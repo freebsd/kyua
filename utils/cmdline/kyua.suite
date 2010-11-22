@@ -1,0 +1,5 @@
+base_command_test
+exceptions_test
+globals_test
+options_test
+parser_test

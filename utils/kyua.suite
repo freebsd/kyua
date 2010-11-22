@@ -1,0 +1,7 @@
+auto_array_test
+env_test
+sanity_test
+include cmdline/kyua.suite
+include format/kyua.suite
+include fs/kyua.suite
+include process/kyua.suite

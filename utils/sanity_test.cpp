@@ -1,0 +1,264 @@
+// Copyright 2010, Google Inc.
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+// * Redistributions of source code must retain the above copyright
+//   notice, this list of conditions and the following disclaimer.
+// * Redistributions in binary form must reproduce the above copyright
+//   notice, this list of conditions and the following disclaimer in the
+//   documentation and/or other materials provided with the distribution.
+// * Neither the name of Google Inc. nor the names of its contributors
+//   may be used to endorse or promote products derived from this software
+//   without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+extern "C" {
+#include <signal.h>
+}
+
+#include <cstdlib>
+#include <iostream>
+
+#include <atf-c++.hpp>
+
+#include "utils/format/macros.hpp"
+#include "utils/fs/path.hpp"
+#include "utils/sanity.hpp"
+#include "utils/process/children.ipp"
+#include "utils/process/status.hpp"
+#include "utils/test_utils.hpp"
+
+namespace fs = utils::fs;
+namespace process = utils::process;
+
+
+#define FILE_REGEXP __FILE__ ":[0-9]+: "
+
+
+static const fs::path Stdout_File("stdout.txt");
+static const fs::path Stderr_File("stderr.txt");
+
+
+#if NDEBUG
+static bool NDebug = true;
+#else
+static bool NDebug = false;
+#endif
+
+
+template< typename Function >
+static process::status
+run_test(Function function)
+{
+    const process::status status = process::child_with_files::fork(
+        function, Stdout_File, Stderr_File)->wait();
+    utils::cat_file("Helper stdout: ", Stdout_File);
+    utils::cat_file("Helper stderr: ", Stderr_File);
+    return status;
+}
+
+
+static void
+verify_success(const process::status& status)
+{
+    ATF_REQUIRE(status.exited());
+    ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
+    ATF_REQUIRE(utils::grep_file("Before test", Stdout_File));
+    ATF_REQUIRE(utils::grep_file("After test", Stdout_File));
+}
+
+
+static void
+verify_failed(const process::status& status, const char* type,
+              const char* exp_message, const bool check_ndebug)
+{
+    if (check_ndebug && NDebug) {
+        std::cout << "Built with NDEBUG; skipping verification\n";
+        verify_success(status);
+    } else {
+        ATF_REQUIRE(status.signaled());
+        ATF_REQUIRE_EQ(SIGABRT, status.termsig());
+        ATF_REQUIRE(utils::grep_file("Before test", Stdout_File));
+        ATF_REQUIRE(!utils::grep_file("After test", Stdout_File));
+        if (exp_message != NULL)
+            ATF_REQUIRE(utils::grep_file(F(FILE_REGEXP "%s: %s") %
+                                         type % exp_message, Stderr_File));
+        else
+            ATF_REQUIRE(utils::grep_file(F(FILE_REGEXP "%s") % type,
+                                         Stderr_File));
+    }
+}
+
+
+template< bool Expression, bool WithMessage >
+static void
+do_inv_test(void)
+{
+    std::cout << "Before test\n";
+    if (WithMessage)
+        INV_MSG(Expression, "Custom message");
+    else
+        INV(Expression);
+    std::cout << "After test\n";
+    std::exit(EXIT_SUCCESS);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(inv__holds);
+ATF_TEST_CASE_BODY(inv__holds)
+{
+    const process::status status = run_test(do_inv_test< true, false >);
+    verify_success(status);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(inv__triggers_default_message);
+ATF_TEST_CASE_BODY(inv__triggers_default_message)
+{
+    const process::status status = run_test(do_inv_test< false, false >);
+    verify_failed(status, "Invariant check failed", "Expression", true);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(inv__triggers_custom_message);
+ATF_TEST_CASE_BODY(inv__triggers_custom_message)
+{
+    const process::status status = run_test(do_inv_test< false, true >);
+    verify_failed(status, "Invariant check failed", "Custom", true);
+}
+
+
+template< bool Expression, bool WithMessage >
+static void
+do_pre_test(void)
+{
+    std::cout << "Before test\n";
+    if (WithMessage)
+        PRE_MSG(Expression, "Custom message");
+    else
+        PRE(Expression);
+    std::cout << "After test\n";
+    std::exit(EXIT_SUCCESS);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(pre__holds);
+ATF_TEST_CASE_BODY(pre__holds)
+{
+    const process::status status = run_test(do_pre_test< true, false >);
+    verify_success(status);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(pre__triggers_default_message);
+ATF_TEST_CASE_BODY(pre__triggers_default_message)
+{
+    const process::status status = run_test(do_pre_test< false, false >);
+    verify_failed(status, "Precondition check failed", "Expression", true);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(pre__triggers_custom_message);
+ATF_TEST_CASE_BODY(pre__triggers_custom_message)
+{
+    const process::status status = run_test(do_pre_test< false, true >);
+    verify_failed(status, "Precondition check failed", "Custom", true);
+}
+
+
+template< bool Expression, bool WithMessage >
+static void
+do_post_test(void)
+{
+    std::cout << "Before test\n";
+    if (WithMessage)
+        POST_MSG(Expression, "Custom message");
+    else
+        POST(Expression);
+    std::cout << "After test\n";
+    std::exit(EXIT_SUCCESS);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(post__holds);
+ATF_TEST_CASE_BODY(post__holds)
+{
+    const process::status status = run_test(do_post_test< true, false >);
+    verify_success(status);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(post__triggers_default_message);
+ATF_TEST_CASE_BODY(post__triggers_default_message)
+{
+    const process::status status = run_test(do_post_test< false, false >);
+    verify_failed(status, "Postcondition check failed", "Expression", true);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(post__triggers_custom_message);
+ATF_TEST_CASE_BODY(post__triggers_custom_message)
+{
+    const process::status status = run_test(do_post_test< false, true >);
+    verify_failed(status, "Postcondition check failed", "Custom", true);
+}
+
+
+template< bool WithMessage >
+static void
+do_unreachable_test(void)
+{
+    std::cout << "Before test\n";
+    if (WithMessage)
+        UNREACHABLE_MSG("Custom message");
+    else
+        UNREACHABLE;
+    std::cout << "After test\n";
+    std::exit(EXIT_SUCCESS);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(unreachable__default_message);
+ATF_TEST_CASE_BODY(unreachable__default_message)
+{
+    const process::status status = run_test(do_unreachable_test< false >);
+    verify_failed(status, "Unreachable point reached", NULL, false);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(unreachable__custom_message);
+ATF_TEST_CASE_BODY(unreachable__custom_message)
+{
+    const process::status status = run_test(do_unreachable_test< true >);
+    verify_failed(status, "Unreachable point reached", "Custom", false);
+}
+
+
+ATF_INIT_TEST_CASES(tcs)
+{
+    ATF_ADD_TEST_CASE(tcs, inv__holds);
+    ATF_ADD_TEST_CASE(tcs, inv__triggers_default_message);
+    ATF_ADD_TEST_CASE(tcs, inv__triggers_custom_message);
+    ATF_ADD_TEST_CASE(tcs, pre__holds);
+    ATF_ADD_TEST_CASE(tcs, pre__triggers_default_message);
+    ATF_ADD_TEST_CASE(tcs, pre__triggers_custom_message);
+    ATF_ADD_TEST_CASE(tcs, post__holds);
+    ATF_ADD_TEST_CASE(tcs, post__triggers_default_message);
+    ATF_ADD_TEST_CASE(tcs, post__triggers_custom_message);
+    ATF_ADD_TEST_CASE(tcs, unreachable__default_message);
+    ATF_ADD_TEST_CASE(tcs, unreachable__custom_message);
+}

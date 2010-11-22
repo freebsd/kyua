@@ -1,0 +1,11 @@
+Content-Type: application/X-atf-atffile; version="1"
+
+prop: test-suite = kyua
+
+tp: auto_array_test
+tp: cmdline
+tp: env_test
+tp: format
+tp: fs
+tp: process
+tp: sanity_test

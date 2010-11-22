@@ -1,0 +1,9 @@
+Content-Type: application/X-atf-atffile; version="1"
+
+prop: test-suite = kyua
+
+tp: exceptions_test
+tp: results_test
+tp: runner_test
+tp: suite_config_test
+tp: test_program_test
