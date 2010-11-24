@@ -27,10 +27,10 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "cli/all_commands.hpp"
+#include "cli/cmd_about.hpp"
 #include "cli/cmd_help.hpp"
 #include "cli/cmd_list.hpp"
 #include "cli/cmd_test.hpp"
-#include "cli/cmd_version.hpp"
 #include "utils/cmdline/base_command.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/sanity.hpp"
@@ -41,17 +41,17 @@ namespace cmdline = utils::cmdline;
 namespace {
 
 
+static cli::cmd_about cmd_about_instance;
 static cli::cmd_help cmd_help_instance;
 static cli::cmd_list cmd_list_instance;
 static cli::cmd_test cmd_test_instance;
-static cli::cmd_version cmd_version_instance;
 
 
 static cmdline::base_command* commands_table[] = {
+    &cmd_about_instance,
     &cmd_help_instance,
     &cmd_list_instance,
     &cmd_test_instance,
-    &cmd_version_instance,
     NULL,
 };
 

@@ -26,56 +26,30 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#if defined(HAVE_CONFIG_H)
-#   include "config.h"
-#endif
+/// \file cli/cmd_about.hpp
+/// Provides the cmd_about class.
 
-#include <atf-c++.hpp>
+#if !defined(CLI_CMD_ABOUT_HPP)
+#define CLI_CMD_ABOUT_HPP
 
-#include "cli/cmd_version.hpp"
-#include "utils/cmdline/exceptions.hpp"
-#include "utils/cmdline/parser.hpp"
-#include "utils/cmdline/ui_mock.hpp"
-#include "utils/test_utils.hpp"
+#include "utils/cmdline/base_command.hpp"
 
-namespace cmdline = utils::cmdline;
-
-using cli::cmd_version;
+namespace cli {
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(too_many_args);
-ATF_TEST_CASE_BODY(too_many_args)
-{
-    cmdline::args_vector args;
-    args.push_back("version");
+/// Implementation of the "about" subcommand.
+class cmd_about : public utils::cmdline::base_command {
+    /// Path to the directory containing the distribution documents.
+    const std::string _docdir;
 
-    cmd_version cmd;
-    cmdline::ui_mock ui;
-    ATF_REQUIRE_EQ(EXIT_SUCCESS, cmd.main(&ui, args));
-    ATF_REQUIRE(utils::grep_string(PACKAGE_NAME, ui.out_log()[0]));
-    ATF_REQUIRE(utils::grep_string(PACKAGE_VERSION, ui.out_log()[0]));
-    ATF_REQUIRE(ui.err_log().empty());
-}
+public:
+    cmd_about(const char* = "");
+
+    int run(utils::cmdline::ui*, const utils::cmdline::parsed_cmdline&);
+};
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(invalid_args);
-ATF_TEST_CASE_BODY(invalid_args)
-{
-    cmdline::args_vector args;
-    args.push_back("version");
-    args.push_back("invalid");
-
-    cmd_version cmd;
-    cmdline::ui_mock ui;
-    ATF_REQUIRE_THROW_RE(cmdline::usage_error, "Too many arguments",
-                         cmd.main(&ui, args));
-    ATF_REQUIRE(ui.out_log().empty());
-    ATF_REQUIRE(ui.err_log().empty());
-}
+}  // namespace cli
 
 
-ATF_INIT_TEST_CASES(tcs)
-{
-    ATF_ADD_TEST_CASE(tcs, too_many_args);
-    ATF_ADD_TEST_CASE(tcs, invalid_args);
-}
+#endif  // !defined(CLI_CMD_ABOUT_HPP)
