@@ -26,12 +26,21 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+extern "C" {
+#include <sys/stat.h>
+
+#include <unistd.h>
+}
+
 #include <cstdlib>
 #include <fstream>
 
 #include <atf-c++.hpp>
 
+#include "utils/env.hpp"
+#include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/optional.ipp"
 
 namespace fs = utils::fs;
 
@@ -107,6 +116,39 @@ ATF_TEST_CASE_BODY(pass)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(validate_env);
+ATF_TEST_CASE_BODY(validate_env)
+{
+    ATF_REQUIRE(utils::getenv("HOME").get() == fs::current_path().str());
+    ATF_REQUIRE(!utils::getenv("LANG"));
+    ATF_REQUIRE(!utils::getenv("LC_ALL"));
+    ATF_REQUIRE(!utils::getenv("LC_COLLATE"));
+    ATF_REQUIRE(!utils::getenv("LC_CTYPE"));
+    ATF_REQUIRE(!utils::getenv("LC_MESSAGES"));
+    ATF_REQUIRE(!utils::getenv("LC_MONETARY"));
+    ATF_REQUIRE(!utils::getenv("LC_NUMERIC"));
+    ATF_REQUIRE(!utils::getenv("LC_TIME"));
+    ATF_REQUIRE(!utils::getenv("TZ"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(validate_pgrp);
+ATF_TEST_CASE_BODY(validate_pgrp)
+{
+    if (::getpgrp() != ::getpid())
+        fail("Test case not running in its own process group");
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(validate_umask);
+ATF_TEST_CASE_BODY(validate_umask)
+{
+    const mode_t old_umask = ::umask(0111);
+    if (old_umask != 0022)
+        fail("umask not set to 0022 when running test case");
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, check_cleanup_workdir);
@@ -114,4 +156,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, create_cookie_in_control_dir);
     ATF_ADD_TEST_CASE(tcs, create_cookie_in_workdir);
     ATF_ADD_TEST_CASE(tcs, pass);
+    ATF_ADD_TEST_CASE(tcs, validate_env);
+    ATF_ADD_TEST_CASE(tcs, validate_pgrp);
+    ATF_ADD_TEST_CASE(tcs, validate_umask);
 }

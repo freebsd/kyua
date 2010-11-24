@@ -33,6 +33,7 @@ extern "C" {
 }
 
 #include <cstdlib>
+#include <iostream>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -109,7 +110,6 @@ isolate_process(const fs::path& cwd)
     // TODO(jmmv): It might be better to do the opposite: just pass a good known
     // set of variables to the child (aka HOME, PATH, ...).  But how do we
     // determine this minimum set?
-    utils::setenv("HOME", cwd.str());
     utils::unsetenv("LANG");
     utils::unsetenv("LC_ALL");
     utils::unsetenv("LC_COLLATE");
@@ -122,6 +122,7 @@ isolate_process(const fs::path& cwd)
 
     if (::chdir(cwd.c_str()) == -1)
         throw std::runtime_error(F("Failed to enter work directory %s") % cwd);
+    utils::setenv("HOME", fs::current_path().str());
 }
 
 
@@ -176,7 +177,12 @@ public:
             _test_case.program().is_absolute() ? _test_case.program() :
             fs::current_path() / _test_case.program());
 
-        isolate_process(_work_directory);
+        try {
+            isolate_process(_work_directory);
+        } catch (const std::exception& error) {
+            std::cerr << F("Failed to set up test case: %s\n") % error.what();
+            std::abort();
+        }
 
         std::vector< std::string > args;
         args.push_back(F("-r%s") % _result_file);

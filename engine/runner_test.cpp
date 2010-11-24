@@ -26,6 +26,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+extern "C" {
+#include <sys/stat.h>
+}
+
 #include <iostream>
 #include <stdexcept>
 
@@ -36,6 +40,7 @@
 #include "engine/test_case.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
+#include "utils/env.hpp"
 #include "utils/noncopyable.hpp"
 #include "utils/test_utils.hpp"
 
@@ -167,22 +172,6 @@ ATF_TEST_CASE_BODY(run_test_case__simple)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__separate_workdir);
-ATF_TEST_CASE_BODY(run_test_case__separate_workdir)
-{
-    const engine::test_case test_case(get_helpers_path(this),
-                                      "create_cookie_in_workdir",
-                                      engine::properties_map());
-    std::auto_ptr< const results::base_result > result = runner::run_test_case(
-        test_case, engine::properties_map());
-    compare_results(results::passed(), result.get());
-
-    if (utils::exists(fs::path("cookie")))
-        fail("It seems that the test case was not executed in a separate "
-             "work directory");
-}
-
-
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__config_variables);
 ATF_TEST_CASE_BODY(run_test_case__config_variables)
 {
@@ -223,6 +212,69 @@ ATF_TEST_CASE_BODY(run_test_case__cleanup_shares_workdir)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__isolation_env);
+ATF_TEST_CASE_BODY(run_test_case__isolation_env)
+{
+    const engine::test_case test_case(get_helpers_path(this), "validate_env",
+                                      engine::properties_map());
+    utils::setenv("HOME", "foobar");
+    utils::setenv("LANG", "C");
+    utils::setenv("LC_ALL", "C");
+    utils::setenv("LC_COLLATE", "C");
+    utils::setenv("LC_CTYPE", "C");
+    utils::setenv("LC_MESSAGES", "C");
+    utils::setenv("LC_MONETARY", "C");
+    utils::setenv("LC_NUMERIC", "C");
+    utils::setenv("LC_TIME", "C");
+    utils::setenv("TZ", "C");
+    std::auto_ptr< const results::base_result > result = runner::run_test_case(
+        test_case, engine::properties_map());
+    compare_results(results::passed(), result.get());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__isolation_pgrp);
+ATF_TEST_CASE_BODY(run_test_case__isolation_pgrp)
+{
+    const engine::test_case test_case(get_helpers_path(this), "validate_pgrp",
+                                      engine::properties_map());
+    const mode_t old_umask = ::umask(0002);
+    std::auto_ptr< const results::base_result > result = runner::run_test_case(
+        test_case, engine::properties_map());
+    compare_results(results::passed(), result.get());
+    ::umask(old_umask);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__isolation_umask);
+ATF_TEST_CASE_BODY(run_test_case__isolation_umask)
+{
+    const engine::test_case test_case(get_helpers_path(this), "validate_umask",
+                                      engine::properties_map());
+    const mode_t old_umask = ::umask(0002);
+    std::auto_ptr< const results::base_result > result = runner::run_test_case(
+        test_case, engine::properties_map());
+    compare_results(results::passed(), result.get());
+    ::umask(old_umask);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__isolation_workdir);
+ATF_TEST_CASE_BODY(run_test_case__isolation_workdir)
+{
+    const engine::test_case test_case(get_helpers_path(this),
+                                      "create_cookie_in_workdir",
+                                      engine::properties_map());
+    std::auto_ptr< const results::base_result > result = runner::run_test_case(
+        test_case, engine::properties_map());
+    compare_results(results::passed(), result.get());
+
+    if (utils::exists(fs::path("cookie")))
+        fail("It seems that the test case was not executed in a separate "
+             "work directory");
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__missing_results_file);
 ATF_TEST_CASE_BODY(run_test_case__missing_results_file)
 {
@@ -230,7 +282,7 @@ ATF_TEST_CASE_BODY(run_test_case__missing_results_file)
                                       engine::properties_map());
     std::auto_ptr< const results::base_result > result = runner::run_test_case(
         test_case, engine::properties_map());
-    // TODO(jmmv): This should really be contain a more descriptive message.
+    // TODO(jmmv): This should really contain a more descriptive message.
     validate_broken("Results file.*cannot be opened", result.get());
 }
 
@@ -249,9 +301,8 @@ ATF_TEST_CASE_BODY(run_test_case__missing_test_program)
 
 
 // TODO(jmmv): Implement tests to validate that the stdout/stderr of the test
-// case body and cleanup are correctly captures by run_test_case.  We probably
+// case body and cleanup are correctly captured by run_test_case.  We probably
 // have to wait until we have a mechanism to store this data to do so.
-// Also implement tests to validate test case isolation.
 
 
 // TODO(jmmv): Need more test cases for run_test_program and run_test_suite.
@@ -276,6 +327,10 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, run_test_case__simple);
     ATF_ADD_TEST_CASE(tcs, run_test_case__config_variables);
     ATF_ADD_TEST_CASE(tcs, run_test_case__cleanup_shares_workdir);
+    ATF_ADD_TEST_CASE(tcs, run_test_case__isolation_env);
+    ATF_ADD_TEST_CASE(tcs, run_test_case__isolation_pgrp);
+    ATF_ADD_TEST_CASE(tcs, run_test_case__isolation_umask);
+    ATF_ADD_TEST_CASE(tcs, run_test_case__isolation_workdir);
     ATF_ADD_TEST_CASE(tcs, run_test_case__missing_results_file);
     ATF_ADD_TEST_CASE(tcs, run_test_case__missing_test_program);
 
