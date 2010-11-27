@@ -28,6 +28,8 @@
 
 extern "C" {
 #include <sys/stat.h>
+
+#include <signal.h>
 }
 
 #include <iostream>
@@ -158,6 +160,49 @@ validate_broken(const char* reason_regexp, const results::base_result* actual)
 }
 
 
+/// Program a signal to be ignored.
+///
+/// If the programming fails, this terminates the test case.  After the handler
+/// is installed, this also delivers a signal to the caller process to ensure
+/// that the signal is effectively being ignored -- otherwise we probably crash,
+/// which would report the test case as broken.
+///
+/// \param signo The signal to be ignored.
+static void
+ignore_signal(const int signo)
+{
+    struct ::sigaction sa;
+    sa.sa_handler = SIG_IGN;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    ATF_REQUIRE(::sigaction(signo, &sa, NULL) != -1);
+
+    ::kill(::getpid(), signo);
+}
+
+
+/// Ensures that a signal handler is resetted in the test case.
+///
+/// \param tc A pointer to the caller test case.
+/// \param signo The signal to test.
+static void
+one_signal_test(const atf::tests::tc* tc, const int signo)
+{
+    PRE_MSG(signo != SIGKILL && signo != SIGSTOP, "The signal to test must be "
+            "programmable");
+
+    ignore_signal(signo);
+
+    engine::properties_map config;
+    config["signo"] = F("%d") % signo;
+    const engine::test_case test_case(get_helpers_path(tc), "validate_signal",
+                                      config);
+    std::auto_ptr< const results::base_result > result = runner::run_test_case(
+        test_case, engine::properties_map());
+    validate_broken("Results file.*cannot be opened", result.get());
+}
+
+
 }  // anonymous namespace
 
 
@@ -246,6 +291,14 @@ ATF_TEST_CASE_BODY(run_test_case__isolation_pgrp)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__isolation_signals);
+ATF_TEST_CASE_BODY(run_test_case__isolation_signals)
+{
+    one_signal_test(this, SIGHUP);
+    one_signal_test(this, SIGUSR2);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__isolation_umask);
 ATF_TEST_CASE_BODY(run_test_case__isolation_umask)
 {
@@ -329,6 +382,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, run_test_case__cleanup_shares_workdir);
     ATF_ADD_TEST_CASE(tcs, run_test_case__isolation_env);
     ATF_ADD_TEST_CASE(tcs, run_test_case__isolation_pgrp);
+    ATF_ADD_TEST_CASE(tcs, run_test_case__isolation_signals);
     ATF_ADD_TEST_CASE(tcs, run_test_case__isolation_umask);
     ATF_ADD_TEST_CASE(tcs, run_test_case__isolation_workdir);
     ATF_ADD_TEST_CASE(tcs, run_test_case__missing_results_file);

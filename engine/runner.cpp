@@ -52,11 +52,13 @@ extern "C" {
 #include "utils/optional.ipp"
 #include "utils/process/children.ipp"
 #include "utils/sanity.hpp"
+#include "utils/signals.hpp"
 
 namespace fs = utils::fs;
 namespace process = utils::process;
 namespace results = engine::results;
 namespace runner = engine::runner;
+namespace signals = utils::signals;
 
 
 namespace {
@@ -105,7 +107,8 @@ isolate_process(const fs::path& cwd)
 
     ::umask(0022);
 
-    // TODO(jmmv): Reset signal handlers.
+    for (int i = 0; i < signals::last_signo; i++)
+        signals::reset(i);
 
     // TODO(jmmv): It might be better to do the opposite: just pass a good known
     // set of variables to the child (aka HOME, PATH, ...).  But how do we

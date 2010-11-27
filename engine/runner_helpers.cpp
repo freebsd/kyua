@@ -29,11 +29,14 @@
 extern "C" {
 #include <sys/stat.h>
 
+#include <signal.h>
 #include <unistd.h>
 }
 
 #include <cstdlib>
 #include <fstream>
+#include <iostream>
+#include <sstream>
 
 #include <atf-c++.hpp>
 
@@ -140,6 +143,21 @@ ATF_TEST_CASE_BODY(validate_pgrp)
 }
 
 
+ATF_TEST_CASE(validate_signal);
+ATF_TEST_CASE_HEAD(validate_signal)
+{
+    set_md_var("require.config", "signo");
+}
+ATF_TEST_CASE_BODY(validate_signal)
+{
+    std::istringstream iss(get_config_var("signo"));
+    int signo;
+    iss >> signo;
+    std::cout << "Delivering signal " << signo << "\n";
+    ::kill(::getpid(), signo);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(validate_umask);
 ATF_TEST_CASE_BODY(validate_umask)
 {
@@ -158,5 +176,6 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, pass);
     ATF_ADD_TEST_CASE(tcs, validate_env);
     ATF_ADD_TEST_CASE(tcs, validate_pgrp);
+    ATF_ADD_TEST_CASE(tcs, validate_signal);
     ATF_ADD_TEST_CASE(tcs, validate_umask);
 }
