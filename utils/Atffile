@@ -9,4 +9,4 @@ tp: format
 tp: fs
 tp: process
 tp: sanity_test
-tp: signals_test
+tp: signals

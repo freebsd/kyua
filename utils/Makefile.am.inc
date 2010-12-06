@@ -37,8 +37,6 @@ libutils_a_SOURCES += utils/optional.hpp
 libutils_a_SOURCES += utils/optional.ipp
 libutils_a_SOURCES += utils/sanity.cpp
 libutils_a_SOURCES += utils/sanity.hpp
-libutils_a_SOURCES += utils/signals.hpp
-libutils_a_SOURCES += utils/signals.cpp
 
 noinst_LIBRARIES += libutils_test.a
 libutils_test_a_SOURCES  = utils/test_utils.cpp
@@ -71,12 +69,8 @@ utils_sanity_test_SOURCES = utils/sanity_test.cpp
 utils_sanity_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
 utils_sanity_test_LDADD = libutils_test.a libutils.a $(ATF_CXX_LIBS)
 
-tests_utils_PROGRAMS += utils/signals_test
-utils_signals_test_SOURCES = utils/signals_test.cpp
-utils_signals_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
-utils_signals_test_LDADD = libutils.a $(ATF_CXX_LIBS)
-
 include utils/cmdline/Makefile.am.inc
 include utils/format/Makefile.am.inc
 include utils/fs/Makefile.am.inc
 include utils/process/Makefile.am.inc
+include utils/signals/Makefile.am.inc

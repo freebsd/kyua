@@ -29,6 +29,7 @@
 extern "C" {
 #include <sys/stat.h>
 
+#include <signal.h>
 #include <unistd.h>
 }
 
@@ -52,7 +53,8 @@ extern "C" {
 #include "utils/optional.ipp"
 #include "utils/process/children.ipp"
 #include "utils/sanity.hpp"
-#include "utils/signals.hpp"
+#include "utils/signals/exceptions.hpp"
+#include "utils/signals/misc.hpp"
 
 namespace fs = utils::fs;
 namespace process = utils::process;
@@ -107,8 +109,16 @@ isolate_process(const fs::path& cwd)
 
     ::umask(0022);
 
-    for (int i = 0; i < signals::last_signo; i++)
-        signals::reset(i);
+    for (int i = 0; i < signals::last_signo; i++) {
+        try {
+            if (i != SIGKILL && i != SIGSTOP)
+                signals::reset(i);
+        } catch (const signals::system_error& e) {
+            // Just ignore errors trying to reset signals.  It might happen
+            // that we try to reset an immutable signal that we are not aware
+            // of, so we certainly do not want to make a big deal of it.
+        }
+    }
 
     // TODO(jmmv): It might be better to do the opposite: just pass a good known
     // set of variables to the child (aka HOME, PATH, ...).  But how do we

@@ -38,7 +38,8 @@ extern "C" {
 #include "utils/defs.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/process/children.ipp"
-#include "utils/signals.hpp"
+#include "utils/signals/exceptions.hpp"
+#include "utils/signals/misc.hpp"
 
 namespace fs = utils::fs;
 namespace process = utils::process;
@@ -91,10 +92,8 @@ ATF_TEST_CASE_BODY(reset__ok)
 ATF_TEST_CASE_WITHOUT_HEAD(reset__immutable);
 ATF_TEST_CASE_BODY(reset__immutable)
 {
-    // Ensure these don't raise errors, even when we know this behavior is
-    // impossible.
-    signals::reset(SIGKILL);
-    signals::reset(SIGSTOP);
+    ATF_REQUIRE_THROW(signals::system_error, signals::reset(SIGKILL));
+    ATF_REQUIRE_THROW(signals::system_error, signals::reset(SIGSTOP));
 }
 
 

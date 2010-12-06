@@ -26,27 +26,51 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file utils/signals.hpp
-/// Interface to signal handlers.
+#include <cstring>
 
-#if !defined(UTILS_SIGNALS_HPP)
-#define UTILS_SIGNALS_HPP
+#include "utils/format/macros.hpp"
+#include "utils/signals/exceptions.hpp"
 
-#include <string>
-
-#include "utils/optional.hpp"
-
-namespace utils {
-namespace signals {
+namespace signals = utils::signals;
 
 
-extern const int last_signo;
+/// Constructs a new error with a plain-text message.
+///
+/// \param message The plain-text error message.
+signals::error::error(const std::string& message) :
+    std::runtime_error(message)
+{
+}
 
 
-void reset(const int);
+/// Destructor for the error.
+signals::error::~error(void) throw()
+{
+}
 
 
-}  // namespace signals
-}  // namespace utils
+/// Constructs a new error based on an errno code.
+///
+/// \param message_ The message describing what caused the error.
+/// \param errno_ The error code.
+signals::system_error::system_error(const std::string& message_,
+                                    const int errno_) :
+    error(F("%s: %s") % message_ % strerror(errno_)),
+    _original_errno(errno_)
+{
+}
 
-#endif  // !defined(UTILS_SIGNALS_HPP)
+
+/// Destructor for the error.
+signals::system_error::~system_error(void) throw()
+{
+}
+
+
+
+/// Gets the original errno code.
+int
+signals::system_error::original_errno(void) const throw()
+{
+    return _original_errno;
+}

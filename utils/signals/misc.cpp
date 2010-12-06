@@ -30,7 +30,12 @@ extern "C" {
 #include <signal.h>
 }
 
-#include "utils/signals.hpp"
+#include <cerrno>
+#include <cstddef>
+
+#include "utils/format/macros.hpp"
+#include "utils/signals/exceptions.hpp"
+#include "utils/signals/misc.hpp"
 
 namespace signals = utils::signals;
 
@@ -43,14 +48,20 @@ const int utils::signals::last_signo = 15;
 /// Resets a signal handler to its default behavior.
 ///
 /// \param signo The number of the signal handler to reset.
+///
+/// \throw signals::system_error If there is a problem trying to reset the
+///     signal handler to its default behavior.
 void
 signals::reset(const int signo)
 {
     struct ::sigaction sa;
-
     sa.sa_handler = SIG_DFL;
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = 0;
 
-    (void)::sigaction(signo, &sa, NULL);
+    if (::sigaction(signo, &sa, NULL) == -1) {
+        const int original_errno = errno;
+        throw system_error(F("Failed to reset signal %d") % signo,
+                           original_errno);
+    }
 }
