@@ -51,52 +51,85 @@ callback(void)
 }  // anonymous namespace
 
 
-ATF_TEST_CASE(program_seconds);
-ATF_TEST_CASE_HEAD(program_seconds)
+ATF_TEST_CASE_WITHOUT_HEAD(timedelta__defaults);
+ATF_TEST_CASE_BODY(timedelta__defaults)
+{
+    const signals::timedelta delta;
+    ATF_REQUIRE_EQ(0, delta.seconds);
+    ATF_REQUIRE_EQ(0, delta.useconds);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(timedelta__overrides);
+ATF_TEST_CASE_BODY(timedelta__overrides)
+{
+    const signals::timedelta delta(1, 2);
+    ATF_REQUIRE_EQ(1, delta.seconds);
+    ATF_REQUIRE_EQ(2, delta.useconds);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(timedelta__equals);
+ATF_TEST_CASE_BODY(timedelta__equals)
+{
+    using signals::timedelta;
+
+    ATF_REQUIRE(timedelta() == timedelta());
+    ATF_REQUIRE(timedelta() == timedelta(0, 0));
+    ATF_REQUIRE(timedelta(1, 2) == timedelta(1, 2));
+
+    ATF_REQUIRE(!(timedelta() == timedelta(0, 1)));
+    ATF_REQUIRE(!(timedelta() == timedelta(1, 0)));
+    ATF_REQUIRE(!(timedelta(1, 2) == timedelta(2, 1)));
+}
+
+
+ATF_TEST_CASE(timer__program_seconds);
+ATF_TEST_CASE_HEAD(timer__program_seconds)
 {
     set_md_var("timeout", "10");
 }
-ATF_TEST_CASE_BODY(program_seconds)
+ATF_TEST_CASE_BODY(timer__program_seconds)
 {
     ::fired = false;
-    signals::timer timer(1, 0, callback);
+    signals::timer timer(signals::timedelta(1, 0), callback);
     ATF_REQUIRE(!::fired);
     while (!::fired)
         ::usleep(1000);
 }
 
 
-ATF_TEST_CASE(program_useconds);
-ATF_TEST_CASE_HEAD(program_useconds)
+ATF_TEST_CASE(timer__program_useconds);
+ATF_TEST_CASE_HEAD(timer__program_useconds)
 {
     set_md_var("timeout", "10");
 }
-ATF_TEST_CASE_BODY(program_useconds)
+ATF_TEST_CASE_BODY(timer__program_useconds)
 {
     ::fired = false;
-    signals::timer timer(0, 500000, callback);
+    signals::timer timer(signals::timedelta(0, 500000), callback);
     while (!::fired)
         ::usleep(1000);
 }
 
 
-ATF_TEST_CASE(unprogram);
-ATF_TEST_CASE_HEAD(unprogram)
+ATF_TEST_CASE(timer__unprogram);
+ATF_TEST_CASE_HEAD(timer__unprogram)
 {
     set_md_var("timeout", "10");
 }
-ATF_TEST_CASE_BODY(unprogram)
+ATF_TEST_CASE_BODY(timer__unprogram)
 {
     ::fired = false;
-    signals::timer timer(0, 500000, callback);
+    signals::timer timer(signals::timedelta(0, 500000), callback);
     timer.unprogram();
     usleep(500000);
     ATF_REQUIRE(!::fired);
 }
 
 
-ATF_TEST_CASE(infinitesimal);
-ATF_TEST_CASE_HEAD(infinitesimal)
+ATF_TEST_CASE(timer__infinitesimal);
+ATF_TEST_CASE_HEAD(timer__infinitesimal)
 {
     set_md_var("descr", "Ensure that the ordering in which the signal, the "
                "timer and the global state are programmed is correct; do so "
@@ -104,13 +137,13 @@ ATF_TEST_CASE_HEAD(infinitesimal)
                "it can trigger such conditions");
     set_md_var("timeout", "10");
 }
-ATF_TEST_CASE_BODY(infinitesimal)
+ATF_TEST_CASE_BODY(timer__infinitesimal)
 {
     for (int i = 0; i < 100; i++) {
         std::cout << "In attempt " << i << "\n";
 
         ::fired = false;
-        signals::timer timer(0, 1, callback);
+        signals::timer timer(signals::timedelta(0, 1), callback);
 
         // From the setitimer(2) documentation:
         //
@@ -131,8 +164,11 @@ ATF_TEST_CASE_BODY(infinitesimal)
 
 ATF_INIT_TEST_CASES(tcs)
 {
-    ATF_ADD_TEST_CASE(tcs, program_seconds);
-    ATF_ADD_TEST_CASE(tcs, program_useconds);
-    ATF_ADD_TEST_CASE(tcs, unprogram);
-    ATF_ADD_TEST_CASE(tcs, infinitesimal);
+    ATF_ADD_TEST_CASE(tcs, timedelta__defaults);
+    ATF_ADD_TEST_CASE(tcs, timedelta__overrides);
+
+    ATF_ADD_TEST_CASE(tcs, timer__program_seconds);
+    ATF_ADD_TEST_CASE(tcs, timer__program_useconds);
+    ATF_ADD_TEST_CASE(tcs, timer__unprogram);
+    ATF_ADD_TEST_CASE(tcs, timer__infinitesimal);
 }

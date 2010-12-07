@@ -101,6 +101,38 @@ sigalrm_handler(const int signo)
 }  // anonymous namespace
 
 
+/// Creates a zero timedelta.
+signals::timedelta::timedelta(void) :
+    seconds(0),
+    useconds(0)
+{
+}
+
+
+/// Creates a timedelta.
+///
+/// \param seconds_ The seconds in the delta.
+/// \param useconds_ The microseconds in the delta.
+signals::timedelta::timedelta(const unsigned int seconds_,
+                              const unsigned long useconds_) :
+    seconds(seconds_),
+    useconds(useconds_)
+{
+}
+
+
+/// Checks if two timedeltas are equal.
+///
+/// \param delta The object to compare to.
+///
+/// \return True if the two timedeltas are equals; false otherwise.
+bool
+signals::timedelta::operator==(const timedelta& delta) const
+{
+    return seconds == delta.seconds && useconds == delta.useconds;
+}
+
+
 /// Programs a timer.
 ///
 /// The timer fires only once; intervals are not supported.
@@ -108,12 +140,9 @@ sigalrm_handler(const int signo)
 /// \pre There is no timer already programmed.  At the moment, this only
 ///     supports one single timer programmed at a time.
 ///
-/// \param seconds The seconds until the timer fires.
-/// \param useconds The microseconds until the timer fires.
+/// \param delta The time until the timer fires.
 /// \param callback The function to call when the timer expires.
-signals::timer::timer(const unsigned int seconds,
-                      const unsigned long useconds,
-                      const timer_callback callback)
+signals::timer::timer(const timedelta& delta, const timer_callback callback)
 {
     PRE_MSG(::active_callback == NULL, "Only one timer can be programmed at a "
             "time due to implementation limitations");
@@ -124,8 +153,8 @@ signals::timer::timer(const unsigned int seconds,
 
         ::itimerval timeval;
         timerclear(&timeval.it_interval);
-        timeval.it_value.tv_sec = seconds;
-        timeval.it_value.tv_usec = useconds;
+        timeval.it_value.tv_sec = delta.seconds;
+        timeval.it_value.tv_usec = delta.useconds;
 
         if (::setitimer(ITIMER_REAL, &timeval, &_pimpl->old_timeval) == -1) {
             const int original_errno = errno;

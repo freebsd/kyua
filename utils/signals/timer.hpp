@@ -44,13 +44,31 @@ namespace signals {
 typedef void (*timer_callback)(void);
 
 
+/// Represents a time delta to describe deadlines.
+/// TODO(jmmv): It may be worth to split this into a separate file and make
+/// every field strongly-typed (at least in the constructor) so that it is not
+/// easy to swap integers by mistake.
+struct timedelta {
+    /// The amount of seconds in the time delta.
+    unsigned int seconds;
+
+    /// The amount of microseconds in the time delta.
+    unsigned long useconds;
+
+    timedelta(void);
+    timedelta(const unsigned int, const unsigned long);
+
+    bool operator==(const timedelta&) const;
+};
+
+
 /// A RAII class to program a timer.
 class timer : noncopyable {
     struct impl;
     std::auto_ptr< impl > _pimpl;
 
 public:
-    timer(const unsigned int, const unsigned long, const timer_callback);
+    timer(const timedelta&, const timer_callback);
     ~timer(void);
 
     void unprogram(void);
