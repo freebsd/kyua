@@ -4,3 +4,5 @@ prop: test-suite = kyua
 
 tp: exceptions_test
 tp: misc_test
+tp: programmer_test
+tp: timer_test

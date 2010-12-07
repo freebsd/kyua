@@ -30,6 +30,10 @@ libutils_a_SOURCES += utils/signals/exceptions.cpp
 libutils_a_SOURCES += utils/signals/exceptions.hpp
 libutils_a_SOURCES += utils/signals/misc.cpp
 libutils_a_SOURCES += utils/signals/misc.hpp
+libutils_a_SOURCES += utils/signals/programmer.cpp
+libutils_a_SOURCES += utils/signals/programmer.hpp
+libutils_a_SOURCES += utils/signals/timer.cpp
+libutils_a_SOURCES += utils/signals/timer.hpp
 
 tests_utils_signalsdir = $(pkgtestsdir)/utils/signals
 
@@ -45,3 +49,13 @@ tests_utils_signals_PROGRAMS += utils/signals/misc_test
 utils_signals_misc_test_SOURCES = utils/signals/misc_test.cpp
 utils_signals_misc_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
 utils_signals_misc_test_LDADD = libutils.a libutils_test.a $(ATF_CXX_LIBS)
+
+tests_utils_signals_PROGRAMS += utils/signals/programmer_test
+utils_signals_programmer_test_SOURCES = utils/signals/programmer_test.cpp
+utils_signals_programmer_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
+utils_signals_programmer_test_LDADD = libutils.a libutils_test.a $(ATF_CXX_LIBS)
+
+tests_utils_signals_PROGRAMS += utils/signals/timer_test
+utils_signals_timer_test_SOURCES = utils/signals/timer_test.cpp
+utils_signals_timer_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
+utils_signals_timer_test_LDADD = libutils.a libutils_test.a $(ATF_CXX_LIBS)
