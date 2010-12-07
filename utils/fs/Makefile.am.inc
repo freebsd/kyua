@@ -53,7 +53,7 @@ utils_fs_exceptions_test_LDADD = libutils.a $(ATF_CXX_LIBS)
 tests_utils_fs_PROGRAMS += utils/fs/operations_test
 utils_fs_operations_test_SOURCES = utils/fs/operations_test.cpp
 utils_fs_operations_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
-utils_fs_operations_test_LDADD = libutils.a $(ATF_CXX_LIBS)
+utils_fs_operations_test_LDADD = libutils.a libutils_test.a $(ATF_CXX_LIBS)
 
 tests_utils_fs_PROGRAMS += utils/fs/path_test
 utils_fs_path_test_SOURCES = utils/fs/path_test.cpp

@@ -67,10 +67,24 @@ process::system_error::~system_error(void) throw()
 }
 
 
-
 /// Gets the original errno code.
 int
 process::system_error::original_errno(void) const throw()
 {
     return _original_errno;
+}
+
+
+/// Constructs a new timeout_error.
+///
+/// \param message_ The message describing what caused the error.
+process::timeout_error::timeout_error(const std::string& message_) :
+    error(message_)
+{
+}
+
+
+/// Destructor for the error.
+process::timeout_error::~timeout_error(void) throw()
+{
 }

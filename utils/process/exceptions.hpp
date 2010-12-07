@@ -62,6 +62,14 @@ public:
 };
 
 
+/// Denotes that a deadline was exceeded.
+class timeout_error : public error {
+public:
+    explicit timeout_error(const std::string&);
+    ~timeout_error(void) throw();
+};
+
+
 }  // namespace process
 }  // namespace utils
 

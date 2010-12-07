@@ -30,6 +30,7 @@ extern "C" {
 #include <sys/wait.h>
 
 #include <fcntl.h>
+#include <signal.h>
 #include <unistd.h>
 }
 
@@ -45,6 +46,7 @@ extern "C" {
 #include "utils/process/system.hpp"
 #include "utils/process/status.hpp"
 #include "utils/sanity.hpp"
+#include "utils/signals/timer.hpp"
 
 
 namespace utils {
@@ -86,6 +88,7 @@ struct child_with_output::impl {
 
 namespace fs = utils::fs;
 namespace process = utils::process;
+namespace signals = utils::signals;
 
 
 namespace {
@@ -141,13 +144,65 @@ create_file(const fs::path& filename)
 static process::status
 safe_wait(const pid_t pid)
 {
+retry:
     int stat_loc;
     if (process::detail::syscall_waitpid(pid, &stat_loc, 0) == -1) {
         const int original_errno = errno;
+        if (original_errno == EINTR)
+            goto retry;
         throw process::system_error(F("Failed to wait for PID %d") % pid,
                                     original_errno);
     }
     return process::status(stat_loc);
+}
+
+
+namespace timed_wait__aux {
+
+
+/// Whether the timer fired or not.
+static bool fired;
+
+
+/// The process to be killed when the timer expires.
+static pid_t pid;
+
+
+/// The handler for the timer.
+static void
+callback(void)
+{
+    fired = true;
+    ::kill(pid, SIGKILL);
+}
+
+
+}  // namespace child_timer
+
+
+/// Waits for a process enforcing a deadline.
+///
+/// \param pid The identifier of the process to wait for.
+/// \param timeout The timeout for the wait.  If the timeout is exceeded, the
+///     child process and its process group are forcibly killed.
+///
+/// \return The exit status of the process.
+///
+/// throw process::timeout_error If the deadline is exceeded.
+static process::status
+timed_wait(const pid_t pid, const signals::timedelta& timeout)
+{
+    timed_wait__aux::fired = false;
+    timed_wait__aux::pid = pid;
+    signals::timer timer(timeout, timed_wait__aux::callback);
+    const process::status status = safe_wait(pid);
+    timer.unprogram();
+    if (timed_wait__aux::fired) {
+        (void)::killpg(pid, SIGKILL);
+        throw process::timeout_error(F("The timeout was exceeded while waiting "
+            "for process %d; forcibly killed") % pid);
+    }
+    return status;
 }
 
 
@@ -233,13 +288,20 @@ process::child_with_files::fork_aux(const fs::path& stdout_file,
 
 /// Blocks to wait for completion.
 ///
+/// \param timeout The timeout for the wait.  If zero, no timeout logic is
+///     applied.
+///
 /// \return The termination status of the child process.
 ///
 /// \throw process::system_error If the call to waitpid(2) fails.
+/// \throw process::timeout_error If the timeout expires.
 process::status
-process::child_with_files::wait(void)
+process::child_with_files::wait(const signals::timedelta& timeout)
 {
-    return safe_wait(_pimpl->_pid);
+    if (timeout == signals::timedelta())
+        return safe_wait(_pimpl->_pid);
+    else
+        return timed_wait(_pimpl->_pid, timeout);
 }
 
 
@@ -314,13 +376,20 @@ process::child_with_output::fork_aux(void)
 
 /// Blocks to wait for completion.
 ///
+/// \param timeout The timeout for the wait.  If zero, no timeout logic is
+///     applied.
+///
 /// \return The termination status of the child process.
 ///
 /// \throw process::system_error If the call to waitpid(2) fails.
+/// \throw process::timeout_error If the timeout expires.
 process::status
-process::child_with_output::wait(void)
+process::child_with_output::wait(const signals::timedelta& timeout)
 {
-    return safe_wait(_pimpl->_pid);
+    if (timeout == signals::timedelta())
+        return safe_wait(_pimpl->_pid);
+    else
+        return timed_wait(_pimpl->_pid, timeout);
 }
 
 

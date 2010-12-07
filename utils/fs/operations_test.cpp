@@ -43,26 +43,12 @@ extern "C" {
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/test_utils.hpp"
 
 namespace fs = utils::fs;
 
 
 namespace {
-
-
-/// Creates a file for testing.
-///
-/// Fails the test case if the file cannot be created.
-///
-/// \param file The name of the file to create.
-static void
-create_file(const char* file)
-{
-    std::ofstream output(file);
-    if (!output)
-        ATF_FAIL(F("Failed to create test file %s") % file);
-    output << "Some contents\n";
-}
 
 
 /// Checks if a directory entry exists and matches a specific type.
@@ -110,14 +96,14 @@ ATF_TEST_CASE_WITHOUT_HEAD(cleanup__files_and_directories);
 ATF_TEST_CASE_BODY(cleanup__files_and_directories)
 {
     fs::mkdir(fs::path("root"), 0755);
-    create_file("root/.hidden_file");
+    utils::create_file(fs::path("root/.hidden_file"));
     fs::mkdir(fs::path("root/.hidden_dir"), 0755);
-    create_file("root/.hidden_dir/a");
-    create_file("root/file");
-    create_file("root/with spaces");
+    utils::create_file(fs::path("root/.hidden_dir/a"));
+    utils::create_file(fs::path("root/file"));
+    utils::create_file(fs::path("root/with spaces"));
     fs::mkdir(fs::path("root/dir1"), 0755);
     fs::mkdir(fs::path("root/dir1/dir2"), 0755);
-    create_file("root/dir1/dir2/file");
+    utils::create_file(fs::path("root/dir1/dir2/file"));
     fs::mkdir(fs::path("root/dir1/dir3"), 0755);
     ATF_REQUIRE(lookup(".", "root", DT_DIR));
     fs::cleanup(fs::path("root"));
@@ -130,7 +116,7 @@ ATF_TEST_CASE_BODY(cleanup__unprotect)
 {
     fs::mkdir(fs::path("root"), 0755);
     fs::mkdir(fs::path("root/foo"), 0755);
-    create_file("root/foo/bar");
+    utils::create_file(fs::path("root/foo/bar"));
     ATF_REQUIRE(::chmod("root/foo/bar", 0555) != -1);
     ATF_REQUIRE(::chmod("root/foo", 0555) != -1);
     fs::cleanup(fs::path("root"));

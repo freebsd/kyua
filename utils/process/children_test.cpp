@@ -47,10 +47,12 @@ extern "C" {
 #include "utils/process/exceptions.hpp"
 #include "utils/process/system.hpp"
 #include "utils/sanity.hpp"
+#include "utils/signals/timer.hpp"
 #include "utils/test_utils.hpp"
 
 namespace fs = utils::fs;
 namespace process = utils::process;
+namespace signals = utils::signals;
 
 
 namespace {
@@ -105,6 +107,40 @@ public:
         child_printer_function();
     }
 };
+
+
+template< int Microseconds >
+static void
+child_wait(void)
+{
+    ::usleep(Microseconds);
+    utils::create_file(fs::path("finished"));
+    std::exit(EXIT_SUCCESS);
+}
+
+
+template< int Microseconds >
+static void
+child_wait_with_subchild(void)
+{
+    ::setpgid(::getpid(), ::getpid());
+
+    const int ret = ::fork();
+    if (ret == -1) {
+        std::abort();
+    } else if (ret == 0) {
+        ::usleep(Microseconds);
+        utils::create_file(fs::path("subfinished"));
+        std::exit(EXIT_SUCCESS);
+    } else {
+        ::usleep(Microseconds);
+        utils::create_file(fs::path("finished"));
+
+        int status;
+        (void)::wait(&status);
+        std::exit(EXIT_SUCCESS);
+    }
+}
 
 
 class do_exec {
@@ -207,6 +243,35 @@ ATF_TEST_CASE_BODY(child_with_files__ok_functor)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(child_with_files__wait_timeout_ok);
+ATF_TEST_CASE_BODY(child_with_files__wait_timeout_ok)
+{
+    std::auto_ptr< process::child_with_files > child =
+        process::child_with_files::fork(
+            child_wait< 500000 >, fs::path("out"), fs::path("err"));
+    const process::status status = child->wait(signals::timedelta(5, 0));
+    ATF_REQUIRE(utils::exists(fs::path("finished")));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(child_with_files__wait_timeout_expired);
+ATF_TEST_CASE_BODY(child_with_files__wait_timeout_expired)
+{
+    std::auto_ptr< process::child_with_files > child =
+        process::child_with_files::fork(
+            child_wait_with_subchild< 500000 >, fs::path("out"),
+            fs::path("err"));
+    ATF_REQUIRE_THROW(process::timeout_error,
+                      child->wait(signals::timedelta(0, 50000)));
+    ATF_REQUIRE(!utils::exists(fs::path("finished")));
+
+    // Check that the subprocess of the child is also killed.
+    ::sleep(1);
+    ATF_REQUIRE(!utils::exists(fs::path("finished")));
+    ATF_REQUIRE(!utils::exists(fs::path("subfinished")));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(child_with_files__fork_fail);
 ATF_TEST_CASE_BODY(child_with_files__fork_fail)
 {
@@ -297,6 +362,32 @@ ATF_TEST_CASE_WITHOUT_HEAD(child_with_output__ok_functor);
 ATF_TEST_CASE_BODY(child_with_output__ok_functor)
 {
     child_with_output__ok(child_printer_functor());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(child_with_output__wait_timeout_ok);
+ATF_TEST_CASE_BODY(child_with_output__wait_timeout_ok)
+{
+    std::auto_ptr< process::child_with_output > child =
+        process::child_with_output::fork(child_wait< 500000 >);
+    const process::status status = child->wait(signals::timedelta(5, 0));
+    ATF_REQUIRE(utils::exists(fs::path("finished")));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(child_with_output__wait_timeout_expired);
+ATF_TEST_CASE_BODY(child_with_output__wait_timeout_expired)
+{
+    std::auto_ptr< process::child_with_output > child =
+        process::child_with_output::fork(child_wait_with_subchild< 500000 >);
+    ATF_REQUIRE_THROW(process::timeout_error,
+                      child->wait(signals::timedelta(0, 50000)));
+    ATF_REQUIRE(!utils::exists(fs::path("finished")));
+
+    // Check that the subprocess of the child is also killed.
+    ::sleep(1);
+    ATF_REQUIRE(!utils::exists(fs::path("finished")));
+    ATF_REQUIRE(!utils::exists(fs::path("subfinished")));
 }
 
 
@@ -480,11 +571,16 @@ ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, child_with_files__ok_function);
     ATF_ADD_TEST_CASE(tcs, child_with_files__ok_functor);
+    ATF_ADD_TEST_CASE(tcs, child_with_files__wait_timeout_ok);
+    ATF_ADD_TEST_CASE(tcs, child_with_files__wait_timeout_expired);
     ATF_ADD_TEST_CASE(tcs, child_with_files__fork_fail);
     ATF_ADD_TEST_CASE(tcs, child_with_files__create_stdout_fail);
     ATF_ADD_TEST_CASE(tcs, child_with_files__create_stderr_fail);
+
     ATF_ADD_TEST_CASE(tcs, child_with_output__ok_function);
     ATF_ADD_TEST_CASE(tcs, child_with_output__ok_functor);
+    ATF_ADD_TEST_CASE(tcs, child_with_output__wait_timeout_ok);
+    ATF_ADD_TEST_CASE(tcs, child_with_output__wait_timeout_expired);
     ATF_ADD_TEST_CASE(tcs, child_with_output__pipe_fail);
     ATF_ADD_TEST_CASE(tcs, child_with_output__fork_fail);
 

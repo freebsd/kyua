@@ -62,6 +62,21 @@ utils::cat_file(const std::string& prefix, const fs::path& path)
 }
 
 
+/// Creates a file for testing.
+///
+/// Fails the test case if the file cannot be created.
+///
+/// \param file The name of the file to create.
+void
+utils::create_file(const fs::path& file)
+{
+    std::ofstream output(file.c_str());
+    if (!output)
+        ATF_FAIL(F("Failed to create test file %s") % file);
+    output << "Some contents\n";
+}
+
+
 /// Checks if a file exists.
 ///
 /// Be aware that this is racy in the same way as access(2) is.

@@ -47,6 +47,7 @@
 #include "utils/fs/path.hpp"
 #include "utils/noncopyable.hpp"
 #include "utils/process/status.hpp"
+#include "utils/signals/timer.hpp"
 
 namespace utils {
 namespace process {
@@ -73,7 +74,7 @@ public:
     static std::auto_ptr< child_with_files > fork(Hook, const fs::path&,
                                                   const fs::path&);
 
-    status wait(void);
+    status wait(const signals::timedelta& = signals::timedelta());
 };
 
 
@@ -99,7 +100,7 @@ public:
 
     std::istream& output(void);
 
-    status wait(void);
+    status wait(const signals::timedelta& = signals::timedelta());
 };
 
 
