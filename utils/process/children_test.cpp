@@ -41,6 +41,7 @@ extern "C" {
 
 #include <atf-c++.hpp>
 
+#include "utils/datetime.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/process/children.ipp"
@@ -50,6 +51,7 @@ extern "C" {
 #include "utils/signals/timer.hpp"
 #include "utils/test_utils.hpp"
 
+namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace process = utils::process;
 namespace signals = utils::signals;
@@ -249,7 +251,7 @@ ATF_TEST_CASE_BODY(child_with_files__wait_timeout_ok)
     std::auto_ptr< process::child_with_files > child =
         process::child_with_files::fork(
             child_wait< 500000 >, fs::path("out"), fs::path("err"));
-    const process::status status = child->wait(signals::timedelta(5, 0));
+    const process::status status = child->wait(datetime::delta(5, 0));
     ATF_REQUIRE(utils::exists(fs::path("finished")));
 }
 
@@ -262,7 +264,7 @@ ATF_TEST_CASE_BODY(child_with_files__wait_timeout_expired)
             child_wait_with_subchild< 500000 >, fs::path("out"),
             fs::path("err"));
     ATF_REQUIRE_THROW(process::timeout_error,
-                      child->wait(signals::timedelta(0, 50000)));
+                      child->wait(datetime::delta(0, 50000)));
     ATF_REQUIRE(!utils::exists(fs::path("finished")));
 
     // Check that the subprocess of the child is also killed.
@@ -370,7 +372,7 @@ ATF_TEST_CASE_BODY(child_with_output__wait_timeout_ok)
 {
     std::auto_ptr< process::child_with_output > child =
         process::child_with_output::fork(child_wait< 500000 >);
-    const process::status status = child->wait(signals::timedelta(5, 0));
+    const process::status status = child->wait(datetime::delta(5, 0));
     ATF_REQUIRE(utils::exists(fs::path("finished")));
 }
 
@@ -381,7 +383,7 @@ ATF_TEST_CASE_BODY(child_with_output__wait_timeout_expired)
     std::auto_ptr< process::child_with_output > child =
         process::child_with_output::fork(child_wait_with_subchild< 500000 >);
     ATF_REQUIRE_THROW(process::timeout_error,
-                      child->wait(signals::timedelta(0, 50000)));
+                      child->wait(datetime::delta(0, 50000)));
     ATF_REQUIRE(!utils::exists(fs::path("finished")));
 
     // Check that the subprocess of the child is also killed.

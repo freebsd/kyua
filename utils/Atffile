@@ -4,6 +4,7 @@ prop: test-suite = kyua
 
 tp: auto_array_test
 tp: cmdline
+tp: datetime_test
 tp: env_test
 tp: format
 tp: fs

@@ -26,44 +26,32 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file utils/signals/timer.hpp
-/// Provides the signals::timer class.
+/// \file utils/datetime.hpp
+/// Provides date and time-related classes and functions.
 
-#if !defined(UTILS_SIGNALS_TIMER_HPP)
-#define UTILS_SIGNALS_TIMER_HPP
-
-#include <memory>
-
-#include "utils/noncopyable.hpp"
+#if !defined(UTILS_DATETIME_HPP)
+#define UTILS_DATETIME_HPP
 
 namespace utils {
-
 namespace datetime {
-struct delta;
-}  // namespace datetime
 
 
-namespace signals {
+/// Represents a time delta to describe deadlines.
+struct delta {
+    /// The amount of seconds in the time delta.
+    unsigned int seconds;
 
+    /// The amount of microseconds in the time delta.
+    unsigned long useconds;
 
-/// Function type for the callback executed when a timer expires.
-typedef void (*timer_callback)(void);
+    delta(void);
+    delta(const unsigned int, const unsigned long);
 
-
-/// A RAII class to program a timer.
-class timer : noncopyable {
-    struct impl;
-    std::auto_ptr< impl > _pimpl;
-
-public:
-    timer(const datetime::delta&, const timer_callback);
-    ~timer(void);
-
-    void unprogram(void);
+    bool operator==(const delta&) const;
 };
 
 
-} // namespace signals
-} // namespace utils
+}  // namespace datetime
+}  // namespace utils
 
-#endif // !defined(UTILS_SIGNALS_TIMER_HPP)
+#endif // !defined(UTILS_DATETIME_HPP)

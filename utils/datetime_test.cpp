@@ -26,44 +26,47 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file utils/signals/timer.hpp
-/// Provides the signals::timer class.
+#include <atf-c++.hpp>
 
-#if !defined(UTILS_SIGNALS_TIMER_HPP)
-#define UTILS_SIGNALS_TIMER_HPP
+#include "utils/datetime.hpp"
 
-#include <memory>
-
-#include "utils/noncopyable.hpp"
-
-namespace utils {
-
-namespace datetime {
-struct delta;
-}  // namespace datetime
+namespace datetime = utils::datetime;
 
 
-namespace signals {
+ATF_TEST_CASE_WITHOUT_HEAD(delta__defaults);
+ATF_TEST_CASE_BODY(delta__defaults)
+{
+    const datetime::delta delta;
+    ATF_REQUIRE_EQ(0, delta.seconds);
+    ATF_REQUIRE_EQ(0, delta.useconds);
+}
 
 
-/// Function type for the callback executed when a timer expires.
-typedef void (*timer_callback)(void);
+ATF_TEST_CASE_WITHOUT_HEAD(delta__overrides);
+ATF_TEST_CASE_BODY(delta__overrides)
+{
+    const datetime::delta delta(1, 2);
+    ATF_REQUIRE_EQ(1, delta.seconds);
+    ATF_REQUIRE_EQ(2, delta.useconds);
+}
 
 
-/// A RAII class to program a timer.
-class timer : noncopyable {
-    struct impl;
-    std::auto_ptr< impl > _pimpl;
+ATF_TEST_CASE_WITHOUT_HEAD(delta__equals);
+ATF_TEST_CASE_BODY(delta__equals)
+{
+    ATF_REQUIRE(datetime::delta() == datetime::delta());
+    ATF_REQUIRE(datetime::delta() == datetime::delta(0, 0));
+    ATF_REQUIRE(datetime::delta(1, 2) == datetime::delta(1, 2));
 
-public:
-    timer(const datetime::delta&, const timer_callback);
-    ~timer(void);
-
-    void unprogram(void);
-};
+    ATF_REQUIRE(!(datetime::delta() == datetime::delta(0, 1)));
+    ATF_REQUIRE(!(datetime::delta() == datetime::delta(1, 0)));
+    ATF_REQUIRE(!(datetime::delta(1, 2) == datetime::delta(2, 1)));
+}
 
 
-} // namespace signals
-} // namespace utils
-
-#endif // !defined(UTILS_SIGNALS_TIMER_HPP)
+ATF_INIT_TEST_CASES(tcs)
+{
+    ATF_ADD_TEST_CASE(tcs, delta__defaults);
+    ATF_ADD_TEST_CASE(tcs, delta__overrides);
+    ATF_ADD_TEST_CASE(tcs, delta__equals);
+}

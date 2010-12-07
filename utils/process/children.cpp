@@ -39,6 +39,7 @@ extern "C" {
 #include <cstring>
 #include <iostream>
 
+#include "utils/datetime.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/process/children.ipp"
 #include "utils/process/exceptions.hpp"
@@ -86,6 +87,7 @@ struct child_with_output::impl {
 }  // namespace utils
 
 
+namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace process = utils::process;
 namespace signals = utils::signals;
@@ -190,7 +192,7 @@ callback(void)
 ///
 /// throw process::timeout_error If the deadline is exceeded.
 static process::status
-timed_wait(const pid_t pid, const signals::timedelta& timeout)
+timed_wait(const pid_t pid, const datetime::delta& timeout)
 {
     timed_wait__aux::fired = false;
     timed_wait__aux::pid = pid;
@@ -296,9 +298,9 @@ process::child_with_files::fork_aux(const fs::path& stdout_file,
 /// \throw process::system_error If the call to waitpid(2) fails.
 /// \throw process::timeout_error If the timeout expires.
 process::status
-process::child_with_files::wait(const signals::timedelta& timeout)
+process::child_with_files::wait(const datetime::delta& timeout)
 {
-    if (timeout == signals::timedelta())
+    if (timeout == datetime::delta())
         return safe_wait(_pimpl->_pid);
     else
         return timed_wait(_pimpl->_pid, timeout);
@@ -384,9 +386,9 @@ process::child_with_output::fork_aux(void)
 /// \throw process::system_error If the call to waitpid(2) fails.
 /// \throw process::timeout_error If the timeout expires.
 process::status
-process::child_with_output::wait(const signals::timedelta& timeout)
+process::child_with_output::wait(const datetime::delta& timeout)
 {
-    if (timeout == signals::timedelta())
+    if (timeout == datetime::delta())
         return safe_wait(_pimpl->_pid);
     else
         return timed_wait(_pimpl->_pid, timeout);

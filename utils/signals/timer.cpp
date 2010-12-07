@@ -34,6 +34,7 @@ extern "C" {
 
 #include <cerrno>
 
+#include "utils/datetime.hpp"
 #include "utils/sanity.hpp"
 #include "utils/signals/exceptions.hpp"
 #include "utils/signals/programmer.hpp"
@@ -77,6 +78,7 @@ struct timer::impl {
 }  // namespace utils
 
 
+namespace datetime = utils::datetime;
 namespace signals = utils::signals;
 
 
@@ -101,38 +103,6 @@ sigalrm_handler(const int signo)
 }  // anonymous namespace
 
 
-/// Creates a zero timedelta.
-signals::timedelta::timedelta(void) :
-    seconds(0),
-    useconds(0)
-{
-}
-
-
-/// Creates a timedelta.
-///
-/// \param seconds_ The seconds in the delta.
-/// \param useconds_ The microseconds in the delta.
-signals::timedelta::timedelta(const unsigned int seconds_,
-                              const unsigned long useconds_) :
-    seconds(seconds_),
-    useconds(useconds_)
-{
-}
-
-
-/// Checks if two timedeltas are equal.
-///
-/// \param delta The object to compare to.
-///
-/// \return True if the two timedeltas are equals; false otherwise.
-bool
-signals::timedelta::operator==(const timedelta& delta) const
-{
-    return seconds == delta.seconds && useconds == delta.useconds;
-}
-
-
 /// Programs a timer.
 ///
 /// The timer fires only once; intervals are not supported.
@@ -142,7 +112,8 @@ signals::timedelta::operator==(const timedelta& delta) const
 ///
 /// \param delta The time until the timer fires.
 /// \param callback The function to call when the timer expires.
-signals::timer::timer(const timedelta& delta, const timer_callback callback)
+signals::timer::timer(const datetime::delta& delta,
+                      const timer_callback callback)
 {
     PRE_MSG(::active_callback == NULL, "Only one timer can be programmed at a "
             "time due to implementation limitations");

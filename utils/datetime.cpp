@@ -26,44 +26,38 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file utils/signals/timer.hpp
-/// Provides the signals::timer class.
+#include "utils/datetime.hpp"
 
-#if !defined(UTILS_SIGNALS_TIMER_HPP)
-#define UTILS_SIGNALS_TIMER_HPP
-
-#include <memory>
-
-#include "utils/noncopyable.hpp"
-
-namespace utils {
-
-namespace datetime {
-struct delta;
-}  // namespace datetime
+namespace datetime = utils::datetime;
 
 
-namespace signals {
+/// Creates a zero time delta.
+datetime::delta::delta(void) :
+    seconds(0),
+    useconds(0)
+{
+}
 
 
-/// Function type for the callback executed when a timer expires.
-typedef void (*timer_callback)(void);
+/// Creates a time delta.
+///
+/// \param seconds_ The seconds in the delta.
+/// \param useconds_ The microseconds in the delta.
+datetime::delta::delta(const unsigned int seconds_,
+                       const unsigned long useconds_) :
+    seconds(seconds_),
+    useconds(useconds_)
+{
+}
 
 
-/// A RAII class to program a timer.
-class timer : noncopyable {
-    struct impl;
-    std::auto_ptr< impl > _pimpl;
-
-public:
-    timer(const datetime::delta&, const timer_callback);
-    ~timer(void);
-
-    void unprogram(void);
-};
-
-
-} // namespace signals
-} // namespace utils
-
-#endif // !defined(UTILS_SIGNALS_TIMER_HPP)
+/// Checks if two time deltas are equal.
+///
+/// \param delta The object to compare to.
+///
+/// \return True if the two time deltas are equals; false otherwise.
+bool
+datetime::delta::operator==(const datetime::delta& delta) const
+{
+    return seconds == delta.seconds && useconds == delta.useconds;
+}

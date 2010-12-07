@@ -29,6 +29,8 @@
 noinst_LIBRARIES += libutils.a
 libutils_a_SOURCES  = utils/auto_array.hpp
 libutils_a_SOURCES += utils/auto_array.ipp
+libutils_a_SOURCES += utils/datetime.cpp
+libutils_a_SOURCES += utils/datetime.hpp
 libutils_a_SOURCES += utils/defs.hpp
 libutils_a_SOURCES += utils/env.hpp
 libutils_a_SOURCES += utils/env.cpp
@@ -53,6 +55,11 @@ tests_utils_PROGRAMS = utils/auto_array_test
 utils_auto_array_test_SOURCES = utils/auto_array_test.cpp
 utils_auto_array_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
 utils_auto_array_test_LDADD = libutils.a $(ATF_CXX_LIBS)
+
+tests_utils_PROGRAMS += utils/datetime_test
+utils_datetime_test_SOURCES = utils/datetime_test.cpp
+utils_datetime_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
+utils_datetime_test_LDADD = libutils.a $(ATF_CXX_LIBS)
 
 tests_utils_PROGRAMS += utils/env_test
 utils_env_test_SOURCES = utils/env_test.cpp
