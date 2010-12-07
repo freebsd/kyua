@@ -26,7 +26,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file auto_array.hpp
+/// \file utils/auto_array.hpp
 /// Provides the utils::auto_array class.
 ///
 /// The class is provided as a separate module on its own to minimize

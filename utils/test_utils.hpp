@@ -26,7 +26,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file test_utils.hpp
+/// \file utils/test_utils.hpp
 /// Helper utilities for test programs.
 ///
 /// The routines provided in this file are only supposed to be used from test

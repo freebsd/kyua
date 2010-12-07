@@ -26,7 +26,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file sanity.hpp
+/// \file utils/sanity.hpp
 ///
 /// Set of macros that replace the standard assert(3) macro with more semantical
 /// expressivity and meaningful diagnostics.  Code should never use assert(3)
