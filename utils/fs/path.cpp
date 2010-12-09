@@ -148,6 +148,21 @@ fs::path::is_absolute(void) const
 }
 
 
+/// Less-than comparator for paths.
+///
+/// This is provided to make identifiers useful as map keys.
+///
+/// \param p The path to compare to.
+///
+/// \return True if this identifier sorts before the other identifier; false
+///     otherwise.
+bool
+fs::path::operator<(const fs::path& p) const
+{
+    return _repr < p._repr;
+}
+
+
 /// Compares two paths for equality.
 ///
 /// Given that the paths are internally normalized, input paths such as

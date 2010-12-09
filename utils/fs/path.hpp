@@ -64,6 +64,7 @@ public:
 
     bool is_absolute(void) const;
 
+    bool operator<(const path&) const;
     bool operator==(const path&) const;
     bool operator!=(const path&) const;
     path operator/(const std::string&) const;
