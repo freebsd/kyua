@@ -196,9 +196,9 @@ one_signal_test(const atf::tests::tc* tc, const int signo)
     engine::properties_map config;
     config["signo"] = F("%d") % signo;
     const engine::test_case test_case(get_helpers_path(tc), "validate_signal",
-                                      config);
+                                      engine::properties_map());
     std::auto_ptr< const results::base_result > result = runner::run_test_case(
-        test_case, engine::properties_map());
+        test_case, config);
     validate_broken("Results file.*cannot be opened", result.get());
 }
 

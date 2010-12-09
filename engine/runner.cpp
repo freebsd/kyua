@@ -109,7 +109,7 @@ isolate_process(const fs::path& cwd)
 
     ::umask(0022);
 
-    for (int i = 0; i < signals::last_signo; i++) {
+    for (int i = 0; i <= signals::last_signo; i++) {
         try {
             if (i != SIGKILL && i != SIGSTOP)
                 signals::reset(i);

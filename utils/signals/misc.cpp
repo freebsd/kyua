@@ -26,6 +26,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#if defined(HAVE_CONFIG_H)
+#   include "config.h"
+#endif
+
 extern "C" {
 #include <signal.h>
 }
@@ -41,8 +45,7 @@ namespace signals = utils::signals;
 
 
 /// Number of the last valid signal.
-/// \todo This should be autodetected from configure.
-const int utils::signals::last_signo = 15;
+const int utils::signals::last_signo = LAST_SIGNO;
 
 
 /// Resets a signal handler to its default behavior.

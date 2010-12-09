@@ -26,64 +26,65 @@ dnl THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 dnl (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 dnl OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-AC_INIT([Kyua - Command line interface], [0.1],
-        [kyua-discuss@googlegroups.com], [kyua-cli],
-        [http://code.google.com/p/kyua/])
-AC_PREREQ([2.65])
+dnl
+dnl KYUA_LAST_SIGNO
+dnl
+dnl Detect the last valid signal number.
+dnl
+AC_DEFUN([KYUA_LAST_SIGNO], [
+    AC_MSG_CHECKING(for the last valid signal)
+    AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <err.h>
+#include <errno.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdio.h>
+#include <stdlib.h>], [
+    int i;
+    FILE *f;
 
+    i = 0;
+    while (i < 1024) {
+        i++;
+        if (i != SIGKILL && i != SIGSTOP) {
+            struct sigaction sa;
+            int ret;
 
-AC_COPYRIGHT([Copyright 2010, Google Inc.])
-AC_CONFIG_AUX_DIR([admin])
-AC_CONFIG_FILES([Doxyfile Makefile utils/defs.hpp])
-AC_CONFIG_HEADERS([config.h])
-AC_CONFIG_MACRO_DIR([m4])
-AC_CONFIG_SRCDIR([main.cpp])
-AC_CONFIG_TESTDIR([bootstrap])
+            sa.sa_handler = SIG_IGN;
+            sigemptyset(&sa.sa_mask);
+            sa.sa_flags = 0;
 
+            ret = sigaction(i, &sa, NULL);
+            if (ret == -1) {
+                if (errno == EINVAL) {
+                    i--;
+                    break;
+                } else
+                    err(EXIT_FAILURE, "sigaction failed");
+            }
+        }
+    }
+    if (i == 100)
+        errx(EXIT_FAILURE, "too many signals");
 
-AM_INIT_AUTOMAKE([1.9 check-news foreign subdir-objects -Wall])
+    f = fopen("conftest.cnt", "w");
+    if (f == NULL)
+        err(EXIT_FAILURE, "failed to open file");
 
+    fprintf(f, "%d\n", i);
+    fclose(f);
 
-AC_LANG([C++])
-AC_PROG_CXX
-KYUA_REQUIRE_CXX
-KYUA_DEVELOPER_MODE([C++])
-KYUA_ATTRIBUTE_NORETURN
-KYUA_GETOPT_WITH_OPTRESET
-KYUA_LAST_SIGNO
-AC_CHECK_FUNCS([putenv setenv unsetenv])
-
-
-AC_MSG_CHECKING([whether getcwd(NULL, 0) works])
-AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <stdlib.h>
-#include <unistd.h>],
-    [char *cwd = getcwd(NULL, 0);
-     return (cwd != NULL) ? EXIT_SUCCESS : EXIT_FAILURE;])],
-    [AC_MSG_RESULT(yes)
-     AC_DEFINE([HAVE_GETCWD_DYN], [1],
-               [Define to 1 if getcwd(NULL, 0) works])],
-    [AC_MSG_RESULT(no)])
-
-
-AC_PROG_RANLIB
-
-
-PKG_CHECK_MODULES([ATF_CXX], [atf-c++ >= 0.12],
-                  [],
-                  AC_MSG_ERROR([atf-c++ (0.12 or newer) is required]))
-KYUA_DOXYGEN
-AC_PATH_PROG([SVN], [svn])
-
-
-dnl BSD make(1) doesn't deal with targets specified as './foo' well: they
-dnl need to be specified as 'foo'.  The following hack is to workaround this
-dnl issue.
-if test "${srcdir}" = .; then
-    target_srcdir=
-else
-    target_srcdir="${srcdir}/"
-fi
-AC_SUBST([target_srcdir])
-
-
-AC_OUTPUT
+    return EXIT_SUCCESS;
+])],
+    [if test ! -f conftest.cnt; then
+         last_signo=15
+         AC_MSG_RESULT(failed; assuming ${last_signo})
+     else
+         last_signo=$(cat conftest.cnt)
+         rm -f conftest.cnt
+         AC_MSG_RESULT(${last_signo})
+     fi],
+    [last_signo=15
+     AC_MSG_RESULT(failed; assuming ${last_signo})])
+    AC_DEFINE_UNQUOTED([LAST_SIGNO], [${last_signo}],
+                       [Define to the last valid signal number])
+])
