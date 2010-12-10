@@ -28,6 +28,7 @@
 
 extern "C" {
 #include <sys/stat.h>
+#include <sys/wait.h>
 
 #include <fcntl.h>
 #include <signal.h>
@@ -96,6 +97,7 @@ child_printer_function(void)
 {
     for (std::size_t i = 0; i < 100; i++)
         std::cout << "This is a message to stdout, sequence " << i << "\n";
+    std::cout.flush();
     std::cerr << "Exiting\n";
     std::exit(EXIT_SUCCESS);
 }

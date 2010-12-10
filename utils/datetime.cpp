@@ -53,11 +53,11 @@ datetime::delta::delta(const unsigned int seconds_,
 
 /// Checks if two time deltas are equal.
 ///
-/// \param delta The object to compare to.
+/// \param other The object to compare to.
 ///
 /// \return True if the two time deltas are equals; false otherwise.
 bool
-datetime::delta::operator==(const datetime::delta& delta) const
+datetime::delta::operator==(const datetime::delta& other) const
 {
-    return seconds == delta.seconds && useconds == delta.useconds;
+    return seconds == other.seconds && useconds == other.useconds;
 }
