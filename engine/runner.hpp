@@ -43,7 +43,7 @@ namespace engine {
 
 
 class suite_config;
-class test_case;
+struct test_case;
 
 
 namespace runner {
@@ -56,20 +56,16 @@ public:
 
     /// Hook called right before a test case is executed.
     ///
-    /// \param test_program The name of the test program.
-    /// \param test_case The name of the test case.
-    virtual void start_test_case(const utils::fs::path& test_program,
-                                 const std::string& test_case) = 0;
+    /// \param identifier The test case identifier.
+    virtual void start_test_case(const test_case_id& identifier) = 0;
 
     /// Hook called right after a test case is executed.
     ///
-    /// \param test_program The name of the test program.
-    /// \param test_case The name of the test case.
+    /// \param identifier The test case identifier.
     /// \param result The result of the test case.  To grab ownership of this
     ///     pointer, just use release() on the smart pointer.
     virtual void finish_test_case(
-        const utils::fs::path& test_program,
-        const std::string& test_case,
+        const test_case_id& identifier,
         std::auto_ptr< const results::base_result > result) = 0;
 };
 

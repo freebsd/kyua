@@ -85,7 +85,6 @@ parse_properties(std::istream& input)
         if (properties.find(property.first) != properties.end())
             throw engine::format_error("Duplicate value for property " +
                                        property.first);
-        // TODO(jmmv): Validate property names and types.
         properties.insert(property);
     }
 
@@ -161,9 +160,10 @@ engine::detail::parse_test_cases(const utils::fs::path& program,
             throw format_error("Invalid test case definition; must be "
                                "preceeded by the identifier");
 
-        const properties_map properties = parse_properties(input);
-        test_cases.push_back(engine::test_case(program, ident.second,
-                                               properties));
+        const engine::test_case_id identifier(program, ident.second);
+        const properties_map raw_properties = parse_properties(input);
+        test_cases.push_back(engine::test_case::from_properties(
+            identifier, raw_properties));
     }
     if (test_cases.empty())
         throw format_error("No test cases");

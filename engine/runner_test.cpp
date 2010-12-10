@@ -55,7 +55,8 @@ namespace {
 
 
 /// Mapping between test case identifier to their results.
-typedef std::map< std::string, const results::base_result* > results_map;
+typedef std::map< engine::test_case_id, const results::base_result* >
+    results_map;
 
 
 /// Callbacks for the execution of test suites and programs.
@@ -72,24 +73,20 @@ public:
     }
 
     void
-    start_test_case(const utils::fs::path& test_program,
-                    const std::string& test_case)
+    start_test_case(const engine::test_case_id& identifier)
     {
-        const std::string id = F("%s:%s") % test_program.str() % test_case;
-        results[id] = NULL;
+        results[identifier] = NULL;
     }
 
     void
-    finish_test_case(const utils::fs::path& test_program,
-                     const std::string& test_case,
+    finish_test_case(const engine::test_case_id& identifier,
                      std::auto_ptr< const results::base_result > result)
     {
-        const std::string id = F("%s:%s") % test_program.str() % test_case;
-        if (results.find(id) == results.end())
+        if (results.find(identifier) == results.end())
             ATF_FAIL(F("finish_test_case called with id %s but start_test_case "
-                       "was never called") % id);
+                       "was never called") % identifier.str());
         else
-            results[id] = result.release();
+            results[identifier] = result.release();
     }
 };
 
@@ -181,6 +178,22 @@ ignore_signal(const int signo)
 }
 
 
+/// Instantiates a test case.
+///
+/// \param path The test program.
+/// \param name The test case name.
+/// \param props The raw properties to pass to the test case.
+///
+/// \return The new test case.
+static engine::test_case
+make_test_case(const fs::path& path, const char* name,
+               const engine::properties_map& props = engine::properties_map())
+{
+    const engine::test_case_id id(path, name);
+    return engine::test_case::from_properties(id, props);
+}
+
+
 /// Ensures that a signal handler is resetted in the test case.
 ///
 /// \param tc A pointer to the caller test case.
@@ -195,10 +208,8 @@ one_signal_test(const atf::tests::tc* tc, const int signo)
 
     engine::properties_map config;
     config["signo"] = F("%d") % signo;
-    const engine::test_case test_case(get_helpers_path(tc), "validate_signal",
-                                      engine::properties_map());
     std::auto_ptr< const results::base_result > result = runner::run_test_case(
-        test_case, config);
+        make_test_case(get_helpers_path(tc), "validate_signal"), config);
     validate_broken("Results file.*cannot be opened", result.get());
 }
 
@@ -209,10 +220,9 @@ one_signal_test(const atf::tests::tc* tc, const int signo)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__simple);
 ATF_TEST_CASE_BODY(run_test_case__simple)
 {
-    const engine::test_case test_case(get_helpers_path(this), "pass",
-                                      engine::properties_map());
     std::auto_ptr< const results::base_result > result = runner::run_test_case(
-        test_case, engine::properties_map());
+        make_test_case(get_helpers_path(this), "pass"),
+        engine::properties_map());
     compare_results(results::passed(), result.get());
 }
 
@@ -220,13 +230,11 @@ ATF_TEST_CASE_BODY(run_test_case__simple)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__config_variables);
 ATF_TEST_CASE_BODY(run_test_case__config_variables)
 {
-    const engine::test_case test_case(get_helpers_path(this),
-                                      "create_cookie_in_control_dir",
-                                      engine::properties_map());
     engine::properties_map config;
     config["control_dir"] = fs::current_path().str();
     std::auto_ptr< const results::base_result > result = runner::run_test_case(
-        test_case, config);
+        make_test_case(get_helpers_path(this), "create_cookie_in_control_dir"),
+        config);
     compare_results(results::passed(), result.get());
 
     if (!utils::exists(fs::path("cookie")))
@@ -238,13 +246,11 @@ ATF_TEST_CASE_BODY(run_test_case__config_variables)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__cleanup_shares_workdir);
 ATF_TEST_CASE_BODY(run_test_case__cleanup_shares_workdir)
 {
-    const engine::test_case test_case(get_helpers_path(this),
-                                      "check_cleanup_workdir",
-                                      engine::properties_map());
     engine::properties_map config;
     config["control_dir"] = fs::current_path().str();
     std::auto_ptr< const results::base_result > result = runner::run_test_case(
-        test_case, config);
+        make_test_case(get_helpers_path(this), "check_cleanup_workdir"),
+        config);
     compare_results(results::skipped("cookie created"), result.get());
 
     if (utils::exists(fs::path("missing_cookie")))
@@ -260,8 +266,6 @@ ATF_TEST_CASE_BODY(run_test_case__cleanup_shares_workdir)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__isolation_env);
 ATF_TEST_CASE_BODY(run_test_case__isolation_env)
 {
-    const engine::test_case test_case(get_helpers_path(this), "validate_env",
-                                      engine::properties_map());
     utils::setenv("HOME", "foobar");
     utils::setenv("LANG", "C");
     utils::setenv("LC_ALL", "C");
@@ -273,7 +277,8 @@ ATF_TEST_CASE_BODY(run_test_case__isolation_env)
     utils::setenv("LC_TIME", "C");
     utils::setenv("TZ", "C");
     std::auto_ptr< const results::base_result > result = runner::run_test_case(
-        test_case, engine::properties_map());
+        make_test_case(get_helpers_path(this), "validate_env"),
+        engine::properties_map());
     compare_results(results::passed(), result.get());
 }
 
@@ -281,11 +286,10 @@ ATF_TEST_CASE_BODY(run_test_case__isolation_env)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__isolation_pgrp);
 ATF_TEST_CASE_BODY(run_test_case__isolation_pgrp)
 {
-    const engine::test_case test_case(get_helpers_path(this), "validate_pgrp",
-                                      engine::properties_map());
     const mode_t old_umask = ::umask(0002);
     std::auto_ptr< const results::base_result > result = runner::run_test_case(
-        test_case, engine::properties_map());
+        make_test_case(get_helpers_path(this), "validate_pgrp"),
+        engine::properties_map());
     compare_results(results::passed(), result.get());
     ::umask(old_umask);
 }
@@ -302,11 +306,10 @@ ATF_TEST_CASE_BODY(run_test_case__isolation_signals)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__isolation_umask);
 ATF_TEST_CASE_BODY(run_test_case__isolation_umask)
 {
-    const engine::test_case test_case(get_helpers_path(this), "validate_umask",
-                                      engine::properties_map());
     const mode_t old_umask = ::umask(0002);
     std::auto_ptr< const results::base_result > result = runner::run_test_case(
-        test_case, engine::properties_map());
+        make_test_case(get_helpers_path(this), "validate_umask"),
+        engine::properties_map());
     compare_results(results::passed(), result.get());
     ::umask(old_umask);
 }
@@ -315,11 +318,9 @@ ATF_TEST_CASE_BODY(run_test_case__isolation_umask)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__isolation_workdir);
 ATF_TEST_CASE_BODY(run_test_case__isolation_workdir)
 {
-    const engine::test_case test_case(get_helpers_path(this),
-                                      "create_cookie_in_workdir",
-                                      engine::properties_map());
     std::auto_ptr< const results::base_result > result = runner::run_test_case(
-        test_case, engine::properties_map());
+        make_test_case(get_helpers_path(this), "create_cookie_in_workdir"),
+        engine::properties_map());
     compare_results(results::passed(), result.get());
 
     if (utils::exists(fs::path("cookie")))
@@ -331,10 +332,9 @@ ATF_TEST_CASE_BODY(run_test_case__isolation_workdir)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__missing_results_file);
 ATF_TEST_CASE_BODY(run_test_case__missing_results_file)
 {
-    const engine::test_case test_case(get_helpers_path(this), "crash",
-                                      engine::properties_map());
     std::auto_ptr< const results::base_result > result = runner::run_test_case(
-        test_case, engine::properties_map());
+        make_test_case(get_helpers_path(this), "crash"),
+        engine::properties_map());
     // TODO(jmmv): This should really contain a more descriptive message.
     validate_broken("Results file.*cannot be opened", result.get());
 }
@@ -343,10 +343,9 @@ ATF_TEST_CASE_BODY(run_test_case__missing_results_file)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__missing_test_program);
 ATF_TEST_CASE_BODY(run_test_case__missing_test_program)
 {
-    const engine::test_case test_case(fs::path("/non-existent"), "passed",
-                                      engine::properties_map());
     std::auto_ptr< const results::base_result > result = runner::run_test_case(
-        test_case, engine::properties_map());
+        make_test_case(fs::path("/non-existent"), "passed"),
+        engine::properties_map());
     // TODO(jmmv): This should really be either an exception to denote a broken
     // test suite or should be properly reported as missing test program.
     validate_broken("Results file.*cannot be opened", result.get());
@@ -367,10 +366,10 @@ ATF_TEST_CASE_BODY(run_test_program__load_failure)
     capture_results hooks;
     runner::run_test_program(fs::path("/non-existent"),
                              engine::properties_map(), &hooks);
-    ATF_REQUIRE(hooks.results.find("/non-existent:__test_program__") !=
-                hooks.results.end());
-    const results::base_result* result = hooks.results["/non-existent:"
-                                                       "__test_program__"];
+    const engine::test_case_id id(fs::path("/non-existent"),
+                                  "__test_program__");
+    ATF_REQUIRE(hooks.results.find(id) != hooks.results.end());
+    const results::base_result* result = hooks.results[id];
     validate_broken("Failed to load list of test cases", result);
 }
 

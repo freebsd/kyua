@@ -187,8 +187,9 @@ public:
     operator()(void) UTILS_NORETURN
     {
         const fs::path test_program = (
-            _test_case.program().is_absolute() ? _test_case.program() :
-            fs::current_path() / _test_case.program());
+            _test_case.identifier.program.is_absolute() ?
+            _test_case.identifier.program :
+            fs::current_path() / _test_case.identifier.program);
 
         try {
             isolate_process(_work_directory);
@@ -201,7 +202,7 @@ public:
         args.push_back(F("-r%s") % _result_file);
         args.push_back(F("-s%s") % test_program.branch_path());
         config_to_args(_config, args);
-        args.push_back(_test_case.name());
+        args.push_back(_test_case.identifier.name);
         process::exec(test_program, args);
     }
 };
@@ -235,15 +236,16 @@ public:
     operator()(void) UTILS_NORETURN
     {
         const fs::path test_program = (
-            _test_case.program().is_absolute() ? _test_case.program() :
-            fs::current_path() / _test_case.program());
+            _test_case.identifier.program.is_absolute() ?
+            _test_case.identifier.program :
+            fs::current_path() / _test_case.identifier.program);
 
         isolate_process(_work_directory);
 
         std::vector< std::string > args;
         args.push_back(F("-s%s") % test_program.branch_path());
         config_to_args(_config, args);
-        args.push_back(F("%s:cleanup") % _test_case.name());
+        args.push_back(F("%s:cleanup") % _test_case.identifier.name);
         process::exec(test_program, args);
     }
 };
@@ -346,9 +348,11 @@ runner::run_test_program(const fs::path& test_program,
     } catch (const std::exception& e) {
         const results::broken broken(F("Failed to load list of test cases: "
                                        "%s") % e.what());
-        hooks->start_test_case(test_program, "__test_program__");
-        hooks->finish_test_case(test_program, "__test_program__",
-                                results::make_result(broken));
+        // TODO(jmmv): Maybe generalize this in test_case_id somehow?
+        const test_case_id program_id = test_case_id(
+            test_program, "__test_program__");
+        hooks->start_test_case(program_id);
+        hooks->finish_test_case(program_id, results::make_result(broken));
         return;
     }
 
@@ -356,11 +360,10 @@ runner::run_test_program(const fs::path& test_program,
          iter != test_cases.end(); iter++) {
         const engine::test_case& test_case = *iter;
 
-        hooks->start_test_case(test_case.program(), test_case.name());
+        hooks->start_test_case(test_case.identifier);
         std::auto_ptr< const results::base_result > result = run_test_case(
             test_case, config);
-        hooks->finish_test_case(test_case.program(), test_case.name(),
-                                result);
+        hooks->finish_test_case(test_case.identifier, result);
     }
 }
 

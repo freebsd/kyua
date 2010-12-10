@@ -33,8 +33,10 @@
 #define ENGINE_TEST_CASE_HPP
 
 #include <map>
+#include <set>
 #include <string>
 
+#include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
 
 namespace engine {
@@ -47,24 +49,97 @@ namespace engine {
 typedef std::map< std::string, std::string > properties_map;
 
 
+/// Collection of paths.
+typedef std::set< utils::fs::path > paths_set;
+
+
+/// Collection of strings.
+typedef std::set< std::string > strings_set;
+
+
+namespace detail {
+
+
+bool parse_bool(const std::string&, const std::string&);
+strings_set parse_list(const std::string&, const std::string&);
+unsigned long parse_ulong(const std::string&, const std::string&);
+
+paths_set parse_require_progs(const std::string&, const std::string&);
+std::string parse_require_user(const std::string&, const std::string&);
+
+
+}  // namespace detail
+
+
+/// Representation of a test case identifier.
+///
+/// A test case identifier is a unique value that identifies the test case
+/// inside a particular test suite.  Given that the program is only supposed to
+/// deal with one test suite at a time, we can assume that the test case
+/// identifier is unique within the program.
+struct test_case_id {
+    /// Name of the test program containing the test case.
+    utils::fs::path program;
+
+    /// Name of the test case within the test program.
+    std::string name;
+
+    test_case_id(const utils::fs::path&, const std::string&);
+
+    std::string str(void) const;
+
+    bool operator<(const test_case_id&) const;
+    bool operator==(const test_case_id&) const;
+};
+
+
 /// Representation of a test case.
 ///
 /// Test cases should be thought as free-standing entities: even though they
 /// are located within a test program, the test program serves no other purpose
 /// than to provide a way to execute the test cases.  Therefore, no information
 /// needs to be stored for the test programs themselves.
-class test_case {
-    utils::fs::path _program;
-    std::string _name;
-    properties_map _metadata;
+struct test_case {
+    /// The test case identifier.
+    test_case_id identifier;
 
-public:
-    test_case(const utils::fs::path&, const std::string&,
-              const properties_map&);
+    /// The test case description.
+    std::string description;
 
-    const utils::fs::path& program(void) const;
-    const std::string& name(void) const;
-    const properties_map& metadata(void) const;
+    /// Whether the test case has a cleanup routine or not.
+    bool has_cleanup;
+
+    /// The maximum amount of time the test case can run for.
+    utils::datetime::delta timeout;
+
+    /// List of architectures in which the test case can run; empty = any.
+    strings_set allowed_architectures;
+
+    /// List of platforms in which the test case can run; empty = any.
+    strings_set allowed_platforms;
+
+    /// List of configuration variables needed by the test case.
+    strings_set required_configs;
+
+    /// List of programs needed by the test case.
+    paths_set required_programs;
+
+    /// Privileges required to run the test case.
+    ///
+    /// Can be empty, in which case means "any privileges", or any of "root" or
+    /// "unprivileged".
+    std::string required_user;
+
+    /// User-defined meta-data properties.
+    properties_map user_metadata;
+
+    test_case(const test_case_id&, const std::string&, const bool,
+              const utils::datetime::delta&, const strings_set&,
+              const strings_set&, const strings_set&, const paths_set&,
+              const std::string&, const properties_map&);
+
+    static test_case from_properties(const test_case_id&,
+                                     const properties_map&);
 
     bool operator==(const test_case&) const;
 };

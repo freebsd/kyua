@@ -64,18 +64,15 @@ public:
     }
 
     void
-    start_test_case(const utils::fs::path& test_program,
-                    const std::string& test_case)
+    start_test_case(const engine::test_case_id& identifier)
     {
     }
 
     void
-    finish_test_case(const utils::fs::path& test_program,
-                     const std::string& test_case,
+    finish_test_case(const engine::test_case_id& identifier,
                      std::auto_ptr< const results::base_result > result)
     {
-        _ui->out(F("%s:%s  ->  %s") % test_program % test_case %
-                 result->format());
+        _ui->out(F("%s  ->  %s") % identifier.str() % result->format());
 
         if (typeid(*result.get()) == typeid(results::broken)) {
             broken_count++;

@@ -85,11 +85,12 @@ cmd_list::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
         for (engine::test_cases_vector::const_iterator iter = tcs.begin();
              iter != tcs.end(); iter++) {
             const engine::test_case& tc = *iter;
-            ui->out(F("%s:%s") % tc.program() % tc.name());
+            ui->out(tc.identifier.str());
 
             if (cmdline.has_option("verbose")) {
-                for (engine::properties_map::const_iterator iter2 = tc.metadata().begin();
-                     iter2 != tc.metadata().end(); iter2++)
+                // TODO(jmmv): Print other metadata.
+                for (engine::properties_map::const_iterator iter2 = tc.user_metadata.begin();
+                     iter2 != tc.user_metadata.end(); iter2++)
                     ui->out(F("    %s = %s\n") % (*iter2).first % (*iter2).second);
             }
         }

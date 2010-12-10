@@ -6,4 +6,5 @@ tp: exceptions_test
 tp: results_test
 tp: runner_test
 tp: suite_config_test
+tp: test_case_test
 tp: test_program_test
