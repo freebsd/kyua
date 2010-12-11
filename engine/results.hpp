@@ -66,6 +66,11 @@ struct base_result {
     ///
     /// \return The formatted result.
     virtual std::string format(void) const = 0;
+
+    /// True if the test case result has a positive connotation.
+    ///
+    /// \return Whether the test case is good or not.
+    virtual bool good(void) const = 0;
 };
 
 
@@ -87,6 +92,7 @@ struct broken : public base_result {
     bool operator!=(const broken&) const;
 
     std::string format(void) const;
+    bool good(void) const;
 };
 
 
@@ -100,6 +106,7 @@ struct expected_death : public base_result {
     bool operator!=(const expected_death&) const;
 
     std::string format(void) const;
+    bool good(void) const;
 };
 
 
@@ -116,6 +123,7 @@ struct expected_exit : public base_result {
     bool operator!=(const expected_exit&) const;
 
     std::string format(void) const;
+    bool good(void) const;
 };
 
 
@@ -129,6 +137,7 @@ struct expected_failure : public base_result {
     bool operator!=(const expected_failure&) const;
 
     std::string format(void) const;
+    bool good(void) const;
 };
 
 
@@ -145,6 +154,7 @@ struct expected_signal : public base_result {
     bool operator!=(const expected_signal&) const;
 
     std::string format(void) const;
+    bool good(void) const;
 };
 
 
@@ -158,6 +168,7 @@ struct expected_timeout : public base_result {
     bool operator!=(const expected_timeout&) const;
 
     std::string format(void) const;
+    bool good(void) const;
 };
 
 
@@ -171,6 +182,7 @@ struct failed : public base_result {
     bool operator!=(const failed&) const;
 
     std::string format(void) const;
+    bool good(void) const;
 };
 
 
@@ -181,6 +193,7 @@ struct passed : public base_result {
     bool operator!=(const passed&) const;
 
     std::string format(void) const;
+    bool good(void) const;
 };
 
 
@@ -194,6 +207,7 @@ struct skipped : public base_result {
     bool operator!=(const skipped&) const;
 
     std::string format(void) const;
+    bool good(void) const;
 };
 
 

@@ -144,7 +144,7 @@ compare_results(const Result& expected, const results::base_result* actual)
 
 /// Wrapper around format_test to define a test case.
 ///
-/// \param name The name of the test case; will be prepended with "__format".
+/// \param name The name of the test case; "__format" will be appended.
 /// \param expected The expected formatted string.
 /// \param result The result to format.
 #define FORMAT_TEST(name, expected, result) \
@@ -152,6 +152,19 @@ compare_results(const Result& expected, const results::base_result* actual)
     ATF_TEST_CASE_BODY(name ## __format) \
     { \
         ATF_REQUIRE_EQ(expected, result.format()); \
+    }
+
+
+/// Creates a test case to validate the good() method.
+///
+/// \param name The name of the test case; "__good" will be appended.
+/// \param expected The expected result of good().
+/// \param result The result to check.
+#define GOOD_TEST(name, expected, result) \
+    ATF_TEST_CASE_WITHOUT_HEAD(name ## __good); \
+    ATF_TEST_CASE_BODY(name ## __good) \
+    { \
+        ATF_REQUIRE_EQ(expected, result.good()); \
     }
 
 
@@ -266,6 +279,30 @@ FORMAT_TEST(passed, "passed",
             results::passed());
 FORMAT_TEST(skipped, "skipped: The reason",
             results::skipped("The reason"));
+
+
+GOOD_TEST(broken, false,
+          results::broken("The reason"));
+GOOD_TEST(expected_death, true,
+          results::expected_death("The reason"));
+GOOD_TEST(expected_exit__any, true,
+          results::expected_exit(none, "The reason"));
+GOOD_TEST(expected_exit__specific, true,
+          results::expected_exit(optional< int >(3), "The reason"));
+GOOD_TEST(expected_failure, true,
+          results::expected_failure("The reason"));
+GOOD_TEST(expected_signal__any, true,
+          results::expected_signal(none, "The reason"));
+GOOD_TEST(expected_signal__specific, true,
+          results::expected_signal(optional< int >(3), "The reason"));
+GOOD_TEST(expected_timeout, true,
+          results::expected_timeout("The reason"));
+GOOD_TEST(failed, false,
+          results::failed("The reason"));
+GOOD_TEST(passed, true,
+          results::passed());
+GOOD_TEST(skipped, true,
+          results::skipped("The reason"));
 
 
 PARSE_BROKEN(empty,
@@ -811,16 +848,27 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, make_result);
 
     ATF_ADD_TEST_CASE(tcs, broken__format);
+    ATF_ADD_TEST_CASE(tcs, broken__good);
     ATF_ADD_TEST_CASE(tcs, expected_death__format);
+    ATF_ADD_TEST_CASE(tcs, expected_death__good);
     ATF_ADD_TEST_CASE(tcs, expected_exit__any__format);
+    ATF_ADD_TEST_CASE(tcs, expected_exit__any__good);
     ATF_ADD_TEST_CASE(tcs, expected_exit__specific__format);
+    ATF_ADD_TEST_CASE(tcs, expected_exit__specific__good);
     ATF_ADD_TEST_CASE(tcs, expected_failure__format);
+    ATF_ADD_TEST_CASE(tcs, expected_failure__good);
     ATF_ADD_TEST_CASE(tcs, expected_signal__any__format);
+    ATF_ADD_TEST_CASE(tcs, expected_signal__any__good);
     ATF_ADD_TEST_CASE(tcs, expected_signal__specific__format);
+    ATF_ADD_TEST_CASE(tcs, expected_signal__specific__good);
     ATF_ADD_TEST_CASE(tcs, expected_timeout__format);
+    ATF_ADD_TEST_CASE(tcs, expected_timeout__good);
     ATF_ADD_TEST_CASE(tcs, failed__format);
+    ATF_ADD_TEST_CASE(tcs, failed__good);
     ATF_ADD_TEST_CASE(tcs, passed__format);
+    ATF_ADD_TEST_CASE(tcs, passed__good);
     ATF_ADD_TEST_CASE(tcs, skipped__format);
+    ATF_ADD_TEST_CASE(tcs, skipped__good);
 
     ATF_ADD_TEST_CASE(tcs, parse__empty);
     ATF_ADD_TEST_CASE(tcs, parse__no_newline__unknown);

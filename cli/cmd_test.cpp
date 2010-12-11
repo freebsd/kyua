@@ -53,13 +53,13 @@ class run_hooks : public runner::hooks {
     cmdline::ui* _ui;
 
 public:
-    unsigned long broken_count;
-    unsigned long failed_count;
+    unsigned long good_count;
+    unsigned long bad_count;
 
     run_hooks(cmdline::ui* ui_) :
         _ui(ui_),
-        broken_count(0),
-        failed_count(0)
+        good_count(0),
+        bad_count(0)
     {
     }
 
@@ -74,11 +74,10 @@ public:
     {
         _ui->out(F("%s  ->  %s") % identifier.str() % result->format());
 
-        if (typeid(*result.get()) == typeid(results::broken)) {
-            broken_count++;
-        } else if (typeid(*result.get()) == typeid(results::failed)) {
-            failed_count++;
-        }
+        if (result->good())
+            good_count++;
+        else
+            bad_count++;
     }
 };
 
@@ -118,9 +117,8 @@ cmd_test::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
     }
 
     ui->out("");
-    ui->out(F("Broken: %d") % hooks.broken_count);
-    ui->out(F("Failed: %d") % hooks.failed_count);
+    ui->out(F("%d/%d passed (%d failed)") % hooks.good_count %
+            (hooks.good_count + hooks.bad_count) % hooks.bad_count);
 
-    return (hooks.broken_count == 0 && hooks.failed_count == 0) ?
-        EXIT_SUCCESS : EXIT_FAILURE;
+    return hooks.bad_count == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }

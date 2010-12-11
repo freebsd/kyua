@@ -450,6 +450,13 @@ results::broken::format(void) const
 }
 
 
+bool
+results::broken::good(void) const
+{
+    return false;
+}
+
+
 /// Constructs a new expected_death result.
 ///
 /// \param reason_ The reason.
@@ -489,6 +496,13 @@ std::string
 results::expected_death::format(void) const
 {
     return F("expected_death: %s") % reason;
+}
+
+
+bool
+results::expected_death::good(void) const
+{
+    return true;
 }
 
 
@@ -540,6 +554,13 @@ results::expected_exit::format(void) const
 }
 
 
+bool
+results::expected_exit::good(void) const
+{
+    return true;
+}
+
+
 /// Constructs a new expected_failure result.
 ///
 /// \param reason_ The reason.
@@ -579,6 +600,13 @@ std::string
 results::expected_failure::format(void) const
 {
     return F("expected_failure: %s") % reason;
+}
+
+
+bool
+results::expected_failure::good(void) const
+{
+    return true;
 }
 
 
@@ -630,6 +658,13 @@ results::expected_signal::format(void) const
 }
 
 
+bool
+results::expected_signal::good(void) const
+{
+    return true;
+}
+
+
 /// Constructs a new expected_timeout result.
 ///
 /// \param reason_ The reason.
@@ -669,6 +704,13 @@ std::string
 results::expected_timeout::format(void) const
 {
     return F("expected_timeout: %s") % reason;
+}
+
+
+bool
+results::expected_timeout::good(void) const
+{
+    return true;
 }
 
 
@@ -714,6 +756,13 @@ results::failed::format(void) const
 }
 
 
+bool
+results::failed::good(void) const
+{
+    return false;
+}
+
+
 /// Constructs a new passed result.
 results::passed::passed(void)
 {
@@ -750,6 +799,13 @@ std::string
 results::passed::format(void) const
 {
     return "passed";
+}
+
+
+bool
+results::passed::good(void) const
+{
+    return true;
 }
 
 
@@ -792,4 +848,11 @@ std::string
 results::skipped::format(void) const
 {
     return F("skipped: %s") % reason;
+}
+
+
+bool
+results::skipped::good(void) const
+{
+    return true;
 }
