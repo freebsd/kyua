@@ -289,7 +289,7 @@ fork_and_wait(Hook hook, const fs::path& outfile, const fs::path& errfile,
 /// \param test_case The test case to execute.
 ///
 /// \return The result of the execution of the test case.
-static std::auto_ptr< const results::base_result >
+static results::result_ptr
 run_test_case_safe(const engine::test_case& test_case,
                    const engine::properties_map& config)
 {
@@ -315,9 +315,9 @@ run_test_case_safe(const engine::test_case& test_case,
             test_case.timeout);
     }
 
-    std::auto_ptr< const results::base_result > result =
-        results::adjust(test_case, body_status, cleanup_status,
-                        results::load(result_file));
+    results::result_ptr result = results::adjust(test_case, body_status,
+                                                 cleanup_status,
+                                                 results::load(result_file));
     workdir.cleanup();
     return result;
 }
@@ -342,11 +342,11 @@ runner::hooks::~hooks(void)
 /// \param config The configuration variables provided by the user.
 ///
 /// \return The result of the test case execution.
-std::auto_ptr< const results::base_result >
+results::result_ptr
 runner::run_test_case(const engine::test_case& test_case,
                       const engine::properties_map& config)
 {
-    std::auto_ptr< const results::base_result > result;
+    results::result_ptr result;
     try {
         result = run_test_case_safe(test_case, config);
     } catch (const std::exception& e) {
@@ -390,8 +390,7 @@ runner::run_test_program(const fs::path& test_program,
         const engine::test_case& test_case = *iter;
 
         hooks->start_test_case(test_case.identifier);
-        std::auto_ptr< const results::base_result > result = run_test_case(
-            test_case, config);
+        results::result_ptr result = run_test_case(test_case, config);
         hooks->finish_test_case(test_case.identifier, result);
     }
 }

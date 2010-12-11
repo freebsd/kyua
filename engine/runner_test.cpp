@@ -80,7 +80,7 @@ public:
 
     void
     finish_test_case(const engine::test_case_id& identifier,
-                     std::auto_ptr< const results::base_result > result)
+                     results::result_ptr result)
     {
         if (results.find(identifier) == results.end())
             ATF_FAIL(F("finish_test_case called with id %s but start_test_case "
@@ -208,7 +208,7 @@ one_signal_test(const atf::tests::tc* tc, const int signo)
 
     engine::properties_map config;
     config["signo"] = F("%d") % signo;
-    std::auto_ptr< const results::base_result > result = runner::run_test_case(
+    results::result_ptr result = runner::run_test_case(
         make_test_case(get_helpers_path(tc), "validate_signal"), config);
     validate_broken("Results file.*cannot be opened", result.get());
 }
@@ -220,7 +220,7 @@ one_signal_test(const atf::tests::tc* tc, const int signo)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__simple);
 ATF_TEST_CASE_BODY(run_test_case__simple)
 {
-    std::auto_ptr< const results::base_result > result = runner::run_test_case(
+    results::result_ptr result = runner::run_test_case(
         make_test_case(get_helpers_path(this), "pass"),
         engine::properties_map());
     compare_results(results::passed(), result.get());
@@ -232,7 +232,7 @@ ATF_TEST_CASE_BODY(run_test_case__config_variables)
 {
     engine::properties_map config;
     config["control_dir"] = fs::current_path().str();
-    std::auto_ptr< const results::base_result > result = runner::run_test_case(
+    results::result_ptr result = runner::run_test_case(
         make_test_case(get_helpers_path(this), "create_cookie_in_control_dir"),
         config);
     compare_results(results::passed(), result.get());
@@ -250,7 +250,7 @@ ATF_TEST_CASE_BODY(run_test_case__cleanup_shares_workdir)
     metadata["has.cleanup"] = "true";
     engine::properties_map config;
     config["control_dir"] = fs::current_path().str();
-    std::auto_ptr< const results::base_result > result = runner::run_test_case(
+    results::result_ptr result = runner::run_test_case(
         make_test_case(get_helpers_path(this), "check_cleanup_workdir",
                        metadata),
         config);
@@ -273,7 +273,7 @@ ATF_TEST_CASE_BODY(run_test_case__has_cleanup__false)
     metadata["has.cleanup"] = "false";
     engine::properties_map config;
     config["control_dir"] = fs::current_path().str();
-    std::auto_ptr< const results::base_result > result = runner::run_test_case(
+    results::result_ptr result = runner::run_test_case(
         make_test_case(get_helpers_path(this), "create_cookie_from_cleanup",
                        metadata), config);
     compare_results(results::passed(), result.get());
@@ -291,7 +291,7 @@ ATF_TEST_CASE_BODY(run_test_case__has_cleanup__true)
     metadata["has.cleanup"] = "true";
     engine::properties_map config;
     config["control_dir"] = fs::current_path().str();
-    std::auto_ptr< const results::base_result > result = runner::run_test_case(
+    results::result_ptr result = runner::run_test_case(
         make_test_case(get_helpers_path(this), "create_cookie_from_cleanup",
                        metadata), config);
     compare_results(results::passed(), result.get());
@@ -315,7 +315,7 @@ ATF_TEST_CASE_BODY(run_test_case__isolation_env)
     utils::setenv("LC_NUMERIC", "C");
     utils::setenv("LC_TIME", "C");
     utils::setenv("TZ", "C");
-    std::auto_ptr< const results::base_result > result = runner::run_test_case(
+    results::result_ptr result = runner::run_test_case(
         make_test_case(get_helpers_path(this), "validate_env"),
         engine::properties_map());
     compare_results(results::passed(), result.get());
@@ -326,7 +326,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__isolation_pgrp);
 ATF_TEST_CASE_BODY(run_test_case__isolation_pgrp)
 {
     const mode_t old_umask = ::umask(0002);
-    std::auto_ptr< const results::base_result > result = runner::run_test_case(
+    results::result_ptr result = runner::run_test_case(
         make_test_case(get_helpers_path(this), "validate_pgrp"),
         engine::properties_map());
     compare_results(results::passed(), result.get());
@@ -346,7 +346,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__isolation_umask);
 ATF_TEST_CASE_BODY(run_test_case__isolation_umask)
 {
     const mode_t old_umask = ::umask(0002);
-    std::auto_ptr< const results::base_result > result = runner::run_test_case(
+    results::result_ptr result = runner::run_test_case(
         make_test_case(get_helpers_path(this), "validate_umask"),
         engine::properties_map());
     compare_results(results::passed(), result.get());
@@ -357,7 +357,7 @@ ATF_TEST_CASE_BODY(run_test_case__isolation_umask)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__isolation_workdir);
 ATF_TEST_CASE_BODY(run_test_case__isolation_workdir)
 {
-    std::auto_ptr< const results::base_result > result = runner::run_test_case(
+    results::result_ptr result = runner::run_test_case(
         make_test_case(get_helpers_path(this), "create_cookie_in_workdir"),
         engine::properties_map());
     compare_results(results::passed(), result.get());
@@ -375,7 +375,7 @@ ATF_TEST_CASE_BODY(run_test_case__timeout_body)
     metadata["timeout"] = "1";
     engine::properties_map config;
     config["control_dir"] = fs::current_path().str();
-    std::auto_ptr< const results::base_result > result = runner::run_test_case(
+    results::result_ptr result = runner::run_test_case(
         make_test_case(get_helpers_path(this), "timeout_body", metadata),
         config);
     validate_broken("Test case timed out after 1 seconds", result.get());
@@ -393,7 +393,7 @@ ATF_TEST_CASE_BODY(run_test_case__timeout_cleanup)
     metadata["timeout"] = "1";
     engine::properties_map config;
     config["control_dir"] = fs::current_path().str();
-    std::auto_ptr< const results::base_result > result = runner::run_test_case(
+    results::result_ptr result = runner::run_test_case(
         make_test_case(get_helpers_path(this), "timeout_cleanup", metadata),
         config);
     validate_broken("Test case cleanup timed out after 1 seconds",
@@ -407,7 +407,7 @@ ATF_TEST_CASE_BODY(run_test_case__timeout_cleanup)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__missing_results_file);
 ATF_TEST_CASE_BODY(run_test_case__missing_results_file)
 {
-    std::auto_ptr< const results::base_result > result = runner::run_test_case(
+    results::result_ptr result = runner::run_test_case(
         make_test_case(get_helpers_path(this), "crash"),
         engine::properties_map());
     // TODO(jmmv): This should really contain a more descriptive message.
@@ -418,7 +418,7 @@ ATF_TEST_CASE_BODY(run_test_case__missing_results_file)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__missing_test_program);
 ATF_TEST_CASE_BODY(run_test_case__missing_test_program)
 {
-    std::auto_ptr< const results::base_result > result = runner::run_test_case(
+    results::result_ptr result = runner::run_test_case(
         make_test_case(fs::path("/non-existent"), "passed"),
         engine::properties_map());
     // TODO(jmmv): This should really be either an exception to denote a broken

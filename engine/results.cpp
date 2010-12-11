@@ -98,7 +98,7 @@ read_lines(std::istream& input)
 /// parsing failed.
 ///
 /// \pre status must be "passed".
-static std::auto_ptr< const results::base_result >
+static results::result_ptr
 parse_without_reason(const std::string& status, const std::string& rest)
 {
     if (!rest.empty())
@@ -119,7 +119,7 @@ parse_without_reason(const std::string& status, const std::string& rest)
 ///
 /// \pre status must be one of "expected_death", "expected_failure",
 /// "expected_timeout", "failed" or "skipped".
-static std::auto_ptr< const results::base_result >
+static results::result_ptr
 parse_with_reason(const std::string& status, const std::string& rest)
 {
     if (rest.length() < 3 || rest.substr(0, 2) != ": ")
@@ -175,7 +175,7 @@ parse_int(const std::string& str)
 /// parsing failed.
 ///
 /// \pre status must be one of "expected_exit" or "expected_signal".
-static std::auto_ptr< const results::base_result >
+static results::result_ptr
 parse_with_reason_and_arg(const std::string& status, const std::string& rest)
 {
     std::string::size_type delim = rest.find_first_of(":(");
@@ -250,7 +250,7 @@ results::base_result::~base_result(void)
 ///
 /// \return A dynamically-allocated instance of a class derived from
 /// results::base_result representing the result of the test case.
-std::auto_ptr< const results::base_result >
+results::result_ptr
 results::parse(std::istream& input)
 {
     const std::pair< size_t, std::string > data = read_lines(input);
@@ -294,7 +294,7 @@ results::parse(std::istream& input)
 ///
 /// \return The parsed test case result.  See the comments in results::parse()
 /// for more details -- in particular, how errors are reported.
-std::auto_ptr< const results::base_result >
+results::result_ptr
 results::load(const fs::path& file)
 {
     std::ifstream input(file.c_str());
@@ -318,10 +318,9 @@ results::load(const fs::path& file)
 ///
 /// \result The adjusted result.  The original result is transformed into broken
 /// if the exit status of the program does not our expectations.
-std::auto_ptr< const results::base_result >
-results::adjust_with_status(
-    std::auto_ptr< const results::base_result > raw_result,
-    const process::status& status)
+results::result_ptr
+results::adjust_with_status(result_ptr raw_result,
+                            const process::status& status)
 {
     if (typeid(*raw_result) == typeid(broken))
         return raw_result;
@@ -418,8 +417,8 @@ results::adjust_with_status(
 ///
 /// \result The adjusted result.  The original result is transformed into broken
 /// if the timeout was not expected.
-std::auto_ptr< const results::base_result >
-results::adjust_with_timeout(std::auto_ptr< const results::base_result > result,
+results::result_ptr
+results::adjust_with_timeout(results::result_ptr result,
                              const datetime::delta& timeout)
 {
     if (typeid(*result) == typeid(expected_timeout))
@@ -441,19 +440,17 @@ results::adjust_with_timeout(std::auto_ptr< const results::base_result > result,
 ///     returned by the load() function.
 ///
 /// \return The result of the test case as it should be reported to the user.
-std::auto_ptr< const results::base_result >
+results::result_ptr
 results::adjust(const engine::test_case& test_case,
                 const optional< process::status >& body_status,
                 const optional< process::status >& cleanup_status,
-                std::auto_ptr< const results::base_result > result_from_file)
+                results::result_ptr result_from_file)
 {
-    std::auto_ptr< const results::base_result > result;
+    results::result_ptr result;
     if (body_status)
-        result = results::adjust_with_status(result_from_file,
-                                             body_status.get());
+        result = adjust_with_status(result_from_file, body_status.get());
     else
-        result = results::adjust_with_timeout(result_from_file,
-                                              test_case.timeout);
+        result = adjust_with_timeout(result_from_file, test_case.timeout);
 
     if (result->good() && test_case.has_cleanup) {
         if (cleanup_status) {

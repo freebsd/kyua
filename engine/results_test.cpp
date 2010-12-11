@@ -179,7 +179,7 @@ static void
 parse_ok_test(const Result& expected, const char* text)
 {
     std::istringstream input(text);
-    std::auto_ptr< const results::base_result > actual = results::parse(input);
+    results::result_ptr actual = results::parse(input);
     compare_results(expected, actual.get());
 }
 
@@ -226,7 +226,7 @@ static void
 parse_broken_test(const char* reason_regexp, const char* text)
 {
     std::istringstream input(text);
-    std::auto_ptr< const results::base_result > result = results::parse(input);
+    results::result_ptr result = results::parse(input);
     validate_broken(reason_regexp, result.get());
 }
 
@@ -250,7 +250,7 @@ parse_broken_test(const char* reason_regexp, const char* text)
 ATF_TEST_CASE_WITHOUT_HEAD(make_result);
 ATF_TEST_CASE_BODY(make_result)
 {
-    std::auto_ptr< const results::base_result > result = results::make_result(
+    results::result_ptr result = results::make_result(
         results::failed("The message"));
     ATF_REQUIRE(typeid(results::failed) == typeid(*result));
     const results::failed* failed = dynamic_cast< const results::failed* >(
@@ -417,8 +417,7 @@ ATF_TEST_CASE_BODY(load__ok)
     output << "skipped: a b c\n";
     output.close();
 
-    std::auto_ptr< const results::base_result > result = results::load(
-        utils::fs::path("result.txt"));
+    results::result_ptr result = results::load(utils::fs::path("result.txt"));
     try {
         const results::skipped* skipped =
             dynamic_cast< const results::skipped* >(result.get());
@@ -432,8 +431,7 @@ ATF_TEST_CASE_BODY(load__ok)
 ATF_TEST_CASE_WITHOUT_HEAD(load__missing_file);
 ATF_TEST_CASE_BODY(load__missing_file)
 {
-    std::auto_ptr< const results::base_result > result = results::load(
-        utils::fs::path("result.txt"));
+    results::result_ptr result = results::load(utils::fs::path("result.txt"));
     const results::broken* broken = dynamic_cast< const results::broken* >(
         result.get());
     ATF_REQUIRE_MATCH("'result.txt'.*cannot be opened", broken->reason);
@@ -448,8 +446,7 @@ ATF_TEST_CASE_BODY(load__format_error)
     output << "passed: foo\n";
     output.close();
 
-    std::auto_ptr< const results::base_result > result = results::load(
-        utils::fs::path("abc.txt"));
+    results::result_ptr result = results::load(utils::fs::path("abc.txt"));
     const results::broken* broken = dynamic_cast< const results::broken* >(
         result.get());
     ATF_REQUIRE_MATCH("cannot have a reason", broken->reason);
@@ -804,8 +801,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(integration__expected_death);
 ATF_TEST_CASE_BODY(integration__expected_death)
 {
     run_test_case(this, "expected_death", fs::path("result.txt"));
-    std::auto_ptr< const results::base_result > result = results::load(
-        fs::path("result.txt"));
+    results::result_ptr result = results::load(fs::path("result.txt"));
     compare_results(results::expected_death("This supposedly dies"),
                     result.get());
 }
@@ -815,8 +811,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(integration__expected_exit__any);
 ATF_TEST_CASE_BODY(integration__expected_exit__any)
 {
     run_test_case(this, "expected_exit__any", fs::path("result.txt"));
-    std::auto_ptr< const results::base_result > result = results::load(
-        fs::path("result.txt"));
+    results::result_ptr result = results::load(fs::path("result.txt"));
     compare_results(results::expected_exit(none, "This supposedly exits with "
                                            "any code"),
                     result.get());
@@ -827,8 +822,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(integration__expected_exit__specific);
 ATF_TEST_CASE_BODY(integration__expected_exit__specific)
 {
     run_test_case(this, "expected_exit__specific", fs::path("result.txt"));
-    std::auto_ptr< const results::base_result > result = results::load(
-        fs::path("result.txt"));
+    results::result_ptr result = results::load(fs::path("result.txt"));
     compare_results(results::expected_exit(optional< int >(312), "This "
                                            "supposedly exits"),
                     result.get());
@@ -839,8 +833,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(integration__expected_failure);
 ATF_TEST_CASE_BODY(integration__expected_failure)
 {
     run_test_case(this, "expected_failure", fs::path("result.txt"));
-    std::auto_ptr< const results::base_result > result = results::load(
-        fs::path("result.txt"));
+    results::result_ptr result = results::load(fs::path("result.txt"));
     compare_results(results::expected_failure("This supposedly fails as "
                                               "expected: The failure"),
                     result.get());
@@ -851,8 +844,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(integration__expected_signal__any);
 ATF_TEST_CASE_BODY(integration__expected_signal__any)
 {
     run_test_case(this, "expected_signal__any", fs::path("result.txt"));
-    std::auto_ptr< const results::base_result > result = results::load(
-        fs::path("result.txt"));
+    results::result_ptr result = results::load(fs::path("result.txt"));
     compare_results(results::expected_signal(none, "This supposedly gets any "
                                              "signal"), result.get());
 }
@@ -862,8 +854,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(integration__expected_signal__specific);
 ATF_TEST_CASE_BODY(integration__expected_signal__specific)
 {
     run_test_case(this, "expected_signal__specific", fs::path("result.txt"));
-    std::auto_ptr< const results::base_result > result = results::load(
-        fs::path("result.txt"));
+    results::result_ptr result = results::load(fs::path("result.txt"));
     compare_results(results::expected_signal(optional<int >(756), "This "
                                              "supposedly gets a signal"),
                     result.get());
@@ -874,8 +865,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(integration__expected_timeout);
 ATF_TEST_CASE_BODY(integration__expected_timeout)
 {
     run_test_case(this, "expected_timeout", fs::path("result.txt"));
-    std::auto_ptr< const results::base_result > result = results::load(
-        fs::path("result.txt"));
+    results::result_ptr result = results::load(fs::path("result.txt"));
     compare_results(results::expected_timeout("This supposedly times out"),
                     result.get());
 }
@@ -885,8 +875,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(integration__failed);
 ATF_TEST_CASE_BODY(integration__failed)
 {
     run_test_case(this, "failed", fs::path("result.txt"));
-    std::auto_ptr< const results::base_result > result = results::load(
-        fs::path("result.txt"));
+    results::result_ptr result = results::load(fs::path("result.txt"));
     compare_results(results::failed("Failed on purpose"),
                     result.get());
 }
@@ -896,8 +885,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(integration__multiline);
 ATF_TEST_CASE_BODY(integration__multiline)
 {
     run_test_case(this, "multiline", fs::path("result.txt"));
-    std::auto_ptr< const results::base_result > result = results::load(
-        fs::path("result.txt"));
+    results::result_ptr result = results::load(fs::path("result.txt"));
     validate_broken("multiple lines.*skipped: word line1<<NEWLINE>>line2",
                     result.get());
 }
@@ -907,8 +895,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(integration__passed);
 ATF_TEST_CASE_BODY(integration__passed)
 {
     run_test_case(this, "passed", fs::path("result.txt"));
-    std::auto_ptr< const results::base_result > result = results::load(
-        fs::path("result.txt"));
+    results::result_ptr result = results::load(fs::path("result.txt"));
     compare_results(results::passed(), result.get());
 }
 
@@ -917,8 +904,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(integration__skipped);
 ATF_TEST_CASE_BODY(integration__skipped)
 {
     run_test_case(this, "skipped", fs::path("result.txt"));
-    std::auto_ptr< const results::base_result > result = results::load(
-        fs::path("result.txt"));
+    results::result_ptr result = results::load(fs::path("result.txt"));
     compare_results(results::skipped("Skipped on purpose"),
                     result.get());
 }

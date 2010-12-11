@@ -64,14 +64,13 @@ public:
     /// \param identifier The test case identifier.
     /// \param result The result of the test case.  To grab ownership of this
     ///     pointer, just use release() on the smart pointer.
-    virtual void finish_test_case(
-        const test_case_id& identifier,
-        std::auto_ptr< const results::base_result > result) = 0;
+    virtual void finish_test_case(const test_case_id& identifier,
+                                  results::result_ptr result) = 0;
 };
 
 
-std::auto_ptr< const results::base_result > run_test_case(
-    const engine::test_case&, const properties_map&);
+results::result_ptr run_test_case(const engine::test_case&,
+                                  const properties_map&);
 void run_test_program(const utils::fs::path&, const properties_map&, hooks*);
 void run_test_suite(const engine::suite_config&, const properties_map&, hooks*);
 

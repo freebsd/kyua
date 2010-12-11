@@ -43,10 +43,10 @@ namespace results {
 /// \return A dynamically allocated copy of the test result, wrapped in a smart
 /// pointer to the base class.
 template< typename T >
-std::auto_ptr< const base_result >
+result_ptr
 make_result(const T& data)
 {
-    return std::auto_ptr< const base_result >(new const T(data));
+    return result_ptr(new const T(data));
 }
 
 

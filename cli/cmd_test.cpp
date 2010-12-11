@@ -70,7 +70,7 @@ public:
 
     void
     finish_test_case(const engine::test_case_id& identifier,
-                     std::auto_ptr< const results::base_result > result)
+                     results::result_ptr result)
     {
         _ui->out(F("%s  ->  %s") % identifier.str() % result->format());
 

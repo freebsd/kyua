@@ -76,17 +76,23 @@ struct base_result {
 };
 
 
-// TODO(jmmv): It probably makes sense to create a typedef for this auto_ptr.
-std::auto_ptr< const base_result > parse(std::istream&);
-std::auto_ptr< const base_result > load(const utils::fs::path&);
-std::auto_ptr< const base_result > adjust_with_status(
-    std::auto_ptr< const base_result >, const utils::process::status&);
-std::auto_ptr< const base_result > adjust_with_timeout(
-    std::auto_ptr< const base_result >, const utils::datetime::delta&);
-std::auto_ptr< const results::base_result > adjust(
-    const engine::test_case&, const utils::optional< utils::process::status >&,
-    const utils::optional< utils::process::status >&,
-    std::auto_ptr< const results::base_result >);
+/// Auto-pointer to a const test case result.
+///
+/// Keep in mind that this is a plain std::auto_ptr.  Remember that whenever
+/// you copy it, the original pointer loses ownership of the object.
+/// All the functions below that take result_ptr as parameters do so for the
+/// only reason to allow simple chaining of calls.
+typedef std::auto_ptr< const base_result > result_ptr;
+
+
+result_ptr parse(std::istream&);
+result_ptr load(const utils::fs::path&);
+result_ptr adjust_with_status(result_ptr, const utils::process::status&);
+result_ptr adjust_with_timeout(result_ptr, const utils::datetime::delta&);
+result_ptr adjust(const engine::test_case&,
+                  const utils::optional< utils::process::status >&,
+                  const utils::optional< utils::process::status >&,
+                  result_ptr);
 
 
 /// Representation of a broken test case.
