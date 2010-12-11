@@ -133,6 +133,19 @@ ATF_TEST_CASE_BODY(create_cookie_in_workdir)
 }
 
 
+ATF_TEST_CASE_WITH_CLEANUP(create_cookie_from_cleanup);
+ATF_TEST_CASE_HEAD(create_cookie_from_cleanup)
+{
+}
+ATF_TEST_CASE_BODY(create_cookie_from_cleanup)
+{
+}
+ATF_TEST_CASE_CLEANUP(create_cookie_from_cleanup)
+{
+    create_cookie(this, "control_dir", "cookie");
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(pass);
 ATF_TEST_CASE_BODY(pass)
 {
@@ -222,6 +235,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, crash);
     ATF_ADD_TEST_CASE(tcs, create_cookie_in_control_dir);
     ATF_ADD_TEST_CASE(tcs, create_cookie_in_workdir);
+    ATF_ADD_TEST_CASE(tcs, create_cookie_from_cleanup);
     ATF_ADD_TEST_CASE(tcs, pass);
     ATF_ADD_TEST_CASE(tcs, timeout_body);
     ATF_ADD_TEST_CASE(tcs, timeout_cleanup);

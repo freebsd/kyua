@@ -246,10 +246,13 @@ ATF_TEST_CASE_BODY(run_test_case__config_variables)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__cleanup_shares_workdir);
 ATF_TEST_CASE_BODY(run_test_case__cleanup_shares_workdir)
 {
+    engine::properties_map metadata;
+    metadata["has.cleanup"] = "true";
     engine::properties_map config;
     config["control_dir"] = fs::current_path().str();
     std::auto_ptr< const results::base_result > result = runner::run_test_case(
-        make_test_case(get_helpers_path(this), "check_cleanup_workdir"),
+        make_test_case(get_helpers_path(this), "check_cleanup_workdir",
+                       metadata),
         config);
     compare_results(results::skipped("cookie created"), result.get());
 
@@ -260,6 +263,42 @@ ATF_TEST_CASE_BODY(run_test_case__cleanup_shares_workdir)
         fail("The cleanup part read an invalid cookie");
     if (!utils::exists(fs::path("cookie_ok")))
         fail("The cleanup part was not executed");
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__has_cleanup__false);
+ATF_TEST_CASE_BODY(run_test_case__has_cleanup__false)
+{
+    engine::properties_map metadata;
+    metadata["has.cleanup"] = "false";
+    engine::properties_map config;
+    config["control_dir"] = fs::current_path().str();
+    std::auto_ptr< const results::base_result > result = runner::run_test_case(
+        make_test_case(get_helpers_path(this), "create_cookie_from_cleanup",
+                       metadata), config);
+    compare_results(results::passed(), result.get());
+
+    if (utils::exists(fs::path("cookie")))
+        fail("The cleanup part was executed even though the test case set "
+             "has.cleanup to false");
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__has_cleanup__true);
+ATF_TEST_CASE_BODY(run_test_case__has_cleanup__true)
+{
+    engine::properties_map metadata;
+    metadata["has.cleanup"] = "true";
+    engine::properties_map config;
+    config["control_dir"] = fs::current_path().str();
+    std::auto_ptr< const results::base_result > result = runner::run_test_case(
+        make_test_case(get_helpers_path(this), "create_cookie_from_cleanup",
+                       metadata), config);
+    compare_results(results::passed(), result.get());
+
+    if (!utils::exists(fs::path("cookie")))
+        fail("The cleanup part was not executed even though the test case set "
+             "has.cleanup to true");
 }
 
 
@@ -415,6 +454,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, run_test_case__simple);
     ATF_ADD_TEST_CASE(tcs, run_test_case__config_variables);
     ATF_ADD_TEST_CASE(tcs, run_test_case__cleanup_shares_workdir);
+    ATF_ADD_TEST_CASE(tcs, run_test_case__has_cleanup__false);
+    ATF_ADD_TEST_CASE(tcs, run_test_case__has_cleanup__true);
     ATF_ADD_TEST_CASE(tcs, run_test_case__isolation_env);
     ATF_ADD_TEST_CASE(tcs, run_test_case__isolation_pgrp);
     ATF_ADD_TEST_CASE(tcs, run_test_case__isolation_signals);

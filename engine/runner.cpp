@@ -306,13 +306,14 @@ run_test_case_safe(const engine::test_case& test_case,
         workdir.directory() / "stderr.txt",
         test_case.timeout);
 
-    // TODO(jmmv): Only run the cleanup when it is present.  And what to do if
-    // the cleanup fails?
-    const optional< process::status > cleanup_status = fork_and_wait(
-        execute_test_case_cleanup(test_case, rundir, config),
-        workdir.directory() / "cleanup-stdout.txt",
-        workdir.directory() / "cleanup-stderr.txt",
-        test_case.timeout);
+    optional< process::status > cleanup_status;
+    if (test_case.has_cleanup) {
+        cleanup_status = fork_and_wait(
+            execute_test_case_cleanup(test_case, rundir, config),
+            workdir.directory() / "cleanup-stdout.txt",
+            workdir.directory() / "cleanup-stderr.txt",
+            test_case.timeout);
+    }
 
     std::auto_ptr< const results::base_result > result =
         results::adjust(test_case, body_status, cleanup_status,
