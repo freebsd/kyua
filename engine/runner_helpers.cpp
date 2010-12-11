@@ -48,6 +48,33 @@ extern "C" {
 namespace fs = utils::fs;
 
 
+namespace {
+
+
+/// Creates an empty file in the given directory.
+///
+/// \param test_case The test case currently running.
+/// \param directory The name of the configuration variable that holds the path
+///     to the directory in which to create the cookie file.
+/// \param name The name of the cookie file to create.
+static void
+create_cookie(const atf::tests::tc* test_case, const char* directory,
+              const char* name)
+{
+    if (!test_case->has_config_var(directory))
+        test_case->fail(std::string(name) + " not provided");
+
+    const fs::path control_dir(test_case->get_config_var(directory));
+    std::ofstream file((control_dir / name).c_str());
+    if (!file)
+        test_case->fail("Failed to create the control cookie");
+    file.close();
+}
+
+
+}  // anonymous namespace
+
+
 ATF_TEST_CASE_WITH_CLEANUP(check_cleanup_workdir);
 ATF_TEST_CASE_HEAD(check_cleanup_workdir)
 {
@@ -92,14 +119,7 @@ ATF_TEST_CASE_BODY(crash)
 ATF_TEST_CASE_WITHOUT_HEAD(create_cookie_in_control_dir);
 ATF_TEST_CASE_BODY(create_cookie_in_control_dir)
 {
-    if (!has_config_var("control_dir"))
-        fail("control_dir not provided");
-
-    const fs::path control_dir(get_config_var("control_dir"));
-    std::ofstream file((control_dir / "cookie").c_str());
-    if (!file)
-        fail("Failed to create the control cookie");
-    file.close();
+    create_cookie(this, "control_dir", "cookie");
 }
 
 
@@ -116,6 +136,35 @@ ATF_TEST_CASE_BODY(create_cookie_in_workdir)
 ATF_TEST_CASE_WITHOUT_HEAD(pass);
 ATF_TEST_CASE_BODY(pass)
 {
+}
+
+
+ATF_TEST_CASE(timeout_body);
+ATF_TEST_CASE_HEAD(timeout_body)
+{
+    if (has_config_var("timeout"))
+        set_md_var("timeout", get_config_var("timeout"));
+}
+ATF_TEST_CASE_BODY(timeout_body)
+{
+    ::sleep(10);
+    create_cookie(this, "control_dir", "cookie");
+}
+
+
+ATF_TEST_CASE_WITH_CLEANUP(timeout_cleanup);
+ATF_TEST_CASE_HEAD(timeout_cleanup)
+{
+    if (has_config_var("timeout"))
+        set_md_var("timeout", get_config_var("timeout"));
+}
+ATF_TEST_CASE_BODY(timeout_cleanup)
+{
+}
+ATF_TEST_CASE_CLEANUP(timeout_cleanup)
+{
+    ::sleep(10);
+    create_cookie(this, "control_dir", "cookie");
 }
 
 
@@ -174,6 +223,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, create_cookie_in_control_dir);
     ATF_ADD_TEST_CASE(tcs, create_cookie_in_workdir);
     ATF_ADD_TEST_CASE(tcs, pass);
+    ATF_ADD_TEST_CASE(tcs, timeout_body);
+    ATF_ADD_TEST_CASE(tcs, timeout_cleanup);
     ATF_ADD_TEST_CASE(tcs, validate_env);
     ATF_ADD_TEST_CASE(tcs, validate_pgrp);
     ATF_ADD_TEST_CASE(tcs, validate_signal);

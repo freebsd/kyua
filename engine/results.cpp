@@ -36,6 +36,7 @@
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 
+namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace process = utils::process;
 namespace results = engine::results;
@@ -305,29 +306,25 @@ results::load(const fs::path& file)
 }
 
 
-/// Adusts the raw result of a test case to its termination status.
+/// Adusts the raw result of a test case with its termination status.
+///
+/// Adjusting the result means ensuring that the termination conditions of the
+/// program match what is expected of the paticular result is reported.  If such
+/// conditions do not match, the test program is considered bogus.
 ///
 /// \param raw_result The result as processed from the results file created by
 ///     the test case.
 /// \param status The exit status of the test program.
-/// \param timed_out Whether the test case timed out or not.
 ///
 /// \result The adjusted result.  The original result is transformed into broken
 /// if the exit status of the program does not our expectations.
 std::auto_ptr< const results::base_result >
-results::adjust(std::auto_ptr< const results::base_result > raw_result,
-                const process::status& status,
-                const bool timed_out)
+results::adjust_with_status(
+    std::auto_ptr< const results::base_result > raw_result,
+    const process::status& status)
 {
     if (typeid(*raw_result) == typeid(broken))
         return raw_result;
-
-    if (timed_out) {
-        if (typeid(*raw_result) == typeid(expected_timeout))
-            return raw_result;
-        else
-            return make_result(broken("Test case timed out"));
-    }
 
     if (typeid(*raw_result) == typeid(expected_death)) {
         return raw_result;
@@ -377,7 +374,6 @@ results::adjust(std::auto_ptr< const results::base_result > raw_result,
                                       format_status(status)));
 
     } else if (typeid(*raw_result) == typeid(expected_timeout)) {
-        INV(!timed_out);
         return make_result(broken("Expected timeout but " +
                                   format_status(status)));
 
@@ -405,6 +401,74 @@ results::adjust(std::auto_ptr< const results::base_result > raw_result,
     } else {
         UNREACHABLE_MSG("Unhandled result type");
     }
+}
+
+
+/// Adusts the raw result of a test case with its timeout.
+///
+/// Adjusting the result means ensuring that the test case is marked as broken
+/// unless its status says that the timeout is expected.
+///
+/// \param result The result as processed from the results file created by
+///     the test case.  Given that the test case timed out, it most likely did
+///     not create a results file (unless for expected failures).  That's OK
+///     because if the results file does not exist, we get a 'broken' type
+///     result from load().
+/// \param timeout The timeout for informative reasons.
+///
+/// \result The adjusted result.  The original result is transformed into broken
+/// if the timeout was not expected.
+std::auto_ptr< const results::base_result >
+results::adjust_with_timeout(std::auto_ptr< const results::base_result > result,
+                             const datetime::delta& timeout)
+{
+    if (typeid(*result) == typeid(expected_timeout))
+        return result;
+    else
+        return make_result(broken(F("Test case timed out after %d seconds") %
+                                  timeout.seconds));
+}
+
+
+/// Calculates the final result of the execution of a test case.
+///
+/// \param test_case The test case for which the result is being adjusted.
+/// \param body_status The exit status of the test case's body; none if it
+///     timed out.
+/// \param cleanup_status The exit status of the test case's cleanup; none if it
+///     timed out.
+/// \param result_from_file The result saved by the test case, if any, as
+///     returned by the load() function.
+///
+/// \return The result of the test case as it should be reported to the user.
+std::auto_ptr< const results::base_result >
+results::adjust(const engine::test_case& test_case,
+                const optional< process::status >& body_status,
+                const optional< process::status >& cleanup_status,
+                std::auto_ptr< const results::base_result > result_from_file)
+{
+    std::auto_ptr< const results::base_result > result;
+    if (body_status)
+        result = results::adjust_with_status(result_from_file,
+                                             body_status.get());
+    else
+        result = results::adjust_with_timeout(result_from_file,
+                                              test_case.timeout);
+
+    if (result->good() && test_case.has_cleanup) {
+        if (cleanup_status) {
+            if (!cleanup_status.get().exited() ||
+                cleanup_status.get().exitstatus() != EXIT_SUCCESS)
+                result.reset(new results::broken("Test case cleanup did not "
+                                                 "terminate successfully"));
+        } else {
+            result.reset(new results::broken(F("Test case cleanup timed out "
+                                               "after %d seconds") %
+                                             test_case.timeout.seconds));
+        }
+    }
+
+    return result;
 }
 
 

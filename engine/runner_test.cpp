@@ -329,6 +329,42 @@ ATF_TEST_CASE_BODY(run_test_case__isolation_workdir)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__timeout_body);
+ATF_TEST_CASE_BODY(run_test_case__timeout_body)
+{
+    engine::properties_map metadata;
+    metadata["timeout"] = "1";
+    engine::properties_map config;
+    config["control_dir"] = fs::current_path().str();
+    std::auto_ptr< const results::base_result > result = runner::run_test_case(
+        make_test_case(get_helpers_path(this), "timeout_body", metadata),
+        config);
+    validate_broken("Test case timed out after 1 seconds", result.get());
+
+    if (utils::exists(fs::path("cookie")))
+        fail("It seems that the test case was not killed after it timed out");
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__timeout_cleanup);
+ATF_TEST_CASE_BODY(run_test_case__timeout_cleanup)
+{
+    engine::properties_map metadata;
+    metadata["has.cleanup"] = "true";
+    metadata["timeout"] = "1";
+    engine::properties_map config;
+    config["control_dir"] = fs::current_path().str();
+    std::auto_ptr< const results::base_result > result = runner::run_test_case(
+        make_test_case(get_helpers_path(this), "timeout_cleanup", metadata),
+        config);
+    validate_broken("Test case cleanup timed out after 1 seconds",
+                    result.get());
+
+    if (utils::exists(fs::path("cookie")))
+        fail("It seems that the test case was not killed after it timed out");
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__missing_results_file);
 ATF_TEST_CASE_BODY(run_test_case__missing_results_file)
 {
@@ -384,6 +420,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, run_test_case__isolation_signals);
     ATF_ADD_TEST_CASE(tcs, run_test_case__isolation_umask);
     ATF_ADD_TEST_CASE(tcs, run_test_case__isolation_workdir);
+    ATF_ADD_TEST_CASE(tcs, run_test_case__timeout_body);
+    ATF_ADD_TEST_CASE(tcs, run_test_case__timeout_cleanup);
     ATF_ADD_TEST_CASE(tcs, run_test_case__missing_results_file);
     ATF_ADD_TEST_CASE(tcs, run_test_case__missing_test_program);
 

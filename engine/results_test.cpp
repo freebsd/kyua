@@ -40,12 +40,14 @@ extern "C" {
 
 #include "engine/exceptions.hpp"
 #include "engine/results.ipp"
+#include "engine/test_case.hpp"
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/process/children.ipp"
 #include "utils/test_utils.hpp"
 
+namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace process = utils::process;
 namespace results = engine::results;
@@ -454,92 +456,82 @@ ATF_TEST_CASE_BODY(load__format_error)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(adjust__broken);
-ATF_TEST_CASE_BODY(adjust__broken)
+ATF_TEST_CASE_WITHOUT_HEAD(adjust_with_status__broken);
+ATF_TEST_CASE_BODY(adjust_with_status__broken)
 {
     const results::broken broken("Passthrough");
     const process::status status = process::status::fake_exited(EXIT_SUCCESS);
     validate_broken("Passthrough",
-                    results::adjust(results::make_result(broken),
-                                    status, true).get());
+                    results::adjust_with_status(results::make_result(broken),
+                                                status).get());
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(adjust__expected_death__ok);
-ATF_TEST_CASE_BODY(adjust__expected_death__ok)
+ATF_TEST_CASE_WITHOUT_HEAD(adjust_with_status__expected_death__ok);
+ATF_TEST_CASE_BODY(adjust_with_status__expected_death__ok)
 {
     const results::expected_death death("The reason");
     const process::status status = process::status::fake_signaled(SIGINT, true);
-    compare_results(death, results::adjust(results::make_result(death),
-                                           status, false).get());
+    compare_results(death,
+                    results::adjust_with_status(results::make_result(death),
+                                                status).get());
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(adjust__expected_death__broken);
-ATF_TEST_CASE_BODY(adjust__expected_death__broken)
-{
-    const results::expected_death death("The reason");
-    const process::status status = process::status::fake_exited(EXIT_SUCCESS);
-    validate_broken("Test case timed out",
-                    results::adjust(results::make_result(death),
-                                    status, true).get());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(adjust__expected_exit__ok);
-ATF_TEST_CASE_BODY(adjust__expected_exit__ok)
+ATF_TEST_CASE_WITHOUT_HEAD(adjust_with_status__expected_exit__ok);
+ATF_TEST_CASE_BODY(adjust_with_status__expected_exit__ok)
 {
     const process::status success = process::status::fake_exited(EXIT_SUCCESS);
     const process::status failure = process::status::fake_exited(EXIT_FAILURE);
 
     const results::expected_exit any_code(none, "The reason");
-    compare_results(any_code, results::adjust(results::make_result(any_code),
-                                              success, false).get());
-    compare_results(any_code, results::adjust(results::make_result(any_code),
-                                              failure, false).get());
+    compare_results(any_code,
+                    results::adjust_with_status(results::make_result(any_code),
+                                                success).get());
+    compare_results(any_code,
+                    results::adjust_with_status(results::make_result(any_code),
+                                                failure).get());
 
     const results::expected_exit a_code(utils::make_optional(EXIT_FAILURE),
                                         "The reason");
-    compare_results(a_code, results::adjust(results::make_result(a_code),
-                                            failure, false).get());
+    compare_results(a_code,
+                    results::adjust_with_status(results::make_result(a_code),
+                                                failure).get());
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(adjust__expected_exit__broken);
-ATF_TEST_CASE_BODY(adjust__expected_exit__broken)
+ATF_TEST_CASE_WITHOUT_HEAD(adjust_with_status__expected_exit__broken);
+ATF_TEST_CASE_BODY(adjust_with_status__expected_exit__broken)
 {
     const process::status sig3 = process::status::fake_signaled(3, false);
     const process::status success = process::status::fake_exited(EXIT_SUCCESS);
 
     const results::expected_exit any_code(none, "The reason");
     validate_broken("Expected clean exit but received signal 3",
-                    results::adjust(results::make_result(any_code),
-                                    sig3, false).get());
+                    results::adjust_with_status(results::make_result(any_code),
+                                                sig3).get());
 
     const results::expected_exit a_code(utils::make_optional(EXIT_FAILURE),
                                         "The reason");
     validate_broken("Expected clean exit with code 1 but got code 0",
-                    results::adjust(results::make_result(a_code),
-                                    success, false).get());
-
-    validate_broken("Test case timed out",
-                    results::adjust(results::make_result(any_code),
-                                    success, true).get());
+                    results::adjust_with_status(results::make_result(a_code),
+                                                success).get());
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(adjust__expected_failure__ok);
-ATF_TEST_CASE_BODY(adjust__expected_failure__ok)
+ATF_TEST_CASE_WITHOUT_HEAD(adjust_with_status__expected_failure__ok);
+ATF_TEST_CASE_BODY(adjust_with_status__expected_failure__ok)
 {
     const results::expected_failure failure("The reason");
     const process::status status = process::status::fake_exited(EXIT_SUCCESS);
-    compare_results(failure, results::adjust(results::make_result(failure),
-                                             status, false).get());
+    compare_results(failure,
+                    results::adjust_with_status(results::make_result(failure),
+                                                status).get());
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(adjust__expected_failure__broken);
-ATF_TEST_CASE_BODY(adjust__expected_failure__broken)
+ATF_TEST_CASE_WITHOUT_HEAD(adjust_with_status__expected_failure__broken);
+ATF_TEST_CASE_BODY(adjust_with_status__expected_failure__broken)
 {
     const process::status success = process::status::fake_exited(EXIT_SUCCESS);
     const process::status failure = process::status::fake_exited(EXIT_FAILURE);
@@ -548,93 +540,80 @@ ATF_TEST_CASE_BODY(adjust__expected_failure__broken)
     const results::expected_failure xfailure("The reason");
     validate_broken("Expected failure should have reported success but "
                     "exited with code 1",
-                    results::adjust(results::make_result(xfailure),
-                                    failure, false).get());
+                    results::adjust_with_status(results::make_result(xfailure),
+                                                failure).get());
     validate_broken("Expected failure should have reported success but "
                     "received signal 3",
-                    results::adjust(results::make_result(xfailure),
-                                    sig3, false).get());
-    validate_broken("Test case timed out",
-                    results::adjust(results::make_result(xfailure),
-                                    success, true).get());
+                    results::adjust_with_status(results::make_result(xfailure),
+                                                sig3).get());
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(adjust__expected_signal__ok);
-ATF_TEST_CASE_BODY(adjust__expected_signal__ok)
+ATF_TEST_CASE_WITHOUT_HEAD(adjust_with_status__expected_signal__ok);
+ATF_TEST_CASE_BODY(adjust_with_status__expected_signal__ok)
 {
     const process::status sig1 = process::status::fake_signaled(1, false);
     const process::status sig3 = process::status::fake_signaled(3, true);
 
     const results::expected_signal any_sig(none, "The reason");
-    compare_results(any_sig, results::adjust(results::make_result(any_sig),
-                                             sig1, false).get());
-    compare_results(any_sig, results::adjust(results::make_result(any_sig),
-                                             sig3, false).get());
+    compare_results(any_sig,
+                    results::adjust_with_status(results::make_result(any_sig),
+                                                sig1).get());
+    compare_results(any_sig,
+                    results::adjust_with_status(results::make_result(any_sig),
+                                                sig3).get());
 
     const results::expected_signal a_sig(utils::make_optional(3),
                                          "The reason");
-    compare_results(a_sig, results::adjust(results::make_result(a_sig),
-                                           3, false).get());
+    compare_results(a_sig,
+                    results::adjust_with_status(results::make_result(a_sig),
+                                                sig3).get());
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(adjust__expected_signal__broken);
-ATF_TEST_CASE_BODY(adjust__expected_signal__broken)
+ATF_TEST_CASE_WITHOUT_HEAD(adjust_with_status__expected_signal__broken);
+ATF_TEST_CASE_BODY(adjust_with_status__expected_signal__broken)
 {
     const process::status sig5 = process::status::fake_signaled(5, false);
     const process::status success = process::status::fake_exited(EXIT_SUCCESS);
 
     const results::expected_signal any_sig(none, "The reason");
     validate_broken("Expected signal but exited with code 0",
-                    results::adjust(results::make_result(any_sig),
-                                    success, false).get());
+                    results::adjust_with_status(results::make_result(any_sig),
+                                                success).get());
 
     const results::expected_signal a_sig(utils::make_optional(4),
                                          "The reason");
     validate_broken("Expected signal 4 but got 5",
-                    results::adjust(results::make_result(a_sig),
-                                    sig5, false).get());
-
-    validate_broken("Test case timed out",
-                    results::adjust(results::make_result(any_sig),
-                                    sig5, true).get());
+                    results::adjust_with_status(results::make_result(a_sig),
+                                                sig5).get());
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(adjust__expected_timeout__ok);
-ATF_TEST_CASE_BODY(adjust__expected_timeout__ok)
-{
-    const results::expected_timeout timeout("The reason");
-    const process::status status = process::status::fake_exited(EXIT_SUCCESS);
-    compare_results(timeout, results::adjust(results::make_result(timeout),
-                                             status, true).get());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(adjust__expected_timeout__broken);
-ATF_TEST_CASE_BODY(adjust__expected_timeout__broken)
+ATF_TEST_CASE_WITHOUT_HEAD(adjust_with_status__expected_timeout__broken);
+ATF_TEST_CASE_BODY(adjust_with_status__expected_timeout__broken)
 {
     const results::expected_timeout timeout("The reason");
     const process::status status = process::status::fake_exited(EXIT_SUCCESS);
     validate_broken("Expected timeout but exited with code 0",
-                    results::adjust(results::make_result(timeout),
-                                    status, false).get());
+                    results::adjust_with_status(results::make_result(timeout),
+                                                status).get());
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(adjust__failed__ok);
-ATF_TEST_CASE_BODY(adjust__failed__ok)
+ATF_TEST_CASE_WITHOUT_HEAD(adjust_with_status__failed__ok);
+ATF_TEST_CASE_BODY(adjust_with_status__failed__ok)
 {
     const results::failed failed("The reason");
     const process::status status = process::status::fake_exited(EXIT_FAILURE);
-    compare_results(failed, results::adjust(results::make_result(failed),
-                                            status, false).get());
+    compare_results(failed,
+                    results::adjust_with_status(results::make_result(failed),
+                                                status).get());
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(adjust__failed__broken);
-ATF_TEST_CASE_BODY(adjust__failed__broken)
+ATF_TEST_CASE_WITHOUT_HEAD(adjust_with_status__failed__broken);
+ATF_TEST_CASE_BODY(adjust_with_status__failed__broken)
 {
     const process::status success = process::status::fake_exited(EXIT_SUCCESS);
     const process::status failure = process::status::fake_exited(EXIT_FAILURE);
@@ -643,30 +622,28 @@ ATF_TEST_CASE_BODY(adjust__failed__broken)
     const results::failed failed("The reason");
     validate_broken("Failed test case should have reported failure but "
                     "exited with code 0",
-                    results::adjust(results::make_result(failed),
-                                    success, false).get());
+                    results::adjust_with_status(results::make_result(failed),
+                                                success).get());
     validate_broken("Failed test case should have reported failure but "
                     "received signal 3",
-                    results::adjust(results::make_result(failed),
-                                    sig3, false).get());
-    validate_broken("Test case timed out",
-                    results::adjust(results::make_result(failed),
-                                    failure, true).get());
+                    results::adjust_with_status(results::make_result(failed),
+                                                sig3).get());
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(adjust__passed__ok);
-ATF_TEST_CASE_BODY(adjust__passed__ok)
+ATF_TEST_CASE_WITHOUT_HEAD(adjust_with_status__passed__ok);
+ATF_TEST_CASE_BODY(adjust_with_status__passed__ok)
 {
     const results::passed passed;
     const process::status status = process::status::fake_exited(EXIT_SUCCESS);
-    compare_results(passed, results::adjust(results::make_result(passed),
-                                            status, false).get());
+    compare_results(passed,
+                    results::adjust_with_status(results::make_result(passed),
+                                                status).get());
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(adjust__passed__broken);
-ATF_TEST_CASE_BODY(adjust__passed__broken)
+ATF_TEST_CASE_WITHOUT_HEAD(adjust_with_status__passed__broken);
+ATF_TEST_CASE_BODY(adjust_with_status__passed__broken)
 {
     const process::status success = process::status::fake_exited(EXIT_SUCCESS);
     const process::status failure = process::status::fake_exited(EXIT_FAILURE);
@@ -675,30 +652,28 @@ ATF_TEST_CASE_BODY(adjust__passed__broken)
     const results::passed passed;
     validate_broken("Passed test case should have reported success but "
                     "exited with code 1",
-                    results::adjust(results::make_result(passed),
-                                    failure, false).get());
+                    results::adjust_with_status(results::make_result(passed),
+                                                failure).get());
     validate_broken("Passed test case should have reported success but "
                     "received signal 3",
-                    results::adjust(results::make_result(passed),
-                                    sig3, false).get());
-    validate_broken("Test case timed out",
-                    results::adjust(results::make_result(passed),
-                                    success, true).get());
+                    results::adjust_with_status(results::make_result(passed),
+                                                sig3).get());
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(adjust__skipped__ok);
-ATF_TEST_CASE_BODY(adjust__skipped__ok)
+ATF_TEST_CASE_WITHOUT_HEAD(adjust_with_status__skipped__ok);
+ATF_TEST_CASE_BODY(adjust_with_status__skipped__ok)
 {
     const results::skipped skipped("The reason");
     const process::status status = process::status::fake_exited(EXIT_SUCCESS);
-    compare_results(skipped, results::adjust(results::make_result(skipped),
-                                            status, false).get());
+    compare_results(skipped,
+                    results::adjust_with_status(results::make_result(skipped),
+                                                status).get());
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(adjust__skipped__broken);
-ATF_TEST_CASE_BODY(adjust__skipped__broken)
+ATF_TEST_CASE_WITHOUT_HEAD(adjust_with_status__skipped__broken);
+ATF_TEST_CASE_BODY(adjust_with_status__skipped__broken)
 {
     const process::status success = process::status::fake_exited(EXIT_SUCCESS);
     const process::status failure = process::status::fake_exited(EXIT_FAILURE);
@@ -707,15 +682,121 @@ ATF_TEST_CASE_BODY(adjust__skipped__broken)
     const results::skipped skipped("The reason");
     validate_broken("Skipped test case should have reported success but "
                     "exited with code 1",
-                    results::adjust(results::make_result(skipped),
-                                    failure, false).get());
+                    results::adjust_with_status(results::make_result(skipped),
+                                                failure).get());
     validate_broken("Skipped test case should have reported success but "
                     "received signal 3",
-                    results::adjust(results::make_result(skipped),
-                                    sig3, false).get());
-    validate_broken("Test case timed out",
-                    results::adjust(results::make_result(skipped),
-                                    success, true).get());
+                    results::adjust_with_status(results::make_result(skipped),
+                                                sig3).get());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(adjust_with_timeout__expected_timeout);
+ATF_TEST_CASE_BODY(adjust_with_timeout__expected_timeout)
+{
+    const results::expected_timeout timeout("The reason");
+    compare_results(timeout, results::adjust_with_timeout(
+        results::make_result(timeout), datetime::delta()).get());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(adjust_with_timeout__timed_out);
+ATF_TEST_CASE_BODY(adjust_with_timeout__timed_out)
+{
+    const results::broken broken("Ignore this");
+    validate_broken("Test case timed out after 123 seconds",
+        results::adjust_with_timeout(results::make_result(broken),
+                                     datetime::delta(123, 0)).get());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(adjust__body_ok__no_cleanup);
+ATF_TEST_CASE_BODY(adjust__body_ok__no_cleanup)
+{
+    engine::properties_map metadata;
+    const engine::test_case test_case = engine::test_case::from_properties(
+        engine::test_case_id(fs::path("program"), "name"), metadata);
+    const results::passed result;
+    compare_results(result, results::adjust(test_case,
+        utils::make_optional(process::status::fake_exited(EXIT_SUCCESS)),
+        none,
+        results::make_result(result)).get());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(adjust__body_ok__cleanup_ok);
+ATF_TEST_CASE_BODY(adjust__body_ok__cleanup_ok)
+{
+    engine::properties_map metadata;
+    metadata["has.cleanup"] = "true";
+    const engine::test_case test_case = engine::test_case::from_properties(
+        engine::test_case_id(fs::path("program"), "name"), metadata);
+    const results::passed result;
+    compare_results(result, results::adjust(test_case,
+        utils::make_optional(process::status::fake_exited(EXIT_SUCCESS)),
+        utils::make_optional(process::status::fake_exited(EXIT_SUCCESS)),
+        results::make_result(result)).get());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(adjust__body_ok__cleanup_bad);
+ATF_TEST_CASE_BODY(adjust__body_ok__cleanup_bad)
+{
+    engine::properties_map metadata;
+    metadata["has.cleanup"] = "true";
+    const engine::test_case test_case = engine::test_case::from_properties(
+        engine::test_case_id(fs::path("program"), "name"), metadata);
+    const results::passed result;
+    validate_broken("cleanup.*not.*successful", results::adjust(test_case,
+        utils::make_optional(process::status::fake_exited(EXIT_SUCCESS)),
+        utils::make_optional(process::status::fake_exited(EXIT_FAILURE)),
+        results::make_result(result)).get());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(adjust__body_ok__cleanup_timeout);
+ATF_TEST_CASE_BODY(adjust__body_ok__cleanup_timeout)
+{
+    engine::properties_map metadata;
+    metadata["has.cleanup"] = "true";
+    metadata["timeout"] = "123";
+    const engine::test_case test_case = engine::test_case::from_properties(
+        engine::test_case_id(fs::path("program"), "name"), metadata);
+    const results::passed result;
+    validate_broken("cleanup.*timed out.*123", results::adjust(test_case,
+        utils::make_optional(process::status::fake_exited(EXIT_SUCCESS)),
+        none,
+        results::make_result(result)).get());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(adjust__body_bad__cleanup_ok);
+ATF_TEST_CASE_BODY(adjust__body_bad__cleanup_ok)
+{
+    engine::properties_map metadata;
+    metadata["has.cleanup"] = "true";
+    const engine::test_case test_case = engine::test_case::from_properties(
+        engine::test_case_id(fs::path("program"), "name"), metadata);
+    const results::failed result("The reason");
+    compare_results(result, results::adjust(test_case,
+        utils::make_optional(process::status::fake_exited(EXIT_FAILURE)),
+        utils::make_optional(process::status::fake_exited(EXIT_SUCCESS)),
+        results::make_result(result)).get());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(adjust__body_bad__cleanup_bad);
+ATF_TEST_CASE_BODY(adjust__body_bad__cleanup_bad)
+{
+    engine::properties_map metadata;
+    metadata["has.cleanup"] = "true";
+    const engine::test_case test_case = engine::test_case::from_properties(
+        engine::test_case_id(fs::path("program"), "name"), metadata);
+    const results::failed result("The reason");
+    compare_results(result, results::adjust(test_case,
+        utils::make_optional(process::status::fake_exited(EXIT_FAILURE)),
+        utils::make_optional(process::status::fake_exited(EXIT_FAILURE)),
+        results::make_result(result)).get());
 }
 
 
@@ -911,23 +992,31 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, load__missing_file);
     ATF_ADD_TEST_CASE(tcs, load__format_error);
 
-    ATF_ADD_TEST_CASE(tcs, adjust__broken);
-    ATF_ADD_TEST_CASE(tcs, adjust__expected_death__ok);
-    ATF_ADD_TEST_CASE(tcs, adjust__expected_death__broken);
-    ATF_ADD_TEST_CASE(tcs, adjust__expected_exit__ok);
-    ATF_ADD_TEST_CASE(tcs, adjust__expected_exit__broken);
-    ATF_ADD_TEST_CASE(tcs, adjust__expected_failure__ok);
-    ATF_ADD_TEST_CASE(tcs, adjust__expected_failure__broken);
-    ATF_ADD_TEST_CASE(tcs, adjust__expected_signal__ok);
-    ATF_ADD_TEST_CASE(tcs, adjust__expected_signal__broken);
-    ATF_ADD_TEST_CASE(tcs, adjust__expected_timeout__ok);
-    ATF_ADD_TEST_CASE(tcs, adjust__expected_timeout__broken);
-    ATF_ADD_TEST_CASE(tcs, adjust__failed__ok);
-    ATF_ADD_TEST_CASE(tcs, adjust__failed__broken);
-    ATF_ADD_TEST_CASE(tcs, adjust__passed__ok);
-    ATF_ADD_TEST_CASE(tcs, adjust__passed__broken);
-    ATF_ADD_TEST_CASE(tcs, adjust__skipped__ok);
-    ATF_ADD_TEST_CASE(tcs, adjust__skipped__broken);
+    ATF_ADD_TEST_CASE(tcs, adjust_with_status__broken);
+    ATF_ADD_TEST_CASE(tcs, adjust_with_status__expected_death__ok);
+    ATF_ADD_TEST_CASE(tcs, adjust_with_status__expected_exit__ok);
+    ATF_ADD_TEST_CASE(tcs, adjust_with_status__expected_exit__broken);
+    ATF_ADD_TEST_CASE(tcs, adjust_with_status__expected_failure__ok);
+    ATF_ADD_TEST_CASE(tcs, adjust_with_status__expected_failure__broken);
+    ATF_ADD_TEST_CASE(tcs, adjust_with_status__expected_signal__ok);
+    ATF_ADD_TEST_CASE(tcs, adjust_with_status__expected_signal__broken);
+    ATF_ADD_TEST_CASE(tcs, adjust_with_status__expected_timeout__broken);
+    ATF_ADD_TEST_CASE(tcs, adjust_with_status__failed__ok);
+    ATF_ADD_TEST_CASE(tcs, adjust_with_status__failed__broken);
+    ATF_ADD_TEST_CASE(tcs, adjust_with_status__passed__ok);
+    ATF_ADD_TEST_CASE(tcs, adjust_with_status__passed__broken);
+    ATF_ADD_TEST_CASE(tcs, adjust_with_status__skipped__ok);
+    ATF_ADD_TEST_CASE(tcs, adjust_with_status__skipped__broken);
+
+    ATF_ADD_TEST_CASE(tcs, adjust_with_timeout__expected_timeout);
+    ATF_ADD_TEST_CASE(tcs, adjust_with_timeout__timed_out);
+
+    ATF_ADD_TEST_CASE(tcs, adjust__body_ok__no_cleanup);
+    ATF_ADD_TEST_CASE(tcs, adjust__body_ok__cleanup_ok);
+    ATF_ADD_TEST_CASE(tcs, adjust__body_ok__cleanup_bad);
+    ATF_ADD_TEST_CASE(tcs, adjust__body_ok__cleanup_timeout);
+    ATF_ADD_TEST_CASE(tcs, adjust__body_bad__cleanup_ok);
+    ATF_ADD_TEST_CASE(tcs, adjust__body_bad__cleanup_bad);
 
     ATF_ADD_TEST_CASE(tcs, integration__expected_death);
     ATF_ADD_TEST_CASE(tcs, integration__expected_exit__any);

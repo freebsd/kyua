@@ -50,6 +50,8 @@
 #include <istream>
 #include <string>
 
+#include "engine/test_case.hpp"
+#include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"
 #include "utils/process/status.hpp"
@@ -77,9 +79,14 @@ struct base_result {
 // TODO(jmmv): It probably makes sense to create a typedef for this auto_ptr.
 std::auto_ptr< const base_result > parse(std::istream&);
 std::auto_ptr< const base_result > load(const utils::fs::path&);
-std::auto_ptr< const base_result > adjust(std::auto_ptr< const base_result >,
-                                          const utils::process::status&,
-                                          const bool);
+std::auto_ptr< const base_result > adjust_with_status(
+    std::auto_ptr< const base_result >, const utils::process::status&);
+std::auto_ptr< const base_result > adjust_with_timeout(
+    std::auto_ptr< const base_result >, const utils::datetime::delta&);
+std::auto_ptr< const results::base_result > adjust(
+    const engine::test_case&, const utils::optional< utils::process::status >&,
+    const utils::optional< utils::process::status >&,
+    std::auto_ptr< const results::base_result >);
 
 
 /// Representation of a broken test case.

@@ -44,6 +44,7 @@ extern "C" {
 #include "engine/suite_config.hpp"
 #include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
+#include "utils/datetime.hpp"
 #include "utils/defs.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
@@ -52,15 +53,20 @@ extern "C" {
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
 #include "utils/process/children.ipp"
+#include "utils/process/exceptions.hpp"
 #include "utils/sanity.hpp"
 #include "utils/signals/exceptions.hpp"
 #include "utils/signals/misc.hpp"
 
+namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace process = utils::process;
 namespace results = engine::results;
 namespace runner = engine::runner;
 namespace signals = utils::signals;
+
+using utils::none;
+using utils::optional;
 
 
 namespace {
@@ -251,6 +257,29 @@ public:
 };
 
 
+/// Forks a subprocess and waits for its completion.
+///
+/// \param hook The code to execute in the subprocess.
+/// \param outfile The file that will receive the stdout output.
+/// \param errfile The file that will receive the stderr output.
+/// \param timeout The amount of time given to the subprocess to execute.
+///
+/// \return The exit status of the process or none if the timeout expired.
+template< class Hook >
+optional< process::status >
+fork_and_wait(Hook hook, const fs::path& outfile, const fs::path& errfile,
+              const datetime::delta& timeout)
+{
+    std::auto_ptr< process::child_with_files > child =
+        process::child_with_files::fork(hook, outfile, errfile);
+    try {
+        return utils::make_optional(child->wait(timeout));
+    } catch (const process::timeout_error& error) {
+        return none;
+    }
+}
+
+
 /// Auxiliary function to execute a test case.
 ///
 /// This is an auxiliary function for run_test_case that is protected from
@@ -269,26 +298,25 @@ run_test_case_safe(const engine::test_case& test_case,
     const fs::path rundir(workdir.directory() / "run");
     fs::mkdir(rundir, 0755);
 
-    const fs::path resfile(workdir.directory() / "result.txt");
+    const fs::path result_file(workdir.directory() / "result.txt");
 
-    std::auto_ptr< process::child_with_files > body_child =
-        process::child_with_files::fork(execute_test_case_body(
-            test_case, resfile, rundir, config),
-            workdir.directory() / "stdout.txt",
-            workdir.directory() / "stderr.txt");
-    const process::status body_status = body_child->wait();
+    const optional< process::status > body_status = fork_and_wait(
+        execute_test_case_body(test_case, result_file, rundir, config),
+        workdir.directory() / "stdout.txt",
+        workdir.directory() / "stderr.txt",
+        test_case.timeout);
 
-    std::auto_ptr< process::child_with_files > cleanup_child =
-        process::child_with_files::fork(execute_test_case_cleanup(
-            test_case, rundir, config),
-            workdir.directory() / "cleanup-stdout.txt",
-            workdir.directory() / "cleanup-stderr.txt");
-    const process::status cleanup_status = cleanup_child->wait();
+    // TODO(jmmv): Only run the cleanup when it is present.  And what to do if
+    // the cleanup fails?
+    const optional< process::status > cleanup_status = fork_and_wait(
+        execute_test_case_cleanup(test_case, rundir, config),
+        workdir.directory() / "cleanup-stdout.txt",
+        workdir.directory() / "cleanup-stderr.txt",
+        test_case.timeout);
 
-    const bool timed_out = false;  // TODO(jmmv): Implement timeout detection.
-
-    std::auto_ptr< const results::base_result > result = results::adjust(
-        results::load(resfile), body_status, timed_out);
+    std::auto_ptr< const results::base_result > result =
+        results::adjust(test_case, body_status, cleanup_status,
+                        results::load(result_file));
     workdir.cleanup();
     return result;
 }
