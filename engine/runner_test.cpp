@@ -368,6 +368,28 @@ ATF_TEST_CASE_BODY(run_test_case__isolation_workdir)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__required_configs);
+ATF_TEST_CASE_BODY(run_test_case__required_configs)
+{
+    engine::properties_map metadata;
+    metadata["require.config"] = "used-var";
+    engine::properties_map config;
+    config["control_dir"] = fs::current_path().str();
+    config["unused-var"] = "value";
+    results::result_ptr result = runner::run_test_case(
+        make_test_case(get_helpers_path(this), "create_cookie_in_control_dir",
+                       metadata),
+        config);
+    compare_results(results::skipped(
+        "Required configuration property 'used-var' not defined"),
+        result.get());
+
+    if (utils::exists(fs::path("cookie")))
+        fail("The test case was not really skipped when the requirements "
+             "check failed");
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__timeout_body);
 ATF_TEST_CASE_BODY(run_test_case__timeout_body)
 {
@@ -461,6 +483,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, run_test_case__isolation_signals);
     ATF_ADD_TEST_CASE(tcs, run_test_case__isolation_umask);
     ATF_ADD_TEST_CASE(tcs, run_test_case__isolation_workdir);
+    ATF_ADD_TEST_CASE(tcs, run_test_case__required_configs);
     ATF_ADD_TEST_CASE(tcs, run_test_case__timeout_body);
     ATF_ADD_TEST_CASE(tcs, run_test_case__timeout_cleanup);
     ATF_ADD_TEST_CASE(tcs, run_test_case__missing_results_file);

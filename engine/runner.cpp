@@ -293,6 +293,11 @@ static results::result_ptr
 run_test_case_safe(const engine::test_case& test_case,
                    const engine::properties_map& config)
 {
+    const std::string skip_reason = engine::check_requirements(test_case,
+                                                               config);
+    if (!skip_reason.empty())
+        return results::make_result(results::skipped(skip_reason));
+
     fs::auto_directory workdir(create_work_directory());
 
     const fs::path rundir(workdir.directory() / "run");

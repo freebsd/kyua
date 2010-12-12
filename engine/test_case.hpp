@@ -145,6 +145,9 @@ struct test_case {
 };
 
 
+std::string check_requirements(const test_case&, const properties_map&);
+
+
 }  // namespace engine
 
 

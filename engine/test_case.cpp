@@ -353,3 +353,25 @@ engine::test_case::operator==(const test_case& tc) const
         timeout == tc.timeout &&
         user_metadata == tc.user_metadata;
 }
+
+
+/// Checks if all the requirements specified by the test case are met.
+///
+/// \param test_case The test case for which to validate the requirements.
+/// \param config The configuration properties provided by the user.
+///
+/// \return A string describing what is missing; empty if everything is OK.
+std::string
+engine::check_requirements(const engine::test_case& test_case,
+                           const properties_map& config)
+{
+    for (strings_set::const_iterator iter = test_case.required_configs.begin();
+         iter != test_case.required_configs.end(); iter++)
+        if (config.find(*iter) == config.end())
+            return F("Required configuration property '%s' not defined") %
+                *iter;
+
+    // TODO(jmmv): Validate architecture, platform, programs and user.
+
+    return "";
+}

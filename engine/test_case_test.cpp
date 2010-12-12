@@ -434,6 +434,85 @@ ATF_TEST_CASE_BODY(test_case__operator_eq)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(check_requirements__none);
+ATF_TEST_CASE_BODY(check_requirements__none)
+{
+    const engine::test_case test_case = engine::test_case::from_properties(
+        engine::test_case_id(fs::path("program"), "name"),
+        engine::properties_map());
+    const engine::properties_map config;
+    ATF_REQUIRE(engine::check_requirements(test_case, config).empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(check_requirements__required_configs__one_ok);
+ATF_TEST_CASE_BODY(check_requirements__required_configs__one_ok)
+{
+    engine::properties_map metadata;
+    metadata["require.config"] = "my-var";
+    const engine::test_case test_case = engine::test_case::from_properties(
+        engine::test_case_id(fs::path("program"), "name"), metadata);
+
+    engine::properties_map config;
+    config["aaa"] = "value1";
+    config["my-var"] = "value2";
+    config["zzz"] = "value3";
+    ATF_REQUIRE(engine::check_requirements(test_case, config).empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(check_requirements__required_configs__one_fail);
+ATF_TEST_CASE_BODY(check_requirements__required_configs__one_fail)
+{
+    engine::properties_map metadata;
+    metadata["require.config"] = "my-var";
+    const engine::test_case test_case = engine::test_case::from_properties(
+        engine::test_case_id(fs::path("program"), "name"), metadata);
+
+    engine::properties_map config;
+    config["aaa"] = "value1";
+    config["myvar"] = "value2";
+    config["zzz"] = "value3";
+    ATF_REQUIRE_MATCH("Required configuration property 'my-var' not defined",
+                      engine::check_requirements(test_case, config));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(check_requirements__required_configs__many_ok);
+ATF_TEST_CASE_BODY(check_requirements__required_configs__many_ok)
+{
+    engine::properties_map metadata;
+    metadata["require.config"] = "foo bar baz";
+    const engine::test_case test_case = engine::test_case::from_properties(
+        engine::test_case_id(fs::path("program"), "name"), metadata);
+
+    engine::properties_map config;
+    config["aaa"] = "value1";
+    config["foo"] = "value2";
+    config["bar"] = "value3";
+    config["baz"] = "value4";
+    config["zzz"] = "value5";
+    ATF_REQUIRE(engine::check_requirements(test_case, config).empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(check_requirements__required_configs__many_fail);
+ATF_TEST_CASE_BODY(check_requirements__required_configs__many_fail)
+{
+    engine::properties_map metadata;
+    metadata["require.config"] = "foo bar baz";
+    const engine::test_case test_case = engine::test_case::from_properties(
+        engine::test_case_id(fs::path("program"), "name"), metadata);
+
+    engine::properties_map config;
+    config["aaa"] = "value1";
+    config["foo"] = "value2";
+    config["zzz"] = "value3";
+    ATF_REQUIRE_MATCH("Required configuration property 'bar' not defined",
+                      engine::check_requirements(test_case, config));
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, parse_bool__true);
@@ -465,4 +544,10 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, test_case__from_properties__override_all);
     ATF_ADD_TEST_CASE(tcs, test_case__from_properties__unknown);
     ATF_ADD_TEST_CASE(tcs, test_case__operator_eq);
+
+    ATF_ADD_TEST_CASE(tcs, check_requirements__none);
+    ATF_ADD_TEST_CASE(tcs, check_requirements__required_configs__one_ok);
+    ATF_ADD_TEST_CASE(tcs, check_requirements__required_configs__one_fail);
+    ATF_ADD_TEST_CASE(tcs, check_requirements__required_configs__many_ok);
+    ATF_ADD_TEST_CASE(tcs, check_requirements__required_configs__many_fail);
 }
