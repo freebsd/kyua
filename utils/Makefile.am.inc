@@ -37,6 +37,8 @@ libutils_a_SOURCES += utils/env.cpp
 libutils_a_SOURCES += utils/noncopyable.hpp
 libutils_a_SOURCES += utils/optional.hpp
 libutils_a_SOURCES += utils/optional.ipp
+libutils_a_SOURCES += utils/passwd.cpp
+libutils_a_SOURCES += utils/passwd.hpp
 libutils_a_SOURCES += utils/sanity.cpp
 libutils_a_SOURCES += utils/sanity.hpp
 
@@ -70,6 +72,11 @@ tests_utils_PROGRAMS += utils/optional_test
 utils_optional_test_SOURCES = utils/optional_test.cpp
 utils_optional_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
 utils_optional_test_LDADD = libutils.a $(ATF_CXX_LIBS)
+
+tests_utils_PROGRAMS += utils/passwd_test
+utils_passwd_test_SOURCES = utils/passwd_test.cpp
+utils_passwd_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
+utils_passwd_test_LDADD = libutils_test.a libutils.a $(ATF_CXX_LIBS)
 
 tests_utils_PROGRAMS += utils/sanity_test
 utils_sanity_test_SOURCES = utils/sanity_test.cpp

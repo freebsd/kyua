@@ -8,6 +8,7 @@ tp: datetime_test
 tp: env_test
 tp: format
 tp: fs
+tp: passwd_test
 tp: process
 tp: sanity_test
 tp: signals
