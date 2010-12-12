@@ -27,7 +27,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 noinst_LIBRARIES += libengine.a
-libengine_a_SOURCES  = engine/exceptions.cpp
+libengine_a_SOURCES  = engine/config.cpp
+libengine_a_SOURCES += engine/config.hpp
+libengine_a_SOURCES += engine/exceptions.cpp
 libengine_a_SOURCES += engine/exceptions.hpp
 libengine_a_SOURCES += engine/suite_config.cpp
 libengine_a_SOURCES += engine/suite_config.hpp
@@ -46,7 +48,12 @@ tests_enginedir = $(pkgtestsdir)/engine
 tests_engine_DATA = engine/Atffile engine/kyua.suite
 EXTRA_DIST += $(tests_engine_DATA)
 
-tests_engine_PROGRAMS = engine/exceptions_test
+tests_engine_PROGRAMS = engine/config_test
+engine_config_test_SOURCES = engine/config_test.cpp
+engine_config_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
+engine_config_test_LDADD = libengine.a libutils.a $(ATF_CXX_LIBS)
+
+tests_engine_PROGRAMS += engine/exceptions_test
 engine_exceptions_test_SOURCES = engine/exceptions_test.cpp
 engine_exceptions_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
 engine_exceptions_test_LDADD = libengine.a libutils.a $(ATF_CXX_LIBS)

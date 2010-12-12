@@ -440,8 +440,143 @@ ATF_TEST_CASE_BODY(check_requirements__none)
     const engine::test_case test_case = engine::test_case::from_properties(
         engine::test_case_id(fs::path("program"), "name"),
         engine::properties_map());
-    const engine::properties_map config;
-    ATF_REQUIRE(engine::check_requirements(test_case, config).empty());
+    const engine::properties_map user_config;
+    ATF_REQUIRE(engine::check_requirements(test_case, engine::config(),
+                                           user_config).empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(check_requirements__required_architectures__one_ok);
+ATF_TEST_CASE_BODY(check_requirements__required_architectures__one_ok)
+{
+    engine::properties_map metadata;
+    metadata["require.arch"] = "x86_64";
+    const engine::test_case test_case = engine::test_case::from_properties(
+        engine::test_case_id(fs::path("program"), "name"), metadata);
+
+    engine::config config;
+    config.architecture = "x86_64";
+    config.platform = "";
+    ATF_REQUIRE(engine::check_requirements(test_case, config,
+                                           engine::properties_map()).empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(
+    check_requirements__required_architectures__one_fail);
+ATF_TEST_CASE_BODY(check_requirements__required_architectures__one_fail)
+{
+    engine::properties_map metadata;
+    metadata["require.arch"] = "x86_64";
+    const engine::test_case test_case = engine::test_case::from_properties(
+        engine::test_case_id(fs::path("program"), "name"), metadata);
+
+    engine::config config;
+    config.architecture = "i386";
+    config.platform = "";
+    ATF_REQUIRE_MATCH("Current architecture 'i386' not supported",
+                      engine::check_requirements(test_case, config,
+                                                 engine::properties_map()));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(check_requirements__required_architectures__many_ok);
+ATF_TEST_CASE_BODY(check_requirements__required_architectures__many_ok)
+{
+    engine::properties_map metadata;
+    metadata["require.arch"] = "x86_64 i386 powerpc";
+    const engine::test_case test_case = engine::test_case::from_properties(
+        engine::test_case_id(fs::path("program"), "name"), metadata);
+
+    engine::config config;
+    config.architecture = "i386";
+    config.platform = "";
+    ATF_REQUIRE(engine::check_requirements(test_case, config,
+                                           engine::properties_map()).empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(
+    check_requirements__required_architectures__many_fail);
+ATF_TEST_CASE_BODY(check_requirements__required_architectures__many_fail)
+{
+    engine::properties_map metadata;
+    metadata["require.arch"] = "x86_64 i386 powerpc";
+    const engine::test_case test_case = engine::test_case::from_properties(
+        engine::test_case_id(fs::path("program"), "name"), metadata);
+
+    engine::config config;
+    config.architecture = "arm";
+    config.platform = "";
+    ATF_REQUIRE_MATCH("Current architecture 'arm' not supported",
+                      engine::check_requirements(test_case, config,
+                                                 engine::properties_map()));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(check_requirements__required_platforms__one_ok);
+ATF_TEST_CASE_BODY(check_requirements__required_platforms__one_ok)
+{
+    engine::properties_map metadata;
+    metadata["require.machine"] = "amd64";
+    const engine::test_case test_case = engine::test_case::from_properties(
+        engine::test_case_id(fs::path("program"), "name"), metadata);
+
+    engine::config config;
+    config.architecture = "";
+    config.platform = "amd64";
+    ATF_REQUIRE(engine::check_requirements(test_case, config,
+                                           engine::properties_map()).empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(check_requirements__required_platforms__one_fail);
+ATF_TEST_CASE_BODY(check_requirements__required_platforms__one_fail)
+{
+    engine::properties_map metadata;
+    metadata["require.machine"] = "amd64";
+    const engine::test_case test_case = engine::test_case::from_properties(
+        engine::test_case_id(fs::path("program"), "name"), metadata);
+
+    engine::config config;
+    config.architecture = "";
+    config.platform = "i386";
+    ATF_REQUIRE_MATCH("Current platform 'i386' not supported",
+                      engine::check_requirements(test_case, config,
+                                                 engine::properties_map()));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(check_requirements__required_platforms__many_ok);
+ATF_TEST_CASE_BODY(check_requirements__required_platforms__many_ok)
+{
+    engine::properties_map metadata;
+    metadata["require.machine"] = "amd64 i386 macppc";
+    const engine::test_case test_case = engine::test_case::from_properties(
+        engine::test_case_id(fs::path("program"), "name"), metadata);
+
+    engine::config config;
+    config.architecture = "";
+    config.platform = "i386";
+    ATF_REQUIRE(engine::check_requirements(test_case, config,
+                                           engine::properties_map()).empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(check_requirements__required_platforms__many_fail);
+ATF_TEST_CASE_BODY(check_requirements__required_platforms__many_fail)
+{
+    engine::properties_map metadata;
+    metadata["require.machine"] = "amd64 i386 macppc";
+    const engine::test_case test_case = engine::test_case::from_properties(
+        engine::test_case_id(fs::path("program"), "name"), metadata);
+
+    engine::config config;
+    config.architecture = "";
+    config.platform = "shark";
+    ATF_REQUIRE_MATCH("Current platform 'shark' not supported",
+                      engine::check_requirements(test_case, config,
+                                                 engine::properties_map()));
 }
 
 
@@ -453,11 +588,12 @@ ATF_TEST_CASE_BODY(check_requirements__required_configs__one_ok)
     const engine::test_case test_case = engine::test_case::from_properties(
         engine::test_case_id(fs::path("program"), "name"), metadata);
 
-    engine::properties_map config;
-    config["aaa"] = "value1";
-    config["my-var"] = "value2";
-    config["zzz"] = "value3";
-    ATF_REQUIRE(engine::check_requirements(test_case, config).empty());
+    engine::properties_map user_config;
+    user_config["aaa"] = "value1";
+    user_config["my-var"] = "value2";
+    user_config["zzz"] = "value3";
+    ATF_REQUIRE(engine::check_requirements(test_case, engine::config(),
+                                           user_config).empty());
 }
 
 
@@ -469,12 +605,13 @@ ATF_TEST_CASE_BODY(check_requirements__required_configs__one_fail)
     const engine::test_case test_case = engine::test_case::from_properties(
         engine::test_case_id(fs::path("program"), "name"), metadata);
 
-    engine::properties_map config;
-    config["aaa"] = "value1";
-    config["myvar"] = "value2";
-    config["zzz"] = "value3";
+    engine::properties_map user_config;
+    user_config["aaa"] = "value1";
+    user_config["myvar"] = "value2";
+    user_config["zzz"] = "value3";
     ATF_REQUIRE_MATCH("Required configuration property 'my-var' not defined",
-                      engine::check_requirements(test_case, config));
+                      engine::check_requirements(test_case, engine::config(),
+                                                 user_config));
 }
 
 
@@ -486,13 +623,14 @@ ATF_TEST_CASE_BODY(check_requirements__required_configs__many_ok)
     const engine::test_case test_case = engine::test_case::from_properties(
         engine::test_case_id(fs::path("program"), "name"), metadata);
 
-    engine::properties_map config;
-    config["aaa"] = "value1";
-    config["foo"] = "value2";
-    config["bar"] = "value3";
-    config["baz"] = "value4";
-    config["zzz"] = "value5";
-    ATF_REQUIRE(engine::check_requirements(test_case, config).empty());
+    engine::properties_map user_config;
+    user_config["aaa"] = "value1";
+    user_config["foo"] = "value2";
+    user_config["bar"] = "value3";
+    user_config["baz"] = "value4";
+    user_config["zzz"] = "value5";
+    ATF_REQUIRE(engine::check_requirements(test_case, engine::config(),
+                                           user_config).empty());
 }
 
 
@@ -504,12 +642,13 @@ ATF_TEST_CASE_BODY(check_requirements__required_configs__many_fail)
     const engine::test_case test_case = engine::test_case::from_properties(
         engine::test_case_id(fs::path("program"), "name"), metadata);
 
-    engine::properties_map config;
-    config["aaa"] = "value1";
-    config["foo"] = "value2";
-    config["zzz"] = "value3";
+    engine::properties_map user_config;
+    user_config["aaa"] = "value1";
+    user_config["foo"] = "value2";
+    user_config["zzz"] = "value3";
     ATF_REQUIRE_MATCH("Required configuration property 'bar' not defined",
-                      engine::check_requirements(test_case, config));
+                      engine::check_requirements(test_case, engine::config(),
+                                                 user_config));
 }
 
 
@@ -546,6 +685,16 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, test_case__operator_eq);
 
     ATF_ADD_TEST_CASE(tcs, check_requirements__none);
+    ATF_ADD_TEST_CASE(tcs, check_requirements__required_architectures__one_ok);
+    ATF_ADD_TEST_CASE(tcs,
+                      check_requirements__required_architectures__one_fail);
+    ATF_ADD_TEST_CASE(tcs, check_requirements__required_architectures__many_ok);
+    ATF_ADD_TEST_CASE(tcs,
+                      check_requirements__required_architectures__many_fail);
+    ATF_ADD_TEST_CASE(tcs, check_requirements__required_platforms__one_ok);
+    ATF_ADD_TEST_CASE(tcs, check_requirements__required_platforms__one_fail);
+    ATF_ADD_TEST_CASE(tcs, check_requirements__required_platforms__many_ok);
+    ATF_ADD_TEST_CASE(tcs, check_requirements__required_platforms__many_fail);
     ATF_ADD_TEST_CASE(tcs, check_requirements__required_configs__one_ok);
     ATF_ADD_TEST_CASE(tcs, check_requirements__required_configs__one_fail);
     ATF_ADD_TEST_CASE(tcs, check_requirements__required_configs__many_ok);

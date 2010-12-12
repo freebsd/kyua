@@ -291,10 +291,11 @@ fork_and_wait(Hook hook, const fs::path& outfile, const fs::path& errfile,
 /// \return The result of the execution of the test case.
 static results::result_ptr
 run_test_case_safe(const engine::test_case& test_case,
-                   const engine::properties_map& config)
+                   const engine::properties_map& user_config)
 {
-    const std::string skip_reason = engine::check_requirements(test_case,
-                                                               config);
+    const engine::config config;  // TODO(jmmv): Pass in as parameter.
+    const std::string skip_reason = engine::check_requirements(
+        test_case, config, user_config);
     if (!skip_reason.empty())
         return results::make_result(results::skipped(skip_reason));
 
@@ -306,7 +307,7 @@ run_test_case_safe(const engine::test_case& test_case,
     const fs::path result_file(workdir.directory() / "result.txt");
 
     const optional< process::status > body_status = fork_and_wait(
-        execute_test_case_body(test_case, result_file, rundir, config),
+        execute_test_case_body(test_case, result_file, rundir, user_config),
         workdir.directory() / "stdout.txt",
         workdir.directory() / "stderr.txt",
         test_case.timeout);
@@ -314,7 +315,7 @@ run_test_case_safe(const engine::test_case& test_case,
     optional< process::status > cleanup_status;
     if (test_case.has_cleanup) {
         cleanup_status = fork_and_wait(
-            execute_test_case_cleanup(test_case, rundir, config),
+            execute_test_case_cleanup(test_case, rundir, user_config),
             workdir.directory() / "cleanup-stdout.txt",
             workdir.directory() / "cleanup-stderr.txt",
             test_case.timeout);

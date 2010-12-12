@@ -26,68 +26,38 @@ dnl THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 dnl (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 dnl OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-AC_INIT([Kyua - Command line interface], [0.1],
-        [kyua-discuss@googlegroups.com], [kyua-cli],
-        [http://code.google.com/p/kyua/])
-AC_PREREQ([2.65])
+dnl
+dnl KYUA_UNAME_ARCHITECTURE
+dnl
+dnl Checks for the current architecture name (aka processor type) and defines
+dnl the KYUA_ARCHITECTURE macro to its value.
+dnl
+AC_DEFUN([KYUA_UNAME_ARCHITECTURE], [
+    AC_MSG_CHECKING([for architecture name])
+    AC_ARG_VAR([KYUA_ARCHITECTURE],
+               [Name of the system architecture (aka processor type)])
+    if test x"${KYUA_ARCHITECTURE-unset}" = x"unset"; then
+        KYUA_ARCHITECTURE="$(uname -p)"
+    fi
+    AC_DEFINE_UNQUOTED([KYUA_ARCHITECTURE], "${KYUA_ARCHITECTURE}",
+                       [Name of the system architecture (aka processor type)])
+    AC_MSG_RESULT([${KYUA_ARCHITECTURE}])
+])
 
-
-AC_COPYRIGHT([Copyright 2010, Google Inc.])
-AC_CONFIG_AUX_DIR([admin])
-AC_CONFIG_FILES([Doxyfile Makefile utils/defs.hpp])
-AC_CONFIG_HEADERS([config.h])
-AC_CONFIG_MACRO_DIR([m4])
-AC_CONFIG_SRCDIR([main.cpp])
-AC_CONFIG_TESTDIR([bootstrap])
-
-
-AM_INIT_AUTOMAKE([1.9 check-news foreign subdir-objects -Wall])
-
-
-AC_LANG([C++])
-AC_PROG_CXX
-KYUA_REQUIRE_CXX
-KYUA_DEVELOPER_MODE([C++])
-KYUA_ATTRIBUTE_NORETURN
-KYUA_GETOPT_WITH_OPTRESET
-KYUA_LAST_SIGNO
-AC_CHECK_FUNCS([putenv setenv unsetenv])
-
-
-AC_MSG_CHECKING([whether getcwd(NULL, 0) works])
-AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <stdlib.h>
-#include <unistd.h>],
-    [char *cwd = getcwd(NULL, 0);
-     return (cwd != NULL) ? EXIT_SUCCESS : EXIT_FAILURE;])],
-    [AC_MSG_RESULT(yes)
-     AC_DEFINE([HAVE_GETCWD_DYN], [1],
-               [Define to 1 if getcwd(NULL, 0) works])],
-    [AC_MSG_RESULT(no)])
-
-
-AC_PROG_RANLIB
-
-
-PKG_CHECK_MODULES([ATF_CXX], [atf-c++ >= 0.12],
-                  [],
-                  AC_MSG_ERROR([atf-c++ (0.12 or newer) is required]))
-KYUA_DOXYGEN
-AC_PATH_PROG([SVN], [svn])
-
-
-KYUA_UNAME_ARCHITECTURE
-KYUA_UNAME_PLATFORM
-
-
-dnl BSD make(1) doesn't deal with targets specified as './foo' well: they
-dnl need to be specified as 'foo'.  The following hack is to workaround this
-dnl issue.
-if test "${srcdir}" = .; then
-    target_srcdir=
-else
-    target_srcdir="${srcdir}/"
-fi
-AC_SUBST([target_srcdir])
-
-
-AC_OUTPUT
+dnl
+dnl KYUA_UNAME_PLATFORM
+dnl
+dnl Checks for the current platform name (aka machine name) and defines
+dnl the KYUA_PLATFORM macro to its value.
+dnl
+AC_DEFUN([KYUA_UNAME_PLATFORM], [
+    AC_MSG_CHECKING([for platform name])
+    AC_ARG_VAR([KYUA_PLATFORM],
+               [Name of the system platform (aka machine name)])
+    if test x"${KYUA_PLATFORM-unset}" = x"unset"; then
+        KYUA_PLATFORM="$(uname -m)"
+    fi
+    AC_DEFINE_UNQUOTED([KYUA_PLATFORM], "${KYUA_PLATFORM}",
+                       [Name of the system platform (aka machine name)])
+    AC_MSG_RESULT([${KYUA_PLATFORM}])
+])

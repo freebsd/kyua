@@ -32,6 +32,7 @@
 #include <iterator>
 #include <sstream>
 
+#include "engine/config.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/test_case.hpp"
 #include "utils/fs/exceptions.hpp"
@@ -358,20 +359,35 @@ engine::test_case::operator==(const test_case& tc) const
 /// Checks if all the requirements specified by the test case are met.
 ///
 /// \param test_case The test case for which to validate the requirements.
-/// \param config The configuration properties provided by the user.
+/// \param config The engine configuration.
+/// \param user_config The configuration properties provided by the user.
 ///
 /// \return A string describing what is missing; empty if everything is OK.
 std::string
 engine::check_requirements(const engine::test_case& test_case,
-                           const properties_map& config)
+                           const engine::config& config,
+                           const properties_map& user_config)
 {
     for (strings_set::const_iterator iter = test_case.required_configs.begin();
          iter != test_case.required_configs.end(); iter++)
-        if (config.find(*iter) == config.end())
+        if (user_config.find(*iter) == user_config.end())
             return F("Required configuration property '%s' not defined") %
                 *iter;
 
-    // TODO(jmmv): Validate architecture, platform, programs and user.
+    if (!test_case.allowed_architectures.empty()) {
+        if (test_case.allowed_architectures.find(config.architecture) ==
+            test_case.allowed_architectures.end())
+            return F("Current architecture '%s' not supported") %
+                config.architecture;
+    }
+
+    if (!test_case.allowed_platforms.empty()) {
+        if (test_case.allowed_platforms.find(config.platform) ==
+            test_case.allowed_platforms.end())
+            return F("Current platform '%s' not supported") % config.platform;
+    }
+
+    // TODO(jmmv): Validate programs and user.
 
     return "";
 }

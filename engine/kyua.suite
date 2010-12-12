@@ -1,3 +1,4 @@
+config_test
 exceptions_test
 results_test
 runner_test
