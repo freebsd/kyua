@@ -287,13 +287,15 @@ fork_and_wait(Hook hook, const fs::path& outfile, const fs::path& errfile,
 /// but is correctly captured in the caller.
 ///
 /// \param test_case The test case to execute.
+/// \param config The values for the current engine configuration.
+/// \param user_config User-specified configuration variables.
 ///
 /// \return The result of the execution of the test case.
 static results::result_ptr
 run_test_case_safe(const engine::test_case& test_case,
+                   const engine::config& config,
                    const engine::properties_map& user_config)
 {
-    const engine::config config;  // TODO(jmmv): Pass in as parameter.
     const std::string skip_reason = engine::check_requirements(
         test_case, config, user_config);
     if (!skip_reason.empty())
@@ -345,16 +347,18 @@ runner::hooks::~hooks(void)
 /// want them to crash the runtime system.
 ///
 /// \param test_case The test to execute.
-/// \param config The configuration variables provided by the user.
+/// \param config The values for the current engine configuration.
+/// \param user_config The configuration variables provided by the user.
 ///
 /// \return The result of the test case execution.
 results::result_ptr
 runner::run_test_case(const engine::test_case& test_case,
-                      const engine::properties_map& config)
+                      const engine::config& config,
+                      const engine::properties_map& user_config)
 {
     results::result_ptr result;
     try {
-        result = run_test_case_safe(test_case, config);
+        result = run_test_case_safe(test_case, config, user_config);
     } catch (const std::exception& e) {
         result = results::make_result(results::broken(F(
             "The test caused an error in the runtime system: %s") % e.what()));
@@ -396,7 +400,9 @@ runner::run_test_program(const fs::path& test_program,
         const engine::test_case& test_case = *iter;
 
         hooks->start_test_case(test_case.identifier);
-        results::result_ptr result = run_test_case(test_case, config);
+        // TODO(jmmv): Pass in the engine configuration.
+        results::result_ptr result = run_test_case(test_case, engine::config(),
+                                                   config);
         hooks->finish_test_case(test_case.identifier, result);
     }
 }
