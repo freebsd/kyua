@@ -436,6 +436,24 @@ ATF_TEST_CASE_BODY(run_test_case__required_configs)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__required_programs);
+ATF_TEST_CASE_BODY(run_test_case__required_programs)
+{
+    engine::properties_map metadata;
+    metadata["require.progs"] = "/non-existent/program";
+    results::result_ptr result = runner::run_test_case(
+        make_test_case(get_helpers_path(this), "create_cookie_in_control_dir",
+                       metadata),
+        engine::config(), engine::properties_map());
+    compare_results(results::skipped(
+        "Required program '/non-existent/program' not found"), result.get());
+
+    if (fs::exists(fs::path("cookie")))
+        fail("The test case was not really skipped when the requirements "
+             "check failed");
+}
+
+
 ATF_TEST_CASE(run_test_case__required_user__root__ok);
 ATF_TEST_CASE_HEAD(run_test_case__required_user__root__ok)
 {
@@ -626,6 +644,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, run_test_case__allowed_architectures);
     ATF_ADD_TEST_CASE(tcs, run_test_case__allowed_platforms);
     ATF_ADD_TEST_CASE(tcs, run_test_case__required_configs);
+    ATF_ADD_TEST_CASE(tcs, run_test_case__required_programs);
     ATF_ADD_TEST_CASE(tcs, run_test_case__required_user__root__ok);
     ATF_ADD_TEST_CASE(tcs, run_test_case__required_user__root__skip);
     ATF_ADD_TEST_CASE(tcs, run_test_case__required_user__unprivileged__ok);

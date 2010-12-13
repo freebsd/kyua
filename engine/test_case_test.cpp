@@ -32,7 +32,10 @@
 
 #include "engine/exceptions.hpp"
 #include "engine/test_case.hpp"
+#include "utils/env.hpp"
+#include "utils/fs/operations.hpp"
 #include "utils/passwd.hpp"
+#include "utils/test_utils.hpp"
 
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
@@ -753,6 +756,61 @@ ATF_TEST_CASE_BODY(check_requirements__required_user__unprivileged__fail)
 }
 
 
+ATF_TEST_CASE(check_requirements__required_programs__ok);
+ATF_TEST_CASE_HEAD(check_requirements__required_programs__ok)
+{
+    set_md_var("require.progs", "/bin/ls /bin/mv");
+}
+ATF_TEST_CASE_BODY(check_requirements__required_programs__ok)
+{
+    fs::mkdir(fs::path("bin"), 0755);
+    utils::create_file(fs::path("bin/foo"));
+    utils::setenv("PATH", (fs::current_path() / "bin").str());
+
+    engine::properties_map metadata;
+    metadata["require.progs"] = "/bin/ls foo /bin/mv";
+    const engine::test_case test_case = engine::test_case::from_properties(
+        engine::test_case_id(fs::path("program"), "name"), metadata);
+
+    ATF_REQUIRE(engine::check_requirements(test_case, engine::config(),
+                                           engine::properties_map()).empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(
+    check_requirements__required_programs__fail_absolute);
+ATF_TEST_CASE_BODY(check_requirements__required_programs__fail_absolute)
+{
+    engine::properties_map metadata;
+    metadata["require.progs"] = "/non-existent/program";
+    const engine::test_case test_case = engine::test_case::from_properties(
+        engine::test_case_id(fs::path("program"), "name"), metadata);
+
+    ATF_REQUIRE_MATCH("'/non-existent/program' not found$",
+                      engine::check_requirements(test_case, engine::config(),
+                                                 engine::properties_map()));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(
+    check_requirements__required_programs__fail_relative);
+ATF_TEST_CASE_BODY(check_requirements__required_programs__fail_relative)
+{
+    fs::mkdir(fs::path("bin"), 0755);
+    utils::create_file(fs::path("bin/foo"));
+    utils::setenv("PATH", (fs::current_path() / "bin").str());
+
+    engine::properties_map metadata;
+    metadata["require.progs"] = "foo bar";
+    const engine::test_case test_case = engine::test_case::from_properties(
+        engine::test_case_id(fs::path("program"), "name"), metadata);
+
+    ATF_REQUIRE_MATCH("'bar' not found in PATH$",
+                      engine::check_requirements(test_case, engine::config(),
+                                                 engine::properties_map()));
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, parse_bool__true);
@@ -808,4 +866,9 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, check_requirements__required_user__unprivileged__ok);
     ATF_ADD_TEST_CASE(tcs,
                       check_requirements__required_user__unprivileged__fail);
+    ATF_ADD_TEST_CASE(tcs, check_requirements__required_programs__ok);
+    ATF_ADD_TEST_CASE(tcs,
+                      check_requirements__required_programs__fail_absolute);
+    ATF_ADD_TEST_CASE(tcs,
+                      check_requirements__required_programs__fail_relative);
 }

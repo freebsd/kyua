@@ -87,7 +87,8 @@ engine_suite_config_test_LDADD = libengine.a libutils.a $(ATF_CXX_LIBS)
 tests_engine_PROGRAMS += engine/test_case_test
 engine_test_case_test_SOURCES = engine/test_case_test.cpp
 engine_test_case_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
-engine_test_case_test_LDADD = libengine.a libutils.a $(ATF_CXX_LIBS)
+engine_test_case_test_LDADD = libengine.a libutils.a libutils_test.a \
+                              $(ATF_CXX_LIBS)
 
 tests_engine_PROGRAMS += engine/test_program_test
 engine_test_program_test_SOURCES = engine/test_program_test.cpp

@@ -36,6 +36,7 @@
 #include "engine/exceptions.hpp"
 #include "engine/test_case.hpp"
 #include "utils/fs/exceptions.hpp"
+#include "utils/fs/operations.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/passwd.hpp"
 #include "utils/sanity.hpp"
@@ -409,7 +410,16 @@ engine::check_requirements(const engine::test_case& test_case,
             UNREACHABLE_MSG("Value of require.user not properly validated");
     }
 
-    // TODO(jmmv): Validate programs.
+    for (paths_set::const_iterator iter = test_case.required_programs.begin();
+         iter != test_case.required_programs.end(); iter++) {
+        if ((*iter).is_absolute()) {
+            if (!fs::exists(*iter))
+                return F("Required program '%s' not found") % *iter;
+        } else {
+            if (!fs::find_in_path((*iter).c_str()))
+                return F("Required program '%s' not found in PATH") % *iter;
+        }
+    }
 
     return "";
 }
