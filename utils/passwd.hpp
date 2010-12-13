@@ -32,23 +32,33 @@
 #if !defined(UTILS_PASSWD_HPP)
 #define UTILS_PASSWD_HPP
 
+#include <string>
+
 namespace utils {
 namespace passwd {
 
 
 /// Represents a system user.
-class user {
-    int _uid;
+struct user {
+    /// The name of the user.
+    const std::string name;
 
-public:
-    user(const int);
+    /// The system-wide identifier of the user.
+    unsigned int uid;
+
+    /// The login group identifier for the user.
+    unsigned int gid;
+
+    user(const std::string&, const unsigned int, const unsigned int);
 
     bool is_root(void) const;
-    int uid(void) const;
 };
 
 
 user current_user(void);
+void drop_privileges(const user&);
+user find_user_by_name(const std::string&);
+user find_user_by_uid(const unsigned int);
 void set_current_user_for_testing(const user&);
 
 

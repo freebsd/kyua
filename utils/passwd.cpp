@@ -27,20 +27,27 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 extern "C" {
+#include <sys/types.h>
+
+#include <pwd.h>
 #include <unistd.h>
 }
 
+#include <stdexcept>
+
+#include "utils/format/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/passwd.hpp"
+#include "utils/sanity.hpp"
 
-namespace passwd = utils::passwd;
+namespace passwd_ns = utils::passwd;
 
 
 namespace {
 
 
 /// If defined, replaces the value returned by current_user().
-static utils::optional< passwd::user > fake_current_user;
+static utils::optional< passwd_ns::user > fake_current_user;
 
 
 }  // anonymous namespace
@@ -48,9 +55,14 @@ static utils::optional< passwd::user > fake_current_user;
 
 /// Constructs a new user.
 ///
+/// \param name_ The name of the user.
 /// \param uid_ The user identifier.
-passwd::user::user(const int uid_) :
-    _uid(uid_)
+/// \param gid_ The login group identifier.
+passwd_ns::user::user(const std::string& name_, const unsigned int uid_,
+                      const unsigned int gid_) :
+    name(name_),
+    uid(uid_),
+    gid(gid_)
 {
 }
 
@@ -59,32 +71,82 @@ passwd::user::user(const int uid_) :
 ///
 /// \return True if the user is root, false otherwise.
 bool
-passwd::user::is_root(void) const
+passwd_ns::user::is_root(void) const
 {
-    return _uid == 0;
-}
-
-
-/// Returns the native user identifier.
-///
-/// \return The user identifier.
-int
-passwd::user::uid(void) const
-{
-    return _uid;
+    return uid == 0;
 }
 
 
 /// Gets the current user.
 ///
 /// \return The current user.
-passwd::user
-passwd::current_user(void)
+passwd_ns::user
+passwd_ns::current_user(void)
 {
     if (fake_current_user)
         return fake_current_user.get();
     else
-        return user(::getpid());
+        return find_user_by_uid(::getuid());
+}
+
+
+/// Drops privileges to the specified user.
+///
+/// \param unprivileged_user The user to drop privileges to.
+///
+/// \throw std::runtime_error If there is any problem dropping privileges.
+void
+passwd_ns::drop_privileges(const user& unprivileged_user)
+{
+    PRE(::getuid() == 0);
+
+    if (::setgid(unprivileged_user.gid) == -1)
+        throw std::runtime_error(F("Failed to drop group privileges (current "
+                                   "GID %d, new GID %d)")
+                                 % ::getgid() % unprivileged_user.gid);
+
+    if (::setuid(unprivileged_user.uid) == -1)
+        throw std::runtime_error(F("Failed to drop user privileges (current "
+                                   "UID %d, new UID %d")
+                                 % ::getuid() % unprivileged_user.uid);
+}
+
+
+/// Gets information about a user by its name.
+///
+/// \param name The name of the user to query.
+///
+/// \return The information about the user.
+///
+/// \throw std::runtime_error If the user does not exist.
+passwd_ns::user
+passwd_ns::find_user_by_name(const std::string& name)
+{
+    const struct ::passwd* pw = ::getpwnam(name.c_str());
+    if (pw == NULL)
+        throw std::runtime_error(F("Failed to get information about the user "
+                                   "'%s'") % name);
+    INV(pw->pw_name == name);
+    return user(pw->pw_name, pw->pw_uid, pw->pw_gid);
+}
+
+
+/// Gets information about a user by its identifier.
+///
+/// \param name The identifier of the user to query.
+///
+/// \return The information about the user.
+///
+/// \throw std::runtime_error If the user does not exist.
+passwd_ns::user
+passwd_ns::find_user_by_uid(const unsigned int uid)
+{
+    const struct ::passwd* pw = ::getpwuid(uid);
+    if (pw == NULL)
+        throw std::runtime_error(F("Failed to get information about the user "
+                                   "with UID %d") % uid);
+    INV(pw->pw_uid == uid);
+    return user(pw->pw_name, pw->pw_uid, pw->pw_gid);
 }
 
 
@@ -92,9 +154,9 @@ passwd::current_user(void)
 ///
 /// This DOES NOT change the current privileges!
 ///
-/// \param The new current user.
+/// \param user The new current user.
 void
-passwd::set_current_user_for_testing(const user& new_current_user)
+passwd_ns::set_current_user_for_testing(const user& new_current_user)
 {
     fake_current_user = new_current_user;
 }
