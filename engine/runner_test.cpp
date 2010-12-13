@@ -45,7 +45,6 @@ extern "C" {
 #include "utils/env.hpp"
 #include "utils/noncopyable.hpp"
 #include "utils/passwd.hpp"
-#include "utils/test_utils.hpp"
 
 namespace fs = utils::fs;
 namespace passwd = utils::passwd;
@@ -240,7 +239,7 @@ ATF_TEST_CASE_BODY(run_test_case__config_variables)
         engine::config(), user_config);
     compare_results(results::passed(), result.get());
 
-    if (!utils::exists(fs::path("cookie")))
+    if (!fs::exists(fs::path("cookie")))
         fail("The cookie was not created where we expected; the test program "
              "probably received an invalid configuration variable");
 }
@@ -259,12 +258,12 @@ ATF_TEST_CASE_BODY(run_test_case__cleanup_shares_workdir)
         engine::config(), user_config);
     compare_results(results::skipped("cookie created"), result.get());
 
-    if (utils::exists(fs::path("missing_cookie")))
+    if (fs::exists(fs::path("missing_cookie")))
         fail("The cleanup part did not see the cookie; the work directory "
              "is probably not shared");
-    if (utils::exists(fs::path("invalid_cookie")))
+    if (fs::exists(fs::path("invalid_cookie")))
         fail("The cleanup part read an invalid cookie");
-    if (!utils::exists(fs::path("cookie_ok")))
+    if (!fs::exists(fs::path("cookie_ok")))
         fail("The cleanup part was not executed");
 }
 
@@ -281,7 +280,7 @@ ATF_TEST_CASE_BODY(run_test_case__has_cleanup__false)
                        metadata), engine::config(), user_config);
     compare_results(results::passed(), result.get());
 
-    if (utils::exists(fs::path("cookie")))
+    if (fs::exists(fs::path("cookie")))
         fail("The cleanup part was executed even though the test case set "
              "has.cleanup to false");
 }
@@ -299,7 +298,7 @@ ATF_TEST_CASE_BODY(run_test_case__has_cleanup__true)
                        metadata), engine::config(), user_config);
     compare_results(results::passed(), result.get());
 
-    if (!utils::exists(fs::path("cookie")))
+    if (!fs::exists(fs::path("cookie")))
         fail("The cleanup part was not executed even though the test case set "
              "has.cleanup to true");
 }
@@ -365,7 +364,7 @@ ATF_TEST_CASE_BODY(run_test_case__isolation_workdir)
         engine::config(), engine::properties_map());
     compare_results(results::passed(), result.get());
 
-    if (utils::exists(fs::path("cookie")))
+    if (fs::exists(fs::path("cookie")))
         fail("It seems that the test case was not executed in a separate "
              "work directory");
 }
@@ -387,7 +386,7 @@ ATF_TEST_CASE_BODY(run_test_case__allowed_architectures)
        "Current architecture 'powerpc' not supported"),
         result.get());
 
-    if (utils::exists(fs::path("cookie")))
+    if (fs::exists(fs::path("cookie")))
         fail("The test case was not really skipped when the requirements "
              "check failed");
 }
@@ -409,7 +408,7 @@ ATF_TEST_CASE_BODY(run_test_case__allowed_platforms)
        "Current platform 'macppc' not supported"),
         result.get());
 
-    if (utils::exists(fs::path("cookie")))
+    if (fs::exists(fs::path("cookie")))
         fail("The test case was not really skipped when the requirements "
              "check failed");
 }
@@ -431,7 +430,7 @@ ATF_TEST_CASE_BODY(run_test_case__required_configs)
         "Required configuration property 'used-var' not defined"),
         result.get());
 
-    if (utils::exists(fs::path("cookie")))
+    if (fs::exists(fs::path("cookie")))
         fail("The test case was not really skipped when the requirements "
              "check failed");
 }
@@ -543,7 +542,7 @@ ATF_TEST_CASE_BODY(run_test_case__timeout_body)
         engine::config(), user_config);
     validate_broken("Test case timed out after 1 seconds", result.get());
 
-    if (utils::exists(fs::path("cookie")))
+    if (fs::exists(fs::path("cookie")))
         fail("It seems that the test case was not killed after it timed out");
 }
 
@@ -562,7 +561,7 @@ ATF_TEST_CASE_BODY(run_test_case__timeout_cleanup)
     validate_broken("Test case cleanup timed out after 1 seconds",
                     result.get());
 
-    if (utils::exists(fs::path("cookie")))
+    if (fs::exists(fs::path("cookie")))
         fail("It seems that the test case was not killed after it timed out");
 }
 

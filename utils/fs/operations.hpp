@@ -35,6 +35,8 @@
 #if !defined(UTILS_FS_OPERATIONS_HPP)
 #define UTILS_FS_OPERATIONS_HPP
 
+#include "utils/optional.hpp"
+
 namespace utils {
 namespace fs {
 
@@ -44,6 +46,8 @@ class path;
 
 void cleanup(const path&);
 path current_path(void);
+bool exists(const fs::path&);
+utils::optional< path > find_in_path(const char*);
 void mkdir(const path&, const int);
 void mkdir_p(const path&, const int);
 fs::path mkdtemp(const path&);

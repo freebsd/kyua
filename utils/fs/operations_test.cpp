@@ -39,10 +39,12 @@ extern "C" {
 
 #include <atf-c++.hpp>
 
+#include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/optional.ipp"
 #include "utils/test_utils.hpp"
 
 namespace fs = utils::fs;
@@ -152,6 +154,77 @@ ATF_TEST_CASE_BODY(current_path__enoent)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(exists);
+ATF_TEST_CASE_BODY(exists)
+{
+    const fs::path dir("dir");
+    ATF_REQUIRE(!fs::exists(dir));
+    fs::mkdir(dir, 0755);
+    ATF_REQUIRE(fs::exists(dir));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(find_in_path__no_path);
+ATF_TEST_CASE_BODY(find_in_path__no_path)
+{
+    utils::unsetenv("PATH");
+    ATF_REQUIRE(!fs::find_in_path("ls"));
+    utils::create_file(fs::path("ls"));
+    ATF_REQUIRE(!fs::find_in_path("ls"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(find_in_path__empty_path);
+ATF_TEST_CASE_BODY(find_in_path__empty_path)
+{
+    utils::setenv("PATH", "");
+    ATF_REQUIRE(!fs::find_in_path("ls"));
+    utils::create_file(fs::path("ls"));
+    ATF_REQUIRE(!fs::find_in_path("ls"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(find_in_path__one_component);
+ATF_TEST_CASE_BODY(find_in_path__one_component)
+{
+    const fs::path dir = fs::current_path() / "bin";
+    fs::mkdir(dir, 0755);
+    utils::setenv("PATH", dir.str());
+
+    ATF_REQUIRE(!fs::find_in_path("ls"));
+    utils::create_file(dir / "ls");
+    ATF_REQUIRE_EQ(dir / "ls", fs::find_in_path("ls").get());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(find_in_path__many_components);
+ATF_TEST_CASE_BODY(find_in_path__many_components)
+{
+    const fs::path dir1 = fs::current_path() / "dir1";
+    const fs::path dir2 = fs::current_path() / "dir2";
+    fs::mkdir(dir1, 0755);
+    fs::mkdir(dir2, 0755);
+    utils::setenv("PATH", dir1.str() + ":" + dir2.str());
+
+    ATF_REQUIRE(!fs::find_in_path("ls"));
+    utils::create_file(dir2 / "ls");
+    ATF_REQUIRE_EQ(dir2 / "ls", fs::find_in_path("ls").get());
+    utils::create_file(dir1 / "ls");
+    ATF_REQUIRE_EQ(dir1 / "ls", fs::find_in_path("ls").get());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(find_in_path__current_directory);
+ATF_TEST_CASE_BODY(find_in_path__current_directory)
+{
+    utils::setenv("PATH", "bin:");
+
+    ATF_REQUIRE(!fs::find_in_path("foo-bar"));
+    utils::create_file(fs::path("foo-bar"));
+    ATF_REQUIRE_EQ(fs::path("foo-bar"), fs::find_in_path("foo-bar").get());
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(mkdir__ok);
 ATF_TEST_CASE_BODY(mkdir__ok)
 {
@@ -232,6 +305,14 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, current_path__ok);
     ATF_ADD_TEST_CASE(tcs, current_path__enoent);
+
+    ATF_ADD_TEST_CASE(tcs, exists);
+
+    ATF_ADD_TEST_CASE(tcs, find_in_path__no_path);
+    ATF_ADD_TEST_CASE(tcs, find_in_path__empty_path);
+    ATF_ADD_TEST_CASE(tcs, find_in_path__one_component);
+    ATF_ADD_TEST_CASE(tcs, find_in_path__many_components);
+    ATF_ADD_TEST_CASE(tcs, find_in_path__current_directory);
 
     ATF_ADD_TEST_CASE(tcs, mkdir__ok);
     ATF_ADD_TEST_CASE(tcs, mkdir__enoent);

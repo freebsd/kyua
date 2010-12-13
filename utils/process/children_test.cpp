@@ -45,6 +45,7 @@ extern "C" {
 #include "utils/datetime.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/fs/operations.hpp"
 #include "utils/process/children.ipp"
 #include "utils/process/exceptions.hpp"
 #include "utils/process/system.hpp"
@@ -254,7 +255,7 @@ ATF_TEST_CASE_BODY(child_with_files__wait_timeout_ok)
         process::child_with_files::fork(
             child_wait< 500000 >, fs::path("out"), fs::path("err"));
     const process::status status = child->wait(datetime::delta(5, 0));
-    ATF_REQUIRE(utils::exists(fs::path("finished")));
+    ATF_REQUIRE(fs::exists(fs::path("finished")));
 }
 
 
@@ -267,12 +268,12 @@ ATF_TEST_CASE_BODY(child_with_files__wait_timeout_expired)
             fs::path("err"));
     ATF_REQUIRE_THROW(process::timeout_error,
                       child->wait(datetime::delta(0, 50000)));
-    ATF_REQUIRE(!utils::exists(fs::path("finished")));
+    ATF_REQUIRE(!fs::exists(fs::path("finished")));
 
     // Check that the subprocess of the child is also killed.
     ::sleep(1);
-    ATF_REQUIRE(!utils::exists(fs::path("finished")));
-    ATF_REQUIRE(!utils::exists(fs::path("subfinished")));
+    ATF_REQUIRE(!fs::exists(fs::path("finished")));
+    ATF_REQUIRE(!fs::exists(fs::path("subfinished")));
 }
 
 
@@ -289,8 +290,8 @@ ATF_TEST_CASE_BODY(child_with_files__fork_fail)
         ATF_REQUIRE(utils::grep_string("fork.*failed", e.what()));
         ATF_REQUIRE_EQ(1234, e.original_errno());
     }
-    ATF_REQUIRE(!utils::exists(fs::path("a.txt")));
-    ATF_REQUIRE(!utils::exists(fs::path("b.txt")));
+    ATF_REQUIRE(!fs::exists(fs::path("a.txt")));
+    ATF_REQUIRE(!fs::exists(fs::path("b.txt")));
 }
 
 
@@ -305,8 +306,8 @@ ATF_TEST_CASE_BODY(child_with_files__create_stdout_fail)
     const process::status status = child->wait();
     ATF_REQUIRE(status.signaled());
     ATF_REQUIRE_EQ(SIGABRT, status.termsig());
-    ATF_REQUIRE(!utils::exists(fs::path("raise-error")));
-    ATF_REQUIRE(!utils::exists(fs::path("created")));
+    ATF_REQUIRE(!fs::exists(fs::path("raise-error")));
+    ATF_REQUIRE(!fs::exists(fs::path("created")));
 }
 
 
@@ -321,8 +322,8 @@ ATF_TEST_CASE_BODY(child_with_files__create_stderr_fail)
     const process::status status = child->wait();
     ATF_REQUIRE(status.signaled());
     ATF_REQUIRE_EQ(SIGABRT, status.termsig());
-    ATF_REQUIRE(utils::exists(fs::path("created")));
-    ATF_REQUIRE(!utils::exists(fs::path("raise-error")));
+    ATF_REQUIRE(fs::exists(fs::path("created")));
+    ATF_REQUIRE(!fs::exists(fs::path("raise-error")));
 }
 
 
@@ -375,7 +376,7 @@ ATF_TEST_CASE_BODY(child_with_output__wait_timeout_ok)
     std::auto_ptr< process::child_with_output > child =
         process::child_with_output::fork(child_wait< 500000 >);
     const process::status status = child->wait(datetime::delta(5, 0));
-    ATF_REQUIRE(utils::exists(fs::path("finished")));
+    ATF_REQUIRE(fs::exists(fs::path("finished")));
 }
 
 
@@ -386,12 +387,12 @@ ATF_TEST_CASE_BODY(child_with_output__wait_timeout_expired)
         process::child_with_output::fork(child_wait_with_subchild< 500000 >);
     ATF_REQUIRE_THROW(process::timeout_error,
                       child->wait(datetime::delta(0, 50000)));
-    ATF_REQUIRE(!utils::exists(fs::path("finished")));
+    ATF_REQUIRE(!fs::exists(fs::path("finished")));
 
     // Check that the subprocess of the child is also killed.
     ::sleep(1);
-    ATF_REQUIRE(!utils::exists(fs::path("finished")));
-    ATF_REQUIRE(!utils::exists(fs::path("subfinished")));
+    ATF_REQUIRE(!fs::exists(fs::path("finished")));
+    ATF_REQUIRE(!fs::exists(fs::path("subfinished")));
 }
 
 

@@ -77,8 +77,7 @@ engine_runner_helpers_LDADD = libutils.a $(ATF_CXX_LIBS)
 tests_engine_PROGRAMS += engine/runner_test
 engine_runner_test_SOURCES = engine/runner_test.cpp
 engine_runner_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
-engine_runner_test_LDADD = libengine.a libutils.a libutils_test.a \
-                           $(ATF_CXX_LIBS)
+engine_runner_test_LDADD = libengine.a libutils.a $(ATF_CXX_LIBS)
 
 tests_engine_PROGRAMS += engine/suite_config_test
 engine_suite_config_test_SOURCES = engine/suite_config_test.cpp

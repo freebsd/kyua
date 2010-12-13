@@ -39,15 +39,21 @@ extern "C" {
 
 #include <cerrno>
 #include <cstring>
+#include <sstream>
 
 #include "utils/auto_array.ipp"
+#include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 
 namespace fs = utils::fs;
+
+using utils::none;
+using utils::optional;
 
 
 namespace {
@@ -175,6 +181,44 @@ fs::current_path(void)
         ::free(cwd);
         throw;
     }
+}
+
+
+/// Checks if a file exists.
+///
+/// Be aware that this is racy in the same way as access(2) is.
+///
+/// \param path The file to check the existance of.
+///
+/// \return True if the file exists; false otherwise.
+bool
+fs::exists(const fs::path& path)
+{
+    return ::access(path.c_str(), F_OK) == 0;
+}
+
+
+/// Locates a file in the PATH.
+///
+/// \param name The file to locate.
+///
+/// \return The path to the located file or none if it was not found
+optional< fs::path >
+fs::find_in_path(const char* name)
+{
+    const optional< std::string > current_path = utils::getenv("PATH");
+    if (!current_path || current_path.get().empty())
+        return none;
+
+    std::istringstream path_input(current_path.get() + ":");
+    std::string path_component;
+    while (std::getline(path_input, path_component, ':').good()) {
+        const fs::path candidate = path_component.empty() ?
+            fs::path(name) : (fs::path(path_component) / name);
+        if (exists(candidate))
+            return utils::make_optional(candidate);
+    }
+    return none;
 }
 
 

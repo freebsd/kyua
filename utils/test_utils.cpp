@@ -77,20 +77,6 @@ utils::create_file(const fs::path& file)
 }
 
 
-/// Checks if a file exists.
-///
-/// Be aware that this is racy in the same way as access(2) is.
-///
-/// \param path The file to check the existance of.
-///
-/// \return True if the file exists; false otherwise.
-bool
-utils::exists(const fs::path& path)
-{
-    return ::access(path.c_str(), F_OK) == 0;
-}
-
-
 /// Looks for a regular expression in a file.
 ///
 /// \param regexp The regular expression.
