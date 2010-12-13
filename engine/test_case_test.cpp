@@ -32,9 +32,11 @@
 
 #include "engine/exceptions.hpp"
 #include "engine/test_case.hpp"
+#include "utils/passwd.hpp"
 
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
+namespace passwd = utils::passwd;
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(parse_bool__true)
@@ -601,7 +603,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(check_requirements__required_configs__one_fail);
 ATF_TEST_CASE_BODY(check_requirements__required_configs__one_fail)
 {
     engine::properties_map metadata;
-    metadata["require.config"] = "my-var";
+    metadata["require.config"] = "unprivileged-user";
     const engine::test_case test_case = engine::test_case::from_properties(
         engine::test_case_id(fs::path("program"), "name"), metadata);
 
@@ -609,7 +611,8 @@ ATF_TEST_CASE_BODY(check_requirements__required_configs__one_fail)
     user_config["aaa"] = "value1";
     user_config["myvar"] = "value2";
     user_config["zzz"] = "value3";
-    ATF_REQUIRE_MATCH("Required configuration property 'my-var' not defined",
+    ATF_REQUIRE_MATCH("Required configuration property 'unprivileged-user' not "
+                      "defined",
                       engine::check_requirements(test_case, engine::config(),
                                                  user_config));
 }
@@ -649,6 +652,104 @@ ATF_TEST_CASE_BODY(check_requirements__required_configs__many_fail)
     ATF_REQUIRE_MATCH("Required configuration property 'bar' not defined",
                       engine::check_requirements(test_case, engine::config(),
                                                  user_config));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(check_requirements__required_configs__special);
+ATF_TEST_CASE_BODY(check_requirements__required_configs__special)
+{
+    engine::properties_map metadata;
+    metadata["require.config"] = "unprivileged-user";
+    const engine::test_case test_case = engine::test_case::from_properties(
+        engine::test_case_id(fs::path("program"), "name"), metadata);
+
+    engine::config config;
+    config.unprivileged_user = passwd::user("foo", 1, 2);
+    ATF_REQUIRE(engine::check_requirements(test_case, config,
+                                           engine::properties_map()).empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(check_requirements__required_user__root__ok);
+ATF_TEST_CASE_BODY(check_requirements__required_user__root__ok)
+{
+    engine::properties_map metadata;
+    metadata["require.user"] = "root";
+    const engine::test_case test_case = engine::test_case::from_properties(
+        engine::test_case_id(fs::path("program"), "name"), metadata);
+
+    passwd::set_current_user_for_testing(passwd::user("", 0, 1));
+    ATF_REQUIRE(engine::check_requirements(test_case, engine::config(),
+                                           engine::properties_map()).empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(check_requirements__required_user__root__fail);
+ATF_TEST_CASE_BODY(check_requirements__required_user__root__fail)
+{
+    engine::properties_map metadata;
+    metadata["require.user"] = "root";
+    const engine::test_case test_case = engine::test_case::from_properties(
+        engine::test_case_id(fs::path("program"), "name"), metadata);
+
+    passwd::set_current_user_for_testing(passwd::user("", 123, 1));
+    ATF_REQUIRE_MATCH("Requires root privileges",
+                      engine::check_requirements(test_case, engine::config(),
+                                                 engine::properties_map()));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(
+    check_requirements__required_user__unprivileged__same);
+ATF_TEST_CASE_BODY(check_requirements__required_user__unprivileged__same)
+{
+    engine::properties_map metadata;
+    metadata["require.user"] = "unprivileged";
+    const engine::test_case test_case = engine::test_case::from_properties(
+        engine::test_case_id(fs::path("program"), "name"), metadata);
+
+    engine::config config;
+    config.unprivileged_user = utils::none;
+
+    passwd::set_current_user_for_testing(passwd::user("", 123, 1));
+    ATF_REQUIRE(engine::check_requirements(test_case, config,
+                                           engine::properties_map()).empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(check_requirements__required_user__unprivileged__ok);
+ATF_TEST_CASE_BODY(check_requirements__required_user__unprivileged__ok)
+{
+    engine::properties_map metadata;
+    metadata["require.user"] = "unprivileged";
+    const engine::test_case test_case = engine::test_case::from_properties(
+        engine::test_case_id(fs::path("program"), "name"), metadata);
+
+    engine::config config;
+    config.unprivileged_user = passwd::user("", 123, 1);
+
+    passwd::set_current_user_for_testing(passwd::user("", 0, 1));
+    ATF_REQUIRE(engine::check_requirements(test_case, config,
+                                           engine::properties_map()).empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(
+    check_requirements__required_user__unprivileged__fail);
+ATF_TEST_CASE_BODY(check_requirements__required_user__unprivileged__fail)
+{
+    engine::properties_map metadata;
+    metadata["require.user"] = "unprivileged";
+    const engine::test_case test_case = engine::test_case::from_properties(
+        engine::test_case_id(fs::path("program"), "name"), metadata);
+
+    engine::config config;
+    config.unprivileged_user = utils::none;
+
+    passwd::set_current_user_for_testing(passwd::user("", 0, 1));
+    ATF_REQUIRE_MATCH("Requires.*unprivileged.*unprivileged-user",
+                      engine::check_requirements(test_case, config,
+                                                 engine::properties_map()));
 }
 
 
@@ -699,4 +800,12 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, check_requirements__required_configs__one_fail);
     ATF_ADD_TEST_CASE(tcs, check_requirements__required_configs__many_ok);
     ATF_ADD_TEST_CASE(tcs, check_requirements__required_configs__many_fail);
+    ATF_ADD_TEST_CASE(tcs, check_requirements__required_configs__special);
+    ATF_ADD_TEST_CASE(tcs, check_requirements__required_user__root__ok);
+    ATF_ADD_TEST_CASE(tcs, check_requirements__required_user__root__fail);
+    ATF_ADD_TEST_CASE(tcs,
+                      check_requirements__required_user__unprivileged__same);
+    ATF_ADD_TEST_CASE(tcs, check_requirements__required_user__unprivileged__ok);
+    ATF_ADD_TEST_CASE(tcs,
+                      check_requirements__required_user__unprivileged__fail);
 }

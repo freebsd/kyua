@@ -41,6 +41,7 @@ ATF_TEST_CASE_BODY(defaults)
     engine::config config;
     ATF_REQUIRE_EQ(KYUA_ARCHITECTURE, config.architecture);
     ATF_REQUIRE_EQ(KYUA_PLATFORM, config.platform);
+    ATF_REQUIRE(!config.unprivileged_user);
 }
 
 

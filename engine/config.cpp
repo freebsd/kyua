@@ -36,7 +36,7 @@
 /// Initializes a configuration object with default values.
 ///
 /// The architecture and platform fields are set to the values detected at
-/// configuration time.
+/// configuration time.  The unprivileged_user field is undefined.
 engine::config::config(void) :
     architecture(KYUA_ARCHITECTURE),
     platform(KYUA_PLATFORM)

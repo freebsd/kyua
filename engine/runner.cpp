@@ -52,6 +52,7 @@ extern "C" {
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
+#include "utils/passwd.hpp"
 #include "utils/process/children.ipp"
 #include "utils/process/exceptions.hpp"
 #include "utils/sanity.hpp"
@@ -60,6 +61,7 @@ extern "C" {
 
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
+namespace passwd = utils::passwd;
 namespace process = utils::process;
 namespace results = engine::results;
 namespace runner = engine::runner;
@@ -88,6 +90,38 @@ create_work_directory(void)
         return fs::mkdtemp(fs::path("/tmp/kyua.XXXXXX"));
     else
         return fs::mkdtemp(fs::path(F("%s/kyua.XXXXXX") % tmpdir));
+}
+
+
+/// Sets the owner of a file or directory.
+///
+/// \param path The file to affect.
+/// \param owner The new owner for the file.
+///
+/// \throw fs::system_error If there is a problem changing the ownership.
+static void
+set_owner(const fs::path& path, const passwd::user& owner)
+{
+    if (::chown(path.c_str(), owner.uid, owner.gid) == -1)
+        throw std::runtime_error(F("Failed to set owner of %s to %s") %
+                                 path % owner.name);
+}
+
+
+/// Check if we can (and should) drop privileges for a test case.
+///
+/// \param test_case The test case to be run.  Needed to inspect its
+///     required_user property.
+/// \param config The current configuration.  Needed to query if
+///     unprivileged_user is defined or not.
+///
+/// \return True if we can drop privileges; false otherwise.
+static bool
+can_do_unprivileged(const engine::test_case& test_case,
+                    const engine::config& config)
+{
+    return test_case.required_user == "unprivileged" &&
+        config.unprivileged_user && passwd::current_user().is_root();
 }
 
 
@@ -147,14 +181,20 @@ isolate_process(const fs::path& cwd)
 
 /// Converts a set of configuration variables to test program flags.
 ///
-/// \param config The configuration variables.
+/// \param config_ The configuration variables provided by the user.
+/// \param user_config The configuration variables.
 /// \param args [out] The test program arguments in which to add the new flags.
 static void
-config_to_args(const engine::properties_map& config,
+config_to_args(const engine::config& config,
+               const engine::properties_map& user_config,
                std::vector< std::string >& args)
 {
-    for (engine::properties_map::const_iterator iter = config.begin();
-         iter != config.end(); iter++) {
+    if (config.unprivileged_user)
+        args.push_back(F("-vunprivileged-user=%s") %
+                       config.unprivileged_user.get().name);
+
+    for (engine::properties_map::const_iterator iter = user_config.begin();
+         iter != user_config.end(); iter++) {
         args.push_back(F("-v%s=%s") % (*iter).first % (*iter).second);
     }
 }
@@ -165,7 +205,8 @@ class execute_test_case_body {
     engine::test_case _test_case;
     fs::path _result_file;
     fs::path _work_directory;
-    engine::properties_map _config;
+    engine::config _config;
+    engine::properties_map _user_config;
 
 public:
     /// Constructor for the functor.
@@ -177,14 +218,17 @@ public:
     /// \param work_directory_ The path to the directory to chdir into when
     ///     running the test program.
     /// \param config_ The configuration variables provided by the user.
+    /// \param user_config_ The configuration variables provided by the user.
     execute_test_case_body(const engine::test_case& test_case_,
                            const fs::path& result_file_,
                            const fs::path& work_directory_,
-                           const engine::properties_map& config_) :
+                           const engine::config& config_,
+                           const engine::properties_map& user_config_) :
         _test_case(test_case_),
         _result_file(result_file_),
         _work_directory(work_directory_),
-        _config(config_)
+        _config(config_),
+        _user_config(user_config_)
     {
     }
 
@@ -204,10 +248,13 @@ public:
             std::abort();
         }
 
+        if (can_do_unprivileged(_test_case, _config))
+            passwd::drop_privileges(_config.unprivileged_user.get());
+
         std::vector< std::string > args;
         args.push_back(F("-r%s") % _result_file);
         args.push_back(F("-s%s") % test_program.branch_path());
-        config_to_args(_config, args);
+        config_to_args(_config, _user_config, args);
         args.push_back(_test_case.identifier.name);
         process::exec(test_program, args);
     }
@@ -218,7 +265,8 @@ public:
 class execute_test_case_cleanup {
     engine::test_case _test_case;
     fs::path _work_directory;
-    engine::properties_map _config;
+    engine::config _config;
+    engine::properties_map _user_config;
 
 public:
     /// Constructor for the functor.
@@ -227,13 +275,16 @@ public:
     ///     test program that contains it, the test case name and its metadata.
     /// \param work_directory_ The path to the directory to chdir into when
     ///     running the test program.
-    /// \param config_ The configuration variables provided by the user.
+    /// \param config_ The values for the current engine configuration.
+    /// \param user_config_ The configuration variables provided by the user.
     execute_test_case_cleanup(const engine::test_case& test_case_,
                               const fs::path& work_directory_,
-                              const engine::properties_map& config_) :
+                              const engine::config& config_,
+                              const engine::properties_map& user_config_) :
         _test_case(test_case_),
         _work_directory(work_directory_),
-        _config(config_)
+        _config(config_),
+        _user_config(user_config_)
     {
     }
 
@@ -248,9 +299,12 @@ public:
 
         isolate_process(_work_directory);
 
+        if (can_do_unprivileged(_test_case, _config))
+            passwd::drop_privileges(_config.unprivileged_user.get());
+
         std::vector< std::string > args;
         args.push_back(F("-s%s") % test_program.branch_path());
-        config_to_args(_config, args);
+        config_to_args(_config, _user_config, args);
         args.push_back(F("%s:cleanup") % _test_case.identifier.name);
         process::exec(test_program, args);
     }
@@ -306,10 +360,16 @@ run_test_case_safe(const engine::test_case& test_case,
     const fs::path rundir(workdir.directory() / "run");
     fs::mkdir(rundir, 0755);
 
+    if (can_do_unprivileged(test_case, config)) {
+        set_owner(workdir.directory(), config.unprivileged_user.get());
+        set_owner(rundir, config.unprivileged_user.get());
+    }
+
     const fs::path result_file(workdir.directory() / "result.txt");
 
     const optional< process::status > body_status = fork_and_wait(
-        execute_test_case_body(test_case, result_file, rundir, user_config),
+        execute_test_case_body(test_case, result_file, rundir, config,
+                               user_config),
         workdir.directory() / "stdout.txt",
         workdir.directory() / "stderr.txt",
         test_case.timeout);
@@ -317,7 +377,8 @@ run_test_case_safe(const engine::test_case& test_case,
     optional< process::status > cleanup_status;
     if (test_case.has_cleanup) {
         cleanup_status = fork_and_wait(
-            execute_test_case_cleanup(test_case, rundir, user_config),
+            execute_test_case_cleanup(test_case, rundir, config,
+                                      user_config),
             workdir.directory() / "cleanup-stdout.txt",
             workdir.directory() / "cleanup-stderr.txt",
             test_case.timeout);
@@ -374,11 +435,11 @@ runner::run_test_case(const engine::test_case& test_case,
 /// named '__test_program__' is created and it is reported as broken.
 ///
 /// \param test_program The test program to execute.
-/// \param config The configuration variables provided by the user.
+/// \param user_config The configuration variables provided by the user.
 /// \param hooks Callbacks for events.
 void
 runner::run_test_program(const fs::path& test_program,
-                         const engine::properties_map& config,
+                         const engine::properties_map& user_config,
                          runner::hooks* hooks)
 {
     engine::test_cases_vector test_cases;
@@ -401,8 +462,10 @@ runner::run_test_program(const fs::path& test_program,
 
         hooks->start_test_case(test_case.identifier);
         // TODO(jmmv): Pass in the engine configuration.
-        results::result_ptr result = run_test_case(test_case, engine::config(),
-                                                   config);
+        engine::config config;
+        config.unprivileged_user = passwd::find_user_by_name("jmmv");
+        results::result_ptr result = run_test_case(test_case, config,
+                                                   user_config);
         hooks->finish_test_case(test_case.identifier, result);
     }
 }

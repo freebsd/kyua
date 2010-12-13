@@ -37,10 +37,12 @@
 #include "engine/test_case.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/passwd.hpp"
 #include "utils/sanity.hpp"
 
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
+namespace passwd = utils::passwd;
 
 
 /// Parses a boolean property.
@@ -369,10 +371,15 @@ engine::check_requirements(const engine::test_case& test_case,
                            const properties_map& user_config)
 {
     for (strings_set::const_iterator iter = test_case.required_configs.begin();
-         iter != test_case.required_configs.end(); iter++)
-        if (user_config.find(*iter) == user_config.end())
+         iter != test_case.required_configs.end(); iter++) {
+        if (*iter == "unprivileged-user") {
+            if (!config.unprivileged_user)
+                return F("Required configuration property '%s' not defined") %
+                    *iter;
+        } else if (user_config.find(*iter) == user_config.end())
             return F("Required configuration property '%s' not defined") %
                 *iter;
+    }
 
     if (!test_case.allowed_architectures.empty()) {
         if (test_case.allowed_architectures.find(config.architecture) ==
@@ -387,7 +394,22 @@ engine::check_requirements(const engine::test_case& test_case,
             return F("Current platform '%s' not supported") % config.platform;
     }
 
-    // TODO(jmmv): Validate programs and user.
+    if (!test_case.required_user.empty()) {
+        const passwd::user user = passwd::current_user();
+        if (test_case.required_user == "root") {
+            if (!user.is_root())
+                return "Requires root privileges";
+        } else if (test_case.required_user == "unprivileged") {
+            if (user.is_root())
+                if (!config.unprivileged_user)
+                    return "Requires an unprivileged user but the "
+                        "unprivileged-user configuration variable is not "
+                        "defined";
+        } else
+            UNREACHABLE_MSG("Value of require.user not properly validated");
+    }
+
+    // TODO(jmmv): Validate programs.
 
     return "";
 }

@@ -109,6 +109,20 @@ ATF_TEST_CASE_CLEANUP(check_cleanup_workdir)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(check_unprivileged);
+ATF_TEST_CASE_BODY(check_unprivileged)
+{
+    if (::getuid() == 0)
+        fail("Running as root, but I shouldn't be");
+
+    std::ofstream file("cookie");
+    if (!file)
+        fail("Failed to create the cookie; work directory probably owned by "
+             "root");
+    file.close();
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(crash);
 ATF_TEST_CASE_BODY(crash)
 {
@@ -232,6 +246,7 @@ ATF_TEST_CASE_BODY(validate_umask)
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, check_cleanup_workdir);
+    ATF_ADD_TEST_CASE(tcs, check_unprivileged);
     ATF_ADD_TEST_CASE(tcs, crash);
     ATF_ADD_TEST_CASE(tcs, create_cookie_in_control_dir);
     ATF_ADD_TEST_CASE(tcs, create_cookie_in_workdir);

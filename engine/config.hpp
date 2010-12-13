@@ -34,6 +34,9 @@
 
 #include <string>
 
+#include "utils/passwd.hpp"
+#include "utils/optional.ipp"
+
 namespace engine {
 
 
@@ -50,6 +53,9 @@ struct config {
 
     /// Name of the system platform (aka machine name).
     std::string platform;
+
+    /// The unprivileged user to run test cases as, if any.
+    utils::optional< utils::passwd::user > unprivileged_user;
 
     config(void);
 };

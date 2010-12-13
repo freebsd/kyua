@@ -44,9 +44,11 @@ extern "C" {
 #include "utils/fs/operations.hpp"
 #include "utils/env.hpp"
 #include "utils/noncopyable.hpp"
+#include "utils/passwd.hpp"
 #include "utils/test_utils.hpp"
 
 namespace fs = utils::fs;
+namespace passwd = utils::passwd;
 namespace results = engine::results;
 namespace runner = engine::runner;
 
@@ -435,6 +437,100 @@ ATF_TEST_CASE_BODY(run_test_case__required_configs)
 }
 
 
+ATF_TEST_CASE(run_test_case__required_user__root__ok);
+ATF_TEST_CASE_HEAD(run_test_case__required_user__root__ok)
+{
+    set_md_var("require.user", "root");
+}
+ATF_TEST_CASE_BODY(run_test_case__required_user__root__ok)
+{
+    engine::properties_map metadata;
+    metadata["require.user"] = "root";
+    engine::config config;
+    results::result_ptr result = runner::run_test_case(
+        make_test_case(get_helpers_path(this), "create_cookie_in_workdir",
+                       metadata), config, engine::properties_map());
+    ATF_REQUIRE(passwd::current_user().is_root());
+    compare_results(results::passed(), result.get());
+}
+
+
+ATF_TEST_CASE(run_test_case__required_user__root__skip);
+ATF_TEST_CASE_HEAD(run_test_case__required_user__root__skip)
+{
+    set_md_var("require.user", "unprivileged");
+}
+ATF_TEST_CASE_BODY(run_test_case__required_user__root__skip)
+{
+    engine::properties_map metadata;
+    metadata["require.user"] = "root";
+    engine::config config;
+    results::result_ptr result = runner::run_test_case(
+        make_test_case(get_helpers_path(this), "create_cookie_in_workdir",
+                       metadata), config, engine::properties_map());
+    ATF_REQUIRE(!passwd::current_user().is_root());
+    compare_results(results::skipped("Requires root privileges"), result.get());
+}
+
+
+ATF_TEST_CASE(run_test_case__required_user__unprivileged__ok);
+ATF_TEST_CASE_HEAD(run_test_case__required_user__unprivileged__ok)
+{
+    set_md_var("require.user", "unprivileged");
+}
+ATF_TEST_CASE_BODY(run_test_case__required_user__unprivileged__ok)
+{
+    engine::properties_map metadata;
+    metadata["require.user"] = "unprivileged";
+    engine::config config;
+    config.unprivileged_user = utils::none;
+    results::result_ptr result = runner::run_test_case(
+        make_test_case(get_helpers_path(this), "create_cookie_in_workdir",
+                       metadata), config, engine::properties_map());
+    compare_results(results::passed(), result.get());
+}
+
+
+ATF_TEST_CASE(run_test_case__required_user__unprivileged__skip);
+ATF_TEST_CASE_HEAD(run_test_case__required_user__unprivileged__skip)
+{
+    set_md_var("require.user", "root");
+}
+ATF_TEST_CASE_BODY(run_test_case__required_user__unprivileged__skip)
+{
+    engine::properties_map metadata;
+    metadata["require.user"] = "unprivileged";
+    engine::config config;
+    config.unprivileged_user = utils::none;
+    results::result_ptr result = runner::run_test_case(
+        make_test_case(get_helpers_path(this), "create_cookie_in_workdir",
+                       metadata), config, engine::properties_map());
+    compare_results(results::skipped(
+        "Requires an unprivileged user but the unprivileged-user "
+        "configuration variable is not defined"), result.get());
+}
+
+
+ATF_TEST_CASE(run_test_case__required_user__unprivileged__drop);
+ATF_TEST_CASE_HEAD(run_test_case__required_user__unprivileged__drop)
+{
+    set_md_var("require.config", "unprivileged-user");
+    set_md_var("require.user", "root");
+}
+ATF_TEST_CASE_BODY(run_test_case__required_user__unprivileged__drop)
+{
+    engine::properties_map metadata;
+    metadata["require.user"] = "unprivileged";
+    engine::config config;
+    config.unprivileged_user = passwd::find_user_by_name(get_config_var(
+        "unprivileged-user"));
+    results::result_ptr result = runner::run_test_case(
+        make_test_case(get_helpers_path(this), "check_unprivileged",
+                       metadata), config, engine::properties_map());
+    compare_results(results::passed(), result.get());
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__timeout_body);
 ATF_TEST_CASE_BODY(run_test_case__timeout_body)
 {
@@ -531,6 +627,11 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, run_test_case__allowed_architectures);
     ATF_ADD_TEST_CASE(tcs, run_test_case__allowed_platforms);
     ATF_ADD_TEST_CASE(tcs, run_test_case__required_configs);
+    ATF_ADD_TEST_CASE(tcs, run_test_case__required_user__root__ok);
+    ATF_ADD_TEST_CASE(tcs, run_test_case__required_user__root__skip);
+    ATF_ADD_TEST_CASE(tcs, run_test_case__required_user__unprivileged__ok);
+    ATF_ADD_TEST_CASE(tcs, run_test_case__required_user__unprivileged__skip);
+    ATF_ADD_TEST_CASE(tcs, run_test_case__required_user__unprivileged__drop);
     ATF_ADD_TEST_CASE(tcs, run_test_case__timeout_body);
     ATF_ADD_TEST_CASE(tcs, run_test_case__timeout_cleanup);
     ATF_ADD_TEST_CASE(tcs, run_test_case__missing_results_file);
