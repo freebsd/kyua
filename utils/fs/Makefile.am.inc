@@ -42,20 +42,22 @@ EXTRA_DIST += $(tests_utils_fs_DATA)
 
 tests_utils_fs_PROGRAMS = utils/fs/auto_cleaners_test
 utils_fs_auto_cleaners_test_SOURCES = utils/fs/auto_cleaners_test.cpp
-utils_fs_auto_cleaners_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
-utils_fs_auto_cleaners_test_LDADD = libutils.a $(ATF_CXX_LIBS)
+utils_fs_auto_cleaners_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_fs_auto_cleaners_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_fs_PROGRAMS += utils/fs/exceptions_test
 utils_fs_exceptions_test_SOURCES = utils/fs/exceptions_test.cpp
-utils_fs_exceptions_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
-utils_fs_exceptions_test_LDADD = libutils.a $(ATF_CXX_LIBS)
+utils_fs_exceptions_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_fs_exceptions_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_fs_PROGRAMS += utils/fs/operations_test
 utils_fs_operations_test_SOURCES = utils/fs/operations_test.cpp
-utils_fs_operations_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
-utils_fs_operations_test_LDADD = libutils.a libutils_test.a $(ATF_CXX_LIBS)
+utils_fs_operations_test_CXXFLAGS = $(UTILS_TEST_CFLAGS) $(UTILS_CFLAGS) \
+                                    $(ATF_CXX_CFLAGS)
+utils_fs_operations_test_LDADD = $(UTILS_TEST_LIBS) $(UTILS_LIBS) \
+                                 $(ATF_CXX_LIBS)
 
 tests_utils_fs_PROGRAMS += utils/fs/path_test
 utils_fs_path_test_SOURCES = utils/fs/path_test.cpp
-utils_fs_path_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
-utils_fs_path_test_LDADD = libutils.a $(ATF_CXX_LIBS)
+utils_fs_path_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_fs_path_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)

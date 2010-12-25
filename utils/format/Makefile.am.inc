@@ -40,10 +40,10 @@ EXTRA_DIST += $(tests_utils_format_DATA)
 
 tests_utils_format_PROGRAMS = utils/format/exceptions_test
 utils_format_exceptions_test_SOURCES = utils/format/exceptions_test.cpp
-utils_format_exceptions_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
-utils_format_exceptions_test_LDADD = libutils.a $(ATF_CXX_LIBS)
+utils_format_exceptions_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_format_exceptions_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_format_PROGRAMS += utils/format/formatter_test
 utils_format_formatter_test_SOURCES = utils/format/formatter_test.cpp
-utils_format_formatter_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
-utils_format_formatter_test_LDADD = libutils.a $(ATF_CXX_LIBS)
+utils_format_formatter_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_format_formatter_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)

@@ -51,7 +51,8 @@ include utils/Makefile.am.inc
 
 bin_PROGRAMS = kyua
 kyua_SOURCES = main.cpp
-kyua_LDADD = libcli.a libengine.a libutils.a
+kyua_CXXFLAGS = $(CLI_CFLAGS) $(ENGINE_CFLAGS) $(UTILS_CFLAGS)
+kyua_LDADD = $(CLI_LIBS) $(ENGINE_LIBS) $(UTILS_LIBS)
 
 TESTS_ENVIRONMENT = PATH=$(prefix)/bin:$${PATH}
 

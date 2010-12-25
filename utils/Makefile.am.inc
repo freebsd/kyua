@@ -26,6 +26,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+UTILS_CFLAGS =
+UTILS_LIBS = libutils.a
+
 noinst_LIBRARIES += libutils.a
 libutils_a_SOURCES  = utils/auto_array.hpp
 libutils_a_SOURCES += utils/auto_array.ipp
@@ -42,11 +45,13 @@ libutils_a_SOURCES += utils/passwd.hpp
 libutils_a_SOURCES += utils/sanity.cpp
 libutils_a_SOURCES += utils/sanity.hpp
 
+UTILS_TEST_CFLAGS = $(UTILS_CFLAGS)
+UTILS_TEST_LIBS = libutils_test.a $(UTILS_LIBS)
+
 noinst_LIBRARIES += libutils_test.a
 libutils_test_a_SOURCES  = utils/test_utils.cpp
 libutils_test_a_SOURCES += utils/test_utils.hpp
 libutils_test_a_CXXFLAGS = $(ATF_CXX_CFLAGS)
-libutils_test_a_LIBADD = libutils.a
 
 tests_utilsdir = $(pkgtestsdir)/utils
 
@@ -55,33 +60,37 @@ EXTRA_DIST += $(tests_utils_DATA)
 
 tests_utils_PROGRAMS = utils/auto_array_test
 utils_auto_array_test_SOURCES = utils/auto_array_test.cpp
-utils_auto_array_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
-utils_auto_array_test_LDADD = libutils.a $(ATF_CXX_LIBS)
+utils_auto_array_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_auto_array_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_PROGRAMS += utils/datetime_test
 utils_datetime_test_SOURCES = utils/datetime_test.cpp
-utils_datetime_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
-utils_datetime_test_LDADD = libutils.a $(ATF_CXX_LIBS)
+utils_datetime_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_datetime_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_PROGRAMS += utils/env_test
 utils_env_test_SOURCES = utils/env_test.cpp
-utils_env_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
-utils_env_test_LDADD = libutils.a $(ATF_CXX_LIBS)
+utils_env_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_env_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_PROGRAMS += utils/optional_test
 utils_optional_test_SOURCES = utils/optional_test.cpp
-utils_optional_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
-utils_optional_test_LDADD = libutils.a $(ATF_CXX_LIBS)
+utils_optional_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_optional_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_PROGRAMS += utils/passwd_test
 utils_passwd_test_SOURCES = utils/passwd_test.cpp
-utils_passwd_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
-utils_passwd_test_LDADD = libutils_test.a libutils.a $(ATF_CXX_LIBS)
+utils_passwd_test_CXXFLAGS = $(UTILS_TEST_CFLAGS) $(UTILS_CFLAGS) \
+                             $(ATF_CXX_CFLAGS)
+utils_passwd_test_LDADD = $(UTILS_TEST_LIBS) $(UTILS_LIBS) \
+                          $(ATF_CXX_LIBS)
 
 tests_utils_PROGRAMS += utils/sanity_test
 utils_sanity_test_SOURCES = utils/sanity_test.cpp
-utils_sanity_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
-utils_sanity_test_LDADD = libutils_test.a libutils.a $(ATF_CXX_LIBS)
+utils_sanity_test_CXXFLAGS = $(UTILS_TEST_CFLAGS) $(UTILS_CFLAGS) \
+                             $(ATF_CXX_CFLAGS)
+utils_sanity_test_LDADD = $(UTILS_TEST_LIBS) $(UTILS_LIBS) \
+                          $(ATF_CXX_LIBS)
 
 include utils/cmdline/Makefile.am.inc
 include utils/format/Makefile.am.inc

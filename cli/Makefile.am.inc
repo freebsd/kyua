@@ -26,6 +26,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+CLI_CFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS)
+CLI_LIBS = libcli.a $(ENGINE_LIBS) $(UTILS_LIBS)
+
 noinst_LIBRARIES += libcli.a
 libcli_a_SOURCES  = cli/all_commands.cpp
 libcli_a_SOURCES += cli/all_commands.hpp
@@ -47,20 +50,24 @@ tests_clidir = $(pkgtestsdir)/cli
 tests_cli_DATA = cli/Atffile cli/kyua.suite
 EXTRA_DIST += $(tests_cli_DATA)
 
-CLI_TESTS_LDADD = libcli.a libengine.a libutils_test.a libutils.a \
+CLI_TESTS_CXXFLAGS = $(CLI_CFLAGS) $(ENGINE_CFLAGS) \
+                     $(UTILS_TEST_CFLAGS) $(UTILS_CFLAGS) \
+                     $(ATF_CXX_CFLAGS)
+CLI_TESTS_LDADD = $(CLI_LIBS) $(ENGINE_LIBS) \
+                  $(UTILS_TEST_LIBS) $(UTILS_LIBS) \
                   $(ATF_CXX_LIBS)
 
 tests_cli_PROGRAMS = cli/cmd_about_test
 cli_cmd_about_test_SOURCES = cli/cmd_about_test.cpp
-cli_cmd_about_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
+cli_cmd_about_test_CXXFLAGS = $(CLI_TESTS_CXXFLAGS)
 cli_cmd_about_test_LDADD = $(CLI_TESTS_LDADD)
 
 tests_cli_PROGRAMS += cli/cmd_help_test
 cli_cmd_help_test_SOURCES = cli/cmd_help_test.cpp
-cli_cmd_help_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
+cli_cmd_help_test_CXXFLAGS = $(CLI_TESTS_CXXFLAGS)
 cli_cmd_help_test_LDADD = $(CLI_TESTS_LDADD)
 
 tests_cli_PROGRAMS += cli/main_test
 cli_main_test_SOURCES = cli/main_test.cpp
-cli_main_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
+cli_main_test_CXXFLAGS = $(CLI_TESTS_CXXFLAGS)
 cli_main_test_LDADD = $(CLI_TESTS_LDADD)

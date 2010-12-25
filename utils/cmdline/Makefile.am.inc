@@ -51,26 +51,29 @@ EXTRA_DIST += $(tests_utils_cmdline_DATA)
 
 tests_utils_cmdline_PROGRAMS = utils/cmdline/base_command_test
 utils_cmdline_base_command_test_SOURCES = utils/cmdline/base_command_test.cpp
-utils_cmdline_base_command_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
-utils_cmdline_base_command_test_LDADD = libutils.a libutils_test.a \
+utils_cmdline_base_command_test_CXXFLAGS = $(UTILS_TEST_CFLAGS) \
+                                           $(UTILS_CFLAGS) \
+                                           $(ATF_CXX_CFLAGS)
+utils_cmdline_base_command_test_LDADD = $(UTILS_TEST_LIBS) \
+                                        $(UTILS_LIBS) \
                                         $(ATF_CXX_LIBS)
 
 tests_utils_cmdline_PROGRAMS += utils/cmdline/exceptions_test
 utils_cmdline_exceptions_test_SOURCES = utils/cmdline/exceptions_test.cpp
-utils_cmdline_exceptions_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
-utils_cmdline_exceptions_test_LDADD = libutils.a $(ATF_CXX_LIBS)
+utils_cmdline_exceptions_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_cmdline_exceptions_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_cmdline_PROGRAMS += utils/cmdline/globals_test
 utils_cmdline_globals_test_SOURCES = utils/cmdline/globals_test.cpp
-utils_cmdline_globals_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
-utils_cmdline_globals_test_LDADD = libutils.a $(ATF_CXX_LIBS)
+utils_cmdline_globals_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_cmdline_globals_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_cmdline_PROGRAMS += utils/cmdline/options_test
 utils_cmdline_options_test_SOURCES = utils/cmdline/options_test.cpp
-utils_cmdline_options_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
-utils_cmdline_options_test_LDADD = libutils.a $(ATF_CXX_LIBS)
+utils_cmdline_options_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_cmdline_options_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_cmdline_PROGRAMS += utils/cmdline/parser_test
 utils_cmdline_parser_test_SOURCES = utils/cmdline/parser_test.cpp
-utils_cmdline_parser_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
-utils_cmdline_parser_test_LDADD = libutils.a $(ATF_CXX_LIBS)
+utils_cmdline_parser_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_cmdline_parser_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)

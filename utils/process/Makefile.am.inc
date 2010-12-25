@@ -47,28 +47,30 @@ EXTRA_DIST += $(tests_utils_process_DATA)
 
 tests_utils_process_PROGRAMS = utils/process/children_test
 utils_process_children_test_SOURCES = utils/process/children_test.cpp
-utils_process_children_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
-utils_process_children_test_LDADD = libutils.a libutils_test.a $(ATF_CXX_LIBS)
+utils_process_children_test_CXXFLAGS = $(UTILS_TEST_CFLAGS) $(UTILS_CFLAGS) \
+                                       $(ATF_CXX_CFLAGS)
+utils_process_children_test_LDADD = $(UTILS_TEST_LIBS) $(UTILS_LIBS) \
+                                    $(ATF_CXX_LIBS)
 
 tests_utils_process_PROGRAMS += utils/process/exceptions_test
 utils_process_exceptions_test_SOURCES = utils/process/exceptions_test.cpp
-utils_process_exceptions_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
-utils_process_exceptions_test_LDADD = libutils.a $(ATF_CXX_LIBS)
+utils_process_exceptions_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_process_exceptions_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_process_PROGRAMS += utils/process/fdstream_test
 utils_process_fdstream_test_SOURCES = utils/process/fdstream_test.cpp
-utils_process_fdstream_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
-utils_process_fdstream_test_LDADD = libutils.a $(ATF_CXX_LIBS)
+utils_process_fdstream_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_process_fdstream_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_process_PROGRAMS += utils/process/helpers
 utils_process_helpers_SOURCES = utils/process/helpers.cpp
 
 tests_utils_process_PROGRAMS += utils/process/status_test
 utils_process_status_test_SOURCES = utils/process/status_test.cpp
-utils_process_status_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
-utils_process_status_test_LDADD = libutils.a $(ATF_CXX_LIBS)
+utils_process_status_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_process_status_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_process_PROGRAMS += utils/process/systembuf_test
 utils_process_systembuf_test_SOURCES = utils/process/systembuf_test.cpp
-utils_process_systembuf_test_CXXFLAGS = $(ATF_CXX_CFLAGS)
-utils_process_systembuf_test_LDADD = libutils.a $(ATF_CXX_LIBS)
+utils_process_systembuf_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_process_systembuf_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
