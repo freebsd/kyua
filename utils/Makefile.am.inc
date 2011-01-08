@@ -30,6 +30,7 @@ UTILS_CFLAGS =
 UTILS_LIBS = libutils.a
 
 noinst_LIBRARIES += libutils.a
+libutils_a_CPPFLAGS =
 libutils_a_SOURCES  = utils/auto_array.hpp
 libutils_a_SOURCES += utils/auto_array.ipp
 libutils_a_SOURCES += utils/datetime.cpp
@@ -95,5 +96,6 @@ utils_sanity_test_LDADD = $(UTILS_TEST_LIBS) $(UTILS_LIBS) \
 include utils/cmdline/Makefile.am.inc
 include utils/format/Makefile.am.inc
 include utils/fs/Makefile.am.inc
+include utils/lua/Makefile.am.inc
 include utils/process/Makefile.am.inc
 include utils/signals/Makefile.am.inc

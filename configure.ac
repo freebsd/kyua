@@ -1,4 +1,4 @@
-dnl Copyright 2010, Google Inc.
+dnl Copyright 2010, 2011, Google Inc.
 dnl All rights reserved.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@ AC_INIT([Kyua - Command line interface], [0.1],
 AC_PREREQ([2.65])
 
 
-AC_COPYRIGHT([Copyright 2010, Google Inc.])
+AC_COPYRIGHT([Copyright 2010, 2011 Google Inc.])
 AC_CONFIG_AUX_DIR([admin])
 AC_CONFIG_FILES([Doxyfile Makefile utils/defs.hpp])
 AC_CONFIG_HEADERS([config.h])
@@ -71,6 +71,9 @@ AC_PROG_RANLIB
 PKG_CHECK_MODULES([ATF_CXX], [atf-c++ >= 0.12],
                   [],
                   AC_MSG_ERROR([atf-c++ (0.12 or newer) is required]))
+PKG_CHECK_MODULES([LUA], [lua >= 5.1],
+                  [],
+                  AC_MSG_ERROR([lua (5.1 or newer) is required]))
 KYUA_DOXYGEN
 AC_PATH_PROG([SVN], [svn])
 
