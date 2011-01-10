@@ -39,9 +39,9 @@ extern "C" {
 #include <string>
 #include <vector>
 
+#include "engine/kyuafile.hpp"
 #include "engine/results.ipp"
 #include "engine/runner.hpp"
-#include "engine/suite_config.hpp"
 #include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
 #include "utils/datetime.hpp"
@@ -477,7 +477,7 @@ runner::run_test_program(const fs::path& test_program,
 /// \param config The configuration variables provided by the user.
 /// \param hooks Callbacks for events.
 void
-runner::run_test_suite(const engine::suite_config& suite,
+runner::run_test_suite(const engine::kyuafile& suite,
                        const engine::properties_map& config,
                        runner::hooks* run_hooks)
 {

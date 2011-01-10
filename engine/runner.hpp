@@ -43,7 +43,7 @@
 namespace engine {
 
 
-class suite_config;
+class kyuafile;
 struct test_case;
 
 
@@ -74,7 +74,7 @@ results::result_ptr run_test_case(const engine::test_case&,
                                   const engine::config&,
                                   const properties_map&);
 void run_test_program(const utils::fs::path&, const properties_map&, hooks*);
-void run_test_suite(const engine::suite_config&, const properties_map&, hooks*);
+void run_test_suite(const engine::kyuafile&, const properties_map&, hooks*);
 
 
 }  // namespace runner

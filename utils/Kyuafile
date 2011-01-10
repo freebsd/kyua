@@ -1,0 +1,11 @@
+auto_array_test
+datetime_test
+env_test
+passwd_test
+sanity_test
+include cmdline/Kyuafile
+include format/Kyuafile
+include fs/Kyuafile
+include lua/Kyuafile
+include process/Kyuafile
+include signals/Kyuafile

@@ -41,7 +41,7 @@ pkgtestsdir = $(testsdir)/kyua/kyua-cli
 
 tests_topdir = $(pkgtestsdir)
 
-tests_top_DATA = Atffile kyua.suite
+tests_top_DATA = Atffile Kyuafile
 EXTRA_DIST += $(tests_top_DATA)
 
 include bootstrap/Makefile.am.inc

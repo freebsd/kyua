@@ -29,9 +29,9 @@
 #include <cstdlib>
 
 #include "cli/cmd_test.hpp"
+#include "engine/kyuafile.hpp"
 #include "engine/results.hpp"
 #include "engine/runner.hpp"
-#include "engine/suite_config.hpp"
 #include "utils/cmdline/base_command.ipp"
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.ipp"
@@ -91,7 +91,7 @@ cmd_test::cmd_test(void) : cmdline::base_command(
     "Run tests")
 {
     add_option(cmdline::path_option(
-        'c', "suite_config", "Configuration file", "file", "kyua.suite"));
+        'c', "kyuafile", "Configuration file", "file", "Kyuafile"));
 }
 
 
@@ -107,11 +107,11 @@ cmd_test::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
     run_hooks hooks(ui);
 
     if (cmdline.arguments().empty()) {
-        const engine::suite_config suite = engine::suite_config::load(
-            cmdline.get_option< cmdline::path_option >("suite_config"));
+        const engine::kyuafile suite = engine::kyuafile::load(
+            cmdline.get_option< cmdline::path_option >("kyuafile"));
         runner::run_test_suite(suite, engine::properties_map(), &hooks);
     } else {
-        const engine::suite_config suite = engine::suite_config::from_arguments(
+        const engine::kyuafile suite = engine::kyuafile::from_arguments(
             cmdline.arguments());
         runner::run_test_suite(suite, engine::properties_map(), &hooks);
     }

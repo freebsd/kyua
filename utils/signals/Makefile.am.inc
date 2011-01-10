@@ -37,7 +37,7 @@ libutils_a_SOURCES += utils/signals/timer.hpp
 
 tests_utils_signalsdir = $(pkgtestsdir)/utils/signals
 
-tests_utils_signals_DATA = utils/signals/Atffile utils/signals/kyua.suite
+tests_utils_signals_DATA = utils/signals/Atffile utils/signals/Kyuafile
 EXTRA_DIST += $(tests_utils_signals_DATA)
 
 tests_utils_signals_PROGRAMS = utils/signals/exceptions_test

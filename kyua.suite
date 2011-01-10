@@ -1,3 +1,0 @@
-include cli/kyua.suite
-include engine/kyua.suite
-include utils/kyua.suite

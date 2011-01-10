@@ -35,7 +35,7 @@ libutils_a_SOURCES += utils/format/macros.hpp
 
 tests_utils_formatdir = $(pkgtestsdir)/utils/format
 
-tests_utils_format_DATA = utils/format/Atffile utils/format/kyua.suite
+tests_utils_format_DATA = utils/format/Atffile utils/format/Kyuafile
 EXTRA_DIST += $(tests_utils_format_DATA)
 
 tests_utils_format_PROGRAMS = utils/format/exceptions_test

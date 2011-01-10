@@ -47,7 +47,7 @@ libcli_a_LIBADD = libutils.a
 
 tests_clidir = $(pkgtestsdir)/cli
 
-tests_cli_DATA = cli/Atffile cli/kyua.suite
+tests_cli_DATA = cli/Atffile cli/Kyuafile
 EXTRA_DIST += $(tests_cli_DATA)
 
 CLI_TESTS_CXXFLAGS = $(CLI_CFLAGS) $(ENGINE_CFLAGS) \

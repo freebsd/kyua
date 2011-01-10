@@ -56,7 +56,7 @@ libutils_test_a_CXXFLAGS = $(ATF_CXX_CFLAGS)
 
 tests_utilsdir = $(pkgtestsdir)/utils
 
-tests_utils_DATA = utils/Atffile utils/kyua.suite
+tests_utils_DATA = utils/Atffile utils/Kyuafile
 EXTRA_DIST += $(tests_utils_DATA)
 
 tests_utils_PROGRAMS = utils/auto_array_test

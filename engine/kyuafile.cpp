@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
 #include <iostream>
 
 #include "engine/exceptions.hpp"
-#include "engine/suite_config.hpp"
+#include "engine/kyuafile.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.hpp"
 #include "utils/format/macros.hpp"
@@ -51,7 +51,7 @@ namespace {
 /// Parses a single test suite configuration file.
 ///
 /// This is a recursive algorithm to load configuration files with inclusions.
-/// It is just a helper function for the suite_config::load() method.
+/// It is just a helper function for the kyuafile::load() method.
 ///
 /// \param suite The file to parse.
 /// \param config_file The directory in which the file is located, relative to
@@ -91,14 +91,14 @@ load_one(const utils::fs::path& suite, const utils::fs::path& directory,
 }  // anonymous namespace
 
 
-/// Constructs a suite_config form initialized data.
+/// Constructs a kyuafile form initialized data.
 ///
 /// Use load() to parse a test suite configuration file and construct a
-/// suite_config object.
+/// kyuafile object.
 ///
 /// \param tps_ Collection of test program executables that belong to this test
 ///     suite.
-engine::suite_config::suite_config(const std::vector< utils::fs::path >& tps_) :
+engine::kyuafile::kyuafile(const std::vector< utils::fs::path >& tps_) :
     _test_programs(tps_)
 {
 }
@@ -112,12 +112,12 @@ engine::suite_config::suite_config(const std::vector< utils::fs::path >& tps_) :
 ///
 /// \throw error If the file does not exist.  TODO(jmmv): This exception is not
 ///     accurate enough.
-engine::suite_config
-engine::suite_config::load(const utils::fs::path& config_file)
+engine::kyuafile
+engine::kyuafile::load(const utils::fs::path& config_file)
 {
     std::vector< utils::fs::path > test_programs;
     load_one(config_file, config_file.branch_path(), test_programs);
-    return suite_config(test_programs);
+    return kyuafile(test_programs);
 }
 
 
@@ -130,8 +130,8 @@ engine::suite_config::load(const utils::fs::path& config_file)
 /// \return An adhoc test suite configuration based on the arguments.
 ///
 /// \throw cmdline::usage_error If the arguments are invalid.
-engine::suite_config
-engine::suite_config::from_arguments(const cmdline::args_vector& args)
+engine::kyuafile
+engine::kyuafile::from_arguments(const cmdline::args_vector& args)
 {
     std::vector< utils::fs::path > test_programs;
     for (cmdline::args_vector::const_iterator iter = args.begin();
@@ -150,7 +150,7 @@ engine::suite_config::from_arguments(const cmdline::args_vector& args)
             throw cmdline::usage_error(F("Invalid path '%s'") % *iter);
         }
     }
-    return suite_config(test_programs);
+    return kyuafile(test_programs);
 }
 
 
@@ -158,7 +158,7 @@ engine::suite_config::from_arguments(const cmdline::args_vector& args)
 ///
 /// \return Collection of test program executable names.
 const std::vector< utils::fs::path >&
-engine::suite_config::test_programs(void) const
+engine::kyuafile::test_programs(void) const
 {
     return _test_programs;
 }

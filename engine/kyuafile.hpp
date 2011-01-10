@@ -26,11 +26,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/suite_config.hpp
+/// \file engine/kyuafile.hpp
 /// Test suite configuration parsing and representation.
 
-#if !defined(ENGINE_SUITE_CONFIG_HPP)
-#define ENGINE_SUITE_CONFIG_HPP
+#if !defined(ENGINE_KYUAFILE_HPP)
+#define ENGINE_KYUAFILE_HPP
 
 #include <vector>
 
@@ -47,13 +47,13 @@ namespace engine {
 ///
 /// This class provides the parser for test suite configuration files and
 /// methods to access the parsed data.
-class suite_config {
+class kyuafile {
     std::vector< utils::fs::path > _test_programs;
 
 public:
-    explicit suite_config(const std::vector< utils::fs::path >&);
-    static suite_config load(const utils::fs::path&);
-    static suite_config from_arguments(const utils::cmdline::args_vector&);
+    explicit kyuafile(const std::vector< utils::fs::path >&);
+    static kyuafile load(const utils::fs::path&);
+    static kyuafile from_arguments(const utils::cmdline::args_vector&);
 
     const std::vector< utils::fs::path >& test_programs(void) const;
 };
@@ -61,4 +61,4 @@ public:
 
 }  // namespace engine
 
-#endif  // !defined(ENGINE_SUITE_CONFIG_HPP)
+#endif  // !defined(ENGINE_KYUAFILE_HPP)

@@ -39,7 +39,7 @@ libutils_a_SOURCES += utils/lua/wrap.hpp
 
 tests_utils_luadir = $(pkgtestsdir)/utils/lua
 
-tests_utils_lua_DATA = utils/lua/Atffile utils/lua/kyua.suite
+tests_utils_lua_DATA = utils/lua/Atffile utils/lua/Kyuafile
 EXTRA_DIST += $(tests_utils_lua_DATA)
 
 tests_utils_lua_PROGRAMS = utils/lua/exceptions_test

@@ -42,7 +42,7 @@ libutils_a_SOURCES += utils/process/systembuf.hpp
 
 tests_utils_processdir = $(pkgtestsdir)/utils/process
 
-tests_utils_process_DATA = utils/process/Atffile utils/process/kyua.suite
+tests_utils_process_DATA = utils/process/Atffile utils/process/Kyuafile
 EXTRA_DIST += $(tests_utils_process_DATA)
 
 tests_utils_process_PROGRAMS = utils/process/children_test

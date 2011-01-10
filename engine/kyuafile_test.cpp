@@ -28,7 +28,7 @@
 
 #include <atf-c++.hpp>
 
-#include "engine/suite_config.hpp"
+#include "engine/kyuafile.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.hpp"
 
@@ -39,7 +39,7 @@ namespace fs = utils::fs;
 ATF_TEST_CASE_WITHOUT_HEAD(from_arguments__none);
 ATF_TEST_CASE_BODY(from_arguments__none)
 {
-    const engine::suite_config suite = engine::suite_config::from_arguments(
+    const engine::kyuafile suite = engine::kyuafile::from_arguments(
         cmdline::args_vector());
     ATF_REQUIRE_EQ(0, suite.test_programs().size());
 }
@@ -51,7 +51,7 @@ ATF_TEST_CASE_BODY(from_arguments__some)
     cmdline::args_vector args;
     args.push_back("a/b/c");
     args.push_back("foo/bar");
-    const engine::suite_config suite = engine::suite_config::from_arguments(
+    const engine::kyuafile suite = engine::kyuafile::from_arguments(
         args);
     ATF_REQUIRE_EQ(2, suite.test_programs().size());
     ATF_REQUIRE_EQ(fs::path("a/b/c"), suite.test_programs()[0]);
@@ -65,7 +65,7 @@ ATF_TEST_CASE_BODY(from_arguments__with_test_case)
     cmdline::args_vector args;
     args.push_back("foo/bar:test_case");
     ATF_REQUIRE_THROW_RE(cmdline::usage_error, "not implemented",
-                         engine::suite_config::from_arguments(args));
+                         engine::kyuafile::from_arguments(args));
 }
 
 
@@ -75,7 +75,7 @@ ATF_TEST_CASE_BODY(from_arguments__invalid_path)
     cmdline::args_vector args;
     args.push_back("");
     ATF_REQUIRE_THROW_RE(cmdline::usage_error, "Invalid path",
-                         engine::suite_config::from_arguments(args));
+                         engine::kyuafile::from_arguments(args));
 }
 
 

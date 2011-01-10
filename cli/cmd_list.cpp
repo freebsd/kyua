@@ -31,7 +31,7 @@
 #include <vector>
 
 #include "cli/cmd_list.hpp"
-#include "engine/suite_config.hpp"
+#include "engine/kyuafile.hpp"
 #include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
 #include "utils/cmdline/base_command.ipp"
@@ -53,7 +53,7 @@ cmd_list::cmd_list(void) : cmdline::base_command(
     "Lists test cases and their meta-data")
 {
     add_option(cmdline::path_option(
-        'c', "suite_config", "Configuration file", "file", "kyua.suite"));
+        'c', "kyuafile", "Configuration file", "file", "Kyuafile"));
     add_option(cmdline::bool_option('v', "verbose", "Show properties"));
 }
 
@@ -69,13 +69,13 @@ cmd_list::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
 {
     std::vector< utils::fs::path > test_programs;
     if (cmdline.arguments().empty()) {
-        engine::suite_config suite_config = engine::suite_config::load(
-            cmdline.get_option< cmdline::path_option >("suite_config"));
-        test_programs = suite_config.test_programs();
+        engine::kyuafile kyuafile = engine::kyuafile::load(
+            cmdline.get_option< cmdline::path_option >("kyuafile"));
+        test_programs = kyuafile.test_programs();
     } else {
-        engine::suite_config suite_config = engine::suite_config::from_arguments(
+        engine::kyuafile kyuafile = engine::kyuafile::from_arguments(
             cmdline.arguments());
-        test_programs = suite_config.test_programs();
+        test_programs = kyuafile.test_programs();
     }
 
     for (std::vector< utils::fs::path >::const_iterator p = test_programs.begin();
