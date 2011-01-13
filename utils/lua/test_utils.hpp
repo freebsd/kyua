@@ -72,13 +72,15 @@ namespace {
 
 /// Gets the pointer to the internal lua_State of a state object.
 ///
+/// This is pure syntactic sugar to simplify typing in the test cases.
+///
 /// \param state The Lua state.
 ///
 /// \return The internal lua_State of the input Lua state.
 inline lua_State*
 raw(utils::lua::state& state)
 {
-    return reinterpret_cast< lua_State* >(state.raw_state_for_testing());
+    return state.raw_state_for_testing();
 }
 
 

@@ -36,12 +36,26 @@
 #define UTILS_LUA_WRAP_HPP
 
 #include <memory>
+#include <string>
+
+#include <lua.hpp>
 
 #include "utils/fs/path.hpp"
 #include "utils/noncopyable.hpp"
 
 namespace utils {
 namespace lua {
+
+
+/// Synonym for lua_CFunction.
+///
+/// This is pure syntactic sugar to prevent C++ code from ever using the C lua_*
+/// methods.  Ideally we would do this simply by not importing lua.hpp, but we
+/// can't because the user must be able to define Lua C hooks, and those take a
+/// lua_State* pointer as their argument.  (Users don't see this because they
+/// just use wrap_cxx_function, but for implementation reasons we must do the
+/// import.  Oh well.)
+typedef lua_CFunction c_function;
 
 
 /// A RAII model for the Lua state.
@@ -64,28 +78,36 @@ class state : utils::noncopyable {
 
 public:
     state(void);
+    explicit state(lua_State*);
     ~state(void);
 
     void close(void);
     void get_global(const std::string&);
     void get_table(const int = -2);
     int get_top(void);
+    bool is_boolean(const int = -1);
     bool is_nil(const int = -1);
     bool is_number(const int = -1);
     bool is_string(const int = -1);
     bool is_table(const int = -1);
     void load_file(const utils::fs::path&);
     void load_string(const std::string&);
+    void new_table(void);
     void open_base(void);
     void open_string(void);
     void open_table(void);
     void pcall(const int, const int, const int);
     void pop(const int);
+    void push_c_function(c_function);
     void push_integer(const int);
+    void push_string(const std::string&);
+    void set_global(const std::string&);
+    void set_table(const int = -3);
+    bool to_boolean(const int = -1);
     long to_integer(const int = -1);
     std::string to_string(const int = -1);
 
-    void* raw_state_for_testing(void);
+    lua_State* raw_state_for_testing(void);
 };
 
 

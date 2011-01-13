@@ -26,31 +26,55 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file utils/lua/operations.hpp
-/// Extra generic functions to interact with Lua.
+#if !defined(UTILS_LUA_WRAP_IPP)
+#define UTILS_LUA_WRAP_IPP
 
-#if !defined(UTILS_LUA_OPERATIONS_HPP)
-#define UTILS_LUA_OPERATIONS_HPP
+#include <lua.hpp>
 
-#include <map>
-#include <string>
-#include <vector>
-
-#include "utils/fs/path.hpp"
 #include "utils/lua/wrap.hpp"
 
 namespace utils {
 namespace lua {
 
 
-void create_module(state& s, const std::string&,
-                   const std::map< std::string, c_function >&);
-unsigned int do_file(state&, const fs::path&, const int = 0);
-unsigned int do_string(state&, const std::string&, const int = 0);
-std::vector< std::string > get_array_as_strings(state&, const std::string&);
+/// The type of a C++ function that can be bound into Lua.
+///
+/// To pass such a function to Lua, convert it to a C function with the
+/// wrap_cxx_function template and pass it to, e.g. state::push_cfunction.
+///
+/// Functions of this type are free to raise exceptions.  These will not
+/// propagate into the Lua C API.
+typedef int (*cxx_function)(lua::state&);
+
+
+namespace detail {
+int call_cxx_function_from_c(cxx_function, lua_State*) throw();
+}  // namespace detail
+
+
+/// Wraps a C++ Lua function into a C function.
+///
+/// You can pass the generated function to, e.g. state::push_cfunction.
+/// This wrapper ensures that exceptions do not propagate out of the C++ world
+/// into the C realm.  Exceptions are reported as Lua errors to the caller.
+///
+/// \param raw_state The raw Lua state.
+///
+/// \return The number of return values pushed onto the Lua stack by the
+/// function.
+///
+/// \warning Due to C++ standard and/or compiler oddities, functions passed to
+/// this template must have external linkage.  In other words, static methods
+/// cannot be passed to this if you want your code to build.
+template< cxx_function Function >
+int
+wrap_cxx_function(lua_State* raw_state)
+{
+    return detail::call_cxx_function_from_c(Function, raw_state);
+}
 
 
 }  // namespace lua
 }  // namespace utils
 
-#endif  // !defined(UTILS_LUA_OPERATIONS_HPP)
+#endif  // !defined(UTILS_LUA_WRAP_IPP)

@@ -36,6 +36,27 @@ namespace fs = utils::fs;
 namespace lua = utils::lua;
 
 
+/// Creates a module: i.e. a table with a set of methods in it.
+///
+/// \param s The Lua state.
+/// \param name The name of the module to create.
+/// \param members The list of member functions to add to the module.
+void
+lua::create_module(state& s, const std::string& name,
+                   const std::map< std::string, c_function >& members)
+{
+    stack_cleaner cleaner(s);
+    s.new_table();
+    for (std::map< std::string, c_function >::const_iterator
+         iter = members.begin(); iter != members.end(); iter++) {
+        s.push_string((*iter).first);
+        s.push_c_function((*iter).second);
+        s.set_table(-3);
+    }
+    s.set_global(name);
+}
+
+
 /// Loads and processes a Lua file.
 ///
 /// This is a replacement for luaL_dofile but with proper error reporting

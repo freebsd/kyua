@@ -29,6 +29,7 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <stdexcept>
 
 #include <atf-c++.hpp>
 #include <lua.hpp>
@@ -36,7 +37,7 @@
 #include "utils/format/macros.hpp"
 #include "utils/lua/exceptions.hpp"
 #include "utils/lua/test_utils.hpp"
-#include "utils/lua/wrap.hpp"
+#include "utils/lua/wrap.ipp"
 
 namespace fs = utils::fs;
 namespace lua = utils::lua;
@@ -96,7 +97,74 @@ check_modules(lua::state& state, const std::string& expected)
 }
 
 
+/// A custom C multiply function for Lua.
+///
+/// \pre stack(-2) contains the first factor.
+/// \pre stack(-1) contains the second factor.
+/// \post stack(-1) contains the product of the two input factors.
+///
+/// \param state The raw Lua state.
+///
+/// \return The number of result values, i.e. 1.
+static int
+c_multiply(lua_State* state)
+{
+    const int f1 = lua_tointeger(state, -2);
+    const int f2 = lua_tointeger(state, -1);
+    lua_pushinteger(state, f1 * f2);
+    return 1;
+}
+
+
+/// A custom C++ integral division function for Lua.
+///
+/// \pre stack(-2) contains the dividend.
+/// \pre stack(-1) contains the divisor.
+/// \post stack(-2) contains the quotient of the division.
+/// \post stack(-1) contains the remainder of the division.
+///
+/// \param state The Lua state.
+///
+/// \return The number of result values, i.e. 1.
+///
+/// \throw std::runtime_error If the divisor is zero.
+/// \throw std::string If the dividend or the divisor are negative.  This is an
+///     exception not derived from std::exception on purpose to ensure that the
+///     C++ wrapping correctly captures any exception regardless of its type.
+int  // Not static because it needs external linkage for wrap_cxx_function.
+cxx_divide(lua::state& state)
+{
+    const int dividend = state.to_integer(-2);
+    const int divisor = state.to_integer(-1);
+    if (divisor == 0)
+        throw std::runtime_error("Divisor is 0");
+    if (dividend < 0 || divisor < 0)
+        throw std::string("Cannot divide negative numbers");
+    state.push_integer(dividend / divisor);
+    state.push_integer(dividend % divisor);
+    return 2;
+}
+
+
 }  // anonymous namespace
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(state__ctor_only_wrap);
+ATF_TEST_CASE_BODY(state__ctor_only_wrap)
+{
+    lua_State* raw_state = lua_open();
+    ATF_REQUIRE(raw_state != NULL);
+
+    {
+        lua::state state(raw_state);
+        lua_pushinteger(raw(state), 123);
+    }
+    // If the wrapper object had closed the Lua state, we could very well crash
+    // here.
+    ATF_REQUIRE_EQ(123, lua_tointeger(raw_state, -1));
+
+    lua_close(raw_state);
+}
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(state__close);
@@ -120,8 +188,8 @@ ATF_TEST_CASE_BODY(state__get_global__ok)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(state__get_global__nil);
-ATF_TEST_CASE_BODY(state__get_global__nil)
+ATF_TEST_CASE_WITHOUT_HEAD(state__get_global__fail);
+ATF_TEST_CASE_BODY(state__get_global__fail)
 {
     lua::state state;
     lua_pushinteger(raw(state), 3);
@@ -189,6 +257,39 @@ ATF_TEST_CASE_BODY(state__get_top)
     ATF_REQUIRE_EQ(1, state.get_top());
     lua_pushinteger(raw(state), 3);
     ATF_REQUIRE_EQ(2, state.get_top());
+    lua_pop(raw(state), 2);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(state__is_boolean__empty);
+ATF_TEST_CASE_BODY(state__is_boolean__empty)
+{
+    lua::state state;
+    ATF_REQUIRE(!state.is_boolean());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(state__is_boolean__top);
+ATF_TEST_CASE_BODY(state__is_boolean__top)
+{
+    lua::state state;
+    lua_pushnil(raw(state));
+    ATF_REQUIRE(!state.is_boolean());
+    lua_pushboolean(raw(state), 1);
+    ATF_REQUIRE(state.is_boolean());
+    lua_pop(raw(state), 2);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(state__is_boolean__explicit);
+ATF_TEST_CASE_BODY(state__is_boolean__explicit)
+{
+    lua::state state;
+    lua_pushboolean(raw(state), 1);
+    ATF_REQUIRE(state.is_boolean(-1));
+    lua_pushinteger(raw(state), 5);
+    ATF_REQUIRE(!state.is_boolean(-1));
+    ATF_REQUIRE(state.is_boolean(-2));
     lua_pop(raw(state), 2);
 }
 
@@ -379,6 +480,17 @@ ATF_TEST_CASE_BODY(state__load_string__fail)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(state__new_table);
+ATF_TEST_CASE_BODY(state__new_table)
+{
+    lua::state state;
+    state.new_table();
+    ATF_REQUIRE_EQ(1, lua_gettop(raw(state)));
+    ATF_REQUIRE(lua_istable(raw(state), -1));
+    lua_pop(raw(state), 1);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(state__open_base);
 ATF_TEST_CASE_BODY(state__open_base)
 {
@@ -461,6 +573,59 @@ ATF_TEST_CASE_BODY(state__pop__many)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(state__push_c_function__c_ok);
+ATF_TEST_CASE_BODY(state__push_c_function__c_ok)
+{
+    lua::state state;
+    state.push_c_function(c_multiply);
+    lua_setglobal(raw(state), "c_multiply");
+
+    ATF_REQUIRE(luaL_dostring(raw(state), "return c_multiply(3, 4)") == 0);
+    ATF_REQUIRE_EQ(12, lua_tointeger(raw(state), -1));
+    lua_pop(raw(state), 1);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(state__push_c_function__cxx_ok);
+ATF_TEST_CASE_BODY(state__push_c_function__cxx_ok)
+{
+    lua::state state;
+    state.push_c_function(lua::wrap_cxx_function< cxx_divide >);
+    lua_setglobal(raw(state), "cxx_divide");
+
+    ATF_REQUIRE(luaL_dostring(raw(state), "return cxx_divide(17, 3)") == 0);
+    ATF_REQUIRE_EQ(5, lua_tointeger(raw(state), -2));
+    ATF_REQUIRE_EQ(2, lua_tointeger(raw(state), -1));
+    lua_pop(raw(state), 2);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(state__push_c_function__cxx_fail_exception);
+ATF_TEST_CASE_BODY(state__push_c_function__cxx_fail_exception)
+{
+    lua::state state;
+    state.push_c_function(lua::wrap_cxx_function< cxx_divide >);
+    lua_setglobal(raw(state), "cxx_divide");
+
+    ATF_REQUIRE(luaL_dostring(raw(state), "return cxx_divide(15, 0)") != 0);
+    ATF_REQUIRE_MATCH("Divisor is 0", lua_tostring(raw(state), -1));
+    lua_pop(raw(state), 1);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(state__push_c_function__cxx_fail_anything);
+ATF_TEST_CASE_BODY(state__push_c_function__cxx_fail_anything)
+{
+    lua::state state;
+    state.push_c_function(lua::wrap_cxx_function< cxx_divide >);
+    lua_setglobal(raw(state), "cxx_divide");
+
+    ATF_REQUIRE(luaL_dostring(raw(state), "return cxx_divide(-3, -1)") != 0);
+    ATF_REQUIRE_MATCH("Unhandled exception", lua_tostring(raw(state), -1));
+    lua_pop(raw(state), 1);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(state__push_integer);
 ATF_TEST_CASE_BODY(state__push_integer)
 {
@@ -472,6 +637,115 @@ ATF_TEST_CASE_BODY(state__push_integer)
     ATF_REQUIRE_EQ(2, lua_gettop(raw(state)));
     ATF_REQUIRE_EQ(34, lua_tointeger(raw(state), -1));
     ATF_REQUIRE_EQ(12, lua_tointeger(raw(state), -2));
+    lua_pop(raw(state), 2);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(state__push_string);
+ATF_TEST_CASE_BODY(state__push_string)
+{
+    lua::state state;
+
+    {
+        std::string str = "first";
+        state.push_string(str);
+        ATF_REQUIRE_EQ(1, lua_gettop(raw(state)));
+        ATF_REQUIRE_EQ(std::string("first"), lua_tostring(raw(state), -1));
+        str = "second";
+        state.push_string(str);
+    }
+    ATF_REQUIRE_EQ(2, lua_gettop(raw(state)));
+    ATF_REQUIRE_EQ(std::string("second"), lua_tostring(raw(state), -1));
+    ATF_REQUIRE_EQ(std::string("first"), lua_tostring(raw(state), -2));
+    lua_pop(raw(state), 2);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(state__set_global__ok);
+ATF_TEST_CASE_BODY(state__set_global__ok)
+{
+    lua::state state;
+    lua_pushinteger(raw(state), 3);
+    state.set_global("test_variable");
+    ATF_REQUIRE(luaL_dostring(raw(state), "return test_variable + 1") == 0);
+    ATF_REQUIRE(lua_isnumber(raw(state), -1));
+    ATF_REQUIRE_EQ(4, lua_tointeger(raw(state), -1));
+    lua_pop(raw(state), 1);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(state__set_global__fail);
+ATF_TEST_CASE_BODY(state__set_global__fail)
+{
+    lua::state state;
+    lua_pushinteger(raw(state), 3);
+    lua_replace(raw(state), LUA_GLOBALSINDEX);
+    lua_pushinteger(raw(state), 4);
+    REQUIRE_API_ERROR("lua_setglobal", state.set_global("test_variable"));
+    lua_pop(raw(state), 1);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(state__set_table__ok);
+ATF_TEST_CASE_BODY(state__set_table__ok)
+{
+    lua::state state;
+    ATF_REQUIRE(luaL_dostring(raw(state), "t = { a = 1, bar = 234 }") == 0);
+    lua_getglobal(raw(state), "t");
+
+    lua_pushstring(raw(state), "bar");
+    lua_pushstring(raw(state), "baz");
+    state.set_table();
+    ATF_REQUIRE_EQ(1, lua_gettop(raw(state)));
+
+    lua_pushstring(raw(state), "a");
+    lua_gettable(raw(state), -2);
+    ATF_REQUIRE(lua_isnumber(raw(state), -1));
+    ATF_REQUIRE_EQ(1, lua_tointeger(raw(state), -1));
+    lua_pop(raw(state), 1);
+
+    lua_pushstring(raw(state), "bar");
+    lua_gettable(raw(state), -2);
+    ATF_REQUIRE(lua_isstring(raw(state), -1));
+    ATF_REQUIRE_EQ(std::string("baz"), lua_tostring(raw(state), -1));
+    lua_pop(raw(state), 1);
+
+    lua_pop(raw(state), 1);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(state__set_table__nil);
+ATF_TEST_CASE_BODY(state__set_table__nil)
+{
+    lua::state state;
+    lua_pushnil(raw(state));
+    lua_pushinteger(raw(state), 1);
+    lua_pushinteger(raw(state), 2);
+    REQUIRE_API_ERROR("lua_settable", state.set_table(-3));
+    lua_pop(raw(state), 3);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(state__to_boolean__top);
+ATF_TEST_CASE_BODY(state__to_boolean__top)
+{
+    lua::state state;
+    lua_pushboolean(raw(state), 1);
+    ATF_REQUIRE(state.to_boolean());
+    lua_pushboolean(raw(state), 0);
+    ATF_REQUIRE(!state.to_boolean());
+    lua_pop(raw(state), 2);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(state__to_boolean__explicit);
+ATF_TEST_CASE_BODY(state__to_boolean__explicit)
+{
+    lua::state state;
+    lua_pushboolean(raw(state), 0);
+    lua_pushboolean(raw(state), 1);
+    ATF_REQUIRE(!state.to_boolean(-2));
+    ATF_REQUIRE(state.to_boolean(-1));
     lua_pop(raw(state), 2);
 }
 
@@ -593,14 +867,18 @@ ATF_TEST_CASE_BODY(stack_cleaner__forget)
 
 ATF_INIT_TEST_CASES(tcs)
 {
+    ATF_ADD_TEST_CASE(tcs, state__ctor_only_wrap);
     ATF_ADD_TEST_CASE(tcs, state__close);
     ATF_ADD_TEST_CASE(tcs, state__get_global__ok);
-    ATF_ADD_TEST_CASE(tcs, state__get_global__nil);
+    ATF_ADD_TEST_CASE(tcs, state__get_global__fail);
     ATF_ADD_TEST_CASE(tcs, state__get_global__undefined);
     ATF_ADD_TEST_CASE(tcs, state__get_table__ok);
     ATF_ADD_TEST_CASE(tcs, state__get_table__nil);
     ATF_ADD_TEST_CASE(tcs, state__get_table__unknown_index);
     ATF_ADD_TEST_CASE(tcs, state__get_top);
+    ATF_ADD_TEST_CASE(tcs, state__is_boolean__empty);
+    ATF_ADD_TEST_CASE(tcs, state__is_boolean__top);
+    ATF_ADD_TEST_CASE(tcs, state__is_boolean__explicit);
     ATF_ADD_TEST_CASE(tcs, state__is_nil__empty);
     ATF_ADD_TEST_CASE(tcs, state__is_nil__top);
     ATF_ADD_TEST_CASE(tcs, state__is_nil__explicit);
@@ -617,6 +895,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, state__load_file__fail);
     ATF_ADD_TEST_CASE(tcs, state__load_string__ok);
     ATF_ADD_TEST_CASE(tcs, state__load_string__fail);
+    ATF_ADD_TEST_CASE(tcs, state__new_table);
     ATF_ADD_TEST_CASE(tcs, state__open_base);
     ATF_ADD_TEST_CASE(tcs, state__open_string);
     ATF_ADD_TEST_CASE(tcs, state__open_table);
@@ -624,7 +903,18 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, state__pcall__fail);
     ATF_ADD_TEST_CASE(tcs, state__pop__one);
     ATF_ADD_TEST_CASE(tcs, state__pop__many);
+    ATF_ADD_TEST_CASE(tcs, state__push_c_function__c_ok);
+    ATF_ADD_TEST_CASE(tcs, state__push_c_function__cxx_ok);
+    ATF_ADD_TEST_CASE(tcs, state__push_c_function__cxx_fail_exception);
+    ATF_ADD_TEST_CASE(tcs, state__push_c_function__cxx_fail_anything);
     ATF_ADD_TEST_CASE(tcs, state__push_integer);
+    ATF_ADD_TEST_CASE(tcs, state__push_string);
+    ATF_ADD_TEST_CASE(tcs, state__set_global__ok);
+    ATF_ADD_TEST_CASE(tcs, state__set_global__fail);
+    ATF_ADD_TEST_CASE(tcs, state__set_table__ok);
+    ATF_ADD_TEST_CASE(tcs, state__set_table__nil);
+    ATF_ADD_TEST_CASE(tcs, state__to_boolean__top);
+    ATF_ADD_TEST_CASE(tcs, state__to_boolean__explicit);
     ATF_ADD_TEST_CASE(tcs, state__to_integer__top);
     ATF_ADD_TEST_CASE(tcs, state__to_integer__explicit);
     ATF_ADD_TEST_CASE(tcs, state__to_string__top);

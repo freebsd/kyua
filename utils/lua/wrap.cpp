@@ -28,7 +28,7 @@
 
 #include "utils/format/macros.hpp"
 #include "utils/lua/exceptions.hpp"
-#include "utils/lua/wrap.hpp"
+#include "utils/lua/wrap.ipp"
 #include "utils/noncopyable.hpp"
 #include "utils/sanity.hpp"
 
@@ -42,7 +42,7 @@ namespace {
 /// Wrapper around lua_getglobal to run in a protected environment.
 ///
 /// \pre stack(-1) is the name of the global to get.
-/// \pre stack(-1) is the value of the global.
+/// \post stack(-1) is the value of the global.
 ///
 /// \param state The Lua C API state.
 ///
@@ -72,6 +72,39 @@ protected_gettable(lua_State* state)
 }
 
 
+/// Wrapper around lua_setglobal to run in a protected environment.
+///
+/// \pre stack(-2) is the name of the global to set.
+/// \pre stack(-1) is the value to set the global to.
+///
+/// \param state The Lua C API state.
+///
+/// \return The number of return values pushed onto the stack.
+static int
+protected_setglobal(lua_State* state)
+{
+    lua_setglobal(state, lua_tostring(state, -2));
+    return 0;
+}
+
+
+/// Wrapper around lua_settable to run in a protected environment.
+///
+/// \pre stack(-3) is the table to set the element into.
+/// \pre stack(-2) is the table index.
+/// \pre stack(-1) is the value to set.
+///
+/// \param state The Lua C API state.
+///
+/// \return The number of return values pushed onto the stack.
+static int
+protected_settable(lua_State* state)
+{
+    lua_settable(state, -3);
+    return 0;
+}
+
+
 }  // anonymous namespace
 
 
@@ -80,11 +113,16 @@ struct utils::lua::state::impl {
     /// The Lua internal state.
     lua_State* lua_state;
 
+    /// Whether we own the state or not (to decide if we close it).
+    bool owned;
+
     /// Constructor.
     ///
     /// \param lua_ The Lua internal state.
-    impl(lua_State* lua_) :
-        lua_state(lua_)
+    /// \param owned_ Whether we own the state or not.
+    impl(lua_State* lua_, bool owned_) :
+        lua_state(lua_),
+        owned(owned_)
     {
     }
 };
@@ -99,7 +137,19 @@ lua::state::state(void)
     lua_State* lua = lua_open();
     if (lua == NULL)
         throw lua::error("lua open failed");
-    _pimpl.reset(new impl(lua));
+    _pimpl.reset(new impl(lua, true));
+}
+
+
+/// Initializes the Lua state from an existing raw state.
+///
+/// Instances constructed using this method do NOT own the raw state.  This
+/// means that, on exit, the state will not be destroyed.
+///
+/// \param raw_state The raw Lua state to wrap.
+lua::state::state(lua_State* raw_state) :
+    _pimpl(new impl(raw_state, false))
+{
 }
 
 
@@ -110,7 +160,7 @@ lua::state::state(void)
 /// code.
 lua::state::~state(void)
 {
-    if (_pimpl->lua_state != NULL)
+    if (_pimpl->owned && _pimpl->lua_state != NULL)
         close();
 }
 
@@ -179,6 +229,18 @@ int
 lua::state::get_top(void)
 {
     return lua_gettop(_pimpl->lua_state);
+}
+
+
+/// Wrapper around lua_isboolean.
+///
+/// \param index The second parameter to lua_isboolean.
+///
+/// \return The return value of lua_isboolean.
+bool
+lua::state::is_boolean(const int index)
+{
+    return lua_isboolean(_pimpl->lua_state, index);
 }
 
 
@@ -260,6 +322,16 @@ lua::state::load_string(const std::string& str)
 }
 
 
+/// Wrapper around lua_newtable.
+///
+/// \warning Terminates execution if there is not enough memory.
+void
+lua::state::new_table(void)
+{
+    lua_newtable(_pimpl->lua_state);
+}
+
+
 /// Wrapper around luaopen_base.
 ///
 /// \throw api_error If luaopen_base fails.
@@ -329,6 +401,19 @@ lua::state::pop(const int count)
 }
 
 
+/// Wrapper around lua_pushcfunction.
+///
+/// \param function The second parameter to lua_pushcfuntion.  Use the
+///     wrap_cxx_function wrapper to provide C++ functions to this parameter.
+///
+/// \warning Terminates execution if there is not enough memory.
+void
+lua::state::push_c_function(c_function function)
+{
+    lua_pushcfunction(_pimpl->lua_state, function);
+}
+
+
 /// Wrapper around lua_pushinteger.
 ///
 /// \param value The second parameter to lua_pushinteger.
@@ -336,6 +421,72 @@ void
 lua::state::push_integer(const int value)
 {
     lua_pushinteger(_pimpl->lua_state, value);
+}
+
+
+/// Wrapper around lua_pushstring.
+///
+/// \param str The second parameter to lua_pushcfuntion.
+///
+/// \warning Terminates execution if there is not enough memory.
+void
+lua::state::push_string(const std::string& str)
+{
+    lua_pushstring(_pimpl->lua_state, str.c_str());
+}
+
+
+/// Wrapper around lua_setglobal.
+///
+/// \param name The second parameter to lua_setglobal.
+///
+/// \throw api_error If lua_setglobal fails.
+///
+/// \warning Terminates execution if there is not enough memory to manipulate
+/// the Lua stack.
+void
+lua::state::set_global(const std::string& name)
+{
+    lua_pushcfunction(_pimpl->lua_state, protected_setglobal);
+    lua_pushstring(_pimpl->lua_state, name.c_str());
+    lua_pushvalue(_pimpl->lua_state, -3);
+    if (lua_pcall(_pimpl->lua_state, 2, 0, 0) != 0)
+        throw lua::api_error::from_stack(_pimpl->lua_state, "lua_setglobal");
+    lua_pop(_pimpl->lua_state, 1);
+}
+
+
+/// Wrapper around lua_settable.
+///
+/// \param index The second parameter to lua_settable.
+///
+/// \throw api_error If lua_settable fails.
+///
+/// \warning Terminates execution if there is not enough memory to manipulate
+/// the Lua stack.
+void
+lua::state::set_table(const int index)
+{
+    lua_pushcfunction(_pimpl->lua_state, protected_settable);
+    lua_pushvalue(_pimpl->lua_state, index < 0 ? index - 1 : index);
+    lua_pushvalue(_pimpl->lua_state, -4);
+    lua_pushvalue(_pimpl->lua_state, -4);
+    if (lua_pcall(_pimpl->lua_state, 3, 0, 0) != 0)
+        throw lua::api_error::from_stack(_pimpl->lua_state, "lua_settable");
+    lua_pop(_pimpl->lua_state, 2);
+}
+
+
+/// Wrapper around lua_toboolean.
+///
+/// \param index The second parameter to lua_toboolean.
+///
+/// \return The return value of lua_toboolean.
+bool
+lua::state::to_boolean(const int index)
+{
+    PRE(is_boolean(index));
+    return lua_toboolean(_pimpl->lua_state, index);
 }
 
 
@@ -373,13 +524,11 @@ lua::state::to_string(const int index)
 
 /// Gets the internal lua_State object for testing purposes only.
 ///
-/// \return The lua_State pointer as an untyped pointer.  The caller must cast
-/// the returned pointer to lua_State*.  This is so that the header file of this
-/// module does not have to expose lua_State at all.
-void*
+/// \return The raw Lua state.
+lua_State*
 lua::state::raw_state_for_testing(void)
 {
-    return static_cast< void* >(_pimpl->lua_state);
+    return _pimpl->lua_state;
 }
 
 
@@ -440,4 +589,29 @@ void
 lua::stack_cleaner::forget(void)
 {
     _pimpl->original_depth = _pimpl->state_ref.get_top();
+}
+
+
+/// Calls a C++ Lua function from a C calling environment.
+///
+/// Any errors reported by the C++ function are caught and reported to the
+/// caller as Lua errors.
+///
+/// \param function The C++ function to call.
+/// \param raw_state The raw Lua state.
+///
+/// \return The number of return values pushed onto the Lua stack by the
+/// function.
+int
+utils::lua::detail::call_cxx_function_from_c(cxx_function function,
+                                             lua_State* raw_state) throw()
+{
+    try {
+        lua::state state(raw_state);
+        return function(state);
+    } catch (const std::exception& e) {
+        return luaL_error(raw_state, "%s", e.what());
+    } catch (...) {
+        return luaL_error(raw_state, "Unhandled exception in Lua C++ hook");
+    }
 }

@@ -36,6 +36,7 @@ libutils_a_SOURCES += utils/lua/operations.cpp
 libutils_a_SOURCES += utils/lua/operations.hpp
 libutils_a_SOURCES += utils/lua/wrap.cpp
 libutils_a_SOURCES += utils/lua/wrap.hpp
+libutils_a_SOURCES += utils/lua/wrap.ipp
 
 tests_utils_luadir = $(pkgtestsdir)/utils/lua
 

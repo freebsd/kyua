@@ -34,10 +34,98 @@
 #include "utils/lua/exceptions.hpp"
 #include "utils/lua/operations.hpp"
 #include "utils/lua/test_utils.hpp"
-#include "utils/lua/wrap.hpp"
+#include "utils/lua/wrap.ipp"
 
 namespace fs = utils::fs;
 namespace lua = utils::lua;
+
+
+namespace {
+
+
+/// Addition function for injection into Lua.
+///
+/// \pre stack(-2) The first summand.
+/// \pre stack(-1) The second summand.
+/// \post stack(-1) The result of the sum.
+///
+/// \param state The Lua state.
+///
+/// \return The number of results (1).
+int  // Not static because it needs external linkage for wrap_cxx_function.
+hook_add(lua::state& state)
+{
+    state.push_integer(state.to_integer(-1) + state.to_integer(-2));
+    return 1;
+}
+
+
+/// Multiplication function for injection into Lua.
+///
+/// \pre stack(-2) The first factor.
+/// \pre stack(-1) The second factor.
+/// \post stack(-1) The product.
+///
+/// \param state The Lua state.
+///
+/// \return The number of results (1).
+int  // Not static because it needs external linkage for wrap_cxx_function.
+hook_multiply(lua::state& state)
+{
+    state.push_integer(state.to_integer(-1) * state.to_integer(-2));
+    return 1;
+}
+
+
+}  // anonymous namespace
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(create_module__empty);
+ATF_TEST_CASE_BODY(create_module__empty)
+{
+    lua::state state;
+    std::map< std::string, lua::c_function > members;
+    lua::create_module(state, "my_math", members);
+
+    state.open_base();
+    lua::do_string(state, "return next(my_math) == nil", 1);
+    ATF_REQUIRE(state.to_boolean());
+    state.pop(1);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(create_module__one);
+ATF_TEST_CASE_BODY(create_module__one)
+{
+    lua::state state;
+    std::map< std::string, lua::c_function > members;
+    members["add"] = lua::wrap_cxx_function< hook_add >;
+    lua::create_module(state, "my_math", members);
+
+    lua::do_string(state, "return my_math.add(10, 20)", 1);
+    ATF_REQUIRE_EQ(30, state.to_integer());
+    state.pop(1);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(create_module__many);
+ATF_TEST_CASE_BODY(create_module__many)
+{
+    lua::state state;
+    std::map< std::string, lua::c_function > members;
+    members["add"] = lua::wrap_cxx_function< hook_add >;
+    members["multiply"] = lua::wrap_cxx_function< hook_multiply >;
+    members["add2"] = lua::wrap_cxx_function< hook_add >;
+    lua::create_module(state, "my_math", members);
+
+    lua::do_string(state, "return my_math.add(10, 20)", 1);
+    ATF_REQUIRE_EQ(30, state.to_integer());
+    lua::do_string(state, "return my_math.multiply(10, 20)", 1);
+    ATF_REQUIRE_EQ(200, state.to_integer());
+    lua::do_string(state, "return my_math.add2(20, 30)", 1);
+    ATF_REQUIRE_EQ(50, state.to_integer());
+    state.pop(3);
+}
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(do_file__any_results);
@@ -218,6 +306,10 @@ ATF_TEST_CASE_BODY(get_array_as_strings__not_a_string)
 
 ATF_INIT_TEST_CASES(tcs)
 {
+    ATF_ADD_TEST_CASE(tcs, create_module__empty);
+    ATF_ADD_TEST_CASE(tcs, create_module__one);
+    ATF_ADD_TEST_CASE(tcs, create_module__many);
+
     ATF_ADD_TEST_CASE(tcs, do_file__any_results);
     ATF_ADD_TEST_CASE(tcs, do_file__no_results);
     ATF_ADD_TEST_CASE(tcs, do_file__many_results);
