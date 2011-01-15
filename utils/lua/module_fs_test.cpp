@@ -70,6 +70,8 @@ ATF_TEST_CASE_BODY(basename__fail)
     lua::state state;
     lua::open_fs(state);
 
+    ATF_REQUIRE_THROW_RE(lua::error, "Need a string",
+                         lua::do_string(state, "return fs.basename({})", 1));
     ATF_REQUIRE_THROW_RE(lua::error, "Invalid path",
                          lua::do_string(state, "return fs.basename('')", 1));
 }
@@ -93,6 +95,8 @@ ATF_TEST_CASE_BODY(dirname__fail)
     lua::state state;
     lua::open_fs(state);
 
+    ATF_REQUIRE_THROW_RE(lua::error, "Need a string",
+                         lua::do_string(state, "return fs.dirname({})", 1));
     ATF_REQUIRE_THROW_RE(lua::error, "Invalid path",
                          lua::do_string(state, "return fs.dirname('')", 1));
 }
@@ -115,6 +119,11 @@ ATF_TEST_CASE_BODY(join__fail)
 {
     lua::state state;
     lua::open_fs(state);
+
+    ATF_REQUIRE_THROW_RE(lua::error, "Need a string",
+                         lua::do_string(state, "return fs.join({}, 'a')", 1));
+    ATF_REQUIRE_THROW_RE(lua::error, "Need a string",
+                         lua::do_string(state, "return fs.join('a', {})", 1));
 
     ATF_REQUIRE_THROW_RE(lua::error, "Invalid path",
                          lua::do_string(state, "return fs.join('', 'a')", 1));

@@ -26,6 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <stdexcept>
+
 #include "utils/lua/module_fs.hpp"
 #include "utils/lua/operations.hpp"
 #include "utils/lua/wrap.ipp"
@@ -48,7 +50,10 @@ namespace {
 int
 lua_fs_basename(lua::state& state)
 {
+    if (!state.is_string())
+        throw std::runtime_error("Need a string parameter");
     const fs::path path(state.to_string());
+
     state.push_string(path.leaf_name().c_str());
     return 1;
 }
@@ -65,7 +70,10 @@ lua_fs_basename(lua::state& state)
 int
 lua_fs_dirname(lua::state& state)
 {
+    if (!state.is_string())
+        throw std::runtime_error("Need a string parameter");
     const fs::path path(state.to_string());
+
     state.push_string(path.branch_path().c_str());
     return 1;
 }
@@ -83,8 +91,14 @@ lua_fs_dirname(lua::state& state)
 int
 lua_fs_join(lua::state& state)
 {
+    if (!state.is_string(-2))
+        throw std::runtime_error("Need a string parameter");
     const fs::path path1(state.to_string(-2));
+
+    if (!state.is_string(-1))
+        throw std::runtime_error("Need a string parameter");
     const fs::path path2(state.to_string(-1));
+
     state.push_string((path1 / path2).c_str());
     return 1;
 }
