@@ -26,6 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <cstring>
+
 #include "utils/format/macros.hpp"
 #include "utils/lua/exceptions.hpp"
 #include "utils/lua/wrap.ipp"
@@ -618,12 +620,21 @@ int
 utils::lua::detail::call_cxx_function_from_c(cxx_function function,
                                              lua_State* raw_state) throw()
 {
+    char error_buf[1024];
+
     try {
         lua::state state(raw_state);
         return function(state);
     } catch (const std::exception& e) {
-        return luaL_error(raw_state, "%s", e.what());
+        std::strncpy(error_buf, e.what(), sizeof(error_buf));
     } catch (...) {
-        return luaL_error(raw_state, "Unhandled exception in Lua C++ hook");
+        std::strncpy(error_buf, "Unhandled exception in Lua C++ hook",
+                     sizeof(error_buf));
     }
+    error_buf[sizeof(error_buf) - 1] = '\0';
+    // We raise the Lua error from outside the try/catch context and we use
+    // a stack-based buffer to hold the message to ensure that we do not leak
+    // any C++ objects (and, as a likely result, memory) when Lua performs its
+    // longjmp.
+    return luaL_error(raw_state, "%s", error_buf);
 }

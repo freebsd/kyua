@@ -146,6 +146,24 @@ cxx_divide(lua::state& state)
 }
 
 
+/// A Lua function that raises a very long error message.
+///
+/// \pre stack(-1) contains the length of the message to construct.
+///
+/// \param state The Lua state.
+///
+/// \return Never returns.
+///
+/// \throw std::runtime_error Unconditionally, with an error message formed by
+///     the repetition of 'A' as many times as requested.
+int  // Not static because it needs external linkage for wrap_cxx_function.
+raise_long_error(lua::state& state)
+{
+    const int length = state.to_integer();
+    throw std::runtime_error(std::string(length, 'A').c_str());
+}
+
+
 }  // anonymous namespace
 
 
@@ -663,6 +681,23 @@ ATF_TEST_CASE_BODY(state__push_c_function__cxx_fail_anything)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(state__push_c_function__cxx_fail_overflow);
+ATF_TEST_CASE_BODY(state__push_c_function__cxx_fail_overflow)
+{
+    lua::state state;
+    state.push_c_function(lua::wrap_cxx_function< raise_long_error >);
+    lua_setglobal(raw(state), "fail");
+
+    ATF_REQUIRE(luaL_dostring(raw(state), "return fail(900)") != 0);
+    ATF_REQUIRE_MATCH(std::string(900, 'A'), lua_tostring(raw(state), -1));
+    lua_pop(raw(state), 1);
+
+    ATF_REQUIRE(luaL_dostring(raw(state), "return fail(8192)") != 0);
+    ATF_REQUIRE_MATCH(std::string(900, 'A'), lua_tostring(raw(state), -1));
+    lua_pop(raw(state), 1);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(state__push_integer);
 ATF_TEST_CASE_BODY(state__push_integer)
 {
@@ -947,6 +982,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, state__push_c_function__cxx_ok);
     ATF_ADD_TEST_CASE(tcs, state__push_c_function__cxx_fail_exception);
     ATF_ADD_TEST_CASE(tcs, state__push_c_function__cxx_fail_anything);
+    ATF_ADD_TEST_CASE(tcs, state__push_c_function__cxx_fail_overflow);
     ATF_ADD_TEST_CASE(tcs, state__push_integer);
     ATF_ADD_TEST_CASE(tcs, state__push_string);
     ATF_ADD_TEST_CASE(tcs, state__set_global__ok);
