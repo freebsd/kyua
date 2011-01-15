@@ -3,5 +3,6 @@ Content-Type: application/X-atf-atffile; version="1"
 prop: test-suite = kyua
 
 tp: exceptions_test
+tp: module_fs_test
 tp: operations_test
 tp: wrap_test

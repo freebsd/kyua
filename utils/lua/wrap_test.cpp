@@ -294,6 +294,43 @@ ATF_TEST_CASE_BODY(state__is_boolean__explicit)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(state__is_function__empty);
+ATF_TEST_CASE_BODY(state__is_function__empty)
+{
+    lua::state state;
+    ATF_REQUIRE(!state.is_function());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(state__is_function__top);
+ATF_TEST_CASE_BODY(state__is_function__top)
+{
+    lua::state state;
+    luaL_dostring(raw(state), "function my_func(a, b) return a + b; end");
+
+    lua_pushnil(raw(state));
+    ATF_REQUIRE(!state.is_function());
+    lua_getglobal(raw(state), "my_func");
+    ATF_REQUIRE(state.is_function());
+    lua_pop(raw(state), 2);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(state__is_function__explicit);
+ATF_TEST_CASE_BODY(state__is_function__explicit)
+{
+    lua::state state;
+    luaL_dostring(raw(state), "function my_func(a, b) return a + b; end");
+
+    lua_getglobal(raw(state), "my_func");
+    ATF_REQUIRE(state.is_function(-1));
+    lua_pushinteger(raw(state), 5);
+    ATF_REQUIRE(!state.is_function(-1));
+    ATF_REQUIRE(state.is_function(-2));
+    lua_pop(raw(state), 2);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(state__is_nil__empty);
 ATF_TEST_CASE_BODY(state__is_nil__empty)
 {
@@ -879,6 +916,9 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, state__is_boolean__empty);
     ATF_ADD_TEST_CASE(tcs, state__is_boolean__top);
     ATF_ADD_TEST_CASE(tcs, state__is_boolean__explicit);
+    ATF_ADD_TEST_CASE(tcs, state__is_function__empty);
+    ATF_ADD_TEST_CASE(tcs, state__is_function__top);
+    ATF_ADD_TEST_CASE(tcs, state__is_function__explicit);
     ATF_ADD_TEST_CASE(tcs, state__is_nil__empty);
     ATF_ADD_TEST_CASE(tcs, state__is_nil__top);
     ATF_ADD_TEST_CASE(tcs, state__is_nil__explicit);

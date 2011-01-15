@@ -244,6 +244,18 @@ lua::state::is_boolean(const int index)
 }
 
 
+/// Wrapper around lua_isfunction.
+///
+/// \param index The second parameter to lua_isfunction.
+///
+/// \return The return value of lua_isfunction.
+bool
+lua::state::is_function(const int index)
+{
+    return lua_isfunction(_pimpl->lua_state, index);
+}
+
+
 /// Wrapper around lua_isnil.
 ///
 /// \param index The second parameter to lua_isnil.

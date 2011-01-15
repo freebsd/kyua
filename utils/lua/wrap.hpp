@@ -86,6 +86,7 @@ public:
     void get_table(const int = -2);
     int get_top(void);
     bool is_boolean(const int = -1);
+    bool is_function(const int = -1);
     bool is_nil(const int = -1);
     bool is_number(const int = -1);
     bool is_string(const int = -1);
