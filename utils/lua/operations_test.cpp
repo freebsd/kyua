@@ -242,6 +242,39 @@ ATF_TEST_CASE_BODY(do_string__error)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(eval__one_result);
+ATF_TEST_CASE_BODY(eval__one_result)
+{
+    lua::state state;
+    stack_balance_checker checker(state);
+    lua::eval(state, "3 + 10");
+    ATF_REQUIRE_EQ(13, state.to_integer());
+    state.pop(1);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(eval__many_results);
+ATF_TEST_CASE_BODY(eval__many_results)
+{
+    lua::state state;
+    stack_balance_checker checker(state);
+    lua::eval(state, "5, 8, 10", 3);
+    ATF_REQUIRE_EQ(5, state.to_integer(-3));
+    ATF_REQUIRE_EQ(8, state.to_integer(-2));
+    ATF_REQUIRE_EQ(10, state.to_integer(-1));
+    state.pop(3);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(eval__error);
+ATF_TEST_CASE_BODY(eval__error)
+{
+    lua::state state;
+    stack_balance_checker checker(state);
+    ATF_REQUIRE_THROW(lua::error, lua::eval(state, "non_existent.method()"));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(get_array_as_strings__empty);
 ATF_TEST_CASE_BODY(get_array_as_strings__empty)
 {
@@ -320,6 +353,10 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, do_string__no_results);
     ATF_ADD_TEST_CASE(tcs, do_string__many_results);
     ATF_ADD_TEST_CASE(tcs, do_string__error);
+
+    ATF_ADD_TEST_CASE(tcs, eval__one_result);
+    ATF_ADD_TEST_CASE(tcs, eval__many_results);
+    ATF_ADD_TEST_CASE(tcs, eval__error);
 
     ATF_ADD_TEST_CASE(tcs, get_array_as_strings__empty);
     ATF_ADD_TEST_CASE(tcs, get_array_as_strings__some);

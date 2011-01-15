@@ -127,6 +127,22 @@ lua::do_string(state& s, const std::string& str, const int nresults)
 }
 
 
+/// Convenience function to evaluate a Lua expression.
+///
+/// \param s The Lua state.
+/// \param expression The textual expression to evaluate.
+/// \param nresults The number of results to leave on the stack.  Must be
+///     positive.
+///
+/// \throw api_error If there is a problem evaluating the expression.
+void
+lua::eval(state& s, const std::string& expression, const int nresults)
+{
+    PRE(nresults > 0);
+    do_string(s, F("return %s") % expression, nresults);
+}
+
+
 /// Queries and returns an array of strings.
 ///
 /// \param s The Lua state.
@@ -142,8 +158,7 @@ lua::get_array_as_strings(state& s, const std::string& name_expr)
 {
     stack_cleaner cleaner1(s);
 
-    s.load_string(F("return (%s);") % name_expr);
-    s.pcall(0, 1, 0);
+    eval(s, name_expr);
     if (s.is_nil())
         throw error(F("Undefined array '%s'") % name_expr);
     if (!s.is_table())
