@@ -79,6 +79,26 @@ lua_fs_dirname(lua::state& state)
 }
 
 
+/// Lua binding for fs::path::is_absolute.
+///
+/// \pre stack(-1) The input path.
+/// \post stack(-1) Whether the input path is absolute or not.
+///
+/// \param state The Lua state.
+///
+/// \return The number of result values, i.e. 1.
+int
+lua_fs_is_absolute(lua::state& state)
+{
+    if (!state.is_string())
+        throw std::runtime_error("Need a string parameter");
+    const fs::path path(state.to_string());
+
+    state.push_boolean(path.is_absolute());
+    return 1;
+}
+
+
 /// Lua binding for fs::path::operator/.
 ///
 /// \pre stack(-2) The first input path.
@@ -119,6 +139,7 @@ lua::open_fs(lua::state& s)
     std::map< std::string, lua::c_function > members;
     members["basename"] = wrap_cxx_function< lua_fs_basename >;
     members["dirname"] = wrap_cxx_function< lua_fs_dirname >;
+    members["is_absolute"] = wrap_cxx_function< lua_fs_is_absolute >;
     members["join"] = wrap_cxx_function< lua_fs_join >;
     lua::create_module(s, "fs", members);
 }

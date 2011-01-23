@@ -99,6 +99,7 @@ public:
     void open_table(void);
     void pcall(const int, const int, const int);
     void pop(const int);
+    void push_boolean(const bool);
     void push_c_function(c_function);
     void push_integer(const int);
     void push_string(const std::string&);

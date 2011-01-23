@@ -102,6 +102,33 @@ ATF_TEST_CASE_BODY(dirname__fail)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(is_absolute__ok);
+ATF_TEST_CASE_BODY(is_absolute__ok)
+{
+    lua::state state;
+    lua::open_fs(state);
+
+    lua::do_string(state, "return fs.is_absolute('my/test//file_foobar')", 1);
+    ATF_REQUIRE(!state.to_boolean());
+    lua::do_string(state, "return fs.is_absolute('/my/test//file_foobar')", 1);
+    ATF_REQUIRE(state.to_boolean());
+    state.pop(2);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(is_absolute__fail);
+ATF_TEST_CASE_BODY(is_absolute__fail)
+{
+    lua::state state;
+    lua::open_fs(state);
+
+    ATF_REQUIRE_THROW_RE(lua::error, "Need a string",
+                         lua::do_string(state, "return fs.is_absolute({})", 1));
+    ATF_REQUIRE_THROW_RE(lua::error, "Invalid path",
+                         lua::do_string(state, "return fs.is_absolute('')", 1));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(join__ok);
 ATF_TEST_CASE_BODY(join__ok)
 {
@@ -140,6 +167,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, basename__fail);
     ATF_ADD_TEST_CASE(tcs, dirname__ok);
     ATF_ADD_TEST_CASE(tcs, dirname__fail);
+    ATF_ADD_TEST_CASE(tcs, is_absolute__ok);
+    ATF_ADD_TEST_CASE(tcs, is_absolute__fail);
     ATF_ADD_TEST_CASE(tcs, join__ok);
     ATF_ADD_TEST_CASE(tcs, join__fail);
 }

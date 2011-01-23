@@ -628,6 +628,21 @@ ATF_TEST_CASE_BODY(state__pop__many)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(state__push_boolean);
+ATF_TEST_CASE_BODY(state__push_boolean)
+{
+    lua::state state;
+    state.push_boolean(true);
+    ATF_REQUIRE_EQ(1, lua_gettop(raw(state)));
+    ATF_REQUIRE(lua_toboolean(raw(state), -1));
+    state.push_boolean(false);
+    ATF_REQUIRE_EQ(2, lua_gettop(raw(state)));
+    ATF_REQUIRE(!lua_toboolean(raw(state), -1));
+    ATF_REQUIRE(lua_toboolean(raw(state), -2));
+    lua_pop(raw(state), 2);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(state__push_c_function__c_ok);
 ATF_TEST_CASE_BODY(state__push_c_function__c_ok)
 {
@@ -978,6 +993,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, state__pcall__fail);
     ATF_ADD_TEST_CASE(tcs, state__pop__one);
     ATF_ADD_TEST_CASE(tcs, state__pop__many);
+    ATF_ADD_TEST_CASE(tcs, state__push_boolean);
     ATF_ADD_TEST_CASE(tcs, state__push_c_function__c_ok);
     ATF_ADD_TEST_CASE(tcs, state__push_c_function__cxx_ok);
     ATF_ADD_TEST_CASE(tcs, state__push_c_function__cxx_fail_exception);

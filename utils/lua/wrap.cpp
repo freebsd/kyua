@@ -415,6 +415,16 @@ lua::state::pop(const int count)
 }
 
 
+/// Wrapper around lua_pushboolean.
+///
+/// \param value The second parameter to lua_pushboolean.
+void
+lua::state::push_boolean(const bool value)
+{
+    lua_pushboolean(_pimpl->lua_state, value ? 1 : 0);
+}
+
+
 /// Wrapper around lua_pushcfunction.
 ///
 /// \param function The second parameter to lua_pushcfuntion.  Use the
