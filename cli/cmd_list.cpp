@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,9 +31,9 @@
 #include <vector>
 
 #include "cli/cmd_list.hpp"
-#include "engine/kyuafile.hpp"
 #include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
+#include "engine/user_files/kyuafile.hpp"
 #include "utils/cmdline/base_command.ipp"
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.ipp"
@@ -43,6 +43,7 @@
 #include "utils/sanity.hpp"
 
 namespace cmdline = utils::cmdline;
+namespace user_files = engine::user_files;
 
 using cli::cmd_list;
 
@@ -69,11 +70,11 @@ cmd_list::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
 {
     std::vector< utils::fs::path > test_programs;
     if (cmdline.arguments().empty()) {
-        engine::kyuafile kyuafile = engine::kyuafile::load(
+        user_files::kyuafile kyuafile = user_files::kyuafile::load(
             cmdline.get_option< cmdline::path_option >("kyuafile"));
         test_programs = kyuafile.test_programs();
     } else {
-        engine::kyuafile kyuafile = engine::kyuafile::from_arguments(
+        user_files::kyuafile kyuafile = user_files::kyuafile::from_arguments(
             cmdline.arguments());
         test_programs = kyuafile.test_programs();
     }

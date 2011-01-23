@@ -1,2 +1,4 @@
-exceptions_test
-formatter_test
+syntax("kyuafile", 1)
+
+AtfTestProgram {name="exceptions_test"}
+AtfTestProgram {name="formatter_test"}

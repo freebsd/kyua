@@ -1,5 +1,7 @@
-base_command_test
-exceptions_test
-globals_test
-options_test
-parser_test
+syntax("kyuafile", 1)
+
+AtfTestProgram {name="base_command_test"}
+AtfTestProgram {name="exceptions_test"}
+AtfTestProgram {name="globals_test"}
+AtfTestProgram {name="options_test"}
+AtfTestProgram {name="parser_test"}

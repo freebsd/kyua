@@ -1,4 +1,6 @@
-auto_cleaners_test
-exceptions_test
-operations_test
-path_test
+syntax("kyuafile", 1)
+
+AtfTestProgram {name="auto_cleaners_test"}
+AtfTestProgram {name="exceptions_test"}
+AtfTestProgram {name="operations_test"}
+AtfTestProgram {name="path_test"}

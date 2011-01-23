@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,11 +39,11 @@ extern "C" {
 #include <string>
 #include <vector>
 
-#include "engine/kyuafile.hpp"
 #include "engine/results.ipp"
 #include "engine/runner.hpp"
 #include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
+#include "engine/user_files/kyuafile.hpp"
 #include "utils/datetime.hpp"
 #include "utils/defs.hpp"
 #include "utils/env.hpp"
@@ -66,6 +66,7 @@ namespace process = utils::process;
 namespace results = engine::results;
 namespace runner = engine::runner;
 namespace signals = utils::signals;
+namespace user_files = engine::user_files;
 
 using utils::none;
 using utils::optional;
@@ -477,7 +478,7 @@ runner::run_test_program(const fs::path& test_program,
 /// \param config The configuration variables provided by the user.
 /// \param hooks Callbacks for events.
 void
-runner::run_test_suite(const engine::kyuafile& suite,
+runner::run_test_suite(const user_files::kyuafile& suite,
                        const engine::properties_map& config,
                        runner::hooks* run_hooks)
 {

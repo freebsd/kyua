@@ -1,4 +1,4 @@
-# Copyright 2010 Google Inc.
+# Copyright 2010, 2011 Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,8 +34,6 @@ libengine_a_SOURCES  = engine/config.cpp
 libengine_a_SOURCES += engine/config.hpp
 libengine_a_SOURCES += engine/exceptions.cpp
 libengine_a_SOURCES += engine/exceptions.hpp
-libengine_a_SOURCES += engine/kyuafile.cpp
-libengine_a_SOURCES += engine/kyuafile.hpp
 libengine_a_SOURCES += engine/test_case.cpp
 libengine_a_SOURCES += engine/test_case.hpp
 libengine_a_SOURCES += engine/test_program.cpp
@@ -85,13 +83,6 @@ engine_runner_test_SOURCES = engine/runner_test.cpp
 engine_runner_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 engine_runner_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
-tests_engine_PROGRAMS += engine/kyuafile_test
-engine_kyuafile_test_SOURCES = engine/kyuafile_test.cpp
-engine_kyuafile_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
-                                $(ATF_CXX_CFLAGS)
-engine_kyuafile_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
-                             $(ATF_CXX_LIBS)
-
 tests_engine_PROGRAMS += engine/test_case_test
 engine_test_case_test_SOURCES = engine/test_case_test.cpp
 engine_test_case_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_TEST_CFLAGS) \
@@ -114,3 +105,5 @@ engine_test_program_atf_helpers_LDADD = $(ATF_CXX_LIBS)
 tests_engine_PROGRAMS += engine/test_program_plain_helpers
 engine_test_program_plain_helpers_SOURCES = \
     engine/test_program_plain_helpers.cpp
+
+include engine/user_files/Makefile.am.inc

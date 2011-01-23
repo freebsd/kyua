@@ -1,5 +1,7 @@
-children_test
-exceptions_test
-fdstream_test
-status_test
-systembuf_test
+syntax("kyuafile", 1)
+
+AtfTestProgram {name="children_test"}
+AtfTestProgram {name="exceptions_test"}
+AtfTestProgram {name="fdstream_test"}
+AtfTestProgram {name="status_test"}
+AtfTestProgram {name="systembuf_test"}

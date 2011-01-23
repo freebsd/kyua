@@ -1,7 +1,10 @@
-config_test
-exceptions_test
-kyuafile_test
-results_test
-runner_test
-test_case_test
-test_program_test
+syntax("kyuafile", 1)
+
+AtfTestProgram {name="config_test"}
+AtfTestProgram {name="exceptions_test"}
+AtfTestProgram {name="results_test"}
+AtfTestProgram {name="runner_test"}
+AtfTestProgram {name="test_case_test"}
+AtfTestProgram {name="test_program_test"}
+
+include("user_files/Kyuafile")

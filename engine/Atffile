@@ -4,8 +4,8 @@ prop: test-suite = kyua
 
 tp: config_test
 tp: exceptions_test
-tp: kyuafile_test
 tp: results_test
 tp: runner_test
 tp: test_case_test
 tp: test_program_test
+tp: user_files

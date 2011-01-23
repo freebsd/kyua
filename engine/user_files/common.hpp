@@ -1,4 +1,4 @@
-// Copyright 2010, 2011 Google Inc.
+// Copyright 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,60 +26,36 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/runner.hpp
-/// Test suite execution.
+/// \file engine/user_files/common.hpp
+/// Boilerplate code to load user-defined Lua scripts.
 
-#if !defined(ENGINE_RUNNER_HPP)
-#define ENGINE_RUNNER_HPP
+#if !defined(ENGINE_USER_FILES_COMMON_HPP)
+#define ENGINE_USER_FILES_COMMON_HPP
 
-#include <string>
+#include <cstddef>
 
-#include "engine/config.hpp"
-#include "engine/results.hpp"
-#include "engine/test_case.hpp"
-#include "utils/fs/path.hpp"
+namespace utils {
 
+namespace fs {
+class path;
+}  // namespace fs
+
+namespace lua {
+class state;
+}  // namespace lua
+
+}  // namespace utils
 
 namespace engine {
-
-
 namespace user_files {
-class kyuafile;
+
+
+void do_user_file(utils::lua::state&, const utils::fs::path&,
+                  const char* = NULL);
+void init(utils::lua::state&, const utils::fs::path&, const char* = NULL);
+
+
 }  // namespace user_files
-struct test_case;
-
-
-namespace runner {
-
-
-/// Callbacks for the execution of test suites and programs.
-class hooks {
-public:
-    virtual ~hooks(void) = 0;
-
-    /// Hook called right before a test case is executed.
-    ///
-    /// \param identifier The test case identifier.
-    virtual void start_test_case(const test_case_id& identifier) = 0;
-
-    /// Hook called right after a test case is executed.
-    ///
-    /// \param identifier The test case identifier.
-    /// \param result The result of the test case.  To grab ownership of this
-    ///     pointer, just use release() on the smart pointer.
-    virtual void finish_test_case(const test_case_id& identifier,
-                                  results::result_ptr result) = 0;
-};
-
-
-results::result_ptr run_test_case(const engine::test_case&,
-                                  const engine::config&,
-                                  const properties_map&);
-void run_test_program(const utils::fs::path&, const properties_map&, hooks*);
-void run_test_suite(const user_files::kyuafile&, const properties_map&, hooks*);
-
-
-}  // namespace runner
 }  // namespace engine
 
-#endif  // !defined(ENGINE_RUNNER_HPP)
+#endif  // !defined(ENGINE_USER_FILES_COMMON_HPP)

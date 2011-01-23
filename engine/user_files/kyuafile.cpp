@@ -27,64 +27,57 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <fstream>
-#include <iostream>
 
 #include "engine/exceptions.hpp"
-#include "engine/kyuafile.hpp"
+#include "engine/user_files/common.hpp"
+#include "engine/user_files/kyuafile.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/exceptions.hpp"
+#include "utils/lua/exceptions.hpp"
+#include "utils/lua/operations.hpp"
+#include "utils/lua/wrap.ipp"
 
 namespace cmdline = utils::cmdline;
 namespace fs = utils::fs;
-
-// TODO(jmmv): Replace this adhoc trivial parser with a full parser.  Use
-// either Yacc or Bison.  Don't bother reimplementing a parser: automake
-// ships the generated files by default, so we can assume end users don't
-// need to deal with tool incompatibilities.
+namespace lua = utils::lua;
+namespace user_files = engine::user_files;
 
 
 namespace {
 
 
-/// Parses a single test suite configuration file.
+/// Processes a raw list of test programs for use within this module.
 ///
-/// This is a recursive algorithm to load configuration files with inclusions.
-/// It is just a helper function for the kyuafile::load() method.
+/// \param strings_vector The input vector of strings.
+/// \param root The directory where the initial Kyuafile is located.
 ///
-/// \param suite The file to parse.
-/// \param config_file The directory in which the file is located, relative to
-///     the initial of the recursive load.
-/// \param test_programs [out] Accumulator that absorbs the collection of test
-///     programs executable names as they are found.
+/// \return A list of paths (not strings) in which any relative path has been
+/// adjusted with the provided root directory.
 ///
-/// \throw error If suite does not exist.  TODO(jmmv): This exception is not
-///     accurate enough.
-static void
-load_one(const utils::fs::path& suite, const utils::fs::path& directory,
-         std::vector< utils::fs::path >& test_programs)
+/// throw fs::error If there is any invalid path in the input vector.
+std::vector< fs::path >
+adjust_test_programs(const std::vector< std::string >& strings,
+                     const fs::path& root)
 {
-    std::ifstream is(suite.c_str());
-    if (!is)
-        throw engine::error(F("Failed to open %s") % suite);
+    std::vector< fs::path > paths;
 
-    std::string line;
-    while (std::getline(is, line).good()) {
-        if (line.substr(0, 8) == "include ") {
-            const utils::fs::path include(line.substr(8));
-            if (directory != utils::fs::path("."))
-                load_one(directory / include, directory / include.branch_path(),
-                         test_programs);
+    for (std::vector< std::string >::const_iterator iter = strings.begin();
+         iter != strings.end(); iter++) {
+        const fs::path raw_path(*iter);
+
+        if (raw_path.is_absolute())
+            paths.push_back(raw_path);
+        else {
+            if (root.str() == ".")
+                paths.push_back(raw_path);
             else
-                load_one(include, include.branch_path(), test_programs);
-        } else {
-            if (directory != utils::fs::path("."))
-                test_programs.push_back(directory / line);
-            else
-                test_programs.push_back(utils::fs::path(line));
+                paths.push_back(root / raw_path);
         }
     }
+
+    return paths;
 }
 
 
@@ -98,7 +91,7 @@ load_one(const utils::fs::path& suite, const utils::fs::path& directory,
 ///
 /// \param tps_ Collection of test program executables that belong to this test
 ///     suite.
-engine::kyuafile::kyuafile(const std::vector< utils::fs::path >& tps_) :
+user_files::kyuafile::kyuafile(const std::vector< utils::fs::path >& tps_) :
     _test_programs(tps_)
 {
 }
@@ -106,18 +99,28 @@ engine::kyuafile::kyuafile(const std::vector< utils::fs::path >& tps_) :
 
 /// Parses a test suite configuration file.
 ///
-/// \param config_file The file to parse.
+/// \param file The file to parse.
 ///
 /// \return High-level representation of the configuration file.
 ///
 /// \throw error If the file does not exist.  TODO(jmmv): This exception is not
 ///     accurate enough.
-engine::kyuafile
-engine::kyuafile::load(const utils::fs::path& config_file)
+user_files::kyuafile
+user_files::kyuafile::load(const utils::fs::path& file)
 {
-    std::vector< utils::fs::path > test_programs;
-    load_one(config_file, config_file.branch_path(), test_programs);
-    return kyuafile(test_programs);
+    std::vector< std::string > test_programs;
+    try {
+        lua::state state;
+        lua::stack_cleaner cleaner(state);
+
+        user_files::do_user_file(state, file);
+
+        test_programs = lua::get_array_as_strings(state,
+                                                  "kyuafile.TEST_PROGRAMS");
+    } catch (const lua::error& e) {
+        throw engine::error(F("Load failed: %s") % e.what());
+    }
+    return kyuafile(adjust_test_programs(test_programs, file.branch_path()));
 }
 
 
@@ -130,8 +133,8 @@ engine::kyuafile::load(const utils::fs::path& config_file)
 /// \return An adhoc test suite configuration based on the arguments.
 ///
 /// \throw cmdline::usage_error If the arguments are invalid.
-engine::kyuafile
-engine::kyuafile::from_arguments(const cmdline::args_vector& args)
+user_files::kyuafile
+user_files::kyuafile::from_arguments(const cmdline::args_vector& args)
 {
     std::vector< utils::fs::path > test_programs;
     for (cmdline::args_vector::const_iterator iter = args.begin();
@@ -158,7 +161,7 @@ engine::kyuafile::from_arguments(const cmdline::args_vector& args)
 ///
 /// \return Collection of test program executable names.
 const std::vector< utils::fs::path >&
-engine::kyuafile::test_programs(void) const
+user_files::kyuafile::test_programs(void) const
 {
     return _test_programs;
 }

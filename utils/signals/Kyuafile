@@ -1,4 +1,6 @@
-exceptions_test
-misc_test
-programmer_test
-timer_test
+syntax("kyuafile", 1)
+
+AtfTestProgram {name="exceptions_test"}
+AtfTestProgram {name="misc_test"}
+AtfTestProgram {name="programmer_test"}
+AtfTestProgram {name="timer_test"}

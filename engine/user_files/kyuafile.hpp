@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,11 +26,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/kyuafile.hpp
+/// \file engine/user_files/kyuafile.hpp
 /// Test suite configuration parsing and representation.
 
-#if !defined(ENGINE_KYUAFILE_HPP)
-#define ENGINE_KYUAFILE_HPP
+#if !defined(ENGINE_USER_FILES_KYUAFILE_HPP)
+#define ENGINE_USER_FILES_KYUAFILE_HPP
 
 #include <vector>
 
@@ -38,6 +38,7 @@
 #include "utils/fs/path.hpp"
 
 namespace engine {
+namespace user_files {
 
 
 /// Representation of the configuration of a test suite.
@@ -59,6 +60,7 @@ public:
 };
 
 
+}  // namespace user_files
 }  // namespace engine
 
-#endif  // !defined(ENGINE_KYUAFILE_HPP)
+#endif  // !defined(ENGINE_USER_FILES_KYUAFILE_HPP)

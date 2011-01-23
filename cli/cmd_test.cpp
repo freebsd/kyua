@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,9 +29,9 @@
 #include <cstdlib>
 
 #include "cli/cmd_test.hpp"
-#include "engine/kyuafile.hpp"
 #include "engine/results.hpp"
 #include "engine/runner.hpp"
+#include "engine/user_files/kyuafile.hpp"
 #include "utils/cmdline/base_command.ipp"
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.ipp"
@@ -42,6 +42,7 @@
 namespace cmdline = utils::cmdline;
 namespace results = engine::results;
 namespace runner = engine::runner;
+namespace user_files = engine::user_files;
 
 using cli::cmd_test;
 
@@ -107,11 +108,11 @@ cmd_test::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
     run_hooks hooks(ui);
 
     if (cmdline.arguments().empty()) {
-        const engine::kyuafile suite = engine::kyuafile::load(
+        const user_files::kyuafile suite = user_files::kyuafile::load(
             cmdline.get_option< cmdline::path_option >("kyuafile"));
         runner::run_test_suite(suite, engine::properties_map(), &hooks);
     } else {
-        const engine::kyuafile suite = engine::kyuafile::from_arguments(
+        const user_files::kyuafile suite = user_files::kyuafile::from_arguments(
             cmdline.arguments());
         runner::run_test_suite(suite, engine::properties_map(), &hooks);
     }

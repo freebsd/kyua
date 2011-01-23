@@ -1,4 +1,6 @@
-exceptions_test
-module_fs_test
-operations_test
-wrap_test
+syntax("kyuafile", 1)
+
+AtfTestProgram {name="exceptions_test"}
+AtfTestProgram {name="module_fs_test"}
+AtfTestProgram {name="operations_test"}
+AtfTestProgram {name="wrap_test"}

@@ -1,3 +1,5 @@
-include cli/Kyuafile
-include engine/Kyuafile
-include utils/Kyuafile
+syntax("kyuafile", 1)
+
+include("cli/Kyuafile")
+include("engine/Kyuafile")
+include("utils/Kyuafile")
