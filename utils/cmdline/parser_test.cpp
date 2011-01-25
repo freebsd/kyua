@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -25,6 +25,16 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+extern "C" {
+#include <fcntl.h>
+#include <unistd.h>
+}
+
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <utility>
 
 #include <atf-c++.hpp>
 
@@ -77,6 +87,48 @@ public:
         }
     }
 };
+
+
+/// Redirects stdout and stderr to a file.
+///
+/// This fails the test case in case of any error.
+///
+/// \param file The name of the file to redirect stdout and stderr to.
+///
+/// \return A copy of the old stdout and stderr file descriptors.
+static std::pair< int, int >
+mock_stdfds(const char* file)
+{
+    std::cout.flush();
+    std::cerr.flush();
+
+    const int oldout = ::dup(STDOUT_FILENO);
+    ATF_REQUIRE(oldout != -1);
+    const int olderr = ::dup(STDERR_FILENO);
+    ATF_REQUIRE(olderr != -1);
+
+    const int fd = ::open(file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    ATF_REQUIRE(fd != -1);
+    ATF_REQUIRE(::dup2(fd, STDOUT_FILENO) != -1);
+    ATF_REQUIRE(::dup2(fd, STDERR_FILENO) != -1);
+    ::close(fd);
+
+    return std::make_pair(oldout, olderr);
+}
+
+
+/// Restores stdout and stderr after a call to mock_stdfds.
+///
+/// \param oldfds The copy of the previous stdout and stderr as returned by the
+///     call to mock_fds().
+static void
+restore_stdfds(const std::pair< int, int >& oldfds)
+{
+    ATF_REQUIRE(::dup2(oldfds.first, STDOUT_FILENO) != -1);
+    ::close(oldfds.first);
+    ATF_REQUIRE(::dup2(oldfds.second, STDERR_FILENO) != -1);
+    ::close(oldfds.second);
+}
 
 
 }  // anonymous namespace
@@ -279,6 +331,25 @@ ATF_TEST_CASE_BODY(unknown_option_error)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(unknown_plus_option_error);
+ATF_TEST_CASE_BODY(unknown_plus_option_error)
+{
+    const int argc = 2;
+    const char* const argv[] = {"progname", "-+", NULL};
+    const cmdline::options_vector options;
+
+    try {
+        parse(argc, argv, options);
+        fail("unknown_option_error not raised");
+    } catch (const cmdline::unknown_option_error& e) {
+        ATF_REQUIRE_EQ("-+", e.option());
+    } catch (const cmdline::missing_option_argument_error& e) {
+        fail("Looks like getopt_long thinks a + option is defined and it "
+             "even requires an argument");
+    }
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(option_types);
 ATF_TEST_CASE_BODY(option_types)
 {
@@ -321,6 +392,42 @@ ATF_TEST_CASE_BODY(option_validation_error)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(silent_errors);
+ATF_TEST_CASE_BODY(silent_errors)
+{
+    const int argc = 2;
+    const char* const argv[] = {"progname", "-h", NULL};
+    cmdline::options_vector options;
+
+    try {
+        std::pair< int, int > oldfds = mock_stdfds("output.txt");
+        try {
+            parse(argc, argv, options);
+        } catch (...) {
+            restore_stdfds(oldfds);
+            throw;
+        }
+        restore_stdfds(oldfds);
+        fail("unknown_option_error not raised");
+    } catch (const cmdline::unknown_option_error& e) {
+        ATF_REQUIRE_EQ("-h", e.option());
+    }
+
+    std::ifstream input("output.txt");
+    ATF_REQUIRE(input);
+
+    bool has_output = false;
+    std::string line;
+    while (std::getline(input, line).good()) {
+        std::cout << line << '\n';
+        has_output = true;
+    }
+
+    if (has_output)
+        fail("getopt_long printed messages on stdout/stderr by itself");
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, progname__no_options);
@@ -331,6 +438,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, subcommands);
     ATF_ADD_TEST_CASE(tcs, missing_option_argument_error);
     ATF_ADD_TEST_CASE(tcs, unknown_option_error);
+    ATF_ADD_TEST_CASE(tcs, unknown_plus_option_error);
     ATF_ADD_TEST_CASE(tcs, option_types);
     ATF_ADD_TEST_CASE(tcs, option_validation_error);
+    ATF_ADD_TEST_CASE(tcs, silent_errors);
 }

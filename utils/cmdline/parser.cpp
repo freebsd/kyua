@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -291,8 +291,12 @@ cmdline::parse(const int argc, const char* const* argv,
 
     int mutable_argc = argc;
     char** mutable_argv = make_mutable_argv(argc, argv);
+    const int old_opterr = ::opterr;
     try {
         int ch;
+
+        ::opterr = 0;
+
         while ((ch = ::getopt_long(mutable_argc, mutable_argv,
                                    ("+:" + data.short_options).c_str(),
                                    data.long_options.get(), NULL)) != -1) {
@@ -320,12 +324,14 @@ cmdline::parse(const int argc, const char* const* argv,
         }
         args = argv_to_vector(mutable_argc - optind, mutable_argv + optind);
 
+        ::opterr = old_opterr;
         ::optind = 1;
 #if defined(HAVE_GETOPT_WITH_OPTRESET)
         ::optreset = 1;
 #endif
     } catch (...) {
         free_mutable_argv(mutable_argv);
+        ::opterr = old_opterr;
         ::optind = 1;
 #if defined(HAVE_GETOPT_WITH_OPTRESET)
         ::optreset = 1;
