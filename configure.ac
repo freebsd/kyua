@@ -71,10 +71,8 @@ AC_PROG_RANLIB
 PKG_CHECK_MODULES([ATF_CXX], [atf-c++ >= 0.12],
                   [],
                   AC_MSG_ERROR([atf-c++ (0.12 or newer) is required]))
-PKG_CHECK_MODULES([LUA], [lua >= 5.1],
-                  [],
-                  AC_MSG_ERROR([lua (5.1 or newer) is required]))
 KYUA_DOXYGEN
+KYUA_LUA
 AC_PATH_PROG([SVN], [svn])
 
 
