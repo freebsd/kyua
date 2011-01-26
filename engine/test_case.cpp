@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 #include <cerrno>
 #include <cstdlib>
 #include <iterator>
+#include <limits>
 #include <sstream>
 
 #include "engine/config.hpp"
@@ -113,7 +114,8 @@ engine::detail::parse_ulong(const std::string& name, const std::string& value)
     char* endptr;
     const unsigned long l = std::strtoul(value.c_str(), &endptr, 10);
     if (value.find_first_of("- \t") != std::string::npos || *endptr != '\0' ||
-        (l == 0 && errno == EINVAL) || (l == ULONG_MAX && errno == ERANGE))
+        (l == 0 && errno == EINVAL) ||
+        (l == std::numeric_limits< unsigned long >::max() && errno == ERANGE))
         throw format_error(F("Invalid value '%s' for integer property '%s'") %
                            value % name);
     return l;

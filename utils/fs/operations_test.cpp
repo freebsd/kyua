@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -70,8 +70,7 @@ lookup(const char* dir, const char* name, const int expected_type)
     bool found = false;
     struct dirent* dp;
     while (!found && (dp = readdir(dirp)) != NULL) {
-        if (dp->d_namlen == std::strlen(name) &&
-            std::strcmp(dp->d_name, name) == 0 &&
+        if (std::strcmp(dp->d_name, name) == 0 &&
             dp->d_type == expected_type) {
             found = true;
         }

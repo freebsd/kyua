@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -25,6 +25,8 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+#include <cstring>
 
 #include "utils/format/macros.hpp"
 #include "utils/fs/exceptions.hpp"
@@ -80,7 +82,7 @@ fs::invalid_path_error::invalid_path(void) const
 /// \param message_ The message describing what caused the error.
 /// \param errno_ The error code.
 fs::system_error::system_error(const std::string& message_, const int errno_) :
-    error(F("%s: %s") % message_ % strerror(errno_)),
+    error(F("%s: %s") % message_ % std::strerror(errno_)),
     _original_errno(errno_)
 {
 }

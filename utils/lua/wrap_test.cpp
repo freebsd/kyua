@@ -91,9 +91,11 @@ check_modules(lua::state& state, const std::string& expected)
 {
     std::cout << "Checking loaded modules" <<
         (expected.empty() ? "" : (" (" + expected + " expected)")) << "\n";
-    ATF_REQUIRE(!(expected == "base" ^ is_available(state, "assert")));
-    ATF_REQUIRE(!(expected == "string" ^ is_available(state, "string.byte")));
-    ATF_REQUIRE(!(expected == "table" ^ is_available(state, "table.concat")));
+    ATF_REQUIRE(!((expected == "base") ^ (is_available(state, "assert"))));
+    ATF_REQUIRE(!((expected == "string") ^
+                  (is_available(state, "string.byte"))));
+    ATF_REQUIRE(!((expected == "table") ^
+                  (is_available(state, "table.concat"))));
 }
 
 

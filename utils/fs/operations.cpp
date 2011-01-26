@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,7 @@ extern "C" {
 }
 
 #include <cerrno>
+#include <cstdlib>
 #include <cstring>
 #include <sstream>
 
@@ -57,21 +58,6 @@ using utils::optional;
 
 
 namespace {
-
-
-/// Gets the name of a directory entry as a sane type.
-///
-/// \param dp The directory entry as returned by readdir(3).
-///
-/// \return The name of the entry.
-static std::string
-dirent_name(const struct dirent* dp)
-{
-    utils::auto_array< char > name(new char[dp->d_namlen + 1]);
-    std::memcpy(name.get(), dp->d_name, dp->d_namlen);
-    name[dp->d_namlen] = '\0';
-    return std::string(name.get());
-}
 
 
 /// Helper function for the public fs::cleanup() routine.
@@ -107,7 +93,7 @@ cleanup_aux(const fs::path& root, const fs::path& current)
     try {
         struct dirent* dp;
         while ((dp = ::readdir(dirp)) != NULL) {
-            const std::string name = dirent_name(dp);
+            const std::string name = dp->d_name;
             if (name == "." || name == "..")
                 continue;
 
@@ -175,10 +161,10 @@ fs::current_path(void)
 
     try {
         const fs::path result(cwd);
-        ::free(cwd);
+        std::free(cwd);
         return result;
     } catch (...) {
-        ::free(cwd);
+        std::free(cwd);
         throw;
     }
 }

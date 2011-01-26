@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,9 +42,7 @@ namespace signals = utils::signals;
 namespace {
 
 
-// Do not name this 'siginfo' because it would clash with the 'struct siginfo'
-// defined by signal.h.
-namespace siginfo_ns {
+namespace sigchld {
 
 
 static bool happened_1;
@@ -52,18 +50,18 @@ static bool happened_2;
 
 
 void handler_1(const int signo) {
-    PRE(signo == SIGINFO);
+    PRE(signo == SIGCHLD);
     happened_1 = true;
 }
 
 
 void handler_2(const int signo) {
-    PRE(signo == SIGINFO);
+    PRE(signo == SIGCHLD);
     happened_2 = true;
 }
 
 
-}  // namespace siginfo_ns
+}  // namespace sigchld
 
 
 }  // anonymous namespace
@@ -72,15 +70,15 @@ void handler_2(const int signo) {
 ATF_TEST_CASE_WITHOUT_HEAD(program_unprogram);
 ATF_TEST_CASE_BODY(program_unprogram)
 {
-    signals::programmer programmer(SIGINFO, siginfo_ns::handler_1);
-    siginfo_ns::happened_1 = false;
-    ::kill(::getpid(), SIGINFO);
-    ATF_REQUIRE(siginfo_ns::happened_1);
+    signals::programmer programmer(SIGCHLD, sigchld::handler_1);
+    sigchld::happened_1 = false;
+    ::kill(::getpid(), SIGCHLD);
+    ATF_REQUIRE(sigchld::happened_1);
 
     programmer.unprogram();
-    siginfo_ns::happened_1 = false;
-    ::kill(::getpid(), SIGINFO);
-    ATF_REQUIRE(!siginfo_ns::happened_1);
+    sigchld::happened_1 = false;
+    ::kill(::getpid(), SIGCHLD);
+    ATF_REQUIRE(!sigchld::happened_1);
 }
 
 
@@ -88,48 +86,48 @@ ATF_TEST_CASE_WITHOUT_HEAD(scope);
 ATF_TEST_CASE_BODY(scope)
 {
     {
-        signals::programmer programmer(SIGINFO, siginfo_ns::handler_1);
-        siginfo_ns::happened_1 = false;
-        ::kill(::getpid(), SIGINFO);
-        ATF_REQUIRE(siginfo_ns::happened_1);
+        signals::programmer programmer(SIGCHLD, sigchld::handler_1);
+        sigchld::happened_1 = false;
+        ::kill(::getpid(), SIGCHLD);
+        ATF_REQUIRE(sigchld::happened_1);
     }
 
-    siginfo_ns::happened_1 = false;
-    ::kill(::getpid(), SIGINFO);
-    ATF_REQUIRE(!siginfo_ns::happened_1);
+    sigchld::happened_1 = false;
+    ::kill(::getpid(), SIGCHLD);
+    ATF_REQUIRE(!sigchld::happened_1);
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(nested);
 ATF_TEST_CASE_BODY(nested)
 {
-    signals::programmer programmer_1(SIGINFO, siginfo_ns::handler_1);
-    siginfo_ns::happened_1 = false;
-    siginfo_ns::happened_2 = false;
-    ::kill(::getpid(), SIGINFO);
-    ATF_REQUIRE(siginfo_ns::happened_1);
-    ATF_REQUIRE(!siginfo_ns::happened_2);
+    signals::programmer programmer_1(SIGCHLD, sigchld::handler_1);
+    sigchld::happened_1 = false;
+    sigchld::happened_2 = false;
+    ::kill(::getpid(), SIGCHLD);
+    ATF_REQUIRE(sigchld::happened_1);
+    ATF_REQUIRE(!sigchld::happened_2);
 
-    signals::programmer programmer_2(SIGINFO, siginfo_ns::handler_2);
-    siginfo_ns::happened_1 = false;
-    siginfo_ns::happened_2 = false;
-    ::kill(::getpid(), SIGINFO);
-    ATF_REQUIRE(!siginfo_ns::happened_1);
-    ATF_REQUIRE(siginfo_ns::happened_2);
+    signals::programmer programmer_2(SIGCHLD, sigchld::handler_2);
+    sigchld::happened_1 = false;
+    sigchld::happened_2 = false;
+    ::kill(::getpid(), SIGCHLD);
+    ATF_REQUIRE(!sigchld::happened_1);
+    ATF_REQUIRE(sigchld::happened_2);
 
     programmer_2.unprogram();
-    siginfo_ns::happened_1 = false;
-    siginfo_ns::happened_2 = false;
-    ::kill(::getpid(), SIGINFO);
-    ATF_REQUIRE(siginfo_ns::happened_1);
-    ATF_REQUIRE(!siginfo_ns::happened_2);
+    sigchld::happened_1 = false;
+    sigchld::happened_2 = false;
+    ::kill(::getpid(), SIGCHLD);
+    ATF_REQUIRE(sigchld::happened_1);
+    ATF_REQUIRE(!sigchld::happened_2);
 
     programmer_1.unprogram();
-    siginfo_ns::happened_1 = false;
-    siginfo_ns::happened_2 = false;
-    ::kill(::getpid(), SIGINFO);
-    ATF_REQUIRE(!siginfo_ns::happened_1);
-    ATF_REQUIRE(!siginfo_ns::happened_2);
+    sigchld::happened_1 = false;
+    sigchld::happened_2 = false;
+    ::kill(::getpid(), SIGCHLD);
+    ATF_REQUIRE(!sigchld::happened_1);
+    ATF_REQUIRE(!sigchld::happened_2);
 }
 
 
