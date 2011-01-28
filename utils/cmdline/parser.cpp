@@ -36,6 +36,7 @@ extern "C" {
 
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 
 #include "utils/auto_array.ipp"
 #include "utils/cmdline/exceptions.hpp"
@@ -162,6 +163,38 @@ free_mutable_argv(char** argv)
         ptr++;
     }
     delete [] argv;
+}
+
+
+/// Finds the name of the offending option after a getopt_long error.
+///
+/// \param data Our internal getopt data used for the call to getopt_long.
+/// \param getopt_optopt The value of ::optopt after the error.
+/// \param argv The argv passed to getopt_long.
+/// \param getopt_optind The value of ::optind after the error.
+///
+/// \return A fully-specified option name (i.e. an option name prefixed by
+///     either '-' or '--').
+static std::string
+find_option_name(const getopt_data& data, const int getopt_optopt,
+                 char** argv, const int getopt_optind)
+{
+    PRE(getopt_optopt >= 0);
+
+    if (getopt_optopt == 0) {
+        return argv[getopt_optind - 1];
+    } else if (getopt_optopt < std::numeric_limits< char >::max()) {
+        INV(getopt_optopt > 0);
+        const char ch = static_cast< char >(getopt_optopt);
+        return F("-%c") % ch;
+    } else {
+        for (const ::option* opt = &data.long_options[0]; opt->name != NULL;
+             opt++) {
+            if (opt->val == getopt_optopt)
+                return F("--%s") % opt->name;
+        }
+        UNREACHABLE;
+    }
 }
 
 
@@ -300,11 +333,14 @@ cmdline::parse(const int argc, const char* const* argv,
         while ((ch = ::getopt_long(mutable_argc, mutable_argv,
                                    ("+:" + data.short_options).c_str(),
                                    data.long_options.get(), NULL)) != -1) {
-            if (ch == ':') {
-                throw cmdline::missing_option_argument_error(
-                    mutable_argv[::optind - 1]);
+            if (ch == ':' ) {
+                const std::string name = find_option_name(
+                    data, ::optopt, mutable_argv, ::optind);
+                throw cmdline::missing_option_argument_error(name);
             } else if (ch == '?') {
-                throw cmdline::unknown_option_error(mutable_argv[::optind - 1]);
+                const std::string name = find_option_name(
+                    data, ::optopt, mutable_argv, ::optind);
+                throw cmdline::unknown_option_error(name);
             }
 
             const std::map< int, const cmdline::base_option* >::const_iterator

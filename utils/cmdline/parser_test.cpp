@@ -26,11 +26,18 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#if defined(HAVE_CONFIG_H)
+#include "config.h"
+#endif
+
 extern "C" {
 #include <fcntl.h>
+#include <getopt.h>
 #include <unistd.h>
 }
 
+#include <cstdlib>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -42,6 +49,7 @@ extern "C" {
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/format/macros.hpp"
+#include "utils/sanity.hpp"
 
 namespace cmdline = utils::cmdline;
 
@@ -128,6 +136,68 @@ restore_stdfds(const std::pair< int, int >& oldfds)
     ::close(oldfds.first);
     ATF_REQUIRE(::dup2(oldfds.second, STDERR_FILENO) != -1);
     ::close(oldfds.second);
+}
+
+
+/// Checks whether a '+:' prefix to the short options of getopt_long works.
+///
+/// It turns out that the getopt_long(3) implementation of Ubuntu 10.04.1 (and
+/// very likely other distributions) does not properly report a missing argument
+/// to a second long option as such.  Instead of returning ':' when the second
+/// long option provided on the command line does not carry a required argument,
+/// it will mistakenly return '?' which translates to "unknown option".
+///
+/// As a result of this bug, we cannot properly detect that 'flag2' requires an
+/// argument in a command line like: 'progname --flag1=foo --flag2'.
+///
+/// I am not sure if we could fully workaround the issue in the implementation
+/// of our library.  For the time being I am just using this bug detection in
+/// the test cases to prevent failures that are not really our fault.
+///
+/// \return bool True if getopt_long is broken and does not interpret '+:'
+///     correctly; False otherwise.
+static bool
+is_getopt_long_pluscolon_broken(void)
+{
+    struct ::option long_options[] = {
+        { "flag1", 1, NULL, '1' },
+        { "flag2", 1, NULL, '2' },
+        { NULL, 0, NULL, 0 }
+    };
+
+    const int argc = 3;
+    char* argv[4];
+    argv[0] = ::strdup("progname");
+    argv[1] = ::strdup("--flag1=a");
+    argv[2] = ::strdup("--flag2");
+    argv[3] = NULL;
+
+    const int old_opterr = ::opterr;
+    ::opterr = 0;
+
+    bool got_colon = false;
+
+    int opt;
+    while ((opt = ::getopt_long(argc, argv, "+:", long_options, NULL)) != -1) {
+        switch (opt) {
+        case '1': break;
+        case '2': break;
+        case ':': got_colon = true; break;
+        case '?': break;
+        default:  UNREACHABLE; break;
+        }
+    }
+
+    ::opterr = old_opterr;
+    ::optind = 1;
+#if defined(HAVE_GETOPT_WITH_OPTRESET)
+    ::optreset = 1;
+#endif
+
+    for (char** arg = &argv[0]; *arg != NULL; arg++)
+        std::free(*arg);
+
+    return !got_colon;
 }
 
 
@@ -293,8 +363,60 @@ ATF_TEST_CASE_BODY(subcommands)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(missing_option_argument_error);
-ATF_TEST_CASE_BODY(missing_option_argument_error)
+ATF_TEST_CASE_WITHOUT_HEAD(missing_option_argument_error__short);
+ATF_TEST_CASE_BODY(missing_option_argument_error__short)
+{
+    const int argc = 3;
+    const char* const argv[] = {"progname", "-a3", "-b", NULL};
+    const string_option flag1('a', "flag1", "Description", "arg");
+    const string_option flag2('b', "flag2", "Description", "arg");
+    std::vector< const base_option* > options;
+    options.push_back(&flag1);
+    options.push_back(&flag2);
+
+    try {
+        parse(argc, argv, options);
+        fail("missing_option_argument_error not raised");
+    } catch (const cmdline::missing_option_argument_error& e) {
+        ATF_REQUIRE_EQ("-b", e.option());
+    } catch (const cmdline::unknown_option_error& e) {
+        if (is_getopt_long_pluscolon_broken())
+            expect_fail("Your getopt_long is broken");
+        fail("Got unknown_option_error instead of "
+             "missing_option_argument_error");
+    }
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(missing_option_argument_error__shortblock);
+ATF_TEST_CASE_BODY(missing_option_argument_error__shortblock)
+{
+    const int argc = 3;
+    const char* const argv[] = {"progname", "-ab3", "-ac", NULL};
+    const bool_option flag1('a', "flag1", "Description");
+    const string_option flag2('b', "flag2", "Description", "arg");
+    const string_option flag3('c', "flag2", "Description", "arg");
+    std::vector< const base_option* > options;
+    options.push_back(&flag1);
+    options.push_back(&flag2);
+    options.push_back(&flag3);
+
+    try {
+        parse(argc, argv, options);
+        fail("missing_option_argument_error not raised");
+    } catch (const cmdline::missing_option_argument_error& e) {
+        ATF_REQUIRE_EQ("-c", e.option());
+    } catch (const cmdline::unknown_option_error& e) {
+        if (is_getopt_long_pluscolon_broken())
+            expect_fail("Your getopt_long is broken");
+        fail("Got unknown_option_error instead of "
+             "missing_option_argument_error");
+    }
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(missing_option_argument_error__long);
+ATF_TEST_CASE_BODY(missing_option_argument_error__long)
 {
     const int argc = 3;
     const char* const argv[] = {"progname", "--flag1=a", "--flag2", NULL};
@@ -309,15 +431,60 @@ ATF_TEST_CASE_BODY(missing_option_argument_error)
         fail("missing_option_argument_error not raised");
     } catch (const cmdline::missing_option_argument_error& e) {
         ATF_REQUIRE_EQ("--flag2", e.option());
+    } catch (const cmdline::unknown_option_error& e) {
+        if (is_getopt_long_pluscolon_broken())
+            expect_fail("Your getopt_long is broken");
+        fail("Got unknown_option_error instead of "
+             "missing_option_argument_error");
     }
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(unknown_option_error);
-ATF_TEST_CASE_BODY(unknown_option_error)
+ATF_TEST_CASE_WITHOUT_HEAD(unknown_option_error__short);
+ATF_TEST_CASE_BODY(unknown_option_error__short)
 {
     const int argc = 3;
-    const char* const argv[] = {"progname", "--flag1=a", "-f", NULL};
+    const char* const argv[] = {"progname", "-a", "-b", NULL};
+    const bool_option flag1('a', "flag1", "Description");
+    std::vector< const base_option* > options;
+    options.push_back(&flag1);
+
+    try {
+        parse(argc, argv, options);
+        fail("unknown_option_error not raised");
+    } catch (const cmdline::unknown_option_error& e) {
+        ATF_REQUIRE_EQ("-b", e.option());
+    }
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(unknown_option_error__shortblock);
+ATF_TEST_CASE_BODY(unknown_option_error__shortblock)
+{
+    const int argc = 3;
+    const char* const argv[] = {"progname", "-a", "-bdc", NULL};
+    const bool_option flag1('a', "flag1", "Description");
+    const bool_option flag2('b', "flag2", "Description");
+    const bool_option flag3('c', "flag3", "Description");
+    std::vector< const base_option* > options;
+    options.push_back(&flag1);
+    options.push_back(&flag2);
+    options.push_back(&flag3);
+
+    try {
+        parse(argc, argv, options);
+        fail("unknown_option_error not raised");
+    } catch (const cmdline::unknown_option_error& e) {
+        ATF_REQUIRE_EQ("-d", e.option());
+    }
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(unknown_option_error__long);
+ATF_TEST_CASE_BODY(unknown_option_error__long)
+{
+    const int argc = 3;
+    const char* const argv[] = {"progname", "--flag1=a", "--flag2", NULL};
     const string_option flag1("flag1", "Description", "arg");
     std::vector< const base_option* > options;
     options.push_back(&flag1);
@@ -326,7 +493,7 @@ ATF_TEST_CASE_BODY(unknown_option_error)
         parse(argc, argv, options);
         fail("unknown_option_error not raised");
     } catch (const cmdline::unknown_option_error& e) {
-        ATF_REQUIRE_EQ("-f", e.option());
+        ATF_REQUIRE_EQ("--flag2", e.option());
     }
 }
 
@@ -436,8 +603,12 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, some_args__some_options);
     ATF_ADD_TEST_CASE(tcs, some_options__all_known);
     ATF_ADD_TEST_CASE(tcs, subcommands);
-    ATF_ADD_TEST_CASE(tcs, missing_option_argument_error);
-    ATF_ADD_TEST_CASE(tcs, unknown_option_error);
+    ATF_ADD_TEST_CASE(tcs, missing_option_argument_error__short);
+    ATF_ADD_TEST_CASE(tcs, missing_option_argument_error__shortblock);
+    ATF_ADD_TEST_CASE(tcs, missing_option_argument_error__long);
+    ATF_ADD_TEST_CASE(tcs, unknown_option_error__short);
+    ATF_ADD_TEST_CASE(tcs, unknown_option_error__shortblock);
+    ATF_ADD_TEST_CASE(tcs, unknown_option_error__long);
     ATF_ADD_TEST_CASE(tcs, unknown_plus_option_error);
     ATF_ADD_TEST_CASE(tcs, option_types);
     ATF_ADD_TEST_CASE(tcs, option_validation_error);
