@@ -70,7 +70,10 @@ ATF_TEST_CASE_BODY(do_user_file__simple)
 
     lua::state state;
     create_mock_module("kyuafile_1.lua");
-    user_files::do_user_file(state, fs::path("simple.lua"));
+    const user_files::syntax_def syntax = user_files::do_user_file(
+        state, fs::path("simple.lua"));
+    ATF_REQUIRE_EQ("kyuafile", syntax.first);
+    ATF_REQUIRE_EQ(1, syntax.second);
     lua::do_string(state, "assert(my_global == 'good-to-go!')");
     lua::do_string(state, "assert(init.get_filename() == 'simple.lua')");
 }
@@ -101,6 +104,72 @@ ATF_TEST_CASE_BODY(do_user_file__missing_file)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(get_syntax__ok);
+ATF_TEST_CASE_BODY(get_syntax__ok)
+{
+    std::ofstream output("simple.lua");
+    ATF_REQUIRE(output);
+    output << "syntax('kyuafile', 1)\n";
+    output.close();
+
+    lua::state state;
+    create_mock_module("kyuafile_1.lua");
+    const std::pair< std::string, int > returned_syntax =
+        user_files::do_user_file(state, fs::path("simple.lua"));
+    const std::pair< std::string, int > syntax = user_files::get_syntax(state);
+    ATF_REQUIRE(returned_syntax == syntax);
+    ATF_REQUIRE_EQ("kyuafile", syntax.first);
+    ATF_REQUIRE_EQ(1, syntax.second);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(get_syntax__no_table);
+ATF_TEST_CASE_BODY(get_syntax__no_table)
+{
+    lua::state state;
+    lua::do_string(state, "init = {}; "
+                   "function init.get_syntax() return nil; end");
+    ATF_REQUIRE_THROW_RE(lua::error, "not a table",
+                         user_files::get_syntax(state));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(get_syntax__not_defined);
+ATF_TEST_CASE_BODY(get_syntax__not_defined)
+{
+    lua::state state;
+    lua::do_string(state, "init = {}; "
+                   "syntax = {format=nil, version=nil}; "
+                   "function init.get_syntax() return syntax; end");
+    ATF_REQUIRE_THROW_RE(lua::error, "not defined",
+                         user_files::get_syntax(state));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(get_syntax__bad_format);
+ATF_TEST_CASE_BODY(get_syntax__bad_format)
+{
+    lua::state state;
+    lua::do_string(state, "init = {}; "
+                   "syntax = {format={}, version=1}; "
+                   "function init.get_syntax() return syntax; end");
+    ATF_REQUIRE_THROW_RE(lua::error, "format.*not a string",
+                         user_files::get_syntax(state));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(get_syntax__bad_version);
+ATF_TEST_CASE_BODY(get_syntax__bad_version)
+{
+    lua::state state;
+    lua::do_string(state, "init = {}; "
+                   "syntax = {format='foo', version={}}; "
+                   "function init.get_syntax() return syntax; end");
+    ATF_REQUIRE_THROW_RE(lua::error, "version.*not an integer",
+                         user_files::get_syntax(state));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(init__ok);
 ATF_TEST_CASE_BODY(init__ok)
 {
@@ -115,6 +184,12 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, do_user_file__simple);
     ATF_ADD_TEST_CASE(tcs, do_user_file__missing_syntax);
     ATF_ADD_TEST_CASE(tcs, do_user_file__missing_file);
+
+    ATF_ADD_TEST_CASE(tcs, get_syntax__ok);
+    ATF_ADD_TEST_CASE(tcs, get_syntax__no_table);
+    ATF_ADD_TEST_CASE(tcs, get_syntax__not_defined);
+    ATF_ADD_TEST_CASE(tcs, get_syntax__bad_format);
+    ATF_ADD_TEST_CASE(tcs, get_syntax__bad_version);
 
     ATF_ADD_TEST_CASE(tcs, init__ok);
 }

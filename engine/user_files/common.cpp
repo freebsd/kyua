@@ -28,6 +28,7 @@
 
 #include "engine/user_files/common.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/lua/exceptions.hpp"
 #include "utils/lua/module_fs.hpp"
 #include "utils/lua/operations.hpp"
 
@@ -42,16 +43,54 @@ namespace user_files = engine::user_files;
 /// \param file The name of the file to process.
 /// \param luadir_for_testing See init().
 ///
+/// \return The syntax definition (format, version) of the file.  The caller
+/// must validate the return value before accessing the Lua state.
+///
 /// \throw lua::error If there is any problem processing the provided Lua file
 ///     or any of its dependent libraries.
-void
+user_files::syntax_def
 user_files::do_user_file(lua::state& state, const fs::path& file,
                          const char* luadir_for_testing)
 {
     lua::stack_cleaner cleaner(state);
     init(state, file, luadir_for_testing);
     lua::do_file(state, file);
-    lua::do_string(state, "init.get_syntax()", 0);  // Ensure syntax is defined.
+    return get_syntax(state);
+}
+
+
+/// Gets the syntax definition of an already loaded file.
+///
+/// \param state The Lua state.
+///
+/// \return The syntax definition (format, version) of the file.
+///
+/// \throw lua::error If there is a problem querying the file syntax.
+user_files::syntax_def
+user_files::get_syntax(lua::state& state)
+{
+    lua::stack_cleaner cleaner(state);
+
+    lua::eval(state, "init.get_syntax()", 1);
+    if (!state.is_table())
+        throw lua::error("init.get_syntax() is not a table");
+
+    state.push_string("format");
+    state.get_table(-2);
+    state.push_string("version");
+    state.get_table(-3);
+
+    if (state.is_nil(-2) || state.is_nil(-1))
+        throw lua::error("Syntax not defined; must call syntax()");
+    if (!state.is_string(-2))
+        throw lua::error("init.get_syntax().format is not a string");
+    if (!state.is_number(-1))
+        throw lua::error("init.get_syntax().version is not an integer");
+
+    const std::string format = state.to_string(-2);
+    const int version = state.to_integer(-1);
+
+    return std::make_pair(format, version);
 }
 
 

@@ -111,7 +111,14 @@ user_files::kyuafile::load(const utils::fs::path& file)
         lua::state state;
         lua::stack_cleaner cleaner(state);
 
-        user_files::do_user_file(state, file);
+        const user_files::syntax_def syntax = user_files::do_user_file(
+            state, file);
+        if (syntax.first != "kyuafile")
+            throw engine::error(F("Unexpected file format '%s'; "
+                                  "need 'kyuafile'") % syntax.first);
+        if (syntax.second != 1)
+            throw engine::error(F("Unexpected file version '%d'; "
+                                  "only 1 is supported") % syntax.second);
 
         test_programs = lua::get_array_as_strings(state,
                                                   "kyuafile.TEST_PROGRAMS");

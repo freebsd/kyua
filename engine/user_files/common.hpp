@@ -33,6 +33,8 @@
 #define ENGINE_USER_FILES_COMMON_HPP
 
 #include <cstddef>
+#include <string>
+#include <utility>
 
 namespace utils {
 
@@ -50,8 +52,13 @@ namespace engine {
 namespace user_files {
 
 
-void do_user_file(utils::lua::state&, const utils::fs::path&,
-                  const char* = NULL);
+/// Representation of the (format, version) pair of a file.
+typedef std::pair< std::string, int > syntax_def;
+
+
+syntax_def do_user_file(utils::lua::state&, const utils::fs::path&,
+                        const char* = NULL);
+syntax_def get_syntax(utils::lua::state&);
 void init(utils::lua::state&, const utils::fs::path&, const char* = NULL);
 
 

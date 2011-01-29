@@ -100,14 +100,40 @@ ATF_TEST_CASE_BODY(load__other_directory)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(load__bad_syntax);
-ATF_TEST_CASE_BODY(load__bad_syntax)
+ATF_TEST_CASE_WITHOUT_HEAD(load__lua_error);
+ATF_TEST_CASE_BODY(load__lua_error)
 {
     std::ofstream file("config");
-    file << "syntax('unknown-file-type', 1)\n";
+    file << "this syntax is invalid\n";
     file.close();
 
-    ATF_REQUIRE_THROW_RE(engine::error, "Load failed.*unknown-file-type",
+    ATF_REQUIRE_THROW(engine::error, user_files::kyuafile::load(
+        fs::path("config")));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(load__bad_syntax__format);
+ATF_TEST_CASE_BODY(load__bad_syntax__format)
+{
+    std::ofstream file("config");
+    file << "syntax('kyuafile', 1)\n";
+    file << "init.get_syntax().format = 'foo'\n";
+    file.close();
+
+    ATF_REQUIRE_THROW_RE(engine::error, "Unexpected file format 'foo'",
+                         user_files::kyuafile::load(fs::path("config")));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(load__bad_syntax__version);
+ATF_TEST_CASE_BODY(load__bad_syntax__version)
+{
+    std::ofstream file("config");
+    file << "syntax('kyuafile', 1)\n";
+    file << "init.get_syntax().version = 123\n";
+    file.close();
+
+    ATF_REQUIRE_THROW_RE(engine::error, "Unexpected file version '123'",
                          user_files::kyuafile::load(fs::path("config")));
 }
 
@@ -167,7 +193,9 @@ ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, load__current_directory);
     ATF_ADD_TEST_CASE(tcs, load__other_directory);
-    ATF_ADD_TEST_CASE(tcs, load__bad_syntax);
+    ATF_ADD_TEST_CASE(tcs, load__lua_error);
+    ATF_ADD_TEST_CASE(tcs, load__bad_syntax__format);
+    ATF_ADD_TEST_CASE(tcs, load__bad_syntax__version);
     ATF_ADD_TEST_CASE(tcs, load__missing_file);
 
     ATF_ADD_TEST_CASE(tcs, from_arguments__none);
