@@ -27,7 +27,7 @@
 -- OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
--- \file engine/kyuafile-1.lua
+-- \file engine/user_files/kyuafile_1.lua
 -- Functions to ease the definition of Kyuafiles.
 --
 -- This module provides a set of public functions to simplify the definition of

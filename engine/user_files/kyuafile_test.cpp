@@ -100,8 +100,8 @@ ATF_TEST_CASE_BODY(load__other_directory)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(load__error);
-ATF_TEST_CASE_BODY(load__error)
+ATF_TEST_CASE_WITHOUT_HEAD(load__bad_syntax);
+ATF_TEST_CASE_BODY(load__bad_syntax)
 {
     std::ofstream file("config");
     file << "syntax('unknown-file-type', 1)\n";
@@ -109,6 +109,14 @@ ATF_TEST_CASE_BODY(load__error)
 
     ATF_REQUIRE_THROW_RE(engine::error, "Load failed.*unknown-file-type",
                          user_files::kyuafile::load(fs::path("config")));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(load__missing_file);
+ATF_TEST_CASE_BODY(load__missing_file)
+{
+    ATF_REQUIRE_THROW_RE(engine::error, "Load failed",
+                         user_files::kyuafile::load(fs::path("missing")));
 }
 
 
@@ -159,7 +167,8 @@ ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, load__current_directory);
     ATF_ADD_TEST_CASE(tcs, load__other_directory);
-    ATF_ADD_TEST_CASE(tcs, load__error);
+    ATF_ADD_TEST_CASE(tcs, load__bad_syntax);
+    ATF_ADD_TEST_CASE(tcs, load__missing_file);
 
     ATF_ADD_TEST_CASE(tcs, from_arguments__none);
     ATF_ADD_TEST_CASE(tcs, from_arguments__some);

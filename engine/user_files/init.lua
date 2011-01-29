@@ -27,7 +27,7 @@
 -- OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
--- \file engine/init.lua
+-- \file engine/user_files/init.lua
 -- Code to initialize the processing of a specific Kyua configuration file.
 --
 -- A Kyua configuration file has always the following structure:

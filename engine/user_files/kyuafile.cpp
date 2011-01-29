@@ -26,8 +26,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <fstream>
-
 #include "engine/exceptions.hpp"
 #include "engine/user_files/common.hpp"
 #include "engine/user_files/kyuafile.hpp"
@@ -120,7 +118,12 @@ user_files::kyuafile::load(const utils::fs::path& file)
     } catch (const lua::error& e) {
         throw engine::error(F("Load failed: %s") % e.what());
     }
-    return kyuafile(adjust_test_programs(test_programs, file.branch_path()));
+    try {
+        return kyuafile(adjust_test_programs(test_programs,
+                                             file.branch_path()));
+    } catch (const fs::error& e) {
+        throw engine::error(F("Load failed: %s") % e.what());
+    }
 }
 
 
