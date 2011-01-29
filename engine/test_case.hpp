@@ -36,7 +36,7 @@
 #include <set>
 #include <string>
 
-#include "engine/config.hpp"
+#include "engine/user_files/config.hpp"
 #include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
 
@@ -146,7 +146,7 @@ struct test_case {
 };
 
 
-std::string check_requirements(const test_case&, const config&,
+std::string check_requirements(const test_case&, const user_files::config&,
                                const properties_map&);
 
 

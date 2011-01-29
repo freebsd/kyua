@@ -186,7 +186,16 @@ function syntax(format, version)
    assert(not SYNTAX.format and not SYNTAX.version,
           "Cannot call syntax() more than once in a single file")
 
-   if format == "kyuafile" then
+   if format == "config" then
+      if version == 1 then
+         local module = dofile_in_env(fs.join(LUADIR, "config_1.lua"),
+                                      getfenv(2))
+         module.export()
+      else
+         error(string.format("Syntax request error: unknown version %d for " ..
+                             "format '%s'", version, format))
+      end
+   elseif format == "kyuafile" then
       if version == 1 then
          local module = dofile_in_env(fs.join(LUADIR, "kyuafile_1.lua"),
                                       getfenv(2))

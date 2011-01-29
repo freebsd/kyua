@@ -3,6 +3,8 @@ Content-Type: application/X-atf-atffile; version="1"
 prop: test-suite = kyua
 
 tp: common_test
+tp: config_test
+tp: config_1_test
 tp: init_test
 tp: kyuafile_test
 tp: kyuafile_1_test

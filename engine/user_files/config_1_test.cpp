@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,41 +26,55 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/config.hpp
-/// Configuration parsing and representation.
+// TODO(jmmv): These tests ought to be written in Lua.  Rewrite when we have a
+// Lua binding.
 
-#if !defined(ENGINE_CONFIG_HPP)
-#define ENGINE_CONFIG_HPP
+#include <fstream>
 
-#include <string>
+#include <atf-c++.hpp>
 
-#include "utils/passwd.hpp"
-#include "utils/optional.ipp"
+#include "engine/user_files/common.hpp"
+#include "utils/fs/path.hpp"
+#include "utils/lua/operations.hpp"
+#include "utils/lua/wrap.hpp"
 
-namespace engine {
-
-
-/// User-tunable configuration of the runtime engine.
-///
-/// The properties hold by this structure comes from the processing of a
-/// user-provided configuration file.
-///
-/// TODO(jmmv): Unify the current properties_map passed around to specify
-/// configuration variables with this class.
-struct config {
-    /// Name of the system architecture (aka processor type).
-    std::string architecture;
-
-    /// Name of the system platform (aka machine name).
-    std::string platform;
-
-    /// The unprivileged user to run test cases as, if any.
-    utils::optional< utils::passwd::user > unprivileged_user;
-
-    config(void);
-};
+namespace fs = utils::fs;
+namespace lua = utils::lua;
+namespace user_files = engine::user_files;
 
 
-}  // namespace engine
+ATF_TEST_CASE_WITHOUT_HEAD(empty);
+ATF_TEST_CASE_BODY(empty)
+{
+    std::ofstream output("test.lua");
+    ATF_REQUIRE(output);
+    output << "syntax('config', 1)\n";
+    output.close();
 
-#endif  // !defined(ENGINE_CONFIG_HPP)
+    lua::state state;
+    user_files::do_user_file(state, fs::path("test.lua"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(some_variables);
+ATF_TEST_CASE_BODY(some_variables)
+{
+    std::ofstream output("test.lua");
+    ATF_REQUIRE(output);
+    output << "syntax('config', 1)\n";
+    output << "foo = 'bar'\n";
+    output << "baz = 3\n";
+    output.close();
+
+    lua::state state;
+    user_files::do_user_file(state, fs::path("test.lua"));
+    lua::do_string(state, "assert(foo == 'bar')");
+    lua::do_string(state, "assert(baz == 3)");
+}
+
+
+ATF_INIT_TEST_CASES(tcs)
+{
+    ATF_ADD_TEST_CASE(tcs, empty);
+    ATF_ADD_TEST_CASE(tcs, some_variables);
+}

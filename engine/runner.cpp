@@ -119,7 +119,7 @@ set_owner(const fs::path& path, const passwd::user& owner)
 /// \return True if we can drop privileges; false otherwise.
 static bool
 can_do_unprivileged(const engine::test_case& test_case,
-                    const engine::config& config)
+                    const user_files::config& config)
 {
     return test_case.required_user == "unprivileged" &&
         config.unprivileged_user && passwd::current_user().is_root();
@@ -186,7 +186,7 @@ isolate_process(const fs::path& cwd)
 /// \param user_config The configuration variables.
 /// \param args [out] The test program arguments in which to add the new flags.
 static void
-config_to_args(const engine::config& config,
+config_to_args(const user_files::config& config,
                const engine::properties_map& user_config,
                std::vector< std::string >& args)
 {
@@ -206,7 +206,7 @@ class execute_test_case_body {
     engine::test_case _test_case;
     fs::path _result_file;
     fs::path _work_directory;
-    engine::config _config;
+    user_files::config _config;
     engine::properties_map _user_config;
 
 public:
@@ -223,7 +223,7 @@ public:
     execute_test_case_body(const engine::test_case& test_case_,
                            const fs::path& result_file_,
                            const fs::path& work_directory_,
-                           const engine::config& config_,
+                           const user_files::config& config_,
                            const engine::properties_map& user_config_) :
         _test_case(test_case_),
         _result_file(result_file_),
@@ -266,7 +266,7 @@ public:
 class execute_test_case_cleanup {
     engine::test_case _test_case;
     fs::path _work_directory;
-    engine::config _config;
+    user_files::config _config;
     engine::properties_map _user_config;
 
 public:
@@ -280,7 +280,7 @@ public:
     /// \param user_config_ The configuration variables provided by the user.
     execute_test_case_cleanup(const engine::test_case& test_case_,
                               const fs::path& work_directory_,
-                              const engine::config& config_,
+                              const user_files::config& config_,
                               const engine::properties_map& user_config_) :
         _test_case(test_case_),
         _work_directory(work_directory_),
@@ -348,7 +348,7 @@ fork_and_wait(Hook hook, const fs::path& outfile, const fs::path& errfile,
 /// \return The result of the execution of the test case.
 static results::result_ptr
 run_test_case_safe(const engine::test_case& test_case,
-                   const engine::config& config,
+                   const user_files::config& config,
                    const engine::properties_map& user_config)
 {
     const std::string skip_reason = engine::check_requirements(
@@ -415,7 +415,7 @@ runner::hooks::~hooks(void)
 /// \return The result of the test case execution.
 results::result_ptr
 runner::run_test_case(const engine::test_case& test_case,
-                      const engine::config& config,
+                      const user_files::config& config,
                       const engine::properties_map& user_config)
 {
     results::result_ptr result;
@@ -440,7 +440,7 @@ runner::run_test_case(const engine::test_case& test_case,
 /// \param hooks Callbacks for events.
 void
 runner::run_test_program(const fs::path& test_program,
-                         const engine::properties_map& user_config,
+                         const user_files::config& config,
                          runner::hooks* hooks)
 {
     engine::test_cases_vector test_cases;
@@ -462,11 +462,8 @@ runner::run_test_program(const fs::path& test_program,
         const engine::test_case& test_case = *iter;
 
         hooks->start_test_case(test_case.identifier);
-        // TODO(jmmv): Pass in the engine configuration.
-        engine::config config;
-        config.unprivileged_user = passwd::find_user_by_name("jmmv");
         results::result_ptr result = run_test_case(test_case, config,
-                                                   user_config);
+                                                   properties_map());
         hooks->finish_test_case(test_case.identifier, result);
     }
 }
@@ -479,7 +476,7 @@ runner::run_test_program(const fs::path& test_program,
 /// \param hooks Callbacks for events.
 void
 runner::run_test_suite(const user_files::kyuafile& suite,
-                       const engine::properties_map& config,
+                       const user_files::config& config,
                        runner::hooks* run_hooks)
 {
     const std::vector< fs::path >& test_programs = suite.test_programs();

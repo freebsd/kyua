@@ -30,9 +30,7 @@ ENGINE_CFLAGS = $(UTILS_CFLAGS)
 ENGINE_LIBS = libengine.a $(UTILS_LIBS)
 
 noinst_LIBRARIES += libengine.a
-libengine_a_SOURCES  = engine/config.cpp
-libengine_a_SOURCES += engine/config.hpp
-libengine_a_SOURCES += engine/exceptions.cpp
+libengine_a_SOURCES  = engine/exceptions.cpp
 libengine_a_SOURCES += engine/exceptions.hpp
 libengine_a_SOURCES += engine/test_case.cpp
 libengine_a_SOURCES += engine/test_case.hpp
@@ -49,12 +47,7 @@ tests_enginedir = $(pkgtestsdir)/engine
 tests_engine_DATA = engine/Atffile engine/Kyuafile
 EXTRA_DIST += $(tests_engine_DATA)
 
-tests_engine_PROGRAMS = engine/config_test
-engine_config_test_SOURCES = engine/config_test.cpp
-engine_config_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-engine_config_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) $(ATF_CXX_LIBS)
-
-tests_engine_PROGRAMS += engine/exceptions_test
+tests_engine_PROGRAMS = engine/exceptions_test
 engine_exceptions_test_SOURCES = engine/exceptions_test.cpp
 engine_exceptions_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
                                   $(ATF_CXX_CFLAGS)

@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,19 +26,60 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#if defined(HAVE_CONFIG_H)
-#   include "config.h"
-#endif
+/// \file engine/user_files/config.hpp
+/// Test suite configuration parsing and representation.
 
-#include "engine/config.hpp"
+#if !defined(ENGINE_USER_FILES_CONFIG_HPP)
+#define ENGINE_USER_FILES_CONFIG_HPP
+
+#include "utils/fs/path.hpp"
+#include "utils/optional.ipp"
+#include "utils/passwd.hpp"
+
+namespace utils {
+namespace lua {
+class state;
+}  // namespace lua
+}  // namespace utils
+
+namespace engine {
+namespace user_files {
 
 
-/// Initializes a configuration object with default values.
+namespace detail {
+
+
+std::string get_string_var(utils::lua::state&, const std::string&,
+                           const std::string&);
+utils::optional< utils::passwd::user > get_user_var(utils::lua::state&,
+                                                    const std::string&);
+
+
+}  // namespace detail
+
+
+/// Representation of Kyua configuration files.
 ///
-/// The architecture and platform fields are set to the values detected at
-/// configuration time.  The unprivileged_user field is undefined.
-engine::config::config(void) :
-    architecture(KYUA_ARCHITECTURE),
-    platform(KYUA_PLATFORM)
-{
-}
+/// This class provides the parser for configuration files and methods to
+/// access the parsed data.
+struct config {
+    /// Name of the system architecture (aka processor type).
+    std::string architecture;
+
+    /// Name of the system platform (aka machine name).
+    std::string platform;
+
+    /// The unprivileged user to run test cases as, if any.
+    utils::optional< utils::passwd::user > unprivileged_user;
+
+    explicit config(const std::string&, const std::string&,
+                    const utils::optional< utils::passwd::user >&);
+    static config defaults(void);
+    static config load(const utils::fs::path&);
+};
+
+
+}  // namespace user_files
+}  // namespace engine
+
+#endif  // !defined(ENGINE_USER_FILES_CONFIG_HPP)

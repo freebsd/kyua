@@ -32,11 +32,14 @@ libengine_a_CPPFLAGS  = $(UTILS_CFLAGS)
 libengine_a_CPPFLAGS += -DKYUA_LUADIR="\"$(luadir)\""
 libengine_a_SOURCES += engine/user_files/common.cpp
 libengine_a_SOURCES += engine/user_files/common.hpp
+libengine_a_SOURCES += engine/user_files/config.cpp
+libengine_a_SOURCES += engine/user_files/config.hpp
 libengine_a_SOURCES += engine/user_files/kyuafile.cpp
 libengine_a_SOURCES += engine/user_files/kyuafile.hpp
 
 lua_modulesdir = $(pkgdatadir)/lua
 lua_modules_DATA  = engine/user_files/init.lua
+lua_modules_DATA += engine/user_files/config_1.lua
 lua_modules_DATA += engine/user_files/kyuafile_1.lua
 
 tests_engine_user_filesdir = $(pkgtestsdir)/engine/user_files
@@ -52,6 +55,20 @@ engine_user_files_common_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
                                          $(ATF_CXX_CFLAGS)
 engine_user_files_common_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
                                       $(ATF_CXX_LIBS)
+
+tests_engine_user_files_PROGRAMS += engine/user_files/config_test
+engine_user_files_config_test_SOURCES = engine/user_files/config_test.cpp
+engine_user_files_config_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
+                                         $(ATF_CXX_CFLAGS)
+engine_user_files_config_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
+                                      $(ATF_CXX_LIBS)
+
+tests_engine_user_files_PROGRAMS += engine/user_files/config_1_test
+engine_user_files_config_1_test_SOURCES = engine/user_files/config_1_test.cpp
+engine_user_files_config_1_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
+                                           $(ATF_CXX_CFLAGS)
+engine_user_files_config_1_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
+                                        $(ATF_CXX_LIBS)
 
 tests_engine_user_files_PROGRAMS += engine/user_files/init_test
 engine_user_files_init_test_SOURCES = engine/user_files/init_test.cpp

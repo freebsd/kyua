@@ -33,9 +33,9 @@
 #include <limits>
 #include <sstream>
 
-#include "engine/config.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/test_case.hpp"
+#include "engine/user_files/config.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/format/macros.hpp"
@@ -45,6 +45,7 @@
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace passwd = utils::passwd;
+namespace user_files = engine::user_files;
 
 
 /// Parses a boolean property.
@@ -370,7 +371,7 @@ engine::test_case::operator==(const test_case& tc) const
 /// \return A string describing what is missing; empty if everything is OK.
 std::string
 engine::check_requirements(const engine::test_case& test_case,
-                           const engine::config& config,
+                           const engine::user_files::config& config,
                            const properties_map& user_config)
 {
     for (strings_set::const_iterator iter = test_case.required_configs.begin();

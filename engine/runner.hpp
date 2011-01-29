@@ -34,9 +34,9 @@
 
 #include <string>
 
-#include "engine/config.hpp"
 #include "engine/results.hpp"
 #include "engine/test_case.hpp"
+#include "engine/user_files/config.hpp"
 #include "utils/fs/path.hpp"
 
 
@@ -73,10 +73,12 @@ public:
 
 
 results::result_ptr run_test_case(const engine::test_case&,
-                                  const engine::config&,
+                                  const user_files::config&,
                                   const properties_map&);
-void run_test_program(const utils::fs::path&, const properties_map&, hooks*);
-void run_test_suite(const user_files::kyuafile&, const properties_map&, hooks*);
+void run_test_program(const utils::fs::path&, const user_files::config&,
+                      hooks*);
+void run_test_suite(const user_files::kyuafile&, const user_files::config&,
+                    hooks*);
 
 
 }  // namespace runner
