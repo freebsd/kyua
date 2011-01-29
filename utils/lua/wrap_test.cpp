@@ -561,6 +561,50 @@ ATF_TEST_CASE_BODY(state__new_table)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(state__next__empty);
+ATF_TEST_CASE_BODY(state__next__empty)
+{
+    lua::state state;
+    luaL_dostring(raw(state), "t = {}");
+
+    lua_getglobal(raw(state), "t");
+    lua_pushstring(raw(state), "this is a dummy value");
+    lua_pushnil(raw(state));
+    ATF_REQUIRE(!state.next(-3));
+    lua_pop(raw(state), 2);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(state__next__many);
+ATF_TEST_CASE_BODY(state__next__many)
+{
+    lua::state state;
+    luaL_dostring(raw(state), "t = {}; t[1] = 100; t[2] = 200");
+
+    lua_getglobal(raw(state), "t");
+    lua_pushnil(raw(state));
+
+    ATF_REQUIRE(state.next());
+    ATF_REQUIRE_EQ(3, lua_gettop(raw(state)));
+    ATF_REQUIRE(lua_isnumber(raw(state), -2));
+    ATF_REQUIRE_EQ(1, lua_tointeger(raw(state), -2));
+    ATF_REQUIRE(lua_isnumber(raw(state), -1));
+    ATF_REQUIRE_EQ(100, lua_tointeger(raw(state), -1));
+    lua_pop(raw(state), 1);
+
+    ATF_REQUIRE(state.next());
+    ATF_REQUIRE_EQ(3, lua_gettop(raw(state)));
+    ATF_REQUIRE(lua_isnumber(raw(state), -2));
+    ATF_REQUIRE_EQ(2, lua_tointeger(raw(state), -2));
+    ATF_REQUIRE(lua_isnumber(raw(state), -1));
+    ATF_REQUIRE_EQ(200, lua_tointeger(raw(state), -1));
+    lua_pop(raw(state), 1);
+
+    ATF_REQUIRE(!state.next());
+    lua_pop(raw(state), 1);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(state__open_base);
 ATF_TEST_CASE_BODY(state__open_base)
 {
@@ -1002,6 +1046,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, state__load_string__ok);
     ATF_ADD_TEST_CASE(tcs, state__load_string__fail);
     ATF_ADD_TEST_CASE(tcs, state__new_table);
+    ATF_ADD_TEST_CASE(tcs, state__next__empty);
+    ATF_ADD_TEST_CASE(tcs, state__next__many);
     ATF_ADD_TEST_CASE(tcs, state__open_base);
     ATF_ADD_TEST_CASE(tcs, state__open_string);
     ATF_ADD_TEST_CASE(tcs, state__open_table);

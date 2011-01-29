@@ -75,6 +75,24 @@ protected_gettable(lua_State* state)
 }
 
 
+/// Wrapper around lua_next to run in a protected environment.
+///
+/// \pre stack(-2) is the table to get the next element from.
+/// \pre stack(-1) is the last processed key.
+/// \post stack(-1) is the value of next(stack(-2), stack(-1)).
+///
+/// \param state The Lua C API state.
+///
+/// \return The number of return values pushed onto the stack.
+static int
+protected_next(lua_State* state)
+{
+    const int more = lua_next(state, -2) != 0;
+    lua_pushboolean(state, more);
+    return more ? 3 : 1;
+}
+
+
 /// Wrapper around lua_setglobal to run in a protected environment.
 ///
 /// \pre stack(-2) is the name of the global to set.
@@ -352,6 +370,33 @@ void
 lua::state::new_table(void)
 {
     lua_newtable(_pimpl->lua_state);
+}
+
+
+/// Wrapper around lua_next.
+///
+/// \param index The second parameter to lua_next.
+///
+/// \return True if there are more elements to process; false otherwise.
+///
+/// \warning Terminates execution if there is not enough memory.
+bool
+lua::state::next(const int index)
+{
+    PRE(lua_istable(_pimpl->lua_state, index));
+    PRE(lua_gettop(_pimpl->lua_state) >= 1);
+    lua_pushcfunction(_pimpl->lua_state, protected_next);
+    lua_pushvalue(_pimpl->lua_state, index < 0 ? index - 1 : index);
+    lua_pushvalue(_pimpl->lua_state, -3);
+    if (lua_pcall(_pimpl->lua_state, 2, LUA_MULTRET, 0) != 0)
+        throw lua::api_error::from_stack(_pimpl->lua_state, "lua_next");
+    const bool more = lua_toboolean(_pimpl->lua_state, -1);
+    lua_pop(_pimpl->lua_state, 1);
+    if (more)
+        lua_remove(_pimpl->lua_state, -3);
+    else
+        lua_pop(_pimpl->lua_state, 1);
+    return more;
 }
 
 

@@ -94,6 +94,7 @@ public:
     void load_file(const utils::fs::path&);
     void load_string(const std::string&);
     void new_table(void);
+    bool next(const int = -2);
     void open_base(void);
     void open_string(void);
     void open_table(void);
