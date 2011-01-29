@@ -2,4 +2,5 @@ syntax("kyuafile", 1)
 
 include("cli/Kyuafile")
 include("engine/Kyuafile")
+include("examples/Kyuafile")
 include("utils/Kyuafile")

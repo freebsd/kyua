@@ -1,0 +1,3 @@
+syntax("kyuafile", 1)
+
+AtfTestProgram {name="syntax_test"}

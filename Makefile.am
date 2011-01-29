@@ -1,4 +1,4 @@
-# Copyright 2010 Google Inc.
+# Copyright 2010, 2011 Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -47,6 +47,7 @@ EXTRA_DIST += $(tests_top_DATA)
 include bootstrap/Makefile.am.inc
 include cli/Makefile.am.inc
 include engine/Makefile.am.inc
+include examples/Makefile.am.inc
 include utils/Makefile.am.inc
 
 bin_PROGRAMS = kyua
