@@ -29,10 +29,12 @@
 #include <lua.hpp>
 
 #include "utils/format/macros.hpp"
+#include "utils/fs/path.hpp"
 #include "utils/lua/exceptions.hpp"
 #include "utils/lua/wrap.hpp"
 #include "utils/sanity.hpp"
 
+namespace fs = utils::fs;
 namespace lua = utils::lua;
 
 
@@ -95,4 +97,30 @@ const std::string&
 lua::api_error::api_function(void) const
 {
     return _api_function;
+}
+
+
+/// Constructs a new error.
+///
+/// \param filename_ The file that count not be found.
+lua::file_not_found_error::file_not_found_error(const fs::path& filename_) :
+    error(F("File '%s' not found") % filename_),
+    _filename(filename_)
+{
+}
+
+
+/// Destructor for the error.
+lua::file_not_found_error::~file_not_found_error(void) throw()
+{
+}
+
+
+/// Gets the name of the file that could not be found.
+///
+/// \return The name of the file.
+const fs::path&
+lua::file_not_found_error::filename(void) const
+{
+    return _filename;
 }

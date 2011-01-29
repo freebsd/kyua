@@ -37,6 +37,8 @@
 
 #include <lua.hpp>
 
+#include "utils/fs/path.hpp"
+
 namespace utils {
 namespace lua {
 
@@ -63,6 +65,18 @@ public:
     static api_error from_stack(lua_State*, const std::string&);
 
     const std::string& api_function(void) const;
+};
+
+
+/// File not found error.
+class file_not_found_error : public error {
+    fs::path _filename;
+
+public:
+    explicit file_not_found_error(const utils::fs::path&);
+    virtual ~file_not_found_error(void) throw();
+
+    const fs::path& filename(void) const;
 };
 
 

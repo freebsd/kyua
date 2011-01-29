@@ -33,6 +33,7 @@
 
 #include "utils/lua/exceptions.hpp"
 
+namespace fs = utils::fs;
 namespace lua = utils::lua;
 
 
@@ -68,10 +69,21 @@ ATF_TEST_CASE_BODY(api_error__from_stack)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(file_not_found_error);
+ATF_TEST_CASE_BODY(file_not_found_error)
+{
+    const lua::file_not_found_error e(fs::path("missing-file"));
+    ATF_REQUIRE(std::strcmp("File 'missing-file' not found", e.what()) == 0);
+    ATF_REQUIRE_EQ("missing-file", e.filename().str());
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, error);
 
     ATF_ADD_TEST_CASE(tcs, api_error__explicit);
     ATF_ADD_TEST_CASE(tcs, api_error__from_stack);
+
+    ATF_ADD_TEST_CASE(tcs, file_not_found_error);
 }

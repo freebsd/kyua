@@ -179,7 +179,7 @@ ATF_TEST_CASE_BODY(do_file__not_found)
 {
     lua::state state;
     stack_balance_checker checker(state);
-    ATF_REQUIRE_THROW_RE(lua::error, "Failed to load Lua file 'foobar.lua'",
+    ATF_REQUIRE_THROW_RE(lua::file_not_found_error, "foobar.lua",
                          lua::do_file(state, fs::path("foobar.lua")));
 }
 

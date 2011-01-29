@@ -29,6 +29,7 @@
 #include <cstring>
 
 #include "utils/format/macros.hpp"
+#include "utils/fs/operations.hpp"
 #include "utils/lua/exceptions.hpp"
 #include "utils/lua/wrap.ipp"
 #include "utils/noncopyable.hpp"
@@ -311,11 +312,19 @@ lua::state::is_table(const int index)
 /// \param file The second parameter to luaL_loadfile.
 ///
 /// \throw api_error If luaL_loadfile returns an error.
+/// \throw file_not_found_error If the specified file does not exist.
 ///
 /// \warning Terminates execution if there is not enough memory.
 void
 lua::state::load_file(const fs::path& file)
 {
+    // This check is racy.  However, this is only here as a consideration to the
+    // caller to properly report the case where a file does not exist.  If
+    // luaL_loadfile cannot open the file later on for whatever reason, the
+    // error will still be reported but it will be less accurate.  Oh well...
+    if (!fs::exists(file))
+        throw lua::file_not_found_error(file);
+
     if (luaL_loadfile(_pimpl->lua_state, file.c_str()) != 0)
         throw lua::api_error::from_stack(_pimpl->lua_state, "luaL_loadfile");
 }

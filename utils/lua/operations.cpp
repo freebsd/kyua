@@ -69,6 +69,7 @@ lua::create_module(state& s, const std::string& name,
 /// \return The number of results left on the stack.
 ///
 /// \throw lua::error If there is a problem processing the file.
+/// \throw lua::file_not_found_error If the file does not exist.
 unsigned int
 lua::do_file(state& s, const fs::path& file, const int nresults)
 {
@@ -79,6 +80,8 @@ lua::do_file(state& s, const fs::path& file, const int nresults)
     try {
         s.load_file(file);
         s.pcall(0, nresults == -1 ? LUA_MULTRET : nresults, 0);
+    } catch (const lua::file_not_found_error& e) {
+        throw e;
     } catch (const lua::api_error& e) {
         throw lua::error(F("Failed to load Lua file '%s': %s") % file %
                          e.what());

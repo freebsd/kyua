@@ -509,12 +509,25 @@ ATF_TEST_CASE_BODY(state__load_file__ok)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(state__load_file__fail);
-ATF_TEST_CASE_BODY(state__load_file__fail)
+ATF_TEST_CASE_WITHOUT_HEAD(state__load_file__api_error);
+ATF_TEST_CASE_BODY(state__load_file__api_error)
 {
+    std::ofstream output("test.lua");
+    output << "I have a bad syntax!  Wohoo!\n";
+    output.close();
+
     lua::state state;
     REQUIRE_API_ERROR("luaL_loadfile",
-                      state.load_file(fs::path("missing.lua")));
+                      state.load_file(fs::path("test.lua")));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(state__load_file__file_not_found_error);
+ATF_TEST_CASE_BODY(state__load_file__file_not_found_error)
+{
+    lua::state state;
+    ATF_REQUIRE_THROW_RE(lua::file_not_found_error, "missing.lua",
+                         state.load_file(fs::path("missing.lua")));
 }
 
 
@@ -984,7 +997,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, state__is_table__top);
     ATF_ADD_TEST_CASE(tcs, state__is_table__explicit);
     ATF_ADD_TEST_CASE(tcs, state__load_file__ok);
-    ATF_ADD_TEST_CASE(tcs, state__load_file__fail);
+    ATF_ADD_TEST_CASE(tcs, state__load_file__api_error);
+    ATF_ADD_TEST_CASE(tcs, state__load_file__file_not_found_error);
     ATF_ADD_TEST_CASE(tcs, state__load_string__ok);
     ATF_ADD_TEST_CASE(tcs, state__load_string__fail);
     ATF_ADD_TEST_CASE(tcs, state__new_table);
