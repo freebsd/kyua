@@ -145,8 +145,27 @@ ATF_TEST_CASE_BODY(find_user_by_name__fail)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(find_user_by_uid);
-ATF_TEST_CASE_BODY(find_user_by_uid)
+ATF_TEST_CASE_WITHOUT_HEAD(find_user_by_name__fake);
+ATF_TEST_CASE_BODY(find_user_by_name__fake)
+{
+    std::vector< passwd_ns::user > users;
+    users.push_back(passwd_ns::user("myself2", 20, 40));
+    users.push_back(passwd_ns::user("myself1", 10, 15));
+    users.push_back(passwd_ns::user("myself3", 30, 60));
+    passwd_ns::set_mock_users_for_testing(users);
+
+    const passwd_ns::user user = passwd_ns::find_user_by_name("myself1");
+    ATF_REQUIRE_EQ(10, user.uid);
+    ATF_REQUIRE_EQ(15, user.gid);
+    ATF_REQUIRE_EQ("myself1", user.name);
+
+    ATF_REQUIRE_THROW_RE(std::runtime_error, "Failed.*user 'root'",
+                         passwd_ns::find_user_by_name("root"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(find_user_by_uid__ok);
+ATF_TEST_CASE_BODY(find_user_by_uid__ok)
 {
     const passwd_ns::user user = passwd_ns::find_user_by_uid(::getuid());
     ATF_REQUIRE_EQ(::getuid(), user.uid);
@@ -155,6 +174,25 @@ ATF_TEST_CASE_BODY(find_user_by_uid)
     const struct ::passwd* pw = ::getpwuid(::getuid());
     ATF_REQUIRE(pw != NULL);
     ATF_REQUIRE_EQ(pw->pw_name, user.name);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(find_user_by_uid__fake);
+ATF_TEST_CASE_BODY(find_user_by_uid__fake)
+{
+    std::vector< passwd_ns::user > users;
+    users.push_back(passwd_ns::user("myself2", 20, 40));
+    users.push_back(passwd_ns::user("myself1", 10, 15));
+    users.push_back(passwd_ns::user("myself3", 30, 60));
+    passwd_ns::set_mock_users_for_testing(users);
+
+    const passwd_ns::user user = passwd_ns::find_user_by_uid(10);
+    ATF_REQUIRE_EQ(10, user.uid);
+    ATF_REQUIRE_EQ(15, user.gid);
+    ATF_REQUIRE_EQ("myself1", user.name);
+
+    ATF_REQUIRE_THROW_RE(std::runtime_error, "Failed.*user.*UID 0",
+                         passwd_ns::find_user_by_uid(0));
 }
 
 
@@ -171,5 +209,7 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, find_user_by_name__ok);
     ATF_ADD_TEST_CASE(tcs, find_user_by_name__fail);
-    ATF_ADD_TEST_CASE(tcs, find_user_by_uid);
+    ATF_ADD_TEST_CASE(tcs, find_user_by_name__fake);
+    ATF_ADD_TEST_CASE(tcs, find_user_by_uid__ok);
+    ATF_ADD_TEST_CASE(tcs, find_user_by_uid__fake);
 }

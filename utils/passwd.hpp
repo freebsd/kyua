@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,7 @@
 #define UTILS_PASSWD_HPP
 
 #include <string>
+#include <vector>
 
 namespace utils {
 namespace passwd {
@@ -41,7 +42,7 @@ namespace passwd {
 /// Represents a system user.
 struct user {
     /// The name of the user.
-    const std::string name;
+    std::string name;
 
     /// The system-wide identifier of the user.
     unsigned int uid;
@@ -60,6 +61,7 @@ void drop_privileges(const user&);
 user find_user_by_name(const std::string&);
 user find_user_by_uid(const unsigned int);
 void set_current_user_for_testing(const user&);
+void set_mock_users_for_testing(const std::vector< user >&);
 
 
 }  // namespace passwd

@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,6 +48,10 @@ namespace {
 
 /// If defined, replaces the value returned by current_user().
 static utils::optional< passwd_ns::user > fake_current_user;
+
+
+/// If not empty, defines the current set of mock users.
+static std::vector< passwd_ns::user > mock_users;
 
 
 }  // anonymous namespace
@@ -122,12 +126,22 @@ passwd_ns::drop_privileges(const user& unprivileged_user)
 passwd_ns::user
 passwd_ns::find_user_by_name(const std::string& name)
 {
-    const struct ::passwd* pw = ::getpwnam(name.c_str());
-    if (pw == NULL)
-        throw std::runtime_error(F("Failed to get information about the user "
-                                   "'%s'") % name);
-    INV(pw->pw_name == name);
-    return user(pw->pw_name, pw->pw_uid, pw->pw_gid);
+    if (mock_users.empty()) {
+        const struct ::passwd* pw = ::getpwnam(name.c_str());
+        if (pw == NULL)
+            throw std::runtime_error(F("Failed to get information about the "
+                                       "user '%s'") % name);
+        INV(pw->pw_name == name);
+        return user(pw->pw_name, pw->pw_uid, pw->pw_gid);
+    } else {
+        for (std::vector< user >::const_iterator iter = mock_users.begin();
+             iter != mock_users.end(); iter++) {
+            if ((*iter).name == name)
+                return *iter;
+        }
+        throw std::runtime_error(F("Failed to get information about the "
+                                   "user '%s'") % name);
+    }
 }
 
 
@@ -141,12 +155,22 @@ passwd_ns::find_user_by_name(const std::string& name)
 passwd_ns::user
 passwd_ns::find_user_by_uid(const unsigned int uid)
 {
-    const struct ::passwd* pw = ::getpwuid(uid);
-    if (pw == NULL)
-        throw std::runtime_error(F("Failed to get information about the user "
-                                   "with UID %d") % uid);
-    INV(pw->pw_uid == uid);
-    return user(pw->pw_name, pw->pw_uid, pw->pw_gid);
+    if (mock_users.empty()) {
+        const struct ::passwd* pw = ::getpwuid(uid);
+        if (pw == NULL)
+            throw std::runtime_error(F("Failed to get information about the "
+                                       "user with UID %d") % uid);
+        INV(pw->pw_uid == uid);
+        return user(pw->pw_name, pw->pw_uid, pw->pw_gid);
+    } else {
+        for (std::vector< user >::const_iterator iter = mock_users.begin();
+             iter != mock_users.end(); iter++) {
+            if ((*iter).uid == uid)
+                return *iter;
+        }
+        throw std::runtime_error(F("Failed to get information about the "
+                                   "user with UID %d") % uid);
+    }
 }
 
 
@@ -159,4 +183,15 @@ void
 passwd_ns::set_current_user_for_testing(const user& new_current_user)
 {
     fake_current_user = new_current_user;
+}
+
+
+/// Overrides the current set of users for testing purposes.
+///
+/// \param users The new users set.  Cannot be empty.
+void
+passwd_ns::set_mock_users_for_testing(const std::vector< user >& users)
+{
+    PRE(!users.empty());
+    mock_users = users;
 }
