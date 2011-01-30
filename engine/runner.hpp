@@ -45,7 +45,7 @@ namespace engine {
 
 namespace user_files {
 class kyuafile;
-class test_program;
+struct test_program;
 }  // namespace user_files
 struct test_case;
 
