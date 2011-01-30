@@ -42,6 +42,7 @@ extern "C" {
 #include "engine/runner.hpp"
 #include "engine/test_case.hpp"
 #include "engine/user_files/config.hpp"
+#include "engine/user_files/kyuafile.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/env.hpp"
@@ -216,11 +217,11 @@ one_signal_test(const atf::tests::tc* tc, const int signo)
 
     ignore_signal(signo);
 
-    engine::properties_map user_config;
-    user_config["signo"] = F("%d") % signo;
+    user_files::config config = mock_config;
+    config.test_suites["the-suite"]["signo"] = F("%d") % signo;
     results::result_ptr result = runner::run_test_case(
         make_test_case(get_helpers_path(tc), "validate_signal"),
-        mock_config, user_config);
+        config, "the-suite");
     validate_broken("Results file.*cannot be opened", result.get());
 }
 
@@ -233,7 +234,7 @@ ATF_TEST_CASE_BODY(run_test_case__simple)
 {
     results::result_ptr result = runner::run_test_case(
         make_test_case(get_helpers_path(this), "pass"),
-        mock_config, engine::properties_map());
+        mock_config, "test-suite");
     compare_results(results::passed(), result.get());
 }
 
@@ -241,11 +242,11 @@ ATF_TEST_CASE_BODY(run_test_case__simple)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__config_variables);
 ATF_TEST_CASE_BODY(run_test_case__config_variables)
 {
-    engine::properties_map user_config;
-    user_config["control_dir"] = fs::current_path().str();
+    user_files::config config = mock_config;
+    config.test_suites["the-suite"]["control_dir"] = fs::current_path().str();
     results::result_ptr result = runner::run_test_case(
         make_test_case(get_helpers_path(this), "create_cookie_in_control_dir"),
-        mock_config, user_config);
+        config, "the-suite");
     compare_results(results::passed(), result.get());
 
     if (!fs::exists(fs::path("cookie")))
@@ -259,12 +260,12 @@ ATF_TEST_CASE_BODY(run_test_case__cleanup_shares_workdir)
 {
     engine::properties_map metadata;
     metadata["has.cleanup"] = "true";
-    engine::properties_map user_config;
-    user_config["control_dir"] = fs::current_path().str();
+    user_files::config config = mock_config;
+    config.test_suites["the-suite"]["control_dir"] = fs::current_path().str();
     results::result_ptr result = runner::run_test_case(
         make_test_case(get_helpers_path(this), "check_cleanup_workdir",
                        metadata),
-        mock_config, user_config);
+        config, "the-suite");
     compare_results(results::skipped("cookie created"), result.get());
 
     if (fs::exists(fs::path("missing_cookie")))
@@ -282,11 +283,11 @@ ATF_TEST_CASE_BODY(run_test_case__has_cleanup__false)
 {
     engine::properties_map metadata;
     metadata["has.cleanup"] = "false";
-    engine::properties_map user_config;
-    user_config["control_dir"] = fs::current_path().str();
+    user_files::config config = mock_config;
+    config.test_suites["the-suite"]["control-dir"] = fs::current_path().str();
     results::result_ptr result = runner::run_test_case(
         make_test_case(get_helpers_path(this), "create_cookie_from_cleanup",
-                       metadata), mock_config, user_config);
+                       metadata), config, "the-suite");
     compare_results(results::passed(), result.get());
 
     if (fs::exists(fs::path("cookie")))
@@ -300,11 +301,11 @@ ATF_TEST_CASE_BODY(run_test_case__has_cleanup__true)
 {
     engine::properties_map metadata;
     metadata["has.cleanup"] = "true";
-    engine::properties_map user_config;
-    user_config["control_dir"] = fs::current_path().str();
+    user_files::config config = mock_config;
+    config.test_suites["the-suite"]["control_dir"] = fs::current_path().str();
     results::result_ptr result = runner::run_test_case(
         make_test_case(get_helpers_path(this), "create_cookie_from_cleanup",
-                       metadata), mock_config, user_config);
+                       metadata), config, "the-suite");
     compare_results(results::passed(), result.get());
 
     if (!fs::exists(fs::path("cookie")))
@@ -328,7 +329,7 @@ ATF_TEST_CASE_BODY(run_test_case__isolation_env)
     utils::setenv("TZ", "C");
     results::result_ptr result = runner::run_test_case(
         make_test_case(get_helpers_path(this), "validate_env"),
-        mock_config, engine::properties_map());
+        mock_config, "test-suite");
     compare_results(results::passed(), result.get());
 }
 
@@ -339,7 +340,7 @@ ATF_TEST_CASE_BODY(run_test_case__isolation_pgrp)
     const mode_t old_umask = ::umask(0002);
     results::result_ptr result = runner::run_test_case(
         make_test_case(get_helpers_path(this), "validate_pgrp"),
-        mock_config, engine::properties_map());
+        mock_config, "test-suite");
     compare_results(results::passed(), result.get());
     ::umask(old_umask);
 }
@@ -359,7 +360,7 @@ ATF_TEST_CASE_BODY(run_test_case__isolation_umask)
     const mode_t old_umask = ::umask(0002);
     results::result_ptr result = runner::run_test_case(
         make_test_case(get_helpers_path(this), "validate_umask"),
-        mock_config, engine::properties_map());
+        mock_config, "test-suite");
     compare_results(results::passed(), result.get());
     ::umask(old_umask);
 }
@@ -370,7 +371,7 @@ ATF_TEST_CASE_BODY(run_test_case__isolation_workdir)
 {
     results::result_ptr result = runner::run_test_case(
         make_test_case(get_helpers_path(this), "create_cookie_in_workdir"),
-        mock_config, engine::properties_map());
+        mock_config, "test-suite");
     compare_results(results::passed(), result.get());
 
     if (fs::exists(fs::path("cookie")))
@@ -390,7 +391,7 @@ ATF_TEST_CASE_BODY(run_test_case__allowed_architectures)
     results::result_ptr result = runner::run_test_case(
         make_test_case(get_helpers_path(this), "create_cookie_in_control_dir",
                        metadata),
-        config, engine::properties_map());
+        config, "test-suite");
     compare_results(results::skipped(
        "Current architecture 'powerpc' not supported"),
         result.get());
@@ -412,7 +413,7 @@ ATF_TEST_CASE_BODY(run_test_case__allowed_platforms)
     results::result_ptr result = runner::run_test_case(
         make_test_case(get_helpers_path(this), "create_cookie_in_control_dir",
                        metadata),
-        config, engine::properties_map());
+        config, "test-suite");
     compare_results(results::skipped(
        "Current platform 'macppc' not supported"),
         result.get());
@@ -428,13 +429,13 @@ ATF_TEST_CASE_BODY(run_test_case__required_configs)
 {
     engine::properties_map metadata;
     metadata["require.config"] = "used-var";
-    engine::properties_map user_config;
-    user_config["control_dir"] = fs::current_path().str();
-    user_config["unused-var"] = "value";
+    user_files::config config = mock_config;
+    config.test_suites["the-suite"]["control_dir"] = fs::current_path().str();
+    config.test_suites["the-suite"]["unused-var"] = "value";
     results::result_ptr result = runner::run_test_case(
         make_test_case(get_helpers_path(this), "create_cookie_in_control_dir",
                        metadata),
-        mock_config, user_config);
+        config, "the-suite");
     compare_results(results::skipped(
         "Required configuration property 'used-var' not defined"),
         result.get());
@@ -453,7 +454,7 @@ ATF_TEST_CASE_BODY(run_test_case__required_programs)
     results::result_ptr result = runner::run_test_case(
         make_test_case(get_helpers_path(this), "create_cookie_in_control_dir",
                        metadata),
-        mock_config, engine::properties_map());
+        mock_config, "test-suite");
     compare_results(results::skipped(
         "Required program '/non-existent/program' not found"), result.get());
 
@@ -474,7 +475,7 @@ ATF_TEST_CASE_BODY(run_test_case__required_user__root__ok)
     metadata["require.user"] = "root";
     results::result_ptr result = runner::run_test_case(
         make_test_case(get_helpers_path(this), "create_cookie_in_workdir",
-                       metadata), mock_config, engine::properties_map());
+                       metadata), mock_config, "test-suite");
     ATF_REQUIRE(passwd::current_user().is_root());
     compare_results(results::passed(), result.get());
 }
@@ -491,7 +492,7 @@ ATF_TEST_CASE_BODY(run_test_case__required_user__root__skip)
     metadata["require.user"] = "root";
     results::result_ptr result = runner::run_test_case(
         make_test_case(get_helpers_path(this), "create_cookie_in_workdir",
-                       metadata), mock_config, engine::properties_map());
+                       metadata), mock_config, "test-suite");
     ATF_REQUIRE(!passwd::current_user().is_root());
     compare_results(results::skipped("Requires root privileges"), result.get());
 }
@@ -510,7 +511,7 @@ ATF_TEST_CASE_BODY(run_test_case__required_user__unprivileged__ok)
     config.unprivileged_user = utils::none;
     results::result_ptr result = runner::run_test_case(
         make_test_case(get_helpers_path(this), "create_cookie_in_workdir",
-                       metadata), config, engine::properties_map());
+                       metadata), config, "test-suite");
     compare_results(results::passed(), result.get());
 }
 
@@ -528,7 +529,7 @@ ATF_TEST_CASE_BODY(run_test_case__required_user__unprivileged__skip)
     config.unprivileged_user = utils::none;
     results::result_ptr result = runner::run_test_case(
         make_test_case(get_helpers_path(this), "create_cookie_in_workdir",
-                       metadata), config, engine::properties_map());
+                       metadata), config, "test-suite");
     compare_results(results::skipped(
         "Requires an unprivileged user but the unprivileged-user "
         "configuration variable is not defined"), result.get());
@@ -550,7 +551,7 @@ ATF_TEST_CASE_BODY(run_test_case__required_user__unprivileged__drop)
         "unprivileged-user"));
     results::result_ptr result = runner::run_test_case(
         make_test_case(get_helpers_path(this), "check_unprivileged",
-                       metadata), config, engine::properties_map());
+                       metadata), config, "test-suite");
     compare_results(results::passed(), result.get());
 }
 
@@ -560,11 +561,11 @@ ATF_TEST_CASE_BODY(run_test_case__timeout_body)
 {
     engine::properties_map metadata;
     metadata["timeout"] = "1";
-    engine::properties_map user_config;
-    user_config["control_dir"] = fs::current_path().str();
+    user_files::config config = mock_config;
+    config.test_suites["the-suite"]["control_dir"] = fs::current_path().str();
     results::result_ptr result = runner::run_test_case(
         make_test_case(get_helpers_path(this), "timeout_body", metadata),
-        mock_config, user_config);
+        config, "the-suite");
     validate_broken("Test case timed out after 1 seconds", result.get());
 
     if (fs::exists(fs::path("cookie")))
@@ -578,11 +579,11 @@ ATF_TEST_CASE_BODY(run_test_case__timeout_cleanup)
     engine::properties_map metadata;
     metadata["has.cleanup"] = "true";
     metadata["timeout"] = "1";
-    engine::properties_map user_config;
-    user_config["control_dir"] = fs::current_path().str();
+    user_files::config config = mock_config;
+    config.test_suites["the-suite"]["control_dir"] = fs::current_path().str();
     results::result_ptr result = runner::run_test_case(
         make_test_case(get_helpers_path(this), "timeout_cleanup", metadata),
-        mock_config, user_config);
+        config, "the-suite");
     validate_broken("Test case cleanup timed out after 1 seconds",
                     result.get());
 
@@ -596,7 +597,7 @@ ATF_TEST_CASE_BODY(run_test_case__missing_results_file)
 {
     results::result_ptr result = runner::run_test_case(
         make_test_case(get_helpers_path(this), "crash"),
-        mock_config, engine::properties_map());
+        mock_config, "test-suite");
     // TODO(jmmv): This should really contain a more descriptive message.
     validate_broken("Results file.*cannot be opened", result.get());
 }
@@ -607,7 +608,7 @@ ATF_TEST_CASE_BODY(run_test_case__missing_test_program)
 {
     results::result_ptr result = runner::run_test_case(
         make_test_case(fs::path("/non-existent"), "passed"),
-        mock_config, engine::properties_map());
+        mock_config, "test-suite");
     // TODO(jmmv): This should really be either an exception to denote a broken
     // test suite or should be properly reported as missing test program.
     validate_broken("Results file.*cannot be opened", result.get());
@@ -625,8 +626,10 @@ ATF_TEST_CASE_BODY(run_test_case__missing_test_program)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_program__load_failure);
 ATF_TEST_CASE_BODY(run_test_program__load_failure)
 {
+    user_files::test_program test_program(fs::path("/non-existent"), "");
+
     capture_results hooks;
-    runner::run_test_program(fs::path("/non-existent"), mock_config, &hooks);
+    runner::run_test_program(test_program, mock_config, &hooks);
     const engine::test_case_id id(fs::path("/non-existent"),
                                   "__test_program__");
     ATF_REQUIRE(hooks.results.find(id) != hooks.results.end());

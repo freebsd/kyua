@@ -147,7 +147,7 @@ struct test_case {
 
 
 std::string check_requirements(const test_case&, const user_files::config&,
-                               const properties_map&);
+                               const std::string&);
 
 
 }  // namespace engine

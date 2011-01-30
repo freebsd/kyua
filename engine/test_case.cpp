@@ -366,21 +366,23 @@ engine::test_case::operator==(const test_case& tc) const
 ///
 /// \param test_case The test case for which to validate the requirements.
 /// \param config The engine configuration.
-/// \param user_config The configuration properties provided by the user.
+/// \param test_suite The name of the test suite.
 ///
 /// \return A string describing what is missing; empty if everything is OK.
 std::string
 engine::check_requirements(const engine::test_case& test_case,
                            const engine::user_files::config& config,
-                           const properties_map& user_config)
+                           const std::string& test_suite)
 {
     for (strings_set::const_iterator iter = test_case.required_configs.begin();
          iter != test_case.required_configs.end(); iter++) {
+        const user_files::properties_map& properties = config.test_suite(
+            test_suite);
         if (*iter == "unprivileged-user") {
             if (!config.unprivileged_user)
                 return F("Required configuration property '%s' not defined") %
                     *iter;
-        } else if (user_config.find(*iter) == user_config.end())
+        } else if (properties.find(*iter) == properties.end())
             return F("Required configuration property '%s' not defined") %
                 *iter;
     }

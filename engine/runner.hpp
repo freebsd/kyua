@@ -45,6 +45,7 @@ namespace engine {
 
 namespace user_files {
 class kyuafile;
+class test_program;
 }  // namespace user_files
 struct test_case;
 
@@ -74,9 +75,9 @@ public:
 
 results::result_ptr run_test_case(const engine::test_case&,
                                   const user_files::config&,
-                                  const properties_map&);
-void run_test_program(const utils::fs::path&, const user_files::config&,
-                      hooks*);
+                                  const std::string&);
+void run_test_program(const user_files::test_program&,
+                      const user_files::config&, hooks*);
 void run_test_suite(const user_files::kyuafile&, const user_files::config&,
                     hooks*);
 

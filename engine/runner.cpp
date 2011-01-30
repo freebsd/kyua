@@ -182,20 +182,22 @@ isolate_process(const fs::path& cwd)
 
 /// Converts a set of configuration variables to test program flags.
 ///
-/// \param config_ The configuration variables provided by the user.
-/// \param user_config The configuration variables.
+/// \param config The configuration variables provided by the user.
+/// \param test_suite The name of the test suite.
 /// \param args [out] The test program arguments in which to add the new flags.
 static void
 config_to_args(const user_files::config& config,
-               const engine::properties_map& user_config,
+               const std::string& test_suite,
                std::vector< std::string >& args)
 {
     if (config.unprivileged_user)
         args.push_back(F("-vunprivileged-user=%s") %
                        config.unprivileged_user.get().name);
 
-    for (engine::properties_map::const_iterator iter = user_config.begin();
-         iter != user_config.end(); iter++) {
+    const user_files::properties_map& properties = config.test_suite(
+        test_suite);
+    for (user_files::properties_map::const_iterator iter = properties.begin();
+         iter != properties.end(); iter++) {
         args.push_back(F("-v%s=%s") % (*iter).first % (*iter).second);
     }
 }
@@ -207,7 +209,7 @@ class execute_test_case_body {
     fs::path _result_file;
     fs::path _work_directory;
     user_files::config _config;
-    engine::properties_map _user_config;
+    std::string _test_suite;
 
 public:
     /// Constructor for the functor.
@@ -219,17 +221,17 @@ public:
     /// \param work_directory_ The path to the directory to chdir into when
     ///     running the test program.
     /// \param config_ The configuration variables provided by the user.
-    /// \param user_config_ The configuration variables provided by the user.
+    /// \param test_suite_ The name of the test suite.
     execute_test_case_body(const engine::test_case& test_case_,
                            const fs::path& result_file_,
                            const fs::path& work_directory_,
                            const user_files::config& config_,
-                           const engine::properties_map& user_config_) :
+                           const std::string& test_suite_) :
         _test_case(test_case_),
         _result_file(result_file_),
         _work_directory(work_directory_),
         _config(config_),
-        _user_config(user_config_)
+        _test_suite(test_suite_)
     {
     }
 
@@ -255,7 +257,7 @@ public:
         std::vector< std::string > args;
         args.push_back(F("-r%s") % _result_file);
         args.push_back(F("-s%s") % test_program.branch_path());
-        config_to_args(_config, _user_config, args);
+        config_to_args(_config, _test_suite, args);
         args.push_back(_test_case.identifier.name);
         process::exec(test_program, args);
     }
@@ -267,7 +269,7 @@ class execute_test_case_cleanup {
     engine::test_case _test_case;
     fs::path _work_directory;
     user_files::config _config;
-    engine::properties_map _user_config;
+    std::string _test_suite;
 
 public:
     /// Constructor for the functor.
@@ -277,15 +279,15 @@ public:
     /// \param work_directory_ The path to the directory to chdir into when
     ///     running the test program.
     /// \param config_ The values for the current engine configuration.
-    /// \param user_config_ The configuration variables provided by the user.
+    /// \param test_suite_ The name of the test suite.
     execute_test_case_cleanup(const engine::test_case& test_case_,
                               const fs::path& work_directory_,
                               const user_files::config& config_,
-                              const engine::properties_map& user_config_) :
+                              const std::string& test_suite_) :
         _test_case(test_case_),
         _work_directory(work_directory_),
         _config(config_),
-        _user_config(user_config_)
+        _test_suite(test_suite_)
     {
     }
 
@@ -305,7 +307,7 @@ public:
 
         std::vector< std::string > args;
         args.push_back(F("-s%s") % test_program.branch_path());
-        config_to_args(_config, _user_config, args);
+        config_to_args(_config, _test_suite, args);
         args.push_back(F("%s:cleanup") % _test_case.identifier.name);
         process::exec(test_program, args);
     }
@@ -343,16 +345,16 @@ fork_and_wait(Hook hook, const fs::path& outfile, const fs::path& errfile,
 ///
 /// \param test_case The test case to execute.
 /// \param config The values for the current engine configuration.
-/// \param user_config User-specified configuration variables.
+/// \param test_suite The name of the test suite.
 ///
 /// \return The result of the execution of the test case.
 static results::result_ptr
 run_test_case_safe(const engine::test_case& test_case,
                    const user_files::config& config,
-                   const engine::properties_map& user_config)
+                   const std::string& test_suite)
 {
     const std::string skip_reason = engine::check_requirements(
-        test_case, config, user_config);
+        test_case, config, test_suite);
     if (!skip_reason.empty())
         return results::make_result(results::skipped(skip_reason));
 
@@ -370,7 +372,7 @@ run_test_case_safe(const engine::test_case& test_case,
 
     const optional< process::status > body_status = fork_and_wait(
         execute_test_case_body(test_case, result_file, rundir, config,
-                               user_config),
+                               test_suite),
         workdir.directory() / "stdout.txt",
         workdir.directory() / "stderr.txt",
         test_case.timeout);
@@ -378,8 +380,7 @@ run_test_case_safe(const engine::test_case& test_case,
     optional< process::status > cleanup_status;
     if (test_case.has_cleanup) {
         cleanup_status = fork_and_wait(
-            execute_test_case_cleanup(test_case, rundir, config,
-                                      user_config),
+            execute_test_case_cleanup(test_case, rundir, config, test_suite),
             workdir.directory() / "cleanup-stdout.txt",
             workdir.directory() / "cleanup-stderr.txt",
             test_case.timeout);
@@ -410,17 +411,17 @@ runner::hooks::~hooks(void)
 ///
 /// \param test_case The test to execute.
 /// \param config The values for the current engine configuration.
-/// \param user_config The configuration variables provided by the user.
+/// \param test_suite The name of the test suite.
 ///
 /// \return The result of the test case execution.
 results::result_ptr
 runner::run_test_case(const engine::test_case& test_case,
                       const user_files::config& config,
-                      const engine::properties_map& user_config)
+                      const std::string& test_suite)
 {
     results::result_ptr result;
     try {
-        result = run_test_case_safe(test_case, config, user_config);
+        result = run_test_case_safe(test_case, config, test_suite);
     } catch (const std::exception& e) {
         result = results::make_result(results::broken(F(
             "The test caused an error in the runtime system: %s") % e.what()));
@@ -436,22 +437,22 @@ runner::run_test_case(const engine::test_case& test_case,
 /// named '__test_program__' is created and it is reported as broken.
 ///
 /// \param test_program The test program to execute.
-/// \param user_config The configuration variables provided by the user.
+/// \param config The configuration variables provided by the user.
 /// \param hooks Callbacks for events.
 void
-runner::run_test_program(const fs::path& test_program,
+runner::run_test_program(const user_files::test_program& test_program,
                          const user_files::config& config,
                          runner::hooks* hooks)
 {
     engine::test_cases_vector test_cases;
     try {
-        test_cases = engine::load_test_cases(test_program);
+        test_cases = engine::load_test_cases(test_program.binary_path);
     } catch (const std::exception& e) {
         const results::broken broken(F("Failed to load list of test cases: "
                                        "%s") % e.what());
         // TODO(jmmv): Maybe generalize this in test_case_id somehow?
         const test_case_id program_id = test_case_id(
-            test_program, "__test_program__");
+            test_program.binary_path, "__test_program__");
         hooks->start_test_case(program_id);
         hooks->finish_test_case(program_id, results::make_result(broken));
         return;
@@ -462,8 +463,8 @@ runner::run_test_program(const fs::path& test_program,
         const engine::test_case& test_case = *iter;
 
         hooks->start_test_case(test_case.identifier);
-        results::result_ptr result = run_test_case(test_case, config,
-                                                   properties_map());
+        results::result_ptr result = run_test_case(
+            test_case, config, test_program.test_suite_name);
         hooks->finish_test_case(test_case.identifier, result);
     }
 }
@@ -483,6 +484,6 @@ runner::run_test_suite(const user_files::kyuafile& suite,
         suite.test_programs();
     for (user_files::test_programs_vector::const_iterator iter =
          test_programs.begin(); iter != test_programs.end(); iter++) {
-        run_test_program((*iter).binary_path, config, run_hooks);
+        run_test_program((*iter), config, run_hooks);
     }
 }

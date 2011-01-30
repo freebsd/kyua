@@ -459,9 +459,8 @@ ATF_TEST_CASE_BODY(check_requirements__none)
     const engine::test_case test_case = engine::test_case::from_properties(
         engine::test_case_id(fs::path("program"), "name"),
         engine::properties_map());
-    const engine::properties_map user_config;
     ATF_REQUIRE(engine::check_requirements(test_case, mock_config,
-                                           user_config).empty());
+                                           "test-suite").empty());
 }
 
 
@@ -476,8 +475,7 @@ ATF_TEST_CASE_BODY(check_requirements__required_architectures__one_ok)
     user_files::config config = mock_config;
     config.architecture = "x86_64";
     config.platform = "";
-    ATF_REQUIRE(engine::check_requirements(test_case, config,
-                                           engine::properties_map()).empty());
+    ATF_REQUIRE(engine::check_requirements(test_case, config, "").empty());
 }
 
 
@@ -494,8 +492,7 @@ ATF_TEST_CASE_BODY(check_requirements__required_architectures__one_fail)
     config.architecture = "i386";
     config.platform = "";
     ATF_REQUIRE_MATCH("Current architecture 'i386' not supported",
-                      engine::check_requirements(test_case, config,
-                                                 engine::properties_map()));
+                      engine::check_requirements(test_case, config, ""));
 }
 
 
@@ -510,8 +507,7 @@ ATF_TEST_CASE_BODY(check_requirements__required_architectures__many_ok)
     user_files::config config = mock_config;
     config.architecture = "i386";
     config.platform = "";
-    ATF_REQUIRE(engine::check_requirements(test_case, config,
-                                           engine::properties_map()).empty());
+    ATF_REQUIRE(engine::check_requirements(test_case, config, "").empty());
 }
 
 
@@ -528,8 +524,7 @@ ATF_TEST_CASE_BODY(check_requirements__required_architectures__many_fail)
     config.architecture = "arm";
     config.platform = "";
     ATF_REQUIRE_MATCH("Current architecture 'arm' not supported",
-                      engine::check_requirements(test_case, config,
-                                                 engine::properties_map()));
+                      engine::check_requirements(test_case, config, ""));
 }
 
 
@@ -544,8 +539,7 @@ ATF_TEST_CASE_BODY(check_requirements__required_platforms__one_ok)
     user_files::config config = mock_config;
     config.architecture = "";
     config.platform = "amd64";
-    ATF_REQUIRE(engine::check_requirements(test_case, config,
-                                           engine::properties_map()).empty());
+    ATF_REQUIRE(engine::check_requirements(test_case, config, "").empty());
 }
 
 
@@ -561,8 +555,7 @@ ATF_TEST_CASE_BODY(check_requirements__required_platforms__one_fail)
     config.architecture = "";
     config.platform = "i386";
     ATF_REQUIRE_MATCH("Current platform 'i386' not supported",
-                      engine::check_requirements(test_case, config,
-                                                 engine::properties_map()));
+                      engine::check_requirements(test_case, config, ""));
 }
 
 
@@ -577,8 +570,7 @@ ATF_TEST_CASE_BODY(check_requirements__required_platforms__many_ok)
     user_files::config config = mock_config;
     config.architecture = "";
     config.platform = "i386";
-    ATF_REQUIRE(engine::check_requirements(test_case, config,
-                                           engine::properties_map()).empty());
+    ATF_REQUIRE(engine::check_requirements(test_case, config, "").empty());
 }
 
 
@@ -594,8 +586,7 @@ ATF_TEST_CASE_BODY(check_requirements__required_platforms__many_fail)
     config.architecture = "";
     config.platform = "shark";
     ATF_REQUIRE_MATCH("Current platform 'shark' not supported",
-                      engine::check_requirements(test_case, config,
-                                                 engine::properties_map()));
+                      engine::check_requirements(test_case, config, ""));
 }
 
 
@@ -607,12 +598,11 @@ ATF_TEST_CASE_BODY(check_requirements__required_configs__one_ok)
     const engine::test_case test_case = engine::test_case::from_properties(
         engine::test_case_id(fs::path("program"), "name"), metadata);
 
-    engine::properties_map user_config;
-    user_config["aaa"] = "value1";
-    user_config["my-var"] = "value2";
-    user_config["zzz"] = "value3";
-    ATF_REQUIRE(engine::check_requirements(test_case, mock_config,
-                                           user_config).empty());
+    user_files::config config = mock_config;
+    config.test_suites["suite"]["aaa"] = "value1";
+    config.test_suites["suite"]["my-var"] = "value2";
+    config.test_suites["suite"]["zzz"] = "value3";
+    ATF_REQUIRE(engine::check_requirements(test_case, config, "suite").empty());
 }
 
 
@@ -624,14 +614,13 @@ ATF_TEST_CASE_BODY(check_requirements__required_configs__one_fail)
     const engine::test_case test_case = engine::test_case::from_properties(
         engine::test_case_id(fs::path("program"), "name"), metadata);
 
-    engine::properties_map user_config;
-    user_config["aaa"] = "value1";
-    user_config["myvar"] = "value2";
-    user_config["zzz"] = "value3";
+    user_files::config config = mock_config;
+    config.test_suites["suite"]["aaa"] = "value1";
+    config.test_suites["suite"]["myvar"] = "value2";
+    config.test_suites["suite"]["zzz"] = "value3";
     ATF_REQUIRE_MATCH("Required configuration property 'unprivileged-user' not "
                       "defined",
-                      engine::check_requirements(test_case, mock_config,
-                                                 user_config));
+                      engine::check_requirements(test_case, config, "suite"));
 }
 
 
@@ -643,14 +632,13 @@ ATF_TEST_CASE_BODY(check_requirements__required_configs__many_ok)
     const engine::test_case test_case = engine::test_case::from_properties(
         engine::test_case_id(fs::path("program"), "name"), metadata);
 
-    engine::properties_map user_config;
-    user_config["aaa"] = "value1";
-    user_config["foo"] = "value2";
-    user_config["bar"] = "value3";
-    user_config["baz"] = "value4";
-    user_config["zzz"] = "value5";
-    ATF_REQUIRE(engine::check_requirements(test_case, mock_config,
-                                           user_config).empty());
+    user_files::config config = mock_config;
+    config.test_suites["suite"]["aaa"] = "value1";
+    config.test_suites["suite"]["foo"] = "value2";
+    config.test_suites["suite"]["bar"] = "value3";
+    config.test_suites["suite"]["baz"] = "value4";
+    config.test_suites["suite"]["zzz"] = "value5";
+    ATF_REQUIRE(engine::check_requirements(test_case, config, "suite").empty());
 }
 
 
@@ -662,13 +650,12 @@ ATF_TEST_CASE_BODY(check_requirements__required_configs__many_fail)
     const engine::test_case test_case = engine::test_case::from_properties(
         engine::test_case_id(fs::path("program"), "name"), metadata);
 
-    engine::properties_map user_config;
-    user_config["aaa"] = "value1";
-    user_config["foo"] = "value2";
-    user_config["zzz"] = "value3";
+    user_files::config config = mock_config;
+    config.test_suites["suite"]["aaa"] = "value1";
+    config.test_suites["suite"]["foo"] = "value2";
+    config.test_suites["suite"]["zzz"] = "value3";
     ATF_REQUIRE_MATCH("Required configuration property 'bar' not defined",
-                      engine::check_requirements(test_case, mock_config,
-                                                 user_config));
+                      engine::check_requirements(test_case, config, "config"));
 }
 
 
@@ -682,8 +669,7 @@ ATF_TEST_CASE_BODY(check_requirements__required_configs__special)
 
     user_files::config config = mock_config;
     config.unprivileged_user = passwd::user("foo", 1, 2);
-    ATF_REQUIRE(engine::check_requirements(test_case, config,
-                                           engine::properties_map()).empty());
+    ATF_REQUIRE(engine::check_requirements(test_case, config, "").empty());
 }
 
 
@@ -696,8 +682,7 @@ ATF_TEST_CASE_BODY(check_requirements__required_user__root__ok)
         engine::test_case_id(fs::path("program"), "name"), metadata);
 
     passwd::set_current_user_for_testing(passwd::user("", 0, 1));
-    ATF_REQUIRE(engine::check_requirements(test_case, mock_config,
-                                           engine::properties_map()).empty());
+    ATF_REQUIRE(engine::check_requirements(test_case, mock_config, "").empty());
 }
 
 
@@ -711,8 +696,7 @@ ATF_TEST_CASE_BODY(check_requirements__required_user__root__fail)
 
     passwd::set_current_user_for_testing(passwd::user("", 123, 1));
     ATF_REQUIRE_MATCH("Requires root privileges",
-                      engine::check_requirements(test_case, mock_config,
-                                                 engine::properties_map()));
+                      engine::check_requirements(test_case, mock_config, ""));
 }
 
 
@@ -729,8 +713,7 @@ ATF_TEST_CASE_BODY(check_requirements__required_user__unprivileged__same)
     config.unprivileged_user = utils::none;
 
     passwd::set_current_user_for_testing(passwd::user("", 123, 1));
-    ATF_REQUIRE(engine::check_requirements(test_case, config,
-                                           engine::properties_map()).empty());
+    ATF_REQUIRE(engine::check_requirements(test_case, config, "").empty());
 }
 
 
@@ -746,8 +729,7 @@ ATF_TEST_CASE_BODY(check_requirements__required_user__unprivileged__ok)
     config.unprivileged_user = passwd::user("", 123, 1);
 
     passwd::set_current_user_for_testing(passwd::user("", 0, 1));
-    ATF_REQUIRE(engine::check_requirements(test_case, config,
-                                           engine::properties_map()).empty());
+    ATF_REQUIRE(engine::check_requirements(test_case, config, "").empty());
 }
 
 
@@ -765,8 +747,7 @@ ATF_TEST_CASE_BODY(check_requirements__required_user__unprivileged__fail)
 
     passwd::set_current_user_for_testing(passwd::user("", 0, 1));
     ATF_REQUIRE_MATCH("Requires.*unprivileged.*unprivileged-user",
-                      engine::check_requirements(test_case, config,
-                                                 engine::properties_map()));
+                      engine::check_requirements(test_case, config, ""));
 }
 
 
@@ -786,8 +767,7 @@ ATF_TEST_CASE_BODY(check_requirements__required_programs__ok)
     const engine::test_case test_case = engine::test_case::from_properties(
         engine::test_case_id(fs::path("program"), "name"), metadata);
 
-    ATF_REQUIRE(engine::check_requirements(test_case, mock_config,
-                                           engine::properties_map()).empty());
+    ATF_REQUIRE(engine::check_requirements(test_case, mock_config, "").empty());
 }
 
 
@@ -801,8 +781,7 @@ ATF_TEST_CASE_BODY(check_requirements__required_programs__fail_absolute)
         engine::test_case_id(fs::path("program"), "name"), metadata);
 
     ATF_REQUIRE_MATCH("'/non-existent/program' not found$",
-                      engine::check_requirements(test_case, mock_config,
-                                                 engine::properties_map()));
+                      engine::check_requirements(test_case, mock_config, ""));
 }
 
 
@@ -820,8 +799,7 @@ ATF_TEST_CASE_BODY(check_requirements__required_programs__fail_relative)
         engine::test_case_id(fs::path("program"), "name"), metadata);
 
     ATF_REQUIRE_MATCH("'bar' not found in PATH$",
-                      engine::check_requirements(test_case, mock_config,
-                                                 engine::properties_map()));
+                      engine::check_requirements(test_case, mock_config, ""));
 }
 
 
