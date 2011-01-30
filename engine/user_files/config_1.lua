@@ -49,6 +49,30 @@ setmetatable(P, {__index = _G})
 setfenv(1, P)
 
 
+TEST_SUITES = {}
+
+
+-- Defines a configuration variable for a particular test suite.
+--
+-- \post TEST_SUITES[test_suite][name] == value
+--
+-- \param test_suite string, The name of the test suite for which a property is
+--     being set.
+-- \param name string, The name of the property to set.
+-- \param value boolean|number|string, The value of the property.
+function test_suite_var(test_suite, name, value)
+   assert(type(test_suite) == "string")
+   assert(type(name) == "string")
+   assert(type(value) == "boolean" or type(value) == "number" or
+          type(value) == "string")
+
+   if TEST_SUITES[test_suite] == nil then
+      TEST_SUITES[test_suite] = {}
+   end
+   TEST_SUITES[test_suite][name] = value
+end
+
+
 -- Sets globals for commonly-used and required module entities.
 --
 -- \post The global environment is modified to include an entry for the module
@@ -56,6 +80,8 @@ setfenv(1, P)
 -- configuration files.
 function export()
    _G.config = P
+
+   _G.test_suite_var = test_suite_var
 end
 
 

@@ -787,6 +787,21 @@ ATF_TEST_CASE_BODY(state__push_integer)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(state__push_nil);
+ATF_TEST_CASE_BODY(state__push_nil)
+{
+    lua::state state;
+    state.push_nil();
+    ATF_REQUIRE_EQ(1, lua_gettop(raw(state)));
+    ATF_REQUIRE(lua_isnil(raw(state), -1));
+    state.push_integer(34);
+    ATF_REQUIRE_EQ(2, lua_gettop(raw(state)));
+    ATF_REQUIRE(!lua_isnil(raw(state), -1));
+    ATF_REQUIRE(lua_isnil(raw(state), -2));
+    lua_pop(raw(state), 2);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(state__push_string);
 ATF_TEST_CASE_BODY(state__push_string)
 {
@@ -1062,6 +1077,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, state__push_c_function__cxx_fail_anything);
     ATF_ADD_TEST_CASE(tcs, state__push_c_function__cxx_fail_overflow);
     ATF_ADD_TEST_CASE(tcs, state__push_integer);
+    ATF_ADD_TEST_CASE(tcs, state__push_nil);
     ATF_ADD_TEST_CASE(tcs, state__push_string);
     ATF_ADD_TEST_CASE(tcs, state__set_global__ok);
     ATF_ADD_TEST_CASE(tcs, state__set_global__fail);

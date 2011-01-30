@@ -502,9 +502,17 @@ lua::state::push_integer(const int value)
 }
 
 
+/// Wrapper around lua_pushnil.
+void
+lua::state::push_nil(void)
+{
+    lua_pushnil(_pimpl->lua_state);
+}
+
+
 /// Wrapper around lua_pushstring.
 ///
-/// \param str The second parameter to lua_pushcfuntion.
+/// \param str The second parameter to lua_pushstring.
 ///
 /// \warning Terminates execution if there is not enough memory.
 void

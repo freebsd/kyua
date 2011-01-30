@@ -78,10 +78,101 @@ validate_defaults(const user_files::config& config)
     ATF_REQUIRE_EQ(KYUA_ARCHITECTURE, config.architecture);
     ATF_REQUIRE_EQ(KYUA_PLATFORM, config.platform);
     ATF_REQUIRE(!config.unprivileged_user);
+    ATF_REQUIRE(config.test_suites.empty());
 }
 
 
 }  // anonymous namespace
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(get_properties__none);
+ATF_TEST_CASE_BODY(get_properties__none)
+{
+    lua::state state;
+    stack_balance_checker checker(state);
+
+    state.new_table();
+
+    const user_files::properties_map properties =
+        user_files::detail::get_properties(state, "the-name");
+    ATF_REQUIRE(properties.empty());
+
+    state.pop(1);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(get_properties__some);
+ATF_TEST_CASE_BODY(get_properties__some)
+{
+    lua::state state;
+    stack_balance_checker checker(state);
+
+    lua::do_string(state, "return {empty_string='', a_string='foo bar', "
+                   "real_int=3, int_as_string='5', bool_true=true, "
+                   "bool_false=false}", 1);
+
+    const user_files::properties_map properties =
+        user_files::detail::get_properties(state, "the-name");
+    ATF_REQUIRE_EQ(6, properties.size());
+
+    user_files::properties_map::const_iterator iter;
+
+    iter = properties.find("empty_string");
+    ATF_REQUIRE(iter != properties.end());
+    ATF_REQUIRE_EQ("", (*iter).second);
+
+    iter = properties.find("a_string");
+    ATF_REQUIRE(iter != properties.end());
+    ATF_REQUIRE_EQ("foo bar", (*iter).second);
+
+    iter = properties.find("real_int");
+    ATF_REQUIRE(iter != properties.end());
+    ATF_REQUIRE_EQ("3", (*iter).second);
+
+    iter = properties.find("int_as_string");
+    ATF_REQUIRE(iter != properties.end());
+    ATF_REQUIRE_EQ("5", (*iter).second);
+
+    iter = properties.find("bool_true");
+    ATF_REQUIRE(iter != properties.end());
+    ATF_REQUIRE_EQ("true", (*iter).second);
+
+    iter = properties.find("bool_false");
+    ATF_REQUIRE(iter != properties.end());
+    ATF_REQUIRE_EQ("false", (*iter).second);
+
+    state.pop(1);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(get_properties__bad_key);
+ATF_TEST_CASE_BODY(get_properties__bad_key)
+{
+    lua::state state;
+    stack_balance_checker checker(state);
+
+    lua::do_string(state, "t = {}; t['a']=5; t[{}]=3; return t", 1);
+
+    ATF_REQUIRE_THROW_RE(engine::error, "non-string property name.*'the-name'",
+                         user_files::detail::get_properties(state, "the-name"));
+
+    state.pop(1);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(get_properties__bad_value);
+ATF_TEST_CASE_BODY(get_properties__bad_value)
+{
+    lua::state state;
+    stack_balance_checker checker(state);
+
+    lua::do_string(state, "return {a=5, b={}}", 1);
+
+    ATF_REQUIRE_THROW_RE(engine::error, "Invalid value.*property 'b'.*'foo'",
+                         user_files::detail::get_properties(state, "foo"));
+
+    state.pop(1);
+}
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(get_string_var__nil);
@@ -116,6 +207,110 @@ ATF_TEST_CASE_BODY(get_string_var__invalid)
     ATF_REQUIRE_THROW_RE(engine::error, "Invalid type.*'myvar'",
                          user_files::detail::get_string_var(state, "myvar",
                                                             "default-value"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(get_test_suites__none);
+ATF_TEST_CASE_BODY(get_test_suites__none)
+{
+    lua::state state;
+    stack_balance_checker checker(state);
+
+    lua::do_string(state, "ts = {}");
+
+    const user_files::test_suites_map test_suites =
+        user_files::detail::get_test_suites(state, "ts");
+    ATF_REQUIRE(test_suites.empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(get_test_suites__some);
+ATF_TEST_CASE_BODY(get_test_suites__some)
+{
+    lua::state state;
+    stack_balance_checker checker(state);
+
+    lua::do_string(state, "ts = {foo={a=3, b='hello', c=true}, "
+                   "bar={}, baz={prop='value'}}");
+
+    const user_files::test_suites_map test_suites =
+        user_files::detail::get_test_suites(state, "ts");
+    ATF_REQUIRE_EQ(2, test_suites.size());
+
+    user_files::test_suites_map::const_iterator iter;
+
+    iter = test_suites.find("foo");
+    ATF_REQUIRE(iter != test_suites.end());
+    {
+        const user_files::properties_map& properties = (*iter).second;
+        ATF_REQUIRE_EQ(3, properties.size());
+
+        user_files::properties_map::const_iterator iter2;
+
+        iter2 = properties.find("a");
+        ATF_REQUIRE(iter2 != properties.end());
+        ATF_REQUIRE_EQ("3", (*iter2).second);
+
+        iter2 = properties.find("b");
+        ATF_REQUIRE(iter2 != properties.end());
+        ATF_REQUIRE_EQ("hello", (*iter2).second);
+
+        iter2 = properties.find("c");
+        ATF_REQUIRE(iter2 != properties.end());
+        ATF_REQUIRE_EQ("true", (*iter2).second);
+    }
+
+    iter = test_suites.find("baz");
+    ATF_REQUIRE(iter != test_suites.end());
+    {
+        const user_files::properties_map& properties = (*iter).second;
+        ATF_REQUIRE_EQ(1, properties.size());
+
+        user_files::properties_map::const_iterator iter2;
+
+        iter2 = properties.find("prop");
+        ATF_REQUIRE(iter2 != properties.end());
+        ATF_REQUIRE_EQ("value", (*iter2).second);
+    }
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(get_test_suites__invalid);
+ATF_TEST_CASE_BODY(get_test_suites__invalid)
+{
+    lua::state state;
+    stack_balance_checker checker(state);
+
+    lua::do_string(state, "ts = 'I should be a table'");
+
+    ATF_REQUIRE_THROW_RE(engine::error, "'ts'.*not a table",
+                         user_files::detail::get_test_suites(state, "ts"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(get_test_suites__bad_key);
+ATF_TEST_CASE_BODY(get_test_suites__bad_key)
+{
+    lua::state state;
+    stack_balance_checker checker(state);
+
+    lua::do_string(state, "ts = {}; ts['a'] = {}; ts[{}] = 'the key is bad'");
+
+    ATF_REQUIRE_THROW_RE(engine::error, "non-string.*suite name.*'ts'",
+                         user_files::detail::get_test_suites(state, "ts"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(get_test_suites__bad_value);
+ATF_TEST_CASE_BODY(get_test_suites__bad_value)
+{
+    lua::state state;
+    stack_balance_checker checker(state);
+
+    lua::do_string(state, "ts = {}; ts['a'] = {}; ts['b'] = 'bad value'");
+
+    ATF_REQUIRE_THROW_RE(engine::error, "non-table properties.*'b'",
+                         user_files::detail::get_test_suites(state, "ts"));
 }
 
 
@@ -240,16 +435,30 @@ ATF_TEST_CASE_BODY(config__load__overrides)
         file << "architecture = 'test-architecture'\n";
         file << "platform = 'test-platform'\n";
         file << "unprivileged_user = 'user2'\n";
+        file << "test_suite_var('mysuite', 'myvar', 'myvalue')\n";
         file.close();
     }
 
     const user_files::config config = user_files::config::load(
         fs::path("config"));
+
     ATF_REQUIRE_EQ("test-architecture", config.architecture);
     ATF_REQUIRE_EQ("test-platform", config.platform);
+
     ATF_REQUIRE(config.unprivileged_user);
     ATF_REQUIRE_EQ("user2", config.unprivileged_user.get().name);
     ATF_REQUIRE_EQ(200, config.unprivileged_user.get().uid);
+
+    ATF_REQUIRE_EQ(1, config.test_suites.size());
+    const user_files::test_suites_map::const_iterator& iter =
+        config.test_suites.find("mysuite");
+    ATF_REQUIRE(iter != config.test_suites.end());
+    const user_files::properties_map& properties = (*iter).second;
+    ATF_REQUIRE_EQ(1, properties.size());
+    const user_files::properties_map::const_iterator& iter2 =
+        properties.find("myvar");
+    ATF_REQUIRE(iter2 != properties.end());
+    ATF_REQUIRE_EQ("myvalue", (*iter2).second);
 }
 
 
@@ -299,11 +508,53 @@ ATF_TEST_CASE_BODY(config__load__missing_file)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(config__test_suite__defined);
+ATF_TEST_CASE_BODY(config__test_suite__defined)
+{
+    user_files::properties_map props1;
+
+    user_files::properties_map props2;
+    props2["key1"] = "value1";
+
+    user_files::config config = user_files::config::defaults();
+    config.test_suites["suite1"] = props1;
+    config.test_suites["suite2"] = props2;
+
+    ATF_REQUIRE(props1 == config.test_suite("suite1"));
+    ATF_REQUIRE(props2 == config.test_suite("suite2"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(config__test_suite__undefined);
+ATF_TEST_CASE_BODY(config__test_suite__undefined)
+{
+    user_files::properties_map props;
+    props["key1"] = "value1";
+
+    user_files::config config = user_files::config::defaults();
+    config.test_suites["suite1"] = props;
+    config.test_suites["suite2"] = props;
+
+    ATF_REQUIRE(user_files::properties_map() == config.test_suite("suite3"));
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
+    ATF_ADD_TEST_CASE(tcs, get_properties__none);
+    ATF_ADD_TEST_CASE(tcs, get_properties__some);
+    ATF_ADD_TEST_CASE(tcs, get_properties__bad_key);
+    ATF_ADD_TEST_CASE(tcs, get_properties__bad_value);
+
     ATF_ADD_TEST_CASE(tcs, get_string_var__nil);
     ATF_ADD_TEST_CASE(tcs, get_string_var__ok);
     ATF_ADD_TEST_CASE(tcs, get_string_var__invalid);
+
+    ATF_ADD_TEST_CASE(tcs, get_test_suites__none);
+    ATF_ADD_TEST_CASE(tcs, get_test_suites__some);
+    ATF_ADD_TEST_CASE(tcs, get_test_suites__invalid);
+    ATF_ADD_TEST_CASE(tcs, get_test_suites__bad_key);
+    ATF_ADD_TEST_CASE(tcs, get_test_suites__bad_value);
 
     ATF_ADD_TEST_CASE(tcs, get_user_var__nil);
     ATF_ADD_TEST_CASE(tcs, get_user_var__uid_ok);
@@ -319,4 +570,6 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, config__load__bad_syntax__format);
     ATF_ADD_TEST_CASE(tcs, config__load__bad_syntax__version);
     ATF_ADD_TEST_CASE(tcs, config__load__missing_file);
+    ATF_ADD_TEST_CASE(tcs, config__test_suite__defined);
+    ATF_ADD_TEST_CASE(tcs, config__test_suite__undefined);
 }

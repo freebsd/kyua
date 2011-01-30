@@ -73,8 +73,29 @@ ATF_TEST_CASE_BODY(some_variables)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(some_test_suite_variables);
+ATF_TEST_CASE_BODY(some_test_suite_variables)
+{
+    std::ofstream output("test.lua");
+    ATF_REQUIRE(output);
+    output << "syntax('config', 1)\n";
+    output << "test_suite_var('ts1', 'foo', 'bar')\n";
+    output << "test_suite_var('ts1', 'foo', 'baz')\n";
+    output << "test_suite_var('ts1', 'hello', 3)\n";
+    output << "test_suite_var('ts2', 'hello', 5)\n";
+    output.close();
+
+    lua::state state;
+    user_files::do_user_file(state, fs::path("test.lua"));
+    lua::do_string(state, "assert(config.TEST_SUITES.ts1.foo == 'baz')");
+    lua::do_string(state, "assert(config.TEST_SUITES.ts1.hello == 3)");
+    lua::do_string(state, "assert(config.TEST_SUITES.ts2.hello == 5)");
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, empty);
     ATF_ADD_TEST_CASE(tcs, some_variables);
+    ATF_ADD_TEST_CASE(tcs, some_test_suite_variables);
 }

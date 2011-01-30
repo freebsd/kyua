@@ -103,6 +103,7 @@ public:
     void push_boolean(const bool);
     void push_c_function(c_function);
     void push_integer(const int);
+    void push_nil(void);
     void push_string(const std::string&);
     void set_global(const std::string&);
     void set_table(const int = -3);

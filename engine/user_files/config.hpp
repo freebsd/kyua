@@ -32,6 +32,9 @@
 #if !defined(ENGINE_USER_FILES_CONFIG_HPP)
 #define ENGINE_USER_FILES_CONFIG_HPP
 
+#include <map>
+#include <string>
+
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
 #include "utils/passwd.hpp"
@@ -46,11 +49,21 @@ namespace engine {
 namespace user_files {
 
 
+/// Collection of key/value string pairs describing test suite properties.
+typedef std::map< std::string, std::string > properties_map;
+
+
+/// Collection of properties for different test suites.
+typedef std::map< std::string, properties_map > test_suites_map;
+
+
 namespace detail {
 
 
+properties_map get_properties(utils::lua::state&, const std::string&);
 std::string get_string_var(utils::lua::state&, const std::string&,
                            const std::string&);
+test_suites_map get_test_suites(utils::lua::state&, const std::string&);
 utils::optional< utils::passwd::user > get_user_var(utils::lua::state&,
                                                     const std::string&);
 
@@ -72,10 +85,16 @@ struct config {
     /// The unprivileged user to run test cases as, if any.
     utils::optional< utils::passwd::user > unprivileged_user;
 
-    explicit config(const std::string&, const std::string&,
-                    const utils::optional< utils::passwd::user >&);
+    /// Free-form configuration variables for the test suites.
+    test_suites_map test_suites;
+
+    config(const std::string&, const std::string&,
+           const utils::optional< utils::passwd::user >&,
+           const test_suites_map&);
     static config defaults(void);
     static config load(const utils::fs::path&);
+
+    const properties_map& test_suite(const std::string&) const;
 };
 
 

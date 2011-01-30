@@ -56,10 +56,48 @@ ATF_TEST_CASE_BODY(kyua_conf)
 
     const user_files::config config = user_files::config::load(
         examplesdir / "kyua.conf");
+
     ATF_REQUIRE_EQ("x86_64", config.architecture);
     ATF_REQUIRE_EQ("amd64", config.platform);
+
     ATF_REQUIRE(config.unprivileged_user);
     ATF_REQUIRE_EQ("nobody", config.unprivileged_user.get().name);
+
+    ATF_REQUIRE_EQ(2, config.test_suites.size());
+    {
+        const user_files::properties_map& properties =
+            config.test_suite("FreeBSD");
+        ATF_REQUIRE_EQ(2, properties.size());
+
+        user_files::properties_map::const_iterator iter;
+
+        iter = properties.find("iterations");
+        ATF_REQUIRE(iter != properties.end());
+        ATF_REQUIRE_EQ("1000", (*iter).second);
+
+        iter = properties.find("run_old_tests");
+        ATF_REQUIRE(iter != properties.end());
+        ATF_REQUIRE_EQ("false", (*iter).second);
+    }
+    {
+        const user_files::properties_map& properties =
+            config.test_suite("NetBSD");
+        ATF_REQUIRE_EQ(3, properties.size());
+
+        user_files::properties_map::const_iterator iter;
+
+        iter = properties.find("file_systems");
+        ATF_REQUIRE(iter != properties.end());
+        ATF_REQUIRE_EQ("ffs lfs ext2fs", (*iter).second);
+
+        iter = properties.find("iterations");
+        ATF_REQUIRE(iter != properties.end());
+        ATF_REQUIRE_EQ("100", (*iter).second);
+
+        iter = properties.find("run_broken_tests");
+        ATF_REQUIRE(iter != properties.end());
+        ATF_REQUIRE_EQ("true", (*iter).second);
+    }
 }
 
 

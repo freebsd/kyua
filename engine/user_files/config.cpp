@@ -49,11 +49,70 @@ using utils::none;
 using utils::optional;
 
 
+namespace {
+
+
+/// An empty key/value map to use as a default return value.
+static const user_files::properties_map empty_properties_map;
+
+
+}  // anonymous namespace
+
+
 // These namespace blocks are here to help Doxygen match the functions to their
 // prototypes...
 namespace engine {
 namespace user_files {
 namespace detail {
+
+
+/// Gets a table of key/value string pairs from the Lua state.
+///
+/// \pre stack(-1) is the table to scan.
+///
+/// \param state The Lua state.
+/// \param test_suite The name of the test suite to which these key/value pairs
+///     belong.  For error reporting purposes only.
+///
+/// \return A map of key/value pairs.
+///
+/// \throw error If any of the keys or values is invalid.
+properties_map
+get_properties(lua::state& state, const std::string& test_suite)
+{
+    PRE(state.is_table());
+
+    properties_map properties;
+
+    lua::stack_cleaner cleaner(state);
+
+    state.push_nil();
+    while (state.next()) {
+        if (!state.is_string(-2))
+            throw engine::error(F("Found non-string property name for test "
+                                  "suite '%s'") % test_suite);
+        const std::string name = state.to_string(-2);
+
+        std::string value;
+        if (state.is_boolean(-1))
+            value = state.to_boolean(-1) ? "true" : "false";
+        else if (state.is_number(-1))
+            value = state.to_string(-1);
+        else if (state.is_string(-1))
+            value = state.to_string(-1);
+        else
+            throw engine::error(F("Invalid value for property '%s' of test "
+                                  "suite '%s': must be a boolean, a number "
+                                  "or a string") % name % test_suite);
+
+        INV(properties.find(name) == properties.end());
+        properties[name] = value;
+
+        state.pop(1);
+    }
+
+    return properties;
+}
 
 
 /// Queries an optional Lua string variable.
@@ -78,6 +137,46 @@ get_string_var(lua::state& state, const std::string& expr,
     else
         throw engine::error(F("Invalid type for variable '%s': must be "
                               "a string") % expr);
+}
+
+
+/// Gets a mapping of test suite names to properties from the Lua state.
+///
+/// \param state The Lua state.
+/// \param expr An expression to resolve the table to query.
+///
+/// \return A map of test suite names to key/value pairs.
+///
+/// \throw error If any of the keys or values is invalid.
+test_suites_map
+get_test_suites(lua::state& state, const std::string& expr)
+{
+    lua::stack_cleaner cleaner(state);
+
+    lua::eval(state, expr);
+    if (!state.is_table())
+        throw engine::error(F("'%s' is not a table") % expr);
+
+    test_suites_map test_suites;
+
+    state.push_nil();
+    while (state.next()) {
+        if (!state.is_string(-2))
+            throw engine::error(F("Found non-string test suite name in '%s'")
+                                % expr);
+        const std::string test_suite = state.to_string(-2);
+
+        if (!state.is_table(-1))
+            throw engine::error(F("Found non-table properties for test suite "
+                                  "'%s'") % test_suite);
+        INV(test_suites.find(test_suite) == test_suites.end());
+        const properties_map properties = get_properties(state, test_suite);
+        if (!properties.empty())
+            test_suites[test_suite] = properties;
+        state.pop(1);
+    }
+
+    return test_suites;
 }
 
 
@@ -133,12 +232,15 @@ get_user_var(lua::state& state, const std::string& expr)
 /// \param architecture_ Name of the system architecture.
 /// \param platform_ Name of the system platform.
 /// \param unprivileged_user_ The unprivileged user, if any.
+/// \param test_suites_ The configuration data for the test suites.
 user_files::config::config(const std::string& architecture_,
                            const std::string& platform_,
-                           const optional< passwd::user >& unprivileged_user_) :
+                           const optional< passwd::user >& unprivileged_user_,
+                           const test_suites_map& test_suites_) :
     architecture(architecture_),
     platform(platform_),
-    unprivileged_user(unprivileged_user_)
+    unprivileged_user(unprivileged_user_),
+    test_suites(test_suites_)
 {
 }
 
@@ -147,7 +249,7 @@ user_files::config::config(const std::string& architecture_,
 user_files::config
 user_files::config::defaults(void)
 {
-    return config(KYUA_ARCHITECTURE, KYUA_PLATFORM, none);
+    return config(KYUA_ARCHITECTURE, KYUA_PLATFORM, none, test_suites_map());
 }
 
 
@@ -183,9 +285,33 @@ user_files::config::load(const utils::fs::path& file)
                                                  values.platform);
         values.unprivileged_user = detail::get_user_var(
             state, "unprivileged_user");
+
+        values.test_suites = detail::get_test_suites(state,
+                                                     "config.TEST_SUITES");
     } catch (const lua::error& e) {
         throw engine::error(F("Load failed: %s") % e.what());
     }
 
     return values;
+}
+
+
+/// Looks up the configuration properties of a particular test suite.
+///
+/// This is just a convenience method to access the contents of the test_suite
+/// member field.
+///
+/// \param name The name of the test suite being queried.
+///
+/// \return The properties for the test suite.  If the test suite has no
+/// properties, returns an empty properties set.
+const user_files::properties_map&
+user_files::config::test_suite(const std::string& name) const
+{
+    const user_files::test_suites_map::const_iterator iter =
+        test_suites.find(name);
+    if (iter == test_suites.end())
+        return empty_properties_map;
+    else
+        return (*iter).second;
 }

@@ -60,7 +60,8 @@ namespace {
 
 /// Fake configuration.
 static const user_files::config mock_config(
-    "mock-architecture", "mock-platform", utils::none);
+    "mock-architecture", "mock-platform", utils::none,
+    user_files::test_suites_map());
 
 
 /// Mapping between test case identifier to their results.
