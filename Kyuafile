@@ -1,5 +1,7 @@
 syntax("kyuafile", 1)
 
+test_suite("kyua")
+
 include("cli/Kyuafile")
 include("engine/Kyuafile")
 include("examples/Kyuafile")

@@ -479,9 +479,10 @@ runner::run_test_suite(const user_files::kyuafile& suite,
                        const user_files::config& config,
                        runner::hooks* run_hooks)
 {
-    const std::vector< fs::path >& test_programs = suite.test_programs();
-    for (std::vector< fs::path >::const_iterator iter = test_programs.begin();
-         iter != test_programs.end(); iter++) {
-        run_test_program(*iter, config, run_hooks);
+    const user_files::test_programs_vector& test_programs =
+        suite.test_programs();
+    for (user_files::test_programs_vector::const_iterator iter =
+         test_programs.begin(); iter != test_programs.end(); iter++) {
+        run_test_program((*iter).binary_path, config, run_hooks);
     }
 }

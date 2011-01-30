@@ -1,5 +1,7 @@
 syntax("kyuafile", 1)
 
+test_suite("kyua")
+
 AtfTestProgram {name="auto_array_test"}
 AtfTestProgram {name="datetime_test"}
 AtfTestProgram {name="env_test"}

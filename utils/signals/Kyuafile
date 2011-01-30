@@ -1,5 +1,7 @@
 syntax("kyuafile", 1)
 
+test_suite("kyua")
+
 AtfTestProgram {name="exceptions_test"}
 AtfTestProgram {name="misc_test"}
 AtfTestProgram {name="programmer_test"}

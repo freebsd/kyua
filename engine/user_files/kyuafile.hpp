@@ -32,13 +32,49 @@
 #if !defined(ENGINE_USER_FILES_KYUAFILE_HPP)
 #define ENGINE_USER_FILES_KYUAFILE_HPP
 
+#include <string>
 #include <vector>
 
 #include "utils/cmdline/parser.hpp"
 #include "utils/fs/path.hpp"
 
+namespace utils {
+namespace lua {
+class state;
+}  // namespace lua
+}  // namespace utils
+
 namespace engine {
 namespace user_files {
+
+
+/// Representation of the data of a test program.
+struct test_program {
+    /// The path to the test program.
+    utils::fs::path binary_path;
+
+    /// The name of the test suite to which the test program belongs.
+    std::string test_suite_name;
+
+    test_program(const utils::fs::path&, const std::string&);
+};
+
+
+/// Collection of test_program objects.
+typedef std::vector< test_program > test_programs_vector;
+
+
+namespace detail {
+
+
+utils::fs::path adjust_binary_path(const utils::fs::path&,
+                                   const utils::fs::path&);
+test_program get_test_program(utils::lua::state&, const utils::fs::path&);
+test_programs_vector get_test_programs(utils::lua::state&, const std::string&,
+                                       const utils::fs::path&);
+
+
+}  // namespace detail
 
 
 /// Representation of the configuration of a test suite.
@@ -49,14 +85,14 @@ namespace user_files {
 /// This class provides the parser for test suite configuration files and
 /// methods to access the parsed data.
 class kyuafile {
-    std::vector< utils::fs::path > _test_programs;
+    test_programs_vector _test_programs;
 
 public:
-    explicit kyuafile(const std::vector< utils::fs::path >&);
+    explicit kyuafile(const test_programs_vector&);
     static kyuafile load(const utils::fs::path&);
     static kyuafile from_arguments(const utils::cmdline::args_vector&);
 
-    const std::vector< utils::fs::path >& test_programs(void) const;
+    const test_programs_vector& test_programs(void) const;
 };
 
 

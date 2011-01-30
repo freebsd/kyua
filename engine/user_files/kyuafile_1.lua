@@ -66,6 +66,25 @@ setfenv(1, P)
 TEST_PROGRAMS = {}
 
 
+-- string, The name of the test suite to which the test programs belong to.
+TEST_SUITE = nil
+
+
+-- Copies a table, but not the contents.
+--
+-- \param in_table table, The input table.
+--
+-- \return table, The copied table.
+local function copy_table(in_table)
+   out_table = {}
+   for key, value in pairs(in_table) do
+      out_table[key] = value
+   end
+   setmetatable(out_table, getmetatable(in_table))
+   return out_table
+end
+
+
 -- Joins two paths, skipping the former if it is '.'.
 --
 -- \param p1 string, The initial path.
@@ -87,10 +106,17 @@ end
 --
 -- \post TEST_PROGRAMS contains a new entry for the test program.
 --
--- \param properties table, The properties describing the test program.
---     The allowed keys and their types are: name:string.
-function AtfTestProgram(properties)
-   table.insert(TEST_PROGRAMS, properties.name)
+-- \param in_properties table, The properties describing the test program.
+--     The allowed keys and their types are: name:string, test_suite:string.
+function AtfTestProgram(in_properties)
+   local properties = copy_table(in_properties)
+   if not properties.test_suite then
+      assert(TEST_SUITE, "No global test suite defined and no test suite " ..
+             "provided in the test program definition (cannot add test " ..
+             "program '" .. properties.name .. "')")
+      properties.test_suite = TEST_SUITE
+   end
+   table.insert(TEST_PROGRAMS, properties)
 end
 
 
@@ -114,13 +140,13 @@ function include(file)
    local syntax = env.init.get_syntax()
    if syntax.format == "kyuafile" then
       if syntax.version == 1 then
-         for _, test_program in ipairs(env.kyuafile.TEST_PROGRAMS) do
-            if fs.is_absolute(test_program) then
-               table.insert(TEST_PROGRAMS, test_program)
-            else
-               table.insert(TEST_PROGRAMS,
-                            join_paths(fs.dirname(file), test_program))
+         for _, raw_test_program in ipairs(env.kyuafile.TEST_PROGRAMS) do
+            local test_program = copy_table(raw_test_program)
+            if not fs.is_absolute(test_program.name) then
+               test_program.name = join_paths(fs.dirname(file),
+                                              test_program.name)
             end
+            table.insert(TEST_PROGRAMS, test_program)
          end
       else
          error(string.format("Inclusion of '%s' by '%s' failed: unsupported " ..
@@ -135,6 +161,26 @@ function include(file)
 end
 
 
+-- Defines the default test suite for the test programs in the Kyuafile.
+--
+-- A test program can override the default value by passing a 'test_suite'
+-- property to its definition.  (I'm not sure if this is a wise thing to offer
+-- though.)
+--
+-- Note that this value is not passed recursively to included Kyuafiles on
+-- purpose because we want such Kyuafiles to be self-contained.
+--
+-- \post The default test suite for the file has been set; i.e.
+--     TEST_SUITE = name.
+--
+-- \param name string, The name of the test suite.
+function test_suite(name)
+   assert(not TEST_SUITE, "Test suite already defined; cannot call " ..
+          "test_suite twice")
+   TEST_SUITE = name
+end
+
+
 -- Sets globals for commonly-used and required module entities.
 --
 -- \post The global environment is modified to include an entry for the module
@@ -145,6 +191,7 @@ function export()
 
    _G.AtfTestProgram = AtfTestProgram
    _G.include = include
+   _G.test_suite = test_suite
 end
 
 
