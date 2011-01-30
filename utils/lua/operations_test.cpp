@@ -275,68 +275,6 @@ ATF_TEST_CASE_BODY(eval__error)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(get_array_as_strings__empty);
-ATF_TEST_CASE_BODY(get_array_as_strings__empty)
-{
-    lua::state state;
-    lua::do_string(state, "the_array = {}");
-    stack_balance_checker checker(state);
-    const std::vector< std::string > array = lua::get_array_as_strings(
-        state, "the_array");
-    ATF_REQUIRE(array.empty());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(get_array_as_strings__some);
-ATF_TEST_CASE_BODY(get_array_as_strings__some)
-{
-    lua::state state;
-    lua::do_string(state, "module = {};"
-                   "local aux = \"abcd\";"
-                   "module.the_array = {\"efg\", aux, 5};");
-    stack_balance_checker checker(state);
-    const std::vector< std::string > array = lua::get_array_as_strings(
-        state, "module.the_array");
-    ATF_REQUIRE_EQ(3, array.size());
-    ATF_REQUIRE_EQ("efg", array[0]);
-    ATF_REQUIRE_EQ("abcd", array[1]);
-    ATF_REQUIRE_EQ("5", array[2]);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(get_array_as_strings__nil);
-ATF_TEST_CASE_BODY(get_array_as_strings__nil)
-{
-    lua::state state;
-    stack_balance_checker checker(state);
-    ATF_REQUIRE_THROW_RE(lua::error, "Undefined array 'abc'",
-                         lua::get_array_as_strings(state, "abc"));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(get_array_as_strings__not_a_table);
-ATF_TEST_CASE_BODY(get_array_as_strings__not_a_table)
-{
-    lua::state state;
-    lua::do_string(state, "fake = \"not a table!\"");
-    stack_balance_checker checker(state);
-    ATF_REQUIRE_THROW_RE(lua::error, "'fake' not an array",
-                         lua::get_array_as_strings(state, "fake"));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(get_array_as_strings__not_a_string);
-ATF_TEST_CASE_BODY(get_array_as_strings__not_a_string)
-{
-    lua::state state;
-    lua::do_string(state, "function foo() return 3; end;"
-                   "bad = {\"abc\", foo};");
-    stack_balance_checker checker(state);
-    ATF_REQUIRE_THROW_RE(lua::error, "non-string value",
-                         lua::get_array_as_strings(state, "bad"));
-}
-
-
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, create_module__empty);
@@ -357,10 +295,4 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, eval__one_result);
     ATF_ADD_TEST_CASE(tcs, eval__many_results);
     ATF_ADD_TEST_CASE(tcs, eval__error);
-
-    ATF_ADD_TEST_CASE(tcs, get_array_as_strings__empty);
-    ATF_ADD_TEST_CASE(tcs, get_array_as_strings__some);
-    ATF_ADD_TEST_CASE(tcs, get_array_as_strings__nil);
-    ATF_ADD_TEST_CASE(tcs, get_array_as_strings__not_a_table);
-    ATF_ADD_TEST_CASE(tcs, get_array_as_strings__not_a_string);
 }

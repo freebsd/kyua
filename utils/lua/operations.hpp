@@ -48,7 +48,6 @@ void create_module(state&, const std::string&,
 unsigned int do_file(state&, const fs::path&, const int = 0);
 unsigned int do_string(state&, const std::string&, const int = 0);
 void eval(state&, const std::string&, const int = 1);
-std::vector< std::string > get_array_as_strings(state&, const std::string&);
 
 
 }  // namespace lua
