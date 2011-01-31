@@ -55,6 +55,17 @@ ATF_TEST_CASE_BODY(invalid_path_error)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(join_error);
+ATF_TEST_CASE_BODY(join_error)
+{
+    const fs::join_error e("dir1/file1", "/dir2/file2", "The reason");
+    ATF_REQUIRE(std::strcmp("Cannot join paths 'dir1/file1' and '/dir2/file2': "
+                            "The reason", e.what()) == 0);
+    ATF_REQUIRE_EQ("dir1/file1", e.textual_path1());
+    ATF_REQUIRE_EQ("/dir2/file2", e.textual_path2());
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(system_error);
 ATF_TEST_CASE_BODY(system_error)
 {
@@ -69,5 +80,6 @@ ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, error);
     ATF_ADD_TEST_CASE(tcs, invalid_path_error);
+    ATF_ADD_TEST_CASE(tcs, join_error);
     ATF_ADD_TEST_CASE(tcs, system_error);
 }

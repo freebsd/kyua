@@ -156,6 +156,9 @@ ATF_TEST_CASE_BODY(join__fail)
                          lua::do_string(state, "return fs.join('', 'a')", 1));
     ATF_REQUIRE_THROW_RE(lua::error, "Invalid path",
                          lua::do_string(state, "return fs.join('a', '')", 1));
+
+    ATF_REQUIRE_THROW_RE(lua::error, "Cannot join.*'a/b'.*'/c'",
+                         lua::do_string(state, "fs.join('a/b', '/c')"));
 }
 
 

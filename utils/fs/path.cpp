@@ -206,14 +206,12 @@ fs::path::operator!=(const fs::path& p) const
 ///
 /// \throw utils::fs::invalid_path_error If components does not represent a
 ///     valid path.
+/// \throw utils::fs::join_error If the join operation is invalid because the
+///     two paths are incompatible.
 fs::path
 fs::path::operator/(const std::string& components) const
 {
-    // TODO(jmmv): This precondition should probably be an exception.  I suspect
-    // we will be using this operator to concatenate paths provided by the user,
-    // in which case we can't make any assumptions about them.
-    PRE(components[0] != '/');
-    return fs::path(_repr + '/' + normalize(components));
+    return (*this) / fs::path(components);
 }
 
 
@@ -223,10 +221,15 @@ fs::path::operator/(const std::string& components) const
 ///
 /// \return A new path containing the concatenation of this path and the other
 ///     path.
+///
+/// \throw utils::fs::join_error If the join operation is invalid because the
+///     two paths are incompatible.
 fs::path
 fs::path::operator/(const fs::path& rest) const
 {
-    PRE(!rest.is_absolute());
+    if (rest.is_absolute())
+        throw fs::join_error(_repr, rest._repr,
+                             "Cannot concatenate a path to an absolute path");
     return fs::path(_repr + '/' + rest._repr);
 }
 

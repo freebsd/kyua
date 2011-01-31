@@ -77,6 +77,48 @@ fs::invalid_path_error::invalid_path(void) const
 }
 
 
+/// Constructs a new join_error.
+///
+/// \param textual_path1_ Textual representation of the first path.
+/// \param textual_path2_ Textual representation of the second path.
+/// \param reason Description of the error in the join operation.
+fs::join_error::join_error(const std::string& textual_path1_,
+                           const std::string& textual_path2_,
+                           const std::string& reason) :
+    error(F("Cannot join paths '%s' and '%s': %s") % textual_path1_ %
+          textual_path2_ % reason),
+    _textual_path1(textual_path1_),
+    _textual_path2(textual_path2_)
+{
+}
+
+
+/// Destructor for the error.
+fs::join_error::~join_error(void) throw()
+{
+}
+
+
+/// Gets the first path that caused the error in a join operation.
+///
+/// \return The textual representation of the path.
+const std::string&
+fs::join_error::textual_path1(void) const
+{
+    return _textual_path1;
+}
+
+
+/// Gets the second path that caused the error in a join operation.
+///
+/// \return The textual representation of the path.
+const std::string&
+fs::join_error::textual_path2(void) const
+{
+    return _textual_path2;
+}
+
+
 /// Constructs a new error based on an errno code.
 ///
 /// \param message_ The message describing what caused the error.

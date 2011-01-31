@@ -58,6 +58,21 @@ public:
 };
 
 
+/// Paths cannot be joined.
+class join_error : public error {
+    std::string _textual_path1;
+    std::string _textual_path2;
+
+public:
+    explicit join_error(const std::string&, const std::string&,
+                        const std::string&);
+    virtual ~join_error(void) throw();
+
+    const std::string& textual_path1(void) const;
+    const std::string& textual_path2(void) const;
+};
+
+
 /// Exceptions for errno-based errors.
 ///
 /// TODO(jmmv): This code is duplicated in, at least, utils::process.  Figure

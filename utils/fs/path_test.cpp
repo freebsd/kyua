@@ -34,7 +34,18 @@
 #include "utils/fs/path.hpp"
 
 using utils::fs::invalid_path_error;
+using utils::fs::join_error;
 using utils::fs::path;
+
+
+#define REQUIRE_JOIN_ERROR(path1, path2, expr) \
+    try { \
+        expr; \
+        ATF_FAIL("Expecting join_error but no error raised"); \
+    } catch (const join_error& e) { \
+        ATF_REQUIRE_EQ(path1, e.textual_path1()); \
+        ATF_REQUIRE_EQ(path2, e.textual_path2()); \
+    }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(normalize__ok);
@@ -146,12 +157,26 @@ ATF_TEST_CASE_BODY(compare_different)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(concat);
-ATF_TEST_CASE_BODY(concat)
+ATF_TEST_CASE_WITHOUT_HEAD(concat__to_string);
+ATF_TEST_CASE_BODY(concat__to_string)
 {
     ATF_REQUIRE_EQ("foo/bar", (path("foo") / "bar").str());
     ATF_REQUIRE_EQ("foo/bar", (path("foo/") / "bar").str());
     ATF_REQUIRE_EQ("foo/bar/baz", (path("foo/") / "bar//baz///").str());
+
+    ATF_REQUIRE_THROW(invalid_path_error, path("foo") / "");
+    REQUIRE_JOIN_ERROR("foo", "/a/b", path("foo") / "/a/b");
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(concat__to_path);
+ATF_TEST_CASE_BODY(concat__to_path)
+{
+    ATF_REQUIRE_EQ("foo/bar", (path("foo") / "bar").str());
+    ATF_REQUIRE_EQ("foo/bar", (path("foo/") / "bar").str());
+    ATF_REQUIRE_EQ("foo/bar/baz", (path("foo/") / "bar//baz///").str());
+
+    REQUIRE_JOIN_ERROR("foo", "/a/b", path("foo") / path("/a/b"));
 }
 
 
@@ -175,6 +200,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, compare_less_than);
     ATF_ADD_TEST_CASE(tcs, compare_equal);
     ATF_ADD_TEST_CASE(tcs, compare_different);
-    ATF_ADD_TEST_CASE(tcs, concat);
+    ATF_ADD_TEST_CASE(tcs, concat__to_string);
+    ATF_ADD_TEST_CASE(tcs, concat__to_path);
     ATF_ADD_TEST_CASE(tcs, use_as_key);
 }
