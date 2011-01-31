@@ -85,14 +85,20 @@ local function copy_table(in_table)
 end
 
 
--- Joins two paths, skipping the former if it is '.'.
+-- Concatenates two paths (using special semantics).
+--
+-- This function is designed to concatenate an arbitrary p1 to an arbitrary
+-- (i.e. not necessarily relative) p2.  p1 is discarded if it is '.' or if p2
+-- is absolute.
 --
 -- \param p1 string, The initial path.
 -- \param p2 string, The path to append to p1.
 --
 -- \return The concatenation of p1 with p2.
-local function join_paths(p1, p2)
+local function mix_paths(p1, p2)
    if p1 == "." then
+      return p2
+   elseif fs.is_absolute(p2) then
       return p2
    else
       return fs.join(p1, p2)
@@ -133,7 +139,7 @@ end
 -- \param relative_file string, The Kyuafile to process, relative to the
 --     Kyuafile being processed.
 function include(file)
-   local abs_file = join_paths(fs.dirname(init.get_filename()), file)
+   local abs_file = mix_paths(fs.dirname(init.get_filename()), file)
 
    local env = init.run(abs_file)
 
@@ -142,10 +148,7 @@ function include(file)
       if syntax.version == 1 then
          for _, raw_test_program in ipairs(env.kyuafile.TEST_PROGRAMS) do
             local test_program = copy_table(raw_test_program)
-            if not fs.is_absolute(test_program.name) then
-               test_program.name = join_paths(fs.dirname(file),
-                                              test_program.name)
-            end
+            test_program.name = mix_paths(fs.dirname(file), test_program.name)
             table.insert(TEST_PROGRAMS, test_program)
          end
       else

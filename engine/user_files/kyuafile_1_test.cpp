@@ -90,6 +90,60 @@ ATF_TEST_CASE_BODY(some_test_programs)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(include_absolute);
+ATF_TEST_CASE_BODY(include_absolute)
+{
+    {
+        std::ofstream output("main.lua");
+        ATF_REQUIRE(output);
+        output << "syntax('kyuafile', 1)\n";
+        output << "test_suite('top')\n";
+        output << "AtfTestProgram {name='test1'}\n";
+        output << "include('dir/second.lua')";
+        output.close();
+    }
+
+    fs::mkdir(fs::path("dir"), 0755);
+
+    {
+        std::ofstream output("dir/second.lua");
+        ATF_REQUIRE(output);
+        output << "syntax('kyuafile', 1)\n";
+        output << "test_suite('two')\n";
+        output << "AtfTestProgram {name='test2'}\n";
+        output << "include('" << (fs::current_path() / "dir/third.lua")
+               << "')\n";
+        output.close();
+    }
+
+    {
+        std::ofstream output("dir/third.lua");
+        ATF_REQUIRE(output);
+        output << "syntax('kyuafile', 1)\n";
+        output << "test_suite('three')\n";
+        output << "AtfTestProgram {name='test3'}\n";
+        output.close();
+    }
+
+    lua::state state;
+    user_files::do_user_file(state, fs::path("main.lua"));
+    lua::do_string(state, "assert(table.maxn(kyuafile.TEST_PROGRAMS) == 3)");
+    lua::do_string(state,
+                   "assert(kyuafile.TEST_PROGRAMS[1].name == 'test1')");
+    lua::do_string(state,
+                   "assert(kyuafile.TEST_PROGRAMS[1].test_suite == 'top')");
+    lua::do_string(state,
+                   "assert(kyuafile.TEST_PROGRAMS[2].name == 'dir/test2')");
+    lua::do_string(state,
+                   "assert(kyuafile.TEST_PROGRAMS[2].test_suite == 'two')");
+    const std::string test3 = (fs::current_path() / "dir/test3").str();
+    lua::do_string(state,
+                   "assert(kyuafile.TEST_PROGRAMS[3].name == '" + test3 + "')");
+    lua::do_string(state,
+                   "assert(kyuafile.TEST_PROGRAMS[3].test_suite == 'three')");
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(include_nested);
 ATF_TEST_CASE_BODY(include_nested)
 {
@@ -256,6 +310,7 @@ ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, empty);
     ATF_ADD_TEST_CASE(tcs, some_test_programs);
+    ATF_ADD_TEST_CASE(tcs, include_absolute);
     ATF_ADD_TEST_CASE(tcs, include_nested);
     ATF_ADD_TEST_CASE(tcs, include_same_dir);
     ATF_ADD_TEST_CASE(tcs, test_suite__ok);
