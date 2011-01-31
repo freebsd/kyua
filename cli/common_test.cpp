@@ -38,6 +38,7 @@
 #include "utils/env.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/test_utils.hpp"
 
 namespace cmdline = utils::cmdline;
 namespace fs = utils::fs;
@@ -85,6 +86,7 @@ create_mock_kyuafile(const char* name, const char* cookie)
     ATF_REQUIRE(output);
     if (cookie != NULL) {
         output << "syntax('kyuafile', 1)\n";
+        utils::create_file(fs::path(cookie));
         output << "AtfTestProgram {name='" << cookie << "', test_suite='a'}\n";
     } else {
         output << "syntax('invalid-file', 1)\n";

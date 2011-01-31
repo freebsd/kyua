@@ -80,10 +80,12 @@ engine_user_files_init_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
 
 tests_engine_user_files_PROGRAMS += engine/user_files/kyuafile_test
 engine_user_files_kyuafile_test_SOURCES = engine/user_files/kyuafile_test.cpp
-engine_user_files_kyuafile_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
+engine_user_files_kyuafile_test_CXXFLAGS = $(ENGINE_CFLAGS) \
+                                           $(UTILS_TEST_CFLAGS) \
+                                           $(UTILS_CFLAGS) \
                                            $(ATF_CXX_CFLAGS)
-engine_user_files_kyuafile_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
-                                        $(ATF_CXX_LIBS)
+engine_user_files_kyuafile_test_LDADD = $(ENGINE_LIBS) $(UTILS_TEST_LIBS) \
+                                        $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_engine_user_files_PROGRAMS += engine/user_files/kyuafile_1_test
 engine_user_files_kyuafile_1_test_SOURCES = \

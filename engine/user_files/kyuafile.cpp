@@ -33,6 +33,7 @@
 #include "utils/cmdline/parser.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/exceptions.hpp"
+#include "utils/fs/operations.hpp"
 #include "utils/lua/exceptions.hpp"
 #include "utils/lua/operations.hpp"
 #include "utils/lua/wrap.ipp"
@@ -102,6 +103,9 @@ get_test_program(lua::state& state, const fs::path& root)
                               "test program '%s'") % path);
     const std::string test_suite(state.to_string());
     state.pop(1);
+
+    if (!fs::exists(path))
+        throw engine::error(F("Non-existent test program '%s'") % path);
 
     return test_program(path, test_suite);
 }
