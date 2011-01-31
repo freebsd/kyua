@@ -4,4 +4,5 @@ test_suite("kyua")
 
 AtfTestProgram {name="cmd_about_test"}
 AtfTestProgram {name="cmd_help_test"}
+AtfTestProgram {name="common_test"}
 AtfTestProgram {name="main_test"}

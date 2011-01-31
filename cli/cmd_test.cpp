@@ -29,6 +29,7 @@
 #include <cstdlib>
 
 #include "cli/cmd_test.hpp"
+#include "cli/common.hpp"
 #include "engine/results.hpp"
 #include "engine/runner.hpp"
 #include "engine/user_files/config.hpp"
@@ -38,11 +39,9 @@
 #include "utils/cmdline/parser.ipp"
 #include "utils/cmdline/ui.hpp"
 #include "utils/format/macros.hpp"
-#include "utils/fs/operations.hpp"
 
 
 namespace cmdline = utils::cmdline;
-namespace fs = utils::fs;
 namespace results = engine::results;
 namespace runner = engine::runner;
 namespace user_files = engine::user_files;
@@ -86,21 +85,6 @@ public:
 };
 
 
-// TODO(jmmv): This is a hack and probably does not belong here.
-// Move out.  Do not forget to kill useless utils::fs includes!
-static user_files::config
-load_config(const fs::path& config_file)
-{
-    if (config_file.str() == "kyua.conf") {  // The default value.
-        if (fs::exists(config_file))
-            return user_files::config::load(config_file);
-        else
-            return user_files::config::defaults();
-    } else
-        return user_files::config::load(config_file);
-}
-
-
 }  // anonymous namespace
 
 
@@ -109,10 +93,8 @@ cmd_test::cmd_test(void) : cmdline::base_command(
     "test", "[test-program ...]", 0, -1,
     "Run tests")
 {
-    add_option(cmdline::path_option(
-        'c', "config", "Configuration file", "file", "kyua.conf"));
-    add_option(cmdline::path_option(
-        'k', "kyuafile", "Test suite file", "file", "Kyuafile"));
+    add_option(config_option);
+    add_option(kyuafile_option);
 }
 
 
@@ -127,18 +109,10 @@ cmd_test::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
 {
     run_hooks hooks(ui);
 
-    const user_files::config config = load_config(
-        cmdline.get_option< cmdline::path_option >("config"));
+    const user_files::config config = load_config(cmdline);
+    const user_files::kyuafile kyuafile = load_kyuafile(cmdline);
 
-    if (cmdline.arguments().empty()) {
-        const user_files::kyuafile suite = user_files::kyuafile::load(
-            cmdline.get_option< cmdline::path_option >("kyuafile"));
-        runner::run_test_suite(suite, config, &hooks);
-    } else {
-        const user_files::kyuafile suite = user_files::kyuafile::from_arguments(
-            cmdline.arguments());
-        runner::run_test_suite(suite, config, &hooks);
-    }
+    runner::run_test_suite(kyuafile, config, &hooks);
 
     ui->out("");
     ui->out(F("%d/%d passed (%d failed)") % hooks.good_count %

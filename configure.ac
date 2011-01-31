@@ -80,6 +80,26 @@ KYUA_UNAME_ARCHITECTURE
 KYUA_UNAME_PLATFORM
 
 
+AC_ARG_VAR([KYUA_CONFSUBDIR],
+           [Subdirectory of sysconfdir under which to look for files])
+if test x"${KYUA_CONFSUBDIR-unset}" = x"unset"; then
+    KYUA_CONFSUBDIR=kyua
+else
+    case ${KYUA_CONFSUBDIR} in
+    /*)
+        AC_MSG_ERROR([KYUA_CONFSUBDIR must hold a relative path])
+        ;;
+    *)
+        ;;
+    esac
+fi
+if test x"${KYUA_CONFSUBDIR}" = x""; then
+    AC_SUBST(kyua_confdir, \${sysconfdir})
+else
+    AC_SUBST(kyua_confdir, \${sysconfdir}/${KYUA_CONFSUBDIR})
+fi
+
+
 dnl BSD make(1) doesn't deal with targets specified as './foo' well: they
 dnl need to be specified as 'foo'.  The following hack is to workaround this
 dnl issue.

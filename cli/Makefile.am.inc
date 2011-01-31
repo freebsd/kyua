@@ -40,9 +40,12 @@ libcli_a_SOURCES += cli/cmd_list.cpp
 libcli_a_SOURCES += cli/cmd_list.hpp
 libcli_a_SOURCES += cli/cmd_test.cpp
 libcli_a_SOURCES += cli/cmd_test.hpp
+libcli_a_SOURCES += cli/common.cpp
+libcli_a_SOURCES += cli/common.hpp
 libcli_a_SOURCES += cli/main.cpp
 libcli_a_SOURCES += cli/main.hpp
-libcli_a_CPPFLAGS = -DKYUA_DOCDIR="\"$(docdir)\""
+libcli_a_CPPFLAGS  = -DKYUA_CONFDIR="\"$(kyua_confdir)\""
+libcli_a_CPPFLAGS += -DKYUA_DOCDIR="\"$(docdir)\""
 libcli_a_LIBADD = libutils.a
 
 tests_clidir = $(pkgtestsdir)/cli
@@ -66,6 +69,11 @@ tests_cli_PROGRAMS += cli/cmd_help_test
 cli_cmd_help_test_SOURCES = cli/cmd_help_test.cpp
 cli_cmd_help_test_CXXFLAGS = $(CLI_TESTS_CXXFLAGS)
 cli_cmd_help_test_LDADD = $(CLI_TESTS_LDADD)
+
+tests_cli_PROGRAMS += cli/common_test
+cli_common_test_SOURCES = cli/common_test.cpp
+cli_common_test_CXXFLAGS = $(CLI_TESTS_CXXFLAGS)
+cli_common_test_LDADD = $(CLI_TESTS_LDADD)
 
 tests_cli_PROGRAMS += cli/main_test
 cli_main_test_SOURCES = cli/main_test.cpp

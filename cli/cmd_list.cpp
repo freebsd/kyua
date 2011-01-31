@@ -31,6 +31,7 @@
 #include <vector>
 
 #include "cli/cmd_list.hpp"
+#include "cli/common.hpp"
 #include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
 #include "engine/user_files/kyuafile.hpp"
@@ -53,8 +54,7 @@ cmd_list::cmd_list(void) : cmdline::base_command(
     "list", "[test-program ...]", 0, -1,
     "Lists test cases and their meta-data")
 {
-    add_option(cmdline::path_option(
-        'c', "kyuafile", "Configuration file", "file", "Kyuafile"));
+    add_option(kyuafile_option);
     add_option(cmdline::bool_option('v', "verbose", "Show properties"));
 }
 
@@ -68,19 +68,11 @@ cmd_list::cmd_list(void) : cmdline::base_command(
 int
 cmd_list::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
 {
-    user_files::test_programs_vector test_programs;
-    if (cmdline.arguments().empty()) {
-        user_files::kyuafile kyuafile = user_files::kyuafile::load(
-            cmdline.get_option< cmdline::path_option >("kyuafile"));
-        test_programs = kyuafile.test_programs();
-    } else {
-        user_files::kyuafile kyuafile = user_files::kyuafile::from_arguments(
-            cmdline.arguments());
-        test_programs = kyuafile.test_programs();
-    }
+    const user_files::kyuafile kyuafile = load_kyuafile(cmdline);
 
     for (user_files::test_programs_vector::const_iterator p =
-         test_programs.begin(); p != test_programs.end(); p++) {
+         kyuafile.test_programs().begin(); p != kyuafile.test_programs().end();
+         p++) {
         const engine::test_cases_vector tcs = engine::load_test_cases(
             (*p).binary_path);
 

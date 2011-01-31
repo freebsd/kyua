@@ -98,6 +98,8 @@ The most common, standard flags given to 'configure' are:
   Default: /usr/local/etc
 
   Specifies where the installed programs will look for configuration files.
+  '/kyua' will be appended to the given path unless KYUA_CONFSUBDIR is
+  redefined as explained later on.
 
 * --help
   Shows information about all available flags and exits immediately,
@@ -107,6 +109,17 @@ The following environment variables are specific to Kyua's 'configure'
 script:
 
 TODO(jmmv): Document this before releasing 0.1.
+
+The following environment variables are specific to Kyua's 'configure'
+script:
+
+* KYUA_CONFSUBDIR
+  Possible values: empty, a relative path.
+  Default: kyua.
+
+  Specifies the subdirectory of the configuration directory (given by the
+  --sysconfdir argument) under which Kyua will search for its configuration
+  files.
 
 The following flags are specific to Kyua's 'configure' script:
 
