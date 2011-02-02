@@ -46,6 +46,7 @@ EXTRA_DIST += $(tests_top_DATA)
 
 include bootstrap/Makefile.am.inc
 include cli/Makefile.am.inc
+include doc/Makefile.am.inc
 include engine/Makefile.am.inc
 include examples/Makefile.am.inc
 include utils/Makefile.am.inc
