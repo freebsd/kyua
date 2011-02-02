@@ -29,3 +29,15 @@
 info_TEXINFOS = doc/kyua-cli.texi
 doc_kyua_cli_TEXINFOS  = doc/copying.texi
 doc_kyua_cli_TEXINFOS += doc/overview.texi
+
+man_MANS = doc/kyua.1
+CLEANFILES = doc/kyua.1
+EXTRA_DIST += doc/kyua.1.in
+
+doc/kyua.1: $(srcdir)/doc/kyua.1.in
+	test -d doc || mkdir -p doc
+	sed -e 's,__DOCDIR__,$(docdir),g' \
+	    -e 's,__INFODIR__,$(infodir),g' \
+	    -e 's,__TESTSDIR__,$(testsdir),g' \
+	    <$(srcdir)/doc/kyua.1.in >doc/kyua.1.tmp
+	mv doc/kyua.1.tmp doc/kyua.1
