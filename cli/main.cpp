@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,10 @@
 #include <string>
 #include <utility>
 
-#include "cli/all_commands.hpp"
+#include "cli/cmd_about.hpp"
+#include "cli/cmd_help.hpp"
+#include "cli/cmd_list.hpp"
+#include "cli/cmd_test.hpp"
 #include "cli/main.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/globals.hpp"
@@ -44,6 +47,9 @@
 
 namespace cmdline = utils::cmdline;
 namespace fs = utils::fs;
+
+
+namespace {
 
 
 /// Executes the given subcommand with proper usage_error reporting.
@@ -90,6 +96,7 @@ run_subcommand(cmdline::ui* ui, cmdline::base_command* command,
 /// \param ui Object to interact with the I/O of the program.
 /// \param argc The number of arguments passed on the command line.
 /// \param argv NULL-terminated array containing the command line arguments.
+/// \param commands The commands recognized by the tool.
 ///
 /// \throw cmdline::usage_error If the user ran the program with invalid
 ///     arguments.
@@ -97,23 +104,24 @@ run_subcommand(cmdline::ui* ui, cmdline::base_command* command,
 ///     exceptions are bugs, but we let them propagate so that the runtime will
 ///     abort and dump core.
 static int
-safe_main(cmdline::ui* ui, int argc, const char* const argv[])
+safe_main(cmdline::ui* ui, int argc, const char* const argv[],
+          cmdline::commands_map& commands)
 {
     cmdline::options_vector options;
     cmdline::parsed_cmdline cmdline = cmdline::parse(argc, argv, options);
 
     if (cmdline.arguments().empty())
         throw cmdline::usage_error("No command provided");
-    const std::string command = cmdline.arguments()[0];
+    const std::string cmdname = cmdline.arguments()[0];
 
-    for (cmdline::base_command** iter = cli::all_commands; *iter != NULL;
-         iter++) {
-        if ((*iter)->name() == command) {
-            return run_subcommand(ui, *iter, cmdline.arguments());
-        }
-    }
-    throw cmdline::usage_error(F("Unknown command '%s'") % command);
+    cmdline::base_command* command = commands.find(cmdname);
+    if (command == NULL)
+        throw cmdline::usage_error(F("Unknown command '%s'") % cmdname);
+    return run_subcommand(ui, command, cmdline.arguments());
 }
+
+
+}  // anonymous namespace
 
 
 /// Testable entry point, with catch-all exception handlers.
@@ -124,6 +132,7 @@ safe_main(cmdline::ui* ui, int argc, const char* const argv[])
 /// \param ui Object to interact with the I/O of the program.
 /// \param argc The number of arguments passed on the command line.
 /// \param argv NULL-terminated array containing the command line arguments.
+/// \param commands The commands recognized by the tool.
 ///
 /// \return 0 on success, some other integer on error.
 ///
@@ -131,10 +140,11 @@ safe_main(cmdline::ui* ui, int argc, const char* const argv[])
 ///     exceptions are bugs, but we let them propagate so that the runtime will
 ///     abort and dump core.
 int
-cli::main(cmdline::ui* ui, const int argc, const char* const* const argv)
+cli::main(cmdline::ui* ui, const int argc, const char* const* const argv,
+          cmdline::commands_map& commands)
 {
     try {
-        return safe_main(ui, argc, argv);
+        return safe_main(ui, argc, argv, commands);
     } catch (const std::pair< std::string, cmdline::usage_error >& e) {
         ui->err(F("Usage error for command %s: %s.") % e.first %
                 e.second.what());
@@ -166,5 +176,12 @@ cli::main(const int argc, const char* const* const argv)
 {
     cmdline::init(argv[0]);
     cmdline::ui ui;
-    return main(&ui, argc, argv);
+
+    cmdline::commands_map commands;
+    commands.insert(cmdline::command_ptr(new cli::cmd_about()));
+    commands.insert(cmdline::command_ptr(new cli::cmd_help(&commands)));
+    commands.insert(cmdline::command_ptr(new cli::cmd_list()));
+    commands.insert(cmdline::command_ptr(new cli::cmd_test()));
+
+    return main(&ui, argc, argv, commands);
 }

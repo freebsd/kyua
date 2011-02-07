@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,6 @@
 
 #include <atf-c++.hpp>
 
-#include "cli/all_commands.hpp"
 #include "cli/cmd_help.hpp"
 #include "utils/cmdline/base_command.ipp"
 #include "utils/cmdline/exceptions.hpp"
@@ -83,20 +82,13 @@ public:
 };
 
 
-static cmd_mock_simple cmd_mock_simple_instance;
-static cmd_mock_complex cmd_mock_complex_instance;
-static cmdline::base_command* mock_commands[] = {
-    &cmd_mock_simple_instance,
-    &cmd_mock_complex_instance,
-    NULL,
-};
-
-
 static void
-setup(void)
+setup(cmdline::commands_map& commands)
 {
     cmdline::init("progname");
-    cli::set_commands_for_testing(mock_commands);
+
+    commands.insert(cmdline::command_ptr(new cmd_mock_simple()));
+    commands.insert(cmdline::command_ptr(new cmd_mock_complex()));
 }
 
 
@@ -106,12 +98,13 @@ setup(void)
 ATF_TEST_CASE_WITHOUT_HEAD(global);
 ATF_TEST_CASE_BODY(global)
 {
-    setup();
+    cmdline::commands_map mock_commands;
+    setup(mock_commands);
 
     cmdline::args_vector args;
     args.push_back("help");
 
-    cmd_help cmd;
+    cmd_help cmd(&mock_commands);
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(EXIT_SUCCESS, cmd.main(&ui, args));
     ATF_REQUIRE(utils::grep_vector("^Usage: progname \\[general_options\\] "
@@ -128,13 +121,14 @@ ATF_TEST_CASE_BODY(global)
 ATF_TEST_CASE_WITHOUT_HEAD(subcommand__simple);
 ATF_TEST_CASE_BODY(subcommand__simple)
 {
-    setup();
+    cmdline::commands_map mock_commands;
+    setup(mock_commands);
 
     cmdline::args_vector args;
     args.push_back("help");
     args.push_back("mock_simple");
 
-    cmd_help cmd;
+    cmd_help cmd(&mock_commands);
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(EXIT_SUCCESS, cmd.main(&ui, args));
     ATF_REQUIRE(utils::grep_vector("^Usage: progname \\[general_options\\] "
@@ -146,13 +140,14 @@ ATF_TEST_CASE_BODY(subcommand__simple)
 ATF_TEST_CASE_WITHOUT_HEAD(subcommand__complex);
 ATF_TEST_CASE_BODY(subcommand__complex)
 {
-    setup();
+    cmdline::commands_map mock_commands;
+    setup(mock_commands);
 
     cmdline::args_vector args;
     args.push_back("help");
     args.push_back("mock_complex");
 
-    cmd_help cmd;
+    cmd_help cmd(&mock_commands);
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(EXIT_SUCCESS, cmd.main(&ui, args));
     ATF_REQUIRE(utils::grep_vector("^Usage: progname \\[general_options\\] "
@@ -171,13 +166,14 @@ ATF_TEST_CASE_BODY(subcommand__complex)
 ATF_TEST_CASE_WITHOUT_HEAD(subcommand__unknown);
 ATF_TEST_CASE_BODY(subcommand__unknown)
 {
-    setup();
+    cmdline::commands_map mock_commands;
+    setup(mock_commands);
 
     cmdline::args_vector args;
     args.push_back("help");
     args.push_back("foobar");
 
-    cmd_help cmd;
+    cmd_help cmd(&mock_commands);
     cmdline::ui_mock ui;
     ATF_REQUIRE_THROW_RE(cmdline::usage_error, "command foobar.*not exist",
                          cmd.main(&ui, args));
@@ -189,14 +185,15 @@ ATF_TEST_CASE_BODY(subcommand__unknown)
 ATF_TEST_CASE_WITHOUT_HEAD(invalid_args);
 ATF_TEST_CASE_BODY(invalid_args)
 {
-    setup();
+    cmdline::commands_map mock_commands;
+    setup(mock_commands);
 
     cmdline::args_vector args;
     args.push_back("help");
     args.push_back("mock_simple");
     args.push_back("mock_complex");
 
-    cmd_help cmd;
+    cmd_help cmd(&mock_commands);
     cmdline::ui_mock ui;
     ATF_REQUIRE_THROW_RE(cmdline::usage_error, "Too many arguments",
                          cmd.main(&ui, args));

@@ -1,4 +1,4 @@
-# Copyright 2010 Google Inc.
+# Copyright 2010, 2011 Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,9 +30,7 @@ CLI_CFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS)
 CLI_LIBS = libcli.a $(ENGINE_LIBS) $(UTILS_LIBS)
 
 noinst_LIBRARIES += libcli.a
-libcli_a_SOURCES  = cli/all_commands.cpp
-libcli_a_SOURCES += cli/all_commands.hpp
-libcli_a_SOURCES += cli/cmd_about.cpp
+libcli_a_SOURCES  = cli/cmd_about.cpp
 libcli_a_SOURCES += cli/cmd_about.hpp
 libcli_a_SOURCES += cli/cmd_help.cpp
 libcli_a_SOURCES += cli/cmd_help.hpp

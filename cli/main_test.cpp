@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,6 @@
 
 #include <atf-c++.hpp>
 
-#include "cli/all_commands.hpp"
 #include "cli/main.hpp"
 #include "utils/cmdline/base_command.hpp"
 #include "utils/cmdline/exceptions.hpp"
@@ -78,20 +77,13 @@ public:
 };
 
 
-static cmd_mock_error cmd_mock_error_instance;
-static cmd_mock_write cmd_mock_write_instance;
-static cmdline::base_command* mock_commands[] = {
-    &cmd_mock_error_instance,
-    &cmd_mock_write_instance,
-    NULL,
-};
-
-
 static void
-setup(void)
+setup(cmdline::commands_map& commands)
 {
     cmdline::init("progname");
-    cli::set_commands_for_testing(mock_commands);
+
+    commands.insert(cmdline::command_ptr(new cmd_mock_error()));
+    commands.insert(cmdline::command_ptr(new cmd_mock_write()));
 }
 
 
@@ -101,13 +93,14 @@ setup(void)
 ATF_TEST_CASE_WITHOUT_HEAD(no_args);
 ATF_TEST_CASE_BODY(no_args)
 {
-    setup();
+    cmdline::commands_map mock_commands;
+    setup(mock_commands);
 
     const int argc = 1;
     const char* const argv[] = {"progname", NULL};
 
     cmdline::ui_mock ui;
-    ATF_REQUIRE_EQ(EXIT_FAILURE, cli::main(&ui, argc, argv));
+    ATF_REQUIRE_EQ(EXIT_FAILURE, cli::main(&ui, argc, argv, mock_commands));
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE(utils::grep_vector("Usage error: No command provided",
                                    ui.err_log()));
@@ -118,13 +111,14 @@ ATF_TEST_CASE_BODY(no_args)
 ATF_TEST_CASE_WITHOUT_HEAD(unknown_command);
 ATF_TEST_CASE_BODY(unknown_command)
 {
-    setup();
+    cmdline::commands_map mock_commands;
+    setup(mock_commands);
 
     const int argc = 2;
     const char* const argv[] = {"progname", "foo", NULL};
 
     cmdline::ui_mock ui;
-    ATF_REQUIRE_EQ(EXIT_FAILURE, cli::main(&ui, argc, argv));
+    ATF_REQUIRE_EQ(EXIT_FAILURE, cli::main(&ui, argc, argv, mock_commands));
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE(utils::grep_vector("Usage error: Unknown command.*foo",
                                    ui.err_log()));
@@ -135,13 +129,14 @@ ATF_TEST_CASE_BODY(unknown_command)
 ATF_TEST_CASE_WITHOUT_HEAD(subcommand__ok);
 ATF_TEST_CASE_BODY(subcommand__ok)
 {
-    setup();
+    cmdline::commands_map mock_commands;
+    setup(mock_commands);
 
     const int argc = 2;
     const char* const argv[] = {"progname", "mock_write", NULL};
 
     cmdline::ui_mock ui;
-    ATF_REQUIRE_EQ(98, cli::main(&ui, argc, argv));
+    ATF_REQUIRE_EQ(98, cli::main(&ui, argc, argv, mock_commands));
     ATF_REQUIRE_EQ(1, ui.out_log().size());
     ATF_REQUIRE_EQ("stdout message from subcommand", ui.out_log()[0]);
     ATF_REQUIRE_EQ(1, ui.err_log().size());
@@ -152,13 +147,14 @@ ATF_TEST_CASE_BODY(subcommand__ok)
 ATF_TEST_CASE_WITHOUT_HEAD(subcommand__invalid_args);
 ATF_TEST_CASE_BODY(subcommand__invalid_args)
 {
-    setup();
+    cmdline::commands_map mock_commands;
+    setup(mock_commands);
 
     const int argc = 3;
     const char* const argv[] = {"progname", "mock_write", "bar", NULL};
 
     cmdline::ui_mock ui;
-    ATF_REQUIRE_EQ(EXIT_FAILURE, cli::main(&ui, argc, argv));
+    ATF_REQUIRE_EQ(EXIT_FAILURE, cli::main(&ui, argc, argv, mock_commands));
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE(utils::grep_vector(
         "Usage error for command mock_write: Too many arguments.",
@@ -170,14 +166,15 @@ ATF_TEST_CASE_BODY(subcommand__invalid_args)
 ATF_TEST_CASE_WITHOUT_HEAD(subcommand__error);
 ATF_TEST_CASE_BODY(subcommand__error)
 {
-    setup();
+    cmdline::commands_map mock_commands;
+    setup(mock_commands);
 
     const int argc = 2;
     const char* const argv[] = {"progname", "mock_error", NULL};
 
     cmdline::ui_mock ui;
     ATF_REQUIRE_THROW_RE(std::runtime_error, "unhandled",
-                         cli::main(&ui, argc, argv));
+                         cli::main(&ui, argc, argv, mock_commands));
 }
 
 

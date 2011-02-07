@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,6 @@
 
 #include <cstdlib>
 
-#include "cli/all_commands.hpp"
 #include "cli/cmd_help.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/globals.hpp"
@@ -49,18 +48,20 @@ namespace {
 /// Prints the summary of commands and generic options.
 ///
 /// \param ui Object to interact with the I/O of the program.
+/// \param commands The set of commands for which to print help.
 static void
-general_help(cmdline::ui* ui)
+general_help(cmdline::ui* ui, const cmdline::commands_map* commands)
 {
     ui->out(F("Usage: %s [general_options] command [options] [args]") %
               cmdline::progname());
 
     ui->out("");
     ui->out("Available commands:");
-    for (cmdline::base_command** iter = cli::all_commands; *iter != NULL;
-         iter++) {
-        ui->out(F("    %s: %s.") % (*iter)->name() %
-                (*iter)->short_description());
+    for (cmdline::commands_map::const_iterator iter = commands->begin();
+         iter != commands->end(); iter++) {
+        const cmdline::base_command* command = (*iter).second;
+        ui->out(F("    %s: %s.") % command->name() %
+                command->short_description());
     }
 }
 
@@ -119,9 +120,13 @@ subcommand_help(cmdline::ui* ui, const utils::cmdline::base_command* command)
 
 
 /// Default constructor for cmd_help.
-cmd_help::cmd_help(void) : cmdline::base_command(
-    "help", "[subcommand]", 0, 1,
-    "Shows usage information")
+///
+/// \param commands_ The set of commands for which to provide help.
+cmd_help::cmd_help(const cmdline::commands_map* commands_) :
+    cmdline::base_command(
+        "help", "[subcommand]", 0, 1,
+        "Shows usage information"),
+    _commands(commands_)
 {
 }
 
@@ -133,19 +138,19 @@ cmd_help::cmd_help(void) : cmdline::base_command(
 ///
 /// \return 0 to indicate success.
 int
-cmd_help::run(utils::cmdline::ui* ui,
-              const utils::cmdline::parsed_cmdline& cmdline)
+cmd_help::run(utils::cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
 {
     if (cmdline.arguments().empty()) {
-        general_help(ui);
+        general_help(ui, _commands);
     } else {
         INV(cmdline.arguments().size() == 1);
         const std::string& cmdname = cmdline.arguments()[0];
-        const cmdline::base_command* command = cli::find_command(cmdname);
+        const cmdline::base_command* command = _commands->find(cmdname);
         if (command == NULL)
             throw cmdline::usage_error(F("The command %s does not exist") %
                                        cmdname);
-        subcommand_help(ui, command);
+        else
+            subcommand_help(ui, command);
     }
 
     return EXIT_SUCCESS;

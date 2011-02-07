@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,35 +26,59 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file cli/all_commands.hpp
-/// Static view of all commands provided by the utility.
+/// \file utils/cmdline/commands_map.hpp
+/// Maintains a collection of dynamically-instantiated commands.
+///
+/// Commands need to be dynamically-instantiated because they are often
+/// complex data structures.  Instantiating them as static variables causes
+/// problems with the order of construction of globals.  The commands_map class
+/// provided by this module provides a mechanism to maintain these instantiated
+/// objects.
 
-#if !defined(CLI_ALL_COMMANDS_HPP)
-#define CLI_ALL_COMMANDS_HPP
+#if !defined(UTILS_CMDLINE_COMMANDS_MAP_HPP)
+#define UTILS_CMDLINE_COMMANDS_MAP_HPP
 
+#include <map>
+#include <memory>
 #include <string>
 
 #include "utils/cmdline/base_command.hpp"
-
-namespace cli {
-
-
-/// NULL-terminated array of pointers to all available commands.
-///
-/// This is not constant to allow replacing the contents of the array for
-/// testing purposes.
-extern utils::cmdline::base_command** all_commands;
+#include "utils/noncopyable.hpp"
 
 
-utils::cmdline::base_command* find_command(const std::string&);
+namespace utils {
+namespace cmdline {
 
 
-// TODO(jmmv): Given that this should be uncallable from non-testing code, maybe
-// we need a separate header file to define this.
-void set_commands_for_testing(utils::cmdline::base_command**);
+/// Auto pointer wrapping a base command.
+typedef std::auto_ptr< cmdline::base_command > command_ptr;
 
 
-}  // namespace cli
+/// Collection of dynamically-instantiated commands.
+class commands_map : noncopyable {
+    typedef std::map< std::string, base_command* > impl_map;
+
+    impl_map _commands;
+
+public:
+    commands_map(void);
+    ~commands_map(void);
+
+    void insert(command_ptr);
+
+    /// Type for a constant iterator.
+    typedef impl_map::const_iterator const_iterator;
+
+    const_iterator begin(void) const;
+    const_iterator end(void) const;
+
+    base_command* find(const std::string&);
+    const base_command* find(const std::string&) const;
+};
 
 
-#endif  // !defined(CLI_ALL_COMMANDS_HPP)
+}  // namespace cmdline
+}  // namespace utils
+
+
+#endif  // !defined(UTILS_CMDLINE_BASE_COMMAND_HPP)

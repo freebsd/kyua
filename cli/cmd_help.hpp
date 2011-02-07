@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,14 +33,17 @@
 #define CLI_CMD_HELP_HPP
 
 #include "utils/cmdline/base_command.hpp"
+#include "utils/cmdline/commands_map.hpp"
 
 namespace cli {
 
 
 /// Implementation of the "help" subcommand.
 class cmd_help : public utils::cmdline::base_command {
+    const utils::cmdline::commands_map* _commands;
+
 public:
-    cmd_help(void);
+    cmd_help(const utils::cmdline::commands_map*);
 
     int run(utils::cmdline::ui*, const utils::cmdline::parsed_cmdline&);
 };

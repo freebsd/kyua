@@ -1,4 +1,4 @@
-# Copyright 2010 Google Inc.
+# Copyright 2010, 2011 Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,8 @@
 libutils_a_SOURCES += utils/cmdline/base_command.cpp
 libutils_a_SOURCES += utils/cmdline/base_command.hpp
 libutils_a_SOURCES += utils/cmdline/base_command.ipp
+libutils_a_SOURCES += utils/cmdline/commands_map.cpp
+libutils_a_SOURCES += utils/cmdline/commands_map.hpp
 libutils_a_SOURCES += utils/cmdline/exceptions.cpp
 libutils_a_SOURCES += utils/cmdline/exceptions.hpp
 libutils_a_SOURCES += utils/cmdline/globals.cpp
@@ -57,6 +59,11 @@ utils_cmdline_base_command_test_CXXFLAGS = $(UTILS_TEST_CFLAGS) \
 utils_cmdline_base_command_test_LDADD = $(UTILS_TEST_LIBS) \
                                         $(UTILS_LIBS) \
                                         $(ATF_CXX_LIBS)
+
+tests_utils_cmdline_PROGRAMS += utils/cmdline/commands_map_test
+utils_cmdline_commands_map_test_SOURCES = utils/cmdline/commands_map_test.cpp
+utils_cmdline_commands_map_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_cmdline_commands_map_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_cmdline_PROGRAMS += utils/cmdline/exceptions_test
 utils_cmdline_exceptions_test_SOURCES = utils/cmdline/exceptions_test.cpp

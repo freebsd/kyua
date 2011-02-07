@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,12 +35,14 @@
 #if !defined(CLI_MAIN_HPP)
 #define CLI_MAIN_HPP
 
+#include "utils/cmdline/commands_map.hpp"
 #include "utils/cmdline/ui.hpp"
 
 namespace cli {
 
 
-int main(utils::cmdline::ui*, const int, const char* const* const);
+int main(utils::cmdline::ui*, const int, const char* const* const,
+         utils::cmdline::commands_map&);
 int main(const int, const char* const* const);
 
 
