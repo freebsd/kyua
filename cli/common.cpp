@@ -30,7 +30,6 @@
 #include "engine/user_files/config.hpp"
 #include "engine/user_files/kyuafile.hpp"
 #include "utils/cmdline/parser.ipp"
-#include "utils/format/macros.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
@@ -66,8 +65,8 @@ static const char* system_config_basename = "kyua.conf";
 ///
 /// This is just an auxiliary string required to define the option below, which
 /// requires a pointer to a static C string.
-static const std::string config_lookup_names = F("%s or %s") %
-    (fs::path("~") / user_config_basename).str() %
+static const std::string config_lookup_names =
+    (fs::path("~") / user_config_basename).str() + " or " +
     (kyua_confdir / system_config_basename).str();
 
 
