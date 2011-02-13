@@ -39,8 +39,8 @@ namespace {
 
 class mock_cmd : public cmdline::base_command {
 public:
-    mock_cmd(const char* name) :
-        cmdline::base_command(name, "", 0, 0, "Command for testing.")
+    mock_cmd(const char* mock_name) :
+        cmdline::base_command(mock_name, "", 0, 0, "Command for testing.")
     {
     }
 
