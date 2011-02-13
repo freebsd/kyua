@@ -77,12 +77,17 @@ version @value{VERSION}.
 @menu
 * Overview:: A general introduction.
 
+Developer's information
+* Test interfaces:: Test program interfaces to the Kyua runtime engine.
+
+Appendices and indices
 * Copying:: License information.
 * Index:: Table of concepts.
 @end menu
 
 
 @include overview.texi
+@include test_interface.texi
 
 
 @node Copying
