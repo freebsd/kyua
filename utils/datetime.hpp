@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,10 @@
 #if !defined(UTILS_DATETIME_HPP)
 #define UTILS_DATETIME_HPP
 
+#include <string>
+
+#include <tr1/memory>
+
 namespace utils {
 namespace datetime {
 
@@ -48,6 +52,27 @@ struct delta {
     delta(const unsigned int, const unsigned long);
 
     bool operator==(const delta&) const;
+};
+
+
+/// Represents a fixed date/time.
+///
+/// Timestamps are immutable objects and therefore we can simply use a shared
+/// pointer to hide the implementation type of the date.  By not using an auto
+/// pointer, we don't have to worry about providing our own copy constructor and
+/// assignment opertor.
+class timestamp {
+    struct impl;
+    std::tr1::shared_ptr< impl > _pimpl;
+
+    timestamp(std::tr1::shared_ptr< impl >);
+
+public:
+    static timestamp from_values(const int, const int, const int,
+                                 const int, const int, const int);
+    static timestamp now(void);
+
+    std::string strftime(const std::string&) const;
 };
 
 
