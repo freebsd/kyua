@@ -38,7 +38,22 @@
 #include "utils/cmdline/commands_map.hpp"
 #include "utils/cmdline/ui.hpp"
 
+namespace utils {
+namespace fs {
+class path;
+}  // namespace fs
+}  // namespace utils
+
 namespace cli {
+
+
+namespace detail {
+
+
+utils::fs::path default_log_name(void);
+
+
+}  // namespace detail
 
 
 int main(utils::cmdline::ui*, const int, const char* const* const,

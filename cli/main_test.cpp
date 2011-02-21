@@ -37,9 +37,15 @@
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.hpp"
 #include "utils/cmdline/ui_mock.hpp"
+#include "utils/datetime.hpp"
+#include "utils/env.hpp"
+#include "utils/fs/operations.hpp"
+#include "utils/fs/path.hpp"
 #include "utils/test_utils.hpp"
 
 namespace cmdline = utils::cmdline;
+namespace datetime = utils::datetime;
+namespace fs = utils::fs;
 
 
 namespace {
@@ -90,8 +96,48 @@ setup(cmdline::commands_map& commands)
 }  // anonymous namespace
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(no_args);
-ATF_TEST_CASE_BODY(no_args)
+ATF_TEST_CASE_WITHOUT_HEAD(detail__default_log_name__home);
+ATF_TEST_CASE_BODY(detail__default_log_name__home)
+{
+    cmdline::init("progname1");
+    datetime::set_mock_now(2011, 2, 21, 21, 10, 30);
+
+    utils::setenv("HOME", "/home//fake");
+    utils::setenv("TMPDIR", "/do/not/use/this");
+    ATF_REQUIRE_EQ(
+        fs::path("/home/fake/.kyua/logs/progname1.20110221-211030.log"),
+        cli::detail::default_log_name());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(detail__default_log_name__tmpdir);
+ATF_TEST_CASE_BODY(detail__default_log_name__tmpdir)
+{
+    cmdline::init("progname2");
+    datetime::set_mock_now(2011, 2, 21, 21, 10, 50);
+
+    utils::unsetenv("HOME");
+    utils::setenv("TMPDIR", "/a/b//c");
+    ATF_REQUIRE_EQ(fs::path("/a/b/c/progname2.20110221-211050.log"),
+                   cli::detail::default_log_name());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(detail__default_log_name__hardcoded);
+ATF_TEST_CASE_BODY(detail__default_log_name__hardcoded)
+{
+    cmdline::init("progname3");
+    datetime::set_mock_now(2011, 2, 21, 21, 15, 00);
+
+    utils::unsetenv("HOME");
+    utils::unsetenv("LOGDIR");
+    ATF_REQUIRE_EQ(fs::path("/tmp/progname3.20110221-211500.log"),
+                   cli::detail::default_log_name());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(main__no_args);
+ATF_TEST_CASE_BODY(main__no_args)
 {
     cmdline::commands_map mock_commands;
     setup(mock_commands);
@@ -108,8 +154,8 @@ ATF_TEST_CASE_BODY(no_args)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(unknown_command);
-ATF_TEST_CASE_BODY(unknown_command)
+ATF_TEST_CASE_WITHOUT_HEAD(main__unknown_command);
+ATF_TEST_CASE_BODY(main__unknown_command)
 {
     cmdline::commands_map mock_commands;
     setup(mock_commands);
@@ -126,8 +172,48 @@ ATF_TEST_CASE_BODY(unknown_command)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(subcommand__ok);
-ATF_TEST_CASE_BODY(subcommand__ok)
+ATF_TEST_CASE_WITHOUT_HEAD(main__logfile__default);
+ATF_TEST_CASE_BODY(main__logfile__default)
+{
+    cmdline::commands_map mock_commands;
+    setup(mock_commands);
+
+    const int argc = 1;
+    const char* const argv[] = {"progname", NULL};
+
+    datetime::set_mock_now(2011, 2, 21, 21, 30, 00);
+
+    cmdline::ui_mock ui;
+    ATF_REQUIRE(!fs::exists(fs::path(
+        ".kyua/logs/progname.20110221-213000.log")));
+    ATF_REQUIRE_EQ(EXIT_FAILURE, cli::main(&ui, argc, argv, mock_commands));
+    ATF_REQUIRE(fs::exists(fs::path(
+        ".kyua/logs/progname.20110221-213000.log")));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(main__logfile__override);
+ATF_TEST_CASE_BODY(main__logfile__override)
+{
+    cmdline::commands_map mock_commands;
+    setup(mock_commands);
+
+    const int argc = 2;
+    const char* const argv[] = {"progname", "--logfile=test.log", NULL};
+
+    datetime::set_mock_now(2011, 2, 21, 21, 30, 00);
+
+    cmdline::ui_mock ui;
+    ATF_REQUIRE(!fs::exists(fs::path("test.log")));
+    ATF_REQUIRE_EQ(EXIT_FAILURE, cli::main(&ui, argc, argv, mock_commands));
+    ATF_REQUIRE(!fs::exists(fs::path(
+        ".kyua/logs/progname.20110221-213000.log")));
+    ATF_REQUIRE(fs::exists(fs::path("test.log")));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(main__subcommand__ok);
+ATF_TEST_CASE_BODY(main__subcommand__ok)
 {
     cmdline::commands_map mock_commands;
     setup(mock_commands);
@@ -144,8 +230,8 @@ ATF_TEST_CASE_BODY(subcommand__ok)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(subcommand__invalid_args);
-ATF_TEST_CASE_BODY(subcommand__invalid_args)
+ATF_TEST_CASE_WITHOUT_HEAD(main__subcommand__invalid_args);
+ATF_TEST_CASE_BODY(main__subcommand__invalid_args)
 {
     cmdline::commands_map mock_commands;
     setup(mock_commands);
@@ -163,8 +249,8 @@ ATF_TEST_CASE_BODY(subcommand__invalid_args)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(subcommand__error);
-ATF_TEST_CASE_BODY(subcommand__error)
+ATF_TEST_CASE_WITHOUT_HEAD(main__subcommand__error);
+ATF_TEST_CASE_BODY(main__subcommand__error)
 {
     cmdline::commands_map mock_commands;
     setup(mock_commands);
@@ -180,9 +266,15 @@ ATF_TEST_CASE_BODY(subcommand__error)
 
 ATF_INIT_TEST_CASES(tcs)
 {
-    ATF_ADD_TEST_CASE(tcs, no_args);
-    ATF_ADD_TEST_CASE(tcs, unknown_command);
-    ATF_ADD_TEST_CASE(tcs, subcommand__ok);
-    ATF_ADD_TEST_CASE(tcs, subcommand__invalid_args);
-    ATF_ADD_TEST_CASE(tcs, subcommand__error);
+    ATF_ADD_TEST_CASE(tcs, detail__default_log_name__home);
+    ATF_ADD_TEST_CASE(tcs, detail__default_log_name__tmpdir);
+    ATF_ADD_TEST_CASE(tcs, detail__default_log_name__hardcoded);
+
+    ATF_ADD_TEST_CASE(tcs, main__no_args);
+    ATF_ADD_TEST_CASE(tcs, main__unknown_command);
+    ATF_ADD_TEST_CASE(tcs, main__logfile__default);
+    ATF_ADD_TEST_CASE(tcs, main__logfile__override);
+    ATF_ADD_TEST_CASE(tcs, main__subcommand__ok);
+    ATF_ADD_TEST_CASE(tcs, main__subcommand__invalid_args);
+    ATF_ADD_TEST_CASE(tcs, main__subcommand__error);
 }

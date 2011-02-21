@@ -26,6 +26,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#if defined(HAVE_CONFIG_H)
+#   include "config.h"
+#endif
+
 #include <cstdlib>
 #include <iostream>
 #include <string>
@@ -41,12 +45,21 @@
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.hpp"
 #include "utils/cmdline/ui.hpp"
+#include "utils/env.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/logging/macros.hpp"
+#include "utils/logging/operations.hpp"
+#include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 
 namespace cmdline = utils::cmdline;
 namespace fs = utils::fs;
+namespace logging = utils::logging;
+
+using utils::none;
+using utils::optional;
 
 
 namespace {
@@ -107,8 +120,20 @@ static int
 safe_main(cmdline::ui* ui, int argc, const char* const argv[],
           cmdline::commands_map& commands)
 {
+    const cmdline::path_option logfile_option(
+        "logfile", "Path to the log file", "file",
+        cli::detail::default_log_name().c_str());
+
     cmdline::options_vector options;
+    options.push_back(&logfile_option);
+
     cmdline::parsed_cmdline cmdline = cmdline::parse(argc, argv, options);
+
+    const fs::path logfile(cmdline.get_option< cmdline::path_option >(
+        "logfile"));
+    fs::mkdir_p(logfile.branch_path(), 0755);
+    LD(F("Log file is %s") % logfile);
+    logging::set_persistency(logfile);
 
     if (cmdline.arguments().empty())
         throw cmdline::usage_error("No command provided");
@@ -122,6 +147,29 @@ safe_main(cmdline::ui* ui, int argc, const char* const argv[],
 
 
 }  // anonymous namespace
+
+
+/// Gets the name of the default log file.
+///
+/// \return The path to the log file.
+fs::path
+cli::detail::default_log_name(void)
+{
+    const optional< std::string > home(utils::getenv("HOME"));
+    if (home) {
+        return logging::generate_log_name(fs::path(home.get()) / ".kyua" /
+                                          "logs", cmdline::progname());
+    } else {
+        const optional< std::string > tmpdir(utils::getenv("TMPDIR"));
+        if (tmpdir) {
+            return logging::generate_log_name(fs::path(tmpdir.get()),
+                                              cmdline::progname());
+        } else {
+            return logging::generate_log_name(fs::path("/tmp"),
+                                              cmdline::progname());
+        }
+    }
+}
 
 
 /// Testable entry point, with catch-all exception handlers.
@@ -146,13 +194,17 @@ cli::main(cmdline::ui* ui, const int argc, const char* const* const argv,
     try {
         return safe_main(ui, argc, argv, commands);
     } catch (const std::pair< std::string, cmdline::usage_error >& e) {
-        ui->err(F("Usage error for command %s: %s.") % e.first %
-                e.second.what());
+        const std::string message = F("Usage error for command %s: %s.") %
+            e.first % e.second.what();
+        LE(message);
+        ui->err(message);
         ui->err(F("Type '%s help %s' for usage information.") %
                 cmdline::progname() % e.first);
         return EXIT_FAILURE;
     } catch (const cmdline::usage_error& e) {
-        ui->err(F("Usage error: %s.") % e.what());
+        const std::string message = F("Usage error: %s.") % e.what();
+        LE(message);
+        ui->err(message);
         ui->err(F("Type '%s help' for usage information.") %
                 cmdline::progname());
         return EXIT_FAILURE;
@@ -174,6 +226,8 @@ cli::main(cmdline::ui* ui, const int argc, const char* const* const argv,
 int
 cli::main(const int argc, const char* const* const argv)
 {
+    LI(F("%s %s") % PACKAGE % VERSION);
+
     cmdline::init(argv[0]);
     cmdline::ui ui;
 
@@ -183,5 +237,7 @@ cli::main(const int argc, const char* const* const argv)
     commands.insert(cmdline::command_ptr(new cli::cmd_list()));
     commands.insert(cmdline::command_ptr(new cli::cmd_test()));
 
-    return main(&ui, argc, argv, commands);
+    const int exit_code = main(&ui, argc, argv, commands);
+    LI(F("Clean exit with code %d") % exit_code);
+    return exit_code;
 }
