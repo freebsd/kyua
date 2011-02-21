@@ -85,8 +85,23 @@ ATF_TEST_CASE_BODY(timestamp__copy)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(timestamp__now);
-ATF_TEST_CASE_BODY(timestamp__now)
+ATF_TEST_CASE_WITHOUT_HEAD(timestamp__now__mock);
+ATF_TEST_CASE_BODY(timestamp__now__mock)
+{
+    datetime::set_mock_now(2011, 2, 21, 18, 5, 10);
+    ATF_REQUIRE_EQ("2011-02-21 18:05:10",
+                   datetime::timestamp::now().strftime("%Y-%m-%d %H:%M:%S"));
+
+    datetime::set_mock_now(2012, 3, 22, 19, 6, 11);
+    ATF_REQUIRE_EQ("2012-03-22 19:06:11",
+                   datetime::timestamp::now().strftime("%Y-%m-%d %H:%M:%S"));
+    ATF_REQUIRE_EQ("2012-03-22 19:06:11",
+                   datetime::timestamp::now().strftime("%Y-%m-%d %H:%M:%S"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(timestamp__now__real);
+ATF_TEST_CASE_BODY(timestamp__now__real)
 {
     // This test is might fail if we happen to run at the crossing of one
     // day to the other and the two measures we pick of the current time
@@ -127,6 +142,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, delta__equals);
 
     ATF_ADD_TEST_CASE(tcs, timestamp__copy);
-    ATF_ADD_TEST_CASE(tcs, timestamp__now);
+    ATF_ADD_TEST_CASE(tcs, timestamp__now__mock);
+    ATF_ADD_TEST_CASE(tcs, timestamp__now__real);
     ATF_ADD_TEST_CASE(tcs, timestamp__strftime);
 }

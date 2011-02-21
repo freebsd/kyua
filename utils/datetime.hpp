@@ -76,6 +76,10 @@ public:
 };
 
 
+void set_mock_now(const int, const int, const int, const int, const int,
+                  const int);
+
+
 }  // namespace datetime
 }  // namespace utils
 

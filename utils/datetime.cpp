@@ -31,9 +31,23 @@ extern "C" {
 }
 
 #include "utils/datetime.hpp"
+#include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 
 namespace datetime = utils::datetime;
+
+using utils::none;
+using utils::optional;
+
+
+namespace {
+
+
+/// Fake value for the current time.
+static optional< datetime::timestamp > mock_now = none;
+
+
+}  // anonymous namespace
 
 
 /// Creates a zero time delta.
@@ -158,6 +172,9 @@ datetime::timestamp::from_values(const int year, const int month,
 datetime::timestamp
 datetime::timestamp::now(void)
 {
+    if (mock_now)
+        return mock_now.get();
+
     ::tm data;
     {
         const time_t current_time = ::time(NULL);
@@ -182,4 +199,14 @@ datetime::timestamp::strftime(const std::string& format) const
     if (::strftime(buf, sizeof(buf), format.c_str(), &_pimpl->data) == 0)
         UNREACHABLE_MSG("Arbitrary-long format strings are unimplemented");
     return buf;
+}
+
+
+/// Sets the current time for testing purposes.
+void
+datetime::set_mock_now(const int year, const int month,
+                       const int day, const int hour,
+                       const int minute, const int second)
+{
+    mock_now = timestamp::from_values(year, month, day, hour, minute, second);
 }
