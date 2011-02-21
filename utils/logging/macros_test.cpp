@@ -53,7 +53,7 @@ ATF_TEST_CASE_BODY(ld)
 
     std::string line;
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ("20110221-183000 D: Debug message", line);
+    ATF_REQUIRE_MATCH("20110221-183000 D .*: Debug message", line);
 }
 
 
@@ -69,7 +69,7 @@ ATF_TEST_CASE_BODY(le)
 
     std::string line;
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ("20110221-183000 E: Error message", line);
+    ATF_REQUIRE_MATCH("20110221-183000 E .*: Error message", line);
 }
 
 
@@ -85,7 +85,7 @@ ATF_TEST_CASE_BODY(li)
 
     std::string line;
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ("20110221-183000 I: Info message", line);
+    ATF_REQUIRE_MATCH("20110221-183000 I .*: Info message", line);
 }
 
 
@@ -101,7 +101,7 @@ ATF_TEST_CASE_BODY(lw)
 
     std::string line;
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ("20110221-183000 W: Warning message", line);
+    ATF_REQUIRE_MATCH("20110221-183000 W .*: Warning message", line);
 }
 
 

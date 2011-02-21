@@ -49,7 +49,7 @@ ATF_TEST_CASE_BODY(generate_log_name__before_log)
                    logging::generate_log_name(fs::path("/some/dir"), "foobar"));
 
     datetime::set_mock_now(2011, 2, 21, 18, 10, 1);
-    logging::log('I', "A message");
+    logging::log('I', "file", 123, "A message");
 
     datetime::set_mock_now(2011, 2, 21, 18, 10, 2);
     ATF_REQUIRE_EQ(fs::path("/some/dir/foobar.20110221-181000.log"),
@@ -61,16 +61,16 @@ ATF_TEST_CASE_WITHOUT_HEAD(generate_log_name__after_log);
 ATF_TEST_CASE_BODY(generate_log_name__after_log)
 {
     datetime::set_mock_now(2011, 2, 21, 18, 15, 0);
-    logging::log('I', "A message");
+    logging::log('I', "file", 123, "A message");
     datetime::set_mock_now(2011, 2, 21, 18, 15, 1);
-    logging::log('I', "A message");
+    logging::log('I', "file", 123, "A message");
 
     datetime::set_mock_now(2011, 2, 21, 18, 15, 2);
     ATF_REQUIRE_EQ(fs::path("/some/dir/foobar.20110221-181500.log"),
                    logging::generate_log_name(fs::path("/some/dir"), "foobar"));
 
     datetime::set_mock_now(2011, 2, 21, 18, 15, 3);
-    logging::log('I', "A message");
+    logging::log('I', "file", 123, "A message");
 
     datetime::set_mock_now(2011, 2, 21, 18, 15, 4);
     ATF_REQUIRE_EQ(fs::path("/some/dir/foobar.20110221-181500.log"),
@@ -82,31 +82,31 @@ ATF_TEST_CASE_WITHOUT_HEAD(log);
 ATF_TEST_CASE_BODY(log)
 {
     datetime::set_mock_now(2011, 2, 21, 18, 10, 0);
-    logging::log('D', "Debug message");
+    logging::log('D', "f1", 1, "Debug message");
 
     datetime::set_mock_now(2011, 2, 21, 18, 10, 1);
-    logging::log('E', "Error message");
+    logging::log('E', "f2", 2, "Error message");
 
     logging::set_persistency(fs::path("test.log"));
 
     datetime::set_mock_now(2011, 2, 21, 18, 10, 2);
-    logging::log('I', "Info message");
+    logging::log('I', "f3", 3, "Info message");
 
     datetime::set_mock_now(2011, 2, 21, 18, 10, 3);
-    logging::log('W', "Warning message");
+    logging::log('W', "f4", 4, "Warning message");
 
     std::ifstream input("test.log");
     ATF_REQUIRE(input);
 
     std::string line;
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ("20110221-181000 D: Debug message", line);
+    ATF_REQUIRE_EQ("20110221-181000 D f1:1: Debug message", line);
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ("20110221-181001 E: Error message", line);
+    ATF_REQUIRE_EQ("20110221-181001 E f2:2: Error message", line);
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ("20110221-181002 I: Info message", line);
+    ATF_REQUIRE_EQ("20110221-181002 I f3:3: Info message", line);
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ("20110221-181003 W: Warning message", line);
+    ATF_REQUIRE_EQ("20110221-181003 W f4:4: Warning message", line);
 }
 
 
@@ -116,14 +116,14 @@ ATF_TEST_CASE_BODY(set_persistency__no_backlog)
     logging::set_persistency(fs::path("test.log"));
 
     datetime::set_mock_now(2011, 2, 21, 18, 20, 0);
-    logging::log('D', "Debug message");
+    logging::log('D', "file", 123, "Debug message");
 
     std::ifstream input("test.log");
     ATF_REQUIRE(input);
 
     std::string line;
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ("20110221-182000 D: Debug message", line);
+    ATF_REQUIRE_EQ("20110221-182000 D file:123: Debug message", line);
 }
 
 
@@ -131,26 +131,26 @@ ATF_TEST_CASE_WITHOUT_HEAD(set_persistency__some_backlog);
 ATF_TEST_CASE_BODY(set_persistency__some_backlog)
 {
     datetime::set_mock_now(2011, 2, 21, 18, 20, 0);
-    logging::log('D', "Debug message 1");
+    logging::log('D', "file1", 123, "Debug message 1");
 
     datetime::set_mock_now(2011, 2, 21, 18, 20, 1);
-    logging::log('D', "Debug message 2");
+    logging::log('D', "file2", 456, "Debug message 2");
 
     logging::set_persistency(fs::path("test.log"));
 
     datetime::set_mock_now(2011, 2, 21, 18, 20, 2);
-    logging::log('D', "Debug message 3");
+    logging::log('D', "file3", 789, "Debug message 3");
 
     std::ifstream input("test.log");
     ATF_REQUIRE(input);
 
     std::string line;
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ("20110221-182000 D: Debug message 1", line);
+    ATF_REQUIRE_EQ("20110221-182000 D file1:123: Debug message 1", line);
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ("20110221-182001 D: Debug message 2", line);
+    ATF_REQUIRE_EQ("20110221-182001 D file2:456: Debug message 2", line);
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ("20110221-182002 D: Debug message 3", line);
+    ATF_REQUIRE_EQ("20110221-182002 D file3:789: Debug message 3", line);
 }
 
 

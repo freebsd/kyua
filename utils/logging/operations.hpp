@@ -41,7 +41,7 @@ namespace logging {
 
 
 fs::path generate_log_name(const fs::path&, const std::string&);
-void log(const char, const std::string&);
+void log(const char, const char*, const int, const std::string&);
 void set_persistency(const fs::path&);
 
 

@@ -93,9 +93,12 @@ logging::generate_log_name(const fs::path& logdir, const std::string& progname)
 ///
 /// \param type The type of the entry.  Can be one of: D=debugging, E=error,
 ///     I=info, W=warning.
+/// \param file The file from which the log message is generated.
+/// \param line The line from which the log message is generated.
 /// \param user_message The raw message to store.
 void
-logging::log(const char type, const std::string& user_message)
+logging::log(const char type, const char* file, const int line,
+             const std::string& user_message)
 {
     PRE(type == 'D' || type == 'E' || type == 'I' || type == 'W');
 
@@ -103,8 +106,8 @@ logging::log(const char type, const std::string& user_message)
     if (!first_timestamp)
         first_timestamp = now;
 
-    const std::string message = F("%s %c: %s") % now.strftime(timestamp_format)
-        % type % user_message;
+    const std::string message = F("%s %c %s:%d: %s") %
+        now.strftime(timestamp_format) % type % file % line % user_message;
     if (logfile.get() == NULL)
         backlog.push_back(message);
     else {

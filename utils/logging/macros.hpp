@@ -40,25 +40,25 @@
 /// Logs a debug message.
 ///
 /// \param message The message to log.
-#define LD(message) utils::logging::log('D', message)
+#define LD(message) utils::logging::log('D', __FILE__, __LINE__, message)
 
 
 /// Logs an error message.
 ///
 /// \param message The message to log.
-#define LE(message) utils::logging::log('E', message)
+#define LE(message) utils::logging::log('E', __FILE__, __LINE__, message)
 
 
 /// Logs an informational message.
 ///
 /// \param message The message to log.
-#define LI(message) utils::logging::log('I', message)
+#define LI(message) utils::logging::log('I', __FILE__, __LINE__, message)
 
 
 /// Logs a warning message.
 ///
 /// \param message The message to log.
-#define LW(message) utils::logging::log('W', message)
+#define LW(message) utils::logging::log('W', __FILE__, __LINE__, message)
 
 
 #endif  // !defined(UTILS_LOGGING_MACROS_HPP)
