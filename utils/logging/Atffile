@@ -1,0 +1,6 @@
+Content-Type: application/X-atf-atffile; version="1"
+
+prop: test-suite = kyua
+
+tp: macros_test
+tp: operations_test

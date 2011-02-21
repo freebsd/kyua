@@ -8,6 +8,7 @@ tp: datetime_test
 tp: env_test
 tp: format
 tp: fs
+tp: logging
 tp: lua
 tp: passwd_test
 tp: process

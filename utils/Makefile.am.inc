@@ -96,6 +96,7 @@ utils_sanity_test_LDADD = $(UTILS_TEST_LIBS) $(UTILS_LIBS) \
 include utils/cmdline/Makefile.am.inc
 include utils/format/Makefile.am.inc
 include utils/fs/Makefile.am.inc
+include utils/logging/Makefile.am.inc
 include utils/lua/Makefile.am.inc
 include utils/process/Makefile.am.inc
 include utils/signals/Makefile.am.inc

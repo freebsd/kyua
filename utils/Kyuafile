@@ -11,6 +11,7 @@ AtfTestProgram {name="sanity_test"}
 include("cmdline/Kyuafile")
 include("format/Kyuafile")
 include("fs/Kyuafile")
+include("logging/Kyuafile")
 include("lua/Kyuafile")
 include("process/Kyuafile")
 include("signals/Kyuafile")
