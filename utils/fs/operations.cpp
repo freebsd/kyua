@@ -243,7 +243,7 @@ fs::mkdir_p(const fs::path& dir, const int mode)
         if (e.original_errno() == ENOENT) {
             fs::mkdir_p(dir.branch_path(), mode);
             fs::mkdir(dir, mode);
-        } else
+        } else if (e.original_errno() != EEXIST)
             throw e;
     }
 }

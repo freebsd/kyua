@@ -266,6 +266,15 @@ ATF_TEST_CASE_BODY(mkdir_p__many_components)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(mkdir_p__already_exists);
+ATF_TEST_CASE_BODY(mkdir_p__already_exists)
+{
+    fs::mkdir(fs::path("a"), 0755);
+    fs::mkdir(fs::path("a/b"), 0755);
+    fs::mkdir_p(fs::path("a/b"), 0755);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(mkdir_p__eacces)
 ATF_TEST_CASE_BODY(mkdir_p__eacces)
 {
@@ -318,6 +327,7 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, mkdir_p__one_component);
     ATF_ADD_TEST_CASE(tcs, mkdir_p__many_components);
+    ATF_ADD_TEST_CASE(tcs, mkdir_p__already_exists);
     ATF_ADD_TEST_CASE(tcs, mkdir_p__eacces);
 
     ATF_ADD_TEST_CASE(tcs, mkdtemp);
