@@ -26,12 +26,17 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+extern "C" {
+#include <unistd.h>
+}
+
 #include <fstream>
 #include <string>
 
 #include <atf-c++.hpp>
 
 #include "utils/datetime.hpp"
+#include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/logging/operations.hpp"
@@ -98,15 +103,21 @@ ATF_TEST_CASE_BODY(log)
     std::ifstream input("test.log");
     ATF_REQUIRE(input);
 
+    const pid_t pid = ::getpid();
+
     std::string line;
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ("20110221-181000 D f1:1: Debug message", line);
+    ATF_REQUIRE_EQ(
+        (F("20110221-181000 D %d f1:1: Debug message") % pid).str(), line);
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ("20110221-181001 E f2:2: Error message", line);
+    ATF_REQUIRE_EQ(
+        (F("20110221-181001 E %d f2:2: Error message") % pid).str(), line);
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ("20110221-181002 I f3:3: Info message", line);
+    ATF_REQUIRE_EQ(
+        (F("20110221-181002 I %d f3:3: Info message") % pid).str(), line);
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ("20110221-181003 W f4:4: Warning message", line);
+    ATF_REQUIRE_EQ(
+        (F("20110221-181003 W %d f4:4: Warning message") % pid).str(), line);
 }
 
 
@@ -121,9 +132,12 @@ ATF_TEST_CASE_BODY(set_persistency__no_backlog)
     std::ifstream input("test.log");
     ATF_REQUIRE(input);
 
+    const pid_t pid = ::getpid();
+
     std::string line;
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ("20110221-182000 D file:123: Debug message", line);
+    ATF_REQUIRE_EQ(
+        (F("20110221-182000 D %d file:123: Debug message") % pid).str(), line);
 }
 
 
@@ -144,13 +158,21 @@ ATF_TEST_CASE_BODY(set_persistency__some_backlog)
     std::ifstream input("test.log");
     ATF_REQUIRE(input);
 
+    const pid_t pid = ::getpid();
+
     std::string line;
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ("20110221-182000 D file1:123: Debug message 1", line);
+    ATF_REQUIRE_EQ(
+        (F("20110221-182000 D %d file1:123: Debug message 1") % pid).str(),
+        line);
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ("20110221-182001 D file2:456: Debug message 2", line);
+    ATF_REQUIRE_EQ(
+        (F("20110221-182001 D %d file2:456: Debug message 2") % pid).str(),
+        line);
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ("20110221-182002 D file3:789: Debug message 3", line);
+    ATF_REQUIRE_EQ(
+        (F("20110221-182002 D %d file3:789: Debug message 3") % pid).str(),
+        line);
 }
 
 

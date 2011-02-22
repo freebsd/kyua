@@ -26,6 +26,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+extern "C" {
+#include <unistd.h>
+}
+
 #include <fstream>
 #include <stdexcept>
 #include <string>
@@ -106,8 +110,9 @@ logging::log(const char type, const char* file, const int line,
     if (!first_timestamp)
         first_timestamp = now;
 
-    const std::string message = F("%s %c %s:%d: %s") %
-        now.strftime(timestamp_format) % type % file % line % user_message;
+    const std::string message = F("%s %c %d %s:%d: %s") %
+        now.strftime(timestamp_format) % type % ::getpid() % file % line %
+        user_message;
     if (logfile.get() == NULL)
         backlog.push_back(message);
     else {
