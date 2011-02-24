@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,7 @@ extern "C" {
 
 #include "utils/datetime.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/logging/macros.hpp"
 #include "utils/process/children.ipp"
 #include "utils/process/exceptions.hpp"
 #include "utils/process/fdstream.hpp"
@@ -147,6 +148,7 @@ static process::status
 safe_wait(const pid_t pid)
 {
 retry:
+    LD(F("Waiting for pid=%d, no timeout") % pid);
     int stat_loc;
     if (process::detail::syscall_waitpid(pid, &stat_loc, 0) == -1) {
         const int original_errno = errno;
@@ -194,12 +196,16 @@ callback(void)
 static process::status
 timed_wait(const pid_t pid, const datetime::delta& timeout)
 {
+    LD(F("Waiting for pid=%d: timeout seconds=%d, useconds=%d") % pid %
+       timeout.seconds % timeout.useconds);
+
     timed_wait__aux::fired = false;
     timed_wait__aux::pid = pid;
     signals::timer timer(timeout, timed_wait__aux::callback);
     const process::status status = safe_wait(pid);
     timer.unprogram();
     if (timed_wait__aux::fired) {
+        LD(F("Process %d timed out; sending KILL signal") % pid);
         (void)::killpg(pid, SIGKILL);
         throw process::timeout_error(F("The timeout was exceeded while waiting "
             "for process %d; forcibly killed") % pid);
@@ -282,6 +288,8 @@ process::child_with_files::fork_aux(const fs::path& stdout_file,
         }
         return std::auto_ptr< process::child_with_files >(NULL);
     } else {
+        LD(F("Spawned process %d: stdout=%s, stderr=%s") % pid % stdout_file %
+           stderr_file);
         return std::auto_ptr< process::child_with_files >(
             new process::child_with_files(new impl(pid)));
     }
@@ -369,6 +377,7 @@ process::child_with_output::fork_aux(void)
         return std::auto_ptr< process::child_with_output >(NULL);
     } else {
         ::close(fds[1]);
+        LD(F("Spawned process %d: stdout and stderr inherited") % pid);
         return std::auto_ptr< process::child_with_output >(
             new process::child_with_output(new impl(
                 pid, new process::ifdstream(fds[0]))));
@@ -411,6 +420,11 @@ process::exec(const fs::path& program, const std::vector< std::string >& args)
     for (std::vector< std::string >::size_type i = 0; i < args.size(); i++)
         argv[1 + i] = duplicate_cstring(args[i].c_str());
     argv[1 + args.size()] = NULL;
+
+    std::string plain_command;
+    for (char** arg = argv; *arg != NULL; arg++)
+        plain_command += F(" %s") % *arg;
+    LD(F("Executing%s") % plain_command);
 
     const int ret = ::execv(program.c_str(), argv);
     const int original_errno = errno;

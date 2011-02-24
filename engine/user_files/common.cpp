@@ -27,7 +27,9 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "engine/user_files/common.hpp"
+#include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/logging/macros.hpp"
 #include "utils/lua/exceptions.hpp"
 #include "utils/lua/module_fs.hpp"
 #include "utils/lua/operations.hpp"
@@ -118,6 +120,8 @@ void
 user_files::init(lua::state& state, const fs::path& file,
                  const char* luadir_for_testing)
 {
+    LI(F("Loading user file '%s'") % file);
+
     lua::stack_cleaner cleaner(state);
 
     state.open_base();

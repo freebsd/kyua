@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,7 @@
 #include "engine/test_program.hpp"
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/logging/macros.hpp"
 #include "utils/process/children.ipp"
 #include "utils/process/exceptions.hpp"
 #include "utils/sanity.hpp"
@@ -184,6 +185,8 @@ engine::detail::parse_test_cases(const utils::fs::path& program,
 engine::test_cases_vector
 engine::load_test_cases(const utils::fs::path& program)
 {
+    LI(F("Obtaining test cases list from test program '%s'") % program);
+
     std::auto_ptr< process::child_with_output > child;
 
     try {

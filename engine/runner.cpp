@@ -48,6 +48,7 @@ extern "C" {
 #include "utils/defs.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/logging/macros.hpp"
 #include "utils/fs/auto_cleaners.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
@@ -370,6 +371,7 @@ run_test_case_safe(const engine::test_case& test_case,
 
     const fs::path result_file(workdir.directory() / "result.txt");
 
+    LI(F("Running test case body for '%s'") % test_case.identifier.str());
     const optional< process::status > body_status = fork_and_wait(
         execute_test_case_body(test_case, result_file, rundir, config,
                                test_suite),
@@ -379,6 +381,8 @@ run_test_case_safe(const engine::test_case& test_case,
 
     optional< process::status > cleanup_status;
     if (test_case.has_cleanup) {
+        LI(F("Running test case cleanup for '%s'") %
+           test_case.identifier.str());
         cleanup_status = fork_and_wait(
             execute_test_case_cleanup(test_case, rundir, config, test_suite),
             workdir.directory() / "cleanup-stdout.txt",
@@ -419,6 +423,8 @@ runner::run_test_case(const engine::test_case& test_case,
                       const user_files::config& config,
                       const std::string& test_suite)
 {
+    LI(F("Processing test case '%s'") % test_case.identifier.str());
+
     results::result_ptr result;
     try {
         result = run_test_case_safe(test_case, config, test_suite);
@@ -444,6 +450,8 @@ runner::run_test_program(const user_files::test_program& test_program,
                          const user_files::config& config,
                          runner::hooks* hooks)
 {
+    LI(F("Processing test program '%s'") % test_program.binary_path);
+
     engine::test_cases_vector test_cases;
     try {
         test_cases = engine::load_test_cases(test_program.binary_path);

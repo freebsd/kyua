@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,6 +27,8 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "utils/cmdline/globals.hpp"
+#include "utils/format/macros.hpp"
+#include "utils/logging/macros.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/sanity.hpp"
 
@@ -57,6 +59,7 @@ cmdline::init(const char* argv0, const bool override_for_testing)
     if (!override_for_testing)
         PRE_MSG(Progname.empty(), "cmdline::init called more than once");
     Progname = utils::fs::path(argv0).leaf_name();
+    LD(F("Program name: %s") % Progname);
     POST(!Progname.empty());
 }
 

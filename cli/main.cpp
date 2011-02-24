@@ -228,6 +228,11 @@ cli::main(const int argc, const char* const* const argv)
 {
     LI(F("%s %s") % PACKAGE % VERSION);
 
+    std::string plain_args;
+    for (const char* const* arg = argv; *arg != NULL; arg++)
+        plain_args += F(" %s") % *arg;
+    LI(F("Command line:%s") % plain_args);
+
     cmdline::init(argv[0]);
     cmdline::ui ui;
 

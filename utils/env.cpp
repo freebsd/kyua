@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,6 +37,7 @@
 
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
 
 using utils::none;
@@ -53,10 +54,13 @@ optional< std::string >
 utils::getenv(const std::string& name)
 {
     const char* value = std::getenv(name.c_str());
-    if (value == NULL)
+    if (value == NULL) {
+        LD(F("Environment variable '%s' is not defined") % name);
         return none;
-    else
+    } else {
+        LD(F("Environment variable '%s' is '%s'") % name % value);
         return utils::make_optional(std::string(value));
+    }
 }
 
 
@@ -69,6 +73,7 @@ utils::getenv(const std::string& name)
 void
 utils::setenv(const std::string& name, const std::string& val)
 {
+    LD(F("Setting environment variable '%s' to '%s'") % name % val);
 #if defined(HAVE_SETENV)
     if (::setenv(name.c_str(), val.c_str(), 1) == -1) {
         const int original_errno = errno;
@@ -98,6 +103,7 @@ utils::setenv(const std::string& name, const std::string& val)
 void
 utils::unsetenv(const std::string& name)
 {
+    LD(F("Unsetting environment variable '%s'") % name);
 #if defined(HAVE_UNSETENV)
     if (::unsetenv(name.c_str()) == -1) {
         const int original_errno = errno;

@@ -36,6 +36,7 @@ extern "C" {
 #include <stdexcept>
 
 #include "utils/format/macros.hpp"
+#include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/passwd.hpp"
 #include "utils/sanity.hpp"
@@ -52,6 +53,18 @@ static utils::optional< passwd_ns::user > fake_current_user;
 
 /// If not empty, defines the current set of mock users.
 static std::vector< passwd_ns::user > mock_users;
+
+
+/// Formats a user for logging purposes.
+///
+/// \param user The user to format.
+///
+/// \return The user as a string.
+static std::string
+format_user(const passwd_ns::user& user)
+{
+    return F("name=%s, uid=%d, gid=%d") % user.name % user.uid % user.gid;
+}
 
 
 }  // anonymous namespace
@@ -87,10 +100,15 @@ passwd_ns::user::is_root(void) const
 passwd_ns::user
 passwd_ns::current_user(void)
 {
-    if (fake_current_user)
-        return fake_current_user.get();
-    else
-        return find_user_by_uid(::getuid());
+    if (fake_current_user) {
+        const user u = fake_current_user.get();
+        LD(F("Current user is fake: %s") % format_user(u));
+        return u;
+    } else {
+        const user u = find_user_by_uid(::getuid());
+        LD(F("Current user is: %s") % format_user(u));
+        return u;
+    }
 }
 
 
@@ -103,6 +121,8 @@ void
 passwd_ns::drop_privileges(const user& unprivileged_user)
 {
     PRE(::getuid() == 0);
+
+    LD(F("Dropping privileges to user: %s") % format_user(unprivileged_user));
 
     if (::setgid(unprivileged_user.gid) == -1)
         throw std::runtime_error(F("Failed to drop group privileges (current "
