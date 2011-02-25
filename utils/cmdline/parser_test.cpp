@@ -279,19 +279,19 @@ ATF_TEST_CASE_BODY(some_args__some_options)
 ATF_TEST_CASE_WITHOUT_HEAD(some_options__all_known);
 ATF_TEST_CASE_BODY(some_options__all_known)
 {
-    const int argc = 15;
+    const int argc = 14;
     const char* const argv[] = {
         "progname",
         "-a",
         "-bvalue_b",
         "-c", "value_c",
-        "--d_long",  // Has default; can't be given as short option.
+        //"-d",  // Options with default optional values are unsupported.
         "-evalue_e",  // Has default; overriden.
         "--f_long",
         "--g_long=value_g",
         "--h_long", "value_h",
-        "--i_long",  // Has default.
-        "--j_long=value_j",  // Has default; overriden.
+        //"--i_long",  // Options with default optional values are unsupported.
+        "--j_long", "value_j",  // Has default; overriden as separate argument.
         "arg1", "arg2", NULL,
     };
     const bool_option a('a', "a_long", "");

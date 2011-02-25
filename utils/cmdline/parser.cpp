@@ -86,12 +86,9 @@ options_to_getopt_data(const cmdline::options_vector& options,
         ::option& long_option = data.long_options[i];
 
         long_option.name = option->long_name().c_str();
-        if (option->needs_arg()) {
-            if (option->has_default_value())
-                long_option.has_arg = optional_argument;
-            else
-                long_option.has_arg = required_argument;
-        } else
+        if (option->needs_arg())
+            long_option.has_arg = required_argument;
+        else
             long_option.has_arg = no_argument;
 
         int id = -1;
