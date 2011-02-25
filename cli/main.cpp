@@ -164,6 +164,7 @@ safe_main(cmdline::ui* ui, int argc, const char* const argv[],
 fs::path
 cli::detail::default_log_name(void)
 {
+    // Update doc/troubleshooting.texi if you change this algorithm.
     const optional< std::string > home(utils::getenv("HOME"));
     if (home) {
         return logging::generate_log_name(fs::path(home.get()) / ".kyua" /

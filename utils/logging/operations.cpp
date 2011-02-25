@@ -85,6 +85,7 @@ logging::generate_log_name(const fs::path& logdir, const std::string& progname)
 {
     if (!first_timestamp)
         first_timestamp = datetime::timestamp::now();
+    // Update doc/troubleshooting.texi if you change the name format.
     return logdir / (F("%s.%s.log") % progname %
                      first_timestamp.get().strftime(timestamp_format));
 }
@@ -110,6 +111,7 @@ logging::log(const char type, const char* file, const int line,
     if (!first_timestamp)
         first_timestamp = now;
 
+    // Update doc/troubleshooting.texi if you change the log format.
     const std::string message = F("%s %c %d %s:%d: %s") %
         now.strftime(timestamp_format) % type % ::getpid() % file % line %
         user_message;

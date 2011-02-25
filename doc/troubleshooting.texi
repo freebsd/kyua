@@ -1,0 +1,139 @@
+@c Copyright 2011 Google Inc.
+@c All rights reserved.
+@c
+@c Redistribution and use in source and binary forms, with or without
+@c modification, are permitted provided that the following conditions are
+@c met:
+@c
+@c * Redistributions of source code must retain the above copyright
+@c   notice, this list of conditions and the following disclaimer.
+@c * Redistributions in binary form must reproduce the above copyright
+@c   notice, this list of conditions and the following disclaimer in the
+@c   documentation and/or other materials provided with the distribution.
+@c * Neither the name of Google Inc. nor the names of its contributors
+@c   may be used to endorse or promote products derived from this software
+@c   without specific prior written permission.
+@c
+@c THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+@c "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+@c LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+@c A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+@c OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+@c SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+@c LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+@c DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+@c THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+@c (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+@c OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+@node Troubleshooting
+@chapter Troubleshooting
+
+@cindex troubleshooting
+@cindex debugging
+
+This chapter describes all the features that Kyua offers to end users
+and developers to track down any run time problems that they may
+experience.  It also provides some pointers and guidelines as to how
+to report such problems to the developers.
+
+@menu
+* Logging:: Gathering a runtime trace of the execution of Kyua.
+* Bug reporting:: How and where to report bugs.
+@end menu
+
+@node Logging
+@section Logging
+
+@cindex logging
+
+@command{kyua} has a logging facility that collects all kinds of
+events at run time.  These events are always logged to a file so that
+the log is available when it is most needed: right after a problem
+happens (e.g. right after the tool crashes, because the crash might be
+not easy to reproduce!).
+
+@menu
+* Log file location:: Default location and the @option{--logfile} option.
+* Log file format:: Description of the contents of log files.
+@end menu
+
+@node Log file location
+@subsection Log file location
+
+Log files are always created.  There is no way to disable them other
+than sending them to @file{/dev/null}.  The reason for this is that
+log files are most useful right after problems happen, but it is not
+possible to predict when such problems will actually happen.
+
+@cindex --logfile
+The location of the log file can be manually specified with the
+@option{--logfile} option as follows:
+
+@verbatim
+$ kyua --logfile=/path/to/file.log [rest of the command line]
+@end verbatim
+
+If @option{--logfile} is not specified, there is a set of internal
+rules to decide where to put the log file and how to name it.
+
+Logs are stored in one of the following locations if
+@option{--logfile} is not provided:
+
+@itemize
+@item
+If the @env{HOME} variable is defined, the location for the log
+files is @file{~/.kyua/logs/}.
+@item
+Otherwise, if the @env{TMPDIR} variable is defined, the location for
+log files is the value of @env{TMPDIR}.
+@item
+Otherwise, the log files go to @file{/tmp}.
+@end itemize
+
+The naming scheme used for the log files, if not overriden with
+@option{--logfile}, is: @samp{<progname>.<timestamp>.log}.
+
+@node Log file format
+@subsection Log file format
+
+The log file is a plain text file containing one line per log record.
+The format of each line is as follows:
+
+@cindex log format
+@verbatim
+timestamp entry_type pid file:line: message
+@end verbatim
+
+@samp{entry_type} can be one of: @samp{E} for an error, @samp{W} for a
+warning, @samp{I} for an informational message and @samp{D} for a
+debug message.
+
+@node Bug reporting
+@section Bug reporting
+
+@cindex bug report
+@cindex reporting a bug
+
+If you think you have encountered a bug in Kyua, please spend some
+time to let the developers know about it.  This will ensure that the
+bug is addressed and potentially fixed in the next Kyua release.
+
+The first step in reporting a bug is to check if there already is a
+similar bug in the database.  Duplicate bugs waste everybody's time.
+You can check what issues are currently in the database by going to:
+@indicateurl{http://code.google.com/p/kyua/issues/list}.
+
+If there is no existing issue that describes an issue similar to the
+one you are experiencing, you can open a new one by visiting
+@indicateurl{http://code.google.com/p/kyua/issues/entry}.
+
+When doing so, please include as much detail as possible.  Among other
+things, explain what system you are running Kyua on, what were you
+trying to do, what exact messages you saw on the screen, how did you
+expect the program to behave, etc.
+
+Also, please include a copy of the log file corresponding to the
+problem you are experiencing.  Unless you have changed the location of
+the log files, you can most likely find them in @file{~/.kyua/logs/};
+see @ref{Log file location}.

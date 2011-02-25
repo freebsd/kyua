@@ -30,6 +30,7 @@ info_TEXINFOS = doc/kyua-cli.texi
 doc_kyua_cli_TEXINFOS  = doc/copying.texi
 doc_kyua_cli_TEXINFOS += doc/overview.texi
 doc_kyua_cli_TEXINFOS += doc/test_interface.texi
+doc_kyua_cli_TEXINFOS += doc/troubleshooting.texi
 
 man_MANS = doc/kyua.1
 CLEANFILES = doc/kyua.1

@@ -76,6 +76,7 @@ version @value{VERSION}.
 
 @menu
 * Overview:: A general introduction.
+* Troubleshooting:: Facilities and procedures to debug/report Kyua issues.
 
 Developer's information
 * Test interfaces:: Test program interfaces to the Kyua runtime engine.
@@ -88,6 +89,7 @@ Appendices and indices
 
 @include overview.texi
 @include test_interface.texi
+@include troubleshooting.texi
 
 
 @node Copying
