@@ -69,6 +69,8 @@ public:
     /// Type for a constant iterator.
     typedef impl_map::const_iterator const_iterator;
 
+    bool empty(void) const;
+
     const_iterator begin(void) const;
     const_iterator end(void) const;
 

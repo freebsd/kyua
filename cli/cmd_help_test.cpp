@@ -92,11 +92,13 @@ setup(cmdline::commands_map& commands)
 }
 
 
-}  // anonymous namespace
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(global);
-ATF_TEST_CASE_BODY(global)
+/// Performs a test on the global help (not that of a subcommand).
+///
+/// \param general_options The genral options supported by the tool, if any.
+/// \param ui The cmdline::mock_ui object to which to write the output.
+static void
+global_test(const cmdline::options_vector& general_options,
+            cmdline::ui_mock& ui)
 {
     cmdline::commands_map mock_commands;
     setup(mock_commands);
@@ -104,12 +106,17 @@ ATF_TEST_CASE_BODY(global)
     cmdline::args_vector args;
     args.push_back("help");
 
-    cmd_help cmd(&mock_commands);
-    cmdline::ui_mock ui;
+    cmd_help cmd(&general_options, &mock_commands);
     ATF_REQUIRE_EQ(EXIT_SUCCESS, cmd.main(&ui, args));
     ATF_REQUIRE(utils::grep_vector("^Usage: progname \\[general_options\\] "
-                                   "command \\[options\\] \\[args\\]$",
+                                   "command \\[command_options\\] \\[args\\]$",
                                    ui.out_log()));
+    if (general_options.empty())
+        ATF_REQUIRE(!utils::grep_vector("Available general options",
+                                        ui.out_log()));
+    else
+        ATF_REQUIRE(utils::grep_vector("Available general options",
+                                       ui.out_log()));
     ATF_REQUIRE(utils::grep_vector("mock_simple.*Simple command",
                                    ui.out_log()));
     ATF_REQUIRE(utils::grep_vector("mock_complex.*Complex command",
@@ -118,9 +125,43 @@ ATF_TEST_CASE_BODY(global)
 }
 
 
+}  // anonymous namespace
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(global__no_options);
+ATF_TEST_CASE_BODY(global__no_options)
+{
+    cmdline::ui_mock ui;
+
+    cmdline::options_vector general_options;
+
+    global_test(general_options, ui);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(global__some_options);
+ATF_TEST_CASE_BODY(global__some_options)
+{
+    cmdline::ui_mock ui;
+
+    cmdline::options_vector general_options;
+    const cmdline::bool_option flag_a("flag_a", "Flag A");
+    general_options.push_back(&flag_a);
+    const cmdline::string_option flag_c('c', "flag_c", "Flag C", "c_arg");
+    general_options.push_back(&flag_c);
+
+    global_test(general_options, ui);
+
+    ATF_REQUIRE(utils::grep_vector("--flag_a", ui.out_log()));
+    ATF_REQUIRE(utils::grep_vector("--flag_c=c_arg", ui.out_log()));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(subcommand__simple);
 ATF_TEST_CASE_BODY(subcommand__simple)
 {
+    cmdline::options_vector general_options;
+
     cmdline::commands_map mock_commands;
     setup(mock_commands);
 
@@ -128,11 +169,12 @@ ATF_TEST_CASE_BODY(subcommand__simple)
     args.push_back("help");
     args.push_back("mock_simple");
 
-    cmd_help cmd(&mock_commands);
+    cmd_help cmd(&general_options, &mock_commands);
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(EXIT_SUCCESS, cmd.main(&ui, args));
     ATF_REQUIRE(utils::grep_vector("^Usage: progname \\[general_options\\] "
                                    "mock_simple$", ui.out_log()));
+    ATF_REQUIRE(!utils::grep_vector("Available.*options", ui.out_log()));
     ATF_REQUIRE(ui.err_log().empty());
 }
 
@@ -140,6 +182,13 @@ ATF_TEST_CASE_BODY(subcommand__simple)
 ATF_TEST_CASE_WITHOUT_HEAD(subcommand__complex);
 ATF_TEST_CASE_BODY(subcommand__complex)
 {
+    cmdline::options_vector general_options;
+    const cmdline::bool_option global_a("global_a", "Global A");
+    general_options.push_back(&global_a);
+    const cmdline::string_option global_c('c', "global_c", "Global C",
+                                          "c_global");
+    general_options.push_back(&global_c);
+
     cmdline::commands_map mock_commands;
     setup(mock_commands);
 
@@ -147,12 +196,16 @@ ATF_TEST_CASE_BODY(subcommand__complex)
     args.push_back("help");
     args.push_back("mock_complex");
 
-    cmd_help cmd(&mock_commands);
+    cmd_help cmd(&general_options, &mock_commands);
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(EXIT_SUCCESS, cmd.main(&ui, args));
     ATF_REQUIRE(utils::grep_vector("^Usage: progname \\[general_options\\] "
-                                   "mock_complex \\[options\\] "
+                                   "mock_complex \\[command_options\\] "
                                    "\\[arg1 .. argN\\]$", ui.out_log()));
+    ATF_REQUIRE(utils::grep_vector("Available general options", ui.out_log()));
+    ATF_REQUIRE(utils::grep_vector("--global_a", ui.out_log()));
+    ATF_REQUIRE(utils::grep_vector("--global_c=c_global", ui.out_log()));
+    ATF_REQUIRE(utils::grep_vector("Available command options", ui.out_log()));
     ATF_REQUIRE(utils::grep_vector("--flag_a:.*Flag A", ui.out_log()));
     ATF_REQUIRE(utils::grep_vector("-b.*--flag_b:.*Flag B", ui.out_log()));
     ATF_REQUIRE(utils::grep_vector("-c c_arg.*--flag_c=c_arg:.*Flag C",
@@ -166,6 +219,8 @@ ATF_TEST_CASE_BODY(subcommand__complex)
 ATF_TEST_CASE_WITHOUT_HEAD(subcommand__unknown);
 ATF_TEST_CASE_BODY(subcommand__unknown)
 {
+    cmdline::options_vector general_options;
+
     cmdline::commands_map mock_commands;
     setup(mock_commands);
 
@@ -173,7 +228,7 @@ ATF_TEST_CASE_BODY(subcommand__unknown)
     args.push_back("help");
     args.push_back("foobar");
 
-    cmd_help cmd(&mock_commands);
+    cmd_help cmd(&general_options, &mock_commands);
     cmdline::ui_mock ui;
     ATF_REQUIRE_THROW_RE(cmdline::usage_error, "command foobar.*not exist",
                          cmd.main(&ui, args));
@@ -185,6 +240,8 @@ ATF_TEST_CASE_BODY(subcommand__unknown)
 ATF_TEST_CASE_WITHOUT_HEAD(invalid_args);
 ATF_TEST_CASE_BODY(invalid_args)
 {
+    cmdline::options_vector general_options;
+
     cmdline::commands_map mock_commands;
     setup(mock_commands);
 
@@ -193,7 +250,7 @@ ATF_TEST_CASE_BODY(invalid_args)
     args.push_back("mock_simple");
     args.push_back("mock_complex");
 
-    cmd_help cmd(&mock_commands);
+    cmd_help cmd(&general_options, &mock_commands);
     cmdline::ui_mock ui;
     ATF_REQUIRE_THROW_RE(cmdline::usage_error, "Too many arguments",
                          cmd.main(&ui, args));
@@ -204,7 +261,8 @@ ATF_TEST_CASE_BODY(invalid_args)
 
 ATF_INIT_TEST_CASES(tcs)
 {
-    ATF_ADD_TEST_CASE(tcs, global);
+    ATF_ADD_TEST_CASE(tcs, global__no_options);
+    ATF_ADD_TEST_CASE(tcs, global__some_options);
     ATF_ADD_TEST_CASE(tcs, subcommand__simple);
     ATF_ADD_TEST_CASE(tcs, subcommand__complex);
     ATF_ADD_TEST_CASE(tcs, subcommand__unknown);

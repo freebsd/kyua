@@ -64,6 +64,16 @@ cmdline::commands_map::insert(command_ptr command)
 }
 
 
+/// Checks whether the list of commands is empty.
+///
+/// \return True if there are no commands in this map.
+bool
+cmdline::commands_map::empty(void) const
+{
+    return _commands.empty();
+}
+
+
 /// Returns a constant iterator to the beginning of the commands sequence.
 ///
 /// \return An map (string -> base_command*) iterator.

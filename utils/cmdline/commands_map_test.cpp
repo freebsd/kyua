@@ -59,6 +59,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(empty);
 ATF_TEST_CASE_BODY(empty)
 {
     cmdline::commands_map commands;
+    ATF_REQUIRE(commands.empty());
     ATF_REQUIRE(commands.begin() == commands.end());
 }
 
@@ -72,6 +73,8 @@ ATF_TEST_CASE_BODY(some)
     cmdline::commands_map commands;
     commands.insert(cmdline::command_ptr(cmd1));
     commands.insert(cmdline::command_ptr(cmd2));
+
+    ATF_REQUIRE(!commands.empty());
 
     cmdline::commands_map::const_iterator iter = commands.begin();
     ATF_REQUIRE((*iter).first == "cmd1");

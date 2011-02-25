@@ -45,27 +45,6 @@ using cli::cmd_help;
 namespace {
 
 
-/// Prints the summary of commands and generic options.
-///
-/// \param ui Object to interact with the I/O of the program.
-/// \param commands The set of commands for which to print help.
-static void
-general_help(cmdline::ui* ui, const cmdline::commands_map* commands)
-{
-    ui->out(F("Usage: %s [general_options] command [options] [args]") %
-              cmdline::progname());
-
-    ui->out("");
-    ui->out("Available commands:");
-    for (cmdline::commands_map::const_iterator iter = commands->begin();
-         iter != commands->end(); iter++) {
-        const cmdline::base_command* command = (*iter).second;
-        ui->out(F("    %s: %s.") % command->name() %
-                command->short_description());
-    }
-}
-
-
 /// Prints help for a set of options.
 ///
 /// \param ui Object to interact with the I/O of the program.
@@ -75,7 +54,6 @@ options_help(cmdline::ui* ui, const cmdline::options_vector& options)
 {
     PRE(!options.empty());
 
-    ui->out("Available options:");
     for (cmdline::options_vector::const_iterator iter = options.begin();
          iter != options.end(); iter++) {
         const cmdline::base_option* option = *iter;
@@ -94,23 +72,63 @@ options_help(cmdline::ui* ui, const cmdline::options_vector& options)
 }
 
 
+/// Prints the summary of commands and generic options.
+///
+/// \param ui Object to interact with the I/O of the program.
+/// \param commands The set of commands for which to print help.
+static void
+general_help(cmdline::ui* ui, const cmdline::options_vector* options,
+             const cmdline::commands_map* commands)
+{
+    PRE(!commands->empty());
+
+    ui->out(F("Usage: %s [general_options] command [command_options] [args]") %
+              cmdline::progname());
+
+    if (!options->empty()) {
+        ui->out("");
+        ui->out("Available general options:");
+        options_help(ui, *options);
+    }
+
+    ui->out("");
+    ui->out("Available commands:");
+    for (cmdline::commands_map::const_iterator iter = commands->begin();
+         iter != commands->end(); iter++) {
+        const cmdline::base_command* command = (*iter).second;
+        ui->out(F("    %s: %s.") % command->name() %
+                command->short_description());
+    }
+}
+
+
 /// Prints help for a particular subcommand.
 ///
 /// \param ui Object to interact with the I/O of the program.
+/// \param general_options The options that apply to all commands.
 /// \param command Pointer to the command to describe.
 static void
-subcommand_help(cmdline::ui* ui, const utils::cmdline::base_command* command)
+subcommand_help(cmdline::ui* ui,
+                const utils::cmdline::options_vector* general_options,
+                const utils::cmdline::base_command* command)
 {
     ui->out(F("Usage: %s [general_options] %s%s%s") %
             cmdline::progname() % command->name() %
-            (command->options().empty() ? "" : " [options]") %
+            (command->options().empty() ? "" : " [command_options]") %
             (command->arg_list().empty() ? "" : (" " + command->arg_list())));
     ui->out("");
     ui->out(F("%s.") % command->short_description());
 
+    if (!general_options->empty()) {
+        ui->out("");
+        ui->out("Available general options:");
+        options_help(ui, *general_options);
+    }
+
     const cmdline::options_vector& options = command->options();
     if (!options.empty()) {
         ui->out("");
+        ui->out("Available command options:");
         options_help(ui, options);
     }
 }
@@ -121,11 +139,14 @@ subcommand_help(cmdline::ui* ui, const utils::cmdline::base_command* command)
 
 /// Default constructor for cmd_help.
 ///
+/// \param options_ The set of program-wide options for which to provide help.
 /// \param commands_ The set of commands for which to provide help.
-cmd_help::cmd_help(const cmdline::commands_map* commands_) :
+cmd_help::cmd_help(const cmdline::options_vector* options_,
+                   const cmdline::commands_map* commands_) :
     cmdline::base_command(
         "help", "[subcommand]", 0, 1,
         "Shows usage information"),
+    _options(options_),
     _commands(commands_)
 {
 }
@@ -141,7 +162,7 @@ int
 cmd_help::run(utils::cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
 {
     if (cmdline.arguments().empty()) {
-        general_help(ui, _commands);
+        general_help(ui, _options, _commands);
     } else {
         INV(cmdline.arguments().size() == 1);
         const std::string& cmdname = cmdline.arguments()[0];
@@ -150,7 +171,7 @@ cmd_help::run(utils::cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
             throw cmdline::usage_error(F("The command %s does not exist") %
                                        cmdname);
         else
-            subcommand_help(ui, command);
+            subcommand_help(ui, _options, command);
     }
 
     return EXIT_SUCCESS;

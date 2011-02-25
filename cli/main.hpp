@@ -57,7 +57,7 @@ utils::fs::path default_log_name(void);
 
 
 int main(utils::cmdline::ui*, const int, const char* const* const,
-         utils::cmdline::commands_map&);
+         utils::cmdline::command_ptr = utils::cmdline::command_ptr());
 int main(const int, const char* const* const);
 
 

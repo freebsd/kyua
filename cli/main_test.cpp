@@ -83,24 +83,14 @@ public:
 };
 
 
-static void
-setup(cmdline::commands_map& commands)
-{
-    cmdline::init("progname");
-
-    commands.insert(cmdline::command_ptr(new cmd_mock_error()));
-    commands.insert(cmdline::command_ptr(new cmd_mock_write()));
-}
-
-
 }  // anonymous namespace
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(detail__default_log_name__home);
 ATF_TEST_CASE_BODY(detail__default_log_name__home)
 {
-    cmdline::init("progname1");
     datetime::set_mock_now(2011, 2, 21, 21, 10, 30);
+    cmdline::init("progname1");
 
     utils::setenv("HOME", "/home//fake");
     utils::setenv("TMPDIR", "/do/not/use/this");
@@ -113,8 +103,8 @@ ATF_TEST_CASE_BODY(detail__default_log_name__home)
 ATF_TEST_CASE_WITHOUT_HEAD(detail__default_log_name__tmpdir);
 ATF_TEST_CASE_BODY(detail__default_log_name__tmpdir)
 {
-    cmdline::init("progname2");
     datetime::set_mock_now(2011, 2, 21, 21, 10, 50);
+    cmdline::init("progname2");
 
     utils::unsetenv("HOME");
     utils::setenv("TMPDIR", "/a/b//c");
@@ -126,8 +116,8 @@ ATF_TEST_CASE_BODY(detail__default_log_name__tmpdir)
 ATF_TEST_CASE_WITHOUT_HEAD(detail__default_log_name__hardcoded);
 ATF_TEST_CASE_BODY(detail__default_log_name__hardcoded)
 {
-    cmdline::init("progname3");
     datetime::set_mock_now(2011, 2, 21, 21, 15, 00);
+    cmdline::init("progname3");
 
     utils::unsetenv("HOME");
     utils::unsetenv("LOGDIR");
@@ -139,14 +129,13 @@ ATF_TEST_CASE_BODY(detail__default_log_name__hardcoded)
 ATF_TEST_CASE_WITHOUT_HEAD(main__no_args);
 ATF_TEST_CASE_BODY(main__no_args)
 {
-    cmdline::commands_map mock_commands;
-    setup(mock_commands);
+    cmdline::init("progname");
 
     const int argc = 1;
     const char* const argv[] = {"progname", NULL};
 
     cmdline::ui_mock ui;
-    ATF_REQUIRE_EQ(EXIT_FAILURE, cli::main(&ui, argc, argv, mock_commands));
+    ATF_REQUIRE_EQ(EXIT_FAILURE, cli::main(&ui, argc, argv));
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE(utils::grep_vector("Usage error: No command provided",
                                    ui.err_log()));
@@ -157,14 +146,13 @@ ATF_TEST_CASE_BODY(main__no_args)
 ATF_TEST_CASE_WITHOUT_HEAD(main__unknown_command);
 ATF_TEST_CASE_BODY(main__unknown_command)
 {
-    cmdline::commands_map mock_commands;
-    setup(mock_commands);
+    cmdline::init("progname");
 
     const int argc = 2;
     const char* const argv[] = {"progname", "foo", NULL};
 
     cmdline::ui_mock ui;
-    ATF_REQUIRE_EQ(EXIT_FAILURE, cli::main(&ui, argc, argv, mock_commands));
+    ATF_REQUIRE_EQ(EXIT_FAILURE, cli::main(&ui, argc, argv));
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE(utils::grep_vector("Usage error: Unknown command.*foo",
                                    ui.err_log()));
@@ -175,18 +163,16 @@ ATF_TEST_CASE_BODY(main__unknown_command)
 ATF_TEST_CASE_WITHOUT_HEAD(main__logfile__default);
 ATF_TEST_CASE_BODY(main__logfile__default)
 {
-    cmdline::commands_map mock_commands;
-    setup(mock_commands);
+    datetime::set_mock_now(2011, 2, 21, 21, 30, 00);
+    cmdline::init("progname");
 
     const int argc = 1;
     const char* const argv[] = {"progname", NULL};
 
-    datetime::set_mock_now(2011, 2, 21, 21, 30, 00);
-
     cmdline::ui_mock ui;
     ATF_REQUIRE(!fs::exists(fs::path(
         ".kyua/logs/progname.20110221-213000.log")));
-    ATF_REQUIRE_EQ(EXIT_FAILURE, cli::main(&ui, argc, argv, mock_commands));
+    ATF_REQUIRE_EQ(EXIT_FAILURE, cli::main(&ui, argc, argv));
     ATF_REQUIRE(fs::exists(fs::path(
         ".kyua/logs/progname.20110221-213000.log")));
 }
@@ -195,17 +181,15 @@ ATF_TEST_CASE_BODY(main__logfile__default)
 ATF_TEST_CASE_WITHOUT_HEAD(main__logfile__override);
 ATF_TEST_CASE_BODY(main__logfile__override)
 {
-    cmdline::commands_map mock_commands;
-    setup(mock_commands);
+    datetime::set_mock_now(2011, 2, 21, 21, 30, 00);
+    cmdline::init("progname");
 
     const int argc = 2;
     const char* const argv[] = {"progname", "--logfile=test.log", NULL};
 
-    datetime::set_mock_now(2011, 2, 21, 21, 30, 00);
-
     cmdline::ui_mock ui;
     ATF_REQUIRE(!fs::exists(fs::path("test.log")));
-    ATF_REQUIRE_EQ(EXIT_FAILURE, cli::main(&ui, argc, argv, mock_commands));
+    ATF_REQUIRE_EQ(EXIT_FAILURE, cli::main(&ui, argc, argv));
     ATF_REQUIRE(!fs::exists(fs::path(
         ".kyua/logs/progname.20110221-213000.log")));
     ATF_REQUIRE(fs::exists(fs::path("test.log")));
@@ -215,14 +199,14 @@ ATF_TEST_CASE_BODY(main__logfile__override)
 ATF_TEST_CASE_WITHOUT_HEAD(main__subcommand__ok);
 ATF_TEST_CASE_BODY(main__subcommand__ok)
 {
-    cmdline::commands_map mock_commands;
-    setup(mock_commands);
+    cmdline::init("progname");
 
     const int argc = 2;
     const char* const argv[] = {"progname", "mock_write", NULL};
 
     cmdline::ui_mock ui;
-    ATF_REQUIRE_EQ(98, cli::main(&ui, argc, argv, mock_commands));
+    ATF_REQUIRE_EQ(98, cli::main(&ui, argc, argv,
+                                 cmdline::command_ptr(new cmd_mock_write())));
     ATF_REQUIRE_EQ(1, ui.out_log().size());
     ATF_REQUIRE_EQ("stdout message from subcommand", ui.out_log()[0]);
     ATF_REQUIRE_EQ(1, ui.err_log().size());
@@ -233,14 +217,15 @@ ATF_TEST_CASE_BODY(main__subcommand__ok)
 ATF_TEST_CASE_WITHOUT_HEAD(main__subcommand__invalid_args);
 ATF_TEST_CASE_BODY(main__subcommand__invalid_args)
 {
-    cmdline::commands_map mock_commands;
-    setup(mock_commands);
+    cmdline::init("progname");
 
     const int argc = 3;
     const char* const argv[] = {"progname", "mock_write", "bar", NULL};
 
     cmdline::ui_mock ui;
-    ATF_REQUIRE_EQ(EXIT_FAILURE, cli::main(&ui, argc, argv, mock_commands));
+    ATF_REQUIRE_EQ(EXIT_FAILURE,
+                   cli::main(&ui, argc, argv,
+                             cmdline::command_ptr(new cmd_mock_write())));
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE(utils::grep_vector(
         "Usage error for command mock_write: Too many arguments.",
@@ -252,15 +237,15 @@ ATF_TEST_CASE_BODY(main__subcommand__invalid_args)
 ATF_TEST_CASE_WITHOUT_HEAD(main__subcommand__error);
 ATF_TEST_CASE_BODY(main__subcommand__error)
 {
-    cmdline::commands_map mock_commands;
-    setup(mock_commands);
+    cmdline::init("progname");
 
     const int argc = 2;
     const char* const argv[] = {"progname", "mock_error", NULL};
 
     cmdline::ui_mock ui;
     ATF_REQUIRE_THROW_RE(std::runtime_error, "unhandled",
-                         cli::main(&ui, argc, argv, mock_commands));
+                         cli::main(&ui, argc, argv,
+                                   cmdline::command_ptr(new cmd_mock_error())));
 }
 
 

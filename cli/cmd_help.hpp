@@ -40,10 +40,12 @@ namespace cli {
 
 /// Implementation of the "help" subcommand.
 class cmd_help : public utils::cmdline::base_command {
+    const utils::cmdline::options_vector* _options;
     const utils::cmdline::commands_map* _commands;
 
 public:
-    cmd_help(const utils::cmdline::commands_map*);
+    cmd_help(const utils::cmdline::options_vector*,
+             const utils::cmdline::commands_map*);
 
     int run(utils::cmdline::ui*, const utils::cmdline::parsed_cmdline&);
 };

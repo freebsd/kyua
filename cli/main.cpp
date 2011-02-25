@@ -109,7 +109,8 @@ run_subcommand(cmdline::ui* ui, cmdline::base_command* command,
 /// \param ui Object to interact with the I/O of the program.
 /// \param argc The number of arguments passed on the command line.
 /// \param argv NULL-terminated array containing the command line arguments.
-/// \param commands The commands recognized by the tool.
+/// \param mock_command An extra command provided for testing purposes; should
+///     just be NULL other than for tests.
 ///
 /// \throw cmdline::usage_error If the user ran the program with invalid
 ///     arguments.
@@ -118,14 +119,22 @@ run_subcommand(cmdline::ui* ui, cmdline::base_command* command,
 ///     abort and dump core.
 static int
 safe_main(cmdline::ui* ui, int argc, const char* const argv[],
-          cmdline::commands_map& commands)
+          cmdline::command_ptr mock_command)
 {
+    cmdline::options_vector options;
     const cmdline::path_option logfile_option(
         "logfile", "Path to the log file", "file",
         cli::detail::default_log_name().c_str());
-
-    cmdline::options_vector options;
     options.push_back(&logfile_option);
+
+    cmdline::commands_map commands;
+    commands.insert(cmdline::command_ptr(new cli::cmd_about()));
+    commands.insert(cmdline::command_ptr(new cli::cmd_help(&options,
+                                                           &commands)));
+    commands.insert(cmdline::command_ptr(new cli::cmd_list()));
+    commands.insert(cmdline::command_ptr(new cli::cmd_test()));
+    if (mock_command.get() != NULL)
+        commands.insert(mock_command);
 
     cmdline::parsed_cmdline cmdline = cmdline::parse(argc, argv, options);
 
@@ -180,7 +189,8 @@ cli::detail::default_log_name(void)
 /// \param ui Object to interact with the I/O of the program.
 /// \param argc The number of arguments passed on the command line.
 /// \param argv NULL-terminated array containing the command line arguments.
-/// \param commands The commands recognized by the tool.
+/// \param mock_command An extra command provided for testing purposes; should
+///     just be NULL other than for tests.
 ///
 /// \return 0 on success, some other integer on error.
 ///
@@ -189,10 +199,10 @@ cli::detail::default_log_name(void)
 ///     abort and dump core.
 int
 cli::main(cmdline::ui* ui, const int argc, const char* const* const argv,
-          cmdline::commands_map& commands)
+          cmdline::command_ptr mock_command)
 {
     try {
-        return safe_main(ui, argc, argv, commands);
+        return safe_main(ui, argc, argv, mock_command);
     } catch (const std::pair< std::string, cmdline::usage_error >& e) {
         const std::string message = F("Usage error for command %s: %s.") %
             e.first % e.second.what();
@@ -236,13 +246,7 @@ cli::main(const int argc, const char* const* const argv)
     cmdline::init(argv[0]);
     cmdline::ui ui;
 
-    cmdline::commands_map commands;
-    commands.insert(cmdline::command_ptr(new cli::cmd_about()));
-    commands.insert(cmdline::command_ptr(new cli::cmd_help(&commands)));
-    commands.insert(cmdline::command_ptr(new cli::cmd_list()));
-    commands.insert(cmdline::command_ptr(new cli::cmd_test()));
-
-    const int exit_code = main(&ui, argc, argv, commands);
+    const int exit_code = main(&ui, argc, argv);
     LI(F("Clean exit with code %d") % exit_code);
     return exit_code;
 }
