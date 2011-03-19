@@ -2,4 +2,4 @@ syntax("kyuafile", 1)
 
 test_suite("kyua")
 
-AtfTestProgram {name="syntax_test"}
+atf_test_program{name="syntax_test"}

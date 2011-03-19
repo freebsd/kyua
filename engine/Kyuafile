@@ -2,10 +2,10 @@ syntax("kyuafile", 1)
 
 test_suite("kyua")
 
-AtfTestProgram {name="exceptions_test"}
-AtfTestProgram {name="results_test"}
-AtfTestProgram {name="runner_test"}
-AtfTestProgram {name="test_case_test"}
-AtfTestProgram {name="test_program_test"}
+atf_test_program{name="exceptions_test"}
+atf_test_program{name="results_test"}
+atf_test_program{name="runner_test"}
+atf_test_program{name="test_case_test"}
+atf_test_program{name="test_program_test"}
 
 include("user_files/Kyuafile")

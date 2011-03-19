@@ -66,10 +66,10 @@ ATF_TEST_CASE_BODY(some_test_programs)
     ATF_REQUIRE(output);
     output << "syntax('kyuafile', 1)\n";
     output << "test_suite('the-default')\n";
-    output << "AtfTestProgram {name='test1'}\n";
-    output << "AtfTestProgram {name='test3', test_suite='overriden'}\n";
-    output << "AtfTestProgram {name='test2'}\n";
-    output << "AtfTestProgram {name='/a/foo'}\n";
+    output << "atf_test_program{name='test1'}\n";
+    output << "atf_test_program{name='test3', test_suite='overriden'}\n";
+    output << "atf_test_program{name='test2'}\n";
+    output << "atf_test_program{name='/a/foo'}\n";
     output.close();
 
     lua::state state;
@@ -98,7 +98,7 @@ ATF_TEST_CASE_BODY(include_absolute)
         ATF_REQUIRE(output);
         output << "syntax('kyuafile', 1)\n";
         output << "test_suite('top')\n";
-        output << "AtfTestProgram {name='test1'}\n";
+        output << "atf_test_program{name='test1'}\n";
         output << "include('dir/second.lua')";
         output.close();
     }
@@ -110,7 +110,7 @@ ATF_TEST_CASE_BODY(include_absolute)
         ATF_REQUIRE(output);
         output << "syntax('kyuafile', 1)\n";
         output << "test_suite('two')\n";
-        output << "AtfTestProgram {name='test2'}\n";
+        output << "atf_test_program{name='test2'}\n";
         output << "include('" << (fs::current_path() / "dir/third.lua")
                << "')\n";
         output.close();
@@ -121,7 +121,7 @@ ATF_TEST_CASE_BODY(include_absolute)
         ATF_REQUIRE(output);
         output << "syntax('kyuafile', 1)\n";
         output << "test_suite('three')\n";
-        output << "AtfTestProgram {name='test3'}\n";
+        output << "atf_test_program{name='test3'}\n";
         output.close();
     }
 
@@ -152,8 +152,8 @@ ATF_TEST_CASE_BODY(include_nested)
         ATF_REQUIRE(output);
         output << "syntax('kyuafile', 1)\n";
         output << "test_suite('foo')\n";
-        output << "AtfTestProgram {name='test1'}\n";
-        output << "AtfTestProgram {name='test2'}\n";
+        output << "atf_test_program{name='test1'}\n";
+        output << "atf_test_program{name='test2'}\n";
         output << "include('dir/test.lua')\n";
         output.close();
     }
@@ -163,7 +163,7 @@ ATF_TEST_CASE_BODY(include_nested)
         std::ofstream output("dir/test.lua");
         ATF_REQUIRE(output);
         output << "syntax('kyuafile', 1)\n";
-        output << "AtfTestProgram {name='test1', test_suite='bar'}\n";
+        output << "atf_test_program{name='test1', test_suite='bar'}\n";
         output << "include('foo/test.lua')\n";
         output.close();
     }
@@ -173,9 +173,9 @@ ATF_TEST_CASE_BODY(include_nested)
         std::ofstream output("dir/foo/test.lua");
         ATF_REQUIRE(output);
         output << "syntax('kyuafile', 1)\n";
-        output << "AtfTestProgram {name='bar', test_suite='baz'}\n";
-        output << "AtfTestProgram {name='baz', test_suite='baz'}\n";
-        output << "AtfTestProgram {name='/a/b/c', test_suite='baz2'}\n";
+        output << "atf_test_program{name='bar', test_suite='baz'}\n";
+        output << "atf_test_program{name='baz', test_suite='baz'}\n";
+        output << "atf_test_program{name='/a/b/c', test_suite='baz2'}\n";
         output.close();
     }
 
@@ -217,8 +217,8 @@ ATF_TEST_CASE_BODY(include_same_dir)
         ATF_REQUIRE(output);
         output << "syntax('kyuafile', 1)\n";
         output << "test_suite('abcd')\n";
-        output << "AtfTestProgram {name='test1'}\n";
-        output << "AtfTestProgram {name='test2'}\n";
+        output << "atf_test_program{name='test1'}\n";
+        output << "atf_test_program{name='test2'}\n";
         output << "include('second.lua')\n";
         output.close();
     }
@@ -228,7 +228,7 @@ ATF_TEST_CASE_BODY(include_same_dir)
         ATF_REQUIRE(output);
         output << "syntax('kyuafile', 1)\n";
         output << "test_suite('efgh')\n";
-        output << "AtfTestProgram {name='test12'}\n";
+        output << "atf_test_program{name='test12'}\n";
         output.close();
     }
 
@@ -287,7 +287,7 @@ ATF_TEST_CASE_BODY(test_suite__not_recursive)
         ATF_REQUIRE(output);
         output << "syntax('kyuafile', 1)\n";
         output << "test_suite('abcd')\n";
-        output << "AtfTestProgram {name='test1'}\n";
+        output << "atf_test_program{name='test1'}\n";
         output << "include('second.lua')\n";
         output.close();
     }
@@ -296,7 +296,7 @@ ATF_TEST_CASE_BODY(test_suite__not_recursive)
         std::ofstream output("second.lua");
         ATF_REQUIRE(output);
         output << "syntax('kyuafile', 1)\n";
-        output << "AtfTestProgram {name='test12'}\n";
+        output << "atf_test_program{name='test12'}\n";
         output.close();
     }
 

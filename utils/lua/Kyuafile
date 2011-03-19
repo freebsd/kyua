@@ -2,7 +2,7 @@ syntax("kyuafile", 1)
 
 test_suite("kyua")
 
-AtfTestProgram {name="exceptions_test"}
-AtfTestProgram {name="module_fs_test"}
-AtfTestProgram {name="operations_test"}
-AtfTestProgram {name="wrap_test"}
+atf_test_program{name="exceptions_test"}
+atf_test_program{name="module_fs_test"}
+atf_test_program{name="operations_test"}
+atf_test_program{name="wrap_test"}

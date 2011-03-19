@@ -40,8 +40,8 @@
 -- ---- cut here ----
 -- syntax("kyuafile", 1)
 --
--- AtfTestProgram {name="foo_test"}
--- AtfTestProgram {name="bar_test"}
+-- atf_test_program{name="foo_test"}
+-- atf_test_program{name="bar_test"}
 -- ... more test program definitions ...
 --
 -- include("dir1/Kyuafile")
@@ -114,7 +114,7 @@ end
 --
 -- \param in_properties table, The properties describing the test program.
 --     The allowed keys and their types are: name:string, test_suite:string.
-function AtfTestProgram(in_properties)
+function atf_test_program(in_properties)
    local properties = copy_table(in_properties)
    if not properties.test_suite then
       assert(TEST_SUITE, "No global test suite defined and no test suite " ..
@@ -192,7 +192,7 @@ end
 function export()
    _G.kyuafile = P
 
-   _G.AtfTestProgram = AtfTestProgram
+   _G.atf_test_program = atf_test_program
    _G.include = include
    _G.test_suite = test_suite
 end

@@ -218,7 +218,7 @@ ATF_TEST_CASE_BODY(kyuafile__load__current_directory)
     {
         std::ofstream file("config");
         file << "syntax('kyuafile', 1)\n";
-        file << "AtfTestProgram {name='one', test_suite='first'}\n";
+        file << "atf_test_program{name='one', test_suite='first'}\n";
         file << "include('dir/config')\n";
         file.close();
     }
@@ -228,7 +228,7 @@ ATF_TEST_CASE_BODY(kyuafile__load__current_directory)
         std::ofstream file("dir/config");
         file << "syntax('kyuafile', 1)\n";
         file << "test_suite('second')\n";
-        file << "AtfTestProgram {name='two'}\n";
+        file << "atf_test_program{name='two'}\n";
         file.close();
     }
 
@@ -253,8 +253,8 @@ ATF_TEST_CASE_BODY(kyuafile__load__other_directory)
         std::ofstream file("root/config");
         file << "syntax('kyuafile', 1)\n";
         file << "test_suite('abc')\n";
-        file << "AtfTestProgram {name='one'}\n";
-        file << "AtfTestProgram {name='/bin/ls'}\n";
+        file << "atf_test_program{name='one'}\n";
+        file << "atf_test_program{name='/bin/ls'}\n";
         file << "include('dir/config')\n";
         file.close();
     }
@@ -263,8 +263,8 @@ ATF_TEST_CASE_BODY(kyuafile__load__other_directory)
         fs::mkdir(fs::path("root/dir"), 0755);
         std::ofstream file("root/dir/config");
         file << "syntax('kyuafile', 1)\n";
-        file << "AtfTestProgram {name='three', test_suite='def'}\n";
-        file << "AtfTestProgram {name='/tmp', test_suite='def'}\n";
+        file << "atf_test_program{name='three', test_suite='def'}\n";
+        file << "atf_test_program{name='/tmp', test_suite='def'}\n";
         file.close();
     }
 
@@ -338,8 +338,8 @@ ATF_TEST_CASE_BODY(kyuafile__load__missing_test_program)
     {
         std::ofstream file("config");
         file << "syntax('kyuafile', 1)\n";
-        file << "AtfTestProgram {name='one', test_suite='first'}\n";
-        file << "AtfTestProgram {name='two', test_suite='first'}\n";
+        file << "atf_test_program{name='one', test_suite='first'}\n";
+        file << "atf_test_program{name='two', test_suite='first'}\n";
         file.close();
     }
 

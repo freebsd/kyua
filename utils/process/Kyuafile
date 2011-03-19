@@ -2,8 +2,8 @@ syntax("kyuafile", 1)
 
 test_suite("kyua")
 
-AtfTestProgram {name="children_test"}
-AtfTestProgram {name="exceptions_test"}
-AtfTestProgram {name="fdstream_test"}
-AtfTestProgram {name="status_test"}
-AtfTestProgram {name="systembuf_test"}
+atf_test_program{name="children_test"}
+atf_test_program{name="exceptions_test"}
+atf_test_program{name="fdstream_test"}
+atf_test_program{name="status_test"}
+atf_test_program{name="systembuf_test"}

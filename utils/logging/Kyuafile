@@ -2,5 +2,5 @@ syntax("kyuafile", 1)
 
 test_suite("kyua")
 
-AtfTestProgram {name="macros_test"}
-AtfTestProgram {name="operations_test"}
+atf_test_program{name="macros_test"}
+atf_test_program{name="operations_test"}

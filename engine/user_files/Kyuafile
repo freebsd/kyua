@@ -2,9 +2,9 @@ syntax("kyuafile", 1)
 
 test_suite("kyua")
 
-AtfTestProgram {name="common_test"}
-AtfTestProgram {name="config_test"}
-AtfTestProgram {name="config_1_test"}
-AtfTestProgram {name="init_test"}
-AtfTestProgram {name="kyuafile_test"}
-AtfTestProgram {name="kyuafile_1_test"}
+atf_test_program{name="common_test"}
+atf_test_program{name="config_test"}
+atf_test_program{name="config_1_test"}
+atf_test_program{name="init_test"}
+atf_test_program{name="kyuafile_test"}
+atf_test_program{name="kyuafile_1_test"}

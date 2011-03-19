@@ -87,7 +87,7 @@ create_mock_kyuafile(const char* name, const char* cookie)
     if (cookie != NULL) {
         output << "syntax('kyuafile', 1)\n";
         utils::create_file(fs::path(cookie));
-        output << "AtfTestProgram {name='" << cookie << "', test_suite='a'}\n";
+        output << "atf_test_program{name='" << cookie << "', test_suite='a'}\n";
     } else {
         output << "syntax('invalid-file', 1)\n";
     }
