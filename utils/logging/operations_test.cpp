@@ -54,7 +54,7 @@ ATF_TEST_CASE_BODY(generate_log_name__before_log)
                    logging::generate_log_name(fs::path("/some/dir"), "foobar"));
 
     datetime::set_mock_now(2011, 2, 21, 18, 10, 1);
-    logging::log('I', "file", 123, "A message");
+    logging::log(logging::level_info, "file", 123, "A message");
 
     datetime::set_mock_now(2011, 2, 21, 18, 10, 2);
     ATF_REQUIRE_EQ(fs::path("/some/dir/foobar.20110221-181000.log"),
@@ -66,16 +66,16 @@ ATF_TEST_CASE_WITHOUT_HEAD(generate_log_name__after_log);
 ATF_TEST_CASE_BODY(generate_log_name__after_log)
 {
     datetime::set_mock_now(2011, 2, 21, 18, 15, 0);
-    logging::log('I', "file", 123, "A message");
+    logging::log(logging::level_info, "file", 123, "A message");
     datetime::set_mock_now(2011, 2, 21, 18, 15, 1);
-    logging::log('I', "file", 123, "A message");
+    logging::log(logging::level_info, "file", 123, "A message");
 
     datetime::set_mock_now(2011, 2, 21, 18, 15, 2);
     ATF_REQUIRE_EQ(fs::path("/some/dir/foobar.20110221-181500.log"),
                    logging::generate_log_name(fs::path("/some/dir"), "foobar"));
 
     datetime::set_mock_now(2011, 2, 21, 18, 15, 3);
-    logging::log('I', "file", 123, "A message");
+    logging::log(logging::level_info, "file", 123, "A message");
 
     datetime::set_mock_now(2011, 2, 21, 18, 15, 4);
     ATF_REQUIRE_EQ(fs::path("/some/dir/foobar.20110221-181500.log"),
@@ -87,18 +87,18 @@ ATF_TEST_CASE_WITHOUT_HEAD(log);
 ATF_TEST_CASE_BODY(log)
 {
     datetime::set_mock_now(2011, 2, 21, 18, 10, 0);
-    logging::log('D', "f1", 1, "Debug message");
+    logging::log(logging::level_debug, "f1", 1, "Debug message");
 
     datetime::set_mock_now(2011, 2, 21, 18, 10, 1);
-    logging::log('E', "f2", 2, "Error message");
+    logging::log(logging::level_error, "f2", 2, "Error message");
 
-    logging::set_persistency(fs::path("test.log"));
+    logging::set_persistency("debug", fs::path("test.log"));
 
     datetime::set_mock_now(2011, 2, 21, 18, 10, 2);
-    logging::log('I', "f3", 3, "Info message");
+    logging::log(logging::level_info, "f3", 3, "Info message");
 
     datetime::set_mock_now(2011, 2, 21, 18, 10, 3);
-    logging::log('W', "f4", 4, "Warning message");
+    logging::log(logging::level_warning, "f4", 4, "Warning message");
 
     std::ifstream input("test.log");
     ATF_REQUIRE(input);
@@ -124,10 +124,10 @@ ATF_TEST_CASE_BODY(log)
 ATF_TEST_CASE_WITHOUT_HEAD(set_persistency__no_backlog);
 ATF_TEST_CASE_BODY(set_persistency__no_backlog)
 {
-    logging::set_persistency(fs::path("test.log"));
+    logging::set_persistency("debug", fs::path("test.log"));
 
     datetime::set_mock_now(2011, 2, 21, 18, 20, 0);
-    logging::log('D', "file", 123, "Debug message");
+    logging::log(logging::level_debug, "file", 123, "Debug message");
 
     std::ifstream input("test.log");
     ATF_REQUIRE(input);
@@ -141,19 +141,41 @@ ATF_TEST_CASE_BODY(set_persistency__no_backlog)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(set_persistency__some_backlog);
-ATF_TEST_CASE_BODY(set_persistency__some_backlog)
+static void
+create_log(const std::string& level, const std::string& path)
 {
-    datetime::set_mock_now(2011, 2, 21, 18, 20, 0);
-    logging::log('D', "file1", 123, "Debug message 1");
+    datetime::set_mock_now(2011, 3, 19, 11, 40, 0);
+    logging::log(logging::level_debug, "file1", 11, "Debug 1");
 
-    datetime::set_mock_now(2011, 2, 21, 18, 20, 1);
-    logging::log('D', "file2", 456, "Debug message 2");
+    datetime::set_mock_now(2011, 3, 19, 11, 40, 1);
+    logging::log(logging::level_error, "file2", 22, "Error 1");
 
-    logging::set_persistency(fs::path("test.log"));
+    datetime::set_mock_now(2011, 3, 19, 11, 40, 2);
+    logging::log(logging::level_info, "file3", 33, "Info 1");
 
-    datetime::set_mock_now(2011, 2, 21, 18, 20, 2);
-    logging::log('D', "file3", 789, "Debug message 3");
+    datetime::set_mock_now(2011, 3, 19, 11, 40, 3);
+    logging::log(logging::level_warning, "file4", 44, "Warning 1");
+
+    logging::set_persistency(level, fs::path(path));
+
+    datetime::set_mock_now(2011, 3, 19, 11, 40, 4);
+    logging::log(logging::level_debug, "file1", 11, "Debug 2");
+
+    datetime::set_mock_now(2011, 3, 19, 11, 40, 5);
+    logging::log(logging::level_error, "file2", 22, "Error 2");
+
+    datetime::set_mock_now(2011, 3, 19, 11, 40, 6);
+    logging::log(logging::level_info, "file3", 33, "Info 2");
+
+    datetime::set_mock_now(2011, 3, 19, 11, 40, 7);
+    logging::log(logging::level_warning, "file4", 44, "Warning 2");
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(set_persistency__some_backlog__debug);
+ATF_TEST_CASE_BODY(set_persistency__some_backlog__debug)
+{
+    create_log("debug", "test.log");
 
     std::ifstream input("test.log");
     ATF_REQUIRE(input);
@@ -163,16 +185,106 @@ ATF_TEST_CASE_BODY(set_persistency__some_backlog)
     std::string line;
     ATF_REQUIRE(std::getline(input, line).good());
     ATF_REQUIRE_EQ(
-        (F("20110221-182000 D %d file1:123: Debug message 1") % pid).str(),
-        line);
+        (F("20110319-114000 D %d file1:11: Debug 1") % pid).str(), line);
     ATF_REQUIRE(std::getline(input, line).good());
     ATF_REQUIRE_EQ(
-        (F("20110221-182001 D %d file2:456: Debug message 2") % pid).str(),
-        line);
+        (F("20110319-114001 E %d file2:22: Error 1") % pid).str(), line);
     ATF_REQUIRE(std::getline(input, line).good());
     ATF_REQUIRE_EQ(
-        (F("20110221-182002 D %d file3:789: Debug message 3") % pid).str(),
-        line);
+        (F("20110319-114002 I %d file3:33: Info 1") % pid).str(), line);
+    ATF_REQUIRE(std::getline(input, line).good());
+    ATF_REQUIRE_EQ(
+        (F("20110319-114003 W %d file4:44: Warning 1") % pid).str(), line);
+    ATF_REQUIRE(std::getline(input, line).good());
+    ATF_REQUIRE_EQ(
+        (F("20110319-114004 D %d file1:11: Debug 2") % pid).str(), line);
+    ATF_REQUIRE(std::getline(input, line).good());
+    ATF_REQUIRE_EQ(
+        (F("20110319-114005 E %d file2:22: Error 2") % pid).str(), line);
+    ATF_REQUIRE(std::getline(input, line).good());
+    ATF_REQUIRE_EQ(
+        (F("20110319-114006 I %d file3:33: Info 2") % pid).str(), line);
+    ATF_REQUIRE(std::getline(input, line).good());
+    ATF_REQUIRE_EQ(
+        (F("20110319-114007 W %d file4:44: Warning 2") % pid).str(), line);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(set_persistency__some_backlog__error);
+ATF_TEST_CASE_BODY(set_persistency__some_backlog__error)
+{
+    create_log("error", "test.log");
+
+    std::ifstream input("test.log");
+    ATF_REQUIRE(input);
+
+    const pid_t pid = ::getpid();
+
+    std::string line;
+    ATF_REQUIRE(std::getline(input, line).good());
+    ATF_REQUIRE_EQ(
+        (F("20110319-114001 E %d file2:22: Error 1") % pid).str(), line);
+    ATF_REQUIRE(std::getline(input, line).good());
+    ATF_REQUIRE_EQ(
+        (F("20110319-114005 E %d file2:22: Error 2") % pid).str(), line);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(set_persistency__some_backlog__info);
+ATF_TEST_CASE_BODY(set_persistency__some_backlog__info)
+{
+    create_log("info", "test.log");
+
+    std::ifstream input("test.log");
+    ATF_REQUIRE(input);
+
+    const pid_t pid = ::getpid();
+
+    std::string line;
+    ATF_REQUIRE(std::getline(input, line).good());
+    ATF_REQUIRE_EQ(
+        (F("20110319-114001 E %d file2:22: Error 1") % pid).str(), line);
+    ATF_REQUIRE(std::getline(input, line).good());
+    ATF_REQUIRE_EQ(
+        (F("20110319-114002 I %d file3:33: Info 1") % pid).str(), line);
+    ATF_REQUIRE(std::getline(input, line).good());
+    ATF_REQUIRE_EQ(
+        (F("20110319-114003 W %d file4:44: Warning 1") % pid).str(), line);
+    ATF_REQUIRE(std::getline(input, line).good());
+    ATF_REQUIRE_EQ(
+        (F("20110319-114005 E %d file2:22: Error 2") % pid).str(), line);
+    ATF_REQUIRE(std::getline(input, line).good());
+    ATF_REQUIRE_EQ(
+        (F("20110319-114006 I %d file3:33: Info 2") % pid).str(), line);
+    ATF_REQUIRE(std::getline(input, line).good());
+    ATF_REQUIRE_EQ(
+        (F("20110319-114007 W %d file4:44: Warning 2") % pid).str(), line);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(set_persistency__some_backlog__warning);
+ATF_TEST_CASE_BODY(set_persistency__some_backlog__warning)
+{
+    create_log("warning", "test.log");
+
+    std::ifstream input("test.log");
+    ATF_REQUIRE(input);
+
+    const pid_t pid = ::getpid();
+
+    std::string line;
+    ATF_REQUIRE(std::getline(input, line).good());
+    ATF_REQUIRE_EQ(
+        (F("20110319-114001 E %d file2:22: Error 1") % pid).str(), line);
+    ATF_REQUIRE(std::getline(input, line).good());
+    ATF_REQUIRE_EQ(
+        (F("20110319-114003 W %d file4:44: Warning 1") % pid).str(), line);
+    ATF_REQUIRE(std::getline(input, line).good());
+    ATF_REQUIRE_EQ(
+        (F("20110319-114005 E %d file2:22: Error 2") % pid).str(), line);
+    ATF_REQUIRE(std::getline(input, line).good());
+    ATF_REQUIRE_EQ(
+        (F("20110319-114007 W %d file4:44: Warning 2") % pid).str(), line);
 }
 
 
@@ -183,9 +295,13 @@ ATF_TEST_CASE_HEAD(set_persistency__fail)
 }
 ATF_TEST_CASE_BODY(set_persistency__fail)
 {
+    ATF_REQUIRE_THROW_RE(std::range_error, "'foobar'",
+                         logging::set_persistency("foobar", fs::path("log")));
+
     fs::mkdir(fs::path("dir"), 0644);
     ATF_REQUIRE_THROW_RE(std::runtime_error, "dir/fail.log",
-                         logging::set_persistency(fs::path("dir/fail.log")));
+                         logging::set_persistency("debug",
+                                                  fs::path("dir/fail.log")));
 }
 
 
@@ -197,6 +313,9 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, log);
 
     ATF_ADD_TEST_CASE(tcs, set_persistency__no_backlog);
-    ATF_ADD_TEST_CASE(tcs, set_persistency__some_backlog);
+    ATF_ADD_TEST_CASE(tcs, set_persistency__some_backlog__debug);
+    ATF_ADD_TEST_CASE(tcs, set_persistency__some_backlog__error);
+    ATF_ADD_TEST_CASE(tcs, set_persistency__some_backlog__info);
+    ATF_ADD_TEST_CASE(tcs, set_persistency__some_backlog__warning);
     ATF_ADD_TEST_CASE(tcs, set_persistency__fail);
 }

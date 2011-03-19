@@ -55,6 +55,7 @@ not easy to reproduce!).
 
 @menu
 * Log file location:: Default location and the @option{--logfile} option.
+* Log levels:: Levels of log messages ant the @option{--loglevel} option.
 * Log file format:: Description of the contents of log files.
 @end menu
 
@@ -93,6 +94,42 @@ Otherwise, the log files go to @file{/tmp}.
 
 The naming scheme used for the log files, if not overriden with
 @option{--logfile}, is: @samp{<progname>.<timestamp>.log}.
+
+@node Log levels
+@subsection Log levels
+
+Every log message has a severity level associated to it.  These levels
+are, in order of severity:
+
+@table @samp
+@item error
+Fatal error messages.  The program generally terminates after these,
+either in a clean manner or by crashing.
+
+@item warning
+Non-fatal error messages.  These generally report a condition that
+must be addressed but the application can continue to run.
+
+@item info
+Informational messages.  These tell the user what the program was
+doing at a general level of operation.
+
+@item debug
+Detailed informational messages.  These are often useful when
+debugging problems in the application, as they contain lots of
+internal details.
+@end table
+
+The default log level for Kyua is @samp{info}.  This generates useful
+log messages but keeps their size reasonably short, readable and
+useful to spot the occasional run-time problem.
+
+@cindex --loglevel
+The user can change the log level by providing the @option{--loglevel}
+flag to the command line.  If the level is lowered, the performance of
+Kyua will increase slightly as it will generate less log entries to
+the log file.  If the level is increased, the performance of Kyua
+might suffer and the generated log files will be significantly larger.
 
 @node Log file format
 @subsection Log file format
@@ -136,4 +173,10 @@ expect the program to behave, etc.
 Also, please include a copy of the log file corresponding to the
 problem you are experiencing.  Unless you have changed the location of
 the log files, you can most likely find them in @file{~/.kyua/logs/};
-see @ref{Log file location}.
+see @ref{Log file location}.  If the problem is reproducible, it is
+good idea to regenerate the log file with an increased log level so as
+to provide more information; see @ref{Log levels}.  For example:
+
+@verbatim
+$ kyua --logfile=problem.log --loglevel=debug [rest of the command line]
+@end verbatim

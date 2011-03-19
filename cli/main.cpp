@@ -122,6 +122,9 @@ safe_main(cmdline::ui* ui, int argc, const char* const argv[],
           cmdline::command_ptr mock_command)
 {
     cmdline::options_vector options;
+    const cmdline::string_option loglevel_option(
+        "loglevel", "Level of the messages to log", "level", "info");
+    options.push_back(&loglevel_option);
     const cmdline::path_option logfile_option(
         "logfile", "Path to the log file", "file",
         cli::detail::default_log_name().c_str());
@@ -142,7 +145,12 @@ safe_main(cmdline::ui* ui, int argc, const char* const argv[],
         "logfile"));
     fs::mkdir_p(logfile.branch_path(), 0755);
     LD(F("Log file is %s") % logfile);
-    logging::set_persistency(logfile);
+    try {
+        logging::set_persistency(cmdline.get_option< cmdline::string_option >(
+            "loglevel"), logfile);
+    } catch (const std::range_error& e) {
+        throw cmdline::usage_error(e.what());
+    }
 
     if (cmdline.arguments().empty())
         throw cmdline::usage_error("No command provided");

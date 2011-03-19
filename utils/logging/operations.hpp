@@ -40,9 +40,21 @@ namespace utils {
 namespace logging {
 
 
+/// Severity levels for log messages.
+///
+/// This enumeration must be sorted from the most severe message to the least
+/// severe.
+enum level {
+    level_error = 0,
+    level_warning,
+    level_info,
+    level_debug,
+};
+
+
 fs::path generate_log_name(const fs::path&, const std::string&);
-void log(const char, const char*, const int, const std::string&);
-void set_persistency(const fs::path&);
+void log(const level, const char*, const int, const std::string&);
+void set_persistency(const std::string&, const fs::path&);
 
 
 }  // namespace logging

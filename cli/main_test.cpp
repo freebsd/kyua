@@ -41,6 +41,7 @@
 #include "utils/env.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/logging/macros.hpp"
 #include "utils/test_utils.hpp"
 
 namespace cmdline = utils::cmdline;
@@ -196,6 +197,90 @@ ATF_TEST_CASE_BODY(main__logfile__override)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(main__loglevel__default);
+ATF_TEST_CASE_BODY(main__loglevel__default)
+{
+    cmdline::init("progname");
+
+    const int argc = 2;
+    const char* const argv[] = {"progname", "--logfile=test.log", NULL};
+
+    LD("Mock debug message");
+    LE("Mock error message");
+    LI("Mock info message");
+    LW("Mock warning message");
+
+    cmdline::ui_mock ui;
+    ATF_REQUIRE_EQ(EXIT_FAILURE, cli::main(&ui, argc, argv));
+    ATF_REQUIRE(!utils::grep_file("Mock debug message", fs::path("test.log")));
+    ATF_REQUIRE(utils::grep_file("Mock error message", fs::path("test.log")));
+    ATF_REQUIRE(utils::grep_file("Mock info message", fs::path("test.log")));
+    ATF_REQUIRE(utils::grep_file("Mock warning message", fs::path("test.log")));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(main__loglevel__higher);
+ATF_TEST_CASE_BODY(main__loglevel__higher)
+{
+    cmdline::init("progname");
+
+    const int argc = 3;
+    const char* const argv[] = {"progname", "--logfile=test.log",
+                                "--loglevel=debug", NULL};
+
+    LD("Mock debug message");
+    LE("Mock error message");
+    LI("Mock info message");
+    LW("Mock warning message");
+
+    cmdline::ui_mock ui;
+    ATF_REQUIRE_EQ(EXIT_FAILURE, cli::main(&ui, argc, argv));
+    ATF_REQUIRE(utils::grep_file("Mock debug message", fs::path("test.log")));
+    ATF_REQUIRE(utils::grep_file("Mock error message", fs::path("test.log")));
+    ATF_REQUIRE(utils::grep_file("Mock info message", fs::path("test.log")));
+    ATF_REQUIRE(utils::grep_file("Mock warning message", fs::path("test.log")));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(main__loglevel__lower);
+ATF_TEST_CASE_BODY(main__loglevel__lower)
+{
+    cmdline::init("progname");
+
+    const int argc = 3;
+    const char* const argv[] = {"progname", "--logfile=test.log",
+                                "--loglevel=warning", NULL};
+
+    LD("Mock debug message");
+    LE("Mock error message");
+    LI("Mock info message");
+    LW("Mock warning message");
+
+    cmdline::ui_mock ui;
+    ATF_REQUIRE_EQ(EXIT_FAILURE, cli::main(&ui, argc, argv));
+    ATF_REQUIRE(!utils::grep_file("Mock debug message", fs::path("test.log")));
+    ATF_REQUIRE(utils::grep_file("Mock error message", fs::path("test.log")));
+    ATF_REQUIRE(!utils::grep_file("Mock info message", fs::path("test.log")));
+    ATF_REQUIRE(utils::grep_file("Mock warning message", fs::path("test.log")));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(main__loglevel__error);
+ATF_TEST_CASE_BODY(main__loglevel__error)
+{
+    cmdline::init("progname");
+
+    const int argc = 3;
+    const char* const argv[] = {"progname", "--logfile=test.log",
+                                "--loglevel=i-am-invalid", NULL};
+
+    cmdline::ui_mock ui;
+    ATF_REQUIRE_EQ(EXIT_FAILURE, cli::main(&ui, argc, argv));
+    ATF_REQUIRE(utils::grep_vector("Usage error.*i-am-invalid", ui.err_log()));
+    ATF_REQUIRE(!fs::exists(fs::path("test.log")));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(main__subcommand__ok);
 ATF_TEST_CASE_BODY(main__subcommand__ok)
 {
@@ -259,6 +344,10 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, main__unknown_command);
     ATF_ADD_TEST_CASE(tcs, main__logfile__default);
     ATF_ADD_TEST_CASE(tcs, main__logfile__override);
+    ATF_ADD_TEST_CASE(tcs, main__loglevel__default);
+    ATF_ADD_TEST_CASE(tcs, main__loglevel__higher);
+    ATF_ADD_TEST_CASE(tcs, main__loglevel__lower);
+    ATF_ADD_TEST_CASE(tcs, main__loglevel__error);
     ATF_ADD_TEST_CASE(tcs, main__subcommand__ok);
     ATF_ADD_TEST_CASE(tcs, main__subcommand__invalid_args);
     ATF_ADD_TEST_CASE(tcs, main__subcommand__error);

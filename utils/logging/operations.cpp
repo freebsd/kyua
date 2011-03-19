@@ -33,6 +33,7 @@ extern "C" {
 #include <fstream>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "utils/datetime.hpp"
@@ -49,7 +50,31 @@ using utils::none;
 using utils::optional;
 
 
+/// The general idea for the application-wide logging goes like this:
+///
+/// 1. The application starts.  Logging is initialized to capture _all_ log
+/// messages into memory regardless of their level.
+///
+/// 2. The application offers the user a way to select the logging level and a
+/// file into which to store the log.
+///
+/// 3. The application calls set_persistence providing a new log level and a log
+/// file.  This must be done as early as possible, to minimize the chances of an
+/// early crash not capturing any logs.
+///
+/// 4. At this point, any log messages stored into memory are flushed to disk
+/// respecting the provided log level.
+///
+/// 5. The internal state of the logging module is updated to only capture
+/// messages that are of the provided log level (or below) and is configured to
+/// directly send messages to disk.
+
+
 namespace {
+
+
+/// Current log level.
+static logging::level log_level = logging::level_debug;
 
 
 /// First time recorded by the logging module.
@@ -57,7 +82,7 @@ static optional< datetime::timestamp > first_timestamp = none;
 
 
 /// In-memory record of log entries before persistency is enabled.
-static std::vector< std::string > backlog;
+static std::vector< std::pair< logging::level, std::string > > backlog;
 
 
 /// Stream to the currently open log file.
@@ -66,6 +91,24 @@ static std::auto_ptr< std::ofstream > logfile;
 
 /// Constant string to strftime to format timestamps.
 static const char* timestamp_format = "%Y%m%d-%H%M%S";
+
+
+/// Converts a level to a printable character.
+///
+/// \param level The level to convert.
+///
+/// \return The printable character, to be used in log messages.
+static char
+level_to_char(const logging::level level)
+{
+    switch (level) {
+    case logging::level_error: return 'E';
+    case logging::level_warning: return 'W';
+    case logging::level_info: return 'I';
+    case logging::level_debug: return 'D';
+    default: UNREACHABLE;
+    }
+}
 
 
 }  // anonymous namespace
@@ -96,27 +139,27 @@ logging::generate_log_name(const fs::path& logdir, const std::string& progname)
 /// If the log is not yet set to persistent mode, the entry is recorded in the
 /// in-memory backlog.  Otherwise, it is just written to disk.
 ///
-/// \param type The type of the entry.  Can be one of: D=debugging, E=error,
-///     I=info, W=warning.
+/// \param message_level The level of the entry.
 /// \param file The file from which the log message is generated.
 /// \param line The line from which the log message is generated.
 /// \param user_message The raw message to store.
 void
-logging::log(const char type, const char* file, const int line,
+logging::log(const level message_level, const char* file, const int line,
              const std::string& user_message)
 {
-    PRE(type == 'D' || type == 'E' || type == 'I' || type == 'W');
-
     const datetime::timestamp now = datetime::timestamp::now();
     if (!first_timestamp)
         first_timestamp = now;
 
+    if (message_level > log_level)
+        return;
+
     // Update doc/troubleshooting.texi if you change the log format.
     const std::string message = F("%s %c %d %s:%d: %s") %
-        now.strftime(timestamp_format) % type % ::getpid() % file % line %
-        user_message;
+        now.strftime(timestamp_format) % level_to_char(message_level) %
+        ::getpid() % file % line % user_message;
     if (logfile.get() == NULL)
-        backlog.push_back(message);
+        backlog.push_back(std::make_pair(message_level, message));
     else {
         INV(backlog.empty());
         (*logfile) << message << '\n';
@@ -133,20 +176,38 @@ logging::log(const char type, const char* file, const int line,
 /// early as possible to ensure that a crash at startup does not discard too
 /// many useful log entries.
 ///
+/// Any log entries above the provided new_level are discarded.
+///
+/// \param new_level The new log level.
 /// \param path The file to write the logs to.
 ///
+/// \throw std::range_error If the given log level is invalid.
 /// \throw std::runtime_error If the given file cannot be created.
 void
-logging::set_persistency(const fs::path& path)
+logging::set_persistency(const std::string& new_level, const fs::path& path)
 {
     PRE(logfile.get() == NULL);
+
+    // Update doc/troubleshooting.info if you change the log levels.
+    if (new_level == "debug")
+        log_level = level_debug;
+    else if (new_level == "error")
+        log_level = level_error;
+    else if (new_level == "info")
+        log_level = level_info;
+    else if (new_level == "warning")
+        log_level = level_warning;
+    else
+        throw std::range_error(F("Unrecognized log level '%s'") % new_level);
 
     logfile.reset(new std::ofstream(path.c_str()));
     if (!(*logfile))
         throw std::runtime_error(F("Failed to create log file %s") % path);
 
-    for (std::vector< std::string >::const_iterator iter = backlog.begin();
-         iter != backlog.end(); iter++)
-        (*logfile) << *iter << '\n';
+    for (std::vector< std::pair< logging::level, std::string > >::const_iterator
+         iter = backlog.begin(); iter != backlog.end(); iter++) {
+        if ((*iter).first <= log_level)
+            (*logfile) << (*iter).second << '\n';
+    }
     backlog.clear();
 }

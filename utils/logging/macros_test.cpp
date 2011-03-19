@@ -44,7 +44,7 @@ namespace logging = utils::logging;
 ATF_TEST_CASE_WITHOUT_HEAD(ld);
 ATF_TEST_CASE_BODY(ld)
 {
-    logging::set_persistency(fs::path("test.log"));
+    logging::set_persistency("debug", fs::path("test.log"));
     datetime::set_mock_now(2011, 2, 21, 18, 30, 0);
     LD("Debug message");
 
@@ -60,7 +60,7 @@ ATF_TEST_CASE_BODY(ld)
 ATF_TEST_CASE_WITHOUT_HEAD(le);
 ATF_TEST_CASE_BODY(le)
 {
-    logging::set_persistency(fs::path("test.log"));
+    logging::set_persistency("debug", fs::path("test.log"));
     datetime::set_mock_now(2011, 2, 21, 18, 30, 0);
     LE("Error message");
 
@@ -76,7 +76,7 @@ ATF_TEST_CASE_BODY(le)
 ATF_TEST_CASE_WITHOUT_HEAD(li);
 ATF_TEST_CASE_BODY(li)
 {
-    logging::set_persistency(fs::path("test.log"));
+    logging::set_persistency("debug", fs::path("test.log"));
     datetime::set_mock_now(2011, 2, 21, 18, 30, 0);
     LI("Info message");
 
@@ -92,7 +92,7 @@ ATF_TEST_CASE_BODY(li)
 ATF_TEST_CASE_WITHOUT_HEAD(lw);
 ATF_TEST_CASE_BODY(lw)
 {
-    logging::set_persistency(fs::path("test.log"));
+    logging::set_persistency("debug", fs::path("test.log"));
     datetime::set_mock_now(2011, 2, 21, 18, 30, 0);
     LW("Warning message");
 
