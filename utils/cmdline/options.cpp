@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,6 +26,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <sstream>
+#include <stdexcept>
+
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/options.hpp"
 #include "utils/format/macros.hpp"
@@ -33,6 +36,37 @@
 #include "utils/sanity.hpp"
 
 namespace cmdline = utils::cmdline;
+
+
+namespace {
+
+
+/// Converts a string to an integer.
+///
+/// TODO(jmmv): This does not belong here.  It should be moved somewhere else,
+/// as I am sure it will be needed in other places.
+///
+/// \param str The string to convert.
+///
+/// \return The converted integer, if the input string was valid.
+///
+/// \throw std::runtime_error If the input string does not represent an integer.
+static int
+to_int(const std::string& str)
+{
+    if (str.empty())
+        throw std::runtime_error("Empty string is not an integer");
+
+    std::istringstream input(str);
+    int i;
+    input >> i;
+    if (!input.eof() || (!input.eof() && !input.good()))
+        throw std::runtime_error(F("Invalid integer '%s'") % str);
+    return i;
+}
+
+
+}  // anonymous namespace
 
 
 /// Constructs a generic option with both a short and a long name.
@@ -251,6 +285,82 @@ cmdline::bool_option::bool_option(const char* long_name_,
                                   const char* description_) :
     base_option(long_name_, description_)
 {
+}
+
+
+/// Constructs an integer option with both a short and a long name.
+///
+/// \param short_name_ The short name for the option.
+/// \param long_name_ The long name for the option.
+/// \param description_ A user-friendly description for the option.
+/// \param arg_name_ The name of the mandatory argument, for documentation
+///     purposes.
+/// \param default_value_ If not NULL, the default value for the mandatory
+///     argument.
+cmdline::int_option::int_option(const char short_name_,
+                                const char* long_name_,
+                                const char* description_,
+                                const char* arg_name_,
+                                const char* default_value_) :
+    base_option(short_name_, long_name_, description_, arg_name_,
+                default_value_)
+{
+}
+
+
+/// Constructs an integer option with a long name only.
+///
+/// \param long_name_ The long name for the option.
+/// \param description_ A user-friendly description for the option.
+/// \param arg_name_ The name of the mandatory argument, for documentation
+///     purposes.
+/// \param default_value_ If not NULL, the default value for the mandatory
+///     argument.
+cmdline::int_option::int_option(const char* long_name_,
+                                const char* description_,
+                                const char* arg_name_,
+                                const char* default_value_) :
+    base_option(long_name_, description_, arg_name_, default_value_)
+{
+}
+
+
+/// Ensures that an integer argument passed to the int_option is valid.
+///
+/// \param raw_value The argument representing an integer as provided by the
+///     user.
+///
+/// \throw cmdline::option_argument_value_error If the integer provided in
+///     raw_value is invalid.
+void
+cmdline::int_option::validate(const std::string& raw_value) const
+{
+    try {
+        (void)to_int(raw_value);
+    } catch (const std::runtime_error& e) {
+        throw cmdline::option_argument_value_error(F("--%s") % long_name(),
+                                                   raw_value, e.what());
+    }
+}
+
+
+/// Converts an integer argument to a native integer.
+///
+/// \param raw_value The argument representing an integer as provided by the
+///     user.
+///
+/// \return The integer.
+///
+/// \pre validate(raw_value) must be true.
+int
+cmdline::int_option::convert(const std::string& raw_value)
+{
+    try {
+        return to_int(raw_value);
+    } catch (const std::runtime_error& e) {
+        PRE_MSG(false, F("Raw value '%s' for int option not properly "
+                         "validated: %s") % raw_value % e.what());
+    }
 }
 
 

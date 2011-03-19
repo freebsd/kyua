@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -180,6 +180,54 @@ ATF_TEST_CASE_BODY(bool_option__long_name)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(int_option__short_name);
+ATF_TEST_CASE_BODY(int_option__short_name)
+{
+    const cmdline::int_option o('p', "int", "The int", "arg", "value");
+    ATF_REQUIRE(o.has_short_name());
+    ATF_REQUIRE_EQ('p', o.short_name());
+    ATF_REQUIRE_EQ("int", o.long_name());
+    ATF_REQUIRE_EQ("The int", o.description());
+    ATF_REQUIRE(o.needs_arg());
+    ATF_REQUIRE_EQ("arg", o.arg_name());
+    ATF_REQUIRE(o.has_default_value());
+    ATF_REQUIRE_EQ("value", o.default_value());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(int_option__long_name);
+ATF_TEST_CASE_BODY(int_option__long_name)
+{
+    const cmdline::int_option o("int", "The int", "arg", "value");
+    ATF_REQUIRE(!o.has_short_name());
+    ATF_REQUIRE_EQ("int", o.long_name());
+    ATF_REQUIRE_EQ("The int", o.description());
+    ATF_REQUIRE(o.needs_arg());
+    ATF_REQUIRE_EQ("arg", o.arg_name());
+    ATF_REQUIRE(o.has_default_value());
+    ATF_REQUIRE_EQ("value", o.default_value());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(int_option__type);
+ATF_TEST_CASE_BODY(int_option__type)
+{
+    const cmdline::int_option o("int", "The int", "arg");
+
+    o.validate("123");
+    ATF_REQUIRE_EQ(123, cmdline::int_option::convert("123"));
+
+    o.validate("-567");
+    ATF_REQUIRE_EQ(-567, cmdline::int_option::convert("-567"));
+
+    ATF_REQUIRE_THROW(cmdline::option_argument_value_error, o.validate(""));
+    ATF_REQUIRE_THROW(cmdline::option_argument_value_error, o.validate("5a"));
+    ATF_REQUIRE_THROW(cmdline::option_argument_value_error, o.validate("a5"));
+    ATF_REQUIRE_THROW(cmdline::option_argument_value_error, o.validate("5 a"));
+    ATF_REQUIRE_THROW(cmdline::option_argument_value_error, o.validate("5.0"));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(path_option__short_name);
 ATF_TEST_CASE_BODY(path_option__short_name)
 {
@@ -280,11 +328,18 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, base_option__long_name__no_arg);
     ATF_ADD_TEST_CASE(tcs, base_option__long_name__with_arg__no_default);
     ATF_ADD_TEST_CASE(tcs, base_option__long_name__with_arg__with_default);
+
     ATF_ADD_TEST_CASE(tcs, bool_option__short_name);
     ATF_ADD_TEST_CASE(tcs, bool_option__long_name);
+
+    ATF_ADD_TEST_CASE(tcs, int_option__short_name);
+    ATF_ADD_TEST_CASE(tcs, int_option__long_name);
+    ATF_ADD_TEST_CASE(tcs, int_option__type);
+
     ATF_ADD_TEST_CASE(tcs, path_option__short_name);
     ATF_ADD_TEST_CASE(tcs, path_option__long_name);
     ATF_ADD_TEST_CASE(tcs, path_option__type);
+
     ATF_ADD_TEST_CASE(tcs, string_option__short_name);
     ATF_ADD_TEST_CASE(tcs, string_option__long_name);
     ATF_ADD_TEST_CASE(tcs, string_option__type);

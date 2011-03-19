@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -120,6 +120,22 @@ public:
 
     /// The data type of this option.
     typedef bool option_type;
+};
+
+
+/// Definition of an integer option.
+class int_option : public base_option {
+public:
+    int_option(const char, const char*, const char*, const char*,
+               const char* = NULL);
+    int_option(const char*, const char*, const char*, const char* = NULL);
+    virtual ~int_option(void) {}
+
+    /// The data type of this option.
+    typedef int option_type;
+
+    virtual void validate(const std::string& str) const;
+    static int convert(const std::string& str);
 };
 
 
