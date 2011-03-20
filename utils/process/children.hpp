@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,14 @@
 /// said subprocesses.  The interfaces to fork subprocesses are very simplified
 /// and only provide the minimum functionality required by the rest of the
 /// project.
+///
+/// Be aware that the semantics of the fork and wait methods exposed by this
+/// module are slightly different from that of the native calls.  Any process
+/// spawned by fork here will be isolated in its own process group; once any of
+/// such children processes is awaited for, its whole process group will be
+/// terminated.  This is the semantics we want in the above layers to ensure
+/// that test programs (and, for that matter, external utilities) do not leak
+/// subprocesses on the system.
 
 #if !defined(UTILS_PROCESS_CHILDREN_HPP)
 #define UTILS_PROCESS_CHILDREN_HPP

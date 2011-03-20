@@ -32,6 +32,8 @@ extern "C" {
 #include <signal.h>
 }
 
+#include <cerrno>
+#include <fstream>
 #include <iostream>
 #include <stdexcept>
 #include <typeinfo>
@@ -311,6 +313,35 @@ ATF_TEST_CASE_BODY(run_test_case__has_cleanup__true)
     if (!fs::exists(fs::path("cookie")))
         fail("The cleanup part was not executed even though the test case set "
              "has.cleanup to true");
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__kill_children);
+ATF_TEST_CASE_BODY(run_test_case__kill_children)
+{
+    engine::properties_map metadata;
+    user_files::config config = mock_config;
+    config.test_suites["the-suite"]["control_dir"] = fs::current_path().str();
+    results::result_ptr result = runner::run_test_case(
+        make_test_case(get_helpers_path(this), "spawn_blocking_child",
+                       metadata), config, "the-suite");
+    compare_results(results::passed(), result.get());
+
+    if (!fs::exists(fs::path("pid")))
+        fail("The pid file was not created");
+    std::ifstream pidfile("pid");
+    ATF_REQUIRE(pidfile);
+    pid_t pid;
+    pidfile >> pid;
+    pidfile.close();
+
+    if (::kill(pid, SIGCONT) != -1 || errno != ESRCH) {
+        // Looks like the subchild did not die.  Note that this might be
+        // inaccurate: the system may have spawned a new process with the same
+        // pid as our subchild... but in practice, this does not happen because
+        // most systems do not immediately reuse pid numbers.
+        fail(F("The subprocess %d of our child was not killed") % pid);
+    }
 }
 
 
@@ -645,6 +676,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, run_test_case__cleanup_shares_workdir);
     ATF_ADD_TEST_CASE(tcs, run_test_case__has_cleanup__false);
     ATF_ADD_TEST_CASE(tcs, run_test_case__has_cleanup__true);
+    ATF_ADD_TEST_CASE(tcs, run_test_case__kill_children);
     ATF_ADD_TEST_CASE(tcs, run_test_case__isolation_env);
     ATF_ADD_TEST_CASE(tcs, run_test_case__isolation_pgrp);
     ATF_ADD_TEST_CASE(tcs, run_test_case__isolation_signals);

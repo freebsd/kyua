@@ -139,6 +139,10 @@ create_file(const fs::path& filename)
 
 /// Exception-based, type-improved version of wait(2).
 ///
+/// Because we are waiting for the termination of a process, and because this is
+/// the canonical way to call wait(2) for this module, we ensure from here that
+/// any subprocess of the process we are killing is terminated.
+///
 /// \param pid The identifier of the process to wait for.
 ///
 /// \return The termination status of the process.
@@ -157,6 +161,8 @@ retry:
         throw process::system_error(F("Failed to wait for PID %d") % pid,
                                     original_errno);
     }
+    LD(F("Sending KILL signal to process group %d") % pid);
+    (void)::killpg(pid, SIGKILL);
     return process::status(stat_loc);
 }
 
@@ -205,8 +211,6 @@ timed_wait(const pid_t pid, const datetime::delta& timeout)
     const process::status status = safe_wait(pid);
     timer.unprogram();
     if (timed_wait__aux::fired) {
-        LD(F("Process %d timed out; sending KILL signal") % pid);
-        (void)::killpg(pid, SIGKILL);
         throw process::timeout_error(F("The timeout was exceeded while waiting "
             "for process %d; forcibly killed") % pid);
     }
@@ -275,6 +279,8 @@ process::child_with_files::fork_aux(const fs::path& stdout_file,
     if (pid == -1) {
         throw process::system_error("fork(2) failed", errno);
     } else if (pid == 0) {
+        ::setpgid(::getpid(), ::getpid());
+
         try {
             const int stdout_fd = create_file(stdout_file);
             const int stderr_fd = create_file(stderr_file);
@@ -365,6 +371,8 @@ process::child_with_output::fork_aux(void)
         ::close(fds[1]);
         throw process::system_error("fork(2) failed", errno);
     } else if (pid == 0) {
+        ::setpgid(::getpid(), ::getpid());
+
         try {
             ::close(fds[0]);
             safe_dup(fds[1], STDOUT_FILENO);

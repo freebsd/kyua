@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -166,6 +166,29 @@ ATF_TEST_CASE_BODY(pass)
 }
 
 
+ATF_TEST_CASE(spawn_blocking_child);
+ATF_TEST_CASE_HEAD(spawn_blocking_child)
+{
+    set_md_var("require.config", "control_dir");
+}
+ATF_TEST_CASE_BODY(spawn_blocking_child)
+{
+    pid_t pid = ::fork();
+    if (pid == -1)
+        fail("Cannot fork subprocess");
+    else if (pid == 0) {
+        for (;;)
+            ::pause();
+    } else {
+        const fs::path name = fs::path(get_config_var("control_dir")) / "pid";
+        std::ofstream pidfile(name.c_str());
+        ATF_REQUIRE(pidfile);
+        pidfile << pid;
+        pidfile.close();
+    }
+}
+
+
 ATF_TEST_CASE(timeout_body);
 ATF_TEST_CASE_HEAD(timeout_body)
 {
@@ -252,6 +275,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, create_cookie_in_workdir);
     ATF_ADD_TEST_CASE(tcs, create_cookie_from_cleanup);
     ATF_ADD_TEST_CASE(tcs, pass);
+    ATF_ADD_TEST_CASE(tcs, spawn_blocking_child);
     ATF_ADD_TEST_CASE(tcs, timeout_body);
     ATF_ADD_TEST_CASE(tcs, timeout_cleanup);
     ATF_ADD_TEST_CASE(tcs, validate_env);

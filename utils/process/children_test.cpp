@@ -39,6 +39,7 @@ extern "C" {
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
+#include <fstream>
 #include <iostream>
 
 #include <atf-c++.hpp>
@@ -61,6 +62,48 @@ namespace signals = utils::signals;
 
 
 namespace {
+
+
+static void
+child_blocking_subchild(void)
+{
+    pid_t pid = ::fork();
+    if (pid == -1) {
+        std::abort();
+    } else if (pid == 0) {
+        for (;;)
+            ::pause();
+    } else {
+        std::ofstream output("subchild_pid");
+        if (!output)
+            std::abort();
+        output << pid << "\n";
+        output.close();
+        std::exit(EXIT_SUCCESS);
+    }
+}
+
+
+static void
+child_blocking_subchild_check(const process::status& status)
+{
+    ATF_REQUIRE(status.exited());
+    ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
+
+    std::ifstream input("subchild_pid");
+    ATF_REQUIRE(input);
+    pid_t pid;
+    input >> pid;
+    input.close();
+
+    if (::kill(pid, SIGCONT) != -1 || errno != ESRCH) {
+        // Looks like the subchild did not die.  Note that this might be
+        // inaccurate: the system may have spawned a new process with the same
+        // pid as our subchild... but in practice, this does not happen because
+        // most systems do not immediately reuse pid numbers.
+        ATF_FAIL(F("The subprocess %d of our child was not killed") % pid);
+    }
+}
 
 
 template< int ExitStatus, char Message >
@@ -129,8 +172,6 @@ template< int Microseconds >
 static void
 child_wait_with_subchild(void)
 {
-    ::setpgid(::getpid(), ::getpid());
-
     const int ret = ::fork();
     if (ret == -1) {
         std::abort();
@@ -246,6 +287,18 @@ ATF_TEST_CASE_BODY(child_with_files__ok_functor)
                                  fs::path("fileA.txt")));
     ATF_REQUIRE(utils::grep_file("^To stderr: a functor$",
                                  fs::path("fileB.txt")));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(child_with_files__wait_killpg);
+ATF_TEST_CASE_BODY(child_with_files__wait_killpg)
+{
+    std::auto_ptr< process::child_with_files > child =
+        process::child_with_files::fork(child_blocking_subchild,
+                                        fs::path("out"), fs::path("err"));
+    const process::status status = child->wait();
+
+    child_blocking_subchild_check(status);
 }
 
 
@@ -368,6 +421,17 @@ ATF_TEST_CASE_WITHOUT_HEAD(child_with_output__ok_functor);
 ATF_TEST_CASE_BODY(child_with_output__ok_functor)
 {
     child_with_output__ok(child_printer_functor());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(child_with_output__wait_killpg);
+ATF_TEST_CASE_BODY(child_with_output__wait_killpg)
+{
+    std::auto_ptr< process::child_with_output > child =
+        process::child_with_output::fork(child_blocking_subchild);
+    const process::status status = child->wait();
+
+    child_blocking_subchild_check(status);
 }
 
 
@@ -577,6 +641,7 @@ ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, child_with_files__ok_function);
     ATF_ADD_TEST_CASE(tcs, child_with_files__ok_functor);
+    ATF_ADD_TEST_CASE(tcs, child_with_files__wait_killpg);
     ATF_ADD_TEST_CASE(tcs, child_with_files__wait_timeout_ok);
     ATF_ADD_TEST_CASE(tcs, child_with_files__wait_timeout_expired);
     ATF_ADD_TEST_CASE(tcs, child_with_files__fork_fail);
@@ -585,6 +650,7 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, child_with_output__ok_function);
     ATF_ADD_TEST_CASE(tcs, child_with_output__ok_functor);
+    ATF_ADD_TEST_CASE(tcs, child_with_output__wait_killpg);
     ATF_ADD_TEST_CASE(tcs, child_with_output__wait_timeout_ok);
     ATF_ADD_TEST_CASE(tcs, child_with_output__wait_timeout_expired);
     ATF_ADD_TEST_CASE(tcs, child_with_output__pipe_fail);

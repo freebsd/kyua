@@ -134,7 +134,6 @@ can_do_unprivileged(const engine::test_case& test_case,
 ///
 /// By isolation, we understand:
 ///
-/// * Create a new process group.
 /// * Change the cwd of the process to a known location that will be cleaned up
 ///   afterwards by the runner monitor.
 /// * Reset a set of critical environment variables to known good values.
@@ -146,8 +145,10 @@ can_do_unprivileged(const engine::test_case& test_case,
 static void
 isolate_process(const fs::path& cwd)
 {
-    const int ret = ::setpgid(::getpid(), 0);
-    INV(ret != -1);
+    // The utils::process library takes care of creating a process group for
+    // us.  Just ensure that is still true, or otherwise things will go pretty
+    // badly.
+    INV(::getpgrp() == ::getpid());
 
     ::umask(0022);
 
