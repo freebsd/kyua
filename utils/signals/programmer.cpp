@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,7 @@ extern "C" {
 #include <cerrno>
 
 #include "utils/format/macros.hpp"
+#include "utils/logging/macros.hpp"
 #include "utils/sanity.hpp"
 #include "utils/signals/exceptions.hpp"
 #include "utils/signals/programmer.hpp"
@@ -101,8 +102,7 @@ signals::programmer::programmer(const int signo, const handler_type handler) :
 signals::programmer::~programmer(void)
 {
     if (_pimpl->programmed) {
-        // TODO(jmmv): Log cases where this happens because unprogram() was not
-        // manually called.
+        LW("Destroying still-programmed signals::programmer object");
         try {
             unprogram();
         } catch (const system_error& e) {

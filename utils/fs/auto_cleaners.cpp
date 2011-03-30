@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,11 +26,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <cstdlib>
-
+#include "utils/format/macros.hpp"
 #include "utils/fs/auto_cleaners.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/operations.hpp"
+#include "utils/logging/macros.hpp"
 
 namespace fs = utils::fs;
 
@@ -54,10 +54,8 @@ fs::auto_directory::~auto_directory(void)
     try {
         this->cleanup();
     } catch (const fs::error& e) {
-        // TODO(jmmv): Report this error when we have a generic logging
-        // facility.  For now, just abort to ensure this does not happen in
-        // practice.
-        std::abort();
+        LW(F("Failed to auto-cleanup directory '%s': %s") % _directory %
+           e.what());
     }
 }
 

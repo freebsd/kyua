@@ -231,6 +231,21 @@ ATF_TEST_CASE_BODY(load_config__user__fail)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(load_config__user__bad_home);
+ATF_TEST_CASE_BODY(load_config__user__bad_home)
+{
+    mock_system_config("Fallback system config");
+    utils::setenv("HOME", "");
+
+    std::map< std::string, std::string > options;
+    options["config"] = cli::config_option.default_value();
+    const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
+
+    const user_files::config config = cli::load_config(mock_cmdline);
+    validate_mock_config(config, "Fallback system config");
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(load_config__system__ok);
 ATF_TEST_CASE_BODY(load_config__system__ok)
 {
@@ -323,6 +338,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, load_config__explicit__fail);
     ATF_ADD_TEST_CASE(tcs, load_config__user__ok);
     ATF_ADD_TEST_CASE(tcs, load_config__user__fail);
+    ATF_ADD_TEST_CASE(tcs, load_config__user__bad_home);
     ATF_ADD_TEST_CASE(tcs, load_config__system__ok);
     ATF_ADD_TEST_CASE(tcs, load_config__system__fail);
 

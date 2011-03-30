@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,7 @@ extern "C" {
 #include <cerrno>
 
 #include "utils/datetime.hpp"
+#include "utils/logging/macros.hpp"
 #include "utils/sanity.hpp"
 #include "utils/signals/exceptions.hpp"
 #include "utils/signals/programmer.hpp"
@@ -146,8 +147,7 @@ signals::timer::timer(const datetime::delta& delta,
 signals::timer::~timer(void)
 {
     if (_pimpl->programmed) {
-        // TODO(jmmv): Log cases where this happens because unprogram() was not
-        // manually called.
+        LW("Destroying still-programmed signals::timer object");
         try {
             unprogram();
         } catch (const system_error& e) {

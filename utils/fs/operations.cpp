@@ -48,6 +48,7 @@ extern "C" {
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 
@@ -82,8 +83,9 @@ cleanup_aux(const fs::path& root, const fs::path& current)
         // We attempt to unprotect the directory to allow modifications, but if
         // this fails, we cannot do much more.  Just ignore the error and hope
         // that the removal of the directory and the files works later.
-
-        // TODO(jmmv): Log this error.
+        const int original_errno = errno;
+        LW(F("Failed to chmod 0700 temporary directory '%s': %s") %
+           current.str() % std::strerror(original_errno));
     }
 
     DIR* dirp = ::opendir(current.c_str());

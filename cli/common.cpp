@@ -30,16 +30,19 @@
 #include "engine/user_files/config.hpp"
 #include "engine/user_files/kyuafile.hpp"
 #include "utils/cmdline/parser.ipp"
+#include "utils/format/macros.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/env.hpp"
+#include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
 
 namespace cmdline = utils::cmdline;
 namespace fs = utils::fs;
 namespace user_files = engine::user_files;
 
+using utils::none;
 using utils::optional;
 
 
@@ -68,6 +71,27 @@ static const char* system_config_basename = "kyua.conf";
 static const std::string config_lookup_names =
     (fs::path("~") / user_config_basename).str() + " or " +
     (kyua_confdir / system_config_basename).str();
+
+
+/// Gets the value of the HOME environment variable with path validation.
+///
+/// \return The value of the HOME environment variable if it is a valid path;
+///     none if it is not defined or if it contains an invalid path.
+static optional< fs::path >
+get_home(void)
+{
+    const optional< std::string > home = utils::getenv("HOME");
+    if (home) {
+        try {
+            return utils::make_optional(fs::path(home.get()));
+        } catch (const fs::error& e) {
+            LW(F("Invalid value '%s' in HOME environment variable: %s") %
+               home.get() % e.what());
+            return none;
+        }
+    } else
+        return none;
+}
 
 
 }  // anonymous namespace
@@ -116,18 +140,18 @@ cli::load_config(const cmdline::parsed_cmdline& cmdline)
     if (filename.str() != config_option.default_value())
         return user_files::config::load(filename);
 
-    const optional< std::string > home = utils::getenv("HOME");
+    const optional< fs::path > home = get_home();
     if (home) {
+        const fs::path path = home.get() / user_config_basename;
         try {
-            const fs::path path = fs::path(home.get()) / user_config_basename;
             if (fs::exists(path))
                 return user_files::config::load(path);
         } catch (const fs::error& e) {
             // Fall through.  If we fail to load the user-specific configuration
             // file because it cannot be openend, we try to load the system-wide
             // one.
-
-            // TODO(jmmv): Log this condition when we have a logging facility.
+            LW(F("Failed to load user-specific configuration file '%s': %s") %
+               path % e.what());
         }
     }
 
