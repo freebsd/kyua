@@ -68,9 +68,9 @@ AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <stdlib.h>
 AC_PROG_RANLIB
 
 
-PKG_CHECK_MODULES([ATF_CXX], [atf-c++ >= 0.12],
+PKG_CHECK_MODULES([ATF_CXX], [atf-c++ >= 0.13],
                   [],
-                  AC_MSG_ERROR([atf-c++ (0.12 or newer) is required]))
+                  AC_MSG_ERROR([atf-c++ (0.13 or newer) is required]))
 KYUA_DOXYGEN
 KYUA_LUA
 AC_PATH_PROG([SVN], [svn])
