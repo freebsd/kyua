@@ -35,7 +35,12 @@ ATF_SH_BUILD = \
     echo "Creating $${dst}"; \
     echo "\#! $(ATF_SH)" >$${dst}; \
     echo "\# AUTOMATICALLY GENERATED FROM Makefile" >>$${dst}; \
-    cat $(srcdir)/integration/utils.sh $${src} >>$${dst}; \
+    if [ -n "$${substs}" ]; then \
+        cat $(srcdir)/integration/utils.sh $${src} \
+            | sed "$${substs}" >>$${dst}; \
+    else \
+        cat $(srcdir)/integration/utils.sh $${src} >>$${dst}; \
+    fi; \
     chmod +x $${dst}
 
 ATF_SH_DEPS = \
@@ -44,7 +49,16 @@ ATF_SH_DEPS = \
 
 EXTRA_DIST += integration/utils.sh
 
-tests_integration_SCRIPTS = integration/cmd_test_test
+tests_integration_SCRIPTS = integration/cmd_about_test
+CLEANFILES += integration/cmd_about_test
+EXTRA_DIST += integration/cmd_about_test.sh
+integration/cmd_about_test: $(srcdir)/integration/cmd_about_test.sh $(ATF_SH_DEPS)
+	test -d integration || mkdir -p integration
+	@src="$(srcdir)/integration/cmd_about_test.sh"; \
+	dst="integration/cmd_about_test"; \
+	substs='s,__KYUA_DOCDIR__,$(docdir),g'; $(ATF_SH_BUILD)
+
+tests_integration_SCRIPTS += integration/cmd_test_test
 CLEANFILES += integration/cmd_test_test
 EXTRA_DIST += integration/cmd_test_test.sh
 integration/cmd_test_test: $(srcdir)/integration/cmd_test_test.sh $(ATF_SH_DEPS)
