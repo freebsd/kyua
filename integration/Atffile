@@ -3,5 +3,6 @@ Content-Type: application/X-atf-atffile; version="1"
 prop: test-suite = kyua
 
 tp: cmd_about_test
+tp: cmd_help_test
 tp: cmd_test_test
 tp: global_test

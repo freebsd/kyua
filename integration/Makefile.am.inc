@@ -58,6 +58,14 @@ integration/cmd_about_test: $(srcdir)/integration/cmd_about_test.sh $(ATF_SH_DEP
 	dst="integration/cmd_about_test"; \
 	substs='s,__KYUA_DOCDIR__,$(docdir),g'; $(ATF_SH_BUILD)
 
+tests_integration_SCRIPTS += integration/cmd_help_test
+CLEANFILES += integration/cmd_help_test
+EXTRA_DIST += integration/cmd_help_test.sh
+integration/cmd_help_test: $(srcdir)/integration/cmd_help_test.sh $(ATF_SH_DEPS)
+	test -d integration || mkdir -p integration
+	@src="$(srcdir)/integration/cmd_help_test.sh"; \
+	dst="integration/cmd_help_test"; $(ATF_SH_BUILD)
+
 tests_integration_SCRIPTS += integration/cmd_test_test
 CLEANFILES += integration/cmd_test_test
 EXTRA_DIST += integration/cmd_test_test.sh
