@@ -96,6 +96,16 @@ EOF
 }
 
 
+utils_test_case too_many_arguments
+too_many_arguments_body() {
+    cat >stderr <<EOF
+Usage error for command about: Too many arguments.
+Type 'kyua help about' for usage information.
+EOF
+    atf_check -s exit:1 -o empty -e file:stderr kyua about abc
+}
+
+
 atf_init_test_cases() {
     atf_add_test_case default
 
@@ -104,4 +114,6 @@ atf_init_test_cases() {
     atf_add_test_case show__license
     atf_add_test_case show__version
     atf_add_test_case show__invalid
+
+    atf_add_test_case too_many_arguments
 }
