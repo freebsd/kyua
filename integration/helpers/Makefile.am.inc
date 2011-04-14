@@ -28,7 +28,11 @@
 
 tests_integration_helpersdir = $(pkgtestsdir)/integration/helpers
 
-tests_integration_helpers_PROGRAMS = integration/helpers/expect_all_pass
+tests_integration_helpers_PROGRAMS = integration/helpers/bad_test_program
+integration_helpers_bad_test_program_SOURCES = \
+    integration/helpers/bad_test_program.cpp
+
+tests_integration_helpers_PROGRAMS += integration/helpers/expect_all_pass
 integration_helpers_expect_all_pass_SOURCES = \
     integration/helpers/expect_all_pass.cpp
 integration_helpers_expect_all_pass_CXXFLAGS = $(ATF_CXX_CFLAGS)
@@ -39,6 +43,11 @@ integration_helpers_expect_some_fail_SOURCES = \
     integration/helpers/expect_some_fail.cpp
 integration_helpers_expect_some_fail_CXXFLAGS = $(ATF_CXX_CFLAGS)
 integration_helpers_expect_some_fail_LDADD = $(ATF_CXX_LIBS)
+
+tests_integration_helpers_PROGRAMS += integration/helpers/metadata
+integration_helpers_metadata_SOURCES = integration/helpers/metadata.cpp
+integration_helpers_metadata_CXXFLAGS = $(ATF_CXX_CFLAGS)
+integration_helpers_metadata_LDADD = $(ATF_CXX_LIBS)
 
 tests_integration_helpers_PROGRAMS += integration/helpers/simple_all_pass
 integration_helpers_simple_all_pass_SOURCES = \

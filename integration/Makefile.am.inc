@@ -66,6 +66,14 @@ integration/cmd_help_test: $(srcdir)/integration/cmd_help_test.sh $(ATF_SH_DEPS)
 	@src="$(srcdir)/integration/cmd_help_test.sh"; \
 	dst="integration/cmd_help_test"; $(ATF_SH_BUILD)
 
+tests_integration_SCRIPTS += integration/cmd_list_test
+CLEANFILES += integration/cmd_list_test
+EXTRA_DIST += integration/cmd_list_test.sh
+integration/cmd_list_test: $(srcdir)/integration/cmd_list_test.sh $(ATF_SH_DEPS)
+	test -d integration || mkdir -p integration
+	@src="$(srcdir)/integration/cmd_list_test.sh"; \
+	dst="integration/cmd_list_test"; $(ATF_SH_BUILD)
+
 tests_integration_SCRIPTS += integration/cmd_test_test
 CLEANFILES += integration/cmd_test_test
 EXTRA_DIST += integration/cmd_test_test.sh
