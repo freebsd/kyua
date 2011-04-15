@@ -27,6 +27,8 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <cstdlib>
+#include <cstring>
+#include <fstream>
 #include <iostream>
 
 
@@ -34,5 +36,15 @@ int
 main(void)
 {
     std::cerr << "This is not a valid test program!\n";
+
+    const char* cookie = std::getenv("CREATE_COOKIE");
+    if (cookie != NULL && std::strlen(cookie) > 0) {
+        std::ofstream file(cookie);
+        if (!file)
+            std::abort();
+        file << "Cookie file\n";
+        file.close();
+    }
+
     return EXIT_FAILURE;
 }

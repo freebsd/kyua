@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -63,6 +63,7 @@ public:
     std::string leaf_name(void) const;
 
     bool is_absolute(void) const;
+    bool is_parent_of(path) const;
 
     bool operator<(const path&) const;
     bool operator==(const path&) const;

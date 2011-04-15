@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -91,6 +91,33 @@ ATF_TEST_CASE_BODY(is_absolute)
     ATF_REQUIRE( path("//a//").is_absolute());
     ATF_REQUIRE(!path("a////").is_absolute());
     ATF_REQUIRE(!path("../foo").is_absolute());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(is_parent_of);
+ATF_TEST_CASE_BODY(is_parent_of)
+{
+    ATF_REQUIRE( path("/").is_parent_of(path("/")));
+    ATF_REQUIRE( path(".").is_parent_of(path(".")));
+    ATF_REQUIRE( path("/a").is_parent_of(path("/a")));
+    ATF_REQUIRE( path("/a/b/c").is_parent_of(path("/a/b/c")));
+    ATF_REQUIRE( path("a").is_parent_of(path("a")));
+    ATF_REQUIRE( path("a/b/c").is_parent_of(path("a/b/c")));
+
+    ATF_REQUIRE( path("/a/b/c").is_parent_of(path("/a/b/c/d")));
+    ATF_REQUIRE( path("/a/b/c").is_parent_of(path("/a/b/c/d/e")));
+    ATF_REQUIRE(!path("/a/b/c").is_parent_of(path("a/b/c")));
+    ATF_REQUIRE(!path("/a/b/c").is_parent_of(path("a/b/c/d/e")));
+
+    ATF_REQUIRE( path("a/b/c").is_parent_of(path("a/b/c/d")));
+    ATF_REQUIRE( path("a/b/c").is_parent_of(path("a/b/c/d/e")));
+    ATF_REQUIRE(!path("a/b/c").is_parent_of(path("/a/b/c")));
+    ATF_REQUIRE(!path("a/b/c").is_parent_of(path("/a/b/c/d/e")));
+
+    ATF_REQUIRE(!path("/a/b/c/d/e").is_parent_of(path("/a/b/c")));
+    ATF_REQUIRE(!path("/a/b/c/d/e").is_parent_of(path("a/b/c")));
+    ATF_REQUIRE(!path("a/b/c/d/e").is_parent_of(path("/a/b/c")));
+    ATF_REQUIRE(!path("a/b/c/d/e").is_parent_of(path("a/b/c")));
 }
 
 
@@ -195,6 +222,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, normalize__ok);
     ATF_ADD_TEST_CASE(tcs, normalize__invalid);
     ATF_ADD_TEST_CASE(tcs, is_absolute);
+    ATF_ADD_TEST_CASE(tcs, is_parent_of);
     ATF_ADD_TEST_CASE(tcs, branch_path);
     ATF_ADD_TEST_CASE(tcs, leaf_name);
     ATF_ADD_TEST_CASE(tcs, compare_less_than);

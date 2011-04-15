@@ -46,11 +46,9 @@
 namespace cmdline = utils::cmdline;
 namespace user_files = engine::user_files;
 
-using cli::cmd_list;
-
 
 /// Default constructor for cmd_list.
-cmd_list::cmd_list(void) : cmdline::base_command(
+cli::cmd_list::cmd_list(void) : cmdline::base_command(
     "list", "[test-program ...]", 0, -1,
     "Lists test cases and their meta-data")
 {
@@ -66,29 +64,44 @@ cmd_list::cmd_list(void) : cmdline::base_command(
 ///
 /// \return 0 to indicate success.
 int
-cmd_list::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
+cli::cmd_list::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
 {
+    const cli::test_filters filters(cmdline.arguments());
     const user_files::kyuafile kyuafile = load_kyuafile(cmdline);
+
+    bool matched = false;
 
     for (user_files::test_programs_vector::const_iterator p =
          kyuafile.test_programs().begin(); p != kyuafile.test_programs().end();
          p++) {
+        if (!filters.match_test_program((*p).binary_path))
+            continue;
+
         const engine::test_cases_vector tcs = engine::load_test_cases(
             (*p).binary_path);
 
         for (engine::test_cases_vector::const_iterator iter = tcs.begin();
              iter != tcs.end(); iter++) {
             const engine::test_case& tc = *iter;
+            if (!filters.match_test_case(tc.identifier))
+                continue;
+
+            matched = true;
             ui->out(tc.identifier.str());
 
             if (cmdline.has_option("verbose")) {
                 // TODO(jmmv): Print other metadata.
                 for (engine::properties_map::const_iterator iter2 = tc.user_metadata.begin();
                      iter2 != tc.user_metadata.end(); iter2++)
-                    ui->out(F("    %s = %s\n") % (*iter2).first % (*iter2).second);
+                    ui->out(F("    %s = %s") % (*iter2).first % (*iter2).second);
             }
         }
     }
 
-    return EXIT_SUCCESS;
+    if (!matched) {
+        // TODO(jmmv): Does not print a nice error prefix; must fix.
+        ui->err("No test cases matched by the filters provided.");
+        return EXIT_FAILURE;
+    } else
+        return EXIT_SUCCESS;
 }

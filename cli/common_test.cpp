@@ -32,8 +32,10 @@
 
 #include "cli/common.hpp"
 #include "engine/exceptions.hpp"
+#include "engine/test_case.hpp"
 #include "engine/user_files/config.hpp"
 #include "engine/user_files/kyuafile.hpp"
+#include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/env.hpp"
 #include "utils/fs/operations.hpp"
@@ -77,7 +79,7 @@ create_mock_config(const char* name, const char* cookie)
 /// validate_mock_kyuafile().
 ///
 /// \param name The name of the configuration file to create.
-/// \param name The magic value to set in the configuration file, or NULL if a
+/// \param cookie The magic value to set in the configuration file, or NULL if a
 ///     broken configuration file is desired.
 static void
 create_mock_kyuafile(const char* name, const char* cookie)
@@ -91,6 +93,17 @@ create_mock_kyuafile(const char* name, const char* cookie)
     } else {
         output << "syntax('invalid-file', 1)\n";
     }
+}
+
+
+/// Creates a test case identifier; provided to simplify typing.
+///
+/// \param test_program_name The test program name.
+/// \param test_case_name The test case name.
+static inline engine::test_case_id
+make_id(const std::string& test_program_name, const std::string& test_case_name)
+{
+    return engine::test_case_id(fs::path(test_program_name), test_case_name);
 }
 
 
@@ -316,8 +329,48 @@ ATF_TEST_CASE_BODY(load_kyuafile__fail)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(load_kyuafile__arguments);
-ATF_TEST_CASE_BODY(load_kyuafile__arguments)
+ATF_TEST_CASE_WITHOUT_HEAD(old_load_kyuafile__default);
+ATF_TEST_CASE_BODY(old_load_kyuafile__default)
+{
+    std::map< std::string, std::string > options;
+    options["kyuafile"] = cli::kyuafile_option.default_value();
+    const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
+
+    create_mock_kyuafile("Kyuafile", "foo bar");
+    const user_files::kyuafile config = cli::old_load_kyuafile(mock_cmdline);
+    validate_mock_kyuafile(config, "foo bar");
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(old_load_kyuafile__explicit);
+ATF_TEST_CASE_BODY(old_load_kyuafile__explicit)
+{
+    std::map< std::string, std::string > options;
+    options["kyuafile"] = "another";
+    const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
+
+    create_mock_kyuafile("Kyuafile", "no no no");
+    create_mock_kyuafile("another", "yes yes yes");
+    const user_files::kyuafile config = cli::old_load_kyuafile(mock_cmdline);
+    validate_mock_kyuafile(config, "yes yes yes");
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(old_load_kyuafile__fail);
+ATF_TEST_CASE_BODY(old_load_kyuafile__fail)
+{
+    std::map< std::string, std::string > options;
+    options["kyuafile"] = "missing-file";
+    const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
+
+    create_mock_kyuafile("Kyuafile", "no no no");
+    ATF_REQUIRE_THROW_RE(engine::error, "missing-file",
+                         cli::old_load_kyuafile(mock_cmdline));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(old_load_kyuafile__arguments);
+ATF_TEST_CASE_BODY(old_load_kyuafile__arguments)
 {
     std::map< std::string, std::string > options;
     options["kyuafile"] = "/i/dont/exist";
@@ -326,8 +379,146 @@ ATF_TEST_CASE_BODY(load_kyuafile__arguments)
     const cmdline::parsed_cmdline mock_cmdline(options, args);
 
     create_mock_kyuafile("Kyuafile", NULL);
-    const user_files::kyuafile config = cli::load_kyuafile(mock_cmdline);
+    const user_files::kyuafile config = cli::old_load_kyuafile(mock_cmdline);
     validate_mock_kyuafile(config, "from command line");
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(test_filters__ctor__ok)
+ATF_TEST_CASE_BODY(test_filters__ctor__ok)
+{
+    std::vector< std::string > args;
+    args.push_back("foo/bar/baz");
+    args.push_back("foo/bar:abc");
+    args.push_back("bar:baz");
+    args.push_back("baz");
+    cli::test_filters unused_filters = cli::test_filters(args);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(test_filters__ctor__fail)
+ATF_TEST_CASE_BODY(test_filters__ctor__fail)
+{
+    std::vector< std::string > args;
+    args.push_back("i-am-good:yes");
+    args.push_back("i-am-invalid:");
+    ATF_REQUIRE_THROW_RE(cmdline::usage_error, "Test case.*'i-am-invalid:'",
+                         (void)cli::test_filters(args));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(test_filters__parse_user_filter__ok);
+ATF_TEST_CASE_BODY(test_filters__parse_user_filter__ok)
+{
+    const cli::test_filters::filter_pair filter =
+        cli::test_filters::parse_user_filter("foo");
+    ATF_REQUIRE_EQ(fs::path("foo"), filter.first);
+    ATF_REQUIRE(filter.second.empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(test_filters__parse_user_filter__empty);
+ATF_TEST_CASE_BODY(test_filters__parse_user_filter__empty)
+{
+    ATF_REQUIRE_THROW_RE(cmdline::usage_error, "empty",
+                         cli::test_filters::parse_user_filter(""));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(test_filters__parse_user_filter__absolute);
+ATF_TEST_CASE_BODY(test_filters__parse_user_filter__absolute)
+{
+    ATF_REQUIRE_THROW_RE(cmdline::usage_error, "'/foo/bar'.*relative",
+                         cli::test_filters::parse_user_filter("/foo//bar"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(test_filters__parse_user_filter__bad_program_name);
+ATF_TEST_CASE_BODY(test_filters__parse_user_filter__bad_program_name)
+{
+    ATF_REQUIRE_THROW_RE(cmdline::usage_error, "Program name.*':foo'",
+                         cli::test_filters::parse_user_filter(":foo"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(test_filters__parse_user_filter__bad_test_case);
+ATF_TEST_CASE_BODY(test_filters__parse_user_filter__bad_test_case)
+{
+    ATF_REQUIRE_THROW_RE(cmdline::usage_error, "Test case.*'bar/baz:'",
+                         cli::test_filters::parse_user_filter("bar/baz:"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(test_filters__parse_user_filter__bad_path);
+ATF_TEST_CASE_BODY(test_filters__parse_user_filter__bad_path)
+{
+    // TODO(jmmv): Not implemented.  At the moment, the only reason for a path
+    // to be invalid is if it is empty... but we are checking this exact
+    // condition ourselves as part of the input validation.  So we can't mock in
+    // an argument with an invalid non-empty path...
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(test_filters__match_test_case__no_filters)
+ATF_TEST_CASE_BODY(test_filters__match_test_case__no_filters)
+{
+    const std::vector< std::string > args;
+
+    const cli::test_filters filters(args);
+    ATF_REQUIRE(filters.match_test_case(make_id("foo", "baz")));
+    ATF_REQUIRE(filters.match_test_case(make_id("foo/bar", "baz")));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(test_filters__match_test_case__some_filters)
+ATF_TEST_CASE_BODY(test_filters__match_test_case__some_filters)
+{
+    std::vector< std::string > args;
+    args.push_back("top_test");
+    args.push_back("subdir_1");
+    args.push_back("subdir_2/a_test");
+    args.push_back("subdir_2/b_test:foo");
+
+    const cli::test_filters filters(args);
+    ATF_REQUIRE( filters.match_test_case(make_id("top_test", "a")));
+    ATF_REQUIRE( filters.match_test_case(make_id("subdir_1/foo", "a")));
+    ATF_REQUIRE( filters.match_test_case(make_id("subdir_1/bar", "z")));
+    ATF_REQUIRE( filters.match_test_case(make_id("subdir_2/a_test", "bar")));
+    ATF_REQUIRE( filters.match_test_case(make_id("subdir_2/b_test", "foo")));
+    ATF_REQUIRE(!filters.match_test_case(make_id("subdir_2/b_test", "bar")));
+    ATF_REQUIRE(!filters.match_test_case(make_id("subdir_2/c_test", "foo")));
+    ATF_REQUIRE(!filters.match_test_case(make_id("subdir_3", "hello")));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(test_filters__match_test_program__no_filters)
+ATF_TEST_CASE_BODY(test_filters__match_test_program__no_filters)
+{
+    const std::vector< std::string > args;
+
+    const cli::test_filters filters(args);
+    ATF_REQUIRE(filters.match_test_program(fs::path("foo")));
+    ATF_REQUIRE(filters.match_test_program(fs::path("foo/bar")));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(test_filters__match_test_program__some_filters)
+ATF_TEST_CASE_BODY(test_filters__match_test_program__some_filters)
+{
+    std::vector< std::string > args;
+    args.push_back("top_test");
+    args.push_back("subdir_1");
+    args.push_back("subdir_2/a_test");
+    args.push_back("subdir_2/b_test:foo");
+
+    const cli::test_filters filters(args);
+    ATF_REQUIRE( filters.match_test_program(fs::path("top_test")));
+    ATF_REQUIRE( filters.match_test_program(fs::path("subdir_1/foo")));
+    ATF_REQUIRE( filters.match_test_program(fs::path("subdir_1/bar")));
+    ATF_REQUIRE( filters.match_test_program(fs::path("subdir_2/a_test")));
+    ATF_REQUIRE( filters.match_test_program(fs::path("subdir_2/b_test")));
+    ATF_REQUIRE(!filters.match_test_program(fs::path("subdir_2/c_test")));
+    ATF_REQUIRE(!filters.match_test_program(fs::path("subdir_3")));
 }
 
 
@@ -345,5 +536,22 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, load_kyuafile__default);
     ATF_ADD_TEST_CASE(tcs, load_kyuafile__explicit);
     ATF_ADD_TEST_CASE(tcs, load_kyuafile__fail);
-    ATF_ADD_TEST_CASE(tcs, load_kyuafile__arguments);
+
+    ATF_ADD_TEST_CASE(tcs, old_load_kyuafile__default);
+    ATF_ADD_TEST_CASE(tcs, old_load_kyuafile__explicit);
+    ATF_ADD_TEST_CASE(tcs, old_load_kyuafile__fail);
+    ATF_ADD_TEST_CASE(tcs, old_load_kyuafile__arguments);
+
+    ATF_ADD_TEST_CASE(tcs, test_filters__ctor__ok);
+    ATF_ADD_TEST_CASE(tcs, test_filters__ctor__fail);
+    ATF_ADD_TEST_CASE(tcs, test_filters__parse_user_filter__ok);
+    ATF_ADD_TEST_CASE(tcs, test_filters__parse_user_filter__empty);
+    ATF_ADD_TEST_CASE(tcs, test_filters__parse_user_filter__absolute);
+    ATF_ADD_TEST_CASE(tcs, test_filters__parse_user_filter__bad_program_name);
+    ATF_ADD_TEST_CASE(tcs, test_filters__parse_user_filter__bad_test_case);
+    ATF_ADD_TEST_CASE(tcs, test_filters__parse_user_filter__bad_path);
+    ATF_ADD_TEST_CASE(tcs, test_filters__match_test_case__no_filters);
+    ATF_ADD_TEST_CASE(tcs, test_filters__match_test_case__some_filters);
+    ATF_ADD_TEST_CASE(tcs, test_filters__match_test_program__no_filters);
+    ATF_ADD_TEST_CASE(tcs, test_filters__match_test_program__some_filters);
 }

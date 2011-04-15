@@ -27,8 +27,10 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "cli/common.hpp"
+#include "engine/test_case.hpp"
 #include "engine/user_files/config.hpp"
 #include "engine/user_files/kyuafile.hpp"
+#include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/exceptions.hpp"
@@ -91,6 +93,23 @@ get_home(void)
         }
     } else
         return none;
+}
+
+
+/// Checks if a test program name matches a filter.
+///
+/// \param filter The filter to check against.
+/// \param test_program The test program name to check against the filters.
+///
+/// \return Whether actual matches filter.
+bool
+match_test_program_only(const cli::test_filters::filter_pair& filter,
+                        const fs::path& test_program)
+{
+    if (filter.first == test_program)
+        return true;
+    else
+        return filter.second.empty() && filter.first.is_parent_of(test_program);
 }
 
 
@@ -163,6 +182,41 @@ cli::load_config(const cmdline::parsed_cmdline& cmdline)
 }
 
 
+// TODO(jmmv): THIS FUNCTION IS DEPRECATED AND MUST BE REMOVED.  The removal can
+// only happen when 'test' is converted to use load_kyuafile() instead.  When
+// removing this function, do not forget to also kill kyuafile::from_arguments
+// and all related includes.
+//
+/// Loads the Kyuafile for this session or generates a fake one.
+///
+/// The algorithm implemented here is as follows:
+/// 1) If there are arguments on the command line that are supposed to override
+///    the Kyuafile, the Kyuafile is not loaded and a fake one is generated.
+/// 2) Otherwise, the user-provided Kyuafile is loaded.
+///
+/// \param cmdline The parsed command line.
+///
+/// \throw engine::error If the parsing of the configuration file fails.
+///     TODO(jmmv): I'm not sure if this is the raised exception.  And even if
+///     it is, we should make it more accurate.
+user_files::kyuafile
+cli::old_load_kyuafile(const cmdline::parsed_cmdline& cmdline)
+{
+    const fs::path filename = cmdline.get_option< cmdline::path_option >(
+        kyuafile_option.long_name());
+
+    if (cmdline.arguments().empty())
+        return user_files::kyuafile::load(filename);
+    else {
+        // TODO(jmmv): Move the from_arguments functionality here.  We probably
+        // don't want to generate the fake file from scratch because we should
+        // inherit the Kyuafile from the directory.  Not sure how to do that
+        // though.
+        return user_files::kyuafile::from_arguments(cmdline.arguments());
+    }
+}
+
+
 /// Loads the Kyuafile for this session or generates a fake one.
 ///
 /// The algorithm implemented here is as follows:
@@ -181,15 +235,7 @@ cli::load_kyuafile(const cmdline::parsed_cmdline& cmdline)
     const fs::path filename = cmdline.get_option< cmdline::path_option >(
         kyuafile_option.long_name());
 
-    if (cmdline.arguments().empty())
-        return user_files::kyuafile::load(filename);
-    else {
-        // TODO(jmmv): Move the from_arguments functionality here.  We probably
-        // don't want to generate the fake file from scratch because we should
-        // inherit the Kyuafile from the directory.  Not sure how to do that
-        // though.
-        return user_files::kyuafile::from_arguments(cmdline.arguments());
-    }
+    return user_files::kyuafile::load(filename);
 }
 
 
@@ -202,4 +248,114 @@ void
 cli::set_confdir_for_testing(const utils::fs::path& dir)
 {
     kyua_confdir = dir;
+}
+
+
+/// Constructs a new set of filters.
+///
+/// \param user_filters The user-provided filters; if empty, no filters are
+///     applied.  See parse_user_filters for details on the syntax.
+///
+/// \throw cmdline::usage_error If any of the filters is invalid.
+cli::test_filters::test_filters(const std::vector< std::string >& user_filters)
+{
+    for (std::vector< std::string >::const_iterator iter = user_filters.begin();
+         iter != user_filters.end(); iter++) {
+        _filters.push_back(parse_user_filter(*iter));
+    }
+}
+
+
+/// Parses a user-provided test filter.
+///
+/// \param str The user-provided string representing a filter for tests.  Must
+///     be of the form <test_program>[:<test_case>].
+///
+/// \return The parsed filter, to be stored inside a test_filters object.
+///
+/// \throw cmdline::usage_error If the provided filter is invalid.
+cli::test_filters::filter_pair
+cli::test_filters::parse_user_filter(const std::string& str)
+{
+    if (str.empty())
+        throw cmdline::usage_error("Test filter cannot be empty");
+
+    const std::string::size_type pos = str.find(':');
+    if (pos == 0)
+        throw cmdline::usage_error(F("Program name component in '%s' is empty")
+                                   % str);
+    if (pos == str.length() - 1)
+        throw cmdline::usage_error(F("Test case component in '%s' is empty")
+                                   % str);
+
+    try {
+        const fs::path test_program(str.substr(0, pos));
+        if (test_program.is_absolute())
+            throw cmdline::usage_error(F("Program name '%s' must be relative "
+                                         "the test suite, not absolute") %
+                                       test_program.str());
+        const std::string test_case(pos == std::string::npos ?
+                                    "" : str.substr(pos + 1));
+        LD(F("Parsed user filter '%s': test program '%s', test case '%s'") %
+           str % test_program.str() % test_case);
+        return filter_pair(test_program, test_case);
+    } catch (const fs::error& e) {
+        throw cmdline::usage_error(F("Invalid path in filter '%s': %s") % str %
+                                   e.what());
+    }
+}
+
+
+/// Checks if a given test case identifier matches the set of filters.
+///
+/// \param id The identifier to check against the filters.
+///
+/// \return True if the provided identifier matches any filter.
+bool
+cli::test_filters::match_test_case(const engine::test_case_id& id) const
+{
+    if (_filters.empty()) {
+        INV(match_test_program(id.program));
+        return true;
+    }
+
+    bool matches = false;
+    for (std::vector< filter_pair >::const_iterator iter = _filters.begin();
+         !matches && iter != _filters.end(); iter++) {
+        const filter_pair& filter = *iter;
+
+        if (match_test_program_only(filter, id.program)) {
+            if (filter.second.empty() || filter.second == id.name)
+                matches = true;
+        }
+    }
+    INV(!matches || match_test_program(id.program));
+    return matches;
+}
+
+
+/// Checks if a given test program matches the set of filters.
+///
+/// This is provided as an optimization only, and the results of this function
+/// are less specific than those of match_test_case.  Checking for the matching
+/// of a test program should be done before loading the list of test cases from
+/// a program, so as to avoid the delay in executing the test program, but
+/// match_test_case must still be called afterwards.
+///
+/// \param name The test program to check against the filters.
+///
+/// \return True if the provided identifier matches any filter.
+bool
+cli::test_filters::match_test_program(const fs::path& name) const
+{
+    if (_filters.empty())
+        return true;
+
+    bool matches = false;
+    for (std::vector< filter_pair >::const_iterator iter = _filters.begin();
+         !matches && iter != _filters.end(); iter++) {
+        if (match_test_program_only(*iter, name))
+            matches = true;
+    }
+    return matches;
 }

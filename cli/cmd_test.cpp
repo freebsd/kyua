@@ -110,7 +110,7 @@ cmd_test::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
     run_hooks hooks(ui);
 
     const user_files::config config = load_config(cmdline);
-    const user_files::kyuafile kyuafile = load_kyuafile(cmdline);
+    const user_files::kyuafile kyuafile = old_load_kyuafile(cmdline);
 
     runner::run_test_suite(kyuafile, config, &hooks);
 

@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -145,6 +145,21 @@ bool
 fs::path::is_absolute(void) const
 {
     return _repr[0] == '/';
+}
+
+
+/// Checks whether the path is a parent of another path.
+///
+/// A path is considered to be a parent of itself.
+bool
+fs::path::is_parent_of(path p) const
+{
+    do {
+        if ((*this) == p)
+            return true;
+        p = p.branch_path();
+    } while (p != fs::path(".") && p != fs::path("/"));
+    return false;
 }
 
 

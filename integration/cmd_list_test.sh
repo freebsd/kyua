@@ -63,7 +63,7 @@ EOF
 
 utils_test_case one_arg__subdir
 one_arg__subdir_body() {
-    cat >subdir/Kyuafile <<EOF
+    cat >Kyuafile <<EOF
 syntax("kyuafile", 1)
 test_suite("top-level")
 include("subdir/Kyuafile")
@@ -74,7 +74,6 @@ EOF
 syntax("kyuafile", 1)
 test_suite("in-subdir")
 atf_test_program{name="simple_all_pass"}
-include("subdir/Kyuafile")
 EOF
     utils_cp_helper simple_all_pass subdir
 
@@ -82,14 +81,13 @@ EOF
 subdir/simple_all_pass:pass
 subdir/simple_all_pass:skip
 EOF
-    atf_expect_fail "Listing of subdirectories not implemented"
     atf_check -s exit:0 -o file:expout -e empty kyua list subdir
 }
 
 
 utils_test_case one_arg__test_case
 one_arg__test_case_body() {
-    cat >subdir/Kyuafile <<EOF
+    cat >Kyuafile <<EOF
 syntax("kyuafile", 1)
 test_suite("top-level")
 atf_test_program{name="first"}
@@ -100,17 +98,15 @@ EOF
 
     cat >expout <<EOF
 first:skip
-second:pass
 EOF
-    atf_expect_fail "Explicit listing of test cases not implemented"
     atf_check -s exit:0 -o file:expout -e empty kyua list \
-        first:skip second:pass
+        first:skip
 }
 
 
 utils_test_case one_arg__test_program
 one_arg__test_program_body() {
-    cat >subdir/Kyuafile <<EOF
+    cat >Kyuafile <<EOF
 syntax("kyuafile", 1)
 test_suite("top-level")
 atf_test_program{name="first"}
@@ -127,35 +123,100 @@ EOF
 }
 
 
-utils_test_case many_args
-many_args_body() {
-    cat >subdir/Kyuafile <<EOF
+utils_test_case one_arg__invalid
+one_arg__invalid_body() {
+cat >experr <<EOF
+Usage error for command list: Test case component in 'foo:' is empty.
+Type 'kyua help list' for usage information.
+EOF
+    atf_check -s exit:1 -o empty -e file:experr kyua list foo:
+}
+
+
+utils_test_case many_args__ok
+many_args__ok_body() {
+    cat >Kyuafile <<EOF
 syntax("kyuafile", 1)
 test_suite("top-level")
 include("subdir/Kyuafile")
 atf_test_program{name="first"}
 EOF
-    utild_cp_helper simple_all_pass first
+    utils_cp_helper simple_all_pass first
 
     mkdir subdir
     cat >subdir/Kyuafile <<EOF
 syntax("kyuafile", 1)
 test_suite("in-subdir")
 atf_test_program{name="second"}
-include("subdir/Kyuafile")
 EOF
     utils_cp_helper simple_some_fail subdir/second
 
     cat >expout <<EOF
-subdir/second:pass
+subdir/second:fail
     test-suite = in-subdir
-subdir/second:skip
+subdir/second:pass
     test-suite = in-subdir
 first:pass
     test-suite = top-level
 EOF
-    atf_expect_fail "Missing features"
+    atf_expect_fail "-v not implemented yet"
     atf_check -s exit:0 -o file:expout -e empty kyua list -v subdir first:pass
+}
+
+
+utils_test_case many_args__invalid
+many_args__invalid_body() {
+cat >experr <<EOF
+Usage error for command list: Program name component in ':badbad' is empty.
+Type 'kyua help list' for usage information.
+EOF
+    atf_check -s exit:1 -o empty -e file:experr kyua list this-is-ok :badbad
+}
+
+
+utils_test_case many_args__no_match__all
+many_args__no_match__all_body() {
+    cat >Kyuafile <<EOF
+syntax("kyuafile", 1)
+test_suite("top-level")
+atf_test_program{name="first"}
+atf_test_program{name="second"}
+EOF
+    utils_cp_helper simple_all_pass first
+    utils_cp_helper simple_all_pass second
+
+    cat >experr <<EOF
+No test cases matched by the filters provided.
+EOF
+    atf_check -s exit:1 -o empty -e file:experr kyua list first1
+}
+
+
+utils_test_case many_args__no_match__some
+many_args__no_match__some_body() {
+    cat >Kyuafile <<EOF
+syntax("kyuafile", 1)
+test_suite("top-level")
+atf_test_program{name="first"}
+atf_test_program{name="second"}
+atf_test_program{name="third"}
+EOF
+    utils_cp_helper simple_all_pass first
+    utils_cp_helper simple_all_pass second
+    utils_cp_helper simple_some_fail third
+
+    cat >expout <<EOF
+first:pass
+first:skip
+third:fail
+third:pass
+EOF
+
+    cat >experr <<EOF
+No test cases matched by the 'fourth' filter.
+EOF
+    atf_expect_fail "Validation of individual filters not implemented"
+    atf_check -s exit:1 -o empty -e file:experr kyua list first fourth third
 }
 
 
@@ -179,8 +240,8 @@ test_suite("integration-2")
 atf_test_program{name="third"}
 atf_test_program{name="fourth"}
 EOF
-    utils_cp_helper simple_all_pass root/third
-    utils_cp_helper simple_some_fail root/fourth
+    utils_cp_helper simple_all_pass root/subdir/third
+    utils_cp_helper simple_some_fail root/subdir/fourth
 
     cat >expout <<EOF
 first:pass
@@ -201,6 +262,29 @@ EOF
         -v -k "$(pwd)/root/Kyuafile" "$(pwd)/root/first"
 }
 
+
+utils_test_case only_load_used_test_programs
+only_load_used_test_programs_body() {
+    cat >Kyuafile <<EOF
+syntax("kyuafile", 1)
+test_suite("integration")
+atf_test_program{name="first"}
+atf_test_program{name="second"}
+EOF
+    utils_cp_helper simple_all_pass first
+    utils_cp_helper bad_test_program second
+
+    cat >expout <<EOF
+first:pass
+first:skip
+EOF
+    CREATE_COOKIE="$(pwd)/cookie"; export CREATE_COOKIE
+    atf_check -s exit:0 -o file:expout -e empty kyua list first
+    if test -f "${CREATE_COOKIE}"; then
+        atf_fail "An unmatched test case has been executed, which harms" \
+            "performance"
+    fi
+}
 
 utils_test_case verbose_flag
 verbose_flag_body() {
@@ -417,9 +501,15 @@ atf_init_test_cases() {
     atf_add_test_case one_arg__subdir
     atf_add_test_case one_arg__test_case
     atf_add_test_case one_arg__test_program
-    atf_add_test_case many_args
+    atf_add_test_case one_arg__invalid
+    atf_add_test_case many_args__ok
+    atf_add_test_case many_args__invalid
+    atf_add_test_case many_args__no_match__all
+    atf_add_test_case many_args__no_match__some
 
     atf_add_test_case args_are_relative
+
+    atf_add_test_case only_load_used_test_programs
 
     atf_add_test_case kyuafile_flag__no_args
     atf_add_test_case kyuafile_flag__some_args
