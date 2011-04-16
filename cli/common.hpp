@@ -64,8 +64,6 @@ extern const utils::cmdline::path_option kyuafile_option;
 
 engine::user_files::config load_config(
     const utils::cmdline::parsed_cmdline&);
-engine::user_files::kyuafile old_load_kyuafile(
-    const utils::cmdline::parsed_cmdline&);
 engine::user_files::kyuafile load_kyuafile(
     const utils::cmdline::parsed_cmdline&);
 void set_confdir_for_testing(const utils::fs::path&);

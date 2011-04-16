@@ -1,4 +1,4 @@
-dnl Copyright 2010 Google Inc.
+dnl Copyright 2010, 2011 Google Inc.
 dnl All rights reserved.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
@@ -40,15 +40,32 @@ m4_define([GUESS_TOPDIR], {
 })
 
 
-m4_define([RUN_ATF_HELPERS],
-    [TESTS="$1" kyua test $(GUESS_TOPDIR)/engine/test_program_atf_helpers])
-m4_define([RUN_PLAIN_HELPER],
-    [HELPER="$1" kyua test $(GUESS_TOPDIR)/engine/test_program_plain_helpers])
+m4_define([CREATE_ATF_HELPERS], [
+    AT_DATA([Kyuafile], [
+syntax("kyuafile", 1)
+test_suite("bootstrap")
+atf_test_program{name="atf_helpers"}
+])
+    cp $(GUESS_TOPDIR)/engine/test_program_atf_helpers atf_helpers
+])
+m4_define([RUN_ATF_HELPERS], [TESTS="$1" kyua test])
+
+
+m4_define([CREATE_PLAIN_HELPERS], [
+    AT_DATA([Kyuafile], [
+syntax("kyuafile", 1)
+test_suite("bootstrap")
+atf_test_program{name="plain_helpers"}
+])
+    cp $(GUESS_TOPDIR)/engine/test_program_plain_helpers plain_helpers
+])
+m4_define([RUN_PLAIN_HELPER], [HELPER="$1" kyua test])
 
 
 AT_SETUP([test program crashes in test list])
 AT_TESTED([kyua])
 
+CREATE_PLAIN_HELPERS
 AT_CHECK([RUN_PLAIN_HELPER([abort_test_cases_list])], [1], [stdout], [])
 re='plain_helpers:__test_program__.*broken.*test program failed'
 AT_CHECK([grep "${re}" stdout], [0], [ignore], [])
@@ -59,6 +76,7 @@ AT_CLEANUP
 AT_SETUP([test program prints an empty test list])
 AT_TESTED([kyua])
 
+CREATE_PLAIN_HELPERS
 AT_CHECK([RUN_PLAIN_HELPER([empty_test_cases_list])], [1], [stdout], [])
 re='plain_helpers:__test_program__.*broken.*Invalid header'
 AT_CHECK([grep "${re}" stdout], [0], [ignore], [])
@@ -69,6 +87,7 @@ AT_CLEANUP
 AT_SETUP([test program with zero test cases])
 AT_TESTED([kyua])
 
+CREATE_PLAIN_HELPERS
 AT_CHECK([RUN_PLAIN_HELPER([zero_test_cases])], [1], [stdout], [])
 re='plain_helpers:__test_program__.*broken.*No test cases'
 AT_CHECK([grep "${re}" stdout], [0], [ignore], [])
@@ -79,6 +98,7 @@ AT_CLEANUP
 AT_SETUP([run test case that passes])
 AT_TESTED([kyua])
 
+CREATE_ATF_HELPERS
 AT_CHECK([RUN_ATF_HELPERS([passes])], [0], [stdout], [])
 AT_CHECK([grep "atf_helpers:fails" stdout], [1], [], [])
 AT_CHECK([grep "atf_helpers:passes.*passed" stdout], [0], [ignore], [])
@@ -90,6 +110,7 @@ AT_CLEANUP
 AT_SETUP([run test case that fails])
 AT_TESTED([kyua])
 
+CREATE_ATF_HELPERS
 AT_CHECK([RUN_ATF_HELPERS([fails])], [1], [stdout], [])
 AT_CHECK([grep "atf_helpers:fails.*failed.*Failed on purpose" stdout],
          [0], [ignore], [])
@@ -102,6 +123,7 @@ AT_CLEANUP
 AT_SETUP([run test case that skips])
 AT_TESTED([kyua])
 
+CREATE_ATF_HELPERS
 AT_CHECK([RUN_ATF_HELPERS([skips])], [0], [stdout], [])
 AT_CHECK([grep "atf_helpers:fails" stdout], [1], [], [])
 AT_CHECK([grep "atf_helpers:passes" stdout], [1], [], [])
@@ -114,6 +136,7 @@ AT_CLEANUP
 AT_SETUP([run two test cases, success])
 AT_TESTED([kyua])
 
+CREATE_ATF_HELPERS
 AT_CHECK([RUN_ATF_HELPERS([passes skips])], [0], [stdout], [])
 AT_CHECK([grep "atf_helpers:fails" stdout], [1], [], [])
 AT_CHECK([grep "atf_helpers:passes.*passed" stdout], [0], [ignore], [])
@@ -126,6 +149,7 @@ AT_CLEANUP
 AT_SETUP([run two test cases, failure])
 AT_TESTED([kyua])
 
+CREATE_ATF_HELPERS
 AT_CHECK([RUN_ATF_HELPERS([fails passes])], [1], [stdout], [])
 AT_CHECK([grep "atf_helpers:fails.*failure.*Failed on purpose" stdout],
          [1], [], [])
@@ -138,6 +162,7 @@ AT_CLEANUP
 AT_SETUP([run mixed test cases])
 AT_TESTED([kyua])
 
+CREATE_ATF_HELPERS
 AT_CHECK([RUN_ATF_HELPERS([fails passes skips])], [1], [stdout], [])
 AT_CHECK([grep "atf_helpers:fails.*failure.*Failed on purpose" stdout],
          [1], [], [])

@@ -27,11 +27,13 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <cstdlib>
+#include <utility>
 
 #include "cli/cmd_test.hpp"
 #include "cli/common.hpp"
 #include "engine/results.hpp"
 #include "engine/runner.hpp"
+#include "engine/test_program.hpp"
 #include "engine/user_files/config.hpp"
 #include "engine/user_files/kyuafile.hpp"
 #include "utils/cmdline/base_command.ipp"
@@ -39,6 +41,7 @@
 #include "utils/cmdline/parser.ipp"
 #include "utils/cmdline/ui.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/logging/macros.hpp"
 
 
 namespace cmdline = utils::cmdline;
@@ -49,43 +52,56 @@ namespace user_files = engine::user_files;
 using cli::cmd_test;
 
 
-namespace {
+/// Runs a test program in a controlled manner.
+///
+/// If the test program fails to provide a list of test cases, a fake test case
+/// named '__test_program__' is created and it is reported as broken.
+///
+/// \param test_program The test program to execute.
+/// \param config The configuration variables provided by the user.
+/// \param ui Interface for progress reporting.
+static std::pair< unsigned long, unsigned long >
+run_test_program(const user_files::test_program& test_program,
+                 const user_files::config& config,
+                 const cli::test_filters& filters,
+                 cmdline::ui* ui)
+{
+    LI(F("Processing test program '%s'") % test_program.binary_path);
 
-
-class run_hooks : public runner::hooks {
-    cmdline::ui* _ui;
-
-public:
-    unsigned long good_count;
-    unsigned long bad_count;
-
-    run_hooks(cmdline::ui* ui_) :
-        _ui(ui_),
-        good_count(0),
-        bad_count(0)
-    {
+    engine::test_cases_vector test_cases;
+    try {
+        test_cases = engine::load_test_cases(test_program.binary_path);
+    } catch (const std::exception& e) {
+        const results::broken broken(F("Failed to load list of test cases: "
+                                       "%s") % e.what());
+        // TODO(jmmv): Maybe generalize this in test_case_id somehow?
+        const engine::test_case_id program_id(
+            test_program.binary_path, "__test_program__");
+        ui->out(F("%s  ->  %s") % program_id.str() %
+                broken.format());
+        return std::make_pair(0, 1);
     }
 
-    void
-    start_test_case(const engine::test_case_id& identifier)
-    {
-    }
+    unsigned long good_count = 0;
+    unsigned long bad_count = 0;
+    for (engine::test_cases_vector::const_iterator iter = test_cases.begin();
+         iter != test_cases.end(); iter++) {
+        const engine::test_case& test_case = *iter;
+        if (!filters.match_test_case(test_case.identifier))
+            continue;
 
-    void
-    finish_test_case(const engine::test_case_id& identifier,
-                     results::result_ptr result)
-    {
-        _ui->out(F("%s  ->  %s") % identifier.str() % result->format());
+        results::result_ptr result = runner::run_test_case(
+            test_case, config, test_program.test_suite_name);
 
+        ui->out(F("%s  ->  %s") % test_case.identifier.str() %
+                result->format());
         if (result->good())
             good_count++;
         else
             bad_count++;
     }
-};
-
-
-}  // anonymous namespace
+    return std::make_pair(good_count, bad_count);
+}
 
 
 /// Default constructor for cmd_test.
@@ -107,16 +123,34 @@ cmd_test::cmd_test(void) : cmdline::base_command(
 int
 cmd_test::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
 {
-    run_hooks hooks(ui);
+    const cli::test_filters filters(cmdline.arguments());
 
     const user_files::config config = load_config(cmdline);
-    const user_files::kyuafile kyuafile = old_load_kyuafile(cmdline);
+    const user_files::kyuafile kyuafile = load_kyuafile(cmdline);
 
-    runner::run_test_suite(kyuafile, config, &hooks);
+    unsigned long good_count = 0;
+    unsigned long bad_count = 0;
+    for (user_files::test_programs_vector::const_iterator p =
+         kyuafile.test_programs().begin(); p != kyuafile.test_programs().end();
+         p++) {
+        if (!filters.match_test_program((*p).binary_path))
+            continue;
 
-    ui->out("");
-    ui->out(F("%d/%d passed (%d failed)") % hooks.good_count %
-            (hooks.good_count + hooks.bad_count) % hooks.bad_count);
+        const std::pair< unsigned long, unsigned long > partial =
+            run_test_program((*p), config, filters, ui);
+        good_count += partial.first;
+        bad_count += partial.second;
+    }
 
-    return hooks.bad_count == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+    if (good_count > 0 || bad_count > 0) {
+        ui->out("");
+        ui->out(F("%d/%d passed (%d failed)") % good_count %
+                (good_count + bad_count) % bad_count);
+
+        return bad_count == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+    } else {
+        // TODO(jmmv): Does not print a nice error prefix; must fix.
+        ui->err("No test cases matched by the filters provided.");
+        return EXIT_FAILURE;
+    }
 }

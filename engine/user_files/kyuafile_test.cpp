@@ -32,15 +32,12 @@
 
 #include "engine/exceptions.hpp"
 #include "engine/user_files/kyuafile.hpp"
-#include "utils/cmdline/exceptions.hpp"
-#include "utils/cmdline/parser.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/lua/operations.hpp"
 #include "utils/lua/test_utils.hpp"
 #include "utils/lua/wrap.ipp"
 #include "utils/test_utils.hpp"
 
-namespace cmdline = utils::cmdline;
 namespace fs = utils::fs;
 namespace lua = utils::lua;
 namespace user_files = engine::user_files;
@@ -350,51 +347,6 @@ ATF_TEST_CASE_BODY(kyuafile__load__missing_test_program)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__from_arguments__none);
-ATF_TEST_CASE_BODY(kyuafile__from_arguments__none)
-{
-    const user_files::kyuafile suite = user_files::kyuafile::from_arguments(
-        cmdline::args_vector());
-    ATF_REQUIRE_EQ(0, suite.test_programs().size());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__from_arguments__some);
-ATF_TEST_CASE_BODY(kyuafile__from_arguments__some)
-{
-    cmdline::args_vector args;
-    args.push_back("a/b/c");
-    args.push_back("foo/bar");
-    const user_files::kyuafile suite = user_files::kyuafile::from_arguments(
-        args);
-    ATF_REQUIRE_EQ(2, suite.test_programs().size());
-    ATF_REQUIRE_EQ(fs::path("a/b/c"), suite.test_programs()[0].binary_path);
-    ATF_REQUIRE_EQ("__undefined__", suite.test_programs()[0].test_suite_name);
-    ATF_REQUIRE_EQ(fs::path("foo/bar"), suite.test_programs()[1].binary_path);
-    ATF_REQUIRE_EQ("__undefined__", suite.test_programs()[1].test_suite_name);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__from_arguments__with_test_case);
-ATF_TEST_CASE_BODY(kyuafile__from_arguments__with_test_case)
-{
-    cmdline::args_vector args;
-    args.push_back("foo/bar:test_case");
-    ATF_REQUIRE_THROW_RE(cmdline::usage_error, "not implemented",
-                         user_files::kyuafile::from_arguments(args));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__from_arguments__invalid_path);
-ATF_TEST_CASE_BODY(kyuafile__from_arguments__invalid_path)
-{
-    cmdline::args_vector args;
-    args.push_back("");
-    ATF_REQUIRE_THROW_RE(cmdline::usage_error, "Invalid path",
-                         user_files::kyuafile::from_arguments(args));
-}
-
-
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, adjust_binary_path__absolute);
@@ -418,9 +370,4 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__bad_syntax__version);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__missing_file);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__missing_test_program);
-
-    ATF_ADD_TEST_CASE(tcs, kyuafile__from_arguments__none);
-    ATF_ADD_TEST_CASE(tcs, kyuafile__from_arguments__some);
-    ATF_ADD_TEST_CASE(tcs, kyuafile__from_arguments__with_test_case);
-    ATF_ADD_TEST_CASE(tcs, kyuafile__from_arguments__invalid_path);
 }

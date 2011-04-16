@@ -36,16 +36,13 @@
 
 #include "engine/results.hpp"
 #include "engine/test_case.hpp"
-#include "engine/user_files/config.hpp"
-#include "utils/fs/path.hpp"
 
 
 namespace engine {
 
 
 namespace user_files {
-class kyuafile;
-struct test_program;
+struct config;
 }  // namespace user_files
 struct test_case;
 
@@ -53,33 +50,9 @@ struct test_case;
 namespace runner {
 
 
-/// Callbacks for the execution of test suites and programs.
-class hooks {
-public:
-    virtual ~hooks(void) = 0;
-
-    /// Hook called right before a test case is executed.
-    ///
-    /// \param identifier The test case identifier.
-    virtual void start_test_case(const test_case_id& identifier) = 0;
-
-    /// Hook called right after a test case is executed.
-    ///
-    /// \param identifier The test case identifier.
-    /// \param result The result of the test case.  To grab ownership of this
-    ///     pointer, just use release() on the smart pointer.
-    virtual void finish_test_case(const test_case_id& identifier,
-                                  results::result_ptr result) = 0;
-};
-
-
 results::result_ptr run_test_case(const engine::test_case&,
                                   const user_files::config&,
                                   const std::string&);
-void run_test_program(const user_files::test_program&,
-                      const user_files::config&, hooks*);
-void run_test_suite(const user_files::kyuafile&, const user_files::config&,
-                    hooks*);
 
 
 }  // namespace runner

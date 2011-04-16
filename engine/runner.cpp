@@ -42,8 +42,7 @@ extern "C" {
 #include "engine/results.ipp"
 #include "engine/runner.hpp"
 #include "engine/test_case.hpp"
-#include "engine/test_program.hpp"
-#include "engine/user_files/kyuafile.hpp"
+#include "engine/user_files/config.hpp"
 #include "utils/datetime.hpp"
 #include "utils/defs.hpp"
 #include "utils/env.hpp"
@@ -402,12 +401,6 @@ run_test_case_safe(const engine::test_case& test_case,
 }  // anonymous namespace
 
 
-/// Destructor for the hooks.
-runner::hooks::~hooks(void)
-{
-}
-
-
 /// Runs a single test case in a controlled manner.
 ///
 /// All exceptions raised at run time are captured and reported as a test
@@ -435,64 +428,4 @@ runner::run_test_case(const engine::test_case& test_case,
     }
     INV(result.get() != NULL);
     return result;
-}
-
-
-/// Runs a test program in a controlled manner.
-///
-/// If the test program fails to provide a list of test cases, a fake test case
-/// named '__test_program__' is created and it is reported as broken.
-///
-/// \param test_program The test program to execute.
-/// \param config The configuration variables provided by the user.
-/// \param hooks Callbacks for events.
-void
-runner::run_test_program(const user_files::test_program& test_program,
-                         const user_files::config& config,
-                         runner::hooks* hooks)
-{
-    LI(F("Processing test program '%s'") % test_program.binary_path);
-
-    engine::test_cases_vector test_cases;
-    try {
-        test_cases = engine::load_test_cases(test_program.binary_path);
-    } catch (const std::exception& e) {
-        const results::broken broken(F("Failed to load list of test cases: "
-                                       "%s") % e.what());
-        // TODO(jmmv): Maybe generalize this in test_case_id somehow?
-        const test_case_id program_id = test_case_id(
-            test_program.binary_path, "__test_program__");
-        hooks->start_test_case(program_id);
-        hooks->finish_test_case(program_id, results::make_result(broken));
-        return;
-    }
-
-    for (engine::test_cases_vector::const_iterator iter = test_cases.begin();
-         iter != test_cases.end(); iter++) {
-        const engine::test_case& test_case = *iter;
-
-        hooks->start_test_case(test_case.identifier);
-        results::result_ptr result = run_test_case(
-            test_case, config, test_program.test_suite_name);
-        hooks->finish_test_case(test_case.identifier, result);
-    }
-}
-
-
-/// Runs a collection of test programs (aka a test suite).
-///
-/// \param suite The definition of the test suite.
-/// \param config The configuration variables provided by the user.
-/// \param hooks Callbacks for events.
-void
-runner::run_test_suite(const user_files::kyuafile& suite,
-                       const user_files::config& config,
-                       runner::hooks* run_hooks)
-{
-    const user_files::test_programs_vector& test_programs =
-        suite.test_programs();
-    for (user_files::test_programs_vector::const_iterator iter =
-         test_programs.begin(); iter != test_programs.end(); iter++) {
-        run_test_program((*iter), config, run_hooks);
-    }
 }

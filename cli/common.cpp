@@ -182,41 +182,6 @@ cli::load_config(const cmdline::parsed_cmdline& cmdline)
 }
 
 
-// TODO(jmmv): THIS FUNCTION IS DEPRECATED AND MUST BE REMOVED.  The removal can
-// only happen when 'test' is converted to use load_kyuafile() instead.  When
-// removing this function, do not forget to also kill kyuafile::from_arguments
-// and all related includes.
-//
-/// Loads the Kyuafile for this session or generates a fake one.
-///
-/// The algorithm implemented here is as follows:
-/// 1) If there are arguments on the command line that are supposed to override
-///    the Kyuafile, the Kyuafile is not loaded and a fake one is generated.
-/// 2) Otherwise, the user-provided Kyuafile is loaded.
-///
-/// \param cmdline The parsed command line.
-///
-/// \throw engine::error If the parsing of the configuration file fails.
-///     TODO(jmmv): I'm not sure if this is the raised exception.  And even if
-///     it is, we should make it more accurate.
-user_files::kyuafile
-cli::old_load_kyuafile(const cmdline::parsed_cmdline& cmdline)
-{
-    const fs::path filename = cmdline.get_option< cmdline::path_option >(
-        kyuafile_option.long_name());
-
-    if (cmdline.arguments().empty())
-        return user_files::kyuafile::load(filename);
-    else {
-        // TODO(jmmv): Move the from_arguments functionality here.  We probably
-        // don't want to generate the fake file from scratch because we should
-        // inherit the Kyuafile from the directory.  Not sure how to do that
-        // though.
-        return user_files::kyuafile::from_arguments(cmdline.arguments());
-    }
-}
-
-
 /// Loads the Kyuafile for this session or generates a fake one.
 ///
 /// The algorithm implemented here is as follows:

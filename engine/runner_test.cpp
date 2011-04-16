@@ -48,7 +48,6 @@ extern "C" {
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/env.hpp"
-#include "utils/noncopyable.hpp"
 #include "utils/passwd.hpp"
 
 namespace fs = utils::fs;
@@ -65,43 +64,6 @@ namespace {
 static const user_files::config mock_config(
     "mock-architecture", "mock-platform", utils::none,
     user_files::test_suites_map());
-
-
-/// Mapping between test case identifier to their results.
-typedef std::map< engine::test_case_id, const results::base_result* >
-    results_map;
-
-
-/// Callbacks for the execution of test suites and programs.
-class capture_results : public runner::hooks, utils::noncopyable {
-public:
-    results_map results;
-
-    ~capture_results(void)
-    {
-        for (results_map::const_iterator iter = results.begin();
-             iter != results.end(); iter++) {
-            delete (*iter).second;
-        }
-    }
-
-    void
-    start_test_case(const engine::test_case_id& identifier)
-    {
-        results[identifier] = NULL;
-    }
-
-    void
-    finish_test_case(const engine::test_case_id& identifier,
-                     results::result_ptr result)
-    {
-        if (results.find(identifier) == results.end())
-            ATF_FAIL(F("finish_test_case called with id %s but start_test_case "
-                       "was never called") % identifier.str());
-        else
-            results[identifier] = result.release();
-    }
-};
 
 
 /// Gets the path to the runtime helpers.
@@ -651,24 +613,6 @@ ATF_TEST_CASE_BODY(run_test_case__missing_test_program)
 // have to wait until we have a mechanism to store this data to do so.
 
 
-// TODO(jmmv): Need more test cases for run_test_program and run_test_suite.
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(run_test_program__load_failure);
-ATF_TEST_CASE_BODY(run_test_program__load_failure)
-{
-    user_files::test_program test_program(fs::path("/non-existent"), "");
-
-    capture_results hooks;
-    runner::run_test_program(test_program, mock_config, &hooks);
-    const engine::test_case_id id(fs::path("/non-existent"),
-                                  "__test_program__");
-    ATF_REQUIRE(hooks.results.find(id) != hooks.results.end());
-    const results::base_result* result = hooks.results[id];
-    validate_broken("Failed to load list of test cases", result);
-}
-
-
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, run_test_case__simple);
@@ -695,6 +639,4 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, run_test_case__timeout_cleanup);
     ATF_ADD_TEST_CASE(tcs, run_test_case__missing_results_file);
     ATF_ADD_TEST_CASE(tcs, run_test_case__missing_test_program);
-
-    ATF_ADD_TEST_CASE(tcs, run_test_program__load_failure);
 }

@@ -329,61 +329,6 @@ ATF_TEST_CASE_BODY(load_kyuafile__fail)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(old_load_kyuafile__default);
-ATF_TEST_CASE_BODY(old_load_kyuafile__default)
-{
-    std::map< std::string, std::string > options;
-    options["kyuafile"] = cli::kyuafile_option.default_value();
-    const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
-
-    create_mock_kyuafile("Kyuafile", "foo bar");
-    const user_files::kyuafile config = cli::old_load_kyuafile(mock_cmdline);
-    validate_mock_kyuafile(config, "foo bar");
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(old_load_kyuafile__explicit);
-ATF_TEST_CASE_BODY(old_load_kyuafile__explicit)
-{
-    std::map< std::string, std::string > options;
-    options["kyuafile"] = "another";
-    const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
-
-    create_mock_kyuafile("Kyuafile", "no no no");
-    create_mock_kyuafile("another", "yes yes yes");
-    const user_files::kyuafile config = cli::old_load_kyuafile(mock_cmdline);
-    validate_mock_kyuafile(config, "yes yes yes");
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(old_load_kyuafile__fail);
-ATF_TEST_CASE_BODY(old_load_kyuafile__fail)
-{
-    std::map< std::string, std::string > options;
-    options["kyuafile"] = "missing-file";
-    const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
-
-    create_mock_kyuafile("Kyuafile", "no no no");
-    ATF_REQUIRE_THROW_RE(engine::error, "missing-file",
-                         cli::old_load_kyuafile(mock_cmdline));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(old_load_kyuafile__arguments);
-ATF_TEST_CASE_BODY(old_load_kyuafile__arguments)
-{
-    std::map< std::string, std::string > options;
-    options["kyuafile"] = "/i/dont/exist";
-    cmdline::args_vector args;
-    args.push_back("from command line");
-    const cmdline::parsed_cmdline mock_cmdline(options, args);
-
-    create_mock_kyuafile("Kyuafile", NULL);
-    const user_files::kyuafile config = cli::old_load_kyuafile(mock_cmdline);
-    validate_mock_kyuafile(config, "from command line");
-}
-
-
 ATF_TEST_CASE_WITHOUT_HEAD(test_filters__ctor__ok)
 ATF_TEST_CASE_BODY(test_filters__ctor__ok)
 {
@@ -536,11 +481,6 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, load_kyuafile__default);
     ATF_ADD_TEST_CASE(tcs, load_kyuafile__explicit);
     ATF_ADD_TEST_CASE(tcs, load_kyuafile__fail);
-
-    ATF_ADD_TEST_CASE(tcs, old_load_kyuafile__default);
-    ATF_ADD_TEST_CASE(tcs, old_load_kyuafile__explicit);
-    ATF_ADD_TEST_CASE(tcs, old_load_kyuafile__fail);
-    ATF_ADD_TEST_CASE(tcs, old_load_kyuafile__arguments);
 
     ATF_ADD_TEST_CASE(tcs, test_filters__ctor__ok);
     ATF_ADD_TEST_CASE(tcs, test_filters__ctor__fail);

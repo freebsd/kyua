@@ -29,8 +29,6 @@
 #include "engine/exceptions.hpp"
 #include "engine/user_files/common.hpp"
 #include "engine/user_files/kyuafile.hpp"
-#include "utils/cmdline/exceptions.hpp"
-#include "utils/cmdline/parser.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/operations.hpp"
@@ -39,7 +37,6 @@
 #include "utils/lua/wrap.ipp"
 #include "utils/sanity.hpp"
 
-namespace cmdline = utils::cmdline;
 namespace fs = utils::fs;
 namespace lua = utils::lua;
 namespace user_files = engine::user_files;
@@ -207,40 +204,6 @@ user_files::kyuafile::load(const utils::fs::path& file)
                                                   file.branch_path());
     } catch (const lua::error& e) {
         throw engine::error(F("Load failed: %s") % e.what());
-    }
-    return kyuafile(test_programs);
-}
-
-
-/// Constructs a test suite based on command line arguments.
-///
-/// TODO(jmmv): This probably belongs in cli/.
-///
-/// \param args The command line arguments.
-///
-/// \return An adhoc test suite configuration based on the arguments.
-///
-/// \throw cmdline::usage_error If the arguments are invalid.
-user_files::kyuafile
-user_files::kyuafile::from_arguments(const cmdline::args_vector& args)
-{
-    test_programs_vector test_programs;
-    for (cmdline::args_vector::const_iterator iter = args.begin();
-         iter != args.end(); iter++) {
-        if ((*iter).find(":") != std::string::npos) {
-            throw cmdline::usage_error(F("Specifying a single test case to run "
-                                         "is not implemented yet (arg %s)") %
-                                       *iter);
-        }
-
-        // TODO(jmmv): Scan directories, if specified.
-
-        try {
-            test_programs.push_back(test_program(fs::path(*iter),
-                                                 "__undefined__"));
-        } catch (const fs::invalid_path_error& error) {
-            throw cmdline::usage_error(F("Invalid path '%s'") % *iter);
-        }
     }
     return kyuafile(test_programs);
 }

@@ -35,7 +35,6 @@
 #include <string>
 #include <vector>
 
-#include "utils/cmdline/parser.hpp"
 #include "utils/fs/path.hpp"
 
 namespace utils {
@@ -90,7 +89,6 @@ class kyuafile {
 public:
     explicit kyuafile(const test_programs_vector&);
     static kyuafile load(const utils::fs::path&);
-    static kyuafile from_arguments(const utils::cmdline::args_vector&);
 
     const test_programs_vector& test_programs(void) const;
 };
