@@ -48,6 +48,37 @@ namespace passwd = utils::passwd;
 namespace user_files = engine::user_files;
 
 
+namespace {
+
+
+/// The default timeout value for test cases that do not provide one.
+/// TODO(jmmv): We should not be doing this; see issue 5 for details.
+static datetime::delta default_timeout(300, 0);
+
+
+/// Concatenates a collection of objects in a string using ' ' as a separator.
+///
+/// \param set The objects to join.  This cannot be empty.
+///
+/// \return The concatenation of all the objects in the set.
+template< class T >
+std::string
+flatten_set(const std::set< T >& set)
+{
+    PRE(!set.empty());
+
+    std::ostringstream output;
+    std::copy(set.begin(), set.end(), std::ostream_iterator< T >(output, " "));
+
+    std::string result = output.str();
+    result.erase(result.end() - 1);
+    return result;
+}
+
+
+}  // anonymous namespace
+
+
 /// Parses a boolean property.
 ///
 /// \param name The name of the property; used for error messages.
@@ -294,7 +325,7 @@ engine::test_case::from_properties(const test_case_id& identifier_,
 {
     std::string description_;
     bool has_cleanup_ = false;
-    datetime::delta timeout_(300, 0);
+    datetime::delta timeout_ = default_timeout;
     strings_set allowed_architectures_;
     strings_set allowed_platforms_;
     strings_set required_configs_;
@@ -335,6 +366,40 @@ engine::test_case::from_properties(const test_case_id& identifier_,
                      allowed_architectures_, allowed_platforms_,
                      required_configs_, required_programs_, required_user_,
                      user_metadata_);
+}
+
+
+/// Returns a string representation of all test case properties.
+///
+/// The returned keys and values match those that can be defined by the test
+/// case.
+///
+/// \return A key/value mapping describing all the test case properties.
+engine::properties_map
+engine::test_case::all_properties(void) const
+{
+    properties_map props = user_metadata;
+
+    if (!description.empty())
+        props["descr"] = description;
+    if (has_cleanup)
+        props["has.cleanup"] = "true";
+    if (timeout != default_timeout) {
+        INV(timeout.useconds == 0);
+        props["timeout"] = F("%d") % timeout.seconds;
+    }
+    if (!allowed_architectures.empty())
+        props["require.arch"] = flatten_set(allowed_architectures);
+    if (!allowed_platforms.empty())
+        props["require.machine"] = flatten_set(allowed_platforms);
+    if (!required_configs.empty())
+        props["require.config"] = flatten_set(required_configs);
+    if (!required_programs.empty())
+        props["require.progs"] = flatten_set(required_programs);
+    if (!required_user.empty())
+        props["require.user"] = required_user;
+
+    return props;
 }
 
 

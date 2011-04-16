@@ -82,6 +82,18 @@ datetime::delta::operator==(const datetime::delta& other) const
 }
 
 
+/// Checks if two time deltas are different.
+///
+/// \param other The object to compare to.
+///
+/// \return True if the two time deltas are different; false otherwise.
+bool
+datetime::delta::operator!=(const datetime::delta& other) const
+{
+    return !(*this == other);
+}
+
+
 namespace utils {
 namespace datetime {
 

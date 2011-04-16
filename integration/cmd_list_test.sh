@@ -152,14 +152,10 @@ EOF
     utils_cp_helper simple_some_fail subdir/second
 
     cat >expout <<EOF
-subdir/second:fail
-    test-suite = in-subdir
-subdir/second:pass
-    test-suite = in-subdir
-first:pass
-    test-suite = top-level
+subdir/second:fail (in-subdir)
+subdir/second:pass (in-subdir)
+first:pass (top-level)
 EOF
-    atf_expect_fail "-v not implemented yet"
     atf_check -s exit:0 -o file:expout -e empty kyua list -v subdir first:pass
 }
 
@@ -244,19 +240,16 @@ EOF
     utils_cp_helper simple_some_fail root/subdir/fourth
 
     cat >expout <<EOF
-first:pass
-    test-suite = integration-1
-first:skip
-    test-suite = integration-1
-subdir/fourth:fail
-    test-suite = integration-2
+first:pass (integration-1)
+first:skip (integration-1)
+subdir/fourth:fail (integration-2)
 EOF
     atf_expect_fail "Test names are not yet relative"
     atf_check -s exit:0 -o file:expout -e empty kyua list \
         -v -k "$(pwd)/root/Kyuafile" first subdir/fourth:fail
 
 cat >experr <<EOF
-Test case not found.  TODO(jmmv): Adjust this expected message.
+No test cases matched by the filters provided.
 EOF
     atf_check -s exit:1 -o empty -e file:experr kyua list \
         -v -k "$(pwd)/root/Kyuafile" "$(pwd)/root/first"
@@ -305,30 +298,23 @@ EOF
     utils_cp_helper metadata subdir
 
     cat >expout <<EOF
-simple_all_pass:pass
-    test-suite = integration-suite-1
-simple_all_pass:skip
-    test-suite = integration-suite-1
-subdir/metadata:no_properties
-    test-suite = integration-suite-2
-subdir/metadata:one_property
-    test-suite = integration-suite-2
+simple_all_pass:pass (integration-suite-1)
+simple_all_pass:skip (integration-suite-1)
+subdir/metadata:no_properties (integration-suite-2)
+subdir/metadata:one_property (integration-suite-2)
     descr = Does nothing but has one metadata property
-subdir/metadata:many_properties
-    test-suite = integration-suite-2
+subdir/metadata:many_properties (integration-suite-2)
+    X-no-meaning = I am a custom variable
     descr =     A description with some padding
     require.arch = some-architecture
     require.config = var1 var2 var3
     require.machine = some-platform
-    require.progs = bin1 bin2 /nonexistent/bin3
+    require.progs = /nonexistent/bin3 bin1 bin2
     require.user = root
-    X-no-meaning = I am a custom variable
-subdir/metadata:with_cleanup
-    test-suite = integration-suite-2
+subdir/metadata:with_cleanup (integration-suite-2)
     has.cleanup = true
-    timeout = 300
+    timeout = 250
 EOF
-    atf_expect_fail "Printing of properties not implemented"
     atf_check -s exit:0 -o file:expout -e empty kyua list -v
     atf_check -s exit:0 -o file:expout -e empty kyua list --verbose
 }
@@ -345,9 +331,8 @@ EOF
     utils_cp_helper simple_all_pass second
 
     cat >experr <<EOF
-Test program not found.  TODO(jmmv): Adjust this expected message.
+No test cases matched by the filters provided.
 EOF
-    atf_expect_fail "Test program presence does not obey the Kyuafile"
     atf_check -s exit:1 -o empty -e file:experr kyua list second
 }
 
@@ -362,9 +347,8 @@ EOF
     utils_cp_helper simple_all_pass first
 
     cat >experr <<EOF
-Test case not found.  TODO(jmmv): Adjust this expected message.
+No test cases matched by the filters provided.
 EOF
-    atf_expect_fail "Test case listing not implemented"
     atf_check -s exit:1 -o empty -e file:experr kyua list first:foobar
 }
 
@@ -483,15 +467,11 @@ EOF
     utils_cp_helper simple_all_pass sometest
 
     cat >expout <<EOF
-sometest:pass
-    test-suite = hello-world
-sometest:skip
-    test-suite = hello-world
+sometest:pass (hello-world)
+sometest:skip (hello-world)
 EOF
-    atf_expect_fail "Explicit test case did not trigger the processing of" \
-        "the Kyuafile"
-    atf_check -s exit:0 -o file:expout -e empty kyua list -k myfile sometest
-    atf_check -s exit:0 -o file:expout -e empty kyua list --kyuafile=myfile \
+    atf_check -s exit:0 -o file:expout -e empty kyua list -v -k myfile sometest
+    atf_check -s exit:0 -o file:expout -e empty kyua list -v --kyuafile=myfile \
         sometest
 }
 

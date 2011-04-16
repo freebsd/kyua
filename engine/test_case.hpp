@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -141,6 +141,8 @@ struct test_case {
 
     static test_case from_properties(const test_case_id&,
                                      const properties_map&);
+
+    properties_map all_properties(void) const;
 
     bool operator==(const test_case&) const;
 };

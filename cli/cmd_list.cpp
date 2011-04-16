@@ -87,12 +87,15 @@ cli::cmd_list::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
                 continue;
 
             matched = true;
-            ui->out(tc.identifier.str());
+            if (!cmdline.has_option("verbose")) {
+                ui->out(tc.identifier.str());
+            } else {
+                ui->out(F("%s (%s)") % tc.identifier.str() %
+                        (*p).test_suite_name);
 
-            if (cmdline.has_option("verbose")) {
-                // TODO(jmmv): Print other metadata.
-                for (engine::properties_map::const_iterator iter2 = tc.user_metadata.begin();
-                     iter2 != tc.user_metadata.end(); iter2++)
+                const engine::properties_map props = tc.all_properties();
+                for (engine::properties_map::const_iterator iter2 = props.begin();
+                     iter2 != props.end(); iter2++)
                     ui->out(F("    %s = %s") % (*iter2).first % (*iter2).second);
             }
         }

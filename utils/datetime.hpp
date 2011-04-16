@@ -52,6 +52,7 @@ struct delta {
     delta(const unsigned int, const unsigned long);
 
     bool operator==(const delta&) const;
+    bool operator!=(const delta&) const;
 };
 
 

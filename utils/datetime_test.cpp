@@ -68,6 +68,19 @@ ATF_TEST_CASE_BODY(delta__equals)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(delta__differs);
+ATF_TEST_CASE_BODY(delta__differs)
+{
+    ATF_REQUIRE(!(datetime::delta() != datetime::delta()));
+    ATF_REQUIRE(!(datetime::delta() != datetime::delta(0, 0)));
+    ATF_REQUIRE(!(datetime::delta(1, 2) != datetime::delta(1, 2)));
+
+    ATF_REQUIRE(datetime::delta() != datetime::delta(0, 1));
+    ATF_REQUIRE(datetime::delta() != datetime::delta(1, 0));
+    ATF_REQUIRE(datetime::delta(1, 2) != datetime::delta(2, 1));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(timestamp__copy);
 ATF_TEST_CASE_BODY(timestamp__copy)
 {
@@ -140,6 +153,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, delta__defaults);
     ATF_ADD_TEST_CASE(tcs, delta__overrides);
     ATF_ADD_TEST_CASE(tcs, delta__equals);
+    ATF_ADD_TEST_CASE(tcs, delta__differs);
 
     ATF_ADD_TEST_CASE(tcs, timestamp__copy);
     ATF_ADD_TEST_CASE(tcs, timestamp__now__mock);

@@ -68,7 +68,7 @@ ATF_TEST_CASE_BODY(many_properties)
 ATF_TEST_CASE_WITH_CLEANUP(with_cleanup);
 ATF_TEST_CASE_HEAD(with_cleanup)
 {
-    set_md_var("timeout", "300");
+    set_md_var("timeout", "250");
 }
 ATF_TEST_CASE_BODY(with_cleanup)
 {

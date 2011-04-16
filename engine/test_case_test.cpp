@@ -417,6 +417,62 @@ ATF_TEST_CASE_BODY(test_case__from_properties__unknown)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(test_case__all_properties__none)
+ATF_TEST_CASE_BODY(test_case__all_properties__none)
+{
+    const engine::test_case_id id(fs::path("program"), "test-case");
+    engine::properties_map in_properties;
+    engine::properties_map exp_properties;
+
+    ATF_REQUIRE(exp_properties == engine::test_case::from_properties(
+        id, in_properties).all_properties());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(test_case__all_properties__only_user)
+ATF_TEST_CASE_BODY(test_case__all_properties__only_user)
+{
+    const engine::test_case_id id(fs::path("program"), "test-case");
+
+    engine::properties_map in_properties;
+    in_properties["X-foo"] = "bar";
+    in_properties["X-another-var"] = "This is a string";
+
+    engine::properties_map exp_properties = in_properties;
+
+    ATF_REQUIRE(exp_properties == engine::test_case::from_properties(
+        id, in_properties).all_properties());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(test_case__all_properties__all)
+ATF_TEST_CASE_BODY(test_case__all_properties__all)
+{
+    const engine::test_case_id id(fs::path("program"), "test-case");
+
+    engine::properties_map in_properties;
+    in_properties["descr"] = "Some text that won't be sorted";
+    in_properties["has.cleanup"] = "true";
+    in_properties["require.arch"] = "i386 x86_64 macppc";
+    in_properties["require.config"] = "var1 var3 var2";
+    in_properties["require.machine"] = "amd64";
+    in_properties["require.progs"] = "/bin/ls svn";
+    in_properties["require.user"] = "root";
+    in_properties["timeout"] = "123";
+    in_properties["X-foo"] = "value1";
+    in_properties["X-bar"] = "value2";
+    in_properties["X-baz-www"] = "value3";
+
+    engine::properties_map exp_properties = in_properties;
+    // Ensure multi-word properties are sorted.
+    exp_properties["require.arch"] = "i386 macppc x86_64";
+    exp_properties["require.config"] = "var1 var2 var3";
+
+    ATF_REQUIRE(exp_properties == engine::test_case::from_properties(
+        id, in_properties).all_properties());
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(test_case__operator_eq);
 ATF_TEST_CASE_BODY(test_case__operator_eq)
 {
@@ -833,6 +889,9 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, test_case__from_properties__defaults);
     ATF_ADD_TEST_CASE(tcs, test_case__from_properties__override_all);
     ATF_ADD_TEST_CASE(tcs, test_case__from_properties__unknown);
+    ATF_ADD_TEST_CASE(tcs, test_case__all_properties__none);
+    ATF_ADD_TEST_CASE(tcs, test_case__all_properties__only_user);
+    ATF_ADD_TEST_CASE(tcs, test_case__all_properties__all);
     ATF_ADD_TEST_CASE(tcs, test_case__operator_eq);
 
     ATF_ADD_TEST_CASE(tcs, check_requirements__none);
