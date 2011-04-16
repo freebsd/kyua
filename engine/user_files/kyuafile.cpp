@@ -26,8 +26,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/exceptions.hpp"
+#include <stdexcept>
+
 #include "engine/user_files/common.hpp"
+#include "engine/user_files/exceptions.hpp"
 #include "engine/user_files/kyuafile.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/exceptions.hpp"
@@ -76,7 +78,7 @@ adjust_binary_path(const fs::path& in_path, const fs::path& root)
 /// \param state The Lua state.
 /// \param root The directory where the initial Kyuafile is located.
 ///
-/// throw engine::error If there is any problem in the input data.
+/// throw std::runtime_error If there is any problem in the input data.
 /// throw fs::error If there is an invalid path in the input data.
 test_program
 get_test_program(lua::state& state, const fs::path& root)
@@ -88,7 +90,7 @@ get_test_program(lua::state& state, const fs::path& root)
     state.push_string("name");
     state.get_table();
     if (!state.is_string())
-        throw engine::error("Found non-string name for test program");
+        throw std::runtime_error("Found non-string name for test program");
     const fs::path path = adjust_binary_path(fs::path(state.to_string()),
                                              root);
     state.pop(1);
@@ -96,13 +98,13 @@ get_test_program(lua::state& state, const fs::path& root)
     state.push_string("test_suite");
     state.get_table();
     if (!state.is_string())
-        throw engine::error(F("Found non-string name for test suite of "
-                              "test program '%s'") % path);
+        throw std::runtime_error(F("Found non-string name for test suite of "
+                                   "test program '%s'") % path);
     const std::string test_suite(state.to_string());
     state.pop(1);
 
     if (!fs::exists(path))
-        throw engine::error(F("Non-existent test program '%s'") % path);
+        throw std::runtime_error(F("Non-existent test program '%s'") % path);
 
     return test_program(path, test_suite);
 }
@@ -115,7 +117,7 @@ get_test_program(lua::state& state, const fs::path& root)
 ///     data.
 /// \param root The directory where the initial Kyuafile is located.
 ///
-/// throw engine::error If there is any problem in the input data.
+/// throw std::runtime_error If there is any problem in the input data.
 /// throw fs::error If there is an invalid path in the input data.
 test_programs_vector
 get_test_programs(lua::state& state, const std::string& expr,
@@ -125,14 +127,14 @@ get_test_programs(lua::state& state, const std::string& expr,
 
     lua::eval(state, expr);
     if (!state.is_table())
-        throw engine::error(F("'%s' is not a table") % expr);
+        throw std::runtime_error(F("'%s' is not a table") % expr);
 
     test_programs_vector test_programs;
 
     state.push_nil();
     while (state.next()) {
         if (!state.is_table(-1))
-            throw engine::error(F("Expected table in '%s'") % expr);
+            throw std::runtime_error(F("Expected table in '%s'") % expr);
 
         test_programs.push_back(get_test_program(state, root));
 
@@ -180,8 +182,8 @@ user_files::kyuafile::kyuafile(const test_programs_vector& tps_) :
 ///
 /// \return High-level representation of the configuration file.
 ///
-/// \throw error If the file does not exist.  TODO(jmmv): This exception is not
-///     accurate enough.
+/// \throw load_error If there is any problem loading the file.  This includes
+///     file access errors and syntax errors.
 user_files::kyuafile
 user_files::kyuafile::load(const utils::fs::path& file)
 {
@@ -193,17 +195,17 @@ user_files::kyuafile::load(const utils::fs::path& file)
         const user_files::syntax_def syntax = user_files::do_user_file(
             state, file);
         if (syntax.first != "kyuafile")
-            throw engine::error(F("Unexpected file format '%s'; "
-                                  "need 'kyuafile'") % syntax.first);
+            throw std::runtime_error(F("Unexpected file format '%s'; "
+                                       "need 'kyuafile'") % syntax.first);
         if (syntax.second != 1)
-            throw engine::error(F("Unexpected file version '%d'; "
-                                  "only 1 is supported") % syntax.second);
+            throw std::runtime_error(F("Unexpected file version '%d'; "
+                                       "only 1 is supported") % syntax.second);
 
         test_programs = detail::get_test_programs(state,
                                                   "kyuafile.TEST_PROGRAMS",
                                                   file.branch_path());
-    } catch (const lua::error& e) {
-        throw engine::error(F("Load failed: %s") % e.what());
+    } catch (const std::runtime_error& e) {
+        throw load_error(file, e.what());
     }
     return kyuafile(test_programs);
 }

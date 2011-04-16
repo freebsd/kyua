@@ -31,12 +31,13 @@
 #endif
 
 #include <fstream>
+#include <stdexcept>
 #include <vector>
 
 #include <atf-c++.hpp>
 
-#include "engine/exceptions.hpp"
 #include "engine/user_files/config.hpp"
+#include "engine/user_files/exceptions.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.hpp"
 #include "utils/lua/operations.hpp"
@@ -153,7 +154,7 @@ ATF_TEST_CASE_BODY(get_properties__bad_key)
 
     lua::do_string(state, "t = {}; t['a']=5; t[{}]=3; return t", 1);
 
-    ATF_REQUIRE_THROW_RE(engine::error, "non-string property name.*'the-name'",
+    ATF_REQUIRE_THROW_RE(std::runtime_error, "non-string property name.*'the-name'",
                          user_files::detail::get_properties(state, "the-name"));
 
     state.pop(1);
@@ -168,7 +169,7 @@ ATF_TEST_CASE_BODY(get_properties__bad_value)
 
     lua::do_string(state, "return {a=5, b={}}", 1);
 
-    ATF_REQUIRE_THROW_RE(engine::error, "Invalid value.*property 'b'.*'foo'",
+    ATF_REQUIRE_THROW_RE(std::runtime_error, "Invalid value.*property 'b'.*'foo'",
                          user_files::detail::get_properties(state, "foo"));
 
     state.pop(1);
@@ -204,7 +205,7 @@ ATF_TEST_CASE_BODY(get_string_var__invalid)
     lua::do_string(state, "myvar = {}");
 
     stack_balance_checker checker(state);
-    ATF_REQUIRE_THROW_RE(engine::error, "Invalid type.*'myvar'",
+    ATF_REQUIRE_THROW_RE(std::runtime_error, "Invalid type.*'myvar'",
                          user_files::detail::get_string_var(state, "myvar",
                                                             "default-value"));
 }
@@ -283,7 +284,7 @@ ATF_TEST_CASE_BODY(get_test_suites__invalid)
 
     lua::do_string(state, "ts = 'I should be a table'");
 
-    ATF_REQUIRE_THROW_RE(engine::error, "'ts'.*not a table",
+    ATF_REQUIRE_THROW_RE(std::runtime_error, "'ts'.*not a table",
                          user_files::detail::get_test_suites(state, "ts"));
 }
 
@@ -296,7 +297,7 @@ ATF_TEST_CASE_BODY(get_test_suites__bad_key)
 
     lua::do_string(state, "ts = {}; ts['a'] = {}; ts[{}] = 'the key is bad'");
 
-    ATF_REQUIRE_THROW_RE(engine::error, "non-string.*suite name.*'ts'",
+    ATF_REQUIRE_THROW_RE(std::runtime_error, "non-string.*suite name.*'ts'",
                          user_files::detail::get_test_suites(state, "ts"));
 }
 
@@ -309,7 +310,7 @@ ATF_TEST_CASE_BODY(get_test_suites__bad_value)
 
     lua::do_string(state, "ts = {}; ts['a'] = {}; ts['b'] = 'bad value'");
 
-    ATF_REQUIRE_THROW_RE(engine::error, "non-table properties.*'b'",
+    ATF_REQUIRE_THROW_RE(std::runtime_error, "non-table properties.*'b'",
                          user_files::detail::get_test_suites(state, "ts"));
 }
 
@@ -351,7 +352,7 @@ ATF_TEST_CASE_BODY(get_user_var__uid_error)
     lua::do_string(state, "myvar = '150'");
 
     stack_balance_checker checker(state);
-    ATF_REQUIRE_THROW_RE(engine::error, "Cannot find user.*UID 150.*'myvar'",
+    ATF_REQUIRE_THROW_RE(std::runtime_error, "Cannot find user.*UID 150.*'myvar'",
                          user_files::detail::get_user_var(state, "myvar"));
 }
 
@@ -382,7 +383,7 @@ ATF_TEST_CASE_BODY(get_user_var__name_error)
     lua::do_string(state, "myvar = 'root'");
 
     stack_balance_checker checker(state);
-    ATF_REQUIRE_THROW_RE(engine::error, "Cannot find user.*name 'root'.*'myvar'",
+    ATF_REQUIRE_THROW_RE(std::runtime_error, "Cannot find user.*name 'root'.*'myvar'",
                          user_files::detail::get_user_var(state, "myvar"));
 }
 
@@ -396,7 +397,7 @@ ATF_TEST_CASE_BODY(get_user_var__invalid)
     lua::do_string(state, "myvar = {}");
 
     stack_balance_checker checker(state);
-    ATF_REQUIRE_THROW_RE(engine::error, "Invalid type.*'myvar'",
+    ATF_REQUIRE_THROW_RE(std::runtime_error, "Invalid type.*'myvar'",
                          user_files::detail::get_user_var(state, "myvar"));
 }
 
@@ -469,7 +470,7 @@ ATF_TEST_CASE_BODY(config__load__lua_error)
     file << "this syntax is invalid\n";
     file.close();
 
-    ATF_REQUIRE_THROW(engine::error, user_files::config::load(
+    ATF_REQUIRE_THROW(user_files::load_error, user_files::config::load(
         fs::path("config")));
 }
 
@@ -482,7 +483,7 @@ ATF_TEST_CASE_BODY(config__load__bad_syntax__format)
     file << "init.get_syntax().format = 'foo'\n";
     file.close();
 
-    ATF_REQUIRE_THROW_RE(engine::error, "Unexpected file format 'foo'",
+    ATF_REQUIRE_THROW_RE(user_files::load_error, "Unexpected file format 'foo'",
                          user_files::config::load(fs::path("config")));
 }
 
@@ -495,7 +496,7 @@ ATF_TEST_CASE_BODY(config__load__bad_syntax__version)
     file << "init.get_syntax().version = 123\n";
     file.close();
 
-    ATF_REQUIRE_THROW_RE(engine::error, "Unexpected file version '123'",
+    ATF_REQUIRE_THROW_RE(user_files::load_error, "Unexpected file version '123'",
                          user_files::config::load(fs::path("config")));
 }
 
@@ -503,7 +504,7 @@ ATF_TEST_CASE_BODY(config__load__bad_syntax__version)
 ATF_TEST_CASE_WITHOUT_HEAD(config__load__missing_file);
 ATF_TEST_CASE_BODY(config__load__missing_file)
 {
-    ATF_REQUIRE_THROW_RE(engine::error, "Load failed",
+    ATF_REQUIRE_THROW_RE(user_files::load_error, "Load of 'missing' failed",
                          user_files::config::load(fs::path("missing")));
 }
 

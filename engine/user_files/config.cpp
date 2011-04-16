@@ -30,9 +30,11 @@
 #   include "config.h"
 #endif
 
-#include "engine/exceptions.hpp"
+#include <stdexcept>
+
 #include "engine/user_files/common.hpp"
 #include "engine/user_files/config.hpp"
+#include "engine/user_files/exceptions.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/lua/exceptions.hpp"
 #include "utils/lua/operations.hpp"
@@ -89,8 +91,8 @@ get_properties(lua::state& state, const std::string& test_suite)
     state.push_nil();
     while (state.next()) {
         if (!state.is_string(-2))
-            throw engine::error(F("Found non-string property name for test "
-                                  "suite '%s'") % test_suite);
+            throw std::runtime_error(F("Found non-string property name for "
+                                       "test suite '%s'") % test_suite);
         const std::string name = state.to_string(-2);
 
         std::string value;
@@ -101,9 +103,9 @@ get_properties(lua::state& state, const std::string& test_suite)
         else if (state.is_string(-1))
             value = state.to_string(-1);
         else
-            throw engine::error(F("Invalid value for property '%s' of test "
-                                  "suite '%s': must be a boolean, a number "
-                                  "or a string") % name % test_suite);
+            throw std::runtime_error(
+                F("Invalid value for property '%s' of test suite '%s': must be "
+                  "a boolean, a number or a string") % name % test_suite);
 
         INV(properties.find(name) == properties.end());
         properties[name] = value;
@@ -135,8 +137,8 @@ get_string_var(lua::state& state, const std::string& expr,
     else if (state.is_string())
         return state.to_string();
     else
-        throw engine::error(F("Invalid type for variable '%s': must be "
-                              "a string") % expr);
+        throw std::runtime_error(F("Invalid type for variable '%s': must be "
+                                   "a string") % expr);
 }
 
 
@@ -155,20 +157,20 @@ get_test_suites(lua::state& state, const std::string& expr)
 
     lua::eval(state, expr);
     if (!state.is_table())
-        throw engine::error(F("'%s' is not a table") % expr);
+        throw std::runtime_error(F("'%s' is not a table") % expr);
 
     test_suites_map test_suites;
 
     state.push_nil();
     while (state.next()) {
         if (!state.is_string(-2))
-            throw engine::error(F("Found non-string test suite name in '%s'")
-                                % expr);
+            throw std::runtime_error(F("Found non-string test suite name in "
+                                       "'%s'") % expr);
         const std::string test_suite = state.to_string(-2);
 
         if (!state.is_table(-1))
-            throw engine::error(F("Found non-table properties for test suite "
-                                  "'%s'") % test_suite);
+            throw std::runtime_error(F("Found non-table properties for test "
+                                       "suite '%s'") % test_suite);
         INV(test_suites.find(test_suite) == test_suites.end());
         const properties_map properties = get_properties(state, test_suite);
         if (!properties.empty())
@@ -188,8 +190,8 @@ get_test_suites(lua::state& state, const std::string& expr)
 /// \return The user data if the variable is defined, or none if the variable
 /// is nil.
 ///
-/// \throw engine::error If the variable has an invalid type or if the specified
-///     user cannot be found on the system.
+/// \throw std::runtime_error If the variable has an invalid type or if the
+///     specified user cannot be found on the system.
 optional< passwd::user >
 get_user_var(lua::state& state, const std::string& expr)
 {
@@ -202,20 +204,20 @@ get_user_var(lua::state& state, const std::string& expr)
         try {
             return utils::make_optional(passwd::find_user_by_uid(uid));
         } catch (const std::runtime_error& e) {
-            throw engine::error(F("Cannot find user with UID %d defined in "
-                                  "variable '%s'") % uid % expr);
+            throw std::runtime_error(F("Cannot find user with UID %d defined in "
+                                       "variable '%s'") % uid % expr);
         }
     } else if (state.is_string()) {
         const std::string name = state.to_string();
         try {
             return utils::make_optional(passwd::find_user_by_name(name));
         } catch (const std::runtime_error& e) {
-            throw engine::error(F("Cannot find user with name '%s' defined in "
-                                  "variable '%s'") % name % expr);
+            throw std::runtime_error(F("Cannot find user with name '%s' defined in "
+                                       "variable '%s'") % name % expr);
         }
     } else {
-        throw engine::error(F("Invalid type for user variable '%s': must be "
-                              "a UID or a user name") % expr);
+        throw std::runtime_error(F("Invalid type for user variable '%s': must be "
+                                   "a UID or a user name") % expr);
     }
 }
 
@@ -259,8 +261,8 @@ user_files::config::defaults(void)
 ///
 /// \return High-level representation of the configuration file.
 ///
-/// \throw error If the file does not exist.  TODO(jmmv): This exception is not
-///     accurate enough.
+/// \throw load_error If there is any problem loading the file.  This includes
+///     file access errors and syntax errors.
 user_files::config
 user_files::config::load(const utils::fs::path& file)
 {
@@ -273,11 +275,11 @@ user_files::config::load(const utils::fs::path& file)
         const user_files::syntax_def syntax = user_files::do_user_file(
             state, file);
         if (syntax.first != "config")
-            throw engine::error(F("Unexpected file format '%s'; "
-                                  "need 'config'") % syntax.first);
+            throw std::runtime_error(F("Unexpected file format '%s'; "
+                                       "need 'config'") % syntax.first);
         if (syntax.second != 1)
-            throw engine::error(F("Unexpected file version '%d'; "
-                                  "only 1 is supported") % syntax.second);
+            throw std::runtime_error(F("Unexpected file version '%d'; "
+                                       "only 1 is supported") % syntax.second);
 
         values.architecture = detail::get_string_var(state, "architecture",
                                                      values.architecture);
@@ -288,8 +290,8 @@ user_files::config::load(const utils::fs::path& file)
 
         values.test_suites = detail::get_test_suites(state,
                                                      "config.TEST_SUITES");
-    } catch (const lua::error& e) {
-        throw engine::error(F("Load failed: %s") % e.what());
+    } catch (const std::runtime_error& e) {
+        throw load_error(file, e.what());
     }
 
     return values;

@@ -34,6 +34,8 @@ libengine_a_SOURCES += engine/user_files/common.cpp
 libengine_a_SOURCES += engine/user_files/common.hpp
 libengine_a_SOURCES += engine/user_files/config.cpp
 libengine_a_SOURCES += engine/user_files/config.hpp
+libengine_a_SOURCES += engine/user_files/exceptions.cpp
+libengine_a_SOURCES += engine/user_files/exceptions.hpp
 libengine_a_SOURCES += engine/user_files/kyuafile.cpp
 libengine_a_SOURCES += engine/user_files/kyuafile.hpp
 
@@ -69,6 +71,14 @@ engine_user_files_config_1_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
                                            $(ATF_CXX_CFLAGS)
 engine_user_files_config_1_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
                                         $(ATF_CXX_LIBS)
+
+tests_engine_user_files_PROGRAMS += engine/user_files/exceptions_test
+engine_user_files_exceptions_test_SOURCES = \
+    engine/user_files/exceptions_test.cpp
+engine_user_files_exceptions_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
+                                             $(ATF_CXX_CFLAGS)
+engine_user_files_exceptions_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
+                                          $(ATF_CXX_LIBS)
 
 tests_engine_user_files_PROGRAMS += engine/user_files/init_test
 engine_user_files_init_test_SOURCES = engine/user_files/init_test.cpp

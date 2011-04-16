@@ -27,10 +27,11 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <fstream>
+#include <stdexcept>
 
 #include <atf-c++.hpp>
 
-#include "engine/exceptions.hpp"
+#include "engine/user_files/exceptions.hpp"
 #include "engine/user_files/kyuafile.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/lua/operations.hpp"
@@ -100,7 +101,7 @@ ATF_TEST_CASE_BODY(get_test_program__bad_name)
 
     lua::do_string(state, "return {name={}, test_suite='the-suite'}", 1);
 
-    ATF_REQUIRE_THROW_RE(engine::error, "non-string.*test program$",
+    ATF_REQUIRE_THROW_RE(std::runtime_error, "non-string.*test program$",
                          user_files::detail::get_test_program(
                              state, fs::path(".")));
 
@@ -116,7 +117,7 @@ ATF_TEST_CASE_BODY(get_test_program__bad_test_suite)
 
     lua::do_string(state, "return {name='foo', test_suite={}}", 1);
 
-    ATF_REQUIRE_THROW_RE(engine::error, "non-string.*test suite.*'bar/foo'",
+    ATF_REQUIRE_THROW_RE(std::runtime_error, "non-string.*test suite.*'bar/foo'",
                          user_files::detail::get_test_program(
                              state, fs::path("bar")));
 
@@ -133,7 +134,7 @@ ATF_TEST_CASE_BODY(get_test_program__missing)
     lua::do_string(state, "return {name='/nonexistent/program', "
                    "test_suite='the-suite'}", 1);
 
-    ATF_REQUIRE_THROW_RE(engine::error, "Non-existent.*'/nonexistent/program'",
+    ATF_REQUIRE_THROW_RE(std::runtime_error, "Non-existent.*'/nonexistent/program'",
                          user_files::detail::get_test_program(
                              state, fs::path("root/directory")));
 
@@ -189,7 +190,7 @@ ATF_TEST_CASE_BODY(get_test_programs__invalid)
 
     lua::do_string(state, "t = 'foo'");
 
-    ATF_REQUIRE_THROW_RE(engine::error, "'t' is not a table",
+    ATF_REQUIRE_THROW_RE(std::runtime_error, "'t' is not a table",
                          user_files::detail::get_test_programs(
                              state, "t", fs::path(".")));
 }
@@ -203,7 +204,7 @@ ATF_TEST_CASE_BODY(get_test_programs__bad_value)
 
     lua::do_string(state, "t = {}; t[1] = 'foo'");
 
-    ATF_REQUIRE_THROW_RE(engine::error, "Expected table in 't'",
+    ATF_REQUIRE_THROW_RE(std::runtime_error, "Expected table in 't'",
                          user_files::detail::get_test_programs(
                              state, "t", fs::path(".")));
 }
@@ -290,7 +291,7 @@ ATF_TEST_CASE_BODY(kyuafile__load__lua_error)
     file << "this syntax is invalid\n";
     file.close();
 
-    ATF_REQUIRE_THROW(engine::error, user_files::kyuafile::load(
+    ATF_REQUIRE_THROW(user_files::load_error, user_files::kyuafile::load(
         fs::path("config")));
 }
 
@@ -303,7 +304,7 @@ ATF_TEST_CASE_BODY(kyuafile__load__bad_syntax__format)
     file << "init.get_syntax().format = 'foo'\n";
     file.close();
 
-    ATF_REQUIRE_THROW_RE(engine::error, "Unexpected file format 'foo'",
+    ATF_REQUIRE_THROW_RE(user_files::load_error, "Unexpected file format 'foo'",
                          user_files::kyuafile::load(fs::path("config")));
 }
 
@@ -313,10 +314,10 @@ ATF_TEST_CASE_BODY(kyuafile__load__bad_syntax__version)
 {
     std::ofstream file("config");
     file << "syntax('kyuafile', 1)\n";
-    file << "init.get_syntax().version = 123\n";
+    file << "init.get_syntax().version = 12\n";
     file.close();
 
-    ATF_REQUIRE_THROW_RE(engine::error, "Unexpected file version '123'",
+    ATF_REQUIRE_THROW_RE(user_files::load_error, "Unexpected file version '12'",
                          user_files::kyuafile::load(fs::path("config")));
 }
 
@@ -324,7 +325,7 @@ ATF_TEST_CASE_BODY(kyuafile__load__bad_syntax__version)
 ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__missing_file);
 ATF_TEST_CASE_BODY(kyuafile__load__missing_file)
 {
-    ATF_REQUIRE_THROW_RE(engine::error, "Load failed",
+    ATF_REQUIRE_THROW_RE(user_files::load_error, "Load of 'missing' failed",
                          user_files::kyuafile::load(fs::path("missing")));
 }
 
@@ -342,7 +343,7 @@ ATF_TEST_CASE_BODY(kyuafile__load__missing_test_program)
 
     utils::create_file(fs::path("one"));
 
-    ATF_REQUIRE_THROW_RE(engine::error, "Non-existent.*'two'",
+    ATF_REQUIRE_THROW_RE(user_files::load_error, "Non-existent.*'two'",
                          user_files::kyuafile::load(fs::path("config")));
 }
 
