@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -260,8 +260,8 @@ ATF_TEST_CASE_BODY(parse_test_cases__many_test_cases)
 ATF_TEST_CASE_WITHOUT_HEAD(load_test_cases__missing_test_program);
 ATF_TEST_CASE_BODY(load_test_cases__missing_test_program)
 {
-    ATF_REQUIRE_THROW(engine::error, engine::load_test_cases(fs::path(
-        "/non-existent")));
+    ATF_REQUIRE_THROW(engine::error, engine::load_test_cases(
+        fs::path("/"), fs::path("non-existent")));
 }
 
 
@@ -269,8 +269,10 @@ ATF_TEST_CASE_WITHOUT_HEAD(load_test_cases__abort);
 ATF_TEST_CASE_BODY(load_test_cases__abort)
 {
     utils::setenv("HELPER", "abort_test_cases_list");
+    const fs::path helpers = plain_helpers(this);
     ATF_REQUIRE_THROW_RE(engine::error, "test program failed",
-                         engine::load_test_cases(plain_helpers(this)));
+        engine::load_test_cases(helpers.branch_path(),
+                                fs::path(helpers.leaf_name())));
 }
 
 
@@ -278,8 +280,10 @@ ATF_TEST_CASE_WITHOUT_HEAD(load_test_cases__empty);
 ATF_TEST_CASE_BODY(load_test_cases__empty)
 {
     utils::setenv("HELPER", "empty_test_cases_list");
+    const fs::path helpers = plain_helpers(this);
     ATF_REQUIRE_THROW_RE(engine::error, "Invalid header",
-                         engine::load_test_cases(plain_helpers(this)));
+        engine::load_test_cases(helpers.branch_path(),
+                                fs::path(helpers.leaf_name())));
 }
 
 
@@ -287,16 +291,21 @@ ATF_TEST_CASE_WITHOUT_HEAD(load_test_cases__zero_test_cases);
 ATF_TEST_CASE_BODY(load_test_cases__zero_test_cases)
 {
     utils::setenv("HELPER", "zero_test_cases");
+    const fs::path helpers = plain_helpers(this);
     ATF_REQUIRE_THROW_RE(engine::error, "No test cases",
-                         engine::load_test_cases(plain_helpers(this)));
+        engine::load_test_cases(helpers.branch_path(),
+                                fs::path(helpers.leaf_name())));
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(load_test_cases__absolute_path);
-ATF_TEST_CASE_BODY(load_test_cases__absolute_path)
+ATF_TEST_CASE_WITHOUT_HEAD(load_test_cases__current_directory);
+ATF_TEST_CASE_BODY(load_test_cases__current_directory)
 {
+    ATF_REQUIRE(::symlink(atf_helpers(this).c_str(),
+                          "test_program_atf_helpers") != -1);
     const engine::test_cases_vector test_cases =
-        engine::load_test_cases(atf_helpers(this));
+        engine::load_test_cases(fs::path("."),
+                                fs::path("test_program_atf_helpers"));
     ATF_REQUIRE_EQ(3, test_cases.size());
 }
 
@@ -304,22 +313,13 @@ ATF_TEST_CASE_BODY(load_test_cases__absolute_path)
 ATF_TEST_CASE_WITHOUT_HEAD(load_test_cases__relative_path);
 ATF_TEST_CASE_BODY(load_test_cases__relative_path)
 {
-    ATF_REQUIRE(::mkdir("dir", 0755) != -1);
+    ATF_REQUIRE(::mkdir("dir1", 0755) != -1);
+    ATF_REQUIRE(::mkdir("dir1/dir2", 0755) != -1);
     ATF_REQUIRE(::symlink(atf_helpers(this).c_str(),
-                          "dir/test_program_atf_helpers") != -1);
+                          "dir1/dir2/test_program_atf_helpers") != -1);
     const engine::test_cases_vector test_cases =
-        engine::load_test_cases(fs::path("dir/test_program_atf_helpers"));
-    ATF_REQUIRE_EQ(3, test_cases.size());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(load_test_cases__basename_only);
-ATF_TEST_CASE_BODY(load_test_cases__basename_only)
-{
-    ATF_REQUIRE(::symlink(atf_helpers(this).c_str(),
-                          "test_program_atf_helpers") != -1);
-    const engine::test_cases_vector test_cases =
-        engine::load_test_cases(fs::path("test_program_atf_helpers"));
+        engine::load_test_cases(fs::path("dir1"),
+                                fs::path("dir2/test_program_atf_helpers"));
     ATF_REQUIRE_EQ(3, test_cases.size());
 }
 
@@ -339,7 +339,6 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, load_test_cases__abort);
     ATF_ADD_TEST_CASE(tcs, load_test_cases__empty);
     ATF_ADD_TEST_CASE(tcs, load_test_cases__zero_test_cases);
-    ATF_ADD_TEST_CASE(tcs, load_test_cases__absolute_path);
+    ATF_ADD_TEST_CASE(tcs, load_test_cases__current_directory);
     ATF_ADD_TEST_CASE(tcs, load_test_cases__relative_path);
-    ATF_ADD_TEST_CASE(tcs, load_test_cases__basename_only);
 }

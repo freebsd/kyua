@@ -61,6 +61,7 @@ public:
 
     path branch_path(void) const;
     std::string leaf_name(void) const;
+    path to_absolute(void) const;
 
     bool is_absolute(void) const;
     bool is_parent_of(path) const;

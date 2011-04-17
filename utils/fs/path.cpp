@@ -27,6 +27,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "utils/fs/exceptions.hpp"
+#include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/sanity.hpp"
 
@@ -137,6 +138,19 @@ fs::path::leaf_name(void) const
         return _repr;
     else
         return _repr.substr(beg_pos + 1);
+}
+
+
+/// Converts a relative path in the current directory to an absolute path.
+///
+/// \pre The path is relative.
+///
+/// \return The absolute representation of the relative path.
+fs::path
+fs::path::to_absolute(void) const
+{
+    PRE(!is_absolute());
+    return fs::current_path() / *this;
 }
 
 

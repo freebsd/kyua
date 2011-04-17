@@ -78,7 +78,7 @@ cli::cmd_list::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
             continue;
 
         const engine::test_cases_vector tcs = engine::load_test_cases(
-            (*p).binary_path);
+            kyuafile.root(), (*p).binary_path);
 
         for (engine::test_cases_vector::const_iterator iter = tcs.begin();
              iter != tcs.end(); iter++) {

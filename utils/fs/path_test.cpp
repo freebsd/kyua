@@ -26,6 +26,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+extern "C" {
+#include <unistd.h>
+}
+
 #include <set>
 
 #include <atf-c++.hpp>
@@ -143,6 +147,14 @@ ATF_TEST_CASE_BODY(leaf_name)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(to_absolute);
+ATF_TEST_CASE_BODY(to_absolute)
+{
+    ATF_REQUIRE(::chdir("/bin") != -1);
+    ATF_REQUIRE_EQ(path("/bin/ls"), path("ls").to_absolute());
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(compare_less_than);
 ATF_TEST_CASE_BODY(compare_less_than)
 {
@@ -225,6 +237,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, is_parent_of);
     ATF_ADD_TEST_CASE(tcs, branch_path);
     ATF_ADD_TEST_CASE(tcs, leaf_name);
+    ATF_ADD_TEST_CASE(tcs, to_absolute);
     ATF_ADD_TEST_CASE(tcs, compare_less_than);
     ATF_ADD_TEST_CASE(tcs, compare_equal);
     ATF_ADD_TEST_CASE(tcs, compare_different);

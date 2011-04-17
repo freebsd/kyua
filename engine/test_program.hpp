@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -59,7 +59,8 @@ test_cases_vector parse_test_cases(const utils::fs::path&, std::istream&);
 }  // namespace detail
 
 
-test_cases_vector load_test_cases(const utils::fs::path&);
+test_cases_vector load_test_cases(const utils::fs::path&,
+                                  const utils::fs::path&);
 
 
 }  // namespace engine

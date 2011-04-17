@@ -44,33 +44,6 @@ namespace lua = utils::lua;
 namespace user_files = engine::user_files;
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(adjust_binary_path__absolute);
-ATF_TEST_CASE_BODY(adjust_binary_path__absolute)
-{
-    ATF_REQUIRE_EQ(fs::path("/foo/bar"),
-                   user_files::detail::adjust_binary_path(
-                       fs::path("/foo/bar"), fs::path("/dont/care")));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(adjust_binary_path__current_directory);
-ATF_TEST_CASE_BODY(adjust_binary_path__current_directory)
-{
-    ATF_REQUIRE_EQ(fs::path("test_program"),
-                   user_files::detail::adjust_binary_path(
-                       fs::path("test_program"), fs::path(".")));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(adjust_binary_path__relative);
-ATF_TEST_CASE_BODY(adjust_binary_path__relative)
-{
-    ATF_REQUIRE_EQ(fs::path("foo/bar/test_program"),
-                   user_files::detail::adjust_binary_path(
-                       fs::path("test_program"), fs::path("foo/bar")));
-}
-
-
 ATF_TEST_CASE_WITHOUT_HEAD(get_test_program__ok);
 ATF_TEST_CASE_BODY(get_test_program__ok)
 {
@@ -86,7 +59,7 @@ ATF_TEST_CASE_BODY(get_test_program__ok)
 
     const user_files::test_program program =
         user_files::detail::get_test_program(state, fs::path("root/directory"));
-    ATF_REQUIRE_EQ(fs::path("root/directory/the-name"), program.binary_path);
+    ATF_REQUIRE_EQ(fs::path("the-name"), program.binary_path);
     ATF_REQUIRE_EQ("the-suite", program.test_suite_name);
 
     state.pop(1);
@@ -117,7 +90,8 @@ ATF_TEST_CASE_BODY(get_test_program__bad_test_suite)
 
     lua::do_string(state, "return {name='foo', test_suite={}}", 1);
 
-    ATF_REQUIRE_THROW_RE(std::runtime_error, "non-string.*test suite.*'bar/foo'",
+    ATF_REQUIRE_THROW_RE(std::runtime_error,
+                         "non-string.*test suite.*'foo'",
                          user_files::detail::get_test_program(
                              state, fs::path("bar")));
 
@@ -131,12 +105,14 @@ ATF_TEST_CASE_BODY(get_test_program__missing)
     lua::state state;
     stack_balance_checker checker(state);
 
-    lua::do_string(state, "return {name='/nonexistent/program', "
+    utils::create_file(fs::path("i-exist"));
+    lua::do_string(state, "return {name='i-exist', "
                    "test_suite='the-suite'}", 1);
 
-    ATF_REQUIRE_THROW_RE(std::runtime_error, "Non-existent.*'/nonexistent/program'",
+    ATF_REQUIRE_THROW_RE(std::runtime_error,
+                         "Non-existent.*'i-exist'",
                          user_files::detail::get_test_program(
-                             state, fs::path("root/directory")));
+                             state, fs::path("root")));
 
     state.pop(1);
 }
@@ -174,10 +150,10 @@ ATF_TEST_CASE_BODY(get_test_programs__some)
         user_files::detail::get_test_programs(state, "t", fs::path("root"));
     ATF_REQUIRE_EQ(2, programs.size());
 
-    ATF_REQUIRE_EQ(fs::path("root/a"), programs[0].binary_path);
+    ATF_REQUIRE_EQ(fs::path("a"), programs[0].binary_path);
     ATF_REQUIRE_EQ("b", programs[0].test_suite_name);
 
-    ATF_REQUIRE_EQ(fs::path("root/c/d"), programs[1].binary_path);
+    ATF_REQUIRE_EQ(fs::path("c/d"), programs[1].binary_path);
     ATF_REQUIRE_EQ("e", programs[1].test_suite_name);
 }
 
@@ -235,6 +211,7 @@ ATF_TEST_CASE_BODY(kyuafile__load__current_directory)
 
     const user_files::kyuafile suite = user_files::kyuafile::load(
         fs::path("config"));
+    ATF_REQUIRE_EQ(fs::path("."), suite.root());
     ATF_REQUIRE_EQ(2, suite.test_programs().size());
     ATF_REQUIRE_EQ(fs::path("one"), suite.test_programs()[0].binary_path);
     ATF_REQUIRE_EQ("first", suite.test_programs()[0].test_suite_name);
@@ -252,7 +229,6 @@ ATF_TEST_CASE_BODY(kyuafile__load__other_directory)
         file << "syntax('kyuafile', 1)\n";
         file << "test_suite('abc')\n";
         file << "atf_test_program{name='one'}\n";
-        file << "atf_test_program{name='/bin/ls'}\n";
         file << "include('dir/config')\n";
         file.close();
     }
@@ -261,26 +237,45 @@ ATF_TEST_CASE_BODY(kyuafile__load__other_directory)
         fs::mkdir(fs::path("root/dir"), 0755);
         std::ofstream file("root/dir/config");
         file << "syntax('kyuafile', 1)\n";
-        file << "atf_test_program{name='three', test_suite='def'}\n";
-        file << "atf_test_program{name='/tmp', test_suite='def'}\n";
+        file << "test_suite('foo')\n";
+        file << "atf_test_program{name='two', test_suite='def'}\n";
+        file << "atf_test_program{name='three'}\n";
         file.close();
     }
 
     utils::create_file(fs::path("root/one"));
+    utils::create_file(fs::path("root/dir/two"));
     utils::create_file(fs::path("root/dir/three"));
 
     const user_files::kyuafile suite = user_files::kyuafile::load(
         fs::path("root/config"));
-    ATF_REQUIRE_EQ(4, suite.test_programs().size());
-    ATF_REQUIRE_EQ(fs::path("root/one"), suite.test_programs()[0].binary_path);
+    ATF_REQUIRE_EQ(fs::path("root"), suite.root());
+    ATF_REQUIRE_EQ(3, suite.test_programs().size());
+    ATF_REQUIRE_EQ(fs::path("one"), suite.test_programs()[0].binary_path);
     ATF_REQUIRE_EQ("abc", suite.test_programs()[0].test_suite_name);
-    ATF_REQUIRE_EQ(fs::path("/bin/ls"), suite.test_programs()[1].binary_path);
-    ATF_REQUIRE_EQ("abc", suite.test_programs()[1].test_suite_name);
-    ATF_REQUIRE_EQ(fs::path("root/dir/three"),
+    ATF_REQUIRE_EQ(fs::path("dir/two"),
+                   suite.test_programs()[1].binary_path);
+    ATF_REQUIRE_EQ("def", suite.test_programs()[1].test_suite_name);
+    ATF_REQUIRE_EQ(fs::path("dir/three"),
                    suite.test_programs()[2].binary_path);
-    ATF_REQUIRE_EQ("def", suite.test_programs()[2].test_suite_name);
-    ATF_REQUIRE_EQ(fs::path("/tmp"), suite.test_programs()[3].binary_path);
-    ATF_REQUIRE_EQ("def", suite.test_programs()[3].test_suite_name);
+    ATF_REQUIRE_EQ("foo", suite.test_programs()[2].test_suite_name);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__test_program_not_basename);
+ATF_TEST_CASE_BODY(kyuafile__load__test_program_not_basename)
+{
+    {
+        std::ofstream file("config");
+        file << "syntax('kyuafile', 1)\n";
+        file << "test_suite('abc')\n";
+        file << "atf_test_program{name='one'}\n";
+        file << "atf_test_program{name='./ls'}\n";
+        file.close();
+    }
+
+    ATF_REQUIRE_THROW_RE(user_files::load_error, "./ls.*path components",
+                         user_files::kyuafile::load(fs::path("config")));
 }
 
 
@@ -350,10 +345,6 @@ ATF_TEST_CASE_BODY(kyuafile__load__missing_test_program)
 
 ATF_INIT_TEST_CASES(tcs)
 {
-    ATF_ADD_TEST_CASE(tcs, adjust_binary_path__absolute);
-    ATF_ADD_TEST_CASE(tcs, adjust_binary_path__current_directory);
-    ATF_ADD_TEST_CASE(tcs, adjust_binary_path__relative);
-
     ATF_ADD_TEST_CASE(tcs, get_test_program__ok);
     ATF_ADD_TEST_CASE(tcs, get_test_program__bad_name);
     ATF_ADD_TEST_CASE(tcs, get_test_program__bad_test_suite);
@@ -366,6 +357,7 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__current_directory);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__other_directory);
+    ATF_ADD_TEST_CASE(tcs, kyuafile__load__test_program_not_basename);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__lua_error);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__bad_syntax__format);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__bad_syntax__version);

@@ -96,9 +96,9 @@ end
 --
 -- \return The concatenation of p1 with p2.
 local function mix_paths(p1, p2)
+   assert(not fs.is_absolute(p2),
+          string.format("Got unexpected absolute path '%s'", p2))
    if p1 == "." then
-      return p2
-   elseif fs.is_absolute(p2) then
       return p2
    else
       return fs.join(p1, p2)
@@ -122,6 +122,9 @@ function atf_test_program(in_properties)
              "program '" .. properties.name .. "')")
       properties.test_suite = TEST_SUITE
    end
+   assert(fs.basename(properties.name) == properties.name,
+          string.format("Test program '%s' cannot contain path components",
+                        properties.name))
    table.insert(TEST_PROGRAMS, properties)
 end
 
@@ -139,6 +142,8 @@ end
 -- \param relative_file string, The Kyuafile to process, relative to the
 --     Kyuafile being processed.
 function include(file)
+   assert(not fs.is_absolute(file),
+          string.format("Cannot include '%s' using an absolute path", file))
    local abs_file = mix_paths(fs.dirname(init.get_filename()), file)
 
    local env = init.run(abs_file)

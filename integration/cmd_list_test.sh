@@ -130,6 +130,12 @@ Usage error for command list: Test case component in 'foo:' is empty.
 Type 'kyua help list' for usage information.
 EOF
     atf_check -s exit:1 -o empty -e file:experr kyua list foo:
+
+cat >experr <<EOF
+Usage error for command list: Program name '/a/b' must be relative to the test suite, not absolute.
+Type 'kyua help list' for usage information.
+EOF
+    atf_check -s exit:1 -o empty -e file:experr kyua list /a/b
 }
 
 
@@ -167,6 +173,12 @@ Usage error for command list: Program name component in ':badbad' is empty.
 Type 'kyua help list' for usage information.
 EOF
     atf_check -s exit:1 -o empty -e file:experr kyua list this-is-ok :badbad
+
+cat >experr <<EOF
+Usage error for command list: Program name '/foo' must be relative to the test suite, not absolute.
+Type 'kyua help list' for usage information.
+EOF
+    atf_check -s exit:1 -o empty -e file:experr kyua list this-is-ok /foo
 }
 
 
@@ -244,15 +256,8 @@ first:pass (integration-1)
 first:skip (integration-1)
 subdir/fourth:fail (integration-2)
 EOF
-    atf_expect_fail "Test names are not yet relative"
     atf_check -s exit:0 -o file:expout -e empty kyua list \
         -v -k "$(pwd)/root/Kyuafile" first subdir/fourth:fail
-
-cat >experr <<EOF
-No test cases matched by the filters provided.
-EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua list \
-        -v -k "$(pwd)/root/Kyuafile" "$(pwd)/root/first"
 }
 
 

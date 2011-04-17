@@ -139,6 +139,8 @@ engine::test_cases_vector
 engine::detail::parse_test_cases(const utils::fs::path& program,
                                  std::istream& input)
 {
+    PRE(!program.is_absolute());
+
     std::string line;
 
     std::getline(input, line);
@@ -174,6 +176,8 @@ engine::detail::parse_test_cases(const utils::fs::path& program,
 
 /// Loads the list of test cases contained in a test program.
 ///
+/// \param root The root of the test suite from which the program will be
+///     resolved.
 /// \param program The name of the test program binary from which the test case
 ///     list is being extracted.
 ///
@@ -183,14 +187,19 @@ engine::detail::parse_test_cases(const utils::fs::path& program,
 /// \throw engine::error If there is a problem executing the test program.
 /// \throw format_error If the test case list has an invalid format.
 engine::test_cases_vector
-engine::load_test_cases(const utils::fs::path& program)
+engine::load_test_cases(const utils::fs::path& root,
+                        const utils::fs::path& program)
 {
-    LI(F("Obtaining test cases list from test program '%s'") % program);
+    PRE_MSG(!program.is_absolute(), F("The program '%s' must be relative to "
+        "the root of the test suite '%s'") % program % root);
+    LI(F("Obtaining test cases list from test program '%s' of root '%s'") %
+       program % root);
 
     std::auto_ptr< process::child_with_output > child;
 
     try {
-        child = process::child_with_output::fork(list_test_cases(program));
+        child = process::child_with_output::fork(list_test_cases(
+            root / program));
     } catch (const process::error& e) {
         // TODO(jmmv): This should be more representative.
         throw engine::error(e.what());

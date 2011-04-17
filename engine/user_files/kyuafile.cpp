@@ -51,26 +51,6 @@ namespace user_files {
 namespace detail {
 
 
-/// Makes a relative path point inside a test suite.
-///
-/// \param in_path The input path to adjust.
-/// \param root The directory where the initial Kyuafile is located.
-///
-/// \return The adjusted path.
-fs::path
-adjust_binary_path(const fs::path& in_path, const fs::path& root)
-{
-    if (in_path.is_absolute())
-        return in_path;
-    else {
-        if (root.str() == ".")
-            return in_path;
-        else
-            return root / in_path;
-    }
-}
-
-
 /// Gets the data of a test program from the Lua state.
 ///
 /// \pre stack(-1) contains a table describing a test program.
@@ -91,8 +71,10 @@ get_test_program(lua::state& state, const fs::path& root)
     state.get_table();
     if (!state.is_string())
         throw std::runtime_error("Found non-string name for test program");
-    const fs::path path = adjust_binary_path(fs::path(state.to_string()),
-                                             root);
+    const fs::path path(state.to_string());
+    if (path.is_absolute())
+        throw std::runtime_error(F("Got unexpected absolute path for test "
+                                   "program '%s'") % path);
     state.pop(1);
 
     state.push_string("test_suite");
@@ -103,7 +85,7 @@ get_test_program(lua::state& state, const fs::path& root)
     const std::string test_suite(state.to_string());
     state.pop(1);
 
-    if (!fs::exists(path))
+    if (!fs::exists(root / path))
         throw std::runtime_error(F("Non-existent test program '%s'") % path);
 
     return test_program(path, test_suite);
@@ -169,8 +151,13 @@ user_files::test_program::test_program(const utils::fs::path& binary_path_,
 /// Use load() to parse a test suite configuration file and construct a
 /// kyuafile object.
 ///
+/// \param root_ The root directory for the test suite represented by the
+///     Kyuafile.  In other words, the directory containing the first Kyuafile
+///     processed.
 /// \param tps_ Collection of test programs that belong to this test suite.
-user_files::kyuafile::kyuafile(const test_programs_vector& tps_) :
+user_files::kyuafile::kyuafile(const fs::path& root_,
+                               const test_programs_vector& tps_) :
+    _root(root_),
     _test_programs(tps_)
 {
 }
@@ -207,7 +194,17 @@ user_files::kyuafile::load(const utils::fs::path& file)
     } catch (const std::runtime_error& e) {
         throw load_error(file, e.what());
     }
-    return kyuafile(test_programs);
+    return kyuafile(file.branch_path(), test_programs);
+}
+
+
+/// Gets the root directory of the test suite.
+///
+/// \return A path.
+const fs::path&
+user_files::kyuafile::root(void) const
+{
+    return _root;
 }
 
 

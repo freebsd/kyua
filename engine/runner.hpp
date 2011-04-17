@@ -36,6 +36,7 @@
 
 #include "engine/results.hpp"
 #include "engine/test_case.hpp"
+#include "utils/fs/path.hpp"
 
 
 namespace engine {
@@ -50,7 +51,8 @@ struct test_case;
 namespace runner {
 
 
-results::result_ptr run_test_case(const engine::test_case&,
+results::result_ptr run_test_case(const utils::fs::path&,
+                                  const engine::test_case&,
                                   const user_files::config&,
                                   const std::string&);
 

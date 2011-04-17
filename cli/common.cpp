@@ -257,7 +257,7 @@ cli::test_filters::parse_user_filter(const std::string& str)
         const fs::path test_program(str.substr(0, pos));
         if (test_program.is_absolute())
             throw cmdline::usage_error(F("Program name '%s' must be relative "
-                                         "the test suite, not absolute") %
+                                         "to the test suite, not absolute") %
                                        test_program.str());
         const std::string test_case(pos == std::string::npos ?
                                     "" : str.substr(pos + 1));

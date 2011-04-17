@@ -206,6 +206,7 @@ config_to_args(const user_files::config& config,
 
 /// Functor to execute a test case in a subprocess.
 class execute_test_case_body {
+    fs::path _root;
     engine::test_case _test_case;
     fs::path _result_file;
     fs::path _work_directory;
@@ -215,19 +216,22 @@ class execute_test_case_body {
 public:
     /// Constructor for the functor.
     ///
-    /// \param test_case_ The data of the test case, including the path to the
-    ///     test program that contains it, the test case name and its metadata.
+    /// \param root_ The root directory of the test suite.
+    /// \param test_case_ The data of the test case, including the program name,
+    ///     the test case name and its metadata.
     /// \param result_file_ The path to the file in which to store the result of
     ///     the test case execution.
     /// \param work_directory_ The path to the directory to chdir into when
     ///     running the test program.
     /// \param config_ The configuration variables provided by the user.
     /// \param test_suite_ The name of the test suite.
-    execute_test_case_body(const engine::test_case& test_case_,
+    execute_test_case_body(const fs::path& root_,
+                           const engine::test_case& test_case_,
                            const fs::path& result_file_,
                            const fs::path& work_directory_,
                            const user_files::config& config_,
                            const std::string& test_suite_) :
+        _root(root_),
         _test_case(test_case_),
         _result_file(result_file_),
         _work_directory(work_directory_),
@@ -240,10 +244,9 @@ public:
     void
     operator()(void) UTILS_NORETURN
     {
-        const fs::path test_program = (
-            _test_case.identifier.program.is_absolute() ?
-            _test_case.identifier.program :
-            fs::current_path() / _test_case.identifier.program);
+        const fs::path test_program = _root / _test_case.identifier.program;
+        const fs::path abs_test_program = test_program.is_absolute() ?
+            test_program : test_program.to_absolute();
 
         try {
             isolate_process(_work_directory);
@@ -257,16 +260,17 @@ public:
 
         std::vector< std::string > args;
         args.push_back(F("-r%s") % _result_file);
-        args.push_back(F("-s%s") % test_program.branch_path());
+        args.push_back(F("-s%s") % abs_test_program.branch_path());
         config_to_args(_config, _test_suite, args);
         args.push_back(_test_case.identifier.name);
-        process::exec(test_program, args);
+        process::exec(abs_test_program, args);
     }
 };
 
 
 /// Functor to execute a test case in a subprocess.
 class execute_test_case_cleanup {
+    fs::path _root;
     engine::test_case _test_case;
     fs::path _work_directory;
     user_files::config _config;
@@ -275,16 +279,19 @@ class execute_test_case_cleanup {
 public:
     /// Constructor for the functor.
     ///
+    /// \param root_ The root directory of the test suite.
     /// \param test_case_ The data of the test case, including the path to the
     ///     test program that contains it, the test case name and its metadata.
     /// \param work_directory_ The path to the directory to chdir into when
     ///     running the test program.
     /// \param config_ The values for the current engine configuration.
     /// \param test_suite_ The name of the test suite.
-    execute_test_case_cleanup(const engine::test_case& test_case_,
+    execute_test_case_cleanup(const fs::path& root_,
+                              const engine::test_case& test_case_,
                               const fs::path& work_directory_,
                               const user_files::config& config_,
                               const std::string& test_suite_) :
+        _root(root_),
         _test_case(test_case_),
         _work_directory(work_directory_),
         _config(config_),
@@ -296,10 +303,9 @@ public:
     void
     operator()(void) UTILS_NORETURN
     {
-        const fs::path test_program = (
-            _test_case.identifier.program.is_absolute() ?
-            _test_case.identifier.program :
-            fs::current_path() / _test_case.identifier.program);
+        const fs::path test_program = _root / _test_case.identifier.program;
+        const fs::path abs_test_program = test_program.is_absolute() ?
+            test_program : test_program.to_absolute();
 
         isolate_process(_work_directory);
 
@@ -307,10 +313,10 @@ public:
             passwd::drop_privileges(_config.unprivileged_user.get());
 
         std::vector< std::string > args;
-        args.push_back(F("-s%s") % test_program.branch_path());
+        args.push_back(F("-s%s") % abs_test_program.branch_path());
         config_to_args(_config, _test_suite, args);
         args.push_back(F("%s:cleanup") % _test_case.identifier.name);
-        process::exec(test_program, args);
+        process::exec(abs_test_program, args);
     }
 };
 
@@ -344,13 +350,16 @@ fork_and_wait(Hook hook, const fs::path& outfile, const fs::path& errfile,
 /// leaking exceptions.  Any exception not managed here is probably a mistake,
 /// but is correctly captured in the caller.
 ///
+/// \param root The root of the test suite, from which the test case will be
+///     loaded.
 /// \param test_case The test case to execute.
 /// \param config The values for the current engine configuration.
 /// \param test_suite The name of the test suite.
 ///
 /// \return The result of the execution of the test case.
 static results::result_ptr
-run_test_case_safe(const engine::test_case& test_case,
+run_test_case_safe(const fs::path& root,
+                   const engine::test_case& test_case,
                    const user_files::config& config,
                    const std::string& test_suite)
 {
@@ -373,7 +382,7 @@ run_test_case_safe(const engine::test_case& test_case,
 
     LI(F("Running test case body for '%s'") % test_case.identifier.str());
     const optional< process::status > body_status = fork_and_wait(
-        execute_test_case_body(test_case, result_file, rundir, config,
+        execute_test_case_body(root, test_case, result_file, rundir, config,
                                test_suite),
         workdir.directory() / "stdout.txt",
         workdir.directory() / "stderr.txt",
@@ -384,7 +393,8 @@ run_test_case_safe(const engine::test_case& test_case,
         LI(F("Running test case cleanup for '%s'") %
            test_case.identifier.str());
         cleanup_status = fork_and_wait(
-            execute_test_case_cleanup(test_case, rundir, config, test_suite),
+            execute_test_case_cleanup(root, test_case, rundir, config,
+                                      test_suite),
             workdir.directory() / "cleanup-stdout.txt",
             workdir.directory() / "cleanup-stderr.txt",
             test_case.timeout);
@@ -407,13 +417,16 @@ run_test_case_safe(const engine::test_case& test_case,
 /// failure.  These exceptions may be really bugs in our code, but we do not
 /// want them to crash the runtime system.
 ///
+/// \param root The root of the test suite, from which the test case will be
+///     loaded.
 /// \param test_case The test to execute.
 /// \param config The values for the current engine configuration.
 /// \param test_suite The name of the test suite.
 ///
 /// \return The result of the test case execution.
 results::result_ptr
-runner::run_test_case(const engine::test_case& test_case,
+runner::run_test_case(const fs::path& root,
+                      const engine::test_case& test_case,
                       const user_files::config& config,
                       const std::string& test_suite)
 {
@@ -421,7 +434,7 @@ runner::run_test_case(const engine::test_case& test_case,
 
     results::result_ptr result;
     try {
-        result = run_test_case_safe(test_case, config, test_suite);
+        result = run_test_case_safe(root, test_case, config, test_suite);
     } catch (const std::exception& e) {
         result = results::make_result(results::broken(F(
             "The test caused an error in the runtime system: %s") % e.what()));
