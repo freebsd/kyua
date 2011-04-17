@@ -48,7 +48,7 @@ class path;
 }  // namespace utils
 
 namespace engine {
-class test_case_id;
+struct test_case_id;
 namespace user_files {
 struct config;
 class kyuafile;

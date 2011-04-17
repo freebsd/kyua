@@ -151,6 +151,8 @@ fs::path::is_absolute(void) const
 /// Checks whether the path is a parent of another path.
 ///
 /// A path is considered to be a parent of itself.
+///
+/// \return True if this path is a parent of p.
 bool
 fs::path::is_parent_of(path p) const
 {

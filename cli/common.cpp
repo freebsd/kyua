@@ -234,7 +234,7 @@ cli::test_filters::test_filters(const std::vector< std::string >& user_filters)
 /// Parses a user-provided test filter.
 ///
 /// \param str The user-provided string representing a filter for tests.  Must
-///     be of the form <test_program>[:<test_case>].
+///     be of the form &lt;test_program%gt;[:&lt;test_case%gt;].
 ///
 /// \return The parsed filter, to be stored inside a test_filters object.
 ///
