@@ -222,6 +222,30 @@ lua::state::get_global(const std::string& name)
 }
 
 
+/// Wrapper around lua_getinfo.
+///
+/// \param what The second parameter to lua_getinfo.
+/// \param ar [out] The third parameter to lua_getinfo.
+///
+/// \warning Terminates execution if there is not enough memory to manipulate
+/// the Lua stack.
+void
+lua::state::get_info(const char* what, debug* ar)
+{
+    if (lua_getinfo(_pimpl->lua_state, what, ar) == 0)
+        throw lua::api_error::from_stack(_pimpl->lua_state, "lua_getinfo");
+}
+
+/// Wrapper around lua_getstack.
+///
+/// \param level The second parameter to lua_getstack.
+/// \param ar [out] The third parameter to lua_getstack.
+void
+lua::state::get_stack(const int level, debug* ar)
+{
+    lua_getstack(_pimpl->lua_state, level, ar);
+}
+
 /// Wrapper around lua_gettable.
 ///
 /// \param index The second parameter to lua_gettable.

@@ -58,6 +58,10 @@ namespace lua {
 typedef lua_CFunction c_function;
 
 
+/// Synonym for lua_Debug.
+typedef lua_Debug debug;
+
+
 /// A RAII model for the Lua state.
 ///
 /// This class holds the state of the Lua interpreter during its existence and
@@ -83,6 +87,8 @@ public:
 
     void close(void);
     void get_global(const std::string&);
+    void get_info(const char*, debug*);
+    void get_stack(const int, debug*);
     void get_table(const int = -2);
     int get_top(void);
     bool is_boolean(const int = -1);

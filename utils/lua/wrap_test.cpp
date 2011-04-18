@@ -228,6 +228,32 @@ ATF_TEST_CASE_BODY(state__get_global__undefined)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(state__get_info);
+ATF_TEST_CASE_BODY(state__get_info)
+{
+    lua::state state;
+    ATF_REQUIRE(luaL_dostring(raw(state), "\n\nfunction hello() end\n"
+                              "return hello") == 0);
+    lua::debug ar;
+    state.get_info(">S", &ar);
+    ATF_REQUIRE_EQ(3, ar.linedefined);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(state__get_stack);
+ATF_TEST_CASE_BODY(state__get_stack)
+{
+    lua::state state;
+    lua::debug ar;
+    ATF_REQUIRE(luaL_dostring(raw(state), "error('Hello')") == 1);
+    state.get_stack(0, &ar);
+    lua_pop(raw(state), 1);
+    // Not sure if we can actually validate anything here, other than we did not
+    // crash... (because get_stack only is supposed to update internal values of
+    // the debug structure).
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(state__get_table__ok);
 ATF_TEST_CASE_BODY(state__get_table__ok)
 {
@@ -1033,6 +1059,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, state__get_global__ok);
     ATF_ADD_TEST_CASE(tcs, state__get_global__fail);
     ATF_ADD_TEST_CASE(tcs, state__get_global__undefined);
+    ATF_ADD_TEST_CASE(tcs, state__get_info);
+    ATF_ADD_TEST_CASE(tcs, state__get_stack);
     ATF_ADD_TEST_CASE(tcs, state__get_table__ok);
     ATF_ADD_TEST_CASE(tcs, state__get_table__nil);
     ATF_ADD_TEST_CASE(tcs, state__get_table__unknown_index);

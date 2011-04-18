@@ -34,6 +34,8 @@ libutils_a_SOURCES += utils/lua/exceptions.cpp
 libutils_a_SOURCES += utils/lua/exceptions.hpp
 libutils_a_SOURCES += utils/lua/module_fs.cpp
 libutils_a_SOURCES += utils/lua/module_fs.hpp
+libutils_a_SOURCES += utils/lua/module_logging.cpp
+libutils_a_SOURCES += utils/lua/module_logging.hpp
 libutils_a_SOURCES += utils/lua/operations.cpp
 libutils_a_SOURCES += utils/lua/operations.hpp
 libutils_a_SOURCES += utils/lua/wrap.cpp
@@ -54,6 +56,11 @@ tests_utils_lua_PROGRAMS += utils/lua/module_fs_test
 utils_lua_module_fs_test_SOURCES = utils/lua/module_fs_test.cpp
 utils_lua_module_fs_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 utils_lua_module_fs_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
+
+tests_utils_lua_PROGRAMS += utils/lua/module_logging_test
+utils_lua_module_logging_test_SOURCES = utils/lua/module_logging_test.cpp
+utils_lua_module_logging_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_lua_module_logging_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_lua_PROGRAMS += utils/lua/operations_test
 utils_lua_operations_test_SOURCES = utils/lua/operations_test.cpp \
