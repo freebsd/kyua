@@ -209,5 +209,6 @@ logging::set_persistency(const std::string& new_level, const fs::path& path)
         if ((*iter).first <= log_level)
             (*logfile) << (*iter).second << '\n';
     }
+    (*logfile).flush();
     backlog.clear();
 }
