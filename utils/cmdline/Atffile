@@ -8,3 +8,4 @@ tp: exceptions_test
 tp: globals_test
 tp: options_test
 tp: parser_test
+tp: ui_test

@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -53,6 +53,11 @@ public:
     virtual void err(const std::string&);
     virtual void out(const std::string&);
 };
+
+
+void print_error(ui*, const std::string&);
+void print_info(ui*, const std::string&);
+void print_warning(ui*, const std::string&);
 
 
 }  // namespace cmdline

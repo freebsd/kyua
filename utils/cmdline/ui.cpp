@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -28,15 +28,18 @@
 
 #include <iostream>
 
+#include "utils/cmdline/globals.hpp"
 #include "utils/cmdline/ui.hpp"
+#include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/logging/macros.hpp"
 #include "utils/sanity.hpp"
 
-using utils::cmdline::ui;
+namespace cmdline = utils::cmdline;
 
 
 /// Destructor for the class.
-ui::~ui(void)
+cmdline::ui::~ui(void)
 {
 }
 
@@ -45,9 +48,10 @@ ui::~ui(void)
 ///
 /// \param message The line to print, without the trailing newline character.
 void
-ui::err(const std::string& message)
+cmdline::ui::err(const std::string& message)
 {
     PRE(message.empty() || message[message.length() - 1] != '\n');
+    LI(F("stderr: %s") % message);
     std::cerr << message << "\n";
 }
 
@@ -56,8 +60,51 @@ ui::err(const std::string& message)
 ///
 /// \param message The line to print, without the trailing newline character.
 void
-ui::out(const std::string& message)
+cmdline::ui::out(const std::string& message)
 {
     PRE(message.empty() || message[message.length() - 1] != '\n');
+    LI(F("stdout: %s") % message);
     std::cout << message << "\n";
+}
+
+
+/// Formats and prints an error message.
+///
+/// \param ui The user interface object used to print the message.
+/// \param message The message to print.  Must not end with a dot nor with a
+///     newline character.
+void
+cmdline::print_error(ui* ui_, const std::string& message)
+{
+    PRE(!message.empty() && message[message.length() - 1] != '.');
+    LE(message);
+    ui_->err(F("%s: E: %s.") % cmdline::progname() % message);
+}
+
+
+/// Formats and prints an informational message.
+///
+/// \param ui The user interface object used to print the message.
+/// \param message The message to print.  Must not end with a dot nor with a
+///     newline character.
+void
+cmdline::print_info(ui* ui_, const std::string& message)
+{
+    PRE(!message.empty() && message[message.length() - 1] != '.');
+    LI(message);
+    ui_->err(F("%s: I: %s.") % cmdline::progname() % message);
+}
+
+
+/// Formats and prints a warning message.
+///
+/// \param ui The user interface object used to print the message.
+/// \param message The message to print.  Must not end with a dot nor with a
+///     newline character.
+void
+cmdline::print_warning(ui* ui_, const std::string& message)
+{
+    PRE(!message.empty() && message[message.length() - 1] != '.');
+    LW(message);
+    ui_->err(F("%s: W: %s.") % cmdline::progname() % message);
 }
