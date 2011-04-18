@@ -126,6 +126,8 @@ function atf_test_program(in_properties)
           string.format("Test program '%s' cannot contain path components",
                         properties.name))
    table.insert(TEST_PROGRAMS, properties)
+
+   logging.debug(string.format("Defined test program '%s'", properties.name))
 end
 
 
@@ -149,6 +151,7 @@ function include(file)
    local env = init.run(abs_file)
 
    local syntax = env.init.get_syntax()
+   logging.debug(string.format("Including file '%s'", abs_file))
    if syntax.format == "kyuafile" then
       if syntax.version == 1 then
          for _, raw_test_program in ipairs(env.kyuafile.TEST_PROGRAMS) do
@@ -186,6 +189,7 @@ function test_suite(name)
    assert(not TEST_SUITE, "Test suite already defined; cannot call " ..
           "test_suite twice")
    TEST_SUITE = name
+   logging.debug(string.format("Set test suite to '%s'", TEST_SUITE))
 end
 
 

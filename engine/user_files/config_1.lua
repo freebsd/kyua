@@ -70,6 +70,9 @@ function test_suite_var(test_suite, name, value)
       TEST_SUITES[test_suite] = {}
    end
    TEST_SUITES[test_suite][name] = value
+
+   logging.info(string.format("Set %s = %s for test suite %s", name, value,
+                              test_suite))
 end
 
 

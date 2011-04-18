@@ -32,6 +32,7 @@
 #include "utils/logging/macros.hpp"
 #include "utils/lua/exceptions.hpp"
 #include "utils/lua/module_fs.hpp"
+#include "utils/lua/module_logging.hpp"
 #include "utils/lua/operations.hpp"
 
 namespace fs = utils::fs;
@@ -128,6 +129,7 @@ user_files::init(lua::state& state, const fs::path& file,
     state.open_string();
     state.open_table();
     lua::open_fs(state);
+    lua::open_logging(state);
 
     lua::do_file(state, fs::path(KYUA_LUADIR) / "init.lua", 1);
     state.push_string("export");

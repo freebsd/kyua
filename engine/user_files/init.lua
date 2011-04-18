@@ -122,6 +122,8 @@ function bootstrap(luadir, filename)
 
    assert(not FILENAME)
    FILENAME = filename
+
+   logging.debug(string.format("Initialized file '%s'", FILENAME))
 end
 
 
@@ -155,6 +157,8 @@ end
 --
 -- \return table, The environment after the file has executed.
 function run(file)
+   logging.debug(string.format("Running file '%s'", file))
+
    local env = {}
    setmetatable(env, {__index = ENV})
    env._G = env
@@ -186,6 +190,8 @@ function syntax(format, version)
    assert(not SYNTAX.format and not SYNTAX.version,
           "Cannot call syntax() more than once in a single file")
 
+   logging.debug(string.format("Setting syntax to '%s', version %d", format,
+                               version))
    if format == "config" then
       if version == 1 then
          local module = dofile_in_env(fs.join(LUADIR, "config_1.lua"),
