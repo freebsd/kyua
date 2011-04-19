@@ -227,6 +227,9 @@ cli::main(cmdline::ui* ui, const int argc, const char* const* const argv,
         ui->err(F("Type '%s help' for usage information.") %
                 cmdline::progname());
         return EXIT_FAILURE;
+    } catch (const std::runtime_error& e) {
+        cmdline::print_error(ui, e.what());
+        return EXIT_FAILURE;
     }
 }
 

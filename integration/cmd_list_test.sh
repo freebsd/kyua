@@ -361,10 +361,8 @@ EOF
 utils_test_case missing_kyuafile__no_args
 missing_kyuafile__no_args_body() {
     cat >experr <<EOF
-File 'Kyuafile' not found.  TODO(jmmv): Adjust this expected message.
+kyua: E: Load of 'Kyuafile' failed: File 'Kyuafile' not found.
 EOF
-
-    atf_expect_fail "Missing Kyuafile error not captured"
     atf_check -s exit:1 -o empty -e file:experr kyua list
 }
 
@@ -380,9 +378,8 @@ EOF
     utils_cp_helper simple_all_pass subdir/unused
 
     cat >experr <<EOF
-File 'Kyuafile' not found.  TODO(jmmv): Adjust this expected message.
+kyua: E: Load of 'Kyuafile' failed: File 'Kyuafile' not found.
 EOF
-    atf_expect_fail "Providing arguments incorrectly skip load of Kyuafiles"
     atf_check -s exit:1 -o empty -e file:experr kyua list subdir/unused
 }
 
@@ -398,9 +395,8 @@ EOF
     utils_cp_helper simple_all_pass subdir/unused
 
     cat >experr <<EOF
-File 'Kyuafile' not found.  TODO(jmmv): Adjust this expected message.
+kyua: E: Load of 'Kyuafile' failed: File 'Kyuafile' not found.
 EOF
-    atf_expect_fail "Kyuafile in subdir cannot load without parent"
     atf_check -s exit:1 -o empty -e file:experr kyua list subdir
 }
 
@@ -412,9 +408,8 @@ Hello, world.
 EOF
 
     cat >experr <<EOF
-Bad 'Kyuafile'.  TODO(jmmv): Adjust this expected message.
+kyua: E: Load of 'Kyuafile' failed: Failed to load Lua file 'Kyuafile': Kyuafile:2: '<name>' expected near '<eof>'.
 EOF
-    atf_expect_fail "Bad kyuafile error not captured"
     atf_check -s exit:1 -o empty -e file:experr kyua list
 }
 
@@ -429,9 +424,8 @@ EOF
     utils_cp_helper bad_test_program .
 
     cat >experr <<EOF
-Bad test program.  TODO(jmmv): Adjust this expected message.
+kyua: E: bad_test_program: Invalid header for test case list; expecting Content-Type for application/X-atf-tp version 1, got 'This is not a valid test program!'.
 EOF
-    atf_expect_fail "Bogus test program errors not captured"
     atf_check -s exit:1 -o empty -e file:experr kyua list
 }
 

@@ -53,16 +53,23 @@ namespace {
 
 
 class cmd_mock_error : public cmdline::base_command {
+    bool _unhandled;
+
 public:
-    cmd_mock_error(void) : cmdline::base_command(
-        "mock_error", "", 0, 0, "Mock command that raises an error")
+    cmd_mock_error(const bool unhandled) :
+        cmdline::base_command("mock_error", "", 0, 0,
+                              "Mock command that raises an error"),
+        _unhandled(unhandled)
     {
     }
 
     int
     run(utils::cmdline::ui* ui, const utils::cmdline::parsed_cmdline& cmdline)
     {
-        throw std::runtime_error("This is unhandled");
+        if (_unhandled)
+            throw std::logic_error("This is unhandled");
+        else
+            throw std::runtime_error("Runtime error");
     }
 };
 
@@ -319,8 +326,8 @@ ATF_TEST_CASE_BODY(main__subcommand__invalid_args)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(main__subcommand__error);
-ATF_TEST_CASE_BODY(main__subcommand__error)
+ATF_TEST_CASE_WITHOUT_HEAD(main__subcommand__runtime_error);
+ATF_TEST_CASE_BODY(main__subcommand__runtime_error)
 {
     cmdline::init("progname");
 
@@ -328,9 +335,25 @@ ATF_TEST_CASE_BODY(main__subcommand__error)
     const char* const argv[] = {"progname", "mock_error", NULL};
 
     cmdline::ui_mock ui;
-    ATF_REQUIRE_THROW_RE(std::runtime_error, "unhandled",
-                         cli::main(&ui, argc, argv,
-                                   cmdline::command_ptr(new cmd_mock_error())));
+    ATF_REQUIRE_EQ(EXIT_FAILURE, cli::main(&ui, argc, argv,
+        cmdline::command_ptr(new cmd_mock_error(false))));
+    ATF_REQUIRE(ui.out_log().empty());
+    ATF_REQUIRE(utils::grep_vector("progname: E: Runtime error.",
+                                   ui.err_log()));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(main__subcommand__unhandled_exception);
+ATF_TEST_CASE_BODY(main__subcommand__unhandled_exception)
+{
+    cmdline::init("progname");
+
+    const int argc = 2;
+    const char* const argv[] = {"progname", "mock_error", NULL};
+
+    cmdline::ui_mock ui;
+    ATF_REQUIRE_THROW(std::logic_error, cli::main(&ui, argc, argv,
+        cmdline::command_ptr(new cmd_mock_error(true))));
 }
 
 
@@ -350,5 +373,6 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, main__loglevel__error);
     ATF_ADD_TEST_CASE(tcs, main__subcommand__ok);
     ATF_ADD_TEST_CASE(tcs, main__subcommand__invalid_args);
-    ATF_ADD_TEST_CASE(tcs, main__subcommand__error);
+    ATF_ADD_TEST_CASE(tcs, main__subcommand__runtime_error);
+    ATF_ADD_TEST_CASE(tcs, main__subcommand__unhandled_exception);
 }
