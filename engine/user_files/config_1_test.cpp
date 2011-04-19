@@ -83,6 +83,7 @@ ATF_TEST_CASE_BODY(some_test_suite_variables)
     output << "test_suite_var('ts1', 'foo', 'baz')\n";
     output << "test_suite_var('ts1', 'hello', 3)\n";
     output << "test_suite_var('ts2', 'hello', 5)\n";
+    output << "test_suite_var('ts2', 'bye', true)\n";
     output.close();
 
     lua::state state;
@@ -90,6 +91,7 @@ ATF_TEST_CASE_BODY(some_test_suite_variables)
     lua::do_string(state, "assert(config.TEST_SUITES.ts1.foo == 'baz')");
     lua::do_string(state, "assert(config.TEST_SUITES.ts1.hello == 3)");
     lua::do_string(state, "assert(config.TEST_SUITES.ts2.hello == 5)");
+    lua::do_string(state, "assert(config.TEST_SUITES.ts2.bye == true)");
 }
 
 

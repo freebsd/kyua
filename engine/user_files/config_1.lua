@@ -71,7 +71,12 @@ function test_suite_var(test_suite, name, value)
    end
    TEST_SUITES[test_suite][name] = value
 
-   logging.info(string.format("Set %s = %s for test suite %s", name, value,
+   if type(value) == "boolean" then
+      str_value = value and "true" or "false"
+   else
+      str_value = tostring(value)
+   end
+   logging.info(string.format("Set %s = %s for test suite %s", name, str_value,
                               test_suite))
 end
 
