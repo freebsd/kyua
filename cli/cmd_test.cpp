@@ -153,8 +153,8 @@ cmd_test::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
 
         return bad_count == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
     } else {
-        // TODO(jmmv): Does not print a nice error prefix; must fix.
-        ui->err("No test cases matched by the filters provided.");
+        cmdline::print_error(ui, "No test cases matched by the filters "
+                             "provided");
         return EXIT_FAILURE;
     }
 }

@@ -194,7 +194,7 @@ EOF
     utils_cp_helper simple_all_pass second
 
     cat >experr <<EOF
-No test cases matched by the filters provided.
+kyua: E: No test cases matched by the filters provided.
 EOF
     atf_check -s exit:1 -o empty -e file:experr kyua list first1
 }
@@ -221,7 +221,7 @@ third:pass
 EOF
 
     cat >experr <<EOF
-No test cases matched by the 'fourth' filter.
+kyua: E: No test cases matched by the 'fourth' filter.
 EOF
     atf_expect_fail "Validation of individual filters not implemented"
     atf_check -s exit:1 -o empty -e file:experr kyua list first fourth third
@@ -336,7 +336,7 @@ EOF
     utils_cp_helper simple_all_pass second
 
     cat >experr <<EOF
-No test cases matched by the filters provided.
+kyua: E: No test cases matched by the filters provided.
 EOF
     atf_check -s exit:1 -o empty -e file:experr kyua list second
 }
@@ -352,7 +352,7 @@ EOF
     utils_cp_helper simple_all_pass first
 
     cat >experr <<EOF
-No test cases matched by the filters provided.
+kyua: E: No test cases matched by the filters provided.
 EOF
     atf_check -s exit:1 -o empty -e file:experr kyua list first:foobar
 }

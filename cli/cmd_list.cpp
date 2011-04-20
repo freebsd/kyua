@@ -102,8 +102,8 @@ cli::cmd_list::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
     }
 
     if (!matched) {
-        // TODO(jmmv): Does not print a nice error prefix; must fix.
-        ui->err("No test cases matched by the filters provided.");
+        cmdline::print_error(ui, "No test cases matched by the filters "
+                             "provided");
         return EXIT_FAILURE;
     } else
         return EXIT_SUCCESS;
