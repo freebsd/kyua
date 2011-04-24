@@ -67,7 +67,7 @@ static std::pair< unsigned long, unsigned long >
 run_test_program(const fs::path& root,
                  const user_files::test_program& test_program,
                  const user_files::config& config,
-                 const cli::test_filters& filters,
+                 const cli::filters_state& filters,
                  cmdline::ui* ui)
 {
     LI(F("Processing test program '%s'") % test_program.binary_path);
@@ -127,8 +127,7 @@ cmd_test::cmd_test(void) : cmdline::base_command(
 int
 cmd_test::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
 {
-    const cli::test_filters filters(cmdline.arguments());
-
+    const cli::filters_state filters(cmdline.arguments());
     const user_files::config config = load_config(cmdline);
     const user_files::kyuafile kyuafile = load_kyuafile(cmdline);
 
@@ -146,15 +145,14 @@ cmd_test::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
         bad_count += partial.second;
     }
 
+    int exit_code;
     if (good_count > 0 || bad_count > 0) {
         ui->out("");
         ui->out(F("%d/%d passed (%d failed)") % good_count %
                 (good_count + bad_count) % bad_count);
 
-        return bad_count == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
-    } else {
-        cmdline::print_error(ui, "No test cases matched by the filters "
-                             "provided");
-        return EXIT_FAILURE;
+        exit_code = (bad_count == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
     }
+
+    return filters.report_unused_filters(ui) ? EXIT_FAILURE : exit_code;
 }

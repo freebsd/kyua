@@ -126,14 +126,12 @@ EOF
 utils_test_case one_arg__invalid
 one_arg__invalid_body() {
 cat >experr <<EOF
-Usage error for command list: Test case component in 'foo:' is empty.
-Type 'kyua help list' for usage information.
+kyua: E: Test case component in 'foo:' is empty.
 EOF
     atf_check -s exit:1 -o empty -e file:experr kyua list foo:
 
 cat >experr <<EOF
-Usage error for command list: Program name '/a/b' must be relative to the test suite, not absolute.
-Type 'kyua help list' for usage information.
+kyua: E: Program name '/a/b' must be relative to the test suite, not absolute.
 EOF
     atf_check -s exit:1 -o empty -e file:experr kyua list /a/b
 }
@@ -169,14 +167,12 @@ EOF
 utils_test_case many_args__invalid
 many_args__invalid_body() {
 cat >experr <<EOF
-Usage error for command list: Program name component in ':badbad' is empty.
-Type 'kyua help list' for usage information.
+kyua: E: Program name component in ':badbad' is empty.
 EOF
     atf_check -s exit:1 -o empty -e file:experr kyua list this-is-ok :badbad
 
 cat >experr <<EOF
-Usage error for command list: Program name '/foo' must be relative to the test suite, not absolute.
-Type 'kyua help list' for usage information.
+kyua: E: Program name '/foo' must be relative to the test suite, not absolute.
 EOF
     atf_check -s exit:1 -o empty -e file:experr kyua list this-is-ok /foo
 }
@@ -194,7 +190,7 @@ EOF
     utils_cp_helper simple_all_pass second
 
     cat >experr <<EOF
-kyua: E: No test cases matched by the filters provided.
+kyua: W: No test cases matched by the filter 'first1'.
 EOF
     atf_check -s exit:1 -o empty -e file:experr kyua list first1
 }
@@ -221,10 +217,11 @@ third:pass
 EOF
 
     cat >experr <<EOF
-kyua: E: No test cases matched by the 'fourth' filter.
+kyua: W: No test cases matched by the filter 'fifth'.
+kyua: W: No test cases matched by the filter 'fourth'.
 EOF
-    atf_expect_fail "Validation of individual filters not implemented"
-    atf_check -s exit:1 -o empty -e file:experr kyua list first fourth third
+    atf_check -s exit:1 -o file:expout -e file:experr kyua list first fourth \
+        third fifth
 }
 
 
@@ -336,7 +333,7 @@ EOF
     utils_cp_helper simple_all_pass second
 
     cat >experr <<EOF
-kyua: E: No test cases matched by the filters provided.
+kyua: W: No test cases matched by the filter 'second'.
 EOF
     atf_check -s exit:1 -o empty -e file:experr kyua list second
 }
@@ -352,7 +349,7 @@ EOF
     utils_cp_helper simple_all_pass first
 
     cat >experr <<EOF
-kyua: E: No test cases matched by the filters provided.
+kyua: W: No test cases matched by the filter 'first:foobar'.
 EOF
     atf_check -s exit:1 -o empty -e file:experr kyua list first:foobar
 }

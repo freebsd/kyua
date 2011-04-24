@@ -40,6 +40,8 @@ libcli_a_SOURCES += cli/cmd_test.cpp
 libcli_a_SOURCES += cli/cmd_test.hpp
 libcli_a_SOURCES += cli/common.cpp
 libcli_a_SOURCES += cli/common.hpp
+libcli_a_SOURCES += cli/filters.cpp
+libcli_a_SOURCES += cli/filters.hpp
 libcli_a_SOURCES += cli/main.cpp
 libcli_a_SOURCES += cli/main.hpp
 libcli_a_CPPFLAGS  = -DKYUA_CONFDIR="\"$(kyua_confdir)\""
@@ -82,6 +84,11 @@ tests_cli_PROGRAMS += cli/common_test
 cli_common_test_SOURCES = cli/common_test.cpp
 cli_common_test_CXXFLAGS = $(CLI_TESTS_CXXFLAGS)
 cli_common_test_LDADD = $(CLI_TESTS_LDADD)
+
+tests_cli_PROGRAMS += cli/filters_test
+cli_filters_test_SOURCES = cli/filters_test.cpp
+cli_filters_test_CXXFLAGS = $(CLI_TESTS_CXXFLAGS)
+cli_filters_test_LDADD = $(CLI_TESTS_LDADD)
 
 tests_cli_PROGRAMS += cli/main_test
 cli_main_test_SOURCES = cli/main_test.cpp

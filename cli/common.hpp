@@ -32,16 +32,14 @@
 #if !defined(CLI_COMMON_HPP)
 #define CLI_COMMON_HPP
 
-#include <string>
 #include <utility>
-#include <vector>
 
 #include "utils/cmdline/options.hpp"
+#include "utils/cmdline/parser.hpp"
+#include "utils/cmdline/ui.hpp"
+#include "utils/noncopyable.hpp"
 
 namespace utils {
-namespace cmdline {
-class parsed_cmdline;
-}  // namespace cmdline
 namespace fs {
 class path;
 }  // namespace fs
@@ -69,28 +67,18 @@ engine::user_files::kyuafile load_kyuafile(
 void set_confdir_for_testing(const utils::fs::path&);
 
 
-/// Collection of user-provided filters to select test cases.
-///
-/// A filter is a string that represents either a directory containing test
-/// cases, a test program name or a test program with a test case name.  Any
-/// other test case name can be tested against the filters by providing an
-/// identifier.  An empty collection of filters acts as a wildcard.
-class test_filters {
-public:
-    /// A (test program, test case) pair.  If the test case is empty, the filter
-    /// matches all test cases of the test program.
-    typedef std::pair< utils::fs::path, std::string > filter_pair;
-
-private:
-    std::vector< filter_pair > _filters;
+/// Represents user-specified test filters and their current match state.
+class filters_state : utils::noncopyable {
+    struct impl;
+    std::auto_ptr< impl > _pimpl;
 
 public:
-    test_filters(const std::vector< std::string >&);
+    filters_state(const utils::cmdline::args_vector&);
 
-    static filter_pair parse_user_filter(const std::string&);
-
-    bool match_test_case(const engine::test_case_id&) const;
     bool match_test_program(const utils::fs::path&) const;
+    bool match_test_case(const engine::test_case_id&) const;
+
+    bool report_unused_filters(utils::cmdline::ui*) const;
 };
 
 

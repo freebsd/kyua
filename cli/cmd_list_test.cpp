@@ -46,7 +46,7 @@ ATF_TEST_CASE_BODY(invalid_filter)
 
     cli::cmd_list cmd;
     cmdline::ui_mock ui;
-    ATF_REQUIRE_THROW_RE(cmdline::usage_error, "Test case.*'incorrect:'.*empty",
+    ATF_REQUIRE_THROW_RE(cmdline::error, "Test case.*'incorrect:'.*empty",
                          cmd.main(&ui, args));
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE(ui.err_log().empty());

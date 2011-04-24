@@ -26,8 +26,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <algorithm>
+
 #include "cli/common.hpp"
-#include "engine/test_case.hpp"
+#include "cli/filters.hpp"
 #include "engine/user_files/config.hpp"
 #include "engine/user_files/kyuafile.hpp"
 #include "utils/cmdline/exceptions.hpp"
@@ -93,23 +95,6 @@ get_home(void)
         }
     } else
         return none;
-}
-
-
-/// Checks if a test program name matches a filter.
-///
-/// \param filter The filter to check against.
-/// \param test_program The test program name to check against the filters.
-///
-/// \return Whether actual matches filter.
-bool
-match_test_program_only(const cli::test_filters::filter_pair& filter,
-                        const fs::path& test_program)
-{
-    if (filter.first == test_program)
-        return true;
-    else
-        return filter.second.empty() && filter.first.is_parent_of(test_program);
 }
 
 
@@ -216,111 +201,95 @@ cli::set_confdir_for_testing(const utils::fs::path& dir)
 }
 
 
-/// Constructs a new set of filters.
-///
-/// \param user_filters The user-provided filters; if empty, no filters are
-///     applied.  See parse_user_filters for details on the syntax.
-///
-/// \throw cmdline::usage_error If any of the filters is invalid.
-cli::test_filters::test_filters(const std::vector< std::string >& user_filters)
-{
-    for (std::vector< std::string >::const_iterator iter = user_filters.begin();
-         iter != user_filters.end(); iter++) {
-        _filters.push_back(parse_user_filter(*iter));
+/// Internal implementation for cli::filters_state.
+struct cli::filters_state::impl {
+    /// The collection of filters provided by the user.
+    test_filters filters;
+
+    /// The filters that have been used so far.
+    std::set< test_filter > used_filters;
+
+    /// Constructs the internal representation of the filters.
+    ///
+    /// \param filters_ The filters provided by the user, already sanitized.
+    impl(const std::set< test_filter >& filters_) :
+        filters(filters_)
+    {
     }
-}
+};
 
 
-/// Parses a user-provided test filter.
+/// Parses a set of command-line arguments to construct test filters.
 ///
-/// \param str The user-provided string representing a filter for tests.  Must
-///     be of the form &lt;test_program%gt;[:&lt;test_case%gt;].
+/// \param args The command-line arguments representing test filters.
 ///
-/// \return The parsed filter, to be stored inside a test_filters object.
-///
-/// \throw cmdline::usage_error If the provided filter is invalid.
-cli::test_filters::filter_pair
-cli::test_filters::parse_user_filter(const std::string& str)
+/// \throw cmdline:error If any of the arguments is invalid, or if they
+///     represent a non-disjoint collection of filters.
+cli::filters_state::filters_state(const cmdline::args_vector& args)
 {
-    if (str.empty())
-        throw cmdline::usage_error("Test filter cannot be empty");
-
-    const std::string::size_type pos = str.find(':');
-    if (pos == 0)
-        throw cmdline::usage_error(F("Program name component in '%s' is empty")
-                                   % str);
-    if (pos == str.length() - 1)
-        throw cmdline::usage_error(F("Test case component in '%s' is empty")
-                                   % str);
+    std::set< test_filter > filters;
 
     try {
-        const fs::path test_program(str.substr(0, pos));
-        if (test_program.is_absolute())
-            throw cmdline::usage_error(F("Program name '%s' must be relative "
-                                         "to the test suite, not absolute") %
-                                       test_program.str());
-        const std::string test_case(pos == std::string::npos ?
-                                    "" : str.substr(pos + 1));
-        LD(F("Parsed user filter '%s': test program '%s', test case '%s'") %
-           str % test_program.str() % test_case);
-        return filter_pair(test_program, test_case);
-    } catch (const fs::error& e) {
-        throw cmdline::usage_error(F("Invalid path in filter '%s': %s") % str %
-                                   e.what());
-    }
-}
-
-
-/// Checks if a given test case identifier matches the set of filters.
-///
-/// \param id The identifier to check against the filters.
-///
-/// \return True if the provided identifier matches any filter.
-bool
-cli::test_filters::match_test_case(const engine::test_case_id& id) const
-{
-    if (_filters.empty()) {
-        INV(match_test_program(id.program));
-        return true;
-    }
-
-    bool matches = false;
-    for (std::vector< filter_pair >::const_iterator iter = _filters.begin();
-         !matches && iter != _filters.end(); iter++) {
-        const filter_pair& filter = *iter;
-
-        if (match_test_program_only(filter, id.program)) {
-            if (filter.second.empty() || filter.second == id.name)
-                matches = true;
+        for (cmdline::args_vector::const_iterator iter = args.begin();
+             iter != args.end(); iter++) {
+            const test_filter filter(test_filter::parse(*iter));
+            if (filters.find(filter) != filters.end())
+                throw cmdline::error(F("Duplicate filter '%s'") % filter.str());
+            filters.insert(filter);
         }
+        check_disjoint_filters(filters);
+    } catch (const std::runtime_error& e) {
+        throw cmdline::error(e.what());
     }
-    INV(!matches || match_test_program(id.program));
-    return matches;
+
+    _pimpl.reset(new impl(filters));
 }
 
 
-/// Checks if a given test program matches the set of filters.
+/// Checks whether these filters match the given test program.
 ///
-/// This is provided as an optimization only, and the results of this function
-/// are less specific than those of match_test_case.  Checking for the matching
-/// of a test program should be done before loading the list of test cases from
-/// a program, so as to avoid the delay in executing the test program, but
-/// match_test_case must still be called afterwards.
+/// \param test_program The test program to match against.
 ///
-/// \param name The test program to check against the filters.
-///
-/// \return True if the provided identifier matches any filter.
+/// \return True if these filters match the given test program name.
 bool
-cli::test_filters::match_test_program(const fs::path& name) const
+cli::filters_state::match_test_program(const fs::path& test_program) const
 {
-    if (_filters.empty())
-        return true;
+    return _pimpl->filters.match_test_program(test_program);
+}
 
-    bool matches = false;
-    for (std::vector< filter_pair >::const_iterator iter = _filters.begin();
-         !matches && iter != _filters.end(); iter++) {
-        if (match_test_program_only(*iter, name))
-            matches = true;
+
+/// Checks whether these filters match the given test case.
+///
+/// \param test_case The test case to match against.
+///
+/// \return True if these filters match the given test case identifier.
+bool
+cli::filters_state::match_test_case(const engine::test_case_id& test_case) const
+{
+    test_filters::match match = _pimpl->filters.match_test_case(test_case);
+    if (match.first && match.second)
+        _pimpl->used_filters.insert(match.second.get());
+    return match.first;
+}
+
+
+/// Reports the filters that have not matched any tests as errors.
+///
+/// \param ui The user interface object through which errors are to be reported.
+///
+/// \return True if there are any unused filters.  The caller should report this
+/// as an error to the user by means of a non-successful exit code.
+bool
+cli::filters_state::report_unused_filters(cmdline::ui* ui) const
+{
+    const std::set< test_filter > unused = _pimpl->filters.difference(
+        _pimpl->used_filters);
+
+    for (std::set< test_filter >::const_iterator iter = unused.begin();
+         iter != unused.end(); iter++) {
+        cmdline::print_warning(ui, F("No test cases matched by the filter '%s'")
+                               % (*iter).str());
     }
-    return matches;
+
+    return !unused.empty();
 }

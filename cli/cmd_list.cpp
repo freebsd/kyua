@@ -66,10 +66,8 @@ cli::cmd_list::cmd_list(void) : cmdline::base_command(
 int
 cli::cmd_list::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
 {
-    const cli::test_filters filters(cmdline.arguments());
+    const cli::filters_state filters(cmdline.arguments());
     const user_files::kyuafile kyuafile = load_kyuafile(cmdline);
-
-    bool matched = false;
 
     for (user_files::test_programs_vector::const_iterator p =
          kyuafile.test_programs().begin(); p != kyuafile.test_programs().end();
@@ -86,7 +84,6 @@ cli::cmd_list::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
             if (!filters.match_test_case(tc.identifier))
                 continue;
 
-            matched = true;
             if (!cmdline.has_option("verbose")) {
                 ui->out(tc.identifier.str());
             } else {
@@ -101,10 +98,5 @@ cli::cmd_list::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
         }
     }
 
-    if (!matched) {
-        cmdline::print_error(ui, "No test cases matched by the filters "
-                             "provided");
-        return EXIT_FAILURE;
-    } else
-        return EXIT_SUCCESS;
+    return filters.report_unused_filters(ui) ? EXIT_FAILURE : EXIT_SUCCESS;
 }

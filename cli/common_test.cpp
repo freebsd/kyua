@@ -36,7 +36,9 @@
 #include "engine/user_files/config.hpp"
 #include "engine/user_files/kyuafile.hpp"
 #include "utils/cmdline/exceptions.hpp"
+#include "utils/cmdline/globals.hpp"
 #include "utils/cmdline/parser.ipp"
+#include "utils/cmdline/ui_mock.hpp"
 #include "utils/env.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
@@ -93,17 +95,6 @@ create_mock_kyuafile(const char* name, const char* cookie)
     } else {
         output << "syntax('invalid-file', 1)\n";
     }
-}
-
-
-/// Creates a test case identifier; provided to simplify typing.
-///
-/// \param test_program_name The test program name.
-/// \param test_case_name The test case name.
-static inline engine::test_case_id
-make_id(const std::string& test_program_name, const std::string& test_case_name)
-{
-    return engine::test_case_id(fs::path(test_program_name), test_case_name);
 }
 
 
@@ -329,141 +320,126 @@ ATF_TEST_CASE_BODY(load_kyuafile__fail)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(test_filters__ctor__ok)
-ATF_TEST_CASE_BODY(test_filters__ctor__ok)
+ATF_TEST_CASE_WITHOUT_HEAD(filters_state__ctor__none);
+ATF_TEST_CASE_BODY(filters_state__ctor__none)
 {
-    std::vector< std::string > args;
-    args.push_back("foo/bar/baz");
-    args.push_back("foo/bar:abc");
-    args.push_back("bar:baz");
-    args.push_back("baz");
-    cli::test_filters unused_filters = cli::test_filters(args);
+    const cmdline::args_vector args;
+    cli::filters_state unused_filters(args);
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(test_filters__ctor__fail)
-ATF_TEST_CASE_BODY(test_filters__ctor__fail)
+ATF_TEST_CASE_WITHOUT_HEAD(filters_state__ctor__ok);
+ATF_TEST_CASE_BODY(filters_state__ctor__ok)
 {
-    std::vector< std::string > args;
-    args.push_back("i-am-good:yes");
-    args.push_back("i-am-invalid:");
-    ATF_REQUIRE_THROW_RE(cmdline::usage_error, "Test case.*'i-am-invalid:'",
-                         (void)cli::test_filters(args));
+    cmdline::args_vector args;
+    args.push_back("foo");
+    args.push_back("bar/baz");
+    args.push_back("other:abc");
+    args.push_back("other:bcd");
+    cli::filters_state unused_filters(args);
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(test_filters__parse_user_filter__ok);
-ATF_TEST_CASE_BODY(test_filters__parse_user_filter__ok)
+ATF_TEST_CASE_WITHOUT_HEAD(filters_state__ctor__duplicate);
+ATF_TEST_CASE_BODY(filters_state__ctor__duplicate)
 {
-    const cli::test_filters::filter_pair filter =
-        cli::test_filters::parse_user_filter("foo");
-    ATF_REQUIRE_EQ(fs::path("foo"), filter.first);
-    ATF_REQUIRE(filter.second.empty());
+    cmdline::args_vector args;
+    args.push_back("foo/bar//baz");
+    args.push_back("hello/world:yes");
+    args.push_back("foo//bar/baz");
+    ATF_REQUIRE_THROW_RE(cmdline::error, "Duplicate.*'foo/bar/baz'",
+                         (void)cli::filters_state(args));
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(test_filters__parse_user_filter__empty);
-ATF_TEST_CASE_BODY(test_filters__parse_user_filter__empty)
+ATF_TEST_CASE_WITHOUT_HEAD(filters_state__ctor__nondisjoint);
+ATF_TEST_CASE_BODY(filters_state__ctor__nondisjoint)
 {
-    ATF_REQUIRE_THROW_RE(cmdline::usage_error, "empty",
-                         cli::test_filters::parse_user_filter(""));
+    cmdline::args_vector args;
+    args.push_back("foo/bar");
+    args.push_back("hello/world:yes");
+    args.push_back("foo/bar:baz");
+    ATF_REQUIRE_THROW_RE(cmdline::error, "'foo/bar'.*'foo/bar:baz'.*disjoint",
+                         (void)cli::filters_state(args));
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(test_filters__parse_user_filter__absolute);
-ATF_TEST_CASE_BODY(test_filters__parse_user_filter__absolute)
+ATF_TEST_CASE_WITHOUT_HEAD(filters_state__match_test_program);
+ATF_TEST_CASE_BODY(filters_state__match_test_program)
 {
-    ATF_REQUIRE_THROW_RE(cmdline::usage_error, "'/foo/bar'.*relative",
-                         cli::test_filters::parse_user_filter("/foo//bar"));
+    cmdline::args_vector args;
+    args.push_back("foo/bar");
+    args.push_back("baz:tc");
+    cli::filters_state filters(args);
+
+    ATF_REQUIRE(filters.match_test_program(fs::path("foo/bar/something")));
+    ATF_REQUIRE(filters.match_test_program(fs::path("baz")));
+
+    ATF_REQUIRE(!filters.match_test_program(fs::path("foo/baz")));
+    ATF_REQUIRE(!filters.match_test_program(fs::path("hello")));
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(test_filters__parse_user_filter__bad_program_name);
-ATF_TEST_CASE_BODY(test_filters__parse_user_filter__bad_program_name)
+ATF_TEST_CASE_WITHOUT_HEAD(filters_state__match_test_case);
+ATF_TEST_CASE_BODY(filters_state__match_test_case)
 {
-    ATF_REQUIRE_THROW_RE(cmdline::usage_error, "Program name.*':foo'",
-                         cli::test_filters::parse_user_filter(":foo"));
+    cmdline::args_vector args;
+    args.push_back("foo/bar");
+    args.push_back("baz:tc");
+    cli::filters_state filters(args);
+
+    ATF_REQUIRE(filters.match_test_case(engine::test_case_id(
+        fs::path("foo/bar/something"), "any")));
+    ATF_REQUIRE(filters.match_test_case(engine::test_case_id(
+        fs::path("baz"), "tc")));
+
+    ATF_REQUIRE(!filters.match_test_case(engine::test_case_id(
+        fs::path("foo/baz/something"), "tc")));
+    ATF_REQUIRE(!filters.match_test_case(engine::test_case_id(
+        fs::path("baz"), "tc2")));
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(test_filters__parse_user_filter__bad_test_case);
-ATF_TEST_CASE_BODY(test_filters__parse_user_filter__bad_test_case)
+ATF_TEST_CASE_WITHOUT_HEAD(filters_state__report_unused_filters__none);
+ATF_TEST_CASE_BODY(filters_state__report_unused_filters__none)
 {
-    ATF_REQUIRE_THROW_RE(cmdline::usage_error, "Test case.*'bar/baz:'",
-                         cli::test_filters::parse_user_filter("bar/baz:"));
+    cmdline::args_vector args;
+    args.push_back("a/b");
+    args.push_back("baz:tc");
+    args.push_back("hey/d:yes");
+    cli::filters_state filters(args);
+
+    filters.match_test_case(engine::test_case_id(fs::path("a/b/c"), "any"));
+    filters.match_test_case(engine::test_case_id(fs::path("baz"), "tc"));
+    filters.match_test_case(engine::test_case_id(fs::path("hey/d"), "yes"));
+
+    cmdline::ui_mock ui;
+    ATF_REQUIRE(!filters.report_unused_filters(&ui));
+    ATF_REQUIRE(ui.out_log().empty());
+    ATF_REQUIRE(ui.err_log().empty());
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(test_filters__parse_user_filter__bad_path);
-ATF_TEST_CASE_BODY(test_filters__parse_user_filter__bad_path)
+ATF_TEST_CASE_WITHOUT_HEAD(filters_state__report_unused_filters__some);
+ATF_TEST_CASE_BODY(filters_state__report_unused_filters__some)
 {
-    // TODO(jmmv): Not implemented.  At the moment, the only reason for a path
-    // to be invalid is if it is empty... but we are checking this exact
-    // condition ourselves as part of the input validation.  So we can't mock in
-    // an argument with an invalid non-empty path...
-}
+    cmdline::args_vector args;
+    args.push_back("a/b");
+    args.push_back("baz:tc");
+    args.push_back("hey/d:yes");
+    cli::filters_state filters(args);
 
+    filters.match_test_program(fs::path("a/b/c"));
+    filters.match_test_case(engine::test_case_id(fs::path("baz"), "tc"));
 
-ATF_TEST_CASE_WITHOUT_HEAD(test_filters__match_test_case__no_filters)
-ATF_TEST_CASE_BODY(test_filters__match_test_case__no_filters)
-{
-    const std::vector< std::string > args;
-
-    const cli::test_filters filters(args);
-    ATF_REQUIRE(filters.match_test_case(make_id("foo", "baz")));
-    ATF_REQUIRE(filters.match_test_case(make_id("foo/bar", "baz")));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(test_filters__match_test_case__some_filters)
-ATF_TEST_CASE_BODY(test_filters__match_test_case__some_filters)
-{
-    std::vector< std::string > args;
-    args.push_back("top_test");
-    args.push_back("subdir_1");
-    args.push_back("subdir_2/a_test");
-    args.push_back("subdir_2/b_test:foo");
-
-    const cli::test_filters filters(args);
-    ATF_REQUIRE( filters.match_test_case(make_id("top_test", "a")));
-    ATF_REQUIRE( filters.match_test_case(make_id("subdir_1/foo", "a")));
-    ATF_REQUIRE( filters.match_test_case(make_id("subdir_1/bar", "z")));
-    ATF_REQUIRE( filters.match_test_case(make_id("subdir_2/a_test", "bar")));
-    ATF_REQUIRE( filters.match_test_case(make_id("subdir_2/b_test", "foo")));
-    ATF_REQUIRE(!filters.match_test_case(make_id("subdir_2/b_test", "bar")));
-    ATF_REQUIRE(!filters.match_test_case(make_id("subdir_2/c_test", "foo")));
-    ATF_REQUIRE(!filters.match_test_case(make_id("subdir_3", "hello")));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(test_filters__match_test_program__no_filters)
-ATF_TEST_CASE_BODY(test_filters__match_test_program__no_filters)
-{
-    const std::vector< std::string > args;
-
-    const cli::test_filters filters(args);
-    ATF_REQUIRE(filters.match_test_program(fs::path("foo")));
-    ATF_REQUIRE(filters.match_test_program(fs::path("foo/bar")));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(test_filters__match_test_program__some_filters)
-ATF_TEST_CASE_BODY(test_filters__match_test_program__some_filters)
-{
-    std::vector< std::string > args;
-    args.push_back("top_test");
-    args.push_back("subdir_1");
-    args.push_back("subdir_2/a_test");
-    args.push_back("subdir_2/b_test:foo");
-
-    const cli::test_filters filters(args);
-    ATF_REQUIRE( filters.match_test_program(fs::path("top_test")));
-    ATF_REQUIRE( filters.match_test_program(fs::path("subdir_1/foo")));
-    ATF_REQUIRE( filters.match_test_program(fs::path("subdir_1/bar")));
-    ATF_REQUIRE( filters.match_test_program(fs::path("subdir_2/a_test")));
-    ATF_REQUIRE( filters.match_test_program(fs::path("subdir_2/b_test")));
-    ATF_REQUIRE(!filters.match_test_program(fs::path("subdir_2/c_test")));
-    ATF_REQUIRE(!filters.match_test_program(fs::path("subdir_3")));
+    cmdline::ui_mock ui;
+    cmdline::init("progname");
+    ATF_REQUIRE(filters.report_unused_filters(&ui));
+    ATF_REQUIRE(ui.out_log().empty());
+    ATF_REQUIRE_EQ(2, ui.err_log().size());
+    ATF_REQUIRE( utils::grep_vector("No.*matched.*'a/b'", ui.err_log()));
+    ATF_REQUIRE(!utils::grep_vector("No.*matched.*'baz:tc'", ui.err_log()));
+    ATF_REQUIRE( utils::grep_vector("No.*matched.*'hey/d:yes'", ui.err_log()));
 }
 
 
@@ -482,16 +458,12 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, load_kyuafile__explicit);
     ATF_ADD_TEST_CASE(tcs, load_kyuafile__fail);
 
-    ATF_ADD_TEST_CASE(tcs, test_filters__ctor__ok);
-    ATF_ADD_TEST_CASE(tcs, test_filters__ctor__fail);
-    ATF_ADD_TEST_CASE(tcs, test_filters__parse_user_filter__ok);
-    ATF_ADD_TEST_CASE(tcs, test_filters__parse_user_filter__empty);
-    ATF_ADD_TEST_CASE(tcs, test_filters__parse_user_filter__absolute);
-    ATF_ADD_TEST_CASE(tcs, test_filters__parse_user_filter__bad_program_name);
-    ATF_ADD_TEST_CASE(tcs, test_filters__parse_user_filter__bad_test_case);
-    ATF_ADD_TEST_CASE(tcs, test_filters__parse_user_filter__bad_path);
-    ATF_ADD_TEST_CASE(tcs, test_filters__match_test_case__no_filters);
-    ATF_ADD_TEST_CASE(tcs, test_filters__match_test_case__some_filters);
-    ATF_ADD_TEST_CASE(tcs, test_filters__match_test_program__no_filters);
-    ATF_ADD_TEST_CASE(tcs, test_filters__match_test_program__some_filters);
+    ATF_ADD_TEST_CASE(tcs, filters_state__ctor__none);
+    ATF_ADD_TEST_CASE(tcs, filters_state__ctor__ok);
+    ATF_ADD_TEST_CASE(tcs, filters_state__ctor__duplicate);
+    ATF_ADD_TEST_CASE(tcs, filters_state__ctor__nondisjoint);
+    ATF_ADD_TEST_CASE(tcs, filters_state__match_test_program);
+    ATF_ADD_TEST_CASE(tcs, filters_state__match_test_case);
+    ATF_ADD_TEST_CASE(tcs, filters_state__report_unused_filters__none);
+    ATF_ADD_TEST_CASE(tcs, filters_state__report_unused_filters__some);
 }
