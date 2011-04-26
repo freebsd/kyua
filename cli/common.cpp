@@ -246,6 +246,15 @@ cli::filters_state::filters_state(const cmdline::args_vector& args)
 }
 
 
+/// Destructor.
+///
+/// This is needed to ensures that the pimpl object gets deleted by giving
+/// visibility of the impl type to the smart poiner.
+cli::filters_state::~filters_state(void)
+{
+}
+
+
 /// Checks whether these filters match the given test program.
 ///
 /// \param test_program The test program to match against.

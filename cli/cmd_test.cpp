@@ -152,7 +152,8 @@ cmd_test::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
                 (good_count + bad_count) % bad_count);
 
         exit_code = (bad_count == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
-    }
+    } else
+        exit_code = EXIT_SUCCESS;
 
     return filters.report_unused_filters(ui) ? EXIT_FAILURE : exit_code;
 }

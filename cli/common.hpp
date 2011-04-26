@@ -74,6 +74,7 @@ class filters_state : utils::noncopyable {
 
 public:
     filters_state(const utils::cmdline::args_vector&);
+    ~filters_state(void);
 
     bool match_test_program(const utils::fs::path&) const;
     bool match_test_case(const engine::test_case_id&) const;
