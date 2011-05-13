@@ -173,7 +173,8 @@ isolate_process(const fs::path& cwd)
     utils::unsetenv("LC_MONETARY");
     utils::unsetenv("LC_NUMERIC");
     utils::unsetenv("LC_TIME");
-    utils::unsetenv("TZ");
+
+    utils::setenv("TZ", "UTC");
 
     if (::chdir(cwd.c_str()) == -1)
         throw std::runtime_error(F("Failed to enter work directory %s") % cwd);

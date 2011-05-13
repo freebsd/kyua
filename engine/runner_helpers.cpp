@@ -40,11 +40,13 @@ extern "C" {
 
 #include <atf-c++.hpp>
 
+#include "utils/datetime.hpp"
 #include "utils/env.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
 
+namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 
 
@@ -230,7 +232,7 @@ ATF_TEST_CASE_BODY(validate_env)
     ATF_REQUIRE(!utils::getenv("LC_MONETARY"));
     ATF_REQUIRE(!utils::getenv("LC_NUMERIC"));
     ATF_REQUIRE(!utils::getenv("LC_TIME"));
-    ATF_REQUIRE(!utils::getenv("TZ"));
+    ATF_REQUIRE(utils::getenv("TZ").get() == "UTC");
 }
 
 
@@ -254,6 +256,15 @@ ATF_TEST_CASE_BODY(validate_signal)
     iss >> signo;
     std::cout << "Delivering signal " << signo << "\n";
     ::kill(::getpid(), signo);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(validate_timezone);
+ATF_TEST_CASE_BODY(validate_timezone)
+{
+    const datetime::timestamp fake = datetime::timestamp::from_values(
+        2011, 5, 13, 12, 20, 30);
+    ATF_REQUIRE_EQ("2011-05-13 12:20:30", fake.strftime("%Y-%m-%d %H:%M:%S"));
 }
 
 
@@ -281,5 +292,6 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, validate_env);
     ATF_ADD_TEST_CASE(tcs, validate_pgrp);
     ATF_ADD_TEST_CASE(tcs, validate_signal);
+    ATF_ADD_TEST_CASE(tcs, validate_timezone);
     ATF_ADD_TEST_CASE(tcs, validate_umask);
 }

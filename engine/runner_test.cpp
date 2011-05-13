@@ -330,7 +330,7 @@ ATF_TEST_CASE_BODY(run_test_case__isolation_env)
     utils::setenv("LC_MONETARY", "C");
     utils::setenv("LC_NUMERIC", "C");
     utils::setenv("LC_TIME", "C");
-    utils::setenv("TZ", "C");
+    utils::setenv("TZ", "EST+5");
     results::result_ptr result = runner::run_test_case(
         fs::path(get_config_var("srcdir")),
         make_test_case(fs::path("runner_helpers"), "validate_env"),
@@ -357,6 +357,18 @@ ATF_TEST_CASE_BODY(run_test_case__isolation_signals)
 {
     one_signal_test(this, SIGHUP);
     one_signal_test(this, SIGUSR2);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__isolation_timezone);
+ATF_TEST_CASE_BODY(run_test_case__isolation_timezone)
+{
+    utils::setenv("TZ", "EST+5");
+    results::result_ptr result = runner::run_test_case(
+        fs::path(get_config_var("srcdir")),
+        make_test_case(fs::path("runner_helpers"), "validate_timezone"),
+        mock_config, "test-suite");
+    compare_results(results::passed(), result.get());
 }
 
 
@@ -656,6 +668,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, run_test_case__isolation_env);
     ATF_ADD_TEST_CASE(tcs, run_test_case__isolation_pgrp);
     ATF_ADD_TEST_CASE(tcs, run_test_case__isolation_signals);
+    ATF_ADD_TEST_CASE(tcs, run_test_case__isolation_timezone);
     ATF_ADD_TEST_CASE(tcs, run_test_case__isolation_umask);
     ATF_ADD_TEST_CASE(tcs, run_test_case__isolation_workdir);
     ATF_ADD_TEST_CASE(tcs, run_test_case__allowed_architectures);
