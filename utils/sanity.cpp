@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,13 +26,96 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#if defined(HAVE_CONFIG_H)
+#include "config.h"
+#endif
+
+extern "C" {
+#include <signal.h>
+#include <unistd.h>
+}
+
+#include <cerrno>
 #include <cstdlib>
 #include <iostream>
 
+#include "utils/format/macros.hpp"
+#include "utils/logging/macros.hpp"
 #include "utils/sanity.hpp"
 
 
 namespace {
+
+
+/// List of fatal signals to be intercepted by the sanity code.
+///
+/// The tests hardcode this list; update them whenever the list gets updated.
+static int fatal_signals[] = { SIGABRT, SIGBUS, SIGSEGV, 0 };
+
+
+/// The path to the log file to report on crashes.  Be aware that this is empty
+/// until install_crash_handlers() is called.
+static std::string logfile;
+
+
+/// Prints a message to stderr.
+///
+/// Note that this runs from a signal handler.  Calling write() is OK.
+///
+/// \param message The message to print.
+static void
+err_write(const std::string& message)
+{
+    ::write(STDERR_FILENO, message.c_str(), message.length());
+}
+
+
+/// The crash handler for fatal signals.
+///
+/// The sole purpose of this is to print some informational data before
+/// reraising the original signal.
+///
+/// \param signo The received signal.
+static void
+crash_handler(const int signo)
+{
+    PRE(!logfile.empty());
+
+    err_write(F("*** Fatal signal %d received\n") % signo);
+    err_write(F("*** Log file is %s\n") % logfile);
+    err_write(F("*** Please report this problem to %s detailing what you were "
+                "doing before the crash happened; if possible, include the log "
+                "file mentioned above\n") % PACKAGE_BUGREPORT);
+
+    /// The handler is installed with SA_RESETHAND, so this is safe to do.  We
+    /// really want to call the default handler to generate any possible core
+    /// dumps.
+    ::kill(::getpid(), signo);
+}
+
+
+/// Installs a handler for a fatal signal representing a crash.
+///
+/// When the specified signal is captured, the crash_handler() will be called to
+/// print some informational details to the user and, later, the signal will be
+/// redelivered using the default handler to obtain a core dump.
+///
+/// \param signo The fatal signal for which to install a handler.
+static void
+install_one_crash_handler(const int signo)
+{
+    struct ::sigaction sa;
+    sa.sa_handler = crash_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESETHAND;
+
+    if (::sigaction(signo, &sa, NULL) == -1) {
+        const int original_errno = errno;
+        LW(F("Could not install crash handler for signal %d: %s") %
+           signo % ::strerror(original_errno));
+    } else
+        LD(F("Installed crash handler for signal %d") % signo);
+}
 
 
 /// Returns a textual representation of an assertion type.
@@ -78,4 +161,26 @@ utils::sanity_failure(const utils::assert_type type, const char* file,
     else
         std::cerr << "\n";
     std::abort();
+}
+
+
+/// Installs persistent handlers for crash signals.
+///
+/// Should be called at the very beginning of the execution of the program to
+/// ensure that a signal handler for fatal crash signals is installed.
+///
+/// \pre The function has not been called before.
+///
+/// \param logfile The path to the log file to report during a crash.
+void
+utils::install_crash_handlers(const std::string& logfile_)
+{
+    static bool installed = false;
+    PRE(!installed);
+    logfile = logfile_;
+
+    for (const int* iter = &fatal_signals[0]; *iter != 0; iter++)
+        install_one_crash_handler(*iter);
+
+    installed = true;
 }

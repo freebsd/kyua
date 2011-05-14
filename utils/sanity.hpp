@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -61,6 +61,9 @@ enum assert_type {
 
 void sanity_failure(const assert_type, const char*, const size_t,
                     const std::string&) UTILS_NORETURN;
+
+
+void install_crash_handlers(const std::string&);
 
 
 }  // namespace utils

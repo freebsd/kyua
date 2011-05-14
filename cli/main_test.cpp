@@ -26,6 +26,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+extern "C" {
+#include <signal.h>
+}
+
 #include <cstdlib>
 
 #include <atf-c++.hpp>
@@ -42,14 +46,35 @@
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
+#include "utils/process/children.ipp"
+#include "utils/process/status.hpp"
 #include "utils/test_utils.hpp"
 
 namespace cmdline = utils::cmdline;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
+namespace process = utils::process;
 
 
 namespace {
+
+
+class cmd_mock_crash : public cmdline::base_command {
+    bool _unhandled;
+
+public:
+    cmd_mock_crash(void) :
+        cmdline::base_command("mock_error", "", 0, 0,
+                              "Mock command that crashes")
+    {
+    }
+
+    int
+    run(utils::cmdline::ui* ui, const utils::cmdline::parsed_cmdline& cmdline)
+    {
+        std::abort();
+    }
+};
 
 
 class cmd_mock_error : public cmdline::base_command {
@@ -357,6 +382,32 @@ ATF_TEST_CASE_BODY(main__subcommand__unhandled_exception)
 }
 
 
+static void
+do_subcommand_crash(void)
+{
+    cmdline::init("progname");
+
+    const int argc = 2;
+    const char* const argv[] = {"progname", "mock_error", NULL};
+
+    cmdline::ui_mock ui;
+    cli::main(&ui, argc, argv,
+              cmdline::command_ptr(new cmd_mock_crash()));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(main__subcommand__crash);
+ATF_TEST_CASE_BODY(main__subcommand__crash)
+{
+    const process::status status = process::child_with_files::fork(
+        do_subcommand_crash, fs::path("stdout.txt"),
+        fs::path("stderr.txt"))->wait();
+    ATF_REQUIRE(status.signaled());
+    ATF_REQUIRE_EQ(SIGABRT, status.termsig());
+    ATF_REQUIRE(utils::grep_file("Fatal signal", fs::path("stderr.txt")));
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, detail__default_log_name__home);
@@ -375,4 +426,5 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, main__subcommand__invalid_args);
     ATF_ADD_TEST_CASE(tcs, main__subcommand__runtime_error);
     ATF_ADD_TEST_CASE(tcs, main__subcommand__unhandled_exception);
+    ATF_ADD_TEST_CASE(tcs, main__subcommand__crash);
 }

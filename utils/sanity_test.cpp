@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -28,6 +28,7 @@
 
 extern "C" {
 #include <signal.h>
+#include <unistd.h>
 }
 
 #include <cstdlib>
@@ -248,6 +249,51 @@ ATF_TEST_CASE_BODY(unreachable__custom_message)
 }
 
 
+template< int Signo >
+static void
+do_crash_handler_test(void)
+{
+    utils::install_crash_handlers("test-log.txt");
+    ::kill(::getpid(), Signo);
+    std::cout << "After signal\n";
+    std::exit(EXIT_FAILURE);
+}
+
+
+template< int Signo >
+static void
+crash_handler_test(void)
+{
+    const process::status status = run_test(do_crash_handler_test< Signo >);
+    ATF_REQUIRE(status.signaled());
+    ATF_REQUIRE_EQ(Signo, status.termsig());
+    ATF_REQUIRE(utils::grep_file(F("Fatal signal %d") % Signo, Stderr_File));
+    ATF_REQUIRE(utils::grep_file("Log file is test-log.txt", Stderr_File));
+    ATF_REQUIRE(!utils::grep_file("After signal", Stdout_File));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(install_crash_handlers__sigabrt);
+ATF_TEST_CASE_BODY(install_crash_handlers__sigabrt)
+{
+    crash_handler_test< SIGABRT >();
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(install_crash_handlers__sigbus);
+ATF_TEST_CASE_BODY(install_crash_handlers__sigbus)
+{
+    crash_handler_test< SIGBUS >();
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(install_crash_handlers__sigsegv);
+ATF_TEST_CASE_BODY(install_crash_handlers__sigsegv)
+{
+    crash_handler_test< SIGSEGV >();
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, inv__holds);
@@ -261,4 +307,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, post__triggers_custom_message);
     ATF_ADD_TEST_CASE(tcs, unreachable__default_message);
     ATF_ADD_TEST_CASE(tcs, unreachable__custom_message);
+
+    ATF_ADD_TEST_CASE(tcs, install_crash_handlers__sigabrt);
+    ATF_ADD_TEST_CASE(tcs, install_crash_handlers__sigbus);
+    ATF_ADD_TEST_CASE(tcs, install_crash_handlers__sigsegv);
 }

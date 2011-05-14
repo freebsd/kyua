@@ -145,6 +145,7 @@ safe_main(cmdline::ui* ui, int argc, const char* const argv[],
         "logfile"));
     fs::mkdir_p(logfile.branch_path(), 0755);
     LD(F("Log file is %s") % logfile);
+    utils::install_crash_handlers(logfile.str());
     try {
         logging::set_persistency(cmdline.get_option< cmdline::string_option >(
             "loglevel"), logfile);
