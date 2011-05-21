@@ -32,6 +32,11 @@ tests_integration_helpers_PROGRAMS = integration/helpers/bad_test_program
 integration_helpers_bad_test_program_SOURCES = \
     integration/helpers/bad_test_program.cpp
 
+tests_integration_helpers_PROGRAMS += integration/helpers/config
+integration_helpers_config_SOURCES = integration/helpers/config.cpp
+integration_helpers_config_CXXFLAGS = $(ATF_CXX_CFLAGS)
+integration_helpers_config_LDADD = $(ATF_CXX_LIBS)
+
 tests_integration_helpers_PROGRAMS += integration/helpers/expect_all_pass
 integration_helpers_expect_all_pass_SOURCES = \
     integration/helpers/expect_all_pass.cpp
