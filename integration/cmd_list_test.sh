@@ -99,8 +99,7 @@ EOF
     cat >expout <<EOF
 first:skip
 EOF
-    atf_check -s exit:0 -o file:expout -e empty kyua list \
-        first:skip
+    atf_check -s exit:0 -o file:expout -e empty kyua list first:skip
 }
 
 
@@ -280,6 +279,7 @@ EOF
             "performance"
     fi
 }
+
 
 utils_test_case verbose_flag
 verbose_flag_body() {
