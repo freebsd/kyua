@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,57 +26,55 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file cli/cmd_list.hpp
-/// Provides the cmd_list class.
+#include <cstdlib>
 
-#if !defined(CLI_CMD_LIST_HPP)
-#define CLI_CMD_LIST_HPP
-
-#include <string>
-
-#include "utils/cmdline/base_command.hpp"
-
-namespace engine {
-struct test_case;
-namespace user_files {
-struct test_program;
-}  // namespace user_files
-}  // namespace engine
-
-namespace utils {
-namespace fs {
-class path;
-}  // namespace fs
-}  // namespace utils
-
-namespace cli {
+#include <atf-c++.hpp>
 
 
-class filters_state;
+ATF_TEST_CASE(crash_list);
+ATF_TEST_CASE_HEAD(crash_list)
+{
+    std::abort();
+}
+ATF_TEST_CASE_BODY(crash_list)
+{
+    std::abort();
+}
 
 
-namespace detail {
-
-void list_test_case(utils::cmdline::ui*, const bool, const engine::test_case&,
-                    const std::string&);
-void list_test_program(utils::cmdline::ui*, const bool,
-                       const utils::fs::path&,
-                       const engine::user_files::test_program&,
-                       cli::filters_state&);
-
-}  // namespace detail
+ATF_TEST_CASE_WITHOUT_HEAD(no_properties);
+ATF_TEST_CASE_BODY(no_properties)
+{
+    std::abort();
+}
 
 
-/// Implementation of the "list" subcommand.
-class cmd_list : public utils::cmdline::base_command {
-public:
-    cmd_list(void);
+ATF_TEST_CASE(some_properties);
+ATF_TEST_CASE_HEAD(some_properties)
+{
+    set_md_var("descr", "This is a description");
+    set_md_var("require.progs", "non-existent /bin/ls");
+}
+ATF_TEST_CASE_BODY(some_properties)
+{
+    std::abort();
+}
 
-    int run(utils::cmdline::ui*, const utils::cmdline::parsed_cmdline&);
-};
 
+ATF_INIT_TEST_CASES(tcs)
+{
+    std::string enabled;
 
-}  // namespace cli
+    const char* tests = std::getenv("TESTS");
+    if (tests == NULL)
+        enabled = "crash_list no_properties some_properties";
+    else
+        enabled = tests;
 
-
-#endif  // !defined(CLI_CMD_LIST_HPP)
+    if (enabled.find("crash_list") != std::string::npos)
+        ATF_ADD_TEST_CASE(tcs, crash_list);
+    if (enabled.find("no_properties") != std::string::npos)
+        ATF_ADD_TEST_CASE(tcs, no_properties);
+    if (enabled.find("some_properties") != std::string::npos)
+        ATF_ADD_TEST_CASE(tcs, some_properties);
+}

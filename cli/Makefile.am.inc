@@ -75,6 +75,11 @@ cli_cmd_list_test_SOURCES = cli/cmd_list_test.cpp
 cli_cmd_list_test_CXXFLAGS = $(CLI_TESTS_CXXFLAGS)
 cli_cmd_list_test_LDADD = $(CLI_TESTS_LDADD)
 
+tests_cli_PROGRAMS += cli/cmd_list_helpers
+cli_cmd_list_helpers_SOURCES = cli/cmd_list_helpers.cpp
+cli_cmd_list_helpers_CXXFLAGS = $(ATF_CXX_CFLAGS)
+cli_cmd_list_helpers_LDADD = $(ATF_CXX_LIBS)
+
 tests_cli_PROGRAMS += cli/cmd_test_test
 cli_cmd_test_test_SOURCES = cli/cmd_test_test.cpp
 cli_cmd_test_test_CXXFLAGS = $(CLI_TESTS_CXXFLAGS)

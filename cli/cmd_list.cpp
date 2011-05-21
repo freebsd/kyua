@@ -44,7 +44,61 @@
 #include "utils/sanity.hpp"
 
 namespace cmdline = utils::cmdline;
+namespace fs = utils::fs;
 namespace user_files = engine::user_files;
+
+
+/// Lists a single test case.
+///
+/// \param ui [out] Object to interact with the I/O of the program.
+/// \param verbose Whether to be verbose or not.
+/// \param test_case The test case to print.
+/// \param test_suite_name The name of the test suite containing the test case.
+void
+cli::detail::list_test_case(cmdline::ui* ui, const bool verbose,
+                            const engine::test_case& test_case,
+                            const std::string& test_suite_name)
+{
+    if (!verbose) {
+        ui->out(test_case.identifier.str());
+    } else {
+        ui->out(F("%s (%s)") % test_case.identifier.str() % test_suite_name);
+
+        const engine::properties_map props = test_case.all_properties();
+        for (engine::properties_map::const_iterator iter = props.begin();
+             iter != props.end(); iter++)
+            ui->out(F("    %s = %s") % (*iter).first % (*iter).second);
+    }
+}
+
+
+/// Lists a single test program.
+///
+/// \param ui [out] Object to interact with the I/O of the program.
+/// \param verbose Whether to be verbose or not.
+/// \param root The top directory of the test suite.
+/// \param test_program The test program to print.
+/// \param filters [in,out] The filters used to select which test cases to
+///     print.  These filters are updated on output to mark which of them
+///     actually matched a test case.
+///
+/// \throw engine::error If there is any problem gathering the test case list
+///     from the test program.
+void
+cli::detail::list_test_program(cmdline::ui* ui, const bool verbose,
+                               const fs::path& root,
+                               const user_files::test_program& test_program,
+                               cli::filters_state& filters)
+{
+    const engine::test_cases_vector test_cases = engine::load_test_cases(
+        root, test_program.binary_path);
+
+    for (engine::test_cases_vector::const_iterator iter = test_cases.begin();
+         iter != test_cases.end(); iter++) {
+        if (filters.match_test_case((*iter).identifier))
+            list_test_case(ui, verbose, *iter, test_program.test_suite_name);
+    }
+}
 
 
 /// Default constructor for cmd_list.
@@ -66,36 +120,16 @@ cli::cmd_list::cmd_list(void) : cmdline::base_command(
 int
 cli::cmd_list::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
 {
-    const cli::filters_state filters(cmdline.arguments());
+    cli::filters_state filters(cmdline.arguments());
     const user_files::kyuafile kyuafile = load_kyuafile(cmdline);
 
-    for (user_files::test_programs_vector::const_iterator p =
-         kyuafile.test_programs().begin(); p != kyuafile.test_programs().end();
-         p++) {
-        if (!filters.match_test_program((*p).binary_path))
-            continue;
-
-        const engine::test_cases_vector tcs = engine::load_test_cases(
-            kyuafile.root(), (*p).binary_path);
-
-        for (engine::test_cases_vector::const_iterator iter = tcs.begin();
-             iter != tcs.end(); iter++) {
-            const engine::test_case& tc = *iter;
-            if (!filters.match_test_case(tc.identifier))
-                continue;
-
-            if (!cmdline.has_option("verbose")) {
-                ui->out(tc.identifier.str());
-            } else {
-                ui->out(F("%s (%s)") % tc.identifier.str() %
-                        (*p).test_suite_name);
-
-                const engine::properties_map props = tc.all_properties();
-                for (engine::properties_map::const_iterator iter2 = props.begin();
-                     iter2 != props.end(); iter2++)
-                    ui->out(F("    %s = %s") % (*iter2).first % (*iter2).second);
-            }
-        }
+    const user_files::test_programs_vector& test_programs =
+        kyuafile.test_programs();
+    for (user_files::test_programs_vector::const_iterator
+         iter = test_programs.begin(); iter != test_programs.end(); iter++) {
+        if (filters.match_test_program((*iter).binary_path))
+            detail::list_test_program(ui, cmdline.has_option("verbose"),
+                                      kyuafile.root(), *iter, filters);
     }
 
     return filters.report_unused_filters(ui) ? EXIT_FAILURE : EXIT_SUCCESS;
