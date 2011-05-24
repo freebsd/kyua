@@ -55,6 +55,7 @@ namespace cmdline = utils::cmdline;
 
 using cmdline::base_option;
 using cmdline::bool_option;
+using cmdline::int_option;
 using cmdline::parse;
 using cmdline::parsed_cmdline;
 using cmdline::string_option;
@@ -333,6 +334,49 @@ ATF_TEST_CASE_BODY(some_options__all_known)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(some_options__multi);
+ATF_TEST_CASE_BODY(some_options__multi)
+{
+    const int argc = 9;
+    const char* const argv[] = {
+        "progname",
+        "-a1",
+        "-bvalue1",
+        "-a2",
+        "--a_long=3",
+        "-bvalue2",
+        "--b_long=value3",
+        "arg1", "arg2", NULL,
+    };
+    const int_option a('a', "a_long", "Description", "arg");
+    const string_option b('b', "b_long", "Description", "arg");
+    std::vector< const base_option* > options;
+    options.push_back(&a);
+    options.push_back(&b);
+    const parsed_cmdline cmdline = parse(argc, argv, options);
+
+    {
+        ATF_REQUIRE_EQ(3, cmdline.get_option< int_option >("a_long"));
+        const std::vector< int > multi =
+            cmdline.get_multi_option< int_option >("a_long");
+        ATF_REQUIRE_EQ(3, multi.size());
+        ATF_REQUIRE_EQ(1, multi[0]);
+        ATF_REQUIRE_EQ(2, multi[1]);
+        ATF_REQUIRE_EQ(3, multi[2]);
+    }
+
+    {
+        ATF_REQUIRE_EQ("value3", cmdline.get_option< string_option >("b_long"));
+        const std::vector< std::string > multi =
+            cmdline.get_multi_option< string_option >("b_long");
+        ATF_REQUIRE_EQ(3, multi.size());
+        ATF_REQUIRE_EQ("value1", multi[0]);
+        ATF_REQUIRE_EQ("value2", multi[1]);
+        ATF_REQUIRE_EQ("value3", multi[2]);
+    }
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(subcommands);
 ATF_TEST_CASE_BODY(subcommands)
 {
@@ -602,6 +646,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, some_args__no_options);
     ATF_ADD_TEST_CASE(tcs, some_args__some_options);
     ATF_ADD_TEST_CASE(tcs, some_options__all_known);
+    ATF_ADD_TEST_CASE(tcs, some_options__multi);
     ATF_ADD_TEST_CASE(tcs, subcommands);
     ATF_ADD_TEST_CASE(tcs, missing_option_argument_error__short);
     ATF_ADD_TEST_CASE(tcs, missing_option_argument_error__shortblock);

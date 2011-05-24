@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,9 @@
 
 /// Gets the value of an option.
 ///
+/// If the option has been specified multiple times on the command line, this
+/// only returns the last value.  This is the traditional behavior.
+///
 /// The option must support arguments.  Otherwise, a call to this function will
 /// not compile because the option type will lack the definition of some fields
 /// and/or methods.
@@ -46,7 +49,34 @@
 template< typename Option > typename Option::option_type
 utils::cmdline::parsed_cmdline::get_option(const std::string& name) const
 {
-    return Option::convert(get_option_str(name));
+    const std::vector< std::string >& raw_values = get_option_raw(name);
+    return Option::convert(raw_values[raw_values.size() - 1]);
+}
+
+
+/// Gets the values of an option that supports repetition.
+///
+/// The option must support arguments.  Otherwise, a call to this function will
+/// not compile because the option type will lack the definition of some fields
+/// and/or methods.
+///
+/// \param name The option to query.
+///
+/// \return The values of the option converted to the appropriate type.
+///
+/// \pre has_option(name) must be true.
+template< typename Option > std::vector< typename Option::option_type >
+utils::cmdline::parsed_cmdline::get_multi_option(const std::string& name) const
+{
+    std::vector< typename Option::option_type > values;
+
+    const std::vector< std::string >& raw_values = get_option_raw(name);
+    for (std::vector< std::string >::const_iterator iter = raw_values.begin();
+         iter != raw_values.end(); iter++) {
+        values.push_back(Option::convert(*iter));
+    }
+
+    return values;
 }
 
 
