@@ -438,6 +438,77 @@ cmdline::path_option::convert(const std::string& raw_value)
 }
 
 
+/// Constructs a property option with both a short and a long name.
+///
+/// \param short_name_ The short name for the option.
+/// \param long_name_ The long name for the option.
+/// \param description_ A user-friendly description for the option.
+/// \param arg_name_ The name of the mandatory argument, for documentation
+///     purposes.  Must include the '=' delimiter.
+cmdline::property_option::property_option(const char short_name_,
+                                          const char* long_name_,
+                                          const char* description_,
+                                          const char* arg_name_) :
+    base_option(short_name_, long_name_, description_, arg_name_)
+{
+    PRE(arg_name().find('=') != std::string::npos);
+}
+
+
+/// Constructs a property option with a long name only.
+///
+/// \param long_name_ The long name for the option.
+/// \param description_ A user-friendly description for the option.
+/// \param arg_name_ The name of the mandatory argument, for documentation
+///     purposes.  Must include the '=' delimiter.
+cmdline::property_option::property_option(const char* long_name_,
+                                          const char* description_,
+                                          const char* arg_name_) :
+    base_option(long_name_, description_, arg_name_)
+{
+    PRE(arg_name().find('=') != std::string::npos);
+}
+
+
+/// Validates the argument to a property option.
+///
+/// \param raw_value The argument provided by the user.
+void
+cmdline::property_option::validate(const std::string& raw_value) const
+{
+    const std::string::size_type pos = raw_value.find('=');
+    if (pos == std::string::npos)
+        throw cmdline::option_argument_value_error(
+            F("--%s") % long_name(), raw_value,
+            F("Argument does not have the form '%s'") % arg_name());
+
+    const std::string key = raw_value.substr(0, pos);
+    if (key.empty())
+        throw cmdline::option_argument_value_error(
+            F("--%s") % long_name(), raw_value, "Empty property name");
+
+    const std::string value = raw_value.substr(pos + 1);
+    if (value.empty())
+        throw cmdline::option_argument_value_error(
+            F("--%s") % long_name(), raw_value, "Empty value");
+}
+
+
+/// Returns the property option in a key/value pair form.
+///
+/// \param raw_value The argument provided by the user.
+///
+/// \return raw_value The key/value pair representation of the property.
+///
+/// \pre validate(raw_value) must be true.
+cmdline::property_option::option_type
+cmdline::property_option::convert(const std::string& raw_value)
+{
+    const std::string::size_type pos = raw_value.find('=');
+    return std::make_pair(raw_value.substr(0, pos), raw_value.substr(pos + 1));
+}
+
+
 /// Constructs a string option with both a short and a long name.
 ///
 /// \param short_name_ The short name for the option.

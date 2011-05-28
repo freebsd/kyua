@@ -33,6 +33,7 @@
 #define UTILS_CMDLINE_OPTIONS_HPP
 
 #include <string>
+#include <utility>
 
 #include "utils/fs/path.hpp"
 
@@ -155,6 +156,29 @@ public:
 
     virtual void validate(const std::string&) const;
     static utils::fs::path convert(const std::string&);
+};
+
+
+/// Definition of a property option.
+///
+/// A property option is an option whose required arguments are of the form
+/// 'name=value'.  Both components of the property are treated as free-form
+/// non-empty strings; any other validation must happen on the caller side.
+///
+/// \todo Would be nice if the delimiter was parametrizable.  With the current
+///     parser interface (convert() being a static method), the only way to do
+///     this would be to templatize this class.
+class property_option : public base_option {
+public:
+    property_option(const char, const char*, const char*, const char*);
+    property_option(const char*, const char*, const char*);
+    virtual ~property_option(void) {}
+
+    /// The data type of this option.
+    typedef std::pair< std::string, std::string > option_type;
+
+    virtual void validate(const std::string& str) const;
+    static option_type convert(const std::string& str);
 };
 
 

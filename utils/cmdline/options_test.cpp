@@ -277,6 +277,54 @@ ATF_TEST_CASE_BODY(path_option__type)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(property_option__short_name);
+ATF_TEST_CASE_BODY(property_option__short_name)
+{
+    const cmdline::property_option o('p', "property", "The property", "a=b");
+    ATF_REQUIRE(o.has_short_name());
+    ATF_REQUIRE_EQ('p', o.short_name());
+    ATF_REQUIRE_EQ("property", o.long_name());
+    ATF_REQUIRE_EQ("The property", o.description());
+    ATF_REQUIRE(o.needs_arg());
+    ATF_REQUIRE_EQ("a=b", o.arg_name());
+    ATF_REQUIRE(!o.has_default_value());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(property_option__long_name);
+ATF_TEST_CASE_BODY(property_option__long_name)
+{
+    const cmdline::property_option o("property", "The property", "a=b");
+    ATF_REQUIRE(!o.has_short_name());
+    ATF_REQUIRE_EQ("property", o.long_name());
+    ATF_REQUIRE_EQ("The property", o.description());
+    ATF_REQUIRE(o.needs_arg());
+    ATF_REQUIRE_EQ("a=b", o.arg_name());
+    ATF_REQUIRE(!o.has_default_value());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(property_option__type);
+ATF_TEST_CASE_BODY(property_option__type)
+{
+    typedef std::pair< std::string, std::string > string_pair;
+    const cmdline::property_option o("property", "The property", "a=b");
+
+    o.validate("foo=bar");
+    ATF_REQUIRE(string_pair("foo", "bar") ==
+                cmdline::property_option::convert("foo=bar"));
+
+    o.validate(" foo  = bar  baz");
+    ATF_REQUIRE(string_pair(" foo  ", " bar  baz") ==
+                cmdline::property_option::convert(" foo  = bar  baz"));
+
+    ATF_REQUIRE_THROW(cmdline::option_argument_value_error, o.validate(""));
+    ATF_REQUIRE_THROW(cmdline::option_argument_value_error, o.validate("="));
+    ATF_REQUIRE_THROW(cmdline::option_argument_value_error, o.validate("a="));
+    ATF_REQUIRE_THROW(cmdline::option_argument_value_error, o.validate("=b"));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(string_option__short_name);
 ATF_TEST_CASE_BODY(string_option__short_name)
 {
@@ -339,6 +387,10 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, path_option__short_name);
     ATF_ADD_TEST_CASE(tcs, path_option__long_name);
     ATF_ADD_TEST_CASE(tcs, path_option__type);
+
+    ATF_ADD_TEST_CASE(tcs, property_option__short_name);
+    ATF_ADD_TEST_CASE(tcs, property_option__long_name);
+    ATF_ADD_TEST_CASE(tcs, property_option__type);
 
     ATF_ADD_TEST_CASE(tcs, string_option__short_name);
     ATF_ADD_TEST_CASE(tcs, string_option__long_name);
