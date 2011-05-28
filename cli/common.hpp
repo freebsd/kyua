@@ -58,6 +58,7 @@ namespace cli {
 
 extern const utils::cmdline::path_option config_option;
 extern const utils::cmdline::path_option kyuafile_option;
+extern const utils::cmdline::property_option variable_option;
 
 
 engine::user_files::config load_config(

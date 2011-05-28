@@ -98,6 +98,51 @@ get_home(void)
 }
 
 
+/// Loads the configuration file for this session, if any.
+///
+/// This is a helper function that does not apply user-specified overrides.  See
+/// the documentation for cli::load_config() for more details.
+///
+/// \param cmdline The parsed command line.
+///
+/// \throw engine::error If the parsing of the configuration file fails.
+///     TODO(jmmv): I'm not sure if this is the raised exception.  And even if
+///     it is, we should make it more accurate.
+user_files::config
+load_config_file(const cmdline::parsed_cmdline& cmdline)
+{
+    // TODO(jmmv): We should really be able to use cmdline.has_option here to
+    // detect whether the option was provided or not instead of checking against
+    // the default value.
+    const fs::path filename = cmdline.get_option< cmdline::path_option >(
+        cli::config_option.long_name());
+    if (filename.str() != cli::config_option.default_value())
+        return user_files::config::load(filename);
+
+    const optional< fs::path > home = get_home();
+    if (home) {
+        const fs::path path = home.get() / user_config_basename;
+        try {
+            if (fs::exists(path))
+                return user_files::config::load(path);
+        } catch (const fs::error& e) {
+            // Fall through.  If we fail to load the user-specific configuration
+            // file because it cannot be openend, we try to load the system-wide
+            // one.
+            LW(F("Failed to load user-specific configuration file '%s': %s") %
+               path % e.what());
+        }
+    }
+
+    const fs::path path = kyua_confdir / system_config_basename;
+    if (fs::exists(path)) {
+        return user_files::config::load(path);
+    } else {
+        return user_files::config::defaults();
+    }
+}
+
+
 }  // anonymous namespace
 
 
@@ -121,12 +166,23 @@ const cmdline::path_option cli::kyuafile_option(
     "file", "Kyuafile");
 
 
+/// Standard definition of the option to specify a configuration variable.
+///
+/// You must use load_kyuafile() to load a configuration file while honoring the
+/// value of this flag.
+const cmdline::property_option cli::variable_option(
+    'v', "variable",
+    "Overrides a particular configuration variable",
+    "name=value");
+
+
 /// Loads the configuration file for this session, if any.
 ///
 /// The algorithm implemented here is as follows:
-/// 1) If ~/.kyuarc exists, load it and return.
-/// 2) If sysconfdir/kyua.conf exists, load it and return.
-/// 3) Otherwise, return the built-in settings.
+/// 1) If ~/.kyuarc exists, load it.
+/// 2) Otherwise, if sysconfdir/kyua.conf exists, load it.
+/// 3) Otherwise, use the built-in settings.
+/// 4) Lastly, apply any user-provided overrides.
 ///
 /// \param cmdline The parsed command line.
 ///
@@ -136,34 +192,15 @@ const cmdline::path_option cli::kyuafile_option(
 user_files::config
 cli::load_config(const cmdline::parsed_cmdline& cmdline)
 {
-    // TODO(jmmv): We should really be able to use cmdline.has_option here to
-    // detect whether the option was provided or not instead of checking against
-    // the default value.
-    const fs::path filename = cmdline.get_option< cmdline::path_option >(
-        config_option.long_name());
-    if (filename.str() != config_option.default_value())
-        return user_files::config::load(filename);
+    const user_files::config config = load_config_file(cmdline);
 
-    const optional< fs::path > home = get_home();
-    if (home) {
-        const fs::path path = home.get() / user_config_basename;
-        try {
-            if (fs::exists(path))
-                return user_files::config::load(path);
-        } catch (const fs::error& e) {
-            // Fall through.  If we fail to load the user-specific configuration
-            // file because it cannot be openend, we try to load the system-wide
-            // one.
-            LW(F("Failed to load user-specific configuration file '%s': %s") %
-               path % e.what());
-        }
+    if (cmdline.has_option(variable_option.long_name())) {
+        return config.apply_overrides(
+            cmdline.get_multi_option< cmdline::property_option >(
+                variable_option.long_name()));
+    } else {
+        return config;
     }
-
-    const fs::path path = kyua_confdir / system_config_basename;
-    if (fs::exists(path))
-        return user_files::config::load(path);
-    else
-        return user_files::config::defaults();
 }
 
 

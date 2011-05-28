@@ -280,6 +280,58 @@ ATF_TEST_CASE_BODY(load_config__system__fail)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(load_config__overrides__no);
+ATF_TEST_CASE_BODY(load_config__overrides__no)
+{
+    cli::set_confdir_for_testing(fs::current_path());
+
+    std::map< std::string, std::vector< std::string > > options;
+    options["config"].push_back(cli::config_option.default_value());
+    options["variable"].push_back("architecture=1");
+    options["variable"].push_back("platform=2");
+    const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
+
+    const user_files::config config = cli::load_config(mock_cmdline);
+    ATF_REQUIRE_EQ("1", config.architecture);
+    ATF_REQUIRE_EQ("2", config.platform);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(load_config__overrides__yes);
+ATF_TEST_CASE_BODY(load_config__overrides__yes)
+{
+    std::ofstream output("config");
+    output << "syntax('config', 1)\n";
+    output << "architecture = 'do not see me'\n";
+    output << "platform = 'see me'\n";
+    output.close();
+
+    std::map< std::string, std::vector< std::string > > options;
+    options["config"].push_back("config");
+    options["variable"].push_back("architecture=overriden");
+    const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
+
+    const user_files::config config = cli::load_config(mock_cmdline);
+    ATF_REQUIRE_EQ("overriden", config.architecture);
+    ATF_REQUIRE_EQ("see me", config.platform);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(load_config__overrides__fail);
+ATF_TEST_CASE_BODY(load_config__overrides__fail)
+{
+    cli::set_confdir_for_testing(fs::current_path());
+
+    std::map< std::string, std::vector< std::string > > options;
+    options["config"].push_back(cli::config_option.default_value());
+    options["variable"].push_back(".a=d");
+    const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
+
+    ATF_REQUIRE_THROW_RE(engine::error, "Empty test suite.*'\\.a=d'",
+                         cli::load_config(mock_cmdline));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(load_kyuafile__default);
 ATF_TEST_CASE_BODY(load_kyuafile__default)
 {
@@ -453,6 +505,9 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, load_config__user__bad_home);
     ATF_ADD_TEST_CASE(tcs, load_config__system__ok);
     ATF_ADD_TEST_CASE(tcs, load_config__system__fail);
+    ATF_ADD_TEST_CASE(tcs, load_config__overrides__no);
+    ATF_ADD_TEST_CASE(tcs, load_config__overrides__yes);
+    ATF_ADD_TEST_CASE(tcs, load_config__overrides__fail);
 
     ATF_ADD_TEST_CASE(tcs, load_kyuafile__default);
     ATF_ADD_TEST_CASE(tcs, load_kyuafile__explicit);

@@ -115,6 +115,7 @@ cmd_test::cmd_test(void) : cmdline::base_command(
 {
     add_option(config_option);
     add_option(kyuafile_option);
+    add_option(variable_option);
 }
 
 
