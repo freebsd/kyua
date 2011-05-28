@@ -402,6 +402,54 @@ ATF_TEST_CASE_BODY(get_user_var__invalid)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(get_user_override__uid_ok);
+ATF_TEST_CASE_BODY(get_user_override__uid_ok)
+{
+    set_mock_users();
+
+    const optional< passwd::user > user = user_files::detail::get_user_override(
+        "myvar", "100");
+    ATF_REQUIRE(user);
+    ATF_REQUIRE_EQ("user1", user.get().name);
+    ATF_REQUIRE_EQ(100, user.get().uid);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(get_user_override__uid_error);
+ATF_TEST_CASE_BODY(get_user_override__uid_error)
+{
+    set_mock_users();
+
+    ATF_REQUIRE_THROW_RE(
+        std::runtime_error, "Cannot find user.*UID 150.*'myvar=150'",
+        user_files::detail::get_user_override("myvar", "150"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(get_user_override__name_ok);
+ATF_TEST_CASE_BODY(get_user_override__name_ok)
+{
+    set_mock_users();
+
+    const optional< passwd::user > user = user_files::detail::get_user_override(
+        "myvar", "user2");
+    ATF_REQUIRE(user);
+    ATF_REQUIRE_EQ("user2", user.get().name);
+    ATF_REQUIRE_EQ(200, user.get().uid);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(get_user_override__name_error);
+ATF_TEST_CASE_BODY(get_user_override__name_error)
+{
+    set_mock_users();
+
+    ATF_REQUIRE_THROW_RE(
+        std::runtime_error, "Cannot find user.*name 'root'.*'myvar=root'",
+        user_files::detail::get_user_override("myvar", "root"));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(config__defaults);
 ATF_TEST_CASE_BODY(config__defaults)
 {
@@ -509,6 +557,137 @@ ATF_TEST_CASE_BODY(config__load__missing_file)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(config__apply_overrides__none);
+ATF_TEST_CASE_BODY(config__apply_overrides__none)
+{
+    user_files::properties_map props;
+    props["key1"] = "value1";
+
+    user_files::config config = user_files::config::defaults();
+    config.test_suites["suite1"] = props;
+
+    const std::vector< user_files::override_pair > overrides;
+    ATF_REQUIRE(config == config.apply_overrides(overrides));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(config__apply_overrides__architecture);
+ATF_TEST_CASE_BODY(config__apply_overrides__architecture)
+{
+    user_files::properties_map props;
+    props["key1"] = "value1";
+
+    user_files::config config = user_files::config::defaults();
+    config.architecture = "foo";
+    config.test_suites["suite1"] = props;
+
+    std::vector< user_files::override_pair > overrides;
+    overrides.push_back(user_files::override_pair("architecture", "bar"));
+
+    const user_files::config new_config = config.apply_overrides(overrides);
+    ATF_REQUIRE(config != new_config);
+    config.architecture = "bar";
+    ATF_REQUIRE(config == new_config);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(config__apply_overrides__platform);
+ATF_TEST_CASE_BODY(config__apply_overrides__platform)
+{
+    user_files::properties_map props;
+    props["key1"] = "value1";
+
+    user_files::config config = user_files::config::defaults();
+    config.platform = "foo";
+    config.test_suites["suite1"] = props;
+
+    std::vector< user_files::override_pair > overrides;
+    overrides.push_back(user_files::override_pair("platform", "bar"));
+
+    const user_files::config new_config = config.apply_overrides(overrides);
+    ATF_REQUIRE(config != new_config);
+    config.platform = "bar";
+    ATF_REQUIRE(config == new_config);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(config__apply_overrides__unprivileged_user__ok);
+ATF_TEST_CASE_BODY(config__apply_overrides__unprivileged_user__ok)
+{
+    user_files::properties_map props;
+    props["key1"] = "value1";
+
+    user_files::config config = user_files::config::defaults();
+    config.test_suites["suite1"] = props;
+
+    std::vector< user_files::override_pair > overrides;
+    overrides.push_back(user_files::override_pair("unprivileged_user",
+                                                  "user1"));
+
+    set_mock_users();
+    const user_files::config new_config = config.apply_overrides(overrides);
+    ATF_REQUIRE(config != new_config);
+    config.unprivileged_user = passwd::user("user1", 100, 150);
+    ATF_REQUIRE(config == new_config);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(config__apply_overrides__unprivileged_user__invalid);
+ATF_TEST_CASE_BODY(config__apply_overrides__unprivileged_user__invalid)
+{
+    const user_files::config config = user_files::config::defaults();
+
+    std::vector< user_files::override_pair > overrides;
+    overrides.push_back(user_files::override_pair("unprivileged_user",
+                                                  "root"));
+
+    set_mock_users();
+    ATF_REQUIRE_THROW_RE(std::runtime_error,
+                         "Cannot find user.*'root'.*'unprivileged_user=root'",
+                         config.apply_overrides(overrides));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(config__apply_overrides__test_suite__ok);
+ATF_TEST_CASE_BODY(config__apply_overrides__test_suite__ok)
+{
+    user_files::properties_map props;
+    props["key1"] = "value1";
+    props["key2"] = "value8";
+
+    user_files::config config = user_files::config::defaults();
+    config.test_suites["suite1"] = props;
+
+    std::vector< user_files::override_pair > overrides;
+    overrides.push_back(user_files::override_pair("suite1.key1", "value2"));
+    overrides.push_back(user_files::override_pair("suite3.key1", "value5"));
+
+    const user_files::config new_config = config.apply_overrides(overrides);
+    ATF_REQUIRE(config != new_config);
+    config.test_suites["suite1"]["key1"] = "value2";
+    config.test_suites["suite3"]["key1"] = "value5";
+    ATF_REQUIRE(config == new_config);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(config__apply_overrides__test_suite__invalid);
+ATF_TEST_CASE_BODY(config__apply_overrides__test_suite__invalid)
+{
+    const user_files::config config = user_files::config::defaults();
+
+    std::vector< user_files::override_pair > overrides;
+    overrides.push_back(user_files::override_pair("", ""));
+
+    overrides[0] = user_files::override_pair(".var", "foo");
+    ATF_REQUIRE_THROW_RE(std::runtime_error, "Empty test suite.*'.var=foo'",
+                         config.apply_overrides(overrides));
+
+    overrides[0] = user_files::override_pair("suite.", "foo");
+    ATF_REQUIRE_THROW_RE(std::runtime_error, "Empty property.*'suite.=foo'",
+                         config.apply_overrides(overrides));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(config__test_suite__defined);
 ATF_TEST_CASE_BODY(config__test_suite__defined)
 {
@@ -540,6 +719,58 @@ ATF_TEST_CASE_BODY(config__test_suite__undefined)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(config__equal_and_different);
+ATF_TEST_CASE_BODY(config__equal_and_different)
+{
+    const user_files::config config = user_files::config::defaults();
+
+    {
+        user_files::config other = user_files::config::defaults();
+        ATF_REQUIRE(  config == other);
+        ATF_REQUIRE(!(config != other));
+        other.architecture = "foo";
+        ATF_REQUIRE(!(config == other));
+        ATF_REQUIRE(  config != other);
+    }
+
+    {
+        user_files::config other = user_files::config::defaults();
+        ATF_REQUIRE(  config == other);
+        ATF_REQUIRE(!(config != other));
+        other.architecture = "foo";
+        ATF_REQUIRE(!(config == other));
+        ATF_REQUIRE(  config != other);
+    }
+
+    {
+        user_files::config other = user_files::config::defaults();
+        ATF_REQUIRE(  config == other);
+        ATF_REQUIRE(!(config != other));
+        other.platform = "foo";
+        ATF_REQUIRE(!(config == other));
+        ATF_REQUIRE(  config != other);
+    }
+
+    {
+        user_files::config other = user_files::config::defaults();
+        ATF_REQUIRE(  config == other);
+        ATF_REQUIRE(!(config != other));
+        other.unprivileged_user = passwd::user("user1", 100, 150);
+        ATF_REQUIRE(!(config == other));
+        ATF_REQUIRE(  config != other);
+    }
+
+    {
+        user_files::config other = user_files::config::defaults();
+        ATF_REQUIRE(  config == other);
+        ATF_REQUIRE(!(config != other));
+        other.test_suites["hello"]["world"] = "foo";
+        ATF_REQUIRE(!(config == other));
+        ATF_REQUIRE(  config != other);
+    }
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, get_properties__none);
@@ -564,6 +795,11 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, get_user_var__name_error);
     ATF_ADD_TEST_CASE(tcs, get_user_var__invalid);
 
+    ATF_ADD_TEST_CASE(tcs, get_user_override__uid_ok);
+    ATF_ADD_TEST_CASE(tcs, get_user_override__uid_error);
+    ATF_ADD_TEST_CASE(tcs, get_user_override__name_ok);
+    ATF_ADD_TEST_CASE(tcs, get_user_override__name_error);
+
     ATF_ADD_TEST_CASE(tcs, config__defaults);
     ATF_ADD_TEST_CASE(tcs, config__load__defaults);
     ATF_ADD_TEST_CASE(tcs, config__load__overrides);
@@ -571,6 +807,14 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, config__load__bad_syntax__format);
     ATF_ADD_TEST_CASE(tcs, config__load__bad_syntax__version);
     ATF_ADD_TEST_CASE(tcs, config__load__missing_file);
+    ATF_ADD_TEST_CASE(tcs, config__apply_overrides__none);
+    ATF_ADD_TEST_CASE(tcs, config__apply_overrides__architecture);
+    ATF_ADD_TEST_CASE(tcs, config__apply_overrides__platform);
+    ATF_ADD_TEST_CASE(tcs, config__apply_overrides__unprivileged_user__ok);
+    ATF_ADD_TEST_CASE(tcs, config__apply_overrides__unprivileged_user__invalid);
+    ATF_ADD_TEST_CASE(tcs, config__apply_overrides__test_suite__ok);
+    ATF_ADD_TEST_CASE(tcs, config__apply_overrides__test_suite__invalid);
     ATF_ADD_TEST_CASE(tcs, config__test_suite__defined);
     ATF_ADD_TEST_CASE(tcs, config__test_suite__undefined);
+    ATF_ADD_TEST_CASE(tcs, config__equal_and_different);
 }

@@ -34,6 +34,8 @@
 
 #include <map>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
@@ -47,6 +49,10 @@ class state;
 
 namespace engine {
 namespace user_files {
+
+
+/// An override for a configuration property in the form of a key/value pair.
+typedef std::pair< std::string, std::string > override_pair;
 
 
 /// Collection of key/value string pairs describing test suite properties.
@@ -66,6 +72,8 @@ std::string get_string_var(utils::lua::state&, const std::string&,
 test_suites_map get_test_suites(utils::lua::state&, const std::string&);
 utils::optional< utils::passwd::user > get_user_var(utils::lua::state&,
                                                     const std::string&);
+utils::optional< utils::passwd::user > get_user_override(const std::string&,
+                                                         const std::string&);
 
 
 }  // namespace detail
@@ -94,7 +102,12 @@ struct config {
     static config defaults(void);
     static config load(const utils::fs::path&);
 
+    config apply_overrides(const std::vector< override_pair >&) const;
+
     const properties_map& test_suite(const std::string&) const;
+
+    bool operator==(const config&) const;
+    bool operator!=(const config&) const;
 };
 
 

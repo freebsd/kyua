@@ -30,12 +30,14 @@
 #   include "config.h"
 #endif
 
+#include <sstream>
 #include <stdexcept>
 
 #include "engine/user_files/common.hpp"
 #include "engine/user_files/config.hpp"
 #include "engine/user_files/exceptions.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/logging/macros.hpp"
 #include "utils/lua/exceptions.hpp"
 #include "utils/lua/operations.hpp"
 #include "utils/lua/wrap.ipp"
@@ -222,9 +224,107 @@ get_user_var(lua::state& state, const std::string& expr)
 }
 
 
+/// Queries an override that represents an existent system user.
+///
+/// \param key The name of the override; used for error reporting purposes.
+/// \param value The name of the user to parse.
+///
+/// \return The user data if the variable is defined, or none if the variable
+/// is nil.
+///
+/// \throw error If the variable has an invalid type or if the specified user
+///     cannot be found on the system.
+optional< passwd::user >
+get_user_override(const std::string& key, const std::string& value)
+{
+    try {
+        return utils::make_optional(passwd::find_user_by_name(value));
+    } catch (const std::runtime_error& e) {
+        std::istringstream iss(value);
+        int uid;
+        iss >> uid;
+        if (!iss.good() && iss.eof()) {
+            try {
+                return utils::make_optional(passwd::find_user_by_uid(uid));
+            } catch (const std::runtime_error& e2) {
+                throw user_files::error(F("Cannot find user with UID %d in "
+                                          "override '%s=%s'") % uid % key %
+                                        value);
+            }
+        } else
+            throw user_files::error(F("Cannot find user with name '%s' in "
+                                      "override '%s=%s'") % value % key %
+                                    value);
+    }
+}
+
+
 }  // namespace detail
 }  // namespace user_files
 }  // namespace engine
+
+
+namespace {
+
+
+/// Applies a text-form override to a test-suite property.
+///
+/// \param config [in,out] The configuration to which the override will be
+///     applied.
+/// \param override The override to apply.
+///
+/// \throw error If the override has an invalid name or value.
+static void
+apply_test_suite_override(user_files::config& config,
+                          const user_files::override_pair& override)
+{
+    const std::string::size_type delim = override.first.find('.');
+    if (delim == std::string::npos)
+        throw user_files::error(F("Unrecognized configuration property "
+                                  "'%s' in override '%s=%s'") %
+                                override.first %
+                                override.first % override.second);
+    const std::string test_suite = override.first.substr(0, delim);
+    if (test_suite.empty())
+        throw user_files::error(F("Empty test suite name in override '%s=%s'")
+                                % override.first % override.second);
+    const std::string property = override.first.substr(delim + 1);
+    if (property.empty())
+        throw user_files::error(F("Empty property name in override '%s=%s'")
+                                % override.first % override.second);
+
+    config.test_suites[test_suite][property] = override.second;
+}
+
+
+/// Applies a text-form override to a configuration object.
+///
+/// \param config [in,out] The configuration to which the override will be
+///     applied.
+/// \param override The override to apply.
+///
+/// \throw error If the override has an invalid name or value.
+static void
+apply_override(user_files::config& config,
+               const user_files::override_pair& override)
+{
+    LI(F("Applying override to configuration: key %s, value %s") %
+        override.first % override.second);
+
+    if (override.first == "architecture") {
+        config.architecture = override.second;
+    } else if (override.first == "platform") {
+        config.platform = override.second;
+    } else if (override.first == "unprivileged_user") {
+        config.unprivileged_user = user_files::detail::get_user_override(
+            override.first, override.second);
+    } else {
+        apply_test_suite_override(config, override);
+    }
+}
+
+
+}  // anonymous namespace
 
 
 /// Constructs a config form initialized data.
@@ -298,6 +398,42 @@ user_files::config::load(const utils::fs::path& file)
 }
 
 
+/// Updates properties in a configuration object based on textual definitions.
+///
+/// This function is used to apply configuration overrides specified by the user
+/// in the command-line to an existing configuration object.  While this is
+/// a UI-specific function, it makes sense to keep it in this module because the
+/// processing of the properties is highly tied to the representation of the
+/// configuration object.
+///
+/// \param overrides The list of overrides to process.  Must be of the form
+///     key=value, where key can be an internal name or a name of the form
+///     test_suite_name.property_name.
+///
+/// \return A new configuration object with the overrides applied.
+///
+/// \throw error If any override is invalid.
+///
+/// \todo Consider the following alternative: we may want a user to specify the
+/// overrides on the command-line as if they were Lua code.  This would prevent
+/// us from having to implement all the override-parsing logic here.  But to
+/// make this effective, we'd need to get rid of the test_suite_var() auxiliary
+/// function in config_1.lua.
+user_files::config
+user_files::config::apply_overrides(
+    const std::vector< override_pair >& overrides) const
+{
+    config new_config(*this);
+
+    for (std::vector< override_pair >::const_iterator iter = overrides.begin();
+         iter != overrides.end(); iter++) {
+        apply_override(new_config, *iter);
+    }
+
+    return new_config;
+}
+
+
 /// Looks up the configuration properties of a particular test suite.
 ///
 /// This is just a convenience method to access the contents of the test_suite
@@ -316,4 +452,31 @@ user_files::config::test_suite(const std::string& name) const
         return empty_properties_map;
     else
         return (*iter).second;
+}
+
+
+/// Checks if two configuration objects are equal.
+///
+/// \param other The object to compare to.
+///
+/// \return True if other and this are equal; false otherwise.
+bool
+user_files::config::operator==(const user_files::config& other) const
+{
+    return (architecture == other.architecture &&
+            platform == other.platform &&
+            unprivileged_user == other.unprivileged_user &&
+            test_suites == other.test_suites);
+}
+
+
+/// Checks if two configuration objects are different.
+///
+/// \param other The object to compare to.
+///
+/// \return True if other and this are different; false otherwise.
+bool
+user_files::config::operator!=(const user_files::config& other) const
+{
+    return !(*this == other);
 }
