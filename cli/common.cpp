@@ -53,13 +53,6 @@ using utils::optional;
 namespace {
 
 
-/// Path to the system-wide configuration files.
-///
-/// This is mutable so that tests can override it.  See set_confdir_for_testing.
-static fs::path kyua_confdir(KYUA_CONFDIR);
-#undef KYUA_CONFDIR
-
-
 /// Basename of the user-specific configuration file.
 static const char* user_config_basename = ".kyuarc";
 
@@ -72,9 +65,14 @@ static const char* system_config_basename = "kyua.conf";
 ///
 /// This is just an auxiliary string required to define the option below, which
 /// requires a pointer to a static C string.
+///
+/// \todo If the user overrides the KYUA_CONFDIR environment variable, we don't
+/// reflect this fact here.  We don't want to query the variable during program
+/// initialization due to the side-effects it may have.  Therefore, fixing this
+/// is tricky as it may require a whole rethink of this module.
 static const std::string config_lookup_names =
     (fs::path("~") / user_config_basename).str() + " or " +
-    (kyua_confdir / system_config_basename).str();
+    (fs::path(KYUA_CONFDIR) / system_config_basename).str();
 
 
 /// Gets the value of the HOME environment variable with path validation.
@@ -134,7 +132,10 @@ load_config_file(const cmdline::parsed_cmdline& cmdline)
         }
     }
 
-    const fs::path path = kyua_confdir / system_config_basename;
+    const fs::path confdir(utils::getenv_with_default(
+        "KYUA_CONFDIR", KYUA_CONFDIR));
+
+    const fs::path path = confdir / system_config_basename;
     if (fs::exists(path)) {
         return user_files::config::load(path);
     } else {
@@ -223,18 +224,6 @@ cli::load_kyuafile(const cmdline::parsed_cmdline& cmdline)
         kyuafile_option.long_name());
 
     return user_files::kyuafile::load(filename);
-}
-
-
-/// Sets the value of the system-wide configuration directory.
-///
-/// Only use this for testing purposes.
-///
-/// \param dir The new value of the configuration directory.
-void
-cli::set_confdir_for_testing(const utils::fs::path& dir)
-{
-    kyua_confdir = dir;
 }
 
 

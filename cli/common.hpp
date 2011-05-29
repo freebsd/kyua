@@ -65,7 +65,6 @@ engine::user_files::config load_config(
     const utils::cmdline::parsed_cmdline&);
 engine::user_files::kyuafile load_kyuafile(
     const utils::cmdline::parsed_cmdline&);
-void set_confdir_for_testing(const utils::fs::path&);
 
 
 /// Represents user-specified test filters and their current match state.

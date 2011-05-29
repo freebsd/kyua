@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,6 +37,7 @@
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/cmdline/ui.hpp"
+#include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/sanity.hpp"
@@ -80,35 +81,13 @@ cat_file(cmdline::ui* ui, const fs::path& file)
 }
 
 
-/// Constructs the path to a distribution document.
-///
-/// \param docdir The directory containing the documents.  If empty, defaults to
-///     the documents directory set at configuration time.
-/// \param docname The base name of the document.
-///
-/// \return The path to the document.
-static fs::path
-path_to_doc(const std::string& docdir, const char* docname)
-{
-    if (docdir.empty())
-        return fs::path(KYUA_DOCDIR) / docname;
-    else
-        return fs::path(docdir) / docname;
-}
-
-
 }  // anonymous namespace
 
 
 /// Default constructor for cmd_about.
-///
-/// \param docdir_ Path to the directory containing the documents.  If empty
-///     defaults to the value determined by configure.  Provided for testing
-///     purposes only.
-cmd_about::cmd_about(const char* docdir_) : cmdline::base_command(
+cmd_about::cmd_about(void) : cmdline::base_command(
     "about", "", 0, 0,
-    "Shows general program information"),
-    _docdir(docdir_)
+    "Shows general program information")
 {
     add_option(cmdline::string_option(
         "show", "What to show", "all|authors|license|version", "all"));
@@ -128,6 +107,9 @@ cmd_about::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
     const std::string show = cmdline.get_option< cmdline::string_option >(
         "show");
 
+    const fs::path docdir(utils::getenv_with_default(
+        "KYUA_DOCDIR", KYUA_DOCDIR));
+
     bool success = true;
 
     if (show == "all") {
@@ -135,17 +117,17 @@ cmd_about::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
         ui->out("");
         ui->out("License terms:");
         ui->out("");
-        success &= cat_file(ui, path_to_doc(_docdir, "COPYING"));
+        success &= cat_file(ui, docdir / "COPYING");
         ui->out("");
         ui->out("Brought to you by:");
         ui->out("");
-        success &= cat_file(ui, path_to_doc(_docdir, "AUTHORS"));
+        success &= cat_file(ui, docdir / "AUTHORS");
         ui->out("");
         ui->out(F("Homepage: %s") % PACKAGE_URL);
     } else if (show == "authors") {
-        success &= cat_file(ui, path_to_doc(_docdir, "AUTHORS"));
+        success &= cat_file(ui, docdir / "AUTHORS");
     } else if (show == "license") {
-        success &= cat_file(ui, path_to_doc(_docdir, "COPYING"));
+        success &= cat_file(ui, docdir / "COPYING");
     } else if (show == "version") {
         ui->out(PACKAGE " (" PACKAGE_NAME ") " PACKAGE_VERSION);
     } else {

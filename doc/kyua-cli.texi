@@ -40,6 +40,7 @@
 
 
 @include version.texi
+@include paths.texi
 @include copying.texi
 
 
@@ -76,6 +77,7 @@ version @value{VERSION}.
 
 @menu
 * Overview:: A general introduction.
+* Usage:: Description of the Kyua command-line tool.
 * Troubleshooting:: Facilities and procedures to debug/report Kyua issues.
 
 Developer's information
@@ -88,6 +90,7 @@ Appendices and indices
 
 
 @include overview.texi
+@include usage.texi
 @include test_interface.texi
 @include troubleshooting.texi
 

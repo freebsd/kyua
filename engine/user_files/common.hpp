@@ -56,10 +56,9 @@ namespace user_files {
 typedef std::pair< std::string, int > syntax_def;
 
 
-syntax_def do_user_file(utils::lua::state&, const utils::fs::path&,
-                        const char* = NULL);
+syntax_def do_user_file(utils::lua::state&, const utils::fs::path&);
 syntax_def get_syntax(utils::lua::state&);
-void init(utils::lua::state&, const utils::fs::path&, const char* = NULL);
+void init(utils::lua::state&, const utils::fs::path&);
 
 
 }  // namespace user_files

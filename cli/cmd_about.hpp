@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@ class cmd_about : public utils::cmdline::base_command {
     const std::string _docdir;
 
 public:
-    cmd_about(const char* = "");
+    cmd_about(void);
 
     int run(utils::cmdline::ui*, const utils::cmdline::parsed_cmdline&);
 };

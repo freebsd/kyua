@@ -106,7 +106,7 @@ static void
 mock_system_config(const char* cookie)
 {
     fs::mkdir(fs::path("system-dir"), 0755);
-    cli::set_confdir_for_testing(fs::current_path() / "system-dir");
+    utils::setenv("KYUA_CONFDIR", (fs::current_path() / "system-dir").str());
     create_mock_config("system-dir/kyua.conf", cookie);
 }
 
@@ -159,7 +159,7 @@ validate_mock_kyuafile(const user_files::kyuafile& kyuafile, const char* cookie)
 ATF_TEST_CASE_WITHOUT_HEAD(load_config__none);
 ATF_TEST_CASE_BODY(load_config__none)
 {
-    cli::set_confdir_for_testing(fs::path("/the/system/does/not/exist"));
+    utils::setenv("KYUA_CONFDIR", "/the/system/does/not/exist");
     utils::setenv("HOME", "/the/user/does/not/exist");
 
     std::map< std::string, std::vector< std::string > > options;
@@ -283,7 +283,7 @@ ATF_TEST_CASE_BODY(load_config__system__fail)
 ATF_TEST_CASE_WITHOUT_HEAD(load_config__overrides__no);
 ATF_TEST_CASE_BODY(load_config__overrides__no)
 {
-    cli::set_confdir_for_testing(fs::current_path());
+    utils::setenv("KYUA_CONFDIR", fs::current_path().str());
 
     std::map< std::string, std::vector< std::string > > options;
     options["config"].push_back(cli::config_option.default_value());
@@ -320,7 +320,7 @@ ATF_TEST_CASE_BODY(load_config__overrides__yes)
 ATF_TEST_CASE_WITHOUT_HEAD(load_config__overrides__fail);
 ATF_TEST_CASE_BODY(load_config__overrides__fail)
 {
-    cli::set_confdir_for_testing(fs::current_path());
+    utils::setenv("KYUA_CONFDIR", fs::current_path().str());
 
     std::map< std::string, std::vector< std::string > > options;
     options["config"].push_back(cli::config_option.default_value());

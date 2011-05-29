@@ -27,6 +27,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "engine/user_files/common.hpp"
+#include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
@@ -44,7 +45,6 @@ namespace user_files = engine::user_files;
 ///
 /// \param state The Lua state.
 /// \param file The name of the file to process.
-/// \param luadir_for_testing See init().
 ///
 /// \return The syntax definition (format, version) of the file.  The caller
 /// must validate the return value before accessing the Lua state.
@@ -52,11 +52,10 @@ namespace user_files = engine::user_files;
 /// \throw lua::error If there is any problem processing the provided Lua file
 ///     or any of its dependent libraries.
 user_files::syntax_def
-user_files::do_user_file(lua::state& state, const fs::path& file,
-                         const char* luadir_for_testing)
+user_files::do_user_file(lua::state& state, const fs::path& file)
 {
     lua::stack_cleaner cleaner(state);
-    init(state, file, luadir_for_testing);
+    init(state, file);
     lua::do_file(state, file);
     return get_syntax(state);
 }
@@ -110,18 +109,16 @@ user_files::get_syntax(lua::state& state)
 /// \param file The name of the file to process.  The file is not actually
 ///     opened in this call; this name is only used to initialize internal
 ///     state.
-/// \param luadir_for_testing If non-NULL, specifies the directory containing
-///     the Lua libraries provided by Kyua.  This directory is NOT used to load
-///     the initial copy of init.lua, but will be used by further calls to the
-///     init.syntax() method.
 ///
 /// \throw lua::error If there is any problem processing the init.lua file or
 ///     initializing its internal state.
 void
-user_files::init(lua::state& state, const fs::path& file,
-                 const char* luadir_for_testing)
+user_files::init(lua::state& state, const fs::path& file)
 {
     LI(F("Loading user file '%s'") % file);
+
+    const fs::path luadir(utils::getenv_with_default(
+        "KYUA_LUADIR", KYUA_LUADIR));
 
     lua::stack_cleaner cleaner(state);
 
@@ -131,16 +128,13 @@ user_files::init(lua::state& state, const fs::path& file,
     lua::open_fs(state);
     lua::open_logging(state);
 
-    lua::do_file(state, fs::path(KYUA_LUADIR) / "init.lua", 1);
+    lua::do_file(state, luadir / "init.lua", 1);
     state.push_string("export");
     state.get_table();
     state.pcall(0, 0, 0);
 
     lua::eval(state, "init.bootstrap");
-    if (luadir_for_testing == NULL)
-        state.push_string(KYUA_LUADIR);
-    else
-        state.push_string(luadir_for_testing);
+    state.push_string(luadir.str());
     state.push_string(file.c_str());
     state.pcall(2, 0, 0);
 }

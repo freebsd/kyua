@@ -46,30 +46,91 @@ check_all() {
 }
 
 
-utils_test_case default
-default_body() {
+# Checks if an installed file is available and, if not, skips the test.
+#
+# \param file The name of the file to check for.
+#
+# \todo This needs to become "require.files" in the metadata.
+require_file() {
+    local file="${1}"; shift
+
+    test -f "${file}" || atf_skip "File ${file} not available; maybe it is" \
+        "not installed yet?"
+}
+
+
+utils_test_case default__installed
+default__installed_body() {
+    require_file "${KYUA_DOCDIR}/AUTHORS"
+    require_file "${KYUA_DOCDIR}/COPYING"
     atf_check -s exit:0 -o save:stdout -e empty kyua about
     check_all stdout
 }
 
 
-utils_test_case show__all
-show__all_body() {
+utils_test_case default__override
+default__override_body() {
+    mkdir docs
+    echo "Author <author@example.net>" >docs/AUTHORS
+    echo "Copyright text" >docs/COPYING
+    export KYUA_DOCDIR=docs
+    atf_check -s exit:0 -o save:stdout -e empty kyua about
+    check_all stdout
+}
+
+
+utils_test_case show__all__installed
+show__all__installed_body() {
+    require_file "${KYUA_DOCDIR}/AUTHORS"
+    require_file "${KYUA_DOCDIR}/COPYING"
     atf_check -s exit:0 -o save:stdout -e empty kyua about --show=all
     check_all stdout
 }
 
 
-utils_test_case show__authors
-show__authors_body() {
+utils_test_case show__all__override
+show__all__override_body() {
+    mkdir docs
+    echo "Author <author@example.net>" >docs/AUTHORS
+    echo "Copyright text" >docs/COPYING
+    export KYUA_DOCDIR=docs
+    atf_check -s exit:0 -o save:stdout -e empty kyua about --show=all
+    check_all stdout
+}
+
+
+utils_test_case show__authors__installed
+show__authors__installed_body() {
+    require_file "${KYUA_DOCDIR}/AUTHORS"
     atf_check -s exit:0 -o file:"${KYUA_DOCDIR}/AUTHORS" -e empty \
         kyua about --show=authors
 }
 
 
-utils_test_case show__license
-show__license_body() {
+utils_test_case show__authors__override
+show__authors__override_body() {
+    mkdir docs
+    echo "Author <author@example.net>" >docs/AUTHORS
+    export KYUA_DOCDIR=docs
+    atf_check -s exit:0 -o file:docs/AUTHORS -e empty \
+        kyua about --show=authors
+}
+
+
+utils_test_case show__license__installed
+show__license__installed_body() {
+    require_file "${KYUA_DOCDIR}/COPYING"
     atf_check -s exit:0 -o file:"${KYUA_DOCDIR}/COPYING" -e empty \
+        kyua about --show=license
+}
+
+
+utils_test_case show__license__override
+show__license__override_body() {
+    mkdir docs
+    echo "Copyright text" >docs/COPYING
+    export KYUA_DOCDIR=docs
+    atf_check -s exit:0 -o file:docs/COPYING -e empty \
         kyua about --show=license
 }
 
@@ -107,11 +168,15 @@ EOF
 
 
 atf_init_test_cases() {
-    atf_add_test_case default
+    atf_add_test_case default__installed
+    atf_add_test_case default__override
 
-    atf_add_test_case show__all
-    atf_add_test_case show__authors
-    atf_add_test_case show__license
+    atf_add_test_case show__all__installed
+    atf_add_test_case show__all__override
+    atf_add_test_case show__authors__installed
+    atf_add_test_case show__authors__override
+    atf_add_test_case show__license__installed
+    atf_add_test_case show__license__override
     atf_add_test_case show__version
     atf_add_test_case show__invalid
 

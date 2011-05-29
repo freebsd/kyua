@@ -39,6 +39,7 @@
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.hpp"
 #include "utils/cmdline/ui_mock.hpp"
+#include "utils/env.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/test_utils.hpp"
@@ -95,7 +96,8 @@ ATF_TEST_CASE_BODY(show_all__ok)
     create_fake_doc("fake-docs", "AUTHORS");
     create_fake_doc("fake-docs", "COPYING");
 
-    cmd_about cmd("fake-docs");
+    utils::setenv("KYUA_DOCDIR", "fake-docs");
+    cmd_about cmd;
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(EXIT_SUCCESS, cmd.main(&ui, args));
     ATF_REQUIRE(utils::grep_string(PACKAGE_NAME, ui.out_log()[0]));
@@ -113,7 +115,8 @@ ATF_TEST_CASE_BODY(show_all__missing_docs)
     cmdline::args_vector args;
     args.push_back("about");
 
-    cmd_about cmd("fake-docs");
+    utils::setenv("KYUA_DOCDIR", "fake-docs");
+    cmd_about cmd;
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(EXIT_FAILURE, cmd.main(&ui, args));
 
@@ -137,7 +140,8 @@ ATF_TEST_CASE_BODY(show_authors__ok)
     fs::mkdir(fs::path("fake-docs"), 0755);
     create_fake_doc("fake-docs", "AUTHORS");
 
-    cmd_about cmd("fake-docs");
+    utils::setenv("KYUA_DOCDIR", "fake-docs");
+    cmd_about cmd;
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(EXIT_SUCCESS, cmd.main(&ui, args));
     ATF_REQUIRE(!utils::grep_string(PACKAGE_NAME, ui.out_log()[0]));
@@ -155,7 +159,8 @@ ATF_TEST_CASE_BODY(show_authors__missing_doc)
     args.push_back("about");
     args.push_back("--show=authors");
 
-    cmd_about cmd("fake-docs");
+    utils::setenv("KYUA_DOCDIR", "fake-docs");
+    cmd_about cmd;
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(EXIT_FAILURE, cmd.main(&ui, args));
 
@@ -176,7 +181,8 @@ ATF_TEST_CASE_BODY(show_license__ok)
     fs::mkdir(fs::path("fake-docs"), 0755);
     create_fake_doc("fake-docs", "COPYING");
 
-    cmd_about cmd("fake-docs");
+    utils::setenv("KYUA_DOCDIR", "fake-docs");
+    cmd_about cmd;
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(EXIT_SUCCESS, cmd.main(&ui, args));
     ATF_REQUIRE(!utils::grep_string(PACKAGE_NAME, ui.out_log()[0]));
@@ -194,7 +200,8 @@ ATF_TEST_CASE_BODY(show_license__missing_doc)
     args.push_back("about");
     args.push_back("--show=license");
 
-    cmd_about cmd("fake-docs");
+    utils::setenv("KYUA_DOCDIR", "fake-docs");
+    cmd_about cmd;
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(EXIT_FAILURE, cmd.main(&ui, args));
 
@@ -212,7 +219,8 @@ ATF_TEST_CASE_BODY(show_version__ok)
     args.push_back("about");
     args.push_back("--show=version");
 
-    cmd_about cmd("fake-docs");
+    utils::setenv("KYUA_DOCDIR", "fake-docs");
+    cmd_about cmd;
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(EXIT_SUCCESS, cmd.main(&ui, args));
     ATF_REQUIRE_EQ(1, ui.out_log().size());

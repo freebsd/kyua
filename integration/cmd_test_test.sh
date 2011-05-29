@@ -598,8 +598,7 @@ EOF
     utils_cp_helper config .
 
     atf_check -s exit:0 -o match:"get_variable.*skipped" -e empty kyua test
-    export KYUA_SYSCONFDIR="$(pwd)"
-    atf_expect_fail "Cannot mock the location of the configuration directory"
+    export KYUA_CONFDIR="$(pwd)"
     atf_check -s exit:0 -o match:"get_variable.*passed" -e empty kyua test
 }
 

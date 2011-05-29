@@ -64,6 +64,28 @@ utils::getenv(const std::string& name)
 }
 
 
+/// Gets the value of an environment variable with a default fallback.
+///
+/// \param name The name of the environment variable to query.
+/// \param default_value The value to return if the variable is not defined.
+///
+/// \return The value of the environment variable.
+std::string
+utils::getenv_with_default(const std::string& name,
+                           const std::string& default_value)
+{
+    const char* value = std::getenv(name.c_str());
+    if (value == NULL) {
+        LD(F("Environment variable '%s' is not defined; using default '%s'") %
+           name % default_value);
+        return default_value;
+    } else {
+        LD(F("Environment variable '%s' is '%s'") % name % value);
+        return value;
+    }
+}
+
+
 /// Sets the value of an environment variable.
 ///
 /// \param name The name of the environment variable to set.

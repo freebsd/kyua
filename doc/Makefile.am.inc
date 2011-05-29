@@ -29,11 +29,20 @@
 info_TEXINFOS = doc/kyua-cli.texi
 doc_kyua_cli_TEXINFOS  = doc/copying.texi
 doc_kyua_cli_TEXINFOS += doc/overview.texi
+doc_kyua_cli_TEXINFOS += doc/paths.texi
 doc_kyua_cli_TEXINFOS += doc/test_interface.texi
 doc_kyua_cli_TEXINFOS += doc/troubleshooting.texi
+doc_kyua_cli_TEXINFOS += doc/usage.texi
+
+CLEANFILES = doc/paths.texi
+doc/paths.texi: $(srcdir)/Makefile
+	echo "@set KYUA_CONFDIR $(kyua_confdir)" >doc/paths.texi.tmp
+	echo "@set KYUA_DOCDIR $(docdir)" >>doc/paths.texi.tmp
+	echo "@set KYUA_LUADIR $(luadir)" >>doc/paths.texi.tmp
+	mv doc/paths.texi.tmp doc/paths.texi
 
 man_MANS = doc/kyua.1
-CLEANFILES = doc/kyua.1
+CLEANFILES += doc/kyua.1
 EXTRA_DIST += doc/kyua.1.in
 
 doc/kyua.1: $(srcdir)/doc/kyua.1.in

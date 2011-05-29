@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,6 +45,17 @@ ATF_TEST_CASE_BODY(getenv)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(getenv_with_default);
+ATF_TEST_CASE_BODY(getenv_with_default)
+{
+    ATF_REQUIRE("don't use" !=
+                utils::getenv_with_default("PATH", "don't use"));
+
+    ATF_REQUIRE_EQ("foo",
+                   utils::getenv_with_default("__UNDEFINED_VARIABLE__", "foo"));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(setenv);
 ATF_TEST_CASE_BODY(setenv)
 {
@@ -72,6 +83,7 @@ ATF_TEST_CASE_BODY(unsetenv)
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, getenv);
+    ATF_ADD_TEST_CASE(tcs, getenv_with_default);
     ATF_ADD_TEST_CASE(tcs, setenv);
     ATF_ADD_TEST_CASE(tcs, unsetenv);
 }

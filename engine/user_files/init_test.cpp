@@ -29,11 +29,18 @@
 // TODO(jmmv): These tests ought to be written in Lua.  Rewrite when we have a
 // Lua binding.
 
+extern "C" {
+#include <sys/stat.h>
+
+#include <unistd.h>
+}
+
 #include <fstream>
 
 #include <atf-c++.hpp>
 
 #include "engine/user_files/common.hpp"
+#include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/lua/exceptions.hpp"
@@ -50,6 +57,8 @@ namespace {
 
 /// Creates a mock module that can be called from syntax().
 ///
+/// \pre mock_init() must have been called beforehand.
+///
 /// \param file The name of the file to create.
 /// \param loaded_cookie A value that will be set in the global 'loaded_cookie'
 ///     variable within Lua to validate that nesting of module loading works
@@ -57,10 +66,26 @@ namespace {
 static void
 create_mock_module(const char* file, const char* loaded_cookie)
 {
-    std::ofstream output(file);
+    std::ofstream output((fs::path("luadir") / file).c_str());
     ATF_REQUIRE(output);
     output << F("return {export=function() _G.loaded_cookie = '%s' end}\n") %
         loaded_cookie;
+}
+
+
+/// Initializes mocking for Lua modules.
+///
+/// This creates a directory in which additional Lua modules will be placed and
+/// puts a copy of the real 'init.lua' file in it.  It later updates KYUA_LUADIR
+/// to point to this mock directory.
+static void
+mock_init(void)
+{
+    ATF_REQUIRE(::mkdir("luadir", 0755) != -1);
+    utils::setenv("KYUA_LUADIR", "luadir");
+
+    const fs::path init_lua = fs::path(KYUA_LUADIR) / "init.lua";
+    ATF_REQUIRE(::symlink(init_lua.c_str(), "luadir/init.lua") != -1);
 }
 
 
@@ -70,8 +95,10 @@ create_mock_module(const char* file, const char* loaded_cookie)
 ATF_TEST_CASE_WITHOUT_HEAD(get_filename);
 ATF_TEST_CASE_BODY(get_filename)
 {
+    mock_init();
+
     lua::state state;
-    user_files::init(state, fs::path("this/is/my-name"), "/non-existent");
+    user_files::init(state, fs::path("this/is/my-name"));
 
     lua::eval(state, "init.get_filename()");
     ATF_REQUIRE_EQ("this/is/my-name", state.to_string());
@@ -82,8 +109,10 @@ ATF_TEST_CASE_BODY(get_filename)
 ATF_TEST_CASE_WITHOUT_HEAD(get_syntax__ok);
 ATF_TEST_CASE_BODY(get_syntax__ok)
 {
+    mock_init();
+
     lua::state state;
-    user_files::init(state, fs::path("this/is/my-name"), ".");
+    user_files::init(state, fs::path("this/is/my-name"));
 
     create_mock_module("kyuafile_1.lua", "unused");
     lua::do_string(state, "syntax('kyuafile', 1)");
@@ -99,8 +128,10 @@ ATF_TEST_CASE_BODY(get_syntax__ok)
 ATF_TEST_CASE_WITHOUT_HEAD(get_syntax__fail);
 ATF_TEST_CASE_BODY(get_syntax__fail)
 {
+    mock_init();
+
     lua::state state;
-    user_files::init(state, fs::path("the-name"), "/non-existent");
+    user_files::init(state, fs::path("the-name"));
 
     ATF_REQUIRE_THROW_RE(lua::error, "Syntax not defined in file 'the-name'",
                          lua::eval(state, "init.get_syntax()"));
@@ -169,8 +200,10 @@ ATF_TEST_CASE_BODY(run__chain)
 ATF_TEST_CASE_WITHOUT_HEAD(syntax__config_1__ok);
 ATF_TEST_CASE_BODY(syntax__config_1__ok)
 {
+    mock_init();
+
     lua::state state;
-    user_files::init(state, fs::path("the-file"), ".");
+    user_files::init(state, fs::path("the-file"));
 
     create_mock_module("config_1.lua", "i-am-the-config");
     lua::do_string(state, "syntax('config', 1)");
@@ -188,8 +221,10 @@ ATF_TEST_CASE_BODY(syntax__config_1__ok)
 ATF_TEST_CASE_WITHOUT_HEAD(syntax__config_1__version_error);
 ATF_TEST_CASE_BODY(syntax__config_1__version_error)
 {
+    mock_init();
+
     lua::state state;
-    user_files::init(state, fs::path("the-file"), ".");
+    user_files::init(state, fs::path("the-file"));
 
     create_mock_module("config_1.lua", "unused");
     ATF_REQUIRE_THROW_RE(lua::error, "Syntax request error: unknown version 2 "
@@ -208,8 +243,10 @@ ATF_TEST_CASE_BODY(syntax__config_1__version_error)
 ATF_TEST_CASE_WITHOUT_HEAD(syntax__config_1__missing_file);
 ATF_TEST_CASE_BODY(syntax__config_1__missing_file)
 {
+    mock_init();
+
     lua::state state;
-    user_files::init(state, fs::path("the-file"), ".");
+    user_files::init(state, fs::path("the-file"));
 
     ATF_REQUIRE_THROW_RE(lua::error, "config_1.lua",
                          lua::do_string(state, "syntax('config', 1)"));
@@ -226,8 +263,10 @@ ATF_TEST_CASE_BODY(syntax__config_1__missing_file)
 ATF_TEST_CASE_WITHOUT_HEAD(syntax__kyuafile_1__ok);
 ATF_TEST_CASE_BODY(syntax__kyuafile_1__ok)
 {
+    mock_init();
+
     lua::state state;
-    user_files::init(state, fs::path("the-file"), ".");
+    user_files::init(state, fs::path("the-file"));
 
     create_mock_module("kyuafile_1.lua", "i-am-the-kyuafile");
     lua::do_string(state, "syntax('kyuafile', 1)");
@@ -245,8 +284,10 @@ ATF_TEST_CASE_BODY(syntax__kyuafile_1__ok)
 ATF_TEST_CASE_WITHOUT_HEAD(syntax__kyuafile_1__version_error);
 ATF_TEST_CASE_BODY(syntax__kyuafile_1__version_error)
 {
+    mock_init();
+
     lua::state state;
-    user_files::init(state, fs::path("the-file"), ".");
+    user_files::init(state, fs::path("the-file"));
 
     create_mock_module("kyuafile_1.lua", "unused");
     ATF_REQUIRE_THROW_RE(lua::error, "Syntax request error: unknown version 2 "
@@ -265,8 +306,10 @@ ATF_TEST_CASE_BODY(syntax__kyuafile_1__version_error)
 ATF_TEST_CASE_WITHOUT_HEAD(syntax__kyuafile_1__missing_file);
 ATF_TEST_CASE_BODY(syntax__kyuafile_1__missing_file)
 {
+    mock_init();
+
     lua::state state;
-    user_files::init(state, fs::path("the-file"), ".");
+    user_files::init(state, fs::path("the-file"));
 
     ATF_REQUIRE_THROW_RE(lua::error, "kyuafile_1.lua",
                          lua::do_string(state, "syntax('kyuafile', 1)"));
@@ -283,8 +326,10 @@ ATF_TEST_CASE_BODY(syntax__kyuafile_1__missing_file)
 ATF_TEST_CASE_WITHOUT_HEAD(syntax__format_error);
 ATF_TEST_CASE_BODY(syntax__format_error)
 {
+    mock_init();
+
     lua::state state;
-    user_files::init(state, fs::path("the-file"), ".");
+    user_files::init(state, fs::path("the-file"));
 
     create_mock_module("kyuafile_1.lua", "unused");
     ATF_REQUIRE_THROW_RE(lua::error, "Syntax request error: unknown format "
@@ -302,8 +347,10 @@ ATF_TEST_CASE_BODY(syntax__format_error)
 ATF_TEST_CASE_WITHOUT_HEAD(syntax__twice);
 ATF_TEST_CASE_BODY(syntax__twice)
 {
+    mock_init();
+
     lua::state state;
-    user_files::init(state, fs::path("the-file"), ".");
+    user_files::init(state, fs::path("the-file"));
 
     create_mock_module("kyuafile_1.lua", "unused");
     ATF_REQUIRE_THROW_RE(lua::error, "syntax.*more than once",
