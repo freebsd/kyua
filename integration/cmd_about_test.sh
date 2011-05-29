@@ -46,23 +46,11 @@ check_all() {
 }
 
 
-# Checks if an installed file is available and, if not, skips the test.
-#
-# \param file The name of the file to check for.
-#
-# \todo This needs to become "require.files" in the metadata.
-require_file() {
-    local file="${1}"; shift
-
-    test -f "${file}" || atf_skip "File ${file} not available; maybe it is" \
-        "not installed yet?"
-}
-
-
 utils_test_case default__installed
+default__installed_head() {
+    atf_set "require.files" "${KYUA_DOCDIR}/AUTHORS ${KYUA_DOCDIR}/COPYING"
+}
 default__installed_body() {
-    require_file "${KYUA_DOCDIR}/AUTHORS"
-    require_file "${KYUA_DOCDIR}/COPYING"
     atf_check -s exit:0 -o save:stdout -e empty kyua about
     check_all stdout
 }
@@ -80,9 +68,10 @@ default__override_body() {
 
 
 utils_test_case show__all__installed
+show__all__installed_head() {
+    atf_set "require.files" "${KYUA_DOCDIR}/AUTHORS ${KYUA_DOCDIR}/COPYING"
+}
 show__all__installed_body() {
-    require_file "${KYUA_DOCDIR}/AUTHORS"
-    require_file "${KYUA_DOCDIR}/COPYING"
     atf_check -s exit:0 -o save:stdout -e empty kyua about --show=all
     check_all stdout
 }
@@ -100,8 +89,10 @@ show__all__override_body() {
 
 
 utils_test_case show__authors__installed
+show__authors__installed_head() {
+    atf_set "require.files" "${KYUA_DOCDIR}/AUTHORS"
+}
 show__authors__installed_body() {
-    require_file "${KYUA_DOCDIR}/AUTHORS"
     atf_check -s exit:0 -o file:"${KYUA_DOCDIR}/AUTHORS" -e empty \
         kyua about --show=authors
 }
@@ -118,8 +109,10 @@ show__authors__override_body() {
 
 
 utils_test_case show__license__installed
+show__license__installed_head() {
+    atf_set "require.files" "${KYUA_DOCDIR}/COPYING"
+}
 show__license__installed_body() {
-    require_file "${KYUA_DOCDIR}/COPYING"
     atf_check -s exit:0 -o file:"${KYUA_DOCDIR}/COPYING" -e empty \
         kyua about --show=license
 }
