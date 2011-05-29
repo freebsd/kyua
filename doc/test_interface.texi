@@ -275,7 +275,21 @@ The contents of the file are @samp{skipped: <reason>\n}.  Example:
 @cindex atf test case isolation
 @cindex isolation, atf
 
-The runtime engine performs the following isolation when executing test cases:
+The runtime engine attempts to isolate test cases from other test
+cases in the same test program and from the rest of the system by
+performing what is called @emph{test case isolation}.
+
+Whenever the user runs a test program binary by hand (i.e. not through
+@command{kyua}), the test program will print a warning message stating
+that test case isolation does not work and therefore the program may
+cause side-effects and/or report invalid values.
+
+The runtime engine (@command{kyua} in our case) must set the
+@env{__RUNNING_INSIDE_ATF_RUN} environment variable to the magic value
+@samp{internal-yes-value} to tell the test programs that they are
+being run with isolation enabled.
+
+The test case isolation performs the following:
 
 @itemize
 @item

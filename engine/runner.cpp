@@ -176,6 +176,8 @@ isolate_process(const fs::path& cwd)
 
     utils::setenv("TZ", "UTC");
 
+    utils::setenv("__RUNNING_INSIDE_ATF_RUN", "internal-yes-value");
+
     if (::chdir(cwd.c_str()) == -1)
         throw std::runtime_error(F("Failed to enter work directory %s") % cwd);
     utils::setenv("HOME", fs::current_path().str());
