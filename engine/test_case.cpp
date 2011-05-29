@@ -154,6 +154,40 @@ engine::detail::parse_ulong(const std::string& name, const std::string& value)
 }
 
 
+/// Parses a list of files (as given through 'require.files').
+///
+/// \param name The name of the property; used for error messages.
+/// \param value The textual value to process.
+///
+/// \return The value as an integer.
+///
+/// \throw engine::format_error If any of the files in the list is invalid
+///     or if the list itself is invalid.
+engine::paths_set
+engine::detail::parse_require_files(const std::string& name,
+                                    const std::string& value)
+{
+    std::set< fs::path > files;
+
+    const strings_set raw_files = parse_list(name, value);
+    for (strings_set::const_iterator iter = raw_files.begin();
+         iter != raw_files.end(); iter++) {
+        try {
+            const fs::path file(*iter);
+            if (!file.is_absolute())
+                throw format_error(F("Relative path '%s' not allowed in "
+                                     "property '%s'") % *iter % name);
+            files.insert(file);
+        } catch (const fs::invalid_path_error& e) {
+            throw format_error(F("Invalid path '%s' in property '%s'") %
+                               *iter % name);
+        }
+    }
+
+    return files;
+}
+
+
 /// Parses a list of program names (as given through 'require.progs').
 ///
 /// \param name The name of the property; used for error messages.
@@ -270,6 +304,7 @@ engine::test_case_id::operator==(const test_case_id& id) const
 ///     If empty, all platforms types are valid.
 /// \param required_configs_ List of configuration variables that must be
 ///     defined to run this test case.
+/// \param required_files_ List of files required by the test case.
 /// \param required_programs_ List of programs required by the test case.
 /// \param required_user_ The user required to run this test case.  Can be
 ///     empty, in which case any user is allowed, or any of 'unprivileged' or
@@ -283,6 +318,7 @@ engine::test_case::test_case(const test_case_id& identifier_,
                              const strings_set& allowed_architectures_,
                              const strings_set& allowed_platforms_,
                              const strings_set& required_configs_,
+                             const paths_set& required_files_,
                              const paths_set& required_programs_,
                              const std::string& required_user_,
                              const properties_map& user_metadata_) :
@@ -293,6 +329,7 @@ engine::test_case::test_case(const test_case_id& identifier_,
     allowed_architectures(allowed_architectures_),
     allowed_platforms(allowed_platforms_),
     required_configs(required_configs_),
+    required_files(required_files_),
     required_programs(required_programs_),
     required_user(required_user_),
     user_metadata(user_metadata_)
@@ -329,6 +366,7 @@ engine::test_case::from_properties(const test_case_id& identifier_,
     strings_set allowed_architectures_;
     strings_set allowed_platforms_;
     strings_set required_configs_;
+    paths_set required_files_;
     paths_set required_programs_;
     std::string required_user_;
     properties_map user_metadata_;
@@ -346,6 +384,8 @@ engine::test_case::from_properties(const test_case_id& identifier_,
             allowed_architectures_ = detail::parse_list(name, value);
         } else if (name == "require.config") {
             required_configs_ = detail::parse_list(name, value);
+        } else if (name == "require.files") {
+            required_files_ = detail::parse_require_files(name, value);
         } else if (name == "require.machine") {
             allowed_platforms_ = detail::parse_list(name, value);
         } else if (name == "require.progs") {
@@ -364,8 +404,8 @@ engine::test_case::from_properties(const test_case_id& identifier_,
 
     return test_case(identifier_, description_, has_cleanup_, timeout_,
                      allowed_architectures_, allowed_platforms_,
-                     required_configs_, required_programs_, required_user_,
-                     user_metadata_);
+                     required_configs_, required_files_, required_programs_,
+                     required_user_, user_metadata_);
 }
 
 
@@ -394,6 +434,8 @@ engine::test_case::all_properties(void) const
         props["require.machine"] = flatten_set(allowed_platforms);
     if (!required_configs.empty())
         props["require.config"] = flatten_set(required_configs);
+    if (!required_files.empty())
+        props["require.files"] = flatten_set(required_files);
     if (!required_programs.empty())
         props["require.progs"] = flatten_set(required_programs);
     if (!required_user.empty())
@@ -420,6 +462,7 @@ engine::test_case::operator==(const test_case& tc) const
         allowed_architectures == tc.allowed_architectures &&
         allowed_platforms == tc.allowed_platforms &&
         required_configs == tc.required_configs &&
+        required_files == tc.required_files &&
         required_programs == tc.required_programs &&
         required_user == tc.required_user &&
         timeout == tc.timeout &&
@@ -478,6 +521,13 @@ engine::check_requirements(const engine::test_case& test_case,
                         "defined";
         } else
             UNREACHABLE_MSG("Value of require.user not properly validated");
+    }
+
+    for (paths_set::const_iterator iter = test_case.required_files.begin();
+         iter != test_case.required_files.end(); iter++) {
+        INV((*iter).is_absolute());
+        if (!fs::exists(*iter))
+            return F("Required file '%s' not found") % *iter;
     }
 
     for (paths_set::const_iterator iter = test_case.required_programs.begin();

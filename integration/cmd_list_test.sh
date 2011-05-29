@@ -310,6 +310,7 @@ subdir/metadata:many_properties (integration-suite-2)
     descr =     A description with some padding
     require.arch = some-architecture
     require.config = var1 var2 var3
+    require.files = /my/file1 /some/other/file
     require.machine = some-platform
     require.progs = /nonexistent/bin3 bin1 bin2
     require.user = root

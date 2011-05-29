@@ -54,6 +54,7 @@ ATF_TEST_CASE_HEAD(many_properties)
     set_md_var("descr", "    A description with some padding");
     set_md_var("require.arch", "some-architecture");
     set_md_var("require.config", "var1 var2 var3");
+    set_md_var("require.files", "/my/file1 /some/other/file");
     set_md_var("require.machine", "some-platform");
     set_md_var("require.progs", "bin1 bin2 /nonexistent/bin3");
     set_md_var("require.user", "root");

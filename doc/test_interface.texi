@@ -148,6 +148,10 @@ Whitespace separated list of configuration variable names.  The list
 of configuration variables that must be defined.  The test is skipped
 if any of these is missing.
 
+@item require.files
+Whitespace separated list of absolute paths to installed files.  If
+any of these files is not found, the test case is skipped.
+
 @item require.machine
 Whitespace separated list of the machine types required by the test
 case.  If defined, the test case is skipped unless the host machine

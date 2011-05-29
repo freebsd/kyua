@@ -185,6 +185,27 @@ ATF_TEST_CASE_BODY(parse_ulong__invalid)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(parse_require_files__ok)
+ATF_TEST_CASE_BODY(parse_require_files__ok)
+{
+    const engine::paths_set paths = engine::detail::parse_require_files(
+        "unused-name", " /bin/ls /f2 ");
+    ATF_REQUIRE_EQ(2, paths.size());
+    ATF_REQUIRE_IN(fs::path("/bin/ls"), paths);
+    ATF_REQUIRE_IN(fs::path("/f2"), paths);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(parse_require_files__invalid)
+ATF_TEST_CASE_BODY(parse_require_files__invalid)
+{
+    ATF_REQUIRE_THROW_RE(engine::format_error,
+                         "Relative path 'data/foo'.*property 'require.files'",
+                         engine::detail::parse_require_files(
+                             "require.files", "  /bin/ls data/foo "));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(parse_require_progs__ok)
 ATF_TEST_CASE_BODY(parse_require_progs__ok)
 {
@@ -310,6 +331,9 @@ ATF_TEST_CASE_BODY(test_case__public_fields)
     engine::strings_set required_configs;
     required_configs.insert("myvar1");
 
+    engine::paths_set required_files;
+    required_files.insert(fs::path("/file1"));
+
     engine::paths_set required_programs;
     required_programs.insert(fs::path("bin1"));
 
@@ -323,6 +347,7 @@ ATF_TEST_CASE_BODY(test_case__public_fields)
                                       allowed_architectures,
                                       allowed_platforms,
                                       required_configs,
+                                      required_files,
                                       required_programs,
                                       "root",
                                       user_metadata);
@@ -333,6 +358,8 @@ ATF_TEST_CASE_BODY(test_case__public_fields)
     ATF_REQUIRE(allowed_architectures == test_case.allowed_architectures);
     ATF_REQUIRE(allowed_platforms == test_case.allowed_platforms);
     ATF_REQUIRE(required_configs == test_case.required_configs);
+    ATF_REQUIRE(required_files == test_case.required_files);
+    ATF_REQUIRE(required_programs == test_case.required_programs);
     ATF_REQUIRE("root" == test_case.required_user);
     ATF_REQUIRE(user_metadata == test_case.user_metadata);
 }
@@ -354,6 +381,7 @@ ATF_TEST_CASE_BODY(test_case__from_properties__defaults)
     ATF_REQUIRE(test_case.allowed_architectures.empty());
     ATF_REQUIRE(test_case.allowed_platforms.empty());
     ATF_REQUIRE(test_case.required_configs.empty());
+    ATF_REQUIRE(test_case.required_files.empty());
     ATF_REQUIRE(test_case.required_programs.empty());
     ATF_REQUIRE(test_case.required_user.empty());
     ATF_REQUIRE(test_case.user_metadata.empty());
@@ -369,6 +397,7 @@ ATF_TEST_CASE_BODY(test_case__from_properties__override_all)
     properties["has.cleanup"] = "true";
     properties["require.arch"] = "i386 x86_64";
     properties["require.config"] = "var1 var2 var3";
+    properties["require.files"] = "/file1 /dir/file2";
     properties["require.machine"] = "amd64";
     properties["require.progs"] = "/bin/ls svn";
     properties["require.user"] = "root";
@@ -393,6 +422,9 @@ ATF_TEST_CASE_BODY(test_case__from_properties__override_all)
     ATF_REQUIRE_IN("var1", test_case.required_configs);
     ATF_REQUIRE_IN("var2", test_case.required_configs);
     ATF_REQUIRE_IN("var3", test_case.required_configs);
+    ATF_REQUIRE_EQ(2, test_case.required_files.size());
+    ATF_REQUIRE_IN(fs::path("/file1"), test_case.required_files);
+    ATF_REQUIRE_IN(fs::path("/dir/file2"), test_case.required_files);
     ATF_REQUIRE_EQ(2, test_case.required_programs.size());
     ATF_REQUIRE_IN(fs::path("/bin/ls"), test_case.required_programs);
     ATF_REQUIRE_IN(fs::path("svn"), test_case.required_programs);
@@ -491,6 +523,7 @@ ATF_TEST_CASE_BODY(test_case__operator_eq)
     overrides["has.cleanup"] = "true";
     overrides["require.arch"] = "i386 x86_64";
     overrides["require.config"] = "var1 var2 var3";
+    overrides["require.files"] = "/file1 /file2";
     overrides["require.machine"] = "amd64";
     overrides["require.progs"] = "/bin/ls svn";
     overrides["require.user"] = "root";
@@ -807,6 +840,33 @@ ATF_TEST_CASE_BODY(check_requirements__required_user__unprivileged__fail)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(check_requirements__required_files__ok);
+ATF_TEST_CASE_BODY(check_requirements__required_files__ok)
+{
+    utils::create_file(fs::path("test-file"));
+
+    engine::properties_map metadata;
+    metadata["require.files"] = (fs::current_path() / "test-file").str();
+    const engine::test_case test_case = engine::test_case::from_properties(
+        engine::test_case_id(fs::path("program"), "name"), metadata);
+
+    ATF_REQUIRE(engine::check_requirements(test_case, mock_config, "").empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(check_requirements__required_files__fail);
+ATF_TEST_CASE_BODY(check_requirements__required_files__fail)
+{
+    engine::properties_map metadata;
+    metadata["require.files"] = "/non-existent/file";
+    const engine::test_case test_case = engine::test_case::from_properties(
+        engine::test_case_id(fs::path("program"), "name"), metadata);
+
+    ATF_REQUIRE_MATCH("'/non-existent/file' not found$",
+                      engine::check_requirements(test_case, mock_config, ""));
+}
+
+
 ATF_TEST_CASE(check_requirements__required_programs__ok);
 ATF_TEST_CASE_HEAD(check_requirements__required_programs__ok)
 {
@@ -869,6 +929,9 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, parse_list__one_word);
     ATF_ADD_TEST_CASE(tcs, parse_list__many_words);
 
+    ATF_ADD_TEST_CASE(tcs, parse_require_files__ok);
+    ATF_ADD_TEST_CASE(tcs, parse_require_files__invalid);
+
     ATF_ADD_TEST_CASE(tcs, parse_require_progs__ok);
     ATF_ADD_TEST_CASE(tcs, parse_require_progs__invalid);
 
@@ -917,6 +980,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, check_requirements__required_user__unprivileged__ok);
     ATF_ADD_TEST_CASE(tcs,
                       check_requirements__required_user__unprivileged__fail);
+    ATF_ADD_TEST_CASE(tcs, check_requirements__required_files__ok);
+    ATF_ADD_TEST_CASE(tcs, check_requirements__required_files__fail);
     ATF_ADD_TEST_CASE(tcs, check_requirements__required_programs__ok);
     ATF_ADD_TEST_CASE(tcs,
                       check_requirements__required_programs__fail_absolute);

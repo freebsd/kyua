@@ -65,6 +65,7 @@ bool parse_bool(const std::string&, const std::string&);
 strings_set parse_list(const std::string&, const std::string&);
 unsigned long parse_ulong(const std::string&, const std::string&);
 
+paths_set parse_require_files(const std::string&, const std::string&);
 paths_set parse_require_progs(const std::string&, const std::string&);
 std::string parse_require_user(const std::string&, const std::string&);
 
@@ -122,6 +123,9 @@ struct test_case {
     /// List of configuration variables needed by the test case.
     strings_set required_configs;
 
+    /// List of files needed by the test case.
+    paths_set required_files;
+
     /// List of programs needed by the test case.
     paths_set required_programs;
 
@@ -137,7 +141,7 @@ struct test_case {
     test_case(const test_case_id&, const std::string&, const bool,
               const utils::datetime::delta&, const strings_set&,
               const strings_set&, const strings_set&, const paths_set&,
-              const std::string&, const properties_map&);
+              const paths_set&, const std::string&, const properties_map&);
 
     static test_case from_properties(const test_case_id&,
                                      const properties_map&);
