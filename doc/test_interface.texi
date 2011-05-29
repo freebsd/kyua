@@ -327,7 +327,8 @@ Umask: The value of the umask is set to 0022.
 @item
 Environment: The @env{LANG}, @env{LC_ALL}, @env{LC_COLLATE},
 @env{LC_CTYPE}, @env{LC_MESSAGES}, @env{LC_MONETARY},
-@env{LC_NUMERIC}, @env{LC_TIME} and @env{TZ} variables are unset.
+@env{LC_NUMERIC} and @env{LC_TIME} variables are unset.
+The @env{TZ} variable is set to @samp{UTC}.
 @end itemize
 
 @node ATF Test Programs
