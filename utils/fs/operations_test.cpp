@@ -305,6 +305,41 @@ ATF_TEST_CASE_BODY(mkdtemp)
 }
 
 
+ATF_TEST_CASE(unmount__ok)
+ATF_TEST_CASE_HEAD(unmount__ok)
+{
+    set_md_var("require.user", "root");
+}
+ATF_TEST_CASE_BODY(unmount__ok)
+{
+    const fs::path mount_point("mount_point");
+    fs::mkdir(mount_point, 0755);
+
+    utils::create_file(mount_point / "test1");
+    utils::mount_tmpfs(mount_point);
+    utils::create_file(mount_point / "test2");
+
+    ATF_REQUIRE(!fs::exists(mount_point / "test1"));
+    ATF_REQUIRE( fs::exists(mount_point / "test2"));
+    fs::unmount(mount_point);
+    ATF_REQUIRE( fs::exists(mount_point / "test1"));
+    ATF_REQUIRE(!fs::exists(mount_point / "test2"));
+}
+
+
+ATF_TEST_CASE(unmount__fail)
+ATF_TEST_CASE_HEAD(unmount__fail)
+{
+    set_md_var("require.user", "root");
+}
+ATF_TEST_CASE_BODY(unmount__fail)
+{
+    const fs::path mount_point("mount_point");
+
+    ATF_REQUIRE_THROW(fs::error, fs::unmount(mount_point));
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, cleanup__empty);
@@ -331,4 +366,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, mkdir_p__eacces);
 
     ATF_ADD_TEST_CASE(tcs, mkdtemp);
+
+    ATF_ADD_TEST_CASE(tcs, unmount__ok);
+    ATF_ADD_TEST_CASE(tcs, unmount__fail);
 }

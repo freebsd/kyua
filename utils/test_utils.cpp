@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,14 +33,37 @@ extern "C" {
 
 #include <atf-c++.hpp>
 
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <vector>
 
+#include "utils/fs/operations.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/optional.ipp"
+#include "utils/process/children.ipp"
 #include "utils/test_utils.hpp"
 
 namespace fs = utils::fs;
+namespace process = utils::process;
+
+using utils::optional;
+
+
+utils::os_type utils::current_os =
+#if defined(__FreeBSD__)
+    utils::os_freebsd
+#elif defined(__linux__)
+    utils::os_linux
+#elif defined(__NetBSD__)
+    utils::os_netbsd
+#elif defined(__SunOS__)
+    utils::os_sunos
+#else
+    utils::os_unsupported
+#endif
+    ;
 
 
 /// Dumps the contents of a file on the standard output.
@@ -136,4 +159,107 @@ utils::grep_vector(const std::string& regexp,
             return true;
     }
     return false;
+}
+
+
+namespace {
+
+
+/// Functor to execute 'mount -t tmpfs' (or a similar variant) in a subprocess.
+class run_mount_tmpfs {
+    optional< fs::path > _mount_binary;
+    std::vector< std::string > _mount_args;
+
+public:
+    /// Constructor for the functor.
+    ///
+    /// \param mount_point The mount point location.  Must be absolute.
+    run_mount_tmpfs(const fs::path& mount_point)
+    {
+        // Required for compatibility with, at least, SunOS.
+        PRE(mount_point.is_absolute());
+
+        switch (utils::current_os) {
+        case utils::os_freebsd:
+            _mount_binary = fs::find_in_path("mdmfs");
+            _mount_args.push_back("-s");
+            _mount_args.push_back("16m");
+            _mount_args.push_back("md");
+            _mount_args.push_back(mount_point.str());
+            break;
+
+        case utils::os_linux:
+            _mount_binary = fs::find_in_path("mount");
+            _mount_args.push_back("-t");
+            _mount_args.push_back("tmpfs");
+            _mount_args.push_back("tmpfs");
+            _mount_args.push_back(mount_point.str());
+            break;
+
+        case utils::os_netbsd:
+            _mount_binary = fs::find_in_path("mount");
+            _mount_args.push_back("-t");
+            _mount_args.push_back("tmpfs");
+            _mount_args.push_back("tmpfs");
+            _mount_args.push_back(mount_point.str());
+            break;
+
+        case utils::os_sunos:
+            _mount_binary = fs::find_in_path("mount");
+            _mount_args.push_back("-F");
+            _mount_args.push_back("tmpfs");
+            _mount_args.push_back("tmpfs");
+            _mount_args.push_back(mount_point.str());
+            break;
+
+        default:
+            ATF_SKIP("Don't know how to mount a file system for testing "
+                     "purposes");
+        }
+
+        if (!_mount_binary)
+            ATF_FAIL("Cannot locate tool '%s'; maybe sbin is not in the PATH?");
+    }
+
+    /// Does the actual mount.
+    void
+    operator()(void) const
+    {
+        PRE(_mount_binary);
+        process::exec(_mount_binary.get(), _mount_args);
+    }
+};
+
+
+}  // anonymous namespace
+
+
+/// Mounts a temporary file system.
+///
+/// This is only provided for testing purposes.  The mounted file system
+/// contains no valuable data.
+///
+/// Note that the calling test case is skipped if the current operating system
+/// is not supported.
+///
+/// \param mount_point The path on which the file system will be mounted.
+void
+utils::mount_tmpfs(const fs::path& mount_point)
+{
+    // SunOS's mount(8) requires paths to be absolute.  To err on the side of
+    // caution, let's make it absolute in all cases.
+    const fs::path abs_mount_point = mount_point.is_absolute() ?
+        mount_point : mount_point.to_absolute();
+
+    const fs::path mount_out("mount.out");
+    const fs::path mount_err("mount.err");
+
+    std::auto_ptr< process::child_with_files > child =
+        process::child_with_files::fork(run_mount_tmpfs(abs_mount_point),
+                                        mount_out, mount_err);
+    const process::status status = child->wait();
+    cat_file("mount stdout: ", mount_out);
+    cat_file("mount stderr: ", mount_err);
+    ATF_REQUIRE(status.exited());
+    ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
 }

@@ -31,6 +31,10 @@
 #endif
 
 extern "C" {
+#if defined(HAVE_UNMOUNT)
+#   include <sys/param.h>
+#   include <sys/mount.h>
+#endif
 #include <sys/stat.h>
 
 #include <dirent.h>
@@ -41,8 +45,10 @@ extern "C" {
 #include <cstdlib>
 #include <cstring>
 #include <sstream>
+#include <string>
 
 #include "utils/auto_array.ipp"
+#include "utils/datetime.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/exceptions.hpp"
@@ -50,12 +56,47 @@ extern "C" {
 #include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
+#include "utils/process/children.ipp"
 #include "utils/sanity.hpp"
 
+namespace datetime = utils::datetime;
 namespace fs = utils::fs;
+namespace process = utils::process;
 
 using utils::none;
 using utils::optional;
+
+
+/// Specifies if a real unmount(2) is available.
+static const bool have_unmount2 =
+#if defined(HAVE_UNMOUNT)
+    true;
+#else
+    false;
+#endif
+
+
+#if !defined(UMOUNT)
+/// Substitute value for the path to umount(8).
+#   define UMOUNT "do-not-use-this-value"
+#else
+#   if defined(HAVE_UNMOUNT)
+#       error "umount(8) detected when unmount(2) is also available"
+#   endif
+#endif
+
+
+#if !defined(HAVE_UNMOUNT)
+/// Fake unmount(2) function for systems without it.
+///
+/// This is only provided to allow our code to compile in all platforms
+/// regardless of whether they actually have an unmount(2) or not.
+static void
+unmount(const char* unused_path, const int unused_flags)
+{
+    UNREACHABLE_MSG("Can't be called if have_unmount2 is false");
+}
+#endif
 
 
 namespace {
@@ -123,6 +164,103 @@ cleanup_aux(const fs::path& root, const fs::path& current)
                                  "while cleaning up %s") %
                                current % root, original_errno);
     }
+}
+
+
+/// Unmounts a file system using unmount(2).
+///
+/// \pre unmount(2) must be available; i.e. have_unmount2 must be true.
+///
+/// \param mount_point The file system to unmount.
+///
+/// \throw fs::system_error If there is a problem unmounting the file system.
+static void
+unmount_with_unmount2(const fs::path& mount_point)
+{
+    PRE(have_unmount2);
+
+    static const int unmount_retries = 5;
+    static const int unmount_retry_delay_seconds = 5;
+
+    int retries = unmount_retries;
+
+retry_unmount:
+    if (::unmount(mount_point.c_str(), 0) == -1) {
+        if (errno == EBUSY && retries > 0) {
+            LD(F("Unmount failed; sleeping before retrying"));
+            retries--;
+            ::sleep(unmount_retry_delay_seconds);
+            goto retry_unmount;
+        } else {
+            const int original_errno = errno;
+            throw fs::system_error(F("Failed to unmount '%s'") %
+                                   mount_point, original_errno);
+        }
+    }
+}
+
+
+/// Functor to execute umount(8).
+class run_umount {
+    fs::path _mount_point;
+
+public:
+    /// Constructs the functor.
+    ///
+    /// \param mount_point The file system to unmount.
+    run_umount(const fs::path& mount_point) :
+        _mount_point(mount_point)
+    {
+    }
+
+    /// Executes umount(8) to unmount the file system.
+    void
+    operator()(void) {
+        const fs::path umount_binary(UMOUNT);
+        if (!umount_binary.is_absolute())
+            LW(F("Builtin path '%s' to umount(8) is not absolute") %
+               umount_binary.str());
+
+        std::vector< std::string > args;
+        args.push_back(umount_binary.str());
+        args.push_back(_mount_point.str());
+        process::exec(umount_binary, args);
+    };
+};
+
+
+/// Unmounts a file system using umount(8).
+///
+/// \pre umount(2) must not be available; i.e. have_unmount2 must be false.
+///
+/// \param mount_point The file system to unmount.
+///
+/// \throw fs::error If there is a problem unmounting the file system.
+static void
+unmount_with_umount8(const fs::path& mount_point)
+{
+    PRE(!have_unmount2);
+
+    static const datetime::delta timeout(30, 0);
+
+    std::auto_ptr< process::child_with_output > child(
+        process::child_with_output::fork(run_umount(mount_point)));
+
+    try {
+        std::string line;
+        while (std::getline(child->output(), line).good()) {
+            LI(F("umount(8) output: %s") % line);
+        }
+    } catch (...) {
+        // Just ignore this.  It is not that important to capture the
+        // messages, yet we want to ensure we wait for the child process.
+        LD("Caught exception while processing umount(8) output");
+    }
+
+    const process::status status = child->wait(timeout);
+    if (!status.exited() || status.exitstatus() != EXIT_SUCCESS)
+        throw fs::error(F("umount(8) failed while unmounting '%s'") %
+                        mount_point);
 }
 
 
@@ -276,4 +414,27 @@ fs::mkdtemp(const path& path_template)
                                original_errno);
     }
     return fs::path(buf.get());
+}
+
+
+/// Unmounts a file system.
+///
+/// \param mount_point The file system to unmount.
+///
+/// \throw fs::error If there is any problem unmounting the file system.
+void
+fs::unmount(const path& mount_point)
+{
+    // FreeBSD's unmount(2) requires paths to be absolute.  To err on the side
+    // of caution, let's make it absolute in all cases.
+    const path abs_mount_point = mount_point.is_absolute() ?
+        mount_point : mount_point.to_absolute();
+
+    if (have_unmount2) {
+        LD(F("Unmounting %s using unmount(2)") % abs_mount_point);
+        unmount_with_unmount2(abs_mount_point);
+    } else {
+        LD(F("Unmounting %s using umount(8)") % abs_mount_point);
+        unmount_with_umount8(abs_mount_point);
+    }
 }

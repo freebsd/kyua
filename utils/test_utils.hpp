@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,11 +46,26 @@
 namespace utils {
 
 
+/// Operating systems recognized by the helper test routines.
+enum os_type {
+    os_unsupported = 0,
+    os_freebsd,
+    os_linux,
+    os_netbsd,
+    os_sunos,
+};
+
+
+/// The current operating system.
+extern os_type current_os;
+
+
 void cat_file(const std::string&, const fs::path&);
 void create_file(const fs::path&);
 bool grep_file(const std::string&, const fs::path&);
 bool grep_string(const std::string&, const std::string&);
 bool grep_vector(const std::string&, const std::vector< std::string >&);
+void mount_tmpfs(const fs::path&);
 
 
 }  // namespace utils
