@@ -517,10 +517,9 @@ bogus_config_body() {
 Hello, world.
 EOF
 
-    cat >experr <<EOF
-kyua: E: Load of '${HOME}/.kyuarc' failed: Failed to load Lua file '${HOME}/.kyuarc': ${HOME}/.kyuarc:2: '<name>' expected near '<eof>'.
-EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua test
+    atf_check -s exit:1 -o empty \
+        -e match:"^kyua: E: Load of '.*kyuarc' failed: Failed to load Lua" \
+        kyua test
 }
 
 
