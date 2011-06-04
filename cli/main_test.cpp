@@ -153,7 +153,7 @@ ATF_TEST_CASE_BODY(detail__default_log_name__hardcoded)
     cmdline::init("progname3");
 
     utils::unsetenv("HOME");
-    utils::unsetenv("LOGDIR");
+    utils::unsetenv("TMPDIR");
     ATF_REQUIRE_EQ(fs::path("/tmp/progname3.20110221-211500.log"),
                    cli::detail::default_log_name());
 }
