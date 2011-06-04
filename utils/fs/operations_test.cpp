@@ -29,13 +29,18 @@
 extern "C" {
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 
 #include <dirent.h>
+#include <signal.h>
+#include <unistd.h>
 }
 
 #include <cerrno>
+#include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <iostream>
 
 #include <atf-c++.hpp>
 
@@ -83,8 +88,18 @@ lookup(const char* dir, const char* name, const int expected_type)
 }  // anonymous namespace
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(cleanup__empty);
-ATF_TEST_CASE_BODY(cleanup__empty)
+ATF_TEST_CASE_WITHOUT_HEAD(cleanup__file);
+ATF_TEST_CASE_BODY(cleanup__file)
+{
+    utils::create_file(fs::path("root"));
+    ATF_REQUIRE(lookup(".", "root", DT_REG));
+    fs::cleanup(fs::path("root"));
+    ATF_REQUIRE(!lookup(".", "root", DT_REG));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(cleanup__subdir__empty);
+ATF_TEST_CASE_BODY(cleanup__subdir__empty)
 {
     fs::mkdir(fs::path("root"), 0755);
     ATF_REQUIRE(lookup(".", "root", DT_DIR));
@@ -93,8 +108,8 @@ ATF_TEST_CASE_BODY(cleanup__empty)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(cleanup__files_and_directories);
-ATF_TEST_CASE_BODY(cleanup__files_and_directories)
+ATF_TEST_CASE_WITHOUT_HEAD(cleanup__subdir__files_and_directories);
+ATF_TEST_CASE_BODY(cleanup__subdir__files_and_directories)
 {
     fs::mkdir(fs::path("root"), 0755);
     utils::create_file(fs::path("root/.hidden_file"));
@@ -112,8 +127,8 @@ ATF_TEST_CASE_BODY(cleanup__files_and_directories)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(cleanup__unprotect);
-ATF_TEST_CASE_BODY(cleanup__unprotect)
+ATF_TEST_CASE_WITHOUT_HEAD(cleanup__subdir__unprotect);
+ATF_TEST_CASE_BODY(cleanup__subdir__unprotect)
 {
     fs::mkdir(fs::path("root"), 0755);
     fs::mkdir(fs::path("root/foo"), 0755);
@@ -122,6 +137,159 @@ ATF_TEST_CASE_BODY(cleanup__unprotect)
     ATF_REQUIRE(::chmod("root/foo", 0555) != -1);
     fs::cleanup(fs::path("root"));
     ATF_REQUIRE(!lookup(".", "root", DT_DIR));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(cleanup__subdir__links);
+ATF_TEST_CASE_BODY(cleanup__subdir__links)
+{
+    fs::mkdir(fs::path("root"), 0755);
+    fs::mkdir(fs::path("root/dir1"), 0755);
+    ATF_REQUIRE(::symlink("../../root", "root/dir1/loop") != -1);
+    ATF_REQUIRE(lookup(".", "root", DT_DIR));
+    fs::cleanup(fs::path("root"));
+    ATF_REQUIRE(!lookup(".", "root", DT_DIR));
+}
+
+
+ATF_TEST_CASE(cleanup__mount_point__root__one);
+ATF_TEST_CASE_HEAD(cleanup__mount_point__root__one)
+{
+    set_md_var("require.user", "root");
+}
+ATF_TEST_CASE_BODY(cleanup__mount_point__root__one)
+{
+    fs::mkdir(fs::path("root"), 0755);
+    utils::mount_tmpfs(fs::path("root"));
+    fs::cleanup(fs::path("root"));
+    ATF_REQUIRE(!lookup(".", "root", DT_DIR));
+}
+
+
+ATF_TEST_CASE(cleanup__mount_point__root__many);
+ATF_TEST_CASE_HEAD(cleanup__mount_point__root__many)
+{
+    set_md_var("require.user", "root");
+}
+ATF_TEST_CASE_BODY(cleanup__mount_point__root__many)
+{
+    fs::mkdir(fs::path("root"), 0755);
+    utils::mount_tmpfs(fs::path("root"));
+    utils::mount_tmpfs(fs::path("root"));
+    fs::cleanup(fs::path("root"));
+    ATF_REQUIRE(!lookup(".", "root", DT_DIR));
+}
+
+
+ATF_TEST_CASE(cleanup__mount_point__subdir__one);
+ATF_TEST_CASE_HEAD(cleanup__mount_point__subdir__one)
+{
+    set_md_var("require.user", "root");
+}
+ATF_TEST_CASE_BODY(cleanup__mount_point__subdir__one)
+{
+    fs::mkdir(fs::path("root"), 0755);
+    fs::mkdir(fs::path("root/dir1"), 0755);
+    utils::create_file(fs::path("root/zz"));
+    utils::mount_tmpfs(fs::path("root/dir1"));
+    fs::cleanup(fs::path("root"));
+    ATF_REQUIRE(!lookup(".", "root", DT_DIR));
+}
+
+
+ATF_TEST_CASE(cleanup__mount_point__subdir__many);
+ATF_TEST_CASE_HEAD(cleanup__mount_point__subdir__many)
+{
+    set_md_var("require.user", "root");
+}
+ATF_TEST_CASE_BODY(cleanup__mount_point__subdir__many)
+{
+    fs::mkdir(fs::path("root"), 0755);
+    fs::mkdir(fs::path("root/dir1"), 0755);
+    utils::create_file(fs::path("root/zz"));
+    utils::mount_tmpfs(fs::path("root/dir1"));
+    utils::mount_tmpfs(fs::path("root/dir1"));
+    fs::cleanup(fs::path("root"));
+    ATF_REQUIRE(!lookup(".", "root", DT_DIR));
+}
+
+
+ATF_TEST_CASE(cleanup__mount_point__nested);
+ATF_TEST_CASE_HEAD(cleanup__mount_point__nested)
+{
+    set_md_var("require.user", "root");
+}
+ATF_TEST_CASE_BODY(cleanup__mount_point__nested)
+{
+    fs::mkdir(fs::path("root"), 0755);
+    fs::mkdir(fs::path("root/dir1"), 0755);
+    fs::mkdir(fs::path("root/dir1/dir2"), 0755);
+    fs::mkdir(fs::path("root/dir3"), 0755);
+    utils::mount_tmpfs(fs::path("root/dir1/dir2"));
+    utils::mount_tmpfs(fs::path("root/dir3"));
+    fs::mkdir(fs::path("root/dir1/dir2/dir4"), 0755);
+    utils::mount_tmpfs(fs::path("root/dir1/dir2/dir4"));
+    fs::mkdir(fs::path("root/dir1/dir2/not-mount-point"), 0755);
+    fs::cleanup(fs::path("root"));
+    ATF_REQUIRE(!lookup(".", "root", DT_DIR));
+}
+
+
+ATF_TEST_CASE(cleanup__mount_point__links);
+ATF_TEST_CASE_HEAD(cleanup__mount_point__links)
+{
+    set_md_var("require.user", "root");
+}
+ATF_TEST_CASE_BODY(cleanup__mount_point__links)
+{
+    fs::mkdir(fs::path("root"), 0755);
+    fs::mkdir(fs::path("root/dir1"), 0755);
+    fs::mkdir(fs::path("root/dir3"), 0755);
+    utils::mount_tmpfs(fs::path("root/dir1"));
+    ATF_REQUIRE(::symlink("../dir3", "root/dir1/link") != -1);
+    fs::cleanup(fs::path("root"));
+    ATF_REQUIRE(!lookup(".", "root", DT_DIR));
+}
+
+
+ATF_TEST_CASE(cleanup__mount_point__busy);
+ATF_TEST_CASE_HEAD(cleanup__mount_point__busy)
+{
+    set_md_var("require.user", "root");
+}
+ATF_TEST_CASE_BODY(cleanup__mount_point__busy)
+{
+    fs::mkdir(fs::path("root"), 0755);
+    fs::mkdir(fs::path("root/dir1"), 0755);
+    utils::mount_tmpfs(fs::path("root/dir1"));
+
+    pid_t pid = ::fork();
+    ATF_REQUIRE(pid != -1);
+    if (pid == 0) {
+        if (::chdir("root/dir1") == -1)
+            std::abort();
+
+        utils::create_file(fs::path("dont-delete-me"));
+        utils::create_file(fs::path("../../done"));
+
+        ::pause();
+        std::exit(EXIT_SUCCESS);
+    } else {
+        std::cerr << "Waiting for child to finish preparations\n";
+        while (!fs::exists(fs::path("done"))) {}
+        std::cerr << "Child done; cleaning up\n";
+
+        ATF_REQUIRE_THROW(fs::error, fs::cleanup(fs::path("root")));
+        ATF_REQUIRE(fs::exists(fs::path("root/dir1/dont-delete-me")));
+
+        std::cerr << "Killing child\n";
+        ATF_REQUIRE(::kill(pid, SIGKILL) != -1);
+        int status;
+        ATF_REQUIRE(::waitpid(pid, &status, 0) != -1);
+
+        fs::cleanup(fs::path("root"));
+        ATF_REQUIRE(!lookup(".", "root", DT_DIR));
+    }
 }
 
 
@@ -342,9 +510,18 @@ ATF_TEST_CASE_BODY(unmount__fail)
 
 ATF_INIT_TEST_CASES(tcs)
 {
-    ATF_ADD_TEST_CASE(tcs, cleanup__empty);
-    ATF_ADD_TEST_CASE(tcs, cleanup__files_and_directories);
-    ATF_ADD_TEST_CASE(tcs, cleanup__unprotect);
+    ATF_ADD_TEST_CASE(tcs, cleanup__file);
+    ATF_ADD_TEST_CASE(tcs, cleanup__subdir__empty);
+    ATF_ADD_TEST_CASE(tcs, cleanup__subdir__files_and_directories);
+    ATF_ADD_TEST_CASE(tcs, cleanup__subdir__unprotect);
+    ATF_ADD_TEST_CASE(tcs, cleanup__subdir__links);
+    ATF_ADD_TEST_CASE(tcs, cleanup__mount_point__root__one);
+    ATF_ADD_TEST_CASE(tcs, cleanup__mount_point__root__many);
+    ATF_ADD_TEST_CASE(tcs, cleanup__mount_point__subdir__one);
+    ATF_ADD_TEST_CASE(tcs, cleanup__mount_point__subdir__many);
+    ATF_ADD_TEST_CASE(tcs, cleanup__mount_point__nested);
+    ATF_ADD_TEST_CASE(tcs, cleanup__mount_point__links);
+    ATF_ADD_TEST_CASE(tcs, cleanup__mount_point__busy);
 
     ATF_ADD_TEST_CASE(tcs, current_path__ok);
     ATF_ADD_TEST_CASE(tcs, current_path__enoent);

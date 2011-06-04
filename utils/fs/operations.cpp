@@ -102,68 +102,241 @@ unmount(const char* unused_path, const int unused_flags)
 namespace {
 
 
-/// Helper function for the public fs::cleanup() routine.
+/// Scans a directory and executes a callback on each argument.
 ///
-/// This helper function preserves the name of the top-level directory beeing
-/// cleaned so that it can be reported in error messages.
+/// Note that this does not raise any file system-related exception on purpose.
+/// Errors are logged and reported to the caller in the form of a return value.
 ///
-/// TODO(jmmv): This should be careful not to cross mount points.  Not sure if
-/// this should also take care of attempting to unmount such mount points.
-/// (Consider a test case doing full integration testing of a file system and it
-/// fails to unmount such file system from within its work directory).
+/// \param directory The directory to scan.
+/// \param callback The function to execute on each entry.
+/// \param argument A cookie to pass to the callback function.
 ///
-/// \param root The directory where the cleanup traversal starts.  Must not
-///     change in any recursive call.
-/// \param current The directory being cleaned.
-///
-/// \throw fs::error If there is a problem removing any directory or file.
-static void
-cleanup_aux(const fs::path& root, const fs::path& current)
+/// \return True if the directory scan and the calls to the callback function
+/// are all successful; false otherwise.
+template< class Argument >
+bool
+try_iterate_directory(const fs::path& directory,
+                      bool (*callback)(const fs::path&, const Argument&),
+                      const Argument& argument)
 {
-    if (::chmod(current.c_str(), 0700) == -1) {
-        // We attempt to unprotect the directory to allow modifications, but if
-        // this fails, we cannot do much more.  Just ignore the error and hope
-        // that the removal of the directory and the files works later.
+    bool ok = true;
+
+    DIR* dirp;
+retry:
+    dirp = ::opendir(directory.c_str());
+    if (dirp == NULL) {
+        const int original_errno = errno;
+        if (original_errno == EINTR)
+            goto retry;
+        LW(F("Failed to open directory %s: %s") % directory.str() %
+           std::strerror(original_errno));
+        ok &= false;
+    } else {
+        try {
+            ::dirent* dp;
+            while ((dp = ::readdir(dirp)) != NULL) {
+                const std::string name = dp->d_name;
+                if (name == "." || name == "..")
+                    continue;
+
+                ok &= callback(directory / name, argument);
+            }
+        } catch (...) {
+            LW(F("Unexpected exception while processing directory %s") %
+               directory.str());
+            ::closedir(dirp);
+            throw;
+        }
+        ::closedir(dirp);
+    }
+
+    return ok;
+}
+
+
+/// Stats a file, without following links.
+///
+/// Note that this does not raise any file system-related exception on purpose.
+/// Errors are logged and reported to the caller in the form of a return value.
+///
+/// \param path The file to stat.
+///
+/// \return The stat structure on success; none on failure.
+static optional< struct ::stat >
+try_stat(const fs::path& path)
+{
+    struct ::stat sb;
+
+retry:
+    if (::lstat(path.c_str(), &sb) == -1) {
+        const int original_errno = errno;
+        if (original_errno == EINTR)
+            goto retry;
+        LW(F("Cannot get information about %s: %s") % path %
+           std::strerror(original_errno));
+        return none;
+    } else
+        return utils::make_optional(sb);
+}
+
+
+/// Removes a directory.
+///
+/// Note that this does not raise any file system-related exception on purpose.
+/// Errors are logged and reported to the caller in the form of a return value.
+///
+/// \param path The directory to remove.
+///
+/// \return True on success; false otherwise.
+static bool
+try_rmdir(const fs::path& path)
+{
+    if (::rmdir(path.c_str()) == -1) {
+        const int original_errno = errno;
+        LW(F("Failed to remove directory %s: %s") %
+           path % std::strerror(original_errno));
+        return false;
+    } else
+        return true;
+}
+
+
+/// Removes a file.
+///
+/// Note that this does not raise any file system-related exception on purpose.
+/// Errors are logged and reported to the caller in the form of a return value.
+///
+/// \param path The file to remove.
+///
+/// \return True on success; false otherwise.
+static bool
+try_unlink(const fs::path& path)
+{
+    if (::unlink(path.c_str()) == -1) {
+        const int original_errno = errno;
+        LW(F("Failed to remove file %s: %s") %
+           path % std::strerror(original_errno));
+        return false;
+    } else
+        return true;
+}
+
+
+/// Unmounts a mount point.
+///
+/// Note that this does not raise any file system-related exception on purpose.
+/// Errors are logged and reported to the caller in the form of a return value.
+///
+/// \param path The location to unmount.
+///
+/// \return True on success; false otherwise.
+static bool
+try_unmount(const fs::path& path)
+{
+    try {
+        fs::unmount(path);
+        return true;
+    } catch (const fs::error& e) {
+        LW(F("Failed to unmount %s: %s") % path % e.what());
+        return false;
+    }
+}
+
+
+/// Attempts to weaken the permissions of a file.
+///
+/// Note that this does not raise any file system-related exception on purpose.
+/// Errors are logged and reported to the caller in the form of a return value.
+///
+/// \param file The file to unprotect.
+///
+/// \return True on success; false otherwise.
+static bool
+try_unprotect(const fs::path& path)
+{
+    if (::chmod(path.c_str(), 0700) == -1) {
         const int original_errno = errno;
         LW(F("Failed to chmod 0700 temporary directory '%s': %s") %
-           current.str() % std::strerror(original_errno));
+           path % std::strerror(original_errno));
+        return false;
+    } else
+        return true;
+}
+
+
+/// Traverses a hierarchy unmounting any mount points in it.
+///
+/// Note that this does not raise any file system-related exception on purpose.
+/// Errors are logged and reported to the caller in the form of a return value.
+///
+/// \param current_path The file or directory to traverse.
+/// \param parent_sb The stat structure of the enclosing directory.
+///
+/// \return True on success; false otherwise.
+static bool
+recursive_unmount(const fs::path& current_path, const struct ::stat& parent_sb)
+{
+    bool ok = true;
+
+    const optional< struct ::stat > current_sb = try_stat(current_path);
+    if (!current_sb)
+        ok &= false;
+    else {
+        if (S_ISDIR(current_sb.get().st_mode)) {
+            INV(!S_ISLNK(current_sb.get().st_mode));
+            ok &= try_iterate_directory(current_path, recursive_unmount,
+                                        current_sb.get());
+        }
+
+        if (current_sb.get().st_dev != parent_sb.st_dev)
+            ok &= try_unmount(current_path);
     }
 
-    DIR* dirp = ::opendir(current.c_str());
-    if (dirp == NULL)
-        throw fs::error(F("Failed to open directory %s while cleaning up %s") %
-                        current % root);
-    try {
-        struct dirent* dp;
-        while ((dp = ::readdir(dirp)) != NULL) {
-            const std::string name = dp->d_name;
-            if (name == "." || name == "..")
-                continue;
+    return ok;
+}
 
-            const fs::path entry_path = current / name;
-            if (dp->d_type == DT_DIR) {
-                cleanup_aux(root, entry_path);
+
+/// Traverses a hierarchy and removes all of its contents.
+///
+/// This honors mount points: when a mount point is encountered, it is traversed
+/// in search for other mount points, but no files within any of these are
+/// removed.
+///
+/// Note that this does not raise any file system-related exception on purpose.
+/// Errors are logged and reported to the caller in the form of a return value.
+///
+/// \param current_path The file or directory to traverse.
+/// \param parent_sb The stat structure of the enclosing directory.
+///
+/// \return True on success; false otherwise.
+static bool
+recursive_cleanup(const fs::path& current_path, const struct ::stat& parent_sb)
+{
+    bool ok = true;
+
+    ok &= try_unprotect(current_path);
+
+    const optional< struct ::stat > current_sb = try_stat(current_path);
+    if (!current_sb)
+        ok &= false;
+    else {
+        if (current_sb.get().st_dev != parent_sb.st_dev) {
+            ok &= recursive_unmount(current_path, parent_sb);
+            if (ok)
+                ok &= recursive_cleanup(current_path, parent_sb);
+        } else {
+            if (S_ISDIR(current_sb.get().st_mode)) {
+                INV(!S_ISLNK(current_sb.get().st_mode));
+                ok &= try_iterate_directory(current_path, recursive_cleanup,
+                                            current_sb.get());
+                ok &= try_rmdir(current_path);
             } else {
-                if (::unlink(entry_path.c_str()) == -1) {
-                    const int original_errno = errno;
-                    throw fs::system_error(F("Failed to remove file %s while "
-                                             "cleaning up %s") %
-                                           entry_path % root, original_errno);
-                }
+                ok &= try_unlink(current_path);
             }
         }
-    } catch (...) {
-        ::closedir(dirp);
-        throw;
     }
-    ::closedir(dirp);
 
-    if (::rmdir(current.c_str()) == -1) {
-        const int original_errno = errno;
-        throw fs::system_error(F("Failed to remove directory %s "
-                                 "while cleaning up %s") %
-                               current % root, original_errno);
-    }
+    return ok;
 }
 
 
@@ -179,8 +352,8 @@ unmount_with_unmount2(const fs::path& mount_point)
 {
     PRE(have_unmount2);
 
-    static const int unmount_retries = 5;
-    static const int unmount_retry_delay_seconds = 5;
+    static const int unmount_retries = 3;
+    static const int unmount_retry_delay_seconds = 2;
 
     int retries = unmount_retries;
 
@@ -267,15 +440,29 @@ unmount_with_umount8(const fs::path& mount_point)
 }  // anonymous namespace
 
 
-/// Recursively removes a directory.
+/// Recursively removes a directory or a file.
 ///
-/// \param root The directory to remove.
+/// \param root The directory or file to remove.
 ///
 /// \throw fs::error If there is a problem removing any directory or file.
 void
 fs::cleanup(const fs::path& root)
 {
-    cleanup_aux(root, root);
+    bool ok = true;
+
+    LI(F("Starting cleanup of '%s'") % root.str());
+
+    optional< struct ::stat > parent_sb = try_stat(root.branch_path());
+    if (!parent_sb)
+        ok &= false;
+    else
+        ok &= recursive_cleanup(root, parent_sb.get());
+
+    if (!ok) {
+        LW(F("Cleanup of '%s' failed") % root.str());
+        throw fs::error(F("Failed to clean up '%s'") % root.str());
+    } else
+        LI(F("Cleanup of '%s' succeeded") % root.str());
 }
 
 

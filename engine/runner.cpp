@@ -49,6 +49,7 @@ extern "C" {
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/fs/auto_cleaners.hpp"
+#include "utils/fs/exceptions.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
@@ -406,7 +407,17 @@ run_test_case_safe(const fs::path& root,
     results::result_ptr result = results::adjust(test_case, body_status,
                                                  cleanup_status,
                                                  results::load(result_file));
-    workdir.cleanup();
+    try {
+        workdir.cleanup();
+    } catch (const fs::error& e) {
+        if (result->good()) {
+            result = results::make_result(results::broken(F(
+                "Could not clean up test work directory: %s") % e.what()));
+        } else {
+            LW(F("Not reporting work directory clean up failure because the "
+                 "test is already broken: %s") % e.what());
+        }
+    }
     return result;
 }
 
