@@ -64,6 +64,12 @@ namespace signals = utils::signals;
 namespace {
 
 
+/// Body for a process that spawns a subprocess.
+///
+/// This is supposed to be passed as a hook to one of the fork() functions.  The
+/// fork() functions run their children in a new process group, so it is
+/// expected that the subprocess we spawn here is part of this process group as
+/// well.
 static void
 child_blocking_subchild(void)
 {
@@ -81,12 +87,24 @@ child_blocking_subchild(void)
         output.close();
         std::exit(EXIT_SUCCESS);
     }
+    UNREACHABLE;
 }
 
 
-static void
-child_blocking_subchild_check(const process::status& status)
+/// Ensures that the subprocess started by child_blocking_subchild is dead.
+///
+/// This function has to be called after running the child_blocking_subchild
+/// function through a fork call.  It ensures that the subchild spawned is
+/// ready, waits for the process group and ensures that both the child and the
+/// subchild have died.
+///
+/// \param child The child object.
+template< class Child >
+void
+child_blocking_subchild_check(Child child)
 {
+    const process::status status = child->wait();
+
     ATF_REQUIRE(status.exited());
     ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
 
@@ -95,12 +113,21 @@ child_blocking_subchild_check(const process::status& status)
     pid_t pid;
     input >> pid;
     input.close();
+    std::cout << F("Subprocess was %d; checking if it died\n") % pid;
 
+    int retries = 3;
+retry:
     if (::kill(pid, SIGCONT) != -1 || errno != ESRCH) {
         // Looks like the subchild did not die.  Note that this might be
         // inaccurate: the system may have spawned a new process with the same
         // pid as our subchild... but in practice, this does not happen because
         // most systems do not immediately reuse pid numbers.
+        if (retries > 0) {
+            std::cout << "Subprocess not dead yet; retrying wait\n";
+            ::sleep(1);
+            retries--;
+            goto retry;
+        }
         ATF_FAIL(F("The subprocess %d of our child was not killed") % pid);
     }
 }
@@ -296,9 +323,8 @@ ATF_TEST_CASE_BODY(child_with_files__wait_killpg)
     std::auto_ptr< process::child_with_files > child =
         process::child_with_files::fork(child_blocking_subchild,
                                         fs::path("out"), fs::path("err"));
-    const process::status status = child->wait();
 
-    child_blocking_subchild_check(status);
+    child_blocking_subchild_check(child);
 }
 
 
@@ -429,9 +455,7 @@ ATF_TEST_CASE_BODY(child_with_output__wait_killpg)
 {
     std::auto_ptr< process::child_with_output > child =
         process::child_with_output::fork(child_blocking_subchild);
-    const process::status status = child->wait();
-
-    child_blocking_subchild_check(status);
+    child_blocking_subchild_check(child);
 }
 
 
