@@ -72,7 +72,7 @@ static int timer_pid = 0;
 static void
 timer_callback(void)
 {
-    ::kill(timer_pid, SIGKILL);
+    ::kill(timer_pid, SIGCONT);
 }
 
 
@@ -83,14 +83,17 @@ template< class Child >
 void
 interrupted_check(Child& child)
 {
-    timer_pid = child->pid();
+    timer_pid = ::getpid();
     signals::timer timer(datetime::delta(0, 500000), timer_callback);
 
+    std::cout << "Waiting for subprocess; should be aborted\n";
     ATF_REQUIRE_THROW(process::system_error,
                       child->wait(datetime::delta()));
 
     timer.unprogram();
 
+    std::cout << "Now terminating process for real\n";
+    ::kill(child->pid(), SIGKILL);
     const process::status status = child->wait(datetime::delta());
     ATF_REQUIRE(status.signaled());
 
@@ -223,7 +226,12 @@ template< int Microseconds >
 static void
 child_wait(void)
 {
-    ::usleep(Microseconds);
+    std::cout << "Sleeping in subprocess\n";
+    if (Microseconds > 1000000)
+        ::sleep(Microseconds / 1000000);
+    else
+        ::usleep(Microseconds);
+    std::cout << "Resuming subprocess and exiting\n";
     utils::create_file(fs::path("finished"));
     std::exit(EXIT_SUCCESS);
 }
