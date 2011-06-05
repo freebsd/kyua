@@ -836,6 +836,39 @@ EOF
 }
 
 
+utils_test_case interrupt
+interrupt_body() {
+    cat >Kyuafile <<EOF
+syntax("kyuafile", 1)
+test_suite("integration")
+atf_test_program{name="interrupts"}
+EOF
+    utils_cp_helper interrupts .
+
+    kyua test \
+        -v integration.X-body-cookie="$(pwd)/body" \
+        -v integration.X-cleanup-cookie="$(pwd)/cleanup" \
+        >stdout 2>stderr &
+    pid=${!}
+
+    while [ ! -f body ]; do
+        echo "Waiting for body to start"
+        sleep 1
+    done
+    sleep 1
+
+    kill -INT ${pid}
+    wait ${pid}
+    [ ${?} -ne 0 ] || atf_fail 'No error code reported'
+
+    [ -f cleanup ] || atf_fail 'Cleanup part not executed after signal'
+
+    atf_check -s exit:0 -o ignore -e empty grep 'Signal caught' stderr
+    atf_check -s exit:0 -o ignore -e empty \
+        grep 'kyua: E: Interrupted by signal' stderr
+}
+
+
 atf_init_test_cases() {
     atf_add_test_case one_test_program__all_pass
     atf_add_test_case one_test_program__some_fail
@@ -871,6 +904,8 @@ atf_init_test_cases() {
 
     atf_add_test_case kyuafile_flag__no_args
     atf_add_test_case kyuafile_flag__some_args
+
+    atf_add_test_case interrupt
 
     atf_add_test_case missing_test_program
     atf_add_test_case missing_test_case

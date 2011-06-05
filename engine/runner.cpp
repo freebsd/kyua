@@ -33,12 +33,14 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include <cerrno>
 #include <cstdlib>
 #include <iostream>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
+#include "engine/exceptions.hpp"
 #include "engine/results.ipp"
 #include "engine/runner.hpp"
 #include "engine/test_case.hpp"
@@ -59,6 +61,7 @@ extern "C" {
 #include "utils/sanity.hpp"
 #include "utils/signals/exceptions.hpp"
 #include "utils/signals/misc.hpp"
+#include "utils/signals/programmer.hpp"
 
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
@@ -74,6 +77,45 @@ using utils::optional;
 
 
 namespace {
+
+
+/// Number of the stop signal.
+///
+/// This is set by interrupt_handler() when it receives a signal that ought to
+/// terminate the execution of the current test case.
+static int interrupted_signo = 0;
+
+
+/// Signal handler for termination signals.
+///
+/// \param signo The signal received.
+///
+/// \post interrupted_signo is set to the received signal.
+static void
+interrupt_handler(const int signo)
+{
+    const char* message = "[-- Signal caught; please wait for clean up --]\n";
+    ::write(STDERR_FILENO, message, std::strlen(message));
+    interrupted_signo = signo;
+
+    POST(interrupted_signo != 0);
+    POST(interrupted_signo == signo);
+}
+
+
+/// Syntactic sugar to validate if there is a pending signal.
+///
+/// \throw interrupted_error If there is a pending signal that ought to
+///     terminate the execution of the program.
+static void
+check_interrupt(void)
+{
+    LD("Checking for pending interrupt signals");
+    if (interrupted_signo != 0) {
+        LI("Interrupt pending; raising error to cause cleanup");
+        throw engine::interrupted_error(interrupted_signo);
+    }
+}
 
 
 /// Atomically creates a new work directory with a unique name.
@@ -342,9 +384,82 @@ fork_and_wait(Hook hook, const fs::path& outfile, const fs::path& errfile,
         process::child_with_files::fork(hook, outfile, errfile);
     try {
         return utils::make_optional(child->wait(timeout));
+    } catch (const process::system_error& error) {
+        if (error.original_errno() == EINTR) {
+            (void)::kill(child->pid(), SIGKILL);
+            (void)child->wait();
+            check_interrupt();
+            UNREACHABLE;
+        } else
+            throw error;
     } catch (const process::timeout_error& error) {
         return none;
     }
+}
+
+
+/// Auxiliary function to execute a test case within a work directory.
+///
+/// This is an auxiliary function for run_test_case_safe that is protected from
+/// the reception of common termination signals.
+///
+/// \param root The root of the test suite, from which the test case will be
+///     loaded.
+/// \param test_case The test case to execute.
+/// \param config The values for the current engine configuration.
+/// \param test_suite The name of the test suite.
+/// \param workdir The directory in which the test case has to be run.
+///
+/// \return The result of the execution of the test case.
+///
+/// \throw interrupted_error If the execution has been interrupted by the user.
+static results::result_ptr
+run_test_case_safe_workdir(const fs::path& root,
+                           const engine::test_case& test_case,
+                           const user_files::config& config,
+                           const std::string& test_suite,
+                           const fs::path& workdir)
+{
+    const fs::path rundir(workdir / "run");
+    fs::mkdir(rundir, 0755);
+
+    if (can_do_unprivileged(test_case, config)) {
+        set_owner(workdir, config.unprivileged_user.get());
+        set_owner(rundir, config.unprivileged_user.get());
+    }
+
+    const fs::path result_file(workdir / "result.txt");
+
+    check_interrupt();
+
+    LI(F("Running test case body for '%s'") % test_case.identifier.str());
+    optional< process::status > body_status;
+    try {
+        body_status = fork_and_wait(
+            execute_test_case_body(root, test_case, result_file, rundir, config,
+                                   test_suite),
+            workdir / "stdout.txt", workdir / "stderr.txt", test_case.timeout);
+    } catch (const engine::interrupted_error& e) {
+        // Ignore: we want to attempt to run the cleanup function before we
+        // return.  The call below to check_interrupt will reraise this signal
+        // when it is safe to do so.
+    }
+
+    optional< process::status > cleanup_status;
+    if (test_case.has_cleanup) {
+        LI(F("Running test case cleanup for '%s'") %
+           test_case.identifier.str());
+        cleanup_status = fork_and_wait(
+            execute_test_case_cleanup(root, test_case, rundir, config,
+                                      test_suite),
+            workdir / "cleanup-stdout.txt", workdir / "cleanup-stderr.txt",
+            test_case.timeout);
+    }
+
+    check_interrupt();
+
+    return results::adjust(test_case, body_status, cleanup_status,
+                           results::load(result_file));
 }
 
 
@@ -361,6 +476,8 @@ fork_and_wait(Hook hook, const fs::path& outfile, const fs::path& errfile,
 /// \param test_suite The name of the test suite.
 ///
 /// \return The result of the execution of the test case.
+///
+/// \throw interrupted_error If the execution has been interrupted by the user.
 static results::result_ptr
 run_test_case_safe(const fs::path& root,
                    const engine::test_case& test_case,
@@ -368,57 +485,51 @@ run_test_case_safe(const fs::path& root,
                    const std::string& test_suite)
 {
     const std::string skip_reason = engine::check_requirements(
+
         test_case, config, test_suite);
     if (!skip_reason.empty())
         return results::make_result(results::skipped(skip_reason));
 
+    // These three separate objects are ugly.  Maybe improve in some way.
+    signals::programmer sighup(SIGHUP, interrupt_handler);
+    signals::programmer sigint(SIGINT, interrupt_handler);
+    signals::programmer sigterm(SIGTERM, interrupt_handler);
+
     fs::auto_directory workdir(create_work_directory());
-
-    const fs::path rundir(workdir.directory() / "run");
-    fs::mkdir(rundir, 0755);
-
-    if (can_do_unprivileged(test_case, config)) {
-        set_owner(workdir.directory(), config.unprivileged_user.get());
-        set_owner(rundir, config.unprivileged_user.get());
-    }
-
-    const fs::path result_file(workdir.directory() / "result.txt");
-
-    LI(F("Running test case body for '%s'") % test_case.identifier.str());
-    const optional< process::status > body_status = fork_and_wait(
-        execute_test_case_body(root, test_case, result_file, rundir, config,
-                               test_suite),
-        workdir.directory() / "stdout.txt",
-        workdir.directory() / "stderr.txt",
-        test_case.timeout);
-
-    optional< process::status > cleanup_status;
-    if (test_case.has_cleanup) {
-        LI(F("Running test case cleanup for '%s'") %
-           test_case.identifier.str());
-        cleanup_status = fork_and_wait(
-            execute_test_case_cleanup(root, test_case, rundir, config,
-                                      test_suite),
-            workdir.directory() / "cleanup-stdout.txt",
-            workdir.directory() / "cleanup-stderr.txt",
-            test_case.timeout);
-    }
-
-    results::result_ptr result = results::adjust(test_case, body_status,
-                                                 cleanup_status,
-                                                 results::load(result_file));
     try {
-        workdir.cleanup();
-    } catch (const fs::error& e) {
-        if (result->good()) {
-            result = results::make_result(results::broken(F(
-                "Could not clean up test work directory: %s") % e.what()));
-        } else {
-            LW(F("Not reporting work directory clean up failure because the "
-                 "test is already broken: %s") % e.what());
+        check_interrupt();
+        results::result_ptr result = run_test_case_safe_workdir(
+            root, test_case, config, test_suite, workdir.directory());
+
+        try {
+            workdir.cleanup();
+        } catch (const fs::error& e) {
+            if (result->good()) {
+                result = results::make_result(results::broken(F(
+                    "Could not clean up test work directory: %s") % e.what()));
+            } else {
+                LW(F("Not reporting work directory clean up failure because "
+                     "the test is already broken: %s") % e.what());
+            }
         }
+
+        sighup.unprogram();
+        sigint.unprogram();
+        sigterm.unprogram();
+
+        check_interrupt();
+
+        return result;
+    } catch (const engine::interrupted_error& e) {
+        workdir.cleanup();
+
+        sighup.unprogram();
+        sigint.unprogram();
+        sigterm.unprogram();
+
+        throw e;
     }
-    return result;
+    UNREACHABLE;
 }
 
 
@@ -438,6 +549,8 @@ run_test_case_safe(const fs::path& root,
 /// \param test_suite The name of the test suite.
 ///
 /// \return The result of the test case execution.
+///
+/// \throw interrupted_error If the execution has been interrupted by the user.
 results::result_ptr
 runner::run_test_case(const fs::path& root,
                       const engine::test_case& test_case,
@@ -449,6 +562,8 @@ runner::run_test_case(const fs::path& root,
     results::result_ptr result;
     try {
         result = run_test_case_safe(root, test_case, config, test_suite);
+    } catch (const interrupted_error& e) {
+        throw e;
     } catch (const std::exception& e) {
         result = results::make_result(results::broken(F(
             "The test caused an error in the runtime system: %s") % e.what()));

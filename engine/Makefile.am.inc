@@ -73,8 +73,10 @@ engine_runner_helpers_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_engine_PROGRAMS += engine/runner_test
 engine_runner_test_SOURCES = engine/runner_test.cpp
-engine_runner_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-engine_runner_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) $(ATF_CXX_LIBS)
+engine_runner_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
+                              $(UTILS_TEST_CFLAGS) $(ATF_CXX_CFLAGS)
+engine_runner_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
+                           $(UTILS_TEST_LIBS) $(ATF_CXX_LIBS)
 
 tests_engine_PROGRAMS += engine/test_case_test
 engine_test_case_test_SOURCES = engine/test_case_test.cpp

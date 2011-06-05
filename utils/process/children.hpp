@@ -82,6 +82,8 @@ public:
     static std::auto_ptr< child_with_files > fork(Hook, const fs::path&,
                                                   const fs::path&);
 
+    int pid(void) const;
+
     status wait(const datetime::delta& = datetime::delta());
 };
 
@@ -107,6 +109,7 @@ public:
     static std::auto_ptr< child_with_output > fork(Hook);
 
     std::istream& output(void);
+    int pid(void) const;
 
     status wait(const datetime::delta& = datetime::delta());
 };

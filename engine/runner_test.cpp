@@ -34,6 +34,7 @@ extern "C" {
 }
 
 #include <cerrno>
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
@@ -41,6 +42,7 @@ extern "C" {
 
 #include <atf-c++.hpp>
 
+#include "engine/exceptions.hpp"
 #include "engine/results.ipp"
 #include "engine/runner.hpp"
 #include "engine/test_case.hpp"
@@ -50,9 +52,12 @@ extern "C" {
 #include "utils/fs/operations.hpp"
 #include "utils/env.hpp"
 #include "utils/passwd.hpp"
+#include "utils/process/children.ipp"
+#include "utils/test_utils.hpp"
 
 namespace fs = utils::fs;
 namespace passwd = utils::passwd;
+namespace process = utils::process;
 namespace results = engine::results;
 namespace runner = engine::runner;
 namespace user_files = engine::user_files;
@@ -176,6 +181,80 @@ one_signal_test(const atf::tests::tc* tc, const int signo)
         make_test_case(fs::path("runner_helpers"), "validate_signal"),
         config, "the-suite");
     validate_broken("Results file.*cannot be opened", result.get());
+}
+
+
+/// Functor for the child spawned by the interrupt test.
+class interrupt_child {
+    const atf::tests::tc* _test_case;
+    int _signo;
+
+public:
+    /// Constructs the new functor.
+    ///
+    /// \param test_case_ The test case running this functor.
+    explicit interrupt_child(const atf::tests::tc* test_case_,
+                             const int signo_) :
+        _test_case(test_case_),
+        _signo(signo_)
+    {
+    }
+
+    /// Executes the functor.
+    void
+    operator()(void)
+    {
+        engine::properties_map metadata;
+        metadata["has.cleanup"] = "true";
+        user_files::config config = mock_config;
+        config.test_suites["the-suite"]["control_dir"] =
+            fs::current_path().str();
+        config.test_suites["the-suite"]["monitor_pid"] = F("%d") % ::getpid();
+        config.test_suites["the-suite"]["signo"] = F("%d") % _signo;
+
+        ATF_REQUIRE_THROW(
+            engine::interrupted_error,
+            runner::run_test_case(
+                fs::path(_test_case->get_config_var("srcdir")),
+                make_test_case(fs::path("runner_helpers"), "block_body",
+                               metadata), config, "the-suite"));
+
+        std::ifstream workdir_cookie("workdir");
+        ATF_REQUIRE(workdir_cookie);
+
+        std::string workdir_str;
+        ATF_REQUIRE(std::getline(workdir_cookie, workdir_str).good());
+        std::cout << F("Work directory was: %s\n") % workdir_str;
+
+        bool ok = true;
+
+        if (fs::exists(fs::path(workdir_str))) {
+            std::cout << "Work directory was not cleaned\n";
+            ok = false;
+        }
+
+        if (!fs::exists(fs::path("cleanup"))) {
+            std::cout << "Cleanup not executed\n";
+            ok = false;
+        }
+
+        std::exit(ok ? EXIT_SUCCESS : EXIT_FAILURE);
+    }
+};
+
+
+static void
+one_interrupt_check(const atf::tests::tc* test_case, const int signo)
+{
+    std::auto_ptr< process::child_with_files > child =
+        process::child_with_files::fork(interrupt_child(test_case, signo),
+                                        fs::path("out.txt"),
+                                        fs::path("err.txt"));
+    const process::status status = child->wait();
+    utils::cat_file("out: ", fs::path("out.txt"));
+    utils::cat_file("err: ", fs::path("err.txt"));
+    ATF_REQUIRE(status.exited());
+    ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
 }
 
 
@@ -623,6 +702,27 @@ ATF_TEST_CASE_BODY(run_test_case__timeout_cleanup)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__interrupt_body__sighup);
+ATF_TEST_CASE_BODY(run_test_case__interrupt_body__sighup)
+{
+    one_interrupt_check(this, SIGHUP);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__interrupt_body__sigint);
+ATF_TEST_CASE_BODY(run_test_case__interrupt_body__sigint)
+{
+    one_interrupt_check(this, SIGINT);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__interrupt_body__sigterm);
+ATF_TEST_CASE_BODY(run_test_case__interrupt_body__sigterm)
+{
+    one_interrupt_check(this, SIGTERM);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__missing_results_file);
 ATF_TEST_CASE_BODY(run_test_case__missing_results_file)
 {
@@ -682,6 +782,9 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, run_test_case__required_user__unprivileged__drop);
     ATF_ADD_TEST_CASE(tcs, run_test_case__timeout_body);
     ATF_ADD_TEST_CASE(tcs, run_test_case__timeout_cleanup);
+    ATF_ADD_TEST_CASE(tcs, run_test_case__interrupt_body__sighup);
+    ATF_ADD_TEST_CASE(tcs, run_test_case__interrupt_body__sigint);
+    ATF_ADD_TEST_CASE(tcs, run_test_case__interrupt_body__sigterm);
     ATF_ADD_TEST_CASE(tcs, run_test_case__missing_results_file);
     ATF_ADD_TEST_CASE(tcs, run_test_case__missing_test_program);
 }

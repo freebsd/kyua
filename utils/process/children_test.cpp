@@ -64,6 +64,40 @@ namespace signals = utils::signals;
 namespace {
 
 
+/// Process that the timer will terminate.
+static int timer_pid = 0;
+
+
+/// Callback for a timer to set timer_fired to true.
+static void
+timer_callback(void)
+{
+    ::kill(timer_pid, SIGKILL);
+}
+
+
+/// Validates that interrupting the wait call raises the proper error.
+///
+/// \param child The child to validate.
+template< class Child >
+void
+interrupted_check(Child& child)
+{
+    timer_pid = child->pid();
+    signals::timer timer(datetime::delta(0, 500000), timer_callback);
+
+    ATF_REQUIRE_THROW(process::system_error,
+                      child->wait(datetime::delta()));
+
+    timer.unprogram();
+
+    const process::status status = child->wait(datetime::delta());
+    ATF_REQUIRE(status.signaled());
+
+    ATF_REQUIRE(!fs::exists(fs::path("finished")));
+}
+
+
 /// Body for a process that spawns a subprocess.
 ///
 /// This is supposed to be passed as a hook to one of the fork() functions.  The
@@ -217,6 +251,40 @@ child_wait_with_subchild(void)
 }
 
 
+/// Body for a child process that creates a pidfile.
+static void
+child_write_pid(void)
+{
+    std::ofstream output("pidfile");
+    output << ::getpid() << "\n";
+    output.close();
+    std::exit(EXIT_SUCCESS);
+}
+
+
+/// Validates that the value of the pidfile matches the pid file in the child.
+///
+/// \param child The child to validate.
+template< class Child >
+void
+child_write_pid_check(Child& child)
+{
+    const int pid = child->pid();
+
+    const process::status status = child->wait();
+    ATF_REQUIRE(status.exited());
+    ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
+
+    std::ifstream input("pidfile");
+    ATF_REQUIRE(input);
+    int read_pid;
+    input >> read_pid;
+    input.close();
+
+    ATF_REQUIRE_EQ(read_pid, pid);
+}
+
+
 class do_exec {
     fs::path _program;
     const std::vector< std::string > _args;
@@ -317,6 +385,17 @@ ATF_TEST_CASE_BODY(child_with_files__ok_functor)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(child_with_files__pid);
+ATF_TEST_CASE_BODY(child_with_files__pid)
+{
+    std::auto_ptr< process::child_with_files > child =
+        process::child_with_files::fork(
+            child_write_pid, fs::path("file1.txt"), fs::path("file2.txt"));
+
+    child_write_pid_check(child);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(child_with_files__wait_killpg);
 ATF_TEST_CASE_BODY(child_with_files__wait_killpg)
 {
@@ -354,6 +433,17 @@ ATF_TEST_CASE_BODY(child_with_files__wait_timeout_expired)
     ::sleep(1);
     ATF_REQUIRE(!fs::exists(fs::path("finished")));
     ATF_REQUIRE(!fs::exists(fs::path("subfinished")));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(child_with_files__interrupted);
+ATF_TEST_CASE_BODY(child_with_files__interrupted)
+{
+    std::auto_ptr< process::child_with_files > child =
+        process::child_with_files::fork(child_wait< 30000000 >,
+                                        fs::path("out"), fs::path("err"));
+
+    interrupted_check(child);
 }
 
 
@@ -450,6 +540,16 @@ ATF_TEST_CASE_BODY(child_with_output__ok_functor)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(child_with_output__pid);
+ATF_TEST_CASE_BODY(child_with_output__pid)
+{
+    std::auto_ptr< process::child_with_output > child =
+        process::child_with_output::fork(child_write_pid);
+
+    child_write_pid_check(child);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(child_with_output__wait_killpg);
 ATF_TEST_CASE_BODY(child_with_output__wait_killpg)
 {
@@ -482,6 +582,16 @@ ATF_TEST_CASE_BODY(child_with_output__wait_timeout_expired)
     ::sleep(1);
     ATF_REQUIRE(!fs::exists(fs::path("finished")));
     ATF_REQUIRE(!fs::exists(fs::path("subfinished")));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(child_with_output__interrupted);
+ATF_TEST_CASE_BODY(child_with_output__interrupted)
+{
+    std::auto_ptr< process::child_with_output > child =
+        process::child_with_output::fork(child_wait< 30000000 >);
+
+    interrupted_check(child);
 }
 
 
@@ -665,9 +775,11 @@ ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, child_with_files__ok_function);
     ATF_ADD_TEST_CASE(tcs, child_with_files__ok_functor);
+    ATF_ADD_TEST_CASE(tcs, child_with_files__pid);
     ATF_ADD_TEST_CASE(tcs, child_with_files__wait_killpg);
     ATF_ADD_TEST_CASE(tcs, child_with_files__wait_timeout_ok);
     ATF_ADD_TEST_CASE(tcs, child_with_files__wait_timeout_expired);
+    ATF_ADD_TEST_CASE(tcs, child_with_files__interrupted);
     ATF_ADD_TEST_CASE(tcs, child_with_files__fork_fail);
     ATF_ADD_TEST_CASE(tcs, child_with_files__create_stdout_fail);
     ATF_ADD_TEST_CASE(tcs, child_with_files__create_stderr_fail);
@@ -677,6 +789,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, child_with_output__wait_killpg);
     ATF_ADD_TEST_CASE(tcs, child_with_output__wait_timeout_ok);
     ATF_ADD_TEST_CASE(tcs, child_with_output__wait_timeout_expired);
+    ATF_ADD_TEST_CASE(tcs, child_with_output__interrupted);
     ATF_ADD_TEST_CASE(tcs, child_with_output__pipe_fail);
     ATF_ADD_TEST_CASE(tcs, child_with_output__fork_fail);
 

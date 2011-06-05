@@ -1,4 +1,4 @@
-// Copyright 2010, 2011 Google Inc.
+// Copyright 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,46 +26,37 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/exceptions.hpp
-/// Exception types raised by the engine module.
+extern "C" {
+#include <unistd.h>
+}
 
-#if !defined(ENGINE_EXCEPTIONS_HPP)
-#define ENGINE_EXCEPTIONS_HPP
+#include <atf-c++.hpp>
 
-#include <stdexcept>
-
-namespace engine {
+#include <fstream>
 
 
-/// Base exception for engine errors.
-class error : public std::runtime_error {
-public:
-    explicit error(const std::string&);
-    virtual ~error(void) throw();
-};
+ATF_TEST_CASE_WITH_CLEANUP(block_body);
+ATF_TEST_CASE_HEAD(block_body)
+{
+    set_md_var("require.config", "X-body-cookie X-cleanup-cookie");
+}
+ATF_TEST_CASE_BODY(block_body)
+{
+    const std::string cookie(get_config_var("X-body-cookie"));
+    std::ofstream output(cookie.c_str());
+    output.close();
+    for (;;)
+        ::pause();
+}
+ATF_TEST_CASE_CLEANUP(block_body)
+{
+    const std::string cookie(get_config_var("X-cleanup-cookie"));
+    std::ofstream output(cookie.c_str());
+    output.close();
+}
 
 
-/// Error while parsing external data.
-class format_error : public error {
-public:
-    explicit format_error(const std::string&);
-    virtual ~format_error(void) throw();
-};
-
-
-/// Execution has been interrupted due to the reception of a signal.
-class interrupted_error : public error {
-    int _signo;
-
-public:
-    explicit interrupted_error(const int);
-    virtual ~interrupted_error(void) throw();
-
-    int signo(void) const;
-};
-
-
-}  // namespace engine
-
-
-#endif  // !defined(ENGINE_EXCEPTIONS_HPP)
+ATF_INIT_TEST_CASES(tcs)
+{
+    ATF_ADD_TEST_CASE(tcs, block_body);
+}

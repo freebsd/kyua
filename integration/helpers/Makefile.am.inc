@@ -49,6 +49,11 @@ integration_helpers_expect_some_fail_SOURCES = \
 integration_helpers_expect_some_fail_CXXFLAGS = $(ATF_CXX_CFLAGS)
 integration_helpers_expect_some_fail_LDADD = $(ATF_CXX_LIBS)
 
+tests_integration_helpers_PROGRAMS += integration/helpers/interrupts
+integration_helpers_interrupts_SOURCES = integration/helpers/interrupts.cpp
+integration_helpers_interrupts_CXXFLAGS = $(ATF_CXX_CFLAGS)
+integration_helpers_interrupts_LDADD = $(ATF_CXX_LIBS)
+
 tests_integration_helpers_PROGRAMS += integration/helpers/metadata
 integration_helpers_metadata_SOURCES = integration/helpers/metadata.cpp
 integration_helpers_metadata_CXXFLAGS = $(ATF_CXX_CFLAGS)

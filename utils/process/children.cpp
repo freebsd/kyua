@@ -151,18 +151,21 @@ create_file(const fs::path& filename)
 static process::status
 safe_wait(const pid_t pid)
 {
-retry:
     LD(F("Waiting for pid=%d, no timeout") % pid);
     int stat_loc;
     if (process::detail::syscall_waitpid(pid, &stat_loc, 0) == -1) {
         const int original_errno = errno;
-        if (original_errno == EINTR)
-            goto retry;
         throw process::system_error(F("Failed to wait for PID %d") % pid,
                                     original_errno);
     }
     LD(F("Sending KILL signal to process group %d") % pid);
-    (void)::killpg(pid, SIGKILL);
+retry:
+    if (::killpg(pid, SIGKILL) == -1) {
+        if (errno == EINTR)
+            goto retry;
+        // Otherwise, just ignore the error and continue.  It should not have
+        // happened.
+    }
     return process::status(stat_loc);
 }
 
@@ -208,13 +211,23 @@ timed_wait(const pid_t pid, const datetime::delta& timeout)
     timed_wait__aux::fired = false;
     timed_wait__aux::pid = pid;
     signals::timer timer(timeout, timed_wait__aux::callback);
-    const process::status status = safe_wait(pid);
-    timer.unprogram();
-    if (timed_wait__aux::fired) {
-        throw process::timeout_error(F("The timeout was exceeded while waiting "
-            "for process %d; forcibly killed") % pid);
+    try {
+        const process::status status = safe_wait(pid);
+        timer.unprogram();
+        return status;
+    } catch (const process::system_error& error) {
+        if (error.original_errno() == EINTR) {
+            if (timed_wait__aux::fired) {
+                timer.unprogram();
+                (void)safe_wait(pid);
+                throw process::timeout_error(
+                    F("The timeout was exceeded while waiting for process "
+                      "%d; forcibly killed") % pid);
+            } else
+                throw error;
+        } else
+            throw error;
     }
-    return status;
 }
 
 
@@ -302,7 +315,20 @@ process::child_with_files::fork_aux(const fs::path& stdout_file,
 }
 
 
+/// Returns the process identifier of this child.
+///
+/// \return A process identifier.
+int
+process::child_with_files::pid(void) const
+{
+    return _pimpl->_pid;
+}
+
+
 /// Blocks to wait for completion.
+///
+/// Note that this does not loop in case the wait call is interrupted.  We need
+/// callers to know when this condition happens and let them retry on their own.
 ///
 /// \param timeout The timeout for the wait.  If zero, no timeout logic is
 ///     applied.
@@ -393,7 +419,20 @@ process::child_with_output::fork_aux(void)
 }
 
 
+/// Returns the process identifier of this child.
+///
+/// \return A process identifier.
+int
+process::child_with_output::pid(void) const
+{
+    return _pimpl->_pid;
+}
+
+
 /// Blocks to wait for completion.
+///
+/// Note that this does not loop in case the wait call is interrupted.  We need
+/// callers to know when this condition happens and let them retry on their own.
 ///
 /// \param timeout The timeout for the wait.  If zero, no timeout logic is
 ///     applied.

@@ -77,6 +77,45 @@ create_cookie(const atf::tests::tc* test_case, const char* directory,
 }  // anonymous namespace
 
 
+ATF_TEST_CASE_WITH_CLEANUP(block_body);
+ATF_TEST_CASE_HEAD(block_body)
+{
+    set_md_var("require.config", "control_dir monitor_pid");
+}
+ATF_TEST_CASE_BODY(block_body)
+{
+    const fs::path control_dir(get_config_var("control_dir"));
+
+    std::ofstream cookie((control_dir / "workdir").c_str());
+    cookie << fs::current_path().str() << "\n";
+    cookie.close();
+
+    int monitor_pid;
+    {
+        std::istringstream input(get_config_var("monitor_pid"));
+        input >> monitor_pid;
+    }
+
+    int signo;
+    {
+        std::istringstream input(get_config_var("signo"));
+        input >> signo;
+    }
+
+    ::sleep(1);
+    ::kill(monitor_pid, signo);
+    for (;;)
+        ::pause();
+}
+ATF_TEST_CASE_CLEANUP(block_body)
+{
+    const fs::path control_dir(get_config_var("control_dir"));
+
+    std::ofstream cookie((control_dir / "cleanup").c_str());
+    cookie.close();
+}
+
+
 ATF_TEST_CASE_WITH_CLEANUP(check_cleanup_workdir);
 ATF_TEST_CASE_HEAD(check_cleanup_workdir)
 {
@@ -279,6 +318,7 @@ ATF_TEST_CASE_BODY(validate_umask)
 
 ATF_INIT_TEST_CASES(tcs)
 {
+    ATF_ADD_TEST_CASE(tcs, block_body);
     ATF_ADD_TEST_CASE(tcs, check_cleanup_workdir);
     ATF_ADD_TEST_CASE(tcs, check_unprivileged);
     ATF_ADD_TEST_CASE(tcs, crash);
