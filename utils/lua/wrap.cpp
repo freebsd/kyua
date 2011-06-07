@@ -349,6 +349,18 @@ lua::state::is_table(const int index)
 }
 
 
+/// Wrapper around lua_isuserdata.
+///
+/// \param index The second parameter to lua_isuserdata.
+///
+/// \return The return value of lua_isuserdata.
+bool
+lua::state::is_userdata(const int index)
+{
+    return lua_isuserdata(_pimpl->lua_state, index);
+}
+
+
 /// Wrapper around luaL_loadfile.
 ///
 /// \param file The second parameter to luaL_loadfile.
@@ -374,7 +386,7 @@ lua::state::load_file(const fs::path& file)
 
 /// Wrapper around luaL_loadstring.
 ///
-/// \param str The second parameter to the luaL_loadstring.
+/// \param str The second parameter to luaL_loadstring.
 ///
 /// \throw api_error If luaL_loadstring returns an error.
 ///
@@ -394,6 +406,23 @@ void
 lua::state::new_table(void)
 {
     lua_newtable(_pimpl->lua_state);
+}
+
+
+/// Wrapper around lua_newuserdata.
+///
+/// This is internal.  The public type-safe interface of this method should be
+/// used instead.
+///
+/// \param size The second parameter to lua_newuserdata.
+///
+/// \return The return value of lua_newuserdata.
+///
+/// \warning Terminates execution if there is not enough memory.
+void*
+lua::state::new_userdata_voidp(const size_t size)
+{
+    return lua_newuserdata(_pimpl->lua_state, size);
 }
 
 
@@ -503,9 +532,23 @@ lua::state::push_boolean(const bool value)
 }
 
 
+/// Wrapper around lua_pushcclosure.
+///
+/// \param function The second parameter to lua_pushcclosure.  Use the
+///     wrap_cxx_function wrapper to provide C++ functions to this parameter.
+/// \param nvalues The third parameter to lua_pushcclosure.
+///
+/// \warning Terminates execution if there is not enough memory.
+void
+lua::state::push_c_closure(c_function function, const int nvalues)
+{
+    lua_pushcclosure(_pimpl->lua_state, function, nvalues);
+}
+
+
 /// Wrapper around lua_pushcfunction.
 ///
-/// \param function The second parameter to lua_pushcfuntion.  Use the
+/// \param function The second parameter to lua_pushcfunction.  Use the
 ///     wrap_cxx_function wrapper to provide C++ functions to this parameter.
 ///
 /// \warning Terminates execution if there is not enough memory.
@@ -566,6 +609,16 @@ lua::state::set_global(const std::string& name)
 }
 
 
+/// Wrapper around lua_setmetatable.
+///
+/// \param index The second parameter to lua_setmetatable.
+void
+lua::state::set_metatable(const int index)
+{
+    lua_setmetatable(_pimpl->lua_state, index);
+}
+
+
 /// Wrapper around lua_settable.
 ///
 /// \param index The second parameter to lua_settable.
@@ -613,6 +666,24 @@ lua::state::to_integer(const int index)
 }
 
 
+/// Wrapper around lua_touserdata.
+///
+/// This is internal.  The public type-safe interface of this method should be
+/// used instead.
+///
+/// \param index The second parameter to lua_touserdata.
+///
+/// \return The return value of lua_touserdata.
+///
+/// \warning Terminates execution if there is not enough memory.
+void*
+lua::state::to_userdata_voidp(const int index)
+{
+    return lua_touserdata(_pimpl->lua_state, index);
+}
+
+
+
 /// Wrapper around lua_tostring.
 ///
 /// \param index The second parameter to lua_tostring.
@@ -629,6 +700,18 @@ lua::state::to_string(const int index)
     // implies that the raw string is duplicated and, henceforth, the string is
     // safe even if the corresponding element is popped from the Lua stack.
     return std::string(raw_string);
+}
+
+
+/// Wrapper around lua_upvalueindex.
+///
+/// \param index The first parameter to lua_upvalueindex.
+///
+/// \return The return value of lua_upvalueindex.
+int
+lua::state::upvalue_index(const int index)
+{
+    return lua_upvalueindex(index);
 }
 
 

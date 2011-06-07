@@ -80,6 +80,9 @@ class state : utils::noncopyable {
     struct impl;
     std::auto_ptr< impl > _pimpl;
 
+    void* new_userdata_voidp(const size_t);
+    void* to_userdata_voidp(const int);
+
 public:
     state(void);
     explicit state(lua_State*);
@@ -97,9 +100,11 @@ public:
     bool is_number(const int = -1);
     bool is_string(const int = -1);
     bool is_table(const int = -1);
+    bool is_userdata(const int = -1);
     void load_file(const utils::fs::path&);
     void load_string(const std::string&);
     void new_table(void);
+    template< typename Type > Type* new_userdata(void);
     bool next(const int = -2);
     void open_base(void);
     void open_string(void);
@@ -107,15 +112,19 @@ public:
     void pcall(const int, const int, const int);
     void pop(const int);
     void push_boolean(const bool);
+    void push_c_closure(c_function, const int);
     void push_c_function(c_function);
     void push_integer(const int);
     void push_nil(void);
     void push_string(const std::string&);
     void set_global(const std::string&);
+    void set_metatable(const int = -2);
     void set_table(const int = -3);
     bool to_boolean(const int = -1);
     long to_integer(const int = -1);
+    template< typename Type > Type* to_userdata(const int = -1);
     std::string to_string(const int = -1);
+    int upvalue_index(const int);
 
     lua_State* raw_state_for_testing(void);
 };

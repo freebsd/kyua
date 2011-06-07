@@ -99,6 +99,43 @@ check_modules(lua::state& state, const std::string& expected)
 }
 
 
+/// A C closure that returns its two integral upvalues.
+///
+/// \post stack(-2) contains the first upvalue.
+/// \post stack(-1) contains the second upvalue.
+///
+/// \param state The raw Lua state.
+///
+/// \return The number of result values, i.e. 2.
+static int
+c_get_upvalues(lua_State* state)
+{
+    const int i1 = lua_tointeger(state, lua::state(state).upvalue_index(1));
+    const int i2 = lua_tointeger(state, lua::state(state).upvalue_index(2));
+    lua_pushinteger(state, i1);
+    lua_pushinteger(state, i2);
+    return 2;
+}
+
+
+/// A custom C multiply function with one of its factors on its closure.
+///
+/// \pre stack(-1) contains the second factor.
+/// \post stack(-1) contains the product of the two input factors.
+///
+/// \param state The raw Lua state.
+///
+/// \return The number of result values, i.e. 1.
+static int
+c_multiply_closure(lua_State* state)
+{
+    const int f1 = lua_tointeger(state, lua_upvalueindex(1));
+    const int f2 = lua_tointeger(state, -1);
+    lua_pushinteger(state, f1 * f2);
+    return 1;
+}
+
+
 /// A custom C multiply function for Lua.
 ///
 /// \pre stack(-2) contains the first factor.
@@ -519,6 +556,41 @@ ATF_TEST_CASE_BODY(state__is_table__explicit)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(state__is_userdata__empty);
+ATF_TEST_CASE_BODY(state__is_userdata__empty)
+{
+    lua::state state;
+    ATF_REQUIRE(!state.is_userdata());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(state__is_userdata__top);
+ATF_TEST_CASE_BODY(state__is_userdata__top)
+{
+    lua::state state;
+
+    lua_pushstring(raw(state), "foo");
+    ATF_REQUIRE(!state.is_userdata());
+    lua_newuserdata(raw(state), 1234);
+    ATF_REQUIRE(state.is_userdata());
+    lua_pop(raw(state), 2);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(state__is_userdata__explicit);
+ATF_TEST_CASE_BODY(state__is_userdata__explicit)
+{
+    lua::state state;
+
+    lua_pushstring(raw(state), "foo");
+    ATF_REQUIRE(!state.is_userdata(-1));
+    lua_newuserdata(raw(state), 543);
+    ATF_REQUIRE(state.is_userdata(-1));
+    ATF_REQUIRE(!state.is_userdata(-2));
+    lua_pop(raw(state), 2);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(state__load_file__ok);
 ATF_TEST_CASE_BODY(state__load_file__ok)
 {
@@ -583,6 +655,18 @@ ATF_TEST_CASE_BODY(state__new_table)
     state.new_table();
     ATF_REQUIRE_EQ(1, lua_gettop(raw(state)));
     ATF_REQUIRE(lua_istable(raw(state), -1));
+    lua_pop(raw(state), 1);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(state__new_userdata);
+ATF_TEST_CASE_BODY(state__new_userdata)
+{
+    lua::state state;
+    int* pointer = state.new_userdata< int >();
+    *pointer = 1234;
+    ATF_REQUIRE_EQ(1, lua_gettop(raw(state)));
+    ATF_REQUIRE(lua_isuserdata(raw(state), -1));
     lua_pop(raw(state), 1);
 }
 
@@ -725,6 +809,21 @@ ATF_TEST_CASE_BODY(state__push_boolean)
     ATF_REQUIRE(!lua_toboolean(raw(state), -1));
     ATF_REQUIRE(lua_toboolean(raw(state), -2));
     lua_pop(raw(state), 2);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(state__push_c_closure);
+ATF_TEST_CASE_BODY(state__push_c_closure)
+{
+    lua::state state;
+    state.push_integer(15);
+    state.push_c_closure(c_multiply_closure, 1);
+    lua_setglobal(raw(state), "c_multiply_closure");
+
+    ATF_REQUIRE(luaL_dostring(raw(state),
+                              "return c_multiply_closure(10)") == 0);
+    ATF_REQUIRE_EQ(150, lua_tointeger(raw(state), -1));
+    lua_pop(raw(state), 1);
 }
 
 
@@ -873,6 +972,53 @@ ATF_TEST_CASE_BODY(state__set_global__fail)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(state__set_metatable__top);
+ATF_TEST_CASE_BODY(state__set_metatable__top)
+{
+    lua::state state;
+    ATF_REQUIRE(luaL_dostring(
+        raw(state),
+        "mt = {}\n"
+        "mt.__add = function(a, b) return a[1] + b end\n"
+        "numbers = {}\n"
+        "numbers[1] = 5\n") == 0);
+
+    lua_getglobal(raw(state), "numbers");
+    lua_getglobal(raw(state), "mt");
+    state.set_metatable();
+    lua_pop(raw(state), 1);
+
+    ATF_REQUIRE(luaL_dostring(raw(state), "return numbers + 2") == 0);
+    ATF_REQUIRE(lua_isnumber(raw(state), -1));
+    ATF_REQUIRE_EQ(7, lua_tointeger(raw(state), -1));
+    lua_pop(raw(state), 1);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(state__set_metatable__explicit);
+ATF_TEST_CASE_BODY(state__set_metatable__explicit)
+{
+    lua::state state;
+    ATF_REQUIRE(luaL_dostring(
+        raw(state),
+        "mt = {}\n"
+        "mt.__add = function(a, b) return a[1] + b end\n"
+        "numbers = {}\n"
+        "numbers[1] = 5\n") == 0);
+
+    lua_getglobal(raw(state), "numbers");
+    lua_pushinteger(raw(state), 1234);
+    lua_getglobal(raw(state), "mt");
+    state.set_metatable(-3);
+    lua_pop(raw(state), 2);
+
+    ATF_REQUIRE(luaL_dostring(raw(state), "return numbers + 2") == 0);
+    ATF_REQUIRE(lua_isnumber(raw(state), -1));
+    ATF_REQUIRE_EQ(7, lua_tointeger(raw(state), -1));
+    lua_pop(raw(state), 1);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(state__set_table__ok);
 ATF_TEST_CASE_BODY(state__set_table__ok)
 {
@@ -984,6 +1130,56 @@ ATF_TEST_CASE_BODY(state__to_string__explicit)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(state__to_userdata__top);
+ATF_TEST_CASE_BODY(state__to_userdata__top)
+{
+    lua::state state;
+    {
+        int* pointer = static_cast< int* >(
+            lua_newuserdata(raw(state), sizeof(int)));
+        *pointer = 987;
+    }
+
+    int* pointer = state.to_userdata< int >();
+    ATF_REQUIRE_EQ(987, *pointer);
+    lua_pop(raw(state), 1);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(state__to_userdata__explicit);
+ATF_TEST_CASE_BODY(state__to_userdata__explicit)
+{
+    lua::state state;
+    {
+        int* pointer = static_cast< int* >(
+            lua_newuserdata(raw(state), sizeof(int)));
+        *pointer = 987;
+    }
+
+    lua_pushinteger(raw(state), 3);
+    int* pointer = state.to_userdata< int >(-2);
+    ATF_REQUIRE_EQ(987, *pointer);
+    lua_pop(raw(state), 2);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(state__upvalue_index);
+ATF_TEST_CASE_BODY(state__upvalue_index)
+{
+    lua::state state;
+    lua_pushinteger(raw(state), 25);
+    lua_pushinteger(raw(state), 30);
+    lua_pushcclosure(raw(state), c_get_upvalues, 2);
+    lua_setglobal(raw(state), "c_get_upvalues");
+
+    ATF_REQUIRE(luaL_dostring(raw(state),
+                              "return c_get_upvalues()") == 0);
+    ATF_REQUIRE_EQ(25, lua_tointeger(raw(state), -2));
+    ATF_REQUIRE_EQ(30, lua_tointeger(raw(state), -1));
+    lua_pop(raw(state), 2);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(stack_cleaner__empty);
 ATF_TEST_CASE_BODY(stack_cleaner__empty)
 {
@@ -1083,12 +1279,16 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, state__is_table__empty);
     ATF_ADD_TEST_CASE(tcs, state__is_table__top);
     ATF_ADD_TEST_CASE(tcs, state__is_table__explicit);
+    ATF_ADD_TEST_CASE(tcs, state__is_userdata__empty);
+    ATF_ADD_TEST_CASE(tcs, state__is_userdata__top);
+    ATF_ADD_TEST_CASE(tcs, state__is_userdata__explicit);
     ATF_ADD_TEST_CASE(tcs, state__load_file__ok);
     ATF_ADD_TEST_CASE(tcs, state__load_file__api_error);
     ATF_ADD_TEST_CASE(tcs, state__load_file__file_not_found_error);
     ATF_ADD_TEST_CASE(tcs, state__load_string__ok);
     ATF_ADD_TEST_CASE(tcs, state__load_string__fail);
     ATF_ADD_TEST_CASE(tcs, state__new_table);
+    ATF_ADD_TEST_CASE(tcs, state__new_userdata);
     ATF_ADD_TEST_CASE(tcs, state__next__empty);
     ATF_ADD_TEST_CASE(tcs, state__next__many);
     ATF_ADD_TEST_CASE(tcs, state__open_base);
@@ -1099,6 +1299,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, state__pop__one);
     ATF_ADD_TEST_CASE(tcs, state__pop__many);
     ATF_ADD_TEST_CASE(tcs, state__push_boolean);
+    ATF_ADD_TEST_CASE(tcs, state__push_c_closure);
     ATF_ADD_TEST_CASE(tcs, state__push_c_function__c_ok);
     ATF_ADD_TEST_CASE(tcs, state__push_c_function__cxx_ok);
     ATF_ADD_TEST_CASE(tcs, state__push_c_function__cxx_fail_exception);
@@ -1109,6 +1310,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, state__push_string);
     ATF_ADD_TEST_CASE(tcs, state__set_global__ok);
     ATF_ADD_TEST_CASE(tcs, state__set_global__fail);
+    ATF_ADD_TEST_CASE(tcs, state__set_metatable__top);
+    ATF_ADD_TEST_CASE(tcs, state__set_metatable__explicit);
     ATF_ADD_TEST_CASE(tcs, state__set_table__ok);
     ATF_ADD_TEST_CASE(tcs, state__set_table__nil);
     ATF_ADD_TEST_CASE(tcs, state__to_boolean__top);
@@ -1117,6 +1320,9 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, state__to_integer__explicit);
     ATF_ADD_TEST_CASE(tcs, state__to_string__top);
     ATF_ADD_TEST_CASE(tcs, state__to_string__explicit);
+    ATF_ADD_TEST_CASE(tcs, state__to_userdata__top);
+    ATF_ADD_TEST_CASE(tcs, state__to_userdata__explicit);
+    ATF_ADD_TEST_CASE(tcs, state__upvalue_index);
 
     ATF_ADD_TEST_CASE(tcs, stack_cleaner__empty);
     ATF_ADD_TEST_CASE(tcs, stack_cleaner__some);
