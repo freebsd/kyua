@@ -254,10 +254,12 @@ try_unmount(const fs::path& path)
 static bool
 try_unprotect(const fs::path& path)
 {
-    if (::chmod(path.c_str(), 0700) == -1) {
+    static const mode_t new_mode = 0700;
+
+    if (::lchmod(path.c_str(), new_mode) == -1) {
         const int original_errno = errno;
-        LW(F("Failed to chmod 0700 temporary directory '%s': %s") %
-           path % std::strerror(original_errno));
+        LW(F("Failed to chmod '%s' to %d: %s") % path % new_mode %
+           std::strerror(original_errno));
         return false;
     } else
         return true;

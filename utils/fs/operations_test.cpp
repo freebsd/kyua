@@ -146,6 +146,7 @@ ATF_TEST_CASE_BODY(cleanup__subdir__links)
     fs::mkdir(fs::path("root"), 0755);
     fs::mkdir(fs::path("root/dir1"), 0755);
     ATF_REQUIRE(::symlink("../../root", "root/dir1/loop") != -1);
+    ATF_REQUIRE(::symlink("non-existent", "root/missing") != -1);
     ATF_REQUIRE(lookup(".", "root", DT_DIR));
     fs::cleanup(fs::path("root"));
     ATF_REQUIRE(!lookup(".", "root", DT_DIR));
