@@ -26,11 +26,21 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <stdexcept>
+extern "C" {
+#include <dirent.h>
+}
 
+#include <cerrno>
+#include <stdexcept>
+#include <string>
+
+#include "utils/format/macros.hpp"
+#include "utils/fs/operations.hpp"
+#include "utils/fs/path.hpp"
 #include "utils/lua/module_fs.hpp"
 #include "utils/lua/operations.hpp"
 #include "utils/lua/wrap.ipp"
+#include "utils/sanity.hpp"
 
 namespace fs = utils::fs;
 namespace lua = utils::lua;
@@ -75,6 +85,117 @@ lua_fs_dirname(lua::state& state)
     const fs::path path(state.to_string());
 
     state.push_string(path.branch_path().c_str());
+    return 1;
+}
+
+
+/// Lua binding for fs::path::exists.
+///
+/// \pre stack(-1) The input path.
+/// \post stack(-1) Whether the input path exists or not.
+///
+/// \param state The Lua state.
+///
+/// \return The number of result values, i.e. 1.
+int
+lua_fs_exists(lua::state& state)
+{
+    if (!state.is_string())
+        throw std::runtime_error("Need a string parameter");
+    const fs::path path(state.to_string());
+
+    state.push_boolean(fs::exists(path));
+    return 1;
+}
+
+
+/// Lua binding for the files iterator.
+///
+/// This function takes an open directory from the closure of the iterator and
+/// returns the next entry.  See lua_fs_files() for the iterator generator
+/// function.
+///
+/// \pre upvalue(1) The userdata containing an open DIR* object.
+///
+/// \param state The lua state.
+///
+/// \return The number of result values, i.e. 0 if there are no more entries or
+/// 1 if an entry has been read.
+int
+files_iterator(lua::state& state)
+{
+    DIR** dirp = state.to_userdata< DIR* >(state.upvalue_index(1));
+    const struct dirent* entry = ::readdir(*dirp);
+    if (entry == NULL)
+        return 0;
+    else {
+        state.push_string(entry->d_name);
+        return 1;
+    }
+}
+
+
+/// Lua binding for the destruction of the files iterator.
+///
+/// This function takes an open directory and closes it.  See lua_fs_files() for
+/// the iterator generator function.
+///
+/// \pre stack(-1) The userdata containing an open DIR* object.
+/// \post The DIR* object is closed.
+///
+/// \param state The lua state.
+///
+/// \return The number of result values, i.e. 0.
+int
+files_gc(lua::state& state)
+{
+    PRE(state.is_userdata());
+
+    DIR** dirp = state.to_userdata< DIR* >();
+    // For some reason, this may be called more than once.  I don't know why
+    // this happens, but we must protect against it.
+    if (*dirp != NULL) {
+        ::closedir(*dirp);
+        *dirp = NULL;
+    }
+
+    return 0;
+}
+
+
+/// Lua binding to create an iterator to scan the contents of a directory.
+///
+/// \pre stack(-1) The input path.
+/// \post stack(-1) The iterator function.
+///
+/// \param state The Lua state.
+///
+/// \return The number of result values, i.e. 1.
+int
+lua_fs_files(lua::state& state)
+{
+    if (!state.is_string())
+        throw std::runtime_error("Need a string parameter");
+    const fs::path path(state.to_string());
+
+    DIR** dirp = state.new_userdata< DIR* >();
+
+    state.new_table();
+    state.push_string("__gc");
+    state.push_c_function(lua::wrap_cxx_function< files_gc >);
+    state.set_table();
+
+    state.set_metatable();
+
+    *dirp = ::opendir(path.c_str());
+    if (*dirp == NULL) {
+        const int original_errno = errno;
+        throw std::runtime_error(F("Failed to open directory: %s") %
+                                 std::strerror(original_errno));
+    }
+
+    state.push_c_closure(lua::wrap_cxx_function< files_iterator >, 1);
+
     return 1;
 }
 
@@ -139,6 +260,8 @@ lua::open_fs(lua::state& s)
     std::map< std::string, lua::c_function > members;
     members["basename"] = wrap_cxx_function< lua_fs_basename >;
     members["dirname"] = wrap_cxx_function< lua_fs_dirname >;
+    members["exists"] = wrap_cxx_function< lua_fs_exists >;
+    members["files"] = wrap_cxx_function< lua_fs_files >;
     members["is_absolute"] = wrap_cxx_function< lua_fs_is_absolute >;
     members["join"] = wrap_cxx_function< lua_fs_join >;
     lua::create_module(s, "fs", members);

@@ -28,11 +28,14 @@
 
 #include <atf-c++.hpp>
 
+#include "utils/fs/operations.hpp"
 #include "utils/lua/module_fs.hpp"
 #include "utils/lua/operations.hpp"
 #include "utils/lua/test_utils.hpp"
 #include "utils/lua/wrap.hpp"
+#include "utils/test_utils.hpp"
 
+namespace fs = utils::fs;
 namespace lua = utils::lua;
 
 
@@ -102,6 +105,101 @@ ATF_TEST_CASE_BODY(dirname__fail)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(exists__ok);
+ATF_TEST_CASE_BODY(exists__ok)
+{
+    lua::state state;
+    lua::open_fs(state);
+
+    utils::create_file(fs::path("foo"));
+
+    lua::do_string(state, "return fs.exists('foo')", 1);
+    ATF_REQUIRE(state.to_boolean());
+    state.pop(1);
+
+    lua::do_string(state, "return fs.exists('bar')", 1);
+    ATF_REQUIRE(!state.to_boolean());
+    state.pop(1);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(exists__fail);
+ATF_TEST_CASE_BODY(exists__fail)
+{
+    lua::state state;
+    lua::open_fs(state);
+
+    ATF_REQUIRE_THROW_RE(lua::error, "Need a string",
+                         lua::do_string(state, "return fs.exists({})", 1));
+    ATF_REQUIRE_THROW_RE(lua::error, "Invalid path",
+                         lua::do_string(state, "return fs.exists('')", 1));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(files__none);
+ATF_TEST_CASE_BODY(files__none)
+{
+    lua::state state;
+    lua::open_fs(state);
+
+    fs::mkdir(fs::path("root"), 0755);
+
+    lua::do_string(state,
+                   "names = ''\n"
+                   "for file in fs.files('root') do\n"
+                   "    names = names .. ' ' .. file\n"
+                   "end\n"
+                   "return names", 1);
+    ATF_REQUIRE_EQ(" . ..", state.to_string());
+    state.pop(1);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(files__some);
+ATF_TEST_CASE_BODY(files__some)
+{
+    lua::state state;
+    lua::open_fs(state);
+
+    fs::mkdir(fs::path("root"), 0755);
+    utils::create_file(fs::path("root/file1"));
+    utils::create_file(fs::path("root/file2"));
+
+    lua::do_string(state,
+                   "names = ''\n"
+                   "for file in fs.files('root') do\n"
+                   "    names = names .. ' ' .. file\n"
+                   "end\n"
+                   "return names", 1);
+    ATF_REQUIRE_EQ(" . .. file1 file2", state.to_string());
+    state.pop(1);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(files__fail_arg);
+ATF_TEST_CASE_BODY(files__fail_arg)
+{
+    lua::state state;
+    lua::open_fs(state);
+
+    ATF_REQUIRE_THROW_RE(lua::error, "Need a string parameter",
+                         lua::do_string(state, "fs.files({})"));
+    ATF_REQUIRE_THROW_RE(lua::error, "Invalid path",
+                         lua::do_string(state, "fs.files('')"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(files__fail_opendir);
+ATF_TEST_CASE_BODY(files__fail_opendir)
+{
+    lua::state state;
+    lua::open_fs(state);
+
+    ATF_REQUIRE_THROW_RE(lua::error, "Failed to open directory",
+                         lua::do_string(state, "fs.files('root')"));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(is_absolute__ok);
 ATF_TEST_CASE_BODY(is_absolute__ok)
 {
@@ -168,10 +266,21 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, basename__ok);
     ATF_ADD_TEST_CASE(tcs, basename__fail);
+
     ATF_ADD_TEST_CASE(tcs, dirname__ok);
     ATF_ADD_TEST_CASE(tcs, dirname__fail);
+
+    ATF_ADD_TEST_CASE(tcs, exists__ok);
+    ATF_ADD_TEST_CASE(tcs, exists__fail);
+
+    ATF_ADD_TEST_CASE(tcs, files__none);
+    ATF_ADD_TEST_CASE(tcs, files__some);
+    ATF_ADD_TEST_CASE(tcs, files__fail_arg);
+    ATF_ADD_TEST_CASE(tcs, files__fail_opendir);
+
     ATF_ADD_TEST_CASE(tcs, is_absolute__ok);
     ATF_ADD_TEST_CASE(tcs, is_absolute__fail);
+
     ATF_ADD_TEST_CASE(tcs, join__ok);
     ATF_ADD_TEST_CASE(tcs, join__fail);
 }

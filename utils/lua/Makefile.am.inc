@@ -54,8 +54,10 @@ utils_lua_exceptions_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_lua_PROGRAMS += utils/lua/module_fs_test
 utils_lua_module_fs_test_SOURCES = utils/lua/module_fs_test.cpp
-utils_lua_module_fs_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-utils_lua_module_fs_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
+utils_lua_module_fs_test_CXXFLAGS = $(UTILS_CFLAGS) $(UTILS_TEST_CFLAGS) \
+                                    $(ATF_CXX_CFLAGS)
+utils_lua_module_fs_test_LDADD = $(UTILS_LIBS) $(UTILS_TEST_LIBS) \
+                                 $(ATF_CXX_LIBS)
 
 tests_utils_lua_PROGRAMS += utils/lua/module_logging_test
 utils_lua_module_logging_test_SOURCES = utils/lua/module_logging_test.cpp
