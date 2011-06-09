@@ -90,13 +90,18 @@ utils::cat_file(const std::string& prefix, const fs::path& path)
 /// Fails the test case if the file cannot be created.
 ///
 /// \param file The name of the file to create.
+/// \param contents The contents of the file, if any.  If empty, this writes
+///     some arbitrary text into the file.
 void
-utils::create_file(const fs::path& file)
+utils::create_file(const fs::path& file, const std::string& contents)
 {
     std::ofstream output(file.c_str());
     if (!output)
         ATF_FAIL(F("Failed to create test file %s") % file);
-    output << "Some contents\n";
+    if (contents.empty())
+        output << "Some contents\n";
+    else
+        output << contents;
 }
 
 

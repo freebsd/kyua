@@ -26,11 +26,18 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+extern "C" {
+#include <unistd.h>
+}
+
 #include <atf-c++.hpp>
 
 #include "engine/user_files/config.hpp"
+#include "engine/user_files/kyuafile.hpp"
+#include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/passwd.hpp"
+#include "utils/test_utils.hpp"
 
 namespace fs = utils::fs;
 namespace passwd = utils::passwd;
@@ -43,11 +50,21 @@ namespace {
 /// Path to the directory containing the examples.
 static const fs::path examplesdir(KYUA_EXAMPLESDIR);
 
+/// Path to the installed Kyuafile.top file.
+static const fs::path installed_kyuafile_top = examplesdir / "Kyuafile.top";
+
+/// Path to the installed kyua.conf file.
+static const fs::path installed_kyua_conf = examplesdir / "kyua.conf";
+
 
 }  // anonymous namespace
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(kyua_conf);
+ATF_TEST_CASE(kyua_conf);
+ATF_TEST_CASE_HEAD(kyua_conf)
+{
+    set_md_var("require.files", installed_kyua_conf.str());
+}
 ATF_TEST_CASE_BODY(kyua_conf)
 {
     std::vector< passwd::user > users;
@@ -55,7 +72,7 @@ ATF_TEST_CASE_BODY(kyua_conf)
     passwd::set_mock_users_for_testing(users);
 
     const user_files::config config = user_files::config::load(
-        examplesdir / "kyua.conf");
+        installed_kyua_conf);
 
     ATF_REQUIRE_EQ("x86_64", config.architecture);
     ATF_REQUIRE_EQ("amd64", config.platform);
@@ -101,7 +118,71 @@ ATF_TEST_CASE_BODY(kyua_conf)
 }
 
 
+ATF_TEST_CASE(kyuafile_top__no_matches);
+ATF_TEST_CASE_HEAD(kyuafile_top__no_matches)
+{
+    set_md_var("require.files", installed_kyuafile_top.str());
+}
+ATF_TEST_CASE_BODY(kyuafile_top__no_matches)
+{
+    fs::mkdir(fs::path("root"), 0755);
+    ATF_REQUIRE(::symlink(installed_kyuafile_top.c_str(),
+                          "root/Kyuafile") != -1);
+
+    utils::create_file(fs::path("root/file"));
+    fs::mkdir(fs::path("root/subdir"), 0755);
+
+    const user_files::kyuafile kyuafile = user_files::kyuafile::load(
+        fs::path("root/Kyuafile"));
+    ATF_REQUIRE_EQ(fs::path("root"), kyuafile.root());
+    ATF_REQUIRE(kyuafile.test_programs().empty());
+}
+
+
+ATF_TEST_CASE(kyuafile_top__some_matches);
+ATF_TEST_CASE_HEAD(kyuafile_top__some_matches)
+{
+    set_md_var("require.files", installed_kyuafile_top.str());
+}
+ATF_TEST_CASE_BODY(kyuafile_top__some_matches)
+{
+    fs::mkdir(fs::path("root"), 0755);
+    const fs::path source_path(examplesdir / "Kyuafile.top");
+    ATF_REQUIRE(::symlink(installed_kyuafile_top.c_str(),
+                          "root/Kyuafile") != -1);
+
+    utils::create_file(fs::path("root/file"));
+
+    fs::mkdir(fs::path("root/subdir1"), 0755);
+    utils::create_file(fs::path("root/subdir1/Kyuafile"),
+                       "syntax('kyuafile', 1)\n"
+                       "atf_test_program{name='a', test_suite='b'}\n");
+    utils::create_file(fs::path("root/subdir1/a"));
+
+    fs::mkdir(fs::path("root/subdir2"), 0755);
+    utils::create_file(fs::path("root/subdir2/Kyuafile"),
+                       "syntax('kyuafile', 1)\n"
+                       "atf_test_program{name='c', test_suite='d'}\n");
+    utils::create_file(fs::path("root/subdir2/c"));
+    utils::create_file(fs::path("root/subdir2/Kyuafile.etc"), "invalid");
+
+    const user_files::kyuafile kyuafile = user_files::kyuafile::load(
+        fs::path("root/Kyuafile"));
+    ATF_REQUIRE_EQ(fs::path("root"), kyuafile.root());
+    ATF_REQUIRE_EQ(2, kyuafile.test_programs().size());
+    ATF_REQUIRE_EQ(fs::path("subdir1/a"),
+                   kyuafile.test_programs()[0].binary_path);
+    ATF_REQUIRE_EQ("b", kyuafile.test_programs()[0].test_suite_name);
+    ATF_REQUIRE_EQ(fs::path("subdir2/c"),
+                   kyuafile.test_programs()[1].binary_path);
+    ATF_REQUIRE_EQ("d", kyuafile.test_programs()[1].test_suite_name);
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, kyua_conf);
+
+    ATF_ADD_TEST_CASE(tcs, kyuafile_top__no_matches);
+    ATF_ADD_TEST_CASE(tcs, kyuafile_top__some_matches);
 }

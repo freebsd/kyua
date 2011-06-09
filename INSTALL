@@ -146,3 +146,14 @@ The following flags are specific to Kyua's 'configure' script:
   perform the best decision based on availability of Doxygen.  Setting this to
   'no' explicitly disables Doxygen usage.  And, lastly, setting this to a path
   forces configure to use a specific Doxygen binary, which must exist.
+
+
+Post-installation tasks
+=======================
+
+Copy the Kyuafile.top file installed in the examples directory to the root of
+your tests hierarchy and name it Kyuafile.  For example:
+
+    # cp /usr/share/kyua-cli/examples/Kyuafile.top /usr/tests/Kyuafile
+
+This will allow you to simply go into /usr/tests and run the tests from there.

@@ -61,7 +61,7 @@ extern os_type current_os;
 
 
 void cat_file(const std::string&, const fs::path&);
-void create_file(const fs::path&);
+void create_file(const fs::path&, const std::string& = "");
 bool grep_file(const std::string&, const fs::path&);
 bool grep_string(const std::string&, const std::string&);
 bool grep_vector(const std::string&, const std::vector< std::string >&);
