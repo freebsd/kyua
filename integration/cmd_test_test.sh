@@ -179,7 +179,7 @@ atf_test_program{name="bogus_test_cases"}
 EOF
 
     cat >expout <<EOF
-bogus_test_cases:die  ->  broken: Premature exit: received signal 6
+bogus_test_cases:die  ->  broken: Premature exit: received signal 9
 bogus_test_cases:exit  ->  broken: Premature exit: exited with code 0
 bogus_test_cases:pass  ->  passed
 
