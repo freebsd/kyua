@@ -281,6 +281,51 @@ EOF
 }
 
 
+utils_test_case kyuafile_flag__no_args
+kyuafile_flag__no_args_body() {
+    cat >Kyuafile <<EOF
+This file is bogus but it is not loaded.
+EOF
+
+    cat >myfile <<EOF
+syntax("kyuafile", 1)
+test_suite("integration")
+atf_test_program{name="sometest"}
+EOF
+    utils_cp_helper simple_all_pass sometest
+
+    cat >expout <<EOF
+sometest:pass
+sometest:skip
+EOF
+    atf_check -s exit:0 -o file:expout -e empty kyua list -k myfile
+    atf_check -s exit:0 -o file:expout -e empty kyua list --kyuafile=myfile
+}
+
+
+utils_test_case kyuafile_flag__some_args
+kyuafile_flag__some_args_body() {
+    cat >Kyuafile <<EOF
+This file is bogus but it is not loaded.
+EOF
+
+    cat >myfile <<EOF
+syntax("kyuafile", 1)
+test_suite("hello-world")
+atf_test_program{name="sometest"}
+EOF
+    utils_cp_helper simple_all_pass sometest
+
+    cat >expout <<EOF
+sometest:pass (hello-world)
+sometest:skip (hello-world)
+EOF
+    atf_check -s exit:0 -o file:expout -e empty kyua list -v -k myfile sometest
+    atf_check -s exit:0 -o file:expout -e empty kyua list -v --kyuafile=myfile \
+        sometest
+}
+
+
 utils_test_case verbose_flag
 verbose_flag_body() {
     cat >Kyuafile <<EOF
@@ -450,51 +495,6 @@ EOF
 kyua: E: Load of 'Kyuafile' failed: Non-existent test program 'subdir/i-am-missing'.
 EOF
     atf_check -s exit:1 -o empty -e file:experr kyua list
-}
-
-
-utils_test_case kyuafile_flag__no_args
-kyuafile_flag__no_args_body() {
-    cat >Kyuafile <<EOF
-This file is bogus but it is not loaded.
-EOF
-
-    cat >myfile <<EOF
-syntax("kyuafile", 1)
-test_suite("integration")
-atf_test_program{name="sometest"}
-EOF
-    utils_cp_helper simple_all_pass sometest
-
-    cat >expout <<EOF
-sometest:pass
-sometest:skip
-EOF
-    atf_check -s exit:0 -o file:expout -e empty kyua list -k myfile
-    atf_check -s exit:0 -o file:expout -e empty kyua list --kyuafile=myfile
-}
-
-
-utils_test_case kyuafile_flag__some_args
-kyuafile_flag__some_args_body() {
-    cat >Kyuafile <<EOF
-This file is bogus but it is not loaded.
-EOF
-
-    cat >myfile <<EOF
-syntax("kyuafile", 1)
-test_suite("hello-world")
-atf_test_program{name="sometest"}
-EOF
-    utils_cp_helper simple_all_pass sometest
-
-    cat >expout <<EOF
-sometest:pass (hello-world)
-sometest:skip (hello-world)
-EOF
-    atf_check -s exit:0 -o file:expout -e empty kyua list -v -k myfile sometest
-    atf_check -s exit:0 -o file:expout -e empty kyua list -v --kyuafile=myfile \
-        sometest
 }
 
 

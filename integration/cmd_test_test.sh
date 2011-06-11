@@ -456,150 +456,6 @@ EOF
 }
 
 
-utils_test_case no_test_program_match
-no_test_program_match_body() {
-    cat >Kyuafile <<EOF
-syntax("kyuafile", 1)
-test_suite("integration")
-atf_test_program{name="first"}
-EOF
-    utils_cp_helper simple_all_pass first
-    utils_cp_helper simple_all_pass second
-
-    cat >experr <<EOF
-kyua: W: No test cases matched by the filter 'second'.
-EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua test second
-}
-
-
-utils_test_case no_test_case_match
-no_test_case_match_body() {
-    cat >Kyuafile <<EOF
-syntax("kyuafile", 1)
-test_suite("integration")
-atf_test_program{name="first"}
-EOF
-    utils_cp_helper simple_all_pass first
-
-    cat >experr <<EOF
-kyua: W: No test cases matched by the filter 'first:foobar'.
-EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua test first:foobar
-}
-
-
-utils_test_case missing_kyuafile__no_args
-missing_kyuafile__no_args_body() {
-    cat >experr <<EOF
-kyua: E: Load of 'Kyuafile' failed: File 'Kyuafile' not found.
-EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua test
-}
-
-
-utils_test_case missing_kyuafile__test_program
-missing_kyuafile__test_program_body() {
-    mkdir subdir
-    cat >subdir/Kyuafile <<EOF
-syntax("kyuafile", 1)
-test_suite("integration")
-atf_test_program{name="unused"}
-EOF
-    utils_cp_helper simple_all_pass subdir/unused
-
-    cat >experr <<EOF
-kyua: E: Load of 'Kyuafile' failed: File 'Kyuafile' not found.
-EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua test subdir/unused
-}
-
-
-utils_test_case missing_kyuafile__subdir
-missing_kyuafile__subdir_body() {
-    mkdir subdir
-    cat >subdir/Kyuafile <<EOF
-syntax("kyuafile", 1)
-test_suite("integration")
-atf_test_program{name="unused"}
-EOF
-    utils_cp_helper simple_all_pass subdir/unused
-
-    cat >experr <<EOF
-kyua: E: Load of 'Kyuafile' failed: File 'Kyuafile' not found.
-EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua test subdir
-}
-
-
-utils_test_case bogus_config
-bogus_config_body() {
-    cat >"${HOME}/.kyuarc" <<EOF
-Hello, world.
-EOF
-
-    atf_check -s exit:1 -o empty \
-        -e match:"^kyua: E: Load of '.*kyuarc' failed: Failed to load Lua" \
-        kyua test
-}
-
-
-utils_test_case bogus_kyuafile
-bogus_kyuafile_body() {
-    cat >Kyuafile <<EOF
-Hello, world.
-EOF
-
-    cat >experr <<EOF
-kyua: E: Load of 'Kyuafile' failed: Failed to load Lua file 'Kyuafile': Kyuafile:2: '<name>' expected near '<eof>'.
-EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua test
-}
-
-
-utils_test_case bogus_test_program
-bogus_test_program_body() {
-    cat >Kyuafile <<EOF
-syntax("kyuafile", 1)
-test_suite("integration")
-atf_test_program{name="crash_on_list"}
-atf_test_program{name="non_executable"}
-EOF
-    utils_cp_helper bad_test_program crash_on_list
-    echo 'I am not executable' >non_executable
-
-    cat >expout <<EOF
-crash_on_list:__test_program__  ->  broken: Failed to load list of test cases: Test program did not exit cleanly
-non_executable:__test_program__  ->  broken: Failed to load list of test cases: Failed to execute the test program
-
-0/2 passed (2 failed)
-EOF
-    atf_check -s exit:1 -o file:expout -e empty kyua test
-}
-
-
-utils_test_case missing_test_program
-missing_test_program_body() {
-    cat >Kyuafile <<EOF
-syntax("kyuafile", 1)
-include("subdir/Kyuafile")
-EOF
-    mkdir subdir
-    cat >subdir/Kyuafile <<EOF
-syntax("kyuafile", 1)
-test_suite("integration")
-atf_test_program{name="ok"}
-atf_test_program{name="i-am-missing"}
-EOF
-    echo 'I should not be touched because the Kyuafile is bogus' >subdir/ok
-
-    cat >experr <<EOF
-kyua: E: Load of 'Kyuafile' failed: Non-existent test program 'subdir/i-am-missing'.
-EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua test
-}
-
-
 utils_test_case config__behavior
 config__behavior_body() {
     cat >"${HOME}/.kyuarc" <<EOF
@@ -912,6 +768,150 @@ EOF
     atf_check -s exit:0 -o ignore -e empty grep 'Signal caught' stderr
     atf_check -s exit:0 -o ignore -e empty \
         grep 'kyua: E: Interrupted by signal' stderr
+}
+
+
+utils_test_case no_test_program_match
+no_test_program_match_body() {
+    cat >Kyuafile <<EOF
+syntax("kyuafile", 1)
+test_suite("integration")
+atf_test_program{name="first"}
+EOF
+    utils_cp_helper simple_all_pass first
+    utils_cp_helper simple_all_pass second
+
+    cat >experr <<EOF
+kyua: W: No test cases matched by the filter 'second'.
+EOF
+    atf_check -s exit:1 -o empty -e file:experr kyua test second
+}
+
+
+utils_test_case no_test_case_match
+no_test_case_match_body() {
+    cat >Kyuafile <<EOF
+syntax("kyuafile", 1)
+test_suite("integration")
+atf_test_program{name="first"}
+EOF
+    utils_cp_helper simple_all_pass first
+
+    cat >experr <<EOF
+kyua: W: No test cases matched by the filter 'first:foobar'.
+EOF
+    atf_check -s exit:1 -o empty -e file:experr kyua test first:foobar
+}
+
+
+utils_test_case missing_kyuafile__no_args
+missing_kyuafile__no_args_body() {
+    cat >experr <<EOF
+kyua: E: Load of 'Kyuafile' failed: File 'Kyuafile' not found.
+EOF
+    atf_check -s exit:1 -o empty -e file:experr kyua test
+}
+
+
+utils_test_case missing_kyuafile__test_program
+missing_kyuafile__test_program_body() {
+    mkdir subdir
+    cat >subdir/Kyuafile <<EOF
+syntax("kyuafile", 1)
+test_suite("integration")
+atf_test_program{name="unused"}
+EOF
+    utils_cp_helper simple_all_pass subdir/unused
+
+    cat >experr <<EOF
+kyua: E: Load of 'Kyuafile' failed: File 'Kyuafile' not found.
+EOF
+    atf_check -s exit:1 -o empty -e file:experr kyua test subdir/unused
+}
+
+
+utils_test_case missing_kyuafile__subdir
+missing_kyuafile__subdir_body() {
+    mkdir subdir
+    cat >subdir/Kyuafile <<EOF
+syntax("kyuafile", 1)
+test_suite("integration")
+atf_test_program{name="unused"}
+EOF
+    utils_cp_helper simple_all_pass subdir/unused
+
+    cat >experr <<EOF
+kyua: E: Load of 'Kyuafile' failed: File 'Kyuafile' not found.
+EOF
+    atf_check -s exit:1 -o empty -e file:experr kyua test subdir
+}
+
+
+utils_test_case bogus_config
+bogus_config_body() {
+    cat >"${HOME}/.kyuarc" <<EOF
+Hello, world.
+EOF
+
+    atf_check -s exit:1 -o empty \
+        -e match:"^kyua: E: Load of '.*kyuarc' failed: Failed to load Lua" \
+        kyua test
+}
+
+
+utils_test_case bogus_kyuafile
+bogus_kyuafile_body() {
+    cat >Kyuafile <<EOF
+Hello, world.
+EOF
+
+    cat >experr <<EOF
+kyua: E: Load of 'Kyuafile' failed: Failed to load Lua file 'Kyuafile': Kyuafile:2: '<name>' expected near '<eof>'.
+EOF
+    atf_check -s exit:1 -o empty -e file:experr kyua test
+}
+
+
+utils_test_case bogus_test_program
+bogus_test_program_body() {
+    cat >Kyuafile <<EOF
+syntax("kyuafile", 1)
+test_suite("integration")
+atf_test_program{name="crash_on_list"}
+atf_test_program{name="non_executable"}
+EOF
+    utils_cp_helper bad_test_program crash_on_list
+    echo 'I am not executable' >non_executable
+
+    cat >expout <<EOF
+crash_on_list:__test_program__  ->  broken: Failed to load list of test cases: Test program did not exit cleanly
+non_executable:__test_program__  ->  broken: Failed to load list of test cases: Failed to execute the test program
+
+0/2 passed (2 failed)
+EOF
+    atf_check -s exit:1 -o file:expout -e empty kyua test
+}
+
+
+utils_test_case missing_test_program
+missing_test_program_body() {
+    cat >Kyuafile <<EOF
+syntax("kyuafile", 1)
+include("subdir/Kyuafile")
+EOF
+    mkdir subdir
+    cat >subdir/Kyuafile <<EOF
+syntax("kyuafile", 1)
+test_suite("integration")
+atf_test_program{name="ok"}
+atf_test_program{name="i-am-missing"}
+EOF
+    echo 'I should not be touched because the Kyuafile is bogus' >subdir/ok
+
+    cat >experr <<EOF
+kyua: E: Load of 'Kyuafile' failed: Non-existent test program 'subdir/i-am-missing'.
+EOF
+    atf_check -s exit:1 -o empty -e file:experr kyua test
 }
 
 
