@@ -37,7 +37,7 @@ noinst_DATA += INSTALL README
 EXTRA_DIST += $(doc_DATA) INSTALL README
 
 testsdir = $(exec_prefix)/tests
-pkgtestsdir = $(testsdir)/kyua/kyua-cli
+pkgtestsdir = $(testsdir)/kyua-cli
 
 tests_topdir = $(pkgtestsdir)
 
