@@ -87,10 +87,10 @@ engine_test_case_test_LDADD = $(ENGINE_LIBS) $(UTILS_TEST_LIBS) \
 
 tests_engine_PROGRAMS += engine/test_program_test
 engine_test_program_test_SOURCES = engine/test_program_test.cpp
-engine_test_program_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
-                                    $(ATF_CXX_CFLAGS)
-engine_test_program_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
-                                 $(ATF_CXX_LIBS)
+engine_test_program_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_TEST_CFLAGS) \
+                                    $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+engine_test_program_test_LDADD = $(ENGINE_LIBS) $(UTILS_TEST_LIBS) \
+                                 $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_engine_PROGRAMS += engine/test_program_atf_helpers
 engine_test_program_atf_helpers_SOURCES = engine/test_program_atf_helpers.cpp

@@ -45,6 +45,10 @@ namespace process = utils::process;
 namespace {
 
 
+/// Internal error code used to communicate an exec failure.
+static const int list_failure_exitcode = 120;
+
+
 /// Splits a property line of the form "name: word1 [... wordN]".
 ///
 /// \param line The line to parse.
@@ -113,7 +117,11 @@ public:
     {
         std::vector< std::string > args;
         args.push_back("-l");
-        process::exec(_program, args);
+        try {
+            process::exec(_program, args);
+        } catch (const process::error& e) {
+            std::exit(list_failure_exitcode);
+        }
     }
 };
 
@@ -205,15 +213,20 @@ engine::load_test_cases(const utils::fs::path& root,
     }
 
     test_cases_vector test_cases;
+    std::string format_error_message;
     try {
         test_cases = detail::parse_test_cases(program, child->output());
     } catch (const format_error& e) {
-        throw format_error(F("%s: %s") % program.str() % e.what());
+        format_error_message = F("%s: %s") % program.str() % e.what();
     }
 
     const utils::process::status status = child->wait();
+    if (status.exited() && status.exitstatus() == list_failure_exitcode)
+        throw error("Failed to execute the test program");
     if (!status.exited() || status.exitstatus() != EXIT_SUCCESS)
-        throw error("Cannot get list of test cases; test program failed");
+        throw error("Test program did not exit cleanly");
+    if (!format_error_message.empty())
+        throw format_error(format_error_message);
 
     return test_cases;
 }

@@ -32,6 +32,7 @@
 
 #include "cli/cmd_list.hpp"
 #include "cli/common.hpp"
+#include "engine/exceptions.hpp"
 #include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
 #include "engine/user_files/kyuafile.hpp"
@@ -123,14 +124,25 @@ cli::cmd_list::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
     cli::filters_state filters(cmdline.arguments());
     const user_files::kyuafile kyuafile = load_kyuafile(cmdline);
 
+    bool ok = true;
+
     const user_files::test_programs_vector& test_programs =
         kyuafile.test_programs();
     for (user_files::test_programs_vector::const_iterator
          iter = test_programs.begin(); iter != test_programs.end(); iter++) {
-        if (filters.match_test_program((*iter).binary_path))
-            detail::list_test_program(ui, cmdline.has_option("verbose"),
-                                      kyuafile.root(), *iter, filters);
+        if (filters.match_test_program((*iter).binary_path)) {
+            try {
+                detail::list_test_program(ui, cmdline.has_option("verbose"),
+                                          kyuafile.root(), *iter, filters);
+            } catch (const engine::error& e) {
+                cmdline::print_warning(
+                    ui, F("Cannot load test case list for '%s': %s") %
+                    (*iter).binary_path % e.what());
+                ok &= false;
+            }
+        }
     }
 
-    return filters.report_unused_filters(ui) ? EXIT_FAILURE : EXIT_SUCCESS;
+    return filters.report_unused_filters(ui) || !ok ?
+        EXIT_FAILURE : EXIT_SUCCESS;
 }

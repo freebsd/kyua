@@ -42,6 +42,7 @@ extern "C" {
 #include "utils/env.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/test_utils.hpp"
 
 namespace detail = engine::detail;
 namespace fs = utils::fs;
@@ -260,8 +261,17 @@ ATF_TEST_CASE_BODY(parse_test_cases__many_test_cases)
 ATF_TEST_CASE_WITHOUT_HEAD(load_test_cases__missing_test_program);
 ATF_TEST_CASE_BODY(load_test_cases__missing_test_program)
 {
-    ATF_REQUIRE_THROW(engine::error, engine::load_test_cases(
-        fs::path("/"), fs::path("non-existent")));
+    ATF_REQUIRE_THROW_RE(engine::error, "Failed to execute",
+        engine::load_test_cases(fs::path("/"), fs::path("non-existent")));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(load_test_cases__not_a_test_program);
+ATF_TEST_CASE_BODY(load_test_cases__not_a_test_program)
+{
+    utils::create_file(fs::path("text-file"));
+    ATF_REQUIRE_THROW_RE(engine::error, "Failed to execute",
+        engine::load_test_cases(fs::path("."), fs::path("text-file")));
 }
 
 
@@ -270,7 +280,7 @@ ATF_TEST_CASE_BODY(load_test_cases__abort)
 {
     utils::setenv("HELPER", "abort_test_cases_list");
     const fs::path helpers = plain_helpers(this);
-    ATF_REQUIRE_THROW_RE(engine::error, "test program failed",
+    ATF_REQUIRE_THROW_RE(engine::error, "Test program did not exit cleanly",
         engine::load_test_cases(helpers.branch_path(),
                                 fs::path(helpers.leaf_name())));
 }
@@ -336,6 +346,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, parse_test_cases__many_test_cases);
 
     ATF_ADD_TEST_CASE(tcs, load_test_cases__missing_test_program);
+    ATF_ADD_TEST_CASE(tcs, load_test_cases__not_a_test_program);
     ATF_ADD_TEST_CASE(tcs, load_test_cases__abort);
     ATF_ADD_TEST_CASE(tcs, load_test_cases__empty);
     ATF_ADD_TEST_CASE(tcs, load_test_cases__zero_test_cases);

@@ -562,14 +562,17 @@ bogus_test_program_body() {
     cat >Kyuafile <<EOF
 syntax("kyuafile", 1)
 test_suite("integration")
-atf_test_program{name="bad_test_program"}
+atf_test_program{name="crash_on_list"}
+atf_test_program{name="non_executable"}
 EOF
-    utils_cp_helper bad_test_program .
+    utils_cp_helper bad_test_program crash_on_list
+    echo 'I am not executable' >non_executable
 
     cat >expout <<EOF
-bad_test_program:__test_program__  ->  broken: Failed to load list of test cases: bad_test_program: Invalid header for test case list; expecting Content-Type for application/X-atf-tp version 1, got 'This is not a valid test program!'
+crash_on_list:__test_program__  ->  broken: Failed to load list of test cases: Test program did not exit cleanly
+non_executable:__test_program__  ->  broken: Failed to load list of test cases: Failed to execute the test program
 
-0/1 passed (1 failed)
+0/2 passed (2 failed)
 EOF
     atf_check -s exit:1 -o file:expout -e empty kyua test
 }

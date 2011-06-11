@@ -224,7 +224,8 @@ ATF_TEST_CASE_BODY(list_test_program__crash)
     cmdline::ui_mock ui;
 
     utils::setenv("TESTS", "crash_list");
-    ATF_REQUIRE_THROW(engine::format_error, run_helpers(this, &ui, true));
+    ATF_REQUIRE_THROW_RE(engine::error, "Test program did not exit cleanly",
+                         run_helpers(this, &ui, true));
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE(ui.err_log().empty());
 }
