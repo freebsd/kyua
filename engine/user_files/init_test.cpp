@@ -46,10 +46,13 @@ extern "C" {
 #include "utils/lua/exceptions.hpp"
 #include "utils/lua/operations.hpp"
 #include "utils/lua/wrap.hpp"
+#include "utils/optional.ipp"
 
 namespace fs = utils::fs;
 namespace lua = utils::lua;
 namespace user_files = engine::user_files;
+
+using utils::optional;
 
 
 namespace {
@@ -81,10 +84,15 @@ create_mock_module(const char* file, const char* loaded_cookie)
 static void
 mock_init(void)
 {
+    fs::path original_luadir(KYUA_LUADIR);
+    const optional< std::string > env_luadir = utils::getenv("KYUA_LUADIR");
+    if (env_luadir)
+        original_luadir = fs::path(env_luadir.get());
+
     ATF_REQUIRE(::mkdir("luadir", 0755) != -1);
     utils::setenv("KYUA_LUADIR", "luadir");
 
-    const fs::path init_lua = fs::path(KYUA_LUADIR) / "init.lua";
+    const fs::path init_lua = original_luadir / "init.lua";
     ATF_REQUIRE(::symlink(init_lua.c_str(), "luadir/init.lua") != -1);
 }
 

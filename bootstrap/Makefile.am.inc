@@ -58,4 +58,5 @@ EXTRA_DIST += bootstrap/testsuite \
 check-local: check-bootstrap
 .PHONY: check-bootstrap
 check-bootstrap: @target_srcdir@bootstrap/testsuite $(check_PROGRAMS)
-	cd bootstrap && $(TESTS_ENVIRONMENT) $(abs_srcdir)/bootstrap/testsuite
+	cd bootstrap && $(CHECK_ENVIRONMENT) $(TESTS_ENVIRONMENT) \
+	    $(abs_srcdir)/bootstrap/testsuite

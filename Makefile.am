@@ -58,17 +58,21 @@ kyua_SOURCES = main.cpp
 kyua_CXXFLAGS = $(CLI_CFLAGS) $(ENGINE_CFLAGS) $(UTILS_CFLAGS)
 kyua_LDADD = $(CLI_LIBS) $(ENGINE_LIBS) $(UTILS_LIBS)
 
-TESTS_ENVIRONMENT = PATH=$(prefix)/bin:$${PATH}
+CHECK_ENVIRONMENT = KYUA_DOCDIR=$(abs_top_srcdir) \
+                    KYUA_LUADIR=$(abs_top_builddir)/engine/user_files \
+                    PATH=$(abs_top_builddir):$${PATH}
+INSTALLCHECK_ENVIRONMENT = PATH=$(prefix)/bin:$${PATH}
 
 check-local: check-kyua
 .PHONY: check-kyua
 check-kyua:
-	$(TESTS_ENVIRONMENT) ./kyua test
+	$(CHECK_ENVIRONMENT) $(TESTS_ENVIRONMENT) ./kyua test
 
 installcheck-local: installcheck-kyua
 .PHONY: installcheck-kyua
 installcheck-kyua:
-	cd $(pkgtestsdir) && $(TESTS_ENVIRONMENT) kyua test
+	cd $(pkgtestsdir) && $(INSTALLCHECK_ENVIRONMENT) $(TESTS_ENVIRONMENT) \
+	    kyua test
 
 if WITH_DOXYGEN
 # This should probably be html-local, but it seems better to generate the
