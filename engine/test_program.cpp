@@ -33,7 +33,6 @@
 #include "engine/exceptions.hpp"
 #include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
-#include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/process/children.ipp"
@@ -110,7 +109,7 @@ public:
     ///
     /// \post The process terminates.
     void
-    operator()(void) UTILS_NORETURN
+    operator()(void)
     {
         std::vector< std::string > args;
         args.push_back("-l");

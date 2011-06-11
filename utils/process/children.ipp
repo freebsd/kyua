@@ -59,8 +59,12 @@ child_with_files::fork(Hook hook, const fs::path& stdout_file,
     std::auto_ptr< child_with_files > child = fork_aux(stdout_file,
                                                        stderr_file);
     if (child.get() == NULL) {
-        hook();
-        std::abort();
+        try {
+            hook();
+            std::abort();
+        } catch (...) {
+            std::abort();
+        }
     }
 
     return child;
@@ -85,8 +89,12 @@ child_with_output::fork(Hook hook)
 {
     std::auto_ptr< child_with_output > child = fork_aux();
     if (child.get() == NULL) {
-        hook();
-        std::abort();
+        try {
+            hook();
+            std::abort();
+        } catch (...) {
+            std::abort();
+        }
     }
 
     return child;

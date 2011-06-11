@@ -453,11 +453,10 @@ process::child_with_output::wait(const datetime::delta& timeout)
 
 /// Executes an external binary and replaces the current process.
 ///
-/// If the new binary cannot be executed, this fails unconditionally: it dumps
-/// an error to stderr and then aborts execution.
-///
 /// \param program The binary to execute.
 /// \param args The arguments to pass to the binary, without the program name.
+///
+/// \throw process::system_error If the call to exec(3) fails.
 void
 process::exec(const fs::path& program, const std::vector< std::string >& args)
 {
@@ -476,7 +475,10 @@ process::exec(const fs::path& program, const std::vector< std::string >& args)
     const int ret = ::execv(program.c_str(), argv);
     const int original_errno = errno;
     INV(ret == -1);
-    std::cerr << F("Failed to execute %s: %s\n") % program %
-        std::strerror(original_errno);
-    std::abort();
+
+    for (char** arg = argv; *arg != NULL; arg++)
+        delete *arg;
+    delete [] argv;
+
+    throw system_error(F("Failed to execute %s") % program, original_errno);
 }

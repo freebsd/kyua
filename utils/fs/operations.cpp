@@ -44,6 +44,7 @@ extern "C" {
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
+#include <iostream>
 #include <sstream>
 #include <string>
 
@@ -57,6 +58,7 @@ extern "C" {
 #include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/process/children.ipp"
+#include "utils/process/exceptions.hpp"
 #include "utils/sanity.hpp"
 
 namespace datetime = utils::datetime;
@@ -390,7 +392,8 @@ public:
 
     /// Executes umount(8) to unmount the file system.
     void
-    operator()(void) {
+    operator()(void)
+    {
         const fs::path umount_binary(UMOUNT);
         if (!umount_binary.is_absolute())
             LW(F("Builtin path '%s' to umount(8) is not absolute") %
@@ -399,7 +402,13 @@ public:
         std::vector< std::string > args;
         args.push_back(umount_binary.str());
         args.push_back(_mount_point.str());
-        process::exec(umount_binary, args);
+        try {
+            process::exec(umount_binary, args);
+        } catch (const process::error& e) {
+            std::cerr << F("Failed to execute %s: %s\n") % umount_binary %
+                e.what();
+            std::exit(EXIT_FAILURE);
+        }
     };
 };
 

@@ -41,7 +41,6 @@ extern "C" {
 #include "engine/exceptions.hpp"
 #include "engine/results.ipp"
 #include "engine/test_case.hpp"
-#include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/process/children.ipp"
@@ -84,7 +83,7 @@ public:
 
     /// Entry point for the functor.
     void
-    operator()(void) UTILS_NORETURN
+    operator()(void)
     {
         std::vector< std::string > args;
         args.push_back("-r" + _resfile.str());

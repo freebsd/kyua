@@ -293,6 +293,28 @@ child_write_pid_check(Child& child)
 }
 
 
+/// A child process that returns.
+///
+/// The fork() wrappers are supposed to capture this condition and terminate the
+/// child before the code returns to the fork() call point.
+static void
+child_return(void)
+{
+}
+
+
+/// A child process that raises an exception.
+///
+/// The fork() wrappers are supposed to capture this condition and terminate the
+/// child before the code returns to the fork() call point.
+template< class Type, Type Value >
+void
+child_raise_exception(void)
+{
+    throw Type(Value);
+}
+
+
 class do_exec {
     fs::path _program;
     const std::vector< std::string > _args;
@@ -307,7 +329,12 @@ public:
     void
     operator()(void)
     {
-        process::exec(_program, _args);
+        try {
+            process::exec(_program, _args);
+        } catch (const process::system_error& e) {
+            std::cerr << "Caught system_error: " << e.what() << '\n';
+            std::abort();
+        }
     }
 };
 
@@ -452,6 +479,50 @@ ATF_TEST_CASE_BODY(child_with_files__interrupted)
                                         fs::path("out"), fs::path("err"));
 
     interrupted_check(child);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(child_with_files__fork_cannot_exit);
+ATF_TEST_CASE_BODY(child_with_files__fork_cannot_exit)
+{
+    const pid_t parent_pid = ::getpid();
+    utils::create_file(fs::path("to-not-be-deleted"));
+
+    std::auto_ptr< process::child_with_files > child =
+        process::child_with_files::fork(child_return,
+                                        fs::path("out"), fs::path("err"));
+    if (::getpid() != parent_pid) {
+        // If we enter this clause, it is because the hook returned.
+        ::unlink("to-not-be-deleted");
+        std::exit(EXIT_SUCCESS);
+    }
+
+    const process::status status = child->wait();
+    ATF_REQUIRE(status.signaled());
+    ATF_REQUIRE(fs::exists(fs::path("to-not-be-deleted")));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(child_with_files__fork_cannot_unwind);
+ATF_TEST_CASE_BODY(child_with_files__fork_cannot_unwind)
+{
+    const pid_t parent_pid = ::getpid();
+    utils::create_file(fs::path("to-not-be-deleted"));
+    try {
+        std::auto_ptr< process::child_with_files > child =
+            process::child_with_files::fork(child_raise_exception< int, 123 >,
+                                            fs::path("out"), fs::path("err"));
+        const process::status status = child->wait();
+        ATF_REQUIRE(status.signaled());
+        ATF_REQUIRE(fs::exists(fs::path("to-not-be-deleted")));
+    } catch (const int i) {
+        // If we enter this clause, it is because an exception leaked from the
+        // hook.
+        INV(parent_pid != ::getpid());
+        INV(i == 123);
+        ::unlink("to-not-be-deleted");
+        std::exit(EXIT_SUCCESS);
+    }
 }
 
 
@@ -617,6 +688,48 @@ ATF_TEST_CASE_BODY(child_with_output__pipe_fail)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(child_with_output__fork_cannot_exit);
+ATF_TEST_CASE_BODY(child_with_output__fork_cannot_exit)
+{
+    const pid_t parent_pid = ::getpid();
+    utils::create_file(fs::path("to-not-be-deleted"));
+
+    std::auto_ptr< process::child_with_output > child =
+        process::child_with_output::fork(child_return);
+    if (::getpid() != parent_pid) {
+        // If we enter this clause, it is because the hook returned.
+        ::unlink("to-not-be-deleted");
+        std::exit(EXIT_SUCCESS);
+    }
+
+    const process::status status = child->wait();
+    ATF_REQUIRE(status.signaled());
+    ATF_REQUIRE(fs::exists(fs::path("to-not-be-deleted")));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(child_with_output__fork_cannot_unwind);
+ATF_TEST_CASE_BODY(child_with_output__fork_cannot_unwind)
+{
+    const pid_t parent_pid = ::getpid();
+    utils::create_file(fs::path("to-not-be-deleted"));
+    try {
+        std::auto_ptr< process::child_with_output > child =
+            process::child_with_output::fork(child_raise_exception< int, 123 >);
+        const process::status status = child->wait();
+        ATF_REQUIRE(status.signaled());
+        ATF_REQUIRE(fs::exists(fs::path("to-not-be-deleted")));
+    } catch (const int i) {
+        // If we enter this clause, it is because an exception leaked from the
+        // hook.
+        INV(parent_pid != ::getpid());
+        INV(i == 123);
+        ::unlink("to-not-be-deleted");
+        std::exit(EXIT_SUCCESS);
+    }
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(child_with_output__fork_fail);
 ATF_TEST_CASE_BODY(child_with_output__fork_fail)
 {
@@ -769,7 +882,7 @@ ATF_TEST_CASE_BODY(exec__missing_program)
 
     std::string line;
     ATF_REQUIRE(std::getline(child->output(), line).good());
-    const std::string exp = "Failed to execute a/b/c: ";
+    const std::string exp = "Caught system_error: Failed to execute a/b/c: ";
     ATF_REQUIRE_EQ(exp, line.substr(0, exp.length()));
     ATF_REQUIRE(!std::getline(child->output(), line));
 
@@ -788,6 +901,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, child_with_files__wait_timeout_ok);
     ATF_ADD_TEST_CASE(tcs, child_with_files__wait_timeout_expired);
     ATF_ADD_TEST_CASE(tcs, child_with_files__interrupted);
+    ATF_ADD_TEST_CASE(tcs, child_with_files__fork_cannot_exit);
+    ATF_ADD_TEST_CASE(tcs, child_with_files__fork_cannot_unwind);
     ATF_ADD_TEST_CASE(tcs, child_with_files__fork_fail);
     ATF_ADD_TEST_CASE(tcs, child_with_files__create_stdout_fail);
     ATF_ADD_TEST_CASE(tcs, child_with_files__create_stderr_fail);
@@ -799,6 +914,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, child_with_output__wait_timeout_expired);
     ATF_ADD_TEST_CASE(tcs, child_with_output__interrupted);
     ATF_ADD_TEST_CASE(tcs, child_with_output__pipe_fail);
+    ATF_ADD_TEST_CASE(tcs, child_with_output__fork_cannot_exit);
+    ATF_ADD_TEST_CASE(tcs, child_with_output__fork_cannot_unwind);
     ATF_ADD_TEST_CASE(tcs, child_with_output__fork_fail);
 
     ATF_ADD_TEST_CASE(tcs, exec__absolute_path);

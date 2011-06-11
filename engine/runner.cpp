@@ -46,7 +46,6 @@ extern "C" {
 #include "engine/test_case.hpp"
 #include "engine/user_files/config.hpp"
 #include "utils/datetime.hpp"
-#include "utils/defs.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
@@ -288,7 +287,7 @@ public:
 
     /// Entry point for the functor.
     void
-    operator()(void) UTILS_NORETURN
+    operator()(void)
     {
         const fs::path test_program = _root / _test_case.identifier.program;
         const fs::path abs_test_program = test_program.is_absolute() ?
@@ -347,7 +346,7 @@ public:
 
     /// Entry point for the functor.
     void
-    operator()(void) UTILS_NORETURN
+    operator()(void)
     {
         const fs::path test_program = _root / _test_case.identifier.program;
         const fs::path abs_test_program = test_program.is_absolute() ?
