@@ -495,11 +495,13 @@ run_test_case_safe(const fs::path& root,
     signals::programmer sigint(SIGINT, interrupt_handler);
     signals::programmer sigterm(SIGTERM, interrupt_handler);
 
+    results::result_ptr result;
+
     fs::auto_directory workdir(create_work_directory());
     try {
         check_interrupt();
-        results::result_ptr result = run_test_case_safe_workdir(
-            root, test_case, config, test_suite, workdir.directory());
+        result = run_test_case_safe_workdir(root, test_case, config, test_suite,
+                                            workdir.directory());
 
         try {
             workdir.cleanup();
@@ -512,14 +514,6 @@ run_test_case_safe(const fs::path& root,
                      "the test is already broken: %s") % e.what());
             }
         }
-
-        sighup.unprogram();
-        sigint.unprogram();
-        sigterm.unprogram();
-
-        check_interrupt();
-
-        return result;
     } catch (const engine::interrupted_error& e) {
         workdir.cleanup();
 
@@ -529,7 +523,14 @@ run_test_case_safe(const fs::path& root,
 
         throw e;
     }
-    UNREACHABLE;
+
+    sighup.unprogram();
+    sigint.unprogram();
+    sigterm.unprogram();
+
+    check_interrupt();
+
+    return result;
 }
 
 
