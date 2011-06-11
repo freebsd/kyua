@@ -431,7 +431,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(load__missing_file);
 ATF_TEST_CASE_BODY(load__missing_file)
 {
     results::result_ptr result = results::load(utils::fs::path("result.txt"));
-    ATF_REQUIRE_EQ(NULL, result.get());
+    ATF_REQUIRE(NULL == result.get());
 }
 
 
