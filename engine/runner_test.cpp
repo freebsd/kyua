@@ -180,7 +180,9 @@ one_signal_test(const atf::tests::tc* tc, const int signo)
         fs::path(tc->get_config_var("srcdir")),
         make_test_case(fs::path("runner_helpers"), "validate_signal"),
         config, "the-suite");
-    validate_broken("Results file.*cannot be opened", result.get());
+    validate_broken(
+        (F("Premature exit: received signal %d") % signo).str().c_str(),
+        result.get());
 }
 
 
@@ -730,8 +732,7 @@ ATF_TEST_CASE_BODY(run_test_case__missing_results_file)
         fs::path(get_config_var("srcdir")),
         make_test_case(fs::path("runner_helpers"), "crash"),
         mock_config, "test-suite");
-    // TODO(jmmv): This should really contain a more descriptive message.
-    validate_broken("Results file.*cannot be opened", result.get());
+    validate_broken("Premature exit: received signal", result.get());
 }
 
 
@@ -747,7 +748,7 @@ ATF_TEST_CASE_BODY(run_test_case__missing_test_program)
         mock_config, "test-suite");
     // TODO(jmmv): This should really be either an exception to denote a broken
     // test suite or should be properly reported as missing test program.
-    validate_broken("Results file.*cannot be opened", result.get());
+    validate_broken("Premature exit: received signal", result.get());
 }
 
 

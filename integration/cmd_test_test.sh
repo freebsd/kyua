@@ -170,6 +170,27 @@ EOF
 }
 
 
+utils_test_case premature_exit
+premature_exit_body() {
+    cat >Kyuafile <<EOF
+syntax("kyuafile", 1)
+test_suite("integration")
+atf_test_program{name="bogus_test_cases"}
+EOF
+
+    cat >expout <<EOF
+bogus_test_cases:die  ->  broken: Premature exit: received signal 6
+bogus_test_cases:exit  ->  broken: Premature exit: exited with code 0
+bogus_test_cases:pass  ->  passed
+
+1/3 passed (2 failed)
+EOF
+
+    utils_cp_helper bogus_test_cases .
+    atf_check -s exit:1 -o file:expout -e empty kyua test
+}
+
+
 utils_test_case no_args
 no_args_body() {
     cat >Kyuafile <<EOF
@@ -876,6 +897,7 @@ atf_init_test_cases() {
     atf_add_test_case many_test_programs__some_fail
     atf_add_test_case expect__all_pass
     atf_add_test_case expect__some_fail
+    atf_add_test_case premature_exit
 
     atf_add_test_case no_args
     atf_add_test_case one_arg__subdir

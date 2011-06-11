@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -432,9 +432,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(load__missing_file);
 ATF_TEST_CASE_BODY(load__missing_file)
 {
     results::result_ptr result = results::load(utils::fs::path("result.txt"));
-    const results::broken* broken = dynamic_cast< const results::broken* >(
-        result.get());
-    ATF_REQUIRE_MATCH("'result.txt'.*cannot be opened", broken->reason);
+    ATF_REQUIRE_EQ(NULL, result.get());
 }
 
 
@@ -450,6 +448,16 @@ ATF_TEST_CASE_BODY(load__format_error)
     const results::broken* broken = dynamic_cast< const results::broken* >(
         result.get());
     ATF_REQUIRE_MATCH("cannot have a reason", broken->reason);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(adjust_with_status__missing);
+ATF_TEST_CASE_BODY(adjust_with_status__missing)
+{
+    const process::status status = process::status::fake_exited(EXIT_SUCCESS);
+    validate_broken("Premature exit: exited with code 0",
+                    results::adjust_with_status(results::result_ptr(NULL),
+                                                status).get());
 }
 
 
@@ -978,6 +986,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, load__missing_file);
     ATF_ADD_TEST_CASE(tcs, load__format_error);
 
+    ATF_ADD_TEST_CASE(tcs, adjust_with_status__missing);
     ATF_ADD_TEST_CASE(tcs, adjust_with_status__broken);
     ATF_ADD_TEST_CASE(tcs, adjust_with_status__expected_death__ok);
     ATF_ADD_TEST_CASE(tcs, adjust_with_status__expected_exit__ok);

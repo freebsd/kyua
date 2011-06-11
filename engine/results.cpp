@@ -301,8 +301,7 @@ results::load(const fs::path& file)
 {
     std::ifstream input(file.c_str());
     if (!input)
-        return make_result(results::broken(F("Results file '%s' cannot be "
-                                             "opened") % file));
+        return result_ptr(NULL);
     else
         return results::parse(input);
 }
@@ -324,6 +323,10 @@ results::result_ptr
 results::adjust_with_status(result_ptr raw_result,
                             const process::status& status)
 {
+    if (raw_result.get() == NULL)
+        return make_result(broken(F("Premature exit: %s") %
+                                  format_status(status)));
+
     if (typeid(*raw_result) == typeid(broken))
         return raw_result;
 
@@ -423,6 +426,10 @@ results::result_ptr
 results::adjust_with_timeout(results::result_ptr result,
                              const datetime::delta& timeout)
 {
+    if (result.get() == NULL)
+        return make_result(broken(F("Test case timed out after %d seconds") %
+                                  timeout.seconds));
+
     if (typeid(*result) == typeid(expected_timeout))
         return result;
     else

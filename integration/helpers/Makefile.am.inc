@@ -32,6 +32,12 @@ tests_integration_helpers_PROGRAMS = integration/helpers/bad_test_program
 integration_helpers_bad_test_program_SOURCES = \
     integration/helpers/bad_test_program.cpp
 
+tests_integration_helpers_PROGRAMS += integration/helpers/bogus_test_cases
+integration_helpers_bogus_test_cases_SOURCES = \
+    integration/helpers/bogus_test_cases.cpp
+integration_helpers_bogus_test_cases_CXXFLAGS = $(ATF_CXX_CFLAGS)
+integration_helpers_bogus_test_cases_LDADD = $(ATF_CXX_LIBS)
+
 tests_integration_helpers_PROGRAMS += integration/helpers/config
 integration_helpers_config_SOURCES = integration/helpers/config.cpp
 integration_helpers_config_CXXFLAGS = $(ATF_CXX_CFLAGS)
