@@ -323,8 +323,8 @@ EOF
 }
 
 
-utils_test_case missing_test_program
-missing_test_program_body() {
+utils_test_case no_test_program_match
+no_test_program_match_body() {
     cat >Kyuafile <<EOF
 syntax("kyuafile", 1)
 test_suite("integration")
@@ -340,8 +340,8 @@ EOF
 }
 
 
-utils_test_case missing_test_case
-missing_test_case_body() {
+utils_test_case no_test_case_match
+no_test_case_match_body() {
     cat >Kyuafile <<EOF
 syntax("kyuafile", 1)
 test_suite("integration")
@@ -431,6 +431,28 @@ EOF
 }
 
 
+utils_test_case missing_test_program
+missing_test_program_body() {
+    cat >Kyuafile <<EOF
+syntax("kyuafile", 1)
+include("subdir/Kyuafile")
+EOF
+    mkdir subdir
+    cat >subdir/Kyuafile <<EOF
+syntax("kyuafile", 1)
+test_suite("integration")
+atf_test_program{name="ok"}
+atf_test_program{name="i-am-missing"}
+EOF
+    echo 'I should not be touched because the Kyuafile is bogus' >subdir/ok
+
+    cat >experr <<EOF
+kyua: E: Load of 'Kyuafile' failed: Non-existent test program 'subdir/i-am-missing'.
+EOF
+    atf_check -s exit:1 -o empty -e file:experr kyua list
+}
+
+
 utils_test_case kyuafile_flag__no_args
 kyuafile_flag__no_args_body() {
     cat >Kyuafile <<EOF
@@ -496,8 +518,8 @@ atf_init_test_cases() {
 
     atf_add_test_case verbose_flag
 
-    atf_add_test_case missing_test_program
-    atf_add_test_case missing_test_case
+    atf_add_test_case no_test_program_match
+    atf_add_test_case no_test_case_match
 
     atf_add_test_case missing_kyuafile__no_args
     atf_add_test_case missing_kyuafile__test_program
@@ -505,4 +527,5 @@ atf_init_test_cases() {
 
     atf_add_test_case bogus_kyuafile
     atf_add_test_case bogus_test_program
+    atf_add_test_case missing_test_program
 }
