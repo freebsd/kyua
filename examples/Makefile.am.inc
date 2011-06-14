@@ -28,8 +28,8 @@
 
 examplesdir = $(pkgdatadir)/examples
 
-examples_DATA  = examples/Kyuafile.top
-examples_DATA += examples/kyua.conf
+dist_examples_DATA  = examples/Kyuafile.top
+dist_examples_DATA += examples/kyua.conf
 
 tests_examplesdir = $(pkgtestsdir)/examples
 

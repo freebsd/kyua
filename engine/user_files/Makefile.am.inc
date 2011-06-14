@@ -40,9 +40,9 @@ libengine_a_SOURCES += engine/user_files/kyuafile.cpp
 libengine_a_SOURCES += engine/user_files/kyuafile.hpp
 
 lua_modulesdir = $(pkgdatadir)/lua
-lua_modules_DATA  = engine/user_files/init.lua
-lua_modules_DATA += engine/user_files/config_1.lua
-lua_modules_DATA += engine/user_files/kyuafile_1.lua
+dist_lua_modules_DATA  = engine/user_files/init.lua
+dist_lua_modules_DATA += engine/user_files/config_1.lua
+dist_lua_modules_DATA += engine/user_files/kyuafile_1.lua
 
 tests_engine_user_filesdir = $(pkgtestsdir)/engine/user_files
 
