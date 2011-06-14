@@ -44,6 +44,7 @@ tests_topdir = $(pkgtestsdir)
 tests_top_DATA = Atffile Kyuafile
 EXTRA_DIST += $(tests_top_DATA)
 
+include admin/Makefile.am.inc
 include bootstrap/Makefile.am.inc
 include cli/Makefile.am.inc
 include doc/Makefile.am.inc
@@ -59,14 +60,23 @@ kyua_CXXFLAGS = $(CLI_CFLAGS) $(ENGINE_CFLAGS) $(UTILS_CFLAGS)
 kyua_LDADD = $(CLI_LIBS) $(ENGINE_LIBS) $(UTILS_LIBS)
 
 CHECK_ENVIRONMENT = KYUA_DOCDIR=$(abs_top_srcdir) \
-                    KYUA_LUADIR=$(abs_top_builddir)/engine/user_files \
+                    KYUA_LUADIR=$(abs_top_srcdir)/engine/user_files \
                     PATH=$(abs_top_builddir):$${PATH}
 INSTALLCHECK_ENVIRONMENT = PATH=$(prefix)/bin:$${PATH}
 
 check-local: check-kyua
 .PHONY: check-kyua
 check-kyua:
+	$(srcdir)/admin/populate-builddir.sh $(top_srcdir) $(top_builddir) \
+	    cleanlist
 	$(CHECK_ENVIRONMENT) $(TESTS_ENVIRONMENT) ./kyua test
+
+clean-local: clean-builddir
+clean-builddir:
+	if test -f cleanlist; then \
+	    rm -f $$(cat cleanlist); \
+	    rm -f cleanlist; \
+	fi
 
 installcheck-local: installcheck-kyua
 .PHONY: installcheck-kyua

@@ -26,35 +26,4 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-info_TEXINFOS = doc/kyua-cli.texi
-doc_kyua_cli_TEXINFOS  = doc/copying.texi
-doc_kyua_cli_TEXINFOS += doc/overview.texi
-doc_kyua_cli_TEXINFOS += doc/paths.texi
-doc_kyua_cli_TEXINFOS += doc/test_interface.texi
-doc_kyua_cli_TEXINFOS += doc/troubleshooting.texi
-doc_kyua_cli_TEXINFOS += doc/usage.texi
-
-CLEANFILES = doc/paths.texi
-doc/paths.texi: $(srcdir)/Makefile
-	echo "@set KYUA_CONFDIR $(kyua_confdir)" >doc/paths.texi.tmp
-	echo "@set KYUA_DOCDIR $(docdir)" >>doc/paths.texi.tmp
-	echo "@set KYUA_LUADIR $(luadir)" >>doc/paths.texi.tmp
-	mv doc/paths.texi.tmp doc/paths.texi
-
-man_MANS = doc/kyua.1
-CLEANFILES += doc/kyua.1
-EXTRA_DIST += doc/kyua.1.in
-
-doc/kyua.1: $(srcdir)/doc/kyua.1.in
-	test -d doc || mkdir -p doc
-	sed -e 's,__DOCDIR__,$(docdir),g' \
-	    -e 's,__INFODIR__,$(infodir),g' \
-	    -e 's,__TESTSDIR__,$(testsdir),g' \
-	    <$(srcdir)/doc/kyua.1.in >doc/kyua.1.tmp
-	mv doc/kyua.1.tmp doc/kyua.1
-
-# Little hack to disable building of the 'dvi' documentation when
-# running 'make distcheck'.  If you want to build the DVI documents,
-# you can still use the 'dvi-am' target.
-dvi:
-	@true
+EXTRA_DIST += admin/populate-builddir.sh

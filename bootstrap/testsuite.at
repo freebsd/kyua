@@ -46,7 +46,7 @@ syntax("kyuafile", 1)
 test_suite("bootstrap")
 atf_test_program{name="atf_helpers"}
 ])
-    cp $(GUESS_TOPDIR)/engine/test_program_atf_helpers atf_helpers
+    ln -s $(GUESS_TOPDIR)/engine/test_program_atf_helpers atf_helpers
 ])
 m4_define([RUN_ATF_HELPERS], [TESTS="$1" kyua test])
 
@@ -57,7 +57,7 @@ syntax("kyuafile", 1)
 test_suite("bootstrap")
 atf_test_program{name="plain_helpers"}
 ])
-    cp $(GUESS_TOPDIR)/engine/test_program_plain_helpers plain_helpers
+    ln -s $(GUESS_TOPDIR)/engine/test_program_plain_helpers plain_helpers
 ])
 m4_define([RUN_PLAIN_HELPER], [HELPER="$1" kyua test])
 
