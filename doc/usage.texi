@@ -31,12 +31,207 @@
 
 @cindex usage
 
-This chapter describes the functionality of the command-line interface
-of @command{kyua}.
+Kyua provides a command-line interface through the @command{kyua}
+binary distributed with the @samp{kyua-cli} package.
+
+The interface of the @command{kyua} binary follows that of a
+traditional subcommand-based interface.  The generic usage form is:
+
+@verbatim
+$ kyua [common_options] subcommand [options] [arguments]
+@end verbatim
+
+The following sections describe what the available options and
+commands are.  Note that the @command{kyua} tool is self-descriptive;
+help can be obtained from the command line by using the @command{help}
+subcommand; @xref{help command}.
 
 @menu
+* Common options:: Options that apply to all commands.
+* Subcommands:: Description of the available commands and their options.
 * Environment variables:: User-tunable varibles.
 @end menu
+
+@node Common options
+@section Common options
+
+The following options are recognized by all the subcommands offered by
+@command{kyua}.  Note that these must be specified before the
+subcommand name.
+
+@table @option
+
+@item --logfile=path
+@cindex @option{--logfile}
+Specifies the location of the file to which @command{kyua} will log
+run-time events useful for postmortem debugging.  The default depends
+on different environment variables but, usually, the log file will be
+stored within the user's home directory.  @xref{Log file location}.
+
+@item --loglevel=level
+@cindex @option{--loglevel}
+Specifies the logging level.  The default is @samp{info}.  @xref{Log
+levels}.
+
+@end table
+
+@node Subcommands
+@section Subcommands
+
+@menu
+Commands list
+* about command:: Details about the about command.
+* help command:: Details about the help command.
+* list command:: Details about the list command.
+* test command:: Details about the test command.
+
+Miscellaneous topics
+* Filters:: Specifying filters for test programs and test cases.
+@end menu
+
+@node about command
+@subsection The about command
+
+@cindex @command{about}
+
+The @command{about} command provides generic information about the
+@samp{kyua-cli} package.
+
+@cindex @option{--show}, @command{about}
+The user can customize the information printed by the @command{about}
+command by specifiying the @option{--show} flag.  The @option{--show}
+flag takes a required argument, which can have one of the following
+values:
+
+@table @samp
+@item all
+This is the default and includes: the name of the package
+(@samp{kyua-cli}), the version number (@value{VERSION}), license
+information, authors information and a link to the project web site.
+Any other value to @option{--show} displays a subset of this
+information.
+
+@item authors
+Displays the list of authors and contributors only.
+
+@item license
+Displays the license information and the list of copyrights.
+
+@item version
+Displays the package name and the version number in a format that is
+compatible with the output of GNU tools that support a
+@option{--version} flag.  Use this whenever you have to query the
+version number of the package.
+@end table
+
+@node help command
+@subsection The help command
+
+@cindex @command{help}
+
+The @command{help} command provides interactive help on all supported
+commands and options.  If, for some reason, you happen to spot a
+discrepancy in the output of this command and this document, the
+command is the authoritative source of information.
+
+If no arguments are provided to @command{help}, the command prints the
+list of common options (@pxref{Common options}) and the list of
+supported subcommands.
+
+If a single argument is provided to @command{help}, this single
+argument is the name of a valid subcommand.  In that case,
+@command{help} prints a textual description of the command, the list
+of common options (@pxref{Common options}) and the list of
+subcommand-specific options.
+
+@node list command
+@subsection The list command
+
+@cindex @command{list}
+
+The @command{list} command scans all the test programs and test cases
+in a test suite and prints a list of all their names, optionally
+accompanied by any metadata properties they have.
+
+The user can provide filters on the test cases to list by specifying
+such filters as arguments; @ref{Filters}.
+
+This command must be run within a test suite (i.e. a directory
+containing a @file{Kyuafile}) or a test suite must be provided with
+the @option{--kyuafile} flag.
+
+The following subcommand options are recognized:
+
+@table @option
+@item --kyuafile=path
+@cindex @option{--kyuafile}, @command{list}
+Specifies the Kyuafile to process.  Defaults to a @file{Kyuafile} file
+in the current directory.
+
+@item --verbose
+@cindex @option{--verbose}, @command{list}
+Prints metadata properties for every test case.
+@end table
+
+This command exits with @samp{0} if there are no problems processing
+the test suite, or with any positive number if the test suite is
+invalid in any sense or if the filters matched no tests.
+
+@node test command
+@subsection The test command
+
+@cindex @command{test}
+
+The @command{test} command runs the tests of a test suite and reports
+results in a primitive manner only intended for progress reporting.
+@c TODO(jmmv): Describe how to gather reports once we implement this.
+At the moment, it is not possible to generate any other kind of
+reports out of the results of the execution.  This feature will be
+implemented later.
+
+The user can provide filters on the test cases to run by specifying
+such filters as arguments; @ref{Filters}.
+
+This command must be run within a test suite (i.e. a directory
+containing a @file{Kyuafile}) or a test suite must be provided with
+the @option{--kyuafile} flag.
+
+The following subcommand options are recognized:
+
+@table @option
+@item --config=path
+@cindex @option{--config}, @command{test}
+Specifies the configuration to process.  Defaults to a
+@file{~/.kyuarc} if it exists, otherwise to
+@file{@value{KYUA_CONFDIR}/kyua.conf}.  None of the default files has
+to exist, but any user explicitly specified has to.
+
+@item --kyuafile=path
+@cindex @option{--kyuafile}, @command{test}
+Specifies the Kyuafile to process.  Defaults to a @file{Kyuafile} file
+in the current directory.
+
+@item --variable=name=value
+@cindex @option{--variable}, @command{test}
+Sets the @samp{name} configuration variable to @samp{value}.  The
+variable can either be a builtin variable for Kyua or a test-suite
+specific variable.
+@end table
+
+@node Filters
+@subsection Filters for test programs and test cases
+
+@cindex filter
+A filter is a string that is used to match test cases or test programs
+in a test suite.  Filters have the following form:
+
+@verbatim
+test_program_name[:test_case_name]
+@end verbatim
+
+Where @samp{test_program_name} is the name of a test program or a
+subdirectory in the test suite, and @samp{test_case_name} is the name
+of a test case.
 
 @node Environment variables
 @section Environment variables
@@ -44,31 +239,47 @@ of @command{kyua}.
 @cindex environment
 @cindex environment variables
 
-The following environment variables are recognized by @command{kyua}.
-In general, you should not have to set them.  They are provided to
-override the value of built-in values.
+The following environment variables are recognized by @command{kyua}
+and you may change them to suit your preferences:
 
 @table @env
+@item HOME
+@cindex HOME
+Path to the user's home directory.  @command{kyua} uses this location
+to determine paths to configuration files and default log files.
+
+@item TMPDIR
+@cindex TMPDIR
+Path to the system-wide temporary directory.  @command{kyua} uses this
+location to place the work directory of test cases, among other
+things.
+
+The default for this variable depends on the operating system.  In
+general, it is @file{/tmp}.
+@end table
+
+@command{kyua} also recognizes the following variables.  You should
+not have to set them; they are only provided to override the value of
+built-in values:
+
+@table @env
+
 @item KYUA_CONFDIR
+@cindex KYUA_CONFDIR
 Path to the system-wide configuration files for @command{kyua}.
 
 Defaults to @file{@value{KYUA_CONFDIR}}.
 
 @item KYUA_DOCDIR
+@cindex KYUA_DOCDIR
 Path to the location of installed documentation.
 
 Defaults to @file{@value{KYUA_DOCDIR}}.
 
 @item KYUA_LUADIR
+@cindex KYUA_LUADIR
 Path to the location of the installed Lua modules provided by @command{kyua}.
 
 Defaults to @file{@value{KYUA_LUADIR}}.
 
-@item TMPDIR
-Path to the system-wide temporary directory.  @command{kyua} will use
-this location to place the work directory of test cases, among other
-things.
-
-The default for this variable depends on the operating system.  In
-general, it is @file{/tmp}.
 @end table

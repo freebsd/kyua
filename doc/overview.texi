@@ -38,12 +38,15 @@ it puts the end user experience before anything else.  There are
 multiple reasons for users to run the tests themselves, and Kyua
 ensures that they can do so in the most convenient way.
 
-At the moment, Kyua is focused on implemented a solid foundation and a
-powerful command-line tool to run tests implemented with the Automated
-Testing Framework (ATF).  Later on, Kyua will also provide a set of
-language bindings (C, C++ and shell, at the least) to ease the
-implementation of test cases in a variety of programming
-languages.
+At the moment, Kyua is focused on implementing a solid foundation and
+a powerful command-line tool to run tests implemented with the
+Automated Testing Framework (ATF).  Later on, Kyua will also provide a
+set of language bindings (C, C++ and shell, at the least) to ease the
+implementation of test cases in a variety of programming languages,
+and may also provide integration with test programs written with
+third-party libraries.
+
+@cindex atf
 
 In effect, Kyua is intended to be a replacement for ATF.  The code
 base of ATF is very hard to extend and the overall design of the tools

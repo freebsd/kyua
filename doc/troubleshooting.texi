@@ -67,7 +67,7 @@ than sending them to @file{/dev/null}.  The reason for this is that
 log files are most useful right after problems happen, but it is not
 possible to predict when such problems will actually happen.
 
-@cindex --logfile
+@cindex @option{--logfile}
 The location of the log file can be manually specified with the
 @option{--logfile} option as follows:
 
@@ -124,7 +124,7 @@ The default log level for Kyua is @samp{info}.  This generates useful
 log messages but keeps their size reasonably short, readable and
 useful to spot the occasional run-time problem.
 
-@cindex --loglevel
+@cindex @option{--loglevel}
 The user can change the log level by providing the @option{--loglevel}
 flag to the command line.  If the level is lowered, the performance of
 Kyua will increase slightly as it will generate less log entries to

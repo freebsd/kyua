@@ -1,0 +1,107 @@
+@c Copyright 2011 Google Inc.
+@c All rights reserved.
+@c
+@c Redistribution and use in source and binary forms, with or without
+@c modification, are permitted provided that the following conditions are
+@c met:
+@c
+@c * Redistributions of source code must retain the above copyright
+@c   notice, this list of conditions and the following disclaimer.
+@c * Redistributions in binary form must reproduce the above copyright
+@c   notice, this list of conditions and the following disclaimer in the
+@c   documentation and/or other materials provided with the distribution.
+@c * Neither the name of Google Inc. nor the names of its contributors
+@c   may be used to endorse or promote products derived from this software
+@c   without specific prior written permission.
+@c
+@c THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+@c "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+@c LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+@c A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+@c OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+@c SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+@c LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+@c DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+@c THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+@c (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+@c OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+@node Test suites
+@chapter Test suites
+
+A test suite is a collection of test programs and is represented by a
+hierarchical layout of test binaries on the file system.  Any subtree
+of the file system can represent a test suite, provided that it
+includes one or more test suite definition files (also known as
+Kyuafiles).
+
+@menu
+* Kyuafile syntax::
+* Top-level Kyuafile::
+@end menu
+
+@node Kyuafile syntax
+@section Kyuafile syntax
+
+Kyuafiles are the files that define test suites.  A test suite must
+contain, at the very least, a Kyuafile at the root of the test suite
+hierarchy.  The job of the Kyuafile is to define what binaries are
+test programs.
+
+Kyuafiles are Lua scripts.  The general structure of a Kyuafile is:
+
+@example
+syntax('kyuafile', 1)
+
+test_suite('first')
+
+-- Declare the test programs that are in this directory.
+atf_test_program@{name='foo_test'@}
+atf_test_program@{name='bar_test', test_suite='second'@}
+
+-- Recurse into any subdirectories that may have other tests.
+include('dir1/Kyuafile')
+include('dir2/Kyuafile')
+@end example
+
+@c TODO(jmmv): Does it really make any sense to override the test
+@c suite name on a test program basis?  I don't think so.
+
+Kyuafiles are only allowed to reference test programs in the current
+directory.  The main reason for this is deterministic behavior: by
+referencing files in the current directory only, there is no room for
+mistakes.  The runtime knows where to look for the test programs and
+it does not have to resolve paths outside of the current directory.
+
+If any recursion is required, the Kyuafile must include other files by
+using the @code{include} primitive.  Note that each file is processed
+in its own Lua environment: there is no mechanism to pass state from
+one file to the other.  The reason for this is that there is no such
+thing as a ``top-level'' Kyuafile: the user has to be able to run the
+test suite from any directory in a given hierarchy, and this execution
+must not depend on files on parent directories.
+
+@node Top-level Kyuafile
+@section Top-level Kyuafile
+
+@cindex top-level Kyuafile
+@cindex @file{Kyuafile.top}
+
+Every system has a top directory into which test suites get installed.
+The default is @file{@value{KYUA_TESTSDIR}}.  Within this directory
+live test suites, each of which is in an independent subdirectory.
+Each subdirectory can be provided separately by independent
+third-party packages.
+
+Kyua allows running all the installed test suites at once in order to
+provide comprehensive cross-component reports.  In order to do this,
+there is a special file in the top directory that knows how to inspect
+the subdirectories in search for other Kyuafiles and include them.
+
+The default top-level Kyuafile lives in
+@file{@value{KYUA_TESTSDIR}/Kyuafile}.  This is just a copy of the
+sample file installed in @file{@value{KYUA_EGDIR}/Kyuafile.top}.
+
+@c TODO(jmmv): Don't know if I want to document the different fs.*
+@c primitives.  We should probably not expose them at all, or
+@c otherwise people will start relying on them...

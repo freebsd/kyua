@@ -78,9 +78,11 @@ version @value{VERSION}.
 @menu
 * Overview:: A general introduction.
 * Usage:: Description of the Kyua command-line tool.
+* Configuration:: Configuration of the runtime engine.
 * Troubleshooting:: Facilities and procedures to debug/report Kyua issues.
 
 Developer's information
+* Test suites:: Defining test suites.
 * Test interfaces:: Test program interfaces to the Kyua runtime engine.
 
 Appendices and indices
@@ -91,6 +93,8 @@ Appendices and indices
 
 @include overview.texi
 @include usage.texi
+@include config.texi
+@include test_suites.texi
 @include test_interface.texi
 @include troubleshooting.texi
 
