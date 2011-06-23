@@ -84,6 +84,7 @@ installcheck-kyua:
 	cd $(pkgtestsdir) && $(INSTALLCHECK_ENVIRONMENT) $(TESTS_ENVIRONMENT) \
 	    kyua test
 
+EXTRA_DIST += Doxyfile
 if WITH_DOXYGEN
 # This should probably be html-local, but it seems better to generate the
 # documentation in all cases to get warnings about missing documentation every
