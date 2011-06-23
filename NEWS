@@ -1,6 +1,21 @@
 Changes in version 0.1
 ======================
 
-STILL UNDER DEVELOPMENT; NOT RELEASED YET.
+Experimental version released on June 23rd, 2011.
 
-* First public release.
+This is the first public release of the kyua-cli package.
+
+The scope of this release is to provide functional replacement for the
+'atf-run' utility included in the atf package.  At this point, 'kyua'
+can reliably run the NetBSD 5.99.53 test suite delivering the same
+results as 'atf-run'.
+
+The reporting facilities of this release are quite limited.  There is
+no replacement for 'atf-report' yet, and there is no easy way of
+debugging failing test programs other than running them by hand.  These
+features will mark future milestones and therefore be part of other
+releases.
+
+Be aware that this release has suffered very limited field testing.
+The test suite for kyua-cli is quite comprehensive, but some bugs may
+be left in any place.
