@@ -41,11 +41,11 @@ global_body() {
 
 utils_test_case one_command
 one_command_body() {
-    atf_check -s exit:0 -o save:stdout -e empty kyua help about
+    atf_check -s exit:0 -o save:stdout -e empty kyua help test
     grep '^Usage: kyua' stdout || atf_fail 'No usage line printed'
-    grep '^Shows general' stdout || atf_fail 'No description printed'
+    grep '^Run tests' stdout || atf_fail 'No description printed'
     grep -- '--loglevel' stdout || atf_fail 'Generic options not printed'
-    grep -- '--show' stdout || atf_fail 'Command options not printed'
+    grep -- '--kyuafile' stdout || atf_fail 'Command options not printed'
     if grep 'about: Shows general' stdout; then
         atf_fail 'Printed table of commands, but should not have done so'
     fi

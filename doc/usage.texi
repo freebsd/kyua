@@ -95,22 +95,17 @@ Miscellaneous topics
 @cindex @command{about}
 
 The @command{about} command provides generic information about the
-@samp{kyua-cli} package.
-
-@cindex @option{--show}, @command{about}
-The user can customize the information printed by the @command{about}
-command by specifiying the @option{--show} flag.  The @option{--show}
-flag takes a required argument, which can have one of the following
-values:
-
-@table @samp
-@item all
-This is the default and includes: the name of the package
+@samp{kyua-cli} package.  In the default form (no arguments), the
+information printed includes: the name of the package
 (@samp{kyua-cli}), the version number (@value{VERSION}), license
 information, authors information and a link to the project web site.
-Any other value to @option{--show} displays a subset of this
-information.
 
+@cindex about topics
+The user can customize the information printed by the @command{about}
+command by specifiying the a topic as an argument to the command; this
+argument can be one of:
+
+@table @samp
 @item authors
 Displays the list of authors and contributors only.
 

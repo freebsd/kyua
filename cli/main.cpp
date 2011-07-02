@@ -43,7 +43,7 @@
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/globals.hpp"
 #include "utils/cmdline/options.hpp"
-#include "utils/cmdline/parser.hpp"
+#include "utils/cmdline/parser.ipp"
 #include "utils/cmdline/ui.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"

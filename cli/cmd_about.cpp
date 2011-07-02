@@ -34,7 +34,6 @@
 #include "cli/cmd_about.hpp"
 #include "utils/cmdline/base_command.ipp"
 #include "utils/cmdline/exceptions.hpp"
-#include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/cmdline/ui.hpp"
 #include "utils/env.hpp"
@@ -86,11 +85,9 @@ cat_file(cmdline::ui* ui, const fs::path& file)
 
 /// Default constructor for cmd_about.
 cmd_about::cmd_about(void) : cmdline::base_command(
-    "about", "", 0, 0,
+    "about", "[authors|license|version]", 0, 1,
     "Shows general program information")
 {
-    add_option(cmdline::string_option(
-        "show", "What to show", "all|authors|license|version", "all"));
 }
 
 
@@ -104,15 +101,12 @@ cmd_about::cmd_about(void) : cmdline::base_command(
 int
 cmd_about::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
 {
-    const std::string show = cmdline.get_option< cmdline::string_option >(
-        "show");
-
     const fs::path docdir(utils::getenv_with_default(
         "KYUA_DOCDIR", KYUA_DOCDIR));
 
     bool success = true;
 
-    if (show == "all") {
+    if (cmdline.arguments().empty()) {
         ui->out(PACKAGE " (" PACKAGE_NAME ") " PACKAGE_VERSION);
         ui->out("");
         ui->out("License terms:");
@@ -124,15 +118,18 @@ cmd_about::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
         success &= cat_file(ui, docdir / "AUTHORS");
         ui->out("");
         ui->out(F("Homepage: %s") % PACKAGE_URL);
-    } else if (show == "authors") {
-        success &= cat_file(ui, docdir / "AUTHORS");
-    } else if (show == "license") {
-        success &= cat_file(ui, docdir / "COPYING");
-    } else if (show == "version") {
-        ui->out(PACKAGE " (" PACKAGE_NAME ") " PACKAGE_VERSION);
     } else {
-        throw cmdline::usage_error(F("Invalid value passed to --show: %s") %
-                                   show);
+        const std::string& topic = cmdline.arguments()[0];
+
+        if (topic == "authors") {
+            success &= cat_file(ui, docdir / "AUTHORS");
+        } else if (topic == "license") {
+            success &= cat_file(ui, docdir / "COPYING");
+        } else if (topic == "version") {
+            ui->out(PACKAGE " (" PACKAGE_NAME ") " PACKAGE_VERSION);
+        } else {
+            throw cmdline::usage_error(F("Invalid about topic '%s'") % topic);
+        }
     }
 
     return success ? EXIT_SUCCESS : EXIT_FAILURE;

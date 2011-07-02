@@ -66,31 +66,11 @@ create_fake_doc(const char* dirname, const char* docname)
 }  // anonymous namespace
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(default);
-ATF_TEST_CASE_BODY(default)
+ATF_TEST_CASE_WITHOUT_HEAD(all_topics__ok);
+ATF_TEST_CASE_BODY(all_topics__ok)
 {
     cmdline::args_vector args;
     args.push_back("about");
-
-    cmd_about cmd;
-    cmdline::ui_mock ui;
-    ATF_REQUIRE_EQ(EXIT_SUCCESS, cmd.main(&ui, args));
-    ATF_REQUIRE(utils::grep_string(PACKAGE_NAME, ui.out_log()[0]));
-    ATF_REQUIRE(utils::grep_string(PACKAGE_VERSION, ui.out_log()[0]));
-    // Don't care if the documents are printed or not because we do not know if
-    // they are available yet (may not have run 'make install').  Just ensure we
-    // get to the right path with the default --what=all and documents location.
-    ATF_REQUIRE(utils::grep_vector("Homepage", ui.out_log()));
-    ATF_REQUIRE(ui.err_log().empty());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(show_all__ok);
-ATF_TEST_CASE_BODY(show_all__ok)
-{
-    cmdline::args_vector args;
-    args.push_back("about");
-    args.push_back("--show=all");
 
     fs::mkdir(fs::path("fake-docs"), 0755);
     create_fake_doc("fake-docs", "AUTHORS");
@@ -109,8 +89,8 @@ ATF_TEST_CASE_BODY(show_all__ok)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(show_all__missing_docs);
-ATF_TEST_CASE_BODY(show_all__missing_docs)
+ATF_TEST_CASE_WITHOUT_HEAD(all_topics__missing_docs);
+ATF_TEST_CASE_BODY(all_topics__missing_docs)
 {
     cmdline::args_vector args;
     args.push_back("about");
@@ -130,12 +110,12 @@ ATF_TEST_CASE_BODY(show_all__missing_docs)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(show_authors__ok);
-ATF_TEST_CASE_BODY(show_authors__ok)
+ATF_TEST_CASE_WITHOUT_HEAD(topic_authors__ok);
+ATF_TEST_CASE_BODY(topic_authors__ok)
 {
     cmdline::args_vector args;
     args.push_back("about");
-    args.push_back("--show=authors");
+    args.push_back("authors");
 
     fs::mkdir(fs::path("fake-docs"), 0755);
     create_fake_doc("fake-docs", "AUTHORS");
@@ -152,12 +132,12 @@ ATF_TEST_CASE_BODY(show_authors__ok)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(show_authors__missing_doc);
-ATF_TEST_CASE_BODY(show_authors__missing_doc)
+ATF_TEST_CASE_WITHOUT_HEAD(topic_authors__missing_doc);
+ATF_TEST_CASE_BODY(topic_authors__missing_doc)
 {
     cmdline::args_vector args;
     args.push_back("about");
-    args.push_back("--show=authors");
+    args.push_back("authors");
 
     utils::setenv("KYUA_DOCDIR", "fake-docs");
     cmd_about cmd;
@@ -171,12 +151,12 @@ ATF_TEST_CASE_BODY(show_authors__missing_doc)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(show_license__ok);
-ATF_TEST_CASE_BODY(show_license__ok)
+ATF_TEST_CASE_WITHOUT_HEAD(topic_license__ok);
+ATF_TEST_CASE_BODY(topic_license__ok)
 {
     cmdline::args_vector args;
     args.push_back("about");
-    args.push_back("--show=license");
+    args.push_back("license");
 
     fs::mkdir(fs::path("fake-docs"), 0755);
     create_fake_doc("fake-docs", "COPYING");
@@ -193,12 +173,12 @@ ATF_TEST_CASE_BODY(show_license__ok)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(show_license__missing_doc);
-ATF_TEST_CASE_BODY(show_license__missing_doc)
+ATF_TEST_CASE_WITHOUT_HEAD(topic_license__missing_doc);
+ATF_TEST_CASE_BODY(topic_license__missing_doc)
 {
     cmdline::args_vector args;
     args.push_back("about");
-    args.push_back("--show=license");
+    args.push_back("license");
 
     utils::setenv("KYUA_DOCDIR", "fake-docs");
     cmd_about cmd;
@@ -212,12 +192,12 @@ ATF_TEST_CASE_BODY(show_license__missing_doc)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(show_version__ok);
-ATF_TEST_CASE_BODY(show_version__ok)
+ATF_TEST_CASE_WITHOUT_HEAD(topic_version__ok);
+ATF_TEST_CASE_BODY(topic_version__ok)
 {
     cmdline::args_vector args;
     args.push_back("about");
-    args.push_back("--show=version");
+    args.push_back("version");
 
     utils::setenv("KYUA_DOCDIR", "fake-docs");
     cmd_about cmd;
@@ -235,7 +215,8 @@ ATF_TEST_CASE_BODY(invalid_args)
 {
     cmdline::args_vector args;
     args.push_back("about");
-    args.push_back("invalid");
+    args.push_back("first");
+    args.push_back("second");
 
     cmd_about cmd;
     cmdline::ui_mock ui;
@@ -246,16 +227,16 @@ ATF_TEST_CASE_BODY(invalid_args)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(invalid_what);
-ATF_TEST_CASE_BODY(invalid_what)
+ATF_TEST_CASE_WITHOUT_HEAD(invalid_topic);
+ATF_TEST_CASE_BODY(invalid_topic)
 {
     cmdline::args_vector args;
     args.push_back("about");
-    args.push_back("--show=foo");
+    args.push_back("foo");
 
     cmd_about cmd;
     cmdline::ui_mock ui;
-    ATF_REQUIRE_THROW_RE(cmdline::usage_error, "Invalid value.*--show: foo",
+    ATF_REQUIRE_THROW_RE(cmdline::usage_error, "Invalid about topic 'foo'",
                          cmd.main(&ui, args));
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE(ui.err_log().empty());
@@ -264,14 +245,13 @@ ATF_TEST_CASE_BODY(invalid_what)
 
 ATF_INIT_TEST_CASES(tcs)
 {
-    ATF_ADD_TEST_CASE(tcs, default);
-    ATF_ADD_TEST_CASE(tcs, show_all__ok);
-    ATF_ADD_TEST_CASE(tcs, show_all__missing_docs);
-    ATF_ADD_TEST_CASE(tcs, show_authors__ok);
-    ATF_ADD_TEST_CASE(tcs, show_authors__missing_doc);
-    ATF_ADD_TEST_CASE(tcs, show_license__ok);
-    ATF_ADD_TEST_CASE(tcs, show_license__missing_doc);
-    ATF_ADD_TEST_CASE(tcs, show_version__ok);
+    ATF_ADD_TEST_CASE(tcs, all_topics__ok);
+    ATF_ADD_TEST_CASE(tcs, all_topics__missing_docs);
+    ATF_ADD_TEST_CASE(tcs, topic_authors__ok);
+    ATF_ADD_TEST_CASE(tcs, topic_authors__missing_doc);
+    ATF_ADD_TEST_CASE(tcs, topic_license__ok);
+    ATF_ADD_TEST_CASE(tcs, topic_license__missing_doc);
+    ATF_ADD_TEST_CASE(tcs, topic_version__ok);
     ATF_ADD_TEST_CASE(tcs, invalid_args);
-    ATF_ADD_TEST_CASE(tcs, invalid_what);
+    ATF_ADD_TEST_CASE(tcs, invalid_topic);
 }
