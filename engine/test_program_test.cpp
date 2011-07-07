@@ -26,330 +26,97 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-extern "C" {
-#include <sys/stat.h>
-
-#include <unistd.h>
-}
-
-#include <iostream>
-#include <sstream>
-
 #include <atf-c++.hpp>
 
-#include "engine/exceptions.hpp"
 #include "engine/test_program.hpp"
-#include "utils/env.hpp"
-#include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
-#include "utils/test_utils.hpp"
 
-namespace detail = engine::detail;
 namespace fs = utils::fs;
 
 
 namespace {
 
 
-/// Gets the path to the atf-specific helpers.
-///
-/// \param tc A pointer to the currently running test case.
-///
-/// \return The path to the helpers binary.
-static fs::path
-atf_helpers(const atf::tests::tc* test_case)
-{
-    return fs::path(test_case->get_config_var("srcdir")) /
-        "test_program_atf_helpers";
-}
+/// Fake implementation of a test program.
+class mock_test_program : public engine::test_program {
+public:
+    /// Number of times the load_test_cases() method has been called.
+    mutable int loads;
 
 
-/// Gets the path to the plain (generic binary, no framework) helpers.
-///
-/// \param tc A pointer to the currently running test case.
-///
-/// \return The path to the helpers binary.
-static fs::path
-plain_helpers(const atf::tests::tc* test_case)
-{
-    return fs::path(test_case->get_config_var("srcdir")) /
-        "test_program_plain_helpers";
-}
+    /// Constructs a new test program.
+    ///
+    /// \param binary_ The name of the test program binary relative to root_.
+    /// \param root_ The root of the test suite containing the test program.
+    /// \param test_suite_name_ The name of the test suite this program belongs
+    ///     to.
+    mock_test_program(const fs::path& binary_, const fs::path& root_,
+                      const std::string& test_suite_name_) :
+        test_program(binary_, root_, test_suite_name_),
+        loads(0)
+    {
+    }
 
 
-/// Instantiates a test case.
-///
-/// \param path The test program.
-/// \param name The test case name.
-/// \param props The raw properties to pass to the test case.
-///
-/// \return The new test case.
-static engine::test_case
-make_test_case(const char* path, const char* name,
-               const engine::properties_map& props = engine::properties_map())
-{
-    const engine::test_case_id id(fs::path(path), name);
-    return engine::test_case::from_properties(id, props);
-}
+    /// Gets the list of test cases from the test program.
+    ///
+    /// \return The list of test cases provided by the test program.
+    engine::test_cases_vector
+    load_test_cases(void) const
+    {
+        loads++;
+
+        engine::test_cases_vector loaded_test_cases;
+        loaded_test_cases.push_back(engine::test_case::from_properties(
+            engine::test_case_id(relative_path(), "foo"),
+            engine::properties_map()));
+        return loaded_test_cases;
+    }
+};
 
 
 }  // anonymous namespace
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(parse_test_cases__empty);
-ATF_TEST_CASE_BODY(parse_test_cases__empty)
+ATF_TEST_CASE_WITHOUT_HEAD(ctor_and_getters);
+ATF_TEST_CASE_BODY(ctor_and_getters)
 {
-    const std::string text = "";
-    std::istringstream input(text);
-    ATF_REQUIRE_THROW_RE(engine::format_error, "expecting Content-Type",
-        detail::parse_test_cases(fs::path("test-program"), input));
+    const mock_test_program test_program(fs::path("binary"), fs::path("root"),
+                                         "suite-name");
+    ATF_REQUIRE_EQ(fs::path("binary"), test_program.relative_path());
+    ATF_REQUIRE_EQ(fs::path("root/binary"), test_program.absolute_path());
+    ATF_REQUIRE_EQ(fs::path("root"), test_program.root());
+    ATF_REQUIRE_EQ("suite-name", test_program.test_suite_name());
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(parse_test_cases__invalid_header);
-ATF_TEST_CASE_BODY(parse_test_cases__invalid_header)
+ATF_TEST_CASE_WITHOUT_HEAD(test_cases__get);
+ATF_TEST_CASE_BODY(test_cases__get)
 {
-    {
-        const std::string text =
-            "Content-Type: application/X-atf-tp; version=\"1\"\n";
-        std::istringstream input(text);
-        ATF_REQUIRE_THROW_RE(engine::format_error, "expecting.*blank line",
-            detail::parse_test_cases(fs::path("test-program"), input));
-    }
-
-    {
-        const std::string text =
-            "Content-Type: application/X-atf-tp; version=\"1\"\nfoo\n";
-        std::istringstream input(text);
-        ATF_REQUIRE_THROW_RE(engine::format_error, "expecting.*blank line",
-            detail::parse_test_cases(fs::path("test-program"), input));
-    }
-
-    {
-        const std::string text =
-            "Content-Type: application/X-atf-tp; version=\"2\"\n\n";
-        std::istringstream input(text);
-        ATF_REQUIRE_THROW_RE(engine::format_error, "expecting Content-Type",
-            detail::parse_test_cases(fs::path("test-program"), input));
-    }
+    const mock_test_program test_program(fs::path("binary"), fs::path("root"),
+                                         "suite-name");
+    const engine::test_cases_vector& test_cases = test_program.test_cases();
+    ATF_REQUIRE_EQ(1, test_cases.size());
+    ATF_REQUIRE_EQ("binary:foo", test_cases[0].identifier.str());
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(parse_test_cases__no_test_cases);
-ATF_TEST_CASE_BODY(parse_test_cases__no_test_cases)
+ATF_TEST_CASE_WITHOUT_HEAD(test_cases__cached);
+ATF_TEST_CASE_BODY(test_cases__cached)
 {
-    const std::string text =
-        "Content-Type: application/X-atf-tp; version=\"1\"\n\n";
-    std::istringstream input(text);
-    ATF_REQUIRE_THROW_RE(engine::format_error, "No test cases",
-        detail::parse_test_cases(fs::path("test-program"), input));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(parse_test_cases__one_test_case_simple);
-ATF_TEST_CASE_BODY(parse_test_cases__one_test_case_simple)
-{
-    const std::string text =
-        "Content-Type: application/X-atf-tp; version=\"1\"\n"
-        "\n"
-        "ident: test-case\n";
-    std::istringstream input(text);
-    const engine::test_cases_vector tests = detail::parse_test_cases(
-        fs::path("test-program"), input);
-
-    const engine::test_case test1 = make_test_case("test-program", "test-case");
-
-    ATF_REQUIRE_EQ(1, tests.size());
-    ATF_REQUIRE(test1 == tests[0]);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(parse_test_cases__one_test_case_complex);
-ATF_TEST_CASE_BODY(parse_test_cases__one_test_case_complex)
-{
-    const std::string text =
-        "Content-Type: application/X-atf-tp; version=\"1\"\n"
-        "\n"
-        "ident: first\n"
-        "descr: This is the description\n"
-        "timeout: 500\n";
-    std::istringstream input(text);
-    const engine::test_cases_vector tests = detail::parse_test_cases(
-        fs::path("test-program"), input);
-
-    engine::properties_map props1;
-    props1["descr"] = "This is the description";
-    props1["timeout"] = "500";
-    const engine::test_case test1 = make_test_case("test-program", "first",
-                                                   props1);
-
-    ATF_REQUIRE_EQ(1, tests.size());
-    ATF_REQUIRE(test1 == tests[0]);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(parse_test_cases__one_test_case_invalid_syntax);
-ATF_TEST_CASE_BODY(parse_test_cases__one_test_case_invalid_syntax)
-{
-    const std::string text =
-        "Content-Type: application/X-atf-tp; version=\"1\"\n\n"
-        "descr: This is the description\n"
-        "ident: first\n";
-    std::istringstream input(text);
-    ATF_REQUIRE_THROW_RE(engine::format_error, "preceeded.*identifier",
-        detail::parse_test_cases(fs::path("test-program"), input));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(parse_test_cases__one_test_case_invalid_properties);
-ATF_TEST_CASE_BODY(parse_test_cases__one_test_case_invalid_properties)
-{
-    // Inject a single invalid property that makes test_case::from_properties()
-    // raise a particular error message so that we can validate that such
-    // function was called.  We do intensive testing separately, so it is not
-    // necessary to redo it here.
-    const std::string text =
-        "Content-Type: application/X-atf-tp; version=\"1\"\n\n"
-        "ident: first\n"
-        "require.progs: bin/ls\n";
-    std::istringstream input(text);
-    ATF_REQUIRE_THROW_RE(engine::format_error, "Relative path 'bin/ls'",
-        detail::parse_test_cases(fs::path("test-program"), input));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(parse_test_cases__many_test_cases);
-ATF_TEST_CASE_BODY(parse_test_cases__many_test_cases)
-{
-    const std::string text =
-        "Content-Type: application/X-atf-tp; version=\"1\"\n"
-        "\n"
-        "ident: first\n"
-        "descr: This is the description\n"
-        "\n"
-        "ident: second\n"
-        "timeout: 500\n"
-        "descr: Some text\n"
-        "\n"
-        "ident: third\n";
-    std::istringstream input(text);
-    const engine::test_cases_vector tests = detail::parse_test_cases(
-        fs::path("test-program"), input);
-
-    engine::properties_map props1;
-    props1["descr"] = "This is the description";
-    const engine::test_case test1 = make_test_case("test-program", "first",
-                                                   props1);
-
-    engine::properties_map props2;
-    props2["descr"] = "Some text";
-    props2["timeout"] = "500";
-    const engine::test_case test2 = make_test_case("test-program", "second",
-                                                   props2);
-
-    engine::properties_map props3;
-    const engine::test_case test3 = make_test_case("test-program", "third",
-                                                   props3);
-
-    ATF_REQUIRE_EQ(3, tests.size());
-    ATF_REQUIRE(test1 == tests[0]);
-    ATF_REQUIRE(test2 == tests[1]);
-    ATF_REQUIRE(test3 == tests[2]);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(load_test_cases__missing_test_program);
-ATF_TEST_CASE_BODY(load_test_cases__missing_test_program)
-{
-    ATF_REQUIRE_THROW_RE(engine::error, "Failed to execute",
-        engine::load_test_cases(fs::path("/"), fs::path("non-existent")));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(load_test_cases__not_a_test_program);
-ATF_TEST_CASE_BODY(load_test_cases__not_a_test_program)
-{
-    utils::create_file(fs::path("text-file"));
-    ATF_REQUIRE_THROW_RE(engine::error, "Failed to execute",
-        engine::load_test_cases(fs::path("."), fs::path("text-file")));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(load_test_cases__abort);
-ATF_TEST_CASE_BODY(load_test_cases__abort)
-{
-    utils::setenv("HELPER", "abort_test_cases_list");
-    const fs::path helpers = plain_helpers(this);
-    ATF_REQUIRE_THROW_RE(engine::error, "Test program did not exit cleanly",
-        engine::load_test_cases(helpers.branch_path(),
-                                fs::path(helpers.leaf_name())));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(load_test_cases__empty);
-ATF_TEST_CASE_BODY(load_test_cases__empty)
-{
-    utils::setenv("HELPER", "empty_test_cases_list");
-    const fs::path helpers = plain_helpers(this);
-    ATF_REQUIRE_THROW_RE(engine::error, "Invalid header",
-        engine::load_test_cases(helpers.branch_path(),
-                                fs::path(helpers.leaf_name())));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(load_test_cases__zero_test_cases);
-ATF_TEST_CASE_BODY(load_test_cases__zero_test_cases)
-{
-    utils::setenv("HELPER", "zero_test_cases");
-    const fs::path helpers = plain_helpers(this);
-    ATF_REQUIRE_THROW_RE(engine::error, "No test cases",
-        engine::load_test_cases(helpers.branch_path(),
-                                fs::path(helpers.leaf_name())));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(load_test_cases__current_directory);
-ATF_TEST_CASE_BODY(load_test_cases__current_directory)
-{
-    ATF_REQUIRE(::symlink(atf_helpers(this).c_str(),
-                          "test_program_atf_helpers") != -1);
-    const engine::test_cases_vector test_cases =
-        engine::load_test_cases(fs::path("."),
-                                fs::path("test_program_atf_helpers"));
-    ATF_REQUIRE_EQ(3, test_cases.size());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(load_test_cases__relative_path);
-ATF_TEST_CASE_BODY(load_test_cases__relative_path)
-{
-    ATF_REQUIRE(::mkdir("dir1", 0755) != -1);
-    ATF_REQUIRE(::mkdir("dir1/dir2", 0755) != -1);
-    ATF_REQUIRE(::symlink(atf_helpers(this).c_str(),
-                          "dir1/dir2/test_program_atf_helpers") != -1);
-    const engine::test_cases_vector test_cases =
-        engine::load_test_cases(fs::path("dir1"),
-                                fs::path("dir2/test_program_atf_helpers"));
-    ATF_REQUIRE_EQ(3, test_cases.size());
+    const mock_test_program test_program(fs::path("binary"), fs::path("root"),
+                                         "suite-name");
+    ATF_REQUIRE_EQ(0, test_program.loads);
+    (void)test_program.test_cases();
+    ATF_REQUIRE_EQ(1, test_program.loads);
+    (void)test_program.test_cases();
+    ATF_REQUIRE_EQ(1, test_program.loads);
 }
 
 
 ATF_INIT_TEST_CASES(tcs)
 {
-    ATF_ADD_TEST_CASE(tcs, parse_test_cases__empty);
-    ATF_ADD_TEST_CASE(tcs, parse_test_cases__invalid_header);
-    ATF_ADD_TEST_CASE(tcs, parse_test_cases__no_test_cases);
-    ATF_ADD_TEST_CASE(tcs, parse_test_cases__one_test_case_simple);
-    ATF_ADD_TEST_CASE(tcs, parse_test_cases__one_test_case_complex);
-    ATF_ADD_TEST_CASE(tcs, parse_test_cases__one_test_case_invalid_syntax);
-    ATF_ADD_TEST_CASE(tcs, parse_test_cases__one_test_case_invalid_properties);
-    ATF_ADD_TEST_CASE(tcs, parse_test_cases__many_test_cases);
-
-    ATF_ADD_TEST_CASE(tcs, load_test_cases__missing_test_program);
-    ATF_ADD_TEST_CASE(tcs, load_test_cases__not_a_test_program);
-    ATF_ADD_TEST_CASE(tcs, load_test_cases__abort);
-    ATF_ADD_TEST_CASE(tcs, load_test_cases__empty);
-    ATF_ADD_TEST_CASE(tcs, load_test_cases__zero_test_cases);
-    ATF_ADD_TEST_CASE(tcs, load_test_cases__current_directory);
-    ATF_ADD_TEST_CASE(tcs, load_test_cases__relative_path);
+    ATF_ADD_TEST_CASE(tcs, ctor_and_getters);
+    ATF_ADD_TEST_CASE(tcs, test_cases__get);
+    ATF_ADD_TEST_CASE(tcs, test_cases__cached);
 }

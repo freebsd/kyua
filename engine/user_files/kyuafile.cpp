@@ -28,6 +28,7 @@
 
 #include <stdexcept>
 
+#include "engine/atf_test_program.hpp"
 #include "engine/user_files/common.hpp"
 #include "engine/user_files/exceptions.hpp"
 #include "engine/user_files/kyuafile.hpp"
@@ -60,7 +61,7 @@ namespace detail {
 ///
 /// throw std::runtime_error If there is any problem in the input data.
 /// throw fs::error If there is an invalid path in the input data.
-test_program
+test_program_ptr
 get_test_program(lua::state& state, const fs::path& root)
 {
     PRE(state.is_table());
@@ -88,7 +89,7 @@ get_test_program(lua::state& state, const fs::path& root)
     if (!fs::exists(root / path))
         throw std::runtime_error(F("Non-existent test program '%s'") % path);
 
-    return test_program(path, test_suite);
+    return test_program_ptr(new atf_test_program(path, root, test_suite));
 }
 
 
@@ -130,20 +131,6 @@ get_test_programs(lua::state& state, const std::string& expr,
 }  // namespace detail
 }  // namespace user_files
 }  // namespace engine
-
-
-/// Initializes a test_program.
-///
-/// \param binary_path_ The path to the test program; can be either absolute or
-///     relative.
-/// \param test_suite_name_ The name of the test suite this test program belongs
-///     to.
-user_files::test_program::test_program(const utils::fs::path& binary_path_,
-                                       const std::string& test_suite_name_) :
-    binary_path(binary_path_),
-    test_suite_name(test_suite_name_)
-{
-}
 
 
 /// Constructs a kyuafile form initialized data.
@@ -211,7 +198,7 @@ user_files::kyuafile::root(void) const
 /// Gets the collection of test programs that belong to this test suite.
 ///
 /// \return Collection of test program executable names.
-const user_files::test_programs_vector&
+const engine::test_programs_vector&
 user_files::kyuafile::test_programs(void) const
 {
     return _test_programs;

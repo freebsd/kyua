@@ -36,8 +36,9 @@ extern "C" {
 
 #include "cli/cmd_list.hpp"
 #include "cli/common.hpp"
+// TODO(jmmv): Should probably use a mock test program.
+#include "engine/atf_test_program.hpp"
 #include "engine/exceptions.hpp"
-#include "engine/test_case.hpp"
 #include "engine/user_files/kyuafile.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.hpp"
@@ -129,16 +130,15 @@ run_helpers(const atf::tests::tc* tc, cmdline::ui* ui, const bool verbose,
     ATF_REQUIRE(::mkdir("root/dir", 0755) != -1);
     ATF_REQUIRE(::symlink(helpers(tc).c_str(), "root/dir/program") != -1);
 
-    const user_files::test_program test_program(fs::path("dir/program"),
-                                                "suite-name");
+    const engine::atf_test_program test_program(fs::path("dir/program"),
+                                                fs::path("root"), "suite-name");
 
     utils::cmdline::args_vector args;
     if (filter != NULL)
         args.push_back(filter);
     cli::filters_state filters(args);
 
-    cli::detail::list_test_program(ui, verbose, fs::path("root"), test_program,
-                                   filters);
+    cli::detail::list_test_program(ui, verbose, test_program, filters);
 }
 
 
@@ -236,14 +236,14 @@ ATF_TEST_CASE_BODY(list_test_program__missing)
 {
     cmdline::ui_mock ui;
 
-    const user_files::test_program test_program(fs::path("missing"),
-                                                "suite-name");
+    const engine::atf_test_program test_program(fs::path("missing"),
+                                                fs::path("root"), "suite-name");
 
     const utils::cmdline::args_vector args;
     cli::filters_state filters(args);
 
     ATF_REQUIRE_THROW(engine::error, cli::detail::list_test_program(
-        &ui, false, fs::path("root"), test_program, filters));
+        &ui, false, test_program, filters));
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE(ui.err_log().empty());
 }

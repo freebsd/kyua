@@ -87,17 +87,15 @@ cli::detail::list_test_case(cmdline::ui* ui, const bool verbose,
 ///     from the test program.
 void
 cli::detail::list_test_program(cmdline::ui* ui, const bool verbose,
-                               const fs::path& root,
-                               const user_files::test_program& test_program,
+                               const engine::test_program& test_program,
                                cli::filters_state& filters)
 {
-    const engine::test_cases_vector test_cases = engine::load_test_cases(
-        root, test_program.binary_path);
+    const engine::test_cases_vector test_cases = test_program.test_cases();
 
     for (engine::test_cases_vector::const_iterator iter = test_cases.begin();
          iter != test_cases.end(); iter++) {
         if (filters.match_test_case((*iter).identifier))
-            list_test_case(ui, verbose, *iter, test_program.test_suite_name);
+            list_test_case(ui, verbose, *iter, test_program.test_suite_name());
     }
 }
 
@@ -126,18 +124,20 @@ cli::cmd_list::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
 
     bool ok = true;
 
-    const user_files::test_programs_vector& test_programs =
+    const engine::test_programs_vector& test_programs =
         kyuafile.test_programs();
-    for (user_files::test_programs_vector::const_iterator
+    for (engine::test_programs_vector::const_iterator
          iter = test_programs.begin(); iter != test_programs.end(); iter++) {
-        if (filters.match_test_program((*iter).binary_path)) {
+        const engine::test_program_ptr& test_program = *iter;
+
+        if (filters.match_test_program(test_program->relative_path())) {
             try {
                 detail::list_test_program(ui, cmdline.has_option("verbose"),
-                                          kyuafile.root(), *iter, filters);
+                                          *test_program, filters);
             } catch (const engine::error& e) {
                 cmdline::print_warning(
                     ui, F("Cannot load test case list for '%s': %s") %
-                    (*iter).binary_path % e.what());
+                    test_program->relative_path() % e.what());
                 ok &= false;
             }
         }

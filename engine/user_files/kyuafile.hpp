@@ -35,6 +35,7 @@
 #include <string>
 #include <vector>
 
+#include "engine/test_program.hpp"
 #include "utils/fs/path.hpp"
 
 namespace utils {
@@ -47,28 +48,10 @@ namespace engine {
 namespace user_files {
 
 
-/// Representation of the data of a test program.
-struct test_program {
-    /// The path to the test program.
-    // TODO(jmmv): This is not true any more.  We do not have a full path to the
-    // test program, just a relative path from the root of the test suite.
-    utils::fs::path binary_path;
-
-    /// The name of the test suite to which the test program belongs.
-    std::string test_suite_name;
-
-    test_program(const utils::fs::path&, const std::string&);
-};
-
-
-/// Collection of test_program objects.
-typedef std::vector< test_program > test_programs_vector;
-
-
 namespace detail {
 
 
-test_program get_test_program(utils::lua::state&, const utils::fs::path&);
+test_program_ptr get_test_program(utils::lua::state&, const utils::fs::path&);
 test_programs_vector get_test_programs(utils::lua::state&, const std::string&,
                                        const utils::fs::path&);
 

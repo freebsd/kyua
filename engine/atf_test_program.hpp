@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,53 +26,36 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file cli/cmd_list.hpp
-/// Provides the cmd_list class.
+/// \file engine/atf_test_program.hpp
+/// Implementation of test programs that follow the ATF interface.
 
-#if !defined(CLI_CMD_LIST_HPP)
-#define CLI_CMD_LIST_HPP
+#if !defined(ENGINE_ATF_TEST_PROGRAM_HPP)
+#define ENGINE_ATF_TEST_PROGRAM_HPP
 
-#include <string>
-
-#include "utils/cmdline/base_command.hpp"
+#include "engine/test_program.hpp"
 
 namespace engine {
-struct test_case;
-class test_program;
-}  // namespace engine
-
-namespace utils {
-namespace fs {
-class path;
-}  // namespace fs
-}  // namespace utils
-
-namespace cli {
-
-
-class filters_state;
 
 
 namespace detail {
 
-void list_test_case(utils::cmdline::ui*, const bool, const engine::test_case&,
-                    const std::string&);
-void list_test_program(utils::cmdline::ui*, const bool,
-                       const engine::test_program&, cli::filters_state&);
+
+test_cases_vector parse_test_cases(const utils::fs::path&, std::istream&);
+
 
 }  // namespace detail
 
 
-/// Implementation of the "list" subcommand.
-class cmd_list : public utils::cmdline::base_command {
-public:
-    cmd_list(void);
+/// Representation of an ATF test program.
+class atf_test_program : public test_program {
+    test_cases_vector load_test_cases(void) const;
 
-    int run(utils::cmdline::ui*, const utils::cmdline::parsed_cmdline&);
+public:
+    atf_test_program(const utils::fs::path&, const utils::fs::path&,
+                     const std::string&);
 };
 
 
-}  // namespace cli
+}  // namespace engine
 
-
-#endif  // !defined(CLI_CMD_LIST_HPP)
+#endif  // !defined(ENGINE_ATF_TEST_PROGRAM_HPP)

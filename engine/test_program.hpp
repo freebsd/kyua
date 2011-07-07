@@ -38,6 +38,8 @@
 #if !defined(ENGINE_TEST_PROGRAM_HPP)
 #define ENGINE_TEST_PROGRAM_HPP
 
+#include <string>
+#include <tr1/memory>
 #include <vector>
 
 #include "engine/test_case.hpp"
@@ -50,17 +52,34 @@ namespace engine {
 typedef std::vector< test_case > test_cases_vector;
 
 
-namespace detail {
+/// Abstract representation of a test program.
+class test_program {
+    utils::fs::path _binary;
+    utils::fs::path _root;
+    std::string _test_suite_name;
+    mutable test_cases_vector _test_cases;
+
+    virtual test_cases_vector load_test_cases(void) const = 0;
+
+public:
+    test_program(const utils::fs::path&, const utils::fs::path&,
+                 const std::string&);
+    virtual ~test_program(void);
+
+    const utils::fs::path& root(void) const;
+    const utils::fs::path& relative_path(void) const;
+    const utils::fs::path absolute_path(void) const;
+    const std::string& test_suite_name(void) const;
+    const test_cases_vector& test_cases(void) const;
+};
 
 
-test_cases_vector parse_test_cases(const utils::fs::path&, std::istream&);
+/// Pointer to a test program.
+typedef std::tr1::shared_ptr< test_program > test_program_ptr;
 
 
-}  // namespace detail
-
-
-test_cases_vector load_test_cases(const utils::fs::path&,
-                                  const utils::fs::path&);
+/// Collection of test programs.
+typedef std::vector< test_program_ptr > test_programs_vector;
 
 
 }  // namespace engine

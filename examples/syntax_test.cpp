@@ -171,11 +171,11 @@ ATF_TEST_CASE_BODY(kyuafile_top__some_matches)
     ATF_REQUIRE_EQ(fs::path("root"), kyuafile.root());
     ATF_REQUIRE_EQ(2, kyuafile.test_programs().size());
     ATF_REQUIRE_EQ(fs::path("subdir1/a"),
-                   kyuafile.test_programs()[0].binary_path);
-    ATF_REQUIRE_EQ("b", kyuafile.test_programs()[0].test_suite_name);
+                   kyuafile.test_programs()[0]->relative_path());
+    ATF_REQUIRE_EQ("b", kyuafile.test_programs()[0]->test_suite_name());
     ATF_REQUIRE_EQ(fs::path("subdir2/c"),
-                   kyuafile.test_programs()[1].binary_path);
-    ATF_REQUIRE_EQ("d", kyuafile.test_programs()[1].test_suite_name);
+                   kyuafile.test_programs()[1]->relative_path());
+    ATF_REQUIRE_EQ("d", kyuafile.test_programs()[1]->test_suite_name());
 }
 
 

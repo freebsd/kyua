@@ -146,10 +146,10 @@ validate_mock_config(const user_files::config& config, const char* cookie)
 static void
 validate_mock_kyuafile(const user_files::kyuafile& kyuafile, const char* cookie)
 {
-    const user_files::test_programs_vector& test_programs =
+    const engine::test_programs_vector& test_programs =
         kyuafile.test_programs();
     ATF_REQUIRE_EQ(1, test_programs.size());
-    ATF_REQUIRE_EQ(cookie, test_programs[0].binary_path.str());
+    ATF_REQUIRE_EQ(cookie, test_programs[0]->relative_path().str());
 }
 
 

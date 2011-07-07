@@ -58,29 +58,26 @@ using cli::cmd_test;
 /// If the test program fails to provide a list of test cases, a fake test case
 /// named '__test_program__' is created and it is reported as broken.
 ///
-/// \param root The root of the test suite from which to locate the test
-///     program.
 /// \param test_program The test program to execute.
 /// \param config The configuration variables provided by the user.
 /// \param ui Interface for progress reporting.
 static std::pair< unsigned long, unsigned long >
-run_test_program(const fs::path& root,
-                 const user_files::test_program& test_program,
+run_test_program(const engine::test_program& test_program,
                  const user_files::config& config,
                  const cli::filters_state& filters,
                  cmdline::ui* ui)
 {
-    LI(F("Processing test program '%s'") % test_program.binary_path);
+    LI(F("Processing test program '%s'") % test_program.relative_path());
 
     engine::test_cases_vector test_cases;
     try {
-        test_cases = engine::load_test_cases(root, test_program.binary_path);
+        test_cases = test_program.test_cases();
     } catch (const std::exception& e) {
         const results::broken broken(F("Failed to load list of test cases: "
                                        "%s") % e.what());
         // TODO(jmmv): Maybe generalize this in test_case_id somehow?
         const engine::test_case_id program_id(
-            test_program.binary_path, "__test_program__");
+            test_program.relative_path(), "__test_program__");
         ui->out(F("%s  ->  %s") % program_id.str() %
                 broken.format());
         return std::make_pair(0, 1);
@@ -95,7 +92,8 @@ run_test_program(const fs::path& root,
             continue;
 
         results::result_ptr result = runner::run_test_case(
-            root, test_case, config, test_program.test_suite_name);
+            test_program.root(), test_case, config,
+            test_program.test_suite_name());
 
         ui->out(F("%s  ->  %s") % test_case.identifier.str() %
                 result->format());
@@ -134,14 +132,16 @@ cmd_test::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
 
     unsigned long good_count = 0;
     unsigned long bad_count = 0;
-    for (user_files::test_programs_vector::const_iterator p =
+    for (engine::test_programs_vector::const_iterator p =
          kyuafile.test_programs().begin(); p != kyuafile.test_programs().end();
          p++) {
-        if (!filters.match_test_program((*p).binary_path))
+        const engine::test_program_ptr& test_program = *p;
+
+        if (!filters.match_test_program(test_program->relative_path()))
             continue;
 
         const std::pair< unsigned long, unsigned long > partial =
-            run_test_program(kyuafile.root(), (*p), config, filters, ui);
+            run_test_program(*test_program, config, filters, ui);
         good_count += partial.first;
         bad_count += partial.second;
     }
