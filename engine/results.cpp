@@ -32,6 +32,7 @@
 #include <typeinfo>
 #include <utility>
 
+#include "engine/atf_test_case.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/results.ipp"
 #include "utils/format/macros.hpp"
@@ -450,7 +451,7 @@ results::adjust_with_timeout(results::result_ptr result,
 ///
 /// \return The result of the test case as it should be reported to the user.
 results::result_ptr
-results::adjust(const engine::test_case& test_case,
+results::adjust(const engine::atf_test_case& test_case,
                 const optional< process::status >& body_status,
                 const optional< process::status >& cleanup_status,
                 results::result_ptr result_from_file)

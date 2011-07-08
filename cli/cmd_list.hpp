@@ -55,8 +55,7 @@ class filters_state;
 
 namespace detail {
 
-void list_test_case(utils::cmdline::ui*, const bool, const engine::test_case&,
-                    const std::string&);
+void list_test_case(utils::cmdline::ui*, const bool, const engine::test_case&);
 void list_test_program(utils::cmdline::ui*, const bool,
                        const engine::test_program&, cli::filters_state&);
 

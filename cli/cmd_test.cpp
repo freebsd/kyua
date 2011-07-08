@@ -87,15 +87,14 @@ run_test_program(const engine::test_program& test_program,
     unsigned long bad_count = 0;
     for (engine::test_cases_vector::const_iterator iter = test_cases.begin();
          iter != test_cases.end(); iter++) {
-        const engine::test_case& test_case = *iter;
-        if (!filters.match_test_case(test_case.identifier))
+        const engine::test_case_ptr test_case = *iter;
+
+        if (!filters.match_test_case(test_case->identifier()))
             continue;
 
-        results::result_ptr result = runner::run_test_case(
-            test_program.root(), test_case, config,
-            test_program.test_suite_name());
+        results::result_ptr result = test_case->run(config);
 
-        ui->out(F("%s  ->  %s") % test_case.identifier.str() %
+        ui->out(F("%s  ->  %s") % test_case->identifier().str() %
                 result->format());
         if (result->good())
             good_count++;

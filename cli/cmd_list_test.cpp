@@ -36,6 +36,8 @@ extern "C" {
 
 #include "cli/cmd_list.hpp"
 #include "cli/common.hpp"
+// TODO(jmmv): Should probably use a mock test case.
+#include "engine/atf_test_case.hpp"
 // TODO(jmmv): Should probably use a mock test program.
 #include "engine/atf_test_program.hpp"
 #include "engine/exceptions.hpp"
@@ -72,14 +74,16 @@ helpers(const atf::tests::tc* test_case)
 ATF_TEST_CASE_WITHOUT_HEAD(list_test_case__no_verbose);
 ATF_TEST_CASE_BODY(list_test_case__no_verbose)
 {
-    const engine::test_case_id id(fs::path("the/test-program"), "abc");
     engine::properties_map properties;
     properties["descr"] = "Unused description";
-    const engine::test_case test_case = engine::test_case::from_properties(
-        id, properties);
+    const engine::atf_test_program test_program(fs::path("the/test-program"),
+                                                fs::path("root"),
+                                                "unused-suite");
+    const engine::atf_test_case test_case =
+        engine::atf_test_case::from_properties(test_program, "abc", properties);
 
     cmdline::ui_mock ui;
-    cli::detail::list_test_case(&ui, false, test_case, "unused test suite");
+    cli::detail::list_test_case(&ui, false, test_case);
     ATF_REQUIRE_EQ(1, ui.out_log().size());
     ATF_REQUIRE_EQ("the/test-program:abc", ui.out_log()[0]);
     ATF_REQUIRE(ui.err_log().empty());
@@ -91,11 +95,14 @@ ATF_TEST_CASE_BODY(list_test_case__verbose__no_properties)
 {
     const engine::test_case_id id(fs::path("hello/world"), "my_name");
     engine::properties_map properties;
-    const engine::test_case test_case = engine::test_case::from_properties(
-        id, properties);
+    const engine::atf_test_program test_program(fs::path("hello/world"),
+                                                fs::path("root"), "the-suite");
+    const engine::atf_test_case test_case =
+        engine::atf_test_case::from_properties(test_program, "my_name",
+                                               properties);
 
     cmdline::ui_mock ui;
-    cli::detail::list_test_case(&ui, true, test_case, "the-suite");
+    cli::detail::list_test_case(&ui, true, test_case);
     ATF_REQUIRE_EQ(1, ui.out_log().size());
     ATF_REQUIRE_EQ("hello/world:my_name (the-suite)", ui.out_log()[0]);
     ATF_REQUIRE(ui.err_log().empty());
@@ -109,11 +116,14 @@ ATF_TEST_CASE_BODY(list_test_case__verbose__some_properties)
     engine::properties_map properties;
     properties["descr"] = "Some description";
     properties["has.cleanup"] = "true";
-    const engine::test_case test_case = engine::test_case::from_properties(
-        id, properties);
+    const engine::atf_test_program test_program(fs::path("hello/world"),
+                                                fs::path("root"), "the-suite");
+    const engine::atf_test_case test_case =
+        engine::atf_test_case::from_properties(test_program, "my_name",
+                                               properties);
 
     cmdline::ui_mock ui;
-    cli::detail::list_test_case(&ui, true, test_case, "the-suite");
+    cli::detail::list_test_case(&ui, true, test_case);
     ATF_REQUIRE_EQ(3, ui.out_log().size());
     ATF_REQUIRE_EQ("hello/world:my_name (the-suite)", ui.out_log()[0]);
     ATF_REQUIRE_EQ("    descr = Some description", ui.out_log()[1]);

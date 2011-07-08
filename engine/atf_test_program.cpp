@@ -28,6 +28,7 @@
 
 #include <cstdlib>
 
+#include "engine/atf_test_case.hpp"
 #include "engine/atf_test_program.hpp"
 #include "engine/exceptions.hpp"
 #include "utils/format/macros.hpp"
@@ -140,11 +141,9 @@ public:
 ///
 /// \throw format_error If the test case list has an invalid format.
 engine::test_cases_vector
-engine::detail::parse_test_cases(const utils::fs::path& program,
+engine::detail::parse_test_cases(const engine::test_program& program,
                                  std::istream& input)
 {
-    PRE(!program.is_absolute());
-
     std::string line;
 
     std::getline(input, line);
@@ -167,10 +166,12 @@ engine::detail::parse_test_cases(const utils::fs::path& program,
             throw format_error("Invalid test case definition; must be "
                                "preceeded by the identifier");
 
-        const engine::test_case_id identifier(program, ident.second);
         const properties_map raw_properties = parse_properties(input);
-        test_cases.push_back(engine::test_case::from_properties(
-            identifier, raw_properties));
+        const engine::atf_test_case test_case =
+            engine::atf_test_case::from_properties(program, ident.second,
+                                                   raw_properties);
+        test_cases.push_back(engine::test_case_ptr(
+             new engine::atf_test_case(test_case)));
     }
     if (test_cases.empty())
         throw format_error("No test cases");
@@ -218,8 +219,7 @@ engine::atf_test_program::load_test_cases(void) const
     test_cases_vector loaded_test_cases;
     std::string format_error_message;
     try {
-        loaded_test_cases = detail::parse_test_cases(relative_path(),
-                                                     child->output());
+        loaded_test_cases = detail::parse_test_cases(*this, child->output());
     } catch (const format_error& e) {
         format_error_message = F("%s: %s") % relative_path().str() % e.what();
     }

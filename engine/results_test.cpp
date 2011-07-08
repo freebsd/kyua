@@ -38,9 +38,10 @@ extern "C" {
 
 #include <atf-c++.hpp>
 
+#include "engine/atf_test_case.hpp"
+#include "engine/atf_test_program.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/results.ipp"
-#include "engine/test_case.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/process/children.ipp"
@@ -717,9 +718,12 @@ ATF_TEST_CASE_BODY(adjust_with_timeout__timed_out)
 ATF_TEST_CASE_WITHOUT_HEAD(adjust__body_ok__no_cleanup);
 ATF_TEST_CASE_BODY(adjust__body_ok__no_cleanup)
 {
+    const engine::atf_test_program test_program(fs::path("non-existent"),
+                                                fs::path("."), "unused-suite");
+
     engine::properties_map metadata;
-    const engine::test_case test_case = engine::test_case::from_properties(
-        engine::test_case_id(fs::path("program"), "name"), metadata);
+    const engine::atf_test_case test_case = engine::atf_test_case::from_properties(
+        test_program, "name", metadata);
     const results::passed result;
     compare_results(result, results::adjust(test_case,
         utils::make_optional(process::status::fake_exited(EXIT_SUCCESS)),
@@ -731,10 +735,13 @@ ATF_TEST_CASE_BODY(adjust__body_ok__no_cleanup)
 ATF_TEST_CASE_WITHOUT_HEAD(adjust__body_ok__cleanup_ok);
 ATF_TEST_CASE_BODY(adjust__body_ok__cleanup_ok)
 {
+    const engine::atf_test_program test_program(fs::path("non-existent"),
+                                                fs::path("."), "unused-suite");
+
     engine::properties_map metadata;
     metadata["has.cleanup"] = "true";
-    const engine::test_case test_case = engine::test_case::from_properties(
-        engine::test_case_id(fs::path("program"), "name"), metadata);
+    const engine::atf_test_case test_case = engine::atf_test_case::from_properties(
+        test_program, "name", metadata);
     const results::passed result;
     compare_results(result, results::adjust(test_case,
         utils::make_optional(process::status::fake_exited(EXIT_SUCCESS)),
@@ -746,10 +753,13 @@ ATF_TEST_CASE_BODY(adjust__body_ok__cleanup_ok)
 ATF_TEST_CASE_WITHOUT_HEAD(adjust__body_ok__cleanup_bad);
 ATF_TEST_CASE_BODY(adjust__body_ok__cleanup_bad)
 {
+    const engine::atf_test_program test_program(fs::path("non-existent"),
+                                                fs::path("."), "unused-suite");
+
     engine::properties_map metadata;
     metadata["has.cleanup"] = "true";
-    const engine::test_case test_case = engine::test_case::from_properties(
-        engine::test_case_id(fs::path("program"), "name"), metadata);
+    const engine::atf_test_case test_case = engine::atf_test_case::from_properties(
+        test_program, "name", metadata);
     const results::passed result;
     validate_broken("cleanup.*not.*successful", results::adjust(test_case,
         utils::make_optional(process::status::fake_exited(EXIT_SUCCESS)),
@@ -761,11 +771,14 @@ ATF_TEST_CASE_BODY(adjust__body_ok__cleanup_bad)
 ATF_TEST_CASE_WITHOUT_HEAD(adjust__body_ok__cleanup_timeout);
 ATF_TEST_CASE_BODY(adjust__body_ok__cleanup_timeout)
 {
+    const engine::atf_test_program test_program(fs::path("non-existent"),
+                                                fs::path("."), "unused-suite");
+
     engine::properties_map metadata;
     metadata["has.cleanup"] = "true";
     metadata["timeout"] = "123";
-    const engine::test_case test_case = engine::test_case::from_properties(
-        engine::test_case_id(fs::path("program"), "name"), metadata);
+    const engine::atf_test_case test_case = engine::atf_test_case::from_properties(
+        test_program, "name", metadata);
     const results::passed result;
     validate_broken("cleanup.*timed out.*123", results::adjust(test_case,
         utils::make_optional(process::status::fake_exited(EXIT_SUCCESS)),
@@ -777,10 +790,13 @@ ATF_TEST_CASE_BODY(adjust__body_ok__cleanup_timeout)
 ATF_TEST_CASE_WITHOUT_HEAD(adjust__body_bad__cleanup_ok);
 ATF_TEST_CASE_BODY(adjust__body_bad__cleanup_ok)
 {
+    const engine::atf_test_program test_program(fs::path("non-existent"),
+                                                fs::path("."), "unused-suite");
+
     engine::properties_map metadata;
     metadata["has.cleanup"] = "true";
-    const engine::test_case test_case = engine::test_case::from_properties(
-        engine::test_case_id(fs::path("program"), "name"), metadata);
+    const engine::atf_test_case test_case = engine::atf_test_case::from_properties(
+        test_program, "name", metadata);
     const results::failed result("The reason");
     compare_results(result, results::adjust(test_case,
         utils::make_optional(process::status::fake_exited(EXIT_FAILURE)),
@@ -792,10 +808,13 @@ ATF_TEST_CASE_BODY(adjust__body_bad__cleanup_ok)
 ATF_TEST_CASE_WITHOUT_HEAD(adjust__body_bad__cleanup_bad);
 ATF_TEST_CASE_BODY(adjust__body_bad__cleanup_bad)
 {
+    const engine::atf_test_program test_program(fs::path("non-existent"),
+                                                fs::path("."), "unused-suite");
+
     engine::properties_map metadata;
     metadata["has.cleanup"] = "true";
-    const engine::test_case test_case = engine::test_case::from_properties(
-        engine::test_case_id(fs::path("program"), "name"), metadata);
+    const engine::atf_test_case test_case = engine::atf_test_case::from_properties(
+        test_program, "name", metadata);
     const results::failed result("The reason");
     compare_results(result, results::adjust(test_case,
         utils::make_optional(process::status::fake_exited(EXIT_FAILURE)),

@@ -28,6 +28,7 @@
 
 #include <atf-c++.hpp>
 
+#include "engine/atf_test_case.hpp"
 #include "engine/test_program.hpp"
 #include "utils/fs/path.hpp"
 
@@ -67,9 +68,12 @@ public:
         loads++;
 
         engine::test_cases_vector loaded_test_cases;
-        loaded_test_cases.push_back(engine::test_case::from_properties(
-            engine::test_case_id(relative_path(), "foo"),
-            engine::properties_map()));
+
+        const engine::atf_test_case test_case = 
+            engine::atf_test_case::from_properties(*this, "foo",
+                                                   engine::properties_map());
+        loaded_test_cases.push_back(engine::test_case_ptr(
+            new engine::atf_test_case(test_case)));
         return loaded_test_cases;
     }
 };
@@ -97,7 +101,7 @@ ATF_TEST_CASE_BODY(test_cases__get)
                                          "suite-name");
     const engine::test_cases_vector& test_cases = test_program.test_cases();
     ATF_REQUIRE_EQ(1, test_cases.size());
-    ATF_REQUIRE_EQ("binary:foo", test_cases[0].identifier.str());
+    ATF_REQUIRE_EQ("binary:foo", test_cases[0]->identifier().str());
 }
 
 

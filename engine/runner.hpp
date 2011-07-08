@@ -32,11 +32,8 @@
 #if !defined(ENGINE_RUNNER_HPP)
 #define ENGINE_RUNNER_HPP
 
-#include <string>
-
 #include "engine/results.hpp"
 #include "engine/test_case.hpp"
-#include "utils/fs/path.hpp"
 
 
 namespace engine {
@@ -45,16 +42,14 @@ namespace engine {
 namespace user_files {
 struct config;
 }  // namespace user_files
-struct test_case;
+class atf_test_case;
 
 
 namespace runner {
 
 
-results::result_ptr run_test_case(const utils::fs::path&,
-                                  const engine::test_case&,
-                                  const user_files::config&,
-                                  const std::string&);
+results::result_ptr run_test_case(const engine::atf_test_case&,
+                                  const user_files::config&);
 
 
 }  // namespace runner

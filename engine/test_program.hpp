@@ -49,7 +49,7 @@ namespace engine {
 
 
 /// Collection of test cases.
-typedef std::vector< test_case > test_cases_vector;
+typedef std::vector< test_case_ptr > test_cases_vector;
 
 
 /// Abstract representation of a test program.

@@ -51,13 +51,15 @@
 #include <memory>
 #include <string>
 
-#include "engine/test_case.hpp"
 #include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"
 #include "utils/process/status.hpp"
 
 namespace engine {
+
+class atf_test_case;
+
 namespace results {
 
 
@@ -90,7 +92,7 @@ result_ptr parse(std::istream&);
 result_ptr load(const utils::fs::path&);
 result_ptr adjust_with_status(result_ptr, const utils::process::status&);
 result_ptr adjust_with_timeout(result_ptr, const utils::datetime::delta&);
-result_ptr adjust(const engine::test_case&,
+result_ptr adjust(const engine::atf_test_case&,
                   const utils::optional< utils::process::status >&,
                   const utils::optional< utils::process::status >&,
                   result_ptr);

@@ -27,17 +27,16 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /// \file engine/test_case.hpp
-/// Provides the test_case class and other auxiliary types.
+/// Interface to interact with test cases.
 
 #if !defined(ENGINE_TEST_CASE_HPP)
 #define ENGINE_TEST_CASE_HPP
 
 #include <map>
-#include <set>
 #include <string>
+#include <tr1/memory>
 
-#include "engine/user_files/config.hpp"
-#include "utils/datetime.hpp"
+#include "engine/results.hpp"
 #include "utils/fs/path.hpp"
 
 namespace engine {
@@ -48,29 +47,6 @@ namespace engine {
 /// A property is just a (name, value) pair, and we represent them as a map
 /// because callers always want to locate properties by name.
 typedef std::map< std::string, std::string > properties_map;
-
-
-/// Collection of paths.
-typedef std::set< utils::fs::path > paths_set;
-
-
-/// Collection of strings.
-typedef std::set< std::string > strings_set;
-
-
-namespace detail {
-
-
-bool parse_bool(const std::string&, const std::string&);
-strings_set parse_list(const std::string&, const std::string&);
-unsigned long parse_ulong(const std::string&, const std::string&);
-
-paths_set parse_require_files(const std::string&, const std::string&);
-paths_set parse_require_progs(const std::string&, const std::string&);
-std::string parse_require_user(const std::string&, const std::string&);
-
-
-}  // namespace detail
 
 
 /// Representation of a test case identifier.
@@ -95,65 +71,35 @@ struct test_case_id {
 };
 
 
+class test_program;
+namespace user_files {
+struct config;
+}  // namespace user_files
+
+
 /// Representation of a test case.
-///
-/// Test cases should be thought as free-standing entities: even though they
-/// are located within a test program, the test program serves no other purpose
-/// than to provide a way to execute the test cases.  Therefore, no information
-/// needs to be stored for the test programs themselves.
-struct test_case {
-    /// The test case identifier.
-    test_case_id identifier;
+class test_case {
+    const engine::test_program& _test_program;
+    std::string _name;
 
-    /// The test case description.
-    std::string description;
+    virtual properties_map get_all_properties(void) const = 0;
+    virtual results::result_ptr do_run(const user_files::config&) const = 0;
 
-    /// Whether the test case has a cleanup routine or not.
-    bool has_cleanup;
+public:
+    test_case(const engine::test_program&, const std::string&);
+    virtual ~test_case(void);
 
-    /// The maximum amount of time the test case can run for.
-    utils::datetime::delta timeout;
-
-    /// List of architectures in which the test case can run; empty = any.
-    strings_set allowed_architectures;
-
-    /// List of platforms in which the test case can run; empty = any.
-    strings_set allowed_platforms;
-
-    /// List of configuration variables needed by the test case.
-    strings_set required_configs;
-
-    /// List of files needed by the test case.
-    paths_set required_files;
-
-    /// List of programs needed by the test case.
-    paths_set required_programs;
-
-    /// Privileges required to run the test case.
-    ///
-    /// Can be empty, in which case means "any privileges", or any of "root" or
-    /// "unprivileged".
-    std::string required_user;
-
-    /// User-defined meta-data properties.
-    properties_map user_metadata;
-
-    test_case(const test_case_id&, const std::string&, const bool,
-              const utils::datetime::delta&, const strings_set&,
-              const strings_set&, const strings_set&, const paths_set&,
-              const paths_set&, const std::string&, const properties_map&);
-
-    static test_case from_properties(const test_case_id&,
-                                     const properties_map&);
+    const engine::test_program& test_program(void) const;
+    const std::string& name(void) const;
+    test_case_id identifier(void) const;
 
     properties_map all_properties(void) const;
-
-    bool operator==(const test_case&) const;
+    results::result_ptr run(const user_files::config&) const;
 };
 
 
-std::string check_requirements(const test_case&, const user_files::config&,
-                               const std::string&);
+/// Pointer to a test case.
+typedef std::tr1::shared_ptr< test_case > test_case_ptr;
 
 
 }  // namespace engine

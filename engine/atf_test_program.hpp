@@ -40,7 +40,7 @@ namespace engine {
 namespace detail {
 
 
-test_cases_vector parse_test_cases(const utils::fs::path&, std::istream&);
+test_cases_vector parse_test_cases(const test_program&, std::istream&);
 
 
 }  // namespace detail
