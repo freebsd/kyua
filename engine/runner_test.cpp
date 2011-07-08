@@ -805,9 +805,7 @@ ATF_TEST_CASE_BODY(run_test_case__missing_test_program)
     ATF_REQUIRE(::mkdir("dir", 0755) != -1);
     results::result_ptr result = runner::run_test_case(
         make_test_case(test_program, "passed"), mock_config);
-    // TODO(jmmv): This should really be either an exception to denote a broken
-    // test suite or should be properly reported as missing test program.
-    validate_broken("Premature exit: received signal", result.get());
+    validate_broken("Failed to execute", result.get());
 }
 
 

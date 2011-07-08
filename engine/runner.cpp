@@ -35,6 +35,7 @@ extern "C" {
 
 #include <cerrno>
 #include <cstdlib>
+#include <fstream>
 #include <iostream>
 #include <stdexcept>
 #include <string>
@@ -47,6 +48,7 @@ extern "C" {
 #include "engine/test_program.hpp"
 #include "engine/user_files/config.hpp"
 #include "utils/datetime.hpp"
+#include "utils/defs.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
@@ -250,12 +252,52 @@ config_to_args(const user_files::config& config,
 }
 
 
+static void report_broken_result(const fs::path&, const std::string&)
+    UTILS_NORETURN;
+
+
+/// Creates a 'broken' results file and exits.
+///
+/// \param result_file The location of the results file.
+/// \param reason The reason for the breakage to report to the caller.
+static void
+report_broken_result(const fs::path& result_file, const std::string& reason)
+{
+    std::ofstream result(result_file.c_str());
+    result << F("broken: %s\n") % reason;
+    result.close();
+    std::exit(EXIT_FAILURE);
+}
+
+
 /// Functor to execute a test case in a subprocess.
 class execute_test_case_body {
     engine::atf_test_case _test_case;
     fs::path _result_file;
     fs::path _work_directory;
     user_files::config _config;
+
+    /// Exception-safe version of operator().
+    void
+    safe_run(void) const
+    {
+        const fs::path test_program = _test_case.test_program().absolute_path();
+        const fs::path abs_test_program = test_program.is_absolute() ?
+            test_program : test_program.to_absolute();
+
+        isolate_process(_work_directory);
+
+        if (can_do_unprivileged(_test_case, _config))
+            passwd::drop_privileges(_config.unprivileged_user.get());
+
+        std::vector< std::string > args;
+        args.push_back(F("-r%s") % _result_file);
+        args.push_back(F("-s%s") % abs_test_program.branch_path());
+        config_to_args(_config, _test_case.test_program().test_suite_name(),
+                       args);
+        args.push_back(_test_case.identifier().name);
+        process::exec(abs_test_program, args);
+    }
 
 public:
     /// Constructor for the functor.
@@ -282,27 +324,14 @@ public:
     void
     operator()(void)
     {
-        const fs::path test_program = _test_case.test_program().absolute_path();
-        const fs::path abs_test_program = test_program.is_absolute() ?
-            test_program : test_program.to_absolute();
-
         try {
-            isolate_process(_work_directory);
-        } catch (const std::exception& error) {
-            std::cerr << F("Failed to set up test case: %s\n") % error.what();
-            std::abort();
+            safe_run();
+        } catch (const std::runtime_error& e) {
+            report_broken_result(_result_file, e.what());
+        } catch (...) {
+            report_broken_result(_result_file, "Caught unknown exception while "
+                                 "setting up the test case");
         }
-
-        if (can_do_unprivileged(_test_case, _config))
-            passwd::drop_privileges(_config.unprivileged_user.get());
-
-        std::vector< std::string > args;
-        args.push_back(F("-r%s") % _result_file);
-        args.push_back(F("-s%s") % abs_test_program.branch_path());
-        config_to_args(_config, _test_case.test_program().test_suite_name(),
-                       args);
-        args.push_back(_test_case.identifier().name);
-        process::exec(abs_test_program, args);
     }
 };
 

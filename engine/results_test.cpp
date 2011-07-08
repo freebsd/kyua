@@ -128,7 +128,8 @@ compare_results(const Result& expected, const results::base_result* actual)
 {
     std::cout << F("Result is of type '%s'\n") % typeid(*actual).name();
 
-    if (typeid(*actual) == typeid(results::broken)) {
+    if (typeid(*actual) == typeid(results::broken) &&
+        typeid(expected) != typeid(results::broken)) {
         const results::broken* broken = dynamic_cast< const results::broken* >(
             actual);
         ATF_FAIL(F("Got unexpected broken result: %s") % broken->reason);
@@ -337,6 +338,14 @@ PARSE_BROKEN(missing_reason__bad_delim,
 PARSE_BROKEN(missing_reason__empty,
              "failed.*followed by.*reason",
              "failed: \n");
+
+
+PARSE_OK(broken__ok,
+         results::broken("a b c"),
+         "broken: a b c\n");
+PARSE_OK(broken__blanks,
+         results::broken("   "),
+         "broken:    \n");
 
 
 PARSE_OK(expected_death__ok,
@@ -973,6 +982,9 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, parse__missing_reason__no_delim);
     ATF_ADD_TEST_CASE(tcs, parse__missing_reason__bad_delim);
     ATF_ADD_TEST_CASE(tcs, parse__missing_reason__empty);
+
+    ATF_ADD_TEST_CASE(tcs, parse__broken__ok);
+    ATF_ADD_TEST_CASE(tcs, parse__broken__blanks);
 
     ATF_ADD_TEST_CASE(tcs, parse__expected_death__ok);
     ATF_ADD_TEST_CASE(tcs, parse__expected_death__blanks);

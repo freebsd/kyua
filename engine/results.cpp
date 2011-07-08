@@ -120,7 +120,7 @@ parse_without_reason(const std::string& status, const std::string& rest)
 /// \return An object representing the test result; results::broken if the
 /// parsing failed.
 ///
-/// \pre status must be one of "expected_death", "expected_failure",
+/// \pre status must be one of "broken", "expected_death", "expected_failure",
 /// "expected_timeout", "failed" or "skipped".
 static results::result_ptr
 parse_with_reason(const std::string& status, const std::string& rest)
@@ -131,7 +131,9 @@ parse_with_reason(const std::string& status, const std::string& rest)
     const std::string reason = rest.substr(2);
     INV(!reason.empty());
 
-    if (status == "expected_death")
+    if (status == "broken")
+        return make_result(results::broken(reason));
+    else if (status == "expected_death")
         return make_result(results::expected_death(reason));
     else if (status == "expected_failure")
         return make_result(results::expected_failure(reason));
@@ -268,7 +270,9 @@ results::parse(std::istream& input)
         const std::string status = data.second.substr(0, delim);
         const std::string rest = data.second.substr(status.length());
 
-        if (status == "expected_death")
+        if (status == "broken")
+            return parse_with_reason(status, rest);
+        else if (status == "expected_death")
             return parse_with_reason(status, rest);
         else if (status == "expected_exit")
             return parse_with_reason_and_arg(status, rest);
