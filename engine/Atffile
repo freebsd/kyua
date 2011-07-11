@@ -2,6 +2,7 @@ Content-Type: application/X-atf-atffile; version="1"
 
 prop: test-suite = kyua
 
+tp: atf_results_test
 tp: atf_test_case_test
 tp: atf_test_program_test
 tp: exceptions_test

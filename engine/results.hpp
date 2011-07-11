@@ -47,19 +47,12 @@
 #if !defined(ENGINE_RESULTS_HPP)
 #define ENGINE_RESULTS_HPP
 
-#include <istream>
 #include <memory>
 #include <string>
 
-#include "utils/datetime.hpp"
-#include "utils/fs/path.hpp"
 #include "utils/optional.hpp"
-#include "utils/process/status.hpp"
 
 namespace engine {
-
-class atf_test_case;
-
 namespace results {
 
 
@@ -86,16 +79,6 @@ struct base_result {
 /// All the functions below that take result_ptr as parameters do so for the
 /// only reason to allow simple chaining of calls.
 typedef std::auto_ptr< const base_result > result_ptr;
-
-
-result_ptr parse(std::istream&);
-result_ptr load(const utils::fs::path&);
-result_ptr adjust_with_status(result_ptr, const utils::process::status&);
-result_ptr adjust_with_timeout(result_ptr, const utils::datetime::delta&);
-result_ptr adjust(const engine::atf_test_case&,
-                  const utils::optional< utils::process::status >&,
-                  const utils::optional< utils::process::status >&,
-                  result_ptr);
 
 
 /// Representation of a broken test case.

@@ -41,6 +41,7 @@ extern "C" {
 #include <string>
 #include <vector>
 
+#include "engine/atf_results.hpp"
 #include "engine/atf_test_case.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/results.ipp"

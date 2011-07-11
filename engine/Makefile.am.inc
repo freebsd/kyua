@@ -30,7 +30,9 @@ ENGINE_CFLAGS = $(UTILS_CFLAGS)
 ENGINE_LIBS = libengine.a $(UTILS_LIBS)
 
 noinst_LIBRARIES += libengine.a
-libengine_a_SOURCES  = engine/atf_test_case.cpp
+libengine_a_SOURCES  = engine/atf_results.cpp
+libengine_a_SOURCES += engine/atf_results.hpp
+libengine_a_SOURCES += engine/atf_test_case.cpp
 libengine_a_SOURCES += engine/atf_test_case.hpp
 libengine_a_SOURCES += engine/atf_test_program.cpp
 libengine_a_SOURCES += engine/atf_test_program.hpp
@@ -51,7 +53,14 @@ tests_enginedir = $(pkgtestsdir)/engine
 tests_engine_DATA = engine/Atffile engine/Kyuafile
 EXTRA_DIST += $(tests_engine_DATA)
 
-tests_engine_PROGRAMS = engine/atf_test_case_test
+tests_engine_PROGRAMS = engine/atf_results_test
+engine_atf_results_test_SOURCES = engine/atf_results_test.cpp
+engine_atf_results_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_TEST_CFLAGS) \
+                                   $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+engine_atf_results_test_LDADD = $(ENGINE_LIBS) $(UTILS_TEST_LIBS) \
+                                $(UTILS_LIBS) $(ATF_CXX_LIBS)
+
+tests_engine_PROGRAMS += engine/atf_test_case_test
 engine_atf_test_case_test_SOURCES = engine/atf_test_case_test.cpp
 engine_atf_test_case_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_TEST_CFLAGS) \
                                      $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
