@@ -176,8 +176,9 @@ cli::test_filter::matches_test_case(const engine::test_case_id& test_case_)
 bool
 cli::test_filter::operator<(const test_filter& other) const
 {
-    return (test_program < other.test_program ||
-            test_program == other.test_program && test_case < other.test_case);
+    return (
+        test_program < other.test_program ||
+        (test_program == other.test_program && test_case < other.test_case));
 }
 
 

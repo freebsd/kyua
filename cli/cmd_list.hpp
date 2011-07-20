@@ -37,7 +37,7 @@
 #include "utils/cmdline/base_command.hpp"
 
 namespace engine {
-struct test_case;
+class test_case;
 class test_program;
 }  // namespace engine
 

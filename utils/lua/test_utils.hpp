@@ -77,7 +77,7 @@ namespace {
 /// \param state The Lua state.
 ///
 /// \return The internal lua_State of the input Lua state.
-inline lua_State*
+static inline lua_State*
 raw(utils::lua::state& state)
 {
     return state.raw_state_for_testing();
