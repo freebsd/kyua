@@ -29,7 +29,6 @@
 #include <cstdlib>
 #include <fstream>
 #include <sstream>
-#include <typeinfo>
 #include <utility>
 
 #include "engine/atf_results.hpp"
@@ -43,7 +42,6 @@
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace process = utils::process;
-namespace results = engine::results;
 
 using utils::none;
 using utils::optional;
@@ -98,18 +96,20 @@ read_lines(std::istream& input)
 /// \param status The result status name.
 /// \param rest The rest of the line after the status name.
 ///
-/// \return An object representing the test result; results::broken if the
-/// parsing failed.
+/// \return An object representing the test result.
+///
+/// \throw format_error If the result is invalid (i.e. rest is invalid).
 ///
 /// \pre status must be "passed".
-static results::result_ptr
+static engine::detail::raw_result
 parse_without_reason(const std::string& status, const std::string& rest)
 {
+    using engine::detail::raw_result;
+
     if (!rest.empty())
-        return make_result(results::broken(F("%s cannot have a reason") %
-                                           status));
+        throw engine::format_error(F("%s cannot have a reason") % status);
     PRE(status == "passed");
-    return make_result(results::passed());
+    return raw_result(raw_result::passed);
 }
 
 
@@ -118,32 +118,35 @@ parse_without_reason(const std::string& status, const std::string& rest)
 /// \param status The result status name.
 /// \param rest The rest of the line after the status name.
 ///
-/// \return An object representing the test result; results::broken if the
-/// parsing failed.
+/// \return An object representing the test result.
+///
+/// \throw format_error If the result is invalid (i.e. rest is invalid).
 ///
 /// \pre status must be one of "broken", "expected_death", "expected_failure",
 /// "expected_timeout", "failed" or "skipped".
-static results::result_ptr
+static engine::detail::raw_result
 parse_with_reason(const std::string& status, const std::string& rest)
 {
+    using engine::detail::raw_result;
+
     if (rest.length() < 3 || rest.substr(0, 2) != ": ")
-        return make_result(results::broken(F("%s must be followed by "
-                                             "': <reason>'") % status));
+        throw engine::format_error(F("%s must be followed by ': <reason>'") %
+                                   status);
     const std::string reason = rest.substr(2);
     INV(!reason.empty());
 
     if (status == "broken")
-        return make_result(results::broken(reason));
+        return raw_result(raw_result::broken, reason);
     else if (status == "expected_death")
-        return make_result(results::expected_death(reason));
+        return raw_result(raw_result::expected_death, reason);
     else if (status == "expected_failure")
-        return make_result(results::expected_failure(reason));
+        return raw_result(raw_result::expected_failure, reason);
     else if (status == "expected_timeout")
-        return make_result(results::expected_timeout(reason));
+        return raw_result(raw_result::expected_timeout, reason);
     else if (status == "failed")
-        return make_result(results::failed(reason));
+        return raw_result(raw_result::failed, reason);
     else if (status == "skipped")
-        return make_result(results::skipped(reason));
+        return raw_result(raw_result::skipped, reason);
     else
         PRE_MSG(false, "Unexpected status");
 }
@@ -181,15 +184,17 @@ parse_int(const std::string& str)
 /// parsing failed.
 ///
 /// \pre status must be one of "expected_exit" or "expected_signal".
-static results::result_ptr
+static engine::detail::raw_result
 parse_with_reason_and_arg(const std::string& status, const std::string& rest)
 {
+    using engine::detail::raw_result;
+
     std::string::size_type delim = rest.find_first_of(":(");
     if (delim == std::string::npos)
-        return make_result(results::broken(F("Invalid format for '%s' test "
-                                             "case result; must be followed by "
-                                             "'[(num)]: <reason>' but found "
-                                             "'%s'") % status % rest));
+        throw engine::format_error(F("Invalid format for '%s' test case "
+                                     "result; must be followed by '[(num)]: "
+                                     "<reason>' but found '%s'") %
+                                   status % rest);
 
     optional< int > arg;
     if (rest[delim] == '(') {
@@ -200,18 +205,18 @@ parse_with_reason_and_arg(const std::string& status, const std::string& rest)
         const std::string argstr = rest.substr(delim + 1, delim2 - delim - 1);
         arg = parse_int(argstr);
         if (!arg)
-            return make_result(results::broken(F("Invalid integer argument "
-                                                 "'%s' to '%s' test case "
-                                                 "result") % argstr % status));
+            throw engine::format_error(F("Invalid integer argument '%s' to "
+                                         "'%s' test case result") %
+                                       argstr % status);
         delim = delim2 + 1;
     }
 
     const std::string reason = rest.substr(delim + 2);
 
     if (status == "expected_exit")
-        return make_result(results::expected_exit(arg, reason));
+        return raw_result(raw_result::expected_exit, arg, reason);
     else if (status == "expected_signal")
-        return make_result(results::expected_signal(arg, reason));
+        return raw_result(raw_result::expected_signal, arg, reason);
     else
         PRE_MSG(false, "Unexpected status");
 }
@@ -238,6 +243,46 @@ format_status(const process::status& status)
 }  // anonymous namespace
 
 
+/// Constructs a raw result with a type.
+///
+/// The reason and the argument are left uninitialized.
+///
+/// \param type_ The type of the result.
+engine::detail::raw_result::raw_result(const types type_) :
+    _type(type_)
+{
+}
+
+
+/// Constructs a raw result with a type and a reason.
+///
+/// The argument is left uninitialized.
+///
+/// \param type_ The type of the result.
+/// \param reason_ The reason for the result.
+engine::detail::raw_result::raw_result(const types type_,
+                                       const std::string& reason_) :
+    _type(type_),
+    _reason(reason_)
+{
+}
+
+
+/// Constructs a raw result with a type, an optional argument and a reason.
+///
+/// \param type_ The type of the result.
+/// \param argument_ The optional argument for the result.
+/// \param reason_ The reason for the result.
+engine::detail::raw_result::raw_result(const types type_,
+                                       const utils::optional< int >& argument_,
+                                       const std::string& reason_) :
+    _type(type_),
+    _argument(argument_),
+    _reason(reason_)
+{
+}
+
+
 /// Parses an input stream to extract a test result.
 ///
 /// If the parsing fails for any reason, the test result becomes results::broken
@@ -250,15 +295,17 @@ format_status(const process::status& status)
 ///
 /// \return A dynamically-allocated instance of a class derived from
 /// results::base_result representing the result of the test case.
-results::result_ptr
-results::parse(std::istream& input)
+///
+/// \throw format_error If the input is invalid.
+engine::detail::raw_result
+engine::detail::raw_result::parse(std::istream& input)
 {
     const std::pair< size_t, std::string > data = read_lines(input);
     if (data.first == 0)
-        return make_result(results::broken("Empty test result or no new line"));
+        throw format_error("Empty test result or no new line");
     else if (data.first > 1)
-        return make_result(results::broken("Test result contains multiple "
-                                           "lines: " + data.second));
+        throw format_error("Test result contains multiple lines: " +
+                           data.second);
     else {
         const std::string::size_type delim = data.second.find_first_not_of(
             "abcdefghijklmnopqrstuvwxyz_");
@@ -284,8 +331,7 @@ results::parse(std::istream& input)
         else if (status == "skipped")
             return parse_with_reason(status, rest);
         else
-            return make_result(results::broken(F("Unknown test result '%s'") %
-                                               status));
+            throw format_error(F("Unknown test result '%s'") % status);
     }
 }
 
@@ -294,185 +340,285 @@ results::parse(std::istream& input)
 ///
 /// \param file The file to parse.
 ///
-/// \return The parsed test case result.  See the comments in results::parse()
-/// for more details -- in particular, how errors are reported.
-results::result_ptr
-results::load(const fs::path& file)
+/// \return The parsed test case result if all goes well.
+///
+/// \throw std::runtime_error If the file does not exist.
+/// \throw engine::format_error If the contents of the file are bogus.
+engine::detail::raw_result
+engine::detail::raw_result::load(const fs::path& file)
 {
     std::ifstream input(file.c_str());
     if (!input)
-        return result_ptr(NULL);
+        throw std::runtime_error("Cannot open results file");
     else
-        return results::parse(input);
+        return parse(input);
 }
 
 
-/// Adusts the raw result of a test case with its termination status.
+/// Gets the type of the result.
 ///
-/// Adjusting the result means ensuring that the termination conditions of the
-/// program match what is expected of the paticular result is reported.  If such
-/// conditions do not match, the test program is considered bogus.
-///
-/// \param raw_result The result as processed from the results file created by
-///     the test case.
-/// \param status The exit status of the test program.
-///
-/// \result The adjusted result.  The original result is transformed into broken
-/// if the exit status of the program does not our expectations.
-results::result_ptr
-results::adjust_with_status(result_ptr raw_result,
-                            const process::status& status)
+/// \return A result type.
+engine::detail::raw_result::types
+engine::detail::raw_result::type(void) const
 {
-    if (raw_result.get() == NULL)
-        return make_result(broken(F("Premature exit: %s") %
-                                  format_status(status)));
+    return _type;
+}
 
-    if (typeid(*raw_result) == typeid(broken))
-        return raw_result;
 
-    if (typeid(*raw_result) == typeid(expected_death)) {
-        return raw_result;
+/// Gets the optional argument of the result.
+///
+/// \return The argument of the result if present; none otherwise.
+const optional< int >&
+engine::detail::raw_result::argument(void) const
+{
+    return _argument;
+}
 
-    } else if (typeid(*raw_result) == typeid(expected_exit)) {
-        if (status.exited()) {
-            const expected_exit* result =
-                dynamic_cast< const expected_exit* >(raw_result.get());
-            if (result->exit_status) {
-                if (result->exit_status.get() == status.exitstatus())
-                    return raw_result;
-                else
-                    return make_result(broken(F("Expected clean exit with code "
-                                                "%d but got code %d") %
-                                              result->exit_status.get() %
-                                              status.exitstatus()));
-            } else
-                return raw_result;
-        } else
-            return make_result(broken("Expected clean exit but " +
-                                      format_status(status)));
 
-    } else if (typeid(*raw_result) == typeid(expected_failure)) {
-        if (status.exited() && status.exitstatus() == EXIT_SUCCESS)
-            return raw_result;
-        else
-            return make_result(broken("Expected failure should have reported "
-                                      "success but " + format_status(status)));
+/// Gets the optional reason of the result.
+///
+/// \return The reason of the result if present; none otherwise.
+const optional< std::string >&
+engine::detail::raw_result::reason(void) const
+{
+    return _reason;
+}
 
-    } else if (typeid(*raw_result) == typeid(expected_signal)) {
-        if (status.signaled()) {
-            const expected_signal* result =
-                dynamic_cast< const expected_signal* >(
-                    raw_result.get());
-            if (result->signal_no) {
-                if (result->signal_no.get() == status.termsig())
-                    return raw_result;
-                else
-                    return make_result(broken(F("Expected signal %d but got "
-                                                "%d") %
-                                              result->signal_no.get() %
-                                              status.termsig()));
-            } else
-                return raw_result;
-        } else
-            return make_result(broken("Expected signal but " +
-                                      format_status(status)));
 
-    } else if (typeid(*raw_result) == typeid(expected_timeout)) {
-        return make_result(broken("Expected timeout but " +
-                                  format_status(status)));
+/// Checks whether the result should be reported as good or not.
+///
+/// \return True if the result can be considered "good", false otherwise.
+bool
+engine::detail::raw_result::good(void) const
+{
+    switch (_type) {
+    case raw_result::expected_death:
+    case raw_result::expected_exit:
+    case raw_result::expected_failure:
+    case raw_result::expected_signal:
+    case raw_result::expected_timeout:
+    case raw_result::passed:
+    case raw_result::skipped:
+        return true;
 
-    } else if (typeid(*raw_result) == typeid(failed)) {
-        if (status.exited() && status.exitstatus() == EXIT_FAILURE)
-            return raw_result;
-        else
-            return make_result(broken("Failed test case should have reported "
-                                      "failure but " + format_status(status)));
+    case raw_result::broken:
+    case raw_result::failed:
+        return false;
 
-    } else if (typeid(*raw_result) == typeid(passed)) {
-        if (status.exited() && status.exitstatus() == EXIT_SUCCESS)
-            return raw_result;
-        else
-            return make_result(broken("Passed test case should have reported "
-                                      "success but " + format_status(status)));
-
-    } else if (typeid(*raw_result) == typeid(skipped)) {
-        if (status.exited() && status.exitstatus() == EXIT_SUCCESS)
-            return raw_result;
-        else
-            return make_result(broken("Skipped test case should have reported "
-                                      "success but " + format_status(status)));
-
-    } else {
-        UNREACHABLE_MSG("Unhandled result type");
+    default:
+        UNREACHABLE;
     }
 }
 
 
-/// Adusts the raw result of a test case with its timeout.
+/// Reinterprets a raw result based on the termination status of the test case.
 ///
-/// Adjusting the result means ensuring that the test case is marked as broken
-/// unless its status says that the timeout is expected.
+/// This reinterpretation ensures that the termination conditions of the program
+/// match what is expected of the paticular result reported by the test program.
+/// If such conditions do not match, the test program is considered bogus and is
+/// thus reported as broken.
 ///
-/// \param result The result as processed from the results file created by
-///     the test case.  Given that the test case timed out, it most likely did
-///     not create a results file (unless for expected failures).  That's OK
-///     because if the results file does not exist, we get a 'broken' type
-///     result from load().
-/// \param timeout The timeout for informative reasons.
+/// This is just a helper function for calculate_result(); the real result of
+/// the test case cannot be inferred from apply() only.
+///
+/// \param status The exit status of the test program, or none if the test
+/// program timed out.
 ///
 /// \result The adjusted result.  The original result is transformed into broken
-/// if the timeout was not expected.
-results::result_ptr
-results::adjust_with_timeout(results::result_ptr result,
-                             const datetime::delta& timeout)
+/// if the exit status of the program does not match our expectations.
+engine::detail::raw_result
+engine::detail::raw_result::apply(const optional< process::status >& status)
+    const
 {
-    if (result.get() == NULL)
-        return make_result(broken(F("Test case timed out after %d seconds") %
-                                  timeout.seconds));
+    if (!status) {
+        if (_type != raw_result::expected_timeout)
+            return raw_result(raw_result::broken, "Test case body timed out");
+        else
+            return *this;
+    }
 
-    if (typeid(*result) == typeid(expected_timeout))
-        return result;
-    else
-        return make_result(broken(F("Test case timed out after %d seconds") %
-                                  timeout.seconds));
+    INV(status);
+    switch (_type) {
+    case raw_result::broken:
+        return *this;
+
+    case raw_result::expected_death:
+        return *this;
+
+    case raw_result::expected_exit:
+        if (status.get().exited()) {
+            if (_argument) {
+                if (_argument.get() == status.get().exitstatus())
+                    return *this;
+                else
+                    return raw_result(
+                        raw_result::broken,
+                        F("Expected clean exit with code %d but got code %d") %
+                        _argument.get() % status.get().exitstatus());
+            } else
+                return *this;
+        } else
+              return raw_result(raw_result::broken, "Expected clean exit but " +
+                                format_status(status.get()));
+
+    case raw_result::expected_failure:
+        if (status.get().exited() && status.get().exitstatus() == EXIT_SUCCESS)
+            return *this;
+        else
+            return raw_result(raw_result::broken, "Expected failure should "
+                              "have reported success but " +
+                              format_status(status.get()));
+
+    case raw_result::expected_signal:
+        if (status.get().signaled()) {
+            if (_argument) {
+                if (_argument.get() == status.get().termsig())
+                    return *this;
+                else
+                    return raw_result(
+                        raw_result::broken,
+                        F("Expected signal %d but got %d") %
+                        _argument.get() % status.get().termsig());
+            } else
+                return *this;
+        } else
+            return raw_result(raw_result::broken, "Expected signal but " +
+                              format_status(status.get()));
+
+    case raw_result::expected_timeout:
+        return raw_result(raw_result::broken, "Expected timeout but " +
+                          format_status(status.get()));
+
+    case raw_result::failed:
+        if (status.get().exited() && status.get().exitstatus() == EXIT_FAILURE)
+            return *this;
+        else
+            return raw_result(raw_result::broken, "Failed test case should "
+                              "have reported failure but " +
+                              format_status(status.get()));
+
+    case raw_result::passed:
+        if (status.get().exited() && status.get().exitstatus() == EXIT_SUCCESS)
+            return *this;
+        else
+            return raw_result(raw_result::broken, "Passed test case should "
+                              "have reported success but " +
+                              format_status(status.get()));
+
+    case raw_result::skipped:
+        if (status.get().exited() && status.get().exitstatus() == EXIT_SUCCESS)
+            return *this;
+        else
+            return raw_result(raw_result::broken, "Skipped test case should "
+                              "have reported success but " +
+                              format_status(status.get()));
+    }
+
+    UNREACHABLE;
 }
 
 
-/// Calculates the final result of the execution of a test case.
+/// Converts an internal result to the interface-agnostic representation.
 ///
-/// \param test_case The test case for which the result is being adjusted.
-/// \param body_status The exit status of the test case's body; none if it
-///     timed out.
-/// \param cleanup_status The exit status of the test case's cleanup; none if it
-///     timed out.
-/// \param result_from_file The result saved by the test case, if any, as
-///     returned by the load() function.
-///
-/// \return The result of the test case as it should be reported to the user.
-results::result_ptr
-results::adjust(const engine::atf_test_case& test_case,
-                const optional< process::status >& body_status,
-                const optional< process::status >& cleanup_status,
-                results::result_ptr result_from_file)
+/// \return A generic result instance representing this result.
+engine::results::result_ptr
+engine::detail::raw_result::externalize(void) const
 {
-    results::result_ptr result;
-    if (body_status)
-        result = adjust_with_status(result_from_file, body_status.get());
-    else
-        result = adjust_with_timeout(result_from_file, test_case.timeout);
+    switch (_type) {
+    case raw_result::broken:
+        return make_result(results::broken(_reason.get()));
 
-    if (result->good() && test_case.has_cleanup) {
-        if (cleanup_status) {
-            if (!cleanup_status.get().exited() ||
-                cleanup_status.get().exitstatus() != EXIT_SUCCESS)
-                result.reset(new results::broken("Test case cleanup did not "
-                                                 "terminate successfully"));
-        } else {
-            result.reset(new results::broken(F("Test case cleanup timed out "
-                                               "after %d seconds") %
-                                             test_case.timeout.seconds));
+    case raw_result::expected_death:
+        return make_result(results::expected_death(_reason.get()));
+
+    case raw_result::expected_exit:
+        return make_result(results::expected_exit(_argument, _reason.get()));
+
+    case raw_result::expected_failure:
+        return make_result(results::expected_failure(_reason.get()));
+
+    case raw_result::expected_signal:
+        return make_result(results::expected_signal(_argument, _reason.get()));
+
+    case raw_result::expected_timeout:
+        return make_result(results::expected_timeout(_reason.get()));
+
+    case raw_result::failed:
+        return make_result(results::failed(_reason.get()));
+
+    case raw_result::passed:
+        return make_result(results::passed());
+
+    case raw_result::skipped:
+        return make_result(results::skipped(_reason.get()));
+
+    default:
+        UNREACHABLE;
+    }
+}
+
+
+/// Compares two raw results for equality.
+///
+/// \param other The resul to compare to.
+///
+/// \return True if the two raw results are equal; false otherwise.
+bool
+engine::detail::raw_result::operator==(const raw_result& other) const
+{
+    return _type == other._type && _argument == other._argument &&
+        _reason == other._reason;
+}
+
+
+/// Calculates the user-visible result of a test case.
+///
+/// This function needs to perform magic to ensure that what the test case
+/// reports as its result is what the user should really see: i.e. it adjusts
+/// the reported status of the test to the exit conditions of its body and
+/// cleanup parts.
+///
+/// \param body_status The termination status of the process that executed
+///     the body of the test.  None if the body timed out.
+/// \param cleanup_status The termination status of the process that executed
+///     the body of the test.  None if the cleanup timed out.
+/// \param result_file The path to the result file that the test case body is
+///     supposed to have created.
+engine::results::result_ptr
+engine::calculate_result(const optional< process::status >& body_status,
+                         const optional< process::status >& cleanup_status,
+                         const fs::path& results_file)
+{
+    using detail::raw_result;
+
+    raw_result result(raw_result::broken, "Unknown result");
+    try {
+        result = raw_result::load(results_file);
+    } catch (const engine::format_error& error) {
+        result = raw_result(raw_result::broken, error.what());
+    } catch (const std::runtime_error& error) {
+        if (body_status)
+            result = raw_result(raw_result::broken, F("Premature exit: %s") %
+                                format_status(body_status.get()));
+        else {
+            // The test case timed out.  apply() handles this case later.
         }
     }
 
-    return result;
+    result = result.apply(body_status);
+
+    if (result.good()) {
+        if (cleanup_status) {
+            if (!cleanup_status.get().exited() ||
+                cleanup_status.get().exitstatus() != EXIT_SUCCESS) {
+                result = raw_result(raw_result::broken, "Test case cleanup "
+                                    "did not terminate successfully");
+            }
+        } else {  // Test case cleanup timed out.
+            result = raw_result(raw_result::broken, "Test case cleanup timed "
+                                "out");
+        }
+    }
+
+    return result.externalize();
 }

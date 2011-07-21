@@ -731,7 +731,7 @@ ATF_TEST_CASE_BODY(run_test_case__timeout_body)
     config.test_suites["the-suite"]["control_dir"] = fs::current_path().str();
     results::result_ptr result = runner::run_test_case(
         make_test_case(test_program, "timeout_body", metadata), config);
-    validate_broken("Test case timed out after 1 seconds", result.get());
+    validate_broken("Test case body timed out", result.get());
 
     if (fs::exists(fs::path("cookie")))
         fail("It seems that the test case was not killed after it timed out");
@@ -752,8 +752,7 @@ ATF_TEST_CASE_BODY(run_test_case__timeout_cleanup)
     config.test_suites["the-suite"]["control_dir"] = fs::current_path().str();
     results::result_ptr result = runner::run_test_case(
         make_test_case(test_program, "timeout_cleanup", metadata), config);
-    validate_broken("Test case cleanup timed out after 1 seconds",
-                    result.get());
+    validate_broken("Test case cleanup timed out", result.get());
 
     if (fs::exists(fs::path("cookie")))
         fail("It seems that the test case was not killed after it timed out");

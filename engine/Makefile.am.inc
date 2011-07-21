@@ -81,11 +81,6 @@ engine_exceptions_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
 engine_exceptions_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
                                $(ATF_CXX_LIBS)
 
-tests_engine_PROGRAMS += engine/results_helpers
-engine_results_helpers_SOURCES = engine/results_helpers.cpp
-engine_results_helpers_CXXFLAGS = $(ATF_CXX_CFLAGS)
-engine_results_helpers_LDADD = $(ATF_CXX_LIBS)
-
 tests_engine_PROGRAMS += engine/results_test
 engine_results_test_SOURCES = engine/results_test.cpp
 engine_results_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_TEST_CFLAGS) \

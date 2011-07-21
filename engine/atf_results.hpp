@@ -42,22 +42,67 @@
 
 namespace engine {
 
+namespace detail {
+
+
+/// Internal representation of the raw result files of ATF-based tests.
+///
+/// This class is used exclusively to represent the transient result files read
+/// from test cases before generating the "public" version of the result.  This
+/// class should actually not be exposed in the header files, but it is for
+/// testing purposes only.
+class raw_result {
+public:
+    /// List of possible types for the test case result.
+    enum types {
+        broken,
+        expected_death,
+        expected_exit,
+        expected_failure,
+        expected_signal,
+        expected_timeout,
+        failed,
+        passed,
+        skipped,
+    };
+
+private:
+    types _type;
+    utils::optional< int > _argument;
+    utils::optional< std::string > _reason;
+
+public:
+    raw_result(const types);
+    raw_result(const types, const std::string&);
+    raw_result(const types, const utils::optional< int >&, const std::string&);
+
+    static raw_result parse(std::istream&);
+    static raw_result load(const utils::fs::path&);
+
+    types type(void) const;
+    const utils::optional< int >& argument(void) const;
+    const utils::optional< std::string >& reason(void) const;
+
+    bool good(void) const;
+    raw_result apply(const utils::optional< utils::process::status >&) const;
+    results::result_ptr externalize(void) const;
+
+    bool operator==(const raw_result&) const;
+};
+
+
+}  // namespace detail
+
+
 class atf_test_case;
 
-namespace results {
+
+results::result_ptr calculate_result(
+    const utils::optional< utils::process::status >&,
+    const utils::optional< utils::process::status >&,
+    const utils::fs::path&);
 
 
-result_ptr parse(std::istream&);
-result_ptr load(const utils::fs::path&);
-result_ptr adjust_with_status(result_ptr, const utils::process::status&);
-result_ptr adjust_with_timeout(result_ptr, const utils::datetime::delta&);
-result_ptr adjust(const engine::atf_test_case&,
-                  const utils::optional< utils::process::status >&,
-                  const utils::optional< utils::process::status >&,
-                  result_ptr);
-
-
-}  // namespace results
 }  // namespace engine
 
 

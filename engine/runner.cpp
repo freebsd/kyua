@@ -463,12 +463,13 @@ run_test_case_safe_workdir(const engine::atf_test_case& test_case,
             execute_test_case_cleanup(test_case, rundir, config),
             workdir / "cleanup-stdout.txt", workdir / "cleanup-stderr.txt",
             test_case.timeout);
+    } else {
+        cleanup_status = process::status::fake_exited(EXIT_SUCCESS);
     }
 
     check_interrupt();
 
-    return results::adjust(test_case, body_status, cleanup_status,
-                           results::load(result_file));
+    return engine::calculate_result(body_status, cleanup_status, result_file);
 }
 
 
