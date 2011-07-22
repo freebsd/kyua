@@ -95,37 +95,6 @@ struct broken : public base_result {
 };
 
 
-/// Representation of a test case that expectedly dies.
-struct expected_death : public base_result {
-    /// The reason for the expected death.
-    std::string reason;
-
-    expected_death(const std::string&);
-    bool operator==(const expected_death&) const;
-    bool operator!=(const expected_death&) const;
-
-    std::string format(void) const;
-    bool good(void) const;
-};
-
-
-/// Representation of a test case that expectedly exits.
-struct expected_exit : public base_result {
-    /// The expected exit code; if none, any exit code is valid.
-    utils::optional< int > exit_status;
-
-    /// The reason for the expected controlled exit.
-    std::string reason;
-
-    expected_exit(const utils::optional< int >&, const std::string&);
-    bool operator==(const expected_exit&) const;
-    bool operator!=(const expected_exit&) const;
-
-    std::string format(void) const;
-    bool good(void) const;
-};
-
-
 /// Representation of a test case that expectedly fails.
 struct expected_failure : public base_result {
     /// The reason for the expected failure.
@@ -134,37 +103,6 @@ struct expected_failure : public base_result {
     expected_failure(const std::string&);
     bool operator==(const expected_failure&) const;
     bool operator!=(const expected_failure&) const;
-
-    std::string format(void) const;
-    bool good(void) const;
-};
-
-
-/// Representation of a test case that expectedly receives a signal.
-struct expected_signal : public base_result {
-    /// The expected signal number; if none, any signal is valid.
-    utils::optional< int > signal_no;
-
-    /// The reason for the expected signal delivery.
-    std::string reason;
-
-    expected_signal(const utils::optional< int >&, const std::string&);
-    bool operator==(const expected_signal&) const;
-    bool operator!=(const expected_signal&) const;
-
-    std::string format(void) const;
-    bool good(void) const;
-};
-
-
-/// Representation of a test case that expectedly times out.
-struct expected_timeout : public base_result {
-    /// The reason for the expected timeout.
-    std::string reason;
-
-    expected_timeout(const std::string&);
-    bool operator==(const expected_timeout&) const;
-    bool operator!=(const expected_timeout&) const;
 
     std::string format(void) const;
     bool good(void) const;

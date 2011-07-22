@@ -562,6 +562,96 @@ ATF_TEST_CASE_BODY(raw_result__apply__skipped__broken)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(raw_result__externalize__broken);
+ATF_TEST_CASE_BODY(raw_result__externalize__broken)
+{
+    const raw_result raw(raw_result::broken, "The reason");
+    const results::result_ptr actual = raw.externalize();
+    ATF_REQUIRE(typeid(results::broken) == typeid(*actual));
+    ATF_REQUIRE_EQ("broken: The reason", actual->format());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(raw_result__externalize__expected_death);
+ATF_TEST_CASE_BODY(raw_result__externalize__expected_death)
+{
+    const raw_result raw(raw_result::expected_death, "The reason");
+    const results::result_ptr actual = raw.externalize();
+    ATF_REQUIRE(typeid(results::expected_failure) == typeid(*actual));
+    ATF_REQUIRE_EQ("expected_failure: The reason", actual->format());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(raw_result__externalize__expected_exit);
+ATF_TEST_CASE_BODY(raw_result__externalize__expected_exit)
+{
+    const raw_result raw(raw_result::expected_exit, "The reason");
+    const results::result_ptr actual = raw.externalize();
+    ATF_REQUIRE(typeid(results::expected_failure) == typeid(*actual));
+    ATF_REQUIRE_EQ("expected_failure: The reason", actual->format());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(raw_result__externalize__expected_failure);
+ATF_TEST_CASE_BODY(raw_result__externalize__expected_failure)
+{
+    const raw_result raw(raw_result::expected_failure, "The reason");
+    const results::result_ptr actual = raw.externalize();
+    ATF_REQUIRE(typeid(results::expected_failure) == typeid(*actual));
+    ATF_REQUIRE_EQ("expected_failure: The reason", actual->format());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(raw_result__externalize__expected_signal);
+ATF_TEST_CASE_BODY(raw_result__externalize__expected_signal)
+{
+    const raw_result raw(raw_result::expected_signal, "The reason");
+    const results::result_ptr actual = raw.externalize();
+    ATF_REQUIRE(typeid(results::expected_failure) == typeid(*actual));
+    ATF_REQUIRE_EQ("expected_failure: The reason", actual->format());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(raw_result__externalize__expected_timeout);
+ATF_TEST_CASE_BODY(raw_result__externalize__expected_timeout)
+{
+    const raw_result raw(raw_result::expected_timeout, "The reason");
+    const results::result_ptr actual = raw.externalize();
+    ATF_REQUIRE(typeid(results::expected_failure) == typeid(*actual));
+    ATF_REQUIRE_EQ("expected_failure: The reason", actual->format());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(raw_result__externalize__failed);
+ATF_TEST_CASE_BODY(raw_result__externalize__failed)
+{
+    const raw_result raw(raw_result::failed, "The reason");
+    const results::result_ptr actual = raw.externalize();
+    ATF_REQUIRE(typeid(results::failed) == typeid(*actual));
+    ATF_REQUIRE_EQ("failed: The reason", actual->format());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(raw_result__externalize__passed);
+ATF_TEST_CASE_BODY(raw_result__externalize__passed)
+{
+    const raw_result raw(raw_result::passed);
+    const results::result_ptr actual = raw.externalize();
+    ATF_REQUIRE(typeid(results::passed) == typeid(*actual));
+    ATF_REQUIRE_EQ("passed", actual->format());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(raw_result__externalize__skipped);
+ATF_TEST_CASE_BODY(raw_result__externalize__skipped)
+{
+    const raw_result raw(raw_result::skipped, "The reason");
+    const results::result_ptr actual = raw.externalize();
+    ATF_REQUIRE(typeid(results::skipped) == typeid(*actual));
+    ATF_REQUIRE_EQ("skipped: The reason", actual->format());
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(calculate_result__missing_file);
 ATF_TEST_CASE_BODY(calculate_result__missing_file)
 {
@@ -731,6 +821,16 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, raw_result__apply__passed__broken);
     ATF_ADD_TEST_CASE(tcs, raw_result__apply__skipped__ok);
     ATF_ADD_TEST_CASE(tcs, raw_result__apply__skipped__broken);
+
+    ATF_ADD_TEST_CASE(tcs, raw_result__externalize__broken);
+    ATF_ADD_TEST_CASE(tcs, raw_result__externalize__expected_death);
+    ATF_ADD_TEST_CASE(tcs, raw_result__externalize__expected_exit);
+    ATF_ADD_TEST_CASE(tcs, raw_result__externalize__expected_failure);
+    ATF_ADD_TEST_CASE(tcs, raw_result__externalize__expected_signal);
+    ATF_ADD_TEST_CASE(tcs, raw_result__externalize__expected_timeout);
+    ATF_ADD_TEST_CASE(tcs, raw_result__externalize__failed);
+    ATF_ADD_TEST_CASE(tcs, raw_result__externalize__passed);
+    ATF_ADD_TEST_CASE(tcs, raw_result__externalize__skipped);
 
     ATF_ADD_TEST_CASE(tcs, calculate_result__missing_file);
     ATF_ADD_TEST_CASE(tcs, calculate_result__bad_file);

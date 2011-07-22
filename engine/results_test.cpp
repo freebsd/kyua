@@ -82,52 +82,19 @@ ATF_TEST_CASE_BODY(make_result)
 }
 
 
-FORMAT_TEST(broken, "broken: The reason",
-            results::broken("The reason"));
-FORMAT_TEST(expected_death, "expected_death: The reason",
-            results::expected_death("The reason"));
-FORMAT_TEST(expected_exit__any, "expected_exit: The reason",
-            results::expected_exit(none, "The reason"));
-FORMAT_TEST(expected_exit__specific, "expected_exit(3): The reason",
-            results::expected_exit(optional< int >(3), "The reason"));
+FORMAT_TEST(broken, "broken: The reason", results::broken("The reason"));
 FORMAT_TEST(expected_failure, "expected_failure: The reason",
             results::expected_failure("The reason"));
-FORMAT_TEST(expected_signal__any, "expected_signal: The reason",
-            results::expected_signal(none, "The reason"));
-FORMAT_TEST(expected_signal__specific, "expected_signal(3): The reason",
-            results::expected_signal(optional< int >(3), "The reason"));
-FORMAT_TEST(expected_timeout, "expected_timeout: The reason",
-            results::expected_timeout("The reason"));
-FORMAT_TEST(failed, "failed: The reason",
-            results::failed("The reason"));
-FORMAT_TEST(passed, "passed",
-            results::passed());
-FORMAT_TEST(skipped, "skipped: The reason",
-            results::skipped("The reason"));
+FORMAT_TEST(failed, "failed: The reason", results::failed("The reason"));
+FORMAT_TEST(passed, "passed", results::passed());
+FORMAT_TEST(skipped, "skipped: The reason", results::skipped("The reason"));
 
 
-GOOD_TEST(broken, false,
-          results::broken("The reason"));
-GOOD_TEST(expected_death, true,
-          results::expected_death("The reason"));
-GOOD_TEST(expected_exit__any, true,
-          results::expected_exit(none, "The reason"));
-GOOD_TEST(expected_exit__specific, true,
-          results::expected_exit(optional< int >(3), "The reason"));
-GOOD_TEST(expected_failure, true,
-          results::expected_failure("The reason"));
-GOOD_TEST(expected_signal__any, true,
-          results::expected_signal(none, "The reason"));
-GOOD_TEST(expected_signal__specific, true,
-          results::expected_signal(optional< int >(3), "The reason"));
-GOOD_TEST(expected_timeout, true,
-          results::expected_timeout("The reason"));
-GOOD_TEST(failed, false,
-          results::failed("The reason"));
-GOOD_TEST(passed, true,
-          results::passed());
-GOOD_TEST(skipped, true,
-          results::skipped("The reason"));
+GOOD_TEST(broken, false, results::broken("The reason"));
+GOOD_TEST(expected_failure, true, results::expected_failure("The reason"));
+GOOD_TEST(failed, false, results::failed("The reason"));
+GOOD_TEST(passed, true, results::passed());
+GOOD_TEST(skipped, true, results::skipped("The reason"));
 
 
 ATF_INIT_TEST_CASES(tcs)
@@ -136,20 +103,8 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, broken__format);
     ATF_ADD_TEST_CASE(tcs, broken__good);
-    ATF_ADD_TEST_CASE(tcs, expected_death__format);
-    ATF_ADD_TEST_CASE(tcs, expected_death__good);
-    ATF_ADD_TEST_CASE(tcs, expected_exit__any__format);
-    ATF_ADD_TEST_CASE(tcs, expected_exit__any__good);
-    ATF_ADD_TEST_CASE(tcs, expected_exit__specific__format);
-    ATF_ADD_TEST_CASE(tcs, expected_exit__specific__good);
     ATF_ADD_TEST_CASE(tcs, expected_failure__format);
     ATF_ADD_TEST_CASE(tcs, expected_failure__good);
-    ATF_ADD_TEST_CASE(tcs, expected_signal__any__format);
-    ATF_ADD_TEST_CASE(tcs, expected_signal__any__good);
-    ATF_ADD_TEST_CASE(tcs, expected_signal__specific__format);
-    ATF_ADD_TEST_CASE(tcs, expected_signal__specific__good);
-    ATF_ADD_TEST_CASE(tcs, expected_timeout__format);
-    ATF_ADD_TEST_CASE(tcs, expected_timeout__good);
     ATF_ADD_TEST_CASE(tcs, failed__format);
     ATF_ADD_TEST_CASE(tcs, failed__good);
     ATF_ADD_TEST_CASE(tcs, passed__format);

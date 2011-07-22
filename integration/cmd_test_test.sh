@@ -132,11 +132,11 @@ atf_test_program{name="expect_all_pass"}
 EOF
 
     cat >expout <<EOF
-expect_all_pass:die  ->  expected_death: This is the reason for death
-expect_all_pass:exit  ->  expected_exit(12): Exiting with correct code
+expect_all_pass:die  ->  expected_failure: This is the reason for death
+expect_all_pass:exit  ->  expected_failure: Exiting with correct code
 expect_all_pass:failure  ->  expected_failure: Oh no: Forced failure
-expect_all_pass:signal  ->  expected_signal(15): Exiting with correct signal
-expect_all_pass:timeout  ->  expected_timeout: This times out
+expect_all_pass:signal  ->  expected_failure: Exiting with correct signal
+expect_all_pass:timeout  ->  expected_failure: This times out
 
 5/5 passed (0 failed)
 EOF

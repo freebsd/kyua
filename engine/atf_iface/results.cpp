@@ -530,19 +530,19 @@ atf_iface::detail::raw_result::externalize(void) const
         return make_result(results::broken(_reason.get()));
 
     case raw_result::expected_death:
-        return make_result(results::expected_death(_reason.get()));
+        return make_result(results::expected_failure(_reason.get()));
 
     case raw_result::expected_exit:
-        return make_result(results::expected_exit(_argument, _reason.get()));
+        return make_result(results::expected_failure(_reason.get()));
 
     case raw_result::expected_failure:
         return make_result(results::expected_failure(_reason.get()));
 
     case raw_result::expected_signal:
-        return make_result(results::expected_signal(_argument, _reason.get()));
+        return make_result(results::expected_failure(_reason.get()));
 
     case raw_result::expected_timeout:
-        return make_result(results::expected_timeout(_reason.get()));
+        return make_result(results::expected_failure(_reason.get()));
 
     case raw_result::failed:
         return make_result(results::failed(_reason.get()));
