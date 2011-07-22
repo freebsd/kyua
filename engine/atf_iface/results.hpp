@@ -26,11 +26,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/atf_results.hpp
+/// \file engine/atf_iface/results.hpp
 /// Functions and types to process the results of ATF-based test cases.
 
-#if !defined(ENGINE_ATF_RESULTS_HPP)
-#define ENGINE_ATF_RESULTS_HPP
+#if !defined(ENGINE_ATF_IFACE_RESULTS_HPP)
+#define ENGINE_ATF_IFACE_RESULTS_HPP
 
 #include <istream>
 
@@ -41,6 +41,8 @@
 #include "utils/process/status.hpp"
 
 namespace engine {
+namespace atf_iface {
+
 
 namespace detail {
 
@@ -94,16 +96,14 @@ public:
 }  // namespace detail
 
 
-class atf_test_case;
-
-
 results::result_ptr calculate_result(
     const utils::optional< utils::process::status >&,
     const utils::optional< utils::process::status >&,
     const utils::fs::path&);
 
 
+}  // namespace atf_iface
 }  // namespace engine
 
 
-#endif  // !defined(ENGINE_ATF_RESULTS_HPP)
+#endif  // !defined(ENGINE_ATF_IFACE_RESULTS_HPP)

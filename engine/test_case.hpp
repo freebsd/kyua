@@ -71,25 +71,26 @@ struct test_case_id {
 };
 
 
-class test_program;
+class base_test_program;
+
 namespace user_files {
 struct config;
 }  // namespace user_files
 
 
 /// Representation of a test case.
-class test_case {
-    const engine::test_program& _test_program;
+class base_test_case {
+    const base_test_program& _test_program;
     std::string _name;
 
     virtual properties_map get_all_properties(void) const = 0;
     virtual results::result_ptr do_run(const user_files::config&) const = 0;
 
 public:
-    test_case(const engine::test_program&, const std::string&);
-    virtual ~test_case(void);
+    base_test_case(const base_test_program&, const std::string&);
+    virtual ~base_test_case(void);
 
-    const engine::test_program& test_program(void) const;
+    const base_test_program& test_program(void) const;
     const std::string& name(void) const;
     test_case_id identifier(void) const;
 
@@ -99,7 +100,7 @@ public:
 
 
 /// Pointer to a test case.
-typedef std::tr1::shared_ptr< test_case > test_case_ptr;
+typedef std::tr1::shared_ptr< base_test_case > test_case_ptr;
 
 
 }  // namespace engine

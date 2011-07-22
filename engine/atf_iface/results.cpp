@@ -31,14 +31,15 @@
 #include <sstream>
 #include <utility>
 
-#include "engine/atf_results.hpp"
-#include "engine/atf_test_case.hpp"
+#include "engine/atf_iface/results.hpp"
+#include "engine/atf_iface/test_case.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/results.ipp"
 #include "utils/format/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 
+namespace atf_iface = engine::atf_iface;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace process = utils::process;
@@ -101,10 +102,10 @@ read_lines(std::istream& input)
 /// \throw format_error If the result is invalid (i.e. rest is invalid).
 ///
 /// \pre status must be "passed".
-static engine::detail::raw_result
+static atf_iface::detail::raw_result
 parse_without_reason(const std::string& status, const std::string& rest)
 {
-    using engine::detail::raw_result;
+    using atf_iface::detail::raw_result;
 
     if (!rest.empty())
         throw engine::format_error(F("%s cannot have a reason") % status);
@@ -124,10 +125,10 @@ parse_without_reason(const std::string& status, const std::string& rest)
 ///
 /// \pre status must be one of "broken", "expected_death", "expected_failure",
 /// "expected_timeout", "failed" or "skipped".
-static engine::detail::raw_result
+static atf_iface::detail::raw_result
 parse_with_reason(const std::string& status, const std::string& rest)
 {
-    using engine::detail::raw_result;
+    using atf_iface::detail::raw_result;
 
     if (rest.length() < 3 || rest.substr(0, 2) != ": ")
         throw engine::format_error(F("%s must be followed by ': <reason>'") %
@@ -184,10 +185,10 @@ parse_int(const std::string& str)
 /// parsing failed.
 ///
 /// \pre status must be one of "expected_exit" or "expected_signal".
-static engine::detail::raw_result
+static atf_iface::detail::raw_result
 parse_with_reason_and_arg(const std::string& status, const std::string& rest)
 {
-    using engine::detail::raw_result;
+    using atf_iface::detail::raw_result;
 
     std::string::size_type delim = rest.find_first_of(":(");
     if (delim == std::string::npos)
@@ -248,7 +249,7 @@ format_status(const process::status& status)
 /// The reason and the argument are left uninitialized.
 ///
 /// \param type_ The type of the result.
-engine::detail::raw_result::raw_result(const types type_) :
+atf_iface::detail::raw_result::raw_result(const types type_) :
     _type(type_)
 {
 }
@@ -260,7 +261,7 @@ engine::detail::raw_result::raw_result(const types type_) :
 ///
 /// \param type_ The type of the result.
 /// \param reason_ The reason for the result.
-engine::detail::raw_result::raw_result(const types type_,
+atf_iface::detail::raw_result::raw_result(const types type_,
                                        const std::string& reason_) :
     _type(type_),
     _reason(reason_)
@@ -273,7 +274,7 @@ engine::detail::raw_result::raw_result(const types type_,
 /// \param type_ The type of the result.
 /// \param argument_ The optional argument for the result.
 /// \param reason_ The reason for the result.
-engine::detail::raw_result::raw_result(const types type_,
+atf_iface::detail::raw_result::raw_result(const types type_,
                                        const utils::optional< int >& argument_,
                                        const std::string& reason_) :
     _type(type_),
@@ -297,8 +298,8 @@ engine::detail::raw_result::raw_result(const types type_,
 /// results::base_result representing the result of the test case.
 ///
 /// \throw format_error If the input is invalid.
-engine::detail::raw_result
-engine::detail::raw_result::parse(std::istream& input)
+atf_iface::detail::raw_result
+atf_iface::detail::raw_result::parse(std::istream& input)
 {
     const std::pair< size_t, std::string > data = read_lines(input);
     if (data.first == 0)
@@ -344,8 +345,8 @@ engine::detail::raw_result::parse(std::istream& input)
 ///
 /// \throw std::runtime_error If the file does not exist.
 /// \throw engine::format_error If the contents of the file are bogus.
-engine::detail::raw_result
-engine::detail::raw_result::load(const fs::path& file)
+atf_iface::detail::raw_result
+atf_iface::detail::raw_result::load(const fs::path& file)
 {
     std::ifstream input(file.c_str());
     if (!input)
@@ -358,8 +359,8 @@ engine::detail::raw_result::load(const fs::path& file)
 /// Gets the type of the result.
 ///
 /// \return A result type.
-engine::detail::raw_result::types
-engine::detail::raw_result::type(void) const
+atf_iface::detail::raw_result::types
+atf_iface::detail::raw_result::type(void) const
 {
     return _type;
 }
@@ -369,7 +370,7 @@ engine::detail::raw_result::type(void) const
 ///
 /// \return The argument of the result if present; none otherwise.
 const optional< int >&
-engine::detail::raw_result::argument(void) const
+atf_iface::detail::raw_result::argument(void) const
 {
     return _argument;
 }
@@ -379,7 +380,7 @@ engine::detail::raw_result::argument(void) const
 ///
 /// \return The reason of the result if present; none otherwise.
 const optional< std::string >&
-engine::detail::raw_result::reason(void) const
+atf_iface::detail::raw_result::reason(void) const
 {
     return _reason;
 }
@@ -389,7 +390,7 @@ engine::detail::raw_result::reason(void) const
 ///
 /// \return True if the result can be considered "good", false otherwise.
 bool
-engine::detail::raw_result::good(void) const
+atf_iface::detail::raw_result::good(void) const
 {
     switch (_type) {
     case raw_result::expected_death:
@@ -426,8 +427,8 @@ engine::detail::raw_result::good(void) const
 ///
 /// \result The adjusted result.  The original result is transformed into broken
 /// if the exit status of the program does not match our expectations.
-engine::detail::raw_result
-engine::detail::raw_result::apply(const optional< process::status >& status)
+atf_iface::detail::raw_result
+atf_iface::detail::raw_result::apply(const optional< process::status >& status)
     const
 {
     if (!status) {
@@ -522,7 +523,7 @@ engine::detail::raw_result::apply(const optional< process::status >& status)
 ///
 /// \return A generic result instance representing this result.
 engine::results::result_ptr
-engine::detail::raw_result::externalize(void) const
+atf_iface::detail::raw_result::externalize(void) const
 {
     switch (_type) {
     case raw_result::broken:
@@ -564,7 +565,7 @@ engine::detail::raw_result::externalize(void) const
 ///
 /// \return True if the two raw results are equal; false otherwise.
 bool
-engine::detail::raw_result::operator==(const raw_result& other) const
+atf_iface::detail::raw_result::operator==(const raw_result& other) const
 {
     return _type == other._type && _argument == other._argument &&
         _reason == other._reason;
@@ -585,9 +586,9 @@ engine::detail::raw_result::operator==(const raw_result& other) const
 /// \param result_file The path to the result file that the test case body is
 ///     supposed to have created.
 engine::results::result_ptr
-engine::calculate_result(const optional< process::status >& body_status,
-                         const optional< process::status >& cleanup_status,
-                         const fs::path& results_file)
+atf_iface::calculate_result(const optional< process::status >& body_status,
+                            const optional< process::status >& cleanup_status,
+                            const fs::path& results_file)
 {
     using detail::raw_result;
 

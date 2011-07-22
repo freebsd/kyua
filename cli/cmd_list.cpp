@@ -57,7 +57,7 @@ namespace user_files = engine::user_files;
 /// \param test_suite_name The name of the test suite containing the test case.
 void
 cli::detail::list_test_case(cmdline::ui* ui, const bool verbose,
-                            const engine::test_case& test_case)
+                            const engine::base_test_case& test_case)
 {
     if (!verbose) {
         ui->out(test_case.identifier().str());
@@ -87,7 +87,7 @@ cli::detail::list_test_case(cmdline::ui* ui, const bool verbose,
 ///     from the test program.
 void
 cli::detail::list_test_program(cmdline::ui* ui, const bool verbose,
-                               const engine::test_program& test_program,
+                               const engine::base_test_program& test_program,
                                cli::filters_state& filters)
 {
     const engine::test_cases_vector test_cases = test_program.test_cases();

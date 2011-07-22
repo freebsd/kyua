@@ -92,8 +92,8 @@ engine::test_case_id::operator==(const test_case_id& id) const
 ///     program must exist in order for the test case to exist.
 /// \param name_ The name of the test case within the test program.  Must be
 ///     unique.
-engine::test_case::test_case(const engine::test_program& test_program_,
-                             const std::string& name_) :
+engine::base_test_case::base_test_case(const base_test_program& test_program_,
+                                       const std::string& name_) :
     _test_program(test_program_),
     _name(name_)
 {
@@ -101,7 +101,7 @@ engine::test_case::test_case(const engine::test_program& test_program_,
 
 
 /// Destroys a test case.
-engine::test_case::~test_case(void)
+engine::base_test_case::~base_test_case(void)
 {
 }
 
@@ -109,8 +109,8 @@ engine::test_case::~test_case(void)
 /// Gets the test program this test case belongs to.
 ///
 /// \return A reference to the container test program.
-const engine::test_program&
-engine::test_case::test_program(void) const
+const engine::base_test_program&
+engine::base_test_case::test_program(void) const
 {
     return _test_program;
 }
@@ -120,7 +120,7 @@ engine::test_case::test_program(void) const
 ///
 /// \return The test case name, relative to the test program.
 const std::string&
-engine::test_case::name(void) const
+engine::base_test_case::name(void) const
 {
     return _name;
 }
@@ -133,7 +133,7 @@ engine::test_case::name(void) const
 ///
 /// \return The test case identifier.
 engine::test_case_id
-engine::test_case::identifier(void) const
+engine::base_test_case::identifier(void) const
 {
     return test_case_id(_test_program.relative_path(), _name);
 }
@@ -150,7 +150,7 @@ engine::test_case::identifier(void) const
 /// should maybe just do specific things for every kind of supported test case,
 /// instead of having this here.
 engine::properties_map
-engine::test_case::all_properties(void) const
+engine::base_test_case::all_properties(void) const
 {
     return get_all_properties();
 }
@@ -163,7 +163,7 @@ engine::test_case::all_properties(void) const
 ///
 /// \return The result of the execution of the test case.
 engine::results::result_ptr
-engine::test_case::run(const user_files::config& config) const
+engine::base_test_case::run(const user_files::config& config) const
 {
     return do_run(config);
 }

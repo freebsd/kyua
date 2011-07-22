@@ -37,8 +37,8 @@
 #include "utils/cmdline/base_command.hpp"
 
 namespace engine {
-class test_case;
-class test_program;
+class base_test_case;
+class base_test_program;
 }  // namespace engine
 
 namespace utils {
@@ -55,9 +55,10 @@ class filters_state;
 
 namespace detail {
 
-void list_test_case(utils::cmdline::ui*, const bool, const engine::test_case&);
+void list_test_case(utils::cmdline::ui*, const bool,
+                    const engine::base_test_case&);
 void list_test_program(utils::cmdline::ui*, const bool,
-                       const engine::test_program&, cli::filters_state&);
+                       const engine::base_test_program&, cli::filters_state&);
 
 }  // namespace detail
 

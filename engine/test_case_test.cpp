@@ -52,7 +52,7 @@ static const user_files::config mock_config(
 
 
 /// Fake implementation of a test program.
-class mock_test_program : public engine::test_program {
+class mock_test_program : public engine::base_test_program {
 public:
     /// Constructs a new test program.
     ///
@@ -61,7 +61,7 @@ public:
     ///
     /// \param binary_ The name of the test program binary.
     mock_test_program(const fs::path& binary_) :
-        test_program(binary_, fs::path("unused-root"), "unused-suite-name")
+        base_test_program(binary_, fs::path("unused-root"), "unused-suite-name")
     {
     }
 
@@ -78,7 +78,7 @@ public:
 
 
 // Fake implementation of a test case.
-class mock_test_case : public engine::test_case {
+class mock_test_case : public engine::base_test_case {
     /// Gets the collection of metadata properties of the test case.
     ///
     /// \return A static collection of properties for testing purposes.
@@ -108,9 +108,9 @@ public:
     ///
     /// \param test_program_ The test program this test case belongs to.
     /// \param name_ The name of the test case within the test program.
-    mock_test_case(const engine::test_program& test_program_,
+    mock_test_case(const engine::base_test_program& test_program_,
                    const std::string& name_) :
-        test_case(test_program_, name_)
+        base_test_case(test_program_, name_)
     {
     }
 };
@@ -181,8 +181,8 @@ ATF_TEST_CASE_BODY(test_case_id__use_as_key)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(test_case__ctor_and_getters)
-ATF_TEST_CASE_BODY(test_case__ctor_and_getters)
+ATF_TEST_CASE_WITHOUT_HEAD(base_test_case__ctor_and_getters)
+ATF_TEST_CASE_BODY(base_test_case__ctor_and_getters)
 {
     const mock_test_program test_program(fs::path("abc"));
     const mock_test_case test_case(test_program, "foo");
@@ -191,8 +191,8 @@ ATF_TEST_CASE_BODY(test_case__ctor_and_getters)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(test_case__identifier)
-ATF_TEST_CASE_BODY(test_case__identifier)
+ATF_TEST_CASE_WITHOUT_HEAD(base_test_case__identifier)
+ATF_TEST_CASE_BODY(base_test_case__identifier)
 {
     const mock_test_program test_program(fs::path("foo"));
     const mock_test_case test_case(test_program, "bar");
@@ -201,8 +201,8 @@ ATF_TEST_CASE_BODY(test_case__identifier)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(test_case__all_properties__delegate)
-ATF_TEST_CASE_BODY(test_case__all_properties__delegate)
+ATF_TEST_CASE_WITHOUT_HEAD(base_test_case__all_properties__delegate)
+ATF_TEST_CASE_BODY(base_test_case__all_properties__delegate)
 {
     const mock_test_program test_program(fs::path("foo"));
     const mock_test_case test_case(test_program, "bar");
@@ -213,8 +213,8 @@ ATF_TEST_CASE_BODY(test_case__all_properties__delegate)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(test_case__run__delegate)
-ATF_TEST_CASE_BODY(test_case__run__delegate)
+ATF_TEST_CASE_WITHOUT_HEAD(base_test_case__run__delegate)
+ATF_TEST_CASE_BODY(base_test_case__run__delegate)
 {
     const mock_test_program test_program(fs::path("foo"));
     const mock_test_case test_case(test_program, "bar");
@@ -235,8 +235,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, test_case_id__operator_eq);
     ATF_ADD_TEST_CASE(tcs, test_case_id__use_as_key);
 
-    ATF_ADD_TEST_CASE(tcs, test_case__ctor_and_getters);
-    ATF_ADD_TEST_CASE(tcs, test_case__identifier);
-    ATF_ADD_TEST_CASE(tcs, test_case__all_properties__delegate);
-    ATF_ADD_TEST_CASE(tcs, test_case__run__delegate);
+    ATF_ADD_TEST_CASE(tcs, base_test_case__ctor_and_getters);
+    ATF_ADD_TEST_CASE(tcs, base_test_case__identifier);
+    ATF_ADD_TEST_CASE(tcs, base_test_case__all_properties__delegate);
+    ATF_ADD_TEST_CASE(tcs, base_test_case__run__delegate);
 }

@@ -30,7 +30,7 @@
 
 #include <atf-c++.hpp>
 
-#include "engine/atf_test_case.hpp"
+#include "engine/atf_iface/test_case.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/test_program.hpp"
 #include "engine/user_files/config.hpp"
@@ -39,6 +39,7 @@
 #include "utils/passwd.hpp"
 #include "utils/test_utils.hpp"
 
+namespace atf_iface = engine::atf_iface;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace passwd = utils::passwd;
@@ -55,7 +56,7 @@ static const user_files::config mock_config(
 
 
 /// Fake implementation of a test program.
-class mock_test_program : public engine::test_program {
+class mock_test_program : public engine::base_test_program {
 public:
     /// Constructs a new test program.
     ///
@@ -66,7 +67,7 @@ public:
     /// \param test_suite_name_ The name of the test suite, if necessary.
     mock_test_program(const fs::path& binary_,
                       const std::string& test_suite_name_ = "unused-suite") :
-        test_program(binary_, fs::path("unused-root"), test_suite_name_)
+        base_test_program(binary_, fs::path("unused-root"), test_suite_name_)
     {
     }
 
@@ -88,16 +89,16 @@ public:
 ATF_TEST_CASE_WITHOUT_HEAD(parse_bool__true)
 ATF_TEST_CASE_BODY(parse_bool__true)
 {
-    ATF_REQUIRE(engine::detail::parse_bool("unused-name", "yes"));
-    ATF_REQUIRE(engine::detail::parse_bool("unused-name", "true"));
+    ATF_REQUIRE(atf_iface::detail::parse_bool("unused-name", "yes"));
+    ATF_REQUIRE(atf_iface::detail::parse_bool("unused-name", "true"));
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(parse_bool__false)
 ATF_TEST_CASE_BODY(parse_bool__false)
 {
-    ATF_REQUIRE(!engine::detail::parse_bool("unused-name", "no"));
-    ATF_REQUIRE(!engine::detail::parse_bool("unused-name", "false"));
+    ATF_REQUIRE(!atf_iface::detail::parse_bool("unused-name", "no"));
+    ATF_REQUIRE(!atf_iface::detail::parse_bool("unused-name", "false"));
 }
 
 
@@ -106,16 +107,16 @@ ATF_TEST_CASE_BODY(parse_bool__invalid)
 {
     ATF_REQUIRE_THROW_RE(engine::format_error,
                          "value ''.*property 'a'",
-                         engine::detail::parse_bool("a", ""));
+                         atf_iface::detail::parse_bool("a", ""));
     ATF_REQUIRE_THROW_RE(engine::format_error,
                          "value 'foo'.*property 'a'",
-                         engine::detail::parse_bool("a", "foo"));
+                         atf_iface::detail::parse_bool("a", "foo"));
     ATF_REQUIRE_THROW_RE(engine::format_error,
                          "value 'True'.*property 'abcd'",
-                         engine::detail::parse_bool("abcd", "True"));
+                         atf_iface::detail::parse_bool("abcd", "True"));
     ATF_REQUIRE_THROW_RE(engine::format_error,
                          "value 'False'.*property 'name'",
-                         engine::detail::parse_bool("name", "False"));
+                         atf_iface::detail::parse_bool("name", "False"));
 }
 
 
@@ -123,26 +124,26 @@ ATF_TEST_CASE_WITHOUT_HEAD(parse_list__empty)
 ATF_TEST_CASE_BODY(parse_list__empty)
 {
     ATF_REQUIRE_THROW_RE(engine::format_error, "empty.*property 'i-am-empty'",
-                         engine::detail::parse_list("i-am-empty", ""));
+                         atf_iface::detail::parse_list("i-am-empty", ""));
     ATF_REQUIRE_THROW_RE(engine::format_error, "empty.*property 'i-am-empty'",
-                         engine::detail::parse_list("i-am-empty", "    "));
+                         atf_iface::detail::parse_list("i-am-empty", "    "));
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(parse_list__one_word)
 ATF_TEST_CASE_BODY(parse_list__one_word)
 {
-    engine::strings_set words;
+    atf_iface::strings_set words;
 
-    words = engine::detail::parse_list("unused-name", "foo");
+    words = atf_iface::detail::parse_list("unused-name", "foo");
     ATF_REQUIRE_EQ(1, words.size());
     ATF_REQUIRE(words.find("foo") != words.end());
 
-    words = engine::detail::parse_list("unused-name", "  foo");
+    words = atf_iface::detail::parse_list("unused-name", "  foo");
     ATF_REQUIRE_EQ(1, words.size());
     ATF_REQUIRE(words.find("foo") != words.end());
 
-    words = engine::detail::parse_list("unused-name", "foo  ");
+    words = atf_iface::detail::parse_list("unused-name", "foo  ");
     ATF_REQUIRE_EQ(1, words.size());
     ATF_REQUIRE(words.find("foo") != words.end());
 }
@@ -151,15 +152,15 @@ ATF_TEST_CASE_BODY(parse_list__one_word)
 ATF_TEST_CASE_WITHOUT_HEAD(parse_list__many_words)
 ATF_TEST_CASE_BODY(parse_list__many_words)
 {
-    engine::strings_set words;
+    atf_iface::strings_set words;
 
-    words = engine::detail::parse_list("unused-name", "foo bar baz");
+    words = atf_iface::detail::parse_list("unused-name", "foo bar baz");
     ATF_REQUIRE_EQ(3, words.size());
     ATF_REQUIRE(words.find("foo") != words.end());
     ATF_REQUIRE(words.find("bar") != words.end());
     ATF_REQUIRE(words.find("baz") != words.end());
 
-    words = engine::detail::parse_list("unused-name", " foo  ba   b    ");
+    words = atf_iface::detail::parse_list("unused-name", " foo  ba   b    ");
     ATF_REQUIRE_EQ(3, words.size());
     ATF_REQUIRE(words.find("foo") != words.end());
     ATF_REQUIRE(words.find("ba") != words.end());
@@ -170,8 +171,8 @@ ATF_TEST_CASE_BODY(parse_list__many_words)
 ATF_TEST_CASE_WITHOUT_HEAD(parse_ulong__ok)
 ATF_TEST_CASE_BODY(parse_ulong__ok)
 {
-    ATF_REQUIRE_EQ(0, engine::detail::parse_ulong("unused-name", "0"));
-    ATF_REQUIRE_EQ(312, engine::detail::parse_ulong("unused-name", "312"));
+    ATF_REQUIRE_EQ(0, atf_iface::detail::parse_ulong("unused-name", "0"));
+    ATF_REQUIRE_EQ(312, atf_iface::detail::parse_ulong("unused-name", "312"));
 }
 
 
@@ -179,7 +180,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(parse_ulong__empty)
 ATF_TEST_CASE_BODY(parse_ulong__empty)
 {
     ATF_REQUIRE_THROW_RE(engine::format_error, "empty.*property 'i-am-empty'",
-                         engine::detail::parse_ulong("i-am-empty", ""));
+                         atf_iface::detail::parse_ulong("i-am-empty", ""));
 }
 
 
@@ -188,36 +189,36 @@ ATF_TEST_CASE_BODY(parse_ulong__invalid)
 {
     ATF_REQUIRE_THROW_RE(engine::format_error,
                          "value '  '.*property 'blanks'",
-                         engine::detail::parse_ulong("blanks", "  "));
+                         atf_iface::detail::parse_ulong("blanks", "  "));
 
     ATF_REQUIRE_THROW_RE(engine::format_error,
                          "value '-3'.*property 'negative'",
-                         engine::detail::parse_ulong("negative", "-3"));
+                         atf_iface::detail::parse_ulong("negative", "-3"));
 
     ATF_REQUIRE_THROW_RE(engine::format_error,
                          "value ' 123'.*property 'space-first'",
-                         engine::detail::parse_ulong("space-first", " 123"));
+                         atf_iface::detail::parse_ulong("space-first", " 123"));
     ATF_REQUIRE_THROW_RE(engine::format_error,
                          "value '123 '.*property 'space-last'",
-                         engine::detail::parse_ulong("space-last", "123 "));
+                         atf_iface::detail::parse_ulong("space-last", "123 "));
 
     ATF_REQUIRE_THROW_RE(engine::format_error,
                          "value 'z78'.*property 'alpha-first'",
-                         engine::detail::parse_ulong("alpha-first", "z78"));
+                         atf_iface::detail::parse_ulong("alpha-first", "z78"));
     ATF_REQUIRE_THROW_RE(engine::format_error,
                          "value '3a'.*property 'alpha-last'",
-                         engine::detail::parse_ulong("alpha-last", "3a"));
+                         atf_iface::detail::parse_ulong("alpha-last", "3a"));
 
     ATF_REQUIRE_THROW_RE(engine::format_error,
                          "value '3 5'.*property 'two-ints'",
-                         engine::detail::parse_ulong("two-ints", "3 5"));
+                         atf_iface::detail::parse_ulong("two-ints", "3 5"));
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(parse_require_files__ok)
 ATF_TEST_CASE_BODY(parse_require_files__ok)
 {
-    const engine::paths_set paths = engine::detail::parse_require_files(
+    const atf_iface::paths_set paths = atf_iface::detail::parse_require_files(
         "unused-name", " /bin/ls /f2 ");
     ATF_REQUIRE_EQ(2, paths.size());
     ATF_REQUIRE_IN(fs::path("/bin/ls"), paths);
@@ -230,7 +231,7 @@ ATF_TEST_CASE_BODY(parse_require_files__invalid)
 {
     ATF_REQUIRE_THROW_RE(engine::format_error,
                          "Relative path 'data/foo'.*property 'require.files'",
-                         engine::detail::parse_require_files(
+                         atf_iface::detail::parse_require_files(
                              "require.files", "  /bin/ls data/foo "));
 }
 
@@ -238,9 +239,9 @@ ATF_TEST_CASE_BODY(parse_require_files__invalid)
 ATF_TEST_CASE_WITHOUT_HEAD(parse_require_progs__ok)
 ATF_TEST_CASE_BODY(parse_require_progs__ok)
 {
-    engine::paths_set paths;
+    atf_iface::paths_set paths;
 
-    paths = engine::detail::parse_require_progs("unused-name", " /bin/ls svn ");
+    paths = atf_iface::detail::parse_require_progs("unused-name", " /bin/ls svn ");
     ATF_REQUIRE_EQ(2, paths.size());
     ATF_REQUIRE_IN(fs::path("/bin/ls"), paths);
     ATF_REQUIRE_IN(fs::path("svn"), paths);
@@ -252,7 +253,7 @@ ATF_TEST_CASE_BODY(parse_require_progs__invalid)
 {
     ATF_REQUIRE_THROW_RE(engine::format_error,
                          "Relative path 'bin/svn'.*property 'require.progs'",
-                         engine::detail::parse_require_progs(
+                         atf_iface::detail::parse_require_progs(
                              "require.progs", "  /bin/ls bin/svn "));
 }
 
@@ -260,10 +261,10 @@ ATF_TEST_CASE_BODY(parse_require_progs__invalid)
 ATF_TEST_CASE_WITHOUT_HEAD(parse_require_user__ok)
 ATF_TEST_CASE_BODY(parse_require_user__ok)
 {
-    ATF_REQUIRE_EQ("", engine::detail::parse_require_user("unused-name", ""));
-    ATF_REQUIRE_EQ("root", engine::detail::parse_require_user(
+    ATF_REQUIRE_EQ("", atf_iface::detail::parse_require_user("unused-name", ""));
+    ATF_REQUIRE_EQ("root", atf_iface::detail::parse_require_user(
         "unused-name", "root"));
-    ATF_REQUIRE_EQ("unprivileged", engine::detail::parse_require_user(
+    ATF_REQUIRE_EQ("unprivileged", atf_iface::detail::parse_require_user(
         "unused-name", "unprivileged"));
 }
 
@@ -273,11 +274,11 @@ ATF_TEST_CASE_BODY(parse_require_user__invalid)
 {
     ATF_REQUIRE_THROW_RE(engine::format_error,
                          "user ' root'.*property 'require.user'",
-                         engine::detail::parse_require_user(
+                         atf_iface::detail::parse_require_user(
                              "require.user", " root"));
     ATF_REQUIRE_THROW_RE(engine::format_error,
                          "user 'nobody'.*property 'require.user'",
-                         engine::detail::parse_require_user(
+                         atf_iface::detail::parse_require_user(
                              "require.user", "nobody"));
 }
 
@@ -289,35 +290,35 @@ ATF_TEST_CASE_BODY(test_case__public_fields)
     const std::string description("some text");
     const datetime::delta timeout(1, 2);
 
-    engine::strings_set allowed_architectures;
+    atf_iface::strings_set allowed_architectures;
     allowed_architectures.insert("x86_64");
 
-    engine::strings_set allowed_platforms;
+    atf_iface::strings_set allowed_platforms;
     allowed_platforms.insert("amd64");
 
-    engine::strings_set required_configs;
+    atf_iface::strings_set required_configs;
     required_configs.insert("myvar1");
 
-    engine::paths_set required_files;
+    atf_iface::paths_set required_files;
     required_files.insert(fs::path("/file1"));
 
-    engine::paths_set required_programs;
+    atf_iface::paths_set required_programs;
     required_programs.insert(fs::path("bin1"));
 
     engine::properties_map user_metadata;
     user_metadata["X-foo"] = "value1";
 
-    const engine::atf_test_case test_case(test_program, "name",
-                                          description,
-                                          true,
-                                          timeout,
-                                          allowed_architectures,
-                                          allowed_platforms,
-                                          required_configs,
-                                          required_files,
-                                          required_programs,
-                                          "root",
-                                          user_metadata);
+    const atf_iface::test_case test_case(test_program, "name",
+                                         description,
+                                         true,
+                                         timeout,
+                                         allowed_architectures,
+                                         allowed_platforms,
+                                         required_configs,
+                                         required_files,
+                                         required_programs,
+                                         "root",
+                                         user_metadata);
     ATF_REQUIRE_EQ(&test_program, &test_case.test_program());
     ATF_REQUIRE_EQ("name", test_case.name());
     ATF_REQUIRE(description == test_case.description);
@@ -339,8 +340,9 @@ ATF_TEST_CASE_BODY(test_case__from_properties__defaults)
     const mock_test_program test_program(fs::path("program"));
     const engine::properties_map properties;
 
-    const engine::atf_test_case test_case = engine::atf_test_case::from_properties(
-        test_program, "test-case", properties);
+    const atf_iface::test_case test_case =
+        atf_iface::test_case::from_properties(test_program, "test-case",
+                                              properties);
 
     ATF_REQUIRE_EQ(&test_program, &test_case.test_program());
     ATF_REQUIRE_EQ("test-case", test_case.name());
@@ -374,8 +376,9 @@ ATF_TEST_CASE_BODY(test_case__from_properties__override_all)
     properties["X-bar"] = "value2";
     properties["X-baz-www"] = "value3";
 
-    const engine::atf_test_case test_case = engine::atf_test_case::from_properties(
-        test_program, "test-case", properties);
+    const atf_iface::test_case test_case =
+        atf_iface::test_case::from_properties(test_program, "test-case",
+                                              properties);
 
     ATF_REQUIRE_EQ(&test_program, &test_case.test_program());
     ATF_REQUIRE_EQ("test-case", test_case.name());
@@ -412,8 +415,9 @@ ATF_TEST_CASE_BODY(test_case__from_properties__unknown)
     properties["foobar"] = "Some text";
 
     ATF_REQUIRE_THROW_RE(engine::format_error, "Unknown.*property.*'foobar'",
-        engine::atf_test_case::from_properties(test_program, "test-case",
-                                                   properties));}
+        atf_iface::test_case::from_properties(test_program, "test-case",
+                                              properties));
+}
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(test_case__all_properties__none)
@@ -423,7 +427,7 @@ ATF_TEST_CASE_BODY(test_case__all_properties__none)
     engine::properties_map in_properties;
     engine::properties_map exp_properties;
 
-    ATF_REQUIRE(exp_properties == engine::atf_test_case::from_properties(
+    ATF_REQUIRE(exp_properties == atf_iface::test_case::from_properties(
         test_program, "test-case", in_properties).all_properties());
 }
 
@@ -439,7 +443,7 @@ ATF_TEST_CASE_BODY(test_case__all_properties__only_user)
 
     engine::properties_map exp_properties = in_properties;
 
-    ATF_REQUIRE(exp_properties == engine::atf_test_case::from_properties(
+    ATF_REQUIRE(exp_properties == atf_iface::test_case::from_properties(
         test_program, "test-case", in_properties).all_properties());
 }
 
@@ -467,7 +471,7 @@ ATF_TEST_CASE_BODY(test_case__all_properties__all)
     exp_properties["require.arch"] = "i386 macppc x86_64";
     exp_properties["require.config"] = "var1 var2 var3";
 
-    ATF_REQUIRE(exp_properties == engine::atf_test_case::from_properties(
+    ATF_REQUIRE(exp_properties == atf_iface::test_case::from_properties(
         test_program, "test-case", in_properties).all_properties());
 }
 
@@ -476,13 +480,15 @@ ATF_TEST_CASE_WITHOUT_HEAD(test_case__operator_eq);
 ATF_TEST_CASE_BODY(test_case__operator_eq)
 {
     const mock_test_program test_program1(fs::path("program"));
-    const engine::atf_test_case original = engine::atf_test_case::from_properties(
-        test_program1, "name", engine::properties_map());
+    const atf_iface::test_case original =
+        atf_iface::test_case::from_properties(test_program1, "name",
+                                              engine::properties_map());
     ATF_REQUIRE(original == original);
 
     const mock_test_program test_program2(fs::path("program2"));
-    const engine::atf_test_case change_id = engine::atf_test_case::from_properties(
-        test_program2, "name", engine::properties_map());
+    const atf_iface::test_case change_id =
+        atf_iface::test_case::from_properties(test_program2, "name",
+                                              engine::properties_map());
     ATF_REQUIRE(!(original == change_id));
 
     engine::properties_map overrides;
@@ -501,8 +507,9 @@ ATF_TEST_CASE_BODY(test_case__operator_eq)
          iter != overrides.end(); iter++) {
         engine::properties_map properties;
         properties[(*iter).first] = (*iter).second;
-        const engine::atf_test_case modified = engine::atf_test_case::from_properties(
-            original.test_program(), original.name(), properties);
+        const atf_iface::test_case modified =
+            atf_iface::test_case::from_properties(original.test_program(),
+                                                  original.name(), properties);
         ATF_REQUIRE(modified == modified);
         ATF_REQUIRE(!(original == modified));
     }
@@ -513,8 +520,9 @@ ATF_TEST_CASE_WITHOUT_HEAD(check_requirements__none);
 ATF_TEST_CASE_BODY(check_requirements__none)
 {
     const mock_test_program test_program(fs::path("program"), "suite");
-    const engine::atf_test_case test_case = engine::atf_test_case::from_properties(
-        test_program, "name", engine::properties_map());
+    const atf_iface::test_case test_case =
+        atf_iface::test_case::from_properties(test_program, "name",
+                                              engine::properties_map());
     ATF_REQUIRE(test_case.check_requirements(mock_config).empty());
 }
 
@@ -525,8 +533,8 @@ ATF_TEST_CASE_BODY(check_requirements__required_architectures__one_ok)
     engine::properties_map metadata;
     metadata["require.arch"] = "x86_64";
     const mock_test_program test_program(fs::path("program"));
-    const engine::atf_test_case test_case = engine::atf_test_case::from_properties(
-        test_program, "name", metadata);
+    const atf_iface::test_case test_case =
+        atf_iface::test_case::from_properties(test_program, "name", metadata);
 
     user_files::config config = mock_config;
     config.architecture = "x86_64";
@@ -542,8 +550,8 @@ ATF_TEST_CASE_BODY(check_requirements__required_architectures__one_fail)
     engine::properties_map metadata;
     metadata["require.arch"] = "x86_64";
     const mock_test_program test_program(fs::path("program"));
-    const engine::atf_test_case test_case = engine::atf_test_case::from_properties(
-        test_program, "name", metadata);
+    const atf_iface::test_case test_case =
+        atf_iface::test_case::from_properties(test_program, "name", metadata);
 
     user_files::config config = mock_config;
     config.architecture = "i386";
@@ -559,8 +567,8 @@ ATF_TEST_CASE_BODY(check_requirements__required_architectures__many_ok)
     engine::properties_map metadata;
     metadata["require.arch"] = "x86_64 i386 powerpc";
     const mock_test_program test_program(fs::path("program"));
-    const engine::atf_test_case test_case = engine::atf_test_case::from_properties(
-        test_program, "name", metadata);
+    const atf_iface::test_case test_case =
+        atf_iface::test_case::from_properties(test_program, "name", metadata);
 
     user_files::config config = mock_config;
     config.architecture = "i386";
@@ -576,8 +584,8 @@ ATF_TEST_CASE_BODY(check_requirements__required_architectures__many_fail)
     engine::properties_map metadata;
     metadata["require.arch"] = "x86_64 i386 powerpc";
     const mock_test_program test_program(fs::path("program"));
-    const engine::atf_test_case test_case = engine::atf_test_case::from_properties(
-        test_program, "name", metadata);
+    const atf_iface::test_case test_case =
+        atf_iface::test_case::from_properties(test_program, "name", metadata);
 
     user_files::config config = mock_config;
     config.architecture = "arm";
@@ -593,8 +601,8 @@ ATF_TEST_CASE_BODY(check_requirements__required_platforms__one_ok)
     engine::properties_map metadata;
     metadata["require.machine"] = "amd64";
     const mock_test_program test_program(fs::path("program"));
-    const engine::atf_test_case test_case = engine::atf_test_case::from_properties(
-        test_program, "name", metadata);
+    const atf_iface::test_case test_case =
+        atf_iface::test_case::from_properties(test_program, "name", metadata);
 
     user_files::config config = mock_config;
     config.architecture = "";
@@ -609,8 +617,8 @@ ATF_TEST_CASE_BODY(check_requirements__required_platforms__one_fail)
     engine::properties_map metadata;
     metadata["require.machine"] = "amd64";
     const mock_test_program test_program(fs::path("program"));
-    const engine::atf_test_case test_case = engine::atf_test_case::from_properties(
-        test_program, "name", metadata);
+    const atf_iface::test_case test_case =
+        atf_iface::test_case::from_properties(test_program, "name", metadata);
 
     user_files::config config = mock_config;
     config.architecture = "";
@@ -626,8 +634,8 @@ ATF_TEST_CASE_BODY(check_requirements__required_platforms__many_ok)
     engine::properties_map metadata;
     metadata["require.machine"] = "amd64 i386 macppc";
     const mock_test_program test_program(fs::path("program"));
-    const engine::atf_test_case test_case = engine::atf_test_case::from_properties(
-        test_program, "name", metadata);
+    const atf_iface::test_case test_case =
+        atf_iface::test_case::from_properties(test_program, "name", metadata);
 
     user_files::config config = mock_config;
     config.architecture = "";
@@ -642,8 +650,8 @@ ATF_TEST_CASE_BODY(check_requirements__required_platforms__many_fail)
     engine::properties_map metadata;
     metadata["require.machine"] = "amd64 i386 macppc";
     const mock_test_program test_program(fs::path("program"));
-    const engine::atf_test_case test_case = engine::atf_test_case::from_properties(
-        test_program, "name", metadata);
+    const atf_iface::test_case test_case =
+         atf_iface::test_case::from_properties(test_program, "name", metadata);
 
     user_files::config config = mock_config;
     config.architecture = "";
@@ -659,8 +667,8 @@ ATF_TEST_CASE_BODY(check_requirements__required_configs__one_ok)
     engine::properties_map metadata;
     metadata["require.config"] = "my-var";
     const mock_test_program test_program(fs::path("program"), "suite");
-    const engine::atf_test_case test_case = engine::atf_test_case::from_properties(
-        test_program, "name", metadata);
+    const atf_iface::test_case test_case =
+        atf_iface::test_case::from_properties(test_program, "name", metadata);
 
     user_files::config config = mock_config;
     config.test_suites["suite"]["aaa"] = "value1";
@@ -676,8 +684,8 @@ ATF_TEST_CASE_BODY(check_requirements__required_configs__one_fail)
     engine::properties_map metadata;
     metadata["require.config"] = "unprivileged-user";
     const mock_test_program test_program(fs::path("program"), "suite");
-    const engine::atf_test_case test_case = engine::atf_test_case::from_properties(
-        test_program, "name", metadata);
+    const atf_iface::test_case test_case =
+        atf_iface::test_case::from_properties(test_program, "name", metadata);
 
     user_files::config config = mock_config;
     config.test_suites["suite"]["aaa"] = "value1";
@@ -695,8 +703,8 @@ ATF_TEST_CASE_BODY(check_requirements__required_configs__many_ok)
     engine::properties_map metadata;
     metadata["require.config"] = "foo bar baz";
     const mock_test_program test_program(fs::path("program"), "suite");
-    const engine::atf_test_case test_case = engine::atf_test_case::from_properties(
-        test_program, "name", metadata);
+    const atf_iface::test_case test_case =
+        atf_iface::test_case::from_properties(test_program, "name", metadata);
 
     user_files::config config = mock_config;
     config.test_suites["suite"]["aaa"] = "value1";
@@ -714,8 +722,8 @@ ATF_TEST_CASE_BODY(check_requirements__required_configs__many_fail)
     engine::properties_map metadata;
     metadata["require.config"] = "foo bar baz";
     const mock_test_program test_program(fs::path("program"), "config");
-    const engine::atf_test_case test_case = engine::atf_test_case::from_properties(
-        test_program, "name", metadata);
+    const atf_iface::test_case test_case =
+        atf_iface::test_case::from_properties(test_program, "name", metadata);
 
     user_files::config config = mock_config;
     config.test_suites["suite"]["aaa"] = "value1";
@@ -732,8 +740,8 @@ ATF_TEST_CASE_BODY(check_requirements__required_configs__special)
     engine::properties_map metadata;
     metadata["require.config"] = "unprivileged-user";
     const mock_test_program test_program(fs::path("program"));
-    const engine::atf_test_case test_case = engine::atf_test_case::from_properties(
-        test_program, "name", metadata);
+    const atf_iface::test_case test_case =
+        atf_iface::test_case::from_properties(test_program, "name", metadata);
 
     user_files::config config = mock_config;
     config.unprivileged_user = passwd::user("foo", 1, 2);
@@ -747,8 +755,8 @@ ATF_TEST_CASE_BODY(check_requirements__required_user__root__ok)
     engine::properties_map metadata;
     metadata["require.user"] = "root";
     const mock_test_program test_program(fs::path("program"));
-    const engine::atf_test_case test_case = engine::atf_test_case::from_properties(
-        test_program, "name", metadata);
+    const atf_iface::test_case test_case =
+        atf_iface::test_case::from_properties(test_program, "name", metadata);
 
     passwd::set_current_user_for_testing(passwd::user("", 0, 1));
     ATF_REQUIRE(test_case.check_requirements(mock_config).empty());
@@ -761,8 +769,8 @@ ATF_TEST_CASE_BODY(check_requirements__required_user__root__fail)
     engine::properties_map metadata;
     metadata["require.user"] = "root";
     const mock_test_program test_program(fs::path("program"));
-    const engine::atf_test_case test_case = engine::atf_test_case::from_properties(
-        test_program, "name", metadata);
+    const atf_iface::test_case test_case =
+        atf_iface::test_case::from_properties(test_program, "name", metadata);
 
     passwd::set_current_user_for_testing(passwd::user("", 123, 1));
     ATF_REQUIRE_MATCH("Requires root privileges",
@@ -777,8 +785,8 @@ ATF_TEST_CASE_BODY(check_requirements__required_user__unprivileged__same)
     engine::properties_map metadata;
     metadata["require.user"] = "unprivileged";
     const mock_test_program test_program(fs::path("program"));
-    const engine::atf_test_case test_case = engine::atf_test_case::from_properties(
-        test_program, "name", metadata);
+    const atf_iface::test_case test_case =
+        atf_iface::test_case::from_properties(test_program, "name", metadata);
 
     user_files::config config = mock_config;
     config.unprivileged_user = utils::none;
@@ -794,8 +802,8 @@ ATF_TEST_CASE_BODY(check_requirements__required_user__unprivileged__ok)
     engine::properties_map metadata;
     metadata["require.user"] = "unprivileged";
     const mock_test_program test_program(fs::path("program"));
-    const engine::atf_test_case test_case = engine::atf_test_case::from_properties(
-        test_program, "name", metadata);
+    const atf_iface::test_case test_case =
+        atf_iface::test_case::from_properties(test_program, "name", metadata);
 
     user_files::config config = mock_config;
     config.unprivileged_user = passwd::user("", 123, 1);
@@ -812,8 +820,8 @@ ATF_TEST_CASE_BODY(check_requirements__required_user__unprivileged__fail)
     engine::properties_map metadata;
     metadata["require.user"] = "unprivileged";
     const mock_test_program test_program(fs::path("program"));
-    const engine::atf_test_case test_case = engine::atf_test_case::from_properties(
-        test_program, "name", metadata);
+    const atf_iface::test_case test_case =
+        atf_iface::test_case::from_properties(test_program, "name", metadata);
 
     user_files::config config = mock_config;
     config.unprivileged_user = utils::none;
@@ -832,8 +840,8 @@ ATF_TEST_CASE_BODY(check_requirements__required_files__ok)
     engine::properties_map metadata;
     metadata["require.files"] = (fs::current_path() / "test-file").str();
     const mock_test_program test_program(fs::path("program"));
-    const engine::atf_test_case test_case = engine::atf_test_case::from_properties(
-        test_program, "name", metadata);
+    const atf_iface::test_case test_case =
+        atf_iface::test_case::from_properties(test_program, "name", metadata);
 
     ATF_REQUIRE(test_case.check_requirements(mock_config).empty());
 }
@@ -845,8 +853,8 @@ ATF_TEST_CASE_BODY(check_requirements__required_files__fail)
     engine::properties_map metadata;
     metadata["require.files"] = "/non-existent/file";
     const mock_test_program test_program(fs::path("program"));
-    const engine::atf_test_case test_case = engine::atf_test_case::from_properties(
-        test_program, "name", metadata);
+    const atf_iface::test_case test_case =
+        atf_iface::test_case::from_properties(test_program, "name", metadata);
 
     ATF_REQUIRE_MATCH("'/non-existent/file' not found$",
                       test_case.check_requirements(mock_config));
@@ -867,8 +875,8 @@ ATF_TEST_CASE_BODY(check_requirements__required_programs__ok)
     engine::properties_map metadata;
     metadata["require.progs"] = "/bin/ls foo /bin/mv";
     const mock_test_program test_program(fs::path("program"));
-    const engine::atf_test_case test_case = engine::atf_test_case::from_properties(
-        test_program, "name", metadata);
+    const atf_iface::test_case test_case =
+        atf_iface::test_case::from_properties(test_program, "name", metadata);
 
     ATF_REQUIRE(test_case.check_requirements(mock_config).empty());
 }
@@ -881,8 +889,8 @@ ATF_TEST_CASE_BODY(check_requirements__required_programs__fail_absolute)
     engine::properties_map metadata;
     metadata["require.progs"] = "/non-existent/program";
     const mock_test_program test_program(fs::path("program"));
-    const engine::atf_test_case test_case = engine::atf_test_case::from_properties(
-        test_program, "name", metadata);
+    const atf_iface::test_case test_case =
+        atf_iface::test_case::from_properties(test_program, "name", metadata);
 
     ATF_REQUIRE_MATCH("'/non-existent/program' not found$",
                       test_case.check_requirements(mock_config));
@@ -900,8 +908,8 @@ ATF_TEST_CASE_BODY(check_requirements__required_programs__fail_relative)
     engine::properties_map metadata;
     metadata["require.progs"] = "foo bar";
     const mock_test_program test_program(fs::path("program"));
-    const engine::atf_test_case test_case = engine::atf_test_case::from_properties(
-        test_program, "name", metadata);
+    const atf_iface::test_case test_case =
+        atf_iface::test_case::from_properties(test_program, "name", metadata);
 
     ATF_REQUIRE_MATCH("'bar' not found in PATH$",
                       test_case.check_requirements(mock_config));

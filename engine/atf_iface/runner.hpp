@@ -26,33 +26,31 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/runner.hpp
+/// \file engine/atf_iface/runner.hpp
 /// Test suite execution.
 
-#if !defined(ENGINE_RUNNER_HPP)
-#define ENGINE_RUNNER_HPP
+#if !defined(ENGINE_ATF_IFACE_RUNNER_HPP)
+#define ENGINE_ATF_IFACE_RUNNER_HPP
 
 #include "engine/results.hpp"
-#include "engine/test_case.hpp"
 
 
 namespace engine {
 
-
 namespace user_files {
 struct config;
 }  // namespace user_files
-class atf_test_case;
 
 
-namespace runner {
+namespace atf_iface {
 
 
-results::result_ptr run_test_case(const engine::atf_test_case&,
-                                  const user_files::config&);
+class test_case;
+
+results::result_ptr run_test_case(const test_case&, const user_files::config&);
 
 
-}  // namespace runner
+}  // namespace atf_iface
 }  // namespace engine
 
-#endif  // !defined(ENGINE_RUNNER_HPP)
+#endif  // !defined(ENGINE_ATF_IFACE_RUNNER_HPP)

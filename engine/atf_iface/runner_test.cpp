@@ -42,11 +42,11 @@ extern "C" {
 
 #include <atf-c++.hpp>
 
-#include "engine/atf_test_case.hpp"
-#include "engine/atf_test_program.hpp"
+#include "engine/atf_iface/test_case.hpp"
+#include "engine/atf_iface/runner.hpp"
+#include "engine/atf_iface/test_program.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/results.ipp"
-#include "engine/runner.hpp"
 #include "engine/user_files/config.hpp"
 #include "engine/user_files/kyuafile.hpp"
 #include "utils/format/macros.hpp"
@@ -56,11 +56,11 @@ extern "C" {
 #include "utils/process/children.ipp"
 #include "utils/test_utils.hpp"
 
+namespace atf_iface = engine::atf_iface;
 namespace fs = utils::fs;
 namespace passwd = utils::passwd;
 namespace process = utils::process;
 namespace results = engine::results;
-namespace runner = engine::runner;
 namespace user_files = engine::user_files;
 
 
@@ -154,11 +154,11 @@ ignore_signal(const int signo)
 /// \param props The raw properties to pass to the test case.
 ///
 /// \return The new test case.
-static engine::atf_test_case
-make_test_case(const engine::atf_test_program& test_program, const char* name,
+static atf_iface::test_case
+make_test_case(const atf_iface::test_program& test_program, const char* name,
                const engine::properties_map& props = engine::properties_map())
 {
-    return engine::atf_test_case::from_properties(test_program, name, props);
+    return atf_iface::test_case::from_properties(test_program, name, props);
 }
 
 
@@ -174,13 +174,13 @@ one_signal_test(const atf::tests::tc* tc, const int signo)
 
     ignore_signal(signo);
 
-    const engine::atf_test_program test_program(
+    const atf_iface::test_program test_program(
         fs::path("runner_helpers"), fs::path(tc->get_config_var("srcdir")),
         "the-suite");
 
     user_files::config config = mock_config;
     config.test_suites["the-suite"]["signo"] = F("%d") % signo;
-    results::result_ptr result = runner::run_test_case(
+    results::result_ptr result = atf_iface::run_test_case(
         make_test_case(test_program, "validate_signal"), config);
     validate_broken(
         (F("Premature exit: received signal %d") % signo).str().c_str(),
@@ -216,14 +216,14 @@ public:
         config.test_suites["the-suite"]["monitor_pid"] = F("%d") % ::getpid();
         config.test_suites["the-suite"]["signo"] = F("%d") % _signo;
 
-        const engine::atf_test_program test_program(
+        const atf_iface::test_program test_program(
             fs::path("runner_helpers"),
             fs::path(_test_case->get_config_var("srcdir")), "the-suite");
 
         ATF_REQUIRE_THROW(
             engine::interrupted_error,
-            runner::run_test_case(make_test_case(test_program, "block_body",
-                                                 metadata), config));
+            atf_iface::run_test_case(make_test_case(test_program, "block_body",
+                                                    metadata), config));
 
         std::ifstream workdir_cookie("workdir");
         ATF_REQUIRE(workdir_cookie);
@@ -270,12 +270,12 @@ one_interrupt_check(const atf::tests::tc* test_case, const int signo)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__current_directory);
 ATF_TEST_CASE_BODY(run_test_case__current_directory)
 {
-    const engine::atf_test_program test_program(
+    const atf_iface::test_program test_program(
         fs::path("program"), fs::path("."), "unit-tests");
 
     ATF_REQUIRE(::symlink((fs::path(get_config_var("srcdir")) /
                            "runner_helpers").c_str(), "program") != -1);
-    results::result_ptr result = runner::run_test_case(
+    results::result_ptr result = atf_iface::run_test_case(
         make_test_case(test_program, "pass"), mock_config);
     compare_results(results::passed(), result.get());
 }
@@ -284,7 +284,7 @@ ATF_TEST_CASE_BODY(run_test_case__current_directory)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__subdirectory);
 ATF_TEST_CASE_BODY(run_test_case__subdirectory)
 {
-    const engine::atf_test_program test_program(
+    const atf_iface::test_program test_program(
         fs::path("dir2/program"), fs::path("dir1"), "unit-tests");
 
     ATF_REQUIRE(::mkdir("dir1", 0755) != -1);
@@ -292,7 +292,7 @@ ATF_TEST_CASE_BODY(run_test_case__subdirectory)
     ATF_REQUIRE(::symlink((fs::path(get_config_var("srcdir")) /
                            "runner_helpers").c_str(),
                           "dir1/dir2/program") != -1);
-    results::result_ptr result = runner::run_test_case(
+    results::result_ptr result = atf_iface::run_test_case(
         make_test_case(test_program, "pass"), mock_config);
     compare_results(results::passed(), result.get());
 }
@@ -301,13 +301,13 @@ ATF_TEST_CASE_BODY(run_test_case__subdirectory)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__config_variables);
 ATF_TEST_CASE_BODY(run_test_case__config_variables)
 {
-    const engine::atf_test_program test_program(
+    const atf_iface::test_program test_program(
         fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
         "the-suite");
 
     user_files::config config = mock_config;
     config.test_suites["the-suite"]["control_dir"] = fs::current_path().str();
-    results::result_ptr result = runner::run_test_case(
+    results::result_ptr result = atf_iface::run_test_case(
         make_test_case(test_program, "create_cookie_in_control_dir"), config);
     compare_results(results::passed(), result.get());
 
@@ -320,7 +320,7 @@ ATF_TEST_CASE_BODY(run_test_case__config_variables)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__cleanup_shares_workdir);
 ATF_TEST_CASE_BODY(run_test_case__cleanup_shares_workdir)
 {
-    const engine::atf_test_program test_program(
+    const atf_iface::test_program test_program(
         fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
         "the-suite");
 
@@ -328,7 +328,7 @@ ATF_TEST_CASE_BODY(run_test_case__cleanup_shares_workdir)
     metadata["has.cleanup"] = "true";
     user_files::config config = mock_config;
     config.test_suites["the-suite"]["control_dir"] = fs::current_path().str();
-    results::result_ptr result = runner::run_test_case(
+    results::result_ptr result = atf_iface::run_test_case(
         make_test_case(test_program, "check_cleanup_workdir", metadata),
         config);
     compare_results(results::skipped("cookie created"), result.get());
@@ -346,7 +346,7 @@ ATF_TEST_CASE_BODY(run_test_case__cleanup_shares_workdir)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__has_cleanup__false);
 ATF_TEST_CASE_BODY(run_test_case__has_cleanup__false)
 {
-    const engine::atf_test_program test_program(
+    const atf_iface::test_program test_program(
         fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
         "the-suite");
 
@@ -354,7 +354,7 @@ ATF_TEST_CASE_BODY(run_test_case__has_cleanup__false)
     metadata["has.cleanup"] = "false";
     user_files::config config = mock_config;
     config.test_suites["the-suite"]["control-dir"] = fs::current_path().str();
-    results::result_ptr result = runner::run_test_case(
+    results::result_ptr result = atf_iface::run_test_case(
         make_test_case(test_program, "create_cookie_from_cleanup", metadata),
         config);
     compare_results(results::passed(), result.get());
@@ -368,7 +368,7 @@ ATF_TEST_CASE_BODY(run_test_case__has_cleanup__false)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__has_cleanup__true);
 ATF_TEST_CASE_BODY(run_test_case__has_cleanup__true)
 {
-    const engine::atf_test_program test_program(
+    const atf_iface::test_program test_program(
         fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
         "the-suite");
 
@@ -376,7 +376,7 @@ ATF_TEST_CASE_BODY(run_test_case__has_cleanup__true)
     metadata["has.cleanup"] = "true";
     user_files::config config = mock_config;
     config.test_suites["the-suite"]["control_dir"] = fs::current_path().str();
-    results::result_ptr result = runner::run_test_case(
+    results::result_ptr result = atf_iface::run_test_case(
         make_test_case(test_program, "create_cookie_from_cleanup", metadata),
         config);
     compare_results(results::passed(), result.get());
@@ -390,14 +390,14 @@ ATF_TEST_CASE_BODY(run_test_case__has_cleanup__true)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__kill_children);
 ATF_TEST_CASE_BODY(run_test_case__kill_children)
 {
-    const engine::atf_test_program test_program(
+    const atf_iface::test_program test_program(
         fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
         "the-suite");
 
     engine::properties_map metadata;
     user_files::config config = mock_config;
     config.test_suites["the-suite"]["control_dir"] = fs::current_path().str();
-    results::result_ptr result = runner::run_test_case(
+    results::result_ptr result = atf_iface::run_test_case(
         make_test_case(test_program, "spawn_blocking_child", metadata), config);
     compare_results(results::passed(), result.get());
 
@@ -422,7 +422,7 @@ ATF_TEST_CASE_BODY(run_test_case__kill_children)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__isolation_env);
 ATF_TEST_CASE_BODY(run_test_case__isolation_env)
 {
-    const engine::atf_test_program test_program(
+    const atf_iface::test_program test_program(
         fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
         "unit-tests");
 
@@ -436,7 +436,7 @@ ATF_TEST_CASE_BODY(run_test_case__isolation_env)
     utils::setenv("LC_NUMERIC", "C");
     utils::setenv("LC_TIME", "C");
     utils::setenv("TZ", "EST+5");
-    results::result_ptr result = runner::run_test_case(
+    results::result_ptr result = atf_iface::run_test_case(
         make_test_case(test_program, "validate_env"), mock_config);
     compare_results(results::passed(), result.get());
 }
@@ -445,12 +445,12 @@ ATF_TEST_CASE_BODY(run_test_case__isolation_env)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__isolation_pgrp);
 ATF_TEST_CASE_BODY(run_test_case__isolation_pgrp)
 {
-    const engine::atf_test_program test_program(
+    const atf_iface::test_program test_program(
         fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
         "unit-tests");
 
     const mode_t old_umask = ::umask(0002);
-    results::result_ptr result = runner::run_test_case(
+    results::result_ptr result = atf_iface::run_test_case(
         make_test_case(test_program, "validate_pgrp"), mock_config);
     compare_results(results::passed(), result.get());
     ::umask(old_umask);
@@ -468,12 +468,12 @@ ATF_TEST_CASE_BODY(run_test_case__isolation_signals)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__isolation_timezone);
 ATF_TEST_CASE_BODY(run_test_case__isolation_timezone)
 {
-    const engine::atf_test_program test_program(
+    const atf_iface::test_program test_program(
         fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
         "unit-tests");
 
     utils::setenv("TZ", "EST+5");
-    results::result_ptr result = runner::run_test_case(
+    results::result_ptr result = atf_iface::run_test_case(
         make_test_case(test_program, "validate_timezone"), mock_config);
     compare_results(results::passed(), result.get());
 }
@@ -482,12 +482,12 @@ ATF_TEST_CASE_BODY(run_test_case__isolation_timezone)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__isolation_umask);
 ATF_TEST_CASE_BODY(run_test_case__isolation_umask)
 {
-    const engine::atf_test_program test_program(
+    const atf_iface::test_program test_program(
         fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
         "unit-tests");
 
     const mode_t old_umask = ::umask(0002);
-    results::result_ptr result = runner::run_test_case(
+    results::result_ptr result = atf_iface::run_test_case(
         make_test_case(test_program, "validate_umask"), mock_config);
     compare_results(results::passed(), result.get());
     ::umask(old_umask);
@@ -497,11 +497,11 @@ ATF_TEST_CASE_BODY(run_test_case__isolation_umask)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__isolation_workdir);
 ATF_TEST_CASE_BODY(run_test_case__isolation_workdir)
 {
-    const engine::atf_test_program test_program(
+    const atf_iface::test_program test_program(
         fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
         "unit-tests");
 
-    results::result_ptr result = runner::run_test_case(
+    results::result_ptr result = atf_iface::run_test_case(
         make_test_case(test_program, "create_cookie_in_workdir"), mock_config);
     compare_results(results::passed(), result.get());
 
@@ -514,7 +514,7 @@ ATF_TEST_CASE_BODY(run_test_case__isolation_workdir)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__allowed_architectures);
 ATF_TEST_CASE_BODY(run_test_case__allowed_architectures)
 {
-    const engine::atf_test_program test_program(
+    const atf_iface::test_program test_program(
         fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
         "unit-tests");
 
@@ -523,7 +523,7 @@ ATF_TEST_CASE_BODY(run_test_case__allowed_architectures)
     user_files::config config = mock_config;
     config.architecture = "powerpc";
     config.platform = "";
-    results::result_ptr result = runner::run_test_case(
+    results::result_ptr result = atf_iface::run_test_case(
         make_test_case(test_program, "create_cookie_in_control_dir", metadata),
         config);
     compare_results(results::skipped(
@@ -539,7 +539,7 @@ ATF_TEST_CASE_BODY(run_test_case__allowed_architectures)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__allowed_platforms);
 ATF_TEST_CASE_BODY(run_test_case__allowed_platforms)
 {
-    const engine::atf_test_program test_program(
+    const atf_iface::test_program test_program(
         fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
         "unit-tests");
 
@@ -548,7 +548,7 @@ ATF_TEST_CASE_BODY(run_test_case__allowed_platforms)
     user_files::config config = mock_config;
     config.architecture = "";
     config.platform = "macppc";
-    results::result_ptr result = runner::run_test_case(
+    results::result_ptr result = atf_iface::run_test_case(
         make_test_case(test_program, "create_cookie_in_control_dir", metadata),
         config);
     compare_results(results::skipped(
@@ -564,7 +564,7 @@ ATF_TEST_CASE_BODY(run_test_case__allowed_platforms)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__required_configs);
 ATF_TEST_CASE_BODY(run_test_case__required_configs)
 {
-    const engine::atf_test_program test_program(
+    const atf_iface::test_program test_program(
         fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
         "the-suite");
 
@@ -573,7 +573,7 @@ ATF_TEST_CASE_BODY(run_test_case__required_configs)
     user_files::config config = mock_config;
     config.test_suites["the-suite"]["control_dir"] = fs::current_path().str();
     config.test_suites["the-suite"]["unused-var"] = "value";
-    results::result_ptr result = runner::run_test_case(
+    results::result_ptr result = atf_iface::run_test_case(
         make_test_case(test_program, "create_cookie_in_control_dir", metadata),
         config);
     compare_results(results::skipped(
@@ -589,13 +589,13 @@ ATF_TEST_CASE_BODY(run_test_case__required_configs)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__required_programs);
 ATF_TEST_CASE_BODY(run_test_case__required_programs)
 {
-    const engine::atf_test_program test_program(
+    const atf_iface::test_program test_program(
         fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
         "unit-tests");
 
     engine::properties_map metadata;
     metadata["require.progs"] = "/non-existent/program";
-    results::result_ptr result = runner::run_test_case(
+    results::result_ptr result = atf_iface::run_test_case(
         make_test_case(test_program, "create_cookie_in_control_dir", metadata),
         mock_config);
     compare_results(results::skipped(
@@ -614,13 +614,13 @@ ATF_TEST_CASE_HEAD(run_test_case__required_user__root__ok)
 }
 ATF_TEST_CASE_BODY(run_test_case__required_user__root__ok)
 {
-    const engine::atf_test_program test_program(
+    const atf_iface::test_program test_program(
         fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
         "unit-tests");
 
     engine::properties_map metadata;
     metadata["require.user"] = "root";
-    results::result_ptr result = runner::run_test_case(
+    results::result_ptr result = atf_iface::run_test_case(
         make_test_case(test_program, "create_cookie_in_workdir", metadata),
         mock_config);
     ATF_REQUIRE(passwd::current_user().is_root());
@@ -635,13 +635,13 @@ ATF_TEST_CASE_HEAD(run_test_case__required_user__root__skip)
 }
 ATF_TEST_CASE_BODY(run_test_case__required_user__root__skip)
 {
-    const engine::atf_test_program test_program(
+    const atf_iface::test_program test_program(
         fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
         "unit-tests");
 
     engine::properties_map metadata;
     metadata["require.user"] = "root";
-    results::result_ptr result = runner::run_test_case(
+    results::result_ptr result = atf_iface::run_test_case(
         make_test_case(test_program, "create_cookie_in_workdir", metadata),
         mock_config);
     ATF_REQUIRE(!passwd::current_user().is_root());
@@ -656,7 +656,7 @@ ATF_TEST_CASE_HEAD(run_test_case__required_user__unprivileged__ok)
 }
 ATF_TEST_CASE_BODY(run_test_case__required_user__unprivileged__ok)
 {
-    const engine::atf_test_program test_program(
+    const atf_iface::test_program test_program(
         fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
         "unit-tests");
 
@@ -664,7 +664,7 @@ ATF_TEST_CASE_BODY(run_test_case__required_user__unprivileged__ok)
     metadata["require.user"] = "unprivileged";
     user_files::config config = mock_config;
     config.unprivileged_user = utils::none;
-    results::result_ptr result = runner::run_test_case(
+    results::result_ptr result = atf_iface::run_test_case(
         make_test_case(test_program, "create_cookie_in_workdir", metadata),
         config);
     compare_results(results::passed(), result.get());
@@ -678,7 +678,7 @@ ATF_TEST_CASE_HEAD(run_test_case__required_user__unprivileged__skip)
 }
 ATF_TEST_CASE_BODY(run_test_case__required_user__unprivileged__skip)
 {
-    const engine::atf_test_program test_program(
+    const atf_iface::test_program test_program(
         fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
         "unit-tests");
 
@@ -686,7 +686,7 @@ ATF_TEST_CASE_BODY(run_test_case__required_user__unprivileged__skip)
     metadata["require.user"] = "unprivileged";
     user_files::config config = mock_config;
     config.unprivileged_user = utils::none;
-    results::result_ptr result = runner::run_test_case(
+    results::result_ptr result = atf_iface::run_test_case(
         make_test_case(test_program, "create_cookie_in_workdir", metadata),
         config);
     compare_results(results::skipped(
@@ -703,7 +703,7 @@ ATF_TEST_CASE_HEAD(run_test_case__required_user__unprivileged__drop)
 }
 ATF_TEST_CASE_BODY(run_test_case__required_user__unprivileged__drop)
 {
-    const engine::atf_test_program test_program(
+    const atf_iface::test_program test_program(
         fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
         "unit-tests");
 
@@ -712,7 +712,7 @@ ATF_TEST_CASE_BODY(run_test_case__required_user__unprivileged__drop)
     user_files::config config = mock_config;
     config.unprivileged_user = passwd::find_user_by_name(get_config_var(
         "unprivileged-user"));
-    results::result_ptr result = runner::run_test_case(
+    results::result_ptr result = atf_iface::run_test_case(
         make_test_case(test_program, "check_unprivileged", metadata), config);
     compare_results(results::passed(), result.get());
 }
@@ -721,7 +721,7 @@ ATF_TEST_CASE_BODY(run_test_case__required_user__unprivileged__drop)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__timeout_body);
 ATF_TEST_CASE_BODY(run_test_case__timeout_body)
 {
-    const engine::atf_test_program test_program(
+    const atf_iface::test_program test_program(
         fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
         "the-suite");
 
@@ -729,7 +729,7 @@ ATF_TEST_CASE_BODY(run_test_case__timeout_body)
     metadata["timeout"] = "1";
     user_files::config config = mock_config;
     config.test_suites["the-suite"]["control_dir"] = fs::current_path().str();
-    results::result_ptr result = runner::run_test_case(
+    results::result_ptr result = atf_iface::run_test_case(
         make_test_case(test_program, "timeout_body", metadata), config);
     validate_broken("Test case body timed out", result.get());
 
@@ -741,7 +741,7 @@ ATF_TEST_CASE_BODY(run_test_case__timeout_body)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__timeout_cleanup);
 ATF_TEST_CASE_BODY(run_test_case__timeout_cleanup)
 {
-    const engine::atf_test_program test_program(
+    const atf_iface::test_program test_program(
         fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
         "the-suite");
 
@@ -750,7 +750,7 @@ ATF_TEST_CASE_BODY(run_test_case__timeout_cleanup)
     metadata["timeout"] = "1";
     user_files::config config = mock_config;
     config.test_suites["the-suite"]["control_dir"] = fs::current_path().str();
-    results::result_ptr result = runner::run_test_case(
+    results::result_ptr result = atf_iface::run_test_case(
         make_test_case(test_program, "timeout_cleanup", metadata), config);
     validate_broken("Test case cleanup timed out", result.get());
 
@@ -783,11 +783,11 @@ ATF_TEST_CASE_BODY(run_test_case__interrupt_body__sigterm)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__missing_results_file);
 ATF_TEST_CASE_BODY(run_test_case__missing_results_file)
 {
-    const engine::atf_test_program test_program(
+    const atf_iface::test_program test_program(
         fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
         "unit-tests");
 
-    results::result_ptr result = runner::run_test_case(
+    results::result_ptr result = atf_iface::run_test_case(
         make_test_case(test_program, "crash"), mock_config);
     validate_broken("Premature exit: received signal", result.get());
 }
@@ -796,13 +796,13 @@ ATF_TEST_CASE_BODY(run_test_case__missing_results_file)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__missing_test_program);
 ATF_TEST_CASE_BODY(run_test_case__missing_test_program)
 {
-    const engine::atf_test_program test_program(
+    const atf_iface::test_program test_program(
         fs::path("runner_helpers"), fs::path("dir"), "unit-tests");
 
     ATF_REQUIRE(::symlink((fs::path(get_config_var("srcdir")) /
                            "runner_helpers").c_str(), "runner_helpers") != -1);
     ATF_REQUIRE(::mkdir("dir", 0755) != -1);
-    results::result_ptr result = runner::run_test_case(
+    results::result_ptr result = atf_iface::run_test_case(
         make_test_case(test_program, "passed"), mock_config);
     validate_broken("Failed to execute", result.get());
 }

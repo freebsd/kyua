@@ -28,7 +28,7 @@
 
 #include <stdexcept>
 
-#include "engine/atf_test_program.hpp"
+#include "engine/atf_iface/test_program.hpp"
 #include "engine/user_files/common.hpp"
 #include "engine/user_files/exceptions.hpp"
 #include "engine/user_files/kyuafile.hpp"
@@ -40,6 +40,7 @@
 #include "utils/lua/wrap.ipp"
 #include "utils/sanity.hpp"
 
+namespace atf_iface = engine::atf_iface;
 namespace fs = utils::fs;
 namespace lua = utils::lua;
 namespace user_files = engine::user_files;
@@ -89,7 +90,8 @@ get_test_program(lua::state& state, const fs::path& root)
     if (!fs::exists(root / path))
         throw std::runtime_error(F("Non-existent test program '%s'") % path);
 
-    return test_program_ptr(new atf_test_program(path, root, test_suite));
+    return test_program_ptr(
+        new atf_iface::test_program(path, root, test_suite));
 }
 
 

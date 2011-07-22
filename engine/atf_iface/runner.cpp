@@ -41,11 +41,11 @@ extern "C" {
 #include <string>
 #include <vector>
 
-#include "engine/atf_results.hpp"
-#include "engine/atf_test_case.hpp"
+#include "engine/atf_iface/results.hpp"
+#include "engine/atf_iface/runner.hpp"
+#include "engine/atf_iface/test_case.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/results.ipp"
-#include "engine/runner.hpp"
 #include "engine/test_program.hpp"
 #include "engine/user_files/config.hpp"
 #include "utils/datetime.hpp"
@@ -66,12 +66,12 @@ extern "C" {
 #include "utils/signals/misc.hpp"
 #include "utils/signals/programmer.hpp"
 
+namespace atf_iface = engine::atf_iface;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace passwd = utils::passwd;
 namespace process = utils::process;
 namespace results = engine::results;
-namespace runner = engine::runner;
 namespace signals = utils::signals;
 namespace user_files = engine::user_files;
 
@@ -164,7 +164,7 @@ set_owner(const fs::path& path, const passwd::user& owner)
 ///
 /// \return True if we can drop privileges; false otherwise.
 static bool
-can_do_unprivileged(const engine::atf_test_case& test_case,
+can_do_unprivileged(const atf_iface::test_case& test_case,
                     const user_files::config& config)
 {
     return test_case.required_user == "unprivileged" &&
@@ -273,7 +273,7 @@ report_broken_result(const fs::path& result_file, const std::string& reason)
 
 /// Functor to execute a test case in a subprocess.
 class execute_test_case_body {
-    engine::atf_test_case _test_case;
+    atf_iface::test_case _test_case;
     fs::path _result_file;
     fs::path _work_directory;
     user_files::config _config;
@@ -310,7 +310,7 @@ public:
     /// \param work_directory_ The path to the directory to chdir into when
     ///     running the test program.
     /// \param config_ The configuration variables provided by the user.
-    execute_test_case_body(const engine::atf_test_case& test_case_,
+    execute_test_case_body(const atf_iface::test_case& test_case_,
                            const fs::path& result_file_,
                            const fs::path& work_directory_,
                            const user_files::config& config_) :
@@ -339,7 +339,7 @@ public:
 
 /// Functor to execute a test case in a subprocess.
 class execute_test_case_cleanup {
-    engine::atf_test_case _test_case;
+    atf_iface::test_case _test_case;
     fs::path _work_directory;
     user_files::config _config;
 
@@ -351,7 +351,7 @@ public:
     /// \param work_directory_ The path to the directory to chdir into when
     ///     running the test program.
     /// \param config_ The values for the current engine configuration.
-    execute_test_case_cleanup(const engine::atf_test_case& test_case_,
+    execute_test_case_cleanup(const atf_iface::test_case& test_case_,
                               const fs::path& work_directory_,
                               const user_files::config& config_) :
         _test_case(test_case_),
@@ -427,7 +427,7 @@ fork_and_wait(Hook hook, const fs::path& outfile, const fs::path& errfile,
 ///
 /// \throw interrupted_error If the execution has been interrupted by the user.
 static results::result_ptr
-run_test_case_safe_workdir(const engine::atf_test_case& test_case,
+run_test_case_safe_workdir(const atf_iface::test_case& test_case,
                            const user_files::config& config,
                            const fs::path& workdir)
 {
@@ -469,7 +469,8 @@ run_test_case_safe_workdir(const engine::atf_test_case& test_case,
 
     check_interrupt();
 
-    return engine::calculate_result(body_status, cleanup_status, result_file);
+    return atf_iface::calculate_result(body_status, cleanup_status,
+                                       result_file);
 }
 
 
@@ -486,7 +487,7 @@ run_test_case_safe_workdir(const engine::atf_test_case& test_case,
 ///
 /// \throw interrupted_error If the execution has been interrupted by the user.
 static results::result_ptr
-run_test_case_safe(const engine::atf_test_case& test_case,
+run_test_case_safe(const atf_iface::test_case& test_case,
                    const user_files::config& config)
 {
     const std::string skip_reason = test_case.check_requirements(config);
@@ -553,8 +554,8 @@ run_test_case_safe(const engine::atf_test_case& test_case,
 ///
 /// \throw interrupted_error If the execution has been interrupted by the user.
 results::result_ptr
-runner::run_test_case(const engine::atf_test_case& test_case,
-                      const user_files::config& config)
+atf_iface::run_test_case(const atf_iface::test_case& test_case,
+                         const user_files::config& config)
 {
     LI(F("Processing test case '%s'") % test_case.identifier().str());
 

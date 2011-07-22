@@ -38,9 +38,10 @@ namespace fs = utils::fs;
 /// \param binary_ The name of the test program binary relative to root_.
 /// \param root_ The root of the test suite containing the test program.
 /// \param test_suite_name_ The name of the test suite this program belongs to.
-engine::test_program::test_program(const utils::fs::path& binary_,
-                                   const utils::fs::path& root_,
-                                   const std::string& test_suite_name_) :
+engine::base_test_program::base_test_program(
+    const utils::fs::path& binary_,
+    const utils::fs::path& root_,
+    const std::string& test_suite_name_) :
     _binary(binary_),
     _root(root_),
     _test_suite_name(test_suite_name_)
@@ -51,7 +52,7 @@ engine::test_program::test_program(const utils::fs::path& binary_,
 
 
 /// Destroys a test program.
-engine::test_program::~test_program(void)
+engine::base_test_program::~base_test_program(void)
 {
 }
 
@@ -60,7 +61,7 @@ engine::test_program::~test_program(void)
 ///
 /// \return The relative path to the test program binary.
 const fs::path&
-engine::test_program::relative_path(void) const
+engine::base_test_program::relative_path(void) const
 {
     return _binary;
 }
@@ -70,7 +71,7 @@ engine::test_program::relative_path(void) const
 ///
 /// \return The absolute path to the test program binary.
 const fs::path
-engine::test_program::absolute_path(void) const
+engine::base_test_program::absolute_path(void) const
 {
     return _root / _binary;
 }
@@ -80,7 +81,7 @@ engine::test_program::absolute_path(void) const
 ///
 /// \return The path to the root of the test suite.
 const fs::path&
-engine::test_program::root(void) const
+engine::base_test_program::root(void) const
 {
     return _root;
 }
@@ -90,7 +91,7 @@ engine::test_program::root(void) const
 ///
 /// \return The name of the test suite.
 const std::string&
-engine::test_program::test_suite_name(void) const
+engine::base_test_program::test_suite_name(void) const
 {
     return _test_suite_name;
 }
@@ -105,7 +106,7 @@ engine::test_program::test_suite_name(void) const
 ///
 /// \throw engine::error If there are problems loading the test case list.
 const engine::test_cases_vector&
-engine::test_program::test_cases(void) const
+engine::base_test_program::test_cases(void) const
 {
     if (_test_cases.empty())
         _test_cases = load_test_cases();

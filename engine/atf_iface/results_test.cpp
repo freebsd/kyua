@@ -38,9 +38,9 @@ extern "C" {
 
 #include <atf-c++.hpp>
 
-#include "engine/atf_results.hpp"
-#include "engine/atf_test_case.hpp"
-#include "engine/atf_test_program.hpp"
+#include "engine/atf_iface/results.hpp"
+#include "engine/atf_iface/test_case.hpp"
+#include "engine/atf_iface/test_program.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/results.ipp"
 #include "utils/format/macros.hpp"
@@ -48,12 +48,13 @@ extern "C" {
 #include "utils/process/status.hpp"
 #include "utils/test_utils.hpp"
 
+namespace atf_iface = engine::atf_iface;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace process = utils::process;
 namespace results = engine::results;
 
-using engine::detail::raw_result;
+using atf_iface::detail::raw_result;
 using utils::none;
 using utils::optional;
 
@@ -568,10 +569,11 @@ ATF_TEST_CASE_BODY(calculate_result__missing_file)
 
     const status body_status = status::fake_exited(EXIT_SUCCESS);
     const status cleanup_status = status::fake_exited(EXIT_FAILURE);
-    validate_broken("Premature exit: exited with code 0",
-                    engine::calculate_result(utils::make_optional(body_status),
-                                             utils::make_optional(cleanup_status),
-                                             fs::path("foo")).get());
+    validate_broken(
+        "Premature exit: exited with code 0",
+        atf_iface::calculate_result(utils::make_optional(body_status),
+                                    utils::make_optional(cleanup_status),
+                                    fs::path("foo")).get());
 }
 
 
@@ -582,9 +584,10 @@ ATF_TEST_CASE_BODY(calculate_result__bad_file)
 
     const status body_status = status::fake_exited(EXIT_SUCCESS);
     utils::create_file(fs::path("foo"), "invalid\n");
-    validate_broken("Unknown test result 'invalid'",
-                    engine::calculate_result(utils::make_optional(body_status),
-                                             none, fs::path("foo")).get());
+    validate_broken(
+        "Unknown test result 'invalid'",
+        atf_iface::calculate_result(utils::make_optional(body_status),
+                                    none, fs::path("foo")).get());
 }
 
 
@@ -597,10 +600,11 @@ ATF_TEST_CASE_BODY(calculate_result__body_ok__cleanup_ok)
     const status body_status = status::fake_exited(EXIT_SUCCESS);
     const status cleanup_status = status::fake_exited(EXIT_SUCCESS);
     const results::skipped result("Something");
-    compare_results(result,
-                    engine::calculate_result(utils::make_optional(body_status),
-                                             utils::make_optional(cleanup_status),
-                                             fs::path("result.txt")).get());
+    compare_results(
+        result,
+        atf_iface::calculate_result(utils::make_optional(body_status),
+                                    utils::make_optional(cleanup_status),
+                                    fs::path("result.txt")).get());
 }
 
 
@@ -614,10 +618,11 @@ ATF_TEST_CASE_BODY(calculate_result__body_ok__cleanup_bad)
     const status cleanup_status = status::fake_exited(EXIT_FAILURE);
     const results::broken result("Test case cleanup did not terminate "
                                  "successfully");
-    compare_results(result,
-                    engine::calculate_result(utils::make_optional(body_status),
-                                             utils::make_optional(cleanup_status),
-                                             fs::path("result.txt")).get());
+    compare_results(
+        result,
+        atf_iface::calculate_result(utils::make_optional(body_status),
+                                    utils::make_optional(cleanup_status),
+                                    fs::path("result.txt")).get());
 }
 
 
@@ -629,10 +634,10 @@ ATF_TEST_CASE_BODY(calculate_result__body_ok__cleanup_timeout)
     utils::create_file(fs::path("result.txt"), "skipped: Something\n");
     const status body_status = status::fake_exited(EXIT_SUCCESS);
     const results::broken result("Test case cleanup timed out");
-    compare_results(result,
-                    engine::calculate_result(utils::make_optional(body_status),
-                                             none,
-                                             fs::path("result.txt")).get());
+    compare_results(
+        result,
+        atf_iface::calculate_result(utils::make_optional(body_status),
+                                    none, fs::path("result.txt")).get());
 }
 
 
@@ -646,10 +651,11 @@ ATF_TEST_CASE_BODY(calculate_result__body_bad__cleanup_ok)
     const status cleanup_status = status::fake_exited(EXIT_SUCCESS);
     const results::broken result("Skipped test case should have reported "
                                  "success but exited with code 1");
-    compare_results(result,
-                    engine::calculate_result(utils::make_optional(body_status),
-                                             utils::make_optional(cleanup_status),
-                                             fs::path("result.txt")).get());
+    compare_results(
+        result,
+        atf_iface::calculate_result(utils::make_optional(body_status),
+                                    utils::make_optional(cleanup_status),
+                                    fs::path("result.txt")).get());
 }
 
 
@@ -663,10 +669,11 @@ ATF_TEST_CASE_BODY(calculate_result__body_bad__cleanup_bad)
     const status cleanup_status = status::fake_exited(EXIT_FAILURE);
     const results::broken result("Passed test case should have reported "
                                  "success but received signal 3");
-    compare_results(result,
-                    engine::calculate_result(utils::make_optional(body_status),
-                                             utils::make_optional(cleanup_status),
-                                             fs::path("result.txt")).get());
+    compare_results(
+        result,
+        atf_iface::calculate_result(utils::make_optional(body_status),
+                                    utils::make_optional(cleanup_status),
+                                    fs::path("result.txt")).get());
 }
 
 

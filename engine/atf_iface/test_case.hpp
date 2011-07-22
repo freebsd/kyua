@@ -26,22 +26,22 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/atf_test_case.hpp
-/// Provides the atf_test_case class and other auxiliary types.
+/// \file engine/atf_iface/test_case.hpp
+/// Provides the atf-specific test_case class and other auxiliary types.
 
-#if !defined(ENGINE_ATF_TEST_CASE_HPP)
-#define ENGINE_ATF_TEST_CASE_HPP
+#if !defined(ENGINE_ATF_IFACE_TEST_CASE_HPP)
+#define ENGINE_ATF_IFACE_TEST_CASE_HPP
 
 #include <map>
 #include <set>
 #include <string>
 
 #include "engine/test_case.hpp"
-#include "engine/user_files/config.hpp"
 #include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
 
 namespace engine {
+namespace atf_iface {
 
 
 /// Collection of paths.
@@ -73,7 +73,7 @@ std::string parse_require_user(const std::string&, const std::string&);
 /// are located within a test program, the test program serves no other purpose
 /// than to provide a way to execute the test cases.  Therefore, no information
 /// needs to be stored for the test programs themselves.
-class atf_test_case : public test_case {
+class test_case : public base_test_case {
     properties_map get_all_properties(void) const;
     results::result_ptr do_run(const user_files::config&) const;
 
@@ -111,23 +111,23 @@ public:
     /// User-defined meta-data properties.
     properties_map user_metadata;
 
-    atf_test_case(const engine::test_program&, const std::string&,
-                  const std::string&, const bool,
-                  const utils::datetime::delta&, const strings_set&,
-                  const strings_set&, const strings_set&, const paths_set&,
-                  const paths_set&, const std::string&, const properties_map&);
+    test_case(const base_test_program&, const std::string&,
+              const std::string&, const bool,
+              const utils::datetime::delta&, const strings_set&,
+              const strings_set&, const strings_set&, const paths_set&,
+              const paths_set&, const std::string&, const properties_map&);
 
-    static atf_test_case from_properties(const engine::test_program&,
-                                         const std::string&,
-                                         const properties_map&);
+    static test_case from_properties(const base_test_program&,
+                                     const std::string&, const properties_map&);
 
     std::string check_requirements(const user_files::config&) const;
 
-    bool operator==(const atf_test_case&) const;
+    bool operator==(const test_case&) const;
 };
 
 
+}  // namespace atf_iface
 }  // namespace engine
 
 
-#endif  // !defined(ENGINE_ATF_TEST_CASE_HPP)
+#endif  // !defined(ENGINE_ATF_IFACE_TEST_CASE_HPP)

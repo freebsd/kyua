@@ -26,36 +26,38 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/atf_test_program.hpp
+/// \file engine/atf_iface/test_program.hpp
 /// Implementation of test programs that follow the ATF interface.
 
-#if !defined(ENGINE_ATF_TEST_PROGRAM_HPP)
-#define ENGINE_ATF_TEST_PROGRAM_HPP
+#if !defined(ENGINE_ATF_IFACE_TEST_PROGRAM_HPP)
+#define ENGINE_ATF_IFACE_TEST_PROGRAM_HPP
 
 #include "engine/test_program.hpp"
 
 namespace engine {
+namespace atf_iface {
 
 
 namespace detail {
 
 
-test_cases_vector parse_test_cases(const test_program&, std::istream&);
+test_cases_vector parse_test_cases(const base_test_program&, std::istream&);
 
 
 }  // namespace detail
 
 
 /// Representation of an ATF test program.
-class atf_test_program : public test_program {
+class test_program : public base_test_program {
     test_cases_vector load_test_cases(void) const;
 
 public:
-    atf_test_program(const utils::fs::path&, const utils::fs::path&,
-                     const std::string&);
+    test_program(const utils::fs::path&, const utils::fs::path&,
+                 const std::string&);
 };
 
 
+}  // namespace atf_iface
 }  // namespace engine
 
-#endif  // !defined(ENGINE_ATF_TEST_PROGRAM_HPP)
+#endif  // !defined(ENGINE_ATF_IFACE_TEST_PROGRAM_HPP)

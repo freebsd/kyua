@@ -28,8 +28,8 @@
 
 #include <cstdlib>
 
-#include "engine/atf_test_case.hpp"
-#include "engine/atf_test_program.hpp"
+#include "engine/atf_iface/test_case.hpp"
+#include "engine/atf_iface/test_program.hpp"
 #include "engine/exceptions.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
@@ -37,6 +37,7 @@
 #include "utils/process/exceptions.hpp"
 #include "utils/sanity.hpp"
 
+namespace atf_iface = engine::atf_iface;
 namespace process = utils::process;
 
 
@@ -141,8 +142,8 @@ public:
 ///
 /// \throw format_error If the test case list has an invalid format.
 engine::test_cases_vector
-engine::detail::parse_test_cases(const engine::test_program& program,
-                                 std::istream& input)
+atf_iface::detail::parse_test_cases(const base_test_program& program,
+                                    std::istream& input)
 {
     std::string line;
 
@@ -167,11 +168,11 @@ engine::detail::parse_test_cases(const engine::test_program& program,
                                "preceeded by the identifier");
 
         const properties_map raw_properties = parse_properties(input);
-        const engine::atf_test_case test_case =
-            engine::atf_test_case::from_properties(program, ident.second,
-                                                   raw_properties);
+        const atf_iface::test_case test_case =
+            atf_iface::test_case::from_properties(program, ident.second,
+                                                  raw_properties);
         test_cases.push_back(engine::test_case_ptr(
-             new engine::atf_test_case(test_case)));
+             new atf_iface::test_case(test_case)));
     }
     if (test_cases.empty())
         throw format_error("No test cases");
@@ -185,10 +186,10 @@ engine::detail::parse_test_cases(const engine::test_program& program,
 /// \param root_ The root of the test suite containing the test program.
 /// \param test_suite_name_ The name of the test suite this program belongs to.
 ///
-engine::atf_test_program::atf_test_program(const utils::fs::path& binary_,
-                                           const utils::fs::path& root_,
-                                           const std::string& test_suite_name_) :
-    test_program(binary_, root_, test_suite_name_)
+atf_iface::test_program::test_program(const utils::fs::path& binary_,
+                                      const utils::fs::path& root_,
+                                      const std::string& test_suite_name_) :
+    base_test_program(binary_, root_, test_suite_name_)
 {
 }
 
@@ -201,7 +202,7 @@ engine::atf_test_program::atf_test_program(const utils::fs::path& binary_,
 /// \throw engine::error If there is a problem executing the test program.
 /// \throw format_error If the test case list has an invalid format.
 engine::test_cases_vector
-engine::atf_test_program::load_test_cases(void) const
+atf_iface::test_program::load_test_cases(void) const
 {
     LI(F("Obtaining test cases list from test program '%s' of root '%s'") %
        relative_path() % root());

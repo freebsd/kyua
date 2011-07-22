@@ -37,9 +37,9 @@ extern "C" {
 #include "cli/cmd_list.hpp"
 #include "cli/common.hpp"
 // TODO(jmmv): Should probably use a mock test case.
-#include "engine/atf_test_case.hpp"
+#include "engine/atf_iface/test_case.hpp"
 // TODO(jmmv): Should probably use a mock test program.
-#include "engine/atf_test_program.hpp"
+#include "engine/atf_iface/test_program.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/user_files/kyuafile.hpp"
 #include "utils/cmdline/exceptions.hpp"
@@ -47,6 +47,7 @@ extern "C" {
 #include "utils/cmdline/ui_mock.hpp"
 #include "utils/env.hpp"
 
+namespace atf_iface = engine::atf_iface;
 namespace cmdline = utils::cmdline;
 namespace user_files = engine::user_files;
 namespace fs = utils::fs;
@@ -76,11 +77,11 @@ ATF_TEST_CASE_BODY(list_test_case__no_verbose)
 {
     engine::properties_map properties;
     properties["descr"] = "Unused description";
-    const engine::atf_test_program test_program(fs::path("the/test-program"),
-                                                fs::path("root"),
-                                                "unused-suite");
-    const engine::atf_test_case test_case =
-        engine::atf_test_case::from_properties(test_program, "abc", properties);
+    const atf_iface::test_program test_program(fs::path("the/test-program"),
+                                               fs::path("root"),
+                                               "unused-suite");
+    const atf_iface::test_case test_case =
+        atf_iface::test_case::from_properties(test_program, "abc", properties);
 
     cmdline::ui_mock ui;
     cli::detail::list_test_case(&ui, false, test_case);
@@ -95,11 +96,11 @@ ATF_TEST_CASE_BODY(list_test_case__verbose__no_properties)
 {
     const engine::test_case_id id(fs::path("hello/world"), "my_name");
     engine::properties_map properties;
-    const engine::atf_test_program test_program(fs::path("hello/world"),
-                                                fs::path("root"), "the-suite");
-    const engine::atf_test_case test_case =
-        engine::atf_test_case::from_properties(test_program, "my_name",
-                                               properties);
+    const atf_iface::test_program test_program(fs::path("hello/world"),
+                                               fs::path("root"), "the-suite");
+    const atf_iface::test_case test_case =
+        atf_iface::test_case::from_properties(test_program, "my_name",
+                                              properties);
 
     cmdline::ui_mock ui;
     cli::detail::list_test_case(&ui, true, test_case);
@@ -116,11 +117,11 @@ ATF_TEST_CASE_BODY(list_test_case__verbose__some_properties)
     engine::properties_map properties;
     properties["descr"] = "Some description";
     properties["has.cleanup"] = "true";
-    const engine::atf_test_program test_program(fs::path("hello/world"),
-                                                fs::path("root"), "the-suite");
-    const engine::atf_test_case test_case =
-        engine::atf_test_case::from_properties(test_program, "my_name",
-                                               properties);
+    const atf_iface::test_program test_program(fs::path("hello/world"),
+                                               fs::path("root"), "the-suite");
+    const atf_iface::test_case test_case =
+        atf_iface::test_case::from_properties(test_program, "my_name",
+                                              properties);
 
     cmdline::ui_mock ui;
     cli::detail::list_test_case(&ui, true, test_case);
@@ -140,8 +141,8 @@ run_helpers(const atf::tests::tc* tc, cmdline::ui* ui, const bool verbose,
     ATF_REQUIRE(::mkdir("root/dir", 0755) != -1);
     ATF_REQUIRE(::symlink(helpers(tc).c_str(), "root/dir/program") != -1);
 
-    const engine::atf_test_program test_program(fs::path("dir/program"),
-                                                fs::path("root"), "suite-name");
+    const atf_iface::test_program test_program(fs::path("dir/program"),
+                                               fs::path("root"), "suite-name");
 
     utils::cmdline::args_vector args;
     if (filter != NULL)
@@ -246,8 +247,8 @@ ATF_TEST_CASE_BODY(list_test_program__missing)
 {
     cmdline::ui_mock ui;
 
-    const engine::atf_test_program test_program(fs::path("missing"),
-                                                fs::path("root"), "suite-name");
+    const atf_iface::test_program test_program(fs::path("missing"),
+                                               fs::path("root"), "suite-name");
 
     const utils::cmdline::args_vector args;
     cli::filters_state filters(args);

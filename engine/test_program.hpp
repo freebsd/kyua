@@ -53,7 +53,7 @@ typedef std::vector< test_case_ptr > test_cases_vector;
 
 
 /// Abstract representation of a test program.
-class test_program {
+class base_test_program {
     utils::fs::path _binary;
     utils::fs::path _root;
     std::string _test_suite_name;
@@ -62,9 +62,9 @@ class test_program {
     virtual test_cases_vector load_test_cases(void) const = 0;
 
 public:
-    test_program(const utils::fs::path&, const utils::fs::path&,
+    base_test_program(const utils::fs::path&, const utils::fs::path&,
                  const std::string&);
-    virtual ~test_program(void);
+    virtual ~base_test_program(void);
 
     const utils::fs::path& root(void) const;
     const utils::fs::path& relative_path(void) const;
@@ -75,7 +75,7 @@ public:
 
 
 /// Pointer to a test program.
-typedef std::tr1::shared_ptr< test_program > test_program_ptr;
+typedef std::tr1::shared_ptr< base_test_program > test_program_ptr;
 
 
 /// Collection of test programs.

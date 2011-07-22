@@ -28,10 +28,11 @@
 
 #include <atf-c++.hpp>
 
-#include "engine/atf_test_case.hpp"
+#include "engine/atf_iface/test_case.hpp"
 #include "engine/test_program.hpp"
 #include "utils/fs/path.hpp"
 
+namespace atf_iface = engine::atf_iface;
 namespace fs = utils::fs;
 
 
@@ -39,7 +40,7 @@ namespace {
 
 
 /// Fake implementation of a test program.
-class mock_test_program : public engine::test_program {
+class mock_test_program : public engine::base_test_program {
 public:
     /// Number of times the load_test_cases() method has been called.
     mutable int loads;
@@ -53,7 +54,7 @@ public:
     ///     to.
     mock_test_program(const fs::path& binary_, const fs::path& root_,
                       const std::string& test_suite_name_) :
-        test_program(binary_, root_, test_suite_name_),
+        base_test_program(binary_, root_, test_suite_name_),
         loads(0)
     {
     }
@@ -69,11 +70,11 @@ public:
 
         engine::test_cases_vector loaded_test_cases;
 
-        const engine::atf_test_case test_case = 
-            engine::atf_test_case::from_properties(*this, "foo",
+        const atf_iface::test_case test_case =
+            atf_iface::test_case::from_properties(*this, "foo",
                                                    engine::properties_map());
         loaded_test_cases.push_back(engine::test_case_ptr(
-            new engine::atf_test_case(test_case)));
+            new atf_iface::test_case(test_case)));
         return loaded_test_cases;
     }
 };

@@ -30,13 +30,7 @@ ENGINE_CFLAGS = $(UTILS_CFLAGS)
 ENGINE_LIBS = libengine.a $(UTILS_LIBS)
 
 noinst_LIBRARIES += libengine.a
-libengine_a_SOURCES  = engine/atf_results.cpp
-libengine_a_SOURCES += engine/atf_results.hpp
-libengine_a_SOURCES += engine/atf_test_case.cpp
-libengine_a_SOURCES += engine/atf_test_case.hpp
-libengine_a_SOURCES += engine/atf_test_program.cpp
-libengine_a_SOURCES += engine/atf_test_program.hpp
-libengine_a_SOURCES += engine/exceptions.cpp
+libengine_a_SOURCES  = engine/exceptions.cpp
 libengine_a_SOURCES += engine/exceptions.hpp
 libengine_a_SOURCES += engine/test_case.cpp
 libengine_a_SOURCES += engine/test_case.hpp
@@ -45,36 +39,13 @@ libengine_a_SOURCES += engine/test_program.hpp
 libengine_a_SOURCES += engine/results.cpp
 libengine_a_SOURCES += engine/results.hpp
 libengine_a_SOURCES += engine/results.ipp
-libengine_a_SOURCES += engine/runner.cpp
-libengine_a_SOURCES += engine/runner.hpp
 
 tests_enginedir = $(pkgtestsdir)/engine
 
 tests_engine_DATA = engine/Atffile engine/Kyuafile
 EXTRA_DIST += $(tests_engine_DATA)
 
-tests_engine_PROGRAMS = engine/atf_results_test
-engine_atf_results_test_SOURCES = engine/atf_results_test.cpp
-engine_atf_results_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_TEST_CFLAGS) \
-                                   $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-engine_atf_results_test_LDADD = $(ENGINE_LIBS) $(UTILS_TEST_LIBS) \
-                                $(UTILS_LIBS) $(ATF_CXX_LIBS)
-
-tests_engine_PROGRAMS += engine/atf_test_case_test
-engine_atf_test_case_test_SOURCES = engine/atf_test_case_test.cpp
-engine_atf_test_case_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_TEST_CFLAGS) \
-                                     $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-engine_atf_test_case_test_LDADD = $(ENGINE_LIBS) $(UTILS_TEST_LIBS) \
-                                  $(UTILS_LIBS) $(ATF_CXX_LIBS)
-
-tests_engine_PROGRAMS += engine/atf_test_program_test
-engine_atf_test_program_test_SOURCES = engine/atf_test_program_test.cpp
-engine_atf_test_program_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_TEST_CFLAGS) \
-                                        $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-engine_atf_test_program_test_LDADD = $(ENGINE_LIBS) $(UTILS_TEST_LIBS) \
-                                     $(UTILS_LIBS) $(ATF_CXX_LIBS)
-
-tests_engine_PROGRAMS += engine/exceptions_test
+tests_engine_PROGRAMS = engine/exceptions_test
 engine_exceptions_test_SOURCES = engine/exceptions_test.cpp
 engine_exceptions_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
                                   $(ATF_CXX_CFLAGS)
@@ -87,18 +58,6 @@ engine_results_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_TEST_CFLAGS) \
                                $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 engine_results_test_LDADD = $(ENGINE_LIBS) $(UTILS_TEST_LIBS) \
                             $(UTILS_LIBS) $(ATF_CXX_LIBS)
-
-tests_engine_PROGRAMS += engine/runner_helpers
-engine_runner_helpers_SOURCES = engine/runner_helpers.cpp
-engine_runner_helpers_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-engine_runner_helpers_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
-
-tests_engine_PROGRAMS += engine/runner_test
-engine_runner_test_SOURCES = engine/runner_test.cpp
-engine_runner_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
-                              $(UTILS_TEST_CFLAGS) $(ATF_CXX_CFLAGS)
-engine_runner_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
-                           $(UTILS_TEST_LIBS) $(ATF_CXX_LIBS)
 
 tests_engine_PROGRAMS += engine/test_case_test
 engine_test_case_test_SOURCES = engine/test_case_test.cpp
@@ -114,13 +73,5 @@ engine_test_program_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_TEST_CFLAGS) \
 engine_test_program_test_LDADD = $(ENGINE_LIBS) $(UTILS_TEST_LIBS) \
                                  $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
-tests_engine_PROGRAMS += engine/test_program_atf_helpers
-engine_test_program_atf_helpers_SOURCES = engine/test_program_atf_helpers.cpp
-engine_test_program_atf_helpers_CXXFLAGS = $(ATF_CXX_CFLAGS)
-engine_test_program_atf_helpers_LDADD = $(ATF_CXX_LIBS)
-
-tests_engine_PROGRAMS += engine/test_program_plain_helpers
-engine_test_program_plain_helpers_SOURCES = \
-    engine/test_program_plain_helpers.cpp
-
+include engine/atf_iface/Makefile.am.inc
 include engine/user_files/Makefile.am.inc

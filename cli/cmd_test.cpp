@@ -32,7 +32,6 @@
 #include "cli/cmd_test.hpp"
 #include "cli/common.hpp"
 #include "engine/results.hpp"
-#include "engine/runner.hpp"
 #include "engine/test_program.hpp"
 #include "engine/user_files/config.hpp"
 #include "engine/user_files/kyuafile.hpp"
@@ -47,7 +46,6 @@
 namespace cmdline = utils::cmdline;
 namespace fs = utils::fs;
 namespace results = engine::results;
-namespace runner = engine::runner;
 namespace user_files = engine::user_files;
 
 using cli::cmd_test;
@@ -62,7 +60,7 @@ using cli::cmd_test;
 /// \param config The configuration variables provided by the user.
 /// \param ui Interface for progress reporting.
 static std::pair< unsigned long, unsigned long >
-run_test_program(const engine::test_program& test_program,
+run_test_program(const engine::base_test_program& test_program,
                  const user_files::config& config,
                  const cli::filters_state& filters,
                  cmdline::ui* ui)

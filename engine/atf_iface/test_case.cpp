@@ -33,10 +33,10 @@
 #include <limits>
 #include <sstream>
 
-#include "engine/atf_test_case.hpp"
+#include "engine/atf_iface/runner.hpp"
+#include "engine/atf_iface/test_case.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/results.hpp"
-#include "engine/runner.hpp"
 #include "engine/test_program.hpp"
 #include "engine/user_files/config.hpp"
 #include "utils/fs/exceptions.hpp"
@@ -45,6 +45,7 @@
 #include "utils/passwd.hpp"
 #include "utils/sanity.hpp"
 
+namespace atf_iface = engine::atf_iface;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace passwd = utils::passwd;
@@ -91,7 +92,7 @@ flatten_set(const std::set< T >& set)
 ///
 /// \throw engine::format_error If the value is invalid.
 bool
-engine::detail::parse_bool(const std::string& name, const std::string& value)
+atf_iface::detail::parse_bool(const std::string& name, const std::string& value)
 {
     if (value == "true" || value == "yes")
         return true;
@@ -111,8 +112,8 @@ engine::detail::parse_bool(const std::string& name, const std::string& value)
 /// \return The value as a collection of strings.
 ///
 /// \throw engine::format_error If the value is invalid.
-engine::strings_set
-engine::detail::parse_list(const std::string& name, const std::string& value)
+atf_iface::strings_set
+atf_iface::detail::parse_list(const std::string& name, const std::string& value)
 {
     strings_set words;
 
@@ -140,7 +141,7 @@ engine::detail::parse_list(const std::string& name, const std::string& value)
 ///
 /// \throw engine::format_error If the value is invalid.
 unsigned long
-engine::detail::parse_ulong(const std::string& name, const std::string& value)
+atf_iface::detail::parse_ulong(const std::string& name, const std::string& value)
 {
     if (value.empty())
         throw format_error(F("Invalid empty value for integer property '%s'") %
@@ -166,9 +167,9 @@ engine::detail::parse_ulong(const std::string& name, const std::string& value)
 ///
 /// \throw engine::format_error If any of the files in the list is invalid
 ///     or if the list itself is invalid.
-engine::paths_set
-engine::detail::parse_require_files(const std::string& name,
-                                    const std::string& value)
+atf_iface::paths_set
+atf_iface::detail::parse_require_files(const std::string& name,
+                                       const std::string& value)
 {
     std::set< fs::path > files;
 
@@ -200,9 +201,9 @@ engine::detail::parse_require_files(const std::string& name,
 ///
 /// \throw engine::format_error If any of the programs in the list is invalid
 ///     or if the list itself is invalid.
-engine::paths_set
-engine::detail::parse_require_progs(const std::string& name,
-                                    const std::string& value)
+atf_iface::paths_set
+atf_iface::detail::parse_require_progs(const std::string& name,
+                                       const std::string& value)
 {
     std::set< fs::path > programs;
 
@@ -234,8 +235,8 @@ engine::detail::parse_require_progs(const std::string& name,
 ///
 /// \throw engine::format_error If the given value is invalid.
 std::string
-engine::detail::parse_require_user(const std::string& name,
-                                   const std::string& value)
+atf_iface::detail::parse_require_user(const std::string& name,
+                                      const std::string& value)
 {
     if (value.empty() || value == "root" || value == "unprivileged")
         return value;
@@ -266,19 +267,19 @@ engine::detail::parse_require_user(const std::string& name,
 ///     'root'.
 /// \param user_metadata_ User-defined meta-data properties.  The names of all
 ///     of these properties must start by 'X-'.
-engine::atf_test_case::atf_test_case(const engine::test_program& test_program_,
-                                     const std::string& name_,
-                                     const std::string& description_,
-                                     const bool has_cleanup_,
-                                     const datetime::delta& timeout_,
-                                     const strings_set& allowed_architectures_,
-                                     const strings_set& allowed_platforms_,
-                                     const strings_set& required_configs_,
-                                     const paths_set& required_files_,
-                                     const paths_set& required_programs_,
-                                     const std::string& required_user_,
-                                     const properties_map& user_metadata_) :
-    test_case(test_program_, name_),
+atf_iface::test_case::test_case(const base_test_program& test_program_,
+                                const std::string& name_,
+                                const std::string& description_,
+                                const bool has_cleanup_,
+                                const datetime::delta& timeout_,
+                                const strings_set& allowed_architectures_,
+                                const strings_set& allowed_platforms_,
+                                const strings_set& required_configs_,
+                                const paths_set& required_files_,
+                                const paths_set& required_programs_,
+                                const std::string& required_user_,
+                                const properties_map& user_metadata_) :
+    base_test_case(test_program_, name_),
     description(description_),
     has_cleanup(has_cleanup_),
     timeout(timeout_),
@@ -314,10 +315,10 @@ engine::atf_test_case::atf_test_case(const engine::test_program& test_program_,
 ///
 /// \throw engine::format_error If the syntax of any of the properties is
 ///     invalid.
-engine::atf_test_case
-engine::atf_test_case::from_properties(const engine::test_program& test_program_,
-                                       const std::string& name_,
-                                       const properties_map& raw_properties)
+atf_iface::test_case
+atf_iface::test_case::from_properties(const base_test_program& test_program_,
+                                      const std::string& name_,
+                                      const properties_map& raw_properties)
 {
     std::string description_;
     bool has_cleanup_ = false;
@@ -361,10 +362,10 @@ engine::atf_test_case::from_properties(const engine::test_program& test_program_
         }
     }
 
-    return atf_test_case(test_program_, name_, description_, has_cleanup_,
-                         timeout_, allowed_architectures_, allowed_platforms_,
-                         required_configs_, required_files_, required_programs_,
-                         required_user_, user_metadata_);
+    return test_case(test_program_, name_, description_, has_cleanup_,
+                     timeout_, allowed_architectures_, allowed_platforms_,
+                     required_configs_, required_files_, required_programs_,
+                     required_user_, user_metadata_);
 }
 
 
@@ -375,7 +376,7 @@ engine::atf_test_case::from_properties(const engine::test_program& test_program_
 ///
 /// \return A key/value mapping describing all the test case properties.
 engine::properties_map
-engine::atf_test_case::get_all_properties(void) const
+atf_iface::test_case::get_all_properties(void) const
 {
     properties_map props = user_metadata;
 
@@ -413,7 +414,7 @@ engine::atf_test_case::get_all_properties(void) const
 ///
 /// \return bool True if the test cases are equal, false otherwise.
 bool
-engine::atf_test_case::operator==(const atf_test_case& tc) const
+atf_iface::test_case::operator==(const test_case& tc) const
 {
     return identifier() == tc.identifier() &&
         description == tc.description &&
@@ -435,8 +436,7 @@ engine::atf_test_case::operator==(const atf_test_case& tc) const
 ///
 /// \return A string describing what is missing; empty if everything is OK.
 std::string
-engine::atf_test_case::check_requirements(const user_files::config& config)
-    const
+atf_iface::test_case::check_requirements(const user_files::config& config) const
 {
     for (strings_set::const_iterator iter = required_configs.begin();
          iter != required_configs.end(); iter++) {
@@ -509,7 +509,7 @@ engine::atf_test_case::check_requirements(const user_files::config& config)
 ///
 /// \return The result of the execution.
 engine::results::result_ptr
-engine::atf_test_case::do_run(const user_files::config& config) const
+atf_iface::test_case::do_run(const user_files::config& config) const
 {
-    return runner::run_test_case(*this, config);
+    return run_test_case(*this, config);
 }
