@@ -92,7 +92,8 @@ flatten_set(const std::set< T >& set)
 ///
 /// \throw engine::format_error If the value is invalid.
 bool
-atf_iface::detail::parse_bool(const std::string& name, const std::string& value)
+engine::atf_iface::detail::parse_bool(const std::string& name,
+                                      const std::string& value)
 {
     if (value == "true" || value == "yes")
         return true;
@@ -112,8 +113,9 @@ atf_iface::detail::parse_bool(const std::string& name, const std::string& value)
 /// \return The value as a collection of strings.
 ///
 /// \throw engine::format_error If the value is invalid.
-atf_iface::strings_set
-atf_iface::detail::parse_list(const std::string& name, const std::string& value)
+engine::atf_iface::strings_set
+engine::atf_iface::detail::parse_list(const std::string& name,
+                                      const std::string& value)
 {
     strings_set words;
 
@@ -141,7 +143,8 @@ atf_iface::detail::parse_list(const std::string& name, const std::string& value)
 ///
 /// \throw engine::format_error If the value is invalid.
 unsigned long
-atf_iface::detail::parse_ulong(const std::string& name, const std::string& value)
+engine::atf_iface::detail::parse_ulong(const std::string& name,
+                                       const std::string& value)
 {
     if (value.empty())
         throw format_error(F("Invalid empty value for integer property '%s'") %
@@ -167,9 +170,9 @@ atf_iface::detail::parse_ulong(const std::string& name, const std::string& value
 ///
 /// \throw engine::format_error If any of the files in the list is invalid
 ///     or if the list itself is invalid.
-atf_iface::paths_set
-atf_iface::detail::parse_require_files(const std::string& name,
-                                       const std::string& value)
+engine::atf_iface::paths_set
+engine::atf_iface::detail::parse_require_files(const std::string& name,
+                                               const std::string& value)
 {
     std::set< fs::path > files;
 
@@ -201,9 +204,9 @@ atf_iface::detail::parse_require_files(const std::string& name,
 ///
 /// \throw engine::format_error If any of the programs in the list is invalid
 ///     or if the list itself is invalid.
-atf_iface::paths_set
-atf_iface::detail::parse_require_progs(const std::string& name,
-                                       const std::string& value)
+engine::atf_iface::paths_set
+engine::atf_iface::detail::parse_require_progs(const std::string& name,
+                                               const std::string& value)
 {
     std::set< fs::path > programs;
 
@@ -234,9 +237,9 @@ atf_iface::detail::parse_require_progs(const std::string& name,
 /// \return The value as an integer.
 ///
 /// \throw engine::format_error If the given value is invalid.
-std::string
-atf_iface::detail::parse_require_user(const std::string& name,
-                                      const std::string& value)
+engine::std::string
+engine::atf_iface::detail::parse_require_user(const std::string& name,
+                                              const std::string& value)
 {
     if (value.empty() || value == "root" || value == "unprivileged")
         return value;

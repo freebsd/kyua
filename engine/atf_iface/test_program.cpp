@@ -142,8 +142,8 @@ public:
 ///
 /// \throw format_error If the test case list has an invalid format.
 engine::test_cases_vector
-atf_iface::detail::parse_test_cases(const base_test_program& program,
-                                    std::istream& input)
+engine::atf_iface::detail::parse_test_cases(const base_test_program& program,
+                                            std::istream& input)
 {
     std::string line;
 
