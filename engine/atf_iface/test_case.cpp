@@ -237,7 +237,7 @@ engine::atf_iface::detail::parse_require_progs(const std::string& name,
 /// \return The value as an integer.
 ///
 /// \throw engine::format_error If the given value is invalid.
-engine::std::string
+std::string
 engine::atf_iface::detail::parse_require_user(const std::string& name,
                                               const std::string& value)
 {
