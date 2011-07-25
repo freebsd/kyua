@@ -71,7 +71,7 @@ check-kyua:
 	    cleanlist
 	$(CHECK_ENVIRONMENT) $(TESTS_ENVIRONMENT) ./kyua test
 
-clean-local: clean-builddir
+CLEAN_TARGETS = clean-builddir
 clean-builddir:
 	if test -f cleanlist; then \
 	    rm -f $$(cat cleanlist); \
@@ -96,10 +96,12 @@ api-docs/api-docs.tag: $(srcdir)/Doxyfile $(SOURCES)
 	mkdir -p api-docs
 	${DOXYGEN} $(srcdir)/Doxyfile 2>&1 | tee api-docs/warnings
 
-clean-local: clean-api-docs
+CLEAN_TARGETS += clean-api-docs
 clean-api-docs:
 	rm -rf api-docs
 endif
+
+clean-local: $(CLEAN_TARGETS)
 
 .PHONY: clean-all
 clean-all:

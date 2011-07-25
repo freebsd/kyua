@@ -26,9 +26,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-ENGINE_CFLAGS = $(UTILS_CFLAGS)
-ENGINE_LIBS = libengine.a $(UTILS_LIBS)
-
 libengine_a_SOURCES += engine/atf_iface/results.cpp
 libengine_a_SOURCES += engine/atf_iface/results.hpp
 libengine_a_SOURCES += engine/atf_iface/runner.cpp
