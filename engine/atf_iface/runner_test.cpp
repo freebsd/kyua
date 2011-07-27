@@ -449,11 +449,9 @@ ATF_TEST_CASE_BODY(run_test_case__isolation_pgrp)
         fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
         "unit-tests");
 
-    const mode_t old_umask = ::umask(0002);
     results::result_ptr result = atf_iface::run_test_case(
         make_test_case(test_program, "validate_pgrp"), mock_config);
     compare_results(results::passed(), result.get());
-    ::umask(old_umask);
 }
 
 
