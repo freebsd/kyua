@@ -125,6 +125,27 @@ function atf_test_program(in_properties)
    assert(fs.basename(properties.name) == properties.name,
           string.format("Test program '%s' cannot contain path components",
                         properties.name))
+   properties.interface = "atf"
+   table.insert(TEST_PROGRAMS, properties)
+
+   logging.debug(string.format("Defined test program '%s'", properties.name))
+end
+
+
+-- Registers a test program that follows the plain test interface.
+--
+-- Use this as a table constructor.
+--
+-- \post TEST_PROGRAMS contains a new entry for the test program.
+--
+-- \param in_properties table, The properties describing the test program.
+--     The allowed keys and their types are: name:string.
+function plain_test_program(in_properties)
+   local properties = copy_table(in_properties)
+   assert(fs.basename(properties.name) == properties.name,
+          string.format("Test program '%s' cannot contain path components",
+                        properties.name))
+   properties.interface = "plain"
    table.insert(TEST_PROGRAMS, properties)
 
    logging.debug(string.format("Defined test program '%s'", properties.name))
@@ -203,6 +224,7 @@ function export()
 
    _G.atf_test_program = atf_test_program
    _G.include = include
+   _G.plain_test_program = plain_test_program
    _G.test_suite = test_suite
 end
 

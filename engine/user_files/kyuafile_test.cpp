@@ -28,9 +28,12 @@
 
 #include <fstream>
 #include <stdexcept>
+#include <typeinfo>
 
 #include <atf-c++.hpp>
 
+#include "engine/atf_iface/test_program.hpp"
+#include "engine/plain_iface/test_program.hpp"
 #include "engine/user_files/exceptions.hpp"
 #include "engine/user_files/kyuafile.hpp"
 #include "utils/fs/operations.hpp"
@@ -39,18 +42,20 @@
 #include "utils/lua/wrap.ipp"
 #include "utils/test_utils.hpp"
 
+namespace atf_iface = engine::atf_iface;
 namespace fs = utils::fs;
 namespace lua = utils::lua;
+namespace plain_iface = engine::plain_iface;
 namespace user_files = engine::user_files;
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(get_test_program__ok);
-ATF_TEST_CASE_BODY(get_test_program__ok)
+ATF_TEST_CASE_WITHOUT_HEAD(get_test_program__atf_ok);
+ATF_TEST_CASE_BODY(get_test_program__atf_ok)
 {
     lua::state state;
     stack_balance_checker checker(state);
 
-    lua::do_string(state, "return {name='the-name', "
+    lua::do_string(state, "return {name='the-name', interface='atf', "
                    "test_suite='the-suite'}", 1);
 
     fs::mkdir(fs::path("root"), 0755);
@@ -59,6 +64,30 @@ ATF_TEST_CASE_BODY(get_test_program__ok)
 
     const engine::test_program_ptr program =
         user_files::detail::get_test_program(state, fs::path("root/directory"));
+    ATF_REQUIRE(typeid(atf_iface::test_program) == typeid(*program));
+    ATF_REQUIRE_EQ(fs::path("the-name"), program->relative_path());
+    ATF_REQUIRE_EQ("the-suite", program->test_suite_name());
+
+    state.pop(1);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(get_test_program__plain_ok);
+ATF_TEST_CASE_BODY(get_test_program__plain_ok)
+{
+    lua::state state;
+    stack_balance_checker checker(state);
+
+    lua::do_string(state, "return {name='the-name', interface='plain', "
+                   "test_suite='the-suite'}", 1);
+
+    fs::mkdir(fs::path("root"), 0755);
+    fs::mkdir(fs::path("root/directory"), 0755);
+    utils::create_file(fs::path("root/directory/the-name"));
+
+    const engine::test_program_ptr program =
+        user_files::detail::get_test_program(state, fs::path("root/directory"));
+    ATF_REQUIRE(typeid(plain_iface::test_program) == typeid(*program));
     ATF_REQUIRE_EQ(fs::path("the-name"), program->relative_path());
     ATF_REQUIRE_EQ("the-suite", program->test_suite_name());
 
@@ -72,7 +101,8 @@ ATF_TEST_CASE_BODY(get_test_program__bad_name)
     lua::state state;
     stack_balance_checker checker(state);
 
-    lua::do_string(state, "return {name={}, test_suite='the-suite'}", 1);
+    lua::do_string(state, "return {name={}, interface='atf', "
+                   "test_suite='the-suite'}", 1);
 
     ATF_REQUIRE_THROW_RE(std::runtime_error, "non-string.*test program$",
                          user_files::detail::get_test_program(
@@ -88,7 +118,8 @@ ATF_TEST_CASE_BODY(get_test_program__bad_test_suite)
     lua::state state;
     stack_balance_checker checker(state);
 
-    lua::do_string(state, "return {name='foo', test_suite={}}", 1);
+    lua::do_string(state, "return {name='foo', interface='atf', "
+                   "test_suite={}}", 1);
 
     ATF_REQUIRE_THROW_RE(std::runtime_error,
                          "non-string.*test suite.*'foo'",
@@ -99,18 +130,51 @@ ATF_TEST_CASE_BODY(get_test_program__bad_test_suite)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(get_test_program__missing);
-ATF_TEST_CASE_BODY(get_test_program__missing)
+ATF_TEST_CASE_WITHOUT_HEAD(get_test_program__missing_binary);
+ATF_TEST_CASE_BODY(get_test_program__missing_binary)
 {
     lua::state state;
     stack_balance_checker checker(state);
 
     utils::create_file(fs::path("i-exist"));
-    lua::do_string(state, "return {name='i-exist', "
+    lua::do_string(state, "return {name='i-exist', interface='atf', "
                    "test_suite='the-suite'}", 1);
 
     ATF_REQUIRE_THROW_RE(std::runtime_error,
                          "Non-existent.*'i-exist'",
+                         user_files::detail::get_test_program(
+                             state, fs::path("root")));
+
+    state.pop(1);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(get_test_program__missing_interface);
+ATF_TEST_CASE_BODY(get_test_program__missing_interface)
+{
+    lua::state state;
+    stack_balance_checker checker(state);
+
+    lua::do_string(state, "return {name='the-name'}", 1);
+
+    ATF_REQUIRE_THROW_RE(std::runtime_error, "Missing test case interface",
+                         user_files::detail::get_test_program(
+                             state, fs::path("root")));
+
+    state.pop(1);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(get_test_program__unsupported_interface);
+ATF_TEST_CASE_BODY(get_test_program__unsupported_interface)
+{
+    lua::state state;
+    stack_balance_checker checker(state);
+
+    lua::do_string(state, "return {name='the-name', interface='foo'}", 1);
+
+    ATF_REQUIRE_THROW_RE(std::runtime_error,
+                         "Unsupported test interface 'foo'",
                          user_files::detail::get_test_program(
                              state, fs::path("root")));
 
@@ -138,8 +202,9 @@ ATF_TEST_CASE_BODY(get_test_programs__some)
     lua::state state;
     stack_balance_checker checker(state);
 
-    lua::do_string(state, "t = {}; t[1] = {name='a', test_suite='b'}; "
-                   "t[2] = {name='c/d', test_suite='e'}");
+    lua::do_string(state,
+                   "t = {}; t[1] = {name='a', interface='atf', test_suite='b'};"
+                   "t[2] = {name='c/d', interface='atf', test_suite='e'}");
 
     fs::mkdir(fs::path("root"), 0755);
     utils::create_file(fs::path("root/a"));
@@ -346,10 +411,13 @@ ATF_TEST_CASE_BODY(kyuafile__load__missing_test_program)
 
 ATF_INIT_TEST_CASES(tcs)
 {
-    ATF_ADD_TEST_CASE(tcs, get_test_program__ok);
+    ATF_ADD_TEST_CASE(tcs, get_test_program__atf_ok);
+    ATF_ADD_TEST_CASE(tcs, get_test_program__plain_ok);
     ATF_ADD_TEST_CASE(tcs, get_test_program__bad_name);
     ATF_ADD_TEST_CASE(tcs, get_test_program__bad_test_suite);
-    ATF_ADD_TEST_CASE(tcs, get_test_program__missing);
+    ATF_ADD_TEST_CASE(tcs, get_test_program__missing_binary);
+    ATF_ADD_TEST_CASE(tcs, get_test_program__missing_interface);
+    ATF_ADD_TEST_CASE(tcs, get_test_program__unsupported_interface);
 
     ATF_ADD_TEST_CASE(tcs, get_test_programs__empty);
     ATF_ADD_TEST_CASE(tcs, get_test_programs__some);

@@ -3,6 +3,16 @@ Changes in version 0.2
 
 STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 
+* Generalized the run-time engine to support executing test programs
+  that implement different interfaces.  Test programs that use the ATF
+  libraries are just a special case of this.
+
+* Added support to the engine to run "plain" test programs: i.e. test
+  programs that do not use any framework and report their pass/fail
+  status as an exit code.  This is to simplify the integration of legacy
+  test programs into a test suite, and also to demonstrate that the
+  run-time engine is generic enough to support different test interfaces.
+
 
 Changes in version 0.1
 ======================

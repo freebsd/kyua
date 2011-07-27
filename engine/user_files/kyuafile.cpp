@@ -29,6 +29,7 @@
 #include <stdexcept>
 
 #include "engine/atf_iface/test_program.hpp"
+#include "engine/plain_iface/test_program.hpp"
 #include "engine/user_files/common.hpp"
 #include "engine/user_files/exceptions.hpp"
 #include "engine/user_files/kyuafile.hpp"
@@ -43,6 +44,7 @@
 namespace atf_iface = engine::atf_iface;
 namespace fs = utils::fs;
 namespace lua = utils::lua;
+namespace plain_iface = engine::plain_iface;
 namespace user_files = engine::user_files;
 
 
@@ -62,8 +64,9 @@ namespace detail {
 ///
 /// throw std::runtime_error If there is any problem in the input data.
 /// throw fs::error If there is an invalid path in the input data.
+template< class TestProgram >
 test_program_ptr
-get_test_program(lua::state& state, const fs::path& root)
+get_one_test_program(lua::state& state, const fs::path& root)
 {
     PRE(state.is_table());
 
@@ -90,8 +93,40 @@ get_test_program(lua::state& state, const fs::path& root)
     if (!fs::exists(root / path))
         throw std::runtime_error(F("Non-existent test program '%s'") % path);
 
-    return test_program_ptr(
-        new atf_iface::test_program(path, root, test_suite));
+    return test_program_ptr(new TestProgram(path, root, test_suite));
+}
+
+
+/// Gets the data of a test program from the Lua state.
+///
+/// \pre stack(-1) contains a table describing a test program.
+///
+/// \param state The Lua state.
+/// \param root The directory where the initial Kyuafile is located.
+///
+/// throw std::runtime_error If there is any problem in the input data.
+/// throw fs::error If there is an invalid path in the input data.
+test_program_ptr
+get_test_program(lua::state& state, const fs::path& root)
+{
+    PRE(state.is_table());
+
+    lua::stack_cleaner cleaner(state);
+
+    state.push_string("interface");
+    state.get_table();
+    if (!state.is_string())
+        throw std::runtime_error("Missing test case interface");
+    const std::string iface_name(state.to_string());
+    state.pop(1);
+
+    if (iface_name == "atf")
+        return get_one_test_program< atf_iface::test_program >(state, root);
+    else if (iface_name == "plain")
+        return get_one_test_program< plain_iface::test_program >(state, root);
+    else
+        throw std::runtime_error(F("Unsupported test interface '%s'") %
+                                 iface_name);
 }
 
 

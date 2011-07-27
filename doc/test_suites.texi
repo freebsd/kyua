@@ -58,6 +58,7 @@ test_suite('first')
 -- Declare the test programs that are in this directory.
 atf_test_program@{name='foo_test'@}
 atf_test_program@{name='bar_test', test_suite='second'@}
+plain_test_program@{name='legacy_test'@}
 
 -- Recurse into any subdirectories that may have other tests.
 include('dir1/Kyuafile')

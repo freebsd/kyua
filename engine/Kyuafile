@@ -8,4 +8,5 @@ atf_test_program{name="test_case_test"}
 atf_test_program{name="test_program_test"}
 
 include("atf_iface/Kyuafile")
+include("plain_iface/Kyuafile")
 include("user_files/Kyuafile")

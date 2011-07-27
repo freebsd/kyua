@@ -59,8 +59,8 @@ ATF_TEST_CASE_BODY(empty)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(some_test_programs__ok);
-ATF_TEST_CASE_BODY(some_test_programs__ok)
+ATF_TEST_CASE_WITHOUT_HEAD(some_atf_test_programs__ok);
+ATF_TEST_CASE_BODY(some_atf_test_programs__ok)
 {
     std::ofstream output("test.lua");
     ATF_REQUIRE(output);
@@ -75,19 +75,25 @@ ATF_TEST_CASE_BODY(some_test_programs__ok)
     user_files::do_user_file(state, fs::path("test.lua"));
     lua::do_string(state, "assert(table.maxn(kyuafile.TEST_PROGRAMS) == 3)");
     lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[1].name == 'test1')");
+    lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[1].interface == "
+                   "'atf')");
     lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[1].test_suite == "
                    "'the-default')");
     lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[2].name == 'test3')");
+    lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[2].interface == "
+                   "'atf')");
     lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[2].test_suite == "
                    "'overriden')");
     lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[3].name == 'test2')");
+    lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[3].interface == "
+                   "'atf')");
     lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[3].test_suite == "
                    "'the-default')");
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(some_test_programs__fail);
-ATF_TEST_CASE_BODY(some_test_programs__fail)
+ATF_TEST_CASE_WITHOUT_HEAD(some_atf_test_programs__fail);
+ATF_TEST_CASE_BODY(some_atf_test_programs__fail)
 {
     std::ofstream output("test.lua");
     ATF_REQUIRE(output);
@@ -95,6 +101,44 @@ ATF_TEST_CASE_BODY(some_test_programs__fail)
     output << "test_suite('the-default')\n";
     output << "atf_test_program{name='test1'}\n";
     output << "atf_test_program{name='/a/foo'}\n";
+    output.close();
+
+    lua::state state;
+    ATF_REQUIRE_THROW_RE(lua::error, "'/a/foo'.*path components",
+                         user_files::do_user_file(state, fs::path("test.lua")));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(some_plain_test_programs__ok);
+ATF_TEST_CASE_BODY(some_plain_test_programs__ok)
+{
+    std::ofstream output("test.lua");
+    ATF_REQUIRE(output);
+    output << "syntax('kyuafile', 1)\n";
+    output << "plain_test_program{name='test2'}\n";
+    output << "plain_test_program{name='test1'}\n";
+    output.close();
+
+    lua::state state;
+    user_files::do_user_file(state, fs::path("test.lua"));
+    lua::do_string(state, "assert(table.maxn(kyuafile.TEST_PROGRAMS) == 2)");
+    lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[1].name == 'test2')");
+    lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[1].interface == "
+                   "'plain')");
+    lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[2].name == 'test1')");
+    lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[2].interface == "
+                   "'plain')");
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(some_plain_test_programs__fail);
+ATF_TEST_CASE_BODY(some_plain_test_programs__fail)
+{
+    std::ofstream output("test.lua");
+    ATF_REQUIRE(output);
+    output << "syntax('kyuafile', 1)\n";
+    output << "plain_test_program{name='test1'}\n";
+    output << "plain_test_program{name='/a/foo'}\n";
     output.close();
 
     lua::state state;
@@ -282,8 +326,10 @@ ATF_TEST_CASE_BODY(test_suite__not_recursive)
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, empty);
-    ATF_ADD_TEST_CASE(tcs, some_test_programs__ok);
-    ATF_ADD_TEST_CASE(tcs, some_test_programs__fail);
+    ATF_ADD_TEST_CASE(tcs, some_atf_test_programs__ok);
+    ATF_ADD_TEST_CASE(tcs, some_atf_test_programs__fail);
+    ATF_ADD_TEST_CASE(tcs, some_plain_test_programs__ok);
+    ATF_ADD_TEST_CASE(tcs, some_plain_test_programs__fail);
     ATF_ADD_TEST_CASE(tcs, include_absolute);
     ATF_ADD_TEST_CASE(tcs, include_nested);
     ATF_ADD_TEST_CASE(tcs, include_same_dir);

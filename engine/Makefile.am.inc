@@ -74,4 +74,5 @@ engine_test_program_test_LDADD = $(ENGINE_LIBS) $(UTILS_TEST_LIBS) \
                                  $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 include engine/atf_iface/Makefile.am.inc
+include engine/plain_iface/Makefile.am.inc
 include engine/user_files/Makefile.am.inc
