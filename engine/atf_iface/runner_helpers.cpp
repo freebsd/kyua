@@ -40,13 +40,11 @@ extern "C" {
 
 #include <atf-c++.hpp>
 
-#include "utils/datetime.hpp"
 #include "utils/env.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
 
-namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 
 
@@ -75,45 +73,6 @@ create_cookie(const atf::tests::tc* test_case, const char* directory,
 
 
 }  // anonymous namespace
-
-
-ATF_TEST_CASE_WITH_CLEANUP(block_body);
-ATF_TEST_CASE_HEAD(block_body)
-{
-    set_md_var("require.config", "control_dir monitor_pid");
-}
-ATF_TEST_CASE_BODY(block_body)
-{
-    const fs::path control_dir(get_config_var("control_dir"));
-
-    std::ofstream cookie((control_dir / "workdir").c_str());
-    cookie << fs::current_path().str() << "\n";
-    cookie.close();
-
-    int monitor_pid;
-    {
-        std::istringstream input(get_config_var("monitor_pid"));
-        input >> monitor_pid;
-    }
-
-    int signo;
-    {
-        std::istringstream input(get_config_var("signo"));
-        input >> signo;
-    }
-
-    ::sleep(1);
-    ::kill(monitor_pid, signo);
-    for (;;)
-        ::pause();
-}
-ATF_TEST_CASE_CLEANUP(block_body)
-{
-    const fs::path control_dir(get_config_var("control_dir"));
-
-    std::ofstream cookie((control_dir / "cleanup").c_str());
-    cookie.close();
-}
 
 
 ATF_TEST_CASE_WITH_CLEANUP(check_cleanup_workdir);
@@ -259,66 +218,16 @@ ATF_TEST_CASE_CLEANUP(timeout_cleanup)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(validate_env);
-ATF_TEST_CASE_BODY(validate_env)
+ATF_TEST_CASE_WITHOUT_HEAD(validate_isolation);
+ATF_TEST_CASE_BODY(validate_isolation)
 {
     ATF_REQUIRE(utils::getenv("HOME").get() == fs::current_path().str());
     ATF_REQUIRE(!utils::getenv("LANG"));
-    ATF_REQUIRE(!utils::getenv("LC_ALL"));
-    ATF_REQUIRE(!utils::getenv("LC_COLLATE"));
-    ATF_REQUIRE(!utils::getenv("LC_CTYPE"));
-    ATF_REQUIRE(!utils::getenv("LC_MESSAGES"));
-    ATF_REQUIRE(!utils::getenv("LC_MONETARY"));
-    ATF_REQUIRE(!utils::getenv("LC_NUMERIC"));
-    ATF_REQUIRE(!utils::getenv("LC_TIME"));
-    ATF_REQUIRE(utils::getenv("TZ").get() == "UTC");
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(validate_pgrp);
-ATF_TEST_CASE_BODY(validate_pgrp)
-{
-    if (::getpgrp() != ::getpid())
-        fail("Test case not running in its own process group");
-}
-
-
-ATF_TEST_CASE(validate_signal);
-ATF_TEST_CASE_HEAD(validate_signal)
-{
-    set_md_var("require.config", "signo");
-}
-ATF_TEST_CASE_BODY(validate_signal)
-{
-    std::istringstream iss(get_config_var("signo"));
-    int signo;
-    iss >> signo;
-    std::cout << "Delivering signal " << signo << "\n";
-    ::kill(::getpid(), signo);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(validate_timezone);
-ATF_TEST_CASE_BODY(validate_timezone)
-{
-    const datetime::timestamp fake = datetime::timestamp::from_values(
-        2011, 5, 13, 12, 20, 30);
-    ATF_REQUIRE_EQ("2011-05-13 12:20:30", fake.strftime("%Y-%m-%d %H:%M:%S"));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(validate_umask);
-ATF_TEST_CASE_BODY(validate_umask)
-{
-    const mode_t old_umask = ::umask(0111);
-    if (old_umask != 0022)
-        fail("umask not set to 0022 when running test case");
 }
 
 
 ATF_INIT_TEST_CASES(tcs)
 {
-    ATF_ADD_TEST_CASE(tcs, block_body);
     ATF_ADD_TEST_CASE(tcs, check_cleanup_workdir);
     ATF_ADD_TEST_CASE(tcs, check_unprivileged);
     ATF_ADD_TEST_CASE(tcs, crash);
@@ -329,9 +238,5 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, spawn_blocking_child);
     ATF_ADD_TEST_CASE(tcs, timeout_body);
     ATF_ADD_TEST_CASE(tcs, timeout_cleanup);
-    ATF_ADD_TEST_CASE(tcs, validate_env);
-    ATF_ADD_TEST_CASE(tcs, validate_pgrp);
-    ATF_ADD_TEST_CASE(tcs, validate_signal);
-    ATF_ADD_TEST_CASE(tcs, validate_timezone);
-    ATF_ADD_TEST_CASE(tcs, validate_umask);
+    ATF_ADD_TEST_CASE(tcs, validate_isolation);
 }

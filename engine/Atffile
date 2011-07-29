@@ -4,6 +4,7 @@ prop: test-suite = kyua
 
 tp: atf_iface
 tp: exceptions_test
+tp: isolation_test
 tp: plain_iface
 tp: results_test
 tp: test_case_test

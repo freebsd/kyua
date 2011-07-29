@@ -184,107 +184,6 @@ validate_broken(const char* reason_regexp, const results::base_result* actual)
 }
 
 
-/// Program a signal to be ignored.
-///
-/// If the programming fails, this terminates the test case.  After the handler
-/// is installed, this also delivers a signal to the caller process to ensure
-/// that the signal is effectively being ignored -- otherwise we probably crash,
-/// which would report the test case as broken.
-///
-/// \param signo The signal to be ignored.
-static void
-ignore_signal(const int signo)
-{
-    struct ::sigaction sa;
-    sa.sa_handler = SIG_IGN;
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags = 0;
-    ATF_REQUIRE(::sigaction(signo, &sa, NULL) != -1);
-
-    ::kill(::getpid(), signo);
-}
-
-
-/// Ensures that a signal handler is resetted in the test case.
-///
-/// \param tc A pointer to the caller test case.
-/// \param signo The signal to test.
-static void
-one_signal_test(const atf::tests::tc* tc, const int signo)
-{
-    PRE_MSG(signo != SIGKILL && signo != SIGSTOP, "The signal to test must be "
-            "programmable");
-
-    ignore_signal(signo);
-
-    plain_helper helper(tc, "validate_signal");
-    helper.set("SIGNO", signo);
-    const results::result_ptr result = helper.run();
-    validate_broken(
-        (F("Received signal %d") % signo).str().c_str(), result.get());
-}
-
-
-/// Functor for the child spawned by the interrupt test.
-class interrupt_child {
-    const atf::tests::tc* _atf_tc;
-    int _signo;
-
-public:
-    /// Constructs the new functor.
-    ///
-    /// \param test_case_ The test case running this functor.
-    explicit interrupt_child(const atf::tests::tc* atf_tc_,
-                             const int signo_) :
-        _atf_tc(atf_tc_),
-        _signo(signo_)
-    {
-    }
-
-    /// Executes the functor.
-    void
-    operator()(void)
-    {
-        plain_helper helper(_atf_tc, "block");
-        helper.set("CONTROL_DIR", fs::current_path());
-        helper.set("MONITOR_PID", ::getpid());
-        helper.set("SIGNO", _signo);
-        ATF_REQUIRE_THROW(engine::interrupted_error, helper.run());
-
-        std::ifstream workdir_cookie("workdir");
-        ATF_REQUIRE(workdir_cookie);
-
-        std::string workdir_str;
-        ATF_REQUIRE(std::getline(workdir_cookie, workdir_str).good());
-        std::cout << F("Work directory was: %s\n") % workdir_str;
-
-        bool ok = true;
-
-        if (fs::exists(fs::path(workdir_str))) {
-            std::cout << "Work directory was not cleaned\n";
-            ok = false;
-        }
-
-        std::exit(ok ? EXIT_SUCCESS : EXIT_FAILURE);
-    }
-};
-
-
-static void
-one_interrupt_check(const atf::tests::tc* test_case, const int signo)
-{
-    std::auto_ptr< process::child_with_files > child =
-        process::child_with_files::fork(interrupt_child(test_case, signo),
-                                        fs::path("out.txt"),
-                                        fs::path("err.txt"));
-    const process::status status = child->wait();
-    utils::cat_file("out: ", fs::path("out.txt"));
-    utils::cat_file("err: ", fs::path("err.txt"));
-    ATF_REQUIRE(status.exited());
-    ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
-}
-
-
 }  // anonymous namespace
 
 
@@ -383,73 +282,16 @@ ATF_TEST_CASE_BODY(run__kill_children)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(run__isolation_env);
-ATF_TEST_CASE_BODY(run__isolation_env)
+ATF_TEST_CASE_WITHOUT_HEAD(run__isolation);
+ATF_TEST_CASE_BODY(run__isolation)
 {
-    const plain_helper helper(this, "validate_env");
-    utils::setenv("TEST_CASE", "validate_env");
+    const plain_helper helper(this, "validate_isolation");
+    utils::setenv("TEST_CASE", "validate_isolation");
+    // Simple checks to make sure that isolate_process has been called.
     utils::setenv("HOME", "foobar");
     utils::setenv("LANG", "C");
-    utils::setenv("LC_ALL", "C");
-    utils::setenv("LC_COLLATE", "C");
-    utils::setenv("LC_CTYPE", "C");
-    utils::setenv("LC_MESSAGES", "C");
-    utils::setenv("LC_MONETARY", "C");
-    utils::setenv("LC_NUMERIC", "C");
-    utils::setenv("LC_TIME", "C");
-    utils::setenv("TZ", "EST+5");
     const results::result_ptr result = helper.run();
     compare_results(results::passed(), result.get());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(run__isolation_pgrp);
-ATF_TEST_CASE_BODY(run__isolation_pgrp)
-{
-    const plain_helper helper(this, "validate_pgrp");
-    const results::result_ptr result = helper.run();
-    compare_results(results::passed(), result.get());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(run__isolation_signals);
-ATF_TEST_CASE_BODY(run__isolation_signals)
-{
-    one_signal_test(this, SIGHUP);
-    one_signal_test(this, SIGUSR2);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(run__isolation_timezone);
-ATF_TEST_CASE_BODY(run__isolation_timezone)
-{
-    const plain_helper helper(this, "validate_timezone");
-    const results::result_ptr result = helper.run();
-    compare_results(results::passed(), result.get());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(run__isolation_umask);
-ATF_TEST_CASE_BODY(run__isolation_umask)
-{
-    const plain_helper helper(this, "validate_umask");
-    const mode_t old_umask = ::umask(0002);
-    const results::result_ptr result = helper.run();
-    compare_results(results::passed(), result.get());
-    ::umask(old_umask);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(run__isolation_workdir);
-ATF_TEST_CASE_BODY(run__isolation_workdir)
-{
-    const plain_helper helper(this, "create_cookie_in_workdir");
-    const results::result_ptr result = helper.run();
-    compare_results(results::passed(), result.get());
-
-    if (fs::exists(fs::path("cookie")))
-        fail("It seems that the test case was not executed in a separate "
-             "work directory");
 }
 
 
@@ -477,27 +319,6 @@ ATF_TEST_CASE_BODY(run__timeout)
 #endif
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(run__interrupt_body__sighup);
-ATF_TEST_CASE_BODY(run__interrupt_body__sighup)
-{
-    one_interrupt_check(this, SIGHUP);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(run__interrupt_body__sigint);
-ATF_TEST_CASE_BODY(run__interrupt_body__sigint)
-{
-    one_interrupt_check(this, SIGINT);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(run__interrupt_body__sigterm);
-ATF_TEST_CASE_BODY(run__interrupt_body__sigterm)
-{
-    one_interrupt_check(this, SIGTERM);
-}
-
-
 ATF_TEST_CASE_WITHOUT_HEAD(run__missing_test_program);
 ATF_TEST_CASE_BODY(run__missing_test_program)
 {
@@ -521,15 +342,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, run__current_directory);
     ATF_ADD_TEST_CASE(tcs, run__subdirectory);
     ATF_ADD_TEST_CASE(tcs, run__kill_children);
-    ATF_ADD_TEST_CASE(tcs, run__isolation_env);
-    ATF_ADD_TEST_CASE(tcs, run__isolation_pgrp);
-    ATF_ADD_TEST_CASE(tcs, run__isolation_signals);
-    ATF_ADD_TEST_CASE(tcs, run__isolation_timezone);
-    ATF_ADD_TEST_CASE(tcs, run__isolation_umask);
-    ATF_ADD_TEST_CASE(tcs, run__isolation_workdir);
+    ATF_ADD_TEST_CASE(tcs, run__isolation);
     //ATF_ADD_TEST_CASE(tcs, run__timeout);
-    ATF_ADD_TEST_CASE(tcs, run__interrupt_body__sighup);
-    ATF_ADD_TEST_CASE(tcs, run__interrupt_body__sigint);
-    ATF_ADD_TEST_CASE(tcs, run__interrupt_body__sigterm);
     ATF_ADD_TEST_CASE(tcs, run__missing_test_program);
 }

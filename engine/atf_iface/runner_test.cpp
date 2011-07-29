@@ -126,27 +126,6 @@ validate_broken(const char* reason_regexp, const results::base_result* actual)
 }
 
 
-/// Program a signal to be ignored.
-///
-/// If the programming fails, this terminates the test case.  After the handler
-/// is installed, this also delivers a signal to the caller process to ensure
-/// that the signal is effectively being ignored -- otherwise we probably crash,
-/// which would report the test case as broken.
-///
-/// \param signo The signal to be ignored.
-static void
-ignore_signal(const int signo)
-{
-    struct ::sigaction sa;
-    sa.sa_handler = SIG_IGN;
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags = 0;
-    ATF_REQUIRE(::sigaction(signo, &sa, NULL) != -1);
-
-    ::kill(::getpid(), signo);
-}
-
-
 /// Instantiates a test case.
 ///
 /// \param path The test program.
@@ -159,108 +138,6 @@ make_test_case(const atf_iface::test_program& test_program, const char* name,
                const engine::properties_map& props = engine::properties_map())
 {
     return atf_iface::test_case::from_properties(test_program, name, props);
-}
-
-
-/// Ensures that a signal handler is resetted in the test case.
-///
-/// \param tc A pointer to the caller test case.
-/// \param signo The signal to test.
-static void
-one_signal_test(const atf::tests::tc* tc, const int signo)
-{
-    PRE_MSG(signo != SIGKILL && signo != SIGSTOP, "The signal to test must be "
-            "programmable");
-
-    ignore_signal(signo);
-
-    const atf_iface::test_program test_program(
-        fs::path("runner_helpers"), fs::path(tc->get_config_var("srcdir")),
-        "the-suite");
-
-    user_files::config config = mock_config;
-    config.test_suites["the-suite"]["signo"] = F("%d") % signo;
-    results::result_ptr result = atf_iface::run_test_case(
-        make_test_case(test_program, "validate_signal"), config);
-    validate_broken(
-        (F("Premature exit: received signal %d") % signo).str().c_str(),
-        result.get());
-}
-
-
-/// Functor for the child spawned by the interrupt test.
-class interrupt_child {
-    const atf::tests::tc* _test_case;
-    int _signo;
-
-public:
-    /// Constructs the new functor.
-    ///
-    /// \param test_case_ The test case running this functor.
-    explicit interrupt_child(const atf::tests::tc* test_case_,
-                             const int signo_) :
-        _test_case(test_case_),
-        _signo(signo_)
-    {
-    }
-
-    /// Executes the functor.
-    void
-    operator()(void)
-    {
-        engine::properties_map metadata;
-        metadata["has.cleanup"] = "true";
-        user_files::config config = mock_config;
-        config.test_suites["the-suite"]["control_dir"] =
-            fs::current_path().str();
-        config.test_suites["the-suite"]["monitor_pid"] = F("%d") % ::getpid();
-        config.test_suites["the-suite"]["signo"] = F("%d") % _signo;
-
-        const atf_iface::test_program test_program(
-            fs::path("runner_helpers"),
-            fs::path(_test_case->get_config_var("srcdir")), "the-suite");
-
-        ATF_REQUIRE_THROW(
-            engine::interrupted_error,
-            atf_iface::run_test_case(make_test_case(test_program, "block_body",
-                                                    metadata), config));
-
-        std::ifstream workdir_cookie("workdir");
-        ATF_REQUIRE(workdir_cookie);
-
-        std::string workdir_str;
-        ATF_REQUIRE(std::getline(workdir_cookie, workdir_str).good());
-        std::cout << F("Work directory was: %s\n") % workdir_str;
-
-        bool ok = true;
-
-        if (fs::exists(fs::path(workdir_str))) {
-            std::cout << "Work directory was not cleaned\n";
-            ok = false;
-        }
-
-        if (!fs::exists(fs::path("cleanup"))) {
-            std::cout << "Cleanup not executed\n";
-            ok = false;
-        }
-
-        std::exit(ok ? EXIT_SUCCESS : EXIT_FAILURE);
-    }
-};
-
-
-static void
-one_interrupt_check(const atf::tests::tc* test_case, const int signo)
-{
-    std::auto_ptr< process::child_with_files > child =
-        process::child_with_files::fork(interrupt_child(test_case, signo),
-                                        fs::path("out.txt"),
-                                        fs::path("err.txt"));
-    const process::status status = child->wait();
-    utils::cat_file("out: ", fs::path("out.txt"));
-    utils::cat_file("err: ", fs::path("err.txt"));
-    ATF_REQUIRE(status.exited());
-    ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
 }
 
 
@@ -419,93 +296,19 @@ ATF_TEST_CASE_BODY(run_test_case__kill_children)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__isolation_env);
-ATF_TEST_CASE_BODY(run_test_case__isolation_env)
+ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__isolation);
+ATF_TEST_CASE_BODY(run_test_case__isolation)
 {
     const atf_iface::test_program test_program(
         fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
         "unit-tests");
 
+    // Simple checks to make sure that isolate_process has been called.
     utils::setenv("HOME", "foobar");
     utils::setenv("LANG", "C");
-    utils::setenv("LC_ALL", "C");
-    utils::setenv("LC_COLLATE", "C");
-    utils::setenv("LC_CTYPE", "C");
-    utils::setenv("LC_MESSAGES", "C");
-    utils::setenv("LC_MONETARY", "C");
-    utils::setenv("LC_NUMERIC", "C");
-    utils::setenv("LC_TIME", "C");
-    utils::setenv("TZ", "EST+5");
     results::result_ptr result = atf_iface::run_test_case(
-        make_test_case(test_program, "validate_env"), mock_config);
+        make_test_case(test_program, "validate_isolation"), mock_config);
     compare_results(results::passed(), result.get());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__isolation_pgrp);
-ATF_TEST_CASE_BODY(run_test_case__isolation_pgrp)
-{
-    const atf_iface::test_program test_program(
-        fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
-        "unit-tests");
-
-    results::result_ptr result = atf_iface::run_test_case(
-        make_test_case(test_program, "validate_pgrp"), mock_config);
-    compare_results(results::passed(), result.get());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__isolation_signals);
-ATF_TEST_CASE_BODY(run_test_case__isolation_signals)
-{
-    one_signal_test(this, SIGHUP);
-    one_signal_test(this, SIGUSR2);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__isolation_timezone);
-ATF_TEST_CASE_BODY(run_test_case__isolation_timezone)
-{
-    const atf_iface::test_program test_program(
-        fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
-        "unit-tests");
-
-    utils::setenv("TZ", "EST+5");
-    results::result_ptr result = atf_iface::run_test_case(
-        make_test_case(test_program, "validate_timezone"), mock_config);
-    compare_results(results::passed(), result.get());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__isolation_umask);
-ATF_TEST_CASE_BODY(run_test_case__isolation_umask)
-{
-    const atf_iface::test_program test_program(
-        fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
-        "unit-tests");
-
-    const mode_t old_umask = ::umask(0002);
-    results::result_ptr result = atf_iface::run_test_case(
-        make_test_case(test_program, "validate_umask"), mock_config);
-    compare_results(results::passed(), result.get());
-    ::umask(old_umask);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__isolation_workdir);
-ATF_TEST_CASE_BODY(run_test_case__isolation_workdir)
-{
-    const atf_iface::test_program test_program(
-        fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
-        "unit-tests");
-
-    results::result_ptr result = atf_iface::run_test_case(
-        make_test_case(test_program, "create_cookie_in_workdir"), mock_config);
-    compare_results(results::passed(), result.get());
-
-    if (fs::exists(fs::path("cookie")))
-        fail("It seems that the test case was not executed in a separate "
-             "work directory");
 }
 
 
@@ -757,27 +560,6 @@ ATF_TEST_CASE_BODY(run_test_case__timeout_cleanup)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__interrupt_body__sighup);
-ATF_TEST_CASE_BODY(run_test_case__interrupt_body__sighup)
-{
-    one_interrupt_check(this, SIGHUP);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__interrupt_body__sigint);
-ATF_TEST_CASE_BODY(run_test_case__interrupt_body__sigint)
-{
-    one_interrupt_check(this, SIGINT);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__interrupt_body__sigterm);
-ATF_TEST_CASE_BODY(run_test_case__interrupt_body__sigterm)
-{
-    one_interrupt_check(this, SIGTERM);
-}
-
-
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__missing_results_file);
 ATF_TEST_CASE_BODY(run_test_case__missing_results_file)
 {
@@ -820,12 +602,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, run_test_case__has_cleanup__false);
     ATF_ADD_TEST_CASE(tcs, run_test_case__has_cleanup__true);
     ATF_ADD_TEST_CASE(tcs, run_test_case__kill_children);
-    ATF_ADD_TEST_CASE(tcs, run_test_case__isolation_env);
-    ATF_ADD_TEST_CASE(tcs, run_test_case__isolation_pgrp);
-    ATF_ADD_TEST_CASE(tcs, run_test_case__isolation_signals);
-    ATF_ADD_TEST_CASE(tcs, run_test_case__isolation_timezone);
-    ATF_ADD_TEST_CASE(tcs, run_test_case__isolation_umask);
-    ATF_ADD_TEST_CASE(tcs, run_test_case__isolation_workdir);
+    ATF_ADD_TEST_CASE(tcs, run_test_case__isolation);
     ATF_ADD_TEST_CASE(tcs, run_test_case__allowed_architectures);
     ATF_ADD_TEST_CASE(tcs, run_test_case__allowed_platforms);
     ATF_ADD_TEST_CASE(tcs, run_test_case__required_configs);
@@ -837,9 +614,6 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, run_test_case__required_user__unprivileged__drop);
     ATF_ADD_TEST_CASE(tcs, run_test_case__timeout_body);
     ATF_ADD_TEST_CASE(tcs, run_test_case__timeout_cleanup);
-    ATF_ADD_TEST_CASE(tcs, run_test_case__interrupt_body__sighup);
-    ATF_ADD_TEST_CASE(tcs, run_test_case__interrupt_body__sigint);
-    ATF_ADD_TEST_CASE(tcs, run_test_case__interrupt_body__sigterm);
     ATF_ADD_TEST_CASE(tcs, run_test_case__missing_results_file);
     ATF_ADD_TEST_CASE(tcs, run_test_case__missing_test_program);
 }

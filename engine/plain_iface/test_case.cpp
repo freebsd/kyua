@@ -27,8 +27,6 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 extern "C" {
-#include <sys/stat.h>
-
 #include <signal.h>
 }
 
@@ -36,33 +34,19 @@ extern "C" {
 #include <iostream>
 
 #include "engine/exceptions.hpp"
+#include "engine/isolation.ipp"
 #include "engine/plain_iface/test_case.hpp"
 #include "engine/plain_iface/test_program.hpp"
 #include "engine/results.hpp"
-#include "utils/datetime.hpp"
-#include "utils/env.hpp"
-#include "utils/format/macros.hpp"
-#include "utils/fs/auto_cleaners.hpp"
-#include "utils/fs/exceptions.hpp"
 #include "utils/fs/operations.hpp"
-#include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
-#include "utils/process/children.ipp"
-#include "utils/process/exceptions.hpp"
-#include "utils/sanity.hpp"
-#include "utils/signals/exceptions.hpp"
-#include "utils/signals/misc.hpp"
-#include "utils/signals/programmer.hpp"
 
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace plain_iface = engine::plain_iface;
 namespace process = utils::process;
 namespace results = engine::results;
-namespace signals = utils::signals;
-namespace user_files = engine::user_files;
 
-using utils::none;
 using utils::optional;
 
 
@@ -71,64 +55,6 @@ namespace {
 
 /// Exit code returned when the exec of the test program fails.
 static int exec_failure_code = 120;
-
-
-/// Number of the stop signal.
-///
-/// This is set by interrupt_handler() when it receives a signal that ought to
-/// terminate the execution of the current test case.
-static int interrupted_signo = 0;
-
-
-/// Signal handler for termination signals.
-///
-/// \param signo The signal received.
-///
-/// \post interrupted_signo is set to the received signal.
-static void
-interrupt_handler(const int signo)
-{
-    const char* message = "[-- Signal caught; please wait for clean up --]\n";
-    ::write(STDERR_FILENO, message, std::strlen(message));
-    interrupted_signo = signo;
-
-    POST(interrupted_signo != 0);
-    POST(interrupted_signo == signo);
-}
-
-
-/// Syntactic sugar to validate if there is a pending signal.
-///
-/// \throw interrupted_error If there is a pending signal that ought to
-///     terminate the execution of the program.
-static void
-check_interrupt(void)
-{
-    LD("Checking for pending interrupt signals");
-    if (interrupted_signo != 0) {
-        LI("Interrupt pending; raising error to cause cleanup");
-        throw engine::interrupted_error(interrupted_signo);
-    }
-}
-
-
-/// Atomically creates a new work directory with a unique name.
-///
-/// The directory is created under the system-wide configured temporary
-/// directory as defined by the TMPDIR environment variable.
-///
-/// \return The path to the new work directory.
-///
-/// \throw fs::error If there is a problem creating the temporary directory.
-static fs::path
-create_work_directory(void)
-{
-    const char* tmpdir = std::getenv("TMPDIR");
-    if (tmpdir == NULL)
-        return fs::mkdtemp(fs::path("/tmp/kyua.XXXXXX"));
-    else
-        return fs::mkdtemp(fs::path(F("%s/kyua.XXXXXX") % tmpdir));
-}
 
 
 /// Formats the termination status of a process to be used with validate_result.
@@ -149,62 +75,6 @@ format_status(const process::status& status)
 }
 
 
-/// Isolates the current process from the rest of the system.
-///
-/// This is intended to be used right before executing a test program because it
-/// attempts to isolate the current process from the rest of the system.
-///
-/// By isolation, we understand:
-///
-/// * Change the cwd of the process to a known location that will be cleaned up
-///   afterwards by the runner monitor.
-/// * Reset a set of critical environment variables to known good values.
-/// * Reset the umask to a known value.
-/// * Reset the signal handlers.
-///
-/// \throw std::runtime_error If there is a problem setting up the process
-///     environment.
-static void
-isolate_process(const fs::path& cwd)
-{
-    // The utils::process library takes care of creating a process group for
-    // us.  Just ensure that is still true, or otherwise things will go pretty
-    // badly.
-    INV(::getpgrp() == ::getpid());
-
-    ::umask(0022);
-
-    for (int i = 0; i <= signals::last_signo; i++) {
-        try {
-            if (i != SIGKILL && i != SIGSTOP)
-                signals::reset(i);
-        } catch (const signals::system_error& e) {
-            // Just ignore errors trying to reset signals.  It might happen
-            // that we try to reset an immutable signal that we are not aware
-            // of, so we certainly do not want to make a big deal of it.
-        }
-    }
-
-    // TODO(jmmv): It might be better to do the opposite: just pass a good known
-    // set of variables to the child (aka HOME, PATH, ...).  But how do we
-    // determine this minimum set?
-    utils::unsetenv("LANG");
-    utils::unsetenv("LC_ALL");
-    utils::unsetenv("LC_COLLATE");
-    utils::unsetenv("LC_CTYPE");
-    utils::unsetenv("LC_MESSAGES");
-    utils::unsetenv("LC_MONETARY");
-    utils::unsetenv("LC_NUMERIC");
-    utils::unsetenv("LC_TIME");
-
-    utils::setenv("TZ", "UTC");
-
-    if (::chdir(cwd.c_str()) == -1)
-        throw std::runtime_error(F("Failed to enter work directory %s") % cwd);
-    utils::setenv("HOME", fs::current_path().str());
-}
-
-
 /// Functor to execute a test case in a subprocess.
 class execute_test_case {
     plain_iface::test_case _test_case;
@@ -218,7 +88,7 @@ class execute_test_case {
         const fs::path abs_test_program = test_program.is_absolute() ?
             test_program : test_program.to_absolute();
 
-        isolate_process(_work_directory);
+        engine::isolate_process(_work_directory);
 
         std::vector< std::string > args;
         try {
@@ -261,36 +131,6 @@ public:
 };
 
 
-/// Forks a subprocess and waits for its completion.
-///
-/// \param hook The code to execute in the subprocess.
-/// \param outfile The file that will receive the stdout output.
-/// \param errfile The file that will receive the stderr output.
-///
-/// \return The exit status of the process or none if the timeout expired.
-template< class Hook >
-optional< process::status >
-fork_and_wait(Hook hook, const fs::path& outfile, const fs::path& errfile)
-{
-    std::auto_ptr< process::child_with_files > child =
-        process::child_with_files::fork(hook, outfile, errfile);
-    try {
-        const datetime::delta timeout(60, 0);  // TODO(jmmv): Parametrize.
-        return utils::make_optional(child->wait(timeout));
-    } catch (const process::system_error& error) {
-        if (error.original_errno() == EINTR) {
-            (void)::kill(child->pid(), SIGKILL);
-            (void)child->wait();
-            check_interrupt();
-            UNREACHABLE;
-        } else
-            throw error;
-    } catch (const process::timeout_error& error) {
-        return none;
-    }
-}
-
-
 /// Converts the exit status of the test program to a result.
 ///
 /// \param maybe_status The exit status of the program, or none if it timed out.
@@ -319,94 +159,45 @@ calculate_result(const optional< process::status >& maybe_status)
 }
 
 
-/// Auxiliary function to execute a test case within a work directory.
-///
-/// This is an auxiliary function for run_test_case_safe that is protected from
-/// the reception of common termination signals.
-///
-/// \param test_case The test case to execute.
-/// \param workdir The directory in which the test case has to be run.
-///
-/// \return The result of the execution of the test case.
-///
-/// \throw interrupted_error If the execution has been interrupted by the user.
-static results::result_ptr
-run_test_case_safe_workdir(const plain_iface::test_case& test_case,
-                           const fs::path& workdir)
-{
-    const fs::path rundir(workdir / "run");
-    fs::mkdir(rundir, 0755);
+class run_test_case_safe {
+    const plain_iface::test_case& _test_case;
 
-    const fs::path result_file(workdir / "result.txt");
-
-    check_interrupt();
-
-    LI(F("Running test case '%s'") % test_case.identifier().str());
-    optional< process::status > body_status = fork_and_wait(
-        execute_test_case(test_case, rundir),
-        workdir / "stdout.txt", workdir / "stderr.txt");
-
-    check_interrupt();
-
-    return calculate_result(body_status);
-}
-
-
-/// Auxiliary function to execute a test case.
-///
-/// This is an auxiliary function for run_test_case that is protected from
-/// leaking exceptions.  Any exception not managed here is probably a mistake,
-/// but is correctly captured in the caller.
-///
-/// \param test_case The test case to execute.
-///
-/// \return The result of the execution of the test case.
-///
-/// \throw interrupted_error If the execution has been interrupted by the user.
-static results::result_ptr
-run_test_case_safe(const plain_iface::test_case& test_case)
-{
-    // These three separate objects are ugly.  Maybe improve in some way.
-    signals::programmer sighup(SIGHUP, interrupt_handler);
-    signals::programmer sigint(SIGINT, interrupt_handler);
-    signals::programmer sigterm(SIGTERM, interrupt_handler);
-
-    results::result_ptr result;
-
-    fs::auto_directory workdir(create_work_directory());
-    try {
-        check_interrupt();
-        result = run_test_case_safe_workdir(test_case, workdir.directory());
-
-        try {
-            workdir.cleanup();
-        } catch (const fs::error& e) {
-            if (result->good()) {
-                result = results::result_ptr(new results::broken(F(
-                    "Could not clean up test work directory: %s") % e.what()));
-            } else {
-                LW(F("Not reporting work directory clean up failure because "
-                     "the test is already broken: %s") % e.what());
-            }
-        }
-    } catch (const engine::interrupted_error& e) {
-        workdir.cleanup();
-
-        sighup.unprogram();
-        sigint.unprogram();
-        sigterm.unprogram();
-
-        throw e;
+public:
+    run_test_case_safe(const plain_iface::test_case& test_case_) :
+        _test_case(test_case_)
+    {
     }
 
-    sighup.unprogram();
-    sigint.unprogram();
-    sigterm.unprogram();
+    /// Auxiliary function to execute a test case within a work directory.
+    ///
+    /// This is an auxiliary function for run_test_case_safe that is protected from
+    /// the reception of common termination signals.
+    ///
+    /// \param test_case The test case to execute.
+    /// \param workdir The directory in which the test case has to be run.
+    ///
+    /// \return The result of the execution of the test case.
+    ///
+    /// \throw interrupted_error If the execution has been interrupted by the user.
+    results::result_ptr
+    operator()(const fs::path& workdir) const
+    {
+        const fs::path rundir(workdir / "run");
+        fs::mkdir(rundir, 0755);
 
-    check_interrupt();
+        engine::check_interrupt();
 
-    return result;
-}
+        LI(F("Running test case '%s'") % _test_case.identifier().str());
+        const datetime::delta timeout(60, 0);  // TODO(jmmv): Parametrize.
+        optional< process::status > body_status = engine::fork_and_wait(
+            execute_test_case(_test_case, rundir),
+            workdir / "stdout.txt", workdir / "stderr.txt", timeout);
+
+        engine::check_interrupt();
+
+        return calculate_result(body_status);
+    }
+};
 
 
 }  // anonymous namespace
@@ -450,7 +241,7 @@ plain_iface::test_case::do_run(const user_files::config& unused_config) const
 
     results::result_ptr result;
     try {
-        result = run_test_case_safe(*this);
+        result = engine::protected_run(run_test_case_safe(*this));
     } catch (const interrupted_error& e) {
         throw e;
     } catch (const std::exception& e) {

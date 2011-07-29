@@ -29,7 +29,6 @@
 extern "C" {
 #include <sys/stat.h>
 
-#include <signal.h>
 #include <unistd.h>
 }
 
@@ -38,13 +37,11 @@ extern "C" {
 #include <iostream>
 #include <sstream>
 
-#include "utils/datetime.hpp"
 #include "utils/env.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
 
-namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 
 using utils::optional;
@@ -62,44 +59,6 @@ fail(const char* str)
 
 
 }  // anonymous namespace
-
-
-static void
-test_block(void)
-{
-    const fs::path control_dir = fs::path(utils::getenv("CONTROL_DIR").get());
-
-    std::ofstream cookie((control_dir / "workdir").c_str());
-    cookie << fs::current_path().str() << "\n";
-    cookie.close();
-
-    int monitor_pid;
-    {
-        std::istringstream input(utils::getenv("MONITOR_PID").get());
-        input >> monitor_pid;
-    }
-
-    int signo;
-    {
-        std::istringstream input(utils::getenv("SIGNO").get());
-        input >> signo;
-    }
-
-    ::sleep(1);
-    ::kill(monitor_pid, signo);
-    for (;;)
-        ::pause();
-}
-
-
-static void
-test_create_cookie_in_workdir(void)
-{
-    std::ofstream file("cookie");
-    if (!file)
-        fail("Failed to create the cookie");
-    file.close();
-}
 
 
 static void
@@ -156,66 +115,12 @@ test_timeout(void)
 
 
 static void
-test_validate_env(void)
+test_validate_isolation(void)
 {
     if (utils::getenv("HOME").get() != fs::current_path().str())
         fail("HOME not reset");
     if (utils::getenv("LANG"))
         fail("LANG not unset");
-    if (utils::getenv("LC_ALL"))
-        fail("LC_ALL not unset");
-    if (utils::getenv("LC_COLLATE"))
-        fail("LC_COLLATE not unset");
-    if (utils::getenv("LC_CTYPE"))
-        fail("LC_CTYPE not unset");
-    if (utils::getenv("LC_MESSAGES"))
-        fail("LC_MESSAGES not unset");
-    if (utils::getenv("LC_MONETARY"))
-        fail("LC_MONETARY not unset");
-    if (utils::getenv("LC_NUMERIC"))
-        fail("LC_NUMERIC not unset");
-    if (utils::getenv("LC_TIME"))
-        fail("LC_TIME not unset");
-    if (utils::getenv("TZ").get() != "UTC")
-        fail("TZ not set to UTC");
-}
-
-
-static void
-test_validate_pgrp(void)
-{
-    if (::getpgrp() != ::getpid())
-        fail("Test case not running in its own process group");
-}
-
-
-static void
-test_validate_signal(void)
-{
-    std::istringstream iss(utils::getenv("SIGNO").get());
-    int signo;
-    iss >> signo;
-    std::cout << "Delivering signal " << signo << "\n";
-    ::kill(::getpid(), signo);
-}
-
-
-static void
-test_validate_timezone(void)
-{
-    const datetime::timestamp fake = datetime::timestamp::from_values(
-        2011, 5, 13, 12, 20, 30);
-    if ("2011-05-13 12:20:30" != fake.strftime("%Y-%m-%d %H:%M:%S"))
-        fail("Invalid defaut TZ");
-}
-
-
-static void
-test_validate_umask(void)
-{
-    const mode_t old_umask = ::umask(0111);
-    if (old_umask != 0022)
-        fail("umask not set to 0022 when running test case");
 }
 
 
@@ -235,11 +140,7 @@ main(int argc, char* argv[])
     }
     const std::string& test_case = test_case_env.get();
 
-    if (test_case == "block")
-        test_block();
-    else if (test_case == "create_cookie_in_workdir")
-        test_create_cookie_in_workdir();
-    else if (test_case == "crash")
+    if (test_case == "crash")
         test_crash();
     else if (test_case == "fail")
         test_fail();
@@ -249,16 +150,8 @@ main(int argc, char* argv[])
         test_spawn_blocking_child();
     else if (test_case == "timeout")
         test_timeout();
-    else if (test_case == "validate_env")
-        test_validate_env();
-    else if (test_case == "validate_pgrp")
-        test_validate_pgrp();
-    else if (test_case == "validate_signal")
-        test_validate_signal();
-    else if (test_case == "validate_timezone")
-        test_validate_timezone();
-    else if (test_case == "validate_umask")
-        test_validate_umask();
+    else if (test_case == "validate_isolation")
+        test_validate_isolation();
     else {
         std::cerr << "Unknown test case";
         return EXIT_FAILURE;
