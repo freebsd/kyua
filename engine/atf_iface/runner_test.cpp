@@ -67,10 +67,99 @@ namespace user_files = engine::user_files;
 namespace {
 
 
-/// Fake configuration.
-static const user_files::config mock_config(
-    "mock-architecture", "mock-platform", utils::none,
-    user_files::test_suites_map());
+/// Simplifies the execution of the helper test cases.
+class atf_helper {
+    const atf::tests::tc* _atf_tc;
+    fs::path _binary_path;
+    fs::path _root;
+    std::string _name;
+    engine::properties_map _metadata;
+    user_files::config _config;
+
+public:
+    /// Constructs a new helper.
+    ///
+    /// \param atf_tc A pointer to the calling test case.  Needed to obtain
+    ///     run-time configuration variables.
+    /// \param name The name of the helper to run.
+    atf_helper(const atf::tests::tc* atf_tc, const char* name) :
+        _atf_tc(atf_tc),
+        _binary_path("runner_helpers"),
+        _root(atf_tc->get_config_var("srcdir")),
+        _name(name),
+        _config("mock-architecture", "mock-platform", utils::none,
+                user_files::test_suites_map())
+    {
+    }
+
+    /// Provides raw access to the run-time configuration.
+    ///
+    /// To override test-suite-specific variables, use set_config() as it
+    /// abstracts away the name of the fake test suite.
+    ///
+    /// \returns A reference to the test case configuration.
+    user_files::config&
+    config(void)
+    {
+        return _config;
+    }
+
+    /// Sets a test-suite-specific configuration variable for the helper.
+    ///
+    /// \param variable The name of the environment variable to set.
+    /// \param value The value of the variable; must be convertible to a string.
+    template< typename T >
+    void
+    set_config(const char* variable, const T& value)
+    {
+        _config.test_suites["the-suite"][variable] = F("%s") % value;
+    }
+
+    /// Sets a metadata variable for the helper.
+    ///
+    /// \param variable The name of the environment variable to set.
+    /// \param value The value of the variable; must be convertible to a string.
+    template< typename T >
+    void
+    set_metadata(const char* variable, const T& value)
+    {
+        _metadata[variable] = F("%s") % value;
+    }
+
+    /// Places the helper in a different location.
+    ///
+    /// This prepares the helper to be run from a different location than the
+    /// source directory so that the runtime execution can be validated.
+    ///
+    /// \param new_binary_path The new path to the binary, relative to the test
+    ///     suite root.
+    /// \param new_root The new test suite root.
+    ///
+    /// \pre The directory holding the target test program must exist.
+    ///     Otherwise, the relocation of the binary will fail.
+    void
+    move(const char* new_binary_path, const char* new_root)
+    {
+        _binary_path = fs::path(new_binary_path);
+        _root = fs::path(new_root);
+
+        const fs::path src_path = fs::path(_atf_tc->get_config_var("srcdir")) /
+            "runner_helpers";
+        const fs::path new_path = _root / _binary_path;
+        ATF_REQUIRE(
+            ::symlink(src_path.c_str(), new_path.c_str()) != -1);
+    }
+
+    /// Runs the helper.
+    results::result_ptr
+    run(void) const
+    {
+        const atf_iface::test_program test_program(_binary_path, _root,
+                                                   "the-suite");
+        return atf_iface::test_case::from_properties(
+            test_program, _name, _metadata).run(_config);
+    }
+};
 
 
 /// Compares two test results and fails the test case if they differ.
@@ -126,34 +215,15 @@ validate_broken(const char* reason_regexp, const results::base_result* actual)
 }
 
 
-/// Instantiates a test case.
-///
-/// \param path The test program.
-/// \param name The test case name.
-/// \param props The raw properties to pass to the test case.
-///
-/// \return The new test case.
-static atf_iface::test_case
-make_test_case(const atf_iface::test_program& test_program, const char* name,
-               const engine::properties_map& props = engine::properties_map())
-{
-    return atf_iface::test_case::from_properties(test_program, name, props);
-}
-
-
 }  // anonymous namespace
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__current_directory);
 ATF_TEST_CASE_BODY(run_test_case__current_directory)
 {
-    const atf_iface::test_program test_program(
-        fs::path("program"), fs::path("."), "unit-tests");
-
-    ATF_REQUIRE(::symlink((fs::path(get_config_var("srcdir")) /
-                           "runner_helpers").c_str(), "program") != -1);
-    results::result_ptr result = atf_iface::run_test_case(
-        make_test_case(test_program, "pass"), mock_config);
+    atf_helper helper(this, "pass");
+    helper.move("program", ".");
+    const results::result_ptr result = helper.run();
     compare_results(results::passed(), result.get());
 }
 
@@ -161,16 +231,11 @@ ATF_TEST_CASE_BODY(run_test_case__current_directory)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__subdirectory);
 ATF_TEST_CASE_BODY(run_test_case__subdirectory)
 {
-    const atf_iface::test_program test_program(
-        fs::path("dir2/program"), fs::path("dir1"), "unit-tests");
-
+    atf_helper helper(this, "pass");
     ATF_REQUIRE(::mkdir("dir1", 0755) != -1);
     ATF_REQUIRE(::mkdir("dir1/dir2", 0755) != -1);
-    ATF_REQUIRE(::symlink((fs::path(get_config_var("srcdir")) /
-                           "runner_helpers").c_str(),
-                          "dir1/dir2/program") != -1);
-    results::result_ptr result = atf_iface::run_test_case(
-        make_test_case(test_program, "pass"), mock_config);
+    helper.move("dir2/program", "dir1");
+    const results::result_ptr result = helper.run();
     compare_results(results::passed(), result.get());
 }
 
@@ -178,14 +243,9 @@ ATF_TEST_CASE_BODY(run_test_case__subdirectory)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__config_variables);
 ATF_TEST_CASE_BODY(run_test_case__config_variables)
 {
-    const atf_iface::test_program test_program(
-        fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
-        "the-suite");
-
-    user_files::config config = mock_config;
-    config.test_suites["the-suite"]["control_dir"] = fs::current_path().str();
-    results::result_ptr result = atf_iface::run_test_case(
-        make_test_case(test_program, "create_cookie_in_control_dir"), config);
+    atf_helper helper(this, "create_cookie_in_control_dir");
+    helper.set_config("control_dir", fs::current_path());
+    const results::result_ptr result = helper.run();
     compare_results(results::passed(), result.get());
 
     if (!fs::exists(fs::path("cookie")))
@@ -197,17 +257,10 @@ ATF_TEST_CASE_BODY(run_test_case__config_variables)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__cleanup_shares_workdir);
 ATF_TEST_CASE_BODY(run_test_case__cleanup_shares_workdir)
 {
-    const atf_iface::test_program test_program(
-        fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
-        "the-suite");
-
-    engine::properties_map metadata;
-    metadata["has.cleanup"] = "true";
-    user_files::config config = mock_config;
-    config.test_suites["the-suite"]["control_dir"] = fs::current_path().str();
-    results::result_ptr result = atf_iface::run_test_case(
-        make_test_case(test_program, "check_cleanup_workdir", metadata),
-        config);
+    atf_helper helper(this, "check_cleanup_workdir");
+    helper.set_metadata("has.cleanup", "true");
+    helper.set_config("control_dir", fs::current_path());
+    const results::result_ptr result = helper.run();
     compare_results(results::skipped("cookie created"), result.get());
 
     if (fs::exists(fs::path("missing_cookie")))
@@ -223,17 +276,10 @@ ATF_TEST_CASE_BODY(run_test_case__cleanup_shares_workdir)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__has_cleanup__false);
 ATF_TEST_CASE_BODY(run_test_case__has_cleanup__false)
 {
-    const atf_iface::test_program test_program(
-        fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
-        "the-suite");
-
-    engine::properties_map metadata;
-    metadata["has.cleanup"] = "false";
-    user_files::config config = mock_config;
-    config.test_suites["the-suite"]["control-dir"] = fs::current_path().str();
-    results::result_ptr result = atf_iface::run_test_case(
-        make_test_case(test_program, "create_cookie_from_cleanup", metadata),
-        config);
+    atf_helper helper(this, "create_cookie_from_cleanup");
+    helper.set_metadata("has.cleanup", "false");
+    helper.set_config("control_dir", fs::current_path());
+    const results::result_ptr result = helper.run();
     compare_results(results::passed(), result.get());
 
     if (fs::exists(fs::path("cookie")))
@@ -245,17 +291,10 @@ ATF_TEST_CASE_BODY(run_test_case__has_cleanup__false)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__has_cleanup__true);
 ATF_TEST_CASE_BODY(run_test_case__has_cleanup__true)
 {
-    const atf_iface::test_program test_program(
-        fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
-        "the-suite");
-
-    engine::properties_map metadata;
-    metadata["has.cleanup"] = "true";
-    user_files::config config = mock_config;
-    config.test_suites["the-suite"]["control_dir"] = fs::current_path().str();
-    results::result_ptr result = atf_iface::run_test_case(
-        make_test_case(test_program, "create_cookie_from_cleanup", metadata),
-        config);
+    atf_helper helper(this, "create_cookie_from_cleanup");
+    helper.set_metadata("has.cleanup", "true");
+    helper.set_config("control_dir", fs::current_path());
+    const results::result_ptr result = helper.run();
     compare_results(results::passed(), result.get());
 
     if (!fs::exists(fs::path("cookie")))
@@ -267,15 +306,9 @@ ATF_TEST_CASE_BODY(run_test_case__has_cleanup__true)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__kill_children);
 ATF_TEST_CASE_BODY(run_test_case__kill_children)
 {
-    const atf_iface::test_program test_program(
-        fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
-        "the-suite");
-
-    engine::properties_map metadata;
-    user_files::config config = mock_config;
-    config.test_suites["the-suite"]["control_dir"] = fs::current_path().str();
-    results::result_ptr result = atf_iface::run_test_case(
-        make_test_case(test_program, "spawn_blocking_child", metadata), config);
+    atf_helper helper(this, "spawn_blocking_child");
+    helper.set_config("control_dir", fs::current_path());
+    const results::result_ptr result = helper.run();
     compare_results(results::passed(), result.get());
 
     if (!fs::exists(fs::path("pid")))
@@ -299,15 +332,11 @@ ATF_TEST_CASE_BODY(run_test_case__kill_children)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__isolation);
 ATF_TEST_CASE_BODY(run_test_case__isolation)
 {
-    const atf_iface::test_program test_program(
-        fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
-        "unit-tests");
-
+    atf_helper helper(this, "validate_isolation");
     // Simple checks to make sure that isolate_process has been called.
     utils::setenv("HOME", "foobar");
     utils::setenv("LANG", "C");
-    results::result_ptr result = atf_iface::run_test_case(
-        make_test_case(test_program, "validate_isolation"), mock_config);
+    const results::result_ptr result = helper.run();
     compare_results(results::passed(), result.get());
 }
 
@@ -315,18 +344,11 @@ ATF_TEST_CASE_BODY(run_test_case__isolation)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__allowed_architectures);
 ATF_TEST_CASE_BODY(run_test_case__allowed_architectures)
 {
-    const atf_iface::test_program test_program(
-        fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
-        "unit-tests");
-
-    engine::properties_map metadata;
-    metadata["require.arch"] = "i386 x86_64";
-    user_files::config config = mock_config;
-    config.architecture = "powerpc";
-    config.platform = "";
-    results::result_ptr result = atf_iface::run_test_case(
-        make_test_case(test_program, "create_cookie_in_control_dir", metadata),
-        config);
+    atf_helper helper(this, "create_cookie_in_control_dir");
+    helper.set_metadata("require.arch", "i386 x86_64");
+    helper.config().architecture = "powerpc";
+    helper.config().platform = "";
+    const results::result_ptr result = helper.run();
     compare_results(results::skipped(
        "Current architecture 'powerpc' not supported"),
         result.get());
@@ -340,18 +362,11 @@ ATF_TEST_CASE_BODY(run_test_case__allowed_architectures)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__allowed_platforms);
 ATF_TEST_CASE_BODY(run_test_case__allowed_platforms)
 {
-    const atf_iface::test_program test_program(
-        fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
-        "unit-tests");
-
-    engine::properties_map metadata;
-    metadata["require.machine"] = "i386 amd64";
-    user_files::config config = mock_config;
-    config.architecture = "";
-    config.platform = "macppc";
-    results::result_ptr result = atf_iface::run_test_case(
-        make_test_case(test_program, "create_cookie_in_control_dir", metadata),
-        config);
+    atf_helper helper(this, "create_cookie_in_control_dir");
+    helper.set_metadata("require.machine", "i386 amd64");
+    helper.config().architecture = "";
+    helper.config().platform = "macppc";
+    const results::result_ptr result = helper.run();
     compare_results(results::skipped(
        "Current platform 'macppc' not supported"),
         result.get());
@@ -365,18 +380,11 @@ ATF_TEST_CASE_BODY(run_test_case__allowed_platforms)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__required_configs);
 ATF_TEST_CASE_BODY(run_test_case__required_configs)
 {
-    const atf_iface::test_program test_program(
-        fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
-        "the-suite");
-
-    engine::properties_map metadata;
-    metadata["require.config"] = "used-var";
-    user_files::config config = mock_config;
-    config.test_suites["the-suite"]["control_dir"] = fs::current_path().str();
-    config.test_suites["the-suite"]["unused-var"] = "value";
-    results::result_ptr result = atf_iface::run_test_case(
-        make_test_case(test_program, "create_cookie_in_control_dir", metadata),
-        config);
+    atf_helper helper(this, "create_cookie_in_control_dir");
+    helper.set_metadata("require.config", "used-var");
+    helper.set_config("control_dir", fs::current_path());
+    helper.set_config("unused-var", "value");
+    const results::result_ptr result = helper.run();
     compare_results(results::skipped(
         "Required configuration property 'used-var' not defined"),
         result.get());
@@ -390,15 +398,9 @@ ATF_TEST_CASE_BODY(run_test_case__required_configs)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__required_programs);
 ATF_TEST_CASE_BODY(run_test_case__required_programs)
 {
-    const atf_iface::test_program test_program(
-        fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
-        "unit-tests");
-
-    engine::properties_map metadata;
-    metadata["require.progs"] = "/non-existent/program";
-    results::result_ptr result = atf_iface::run_test_case(
-        make_test_case(test_program, "create_cookie_in_control_dir", metadata),
-        mock_config);
+    atf_helper helper(this, "create_cookie_in_control_dir");
+    helper.set_metadata("require.progs", "/non-existent/program");
+    const results::result_ptr result = helper.run();
     compare_results(results::skipped(
         "Required program '/non-existent/program' not found"), result.get());
 
@@ -415,15 +417,9 @@ ATF_TEST_CASE_HEAD(run_test_case__required_user__root__ok)
 }
 ATF_TEST_CASE_BODY(run_test_case__required_user__root__ok)
 {
-    const atf_iface::test_program test_program(
-        fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
-        "unit-tests");
-
-    engine::properties_map metadata;
-    metadata["require.user"] = "root";
-    results::result_ptr result = atf_iface::run_test_case(
-        make_test_case(test_program, "create_cookie_in_workdir", metadata),
-        mock_config);
+    atf_helper helper(this, "create_cookie_in_workdir");
+    helper.set_metadata("require.user", "root");
+    const results::result_ptr result = helper.run();
     ATF_REQUIRE(passwd::current_user().is_root());
     compare_results(results::passed(), result.get());
 }
@@ -436,15 +432,9 @@ ATF_TEST_CASE_HEAD(run_test_case__required_user__root__skip)
 }
 ATF_TEST_CASE_BODY(run_test_case__required_user__root__skip)
 {
-    const atf_iface::test_program test_program(
-        fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
-        "unit-tests");
-
-    engine::properties_map metadata;
-    metadata["require.user"] = "root";
-    results::result_ptr result = atf_iface::run_test_case(
-        make_test_case(test_program, "create_cookie_in_workdir", metadata),
-        mock_config);
+    atf_helper helper(this, "create_cookie_in_workdir");
+    helper.set_metadata("require.user", "root");
+    const results::result_ptr result = helper.run();
     ATF_REQUIRE(!passwd::current_user().is_root());
     compare_results(results::skipped("Requires root privileges"), result.get());
 }
@@ -457,17 +447,10 @@ ATF_TEST_CASE_HEAD(run_test_case__required_user__unprivileged__ok)
 }
 ATF_TEST_CASE_BODY(run_test_case__required_user__unprivileged__ok)
 {
-    const atf_iface::test_program test_program(
-        fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
-        "unit-tests");
-
-    engine::properties_map metadata;
-    metadata["require.user"] = "unprivileged";
-    user_files::config config = mock_config;
-    config.unprivileged_user = utils::none;
-    results::result_ptr result = atf_iface::run_test_case(
-        make_test_case(test_program, "create_cookie_in_workdir", metadata),
-        config);
+    atf_helper helper(this, "create_cookie_in_workdir");
+    helper.set_metadata("require.user", "unprivileged");
+    helper.config().unprivileged_user = utils::none;
+    const results::result_ptr result = helper.run();
     compare_results(results::passed(), result.get());
 }
 
@@ -479,17 +462,10 @@ ATF_TEST_CASE_HEAD(run_test_case__required_user__unprivileged__skip)
 }
 ATF_TEST_CASE_BODY(run_test_case__required_user__unprivileged__skip)
 {
-    const atf_iface::test_program test_program(
-        fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
-        "unit-tests");
-
-    engine::properties_map metadata;
-    metadata["require.user"] = "unprivileged";
-    user_files::config config = mock_config;
-    config.unprivileged_user = utils::none;
-    results::result_ptr result = atf_iface::run_test_case(
-        make_test_case(test_program, "create_cookie_in_workdir", metadata),
-        config);
+    atf_helper helper(this, "create_cookie_in_workdir");
+    helper.set_metadata("require.user", "unprivileged");
+    helper.config().unprivileged_user = utils::none;
+    const results::result_ptr result = helper.run();
     compare_results(results::skipped(
         "Requires an unprivileged user but the unprivileged-user "
         "configuration variable is not defined"), result.get());
@@ -504,17 +480,11 @@ ATF_TEST_CASE_HEAD(run_test_case__required_user__unprivileged__drop)
 }
 ATF_TEST_CASE_BODY(run_test_case__required_user__unprivileged__drop)
 {
-    const atf_iface::test_program test_program(
-        fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
-        "unit-tests");
-
-    engine::properties_map metadata;
-    metadata["require.user"] = "unprivileged";
-    user_files::config config = mock_config;
-    config.unprivileged_user = passwd::find_user_by_name(get_config_var(
-        "unprivileged-user"));
-    results::result_ptr result = atf_iface::run_test_case(
-        make_test_case(test_program, "check_unprivileged", metadata), config);
+    atf_helper helper(this, "check_unprivileged");
+    helper.set_metadata("require.user", "unprivileged");
+    helper.config().unprivileged_user = passwd::find_user_by_name(
+        get_config_var("unprivileged-user"));
+    const results::result_ptr result = helper.run();
     compare_results(results::passed(), result.get());
 }
 
@@ -522,16 +492,10 @@ ATF_TEST_CASE_BODY(run_test_case__required_user__unprivileged__drop)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__timeout_body);
 ATF_TEST_CASE_BODY(run_test_case__timeout_body)
 {
-    const atf_iface::test_program test_program(
-        fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
-        "the-suite");
-
-    engine::properties_map metadata;
-    metadata["timeout"] = "1";
-    user_files::config config = mock_config;
-    config.test_suites["the-suite"]["control_dir"] = fs::current_path().str();
-    results::result_ptr result = atf_iface::run_test_case(
-        make_test_case(test_program, "timeout_body", metadata), config);
+    atf_helper helper(this, "timeout_body");
+    helper.set_metadata("timeout", "1");
+    helper.set_config("control_dir", fs::current_path());
+    const results::result_ptr result = helper.run();
     validate_broken("Test case body timed out", result.get());
 
     if (fs::exists(fs::path("cookie")))
@@ -542,18 +506,11 @@ ATF_TEST_CASE_BODY(run_test_case__timeout_body)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__timeout_cleanup);
 ATF_TEST_CASE_BODY(run_test_case__timeout_cleanup)
 {
-    const atf_iface::test_program test_program(
-        fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
-        "the-suite");
-
-    engine::properties_map metadata;
-    metadata["has.cleanup"] = "true";
-    metadata["timeout"] = "1";
-    user_files::config config = mock_config;
-    config.test_suites["the-suite"]["control_dir"] = fs::current_path().str();
-    results::result_ptr result = atf_iface::run_test_case(
-        make_test_case(test_program, "timeout_cleanup", metadata), config);
-    validate_broken("Test case cleanup timed out", result.get());
+    atf_helper helper(this, "timeout_cleanup");
+    helper.set_metadata("has.cleanup", "true");
+    helper.set_metadata("timeout", "1");
+    helper.set_config("control_dir", fs::current_path());
+    const results::result_ptr result = helper.run();
 
     if (fs::exists(fs::path("cookie")))
         fail("It seems that the test case was not killed after it timed out");
@@ -563,12 +520,8 @@ ATF_TEST_CASE_BODY(run_test_case__timeout_cleanup)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__missing_results_file);
 ATF_TEST_CASE_BODY(run_test_case__missing_results_file)
 {
-    const atf_iface::test_program test_program(
-        fs::path("runner_helpers"), fs::path(get_config_var("srcdir")),
-        "unit-tests");
-
-    results::result_ptr result = atf_iface::run_test_case(
-        make_test_case(test_program, "crash"), mock_config);
+    atf_helper helper(this, "crash");
+    const results::result_ptr result = helper.run();
     validate_broken("Premature exit: received signal", result.get());
 }
 
@@ -576,14 +529,11 @@ ATF_TEST_CASE_BODY(run_test_case__missing_results_file)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__missing_test_program);
 ATF_TEST_CASE_BODY(run_test_case__missing_test_program)
 {
-    const atf_iface::test_program test_program(
-        fs::path("runner_helpers"), fs::path("dir"), "unit-tests");
-
-    ATF_REQUIRE(::symlink((fs::path(get_config_var("srcdir")) /
-                           "runner_helpers").c_str(), "runner_helpers") != -1);
+    atf_helper helper(this, "crash");
     ATF_REQUIRE(::mkdir("dir", 0755) != -1);
-    results::result_ptr result = atf_iface::run_test_case(
-        make_test_case(test_program, "passed"), mock_config);
+    helper.move("runner_helpers", "dir");
+    ATF_REQUIRE(::unlink("dir/runner_helpers") != -1);
+    const results::result_ptr result = helper.run();
     validate_broken("Failed to execute", result.get());
 }
 
