@@ -115,8 +115,9 @@ ATF_TEST_CASE_BODY(some_plain_test_programs__ok)
     std::ofstream output("test.lua");
     ATF_REQUIRE(output);
     output << "syntax('kyuafile', 1)\n";
+    output << "test_suite('the-default')\n";
     output << "plain_test_program{name='test2'}\n";
-    output << "plain_test_program{name='test1'}\n";
+    output << "plain_test_program{name='test1', test_suite='overriden'}\n";
     output.close();
 
     lua::state state;
@@ -125,9 +126,13 @@ ATF_TEST_CASE_BODY(some_plain_test_programs__ok)
     lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[1].name == 'test2')");
     lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[1].interface == "
                    "'plain')");
+    lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[1].test_suite == "
+                   "'the-default')");
     lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[2].name == 'test1')");
     lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[2].interface == "
                    "'plain')");
+    lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[2].test_suite == "
+                   "'overriden')");
 }
 
 
@@ -137,8 +142,8 @@ ATF_TEST_CASE_BODY(some_plain_test_programs__fail)
     std::ofstream output("test.lua");
     ATF_REQUIRE(output);
     output << "syntax('kyuafile', 1)\n";
-    output << "plain_test_program{name='test1'}\n";
-    output << "plain_test_program{name='/a/foo'}\n";
+    output << "plain_test_program{name='test1', test_suite='a'}\n";
+    output << "plain_test_program{name='/a/foo', test_suite='b'}\n";
     output.close();
 
     lua::state state;

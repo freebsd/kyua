@@ -251,6 +251,68 @@ ATF_TEST_CASE_BODY(get_test_programs__bad_value)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__integration);
+ATF_TEST_CASE_BODY(kyuafile__load__integration)
+{
+    {
+        std::ofstream file("config");
+        file << "syntax('kyuafile', 1)\n";
+        file << "test_suite('one-suite')\n";
+        file << "atf_test_program{name='1st'}\n";
+        file << "atf_test_program{name='2nd', test_suite='first'}\n";
+        file << "plain_test_program{name='3rd'}\n";
+        file << "plain_test_program{name='4th', test_suite='second'}\n";
+        file << "include('dir/config')\n";
+        file.close();
+    }
+
+    {
+        fs::mkdir(fs::path("dir"), 0755);
+        std::ofstream file("dir/config");
+        file << "syntax('kyuafile', 1)\n";
+        file << "atf_test_program{name='1st', test_suite='other-suite'}\n";
+        file.close();
+    }
+
+    utils::create_file(fs::path("1st"));
+    utils::create_file(fs::path("2nd"));
+    utils::create_file(fs::path("3rd"));
+    utils::create_file(fs::path("4th"));
+    utils::create_file(fs::path("dir/1st"));
+
+    const user_files::kyuafile suite = user_files::kyuafile::load(
+        fs::path("config"));
+    ATF_REQUIRE_EQ(fs::path("."), suite.root());
+    ATF_REQUIRE_EQ(5, suite.test_programs().size());
+
+    ATF_REQUIRE(typeid(atf_iface::test_program) ==
+                typeid(*suite.test_programs()[0]));
+    ATF_REQUIRE_EQ(fs::path("1st"), suite.test_programs()[0]->relative_path());
+    ATF_REQUIRE_EQ("one-suite", suite.test_programs()[0]->test_suite_name());
+
+    ATF_REQUIRE(typeid(atf_iface::test_program) ==
+                typeid(*suite.test_programs()[1]));
+    ATF_REQUIRE_EQ(fs::path("2nd"), suite.test_programs()[1]->relative_path());
+    ATF_REQUIRE_EQ("first", suite.test_programs()[1]->test_suite_name());
+
+    ATF_REQUIRE(typeid(plain_iface::test_program) ==
+                typeid(*suite.test_programs()[2]));
+    ATF_REQUIRE_EQ(fs::path("3rd"), suite.test_programs()[2]->relative_path());
+    ATF_REQUIRE_EQ("one-suite", suite.test_programs()[2]->test_suite_name());
+
+    ATF_REQUIRE(typeid(plain_iface::test_program) ==
+                typeid(*suite.test_programs()[3]));
+    ATF_REQUIRE_EQ(fs::path("4th"), suite.test_programs()[3]->relative_path());
+    ATF_REQUIRE_EQ("second", suite.test_programs()[3]->test_suite_name());
+
+    ATF_REQUIRE(typeid(atf_iface::test_program) ==
+                typeid(*suite.test_programs()[4]));
+    ATF_REQUIRE_EQ(fs::path("dir/1st"),
+                   suite.test_programs()[4]->relative_path());
+    ATF_REQUIRE_EQ("other-suite", suite.test_programs()[4]->test_suite_name());
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__current_directory);
 ATF_TEST_CASE_BODY(kyuafile__load__current_directory)
 {
@@ -424,6 +486,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, get_test_programs__invalid);
     ATF_ADD_TEST_CASE(tcs, get_test_programs__bad_value);
 
+    ATF_ADD_TEST_CASE(tcs, kyuafile__load__integration);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__current_directory);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__other_directory);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__test_program_not_basename);

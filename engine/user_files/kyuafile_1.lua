@@ -142,6 +142,12 @@ end
 --     The allowed keys and their types are: name:string.
 function plain_test_program(in_properties)
    local properties = copy_table(in_properties)
+   if not properties.test_suite then
+      assert(TEST_SUITE, "No global test suite defined and no test suite " ..
+             "provided in the test program definition (cannot add test " ..
+             "program '" .. properties.name .. "')")
+      properties.test_suite = TEST_SUITE
+   end
    assert(fs.basename(properties.name) == properties.name,
           string.format("Test program '%s' cannot contain path components",
                         properties.name))
