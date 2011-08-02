@@ -36,15 +36,7 @@ namespace plain_iface = engine::plain_iface;
 using utils::optional;
 
 
-namespace {
-
-
-/// The default timeout value for test cases that do not provide one.
-/// TODO(jmmv): We should not be doing this; see issue 5 for details.
-static datetime::delta default_timeout(300, 0);
-
-
-}  // anonymous namespace
+datetime::delta engine::plain_iface::detail::default_timeout(300, 0);
 
 
 /// Constructs a new plain test program.
@@ -61,7 +53,8 @@ plain_iface::test_program::test_program(
     const std::string& test_suite_name_,
     const optional< datetime::delta >& optional_timeout_) :
     base_test_program(binary_, root_, test_suite_name_),
-    _timeout(optional_timeout_ ? optional_timeout_.get() : default_timeout)
+    _timeout(optional_timeout_ ?
+             optional_timeout_.get() : detail::default_timeout)
 {
 }
 

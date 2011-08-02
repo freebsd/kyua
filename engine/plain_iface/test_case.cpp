@@ -41,6 +41,7 @@ extern "C" {
 #include "utils/fs/operations.hpp"
 #include "utils/optional.ipp"
 
+namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace plain_iface = engine::plain_iface;
 namespace process = utils::process;
@@ -225,7 +226,18 @@ plain_iface::test_case::test_case(const base_test_program& test_program_) :
 engine::properties_map
 plain_iface::test_case::get_all_properties(void) const
 {
-    return properties_map();
+    properties_map props;
+
+    const plain_iface::test_program* test_program =
+        dynamic_cast< const plain_iface::test_program* >(&this->test_program());
+
+    const datetime::delta& timeout = test_program->timeout();
+    if (timeout != detail::default_timeout) {
+        INV(timeout.useconds == 0);
+        props["timeout"] = F("%d") % timeout.seconds;
+    }
+
+    return props;
 }
 
 

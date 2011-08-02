@@ -207,14 +207,29 @@ ATF_TEST_CASE_BODY(ctor)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(all_properties);
-ATF_TEST_CASE_BODY(all_properties)
+ATF_TEST_CASE_WITHOUT_HEAD(all_properties__none);
+ATF_TEST_CASE_BODY(all_properties__none)
 {
     const plain_iface::test_program test_program(fs::path("program"),
                                                  fs::path("root"),
                                                  "test-suite", none);
     const plain_iface::test_case test_case(test_program);
     ATF_REQUIRE(test_case.all_properties().empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(all_properties__all);
+ATF_TEST_CASE_BODY(all_properties__all)
+{
+    const plain_iface::test_program test_program(
+        fs::path("program"), fs::path("root"), "test-suite",
+        utils::make_optional(datetime::delta(123, 0)));
+    const plain_iface::test_case test_case(test_program);
+
+    engine::properties_map exp_properties;
+    exp_properties["timeout"] = "123";
+
+    ATF_REQUIRE(exp_properties == test_case.all_properties());
 }
 
 
@@ -332,7 +347,8 @@ ATF_TEST_CASE_BODY(run__missing_test_program)
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, ctor);
-    ATF_ADD_TEST_CASE(tcs, all_properties);
+    ATF_ADD_TEST_CASE(tcs, all_properties__none);
+    ATF_ADD_TEST_CASE(tcs, all_properties__all);
 
     ATF_ADD_TEST_CASE(tcs, run__result_pass);
     ATF_ADD_TEST_CASE(tcs, run__result_fail);

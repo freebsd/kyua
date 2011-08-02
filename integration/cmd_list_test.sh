@@ -332,9 +332,11 @@ verbose_flag_body() {
 syntax("kyuafile", 1)
 test_suite("integration-suite-1")
 atf_test_program{name="simple_all_pass"}
+plain_test_program{name="i_am_plain", timeout=654}
 include("subdir/Kyuafile")
 EOF
     utils_cp_helper simple_all_pass .
+    touch i_am_plain
 
     mkdir subdir
     cat >subdir/Kyuafile <<EOF
@@ -347,6 +349,8 @@ EOF
     cat >expout <<EOF
 simple_all_pass:pass (integration-suite-1)
 simple_all_pass:skip (integration-suite-1)
+i_am_plain:main (integration-suite-1)
+    timeout = 654
 subdir/metadata:no_properties (integration-suite-2)
 subdir/metadata:one_property (integration-suite-2)
     descr = Does nothing but has one metadata property
