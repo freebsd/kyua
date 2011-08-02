@@ -48,6 +48,131 @@ namespace plain_iface = engine::plain_iface;
 namespace user_files = engine::user_files;
 
 
+namespace {
+
+
+/// Gets a string field from a Lua table.
+///
+/// \pre state(-1) contains a table.
+///
+/// \param state The Lua state.
+/// \param field The name of the field to query.
+/// \param error The error message to raise when an error condition is
+///     encoutered.
+///
+/// \return The string value from the table.
+///
+/// \raises std::runtime_error If there is any problem accessing the table.
+static inline std::string
+get_table_string(lua::state& state, const char* field, const std::string& error)
+{
+    PRE(state.is_table());
+
+    lua::stack_cleaner cleaner(state);
+
+    state.push_string(field);
+    state.get_table();
+    if (!state.is_string())
+        throw std::runtime_error(error);
+    const std::string str(state.to_string());
+    state.pop(1);
+    return str;
+}
+
+
+/// Gets a test program path name from a Lua test program definition.
+///
+/// \pre state(-1) contains a table representing a test program.
+///
+/// \param state The Lua state.
+/// \param root The root location of the test suite.
+///
+/// \returns The path to the test program relative to root.
+///
+/// \raises std::runtime_error If the table definition is invalid or if the test
+///     program does not exist.
+static fs::path
+get_path(lua::state& state, const fs::path& root)
+{
+    const fs::path path = fs::path(get_table_string(
+        state, "name", "Found non-string name for test program"));
+    if (path.is_absolute())
+        throw std::runtime_error(F("Got unexpected absolute path for test "
+                                   "program '%s'") % path);
+
+    if (!fs::exists(root / path))
+        throw std::runtime_error(F("Non-existent test program '%s'") % path);
+
+    return path;
+}
+
+
+/// Gets a test suite name from a Lua test program definition.
+///
+/// \pre state(-1) contains a table representing a test program.
+///
+/// \param state The Lua state.
+/// \param path The path to the test program; used for error reporting purposes.
+///
+/// \returns The name of the test suite the test program belongs to.
+///
+/// \raises std::runtime_error If the table definition is invalid.
+static std::string
+get_test_suite(lua::state& state, const fs::path& path)
+{
+    return get_table_string(
+        state, "test_suite", F("Found non-string name for test suite of "
+                               "test program '%s'") % path);
+}
+
+
+/// Gets the data of an ATF test program from the Lua state.
+///
+/// \pre stack(-1) contains a table describing a test program.
+///
+/// \param state The Lua state.
+/// \param root The directory where the initial Kyuafile is located.
+///
+/// throw std::runtime_error If there is any problem in the input data.
+/// throw fs::error If there is an invalid path in the input data.
+static engine::test_program_ptr
+get_atf_test_program(lua::state& state, const fs::path& root)
+{
+    PRE(state.is_table());
+
+    const fs::path path = get_path(state, root);
+    const std::string test_suite = get_test_suite(state, path);
+
+    return engine::test_program_ptr(new atf_iface::test_program(
+        path, root, test_suite));
+}
+
+
+/// Gets the data of a plain test program from the Lua state.
+///
+/// \pre stack(-1) contains a table describing a test program.
+///
+/// \param state The Lua state.
+/// \param root The directory where the initial Kyuafile is located.
+///
+/// throw std::runtime_error If there is any problem in the input data.
+/// throw fs::error If there is an invalid path in the input data.
+static engine::test_program_ptr
+get_plain_test_program(lua::state& state, const fs::path& root)
+{
+    PRE(state.is_table());
+
+    const fs::path path = get_path(state, root);
+    const std::string test_suite = get_test_suite(state, path);
+
+    return engine::test_program_ptr(new plain_iface::test_program(
+        path, root, test_suite));
+}
+
+
+}  // anonymous namespace
+
+
 // These namespace blocks are here to help Doxygen match the functions to their
 // prototypes...
 namespace engine {
@@ -64,69 +189,21 @@ namespace detail {
 ///
 /// throw std::runtime_error If there is any problem in the input data.
 /// throw fs::error If there is an invalid path in the input data.
-template< class TestProgram >
-test_program_ptr
-get_one_test_program(lua::state& state, const fs::path& root)
-{
-    PRE(state.is_table());
-
-    lua::stack_cleaner cleaner(state);
-
-    state.push_string("name");
-    state.get_table();
-    if (!state.is_string())
-        throw std::runtime_error("Found non-string name for test program");
-    const fs::path path(state.to_string());
-    if (path.is_absolute())
-        throw std::runtime_error(F("Got unexpected absolute path for test "
-                                   "program '%s'") % path);
-    state.pop(1);
-
-    state.push_string("test_suite");
-    state.get_table();
-    if (!state.is_string())
-        throw std::runtime_error(F("Found non-string name for test suite of "
-                                   "test program '%s'") % path);
-    const std::string test_suite(state.to_string());
-    state.pop(1);
-
-    if (!fs::exists(root / path))
-        throw std::runtime_error(F("Non-existent test program '%s'") % path);
-
-    return test_program_ptr(new TestProgram(path, root, test_suite));
-}
-
-
-/// Gets the data of a test program from the Lua state.
-///
-/// \pre stack(-1) contains a table describing a test program.
-///
-/// \param state The Lua state.
-/// \param root The directory where the initial Kyuafile is located.
-///
-/// throw std::runtime_error If there is any problem in the input data.
-/// throw fs::error If there is an invalid path in the input data.
 test_program_ptr
 get_test_program(lua::state& state, const fs::path& root)
 {
     PRE(state.is_table());
 
-    lua::stack_cleaner cleaner(state);
+    const std::string interface = get_table_string(
+        state, "interface", "Missing test case interface");
 
-    state.push_string("interface");
-    state.get_table();
-    if (!state.is_string())
-        throw std::runtime_error("Missing test case interface");
-    const std::string iface_name(state.to_string());
-    state.pop(1);
-
-    if (iface_name == "atf")
-        return get_one_test_program< atf_iface::test_program >(state, root);
-    else if (iface_name == "plain")
-        return get_one_test_program< plain_iface::test_program >(state, root);
+    if (interface == "atf")
+        return get_atf_test_program(state, root);
+    else if (interface == "plain")
+        return get_plain_test_program(state, root);
     else
         throw std::runtime_error(F("Unsupported test interface '%s'") %
-                                 iface_name);
+                                 interface);
 }
 
 
