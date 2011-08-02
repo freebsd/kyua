@@ -45,15 +45,20 @@ extern "C" {
 #include "utils/env.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/optional.ipp"
 #include "utils/process/children.ipp"
 #include "utils/sanity.hpp"
 #include "utils/test_utils.hpp"
 
+namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace plain_iface = engine::plain_iface;
 namespace process = utils::process;
 namespace results = engine::results;
 namespace user_files = engine::user_files;
+
+using utils::none;
+using utils::optional;
 
 
 namespace {
@@ -64,6 +69,7 @@ class plain_helper {
     const atf::tests::tc* _atf_tc;
     fs::path _binary_path;
     fs::path _root;
+    optional< datetime::delta > _timeout;
 
 public:
     /// Constructs a new helper.
@@ -71,10 +77,12 @@ public:
     /// \param atf_tc A pointer to the calling test case.  Needed to obtain
     ///     run-time configuration variables.
     /// \param name The name of the helper to run.
-    plain_helper(const atf::tests::tc* atf_tc, const char* name) :
+    plain_helper(const atf::tests::tc* atf_tc, const char* name,
+                 const optional< datetime::delta > timeout = none) :
         _atf_tc(atf_tc),
         _binary_path("test_case_helpers"),
-        _root(atf_tc->get_config_var("srcdir"))
+        _root(atf_tc->get_config_var("srcdir")),
+        _timeout(timeout)
     {
         utils::setenv("TEST_CASE", name);
     }
@@ -124,7 +132,7 @@ public:
     run(const user_files::config& config = user_files::config::defaults()) const
     {
         const plain_iface::test_program test_program(_binary_path, _root,
-                                                     "unit-tests");
+                                                     "unit-tests", _timeout);
         const plain_iface::test_case test_case(test_program);
         return test_case.run(config);
     }
@@ -192,7 +200,7 @@ ATF_TEST_CASE_BODY(ctor)
 {
     const plain_iface::test_program test_program(fs::path("program"),
                                                  fs::path("root"),
-                                                 "test-suite");
+                                                 "test-suite", none);
     const plain_iface::test_case test_case(test_program);
     ATF_REQUIRE(&test_program == &test_case.test_program());
     ATF_REQUIRE_EQ("main", test_case.name());
@@ -204,7 +212,7 @@ ATF_TEST_CASE_BODY(all_properties)
 {
     const plain_iface::test_program test_program(fs::path("program"),
                                                  fs::path("root"),
-                                                 "test-suite");
+                                                 "test-suite", none);
     const plain_iface::test_case test_case(test_program);
     ATF_REQUIRE(test_case.all_properties().empty());
 }
@@ -295,28 +303,18 @@ ATF_TEST_CASE_BODY(run__isolation)
 }
 
 
-#if 0
-// This needs the TODO regarding the parametrization of the timeout in test_case
-// fixed first.
 ATF_TEST_CASE_WITHOUT_HEAD(run__timeout);
 ATF_TEST_CASE_BODY(run__timeout)
 {
-    const plain_iface::test_program test_program(
-        fs::path("test_case_helpers"), fs::path(get_config_var("srcdir")),
-        "the-suite");
-
-    //engine::properties_map metadata;
-    //metadata["timeout"] = "1";
-    utils::setenv("TEST_CASE", "timeout");
-    utils::setenv("CONTROL_DIR", fs::current_path().str());
-    results::result_ptr result = plain_iface::test_case(
-        test_program).run(user_files::config::defaults());
+    plain_helper helper(this, "timeout",
+                        utils::make_optional(datetime::delta(1, 0)));
+    helper.set("CONTROL_DIR", fs::current_path());
+    const results::result_ptr result = helper.run();
     validate_broken("Test case timed out", result.get());
 
     if (fs::exists(fs::path("cookie")))
         fail("It seems that the test case was not killed after it timed out");
 }
-#endif
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(run__missing_test_program);
@@ -343,6 +341,6 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, run__subdirectory);
     ATF_ADD_TEST_CASE(tcs, run__kill_children);
     ATF_ADD_TEST_CASE(tcs, run__isolation);
-    //ATF_ADD_TEST_CASE(tcs, run__timeout);
+    ATF_ADD_TEST_CASE(tcs, run__timeout);
     ATF_ADD_TEST_CASE(tcs, run__missing_test_program);
 }

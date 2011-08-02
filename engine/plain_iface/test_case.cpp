@@ -41,7 +41,6 @@ extern "C" {
 #include "utils/fs/operations.hpp"
 #include "utils/optional.ipp"
 
-namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace plain_iface = engine::plain_iface;
 namespace process = utils::process;
@@ -187,11 +186,15 @@ public:
 
         engine::check_interrupt();
 
+        const plain_iface::test_program* test_program =
+            dynamic_cast< const plain_iface::test_program* >(
+                &_test_case.test_program());
+
         LI(F("Running test case '%s'") % _test_case.identifier().str());
-        const datetime::delta timeout(60, 0);  // TODO(jmmv): Parametrize.
         optional< process::status > body_status = engine::fork_and_wait(
             execute_test_case(_test_case, rundir),
-            workdir / "stdout.txt", workdir / "stderr.txt", timeout);
+            workdir / "stdout.txt", workdir / "stderr.txt",
+            test_program->timeout());
 
         engine::check_interrupt();
 

@@ -33,6 +33,8 @@
 #define ENGINE_PLAIN_IFACE_TEST_PROGRAM_HPP
 
 #include "engine/test_program.hpp"
+#include "utils/datetime.hpp"
+#include "utils/optional.hpp"
 
 namespace engine {
 namespace plain_iface {
@@ -40,11 +42,16 @@ namespace plain_iface {
 
 /// Representation of a plain test program.
 class test_program : public base_test_program {
+    utils::datetime::delta _timeout;
+
     test_cases_vector load_test_cases(void) const;
 
 public:
     test_program(const utils::fs::path&, const utils::fs::path&,
-                 const std::string&);
+                 const std::string&,
+                 const utils::optional< utils::datetime::delta >&);
+
+    const utils::datetime::delta& timeout(void) const;
 };
 
 

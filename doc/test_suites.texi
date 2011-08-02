@@ -59,6 +59,7 @@ test_suite('first')
 atf_test_program@{name='foo_test'@}
 atf_test_program@{name='bar_test', test_suite='second'@}
 plain_test_program@{name='legacy_test'@}
+plain_test_program@{name='legacy2_test', timeout=30@}
 
 -- Recurse into any subdirectories that may have other tests.
 include('dir1/Kyuafile')

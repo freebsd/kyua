@@ -39,13 +39,18 @@
 #include "utils/lua/exceptions.hpp"
 #include "utils/lua/operations.hpp"
 #include "utils/lua/wrap.ipp"
+#include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 
 namespace atf_iface = engine::atf_iface;
+namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace lua = utils::lua;
 namespace plain_iface = engine::plain_iface;
 namespace user_files = engine::user_files;
+
+using utils::none;
+using utils::optional;
 
 
 namespace {
@@ -162,11 +167,27 @@ get_plain_test_program(lua::state& state, const fs::path& root)
 {
     PRE(state.is_table());
 
+    lua::stack_cleaner cleaner(state);
+
     const fs::path path = get_path(state, root);
     const std::string test_suite = get_test_suite(state, path);
 
+    optional< datetime::delta > timeout;
+    {
+        state.push_string("timeout");
+        state.get_table();
+        if (state.is_nil())
+            timeout = none;
+        else if (state.is_number())
+            timeout = datetime::delta(state.to_integer(), 0);
+        else
+            throw std::runtime_error(F("Non-integer value provided as timeout "
+                                       "for test program '%s'") % path);
+        state.pop(1);
+    }
+
     return engine::test_program_ptr(new plain_iface::test_program(
-        path, root, test_suite));
+        path, root, test_suite, timeout));
 }
 
 

@@ -30,20 +30,38 @@
 
 #include "engine/plain_iface/test_program.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/optional.ipp"
 
+namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace plain_iface = engine::plain_iface;
 
+using utils::none;
 
-ATF_TEST_CASE_WITHOUT_HEAD(ctor);
-ATF_TEST_CASE_BODY(ctor)
+
+ATF_TEST_CASE_WITHOUT_HEAD(ctor__no_timeout);
+ATF_TEST_CASE_BODY(ctor__no_timeout)
 {
     const plain_iface::test_program test_program(fs::path("program"),
                                                  fs::path("root"),
-                                                 "test-suite");
+                                                 "test-suite", none);
     ATF_REQUIRE_EQ("program", test_program.relative_path().str());
     ATF_REQUIRE_EQ("root", test_program.root().str());
     ATF_REQUIRE_EQ("test-suite", test_program.test_suite_name());
+    ATF_REQUIRE(datetime::delta(300, 0) == test_program.timeout());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(ctor__with_timeout);
+ATF_TEST_CASE_BODY(ctor__with_timeout)
+{
+    const plain_iface::test_program test_program(
+        fs::path("program"), fs::path("root"), "test-suite",
+        utils::make_optional(datetime::delta(10, 3)));
+    ATF_REQUIRE_EQ("program", test_program.relative_path().str());
+    ATF_REQUIRE_EQ("root", test_program.root().str());
+    ATF_REQUIRE_EQ("test-suite", test_program.test_suite_name());
+    ATF_REQUIRE(datetime::delta(10, 3) == test_program.timeout());
 }
 
 
@@ -52,7 +70,7 @@ ATF_TEST_CASE_BODY(test_cases)
 {
     const plain_iface::test_program test_program(fs::path("program"),
                                                  fs::path("root"),
-                                                 "test-suite");
+                                                 "test-suite", none);
     const engine::test_cases_vector test_cases(test_program.test_cases());
     ATF_REQUIRE_EQ(1, test_cases.size());
 
@@ -64,6 +82,7 @@ ATF_TEST_CASE_BODY(test_cases)
 
 ATF_INIT_TEST_CASES(tcs)
 {
-    ATF_ADD_TEST_CASE(tcs, ctor);
+    ATF_ADD_TEST_CASE(tcs, ctor__no_timeout);
+    ATF_ADD_TEST_CASE(tcs, ctor__with_timeout);
     ATF_ADD_TEST_CASE(tcs, test_cases);
 }

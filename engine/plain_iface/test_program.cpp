@@ -28,8 +28,23 @@
 
 #include "engine/plain_iface/test_case.hpp"
 #include "engine/plain_iface/test_program.hpp"
+#include "utils/optional.ipp"
 
+namespace datetime = utils::datetime;
 namespace plain_iface = engine::plain_iface;
+
+using utils::optional;
+
+
+namespace {
+
+
+/// The default timeout value for test cases that do not provide one.
+/// TODO(jmmv): We should not be doing this; see issue 5 for details.
+static datetime::delta default_timeout(300, 0);
+
+
+}  // anonymous namespace
 
 
 /// Constructs a new plain test program.
@@ -37,11 +52,16 @@ namespace plain_iface = engine::plain_iface;
 /// \param binary_ The name of the test program binary relative to root_.
 /// \param root_ The root of the test suite containing the test program.
 /// \param test_suite_name_ The name of the test suite this program belongs to.
+/// \param optional_timeout_ The timeout for the test program's only single test
+///     case.  If none, a default timeout is used.
 ///
-plain_iface::test_program::test_program(const utils::fs::path& binary_,
-                                        const utils::fs::path& root_,
-                                        const std::string& test_suite_name_) :
-    base_test_program(binary_, root_, test_suite_name_)
+plain_iface::test_program::test_program(
+    const utils::fs::path& binary_,
+    const utils::fs::path& root_,
+    const std::string& test_suite_name_,
+    const optional< datetime::delta >& optional_timeout_) :
+    base_test_program(binary_, root_, test_suite_name_),
+    _timeout(optional_timeout_ ? optional_timeout_.get() : default_timeout)
 {
 }
 
@@ -55,4 +75,17 @@ plain_iface::test_program::load_test_cases(void) const
     test_cases_vector test_cases;
     test_cases.push_back(engine::test_case_ptr(new test_case(*this)));
     return test_cases;
+}
+
+
+/// Returns the timeout of the test program.
+///
+/// Note that this is always defined, even in those cases where the test program
+/// is constructed with a 'none' timeout.
+///
+/// \return The timeout value.
+const datetime::delta&
+plain_iface::test_program::timeout(void) const
+{
+    return _timeout;
 }
