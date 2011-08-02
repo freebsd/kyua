@@ -31,7 +31,8 @@ AT_INIT([bootstrapping tests])
 
 m4_define([GUESS_TOPDIR], {
     old=$(pwd)
-    while test $(pwd) != '/' -a ! -e ./Makefile; do
+    cd $(dirname @S|@0)
+    while test $(pwd) != '/' -a ! -e engine/atf_iface/Kyuafile; do
         cd ..
     done
     topdir=$(pwd)

@@ -26,6 +26,11 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+tests_bootstrapdir = $(pkgtestsdir)/bootstrap
+
+tests_bootstrap_DATA = bootstrap/Kyuafile
+EXTRA_DIST += $(tests_bootstrap_DATA)
+
 DISTCLEANFILES = bootstrap/atconfig \
                  bootstrap/testsuite.lineno \
                  bootstrap/testsuite.log
@@ -34,7 +39,8 @@ distclean-local: distclean-testsuite
 distclean-testsuite:
 	-rm -rf bootstrap/testsuite.dir
 
-EXTRA_DIST += bootstrap/testsuite \
+EXTRA_DIST += bootstrap/Kyuafile \
+              bootstrap/testsuite \
               bootstrap/package.m4 \
               bootstrap/testsuite.at
 
@@ -48,6 +54,7 @@ EXTRA_DIST += bootstrap/testsuite \
 	echo 'm4_define(AT_PACKAGE_BUGREPORT, @PACKAGE_BUGREPORT@)'; \
 	} >$(srcdir)/bootstrap/package.m4
 
+tests_bootstrap_SCRIPTS = bootstrap/testsuite
 @target_srcdir@bootstrap/testsuite: $(srcdir)/bootstrap/testsuite.at \
                                     @target_srcdir@bootstrap/package.m4
 	autom4te --language=Autotest -I $(srcdir) \
