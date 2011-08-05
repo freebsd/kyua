@@ -29,6 +29,7 @@
 extern "C" {
 #include <sys/stat.h>
 
+#include <signal.h>
 #include <unistd.h>
 }
 

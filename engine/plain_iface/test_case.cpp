@@ -228,10 +228,10 @@ plain_iface::test_case::get_all_properties(void) const
 {
     properties_map props;
 
-    const plain_iface::test_program* test_program =
+    const plain_iface::test_program* plain_test_program =
         dynamic_cast< const plain_iface::test_program* >(&this->test_program());
 
-    const datetime::delta& timeout = test_program->timeout();
+    const datetime::delta& timeout = plain_test_program->timeout();
     if (timeout != detail::default_timeout) {
         INV(timeout.useconds == 0);
         props["timeout"] = F("%d") % timeout.seconds;

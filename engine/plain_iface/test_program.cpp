@@ -65,9 +65,9 @@ plain_iface::test_program::test_program(
 engine::test_cases_vector
 plain_iface::test_program::load_test_cases(void) const
 {
-    test_cases_vector test_cases;
-    test_cases.push_back(engine::test_case_ptr(new test_case(*this)));
-    return test_cases;
+    test_cases_vector loaded_test_cases;
+    loaded_test_cases.push_back(engine::test_case_ptr(new test_case(*this)));
+    return loaded_test_cases;
 }
 
 
