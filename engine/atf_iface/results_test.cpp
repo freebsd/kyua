@@ -30,6 +30,7 @@ extern "C" {
 #include <signal.h>
 }
 
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <sstream>

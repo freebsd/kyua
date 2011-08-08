@@ -33,17 +33,22 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include <cstring>
+
 #include "engine/exceptions.hpp"
 #include "engine/isolation.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/logging/macros.hpp"
+#include "utils/optional.ipp"
 #include "utils/signals/exceptions.hpp"
 #include "utils/signals/misc.hpp"
 
 namespace fs = utils::fs;
 namespace signals = utils::signals;
+
+using utils::optional;
 
 
 namespace {
@@ -70,11 +75,11 @@ static int interrupted_signo = 0;
 fs::path
 engine::detail::create_work_directory(void)
 {
-    const char* tmpdir = std::getenv("TMPDIR");
-    if (tmpdir == NULL)
+    const optional< std::string > tmpdir = utils::getenv("TMPDIR");
+    if (!tmpdir)
         return fs::mkdtemp(fs::path("/tmp/kyua.XXXXXX"));
     else
-        return fs::mkdtemp(fs::path(F("%s/kyua.XXXXXX") % tmpdir));
+        return fs::mkdtemp(fs::path(F("%s/kyua.XXXXXX") % tmpdir.get()));
 }
 
 

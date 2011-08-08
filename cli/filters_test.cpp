@@ -61,7 +61,7 @@ mkid(const char* test_program, const char* test_case)
 ATF_TEST_CASE_WITHOUT_HEAD(test_filter__public_fields);
 ATF_TEST_CASE_BODY(test_filter__public_fields)
 {
-    const cli::test_filter::test_filter filter(fs::path("foo/bar"), "baz");
+    const cli::test_filter filter(fs::path("foo/bar"), "baz");
     ATF_REQUIRE_EQ(fs::path("foo/bar"), filter.test_program);
     ATF_REQUIRE_EQ("baz", filter.test_case);
 }
@@ -70,7 +70,7 @@ ATF_TEST_CASE_BODY(test_filter__public_fields)
 ATF_TEST_CASE_WITHOUT_HEAD(test_filter__parse__ok);
 ATF_TEST_CASE_BODY(test_filter__parse__ok)
 {
-    const cli::test_filter::test_filter filter(cli::test_filter::parse("foo"));
+    const cli::test_filter filter(cli::test_filter::parse("foo"));
     ATF_REQUIRE_EQ(fs::path("foo"), filter.test_program);
     ATF_REQUIRE(filter.test_case.empty());
 }

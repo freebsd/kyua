@@ -37,6 +37,7 @@ extern "C" {
 
 #include <cerrno>
 #include <cstdlib>
+#include <cstring>
 #include <iostream>
 
 #include "utils/format/macros.hpp"
@@ -112,7 +113,7 @@ install_one_crash_handler(const int signo)
     if (::sigaction(signo, &sa, NULL) == -1) {
         const int original_errno = errno;
         LW(F("Could not install crash handler for signal %d: %s") %
-           signo % ::strerror(original_errno));
+           signo % std::strerror(original_errno));
     } else
         LD(F("Installed crash handler for signal %d") % signo);
 }

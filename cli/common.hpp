@@ -32,7 +32,7 @@
 #if !defined(CLI_COMMON_HPP)
 #define CLI_COMMON_HPP
 
-#include <utility>
+#include <memory>
 
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.hpp"

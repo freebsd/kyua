@@ -31,6 +31,7 @@ extern "C" {
 }
 
 #include <cerrno>
+#include <cstring>
 #include <stdexcept>
 #include <string>
 
