@@ -30,12 +30,11 @@
 #include <utility>
 
 #include "cli/cmd_test.hpp"
-#include "cli/common.hpp"
+#include "cli/common.ipp"
 #include "engine/results.hpp"
 #include "engine/test_program.hpp"
 #include "engine/user_files/config.hpp"
 #include "engine/user_files/kyuafile.hpp"
-#include "utils/cmdline/base_command.ipp"
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/cmdline/ui.hpp"
@@ -104,13 +103,10 @@ run_test_program(const engine::base_test_program& test_program,
 
 
 /// Default constructor for cmd_test.
-cmd_test::cmd_test(void) : cmdline::base_command(
-    "test", "[test-program ...]", 0, -1,
-    "Run tests")
+cmd_test::cmd_test(void) : cli_command(
+    "test", "[test-program ...]", 0, -1, "Run tests")
 {
-    add_option(config_option);
     add_option(kyuafile_option);
-    add_option(variable_option);
 }
 
 
@@ -118,13 +114,14 @@ cmd_test::cmd_test(void) : cmdline::base_command(
 ///
 /// \param ui Object to interact with the I/O of the program.
 /// \param cmdline Representation of the command line to the subcommand.
+/// \param config The runtime configuration of the program.
 ///
 /// \return 0 if all tests passed, 1 otherwise.
 int
-cmd_test::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
+cmd_test::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
+              const user_files::config& config)
 {
     const cli::filters_state filters(cmdline.arguments());
-    const user_files::config config = load_config(cmdline);
     const user_files::kyuafile kyuafile = load_kyuafile(cmdline);
 
     unsigned long good_count = 0;

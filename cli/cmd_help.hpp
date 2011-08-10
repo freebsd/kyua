@@ -32,22 +32,24 @@
 #if !defined(CLI_CMD_HELP_HPP)
 #define CLI_CMD_HELP_HPP
 
-#include "utils/cmdline/base_command.hpp"
+#include "cli/common.hpp"
 #include "utils/cmdline/commands_map.hpp"
 
 namespace cli {
 
 
 /// Implementation of the "help" subcommand.
-class cmd_help : public utils::cmdline::base_command {
+class cmd_help : public cli_command
+{
     const utils::cmdline::options_vector* _options;
-    const utils::cmdline::commands_map* _commands;
+    const utils::cmdline::commands_map< cli_command >* _commands;
 
 public:
     cmd_help(const utils::cmdline::options_vector*,
-             const utils::cmdline::commands_map*);
+             const utils::cmdline::commands_map< cli_command >*);
 
-    int run(utils::cmdline::ui*, const utils::cmdline::parsed_cmdline&);
+    int run(utils::cmdline::ui*, const utils::cmdline::parsed_cmdline&,
+            const engine::user_files::config&);
 };
 
 

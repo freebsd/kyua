@@ -31,12 +31,11 @@
 #include <vector>
 
 #include "cli/cmd_list.hpp"
-#include "cli/common.hpp"
+#include "cli/common.ipp"
 #include "engine/exceptions.hpp"
 #include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
 #include "engine/user_files/kyuafile.hpp"
-#include "utils/cmdline/base_command.ipp"
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/cmdline/ui.hpp"
@@ -103,9 +102,9 @@ cli::detail::list_test_program(cmdline::ui* ui, const bool verbose,
 
 
 /// Default constructor for cmd_list.
-cli::cmd_list::cmd_list(void) : cmdline::base_command(
-    "list", "[test-program ...]", 0, -1,
-    "Lists test cases and their meta-data")
+cli::cmd_list::cmd_list(void) :
+    cli_command("list", "[test-program ...]", 0, -1,
+                "Lists test cases and their meta-data")
 {
     add_option(kyuafile_option);
     add_option(cmdline::bool_option('v', "verbose", "Show properties"));
@@ -116,10 +115,12 @@ cli::cmd_list::cmd_list(void) : cmdline::base_command(
 ///
 /// \param ui Object to interact with the I/O of the program.
 /// \param cmdline Representation of the command line to the subcommand.
+/// \param unused_config The runtime configuration of the program.
 ///
 /// \return 0 to indicate success.
 int
-cli::cmd_list::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
+cli::cmd_list::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
+                   const user_files::config& unused_config)
 {
     cli::filters_state filters(cmdline.arguments());
     const user_files::kyuafile kyuafile = load_kyuafile(cmdline);

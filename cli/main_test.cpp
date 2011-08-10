@@ -35,7 +35,7 @@ extern "C" {
 #include <atf-c++.hpp>
 
 #include "cli/main.hpp"
-#include "utils/cmdline/base_command.hpp"
+#include "engine/user_files/config.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/globals.hpp"
 #include "utils/cmdline/options.hpp"
@@ -54,42 +54,47 @@ namespace cmdline = utils::cmdline;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace process = utils::process;
+namespace user_files = engine::user_files;
 
 
 namespace {
 
 
-class cmd_mock_crash : public cmdline::base_command {
+static const user_files::config default_config = user_files::config::defaults();
+
+
+class cmd_mock_crash : public cli::cli_command {
     bool _unhandled;
 
 public:
     cmd_mock_crash(void) :
-        cmdline::base_command("mock_error", "", 0, 0,
-                              "Mock command that crashes")
+        cli::cli_command("mock_error", "", 0, 0, "Mock command that crashes")
     {
     }
 
     int
-    run(utils::cmdline::ui* ui, const utils::cmdline::parsed_cmdline& cmdline)
+    run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
+        const user_files::config& unused_config)
     {
         std::abort();
     }
 };
 
 
-class cmd_mock_error : public cmdline::base_command {
+class cmd_mock_error : public cli::cli_command {
     bool _unhandled;
 
 public:
     cmd_mock_error(const bool unhandled) :
-        cmdline::base_command("mock_error", "", 0, 0,
-                              "Mock command that raises an error"),
+        cli::cli_command("mock_error", "", 0, 0,
+                         "Mock command that raises an error"),
         _unhandled(unhandled)
     {
     }
 
     int
-    run(utils::cmdline::ui* ui, const utils::cmdline::parsed_cmdline& cmdline)
+    run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
+        const user_files::config& unused_config)
     {
         if (_unhandled)
             throw std::logic_error("This is unhandled");
@@ -99,15 +104,16 @@ public:
 };
 
 
-class cmd_mock_write : public cmdline::base_command {
+class cmd_mock_write : public cli::cli_command {
 public:
-    cmd_mock_write(void) : cmdline::base_command(
+    cmd_mock_write(void) : cli::cli_command(
         "mock_write", "", 0, 0, "Mock command that prints output")
     {
     }
 
     int
-    run(utils::cmdline::ui* ui, const utils::cmdline::parsed_cmdline& cmdline)
+    run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
+        const user_files::config& unused_config)
     {
         ui->out("stdout message from subcommand");
         ui->err("stderr message from subcommand");
@@ -322,8 +328,9 @@ ATF_TEST_CASE_BODY(main__subcommand__ok)
     const char* const argv[] = {"progname", "mock_write", NULL};
 
     cmdline::ui_mock ui;
-    ATF_REQUIRE_EQ(98, cli::main(&ui, argc, argv,
-                                 cmdline::command_ptr(new cmd_mock_write())));
+    ATF_REQUIRE_EQ(98,
+                   cli::main(&ui, argc, argv,
+                             cli::cli_command_ptr(new cmd_mock_write())));
     ATF_REQUIRE_EQ(1, ui.out_log().size());
     ATF_REQUIRE_EQ("stdout message from subcommand", ui.out_log()[0]);
     ATF_REQUIRE_EQ(1, ui.err_log().size());
@@ -342,7 +349,7 @@ ATF_TEST_CASE_BODY(main__subcommand__invalid_args)
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(EXIT_FAILURE,
                    cli::main(&ui, argc, argv,
-                             cmdline::command_ptr(new cmd_mock_write())));
+                             cli::cli_command_ptr(new cmd_mock_write())));
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE(utils::grep_vector(
         "Usage error for command mock_write: Too many arguments.",
@@ -361,7 +368,7 @@ ATF_TEST_CASE_BODY(main__subcommand__runtime_error)
 
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(EXIT_FAILURE, cli::main(&ui, argc, argv,
-        cmdline::command_ptr(new cmd_mock_error(false))));
+        cli::cli_command_ptr(new cmd_mock_error(false))));
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE(utils::grep_vector("progname: E: Runtime error.",
                                    ui.err_log()));
@@ -378,7 +385,7 @@ ATF_TEST_CASE_BODY(main__subcommand__unhandled_exception)
 
     cmdline::ui_mock ui;
     ATF_REQUIRE_THROW(std::logic_error, cli::main(&ui, argc, argv,
-        cmdline::command_ptr(new cmd_mock_error(true))));
+        cli::cli_command_ptr(new cmd_mock_error(true))));
 }
 
 
@@ -392,7 +399,7 @@ do_subcommand_crash(void)
 
     cmdline::ui_mock ui;
     cli::main(&ui, argc, argv,
-              cmdline::command_ptr(new cmd_mock_crash()));
+              cli::cli_command_ptr(new cmd_mock_crash()));
 }
 
 

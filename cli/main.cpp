@@ -39,7 +39,11 @@
 #include "cli/cmd_help.hpp"
 #include "cli/cmd_list.hpp"
 #include "cli/cmd_test.hpp"
+#include "cli/common.ipp"
+#include "cli/config.hpp"
 #include "cli/main.hpp"
+#include "engine/user_files/config.hpp"
+#include "utils/cmdline/commands_map.ipp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/globals.hpp"
 #include "utils/cmdline/options.hpp"
@@ -57,6 +61,7 @@
 namespace cmdline = utils::cmdline;
 namespace fs = utils::fs;
 namespace logging = utils::logging;
+namespace user_files = engine::user_files;
 
 using utils::none;
 using utils::optional;
@@ -83,12 +88,13 @@ namespace {
 ///     exceptions are bugs, but we let them propagate so that the runtime will
 ///     abort and dump core.
 static int
-run_subcommand(cmdline::ui* ui, cmdline::base_command* command,
-               const cmdline::args_vector& args)
+run_subcommand(cmdline::ui* ui, cli::cli_command* command,
+               const cmdline::args_vector& args,
+               const user_files::config& config)
 {
     try {
         PRE(command->name() == args[0]);
-        return command->main(ui, args);
+        return command->main(ui, args, config);
     } catch (const cmdline::usage_error& e) {
         throw std::pair< std::string, cmdline::usage_error >(
             command->name(), e);
@@ -119,9 +125,11 @@ run_subcommand(cmdline::ui* ui, cmdline::base_command* command,
 ///     abort and dump core.
 static int
 safe_main(cmdline::ui* ui, int argc, const char* const argv[],
-          cmdline::command_ptr mock_command)
+          cli::cli_command_ptr mock_command)
 {
     cmdline::options_vector options;
+    options.push_back(&cli::config_option);
+    options.push_back(&cli::variable_option);
     const cmdline::string_option loglevel_option(
         "loglevel", "Level of the messages to log", "level", "info");
     options.push_back(&loglevel_option);
@@ -130,16 +138,17 @@ safe_main(cmdline::ui* ui, int argc, const char* const argv[],
         cli::detail::default_log_name().c_str());
     options.push_back(&logfile_option);
 
-    cmdline::commands_map commands;
-    commands.insert(cmdline::command_ptr(new cli::cmd_about()));
-    commands.insert(cmdline::command_ptr(new cli::cmd_help(&options,
-                                                           &commands)));
-    commands.insert(cmdline::command_ptr(new cli::cmd_list()));
-    commands.insert(cmdline::command_ptr(new cli::cmd_test()));
+    cmdline::commands_map< cli::cli_command > commands;
+    commands.insert(new cli::cmd_about());
+    commands.insert(new cli::cmd_help(&options, &commands));
+    commands.insert(new cli::cmd_list());
+    commands.insert(new cli::cmd_test());
     if (mock_command.get() != NULL)
         commands.insert(mock_command);
 
     cmdline::parsed_cmdline cmdline = cmdline::parse(argc, argv, options);
+
+    const user_files::config config = cli::load_config(cmdline);
 
     const fs::path logfile(cmdline.get_option< cmdline::path_option >(
         "logfile"));
@@ -157,10 +166,10 @@ safe_main(cmdline::ui* ui, int argc, const char* const argv[],
         throw cmdline::usage_error("No command provided");
     const std::string cmdname = cmdline.arguments()[0];
 
-    cmdline::base_command* command = commands.find(cmdname);
+    cli::cli_command* command = commands.find(cmdname);
     if (command == NULL)
         throw cmdline::usage_error(F("Unknown command '%s'") % cmdname);
-    return run_subcommand(ui, command, cmdline.arguments());
+    return run_subcommand(ui, command, cmdline.arguments(), config);
 }
 
 
@@ -209,7 +218,7 @@ cli::detail::default_log_name(void)
 ///     abort and dump core.
 int
 cli::main(cmdline::ui* ui, const int argc, const char* const* const argv,
-          cmdline::command_ptr mock_command)
+          cli_command_ptr mock_command)
 {
     try {
         return safe_main(ui, argc, argv, mock_command);

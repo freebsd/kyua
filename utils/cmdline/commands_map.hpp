@@ -42,7 +42,6 @@
 #include <memory>
 #include <string>
 
-#include "utils/cmdline/base_command.hpp"
 #include "utils/noncopyable.hpp"
 
 
@@ -50,13 +49,10 @@ namespace utils {
 namespace cmdline {
 
 
-/// Auto pointer wrapping a base command.
-typedef std::auto_ptr< cmdline::base_command > command_ptr;
-
-
 /// Collection of dynamically-instantiated commands.
+template< typename BaseCommand >
 class commands_map : noncopyable {
-    typedef std::map< std::string, base_command* > impl_map;
+    typedef std::map< std::string, BaseCommand* > impl_map;
 
     impl_map _commands;
 
@@ -64,18 +60,21 @@ public:
     commands_map(void);
     ~commands_map(void);
 
+    /// Scoped, strictly-owned pointer to a command from this map.
+    typedef typename std::auto_ptr< BaseCommand > command_ptr;
     void insert(command_ptr);
+    void insert(BaseCommand*);
 
     /// Type for a constant iterator.
-    typedef impl_map::const_iterator const_iterator;
+    typedef typename impl_map::const_iterator const_iterator;
 
     bool empty(void) const;
 
     const_iterator begin(void) const;
     const_iterator end(void) const;
 
-    base_command* find(const std::string&);
-    const base_command* find(const std::string&) const;
+    BaseCommand* find(const std::string&);
+    const BaseCommand* find(const std::string&) const;
 };
 
 

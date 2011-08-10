@@ -539,10 +539,10 @@ EOF
     utils_cp_helper config .
 
     atf_check -s exit:0 -o match:"get_variable.*skipped" -e empty kyua test
-    atf_check -s exit:0 -o match:"get_variable.*passed" -e empty kyua test \
-        -c kyuarc
-    atf_check -s exit:0 -o match:"get_variable.*passed" -e empty kyua test \
-        --config=kyuarc
+    atf_check -s exit:0 -o match:"get_variable.*passed" -e empty kyua \
+        -c kyuarc test
+    atf_check -s exit:0 -o match:"get_variable.*passed" -e empty kyua \
+        --config=kyuarc test
 }
 
 
@@ -551,7 +551,7 @@ config_flag__explicit__missing_file_body() {
     cat >experr <<EOF
 kyua: E: Load of 'foo' failed: File 'foo' not found.
 EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua test --config=foo
+    atf_check -s exit:1 -o empty -e file:experr kyua --config=foo test
 }
 
 
@@ -559,7 +559,7 @@ utils_test_case config_flag__explicit__bad_file
 config_flag__explicit__bad_file_body() {
     touch custom
     atf_check -s exit:1 -o empty -e match:"Syntax not defined.*'custom'" \
-        kyua test --config=custom
+        kyua --config=custom test
 }
 
 
@@ -584,14 +584,16 @@ EOF
             grep 'config3:get_variable.*skipped' stdout
     }
 
-    atf_check -s exit:1 -o save:stdout -e empty kyua test \
+    atf_check -s exit:1 -o save:stdout -e empty kyua \
         -v "suite1.X-the-variable=value1" \
-        -v "suite2.X-the-variable=value2"
+        -v "suite2.X-the-variable=value2" \
+        test
     check_stdout
 
-    atf_check -s exit:1 -o save:stdout -e empty kyua test \
+    atf_check -s exit:1 -o save:stdout -e empty kyua \
         --variable="suite1.X-the-variable=value1" \
-        --variable="suite2.X-the-variable=value2"
+        --variable="suite2.X-the-variable=value2" \
+        test
     check_stdout
 }
 
@@ -627,14 +629,16 @@ EOF
             grep 'config4:get_variable.*passed' stdout
     }
 
-    atf_check -s exit:1 -o save:stdout -e empty kyua test \
+    atf_check -s exit:1 -o save:stdout -e empty kyua \
         -v "suite2.X-the-variable=value2" \
-        -v "suite4.X-the-variable=value2"
+        -v "suite4.X-the-variable=value2" \
+        test
     check_stdout
 
-    atf_check -s exit:1 -o save:stdout -e empty kyua test \
+    atf_check -s exit:1 -o save:stdout -e empty kyua \
         --variable="suite2.X-the-variable=value2" \
-        --variable="suite4.X-the-variable=value2"
+        --variable="suite4.X-the-variable=value2" \
+        test
     check_stdout
 }
 
@@ -662,12 +666,12 @@ EOF
             grep 'config2:get_variable.*passed' stdout
     }
 
-    atf_check -s exit:1 -o save:stdout -e empty kyua test -c config \
-        -v "suite2.X-the-variable=value2"
+    atf_check -s exit:1 -o save:stdout -e empty kyua -c config \
+        -v "suite2.X-the-variable=value2" test
     check_stdout
 
-    atf_check -s exit:1 -o save:stdout -e empty kyua test -c config \
-        --variable="suite2.X-the-variable=value2"
+    atf_check -s exit:1 -o save:stdout -e empty kyua -c config \
+        --variable="suite2.X-the-variable=value2" test
     check_stdout
 }
 
@@ -675,17 +679,17 @@ EOF
 utils_test_case variable_flag__invalid
 variable_flag__invalid_body() {
     cat >experr <<EOF
-Usage error for command test: Invalid argument '' for option --variable: Argument does not have the form 'name=value'.
-Type 'kyua help test' for usage information.
+Usage error: Invalid argument '' for option --variable: Argument does not have the form 'name=value'.
+Type 'kyua help' for usage information.
 EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua test \
-        -v "a.b=c" -v ""
+    atf_check -s exit:1 -o empty -e file:experr kyua \
+        -v "a.b=c" -v "" test
 
     cat >experr <<EOF
 kyua: E: Unrecognized configuration property 'foo' in override 'foo=bar'.
 EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua test \
-        -v "a.b=c" -v "foo=bar"
+    atf_check -s exit:1 -o empty -e file:experr kyua \
+        -v "a.b=c" -v "foo=bar" test
 }
 
 
@@ -747,10 +751,10 @@ atf_test_program{name="interrupts"}
 EOF
     utils_cp_helper interrupts .
 
-    kyua test \
+    kyua \
         -v integration.X-body-cookie="$(pwd)/body" \
         -v integration.X-cleanup-cookie="$(pwd)/cleanup" \
-        >stdout 2>stderr &
+        test >stdout 2>stderr &
     pid=${!}
 
     while [ ! -f body ]; do

@@ -29,11 +29,13 @@
 #include "utils/cmdline/commands_map.hpp"
 #include "utils/sanity.hpp"
 
-namespace cmdline = utils::cmdline;
+
+namespace utils {
 
 
 /// Constructs an empty set of commands.
-cmdline::commands_map::commands_map(void)
+template< typename BaseCommand >
+cmdline::commands_map< BaseCommand >::commands_map(void)
 {
 }
 
@@ -41,10 +43,11 @@ cmdline::commands_map::commands_map(void)
 /// Destroys a set of commands.
 ///
 /// This releases the dynamically-instantiated objects.
-cmdline::commands_map::~commands_map(void)
+template< typename BaseCommand >
+cmdline::commands_map< BaseCommand >::~commands_map(void)
 {
-    for (impl_map::iterator iter = _commands.begin(); iter != _commands.end();
-         iter++)
+    for (typename impl_map::iterator iter = _commands.begin();
+         iter != _commands.end(); iter++)
         delete (*iter).second;
 }
 
@@ -54,21 +57,39 @@ cmdline::commands_map::~commands_map(void)
 /// \param command The command to insert.  This must have been dynamically
 ///     allocated with new.  The call grabs ownership of the command, or the
 ///     command is freed if the call fails.
+template< typename BaseCommand >
 void
-cmdline::commands_map::insert(command_ptr command)
+cmdline::commands_map< BaseCommand >::insert(command_ptr command)
 {
     INV(_commands.find(command->name()) == _commands.end());
-    base_command* ptr = command.release();
+    BaseCommand* ptr = command.release();
     INV(ptr != NULL);
     _commands[ptr->name()] = ptr;
+}
+
+
+/// Inserts a new command into the map.
+///
+/// This grabs ownership of the pointer, so it is ONLY safe to use with the
+/// following idiom: insert(new foo()).
+///
+/// \param command The command to insert.  This must have been dynamically
+///     allocated with new.  The call grabs ownership of the command, or the
+///     command is freed if the call fails.
+template< typename BaseCommand >
+void
+cmdline::commands_map< BaseCommand >::insert(BaseCommand* command)
+{
+    insert(command_ptr(command));
 }
 
 
 /// Checks whether the list of commands is empty.
 ///
 /// \return True if there are no commands in this map.
+template< typename BaseCommand >
 bool
-cmdline::commands_map::empty(void) const
+cmdline::commands_map< BaseCommand >::empty(void) const
 {
     return _commands.empty();
 }
@@ -76,9 +97,10 @@ cmdline::commands_map::empty(void) const
 
 /// Returns a constant iterator to the beginning of the commands sequence.
 ///
-/// \return An map (string -> base_command*) iterator.
-cmdline::commands_map::const_iterator
-cmdline::commands_map::begin(void) const
+/// \return A map (string -> BaseCommand*) iterator.
+template< typename BaseCommand >
+typename cmdline::commands_map< BaseCommand >::const_iterator
+cmdline::commands_map< BaseCommand >::begin(void) const
 {
     return _commands.begin();
 }
@@ -86,9 +108,10 @@ cmdline::commands_map::begin(void) const
 
 /// Returns a constant iterator to the end of the commands sequence.
 ///
-/// \return An map (string -> base_command*) iterator.
-cmdline::commands_map::const_iterator
-cmdline::commands_map::end(void) const
+/// \return A map (string -> BaseCommand*) iterator.
+template< typename BaseCommand >
+typename cmdline::commands_map< BaseCommand >::const_iterator
+cmdline::commands_map< BaseCommand >::end(void) const
 {
     return _commands.end();
 }
@@ -99,10 +122,11 @@ cmdline::commands_map::end(void) const
 /// \param name The name of the command to locate.
 ///
 /// \return The command itself or NULL if it does not exist.
-cmdline::base_command*
-cmdline::commands_map::find(const std::string& name)
+template< typename BaseCommand >
+BaseCommand*
+cmdline::commands_map< BaseCommand >::find(const std::string& name)
 {
-    impl_map::iterator iter = _commands.find(name);
+    typename impl_map::iterator iter = _commands.find(name);
     if (iter == _commands.end())
         return NULL;
     else
@@ -115,12 +139,16 @@ cmdline::commands_map::find(const std::string& name)
 /// \param name The name of the command to locate.
 ///
 /// \return The command itself or NULL if it does not exist.
-const cmdline::base_command*
-cmdline::commands_map::find(const std::string& name) const
+template< typename BaseCommand >
+const BaseCommand*
+cmdline::commands_map< BaseCommand >::find(const std::string& name) const
 {
-    impl_map::const_iterator iter = _commands.find(name);
+    typename impl_map::const_iterator iter = _commands.find(name);
     if (iter == _commands.end())
         return NULL;
     else
         return (*iter).second;
 }
+
+
+}  // namespace utils

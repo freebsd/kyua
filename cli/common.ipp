@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,29 +26,5 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file cli/cmd_test.hpp
-/// Provides the cmd_test class.
-
-#if !defined(CLI_CMD_TEST_HPP)
-#define CLI_CMD_TEST_HPP
-
 #include "cli/common.hpp"
-
-namespace cli {
-
-
-/// Implementation of the "test" subcommand.
-class cmd_test : public cli_command
-{
-public:
-    cmd_test(void);
-
-    int run(utils::cmdline::ui*, const utils::cmdline::parsed_cmdline&,
-            const engine::user_files::config&);
-};
-
-
-}  // namespace cli
-
-
-#endif  // !defined(CLI_CMD_TEST_HPP)
+#include "utils/cmdline/base_command.ipp"

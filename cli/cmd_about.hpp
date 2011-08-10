@@ -32,20 +32,22 @@
 #if !defined(CLI_CMD_ABOUT_HPP)
 #define CLI_CMD_ABOUT_HPP
 
-#include "utils/cmdline/base_command.hpp"
+#include "cli/common.hpp"
 
 namespace cli {
 
 
 /// Implementation of the "about" subcommand.
-class cmd_about : public utils::cmdline::base_command {
+class cmd_about : public cli_command
+{
     /// Path to the directory containing the distribution documents.
     const std::string _docdir;
 
 public:
     cmd_about(void);
 
-    int run(utils::cmdline::ui*, const utils::cmdline::parsed_cmdline&);
+    int run(utils::cmdline::ui*, const utils::cmdline::parsed_cmdline&,
+            const engine::user_files::config&);
 };
 
 

@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,29 +26,34 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file cli/cmd_test.hpp
-/// Provides the cmd_test class.
+/// \file cli/config.hpp
+/// Utility functions to load configuration files.
+///
+/// \todo All this should probably just be merged into the main module
+/// as nothing else should have access to this.
 
-#if !defined(CLI_CMD_TEST_HPP)
-#define CLI_CMD_TEST_HPP
+#if !defined(CLI_CONFIG_HPP)
+#define CLI_CONFIG_HPP
 
-#include "cli/common.hpp"
+#include "utils/cmdline/options.hpp"
+#include "utils/cmdline/parser.hpp"
+
+namespace engine {
+namespace user_files {
+struct config;
+}  // namespace user_files
+}  // namespace engine
 
 namespace cli {
 
 
-/// Implementation of the "test" subcommand.
-class cmd_test : public cli_command
-{
-public:
-    cmd_test(void);
+extern const utils::cmdline::path_option config_option;
+extern const utils::cmdline::property_option variable_option;
 
-    int run(utils::cmdline::ui*, const utils::cmdline::parsed_cmdline&,
-            const engine::user_files::config&);
-};
+
+engine::user_files::config load_config(const utils::cmdline::parsed_cmdline&);
 
 
 }  // namespace cli
 
-
-#endif  // !defined(CLI_CMD_TEST_HPP)
+#endif  // !defined(CLI_CONFIG_HPP)

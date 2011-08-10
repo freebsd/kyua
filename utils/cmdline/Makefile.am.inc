@@ -29,8 +29,8 @@
 libutils_a_SOURCES += utils/cmdline/base_command.cpp
 libutils_a_SOURCES += utils/cmdline/base_command.hpp
 libutils_a_SOURCES += utils/cmdline/base_command.ipp
-libutils_a_SOURCES += utils/cmdline/commands_map.cpp
 libutils_a_SOURCES += utils/cmdline/commands_map.hpp
+libutils_a_SOURCES += utils/cmdline/commands_map.ipp
 libutils_a_SOURCES += utils/cmdline/exceptions.cpp
 libutils_a_SOURCES += utils/cmdline/exceptions.hpp
 libutils_a_SOURCES += utils/cmdline/globals.cpp

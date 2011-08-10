@@ -29,11 +29,22 @@
 #include <atf-c++.hpp>
 
 #include "cli/cmd_test.hpp"
+#include "engine/user_files/config.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.hpp"
 #include "utils/cmdline/ui_mock.hpp"
 
 namespace cmdline = utils::cmdline;
+namespace user_files = engine::user_files;
+
+
+namespace {
+
+
+static const user_files::config default_config = user_files::config::defaults();
+
+
+}  // anonymous namespace
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(invalid_filter);
@@ -47,7 +58,7 @@ ATF_TEST_CASE_BODY(invalid_filter)
     cli::cmd_test cmd;
     cmdline::ui_mock ui;
     ATF_REQUIRE_THROW_RE(cmdline::error, "Test case.*'incorrect:'.*empty",
-                         cmd.main(&ui, args));
+                         cmd.main(&ui, args, default_config));
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE(ui.err_log().empty());
 }

@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,13 +45,12 @@ namespace cmdline {
 class ui;
 
 
-/// Base class for the implementation of subcommands of a program.
+/// Prototype class for the implementation of subcommands of a program.
 ///
-/// The main CLI binary subclasses this class to define the subcommands it
-/// provides.  Each subcommand has a name, a set of options and a specific
-/// syntax for the arguments it receives.  The subclass also implements the
-/// entry point for the code of the command.
-class base_command : noncopyable {
+/// Use the subclasses of command_proto defined in this module instead of
+/// command_proto itself as base classes for your application-specific
+/// commands.
+class command_proto : noncopyable {
     const std::string _name;
     const std::string _arg_list;
     int _min_args;
@@ -63,7 +62,26 @@ class base_command : noncopyable {
 
 protected:
     template< typename Option > void add_option(const Option&);
+    parsed_cmdline parse_cmdline(const args_vector&) const;
 
+public:
+    command_proto(const std::string&, const std::string&, const int, const int,
+                  const std::string&);
+    virtual ~command_proto(void);
+
+    const std::string& name(void) const;
+    const std::string& arg_list(void) const;
+    const std::string& short_description(void) const;
+    const options_vector& options(void) const;
+};
+
+
+/// Unparametrized base subcommand for a program.
+///
+/// Use this class to define subcommands for your program that do not need any
+/// information passed in from the main command-line dispatcher other than the
+/// command-line arguments.
+class base_command_no_data : public command_proto {
     /// Main code of the command.
     ///
     /// This is called from main() after the command line has been processed and
@@ -82,16 +100,47 @@ protected:
     virtual int run(ui* ui, const parsed_cmdline& cmdline) = 0;
 
 public:
-    explicit base_command(const std::string&, const std::string&,
-                          const int, const int, const std::string&);
-    virtual ~base_command(void);
-
-    const std::string& name(void) const;
-    const std::string& arg_list(void) const;
-    const std::string& short_description(void) const;
-    const options_vector& options(void) const;
+    base_command_no_data(const std::string&, const std::string&, const int,
+                         const int, const std::string&);
 
     int main(ui*, const args_vector&);
+};
+
+
+/// Parametrized base subcommand for a program.
+///
+/// Use this class to define subcommands for your program that need some kind of
+/// runtime information passed in from the main command-line dispatcher.
+///
+/// \param Data The type of the object passed to the subcommand at runtime.
+/// This is useful, for example, to pass around the runtime configuration of the
+/// program.
+template< typename Data >
+class base_command : public command_proto {
+    /// Main code of the command.
+    ///
+    /// This is called from main() after the command line has been processed and
+    /// validated.
+    ///
+    /// \param ui Object to interact with the I/O of the command.  The command
+    ///     must always use this object to write to stdout and stderr.
+    /// \param cmdline The parsed command line, containing the values of any
+    ///     given options and arguments.
+    /// \param data An instance of the runtime data passed from main().
+    ///
+    /// \return The exit code that the program has to return.  0 on success,
+    ///     some other value on error.
+    ///
+    /// \throw std::runtime_error Any errors detected during the execution of
+    ///     the command are reported by means of exceptions.
+    virtual int run(ui* ui, const parsed_cmdline& cmdline,
+                    const Data& data) = 0;
+
+public:
+    base_command(const std::string&, const std::string&, const int, const int,
+                 const std::string&);
+
+    int main(ui*, const args_vector&, const Data&);
 };
 
 

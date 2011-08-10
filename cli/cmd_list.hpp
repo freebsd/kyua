@@ -34,7 +34,7 @@
 
 #include <string>
 
-#include "utils/cmdline/base_command.hpp"
+#include "cli/common.hpp"
 
 namespace engine {
 class base_test_case;
@@ -64,11 +64,13 @@ void list_test_program(utils::cmdline::ui*, const bool,
 
 
 /// Implementation of the "list" subcommand.
-class cmd_list : public utils::cmdline::base_command {
+class cmd_list : public cli_command
+{
 public:
     cmd_list(void);
 
-    int run(utils::cmdline::ui*, const utils::cmdline::parsed_cmdline&);
+    int run(utils::cmdline::ui*, const utils::cmdline::parsed_cmdline&,
+            const engine::user_files::config&);
 };
 
 

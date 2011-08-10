@@ -36,6 +36,7 @@
 #include <atf-c++.hpp>
 
 #include "cli/cmd_about.hpp"
+#include "engine/user_files/config.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.hpp"
 #include "utils/cmdline/ui_mock.hpp"
@@ -46,11 +47,15 @@
 
 namespace cmdline = utils::cmdline;
 namespace fs = utils::fs;
+namespace user_files = engine::user_files;
 
 using cli::cmd_about;
 
 
 namespace {
+
+
+static const user_files::config default_config = user_files::config::defaults();
 
 
 static void
@@ -79,7 +84,7 @@ ATF_TEST_CASE_BODY(all_topics__ok)
     utils::setenv("KYUA_DOCDIR", "fake-docs");
     cmd_about cmd;
     cmdline::ui_mock ui;
-    ATF_REQUIRE_EQ(EXIT_SUCCESS, cmd.main(&ui, args));
+    ATF_REQUIRE_EQ(EXIT_SUCCESS, cmd.main(&ui, args, default_config));
     ATF_REQUIRE(utils::grep_string(PACKAGE_NAME, ui.out_log()[0]));
     ATF_REQUIRE(utils::grep_string(PACKAGE_VERSION, ui.out_log()[0]));
     ATF_REQUIRE(utils::grep_vector("Content of AUTHORS", ui.out_log()));
@@ -98,7 +103,7 @@ ATF_TEST_CASE_BODY(all_topics__missing_docs)
     utils::setenv("KYUA_DOCDIR", "fake-docs");
     cmd_about cmd;
     cmdline::ui_mock ui;
-    ATF_REQUIRE_EQ(EXIT_FAILURE, cmd.main(&ui, args));
+    ATF_REQUIRE_EQ(EXIT_FAILURE, cmd.main(&ui, args, default_config));
 
     ATF_REQUIRE(utils::grep_string(PACKAGE_NAME, ui.out_log()[0]));
     ATF_REQUIRE(utils::grep_string(PACKAGE_VERSION, ui.out_log()[0]));
@@ -123,7 +128,7 @@ ATF_TEST_CASE_BODY(topic_authors__ok)
     utils::setenv("KYUA_DOCDIR", "fake-docs");
     cmd_about cmd;
     cmdline::ui_mock ui;
-    ATF_REQUIRE_EQ(EXIT_SUCCESS, cmd.main(&ui, args));
+    ATF_REQUIRE_EQ(EXIT_SUCCESS, cmd.main(&ui, args, default_config));
     ATF_REQUIRE(!utils::grep_string(PACKAGE_NAME, ui.out_log()[0]));
     ATF_REQUIRE(utils::grep_vector("Content of AUTHORS", ui.out_log()));
     ATF_REQUIRE(!utils::grep_vector("COPYING", ui.out_log()));
@@ -142,7 +147,7 @@ ATF_TEST_CASE_BODY(topic_authors__missing_doc)
     utils::setenv("KYUA_DOCDIR", "fake-docs");
     cmd_about cmd;
     cmdline::ui_mock ui;
-    ATF_REQUIRE_EQ(EXIT_FAILURE, cmd.main(&ui, args));
+    ATF_REQUIRE_EQ(EXIT_FAILURE, cmd.main(&ui, args, default_config));
 
     ATF_REQUIRE_EQ(0, ui.out_log().size());
 
@@ -164,7 +169,7 @@ ATF_TEST_CASE_BODY(topic_license__ok)
     utils::setenv("KYUA_DOCDIR", "fake-docs");
     cmd_about cmd;
     cmdline::ui_mock ui;
-    ATF_REQUIRE_EQ(EXIT_SUCCESS, cmd.main(&ui, args));
+    ATF_REQUIRE_EQ(EXIT_SUCCESS, cmd.main(&ui, args, default_config));
     ATF_REQUIRE(!utils::grep_string(PACKAGE_NAME, ui.out_log()[0]));
     ATF_REQUIRE(!utils::grep_vector("AUTHORS", ui.out_log()));
     ATF_REQUIRE(utils::grep_vector("Content of COPYING", ui.out_log()));
@@ -183,7 +188,7 @@ ATF_TEST_CASE_BODY(topic_license__missing_doc)
     utils::setenv("KYUA_DOCDIR", "fake-docs");
     cmd_about cmd;
     cmdline::ui_mock ui;
-    ATF_REQUIRE_EQ(EXIT_FAILURE, cmd.main(&ui, args));
+    ATF_REQUIRE_EQ(EXIT_FAILURE, cmd.main(&ui, args, default_config));
 
     ATF_REQUIRE_EQ(0, ui.out_log().size());
 
@@ -202,7 +207,7 @@ ATF_TEST_CASE_BODY(topic_version__ok)
     utils::setenv("KYUA_DOCDIR", "fake-docs");
     cmd_about cmd;
     cmdline::ui_mock ui;
-    ATF_REQUIRE_EQ(EXIT_SUCCESS, cmd.main(&ui, args));
+    ATF_REQUIRE_EQ(EXIT_SUCCESS, cmd.main(&ui, args, default_config));
     ATF_REQUIRE_EQ(1, ui.out_log().size());
     ATF_REQUIRE(utils::grep_string(PACKAGE_NAME, ui.out_log()[0]));
     ATF_REQUIRE(utils::grep_string(PACKAGE_VERSION, ui.out_log()[0]));
@@ -221,7 +226,7 @@ ATF_TEST_CASE_BODY(invalid_args)
     cmd_about cmd;
     cmdline::ui_mock ui;
     ATF_REQUIRE_THROW_RE(cmdline::usage_error, "Too many arguments",
-                         cmd.main(&ui, args));
+                         cmd.main(&ui, args, default_config));
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE(ui.err_log().empty());
 }
@@ -237,7 +242,7 @@ ATF_TEST_CASE_BODY(invalid_topic)
     cmd_about cmd;
     cmdline::ui_mock ui;
     ATF_REQUIRE_THROW_RE(cmdline::usage_error, "Invalid about topic 'foo'",
-                         cmd.main(&ui, args));
+                         cmd.main(&ui, args, default_config));
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE(ui.err_log().empty());
 }

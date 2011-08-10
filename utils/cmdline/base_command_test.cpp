@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,21 +40,56 @@ namespace cmdline = utils::cmdline;
 namespace {
 
 
-class mock_cmd : public utils::cmdline::base_command {
+/// Mock command to test the cmdline::base_command base class.
+///
+/// \param Data The type of the opaque data object passed to main().
+/// \param ExpectedData The value run() will expect to find in the Data object
+///     passed to main().
+template< typename Data, Data ExpectedData >
+class mock_cmd : public cmdline::base_command< Data > {
 public:
     bool executed;
     std::string optvalue;
 
     mock_cmd(void) :
-        cmdline::base_command("mock", "arg1 [arg2 [arg3]]", 1, 3,
-                              "Command for testing."),
+        cmdline::base_command< Data >("mock", "arg1 [arg2 [arg3]]", 1, 3,
+                                      "Command for testing."),
+        executed(false)
+    {
+        this->add_option(cmdline::string_option("the_string", "Test option",
+                                                "arg"));
+    }
+
+    int
+    run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
+        const Data& data)
+    {
+        if (cmdline.has_option("the_string"))
+            optvalue = cmdline.get_option< cmdline::string_option >(
+                "the_string");
+        ATF_REQUIRE_EQ(ExpectedData, data);
+        executed = true;
+        return 1234;
+    }
+};
+
+
+/// Mock command to test the cmdline::base_command_no_data base class.
+class mock_cmd_no_data : public cmdline::base_command_no_data {
+public:
+    bool executed;
+    std::string optvalue;
+
+    mock_cmd_no_data(void) :
+        cmdline::base_command_no_data("mock", "arg1 [arg2 [arg3]]", 1, 3,
+                                      "Command for testing."),
         executed(false)
     {
         add_option(cmdline::string_option("the_string", "Test option", "arg"));
     }
 
     int
-    run(utils::cmdline::ui* ui, const utils::cmdline::parsed_cmdline& cmdline)
+    run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
     {
         if (cmdline.has_option("the_string"))
             optvalue = cmdline.get_option< cmdline::string_option >(
@@ -65,13 +100,73 @@ public:
 };
 
 
+/// Implementation of a command to get access to parse_cmdline().
+class parse_cmdline_portal : public cmdline::command_proto {
+public:
+    parse_cmdline_portal(void) :
+        cmdline::command_proto("portal", "arg1 [arg2 [arg3]]", 1, 3,
+                               "Command for testing.")
+    {
+        this->add_option(cmdline::string_option("the_string", "Test option",
+                                                "arg"));
+    }
+
+    cmdline::parsed_cmdline
+    operator()(const cmdline::args_vector& args) const
+    {
+        return parse_cmdline(args);
+    }
+};
+
+
 }  // anonymous namespace
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(getters);
-ATF_TEST_CASE_BODY(getters)
+ATF_TEST_CASE_WITHOUT_HEAD(command_proto__parse_cmdline__ok);
+ATF_TEST_CASE_BODY(command_proto__parse_cmdline__ok)
 {
-    mock_cmd cmd;
+    cmdline::args_vector args;
+    args.push_back("portal");
+    args.push_back("--the_string=foo bar");
+    args.push_back("one arg");
+    args.push_back("another arg");
+    (void)parse_cmdline_portal()(args);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(command_proto__parse_cmdline__parse_fail);
+ATF_TEST_CASE_BODY(command_proto__parse_cmdline__parse_fail)
+{
+    cmdline::args_vector args;
+    args.push_back("portal");
+    args.push_back("--foo-bar");
+    ATF_REQUIRE_THROW_RE(cmdline::usage_error, "Unknown.*foo-bar",
+                         (void)parse_cmdline_portal()(args));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(command_proto__parse_cmdline__args_invalid);
+ATF_TEST_CASE_BODY(command_proto__parse_cmdline__args_invalid)
+{
+    cmdline::args_vector args;
+    args.push_back("portal");
+
+    ATF_REQUIRE_THROW_RE(cmdline::usage_error, "Not enough arguments",
+                         (void)parse_cmdline_portal()(args));
+
+    args.push_back("1");
+    args.push_back("2");
+    args.push_back("3");
+    args.push_back("4");
+    ATF_REQUIRE_THROW_RE(cmdline::usage_error, "Too many arguments",
+                         (void)parse_cmdline_portal()(args));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(base_command__getters);
+ATF_TEST_CASE_BODY(base_command__getters)
+{
+    mock_cmd< int, 584 > cmd;
     ATF_REQUIRE_EQ("mock", cmd.name());
     ATF_REQUIRE_EQ("arg1 [arg2 [arg3]]", cmd.arg_list());
     ATF_REQUIRE_EQ("Command for testing.", cmd.short_description());
@@ -80,10 +175,54 @@ ATF_TEST_CASE_BODY(getters)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(main__parse_ok);
-ATF_TEST_CASE_BODY(main__parse_ok)
+ATF_TEST_CASE_WITHOUT_HEAD(base_command__main__ok)
+ATF_TEST_CASE_BODY(base_command__main__ok)
 {
-    mock_cmd cmd;
+    mock_cmd< int, 584 > cmd;
+
+    cmdline::ui_mock ui;
+    cmdline::args_vector args;
+    args.push_back("mock");
+    args.push_back("--the_string=foo bar");
+    args.push_back("one arg");
+    args.push_back("another arg");
+    ATF_REQUIRE_EQ(1234, cmd.main(&ui, args, 584));
+    ATF_REQUIRE(cmd.executed);
+    ATF_REQUIRE_EQ("foo bar", cmd.optvalue);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(base_command__main__parse_cmdline_fail)
+ATF_TEST_CASE_BODY(base_command__main__parse_cmdline_fail)
+{
+    mock_cmd< int, 584 > cmd;
+
+    cmdline::ui_mock ui;
+    cmdline::args_vector args;
+    args.push_back("mock");
+    args.push_back("--foo-bar");
+    ATF_REQUIRE_THROW_RE(cmdline::usage_error, "Unknown.*foo-bar",
+                         cmd.main(&ui, args, 584));
+    ATF_REQUIRE(!cmd.executed);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(base_command_no_data__getters);
+ATF_TEST_CASE_BODY(base_command_no_data__getters)
+{
+    mock_cmd_no_data cmd;
+    ATF_REQUIRE_EQ("mock", cmd.name());
+    ATF_REQUIRE_EQ("arg1 [arg2 [arg3]]", cmd.arg_list());
+    ATF_REQUIRE_EQ("Command for testing.", cmd.short_description());
+    ATF_REQUIRE_EQ(1, cmd.options().size());
+    ATF_REQUIRE_EQ("the_string", cmd.options()[0]->long_name());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(base_command_no_data__main__ok)
+ATF_TEST_CASE_BODY(base_command_no_data__main__ok)
+{
+    mock_cmd_no_data cmd;
 
     cmdline::ui_mock ui;
     cmdline::args_vector args;
@@ -97,10 +236,10 @@ ATF_TEST_CASE_BODY(main__parse_ok)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(main__parse_fail);
-ATF_TEST_CASE_BODY(main__parse_fail)
+ATF_TEST_CASE_WITHOUT_HEAD(base_command_no_data__main__parse_cmdline_fail)
+ATF_TEST_CASE_BODY(base_command_no_data__main__parse_cmdline_fail)
 {
-    mock_cmd cmd;
+    mock_cmd_no_data cmd;
 
     cmdline::ui_mock ui;
     cmdline::args_vector args;
@@ -112,49 +251,17 @@ ATF_TEST_CASE_BODY(main__parse_fail)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(main__valid_args);
-ATF_TEST_CASE_BODY(main__valid_args)
-{
-    mock_cmd cmd;
-
-    cmdline::ui_mock ui;
-    cmdline::args_vector args;
-    args.push_back("mock");
-    args.push_back("one arg");
-    ATF_REQUIRE_EQ(1234, cmd.main(&ui, args));
-    ATF_REQUIRE(cmd.executed);
-    ATF_REQUIRE(cmd.optvalue.empty());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(main__invalid_args);
-ATF_TEST_CASE_BODY(main__invalid_args)
-{
-    mock_cmd cmd;
-
-    cmdline::ui_mock ui;
-    cmdline::args_vector args;
-    args.push_back("mock");
-
-    ATF_REQUIRE_THROW_RE(cmdline::usage_error, "Not enough arguments",
-                         cmd.main(&ui, args));
-    ATF_REQUIRE(!cmd.executed);
-
-    args.push_back("1");
-    args.push_back("2");
-    args.push_back("3");
-    args.push_back("4");
-    ATF_REQUIRE_THROW_RE(cmdline::usage_error, "Too many arguments",
-                         cmd.main(&ui, args));
-    ATF_REQUIRE(!cmd.executed);
-}
-
-
 ATF_INIT_TEST_CASES(tcs)
 {
-    ATF_ADD_TEST_CASE(tcs, getters);
-    ATF_ADD_TEST_CASE(tcs, main__parse_ok);
-    ATF_ADD_TEST_CASE(tcs, main__parse_fail);
-    ATF_ADD_TEST_CASE(tcs, main__valid_args);
-    ATF_ADD_TEST_CASE(tcs, main__invalid_args);
+    ATF_ADD_TEST_CASE(tcs, command_proto__parse_cmdline__ok);
+    ATF_ADD_TEST_CASE(tcs, command_proto__parse_cmdline__parse_fail);
+    ATF_ADD_TEST_CASE(tcs, command_proto__parse_cmdline__args_invalid);
+
+    ATF_ADD_TEST_CASE(tcs, base_command__getters);
+    ATF_ADD_TEST_CASE(tcs, base_command__main__ok);
+    ATF_ADD_TEST_CASE(tcs, base_command__main__parse_cmdline_fail);
+
+    ATF_ADD_TEST_CASE(tcs, base_command_no_data__getters);
+    ATF_ADD_TEST_CASE(tcs, base_command_no_data__main__ok);
+    ATF_ADD_TEST_CASE(tcs, base_command_no_data__main__parse_cmdline_fail);
 }

@@ -32,7 +32,7 @@
 #include <vector>
 
 #include "cli/cmd_about.hpp"
-#include "utils/cmdline/base_command.ipp"
+#include "cli/common.ipp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/cmdline/ui.hpp"
@@ -47,6 +47,7 @@
 
 namespace cmdline = utils::cmdline;
 namespace fs = utils::fs;
+namespace user_files = engine::user_files;
 
 using cli::cmd_about;
 
@@ -84,7 +85,7 @@ cat_file(cmdline::ui* ui, const fs::path& file)
 
 
 /// Default constructor for cmd_about.
-cmd_about::cmd_about(void) : cmdline::base_command(
+cmd_about::cmd_about(void) : cli_command(
     "about", "[authors|license|version]", 0, 1,
     "Shows general program information")
 {
@@ -95,11 +96,13 @@ cmd_about::cmd_about(void) : cmdline::base_command(
 ///
 /// \param ui Object to interact with the I/O of the program.
 /// \param cmdline Representation of the command line to the subcommand.
+/// \param unused_config The runtime configuration of the program.
 ///
 /// \return 0 if everything is OK, 1 if any of the necessary documents cannot be
 /// opened.
 int
-cmd_about::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
+cmd_about::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
+               const user_files::config& unused_config)
 {
     const fs::path docdir(utils::getenv_with_default(
         "KYUA_DOCDIR", KYUA_DOCDIR));

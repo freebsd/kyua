@@ -35,7 +35,7 @@
 #if !defined(CLI_MAIN_HPP)
 #define CLI_MAIN_HPP
 
-#include "utils/cmdline/commands_map.hpp"
+#include "cli/common.hpp"
 #include "utils/cmdline/ui.hpp"
 
 namespace utils {
@@ -57,7 +57,7 @@ utils::fs::path default_log_name(void);
 
 
 int main(utils::cmdline::ui*, const int, const char* const* const,
-         utils::cmdline::command_ptr = utils::cmdline::command_ptr());
+         cli_command_ptr = cli_command_ptr());
 int main(const int, const char* const* const);
 
 

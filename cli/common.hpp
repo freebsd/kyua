@@ -34,6 +34,7 @@
 
 #include <memory>
 
+#include "utils/cmdline/base_command.hpp"
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.hpp"
 #include "utils/cmdline/ui.hpp"
@@ -56,13 +57,23 @@ class kyuafile;
 namespace cli {
 
 
-extern const utils::cmdline::path_option config_option;
 extern const utils::cmdline::path_option kyuafile_option;
 extern const utils::cmdline::property_option variable_option;
 
 
-engine::user_files::config load_config(
-    const utils::cmdline::parsed_cmdline&);
+/// Base type for commands defined in the cli module.
+///
+/// All commands in Kyua receive a configuration object as their runtime
+/// data parameter because the configuration file applies to all the
+/// commands.
+typedef utils::cmdline::base_command< engine::user_files::config >
+    cli_command;
+
+
+/// Scoped, strictly owned pointer to a cli_command.
+typedef std::auto_ptr< cli_command > cli_command_ptr;
+
+
 engine::user_files::kyuafile load_kyuafile(
     const utils::cmdline::parsed_cmdline&);
 

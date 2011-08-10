@@ -28,7 +28,8 @@
 
 #include <atf-c++.hpp>
 
-#include "utils/cmdline/commands_map.hpp"
+#include "utils/cmdline/base_command.hpp"
+#include "utils/cmdline/commands_map.ipp"
 #include "utils/sanity.hpp"
 
 namespace cmdline = utils::cmdline;
@@ -37,10 +38,11 @@ namespace cmdline = utils::cmdline;
 namespace {
 
 
-class mock_cmd : public cmdline::base_command {
+class mock_cmd : public cmdline::base_command_no_data {
 public:
     mock_cmd(const char* mock_name) :
-        cmdline::base_command(mock_name, "", 0, 0, "Command for testing.")
+        cmdline::base_command_no_data(mock_name, "", 0, 0,
+                                      "Command for testing.")
     {
     }
 
@@ -58,7 +60,7 @@ public:
 ATF_TEST_CASE_WITHOUT_HEAD(empty);
 ATF_TEST_CASE_BODY(empty)
 {
-    cmdline::commands_map commands;
+    cmdline::commands_map< cmdline::base_command_no_data > commands;
     ATF_REQUIRE(commands.empty());
     ATF_REQUIRE(commands.begin() == commands.end());
 }
@@ -67,16 +69,16 @@ ATF_TEST_CASE_BODY(empty)
 ATF_TEST_CASE_WITHOUT_HEAD(some);
 ATF_TEST_CASE_BODY(some)
 {
-    cmdline::base_command* cmd1 = new mock_cmd("cmd1");
-    cmdline::base_command* cmd2 = new mock_cmd("cmd2");
-
-    cmdline::commands_map commands;
-    commands.insert(cmdline::command_ptr(cmd1));
-    commands.insert(cmdline::command_ptr(cmd2));
+    cmdline::commands_map< cmdline::base_command_no_data > commands;
+    cmdline::base_command_no_data* cmd1 = new mock_cmd("cmd1");
+    commands.insert(cmd1);
+    cmdline::base_command_no_data* cmd2 = new mock_cmd("cmd2");
+    commands.insert(cmd2);
 
     ATF_REQUIRE(!commands.empty());
 
-    cmdline::commands_map::const_iterator iter = commands.begin();
+    cmdline::commands_map< cmdline::base_command_no_data >::const_iterator
+        iter = commands.begin();
     ATF_REQUIRE((*iter).first == "cmd1");
     ATF_REQUIRE((*iter).second == cmd1);
 
@@ -91,12 +93,11 @@ ATF_TEST_CASE_BODY(some)
 ATF_TEST_CASE_WITHOUT_HEAD(find__match);
 ATF_TEST_CASE_BODY(find__match)
 {
-    cmdline::base_command* cmd1 = new mock_cmd("cmd1");
-    cmdline::base_command* cmd2 = new mock_cmd("cmd2");
-
-    cmdline::commands_map commands;
-    commands.insert(cmdline::command_ptr(cmd1));
-    commands.insert(cmdline::command_ptr(cmd2));
+    cmdline::commands_map< cmdline::base_command_no_data > commands;
+    cmdline::base_command_no_data* cmd1 = new mock_cmd("cmd1");
+    commands.insert(cmd1);
+    cmdline::base_command_no_data* cmd2 = new mock_cmd("cmd2");
+    commands.insert(cmd2);
 
     ATF_REQUIRE(cmd1 == commands.find("cmd1"));
     ATF_REQUIRE(cmd2 == commands.find("cmd2"));
@@ -106,8 +107,8 @@ ATF_TEST_CASE_BODY(find__match)
 ATF_TEST_CASE_WITHOUT_HEAD(find__nomatch);
 ATF_TEST_CASE_BODY(find__nomatch)
 {
-    cmdline::commands_map commands;
-    commands.insert(cmdline::command_ptr(new mock_cmd("cmd1")));
+    cmdline::commands_map< cmdline::base_command_no_data > commands;
+    commands.insert(new mock_cmd("cmd1"));
 
     ATF_REQUIRE(NULL == commands.find("cmd2"));
 }
