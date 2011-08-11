@@ -93,10 +93,11 @@ static const bool have_unmount2 =
 ///
 /// This is only provided to allow our code to compile in all platforms
 /// regardless of whether they actually have an unmount(2) or not.
-static void
+static int
 unmount(const char* unused_path, const int unused_flags)
 {
     UNREACHABLE_MSG("Can't be called if have_unmount2 is false");
+    return -1;
 }
 #endif
 
