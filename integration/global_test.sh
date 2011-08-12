@@ -140,4 +140,7 @@ atf_init_test_cases() {
     atf_add_test_case loglevel__default
     atf_add_test_case loglevel__lower
     atf_add_test_case loglevel__higher
+
+    # Tests for the global configuration-related flags are found in the
+    # cmd_config_test test program.
 }

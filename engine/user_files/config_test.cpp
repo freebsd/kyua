@@ -50,6 +50,7 @@ namespace lua = utils::lua;
 namespace passwd = utils::passwd;
 namespace user_files = engine::user_files;
 
+using utils::none;
 using utils::optional;
 
 
@@ -719,6 +720,52 @@ ATF_TEST_CASE_BODY(config__test_suite__undefined)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(config__all_properties__minimum);
+ATF_TEST_CASE_BODY(config__all_properties__minimum)
+{
+    const user_files::config config("the-architecture", "the-platform",
+                                    none, user_files::test_suites_map());
+
+    user_files::properties_map exp_props;
+    exp_props["architecture"] = "the-architecture";
+    exp_props["platform"] = "the-platform";
+
+    ATF_REQUIRE(exp_props == config.all_properties());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(config__all_properties__all);
+ATF_TEST_CASE_BODY(config__all_properties__all)
+{
+    user_files::test_suites_map test_suites;
+    test_suites["empty"] = user_files::properties_map();
+    {
+        user_files::properties_map props;
+        props["one"] = "value";
+        test_suites["single"] = props;
+    }
+    {
+        user_files::properties_map props;
+        props["one"] = "first";
+        props["two.three"] = "second";
+        test_suites["many"] = props;
+    }
+
+    const user_files::config config("the-architecture", "the-platform",
+        utils::make_optional(passwd::user("the-user", 100, 150)), test_suites);
+
+    user_files::properties_map exp_props;
+    exp_props["architecture"] = "the-architecture";
+    exp_props["platform"] = "the-platform";
+    exp_props["unprivileged_user"] = "the-user";
+    exp_props["single.one"] = "value";
+    exp_props["many.one"] = "first";
+    exp_props["many.two.three"] = "second";
+
+    ATF_REQUIRE(exp_props == config.all_properties());
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(config__equal_and_different);
 ATF_TEST_CASE_BODY(config__equal_and_different)
 {
@@ -816,5 +863,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, config__apply_overrides__test_suite__invalid);
     ATF_ADD_TEST_CASE(tcs, config__test_suite__defined);
     ATF_ADD_TEST_CASE(tcs, config__test_suite__undefined);
+    ATF_ADD_TEST_CASE(tcs, config__all_properties__minimum);
+    ATF_ADD_TEST_CASE(tcs, config__all_properties__all);
     ATF_ADD_TEST_CASE(tcs, config__equal_and_different);
 }

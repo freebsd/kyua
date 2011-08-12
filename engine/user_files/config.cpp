@@ -324,6 +324,26 @@ apply_override(user_files::config& config,
 }
 
 
+/// Constructs fully-qualified names for test-suite variables.
+///
+/// \param name The name of the test suite.
+/// \param properties The properties of the test suite.
+///
+/// \return A collection of fully-qualified properties.
+static user_files::properties_map
+qualify_test_suite(const std::string& name,
+                   const user_files::properties_map& properties)
+{
+    user_files::properties_map qualified_properties;
+    for (user_files::properties_map::const_iterator iter = properties.begin();
+         iter != properties.end(); iter++) {
+        const std::string key = F("%s.%s") % name % (*iter).first;
+        qualified_properties[key] = (*iter).second;
+    }
+    return qualified_properties;
+}
+
+
 }  // anonymous namespace
 
 
@@ -452,6 +472,35 @@ user_files::config::test_suite(const std::string& name) const
         return empty_properties_map;
     else
         return (*iter).second;
+}
+
+
+/// Returns all configuration properties as a key/value map.
+///
+/// This is intended to format all properties for user consumption.  The key
+/// names sould match the names used to represent the properties in the
+/// configuration files themselves.
+///
+/// \return A key/value mapping describing all configuration properties by their
+/// fully-qualified name.
+user_files::properties_map
+user_files::config::all_properties(void) const
+{
+    properties_map properties;
+
+    properties["architecture"] = architecture;
+    properties["platform"] = platform;
+    if (unprivileged_user)
+        properties["unprivileged_user"] = unprivileged_user.get().name;
+
+    for (test_suites_map::const_iterator iter = test_suites.begin();
+         iter != test_suites.end(); iter++) {
+        const properties_map aux = qualify_test_suite((*iter).first,
+                                                      (*iter).second);
+        properties.insert(aux.begin(), aux.end());
+    }
+
+    return properties;
 }
 
 

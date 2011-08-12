@@ -81,6 +81,7 @@ levels}.
 @menu
 Commands list
 * about command:: Details about the about command.
+* config command:: Details about the config command.
 * help command:: Details about the help command.
 * list command:: Details about the list command.
 * test command:: Details about the test command.
@@ -118,6 +119,25 @@ compatible with the output of GNU tools that support a
 @option{--version} flag.  Use this whenever you have to query the
 version number of the package.
 @end table
+
+@node config command
+@subsection The config command
+
+@cindex @command{config}
+
+The @command{config} command provides a way to list all defined
+configuration variables and their current values.
+
+This command is intended to help the user in resolving the values of
+the configuration variables without having to scan over configuration
+files.
+
+In the default form (no arguments), the command prints all
+configuration variables and returns 0 for success.
+
+If any arguments are provided, the command will only print the
+requested variables.  If any particular variable is not defined, the
+command will return 1 for error.
 
 @node help command
 @subsection The help command

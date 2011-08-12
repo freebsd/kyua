@@ -106,6 +106,8 @@ struct config {
 
     const properties_map& test_suite(const std::string&) const;
 
+    properties_map all_properties(void) const;
+
     bool operator==(const config&) const;
     bool operator!=(const config&) const;
 };

@@ -456,12 +456,12 @@ EOF
 }
 
 
-utils_test_case config__behavior
-config__behavior_body() {
-    cat >"${HOME}/.kyuarc" <<EOF
+utils_test_case config_behavior
+config_behavior_body() {
+    cat >"my-config" <<EOF
 syntax("config", 1)
 test_suite_var("suite1", "X-the-variable", "value1")
-test_suite_var("suite2", "X-the-variable", "value2")
+test_suite_var("suite2", "X-the-variable", "override me")
 EOF
 
     cat >Kyuafile <<EOF
@@ -474,222 +474,14 @@ EOF
     utils_cp_helper config config2
     utils_cp_helper config config3
 
-    atf_check -s exit:1 -o save:stdout -e empty kyua test
+    atf_check -s exit:1 -o save:stdout -e empty \
+        kyua -c my-config -v suite2.X-the-variable=value2 test
     atf_check -s exit:0 -o ignore -e empty \
         grep 'config1:get_variable.*failed' stdout
     atf_check -s exit:0 -o ignore -e empty \
         grep 'config2:get_variable.*passed' stdout
     atf_check -s exit:0 -o ignore -e empty \
         grep 'config3:get_variable.*skipped' stdout
-}
-
-
-utils_test_case config_flag__default_system
-config_flag__default_system_body() {
-    cat >kyua.conf <<EOF
-syntax("config", 1)
-test_suite_var("integration", "X-the-variable", "value2")
-EOF
-
-    cat >Kyuafile <<EOF
-syntax("kyuafile", 1)
-test_suite("integration")
-atf_test_program{name="config"}
-EOF
-    utils_cp_helper config .
-
-    atf_check -s exit:0 -o match:"get_variable.*skipped" -e empty kyua test
-    export KYUA_CONFDIR="$(pwd)"
-    atf_check -s exit:0 -o match:"get_variable.*passed" -e empty kyua test
-}
-
-
-utils_test_case config_flag__default_home
-config_flag__default_home_body() {
-    cat >kyuarc <<EOF
-syntax("config", 1)
-test_suite_var("integration", "X-the-variable", "value2")
-EOF
-
-    cat >Kyuafile <<EOF
-syntax("kyuafile", 1)
-test_suite("integration")
-atf_test_program{name="config"}
-EOF
-    utils_cp_helper config .
-
-    atf_check -s exit:0 -o match:"get_variable.*skipped" -e empty kyua test
-    mv kyuarc "${HOME}/.kyuarc"
-    atf_check -s exit:0 -o match:"get_variable.*passed" -e empty kyua test
-}
-
-
-utils_test_case config_flag__explicit__ok
-config_flag__explicit__ok_body() {
-    cat >kyuarc <<EOF
-syntax("config", 1)
-test_suite_var("integration", "X-the-variable", "value2")
-EOF
-
-    cat >Kyuafile <<EOF
-syntax("kyuafile", 1)
-test_suite("integration")
-atf_test_program{name="config"}
-EOF
-    utils_cp_helper config .
-
-    atf_check -s exit:0 -o match:"get_variable.*skipped" -e empty kyua test
-    atf_check -s exit:0 -o match:"get_variable.*passed" -e empty kyua \
-        -c kyuarc test
-    atf_check -s exit:0 -o match:"get_variable.*passed" -e empty kyua \
-        --config=kyuarc test
-}
-
-
-utils_test_case config_flag__explicit__missing_file
-config_flag__explicit__missing_file_body() {
-    cat >experr <<EOF
-kyua: E: Load of 'foo' failed: File 'foo' not found.
-EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua --config=foo test
-}
-
-
-utils_test_case config_flag__explicit__bad_file
-config_flag__explicit__bad_file_body() {
-    touch custom
-    atf_check -s exit:1 -o empty -e match:"Syntax not defined.*'custom'" \
-        kyua --config=custom test
-}
-
-
-utils_test_case variable_flag__no_config
-variable_flag__no_config_body() {
-    cat >Kyuafile <<EOF
-syntax("kyuafile", 1)
-atf_test_program{name="config1", test_suite="suite1"}
-atf_test_program{name="config2", test_suite="suite2"}
-atf_test_program{name="config3", test_suite="suite3"}
-EOF
-    utils_cp_helper config config1
-    utils_cp_helper config config2
-    utils_cp_helper config config3
-
-    check_stdout() {
-        atf_check -s exit:0 -o ignore -e empty \
-            grep 'config1:get_variable.*failed' stdout
-        atf_check -s exit:0 -o ignore -e empty \
-            grep 'config2:get_variable.*passed' stdout
-        atf_check -s exit:0 -o ignore -e empty \
-            grep 'config3:get_variable.*skipped' stdout
-    }
-
-    atf_check -s exit:1 -o save:stdout -e empty kyua \
-        -v "suite1.X-the-variable=value1" \
-        -v "suite2.X-the-variable=value2" \
-        test
-    check_stdout
-
-    atf_check -s exit:1 -o save:stdout -e empty kyua \
-        --variable="suite1.X-the-variable=value1" \
-        --variable="suite2.X-the-variable=value2" \
-        test
-    check_stdout
-}
-
-
-utils_test_case variable_flag__override_default_config
-variable_flag__override_default_config_body() {
-    cat >"${HOME}/.kyuarc" <<EOF
-syntax("config", 1)
-test_suite_var("suite1", "X-the-variable", "value1")
-test_suite_var("suite2", "X-the-variable", "should not be used")
-EOF
-
-    cat >Kyuafile <<EOF
-syntax("kyuafile", 1)
-atf_test_program{name="config1", test_suite="suite1"}
-atf_test_program{name="config2", test_suite="suite2"}
-atf_test_program{name="config3", test_suite="suite3"}
-atf_test_program{name="config4", test_suite="suite4"}
-EOF
-    utils_cp_helper config config1
-    utils_cp_helper config config2
-    utils_cp_helper config config3
-    utils_cp_helper config config4
-
-    check_stdout() {
-        atf_check -s exit:0 -o ignore -e empty \
-            grep 'config1:get_variable.*failed' stdout
-        atf_check -s exit:0 -o ignore -e empty \
-            grep 'config2:get_variable.*passed' stdout
-        atf_check -s exit:0 -o ignore -e empty \
-            grep 'config3:get_variable.*skipped' stdout
-        atf_check -s exit:0 -o ignore -e empty \
-            grep 'config4:get_variable.*passed' stdout
-    }
-
-    atf_check -s exit:1 -o save:stdout -e empty kyua \
-        -v "suite2.X-the-variable=value2" \
-        -v "suite4.X-the-variable=value2" \
-        test
-    check_stdout
-
-    atf_check -s exit:1 -o save:stdout -e empty kyua \
-        --variable="suite2.X-the-variable=value2" \
-        --variable="suite4.X-the-variable=value2" \
-        test
-    check_stdout
-}
-
-
-utils_test_case variable_flag__override_custom_config
-variable_flag__override_custom_config_body() {
-    cat >config <<EOF
-syntax("config", 1)
-test_suite_var("suite1", "X-the-variable", "value1")
-test_suite_var("suite2", "X-the-variable", "should not be used")
-EOF
-
-    cat >Kyuafile <<EOF
-syntax("kyuafile", 1)
-atf_test_program{name="config1", test_suite="suite1"}
-atf_test_program{name="config2", test_suite="suite2"}
-EOF
-    utils_cp_helper config config1
-    utils_cp_helper config config2
-
-    check_stdout() {
-        atf_check -s exit:0 -o ignore -e empty \
-            grep 'config1:get_variable.*failed' stdout
-        atf_check -s exit:0 -o ignore -e empty \
-            grep 'config2:get_variable.*passed' stdout
-    }
-
-    atf_check -s exit:1 -o save:stdout -e empty kyua -c config \
-        -v "suite2.X-the-variable=value2" test
-    check_stdout
-
-    atf_check -s exit:1 -o save:stdout -e empty kyua -c config \
-        --variable="suite2.X-the-variable=value2" test
-    check_stdout
-}
-
-
-utils_test_case variable_flag__invalid
-variable_flag__invalid_body() {
-    cat >experr <<EOF
-Usage error: Invalid argument '' for option --variable: Argument does not have the form 'name=value'.
-Type 'kyua help' for usage information.
-EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua \
-        -v "a.b=c" -v "" test
-
-    cat >experr <<EOF
-kyua: E: Unrecognized configuration property 'foo' in override 'foo=bar'.
-EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua \
-        -v "a.b=c" -v "foo=bar" test
 }
 
 
@@ -942,16 +734,7 @@ atf_init_test_cases() {
 
     atf_add_test_case only_load_used_test_programs
 
-    atf_add_test_case config__behavior
-    atf_add_test_case config_flag__default_system
-    atf_add_test_case config_flag__default_home
-    atf_add_test_case config_flag__explicit__ok
-    atf_add_test_case config_flag__explicit__missing_file
-    atf_add_test_case config_flag__explicit__bad_file
-    atf_add_test_case variable_flag__no_config
-    atf_add_test_case variable_flag__override_default_config
-    atf_add_test_case variable_flag__override_custom_config
-    atf_add_test_case variable_flag__invalid
+    atf_add_test_case config_behavior
 
     atf_add_test_case kyuafile_flag__no_args
     atf_add_test_case kyuafile_flag__some_args
