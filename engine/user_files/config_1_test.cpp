@@ -35,6 +35,7 @@
 
 #include "engine/user_files/common.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/lua/exceptions.hpp"
 #include "utils/lua/operations.hpp"
 #include "utils/lua/wrap.hpp"
 
@@ -73,17 +74,17 @@ ATF_TEST_CASE_BODY(some_variables)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(some_test_suite_variables);
-ATF_TEST_CASE_BODY(some_test_suite_variables)
+ATF_TEST_CASE_WITHOUT_HEAD(test_suites__ok);
+ATF_TEST_CASE_BODY(test_suites__ok)
 {
     std::ofstream output("test.lua");
     ATF_REQUIRE(output);
     output << "syntax('config', 1)\n";
-    output << "test_suite_var('ts1', 'foo', 'bar')\n";
-    output << "test_suite_var('ts1', 'foo', 'baz')\n";
-    output << "test_suite_var('ts1', 'hello', 3)\n";
-    output << "test_suite_var('ts2', 'hello', 5)\n";
-    output << "test_suite_var('ts2', 'bye', true)\n";
+    output << "test_suites.ts1.foo = 'bar'\n";
+    output << "test_suites.ts1.foo = 'baz'\n";
+    output << "test_suites.ts1.hello = 3\n";
+    output << "test_suites.ts2.hello = 5\n";
+    output << "test_suites.ts2.bye = true\n";
     output.close();
 
     lua::state state;
@@ -95,9 +96,75 @@ ATF_TEST_CASE_BODY(some_test_suite_variables)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(test_suites__get__invalid_key_type);
+ATF_TEST_CASE_BODY(test_suites__get__invalid_key_type)
+{
+    std::ofstream output("test.lua");
+    ATF_REQUIRE(output);
+    output << "syntax('config', 1)\n";
+    output << "test_suites[3].foo = 'abc'\n";
+    output.close();
+
+    lua::state state;
+    ATF_REQUIRE_THROW_RE(lua::error, "name must be a string",
+                         user_files::do_user_file(state, fs::path("test.lua")));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(test_suites__set__disallow);
+ATF_TEST_CASE_BODY(test_suites__set__disallow)
+{
+    std::ofstream output("test.lua");
+    ATF_REQUIRE(output);
+    output << "syntax('config', 1)\n";
+    output << "test_suites.hello = 'abc'\n";
+    output.close();
+
+    lua::state state;
+    ATF_REQUIRE_THROW_RE(lua::error, "Cannot directly set.*test_suites",
+                         user_files::do_user_file(state, fs::path("test.lua")));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(test_suite__set__invalid_key_type);
+ATF_TEST_CASE_BODY(test_suite__set__invalid_key_type)
+{
+    std::ofstream output("test.lua");
+    ATF_REQUIRE(output);
+    output << "syntax('config', 1)\n";
+    output << "test_suites.hello[3] = {}\n";
+    output.close();
+
+    lua::state state;
+    ATF_REQUIRE_THROW_RE(lua::error, "Key '3'.*not a string.*suite 'hello'",
+                         user_files::do_user_file(state, fs::path("test.lua")));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(test_suite__set__invalid_value_type);
+ATF_TEST_CASE_BODY(test_suite__set__invalid_value_type)
+{
+    std::ofstream output("test.lua");
+    ATF_REQUIRE(output);
+    output << "syntax('config', 1)\n";
+    output << "test_suites.hello.world = {}\n";
+    output.close();
+
+    lua::state state;
+    ATF_REQUIRE_THROW_RE(lua::error, "Invalid type.*'world'.*suite 'hello'",
+                         user_files::do_user_file(state, fs::path("test.lua")));
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, empty);
     ATF_ADD_TEST_CASE(tcs, some_variables);
-    ATF_ADD_TEST_CASE(tcs, some_test_suite_variables);
+
+    ATF_ADD_TEST_CASE(tcs, test_suites__ok);
+    ATF_ADD_TEST_CASE(tcs, test_suites__get__invalid_key_type);
+    ATF_ADD_TEST_CASE(tcs, test_suites__set__disallow);
+
+    ATF_ADD_TEST_CASE(tcs, test_suite__set__invalid_key_type);
+    ATF_ADD_TEST_CASE(tcs, test_suite__set__invalid_value_type);
 }

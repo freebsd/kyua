@@ -460,8 +460,8 @@ utils_test_case config_behavior
 config_behavior_body() {
     cat >"my-config" <<EOF
 syntax("config", 1)
-test_suite_var("suite1", "X-the-variable", "value1")
-test_suite_var("suite2", "X-the-variable", "override me")
+test_suites.suite1["X-the-variable"] = "value1"
+test_suites.suite2["X-the-variable"] = "override me"
 EOF
 
     cat >Kyuafile <<EOF

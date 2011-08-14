@@ -485,7 +485,7 @@ ATF_TEST_CASE_BODY(config__load__overrides)
         file << "architecture = 'test-architecture'\n";
         file << "platform = 'test-platform'\n";
         file << "unprivileged_user = 'user2'\n";
-        file << "test_suite_var('mysuite', 'myvar', 'myvalue')\n";
+        file << "test_suites.mysuite.myvar = 'myvalue'\n";
         file.close();
     }
 

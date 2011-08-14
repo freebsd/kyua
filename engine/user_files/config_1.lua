@@ -49,36 +49,90 @@ setmetatable(P, {__index = _G})
 setfenv(1, P)
 
 
-TEST_SUITES = {}
-
-
--- Defines a configuration variable for a particular test suite.
+-- newindex metatable method for a test suite table.
 --
--- \post TEST_SUITES[test_suite][name] == value
---
--- \param test_suite string, The name of the test suite for which a property is
---     being set.
--- \param name string, The name of the property to set.
--- \param value boolean|number|string, The value of the property.
-function test_suite_var(test_suite, name, value)
-   assert(type(test_suite) == "string")
-   assert(type(name) == "string")
+-- \param table table, The table containing all the test-suite-specific
+--     configuration variables.
+-- \param key string, The name of the configuration variable to be set.
+-- \param value boolean|number|string, The new value for the configuration
+--     variable.
+function test_suite_newindex(table, key, value)
+   local test_suite_name = getmetatable(table)._test_suite_name
+
+   assert(type(key) == "string",
+          string.format("Key '%s' not a string while indexing test suite '%s'",
+                        key, test_suite_name))
    assert(type(value) == "boolean" or type(value) == "number" or
-          type(value) == "string")
+          type(value) == "string",
+          string.format("Invalid type for property '%s' in test suite '%s'",
+                        key, test_suite_name))
 
-   if TEST_SUITES[test_suite] == nil then
-      TEST_SUITES[test_suite] = {}
-   end
-   TEST_SUITES[test_suite][name] = value
+   rawset(table, key, value)
 
    if type(value) == "boolean" then
       str_value = value and "true" or "false"
    else
       str_value = tostring(value)
    end
-   logging.info(string.format("Set %s = %s for test suite %s", name, str_value,
-                              test_suite))
+   logging.info(string.format("Set %s = %s for test suite %s", key, str_value,
+                              test_suite_name))
 end
+
+
+-- index metatable method for the TEST_SUITES table.
+--
+-- This method creates a new subtable of TEST_SUITES every time it is invoked on
+-- a non-existent key.  This way we ensure that all elements of TEST_SUITES are
+-- tables on their own and represent a key/value mapping on themselves.
+--
+-- \param table table, The table containing all the tables representing
+--     test-suite-specific configuration variables..
+-- \param key string, The name of the test suite to get (or create if it has not
+--     been accessed yet).
+--
+-- \return table, The table representing the test-suite-specific variables for
+-- the test suite named 'key'.
+function test_suites_index(table, key)
+   assert(type(key) == "string", "Test suite name must be a string")
+
+   value = rawget(table, key)
+   if value == nil then
+      value = {}
+      setmetatable(value, {__newindex = test_suite_newindex,
+                           _test_suite_name = key})
+      rawset(table, key, value)
+   end
+
+   assert(type(value) == "table")
+   return value
+end
+
+
+-- newindex metatable method for the TEST_SUITES table.
+--
+-- We disallow users to call this method on the global TEST_SUITES table because
+-- we do not want them to assign arbitrary values to members of this table.  The
+-- 'index' method will create default objects instead upon demand.
+--
+-- \param table table, The table containing all the test-suite-specific
+--     configuration variables.
+-- \param key string, The name of the configuration variable to be set.
+-- \param value boolean|number|string, The new value for the configuration
+--     variable.
+function test_suites_newindex(unused_table, unused_key, unused_value)
+   error('Cannot directly set values of test_suites; index them instead')
+end
+
+
+-- Definition of all test-suite-specific configuration variables.
+--
+-- This table is tweaked to force all of its elements to be other tables, which
+-- in turn represent the configuration variables of a single test suite.
+TEST_SUITES = {}
+setmetatable(TEST_SUITES, {
+    __index = test_suites_index,
+    __newindex = test_suites_newindex,
+})
 
 
 -- Sets globals for commonly-used and required module entities.
@@ -89,7 +143,7 @@ end
 function export()
    _G.config = P
 
-   _G.test_suite_var = test_suite_var
+   _G.test_suites = TEST_SUITES
 end
 
 

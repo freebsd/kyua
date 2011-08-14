@@ -80,8 +80,8 @@ architecture = 'foo'
 platform = 'bar'
 
 -- Assign test-suite variables.
-test_suite_var('NetBSD', 'file_systems', 'ffs ext2fs')
-test_suite_var('X11', 'graphics_driver', 'vesa')
+test_suites.NetBSD.file_systems = 'ffs ext2fs'
+test_suites.X11.graphics_driver = 'vesa'
 @end example
 
 Note the syntax definition at the very beginning: this is not standard
@@ -129,12 +129,12 @@ variables, and their type and meaning is specific to the test suite.
 @c these variables in some way so that we can expose them to the user?
 @c Maybe declare them in the Kyuafiles?
 
-@cindex test_suite_var function
-Test-suite specific configuration variables are defined with the
-@code{test_suite_var} function.  The general syntax is:
+@cindex test_suites map
+Test-suite specific configuration variables are defined inside the
+@code{test_suites} dictionary.  The general syntax is:
 
 @example
-test_suite_var(@var{test_suite_name}, @var{variable_name}, @var{value})
+test_suites.@var{test_suite_name}.@var{variable_name} = @var{value}
 @end example
 
 where @var{test_suite_name} is the name of the test suite,

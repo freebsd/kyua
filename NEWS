@@ -17,6 +17,11 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   inspect the current configuration variables after evaluation, without having
   to read through configuration files.
 
+* Issue 11: Removed the test_suites_var function from configuration files.
+  This was used to set the value of test-suite-sepecific variables, but
+  it was ugly-looking.  It is now possible to use the more natural syntax
+  'test_suites.<test-suite-name>.<variable> = <value>'.
+
 
 Changes in version 0.1
 ======================

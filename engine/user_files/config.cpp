@@ -436,9 +436,7 @@ user_files::config::load(const utils::fs::path& file)
 ///
 /// \todo Consider the following alternative: we may want a user to specify the
 /// overrides on the command-line as if they were Lua code.  This would prevent
-/// us from having to implement all the override-parsing logic here.  But to
-/// make this effective, we'd need to get rid of the test_suite_var() auxiliary
-/// function in config_1.lua.
+/// us from having to implement all the override-parsing logic here.
 user_files::config
 user_files::config::apply_overrides(
     const std::vector< override_pair >& overrides) const

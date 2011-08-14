@@ -60,8 +60,7 @@ create_mock_config(const char* name, const char* cookie)
     ATF_REQUIRE(output);
     if (cookie != NULL) {
         output << "syntax('config', 1)\n";
-        output << "test_suite_var('suite', 'magic-value', '" << cookie
-               << "')\n";
+        output << "test_suites.suite.magic_value = '" << cookie << "'\n";
     } else {
         output << "syntax('invalid-file', 1)\n";
     }
@@ -103,7 +102,7 @@ validate_mock_config(const user_files::config& config, const char* cookie)
 {
     const user_files::properties_map& properties = config.test_suite("suite");
     const user_files::properties_map::const_iterator iter =
-        properties.find("magic-value");
+        properties.find("magic_value");
     ATF_REQUIRE(iter != properties.end());
     ATF_REQUIRE_EQ(cookie, (*iter).second);
 }
