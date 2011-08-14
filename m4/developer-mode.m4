@@ -1,4 +1,4 @@
-dnl Copyright 2010 Google Inc.
+dnl Copyright 2010, 2011 Google Inc.
 dnl All rights reserved.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
@@ -26,85 +26,87 @@ dnl THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 dnl (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 dnl OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-dnl -----------------------------------------------------------------------
-dnl Set up the developer mode
-dnl -----------------------------------------------------------------------
+dnl \file developer-mode.m4
+dnl
+dnl "Developer mode" is a mode in which the build system reports any
+dnl build-time warnings as fatal errors.  This helps in minimizing the
+dnl amount of trivial coding problems introduced in the code.
+dnl Unfortunately, this is not bullet-proof due to the wide variety of
+dnl compilers available and their different warning diagnostics.
+dnl
+dnl When developer mode support is added to a package, the compilation will
+dnl gain a bunch of extra warning diagnostics.  These will NOT be enforced
+dnl unless developer mode is enabled.
+dnl
+dnl Developer mode is enabled when the user requests it through the
+dnl configure command line, or when building from the repository.  The
+dnl latter is to minimize the risk of committing new code with warnings
+dnl into the tree.
 
+
+dnl Adds "developer mode" support to the package.
 dnl
-dnl KYUA_DEVELOPER_MODE(languages)
-dnl
-dnl Adds a --enable-developer flag to the configure script and, when given,
-dnl checks for and enables several flags useful during development.
-dnl
+dnl This macro performs the actual definition of the --enable-developer
+dnl flag and implements all of its logic.  See the file-level comment for
+dnl details as to what this implies.
 AC_DEFUN([KYUA_DEVELOPER_MODE], [
     m4_foreach([language], [$1], [m4_set_add([languages], language)])
 
-    AC_ARG_ENABLE([developer],
-                  AS_HELP_STRING([--enable-developer],
-                                 [enable developer features]),,
-                  [case ${PACKAGE_VERSION} in
-                   0.*|*99*|*alpha*|*beta*) enable_developer=yes ;;
-                   *) enable_developer=no ;;
-                   esac])
+    AC_ARG_ENABLE(
+        [developer],
+        AS_HELP_STRING([--enable-developer], [enable developer features]),,
+        [if test -d ${srcdir}/.svn; then
+             AC_MSG_NOTICE([building from HEAD; developer mode autoenabled])
+             enable_developer=yes
+         else
+             enable_developer=no
+         fi])
+
+    #
+    # The following warning flags should also be enabled but cannot be.
+    # Reasons given below.
+    #
+    # -Wold-style-cast: Raises errors when using TIOCGWINSZ, at least under
+    #                   Mac OS X.  This is due to the way _IOR is defined.
+    #
+
+    try_c_cxx_flags="-D_FORTIFY_SOURCE=2 \
+                     -Wall \
+                     -Wcast-qual \
+                     -Wextra \
+                     -Wpointer-arith \
+                     -Wredundant-decls \
+                     -Wreturn-type \
+                     -Wshadow \
+                     -Wsign-compare \
+                     -Wswitch \
+                     -Wwrite-strings"
+
+    try_c_flags="-Wmissing-prototypes \
+                 -Wno-traditional \
+                 -Wstrict-prototypes"
+
+    try_cxx_flags="-Wabi \
+                   -Wctor-dtor-privacy \
+                   -Wno-deprecated \
+                   -Wno-non-template-friend \
+                   -Wno-pmf-conversions \
+                   -Wnon-virtual-dtor \
+                   -Woverloaded-virtual \
+                   -Wreorder \
+                   -Wsign-promo \
+                   -Wsynth"
 
     if test ${enable_developer} = yes; then
         try_werror=yes
-
-        try_c_cxx_flags="-g \
-                         -Wall \
-                         -Wcast-qual \
-                         -Wextra \
-                         -Wpointer-arith \
-                         -Wredundant-decls \
-                         -Wreturn-type \
-                         -Wshadow \
-                         -Wsign-compare \
-                         -Wswitch \
-                         -Wwrite-strings"
-
-        try_c_flags="-Wmissing-prototypes \
-                     -Wno-traditional \
-                     -Wstrict-prototypes"
-
-        try_cxx_flags="-Wabi \
-                       -Wctor-dtor-privacy \
-                       -Wno-deprecated \
-                       -Wno-non-template-friend \
-                       -Wno-pmf-conversions \
-                       -Wnon-virtual-dtor \
-                       -Woverloaded-virtual \
-                       -Wreorder \
-                       -Wsign-promo \
-                       -Wsynth"
-
-        #
-        # The following flags should also be enabled but cannot be.  Reasons
-        # given below.
-        #
-        # -Wold-style-cast: Raises errors when using TIOCGWINSZ, at least under
-        #                   Mac OS X.  This is due to the way _IOR is defined.
-        #
+        try_c_cxx_flags="${try_c_cxx_flags} -g -Werror"
     else
         try_werror=no
-        try_c_cxx_flags="-DNDEBUG"
-        try_c_flags=
-        try_cxx_flags=
-    fi
-    try_c_cxx_flags="${try_c_cxx_flags} -D_FORTIFY_SOURCE=2"
-
-    # Try and set -Werror first so that tests for other flags are accurate.
-    # Otherwise, compilers such as clang will report the flags as a warning and
-    # we will conclude they are supported... but when they are combined with
-    # -Werror they cause build failures.
-    if test ${try_werror} = yes; then
-        m4_set_contains([languages], [C], [KYUA_CC_FLAGS(-Werror, CFLAGS)])
-        m4_set_contains([languages], [C++], [KYUA_CXX_FLAGS(-Werror, CXXFLAGS)])
+        try_c_cxx_flags="${try_c_cxx_flags} -DNDEBUG"
     fi
 
     m4_set_contains([languages], [C],
-                    [KYUA_CC_FLAGS(${try_c_cxx_flags} ${try_c_flags},
-                                   CFLAGS)])
+                    [KYUA_CC_FLAGS(${try_c_cxx_flags} ${try_c_flags})])
     m4_set_contains([languages], [C++],
-                    [KYUA_CXX_FLAGS(${try_c_cxx_flags} ${try_cxx_flags},
-                                    CXXFLAGS)])
+                    [KYUA_CXX_FLAGS(${try_c_cxx_flags} ${try_cxx_flags})])
 ])

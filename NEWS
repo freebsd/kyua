@@ -27,6 +27,13 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 * Issue 23: Enabled detection of unused parameters and variables in the
   code and fixed all warnings.
 
+* Issue 22: Changed the behavior of "developer mode".  Compiler warnings
+  are now enabled unconditionally regardless of whether we are in
+  developer mode or not; developer mode is now only used to perform
+  strict warning checks and to enable assertions.  Additionally,
+  developer mode is now only automatically enabled when building from the
+  repository, not for formal releases.
+
 
 Changes in version 0.1
 ======================
