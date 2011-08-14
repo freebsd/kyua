@@ -36,6 +36,7 @@
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/cmdline/ui.hpp"
+#include "utils/defs.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
@@ -102,7 +103,7 @@ cmd_about::cmd_about(void) : cli_command(
 /// opened.
 int
 cmd_about::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
-               const user_files::config& unused_config)
+               const user_files::config& UTILS_UNUSED_PARAM(config))
 {
     const fs::path docdir(utils::getenv_with_default(
         "KYUA_DOCDIR", KYUA_DOCDIR));

@@ -30,6 +30,7 @@
 
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/options.hpp"
+#include "utils/defs.hpp"
 
 namespace cmdline = utils::cmdline;
 
@@ -52,7 +53,7 @@ public:
     typedef std::string option_type;
 
     virtual void
-    validate(const std::string& str) const
+    validate(const std::string& UTILS_UNUSED_PARAM(str)) const
     {
         // Do nothing.
     }

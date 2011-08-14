@@ -30,6 +30,7 @@
 
 #include "utils/cmdline/base_command.hpp"
 #include "utils/cmdline/commands_map.ipp"
+#include "utils/defs.hpp"
 #include "utils/sanity.hpp"
 
 namespace cmdline = utils::cmdline;
@@ -47,7 +48,8 @@ public:
     }
 
     int
-    run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
+    run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
+        const cmdline::parsed_cmdline& UTILS_UNUSED_PARAM(cmdline))
     {
         UNREACHABLE;
     }

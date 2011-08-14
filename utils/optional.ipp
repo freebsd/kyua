@@ -31,6 +31,7 @@
 
 #include <cstddef>
 
+#include "utils/defs.hpp"
 #include "utils/optional.hpp"
 #include "utils/sanity.hpp"
 
@@ -47,7 +48,8 @@ utils::optional< T >::optional(void) :
 ///
 /// \param unused_none A copy of the utils::none instance.
 template< class T >
-utils::optional< T >::optional(utils::detail::none_t unused_none) :
+utils::optional< T >::optional(
+    utils::detail::none_t UTILS_UNUSED_PARAM(none)) :
     _data(NULL)
 {
 }
@@ -90,7 +92,7 @@ utils::optional< T >::~optional(void)
 /// \return A reference to this.
 template< class T >
 utils::optional< T >&
-utils::optional< T >::operator=(utils::detail::none_t unused_none)
+utils::optional< T >::operator=(utils::detail::none_t UTILS_UNUSED_PARAM(none))
 {
     if (_data != NULL)
         delete _data;

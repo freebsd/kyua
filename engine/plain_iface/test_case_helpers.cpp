@@ -37,6 +37,7 @@ extern "C" {
 #include <iostream>
 #include <sstream>
 
+#include "utils/defs.hpp"
 #include "utils/env.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
@@ -125,7 +126,7 @@ test_validate_isolation(void)
 
 
 int
-main(int argc, char* argv[])
+main(int argc, char** UTILS_UNUSED_PARAM(argv))
 {
     if (argc != 1) {
         std::cerr << "No arguments allowed; select the test case with the "

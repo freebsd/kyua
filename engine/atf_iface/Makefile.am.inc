@@ -77,6 +77,7 @@ engine_atf_iface_test_program_atf_helpers_LDADD = $(ATF_CXX_LIBS)
 tests_engine_atf_iface_PROGRAMS += engine/atf_iface/test_program_plain_helpers
 engine_atf_iface_test_program_plain_helpers_SOURCES = \
     engine/atf_iface/test_program_plain_helpers.cpp
+engine_atf_iface_test_program_plain_helpers_CXXFLAGS = $(UTILS_CFLAGS)
 
 tests_engine_atf_iface_PROGRAMS += engine/atf_iface/test_program_test
 engine_atf_iface_test_program_test_SOURCES = \

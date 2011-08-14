@@ -27,6 +27,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "engine/results.ipp"
+#include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/optional.ipp"
 
@@ -196,11 +197,11 @@ results::passed::passed(void)
 
 /// Equality comparator.
 ///
-/// \param other The result to compare to.
+/// \param unused_other The result to compare to.
 ///
 /// \return True if equal, false otherwise.
 bool
-results::passed::operator==(const results::passed& other)
+results::passed::operator==(const results::passed& UTILS_UNUSED_PARAM(other))
     const
 {
     return true;
@@ -209,11 +210,11 @@ results::passed::operator==(const results::passed& other)
 
 /// Inquality comparator.
 ///
-/// \param other The result to compare to.
+/// \param unused_other The result to compare to.
 ///
 /// \return True if differed, false otherwise.
 bool
-results::passed::operator!=(const results::passed& other)
+results::passed::operator!=(const results::passed& UTILS_UNUSED_PARAM(other))
     const
 {
     return false;

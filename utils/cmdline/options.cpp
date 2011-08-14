@@ -31,6 +31,7 @@
 
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/options.hpp"
+#include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/sanity.hpp"
@@ -252,13 +253,13 @@ cmdline::base_option::format_long_name(void) const
 /// This must be reimplemented by subclasses that describe options with
 /// arguments.
 ///
-/// \param str The argument to validate as provided by the user in the command
-///     line.
+/// \param unused_str The argument to validate as provided by the user in the
+///     command line.
 ///
 /// \throw cmdline::option_argument_value_error Subclasses must raise this
 ///     exception to indicate the cases in which str is invalid.
 void
-cmdline::base_option::validate(const std::string& str) const
+cmdline::base_option::validate(const std::string& UTILS_UNUSED_PARAM(str)) const
 {
     UNREACHABLE_MSG("Option does not support an argument");
 }
@@ -548,9 +549,10 @@ cmdline::string_option::string_option(const char* long_name_,
 
 /// Does nothing; all string values are valid arguments to a string_option.
 ///
-/// \param raw_value The argument provided by the user.
+/// \param unused_raw_value The argument provided by the user.
 void
-cmdline::string_option::validate(const std::string& raw_value) const
+cmdline::string_option::validate(
+    const std::string& UTILS_UNUSED_PARAM(raw_value)) const
 {
     // Nothing to do.
 }

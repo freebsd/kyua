@@ -38,6 +38,7 @@
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.hpp"
 #include "utils/cmdline/ui_mock.hpp"
+#include "utils/defs.hpp"
 #include "utils/sanity.hpp"
 #include "utils/test_utils.hpp"
 
@@ -61,8 +62,9 @@ public:
     }
 
     int
-    run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
-        const user_files::config& config)
+    run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
+        const cmdline::parsed_cmdline& UTILS_UNUSED_PARAM(cmdline),
+        const user_files::config& UTILS_UNUSED_PARAM(config))
     {
         UNREACHABLE;
         return 1234;
@@ -82,8 +84,9 @@ public:
     }
 
     int
-    run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
-        const user_files::config& config)
+    run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
+        const cmdline::parsed_cmdline& UTILS_UNUSED_PARAM(cmdline),
+        const user_files::config& UTILS_UNUSED_PARAM(config))
     {
         UNREACHABLE;
         return 5678;

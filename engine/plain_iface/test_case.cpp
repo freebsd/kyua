@@ -38,6 +38,7 @@ extern "C" {
 #include "engine/plain_iface/test_case.hpp"
 #include "engine/plain_iface/test_program.hpp"
 #include "engine/results.hpp"
+#include "utils/defs.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/optional.ipp"
 
@@ -250,7 +251,8 @@ plain_iface::test_case::get_all_properties(void) const
 ///
 /// \return The result of the execution.
 engine::results::result_ptr
-plain_iface::test_case::do_run(const user_files::config& unused_config) const
+plain_iface::test_case::do_run(
+    const user_files::config& UTILS_UNUSED_PARAM(config)) const
 {
     LI(F("Processing test case '%s'") % identifier().str());
 

@@ -45,6 +45,7 @@ extern "C" {
 #include <atf-c++.hpp>
 
 #include "utils/datetime.hpp"
+#include "utils/defs.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
@@ -374,7 +375,7 @@ open_fail(const char* path, const int flags, ...)
 
 template< int Errno >
 static pid_t
-pipe_fail(int fildes[2])
+pipe_fail(int* UTILS_UNUSED_PARAM(fildes))
 {
     errno = Errno;
     return -1;

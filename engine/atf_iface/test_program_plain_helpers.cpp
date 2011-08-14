@@ -30,12 +30,14 @@
 #include <cstring>
 #include <iostream>
 
+#include "utils/defs.hpp"
+
 
 namespace {
 
 
 int
-helper_abort_test_cases_list(int argc, char** argv)
+helper_abort_test_cases_list(int UTILS_UNUSED_PARAM(argc), char** argv)
 {
     for (const char* const* arg = argv; *arg != NULL; arg++) {
         if (std::strcmp(*arg, "-l") == 0) {
@@ -49,14 +51,15 @@ helper_abort_test_cases_list(int argc, char** argv)
 
 
 int
-helper_empty_test_cases_list(int argc, char** argv)
+helper_empty_test_cases_list(int UTILS_UNUSED_PARAM(argc),
+                             char** UTILS_UNUSED_PARAM(argv))
 {
     return EXIT_SUCCESS;
 }
 
 
 int
-helper_zero_test_cases(int argc, char** argv)
+helper_zero_test_cases(int UTILS_UNUSED_PARAM(argc), char** argv)
 {
     for (const char* const* arg = argv; *arg != NULL; arg++) {
         if (std::strcmp(*arg, "-l") == 0)

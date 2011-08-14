@@ -42,6 +42,7 @@ extern "C" {
 #include "utils/cmdline/parser.hpp"
 #include "utils/cmdline/ui_mock.hpp"
 #include "utils/datetime.hpp"
+#include "utils/defs.hpp"
 #include "utils/env.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
@@ -73,8 +74,9 @@ public:
     }
 
     int
-    run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
-        const user_files::config& unused_config)
+    run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
+        const cmdline::parsed_cmdline& UTILS_UNUSED_PARAM(cmdline),
+        const user_files::config& UTILS_UNUSED_PARAM(config))
     {
         std::abort();
     }
@@ -93,8 +95,9 @@ public:
     }
 
     int
-    run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
-        const user_files::config& unused_config)
+    run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
+        const cmdline::parsed_cmdline& UTILS_UNUSED_PARAM(cmdline),
+        const user_files::config& UTILS_UNUSED_PARAM(config))
     {
         if (_unhandled)
             throw std::logic_error("This is unhandled");
@@ -112,8 +115,9 @@ public:
     }
 
     int
-    run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
-        const user_files::config& unused_config)
+    run(cmdline::ui* ui,
+        const cmdline::parsed_cmdline& UTILS_UNUSED_PARAM(cmdline),
+        const user_files::config& UTILS_UNUSED_PARAM(config))
     {
         ui->out("stdout message from subcommand");
         ui->err("stderr message from subcommand");

@@ -39,6 +39,7 @@
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/cmdline/ui.hpp"
+#include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/sanity.hpp"
@@ -120,7 +121,7 @@ cli::cmd_list::cmd_list(void) :
 /// \return 0 to indicate success.
 int
 cli::cmd_list::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
-                   const user_files::config& unused_config)
+                   const user_files::config& UTILS_UNUSED_PARAM(config))
 {
     cli::filters_state filters(cmdline.arguments());
     const user_files::kyuafile kyuafile = load_kyuafile(cmdline);

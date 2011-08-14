@@ -36,6 +36,7 @@
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.hpp"
 #include "utils/cmdline/ui.hpp"
+#include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/sanity.hpp"
 
@@ -162,7 +163,7 @@ cmd_help::cmd_help(const cmdline::options_vector* options_,
 /// \return 0 to indicate success.
 int
 cmd_help::run(utils::cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
-              const user_files::config& unused_config)
+              const user_files::config& UTILS_UNUSED_PARAM(config))
 {
     if (cmdline.arguments().empty()) {
         general_help(ui, _options, _commands);

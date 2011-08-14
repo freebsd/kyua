@@ -31,6 +31,7 @@
 #include <atf-c++.hpp>
 
 #include "utils/auto_array.ipp"
+#include "utils/defs.hpp"
 
 using utils::auto_array;
 
@@ -51,7 +52,7 @@ public:
     }
 
     void*
-    operator new(size_t size)
+    operator new(size_t UTILS_UNUSED_PARAM(size))
     {
         ATF_FAIL("New called but should have been new[]");
         return new int(5);
@@ -67,7 +68,7 @@ public:
     }
 
     void
-    operator delete(void* mem)
+    operator delete(void* UTILS_UNUSED_PARAM(mem))
     {
         ATF_FAIL("Delete called but should have been delete[]");
     }

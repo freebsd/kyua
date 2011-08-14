@@ -33,6 +33,7 @@
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/cmdline/ui_mock.hpp"
+#include "utils/defs.hpp"
 
 namespace cmdline = utils::cmdline;
 
@@ -61,8 +62,8 @@ public:
     }
 
     int
-    run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
-        const Data& data)
+    run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
+        const cmdline::parsed_cmdline& cmdline, const Data& data)
     {
         if (cmdline.has_option("the_string"))
             optvalue = cmdline.get_option< cmdline::string_option >(
@@ -89,7 +90,8 @@ public:
     }
 
     int
-    run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline)
+    run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
+        const cmdline::parsed_cmdline& cmdline)
     {
         if (cmdline.has_option("the_string"))
             optvalue = cmdline.get_option< cmdline::string_option >(

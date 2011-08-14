@@ -54,7 +54,6 @@ AC_DEFUN([KYUA_DEVELOPER_MODE], [
                          -Wall \
                          -Wcast-qual \
                          -Wextra \
-                         -Wno-unused-parameter \
                          -Wpointer-arith \
                          -Wredundant-decls \
                          -Wreturn-type \

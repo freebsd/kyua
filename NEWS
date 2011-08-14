@@ -24,6 +24,9 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   more natural syntax 'test_suites.<test-suite-name>.<variable> =
   <value>'.
 
+* Issue 23: Enabled detection of unused parameters and variables in the
+  code and fixed all warnings.
+
 
 Changes in version 0.1
 ======================

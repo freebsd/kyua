@@ -72,3 +72,29 @@ AC_DEFUN([KYUA_ATTRIBUTE_NORETURN], [
     )
     AC_SUBST([ATTRIBUTE_NORETURN], [${value}])
 ])
+
+
+dnl
+dnl KYUA_ATTRIBUTE_UNUSED
+dnl
+dnl Checks if the current compiler has a way to mark parameters as unused
+dnl so that the -Wunused-parameter warning can be avoided.
+dnl
+AC_DEFUN([KYUA_ATTRIBUTE_UNUSED], [
+    AC_MSG_CHECKING(whether __attribute__((__unused__)) is supported)
+    AC_COMPILE_IFELSE(
+        [AC_LANG_PROGRAM([
+static void
+function(int a __attribute__((__unused__)))
+{
+}], [
+    function(3);
+    return 0;
+])],
+        [AC_MSG_RESULT(yes)
+         value="__attribute__((__unused__))"],
+        [AC_MSG_RESULT(no)
+         value=""]
+    )
+    AC_SUBST([ATTRIBUTE_UNUSED], [${value}])
+])
