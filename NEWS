@@ -3,24 +3,26 @@ Changes in version 0.2
 
 STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 
-* Generalized the run-time engine to support executing test programs
-  that implement different interfaces.  Test programs that use the ATF
-  libraries are just a special case of this.
+* Issue 18: Generalized the run-time engine to support executing test
+  programs that implement different interfaces.  Test programs that use
+  the ATF libraries are just a special case of this.
 
-* Added support to the engine to run "plain" test programs: i.e. test
-  programs that do not use any framework and report their pass/fail
-  status as an exit code.  This is to simplify the integration of legacy
-  test programs into a test suite, and also to demonstrate that the
-  run-time engine is generic enough to support different test interfaces.
+* Issue 18: Added support to the engine to run "plain" test programs:
+  i.e. test programs that do not use any framework and report their
+  pass/fail status as an exit code.  This is to simplify the integration
+  of legacy test programs into a test suite, and also to demonstrate
+  that the run-time engine is generic enough to support different test
+  interfaces.
 
-* Issue 11: Added the 'config' subcommand.  This command allows the end user to
-  inspect the current configuration variables after evaluation, without having
-  to read through configuration files.
+* Issue 11: Added the 'config' subcommand.  This command allows the end
+  user to inspect the current configuration variables after evaluation,
+  without having to read through configuration files.
 
-* Issue 11: Removed the test_suites_var function from configuration files.
-  This was used to set the value of test-suite-sepecific variables, but
-  it was ugly-looking.  It is now possible to use the more natural syntax
-  'test_suites.<test-suite-name>.<variable> = <value>'.
+* Issue 11: Removed the test_suites_var function from configuration
+  files.  This was used to set the value of test-suite-sepecific
+  variables, but it was ugly-looking.  It is now possible to use the
+  more natural syntax 'test_suites.<test-suite-name>.<variable> =
+  <value>'.
 
 
 Changes in version 0.1
