@@ -183,6 +183,22 @@ EOF
 }
 
 
+utils_test_case config_flag__explicit__disable
+config_flag__explicit__disable_body() {
+    cat >kyua.conf <<EOF
+syntax("config", 1)
+test_suites.foo["X-var"] = "baz"
+EOF
+    cp kyua.conf .kyuarc
+    export KYUA_CONFDIR="$(pwd)"
+
+    atf_check -s exit:0 -o match:"foo.X-var = baz" -e empty \
+        kyua config foo.X-var
+    atf_check -s exit:1 -o empty -e match:"kyua: W: 'foo.X-var'.*not defined" \
+        kyua --config=none config foo.X-var
+}
+
+
 utils_test_case config_flag__explicit__missing_file
 config_flag__explicit__missing_file_body() {
     cat >experr <<EOF
@@ -298,6 +314,7 @@ atf_init_test_cases() {
     atf_add_test_case config_flag__default_system
     atf_add_test_case config_flag__default_home
     atf_add_test_case config_flag__explicit__ok
+    atf_add_test_case config_flag__explicit__disable
     atf_add_test_case config_flag__explicit__missing_file
     atf_add_test_case config_flag__explicit__bad_file
 

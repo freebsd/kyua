@@ -56,6 +56,10 @@ static const char* user_config_basename = ".kyuarc";
 static const char* system_config_basename = "kyua.conf";
 
 
+/// Magic string to disable loading of configuration files.
+static const char* none_config = "none";
+
+
 /// Textual description of the default configuration files.
 ///
 /// This is just an auxiliary string required to define the option below, which
@@ -109,7 +113,10 @@ load_config_file(const cmdline::parsed_cmdline& cmdline)
     // the default value.
     const fs::path filename = cmdline.get_option< cmdline::path_option >(
         cli::config_option.long_name());
-    if (filename.str() != cli::config_option.default_value())
+    if (filename.str() == none_config) {
+        LD("Configuration loading disabled; using defaults");
+        return user_files::config::defaults();
+    } else if (filename.str() != cli::config_option.default_value())
         return user_files::config::load(filename);
 
     const optional< fs::path > home = get_home();
@@ -148,7 +155,8 @@ load_config_file(const cmdline::parsed_cmdline& cmdline)
 /// value of this flag.
 const cmdline::path_option cli::config_option(
     'c', "config",
-    "Path to the configuration file",
+    (std::string("Path to the configuration file; '") + none_config +
+     "' to disable loading").c_str(),
     "file", config_lookup_names.c_str());
 
 

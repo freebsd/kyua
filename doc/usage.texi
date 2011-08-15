@@ -221,6 +221,10 @@ Specifies the configuration to process.  Defaults to a
 @file{@value{KYUA_CONFDIR}/kyua.conf}.  None of the default files has
 to exist, but any user explicitly specified has to.
 
+The special value @samp{none} requests that no configuration files be
+loaded.  Overrides can still be provided through the @option{--variable}
+flag.
+
 @item --kyuafile=path
 @cindex @option{--kyuafile}, @command{test}
 Specifies the Kyuafile to process.  Defaults to a @file{Kyuafile} file

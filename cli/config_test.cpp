@@ -143,6 +143,21 @@ ATF_TEST_CASE_BODY(load_config__explicit__ok)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(load_config__explicit__disable);
+ATF_TEST_CASE_BODY(load_config__explicit__disable)
+{
+    mock_system_config(NULL);
+    mock_user_config(NULL);
+
+    std::map< std::string, std::vector< std::string > > options;
+    options["config"].push_back("none");
+    const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
+
+    const user_files::config config = cli::load_config(mock_cmdline);
+    ATF_REQUIRE(user_files::config::defaults() == config);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(load_config__explicit__fail);
 ATF_TEST_CASE_BODY(load_config__explicit__fail)
 {
@@ -291,6 +306,7 @@ ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, load_config__none);
     ATF_ADD_TEST_CASE(tcs, load_config__explicit__ok);
+    ATF_ADD_TEST_CASE(tcs, load_config__explicit__disable);
     ATF_ADD_TEST_CASE(tcs, load_config__explicit__fail);
     ATF_ADD_TEST_CASE(tcs, load_config__user__ok);
     ATF_ADD_TEST_CASE(tcs, load_config__user__fail);

@@ -34,6 +34,10 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   developer mode is now only automatically enabled when building from the
   repository, not for formal releases.
 
+* Added a mechanism to disable the loading of configuration files
+  altogether.  Needed for testing purposes and for scriptability.
+  Available by passing the '--config=none' flag.
+
 
 Changes in version 0.1
 ======================
