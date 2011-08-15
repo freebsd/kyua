@@ -59,17 +59,19 @@ kyua_SOURCES = main.cpp
 kyua_CXXFLAGS = $(CLI_CFLAGS) $(ENGINE_CFLAGS) $(UTILS_CFLAGS)
 kyua_LDADD = $(CLI_LIBS) $(ENGINE_LIBS) $(UTILS_LIBS)
 
-CHECK_ENVIRONMENT = KYUA_DOCDIR=$(abs_top_srcdir) \
+CHECK_ENVIRONMENT = KYUA_CONFDIR=/non-existent \
+                    KYUA_DOCDIR=$(abs_top_srcdir) \
                     KYUA_LUADIR=$(abs_top_srcdir)/engine/user_files \
                     PATH=$(abs_top_builddir):$${PATH}
-INSTALLCHECK_ENVIRONMENT = PATH=$(prefix)/bin:$${PATH}
+INSTALLCHECK_ENVIRONMENT = KYUA_CONFDIR=/non-existent \
+                           PATH=$(prefix)/bin:$${PATH}
 
 check-local: check-kyua
 .PHONY: check-kyua
 check-kyua:
 	$(srcdir)/admin/populate-builddir.sh $(top_srcdir) $(top_builddir) \
 	    cleanlist
-	$(CHECK_ENVIRONMENT) $(TESTS_ENVIRONMENT) ./kyua test
+	$(CHECK_ENVIRONMENT) $(TESTS_ENVIRONMENT) ./kyua --config=none test
 
 CLEAN_TARGETS = clean-builddir
 clean-builddir:
@@ -82,7 +84,7 @@ installcheck-local: installcheck-kyua
 .PHONY: installcheck-kyua
 installcheck-kyua:
 	cd $(pkgtestsdir) && $(INSTALLCHECK_ENVIRONMENT) $(TESTS_ENVIRONMENT) \
-	    kyua test
+	    kyua --config=none test
 
 EXTRA_DIST += Doxyfile
 if WITH_DOXYGEN
