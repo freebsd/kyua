@@ -61,6 +61,17 @@ subcommand name.
 
 @table @option
 
+@item --config=path
+@cindex @option{--config}
+Specifies the configuration to process.  Defaults to a
+@file{~/.kyuarc} if it exists, otherwise to
+@file{@value{KYUA_CONFDIR}/kyua.conf}.  None of the default files has
+to exist, but any user explicitly specified has to.
+
+The special value @samp{none} requests that no configuration files be
+loaded.  Overrides can still be provided through the @option{--variable}
+flag.
+
 @item --logfile=path
 @cindex @option{--logfile}
 Specifies the location of the file to which @command{kyua} will log
@@ -72,6 +83,12 @@ stored within the user's home directory.  @xref{Log file location}.
 @cindex @option{--loglevel}
 Specifies the logging level.  The default is @samp{info}.  @xref{Log
 levels}.
+
+@item --variable=name=value
+@cindex @option{--variable}
+Sets the @samp{name} configuration variable to @samp{value}.  The
+variable can either be a builtin variable for Kyua or a test-suite
+specific variable.
 
 @end table
 
@@ -214,27 +231,10 @@ the @option{--kyuafile} flag.
 The following subcommand options are recognized:
 
 @table @option
-@item --config=path
-@cindex @option{--config}, @command{test}
-Specifies the configuration to process.  Defaults to a
-@file{~/.kyuarc} if it exists, otherwise to
-@file{@value{KYUA_CONFDIR}/kyua.conf}.  None of the default files has
-to exist, but any user explicitly specified has to.
-
-The special value @samp{none} requests that no configuration files be
-loaded.  Overrides can still be provided through the @option{--variable}
-flag.
-
 @item --kyuafile=path
 @cindex @option{--kyuafile}, @command{test}
 Specifies the Kyuafile to process.  Defaults to a @file{Kyuafile} file
 in the current directory.
-
-@item --variable=name=value
-@cindex @option{--variable}, @command{test}
-Sets the @samp{name} configuration variable to @samp{value}.  The
-variable can either be a builtin variable for Kyua or a test-suite
-specific variable.
 @end table
 
 @node Filters
