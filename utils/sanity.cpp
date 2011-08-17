@@ -67,7 +67,11 @@ static std::string logfile;
 static void
 err_write(const std::string& message)
 {
-    ::write(STDERR_FILENO, message.c_str(), message.length());
+    if (::write(STDERR_FILENO, message.c_str(), message.length()) == -1) {
+        // We are crashing.  If ::write fails, there is not much we could do,
+        // specially considering that we are running within a signal handler.
+        // Just ignore the error.
+    }
 }
 
 

@@ -92,7 +92,12 @@ void
 engine::detail::interrupt_handler(const int signo)
 {
     const char* message = "[-- Signal caught; please wait for clean up --]\n";
-    ::write(STDERR_FILENO, message, std::strlen(message));
+    if (::write(STDERR_FILENO, message, std::strlen(message)) == -1) {
+        // We are exiting: the message printed here is only for informational
+        // purposes.  If we fail to print it (which probably means something
+        // is really bad), there is not much we can do within the signal
+        // handler, so just ignore this.
+    }
     interrupted_signo = signo;
 
     POST(interrupted_signo != 0);

@@ -50,6 +50,7 @@ extern "C" {
 
 #include "utils/auto_array.ipp"
 #include "utils/datetime.hpp"
+#include "utils/defs.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/exceptions.hpp"
@@ -93,8 +94,14 @@ static const bool have_unmount2 =
 ///
 /// This is only provided to allow our code to compile in all platforms
 /// regardless of whether they actually have an unmount(2) or not.
+///
+/// \param unused_path The mount point to be unmounted.
+/// \param unused_flags The flags to the unmount(2) call.
+///
+/// \return -1 to indicate error, although this should never happen.
 static int
-unmount(const char* unused_path, const int unused_flags)
+unmount(const char* UTILS_UNUSED_PARAM(path),
+        const int UTILS_UNUSED_PARAM(flags))
 {
     UNREACHABLE_MSG("Can't be called if have_unmount2 is false");
     return -1;
