@@ -33,6 +33,7 @@
 #include "cli/cmd_help.hpp"
 #include "cli/common.ipp"
 #include "engine/user_files/config.hpp"
+#include "utils/cmdline/commands_map.ipp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/globals.hpp"
 #include "utils/cmdline/options.hpp"

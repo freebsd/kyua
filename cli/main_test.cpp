@@ -36,6 +36,7 @@ extern "C" {
 
 #include "cli/main.hpp"
 #include "engine/user_files/config.hpp"
+#include "utils/cmdline/base_command.ipp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/globals.hpp"
 #include "utils/cmdline/options.hpp"
