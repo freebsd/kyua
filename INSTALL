@@ -57,6 +57,15 @@ run:
 
     $ autoreconf -i -s
 
+If ATF is installed in a different prefix than Autoconf, you will also
+need to tell autoreconf where the ATF M4 macros are located.  Otherwise,
+the configure script will be incomplete and will show confusing syntax
+errors mentioning, for example, ATF_CHECK_SH.  To fix this, you have
+to run autoreconf in the following manner, replacing '<atf-prefix>' with
+the appropriate path:
+
+    $ autoreconf -i -s -I <atf-prefix>/share/aclocal
+
 
 General build procedure
 =======================
