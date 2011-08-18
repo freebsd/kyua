@@ -26,11 +26,54 @@ dnl THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 dnl (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 dnl OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+dnl \file m4/fs.m4
+dnl File system related checks.
 dnl
+dnl The macros in this file check for features required in the utils/fs
+dnl module.  The global KYUA_FS_MODULE macro will call all checks required
+dnl for the library.
+
+
+dnl KYUA_FS_LCHMOD
+dnl
+dnl Checks whether lchmod(3) exists and if it works.  Some systems, such as
+dnl Ubuntu 10.04.1 LTS, provide a lchmod(3) stub that is not implemented yet
+dnl allows programs to compile cleanly (albeit for a warning).  It would be
+dnl nice to detect if lchmod(3) works at run time to prevent side-effects of
+dnl this test but doing so means we will keep receiving a noisy compiler
+dnl warning.
+AC_DEFUN([KYUA_FS_LCHMOD], [
+    AC_MSG_CHECKING([for a working lchmod])
+    working_lchmod=no
+    AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <sys/stat.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+], [
+    int fd = open("conftest.txt", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fd == -1) {
+        perror("creation of conftest.txt failed");
+        return EXIT_FAILURE;
+    }
+
+    return lchmod("conftest.txt", 0640) != -1 ?  EXIT_SUCCESS : EXIT_FAILURE;
+])],
+    [AC_MSG_RESULT([yes])
+     AC_DEFINE_UNQUOTED([HAVE_WORKING_LCHMOD], [1],
+                        [Define to 1 if your lchmod works])],
+    [if test ! -f conftest.txt; then
+         AC_MSG_RESULT([failed; assuming no])
+     else
+         rm -f conftest.txt
+         AC_MSG_RESULT([no])
+     fi])
+])
+
+
 dnl KYUA_FS_UNMOUNT
 dnl
 dnl Detect the correct method to unmount a file system.
-dnl
 AC_DEFUN([KYUA_FS_UNMOUNT], [
     AC_CHECK_FUNCS([unmount], [have_unmount2=yes], [have_unmount2=no])
     if test "${have_unmount2}" = no; then
@@ -43,4 +86,13 @@ AC_DEFUN([KYUA_FS_UNMOUNT], [
             AC_MSG_ERROR([Don't know how to unmount a file system])
         fi
     fi
+])
+
+
+dnl KYUA_FS_MODULE
+dnl
+dnl Performs all checks needed by the utils/fs library.
+AC_DEFUN([KYUA_FS_MODULE], [
+    KYUA_FS_LCHMOD
+    KYUA_FS_UNMOUNT
 ])

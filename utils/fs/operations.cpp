@@ -112,6 +112,35 @@ unmount(const char* UTILS_UNUSED_PARAM(path),
 namespace {
 
 
+/// Wrapper around lchmod(3).
+///
+/// In systems with a working lchmod(3), this does nothing more than calling
+/// the function.  On systems without lchmod(3), this uses chmod(2) as a
+/// replacement and logs the fact that the original call is missing.
+/// The cleanup of the work directory might end up not being as accurate as if
+/// we had lchmod(3), but it's not a huge deal.
+///
+/// \param path The path for which to change the permissions.
+/// \param mode The new mode for the file.
+///
+/// \return The return value of the executed chmod function.
+static int
+do_lchmod(const char* path, const mode_t mode)
+{
+#if HAVE_WORKING_LCHMOD
+    return ::lchmod(path, mode);
+#else
+    static bool logged_warning = false;
+    if (!logged_warning) {
+        LW("lchmod(3) was not available at compilation time; work directory "
+           "cleanup might fail unexpectedly");
+        logged_warning = true;
+    }
+    return ::chmod(path, mode);
+#endif
+}
+
+
 /// Scans a directory and executes a callback on each argument.
 ///
 /// Note that this does not raise any file system-related exception on purpose.
@@ -266,7 +295,7 @@ try_unprotect(const fs::path& path)
 {
     static const mode_t new_mode = 0700;
 
-    if (::lchmod(path.c_str(), new_mode) == -1) {
+    if (do_lchmod(path.c_str(), new_mode) == -1) {
         const int original_errno = errno;
         LW(F("Failed to chmod '%s' to %d: %s") % path % new_mode %
            std::strerror(original_errno));

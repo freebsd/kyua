@@ -143,12 +143,22 @@ ATF_TEST_CASE_BODY(cleanup__subdir__unprotect)
 ATF_TEST_CASE_WITHOUT_HEAD(cleanup__subdir__links);
 ATF_TEST_CASE_BODY(cleanup__subdir__links)
 {
+    fs::mkdir(fs::path("test"), 0755);
+    const bool lchmod_fails = (::lchmod("test", 0700) == -1 &&
+                               ::chmod("test", 0700) != -1);
+
     fs::mkdir(fs::path("root"), 0755);
     fs::mkdir(fs::path("root/dir1"), 0755);
     ATF_REQUIRE(::symlink("../../root", "root/dir1/loop") != -1);
     ATF_REQUIRE(::symlink("non-existent", "root/missing") != -1);
     ATF_REQUIRE(lookup(".", "root", DT_DIR));
-    fs::cleanup(fs::path("root"));
+    try {
+        fs::cleanup(fs::path("root"));
+    } catch (const fs::error& e) {
+        if (lchmod_fails)
+            expect_fail("lchmod(2) is not implemented in your system");
+        fail(e.what());
+    }
     ATF_REQUIRE(!lookup(".", "root", DT_DIR));
 }
 
