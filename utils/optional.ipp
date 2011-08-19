@@ -149,6 +149,23 @@ utils::optional< T >::get(void) const
 }
 
 
+/// Gets the value of this object with a default fallback.
+///
+/// \param default_value The value to return if this object holds no value.
+///
+/// \return A reference to the data in the optional object, or the reference
+/// passed in as a parameter.
+template< class T >
+const T&
+utils::optional< T >::get_default(const T& default_value) const
+{
+    if (_data != NULL)
+        return *_data;
+    else
+        return default_value;
+}
+
+
 /// Tests whether the optional object contains data or not.
 ///
 /// \return True if the object is not none; false otherwise.

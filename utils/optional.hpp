@@ -83,6 +83,7 @@ public:
     operator bool(void) const;
 
     const T& get(void) const;
+    const T& get_default(const T&) const;
     T& get(void);
 };
 

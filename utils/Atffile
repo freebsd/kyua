@@ -10,6 +10,7 @@ tp: format
 tp: fs
 tp: logging
 tp: lua
+tp: optional_test
 tp: passwd_test
 tp: process
 tp: sanity_test

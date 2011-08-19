@@ -173,6 +173,17 @@ ATF_TEST_CASE_BODY(memory)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(get_default);
+ATF_TEST_CASE_BODY(get_default)
+{
+    const std::string def_value = "hello";
+    optional< std::string > optional;
+    ATF_REQUIRE(&def_value == &optional.get_default(def_value));
+    optional = "bye";
+    ATF_REQUIRE_EQ("bye", optional.get_default(def_value));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(make_optional);
 ATF_TEST_CASE_BODY(make_optional)
 {
@@ -189,5 +200,6 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, assign);
     ATF_ADD_TEST_CASE(tcs, return);
     ATF_ADD_TEST_CASE(tcs, memory);
+    ATF_ADD_TEST_CASE(tcs, get_default);
     ATF_ADD_TEST_CASE(tcs, make_optional);
 }
