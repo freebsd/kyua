@@ -274,7 +274,11 @@ process::child_with_files::~child_with_files(void)
 /// raise different errors, do not forget to update fork() accordingly.
 ///
 /// \param stdout_file The name of the file in which to store the stdout.
+///     If this has the magic value /dev/stdout, then the parent's stdout is
+///     reused without applying any redirection.
 /// \param stderr_file The name of the file in which to store the stderr.
+///     If this has the magic value /dev/stderr, then the parent's stderr is
+///     reused without applying any redirection.
 ///
 /// \return In the case of the parent, a new child_with_files object returned
 /// as a dynamically-allocated object because children classes are unique and
@@ -295,12 +299,16 @@ process::child_with_files::fork_aux(const fs::path& stdout_file,
         ::setpgid(::getpid(), ::getpid());
 
         try {
-            const int stdout_fd = create_file(stdout_file);
-            const int stderr_fd = create_file(stderr_file);
-            safe_dup(stdout_fd, STDOUT_FILENO);
-            ::close(stdout_fd);
-            safe_dup(stderr_fd, STDERR_FILENO);
-            ::close(stderr_fd);
+            if (stdout_file != fs::path("/dev/stdout")) {
+                const int stdout_fd = create_file(stdout_file);
+                safe_dup(stdout_fd, STDOUT_FILENO);
+                ::close(stdout_fd);
+            }
+            if (stderr_file != fs::path("/dev/stderr")) {
+                const int stderr_fd = create_file(stderr_file);
+                safe_dup(stderr_fd, STDERR_FILENO);
+                ::close(stderr_fd);
+            }
         } catch (const system_error& e) {
             std::cerr << F("Failed to set up subprocess: %s\n") % e.what();
             std::abort();

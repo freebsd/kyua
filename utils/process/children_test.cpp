@@ -382,6 +382,52 @@ pipe_fail(int* UTILS_UNUSED_PARAM(fildes))
 }
 
 
+/// Helper for child_with_files tests to validate inheritance of stdout/stderr.
+///
+/// This function ensures that passing one of /dev/stdout or /dev/stderr to
+/// the child_with_files fork method does the right thing.  The idea is that we
+/// call fork with the given parameters and then make our child redirect one of
+/// its file descriptors to a specific file without going through the process
+/// library.  We then validate if this redirection worked and got the expected
+/// output.
+///
+/// \param fork_stdout The path to pass to the fork call as the stdout file.
+/// \param fork_stderr The path to pass to the fork call as the stderr file.
+/// \param child_file The file to explicitly in the subchild.
+/// \param child_fd The file descriptor to which to attach child_file.
+static void
+do_inherit_test(const char* fork_stdout, const char* fork_stderr,
+                const char* child_file, const int child_fd)
+{
+    const pid_t pid = ::fork();
+    ATF_REQUIRE(pid != -1);
+    if (pid == 0) {
+        const int fd = ::open(child_file, O_CREAT | O_WRONLY | O_TRUNC, 0644);
+        if (fd != child_fd) {
+            if (::dup2(fd, child_fd) == -1)
+                std::abort();
+            ::close(fd);
+        }
+
+        std::auto_ptr< process::child_with_files > child =
+            process::child_with_files::fork(
+                child_simple_function< 123, 'Z' >,
+                fs::path(fork_stdout), fs::path(fork_stderr));
+        const process::status status = child->wait();
+        if (!status.exited() || status.exitstatus() != 123)
+            std::abort();
+        std::exit(EXIT_SUCCESS);
+    } else {
+        int status;
+        ATF_REQUIRE(::waitpid(pid, &status, 0) != -1);
+        ATF_REQUIRE(WIFEXITED(status));
+        ATF_REQUIRE_EQ(EXIT_SUCCESS, WEXITSTATUS(status));
+        ATF_REQUIRE(utils::grep_file("stdout: Z", fs::path("stdout.txt")));
+        ATF_REQUIRE(utils::grep_file("stderr: Z", fs::path("stderr.txt")));
+    }
+}
+
+
 }  // anonymous namespace
 
 
@@ -429,6 +475,20 @@ ATF_TEST_CASE_BODY(child_with_files__pid)
             child_write_pid, fs::path("file1.txt"), fs::path("file2.txt"));
 
     child_write_pid_check(child);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(child_with_files__inherit_stdout);
+ATF_TEST_CASE_BODY(child_with_files__inherit_stdout)
+{
+    do_inherit_test("/dev/stdout", "stderr.txt", "stdout.txt", STDOUT_FILENO);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(child_with_files__inherit_stderr);
+ATF_TEST_CASE_BODY(child_with_files__inherit_stderr)
+{
+    do_inherit_test("stdout.txt", "/dev/stderr", "stderr.txt", STDERR_FILENO);
 }
 
 
@@ -898,6 +958,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, child_with_files__ok_function);
     ATF_ADD_TEST_CASE(tcs, child_with_files__ok_functor);
     ATF_ADD_TEST_CASE(tcs, child_with_files__pid);
+    ATF_ADD_TEST_CASE(tcs, child_with_files__inherit_stdout);
+    ATF_ADD_TEST_CASE(tcs, child_with_files__inherit_stderr);
     ATF_ADD_TEST_CASE(tcs, child_with_files__wait_killpg);
     ATF_ADD_TEST_CASE(tcs, child_with_files__wait_timeout_ok);
     ATF_ADD_TEST_CASE(tcs, child_with_files__wait_timeout_expired);
