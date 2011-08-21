@@ -127,11 +127,11 @@ int
 cmd_debug::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
                const user_files::config& config)
 {
-    const std::string& name = cmdline.arguments()[0];
-    if (name.find(':') == std::string::npos)
+    const std::string& test_case_name = cmdline.arguments()[0];
+    if (test_case_name.find(':') == std::string::npos)
         throw cmdline::usage_error(F("'%s' is not a test case identifier "
-                                     "(missing ':'?)") % name);
-    const test_filter filter = test_filter::parse(name);
+                                     "(missing ':'?)") % test_case_name);
+    const test_filter filter = test_filter::parse(test_case_name);
 
     const user_files::kyuafile kyuafile = load_kyuafile(cmdline);
 
