@@ -99,6 +99,7 @@ specific variable.
 Commands list
 * about command:: Details about the about command.
 * config command:: Details about the config command.
+* debug command:: Details about the debug command.
 * help command:: Details about the help command.
 * list command:: Details about the list command.
 * test command:: Details about the test command.
@@ -155,6 +156,79 @@ configuration variables and returns 0 for success.
 If any arguments are provided, the command will only print the
 requested variables.  If any particular variable is not defined, the
 command will return 1 for error.
+
+@node debug command
+@subsection The debug command
+
+@cindex @command{debug}
+
+The @command{debug} command provides a mechanism to execute a single test
+case bypassing some of the Kyua infrastructure and allowing the user to
+poke into the execution behavior of the test.
+
+The @command{debug} command prints the result of the test case as the
+last line of its output, and exits with 0 if the test case finished
+successfuly or 1 if the test case failed or the engine encountered an
+error processing the test case or user input.
+
+At the moment, the @command{debug} command allows the following
+aspects of a test case execution to be tweaked:
+
+@itemize
+@item
+Redirection of the test case's stdout and stderr to the console (the
+default) or to arbitraty files.  See the @option{--stdout} and
+@option{--stderr} options below.
+@end itemize
+
+The following subcommand options are recognized:
+
+@table @option
+@item --kyuafile=path
+@cindex @option{--kyuafile}, @command{debug}
+Specifies the Kyuafile to process.  Defaults to a @file{Kyuafile} file
+in the current directory.
+
+@item --stderr=path
+@cindex @option{--stderr}, @command{debug}
+Specifies the file to which to send the standard error of the test
+program's body.  The default is @file{/dev/stderr}, which is a special
+that redirects the output to the console.
+
+@item --stdout=path
+@cindex @option{--stdout}, @command{debug}
+Specifies the file to which to send the standard output of the test
+program's body.  The default is @file{/dev/stdout}, which is a special
+that redirects the output to the console.
+@end table
+
+For example, suppose the following Kyua session:
+
+@cindex example, debug
+
+@verbatim
+$ kyua test
+kernel/fs:mkdir  ->  passed
+kernel/fs:rmdir  ->  failed: Invalid argument
+
+1/2 passed (1 failed)
+@end verbatim
+
+At this point, we do not have a lot of information regarding the
+failure of the @samp{kernel/fs:rmdir} test.  We could run this test
+through the @command{debug} command to inspect its output a bit
+closer, hoping that the test case is kind enough to log its progress:
+
+@verbatim
+$ kyua debug kernel/fs:rmdir
+Trying rmdir('foo')
+Trying rmdir(NULL)
+kernel/fs:rmdir  ->  failed: Invalid argument
+@end verbatim
+
+Luckily, the offending test case was printing status lines as it
+progressed, so we could see the last attempted call and we can know
+match the failure message to the problem.
 
 @node help command
 @subsection The help command

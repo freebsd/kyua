@@ -160,12 +160,19 @@ calculate_result(const optional< process::status >& maybe_status)
 }
 
 
+/// Functor to execute the test case.
 class run_test_case_safe {
     const plain_iface::test_case& _test_case;
+    const optional< fs::path > _stdout_path;
+    const optional< fs::path > _stderr_path;
 
 public:
-    run_test_case_safe(const plain_iface::test_case& test_case_) :
-        _test_case(test_case_)
+    run_test_case_safe(const plain_iface::test_case& test_case_,
+                       const optional< fs::path >& stdout_path_,
+                       const optional< fs::path >& stderr_path_) :
+        _test_case(test_case_),
+        _stdout_path(stdout_path_),
+        _stderr_path(stderr_path_)
     {
     }
 
@@ -195,7 +202,8 @@ public:
         LI(F("Running test case '%s'") % _test_case.identifier().str());
         optional< process::status > body_status = engine::fork_and_wait(
             execute_test_case(_test_case, rundir),
-            workdir / "stdout.txt", workdir / "stderr.txt",
+            _stdout_path.get_default(workdir / "stdout.txt"),
+            _stderr_path.get_default(workdir / "stderr.txt"),
             test_program->timeout());
 
         engine::check_interrupt();
@@ -251,14 +259,17 @@ plain_iface::test_case::get_all_properties(void) const
 ///
 /// \return The result of the execution.
 engine::results::result_ptr
-plain_iface::test_case::do_run(
-    const user_files::config& UTILS_UNUSED_PARAM(config)) const
+plain_iface::test_case::execute(
+    const user_files::config& UTILS_UNUSED_PARAM(config),
+    const optional< fs::path >& stdout_path,
+    const optional< fs::path >& stderr_path) const
 {
     LI(F("Processing test case '%s'") % identifier().str());
 
     results::result_ptr result;
     try {
-        result = engine::protected_run(run_test_case_safe(*this));
+        result = engine::protected_run(run_test_case_safe(*this, stdout_path,
+                                                          stderr_path));
     } catch (const interrupted_error& e) {
         throw e;
     } catch (const std::exception& e) {

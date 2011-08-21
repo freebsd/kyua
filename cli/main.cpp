@@ -37,6 +37,7 @@
 
 #include "cli/cmd_about.hpp"
 #include "cli/cmd_config.hpp"
+#include "cli/cmd_debug.hpp"
 #include "cli/cmd_help.hpp"
 #include "cli/cmd_list.hpp"
 #include "cli/cmd_test.hpp"
@@ -142,6 +143,7 @@ safe_main(cmdline::ui* ui, int argc, const char* const argv[],
     cmdline::commands_map< cli::cli_command > commands;
     commands.insert(new cli::cmd_about());
     commands.insert(new cli::cmd_config());
+    commands.insert(new cli::cmd_debug());
     commands.insert(new cli::cmd_help(&options, &commands));
     commands.insert(new cli::cmd_list());
     commands.insert(new cli::cmd_test());

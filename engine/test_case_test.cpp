@@ -41,6 +41,8 @@ namespace fs = utils::fs;
 namespace results = engine::results;
 namespace user_files = engine::user_files;
 
+using utils::optional;
+
 
 namespace {
 
@@ -96,7 +98,9 @@ class mock_test_case : public engine::base_test_case {
     ///
     /// \return A static result for testing purposes.
     results::result_ptr
-    do_run(const user_files::config& config) const
+    execute(const user_files::config& config,
+            const optional< fs::path >& UTILS_UNUSED_PARAM(stdout_path),
+            const optional< fs::path >& UTILS_UNUSED_PARAM(stderr_path)) const
     {
         if (&config != &mock_config)
             throw std::runtime_error("Invalid config object");

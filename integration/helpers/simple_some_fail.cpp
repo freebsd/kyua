@@ -26,12 +26,16 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <iostream>
+
 #include <atf-c++.hpp>
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(fail);
 ATF_TEST_CASE_BODY(fail)
 {
+    std::cout << "This is the stdout of fail\n";
+    std::cerr << "This is the stderr of fail\n";
     fail("This fails on purpose");
 }
 
@@ -39,6 +43,8 @@ ATF_TEST_CASE_BODY(fail)
 ATF_TEST_CASE_WITHOUT_HEAD(pass);
 ATF_TEST_CASE_BODY(pass)
 {
+    std::cout << "This is the stdout of pass\n";
+    std::cerr << "This is the stderr of pass\n";
 }
 
 

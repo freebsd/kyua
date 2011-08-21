@@ -75,7 +75,10 @@ std::string parse_require_user(const std::string&, const std::string&);
 /// needs to be stored for the test programs themselves.
 class test_case : public base_test_case {
     properties_map get_all_properties(void) const;
-    results::result_ptr do_run(const user_files::config&) const;
+    virtual results::result_ptr execute(
+        const user_files::config&,
+        const utils::optional< utils::fs::path >&,
+        const utils::optional< utils::fs::path >&) const;
 
 public:
     /// The test case description.

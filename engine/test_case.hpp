@@ -38,6 +38,7 @@
 
 #include "engine/results.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/optional.hpp"
 
 namespace engine {
 
@@ -84,7 +85,10 @@ class base_test_case {
     std::string _name;
 
     virtual properties_map get_all_properties(void) const = 0;
-    virtual results::result_ptr do_run(const user_files::config&) const = 0;
+    virtual results::result_ptr execute(
+        const user_files::config&,
+        const utils::optional< utils::fs::path >&,
+        const utils::optional< utils::fs::path >&) const = 0;
 
 public:
     base_test_case(const base_test_program&, const std::string&);
@@ -95,6 +99,9 @@ public:
     test_case_id identifier(void) const;
 
     properties_map all_properties(void) const;
+    results::result_ptr debug(const user_files::config&,
+                              const utils::fs::path&,
+                              const utils::fs::path&) const;
     results::result_ptr run(const user_files::config&) const;
 };
 

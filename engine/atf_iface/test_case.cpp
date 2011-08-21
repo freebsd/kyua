@@ -51,6 +51,8 @@ namespace fs = utils::fs;
 namespace passwd = utils::passwd;
 namespace user_files = engine::user_files;
 
+using utils::optional;
+
 
 namespace {
 
@@ -512,7 +514,9 @@ atf_iface::test_case::check_requirements(const user_files::config& config) const
 ///
 /// \return The result of the execution.
 engine::results::result_ptr
-atf_iface::test_case::do_run(const user_files::config& config) const
+atf_iface::test_case::execute(const user_files::config& config,
+                              const optional< fs::path >& stdout_path,
+                              const optional< fs::path >& stderr_path) const
 {
-    return run_test_case(*this, config);
+    return run_test_case(*this, config, stdout_path, stderr_path);
 }

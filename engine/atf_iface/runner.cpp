@@ -43,6 +43,7 @@ extern "C" {
 #include "engine/user_files/config.hpp"
 #include "utils/env.hpp"
 #include "utils/fs/operations.hpp"
+#include "utils/optional.ipp"
 #include "utils/passwd.hpp"
 
 namespace atf_iface = engine::atf_iface;
@@ -248,12 +249,18 @@ public:
 class run_test_case_safe {
     const atf_iface::test_case& _test_case;
     const user_files::config& _config;
+    const optional< fs::path > _stdout_path;
+    const optional< fs::path > _stderr_path;
 
 public:
     run_test_case_safe(const atf_iface::test_case& test_case_,
-                       const user_files::config& config_) :
+                       const user_files::config& config_,
+                       const optional< fs::path >& stdout_path_,
+                       const optional< fs::path >& stderr_path_) :
         _test_case(test_case_),
-        _config(config_)
+        _config(config_),
+        _stdout_path(stdout_path_),
+        _stderr_path(stderr_path_)
     {
     }
 
@@ -289,7 +296,9 @@ public:
         try {
             body_status = engine::fork_and_wait(
                 execute_test_case_body(_test_case, result_file, rundir, _config),
-                workdir / "stdout.txt", workdir / "stderr.txt", _test_case.timeout);
+                _stdout_path.get_default(workdir / "stdout.txt"),
+                _stderr_path.get_default(workdir / "stderr.txt"),
+                _test_case.timeout);
         } catch (const engine::interrupted_error& e) {
             // Ignore: we want to attempt to run the cleanup function before we
             // return.  The call below to check_interrupt will reraise this signal
@@ -333,7 +342,9 @@ public:
 /// \throw interrupted_error If the execution has been interrupted by the user.
 results::result_ptr
 atf_iface::run_test_case(const atf_iface::test_case& test_case,
-                         const user_files::config& config)
+                         const user_files::config& config,
+                         const optional< fs::path >& stdout_path,
+                         const optional< fs::path >& stderr_path)
 {
     LI(F("Processing test case '%s'") % test_case.identifier().str());
 
@@ -341,8 +352,8 @@ atf_iface::run_test_case(const atf_iface::test_case& test_case,
     try {
         const std::string skip_reason = test_case.check_requirements(config);
         if (skip_reason.empty())
-            result = engine::protected_run(run_test_case_safe(test_case,
-                                                              config));
+            result = engine::protected_run(run_test_case_safe(
+                test_case, config, stdout_path, stderr_path));
         else
             result = results::make_result(results::skipped(skip_reason));
     } catch (const interrupted_error& e) {

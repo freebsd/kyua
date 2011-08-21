@@ -4,6 +4,7 @@ prop: test-suite = kyua
 
 tp: cmd_about_test
 tp: cmd_config_test
+tp: cmd_debug_test
 tp: cmd_help_test
 tp: cmd_list_test
 tp: cmd_test_test

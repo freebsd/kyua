@@ -34,6 +34,8 @@ libcli_a_SOURCES  = cli/cmd_about.cpp
 libcli_a_SOURCES += cli/cmd_about.hpp
 libcli_a_SOURCES += cli/cmd_config.cpp
 libcli_a_SOURCES += cli/cmd_config.hpp
+libcli_a_SOURCES += cli/cmd_debug.cpp
+libcli_a_SOURCES += cli/cmd_debug.hpp
 libcli_a_SOURCES += cli/cmd_help.cpp
 libcli_a_SOURCES += cli/cmd_help.hpp
 libcli_a_SOURCES += cli/cmd_list.cpp
@@ -74,6 +76,11 @@ tests_cli_PROGRAMS += cli/cmd_config_test
 cli_cmd_config_test_SOURCES = cli/cmd_config_test.cpp
 cli_cmd_config_test_CXXFLAGS = $(CLI_TESTS_CXXFLAGS)
 cli_cmd_config_test_LDADD = $(CLI_TESTS_LDADD)
+
+tests_cli_PROGRAMS += cli/cmd_debug_test
+cli_cmd_debug_test_SOURCES = cli/cmd_debug_test.cpp
+cli_cmd_debug_test_CXXFLAGS = $(CLI_TESTS_CXXFLAGS)
+cli_cmd_debug_test_LDADD = $(CLI_TESTS_LDADD)
 
 tests_cli_PROGRAMS += cli/cmd_help_test
 cli_cmd_help_test_SOURCES = cli/cmd_help_test.cpp

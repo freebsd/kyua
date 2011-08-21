@@ -38,6 +38,12 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   altogether.  Needed for testing purposes and for scriptability.
   Available by passing the '--config=none' flag.
 
+* Added the 'debug' subcommand.  This command allows end users to tweak
+  the execution of a specific test case and to poke into the behavior of
+  its execution.  At the moment, all this command allows is to view the
+  stdout and stderr output of the command in real time (which the 'test'
+  command currently completely hides).
+
 
 Changes in version 0.1
 ======================

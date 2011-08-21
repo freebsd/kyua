@@ -26,35 +26,64 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/plain_iface/test_case.hpp
-/// Provides the plain-specific test_case class and other auxiliary types.
+#include <stdexcept>
 
-#if !defined(ENGINE_PLAIN_IFACE_TEST_CASE_HPP)
-#define ENGINE_PLAIN_IFACE_TEST_CASE_HPP
+#include <atf-c++.hpp>
 
-#include <string>
+#include "cli/cmd_debug.hpp"
+#include "engine/user_files/config.hpp"
+#include "utils/cmdline/exceptions.hpp"
+#include "utils/cmdline/parser.hpp"
+#include "utils/cmdline/ui_mock.hpp"
 
-#include "engine/test_case.hpp"
-#include "utils/fs/path.hpp"
-
-namespace engine {
-namespace plain_iface {
-
-
-/// Representation of a plain test case.
-class test_case : public base_test_case {
-    properties_map get_all_properties(void) const;
-    virtual results::result_ptr execute(
-        const user_files::config&,
-        const utils::optional< utils::fs::path >&,
-        const utils::optional< utils::fs::path >&) const;
-
-public:
-    test_case(const base_test_program&);
-};
+namespace cmdline = utils::cmdline;
+namespace user_files = engine::user_files;
 
 
-}  // namespace plain_iface
-}  // namespace engine
+namespace {
 
-#endif  // !defined(ENGINE_PLAIN_IFACE_TEST_CASE_HPP)
+
+static const user_files::config default_config = user_files::config::defaults();
+
+
+}  // anonymous namespace
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(invalid_filter);
+ATF_TEST_CASE_BODY(invalid_filter)
+{
+    cmdline::args_vector args;
+    args.push_back("debug");
+    args.push_back("incorrect:");
+
+    cli::cmd_debug cmd;
+    cmdline::ui_mock ui;
+    // TODO(jmmv): This error should really be cmdline::usage_error.
+    ATF_REQUIRE_THROW_RE(std::runtime_error, "Test case.*'incorrect:'.*empty",
+                         cmd.main(&ui, args, default_config));
+    ATF_REQUIRE(ui.out_log().empty());
+    ATF_REQUIRE(ui.err_log().empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(filter_without_test_case);
+ATF_TEST_CASE_BODY(filter_without_test_case)
+{
+    cmdline::args_vector args;
+    args.push_back("debug");
+    args.push_back("program");
+
+    cli::cmd_debug cmd;
+    cmdline::ui_mock ui;
+    ATF_REQUIRE_THROW_RE(cmdline::error, "'program'.*not a test case",
+                         cmd.main(&ui, args, default_config));
+    ATF_REQUIRE(ui.out_log().empty());
+    ATF_REQUIRE(ui.err_log().empty());
+}
+
+
+ATF_INIT_TEST_CASES(tcs)
+{
+    ATF_ADD_TEST_CASE(tcs, invalid_filter);
+    ATF_ADD_TEST_CASE(tcs, filter_without_test_case);
+}

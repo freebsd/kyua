@@ -30,9 +30,13 @@
 #include "engine/test_program.hpp"
 #include "engine/user_files/config.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/optional.ipp"
 
 namespace fs = utils::fs;
 namespace user_files = engine::user_files;
+
+using utils::none;
+using utils::optional;
 
 
 /// Constructs a new test case identifier.
@@ -156,6 +160,30 @@ engine::base_test_case::all_properties(void) const
 }
 
 
+/// Runs the test case in debug mode.
+///
+/// Debug mode gives the caller more control on the execution of the test.  It
+/// should not be used for normal execution of tests; instead, call run().
+///
+/// \param config The user configuration that defines the execution of this test
+///     case.
+/// \param stdout_path The file to which to redirect the stdout of the test.
+///     For interactive debugging, '/dev/stdout' is probably a reasonable value.
+/// \param stderr_path The file to which to redirect the stdout of the test.
+///     For interactive debugging, '/dev/stderr' is probably a reasonable value.
+///
+/// \return The result of the execution of the test case.
+engine::results::result_ptr
+engine::base_test_case::debug(const user_files::config& config,
+                              const fs::path& stdout_path,
+                              const fs::path& stderr_path) const
+{
+    return execute(config,
+                   utils::make_optional(stdout_path),
+                   utils::make_optional(stderr_path));
+}
+
+
 /// Runs the test case.
 ///
 /// \param config The user configuration that defines the execution of this test
@@ -165,5 +193,5 @@ engine::base_test_case::all_properties(void) const
 engine::results::result_ptr
 engine::base_test_case::run(const user_files::config& config) const
 {
-    return do_run(config);
+    return execute(config, none, none);
 }

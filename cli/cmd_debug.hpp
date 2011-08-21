@@ -26,35 +26,29 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/plain_iface/test_case.hpp
-/// Provides the plain-specific test_case class and other auxiliary types.
+/// \file cli/cmd_debug.hpp
+/// Provides the cmd_debug class.
 
-#if !defined(ENGINE_PLAIN_IFACE_TEST_CASE_HPP)
-#define ENGINE_PLAIN_IFACE_TEST_CASE_HPP
+#if !defined(CLI_CMD_DEBUG_HPP)
+#define CLI_CMD_DEBUG_HPP
 
-#include <string>
+#include "cli/common.hpp"
 
-#include "engine/test_case.hpp"
-#include "utils/fs/path.hpp"
-
-namespace engine {
-namespace plain_iface {
+namespace cli {
 
 
-/// Representation of a plain test case.
-class test_case : public base_test_case {
-    properties_map get_all_properties(void) const;
-    virtual results::result_ptr execute(
-        const user_files::config&,
-        const utils::optional< utils::fs::path >&,
-        const utils::optional< utils::fs::path >&) const;
-
+/// Implementation of the "debug" subcommand.
+class cmd_debug : public cli_command
+{
 public:
-    test_case(const base_test_program&);
+    cmd_debug(void);
+
+    int run(utils::cmdline::ui*, const utils::cmdline::parsed_cmdline&,
+            const engine::user_files::config&);
 };
 
 
-}  // namespace plain_iface
-}  // namespace engine
+}  // namespace cli
 
-#endif  // !defined(ENGINE_PLAIN_IFACE_TEST_CASE_HPP)
+
+#endif  // !defined(CLI_CMD_DEBUG_HPP)
