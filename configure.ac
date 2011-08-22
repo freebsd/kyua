@@ -70,6 +70,8 @@ AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <stdlib.h>
 AC_PROG_RANLIB
 
 
+m4_ifndef([PKG_CHECK_MODULES],
+    [m4_fatal([Cannot find pkg.m4; see the INSTALL document for help])])
 PKG_CHECK_MODULES([ATF_CXX], [atf-c++ >= 0.13],
                   [],
                   AC_MSG_ERROR([atf-c++ (0.13 or newer) is required]))
