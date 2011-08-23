@@ -36,6 +36,7 @@
 #include <atf-c++.hpp>
 
 #include "cli/cmd_about.hpp"
+#include "cli/common.ipp"
 #include "engine/user_files/config.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.hpp"

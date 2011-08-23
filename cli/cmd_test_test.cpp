@@ -29,6 +29,7 @@
 #include <atf-c++.hpp>
 
 #include "cli/cmd_test.hpp"
+#include "cli/common.ipp"
 #include "engine/user_files/config.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.hpp"

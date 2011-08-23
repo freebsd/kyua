@@ -31,6 +31,7 @@
 #include <atf-c++.hpp>
 
 #include "cli/cmd_config.hpp"
+#include "cli/common.ipp"
 #include "engine/user_files/config.hpp"
 #include "utils/cmdline/globals.hpp"
 #include "utils/cmdline/ui_mock.hpp"

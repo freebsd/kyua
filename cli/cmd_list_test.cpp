@@ -35,7 +35,7 @@ extern "C" {
 #include <atf-c++.hpp>
 
 #include "cli/cmd_list.hpp"
-#include "cli/common.hpp"
+#include "cli/common.ipp"
 // TODO(jmmv): Should probably use a mock test case.
 #include "engine/atf_iface/test_case.hpp"
 // TODO(jmmv): Should probably use a mock test program.

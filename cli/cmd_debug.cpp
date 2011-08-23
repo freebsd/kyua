@@ -36,6 +36,7 @@
 #include "engine/user_files/config.hpp"
 #include "engine/user_files/kyuafile.hpp"
 #include "utils/cmdline/exceptions.hpp"
+#include "utils/cmdline/parser.ipp"
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 
