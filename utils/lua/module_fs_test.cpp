@@ -140,17 +140,19 @@ ATF_TEST_CASE_WITHOUT_HEAD(files__none);
 ATF_TEST_CASE_BODY(files__none)
 {
     lua::state state;
+    state.open_table();
     lua::open_fs(state);
 
     fs::mkdir(fs::path("root"), 0755);
 
     lua::do_string(state,
-                   "names = ''\n"
+                   "names = {}\n"
                    "for file in fs.files('root') do\n"
-                   "    names = names .. ' ' .. file\n"
+                   "    table.insert(names, file)\n"
                    "end\n"
-                   "return names", 1);
-    ATF_REQUIRE_EQ(" . ..", state.to_string());
+                   "table.sort(names)\n"
+                   "return table.concat(names, ' ')", 1);
+    ATF_REQUIRE_EQ(". ..", state.to_string());
     state.pop(1);
 }
 
@@ -159,6 +161,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(files__some);
 ATF_TEST_CASE_BODY(files__some)
 {
     lua::state state;
+    state.open_table();
     lua::open_fs(state);
 
     fs::mkdir(fs::path("root"), 0755);
@@ -166,12 +169,13 @@ ATF_TEST_CASE_BODY(files__some)
     utils::create_file(fs::path("root/file2"));
 
     lua::do_string(state,
-                   "names = ''\n"
+                   "names = {}\n"
                    "for file in fs.files('root') do\n"
-                   "    names = names .. ' ' .. file\n"
+                   "    table.insert(names, file)\n"
                    "end\n"
-                   "return names", 1);
-    ATF_REQUIRE_EQ(" . .. file1 file2", state.to_string());
+                   "table.sort(names)\n"
+                   "return table.concat(names, ' ')", 1);
+    ATF_REQUIRE_EQ(". .. file1 file2", state.to_string());
     state.pop(1);
 }
 
