@@ -26,11 +26,11 @@ dnl THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 dnl (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 dnl OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-dnl
+
 dnl KYUA_LUA
 dnl
-dnl Helper macro to detect Lua in a variety of systems.
-dnl
+dnl Detect if Lua 5.x is present.  This actually tries to find Lua 5.1,
+dnl but our tests might pick up an older version.
 AC_DEFUN([KYUA_LUA], [
     lua_found=no
 
@@ -41,8 +41,8 @@ AC_DEFUN([KYUA_LUA], [
     fi
 
     if test "${lua_found}" = no; then
-        AC_PATH_PROGS([LUA_CONFIG], [lua-config])
-        if test "${LUA_CONFIG-unset}" != unset; then
+        AC_PATH_PROGS([LUA_CONFIG], [lua-config], [no])
+        if test "${LUA_CONFIG-no}" != no; then
             AC_SUBST([LUA_CFLAGS], [$(${LUA_CONFIG} --include)])
             AC_SUBST([LUA_LIBS], [$(${LUA_CONFIG} --libs)])
             lua_found=yes
@@ -55,4 +55,22 @@ AC_DEFUN([KYUA_LUA], [
         AC_MSG_NOTICE([using LUA_CFLAGS = ${LUA_CFLAGS}])
         AC_MSG_NOTICE([using LUA_LIBS = ${LUA_LIBS}])
     fi
+])
+
+
+dnl KYUA_LUA_CXX
+dnl
+dnl Checks that Lua exists and that it provides lua.hpp.  Lua 5.1 is the
+dnl first version to provide lua.hpp, but our KYUA_LUA checks might detect
+dnl an older version.
+AC_DEFUN([KYUA_LUA_CXX], [
+    AC_LANG_ASSERT([C++])
+
+    KYUA_LUA
+
+    saved_cppflags="${CPPFLAGS}"
+    CPPFLAGS="${CPPFLAGS} ${LUA_CFLAGS}"
+    AC_CHECK_HEADERS([lua.hpp], [],
+        [AC_MSG_ERROR([lua.hpp is missing; do you have lua 5.1 (not 5.0)?])])
+    CPPFLAGS="${saved_cppflags}"
 ])
