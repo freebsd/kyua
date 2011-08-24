@@ -58,7 +58,7 @@ recursive_copy() {
     local basename="${1}"; shift
 
     local files="$(cd ${srcdir} && find . -name "${basename}" |
-                   sed -e 's,^\./,,')"
+                   grep -v _build | sed -e 's,^\./,,')"
     for file in ${files}; do
         if cmp -s "${srcdir}/${file}" "${builddir}/${file}"; then
             :

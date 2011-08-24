@@ -31,8 +31,10 @@ AT_INIT([bootstrapping tests])
 
 m4_define([GUESS_TOPDIR], {
     old=$(pwd)
-    cd $(dirname @S|@0)
-    while test $(pwd) != '/' -a ! -e engine/atf_iface/Kyuafile; do
+    cd "${at_suite_dir}"
+    # We need to locate a build product, not a source file, because the
+    # test suite may be run outside of the source tree (think distcheck).
+    while test $(pwd) != '/' -a ! -e engine/test_case_test; do
         cd ..
     done
     topdir=$(pwd)
