@@ -454,7 +454,11 @@ ATF_TEST_CASE_BODY(mkdir_p__already_exists)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(mkdir_p__eacces)
+ATF_TEST_CASE(mkdir_p__eacces)
+ATF_TEST_CASE_HEAD(mkdir_p__eacces)
+{
+    set_md_var("require.user", "unprivileged");
+}
 ATF_TEST_CASE_BODY(mkdir_p__eacces)
 {
     fs::mkdir(fs::path("a"), 0755);
