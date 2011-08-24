@@ -365,14 +365,14 @@ cmdline::parse(const int argc, const char* const* argv,
         args = argv_to_vector(mutable_argc - optind, mutable_argv + optind);
 
         ::opterr = old_opterr;
-        ::optind = 1;
+        ::optind = GETOPT_OPTIND_RESET_VALUE;
 #if defined(HAVE_GETOPT_WITH_OPTRESET)
         ::optreset = 1;
 #endif
     } catch (...) {
         free_mutable_argv(mutable_argv);
         ::opterr = old_opterr;
-        ::optind = 1;
+        ::optind = GETOPT_OPTIND_RESET_VALUE;
 #if defined(HAVE_GETOPT_WITH_OPTRESET)
         ::optreset = 1;
 #endif
