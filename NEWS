@@ -1,48 +1,64 @@
 Changes in version 0.2
 ======================
 
-STILL UNDER DEVELOPMENT; NOT RELEASED YET.
+Experimental version released on August 24th, 2011.
 
-* Issue 18: Generalized the run-time engine to support executing test
-  programs that implement different interfaces.  Test programs that use
-  the ATF libraries are just a special case of this.
+The biggest change in this release is the ability for Kyua to run test
+programs implemented using different frameworks.  What this means is
+that, now, a Kyua test suite can include not only ATF-based test
+programs, but also "legacy" (aka plain) test programs that do not use
+any framework.  I.e. if you have tests that are simple programs that
+exit with 0 on success and 1 on failure, you can plug them in into a
+Kyua test suite.
 
-* Issue 18: Added support to the engine to run "plain" test programs:
-  i.e. test programs that do not use any framework and report their
-  pass/fail status as an exit code.  This is to simplify the integration
-  of legacy test programs into a test suite, and also to demonstrate
-  that the run-time engine is generic enough to support different test
-  interfaces.
+Other than this, there have been several user-visible changes.  The most
+important are the addition of the new 'config' and 'debug' subcommands
+to the 'kyua' binary.  The former can be used to inspect the runtime
+configuration of Kyua after parsing, and the latter is useful to
+interact with failing tests cases in order to get more data about the
+failure itself.
 
-* Issue 11: Added the 'config' subcommand.  This command allows the end
-  user to inspect the current configuration variables after evaluation,
-  without having to read through configuration files.
+Without further ado, here comes the itemized list of changes:
 
-* Issue 11: Removed the test_suites_var function from configuration
-  files.  This was used to set the value of test-suite-sepecific
-  variables, but it was ugly-looking.  It is now possible to use the
-  more natural syntax 'test_suites.<test-suite-name>.<variable> =
-  <value>'.
+* Generalized the run-time engine to support executing test programs
+  that implement different interfaces.  Test programs that use the ATF
+  libraries are just a special case of this.  (Issue 18.)
 
-* Issue 23: Enabled detection of unused parameters and variables in the
-  code and fixed all warnings.
+* Added support to the engine to run "plain" test programs: i.e. test
+  programs that do not use any framework and report their pass/fail
+  status as an exit code.  This is to simplify the integration of legacy
+  test programs into a test suite, and also to demonstrate that the
+  run-time engine is generic enough to support different test
+  interfaces.  (Issue 18.)
 
-* Issue 22: Changed the behavior of "developer mode".  Compiler warnings
-  are now enabled unconditionally regardless of whether we are in
-  developer mode or not; developer mode is now only used to perform
-  strict warning checks and to enable assertions.  Additionally,
-  developer mode is now only automatically enabled when building from the
-  repository, not for formal releases.
+* Added the 'debug' subcommand.  This command allows end users to tweak
+  the execution of a specific test case and to poke into the behavior of
+  its execution.  At the moment, all this command allows is to view the
+  stdout and stderr of the command in real time (which the 'test'
+  command currently completely hides).
+
+* Added the 'config' subcommand.  This command allows the end user to
+  inspect the current configuration variables after evaluation, without
+  having to read through configuration files.  (Issue 11.)
+
+* Removed the test_suites_var function from configuration files.  This
+  was used to set the value of test-suite-sepecific variables, but it
+  was ugly-looking.  It is now possible to use the more natural syntax
+  'test_suites.<test-suite-name>.<variable> = <value>'.  (Issue 11.)
 
 * Added a mechanism to disable the loading of configuration files
   altogether.  Needed for testing purposes and for scriptability.
   Available by passing the '--config=none' flag.
 
-* Added the 'debug' subcommand.  This command allows end users to tweak
-  the execution of a specific test case and to poke into the behavior of
-  its execution.  At the moment, all this command allows is to view the
-  stdout and stderr output of the command in real time (which the 'test'
-  command currently completely hides).
+* Enabled detection of unused parameters and variables in the code and
+  fixed all warnings.  (Issue 23.)
+
+* Changed the behavior of "developer mode".  Compiler warnings are now
+  enabled unconditionally regardless of whether we are in developer mode
+  or not; developer mode is now only used to perform strict warning
+  checks and to enable assertions.  Additionally, developer mode is now
+  only automatically enabled when building from the repository, not for
+  formal releases.  (Issue 22.)
 
 
 Changes in version 0.1
