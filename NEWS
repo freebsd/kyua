@@ -60,6 +60,9 @@ Without further ado, here comes the itemized list of changes:
   only automatically enabled when building from the repository, not for
   formal releases.  (Issue 22.)
 
+* Fixed many build and portability problems to Debian sid with GCC 4.6.3
+  and Ubuntu 10.04.1 LTS.  (Issues 20, 21, 26.)
+
 
 Changes in version 0.1
 ======================
