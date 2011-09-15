@@ -26,7 +26,7 @@ dnl THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 dnl (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 dnl OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-AC_INIT([Kyua - Command line interface], [0.2],
+AC_INIT([Kyua - Command line interface], [0.3],
         [kyua-discuss@googlegroups.com], [kyua-cli],
         [http://code.google.com/p/kyua/])
 AC_PREREQ([2.65])
