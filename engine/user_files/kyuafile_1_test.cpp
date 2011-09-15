@@ -32,17 +32,18 @@
 #include <fstream>
 
 #include <atf-c++.hpp>
+#include <lutok/exceptions.hpp>
+#include <lutok/operations.hpp>
+#include <lutok/wrap.hpp>
 
 #include "engine/user_files/common.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
-#include "utils/lua/exceptions.hpp"
-#include "utils/lua/operations.hpp"
-#include "utils/lua/wrap.hpp"
 
 namespace fs = utils::fs;
-namespace lua = utils::lua;
 namespace user_files = engine::user_files;
+
+#define DS lutok::do_string
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(empty);
@@ -53,9 +54,9 @@ ATF_TEST_CASE_BODY(empty)
     output << "syntax('kyuafile', 1)\n";
     output.close();
 
-    lua::state state;
+    lutok::state state;
     user_files::do_user_file(state, fs::path("test.lua"));
-    lua::do_string(state, "assert(table.maxn(kyuafile.TEST_PROGRAMS) == 0)");
+    DS(state, "assert(table.maxn(kyuafile.TEST_PROGRAMS) == 0)");
 }
 
 
@@ -71,24 +72,18 @@ ATF_TEST_CASE_BODY(some_atf_test_programs__ok)
     output << "atf_test_program{name='test2'}\n";
     output.close();
 
-    lua::state state;
+    lutok::state state;
     user_files::do_user_file(state, fs::path("test.lua"));
-    lua::do_string(state, "assert(table.maxn(kyuafile.TEST_PROGRAMS) == 3)");
-    lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[1].name == 'test1')");
-    lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[1].interface == "
-                   "'atf')");
-    lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[1].test_suite == "
-                   "'the-default')");
-    lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[2].name == 'test3')");
-    lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[2].interface == "
-                   "'atf')");
-    lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[2].test_suite == "
-                   "'overriden')");
-    lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[3].name == 'test2')");
-    lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[3].interface == "
-                   "'atf')");
-    lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[3].test_suite == "
-                   "'the-default')");
+    DS(state, "assert(table.maxn(kyuafile.TEST_PROGRAMS) == 3)");
+    DS(state, "assert(kyuafile.TEST_PROGRAMS[1].name == 'test1')");
+    DS(state, "assert(kyuafile.TEST_PROGRAMS[1].interface == 'atf')");
+    DS(state, "assert(kyuafile.TEST_PROGRAMS[1].test_suite == 'the-default')");
+    DS(state, "assert(kyuafile.TEST_PROGRAMS[2].name == 'test3')");
+    DS(state, "assert(kyuafile.TEST_PROGRAMS[2].interface == 'atf')");
+    DS(state, "assert(kyuafile.TEST_PROGRAMS[2].test_suite == 'overriden')");
+    DS(state, "assert(kyuafile.TEST_PROGRAMS[3].name == 'test2')");
+    DS(state, "assert(kyuafile.TEST_PROGRAMS[3].interface == 'atf')");
+    DS(state, "assert(kyuafile.TEST_PROGRAMS[3].test_suite == 'the-default')");
 }
 
 
@@ -103,8 +98,8 @@ ATF_TEST_CASE_BODY(some_atf_test_programs__fail)
     output << "atf_test_program{name='/a/foo'}\n";
     output.close();
 
-    lua::state state;
-    ATF_REQUIRE_THROW_RE(lua::error, "'/a/foo'.*path components",
+    lutok::state state;
+    ATF_REQUIRE_THROW_RE(lutok::error, "'/a/foo'.*path components",
                          user_files::do_user_file(state, fs::path("test.lua")));
 }
 
@@ -120,19 +115,15 @@ ATF_TEST_CASE_BODY(some_plain_test_programs__ok)
     output << "plain_test_program{name='test1', test_suite='overriden'}\n";
     output.close();
 
-    lua::state state;
+    lutok::state state;
     user_files::do_user_file(state, fs::path("test.lua"));
-    lua::do_string(state, "assert(table.maxn(kyuafile.TEST_PROGRAMS) == 2)");
-    lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[1].name == 'test2')");
-    lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[1].interface == "
-                   "'plain')");
-    lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[1].test_suite == "
-                   "'the-default')");
-    lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[2].name == 'test1')");
-    lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[2].interface == "
-                   "'plain')");
-    lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[2].test_suite == "
-                   "'overriden')");
+    DS(state, "assert(table.maxn(kyuafile.TEST_PROGRAMS) == 2)");
+    DS(state, "assert(kyuafile.TEST_PROGRAMS[1].name == 'test2')");
+    DS(state, "assert(kyuafile.TEST_PROGRAMS[1].interface == 'plain')");
+    DS(state, "assert(kyuafile.TEST_PROGRAMS[1].test_suite == 'the-default')");
+    DS(state, "assert(kyuafile.TEST_PROGRAMS[2].name == 'test1')");
+    DS(state, "assert(kyuafile.TEST_PROGRAMS[2].interface == 'plain')");
+    DS(state, "assert(kyuafile.TEST_PROGRAMS[2].test_suite == 'overriden')");
 }
 
 
@@ -146,8 +137,8 @@ ATF_TEST_CASE_BODY(some_plain_test_programs__fail)
     output << "plain_test_program{name='/a/foo', test_suite='b'}\n";
     output.close();
 
-    lua::state state;
-    ATF_REQUIRE_THROW_RE(lua::error, "'/a/foo'.*path components",
+    lutok::state state;
+    ATF_REQUIRE_THROW_RE(lutok::error, "'/a/foo'.*path components",
                          user_files::do_user_file(state, fs::path("test.lua")));
 }
 
@@ -165,8 +156,8 @@ ATF_TEST_CASE_BODY(include_absolute)
         output.close();
     }
 
-    lua::state state;
-    ATF_REQUIRE_THROW_RE(lua::error, "second.lua'.*absolute path",
+    lutok::state state;
+    ATF_REQUIRE_THROW_RE(lutok::error, "second.lua'.*absolute path",
                          user_files::do_user_file(state, fs::path("main.lua")));
 }
 
@@ -205,29 +196,19 @@ ATF_TEST_CASE_BODY(include_nested)
         output.close();
     }
 
-    lua::state state;
+    lutok::state state;
     user_files::do_user_file(state, fs::path("root.lua"));
-    lua::do_string(state, "assert(table.maxn(kyuafile.TEST_PROGRAMS) == 5)");
-    lua::do_string(state,
-                   "assert(kyuafile.TEST_PROGRAMS[1].name == 'test1')");
-    lua::do_string(state,
-                   "assert(kyuafile.TEST_PROGRAMS[1].test_suite == 'foo')");
-    lua::do_string(state,
-                   "assert(kyuafile.TEST_PROGRAMS[2].name == 'test2')");
-    lua::do_string(state,
-                   "assert(kyuafile.TEST_PROGRAMS[2].test_suite == 'foo')");
-    lua::do_string(state,
-                   "assert(kyuafile.TEST_PROGRAMS[3].name == 'dir/test1')");
-    lua::do_string(state,
-                   "assert(kyuafile.TEST_PROGRAMS[3].test_suite == 'bar')");
-    lua::do_string(state,
-                   "assert(kyuafile.TEST_PROGRAMS[4].name == 'dir/foo/bar')");
-    lua::do_string(state,
-                   "assert(kyuafile.TEST_PROGRAMS[4].test_suite == 'baz')");
-    lua::do_string(state,
-                   "assert(kyuafile.TEST_PROGRAMS[5].name == 'dir/foo/baz')");
-    lua::do_string(state,
-                   "assert(kyuafile.TEST_PROGRAMS[5].test_suite == 'baz')");
+    DS(state, "assert(table.maxn(kyuafile.TEST_PROGRAMS) == 5)");
+    DS(state, "assert(kyuafile.TEST_PROGRAMS[1].name == 'test1')");
+    DS(state, "assert(kyuafile.TEST_PROGRAMS[1].test_suite == 'foo')");
+    DS(state, "assert(kyuafile.TEST_PROGRAMS[2].name == 'test2')");
+    DS(state, "assert(kyuafile.TEST_PROGRAMS[2].test_suite == 'foo')");
+    DS(state, "assert(kyuafile.TEST_PROGRAMS[3].name == 'dir/test1')");
+    DS(state, "assert(kyuafile.TEST_PROGRAMS[3].test_suite == 'bar')");
+    DS(state, "assert(kyuafile.TEST_PROGRAMS[4].name == 'dir/foo/bar')");
+    DS(state, "assert(kyuafile.TEST_PROGRAMS[4].test_suite == 'baz')");
+    DS(state, "assert(kyuafile.TEST_PROGRAMS[5].name == 'dir/foo/baz')");
+    DS(state, "assert(kyuafile.TEST_PROGRAMS[5].test_suite == 'baz')");
 }
 
 
@@ -254,18 +235,15 @@ ATF_TEST_CASE_BODY(include_same_dir)
         output.close();
     }
 
-    lua::state state;
+    lutok::state state;
     user_files::do_user_file(state, fs::path("main.lua"));
-    lua::do_string(state, "assert(table.maxn(kyuafile.TEST_PROGRAMS) == 3)");
-    lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[1].name == 'test1')");
-    lua::do_string(state,
-                   "assert(kyuafile.TEST_PROGRAMS[1].test_suite == 'abcd')");
-    lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[2].name == 'test2')");
-    lua::do_string(state,
-                   "assert(kyuafile.TEST_PROGRAMS[2].test_suite == 'abcd')");
-    lua::do_string(state, "assert(kyuafile.TEST_PROGRAMS[3].name == 'test12')");
-    lua::do_string(state,
-                   "assert(kyuafile.TEST_PROGRAMS[3].test_suite == 'efgh')");
+    DS(state, "assert(table.maxn(kyuafile.TEST_PROGRAMS) == 3)");
+    DS(state, "assert(kyuafile.TEST_PROGRAMS[1].name == 'test1')");
+    DS(state, "assert(kyuafile.TEST_PROGRAMS[1].test_suite == 'abcd')");
+    DS(state, "assert(kyuafile.TEST_PROGRAMS[2].name == 'test2')");
+    DS(state, "assert(kyuafile.TEST_PROGRAMS[2].test_suite == 'abcd')");
+    DS(state, "assert(kyuafile.TEST_PROGRAMS[3].name == 'test12')");
+    DS(state, "assert(kyuafile.TEST_PROGRAMS[3].test_suite == 'efgh')");
 }
 
 
@@ -278,9 +256,9 @@ ATF_TEST_CASE_BODY(test_suite__ok)
     output << "test_suite('the-test-suite')\n";
     output.close();
 
-    lua::state state;
+    lutok::state state;
     user_files::do_user_file(state, fs::path("test.lua"));
-    lua::do_string(state, "assert(kyuafile.TEST_SUITE == 'the-test-suite')");
+    DS(state, "assert(kyuafile.TEST_SUITE == 'the-test-suite')");
 }
 
 
@@ -294,10 +272,10 @@ ATF_TEST_CASE_BODY(test_suite__twice)
     output << "test_suite('the-test-suite-2')\n";
     output.close();
 
-    lua::state state;
-    ATF_REQUIRE_THROW_RE(lua::error, "cannot call test_suite twice",
+    lutok::state state;
+    ATF_REQUIRE_THROW_RE(lutok::error, "cannot call test_suite twice",
                          user_files::do_user_file(state, fs::path("test.lua")));
-    lua::do_string(state, "assert(kyuafile.TEST_SUITE == 'the-test-suite-1')");
+    DS(state, "assert(kyuafile.TEST_SUITE == 'the-test-suite-1')");
 }
 
 
@@ -322,8 +300,8 @@ ATF_TEST_CASE_BODY(test_suite__not_recursive)
         output.close();
     }
 
-    lua::state state;
-    ATF_REQUIRE_THROW_RE(lua::error, "no test suite.*test program 'test12'",
+    lutok::state state;
+    ATF_REQUIRE_THROW_RE(lutok::error, "no test suite.*test program 'test12'",
                          user_files::do_user_file(state, fs::path("main.lua")));
 }
 

@@ -26,31 +26,22 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file utils/lua/operations.hpp
-/// Extra generic functions to interact with Lua.
+/// \file utils/fs/lua_module.hpp
+/// Lua bindings for the utils::fs module.
 
-#if !defined(UTILS_LUA_OPERATIONS_HPP)
-#define UTILS_LUA_OPERATIONS_HPP
+#if !defined(UTILS_FS_LUA_MODULE_HPP)
+#define UTILS_FS_LUA_MODULE_HPP
 
-#include <map>
-#include <string>
-#include <vector>
-
-#include "utils/fs/path.hpp"
-#include "utils/lua/wrap.hpp"
+#include <lutok/wrap.hpp>
 
 namespace utils {
-namespace lua {
+namespace fs {
 
 
-void create_module(state&, const std::string&,
-                   const std::map< std::string, c_function >&);
-unsigned int do_file(state&, const fs::path&, const int = 0);
-unsigned int do_string(state&, const std::string&, const int = 0);
-void eval(state&, const std::string&, const int = 1);
+void open_fs(lutok::state&);
 
 
-}  // namespace lua
+}  // namespace fs
 }  // namespace utils
 
-#endif  // !defined(UTILS_LUA_OPERATIONS_HPP)
+#endif  // !defined(UTILS_FS_LUA_MODULE_HPP)

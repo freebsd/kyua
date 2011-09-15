@@ -35,18 +35,17 @@
 #include <vector>
 
 #include <atf-c++.hpp>
+#include <lutok/operations.hpp>
+#include <lutok/test_utils.hpp>
+#include <lutok/wrap.ipp>
 
 #include "engine/user_files/config.hpp"
 #include "engine/user_files/exceptions.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.hpp"
-#include "utils/lua/operations.hpp"
-#include "utils/lua/test_utils.hpp"
-#include "utils/lua/wrap.ipp"
 #include "utils/passwd.hpp"
 
 namespace fs = utils::fs;
-namespace lua = utils::lua;
 namespace passwd = utils::passwd;
 namespace user_files = engine::user_files;
 
@@ -90,7 +89,7 @@ validate_defaults(const user_files::config& config)
 ATF_TEST_CASE_WITHOUT_HEAD(get_properties__none);
 ATF_TEST_CASE_BODY(get_properties__none)
 {
-    lua::state state;
+    lutok::state state;
     stack_balance_checker checker(state);
 
     state.new_table();
@@ -106,13 +105,13 @@ ATF_TEST_CASE_BODY(get_properties__none)
 ATF_TEST_CASE_WITHOUT_HEAD(get_properties__some);
 ATF_TEST_CASE_BODY(get_properties__some)
 {
-    lua::state state;
+    lutok::state state;
     stack_balance_checker checker(state);
 
-    lua::do_string(state, "return {empty_string='', a_string='foo bar', "
-                   "real_int=3, int_as_string='5', bool_true=true, "
-                   "bool_false=false}", 1);
-
+    lutok::do_string(state, "return {empty_string='', a_string='foo bar', "
+                     "real_int=3, int_as_string='5', bool_true=true, "
+                     "bool_false=false}", 1);
+    
     const user_files::properties_map properties =
         user_files::detail::get_properties(state, "the-name");
     ATF_REQUIRE_EQ(6, properties.size());
@@ -150,13 +149,14 @@ ATF_TEST_CASE_BODY(get_properties__some)
 ATF_TEST_CASE_WITHOUT_HEAD(get_properties__bad_key);
 ATF_TEST_CASE_BODY(get_properties__bad_key)
 {
-    lua::state state;
+    lutok::state state;
     stack_balance_checker checker(state);
 
-    lua::do_string(state, "t = {}; t['a']=5; t[{}]=3; return t", 1);
+    lutok::do_string(state, "t = {}; t['a']=5; t[{}]=3; return t", 1);
 
-    ATF_REQUIRE_THROW_RE(std::runtime_error, "non-string property name.*'the-name'",
-                         user_files::detail::get_properties(state, "the-name"));
+    ATF_REQUIRE_THROW_RE(
+        std::runtime_error, "non-string property name.*'the-name'",
+        user_files::detail::get_properties(state, "the-name"));
 
     state.pop(1);
 }
@@ -165,13 +165,14 @@ ATF_TEST_CASE_BODY(get_properties__bad_key)
 ATF_TEST_CASE_WITHOUT_HEAD(get_properties__bad_value);
 ATF_TEST_CASE_BODY(get_properties__bad_value)
 {
-    lua::state state;
+    lutok::state state;
     stack_balance_checker checker(state);
 
-    lua::do_string(state, "return {a=5, b={}}", 1);
+    lutok::do_string(state, "return {a=5, b={}}", 1);
 
-    ATF_REQUIRE_THROW_RE(std::runtime_error, "Invalid value.*property 'b'.*'foo'",
-                         user_files::detail::get_properties(state, "foo"));
+    ATF_REQUIRE_THROW_RE(
+        std::runtime_error, "Invalid value.*property 'b'.*'foo'",
+        user_files::detail::get_properties(state, "foo"));
 
     state.pop(1);
 }
@@ -180,7 +181,7 @@ ATF_TEST_CASE_BODY(get_properties__bad_value)
 ATF_TEST_CASE_WITHOUT_HEAD(get_string_var__nil);
 ATF_TEST_CASE_BODY(get_string_var__nil)
 {
-    lua::state state;
+    lutok::state state;
     stack_balance_checker checker(state);
     ATF_REQUIRE_EQ("default-value", user_files::detail::get_string_var(
         state, "undefined", "default-value"));
@@ -190,8 +191,8 @@ ATF_TEST_CASE_BODY(get_string_var__nil)
 ATF_TEST_CASE_WITHOUT_HEAD(get_string_var__ok);
 ATF_TEST_CASE_BODY(get_string_var__ok)
 {
-    lua::state state;
-    lua::do_string(state, "myvar = 'foo bar baz'");
+    lutok::state state;
+    lutok::do_string(state, "myvar = 'foo bar baz'");
 
     stack_balance_checker checker(state);
     ATF_REQUIRE_EQ("foo bar baz", user_files::detail::get_string_var(
@@ -202,23 +203,23 @@ ATF_TEST_CASE_BODY(get_string_var__ok)
 ATF_TEST_CASE_WITHOUT_HEAD(get_string_var__invalid);
 ATF_TEST_CASE_BODY(get_string_var__invalid)
 {
-    lua::state state;
-    lua::do_string(state, "myvar = {}");
+    lutok::state state;
+    lutok::do_string(state, "myvar = {}");
 
     stack_balance_checker checker(state);
-    ATF_REQUIRE_THROW_RE(std::runtime_error, "Invalid type.*'myvar'",
-                         user_files::detail::get_string_var(state, "myvar",
-                                                            "default-value"));
+    ATF_REQUIRE_THROW_RE(
+        std::runtime_error, "Invalid type.*'myvar'",
+        user_files::detail::get_string_var(state, "myvar", "default-value"));
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(get_test_suites__none);
 ATF_TEST_CASE_BODY(get_test_suites__none)
 {
-    lua::state state;
+    lutok::state state;
     stack_balance_checker checker(state);
 
-    lua::do_string(state, "ts = {}");
+    lutok::do_string(state, "ts = {}");
 
     const user_files::test_suites_map test_suites =
         user_files::detail::get_test_suites(state, "ts");
@@ -229,11 +230,11 @@ ATF_TEST_CASE_BODY(get_test_suites__none)
 ATF_TEST_CASE_WITHOUT_HEAD(get_test_suites__some);
 ATF_TEST_CASE_BODY(get_test_suites__some)
 {
-    lua::state state;
+    lutok::state state;
     stack_balance_checker checker(state);
 
-    lua::do_string(state, "ts = {foo={a=3, b='hello', c=true}, "
-                   "bar={}, baz={prop='value'}}");
+    lutok::do_string(state, "ts = {foo={a=3, b='hello', c=true}, "
+                     "bar={}, baz={prop='value'}}");
 
     const user_files::test_suites_map test_suites =
         user_files::detail::get_test_suites(state, "ts");
@@ -280,10 +281,10 @@ ATF_TEST_CASE_BODY(get_test_suites__some)
 ATF_TEST_CASE_WITHOUT_HEAD(get_test_suites__invalid);
 ATF_TEST_CASE_BODY(get_test_suites__invalid)
 {
-    lua::state state;
+    lutok::state state;
     stack_balance_checker checker(state);
 
-    lua::do_string(state, "ts = 'I should be a table'");
+    lutok::do_string(state, "ts = 'I should be a table'");
 
     ATF_REQUIRE_THROW_RE(std::runtime_error, "'ts'.*not a table",
                          user_files::detail::get_test_suites(state, "ts"));
@@ -293,10 +294,10 @@ ATF_TEST_CASE_BODY(get_test_suites__invalid)
 ATF_TEST_CASE_WITHOUT_HEAD(get_test_suites__bad_key);
 ATF_TEST_CASE_BODY(get_test_suites__bad_key)
 {
-    lua::state state;
+    lutok::state state;
     stack_balance_checker checker(state);
 
-    lua::do_string(state, "ts = {}; ts['a'] = {}; ts[{}] = 'the key is bad'");
+    lutok::do_string(state, "ts = {}; ts['a'] = {}; ts[{}] = 'the key is bad'");
 
     ATF_REQUIRE_THROW_RE(std::runtime_error, "non-string.*suite name.*'ts'",
                          user_files::detail::get_test_suites(state, "ts"));
@@ -306,10 +307,10 @@ ATF_TEST_CASE_BODY(get_test_suites__bad_key)
 ATF_TEST_CASE_WITHOUT_HEAD(get_test_suites__bad_value);
 ATF_TEST_CASE_BODY(get_test_suites__bad_value)
 {
-    lua::state state;
+    lutok::state state;
     stack_balance_checker checker(state);
 
-    lua::do_string(state, "ts = {}; ts['a'] = {}; ts['b'] = 'bad value'");
+    lutok::do_string(state, "ts = {}; ts['a'] = {}; ts['b'] = 'bad value'");
 
     ATF_REQUIRE_THROW_RE(std::runtime_error, "non-table properties.*'b'",
                          user_files::detail::get_test_suites(state, "ts"));
@@ -321,7 +322,7 @@ ATF_TEST_CASE_BODY(get_user_var__nil)
 {
     set_mock_users();
 
-    lua::state state;
+    lutok::state state;
     stack_balance_checker checker(state);
     ATF_REQUIRE(!user_files::detail::get_user_var(state, "undefined"));
 }
@@ -332,8 +333,8 @@ ATF_TEST_CASE_BODY(get_user_var__uid_ok)
 {
     set_mock_users();
 
-    lua::state state;
-    lua::do_string(state, "myvar = 100");
+    lutok::state state;
+    lutok::do_string(state, "myvar = 100");
 
     stack_balance_checker checker(state);
     const optional< passwd::user > user = user_files::detail::get_user_var(
@@ -349,12 +350,13 @@ ATF_TEST_CASE_BODY(get_user_var__uid_error)
 {
     set_mock_users();
 
-    lua::state state;
-    lua::do_string(state, "myvar = '150'");
+    lutok::state state;
+    lutok::do_string(state, "myvar = '150'");
 
     stack_balance_checker checker(state);
-    ATF_REQUIRE_THROW_RE(std::runtime_error, "Cannot find user.*UID 150.*'myvar'",
-                         user_files::detail::get_user_var(state, "myvar"));
+    ATF_REQUIRE_THROW_RE(
+        std::runtime_error, "Cannot find user.*UID 150.*'myvar'",
+        user_files::detail::get_user_var(state, "myvar"));
 }
 
 
@@ -363,8 +365,8 @@ ATF_TEST_CASE_BODY(get_user_var__name_ok)
 {
     set_mock_users();
 
-    lua::state state;
-    lua::do_string(state, "myvar = 'user2'");
+    lutok::state state;
+    lutok::do_string(state, "myvar = 'user2'");
 
     stack_balance_checker checker(state);
     const optional< passwd::user > user = user_files::detail::get_user_var(
@@ -380,12 +382,13 @@ ATF_TEST_CASE_BODY(get_user_var__name_error)
 {
     set_mock_users();
 
-    lua::state state;
-    lua::do_string(state, "myvar = 'root'");
+    lutok::state state;
+    lutok::do_string(state, "myvar = 'root'");
 
     stack_balance_checker checker(state);
-    ATF_REQUIRE_THROW_RE(std::runtime_error, "Cannot find user.*name 'root'.*'myvar'",
-                         user_files::detail::get_user_var(state, "myvar"));
+    ATF_REQUIRE_THROW_RE(
+        std::runtime_error, "Cannot find user.*name 'root'.*'myvar'",
+        user_files::detail::get_user_var(state, "myvar"));
 }
 
 
@@ -394,8 +397,8 @@ ATF_TEST_CASE_BODY(get_user_var__invalid)
 {
     set_mock_users();
 
-    lua::state state;
-    lua::do_string(state, "myvar = {}");
+    lutok::state state;
+    lutok::do_string(state, "myvar = {}");
 
     stack_balance_checker checker(state);
     ATF_REQUIRE_THROW_RE(std::runtime_error, "Invalid type.*'myvar'",

@@ -28,6 +28,10 @@
 
 #include <stdexcept>
 
+#include <lutok/exceptions.hpp>
+#include <lutok/operations.hpp>
+#include <lutok/wrap.ipp>
+
 #include "engine/atf_iface/test_program.hpp"
 #include "engine/plain_iface/test_program.hpp"
 #include "engine/user_files/common.hpp"
@@ -36,16 +40,12 @@
 #include "utils/format/macros.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/operations.hpp"
-#include "utils/lua/exceptions.hpp"
-#include "utils/lua/operations.hpp"
-#include "utils/lua/wrap.ipp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 
 namespace atf_iface = engine::atf_iface;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
-namespace lua = utils::lua;
 namespace plain_iface = engine::plain_iface;
 namespace user_files = engine::user_files;
 
@@ -69,11 +69,12 @@ namespace {
 ///
 /// \raises std::runtime_error If there is any problem accessing the table.
 static inline std::string
-get_table_string(lua::state& state, const char* field, const std::string& error)
+get_table_string(lutok::state& state, const char* field,
+                 const std::string& error)
 {
     PRE(state.is_table());
 
-    lua::stack_cleaner cleaner(state);
+    lutok::stack_cleaner cleaner(state);
 
     state.push_string(field);
     state.get_table();
@@ -97,7 +98,7 @@ get_table_string(lua::state& state, const char* field, const std::string& error)
 /// \raises std::runtime_error If the table definition is invalid or if the test
 ///     program does not exist.
 static fs::path
-get_path(lua::state& state, const fs::path& root)
+get_path(lutok::state& state, const fs::path& root)
 {
     const fs::path path = fs::path(get_table_string(
         state, "name", "Found non-string name for test program"));
@@ -123,7 +124,7 @@ get_path(lua::state& state, const fs::path& root)
 ///
 /// \raises std::runtime_error If the table definition is invalid.
 static std::string
-get_test_suite(lua::state& state, const fs::path& path)
+get_test_suite(lutok::state& state, const fs::path& path)
 {
     return get_table_string(
         state, "test_suite", F("Found non-string name for test suite of "
@@ -141,7 +142,7 @@ get_test_suite(lua::state& state, const fs::path& path)
 /// throw std::runtime_error If there is any problem in the input data.
 /// throw fs::error If there is an invalid path in the input data.
 static engine::test_program_ptr
-get_atf_test_program(lua::state& state, const fs::path& root)
+get_atf_test_program(lutok::state& state, const fs::path& root)
 {
     PRE(state.is_table());
 
@@ -163,11 +164,11 @@ get_atf_test_program(lua::state& state, const fs::path& root)
 /// throw std::runtime_error If there is any problem in the input data.
 /// throw fs::error If there is an invalid path in the input data.
 static engine::test_program_ptr
-get_plain_test_program(lua::state& state, const fs::path& root)
+get_plain_test_program(lutok::state& state, const fs::path& root)
 {
     PRE(state.is_table());
 
-    lua::stack_cleaner cleaner(state);
+    lutok::stack_cleaner cleaner(state);
 
     const fs::path path = get_path(state, root);
     const std::string test_suite = get_test_suite(state, path);
@@ -211,7 +212,7 @@ namespace detail {
 /// throw std::runtime_error If there is any problem in the input data.
 /// throw fs::error If there is an invalid path in the input data.
 test_program_ptr
-get_test_program(lua::state& state, const fs::path& root)
+get_test_program(lutok::state& state, const fs::path& root)
 {
     PRE(state.is_table());
 
@@ -238,12 +239,12 @@ get_test_program(lua::state& state, const fs::path& root)
 /// throw std::runtime_error If there is any problem in the input data.
 /// throw fs::error If there is an invalid path in the input data.
 test_programs_vector
-get_test_programs(lua::state& state, const std::string& expr,
+get_test_programs(lutok::state& state, const std::string& expr,
                   const fs::path& root)
 {
-    lua::stack_cleaner cleaner(state);
+    lutok::stack_cleaner cleaner(state);
 
-    lua::eval(state, expr);
+    lutok::eval(state, expr);
     if (!state.is_table())
         throw std::runtime_error(F("'%s' is not a table") % expr);
 
@@ -298,8 +299,8 @@ user_files::kyuafile::load(const utils::fs::path& file)
 {
     test_programs_vector test_programs;
     try {
-        lua::state state;
-        lua::stack_cleaner cleaner(state);
+        lutok::state state;
+        lutok::stack_cleaner cleaner(state);
 
         const user_files::syntax_def syntax = user_files::do_user_file(
             state, file);

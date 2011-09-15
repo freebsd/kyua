@@ -28,13 +28,13 @@
 
 #include <stdexcept>
 
+#include <lutok/operations.hpp>
+#include <lutok/wrap.ipp>
+
+#include "utils/logging/lua_module.hpp"
 #include "utils/logging/operations.hpp"
-#include "utils/lua/module_logging.hpp"
-#include "utils/lua/operations.hpp"
-#include "utils/lua/wrap.ipp"
 
 namespace logging = utils::logging;
-namespace lua = utils::lua;
 
 
 namespace {
@@ -51,13 +51,13 @@ namespace {
 ///
 /// \throw std::runtime_error If the parameters to the function are invalid.
 static int
-do_logging(const logging::level& level, lua::state& state)
+do_logging(const logging::level& level, lutok::state& state)
 {
     if (!state.is_string(-1))
       throw std::runtime_error("The logging message must be a string");
     const std::string message(state.to_string(-1));
 
-    lua::debug ar;
+    lutok::debug ar;
     state.get_stack(1, &ar);
     state.get_info("Sl", &ar);
 
@@ -75,7 +75,7 @@ do_logging(const logging::level& level, lua::state& state)
 ///
 /// \return The number of result values, i.e. 0.
 int
-lua_logging_error(lua::state& state)
+lua_logging_error(lutok::state& state)
 {
     return do_logging(logging::level_error, state);
 }
@@ -89,7 +89,7 @@ lua_logging_error(lua::state& state)
 ///
 /// \return The number of result values, i.e. 0.
 int
-lua_logging_warning(lua::state& state)
+lua_logging_warning(lutok::state& state)
 {
     return do_logging(logging::level_warning, state);
 }
@@ -103,7 +103,7 @@ lua_logging_warning(lua::state& state)
 ///
 /// \return The number of result values, i.e. 0.
 int
-lua_logging_info(lua::state& state)
+lua_logging_info(lutok::state& state)
 {
     return do_logging(logging::level_info, state);
 }
@@ -117,7 +117,7 @@ lua_logging_info(lua::state& state)
 ///
 /// \return The number of result values, i.e. 0.
 int
-lua_logging_debug(lua::state& state)
+lua_logging_debug(lutok::state& state)
 {
     return do_logging(logging::level_debug, state);
 }
@@ -133,12 +133,12 @@ lua_logging_debug(lua::state& state)
 ///
 /// \param s The Lua state.
 void
-lua::open_logging(lua::state& s)
+logging::open_logging(lutok::state& s)
 {
-    std::map< std::string, lua::c_function > members;
-    members["error"] = wrap_cxx_function< lua_logging_error >;
-    members["warning"] = wrap_cxx_function< lua_logging_warning >;
-    members["info"] = wrap_cxx_function< lua_logging_info >;
-    members["debug"] = wrap_cxx_function< lua_logging_debug >;
-    lua::create_module(s, "logging", members);
+    std::map< std::string, lutok::c_function > members;
+    members["error"] = lutok::wrap_cxx_function< lua_logging_error >;
+    members["warning"] = lutok::wrap_cxx_function< lua_logging_warning >;
+    members["info"] = lutok::wrap_cxx_function< lua_logging_info >;
+    members["debug"] = lutok::wrap_cxx_function< lua_logging_debug >;
+    lutok::create_module(s, "logging", members);
 }

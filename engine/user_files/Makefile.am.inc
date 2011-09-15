@@ -26,9 +26,12 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+ENGINE_CFLAGS += $(LUTOK_CFLAGS)
+ENGINE_LIBS += $(LUTOK_LIBS)
+
 luadir = $(pkgdatadir)/lua
 
-libengine_a_CPPFLAGS  = $(UTILS_CFLAGS)
+libengine_a_CPPFLAGS  = $(LUTOK_CFLAGS) $(UTILS_CFLAGS)
 libengine_a_CPPFLAGS += -DKYUA_LUADIR="\"$(luadir)\""
 libengine_a_SOURCES += engine/user_files/common.cpp
 libengine_a_SOURCES += engine/user_files/common.hpp

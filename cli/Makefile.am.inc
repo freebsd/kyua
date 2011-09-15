@@ -53,6 +53,7 @@ libcli_a_SOURCES += cli/main.cpp
 libcli_a_SOURCES += cli/main.hpp
 libcli_a_CPPFLAGS  = -DKYUA_CONFDIR="\"$(kyua_confdir)\""
 libcli_a_CPPFLAGS += -DKYUA_DOCDIR="\"$(docdir)\""
+libcli_a_CPPFLAGS += $(ENGINE_CFLAGS) $(UTILS_CFLAGS)
 libcli_a_LIBADD = libutils.a
 
 tests_clidir = $(pkgtestsdir)/cli

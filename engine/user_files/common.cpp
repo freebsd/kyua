@@ -26,18 +26,19 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <lutok/exceptions.hpp>
+#include <lutok/operations.hpp>
+
 #include "engine/user_files/common.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/fs/lua_module.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/logging/lua_module.hpp"
 #include "utils/logging/macros.hpp"
-#include "utils/lua/exceptions.hpp"
-#include "utils/lua/module_fs.hpp"
-#include "utils/lua/module_logging.hpp"
-#include "utils/lua/operations.hpp"
 
 namespace fs = utils::fs;
-namespace lua = utils::lua;
+namespace logging = utils::logging;
 namespace user_files = engine::user_files;
 
 
@@ -49,14 +50,14 @@ namespace user_files = engine::user_files;
 /// \return The syntax definition (format, version) of the file.  The caller
 /// must validate the return value before accessing the Lua state.
 ///
-/// \throw lua::error If there is any problem processing the provided Lua file
-///     or any of its dependent libraries.
+/// \throw lutok::error If there is any problem processing the provided Lua
+///     file or any of its dependent libraries.
 user_files::syntax_def
-user_files::do_user_file(lua::state& state, const fs::path& file)
+user_files::do_user_file(lutok::state& state, const fs::path& file)
 {
-    lua::stack_cleaner cleaner(state);
+    lutok::stack_cleaner cleaner(state);
     init(state, file);
-    lua::do_file(state, file);
+    lutok::do_file(state, file.str());
     return get_syntax(state);
 }
 
@@ -67,15 +68,15 @@ user_files::do_user_file(lua::state& state, const fs::path& file)
 ///
 /// \return The syntax definition (format, version) of the file.
 ///
-/// \throw lua::error If there is a problem querying the file syntax.
+/// \throw lutok::error If there is a problem querying the file syntax.
 user_files::syntax_def
-user_files::get_syntax(lua::state& state)
+user_files::get_syntax(lutok::state& state)
 {
-    lua::stack_cleaner cleaner(state);
+    lutok::stack_cleaner cleaner(state);
 
-    lua::eval(state, "init.get_syntax()", 1);
+    lutok::eval(state, "init.get_syntax()", 1);
     if (!state.is_table())
-        throw lua::error("init.get_syntax() is not a table");
+        throw lutok::error("init.get_syntax() is not a table");
 
     state.push_string("format");
     state.get_table(-2);
@@ -83,11 +84,11 @@ user_files::get_syntax(lua::state& state)
     state.get_table(-3);
 
     if (state.is_nil(-2) || state.is_nil(-1))
-        throw lua::error("Syntax not defined; must call syntax()");
+        throw lutok::error("Syntax not defined; must call syntax()");
     if (!state.is_string(-2))
-        throw lua::error("init.get_syntax().format is not a string");
+        throw lutok::error("init.get_syntax().format is not a string");
     if (!state.is_number(-1))
-        throw lua::error("init.get_syntax().version is not an integer");
+        throw lutok::error("init.get_syntax().version is not an integer");
 
     const std::string format = state.to_string(-2);
     const int version = state.to_integer(-1);
@@ -110,30 +111,30 @@ user_files::get_syntax(lua::state& state)
 ///     opened in this call; this name is only used to initialize internal
 ///     state.
 ///
-/// \throw lua::error If there is any problem processing the init.lua file or
-///     initializing its internal state.
+/// \throw lutok::error If there is any problem processing the init.lua file
+///     or initializing its internal state.
 void
-user_files::init(lua::state& state, const fs::path& file)
+user_files::init(lutok::state& state, const fs::path& file)
 {
     LI(F("Loading user file '%s'") % file);
 
     const fs::path luadir(utils::getenv_with_default(
         "KYUA_LUADIR", KYUA_LUADIR));
 
-    lua::stack_cleaner cleaner(state);
+    lutok::stack_cleaner cleaner(state);
 
     state.open_base();
     state.open_string();
     state.open_table();
-    lua::open_fs(state);
-    lua::open_logging(state);
+    fs::open_fs(state);
+    logging::open_logging(state);
 
-    lua::do_file(state, luadir / "init.lua", 1);
+    lutok::do_file(state, (luadir / "init.lua").str(), 1);
     state.push_string("export");
     state.get_table();
     state.pcall(0, 0, 0);
 
-    lua::eval(state, "init.bootstrap");
+    lutok::eval(state, "init.bootstrap");
     state.push_string(luadir.str());
     state.push_string(file.c_str());
     state.pcall(2, 0, 0);

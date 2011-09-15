@@ -31,20 +31,20 @@
 #include <typeinfo>
 
 #include <atf-c++.hpp>
+#include <lutok/operations.hpp>
+#include <lutok/test_utils.hpp>
+#include <lutok/wrap.ipp>
 
 #include "engine/atf_iface/test_program.hpp"
 #include "engine/plain_iface/test_program.hpp"
 #include "engine/user_files/exceptions.hpp"
 #include "engine/user_files/kyuafile.hpp"
+#include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
-#include "utils/lua/operations.hpp"
-#include "utils/lua/test_utils.hpp"
-#include "utils/lua/wrap.ipp"
 #include "utils/test_utils.hpp"
 
 namespace atf_iface = engine::atf_iface;
 namespace fs = utils::fs;
-namespace lua = utils::lua;
 namespace plain_iface = engine::plain_iface;
 namespace user_files = engine::user_files;
 
@@ -55,11 +55,11 @@ namespace user_files = engine::user_files;
 static void
 bad_name_test(const char* interface)
 {
-    lua::state state;
+    lutok::state state;
     stack_balance_checker checker(state);
 
-    lua::do_string(state, F("return {name={}, interface='%s', "
-                            "test_suite='the-suite'}") % interface, 1);
+    lutok::do_string(state, F("return {name={}, interface='%s', "
+                              "test_suite='the-suite'}") % interface, 1);
 
     ATF_REQUIRE_THROW_RE(std::runtime_error, "non-string.*test program$",
                          user_files::detail::get_test_program(
@@ -75,11 +75,11 @@ bad_name_test(const char* interface)
 static void
 bad_test_suite_test(const char* interface)
 {
-    lua::state state;
+    lutok::state state;
     stack_balance_checker checker(state);
 
-    lua::do_string(state, F("return {name='foo', interface='%s', "
-                            "test_suite={}}") % interface, 1);
+    lutok::do_string(state, F("return {name='foo', interface='%s', "
+                              "test_suite={}}") % interface, 1);
     fs::mkdir(fs::path("bar"), 0755);
     utils::create_file(fs::path("bar/foo"));
 
@@ -98,12 +98,12 @@ bad_test_suite_test(const char* interface)
 static void
 missing_binary_test(const char* interface)
 {
-    lua::state state;
+    lutok::state state;
     stack_balance_checker checker(state);
 
     utils::create_file(fs::path("i-exist"));
-    lua::do_string(state, F("return {name='i-exist', interface='%s', "
-                            "test_suite='the-suite'}") % interface, 1);
+    lutok::do_string(state, F("return {name='i-exist', interface='%s', "
+                              "test_suite='the-suite'}") % interface, 1);
 
     ATF_REQUIRE_THROW_RE(std::runtime_error,
                          "Non-existent.*'i-exist'",
@@ -117,11 +117,11 @@ missing_binary_test(const char* interface)
 ATF_TEST_CASE_WITHOUT_HEAD(get_test_program__atf__ok);
 ATF_TEST_CASE_BODY(get_test_program__atf__ok)
 {
-    lua::state state;
+    lutok::state state;
     stack_balance_checker checker(state);
 
-    lua::do_string(state, "return {name='the-name', interface='atf', "
-                   "test_suite='the-suite'}", 1);
+    lutok::do_string(state, "return {name='the-name', interface='atf', "
+                     "test_suite='the-suite'}", 1);
 
     fs::mkdir(fs::path("root"), 0755);
     fs::mkdir(fs::path("root/directory"), 0755);
@@ -161,11 +161,11 @@ ATF_TEST_CASE_BODY(get_test_program__atf__missing_binary)
 ATF_TEST_CASE_WITHOUT_HEAD(get_test_program__plain__ok);
 ATF_TEST_CASE_BODY(get_test_program__plain__ok)
 {
-    lua::state state;
+    lutok::state state;
     stack_balance_checker checker(state);
 
-    lua::do_string(state, "return {name='the-name', interface='plain', "
-                   "test_suite='the-suite'}", 1);
+    lutok::do_string(state, "return {name='the-name', interface='plain', "
+                     "test_suite='the-suite'}", 1);
 
     fs::mkdir(fs::path("root"), 0755);
     fs::mkdir(fs::path("root/directory"), 0755);
@@ -205,10 +205,10 @@ ATF_TEST_CASE_BODY(get_test_program__plain__missing_binary)
 ATF_TEST_CASE_WITHOUT_HEAD(get_test_program__missing_interface);
 ATF_TEST_CASE_BODY(get_test_program__missing_interface)
 {
-    lua::state state;
+    lutok::state state;
     stack_balance_checker checker(state);
 
-    lua::do_string(state, "return {name='the-name'}", 1);
+    lutok::do_string(state, "return {name='the-name'}", 1);
 
     ATF_REQUIRE_THROW_RE(std::runtime_error, "Missing test case interface",
                          user_files::detail::get_test_program(
@@ -221,10 +221,10 @@ ATF_TEST_CASE_BODY(get_test_program__missing_interface)
 ATF_TEST_CASE_WITHOUT_HEAD(get_test_program__unsupported_interface);
 ATF_TEST_CASE_BODY(get_test_program__unsupported_interface)
 {
-    lua::state state;
+    lutok::state state;
     stack_balance_checker checker(state);
 
-    lua::do_string(state, "return {name='the-name', interface='foo'}", 1);
+    lutok::do_string(state, "return {name='the-name', interface='foo'}", 1);
 
     ATF_REQUIRE_THROW_RE(std::runtime_error,
                          "Unsupported test interface 'foo'",
@@ -238,10 +238,10 @@ ATF_TEST_CASE_BODY(get_test_program__unsupported_interface)
 ATF_TEST_CASE_WITHOUT_HEAD(get_test_programs__empty);
 ATF_TEST_CASE_BODY(get_test_programs__empty)
 {
-    lua::state state;
+    lutok::state state;
     stack_balance_checker checker(state);
 
-    lua::do_string(state, "t = {}");
+    lutok::do_string(state, "t = {}");
 
     const engine::test_programs_vector programs =
         user_files::detail::get_test_programs(state, "t", fs::path("a/b"));
@@ -252,12 +252,12 @@ ATF_TEST_CASE_BODY(get_test_programs__empty)
 ATF_TEST_CASE_WITHOUT_HEAD(get_test_programs__some);
 ATF_TEST_CASE_BODY(get_test_programs__some)
 {
-    lua::state state;
+    lutok::state state;
     stack_balance_checker checker(state);
 
-    lua::do_string(state,
-                   "t = {}; t[1] = {name='a', interface='atf', test_suite='b'};"
-                   "t[2] = {name='c/d', interface='atf', test_suite='e'}");
+    lutok::do_string(
+        state, "t = {}; t[1] = {name='a', interface='atf', test_suite='b'};"
+        "t[2] = {name='c/d', interface='atf', test_suite='e'}");
 
     fs::mkdir(fs::path("root"), 0755);
     utils::create_file(fs::path("root/a"));
@@ -279,10 +279,10 @@ ATF_TEST_CASE_BODY(get_test_programs__some)
 ATF_TEST_CASE_WITHOUT_HEAD(get_test_programs__invalid);
 ATF_TEST_CASE_BODY(get_test_programs__invalid)
 {
-    lua::state state;
+    lutok::state state;
     stack_balance_checker checker(state);
 
-    lua::do_string(state, "t = 'foo'");
+    lutok::do_string(state, "t = 'foo'");
 
     ATF_REQUIRE_THROW_RE(std::runtime_error, "'t' is not a table",
                          user_files::detail::get_test_programs(
@@ -293,10 +293,10 @@ ATF_TEST_CASE_BODY(get_test_programs__invalid)
 ATF_TEST_CASE_WITHOUT_HEAD(get_test_programs__bad_value);
 ATF_TEST_CASE_BODY(get_test_programs__bad_value)
 {
-    lua::state state;
+    lutok::state state;
     stack_balance_checker checker(state);
 
-    lua::do_string(state, "t = {}; t[1] = 'foo'");
+    lutok::do_string(state, "t = {}; t[1] = 'foo'");
 
     ATF_REQUIRE_THROW_RE(std::runtime_error, "Expected table in 't'",
                          user_files::detail::get_test_programs(

@@ -30,17 +30,17 @@
 #include <string>
 
 #include <atf-c++.hpp>
+#include <lutok/operations.hpp>
+#include <lutok/test_utils.hpp>
+#include <lutok/wrap.hpp>
 
+#include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/logging/lua_module.hpp"
 #include "utils/logging/operations.hpp"
-#include "utils/lua/module_logging.hpp"
-#include "utils/lua/operations.hpp"
-#include "utils/lua/test_utils.hpp"
-#include "utils/lua/wrap.hpp"
 
 namespace fs = utils::fs;
 namespace logging = utils::logging;
-namespace lua = utils::lua;
 
 
 /// Ensures that a particular logging.<type> function works.
@@ -50,14 +50,14 @@ namespace lua = utils::lua;
 static void
 do_logging_ok_check(const char exp_type, const char* function)
 {
-    lua::state state;
-    lua::open_logging(state);
+    lutok::state state;
+    logging::open_logging(state);
 
     logging::set_persistency("debug", fs::path("test.log"));
     std::ofstream output("test.lua");
     output << F("\n%s('The message from lua!')\n") % function;
     output.close();
-    lua::do_file(state, fs::path("test.lua"));
+    lutok::do_file(state, "test.lua");
 
     std::ifstream input("test.log");
     ATF_REQUIRE(input);
@@ -75,27 +75,27 @@ do_logging_ok_check(const char exp_type, const char* function)
 static void
 do_logging_fail_check(const char* function)
 {
-    lua::state state;
-    lua::open_logging(state);
+    lutok::state state;
+    logging::open_logging(state);
 
-    ATF_REQUIRE_THROW_RE(lua::error, "message must be a string",
-                         lua::do_string(state, F("%s({})\n") % function));
+    ATF_REQUIRE_THROW_RE(lutok::error, "message must be a string",
+                         lutok::do_string(state, F("%s({})\n") % function));
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(open_logging);
 ATF_TEST_CASE_BODY(open_logging)
 {
-    lua::state state;
+    lutok::state state;
     stack_balance_checker checker(state);
-    lua::open_logging(state);
-    lua::do_string(state, "return logging.error", 1);
+    logging::open_logging(state);
+    lutok::do_string(state, "return logging.error", 1);
     ATF_REQUIRE(state.is_function());
-    lua::do_string(state, "return logging.warning", 1);
+    lutok::do_string(state, "return logging.warning", 1);
     ATF_REQUIRE(state.is_function());
-    lua::do_string(state, "return logging.info", 1);
+    lutok::do_string(state, "return logging.info", 1);
     ATF_REQUIRE(state.is_function());
-    lua::do_string(state, "return logging.debug", 1);
+    lutok::do_string(state, "return logging.debug", 1);
     ATF_REQUIRE(state.is_function());
     state.pop(4);
 }

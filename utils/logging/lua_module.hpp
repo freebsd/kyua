@@ -26,29 +26,22 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file utils/lua/module_fs.hpp
-/// Lua bindings for the utils::fs module.
-///
-/// This file is within utils::lua instead of utils::fs because utils::lua
-/// already depends on utils::fs -- adding this module does not create any
-/// cross-dependencies.  Also, looking forward we may want to split off the
-/// utils::fs module into its own library and it will be nice if it does not
-/// have to depend on Lua.
+/// \file utils/logging/lua_module.hpp
+/// Lua bindings for the utils::logging module.
 
-#if !defined(UTILS_LUA_MODULE_FS_HPP)
-#define UTILS_LUA_MODULE_FS_HPP
+#if !defined(UTILS_LOGGING_LUA_MODULE_HPP)
+#define UTILS_LOGGING_LUA_MODULE_HPP
+
+#include <lutok/wrap.hpp>
 
 namespace utils {
-namespace lua {
+namespace logging {
 
 
-class state;
+void open_logging(lutok::state&);
 
 
-void open_fs(lua::state&);
-
-
-}  // namespace lua
+}  // namespace logging
 }  // namespace utils
 
-#endif  // !defined(UTILS_LUA_MODULE_FS_HPP)
+#endif  // !defined(UTILS_LOGGING_LUA_MODULE_HPP)

@@ -37,15 +37,11 @@
 #include <utility>
 #include <vector>
 
+#include <lutok/wrap.hpp>
+
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
 #include "utils/passwd.hpp"
-
-namespace utils {
-namespace lua {
-class state;
-}  // namespace lua
-}  // namespace utils
 
 namespace engine {
 namespace user_files {
@@ -66,11 +62,11 @@ typedef std::map< std::string, properties_map > test_suites_map;
 namespace detail {
 
 
-properties_map get_properties(utils::lua::state&, const std::string&);
-std::string get_string_var(utils::lua::state&, const std::string&,
+properties_map get_properties(lutok::state&, const std::string&);
+std::string get_string_var(lutok::state&, const std::string&,
                            const std::string&);
-test_suites_map get_test_suites(utils::lua::state&, const std::string&);
-utils::optional< utils::passwd::user > get_user_var(utils::lua::state&,
+test_suites_map get_test_suites(lutok::state&, const std::string&);
+utils::optional< utils::passwd::user > get_user_var(lutok::state&,
                                                     const std::string&);
 utils::optional< utils::passwd::user > get_user_override(const std::string&,
                                                          const std::string&);

@@ -38,18 +38,17 @@ extern "C" {
 #include <fstream>
 
 #include <atf-c++.hpp>
+#include <lutok/exceptions.hpp>
+#include <lutok/operations.hpp>
+#include <lutok/wrap.hpp>
 
 #include "engine/user_files/common.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
-#include "utils/lua/exceptions.hpp"
-#include "utils/lua/operations.hpp"
-#include "utils/lua/wrap.hpp"
 #include "utils/optional.ipp"
 
 namespace fs = utils::fs;
-namespace lua = utils::lua;
 namespace user_files = engine::user_files;
 
 using utils::optional;
@@ -105,10 +104,10 @@ ATF_TEST_CASE_BODY(get_filename)
 {
     mock_init();
 
-    lua::state state;
+    lutok::state state;
     user_files::init(state, fs::path("this/is/my-name"));
 
-    lua::eval(state, "init.get_filename()");
+    lutok::eval(state, "init.get_filename()");
     ATF_REQUIRE_EQ("this/is/my-name", state.to_string());
     state.pop(1);
 }
@@ -119,15 +118,15 @@ ATF_TEST_CASE_BODY(get_syntax__ok)
 {
     mock_init();
 
-    lua::state state;
+    lutok::state state;
     user_files::init(state, fs::path("this/is/my-name"));
 
     create_mock_module("kyuafile_1.lua", "unused");
-    lua::do_string(state, "syntax('kyuafile', 1)");
+    lutok::do_string(state, "syntax('kyuafile', 1)");
 
-    lua::eval(state, "init.get_syntax().format");
+    lutok::eval(state, "init.get_syntax().format");
     ATF_REQUIRE_EQ("kyuafile", state.to_string());
-    lua::eval(state, "init.get_syntax().version");
+    lutok::eval(state, "init.get_syntax().version");
     ATF_REQUIRE_EQ(1, state.to_integer());
     state.pop(2);
 }
@@ -138,18 +137,18 @@ ATF_TEST_CASE_BODY(get_syntax__fail)
 {
     mock_init();
 
-    lua::state state;
+    lutok::state state;
     user_files::init(state, fs::path("the-name"));
 
-    ATF_REQUIRE_THROW_RE(lua::error, "Syntax not defined in file 'the-name'",
-                         lua::eval(state, "init.get_syntax()"));
+    ATF_REQUIRE_THROW_RE(lutok::error, "Syntax not defined in file 'the-name'",
+                         lutok::eval(state, "init.get_syntax()"));
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(run__simple);
 ATF_TEST_CASE_BODY(run__simple)
 {
-    lua::state state;
+    lutok::state state;
     user_files::init(state, fs::path("root.lua"));
 
     std::ofstream output("simple.lua");
@@ -157,13 +156,13 @@ ATF_TEST_CASE_BODY(run__simple)
     output << "global_variable = 54321\n";
     output.close();
 
-    lua::do_string(state, "simple_env = init.run('simple.lua')");
+    lutok::do_string(state, "simple_env = init.run('simple.lua')");
 
     state.get_global("global_variable");
     ATF_REQUIRE(state.is_nil());
     state.pop(1);
 
-    lua::eval(state, "simple_env.global_variable");
+    lutok::eval(state, "simple_env.global_variable");
     ATF_REQUIRE_EQ(54321, state.to_integer());
     state.pop(1);
 }
@@ -172,7 +171,7 @@ ATF_TEST_CASE_BODY(run__simple)
 ATF_TEST_CASE_WITHOUT_HEAD(run__chain);
 ATF_TEST_CASE_BODY(run__chain)
 {
-    lua::state state;
+    lutok::state state;
     user_files::init(state, fs::path("root.lua"));
 
     {
@@ -189,19 +188,21 @@ ATF_TEST_CASE_BODY(run__chain)
         output << "global_variable = 2\n";
     }
 
-    lua::do_string(state, "env1 = init.run('simple1.lua')");
+    lutok::do_string(state, "env1 = init.run('simple1.lua')");
 
-    lua::do_string(state, "assert(global_variable == nil)");
-    lua::do_string(state, "assert(env1.global_variable == 1)");
-    lua::do_string(state, "assert(env1.env2.global_variable == 2)");
+    lutok::do_string(state, "assert(global_variable == nil)");
+    lutok::do_string(state, "assert(env1.global_variable == 1)");
+    lutok::do_string(state, "assert(env1.env2.global_variable == 2)");
 
-    ATF_REQUIRE_THROW(lua::error, lua::do_string(state, "init.get_syntax()"));
-    ATF_REQUIRE_THROW(lua::error,
-                      lua::do_string(state, "init.env1.get_syntax()"));
-    lua::do_string(state,
-                   "assert(env1.env2.init.get_syntax().format == 'kyuafile')");
-    lua::do_string(state,
-                   "assert(env1.env2.init.get_syntax().version == 1)");
+    ATF_REQUIRE_THROW(lutok::error,
+                      lutok::do_string(state, "init.get_syntax()"));
+    ATF_REQUIRE_THROW(lutok::error,
+                      lutok::do_string(state, "init.env1.get_syntax()"));
+    lutok::do_string(state,
+                     "assert(env1.env2.init.get_syntax().format == "
+                     "'kyuafile')");
+    lutok::do_string(state,
+                     "assert(env1.env2.init.get_syntax().version == 1)");
 }
 
 
@@ -210,17 +211,17 @@ ATF_TEST_CASE_BODY(syntax__config_1__ok)
 {
     mock_init();
 
-    lua::state state;
+    lutok::state state;
     user_files::init(state, fs::path("the-file"));
 
     create_mock_module("config_1.lua", "i-am-the-config");
-    lua::do_string(state, "syntax('config', 1)");
+    lutok::do_string(state, "syntax('config', 1)");
 
-    lua::eval(state, "init.get_syntax().format");
+    lutok::eval(state, "init.get_syntax().format");
     ATF_REQUIRE_EQ("config", state.to_string());
-    lua::eval(state, "init.get_syntax().version");
+    lutok::eval(state, "init.get_syntax().version");
     ATF_REQUIRE_EQ(1, state.to_integer());
-    lua::eval(state, "loaded_cookie");
+    lutok::eval(state, "loaded_cookie");
     ATF_REQUIRE_EQ("i-am-the-config", state.to_string());
     state.pop(3);
 }
@@ -231,18 +232,18 @@ ATF_TEST_CASE_BODY(syntax__config_1__version_error)
 {
     mock_init();
 
-    lua::state state;
+    lutok::state state;
     user_files::init(state, fs::path("the-file"));
 
     create_mock_module("config_1.lua", "unused");
-    ATF_REQUIRE_THROW_RE(lua::error, "Syntax request error: unknown version 2 "
-                         "for format 'config'",
-                         lua::do_string(state, "syntax('config', 2)"));
+    ATF_REQUIRE_THROW_RE(lutok::error, "Syntax request error: unknown version "
+                         "2 for format 'config'",
+                         lutok::do_string(state, "syntax('config', 2)"));
 
-    ATF_REQUIRE_THROW_RE(lua::error, "not defined",
-                         lua::eval(state, "init.get_syntax()"));
+    ATF_REQUIRE_THROW_RE(lutok::error, "not defined",
+                         lutok::eval(state, "init.get_syntax()"));
 
-    lua::eval(state, "loaded_cookie");
+    lutok::eval(state, "loaded_cookie");
     ATF_REQUIRE(state.is_nil());
     state.pop(1);
 }
@@ -253,16 +254,16 @@ ATF_TEST_CASE_BODY(syntax__config_1__missing_file)
 {
     mock_init();
 
-    lua::state state;
+    lutok::state state;
     user_files::init(state, fs::path("the-file"));
 
-    ATF_REQUIRE_THROW_RE(lua::error, "config_1.lua",
-                         lua::do_string(state, "syntax('config', 1)"));
+    ATF_REQUIRE_THROW_RE(lutok::error, "config_1.lua",
+                         lutok::do_string(state, "syntax('config', 1)"));
 
-    ATF_REQUIRE_THROW_RE(lua::error, "not defined",
-                         lua::eval(state, "init.get_syntax()"));
+    ATF_REQUIRE_THROW_RE(lutok::error, "not defined",
+                         lutok::eval(state, "init.get_syntax()"));
 
-    lua::eval(state, "loaded_cookie");
+    lutok::eval(state, "loaded_cookie");
     ATF_REQUIRE(state.is_nil());
     state.pop(1);
 }
@@ -273,17 +274,17 @@ ATF_TEST_CASE_BODY(syntax__kyuafile_1__ok)
 {
     mock_init();
 
-    lua::state state;
+    lutok::state state;
     user_files::init(state, fs::path("the-file"));
 
     create_mock_module("kyuafile_1.lua", "i-am-the-kyuafile");
-    lua::do_string(state, "syntax('kyuafile', 1)");
+    lutok::do_string(state, "syntax('kyuafile', 1)");
 
-    lua::eval(state, "init.get_syntax().format");
+    lutok::eval(state, "init.get_syntax().format");
     ATF_REQUIRE_EQ("kyuafile", state.to_string());
-    lua::eval(state, "init.get_syntax().version");
+    lutok::eval(state, "init.get_syntax().version");
     ATF_REQUIRE_EQ(1, state.to_integer());
-    lua::eval(state, "loaded_cookie");
+    lutok::eval(state, "loaded_cookie");
     ATF_REQUIRE_EQ("i-am-the-kyuafile", state.to_string());
     state.pop(3);
 }
@@ -294,18 +295,18 @@ ATF_TEST_CASE_BODY(syntax__kyuafile_1__version_error)
 {
     mock_init();
 
-    lua::state state;
+    lutok::state state;
     user_files::init(state, fs::path("the-file"));
 
     create_mock_module("kyuafile_1.lua", "unused");
-    ATF_REQUIRE_THROW_RE(lua::error, "Syntax request error: unknown version 2 "
+    ATF_REQUIRE_THROW_RE(lutok::error, "Syntax request error: unknown version 2 "
                          "for format 'kyuafile'",
-                         lua::do_string(state, "syntax('kyuafile', 2)"));
+                         lutok::do_string(state, "syntax('kyuafile', 2)"));
 
-    ATF_REQUIRE_THROW_RE(lua::error, "not defined",
-                         lua::eval(state, "init.get_syntax()"));
+    ATF_REQUIRE_THROW_RE(lutok::error, "not defined",
+                         lutok::eval(state, "init.get_syntax()"));
 
-    lua::eval(state, "loaded_cookie");
+    lutok::eval(state, "loaded_cookie");
     ATF_REQUIRE(state.is_nil());
     state.pop(1);
 }
@@ -316,16 +317,16 @@ ATF_TEST_CASE_BODY(syntax__kyuafile_1__missing_file)
 {
     mock_init();
 
-    lua::state state;
+    lutok::state state;
     user_files::init(state, fs::path("the-file"));
 
-    ATF_REQUIRE_THROW_RE(lua::error, "kyuafile_1.lua",
-                         lua::do_string(state, "syntax('kyuafile', 1)"));
+    ATF_REQUIRE_THROW_RE(lutok::error, "kyuafile_1.lua",
+                         lutok::do_string(state, "syntax('kyuafile', 1)"));
 
-    ATF_REQUIRE_THROW_RE(lua::error, "not defined",
-                         lua::eval(state, "init.get_syntax()"));
+    ATF_REQUIRE_THROW_RE(lutok::error, "not defined",
+                         lutok::eval(state, "init.get_syntax()"));
 
-    lua::eval(state, "loaded_cookie");
+    lutok::eval(state, "loaded_cookie");
     ATF_REQUIRE(state.is_nil());
     state.pop(1);
 }
@@ -336,17 +337,18 @@ ATF_TEST_CASE_BODY(syntax__format_error)
 {
     mock_init();
 
-    lua::state state;
+    lutok::state state;
     user_files::init(state, fs::path("the-file"));
 
     create_mock_module("kyuafile_1.lua", "unused");
-    ATF_REQUIRE_THROW_RE(lua::error, "Syntax request error: unknown format "
-                         "'foo'", lua::do_string(state, "syntax('foo', 123)"));
+    ATF_REQUIRE_THROW_RE(lutok::error, "Syntax request error: unknown format "
+                         "'foo'",
+                         lutok::do_string(state, "syntax('foo', 123)"));
 
-    ATF_REQUIRE_THROW_RE(lua::error, "not defined",
-                         lua::eval(state, "init.get_syntax()"));
+    ATF_REQUIRE_THROW_RE(lutok::error, "not defined",
+                         lutok::eval(state, "init.get_syntax()"));
 
-    lua::eval(state, "loaded_cookie");
+    lutok::eval(state, "loaded_cookie");
     ATF_REQUIRE(state.is_nil());
     state.pop(1);
 }
@@ -357,13 +359,13 @@ ATF_TEST_CASE_BODY(syntax__twice)
 {
     mock_init();
 
-    lua::state state;
+    lutok::state state;
     user_files::init(state, fs::path("the-file"));
 
     create_mock_module("kyuafile_1.lua", "unused");
-    ATF_REQUIRE_THROW_RE(lua::error, "syntax.*more than once",
-                         lua::do_string(state, "syntax('kyuafile', 1); "
-                                        "syntax('a', 3)"));
+    ATF_REQUIRE_THROW_RE(lutok::error, "syntax.*more than once",
+                         lutok::do_string(state, "syntax('kyuafile', 1); "
+                                          "syntax('a', 3)"));
 }
 
 

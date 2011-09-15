@@ -36,15 +36,13 @@
 #include <string>
 #include <utility>
 
+#include <lutok/wrap.hpp>
+
 namespace utils {
 
 namespace fs {
 class path;
 }  // namespace fs
-
-namespace lua {
-class state;
-}  // namespace lua
 
 }  // namespace utils
 
@@ -56,9 +54,9 @@ namespace user_files {
 typedef std::pair< std::string, int > syntax_def;
 
 
-syntax_def do_user_file(utils::lua::state&, const utils::fs::path&);
-syntax_def get_syntax(utils::lua::state&);
-void init(utils::lua::state&, const utils::fs::path&);
+syntax_def do_user_file(lutok::state&, const utils::fs::path&);
+syntax_def get_syntax(lutok::state&);
+void init(lutok::state&, const utils::fs::path&);
 
 
 }  // namespace user_files

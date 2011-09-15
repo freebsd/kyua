@@ -35,14 +35,10 @@
 #include <string>
 #include <vector>
 
+#include <lutok/wrap.hpp>
+
 #include "engine/test_program.hpp"
 #include "utils/fs/path.hpp"
-
-namespace utils {
-namespace lua {
-class state;
-}  // namespace lua
-}  // namespace utils
 
 namespace engine {
 namespace user_files {
@@ -51,8 +47,8 @@ namespace user_files {
 namespace detail {
 
 
-test_program_ptr get_test_program(utils::lua::state&, const utils::fs::path&);
-test_programs_vector get_test_programs(utils::lua::state&, const std::string&,
+test_program_ptr get_test_program(lutok::state&, const utils::fs::path&);
+test_programs_vector get_test_programs(lutok::state&, const std::string&,
                                        const utils::fs::path&);
 
 

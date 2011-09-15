@@ -32,7 +32,7 @@ To build and use Kyua successfully you need:
 
 * A standards-compliant C++ complier.
 * The Automated Testing Framework, version 0.14 or greater.
-* Lua 5.1.
+* Lutok 0.1 with Lua 5.1.
 * pkg-config.
 
 If you are building Kyua from the code on the repository, you will also

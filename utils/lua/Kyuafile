@@ -1,9 +1,0 @@
-syntax("kyuafile", 1)
-
-test_suite("kyua")
-
-atf_test_program{name="exceptions_test"}
-atf_test_program{name="module_fs_test"}
-atf_test_program{name="module_logging_test"}
-atf_test_program{name="operations_test"}
-atf_test_program{name="wrap_test"}

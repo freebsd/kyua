@@ -26,6 +26,12 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+UTILS_CFLAGS += $(LUTOK_CFLAGS)
+UTILS_LIBS += $(LUTOK_LIBS)
+
+libutils_a_CPPFLAGS += $(LUTOK_CFLAGS)
+libutils_a_SOURCES += utils/logging/lua_module.cpp
+libutils_a_SOURCES += utils/logging/lua_module.hpp
 libutils_a_SOURCES += utils/logging/macros.hpp
 libutils_a_SOURCES += utils/logging/operations.cpp
 libutils_a_SOURCES += utils/logging/operations.hpp
@@ -39,6 +45,11 @@ tests_utils_logging_PROGRAMS = utils/logging/macros_test
 utils_logging_macros_test_SOURCES = utils/logging/macros_test.cpp
 utils_logging_macros_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 utils_logging_macros_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
+
+tests_utils_logging_PROGRAMS += utils/logging/lua_module_test
+utils_logging_lua_module_test_SOURCES = utils/logging/lua_module_test.cpp
+utils_logging_lua_module_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_logging_lua_module_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_logging_PROGRAMS += utils/logging/operations_test
 utils_logging_operations_test_SOURCES = utils/logging/operations_test.cpp

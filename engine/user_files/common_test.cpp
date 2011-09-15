@@ -29,15 +29,14 @@
 #include <fstream>
 
 #include <atf-c++.hpp>
+#include <lutok/exceptions.hpp>
+#include <lutok/operations.hpp>
+#include <lutok/wrap.hpp>
 
 #include "engine/user_files/common.hpp"
 #include "utils/fs/path.hpp"
-#include "utils/lua/exceptions.hpp"
-#include "utils/lua/operations.hpp"
-#include "utils/lua/wrap.hpp"
 
 namespace fs = utils::fs;
-namespace lua = utils::lua;
 namespace user_files = engine::user_files;
 
 
@@ -68,14 +67,14 @@ ATF_TEST_CASE_BODY(do_user_file__simple)
     output << "my_global = 'good-to-go!'\n";
     output.close();
 
-    lua::state state;
+    lutok::state state;
     create_mock_module("kyuafile_1.lua");
     const user_files::syntax_def syntax = user_files::do_user_file(
         state, fs::path("simple.lua"));
     ATF_REQUIRE_EQ("kyuafile", syntax.first);
     ATF_REQUIRE_EQ(1, syntax.second);
-    lua::do_string(state, "assert(my_global == 'good-to-go!')");
-    lua::do_string(state, "assert(init.get_filename() == 'simple.lua')");
+    lutok::do_string(state, "assert(my_global == 'good-to-go!')");
+    lutok::do_string(state, "assert(init.get_filename() == 'simple.lua')");
 }
 
 
@@ -87,19 +86,19 @@ ATF_TEST_CASE_BODY(do_user_file__missing_syntax)
     output << "my_global = 'oh, no'\n";
     output.close();
 
-    lua::state state;
-    ATF_REQUIRE_THROW_RE(lua::error, "Syntax not defined",
+    lutok::state state;
+    ATF_REQUIRE_THROW_RE(lutok::error, "Syntax not defined",
                          user_files::do_user_file(state,
                                                   fs::path("simple.lua")));
-    lua::do_string(state, "assert(my_global == 'oh, no')");
+    lutok::do_string(state, "assert(my_global == 'oh, no')");
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(do_user_file__missing_file);
 ATF_TEST_CASE_BODY(do_user_file__missing_file)
 {
-    lua::state state;
-    ATF_REQUIRE_THROW(lua::error, user_files::do_user_file(
+    lutok::state state;
+    ATF_REQUIRE_THROW(lutok::error, user_files::do_user_file(
         state, fs::path("non-existent.lua")));
 }
 
@@ -112,7 +111,7 @@ ATF_TEST_CASE_BODY(get_syntax__ok)
     output << "syntax('kyuafile', 1)\n";
     output.close();
 
-    lua::state state;
+    lutok::state state;
     create_mock_module("kyuafile_1.lua");
     const std::pair< std::string, int > returned_syntax =
         user_files::do_user_file(state, fs::path("simple.lua"));
@@ -126,10 +125,10 @@ ATF_TEST_CASE_BODY(get_syntax__ok)
 ATF_TEST_CASE_WITHOUT_HEAD(get_syntax__no_table);
 ATF_TEST_CASE_BODY(get_syntax__no_table)
 {
-    lua::state state;
-    lua::do_string(state, "init = {}; "
-                   "function init.get_syntax() return nil; end");
-    ATF_REQUIRE_THROW_RE(lua::error, "not a table",
+    lutok::state state;
+    lutok::do_string(state, "init = {}; "
+                     "function init.get_syntax() return nil; end");
+    ATF_REQUIRE_THROW_RE(lutok::error, "not a table",
                          user_files::get_syntax(state));
 }
 
@@ -137,11 +136,11 @@ ATF_TEST_CASE_BODY(get_syntax__no_table)
 ATF_TEST_CASE_WITHOUT_HEAD(get_syntax__not_defined);
 ATF_TEST_CASE_BODY(get_syntax__not_defined)
 {
-    lua::state state;
-    lua::do_string(state, "init = {}; "
-                   "syntax = {format=nil, version=nil}; "
-                   "function init.get_syntax() return syntax; end");
-    ATF_REQUIRE_THROW_RE(lua::error, "not defined",
+    lutok::state state;
+    lutok::do_string(state, "init = {}; "
+                     "syntax = {format=nil, version=nil}; "
+                     "function init.get_syntax() return syntax; end");
+    ATF_REQUIRE_THROW_RE(lutok::error, "not defined",
                          user_files::get_syntax(state));
 }
 
@@ -149,11 +148,11 @@ ATF_TEST_CASE_BODY(get_syntax__not_defined)
 ATF_TEST_CASE_WITHOUT_HEAD(get_syntax__bad_format);
 ATF_TEST_CASE_BODY(get_syntax__bad_format)
 {
-    lua::state state;
-    lua::do_string(state, "init = {}; "
-                   "syntax = {format={}, version=1}; "
-                   "function init.get_syntax() return syntax; end");
-    ATF_REQUIRE_THROW_RE(lua::error, "format.*not a string",
+    lutok::state state;
+    lutok::do_string(state, "init = {}; "
+                     "syntax = {format={}, version=1}; "
+                     "function init.get_syntax() return syntax; end");
+    ATF_REQUIRE_THROW_RE(lutok::error, "format.*not a string",
                          user_files::get_syntax(state));
 }
 
@@ -161,11 +160,11 @@ ATF_TEST_CASE_BODY(get_syntax__bad_format)
 ATF_TEST_CASE_WITHOUT_HEAD(get_syntax__bad_version);
 ATF_TEST_CASE_BODY(get_syntax__bad_version)
 {
-    lua::state state;
-    lua::do_string(state, "init = {}; "
-                   "syntax = {format='foo', version={}}; "
-                   "function init.get_syntax() return syntax; end");
-    ATF_REQUIRE_THROW_RE(lua::error, "version.*not an integer",
+    lutok::state state;
+    lutok::do_string(state, "init = {}; "
+                     "syntax = {format='foo', version={}}; "
+                     "function init.get_syntax() return syntax; end");
+    ATF_REQUIRE_THROW_RE(lutok::error, "version.*not an integer",
                          user_files::get_syntax(state));
 }
 
@@ -173,9 +172,10 @@ ATF_TEST_CASE_BODY(get_syntax__bad_version)
 ATF_TEST_CASE_WITHOUT_HEAD(init__ok);
 ATF_TEST_CASE_BODY(init__ok)
 {
-    lua::state state;
+    lutok::state state;
     user_files::init(state, fs::path("non-existent.lua"));
-    lua::do_string(state, "assert(init.get_filename() == 'non-existent.lua')");
+    lutok::do_string(state,
+                     "assert(init.get_filename() == 'non-existent.lua')");
 }
 
 

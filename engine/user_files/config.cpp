@@ -33,19 +33,19 @@
 #include <sstream>
 #include <stdexcept>
 
+#include <lutok/exceptions.hpp>
+#include <lutok/operations.hpp>
+#include <lutok/wrap.ipp>
+
 #include "engine/user_files/common.hpp"
 #include "engine/user_files/config.hpp"
 #include "engine/user_files/exceptions.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
-#include "utils/lua/exceptions.hpp"
-#include "utils/lua/operations.hpp"
-#include "utils/lua/wrap.ipp"
 #include "utils/optional.ipp"
 #include "utils/passwd.hpp"
 
 namespace fs = utils::fs;
-namespace lua = utils::lua;
 namespace passwd = utils::passwd;
 namespace user_files = engine::user_files;
 
@@ -82,13 +82,13 @@ namespace detail {
 ///
 /// \throw error If any of the keys or values is invalid.
 properties_map
-get_properties(lua::state& state, const std::string& test_suite)
+get_properties(lutok::state& state, const std::string& test_suite)
 {
     PRE(state.is_table());
 
     properties_map properties;
 
-    lua::stack_cleaner cleaner(state);
+    lutok::stack_cleaner cleaner(state);
 
     state.push_nil();
     while (state.next()) {
@@ -129,11 +129,11 @@ get_properties(lua::state& state, const std::string& test_suite)
 ///
 /// \throw engine:error If the variable has an invalid type.
 std::string
-get_string_var(lua::state& state, const std::string& expr,
+get_string_var(lutok::state& state, const std::string& expr,
                const std::string& default_value)
 {
-    lua::stack_cleaner cleaner(state);
-    lua::eval(state, expr);
+    lutok::stack_cleaner cleaner(state);
+    lutok::eval(state, expr);
     if (state.is_nil())
         return default_value;
     else if (state.is_string())
@@ -153,11 +153,11 @@ get_string_var(lua::state& state, const std::string& expr,
 ///
 /// \throw error If any of the keys or values is invalid.
 test_suites_map
-get_test_suites(lua::state& state, const std::string& expr)
+get_test_suites(lutok::state& state, const std::string& expr)
 {
-    lua::stack_cleaner cleaner(state);
+    lutok::stack_cleaner cleaner(state);
 
-    lua::eval(state, expr);
+    lutok::eval(state, expr);
     if (!state.is_table())
         throw std::runtime_error(F("'%s' is not a table") % expr);
 
@@ -195,10 +195,10 @@ get_test_suites(lua::state& state, const std::string& expr)
 /// \throw std::runtime_error If the variable has an invalid type or if the
 ///     specified user cannot be found on the system.
 optional< passwd::user >
-get_user_var(lua::state& state, const std::string& expr)
+get_user_var(lutok::state& state, const std::string& expr)
 {
-    lua::stack_cleaner cleaner(state);
-    lua::eval(state, expr);
+    lutok::stack_cleaner cleaner(state);
+    lutok::eval(state, expr);
     if (state.is_nil()) {
         return none;
     } else if (state.is_number()) {
@@ -389,8 +389,8 @@ user_files::config::load(const utils::fs::path& file)
     config values = defaults();
 
     try {
-        lua::state state;
-        lua::stack_cleaner cleaner(state);
+        lutok::state state;
+        lutok::stack_cleaner cleaner(state);
 
         const user_files::syntax_def syntax = user_files::do_user_file(
             state, file);

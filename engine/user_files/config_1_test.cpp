@@ -32,15 +32,14 @@
 #include <fstream>
 
 #include <atf-c++.hpp>
+#include <lutok/exceptions.hpp>
+#include <lutok/operations.hpp>
+#include <lutok/wrap.hpp>
 
 #include "engine/user_files/common.hpp"
 #include "utils/fs/path.hpp"
-#include "utils/lua/exceptions.hpp"
-#include "utils/lua/operations.hpp"
-#include "utils/lua/wrap.hpp"
 
 namespace fs = utils::fs;
-namespace lua = utils::lua;
 namespace user_files = engine::user_files;
 
 
@@ -52,7 +51,7 @@ ATF_TEST_CASE_BODY(empty)
     output << "syntax('config', 1)\n";
     output.close();
 
-    lua::state state;
+    lutok::state state;
     user_files::do_user_file(state, fs::path("test.lua"));
 }
 
@@ -67,10 +66,10 @@ ATF_TEST_CASE_BODY(some_variables)
     output << "baz = 3\n";
     output.close();
 
-    lua::state state;
+    lutok::state state;
     user_files::do_user_file(state, fs::path("test.lua"));
-    lua::do_string(state, "assert(foo == 'bar')");
-    lua::do_string(state, "assert(baz == 3)");
+    lutok::do_string(state, "assert(foo == 'bar')");
+    lutok::do_string(state, "assert(baz == 3)");
 }
 
 
@@ -87,12 +86,12 @@ ATF_TEST_CASE_BODY(test_suites__ok)
     output << "test_suites.ts2.bye = true\n";
     output.close();
 
-    lua::state state;
+    lutok::state state;
     user_files::do_user_file(state, fs::path("test.lua"));
-    lua::do_string(state, "assert(config.TEST_SUITES.ts1.foo == 'baz')");
-    lua::do_string(state, "assert(config.TEST_SUITES.ts1.hello == 3)");
-    lua::do_string(state, "assert(config.TEST_SUITES.ts2.hello == 5)");
-    lua::do_string(state, "assert(config.TEST_SUITES.ts2.bye == true)");
+    lutok::do_string(state, "assert(config.TEST_SUITES.ts1.foo == 'baz')");
+    lutok::do_string(state, "assert(config.TEST_SUITES.ts1.hello == 3)");
+    lutok::do_string(state, "assert(config.TEST_SUITES.ts2.hello == 5)");
+    lutok::do_string(state, "assert(config.TEST_SUITES.ts2.bye == true)");
 }
 
 
@@ -105,8 +104,8 @@ ATF_TEST_CASE_BODY(test_suites__get__invalid_key_type)
     output << "test_suites[3].foo = 'abc'\n";
     output.close();
 
-    lua::state state;
-    ATF_REQUIRE_THROW_RE(lua::error, "name must be a string",
+    lutok::state state;
+    ATF_REQUIRE_THROW_RE(lutok::error, "name must be a string",
                          user_files::do_user_file(state, fs::path("test.lua")));
 }
 
@@ -120,8 +119,8 @@ ATF_TEST_CASE_BODY(test_suites__set__disallow)
     output << "test_suites.hello = 'abc'\n";
     output.close();
 
-    lua::state state;
-    ATF_REQUIRE_THROW_RE(lua::error, "Cannot directly set.*test_suites",
+    lutok::state state;
+    ATF_REQUIRE_THROW_RE(lutok::error, "Cannot directly set.*test_suites",
                          user_files::do_user_file(state, fs::path("test.lua")));
 }
 
@@ -135,8 +134,8 @@ ATF_TEST_CASE_BODY(test_suite__set__invalid_key_type)
     output << "test_suites.hello[3] = {}\n";
     output.close();
 
-    lua::state state;
-    ATF_REQUIRE_THROW_RE(lua::error, "Key '3'.*not a string.*suite 'hello'",
+    lutok::state state;
+    ATF_REQUIRE_THROW_RE(lutok::error, "Key '3'.*not a string.*suite 'hello'",
                          user_files::do_user_file(state, fs::path("test.lua")));
 }
 
@@ -150,8 +149,8 @@ ATF_TEST_CASE_BODY(test_suite__set__invalid_value_type)
     output << "test_suites.hello.world = {}\n";
     output.close();
 
-    lua::state state;
-    ATF_REQUIRE_THROW_RE(lua::error, "Invalid type.*'world'.*suite 'hello'",
+    lutok::state state;
+    ATF_REQUIRE_THROW_RE(lutok::error, "Invalid type.*'world'.*suite 'hello'",
                          user_files::do_user_file(state, fs::path("test.lua")));
 }
 
