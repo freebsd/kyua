@@ -36,8 +36,8 @@
 
 #include <atf-c++.hpp>
 #include <lutok/operations.hpp>
+#include <lutok/state.ipp>
 #include <lutok/test_utils.hpp>
-#include <lutok/wrap.ipp>
 
 #include "engine/user_files/config.hpp"
 #include "engine/user_files/exceptions.hpp"

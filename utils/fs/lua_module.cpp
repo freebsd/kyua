@@ -36,7 +36,7 @@ extern "C" {
 #include <string>
 
 #include <lutok/operations.hpp>
-#include <lutok/wrap.ipp>
+#include <lutok/state.ipp>
 
 #include "utils/format/macros.hpp"
 #include "utils/fs/lua_module.hpp"

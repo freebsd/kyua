@@ -32,7 +32,7 @@
 #if !defined(UTILS_LOGGING_LUA_MODULE_HPP)
 #define UTILS_LOGGING_LUA_MODULE_HPP
 
-#include <lutok/wrap.hpp>
+#include <lutok/state.hpp>
 
 namespace utils {
 namespace logging {

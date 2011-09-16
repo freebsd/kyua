@@ -40,7 +40,7 @@ extern "C" {
 #include <atf-c++.hpp>
 #include <lutok/exceptions.hpp>
 #include <lutok/operations.hpp>
-#include <lutok/wrap.hpp>
+#include <lutok/state.hpp>
 
 #include "engine/user_files/common.hpp"
 #include "utils/env.hpp"

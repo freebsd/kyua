@@ -31,8 +31,8 @@
 
 #include <atf-c++.hpp>
 #include <lutok/operations.hpp>
+#include <lutok/state.hpp>
 #include <lutok/test_utils.hpp>
-#include <lutok/wrap.hpp>
 
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"

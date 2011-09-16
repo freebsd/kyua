@@ -36,7 +36,7 @@
 #include <string>
 #include <utility>
 
-#include <lutok/wrap.hpp>
+#include <lutok/state.hpp>
 
 namespace utils {
 

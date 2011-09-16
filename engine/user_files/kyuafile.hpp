@@ -35,7 +35,7 @@
 #include <string>
 #include <vector>
 
-#include <lutok/wrap.hpp>
+#include <lutok/state.hpp>
 
 #include "engine/test_program.hpp"
 #include "utils/fs/path.hpp"

@@ -30,7 +30,8 @@
 
 #include <lutok/exceptions.hpp>
 #include <lutok/operations.hpp>
-#include <lutok/wrap.ipp>
+#include <lutok/stack_cleaner.hpp>
+#include <lutok/state.ipp>
 
 #include "engine/atf_iface/test_program.hpp"
 #include "engine/plain_iface/test_program.hpp"

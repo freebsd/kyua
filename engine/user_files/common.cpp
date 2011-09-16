@@ -28,6 +28,7 @@
 
 #include <lutok/exceptions.hpp>
 #include <lutok/operations.hpp>
+#include <lutok/stack_cleaner.hpp>
 
 #include "engine/user_files/common.hpp"
 #include "utils/env.hpp"

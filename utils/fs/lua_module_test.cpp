@@ -28,8 +28,8 @@
 
 #include <atf-c++.hpp>
 #include <lutok/operations.hpp>
+#include <lutok/state.hpp>
 #include <lutok/test_utils.hpp>
-#include <lutok/wrap.hpp>
 
 #include "utils/fs/lua_module.hpp"
 #include "utils/fs/operations.hpp"

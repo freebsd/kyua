@@ -29,7 +29,7 @@
 #include <stdexcept>
 
 #include <lutok/operations.hpp>
-#include <lutok/wrap.ipp>
+#include <lutok/state.ipp>
 
 #include "utils/logging/lua_module.hpp"
 #include "utils/logging/operations.hpp"
