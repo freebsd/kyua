@@ -58,7 +58,7 @@ namespace {
 /// \param state The Lua state.
 ///
 /// \return The number of result values, i.e. 1.
-int
+static int
 lua_fs_basename(lutok::state& state)
 {
     if (!state.is_string())
@@ -78,7 +78,7 @@ lua_fs_basename(lutok::state& state)
 /// \param state The Lua state.
 ///
 /// \return The number of result values, i.e. 1.
-int
+static int
 lua_fs_dirname(lutok::state& state)
 {
     if (!state.is_string())
@@ -98,7 +98,7 @@ lua_fs_dirname(lutok::state& state)
 /// \param state The Lua state.
 ///
 /// \return The number of result values, i.e. 1.
-int
+static int
 lua_fs_exists(lutok::state& state)
 {
     if (!state.is_string())
@@ -122,7 +122,7 @@ lua_fs_exists(lutok::state& state)
 ///
 /// \return The number of result values, i.e. 0 if there are no more entries or
 /// 1 if an entry has been read.
-int
+static int
 files_iterator(lutok::state& state)
 {
     DIR** dirp = state.to_userdata< DIR* >(state.upvalue_index(1));
@@ -147,7 +147,7 @@ files_iterator(lutok::state& state)
 /// \param state The lua state.
 ///
 /// \return The number of result values, i.e. 0.
-int
+static int
 files_gc(lutok::state& state)
 {
     PRE(state.is_userdata());
@@ -172,7 +172,7 @@ files_gc(lutok::state& state)
 /// \param state The Lua state.
 ///
 /// \return The number of result values, i.e. 1.
-int
+static int
 lua_fs_files(lutok::state& state)
 {
     if (!state.is_string())
@@ -183,7 +183,7 @@ lua_fs_files(lutok::state& state)
 
     state.new_table();
     state.push_string("__gc");
-    state.push_c_function(lutok::wrap_cxx_function< files_gc >);
+    state.push_cxx_function(files_gc);
     state.set_table();
 
     state.set_metatable();
@@ -195,7 +195,7 @@ lua_fs_files(lutok::state& state)
                                  std::strerror(original_errno));
     }
 
-    state.push_c_closure(lutok::wrap_cxx_function< files_iterator >, 1);
+    state.push_cxx_closure(files_iterator, 1);
 
     return 1;
 }
@@ -209,7 +209,7 @@ lua_fs_files(lutok::state& state)
 /// \param state The Lua state.
 ///
 /// \return The number of result values, i.e. 1.
-int
+static int
 lua_fs_is_absolute(lutok::state& state)
 {
     if (!state.is_string())
@@ -230,7 +230,7 @@ lua_fs_is_absolute(lutok::state& state)
 /// \param state The Lua state.
 ///
 /// \return The number of result values, i.e. 1.
-int
+static int
 lua_fs_join(lutok::state& state)
 {
     if (!state.is_string(-2))
@@ -258,12 +258,12 @@ lua_fs_join(lutok::state& state)
 void
 fs::open_fs(lutok::state& s)
 {
-    std::map< std::string, lutok::c_function > members;
-    members["basename"] = lutok::wrap_cxx_function< lua_fs_basename >;
-    members["dirname"] = lutok::wrap_cxx_function< lua_fs_dirname >;
-    members["exists"] = lutok::wrap_cxx_function< lua_fs_exists >;
-    members["files"] = lutok::wrap_cxx_function< lua_fs_files >;
-    members["is_absolute"] = lutok::wrap_cxx_function< lua_fs_is_absolute >;
-    members["join"] = lutok::wrap_cxx_function< lua_fs_join >;
+    std::map< std::string, lutok::cxx_function > members;
+    members["basename"] = lua_fs_basename;
+    members["dirname"] = lua_fs_dirname;
+    members["exists"] = lua_fs_exists;
+    members["files"] = lua_fs_files;
+    members["is_absolute"] = lua_fs_is_absolute;
+    members["join"] = lua_fs_join;
     lutok::create_module(s, "fs", members);
 }
