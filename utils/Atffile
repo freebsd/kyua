@@ -14,3 +14,4 @@ tp: passwd_test
 tp: process
 tp: sanity_test
 tp: signals
+tp: sqlite

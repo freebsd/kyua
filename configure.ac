@@ -78,6 +78,9 @@ PKG_CHECK_MODULES([ATF_CXX], [atf-c++ >= 0.13],
 PKG_CHECK_MODULES([LUTOK], [lutok >= 0.1],
                   [],
                   AC_MSG_ERROR([lutok (0.1 or newer) is required]))
+PKG_CHECK_MODULES([SQLITE3], [sqlite3 >= 3.7],
+                  [],
+                  AC_MSG_ERROR([sqlite3 (3.7 or newer) is required]))
 m4_ifndef([ATF_CHECK_SH],
     [m4_fatal([Cannot find atf-sh.m4; see the INSTALL document for help])])
 ATF_CHECK_SH([>= 0.14])

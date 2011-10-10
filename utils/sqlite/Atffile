@@ -1,0 +1,7 @@
+Content-Type: application/X-atf-atffile; version="1"
+
+prop: test-suite = kyua
+
+tp: c_gate_test
+tp: database_test
+tp: exceptions_test

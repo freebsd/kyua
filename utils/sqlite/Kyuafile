@@ -1,0 +1,7 @@
+syntax("kyuafile", 1)
+
+test_suite("kyua")
+
+atf_test_program{name="c_gate_test"}
+atf_test_program{name="database_test"}
+atf_test_program{name="exceptions_test"}

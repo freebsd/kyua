@@ -99,3 +99,4 @@ include utils/fs/Makefile.am.inc
 include utils/logging/Makefile.am.inc
 include utils/process/Makefile.am.inc
 include utils/signals/Makefile.am.inc
+include utils/sqlite/Makefile.am.inc
