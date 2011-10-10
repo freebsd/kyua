@@ -105,6 +105,30 @@ ATF_TEST_CASE_BODY(close)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(exec__ok);
+ATF_TEST_CASE_BODY(exec__ok)
+{
+    sqlite::database db = sqlite::database::open(fs::path(":memory:"),
+        sqlite::open_readwrite);
+    db.exec(create_test_table_sql);
+    verify_test_table(raw(db));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(exec__fail);
+ATF_TEST_CASE_BODY(exec__fail)
+{
+    sqlite::database db = sqlite::database::open(fs::path(":memory:"),
+        sqlite::open_readwrite);
+    REQUIRE_API_ERROR("sqlite3_exec",
+                      db.exec("SELECT * FROM test"));
+    REQUIRE_API_ERROR("sqlite3_exec",
+                      db.exec("CREATE TABLE test (col INTEGER PRIMARY KEY);"
+                              "FOO BAR"));
+    db.exec("SELECT * FROM test");
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, open__readonly__ok);
@@ -113,4 +137,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, open__create__fail);
 
     ATF_ADD_TEST_CASE(tcs, close);
+
+    ATF_ADD_TEST_CASE(tcs, exec__ok);
+    ATF_ADD_TEST_CASE(tcs, exec__fail);
 }

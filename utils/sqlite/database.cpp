@@ -155,3 +155,22 @@ sqlite::database::close(void)
     PRE(error == SQLITE_OK);
     _pimpl->db = NULL;
 }
+
+
+/// Executes an arbitrary SQL string.
+///
+/// As the documentation explains, this is unsafe.  The code should really be
+/// preparing statements and executing them step by step.  However, it is
+/// perfectly fine to use this function for, e.g. the initial creation of
+/// tables in a database and in tests.
+///
+/// \param sql The SQL commands to be executed.
+///
+/// \throw api_error If there is any problem while processing the SQL.
+void
+sqlite::database::exec(const std::string& sql)
+{
+    const int error = ::sqlite3_exec(_pimpl->db, sql.c_str(), NULL, NULL, NULL);
+    if (error != SQLITE_OK)
+        throw api_error::from_database(*this, "sqlite3_exec");
+}

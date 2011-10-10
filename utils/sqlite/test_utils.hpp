@@ -84,6 +84,18 @@ raw(utils::sqlite::database& db)
 }
 
 
+/// SQL commands to create a test table.
+///
+/// See create_test_table() for more details.
+static const char* create_test_table_sql =
+    "CREATE TABLE test (prime INTEGER PRIMARY KEY);"
+    "INSERT INTO test (prime) VALUES (1);\n"
+    "INSERT INTO test (prime) VALUES (2);\n"
+    "INSERT INTO test (prime) VALUES (7);\n"
+    "INSERT INTO test (prime) VALUES (5);\n"
+    "INSERT INTO test (prime) VALUES (3);\n";
+
+
 /// Creates a 'test' table in a database.
 ///
 /// The created 'test' table is populated with a few rows.  If there are any
@@ -97,14 +109,8 @@ static void
 create_test_table(::sqlite3* db)
 {
     std::cout << "Creating 'test' table in the database\n";
-    ATF_REQUIRE_EQ(SQLITE_OK, ::sqlite3_exec(
-        db, "CREATE TABLE test (prime INTEGER PRIMARY KEY);"
-        "INSERT INTO test (prime) VALUES (1);\n"
-        "INSERT INTO test (prime) VALUES (2);\n"
-        "INSERT INTO test (prime) VALUES (7);\n"
-        "INSERT INTO test (prime) VALUES (5);\n"
-        "INSERT INTO test (prime) VALUES (3);\n",
-        NULL, NULL, NULL));
+    ATF_REQUIRE_EQ(SQLITE_OK, ::sqlite3_exec(db, create_test_table_sql,
+                                             NULL, NULL, NULL));
 }
 
 

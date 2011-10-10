@@ -81,6 +81,8 @@ public:
 
     static database open(const fs::path&, int);
     void close(void);
+
+    void exec(const std::string&);
 };
 
 
