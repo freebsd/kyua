@@ -77,8 +77,7 @@ AC_DEFUN([_KYUA_GETOPT_OPTIND_RESET_VALUE], [
 static void
 first_pass(void)
 {
-    int argc, flag;
-    char ch;
+    int argc, ch, flag;
     char* argv@<:@5@:>@;
 
     argc = 4;
@@ -106,8 +105,7 @@ first_pass(void)
 static void
 second_pass(void)
 {
-    int argc, flag;
-    char ch;
+    int argc, ch, flag;
     char* argv@<:@5@:>@;
 
     argc = 4;
