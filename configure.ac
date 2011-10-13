@@ -72,9 +72,9 @@ AC_PROG_RANLIB
 
 m4_ifndef([PKG_CHECK_MODULES],
     [m4_fatal([Cannot find pkg.m4; see the INSTALL document for help])])
-PKG_CHECK_MODULES([ATF_CXX], [atf-c++ >= 0.13],
-                  [],
-                  AC_MSG_ERROR([atf-c++ (0.13 or newer) is required]))
+m4_ifndef([ATF_CHECK_CXX],
+    [m4_fatal([Cannot find atf-c++.m4; see the INSTALL document for help])])
+ATF_CHECK_CXX([>= 0.13])
 PKG_CHECK_MODULES([LUTOK], [lutok >= 0.1],
                   [],
                   AC_MSG_ERROR([lutok (0.1 or newer) is required]))
