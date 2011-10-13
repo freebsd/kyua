@@ -39,6 +39,10 @@
 #define UTILS_NORETURN @ATTRIBUTE_NORETURN@
 
 
+/// Attribute to mark a function as pure.
+#define UTILS_PURE @ATTRIBUTE_PURE@
+
+
 /// Attribute to mark an entity as unused.
 #define UTILS_UNUSED @ATTRIBUTE_UNUSED@
 

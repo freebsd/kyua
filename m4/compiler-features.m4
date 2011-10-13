@@ -46,6 +46,7 @@ AC_DEFUN([KYUA_REQUIRE_CXX], [
     fi
 ])
 
+
 dnl
 dnl KYUA_ATTRIBUTE_NORETURN
 dnl
@@ -71,6 +72,33 @@ AC_DEFUN([KYUA_ATTRIBUTE_NORETURN], [
          value=""]
     )
     AC_SUBST([ATTRIBUTE_NORETURN], [${value}])
+])
+
+
+dnl
+dnl KYUA_ATTRIBUTE_PURE
+dnl
+dnl Checks if the current compiler has a way to mark functions as pure.
+dnl
+AC_DEFUN([KYUA_ATTRIBUTE_PURE], [
+    AC_MSG_CHECKING(whether __attribute__((__pure__)) is supported)
+    AC_COMPILE_IFELSE(
+        [AC_LANG_PROGRAM([
+static int function(int, int) __attribute__((__pure__));
+
+static int
+function(int a, int b)
+{
+    return a + b;
+}], [
+    return function(3, 4);
+])],
+        [AC_MSG_RESULT(yes)
+         value="__attribute__((__pure__))"],
+        [AC_MSG_RESULT(no)
+         value=""]
+    )
+    AC_SUBST([ATTRIBUTE_PURE], [${value}])
 ])
 
 
