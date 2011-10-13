@@ -57,8 +57,7 @@ ATF_TEST_CASE_BODY(connect)
 ATF_TEST_CASE_WITHOUT_HEAD(c_database);
 ATF_TEST_CASE_BODY(c_database)
 {
-    sqlite::database db = sqlite::database::open(
-        fs::path(":memory:"), sqlite::open_readwrite);
+    sqlite::database db = sqlite::database::in_memory();
     create_test_table(raw(db));
     {
         sqlite::database_c_gate gate(db);

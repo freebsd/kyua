@@ -37,6 +37,17 @@ namespace fs = utils::fs;
 namespace sqlite = utils::sqlite;
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(in_memory);
+ATF_TEST_CASE_BODY(in_memory)
+{
+    sqlite::database db = sqlite::database::in_memory();
+    create_test_table(raw(db));
+    verify_test_table(raw(db));
+
+    ATF_REQUIRE(!fs::exists(fs::path(":memory:")));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(open__readonly__ok);
 ATF_TEST_CASE_BODY(open__readonly__ok)
 {
@@ -93,23 +104,50 @@ ATF_TEST_CASE_BODY(open__create__fail)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(temporary);
+ATF_TEST_CASE_BODY(temporary)
+{
+    // We could validate if files go to disk by setting the temp_store_directory
+    // PRAGMA to a subdirectory of pwd, and then ensuring the subdirectory is
+    // not empty.  However, there does not seem to be a way to force SQLite to
+    // unconditionally write the temporary database to disk (even with
+    // temp_store = FILE), so this scenary is hard to reproduce.
+    sqlite::database db = sqlite::database::temporary();
+    create_test_table(raw(db));
+    verify_test_table(raw(db));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(close);
 ATF_TEST_CASE_BODY(close)
 {
-    sqlite::database db = sqlite::database::open(fs::path(":memory:"),
-        sqlite::open_readonly);
-    ATF_REQUIRE(!fs::exists(fs::path(":memory:")));
+    sqlite::database db = sqlite::database::in_memory();
     db.close();
     // The destructor for the database will run now.  If it does a second close,
     // we may crash, so let's see if we don't.
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(copy);
+ATF_TEST_CASE_BODY(copy)
+{
+    sqlite::database db1 = sqlite::database::in_memory();
+    {
+        sqlite::database db2 = sqlite::database::in_memory();
+        create_test_table(raw(db2));
+        db1 = db2;
+        verify_test_table(raw(db1));
+    }
+    // db2 went out of scope.  If the destruction is not properly managed, the
+    // memory of db1 may have been invalidated and this would not work.
+    verify_test_table(raw(db1));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(exec__ok);
 ATF_TEST_CASE_BODY(exec__ok)
 {
-    sqlite::database db = sqlite::database::open(fs::path(":memory:"),
-        sqlite::open_readwrite);
+    sqlite::database db = sqlite::database::in_memory();
     db.exec(create_test_table_sql);
     verify_test_table(raw(db));
 }
@@ -118,8 +156,7 @@ ATF_TEST_CASE_BODY(exec__ok)
 ATF_TEST_CASE_WITHOUT_HEAD(exec__fail);
 ATF_TEST_CASE_BODY(exec__fail)
 {
-    sqlite::database db = sqlite::database::open(fs::path(":memory:"),
-        sqlite::open_readwrite);
+    sqlite::database db = sqlite::database::in_memory();
     REQUIRE_API_ERROR("sqlite3_exec",
                       db.exec("SELECT * FROM test"));
     REQUIRE_API_ERROR("sqlite3_exec",
@@ -131,12 +168,18 @@ ATF_TEST_CASE_BODY(exec__fail)
 
 ATF_INIT_TEST_CASES(tcs)
 {
+    ATF_ADD_TEST_CASE(tcs, in_memory);
+
     ATF_ADD_TEST_CASE(tcs, open__readonly__ok);
     ATF_ADD_TEST_CASE(tcs, open__readonly__fail);
     ATF_ADD_TEST_CASE(tcs, open__create__ok);
     ATF_ADD_TEST_CASE(tcs, open__create__fail);
 
+    ATF_ADD_TEST_CASE(tcs, temporary);
+
     ATF_ADD_TEST_CASE(tcs, close);
+
+    ATF_ADD_TEST_CASE(tcs, copy);
 
     ATF_ADD_TEST_CASE(tcs, exec__ok);
     ATF_ADD_TEST_CASE(tcs, exec__fail);

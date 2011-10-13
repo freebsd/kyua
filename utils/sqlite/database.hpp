@@ -79,7 +79,9 @@ class database {
 public:
     ~database(void);
 
+    static database in_memory(void);
     static database open(const fs::path&, int);
+    static database temporary(void);
     void close(void);
 
     void exec(const std::string&);

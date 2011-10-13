@@ -57,6 +57,61 @@ struct utils::sqlite::database::impl {
         owned(owned_)
     {
     }
+
+    /// Destructor.
+    ///
+    /// It is important to keep this as part of the 'impl' class instead of the
+    /// container class.  The 'impl' class is destroyed exactly once (because it
+    /// is managed by a shared_ptr) and thus releasing the resources here is
+    /// OK.  However, the container class is potentially released many times,
+    /// which means that we would be double-freeing the internal object and
+    /// reusing invalid data.
+    ~impl(void)
+    {
+        if (owned && db != NULL)
+            close();
+    }
+
+    /// Exception-safe version of sqlite3_open_v2.
+    ///
+    /// \param file The path to the database file to be opened.
+    /// \param flags The flags to be passed to the open routine.
+    ///
+    /// \return The opened database.
+    ///
+    /// \throw std::bad_alloc If there is not enough memory to open the
+    ///     database.
+    /// \throw api_error If there is any problem opening the database.
+    static ::sqlite3*
+    safe_open(const char* file, const int flags)
+    {
+        ::sqlite3* db;
+        const int error = ::sqlite3_open_v2(file, &db, flags, NULL);
+        if (error != SQLITE_OK) {
+            if (db == NULL)
+                throw std::bad_alloc();
+            else {
+                sqlite::database error_db(db, true);
+                throw sqlite::api_error::from_database(error_db,
+                                                       "sqlite3_open_v2");
+            }
+        }
+        INV(db != NULL);
+        return db;
+    }
+
+    /// Shared code for the public close() method.
+    void
+    close(void)
+    {
+        PRE(db != NULL);
+        int error = ::sqlite3_close(db);
+        // For now, let's consider a return of SQLITE_BUSY an error.  We should
+        // not be trying to close a busy database in our code.  Maybe revisit
+        // this later to raise busy errors as exceptions.
+        PRE(error == SQLITE_OK);
+        db = NULL;
+    }
 };
 
 
@@ -78,23 +133,39 @@ sqlite::database::database(void* db_, const bool owned_) :
 /// code.
 sqlite::database::~database(void)
 {
-    if (_pimpl->owned && _pimpl->db != NULL)
-        close();
 }
 
 
-/// Opens an SQLite database.
+/// Opens a memory-based temporary SQLite database.
 ///
-/// \param file The path to the database file to be opened.  This follows the
-///     same conventions as the filename passed to the C library: i.e. the
-///     names "" and ":memory:" are valid and recognized.
+/// \return An in-memory database instance.
+///
+/// \throw std::bad_alloc If there is not enough memory to open the database.
+/// \throw api_error If there is any problem opening the database.
+sqlite::database
+sqlite::database::in_memory(void)
+{
+    return database(impl::safe_open(":memory:", SQLITE_OPEN_READWRITE), true);
+}
+
+
+/// Opens a named on-disk SQLite database.
+///
+/// \param file The path to the database file to be opened.  This does not
+///     accept the values "" and ":memory:"; use temporary() and in_memory()
+///     instead.
 /// \param open_flags The flags to be passed to the open routine.
+///
+/// \return A file-backed database instance.
 ///
 /// \throw std::bad_alloc If there is not enough memory to open the database.
 /// \throw api_error If there is any problem opening the database.
 sqlite::database
 sqlite::database::open(const fs::path& file, int open_flags)
 {
+    PRE_MSG(!file.str().empty(), "Use database::temporary() instead");
+    PRE_MSG(file.str() != ":memory:", "Use database::in_memory() instead");
+
     int flags = 0;
     if (open_flags & open_readonly) {
         flags |= SQLITE_OPEN_READONLY;
@@ -110,18 +181,20 @@ sqlite::database::open(const fs::path& file, int open_flags)
     }
     PRE(open_flags == 0);
 
-    ::sqlite3* db;
-    const int error = ::sqlite3_open_v2(file.c_str(), &db, flags, NULL);
-    if (error != SQLITE_OK) {
-        if (db == NULL)
-            throw std::bad_alloc();
-        else {
-            database error_db(db, true);
-            throw sqlite::api_error::from_database(error_db, "sqlite3_open_v2");
-        }
-    }
-    INV(db != NULL);
-    return database(db, true);
+    return database(impl::safe_open(file.c_str(), flags), true);
+}
+
+
+/// Opens an unnamed on-disk SQLite database.
+///
+/// \return A file-backed database instance.
+///
+/// \throw std::bad_alloc If there is not enough memory to open the database.
+/// \throw api_error If there is any problem opening the database.
+sqlite::database
+sqlite::database::temporary(void)
+{
+    return database(impl::safe_open("", SQLITE_OPEN_READWRITE), true);
 }
 
 
@@ -147,13 +220,7 @@ sqlite::database::raw_database(void)
 void
 sqlite::database::close(void)
 {
-    PRE(_pimpl->db != NULL);
-    int error = ::sqlite3_close(_pimpl->db);
-    // For now, let's consider a return of SQLITE_BUSY an error.  We should not
-    // be trying to close a busy database in our code.  Maybe revisit this later
-    // to raise busy errors as exceptions.
-    PRE(error == SQLITE_OK);
-    _pimpl->db = NULL;
+    _pimpl->close();
 }
 
 
