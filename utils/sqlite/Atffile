@@ -5,3 +5,4 @@ prop: test-suite = kyua
 tp: c_gate_test
 tp: database_test
 tp: exceptions_test
+tp: statement_test

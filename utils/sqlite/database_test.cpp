@@ -31,6 +31,7 @@
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/sqlite/database.hpp"
+#include "utils/sqlite/statement.hpp"
 #include "utils/sqlite/test_utils.hpp"
 
 namespace fs = utils::fs;
@@ -166,6 +167,25 @@ ATF_TEST_CASE_BODY(exec__fail)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(create_statement__ok);
+ATF_TEST_CASE_BODY(create_statement__ok)
+{
+    sqlite::database db = sqlite::database::in_memory();
+    sqlite::statement stmt = db.create_statement("SELECT 3");
+    // Statement testing happens in statement_test.  We are only interested here
+    // in ensuring that the API call exists and runs.
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(create_statement__fail);
+ATF_TEST_CASE_BODY(create_statement__fail)
+{
+    sqlite::database db = sqlite::database::in_memory();
+    REQUIRE_API_ERROR("sqlite3_prepare_v2",
+                      db.create_statement("SELECT * FROM missing"));
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, in_memory);
@@ -183,4 +203,7 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, exec__ok);
     ATF_ADD_TEST_CASE(tcs, exec__fail);
+
+    ATF_ADD_TEST_CASE(tcs, create_statement__ok);
+    ATF_ADD_TEST_CASE(tcs, create_statement__fail);
 }

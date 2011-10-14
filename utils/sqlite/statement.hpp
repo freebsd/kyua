@@ -26,72 +26,68 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file utils/sqlite/database.hpp
-/// Wrapper classes and utilities for the SQLite database state.
+/// \file utils/sqlite/statement.hpp
+/// Wrapper classes and utilities for SQLite statement processing.
 ///
 /// This module contains thin RAII wrappers around the SQLite 3 structures
-/// representing the database, and lightweight.
+/// representing statements.
 
-#if !defined(UTILS_SQLITE_DATABASE_HPP)
-#define UTILS_SQLITE_DATABASE_HPP
+#if !defined(UTILS_SQLITE_STATEMENT_HPP)
+#define UTILS_SQLITE_STATEMENT_HPP
 
+extern "C" {
+#include <stdint.h>
+}
+
+#include <string>
 #include <tr1/memory>
-
-#include "utils/fs/path.hpp"
 
 namespace utils {
 namespace sqlite {
 
 
-class database_c_gate;
-class statement;
+class database;
 
 
-/// Constant for the database::open flags: open in read-only mode.
-static const int open_readonly = 1 << 0;
-/// Constant for the database::open flags: open in read-write mode.
-static const int open_readwrite = 1 << 1;
-/// Constant for the database::open flags: create on open.
-static const int open_create = 1 << 2;
+/// Representation of the SQLite data types.
+enum type {
+    type_blob,
+    type_float,
+    type_integer,
+    type_null,
+    type_text,
+};
 
 
-/// A RAII model for the SQLite 3 database.
-///
-/// This class holds the database of the SQLite 3 interface during its existence
-/// and provides wrappers around several SQLite 3 library functions that operate
-/// on such database.
-///
-/// These wrapper functions differ from the C versions in that they use the
-/// implicit database hold by the class, they use C++ types where appropriate
-/// and they use exceptions to report errors.
-///
-/// The wrappers intend to be as lightweight as possible but, in some
-/// situations, they are pretty complex because of the workarounds needed to
-/// make the SQLite 3 more C++ friendly.  We prefer a clean C++ interface over
-/// optimal efficiency, so this is OK.
-class database {
+/// A RAII model for an SQLite 3 statement.
+class statement {
     struct impl;
     std::tr1::shared_ptr< impl > _pimpl;
 
-    friend class database_c_gate;
-    database(void*, const bool);
-    void* raw_database(void);
+    statement(database&, void*);
+    friend class database;
 
 public:
-    ~database(void);
+    ~statement(void);
 
-    static database in_memory(void);
-    static database open(const fs::path&, int);
-    static database temporary(void);
-    void close(void);
+    bool step(void);
 
-    void exec(const std::string&);
+    int column_count(void);
+    std::string column_name(const int);
+    type column_type(const int);
 
-    statement create_statement(const std::string&);
+    const void* column_blob(const int);
+    double column_double(const int);
+    int column_int(const int);
+    int64_t column_int64(const int);
+    const char* column_text(const int);
+    int column_bytes(const int);
+
+    void reset(void);
 };
 
 
 }  // namespace sqlite
 }  // namespace utils
 
-#endif  // !defined(UTILS_SQLITE_DATABASE_HPP)
+#endif  // !defined(UTILS_SQLITE_STATEMENT_HPP)

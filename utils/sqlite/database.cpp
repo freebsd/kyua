@@ -35,6 +35,7 @@ extern "C" {
 #include "utils/sanity.hpp"
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/exceptions.hpp"
+#include "utils/sqlite/statement.hpp"
 
 namespace sqlite = utils::sqlite;
 
@@ -240,4 +241,21 @@ sqlite::database::exec(const std::string& sql)
     const int error = ::sqlite3_exec(_pimpl->db, sql.c_str(), NULL, NULL, NULL);
     if (error != SQLITE_OK)
         throw api_error::from_database(*this, "sqlite3_exec");
+}
+
+
+/// Prepares a new statement.
+///
+/// \param sql The SQL statement to prepare.
+///
+/// \return The prepared statement.
+sqlite::statement
+sqlite::database::create_statement(const std::string& sql)
+{
+    sqlite3_stmt* stmt;
+    const int error = ::sqlite3_prepare_v2(_pimpl->db, sql.c_str(),
+                                           sql.length() + 1, &stmt, NULL);
+    if (error != SQLITE_OK)
+        throw api_error::from_database(*this, "sqlite3_prepare_v2");
+    return statement(*this, static_cast< void* >(stmt));
 }

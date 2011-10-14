@@ -43,6 +43,7 @@
 
 #include <atf-c++.hpp>
 
+#include "utils/defs.hpp"
 #include "utils/sqlite/c_gate.hpp"
 #include "utils/sqlite/exceptions.hpp"
 
@@ -96,6 +97,9 @@ static const char* create_test_table_sql =
     "INSERT INTO test (prime) VALUES (3);\n";
 
 
+static void create_test_table(::sqlite3*) UTILS_UNUSED;
+
+
 /// Creates a 'test' table in a database.
 ///
 /// The created 'test' table is populated with a few rows.  If there are any
@@ -112,6 +116,9 @@ create_test_table(::sqlite3* db)
     ATF_REQUIRE_EQ(SQLITE_OK, ::sqlite3_exec(db, create_test_table_sql,
                                              NULL, NULL, NULL));
 }
+
+
+static void verify_test_table(::sqlite3*) UTILS_UNUSED;
 
 
 /// Verifies that the specified database contains the 'test' table.
