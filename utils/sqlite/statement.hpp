@@ -84,6 +84,19 @@ public:
     int column_bytes(const int);
 
     void reset(void);
+
+    void bind_blob(const int, const void*, const int);
+    void bind_double(const int, const double);
+    void bind_int(const int, const int);
+    void bind_int64(const int, const int64_t);
+    void bind_null(const int);
+    void bind_text(const int, const std::string&);
+
+    int bind_parameter_count(void);
+    int bind_parameter_index(const std::string&);
+    std::string bind_parameter_name(const int);
+
+    void clear_bindings(void);
 };
 
 

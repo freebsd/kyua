@@ -65,6 +65,31 @@ c_type_to_cxx(const int original)
 }
 
 
+/// Handles the return value of a sqlite3_bind_* call.
+///
+/// \param db The database the call was made on.
+/// \param api_function The name of the sqlite3_bind_* function called.
+/// \param error The error code returned by the function; can be SQLITE_OK.
+///
+/// \throw std::bad_alloc If there was no memory for the binding.
+/// \throw api_error If the binding fails for any other reason.
+static void
+handle_bind_error(sqlite::database& db, const char* api_function,
+                  const int error)
+{
+    switch (error) {
+    case SQLITE_OK:
+        return;
+    case SQLITE_RANGE:
+        UNREACHABLE_MSG("Invalid index for bind argument");
+    case SQLITE_NOMEM:
+        throw std::bad_alloc();
+    default:
+        throw sqlite::api_error::from_database(db, api_function);
+    }
+}
+
+
 }  // anonymous namespace
 
 
@@ -282,4 +307,141 @@ void
 sqlite::statement::reset(void)
 {
     (void)::sqlite3_reset(_pimpl->stmt);
+}
+
+
+/// Binds a blob to a prepared statement.
+///
+/// \param index The index of the binding.
+/// \param blob A pointer to the beginning of the blob.  This memory must remain
+///     valid during the execution of the statement.
+/// \param size The size of the blob.
+///
+/// \throw api_error If the binding fails.
+void
+sqlite::statement::bind_blob(const int index, const void* blob, const int size)
+{
+    const int error = ::sqlite3_bind_blob(_pimpl->stmt, index, blob, size,
+                                          SQLITE_STATIC);
+    handle_bind_error(_pimpl->db, "sqlite3_bind_blob", error);
+}
+
+
+/// Binds a double value to a prepared statement.
+///
+/// \param index The index of the binding.
+/// \param value The double value to bind.
+///
+/// \throw api_error If the binding fails.
+void
+sqlite::statement::bind_double(const int index, const double value)
+{
+    const int error = ::sqlite3_bind_double(_pimpl->stmt, index, value);
+    handle_bind_error(_pimpl->db, "sqlite3_bind_double", error);
+}
+
+
+/// Binds an integer value to a prepared statement.
+///
+/// \param index The index of the binding.
+/// \param value The integer value to bind.
+///
+/// \throw api_error If the binding fails.
+void
+sqlite::statement::bind_int(const int index, const int value)
+{
+    const int error = ::sqlite3_bind_int(_pimpl->stmt, index, value);
+    handle_bind_error(_pimpl->db, "sqlite3_bind_int", error);
+}
+
+
+/// Binds a 64-bit integer value to a prepared statement.
+///
+/// \param index The index of the binding.
+/// \param value The 64-bin integer value to bind.
+///
+/// \throw api_error If the binding fails.
+void
+sqlite::statement::bind_int64(const int index, const int64_t value)
+{
+    const int error = ::sqlite3_bind_int64(_pimpl->stmt, index, value);
+    handle_bind_error(_pimpl->db, "sqlite3_bind_int64", error);
+}
+
+
+/// Binds a NULL value to a prepared statement.
+///
+/// \param index The index of the binding.
+///
+/// \throw api_error If the binding fails.
+void
+sqlite::statement::bind_null(const int index)
+{
+    const int error = ::sqlite3_bind_null(_pimpl->stmt, index);
+    handle_bind_error(_pimpl->db, "sqlite3_bind_null", error);
+}
+
+
+/// Binds a text string to a prepared statement.
+///
+/// \param index The index of the binding.
+/// \param text The string to bind.  Must remain valid during the execution of
+///     the statement.
+///
+/// \throw api_error If the binding fails.
+void
+sqlite::statement::bind_text(const int index, const std::string& text)
+{
+    const int error = ::sqlite3_bind_text(_pimpl->stmt, index, text.c_str(),
+                                          text.length(), SQLITE_STATIC);
+    handle_bind_error(_pimpl->db, "sqlite3_bind_text", error);
+}
+
+
+/// Returns the index of the highest parameter.
+///
+/// \return A parameter index.
+int
+sqlite::statement::bind_parameter_count(void)
+{
+    return ::sqlite3_bind_parameter_count(_pimpl->stmt);
+}
+
+
+/// Returns the index of a named parameter.
+///
+/// \param name The name of the parameter to be queried; must exist.
+///
+/// \return A parameter index.
+int
+sqlite::statement::bind_parameter_index(const std::string& name)
+{
+    const int index = ::sqlite3_bind_parameter_index(_pimpl->stmt,
+                                                     name.c_str());
+    PRE_MSG(index > 0, "Parameter name not in statement");
+    return index;
+}
+
+
+/// Returns the name of a parameter by index.
+///
+/// \param index The index to query; must be valid.
+///
+/// \return The name of the parameter.
+std::string
+sqlite::statement::bind_parameter_name(const int index)
+{
+    const char* name = ::sqlite3_bind_parameter_name(_pimpl->stmt, index);
+    PRE_MSG(name != NULL, "Index value out of range or nameless parameter");
+    return std::string(name);
+}
+
+
+/// Clears any bindings and releases their memory.
+void
+sqlite::statement::clear_bindings(void)
+{
+    const int error = ::sqlite3_clear_bindings(_pimpl->stmt);
+    PRE_MSG(error == SQLITE_OK, "SQLite3 contract has changed; it should "
+            "only return SQLITE_OK");
 }

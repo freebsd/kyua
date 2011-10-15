@@ -30,6 +30,7 @@ extern "C" {
 #include <stdint.h>
 }
 
+#include <cstring>
 #include <iostream>
 
 #include <atf-c++.hpp>
@@ -279,6 +280,158 @@ ATF_TEST_CASE_BODY(reset)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(bind_blob);
+ATF_TEST_CASE_BODY(bind_blob)
+{
+    sqlite::database db = sqlite::database::in_memory();
+    sqlite::statement stmt = db.create_statement("SELECT 3, ?");
+
+    const unsigned char blob[] = {0xca, 0xfe};
+    stmt.bind_blob(1, static_cast< const void* >(blob), 2);
+    ATF_REQUIRE(stmt.step());
+    ATF_REQUIRE_EQ(sqlite::type_integer, stmt.column_type(0));
+    ATF_REQUIRE_EQ(3, stmt.column_int(0));
+    ATF_REQUIRE_EQ(sqlite::type_blob, stmt.column_type(1));
+    const unsigned char* ret_blob =
+        static_cast< const unsigned char* >(stmt.column_blob(1));
+    ATF_REQUIRE(std::memcmp(blob, ret_blob, 2) == 0);
+    ATF_REQUIRE(!stmt.step());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(bind_double);
+ATF_TEST_CASE_BODY(bind_double)
+{
+    sqlite::database db = sqlite::database::in_memory();
+    sqlite::statement stmt = db.create_statement("SELECT 3, ?");
+
+    stmt.bind_double(1, 0.5);
+    ATF_REQUIRE(stmt.step());
+    ATF_REQUIRE_EQ(sqlite::type_integer, stmt.column_type(0));
+    ATF_REQUIRE_EQ(3, stmt.column_int(0));
+    ATF_REQUIRE_EQ(sqlite::type_float, stmt.column_type(1));
+    ATF_REQUIRE_EQ(0.5, stmt.column_double(1));
+    ATF_REQUIRE(!stmt.step());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(bind_int);
+ATF_TEST_CASE_BODY(bind_int)
+{
+    sqlite::database db = sqlite::database::in_memory();
+    sqlite::statement stmt = db.create_statement("SELECT 3, ?");
+
+    stmt.bind_int(1, 123);
+    ATF_REQUIRE(stmt.step());
+    ATF_REQUIRE_EQ(sqlite::type_integer, stmt.column_type(0));
+    ATF_REQUIRE_EQ(3, stmt.column_int(0));
+    ATF_REQUIRE_EQ(sqlite::type_integer, stmt.column_type(1));
+    ATF_REQUIRE_EQ(123, stmt.column_int(1));
+    ATF_REQUIRE(!stmt.step());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(bind_int64);
+ATF_TEST_CASE_BODY(bind_int64)
+{
+    sqlite::database db = sqlite::database::in_memory();
+    sqlite::statement stmt = db.create_statement("SELECT 3, ?");
+
+    stmt.bind_int64(1, 4294967419L);
+    ATF_REQUIRE(stmt.step());
+    ATF_REQUIRE_EQ(sqlite::type_integer, stmt.column_type(0));
+    ATF_REQUIRE_EQ(3, stmt.column_int(0));
+    ATF_REQUIRE_EQ(sqlite::type_integer, stmt.column_type(1));
+    ATF_REQUIRE_EQ(4294967419, stmt.column_int64(1));
+    ATF_REQUIRE(!stmt.step());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(bind_null);
+ATF_TEST_CASE_BODY(bind_null)
+{
+    sqlite::database db = sqlite::database::in_memory();
+    sqlite::statement stmt = db.create_statement("SELECT 3, ?");
+
+    stmt.bind_null(1);
+    ATF_REQUIRE(stmt.step());
+    ATF_REQUIRE_EQ(sqlite::type_integer, stmt.column_type(0));
+    ATF_REQUIRE_EQ(3, stmt.column_int(0));
+    ATF_REQUIRE_EQ(sqlite::type_null, stmt.column_type(1));
+    ATF_REQUIRE(!stmt.step());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(bind_text);
+ATF_TEST_CASE_BODY(bind_text)
+{
+    sqlite::database db = sqlite::database::in_memory();
+    sqlite::statement stmt = db.create_statement("SELECT 3, ?");
+
+    const std::string str = "Hello";
+    stmt.bind_text(1, str);
+    ATF_REQUIRE(stmt.step());
+    ATF_REQUIRE_EQ(sqlite::type_integer, stmt.column_type(0));
+    ATF_REQUIRE_EQ(3, stmt.column_int(0));
+    ATF_REQUIRE_EQ(sqlite::type_text, stmt.column_type(1));
+    ATF_REQUIRE_EQ(str, stmt.column_text(1));
+    ATF_REQUIRE(!stmt.step());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(bind_parameter_count);
+ATF_TEST_CASE_BODY(bind_parameter_count)
+{
+    sqlite::database db = sqlite::database::in_memory();
+    sqlite::statement stmt = db.create_statement("SELECT 3, ?, ?");
+    ATF_REQUIRE_EQ(2, stmt.bind_parameter_count());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(bind_parameter_index);
+ATF_TEST_CASE_BODY(bind_parameter_index)
+{
+    sqlite::database db = sqlite::database::in_memory();
+    sqlite::statement stmt = db.create_statement("SELECT 3, :foo, ?, :bar");
+    ATF_REQUIRE_EQ(1, stmt.bind_parameter_index(":foo"));
+    ATF_REQUIRE_EQ(3, stmt.bind_parameter_index(":bar"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(bind_parameter_name);
+ATF_TEST_CASE_BODY(bind_parameter_name)
+{
+    sqlite::database db = sqlite::database::in_memory();
+    sqlite::statement stmt = db.create_statement("SELECT 3, :foo, ?, :bar");
+    ATF_REQUIRE_EQ(":foo", stmt.bind_parameter_name(1));
+    ATF_REQUIRE_EQ(":bar", stmt.bind_parameter_name(3));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(clear_bindings);
+ATF_TEST_CASE_BODY(clear_bindings)
+{
+    sqlite::database db = sqlite::database::in_memory();
+    sqlite::statement stmt = db.create_statement("SELECT 3, ?");
+
+    stmt.bind_int(1, 5);
+    ATF_REQUIRE(stmt.step());
+    ATF_REQUIRE_EQ(sqlite::type_integer, stmt.column_type(0));
+    ATF_REQUIRE_EQ(3, stmt.column_int(0));
+    ATF_REQUIRE_EQ(sqlite::type_integer, stmt.column_type(1));
+    ATF_REQUIRE_EQ(5, stmt.column_int(1));
+    stmt.clear_bindings();
+    stmt.reset();
+
+    ATF_REQUIRE(stmt.step());
+    ATF_REQUIRE_EQ(sqlite::type_integer, stmt.column_type(0));
+    ATF_REQUIRE_EQ(3, stmt.column_int(0));
+    ATF_REQUIRE_EQ(sqlite::type_null, stmt.column_type(1));
+
+    ATF_REQUIRE(!stmt.step());
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, step__ok);
@@ -304,4 +457,17 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, column_bytes__text);
 
     ATF_ADD_TEST_CASE(tcs, reset);
+
+    ATF_ADD_TEST_CASE(tcs, bind_blob);
+    ATF_ADD_TEST_CASE(tcs, bind_double);
+    ATF_ADD_TEST_CASE(tcs, bind_int);
+    ATF_ADD_TEST_CASE(tcs, bind_int64);
+    ATF_ADD_TEST_CASE(tcs, bind_null);
+    ATF_ADD_TEST_CASE(tcs, bind_text);
+
+    ATF_ADD_TEST_CASE(tcs, bind_parameter_count);
+    ATF_ADD_TEST_CASE(tcs, bind_parameter_index);
+    ATF_ADD_TEST_CASE(tcs, bind_parameter_name);
+
+    ATF_ADD_TEST_CASE(tcs, clear_bindings);
 }
