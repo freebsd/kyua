@@ -29,7 +29,7 @@
 #include <algorithm>
 #include <stdexcept>
 
-#include "cli/filters.hpp"
+#include "engine/filters.hpp"
 #include "engine/test_case.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/exceptions.hpp"
@@ -48,8 +48,8 @@ using utils::optional;
 /// \param test_program_ The name of the test program or of the subdirectory to
 ///     match.
 /// \param test_case_ The name of the test case to match.
-cli::test_filter::test_filter(const fs::path& test_program_,
-                              const std::string& test_case_) :
+engine::test_filter::test_filter(const fs::path& test_program_,
+                                 const std::string& test_case_) :
     test_program(test_program_),
     test_case(test_case_)
 {
@@ -64,8 +64,8 @@ cli::test_filter::test_filter(const fs::path& test_program_,
 /// \return The parsed filter.
 ///
 /// \throw std::runtime_error If the provided filter is invalid.
-cli::test_filter
-cli::test_filter::parse(const std::string& str)
+engine::test_filter
+engine::test_filter::parse(const std::string& str)
 {
     if (str.empty())
         throw std::runtime_error("Test filter cannot be empty");
@@ -107,7 +107,7 @@ cli::test_filter::parse(const std::string& str)
 /// not necessarily match the string the user provided: in particular, the path
 /// may have been internally normalized.
 std::string
-cli::test_filter::str(void) const
+engine::test_filter::str(void) const
 {
     if (!test_case.empty())
         return F("%s:%s") % test_program % test_case;
@@ -122,7 +122,7 @@ cli::test_filter::str(void) const
 ///
 /// \return True if this filter contains the other filter or if they are equal.
 bool
-cli::test_filter::contains(const test_filter& other) const
+engine::test_filter::contains(const test_filter& other) const
 {
     if (*this == other)
         return true;
@@ -139,7 +139,7 @@ cli::test_filter::contains(const test_filter& other) const
 /// \return Whether the filter matches the test program.  This is a superset of
 /// matches_test_case.
 bool
-cli::test_filter::matches_test_program(const fs::path& test_program_) const
+engine::test_filter::matches_test_program(const fs::path& test_program_) const
 {
     if (test_program == test_program_)
         return true;
@@ -158,7 +158,7 @@ cli::test_filter::matches_test_program(const fs::path& test_program_) const
 ///
 /// \return Whether the filter matches the test case.
 bool
-cli::test_filter::matches_test_case(const engine::test_case_id& test_case_)
+engine::test_filter::matches_test_case(const test_case_id& test_case_)
     const
 {
     if (matches_test_program(test_case_.program)) {
@@ -174,7 +174,7 @@ cli::test_filter::matches_test_case(const engine::test_case_id& test_case_)
 ///
 /// \return True if this filter sorts before the other filter.
 bool
-cli::test_filter::operator<(const test_filter& other) const
+engine::test_filter::operator<(const test_filter& other) const
 {
     return (
         test_program < other.test_program ||
@@ -188,7 +188,7 @@ cli::test_filter::operator<(const test_filter& other) const
 ///
 /// \return True if this filter is equal to the other filter.
 bool
-cli::test_filter::operator==(const test_filter& other) const
+engine::test_filter::operator==(const test_filter& other) const
 {
     return test_program == other.test_program && test_case == other.test_case;
 }
@@ -200,7 +200,7 @@ cli::test_filter::operator==(const test_filter& other) const
 ///
 /// \return True if this filter is different than the other filter.
 bool
-cli::test_filter::operator!=(const test_filter& other) const
+engine::test_filter::operator!=(const test_filter& other) const
 {
     return !(*this == other);
 }
@@ -209,9 +209,7 @@ cli::test_filter::operator!=(const test_filter& other) const
 /// Constructs a new set of filters.
 ///
 /// \param filters_ The filters themselves; if empty, no filters are applied.
-///
-/// \throw cmdline::usage_error If any of the filters is invalid.
-cli::test_filters::test_filters(const std::set< cli::test_filter >& filters_) :
+engine::test_filters::test_filters(const std::set< test_filter >& filters_) :
     _filters(filters_)
 {
 }
@@ -229,7 +227,7 @@ cli::test_filters::test_filters(const std::set< cli::test_filter >& filters_) :
 ///
 /// \return True if the provided identifier matches any filter.
 bool
-cli::test_filters::match_test_program(const fs::path& name) const
+engine::test_filters::match_test_program(const fs::path& name) const
 {
     if (_filters.empty())
         return true;
@@ -250,8 +248,8 @@ cli::test_filters::match_test_program(const fs::path& name) const
 /// \return A boolean indicating if the test case is matched by any filter and,
 /// if true, a string containing the filter name.  The string is empty when
 /// there are no filters defined.
-cli::test_filters::match
-cli::test_filters::match_test_case(const engine::test_case_id& id) const
+engine::test_filters::match
+engine::test_filters::match_test_case(const test_case_id& id) const
 {
     if (_filters.empty()) {
         INV(match_test_program(id.program));
@@ -275,8 +273,8 @@ cli::test_filters::match_test_case(const engine::test_case_id& id) const
 ///     of the filters held by this object.
 ///
 /// \return The set of filters that have not been used.
-std::set< cli::test_filter >
-cli::test_filters::difference(const std::set< test_filter >& matched) const
+std::set< engine::test_filter >
+engine::test_filters::difference(const std::set< test_filter >& matched) const
 {
     PRE(std::includes(_filters.begin(), _filters.end(),
                       matched.begin(), matched.end()));
@@ -295,18 +293,18 @@ cli::test_filters::difference(const std::set< test_filter >& matched) const
 ///
 /// \throw std::runtime_error If the filters are not disjoint.
 void
-cli::check_disjoint_filters(const std::set< cli::test_filter >& filters)
+engine::check_disjoint_filters(const std::set< engine::test_filter >& filters)
 {
     // Yes, this is an O(n^2) algorithm.  However, we can assume that the number
     // of test filters (which are provided by the user on the command line) on a
     // particular run is in the order of tens, and thus this should not cause
     // any serious performance trouble.
-    for (std::set< cli::test_filter >::const_iterator i1 = filters.begin();
+    for (std::set< test_filter >::const_iterator i1 = filters.begin();
          i1 != filters.end(); i1++) {
-        for (std::set< cli::test_filter >::const_iterator i2 = filters.begin();
+        for (std::set< test_filter >::const_iterator i2 = filters.begin();
              i2 != filters.end(); i2++) {
-            const cli::test_filter& filter1 = *i1;
-            const cli::test_filter& filter2 = *i2;
+            const test_filter& filter1 = *i1;
+            const test_filter& filter2 = *i2;
 
             if (i1 != i2 && filter1.contains(filter2)) {
                 throw std::runtime_error(

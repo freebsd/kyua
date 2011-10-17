@@ -29,7 +29,7 @@
 #include <algorithm>
 
 #include "cli/common.hpp"
-#include "cli/filters.hpp"
+#include "engine/filters.hpp"
 #include "engine/user_files/kyuafile.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.ipp"
@@ -76,15 +76,15 @@ cli::load_kyuafile(const cmdline::parsed_cmdline& cmdline)
 /// Internal implementation for cli::filters_state.
 struct cli::filters_state::impl {
     /// The collection of filters provided by the user.
-    test_filters filters;
+    engine::test_filters filters;
 
     /// The filters that have been used so far.
-    std::set< test_filter > used_filters;
+    std::set< engine::test_filter > used_filters;
 
     /// Constructs the internal representation of the filters.
     ///
     /// \param filters_ The filters provided by the user, already sanitized.
-    impl(const std::set< test_filter >& filters_) :
+    impl(const std::set< engine::test_filter >& filters_) :
         filters(filters_)
     {
     }
@@ -99,12 +99,12 @@ struct cli::filters_state::impl {
 ///     represent a non-disjoint collection of filters.
 cli::filters_state::filters_state(const cmdline::args_vector& args)
 {
-    std::set< test_filter > filters;
+    std::set< engine::test_filter > filters;
 
     try {
         for (cmdline::args_vector::const_iterator iter = args.begin();
              iter != args.end(); iter++) {
-            const test_filter filter(test_filter::parse(*iter));
+            const engine::test_filter filter(engine::test_filter::parse(*iter));
             if (filters.find(filter) != filters.end())
                 throw cmdline::error(F("Duplicate filter '%s'") % filter.str());
             filters.insert(filter);
@@ -147,7 +147,8 @@ cli::filters_state::match_test_program(const fs::path& test_program) const
 bool
 cli::filters_state::match_test_case(const engine::test_case_id& test_case) const
 {
-    test_filters::match match = _pimpl->filters.match_test_case(test_case);
+    engine::test_filters::match match = _pimpl->filters.match_test_case(
+        test_case);
     if (match.first && match.second)
         _pimpl->used_filters.insert(match.second.get());
     return match.first;
@@ -163,10 +164,10 @@ cli::filters_state::match_test_case(const engine::test_case_id& test_case) const
 bool
 cli::filters_state::report_unused_filters(cmdline::ui* ui) const
 {
-    const std::set< test_filter > unused = _pimpl->filters.difference(
+    const std::set< engine::test_filter > unused = _pimpl->filters.difference(
         _pimpl->used_filters);
 
-    for (std::set< test_filter >::const_iterator iter = unused.begin();
+    for (std::set< engine::test_filter >::const_iterator iter = unused.begin();
          iter != unused.end(); iter++) {
         cmdline::print_warning(ui, F("No test cases matched by the filter '%s'")
                                % (*iter).str());

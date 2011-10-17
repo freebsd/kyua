@@ -32,6 +32,8 @@ ENGINE_LIBS = libengine.a $(UTILS_LIBS)
 noinst_LIBRARIES += libengine.a
 libengine_a_SOURCES  = engine/exceptions.cpp
 libengine_a_SOURCES += engine/exceptions.hpp
+libengine_a_SOURCES += engine/filters.cpp
+libengine_a_SOURCES += engine/filters.hpp
 libengine_a_SOURCES += engine/isolation.cpp
 libengine_a_SOURCES += engine/isolation.hpp
 libengine_a_SOURCES += engine/isolation.ipp
@@ -54,6 +56,12 @@ engine_exceptions_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
                                   $(ATF_CXX_CFLAGS)
 engine_exceptions_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
                                $(ATF_CXX_LIBS)
+
+tests_engine_PROGRAMS += engine/filters_test
+engine_filters_test_SOURCES = engine/filters_test.cpp
+engine_filters_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
+                               $(ATF_CXX_CFLAGS)
+engine_filters_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_engine_PROGRAMS += engine/isolation_test
 engine_isolation_test_SOURCES = engine/isolation_test.cpp

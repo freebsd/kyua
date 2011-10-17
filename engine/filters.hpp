@@ -26,19 +26,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file cli/filters.hpp
+/// \file engine/filters.hpp
 /// Representation and manipulation of filters for test cases.
 ///
 /// All the filter classes in this module are supposed to be purely functional:
 /// they are mere filters that decide whether they match or not the input data
 /// fed to them.  User-interface filter manipulation must go somewhere else.
-///
-/// TODO(jmmv): This probably belongs in engine/.  However, there is no code
-/// outside of the frontend that needs this at the moment, so this is why it is
-/// here.
 
-#if !defined(CLI_FILTERS_HPP)
-#define CLI_FILTERS_HPP
+#if !defined(ENGINE_FILTERS_HPP)
+#define ENGINE_FILTERS_HPP
 
 #include <string>
 #include <set>
@@ -49,11 +45,9 @@
 
 
 namespace engine {
+
+
 struct test_case_id;
-}  // namespace engine
-
-
-namespace cli {
 
 
 /// Filter for test cases.
@@ -112,6 +106,6 @@ public:
 void check_disjoint_filters(const std::set< test_filter >&);
 
 
-}  // namespace cli
+}  // namespace engine
 
-#endif  // !defined(CLI_FILTERS_HPP)
+#endif  // !defined(ENGINE_FILTERS_HPP)

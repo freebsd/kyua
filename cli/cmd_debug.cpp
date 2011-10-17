@@ -31,7 +31,7 @@
 
 #include "cli/cmd_debug.hpp"
 #include "cli/common.ipp"
-#include "cli/filters.hpp"
+#include "engine/filters.hpp"
 #include "engine/results.hpp"
 #include "engine/user_files/config.hpp"
 #include "engine/user_files/kyuafile.hpp"
@@ -60,7 +60,7 @@ namespace {
 /// \throw std::runtime_error If the provided filter matches more than one test
 ///     case or if the test case cannot be found.
 const engine::test_case_ptr
-find_test_case(const cli::test_filter& filter,
+find_test_case(const engine::test_filter& filter,
                const user_files::kyuafile& kyuafile)
 {
     engine::test_case_ptr found;;
@@ -132,7 +132,8 @@ cmd_debug::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
     if (test_case_name.find(':') == std::string::npos)
         throw cmdline::usage_error(F("'%s' is not a test case identifier "
                                      "(missing ':'?)") % test_case_name);
-    const test_filter filter = test_filter::parse(test_case_name);
+    const engine::test_filter filter = engine::test_filter::parse(
+        test_case_name);
 
     const user_files::kyuafile kyuafile = load_kyuafile(cmdline);
 
