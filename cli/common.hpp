@@ -32,13 +32,12 @@
 #if !defined(CLI_COMMON_HPP)
 #define CLI_COMMON_HPP
 
-#include <memory>
+#include <set>
 
 #include "utils/cmdline/base_command.hpp"
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.hpp"
 #include "utils/cmdline/ui.hpp"
-#include "utils/noncopyable.hpp"
 
 namespace utils {
 namespace fs {
@@ -48,6 +47,7 @@ class path;
 
 namespace engine {
 struct test_case_id;
+struct test_filter;
 namespace user_files {
 struct config;
 class kyuafile;
@@ -77,21 +77,10 @@ typedef std::auto_ptr< cli_command > cli_command_ptr;
 engine::user_files::kyuafile load_kyuafile(
     const utils::cmdline::parsed_cmdline&);
 
-
-/// Represents user-specified test filters and their current match state.
-class filters_state : utils::noncopyable {
-    struct impl;
-    std::auto_ptr< impl > _pimpl;
-
-public:
-    filters_state(const utils::cmdline::args_vector&);
-    ~filters_state(void);
-
-    bool match_test_program(const utils::fs::path&) const;
-    bool match_test_case(const engine::test_case_id&) const;
-
-    bool report_unused_filters(utils::cmdline::ui*) const;
-};
+std::set< engine::test_filter > parse_filters(
+    const utils::cmdline::args_vector&);
+bool report_unused_filters(const std::set< engine::test_filter >&,
+                           utils::cmdline::ui*);
 
 
 }  // namespace cli

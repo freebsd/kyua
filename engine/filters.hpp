@@ -89,7 +89,7 @@ class test_filters {
     std::set< test_filter > _filters;
 
 public:
-    test_filters(const std::set< test_filter >&);
+    explicit test_filters(const std::set< test_filter >&);
 
     /// Return type of match_test_case.  Indicates whether the filters have
     /// matched a particular test case and, if they have, which filter did the
@@ -104,6 +104,21 @@ public:
 
 
 void check_disjoint_filters(const std::set< test_filter >&);
+
+
+/// Tracks state of the filters that have matched tests during execution.
+class filters_state {
+    test_filters _filters;
+    std::set< test_filter > _used_filters;
+
+public:
+    explicit filters_state(const std::set< test_filter >&);
+
+    bool match_test_program(const utils::fs::path&) const;
+    bool match_test_case(const test_case_id&);
+
+    std::set< test_filter > unused(void) const;
+};
 
 
 }  // namespace engine

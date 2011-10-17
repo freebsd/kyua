@@ -39,6 +39,7 @@
 namespace engine {
 class base_test_case;
 class base_test_program;
+class filters_state;
 }  // namespace engine
 
 namespace utils {
@@ -50,15 +51,13 @@ class path;
 namespace cli {
 
 
-class filters_state;
-
-
 namespace detail {
 
 void list_test_case(utils::cmdline::ui*, const bool,
                     const engine::base_test_case&);
 void list_test_program(utils::cmdline::ui*, const bool,
-                       const engine::base_test_program&, cli::filters_state&);
+                       const engine::base_test_program&,
+                       engine::filters_state&);
 
 }  // namespace detail
 

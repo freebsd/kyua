@@ -33,6 +33,7 @@
 #include "cli/cmd_list.hpp"
 #include "cli/common.ipp"
 #include "engine/exceptions.hpp"
+#include "engine/filters.hpp"
 #include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
 #include "engine/user_files/kyuafile.hpp"
@@ -88,7 +89,7 @@ cli::detail::list_test_case(cmdline::ui* ui, const bool verbose,
 void
 cli::detail::list_test_program(cmdline::ui* ui, const bool verbose,
                                const engine::base_test_program& test_program,
-                               cli::filters_state& filters)
+                               engine::filters_state& filters)
 {
     const engine::test_cases_vector test_cases = test_program.test_cases();
 
@@ -123,7 +124,7 @@ int
 cli::cmd_list::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
                    const user_files::config& UTILS_UNUSED_PARAM(config))
 {
-    cli::filters_state filters(cmdline.arguments());
+    engine::filters_state filters(parse_filters(cmdline.arguments()));
     const user_files::kyuafile kyuafile = load_kyuafile(cmdline);
 
     bool ok = true;
@@ -147,6 +148,6 @@ cli::cmd_list::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
         }
     }
 
-    return filters.report_unused_filters(ui) || !ok ?
+    return report_unused_filters(filters.unused(), ui) || !ok ?
         EXIT_FAILURE : EXIT_SUCCESS;
 }

@@ -314,3 +314,51 @@ engine::check_disjoint_filters(const std::set< engine::test_filter >& filters)
         }
     }
 }
+
+
+/// Constructs a filters_state instance.
+///
+/// \param filters_ The set of filters to track.
+engine::filters_state::filters_state(
+    const std::set< engine::test_filter >& filters_) :
+    _filters(test_filters(filters_))
+{
+}
+
+
+/// Checks whether these filters match the given test program.
+///
+/// \param test_program The test program to match against.
+///
+/// \return True if these filters match the given test program name.
+bool
+engine::filters_state::match_test_program(const fs::path& test_program) const
+{
+    return _filters.match_test_program(test_program);
+}
+
+
+/// Checks whether these filters match the given test case.
+///
+/// \param test_case The test case to match against.
+///
+/// \return True if these filters match the given test case identifier.
+bool
+engine::filters_state::match_test_case(const test_case_id& test_case)
+{
+    engine::test_filters::match match = _filters.match_test_case(test_case);
+    if (match.first && match.second)
+        _used_filters.insert(match.second.get());
+    return match.first;
+}
+
+
+/// Calculates the unused filters in this set.
+///
+/// \return Returns the set of filters that have not matched any tests.  This
+/// information is useful to report usage errors to the user.
+std::set< engine::test_filter >
+engine::filters_state::unused(void) const
+{
+    return _filters.difference(_used_filters);
+}

@@ -41,6 +41,7 @@ extern "C" {
 // TODO(jmmv): Should probably use a mock test program.
 #include "engine/atf_iface/test_program.hpp"
 #include "engine/exceptions.hpp"
+#include "engine/filters.hpp"
 #include "engine/user_files/kyuafile.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.hpp"
@@ -147,7 +148,7 @@ run_helpers(const atf::tests::tc* tc, cmdline::ui* ui, const bool verbose,
     utils::cmdline::args_vector args;
     if (filter != NULL)
         args.push_back(filter);
-    cli::filters_state filters(args);
+    engine::filters_state filters(cli::parse_filters(args));
 
     cli::detail::list_test_program(ui, verbose, test_program, filters);
 }
@@ -251,7 +252,7 @@ ATF_TEST_CASE_BODY(list_test_program__missing)
                                                fs::path("root"), "suite-name");
 
     const utils::cmdline::args_vector args;
-    cli::filters_state filters(args);
+    engine::filters_state filters(cli::parse_filters(args));
 
     ATF_REQUIRE_THROW(engine::error, cli::detail::list_test_program(
         &ui, false, test_program, filters));

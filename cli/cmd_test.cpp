@@ -31,6 +31,7 @@
 
 #include "cli/cmd_test.hpp"
 #include "cli/common.ipp"
+#include "engine/filters.hpp"
 #include "engine/results.hpp"
 #include "engine/test_program.hpp"
 #include "engine/user_files/config.hpp"
@@ -61,7 +62,7 @@ using cli::cmd_test;
 static std::pair< unsigned long, unsigned long >
 run_test_program(const engine::base_test_program& test_program,
                  const user_files::config& config,
-                 const cli::filters_state& filters,
+                 engine::filters_state& filters,
                  cmdline::ui* ui)
 {
     LI(F("Processing test program '%s'") % test_program.relative_path());
@@ -121,7 +122,7 @@ int
 cmd_test::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
               const user_files::config& config)
 {
-    const cli::filters_state filters(cmdline.arguments());
+    engine::filters_state filters(parse_filters(cmdline.arguments()));
     const user_files::kyuafile kyuafile = load_kyuafile(cmdline);
 
     unsigned long good_count = 0;
@@ -150,5 +151,6 @@ cmd_test::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
     } else
         exit_code = EXIT_SUCCESS;
 
-    return filters.report_unused_filters(ui) ? EXIT_FAILURE : exit_code;
+    return report_unused_filters(filters.unused(), ui) ?
+        EXIT_FAILURE : exit_code;
 }

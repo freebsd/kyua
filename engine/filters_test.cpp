@@ -472,6 +472,79 @@ ATF_TEST_CASE_BODY(check_disjoint_filters__fail)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(filters_state__match_test_program);
+ATF_TEST_CASE_BODY(filters_state__match_test_program)
+{
+    std::set< engine::test_filter > filters;
+    filters.insert(mkfilter("foo/bar", ""));
+    filters.insert(mkfilter("baz", "tc"));
+    engine::filters_state state(filters);
+
+    ATF_REQUIRE(state.match_test_program(fs::path("foo/bar/something")));
+    ATF_REQUIRE(state.match_test_program(fs::path("baz")));
+
+    ATF_REQUIRE(!state.match_test_program(fs::path("foo/baz")));
+    ATF_REQUIRE(!state.match_test_program(fs::path("hello")));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(filters_state__match_test_case);
+ATF_TEST_CASE_BODY(filters_state__match_test_case)
+{
+    std::set< engine::test_filter > filters;
+    filters.insert(mkfilter("foo/bar", ""));
+    filters.insert(mkfilter("baz", "tc"));
+    engine::filters_state state(filters);
+
+    ATF_REQUIRE(state.match_test_case(engine::test_case_id(
+        fs::path("foo/bar/something"), "any")));
+    ATF_REQUIRE(state.match_test_case(engine::test_case_id(
+        fs::path("baz"), "tc")));
+
+    ATF_REQUIRE(!state.match_test_case(engine::test_case_id(
+        fs::path("foo/baz/something"), "tc")));
+    ATF_REQUIRE(!state.match_test_case(engine::test_case_id(
+        fs::path("baz"), "tc2")));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(filters_state__unused__none);
+ATF_TEST_CASE_BODY(filters_state__unused__none)
+{
+    std::set< engine::test_filter > filters;
+    filters.insert(mkfilter("a/b", ""));
+    filters.insert(mkfilter("baz", "tc"));
+    filters.insert(mkfilter("hey/d", "yes"));
+    engine::filters_state state(filters);
+
+    state.match_test_case(engine::test_case_id(fs::path("a/b/c"), "any"));
+    state.match_test_case(engine::test_case_id(fs::path("baz"), "tc"));
+    state.match_test_case(engine::test_case_id(fs::path("hey/d"), "yes"));
+
+    ATF_REQUIRE(state.unused().empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(filters_state__unused__some);
+ATF_TEST_CASE_BODY(filters_state__unused__some)
+{
+    std::set< engine::test_filter > filters;
+    filters.insert(mkfilter("a/b", ""));
+    filters.insert(mkfilter("baz", "tc"));
+    filters.insert(mkfilter("hey/d", "yes"));
+    engine::filters_state state(filters);
+
+    state.match_test_program(fs::path("a/b/c"));
+    state.match_test_case(engine::test_case_id(fs::path("baz"), "tc"));
+
+    std::set< engine::test_filter > exp_unused;
+    exp_unused.insert(mkfilter("a/b", ""));
+    exp_unused.insert(mkfilter("hey/d", "yes"));
+
+    ATF_REQUIRE(exp_unused == state.unused());
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, test_filter__public_fields);
@@ -500,4 +573,9 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, check_disjoint_filters__ok);
     ATF_ADD_TEST_CASE(tcs, check_disjoint_filters__fail);
+
+    ATF_ADD_TEST_CASE(tcs, filters_state__match_test_program);
+    ATF_ADD_TEST_CASE(tcs, filters_state__match_test_case);
+    ATF_ADD_TEST_CASE(tcs, filters_state__unused__none);
+    ATF_ADD_TEST_CASE(tcs, filters_state__unused__some);
 }

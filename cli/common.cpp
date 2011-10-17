@@ -73,31 +73,14 @@ cli::load_kyuafile(const cmdline::parsed_cmdline& cmdline)
 }
 
 
-/// Internal implementation for cli::filters_state.
-struct cli::filters_state::impl {
-    /// The collection of filters provided by the user.
-    engine::test_filters filters;
-
-    /// The filters that have been used so far.
-    std::set< engine::test_filter > used_filters;
-
-    /// Constructs the internal representation of the filters.
-    ///
-    /// \param filters_ The filters provided by the user, already sanitized.
-    impl(const std::set< engine::test_filter >& filters_) :
-        filters(filters_)
-    {
-    }
-};
-
-
 /// Parses a set of command-line arguments to construct test filters.
 ///
 /// \param args The command-line arguments representing test filters.
 ///
 /// \throw cmdline:error If any of the arguments is invalid, or if they
 ///     represent a non-disjoint collection of filters.
-cli::filters_state::filters_state(const cmdline::args_vector& args)
+std::set< engine::test_filter >
+cli::parse_filters(const cmdline::args_vector& args)
 {
     std::set< engine::test_filter > filters;
 
@@ -114,44 +97,7 @@ cli::filters_state::filters_state(const cmdline::args_vector& args)
         throw cmdline::error(e.what());
     }
 
-    _pimpl.reset(new impl(filters));
-}
-
-
-/// Destructor.
-///
-/// This is needed to ensures that the pimpl object gets deleted by giving
-/// visibility of the impl type to the smart poiner.
-cli::filters_state::~filters_state(void)
-{
-}
-
-
-/// Checks whether these filters match the given test program.
-///
-/// \param test_program The test program to match against.
-///
-/// \return True if these filters match the given test program name.
-bool
-cli::filters_state::match_test_program(const fs::path& test_program) const
-{
-    return _pimpl->filters.match_test_program(test_program);
-}
-
-
-/// Checks whether these filters match the given test case.
-///
-/// \param test_case The test case to match against.
-///
-/// \return True if these filters match the given test case identifier.
-bool
-cli::filters_state::match_test_case(const engine::test_case_id& test_case) const
-{
-    engine::test_filters::match match = _pimpl->filters.match_test_case(
-        test_case);
-    if (match.first && match.second)
-        _pimpl->used_filters.insert(match.second.get());
-    return match.first;
+    return filters;
 }
 
 
@@ -162,11 +108,9 @@ cli::filters_state::match_test_case(const engine::test_case_id& test_case) const
 /// \return True if there are any unused filters.  The caller should report this
 /// as an error to the user by means of a non-successful exit code.
 bool
-cli::filters_state::report_unused_filters(cmdline::ui* ui) const
+cli::report_unused_filters(const std::set< engine::test_filter >& unused,
+                           cmdline::ui* ui)
 {
-    const std::set< engine::test_filter > unused = _pimpl->filters.difference(
-        _pimpl->used_filters);
-
     for (std::set< engine::test_filter >::const_iterator iter = unused.begin();
          iter != unused.end(); iter++) {
         cmdline::print_warning(ui, F("No test cases matched by the filter '%s'")
