@@ -138,6 +138,29 @@ ATF_TEST_CASE_BODY(load_kyuafile__fail)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(kyuafile_path__default);
+ATF_TEST_CASE_BODY(kyuafile_path__default)
+{
+    std::map< std::string, std::vector< std::string > > options;
+    options["kyuafile"].push_back(cli::kyuafile_option.default_value());
+    const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
+
+    ATF_REQUIRE_EQ(cli::kyuafile_option.default_value(),
+                   cli::kyuafile_path(mock_cmdline).str());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(kyuafile_path__explicit);
+ATF_TEST_CASE_BODY(kyuafile_path__explicit)
+{
+    std::map< std::string, std::vector< std::string > > options;
+    options["kyuafile"].push_back("/my//path");
+    const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
+
+    ATF_REQUIRE_EQ("/my/path", cli::kyuafile_path(mock_cmdline).str());
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(parse_filters__none);
 ATF_TEST_CASE_BODY(parse_filters__none)
 {
@@ -225,6 +248,9 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, load_kyuafile__default);
     ATF_ADD_TEST_CASE(tcs, load_kyuafile__explicit);
     ATF_ADD_TEST_CASE(tcs, load_kyuafile__fail);
+
+    ATF_ADD_TEST_CASE(tcs, kyuafile_path__default);
+    ATF_ADD_TEST_CASE(tcs, kyuafile_path__explicit);
 
     ATF_ADD_TEST_CASE(tcs, parse_filters__none);
     ATF_ADD_TEST_CASE(tcs, parse_filters__ok);

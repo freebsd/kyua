@@ -26,65 +26,23 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file cli/common.hpp
-/// Utility functions to implement CLI subcommands.
+#include <atf-c++.hpp>
 
-#if !defined(CLI_COMMON_HPP)
-#define CLI_COMMON_HPP
-
-#include <set>
-
-#include "utils/cmdline/base_command.hpp"
-#include "utils/cmdline/options.hpp"
-#include "utils/cmdline/parser.hpp"
-#include "utils/cmdline/ui.hpp"
-
-namespace utils {
-namespace fs {
-class path;
-}  // namespace fs
-}  // namespace utils
-
-namespace engine {
-struct test_case_id;
-struct test_filter;
-namespace user_files {
-struct config;
-class kyuafile;
-}  // namespace user_files
-}  // namespace engine
-
-namespace cli {
+#include "engine/drivers/run_tests.hpp"
 
 
-extern const utils::cmdline::path_option kyuafile_option;
-extern const utils::cmdline::property_option variable_option;
+ATF_TEST_CASE_WITHOUT_HEAD(TODO);
+ATF_TEST_CASE_BODY(TODO)
+{
+    // The run_tests driver contains the code that was formerly in
+    // cli/cmd_test.  That code did not have unit tests, and this was left empty
+    // during the migration.
+    // TODO(jmmv): Add tests.
+    skip("Not implemented");
+}
 
 
-/// Base type for commands defined in the cli module.
-///
-/// All commands in Kyua receive a configuration object as their runtime
-/// data parameter because the configuration file applies to all the
-/// commands.
-typedef utils::cmdline::base_command< engine::user_files::config >
-    cli_command;
-
-
-/// Scoped, strictly owned pointer to a cli_command.
-typedef std::auto_ptr< cli_command > cli_command_ptr;
-
-
-engine::user_files::kyuafile load_kyuafile(
-    const utils::cmdline::parsed_cmdline&);
-
-utils::fs::path kyuafile_path(const utils::cmdline::parsed_cmdline&);
-
-std::set< engine::test_filter > parse_filters(
-    const utils::cmdline::args_vector&);
-bool report_unused_filters(const std::set< engine::test_filter >&,
-                           utils::cmdline::ui*);
-
-
-}  // namespace cli
-
-#endif  // !defined(CLI_COMMON_HPP)
+ATF_INIT_TEST_CASES(tcs)
+{
+    ATF_ADD_TEST_CASE(tcs, TODO);
+}

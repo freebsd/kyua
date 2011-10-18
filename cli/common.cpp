@@ -53,6 +53,10 @@ const cmdline::path_option cli::kyuafile_option(
 
 /// Loads the Kyuafile for this session or generates a fake one.
 ///
+/// TODO(jmmv): Kill this function.  This has been superseded by kyuafile_path
+/// and the modules in engine/drivers/.  Oh, and the whole docstring for this
+/// function is bogus.  We don't generate Kyuafiles on the fly any more.
+///
 /// The algorithm implemented here is as follows:
 /// 1) If there are arguments on the command line that are supposed to override
 ///    the Kyuafile, the Kyuafile is not loaded and a fake one is generated.
@@ -70,6 +74,21 @@ cli::load_kyuafile(const cmdline::parsed_cmdline& cmdline)
         kyuafile_option.long_name());
 
     return user_files::kyuafile::load(filename);
+}
+
+
+/// Gets the path to the Kyuafile to be loaded.
+///
+/// This is just syntactic sugar to simplify quierying the 'kyuafile_option'.
+///
+/// \param cmdline The parsed command line.
+///
+/// \return The path to the Kyuafile to be loaded.
+fs::path
+cli::kyuafile_path(const cmdline::parsed_cmdline& cmdline)
+{
+    return cmdline.get_option< cmdline::path_option >(
+        kyuafile_option.long_name());
 }
 
 
