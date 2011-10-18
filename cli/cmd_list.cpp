@@ -32,22 +32,72 @@
 
 #include "cli/cmd_list.hpp"
 #include "cli/common.ipp"
-#include "engine/exceptions.hpp"
+#include "engine/drivers/list_tests.hpp"
 #include "engine/filters.hpp"
 #include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
-#include "engine/user_files/kyuafile.hpp"
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/cmdline/ui.hpp"
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
-#include "utils/sanity.hpp"
 
 namespace cmdline = utils::cmdline;
 namespace fs = utils::fs;
+namespace list_tests = engine::drivers::list_tests;
 namespace user_files = engine::user_files;
+
+
+namespace {
+
+
+/// Hooks for list_tests to print test cases as they come.
+class progress_hooks : public list_tests::base_hooks {
+    cmdline::ui* _ui;
+    bool _verbose;
+
+public:
+    /// Indicates if all test cases were processed successfully.
+    bool ok;
+
+    /// Initializes the hooks.
+    ///
+    /// \param ui_ The ui object to which to print the test cases.
+    /// \param verbose_ Whether to print test case details or just their names.
+    progress_hooks(cmdline::ui* ui_, const bool verbose_) :
+        _ui(ui_),
+        _verbose(verbose_),
+        ok(true)
+    {
+    }
+
+    /// Reports a test program as failed.
+    ///
+    /// \param test_program The failed test program.
+    /// \param reason The reason for the failure of the test program.
+    void
+    got_bogus_test_program(const engine::base_test_program& test_program,
+                           const std::string& reason)
+    {
+        cmdline::print_warning(
+            _ui, F("Cannot load test case list for '%s': %s") %
+            test_program.relative_path() % reason);
+        ok &= false;
+    }
+
+    /// Reports a test case as soon as it is found.
+    ///
+    /// \param test_case The test case to report.
+    void
+    got_test_case(const engine::base_test_case& test_case)
+    {
+        cli::detail::list_test_case(_ui, _verbose, test_case);
+    }
+};
+
+
+}  // anonymous namespace
 
 
 /// Lists a single test case.
@@ -74,35 +124,6 @@ cli::detail::list_test_case(cmdline::ui* ui, const bool verbose,
 }
 
 
-/// Lists a single test program.
-///
-/// \param ui [out] Object to interact with the I/O of the program.
-/// \param verbose Whether to be verbose or not.
-/// \param root The top directory of the test suite.
-/// \param test_program The test program to print.
-/// \param filters [in,out] The filters used to select which test cases to
-///     print.  These filters are updated on output to mark which of them
-///     actually matched a test case.
-///
-/// \throw engine::error If there is any problem gathering the test case list
-///     from the test program.
-void
-cli::detail::list_test_program(cmdline::ui* ui, const bool verbose,
-                               const engine::base_test_program& test_program,
-                               engine::filters_state& filters)
-{
-    const engine::test_cases_vector test_cases = test_program.test_cases();
-
-    for (engine::test_cases_vector::const_iterator iter = test_cases.begin();
-         iter != test_cases.end(); iter++) {
-        const engine::test_case_ptr tc = *iter;
-
-        if (filters.match_test_case(tc->identifier()))
-            list_test_case(ui, verbose, *tc);
-    }
-}
-
-
 /// Default constructor for cmd_list.
 cli::cmd_list::cmd_list(void) :
     cli_command("list", "[test-program ...]", 0, -1,
@@ -124,30 +145,10 @@ int
 cli::cmd_list::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
                    const user_files::config& UTILS_UNUSED_PARAM(config))
 {
-    engine::filters_state filters(parse_filters(cmdline.arguments()));
-    const user_files::kyuafile kyuafile = load_kyuafile(cmdline);
+    progress_hooks hooks(ui, cmdline.has_option("verbose"));
+    const list_tests::result result = list_tests::drive(
+        kyuafile_path(cmdline), parse_filters(cmdline.arguments()), hooks);
 
-    bool ok = true;
-
-    const engine::test_programs_vector& test_programs =
-        kyuafile.test_programs();
-    for (engine::test_programs_vector::const_iterator
-         iter = test_programs.begin(); iter != test_programs.end(); iter++) {
-        const engine::test_program_ptr& test_program = *iter;
-
-        if (filters.match_test_program(test_program->relative_path())) {
-            try {
-                detail::list_test_program(ui, cmdline.has_option("verbose"),
-                                          *test_program, filters);
-            } catch (const engine::error& e) {
-                cmdline::print_warning(
-                    ui, F("Cannot load test case list for '%s': %s") %
-                    test_program->relative_path() % e.what());
-                ok &= false;
-            }
-        }
-    }
-
-    return report_unused_filters(filters.unused(), ui) || !ok ?
+    return report_unused_filters(result.unused_filters, ui) || !hooks.ok ?
         EXIT_FAILURE : EXIT_SUCCESS;
 }

@@ -55,9 +55,6 @@ namespace detail {
 
 void list_test_case(utils::cmdline::ui*, const bool,
                     const engine::base_test_case&);
-void list_test_program(utils::cmdline::ui*, const bool,
-                       const engine::base_test_program&,
-                       engine::filters_state&);
 
 }  // namespace detail
 

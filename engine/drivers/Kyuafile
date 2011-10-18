@@ -2,4 +2,5 @@ syntax("kyuafile", 1)
 
 test_suite("kyua")
 
+atf_test_program{name="list_tests_test"}
 atf_test_program{name="run_tests_test"}
