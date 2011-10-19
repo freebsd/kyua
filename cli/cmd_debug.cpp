@@ -26,77 +26,22 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <cstdlib>
-#include <stdexcept>
-
 #include "cli/cmd_debug.hpp"
 #include "cli/common.ipp"
+#include "engine/drivers/debug_test.hpp"
 #include "engine/filters.hpp"
-#include "engine/results.hpp"
+#include "engine/results.ipp"
 #include "engine/user_files/config.hpp"
-#include "engine/user_files/kyuafile.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.ipp"
-#include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 
 namespace cmdline = utils::cmdline;
+namespace debug_test = engine::drivers::debug_test;
 namespace results = engine::results;
 namespace user_files = engine::user_files;
 
 using cli::cmd_debug;
-
-
-namespace {
-
-
-/// Looks for a single test case in the Kyuafile.
-///
-/// \param filter A filter to match the desired test case.
-/// \param kyuafile The test suite in which to look for the test case.
-///
-/// \return A pointer to the test case if found.
-///
-/// \throw std::runtime_error If the provided filter matches more than one test
-///     case or if the test case cannot be found.
-const engine::test_case_ptr
-find_test_case(const engine::test_filter& filter,
-               const user_files::kyuafile& kyuafile)
-{
-    engine::test_case_ptr found;;
-
-    for (engine::test_programs_vector::const_iterator p =
-         kyuafile.test_programs().begin(); p != kyuafile.test_programs().end();
-         p++) {
-        const engine::test_program_ptr& test_program = *p;
-
-        if (!filter.matches_test_program(test_program->relative_path()))
-            continue;
-
-        const engine::test_cases_vector test_cases = test_program->test_cases();
-
-        for (engine::test_cases_vector::const_iterator
-             iter = test_cases.begin(); iter != test_cases.end(); iter++) {
-            const engine::test_case_ptr tc = *iter;
-
-            if (filter.matches_test_case(tc->identifier())) {
-                if (found.get() != NULL)
-                    throw std::runtime_error(F("The filter '%s' matches more "
-                                               "than one test case") %
-                                             filter.str());
-                found = tc;
-            }
-        }
-    }
-
-    if (found.get() == NULL)
-        throw std::runtime_error(F("Unknown test case '%s'") % filter.str());
-
-    return found;
-}
-
-
-}  // anonymous namespace
 
 
 /// Default constructor for cmd_debug.
@@ -135,15 +80,13 @@ cmd_debug::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
     const engine::test_filter filter = engine::test_filter::parse(
         test_case_name);
 
-    const user_files::kyuafile kyuafile = load_kyuafile(cmdline);
-
-    const engine::test_case_ptr test_case = find_test_case(filter, kyuafile);
-    const results::result_ptr result = test_case->debug(
-        config,
+    const debug_test::result result = debug_test::drive(
+        kyuafile_path(cmdline), filter, config,
         cmdline.get_option< cmdline::path_option >("stdout"),
         cmdline.get_option< cmdline::path_option >("stderr"));
 
-    ui->out(F("%s  ->  %s") % test_case->identifier().str() % result->format());
+    ui->out(F("%s  ->  %s") % result.test_id.str() %
+            result.test_result->format());
 
-    return result->good() ? EXIT_SUCCESS : EXIT_FAILURE;
+    return result.test_result->good() ? EXIT_SUCCESS : EXIT_FAILURE;
 }

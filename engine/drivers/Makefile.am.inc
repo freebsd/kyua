@@ -26,6 +26,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+libengine_a_SOURCES += engine/drivers/debug_test.cpp
+libengine_a_SOURCES += engine/drivers/debug_test.hpp
 libengine_a_SOURCES += engine/drivers/list_tests.cpp
 libengine_a_SOURCES += engine/drivers/list_tests.hpp
 libengine_a_SOURCES += engine/drivers/run_tests.cpp
@@ -37,7 +39,14 @@ tests_engine_drivers_DATA  = engine/drivers/Atffile
 tests_engine_drivers_DATA += engine/drivers/Kyuafile
 EXTRA_DIST += $(tests_engine_drivers_DATA)
 
-tests_engine_drivers_PROGRAMS = engine/drivers/list_tests_helpers
+tests_engine_drivers_PROGRAMS = engine/drivers/debug_test_test
+engine_drivers_debug_test_test_SOURCES = engine/drivers/debug_test_test.cpp
+engine_drivers_debug_test_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
+                                          $(ATF_CXX_CFLAGS)
+engine_drivers_debug_test_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
+                                       $(ATF_CXX_LIBS)
+
+tests_engine_drivers_PROGRAMS += engine/drivers/list_tests_helpers
 engine_drivers_list_tests_helpers_SOURCES = \
     engine/drivers/list_tests_helpers.cpp
 engine_drivers_list_tests_helpers_CXXFLAGS = $(ATF_CXX_CFLAGS)
