@@ -47,8 +47,8 @@
 #if !defined(ENGINE_RESULTS_HPP)
 #define ENGINE_RESULTS_HPP
 
-#include <memory>
 #include <string>
+#include <tr1/memory>
 
 #include "utils/optional.hpp"
 
@@ -72,13 +72,8 @@ struct base_result {
 };
 
 
-/// Auto-pointer to a const test case result.
-///
-/// Keep in mind that this is a plain std::auto_ptr.  Remember that whenever
-/// you copy it, the original pointer loses ownership of the object.
-/// All the functions below that take result_ptr as parameters do so for the
-/// only reason to allow simple chaining of calls.
-typedef std::auto_ptr< const base_result > result_ptr;
+/// Shared pointer to a const test case result.
+typedef std::tr1::shared_ptr< const base_result > result_ptr;
 
 
 /// Representation of a broken test case.
