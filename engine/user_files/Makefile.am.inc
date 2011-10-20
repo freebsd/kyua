@@ -31,7 +31,7 @@ ENGINE_LIBS += $(LUTOK_LIBS)
 
 luadir = $(pkgdatadir)/lua
 
-libengine_a_CPPFLAGS  = $(LUTOK_CFLAGS) $(UTILS_CFLAGS)
+libengine_a_CPPFLAGS += $(LUTOK_CFLAGS)
 libengine_a_CPPFLAGS += -DKYUA_LUADIR="\"$(luadir)\""
 libengine_a_SOURCES += engine/user_files/common.cpp
 libengine_a_SOURCES += engine/user_files/common.hpp
