@@ -32,6 +32,7 @@
 #if !defined(CLI_COMMON_HPP)
 #define CLI_COMMON_HPP
 
+#include <memory>
 #include <set>
 
 #include "utils/cmdline/base_command.hpp"
