@@ -161,9 +161,6 @@ const cmdline::path_option cli::config_option(
 
 
 /// Standard definition of the option to specify a configuration variable.
-///
-/// You must use load_kyuafile() to load a configuration file while honoring the
-/// value of this flag.
 const cmdline::property_option cli::variable_option(
     'v', "variable",
     "Overrides a particular configuration variable",

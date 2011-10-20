@@ -30,7 +30,6 @@
 
 #include "cli/common.hpp"
 #include "engine/filters.hpp"
-#include "engine/user_files/kyuafile.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/format/macros.hpp"
@@ -42,39 +41,10 @@ namespace user_files = engine::user_files;
 
 
 /// Standard definition of the option to specify a Kyuafile.
-///
-/// You must use load_kyuafile() to load a configuration file while honoring the
-/// value of this flag.
 const cmdline::path_option cli::kyuafile_option(
     'k', "kyuafile",
     "Path to the test suite definition",
     "file", "Kyuafile");
-
-
-/// Loads the Kyuafile for this session or generates a fake one.
-///
-/// TODO(jmmv): Kill this function.  This has been superseded by kyuafile_path
-/// and the modules in engine/drivers/.  Oh, and the whole docstring for this
-/// function is bogus.  We don't generate Kyuafiles on the fly any more.
-///
-/// The algorithm implemented here is as follows:
-/// 1) If there are arguments on the command line that are supposed to override
-///    the Kyuafile, the Kyuafile is not loaded and a fake one is generated.
-/// 2) Otherwise, the user-provided Kyuafile is loaded.
-///
-/// \param cmdline The parsed command line.
-///
-/// \throw engine::error If the parsing of the configuration file fails.
-///     TODO(jmmv): I'm not sure if this is the raised exception.  And even if
-///     it is, we should make it more accurate.
-user_files::kyuafile
-cli::load_kyuafile(const cmdline::parsed_cmdline& cmdline)
-{
-    const fs::path filename = cmdline.get_option< cmdline::path_option >(
-        kyuafile_option.long_name());
-
-    return user_files::kyuafile::load(filename);
-}
 
 
 /// Gets the path to the Kyuafile to be loaded.

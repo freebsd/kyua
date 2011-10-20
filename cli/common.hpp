@@ -51,7 +51,6 @@ struct test_case_id;
 struct test_filter;
 namespace user_files {
 struct config;
-class kyuafile;
 }  // namespace user_files
 }  // namespace engine
 
@@ -74,9 +73,6 @@ typedef utils::cmdline::base_command< engine::user_files::config >
 /// Scoped, strictly owned pointer to a cli_command.
 typedef std::auto_ptr< cli_command > cli_command_ptr;
 
-
-engine::user_files::kyuafile load_kyuafile(
-    const utils::cmdline::parsed_cmdline&);
 
 utils::fs::path kyuafile_path(const utils::cmdline::parsed_cmdline&);
 

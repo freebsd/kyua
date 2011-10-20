@@ -34,7 +34,6 @@
 #include "engine/exceptions.hpp"
 #include "engine/filters.hpp"
 #include "engine/test_case.hpp"
-#include "engine/user_files/kyuafile.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/globals.hpp"
 #include "utils/cmdline/parser.ipp"
@@ -50,29 +49,6 @@ namespace user_files = engine::user_files;
 namespace {
 
 
-/// Creates a Kyuafile for testing purposes.
-///
-/// To ensure that the loaded file is the one created by this function, use
-/// validate_mock_kyuafile().
-///
-/// \param name The name of the configuration file to create.
-/// \param cookie The magic value to set in the configuration file, or NULL if a
-///     broken configuration file is desired.
-static void
-create_mock_kyuafile(const char* name, const char* cookie)
-{
-    std::ofstream output(name);
-    ATF_REQUIRE(output);
-    if (cookie != NULL) {
-        output << "syntax('kyuafile', 1)\n";
-        utils::create_file(fs::path(cookie));
-        output << "atf_test_program{name='" << cookie << "', test_suite='a'}\n";
-    } else {
-        output << "syntax('invalid-file', 1)\n";
-    }
-}
-
-
 /// Syntactic sugar to instantiate engine::test_filter objects.
 inline engine::test_filter
 mkfilter(const char* test_program, const char* test_case)
@@ -81,61 +57,7 @@ mkfilter(const char* test_program, const char* test_case)
 }
 
 
-/// Ensures that a loaded configuration was created with create_mock_kyuafile().
-///
-/// \param config The configuration to validate.
-/// \param cookie The magic value to expect in the configuration file.
-static void
-validate_mock_kyuafile(const user_files::kyuafile& kyuafile, const char* cookie)
-{
-    const engine::test_programs_vector& test_programs =
-        kyuafile.test_programs();
-    ATF_REQUIRE_EQ(1, test_programs.size());
-    ATF_REQUIRE_EQ(cookie, test_programs[0]->relative_path().str());
-}
-
-
 }  // anonymous namespace
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(load_kyuafile__default);
-ATF_TEST_CASE_BODY(load_kyuafile__default)
-{
-    std::map< std::string, std::vector< std::string > > options;
-    options["kyuafile"].push_back(cli::kyuafile_option.default_value());
-    const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
-
-    create_mock_kyuafile("Kyuafile", "foo bar");
-    const user_files::kyuafile config = cli::load_kyuafile(mock_cmdline);
-    validate_mock_kyuafile(config, "foo bar");
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(load_kyuafile__explicit);
-ATF_TEST_CASE_BODY(load_kyuafile__explicit)
-{
-    std::map< std::string, std::vector< std::string > > options;
-    options["kyuafile"].push_back("another");
-    const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
-
-    create_mock_kyuafile("Kyuafile", "no no no");
-    create_mock_kyuafile("another", "yes yes yes");
-    const user_files::kyuafile config = cli::load_kyuafile(mock_cmdline);
-    validate_mock_kyuafile(config, "yes yes yes");
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(load_kyuafile__fail);
-ATF_TEST_CASE_BODY(load_kyuafile__fail)
-{
-    std::map< std::string, std::vector< std::string > > options;
-    options["kyuafile"].push_back("missing-file");
-    const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
-
-    create_mock_kyuafile("Kyuafile", "no no no");
-    ATF_REQUIRE_THROW_RE(engine::error, "missing-file",
-                         cli::load_kyuafile(mock_cmdline));
-}
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(kyuafile_path__default);
@@ -245,10 +167,6 @@ ATF_TEST_CASE_BODY(report_unused_filters__some)
 
 ATF_INIT_TEST_CASES(tcs)
 {
-    ATF_ADD_TEST_CASE(tcs, load_kyuafile__default);
-    ATF_ADD_TEST_CASE(tcs, load_kyuafile__explicit);
-    ATF_ADD_TEST_CASE(tcs, load_kyuafile__fail);
-
     ATF_ADD_TEST_CASE(tcs, kyuafile_path__default);
     ATF_ADD_TEST_CASE(tcs, kyuafile_path__explicit);
 
@@ -256,6 +174,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, parse_filters__ok);
     ATF_ADD_TEST_CASE(tcs, parse_filters__duplicate);
     ATF_ADD_TEST_CASE(tcs, parse_filters__nondisjoint);
+
     ATF_ADD_TEST_CASE(tcs, report_unused_filters__none);
     ATF_ADD_TEST_CASE(tcs, report_unused_filters__some);
 }
