@@ -186,6 +186,18 @@ ATF_TEST_CASE_BODY(create_statement__fail)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(last_insert_rowid);
+ATF_TEST_CASE_BODY(last_insert_rowid)
+{
+    sqlite::database db = sqlite::database::in_memory();
+    db.exec("CREATE TABLE test (a INTEGER PRIMARY KEY, b INTEGER)");
+    db.exec("INSERT INTO test VALUES (723, 5)");
+    ATF_REQUIRE_EQ(723, db.last_insert_rowid());
+    db.exec("INSERT INTO test VALUES (145, 20)");
+    ATF_REQUIRE_EQ(145, db.last_insert_rowid());
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, in_memory);
@@ -206,4 +218,6 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, create_statement__ok);
     ATF_ADD_TEST_CASE(tcs, create_statement__fail);
+
+    ATF_ADD_TEST_CASE(tcs, last_insert_rowid);
 }

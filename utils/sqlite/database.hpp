@@ -35,6 +35,7 @@
 #if !defined(UTILS_SQLITE_DATABASE_HPP)
 #define UTILS_SQLITE_DATABASE_HPP
 
+#include <cstddef>
 #include <tr1/memory>
 
 #include "utils/fs/path.hpp"
@@ -88,6 +89,8 @@ public:
     void exec(const std::string&);
 
     statement create_statement(const std::string&);
+
+    int64_t last_insert_rowid(void);
 };
 
 

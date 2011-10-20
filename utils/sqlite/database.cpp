@@ -259,3 +259,13 @@ sqlite::database::create_statement(const std::string& sql)
         throw api_error::from_database(*this, "sqlite3_prepare_v2");
     return statement(*this, static_cast< void* >(stmt));
 }
+
+
+/// Returns the row identifier of the last insert.
+///
+/// \return A row identifier.
+int64_t
+sqlite::database::last_insert_rowid(void)
+{
+    return ::sqlite3_last_insert_rowid(_pimpl->db);
+}
