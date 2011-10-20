@@ -30,6 +30,7 @@ ENGINE_CFLAGS = $(UTILS_CFLAGS)
 ENGINE_LIBS = libengine.a $(UTILS_LIBS)
 
 noinst_LIBRARIES += libengine.a
+libengine_a_CPPFLAGS = $(UTILS_CFLAGS)
 libengine_a_SOURCES  = engine/exceptions.cpp
 libengine_a_SOURCES += engine/exceptions.hpp
 libengine_a_SOURCES += engine/filters.cpp
