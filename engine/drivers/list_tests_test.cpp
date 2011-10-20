@@ -102,7 +102,7 @@ run_helpers(const atf::tests::tc* tc, list_tests::base_hooks& hooks,
 {
     ATF_REQUIRE(::mkdir("root", 0755) != -1);
     ATF_REQUIRE(::mkdir("root/dir", 0755) != -1);
-    ATF_REQUIRE(link(helpers(tc).c_str(), "root/dir/program") != -1);
+    ATF_REQUIRE(::symlink(helpers(tc).c_str(), "root/dir/program") != -1);
 
     std::ofstream kyuafile1("root/Kyuafile");
     kyuafile1 << "syntax('kyuafile', 1)\n";
