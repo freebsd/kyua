@@ -132,14 +132,14 @@ ATF_TEST_CASE_BODY(column_type__ok)
             "INSERT INTO foo VALUES (NULL, NULL, NULL, NULL, NULL);");
     sqlite::statement stmt = db.create_statement("SELECT * FROM foo");
     ATF_REQUIRE(stmt.step());
-    ATF_REQUIRE_EQ(sqlite::type_blob, stmt.column_type(0));
-    ATF_REQUIRE_EQ(sqlite::type_float, stmt.column_type(1));
-    ATF_REQUIRE_EQ(sqlite::type_integer, stmt.column_type(2));
-    ATF_REQUIRE_EQ(sqlite::type_null, stmt.column_type(3));
-    ATF_REQUIRE_EQ(sqlite::type_text, stmt.column_type(4));
+    ATF_REQUIRE(sqlite::type_blob == stmt.column_type(0));
+    ATF_REQUIRE(sqlite::type_float == stmt.column_type(1));
+    ATF_REQUIRE(sqlite::type_integer == stmt.column_type(2));
+    ATF_REQUIRE(sqlite::type_null == stmt.column_type(3));
+    ATF_REQUIRE(sqlite::type_text == stmt.column_type(4));
     ATF_REQUIRE(stmt.step());
     for (int i = 0; i < stmt.column_count(); i++)
-        ATF_REQUIRE_EQ(sqlite::type_null, stmt.column_type(i));
+        ATF_REQUIRE(sqlite::type_null == stmt.column_type(i));
     ATF_REQUIRE(!stmt.step());
 }
 
@@ -152,9 +152,9 @@ ATF_TEST_CASE_BODY(column_type__out_of_range)
             "INSERT INTO foo VALUES (1);");
     sqlite::statement stmt = db.create_statement("SELECT * FROM foo");
     ATF_REQUIRE(stmt.step());
-    ATF_REQUIRE_EQ(sqlite::type_integer, stmt.column_type(0));
-    ATF_REQUIRE_EQ(sqlite::type_null, stmt.column_type(1));
-    ATF_REQUIRE_EQ(sqlite::type_null, stmt.column_type(512));
+    ATF_REQUIRE(sqlite::type_integer == stmt.column_type(0));
+    ATF_REQUIRE(sqlite::type_null == stmt.column_type(1));
+    ATF_REQUIRE(sqlite::type_null == stmt.column_type(512));
     ATF_REQUIRE(!stmt.step());
 }
 
@@ -289,9 +289,9 @@ ATF_TEST_CASE_BODY(bind_blob)
     const unsigned char blob[] = {0xca, 0xfe};
     stmt.bind_blob(1, static_cast< const void* >(blob), 2);
     ATF_REQUIRE(stmt.step());
-    ATF_REQUIRE_EQ(sqlite::type_integer, stmt.column_type(0));
+    ATF_REQUIRE(sqlite::type_integer == stmt.column_type(0));
     ATF_REQUIRE_EQ(3, stmt.column_int(0));
-    ATF_REQUIRE_EQ(sqlite::type_blob, stmt.column_type(1));
+    ATF_REQUIRE(sqlite::type_blob == stmt.column_type(1));
     const unsigned char* ret_blob =
         static_cast< const unsigned char* >(stmt.column_blob(1));
     ATF_REQUIRE(std::memcmp(blob, ret_blob, 2) == 0);
@@ -307,9 +307,9 @@ ATF_TEST_CASE_BODY(bind_double)
 
     stmt.bind_double(1, 0.5);
     ATF_REQUIRE(stmt.step());
-    ATF_REQUIRE_EQ(sqlite::type_integer, stmt.column_type(0));
+    ATF_REQUIRE(sqlite::type_integer == stmt.column_type(0));
     ATF_REQUIRE_EQ(3, stmt.column_int(0));
-    ATF_REQUIRE_EQ(sqlite::type_float, stmt.column_type(1));
+    ATF_REQUIRE(sqlite::type_float == stmt.column_type(1));
     ATF_REQUIRE_EQ(0.5, stmt.column_double(1));
     ATF_REQUIRE(!stmt.step());
 }
@@ -323,9 +323,9 @@ ATF_TEST_CASE_BODY(bind_int)
 
     stmt.bind_int(1, 123);
     ATF_REQUIRE(stmt.step());
-    ATF_REQUIRE_EQ(sqlite::type_integer, stmt.column_type(0));
+    ATF_REQUIRE(sqlite::type_integer == stmt.column_type(0));
     ATF_REQUIRE_EQ(3, stmt.column_int(0));
-    ATF_REQUIRE_EQ(sqlite::type_integer, stmt.column_type(1));
+    ATF_REQUIRE(sqlite::type_integer == stmt.column_type(1));
     ATF_REQUIRE_EQ(123, stmt.column_int(1));
     ATF_REQUIRE(!stmt.step());
 }
@@ -339,9 +339,9 @@ ATF_TEST_CASE_BODY(bind_int64)
 
     stmt.bind_int64(1, 4294967419L);
     ATF_REQUIRE(stmt.step());
-    ATF_REQUIRE_EQ(sqlite::type_integer, stmt.column_type(0));
+    ATF_REQUIRE(sqlite::type_integer == stmt.column_type(0));
     ATF_REQUIRE_EQ(3, stmt.column_int(0));
-    ATF_REQUIRE_EQ(sqlite::type_integer, stmt.column_type(1));
+    ATF_REQUIRE(sqlite::type_integer == stmt.column_type(1));
     ATF_REQUIRE_EQ(4294967419, stmt.column_int64(1));
     ATF_REQUIRE(!stmt.step());
 }
@@ -355,9 +355,9 @@ ATF_TEST_CASE_BODY(bind_null)
 
     stmt.bind_null(1);
     ATF_REQUIRE(stmt.step());
-    ATF_REQUIRE_EQ(sqlite::type_integer, stmt.column_type(0));
+    ATF_REQUIRE(sqlite::type_integer == stmt.column_type(0));
     ATF_REQUIRE_EQ(3, stmt.column_int(0));
-    ATF_REQUIRE_EQ(sqlite::type_null, stmt.column_type(1));
+    ATF_REQUIRE(sqlite::type_null == stmt.column_type(1));
     ATF_REQUIRE(!stmt.step());
 }
 
@@ -371,9 +371,9 @@ ATF_TEST_CASE_BODY(bind_text)
     const std::string str = "Hello";
     stmt.bind_text(1, str);
     ATF_REQUIRE(stmt.step());
-    ATF_REQUIRE_EQ(sqlite::type_integer, stmt.column_type(0));
+    ATF_REQUIRE(sqlite::type_integer == stmt.column_type(0));
     ATF_REQUIRE_EQ(3, stmt.column_int(0));
-    ATF_REQUIRE_EQ(sqlite::type_text, stmt.column_type(1));
+    ATF_REQUIRE(sqlite::type_text == stmt.column_type(1));
     ATF_REQUIRE_EQ(str, stmt.column_text(1));
     ATF_REQUIRE(!stmt.step());
 }
@@ -416,17 +416,17 @@ ATF_TEST_CASE_BODY(clear_bindings)
 
     stmt.bind_int(1, 5);
     ATF_REQUIRE(stmt.step());
-    ATF_REQUIRE_EQ(sqlite::type_integer, stmt.column_type(0));
+    ATF_REQUIRE(sqlite::type_integer == stmt.column_type(0));
     ATF_REQUIRE_EQ(3, stmt.column_int(0));
-    ATF_REQUIRE_EQ(sqlite::type_integer, stmt.column_type(1));
+    ATF_REQUIRE(sqlite::type_integer == stmt.column_type(1));
     ATF_REQUIRE_EQ(5, stmt.column_int(1));
     stmt.clear_bindings();
     stmt.reset();
 
     ATF_REQUIRE(stmt.step());
-    ATF_REQUIRE_EQ(sqlite::type_integer, stmt.column_type(0));
+    ATF_REQUIRE(sqlite::type_integer == stmt.column_type(0));
     ATF_REQUIRE_EQ(3, stmt.column_int(0));
-    ATF_REQUIRE_EQ(sqlite::type_null, stmt.column_type(1));
+    ATF_REQUIRE(sqlite::type_null == stmt.column_type(1));
 
     ATF_REQUIRE(!stmt.step());
 }
