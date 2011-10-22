@@ -30,6 +30,8 @@ extern "C" {
 #include <sqlite3.h>
 }
 
+#include <map>
+
 #include "utils/defs.hpp"
 #include "utils/sanity.hpp"
 #include "utils/sqlite/c_gate.hpp"
@@ -100,6 +102,9 @@ struct utils::sqlite::statement::impl {
 
     /// The SQLite 3 internal statement.
     ::sqlite3_stmt* stmt;
+
+    /// Cache for the column names in a statement; lazily initialized.
+    std::map< std::string, int > column_cache;
 
     /// Constructor.
     ///
@@ -209,6 +214,34 @@ sqlite::type
 sqlite::statement::column_type(const int index)
 {
     return c_type_to_cxx(::sqlite3_column_type(_pimpl->stmt, index));
+}
+
+
+/// Finds a column by name.
+///
+/// \param name The name of the column to search for.
+///
+/// \return The column identifier.
+///
+/// \throw value_error If the name cannot be found.
+int
+sqlite::statement::column_id(const std::string& name)
+{
+    std::map< std::string, int >& cache = _pimpl->column_cache;
+
+    if (cache.empty()) {
+        for (int i = 0; i < column_count(); i++) {
+            const std::string aux_name = column_name(i);
+            INV(cache.find(aux_name) == cache.end());
+            cache[aux_name] = i;
+        }
+    }
+
+    const std::map< std::string, int >::const_iterator iter = cache.find(name);
+    if (iter == cache.end())
+        throw invalid_column_error(name);
+    else
+        return (*iter).second;
 }
 
 

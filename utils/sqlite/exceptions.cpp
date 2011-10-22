@@ -30,6 +30,7 @@ extern "C" {
 #include <sqlite3.h>
 }
 
+#include "utils/format/macros.hpp"
 #include "utils/sqlite/c_gate.hpp"
 #include "utils/sqlite/exceptions.hpp"
 
@@ -92,4 +93,30 @@ const std::string&
 sqlite::api_error::api_function(void) const
 {
     return _api_function;
+}
+
+
+/// Constructs a new error.
+///
+/// \param name_ The name of the unknown column.
+sqlite::invalid_column_error::invalid_column_error(const std::string& name_) :
+    error(F("Unknown column '%s'") % name_),
+    _column_name(name_)
+{
+}
+
+
+/// Destructor for the error.
+sqlite::invalid_column_error::~invalid_column_error(void) throw()
+{
+}
+
+
+/// Gets the name of the column that could not be found.
+///
+/// \return The name of the column requested by the user.
+const std::string&
+sqlite::invalid_column_error::column_name(void) const
+{
+    return _column_name;
 }

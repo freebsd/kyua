@@ -75,6 +75,7 @@ public:
     int column_count(void);
     std::string column_name(const int);
     type column_type(const int);
+    int column_id(const std::string&);
 
     const void* column_blob(const int);
     double column_double(const int);

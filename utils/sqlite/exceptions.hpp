@@ -64,6 +64,18 @@ public:
 };
 
 
+/// The caller requested a non-existent column name.
+class invalid_column_error : public error {
+    std::string _column_name;
+
+public:
+    explicit invalid_column_error(const std::string&);
+    virtual ~invalid_column_error(void) throw();
+
+    const std::string& column_name(void) const;
+};
+
+
 }  // namespace sqlite
 }  // namespace utils
 

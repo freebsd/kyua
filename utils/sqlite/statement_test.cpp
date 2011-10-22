@@ -159,6 +159,43 @@ ATF_TEST_CASE_BODY(column_type__out_of_range)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(column_id__ok);
+ATF_TEST_CASE_BODY(column_id__ok)
+{
+    sqlite::database db = sqlite::database::in_memory();
+    db.exec("CREATE TABLE foo (bar INTEGER PRIMARY KEY, "
+            "                  baz INTEGER);"
+            "INSERT INTO foo VALUES (1, 2);");
+    sqlite::statement stmt = db.create_statement("SELECT * FROM foo");
+    ATF_REQUIRE(stmt.step());
+    ATF_REQUIRE_EQ(0, stmt.column_id("bar"));
+    ATF_REQUIRE_EQ(1, stmt.column_id("baz"));
+    ATF_REQUIRE_EQ(0, stmt.column_id("bar"));
+    ATF_REQUIRE_EQ(1, stmt.column_id("baz"));
+    ATF_REQUIRE(!stmt.step());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(column_id__missing);
+ATF_TEST_CASE_BODY(column_id__missing)
+{
+    sqlite::database db = sqlite::database::in_memory();
+    db.exec("CREATE TABLE foo (bar INTEGER PRIMARY KEY, "
+            "                  baz INTEGER);"
+            "INSERT INTO foo VALUES (1, 2);");
+    sqlite::statement stmt = db.create_statement("SELECT * FROM foo");
+    ATF_REQUIRE(stmt.step());
+    ATF_REQUIRE_EQ(0, stmt.column_id("bar"));
+    try {
+        stmt.column_id("bazo");
+        fail("invalid_column_error not raised");
+    } catch (const sqlite::invalid_column_error& e) {
+        ATF_REQUIRE_EQ("bazo", e.column_name());
+    }
+    ATF_REQUIRE(!stmt.step());
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(column_blob);
 ATF_TEST_CASE_BODY(column_blob)
 {
@@ -445,6 +482,9 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, column_type__ok);
     ATF_ADD_TEST_CASE(tcs, column_type__out_of_range);
+
+    ATF_ADD_TEST_CASE(tcs, column_id__ok);
+    ATF_ADD_TEST_CASE(tcs, column_id__missing);
 
     ATF_ADD_TEST_CASE(tcs, column_blob);
     ATF_ADD_TEST_CASE(tcs, column_double);

@@ -71,10 +71,21 @@ ATF_TEST_CASE_BODY(api_error__from_database)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(invalid_column_error);
+ATF_TEST_CASE_BODY(invalid_column_error)
+{
+    const sqlite::invalid_column_error e("some_name");
+    ATF_REQUIRE(std::strcmp("Unknown column 'some_name'", e.what()) == 0);
+    ATF_REQUIRE_EQ("some_name", e.column_name());
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, error);
 
     ATF_ADD_TEST_CASE(tcs, api_error__explicit);
     ATF_ADD_TEST_CASE(tcs, api_error__from_database);
+
+    ATF_ADD_TEST_CASE(tcs, invalid_column_error);
 }
