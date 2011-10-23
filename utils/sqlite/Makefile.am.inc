@@ -38,6 +38,8 @@ libutils_a_SOURCES += utils/sqlite/exceptions.cpp
 libutils_a_SOURCES += utils/sqlite/exceptions.hpp
 libutils_a_SOURCES += utils/sqlite/statement.cpp
 libutils_a_SOURCES += utils/sqlite/statement.hpp
+libutils_a_SOURCES += utils/sqlite/transaction.cpp
+libutils_a_SOURCES += utils/sqlite/transaction.hpp
 
 tests_utils_sqlitedir = $(pkgtestsdir)/utils/sqlite
 
@@ -66,3 +68,8 @@ utils_sqlite_statement_test_SOURCES = utils/sqlite/statement_test.cpp \
                                       utils/sqlite/test_utils.hpp
 utils_sqlite_statement_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 utils_sqlite_statement_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
+
+tests_utils_sqlite_PROGRAMS += utils/sqlite/transaction_test
+utils_sqlite_transaction_test_SOURCES = utils/sqlite/transaction_test.cpp
+utils_sqlite_transaction_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_sqlite_transaction_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)

@@ -33,6 +33,7 @@
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/statement.hpp"
 #include "utils/sqlite/test_utils.hpp"
+#include "utils/sqlite/transaction.hpp"
 
 namespace fs = utils::fs;
 namespace sqlite = utils::sqlite;
@@ -177,6 +178,16 @@ ATF_TEST_CASE_BODY(create_statement__ok)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(begin_transaction);
+ATF_TEST_CASE_BODY(begin_transaction)
+{
+    sqlite::database db = sqlite::database::in_memory();
+    sqlite::transaction stmt = db.begin_transaction();
+    // Transaction testing happens in transaction_test.  We are only interested
+    // here in ensuring that the API call exists and runs.
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(create_statement__fail);
 ATF_TEST_CASE_BODY(create_statement__fail)
 {
@@ -215,6 +226,8 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, exec__ok);
     ATF_ADD_TEST_CASE(tcs, exec__fail);
+
+    ATF_ADD_TEST_CASE(tcs, begin_transaction);
 
     ATF_ADD_TEST_CASE(tcs, create_statement__ok);
     ATF_ADD_TEST_CASE(tcs, create_statement__fail);

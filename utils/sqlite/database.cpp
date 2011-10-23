@@ -36,6 +36,7 @@ extern "C" {
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/exceptions.hpp"
 #include "utils/sqlite/statement.hpp"
+#include "utils/sqlite/transaction.hpp"
 
 namespace sqlite = utils::sqlite;
 
@@ -241,6 +242,19 @@ sqlite::database::exec(const std::string& sql)
     const int error = ::sqlite3_exec(_pimpl->db, sql.c_str(), NULL, NULL, NULL);
     if (error != SQLITE_OK)
         throw api_error::from_database(*this, "sqlite3_exec");
+}
+
+
+/// Opens a new transaction.
+///
+/// \return An object representing the state of the transaction.
+///
+/// \throw api_error If there is any problem while opening the transaction.
+sqlite::transaction
+sqlite::database::begin_transaction(void)
+{
+    exec("BEGIN TRANSACTION");
+    return transaction(*this);
 }
 
 

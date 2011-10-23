@@ -46,6 +46,7 @@ namespace sqlite {
 
 class database_c_gate;
 class statement;
+class transaction;
 
 
 /// Constant for the database::open flags: open in read-only mode.
@@ -88,6 +89,7 @@ public:
 
     void exec(const std::string&);
 
+    transaction begin_transaction(void);
     statement create_statement(const std::string&);
 
     int64_t last_insert_rowid(void);
