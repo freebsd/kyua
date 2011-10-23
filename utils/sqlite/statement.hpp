@@ -87,11 +87,17 @@ public:
     void reset(void);
 
     void bind_blob(const int, const void*, const int);
+    void bind_blob(const char*, const void*, const int);
     void bind_double(const int, const double);
+    void bind_double(const char*, const double);
     void bind_int(const int, const int);
+    void bind_int(const char*, const int);
     void bind_int64(const int, const int64_t);
+    void bind_int64(const char*, const int64_t);
     void bind_null(const int);
+    void bind_null(const char*);
     void bind_text(const int, const std::string&);
+    void bind_text(const char*, const std::string&);
 
     int bind_parameter_count(void);
     int bind_parameter_index(const std::string&);

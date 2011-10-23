@@ -360,6 +360,21 @@ sqlite::statement::bind_blob(const int index, const void* blob, const int size)
 }
 
 
+/// Binds a blob to a prepared statement.
+///
+/// \param name The name of the parameter; must exist.
+/// \param blob A pointer to the beginning of the blob.  This memory must remain
+///     valid during the execution of the statement.
+/// \param size The size of the blob.
+///
+/// \throw api_error If the binding fails.
+void
+sqlite::statement::bind_blob(const char* name, const void* blob, const int size)
+{
+    bind_blob(bind_parameter_index(name), blob, size);
+}
+
+
 /// Binds a double value to a prepared statement.
 ///
 /// \param index The index of the binding.
@@ -371,6 +386,19 @@ sqlite::statement::bind_double(const int index, const double value)
 {
     const int error = ::sqlite3_bind_double(_pimpl->stmt, index, value);
     handle_bind_error(_pimpl->db, "sqlite3_bind_double", error);
+}
+
+
+/// Binds a double value to a prepared statement.
+///
+/// \param name The name of the parameter; must exist.
+/// \param value The double value to bind.
+///
+/// \throw api_error If the binding fails.
+void
+sqlite::statement::bind_double(const char* name, const double value)
+{
+    bind_double(bind_parameter_index(name), value);
 }
 
 
@@ -388,6 +416,19 @@ sqlite::statement::bind_int(const int index, const int value)
 }
 
 
+/// Binds an integer value to a prepared statement.
+///
+/// \param name The name of the parameter; must exist.
+/// \param value The integer value to bind.
+///
+/// \throw api_error If the binding fails.
+void
+sqlite::statement::bind_int(const char* name, const int value)
+{
+    bind_int(bind_parameter_index(name), value);
+}
+
+
 /// Binds a 64-bit integer value to a prepared statement.
 ///
 /// \param index The index of the binding.
@@ -399,6 +440,19 @@ sqlite::statement::bind_int64(const int index, const int64_t value)
 {
     const int error = ::sqlite3_bind_int64(_pimpl->stmt, index, value);
     handle_bind_error(_pimpl->db, "sqlite3_bind_int64", error);
+}
+
+
+/// Binds a 64-bit integer value to a prepared statement.
+///
+/// \param name The name of the parameter; must exist.
+/// \param value The 64-bin integer value to bind.
+///
+/// \throw api_error If the binding fails.
+void
+sqlite::statement::bind_int64(const char* name, const int64_t value)
+{
+    bind_int64(bind_parameter_index(name), value);
 }
 
 
@@ -415,6 +469,18 @@ sqlite::statement::bind_null(const int index)
 }
 
 
+/// Binds a NULL value to a prepared statement.
+///
+/// \param name The name of the parameter; must exist.
+///
+/// \throw api_error If the binding fails.
+void
+sqlite::statement::bind_null(const char* name)
+{
+    bind_null(bind_parameter_index(name));
+}
+
+
 /// Binds a text string to a prepared statement.
 ///
 /// \param index The index of the binding.
@@ -428,6 +494,20 @@ sqlite::statement::bind_text(const int index, const std::string& text)
     const int error = ::sqlite3_bind_text(_pimpl->stmt, index, text.c_str(),
                                           text.length(), SQLITE_STATIC);
     handle_bind_error(_pimpl->db, "sqlite3_bind_text", error);
+}
+
+
+/// Binds a text string to a prepared statement.
+///
+/// \param name The name of the parameter; must exist.
+/// \param text The string to bind.  Must remain valid during the execution of
+///     the statement.
+///
+/// \throw api_error If the binding fails.
+void
+sqlite::statement::bind_text(const char* name, const std::string& text)
+{
+    bind_text(bind_parameter_index(name), text);
 }
 
 
