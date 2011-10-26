@@ -2,9 +2,6 @@ Content-Type: application/X-atf-atffile; version="1"
 
 prop: test-suite = kyua
 
-tp: cli
-tp: engine
-tp: examples
-tp: integration
-tp: store
-tp: utils
+tp: backend_test
+tp: exceptions_test
+tp: metadata_test
