@@ -48,12 +48,8 @@ using utils::optional;
 namespace {
 
 
-/// Basename of the user-specific configuration file.
-static const char* user_config_basename = ".kyuarc";
-
-
-/// Basename of the system-wide configuration file.
-static const char* system_config_basename = "kyua.conf";
+/// Basename of the configuration file.
+static const char* config_basename = "kyua.conf";
 
 
 /// Magic string to disable loading of configuration files.
@@ -70,8 +66,8 @@ static const char* none_config = "none";
 /// initialization due to the side-effects it may have.  Therefore, fixing this
 /// is tricky as it may require a whole rethink of this module.
 static const std::string config_lookup_names =
-    (fs::path("~") / user_config_basename).str() + " or " +
-    (fs::path(KYUA_CONFDIR) / system_config_basename).str();
+    (fs::path("~/.kyua") / config_basename).str() + " or " +
+    (fs::path(KYUA_CONFDIR) / config_basename).str();
 
 
 /// Gets the value of the HOME environment variable with path validation.
@@ -121,7 +117,7 @@ load_config_file(const cmdline::parsed_cmdline& cmdline)
 
     const optional< fs::path > home = get_home();
     if (home) {
-        const fs::path path = home.get() / user_config_basename;
+        const fs::path path = home.get() / ".kyua" / config_basename;
         try {
             if (fs::exists(path))
                 return user_files::config::load(path);
@@ -137,7 +133,7 @@ load_config_file(const cmdline::parsed_cmdline& cmdline)
     const fs::path confdir(utils::getenv_with_default(
         "KYUA_CONFDIR", KYUA_CONFDIR));
 
-    const fs::path path = confdir / system_config_basename;
+    const fs::path path = confdir / config_basename;
     if (fs::exists(path)) {
         return user_files::config::load(path);
     } else {
@@ -170,7 +166,7 @@ const cmdline::property_option cli::variable_option(
 /// Loads the configuration file for this session, if any.
 ///
 /// The algorithm implemented here is as follows:
-/// 1) If ~/.kyuarc exists, load it.
+/// 1) If ~/.kyua/kyua.conf exists, load it.
 /// 2) Otherwise, if sysconfdir/kyua.conf exists, load it.
 /// 3) Otherwise, use the built-in settings.
 /// 4) Lastly, apply any user-provided overrides.

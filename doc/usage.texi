@@ -64,7 +64,7 @@ subcommand name.
 @item --config=path
 @cindex @option{--config}
 Specifies the configuration to process.  Defaults to a
-@file{~/.kyuarc} if it exists, otherwise to
+@file{~/.kyua/kyua.conf} if it exists, otherwise to
 @file{@value{KYUA_CONFDIR}/kyua.conf}.  None of the default files has
 to exist, but any user explicitly specified has to.
 

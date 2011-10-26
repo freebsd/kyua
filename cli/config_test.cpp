@@ -88,8 +88,9 @@ static void
 mock_user_config(const char* cookie)
 {
     fs::mkdir(fs::path("user-dir"), 0755);
+    fs::mkdir(fs::path("user-dir/.kyua"), 0755);
     utils::setenv("HOME", (fs::current_path() / "user-dir").str());
-    create_mock_config("user-dir/.kyuarc", cookie);
+    create_mock_config("user-dir/.kyua/kyua.conf", cookie);
 }
 
 

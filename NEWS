@@ -7,6 +7,10 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   library.  Lutok is just what used to be our own utils::lua module,
   but is now distributed separately.
 
+* Renamed the user-specific configuration file from ~/.kyuarc to
+  ~/.kyua/kyua.conf for consistency with other files stored in the
+  ~/.kyua/ subdirectory.
+
 
 Changes in version 0.2
 ======================

@@ -48,7 +48,7 @@ context of particular test suites.
 @section Configuration resolution order
 
 Configuration variables are first read from the configuration file,
-which is either @file{~/.kyuarc} if it exists, or otherwise
+which is either @file{~/.kyua/kyua.conf} if it exists, or otherwise
 @file{@value{KYUA_CONFDIR}/kyua.conf}.  The user can override this
 file by providing the @option{--config} option to the @command{test}
 subcommand.

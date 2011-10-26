@@ -645,12 +645,14 @@ EOF
 
 utils_test_case bogus_config
 bogus_config_body() {
-    cat >"${HOME}/.kyuarc" <<EOF
+    mkdir .kyua
+    cat >"${HOME}/.kyua/kyua.conf" <<EOF
 Hello, world.
 EOF
 
+    file_re='.*\.kyua/kyua.conf'
     atf_check -s exit:1 -o empty \
-        -e match:"^kyua: E: Load of '.*kyuarc' failed: Failed to load Lua" \
+        -e match:"^kyua: E: Load of '${file_re}' failed: Failed to load Lua" \
         kyua test
 }
 

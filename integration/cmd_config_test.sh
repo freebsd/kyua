@@ -38,7 +38,8 @@ defaults_body() {
 
 utils_test_case all
 all_body() {
-    cat >"${HOME}/.kyuarc" <<EOF
+    mkdir "${HOME}/.kyua"
+    cat >"${HOME}/.kyua/kyua.conf" <<EOF
 syntax("config", 1)
 architecture = "my-architecture"
 platform = "my-platform"
@@ -61,7 +62,8 @@ EOF
 
 utils_test_case one__ok
 one__ok_body() {
-    cat >"${HOME}/.kyuarc" <<EOF
+    mkdir "${HOME}/.kyua"
+    cat >"${HOME}/.kyua/kyua.conf" <<EOF
 syntax("config", 1)
 test_suites.first["X-one"] = 1
 test_suites.first["X-two"] = 2
@@ -77,7 +79,8 @@ EOF
 
 utils_test_case one__fail
 one__fail_body() {
-    cat >"${HOME}/.kyuarc" <<EOF
+    mkdir "${HOME}/.kyua"
+    cat >"${HOME}/.kyua/kyua.conf" <<EOF
 syntax("config", 1)
 test_suites.first["X-one"] = 1
 test_suites.first["X-three"] = 3
@@ -93,7 +96,8 @@ EOF
 
 utils_test_case many__ok
 many__ok_body() {
-    cat >"${HOME}/.kyuarc" <<EOF
+    mkdir "${HOME}/.kyua"
+    cat >"${HOME}/.kyua/kyua.conf" <<EOF
 syntax("config", 1)
 test_suites.first["X-one"] = 1
 test_suites.first["X-two"] = 2
@@ -111,7 +115,8 @@ EOF
 
 utils_test_case many__fail
 many__fail_body() {
-    cat >"${HOME}/.kyuarc" <<EOF
+    mkdir "${HOME}/.kyua"
+    cat >"${HOME}/.kyua/kyua.conf" <<EOF
 syntax("config", 1)
 test_suites.first["X-one"] = 1
 test_suites.first["X-three"] = 3
@@ -158,7 +163,8 @@ EOF
         kyua config foo.X-var
 
     # The previously-created "system-wide" file has to be ignored.
-    cat >.kyuarc <<EOF
+    mkdir .kyua
+    cat >.kyua/kyua.conf <<EOF
 syntax("config", 1)
 test_suites.foo["X-var"] = "baz"
 EOF
@@ -169,7 +175,7 @@ EOF
 
 utils_test_case config_flag__explicit__ok
 config_flag__explicit__ok_body() {
-    cat >kyuarc <<EOF
+    cat >kyua.conf <<EOF
 syntax("config", 1)
 test_suites.foo["X-var"] = "baz"
 EOF
@@ -177,9 +183,9 @@ EOF
     atf_check -s exit:1 -o empty -e match:"kyua: W: 'foo.X-var'.*not defined" \
         kyua config foo.X-var
     atf_check -s exit:0 -o match:"foo.X-var = baz" -e empty \
-        kyua -c kyuarc config foo.X-var
+        kyua -c kyua.conf config foo.X-var
     atf_check -s exit:0 -o match:"foo.X-var = baz" -e empty \
-        kyua --config=kyuarc config foo.X-var
+        kyua --config=kyua.conf config foo.X-var
 }
 
 
@@ -189,7 +195,8 @@ config_flag__explicit__disable_body() {
 syntax("config", 1)
 test_suites.foo["X-var"] = "baz"
 EOF
-    cp kyua.conf .kyuarc
+    mkdir .kyua
+    cp kyua.conf .kyua/kyua.conf
     export KYUA_CONFDIR="$(pwd)"
 
     atf_check -s exit:0 -o match:"foo.X-var = baz" -e empty \
@@ -240,7 +247,8 @@ variable_flag__no_config_body() {
 
 utils_test_case variable_flag__override_default_config
 variable_flag__override_default_config_body() {
-    cat >"${HOME}/.kyuarc" <<EOF
+    mkdir "${HOME}/.kyua"
+    cat >"${HOME}/.kyua/kyua.conf" <<EOF
 syntax("config", 1)
 test_suites.suite1["X-the-variable"] = "value1"
 test_suites.suite2["X-the-variable"] = "should not be used"
