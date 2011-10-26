@@ -148,6 +148,15 @@ ATF_TEST_CASE_BODY(timestamp__strftime)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(timestamp__timegm);
+ATF_TEST_CASE_BODY(timestamp__timegm)
+{
+    const datetime::timestamp ts1 = datetime::timestamp::from_values(
+        2010, 12, 10, 8, 45, 50);
+    ATF_REQUIRE_EQ(1291970750, ts1.timegm());
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, delta__defaults);
@@ -159,4 +168,5 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, timestamp__now__mock);
     ATF_ADD_TEST_CASE(tcs, timestamp__now__real);
     ATF_ADD_TEST_CASE(tcs, timestamp__strftime);
+    ATF_ADD_TEST_CASE(tcs, timestamp__timegm);
 }

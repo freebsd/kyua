@@ -214,6 +214,16 @@ datetime::timestamp::strftime(const std::string& format) const
 }
 
 
+/// Returns the number of seconds since the epoch in UTC.
+///
+/// \return A number of seconds.
+int64_t
+datetime::timestamp::timegm(void) const
+{
+    return ::timegm(&_pimpl->data);
+}
+
+
 /// Sets the current time for testing purposes.
 void
 datetime::set_mock_now(const int year, const int month,

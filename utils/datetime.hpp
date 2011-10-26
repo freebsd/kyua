@@ -32,6 +32,7 @@
 #if !defined(UTILS_DATETIME_HPP)
 #define UTILS_DATETIME_HPP
 
+#include <cstddef>
 #include <string>
 
 #include <tr1/memory>
@@ -74,6 +75,7 @@ public:
     static timestamp now(void);
 
     std::string strftime(const std::string&) const;
+    int64_t timegm(void) const;
 };
 
 
