@@ -26,14 +26,16 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-CLI_CFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS)
-CLI_LIBS = libcli.a $(ENGINE_LIBS) $(UTILS_LIBS)
+CLI_CFLAGS = $(ENGINE_CFLAGS) $(STORE_CFLAGS) $(UTILS_CFLAGS)
+CLI_LIBS = libcli.a $(ENGINE_LIBS) $(STORE_LIBS) $(UTILS_LIBS)
 
 noinst_LIBRARIES += libcli.a
 libcli_a_SOURCES  = cli/cmd_about.cpp
 libcli_a_SOURCES += cli/cmd_about.hpp
 libcli_a_SOURCES += cli/cmd_config.cpp
 libcli_a_SOURCES += cli/cmd_config.hpp
+libcli_a_SOURCES += cli/cmd_db_exec.cpp
+libcli_a_SOURCES += cli/cmd_db_exec.hpp
 libcli_a_SOURCES += cli/cmd_debug.cpp
 libcli_a_SOURCES += cli/cmd_debug.hpp
 libcli_a_SOURCES += cli/cmd_help.cpp
@@ -51,7 +53,7 @@ libcli_a_SOURCES += cli/main.cpp
 libcli_a_SOURCES += cli/main.hpp
 libcli_a_CPPFLAGS  = -DKYUA_CONFDIR="\"$(kyua_confdir)\""
 libcli_a_CPPFLAGS += -DKYUA_DOCDIR="\"$(docdir)\""
-libcli_a_CPPFLAGS += $(ENGINE_CFLAGS) $(UTILS_CFLAGS)
+libcli_a_CPPFLAGS += $(ENGINE_CFLAGS) $(STORE_CFLAGS) $(UTILS_CFLAGS)
 libcli_a_LIBADD = libutils.a
 
 tests_clidir = $(pkgtestsdir)/cli
@@ -75,6 +77,11 @@ tests_cli_PROGRAMS += cli/cmd_config_test
 cli_cmd_config_test_SOURCES = cli/cmd_config_test.cpp
 cli_cmd_config_test_CXXFLAGS = $(CLI_TESTS_CXXFLAGS)
 cli_cmd_config_test_LDADD = $(CLI_TESTS_LDADD)
+
+tests_cli_PROGRAMS += cli/cmd_db_exec_test
+cli_cmd_db_exec_test_SOURCES = cli/cmd_db_exec_test.cpp
+cli_cmd_db_exec_test_CXXFLAGS = $(CLI_TESTS_CXXFLAGS)
+cli_cmd_db_exec_test_LDADD = $(CLI_TESTS_LDADD)
 
 tests_cli_PROGRAMS += cli/cmd_debug_test
 cli_cmd_debug_test_SOURCES = cli/cmd_debug_test.cpp

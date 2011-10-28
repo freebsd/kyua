@@ -39,6 +39,8 @@
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.hpp"
 #include "utils/cmdline/ui.hpp"
+#include "utils/fs/path.hpp"
+#include "utils/optional.hpp"
 
 namespace utils {
 namespace fs {
@@ -58,6 +60,7 @@ namespace cli {
 
 
 extern const utils::cmdline::path_option kyuafile_option;
+extern const utils::cmdline::path_option store_option;
 extern const utils::cmdline::property_option variable_option;
 
 
@@ -74,7 +77,10 @@ typedef utils::cmdline::base_command< engine::user_files::config >
 typedef std::auto_ptr< cli_command > cli_command_ptr;
 
 
+utils::optional< utils::fs::path > get_home(void);
+
 utils::fs::path kyuafile_path(const utils::cmdline::parsed_cmdline&);
+utils::fs::path store_path(const utils::cmdline::parsed_cmdline&);
 
 std::set< engine::test_filter > parse_filters(
     const utils::cmdline::args_vector&);

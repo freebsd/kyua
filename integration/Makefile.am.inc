@@ -66,6 +66,14 @@ integration/cmd_config_test: $(srcdir)/integration/cmd_config_test.sh $(ATF_SH_D
 	@src="$(srcdir)/integration/cmd_config_test.sh"; \
 	dst="integration/cmd_config_test"; $(ATF_SH_BUILD)
 
+tests_integration_SCRIPTS += integration/cmd_db_exec_test
+CLEANFILES += integration/cmd_db_exec_test
+EXTRA_DIST += integration/cmd_db_exec_test.sh
+integration/cmd_db_exec_test: $(srcdir)/integration/cmd_db_exec_test.sh $(ATF_SH_DEPS)
+	test -d integration || mkdir -p integration
+	@src="$(srcdir)/integration/cmd_db_exec_test.sh"; \
+	dst="integration/cmd_db_exec_test"; $(ATF_SH_BUILD)
+
 tests_integration_SCRIPTS += integration/cmd_debug_test
 CLEANFILES += integration/cmd_debug_test
 EXTRA_DIST += integration/cmd_debug_test.sh

@@ -11,6 +11,9 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   ~/.kyua/kyua.conf for consistency with other files stored in the
   ~/.kyua/ subdirectory.
 
+* Added the db-exec command to directly interact with the store
+  database.
+
 
 Changes in version 0.2
 ======================

@@ -26,6 +26,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "cli/common.hpp"
 #include "cli/config.hpp"
 #include "engine/user_files/config.hpp"
 #include "utils/cmdline/parser.ipp"
@@ -41,7 +42,6 @@ namespace cmdline = utils::cmdline;
 namespace fs = utils::fs;
 namespace user_files = engine::user_files;
 
-using utils::none;
 using utils::optional;
 
 
@@ -70,27 +70,6 @@ static const std::string config_lookup_names =
     (fs::path(KYUA_CONFDIR) / config_basename).str();
 
 
-/// Gets the value of the HOME environment variable with path validation.
-///
-/// \return The value of the HOME environment variable if it is a valid path;
-///     none if it is not defined or if it contains an invalid path.
-static optional< fs::path >
-get_home(void)
-{
-    const optional< std::string > home = utils::getenv("HOME");
-    if (home) {
-        try {
-            return utils::make_optional(fs::path(home.get()));
-        } catch (const fs::error& e) {
-            LW(F("Invalid value '%s' in HOME environment variable: %s") %
-               home.get() % e.what());
-            return none;
-        }
-    } else
-        return none;
-}
-
-
 /// Loads the configuration file for this session, if any.
 ///
 /// This is a helper function that does not apply user-specified overrides.  See
@@ -115,7 +94,7 @@ load_config_file(const cmdline::parsed_cmdline& cmdline)
     } else if (filename.str() != cli::config_option.default_value())
         return user_files::config::load(filename);
 
-    const optional< fs::path > home = get_home();
+    const optional< fs::path > home = cli::get_home();
     if (home) {
         const fs::path path = home.get() / ".kyua" / config_basename;
         try {

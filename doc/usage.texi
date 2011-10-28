@@ -99,6 +99,7 @@ specific variable.
 Commands list
 * about command:: Details about the about command.
 * config command:: Details about the config command.
+* db-exec command:: Details about the db-exec command.
 * debug command:: Details about the debug command.
 * help command:: Details about the help command.
 * list command:: Details about the list command.
@@ -156,6 +157,36 @@ configuration variables and returns 0 for success.
 If any arguments are provided, the command will only print the
 requested variables.  If any particular variable is not defined, the
 command will return 1 for error.
+
+@node db-exec command
+@subsection The db-exec command
+
+@cindex @command{db-exec}
+
+The @command{db-exec} command provides a way to execute an arbitrary
+SQL statement within the database.  This command is mostly intended to
+aid in debugging, but can also be used to extract information from the
+database when the current interfaces do not provide the desired
+functionality.
+
+The @command{db-exec} command takes one or more arguments, all of
+which are concatenated to form a single SQL statement.  Once the
+staement is executed, @command{db-exec} will print the resulting table
+on the screen, if any.  The command returns 0 on success, or 1 if
+anything went wrong.
+
+The following subcommand options are recognized:
+
+@table @option
+@item --no-headers
+@cindex @option{--no-headers}, @command{db-exec}
+Avoids printing the headers of the table in the output of the command.
+
+@item --store=path
+@cindex @option{--store}, @command{db-exec}
+Specifies the database to use.  Defaults to @file{~/.kyua/store.db}.
+The database is created if it does not exist.
+@end table
 
 @node debug command
 @subsection The debug command

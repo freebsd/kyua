@@ -32,12 +32,20 @@
 #include "engine/filters.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.ipp"
+#include "utils/env.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/logging/macros.hpp"
+#include "utils/fs/exceptions.hpp"
+#include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/optional.ipp"
 
 namespace cmdline = utils::cmdline;
 namespace fs = utils::fs;
 namespace user_files = engine::user_files;
+
+using utils::none;
+using utils::optional;
 
 
 /// Standard definition of the option to specify a Kyuafile.
@@ -45,6 +53,34 @@ const cmdline::path_option cli::kyuafile_option(
     'k', "kyuafile",
     "Path to the test suite definition",
     "file", "Kyuafile");
+
+
+/// Standard definition of the option to specify the store.
+const cmdline::path_option cli::store_option(
+    's', "store",
+    "Path to the store database",
+    "file", "~/.kyua/store.db");
+
+
+/// Gets the value of the HOME environment variable with path validation.
+///
+/// \return The value of the HOME environment variable if it is a valid path;
+///     none if it is not defined or if it contains an invalid path.
+optional< fs::path >
+cli::get_home(void)
+{
+    const optional< std::string > home = utils::getenv("HOME");
+    if (home) {
+        try {
+            return utils::make_optional(fs::path(home.get()));
+        } catch (const fs::error& e) {
+            LW(F("Invalid value '%s' in HOME environment variable: %s") %
+               home.get() % e.what());
+            return none;
+        }
+    } else
+        return none;
+}
 
 
 /// Gets the path to the Kyuafile to be loaded.
@@ -59,6 +95,41 @@ cli::kyuafile_path(const cmdline::parsed_cmdline& cmdline)
 {
     return cmdline.get_option< cmdline::path_option >(
         kyuafile_option.long_name());
+}
+
+
+/// Gets the path to the store to be used.
+///
+/// This has the side-effect of creating the directory in which to store the
+/// database if and only if the path to the database matches the default value.
+/// When the user does not specify an override for the location of the database,
+/// he should not care about the directory existing.  Any of this is not a big
+/// deal though, because logs are also stored within ~/.kyua and thus we will
+/// most likely end up creating the directory anyway.
+///
+/// \param cmdline The parsed command line.
+///
+/// \return The path to the store to be used.
+///
+/// \throw fs::error If the creation of the directory fails.
+fs::path
+cli::store_path(const cmdline::parsed_cmdline& cmdline)
+{
+    fs::path store = cmdline.get_option< cmdline::path_option >(
+        store_option.long_name());
+    if (store == fs::path(store_option.default_value())) {
+        const optional< fs::path > home = cli::get_home();
+        if (home) {
+            store = home.get() / ".kyua/store.db";
+            fs::mkdir_p(store.branch_path(), 0777);
+        } else {
+            store = fs::path("kyua-store.db");
+            LW("HOME not defined; creating store database in current "
+               "directory");
+        }
+    }
+    LI(F("Store database set to: %s") % store);
+    return store;
 }
 
 
