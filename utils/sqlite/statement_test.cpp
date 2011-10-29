@@ -78,6 +78,30 @@ ATF_TEST_CASE_BODY(step__fail)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(step_without_results__ok);
+ATF_TEST_CASE_BODY(step_without_results__ok)
+{
+    sqlite::database db = sqlite::database::in_memory();
+    sqlite::statement stmt = db.create_statement(
+        "CREATE TABLE foo (a INTEGER PRIMARY KEY)");
+    ATF_REQUIRE_THROW(sqlite::error, db.exec("SELECT * FROM foo"));
+    stmt.step_without_results();
+    db.exec("SELECT * FROM foo");
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(step_without_results__fail);
+ATF_TEST_CASE_BODY(step_without_results__fail)
+{
+    sqlite::database db = sqlite::database::in_memory();
+    db.exec("CREATE TABLE foo (a INTEGER PRIMARY KEY)");
+    db.exec("INSERT INTO foo VALUES (3)");
+    sqlite::statement stmt = db.create_statement(
+        "INSERT INTO foo VALUES (3)");
+    REQUIRE_API_ERROR("sqlite3_step", stmt.step_without_results());
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(column_count);
 ATF_TEST_CASE_BODY(column_count)
 {
@@ -573,6 +597,9 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, step__ok);
     ATF_ADD_TEST_CASE(tcs, step__many);
     ATF_ADD_TEST_CASE(tcs, step__fail);
+
+    ATF_ADD_TEST_CASE(tcs, step_without_results__ok);
+    ATF_ADD_TEST_CASE(tcs, step_without_results__fail);
 
     ATF_ADD_TEST_CASE(tcs, column_count);
 

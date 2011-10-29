@@ -71,6 +71,7 @@ public:
     ~statement(void);
 
     bool step(void);
+    void step_without_results(void);
 
     int column_count(void);
     std::string column_name(const int);

@@ -158,6 +158,22 @@ sqlite::statement::~statement(void)
 }
 
 
+/// Executes a statement that is not supposed to return any data.
+///
+/// Use this function to execute DDL and INSERT statements; i.e. statements that
+/// only have one processing step and deliver no rows.  This frees the caller
+/// from having to deal with the return value of the step() function.
+///
+/// \pre The statement to execute will not produce any rows.
+void
+sqlite::statement::step_without_results(void)
+{
+    const bool data = step();
+    INV_MSG(!data, "The statement should not have produced any rows, but it "
+            "did");
+}
+
+
 /// Performs a processing step on the statement.
 ///
 /// \return True if the statement returned a row; false if the processing has
