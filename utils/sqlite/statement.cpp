@@ -500,15 +500,18 @@ sqlite::statement::bind_null(const char* name)
 /// Binds a text string to a prepared statement.
 ///
 /// \param index The index of the binding.
-/// \param text The string to bind.  Must remain valid during the execution of
-///     the statement.
+/// \param text The string to bind.  SQLite generates an internal copy of this
+///     string, so the original string object does not have to remain live.  We
+///     do this because handling the lifetime of std::string objects is very
+///     hard (think about implicit conversions), so it is very easy to shoot
+///     ourselves in the foot if we don't do this.
 ///
 /// \throw api_error If the binding fails.
 void
 sqlite::statement::bind_text(const int index, const std::string& text)
 {
     const int error = ::sqlite3_bind_text(_pimpl->stmt, index, text.c_str(),
-                                          text.length(), SQLITE_STATIC);
+                                          text.length(), SQLITE_TRANSIENT);
     handle_bind_error(_pimpl->db, "sqlite3_bind_text", error);
 }
 

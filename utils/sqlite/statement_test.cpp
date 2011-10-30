@@ -539,6 +539,26 @@ ATF_TEST_CASE_BODY(bind_text__by_name)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(bind_text__transient);
+ATF_TEST_CASE_BODY(bind_text__transient)
+{
+    sqlite::database db = sqlite::database::in_memory();
+    sqlite::statement stmt = db.create_statement("SELECT 3, :foo");
+
+    {
+        const std::string str = "Hello";
+        stmt.bind_text(":foo", str);
+    }
+
+    ATF_REQUIRE(stmt.step());
+    ATF_REQUIRE(sqlite::type_integer == stmt.column_type(0));
+    ATF_REQUIRE_EQ(3, stmt.column_int(0));
+    ATF_REQUIRE(sqlite::type_text == stmt.column_type(1));
+    ATF_REQUIRE_EQ(std::string("Hello"), stmt.column_text(1));
+    ATF_REQUIRE(!stmt.step());
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(bind_parameter_count);
 ATF_TEST_CASE_BODY(bind_parameter_count)
 {
@@ -636,6 +656,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, bind_null__by_name);
     ATF_ADD_TEST_CASE(tcs, bind_text__by_index);
     ATF_ADD_TEST_CASE(tcs, bind_text__by_name);
+    ATF_ADD_TEST_CASE(tcs, bind_text__transient);
 
     ATF_ADD_TEST_CASE(tcs, bind_parameter_count);
     ATF_ADD_TEST_CASE(tcs, bind_parameter_index);
