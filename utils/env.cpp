@@ -44,6 +44,32 @@ using utils::none;
 using utils::optional;
 
 
+extern "C" {
+    extern char** environ;
+}
+
+
+/// Gets all environment variables.
+///
+/// \return A mapping of (name, value) pairs describing the environment
+/// variables.
+std::map< std::string, std::string >
+utils::getallenv(void)
+{
+    std::map< std::string, std::string > allenv;
+    for (char** envp = environ; *envp != NULL; envp++) {
+        const std::string oneenv = *envp;
+        const std::string::size_type pos = oneenv.find('=');
+        const std::string name = oneenv.substr(0, pos);
+        const std::string value = oneenv.substr(pos + 1);
+
+        PRE(allenv.find(name) == allenv.end());
+        allenv[name] = value;
+    }
+    return allenv;
+}
+
+
 /// Gets the value of an environment variable.
 ///
 /// \param name The name of the environment variable to query.

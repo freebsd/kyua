@@ -34,6 +34,44 @@
 using utils::optional;
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(getallenv);
+ATF_TEST_CASE_BODY(getallenv)
+{
+    utils::unsetenv("test-missing");
+    utils::setenv("test-empty", "");
+    utils::setenv("test-text", "some-value");
+
+    const std::map< std::string, std::string > allenv = utils::getallenv();
+
+    {
+        const std::map< std::string, std::string >::const_iterator iter =
+            allenv.find("test-missing");
+        ATF_REQUIRE(iter == allenv.end());
+    }
+
+    {
+        const std::map< std::string, std::string >::const_iterator iter =
+            allenv.find("test-empty");
+        ATF_REQUIRE(iter != allenv.end());
+        ATF_REQUIRE((*iter).second.empty());
+    }
+
+    {
+        const std::map< std::string, std::string >::const_iterator iter =
+            allenv.find("test-text");
+        ATF_REQUIRE(iter != allenv.end());
+        ATF_REQUIRE_EQ("some-value", (*iter).second);
+    }
+
+    if (utils::getenv("PATH")) {
+        const std::map< std::string, std::string >::const_iterator iter =
+            allenv.find("PATH");
+        ATF_REQUIRE(iter != allenv.end());
+        ATF_REQUIRE_EQ(utils::getenv("PATH").get(), (*iter).second);
+    }
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(getenv);
 ATF_TEST_CASE_BODY(getenv)
 {
@@ -82,6 +120,7 @@ ATF_TEST_CASE_BODY(unsetenv)
 
 ATF_INIT_TEST_CASES(tcs)
 {
+    ATF_ADD_TEST_CASE(tcs, getallenv);
     ATF_ADD_TEST_CASE(tcs, getenv);
     ATF_ADD_TEST_CASE(tcs, getenv_with_default);
     ATF_ADD_TEST_CASE(tcs, setenv);

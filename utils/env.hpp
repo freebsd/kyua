@@ -36,6 +36,7 @@
 #if !defined(UTILS_ENV_HPP)
 #define UTILS_ENV_HPP
 
+#include <map>
 #include <string>
 
 #include "utils/optional.hpp"
@@ -43,6 +44,7 @@
 namespace utils {
 
 
+std::map< std::string, std::string > getallenv(void);
 optional< std::string > getenv(const std::string&);
 std::string getenv_with_default(const std::string&, const std::string&);
 void setenv(const std::string&, const std::string&);
