@@ -125,9 +125,9 @@ ATF_TEST_CASE_BODY(put__action__ok)
     const engine::action action3(context1);
     tx.put(context1);
     tx.put(context2);
-    tx.put(action1);
-    tx.put(action3);
-    tx.put(action2);
+    ATF_REQUIRE_EQ(1, tx.put(action1));
+    ATF_REQUIRE_EQ(2, tx.put(action3));
+    ATF_REQUIRE_EQ(3, tx.put(action2));
     tx.commit();
 
     // TODO(jmmv): These tests are too simplistic.  We should probably combine
@@ -181,9 +181,9 @@ ATF_TEST_CASE_BODY(put__context__ok)
     const engine::context context1(fs::path("/foo/bar"), env1);
     const engine::context context2(fs::path("/foo/bar"), env1);
     const engine::context context3(fs::path("/foo/baz"), env2);
-    tx.put(context1);
-    tx.put(context3);
-    tx.put(context2);
+    ATF_REQUIRE_EQ(1, tx.put(context1));
+    ATF_REQUIRE_EQ(2, tx.put(context3));
+    ATF_REQUIRE_EQ(3, tx.put(context2));
     tx.commit();
 
     // TODO(jmmv): These tests are too simplistic.  We should probably combine

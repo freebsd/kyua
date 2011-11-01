@@ -267,8 +267,10 @@ store::transaction::rollback(void)
 ///
 /// \param action The action to put.
 ///
+/// \return The identifier of the inserted action.
+///
 /// \throw error If there is any problem when talking to the database.
-void
+int64_t
 store::transaction::put(const engine::action& action)
 {
     const optional< int64_t > oid = _pimpl->find_oid(action);
@@ -282,8 +284,10 @@ store::transaction::put(const engine::action& action)
             "INSERT INTO actions (context_id) VALUES (:context_id)");
         stmt.bind_int64(":context_id", context_id.get());
         stmt.step_without_results();
+        const int64_t action_id = _pimpl->_db.last_insert_rowid();
 
-        _pimpl->insert_oid(action, _pimpl->_db.last_insert_rowid());
+        _pimpl->insert_oid(action, action_id);
+        return action_id;
     } catch (const sqlite::error& e) {
         throw error(e.what());
     }
@@ -297,8 +301,10 @@ store::transaction::put(const engine::action& action)
 ///
 /// \param context The context to put.
 ///
+/// \return The identifier of the inserted context.
+///
 /// \throw error If there is any problem when talking to the database.
-void
+int64_t
 store::transaction::put(const engine::context& context)
 {
     const optional< int64_t > oid = _pimpl->find_oid(context);
@@ -314,6 +320,7 @@ store::transaction::put(const engine::context& context)
         put_env_vars(_pimpl->_db, context_id, context.env());
 
         _pimpl->insert_oid(context, context_id);
+        return context_id;
     } catch (const sqlite::error& e) {
         throw error(e.what());
     }
