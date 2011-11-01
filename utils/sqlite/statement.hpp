@@ -82,7 +82,7 @@ public:
     double column_double(const int);
     int column_int(const int);
     int64_t column_int64(const int);
-    const char* column_text(const int);
+    std::string column_text(const int);
     int column_bytes(const int);
 
     void reset(void);

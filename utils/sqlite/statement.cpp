@@ -325,7 +325,7 @@ sqlite::statement::column_int64(const int index)
 /// this call will be invalidated on the next call to any SQLite API function.
 /// If you want to be extra safe, store the result in a std::string to not worry
 /// about this.
-const char*
+std::string
 sqlite::statement::column_text(const int index)
 {
     PRE(column_type(index) == type_text);
