@@ -26,66 +26,51 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file store/backend.hpp
-/// Interface to the backend database.
+/// \file store/transaction.hpp
+/// Implementation of transactions on the backend.
 
-#if !defined(STORE_BACKEND_HPP)
-#define STORE_BACKEND_HPP
+#if !defined(STORE_TRANSACTION_HPP)
+#define STORE_TRANSACTION_HPP
+
+extern "C" {
+#include <stdint.h>
+}
 
 #include <tr1/memory>
 
-namespace utils {
-namespace fs {
-class path;
-}  // namespace fs
-namespace sqlite {
-class database;
-}  // namespace sqlite
-}  // namespace utils
+namespace engine {
+class action;
+class context;
+};
 
 namespace store {
 
 
-class metadata;
+class backend;
 
 
-namespace detail {
-
-
-extern const int current_schema_version;
-extern const utils::fs::path schema_file;
-
-
-metadata initialize(utils::sqlite::database&,
-                    const utils::fs::path& = schema_file);
-
-
-}  // anonymous namespace
-
-
-class transaction;
-
-
-/// Public interface to the database store.
-class backend {
+/// Representation of a transaction.
+///
+/// Transactions are the entry place for high-level calls that access the
+/// database.
+class transaction {
     struct impl;
     std::tr1::shared_ptr< impl > _pimpl;
 
-    friend class metadata;
-
-    backend(impl*);
+    friend class backend;
+    transaction(backend&);
 
 public:
-    ~backend(void);
+    ~transaction(void);
 
-    static backend open_ro(const utils::fs::path&);
-    static backend open_rw(const utils::fs::path&);
+    void commit(void);
+    void rollback(void);
 
-    utils::sqlite::database& database(void);
-    transaction start(void);
+    void put(const engine::action&);
+    void put(const engine::context&);
 };
 
 
 }  // namespace store
 
-#endif  // !defined(STORE_BACKEND_HPP)
+#endif  // !defined(STORE_TRANSACTION_HPP)

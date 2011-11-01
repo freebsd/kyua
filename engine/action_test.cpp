@@ -26,66 +26,42 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file store/backend.hpp
-/// Interface to the backend database.
+#include <atf-c++.hpp>
 
-#if !defined(STORE_BACKEND_HPP)
-#define STORE_BACKEND_HPP
+#include "engine/action.hpp"
+#include "engine/context.hpp"
+#include "utils/fs/path.hpp"
 
-#include <tr1/memory>
-
-namespace utils {
-namespace fs {
-class path;
-}  // namespace fs
-namespace sqlite {
-class database;
-}  // namespace sqlite
-}  // namespace utils
-
-namespace store {
+namespace fs = utils::fs;
 
 
-class metadata;
+ATF_TEST_CASE_WITHOUT_HEAD(ctor_and_getters);
+ATF_TEST_CASE_BODY(ctor_and_getters)
+{
+    const engine::context context(fs::path("/foo/bar"));
+    const engine::action action(context);
+    ATF_REQUIRE(context.unique_address() == action.context().unique_address());
+}
 
 
-namespace detail {
+ATF_TEST_CASE_WITHOUT_HEAD(unique_address);
+ATF_TEST_CASE_BODY(unique_address)
+{
+    const engine::context context(fs::path("/foo/bar"));
+    const engine::action action1(context);
+    {
+        const engine::action action2 = action1;
+        const engine::action action3(context);
+        ATF_REQUIRE(action1.unique_address() == action2.unique_address());
+        ATF_REQUIRE(action1.unique_address() != action3.unique_address());
+        ATF_REQUIRE(action2.unique_address() != action3.unique_address());
+    }
+    ATF_REQUIRE(action1.unique_address() == action1.unique_address());
+}
 
 
-extern const int current_schema_version;
-extern const utils::fs::path schema_file;
-
-
-metadata initialize(utils::sqlite::database&,
-                    const utils::fs::path& = schema_file);
-
-
-}  // anonymous namespace
-
-
-class transaction;
-
-
-/// Public interface to the database store.
-class backend {
-    struct impl;
-    std::tr1::shared_ptr< impl > _pimpl;
-
-    friend class metadata;
-
-    backend(impl*);
-
-public:
-    ~backend(void);
-
-    static backend open_ro(const utils::fs::path&);
-    static backend open_rw(const utils::fs::path&);
-
-    utils::sqlite::database& database(void);
-    transaction start(void);
-};
-
-
-}  // namespace store
-
-#endif  // !defined(STORE_BACKEND_HPP)
+ATF_INIT_TEST_CASES(tcs)
+{
+    ATF_ADD_TEST_CASE(tcs, ctor_and_getters);
+    ATF_ADD_TEST_CASE(tcs, unique_address);
+}

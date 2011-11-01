@@ -26,66 +26,61 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file store/backend.hpp
-/// Interface to the backend database.
+#include "engine/action.hpp"
+#include "engine/context.hpp"
 
-#if !defined(STORE_BACKEND_HPP)
-#define STORE_BACKEND_HPP
-
-#include <tr1/memory>
-
-namespace utils {
-namespace fs {
-class path;
-}  // namespace fs
-namespace sqlite {
-class database;
-}  // namespace sqlite
-}  // namespace utils
-
-namespace store {
+namespace fs = utils::fs;
 
 
-class metadata;
+/// Internal implementation of an action.
+struct engine::action::impl {
+    /// The runtime context of the action.
+    const engine::context& _context;
 
-
-namespace detail {
-
-
-extern const int current_schema_version;
-extern const utils::fs::path schema_file;
-
-
-metadata initialize(utils::sqlite::database&,
-                    const utils::fs::path& = schema_file);
-
-
-}  // anonymous namespace
-
-
-class transaction;
-
-
-/// Public interface to the database store.
-class backend {
-    struct impl;
-    std::tr1::shared_ptr< impl > _pimpl;
-
-    friend class metadata;
-
-    backend(impl*);
-
-public:
-    ~backend(void);
-
-    static backend open_ro(const utils::fs::path&);
-    static backend open_rw(const utils::fs::path&);
-
-    utils::sqlite::database& database(void);
-    transaction start(void);
+    /// Constructor.
+    ///
+    /// \param context_ The runtime context.
+    impl(const engine::context& context_) :
+        _context(context_)
+    {
+    }
 };
 
 
-}  // namespace store
+/// Constructs a new action.
+///
+/// \param context_ The runtime context in which the action runs.
+engine::action::action(const engine::context& context_) :
+    _pimpl(new impl(context_))
+{
+}
 
-#endif  // !defined(STORE_BACKEND_HPP)
+
+/// Destructor.
+engine::action::~action(void)
+{
+}
+
+
+/// Returns a unique memory address for this action.
+///
+/// Remember that action objects are shallowly copied; therefore, it is possible
+/// for two distinct variables of a context to return the same unique internal
+/// address (which is perfectly okay).
+///
+/// \return The uniquely-identifying address for this action.
+intptr_t
+engine::action::unique_address(void) const
+{
+    return reinterpret_cast< intptr_t >(_pimpl.get());
+}
+
+
+/// Returns the context attached to this action.
+///
+/// \return A reference to the context.
+const engine::context&
+engine::action::context(void) const
+{
+    return _pimpl->_context;
+}

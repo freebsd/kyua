@@ -31,13 +31,13 @@
 #include "store/backend.hpp"
 #include "store/exceptions.hpp"
 #include "store/metadata.hpp"
+#include "store/transaction.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/sanity.hpp"
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/exceptions.hpp"
 #include "utils/sqlite/statement.hpp"
-#include "utils/sqlite/transaction.hpp"
 
 namespace fs = utils::fs;
 namespace sqlite = utils::sqlite;
@@ -264,4 +264,14 @@ sqlite::database&
 store::backend::database(void)
 {
     return _pimpl->database;
+}
+
+
+/// Opens a transaction.
+///
+/// \return A new transaction.
+store::transaction
+store::backend::start(void)
+{
+    return transaction(*this);
 }

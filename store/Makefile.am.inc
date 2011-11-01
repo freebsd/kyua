@@ -37,6 +37,8 @@ libstore_a_SOURCES += store/exceptions.cpp
 libstore_a_SOURCES += store/exceptions.hpp
 libstore_a_SOURCES += store/metadata.cpp
 libstore_a_SOURCES += store/metadata.hpp
+libstore_a_SOURCES += store/transaction.cpp
+libstore_a_SOURCES += store/transaction.hpp
 
 storedir = $(pkgdatadir)/store
 dist_store_DATA = store/schema.sql
@@ -48,17 +50,28 @@ EXTRA_DIST += $(tests_store_DATA)
 
 tests_store_PROGRAMS = store/backend_test
 store_backend_test_SOURCES = store/backend_test.cpp
-store_backend_test_CXXFLAGS = $(STORE_CFLAGS) $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-store_backend_test_LDADD = $(STORE_LIBS) $(UTILS_LIBS) $(ATF_CXX_LIBS)
+store_backend_test_CXXFLAGS = $(ENGINE_CFLAGS) $(STORE_CFLAGS) \
+                              $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+store_backend_test_LDADD = $(ENGINE_LIBS) $(STORE_LIBS) \
+                           $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_store_PROGRAMS += store/exceptions_test
 store_exceptions_test_SOURCES = store/exceptions_test.cpp
-store_exceptions_test_CXXFLAGS = $(STORE_CFLAGS) $(UTILS_CFLAGS) \
-                                 $(ATF_CXX_CFLAGS)
-store_exceptions_test_LDADD = $(STORE_LIBS) $(UTILS_LIBS) \
-                              $(ATF_CXX_LIBS)
+store_exceptions_test_CXXFLAGS = $(ENGINE_CFLAGS) $(STORE_CFLAGS) \
+                                 $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+store_exceptions_test_LDADD = $(ENGINE_LIBS) $(STORE_LIBS) \
+                              $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_store_PROGRAMS += store/metadata_test
 store_metadata_test_SOURCES = store/metadata_test.cpp
-store_metadata_test_CXXFLAGS = $(STORE_CFLAGS) $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-store_metadata_test_LDADD = $(STORE_LIBS) $(UTILS_LIBS) $(ATF_CXX_LIBS)
+store_metadata_test_CXXFLAGS = $(ENGINE_CFLAGS) $(STORE_CFLAGS) \
+                               $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+store_metadata_test_LDADD = $(ENGINE_LIBS) $(STORE_LIBS) \
+                            $(UTILS_LIBS) $(ATF_CXX_LIBS)
+
+tests_store_PROGRAMS += store/transaction_test
+store_transaction_test_SOURCES = store/transaction_test.cpp
+store_transaction_test_CXXFLAGS = $(ENGINE_CFLAGS) $(STORE_CFLAGS) \
+                                  $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+store_transaction_test_LDADD = $(ENGINE_LIBS) $(STORE_LIBS) \
+                               $(UTILS_LIBS) $(ATF_CXX_LIBS)

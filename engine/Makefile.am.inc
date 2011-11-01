@@ -26,12 +26,16 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-ENGINE_CFLAGS = $(UTILS_CFLAGS)
-ENGINE_LIBS = libengine.a $(UTILS_LIBS)
+ENGINE_CFLAGS = $(STORE_CFLAGS) $(UTILS_CFLAGS)
+ENGINE_LIBS = libengine.a $(STORE_LIBS) $(UTILS_LIBS)
 
 noinst_LIBRARIES += libengine.a
 libengine_a_CPPFLAGS = $(UTILS_CFLAGS)
-libengine_a_SOURCES  = engine/exceptions.cpp
+libengine_a_SOURCES  = engine/action.cpp
+libengine_a_SOURCES += engine/action.hpp
+libengine_a_SOURCES += engine/context.cpp
+libengine_a_SOURCES += engine/context.hpp
+libengine_a_SOURCES += engine/exceptions.cpp
 libengine_a_SOURCES += engine/exceptions.hpp
 libengine_a_SOURCES += engine/filters.cpp
 libengine_a_SOURCES += engine/filters.hpp
@@ -51,7 +55,18 @@ tests_enginedir = $(pkgtestsdir)/engine
 tests_engine_DATA = engine/Atffile engine/Kyuafile
 EXTRA_DIST += $(tests_engine_DATA)
 
-tests_engine_PROGRAMS = engine/exceptions_test
+tests_engine_PROGRAMS = engine/action_test
+engine_action_test_SOURCES = engine/action_test.cpp
+engine_action_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+engine_action_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) $(ATF_CXX_LIBS)
+
+tests_engine_PROGRAMS += engine/context_test
+engine_context_test_SOURCES = engine/context_test.cpp
+engine_context_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
+                               $(ATF_CXX_CFLAGS)
+engine_context_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) $(ATF_CXX_LIBS)
+
+tests_engine_PROGRAMS += engine/exceptions_test
 engine_exceptions_test_SOURCES = engine/exceptions_test.cpp
 engine_exceptions_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
                                   $(ATF_CXX_CFLAGS)

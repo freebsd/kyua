@@ -26,66 +26,43 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file store/backend.hpp
-/// Interface to the backend database.
+/// \file engine/context.hpp
+/// Representation of runtime contexts.
 
-#if !defined(STORE_BACKEND_HPP)
-#define STORE_BACKEND_HPP
+#if !defined(ENGINE_CONTEXT_HPP)
+#define ENGINE_CONTEXT_HPP
+
+extern "C" {
+#include <stdint.h>
+}
 
 #include <tr1/memory>
 
-namespace utils {
-namespace fs {
-class path;
-}  // namespace fs
-namespace sqlite {
-class database;
-}  // namespace sqlite
-}  // namespace utils
+#include "utils/fs/path.hpp"
 
-namespace store {
+namespace engine {
 
 
-class metadata;
-
-
-namespace detail {
-
-
-extern const int current_schema_version;
-extern const utils::fs::path schema_file;
-
-
-metadata initialize(utils::sqlite::database&,
-                    const utils::fs::path& = schema_file);
-
-
-}  // anonymous namespace
-
-
-class transaction;
-
-
-/// Public interface to the database store.
-class backend {
+/// Representation of a runtime context.
+///
+/// The instances of this class are unique (i.e. copying the objects only yields
+/// a shallow copy that shares the same internal implementation).  This is a
+/// requirement for the 'store' API model.
+class context {
     struct impl;
     std::tr1::shared_ptr< impl > _pimpl;
 
-    friend class metadata;
-
-    backend(impl*);
-
 public:
-    ~backend(void);
+    explicit context(const utils::fs::path&);
+    ~context(void);
+    static context current(void);
 
-    static backend open_ro(const utils::fs::path&);
-    static backend open_rw(const utils::fs::path&);
+    intptr_t unique_address(void) const;
 
-    utils::sqlite::database& database(void);
-    transaction start(void);
+    const utils::fs::path& cwd(void) const;
 };
 
 
-}  // namespace store
+}  // namespace engine
 
-#endif  // !defined(STORE_BACKEND_HPP)
+#endif  // !defined(ENGINE_CONTEXT_HPP)

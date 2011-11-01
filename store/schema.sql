@@ -62,6 +62,40 @@ CREATE TABLE metadata (
 
 
 -- -------------------------------------------------------------------------
+-- Contexts.
+-- -------------------------------------------------------------------------
+
+
+-- Execution contexts.
+--
+-- A context represents the execution environment of a particular action.
+-- Because every action is invoked by the user, the context may have
+-- changed.  We record such information for information and debugging
+-- purposes.
+CREATE TABLE contexts (
+    context_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    cwd TEXT NOT NULL
+);
+
+
+-- -------------------------------------------------------------------------
+-- Actions.
+-- -------------------------------------------------------------------------
+
+
+-- Representation of user-initiated actions.
+--
+-- An action is an operation initiated by the user.  At the moment, the
+-- only operation Kyua supports is the "test" operation (in the future we
+-- should be able to store, e.g. build logs).  To keep things simple the
+-- database schema is restricted to represent one single action.
+CREATE TABLE actions (
+    action_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    context_id INTEGER REFERENCES contexts
+);
+
+
+-- -------------------------------------------------------------------------
 -- Initialization of values.
 -- -------------------------------------------------------------------------
 

@@ -2,7 +2,9 @@ Content-Type: application/X-atf-atffile; version="1"
 
 prop: test-suite = kyua
 
+tp: action_test
 tp: atf_iface
+tp: context_test
 tp: drivers
 tp: exceptions_test
 tp: filters_test

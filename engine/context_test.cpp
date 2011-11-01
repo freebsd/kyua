@@ -26,66 +26,49 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file store/backend.hpp
-/// Interface to the backend database.
+#include <atf-c++.hpp>
 
-#if !defined(STORE_BACKEND_HPP)
-#define STORE_BACKEND_HPP
+#include "engine/context.hpp"
+#include "utils/fs/operations.hpp"
+#include "utils/fs/path.hpp"
 
-#include <tr1/memory>
-
-namespace utils {
-namespace fs {
-class path;
-}  // namespace fs
-namespace sqlite {
-class database;
-}  // namespace sqlite
-}  // namespace utils
-
-namespace store {
+namespace fs = utils::fs;
 
 
-class metadata;
+ATF_TEST_CASE_WITHOUT_HEAD(ctor_and_getters);
+ATF_TEST_CASE_BODY(ctor_and_getters)
+{
+    const engine::context context(fs::path("/foo/bar"));
+    ATF_REQUIRE_EQ(fs::path("/foo/bar"), context.cwd());
+}
 
 
-namespace detail {
+ATF_TEST_CASE_WITHOUT_HEAD(current);
+ATF_TEST_CASE_BODY(current)
+{
+    const engine::context context = engine::context::current();
+    ATF_REQUIRE_EQ(fs::current_path(), context.cwd());
+}
 
 
-extern const int current_schema_version;
-extern const utils::fs::path schema_file;
+ATF_TEST_CASE_WITHOUT_HEAD(unique_address);
+ATF_TEST_CASE_BODY(unique_address)
+{
+    const engine::context context1(fs::path("/foo/bar"));
+    {
+        const engine::context context2 = context1;
+        const engine::context context3(fs::path("/foo/bar"));
+        ATF_REQUIRE(context1.unique_address() == context2.unique_address());
+        ATF_REQUIRE(context1.unique_address() != context3.unique_address());
+        ATF_REQUIRE(context2.unique_address() != context3.unique_address());
+    }
+    ATF_REQUIRE(context1.unique_address() == context1.unique_address());
+}
 
 
-metadata initialize(utils::sqlite::database&,
-                    const utils::fs::path& = schema_file);
-
-
-}  // anonymous namespace
-
-
-class transaction;
-
-
-/// Public interface to the database store.
-class backend {
-    struct impl;
-    std::tr1::shared_ptr< impl > _pimpl;
-
-    friend class metadata;
-
-    backend(impl*);
-
-public:
-    ~backend(void);
-
-    static backend open_ro(const utils::fs::path&);
-    static backend open_rw(const utils::fs::path&);
-
-    utils::sqlite::database& database(void);
-    transaction start(void);
-};
-
-
-}  // namespace store
-
-#endif  // !defined(STORE_BACKEND_HPP)
+ATF_INIT_TEST_CASES(tcs)
+{
+    ATF_ADD_TEST_CASE(tcs, ctor_and_getters);
+    ATF_ADD_TEST_CASE(tcs, current);
+    ATF_ADD_TEST_CASE(tcs, unique_address);
+}

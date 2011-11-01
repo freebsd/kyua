@@ -26,66 +26,69 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file store/backend.hpp
-/// Interface to the backend database.
+#include "engine/context.hpp"
+#include "utils/fs/operations.hpp"
 
-#if !defined(STORE_BACKEND_HPP)
-#define STORE_BACKEND_HPP
-
-#include <tr1/memory>
-
-namespace utils {
-namespace fs {
-class path;
-}  // namespace fs
-namespace sqlite {
-class database;
-}  // namespace sqlite
-}  // namespace utils
-
-namespace store {
+namespace fs = utils::fs;
 
 
-class metadata;
+/// Internal implementation of a context.
+struct engine::context::impl {
+    /// The current working directory.
+    fs::path _cwd;
 
-
-namespace detail {
-
-
-extern const int current_schema_version;
-extern const utils::fs::path schema_file;
-
-
-metadata initialize(utils::sqlite::database&,
-                    const utils::fs::path& = schema_file);
-
-
-}  // anonymous namespace
-
-
-class transaction;
-
-
-/// Public interface to the database store.
-class backend {
-    struct impl;
-    std::tr1::shared_ptr< impl > _pimpl;
-
-    friend class metadata;
-
-    backend(impl*);
-
-public:
-    ~backend(void);
-
-    static backend open_ro(const utils::fs::path&);
-    static backend open_rw(const utils::fs::path&);
-
-    utils::sqlite::database& database(void);
-    transaction start(void);
+    /// Constructor.
+    ///
+    /// \param cwd_ The current working directory.
+    impl(const fs::path& cwd_) :
+        _cwd(cwd_)
+    {
+    }
 };
 
 
-}  // namespace store
+/// Constructs a new context.
+///
+/// \param cwd_ The current working directory.
+engine::context::context(const fs::path& cwd_) :
+    _pimpl(new impl(cwd_))
+{
+}
 
-#endif  // !defined(STORE_BACKEND_HPP)
+
+/// Destructor.
+engine::context::~context(void)
+{
+}
+
+
+/// Constructs a new context based on the current environment.
+engine::context
+engine::context::current(void)
+{
+    return context(fs::current_path());
+}
+
+
+/// Returns a unique memory address for this context.
+///
+/// Remember that context objects are shallowly copied; therefore, it is
+/// possible for two distinct variables of a context to return the same unique
+/// internal address (which is perfectly okay).
+///
+/// \return The uniquely-identifying address for this context.
+intptr_t
+engine::context::unique_address(void) const
+{
+    return reinterpret_cast< intptr_t >(_pimpl.get());
+}
+
+
+/// Returns the current working directory of the context.
+///
+/// \return A path.
+const fs::path&
+engine::context::cwd(void) const
+{
+    return _pimpl->_cwd;
+}

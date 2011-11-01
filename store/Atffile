@@ -5,3 +5,4 @@ prop: test-suite = kyua
 tp: backend_test
 tp: exceptions_test
 tp: metadata_test
+tp: transaction_test
