@@ -26,7 +26,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <map>
 #include <set>
+#include <string>
 
 #include <atf-c++.hpp>
 
@@ -68,7 +70,8 @@ ATF_TEST_CASE_HEAD(commit__fail)
 ATF_TEST_CASE_BODY(commit__fail)
 {
     store::backend backend = store::backend::open_rw(fs::path("test.db"));
-    const engine::context context(fs::path("/foo/bar"));
+    const engine::context context(fs::path("/foo/bar"),
+                                  std::map< std::string, std::string >());
     {
         store::transaction tx = backend.start();
         tx.put(context);
@@ -113,8 +116,10 @@ ATF_TEST_CASE_BODY(put__action__ok)
 {
     store::backend backend = store::backend::open_rw(fs::path("test.db"));
     store::transaction tx = backend.start();
-    const engine::context context1(fs::path("/foo/bar"));
-    const engine::context context2(fs::path("/foo/baz"));
+    const engine::context context1(fs::path("/foo/bar"),
+                                   std::map< std::string, std::string >());
+    const engine::context context2(fs::path("/foo/baz"),
+                                   std::map< std::string, std::string >());
     const engine::action action1(context1);
     const engine::action action2(context2);
     const engine::action action3(context1);
@@ -149,7 +154,8 @@ ATF_TEST_CASE_BODY(put__action__fail)
 {
     store::backend backend = store::backend::open_rw(fs::path("test.db"));
     store::transaction tx = backend.start();
-    const engine::context context(fs::path("/foo/bar"));
+    const engine::context context(fs::path("/foo/bar"),
+                                  std::map< std::string, std::string >());
     tx.put(context);
     const engine::action action(context);
     backend.database().exec("DROP TABLE actions");
@@ -167,9 +173,14 @@ ATF_TEST_CASE_BODY(put__context__ok)
 {
     store::backend backend = store::backend::open_rw(fs::path("test.db"));
     store::transaction tx = backend.start();
-    const engine::context context1(fs::path("/foo/bar"));
-    const engine::context context2(fs::path("/foo/bar"));
-    const engine::context context3(fs::path("/foo/baz"));
+    std::map< std::string, std::string > env1;
+    env1["A1"] = "foo";
+    env1["A2"] = "bar";
+    std::map< std::string, std::string > env2;
+    env2["A1"] = "not foo";
+    const engine::context context1(fs::path("/foo/bar"), env1);
+    const engine::context context2(fs::path("/foo/bar"), env1);
+    const engine::context context3(fs::path("/foo/baz"), env2);
     tx.put(context1);
     tx.put(context3);
     tx.put(context2);
@@ -179,13 +190,33 @@ ATF_TEST_CASE_BODY(put__context__ok)
     // the get/put tests, but to do so, we need to wait until the get
     // functionality is implemented.
     sqlite::statement stmt = backend.database().create_statement(
-        "SELECT cwd FROM contexts ORDER BY cwd");
+        "SELECT contexts.context_id, cwd, var_name, var_value "
+        "FROM contexts NATURAL JOIN env_vars "
+        "ORDER BY contexts.context_id, var_name");
+
     ATF_REQUIRE(stmt.step());
-    ATF_REQUIRE_EQ("/foo/bar", stmt.column_text(0));
+    ATF_REQUIRE_EQ("/foo/bar", stmt.column_text(1));
+    ATF_REQUIRE_EQ("A1", stmt.column_text(2));
+    ATF_REQUIRE_EQ("foo", stmt.column_text(3));
     ATF_REQUIRE(stmt.step());
-    ATF_REQUIRE_EQ("/foo/bar", stmt.column_text(0));
+    ATF_REQUIRE_EQ("/foo/bar", stmt.column_text(1));
+    ATF_REQUIRE_EQ("A2", stmt.column_text(2));
+    ATF_REQUIRE_EQ("bar", stmt.column_text(3));
+
     ATF_REQUIRE(stmt.step());
-    ATF_REQUIRE_EQ("/foo/baz", stmt.column_text(0));
+    ATF_REQUIRE_EQ("/foo/baz", stmt.column_text(1));
+    ATF_REQUIRE_EQ("A1", stmt.column_text(2));
+    ATF_REQUIRE_EQ("not foo", stmt.column_text(3));
+
+    ATF_REQUIRE(stmt.step());
+    ATF_REQUIRE_EQ("/foo/bar", stmt.column_text(1));
+    ATF_REQUIRE_EQ("A1", stmt.column_text(2));
+    ATF_REQUIRE_EQ("foo", stmt.column_text(3));
+    ATF_REQUIRE(stmt.step());
+    ATF_REQUIRE_EQ("/foo/bar", stmt.column_text(1));
+    ATF_REQUIRE_EQ("A2", stmt.column_text(2));
+    ATF_REQUIRE_EQ("bar", stmt.column_text(3));
+
     ATF_REQUIRE(!stmt.step());
 }
 
@@ -200,7 +231,8 @@ ATF_TEST_CASE_BODY(put__context__fail)
     (void)store::backend::open_rw(fs::path("test.db"));
     store::backend backend = store::backend::open_ro(fs::path("test.db"));
     store::transaction tx = backend.start();
-    const engine::context context(fs::path("/foo/bar"));
+    const engine::context context(fs::path("/foo/bar"),
+                                  std::map< std::string, std::string >());
     ATF_REQUIRE_THROW(store::error, tx.put(context));
     tx.commit();
 }

@@ -78,6 +78,16 @@ CREATE TABLE contexts (
 );
 
 
+-- Environment variables of a context.
+CREATE TABLE env_vars (
+    context_id INTEGER REFERENCES contexts,
+    var_name TEXT NOT NULL,
+    var_value TEXT NOT NULL,
+
+    PRIMARY KEY (context_id, var_name)
+);
+
+
 -- -------------------------------------------------------------------------
 -- Actions.
 -- -------------------------------------------------------------------------

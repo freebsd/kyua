@@ -26,6 +26,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <map>
+#include <string>
+
 #include <atf-c++.hpp>
 
 #include "engine/action.hpp"
@@ -35,10 +38,28 @@
 namespace fs = utils::fs;
 
 
+namespace {
+
+
+/// Generates a context with fake data for testing purposes only.
+///
+/// \return The fake context.
+static engine::context
+fake_context(void)
+{
+    std::map< std::string, std::string > env;
+    env["foo"] = "bar";
+    return engine::context(fs::path("/foo/bar"), env);
+}
+
+
+}  // anonymous namespace
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(ctor_and_getters);
 ATF_TEST_CASE_BODY(ctor_and_getters)
 {
-    const engine::context context(fs::path("/foo/bar"));
+    const engine::context context = fake_context();
     const engine::action action(context);
     ATF_REQUIRE(context.unique_address() == action.context().unique_address());
 }
@@ -47,7 +68,7 @@ ATF_TEST_CASE_BODY(ctor_and_getters)
 ATF_TEST_CASE_WITHOUT_HEAD(unique_address);
 ATF_TEST_CASE_BODY(unique_address)
 {
-    const engine::context context(fs::path("/foo/bar"));
+    const engine::context context = fake_context();
     const engine::action action1(context);
     {
         const engine::action action2 = action1;

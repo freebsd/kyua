@@ -36,6 +36,8 @@ extern "C" {
 #include <stdint.h>
 }
 
+#include <map>
+#include <string>
 #include <tr1/memory>
 
 #include "utils/fs/path.hpp"
@@ -53,13 +55,15 @@ class context {
     std::tr1::shared_ptr< impl > _pimpl;
 
 public:
-    explicit context(const utils::fs::path&);
+    context(const utils::fs::path&,
+            const std::map< std::string, std::string >&);
     ~context(void);
     static context current(void);
 
     intptr_t unique_address(void) const;
 
     const utils::fs::path& cwd(void) const;
+    const std::map< std::string, std::string >& env(void) const;
 };
 
 

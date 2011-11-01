@@ -26,9 +26,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <map>
+#include <string>
+
 #include <atf-c++.hpp>
 
 #include "engine/context.hpp"
+#include "utils/env.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 
@@ -38,8 +42,12 @@ namespace fs = utils::fs;
 ATF_TEST_CASE_WITHOUT_HEAD(ctor_and_getters);
 ATF_TEST_CASE_BODY(ctor_and_getters)
 {
-    const engine::context context(fs::path("/foo/bar"));
+    std::map< std::string, std::string > env;
+    env["foo"] = "first";
+    env["bar"] = "second";
+    const engine::context context(fs::path("/foo/bar"), env);
     ATF_REQUIRE_EQ(fs::path("/foo/bar"), context.cwd());
+    ATF_REQUIRE(env == context.env());
 }
 
 
@@ -48,16 +56,19 @@ ATF_TEST_CASE_BODY(current)
 {
     const engine::context context = engine::context::current();
     ATF_REQUIRE_EQ(fs::current_path(), context.cwd());
+    ATF_REQUIRE(utils::getallenv() == context.env());
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(unique_address);
 ATF_TEST_CASE_BODY(unique_address)
 {
-    const engine::context context1(fs::path("/foo/bar"));
+    std::map< std::string, std::string > env;
+    env["foo"] = "first";
+    const engine::context context1(fs::path("/foo/bar"), env);
     {
         const engine::context context2 = context1;
-        const engine::context context3(fs::path("/foo/bar"));
+        const engine::context context3(fs::path("/foo/bar"), env);
         ATF_REQUIRE(context1.unique_address() == context2.unique_address());
         ATF_REQUIRE(context1.unique_address() != context3.unique_address());
         ATF_REQUIRE(context2.unique_address() != context3.unique_address());
