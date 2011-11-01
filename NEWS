@@ -14,6 +14,11 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 * Added the db-exec command to directly interact with the store
   database.
 
+* Made the 'test' command generate persistent output (SO FAR WE ONLY
+  STORE THE ACTION DATA; REWORD THIS ONCE WE ADD TEST RESULTS SUPPORT).
+  As a side effect, 'test' now supports a '--store' option to indicate
+  where the database lives.
+
 
 Changes in version 0.2
 ======================

@@ -84,6 +84,7 @@ cmd_test::cmd_test(void) : cli_command(
     "test", "[test-program ...]", 0, -1, "Run tests")
 {
     add_option(kyuafile_option);
+    add_option(store_option);
 }
 
 
@@ -100,8 +101,8 @@ cmd_test::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
 {
     hooks h(ui);
     const run_tests::result result = run_tests::drive(
-        kyuafile_path(cmdline), parse_filters(cmdline.arguments()),
-        config, h);
+        kyuafile_path(cmdline), store_path(cmdline),
+        parse_filters(cmdline.arguments()), config, h);
 
     int exit_code;
     if (h.good_count > 0 || h.bad_count > 0) {
@@ -112,6 +113,8 @@ cmd_test::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
         exit_code = (h.bad_count == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
     } else
         exit_code = EXIT_SUCCESS;
+
+    ui->out(F("Committed action %d") % result.action_id);
 
     return report_unused_filters(result.unused_filters, ui) ?
         EXIT_FAILURE : exit_code;

@@ -26,11 +26,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "engine/action.hpp"
+#include "engine/context.hpp"
 #include "engine/drivers/run_tests.hpp"
 #include "engine/filters.hpp"
 #include "engine/results.ipp"
 #include "engine/test_program.hpp"
 #include "engine/user_files/kyuafile.hpp"
+#include "store/backend.hpp"
+#include "store/transaction.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
 
@@ -97,6 +101,7 @@ run_tests::base_hooks::~base_hooks(void)
 /// Executes the operation.
 ///
 /// \param kyuafile_path The path to the Kyuafile to be loaded.
+/// \param store_path The path to the store to be used.
 /// \param raw_filters The test case filters as provided by the user.
 /// \param config The end-user configuration properties.
 /// \param hooks The hooks for this execution.
@@ -104,6 +109,7 @@ run_tests::base_hooks::~base_hooks(void)
 /// \returns A structure with all results computed by this driver.
 run_tests::result
 run_tests::drive(const fs::path& kyuafile_path,
+                 const fs::path& store_path,
                  const std::set< engine::test_filter >& raw_filters,
                  const user_files::config& config,
                  base_hooks& hooks)
@@ -111,6 +117,14 @@ run_tests::drive(const fs::path& kyuafile_path,
     const user_files::kyuafile kyuafile = user_files::kyuafile::load(
         kyuafile_path);
     filters_state filters(raw_filters);
+    store::backend db = store::backend::open_rw(store_path);
+    store::transaction tx = db.start();
+
+    engine::context context = engine::context::current();
+    tx.put(context);
+
+    engine::action action(context);
+    const int64_t action_id = tx.put(action);
 
     for (test_programs_vector::const_iterator iter =
          kyuafile.test_programs().begin();
@@ -123,5 +137,7 @@ run_tests::drive(const fs::path& kyuafile_path,
         run_test_program(*test_program, config, filters, hooks);
     }
 
-    return result(filters.unused());
+    tx.commit();
+
+    return result(action_id, filters.unused());
 }

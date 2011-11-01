@@ -36,6 +36,10 @@
 #if !defined(ENGINE_DRIVERS_RUN_TESTS_HPP)
 #define ENGINE_DRIVERS_RUN_TESTS_HPP
 
+extern "C" {
+#include <stdint.h>
+}
+
 #include <set>
 
 #include "engine/filters.hpp"
@@ -64,6 +68,9 @@ public:
 
 /// Tuple containing the results of this driver.
 struct result {
+    /// The identifier assigned to the operation.
+    int64_t action_id;
+
     /// Filters that did not match any available test case.
     ///
     /// The presence of any filters here probably indicates a usage error.  If a
@@ -72,16 +79,20 @@ struct result {
 
     /// Initializer for the tuple's fields.
     ///
+    /// \param action_id_ The identifier assigned to the operation.
     /// \param unused_filters_ The filters that did not match any test case.
-    result(const std::set< test_filter >& unused_filters_) :
+    result(const int64_t action_id_,
+           const std::set< test_filter >& unused_filters_) :
+        action_id(action_id_),
         unused_filters(unused_filters_)
     {
     }
 };
 
 
-result drive(const utils::fs::path&, const std::set< test_filter >&,
-             const user_files::config&, base_hooks&);
+result drive(const utils::fs::path&, const utils::fs::path&,
+             const std::set< test_filter >&, const user_files::config&,
+             base_hooks&);
 
 
 }  // namespace run_tests

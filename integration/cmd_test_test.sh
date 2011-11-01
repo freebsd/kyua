@@ -40,6 +40,7 @@ simple_all_pass:pass  ->  passed
 simple_all_pass:skip  ->  skipped: The reason for skipping is this
 
 2/2 passed (0 failed)
+Committed action 1
 EOF
 
     utils_cp_helper simple_all_pass .
@@ -60,6 +61,7 @@ simple_some_fail:fail  ->  failed: This fails on purpose
 simple_some_fail:pass  ->  passed
 
 1/2 passed (1 failed)
+Committed action 1
 EOF
 
     utils_cp_helper simple_some_fail .
@@ -86,6 +88,7 @@ third:pass  ->  passed
 third:skip  ->  skipped: The reason for skipping is this
 
 6/6 passed (0 failed)
+Committed action 1
 EOF
 
     utils_cp_helper simple_all_pass first
@@ -114,6 +117,7 @@ third:pass  ->  passed
 third:skip  ->  skipped: The reason for skipping is this
 
 4/6 passed (2 failed)
+Committed action 1
 EOF
 
     utils_cp_helper simple_some_fail first
@@ -139,6 +143,7 @@ expect_all_pass:signal  ->  expected_failure: Exiting with correct signal
 expect_all_pass:timeout  ->  expected_failure: This times out
 
 5/5 passed (0 failed)
+Committed action 1
 EOF
 
     utils_cp_helper expect_all_pass .
@@ -163,6 +168,7 @@ expect_some_fail:signal  ->  broken: Expected signal 15 but got 9
 expect_some_fail:timeout  ->  failed: Test case was expected to hang but it continued execution
 
 1/6 passed (5 failed)
+Committed action 1
 EOF
 
     utils_cp_helper expect_some_fail .
@@ -184,6 +190,7 @@ bogus_test_cases:exit  ->  broken: Premature exit: exited with code 0
 bogus_test_cases:pass  ->  passed
 
 1/3 passed (2 failed)
+Committed action 1
 EOF
 
     utils_cp_helper bogus_test_cases .
@@ -217,6 +224,7 @@ subdir/simple_some_fail:fail  ->  failed: This fails on purpose
 subdir/simple_some_fail:pass  ->  passed
 
 3/4 passed (1 failed)
+Committed action 1
 EOF
     atf_check -s exit:1 -o file:expout -e empty kyua test
 }
@@ -243,6 +251,7 @@ subdir/simple_all_pass:pass  ->  passed
 subdir/simple_all_pass:skip  ->  skipped: The reason for skipping is this
 
 2/2 passed (0 failed)
+Committed action 1
 EOF
     atf_check -s exit:0 -o file:expout -e empty kyua test subdir
 }
@@ -263,6 +272,7 @@ EOF
 first:skip  ->  skipped: The reason for skipping is this
 
 1/1 passed (0 failed)
+Committed action 1
 EOF
     atf_check -s exit:0 -o file:expout -e empty kyua test first:skip
 }
@@ -284,6 +294,7 @@ second:fail  ->  failed: This fails on purpose
 second:pass  ->  passed
 
 1/2 passed (1 failed)
+Committed action 1
 EOF
     atf_check -s exit:1 -o file:expout -e empty kyua test second
 }
@@ -327,6 +338,7 @@ subdir/second:pass  ->  passed
 first:pass  ->  passed
 
 2/3 passed (1 failed)
+Committed action 1
 EOF
     atf_check -s exit:1 -o file:expout -e empty kyua test subdir first:pass
 }
@@ -357,10 +369,13 @@ EOF
     utils_cp_helper simple_all_pass first
     utils_cp_helper simple_all_pass second
 
+    cat >expout <<EOF
+Committed action 1
+EOF
     cat >experr <<EOF
 kyua: W: No test cases matched by the filter 'first1'.
 EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua test first1
+    atf_check -s exit:1 -o file:expout -e file:experr kyua test first1
 }
 
 
@@ -384,6 +399,7 @@ third:fail  ->  failed: This fails on purpose
 third:pass  ->  passed
 
 3/4 passed (1 failed)
+Committed action 1
 EOF
 
     cat >experr <<EOF
@@ -424,6 +440,7 @@ first:skip  ->  skipped: The reason for skipping is this
 subdir/fourth:fail  ->  failed: This fails on purpose
 
 2/3 passed (1 failed)
+Committed action 1
 EOF
     atf_check -s exit:1 -o file:expout -e empty kyua test \
         -k "$(pwd)/root/Kyuafile" first subdir/fourth:fail
@@ -446,6 +463,7 @@ first:pass  ->  passed
 first:skip  ->  skipped: The reason for skipping is this
 
 2/2 passed (0 failed)
+Committed action 1
 EOF
     CREATE_COOKIE="$(pwd)/cookie"; export CREATE_COOKIE
     atf_check -s exit:0 -o file:expout -e empty kyua test first
@@ -485,6 +503,79 @@ EOF
 }
 
 
+utils_test_case store_contents
+store_contents_body() {
+    cat >Kyuafile <<EOF
+syntax("kyuafile", 1)
+atf_test_program{name="some-program", test_suite="suite1"}
+EOF
+    utils_cp_helper simple_all_pass some-program
+    cat >expout <<EOF
+some-program:pass  ->  passed
+some-program:skip  ->  skipped: The reason for skipping is this
+
+2/2 passed (0 failed)
+Committed action 1
+EOF
+
+    # TODO(jmmv): The tests below should not care about the specific contents of
+    # the database, but we cannot do better yet.  Instead, we should bundle
+    # these tests with the tests of the future "report" tests so that we can
+    # actually validate the integration of testing plus reporting.
+
+    atf_check -s exit:0 -o file:expout -e empty kyua test
+    atf_check -s exit:0 -o inline:'1\n' -e empty \
+        kyua db-exec --no-headers "SELECT COUNT(action_id) FROM ACTIONS"
+    atf_check -s exit:0 -o inline:'1\n' -e empty \
+        kyua db-exec --no-headers "SELECT COUNT(context_id) FROM CONTEXTS"
+
+    rm -f some-program
+    utils_cp_helper simple_some_fail some-program
+    cat >expout <<EOF
+some-program:fail  ->  failed: This fails on purpose
+some-program:pass  ->  passed
+
+1/2 passed (1 failed)
+Committed action 2
+EOF
+
+    atf_check -s exit:1 -o file:expout -e empty kyua test
+    atf_check -s exit:0 -o inline:'2\n' -e empty \
+        kyua db-exec --no-headers "SELECT COUNT(action_id) FROM ACTIONS"
+    atf_check -s exit:0 -o inline:'2\n' -e empty \
+        kyua db-exec --no-headers "SELECT COUNT(context_id) FROM CONTEXTS"
+}
+
+
+utils_test_case store_flag__ok
+store_flag__ok_body() {
+    cat >Kyuafile <<EOF
+syntax("kyuafile", 1)
+atf_test_program{name="config1", test_suite="suite1"}
+EOF
+    utils_cp_helper config config1
+
+    atf_check -s exit:0 -o ignore -e empty kyua test -s foo1.db
+    test -f foo1.db || atf_fail "-s did not work"
+    atf_check -s exit:0 -o ignore -e empty kyua test --store=foo2.db
+    test -f foo2.db || atf_fail "--store did not work"
+    test ! -f .kyua/store.db || atf_fail "Default database created"
+}
+
+
+utils_test_case store_flag__fail
+store_flag__fail_body() {
+    cat >Kyuafile <<EOF
+syntax("kyuafile", 1)
+atf_test_program{name="config1", test_suite="suite1"}
+EOF
+    utils_cp_helper config config1
+
+    atf_check -s exit:1 -o empty -e match:"Invalid.*--store" \
+        kyua test --store=""
+}
+
+
 utils_test_case kyuafile_flag__no_args
 kyuafile_flag__no_args_body() {
     cat >Kyuafile <<EOF
@@ -503,8 +594,16 @@ sometest:pass  ->  passed
 sometest:skip  ->  skipped: The reason for skipping is this
 
 2/2 passed (0 failed)
+Committed action 1
 EOF
     atf_check -s exit:0 -o file:expout -e empty kyua test -k myfile
+    cat >expout <<EOF
+sometest:pass  ->  passed
+sometest:skip  ->  skipped: The reason for skipping is this
+
+2/2 passed (0 failed)
+Committed action 2
+EOF
     atf_check -s exit:0 -o file:expout -e empty kyua test --kyuafile=myfile
 }
 
@@ -527,8 +626,16 @@ sometest:pass  ->  passed
 sometest:skip  ->  skipped: The reason for skipping is this
 
 2/2 passed (0 failed)
+Committed action 1
 EOF
     atf_check -s exit:0 -o file:expout -e empty kyua test -k myfile sometest
+    cat >expout <<EOF
+sometest:pass  ->  passed
+sometest:skip  ->  skipped: The reason for skipping is this
+
+2/2 passed (0 failed)
+Committed action 2
+EOF
     atf_check -s exit:0 -o file:expout -e empty kyua test --kyuafile=myfile \
         sometest
 }
@@ -577,10 +684,13 @@ EOF
     utils_cp_helper simple_all_pass first
     utils_cp_helper simple_all_pass second
 
+    cat >expout <<EOF
+Committed action 1
+EOF
     cat >experr <<EOF
 kyua: W: No test cases matched by the filter 'second'.
 EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua test second
+    atf_check -s exit:1 -o file:expout -e file:experr kyua test second
 }
 
 
@@ -593,10 +703,13 @@ atf_test_program{name="first"}
 EOF
     utils_cp_helper simple_all_pass first
 
+    cat >expout <<EOF
+Committed action 1
+EOF
     cat >experr <<EOF
 kyua: W: No test cases matched by the filter 'first:foobar'.
 EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua test first:foobar
+    atf_check -s exit:1 -o file:expout -e file:experr kyua test first:foobar
 }
 
 
@@ -686,6 +799,7 @@ crash_on_list:__test_program__  ->  broken: Failed to load list of test cases: T
 non_executable:__test_program__  ->  broken: Failed to load list of test cases: Failed to execute the test program
 
 0/2 passed (2 failed)
+Committed action 1
 EOF
     atf_check -s exit:1 -o file:expout -e empty kyua test
 }
@@ -737,6 +851,10 @@ atf_init_test_cases() {
     atf_add_test_case only_load_used_test_programs
 
     atf_add_test_case config_behavior
+
+    atf_add_test_case store_contents
+    atf_add_test_case store_flag__ok
+    atf_add_test_case store_flag__fail
 
     atf_add_test_case kyuafile_flag__no_args
     atf_add_test_case kyuafile_flag__some_args
