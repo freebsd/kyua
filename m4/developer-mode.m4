@@ -88,7 +88,6 @@ AC_DEFUN([KYUA_DEVELOPER_MODE], [
 
     try_cxx_flags="-Wabi \
                    -Wctor-dtor-privacy \
-                   -Weffc++ \
                    -Wno-deprecated \
                    -Wno-non-template-friend \
                    -Wno-pmf-conversions \
