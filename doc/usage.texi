@@ -340,6 +340,11 @@ The following subcommand options are recognized:
 @cindex @option{--kyuafile}, @command{test}
 Specifies the Kyuafile to process.  Defaults to a @file{Kyuafile} file
 in the current directory.
+
+@item --store=path
+@cindex @option{--store}, @command{test}
+Specifies the database to use.  Defaults to @file{~/.kyua/store.db}.
+The database is created if it does not exist.
 @end table
 
 @node Filters
