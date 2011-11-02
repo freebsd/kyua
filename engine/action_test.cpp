@@ -61,7 +61,8 @@ ATF_TEST_CASE_BODY(ctor_and_getters)
 {
     const engine::context context = fake_context();
     const engine::action action(context);
-    ATF_REQUIRE(context.unique_address() == action.context().unique_address());
+    ATF_REQUIRE_EQ(context.unique_address(),
+                   action.runtime_context().unique_address());
 }
 
 

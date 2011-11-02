@@ -58,7 +58,7 @@ public:
     ~action(void);
 
     intptr_t unique_address(void) const;
-    const context& context(void) const;
+    const context& runtime_context(void) const;
 };
 
 

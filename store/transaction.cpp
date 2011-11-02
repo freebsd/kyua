@@ -276,7 +276,8 @@ store::transaction::put(const engine::action& action)
     const optional< int64_t > oid = _pimpl->find_oid(action);
     PRE_MSG(!oid, "Immutable object; cannot doubleput");
 
-    const optional< int64_t > context_id = _pimpl->find_oid(action.context());
+    const optional< int64_t > context_id = _pimpl->find_oid(
+        action.runtime_context());
     PRE_MSG(context_id, "Context not yet stored");
 
     try {

@@ -35,12 +35,12 @@ namespace fs = utils::fs;
 /// Internal implementation of an action.
 struct engine::action::impl {
     /// The runtime context of the action.
-    const engine::context& _context;
+    const context& _context;
 
     /// Constructor.
     ///
     /// \param context_ The runtime context.
-    impl(const engine::context& context_) :
+    impl(const context& context_) :
         _context(context_)
     {
     }
@@ -50,7 +50,7 @@ struct engine::action::impl {
 /// Constructs a new action.
 ///
 /// \param context_ The runtime context in which the action runs.
-engine::action::action(const engine::context& context_) :
+engine::action::action(const context& context_) :
     _pimpl(new impl(context_))
 {
 }
@@ -80,7 +80,7 @@ engine::action::unique_address(void) const
 ///
 /// \return A reference to the context.
 const engine::context&
-engine::action::context(void) const
+engine::action::runtime_context(void) const
 {
     return _pimpl->_context;
 }
