@@ -95,6 +95,23 @@ ATF_TEST_CASE_BODY(ctor_and_getters)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(unique_address);
+ATF_TEST_CASE_BODY(unique_address)
+{
+    const mock_test_program tp1(fs::path("binary"), fs::path("root"),
+                                "suite-name");
+    {
+        const mock_test_program tp2 = tp1;
+        const mock_test_program tp3(fs::path("binary"), fs::path("root"),
+                                    "suite-name");
+        ATF_REQUIRE(tp1.unique_address() == tp2.unique_address());
+        ATF_REQUIRE(tp1.unique_address() != tp3.unique_address());
+        ATF_REQUIRE(tp2.unique_address() != tp3.unique_address());
+    }
+    ATF_REQUIRE(tp1.unique_address() == tp1.unique_address());
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(test_cases__get);
 ATF_TEST_CASE_BODY(test_cases__get)
 {
@@ -122,6 +139,7 @@ ATF_TEST_CASE_BODY(test_cases__cached)
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, ctor_and_getters);
+    ATF_ADD_TEST_CASE(tcs, unique_address);
     ATF_ADD_TEST_CASE(tcs, test_cases__get);
     ATF_ADD_TEST_CASE(tcs, test_cases__cached);
 }

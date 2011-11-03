@@ -53,7 +53,8 @@ extern utils::datetime::delta default_timeout;
 
 /// Representation of a plain test program.
 class test_program : public base_test_program {
-    utils::datetime::delta _timeout;
+    struct impl;
+    std::tr1::shared_ptr< impl > _pimpl;
 
     test_cases_vector load_test_cases(void) const;
 
@@ -61,6 +62,7 @@ public:
     test_program(const utils::fs::path&, const utils::fs::path&,
                  const std::string&,
                  const utils::optional< utils::datetime::delta >&);
+    ~test_program(void);
 
     const utils::datetime::delta& timeout(void) const;
 };

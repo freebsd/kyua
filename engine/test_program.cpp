@@ -33,21 +33,49 @@
 namespace fs = utils::fs;
 
 
+/// Internal implementation of a base_test_program.
+struct engine::base_test_program::base_impl {
+    /// Name of the test program binary relative to root.
+    fs::path binary;
+
+    /// Root of the test suite containing the test program.
+    fs::path root;
+
+    /// Name of the test suite this program belongs to.
+    std::string test_suite_name;
+
+    /// List of test casees in the test program; lazily initialized.
+    test_cases_vector test_cases;
+
+    /// Constructor.
+    /// \param binary_ The name of the test program binary relative to root_.
+    /// \param root_ The root of the test suite containing the test program.
+    /// \param test_suite_name_ The name of the test suite this program
+    ///     belongs to.
+    base_impl(const fs::path& binary_, const fs::path& root_,
+              const std::string& test_suite_name_) :
+        binary(binary_),
+        root(root_),
+        test_suite_name(test_suite_name_)
+    {
+        PRE_MSG(!binary.is_absolute(),
+                F("The program '%s' must be relative to the root of the test "
+                  "suite '%s'") % binary % root);
+    }
+};
+
+
 /// Constructs a new test program.
 ///
 /// \param binary_ The name of the test program binary relative to root_.
 /// \param root_ The root of the test suite containing the test program.
 /// \param test_suite_name_ The name of the test suite this program belongs to.
 engine::base_test_program::base_test_program(
-    const utils::fs::path& binary_,
-    const utils::fs::path& root_,
+    const fs::path& binary_,
+    const fs::path& root_,
     const std::string& test_suite_name_) :
-    _binary(binary_),
-    _root(root_),
-    _test_suite_name(test_suite_name_)
+    _pbimpl(new base_impl(binary_, root_, test_suite_name_))
 {
-    PRE_MSG(!_binary.is_absolute(), F("The program '%s' must be relative to "
-        "the root of the test suite '%s'") % _binary % _root);
 }
 
 
@@ -57,13 +85,27 @@ engine::base_test_program::~base_test_program(void)
 }
 
 
+/// Returns a unique memory address for this test program.
+///
+/// Remember that test program objects are shallowly copied; therefore, it is
+/// possible for two distinct variables of a context to return the same unique
+/// internal address (which is perfectly okay).
+///
+/// \return The uniquely-identifying address for this context.
+intptr_t
+engine::base_test_program::unique_address(void) const
+{
+    return reinterpret_cast< intptr_t >(_pbimpl.get());
+}
+
+
 /// Gets the path to the test program relative to the root of the test suite.
 ///
 /// \return The relative path to the test program binary.
 const fs::path&
 engine::base_test_program::relative_path(void) const
 {
-    return _binary;
+    return _pbimpl->binary;
 }
 
 
@@ -73,7 +115,7 @@ engine::base_test_program::relative_path(void) const
 const fs::path
 engine::base_test_program::absolute_path(void) const
 {
-    return _root / _binary;
+    return _pbimpl->root / _pbimpl->binary;
 }
 
 
@@ -83,7 +125,7 @@ engine::base_test_program::absolute_path(void) const
 const fs::path&
 engine::base_test_program::root(void) const
 {
-    return _root;
+    return _pbimpl->root;
 }
 
 
@@ -93,7 +135,7 @@ engine::base_test_program::root(void) const
 const std::string&
 engine::base_test_program::test_suite_name(void) const
 {
-    return _test_suite_name;
+    return _pbimpl->test_suite_name;
 }
 
 
@@ -108,7 +150,7 @@ engine::base_test_program::test_suite_name(void) const
 const engine::test_cases_vector&
 engine::base_test_program::test_cases(void) const
 {
-    if (_test_cases.empty())
-        _test_cases = load_test_cases();
-    return _test_cases;
+    if (_pbimpl->test_cases.empty())
+        _pbimpl->test_cases = load_test_cases();
+    return _pbimpl->test_cases;
 }

@@ -39,6 +39,24 @@ using utils::optional;
 datetime::delta engine::plain_iface::detail::default_timeout(300, 0);
 
 
+/// Internal implementation for a test_program.
+struct engine::plain_iface::test_program::impl {
+    /// The timeout for the single test case in the test program.
+    datetime::delta timeout;
+
+    /// Constructor.
+    ///
+    /// \param optional_timeout_ The timeout for the test program's only single
+    ///     test case.  If none, a default timeout is used.
+    impl(const optional< datetime::delta >& optional_timeout_) :
+        timeout(optional_timeout_ ?
+                optional_timeout_.get() : detail::default_timeout)
+
+    {
+    }
+};
+
+
 /// Constructs a new plain test program.
 ///
 /// \param binary_ The name of the test program binary relative to root_.
@@ -53,8 +71,13 @@ plain_iface::test_program::test_program(
     const std::string& test_suite_name_,
     const optional< datetime::delta >& optional_timeout_) :
     base_test_program(binary_, root_, test_suite_name_),
-    _timeout(optional_timeout_ ?
-             optional_timeout_.get() : detail::default_timeout)
+    _pimpl(new impl(optional_timeout_))
+{
+}
+
+
+/// Destructor.
+plain_iface::test_program::~test_program(void)
 {
 }
 
@@ -80,5 +103,5 @@ plain_iface::test_program::load_test_cases(void) const
 const datetime::delta&
 plain_iface::test_program::timeout(void) const
 {
-    return _timeout;
+    return _pimpl->timeout;
 }

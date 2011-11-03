@@ -38,6 +38,10 @@
 #if !defined(ENGINE_TEST_PROGRAM_HPP)
 #define ENGINE_TEST_PROGRAM_HPP
 
+extern "C" {
+#include <stdint.h>
+}
+
 #include <string>
 #include <tr1/memory>
 #include <vector>
@@ -53,18 +57,22 @@ typedef std::vector< test_case_ptr > test_cases_vector;
 
 
 /// Abstract representation of a test program.
+///
+/// Subclasses must use the same pimpl idiom using a shared_ptr to ensure that
+/// copies are always shallow.  This is a prerequisite for unique_address() to
+/// work properly.
 class base_test_program {
-    utils::fs::path _binary;
-    utils::fs::path _root;
-    std::string _test_suite_name;
-    mutable test_cases_vector _test_cases;
+    struct base_impl;
+    std::tr1::shared_ptr< base_impl > _pbimpl;
 
     virtual test_cases_vector load_test_cases(void) const = 0;
 
 public:
     base_test_program(const utils::fs::path&, const utils::fs::path&,
-                 const std::string&);
+                      const std::string&);
     virtual ~base_test_program(void);
+
+    intptr_t unique_address(void) const;
 
     const utils::fs::path& root(void) const;
     const utils::fs::path& relative_path(void) const;
