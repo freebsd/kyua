@@ -251,6 +251,88 @@ engine::atf_iface::detail::parse_require_user(const std::string& name,
 }
 
 
+/// Internal implementation of a test case.
+struct engine::atf_iface::test_case::impl {
+    /// The test case description.
+    std::string description;
+
+    /// Whether the test case has a cleanup routine or not.
+    bool has_cleanup;
+
+    /// The maximum amount of time the test case can run for.
+    datetime::delta timeout;
+
+    /// List of architectures in which the test case can run; empty = any.
+    strings_set allowed_architectures;
+
+    /// List of platforms in which the test case can run; empty = any.
+    strings_set allowed_platforms;
+
+    /// List of configuration variables needed by the test case.
+    strings_set required_configs;
+
+    /// List of files needed by the test case.
+    paths_set required_files;
+
+    /// List of programs needed by the test case.
+    paths_set required_programs;
+
+    /// Privileges required to run the test case.
+    ///
+    /// Can be empty, in which case means "any privileges", or any of "root" or
+    /// "unprivileged".
+    std::string required_user;
+
+    /// User-defined meta-data properties.
+    properties_map user_metadata;
+
+    /// Constructor.
+    ///
+    /// \param description_ See the parent class.
+    /// \param has_cleanup_ See the parent class.
+    /// \param timeout_ See the parent class.
+    /// \param allowed_architectures_ See the parent class.
+    /// \param allowed_platforms_ See the parent class.
+    /// \param required_configs_ See the parent class.
+    /// \param required_files_ See the parent class.
+    /// \param required_programs_ See the parent class.
+    /// \param required_user_ See the parent class.
+    /// \param user_metadata_ See the parent class.
+    impl(const std::string& description_,
+         const bool has_cleanup_,
+         const datetime::delta& timeout_,
+         const strings_set& allowed_architectures_,
+         const strings_set& allowed_platforms_,
+         const strings_set& required_configs_,
+         const paths_set& required_files_,
+         const paths_set& required_programs_,
+         const std::string& required_user_,
+         const properties_map& user_metadata_) :
+        description(description_),
+        has_cleanup(has_cleanup_),
+        timeout(timeout_),
+        allowed_architectures(allowed_architectures_),
+        allowed_platforms(allowed_platforms_),
+        required_configs(required_configs_),
+        required_files(required_files_),
+        required_programs(required_programs_),
+        required_user(required_user_),
+        user_metadata(user_metadata_)
+    {
+        PRE(required_user.empty() || required_user == "unprivileged" ||
+            required_user == "root");
+
+        for (properties_map::const_iterator iter = user_metadata.begin();
+             iter != user_metadata.end(); iter++) {
+            const std::string& property_name = (*iter).first;
+            PRE_MSG(property_name.size() > 2 &&
+                    property_name.substr(0, 2) == "X-",
+                    "User properties must be prefixed by X-");
+        }
+    }
+};
+
+
 /// Constructs a new test case.
 ///
 /// \param test_program_ The test program this test case belongs to.  This
@@ -285,26 +367,17 @@ atf_iface::test_case::test_case(const base_test_program& test_program_,
                                 const std::string& required_user_,
                                 const properties_map& user_metadata_) :
     base_test_case(test_program_, name_),
-    description(description_),
-    has_cleanup(has_cleanup_),
-    timeout(timeout_),
-    allowed_architectures(allowed_architectures_),
-    allowed_platforms(allowed_platforms_),
-    required_configs(required_configs_),
-    required_files(required_files_),
-    required_programs(required_programs_),
-    required_user(required_user_),
-    user_metadata(user_metadata_)
+    _pimpl(new impl(description_, has_cleanup_, timeout_,
+                    allowed_architectures_, allowed_platforms_,
+                    required_configs_, required_files_, required_programs_,
+                    required_user_, user_metadata_))
 {
-    PRE(required_user_.empty() || required_user_ == "unprivileged" ||
-        required_user_ == "root");
+}
 
-    for (properties_map::const_iterator iter = user_metadata_.begin();
-         iter != user_metadata_.end(); iter++) {
-        const std::string& property_name = (*iter).first;
-        PRE_MSG(property_name.size() > 2 && property_name.substr(0, 2) == "X-",
-                "User properties must be prefixed by X-");
-    }
+
+/// Destructor.
+atf_iface::test_case::~test_case(void)
+{
 }
 
 
@@ -374,6 +447,106 @@ atf_iface::test_case::from_properties(const base_test_program& test_program_,
 }
 
 
+/// Gets the description of the test case.
+///
+/// \return The description of the test case.
+const std::string&
+atf_iface::test_case::description(void) const
+{
+    return _pimpl->description;
+}
+
+
+/// Gets whether the test case has a cleanup routine or not.
+///
+/// \return True if the test case has a cleanup routine, false otherwise.
+bool
+atf_iface::test_case::has_cleanup(void) const
+{
+    return _pimpl->has_cleanup;
+}
+
+
+/// Gets the test case timeout.
+///
+/// \return The test case timeout.
+const datetime::delta&
+atf_iface::test_case::timeout(void) const
+{
+    return _pimpl->timeout;
+}
+
+
+/// Gets the list of allowed architectures.
+///
+/// \return The list of allowed architectures.
+const atf_iface::strings_set&
+atf_iface::test_case::allowed_architectures(void) const
+{
+    return _pimpl->allowed_architectures;
+}
+
+
+/// Gets the list of allowed platforms.
+///
+/// \return The list of allowed platforms.
+const atf_iface::strings_set&
+atf_iface::test_case::allowed_platforms(void) const
+{
+    return _pimpl->allowed_platforms;
+}
+
+
+/// Gets the list of required configuration variables.
+///
+/// \return The list of required configuration variables.
+const atf_iface::strings_set&
+atf_iface::test_case::required_configs(void) const
+{
+    return _pimpl->required_configs;
+}
+
+
+/// Gets the list of required files.
+///
+/// \return The list of required files.
+const atf_iface::paths_set&
+atf_iface::test_case::required_files(void) const
+{
+    return _pimpl->required_files;
+}
+
+
+/// Gets the list of required programs.
+///
+/// \return The list of required programs.
+const atf_iface::paths_set&
+atf_iface::test_case::required_programs(void) const
+{
+    return _pimpl->required_programs;
+}
+
+
+/// Gets the required user name.
+///
+/// \return The required user name.
+const std::string&
+atf_iface::test_case::required_user(void) const
+{
+    return _pimpl->required_user;
+}
+
+
+/// Gets the custom user metadata, if any.
+///
+/// \return The user metadata.
+const engine::properties_map&
+atf_iface::test_case::user_metadata(void) const
+{
+    return _pimpl->user_metadata;
+}
+
+
 /// Returns a string representation of all test case properties.
 ///
 /// The returned keys and values match those that can be defined by the test
@@ -383,28 +556,28 @@ atf_iface::test_case::from_properties(const base_test_program& test_program_,
 engine::properties_map
 atf_iface::test_case::get_all_properties(void) const
 {
-    properties_map props = user_metadata;
+    properties_map props = _pimpl->user_metadata;
 
-    if (!description.empty())
-        props["descr"] = description;
-    if (has_cleanup)
+    if (!_pimpl->description.empty())
+        props["descr"] = _pimpl->description;
+    if (_pimpl->has_cleanup)
         props["has.cleanup"] = "true";
-    if (timeout != default_timeout) {
-        INV(timeout.useconds == 0);
-        props["timeout"] = F("%d") % timeout.seconds;
+    if (_pimpl->timeout != default_timeout) {
+        INV(_pimpl->timeout.useconds == 0);
+        props["timeout"] = F("%d") % _pimpl->timeout.seconds;
     }
-    if (!allowed_architectures.empty())
-        props["require.arch"] = flatten_set(allowed_architectures);
-    if (!allowed_platforms.empty())
-        props["require.machine"] = flatten_set(allowed_platforms);
-    if (!required_configs.empty())
-        props["require.config"] = flatten_set(required_configs);
-    if (!required_files.empty())
-        props["require.files"] = flatten_set(required_files);
-    if (!required_programs.empty())
-        props["require.progs"] = flatten_set(required_programs);
-    if (!required_user.empty())
-        props["require.user"] = required_user;
+    if (!_pimpl->allowed_architectures.empty())
+        props["require.arch"] = flatten_set(_pimpl->allowed_architectures);
+    if (!_pimpl->allowed_platforms.empty())
+        props["require.machine"] = flatten_set(_pimpl->allowed_platforms);
+    if (!_pimpl->required_configs.empty())
+        props["require.config"] = flatten_set(_pimpl->required_configs);
+    if (!_pimpl->required_files.empty())
+        props["require.files"] = flatten_set(_pimpl->required_files);
+    if (!_pimpl->required_programs.empty())
+        props["require.progs"] = flatten_set(_pimpl->required_programs);
+    if (!_pimpl->required_user.empty())
+        props["require.user"] = _pimpl->required_user;
 
     return props;
 }
@@ -422,16 +595,16 @@ bool
 atf_iface::test_case::operator==(const test_case& tc) const
 {
     return identifier() == tc.identifier() &&
-        description == tc.description &&
-        has_cleanup == tc.has_cleanup &&
-        allowed_architectures == tc.allowed_architectures &&
-        allowed_platforms == tc.allowed_platforms &&
-        required_configs == tc.required_configs &&
-        required_files == tc.required_files &&
-        required_programs == tc.required_programs &&
-        required_user == tc.required_user &&
-        timeout == tc.timeout &&
-        user_metadata == tc.user_metadata;
+        _pimpl->description == tc._pimpl->description &&
+        _pimpl->has_cleanup == tc._pimpl->has_cleanup &&
+        _pimpl->allowed_architectures == tc._pimpl->allowed_architectures &&
+        _pimpl->allowed_platforms == tc._pimpl->allowed_platforms &&
+        _pimpl->required_configs == tc._pimpl->required_configs &&
+        _pimpl->required_files == tc._pimpl->required_files &&
+        _pimpl->required_programs == tc._pimpl->required_programs &&
+        _pimpl->required_user == tc._pimpl->required_user &&
+        _pimpl->timeout == tc._pimpl->timeout &&
+        _pimpl->user_metadata == tc._pimpl->user_metadata;
 }
 
 
@@ -443,8 +616,8 @@ atf_iface::test_case::operator==(const test_case& tc) const
 std::string
 atf_iface::test_case::check_requirements(const user_files::config& config) const
 {
-    for (strings_set::const_iterator iter = required_configs.begin();
-         iter != required_configs.end(); iter++) {
+    for (strings_set::const_iterator iter = _pimpl->required_configs.begin();
+         iter != _pimpl->required_configs.end(); iter++) {
         const user_files::properties_map& properties = config.test_suite(
             test_program().test_suite_name());
         if (*iter == "unprivileged-user") {
@@ -456,24 +629,25 @@ atf_iface::test_case::check_requirements(const user_files::config& config) const
                 *iter;
     }
 
-    if (!allowed_architectures.empty()) {
-        if (allowed_architectures.find(config.architecture) ==
-            allowed_architectures.end())
+    if (!_pimpl->allowed_architectures.empty()) {
+        if (_pimpl->allowed_architectures.find(config.architecture) ==
+            _pimpl->allowed_architectures.end())
             return F("Current architecture '%s' not supported") %
                 config.architecture;
     }
 
-    if (!allowed_platforms.empty()) {
-        if (allowed_platforms.find(config.platform) == allowed_platforms.end())
+    if (!_pimpl->allowed_platforms.empty()) {
+        if (_pimpl->allowed_platforms.find(config.platform) ==
+            _pimpl->allowed_platforms.end())
             return F("Current platform '%s' not supported") % config.platform;
     }
 
-    if (!required_user.empty()) {
+    if (!_pimpl->required_user.empty()) {
         const passwd::user user = passwd::current_user();
-        if (required_user == "root") {
+        if (_pimpl->required_user == "root") {
             if (!user.is_root())
                 return "Requires root privileges";
-        } else if (required_user == "unprivileged") {
+        } else if (_pimpl->required_user == "unprivileged") {
             if (user.is_root())
                 if (!config.unprivileged_user)
                     return "Requires an unprivileged user but the "
@@ -483,15 +657,15 @@ atf_iface::test_case::check_requirements(const user_files::config& config) const
             UNREACHABLE_MSG("Value of require.user not properly validated");
     }
 
-    for (paths_set::const_iterator iter = required_files.begin();
-         iter != required_files.end(); iter++) {
+    for (paths_set::const_iterator iter = _pimpl->required_files.begin();
+         iter != _pimpl->required_files.end(); iter++) {
         INV((*iter).is_absolute());
         if (!fs::exists(*iter))
             return F("Required file '%s' not found") % *iter;
     }
 
-    for (paths_set::const_iterator iter = required_programs.begin();
-         iter != required_programs.end(); iter++) {
+    for (paths_set::const_iterator iter = _pimpl->required_programs.begin();
+         iter != _pimpl->required_programs.end(); iter++) {
         if ((*iter).is_absolute()) {
             if (!fs::exists(*iter))
                 return F("Required program '%s' not found") % *iter;

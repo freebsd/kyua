@@ -89,6 +89,27 @@ engine::test_case_id::operator==(const test_case_id& id) const
 }
 
 
+/// Internal implementation for a base_test_case.
+struct engine::base_test_case::base_impl {
+    /// Test program this test case belongs to.
+    const base_test_program& test_program;
+
+    /// Name of the test case; must be unique within the test program.
+    std::string name;
+
+    /// Constructor.
+    ///
+    /// \param test_program_ The test program this test case belongs to.
+    /// \param name_ The name of the test case within the test program.
+    base_impl(const base_test_program& test_program_,
+              const std::string& name_) :
+        test_program(test_program_),
+        name(name_)
+    {
+    }
+};
+
+
 /// Constructs a new test case.
 ///
 /// \param test_program_ The test program this test case belongs to.  This is a
@@ -98,8 +119,7 @@ engine::test_case_id::operator==(const test_case_id& id) const
 ///     unique.
 engine::base_test_case::base_test_case(const base_test_program& test_program_,
                                        const std::string& name_) :
-    _test_program(test_program_),
-    _name(name_)
+    _pbimpl(new base_impl(test_program_, name_))
 {
 }
 
@@ -110,13 +130,27 @@ engine::base_test_case::~base_test_case(void)
 }
 
 
+/// Returns a unique memory address for this test case.
+///
+/// Remember that test case objects are shallowly copied; therefore, it is
+/// possible for two distinct variables of a context to return the same unique
+/// internal address (which is perfectly okay).
+///
+/// \return The uniquely-identifying address for this context.
+intptr_t
+engine::base_test_case::unique_address(void) const
+{
+    return reinterpret_cast< intptr_t >(_pbimpl.get());
+}
+
+
 /// Gets the test program this test case belongs to.
 ///
 /// \return A reference to the container test program.
 const engine::base_test_program&
 engine::base_test_case::test_program(void) const
 {
-    return _test_program;
+    return _pbimpl->test_program;
 }
 
 
@@ -126,7 +160,7 @@ engine::base_test_case::test_program(void) const
 const std::string&
 engine::base_test_case::name(void) const
 {
-    return _name;
+    return _pbimpl->name;
 }
 
 
@@ -139,7 +173,7 @@ engine::base_test_case::name(void) const
 engine::test_case_id
 engine::base_test_case::identifier(void) const
 {
-    return test_case_id(_test_program.relative_path(), _name);
+    return test_case_id(_pbimpl->test_program.relative_path(), _pbimpl->name);
 }
 
 

@@ -74,6 +74,9 @@ std::string parse_require_user(const std::string&, const std::string&);
 /// than to provide a way to execute the test cases.  Therefore, no information
 /// needs to be stored for the test programs themselves.
 class test_case : public base_test_case {
+    struct impl;
+    std::tr1::shared_ptr< impl > _pimpl;
+
     properties_map get_all_properties(void) const;
     virtual results::result_ptr execute(
         const user_files::config&,
@@ -81,47 +84,26 @@ class test_case : public base_test_case {
         const utils::optional< utils::fs::path >&) const;
 
 public:
-    /// The test case description.
-    std::string description;
-
-    /// Whether the test case has a cleanup routine or not.
-    bool has_cleanup;
-
-    /// The maximum amount of time the test case can run for.
-    utils::datetime::delta timeout;
-
-    /// List of architectures in which the test case can run; empty = any.
-    strings_set allowed_architectures;
-
-    /// List of platforms in which the test case can run; empty = any.
-    strings_set allowed_platforms;
-
-    /// List of configuration variables needed by the test case.
-    strings_set required_configs;
-
-    /// List of files needed by the test case.
-    paths_set required_files;
-
-    /// List of programs needed by the test case.
-    paths_set required_programs;
-
-    /// Privileges required to run the test case.
-    ///
-    /// Can be empty, in which case means "any privileges", or any of "root" or
-    /// "unprivileged".
-    std::string required_user;
-
-    /// User-defined meta-data properties.
-    properties_map user_metadata;
-
     test_case(const base_test_program&, const std::string&,
               const std::string&, const bool,
               const utils::datetime::delta&, const strings_set&,
               const strings_set&, const strings_set&, const paths_set&,
               const paths_set&, const std::string&, const properties_map&);
+    ~test_case(void);
 
     static test_case from_properties(const base_test_program&,
                                      const std::string&, const properties_map&);
+
+    const std::string& description(void) const;
+    bool has_cleanup(void) const;
+    const utils::datetime::delta& timeout(void) const;
+    const strings_set& allowed_architectures(void) const;
+    const strings_set& allowed_platforms(void) const;
+    const strings_set& required_configs(void) const;
+    const paths_set& required_files(void) const;
+    const paths_set& required_programs(void) const;
+    const std::string& required_user(void) const;
+    const properties_map& user_metadata(void) const;
 
     std::string check_requirements(const user_files::config&) const;
 

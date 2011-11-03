@@ -86,7 +86,7 @@ static bool
 can_do_unprivileged(const atf_iface::test_case& test_case,
                     const user_files::config& config)
 {
-    return test_case.required_user == "unprivileged" &&
+    return test_case.required_user() == "unprivileged" &&
         config.unprivileged_user && passwd::current_user().is_root();
 }
 
@@ -298,7 +298,7 @@ public:
                 execute_test_case_body(_test_case, result_file, rundir, _config),
                 _stdout_path.get_default(workdir / "stdout.txt"),
                 _stderr_path.get_default(workdir / "stderr.txt"),
-                _test_case.timeout);
+                _test_case.timeout());
         } catch (const engine::interrupted_error& e) {
             // Ignore: we want to attempt to run the cleanup function before we
             // return.  The call below to check_interrupt will reraise this signal
@@ -306,13 +306,13 @@ public:
         }
 
         optional< process::status > cleanup_status;
-        if (_test_case.has_cleanup) {
+        if (_test_case.has_cleanup()) {
             LI(F("Running test case cleanup for '%s'") %
                _test_case.identifier().str());
             cleanup_status = engine::fork_and_wait(
                 execute_test_case_cleanup(_test_case, rundir, _config),
                 workdir / "cleanup-stdout.txt", workdir / "cleanup-stderr.txt",
-                _test_case.timeout);
+                _test_case.timeout());
         } else {
             cleanup_status = process::status::fake_exited(EXIT_SUCCESS);
         }

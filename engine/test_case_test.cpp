@@ -195,6 +195,22 @@ ATF_TEST_CASE_BODY(base_test_case__ctor_and_getters)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(base_test_case__unique_address);
+ATF_TEST_CASE_BODY(base_test_case__unique_address)
+{
+    const mock_test_program test_program(fs::path("abc"));
+    const mock_test_case tc1(test_program, "foo");
+    {
+        const mock_test_case tc2 = tc1;
+        const mock_test_case tc3(test_program, "foo");
+        ATF_REQUIRE(tc1.unique_address() == tc2.unique_address());
+        ATF_REQUIRE(tc1.unique_address() != tc3.unique_address());
+        ATF_REQUIRE(tc2.unique_address() != tc3.unique_address());
+    }
+    ATF_REQUIRE(tc1.unique_address() == tc1.unique_address());
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(base_test_case__identifier)
 ATF_TEST_CASE_BODY(base_test_case__identifier)
 {
@@ -240,6 +256,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, test_case_id__use_as_key);
 
     ATF_ADD_TEST_CASE(tcs, base_test_case__ctor_and_getters);
+    ATF_ADD_TEST_CASE(tcs, base_test_case__unique_address);
     ATF_ADD_TEST_CASE(tcs, base_test_case__identifier);
     ATF_ADD_TEST_CASE(tcs, base_test_case__all_properties__delegate);
     ATF_ADD_TEST_CASE(tcs, base_test_case__run__delegate);

@@ -32,6 +32,10 @@
 #if !defined(ENGINE_TEST_CASE_HPP)
 #define ENGINE_TEST_CASE_HPP
 
+extern "C" {
+#include <stdint.h>
+}
+
 #include <map>
 #include <string>
 #include <tr1/memory>
@@ -81,8 +85,8 @@ struct config;
 
 /// Representation of a test case.
 class base_test_case {
-    const base_test_program& _test_program;
-    std::string _name;
+    struct base_impl;
+    std::tr1::shared_ptr< base_impl > _pbimpl;
 
     virtual properties_map get_all_properties(void) const = 0;
     virtual results::result_ptr execute(
@@ -93,6 +97,8 @@ class base_test_case {
 public:
     base_test_case(const base_test_program&, const std::string&);
     virtual ~base_test_case(void);
+
+    intptr_t unique_address(void) const;
 
     const base_test_program& test_program(void) const;
     const std::string& name(void) const;
