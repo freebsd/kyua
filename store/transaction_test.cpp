@@ -74,18 +74,18 @@ ATF_TEST_CASE_BODY(commit__fail)
                                   std::map< std::string, std::string >());
     {
         store::transaction tx = backend.start();
-        tx.put(context);
+        tx.put_context(context);
         backend.database().exec(
             "CREATE TABLE foo ("
             "a REFERENCES contexts(context_id) DEFERRABLE INITIALLY DEFERRED");
         backend.database().exec("INSERT INTO foo VALUES (912378472");
         ATF_REQUIRE_THROW(store::error, tx.commit());
     }
-    // If there is a problem in the handling of OIDs (such as that the OID of
-    // the context has been recorded as committed above but hasn't), the
-    // following would fail.  If it does not fail, then we assume all is good.
+    // If the code attempts to maintain any state regarding the already-put
+    // objects and the commit does not clean up correctly, this would fail in
+    // some manner.
     store::transaction tx = backend.start();
-    tx.put(context);
+    tx.put_context(context);
     tx.commit();
 }
 
@@ -107,12 +107,12 @@ ATF_TEST_CASE_BODY(rollback__ok)
 }
 
 
-ATF_TEST_CASE(put__action__ok);
-ATF_TEST_CASE_HEAD(put__action__ok)
+ATF_TEST_CASE(put_action__ok);
+ATF_TEST_CASE_HEAD(put_action__ok)
 {
     set_md_var("require.files", store::detail::schema_file.c_str());
 }
-ATF_TEST_CASE_BODY(put__action__ok)
+ATF_TEST_CASE_BODY(put_action__ok)
 {
     store::backend backend = store::backend::open_rw(fs::path("test.db"));
     store::transaction tx = backend.start();
@@ -123,11 +123,11 @@ ATF_TEST_CASE_BODY(put__action__ok)
     const engine::action action1(context1);
     const engine::action action2(context2);
     const engine::action action3(context1);
-    tx.put(context1);
-    tx.put(context2);
-    ATF_REQUIRE_EQ(1, tx.put(action1));
-    ATF_REQUIRE_EQ(2, tx.put(action3));
-    ATF_REQUIRE_EQ(3, tx.put(action2));
+    const int64_t context1_id = tx.put_context(context1);
+    const int64_t context2_id = tx.put_context(context2);
+    ATF_REQUIRE_EQ(1, tx.put_action(action1, context1_id));
+    ATF_REQUIRE_EQ(2, tx.put_action(action3, context1_id));
+    ATF_REQUIRE_EQ(3, tx.put_action(action2, context2_id));
     tx.commit();
 
     // TODO(jmmv): These tests are too simplistic.  We should probably combine
@@ -145,31 +145,31 @@ ATF_TEST_CASE_BODY(put__action__ok)
 }
 
 
-ATF_TEST_CASE(put__action__fail);
-ATF_TEST_CASE_HEAD(put__action__fail)
+ATF_TEST_CASE(put_action__fail);
+ATF_TEST_CASE_HEAD(put_action__fail)
 {
     set_md_var("require.files", store::detail::schema_file.c_str());
 }
-ATF_TEST_CASE_BODY(put__action__fail)
+ATF_TEST_CASE_BODY(put_action__fail)
 {
     store::backend backend = store::backend::open_rw(fs::path("test.db"));
     store::transaction tx = backend.start();
     const engine::context context(fs::path("/foo/bar"),
                                   std::map< std::string, std::string >());
-    tx.put(context);
+    const int64_t context_id = tx.put_context(context);
     const engine::action action(context);
     backend.database().exec("DROP TABLE actions");
-    ATF_REQUIRE_THROW(store::error, tx.put(action));
+    ATF_REQUIRE_THROW(store::error, tx.put_action(action, context_id));
     tx.commit();
 }
 
 
-ATF_TEST_CASE(put__context__ok);
-ATF_TEST_CASE_HEAD(put__context__ok)
+ATF_TEST_CASE(put_context__ok);
+ATF_TEST_CASE_HEAD(put_context__ok)
 {
     set_md_var("require.files", store::detail::schema_file.c_str());
 }
-ATF_TEST_CASE_BODY(put__context__ok)
+ATF_TEST_CASE_BODY(put_context__ok)
 {
     store::backend backend = store::backend::open_rw(fs::path("test.db"));
     store::transaction tx = backend.start();
@@ -181,9 +181,9 @@ ATF_TEST_CASE_BODY(put__context__ok)
     const engine::context context1(fs::path("/foo/bar"), env1);
     const engine::context context2(fs::path("/foo/bar"), env1);
     const engine::context context3(fs::path("/foo/baz"), env2);
-    ATF_REQUIRE_EQ(1, tx.put(context1));
-    ATF_REQUIRE_EQ(2, tx.put(context3));
-    ATF_REQUIRE_EQ(3, tx.put(context2));
+    ATF_REQUIRE_EQ(1, tx.put_context(context1));
+    ATF_REQUIRE_EQ(2, tx.put_context(context3));
+    ATF_REQUIRE_EQ(3, tx.put_context(context2));
     tx.commit();
 
     // TODO(jmmv): These tests are too simplistic.  We should probably combine
@@ -221,19 +221,19 @@ ATF_TEST_CASE_BODY(put__context__ok)
 }
 
 
-ATF_TEST_CASE(put__context__fail);
-ATF_TEST_CASE_HEAD(put__context__fail)
+ATF_TEST_CASE(put_context__fail);
+ATF_TEST_CASE_HEAD(put_context__fail)
 {
     set_md_var("require.files", store::detail::schema_file.c_str());
 }
-ATF_TEST_CASE_BODY(put__context__fail)
+ATF_TEST_CASE_BODY(put_context__fail)
 {
     (void)store::backend::open_rw(fs::path("test.db"));
     store::backend backend = store::backend::open_ro(fs::path("test.db"));
     store::transaction tx = backend.start();
     const engine::context context(fs::path("/foo/bar"),
                                   std::map< std::string, std::string >());
-    ATF_REQUIRE_THROW(store::error, tx.put(context));
+    ATF_REQUIRE_THROW(store::error, tx.put_context(context));
     tx.commit();
 }
 
@@ -243,8 +243,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, commit__ok);
     ATF_ADD_TEST_CASE(tcs, rollback__ok);
 
-    ATF_ADD_TEST_CASE(tcs, put__action__ok);
-    ATF_ADD_TEST_CASE(tcs, put__action__fail);
-    ATF_ADD_TEST_CASE(tcs, put__context__ok);
-    ATF_ADD_TEST_CASE(tcs, put__context__fail);
+    ATF_ADD_TEST_CASE(tcs, put_action__ok);
+    ATF_ADD_TEST_CASE(tcs, put_action__fail);
+    ATF_ADD_TEST_CASE(tcs, put_context__ok);
+    ATF_ADD_TEST_CASE(tcs, put_context__fail);
 }

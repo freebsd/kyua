@@ -66,8 +66,8 @@ public:
     void commit(void);
     void rollback(void);
 
-    int64_t put(const engine::action&);
-    int64_t put(const engine::context&);
+    int64_t put_action(const engine::action&, const int64_t);
+    int64_t put_context(const engine::context&);
 };
 
 

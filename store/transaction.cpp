@@ -37,8 +37,7 @@ extern "C" {
 #include "store/backend.hpp"
 #include "store/exceptions.hpp"
 #include "store/transaction.hpp"
-#include "utils/optional.ipp"
-#include "utils/sanity.hpp"
+#include "utils/defs.hpp"
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/exceptions.hpp"
 #include "utils/sqlite/statement.hpp"
@@ -46,73 +45,8 @@ extern "C" {
 
 namespace sqlite = utils::sqlite;
 
-using utils::none;
-using utils::optional;
-
 
 namespace {
-
-
-/// Mapping between unique object addresses to OIDs.
-///
-/// Classes from the engine layer that want to be persistent need to expose a
-/// unique_address() method that returns a unique value representing a
-/// particular instance of the class.  Such unique value is derived from the
-/// memory position storing the internal representation of the instance, which
-/// is shared across all non-pointer instances to the same data.
-///
-/// \todo All this belongs in the backend abstraction because OID mappings are
-/// database-specific.
-typedef std::map< intptr_t, int64_t > oid_map;
-
-
-/// Mapping of all known objects to their OIDs.
-///
-/// Because we use a transactional model in our backend store, we need to
-/// overlay a separate oid_map to this one during the execution of a
-/// transaction.
-static oid_map committed_objects;
-
-
-/// Finds the OID corresponding to an object.
-///
-/// Use transaction::impl::find_oid instead of this global function.
-///
-/// \param map The map from which to query the OID.
-/// \param object The object to get the OID from.  Must implement the
-///     unique_address() method.
-///
-/// \return The OID for the object if it is known; none otherwise.  Every object
-/// in memory must have an OID in this map if the object was previously loaded
-/// from the database.  Objects that do not have an OID yet are objects that
-/// have yet to be stored in the database.
-template< class T >
-optional< int64_t >
-find_oid(oid_map& map, const T& object)
-{
-    const oid_map::const_iterator iter = map.find(object.unique_address());
-    if (iter == map.end())
-        return none;
-    else
-        return optional< int64_t >((*iter).second);
-}
-
-
-/// Inserts an new mapping of an object to an OID into the global map.
-///
-/// Use transaction::impl::insert_oid instead of this global function.
-///
-/// \param map The map into which to insert the new OID.
-/// \param object The object whose OID to store.  Must implement the
-///     unique_address() method.
-/// \param oid The new OID for the object.
-template< class T >
-static void
-insert_oid(oid_map& map, const T& object, const int64_t oid)
-{
-    PRE(!find_oid(map, object));
-    map[object.unique_address()] = oid;
-}
 
 
 /// Stores the environment variables of a context.
@@ -151,9 +85,6 @@ struct store::transaction::impl {
     /// The backing SQLite transaction.
     sqlite::transaction _tx;
 
-    /// The not-yet committed mappings that are part of this transaction.
-    oid_map _objects;
-
     /// Opens a transaction.
     ///
     /// \param backend_ The backend this transaction is connected to.
@@ -161,61 +92,6 @@ struct store::transaction::impl {
         _db(backend_.database()),
         _tx(backend_.database().begin_transaction())
     {
-    }
-
-    /// Finds the OID corresponding to an object.
-    ///
-    /// \param object The object to get the OID from.  Must implement the
-    ///     unique_address() method.
-    ///
-    /// \return The OID for the object if it is known; none otherwise.  Every
-    /// object in memory must have an OID in this map if the object was
-    /// previously loaded from the database.  Objects that do not have an OID
-    /// yet are objects that have yet to be stored in the database.
-    template< class T >
-    optional< int64_t >
-    find_oid(const T& object)
-    {
-        const optional< int64_t > oid = ::find_oid(_objects, object);
-        if (oid)
-            return oid;
-        else
-            return ::find_oid(committed_objects, object);
-    }
-
-    /// Inserts an new mapping of an object to an OID into the global map.
-    ///
-    /// \param object The object whose OID to store.  Must implement the
-    ///     unique_address() method.
-    /// \param oid The new OID for the object.
-    template< class T >
-    void
-    insert_oid(const T& object, const int64_t oid)
-    {
-        ::insert_oid(_objects, object, oid);
-    }
-
-    /// Commits the transaction.
-    ///
-    /// Aside from actually committing the changes to the database, this applies
-    /// any pending object to OID mappings to the global table.
-    ///
-    /// \throw error If there is any problem when talking to the database.
-    void
-    commit(void)
-    {
-        try {
-            _tx.commit();
-        } catch (const sqlite::error& e) {
-            throw error(e.what());
-        }
-
-        for (oid_map::const_iterator iter = _objects.begin();
-             iter != _objects.end(); ++iter) {
-            INV(committed_objects.find((*iter).first) ==
-                committed_objects.end());
-            committed_objects.insert(*iter);
-        }
     }
 };
 
@@ -241,7 +117,11 @@ store::transaction::~transaction(void)
 void
 store::transaction::commit(void)
 {
-    _pimpl->commit();
+    try {
+        _pimpl->_tx.commit();
+    } catch (const sqlite::error& e) {
+        throw error(e.what());
+    }
 }
 
 
@@ -265,29 +145,23 @@ store::transaction::rollback(void)
 /// \pre The dependent objects have already been put.
 /// \post The action is stored into the database with a new identifier.
 ///
-/// \param action The action to put.
+/// \param unused_action The action to put.
+/// \param context_id The identifier for the action's context.
 ///
 /// \return The identifier of the inserted action.
 ///
 /// \throw error If there is any problem when talking to the database.
 int64_t
-store::transaction::put(const engine::action& action)
+store::transaction::put_action(const engine::action& UTILS_UNUSED_PARAM(action),
+                               const int64_t context_id)
 {
-    const optional< int64_t > oid = _pimpl->find_oid(action);
-    PRE_MSG(!oid, "Immutable object; cannot doubleput");
-
-    const optional< int64_t > context_id = _pimpl->find_oid(
-        action.runtime_context());
-    PRE_MSG(context_id, "Context not yet stored");
-
     try {
         sqlite::statement stmt = _pimpl->_db.create_statement(
             "INSERT INTO actions (context_id) VALUES (:context_id)");
-        stmt.bind_int64(":context_id", context_id.get());
+        stmt.bind_int64(":context_id", context_id);
         stmt.step_without_results();
         const int64_t action_id = _pimpl->_db.last_insert_rowid();
 
-        _pimpl->insert_oid(action, action_id);
         return action_id;
     } catch (const sqlite::error& e) {
         throw error(e.what());
@@ -306,11 +180,8 @@ store::transaction::put(const engine::action& action)
 ///
 /// \throw error If there is any problem when talking to the database.
 int64_t
-store::transaction::put(const engine::context& context)
+store::transaction::put_context(const engine::context& context)
 {
-    const optional< int64_t > oid = _pimpl->find_oid(context);
-    PRE_MSG(!oid, "Immutable object; cannot doubleput");
-
     try {
         sqlite::statement stmt = _pimpl->_db.create_statement(
             "INSERT INTO contexts (cwd) VALUES (:cwd)");
@@ -320,7 +191,6 @@ store::transaction::put(const engine::context& context)
 
         put_env_vars(_pimpl->_db, context_id, context.env());
 
-        _pimpl->insert_oid(context, context_id);
         return context_id;
     } catch (const sqlite::error& e) {
         throw error(e.what());

@@ -121,10 +121,10 @@ run_tests::drive(const fs::path& kyuafile_path,
     store::transaction tx = db.start();
 
     engine::context context = engine::context::current();
-    tx.put(context);
+    const int64_t context_id = tx.put_context(context);
 
     engine::action action(context);
-    const int64_t action_id = tx.put(action);
+    const int64_t action_id = tx.put_action(action, context_id);
 
     for (test_programs_vector::const_iterator iter =
          kyuafile.test_programs().begin();
