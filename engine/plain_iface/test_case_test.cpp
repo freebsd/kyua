@@ -155,7 +155,7 @@ compare_results(const Result& expected, const results::base_result* actual)
     if (typeid(*actual) == typeid(results::broken)) {
         const results::broken* broken = dynamic_cast< const results::broken* >(
             actual);
-        ATF_FAIL(F("Got unexpected broken result: %s") % broken->reason);
+        ATF_FAIL(F("Got unexpected broken result: %s") % broken->reason());
     } else {
         if (typeid(*actual) != typeid(expected)) {
             ATF_FAIL(F("Result %s does not match type %s") %
@@ -183,8 +183,8 @@ validate_broken(const char* reason_regexp, const results::base_result* actual)
     if (typeid(*actual) == typeid(results::broken)) {
         const results::broken* broken = dynamic_cast< const results::broken* >(
             actual);
-        std::cout << F("Got reason: %s\n") % broken->reason;
-        ATF_REQUIRE_MATCH(reason_regexp, broken->reason);
+        std::cout << F("Got reason: %s\n") % broken->reason();
+        ATF_REQUIRE_MATCH(reason_regexp, broken->reason());
     } else {
         ATF_FAIL(F("Expected broken result but got %s") %
                  typeid(*actual).name());

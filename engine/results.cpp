@@ -33,7 +33,38 @@
 
 namespace results = engine::results;
 
+using utils::none;
 using utils::optional;
+
+
+/// Internal implementation of a result.
+struct engine::results::base_result::base_impl {
+    /// Whether the result can be considered "good" or not.
+    bool good;
+
+    /// The explanation for the result.
+    ///
+    /// This should be non-none only if the result type supports a reason.
+    optional< std::string > reason;
+
+    /// Constructor.
+    ///
+    /// \param good_ True if the result is good, false otherwise.
+    /// \param reason_ The explanation for the result, if any.
+    base_impl(const bool good_, const optional< std::string >& reason_) :
+        good(good_),
+        reason(reason_)
+    {
+    }
+};
+
+
+/// Constructs a base result.
+results::base_result::base_result(const bool good_,
+                                  const optional< std::string >& reason_) :
+    _pbimpl(new base_impl(good_, reason_))
+{
+}
 
 
 /// Destructor for a test result.
@@ -42,11 +73,45 @@ results::base_result::~base_result(void)
 }
 
 
+/// Returns a unique memory address for this result.
+///
+/// Remember that result objects are shallowly copied; therefore, it is
+/// possible for two distinct variables of a result to return the same unique
+/// internal address (which is perfectly okay).
+///
+/// \return The uniquely-identifying address for this result.
+intptr_t
+results::base_result::unique_address(void) const
+{
+    return reinterpret_cast< intptr_t >(_pbimpl.get());
+}
+
+
+/// Gets the reason behind the result, if any.
+///
+/// \return The reason, or none if not defined.
+const optional< std::string >&
+results::base_result::optional_reason(void) const
+{
+    return _pbimpl->reason;
+}
+
+
+/// True if the test case result has a positive connotation.
+///
+/// \return Whether the test case is good or not.
+bool
+results::base_result::good(void) const
+{
+    return _pbimpl->good;
+}
+
+
 /// Constructs a new broken result.
 ///
 /// \param reason_ The reason.
 results::broken::broken(const std::string& reason_) :
-    reason(reason_)
+    base_result(false, utils::make_optional(reason_))
 {
 }
 
@@ -60,7 +125,7 @@ bool
 results::broken::operator==(const results::broken& other)
     const
 {
-    return reason == other.reason;
+    return reason() == other.reason();
 }
 
 
@@ -73,21 +138,29 @@ bool
 results::broken::operator!=(const results::broken& other)
     const
 {
-    return reason != other.reason;
+    return reason() != other.reason();
 }
 
 
+/// Gets the reason describing the result.
+///
+/// \return The test-provided reason for the result.
+const std::string&
+results::broken::reason(void) const
+{
+    return optional_reason().get();
+}
+
+
+/// Generates a user-friendly representation of the result.
+///
+/// \return A text-based representation of the result.
+///
+/// \todo This should be in the 'cli' layer, not in 'engine'.
 std::string
 results::broken::format(void) const
 {
-    return F("broken: %s") % reason;
-}
-
-
-bool
-results::broken::good(void) const
-{
-    return false;
+    return F("broken: %s") % reason();
 }
 
 
@@ -95,7 +168,7 @@ results::broken::good(void) const
 ///
 /// \param reason_ The reason.
 results::expected_failure::expected_failure(const std::string& reason_) :
-    reason(reason_)
+    base_result(true, utils::make_optional(reason_))
 {
 }
 
@@ -109,7 +182,7 @@ bool
 results::expected_failure::operator==(const results::expected_failure& other)
     const
 {
-    return reason == other.reason;
+    return reason() == other.reason();
 }
 
 
@@ -122,21 +195,29 @@ bool
 results::expected_failure::operator!=(const results::expected_failure& other)
     const
 {
-    return reason != other.reason;
+    return reason() != other.reason();
 }
 
 
+/// Gets the reason describing the result.
+///
+/// \return The test-provided reason for the result.
+const std::string&
+results::expected_failure::reason(void) const
+{
+    return optional_reason().get();
+}
+
+
+/// Generates a user-friendly representation of the result.
+///
+/// \return A text-based representation of the result.
+///
+/// \todo This should be in the 'cli' layer, not in 'engine'.
 std::string
 results::expected_failure::format(void) const
 {
-    return F("expected_failure: %s") % reason;
-}
-
-
-bool
-results::expected_failure::good(void) const
-{
-    return true;
+    return F("expected_failure: %s") % reason();
 }
 
 
@@ -144,7 +225,7 @@ results::expected_failure::good(void) const
 ///
 /// \param reason_ The reason.
 results::failed::failed(const std::string& reason_) :
-    reason(reason_)
+    base_result(false, utils::make_optional(reason_))
 {
 }
 
@@ -158,7 +239,7 @@ bool
 results::failed::operator==(const results::failed& other)
     const
 {
-    return reason == other.reason;
+    return reason() == other.reason();
 }
 
 
@@ -171,26 +252,35 @@ bool
 results::failed::operator!=(const results::failed& other)
     const
 {
-    return reason != other.reason;
+    return reason() != other.reason();
 }
 
 
+/// Gets the reason describing the result.
+///
+/// \return The test-provided reason for the result.
+const std::string&
+results::failed::reason(void) const
+{
+    return optional_reason().get();
+}
+
+
+/// Generates a user-friendly representation of the result.
+///
+/// \return A text-based representation of the result.
+///
+/// \todo This should be in the 'cli' layer, not in 'engine'.
 std::string
 results::failed::format(void) const
 {
-    return F("failed: %s") % reason;
-}
-
-
-bool
-results::failed::good(void) const
-{
-    return false;
+    return F("failed: %s") % reason();
 }
 
 
 /// Constructs a new passed result.
-results::passed::passed(void)
+results::passed::passed(void) :
+    base_result(true, none)
 {
 }
 
@@ -221,6 +311,11 @@ results::passed::operator!=(const results::passed& UTILS_UNUSED_PARAM(other))
 }
 
 
+/// Generates a user-friendly representation of the result.
+///
+/// \return A text-based representation of the result.
+///
+/// \todo This should be in the 'cli' layer, not in 'engine'.
 std::string
 results::passed::format(void) const
 {
@@ -228,18 +323,11 @@ results::passed::format(void) const
 }
 
 
-bool
-results::passed::good(void) const
-{
-    return true;
-}
-
-
 /// Constructs a new skipped result.
 ///
 /// \param reason_ The reason.
 results::skipped::skipped(const std::string& reason_) :
-    reason(reason_)
+    base_result(true, utils::make_optional(reason_))
 {
 }
 
@@ -253,7 +341,7 @@ bool
 results::skipped::operator==(const results::skipped& other)
     const
 {
-    return reason == other.reason;
+    return reason() == other.reason();
 }
 
 
@@ -266,19 +354,27 @@ bool
 results::skipped::operator!=(const results::skipped& other)
     const
 {
-    return reason != other.reason;
+    return reason() != other.reason();
 }
 
 
+/// Gets the reason describing the result.
+///
+/// \return The test-provided reason for the result.
+const std::string&
+results::skipped::reason(void) const
+{
+    return optional_reason().get();
+}
+
+
+/// Generates a user-friendly representation of the result.
+///
+/// \return A text-based representation of the result.
+///
+/// \todo This should be in the 'cli' layer, not in 'engine'.
 std::string
 results::skipped::format(void) const
 {
-    return F("skipped: %s") % reason;
-}
-
-
-bool
-results::skipped::good(void) const
-{
-    return true;
+    return F("skipped: %s") % reason();
 }

@@ -47,6 +47,10 @@
 #if !defined(ENGINE_RESULTS_HPP)
 #define ENGINE_RESULTS_HPP
 
+extern "C" {
+#include <stdint.h>
+}
+
 #include <string>
 #include <tr1/memory>
 
@@ -57,18 +61,35 @@ namespace results {
 
 
 /// Base abstract class to represent a test case result.
-struct base_result {
+///
+/// This base class provides common functionality across all result types.  It
+/// also provides helper utilities to make the implementation of the subtypes
+/// easier; for example, it provides a mechanism to represent result reasons,
+/// yet the "passed" type will not want to expose it.
+///
+/// \todo I think special-casing the "passed" type to not expose a reason is a
+/// lot of hassle.  Maybe we should just optionally-return a result regardless
+/// (being none if not available).
+class base_result {
+    struct base_impl;
+    std::tr1::shared_ptr< base_impl > _pbimpl;
+
+protected:
+    base_result(const bool, const utils::optional< std::string >&);
+
+    const utils::optional< std::string >& optional_reason(void) const;
+
+public:
     virtual ~base_result(void) = 0;
+
+    intptr_t unique_address(void) const;
 
     /// Simple formatter.
     ///
     /// \return The formatted result.
     virtual std::string format(void) const = 0;
 
-    /// True if the test case result has a positive connotation.
-    ///
-    /// \return Whether the test case is good or not.
-    virtual bool good(void) const = 0;
+    bool good(void) const;
 };
 
 
@@ -77,69 +98,61 @@ typedef std::tr1::shared_ptr< const base_result > result_ptr;
 
 
 /// Representation of a broken test case.
-struct broken : public base_result {
-    /// The reason for the brokenness.
-    std::string reason;
-
+class broken : public base_result {
+public:
     broken(const std::string&);
     bool operator==(const broken&) const;
     bool operator!=(const broken&) const;
 
+    const std::string& reason(void) const;
     std::string format(void) const;
-    bool good(void) const;
 };
 
 
 /// Representation of a test case that expectedly fails.
-struct expected_failure : public base_result {
-    /// The reason for the expected failure.
-    std::string reason;
-
+class expected_failure : public base_result {
+public:
     expected_failure(const std::string&);
     bool operator==(const expected_failure&) const;
     bool operator!=(const expected_failure&) const;
 
+    const std::string& reason(void) const;
     std::string format(void) const;
-    bool good(void) const;
 };
 
 
 /// Representation of a test case that fails.
-struct failed : public base_result {
-    /// The reason for the failure.
-    std::string reason;
-
+class failed : public base_result {
+public:
     failed(const std::string&);
     bool operator==(const failed&) const;
     bool operator!=(const failed&) const;
 
+    const std::string& reason(void) const;
     std::string format(void) const;
-    bool good(void) const;
 };
 
 
 /// Representation of a test case that succeeds.
-struct passed : public base_result {
+class passed : public base_result {
+public:
     passed(void);
     bool operator==(const passed&) const;
     bool operator!=(const passed&) const;
 
     std::string format(void) const;
-    bool good(void) const;
 };
 
 
 /// Representation of a test case that is skipped.
-struct skipped : public base_result {
-    /// The reason for the skipping.
-    std::string reason;
-
+class skipped : public base_result {
+public:
     skipped(const std::string&);
     bool operator==(const skipped&) const;
     bool operator!=(const skipped&) const;
 
+    const std::string& reason(void) const;
     std::string format(void) const;
-    bool good(void) const;
 };
 
 

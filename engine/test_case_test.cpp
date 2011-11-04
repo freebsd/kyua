@@ -243,7 +243,7 @@ ATF_TEST_CASE_BODY(base_test_case__run__delegate)
     ATF_REQUIRE(typeid(*result) == typeid(results::skipped));
     const results::skipped* typed_result =
         dynamic_cast< const results::skipped* >(result.get());
-    ATF_REQUIRE_EQ("A test result", typed_result->reason);
+    ATF_REQUIRE_EQ("A test result", typed_result->reason());
 }
 
 
