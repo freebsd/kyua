@@ -71,6 +71,11 @@ ATF_TEST_CASE_BODY(normalize__ok)
     ATF_REQUIRE_EQ("/foo", path("///foo").str());
     ATF_REQUIRE_EQ("/foo/bar", path("///foo///bar").str());
     ATF_REQUIRE_EQ("/foo/bar", path("///foo///bar///").str());
+
+    ATF_REQUIRE_EQ("./foo/bar", path("./foo/bar").str());
+    ATF_REQUIRE_EQ("./foo/bar", path("./foo/./bar").str());
+    ATF_REQUIRE_EQ("./foo/bar", path("././foo/./bar").str());
+    ATF_REQUIRE_EQ("foo/bar", path("foo/././bar").str());
 }
 
 

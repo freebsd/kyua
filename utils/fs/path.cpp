@@ -63,7 +63,7 @@ normalize(const std::string& in)
         if (!component.empty()) {
             if (pos == 0)
                 out += component;
-            else
+            else if (component != ".")
                 out += "/" + component;
         }
 
