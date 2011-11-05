@@ -54,14 +54,21 @@ namespace {
 ///
 /// \param test_program The test program to execute.
 /// \param config The configuration variables provided by the user.
-/// \param ui Interface for progress reporting.
+/// \param filters The matching state of the filters.
+/// \param hooks The user hooks to receive asynchronous notifications.
+/// \param tx The store transaction into which to put the results.
+/// \param action_id The action this program belongs to.
 void
 run_test_program(const engine::base_test_program& test_program,
                  const user_files::config& config,
                  engine::filters_state& filters,
-                 run_tests::base_hooks& hooks)
+                 run_tests::base_hooks& hooks,
+                 store::transaction& tx,
+                 const int64_t action_id)
 {
     LI(F("Processing test program '%s'") % test_program.relative_path());
+    const int64_t test_program_id = tx.put_test_program(test_program,
+                                                        action_id);
 
     engine::test_cases_vector test_cases;
     try {
@@ -73,6 +80,7 @@ run_test_program(const engine::base_test_program& test_program,
         const engine::test_case_id program_id(
             test_program.relative_path(), "__test_program__");
         const results::result_ptr result = results::make_result(broken);
+        // TODO(jmmv): Put the test case result.
         hooks.got_result(program_id, result);
     }
 
@@ -83,7 +91,10 @@ run_test_program(const engine::base_test_program& test_program,
         if (!filters.match_test_case(test_case->identifier()))
             continue;
 
+        const int64_t test_case_id = tx.put_test_case(*test_case,
+                                                      test_program_id);
         const results::result_ptr result = test_case->run(config);
+        tx.put_result(result, test_case_id);
         hooks.got_result(test_case->identifier(), result);
     }
 }
@@ -134,7 +145,8 @@ run_tests::drive(const fs::path& kyuafile_path,
         if (!filters.match_test_program(test_program->relative_path()))
             continue;
 
-        run_test_program(*test_program, config, filters, hooks);
+        run_test_program(*test_program, config, filters, hooks,
+                         tx, action_id);
     }
 
     tx.commit();

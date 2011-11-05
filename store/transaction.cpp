@@ -31,19 +31,28 @@ extern "C" {
 }
 
 #include <map>
+#include <typeinfo>
 
 #include "engine/action.hpp"
+#include "engine/atf_iface/test_program.hpp"
 #include "engine/context.hpp"
+#include "engine/plain_iface/test_program.hpp"
+#include "engine/results.hpp"
 #include "store/backend.hpp"
 #include "store/exceptions.hpp"
 #include "store/transaction.hpp"
 #include "utils/defs.hpp"
+#include "utils/sanity.hpp"
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/exceptions.hpp"
 #include "utils/sqlite/statement.hpp"
 #include "utils/sqlite/transaction.hpp"
 
+namespace atf_iface = engine::atf_iface;
+namespace fs = utils::fs;
 namespace sqlite = utils::sqlite;
+namespace plain_iface = engine::plain_iface;
+namespace results = engine::results;
 
 
 namespace {
@@ -66,6 +75,31 @@ put_env_vars(sqlite::database& db, const int64_t context_id,
     stmt.bind_int64(":context_id", context_id);
     for (std::map< std::string, std::string >::const_iterator iter =
              env.begin(); iter != env.end(); iter++) {
+        stmt.bind_text(":var_name", (*iter).first);
+        stmt.bind_text(":var_value", (*iter).second);
+        stmt.step_without_results();
+        stmt.reset();
+    }
+}
+
+
+/// Stores the metadata variables of a test case.
+///
+/// \param db The SQLite database.
+/// \param test_case_id The identifier of the test case.
+/// \param metadata The metadata properties.
+///
+/// \throw sqlite::error If there is a problem storing the variables.
+static void
+put_metadata(sqlite::database& db, const int64_t test_case_id,
+             const engine::properties_map& metadata)
+{
+    sqlite::statement stmt = db.create_statement(
+        "INSERT INTO test_cases_metadata (test_case_id, var_name, var_value) "
+        "VALUES (:test_case_id, :var_name, :var_value)");
+    stmt.bind_int64(":test_case_id", test_case_id);
+    for (engine::properties_map::const_iterator iter = metadata.begin();
+         iter != metadata.end(); iter++) {
         stmt.bind_text(":var_name", (*iter).first);
         stmt.bind_text(":var_value", (*iter).second);
         stmt.step_without_results();
@@ -192,6 +226,131 @@ store::transaction::put_context(const engine::context& context)
         put_env_vars(_pimpl->_db, context_id, context.env());
 
         return context_id;
+    } catch (const sqlite::error& e) {
+        throw error(e.what());
+    }
+}
+
+
+/// Puts a test program into the database.
+///
+/// \pre The test program has not been put yet.
+/// \post The test program is stored into the database with a new identifier.
+///
+/// \param test_program The test program to put.
+/// \param action_id The action this test program belongs to.
+///
+/// \return The identifier of the inserted test program.
+///
+/// \throw error If there is any problem when talking to the database.
+int64_t
+store::transaction::put_test_program(
+    const engine::base_test_program& test_program,
+    const int64_t action_id)
+{
+    try {
+        sqlite::statement stmt = _pimpl->_db.create_statement(
+            "INSERT INTO test_programs (action_id, binary_path, "
+            "                           test_suite_name) "
+            "VALUES (:action_id, :binary_path, :test_suite_name)");
+        stmt.bind_int64(":action_id", action_id);
+        const fs::path binary_path = test_program.absolute_path();
+        stmt.bind_text(":binary_path", binary_path.is_absolute() ?
+                       binary_path.str() : binary_path.to_absolute().str());
+        stmt.bind_text(":test_suite_name", test_program.test_suite_name());
+        stmt.step_without_results();
+        const int64_t test_program_id = _pimpl->_db.last_insert_rowid();
+
+        return test_program_id;
+    } catch (const sqlite::error& e) {
+        throw error(e.what());
+    }
+}
+
+
+/// Puts a test case into the database.
+///
+/// \pre The test case has not been put yet.
+/// \post The test case is stored into the database with a new identifier.
+///
+/// \param test_case The test case to put.
+/// \param test_program_id The test program this test case belongs to.
+///
+/// \return The identifier of the inserted test case.
+///
+/// \throw error If there is any problem when talking to the database.
+int64_t
+store::transaction::put_test_case(const engine::base_test_case& test_case,
+                                  const int64_t test_program_id)
+{
+    try {
+        sqlite::statement stmt = _pimpl->_db.create_statement(
+            "INSERT INTO test_cases (test_program_id, name) "
+            "VALUES (:test_program_id, :name)");
+        stmt.bind_int64(":test_program_id", test_program_id);
+        stmt.bind_text(":name", test_case.name());
+        stmt.step_without_results();
+        const int64_t test_case_id = _pimpl->_db.last_insert_rowid();
+
+        put_metadata(_pimpl->_db, test_case_id, test_case.all_properties());
+
+        return test_case_id;
+    } catch (const sqlite::error& e) {
+        throw error(e.what());
+    }
+}
+
+
+/// Puts a result into the database.
+///
+/// \pre The result has not been put yet.
+/// \post The result is stored into the database with a new identifier.
+///
+/// \param result The result to put.
+/// \param test_case_id The test case this result corresponds to.
+///
+/// \return The identifier of the inserted result.
+///
+/// \throw error If there is any problem when talking to the database.
+int64_t
+store::transaction::put_result(const results::result_ptr result,
+                               const int64_t test_case_id)
+{
+    try {
+        sqlite::statement stmt = _pimpl->_db.create_statement(
+            "INSERT INTO test_results (test_case_id, result_type, "
+            "                          result_reason) "
+            "VALUES (:test_case_id, :result_type, :result_reason)");
+        stmt.bind_int64(":test_case_id", test_case_id);
+        if (typeid(*result) == typeid(results::broken)) {
+            const results::broken* result2 =
+                dynamic_cast< const results::broken* >(result.get());
+            stmt.bind_text(":result_type", "broken");
+            stmt.bind_text(":result_reason", result2->reason());
+        } else if (typeid(*result) == typeid(results::expected_failure)) {
+            const results::expected_failure* result2 =
+                dynamic_cast< const results::expected_failure* >(result.get());
+            stmt.bind_text(":result_type", "expected_failure");
+            stmt.bind_text(":result_reason", result2->reason());
+        } else if (typeid(*result) == typeid(results::failed)) {
+            const results::failed* result2 =
+                dynamic_cast< const results::failed* >(result.get());
+            stmt.bind_text(":result_type", "failed");
+            stmt.bind_text(":result_reason", result2->reason());
+        } else if (typeid(*result) == typeid(results::passed)) {
+            stmt.bind_text(":result_type", "passed");
+            stmt.bind_null(":result_reason");
+        } else if (typeid(*result) == typeid(results::skipped)) {
+            const results::skipped* result2 =
+                dynamic_cast< const results::skipped* >(result.get());
+            stmt.bind_text(":result_type", "skipped");
+            stmt.bind_text(":result_reason", result2->reason());
+        } else
+            UNREACHABLE_MSG("Unimplemented result type");
+        stmt.step_without_results();
+        const int64_t result_id = _pimpl->_db.last_insert_rowid();
+
+        return result_id;
     } catch (const sqlite::error& e) {
         throw error(e.what());
     }

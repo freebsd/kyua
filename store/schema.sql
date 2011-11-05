@@ -75,6 +75,8 @@ CREATE TABLE metadata (
 CREATE TABLE contexts (
     context_id INTEGER PRIMARY KEY AUTOINCREMENT,
     cwd TEXT NOT NULL
+
+    -- TODO(jmmv): Record the run-time configuration.
 );
 
 
@@ -102,6 +104,80 @@ CREATE TABLE env_vars (
 CREATE TABLE actions (
     action_id INTEGER PRIMARY KEY AUTOINCREMENT,
     context_id INTEGER REFERENCES contexts
+);
+
+
+-- -------------------------------------------------------------------------
+-- Test suites.
+--
+-- The tables in this section represent all the components that form a test
+-- suite.  This includes data about the test suite itself (test programs
+-- and test cases), and also the data about particular runs (test results).
+--
+-- As you will notice, every object belongs to a particular action, has a
+-- unique identifier and there is no attempt to deduplicate data.  This
+-- comes from the fact that a test suite is not "stable" over time: i.e. on
+-- each execution of the test suite, test programs and test cases may have
+-- come and gone.  This has the interesting result of making the
+-- distinction of a test case and a test result a pure syntactic
+-- difference, because there is always a 1:1 relation.
+--
+-- The code that performs the processing of the actions is the component in
+-- charge of finding correlations between test programs and test cases
+-- across different actions.
+-- -------------------------------------------------------------------------
+
+
+-- Representation of a test program.
+--
+-- At the moment, there are no substantial differences between the
+-- different interfaces, so we can simplify the design by with having a
+-- single table representing all test caes.  We may need to revisit this in
+-- the future.
+CREATE TABLE test_programs (
+    test_program_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    action_id INTEGER REFERENCES actions,
+
+    -- Absolute path to the test program.
+    binary_path TEXT NOT NULL,
+
+    -- Name of the test suite the test program belongs to.
+    test_suite_name TEXT NOT NULL
+);
+
+
+-- Representation of a test case.
+--
+-- At the moment, there are no substantial differences between the
+-- different interfaces, so we can simplify the design by with having a
+-- single table representing all test caes.  We may need to revisit this in
+-- the future.
+CREATE TABLE test_cases (
+    test_case_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    test_program_id INTEGER REFERENCES test_programs,
+    name TEXT NOT NULL
+);
+
+
+-- Representation of the test case metadata properties.
+CREATE TABLE test_cases_metadata (
+    test_case_id INTEGER REFERENCES test_cases,
+    var_name TEXT NOT NULL,
+    var_value TEXT,
+
+    PRIMARY KEY (test_case_id, var_name)
+);
+
+
+-- Representation of test case results.
+--
+-- Note that there is a 1:1 relation between test cases and their results.
+-- This is a result of storing the information of a test case on every
+-- single action.
+CREATE TABLE test_results (
+    test_case_id INTEGER REFERENCES test_cases,
+    result_type TEXT NOT NULL,
+    result_reason TEXT
 );
 
 

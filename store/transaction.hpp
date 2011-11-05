@@ -38,8 +38,12 @@ extern "C" {
 
 #include <tr1/memory>
 
+#include "engine/results.hpp"
+
 namespace engine {
 class action;
+class base_test_case;
+class base_test_program;
 class context;
 };
 
@@ -68,6 +72,9 @@ public:
 
     int64_t put_action(const engine::action&, const int64_t);
     int64_t put_context(const engine::context&);
+    int64_t put_test_program(const engine::base_test_program&, const int64_t);
+    int64_t put_test_case(const engine::base_test_case&, const int64_t);
+    int64_t put_result(const engine::results::result_ptr, const int64_t);
 };
 
 
