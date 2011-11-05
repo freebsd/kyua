@@ -97,6 +97,8 @@ format_cell(sqlite::statement& stmt, const int index)
 {
     if (stmt.column_type(index) == sqlite::type_integer) {
         return F("%d") % stmt.column_int64(index);
+    } else if (stmt.column_type(index) == sqlite::type_null) {
+        return "NULL";
     } else if (stmt.column_type(index) == sqlite::type_text) {
         return stmt.column_text(index);
     } else {

@@ -102,14 +102,14 @@ store_flag__explicit__fail_body() {
 utils_test_case no_headers_flag
 no_headers_flag_body() {
     atf_check kyua db-exec "CREATE TABLE data" \
-        "(a INTEGER PRIMARY KEY, b INTEGER)"
-    atf_check kyua db-exec "INSERT INTO data VALUES (65, 43)"
-    atf_check kyua db-exec "INSERT INTO data VALUES (23, 42)"
+        "(a INTEGER PRIMARY KEY, b INTEGER, c TEXT)"
+    atf_check kyua db-exec "INSERT INTO data VALUES (65, 43, NULL)"
+    atf_check kyua db-exec "INSERT INTO data VALUES (23, 42, 'foo')"
 
     cat >expout <<EOF
-a,b
-23,42
-65,43
+a,b,c
+23,42,foo
+65,43,NULL
 EOF
     atf_check -s exit:0 -o file:expout -e empty \
         kyua db-exec "SELECT * FROM data ORDER BY a"
