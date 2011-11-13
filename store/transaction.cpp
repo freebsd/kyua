@@ -42,6 +42,7 @@ extern "C" {
 #include "store/exceptions.hpp"
 #include "store/transaction.hpp"
 #include "utils/defs.hpp"
+#include "utils/format/macros.hpp"
 #include "utils/sanity.hpp"
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/exceptions.hpp"
@@ -56,6 +57,34 @@ namespace results = engine::results;
 
 
 namespace {
+
+
+/// Retrieves the environment variables of a context.
+///
+/// \param db The SQLite database.
+/// \param context_id The identifier of the context.
+///
+/// \return The environment variables of the specified context.
+///
+/// \throw sqlite::error If there is a problem storing the variables.
+static std::map< std::string, std::string >
+get_env_vars(sqlite::database& db, const int64_t context_id)
+{
+    std::map< std::string, std::string > env;
+
+    sqlite::statement stmt = db.create_statement(
+        "SELECT var_name, var_value FROM env_vars "
+        "WHERE context_id == :context_id");
+    stmt.bind_int64(":context_id", context_id);
+
+    while (stmt.step()) {
+        const std::string name = stmt.safe_column_text("var_name");
+        const std::string value = stmt.safe_column_text("var_value");
+        env[name] = value;
+    }
+
+    return env;
+}
 
 
 /// Stores the environment variables of a context.
@@ -169,6 +198,58 @@ store::transaction::rollback(void)
         _pimpl->_tx.rollback();
     } catch (const sqlite::error& e) {
         throw error(e.what());
+    }
+}
+
+
+/// Retrieves an action from the database.
+///
+/// \param action_id The identifier of the action to retrieve.
+///
+/// \return The retrieved action.
+///
+/// \throw error If there is a problem loading the action.
+engine::action
+store::transaction::get_action(const int64_t action_id)
+{
+    try {
+        sqlite::statement stmt = _pimpl->_db.create_statement(
+            "SELECT context_id FROM actions WHERE action_id == :action_id");
+        stmt.bind_int64(":action_id", action_id);
+        if (!stmt.step())
+            throw error(F("Error loading action %d: does not exist") %
+                        action_id);
+
+        return engine::action(
+            get_context(stmt.safe_column_int64("context_id")));
+    } catch (const sqlite::error& e) {
+        throw error(F("Error loading action %d: %s") % action_id % e.what());
+    }
+}
+
+
+/// Retrieves an context from the database.
+///
+/// \param context_id The identifier of the context to retrieve.
+///
+/// \return The retrieved context.
+///
+/// \throw error If there is a problem loading the context.
+engine::context
+store::transaction::get_context(const int64_t context_id)
+{
+    try {
+        sqlite::statement stmt = _pimpl->_db.create_statement(
+            "SELECT cwd FROM contexts WHERE context_id == :context_id");
+        stmt.bind_int64(":context_id", context_id);
+        if (!stmt.step())
+            throw error(F("Error loading context %d: does not exist") %
+                        context_id);
+
+        return engine::context(fs::path(stmt.safe_column_text("cwd")),
+                               get_env_vars(_pimpl->_db, context_id));
+    } catch (const sqlite::error& e) {
+        throw error(F("Error loading context %d: %s") % context_id % e.what());
     }
 }
 

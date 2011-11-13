@@ -70,6 +70,9 @@ public:
     void commit(void);
     void rollback(void);
 
+    engine::action get_action(const int64_t);
+    engine::context get_context(const int64_t);
+
     int64_t put_action(const engine::action&, const int64_t);
     int64_t put_context(const engine::context&);
     int64_t put_test_program(const engine::base_test_program&, const int64_t);

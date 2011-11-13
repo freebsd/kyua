@@ -157,50 +157,85 @@ ATF_TEST_CASE_BODY(rollback__ok)
 }
 
 
-ATF_TEST_CASE(put_action__ok);
-ATF_TEST_CASE_HEAD(put_action__ok)
+ATF_TEST_CASE(get_put_action__ok);
+ATF_TEST_CASE_HEAD(get_put_action__ok)
 {
     set_md_var("require.files", store::detail::schema_file.c_str());
 }
-ATF_TEST_CASE_BODY(put_action__ok)
+ATF_TEST_CASE_BODY(get_put_action__ok)
 {
     store::backend backend = store::backend::open_rw(fs::path("test.db"));
-    store::transaction tx = backend.start();
     const engine::context context1(fs::path("/foo/bar"),
                                    std::map< std::string, std::string >());
     const engine::context context2(fs::path("/foo/baz"),
                                    std::map< std::string, std::string >());
-    const engine::action action1(context1);
-    const engine::action action2(context2);
-    const engine::action action3(context1);
-    const int64_t context1_id = tx.put_context(context1);
-    const int64_t context2_id = tx.put_context(context2);
-    ATF_REQUIRE_EQ(1, tx.put_action(action1, context1_id));
-    ATF_REQUIRE_EQ(2, tx.put_action(action3, context1_id));
-    ATF_REQUIRE_EQ(3, tx.put_action(action2, context2_id));
-    tx.commit();
+    const engine::action exp_action1(context1);
+    const engine::action exp_action2(context2);
+    const engine::action exp_action3(context1);
 
-    // TODO(jmmv): These tests are too simplistic.  We should probably combine
-    // the get/put tests, but to do so, we need to wait until the get
-    // functionality is implemented.
-    std::set< int > action_ids, context_ids;
-    sqlite::statement stmt = backend.database().create_statement(
-        "SELECT action_id,context_id FROM actions");
-    while (stmt.step()) {
-        action_ids.insert(stmt.column_int(0));
-        context_ids.insert(stmt.column_int(1));
+    int64_t id1, id2, id3;
+    {
+        store::transaction tx = backend.start();
+        const int64_t context1_id = tx.put_context(context1);
+        const int64_t context2_id = tx.put_context(context2);
+        id1 = tx.put_action(exp_action1, context1_id);
+        id3 = tx.put_action(exp_action3, context1_id);
+        id2 = tx.put_action(exp_action2, context2_id);
+        tx.commit();
     }
-    ATF_REQUIRE_EQ(3, action_ids.size());
-    ATF_REQUIRE_EQ(2, context_ids.size());
+    {
+        store::transaction tx = backend.start();
+        const engine::action action1 = tx.get_action(id1);
+        const engine::action action2 = tx.get_action(id2);
+        const engine::action action3 = tx.get_action(id3);
+        tx.rollback();
+
+        ATF_REQUIRE(exp_action1 == action1);
+        ATF_REQUIRE(exp_action2 == action2);
+        ATF_REQUIRE(exp_action3 == action3);
+    }
 }
 
 
-ATF_TEST_CASE(put_action__fail);
-ATF_TEST_CASE_HEAD(put_action__fail)
+ATF_TEST_CASE(get_put_action__get_fail__missing);
+ATF_TEST_CASE_HEAD(get_put_action__get_fail__missing)
 {
     set_md_var("require.files", store::detail::schema_file.c_str());
 }
-ATF_TEST_CASE_BODY(put_action__fail)
+ATF_TEST_CASE_BODY(get_put_action__get_fail__missing)
+{
+    store::backend backend = store::backend::open_rw(fs::path("test.db"));
+
+    store::transaction tx = backend.start();
+    ATF_REQUIRE_THROW_RE(store::error, "action 523: does not exist",
+                         tx.get_action(523));
+}
+
+
+ATF_TEST_CASE(get_put_action__get_fail__invalid_context);
+ATF_TEST_CASE_HEAD(get_put_action__get_fail__invalid_context)
+{
+    set_md_var("require.files", store::detail::schema_file.c_str());
+}
+ATF_TEST_CASE_BODY(get_put_action__get_fail__invalid_context)
+{
+    store::backend backend = store::backend::open_rw(fs::path("test.db"));
+    backend.database().exec("PRAGMA foreign_keys = OFF");
+    backend.database().exec("INSERT INTO actions (action_id, context_id) "
+                            "VALUES (123, 456)");
+
+    store::transaction tx = backend.start();
+    ATF_REQUIRE_THROW_RE(store::error, "context 456: does not exist",
+                         tx.get_action(123));
+}
+
+
+ATF_TEST_CASE(get_put_action__put_fail);
+ATF_TEST_CASE_HEAD(get_put_action__put_fail)
+{
+    set_md_var("require.files", store::detail::schema_file.c_str());
+}
+ATF_TEST_CASE_BODY(get_put_action__put_fail)
 {
     store::backend backend = store::backend::open_rw(fs::path("test.db"));
     store::transaction tx = backend.start();
@@ -214,69 +249,127 @@ ATF_TEST_CASE_BODY(put_action__fail)
 }
 
 
-ATF_TEST_CASE(put_context__ok);
-ATF_TEST_CASE_HEAD(put_context__ok)
+ATF_TEST_CASE(get_put_context__ok);
+ATF_TEST_CASE_HEAD(get_put_context__ok)
 {
     set_md_var("require.files", store::detail::schema_file.c_str());
 }
-ATF_TEST_CASE_BODY(put_context__ok)
+ATF_TEST_CASE_BODY(get_put_context__ok)
 {
     store::backend backend = store::backend::open_rw(fs::path("test.db"));
-    store::transaction tx = backend.start();
+
     std::map< std::string, std::string > env1;
     env1["A1"] = "foo";
     env1["A2"] = "bar";
     std::map< std::string, std::string > env2;
-    env2["A1"] = "not foo";
-    const engine::context context1(fs::path("/foo/bar"), env1);
-    const engine::context context2(fs::path("/foo/bar"), env1);
-    const engine::context context3(fs::path("/foo/baz"), env2);
-    ATF_REQUIRE_EQ(1, tx.put_context(context1));
-    ATF_REQUIRE_EQ(2, tx.put_context(context3));
-    ATF_REQUIRE_EQ(3, tx.put_context(context2));
-    tx.commit();
+    const engine::context exp_context1(fs::path("/foo/bar"), env1);
+    const engine::context exp_context2(fs::path("/foo/bar"), env1);
+    const engine::context exp_context3(fs::path("/foo/baz"), env2);
 
-    // TODO(jmmv): These tests are too simplistic.  We should probably combine
-    // the get/put tests, but to do so, we need to wait until the get
-    // functionality is implemented.
-    sqlite::statement stmt = backend.database().create_statement(
-        "SELECT contexts.context_id, cwd, var_name, var_value "
-        "FROM contexts NATURAL JOIN env_vars "
-        "ORDER BY contexts.context_id, var_name");
+    int64_t id1, id2, id3;
+    {
+        store::transaction tx = backend.start();
+        id1 = tx.put_context(exp_context1);
+        id3 = tx.put_context(exp_context3);
+        id2 = tx.put_context(exp_context2);
+        tx.commit();
+    }
+    {
+        store::transaction tx = backend.start();
+        const engine::context context1 = tx.get_context(id1);
+        const engine::context context2 = tx.get_context(id2);
+        const engine::context context3 = tx.get_context(id3);
+        tx.rollback();
 
-    ATF_REQUIRE(stmt.step());
-    ATF_REQUIRE_EQ("/foo/bar", stmt.column_text(1));
-    ATF_REQUIRE_EQ("A1", stmt.column_text(2));
-    ATF_REQUIRE_EQ("foo", stmt.column_text(3));
-    ATF_REQUIRE(stmt.step());
-    ATF_REQUIRE_EQ("/foo/bar", stmt.column_text(1));
-    ATF_REQUIRE_EQ("A2", stmt.column_text(2));
-    ATF_REQUIRE_EQ("bar", stmt.column_text(3));
-
-    ATF_REQUIRE(stmt.step());
-    ATF_REQUIRE_EQ("/foo/baz", stmt.column_text(1));
-    ATF_REQUIRE_EQ("A1", stmt.column_text(2));
-    ATF_REQUIRE_EQ("not foo", stmt.column_text(3));
-
-    ATF_REQUIRE(stmt.step());
-    ATF_REQUIRE_EQ("/foo/bar", stmt.column_text(1));
-    ATF_REQUIRE_EQ("A1", stmt.column_text(2));
-    ATF_REQUIRE_EQ("foo", stmt.column_text(3));
-    ATF_REQUIRE(stmt.step());
-    ATF_REQUIRE_EQ("/foo/bar", stmt.column_text(1));
-    ATF_REQUIRE_EQ("A2", stmt.column_text(2));
-    ATF_REQUIRE_EQ("bar", stmt.column_text(3));
-
-    ATF_REQUIRE(!stmt.step());
+        ATF_REQUIRE(exp_context1 == context1);
+        ATF_REQUIRE(exp_context2 == context2);
+        ATF_REQUIRE(exp_context3 == context3);
+    }
 }
 
 
-ATF_TEST_CASE(put_context__fail);
-ATF_TEST_CASE_HEAD(put_context__fail)
+ATF_TEST_CASE(get_put_context__get_fail__missing);
+ATF_TEST_CASE_HEAD(get_put_context__get_fail__missing)
 {
     set_md_var("require.files", store::detail::schema_file.c_str());
 }
-ATF_TEST_CASE_BODY(put_context__fail)
+ATF_TEST_CASE_BODY(get_put_context__get_fail__missing)
+{
+    store::backend backend = store::backend::open_rw(fs::path("test.db"));
+
+    store::transaction tx = backend.start();
+    ATF_REQUIRE_THROW_RE(store::error, "context 456: does not exist",
+                         tx.get_context(456));
+}
+
+
+ATF_TEST_CASE(get_put_context__get_fail__invalid_cwd);
+ATF_TEST_CASE_HEAD(get_put_context__get_fail__invalid_cwd)
+{
+    set_md_var("require.files", store::detail::schema_file.c_str());
+}
+ATF_TEST_CASE_BODY(get_put_context__get_fail__invalid_cwd)
+{
+    store::backend backend = store::backend::open_rw(fs::path("test.db"));
+
+    sqlite::statement stmt = backend.database().create_statement(
+        "INSERT INTO contexts (context_id, cwd) VALUES (78, :cwd)");
+    const char buffer[10] = "foo bar";
+    stmt.bind_blob(":cwd", buffer, sizeof(buffer));
+    stmt.step_without_results();
+
+    store::transaction tx = backend.start();
+    ATF_REQUIRE_THROW_RE(store::error, "context 78: .*cwd.*not a string",
+                         tx.get_context(78));
+}
+
+
+ATF_TEST_CASE(get_put_context__get_fail__invalid_env_vars);
+ATF_TEST_CASE_HEAD(get_put_context__get_fail__invalid_env_vars)
+{
+    set_md_var("require.files", store::detail::schema_file.c_str());
+}
+ATF_TEST_CASE_BODY(get_put_context__get_fail__invalid_env_vars)
+{
+    store::backend backend = store::backend::open_rw(fs::path("test.db"));
+
+    backend.database().exec("INSERT INTO contexts (context_id, cwd) "
+                            "VALUES (10, '/foo/bar')");
+    backend.database().exec("INSERT INTO contexts (context_id, cwd) "
+                            "VALUES (20, '/foo/bar')");
+
+    const char buffer[10] = "foo bar";
+
+    {
+        sqlite::statement stmt = backend.database().create_statement(
+            "INSERT INTO env_vars (context_id, var_name, var_value) "
+            "VALUES (10, :var_name, 'abc')");
+        stmt.bind_blob(":var_name", buffer, sizeof(buffer));
+        stmt.step_without_results();
+    }
+
+    {
+        sqlite::statement stmt = backend.database().create_statement(
+            "INSERT INTO env_vars (context_id, var_name, var_value) "
+            "VALUES (20, 'abc', :var_value)");
+        stmt.bind_blob(":var_value", buffer, sizeof(buffer));
+        stmt.step_without_results();
+    }
+
+    store::transaction tx = backend.start();
+    ATF_REQUIRE_THROW_RE(store::error, "context 10: .*var_name.*not a string",
+                         tx.get_context(10));
+    ATF_REQUIRE_THROW_RE(store::error, "context 20: .*var_value.*not a string",
+                         tx.get_context(20));
+}
+
+
+ATF_TEST_CASE(get_put_context__put_fail);
+ATF_TEST_CASE_HEAD(get_put_context__put_fail)
+{
+    set_md_var("require.files", store::detail::schema_file.c_str());
+}
+ATF_TEST_CASE_BODY(get_put_context__put_fail)
 {
     (void)store::backend::open_rw(fs::path("test.db"));
     store::backend backend = store::backend::open_ro(fs::path("test.db"));
@@ -478,14 +571,22 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, commit__ok);
     ATF_ADD_TEST_CASE(tcs, rollback__ok);
 
-    ATF_ADD_TEST_CASE(tcs, put_action__ok);
-    ATF_ADD_TEST_CASE(tcs, put_action__fail);
-    ATF_ADD_TEST_CASE(tcs, put_context__ok);
-    ATF_ADD_TEST_CASE(tcs, put_context__fail);
+    ATF_ADD_TEST_CASE(tcs, get_put_action__ok);
+    ATF_ADD_TEST_CASE(tcs, get_put_action__get_fail__missing);
+    ATF_ADD_TEST_CASE(tcs, get_put_action__get_fail__invalid_context);
+    ATF_ADD_TEST_CASE(tcs, get_put_action__put_fail);
+
+    ATF_ADD_TEST_CASE(tcs, get_put_context__ok);
+    ATF_ADD_TEST_CASE(tcs, get_put_context__get_fail__missing);
+    ATF_ADD_TEST_CASE(tcs, get_put_context__get_fail__invalid_cwd);
+    ATF_ADD_TEST_CASE(tcs, get_put_context__get_fail__invalid_env_vars);
+    ATF_ADD_TEST_CASE(tcs, get_put_context__put_fail);
+
     ATF_ADD_TEST_CASE(tcs, put_test_program__ok);
     ATF_ADD_TEST_CASE(tcs, put_test_program__fail);
     ATF_ADD_TEST_CASE(tcs, put_test_case__ok);
     ATF_ADD_TEST_CASE(tcs, put_test_case__fail);
+
     ATF_ADD_TEST_CASE(tcs, put_result__ok__broken);
     ATF_ADD_TEST_CASE(tcs, put_result__ok__expected_failure);
     ATF_ADD_TEST_CASE(tcs, put_result__ok__failed);
