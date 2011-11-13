@@ -76,7 +76,7 @@ public:
     int column_count(void);
     std::string column_name(const int);
     type column_type(const int);
-    int column_id(const std::string&);
+    int column_id(const char*);
 
     const void* column_blob(const int);
     double column_double(const int);
@@ -84,6 +84,13 @@ public:
     int64_t column_int64(const int);
     std::string column_text(const int);
     int column_bytes(const int);
+
+    const void* safe_column_blob(const char*);
+    double safe_column_double(const char*);
+    int safe_column_int(const char*);
+    int64_t safe_column_int64(const char*);
+    std::string safe_column_text(const char*);
+    int safe_column_bytes(const char*);
 
     void reset(void);
 

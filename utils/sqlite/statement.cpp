@@ -33,6 +33,7 @@ extern "C" {
 #include <map>
 
 #include "utils/defs.hpp"
+#include "utils/format/macros.hpp"
 #include "utils/sanity.hpp"
 #include "utils/sqlite/c_gate.hpp"
 #include "utils/sqlite/exceptions.hpp"
@@ -241,7 +242,7 @@ sqlite::statement::column_type(const int index)
 ///
 /// \throw value_error If the name cannot be found.
 int
-sqlite::statement::column_id(const std::string& name)
+sqlite::statement::column_id(const char* name)
 {
     std::map< std::string, int >& cache = _pimpl->column_cache;
 
@@ -348,6 +349,115 @@ sqlite::statement::column_bytes(const int index)
 {
     PRE(column_type(index) == type_blob || column_type(index) == type_text);
     return ::sqlite3_column_bytes(_pimpl->stmt, index);
+}
+
+
+/// Type-checked version of column_blob.
+///
+/// \param name The name of the column to retrieve.
+///
+/// \return The same as column_blob if the value can be retrieved.
+///
+/// \throw error If the type of the cell to retrieve is invalid.
+/// \throw invalid_column_error If name is invalid.
+const void*
+sqlite::statement::safe_column_blob(const char* name)
+{
+    const int column = column_id(name);
+    if (column_type(column) != sqlite::type_blob)
+        throw sqlite::error(F("Column '%s' is not a blob") % name);
+    return column_blob(column);
+}
+
+
+/// Type-checked version of column_double.
+///
+/// \param name The name of the column to retrieve.
+///
+/// \return The same as column_double if the value can be retrieved.
+///
+/// \throw error If the type of the cell to retrieve is invalid.
+/// \throw invalid_column_error If name is invalid.
+double
+sqlite::statement::safe_column_double(const char* name)
+{
+    const int column = column_id(name);
+    if (column_type(column) != sqlite::type_float)
+        throw sqlite::error(F("Column '%s' is not a float") % name);
+    return column_double(column);
+}
+
+
+/// Type-checked version of column_int.
+///
+/// \param name The name of the column to retrieve.
+///
+/// \return The same as column_int if the value can be retrieved.
+///
+/// \throw error If the type of the cell to retrieve is invalid.
+/// \throw invalid_column_error If name is invalid.
+int
+sqlite::statement::safe_column_int(const char* name)
+{
+    const int column = column_id(name);
+    if (column_type(column) != sqlite::type_integer)
+        throw sqlite::error(F("Column '%s' is not an integer") % name);
+    return column_int(column);
+}
+
+
+/// Type-checked version of column_int64.
+///
+/// \param name The name of the column to retrieve.
+///
+/// \return The same as column_int64 if the value can be retrieved.
+///
+/// \throw error If the type of the cell to retrieve is invalid.
+/// \throw invalid_column_error If name is invalid.
+int64_t
+sqlite::statement::safe_column_int64(const char* name)
+{
+    const int column = column_id(name);
+    if (column_type(column) != sqlite::type_integer)
+        throw sqlite::error(F("Column '%s' is not an integer") % name);
+    return column_int64(column);
+}
+
+
+/// Type-checked version of column_text.
+///
+/// \param name The name of the column to retrieve.
+///
+/// \return The same as column_text if the value can be retrieved.
+///
+/// \throw error If the type of the cell to retrieve is invalid.
+/// \throw invalid_column_error If name is invalid.
+std::string
+sqlite::statement::safe_column_text(const char* name)
+{
+    const int column = column_id(name);
+    if (column_type(column) != sqlite::type_text)
+        throw sqlite::error(F("Column '%s' is not a string") % name);
+    return column_text(column);
+}
+
+
+/// Type-checked version of column_bytes.
+///
+/// \param name The name of the column to retrieve the size of.
+///
+/// \return The same as column_bytes if the value can be retrieved.
+///
+/// \throw error If the type of the cell to retrieve the size of is invalid.
+/// \throw invalid_column_error If name is invalid.
+int
+sqlite::statement::safe_column_bytes(const char* name)
+{
+    const int column = column_id(name);
+    if (column_type(column) != sqlite::type_blob &&
+        column_type(column) != sqlite::type_text)
+        throw sqlite::error(F("Column '%s' is not a blob or a string") % name);
+    return column_bytes(column);
 }
 
 

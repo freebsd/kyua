@@ -295,7 +295,7 @@ ATF_TEST_CASE_BODY(column_text)
             "INSERT INTO foo VALUES (NULL, 'foo bar', NULL);");
     sqlite::statement stmt = db.create_statement("SELECT * FROM foo");
     ATF_REQUIRE(stmt.step());
-    ATF_REQUIRE_EQ("foo bar", std::string(stmt.column_text(1)));
+    ATF_REQUIRE_EQ("foo bar", stmt.column_text(1));
     ATF_REQUIRE(!stmt.step());
 }
 
@@ -322,6 +322,195 @@ ATF_TEST_CASE_BODY(column_bytes__text)
     sqlite::statement stmt = db.create_statement("SELECT * FROM foo");
     ATF_REQUIRE(stmt.step());
     ATF_REQUIRE_EQ(7, stmt.column_bytes(0));
+    ATF_REQUIRE(!stmt.step());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(safe_column_blob__ok);
+ATF_TEST_CASE_BODY(safe_column_blob__ok)
+{
+    sqlite::database db = sqlite::database::in_memory();
+    db.exec("CREATE TABLE foo (a INTEGER, b BLOB, c INTEGER);"
+            "INSERT INTO foo VALUES (NULL, x'cafe', NULL);");
+    sqlite::statement stmt = db.create_statement("SELECT * FROM foo");
+    ATF_REQUIRE(stmt.step());
+    const void* blob = stmt.safe_column_blob("b");
+    ATF_REQUIRE_EQ(0xca, static_cast< const uint8_t* >(blob)[0]);
+    ATF_REQUIRE_EQ(0xfe, static_cast< const uint8_t* >(blob)[1]);
+    ATF_REQUIRE(!stmt.step());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(safe_column_blob__fail);
+ATF_TEST_CASE_BODY(safe_column_blob__fail)
+{
+    sqlite::database db = sqlite::database::in_memory();
+    db.exec("CREATE TABLE foo (a INTEGER);"
+            "INSERT INTO foo VALUES (123);");
+    sqlite::statement stmt = db.create_statement("SELECT * FROM foo");
+    ATF_REQUIRE(stmt.step());
+    ATF_REQUIRE_THROW(sqlite::invalid_column_error,
+                      stmt.safe_column_blob("b"));
+    ATF_REQUIRE_THROW_RE(sqlite::error, "not a blob",
+                         stmt.safe_column_blob("a"));
+    ATF_REQUIRE(!stmt.step());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(safe_column_double__ok);
+ATF_TEST_CASE_BODY(safe_column_double__ok)
+{
+    sqlite::database db = sqlite::database::in_memory();
+    db.exec("CREATE TABLE foo (a INTEGER, b DOUBLE, c INTEGER);"
+            "INSERT INTO foo VALUES (NULL, 0.5, NULL);");
+    sqlite::statement stmt = db.create_statement("SELECT * FROM foo");
+    ATF_REQUIRE(stmt.step());
+    ATF_REQUIRE_EQ(0.5, stmt.safe_column_double("b"));
+    ATF_REQUIRE(!stmt.step());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(safe_column_double__fail);
+ATF_TEST_CASE_BODY(safe_column_double__fail)
+{
+    sqlite::database db = sqlite::database::in_memory();
+    db.exec("CREATE TABLE foo (a INTEGER);"
+            "INSERT INTO foo VALUES (NULL);");
+    sqlite::statement stmt = db.create_statement("SELECT * FROM foo");
+    ATF_REQUIRE(stmt.step());
+    ATF_REQUIRE_THROW(sqlite::invalid_column_error,
+                      stmt.safe_column_double("b"));
+    ATF_REQUIRE_THROW_RE(sqlite::error, "not a float",
+                         stmt.safe_column_double("a"));
+    ATF_REQUIRE(!stmt.step());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(safe_column_int__ok);
+ATF_TEST_CASE_BODY(safe_column_int__ok)
+{
+    sqlite::database db = sqlite::database::in_memory();
+    db.exec("CREATE TABLE foo (a TEXT, b INTEGER, c TEXT);"
+            "INSERT INTO foo VALUES (NULL, 987, NULL);");
+    sqlite::statement stmt = db.create_statement("SELECT * FROM foo");
+    ATF_REQUIRE(stmt.step());
+    ATF_REQUIRE_EQ(987, stmt.safe_column_int("b"));
+    ATF_REQUIRE(!stmt.step());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(safe_column_int__fail);
+ATF_TEST_CASE_BODY(safe_column_int__fail)
+{
+    sqlite::database db = sqlite::database::in_memory();
+    db.exec("CREATE TABLE foo (a TEXT);"
+            "INSERT INTO foo VALUES ('def');");
+    sqlite::statement stmt = db.create_statement("SELECT * FROM foo");
+    ATF_REQUIRE(stmt.step());
+    ATF_REQUIRE_THROW(sqlite::invalid_column_error,
+                      stmt.safe_column_int("b"));
+    ATF_REQUIRE_THROW_RE(sqlite::error, "not an integer",
+                         stmt.safe_column_int("a"));
+    ATF_REQUIRE(!stmt.step());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(safe_column_int64__ok);
+ATF_TEST_CASE_BODY(safe_column_int64__ok)
+{
+    sqlite::database db = sqlite::database::in_memory();
+    db.exec("CREATE TABLE foo (a TEXT, b INTEGER, c TEXT);"
+            "INSERT INTO foo VALUES (NULL, 4294967419, NULL);");
+    sqlite::statement stmt = db.create_statement("SELECT * FROM foo");
+    ATF_REQUIRE(stmt.step());
+    ATF_REQUIRE_EQ(4294967419L, stmt.safe_column_int64("b"));
+    ATF_REQUIRE(!stmt.step());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(safe_column_int64__fail);
+ATF_TEST_CASE_BODY(safe_column_int64__fail)
+{
+    sqlite::database db = sqlite::database::in_memory();
+    db.exec("CREATE TABLE foo (a TEXT);"
+            "INSERT INTO foo VALUES ('abc');");
+    sqlite::statement stmt = db.create_statement("SELECT * FROM foo");
+    ATF_REQUIRE(stmt.step());
+    ATF_REQUIRE_THROW(sqlite::invalid_column_error,
+                      stmt.safe_column_int64("b"));
+    ATF_REQUIRE_THROW_RE(sqlite::error, "not an integer",
+                         stmt.safe_column_int64("a"));
+    ATF_REQUIRE(!stmt.step());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(safe_column_text__ok);
+ATF_TEST_CASE_BODY(safe_column_text__ok)
+{
+    sqlite::database db = sqlite::database::in_memory();
+    db.exec("CREATE TABLE foo (a INTEGER, b TEXT, c INTEGER);"
+            "INSERT INTO foo VALUES (NULL, 'foo bar', NULL);");
+    sqlite::statement stmt = db.create_statement("SELECT * FROM foo");
+    ATF_REQUIRE(stmt.step());
+    ATF_REQUIRE_EQ("foo bar", stmt.safe_column_text("b"));
+    ATF_REQUIRE(!stmt.step());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(safe_column_text__fail);
+ATF_TEST_CASE_BODY(safe_column_text__fail)
+{
+    sqlite::database db = sqlite::database::in_memory();
+    db.exec("CREATE TABLE foo (a INTEGER);"
+            "INSERT INTO foo VALUES (NULL);");
+    sqlite::statement stmt = db.create_statement("SELECT * FROM foo");
+    ATF_REQUIRE(stmt.step());
+    ATF_REQUIRE_THROW(sqlite::invalid_column_error,
+                      stmt.safe_column_text("b"));
+    ATF_REQUIRE_THROW_RE(sqlite::error, "not a string",
+                         stmt.safe_column_text("a"));
+    ATF_REQUIRE(!stmt.step());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(safe_column_bytes__ok__blob);
+ATF_TEST_CASE_BODY(safe_column_bytes__ok__blob)
+{
+    sqlite::database db = sqlite::database::in_memory();
+    db.exec("CREATE TABLE foo (a BLOB);"
+            "INSERT INTO foo VALUES (x'12345678');");
+    sqlite::statement stmt = db.create_statement("SELECT * FROM foo");
+    ATF_REQUIRE(stmt.step());
+    ATF_REQUIRE_EQ(4, stmt.safe_column_bytes("a"));
+    ATF_REQUIRE(!stmt.step());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(safe_column_bytes__ok__text);
+ATF_TEST_CASE_BODY(safe_column_bytes__ok__text)
+{
+    sqlite::database db = sqlite::database::in_memory();
+    db.exec("CREATE TABLE foo (a TEXT);"
+            "INSERT INTO foo VALUES ('foo bar');");
+    sqlite::statement stmt = db.create_statement("SELECT * FROM foo");
+    ATF_REQUIRE(stmt.step());
+    ATF_REQUIRE_EQ(7, stmt.safe_column_bytes("a"));
+    ATF_REQUIRE(!stmt.step());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(safe_column_bytes__fail);
+ATF_TEST_CASE_BODY(safe_column_bytes__fail)
+{
+    sqlite::database db = sqlite::database::in_memory();
+    db.exec("CREATE TABLE foo (a TEXT);"
+            "INSERT INTO foo VALUES (NULL);");
+    sqlite::statement stmt = db.create_statement("SELECT * FROM foo");
+    ATF_REQUIRE(stmt.step());
+    ATF_REQUIRE_THROW(sqlite::invalid_column_error,
+                      stmt.safe_column_bytes("b"));
+    ATF_REQUIRE_THROW_RE(sqlite::error, "not a blob or a string",
+                         stmt.safe_column_bytes("a"));
     ATF_REQUIRE(!stmt.step());
 }
 
@@ -641,6 +830,21 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, column_bytes__blob);
     ATF_ADD_TEST_CASE(tcs, column_bytes__text);
+
+    ATF_ADD_TEST_CASE(tcs, safe_column_blob__ok);
+    ATF_ADD_TEST_CASE(tcs, safe_column_blob__fail);
+    ATF_ADD_TEST_CASE(tcs, safe_column_double__ok);
+    ATF_ADD_TEST_CASE(tcs, safe_column_double__fail);
+    ATF_ADD_TEST_CASE(tcs, safe_column_int__ok);
+    ATF_ADD_TEST_CASE(tcs, safe_column_int__fail);
+    ATF_ADD_TEST_CASE(tcs, safe_column_int64__ok);
+    ATF_ADD_TEST_CASE(tcs, safe_column_int64__fail);
+    ATF_ADD_TEST_CASE(tcs, safe_column_text__ok);
+    ATF_ADD_TEST_CASE(tcs, safe_column_text__fail);
+
+    ATF_ADD_TEST_CASE(tcs, safe_column_bytes__ok__blob);
+    ATF_ADD_TEST_CASE(tcs, safe_column_bytes__ok__text);
+    ATF_ADD_TEST_CASE(tcs, safe_column_bytes__fail);
 
     ATF_ADD_TEST_CASE(tcs, reset);
 
