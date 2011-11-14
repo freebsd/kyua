@@ -249,6 +249,70 @@ ATF_TEST_CASE_BODY(get_put_action__put_fail)
 }
 
 
+ATF_TEST_CASE(get_latest_action__ok);
+ATF_TEST_CASE_HEAD(get_latest_action__ok)
+{
+    set_md_var("require.files", store::detail::schema_file.c_str());
+}
+ATF_TEST_CASE_BODY(get_latest_action__ok)
+{
+    store::backend backend = store::backend::open_rw(fs::path("test.db"));
+    const engine::context context1(fs::path("/foo/bar"),
+                                   std::map< std::string, std::string >());
+    const engine::context context2(fs::path("/foo/baz"),
+                                   std::map< std::string, std::string >());
+    const engine::action exp_action1(context1);
+    const engine::action exp_action2(context2);
+
+    {
+        store::transaction tx = backend.start();
+        const int64_t context1_id = tx.put_context(context1);
+        const int64_t context2_id = tx.put_context(context2);
+        (void)tx.put_action(exp_action1, context1_id);
+        (void)tx.put_action(exp_action2, context2_id);
+        tx.commit();
+    }
+    {
+        store::transaction tx = backend.start();
+        const engine::action latest_action = tx.get_latest_action();
+        tx.rollback();
+
+        ATF_REQUIRE(exp_action2 == latest_action);
+    }
+}
+
+
+ATF_TEST_CASE(get_latest_action__none);
+ATF_TEST_CASE_HEAD(get_latest_action__none)
+{
+    set_md_var("require.files", store::detail::schema_file.c_str());
+}
+ATF_TEST_CASE_BODY(get_latest_action__none)
+{
+    store::backend backend = store::backend::open_rw(fs::path("test.db"));
+    store::transaction tx = backend.start();
+    ATF_REQUIRE_THROW_RE(store::error, "No actions", tx.get_latest_action());
+}
+
+
+ATF_TEST_CASE(get_latest_action__invalid_context);
+ATF_TEST_CASE_HEAD(get_latest_action__invalid_context)
+{
+    set_md_var("require.files", store::detail::schema_file.c_str());
+}
+ATF_TEST_CASE_BODY(get_latest_action__invalid_context)
+{
+    store::backend backend = store::backend::open_rw(fs::path("test.db"));
+    backend.database().exec("PRAGMA foreign_keys = OFF");
+    backend.database().exec("INSERT INTO actions (action_id, context_id) "
+                            "VALUES (123, 456)");
+
+    store::transaction tx = backend.start();
+    ATF_REQUIRE_THROW_RE(store::error, "context 456: does not exist",
+                         tx.get_latest_action());
+}
+
+
 ATF_TEST_CASE(get_put_context__ok);
 ATF_TEST_CASE_HEAD(get_put_context__ok)
 {
@@ -575,6 +639,10 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, get_put_action__get_fail__missing);
     ATF_ADD_TEST_CASE(tcs, get_put_action__get_fail__invalid_context);
     ATF_ADD_TEST_CASE(tcs, get_put_action__put_fail);
+
+    ATF_ADD_TEST_CASE(tcs, get_latest_action__ok);
+    ATF_ADD_TEST_CASE(tcs, get_latest_action__none);
+    ATF_ADD_TEST_CASE(tcs, get_latest_action__invalid_context);
 
     ATF_ADD_TEST_CASE(tcs, get_put_context__ok);
     ATF_ADD_TEST_CASE(tcs, get_put_context__get_fail__missing);

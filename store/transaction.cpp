@@ -228,6 +228,29 @@ store::transaction::get_action(const int64_t action_id)
 }
 
 
+/// Retrieves the latest action from the database.
+///
+/// \return The retrieved action.
+///
+/// \throw error If there is a problem loading the action.
+engine::action
+store::transaction::get_latest_action(void)
+{
+    try {
+        sqlite::statement stmt = _pimpl->_db.create_statement(
+            "SELECT context_id FROM actions WHERE "
+            "action_id == (SELECT max(action_id) FROM actions)");
+        if (!stmt.step())
+            throw error("No actions in the database");
+
+        return engine::action(
+            get_context(stmt.safe_column_int64("context_id")));
+    } catch (const sqlite::error& e) {
+        throw error(F("Error loading latest action: %s") % e.what());
+    }
+}
+
+
 /// Retrieves an context from the database.
 ///
 /// \param context_id The identifier of the context to retrieve.
