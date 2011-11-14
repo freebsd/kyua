@@ -41,6 +41,7 @@
 #include "cli/cmd_debug.hpp"
 #include "cli/cmd_help.hpp"
 #include "cli/cmd_list.hpp"
+#include "cli/cmd_report.hpp"
 #include "cli/cmd_test.hpp"
 #include "cli/common.ipp"
 #include "cli/config.hpp"
@@ -148,6 +149,7 @@ safe_main(cmdline::ui* ui, int argc, const char* const argv[],
     commands.insert(new cli::cmd_debug());
     commands.insert(new cli::cmd_help(&options, &commands));
     commands.insert(new cli::cmd_list());
+    commands.insert(new cli::cmd_report());
     commands.insert(new cli::cmd_test());
     if (mock_command.get() != NULL)
         commands.insert(mock_command);

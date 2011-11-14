@@ -5,3 +5,4 @@ prop: test-suite = kyua
 tp: debug_test_test
 tp: list_tests_test
 tp: run_tests_test
+tp: scan_action_test

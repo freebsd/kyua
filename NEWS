@@ -19,6 +19,9 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   As a side effect, 'test' now supports a '--store' option to indicate
   where the database lives.
 
+* Added the 'report' command to generate plain-text reports of the
+  test results stored in the database.
+
 
 Changes in version 0.2
 ======================

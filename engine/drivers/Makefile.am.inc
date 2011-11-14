@@ -32,6 +32,8 @@ libengine_a_SOURCES += engine/drivers/list_tests.cpp
 libengine_a_SOURCES += engine/drivers/list_tests.hpp
 libengine_a_SOURCES += engine/drivers/run_tests.cpp
 libengine_a_SOURCES += engine/drivers/run_tests.hpp
+libengine_a_SOURCES += engine/drivers/scan_action.cpp
+libengine_a_SOURCES += engine/drivers/scan_action.hpp
 
 tests_engine_driversdir = $(pkgtestsdir)/engine/drivers
 
@@ -65,3 +67,10 @@ engine_drivers_run_tests_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
                                          $(ATF_CXX_CFLAGS)
 engine_drivers_run_tests_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
                                       $(ATF_CXX_LIBS)
+
+tests_engine_drivers_PROGRAMS += engine/drivers/scan_action_test
+engine_drivers_scan_action_test_SOURCES = engine/drivers/scan_action_test.cpp
+engine_drivers_scan_action_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
+                                           $(ATF_CXX_CFLAGS)
+engine_drivers_scan_action_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
+                                        $(ATF_CXX_LIBS)

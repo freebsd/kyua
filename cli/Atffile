@@ -8,6 +8,7 @@ tp: cmd_db_exec_test
 tp: cmd_debug_test
 tp: cmd_help_test
 tp: cmd_list_test
+tp: cmd_report_test
 tp: cmd_test_test
 tp: common_test
 tp: config_test
