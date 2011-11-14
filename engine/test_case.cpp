@@ -130,20 +130,6 @@ engine::base_test_case::~base_test_case(void)
 }
 
 
-/// Returns a unique memory address for this test case.
-///
-/// Remember that test case objects are shallowly copied; therefore, it is
-/// possible for two distinct variables of a context to return the same unique
-/// internal address (which is perfectly okay).
-///
-/// \return The uniquely-identifying address for this context.
-intptr_t
-engine::base_test_case::unique_address(void) const
-{
-    return reinterpret_cast< intptr_t >(_pbimpl.get());
-}
-
-
 /// Gets the test program this test case belongs to.
 ///
 /// \return A reference to the container test program.

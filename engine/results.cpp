@@ -73,20 +73,6 @@ results::base_result::~base_result(void)
 }
 
 
-/// Returns a unique memory address for this result.
-///
-/// Remember that result objects are shallowly copied; therefore, it is
-/// possible for two distinct variables of a result to return the same unique
-/// internal address (which is perfectly okay).
-///
-/// \return The uniquely-identifying address for this result.
-intptr_t
-results::base_result::unique_address(void) const
-{
-    return reinterpret_cast< intptr_t >(_pbimpl.get());
-}
-
-
 /// Gets the reason behind the result, if any.
 ///
 /// \return The reason, or none if not defined.

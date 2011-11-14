@@ -85,20 +85,6 @@ engine::base_test_program::~base_test_program(void)
 }
 
 
-/// Returns a unique memory address for this test program.
-///
-/// Remember that test program objects are shallowly copied; therefore, it is
-/// possible for two distinct variables of a context to return the same unique
-/// internal address (which is perfectly okay).
-///
-/// \return The uniquely-identifying address for this context.
-intptr_t
-engine::base_test_program::unique_address(void) const
-{
-    return reinterpret_cast< intptr_t >(_pbimpl.get());
-}
-
-
 /// Gets the path to the test program relative to the root of the test suite.
 ///
 /// \return The relative path to the test program binary.

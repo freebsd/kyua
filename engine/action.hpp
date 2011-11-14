@@ -32,10 +32,6 @@
 #if !defined(ENGINE_ACTION_HPP)
 #define ENGINE_ACTION_HPP
 
-extern "C" {
-#include <stdint.h>
-}
-
 #include <tr1/memory>
 
 namespace engine {
@@ -57,7 +53,6 @@ public:
     explicit action(const context&);
     ~action(void);
 
-    intptr_t unique_address(void) const;
     const context& runtime_context(void) const;
 
     bool operator==(const action&) const;

@@ -60,23 +60,6 @@ ATF_TEST_CASE_BODY(current)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(unique_address);
-ATF_TEST_CASE_BODY(unique_address)
-{
-    std::map< std::string, std::string > env;
-    env["foo"] = "first";
-    const engine::context context1(fs::path("/foo/bar"), env);
-    {
-        const engine::context context2 = context1;
-        const engine::context context3(fs::path("/foo/bar"), env);
-        ATF_REQUIRE(context1.unique_address() == context2.unique_address());
-        ATF_REQUIRE(context1.unique_address() != context3.unique_address());
-        ATF_REQUIRE(context2.unique_address() != context3.unique_address());
-    }
-    ATF_REQUIRE(context1.unique_address() == context1.unique_address());
-}
-
-
 ATF_TEST_CASE_WITHOUT_HEAD(operator_eq);
 ATF_TEST_CASE_BODY(operator_eq)
 {
@@ -97,6 +80,5 @@ ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, ctor_and_getters);
     ATF_ADD_TEST_CASE(tcs, current);
-    ATF_ADD_TEST_CASE(tcs, unique_address);
     ATF_ADD_TEST_CASE(tcs, operator_eq);
 }

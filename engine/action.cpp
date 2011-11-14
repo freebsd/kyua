@@ -73,20 +73,6 @@ engine::action::~action(void)
 }
 
 
-/// Returns a unique memory address for this action.
-///
-/// Remember that action objects are shallowly copied; therefore, it is possible
-/// for two distinct variables of a context to return the same unique internal
-/// address (which is perfectly okay).
-///
-/// \return The uniquely-identifying address for this action.
-intptr_t
-engine::action::unique_address(void) const
-{
-    return reinterpret_cast< intptr_t >(_pimpl.get());
-}
-
-
 /// Returns the context attached to this action.
 ///
 /// \return A reference to the context.

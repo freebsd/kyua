@@ -32,10 +32,6 @@
 #if !defined(ENGINE_CONTEXT_HPP)
 #define ENGINE_CONTEXT_HPP
 
-extern "C" {
-#include <stdint.h>
-}
-
 #include <map>
 #include <string>
 #include <tr1/memory>
@@ -59,8 +55,6 @@ public:
             const std::map< std::string, std::string >&);
     ~context(void);
     static context current(void);
-
-    intptr_t unique_address(void) const;
 
     const utils::fs::path& cwd(void) const;
     const std::map< std::string, std::string >& env(void) const;

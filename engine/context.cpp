@@ -90,20 +90,6 @@ engine::context::current(void)
 }
 
 
-/// Returns a unique memory address for this context.
-///
-/// Remember that context objects are shallowly copied; therefore, it is
-/// possible for two distinct variables of a context to return the same unique
-/// internal address (which is perfectly okay).
-///
-/// \return The uniquely-identifying address for this context.
-intptr_t
-engine::context::unique_address(void) const
-{
-    return reinterpret_cast< intptr_t >(_pimpl.get());
-}
-
-
 /// Returns the current working directory of the context.
 ///
 /// \return A path.

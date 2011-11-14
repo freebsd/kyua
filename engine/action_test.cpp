@@ -61,24 +61,7 @@ ATF_TEST_CASE_BODY(ctor_and_getters)
 {
     const engine::context context = fake_context();
     const engine::action action(context);
-    ATF_REQUIRE_EQ(context.unique_address(),
-                   action.runtime_context().unique_address());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(unique_address);
-ATF_TEST_CASE_BODY(unique_address)
-{
-    const engine::context context = fake_context();
-    const engine::action action1(context);
-    {
-        const engine::action action2 = action1;
-        const engine::action action3(context);
-        ATF_REQUIRE(action1.unique_address() == action2.unique_address());
-        ATF_REQUIRE(action1.unique_address() != action3.unique_address());
-        ATF_REQUIRE(action2.unique_address() != action3.unique_address());
-    }
-    ATF_REQUIRE(action1.unique_address() == action1.unique_address());
+    ATF_REQUIRE(context == action.runtime_context());
 }
 
 
@@ -96,6 +79,5 @@ ATF_TEST_CASE_BODY(operator_eq)
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, ctor_and_getters);
-    ATF_ADD_TEST_CASE(tcs, unique_address);
     ATF_ADD_TEST_CASE(tcs, operator_eq);
 }

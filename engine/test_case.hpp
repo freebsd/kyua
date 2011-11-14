@@ -32,10 +32,6 @@
 #if !defined(ENGINE_TEST_CASE_HPP)
 #define ENGINE_TEST_CASE_HPP
 
-extern "C" {
-#include <stdint.h>
-}
-
 #include <map>
 #include <string>
 #include <tr1/memory>
@@ -97,8 +93,6 @@ class base_test_case {
 public:
     base_test_case(const base_test_program&, const std::string&);
     virtual ~base_test_case(void);
-
-    intptr_t unique_address(void) const;
 
     const base_test_program& test_program(void) const;
     const std::string& name(void) const;

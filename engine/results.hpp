@@ -47,10 +47,6 @@
 #if !defined(ENGINE_RESULTS_HPP)
 #define ENGINE_RESULTS_HPP
 
-extern "C" {
-#include <stdint.h>
-}
-
 #include <string>
 #include <tr1/memory>
 
@@ -81,8 +77,6 @@ protected:
 
 public:
     virtual ~base_result(void) = 0;
-
-    intptr_t unique_address(void) const;
 
     /// Simple formatter.
     ///

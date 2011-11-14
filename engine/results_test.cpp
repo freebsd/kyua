@@ -41,63 +41,6 @@ using utils::optional;
 namespace {
 
 
-template< typename Result >
-static void
-unique_address_test(void)
-{
-    const Result result1;
-    {
-        const Result result2 = result1;
-        const Result result3;
-        ATF_REQUIRE(result1.unique_address() == result2.unique_address());
-        ATF_REQUIRE(result1.unique_address() != result3.unique_address());
-        ATF_REQUIRE(result2.unique_address() != result3.unique_address());
-    }
-    ATF_REQUIRE(result1.unique_address() == result1.unique_address());
-}
-
-
-template< typename Result >
-static void
-unique_address_test(const std::string& reason)
-{
-    const Result result1(reason);
-    {
-        const Result result2 = result1;
-        const Result result3(reason);
-        ATF_REQUIRE(result1.unique_address() == result2.unique_address());
-        ATF_REQUIRE(result1.unique_address() != result3.unique_address());
-        ATF_REQUIRE(result2.unique_address() != result3.unique_address());
-    }
-    ATF_REQUIRE(result1.unique_address() == result1.unique_address());
-}
-
-
-/// Wrapper around unique_address_test to define a test case.
-///
-/// \param name The name of the test result; "__unique_address" will be
-///     appended, and results::<name> must exist.
-#define UNIQUE_ADDRESS_TEST(name) \
-    ATF_TEST_CASE_WITHOUT_HEAD(name ## __unique_address); \
-    ATF_TEST_CASE_BODY(name ## __unique_address) \
-    { \
-        unique_address_test< results::name >(); \
-    }
-
-
-/// Wrapper around unique_address_test to define a test case.
-///
-/// \param name The name of the test result; "__unique_address" will be
-///     appended, and results::<name> must exist.
-/// \param reason An arbitrary reason text for the test.
-#define UNIQUE_ADDRESS_WITH_REASON_TEST(name, reason) \
-    ATF_TEST_CASE_WITHOUT_HEAD(name ## __unique_address); \
-    ATF_TEST_CASE_BODY(name ## __unique_address) \
-    { \
-        unique_address_test< results::name >(reason); \
-    }
-
-
 /// Creates a test case to validate the format() method.
 ///
 /// \param name The name of the test case; "__format" will be appended.
@@ -139,13 +82,6 @@ ATF_TEST_CASE_BODY(make_result)
 }
 
 
-UNIQUE_ADDRESS_WITH_REASON_TEST(broken, "The reason");
-UNIQUE_ADDRESS_WITH_REASON_TEST(expected_failure, "The reason");
-UNIQUE_ADDRESS_WITH_REASON_TEST(failed, "The reason");
-UNIQUE_ADDRESS_TEST(passed);
-UNIQUE_ADDRESS_WITH_REASON_TEST(skipped, "The reason");
-
-
 FORMAT_TEST(broken, "broken: The reason", results::broken("The reason"));
 FORMAT_TEST(expected_failure, "expected_failure: The reason",
             results::expected_failure("The reason"));
@@ -165,19 +101,14 @@ ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, make_result);
 
-    ATF_ADD_TEST_CASE(tcs, broken__unique_address);
     ATF_ADD_TEST_CASE(tcs, broken__format);
     ATF_ADD_TEST_CASE(tcs, broken__good);
-    ATF_ADD_TEST_CASE(tcs, expected_failure__unique_address);
     ATF_ADD_TEST_CASE(tcs, expected_failure__format);
     ATF_ADD_TEST_CASE(tcs, expected_failure__good);
-    ATF_ADD_TEST_CASE(tcs, failed__unique_address);
     ATF_ADD_TEST_CASE(tcs, failed__format);
     ATF_ADD_TEST_CASE(tcs, failed__good);
-    ATF_ADD_TEST_CASE(tcs, passed__unique_address);
     ATF_ADD_TEST_CASE(tcs, passed__format);
     ATF_ADD_TEST_CASE(tcs, passed__good);
-    ATF_ADD_TEST_CASE(tcs, skipped__unique_address);
     ATF_ADD_TEST_CASE(tcs, skipped__format);
     ATF_ADD_TEST_CASE(tcs, skipped__good);
 }
