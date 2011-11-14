@@ -45,11 +45,11 @@ namespace {
 ///
 /// \return The fake context.
 static engine::context
-fake_context(void)
+fake_context(const char* cwd = "/foo/bar")
 {
     std::map< std::string, std::string > env;
     env["foo"] = "bar";
-    return engine::context(fs::path("/foo/bar"), env);
+    return engine::context(fs::path(cwd), env);
 }
 
 
@@ -82,8 +82,20 @@ ATF_TEST_CASE_BODY(unique_address)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(operator_eq);
+ATF_TEST_CASE_BODY(operator_eq)
+{
+    const engine::action action1(fake_context("foo/bar"));
+    const engine::action action2(fake_context("foo/bar"));
+    const engine::action action3(fake_context("foo/baz"));
+    ATF_REQUIRE(  action1 == action2);
+    ATF_REQUIRE(!(action1 == action3));
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, ctor_and_getters);
     ATF_ADD_TEST_CASE(tcs, unique_address);
+    ATF_ADD_TEST_CASE(tcs, operator_eq);
 }

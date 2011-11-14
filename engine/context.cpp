@@ -51,6 +51,17 @@ struct engine::context::impl {
         _env(env_)
     {
     }
+
+    /// Equality comparator.
+    ///
+    /// \param other The object to compare to.
+    ///
+    /// \return True if the two objects are equal; false otherwise.
+    bool
+    operator==(const impl& other) const
+    {
+        return _cwd == other._cwd && _env == other._env;
+    }
 };
 
 
@@ -110,4 +121,16 @@ const std::map< std::string, std::string >&
 engine::context::env(void) const
 {
     return _pimpl->_env;
+}
+
+
+/// Equality comparator.
+///
+/// \param other The object to compare to.
+///
+/// \return True if the two objects are equal; false otherwise.
+bool
+engine::context::operator==(const context& other) const
+{
+    return *_pimpl == *other._pimpl;
 }

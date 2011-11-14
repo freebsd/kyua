@@ -64,6 +64,8 @@ public:
 
     const utils::fs::path& cwd(void) const;
     const std::map< std::string, std::string >& env(void) const;
+
+    bool operator==(const context&) const;
 };
 
 

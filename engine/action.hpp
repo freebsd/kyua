@@ -59,6 +59,8 @@ public:
 
     intptr_t unique_address(void) const;
     const context& runtime_context(void) const;
+
+    bool operator==(const action&) const;
 };
 
 

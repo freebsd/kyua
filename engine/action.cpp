@@ -35,7 +35,7 @@ namespace fs = utils::fs;
 /// Internal implementation of an action.
 struct engine::action::impl {
     /// The runtime context of the action.
-    const context& _context;
+    context _context;
 
     /// Constructor.
     ///
@@ -43,6 +43,17 @@ struct engine::action::impl {
     impl(const context& context_) :
         _context(context_)
     {
+    }
+
+    /// Equality comparator.
+    ///
+    /// \param other The object to compare to.
+    ///
+    /// \return True if the two objects are equal; false otherwise.
+    bool
+    operator==(const impl& other) const
+    {
+        return _context == other._context;
     }
 };
 
@@ -83,4 +94,16 @@ const engine::context&
 engine::action::runtime_context(void) const
 {
     return _pimpl->_context;
+}
+
+
+/// Equality comparator.
+///
+/// \param other The object to compare to.
+///
+/// \return True if the two objects are equal; false otherwise.
+bool
+engine::action::operator==(const action& other) const
+{
+    return *_pimpl == *other._pimpl;
 }
