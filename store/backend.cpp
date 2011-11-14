@@ -121,14 +121,14 @@ do_open(const fs::path& file, const int flags)
         database.exec("PRAGMA foreign_keys = ON");
         return database;
     } catch (const sqlite::error& e) {
-        throw store::error(F("Cannot open '%s': %s") % e.what() % file);
+        throw store::error(F("Cannot open '%s': %s") % file % e.what());
     }
 }
 
 
 /// Checks if a database is empty (i.e. if it is new).
 ///
-/// \param db The database to check. 
+/// \param db The database to check.
 ///
 /// \return True if the database is empty.
 static bool

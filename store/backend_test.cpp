@@ -114,7 +114,7 @@ ATF_TEST_CASE_BODY(backend__open_ro__ok)
 ATF_TEST_CASE_WITHOUT_HEAD(backend__open_ro__missing_file);
 ATF_TEST_CASE_BODY(backend__open_ro__missing_file)
 {
-    ATF_REQUIRE_THROW_RE(store::error, "missing.db",
+    ATF_REQUIRE_THROW_RE(store::error, "Cannot open 'missing.db': ",
                          store::backend::open_ro(fs::path("missing.db")));
     ATF_REQUIRE(!fs::exists(fs::path("missing.db")));
 }
