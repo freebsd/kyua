@@ -69,11 +69,24 @@ default_behavior__ok_body() {
     run_tests "mock1"
 
     cat >expout <<EOF
+Action: 1
 ===> Execution context
 Current directory: $(pwd)/testsuite
 Environment variables:
     HOME=$(pwd)/testsuite/home
     MOCK=mock1
+EOF
+    atf_check -s exit:0 -o file:expout -e empty kyua report
+
+    run_tests "mock2"
+
+    cat >expout <<EOF
+Action: 2
+===> Execution context
+Current directory: $(pwd)/testsuite
+Environment variables:
+    HOME=$(pwd)/testsuite/home
+    MOCK=mock2
 EOF
     atf_check -s exit:0 -o file:expout -e empty kyua report
 }
@@ -101,8 +114,10 @@ action__explicit_body() {
     run_tests "mock2"; action2=$?
 
     atf_check -s exit:0 -o match:"MOCK=mock1" -o not-match:"MOCK=mock2" \
+        -o match:"Action: 1" -o not-match:"Action: 2" \
         -e empty kyua report --action="${action1}"
     atf_check -s exit:0 -o not-match:"MOCK=mock1" -o match:"MOCK=mock2" \
+        -o match:"Action: 2" -o not-match:"Action: 1" \
         -e empty kyua report --action="${action2}"
 }
 
@@ -120,7 +135,10 @@ utils_test_case hide_context
 hide_context_body() {
     run_tests "mock1"
 
-    atf_check -s exit:0 -o empty -e empty kyua report --hide-context
+    cat >expout <<EOF
+Action: 1
+EOF
+    atf_check -s exit:0 -o file:expout -e empty kyua report --hide-context
 }
 
 
@@ -129,6 +147,7 @@ output__console__change_file_body() {
     run_tests
 
     cat >experr <<EOF
+Action: 1
 ===> Execution context
 Current directory: $(pwd)/testsuite
 Environment variables:

@@ -55,8 +55,10 @@ public:
 
     /// Callback executed when an action is found.
     ///
+    /// \param action_id The identifier of the loaded action.
     /// \param action The action loaded from the database.
-    virtual void got_action(const engine::action& action) = 0;
+    virtual void got_action(const int64_t action_id,
+                            const engine::action& action) = 0;
 };
 
 
@@ -69,7 +71,7 @@ struct result {
 };
 
 
-result drive(const utils::fs::path&, const utils::optional< int64_t >&,
+result drive(const utils::fs::path&, utils::optional< int64_t >,
              base_hooks&);
 
 

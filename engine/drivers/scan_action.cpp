@@ -46,20 +46,25 @@ namespace {
 /// Gets an action from the store.
 ///
 /// \param tx The open store transaction.
-/// \param action_id The specific action to get, or none to fetch the latest
-///     available action.
+/// \param [in,out] action_id The specific action to get, or none to fetch the
+///     latest available action.  This is updated to contain the action id of
+///     the returned action.
 ///
 /// \return The fetched action.
 ///
 /// \throw error If there is any problem while loading the action.
 static engine::action
-get_action(store::transaction& tx, const optional< int64_t >& action_id)
+get_action(store::transaction& tx, optional< int64_t >& action_id)
 {
     try {
         if (action_id)
             return tx.get_action(action_id.get());
-        else
-            return tx.get_latest_action();
+        else {
+            const std::pair< int64_t, engine::action > latest_action =
+                tx.get_latest_action();
+            action_id = latest_action.first;
+            return latest_action.second;
+        }
     } catch (const store::error& e) {
         throw engine::error(e.what());
     }
@@ -83,14 +88,14 @@ scan_action::base_hooks::~base_hooks(void)
 /// \returns A structure with all results computed by this driver.
 scan_action::result
 scan_action::drive(const fs::path& store_path,
-                   const optional< int64_t >& action_id,
+                   optional< int64_t > action_id,
                    base_hooks& hooks)
 {
     store::backend db = store::backend::open_ro(store_path);
     store::transaction tx = db.start();
 
     const engine::action action = get_action(tx, action_id);
-    hooks.got_action(action);
+    hooks.got_action(action_id.get(), action);
 
     return result();
 }

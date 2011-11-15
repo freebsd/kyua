@@ -264,20 +264,23 @@ ATF_TEST_CASE_BODY(get_latest_action__ok)
     const engine::action exp_action1(context1);
     const engine::action exp_action2(context2);
 
+    int64_t id2;
     {
         store::transaction tx = backend.start();
         const int64_t context1_id = tx.put_context(context1);
         const int64_t context2_id = tx.put_context(context2);
         (void)tx.put_action(exp_action1, context1_id);
-        (void)tx.put_action(exp_action2, context2_id);
+        id2 = tx.put_action(exp_action2, context2_id);
         tx.commit();
     }
     {
         store::transaction tx = backend.start();
-        const engine::action latest_action = tx.get_latest_action();
+        const std::pair< int64_t, engine::action > latest_action =
+            tx.get_latest_action();
         tx.rollback();
 
-        ATF_REQUIRE(exp_action2 == latest_action);
+        ATF_REQUIRE(id2 == latest_action.first);
+        ATF_REQUIRE(exp_action2 == latest_action.second);
     }
 }
 

@@ -37,6 +37,7 @@ extern "C" {
 }
 
 #include <tr1/memory>
+#include <utility>
 
 #include "engine/results.hpp"
 
@@ -71,7 +72,7 @@ public:
     void rollback(void);
 
     engine::action get_action(const int64_t);
-    engine::action get_latest_action(void);
+    std::pair< int64_t, engine::action > get_latest_action(void);
     engine::context get_context(const int64_t);
 
     int64_t put_action(const engine::action&, const int64_t);

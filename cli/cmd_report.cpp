@@ -93,10 +93,12 @@ public:
 
     /// Callback executed when an action is found.
     ///
+    /// \param action_id The identifier of the loaded action.
     /// \param action The action loaded from the database.
     void
-    got_action(const engine::action& action)
+    got_action(const int64_t action_id, const engine::action& action)
     {
+        _ui->out(F("Action: %d") % action_id);
         if (_include_context)
             print_context(action.runtime_context());
     }
