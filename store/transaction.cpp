@@ -87,6 +87,50 @@ get_env_vars(sqlite::database& db, const int64_t context_id)
 }
 
 
+/// Retrieves a result from the database.
+///
+/// \param stmt The statement with the data for the result to load.
+/// \param type_column The name of the column containing the type of the result.
+/// \param reason_column The name of the column containing the reason for the
+///     result, if any.
+///
+/// \return The loaded result.
+///
+/// \throw integrity_error If the data in the database is invalid.
+static results::result_ptr
+parse_result(sqlite::statement& stmt, const char* type_column,
+             const char* reason_column)
+{
+    try {
+        const std::string type = stmt.safe_column_text(type_column);
+        if (type == "passed") {
+            if (stmt.column_type(stmt.column_id(reason_column)) !=
+                sqlite::type_null)
+                throw store::integrity_error("Result of type 'passed' has a "
+                                             "non-NULL reason");
+            return results::result_ptr(new results::passed());
+        } else if (type == "broken") {
+            return results::result_ptr(new results::broken(
+                stmt.safe_column_text(reason_column)));
+        } else if (type == "expected_failure") {
+            return results::result_ptr(new results::expected_failure(
+                stmt.safe_column_text(reason_column)));
+        } else if (type == "failed") {
+            return results::result_ptr(new results::failed(
+                stmt.safe_column_text(reason_column)));
+        } else if (type == "skipped") {
+            return results::result_ptr(new results::skipped(
+                stmt.safe_column_text(reason_column)));
+        } else {
+            throw store::integrity_error(F("Unknown test result type %s") %
+                                         type);
+        }
+    } catch (const sqlite::error& e) {
+        throw store::integrity_error(e.what());
+    }
+}
+
+
 /// Stores the environment variables of a context.
 ///
 /// \param db The SQLite database.
@@ -138,6 +182,95 @@ put_metadata(sqlite::database& db, const int64_t test_case_id,
 
 
 }  // anonymous namespace
+
+
+/// Internal implementation for a results iterator.
+struct store::results_iterator::impl {
+    /// The statement to iterate on.
+    sqlite::statement _stmt;
+
+    /// Whether the iterator is still valid or not.
+    bool _valid;
+
+    /// Constructor.
+    impl(sqlite::database& db_, const int64_t action_id_) :
+        _stmt(db_.create_statement(
+                  "SELECT test_programs.binary_path, test_cases.name, "
+                  "    test_results.result_type, test_results.result_reason "
+                  "FROM test_programs NATURAL JOIN test_cases "
+                  "    NATURAL JOIN test_results "
+                  "WHERE test_programs.action_id == :action_id"))
+    {
+        _stmt.bind_int64(":action_id", action_id_);
+        _valid = _stmt.step();
+    }
+};
+
+
+/// Constructor.
+///
+/// \param pimpl_ The internal implementation details of the iterator.
+store::results_iterator::results_iterator(
+    std::tr1::shared_ptr< impl > pimpl_) :
+    _pimpl(pimpl_)
+{
+}
+
+
+/// Destructor.
+store::results_iterator::~results_iterator(void)
+{
+}
+
+
+/// Moves the iterator forward by one result.
+///
+/// \return The iterator itself.
+store::results_iterator&
+store::results_iterator::operator++(void)
+{
+    _pimpl->_valid = _pimpl->_stmt.step();
+    return *this;
+}
+
+
+/// Checks whether the iterator is still valid.
+///
+/// \return True if there is more elements to iterate on, false otherwise.
+store::results_iterator::operator bool(void) const
+{
+    return _pimpl->_valid;
+}
+
+
+/// Gets the absolute path to the test program pointed by the iterator.
+///
+/// \return An absolute path.
+fs::path
+store::results_iterator::binary_path(void) const
+{
+    return fs::path(_pimpl->_stmt.safe_column_text("binary_path"));
+}
+
+
+/// Gets the name of the test case pointed by the iterator.
+///
+/// \return A test case name, unique within the test program.
+std::string
+store::results_iterator::test_case_name(void) const
+{
+    return _pimpl->_stmt.safe_column_text("name");
+}
+
+
+/// Gets the result of the test case pointed by the iterator.
+///
+/// \return A test case result.
+results::result_ptr
+store::results_iterator::result(void) const
+{
+    return parse_result(_pimpl->_stmt, "result_type", "result_reason");
+}
 
 
 /// Internal implementation for a store transaction.
@@ -224,6 +357,25 @@ store::transaction::get_action(const int64_t action_id)
             get_context(stmt.safe_column_int64("context_id")));
     } catch (const sqlite::error& e) {
         throw error(F("Error loading action %d: %s") % action_id % e.what());
+    }
+}
+
+
+/// Creates a new iterator to scan the test results of an action.
+///
+/// \param action_id The identifier of the action for which to get the results.
+///
+/// \return The constructed iterator.
+///
+/// \throw error If there is any problem constructing the iterator.
+store::results_iterator
+store::transaction::get_action_results(const int64_t action_id)
+{
+    try {
+        return results_iterator(std::tr1::shared_ptr< results_iterator::impl >(
+           new results_iterator::impl(_pimpl->_db, action_id)));
+    } catch (const sqlite::error& e) {
+        throw error(e.what());
     }
 }
 

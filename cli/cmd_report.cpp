@@ -33,6 +33,7 @@
 #include "engine/action.hpp"
 #include "engine/context.hpp"
 #include "engine/drivers/scan_action.hpp"
+#include "engine/results.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/defs.hpp"
@@ -40,6 +41,7 @@
 #include "utils/optional.ipp"
 
 namespace cmdline = utils::cmdline;
+namespace results = engine::results;
 namespace scan_action = engine::drivers::scan_action;
 namespace user_files = engine::user_files;
 
@@ -57,6 +59,8 @@ class console_hooks : public scan_action::base_hooks {
 
     /// Whether to include the runtime context in the output or not.
     const bool _include_context;
+
+    bool _first_result;
 
     /// Dumps the execution context to the output.
     ///
@@ -87,7 +91,8 @@ public:
     ///     the output or not.
     console_hooks(cmdline::ui* ui_, bool include_context_) :
         _ui(ui_),
-        _include_context(include_context_)
+        _include_context(include_context_),
+        _first_result(true)
     {
     }
 
@@ -101,6 +106,21 @@ public:
         _ui->out(F("Action: %d") % action_id);
         if (_include_context)
             print_context(action.runtime_context());
+    }
+
+    void
+    got_result(const utils::fs::path& binary_path,
+               const std::string& test_case_name,
+               const results::result_ptr result)
+    {
+        if (_first_result) {
+            // TODO(jmmv): Should have a got_results_count callback, and then we
+            // can print the header from there.
+            _ui->out("===> Test results");
+            _first_result = false;
+        }
+        _ui->out(F("%s:%s  ->  %s") % binary_path % test_case_name %
+                 result->format());
     }
 };
 

@@ -51,7 +51,32 @@ class context;
 namespace store {
 
 
-class backend;
+class transaction;
+
+
+/// Iterator for the set of test case results that are part of an action.
+///
+/// \todo Note that this is not a "standard" C++ iterator.  I have chosen to
+/// implement a different interface because it makes things easier to represent
+/// an SQL statement state.  Rewrite as a proper C++ iterator, inheriting from
+/// std::iterator.
+class results_iterator {
+    struct impl;
+    std::tr1::shared_ptr< impl > _pimpl;
+
+    friend class transaction;
+    results_iterator(std::tr1::shared_ptr< impl >);
+
+public:
+    ~results_iterator(void);
+
+    results_iterator& operator++(void);
+    operator bool(void) const;
+
+    utils::fs::path binary_path(void) const;
+    std::string test_case_name(void) const;
+    engine::results::result_ptr result(void) const;
+};
 
 
 /// Representation of a transaction.
@@ -72,6 +97,7 @@ public:
     void rollback(void);
 
     engine::action get_action(const int64_t);
+    results_iterator get_action_results(const int64_t);
     std::pair< int64_t, engine::action > get_latest_action(void);
     engine::context get_context(const int64_t);
 

@@ -83,6 +83,8 @@ scan_action::base_hooks::~base_hooks(void)
 /// Executes the operation.
 ///
 /// \param store_path The path to the database store.
+/// \param action_id The identifier of the action to scan; if none, scans the
+///     latest action in the store.
 /// \param hooks The hooks for this execution.
 ///
 /// \returns A structure with all results computed by this driver.
@@ -96,6 +98,13 @@ scan_action::drive(const fs::path& store_path,
 
     const engine::action action = get_action(tx, action_id);
     hooks.got_action(action_id.get(), action);
+
+    store::results_iterator iter = tx.get_action_results(action_id.get());
+    while (iter) {
+        hooks.got_result(iter.binary_path(), iter.test_case_name(),
+                         iter.result());
+        ++iter;
+    }
 
     return result();
 }

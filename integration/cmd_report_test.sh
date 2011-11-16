@@ -75,6 +75,9 @@ Current directory: $(pwd)/testsuite
 Environment variables:
     HOME=$(pwd)/testsuite/home
     MOCK=mock1
+===> Test results
+$(pwd)/testsuite/simple_all_pass:pass  ->  passed
+$(pwd)/testsuite/simple_all_pass:skip  ->  skipped: The reason for skipping is this
 EOF
     atf_check -s exit:0 -o file:expout -e empty kyua report
 
@@ -87,6 +90,9 @@ Current directory: $(pwd)/testsuite
 Environment variables:
     HOME=$(pwd)/testsuite/home
     MOCK=mock2
+===> Test results
+$(pwd)/testsuite/simple_all_pass:pass  ->  passed
+$(pwd)/testsuite/simple_all_pass:skip  ->  skipped: The reason for skipping is this
 EOF
     atf_check -s exit:0 -o file:expout -e empty kyua report
 }
@@ -137,6 +143,9 @@ hide_context_body() {
 
     cat >expout <<EOF
 Action: 1
+===> Test results
+$(pwd)/testsuite/simple_all_pass:pass  ->  passed
+$(pwd)/testsuite/simple_all_pass:skip  ->  skipped: The reason for skipping is this
 EOF
     atf_check -s exit:0 -o file:expout -e empty kyua report --hide-context
 }
@@ -153,6 +162,9 @@ Current directory: $(pwd)/testsuite
 Environment variables:
     HOME=$(pwd)/testsuite/home
     MOCK=random-text
+===> Test results
+$(pwd)/testsuite/simple_all_pass:pass  ->  passed
+$(pwd)/testsuite/simple_all_pass:skip  ->  skipped: The reason for skipping is this
 EOF
     atf_expect_fail "--output not implemented yet"
     atf_check -s exit:0 -o empty -e file:experr kyua report \

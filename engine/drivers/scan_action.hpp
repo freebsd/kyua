@@ -37,6 +37,7 @@
 #if !defined(ENGINE_DRIVERS_SCAN_ACTION_HPP)
 #define ENGINE_DRIVERS_SCAN_ACTION_HPP
 
+#include "engine/results.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"
 
@@ -59,6 +60,15 @@ public:
     /// \param action The action loaded from the database.
     virtual void got_action(const int64_t action_id,
                             const engine::action& action) = 0;
+
+    /// Callback executed when a test results is found.
+    ///
+    /// \param binary_path The absolute path to the test program.
+    /// \param test_case_name The name of the test case.
+    /// \param result The result of the test case.
+    virtual void got_result(const utils::fs::path& binary_path,
+                            const std::string& test_case_name,
+                            const results::result_ptr result) = 0;
 };
 
 

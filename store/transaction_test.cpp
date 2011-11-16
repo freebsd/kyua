@@ -249,6 +249,81 @@ ATF_TEST_CASE_BODY(get_put_action__put_fail)
 }
 
 
+ATF_TEST_CASE(get_action_results__none);
+ATF_TEST_CASE_HEAD(get_action_results__none)
+{
+    set_md_var("require.files", store::detail::schema_file.c_str());
+}
+ATF_TEST_CASE_BODY(get_action_results__none)
+{
+    store::backend backend = store::backend::open_rw(fs::path("test.db"));
+    store::transaction tx = backend.start();
+    store::results_iterator iter = tx.get_action_results(1);
+    ATF_REQUIRE(!iter);
+}
+
+
+ATF_TEST_CASE(get_action_results__many);
+ATF_TEST_CASE_HEAD(get_action_results__many)
+{
+    set_md_var("require.files", store::detail::schema_file.c_str());
+}
+ATF_TEST_CASE_BODY(get_action_results__many)
+{
+    store::backend backend = store::backend::open_rw(fs::path("test.db"));
+
+    store::transaction tx = backend.start();
+
+    const engine::context context(fs::path("/foo/bar"),
+                                  std::map< std::string, std::string >());
+    const engine::action action(context);
+    const int64_t context_id = tx.put_context(context);
+    const int64_t action_id = tx.put_action(action, context_id);
+    const int64_t action2_id = tx.put_action(action, context_id);
+
+    {
+        const plain_iface::test_program test_program(
+            fs::path("a/prog1"), fs::path("/the/root"), "suite1", none);
+        const plain_iface::test_case test_case(test_program);
+        const results::result_ptr result(new results::passed());
+
+        const int64_t tp_id = tx.put_test_program(test_program, action_id);
+        const int64_t tc_id = tx.put_test_case(test_case, tp_id);
+        tx.put_result(result, tc_id);
+
+        const int64_t tp2_id = tx.put_test_program(test_program, action2_id);
+        const int64_t tc2_id = tx.put_test_case(test_case, tp2_id);
+        tx.put_result(result, tc2_id);
+    }
+    {
+        const plain_iface::test_program test_program(
+            fs::path("b/prog2"), fs::path("/the/root"), "suite2", none);
+        const plain_iface::test_case test_case(test_program);
+        const results::result_ptr result(new results::failed("Some text"));
+
+        const int64_t tp_id = tx.put_test_program(test_program, action_id);
+        const int64_t tc_id = tx.put_test_case(test_case, tp_id);
+        tx.put_result(result, tc_id);
+    }
+
+    tx.commit();
+
+    store::transaction tx2 = backend.start();
+    store::results_iterator iter = tx2.get_action_results(action_id);
+    ATF_REQUIRE(iter);
+    ATF_REQUIRE_EQ(fs::path("/the/root/a/prog1"), iter.binary_path());
+    ATF_REQUIRE_EQ("main", iter.test_case_name());
+    ATF_REQUIRE(typeid(results::passed) == typeid(*iter.result()));
+    ATF_REQUIRE(++iter);
+    ATF_REQUIRE_EQ(fs::path("/the/root/b/prog2"), iter.binary_path());
+    ATF_REQUIRE_EQ("main", iter.test_case_name());
+    ATF_REQUIRE(typeid(results::failed) == typeid(*iter.result()));
+    ATF_REQUIRE(results::failed("Some text") ==
+                *dynamic_cast< const results::failed* >(iter.result().get()));
+    ATF_REQUIRE(!++iter);
+}
+
+
 ATF_TEST_CASE(get_latest_action__ok);
 ATF_TEST_CASE_HEAD(get_latest_action__ok)
 {
@@ -642,6 +717,9 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, get_put_action__get_fail__missing);
     ATF_ADD_TEST_CASE(tcs, get_put_action__get_fail__invalid_context);
     ATF_ADD_TEST_CASE(tcs, get_put_action__put_fail);
+
+    ATF_ADD_TEST_CASE(tcs, get_action_results__none);
+    ATF_ADD_TEST_CASE(tcs, get_action_results__many);
 
     ATF_ADD_TEST_CASE(tcs, get_latest_action__ok);
     ATF_ADD_TEST_CASE(tcs, get_latest_action__none);
