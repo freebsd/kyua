@@ -103,6 +103,7 @@ Commands list
 * debug command:: Details about the debug command.
 * help command:: Details about the help command.
 * list command:: Details about the list command.
+* report command:: Details about the report command.
 * test command:: Details about the test command.
 
 Miscellaneous topics
@@ -313,6 +314,40 @@ Prints metadata properties for every test case.
 This command exits with @samp{0} if there are no problems processing
 the test suite, or with any positive number if the test suite is
 invalid in any sense or if the filters matched no tests.
+
+@node report command
+@subsection The report command
+
+@cindex @command{report}
+
+The @command{report} command provides the main mechanism to generate
+reports of the execution of a test suite.  The command processes an
+action stored in the database and then creates a textual summary of
+the test case results recorded in that action.
+
+The following subcommand options are recognized:
+
+@table @option
+@item --action=identifier
+@cindex @option{--action}, @command{report}
+Specifies the action for which to generate a report.  If not provided,
+defaults to the latest action stored in the database.
+
+@item --hide-context
+@cindex @option{--hide-context}, @command{report}
+Avoids printing the runtime context of the action.
+
+@item --output=format:path
+@cindex @option{--output}, @command{report}
+Specifies the format of the generated report and where it should be
+stored.  At the moment, the only accepted value is the default, which
+is @samp{console:/dev/stdout}.
+
+@item --store=path
+@cindex @option{--store}, @command{db-exec}
+Specifies the database to use.  Defaults to @file{~/.kyua/store.db}.
+The database is created if it does not exist.
+@end table
 
 @node test command
 @subsection The test command
