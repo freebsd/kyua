@@ -35,7 +35,7 @@
 #include "engine/drivers/scan_action.hpp"
 #include "engine/plain_iface/test_case.hpp"
 #include "engine/plain_iface/test_program.hpp"
-#include "engine/results.hpp"
+#include "engine/test_result.hpp"
 #include "store/backend.hpp"
 #include "store/exceptions.hpp"
 #include "store/transaction.hpp"
@@ -45,7 +45,6 @@
 
 namespace fs = utils::fs;
 namespace plain_iface = engine::plain_iface;
-namespace results = engine::results;
 namespace scan_action = engine::drivers::scan_action;
 
 using utils::none;
@@ -87,10 +86,17 @@ public:
     /// \param result The result of the test case.
     void got_result(const fs::path& binary_path,
                     const std::string& test_case_name,
-                    const results::result_ptr result)
+                    const engine::test_result& result)
     {
-        _results.insert(F("%s:%s:%s") % binary_path % test_case_name %
-                        result->format());
+        const char* type;
+        switch (result.type()) {
+        case engine::test_result::passed: type = "passed"; break;
+        case engine::test_result::skipped: type = "skipped"; break;
+        default:
+            UNREACHABLE_MSG("Formatting unimplemented");
+        }
+        _results.insert(F("%s:%s:%s:%s") % binary_path % test_case_name %
+                        type % result.reason());
     }
 };
 
@@ -129,8 +135,8 @@ populate_db(const char* db_name, const int count)
 
         for (int j = 0; j < count; j++) {
             const plain_iface::test_case test_case(test_program);
-            const results::result_ptr result(
-                new results::skipped(F("Count %d") % i));
+            const engine::test_result result(engine::test_result::skipped,
+                                             F("Count %d") % i);
             const int64_t tc_id = tx.put_test_case(test_case, tp_id);
             tx.put_result(result, tc_id);
         }
@@ -164,8 +170,8 @@ ATF_TEST_CASE_BODY(latest_action)
     ATF_REQUIRE(action == hooks._action.get());
 
     std::set< std::string > results;
-    results.insert("/root/dir/prog_0:main:skipped: Count 0");
-    results.insert("/root/dir/prog_1:main:skipped: Count 1");
+    results.insert("/root/dir/prog_0:main:skipped:Count 0");
+    results.insert("/root/dir/prog_1:main:skipped:Count 1");
     ATF_REQUIRE(results == hooks._results);
 }
 
@@ -190,7 +196,7 @@ ATF_TEST_CASE_BODY(explicit_action)
     ATF_REQUIRE(action == hooks._action.get());
 
     std::set< std::string > results;
-    results.insert("/root/dir/prog_0:main:skipped: Count 0");
+    results.insert("/root/dir/prog_0:main:skipped:Count 0");
     ATF_REQUIRE(results == hooks._results);
 }
 

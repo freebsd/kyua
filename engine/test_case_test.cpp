@@ -27,18 +27,16 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <set>
-#include <typeinfo>
 
 #include <atf-c++.hpp>
 
-#include "engine/results.ipp"
 #include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
+#include "engine/test_result.hpp"
 #include "engine/user_files/config.hpp"
 #include "utils/sanity.hpp"
 
 namespace fs = utils::fs;
-namespace results = engine::results;
 namespace user_files = engine::user_files;
 
 using utils::optional;
@@ -97,14 +95,14 @@ class mock_test_case : public engine::base_test_case {
     /// \param config The run-time configuration.  Must be mock_config.
     ///
     /// \return A static result for testing purposes.
-    results::result_ptr
+    engine::test_result
     execute(const user_files::config& config,
             const optional< fs::path >& UTILS_UNUSED_PARAM(stdout_path),
             const optional< fs::path >& UTILS_UNUSED_PARAM(stderr_path)) const
     {
         if (&config != &mock_config)
             throw std::runtime_error("Invalid config object");
-        return results::make_result(results::skipped("A test result"));
+        return engine::test_result(engine::test_result::skipped, "A test result");
     }
 
 public:
@@ -223,11 +221,9 @@ ATF_TEST_CASE_BODY(base_test_case__run__delegate)
     const mock_test_program test_program(fs::path("foo"));
     const mock_test_case test_case(test_program, "bar");
 
-    const results::result_ptr result = test_case.run(mock_config);
-    ATF_REQUIRE(typeid(*result) == typeid(results::skipped));
-    const results::skipped* typed_result =
-        dynamic_cast< const results::skipped* >(result.get());
-    ATF_REQUIRE_EQ("A test result", typed_result->reason());
+    ATF_REQUIRE(engine::test_result(engine::test_result::skipped,
+                                    "A test result") ==
+                test_case.run(mock_config));
 }
 
 

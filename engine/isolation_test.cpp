@@ -36,12 +36,10 @@ extern "C" {
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
-#include <typeinfo>
 
 #include <atf-c++.hpp>
 
 #include "engine/isolation.ipp"
-#include "engine/results.ipp"
 #include "utils/env.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/process/children.hpp"
@@ -50,7 +48,6 @@ extern "C" {
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace process = utils::process;
-namespace results = engine::results;
 
 using utils::optional;
 
@@ -92,41 +89,39 @@ isolate_process_kill_self(void)
 }
 
 
-template< class Result >
 class protected_run_hook_simple {
-    const Result _result;
+    const engine::test_result _result;
 
 public:
-    protected_run_hook_simple(const Result& result_) :
+    protected_run_hook_simple(const engine::test_result& result_) :
         _result(result_)
     {
     }
 
-    results::result_ptr
+    const engine::test_result&
     operator()(const fs::path& workdir)
     {
         ATF_REQUIRE_EQ(fs::path("my-tmpdir"), workdir.branch_path());
-        return results::make_result(_result);
+        return _result;
     }
 };
 
 
-template< class Result >
 class protected_run_hook_protect {
-    const Result _result;
+    const engine::test_result _result;
 
 public:
-    protected_run_hook_protect(const Result& result_) :
+    protected_run_hook_protect(const engine::test_result& result_) :
         _result(result_)
     {
     }
 
-    results::result_ptr
+    const engine::test_result&
     operator()(const fs::path& workdir)
     {
         ATF_REQUIRE_EQ(fs::path("my-tmpdir"), workdir.branch_path());
         ::chmod(workdir.branch_path().c_str(), 0555);
-        return results::make_result(_result);
+        return _result;
     }
 };
 
@@ -140,12 +135,12 @@ public:
     {
     }
 
-    results::result_ptr
+    engine::test_result
     operator()(const fs::path& workdir)
     {
         ATF_REQUIRE_EQ(fs::path("my-tmpdir"), workdir.branch_path());
         ::kill(::getpid(), _signo);
-        return results::make_result(results::passed());
+        return engine::test_result(engine::test_result::passed);
     }
 };
 
@@ -325,10 +320,9 @@ ATF_TEST_CASE_BODY(protected_run__ok)
     ATF_REQUIRE(::mkdir("my-tmpdir", 0755) != -1);
     utils::setenv("TMPDIR", "my-tmpdir");
 
-    const protected_run_hook_simple< results::skipped > hook(
-        results::skipped("A reason"));
-    const results::result_ptr result = engine::protected_run(hook);
-    ATF_REQUIRE(typeid(results::skipped) == typeid(*result));
+    const engine::test_result result(engine::test_result::skipped, "Foo");
+    const protected_run_hook_simple hook(result);
+    ATF_REQUIRE(result == engine::protected_run(hook));
 }
 
 
@@ -342,10 +336,9 @@ ATF_TEST_CASE_BODY(protected_run__ok_but_cleanup_fail)
     ATF_REQUIRE(::mkdir("my-tmpdir", 0755) != -1);
     utils::setenv("TMPDIR", "my-tmpdir");
 
-    const protected_run_hook_protect< results::skipped > hook(
-        results::skipped("A reason"));
-    const results::result_ptr result = engine::protected_run(hook);
-    ATF_REQUIRE(typeid(results::broken) == typeid(*result));
+    const engine::test_result result(engine::test_result::broken, "Bar");
+    const protected_run_hook_protect hook(result);
+    ATF_REQUIRE(result == engine::protected_run(hook));
 }
 
 
@@ -359,10 +352,9 @@ ATF_TEST_CASE_BODY(protected_run__fail_and_cleanup_fail)
     ATF_REQUIRE(::mkdir("my-tmpdir", 0755) != -1);
     utils::setenv("TMPDIR", "my-tmpdir");
 
-    const protected_run_hook_protect< results::failed > hook(
-        results::failed("A reason"));
-    const results::result_ptr result = engine::protected_run(hook);
-    ATF_REQUIRE(typeid(results::failed) == typeid(*result));
+    const engine::test_result result(engine::test_result::failed, "Oh no");
+    const protected_run_hook_protect hook(result);
+    ATF_REQUIRE(result == engine::protected_run(hook));
 }
 
 

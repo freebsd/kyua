@@ -39,13 +39,12 @@ extern "C" {
 #include <tr1/memory>
 #include <utility>
 
-#include "engine/results.hpp"
-
 namespace engine {
 class action;
 class base_test_case;
 class base_test_program;
 class context;
+class test_result;
 };
 
 namespace store {
@@ -75,7 +74,7 @@ public:
 
     utils::fs::path binary_path(void) const;
     std::string test_case_name(void) const;
-    engine::results::result_ptr result(void) const;
+    engine::test_result result(void) const;
 };
 
 
@@ -105,7 +104,7 @@ public:
     int64_t put_context(const engine::context&);
     int64_t put_test_program(const engine::base_test_program&, const int64_t);
     int64_t put_test_case(const engine::base_test_case&, const int64_t);
-    int64_t put_result(const engine::results::result_ptr, const int64_t);
+    int64_t put_result(const engine::test_result&, const int64_t);
 };
 
 

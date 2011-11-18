@@ -46,9 +46,8 @@ libengine_a_SOURCES += engine/test_case.cpp
 libengine_a_SOURCES += engine/test_case.hpp
 libengine_a_SOURCES += engine/test_program.cpp
 libengine_a_SOURCES += engine/test_program.hpp
-libengine_a_SOURCES += engine/results.cpp
-libengine_a_SOURCES += engine/results.hpp
-libengine_a_SOURCES += engine/results.ipp
+libengine_a_SOURCES += engine/test_result.cpp
+libengine_a_SOURCES += engine/test_result.hpp
 
 tests_enginedir = $(pkgtestsdir)/engine
 
@@ -86,13 +85,6 @@ engine_isolation_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_TEST_CFLAGS) \
 engine_isolation_test_LDADD = $(ENGINE_LIBS) $(UTILS_TEST_LIBS) \
                               $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
-tests_engine_PROGRAMS += engine/results_test
-engine_results_test_SOURCES = engine/results_test.cpp
-engine_results_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_TEST_CFLAGS) \
-                               $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-engine_results_test_LDADD = $(ENGINE_LIBS) $(UTILS_TEST_LIBS) \
-                            $(UTILS_LIBS) $(ATF_CXX_LIBS)
-
 tests_engine_PROGRAMS += engine/test_case_test
 engine_test_case_test_SOURCES = engine/test_case_test.cpp
 engine_test_case_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_TEST_CFLAGS) \
@@ -106,6 +98,13 @@ engine_test_program_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_TEST_CFLAGS) \
                                     $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 engine_test_program_test_LDADD = $(ENGINE_LIBS) $(UTILS_TEST_LIBS) \
                                  $(UTILS_LIBS) $(ATF_CXX_LIBS)
+
+tests_engine_PROGRAMS += engine/test_result_test
+engine_test_result_test_SOURCES = engine/test_result_test.cpp
+engine_test_result_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_TEST_CFLAGS) \
+                                   $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+engine_test_result_test_LDADD = $(ENGINE_LIBS) $(UTILS_TEST_LIBS) \
+                                $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 include engine/atf_iface/Makefile.am.inc
 include engine/drivers/Makefile.am.inc

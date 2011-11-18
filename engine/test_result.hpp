@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,31 +26,57 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/results.hpp"
+/// \file engine/test_result.hpp
+/// Representation of test case results.
 
-#if !defined(ENGINE_RESULTS_IPP)
-#define ENGINE_RESULTS_IPP
+#if !defined(ENGINE_TEST_RESULT_HPP)
+#define ENGINE_TEST_RESULT_HPP
+
+#include <string>
 
 namespace engine {
-namespace results {
 
 
-/// Creates a test result in dynamic memory.
+/// Representation of a single test result.
 ///
-/// \param data An instance of a test result class (a class that inherits from
-///     results::base_result.
+/// A test result is a simple pair of (type, reason).  The type indicates the
+/// semantics of the results, and the optional reason provides an extra
+/// description of the result type.
 ///
-/// \return A dynamically allocated copy of the test result, wrapped in a smart
-/// pointer to the base class.
-template< typename T >
-result_ptr
-make_result(const T& data)
-{
-    return result_ptr(new const T(data));
-}
+/// In general, a 'passed' result will not have a reason attached, because a
+/// successful test case does not deserve any kind of explanation.  We used to
+/// special-case this with a very complex class hierarchy, but it proved to
+/// result in an extremely-complex to maintain code base that provided no
+/// benefits.  As a result, we allow any test type to carry a reason.
+class test_result {
+public:
+    /// The type of the result.
+    enum result_type {
+        broken,
+        expected_failure,
+        failed,
+        passed,
+        skipped,
+    };
+
+private:
+    result_type _type;
+    std::string _reason;
+
+public:
+    test_result(const result_type, const std::string& = "");
+
+    result_type type(void) const;
+    const std::string& reason(void) const;
+
+    bool good(void) const;
+
+    bool operator==(const test_result&) const;
+    bool operator!=(const test_result&) const;
+};
 
 
-}  // namespace results
 }  // namespace engine
 
-#endif  // !defined(ENGINE_RESULTS_IPP)
+
+#endif  // !defined(ENGINE_TEST_RESULT_HPP)

@@ -38,7 +38,6 @@
 #include <set>
 
 #include "engine/filters.hpp"
-#include "engine/results.hpp"
 #include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
 #include "utils/fs/path.hpp"

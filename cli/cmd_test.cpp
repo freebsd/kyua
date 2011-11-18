@@ -32,6 +32,7 @@
 #include "cli/common.ipp"
 #include "engine/drivers/run_tests.hpp"
 #include "engine/test_case.hpp"
+#include "engine/test_result.hpp"
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/cmdline/ui.hpp"
@@ -39,7 +40,6 @@
 
 namespace cmdline = utils::cmdline;
 namespace fs = utils::fs;
-namespace results = engine::results;
 namespace run_tests = engine::drivers::run_tests;
 namespace user_files = engine::user_files;
 
@@ -65,10 +65,10 @@ public:
 
     virtual void
     got_result(const engine::test_case_id& id,
-               const results::result_ptr& result)
+               const engine::test_result& result)
     {
-        _ui->out(F("%s  ->  %s") % id.str() % result->format());
-        if (result->good())
+        _ui->out(F("%s  ->  %s") % id.str() % cli::format_result(result));
+        if (result.good())
             good_count++;
         else
             bad_count++;

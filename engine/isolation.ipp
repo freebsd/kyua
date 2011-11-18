@@ -34,6 +34,7 @@ extern "C" {
 
 #include "engine/exceptions.hpp"
 #include "engine/isolation.hpp"
+#include "engine/test_result.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/auto_cleaners.hpp"
 #include "utils/fs/exceptions.hpp"
@@ -90,7 +91,7 @@ engine::fork_and_wait(Hook hook, const utils::fs::path& outfile,
 ///
 /// \throw interrupted_error If the execution has been interrupted by the user.
 template< class Hook >
-engine::results::result_ptr
+engine::test_result
 engine::protected_run(Hook hook)
 {
     // These three separate objects are ugly.  Maybe improve in some way.
@@ -98,7 +99,7 @@ engine::protected_run(Hook hook)
     utils::signals::programmer sigint(SIGINT, detail::interrupt_handler);
     utils::signals::programmer sigterm(SIGTERM, detail::interrupt_handler);
 
-    engine::results::result_ptr result;
+    test_result result(test_result::broken, "Test result not yet initialized");
 
     utils::fs::auto_directory workdir(detail::create_work_directory());
     try {
@@ -107,9 +108,9 @@ engine::protected_run(Hook hook)
         try {
             workdir.cleanup();
         } catch (const utils::fs::error& e) {
-            if (result->good()) {
-                result = engine::results::result_ptr(new engine::results::broken(F(
-                    "Could not clean up test work directory: %s") % e.what()));
+            if (result.good()) {
+                result = test_result(test_result::broken,
+                    F("Could not clean up test work directory: %s") % e.what());
             } else {
                 LW(F("Not reporting work directory clean up failure because "
                      "the test is already broken: %s") % e.what());

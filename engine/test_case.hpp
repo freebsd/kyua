@@ -36,11 +36,13 @@
 #include <string>
 #include <tr1/memory>
 
-#include "engine/results.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"
 
 namespace engine {
+
+
+class test_result;
 
 
 /// Collection of test case properties.
@@ -85,7 +87,7 @@ class base_test_case {
     std::tr1::shared_ptr< base_impl > _pbimpl;
 
     virtual properties_map get_all_properties(void) const = 0;
-    virtual results::result_ptr execute(
+    virtual test_result execute(
         const user_files::config&,
         const utils::optional< utils::fs::path >&,
         const utils::optional< utils::fs::path >&) const = 0;
@@ -99,10 +101,10 @@ public:
     test_case_id identifier(void) const;
 
     properties_map all_properties(void) const;
-    results::result_ptr debug(const user_files::config&,
-                              const utils::fs::path&,
-                              const utils::fs::path&) const;
-    results::result_ptr run(const user_files::config&) const;
+    test_result debug(const user_files::config&,
+                      const utils::fs::path&,
+                      const utils::fs::path&) const;
+    test_result run(const user_files::config&) const;
 };
 
 

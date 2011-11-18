@@ -51,6 +51,7 @@ class path;
 namespace engine {
 struct test_case_id;
 struct test_filter;
+class test_result;
 namespace user_files {
 struct config;
 }  // namespace user_files
@@ -86,6 +87,8 @@ std::set< engine::test_filter > parse_filters(
     const utils::cmdline::args_vector&);
 bool report_unused_filters(const std::set< engine::test_filter >&,
                            utils::cmdline::ui*);
+
+std::string format_result(const engine::test_result&);
 
 
 }  // namespace cli

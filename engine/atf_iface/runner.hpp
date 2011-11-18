@@ -32,13 +32,12 @@
 #if !defined(ENGINE_ATF_IFACE_RUNNER_HPP)
 #define ENGINE_ATF_IFACE_RUNNER_HPP
 
-#include "engine/results.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"
 
 
 namespace engine {
-
+class test_result;
 namespace user_files {
 struct config;
 }  // namespace user_files
@@ -49,9 +48,9 @@ namespace atf_iface {
 
 class test_case;
 
-results::result_ptr run_test_case(const test_case&, const user_files::config&,
-                                  const utils::optional< utils::fs::path >&,
-                                  const utils::optional< utils::fs::path >&);
+test_result run_test_case(const test_case&, const user_files::config&,
+                          const utils::optional< utils::fs::path >&,
+                          const utils::optional< utils::fs::path >&);
 
 
 }  // namespace atf_iface

@@ -37,8 +37,8 @@
 #define ENGINE_DRIVERS_DEBUG_TEST_HPP
 
 #include "engine/filters.hpp"
-#include "engine/results.hpp"
 #include "engine/test_case.hpp"
+#include "engine/test_result.hpp"
 #include "engine/user_files/config.hpp"
 #include "utils/fs/path.hpp"
 
@@ -53,14 +53,14 @@ struct result {
     test_case_id test_id;
 
     /// The result of the test case.
-    results::result_ptr test_result;
+    engine::test_result test_result;
 
     /// Initializer for the tuple's fields.
     ///
     /// \param test_id_ The identifier of the test case.
     /// \param test_result_ The result of the test case.
     result(const test_case_id& test_id_,
-           results::result_ptr& test_result_) :
+           const engine::test_result& test_result_) :
         test_id(test_id_),
         test_result(test_result_)
     {

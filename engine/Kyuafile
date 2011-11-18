@@ -7,9 +7,9 @@ atf_test_program{name="context_test"}
 atf_test_program{name="exceptions_test"}
 atf_test_program{name="filters_test"}
 atf_test_program{name="isolation_test"}
-atf_test_program{name="results_test"}
 atf_test_program{name="test_case_test"}
 atf_test_program{name="test_program_test"}
+atf_test_program{name="test_result_test"}
 
 include("atf_iface/Kyuafile")
 include("drivers/Kyuafile")

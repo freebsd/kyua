@@ -37,13 +37,13 @@
 #if !defined(ENGINE_DRIVERS_SCAN_ACTION_HPP)
 #define ENGINE_DRIVERS_SCAN_ACTION_HPP
 
-#include "engine/results.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"
 
 namespace engine {
 
 class action;
+class test_result;
 
 namespace drivers {
 namespace scan_action {
@@ -68,7 +68,7 @@ public:
     /// \param result The result of the test case.
     virtual void got_result(const utils::fs::path& binary_path,
                             const std::string& test_case_name,
-                            const results::result_ptr result) = 0;
+                            const engine::test_result& result) = 0;
 };
 
 

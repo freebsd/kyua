@@ -34,13 +34,13 @@ extern "C" {
 
 #include <cerrno>
 #include <fstream>
-#include <iostream>
 
 #include <atf-c++.hpp>
 
 #include "engine/exceptions.hpp"
 #include "engine/plain_iface/test_case.hpp"
 #include "engine/plain_iface/test_program.hpp"
+#include "engine/test_result.hpp"
 #include "engine/user_files/config.hpp"
 #include "utils/env.hpp"
 #include "utils/fs/operations.hpp"
@@ -54,7 +54,6 @@ namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace plain_iface = engine::plain_iface;
 namespace process = utils::process;
-namespace results = engine::results;
 namespace user_files = engine::user_files;
 
 using utils::none;
@@ -128,7 +127,7 @@ public:
     ///
     /// \param config The runtime engine configuration, if different to the
     /// defaults.
-    results::result_ptr
+    engine::test_result
     run(const user_files::config& config = user_files::config::defaults()) const
     {
         const plain_iface::test_program test_program(_binary_path, _root,
@@ -137,59 +136,6 @@ public:
         return test_case.run(config);
     }
 };
-
-
-/// Compares two test results and fails the test case if they differ.
-///
-/// TODO(jmmv): This is a verbatim duplicate from results_test.cpp.  Move to a
-/// separate test_utils module, just as was done in the utils/ subdirectory.
-///
-/// \param expected The expected result.
-/// \param actual A pointer to the actual result.
-template< class Result >
-static void
-compare_results(const Result& expected, const results::base_result* actual)
-{
-    std::cout << F("Result is of type '%s'\n") % typeid(*actual).name();
-
-    if (typeid(*actual) == typeid(results::broken)) {
-        const results::broken* broken = dynamic_cast< const results::broken* >(
-            actual);
-        ATF_FAIL(F("Got unexpected broken result: %s") % broken->reason());
-    } else {
-        if (typeid(*actual) != typeid(expected)) {
-            ATF_FAIL(F("Result %s does not match type %s") %
-                     typeid(*actual).name() % typeid(expected).name());
-        } else {
-            const Result* actual_typed = dynamic_cast< const Result* >(actual);
-            ATF_REQUIRE(expected == *actual_typed);
-        }
-    }
-}
-
-
-/// Validates a broken test case and fails the test case if invalid.
-///
-/// TODO(jmmv): This is a verbatim duplicate from results_test.cpp.  Move to a
-/// separate test_utils module, just as was done in the utils/ subdirectory.
-///
-/// \param reason_regexp The reason to match against the broken reason.
-/// \param actual A pointer to the actual result.
-static void
-validate_broken(const char* reason_regexp, const results::base_result* actual)
-{
-    std::cout << F("Result is of type '%s'\n") % typeid(*actual).name();
-
-    if (typeid(*actual) == typeid(results::broken)) {
-        const results::broken* broken = dynamic_cast< const results::broken* >(
-            actual);
-        std::cout << F("Got reason: %s\n") % broken->reason();
-        ATF_REQUIRE_MATCH(reason_regexp, broken->reason());
-    } else {
-        ATF_FAIL(F("Expected broken result but got %s") %
-                 typeid(*actual).name());
-    }
-}
 
 
 }  // anonymous namespace
@@ -236,24 +182,26 @@ ATF_TEST_CASE_BODY(all_properties__all)
 ATF_TEST_CASE_WITHOUT_HEAD(run__result_pass);
 ATF_TEST_CASE_BODY(run__result_pass)
 {
-    const results::result_ptr result = plain_helper(this, "pass").run();
-    compare_results(results::passed(), result.get());
+    ATF_REQUIRE(engine::test_result(engine::test_result::passed) ==
+                plain_helper(this, "pass").run());
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(run__result_fail);
 ATF_TEST_CASE_BODY(run__result_fail)
 {
-    const results::result_ptr result = plain_helper(this, "fail").run();
-    compare_results(results::failed("Exited with code 8"), result.get());
+    ATF_REQUIRE(engine::test_result(engine::test_result::failed,
+                                    "Exited with code 8") ==
+                plain_helper(this, "fail").run());
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(run__result_crash);
 ATF_TEST_CASE_BODY(run__result_crash)
 {
-    const results::result_ptr result = plain_helper(this, "crash").run();
-    validate_broken("Received signal 6", result.get());
+    const engine::test_result result = plain_helper(this, "crash").run();
+    ATF_REQUIRE(engine::test_result::broken == result.type());
+    ATF_REQUIRE_MATCH(F("Received signal %d") % SIGABRT, result.reason());
 }
 
 
@@ -262,8 +210,8 @@ ATF_TEST_CASE_BODY(run__current_directory)
 {
     plain_helper helper(this, "pass");
     helper.move("program", ".");
-    results::result_ptr result = helper.run();
-    compare_results(results::passed(), result.get());
+    ATF_REQUIRE(engine::test_result(engine::test_result::passed) ==
+                helper.run());
 }
 
 
@@ -274,8 +222,8 @@ ATF_TEST_CASE_BODY(run__subdirectory)
     ATF_REQUIRE(::mkdir("dir1", 0755) != -1);
     ATF_REQUIRE(::mkdir("dir1/dir2", 0755) != -1);
     helper.move("dir2/program", "dir1");
-    results::result_ptr result = helper.run();
-    compare_results(results::passed(), result.get());
+    ATF_REQUIRE(engine::test_result(engine::test_result::passed) ==
+                helper.run());
 }
 
 
@@ -284,8 +232,8 @@ ATF_TEST_CASE_BODY(run__kill_children)
 {
     plain_helper helper(this, "spawn_blocking_child");
     helper.set("CONTROL_DIR", fs::current_path());
-    const results::result_ptr result = helper.run();
-    compare_results(results::passed(), result.get());
+    ATF_REQUIRE(engine::test_result(engine::test_result::passed) ==
+                helper.run());
 
     if (!fs::exists(fs::path("pid")))
         fail("The pid file was not created");
@@ -313,8 +261,8 @@ ATF_TEST_CASE_BODY(run__isolation)
     // Simple checks to make sure that isolate_process has been called.
     utils::setenv("HOME", "foobar");
     utils::setenv("LANG", "C");
-    const results::result_ptr result = helper.run();
-    compare_results(results::passed(), result.get());
+    ATF_REQUIRE(engine::test_result(engine::test_result::passed) ==
+                helper.run());
 }
 
 
@@ -324,8 +272,9 @@ ATF_TEST_CASE_BODY(run__timeout)
     plain_helper helper(this, "timeout",
                         utils::make_optional(datetime::delta(1, 0)));
     helper.set("CONTROL_DIR", fs::current_path());
-    const results::result_ptr result = helper.run();
-    validate_broken("Test case timed out", result.get());
+    ATF_REQUIRE(engine::test_result(engine::test_result::broken,
+                                    "Test case timed out") ==
+                helper.run());
 
     if (fs::exists(fs::path("cookie")))
         fail("It seems that the test case was not killed after it timed out");
@@ -339,8 +288,9 @@ ATF_TEST_CASE_BODY(run__missing_test_program)
     ATF_REQUIRE(::mkdir("dir", 0755) != -1);
     helper.move("test_case_helpers", "dir");
     ATF_REQUIRE(::unlink("dir/test_case_helpers") != -1);
-    const results::result_ptr result = helper.run();
-    validate_broken("Failed to execute", result.get());
+    const engine::test_result result = helper.run();
+    ATF_REQUIRE(engine::test_result::broken == result.type());
+    ATF_REQUIRE_MATCH("Failed to execute", result.reason());
 }
 
 

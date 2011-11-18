@@ -30,6 +30,7 @@
 
 #include "cli/common.hpp"
 #include "engine/filters.hpp"
+#include "engine/test_result.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/env.hpp"
@@ -178,4 +179,31 @@ cli::report_unused_filters(const std::set< engine::test_filter >& unused,
     }
 
     return !unused.empty();
+}
+
+
+/// Formats a test case result for user presentation.
+///
+/// \param result The result to format.
+///
+/// \return A user-friendly representation of the result.
+std::string
+cli::format_result(const engine::test_result& result)
+{
+    std::string text;
+
+    using engine::test_result;
+    switch (result.type()) {
+    case test_result::broken: text = "broken"; break;
+    case test_result::expected_failure: text = "expected_failure"; break;
+    case test_result::failed: text = "failed"; break;
+    case test_result::passed: text = "passed"; break;
+    case test_result::skipped: text = "skipped"; break;
+    }
+    INV(!text.empty());
+
+    if (!result.reason().empty())
+        text += ": " + result.reason();
+
+    return text;
 }

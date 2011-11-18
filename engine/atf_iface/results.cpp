@@ -34,7 +34,7 @@
 #include "engine/atf_iface/results.hpp"
 #include "engine/atf_iface/test_case.hpp"
 #include "engine/exceptions.hpp"
-#include "engine/results.ipp"
+#include "engine/test_result.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
@@ -181,8 +181,8 @@ parse_int(const std::string& str)
 /// \param status The result status name.
 /// \param rest The rest of the line after the status name.
 ///
-/// \return An object representing the test result; results::broken if the
-/// parsing failed.
+/// \return The parsed test result if the data is valid, or a broken result if
+/// the parsing failed.
 ///
 /// \pre status must be one of "expected_exit" or "expected_signal".
 static atf_iface::detail::raw_result
@@ -286,16 +286,15 @@ atf_iface::detail::raw_result::raw_result(const types type_,
 
 /// Parses an input stream to extract a test result.
 ///
-/// If the parsing fails for any reason, the test result becomes results::broken
-/// and it contains the reason for the parsing failure.  Test cases that report
-/// results in an inconsistent state cannot be trusted (e.g. the test program
-/// code may have a bug), and thus why they are reported as broken instead of
-/// just failed (which is a legitimate result for a test case).
+/// If the parsing fails for any reason, the test result is 'broken' and it
+/// contains the reason for the parsing failure.  Test cases that report results
+/// in an inconsistent state cannot be trusted (e.g. the test program code may
+/// have a bug), and thus why they are reported as broken instead of just failed
+/// (which is a legitimate result for a test case).
 ///
 /// \param input The stream to read from.
 ///
-/// \return A dynamically-allocated instance of a class derived from
-/// results::base_result representing the result of the test case.
+/// \return A generic representation of the result of the test case.
 ///
 /// \throw format_error If the input is invalid.
 atf_iface::detail::raw_result
@@ -522,36 +521,28 @@ atf_iface::detail::raw_result::apply(const optional< process::status >& status)
 /// Converts an internal result to the interface-agnostic representation.
 ///
 /// \return A generic result instance representing this result.
-engine::results::result_ptr
+engine::test_result
 atf_iface::detail::raw_result::externalize(void) const
 {
     switch (_type) {
     case raw_result::broken:
-        return make_result(results::broken(_reason.get()));
+        return test_result(test_result::broken, _reason.get());
 
     case raw_result::expected_death:
-        return make_result(results::expected_failure(_reason.get()));
-
     case raw_result::expected_exit:
-        return make_result(results::expected_failure(_reason.get()));
-
     case raw_result::expected_failure:
-        return make_result(results::expected_failure(_reason.get()));
-
     case raw_result::expected_signal:
-        return make_result(results::expected_failure(_reason.get()));
-
     case raw_result::expected_timeout:
-        return make_result(results::expected_failure(_reason.get()));
+        return test_result(test_result::expected_failure, _reason.get());
 
     case raw_result::failed:
-        return make_result(results::failed(_reason.get()));
+        return test_result(test_result::failed, _reason.get());
 
     case raw_result::passed:
-        return make_result(results::passed());
+        return test_result(test_result::passed);
 
     case raw_result::skipped:
-        return make_result(results::skipped(_reason.get()));
+        return test_result(test_result::skipped, _reason.get());
 
     default:
         UNREACHABLE;
@@ -585,7 +576,7 @@ atf_iface::detail::raw_result::operator==(const raw_result& other) const
 ///     the body of the test.  None if the cleanup timed out.
 /// \param result_file The path to the result file that the test case body is
 ///     supposed to have created.
-engine::results::result_ptr
+engine::test_result
 atf_iface::calculate_result(const optional< process::status >& body_status,
                             const optional< process::status >& cleanup_status,
                             const fs::path& results_file)

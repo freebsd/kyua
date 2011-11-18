@@ -44,7 +44,7 @@ namespace plain_iface {
 /// Representation of a plain test case.
 class test_case : public base_test_case {
     properties_map get_all_properties(void) const;
-    virtual results::result_ptr execute(
+    virtual test_result execute(
         const user_files::config&,
         const utils::optional< utils::fs::path >&,
         const utils::optional< utils::fs::path >&) const;

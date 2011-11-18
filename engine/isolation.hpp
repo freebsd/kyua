@@ -37,7 +37,6 @@
 #if !defined(ENGINE_ISOLATION_HPP)
 #define ENGINE_ISOLATION_HPP
 
-#include "engine/results.hpp"
 #include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"
@@ -57,6 +56,9 @@ void interrupt_handler(const int);
 }  // namespace detail
 
 
+class test_result;
+
+
 void check_interrupt(void);
 
 template< class Hook >
@@ -67,7 +69,7 @@ utils::optional< utils::process::status > fork_and_wait(
 void isolate_process(const utils::fs::path&);
 
 template< class Hook >
-results::result_ptr protected_run(Hook);
+test_result protected_run(Hook);
 
 
 }  // namespace engine

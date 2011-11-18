@@ -29,6 +29,7 @@
 #include "engine/action.hpp"
 #include "engine/drivers/scan_action.hpp"
 #include "engine/exceptions.hpp"
+#include "engine/test_result.hpp"
 #include "store/backend.hpp"
 #include "store/exceptions.hpp"
 #include "store/transaction.hpp"

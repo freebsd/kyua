@@ -37,7 +37,7 @@ extern "C" {
 #include "engine/isolation.ipp"
 #include "engine/plain_iface/test_case.hpp"
 #include "engine/plain_iface/test_program.hpp"
-#include "engine/results.hpp"
+#include "engine/test_result.hpp"
 #include "utils/defs.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/optional.ipp"
@@ -46,7 +46,6 @@ namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace plain_iface = engine::plain_iface;
 namespace process = utils::process;
-namespace results = engine::results;
 
 using utils::optional;
 
@@ -137,25 +136,25 @@ public:
 /// \param maybe_status The exit status of the program, or none if it timed out.
 ///
 /// \return A test case result.
-static results::result_ptr
+static engine::test_result
 calculate_result(const optional< process::status >& maybe_status)
 {
+    using engine::test_result;
+
     if (!maybe_status)
-        return results::result_ptr(new results::broken("Test case timed out"));
+        return test_result(test_result::broken, "Test case timed out");
     const process::status& status = maybe_status.get();
 
     if (status.exited()) {
         if (status.exitstatus() == EXIT_SUCCESS)
-            return results::result_ptr(new results::passed());
+            return test_result(test_result::passed);
         else if (status.exitstatus() == exec_failure_code)
-            return results::result_ptr(
-                new results::broken("Failed to execute test program"));
+            return test_result(test_result::broken,
+                               "Failed to execute test program");
         else
-            return results::result_ptr(
-                new results::failed(format_status(status)));
+            return test_result(test_result::failed, format_status(status));
     } else {
-        return results::result_ptr(new results::broken(
-                                       format_status(status)));
+        return test_result(test_result::broken, format_status(status));
     }
 }
 
@@ -187,7 +186,7 @@ public:
     /// \return The result of the execution of the test case.
     ///
     /// \throw interrupted_error If the execution has been interrupted by the user.
-    results::result_ptr
+    engine::test_result
     operator()(const fs::path& workdir) const
     {
         const fs::path rundir(workdir / "run");
@@ -258,7 +257,7 @@ plain_iface::test_case::get_all_properties(void) const
 /// \param unused_config The run-time configuration for the test case.
 ///
 /// \return The result of the execution.
-engine::results::result_ptr
+engine::test_result
 plain_iface::test_case::execute(
     const user_files::config& UTILS_UNUSED_PARAM(config),
     const optional< fs::path >& stdout_path,
@@ -266,16 +265,13 @@ plain_iface::test_case::execute(
 {
     LI(F("Processing test case '%s'") % identifier().str());
 
-    results::result_ptr result;
     try {
-        result = engine::protected_run(run_test_case_safe(*this, stdout_path,
-                                                          stderr_path));
+        return engine::protected_run(run_test_case_safe(*this, stdout_path,
+                                                        stderr_path));
     } catch (const interrupted_error& e) {
         throw e;
     } catch (const std::exception& e) {
-        result = results::result_ptr(new results::broken(F(
-            "The test caused an error in the runtime system: %s") % e.what()));
+        return test_result(test_result::broken, F(
+            "The test caused an error in the runtime system: %s") % e.what());
     }
-    INV(result.get() != NULL);
-    return result;
 }

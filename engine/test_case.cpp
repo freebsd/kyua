@@ -28,6 +28,7 @@
 
 #include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
+#include "engine/test_result.hpp"
 #include "engine/user_files/config.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/optional.ipp"
@@ -193,7 +194,7 @@ engine::base_test_case::all_properties(void) const
 ///     For interactive debugging, '/dev/stderr' is probably a reasonable value.
 ///
 /// \return The result of the execution of the test case.
-engine::results::result_ptr
+engine::test_result
 engine::base_test_case::debug(const user_files::config& config,
                               const fs::path& stdout_path,
                               const fs::path& stderr_path) const
@@ -210,7 +211,7 @@ engine::base_test_case::debug(const user_files::config& config,
 ///     case.
 ///
 /// \return The result of the execution of the test case.
-engine::results::result_ptr
+engine::test_result
 engine::base_test_case::run(const user_files::config& config) const
 {
     return execute(config, none, none);

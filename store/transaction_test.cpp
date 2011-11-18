@@ -36,7 +36,7 @@
 #include "engine/context.hpp"
 #include "engine/plain_iface/test_case.hpp"
 #include "engine/plain_iface/test_program.hpp"
-#include "engine/results.hpp"
+#include "engine/test_result.hpp"
 #include "store/backend.hpp"
 #include "store/exceptions.hpp"
 #include "store/transaction.hpp"
@@ -50,7 +50,6 @@
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace plain_iface = engine::plain_iface;
-namespace results = engine::results;
 namespace sqlite = utils::sqlite;
 
 using utils::none;
@@ -67,15 +66,14 @@ namespace {
 /// \param exp_reason The reason to expect in the database.  This is separate
 ///     from the result parameter so that we can handle passed() here as well.
 ///     Just provide NULL in this case.
-template< class Result >
 static void
-do_put_result_ok_test(const Result& result, const char* result_type,
-                      const char* exp_reason)
+do_put_result_ok_test(const engine::test_result& result,
+                      const char* result_type, const char* exp_reason)
 {
     store::backend backend = store::backend::open_rw(fs::path("test.db"));
     backend.database().exec("PRAGMA foreign_keys = OFF");
     store::transaction tx = backend.start();
-    tx.put_result(results::result_ptr(new Result(result)), 312);
+    tx.put_result(result, 312);
     tx.commit();
 
     sqlite::statement stmt = backend.database().create_statement(
@@ -285,7 +283,7 @@ ATF_TEST_CASE_BODY(get_action_results__many)
         const plain_iface::test_program test_program(
             fs::path("a/prog1"), fs::path("/the/root"), "suite1", none);
         const plain_iface::test_case test_case(test_program);
-        const results::result_ptr result(new results::passed());
+        const engine::test_result result(engine::test_result::passed);
 
         const int64_t tp_id = tx.put_test_program(test_program, action_id);
         const int64_t tc_id = tx.put_test_case(test_case, tp_id);
@@ -299,7 +297,8 @@ ATF_TEST_CASE_BODY(get_action_results__many)
         const plain_iface::test_program test_program(
             fs::path("b/prog2"), fs::path("/the/root"), "suite2", none);
         const plain_iface::test_case test_case(test_program);
-        const results::result_ptr result(new results::failed("Some text"));
+        const engine::test_result result(engine::test_result::failed,
+                                         "Some text");
 
         const int64_t tp_id = tx.put_test_program(test_program, action_id);
         const int64_t tc_id = tx.put_test_case(test_case, tp_id);
@@ -313,13 +312,13 @@ ATF_TEST_CASE_BODY(get_action_results__many)
     ATF_REQUIRE(iter);
     ATF_REQUIRE_EQ(fs::path("/the/root/a/prog1"), iter.binary_path());
     ATF_REQUIRE_EQ("main", iter.test_case_name());
-    ATF_REQUIRE(typeid(results::passed) == typeid(*iter.result()));
+    ATF_REQUIRE(engine::test_result(engine::test_result::passed) ==
+                iter.result());
     ATF_REQUIRE(++iter);
     ATF_REQUIRE_EQ(fs::path("/the/root/b/prog2"), iter.binary_path());
     ATF_REQUIRE_EQ("main", iter.test_case_name());
-    ATF_REQUIRE(typeid(results::failed) == typeid(*iter.result()));
-    ATF_REQUIRE(results::failed("Some text") ==
-                *dynamic_cast< const results::failed* >(iter.result().get()));
+    ATF_REQUIRE(engine::test_result(engine::test_result::failed, "Some text") ==
+                iter.result());
     ATF_REQUIRE(!++iter);
 }
 
@@ -643,7 +642,8 @@ ATF_TEST_CASE_HEAD(put_result__ok__broken)
 }
 ATF_TEST_CASE_BODY(put_result__ok__broken)
 {
-    do_put_result_ok_test(results::broken("a b cd"), "broken", "a b cd");
+    const engine::test_result result(engine::test_result::broken, "a b cd");
+    do_put_result_ok_test(result, "broken", "a b cd");
 }
 
 
@@ -654,8 +654,9 @@ ATF_TEST_CASE_HEAD(put_result__ok__expected_failure)
 }
 ATF_TEST_CASE_BODY(put_result__ok__expected_failure)
 {
-    do_put_result_ok_test(results::expected_failure("a b cd"),
-                          "expected_failure", "a b cd");
+    const engine::test_result result(engine::test_result::expected_failure,
+                                     "a b cd");
+    do_put_result_ok_test(result, "expected_failure", "a b cd");
 }
 
 
@@ -666,7 +667,8 @@ ATF_TEST_CASE_HEAD(put_result__ok__failed)
 }
 ATF_TEST_CASE_BODY(put_result__ok__failed)
 {
-    do_put_result_ok_test(results::failed("a b cd"), "failed", "a b cd");
+    const engine::test_result result(engine::test_result::failed, "a b cd");
+    do_put_result_ok_test(result, "failed", "a b cd");
 }
 
 
@@ -677,7 +679,8 @@ ATF_TEST_CASE_HEAD(put_result__ok__passed)
 }
 ATF_TEST_CASE_BODY(put_result__ok__passed)
 {
-    do_put_result_ok_test(results::passed(), "passed", NULL);
+    const engine::test_result result(engine::test_result::passed);
+    do_put_result_ok_test(result, "passed", NULL);
 }
 
 
@@ -688,7 +691,8 @@ ATF_TEST_CASE_HEAD(put_result__ok__skipped)
 }
 ATF_TEST_CASE_BODY(put_result__ok__skipped)
 {
-    do_put_result_ok_test(results::skipped("a b cd"), "skipped", "a b cd");
+    const engine::test_result result(engine::test_result::skipped, "a b cd");
+    do_put_result_ok_test(result, "skipped", "a b cd");
 }
 
 
@@ -699,7 +703,7 @@ ATF_TEST_CASE_HEAD(put_result__fail)
 }
 ATF_TEST_CASE_BODY(put_result__fail)
 {
-    const results::result_ptr result(new results::broken("foo"));
+    const engine::test_result result(engine::test_result::broken, "foo");
 
     store::backend backend = store::backend::open_rw(fs::path("test.db"));
     store::transaction tx = backend.start();

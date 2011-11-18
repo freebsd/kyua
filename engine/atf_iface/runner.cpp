@@ -39,7 +39,6 @@ extern "C" {
 #include "engine/atf_iface/test_program.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/isolation.ipp"
-#include "engine/results.ipp"
 #include "engine/user_files/config.hpp"
 #include "utils/env.hpp"
 #include "utils/fs/operations.hpp"
@@ -50,7 +49,6 @@ namespace atf_iface = engine::atf_iface;
 namespace fs = utils::fs;
 namespace passwd = utils::passwd;
 namespace process = utils::process;
-namespace results = engine::results;
 namespace user_files = engine::user_files;
 
 using utils::optional;
@@ -276,7 +274,7 @@ public:
     /// \return The result of the execution of the test case.
     ///
     /// \throw interrupted_error If the execution has been interrupted by the user.
-    results::result_ptr
+    engine::test_result
     operator()(const fs::path& workdir) const
     {
         const fs::path rundir(workdir / "run");
@@ -340,7 +338,7 @@ public:
 /// \return The result of the test case execution.
 ///
 /// \throw interrupted_error If the execution has been interrupted by the user.
-results::result_ptr
+engine::test_result
 atf_iface::run_test_case(const atf_iface::test_case& test_case,
                          const user_files::config& config,
                          const optional< fs::path >& stdout_path,
@@ -348,20 +346,18 @@ atf_iface::run_test_case(const atf_iface::test_case& test_case,
 {
     LI(F("Processing test case '%s'") % test_case.identifier().str());
 
-    results::result_ptr result;
     try {
         const std::string skip_reason = test_case.check_requirements(config);
         if (skip_reason.empty())
-            result = engine::protected_run(run_test_case_safe(
+            return engine::protected_run(run_test_case_safe(
                 test_case, config, stdout_path, stderr_path));
         else
-            result = results::make_result(results::skipped(skip_reason));
+            return engine::test_result(engine::test_result::skipped,
+                                       skip_reason);
     } catch (const interrupted_error& e) {
         throw e;
     } catch (const std::exception& e) {
-        result = results::make_result(results::broken(F(
-            "The test caused an error in the runtime system: %s") % e.what()));
+        return engine::test_result(engine::test_result::broken,
+            F("The test caused an error in the runtime system: %s") % e.what());
     }
-    INV(result.get() != NULL);
-    return result;
 }

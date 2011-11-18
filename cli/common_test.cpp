@@ -34,6 +34,7 @@
 #include "engine/exceptions.hpp"
 #include "engine/filters.hpp"
 #include "engine/test_case.hpp"
+#include "engine/test_result.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/globals.hpp"
 #include "utils/cmdline/parser.ipp"
@@ -260,6 +261,30 @@ ATF_TEST_CASE_BODY(report_unused_filters__some)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(format_result__no_reason);
+ATF_TEST_CASE_BODY(format_result__no_reason)
+{
+    ATF_REQUIRE_EQ("passed", cli::format_result(
+        engine::test_result(engine::test_result::passed)));
+    ATF_REQUIRE_EQ("failed", cli::format_result(
+        engine::test_result(engine::test_result::failed)));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(format_result__with_reason);
+ATF_TEST_CASE_BODY(format_result__with_reason)
+{
+    ATF_REQUIRE_EQ("broken: Something", cli::format_result(
+        engine::test_result(engine::test_result::broken, "Something")));
+    ATF_REQUIRE_EQ("expected_failure: A B C", cli::format_result(
+        engine::test_result(engine::test_result::expected_failure, "A B C")));
+    ATF_REQUIRE_EQ("failed: More text", cli::format_result(
+        engine::test_result(engine::test_result::failed, "More text")));
+    ATF_REQUIRE_EQ("skipped: Bye", cli::format_result(
+        engine::test_result(engine::test_result::skipped, "Bye")));
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, get_home__ok);
@@ -281,4 +306,7 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, report_unused_filters__none);
     ATF_ADD_TEST_CASE(tcs, report_unused_filters__some);
+
+    ATF_ADD_TEST_CASE(tcs, format_result__no_reason);
+    ATF_ADD_TEST_CASE(tcs, format_result__with_reason);
 }

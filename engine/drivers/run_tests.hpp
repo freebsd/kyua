@@ -43,11 +43,11 @@ extern "C" {
 #include <set>
 
 #include "engine/filters.hpp"
-#include "engine/results.hpp"
 #include "engine/user_files/config.hpp"
 #include "utils/fs/path.hpp"
 
 namespace engine {
+class test_result;
 namespace drivers {
 namespace run_tests {
 
@@ -62,7 +62,7 @@ public:
     /// \param id The identifier of the test case.
     /// \param result The result of the execution of the test case.
     virtual void got_result(const engine::test_case_id& id,
-                            const results::result_ptr& result) = 0;
+                            const engine::test_result& result) = 0;
 };
 
 

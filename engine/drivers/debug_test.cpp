@@ -30,14 +30,13 @@
 
 #include "engine/drivers/debug_test.hpp"
 #include "engine/filters.hpp"
-#include "engine/results.ipp"
 #include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
+#include "engine/test_result.hpp"
 #include "engine/user_files/kyuafile.hpp"
 #include "utils/format/macros.hpp"
 
 namespace fs = utils::fs;
-namespace results = engine::results;
 namespace debug_test = engine::drivers::debug_test;
 namespace user_files = engine::user_files;
 
@@ -113,7 +112,7 @@ debug_test::drive(const fs::path& kyuafile_path, const test_filter& filter,
     const user_files::kyuafile kyuafile = user_files::kyuafile::load(
         kyuafile_path);
     const engine::test_case_ptr test_case = find_test_case(filter, kyuafile);
-    results::result_ptr test_result = test_case->debug(
+    const engine::test_result test_result = test_case->debug(
         config, stdout_path, stderr_path);
     return result(test_case->identifier(), test_result);
 }

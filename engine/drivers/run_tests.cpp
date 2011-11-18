@@ -30,8 +30,8 @@
 #include "engine/context.hpp"
 #include "engine/drivers/run_tests.hpp"
 #include "engine/filters.hpp"
-#include "engine/results.ipp"
 #include "engine/test_program.hpp"
+#include "engine/test_result.hpp"
 #include "engine/user_files/kyuafile.hpp"
 #include "store/backend.hpp"
 #include "store/transaction.hpp"
@@ -39,7 +39,6 @@
 #include "utils/logging/macros.hpp"
 
 namespace fs = utils::fs;
-namespace results = engine::results;
 namespace run_tests = engine::drivers::run_tests;
 namespace user_files = engine::user_files;
 
@@ -74,14 +73,13 @@ run_test_program(const engine::base_test_program& test_program,
     try {
         test_cases = test_program.test_cases();
     } catch (const std::exception& e) {
-        const results::broken broken(F("Failed to load list of test cases: "
-                                       "%s") % e.what());
+        const engine::test_result broken(engine::test_result::broken,
+            F("Failed to load list of test cases: %s") % e.what());
         // TODO(jmmv): Maybe generalize this in test_case_id somehow?
         const engine::test_case_id program_id(
             test_program.relative_path(), "__test_program__");
-        const results::result_ptr result = results::make_result(broken);
         // TODO(jmmv): Put the test case result.
-        hooks.got_result(program_id, result);
+        hooks.got_result(program_id, broken);
     }
 
     for (engine::test_cases_vector::const_iterator iter = test_cases.begin();
@@ -93,7 +91,7 @@ run_test_program(const engine::base_test_program& test_program,
 
         const int64_t test_case_id = tx.put_test_case(*test_case,
                                                       test_program_id);
-        const results::result_ptr result = test_case->run(config);
+        const engine::test_result result = test_case->run(config);
         tx.put_result(result, test_case_id);
         hooks.got_result(test_case->identifier(), result);
     }

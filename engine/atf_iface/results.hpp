@@ -34,13 +34,13 @@
 
 #include <istream>
 
-#include "engine/results.hpp"
 #include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"
 #include "utils/process/status.hpp"
 
 namespace engine {
+class test_result;
 namespace atf_iface {
 
 
@@ -87,7 +87,7 @@ public:
 
     bool good(void) const;
     raw_result apply(const utils::optional< utils::process::status >&) const;
-    results::result_ptr externalize(void) const;
+    test_result externalize(void) const;
 
     bool operator==(const raw_result&) const;
 };
@@ -96,7 +96,7 @@ public:
 }  // namespace detail
 
 
-results::result_ptr calculate_result(
+test_result calculate_result(
     const utils::optional< utils::process::status >&,
     const utils::optional< utils::process::status >&,
     const utils::fs::path&);

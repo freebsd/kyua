@@ -36,8 +36,8 @@
 #include "engine/atf_iface/runner.hpp"
 #include "engine/atf_iface/test_case.hpp"
 #include "engine/exceptions.hpp"
-#include "engine/results.hpp"
 #include "engine/test_program.hpp"
+#include "engine/test_result.hpp"
 #include "engine/user_files/config.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/operations.hpp"
@@ -687,7 +687,7 @@ atf_iface::test_case::check_requirements(const user_files::config& config) const
 /// \param config The run-time configuration for the test case.
 ///
 /// \return The result of the execution.
-engine::results::result_ptr
+engine::test_result
 atf_iface::test_case::execute(const user_files::config& config,
                               const optional< fs::path >& stdout_path,
                               const optional< fs::path >& stderr_path) const

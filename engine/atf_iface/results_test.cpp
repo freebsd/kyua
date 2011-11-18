@@ -32,10 +32,8 @@ extern "C" {
 
 #include <cstdlib>
 #include <fstream>
-#include <iostream>
 #include <sstream>
 #include <stdexcept>
-#include <typeinfo>
 
 #include <atf-c++.hpp>
 
@@ -43,7 +41,7 @@ extern "C" {
 #include "engine/atf_iface/test_case.hpp"
 #include "engine/atf_iface/test_program.hpp"
 #include "engine/exceptions.hpp"
-#include "engine/results.ipp"
+#include "engine/test_result.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/process/status.hpp"
@@ -53,7 +51,6 @@ namespace atf_iface = engine::atf_iface;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace process = utils::process;
-namespace results = engine::results;
 
 using atf_iface::detail::raw_result;
 using utils::none;
@@ -61,26 +58,6 @@ using utils::optional;
 
 
 namespace {
-
-
-/// Compares two test results and fails the test case if they differ.
-///
-/// \param expected The expected result.
-/// \param actual A pointer to the actual result.
-template< class Result >
-static void
-compare_results(const Result& expected, const results::base_result* actual)
-{
-    std::cout << F("Result is of type '%s'\n") % typeid(*actual).name();
-
-    if (typeid(*actual) != typeid(expected)) {
-        ATF_FAIL(F("Result %s does not match type %s") %
-                 typeid(*actual).name() % typeid(expected).name());
-    } else {
-        const Result* actual_typed = dynamic_cast< const Result* >(actual);
-        ATF_REQUIRE(expected == *actual_typed);
-    }
-}
 
 
 /// Performs a test for results::parse() that should succeed.
@@ -117,27 +94,6 @@ parse_ok_test(const raw_result::types& exp_type,
     { \
         parse_ok_test(exp_type, exp_argument, exp_reason, input); \
     }
-
-
-/// Validates a broken test case and fails the test case if invalid.
-///
-/// \param reason_regexp The reason to match against the broken reason.
-/// \param actual A pointer to the actual result.
-static void
-validate_broken(const char* reason_regexp, const results::base_result* actual)
-{
-    std::cout << F("Result is of type '%s'\n") % typeid(*actual).name();
-
-    if (typeid(*actual) == typeid(results::broken)) {
-        const results::broken* broken = dynamic_cast< const results::broken* >(
-            actual);
-        std::cout << F("Got reason: %s\n") % broken->reason();
-        ATF_REQUIRE_MATCH(reason_regexp, broken->reason());
-    } else {
-        ATF_FAIL(F("Expected broken result but got %s") %
-                 typeid(*actual).name());
-    }
-}
 
 
 /// Performs a test for results::parse() that should fail.
@@ -567,9 +523,9 @@ ATF_TEST_CASE_WITHOUT_HEAD(raw_result__externalize__broken);
 ATF_TEST_CASE_BODY(raw_result__externalize__broken)
 {
     const raw_result raw(raw_result::broken, "The reason");
-    const results::result_ptr actual = raw.externalize();
-    ATF_REQUIRE(typeid(results::broken) == typeid(*actual));
-    ATF_REQUIRE_EQ("broken: The reason", actual->format());
+    const engine::test_result expected(engine::test_result::broken,
+                                       "The reason");
+    ATF_REQUIRE(expected == raw.externalize());
 }
 
 
@@ -577,9 +533,9 @@ ATF_TEST_CASE_WITHOUT_HEAD(raw_result__externalize__expected_death);
 ATF_TEST_CASE_BODY(raw_result__externalize__expected_death)
 {
     const raw_result raw(raw_result::expected_death, "The reason");
-    const results::result_ptr actual = raw.externalize();
-    ATF_REQUIRE(typeid(results::expected_failure) == typeid(*actual));
-    ATF_REQUIRE_EQ("expected_failure: The reason", actual->format());
+    const engine::test_result expected(engine::test_result::expected_failure,
+                                       "The reason");
+    ATF_REQUIRE(expected == raw.externalize());
 }
 
 
@@ -587,9 +543,9 @@ ATF_TEST_CASE_WITHOUT_HEAD(raw_result__externalize__expected_exit);
 ATF_TEST_CASE_BODY(raw_result__externalize__expected_exit)
 {
     const raw_result raw(raw_result::expected_exit, "The reason");
-    const results::result_ptr actual = raw.externalize();
-    ATF_REQUIRE(typeid(results::expected_failure) == typeid(*actual));
-    ATF_REQUIRE_EQ("expected_failure: The reason", actual->format());
+    const engine::test_result expected(engine::test_result::expected_failure,
+                                       "The reason");
+    ATF_REQUIRE(expected == raw.externalize());
 }
 
 
@@ -597,9 +553,9 @@ ATF_TEST_CASE_WITHOUT_HEAD(raw_result__externalize__expected_failure);
 ATF_TEST_CASE_BODY(raw_result__externalize__expected_failure)
 {
     const raw_result raw(raw_result::expected_failure, "The reason");
-    const results::result_ptr actual = raw.externalize();
-    ATF_REQUIRE(typeid(results::expected_failure) == typeid(*actual));
-    ATF_REQUIRE_EQ("expected_failure: The reason", actual->format());
+    const engine::test_result expected(engine::test_result::expected_failure,
+                                       "The reason");
+    ATF_REQUIRE(expected == raw.externalize());
 }
 
 
@@ -607,9 +563,9 @@ ATF_TEST_CASE_WITHOUT_HEAD(raw_result__externalize__expected_signal);
 ATF_TEST_CASE_BODY(raw_result__externalize__expected_signal)
 {
     const raw_result raw(raw_result::expected_signal, "The reason");
-    const results::result_ptr actual = raw.externalize();
-    ATF_REQUIRE(typeid(results::expected_failure) == typeid(*actual));
-    ATF_REQUIRE_EQ("expected_failure: The reason", actual->format());
+    const engine::test_result expected(engine::test_result::expected_failure,
+                                       "The reason");
+    ATF_REQUIRE(expected == raw.externalize());
 }
 
 
@@ -617,9 +573,9 @@ ATF_TEST_CASE_WITHOUT_HEAD(raw_result__externalize__expected_timeout);
 ATF_TEST_CASE_BODY(raw_result__externalize__expected_timeout)
 {
     const raw_result raw(raw_result::expected_timeout, "The reason");
-    const results::result_ptr actual = raw.externalize();
-    ATF_REQUIRE(typeid(results::expected_failure) == typeid(*actual));
-    ATF_REQUIRE_EQ("expected_failure: The reason", actual->format());
+    const engine::test_result expected(engine::test_result::expected_failure,
+                                       "The reason");
+    ATF_REQUIRE(expected == raw.externalize());
 }
 
 
@@ -627,9 +583,9 @@ ATF_TEST_CASE_WITHOUT_HEAD(raw_result__externalize__failed);
 ATF_TEST_CASE_BODY(raw_result__externalize__failed)
 {
     const raw_result raw(raw_result::failed, "The reason");
-    const results::result_ptr actual = raw.externalize();
-    ATF_REQUIRE(typeid(results::failed) == typeid(*actual));
-    ATF_REQUIRE_EQ("failed: The reason", actual->format());
+    const engine::test_result expected(engine::test_result::failed,
+                                       "The reason");
+    ATF_REQUIRE(expected == raw.externalize());
 }
 
 
@@ -637,9 +593,8 @@ ATF_TEST_CASE_WITHOUT_HEAD(raw_result__externalize__passed);
 ATF_TEST_CASE_BODY(raw_result__externalize__passed)
 {
     const raw_result raw(raw_result::passed);
-    const results::result_ptr actual = raw.externalize();
-    ATF_REQUIRE(typeid(results::passed) == typeid(*actual));
-    ATF_REQUIRE_EQ("passed", actual->format());
+    const engine::test_result expected(engine::test_result::passed);
+    ATF_REQUIRE(expected == raw.externalize());
 }
 
 
@@ -647,9 +602,9 @@ ATF_TEST_CASE_WITHOUT_HEAD(raw_result__externalize__skipped);
 ATF_TEST_CASE_BODY(raw_result__externalize__skipped)
 {
     const raw_result raw(raw_result::skipped, "The reason");
-    const results::result_ptr actual = raw.externalize();
-    ATF_REQUIRE(typeid(results::skipped) == typeid(*actual));
-    ATF_REQUIRE_EQ("skipped: The reason", actual->format());
+    const engine::test_result expected(engine::test_result::skipped,
+                                       "The reason");
+    ATF_REQUIRE(expected == raw.externalize());
 }
 
 
@@ -660,11 +615,11 @@ ATF_TEST_CASE_BODY(calculate_result__missing_file)
 
     const status body_status = status::fake_exited(EXIT_SUCCESS);
     const status cleanup_status = status::fake_exited(EXIT_FAILURE);
-    validate_broken(
-        "Premature exit: exited with code 0",
-        atf_iface::calculate_result(utils::make_optional(body_status),
-                                    utils::make_optional(cleanup_status),
-                                    fs::path("foo")).get());
+    const engine::test_result expected(engine::test_result::broken,
+                                       "Premature exit: exited with code 0");
+    ATF_REQUIRE(expected == atf_iface::calculate_result(
+        utils::make_optional(body_status), utils::make_optional(cleanup_status),
+        fs::path("foo")));
 }
 
 
@@ -675,10 +630,10 @@ ATF_TEST_CASE_BODY(calculate_result__bad_file)
 
     const status body_status = status::fake_exited(EXIT_SUCCESS);
     utils::create_file(fs::path("foo"), "invalid\n");
-    validate_broken(
-        "Unknown test result 'invalid'",
-        atf_iface::calculate_result(utils::make_optional(body_status),
-                                    none, fs::path("foo")).get());
+    const engine::test_result expected(engine::test_result::broken,
+                                       "Unknown test result 'invalid'");
+    ATF_REQUIRE(expected == atf_iface::calculate_result(
+        utils::make_optional(body_status), none, fs::path("foo")));
 }
 
 
@@ -690,12 +645,11 @@ ATF_TEST_CASE_BODY(calculate_result__body_ok__cleanup_ok)
     utils::create_file(fs::path("result.txt"), "skipped: Something\n");
     const status body_status = status::fake_exited(EXIT_SUCCESS);
     const status cleanup_status = status::fake_exited(EXIT_SUCCESS);
-    const results::skipped result("Something");
-    compare_results(
-        result,
+    ATF_REQUIRE(
+        engine::test_result(engine::test_result::skipped, "Something") ==
         atf_iface::calculate_result(utils::make_optional(body_status),
                                     utils::make_optional(cleanup_status),
-                                    fs::path("result.txt")).get());
+                                    fs::path("result.txt")));
 }
 
 
@@ -707,13 +661,12 @@ ATF_TEST_CASE_BODY(calculate_result__body_ok__cleanup_bad)
     utils::create_file(fs::path("result.txt"), "skipped: Something\n");
     const status body_status = status::fake_exited(EXIT_SUCCESS);
     const status cleanup_status = status::fake_exited(EXIT_FAILURE);
-    const results::broken result("Test case cleanup did not terminate "
-                                 "successfully");
-    compare_results(
-        result,
+    ATF_REQUIRE(
+        engine::test_result(engine::test_result::broken, "Test case "
+                            "cleanup did not terminate successfully") ==
         atf_iface::calculate_result(utils::make_optional(body_status),
                                     utils::make_optional(cleanup_status),
-                                    fs::path("result.txt")).get());
+                                    fs::path("result.txt")));
 }
 
 
@@ -724,11 +677,11 @@ ATF_TEST_CASE_BODY(calculate_result__body_ok__cleanup_timeout)
 
     utils::create_file(fs::path("result.txt"), "skipped: Something\n");
     const status body_status = status::fake_exited(EXIT_SUCCESS);
-    const results::broken result("Test case cleanup timed out");
-    compare_results(
-        result,
+    ATF_REQUIRE(
+        engine::test_result(engine::test_result::broken, "Test case "
+                            "cleanup timed out") ==
         atf_iface::calculate_result(utils::make_optional(body_status),
-                                    none, fs::path("result.txt")).get());
+                                    none, fs::path("result.txt")));
 }
 
 
@@ -740,13 +693,13 @@ ATF_TEST_CASE_BODY(calculate_result__body_bad__cleanup_ok)
     utils::create_file(fs::path("result.txt"), "skipped: Something\n");
     const status body_status = status::fake_exited(EXIT_FAILURE);
     const status cleanup_status = status::fake_exited(EXIT_SUCCESS);
-    const results::broken result("Skipped test case should have reported "
-                                 "success but exited with code 1");
-    compare_results(
-        result,
+    ATF_REQUIRE(
+        engine::test_result(engine::test_result::broken, "Skipped test case "
+                            "should have reported success but exited with "
+                            "code 1") ==
         atf_iface::calculate_result(utils::make_optional(body_status),
                                     utils::make_optional(cleanup_status),
-                                    fs::path("result.txt")).get());
+                                    fs::path("result.txt")));
 }
 
 
@@ -758,13 +711,13 @@ ATF_TEST_CASE_BODY(calculate_result__body_bad__cleanup_bad)
     utils::create_file(fs::path("result.txt"), "passed\n");
     const status body_status = status::fake_signaled(3, false);
     const status cleanup_status = status::fake_exited(EXIT_FAILURE);
-    const results::broken result("Passed test case should have reported "
-                                 "success but received signal 3");
-    compare_results(
-        result,
+    ATF_REQUIRE(
+        engine::test_result(engine::test_result::broken, "Passed test case "
+                            "should have reported success but received "
+                            "signal 3") ==
         atf_iface::calculate_result(utils::make_optional(body_status),
                                     utils::make_optional(cleanup_status),
-                                    fs::path("result.txt")).get());
+                                    fs::path("result.txt")));
 }
 
 

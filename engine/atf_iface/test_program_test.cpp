@@ -32,7 +32,6 @@ extern "C" {
 #include <unistd.h>
 }
 
-#include <iostream>
 #include <sstream>
 
 #include <atf-c++.hpp>

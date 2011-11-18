@@ -32,7 +32,6 @@
 #include "cli/common.ipp"
 #include "engine/drivers/debug_test.hpp"
 #include "engine/filters.hpp"
-#include "engine/results.ipp"
 #include "engine/user_files/config.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.ipp"
@@ -40,7 +39,6 @@
 
 namespace cmdline = utils::cmdline;
 namespace debug_test = engine::drivers::debug_test;
-namespace results = engine::results;
 namespace user_files = engine::user_files;
 
 using cli::cmd_debug;
@@ -88,7 +86,7 @@ cmd_debug::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
         cmdline.get_option< cmdline::path_option >("stderr"));
 
     ui->out(F("%s  ->  %s") % result.test_id.str() %
-            result.test_result->format());
+            cli::format_result(result.test_result));
 
-    return result.test_result->good() ? EXIT_SUCCESS : EXIT_FAILURE;
+    return result.test_result.good() ? EXIT_SUCCESS : EXIT_FAILURE;
 }

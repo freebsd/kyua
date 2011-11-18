@@ -37,7 +37,7 @@ extern "C" {
 #include "engine/atf_iface/test_program.hpp"
 #include "engine/context.hpp"
 #include "engine/plain_iface/test_program.hpp"
-#include "engine/results.hpp"
+#include "engine/test_result.hpp"
 #include "store/backend.hpp"
 #include "store/exceptions.hpp"
 #include "store/transaction.hpp"
@@ -53,7 +53,6 @@ namespace atf_iface = engine::atf_iface;
 namespace fs = utils::fs;
 namespace sqlite = utils::sqlite;
 namespace plain_iface = engine::plain_iface;
-namespace results = engine::results;
 
 
 namespace {
@@ -97,10 +96,12 @@ get_env_vars(sqlite::database& db, const int64_t context_id)
 /// \return The loaded result.
 ///
 /// \throw integrity_error If the data in the database is invalid.
-static results::result_ptr
+static engine::test_result
 parse_result(sqlite::statement& stmt, const char* type_column,
              const char* reason_column)
 {
+    using engine::test_result;
+
     try {
         const std::string type = stmt.safe_column_text(type_column);
         if (type == "passed") {
@@ -108,19 +109,19 @@ parse_result(sqlite::statement& stmt, const char* type_column,
                 sqlite::type_null)
                 throw store::integrity_error("Result of type 'passed' has a "
                                              "non-NULL reason");
-            return results::result_ptr(new results::passed());
+            return test_result(test_result::passed);
         } else if (type == "broken") {
-            return results::result_ptr(new results::broken(
-                stmt.safe_column_text(reason_column)));
+            return test_result(test_result::broken,
+                               stmt.safe_column_text(reason_column));
         } else if (type == "expected_failure") {
-            return results::result_ptr(new results::expected_failure(
-                stmt.safe_column_text(reason_column)));
+            return test_result(test_result::expected_failure, 
+                               stmt.safe_column_text(reason_column));
         } else if (type == "failed") {
-            return results::result_ptr(new results::failed(
-                stmt.safe_column_text(reason_column)));
+            return test_result(test_result::failed,
+                               stmt.safe_column_text(reason_column));
         } else if (type == "skipped") {
-            return results::result_ptr(new results::skipped(
-                stmt.safe_column_text(reason_column)));
+            return test_result(test_result::skipped,
+                               stmt.safe_column_text(reason_column));
         } else {
             throw store::integrity_error(F("Unknown test result type %s") %
                                          type);
@@ -266,7 +267,7 @@ store::results_iterator::test_case_name(void) const
 /// Gets the result of the test case pointed by the iterator.
 ///
 /// \return A test case result.
-results::result_ptr
+engine::test_result
 store::results_iterator::result(void) const
 {
     return parse_result(_pimpl->_stmt, "result_type", "result_reason");
@@ -573,7 +574,7 @@ store::transaction::put_test_case(const engine::base_test_case& test_case,
 ///
 /// \throw error If there is any problem when talking to the database.
 int64_t
-store::transaction::put_result(const results::result_ptr result,
+store::transaction::put_result(const engine::test_result& result,
                                const int64_t test_case_id)
 {
     try {
@@ -582,31 +583,37 @@ store::transaction::put_result(const results::result_ptr result,
             "                          result_reason) "
             "VALUES (:test_case_id, :result_type, :result_reason)");
         stmt.bind_int64(":test_case_id", test_case_id);
-        if (typeid(*result) == typeid(results::broken)) {
-            const results::broken* result2 =
-                dynamic_cast< const results::broken* >(result.get());
+
+        switch (result.type()) {
+        case engine::test_result::broken:
             stmt.bind_text(":result_type", "broken");
-            stmt.bind_text(":result_reason", result2->reason());
-        } else if (typeid(*result) == typeid(results::expected_failure)) {
-            const results::expected_failure* result2 =
-                dynamic_cast< const results::expected_failure* >(result.get());
+            break;
+
+        case engine::test_result::expected_failure:
             stmt.bind_text(":result_type", "expected_failure");
-            stmt.bind_text(":result_reason", result2->reason());
-        } else if (typeid(*result) == typeid(results::failed)) {
-            const results::failed* result2 =
-                dynamic_cast< const results::failed* >(result.get());
+            break;
+
+        case engine::test_result::failed:
             stmt.bind_text(":result_type", "failed");
-            stmt.bind_text(":result_reason", result2->reason());
-        } else if (typeid(*result) == typeid(results::passed)) {
+            break;
+
+        case engine::test_result::passed:
             stmt.bind_text(":result_type", "passed");
-            stmt.bind_null(":result_reason");
-        } else if (typeid(*result) == typeid(results::skipped)) {
-            const results::skipped* result2 =
-                dynamic_cast< const results::skipped* >(result.get());
+            break;
+
+        case engine::test_result::skipped:
             stmt.bind_text(":result_type", "skipped");
-            stmt.bind_text(":result_reason", result2->reason());
-        } else
-            UNREACHABLE_MSG("Unimplemented result type");
+            break;
+
+        default:
+            UNREACHABLE;
+        }
+
+        if (result.reason().empty())
+            stmt.bind_null(":result_reason");
+        else
+            stmt.bind_text(":result_reason", result.reason());
+
         stmt.step_without_results();
         const int64_t result_id = _pimpl->_db.last_insert_rowid();
 

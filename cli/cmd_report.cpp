@@ -33,7 +33,6 @@
 #include "engine/action.hpp"
 #include "engine/context.hpp"
 #include "engine/drivers/scan_action.hpp"
-#include "engine/results.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/defs.hpp"
@@ -41,7 +40,6 @@
 #include "utils/optional.ipp"
 
 namespace cmdline = utils::cmdline;
-namespace results = engine::results;
 namespace scan_action = engine::drivers::scan_action;
 namespace user_files = engine::user_files;
 
@@ -111,7 +109,7 @@ public:
     void
     got_result(const utils::fs::path& binary_path,
                const std::string& test_case_name,
-               const results::result_ptr result)
+               const engine::test_result& result)
     {
         if (_first_result) {
             // TODO(jmmv): Should have a got_results_count callback, and then we
@@ -120,7 +118,7 @@ public:
             _first_result = false;
         }
         _ui->out(F("%s:%s  ->  %s") % binary_path % test_case_name %
-                 result->format());
+                 cli::format_result(result));
     }
 };
 
