@@ -333,15 +333,15 @@ The following subcommand options are recognized:
 Specifies the action for which to generate a report.  If not provided,
 defaults to the latest action stored in the database.
 
-@item --hide-context
-@cindex @option{--hide-context}, @command{report}
-Avoids printing the runtime context of the action.
-
 @item --output=format:path
 @cindex @option{--output}, @command{report}
 Specifies the format of the generated report and where it should be
 stored.  At the moment, the only accepted value is the default, which
 is @samp{console:/dev/stdout}.
+
+@item --show-context
+@cindex @option{--show-context}, @command{report}
+Prints the runtime context of the action.
 
 @item --store=path
 @cindex @option{--store}, @command{db-exec}

@@ -69,30 +69,22 @@ default_behavior__ok_body() {
     run_tests "mock1"
 
     cat >expout <<EOF
-Action: 1
-===> Execution context
-Current directory: $(pwd)/testsuite
-Environment variables:
-    HOME=$(pwd)/testsuite/home
-    MOCK=mock1
-===> Test results
-$(pwd)/testsuite/simple_all_pass:pass  ->  passed
+===> Skipped tests
 $(pwd)/testsuite/simple_all_pass:skip  ->  skipped: The reason for skipping is this
+===> Summary
+Action: 1
+Test cases: 2 total, 1 skipped, 0 expected failures, 0 broken, 0 failed
 EOF
     atf_check -s exit:0 -o file:expout -e empty kyua report
 
     run_tests "mock2"
 
     cat >expout <<EOF
-Action: 2
-===> Execution context
-Current directory: $(pwd)/testsuite
-Environment variables:
-    HOME=$(pwd)/testsuite/home
-    MOCK=mock2
-===> Test results
-$(pwd)/testsuite/simple_all_pass:pass  ->  passed
+===> Skipped tests
 $(pwd)/testsuite/simple_all_pass:skip  ->  skipped: The reason for skipping is this
+===> Summary
+Action: 2
+Test cases: 2 total, 1 skipped, 0 expected failures, 0 broken, 0 failed
 EOF
     atf_check -s exit:0 -o file:expout -e empty kyua report
 }
@@ -121,10 +113,10 @@ action__explicit_body() {
 
     atf_check -s exit:0 -o match:"MOCK=mock1" -o not-match:"MOCK=mock2" \
         -o match:"Action: 1" -o not-match:"Action: 2" \
-        -e empty kyua report --action="${action1}"
+        -e empty kyua report --action="${action1}" --show-context
     atf_check -s exit:0 -o not-match:"MOCK=mock1" -o match:"MOCK=mock2" \
         -o match:"Action: 2" -o not-match:"Action: 1" \
-        -e empty kyua report --action="${action2}"
+        -e empty kyua report --action="${action2}" --show-context
 }
 
 
@@ -137,17 +129,23 @@ action__not_found_body() {
 }
 
 
-utils_test_case hide_context
-hide_context_body() {
+utils_test_case show_context
+show_context_body() {
     run_tests "mock1"
 
     cat >expout <<EOF
-Action: 1
-===> Test results
-$(pwd)/testsuite/simple_all_pass:pass  ->  passed
+===> Execution context
+Current directory: $(pwd)/testsuite
+Environment variables:
+    HOME=$(pwd)/testsuite/home
+    MOCK=mock1
+===> Skipped tests
 $(pwd)/testsuite/simple_all_pass:skip  ->  skipped: The reason for skipping is this
+===> Summary
+Action: 1
+Test cases: 2 total, 1 skipped, 0 expected failures, 0 broken, 0 failed
 EOF
-    atf_check -s exit:0 -o file:expout -e empty kyua report --hide-context
+    atf_check -s exit:0 -o file:expout -e empty kyua report --show-context
 }
 
 
@@ -156,15 +154,11 @@ output__console__change_file_body() {
     run_tests
 
     cat >experr <<EOF
-Action: 1
-===> Execution context
-Current directory: $(pwd)/testsuite
-Environment variables:
-    HOME=$(pwd)/testsuite/home
-    MOCK=random-text
-===> Test results
-$(pwd)/testsuite/simple_all_pass:pass  ->  passed
+===> Skipped tests
 $(pwd)/testsuite/simple_all_pass:skip  ->  skipped: The reason for skipping is this
+===> Summary
+Action: 1
+Test cases: 2 total, 1 skipped, 0 expected failures, 0 broken, 0 failed
 EOF
     atf_expect_fail "--output not implemented yet"
     atf_check -s exit:0 -o empty -e file:experr kyua report \
@@ -180,7 +174,7 @@ atf_init_test_cases() {
     atf_add_test_case action__explicit
     atf_add_test_case action__not_found
 
-    atf_add_test_case hide_context
+    atf_add_test_case show_context
 
     atf_add_test_case output__console__change_file
 }
