@@ -39,10 +39,10 @@ extern "C" {
 #include <tr1/memory>
 #include <utility>
 
+#include "engine/test_program.hpp"
+
 namespace engine {
 class action;
-class base_test_case;
-class base_test_program;
 class context;
 class test_result;
 };
@@ -72,7 +72,7 @@ public:
     results_iterator& operator++(void);
     operator bool(void) const;
 
-    utils::fs::path binary_path(void) const;
+    engine::test_program_ptr test_program(void) const;
     std::string test_case_name(void) const;
     engine::test_result result(void) const;
 };

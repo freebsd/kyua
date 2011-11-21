@@ -81,10 +81,10 @@ public:
 
     /// Callback executed when a test results is found.
     ///
-    /// \param binary_path The absolute path to the test program.
+    /// \param test_program The test program this result belongs to.
     /// \param test_case_name The name of the test case.
     /// \param result The result of the test case.
-    void got_result(const fs::path& binary_path,
+    void got_result(const engine::test_program_ptr& test_program,
                     const std::string& test_case_name,
                     const engine::test_result& result)
     {
@@ -95,8 +95,8 @@ public:
         default:
             UNREACHABLE_MSG("Formatting unimplemented");
         }
-        _results.insert(F("%s:%s:%s:%s") % binary_path % test_case_name %
-                        type % result.reason());
+        _results.insert(F("%s:%s:%s:%s") % test_program->absolute_path() %
+                        test_case_name % type % result.reason());
     }
 };
 

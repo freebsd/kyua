@@ -41,8 +41,10 @@ extern "C" {
 #include "store/backend.hpp"
 #include "store/exceptions.hpp"
 #include "store/transaction.hpp"
+#include "utils/datetime.hpp"
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/exceptions.hpp"
@@ -50,9 +52,13 @@ extern "C" {
 #include "utils/sqlite/transaction.hpp"
 
 namespace atf_iface = engine::atf_iface;
+namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace sqlite = utils::sqlite;
 namespace plain_iface = engine::plain_iface;
+
+using utils::none;
+using utils::optional;
 
 
 namespace {
@@ -86,6 +92,82 @@ get_env_vars(sqlite::database& db, const int64_t context_id)
 }
 
 
+/// Gets an optional datetime::delta object from the database.
+///
+/// \param stmt The statement from which to fetch the data.
+/// \param column The name of the column holding the data.
+///
+/// \return The delta if the column has data, or none otherwise.
+static optional< datetime::delta >
+parse_optional_delta(sqlite::statement& stmt, const char* column)
+{
+    if (stmt.column_type(stmt.column_id(column)) == sqlite::type_null)
+        return none;
+    else {
+        return utils::make_optional(
+            datetime::delta::from_useconds(stmt.safe_column_int64(column)));
+    }
+}
+
+
+/// Loads a specific test program from the database.
+///
+/// \param db The database to load the test program from.
+/// \param id The identifier of the test program to load.
+/// \param interface The name of the interface of the test program.  Used to
+///     address detail tables.
+///
+/// \return The instantiated test program.
+///
+/// \throw integrity_error If the data read from the database cannot be properly
+///     interpreted.
+static engine::test_program_ptr
+get_test_program(sqlite::database& db, const int64_t id,
+                 const std::string& interface)
+{
+    if (interface == "atf") {
+        sqlite::statement stmt = db.create_statement(
+            "SELECT * FROM test_programs WHERE test_program_id == :id");
+        stmt.bind_int64(":id", id);
+        stmt.step();
+        return engine::test_program_ptr(new atf_iface::test_program(
+            fs::path(stmt.safe_column_text("relative_path")),
+            fs::path(stmt.safe_column_text("root")),
+            stmt.safe_column_text("test_suite_name")));
+    } else if (interface == "plain") {
+        sqlite::statement stmt = db.create_statement(
+            "SELECT * FROM test_programs NATURAL JOIN plain_test_programs "
+            "    WHERE test_program_id == :id");
+        stmt.bind_int64(":id", id);
+        stmt.step();
+        return engine::test_program_ptr(new plain_iface::test_program(
+            fs::path(stmt.safe_column_text("relative_path")),
+            fs::path(stmt.safe_column_text("root")),
+            stmt.safe_column_text("test_suite_name"),
+            parse_optional_delta(stmt, "timeout")));
+    } else
+        throw store::integrity_error(
+            F("Unknown interface %s in test program %d") % interface % id);
+}
+
+
+/// Gets the name of the interface of a test program for externalization.
+///
+/// \param test_program The test program to query the interface of.
+///
+/// \return The name of the test interface.
+static std::string
+interface_name(const engine::base_test_program& test_program)
+{
+    if (typeid(test_program) == typeid(atf_iface::test_program)) {
+        return "atf";
+    } else if (typeid(test_program) == typeid(plain_iface::test_program)) {
+        return "plain";
+    } else
+        UNREACHABLE_MSG("Unsupported test program interface");
+}
+
+
 /// Retrieves a result from the database.
 ///
 /// \param stmt The statement with the data for the result to load.
@@ -114,7 +196,7 @@ parse_result(sqlite::statement& stmt, const char* type_column,
             return test_result(test_result::broken,
                                stmt.safe_column_text(reason_column));
         } else if (type == "expected_failure") {
-            return test_result(test_result::expected_failure, 
+            return test_result(test_result::expected_failure,
                                stmt.safe_column_text(reason_column));
         } else if (type == "failed") {
             return test_result(test_result::failed,
@@ -182,11 +264,45 @@ put_metadata(sqlite::database& db, const int64_t test_case_id,
 }
 
 
+/// Stores interface-specific details of a test program.
+///
+/// We assume that the caller has already stored the common details of a test
+/// program across interfaces.  We only store the information that belongs in
+/// the detail tables.
+///
+/// \param db The database into which to store the information.
+/// \param test_program The test program to store.
+/// \param test_program_id The identifier of the test case; this comes from the
+///     previous insert of the generic data.
+static void
+put_test_program_detail(sqlite::database& db,
+                        const engine::base_test_program& test_program,
+                        const int64_t test_program_id)
+{
+    if (typeid(test_program) == typeid(atf_iface::test_program)) {
+        // Nothing to do.
+    } else if (typeid(test_program) == typeid(plain_iface::test_program)) {
+        const plain_iface::test_program& plain =
+            dynamic_cast< const plain_iface::test_program& >(test_program);
+        sqlite::statement stmt = db.create_statement(
+            "INSERT INTO plain_test_programs (test_program_id, timeout) "
+            "VALUES (:test_program_id, :timeout)");
+        stmt.bind_int64(":test_program_id", test_program_id);
+        stmt.bind_int64(":timeout", plain.timeout().to_useconds());
+        stmt.step_without_results();
+    } else
+        UNREACHABLE_MSG("Unsupported test program interface");
+}
+
+
 }  // anonymous namespace
 
 
 /// Internal implementation for a results iterator.
 struct store::results_iterator::impl {
+    /// The database with the data.
+    sqlite::database _db;
+
     /// The statement to iterate on.
     sqlite::statement _stmt;
 
@@ -195,8 +311,10 @@ struct store::results_iterator::impl {
 
     /// Constructor.
     impl(sqlite::database& db_, const int64_t action_id_) :
+        _db(db_),
         _stmt(db_.create_statement(
-                  "SELECT test_programs.binary_path, test_cases.name, "
+                  "SELECT test_programs.test_program_id, "
+                  "    test_programs.interface, test_cases.name, "
                   "    test_results.result_type, test_results.result_reason "
                   "FROM test_programs NATURAL JOIN test_cases "
                   "    NATURAL JOIN test_results "
@@ -244,13 +362,15 @@ store::results_iterator::operator bool(void) const
 }
 
 
-/// Gets the absolute path to the test program pointed by the iterator.
+/// Gets the test program this result belongs to.
 ///
-/// \return An absolute path.
-fs::path
-store::results_iterator::binary_path(void) const
+/// \return The representation of a test program.
+engine::test_program_ptr
+store::results_iterator::test_program(void) const
 {
-    return fs::path(_pimpl->_stmt.safe_column_text("binary_path"));
+    const int64_t id = _pimpl->_stmt.safe_column_int64("test_program_id");
+    const std::string interface = _pimpl->_stmt.safe_column_text("interface");
+    return get_test_program(_pimpl->_db, id, interface);
 }
 
 
@@ -511,16 +631,23 @@ store::transaction::put_test_program(
 {
     try {
         sqlite::statement stmt = _pimpl->_db.create_statement(
-            "INSERT INTO test_programs (action_id, binary_path, "
-            "                           test_suite_name) "
-            "VALUES (:action_id, :binary_path, :test_suite_name)");
+            "INSERT INTO test_programs (action_id, root, relative_path, "
+            "                           test_suite_name, interface) "
+            "VALUES (:action_id, :root, :relative_path, :test_suite_name,"
+            "        :interface)");
         stmt.bind_int64(":action_id", action_id);
-        const fs::path binary_path = test_program.absolute_path();
-        stmt.bind_text(":binary_path", binary_path.is_absolute() ?
-                       binary_path.str() : binary_path.to_absolute().str());
+        // TODO(jmmv): The root is not necessarily absolute.  We need to ensure
+        // that we can recover the absolute path of the test program.  Maybe we
+        // need to change the base_test_program to always ensure root is
+        // absolute?
+        stmt.bind_text(":root", test_program.root().str());
+        stmt.bind_text(":relative_path", test_program.relative_path().str());
         stmt.bind_text(":test_suite_name", test_program.test_suite_name());
+        stmt.bind_text(":interface", interface_name(test_program));
         stmt.step_without_results();
         const int64_t test_program_id = _pimpl->_db.last_insert_rowid();
+
+        put_test_program_detail(_pimpl->_db, test_program, test_program_id);
 
         return test_program_id;
     } catch (const sqlite::error& e) {

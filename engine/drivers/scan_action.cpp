@@ -102,7 +102,7 @@ scan_action::drive(const fs::path& store_path,
 
     store::results_iterator iter = tx.get_action_results(action_id.get());
     while (iter) {
-        hooks.got_result(iter.binary_path(), iter.test_case_name(),
+        hooks.got_result(iter.test_program(), iter.test_case_name(),
                          iter.result());
         ++iter;
     }

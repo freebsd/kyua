@@ -52,6 +52,9 @@ struct delta {
     delta(void);
     delta(const unsigned int, const unsigned long);
 
+    static delta from_useconds(const unsigned long);
+    unsigned long to_useconds(void) const;
+
     bool operator==(const delta&) const;
     bool operator!=(const delta&) const;
 };

@@ -70,6 +70,28 @@ datetime::delta::delta(const unsigned int seconds_,
 }
 
 
+/// Converts a time expressed in microseconds to a delta.
+///
+/// \param useconds The amount of microseconds representing the delta.
+///
+/// \return A new delta object.
+datetime::delta
+datetime::delta::from_useconds(const unsigned long useconds)
+{
+    return delta(useconds / 1000000, useconds % 1000000);
+}
+
+
+/// Convers the delta to a flat representation expressed in microseconds.
+///
+/// \return The amount of microseconds that corresponds to this delta.
+unsigned long
+datetime::delta::to_useconds(void) const
+{
+    return seconds * 1000000 + useconds;
+}
+
+
 /// Checks if two time deltas are equal.
 ///
 /// \param other The object to compare to.

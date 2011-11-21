@@ -138,11 +138,20 @@ CREATE TABLE test_programs (
     test_program_id INTEGER PRIMARY KEY AUTOINCREMENT,
     action_id INTEGER REFERENCES actions,
 
-    -- Absolute path to the test program.
-    binary_path TEXT NOT NULL,
+    -- The path to the root of the test suite (where the Kyuafile lives).
+    root TEXT NOT NULL,
+
+    -- The path to the test program, relative to the root.
+    relative_path NOT NULL,
 
     -- Name of the test suite the test program belongs to.
-    test_suite_name TEXT NOT NULL
+    test_suite_name TEXT NOT NULL,
+
+    -- The name of the test program interface.
+    --
+    -- Note that this indicates both the interface for the test program and
+    -- its test cases.  See below for the corresponding detail tables.
+    interface TEXT NOT NULL
 );
 
 
@@ -178,6 +187,32 @@ CREATE TABLE test_results (
     test_case_id INTEGER REFERENCES test_cases,
     result_type TEXT NOT NULL,
     result_reason TEXT
+);
+
+
+-- -------------------------------------------------------------------------
+-- Detail tables for the 'atf' test interface.
+-- -------------------------------------------------------------------------
+
+
+-- No tables yet; will add some for the test cases.
+
+
+-- -------------------------------------------------------------------------
+-- Detail tables for the 'plain' test interface.
+-- -------------------------------------------------------------------------
+
+
+-- Properties specific to 'plain' test programs.
+CREATE TABLE plain_test_programs (
+    test_program_id INTEGER REFERENCES test_programs,
+
+    -- The timeout for the test cases in this test program.  While this
+    -- setting has a default value for test programs, we explicitly record
+    -- the information here.  The "default value" used when the test
+    -- program was run might change over time, so we want to know what it
+    -- was exactly when this was run.
+    timeout INTEGER NOT NULL
 );
 
 

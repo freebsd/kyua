@@ -33,6 +33,7 @@
 #include <atf-c++.hpp>
 
 #include "engine/action.hpp"
+#include "engine/atf_iface/test_program.hpp"
 #include "engine/context.hpp"
 #include "engine/plain_iface/test_case.hpp"
 #include "engine/plain_iface/test_program.hpp"
@@ -47,6 +48,7 @@
 #include "utils/sqlite/exceptions.hpp"
 #include "utils/sqlite/statement.hpp"
 
+namespace atf_iface = engine::atf_iface;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace plain_iface = engine::plain_iface;
@@ -310,12 +312,14 @@ ATF_TEST_CASE_BODY(get_action_results__many)
     store::transaction tx2 = backend.start();
     store::results_iterator iter = tx2.get_action_results(action_id);
     ATF_REQUIRE(iter);
-    ATF_REQUIRE_EQ(fs::path("/the/root/a/prog1"), iter.binary_path());
+    ATF_REQUIRE_EQ(fs::path("/the/root/a/prog1"),
+                   iter.test_program()->absolute_path());
     ATF_REQUIRE_EQ("main", iter.test_case_name());
     ATF_REQUIRE(engine::test_result(engine::test_result::passed) ==
                 iter.result());
     ATF_REQUIRE(++iter);
-    ATF_REQUIRE_EQ(fs::path("/the/root/b/prog2"), iter.binary_path());
+    ATF_REQUIRE_EQ(fs::path("/the/root/b/prog2"),
+                   iter.test_program()->absolute_path());
     ATF_REQUIRE_EQ("main", iter.test_case_name());
     ATF_REQUIRE(engine::test_result(engine::test_result::failed, "Some text") ==
                 iter.result());
@@ -522,14 +526,50 @@ ATF_TEST_CASE_BODY(get_put_context__put_fail)
 }
 
 
-ATF_TEST_CASE(put_test_program__ok);
-ATF_TEST_CASE_HEAD(put_test_program__ok)
+ATF_TEST_CASE(put_test_program__atf);
+ATF_TEST_CASE_HEAD(put_test_program__atf)
 {
     set_md_var("require.files", store::detail::schema_file.c_str());
 }
-ATF_TEST_CASE_BODY(put_test_program__ok)
+ATF_TEST_CASE_BODY(put_test_program__atf)
 {
-    // TODO(jmmv): Use a mock test program.
+    const atf_iface::test_program test_program(
+        fs::path("the/binary"), fs::path("/some/root"), "the-suite");
+
+    store::backend backend = store::backend::open_rw(fs::path("test.db"));
+    backend.database().exec("PRAGMA foreign_keys = OFF");
+    store::transaction tx = backend.start();
+    const int64_t test_program_id = tx.put_test_program(test_program, 15);
+    tx.commit();
+
+    {
+        sqlite::statement stmt = backend.database().create_statement(
+            "SELECT * FROM test_programs");
+
+        ATF_REQUIRE(stmt.step());
+        ATF_REQUIRE_EQ(test_program_id,
+                       stmt.safe_column_int64("test_program_id"));
+        ATF_REQUIRE_EQ(15, stmt.safe_column_int64("action_id"));
+        ATF_REQUIRE_EQ("/some/root", stmt.safe_column_text("root"));
+        ATF_REQUIRE_EQ("the/binary", stmt.safe_column_text("relative_path"));
+        ATF_REQUIRE_EQ("the-suite", stmt.safe_column_text("test_suite_name"));
+        ATF_REQUIRE(!stmt.step());
+    }
+    {
+        sqlite::statement stmt = backend.database().create_statement(
+            "SELECT * FROM plain_test_programs");
+        ATF_REQUIRE(!stmt.step());
+    }
+}
+
+
+ATF_TEST_CASE(put_test_program__plain);
+ATF_TEST_CASE_HEAD(put_test_program__plain)
+{
+    set_md_var("require.files", store::detail::schema_file.c_str());
+}
+ATF_TEST_CASE_BODY(put_test_program__plain)
+{
     const plain_iface::test_program test_program(
         fs::path("the/binary"), fs::path("/some/root"), "the-suite", none);
 
@@ -539,16 +579,29 @@ ATF_TEST_CASE_BODY(put_test_program__ok)
     const int64_t test_program_id = tx.put_test_program(test_program, 15);
     tx.commit();
 
-    sqlite::statement stmt = backend.database().create_statement(
-        "SELECT test_program_id, action_id, binary_path, test_suite_name "
-        "FROM test_programs");
+    {
+        sqlite::statement stmt = backend.database().create_statement(
+            "SELECT * FROM test_programs");
 
-    ATF_REQUIRE(stmt.step());
-    ATF_REQUIRE_EQ(test_program_id, stmt.column_int64(0));
-    ATF_REQUIRE_EQ(15, stmt.column_int64(1));
-    ATF_REQUIRE_EQ("/some/root/the/binary", stmt.column_text(2));
-    ATF_REQUIRE_EQ("the-suite", stmt.column_text(3));
-    ATF_REQUIRE(!stmt.step());
+        ATF_REQUIRE(stmt.step());
+        ATF_REQUIRE_EQ(test_program_id,
+                       stmt.safe_column_int64("test_program_id"));
+        ATF_REQUIRE_EQ(15, stmt.safe_column_int64("action_id"));
+        ATF_REQUIRE_EQ("/some/root", stmt.safe_column_text("root"));
+        ATF_REQUIRE_EQ("the/binary", stmt.safe_column_text("relative_path"));
+        ATF_REQUIRE_EQ("the-suite", stmt.safe_column_text("test_suite_name"));
+        ATF_REQUIRE(!stmt.step());
+    }
+    {
+        sqlite::statement stmt = backend.database().create_statement(
+            "SELECT * FROM plain_test_programs");
+
+        ATF_REQUIRE(stmt.step());
+        ATF_REQUIRE_EQ(test_program_id,
+                       stmt.safe_column_int64("test_program_id"));
+        ATF_REQUIRE_EQ(test_program.timeout().to_useconds(),
+                       stmt.safe_column_int64("timeout"));
+    }
 }
 
 
@@ -735,7 +788,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, get_put_context__get_fail__invalid_env_vars);
     ATF_ADD_TEST_CASE(tcs, get_put_context__put_fail);
 
-    ATF_ADD_TEST_CASE(tcs, put_test_program__ok);
+    ATF_ADD_TEST_CASE(tcs, put_test_program__atf);
+    ATF_ADD_TEST_CASE(tcs, put_test_program__plain);
     ATF_ADD_TEST_CASE(tcs, put_test_program__fail);
     ATF_ADD_TEST_CASE(tcs, put_test_case__ok);
     ATF_ADD_TEST_CASE(tcs, put_test_case__fail);

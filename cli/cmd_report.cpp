@@ -164,18 +164,19 @@ public:
 
     /// Callback executed when a test results is found.
     ///
-    /// \param binary_path The absolute path to the test program.
+    /// \param test_program The test program the result belongs to.
     /// \param test_case_name The name of the test case.
     /// \param result The result of the test case.
     void
-    got_result(const fs::path& binary_path,
+    got_result(const engine::test_program_ptr& test_program,
                const std::string& test_case_name,
                const engine::test_result& result)
     {
         ++_total;
         if (result.type() != engine::test_result::passed)
             _results[result.type()].push_back(
-                result_data(binary_path, test_case_name, result));
+                result_data(test_program->relative_path(), test_case_name,
+                            result));
     }
 
     /// Prints the tests summary.

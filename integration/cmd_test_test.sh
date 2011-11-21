@@ -546,19 +546,20 @@ EOF
         kyua db-exec --no-headers "SELECT COUNT(context_id) FROM CONTEXTS"
 
 cat >expout <<EOF
-1,$(pwd)/some-program,pass,passed,NULL
-1,$(pwd)/some-program,skip,skipped,The reason for skipping is this
-2,$(pwd)/some-program,fail,failed,This fails on purpose
-2,$(pwd)/some-program,pass,passed,NULL
+1,some-program,pass,passed,NULL
+1,some-program,skip,skipped,The reason for skipping is this
+2,some-program,fail,failed,This fails on purpose
+2,some-program,pass,passed,NULL
 EOF
     atf_check -s exit:0 -o file:expout -e empty \
         kyua db-exec --no-headers \
         "SELECT actions.action_id, " \
-        "       test_programs.binary_path, test_cases.name, " \
+        "       test_programs.relative_path, test_cases.name, " \
         "       test_results.result_type, test_results.result_reason " \
         "FROM actions NATURAL JOIN test_programs NATURAL JOIN test_cases " \
         "     NATURAL JOIN test_results " \
-        "ORDER BY actions.action_id, test_programs.binary_path, test_cases.name"
+        "ORDER BY actions.action_id, test_programs.relative_path, " \
+        "         test_cases.name"
 }
 
 

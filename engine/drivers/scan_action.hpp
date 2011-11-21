@@ -37,6 +37,7 @@
 #if !defined(ENGINE_DRIVERS_SCAN_ACTION_HPP)
 #define ENGINE_DRIVERS_SCAN_ACTION_HPP
 
+#include "engine/test_program.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"
 
@@ -63,10 +64,10 @@ public:
 
     /// Callback executed when a test results is found.
     ///
-    /// \param binary_path The absolute path to the test program.
+    /// \param test_program The test program to which the result belongs.
     /// \param test_case_name The name of the test case.
     /// \param result The result of the test case.
-    virtual void got_result(const utils::fs::path& binary_path,
+    virtual void got_result(const engine::test_program_ptr& test_program,
                             const std::string& test_case_name,
                             const engine::test_result& result) = 0;
 };

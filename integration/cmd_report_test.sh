@@ -70,7 +70,7 @@ default_behavior__ok_body() {
 
     cat >expout <<EOF
 ===> Skipped tests
-$(pwd)/testsuite/simple_all_pass:skip  ->  skipped: The reason for skipping is this
+simple_all_pass:skip  ->  skipped: The reason for skipping is this
 ===> Summary
 Action: 1
 Test cases: 2 total, 1 skipped, 0 expected failures, 0 broken, 0 failed
@@ -81,7 +81,7 @@ EOF
 
     cat >expout <<EOF
 ===> Skipped tests
-$(pwd)/testsuite/simple_all_pass:skip  ->  skipped: The reason for skipping is this
+simple_all_pass:skip  ->  skipped: The reason for skipping is this
 ===> Summary
 Action: 2
 Test cases: 2 total, 1 skipped, 0 expected failures, 0 broken, 0 failed
@@ -140,7 +140,7 @@ Environment variables:
     HOME=$(pwd)/testsuite/home
     MOCK=mock1
 ===> Skipped tests
-$(pwd)/testsuite/simple_all_pass:skip  ->  skipped: The reason for skipping is this
+simple_all_pass:skip  ->  skipped: The reason for skipping is this
 ===> Summary
 Action: 1
 Test cases: 2 total, 1 skipped, 0 expected failures, 0 broken, 0 failed
@@ -155,7 +155,7 @@ output__console__change_file_body() {
 
     cat >experr <<EOF
 ===> Skipped tests
-$(pwd)/testsuite/simple_all_pass:skip  ->  skipped: The reason for skipping is this
+simple_all_pass:skip  ->  skipped: The reason for skipping is this
 ===> Summary
 Action: 1
 Test cases: 2 total, 1 skipped, 0 expected failures, 0 broken, 0 failed
