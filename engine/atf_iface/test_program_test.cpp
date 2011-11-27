@@ -116,7 +116,7 @@ check_test_cases_list_failure(const engine::test_cases_vector& test_cases,
             test_cases[0].get());
     ATF_REQUIRE_EQ("__test_cases_list__", test_case.name());
     const engine::test_result result = test_case.run(mock_config);
-    ATF_REQUIRE_EQ(engine::test_result::broken, result.type());
+    ATF_REQUIRE(engine::test_result::broken == result.type());
     ATF_REQUIRE_MATCH(exp_reason, result.reason());
 }
 

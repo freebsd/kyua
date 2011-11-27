@@ -469,9 +469,12 @@ ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__missing_results_file);
 ATF_TEST_CASE_BODY(run_test_case__missing_results_file)
 {
     atf_helper helper(this, "crash");
-    ATF_REQUIRE(engine::test_result(
-        engine::test_result::broken,
-        F("Premature exit: received signal %d") % SIGABRT) == helper.run());
+    const engine::test_result result = helper.run();
+    ATF_REQUIRE(engine::test_result::broken == result.type());
+    // Need to match instead of doing an explicit comparison because the string
+    // may include the "core dumped" substring.
+    ATF_REQUIRE_MATCH(F("Premature exit: received signal %d") % SIGABRT,
+                      result.reason());
 }
 
 
