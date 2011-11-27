@@ -27,7 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 STORE_CFLAGS = $(UTILS_CFLAGS)
-STORE_LIBS = libstore.a $(UTILS_LIBS)
+STORE_LIBS = libstore.a libengine.a $(UTILS_LIBS)
 
 noinst_LIBRARIES += libstore.a
 libstore_a_CPPFLAGS = -DKYUA_STOREDIR=\"$(storedir)\"
