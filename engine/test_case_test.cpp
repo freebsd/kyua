@@ -130,14 +130,6 @@ ATF_TEST_CASE_BODY(test_case_id__public_fields)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(test_case_id__str)
-ATF_TEST_CASE_BODY(test_case_id__str)
-{
-    const engine::test_case_id id(fs::path("dir/program"), "case1");
-    ATF_REQUIRE_EQ("dir/program:case1", id.str());
-}
-
-
 ATF_TEST_CASE_WITHOUT_HEAD(test_case_id__operator_lt)
 ATF_TEST_CASE_BODY(test_case_id__operator_lt)
 {
@@ -230,7 +222,6 @@ ATF_TEST_CASE_BODY(base_test_case__run__delegate)
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, test_case_id__public_fields);
-    ATF_ADD_TEST_CASE(tcs, test_case_id__str);
     ATF_ADD_TEST_CASE(tcs, test_case_id__operator_lt);
     ATF_ADD_TEST_CASE(tcs, test_case_id__operator_eq);
     ATF_ADD_TEST_CASE(tcs, test_case_id__use_as_key);

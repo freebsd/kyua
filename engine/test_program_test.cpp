@@ -102,7 +102,9 @@ ATF_TEST_CASE_BODY(test_cases__get)
                                          "suite-name");
     const engine::test_cases_vector& test_cases = test_program.test_cases();
     ATF_REQUIRE_EQ(1, test_cases.size());
-    ATF_REQUIRE_EQ("binary:foo", test_cases[0]->identifier().str());
+    ATF_REQUIRE_EQ(fs::path("binary"),
+                   test_cases[0]->test_program().relative_path());
+    ATF_REQUIRE_EQ("foo", test_cases[0]->name());
 }
 
 

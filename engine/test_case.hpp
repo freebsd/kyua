@@ -67,8 +67,6 @@ struct test_case_id {
 
     test_case_id(const utils::fs::path&, const std::string&);
 
-    std::string str(void) const;
-
     bool operator<(const test_case_id&) const;
     bool operator==(const test_case_id&) const;
 };

@@ -53,16 +53,6 @@ engine::test_case_id::test_case_id(const fs::path& program_,
 }
 
 
-/// Generate a unique test case identifier.
-///
-/// \return The formatted test case identifier.
-std::string
-engine::test_case_id::str(void) const
-{
-    return F("%s:%s") % program % name;
-}
-
-
 /// Less-than comparator.
 ///
 /// This is provided to make identifiers useful as map keys.

@@ -156,7 +156,7 @@ class execute_test_case_body {
         args.push_back(F("-s%s") % abs_test_program.branch_path());
         config_to_args(_config, _test_case.test_program().test_suite_name(),
                        args);
-        args.push_back(_test_case.identifier().name);
+        args.push_back(_test_case.name());
         process::exec(abs_test_program, args);
     }
 
@@ -238,7 +238,7 @@ public:
         args.push_back(F("-s%s") % abs_test_program.branch_path());
         config_to_args(_config, _test_case.test_program().test_suite_name(),
                        args);
-        args.push_back(F("%s:cleanup") % _test_case.identifier().name);
+        args.push_back(F("%s:cleanup") % _test_case.name());
         process::exec(abs_test_program, args);
     }
 };
@@ -289,7 +289,7 @@ public:
 
         engine::check_interrupt();
 
-        LI(F("Running test case body for '%s'") % _test_case.identifier().str());
+        LI(F("Running test case body of '%s'") % _test_case.name());
         optional< process::status > body_status;
         try {
             body_status = engine::fork_and_wait(
@@ -305,8 +305,7 @@ public:
 
         optional< process::status > cleanup_status;
         if (_test_case.has_cleanup()) {
-            LI(F("Running test case cleanup for '%s'") %
-               _test_case.identifier().str());
+            LI(F("Running test case cleanup of '%s'") % _test_case.name());
             cleanup_status = engine::fork_and_wait(
                 execute_test_case_cleanup(_test_case, rundir, _config),
                 workdir / "cleanup-stdout.txt", workdir / "cleanup-stderr.txt",
@@ -344,7 +343,7 @@ atf_iface::run_test_case(const atf_iface::test_case& test_case,
                          const optional< fs::path >& stdout_path,
                          const optional< fs::path >& stderr_path)
 {
-    LI(F("Processing test case '%s'") % test_case.identifier().str());
+    LI(F("Processing test case '%s'") % test_case.name());
 
     try {
         const std::string skip_reason = test_case.check_requirements(config);

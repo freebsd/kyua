@@ -67,7 +67,8 @@ public:
     got_result(const engine::test_case_id& id,
                const engine::test_result& result)
     {
-        _ui->out(F("%s  ->  %s") % id.str() % cli::format_result(result));
+        _ui->out(F("%s  ->  %s") % cli::format_test_case_id(id) %
+                 cli::format_result(result));
         if (result.good())
             good_count++;
         else

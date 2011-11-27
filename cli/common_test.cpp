@@ -34,6 +34,7 @@
 #include "engine/exceptions.hpp"
 #include "engine/filters.hpp"
 #include "engine/test_case.hpp"
+#include "engine/test_program.hpp"
 #include "engine/test_result.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/globals.hpp"
@@ -44,6 +45,7 @@
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
+#include "utils/sanity.hpp"
 #include "utils/test_utils.hpp"
 
 namespace cmdline = utils::cmdline;
@@ -62,6 +64,63 @@ mkfilter(const char* test_program, const char* test_case)
 {
     return engine::test_filter(fs::path(test_program), test_case);
 }
+
+
+/// Fake implementation of a test program.
+class mock_test_program : public engine::base_test_program {
+public:
+    /// Constructs a new test program.
+    ///
+    /// \param binary_ The name of the test program binary.
+    mock_test_program(const fs::path& binary_) :
+        base_test_program(binary_, fs::path("unused-root"), "unused-suite-name")
+    {
+    }
+
+    /// Gets the list of test cases from the test program.
+    ///
+    /// \return Nothing; this method is not supposed to be called.
+    engine::test_cases_vector
+    load_test_cases(void) const
+    {
+        UNREACHABLE;
+    }
+};
+
+
+// Fake implementation of a test case.
+class mock_test_case : public engine::base_test_case {
+    /// Gets the collection of metadata properties of the test case.
+    ///
+    /// \return A static collection of properties for testing purposes.
+    engine::properties_map
+    get_all_properties(void) const
+    {
+        return engine::properties_map();
+    }
+
+    /// Fakes the execution of a test case.
+    ///
+    /// \return Nothing; this method is not supposed to be called.
+    engine::test_result
+    execute(const user_files::config& UTILS_UNUSED_PARAM(config),
+            const optional< fs::path >& UTILS_UNUSED_PARAM(stdout_path),
+            const optional< fs::path >& UTILS_UNUSED_PARAM(stderr_path)) const
+    {
+        UNREACHABLE;
+    }
+
+public:
+    /// Constructs a new test case.
+    ///
+    /// \param test_program_ The test program this test case belongs to.
+    /// \param name_ The name of the test case within the test program.
+    mock_test_case(const engine::base_test_program& test_program_,
+                   const std::string& name_) :
+        base_test_case(test_program_, name_)
+    {
+    }
+};
 
 
 }  // anonymous namespace
@@ -285,6 +344,23 @@ ATF_TEST_CASE_BODY(format_result__with_reason)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(format_test_case_id__from_test_case);
+ATF_TEST_CASE_BODY(format_test_case_id__from_test_case)
+{
+    const mock_test_program test_program(fs::path("foo/bar/baz"));
+    const mock_test_case test_case(test_program, "abc");
+    ATF_REQUIRE_EQ("foo/bar/baz:abc", cli::format_test_case_id(test_case));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(format_test_case_id__from_id);
+ATF_TEST_CASE_BODY(format_test_case_id__from_id)
+{
+    const engine::test_case_id id(fs::path("foo/bar"), "some-test");
+    ATF_REQUIRE_EQ("foo/bar:some-test", cli::format_test_case_id(id));
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, get_home__ok);
@@ -309,4 +385,7 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, format_result__no_reason);
     ATF_ADD_TEST_CASE(tcs, format_result__with_reason);
+
+    ATF_ADD_TEST_CASE(tcs, format_test_case_id__from_test_case);
+    ATF_ADD_TEST_CASE(tcs, format_test_case_id__from_id);
 }

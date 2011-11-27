@@ -49,8 +49,9 @@ class path;
 }  // namespace utils
 
 namespace engine {
-struct test_case_id;
+class base_test_case;
 struct test_filter;
+struct test_case_id;
 class test_result;
 namespace user_files {
 struct config;
@@ -89,6 +90,8 @@ bool report_unused_filters(const std::set< engine::test_filter >&,
                            utils::cmdline::ui*);
 
 std::string format_result(const engine::test_result&);
+std::string format_test_case_id(const engine::base_test_case&);
+std::string format_test_case_id(const engine::test_case_id&);
 
 
 }  // namespace cli

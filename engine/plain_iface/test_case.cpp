@@ -198,7 +198,7 @@ public:
             dynamic_cast< const plain_iface::test_program* >(
                 &_test_case.test_program());
 
-        LI(F("Running test case '%s'") % _test_case.identifier().str());
+        LI(F("Running test case '%s'") % _test_case.name());
         optional< process::status > body_status = engine::fork_and_wait(
             execute_test_case(_test_case, rundir),
             _stdout_path.get_default(workdir / "stdout.txt"),
@@ -263,7 +263,7 @@ plain_iface::test_case::execute(
     const optional< fs::path >& stdout_path,
     const optional< fs::path >& stderr_path) const
 {
-    LI(F("Processing test case '%s'") % identifier().str());
+    LI(F("Processing test case '%s'") % name());
 
     try {
         return engine::protected_run(run_test_case_safe(*this, stdout_path,

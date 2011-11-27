@@ -92,11 +92,11 @@ void
 cli::detail::list_test_case(cmdline::ui* ui, const bool verbose,
                             const engine::base_test_case& test_case)
 {
+    const std::string id = format_test_case_id(test_case);
     if (!verbose) {
-        ui->out(test_case.identifier().str());
+        ui->out(id);
     } else {
-        ui->out(F("%s (%s)") % test_case.identifier().str() %
-                test_case.test_program().test_suite_name());
+        ui->out(F("%s (%s)") % id % test_case.test_program().test_suite_name());
 
         const engine::properties_map props = test_case.all_properties();
         for (engine::properties_map::const_iterator iter = props.begin();

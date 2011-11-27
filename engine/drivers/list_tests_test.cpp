@@ -49,6 +49,7 @@ extern "C" {
 #include "engine/filters.hpp"
 #include "engine/user_files/kyuafile.hpp"
 #include "utils/env.hpp"
+#include "utils/format/macros.hpp"
 
 namespace atf_iface = engine::atf_iface;
 namespace list_tests = engine::drivers::list_tests;
@@ -79,7 +80,9 @@ public:
     virtual void
     got_test_case(const engine::base_test_case& test_case)
     {
-        test_cases.insert(test_case.identifier().str());
+        test_cases.insert(F("%s:%s") %
+                          test_case.test_program().relative_path() %
+                          test_case.name());
     }
 };
 

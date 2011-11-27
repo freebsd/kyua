@@ -85,7 +85,7 @@ cmd_debug::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
         cmdline.get_option< cmdline::path_option >("stdout"),
         cmdline.get_option< cmdline::path_option >("stderr"));
 
-    ui->out(F("%s  ->  %s") % result.test_id.str() %
+    ui->out(F("%s  ->  %s") % format_test_case_id(result.test_id) %
             cli::format_result(result.test_result));
 
     return result.test_result.good() ? EXIT_SUCCESS : EXIT_FAILURE;

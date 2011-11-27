@@ -30,6 +30,8 @@
 
 #include "cli/common.hpp"
 #include "engine/filters.hpp"
+#include "engine/test_case.hpp"
+#include "engine/test_program.hpp"
 #include "engine/test_result.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.ipp"
@@ -206,4 +208,29 @@ cli::format_result(const engine::test_result& result)
         text += ": " + result.reason();
 
     return text;
+}
+
+
+/// Formats the identifier of a test case for user presentation.
+///
+/// \param test_case The test case whose identifier to format.
+///
+/// \return A string representing the test case uniquely within a test suite.
+std::string
+cli::format_test_case_id(const engine::base_test_case& test_case)
+{
+    return F("%s:%s") % test_case.test_program().relative_path() %
+        test_case.name();
+}
+
+
+/// Formats the identifier of a test case for user presentation.
+///
+/// \param test_case_id The test case identifier.
+///
+/// \return A string representing the test case uniquely within a test suite.
+std::string
+cli::format_test_case_id(const engine::test_case_id& test_case_id)
+{
+    return F("%s:%s") % test_case_id.program % test_case_id.name;
 }
