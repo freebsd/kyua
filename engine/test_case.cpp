@@ -40,46 +40,6 @@ using utils::none;
 using utils::optional;
 
 
-/// Constructs a new test case identifier.
-///
-/// \param program_ Name of the test program containing the test case.
-/// \param name_ Name of the test case.  This name comes from its "ident"
-///     meta-data property.
-engine::test_case_id::test_case_id(const fs::path& program_,
-                                   const std::string& name_) :
-    program(program_),
-    name(name_)
-{
-}
-
-
-/// Less-than comparator.
-///
-/// This is provided to make identifiers useful as map keys.
-///
-/// \param id The identifier to compare to.
-///
-/// \return True if this identifier sorts before the other identifier; false
-///     otherwise.
-bool
-engine::test_case_id::operator<(const test_case_id& id) const
-{
-    return program < id.program || name < id.name;
-}
-
-
-/// Equality comparator.
-///
-/// \param id The identifier to compare to.
-///
-/// \returns True if the two identifiers are equal; false otherwise.
-bool
-engine::test_case_id::operator==(const test_case_id& id) const
-{
-    return program == id.program && name == id.name;
-}
-
-
 /// Internal implementation for a base_test_case.
 struct engine::base_test_case::base_impl {
     /// Test program this test case belongs to.
@@ -138,19 +98,6 @@ const std::string&
 engine::base_test_case::name(void) const
 {
     return _pbimpl->name;
-}
-
-
-/// Generates a unique identifier for the test case.
-///
-/// The identifier is unique within the instance of Kyua because we assume that
-/// only one test suite is processed at a time.
-///
-/// \return The test case identifier.
-engine::test_case_id
-engine::base_test_case::identifier(void) const
-{
-    return test_case_id(_pbimpl->test_program.relative_path(), _pbimpl->name);
 }
 
 

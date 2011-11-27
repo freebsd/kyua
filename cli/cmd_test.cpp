@@ -64,10 +64,10 @@ public:
     }
 
     virtual void
-    got_result(const engine::test_case_id& id,
+    got_result(const engine::test_case_ptr& test_case,
                const engine::test_result& result)
     {
-        _ui->out(F("%s  ->  %s") % cli::format_test_case_id(id) %
+        _ui->out(F("%s  ->  %s") % cli::format_test_case_id(*test_case) %
                  cli::format_result(result));
         if (result.good())
             good_count++;

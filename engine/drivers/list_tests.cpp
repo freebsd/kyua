@@ -58,7 +58,7 @@ list_test_program(const engine::base_test_program& test_program,
          iter != test_cases.end(); iter++) {
         const engine::test_case_ptr tc = *iter;
 
-        if (filters.match_test_case(tc->identifier()))
+        if (filters.match_test_case(test_program.relative_path(), tc->name()))
             hooks.got_test_case(*tc);
     }
 }

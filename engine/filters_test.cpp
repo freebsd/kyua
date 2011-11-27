@@ -47,14 +47,6 @@ mkfilter(const char* test_program, const char* test_case)
 }
 
 
-/// Syntactic sugar to instantiate engine::test_case_id objects.
-inline engine::test_case_id
-mkid(const char* test_program, const char* test_case)
-{
-    return engine::test_case_id(fs::path(test_program), test_case);
-}
-
-
 }  // anonymous namespace
 
 
@@ -219,30 +211,30 @@ ATF_TEST_CASE_BODY(test_filter__matches_test_case)
 {
     {
         const engine::test_filter f(fs::path("top"), "foo");
-        ATF_REQUIRE( f.matches_test_case(mkid("top", "foo")));
-        ATF_REQUIRE(!f.matches_test_case(mkid("top", "bar")));
+        ATF_REQUIRE( f.matches_test_case(fs::path("top"), "foo"));
+        ATF_REQUIRE(!f.matches_test_case(fs::path("top"), "bar"));
     }
 
     {
         const engine::test_filter f(fs::path("top"), "");
-        ATF_REQUIRE( f.matches_test_case(mkid("top", "foo")));
-        ATF_REQUIRE( f.matches_test_case(mkid("top", "bar")));
-        ATF_REQUIRE(!f.matches_test_case(mkid("top2", "foo")));
+        ATF_REQUIRE( f.matches_test_case(fs::path("top"), "foo"));
+        ATF_REQUIRE( f.matches_test_case(fs::path("top"), "bar"));
+        ATF_REQUIRE(!f.matches_test_case(fs::path("top2"), "foo"));
     }
 
     {
         const engine::test_filter f(fs::path("d1/d2/prog"), "t1");
-        ATF_REQUIRE( f.matches_test_case(mkid("d1/d2/prog", "t1")));
-        ATF_REQUIRE(!f.matches_test_case(mkid("d1/d2/prog", "t2")));
+        ATF_REQUIRE( f.matches_test_case(fs::path("d1/d2/prog"), "t1"));
+        ATF_REQUIRE(!f.matches_test_case(fs::path("d1/d2/prog"), "t2"));
     }
 
     {
         const engine::test_filter f(fs::path("d1/d2"), "");
-        ATF_REQUIRE( f.matches_test_case(mkid("d1/d2/prog", "t1")));
-        ATF_REQUIRE( f.matches_test_case(mkid("d1/d2/prog", "t2")));
-        ATF_REQUIRE( f.matches_test_case(mkid("d1/d2/prog2", "t2")));
-        ATF_REQUIRE(!f.matches_test_case(mkid("d1/d3", "foo")));
-        ATF_REQUIRE(!f.matches_test_case(mkid("d2", "foo")));
+        ATF_REQUIRE( f.matches_test_case(fs::path("d1/d2/prog"), "t1"));
+        ATF_REQUIRE( f.matches_test_case(fs::path("d1/d2/prog"), "t2"));
+        ATF_REQUIRE( f.matches_test_case(fs::path("d1/d2/prog2"), "t2"));
+        ATF_REQUIRE(!f.matches_test_case(fs::path("d1/d3"), "foo"));
+        ATF_REQUIRE(!f.matches_test_case(fs::path("d2"), "foo"));
     }
 }
 
@@ -313,11 +305,11 @@ ATF_TEST_CASE_BODY(test_filters__match_test_case__no_filters)
     const engine::test_filters filters(raw_filters);
     engine::test_filters::match match;
 
-    match = filters.match_test_case(mkid("foo", "baz"));
+    match = filters.match_test_case(fs::path("foo"), "baz");
     ATF_REQUIRE(match.first);
     ATF_REQUIRE(!match.second);
 
-    match = filters.match_test_case(mkid("foo/bar", "baz"));
+    match = filters.match_test_case(fs::path("foo/bar"), "baz");
     ATF_REQUIRE(match.first);
     ATF_REQUIRE(!match.second);
 }
@@ -335,33 +327,33 @@ ATF_TEST_CASE_BODY(test_filters__match_test_case__some_filters)
     const engine::test_filters filters(raw_filters);
     engine::test_filters::match match;
 
-    match = filters.match_test_case(mkid("top_test", "a"));
+    match = filters.match_test_case(fs::path("top_test"), "a");
     ATF_REQUIRE(match.first);
     ATF_REQUIRE_EQ("top_test", match.second.get().str());
 
-    match = filters.match_test_case(mkid("subdir_1/foo", "a"));
+    match = filters.match_test_case(fs::path("subdir_1/foo"), "a");
     ATF_REQUIRE(match.first);
     ATF_REQUIRE_EQ("subdir_1", match.second.get().str());
 
-    match = filters.match_test_case(mkid("subdir_1/bar", "z"));
+    match = filters.match_test_case(fs::path("subdir_1/bar"), "z");
     ATF_REQUIRE(match.first);
     ATF_REQUIRE_EQ("subdir_1", match.second.get().str());
 
-    match = filters.match_test_case(mkid("subdir_2/a_test", "bar"));
+    match = filters.match_test_case(fs::path("subdir_2/a_test"), "bar");
     ATF_REQUIRE(match.first);
     ATF_REQUIRE_EQ("subdir_2/a_test", match.second.get().str());
 
-    match = filters.match_test_case(mkid("subdir_2/b_test", "foo"));
+    match = filters.match_test_case(fs::path("subdir_2/b_test"), "foo");
     ATF_REQUIRE(match.first);
     ATF_REQUIRE_EQ("subdir_2/b_test:foo", match.second.get().str());
 
-    match = filters.match_test_case(mkid("subdir_2/b_test", "bar"));
+    match = filters.match_test_case(fs::path("subdir_2/b_test"), "bar");
     ATF_REQUIRE(!match.first);
 
-    match = filters.match_test_case(mkid("subdir_2/c_test", "foo"));
+    match = filters.match_test_case(fs::path("subdir_2/c_test"), "foo");
     ATF_REQUIRE(!match.first);
 
-    match = filters.match_test_case(mkid("subdir_3", "hello"));
+    match = filters.match_test_case(fs::path("subdir_3"), "hello");
     ATF_REQUIRE(!match.first);
 }
 
@@ -496,15 +488,11 @@ ATF_TEST_CASE_BODY(filters_state__match_test_case)
     filters.insert(mkfilter("baz", "tc"));
     engine::filters_state state(filters);
 
-    ATF_REQUIRE(state.match_test_case(engine::test_case_id(
-        fs::path("foo/bar/something"), "any")));
-    ATF_REQUIRE(state.match_test_case(engine::test_case_id(
-        fs::path("baz"), "tc")));
+    ATF_REQUIRE(state.match_test_case(fs::path("foo/bar/something"), "any"));
+    ATF_REQUIRE(state.match_test_case(fs::path("baz"), "tc"));
 
-    ATF_REQUIRE(!state.match_test_case(engine::test_case_id(
-        fs::path("foo/baz/something"), "tc")));
-    ATF_REQUIRE(!state.match_test_case(engine::test_case_id(
-        fs::path("baz"), "tc2")));
+    ATF_REQUIRE(!state.match_test_case(fs::path("foo/baz/something"), "tc"));
+    ATF_REQUIRE(!state.match_test_case(fs::path("baz"), "tc2"));
 }
 
 
@@ -517,9 +505,9 @@ ATF_TEST_CASE_BODY(filters_state__unused__none)
     filters.insert(mkfilter("hey/d", "yes"));
     engine::filters_state state(filters);
 
-    state.match_test_case(engine::test_case_id(fs::path("a/b/c"), "any"));
-    state.match_test_case(engine::test_case_id(fs::path("baz"), "tc"));
-    state.match_test_case(engine::test_case_id(fs::path("hey/d"), "yes"));
+    state.match_test_case(fs::path("a/b/c"), "any");
+    state.match_test_case(fs::path("baz"), "tc");
+    state.match_test_case(fs::path("hey/d"), "yes");
 
     ATF_REQUIRE(state.unused().empty());
 }
@@ -535,7 +523,7 @@ ATF_TEST_CASE_BODY(filters_state__unused__some)
     engine::filters_state state(filters);
 
     state.match_test_program(fs::path("a/b/c"));
-    state.match_test_case(engine::test_case_id(fs::path("baz"), "tc"));
+    state.match_test_case(fs::path("baz"), "tc");
 
     std::set< engine::test_filter > exp_unused;
     exp_unused.insert(mkfilter("a/b", ""));

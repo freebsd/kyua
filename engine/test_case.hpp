@@ -52,26 +52,6 @@ class test_result;
 typedef std::map< std::string, std::string > properties_map;
 
 
-/// Representation of a test case identifier.
-///
-/// A test case identifier is a unique value that identifies the test case
-/// inside a particular test suite.  Given that the program is only supposed to
-/// deal with one test suite at a time, we can assume that the test case
-/// identifier is unique within the program.
-struct test_case_id {
-    /// Name of the test program containing the test case.
-    utils::fs::path program;
-
-    /// Name of the test case within the test program.
-    std::string name;
-
-    test_case_id(const utils::fs::path&, const std::string&);
-
-    bool operator<(const test_case_id&) const;
-    bool operator==(const test_case_id&) const;
-};
-
-
 class base_test_program;
 
 namespace user_files {
@@ -96,7 +76,6 @@ public:
 
     const base_test_program& test_program(void) const;
     const std::string& name(void) const;
-    test_case_id identifier(void) const;
 
     properties_map all_properties(void) const;
     test_result debug(const user_files::config&,

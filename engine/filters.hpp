@@ -47,9 +47,6 @@
 namespace engine {
 
 
-struct test_case_id;
-
-
 /// Filter for test cases.
 ///
 /// A filter is one of: the name of a directory containing test cases, the name
@@ -69,7 +66,7 @@ struct test_filter {
 
     bool contains(const test_filter&) const;
     bool matches_test_program(const utils::fs::path&) const;
-    bool matches_test_case(const engine::test_case_id&) const;
+    bool matches_test_case(const utils::fs::path&, const std::string&) const;
 
     bool operator<(const test_filter&) const;
     bool operator==(const test_filter&) const;
@@ -97,7 +94,7 @@ public:
     typedef std::pair< bool, utils::optional< test_filter > > match;
 
     bool match_test_program(const utils::fs::path&) const;
-    match match_test_case(const engine::test_case_id&) const;
+    match match_test_case(const utils::fs::path&, const std::string&) const;
 
     std::set< test_filter > difference(const std::set< test_filter >&) const;
 };
@@ -115,7 +112,7 @@ public:
     explicit filters_state(const std::set< test_filter >&);
 
     bool match_test_program(const utils::fs::path&) const;
-    bool match_test_case(const test_case_id&);
+    bool match_test_case(const utils::fs::path&, const std::string&);
 
     std::set< test_filter > unused(void) const;
 };

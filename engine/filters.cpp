@@ -154,15 +154,16 @@ engine::test_filter::matches_test_program(const fs::path& test_program_) const
 
 /// Checks if this filter matches a given test case identifier.
 ///
+/// \param test_program_ The test program to compare to.
 /// \param test_case_ The test case to compare to.
 ///
 /// \return Whether the filter matches the test case.
 bool
-engine::test_filter::matches_test_case(const test_case_id& test_case_)
-    const
+engine::test_filter::matches_test_case(const fs::path& test_program_,
+                                       const std::string& test_case_) const
 {
-    if (matches_test_program(test_case_.program)) {
-        return test_case.empty() || test_case == test_case_.name;
+    if (matches_test_program(test_program_)) {
+        return test_case.empty() || test_case == test_case_;
     } else
         return false;
 }
@@ -243,26 +244,28 @@ engine::test_filters::match_test_program(const fs::path& name) const
 
 /// Checks if a given test case identifier matches the set of filters.
 ///
-/// \param id The identifier to check against the filters.
+/// \param test_program The test program to check against the filters.
+/// \param test_case The test case to check against the filters.
 ///
 /// \return A boolean indicating if the test case is matched by any filter and,
 /// if true, a string containing the filter name.  The string is empty when
 /// there are no filters defined.
 engine::test_filters::match
-engine::test_filters::match_test_case(const test_case_id& id) const
+engine::test_filters::match_test_case(const fs::path& test_program,
+                                      const std::string& test_case) const
 {
     if (_filters.empty()) {
-        INV(match_test_program(id.program));
+        INV(match_test_program(test_program));
         return match(true, none);
     }
 
     optional< test_filter > found = none;
     for (std::set< test_filter >::const_iterator iter = _filters.begin();
          !found && iter != _filters.end(); iter++) {
-        if ((*iter).matches_test_case(id))
+        if ((*iter).matches_test_case(test_program, test_case))
             found = *iter;
     }
-    INV(!found || match_test_program(id.program));
+    INV(!found || match_test_program(test_program));
     return match(static_cast< bool >(found), found);
 }
 
@@ -340,13 +343,16 @@ engine::filters_state::match_test_program(const fs::path& test_program) const
 
 /// Checks whether these filters match the given test case.
 ///
+/// \param test_program The test program to match against.
 /// \param test_case The test case to match against.
 ///
 /// \return True if these filters match the given test case identifier.
 bool
-engine::filters_state::match_test_case(const test_case_id& test_case)
+engine::filters_state::match_test_case(const fs::path& test_program,
+                                       const std::string& test_case)
 {
-    engine::test_filters::match match = _filters.match_test_case(test_case);
+    engine::test_filters::match match = _filters.match_test_case(
+        test_program, test_case);
     if (match.first && match.second)
         _used_filters.insert(match.second.get());
     return match.first;

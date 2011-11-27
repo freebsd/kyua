@@ -675,7 +675,9 @@ atf_iface::test_case::get_all_properties(void) const
 bool
 atf_iface::test_case::operator==(const test_case& tc) const
 {
-    return identifier() == tc.identifier() &&
+    return
+        test_program().relative_path() == tc.test_program().relative_path() &&
+        name() == tc.name() &&
         _pimpl->description == tc._pimpl->description &&
         _pimpl->has_cleanup == tc._pimpl->has_cleanup &&
         _pimpl->allowed_architectures == tc._pimpl->allowed_architectures &&

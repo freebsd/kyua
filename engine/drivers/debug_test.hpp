@@ -49,19 +49,29 @@ namespace debug_test {
 
 /// Tuple containing the results of this driver.
 struct result {
-    /// The identifier of the executed test case.
-    test_case_id test_id;
+    /// The name of the executed test case.
+    ///
+    /// \todo This is a huge hack.  We cannot return an engine::test_case
+    /// instance because test cases depend on their enclosing test programs to
+    /// remain alive.  However, because this result is consumed after drive()
+    /// has finalized (and thus all temporary objects have been destroyed), the
+    /// test case object becomes invalid.  I believe we should get rid of the
+    /// cyclic dependency between test cases and test programs to make this a
+    /// non-issue.  Alternatively, we might consider feeding back this
+    /// information to the caller in the form of a hook, so that all the active
+    /// objects remain alive.
+    std::string test_case;
 
     /// The result of the test case.
     engine::test_result test_result;
 
     /// Initializer for the tuple's fields.
     ///
-    /// \param test_id_ The identifier of the test case.
+    /// \param test_case_ The matched test case.
     /// \param test_result_ The result of the test case.
-    result(const test_case_id& test_id_,
+    result(const std::string& test_case_,
            const engine::test_result& test_result_) :
-        test_id(test_id_),
+        test_case(test_case_),
         test_result(test_result_)
     {
     }

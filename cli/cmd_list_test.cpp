@@ -64,7 +64,6 @@ ATF_TEST_CASE_BODY(list_test_case__no_verbose)
 ATF_TEST_CASE_WITHOUT_HEAD(list_test_case__verbose__no_properties);
 ATF_TEST_CASE_BODY(list_test_case__verbose__no_properties)
 {
-    const engine::test_case_id id(fs::path("hello/world"), "my_name");
     engine::properties_map properties;
     const atf_iface::test_program test_program(fs::path("hello/world"),
                                                fs::path("root"), "the-suite");
@@ -83,7 +82,6 @@ ATF_TEST_CASE_BODY(list_test_case__verbose__no_properties)
 ATF_TEST_CASE_WITHOUT_HEAD(list_test_case__verbose__some_properties);
 ATF_TEST_CASE_BODY(list_test_case__verbose__some_properties)
 {
-    const engine::test_case_id id(fs::path("hello/world"), "my_name");
     engine::properties_map properties;
     properties["descr"] = "Some description";
     properties["has.cleanup"] = "true";

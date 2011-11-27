@@ -74,14 +74,15 @@ run_test_program(const engine::base_test_program& test_program,
          iter != test_cases.end(); iter++) {
         const engine::test_case_ptr test_case = *iter;
 
-        if (!filters.match_test_case(test_case->identifier()))
+        if (!filters.match_test_case(test_program.relative_path(),
+                                     test_case->name()))
             continue;
 
         const int64_t test_case_id = tx.put_test_case(*test_case,
                                                       test_program_id);
         const engine::test_result result = test_case->run(config);
         tx.put_result(result, test_case_id);
-        hooks.got_result(test_case->identifier(), result);
+        hooks.got_result(test_case, result);
     }
 }
 

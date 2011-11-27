@@ -43,6 +43,7 @@ extern "C" {
 #include <set>
 
 #include "engine/filters.hpp"
+#include "engine/test_case.hpp"
 #include "engine/user_files/config.hpp"
 #include "utils/fs/path.hpp"
 
@@ -59,9 +60,9 @@ public:
 
     /// Called when a result of a test case becomes available.
     ///
-    /// \param id The identifier of the test case.
+    /// \param test_case The test case.
     /// \param result The result of the execution of the test case.
-    virtual void got_result(const engine::test_case_id& id,
+    virtual void got_result(const engine::test_case_ptr& test_case,
                             const engine::test_result& result) = 0;
 };
 

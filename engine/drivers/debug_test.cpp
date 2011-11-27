@@ -73,7 +73,8 @@ find_test_case(const engine::test_filter& filter,
              iter = test_cases.begin(); iter != test_cases.end(); iter++) {
             const engine::test_case_ptr tc = *iter;
 
-            if (filter.matches_test_case(tc->identifier())) {
+            if (filter.matches_test_case(test_program->relative_path(),
+                                         tc->name())) {
                 if (found.get() != NULL)
                     throw std::runtime_error(F("The filter '%s' matches more "
                                                "than one test case") %
@@ -114,5 +115,6 @@ debug_test::drive(const fs::path& kyuafile_path, const test_filter& filter,
     const engine::test_case_ptr test_case = find_test_case(filter, kyuafile);
     const engine::test_result test_result = test_case->debug(
         config, stdout_path, stderr_path);
-    return result(test_case->identifier(), test_result);
+    return result(F("%s:%s") % test_case->test_program().relative_path() %
+                  test_case->name(), test_result);
 }

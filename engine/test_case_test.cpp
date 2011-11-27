@@ -26,8 +26,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <set>
-
 #include <atf-c++.hpp>
 
 #include "engine/test_case.hpp"
@@ -121,60 +119,6 @@ public:
 }  // anonymous namespace
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(test_case_id__public_fields)
-ATF_TEST_CASE_BODY(test_case_id__public_fields)
-{
-    const engine::test_case_id id(fs::path("program"), "name");
-    ATF_REQUIRE_EQ(fs::path("program"), id.program);
-    ATF_REQUIRE_EQ("name", id.name);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(test_case_id__operator_lt)
-ATF_TEST_CASE_BODY(test_case_id__operator_lt)
-{
-    ATF_REQUIRE(engine::test_case_id(fs::path("a"), "b") <
-                engine::test_case_id(fs::path("c"), "a"));
-
-    ATF_REQUIRE(engine::test_case_id(fs::path("a"), "b") <
-                engine::test_case_id(fs::path("a"), "c"));
-
-    ATF_REQUIRE(!(engine::test_case_id(fs::path("a"), "b") <
-                  engine::test_case_id(fs::path("a"), "a")));
-
-    ATF_REQUIRE(!(engine::test_case_id(fs::path("b"), "a") <
-                  engine::test_case_id(fs::path("a"), "a")));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(test_case_id__operator_eq)
-ATF_TEST_CASE_BODY(test_case_id__operator_eq)
-{
-    ATF_REQUIRE(engine::test_case_id(fs::path("a"), "b") ==
-                engine::test_case_id(fs::path("a"), "b"));
-
-    ATF_REQUIRE(!(engine::test_case_id(fs::path("a"), "a") ==
-                  engine::test_case_id(fs::path("a"), "b")));
-
-    ATF_REQUIRE(!(engine::test_case_id(fs::path("a"), "b") ==
-                  engine::test_case_id(fs::path("b"), "b")));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(test_case_id__use_as_key)
-ATF_TEST_CASE_BODY(test_case_id__use_as_key)
-{
-    std::set< engine::test_case_id > ids;
-    const engine::test_case_id id(fs::path("foo"), "bar");
-    ids.insert(id);
-    ATF_REQUIRE(ids.find(id) != ids.end());
-    ATF_REQUIRE(ids.find(engine::test_case_id(fs::path("foo"), "b")) ==
-                ids.end());
-    ATF_REQUIRE(ids.find(engine::test_case_id(fs::path("f"), "bar")) ==
-                ids.end());
-}
-
-
 ATF_TEST_CASE_WITHOUT_HEAD(base_test_case__ctor_and_getters)
 ATF_TEST_CASE_BODY(base_test_case__ctor_and_getters)
 {
@@ -182,16 +126,6 @@ ATF_TEST_CASE_BODY(base_test_case__ctor_and_getters)
     const mock_test_case test_case(test_program, "foo");
     ATF_REQUIRE_EQ(&test_program, &test_case.test_program());
     ATF_REQUIRE_EQ("foo", test_case.name());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(base_test_case__identifier)
-ATF_TEST_CASE_BODY(base_test_case__identifier)
-{
-    const mock_test_program test_program(fs::path("foo"));
-    const mock_test_case test_case(test_program, "bar");
-    ATF_REQUIRE(engine::test_case_id(fs::path("foo"), "bar") ==
-                test_case.identifier());
 }
 
 
@@ -221,13 +155,7 @@ ATF_TEST_CASE_BODY(base_test_case__run__delegate)
 
 ATF_INIT_TEST_CASES(tcs)
 {
-    ATF_ADD_TEST_CASE(tcs, test_case_id__public_fields);
-    ATF_ADD_TEST_CASE(tcs, test_case_id__operator_lt);
-    ATF_ADD_TEST_CASE(tcs, test_case_id__operator_eq);
-    ATF_ADD_TEST_CASE(tcs, test_case_id__use_as_key);
-
     ATF_ADD_TEST_CASE(tcs, base_test_case__ctor_and_getters);
-    ATF_ADD_TEST_CASE(tcs, base_test_case__identifier);
     ATF_ADD_TEST_CASE(tcs, base_test_case__all_properties__delegate);
     ATF_ADD_TEST_CASE(tcs, base_test_case__run__delegate);
 }
