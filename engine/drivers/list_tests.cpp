@@ -47,9 +47,6 @@ namespace {
 ///     print.  These filters are updated on output to mark which of them
 ///     actually matched a test case.
 /// \param hooks The runtime hooks.
-///
-/// \throw engine::error If there is any problem gathering the test case list
-///     from the test program.
 static void
 list_test_program(const engine::base_test_program& test_program,
                   engine::filters_state& filters,
@@ -100,11 +97,7 @@ list_tests::drive(const fs::path& kyuafile_path,
         if (!filters.match_test_program(test_program->relative_path()))
             continue;
 
-        try {
-            list_test_program(*test_program, filters, hooks);
-        } catch (const engine::error& e) {
-            hooks.got_bogus_test_program(*test_program, e.what());
-        }
+        list_test_program(*test_program, filters, hooks);
     }
 
     return result(filters.unused());

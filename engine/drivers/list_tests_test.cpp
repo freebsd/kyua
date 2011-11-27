@@ -74,15 +74,7 @@ helpers(const atf::tests::tc* test_case)
 
 class capture_hooks : public list_tests::base_hooks {
 public:
-    std::map< std::string, std::string > bogus_test_programs;
     std::set< std::string > test_cases;
-
-    virtual void
-    got_bogus_test_program(const engine::base_test_program& test_program,
-                           const std::string& reason)
-    {
-        bogus_test_programs[test_program.relative_path().str()] = reason;
-    }
 
     virtual void
     got_test_case(const engine::base_test_case& test_case)
@@ -133,7 +125,6 @@ ATF_TEST_CASE_BODY(one_test_case)
     std::set< std::string > exp_test_cases;
     exp_test_cases.insert("dir/program:some_properties");
     ATF_REQUIRE(exp_test_cases == hooks.test_cases);
-    ATF_REQUIRE(hooks.bogus_test_programs.empty());
 }
 
 
@@ -148,7 +139,6 @@ ATF_TEST_CASE_BODY(many_test_cases)
     exp_test_cases.insert("dir/program:no_properties");
     exp_test_cases.insert("dir/program:some_properties");
     ATF_REQUIRE(exp_test_cases == hooks.test_cases);
-    ATF_REQUIRE(hooks.bogus_test_programs.empty());
 }
 
 
@@ -162,22 +152,19 @@ ATF_TEST_CASE_BODY(filter_match)
     std::set< std::string > exp_test_cases;
     exp_test_cases.insert("dir/program:some_properties");
     ATF_REQUIRE(exp_test_cases == hooks.test_cases);
-    ATF_REQUIRE(hooks.bogus_test_programs.empty());
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(crash);
 ATF_TEST_CASE_BODY(crash)
 {
-    utils::setenv("TESTS", "crash_list");
+    utils::setenv("TESTS", "crash_list some_properties");
     capture_hooks hooks;
-    run_helpers(this, hooks, "dir/program", "some_properties");
+    run_helpers(this, hooks, "dir/program");
 
-    std::map< std::string, std::string > exp_bogus_test_programs;
-    exp_bogus_test_programs["dir/program"] = "Test program did not exit "
-        "cleanly";
-    ATF_REQUIRE(hooks.test_cases.empty());
-    ATF_REQUIRE(exp_bogus_test_programs == hooks.bogus_test_programs);
+    std::set< std::string > exp_test_cases;
+    exp_test_cases.insert("dir/program:__test_cases_list__");
+    ATF_REQUIRE(exp_test_cases == hooks.test_cases);
 }
 
 

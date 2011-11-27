@@ -49,6 +49,7 @@ test_cases_vector parse_test_cases(const base_test_program&, std::istream&);
 
 /// Representation of an ATF test program.
 class test_program : public base_test_program {
+    test_cases_vector safe_load_test_cases(void) const;
     test_cases_vector load_test_cases(void) const;
 
 public:

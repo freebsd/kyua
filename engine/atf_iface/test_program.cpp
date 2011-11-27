@@ -31,6 +31,7 @@
 #include "engine/atf_iface/test_case.hpp"
 #include "engine/atf_iface/test_program.hpp"
 #include "engine/exceptions.hpp"
+#include "engine/test_result.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/process/children.ipp"
@@ -194,28 +195,26 @@ atf_iface::test_program::test_program(const utils::fs::path& binary_,
 }
 
 
-/// Loads the list of test cases contained in a test program.
+/// Auxiliary function for load_test_cases.
+///
+/// This function differs from load_test_cases in that it can throw exceptions.
+/// The caller takes this into account and generates a fake test case to
+/// represent the failure.
 ///
 /// \return A collection of test_case objects representing the input test case
 /// list.
 ///
 /// \throw engine::error If there is a problem executing the test program.
 /// \throw format_error If the test case list has an invalid format.
+/// \throw process::error If the spawning of the child process fails.
 engine::test_cases_vector
-atf_iface::test_program::load_test_cases(void) const
+atf_iface::test_program::safe_load_test_cases(void) const
 {
     LI(F("Obtaining test cases list from test program '%s' of root '%s'") %
        relative_path() % root());
 
-    std::auto_ptr< process::child_with_output > child;
-
-    try {
-        child = process::child_with_output::fork(list_test_cases(
-            absolute_path()));
-    } catch (const process::error& e) {
-        // TODO(jmmv): This should be more representative.
-        throw engine::error(e.what());
-    }
+    const std::auto_ptr< process::child_with_output > child =
+        process::child_with_output::fork(list_test_cases(absolute_path()));
 
     test_cases_vector loaded_test_cases;
     std::string format_error_message;
@@ -234,4 +233,27 @@ atf_iface::test_program::load_test_cases(void) const
         throw format_error(format_error_message);
 
     return loaded_test_cases;
+}
+
+
+/// Loads the list of test cases contained in a test program.
+///
+/// \return A collection of test_case objects representing the input test case
+/// list.  If the test cases cannot be properly loaded from the test program,
+/// the return list contains a single test case representing the failure.  The
+/// fake test case return is "runnable" in the sense that it will report an
+/// error when attempted to be run.
+engine::test_cases_vector
+atf_iface::test_program::load_test_cases(void) const
+{
+    try {
+        return safe_load_test_cases();
+    } catch (const std::runtime_error& e) {
+        test_cases_vector loaded_test_cases;
+        loaded_test_cases.push_back(test_case_ptr(new global_test_case(
+            *this, "__test_cases_list__",
+            "Represents the correct processing of the test cases list",
+            test_result(test_result::broken, e.what()))));
+        return loaded_test_cases;
+    }
 }

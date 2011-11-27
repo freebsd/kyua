@@ -52,14 +52,6 @@ class base_hooks {
 public:
     virtual ~base_hooks(void) = 0;
 
-    /// Called when a bogus test program is identifier.
-    ///
-    /// \param test_program The offending test program.
-    /// \param reason The error describing the failure in the test program.
-    virtual void got_bogus_test_program(
-        const engine::base_test_program& test_program,
-        const std::string& reason) = 0;
-
     /// Called when a test case is identified in a test suite.
     ///
     /// \param test_case The data describing the test case.

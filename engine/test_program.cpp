@@ -26,6 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <stdexcept>
+
 #include "engine/test_program.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/sanity.hpp"
@@ -127,16 +129,20 @@ engine::base_test_program::test_suite_name(void) const
 
 /// Gets the list of test cases from the test program.
 ///
-/// Note that this operation may be expensive and may throw arbitrary runtime
-/// errors.
+/// Note that this operation may be expensive because it may lazily load the
+/// test cases list from the test program.  Errors during the processing of the
+/// test case list are represented as a single test case describing the failure.
 ///
 /// \return The list of test cases provided by the test program.
-///
-/// \throw engine::error If there are problems loading the test case list.
 const engine::test_cases_vector&
 engine::base_test_program::test_cases(void) const
 {
-    if (_pbimpl->test_cases.empty())
-        _pbimpl->test_cases = load_test_cases();
+    if (_pbimpl->test_cases.empty()) {
+        try {
+            _pbimpl->test_cases = load_test_cases();
+        } catch (const std::runtime_error& e) {
+            UNREACHABLE_MSG(F("Should not have thrown, but got: %s") % e.what());
+        }
+    }
     return _pbimpl->test_cases;
 }

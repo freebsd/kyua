@@ -74,7 +74,7 @@ AT_TESTED([kyua])
 
 CREATE_PLAIN_HELPERS
 AT_CHECK([RUN_PLAIN_HELPER([abort_test_cases_list])], [1], [stdout], [])
-re='plain_helpers:__test_program__.*broken.*Test program did not exit cleanly'
+re='plain_helpers:__test_cases_list__.*broken.*Test program did not exit cleanly'
 AT_CHECK([grep "${re}" stdout], [0], [ignore], [])
 
 AT_CLEANUP
@@ -85,7 +85,7 @@ AT_TESTED([kyua])
 
 CREATE_PLAIN_HELPERS
 AT_CHECK([RUN_PLAIN_HELPER([empty_test_cases_list])], [1], [stdout], [])
-re='plain_helpers:__test_program__.*broken.*Invalid header'
+re='plain_helpers:__test_cases_list__.*broken.*Invalid header'
 AT_CHECK([grep "${re}" stdout], [0], [ignore], [])
 
 AT_CLEANUP
@@ -96,7 +96,7 @@ AT_TESTED([kyua])
 
 CREATE_PLAIN_HELPERS
 AT_CHECK([RUN_PLAIN_HELPER([zero_test_cases])], [1], [stdout], [])
-re='plain_helpers:__test_program__.*broken.*No test cases'
+re='plain_helpers:__test_cases_list__.*broken.*No test cases'
 AT_CHECK([grep "${re}" stdout], [0], [ignore], [])
 
 AT_CLEANUP

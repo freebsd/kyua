@@ -58,32 +58,14 @@ class progress_hooks : public list_tests::base_hooks {
     bool _verbose;
 
 public:
-    /// Indicates if all test cases were processed successfully.
-    bool ok;
-
     /// Initializes the hooks.
     ///
     /// \param ui_ The ui object to which to print the test cases.
     /// \param verbose_ Whether to print test case details or just their names.
     progress_hooks(cmdline::ui* ui_, const bool verbose_) :
         _ui(ui_),
-        _verbose(verbose_),
-        ok(true)
+        _verbose(verbose_)
     {
-    }
-
-    /// Reports a test program as failed.
-    ///
-    /// \param test_program The failed test program.
-    /// \param reason The reason for the failure of the test program.
-    void
-    got_bogus_test_program(const engine::base_test_program& test_program,
-                           const std::string& reason)
-    {
-        cmdline::print_warning(
-            _ui, F("Cannot load test case list for '%s': %s") %
-            test_program.relative_path() % reason);
-        ok &= false;
     }
 
     /// Reports a test case as soon as it is found.
@@ -149,6 +131,6 @@ cli::cmd_list::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
     const list_tests::result result = list_tests::drive(
         kyuafile_path(cmdline), parse_filters(cmdline.arguments()), hooks);
 
-    return report_unused_filters(result.unused_filters, ui) || !hooks.ok ?
+    return report_unused_filters(result.unused_filters, ui) ?
         EXIT_FAILURE : EXIT_SUCCESS;
 }

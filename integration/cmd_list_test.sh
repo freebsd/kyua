@@ -472,11 +472,11 @@ EOF
     utils_cp_helper bad_test_program crash_on_list
     echo 'I am not executable' >non_executable
 
-    cat >experr <<EOF
-kyua: W: Cannot load test case list for 'crash_on_list': Test program did not exit cleanly.
-kyua: W: Cannot load test case list for 'non_executable': Failed to execute the test program.
+    cat >expout <<EOF
+crash_on_list:__test_cases_list__
+non_executable:__test_cases_list__
 EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua list
+    atf_check -s exit:0 -o file:expout -e empty kyua list
 }
 
 

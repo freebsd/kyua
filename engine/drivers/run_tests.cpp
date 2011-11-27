@@ -69,19 +69,7 @@ run_test_program(const engine::base_test_program& test_program,
     const int64_t test_program_id = tx.put_test_program(test_program,
                                                         action_id);
 
-    engine::test_cases_vector test_cases;
-    try {
-        test_cases = test_program.test_cases();
-    } catch (const std::exception& e) {
-        const engine::test_result broken(engine::test_result::broken,
-            F("Failed to load list of test cases: %s") % e.what());
-        // TODO(jmmv): Maybe generalize this in test_case_id somehow?
-        const engine::test_case_id program_id(
-            test_program.relative_path(), "__test_program__");
-        // TODO(jmmv): Put the test case result.
-        hooks.got_result(program_id, broken);
-    }
-
+    const engine::test_cases_vector& test_cases = test_program.test_cases();
     for (engine::test_cases_vector::const_iterator iter = test_cases.begin();
          iter != test_cases.end(); iter++) {
         const engine::test_case_ptr test_case = *iter;

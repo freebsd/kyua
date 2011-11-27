@@ -251,6 +251,87 @@ engine::atf_iface::detail::parse_require_user(const std::string& name,
 }
 
 
+/// Internal implementation of a global_test_case object.
+struct engine::atf_iface::global_test_case::impl {
+    /// The test case description.
+    std::string description;
+
+    /// The fake result to return when this test case is "run".
+    engine::test_result fake_result;
+
+    /// Constructor.
+    ///
+    /// \param description_ See the parent class.
+    /// \param test_result_ See the parent class.
+    impl(const std::string& description_,
+         const engine::test_result& test_result_) :
+        description(description_),
+        fake_result(test_result_)
+    {
+    }
+};
+
+
+/// Constructs a new test case.
+///
+/// \param test_program_ The test program this test case belongs to.
+/// \param name_ The name to give to this fake test case.  This name should be
+///     prefixed and suffixed by '__' to clearly denote that this is internal.
+/// \param description_ The description of the test case, if any.
+/// \param test_result_ The fake result to return when this test case is run.
+atf_iface::global_test_case::global_test_case(
+    const base_test_program& test_program_,
+    const std::string& name_,
+    const std::string& description_,
+    const engine::test_result& test_result_) :
+    base_test_case(test_program_, name_),
+    _pimpl(new impl(description_, test_result_))
+{
+    PRE_MSG(name_.length() > 4 && name_.substr(0, 2) == "__" &&
+            name_.substr(name_.length() - 2) == "__",
+            "Invalid fake name provided to fake test case");
+}
+
+
+/// Destructor.
+atf_iface::global_test_case::~global_test_case(void)
+{
+}
+
+
+/// Returns a string representation of all test case properties.
+///
+/// The returned keys and values match those that can be defined by the test
+/// case.
+///
+/// \return A key/value mapping describing all the test case properties.
+engine::properties_map
+atf_iface::global_test_case::get_all_properties(void) const
+{
+    properties_map props;
+    props["descr"] = _pimpl->description;
+    return props;
+}
+
+
+/// Executes the test case.
+///
+/// This should not throw any exception: problems detected during execution are
+/// reported as a broken test case result.
+///
+/// \param config The run-time configuration for the test case.
+///
+/// \return The result of the execution.
+engine::test_result
+atf_iface::global_test_case::execute(
+    const user_files::config& UTILS_UNUSED_PARAM(config),
+    const optional< fs::path >& UTILS_UNUSED_PARAM(stdout_path),
+    const optional< fs::path >& UTILS_UNUSED_PARAM(stderr_path)) const
+{
+    return _pimpl->fake_result;
+}
+
+
 /// Internal implementation of a test case.
 struct engine::atf_iface::test_case::impl {
     /// The test case description.

@@ -811,8 +811,8 @@ EOF
     echo 'I am not executable' >non_executable
 
     cat >expout <<EOF
-crash_on_list:__test_program__  ->  broken: Failed to load list of test cases: Test program did not exit cleanly
-non_executable:__test_program__  ->  broken: Failed to load list of test cases: Failed to execute the test program
+crash_on_list:__test_cases_list__  ->  broken: Test program did not exit cleanly
+non_executable:__test_cases_list__  ->  broken: Failed to execute the test program
 
 0/2 passed (2 failed)
 Committed action 1
