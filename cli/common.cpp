@@ -222,3 +222,15 @@ cli::format_test_case_id(const engine::base_test_case& test_case)
     return F("%s:%s") % test_case.test_program().relative_path() %
         test_case.name();
 }
+
+
+/// Formats a filter using the same syntax of a test case.
+///
+/// \param test_filter The filter to format.
+///
+/// \return A string representing the test filter.
+std::string
+cli::format_test_case_id(const engine::test_filter& test_filter)
+{
+    return F("%s:%s") % test_filter.test_program % test_filter.test_case;
+}

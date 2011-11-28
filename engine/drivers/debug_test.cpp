@@ -115,6 +115,6 @@ debug_test::drive(const fs::path& kyuafile_path, const test_filter& filter,
     const engine::test_case_ptr test_case = find_test_case(filter, kyuafile);
     const engine::test_result test_result = test_case->debug(
         config, stdout_path, stderr_path);
-    return result(F("%s:%s") % test_case->test_program().relative_path() %
-                  test_case->name(), test_result);
+    return result(test_filter(test_case->test_program().relative_path(),
+                              test_case->name()), test_result);
 }

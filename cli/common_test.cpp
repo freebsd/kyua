@@ -344,12 +344,20 @@ ATF_TEST_CASE_BODY(format_result__with_reason)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(format_test_case_id);
-ATF_TEST_CASE_BODY(format_test_case_id)
+ATF_TEST_CASE_WITHOUT_HEAD(format_test_case_id__test_case);
+ATF_TEST_CASE_BODY(format_test_case_id__test_case)
 {
     const mock_test_program test_program(fs::path("foo/bar/baz"));
     const mock_test_case test_case(test_program, "abc");
     ATF_REQUIRE_EQ("foo/bar/baz:abc", cli::format_test_case_id(test_case));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(format_test_case_id__test_filter);
+ATF_TEST_CASE_BODY(format_test_case_id__test_filter)
+{
+    const engine::test_filter filter(fs::path("foo/bar"), "baz");
+    ATF_REQUIRE_EQ("foo/bar:baz", cli::format_test_case_id(filter));
 }
 
 
@@ -378,5 +386,6 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, format_result__no_reason);
     ATF_ADD_TEST_CASE(tcs, format_result__with_reason);
 
-    ATF_ADD_TEST_CASE(tcs, format_test_case_id);
+    ATF_ADD_TEST_CASE(tcs, format_test_case_id__test_case);
+    ATF_ADD_TEST_CASE(tcs, format_test_case_id__test_filter);
 }
