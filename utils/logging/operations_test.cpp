@@ -86,6 +86,8 @@ ATF_TEST_CASE_BODY(generate_log_name__after_log)
 ATF_TEST_CASE_WITHOUT_HEAD(log);
 ATF_TEST_CASE_BODY(log)
 {
+    logging::set_inmemory();
+
     datetime::set_mock_now(2011, 2, 21, 18, 10, 0);
     logging::log(logging::level_debug, "f1", 1, "Debug message");
 
@@ -141,9 +143,15 @@ ATF_TEST_CASE_BODY(set_persistency__no_backlog)
 }
 
 
+/// Creates a log for testing purposes, buffering messages on start.
+///
+/// \param level The level of the desired log.
+/// \param path The output file.
 static void
 create_log(const std::string& level, const std::string& path)
 {
+    logging::set_inmemory();
+
     datetime::set_mock_now(2011, 3, 19, 11, 40, 0);
     logging::log(logging::level_debug, "file1", 11, "Debug 1");
 

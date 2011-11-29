@@ -49,6 +49,7 @@ extern "C" {
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
+#include "utils/logging/macros.hpp"
 #include "utils/process/children.ipp"
 #include "utils/process/exceptions.hpp"
 #include "utils/process/system.hpp"
@@ -58,6 +59,7 @@ extern "C" {
 
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
+namespace logging = utils::logging;
 namespace process = utils::process;
 namespace signals = utils::signals;
 
@@ -330,6 +332,7 @@ public:
     void
     operator()(void)
     {
+        logging::set_inmemory();
         try {
             process::exec(_program, _args);
         } catch (const process::system_error& e) {
@@ -866,6 +869,8 @@ ATF_TEST_CASE_BODY(exec__basename_only)
 ATF_TEST_CASE_WITHOUT_HEAD(exec__no_path);
 ATF_TEST_CASE_BODY(exec__no_path)
 {
+    logging::set_inmemory();
+
     std::vector< std::string > args;
     args.push_back("return-code");
     args.push_back("14");

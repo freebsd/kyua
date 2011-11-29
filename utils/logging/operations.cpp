@@ -53,12 +53,13 @@ using utils::optional;
 /// The general idea for the application-wide logging goes like this:
 ///
 /// 1. The application starts.  Logging is initialized to capture _all_ log
-/// messages into memory regardless of their level.
+/// messages into memory regardless of their level by issuing a call to the
+/// set_inmemory() function.
 ///
 /// 2. The application offers the user a way to select the logging level and a
 /// file into which to store the log.
 ///
-/// 3. The application calls set_persistence providing a new log level and a log
+/// 3. The application calls set_persistency providing a new log level and a log
 /// file.  This must be done as early as possible, to minimize the chances of an
 /// early crash not capturing any logs.
 ///
@@ -68,6 +69,10 @@ using utils::optional;
 /// 5. The internal state of the logging module is updated to only capture
 /// messages that are of the provided log level (or below) and is configured to
 /// directly send messages to disk.
+///
+/// The call to set_inmemory() should only be performed by the user-facing
+/// application.  Tests should skip this call so that the logging messages go to
+/// stderr by default, thus generating a useful log to debug the tests.
 
 
 namespace {
@@ -75,6 +80,10 @@ namespace {
 
 /// Current log level.
 static logging::level log_level = logging::level_debug;
+
+
+/// Indicates whether set_persistency() will be called automatically or not.
+static bool auto_set_persistency = true;
 
 
 /// First time recorded by the logging module.
@@ -151,6 +160,15 @@ logging::log(const level message_level, const char* file, const int line,
     if (!first_timestamp)
         first_timestamp = now;
 
+    if (auto_set_persistency) {
+        // These values are hardcoded here for testing purposes.  The
+        // application should call set_inmemory() by itself during
+        // initialization to avoid this, so that it has explicit control on how
+        // the call to set_persistency() happens.
+        set_persistency("debug", fs::path("/dev/stderr"));
+        auto_set_persistency = false;
+    }
+
     if (message_level > log_level)
         return;
 
@@ -165,6 +183,14 @@ logging::log(const level message_level, const char* file, const int line,
         (*logfile) << message << '\n';
         (*logfile).flush();
     }
+}
+
+
+/// Sets the logging to record messages in memory for later flushing.
+void
+logging::set_inmemory(void)
+{
+    auto_set_persistency = false;
 }
 
 
@@ -186,6 +212,8 @@ logging::log(const level message_level, const char* file, const int line,
 void
 logging::set_persistency(const std::string& new_level, const fs::path& path)
 {
+    auto_set_persistency = false;
+
     PRE(logfile.get() == NULL);
 
     // Update doc/troubleshooting.info if you change the log levels.

@@ -266,6 +266,8 @@ cli::main(cmdline::ui* ui, const int argc, const char* const* const argv,
 int
 cli::main(const int argc, const char* const* const argv)
 {
+    logging::set_inmemory();
+
     LI(F("%s %s") % PACKAGE % VERSION);
 
     std::string plain_args;

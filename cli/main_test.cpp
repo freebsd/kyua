@@ -48,6 +48,7 @@ extern "C" {
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
+#include "utils/logging/operations.hpp"
 #include "utils/process/children.ipp"
 #include "utils/process/status.hpp"
 #include "utils/test_utils.hpp"
@@ -55,6 +56,7 @@ extern "C" {
 namespace cmdline = utils::cmdline;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
+namespace logging = utils::logging;
 namespace process = utils::process;
 namespace user_files = engine::user_files;
 
@@ -173,6 +175,7 @@ ATF_TEST_CASE_BODY(detail__default_log_name__hardcoded)
 ATF_TEST_CASE_WITHOUT_HEAD(main__no_args);
 ATF_TEST_CASE_BODY(main__no_args)
 {
+    logging::set_inmemory();
     cmdline::init("progname");
 
     const int argc = 1;
@@ -190,6 +193,7 @@ ATF_TEST_CASE_BODY(main__no_args)
 ATF_TEST_CASE_WITHOUT_HEAD(main__unknown_command);
 ATF_TEST_CASE_BODY(main__unknown_command)
 {
+    logging::set_inmemory();
     cmdline::init("progname");
 
     const int argc = 2;
@@ -207,6 +211,7 @@ ATF_TEST_CASE_BODY(main__unknown_command)
 ATF_TEST_CASE_WITHOUT_HEAD(main__logfile__default);
 ATF_TEST_CASE_BODY(main__logfile__default)
 {
+    logging::set_inmemory();
     datetime::set_mock_now(2011, 2, 21, 21, 30, 00);
     cmdline::init("progname");
 
@@ -225,6 +230,7 @@ ATF_TEST_CASE_BODY(main__logfile__default)
 ATF_TEST_CASE_WITHOUT_HEAD(main__logfile__override);
 ATF_TEST_CASE_BODY(main__logfile__override)
 {
+    logging::set_inmemory();
     datetime::set_mock_now(2011, 2, 21, 21, 30, 00);
     cmdline::init("progname");
 
@@ -243,6 +249,7 @@ ATF_TEST_CASE_BODY(main__logfile__override)
 ATF_TEST_CASE_WITHOUT_HEAD(main__loglevel__default);
 ATF_TEST_CASE_BODY(main__loglevel__default)
 {
+    logging::set_inmemory();
     cmdline::init("progname");
 
     const int argc = 2;
@@ -265,6 +272,7 @@ ATF_TEST_CASE_BODY(main__loglevel__default)
 ATF_TEST_CASE_WITHOUT_HEAD(main__loglevel__higher);
 ATF_TEST_CASE_BODY(main__loglevel__higher)
 {
+    logging::set_inmemory();
     cmdline::init("progname");
 
     const int argc = 3;
@@ -288,6 +296,7 @@ ATF_TEST_CASE_BODY(main__loglevel__higher)
 ATF_TEST_CASE_WITHOUT_HEAD(main__loglevel__lower);
 ATF_TEST_CASE_BODY(main__loglevel__lower)
 {
+    logging::set_inmemory();
     cmdline::init("progname");
 
     const int argc = 3;
@@ -311,6 +320,7 @@ ATF_TEST_CASE_BODY(main__loglevel__lower)
 ATF_TEST_CASE_WITHOUT_HEAD(main__loglevel__error);
 ATF_TEST_CASE_BODY(main__loglevel__error)
 {
+    logging::set_inmemory();
     cmdline::init("progname");
 
     const int argc = 3;
@@ -327,6 +337,7 @@ ATF_TEST_CASE_BODY(main__loglevel__error)
 ATF_TEST_CASE_WITHOUT_HEAD(main__subcommand__ok);
 ATF_TEST_CASE_BODY(main__subcommand__ok)
 {
+    logging::set_inmemory();
     cmdline::init("progname");
 
     const int argc = 2;
@@ -346,6 +357,7 @@ ATF_TEST_CASE_BODY(main__subcommand__ok)
 ATF_TEST_CASE_WITHOUT_HEAD(main__subcommand__invalid_args);
 ATF_TEST_CASE_BODY(main__subcommand__invalid_args)
 {
+    logging::set_inmemory();
     cmdline::init("progname");
 
     const int argc = 3;
@@ -366,6 +378,7 @@ ATF_TEST_CASE_BODY(main__subcommand__invalid_args)
 ATF_TEST_CASE_WITHOUT_HEAD(main__subcommand__runtime_error);
 ATF_TEST_CASE_BODY(main__subcommand__runtime_error)
 {
+    logging::set_inmemory();
     cmdline::init("progname");
 
     const int argc = 2;
@@ -383,6 +396,7 @@ ATF_TEST_CASE_BODY(main__subcommand__runtime_error)
 ATF_TEST_CASE_WITHOUT_HEAD(main__subcommand__unhandled_exception);
 ATF_TEST_CASE_BODY(main__subcommand__unhandled_exception)
 {
+    logging::set_inmemory();
     cmdline::init("progname");
 
     const int argc = 2;
@@ -397,6 +411,7 @@ ATF_TEST_CASE_BODY(main__subcommand__unhandled_exception)
 static void
 do_subcommand_crash(void)
 {
+    logging::set_inmemory();
     cmdline::init("progname");
 
     const int argc = 2;

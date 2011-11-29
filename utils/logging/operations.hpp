@@ -54,6 +54,7 @@ enum level {
 
 fs::path generate_log_name(const fs::path&, const std::string&);
 void log(const level, const char*, const int, const std::string&);
+void set_inmemory(void);
 void set_persistency(const std::string&, const fs::path&);
 
 
