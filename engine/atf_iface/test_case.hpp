@@ -67,31 +67,6 @@ std::string parse_require_user(const std::string&, const std::string&);
 }  // namespace detail
 
 
-/// Represents a fake test case within an ATF test program.
-///
-/// This fake test case is generated when, for example, the test program fails
-/// to yield a valid list of test cases.  Under these conditions, we generate a
-/// fake test case that represents the whole test program (hence the class
-/// name).  The generated test case is not executable because it does not
-/// correspond to any test case defined in the test program, so we also record
-/// inside the test case the test result we want to return to the caller.
-class global_test_case : public base_test_case {
-    struct impl;
-    std::tr1::shared_ptr< impl > _pimpl;
-
-    properties_map get_all_properties(void) const;
-    virtual engine::test_result execute(
-        const user_files::config&,
-        const utils::optional< utils::fs::path >&,
-        const utils::optional< utils::fs::path >&) const;
-
-public:
-    global_test_case(const base_test_program&, const std::string&,
-                     const std::string&, const engine::test_result&);
-    ~global_test_case(void);
-};
-
-
 /// Representation of an ATF test case.
 ///
 /// Test cases should be thought as free-standing entities: even though they
@@ -114,6 +89,8 @@ public:
               const utils::datetime::delta&, const strings_set&,
               const strings_set&, const strings_set&, const paths_set&,
               const paths_set&, const std::string&, const properties_map&);
+    test_case(const base_test_program&, const std::string&, const std::string&,
+              const test_result&);
     ~test_case(void);
 
     static test_case from_properties(const base_test_program&,

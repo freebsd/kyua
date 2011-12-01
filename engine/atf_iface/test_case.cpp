@@ -51,6 +51,7 @@ namespace fs = utils::fs;
 namespace passwd = utils::passwd;
 namespace user_files = engine::user_files;
 
+using utils::none;
 using utils::optional;
 
 
@@ -251,87 +252,6 @@ engine::atf_iface::detail::parse_require_user(const std::string& name,
 }
 
 
-/// Internal implementation of a global_test_case object.
-struct engine::atf_iface::global_test_case::impl {
-    /// The test case description.
-    std::string description;
-
-    /// The fake result to return when this test case is "run".
-    engine::test_result fake_result;
-
-    /// Constructor.
-    ///
-    /// \param description_ See the parent class.
-    /// \param test_result_ See the parent class.
-    impl(const std::string& description_,
-         const engine::test_result& test_result_) :
-        description(description_),
-        fake_result(test_result_)
-    {
-    }
-};
-
-
-/// Constructs a new test case.
-///
-/// \param test_program_ The test program this test case belongs to.
-/// \param name_ The name to give to this fake test case.  This name should be
-///     prefixed and suffixed by '__' to clearly denote that this is internal.
-/// \param description_ The description of the test case, if any.
-/// \param test_result_ The fake result to return when this test case is run.
-atf_iface::global_test_case::global_test_case(
-    const base_test_program& test_program_,
-    const std::string& name_,
-    const std::string& description_,
-    const engine::test_result& test_result_) :
-    base_test_case(test_program_, name_),
-    _pimpl(new impl(description_, test_result_))
-{
-    PRE_MSG(name_.length() > 4 && name_.substr(0, 2) == "__" &&
-            name_.substr(name_.length() - 2) == "__",
-            "Invalid fake name provided to fake test case");
-}
-
-
-/// Destructor.
-atf_iface::global_test_case::~global_test_case(void)
-{
-}
-
-
-/// Returns a string representation of all test case properties.
-///
-/// The returned keys and values match those that can be defined by the test
-/// case.
-///
-/// \return A key/value mapping describing all the test case properties.
-engine::properties_map
-atf_iface::global_test_case::get_all_properties(void) const
-{
-    properties_map props;
-    props["descr"] = _pimpl->description;
-    return props;
-}
-
-
-/// Executes the test case.
-///
-/// This should not throw any exception: problems detected during execution are
-/// reported as a broken test case result.
-///
-/// \param config The run-time configuration for the test case.
-///
-/// \return The result of the execution.
-engine::test_result
-atf_iface::global_test_case::execute(
-    const user_files::config& UTILS_UNUSED_PARAM(config),
-    const optional< fs::path >& UTILS_UNUSED_PARAM(stdout_path),
-    const optional< fs::path >& UTILS_UNUSED_PARAM(stderr_path)) const
-{
-    return _pimpl->fake_result;
-}
-
-
 /// Internal implementation of a test case.
 struct engine::atf_iface::test_case::impl {
     /// The test case description.
@@ -367,6 +287,9 @@ struct engine::atf_iface::test_case::impl {
     /// User-defined meta-data properties.
     properties_map user_metadata;
 
+    /// Fake result to return instead of running the test case.
+    optional< test_result > fake_result;
+
     /// Constructor.
     ///
     /// \param description_ See the parent class.
@@ -379,6 +302,8 @@ struct engine::atf_iface::test_case::impl {
     /// \param required_programs_ See the parent class.
     /// \param required_user_ See the parent class.
     /// \param user_metadata_ See the parent class.
+    /// \param fake_result_ Fake result to return instead of running the test
+    ///     case.
     impl(const std::string& description_,
          const bool has_cleanup_,
          const datetime::delta& timeout_,
@@ -388,7 +313,8 @@ struct engine::atf_iface::test_case::impl {
          const paths_set& required_files_,
          const paths_set& required_programs_,
          const std::string& required_user_,
-         const properties_map& user_metadata_) :
+         const properties_map& user_metadata_,
+         const optional< test_result >& fake_result_) :
         description(description_),
         has_cleanup(has_cleanup_),
         timeout(timeout_),
@@ -398,7 +324,8 @@ struct engine::atf_iface::test_case::impl {
         required_files(required_files_),
         required_programs(required_programs_),
         required_user(required_user_),
-        user_metadata(user_metadata_)
+        user_metadata(user_metadata_),
+        fake_result(fake_result_)
     {
         PRE(required_user.empty() || required_user == "unprivileged" ||
             required_user == "root");
@@ -451,8 +378,38 @@ atf_iface::test_case::test_case(const base_test_program& test_program_,
     _pimpl(new impl(description_, has_cleanup_, timeout_,
                     allowed_architectures_, allowed_platforms_,
                     required_configs_, required_files_, required_programs_,
-                    required_user_, user_metadata_))
+                    required_user_, user_metadata_, none))
 {
+}
+
+
+/// Constructs a new fake test case.
+///
+/// A fake test case is a test case that is not really defined by the test
+/// program.  Such test cases have a name surrounded by '__' and, when executed,
+/// they return a fixed, pre-recorded result.  This functionality is used, for
+/// example, to dynamically create a test case representing the test program
+/// itself when it is broken (i.e. when it's even unable to provide a list of
+/// its own test cases).
+///
+/// \param test_program_ The test program this test case belongs to.
+/// \param name_ The name to give to this fake test case.  This name has to be
+///     prefixed and suffixed by '__' to clearly denote that this is internal.
+/// \param description_ The description of the test case, if any.
+/// \param test_result_ The fake result to return when this test case is run.
+atf_iface::test_case::test_case(const base_test_program& test_program_,
+                                const std::string& name_,
+                                const std::string& description_,
+                                const engine::test_result& test_result_) :
+    base_test_case(test_program_, name_),
+    _pimpl(new impl(description_, false, default_timeout,
+                    strings_set(), strings_set(), strings_set(), paths_set(),
+                    paths_set(), "", properties_map(),
+                    utils::make_optional(test_result_)))
+{
+    PRE_MSG(name_.length() > 4 && name_.substr(0, 2) == "__" &&
+            name_.substr(name_.length() - 2) == "__",
+            "Invalid fake name provided to fake test case");
 }
 
 
@@ -775,5 +732,8 @@ atf_iface::test_case::execute(const user_files::config& config,
                               const optional< fs::path >& stdout_path,
                               const optional< fs::path >& stderr_path) const
 {
-    return run_test_case(*this, config, stdout_path, stderr_path);
+    if (_pimpl->fake_result)
+        return _pimpl->fake_result.get();
+    else
+        return run_test_case(*this, config, stdout_path, stderr_path);
 }

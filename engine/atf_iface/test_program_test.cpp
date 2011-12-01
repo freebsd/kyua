@@ -111,9 +111,8 @@ check_test_cases_list_failure(const engine::test_cases_vector& test_cases,
                               const std::string& exp_reason)
 {
     ATF_REQUIRE_EQ(1, test_cases.size());
-    const atf_iface::global_test_case& test_case =
-        *dynamic_cast< const atf_iface::global_test_case* >(
-            test_cases[0].get());
+    const atf_iface::test_case& test_case =
+        *dynamic_cast< const atf_iface::test_case* >(test_cases[0].get());
     ATF_REQUIRE_EQ("__test_cases_list__", test_case.name());
     const engine::test_result result = test_case.run(mock_config);
     ATF_REQUIRE(engine::test_result::broken == result.type());

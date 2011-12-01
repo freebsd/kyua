@@ -250,7 +250,7 @@ atf_iface::test_program::load_test_cases(void) const
         return safe_load_test_cases();
     } catch (const std::runtime_error& e) {
         test_cases_vector loaded_test_cases;
-        loaded_test_cases.push_back(test_case_ptr(new global_test_case(
+        loaded_test_cases.push_back(test_case_ptr(new test_case(
             *this, "__test_cases_list__",
             "Represents the correct processing of the test cases list",
             test_result(test_result::broken, e.what()))));

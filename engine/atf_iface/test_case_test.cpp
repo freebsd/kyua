@@ -284,47 +284,6 @@ ATF_TEST_CASE_BODY(parse_require_user__invalid)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(global_test_case__ctor_and_getters)
-ATF_TEST_CASE_BODY(global_test_case__ctor_and_getters)
-{
-    const mock_test_program test_program(fs::path("bin"));
-    const atf_iface::global_test_case test_case(
-        test_program, "__internal_name__", "Some description",
-        engine::test_result(engine::test_result::passed));
-
-    ATF_REQUIRE_EQ(&test_program, &test_case.test_program());
-    ATF_REQUIRE_EQ("__internal_name__", test_case.name());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(global_test_case__all_properties)
-ATF_TEST_CASE_BODY(global_test_case__all_properties)
-{
-    const mock_test_program test_program(fs::path("program"));
-    const atf_iface::global_test_case test_case(
-        test_program, "__internal_name__", "Some description",
-        engine::test_result(engine::test_result::passed));
-
-    engine::properties_map exp_properties;
-    exp_properties["descr"] = "Some description";
-
-    ATF_REQUIRE(exp_properties == test_case.all_properties());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(global_test_case__run)
-ATF_TEST_CASE_BODY(global_test_case__run)
-{
-    const engine::test_result result(engine::test_result::skipped, "Hello!");
-
-    const mock_test_program test_program(fs::path("program"));
-    const atf_iface::global_test_case test_case(
-        test_program, "__internal_name__", "Some description", result);
-
-    ATF_REQUIRE(result == test_case.run(mock_config));
-}
-
-
 ATF_TEST_CASE_WITHOUT_HEAD(test_case__ctor_and_getters)
 ATF_TEST_CASE_BODY(test_case__ctor_and_getters)
 {
@@ -373,6 +332,20 @@ ATF_TEST_CASE_BODY(test_case__ctor_and_getters)
     ATF_REQUIRE(required_programs == test_case.required_programs());
     ATF_REQUIRE("root" == test_case.required_user());
     ATF_REQUIRE(user_metadata == test_case.user_metadata());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(test_case__fake_ctor_and_getters)
+ATF_TEST_CASE_BODY(test_case__fake_ctor_and_getters)
+{
+    const mock_test_program test_program(fs::path("bin"));
+    const atf_iface::test_case test_case(
+        test_program, "__internal_name__", "Some description",
+        engine::test_result(engine::test_result::passed));
+
+    ATF_REQUIRE_EQ(&test_program, &test_case.test_program());
+    ATF_REQUIRE_EQ("__internal_name__", test_case.name());
+    ATF_REQUIRE_EQ("Some description", test_case.description());
 }
 
 
@@ -556,6 +529,19 @@ ATF_TEST_CASE_BODY(test_case__operator_eq)
         ATF_REQUIRE(modified == modified);
         ATF_REQUIRE(!(original == modified));
     }
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(test_case__run__fake)
+ATF_TEST_CASE_BODY(test_case__run__fake)
+{
+    const engine::test_result result(engine::test_result::skipped, "Hello!");
+
+    const mock_test_program test_program(fs::path("program"));
+    const atf_iface::test_case test_case(
+        test_program, "__internal_name__", "Some description", result);
+
+    ATF_REQUIRE(result == test_case.run(mock_config));
 }
 
 
@@ -982,11 +968,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, parse_ulong__empty);
     ATF_ADD_TEST_CASE(tcs, parse_ulong__invalid);
 
-    ATF_ADD_TEST_CASE(tcs, global_test_case__ctor_and_getters);
-    ATF_ADD_TEST_CASE(tcs, global_test_case__all_properties);
-    ATF_ADD_TEST_CASE(tcs, global_test_case__run);
-
     ATF_ADD_TEST_CASE(tcs, test_case__ctor_and_getters);
+    ATF_ADD_TEST_CASE(tcs, test_case__fake_ctor_and_getters);
     ATF_ADD_TEST_CASE(tcs, test_case__from_properties__defaults);
     ATF_ADD_TEST_CASE(tcs, test_case__from_properties__override_all);
     ATF_ADD_TEST_CASE(tcs, test_case__from_properties__unknown);
@@ -994,6 +977,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, test_case__all_properties__only_user);
     ATF_ADD_TEST_CASE(tcs, test_case__all_properties__all);
     ATF_ADD_TEST_CASE(tcs, test_case__operator_eq);
+    ATF_ADD_TEST_CASE(tcs, test_case__run__fake);
 
     ATF_ADD_TEST_CASE(tcs, check_requirements__none);
     ATF_ADD_TEST_CASE(tcs, check_requirements__required_architectures__one_ok);
