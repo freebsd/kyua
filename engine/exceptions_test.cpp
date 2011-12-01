@@ -32,14 +32,11 @@
 
 #include "engine/exceptions.hpp"
 
-using engine::error;
-using engine::format_error;
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(error);
 ATF_TEST_CASE_BODY(error)
 {
-    const error e("Some text");
+    const engine::error e("Some text");
     ATF_REQUIRE(std::strcmp("Some text", e.what()) == 0);
 }
 
@@ -47,8 +44,24 @@ ATF_TEST_CASE_BODY(error)
 ATF_TEST_CASE_WITHOUT_HEAD(format_error);
 ATF_TEST_CASE_BODY(format_error)
 {
-    const format_error e("Some other text");
+    const engine::format_error e("Some other text");
     ATF_REQUIRE(std::strcmp("Some other text", e.what()) == 0);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(interrupted_error);
+ATF_TEST_CASE_BODY(interrupted_error)
+{
+    const engine::interrupted_error e(5);
+    ATF_REQUIRE(std::strcmp("Interrupted by signal 5", e.what()) == 0);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(not_found_error);
+ATF_TEST_CASE_BODY(not_found_error)
+{
+    const engine::not_found_error e("Missing foo");
+    ATF_REQUIRE(std::strcmp("Missing foo", e.what()) == 0);
 }
 
 
@@ -56,4 +69,6 @@ ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, error);
     ATF_ADD_TEST_CASE(tcs, format_error);
+    ATF_ADD_TEST_CASE(tcs, interrupted_error);
+    ATF_ADD_TEST_CASE(tcs, not_found_error);
 }

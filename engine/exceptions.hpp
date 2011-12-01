@@ -65,6 +65,14 @@ public:
 };
 
 
+/// A requested element could not be found.
+class not_found_error : public error {
+public:
+    explicit not_found_error(const std::string&);
+    virtual ~not_found_error(void) throw();
+};
+
+
 }  // namespace engine
 
 

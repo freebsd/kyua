@@ -84,3 +84,18 @@ engine::interrupted_error::signo(void) const
 {
     return _signo;
 }
+
+
+/// Constructs a new not_found_error.
+///
+/// \param message The plain-text error message.
+engine::not_found_error::not_found_error(const std::string& message) :
+    error(message)
+{
+}
+
+
+/// Destructor for the error.
+engine::not_found_error::~not_found_error(void) throw()
+{
+}
