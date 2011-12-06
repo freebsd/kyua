@@ -39,11 +39,29 @@ using utils::optional;
 namespace {
 
 
+/// Fake class to capture calls to the new and delete operators.
 class test_alloc {
 public:
+    /// Value to disambiguate objects after construction.
     int value;
-    test_alloc(int v) : value(v) {};
 
+    /// Balance of alive instances of this class in dynamic memory.
+    static size_t instances;
+
+    /// Constructs a new optional object.
+    ///
+    /// \param value_ The value to store in this object for disambiguation.
+    test_alloc(int value_) : value(value_)
+    {
+    }
+
+    /// Allocates a new object and records its existence.
+    ///
+    /// \param size The amount of memory to allocate.
+    ///
+    /// \return A pointer to the allocated memory.
+    ///
+    /// \throw std::bad_alloc If the memory allocation fails.
     void*
     operator new(size_t size)
     {
@@ -52,6 +70,9 @@ public:
         return ::operator new(size);
     }
 
+    /// Deallocates an existing object and unrecords its existence.
+    ///
+    /// \param mem The pointer to the memory to deallocate.
     void
     operator delete(void* mem)
     {
@@ -59,18 +80,26 @@ public:
         std::cout << "test_alloc::operator delete called\n";
         ::operator delete(mem);
     }
-
-    static size_t instances;
 };
+
 
 size_t test_alloc::instances = 0;
 
 
-template< typename T >
-optional< T >
-return_optional(const T& value)
+/// Constructs and returns an optional object.
+///
+/// This is used by tests to validate that returning an object from within a
+/// function works (i.e. the necessary constructors are available).
+///
+/// \tparam Type The type of the object included in the optional wrapper.
+/// \param value The value to put inside the optional wrapper.
+///
+/// \return The constructed optional object.
+template< typename Type >
+optional< Type >
+return_optional(const Type& value)
 {
-    return optional< T >(value);
+    return optional< Type >(value);
 }
 
 

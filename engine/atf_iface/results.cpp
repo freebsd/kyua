@@ -63,7 +63,7 @@ namespace {
 /// and their contents.  If the file contains a single line with no newline
 /// character, the line count is 0.  If the file includes more than one line,
 /// the lines are merged together and separated by the magic string
-/// '<<NEWLINE>>'.
+/// '&lt;&lt;NEWLINE&gt;&gt;'.
 static std::pair< size_t, std::string >
 read_lines(std::istream& input)
 {
@@ -574,8 +574,10 @@ atf_iface::detail::raw_result::operator==(const raw_result& other) const
 ///     the body of the test.  None if the body timed out.
 /// \param cleanup_status The termination status of the process that executed
 ///     the body of the test.  None if the cleanup timed out.
-/// \param result_file The path to the result file that the test case body is
+/// \param results_file The path to the results file that the test case body is
 ///     supposed to have created.
+///
+/// \return The calculated test case result.
 engine::test_result
 atf_iface::calculate_result(const optional< process::status >& body_status,
                             const optional< process::status >& cleanup_status,

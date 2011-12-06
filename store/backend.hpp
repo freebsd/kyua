@@ -69,6 +69,8 @@ class transaction;
 /// Public interface to the database store.
 class backend {
     struct impl;
+
+    /// Pointer to the shared internal implementation.
     std::tr1::shared_ptr< impl > _pimpl;
 
     friend class metadata;

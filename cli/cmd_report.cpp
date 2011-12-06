@@ -74,10 +74,20 @@ class console_hooks : public scan_action::base_hooks {
 
     /// Representation of a single result.
     struct result_data {
+        /// The relative path to the test program.
         fs::path binary_path;
+
+        /// The name of the test case.
         std::string test_case_name;
+
+        /// The result of the test case.
         engine::test_result result;
 
+        /// Constructs a new results data.
+        ///
+        /// \param binary_path_ The relative path to the test program.
+        /// \param test_case_name_ The name of the test case.
+        /// \param result_ The result of the test case.
         result_data(const fs::path& binary_path_,
                     const std::string& test_case_name_,
                     const engine::test_result& result_) :

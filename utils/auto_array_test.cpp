@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,40 +39,57 @@ using utils::auto_array;
 namespace {
 
 
+/// Mock class to capture calls to the new and delete operators.
 class test_array {
 public:
+    /// User-settable cookie to disambiguate instances of this class.
     int m_value;
 
+    /// The current balance of existing test_array instances.
     static ssize_t m_nblocks;
 
-    static auto_array< test_array >
-    do_copy(auto_array< test_array >& ta)
-    {
-        return auto_array< test_array >(ta);
-    }
-
+    /// Captures invalid calls to new on an array.
+    ///
+    /// \param unused_size The amount of memory to allocate, in bytes.
+    ///
+    /// \return Nothing; this always fails the test case.
     void*
-    operator new(size_t UTILS_UNUSED_PARAM(size))
+    operator new(const size_t UTILS_UNUSED_PARAM(size))
     {
         ATF_FAIL("New called but should have been new[]");
         return new int(5);
     }
 
+    /// Obtains memory for a new instance and increments m_nblocks.
+    ///
+    /// \param size The amount of memory to allocate, in bytes.
+    ///
+    /// \return A pointer to the allocated memory.
+    ///
+    /// \throw std::bad_alloc If the memory cannot be allocated.
     void*
-    operator new[](size_t size)
+    operator new[](const size_t size)
     {
-        m_nblocks++;
         void* mem = ::operator new(size);
+        m_nblocks++;
         std::cout << "Allocated 'test_array' object " << mem << "\n";
         return mem;
     }
 
+    /// Captures invalid calls to delete on an array.
+    ///
+    /// \param unused_mem The pointer to the memory to be deleted.
+    ///
+    /// \return Nothing; this always fails the test case.
     void
     operator delete(void* UTILS_UNUSED_PARAM(mem))
     {
         ATF_FAIL("Delete called but should have been delete[]");
     }
 
+    /// Deletes a previously allocated array and decrements m_nblocks.
+    ///
+    /// \param mem The pointer to the memory to be deleted.
     void
     operator delete[](void* mem)
     {
@@ -145,7 +162,7 @@ ATF_TEST_CASE_BODY(copy_ref)
         ATF_REQUIRE_EQ(test_array::m_nblocks, 1);
 
         {
-            auto_array< test_array > t2 = test_array::do_copy(t1);
+            auto_array< test_array > t2 = t1;
             ATF_REQUIRE_EQ(test_array::m_nblocks, 1);
         }
         ATF_REQUIRE_EQ(test_array::m_nblocks, 0);
@@ -253,7 +270,7 @@ ATF_TEST_CASE_BODY(assign_ref)
 
         {
             auto_array< test_array > t2;
-            t2 = test_array::do_copy(t1);
+            t2 = t1;
             ATF_REQUIRE_EQ(test_array::m_nblocks, 1);
         }
         ATF_REQUIRE_EQ(test_array::m_nblocks, 0);

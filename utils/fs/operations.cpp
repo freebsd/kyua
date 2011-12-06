@@ -287,7 +287,7 @@ try_unmount(const fs::path& path)
 /// Note that this does not raise any file system-related exception on purpose.
 /// Errors are logged and reported to the caller in the form of a return value.
 ///
-/// \param file The file to unprotect.
+/// \param path The file to unprotect.
 ///
 /// \return True on success; false otherwise.
 static bool
@@ -416,6 +416,7 @@ retry_unmount:
 
 /// Functor to execute umount(8).
 class run_umount {
+    /// The path to unmount.
     fs::path _mount_point;
 
 public:

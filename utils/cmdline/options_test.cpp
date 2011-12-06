@@ -37,27 +37,59 @@ namespace cmdline = utils::cmdline;
 namespace {
 
 
+/// Simple string-based option type for testing purposes.
 class mock_option : public cmdline::base_option {
 public:
+    /// Constructs a mock option with a short name and a long name.
+    ///
+    ///
+    /// \param short_name_ The short name for the option.
+    /// \param long_name_ The long name for the option.
+    /// \param description_ A user-friendly description for the option.
+    /// \param arg_name_ If not NULL, specifies that the option must receive an
+    ///     argument and specifies the name of such argument for documentation
+    ///     purposes.
+    /// \param default_value_ If not NULL, specifies that the option has a
+    ///     default value for the mandatory argument.
     mock_option(const char short_name_, const char* long_name_,
                   const char* description_, const char* arg_name_ = NULL,
                   const char* default_value_ = NULL) :
         base_option(short_name_, long_name_, description_, arg_name_,
                     default_value_) {}
+
+    /// Constructs a mock option with a long name only.
+    ///
+    /// \param long_name_ The long name for the option.
+    /// \param description_ A user-friendly description for the option.
+    /// \param arg_name_ If not NULL, specifies that the option must receive an
+    ///     argument and specifies the name of such argument for documentation
+    ///     purposes.
+    /// \param default_value_ If not NULL, specifies that the option has a
+    ///     default value for the mandatory argument.
     mock_option(const char* long_name_,
                   const char* description_, const char* arg_name_ = NULL,
                   const char* default_value_ = NULL) :
         base_option(long_name_, description_, arg_name_, default_value_) {}
-    virtual ~mock_option(void) {}
 
+    /// The data type of this option.
     typedef std::string option_type;
 
-    virtual void
+    /// Ensures that the argument passed to the option is valid.
+    ///
+    /// In this particular mock option, this does not perform any validation.
+    ///
+    /// \param unused_str The user-provided argument to the option.
+    void
     validate(const std::string& UTILS_UNUSED_PARAM(str)) const
     {
         // Do nothing.
     }
 
+    /// Returns the input parameter without any conversion.
+    ///
+    /// \param str The user-provided argument to the option.
+    ///
+    /// \return The same value as provided by the user without conversion.
     static std::string
     convert(const std::string& str)
     {

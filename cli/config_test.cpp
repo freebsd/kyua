@@ -51,7 +51,7 @@ namespace {
 /// validate_mock_config().
 ///
 /// \param name The name of the configuration file to create.
-/// \param name The magic value to set in the configuration file, or NULL if a
+/// \param cookie The magic value to set in the configuration file, or NULL if a
 ///     broken configuration file is desired.
 static void
 create_mock_config(const char* name, const char* cookie)
@@ -69,7 +69,7 @@ create_mock_config(const char* name, const char* cookie)
 
 /// Creates an invalid system configuration.
 ///
-/// \param name The magic value to set in the configuration file, or NULL if a
+/// \param cookie The magic value to set in the configuration file, or NULL if a
 ///     broken configuration file is desired.
 static void
 mock_system_config(const char* cookie)
@@ -82,7 +82,7 @@ mock_system_config(const char* cookie)
 
 /// Creates an invalid user configuration.
 ///
-/// \param name The magic value to set in the configuration file, or NULL if a
+/// \param cookie The magic value to set in the configuration file, or NULL if a
 ///     broken configuration file is desired.
 static void
 mock_user_config(const char* cookie)

@@ -49,7 +49,10 @@ namespace cmdline {
 /// This class records all writes to stdout and stderr to allow further
 /// inspection for testing purposes.
 class ui_mock : public ui {
+    /// Messages sent to stderr.
     std::vector< std::string > _err_log;
+
+    /// Messages sent to stdout.
     std::vector< std::string > _out_log;
 
 public:

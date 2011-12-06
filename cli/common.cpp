@@ -166,6 +166,7 @@ cli::parse_filters(const cmdline::args_vector& args)
 
 /// Reports the filters that have not matched any tests as errors.
 ///
+/// \param unused The collection of unused filters to report.
 /// \param ui The user interface object through which errors are to be reported.
 ///
 /// \return True if there are any unused filters.  The caller should report this

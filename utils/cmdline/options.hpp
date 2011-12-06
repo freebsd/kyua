@@ -76,12 +76,24 @@ namespace cmdline {
 /// the foo.  It'd be very nice if we'd use something similar Boost.Optional to
 /// simplify this interface altogether.
 class base_option {
+    /// Short name of the option; 0 to indicate that none is available.
     char _short_name;
+
+    /// Long name of the option.
     std::string _long_name;
+
+    /// Textual description of the purpose of the option.
     std::string _description;
+
+    /// Descriptive name of the required argument; empty if not allowed.
     std::string _arg_name;
 
+    /// Whether the option has a default value or not.
+    ///
+    /// \todo We should probably be using the optional class here.
     bool _has_default_value;
+
+    /// If _has_default_value is true, the default value.
     std::string _default_value;
 
 public:
@@ -89,7 +101,7 @@ public:
                 const char* = NULL);
     base_option(const char*, const char*, const char* = NULL,
                 const char* = NULL);
-    virtual ~base_option(void) = 0;
+    virtual ~base_option(void);
 
     bool has_short_name(void) const;
     char short_name(void) const;

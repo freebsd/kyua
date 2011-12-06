@@ -88,7 +88,7 @@ public:
 };
 
 
-// Fake implementation of a test case.
+/// Fake implementation of a test case.
 class mock_test_case : public engine::base_test_case {
     /// Gets the collection of metadata properties of the test case.
     ///
@@ -100,6 +100,13 @@ class mock_test_case : public engine::base_test_case {
     }
 
     /// Fakes the execution of a test case.
+    ///
+    /// \param unused_config The user configuration that defines the execution
+    ///     of this test case.
+    /// \param unused_stdout_path The file to which to redirect the stdout of
+    ///     the test.
+    /// \param unused_stderr_path The file to which to redirect the stderr of
+    ///     the test.
     ///
     /// \return Nothing; this method is not supposed to be called.
     engine::test_result

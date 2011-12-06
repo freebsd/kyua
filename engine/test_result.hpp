@@ -50,7 +50,7 @@ namespace engine {
 /// benefits.  As a result, we allow any test type to carry a reason.
 class test_result {
 public:
-    /// The type of the result.
+    /// Type definitions for all possible test case results.
     enum result_type {
         broken,
         expected_failure,
@@ -60,7 +60,10 @@ public:
     };
 
 private:
+    /// The type of the result.
     result_type _type;
+
+    /// A description of the result; may be empty.
     std::string _reason;
 
 public:

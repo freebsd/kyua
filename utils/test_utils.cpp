@@ -131,7 +131,7 @@ utils::grep_file(const std::string& regexp, const fs::path& path)
 /// Looks for a regular expression in a string.
 ///
 /// \param regexp The regular expression.
-/// \param path The string to query.
+/// \param str The string to query.
 ///
 /// \return True if the regular expression matches anywhere in the string; false
 /// otherwise.
@@ -150,7 +150,7 @@ utils::grep_string(const std::string& regexp, const std::string& str)
 /// Looks for a regular expression in a vector of strings.
 ///
 /// \param regexp The regular expression.
-/// \param path The vector to query.
+/// \param v The vector to query.
 ///
 /// \return True if the regular expression matches anywhere in the vector; false
 /// otherwise.
@@ -172,7 +172,10 @@ namespace {
 
 /// Functor to execute 'mount -t tmpfs' (or a similar variant) in a subprocess.
 class run_mount_tmpfs {
+    /// Path to the mount(8) binary, if known.
     optional< fs::path > _mount_binary;
+
+    /// Arguments to mount(8) to mount a temporary file system.
     std::vector< std::string > _mount_args;
 
 public:

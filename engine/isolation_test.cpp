@@ -41,13 +41,17 @@ extern "C" {
 
 #include "engine/isolation.ipp"
 #include "utils/env.hpp"
+#include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
+#include "utils/logging/macros.hpp"
 #include "utils/process/children.hpp"
 #include "utils/sanity.hpp"
+#include "utils/signals/misc.hpp"
 
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace process = utils::process;
+namespace signals = utils::signals;
 
 using utils::optional;
 
@@ -55,6 +59,7 @@ using utils::optional;
 namespace {
 
 
+/// Body for a subprocess that prints messages and exits.
 void
 fork_and_wait_hook_ok(void)
 {
@@ -64,13 +69,33 @@ fork_and_wait_hook_ok(void)
 }
 
 
+/// Body for a subprocess that gets stuck.
+///
+/// This attempts to configure all signals to be ignored so that the caller
+/// process has to kill this child by sending an uncatchable signal.
 void
 fork_and_wait_hook_block(void)
 {
-    ::pause();
+    for (int i = 0; i <= signals::last_signo; i++) {
+        struct ::sigaction sa;
+        sa.sa_handler = SIG_IGN;
+        sigemptyset(&sa.sa_mask);
+        sa.sa_flags = 0;
+        if (::sigaction(i, &sa, NULL) == -1)
+            LD(F("Failed to ignore signal %d (may be normal!)") % i);
+        else
+            LD(F("Ignoring signal %d") % i);
+    }
+
+    for (;;)
+        ::pause();
 }
 
 
+/// Body for a subprocess that checks if isolate_process() defines a pgrp.
+///
+/// The subprocess exits with 0 if the pgrp has been created; otherwise exits
+/// with 1.
 void
 isolate_process_check_pgrp(void)
 {
@@ -79,6 +104,13 @@ isolate_process_check_pgrp(void)
 }
 
 
+/// Body for a subprocess that kills itself.
+///
+/// This is used to verify that the caller notices that the child received a
+/// signal instead of exiting cleanly.
+///
+/// \tparam Signo The signal to send to self.  It should be a signal that has
+///     not been programmed yet whose default action is to die.
 template< int Signo >
 void
 isolate_process_kill_self(void)
@@ -89,56 +121,98 @@ isolate_process_kill_self(void)
 }
 
 
-class protected_run_hook_simple {
+/// Hook for protected_run() that validates the value of the work directory.
+///
+/// The caller needs to arrange for a mechanism to make the work directory
+/// parameter passed to the hook to include a particular known value.  This can
+/// be done, for example, by setting TMPDIR.
+class protected_run_hook_check_workdir {
+    /// The dirname of the work directory to expect.
+    const fs::path _dirname;
+
+    /// The test result to return.
     const engine::test_result _result;
 
 public:
-    protected_run_hook_simple(const engine::test_result& result_) :
+    /// Constructs a new functor.
+    ///
+    /// \param dirname_ The dirname of the expected work directory.
+    /// \param result_ The test result to return from the hook.
+    protected_run_hook_check_workdir(const char* dirname_,
+                                     const engine::test_result& result_) :
+        _dirname(dirname_),
         _result(result_)
     {
     }
 
+    /// Runs the functor.
+    ///
+    /// \param workdir The work directory calculated by protected_run().  Its
+    ///     dirname must match what we expect as defined during construction.
+    ///
+    /// \return The test result passed to the constructor.
     const engine::test_result&
     operator()(const fs::path& workdir)
     {
-        ATF_REQUIRE_EQ(fs::path("my-tmpdir"), workdir.branch_path());
+        ATF_REQUIRE_EQ(_dirname, workdir.branch_path());
         return _result;
     }
 };
 
 
+/// Hook for protected_run() that makes the work directory unwritable.
 class protected_run_hook_protect {
+    /// The test result to return.
     const engine::test_result _result;
 
 public:
+    /// Constructs a new functor.
+    ///
+    /// \param result_ The test result to return from the hook.
     protected_run_hook_protect(const engine::test_result& result_) :
         _result(result_)
     {
     }
 
+    /// Runs the functor.
+    ///
+    /// \param workdir The work directory calculated by protected_run().
+    ///
+    /// \return The test result passed to the constructor.
     const engine::test_result&
     operator()(const fs::path& workdir)
     {
-        ATF_REQUIRE_EQ(fs::path("my-tmpdir"), workdir.branch_path());
         ::chmod(workdir.branch_path().c_str(), 0555);
         return _result;
     }
 };
 
 
+/// Hook for protected_run() that dies during execution.
 class protected_run_hook_signal {
+    /// The signal to send to ourselves to commit suicide.
     const int _signo;
 
 public:
+    /// Constructs a new functor.
+    ///
+    /// \param signo_ The signal to send to ourselves to commit suicide.
+    ///     Note that protected_run() does NOT spawn a subprocess, so the signal
+    ///     passed here must be catchable.
     protected_run_hook_signal(const int signo_) :
         _signo(signo_)
     {
     }
 
+    /// Runs the functor.
+    ///
+    /// \param unused_workdir The work directory calculated by protected_run().
+    ///
+    /// \return A passed test case result.  This should not happen though, as
+    /// the signal raised before returning should kill ourselves.
     engine::test_result
-    operator()(const fs::path& workdir)
+    operator()(const fs::path& UTILS_UNUSED_PARAM(workdir))
     {
-        ATF_REQUIRE_EQ(fs::path("my-tmpdir"), workdir.branch_path());
         ::kill(::getpid(), _signo);
         return engine::test_result(engine::test_result::passed);
     }
@@ -321,7 +395,7 @@ ATF_TEST_CASE_BODY(protected_run__ok)
     utils::setenv("TMPDIR", "my-tmpdir");
 
     const engine::test_result result(engine::test_result::skipped, "Foo");
-    const protected_run_hook_simple hook(result);
+    const protected_run_hook_check_workdir hook("my-tmpdir", result);
     ATF_REQUIRE(result == engine::protected_run(hook));
 }
 

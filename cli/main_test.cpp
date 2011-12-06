@@ -64,18 +64,29 @@ namespace user_files = engine::user_files;
 namespace {
 
 
+/// Instantiation of a default user configuration; syntactic sugar.
 static const user_files::config default_config = user_files::config::defaults();
 
 
+/// Fake command implementation that crashes during its execution.
 class cmd_mock_crash : public cli::cli_command {
-    bool _unhandled;
-
 public:
+    /// Constructs a new mock command.
+    ///
+    /// All command parameters are set to irrelevant values.
     cmd_mock_crash(void) :
         cli::cli_command("mock_error", "", 0, 0, "Mock command that crashes")
     {
     }
 
+    /// Runs the mock command.
+    ///
+    /// \param unused_ui Object to interact with the I/O of the program.
+    /// \param unused_cmdline Representation of the command line to the
+    ///     subcommand.
+    /// \param unused_config The runtime configuration of the program.
+    ///
+    /// \return Nothing because this function always aborts.
     int
     run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
         const cmdline::parsed_cmdline& UTILS_UNUSED_PARAM(cmdline),
@@ -86,10 +97,21 @@ public:
 };
 
 
+/// Fake command implementation that throws an exception during its execution.
 class cmd_mock_error : public cli::cli_command {
+    /// Whether the command raises an exception captured by the parent or not.
+    ///
+    /// If this is true, the command will raise a std::runtime_error exception
+    /// or a subclass of it.  The main program is in charge of capturing these
+    /// and reporting them appropriately.  If false, this raises another
+    /// exception that does not inherit from std::runtime_error.
     bool _unhandled;
 
 public:
+    /// Constructs a new mock command.
+    ///
+    /// \param unhandled If true, make run raise an exception not catched by the
+    ///     main program.
     cmd_mock_error(const bool unhandled) :
         cli::cli_command("mock_error", "", 0, 0,
                          "Mock command that raises an error"),
@@ -97,6 +119,17 @@ public:
     {
     }
 
+    /// Runs the mock command.
+    ///
+    /// \param unused_ui Object to interact with the I/O of the program.
+    /// \param unused_cmdline Representation of the command line to the
+    ///     subcommand.
+    /// \param unused_config The runtime configuration of the program.
+    ///
+    /// \return Nothing because this function always aborts.
+    ///
+    /// \throw std::logic_error If _unhandled is true.
+    /// \throw std::runtime_error If _unhandled is false.
     int
     run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
         const cmdline::parsed_cmdline& UTILS_UNUSED_PARAM(cmdline),
@@ -110,13 +143,25 @@ public:
 };
 
 
+/// Fake command implementation that prints messages during its execution.
 class cmd_mock_write : public cli::cli_command {
 public:
+    /// Constructs a new mock command.
+    ///
+    /// All command parameters are set to irrelevant values.
     cmd_mock_write(void) : cli::cli_command(
         "mock_write", "", 0, 0, "Mock command that prints output")
     {
     }
 
+    /// Runs the mock command.
+    ///
+    /// \param ui Object to interact with the I/O of the program.
+    /// \param unused_cmdline Representation of the command line to the
+    ///     subcommand.
+    /// \param unused_config The runtime configuration of the program.
+    ///
+    /// \return Nothing because this function always aborts.
     int
     run(cmdline::ui* ui,
         const cmdline::parsed_cmdline& UTILS_UNUSED_PARAM(cmdline),

@@ -62,7 +62,7 @@ namespace {
 
 /// Gets the path to the helpers for this test program.
 ///
-/// \param tc A pointer to the currently running test case.
+/// \param test_case A pointer to the currently running test case.
 ///
 /// \return The path to the helpers binary.
 static fs::path
@@ -73,10 +73,15 @@ helpers(const atf::tests::tc* test_case)
 }
 
 
+/// Hooks to capture the incremental listing of test cases.
 class capture_hooks : public list_tests::base_hooks {
 public:
+    /// Set of the listed test cases in a program:test_case form.
     std::set< std::string > test_cases;
 
+    /// Called when a test case is identified in a test suite.
+    ///
+    /// \param test_case The data describing the test case.
     virtual void
     got_test_case(const engine::base_test_case& test_case)
     {

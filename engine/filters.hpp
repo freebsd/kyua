@@ -83,6 +83,7 @@ struct test_filter {
 /// most likely the fault of the user.  To check for non-disjoint filters before
 /// constructing this object, use check_disjoint_filters.
 class test_filters {
+    /// The user-provided filters.
     std::set< test_filter > _filters;
 
 public:
@@ -105,7 +106,10 @@ void check_disjoint_filters(const std::set< test_filter >&);
 
 /// Tracks state of the filters that have matched tests during execution.
 class filters_state {
+    /// The user-provided filters.
     test_filters _filters;
+
+    /// Collection of filters that have matched test cases so far.
     std::set< test_filter > _used_filters;
 
 public:

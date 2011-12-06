@@ -67,6 +67,7 @@ const detail::none_t none = {};
 /// This class is a simplified version of Boost.Optional.
 template< class T >
 class optional {
+    /// Internal representation of the optional data value.
     T* _data;
 
 public:

@@ -77,6 +77,9 @@ static const std::string config_lookup_names =
 ///
 /// \param cmdline The parsed command line.
 ///
+/// \return The loaded configuration file, or the configuration defaults if the
+/// loading is disabled.
+///
 /// \throw engine::error If the parsing of the configuration file fails.
 ///     TODO(jmmv): I'm not sure if this is the raised exception.  And even if
 ///     it is, we should make it more accurate.

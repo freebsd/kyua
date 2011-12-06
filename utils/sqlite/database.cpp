@@ -200,7 +200,7 @@ sqlite::database::temporary(void)
 }
 
 
-/// Gets the internal ::sqlite3 object.
+/// Gets the internal sqlite3 object.
 ///
 /// \return The raw SQLite 3 database.  This is returned as a void pointer to
 /// prevent including the sqlite3.h header file from our public interface.  The

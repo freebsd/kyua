@@ -81,6 +81,7 @@ timer_callback(void)
 
 /// Validates that interrupting the wait call raises the proper error.
 ///
+/// \tparam child The type of the child to validate.
 /// \param child The child to validate.
 template< class Child >
 void
@@ -173,6 +174,12 @@ retry:
 }
 
 
+/// Body for a process that prints a simple message and exits.
+///
+/// \tparam ExitStatus The exit status for the subprocess.
+/// \tparam Message A single character that will be prepended to the printed
+///     messages.  This would ideally be a string, but we cannot templatize a
+///     function with an object nor a pointer.
 template< int ExitStatus, char Message >
 static void
 child_simple_function(void)
@@ -183,17 +190,26 @@ child_simple_function(void)
 }
 
 
+/// Functor for the body of a process that prints a simple message and exits.
 class child_simple_functor {
+    /// The exit status that the subprocess will yield.
     int _exitstatus;
+
+    /// The message to print on stdout and stderr.
     std::string _message;
 
 public:
-    child_simple_functor(int exitstatus, const std::string& message) :
+    /// Constructs a new functor.
+    ///
+    /// \param exitstatus The exit status that the subprocess will yield.
+    /// \param message The message to print on stdout and stderr.
+    child_simple_functor(const int exitstatus, const std::string& message) :
         _exitstatus(exitstatus),
         _message(message)
     {
     }
 
+    /// Body for the subprocess.
     void
     operator()(void)
     {
@@ -204,6 +220,10 @@ public:
 };
 
 
+/// Body for a process that prints many messages to stdout and exits.
+///
+/// The goal of this body is to validate that any buffering performed on the
+/// parent process to read the output of the subprocess works correctly.
 static void
 child_printer_function(void)
 {
@@ -215,8 +235,10 @@ child_printer_function(void)
 }
 
 
+/// Functor for the body of a process that runs child_printer_function.
 class child_printer_functor {
 public:
+    /// Body for the subprocess.
     void
     operator()(void)
     {
@@ -225,6 +247,15 @@ public:
 };
 
 
+/// Body for a process that sleeps for an amount of time and exits.
+///
+/// The goal of this body is to validate the timeout functionality of the
+/// parent.  This is done by sleeping first and later creating a "cookie" file
+/// in the current directory that indicates that the process actually finished
+/// its execution.  If the child is killed while it is sleeping, then the cookie
+/// is not created and we can check that the timeout worked.
+///
+/// \tparam Microseconds The time to sleep for before creating the cookie.
 template< int Microseconds >
 static void
 child_wait(void)
@@ -240,6 +271,16 @@ child_wait(void)
 }
 
 
+/// Body for a process that spawns another process and sleeps.
+///
+/// The goal of this body is similar to that of child_wait.  However, we
+/// generate a "subprocess tree" from here by spawning another subprocess.  This
+/// is to allow the caller to validate that, when the timeout for the process is
+/// reached, all of the children are killed (i.e. all the process group is
+/// terminated), not just the directly-spawned child.  These checks are also
+/// performed by file system cookies.
+///
+/// \tparam Microseconds The time to sleep for before creating the cookies.
 template< int Microseconds >
 static void
 child_wait_with_subchild(void)
@@ -275,6 +316,7 @@ child_write_pid(void)
 
 /// Validates that the value of the pidfile matches the pid file in the child.
 ///
+/// \tparam Child The type of the child to validate.
 /// \param child The child to validate.
 template< class Child >
 void
@@ -310,6 +352,13 @@ child_return(void)
 ///
 /// The fork() wrappers are supposed to capture this condition and terminate the
 /// child before the code returns to the fork() call point.
+///
+/// \tparam Type The type of the exception to raise.
+/// \tparam Value The value passed to the constructor of the exception type.  In
+///     general, this only makes sense if Type is a primitive type so that, in
+///     the end, the code becomes "throw int(123)".
+///
+/// \throw Type An exception of the provided type.
 template< class Type, Type Value >
 void
 child_raise_exception(void)
@@ -318,17 +367,30 @@ child_raise_exception(void)
 }
 
 
+/// Functor for the body of a process that calls process::exec.
+///
+/// In order to be able to test the process::exec function, we must execute it
+/// under a subprocess so that we can inspect the actions taken in such
+/// subprocess from the test case itself.
 class do_exec {
+    /// The path to the program to execute.
     fs::path _program;
+
+    /// The arguments to pass to the executed program.
     const std::vector< std::string > _args;
 
 public:
+    /// Constructs a new functor.
+    ///
+    /// \param program The path to the program to execute.
+    /// \param args The arguments to pass to the executed program.
     do_exec(const fs::path& program, const std::vector< std::string >& args) :
         _program(program),
         _args(args)
     {
     }
 
+    /// Body for the subprocess.
     void
     operator()(void)
     {
@@ -343,6 +405,12 @@ public:
 };
 
 
+/// Calculates the path to the test helpers binary.
+///
+/// \param tc A pointer to the caller test case, needed to extract the value of
+///     the "srcdir" property.
+///
+/// \return The path to the helpers binary.
 static fs::path
 get_helpers(const atf::tests::tc* tc)
 {
@@ -350,18 +418,31 @@ get_helpers(const atf::tests::tc* tc)
 }
 
 
+/// Mock fork(2) that just returns an error.
+///
+/// \tparam Errno The value to set as the errno of the failed call.
+///
+/// \return Always -1.
 template< int Errno >
 static pid_t
-fork_fail(void)
+fork_fail(void) throw()
 {
     errno = Errno;
     return -1;
 }
 
 
+/// Mock open(2) that fails if the 'raise-error' file is opened.
+///
+/// \tparam Errno The value to set as the errno if the known failure triggers.
+/// \param path The path to the file to be opened.
+/// \param flags The open flags.
+/// \param ... The file mode creation, if flags contains O_CREAT.
+///
+/// \return The opened file handle or -1 on error.
 template< int Errno >
-static pid_t
-open_fail(const char* path, const int flags, ...)
+static int
+open_fail(const char* path, const int flags, ...) throw()
 {
     if (std::strcmp(path, "raise-error") == 0) {
         errno = Errno;
@@ -376,9 +457,15 @@ open_fail(const char* path, const int flags, ...)
 }
 
 
+/// Mock pipe(2) that just returns an error.
+///
+/// \tparam Errno The value to set as the errno of the failed call.
+/// \param [out] unused_fildes A pointer to a 2-integer array.
+///
+/// \return Always -1.
 template< int Errno >
 static pid_t
-pipe_fail(int* UTILS_UNUSED_PARAM(fildes))
+pipe_fail(int* UTILS_UNUSED_PARAM(fildes)) throw()
 {
     errno = Errno;
     return -1;
@@ -428,6 +515,42 @@ do_inherit_test(const char* fork_stdout, const char* fork_stderr,
         ATF_REQUIRE(utils::grep_file("stdout: Z", fs::path("stdout.txt")));
         ATF_REQUIRE(utils::grep_file("stderr: Z", fs::path("stderr.txt")));
     }
+}
+
+
+/// Performs a "child_with_output__ok_*" test.
+///
+/// This test basically ensures that the child_with_output class spawns a
+/// process whose output is captured in an input stream.
+///
+/// \tparam Hook The type of the fork hook to use.
+/// \param hook The hook to the fork call.
+template< class Hook >
+static void
+child_with_output__ok(Hook hook)
+{
+    std::cout << "This unflushed message should not propagate to the child";
+    std::cerr << "This unflushed message should not propagate to the child";
+    std::auto_ptr< process::child_with_output > child =
+        process::child_with_output::fork(hook);
+    std::cout << std::endl;
+    std::cerr << std::endl;
+
+    std::istream& output = child->output();
+    for (std::size_t i = 0; i < 100; i++) {
+        std::string line;
+        ATF_REQUIRE(std::getline(output, line).good());
+        ATF_REQUIRE_EQ((F("This is a message to stdout, "
+                          "sequence %d") % i).str(), line);
+    }
+
+    std::string line;
+    ATF_REQUIRE(std::getline(output, line).good());
+    ATF_REQUIRE_EQ("Exiting", line);
+
+    process::status status = child->wait();
+    ATF_REQUIRE(status.exited());
+    ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
 }
 
 
@@ -637,35 +760,6 @@ ATF_TEST_CASE_BODY(child_with_files__create_stderr_fail)
     ATF_REQUIRE_EQ(SIGABRT, status.termsig());
     ATF_REQUIRE(fs::exists(fs::path("created")));
     ATF_REQUIRE(!fs::exists(fs::path("raise-error")));
-}
-
-
-template< class Hook >
-static void
-child_with_output__ok(Hook hook)
-{
-    std::cout << "This unflushed message should not propagate to the child";
-    std::cerr << "This unflushed message should not propagate to the child";
-    std::auto_ptr< process::child_with_output > child =
-        process::child_with_output::fork(hook);
-    std::cout << std::endl;
-    std::cerr << std::endl;
-
-    std::istream& output = child->output();
-    for (std::size_t i = 0; i < 100; i++) {
-        std::string line;
-        ATF_REQUIRE(std::getline(output, line).good());
-        ATF_REQUIRE_EQ((F("This is a message to stdout, "
-                          "sequence %d") % i).str(), line);
-    }
-
-    std::string line;
-    ATF_REQUIRE(std::getline(output, line).good());
-    ATF_REQUIRE_EQ("Exiting", line);
-
-    process::status status = child->wait();
-    ATF_REQUIRE(status.exited());
-    ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
 }
 
 

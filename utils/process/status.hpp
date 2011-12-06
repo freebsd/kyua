@@ -42,7 +42,10 @@ namespace process {
 
 /// Representation of the termination status of a process.
 class status {
+    /// The exit status of the process, if it exited cleanly.
     optional< int > _exited;
+
+    /// The signal that terminated the program, if any, and if it dumped core.
     optional< std::pair< int, bool > > _signaled;
 
     status(const optional< int >&, const optional< std::pair< int, bool > >&);

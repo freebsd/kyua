@@ -49,20 +49,32 @@ using cli::cmd_test;
 namespace {
 
 
-class hooks : public run_tests::base_hooks {
+/// Hooks to print a progress report of the execution of the tests.
+class print_hooks : public run_tests::base_hooks {
+    /// Object to interact with the I/O of the program.
     cmdline::ui* _ui;
 
 public:
+    /// The amount of positive test results found so far.
     unsigned long good_count;
+
+    /// The amount of negative test results found so far.
     unsigned long bad_count;
 
-    hooks(cmdline::ui* ui_) :
+    /// Constructor for the hooks.
+    ///
+    /// \param ui_ Object to interact with the I/O of the program.
+    print_hooks(cmdline::ui* ui_) :
         _ui(ui_),
         good_count(0),
         bad_count(0)
     {
     }
 
+    /// Called when a result of a test case becomes available.
+    ///
+    /// \param test_case The test case.
+    /// \param result The result of the execution of the test case.
     virtual void
     got_result(const engine::test_case_ptr& test_case,
                const engine::test_result& result)
@@ -100,18 +112,18 @@ int
 cmd_test::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
               const user_files::config& config)
 {
-    hooks h(ui);
+    print_hooks hooks(ui);
     const run_tests::result result = run_tests::drive(
         kyuafile_path(cmdline), store_path(cmdline),
-        parse_filters(cmdline.arguments()), config, h);
+        parse_filters(cmdline.arguments()), config, hooks);
 
     int exit_code;
-    if (h.good_count > 0 || h.bad_count > 0) {
+    if (hooks.good_count > 0 || hooks.bad_count > 0) {
         ui->out("");
-        ui->out(F("%d/%d passed (%d failed)") % h.good_count %
-                (h.good_count + h.bad_count) % h.bad_count);
+        ui->out(F("%d/%d passed (%d failed)") % hooks.good_count %
+                (hooks.good_count + hooks.bad_count) % hooks.bad_count);
 
-        exit_code = (h.bad_count == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
+        exit_code = (hooks.bad_count == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
     } else
         exit_code = EXIT_SUCCESS;
 

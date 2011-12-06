@@ -47,6 +47,8 @@ class database;
 /// it has been explicitly committed.
 class transaction {
     struct impl;
+
+    /// Pointer to the shared internal implementation.
     std::tr1::shared_ptr< impl > _pimpl;
 
     explicit transaction(database&);

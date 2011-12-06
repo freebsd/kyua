@@ -47,6 +47,8 @@ class context;
 /// requirement for the 'store' API model.
 class action {
     struct impl;
+
+    /// Pointer to the shared internal implementation.
     std::tr1::shared_ptr< impl > _pimpl;
 
 public:

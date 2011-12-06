@@ -49,9 +49,13 @@ namespace {
 template< typename Data, Data ExpectedData >
 class mock_cmd : public cmdline::base_command< Data > {
 public:
+    /// Indicates if run() has been called already and executed correctly.
     bool executed;
+
+    /// Contains the argument of --the_string after run() is executed.
     std::string optvalue;
 
+    /// Constructs a new mock command.
     mock_cmd(void) :
         cmdline::base_command< Data >("mock", "arg1 [arg2 [arg3]]", 1, 3,
                                       "Command for testing."),
@@ -61,6 +65,13 @@ public:
                                                 "arg"));
     }
 
+    /// Executes the command.
+    ///
+    /// \param unused_ui Object to interact with the I/O of the program.
+    /// \param cmdline Representation of the command line to the subcommand.
+    /// \param data Arbitrary data cookie passed to the command.
+    ///
+    /// \return A hardcoded number for testing purposes.
     int
     run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
         const cmdline::parsed_cmdline& cmdline, const Data& data)
@@ -78,9 +89,13 @@ public:
 /// Mock command to test the cmdline::base_command_no_data base class.
 class mock_cmd_no_data : public cmdline::base_command_no_data {
 public:
+    /// Indicates if run() has been called already and executed correctly.
     bool executed;
+
+    /// Contains the argument of --the_string after run() is executed.
     std::string optvalue;
 
+    /// Constructs a new mock command.
     mock_cmd_no_data(void) :
         cmdline::base_command_no_data("mock", "arg1 [arg2 [arg3]]", 1, 3,
                                       "Command for testing."),
@@ -89,6 +104,12 @@ public:
         add_option(cmdline::string_option("the_string", "Test option", "arg"));
     }
 
+    /// Executes the command.
+    ///
+    /// \param unused_ui Object to interact with the I/O of the program.
+    /// \param cmdline Representation of the command line to the subcommand.
+    ///
+    /// \return A hardcoded number for testing purposes.
     int
     run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
         const cmdline::parsed_cmdline& cmdline)
@@ -105,6 +126,7 @@ public:
 /// Implementation of a command to get access to parse_cmdline().
 class parse_cmdline_portal : public cmdline::command_proto {
 public:
+    /// Constructs a new mock command.
     parse_cmdline_portal(void) :
         cmdline::command_proto("portal", "arg1 [arg2 [arg3]]", 1, 3,
                                "Command for testing.")
@@ -113,6 +135,11 @@ public:
                                                 "arg"));
     }
 
+    /// Delegator for the internal parse_cmdline() method.
+    ///
+    /// \param args The input arguments to be parsed.
+    ///
+    /// \return The parsed command line, split in options and arguments.
     cmdline::parsed_cmdline
     operator()(const cmdline::args_vector& args) const
     {

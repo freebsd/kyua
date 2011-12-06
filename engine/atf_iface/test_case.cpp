@@ -725,6 +725,10 @@ atf_iface::test_case::check_requirements(const user_files::config& config) const
 /// reported as a broken test case result.
 ///
 /// \param config The run-time configuration for the test case.
+/// \param stdout_path The file to which to redirect the stdout of the test.
+///     If none, use a temporary file in the work directory.
+/// \param stderr_path The file to which to redirect the stdout of the test.
+///     If none, use a temporary file in the work directory.
 ///
 /// \return The result of the execution.
 engine::test_result

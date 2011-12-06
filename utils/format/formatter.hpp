@@ -63,9 +63,16 @@ namespace format {
 /// const std::string s = f3.str();
 /// \endcode
 class formatter {
+    /// The original format string provided by the user.
     std::string _format;
 
+    /// The current "expansion" of the format string.
+    ///
+    /// This field gets updated on every call to operator%() to have one less
+    /// formatting placeholder.
     std::string _expansion;
+
+    /// The position of _expansion from which to scan for placeholders.
     std::string::size_type _last_pos;
 
     formatter replace(const std::string&) const;

@@ -75,7 +75,7 @@ public:
 };
 
 
-// Fake implementation of a test case.
+/// Fake implementation of a test case.
 class mock_test_case : public engine::base_test_case {
     /// Gets the collection of metadata properties of the test case.
     ///
@@ -91,6 +91,8 @@ class mock_test_case : public engine::base_test_case {
     /// Fakes the execution of a test case.
     ///
     /// \param config The run-time configuration.  Must be mock_config.
+    /// \param unused_stdout_path The file into which to write the stdout.
+    /// \param unused_stderr_path The file into which to write the stderr.
     ///
     /// \return A static result for testing purposes.
     engine::test_result
@@ -100,7 +102,8 @@ class mock_test_case : public engine::base_test_case {
     {
         if (&config != &mock_config)
             throw std::runtime_error("Invalid config object");
-        return engine::test_result(engine::test_result::skipped, "A test result");
+        return engine::test_result(engine::test_result::skipped,
+                                   "A test result");
     }
 
 public:

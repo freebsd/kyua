@@ -73,6 +73,8 @@ static const int open_create = 1 << 2;
 /// optimal efficiency, so this is OK.
 class database {
     struct impl;
+
+    /// Pointer to the shared internal implementation.
     std::tr1::shared_ptr< impl > _pimpl;
 
     friend class database_c_gate;

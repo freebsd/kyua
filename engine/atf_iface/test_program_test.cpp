@@ -62,7 +62,7 @@ static const user_files::config mock_config(
 
 /// Gets the path to the atf-specific helpers.
 ///
-/// \param tc A pointer to the currently running test case.
+/// \param test_case A pointer to the currently running test case.
 ///
 /// \return The path to the helpers binary.
 static fs::path
@@ -75,7 +75,7 @@ atf_helpers(const atf::tests::tc* test_case)
 
 /// Gets the path to the plain (generic binary, no framework) helpers.
 ///
-/// \param tc A pointer to the currently running test case.
+/// \param test_case A pointer to the currently running test case.
 ///
 /// \return The path to the helpers binary.
 static fs::path
@@ -88,8 +88,8 @@ plain_helpers(const atf::tests::tc* test_case)
 
 /// Instantiates a test case.
 ///
-/// \param path The test program.
-/// \param name The test case name.
+/// \param test_program The test program.
+/// \param name The name of the test case.
 /// \param props The raw properties to pass to the test case.
 ///
 /// \return The new test case.

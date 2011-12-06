@@ -48,6 +48,8 @@ namespace process {
 /// destroyed, the file descriptor is closed unconditionally.
 class systembuf : public std::streambuf, noncopyable {
     struct impl;
+
+    /// Pointer to the shared internal implementation.
     std::auto_ptr< impl > _pimpl;
 
 protected:

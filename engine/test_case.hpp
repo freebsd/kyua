@@ -62,13 +62,34 @@ struct config;
 /// Representation of a test case.
 class base_test_case {
     struct base_impl;
+
+    /// Pointer to the shared internal implementation.
     std::tr1::shared_ptr< base_impl > _pbimpl;
 
+    /// Returns a string representation of all test case properties.
+    ///
+    /// The returned keys and values match those that can be defined by the test
+    /// case.
+    ///
+    /// \return A key/value mapping describing all the test case properties.
     virtual properties_map get_all_properties(void) const = 0;
+
+    /// Executes the test case.
+    ///
+    /// This should not throw any exception: problems detected during execution
+    /// are reported as a broken test case result.
+    ///
+    /// \param config The run-time configuration for the test case.
+    /// \param stdout_path The file to which to redirect the stdout of the test.
+    ///     If none, use a temporary file in the work directory.
+    /// \param stderr_path The file to which to redirect the stdout of the test.
+    ///     If none, use a temporary file in the work directory.
+    ///
+    /// \return The result of the execution.
     virtual test_result execute(
-        const user_files::config&,
-        const utils::optional< utils::fs::path >&,
-        const utils::optional< utils::fs::path >&) const = 0;
+        const user_files::config& config,
+        const utils::optional< utils::fs::path >& stdout_path,
+        const utils::optional< utils::fs::path >& stderr_path) const = 0;
 
 public:
     base_test_case(const base_test_program&, const std::string&);

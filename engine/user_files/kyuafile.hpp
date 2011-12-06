@@ -63,7 +63,10 @@ test_programs_vector get_test_programs(lutok::state&, const std::string&,
 /// This class provides the parser for test suite configuration files and
 /// methods to access the parsed data.
 class kyuafile {
+    /// Path to the directory containing the top-level Kyuafile loaded.
     utils::fs::path _root;
+
+    /// Collection of the test programs defined in the Kyuafile.
     test_programs_vector _test_programs;
 
 public:

@@ -48,6 +48,8 @@ namespace engine {
 /// requirement for the 'store' API model.
 class context {
     struct impl;
+
+    /// Pointer to the shared internal implementation.
     std::tr1::shared_ptr< impl > _pimpl;
 
 public:

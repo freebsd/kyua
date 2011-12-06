@@ -52,29 +52,47 @@ using cli::cmd_help;
 namespace {
 
 
+/// Instantiation of a default user configuration; syntactic sugar.
 static const user_files::config default_config = user_files::config::defaults();
 
 
+/// Mock command with a simple definition (no options, no arguments).
+///
+/// Attempting to run this command will result in a crash.  It is only provided
+/// to validate the generation of interactive help.
 class cmd_mock_simple : public cli::cli_command {
 public:
+    /// Constructs a new mock command.
     cmd_mock_simple(void) : cli::cli_command(
         "mock_simple", "", 0, 0, "Simple command")
     {
     }
 
+    /// Runs the mock command.
+    ///
+    /// \param unused_ui Object to interact with the I/O of the program.
+    /// \param unused_cmdline Representation of the command line to the
+    ///     subcommand.
+    /// \param unused_config The runtime configuration of the program.
+    ///
+    /// \return Nothing because this function is never called.
     int
     run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
         const cmdline::parsed_cmdline& UTILS_UNUSED_PARAM(cmdline),
         const user_files::config& UTILS_UNUSED_PARAM(config))
     {
         UNREACHABLE;
-        return 1234;
     }
 };
 
 
+/// Mock command with a complex definition (some options, some arguments).
+///
+/// Attempting to run this command will result in a crash.  It is only provided
+/// to validate the generation of interactive help.
 class cmd_mock_complex : public cli::cli_command {
 public:
+    /// Constructs a new mock command.
     cmd_mock_complex(void) : cli::cli_command(
         "mock_complex", "[arg1 .. argN]", 0, 2, "Complex command")
     {
@@ -84,17 +102,28 @@ public:
         add_option(cmdline::string_option("flag_d", "Flag D", "d_arg", "foo"));
     }
 
+    /// Runs the mock command.
+    ///
+    /// \param unused_ui Object to interact with the I/O of the program.
+    /// \param unused_cmdline Representation of the command line to the
+    ///     subcommand.
+    /// \param unused_config The runtime configuration of the program.
+    ///
+    /// \return Nothing because this function is never called.
     int
     run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
         const cmdline::parsed_cmdline& UTILS_UNUSED_PARAM(cmdline),
         const user_files::config& UTILS_UNUSED_PARAM(config))
     {
         UNREACHABLE;
-        return 5678;
     }
 };
 
 
+/// Initializes the cmdline library and generates the set of test commands.
+///
+/// \param [out] commands A mapping that is updated to contain the commands to
+///     use for testing.
 static void
 setup(cmdline::commands_map< cli::cli_command >& commands)
 {

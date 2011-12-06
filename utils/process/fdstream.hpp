@@ -48,6 +48,8 @@ namespace process {
 class ifdstream : public std::istream, noncopyable
 {
     struct impl;
+
+    /// Pointer to the shared internal implementation.
     std::auto_ptr< impl > _pimpl;
 
 public:

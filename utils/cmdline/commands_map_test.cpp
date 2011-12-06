@@ -39,14 +39,30 @@ namespace cmdline = utils::cmdline;
 namespace {
 
 
+/// Fake command to validate the behavior of commands_map.
+///
+/// Note that this command does not do anything.  It is only intended to provide
+/// a specific class that can be inserted into commands_map instances and check
+/// that it can be located properly.
 class mock_cmd : public cmdline::base_command_no_data {
 public:
+    /// Constructor for the mock command.
+    ///
+    /// \param mock_name The name of the command.  All other settings are set to
+    ///     irrelevant values.
     mock_cmd(const char* mock_name) :
         cmdline::base_command_no_data(mock_name, "", 0, 0,
                                       "Command for testing.")
     {
     }
 
+    /// Runs the mock command.
+    ///
+    /// \param unused_ui Object to interact with the I/O of the program.
+    /// \param unused_cmdline Representation of the command line to the
+    ///     subcommand.
+    ///
+    /// \return Nothing because this function is never called.
     int
     run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
         const cmdline::parsed_cmdline& UTILS_UNUSED_PARAM(cmdline))

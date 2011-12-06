@@ -143,7 +143,7 @@ struct utils::sqlite::statement::impl {
 ///
 /// \param db The database this statement belongs to.
 /// \param raw_stmt A void pointer representing a SQLite native statement of
-///     type ::sqlite3_stmt.
+///     type sqlite3_stmt.
 sqlite::statement::statement(database& db, void* raw_stmt) :
     _pimpl(new impl(db, static_cast< ::sqlite3_stmt* >(raw_stmt)))
 {

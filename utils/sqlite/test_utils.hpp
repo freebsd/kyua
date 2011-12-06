@@ -71,13 +71,13 @@ namespace {
     } while (0)
 
 
-/// Gets the pointer to the internal ::sqlite3 of a database object.
+/// Gets the pointer to the internal sqlite3 of a database object.
 ///
 /// This is pure syntactic sugar to simplify typing in the test cases.
 ///
 /// \param db The SQLite database.
 ///
-/// \return The internal ::sqlite3 of the input database.
+/// \return The internal sqlite3 of the input database.
 static inline ::sqlite3*
 raw(utils::sqlite::database& db)
 {

@@ -54,7 +54,10 @@ namespace {
 
 /// Hooks for list_tests to print test cases as they come.
 class progress_hooks : public list_tests::base_hooks {
+    /// The ui object to which to print the test cases.
     cmdline::ui* _ui;
+
+    /// Whether to print test case details or just their names.
     bool _verbose;
 
 public:
@@ -84,10 +87,9 @@ public:
 
 /// Lists a single test case.
 ///
-/// \param ui [out] Object to interact with the I/O of the program.
+/// \param [out] ui Object to interact with the I/O of the program.
 /// \param verbose Whether to be verbose or not.
 /// \param test_case The test case to print.
-/// \param test_suite_name The name of the test suite containing the test case.
 void
 cli::detail::list_test_case(cmdline::ui* ui, const bool verbose,
                             const engine::base_test_case& test_case)

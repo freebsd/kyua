@@ -54,6 +54,8 @@ extern utils::datetime::delta default_timeout;
 /// Representation of a plain test program.
 class test_program : public base_test_program {
     struct impl;
+
+    /// Pointer to the shared internal implementation.
     std::tr1::shared_ptr< impl > _pimpl;
 
     test_cases_vector load_test_cases(void) const;

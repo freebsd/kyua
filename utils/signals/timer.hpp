@@ -53,6 +53,8 @@ typedef void (*timer_callback)(void);
 /// A RAII class to program a timer.
 class timer : noncopyable {
     struct impl;
+
+    /// Pointer to the shared internal implementation.
     std::auto_ptr< impl > _pimpl;
 
 public:

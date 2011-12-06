@@ -41,7 +41,10 @@ namespace store {
 
 /// Representation of the database metadata.
 class metadata {
+    /// Timestamp of the last metadata entry in the database.
     int64_t _timestamp;
+
+    /// Current version of the database schema.
     int _schema_version;
 
     metadata(const int64_t, const int);

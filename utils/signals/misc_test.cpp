@@ -51,6 +51,14 @@ namespace {
 
 static void program_reset_raise(void) UTILS_NORETURN;
 
+
+/// Body of a subprocess that tests the signal::reset function.
+///
+/// This function programs a signal to be ignored, then uses signal::reset to
+/// bring it back to its default handler and then delivers the signal to self.
+/// The default behavior of the signal is for the process to die, so this
+/// function should never return correctly (and thus the child process should
+/// always die due to a signal if all goes well).
 static void
 program_reset_raise(void)
 {

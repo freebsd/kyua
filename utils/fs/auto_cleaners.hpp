@@ -44,7 +44,10 @@ namespace fs {
 /// The directory is removed recursively using the fs::cleanup() function.
 /// Use this in conjunction with fs::mkdtemp, for example.
 class auto_directory : noncopyable {
+    /// The path to the directory being managed.
     fs::path _directory;
+
+    /// Whether cleanup() has been already executed or not.
     bool _cleaned;
 
 public:

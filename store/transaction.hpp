@@ -61,6 +61,8 @@ class transaction;
 /// std::iterator.
 class results_iterator {
     struct impl;
+
+    /// Pointer to the shared internal implementation.
     std::tr1::shared_ptr< impl > _pimpl;
 
     friend class transaction;
@@ -84,6 +86,8 @@ public:
 /// database.
 class transaction {
     struct impl;
+
+    /// Pointer to the shared internal implementation.
     std::tr1::shared_ptr< impl > _pimpl;
 
     friend class backend;

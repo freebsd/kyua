@@ -46,13 +46,31 @@ using utils::process::status;
 namespace {
 
 
-static void child_exit_success(void) { std::exit(EXIT_SUCCESS); }
-static void child_exit_failure(void) { std::exit(EXIT_FAILURE); }
-static void child_signal_term(void) { ::kill(::getpid(), SIGTERM); }
-static void child_signal_kill(void) { ::kill(::getpid(), SIGKILL); }
-static void child_coredump(void) { ::kill(::getpid(), SIGQUIT); }
+/// Body of a subprocess that exits with a particular exit status.
+///
+/// \tparam ExitStatus The status to exit with.
+template< int ExitStatus >
+void child_exit(void)
+{
+    std::exit(ExitStatus);
+}
 
 
+/// Body of a subprocess that sends a particular signal to itself.
+///
+/// \tparam Signo The signal to send to self.
+template< int Signo >
+void child_signal(void)
+{
+    ::kill(::getpid(), Signo);
+}
+
+
+/// Spawns a process and waits for completion.
+///
+/// \param hook The function to run within the child.  Should not return.
+///
+/// \return The termination status of the spawned subprocess.
 status
 fork_and_wait(void (*hook)(void))
 {
@@ -96,12 +114,12 @@ ATF_TEST_CASE_BODY(fake_signaled)
 ATF_TEST_CASE_WITHOUT_HEAD(integration__exited);
 ATF_TEST_CASE_BODY(integration__exited)
 {
-    const status exit_success = fork_and_wait(child_exit_success);
+    const status exit_success = fork_and_wait(child_exit< EXIT_SUCCESS >);
     ATF_REQUIRE(exit_success.exited());
     ATF_REQUIRE_EQ(EXIT_SUCCESS, exit_success.exitstatus());
     ATF_REQUIRE(!exit_success.signaled());
 
-    const status exit_failure = fork_and_wait(child_exit_failure);
+    const status exit_failure = fork_and_wait(child_exit< EXIT_FAILURE >);
     ATF_REQUIRE(exit_failure.exited());
     ATF_REQUIRE_EQ(EXIT_FAILURE, exit_failure.exitstatus());
     ATF_REQUIRE(!exit_failure.signaled());
@@ -111,13 +129,13 @@ ATF_TEST_CASE_BODY(integration__exited)
 ATF_TEST_CASE_WITHOUT_HEAD(integration__signaled);
 ATF_TEST_CASE_BODY(integration__signaled)
 {
-    const status sigterm = fork_and_wait(child_signal_term);
+    const status sigterm = fork_and_wait(child_signal< SIGTERM >);
     ATF_REQUIRE(!sigterm.exited());
     ATF_REQUIRE(sigterm.signaled());
     ATF_REQUIRE_EQ(SIGTERM, sigterm.termsig());
     ATF_REQUIRE(!sigterm.coredump());
 
-    const status sigkill = fork_and_wait(child_signal_kill);
+    const status sigkill = fork_and_wait(child_signal< SIGKILL >);
     ATF_REQUIRE(!sigkill.exited());
     ATF_REQUIRE(sigkill.signaled());
     ATF_REQUIRE_EQ(SIGKILL, sigkill.termsig());
@@ -134,7 +152,7 @@ ATF_TEST_CASE_BODY(integration__coredump)
     if (::setrlimit(RLIMIT_CORE, &rl) == -1)
         skip("Cannot unlimit the core file size; check limits manually");
 
-    const status coredump = fork_and_wait(child_coredump);
+    const status coredump = fork_and_wait(child_signal< SIGQUIT >);
     ATF_REQUIRE(!coredump.exited());
     ATF_REQUIRE(coredump.signaled());
     ATF_REQUIRE_EQ(SIGQUIT, coredump.termsig());

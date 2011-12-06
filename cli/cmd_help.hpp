@@ -41,7 +41,10 @@ namespace cli {
 /// Implementation of the "help" subcommand.
 class cmd_help : public cli_command
 {
+    /// The set of program-wide options for which to provide help.
     const utils::cmdline::options_vector* _options;
+
+    /// The set of commands for which to provide help.
     const utils::cmdline::commands_map< cli_command >* _commands;
 
 public:

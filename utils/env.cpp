@@ -115,6 +115,7 @@ utils::getenv_with_default(const std::string& name,
 /// Sets the value of an environment variable.
 ///
 /// \param name The name of the environment variable to set.
+/// \param val The value to set the environment variable to.  May be empty.
 ///
 /// \throw std::runtime_error If there is an error setting the environment
 ///     variable.

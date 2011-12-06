@@ -75,6 +75,8 @@ std::string parse_require_user(const std::string&, const std::string&);
 /// needs to be stored for the test programs themselves.
 class test_case : public base_test_case {
     struct impl;
+
+    /// Pointer to the shared internal implementation.
     std::tr1::shared_ptr< impl > _pimpl;
 
     properties_map get_all_properties(void) const;

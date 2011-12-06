@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -47,6 +47,8 @@ typedef void (*handler_type)(const int);
 /// A RAII class to program signal handlers.
 class programmer : noncopyable {
     struct impl;
+
+    /// Pointer to the shared internal implementation.
     std::auto_ptr< impl > _pimpl;
 
 public:

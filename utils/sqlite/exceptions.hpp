@@ -52,6 +52,7 @@ public:
 
 /// Exception for errors raised by the SQLite 3 API library.
 class api_error : public error {
+    /// The name of the SQLite 3 C API function that caused this error.
     std::string _api_function;
 
 public:
@@ -66,6 +67,7 @@ public:
 
 /// The caller requested a non-existent column name.
 class invalid_column_error : public error {
+    /// The name of the invalid column.
     std::string _column_name;
 
 public:

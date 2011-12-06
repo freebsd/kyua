@@ -70,7 +70,7 @@ struct getopt_data : utils::noncopyable {
 /// Converts a cmdline::options_vector to a getopt_data.
 ///
 /// \param options The high-level definition of the options.
-/// \param getopt_data [out] An object containing the necessary data to call
+/// \param [out] data An object containing the necessary data to call
 ///     getopt_long(3) and interpret its results.
 static void
 options_to_getopt_data(const cmdline::options_vector& options,
@@ -166,9 +166,9 @@ free_mutable_argv(char** argv)
 /// Finds the name of the offending option after a getopt_long error.
 ///
 /// \param data Our internal getopt data used for the call to getopt_long.
-/// \param getopt_optopt The value of ::optopt after the error.
+/// \param getopt_optopt The value of getopt(3)'s optopt after the error.
 /// \param argv The argv passed to getopt_long.
-/// \param getopt_optind The value of ::optind after the error.
+/// \param getopt_optind The value of getopt(3)'s optind after the error.
 ///
 /// \return A fully-specified option name (i.e. an option name prefixed by
 ///     either '-' or '--').
@@ -238,11 +238,11 @@ cmdline::parsed_cmdline::has_option(const std::string& name) const
 ///
 /// The caller has to use get_option() instead; this function is internal.
 ///
-/// \param The option to query.
+/// \pre has_option(name) must be true.
+///
+/// \param name The option to query.
 ///
 /// \return The value of the option as a plain string.
-///
-/// \pre has_option(name) must be true.
 const std::vector< std::string >&
 cmdline::parsed_cmdline::get_option_raw(const std::string& name) const
 {

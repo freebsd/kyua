@@ -68,7 +68,7 @@ namespace {
 ///
 /// \return The string value from the table.
 ///
-/// \raises std::runtime_error If there is any problem accessing the table.
+/// \throw std::runtime_error If there is any problem accessing the table.
 static inline std::string
 get_table_string(lutok::state& state, const char* field,
                  const std::string& error)
@@ -94,9 +94,9 @@ get_table_string(lutok::state& state, const char* field,
 /// \param state The Lua state.
 /// \param root The root location of the test suite.
 ///
-/// \returns The path to the test program relative to root.
+/// \return The path to the test program relative to root.
 ///
-/// \raises std::runtime_error If the table definition is invalid or if the test
+/// \throw std::runtime_error If the table definition is invalid or if the test
 ///     program does not exist.
 static fs::path
 get_path(lutok::state& state, const fs::path& root)
@@ -121,9 +121,9 @@ get_path(lutok::state& state, const fs::path& root)
 /// \param state The Lua state.
 /// \param path The path to the test program; used for error reporting purposes.
 ///
-/// \returns The name of the test suite the test program belongs to.
+/// \return The name of the test suite the test program belongs to.
 ///
-/// \raises std::runtime_error If the table definition is invalid.
+/// \throw std::runtime_error If the table definition is invalid.
 static std::string
 get_test_suite(lutok::state& state, const fs::path& path)
 {
@@ -140,8 +140,10 @@ get_test_suite(lutok::state& state, const fs::path& path)
 /// \param state The Lua state.
 /// \param root The directory where the initial Kyuafile is located.
 ///
-/// throw std::runtime_error If there is any problem in the input data.
-/// throw fs::error If there is an invalid path in the input data.
+/// \return The ATF test program definition.
+///
+/// \throw std::runtime_error If there is any problem in the input data.
+/// \throw fs::error If there is an invalid path in the input data.
 static engine::test_program_ptr
 get_atf_test_program(lutok::state& state, const fs::path& root)
 {
@@ -162,8 +164,10 @@ get_atf_test_program(lutok::state& state, const fs::path& root)
 /// \param state The Lua state.
 /// \param root The directory where the initial Kyuafile is located.
 ///
-/// throw std::runtime_error If there is any problem in the input data.
-/// throw fs::error If there is an invalid path in the input data.
+/// \return The plain test program definition.
+///
+/// \throw std::runtime_error If there is any problem in the input data.
+/// \throw fs::error If there is an invalid path in the input data.
 static engine::test_program_ptr
 get_plain_test_program(lutok::state& state, const fs::path& root)
 {
@@ -210,8 +214,10 @@ namespace detail {
 /// \param state The Lua state.
 /// \param root The directory where the initial Kyuafile is located.
 ///
-/// throw std::runtime_error If there is any problem in the input data.
-/// throw fs::error If there is an invalid path in the input data.
+/// \return The test program definition.
+///
+/// \throw std::runtime_error If there is any problem in the input data.
+/// \throw fs::error If there is an invalid path in the input data.
 test_program_ptr
 get_test_program(lutok::state& state, const fs::path& root)
 {
@@ -237,8 +243,10 @@ get_test_program(lutok::state& state, const fs::path& root)
 ///     data.
 /// \param root The directory where the initial Kyuafile is located.
 ///
-/// throw std::runtime_error If there is any problem in the input data.
-/// throw fs::error If there is an invalid path in the input data.
+/// \return The definition of the test programs.
+///
+/// \throw std::runtime_error If there is any problem in the input data.
+/// \throw fs::error If there is an invalid path in the input data.
 test_programs_vector
 get_test_programs(lutok::state& state, const std::string& expr,
                   const fs::path& root)

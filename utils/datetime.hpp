@@ -68,6 +68,8 @@ struct delta {
 /// assignment opertor.
 class timestamp {
     struct impl;
+
+    /// Pointer to the shared internal implementation.
     std::tr1::shared_ptr< impl > _pimpl;
 
     timestamp(std::tr1::shared_ptr< impl >);

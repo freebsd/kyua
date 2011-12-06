@@ -52,6 +52,7 @@ public:
 /// out a way to reuse this exception while maintaining the correct inheritance
 /// (i.e. be able to keep it as a child of signals::error).
 class system_error : public error {
+    /// Error number describing this libc error condition.
     int _original_errno;
 
 public:

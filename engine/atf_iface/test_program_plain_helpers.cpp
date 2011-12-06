@@ -36,7 +36,13 @@
 namespace {
 
 
-int
+/// Prints a fake but valid test case list and then aborts.
+///
+/// \param unused_argc The original argument count of the program.
+/// \param argv The original arguments of the program.
+///
+/// \return Nothing because this dies before returning.
+static int
 helper_abort_test_cases_list(int UTILS_UNUSED_PARAM(argc), char** argv)
 {
     for (const char* const* arg = argv; *arg != NULL; arg++) {
@@ -50,7 +56,13 @@ helper_abort_test_cases_list(int UTILS_UNUSED_PARAM(argc), char** argv)
 }
 
 
-int
+/// Just returns without printing anything as the test case list.
+///
+/// \param unused_argc The original argument count of the program.
+/// \param unused_argv The original arguments of the program.
+///
+/// \return Always 0, as required for test programs.
+static int
 helper_empty_test_cases_list(int UTILS_UNUSED_PARAM(argc),
                              char** UTILS_UNUSED_PARAM(argv))
 {
@@ -58,7 +70,13 @@ helper_empty_test_cases_list(int UTILS_UNUSED_PARAM(argc),
 }
 
 
-int
+/// Prints a correctly-formatted test case list but empty.
+///
+/// \param unused_argc The original argument count of the program.
+/// \param argv The original arguments of the program.
+///
+/// \return Always 0, as required for test programs.
+static int
 helper_zero_test_cases(int UTILS_UNUSED_PARAM(argc), char** argv)
 {
     for (const char* const* arg = argv; *arg != NULL; arg++) {
@@ -70,10 +88,18 @@ helper_zero_test_cases(int UTILS_UNUSED_PARAM(argc), char** argv)
 }
 
 
-static const struct helper {
+/// Mapping of the name of a helper to its implementation.
+struct helper {
+    /// The name of the helper, as will be provided by the user on the CLI.
     const char* name;
+
+    /// A pointer to the function implementing the helper.
     int (*hook)(int, char**);
-} helpers[] = {
+};
+
+
+/// NULL-terminated table mapping helper names to their implementations.
+static const helper helpers[] = {
     { "abort_test_cases_list", helper_abort_test_cases_list, },
     { "empty_test_cases_list", helper_empty_test_cases_list, },
     { "zero_test_cases", helper_zero_test_cases, },
@@ -84,6 +110,21 @@ static const struct helper {
 }  // anonymous namespace
 
 
+/// Entry point to the ATF-less helpers.
+///
+/// The caller must select a helper to execute by defining the HELPER
+/// environment variable to the name of the desired helper.  Think of this main
+/// method as a subprogram dispatcher, to avoid having many individual helper
+/// binaries.
+///
+/// \todo Maybe we should really have individual helper binaries.  It would
+/// avoid a significant amount of complexity here and in the tests, at the
+/// expense of some extra files and extra build logic.
+///
+/// \param argc The user argument count; delegated to the helper.
+/// \param argv The user arguments; delegated to the helper.
+///
+/// \return The exit code of the helper, which depends on the requested helper.
 int
 main(int argc, char** argv)
 {

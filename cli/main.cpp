@@ -80,6 +80,7 @@ namespace {
 /// \param command The subcommand to execute.
 /// \param args The part of the command line passed to the subcommand.  The
 ///     first item of this collection must match the command name.
+/// \param config The runtime configuration to pass to the subcommand.
 ///
 /// \return The exit code of the command.  Typically 0 on success, some other
 /// integer otherwise.

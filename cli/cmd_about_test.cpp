@@ -56,9 +56,14 @@ using cli::cmd_about;
 namespace {
 
 
+/// Instantiation of a default user configuration; syntactic sugar.
 static const user_files::config default_config = user_files::config::defaults();
 
 
+/// Creates a fake document file in the provided location.
+///
+/// \param dirname The documents directory.
+/// \param docname The base name of the document to create.
 static void
 create_fake_doc(const char* dirname, const char* docname)
 {

@@ -51,6 +51,7 @@ namespace fs {
 ///
 /// Conversions to and from strings are always explicit.
 class path {
+    /// Internal representation of the path.
     std::string _repr;
 
 public:

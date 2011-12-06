@@ -130,6 +130,8 @@ install_one_crash_handler(const int signo)
 /// \param type The type of the assertion.  If the type is unknown for whatever
 ///     reason, a special message is returned.  The code cannot abort in such a
 ///     case because this code is dealing for assertion errors.
+///
+/// \return A textual description of the assertion type.
 static std::string
 format_type(const utils::assert_type type)
 {
@@ -157,7 +159,7 @@ format_type(const utils::assert_type type)
 /// \param line The line in which the assertion failed.
 /// \param message The failure message associated to the condition.
 void
-utils::sanity_failure(const utils::assert_type type, const char* file,
+utils::sanity_failure(const assert_type type, const char* file,
                       const size_t line, const std::string& message)
 {
     std::cerr << "*** " << file << ":" << line << ": " << format_type(type);
@@ -176,7 +178,7 @@ utils::sanity_failure(const utils::assert_type type, const char* file,
 ///
 /// \pre The function has not been called before.
 ///
-/// \param logfile The path to the log file to report during a crash.
+/// \param logfile_ The path to the log file to report during a crash.
 void
 utils::install_crash_handlers(const std::string& logfile_)
 {

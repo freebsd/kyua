@@ -44,6 +44,7 @@ namespace user_files = engine::user_files;
 namespace {
 
 
+/// Instantiation of a default user configuration; syntactic sugar.
 static const user_files::config default_config = user_files::config::defaults();
 
 

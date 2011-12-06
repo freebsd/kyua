@@ -40,16 +40,33 @@ namespace {
 /// Trivial implementation of the ui interface for testing purposes.
 class ui_test : public cmdline::ui {
 public:
+    /// Recording of the last call to err().
     std::string err_message;
+
+    /// Recording of the last call to out().
     std::string out_message;
 
-    void err(const std::string& message)
+    /// Records an error message.
+    ///
+    /// \pre This function has not been called before.  We only record a single
+    ///     message for simplicity of the testing.
+    ///
+    /// \param message The message to record.
+    void
+    err(const std::string& message)
     {
         ATF_REQUIRE(err_message.empty());
         err_message = message;
     }
 
-    void out(const std::string& message)
+    /// Records a message.
+    ///
+    /// \pre This function has not been called before.  We only record a single
+    ///     message for simplicity of the testing.
+    ///
+    /// \param message The message to record.
+    void
+    out(const std::string& message)
     {
         ATF_REQUIRE(out_message.empty());
         out_message = message;

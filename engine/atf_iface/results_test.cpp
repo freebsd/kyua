@@ -62,7 +62,9 @@ namespace {
 
 /// Performs a test for results::parse() that should succeed.
 ///
-/// \param expected The expected result.
+/// \param exp_type The expected type of the result.
+/// \param exp_argument The expected argument in the result, if any.
+/// \param exp_reason The expected reason describing the result, if any.
 /// \param text The literal input to parse; can include multiple lines.
 static void
 parse_ok_test(const raw_result::types& exp_type,
@@ -86,7 +88,9 @@ parse_ok_test(const raw_result::types& exp_type,
 ///
 /// \param name The name of the test case; will be prefixed with
 ///     "raw_result__parse__".
-/// \param expected The expected result.
+/// \param exp_type The expected type of the result.
+/// \param exp_argument The expected argument in the result, if any.
+/// \param exp_reason The expected reason describing the result, if any.
 /// \param input The literal input to parse.
 #define PARSE_OK(name, exp_type, exp_argument, exp_reason, input) \
     ATF_TEST_CASE_WITHOUT_HEAD(raw_result__parse__ ## name); \

@@ -130,11 +130,18 @@ report_broken_result(const fs::path& result_file, const std::string& reason)
 }
 
 
-/// Functor to execute a test case in a subprocess.
+/// Functor to execute a test case's body in a subprocess.
 class execute_test_case_body {
+    /// Data of the test case to execute.
     atf_iface::test_case _test_case;
+
+    /// Path to the results file to create.
     fs::path _result_file;
+
+    /// Path to the work directory in which to run the test case.
     fs::path _work_directory;
+
+    /// Parameters to configure the runtime environment of the test case.
     user_files::config _config;
 
     /// Exception-safe version of operator().
@@ -197,10 +204,15 @@ public:
 };
 
 
-/// Functor to execute a test case in a subprocess.
+/// Functor to execute a test case's cleanup routine in a subprocess.
 class execute_test_case_cleanup {
+    /// Data of the test case to execute.
     atf_iface::test_case _test_case;
+
+    /// Path to the work directory in which to run the test case.
     fs::path _work_directory;
+
+    /// Parameters to configure the runtime environment of the test case.
     user_files::config _config;
 
 public:
@@ -244,13 +256,32 @@ public:
 };
 
 
+/// Functor to run a test case inside a controlled environment.
 class run_test_case_safe {
+    /// Data of the test case to debug.
     const atf_iface::test_case& _test_case;
+
+    /// Parameters to configure the runtime environment of the test case.
     const user_files::config& _config;
+
+    /// The file into which to store the test case's stdout.  If none, use a
+    /// temporary file within the work directory.
     const optional< fs::path > _stdout_path;
+
+    /// The file into which to store the test case's stderr.  If none, use a
+    /// temporary file within the work directory.
     const optional< fs::path > _stderr_path;
 
 public:
+    /// Constructor for the functor.
+    ///
+    /// \param test_case_ The data of the test case, including the path to the
+    ///     test program that contains it, the test case name and its metadata.
+    /// \param config_ The values for the current engine configuration.
+    /// \param stdout_path_ The file into which to store the test case's stdout.
+    ///     If none, use a temporary file within the work directory.
+    /// \param stderr_path_ The file into which to store the test case's stderr.
+    ///     If none, use a temporary file within the work directory.
     run_test_case_safe(const atf_iface::test_case& test_case_,
                        const user_files::config& config_,
                        const optional< fs::path >& stdout_path_,
@@ -264,16 +295,15 @@ public:
 
     /// Auxiliary function to execute a test case within a work directory.
     ///
-    /// This is an auxiliary function for run_test_case_safe that is protected from
-    /// the reception of common termination signals.
+    /// This is an auxiliary function for run_test_case_safe that is protected
+    /// from the reception of common termination signals.
     ///
-    /// \param test_case The test case to execute.
-    /// \param config The values for the current engine configuration.
     /// \param workdir The directory in which the test case has to be run.
     ///
     /// \return The result of the execution of the test case.
     ///
-    /// \throw interrupted_error If the execution has been interrupted by the user.
+    /// \throw interrupted_error If the execution has been interrupted by the
+    /// user.
     engine::test_result
     operator()(const fs::path& workdir) const
     {
@@ -333,6 +363,10 @@ public:
 ///
 /// \param test_case The test to execute.
 /// \param config The values for the current engine configuration.
+/// \param stdout_path The file into which to store the test case's stdout.
+///     If none, use a temporary file within the work directory.
+/// \param stderr_path The file into which to store the test case's stderr.
+///     If none, use a temporary file within the work directory.
 ///
 /// \return The result of the test case execution.
 ///

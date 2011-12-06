@@ -56,6 +56,7 @@ public:
 
 /// Error denoting that no argument was provided to an option that required one.
 class missing_option_argument_error : public usage_error {
+    /// Name of the option for which no required argument was specified.
     std::string _option;
 
 public:
@@ -68,8 +69,13 @@ public:
 
 /// Error denoting that the argument provided to an option is invalid.
 class option_argument_value_error : public usage_error {
+    /// Name of the option for which the argument was invalid.
     std::string _option;
+
+    /// Raw value of the invalid user-provided argument.
     std::string _argument;
+
+    /// Reason describing why the argument is invalid.
     std::string _reason;
 
 public:
@@ -84,6 +90,7 @@ public:
 
 /// Error denoting that the user specified an unknown option.
 class unknown_option_error : public usage_error {
+    /// Name of the option that was not known.
     std::string _option;
 
 public:

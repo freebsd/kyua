@@ -97,7 +97,7 @@ find_test_case(const engine::test_filter& filter,
 /// Executes the operation.
 ///
 /// \param kyuafile_path The path to the Kyuafile to be loaded.
-/// \param raw_filters The test case filter to locate the test to run.
+/// \param filter The test case filter to locate the test to debug.
 /// \param config The end-user configuration properties.
 /// \param stdout_path The name of the file into which to store the test case
 ///     stdout.

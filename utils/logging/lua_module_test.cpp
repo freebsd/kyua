@@ -43,10 +43,10 @@ namespace fs = utils::fs;
 namespace logging = utils::logging;
 
 
-/// Ensures that a particular logging.<type> function works.
+/// Ensures that a particular logging.* function works.
 ///
 /// \param exp_type The expected type of the resulting error message.
-/// \param function The name of the logging.<type> function.
+/// \param function The name of the logging.* function.
 static void
 do_logging_ok_check(const char exp_type, const char* function)
 {
@@ -69,9 +69,9 @@ do_logging_ok_check(const char exp_type, const char* function)
 }
 
 
-/// Ensures that a particular logging.<type> function detects invalid arguments.
+/// Ensures that a particular logging.* function detects invalid arguments.
 ///
-/// \param function The name of the logging.<type> function.
+/// \param function The name of the logging.* function.
 static void
 do_logging_fail_check(const char* function)
 {

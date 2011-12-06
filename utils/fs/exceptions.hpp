@@ -48,6 +48,7 @@ public:
 
 /// Error denoting an invalid path while constructing a fs::path object.
 class invalid_path_error : public error {
+    /// Raw value of the invalid path.
     std::string _textual_path;
 
 public:
@@ -60,7 +61,10 @@ public:
 
 /// Paths cannot be joined.
 class join_error : public error {
+    /// Raw value of the first path in the join operation.
     std::string _textual_path1;
+
+    /// Raw value of the second path in the join operation.
     std::string _textual_path2;
 
 public:
@@ -79,6 +83,7 @@ public:
 /// out a way to reuse this exception while maintaining the correct inheritance
 /// (i.e. be able to keep it as a child of fs::error).
 class system_error : public error {
+    /// Error number describing this libc error condition.
     int _original_errno;
 
 public:

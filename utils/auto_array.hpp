@@ -52,9 +52,11 @@ namespace detail {
 /// utils::auto_array from a function.
 template< class T >
 class auto_array_ref {
+    /// Internal pointer to the dynamically-allocated array.
     T* _ptr;
 
     template< class > friend class utils::auto_array;
+
 public:
     explicit auto_array_ref(T*);
 };
@@ -72,6 +74,7 @@ public:
 /// new[].
 template< class T >
 class auto_array {
+    /// Internal pointer to the dynamically-allocated array.
     T* _ptr;
 
 public:

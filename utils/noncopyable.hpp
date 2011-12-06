@@ -47,11 +47,16 @@ namespace utils {
 ///
 /// Always use private inheritance.
 class noncopyable {
-    // The class cannot be empty; otherwise we get ABI-stability warnings
-    // during the build, which will break it due to strict checking.
+    /// Data placeholder.
+    ///
+    /// The class cannot be empty; otherwise we get ABI-stability warnings
+    /// during the build, which will break it due to strict checking.
     int _noncopyable_dummy;
 
+    /// Private copy constructor to deny copying of subclasses.
     noncopyable(const noncopyable&);
+
+    /// Private assignment constructor to deny copying of subclasses.
     noncopyable& operator=(const noncopyable&);
 
 protected:

@@ -67,6 +67,8 @@ namespace process {
 /// processing.
 class child_with_files : noncopyable {
     struct impl;
+
+    /// Pointer to the shared internal implementation.
     std::auto_ptr< impl > _pimpl;
 
     static std::auto_ptr< child_with_files > fork_aux(
@@ -95,6 +97,8 @@ public:
 /// does not have to deal with poll(2).
 class child_with_output : noncopyable {
     struct impl;
+
+    /// Pointer to the shared internal implementation.
     std::auto_ptr< impl > _pimpl;
 
     explicit child_with_output(impl *);

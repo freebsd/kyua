@@ -64,15 +64,30 @@ using cmdline::string_option;
 namespace {
 
 
+/// Mock option type to check the validate and convert methods sequence.
+///
+/// Instances of this option accept a string argument that must be either "zero"
+/// or "one".  These are validated and converted to integers.
 class mock_option : public base_option {
 public:
+    /// Constructs the new option.
+    ///
+    /// \param long_name_ The long name for the option.  All other option
+    ///     properties are irrelevant for the tests using this, so they are set
+    ///     to arbitrary values.
     mock_option(const char* long_name_) :
         base_option(long_name_, "Irrelevant description", "arg")
     {
     }
 
+    /// The type of the argument of this option.
     typedef int option_type;
 
+    /// Checks that the user-provided option is valid.
+    ///
+    /// \param str The user argument; must be "zero" or "one".
+    ///
+    /// \throw cmdline::option_argument_value_error If str is not valid.
     void
     validate(const std::string& str) const
     {
@@ -81,6 +96,17 @@ public:
                                                        str, "Unknown value");
     }
 
+    /// Converts the user-provided argument to our native integer type.
+    ///
+    /// \param str The user argument; must be "zero" or "one".
+    ///
+    /// \return 0 if the input is "zero", or 1 if the input is "one".
+    ///
+    /// \throw std::runtime_error If str is not valid.  In real life, this
+    ///     should be a precondition because validate() has already ensured that
+    ///     the values passed to convert() are correct.  However, we raise an
+    ///     exception here because we are actually validating that this code
+    ///     sequence holds true.
     static int
     convert(const std::string& str)
     {

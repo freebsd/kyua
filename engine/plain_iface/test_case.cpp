@@ -77,7 +77,10 @@ format_status(const process::status& status)
 
 /// Functor to execute a test case in a subprocess.
 class execute_test_case {
+    /// Data of the test case to execute.
     plain_iface::test_case _test_case;
+
+    /// Path to the work directory in which to run the test case.
     fs::path _work_directory;
 
     /// Exception-safe version of operator().
@@ -161,11 +164,26 @@ calculate_result(const optional< process::status >& maybe_status)
 
 /// Functor to execute the test case.
 class run_test_case_safe {
+    /// Data of the test case to debug.
     const plain_iface::test_case& _test_case;
+
+    /// The file into which to store the test case's stdout.  If none, use a
+    /// temporary file within the work directory.
     const optional< fs::path > _stdout_path;
+
+    /// The file into which to store the test case's stderr.  If none, use a
+    /// temporary file within the work directory.
     const optional< fs::path > _stderr_path;
 
 public:
+    /// Constructor for the functor.
+    ///
+    /// \param test_case_ The data of the test case, including the path to the
+    ///     test program that contains it, the test case name and its metadata.
+    /// \param stdout_path_ The file into which to store the test case's stdout.
+    ///     If none, use a temporary file within the work directory.
+    /// \param stderr_path_ The file into which to store the test case's stderr.
+    ///     If none, use a temporary file within the work directory.
     run_test_case_safe(const plain_iface::test_case& test_case_,
                        const optional< fs::path >& stdout_path_,
                        const optional< fs::path >& stderr_path_) :
@@ -177,15 +195,15 @@ public:
 
     /// Auxiliary function to execute a test case within a work directory.
     ///
-    /// This is an auxiliary function for run_test_case_safe that is protected from
-    /// the reception of common termination signals.
+    /// This is an auxiliary function for run_test_case_safe that is protected
+    /// from the reception of common termination signals.
     ///
-    /// \param test_case The test case to execute.
     /// \param workdir The directory in which the test case has to be run.
     ///
     /// \return The result of the execution of the test case.
     ///
-    /// \throw interrupted_error If the execution has been interrupted by the user.
+    /// \throw interrupted_error If the execution has been interrupted by the
+    /// user.
     engine::test_result
     operator()(const fs::path& workdir) const
     {
@@ -255,6 +273,10 @@ plain_iface::test_case::get_all_properties(void) const
 /// reported as a broken test case result.
 ///
 /// \param unused_config The run-time configuration for the test case.
+/// \param stdout_path The file into which to store the test case's stdout.
+///     If none, use a temporary file within the work directory.
+/// \param stderr_path The file into which to store the test case's stderr.
+///     If none, use a temporary file within the work directory.
 ///
 /// \return The result of the execution.
 engine::test_result

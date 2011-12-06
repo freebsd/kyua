@@ -51,6 +51,9 @@ using utils::optional;
 namespace {
 
 
+/// Logs an error message and exits the test with an error code.
+///
+/// \param str The error message to log.
 static void
 fail(const char* str)
 {
@@ -59,9 +62,7 @@ fail(const char* str)
 }
 
 
-}  // anonymous namespace
-
-
+/// A test case that crashes.
 static void
 test_crash(void)
 {
@@ -69,6 +70,7 @@ test_crash(void)
 }
 
 
+/// A test case that exits with a non-zero exit code, and not 1.
 static void
 test_fail(void)
 {
@@ -76,12 +78,17 @@ test_fail(void)
 }
 
 
+/// A test case that passes.
 static void
 test_pass(void)
 {
 }
 
 
+/// A test case that spawns a subchild that gets stuck.
+///
+/// This test case is used by the caller to validate that the whole process tree
+/// is terminated when the test case is killed.
 static void
 test_spawn_blocking_child(void)
 {
@@ -103,6 +110,10 @@ test_spawn_blocking_child(void)
 }
 
 
+/// A test case that times out.
+///
+/// Note that the timeout is defined in the Kyuafile, as the plain interface has
+/// no means for test programs to specify this by themselves.
 static void
 test_timeout(void)
 {
@@ -115,6 +126,10 @@ test_timeout(void)
 }
 
 
+/// A test case that performs basic checks on the runtime environment.
+///
+/// If the runtime environment does not look clean (according to the rules in
+/// the Kyua runtime properties), the test fails.
 static void
 test_validate_isolation(void)
 {
@@ -125,6 +140,24 @@ test_validate_isolation(void)
 }
 
 
+}  // anonymous namespace
+
+
+/// Entry point to the test program.
+///
+/// The caller can select which test case to run by defining the TEST_CASE
+/// environment variable.  This is not "standard", in the sense this is not a
+/// generic property of the plain test case interface.
+///
+/// \todo It may be worth to split this binary into separate, smaller binaries,
+/// one for every "test case".  We use this program as a dispatcher for
+/// different "main"s, the only reason being to keep the amount of helper test
+/// programs to a minimum.  However, putting this each function in its own
+/// binary could simplify many other things.
+///
+/// \param argc The number of CLI arguments.
+/// \param unused_argv The CLI arguments themselves.  These are not used because
+///     Kyua will not pass any arguments to the plain test program.
 int
 main(int argc, char** UTILS_UNUSED_PARAM(argv))
 {

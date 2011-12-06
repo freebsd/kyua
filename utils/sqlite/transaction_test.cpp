@@ -40,6 +40,15 @@ namespace sqlite = utils::sqlite;
 namespace {
 
 
+/// Ensures that a table has a single specific value in a column.
+///
+/// \param db The SQLite database.
+/// \param table_name The table to be checked.
+/// \param column_name The column to be checked.
+/// \param exp_value The value expected to be found in the column.
+///
+/// \return True if the column contains a single value and it matches exp_value;
+/// false if not.  If the query fails, the calling test is marked as bad.
 static bool
 check_in_table(sqlite::database& db, const char* table_name,
                const char* column_name, int exp_value)

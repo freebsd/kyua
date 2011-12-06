@@ -79,6 +79,7 @@ options_help(cmdline::ui* ui, const cmdline::options_vector& options)
 /// Prints the summary of commands and generic options.
 ///
 /// \param ui Object to interact with the I/O of the program.
+/// \param options The set of program-wide options for which to print help.
 /// \param commands The set of commands for which to print help.
 static void
 general_help(cmdline::ui* ui, const cmdline::options_vector* options,

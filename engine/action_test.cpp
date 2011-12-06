@@ -43,6 +43,9 @@ namespace {
 
 /// Generates a context with fake data for testing purposes only.
 ///
+/// \param cwd The work directory held in the context.  This contains an
+///     irrelevant default value if not provided.
+///
 /// \return The fake context.
 static engine::context
 fake_context(const char* cwd = "/foo/bar")

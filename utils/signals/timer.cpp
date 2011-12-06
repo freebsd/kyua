@@ -86,12 +86,13 @@ namespace signals = utils::signals;
 namespace {
 
 
+/// The function to run when SIGALRM fires.
 static signals::timer_callback active_callback = NULL;
 
 
 /// SIGALRM handler for the timer implementation.
 ///
-/// \parma signo The signal received; must be SIGALRM.
+/// \param signo The signal received; must be SIGALRM.
 static void
 sigalrm_handler(const int signo)
 {

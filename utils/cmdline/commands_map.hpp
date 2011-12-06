@@ -52,8 +52,10 @@ namespace cmdline {
 /// Collection of dynamically-instantiated commands.
 template< typename BaseCommand >
 class commands_map : noncopyable {
+    /// Map of command names to their implementations.
     typedef std::map< std::string, BaseCommand* > impl_map;
 
+    /// Collection of all available commands.
     impl_map _commands;
 
 public:

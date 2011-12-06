@@ -98,15 +98,17 @@ parse_properties(std::istream& input)
 
 /// Subprocess functor to invoke "test-program -l" to list test cases.
 class list_test_cases {
+    /// Absolute path to the test program to list the test cases of.
     const utils::fs::path& _program;
 
 public:
     /// Initializes the functor.
     ///
-    /// \param Pointer to a list_test_cases_data object.
+    /// \param program The absolute path of the test program to execute.
     list_test_cases(const utils::fs::path& program) :
         _program(program)
     {
+        PRE(_program.is_absolute());
     }
 
     /// Child process entry point.

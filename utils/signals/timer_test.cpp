@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,9 +40,11 @@ namespace signals = utils::signals;
 namespace {
 
 
+/// True if callback() was executed after being programmed with a timer.
 static volatile bool fired;
 
 
+/// Timer callback to record its execution.
 static void
 callback(void)
 {

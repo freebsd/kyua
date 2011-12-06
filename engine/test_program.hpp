@@ -55,8 +55,19 @@ typedef std::vector< test_case_ptr > test_cases_vector;
 /// Abstract representation of a test program.
 class base_test_program {
     struct base_impl;
+
+    /// Pointer to the shared internal implementation.
     std::tr1::shared_ptr< base_impl > _pbimpl;
 
+    /// Loads the list of test cases contained in a test program.
+    ///
+    /// \return A collection of test_case objects representing the input test
+    /// case list.
+    ///
+    /// \note If the test cases have to be loaded from the test program itself,
+    /// and the test program fails to run, this function should report the
+    /// failure as a fake test case with a fixed broken-type result.  This
+    /// method should not throw errors on these conditions.
     virtual test_cases_vector load_test_cases(void) const = 0;
 
 public:

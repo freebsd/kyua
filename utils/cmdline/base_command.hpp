@@ -51,11 +51,22 @@ class ui;
 /// command_proto itself as base classes for your application-specific
 /// commands.
 class command_proto : noncopyable {
+    /// The user-visible name of the command.
     const std::string _name;
+
+    /// Textual description of the command arguments.
     const std::string _arg_list;
-    int _min_args;
-    int _max_args;
+
+    /// The minimum number of required arguments.
+    const int _min_args;
+
+    /// The maximum number of allowed arguments; -1 for infinity.
+    const int _max_args;
+
+    /// A textual description of the command.
     const std::string _short_description;
+
+    /// Collection of command-specific options.
     options_vector _options;
 
     void add_option_ptr(const base_option*);

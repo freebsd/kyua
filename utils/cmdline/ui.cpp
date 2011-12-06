@@ -70,7 +70,7 @@ cmdline::ui::out(const std::string& message)
 
 /// Formats and prints an error message.
 ///
-/// \param ui The user interface object used to print the message.
+/// \param ui_ The user interface object used to print the message.
 /// \param message The message to print.  Must not end with a dot nor with a
 ///     newline character.
 void
@@ -84,7 +84,7 @@ cmdline::print_error(ui* ui_, const std::string& message)
 
 /// Formats and prints an informational message.
 ///
-/// \param ui The user interface object used to print the message.
+/// \param ui_ The user interface object used to print the message.
 /// \param message The message to print.  Must not end with a dot nor with a
 ///     newline character.
 void
@@ -98,7 +98,7 @@ cmdline::print_info(ui* ui_, const std::string& message)
 
 /// Formats and prints a warning message.
 ///
-/// \param ui The user interface object used to print the message.
+/// \param ui_ The user interface object used to print the message.
 /// \param message The message to print.  Must not end with a dot nor with a
 ///     newline character.
 void

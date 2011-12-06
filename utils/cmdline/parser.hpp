@@ -65,7 +65,10 @@ typedef std::vector< const base_option* > options_vector;
 /// arguments to the options and the arguments to the command are valid), as all
 /// validation happens during parsing (before this class is instantiated).
 class parsed_cmdline {
+    /// Mapping of option names to all the values provided.
     std::map< std::string, std::vector< std::string > > _option_values;
+
+    /// Collection of arguments with all options removed.
     args_vector _arguments;
 
     const std::vector< std::string >& get_option_raw(const std::string&) const;

@@ -55,6 +55,7 @@ public:
 
 /// Execution has been interrupted due to the reception of a signal.
 class interrupted_error : public error {
+    /// Signal that caused the interrupt.
     int _signo;
 
 public:

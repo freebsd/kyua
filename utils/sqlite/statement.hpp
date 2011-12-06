@@ -62,6 +62,8 @@ enum type {
 /// A RAII model for an SQLite 3 statement.
 class statement {
     struct impl;
+
+    /// Pointer to the shared internal implementation.
     std::tr1::shared_ptr< impl > _pimpl;
 
     statement(database&, void*);

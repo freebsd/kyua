@@ -48,6 +48,12 @@ using utils::none;
 namespace {
 
 
+/// Instantiates a fake user configuration for testing purposes.
+///
+/// The user configuration is populated with a collection of test-suite
+/// properties and some hardcoded values for the generic configuration options.
+///
+/// \return A new user configuration object.
 static user_files::config
 fake_config(void)
 {

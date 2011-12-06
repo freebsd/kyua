@@ -167,7 +167,7 @@ passwd_ns::find_user_by_name(const std::string& name)
 
 /// Gets information about a user by its identifier.
 ///
-/// \param name The identifier of the user to query.
+/// \param uid The identifier of the user to query.
 ///
 /// \return The information about the user.
 ///
@@ -198,7 +198,7 @@ passwd_ns::find_user_by_uid(const unsigned int uid)
 ///
 /// This DOES NOT change the current privileges!
 ///
-/// \param user The new current user.
+/// \param new_current_user The new current user.
 void
 passwd_ns::set_current_user_for_testing(const user& new_current_user)
 {

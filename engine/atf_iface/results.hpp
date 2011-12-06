@@ -69,8 +69,17 @@ public:
     };
 
 private:
+    /// The test case result.
     types _type;
+
+    /// The optional integral argument that may accompany the result.
+    ///
+    /// Should only be present if the type is expected_exit or expected_signal.
     utils::optional< int > _argument;
+
+    /// A description of the test case result.
+    ///
+    /// Should always be present except for the passed type.
     utils::optional< std::string > _reason;
 
 public:

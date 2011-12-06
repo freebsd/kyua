@@ -50,6 +50,7 @@ extern "C" {
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/env.hpp"
+#include "utils/noncopyable.hpp"
 #include "utils/passwd.hpp"
 #include "utils/process/children.ipp"
 #include "utils/test_utils.hpp"
@@ -64,13 +65,28 @@ namespace user_files = engine::user_files;
 namespace {
 
 
-/// Simplifies the execution of the helper test cases.
-class atf_helper {
-    const atf::tests::tc* _atf_tc;
-    fs::path _binary_path;
+/// Launcher for the helper test cases.
+///
+/// This builder class can be used to construct the runtime state of the helper
+/// test cases and later run them.  The class also provides other helper methods
+/// to interact with the helper binary.
+class atf_helper : utils::noncopyable {
+    /// Path to the test program's source directory.
+    const fs::path _srcdir;
+
+    /// The root of the test suite.
     fs::path _root;
-    std::string _name;
+
+    /// Path to the helper test program, relative to _root.
+    fs::path _binary_path;
+
+    /// Name of the helper test case to run.
+    const std::string _name;
+
+    /// Metadata variables of the test case.
     engine::properties_map _metadata;
+
+    /// Run-time configuration for the test case.
     user_files::config _config;
 
 public:
@@ -80,9 +96,9 @@ public:
     ///     run-time configuration variables.
     /// \param name The name of the helper to run.
     atf_helper(const atf::tests::tc* atf_tc, const char* name) :
-        _atf_tc(atf_tc),
+        _srcdir(atf_tc->get_config_var("srcdir")),
+        _root(_srcdir),
         _binary_path("runner_helpers"),
-        _root(atf_tc->get_config_var("srcdir")),
         _name(name),
         _config("mock-architecture", "mock-platform", utils::none,
                 user_files::test_suites_map())
@@ -140,14 +156,15 @@ public:
         _binary_path = fs::path(new_binary_path);
         _root = fs::path(new_root);
 
-        const fs::path src_path = fs::path(_atf_tc->get_config_var("srcdir")) /
-            "runner_helpers";
+        const fs::path src_path = fs::path(_srcdir / "runner_helpers");
         const fs::path new_path = _root / _binary_path;
         ATF_REQUIRE(
             ::symlink(src_path.c_str(), new_path.c_str()) != -1);
     }
 
     /// Runs the helper.
+    ///
+    /// \return The result of the execution.
     engine::test_result
     run(void) const
     {

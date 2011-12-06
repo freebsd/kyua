@@ -65,9 +65,16 @@ namespace {
 
 /// Simplifies the execution of the helper test cases.
 class plain_helper {
-    const atf::tests::tc* _atf_tc;
-    fs::path _binary_path;
+    /// Path to the test program's source directory.
+    const fs::path _srcdir;
+
+    /// The root of the test suite.
     fs::path _root;
+
+    /// Path to the helper test program, relative to _root.
+    fs::path _binary_path;
+
+    /// Optional timeout for the test program.
     optional< datetime::delta > _timeout;
 
 public:
@@ -76,11 +83,12 @@ public:
     /// \param atf_tc A pointer to the calling test case.  Needed to obtain
     ///     run-time configuration variables.
     /// \param name The name of the helper to run.
+    /// \param timeout An optional timeout for the test case.
     plain_helper(const atf::tests::tc* atf_tc, const char* name,
                  const optional< datetime::delta > timeout = none) :
-        _atf_tc(atf_tc),
+        _srcdir(atf_tc->get_config_var("srcdir")),
+        _root(_srcdir),
         _binary_path("test_case_helpers"),
-        _root(atf_tc->get_config_var("srcdir")),
         _timeout(timeout)
     {
         utils::setenv("TEST_CASE", name);
@@ -116,8 +124,7 @@ public:
         _binary_path = fs::path(new_binary_path);
         _root = fs::path(new_root);
 
-        const fs::path src_path = fs::path(_atf_tc->get_config_var("srcdir")) /
-            "test_case_helpers";
+        const fs::path src_path = fs::path(_srcdir) / "test_case_helpers";
         const fs::path new_path = _root / _binary_path;
         ATF_REQUIRE(
             ::symlink(src_path.c_str(), new_path.c_str()) != -1);
@@ -127,6 +134,8 @@ public:
     ///
     /// \param config The runtime engine configuration, if different to the
     /// defaults.
+    ///
+    /// \return The result of the execution.
     engine::test_result
     run(const user_files::config& config = user_files::config::defaults()) const
     {

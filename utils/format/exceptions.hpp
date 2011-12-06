@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,6 +48,7 @@ public:
 
 /// Error denoting a bad format string.
 class bad_format_error : public error {
+    /// The format string that caused the error.
     std::string _format;
 
 public:
@@ -60,7 +61,10 @@ public:
 
 /// Error denoting too many arguments for the format string.
 class extra_args_error : public error {
+    /// The format string that was passed too many arguments.
     std::string _format;
+
+    /// The first argument that caused the error.
     std::string _arg;
 
 public:
