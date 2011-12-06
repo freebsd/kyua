@@ -31,6 +31,7 @@
 #include "engine/atf_iface/test_case.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/test_program.hpp"
+#include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 
 namespace atf_iface = engine::atf_iface;
@@ -90,7 +91,8 @@ ATF_TEST_CASE_BODY(ctor_and_getters)
     const mock_test_program test_program(fs::path("binary"), fs::path("root"),
                                          "suite-name");
     ATF_REQUIRE_EQ(fs::path("binary"), test_program.relative_path());
-    ATF_REQUIRE_EQ(fs::path("root/binary"), test_program.absolute_path());
+    ATF_REQUIRE_EQ(fs::current_path() / "root/binary",
+                   test_program.absolute_path());
     ATF_REQUIRE_EQ(fs::path("root"), test_program.root());
     ATF_REQUIRE_EQ("suite-name", test_program.test_suite_name());
 }

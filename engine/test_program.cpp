@@ -107,7 +107,8 @@ engine::base_test_program::relative_path(void) const
 const fs::path
 engine::base_test_program::absolute_path(void) const
 {
-    return _pbimpl->root / _pbimpl->binary;
+    const fs::path full_path = _pbimpl->root / _pbimpl->binary;
+    return full_path.is_absolute() ? full_path : full_path.to_absolute();
 }
 
 
