@@ -189,10 +189,10 @@ engine::base_test_program::test_cases(void) const
 /// \pre The test program must not have attempted to load its test cases yet.
 ///     I.e. test_cases() has not been called.
 ///
-/// \param test_cases The test cases to add to this test program.
+/// \param test_cases_ The test cases to add to this test program.
 void
-engine::base_test_program::set_test_cases(const test_cases_vector& test_cases)
+engine::base_test_program::set_test_cases(const test_cases_vector& test_cases_)
 {
     PRE(!_pbimpl->test_cases);
-    _pbimpl->test_cases = test_cases;
+    _pbimpl->test_cases = test_cases_;
 }
