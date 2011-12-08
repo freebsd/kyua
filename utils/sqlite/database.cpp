@@ -124,6 +124,9 @@ struct utils::sqlite::database::impl {
 /// You must share the same database object alongside the lifetime of your
 /// SQLite session.  As soon as the object is destroyed, the session is
 /// terminated.
+///
+/// \param db_ Raw pointer to the C SQLite 3 object.
+/// \param owned_ Whether this instance will own the pointer or not.
 sqlite::database::database(void* db_, const bool owned_) :
     _pimpl(new impl(static_cast< ::sqlite3* >(db_), owned_))
 {
