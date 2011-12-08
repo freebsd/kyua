@@ -205,7 +205,7 @@ get_test_cases(sqlite::database& db, const int64_t test_program_id,
             break;
 
         default:
-            UNREACHABLE_MSG(F("Unsanitized interface value '%s'") % interface);
+            UNREACHABLE_MSG("Unsanitized interface value");
         }
 
         LD(F("Loaded test case '%s'") % test_case->name());
