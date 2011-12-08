@@ -29,19 +29,61 @@
 #include <atf-c++.hpp>
 
 #include "cli/cmd_report.hpp"
+#include "utils/fs/path.hpp"
+#include "utils/cmdline/exceptions.hpp"
+
+namespace cmdline = utils::cmdline;
+namespace fs = utils::fs;
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(none);
-ATF_TEST_CASE_BODY(none)
+ATF_TEST_CASE_WITHOUT_HEAD(output_option__settings);
+ATF_TEST_CASE_BODY(output_option__settings)
 {
-    // TODO(jmmv): At the moment, there is nothing really worth implementing
-    // here that is not already in the integration tests.  The code of the
-    // report command will grow significantly, and at that point I expect we
-    // will put some tests here.  This is just a placeholder for now.
+    const cli::output_option o;
+    ATF_REQUIRE(o.has_short_name());
+    ATF_REQUIRE_EQ('o', o.short_name());
+    ATF_REQUIRE_EQ("output", o.long_name());
+    ATF_REQUIRE(o.needs_arg());
+    ATF_REQUIRE_EQ("format:output", o.arg_name());
+    ATF_REQUIRE(o.has_default_value());
+    ATF_REQUIRE_EQ("console:/dev/stdout", o.default_value());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(output_option__validate);
+ATF_TEST_CASE_BODY(output_option__validate)
+{
+    const cli::output_option o;
+
+    o.validate("console:/dev/stdout");
+    o.validate("console:abc");
+
+    ATF_REQUIRE_THROW_RE(cmdline::option_argument_value_error,
+                         "form.*format:path", o.validate(""));
+    ATF_REQUIRE_THROW_RE(cmdline::option_argument_value_error,
+                         "empty", o.validate("console:"));
+    ATF_REQUIRE_THROW_RE(cmdline::option_argument_value_error,
+                         "Unknown output format.*foo", o.validate("foo:b"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(output_option__convert);
+ATF_TEST_CASE_BODY(output_option__convert)
+{
+    using cli::output_option;
+
+    ATF_REQUIRE(output_option::option_type(output_option::console_format,
+                                           fs::path("/dev/stdout")) ==
+                output_option::convert("console:/dev/stdout"));
+    ATF_REQUIRE(output_option::option_type(output_option::console_format,
+                                           fs::path("abcd/efg")) ==
+                output_option::convert("console:abcd//efg/"));
 }
 
 
 ATF_INIT_TEST_CASES(tcs)
 {
-    ATF_ADD_TEST_CASE(tcs, none);
+    ATF_ADD_TEST_CASE(tcs, output_option__settings);
+    ATF_ADD_TEST_CASE(tcs, output_option__validate);
+    ATF_ADD_TEST_CASE(tcs, output_option__convert);
 }

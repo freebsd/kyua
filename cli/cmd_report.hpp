@@ -33,8 +33,40 @@
 #define CLI_CMD_REPORT_HPP
 
 #include "cli/common.hpp"
+#include "utils/cmdline/options.hpp"
+#include "utils/fs/path.hpp"
 
 namespace cli {
+
+
+/// Option to specify an output selector.
+///
+/// An output selector is composed of an output format and a location for the
+/// output.  The output format is something like "html" whereas the location is
+/// either a file or a directory on disk.  The semantics of the location vary
+/// depending on the format.
+class output_option : public utils::cmdline::base_option {
+public:
+    /// Identifiers for the valid format types.
+    enum format_type {
+        console_format,
+    };
+
+    /// Output format and location pair; i.e. the type of the native value.
+    typedef std::pair< format_type, utils::fs::path > option_type;
+
+private:
+    static format_type format_from_string(const std::string&);
+    static option_type split_value(const std::string&);
+
+public:
+    output_option(void);
+    virtual ~output_option(void);
+
+    virtual void validate(const std::string&) const;
+
+    static option_type convert(const std::string&);
+};
 
 
 /// Implementation of the "report" subcommand.
