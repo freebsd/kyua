@@ -33,6 +33,7 @@
 #include <atf-c++.hpp>
 
 #include "engine/action.hpp"
+#include "engine/atf_iface/test_case.hpp"
 #include "engine/atf_iface/test_program.hpp"
 #include "engine/context.hpp"
 #include "engine/plain_iface/test_case.hpp"
@@ -623,14 +624,68 @@ ATF_TEST_CASE_BODY(put_test_program__fail)
 }
 
 
-ATF_TEST_CASE(put_test_case__ok);
-ATF_TEST_CASE_HEAD(put_test_case__ok)
+ATF_TEST_CASE(put_test_case__atf);
+ATF_TEST_CASE_HEAD(put_test_case__atf)
 {
     set_md_var("require.files", store::detail::schema_file.c_str());
 }
-ATF_TEST_CASE_BODY(put_test_case__ok)
+ATF_TEST_CASE_BODY(put_test_case__atf)
 {
-    // TODO(jmmv): Use a mock test program and test case.
+    const atf_iface::test_program test_program(
+        fs::path("the/binary"), fs::path("/some/root"), "the-suite");
+
+    const atf_iface::test_case test_case1 =
+        atf_iface::test_case::from_properties(test_program, "tc1",
+                                              engine::properties_map());
+
+    engine::properties_map props2;
+    props2["descr"] = "The description";
+    props2["has.cleanup"] = "true";
+    props2["require.arch"] = "powerpc x86_64";
+    props2["require.config"] = "var1 var2 var3";
+    props2["require.files"] = "/file1/yes /file2/foo";
+    props2["require.machine"] = "amd64 macppc";
+    props2["require.progs"] = "/bin/ls cp";
+    props2["require.user"] = "root";
+    props2["timeout"] = "520";
+    props2["X-user1"] = "value1";
+    props2["X-user2"] = "value2";
+    const atf_iface::test_case test_case2 =
+        atf_iface::test_case::from_properties(test_program, "tc2", props2);
+
+    store::backend backend = store::backend::open_rw(fs::path("test.db"));
+    backend.database().exec("PRAGMA foreign_keys = OFF");
+    int64_t test_program_id;
+    {
+        store::transaction tx = backend.start();
+        test_program_id = tx.put_test_program(test_program, 15);
+        tx.put_test_case(test_case1, test_program_id);
+        tx.put_test_case(test_case2, test_program_id);
+        tx.commit();
+    }
+
+    store::transaction tx = backend.start();
+    const engine::test_program_ptr generic_loaded_test_program =
+        store::detail::get_test_program(backend, test_program_id,
+                                        store::detail::atf_interface);
+
+    const atf_iface::test_program& loaded_test_program =
+        *dynamic_cast< const atf_iface::test_program* >(
+            generic_loaded_test_program.get());
+    ATF_REQUIRE(test_case1 == *dynamic_cast< const atf_iface::test_case* >(
+        loaded_test_program.find("tc1").get()));
+    ATF_REQUIRE(test_case2 == *dynamic_cast< const atf_iface::test_case* >(
+        loaded_test_program.find("tc2").get()));
+}
+
+
+ATF_TEST_CASE(put_test_case__plain);
+ATF_TEST_CASE_HEAD(put_test_case__plain)
+{
+    set_md_var("require.files", store::detail::schema_file.c_str());
+}
+ATF_TEST_CASE_BODY(put_test_case__plain)
+{
     const plain_iface::test_program test_program(
         fs::path("the/binary"), fs::path("/some/root"), "the-suite",
         utils::make_optional(datetime::delta(512, 0)));
@@ -655,17 +710,10 @@ ATF_TEST_CASE_BODY(put_test_case__ok)
         ATF_REQUIRE(!stmt.step());
     }
 
-    {
-        sqlite::statement stmt = backend.database().create_statement(
-            "SELECT test_case_id, var_name, var_value "
-            "FROM test_cases_metadata");
-
-        ATF_REQUIRE(stmt.step());
-        ATF_REQUIRE_EQ(test_case_id, stmt.column_int64(0));
-        ATF_REQUIRE_EQ("timeout", stmt.column_text(1));
-        ATF_REQUIRE_EQ("512", stmt.column_text(2));
-        ATF_REQUIRE(!stmt.step());
-    }
+    ATF_REQUIRE(!backend.database().create_statement(
+        "SELECT * FROM atf_test_cases").step());
+    ATF_REQUIRE(!backend.database().create_statement(
+        "SELECT * FROM atf_test_cases_multivalues").step());
 }
 
 
@@ -791,7 +839,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, put_test_program__atf);
     ATF_ADD_TEST_CASE(tcs, put_test_program__plain);
     ATF_ADD_TEST_CASE(tcs, put_test_program__fail);
-    ATF_ADD_TEST_CASE(tcs, put_test_case__ok);
+    ATF_ADD_TEST_CASE(tcs, put_test_case__atf);
+    ATF_ADD_TEST_CASE(tcs, put_test_case__plain);
     ATF_ADD_TEST_CASE(tcs, put_test_case__fail);
 
     ATF_ADD_TEST_CASE(tcs, put_result__ok__broken);

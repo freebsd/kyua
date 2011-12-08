@@ -32,18 +32,23 @@ extern "C" {
 
 #include <map>
 #include <typeinfo>
+#include <utility>
 
 #include "engine/action.hpp"
+#include "engine/atf_iface/test_case.hpp"
 #include "engine/atf_iface/test_program.hpp"
 #include "engine/context.hpp"
+#include "engine/plain_iface/test_case.hpp"
 #include "engine/plain_iface/test_program.hpp"
 #include "engine/test_result.hpp"
 #include "store/backend.hpp"
+#include "store/dbtypes.hpp"
 #include "store/exceptions.hpp"
 #include "store/transaction.hpp"
 #include "utils/datetime.hpp"
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 #include "utils/sqlite/database.hpp"
@@ -92,79 +97,122 @@ get_env_vars(sqlite::database& db, const int64_t context_id)
 }
 
 
-/// Gets an optional datetime::delta object from the database.
+/// Retrieves an ATF test case from the database.
 ///
-/// \param stmt The statement from which to fetch the data.
-/// \param column The name of the column holding the data.
+/// \param db The SQLite database.
+/// \param test_case_id The identifier of the test case to retrieve.
+/// \param test_program The test program that the test case will be bound to.
+///     This is necessary because test cases have a bidirectional link to their
+///     enclosing test programs.
+/// \param name The name of the test case.
 ///
-/// \return The delta if the column has data, or none otherwise.
-static optional< datetime::delta >
-parse_optional_delta(sqlite::statement& stmt, const char* column)
+/// \return A new ATF test case.
+static atf_iface::test_case*
+get_atf_test_case(sqlite::database& db, const int64_t test_case_id,
+                  const engine::base_test_program& test_program,
+                  const std::string& name)
 {
-    if (stmt.column_type(stmt.column_id(column)) == sqlite::type_null)
-        return none;
-    else {
-        return utils::make_optional(
-            datetime::delta::from_useconds(stmt.safe_column_int64(column)));
+    sqlite::statement stmt = db.create_statement(
+        "SELECT * FROM atf_test_cases WHERE test_case_id == :test_case_id");
+    stmt.bind_int64(":test_case_id", test_case_id);
+    if (!stmt.step())
+        throw store::integrity_error(F("No detail data for ATF test case %d") %
+                                     test_case_id);
+
+    const std::string description = store::column_optional_string(
+        stmt, "description");
+    const bool has_cleanup = store::column_bool(stmt, "has_cleanup");
+    const datetime::delta timeout = store::column_delta(stmt, "timeout");
+    const std::string required_user = store::column_optional_string(
+        stmt, "required_user");
+
+    const bool more = stmt.step();
+    INV(!more);
+
+    atf_iface::strings_set allowed_architectures;
+    atf_iface::strings_set required_configs;
+    atf_iface::paths_set required_files;
+    atf_iface::strings_set allowed_platforms;
+    atf_iface::paths_set required_programs;
+    engine::properties_map user_metadata;
+
+    sqlite::statement stmt2 = db.create_statement(
+        "SELECT * FROM atf_test_cases_multivalues "
+        "WHERE test_case_id == :test_case_id");
+    stmt2.bind_int64(":test_case_id", test_case_id);
+    while (stmt2.step()) {
+        const std::string pname = stmt2.safe_column_text("property_name");
+        const std::string pvalue = stmt2.safe_column_text("property_value");
+
+        if (pname == "require.arch")
+            allowed_architectures.insert(pvalue);
+        else if (pname == "require.config")
+            required_configs.insert(pvalue);
+        else if (pname == "require.files")
+            required_files.insert(fs::path(pvalue));
+        else if (pname == "require.machine")
+            allowed_platforms.insert(pvalue);
+        else if (pname == "require.progs")
+            required_programs.insert(fs::path(pvalue));
+        else
+            user_metadata[pname] = pvalue;
     }
+
+    return new atf_iface::test_case(
+        test_program, name, description, has_cleanup, timeout,
+        allowed_architectures, allowed_platforms, required_configs,
+        required_files, required_programs, required_user, user_metadata);
 }
 
 
-/// Loads a specific test program from the database.
+/// Gets all the test cases within a particular test program.
 ///
-/// \param db The database to load the test program from.
-/// \param id The identifier of the test program to load.
-/// \param interface The name of the interface of the test program.  Used to
-///     address detail tables.
+/// \param db The database to query the information from.
+/// \param test_program_id The identifier of the test program whose test cases
+///     to query.
+/// \param test_program The test program itself, needed to establish a binding
+///     between the loaded test cases and the test program.
+/// \param interface The interface type of the test cases to be loaded.  This
+///     assumes that all test cases within a test program share the same
+///     interface, which is a pretty reasonable assumption.
 ///
-/// \return The instantiated test program.
+/// \return The collection of loaded test cases.
 ///
-/// \throw integrity_error If the data read from the database cannot be properly
-///     interpreted.
-static engine::test_program_ptr
-get_test_program(sqlite::database& db, const int64_t id,
-                 const std::string& interface)
+/// \throw integrity_error If there is any problem in the loaded data.
+static engine::test_cases_vector
+get_test_cases(sqlite::database& db, const int64_t test_program_id,
+               const engine::base_test_program& test_program,
+               const store::detail::interface_type interface)
 {
-    if (interface == "atf") {
-        sqlite::statement stmt = db.create_statement(
-            "SELECT * FROM test_programs WHERE test_program_id == :id");
-        stmt.bind_int64(":id", id);
-        stmt.step();
-        return engine::test_program_ptr(new atf_iface::test_program(
-            fs::path(stmt.safe_column_text("relative_path")),
-            fs::path(stmt.safe_column_text("root")),
-            stmt.safe_column_text("test_suite_name")));
-    } else if (interface == "plain") {
-        sqlite::statement stmt = db.create_statement(
-            "SELECT * FROM test_programs NATURAL JOIN plain_test_programs "
-            "    WHERE test_program_id == :id");
-        stmt.bind_int64(":id", id);
-        stmt.step();
-        return engine::test_program_ptr(new plain_iface::test_program(
-            fs::path(stmt.safe_column_text("relative_path")),
-            fs::path(stmt.safe_column_text("root")),
-            stmt.safe_column_text("test_suite_name"),
-            parse_optional_delta(stmt, "timeout")));
-    } else
-        throw store::integrity_error(
-            F("Unknown interface %s in test program %d") % interface % id);
-}
+    engine::test_cases_vector test_cases;
 
+    sqlite::statement stmt = db.create_statement(
+        "SELECT * FROM test_cases WHERE test_program_id == :test_program_id");
+    stmt.bind_int64(":test_program_id", test_program_id);
+    while (stmt.step()) {
+        const int64_t test_case_id = stmt.safe_column_int64("test_case_id");
+        const std::string name = stmt.safe_column_text("name");
 
-/// Gets the name of the interface of a test program for externalization.
-///
-/// \param test_program The test program to query the interface of.
-///
-/// \return The name of the test interface.
-static std::string
-interface_name(const engine::base_test_program& test_program)
-{
-    if (typeid(test_program) == typeid(atf_iface::test_program)) {
-        return "atf";
-    } else if (typeid(test_program) == typeid(plain_iface::test_program)) {
-        return "plain";
-    } else
-        UNREACHABLE_MSG("Unsupported test program interface");
+        engine::test_case_ptr test_case;
+        switch (interface) {
+        case store::detail::atf_interface:
+            test_case.reset(get_atf_test_case(db, test_case_id, test_program,
+                                              name));
+            break;
+
+        case store::detail::plain_interface:
+            test_case.reset(new plain_iface::test_case(test_program));
+            break;
+
+        default:
+            UNREACHABLE_MSG(F("Unsanitized interface value '%s'") % interface);
+        }
+
+        LD(F("Loaded test case '%s'") % test_case->name());
+        test_cases.push_back(test_case);
+    }
+
+    return test_cases;
 }
 
 
@@ -239,7 +287,7 @@ put_env_vars(sqlite::database& db, const int64_t context_id,
 }
 
 
-/// Stores the metadata variables of a test case.
+/// Stores the user-defined metadata variables of an 'atf' test case.
 ///
 /// \param db The SQLite database.
 /// \param test_case_id The identifier of the test case.
@@ -247,20 +295,140 @@ put_env_vars(sqlite::database& db, const int64_t context_id,
 ///
 /// \throw sqlite::error If there is a problem storing the variables.
 static void
-put_metadata(sqlite::database& db, const int64_t test_case_id,
-             const engine::properties_map& metadata)
+put_atf_user_metadata(sqlite::database& db, const int64_t test_case_id,
+                      const engine::properties_map& metadata)
 {
     sqlite::statement stmt = db.create_statement(
-        "INSERT INTO test_cases_metadata (test_case_id, var_name, var_value) "
-        "VALUES (:test_case_id, :var_name, :var_value)");
+        "INSERT INTO atf_test_cases_multivalues (test_case_id, property_name, "
+        "    property_value) "
+        "VALUES (:test_case_id, :property_name, :property_value)");
     stmt.bind_int64(":test_case_id", test_case_id);
     for (engine::properties_map::const_iterator iter = metadata.begin();
          iter != metadata.end(); iter++) {
-        stmt.bind_text(":var_name", (*iter).first);
-        stmt.bind_text(":var_value", (*iter).second);
+        stmt.bind_text(":property_name", (*iter).first);
+        stmt.bind_text(":property_value", (*iter).second);
         stmt.step_without_results();
         stmt.reset();
     }
+}
+
+
+/// Identity functor for put_atf_multivalues.
+struct identity {
+    /// Returns the input string.
+    ///
+    /// \param str The string extracted from a set.
+    ///
+    /// \return The same str.
+    const std::string&
+    operator()(const std::string& str) const
+    {
+        return str;
+    }
+};
+
+
+/// Path-to-string functor for put_atf_multivalues.
+struct path_to_str {
+    /// Returns a string representing the input path.
+    ///
+    /// \param path The path extracted from a set.
+    ///
+    /// \return The textual representation of the path.
+    const std::string&
+    operator()(const fs::path& path) const
+    {
+        return path.str();
+    }
+};
+
+
+/// Stores a set of "multi-values" in an 'atf' test case.
+///
+/// We understand as multi-values as a metadata property that contains more than
+/// one value.  For example, the 'require.progs' property contains zero or more
+/// program name specifications, and these need to be recorded separately.
+///
+/// \param db The database to which to put the values.
+/// \param test_case_id The identifier of the atf test case the stored
+///     properties belong to.
+/// \param property_name The name of the property being stored.
+/// \param values The collection of values to be stored.
+/// \param adapter A functor that takes a value from the input values and
+///     returns its string representation.
+template< typename StringsSet, class ToStringAdapter >
+static void
+put_atf_multivalues(sqlite::database& db,
+                    const int64_t test_case_id,
+                    const char* property_name,
+                    const StringsSet& values,
+                    const ToStringAdapter adapter)
+{
+    if (values.empty())
+        return;
+
+    sqlite::statement stmt = db.create_statement(
+        "INSERT INTO atf_test_cases_multivalues (test_case_id, property_name, "
+        "    property_value) "
+        "VALUES (:test_case_id, :property_name, :property_value)");
+    stmt.bind_int64(":test_case_id", test_case_id);
+    stmt.bind_text(":property_name", property_name);
+    for (typename StringsSet::const_iterator iter = values.begin();
+         iter != values.end(); iter++) {
+        stmt.bind_text(":property_value", adapter(*iter));
+        stmt.step_without_results();
+        stmt.reset();
+    }
+}
+
+
+/// Stores interface-specific details of a test case.
+///
+/// We assume that the caller has already stored the common details of a test
+/// case across interfaces.  We only store the information that belongs in the
+/// detail tables.
+///
+/// \param db The database into which to store the information.
+/// \param test_case The test case to store.
+/// \param test_case_id The identifier of the test case; this comes from the
+///     previous insert of the generic data.
+static void
+put_test_case_detail(sqlite::database& db,
+                     const engine::base_test_case& test_case,
+                     const int64_t test_case_id)
+{
+    if (typeid(test_case) == typeid(atf_iface::test_case)) {
+        const atf_iface::test_case& atf =
+            dynamic_cast< const atf_iface::test_case& >(test_case);
+        sqlite::statement stmt = db.create_statement(
+            "INSERT INTO atf_test_cases (test_case_id, description, "
+            "    has_cleanup, timeout, required_user) "
+            "VALUES (:test_case_id, :description, :has_cleanup, "
+            "    :timeout, :required_user)");
+        stmt.bind_int64(":test_case_id", test_case_id);
+        store::bind_optional_string(stmt, ":description", atf.description());
+        store::bind_bool(stmt, ":has_cleanup", atf.has_cleanup());
+        store::bind_delta(stmt, ":timeout", atf.timeout());
+        store::bind_optional_string(stmt, ":required_user",
+                                    atf.required_user());
+        stmt.step_without_results();
+
+        put_atf_multivalues(db, test_case_id, "require.arch",
+                            atf.allowed_architectures(), identity());
+        put_atf_multivalues(db, test_case_id, "require.config",
+                            atf.required_configs(), identity());
+        put_atf_multivalues(db, test_case_id, "require.files",
+                            atf.required_files(), path_to_str());
+        put_atf_multivalues(db, test_case_id, "require.machine",
+                            atf.allowed_platforms(), identity());
+        put_atf_multivalues(db, test_case_id, "require.progs",
+                            atf.required_programs(), path_to_str());
+
+        put_atf_user_metadata(db, test_case_id, atf.user_metadata());
+    } else if (typeid(test_case) == typeid(plain_iface::test_case)) {
+        // Nothing to do.
+    } else
+        UNREACHABLE_MSG("Unsupported test case interface");
 }
 
 
@@ -272,8 +440,8 @@ put_metadata(sqlite::database& db, const int64_t test_case_id,
 ///
 /// \param db The database into which to store the information.
 /// \param test_program The test program to store.
-/// \param test_program_id The identifier of the test case; this comes from the
-///     previous insert of the generic data.
+/// \param test_program_id The identifier of the test program; this comes from
+///     the previous insert of the generic data.
 static void
 put_test_program_detail(sqlite::database& db,
                         const engine::base_test_program& test_program,
@@ -288,7 +456,7 @@ put_test_program_detail(sqlite::database& db,
             "INSERT INTO plain_test_programs (test_program_id, timeout) "
             "VALUES (:test_program_id, :timeout)");
         stmt.bind_int64(":test_program_id", test_program_id);
-        stmt.bind_int64(":timeout", plain.timeout().to_useconds());
+        store::bind_delta(stmt, ":timeout", plain.timeout());
         stmt.step_without_results();
     } else
         UNREACHABLE_MSG("Unsupported test program interface");
@@ -298,27 +466,95 @@ put_test_program_detail(sqlite::database& db,
 }  // anonymous namespace
 
 
+/// Loads a specific test program from the database.
+///
+/// \param db The database to load the test program from.
+/// \param id The identifier of the test program to load.
+/// \param interface The name of the interface of the test program.  Used to
+///     address detail tables.
+///
+/// \return The instantiated test program.
+///
+/// \throw integrity_error If the data read from the database cannot be properly
+///     interpreted.
+engine::test_program_ptr
+store::detail::get_test_program(backend& backend_, const int64_t id,
+                                const store::detail::interface_type interface)
+{
+    sqlite::database& db = backend_.database();
+
+    engine::test_program_ptr test_program;
+    switch (interface) {
+    case store::detail::atf_interface:
+    {
+        sqlite::statement stmt = db.create_statement(
+            "SELECT * FROM test_programs WHERE test_program_id == :id");
+        stmt.bind_int64(":id", id);
+        stmt.step();
+        test_program.reset(new atf_iface::test_program(
+            fs::path(stmt.safe_column_text("relative_path")),
+            fs::path(stmt.safe_column_text("root")),
+            stmt.safe_column_text("test_suite_name")));
+        const bool more = stmt.step();
+        INV(!more);
+        break;
+    }
+    case store::detail::plain_interface:
+    {
+        sqlite::statement stmt = db.create_statement(
+            "SELECT * FROM test_programs NATURAL JOIN plain_test_programs "
+            "    WHERE test_program_id == :id");
+        stmt.bind_int64(":id", id);
+        stmt.step();
+        test_program.reset(new plain_iface::test_program(
+            fs::path(stmt.safe_column_text("relative_path")),
+            fs::path(stmt.safe_column_text("root")),
+            stmt.safe_column_text("test_suite_name"),
+            utils::make_optional(store::column_delta(stmt, "timeout"))));
+        const bool more = stmt.step();
+        INV(!more);
+        break;
+    }
+    default:
+        throw store::integrity_error(
+            F("Unknown interface in test program %d") % id);
+    }
+    INV(test_program.get() != NULL);
+
+    LD(F("Loaded test program '%s'; getting test cases") %
+       test_program->relative_path());
+    test_program->set_test_cases(get_test_cases(db, id, *test_program,
+                                                interface));
+    return test_program;
+}
+
+
 /// Internal implementation for a results iterator.
 struct store::results_iterator::impl {
-    /// The database with the data.
-    sqlite::database _db;
+    /// The store backend we are dealing with.
+    store::backend _backend;
 
     /// The statement to iterate on.
     sqlite::statement _stmt;
+
+    /// A cache for the last loaded test program.
+    optional< std::pair< int64_t, engine::test_program_ptr > >
+        _last_test_program;
 
     /// Whether the iterator is still valid or not.
     bool _valid;
 
     /// Constructor.
-    impl(sqlite::database& db_, const int64_t action_id_) :
-        _db(db_),
-        _stmt(db_.create_statement(
-                  "SELECT test_programs.test_program_id, "
-                  "    test_programs.interface, test_cases.name, "
-                  "    test_results.result_type, test_results.result_reason "
-                  "FROM test_programs NATURAL JOIN test_cases "
-                  "    NATURAL JOIN test_results "
-                  "WHERE test_programs.action_id == :action_id"))
+    impl(store::backend& backend_, const int64_t action_id_) :
+        _backend(backend_),
+        _stmt(backend_.database().create_statement(
+            "SELECT test_programs.test_program_id, "
+            "    test_programs.interface, test_cases.name, "
+            "    test_results.result_type, test_results.result_reason "
+            "FROM test_programs NATURAL JOIN test_cases "
+            "    NATURAL JOIN test_results "
+            "WHERE test_programs.action_id == :action_id "
+            "ORDER BY test_programs.test_program_id, test_cases.name"))
     {
         _stmt.bind_int64(":action_id", action_id_);
         _valid = _stmt.step();
@@ -365,16 +601,27 @@ store::results_iterator::operator bool(void) const
 /// Gets the test program this result belongs to.
 ///
 /// \return The representation of a test program.
-engine::test_program_ptr
+const engine::test_program_ptr
 store::results_iterator::test_program(void) const
 {
     const int64_t id = _pimpl->_stmt.safe_column_int64("test_program_id");
-    const std::string interface = _pimpl->_stmt.safe_column_text("interface");
-    return get_test_program(_pimpl->_db, id, interface);
+    if (!_pimpl->_last_test_program ||
+        _pimpl->_last_test_program.get().first != id)
+    {
+        const detail::interface_type interface = store::column_interface(
+            _pimpl->_stmt, "interface");
+        const engine::test_program_ptr tp = detail::get_test_program(
+            _pimpl->_backend, id, interface);
+        _pimpl->_last_test_program = std::make_pair(id, tp);
+    }
+    return _pimpl->_last_test_program.get().second;
 }
 
 
 /// Gets the name of the test case pointed by the iterator.
+///
+/// The caller can look up the test case data by using the find() method on the
+/// test program returned by test_program().
 ///
 /// \return A test case name, unique within the test program.
 std::string
@@ -396,6 +643,10 @@ store::results_iterator::result(void) const
 
 /// Internal implementation for a store transaction.
 struct store::transaction::impl {
+    /// The backend instance.
+    store::backend& _backend;
+
+
     /// The SQLite database this transaction deals with.
     sqlite::database _db;
 
@@ -406,6 +657,7 @@ struct store::transaction::impl {
     ///
     /// \param backend_ The backend this transaction is connected to.
     impl(backend& backend_) :
+        _backend(backend_),
         _db(backend_.database()),
         _tx(backend_.database().begin_transaction())
     {
@@ -494,7 +746,7 @@ store::transaction::get_action_results(const int64_t action_id)
 {
     try {
         return results_iterator(std::tr1::shared_ptr< results_iterator::impl >(
-           new results_iterator::impl(_pimpl->_db, action_id)));
+           new results_iterator::impl(_pimpl->_backend, action_id)));
     } catch (const sqlite::error& e) {
         throw error(e.what());
     }
@@ -643,7 +895,7 @@ store::transaction::put_test_program(
         stmt.bind_text(":root", test_program.root().str());
         stmt.bind_text(":relative_path", test_program.relative_path().str());
         stmt.bind_text(":test_suite_name", test_program.test_suite_name());
-        stmt.bind_text(":interface", interface_name(test_program));
+        bind_interface(stmt, ":interface", guess_interface(test_program));
         stmt.step_without_results();
         const int64_t test_program_id = _pimpl->_db.last_insert_rowid();
 
@@ -680,7 +932,7 @@ store::transaction::put_test_case(const engine::base_test_case& test_case,
         stmt.step_without_results();
         const int64_t test_case_id = _pimpl->_db.last_insert_rowid();
 
-        put_metadata(_pimpl->_db, test_case_id, test_case.all_properties());
+        put_test_case_detail(_pimpl->_db, test_case, test_case_id);
 
         return test_case_id;
     } catch (const sqlite::error& e) {

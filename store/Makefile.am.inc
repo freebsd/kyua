@@ -33,6 +33,8 @@ noinst_LIBRARIES += libstore.a
 libstore_a_CPPFLAGS = -DKYUA_STOREDIR=\"$(storedir)\"
 libstore_a_SOURCES  = store/backend.cpp
 libstore_a_SOURCES += store/backend.hpp
+libstore_a_SOURCES += store/dbtypes.cpp
+libstore_a_SOURCES += store/dbtypes.hpp
 libstore_a_SOURCES += store/exceptions.cpp
 libstore_a_SOURCES += store/exceptions.hpp
 libstore_a_SOURCES += store/metadata.cpp
@@ -53,6 +55,13 @@ store_backend_test_SOURCES = store/backend_test.cpp
 store_backend_test_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) \
                               $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 store_backend_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) \
+                           $(UTILS_LIBS) $(ATF_CXX_LIBS)
+
+tests_store_PROGRAMS += store/dbtypes_test
+store_dbtypes_test_SOURCES = store/dbtypes_test.cpp
+store_dbtypes_test_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) \
+                              $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+store_dbtypes_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) \
                            $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_store_PROGRAMS += store/exceptions_test

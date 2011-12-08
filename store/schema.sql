@@ -168,23 +168,13 @@ CREATE TABLE test_cases (
 );
 
 
--- Representation of the test case metadata properties.
-CREATE TABLE test_cases_metadata (
-    test_case_id INTEGER REFERENCES test_cases,
-    var_name TEXT NOT NULL,
-    var_value TEXT,
-
-    PRIMARY KEY (test_case_id, var_name)
-);
-
-
 -- Representation of test case results.
 --
 -- Note that there is a 1:1 relation between test cases and their results.
 -- This is a result of storing the information of a test case on every
 -- single action.
 CREATE TABLE test_results (
-    test_case_id INTEGER REFERENCES test_cases,
+    test_case_id INTEGER PRIMARY KEY REFERENCES test_cases,
     result_type TEXT NOT NULL,
     result_reason TEXT
 );
@@ -195,7 +185,49 @@ CREATE TABLE test_results (
 -- -------------------------------------------------------------------------
 
 
--- No tables yet; will add some for the test cases.
+-- Properties specific to 'atf' test cases.
+--
+-- This table contains the representation of singly-valued properties such
+-- as 'timeout'.  Properties that can have more than one (textual) value
+-- are stored in the atf_test_cases_multivalues table.
+--
+-- Note that all properties can be NULL because test cases are not required
+-- to define them.
+CREATE TABLE atf_test_cases (
+    test_case_id INTEGER PRIMARY KEY REFERENCES test_cases,
+
+    -- Free-form description of the text case.
+    description TEXT,
+
+    -- Either 'true' or 'false', indicating whether the test case has a
+    -- cleanup routine or not.
+    has_cleanup TEXT,
+
+    -- The timeout for the test case in microseconds.
+    timeout INTEGER,
+
+    -- Either 'root' or 'unprivileged', indicating the privileges required by
+    -- the test case.
+    required_user TEXT
+);
+
+
+-- Representation of test case properties that have more than one value.
+--
+-- While we could store the flattened values of the properties as provided
+-- by the test case itself, we choose to store the processed, split
+-- representation.  This allows us to perform queries about the test cases
+-- directly on the database without doing text processing; for example,
+-- "get all test cases that require /bin/ls".
+CREATE TABLE atf_test_cases_multivalues (
+    test_case_id INTEGER REFERENCES test_cases,
+
+    -- The name of the property; for example, 'require.progs'.
+    property_name TEXT NOT NULL,
+
+    -- One of the values of the property.
+    property_value TEXT NOT NULL
+);
 
 
 -- -------------------------------------------------------------------------
@@ -205,7 +237,7 @@ CREATE TABLE test_results (
 
 -- Properties specific to 'plain' test programs.
 CREATE TABLE plain_test_programs (
-    test_program_id INTEGER REFERENCES test_programs,
+    test_program_id INTEGER PRIMARY KEY REFERENCES test_programs,
 
     -- The timeout for the test cases in this test program.  While this
     -- setting has a default value for test programs, we explicitly record

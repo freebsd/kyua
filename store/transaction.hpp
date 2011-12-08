@@ -45,12 +45,30 @@ namespace engine {
 class action;
 class context;
 class test_result;
-};
+}  // namespace engine
 
 namespace store {
 
 
+class backend;
 class transaction;
+
+
+namespace detail {
+
+
+/// Internal representation of the test interfaces for the storage layer.
+enum interface_type {
+    atf_interface,
+    plain_interface,
+};
+
+
+engine::test_program_ptr get_test_program(backend&, const int64_t,
+                                          const interface_type);
+
+
+}  // namespace detail
 
 
 /// Iterator for the set of test case results that are part of an action.
@@ -74,7 +92,7 @@ public:
     results_iterator& operator++(void);
     operator bool(void) const;
 
-    engine::test_program_ptr test_program(void) const;
+    const engine::test_program_ptr test_program(void) const;
     std::string test_case_name(void) const;
     engine::test_result result(void) const;
 };
