@@ -255,6 +255,8 @@ cli::output_option::format_from_string(const std::string& value)
 /// \param raw_value The argument representing an output selector as provided by
 ///     the user.
 ///
+/// \return The input value split in its format type and location.
+///
 /// \throw std::runtime_error If the argument has an invalid syntax.
 /// \throw fs::error If the location provided in the argument is invalid.
 cli::output_option::option_type

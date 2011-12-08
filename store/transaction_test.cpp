@@ -600,8 +600,9 @@ ATF_TEST_CASE_BODY(put_test_program__plain)
         ATF_REQUIRE(stmt.step());
         ATF_REQUIRE_EQ(test_program_id,
                        stmt.safe_column_int64("test_program_id"));
-        ATF_REQUIRE_EQ(test_program.timeout().to_useconds(),
-                       stmt.safe_column_int64("timeout"));
+        ATF_REQUIRE_EQ(
+            static_cast< int64_t >(test_program.timeout().to_useconds()),
+            stmt.safe_column_int64("timeout"));
     }
 }
 
