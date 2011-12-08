@@ -28,7 +28,7 @@
 
 tests_integrationdir = $(pkgtestsdir)/integration
 
-tests_integration_DATA = integration/Atffile integration/Kyuafile
+tests_integration_DATA = integration/Kyuafile
 EXTRA_DIST += $(tests_integration_DATA)
 
 ATF_SH_BUILD = \

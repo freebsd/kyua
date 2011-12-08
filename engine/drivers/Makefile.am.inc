@@ -37,8 +37,7 @@ libengine_a_SOURCES += engine/drivers/scan_action.hpp
 
 tests_engine_driversdir = $(pkgtestsdir)/engine/drivers
 
-tests_engine_drivers_DATA  = engine/drivers/Atffile
-tests_engine_drivers_DATA += engine/drivers/Kyuafile
+tests_engine_drivers_DATA = engine/drivers/Kyuafile
 EXTRA_DIST += $(tests_engine_drivers_DATA)
 
 tests_engine_drivers_PROGRAMS = engine/drivers/debug_test_test

@@ -22,6 +22,10 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 * Added the 'report' command to generate plain-text reports of the
   test results stored in the database.
 
+* Removed the 'Atffile's from the source tree.  Kyua is stable enough
+  to generate trustworthy reports, and we do not want to give the
+  impression that atf-run / atf-report are still supported.
+
 
 Changes in version 0.2
 ======================

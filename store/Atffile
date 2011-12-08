@@ -1,9 +1,0 @@
-Content-Type: application/X-atf-atffile; version="1"
-
-prop: test-suite = kyua
-
-tp: backend_test
-tp: dbtypes_test
-tp: exceptions_test
-tp: metadata_test
-tp: transaction_test

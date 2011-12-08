@@ -43,7 +43,7 @@ libutils_a_SOURCES += utils/sqlite/transaction.hpp
 
 tests_utils_sqlitedir = $(pkgtestsdir)/utils/sqlite
 
-tests_utils_sqlite_DATA = utils/sqlite/Atffile utils/sqlite/Kyuafile
+tests_utils_sqlite_DATA = utils/sqlite/Kyuafile
 EXTRA_DIST += $(tests_utils_sqlite_DATA)
 
 tests_utils_sqlite_PROGRAMS = utils/sqlite/c_gate_test

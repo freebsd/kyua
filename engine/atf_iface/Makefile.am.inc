@@ -37,8 +37,7 @@ libengine_a_SOURCES += engine/atf_iface/test_program.hpp
 
 tests_engine_atf_ifacedir = $(pkgtestsdir)/engine/atf_iface
 
-tests_engine_atf_iface_DATA  = engine/atf_iface/Atffile
-tests_engine_atf_iface_DATA += engine/atf_iface/Kyuafile
+tests_engine_atf_iface_DATA = engine/atf_iface/Kyuafile
 EXTRA_DIST += $(tests_engine_atf_iface_DATA)
 
 tests_engine_atf_iface_PROGRAMS = engine/atf_iface/results_test

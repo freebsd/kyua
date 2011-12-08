@@ -48,7 +48,7 @@ libutils_test_a_SOURCES += utils/cmdline/ui_mock.cpp
 
 tests_utils_cmdlinedir = $(pkgtestsdir)/utils/cmdline
 
-tests_utils_cmdline_DATA = utils/cmdline/Atffile utils/cmdline/Kyuafile
+tests_utils_cmdline_DATA = utils/cmdline/Kyuafile
 EXTRA_DIST += $(tests_utils_cmdline_DATA)
 
 tests_utils_cmdline_PROGRAMS = utils/cmdline/base_command_test

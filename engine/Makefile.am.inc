@@ -51,7 +51,7 @@ libengine_a_SOURCES += engine/test_result.hpp
 
 tests_enginedir = $(pkgtestsdir)/engine
 
-tests_engine_DATA = engine/Atffile engine/Kyuafile
+tests_engine_DATA = engine/Kyuafile
 EXTRA_DIST += $(tests_engine_DATA)
 
 tests_engine_PROGRAMS = engine/action_test

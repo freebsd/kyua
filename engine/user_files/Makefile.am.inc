@@ -49,8 +49,7 @@ dist_lua_modules_DATA += engine/user_files/kyuafile_1.lua
 
 tests_engine_user_filesdir = $(pkgtestsdir)/engine/user_files
 
-tests_engine_user_files_DATA  = engine/user_files/Atffile
-tests_engine_user_files_DATA += engine/user_files/Kyuafile
+tests_engine_user_files_DATA = engine/user_files/Kyuafile
 EXTRA_DIST += $(tests_engine_user_files_DATA)
 
 tests_engine_user_files_PROGRAMS = engine/user_files/common_test

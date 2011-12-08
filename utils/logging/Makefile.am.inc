@@ -38,7 +38,7 @@ libutils_a_SOURCES += utils/logging/operations.hpp
 
 tests_utils_loggingdir = $(pkgtestsdir)/utils/logging
 
-tests_utils_logging_DATA = utils/logging/Atffile utils/logging/Kyuafile
+tests_utils_logging_DATA = utils/logging/Kyuafile
 EXTRA_DIST += $(tests_utils_logging_DATA)
 
 tests_utils_logging_PROGRAMS = utils/logging/macros_test

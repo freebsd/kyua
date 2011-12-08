@@ -47,7 +47,7 @@ dist_store_DATA = store/schema.sql
 
 tests_storedir = $(pkgtestsdir)/store
 
-tests_store_DATA = store/Atffile store/Kyuafile
+tests_store_DATA = store/Kyuafile
 EXTRA_DIST += $(tests_store_DATA)
 
 tests_store_PROGRAMS = store/backend_test

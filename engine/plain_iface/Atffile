@@ -1,6 +1,0 @@
-Content-Type: application/X-atf-atffile; version="1"
-
-prop: test-suite = kyua
-
-tp: test_case_test
-tp: test_program_test

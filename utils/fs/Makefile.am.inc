@@ -43,7 +43,7 @@ libutils_a_SOURCES += utils/fs/path.hpp
 
 tests_utils_fsdir = $(pkgtestsdir)/utils/fs
 
-tests_utils_fs_DATA = utils/fs/Atffile utils/fs/Kyuafile
+tests_utils_fs_DATA = utils/fs/Kyuafile
 EXTRA_DIST += $(tests_utils_fs_DATA)
 
 tests_utils_fs_PROGRAMS = utils/fs/auto_cleaners_test

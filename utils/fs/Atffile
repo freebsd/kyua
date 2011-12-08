@@ -1,9 +1,0 @@
-Content-Type: application/X-atf-atffile; version="1"
-
-prop: test-suite = kyua
-
-tp: auto_cleaners_test
-tp: exceptions_test
-tp: lua_module_test
-tp: operations_test
-tp: path_test

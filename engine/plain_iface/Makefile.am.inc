@@ -33,8 +33,7 @@ libengine_a_SOURCES += engine/plain_iface/test_program.hpp
 
 tests_engine_plain_ifacedir = $(pkgtestsdir)/engine/plain_iface
 
-tests_engine_plain_iface_DATA  = engine/plain_iface/Atffile
-tests_engine_plain_iface_DATA += engine/plain_iface/Kyuafile
+tests_engine_plain_iface_DATA = engine/plain_iface/Kyuafile
 EXTRA_DIST += $(tests_engine_plain_iface_DATA)
 
 tests_engine_plain_iface_PROGRAMS = engine/plain_iface/test_case_helpers

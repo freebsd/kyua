@@ -33,7 +33,7 @@ dist_examples_DATA += examples/kyua.conf
 
 tests_examplesdir = $(pkgtestsdir)/examples
 
-tests_examples_DATA = examples/Atffile examples/Kyuafile
+tests_examples_DATA = examples/Kyuafile
 EXTRA_DIST += $(tests_examples_DATA)
 
 tests_examples_PROGRAMS = examples/syntax_test

@@ -41,7 +41,7 @@ pkgtestsdir = $(testsdir)/kyua-cli
 
 tests_topdir = $(pkgtestsdir)
 
-tests_top_DATA = Atffile Kyuafile
+tests_top_DATA = Kyuafile
 EXTRA_DIST += $(tests_top_DATA)
 
 include admin/Makefile.am.inc
