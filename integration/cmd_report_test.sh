@@ -153,16 +153,22 @@ utils_test_case output__console__change_file
 output__console__change_file_body() {
     run_tests
 
-    cat >experr <<EOF
+    cat >report <<EOF
 ===> Skipped tests
 simple_all_pass:skip  ->  skipped: The reason for skipping is this
 ===> Summary
 Action: 1
 Test cases: 2 total, 1 skipped, 0 expected failures, 0 broken, 0 failed
 EOF
-    atf_expect_fail "--output not implemented yet"
-    atf_check -s exit:0 -o empty -e file:experr kyua report \
+
+    atf_check -s exit:0 -o file:report -e empty kyua report \
+        --output=console:/dev/stdout
+    atf_check -s exit:0 -o empty -e file:report kyua report \
         --output=console:/dev/stderr
+
+    atf_check -s exit:0 -o empty -e empty kyua report \
+        --output=console:my-file
+    atf_check -s exit:0 -o file:report cat my-file
 }
 
 

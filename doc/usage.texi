@@ -336,8 +336,8 @@ defaults to the latest action stored in the database.
 @item --output=format:path
 @cindex @option{--output}, @command{report}
 Specifies the format of the generated report and where it should be
-stored.  At the moment, the only accepted value is the default, which
-is @samp{console:/dev/stdout}.
+stored in the form @samp{format:path}.  At the moment, the only format
+type is @samp{console}.
 
 @item --show-context
 @cindex @option{--show-context}, @command{report}

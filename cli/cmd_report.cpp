@@ -28,6 +28,7 @@
 
 #include <cstddef>
 #include <cstdlib>
+#include <fstream>
 #include <map>
 #include <vector>
 
@@ -57,8 +58,8 @@ namespace {
 
 /// Generates a plain-text report intended to be printed to the console.
 class console_hooks : public scan_action::base_hooks {
-    /// The user interface to which to send the output.
-    cmdline::ui* const _ui;
+    /// Indirection to print the output to the correct file stream.
+    cli::file_writer _writer;
 
     /// Whether to include the runtime context in the output or not.
     const bool _show_context;
@@ -108,19 +109,19 @@ class console_hooks : public scan_action::base_hooks {
     ///
     /// \param context The context to dump.
     void
-    print_context(const engine::context& context) const
+    print_context(const engine::context& context)
     {
-        _ui->out("===> Execution context");
+        _writer("===> Execution context");
 
-        _ui->out(F("Current directory: %s") % context.cwd());
+        _writer(F("Current directory: %s") % context.cwd());
         const std::map< std::string, std::string >& env = context.env();
         if (env.empty())
-            _ui->out("No environment variables recorded");
+            _writer("No environment variables recorded");
         else {
-            _ui->out("Environment variables:");
+            _writer("Environment variables:");
             for (std::map< std::string, std::string >::const_iterator
                      iter = env.begin(); iter != env.end(); iter++) {
-                _ui->out(F("    %s=%s") % (*iter).first % (*iter).second);
+                _writer(F("    %s=%s") % (*iter).first % (*iter).second);
             }
         }
     }
@@ -128,7 +129,7 @@ class console_hooks : public scan_action::base_hooks {
     /// Prints a set of results.
     std::size_t
     print_results(const engine::test_result::result_type type,
-                  const char* title) const
+                  const char* title)
     {
         const std::map< engine::test_result::result_type,
                         std::vector< result_data > >::const_iterator iter2 =
@@ -137,12 +138,12 @@ class console_hooks : public scan_action::base_hooks {
             return 0;
         const std::vector< result_data >& all = (*iter2).second;
 
-        _ui->out(F("===> %s") % title);
+        _writer(F("===> %s") % title);
         for (std::vector< result_data >::const_iterator iter = all.begin();
              iter != all.end(); iter++) {
-            _ui->out(F("%s:%s  ->  %s") % (*iter).binary_path %
-                     (*iter).test_case_name %
-                     cli::format_result((*iter).result));
+            _writer(F("%s:%s  ->  %s") % (*iter).binary_path %
+                    (*iter).test_case_name %
+                    cli::format_result((*iter).result));
         }
         return all.size();
     }
@@ -150,11 +151,13 @@ class console_hooks : public scan_action::base_hooks {
 public:
     /// Constructor for the hooks.
     ///
-    /// \param ui_ The user interface to which to send the output.
+    /// \param ui_ The user interface object of the caller command.
+    /// \param outfile_ The file to which to send the output.
     /// \param show_context_ Whether to include the runtime context in
     ///     the output or not.
-    console_hooks(cmdline::ui* ui_, bool show_context_) :
-        _ui(ui_),
+    console_hooks(cmdline::ui* ui_, const fs::path& outfile_,
+                  bool show_context_) :
+        _writer(ui_, outfile_),
         _show_context(show_context_),
         _total(0)
     {
@@ -191,7 +194,7 @@ public:
 
     /// Prints the tests summary.
     void
-    print_tests(void) const
+    print_tests(void)
     {
         if (_total == 0)
             return;
@@ -205,11 +208,11 @@ public:
         const std::size_t failed = print_results(
             engine::test_result::failed, "Failed tests");
 
-        _ui->out("===> Summary");
-        _ui->out(F("Action: %d") % _action_id);
-        _ui->out(F("Test cases: %d total, %d skipped, %d expected failures, "
-                   "%d broken, %d failed") %
-                 _total % skipped % xfail % broken % failed);
+        _writer("===> Summary");
+        _writer(F("Action: %d") % _action_id);
+        _writer(F("Test cases: %d total, %d skipped, %d expected failures, "
+                  "%d broken, %d failed") %
+                _total % skipped % xfail % broken % failed);
     }
 };
 
@@ -309,6 +312,48 @@ cli::output_option::convert(const std::string& raw_value)
 }
 
 
+const fs::path cli::file_writer::_stdout_path("/dev/stdout");
+const fs::path cli::file_writer::_stderr_path("/dev/stderr");
+
+
+/// Constructs a new file_writer wrapper.
+///
+/// \param ui_ The UI object of the caller command.
+/// \param path_ The path to the output file.
+cli::file_writer::file_writer(cmdline::ui* const ui_, const fs::path& path_) :
+    _ui(ui_), _output_path(path_)
+{
+    if (path_ != _stdout_path && path_ != _stderr_path) {
+        _output_file.reset(new std::ofstream(path_.c_str()));
+        if (!*(_output_file)) {
+            throw std::runtime_error(F("Cannot open output file %s") % path_);
+        }
+    }
+}
+
+/// Destructor.
+cli::file_writer::~file_writer(void)
+{
+}
+
+/// Writes a message to the selected output.
+///
+/// \param message The message to write; should not include a termination
+///     new line.
+void
+cli::file_writer::operator()(const std::string& message)
+{
+    if (_output_path == _stdout_path)
+        _ui->out(message);
+    else if (_output_path == _stderr_path)
+        _ui->err(message);
+    else {
+        INV(_output_file.get() != NULL);
+        (*_output_file) << message << '\n';
+    }
+}
+
+
 /// Default constructor for cmd_report.
 cmd_report::cmd_report(void) : cli_command(
     "report", "", 0, 0,
@@ -338,16 +383,13 @@ cmd_report::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
 {
     const output_option::option_type output =
         cmdline.get_option< output_option >("output");
-    if (output != output_option::option_type(output_option::console_format,
-                                             fs::path("/dev/stdout")))
-        throw cmdline::usage_error("Support to change --output not yet "
-                                   "implemented");
 
     optional< int64_t > action_id;
     if (cmdline.has_option("action"))
         action_id = cmdline.get_option< cmdline::int_option >("action");
 
-    console_hooks hooks(ui, cmdline.has_option("show-context"));
+    INV(output.first == output_option::console_format);
+    console_hooks hooks(ui, output.second, cmdline.has_option("show-context"));
     scan_action::drive(store_path(cmdline), action_id, hooks);
     hooks.print_tests();
 

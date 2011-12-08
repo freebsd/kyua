@@ -31,6 +31,8 @@
 #include "cli/cmd_report.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/cmdline/exceptions.hpp"
+#include "utils/cmdline/ui_mock.hpp"
+#include "utils/test_utils.hpp"
 
 namespace cmdline = utils::cmdline;
 namespace fs = utils::fs;
@@ -81,9 +83,58 @@ ATF_TEST_CASE_BODY(output_option__convert)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(file_writer__stdout);
+ATF_TEST_CASE_BODY(file_writer__stdout)
+{
+    cmdline::ui_mock ui;
+    {
+        cli::file_writer writer(&ui, fs::path("/dev/stdout"));
+        writer("A simple message");
+    }
+
+    ATF_REQUIRE_EQ(1, ui.out_log().size());
+    ATF_REQUIRE_EQ("A simple message", ui.out_log()[0]);
+    ATF_REQUIRE(ui.err_log().empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(file_writer__stderr);
+ATF_TEST_CASE_BODY(file_writer__stderr)
+{
+    cmdline::ui_mock ui;
+    {
+        cli::file_writer writer(&ui, fs::path("/dev/stderr"));
+        writer("A simple message");
+    }
+
+    ATF_REQUIRE(ui.out_log().empty());
+    ATF_REQUIRE_EQ(1, ui.err_log().size());
+    ATF_REQUIRE_EQ("A simple message", ui.err_log()[0]);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(file_writer__other);
+ATF_TEST_CASE_BODY(file_writer__other)
+{
+    cmdline::ui_mock ui;
+    {
+        cli::file_writer writer(&ui, fs::path("custom"));
+        writer("A simple message");
+    }
+
+    ATF_REQUIRE(ui.out_log().empty());
+    ATF_REQUIRE(ui.err_log().empty());
+    ATF_REQUIRE(utils::grep_file("A simple message", fs::path("custom")));
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, output_option__settings);
     ATF_ADD_TEST_CASE(tcs, output_option__validate);
     ATF_ADD_TEST_CASE(tcs, output_option__convert);
+
+    ATF_ADD_TEST_CASE(tcs, file_writer__stdout);
+    ATF_ADD_TEST_CASE(tcs, file_writer__stderr);
+    ATF_ADD_TEST_CASE(tcs, file_writer__other);
 }
