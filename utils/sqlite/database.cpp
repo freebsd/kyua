@@ -32,6 +32,8 @@ extern "C" {
 
 #include <stdexcept>
 
+#include "utils/format/macros.hpp"
+#include "utils/logging/macros.hpp"
 #include "utils/sanity.hpp"
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/exceptions.hpp"
@@ -266,6 +268,7 @@ sqlite::database::begin_transaction(void)
 sqlite::statement
 sqlite::database::create_statement(const std::string& sql)
 {
+    LD(F("Creating statement: %s") % sql);
     sqlite3_stmt* stmt;
     const int error = ::sqlite3_prepare_v2(_pimpl->db, sql.c_str(),
                                            sql.length() + 1, &stmt, NULL);

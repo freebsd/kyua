@@ -34,6 +34,7 @@ extern "C" {
 
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/logging/macros.hpp"
 #include "utils/sanity.hpp"
 #include "utils/sqlite/c_gate.hpp"
 #include "utils/sqlite/exceptions.hpp"
@@ -187,8 +188,10 @@ sqlite::statement::step(void)
     const int error = ::sqlite3_step(_pimpl->stmt);
     switch (error) {
     case SQLITE_DONE:
+        LD("Step statement; no more rows");
         return false;
     case SQLITE_ROW:
+        LD("Step statement; row available for processing");
         return true;
     default:
         throw api_error::from_database(_pimpl->db, "sqlite3_step");
