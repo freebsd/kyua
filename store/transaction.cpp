@@ -53,7 +53,7 @@ extern "C" {
 #include "utils/sanity.hpp"
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/exceptions.hpp"
-#include "utils/sqlite/statement.hpp"
+#include "utils/sqlite/statement.ipp"
 #include "utils/sqlite/transaction.hpp"
 
 namespace atf_iface = engine::atf_iface;
@@ -85,7 +85,7 @@ get_env_vars(sqlite::database& db, const int64_t context_id)
     sqlite::statement stmt = db.create_statement(
         "SELECT var_name, var_value FROM env_vars "
         "WHERE context_id == :context_id");
-    stmt.bind_int64(":context_id", context_id);
+    stmt.bind(":context_id", context_id);
 
     while (stmt.step()) {
         const std::string name = stmt.safe_column_text("var_name");
@@ -114,7 +114,7 @@ get_atf_test_case(sqlite::database& db, const int64_t test_case_id,
 {
     sqlite::statement stmt = db.create_statement(
         "SELECT * FROM atf_test_cases WHERE test_case_id == :test_case_id");
-    stmt.bind_int64(":test_case_id", test_case_id);
+    stmt.bind(":test_case_id", test_case_id);
     if (!stmt.step())
         throw store::integrity_error(F("No detail data for ATF test case %d") %
                                      test_case_id);
@@ -139,7 +139,7 @@ get_atf_test_case(sqlite::database& db, const int64_t test_case_id,
     sqlite::statement stmt2 = db.create_statement(
         "SELECT * FROM atf_test_cases_multivalues "
         "WHERE test_case_id == :test_case_id");
-    stmt2.bind_int64(":test_case_id", test_case_id);
+    stmt2.bind(":test_case_id", test_case_id);
     while (stmt2.step()) {
         const std::string pname = stmt2.safe_column_text("property_name");
         const std::string pvalue = stmt2.safe_column_text("property_value");
@@ -188,7 +188,7 @@ get_test_cases(sqlite::database& db, const int64_t test_program_id,
 
     sqlite::statement stmt = db.create_statement(
         "SELECT * FROM test_cases WHERE test_program_id == :test_program_id");
-    stmt.bind_int64(":test_program_id", test_program_id);
+    stmt.bind(":test_program_id", test_program_id);
     while (stmt.step()) {
         const int64_t test_case_id = stmt.safe_column_int64("test_case_id");
         const std::string name = stmt.safe_column_text("name");
@@ -276,11 +276,11 @@ put_env_vars(sqlite::database& db, const int64_t context_id,
     sqlite::statement stmt = db.create_statement(
         "INSERT INTO env_vars (context_id, var_name, var_value) "
         "VALUES (:context_id, :var_name, :var_value)");
-    stmt.bind_int64(":context_id", context_id);
+    stmt.bind(":context_id", context_id);
     for (std::map< std::string, std::string >::const_iterator iter =
              env.begin(); iter != env.end(); iter++) {
-        stmt.bind_text(":var_name", (*iter).first);
-        stmt.bind_text(":var_value", (*iter).second);
+        stmt.bind(":var_name", (*iter).first);
+        stmt.bind(":var_value", (*iter).second);
         stmt.step_without_results();
         stmt.reset();
     }
@@ -302,11 +302,11 @@ put_atf_user_metadata(sqlite::database& db, const int64_t test_case_id,
         "INSERT INTO atf_test_cases_multivalues (test_case_id, property_name, "
         "    property_value) "
         "VALUES (:test_case_id, :property_name, :property_value)");
-    stmt.bind_int64(":test_case_id", test_case_id);
+    stmt.bind(":test_case_id", test_case_id);
     for (engine::properties_map::const_iterator iter = metadata.begin();
          iter != metadata.end(); iter++) {
-        stmt.bind_text(":property_name", (*iter).first);
-        stmt.bind_text(":property_value", (*iter).second);
+        stmt.bind(":property_name", (*iter).first);
+        stmt.bind(":property_value", (*iter).second);
         stmt.step_without_results();
         stmt.reset();
     }
@@ -371,11 +371,11 @@ put_atf_multivalues(sqlite::database& db,
         "INSERT INTO atf_test_cases_multivalues (test_case_id, property_name, "
         "    property_value) "
         "VALUES (:test_case_id, :property_name, :property_value)");
-    stmt.bind_int64(":test_case_id", test_case_id);
-    stmt.bind_text(":property_name", property_name);
+    stmt.bind(":test_case_id", test_case_id);
+    stmt.bind(":property_name", property_name);
     for (typename StringsSet::const_iterator iter = values.begin();
          iter != values.end(); iter++) {
-        stmt.bind_text(":property_value", adapter(*iter));
+        stmt.bind(":property_value", adapter(*iter));
         stmt.step_without_results();
         stmt.reset();
     }
@@ -405,7 +405,7 @@ put_test_case_detail(sqlite::database& db,
             "    has_cleanup, timeout, required_user) "
             "VALUES (:test_case_id, :description, :has_cleanup, "
             "    :timeout, :required_user)");
-        stmt.bind_int64(":test_case_id", test_case_id);
+        stmt.bind(":test_case_id", test_case_id);
         store::bind_optional_string(stmt, ":description", atf.description());
         store::bind_bool(stmt, ":has_cleanup", atf.has_cleanup());
         store::bind_delta(stmt, ":timeout", atf.timeout());
@@ -455,7 +455,7 @@ put_test_program_detail(sqlite::database& db,
         sqlite::statement stmt = db.create_statement(
             "INSERT INTO plain_test_programs (test_program_id, timeout) "
             "VALUES (:test_program_id, :timeout)");
-        stmt.bind_int64(":test_program_id", test_program_id);
+        stmt.bind(":test_program_id", test_program_id);
         store::bind_delta(stmt, ":timeout", plain.timeout());
         stmt.step_without_results();
     } else
@@ -489,7 +489,7 @@ store::detail::get_test_program(backend& backend_, const int64_t id,
     {
         sqlite::statement stmt = db.create_statement(
             "SELECT * FROM test_programs WHERE test_program_id == :id");
-        stmt.bind_int64(":id", id);
+        stmt.bind(":id", id);
         stmt.step();
         test_program.reset(new atf_iface::test_program(
             fs::path(stmt.safe_column_text("relative_path")),
@@ -504,7 +504,7 @@ store::detail::get_test_program(backend& backend_, const int64_t id,
         sqlite::statement stmt = db.create_statement(
             "SELECT * FROM test_programs NATURAL JOIN plain_test_programs "
             "    WHERE test_program_id == :id");
-        stmt.bind_int64(":id", id);
+        stmt.bind(":id", id);
         stmt.step();
         test_program.reset(new plain_iface::test_program(
             fs::path(stmt.safe_column_text("relative_path")),
@@ -556,7 +556,7 @@ struct store::results_iterator::impl {
             "WHERE test_programs.action_id == :action_id "
             "ORDER BY test_programs.test_program_id, test_cases.name"))
     {
-        _stmt.bind_int64(":action_id", action_id_);
+        _stmt.bind(":action_id", action_id_);
         _valid = _stmt.step();
     }
 };
@@ -721,7 +721,7 @@ store::transaction::get_action(const int64_t action_id)
     try {
         sqlite::statement stmt = _pimpl->_db.create_statement(
             "SELECT context_id FROM actions WHERE action_id == :action_id");
-        stmt.bind_int64(":action_id", action_id);
+        stmt.bind(":action_id", action_id);
         if (!stmt.step())
             throw error(F("Error loading action %d: does not exist") %
                         action_id);
@@ -793,7 +793,7 @@ store::transaction::get_context(const int64_t context_id)
     try {
         sqlite::statement stmt = _pimpl->_db.create_statement(
             "SELECT cwd FROM contexts WHERE context_id == :context_id");
-        stmt.bind_int64(":context_id", context_id);
+        stmt.bind(":context_id", context_id);
         if (!stmt.step())
             throw error(F("Error loading context %d: does not exist") %
                         context_id);
@@ -825,7 +825,7 @@ store::transaction::put_action(const engine::action& UTILS_UNUSED_PARAM(action),
     try {
         sqlite::statement stmt = _pimpl->_db.create_statement(
             "INSERT INTO actions (context_id) VALUES (:context_id)");
-        stmt.bind_int64(":context_id", context_id);
+        stmt.bind(":context_id", context_id);
         stmt.step_without_results();
         const int64_t action_id = _pimpl->_db.last_insert_rowid();
 
@@ -852,7 +852,7 @@ store::transaction::put_context(const engine::context& context)
     try {
         sqlite::statement stmt = _pimpl->_db.create_statement(
             "INSERT INTO contexts (cwd) VALUES (:cwd)");
-        stmt.bind_text(":cwd", context.cwd().str());
+        stmt.bind(":cwd", context.cwd().str());
         stmt.step_without_results();
         const int64_t context_id = _pimpl->_db.last_insert_rowid();
 
@@ -887,14 +887,14 @@ store::transaction::put_test_program(
             "                           test_suite_name, interface) "
             "VALUES (:action_id, :root, :relative_path, :test_suite_name,"
             "        :interface)");
-        stmt.bind_int64(":action_id", action_id);
+        stmt.bind(":action_id", action_id);
         // TODO(jmmv): The root is not necessarily absolute.  We need to ensure
         // that we can recover the absolute path of the test program.  Maybe we
         // need to change the base_test_program to always ensure root is
         // absolute?
-        stmt.bind_text(":root", test_program.root().str());
-        stmt.bind_text(":relative_path", test_program.relative_path().str());
-        stmt.bind_text(":test_suite_name", test_program.test_suite_name());
+        stmt.bind(":root", test_program.root().str());
+        stmt.bind(":relative_path", test_program.relative_path().str());
+        stmt.bind(":test_suite_name", test_program.test_suite_name());
         bind_interface(stmt, ":interface", guess_interface(test_program));
         stmt.step_without_results();
         const int64_t test_program_id = _pimpl->_db.last_insert_rowid();
@@ -927,8 +927,8 @@ store::transaction::put_test_case(const engine::base_test_case& test_case,
         sqlite::statement stmt = _pimpl->_db.create_statement(
             "INSERT INTO test_cases (test_program_id, name) "
             "VALUES (:test_program_id, :name)");
-        stmt.bind_int64(":test_program_id", test_program_id);
-        stmt.bind_text(":name", test_case.name());
+        stmt.bind(":test_program_id", test_program_id);
+        stmt.bind(":name", test_case.name());
         stmt.step_without_results();
         const int64_t test_case_id = _pimpl->_db.last_insert_rowid();
 
@@ -961,27 +961,27 @@ store::transaction::put_result(const engine::test_result& result,
             "INSERT INTO test_results (test_case_id, result_type, "
             "                          result_reason) "
             "VALUES (:test_case_id, :result_type, :result_reason)");
-        stmt.bind_int64(":test_case_id", test_case_id);
+        stmt.bind(":test_case_id", test_case_id);
 
         switch (result.type()) {
         case engine::test_result::broken:
-            stmt.bind_text(":result_type", "broken");
+            stmt.bind(":result_type", "broken");
             break;
 
         case engine::test_result::expected_failure:
-            stmt.bind_text(":result_type", "expected_failure");
+            stmt.bind(":result_type", "expected_failure");
             break;
 
         case engine::test_result::failed:
-            stmt.bind_text(":result_type", "failed");
+            stmt.bind(":result_type", "failed");
             break;
 
         case engine::test_result::passed:
-            stmt.bind_text(":result_type", "passed");
+            stmt.bind(":result_type", "passed");
             break;
 
         case engine::test_result::skipped:
-            stmt.bind_text(":result_type", "skipped");
+            stmt.bind(":result_type", "skipped");
             break;
 
         default:
@@ -989,9 +989,9 @@ store::transaction::put_result(const engine::test_result& result,
         }
 
         if (result.reason().empty())
-            stmt.bind_null(":result_reason");
+            stmt.bind(":result_reason", sqlite::null());
         else
-            stmt.bind_text(":result_reason", result.reason());
+            stmt.bind(":result_reason", result.reason());
 
         stmt.step_without_results();
         const int64_t result_id = _pimpl->_db.last_insert_rowid();

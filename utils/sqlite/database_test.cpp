@@ -31,7 +31,7 @@
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/sqlite/database.hpp"
-#include "utils/sqlite/statement.hpp"
+#include "utils/sqlite/statement.ipp"
 #include "utils/sqlite/test_utils.hpp"
 #include "utils/sqlite/transaction.hpp"
 

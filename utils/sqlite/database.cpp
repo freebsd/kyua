@@ -37,7 +37,7 @@ extern "C" {
 #include "utils/sanity.hpp"
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/exceptions.hpp"
-#include "utils/sqlite/statement.hpp"
+#include "utils/sqlite/statement.ipp"
 #include "utils/sqlite/transaction.hpp"
 
 namespace sqlite = utils::sqlite;

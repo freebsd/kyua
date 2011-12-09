@@ -34,7 +34,7 @@
 #include "store/exceptions.hpp"
 #include "utils/optional.ipp"
 #include "utils/sqlite/database.hpp"
-#include "utils/sqlite/statement.hpp"
+#include "utils/sqlite/statement.ipp"
 
 namespace atf_iface = engine::atf_iface;
 namespace datetime = utils::datetime;
@@ -76,15 +76,13 @@ do_ok_test(void (*bind)(sqlite::statement&, const char*, Type1),
 
 /// Validates an error condition of column_*.
 ///
-/// \param bind The sqlite::statement::bind_* method to put the invalid value.
 /// \param value The invalid value to insert into the database.
 /// \param column The store::column_* function to get the value.
 /// \param error_regexp The expected message in the raised integrity_error.
-template< typename Type1, typename Type2, typename Type3 >
+template< typename Type1, typename Type2 >
 static void
-do_invalid_test(void (sqlite::statement::*bind)(const char*, Type1),
-                Type2 value,
-                Type3 (*column)(sqlite::statement&, const char*),
+do_invalid_test(Type1 value,
+                Type2 (*column)(sqlite::statement&, const char*),
                 const std::string& error_regexp)
 {
     sqlite::database db = sqlite::database::in_memory();
@@ -92,7 +90,7 @@ do_invalid_test(void (sqlite::statement::*bind)(const char*, Type1),
 
     sqlite::statement insert = db.create_statement("INSERT INTO test "
                                                    "VALUES (:v)");
-    (insert.*bind)(":v", value);
+    insert.bind(":v", value);
     insert.step_without_results();
 
     sqlite::statement query = db.create_statement("SELECT * FROM test");
@@ -117,16 +115,14 @@ ATF_TEST_CASE_BODY(bool__ok)
 ATF_TEST_CASE_WITHOUT_HEAD(bool__get_invalid_type);
 ATF_TEST_CASE_BODY(bool__get_invalid_type)
 {
-    do_invalid_test(&sqlite::statement::bind_int, 123,
-                    store::column_bool, "not a string");
+    do_invalid_test(123, store::column_bool, "not a string");
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(bool__get_invalid_value);
 ATF_TEST_CASE_BODY(bool__get_invalid_value)
 {
-    do_invalid_test(&sqlite::statement::bind_text, "foo",
-                    store::column_bool, "Unknown boolean.*foo");
+    do_invalid_test("foo", store::column_bool, "Unknown boolean.*foo");
 }
 
 
@@ -140,8 +136,7 @@ ATF_TEST_CASE_BODY(delta__ok)
 ATF_TEST_CASE_WITHOUT_HEAD(delta__get_invalid_type);
 ATF_TEST_CASE_BODY(delta__get_invalid_type)
 {
-    do_invalid_test(&sqlite::statement::bind_double, 15.6,
-                    store::column_delta, "not an integer");
+    do_invalid_test(15.6, store::column_delta, "not an integer");
 }
 
 
@@ -177,16 +172,15 @@ ATF_TEST_CASE_BODY(interface__ok)
 ATF_TEST_CASE_WITHOUT_HEAD(interface__get_invalid_type);
 ATF_TEST_CASE_BODY(interface__get_invalid_type)
 {
-    do_invalid_test(&sqlite::statement::bind_int, 35,
-                    store::column_interface, "not a string");
+    do_invalid_test(35, store::column_interface, "not a string");
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(interface__get_invalid_value);
 ATF_TEST_CASE_BODY(interface__get_invalid_value)
 {
-    do_invalid_test(&sqlite::statement::bind_text, "foobar",
-                    store::column_interface, "Unknown interface.*'foobar'");
+    do_invalid_test("foobar", store::column_interface,
+                    "Unknown interface.*'foobar'");
 }
 
 
@@ -201,8 +195,7 @@ ATF_TEST_CASE_BODY(optional_string__ok)
 ATF_TEST_CASE_WITHOUT_HEAD(optional_string__get_invalid_type);
 ATF_TEST_CASE_BODY(optional_string__get_invalid_type)
 {
-    do_invalid_test(&sqlite::statement::bind_int, 35,
-                    store::column_optional_string, "Invalid string");
+    do_invalid_test(35, store::column_optional_string, "Invalid string");
 }
 
 

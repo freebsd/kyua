@@ -47,7 +47,7 @@
 #include "utils/optional.ipp"
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/exceptions.hpp"
-#include "utils/sqlite/statement.hpp"
+#include "utils/sqlite/statement.ipp"
 
 namespace atf_iface = engine::atf_iface;
 namespace datetime = utils::datetime;
@@ -461,7 +461,7 @@ ATF_TEST_CASE_BODY(get_put_context__get_fail__invalid_cwd)
     sqlite::statement stmt = backend.database().create_statement(
         "INSERT INTO contexts (context_id, cwd) VALUES (78, :cwd)");
     const char buffer[10] = "foo bar";
-    stmt.bind_blob(":cwd", buffer, sizeof(buffer));
+    stmt.bind(":cwd", sqlite::blob(buffer, sizeof(buffer)));
     stmt.step_without_results();
 
     store::transaction tx = backend.start();
@@ -490,7 +490,7 @@ ATF_TEST_CASE_BODY(get_put_context__get_fail__invalid_env_vars)
         sqlite::statement stmt = backend.database().create_statement(
             "INSERT INTO env_vars (context_id, var_name, var_value) "
             "VALUES (10, :var_name, 'abc')");
-        stmt.bind_blob(":var_name", buffer, sizeof(buffer));
+        stmt.bind(":var_name", sqlite::blob(buffer, sizeof(buffer)));
         stmt.step_without_results();
     }
 
@@ -498,7 +498,7 @@ ATF_TEST_CASE_BODY(get_put_context__get_fail__invalid_env_vars)
         sqlite::statement stmt = backend.database().create_statement(
             "INSERT INTO env_vars (context_id, var_name, var_value) "
             "VALUES (20, 'abc', :var_value)");
-        stmt.bind_blob(":var_value", buffer, sizeof(buffer));
+        stmt.bind(":var_value", sqlite::blob(buffer, sizeof(buffer)));
         stmt.step_without_results();
     }
 

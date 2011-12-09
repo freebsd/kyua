@@ -59,6 +59,34 @@ enum type {
 };
 
 
+/// Representation of a BLOB.
+class blob {
+public:
+    /// Memory representing the contents of the blob, or NULL if empty.
+    ///
+    /// This memory must remain valid throughout the life of this object, as we
+    /// do not grab ownership of the memory.
+    const void* memory;
+
+    /// Number of bytes in memory.
+    int size;
+
+    /// Constructs a new blob.
+    ///
+    /// \param memory_ Pointer to the contents of the blob.
+    /// \param size_ The size of memory_.
+    blob(const void* memory_, const int size_) :
+        memory(memory_), size(size_)
+    {
+    }
+};
+
+
+/// Representation of a SQL NULL value.
+class null {
+};
+
+
 /// A RAII model for an SQLite 3 statement.
 class statement {
     struct impl;
@@ -80,14 +108,14 @@ public:
     type column_type(const int);
     int column_id(const char*);
 
-    const void* column_blob(const int);
+    blob column_blob(const int);
     double column_double(const int);
     int column_int(const int);
     int64_t column_int64(const int);
     std::string column_text(const int);
     int column_bytes(const int);
 
-    const void* safe_column_blob(const char*);
+    blob safe_column_blob(const char*);
     double safe_column_double(const char*);
     int safe_column_int(const char*);
     int64_t safe_column_int64(const char*);
@@ -96,18 +124,13 @@ public:
 
     void reset(void);
 
-    void bind_blob(const int, const void*, const int);
-    void bind_blob(const char*, const void*, const int);
-    void bind_double(const int, const double);
-    void bind_double(const char*, const double);
-    void bind_int(const int, const int);
-    void bind_int(const char*, const int);
-    void bind_int64(const int, const int64_t);
-    void bind_int64(const char*, const int64_t);
-    void bind_null(const int);
-    void bind_null(const char*);
-    void bind_text(const int, const std::string&);
-    void bind_text(const char*, const std::string&);
+    void bind(const int, const blob&);
+    void bind(const int, const double);
+    void bind(const int, const int);
+    void bind(const int, const int64_t);
+    void bind(const int, const null&);
+    void bind(const int, const std::string&);
+    template< class T > void bind(const char*, const T&);
 
     int bind_parameter_count(void);
     int bind_parameter_index(const std::string&);

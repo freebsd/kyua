@@ -38,6 +38,7 @@ libutils_a_SOURCES += utils/sqlite/exceptions.cpp
 libutils_a_SOURCES += utils/sqlite/exceptions.hpp
 libutils_a_SOURCES += utils/sqlite/statement.cpp
 libutils_a_SOURCES += utils/sqlite/statement.hpp
+libutils_a_SOURCES += utils/sqlite/statement.ipp
 libutils_a_SOURCES += utils/sqlite/transaction.cpp
 libutils_a_SOURCES += utils/sqlite/transaction.hpp
 

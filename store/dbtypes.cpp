@@ -35,7 +35,7 @@
 #include "store/exceptions.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/sanity.hpp"
-#include "utils/sqlite/statement.hpp"
+#include "utils/sqlite/statement.ipp"
 
 namespace atf_iface = engine::atf_iface;
 namespace datetime = utils::datetime;
@@ -74,7 +74,7 @@ store::guess_interface(const engine::base_test_program& test_program)
 void
 store::bind_bool(sqlite::statement& stmt, const char* field, const bool value)
 {
-    stmt.bind_text(field, value ? "true" : "false");
+    stmt.bind(field, value ? "true" : "false");
 }
 
 
@@ -87,7 +87,7 @@ void
 store::bind_delta(sqlite::statement& stmt, const char* field,
                   const datetime::delta& delta)
 {
-    stmt.bind_int64(field, delta.to_useconds());
+    stmt.bind(field, static_cast< int64_t >(delta.to_useconds()));
 }
 
 
@@ -102,10 +102,10 @@ store::bind_interface(sqlite::statement& stmt, const char* field,
 {
     switch (interface) {
     case detail::atf_interface:
-        stmt.bind_text(field, "atf");
+        stmt.bind(field, "atf");
         break;
     case detail::plain_interface:
-        stmt.bind_text(field, "plain");
+        stmt.bind(field, "plain");
         break;
     default:
         UNREACHABLE_MSG("Unsupported test program interface");
@@ -127,9 +127,9 @@ store::bind_optional_string(sqlite::statement& stmt, const char* field,
                             const std::string& str)
 {
     if (str.empty())
-        stmt.bind_null(field);
+        stmt.bind(field, sqlite::null());
     else
-        stmt.bind_text(field, str);
+        stmt.bind(field, str);
 }
 
 

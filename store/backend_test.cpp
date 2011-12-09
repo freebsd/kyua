@@ -37,7 +37,7 @@
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/sqlite/database.hpp"
-#include "utils/sqlite/statement.hpp"
+#include "utils/sqlite/statement.ipp"
 
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
