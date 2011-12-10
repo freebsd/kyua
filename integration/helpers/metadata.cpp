@@ -27,6 +27,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <cstdlib>
+#include <iostream>
 
 #include <atf-c++.hpp>
 
@@ -73,9 +74,13 @@ ATF_TEST_CASE_HEAD(with_cleanup)
 }
 ATF_TEST_CASE_BODY(with_cleanup)
 {
+    std::cout << "Body message to stdout\n";
+    std::cerr << "Body message to stderr\n";
 }
 ATF_TEST_CASE_CLEANUP(with_cleanup)
 {
+    std::cout << "Cleanup message to stdout\n";
+    std::cerr << "Cleanup message to stderr\n";
 }
 
 

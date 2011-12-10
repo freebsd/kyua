@@ -315,7 +315,11 @@ public:
             set_owner(rundir, _config.unprivileged_user.get());
         }
 
-        const fs::path result_file(workdir / "result.txt");
+        const fs::path result_file = workdir / "__RESULT__";
+        const fs::path stdout_file =
+            _stdout_path.get_default(workdir / "__STDOUT__");
+        const fs::path stderr_file =
+            _stderr_path.get_default(workdir / "__STDERR__");
 
         engine::check_interrupt();
 
@@ -324,13 +328,11 @@ public:
         try {
             body_status = engine::fork_and_wait(
                 execute_test_case_body(_test_case, result_file, rundir, _config),
-                _stdout_path.get_default(workdir / "stdout.txt"),
-                _stderr_path.get_default(workdir / "stderr.txt"),
-                _test_case.timeout());
+                stdout_file, stderr_file, _test_case.timeout());
         } catch (const engine::interrupted_error& e) {
             // Ignore: we want to attempt to run the cleanup function before we
-            // return.  The call below to check_interrupt will reraise this signal
-            // when it is safe to do so.
+            // return.  The call below to check_interrupt will reraise this
+            // signal when it is safe to do so.
         }
 
         optional< process::status > cleanup_status;
@@ -338,8 +340,7 @@ public:
             LI(F("Running test case cleanup of '%s'") % _test_case.name());
             cleanup_status = engine::fork_and_wait(
                 execute_test_case_cleanup(_test_case, rundir, _config),
-                workdir / "cleanup-stdout.txt", workdir / "cleanup-stderr.txt",
-                _test_case.timeout());
+                stdout_file, stderr_file, _test_case.timeout());
         } else {
             cleanup_status = process::status::fake_exited(EXIT_SUCCESS);
         }

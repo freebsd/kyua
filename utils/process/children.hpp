@@ -64,7 +64,8 @@ namespace process {
 ///
 /// Use this class when you want to start a child process and you want to store
 /// all of its output to stdout and stderr in separate files for later
-/// processing.
+/// processing.  Note that the specified files are NOT overwritten if they
+/// already exist: they are opened in append mode.
 class child_with_files : noncopyable {
     struct impl;
 

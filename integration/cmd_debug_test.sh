@@ -143,6 +143,35 @@ EOF
 }
 
 
+utils_test_case body_and_cleanup
+body_and_cleanup_body() {
+    cat >Kyuafile <<EOF
+syntax("kyuafile", 1)
+test_suite("integration")
+atf_test_program{name="single"}
+EOF
+    utils_cp_helper metadata single
+
+    cat >expout <<EOF
+single:with_cleanup  ->  passed
+EOF
+    atf_check -s exit:0 -o file:expout -e empty kyua debug \
+        --stdout=saved.out --stderr=saved.err single:with_cleanup
+
+    cat >expout <<EOF
+Body message to stdout
+Cleanup message to stdout
+EOF
+    atf_check -s exit:0 -o file:expout -e empty cat saved.out
+
+    cat >experr <<EOF
+Body message to stderr
+Cleanup message to stderr
+EOF
+    atf_check -s exit:0 -o file:experr -e empty cat saved.err
+}
+
+
 utils_test_case stdout_stderr_flags
 stdout_stderr_flags_body() {
     cat >Kyuafile <<EOF
@@ -344,6 +373,8 @@ atf_init_test_cases() {
     atf_add_test_case one_arg__no_match
     atf_add_test_case one_arg__no_test_case
     atf_add_test_case one_arg__bad_filter
+
+    atf_add_test_case body_and_cleanup
 
     atf_add_test_case stdout_stderr_flags
 

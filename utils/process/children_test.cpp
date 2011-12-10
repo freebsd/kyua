@@ -560,36 +560,57 @@ child_with_output__ok(Hook hook)
 ATF_TEST_CASE_WITHOUT_HEAD(child_with_files__ok_function);
 ATF_TEST_CASE_BODY(child_with_files__ok_function)
 {
+    const fs::path file1("file1.txt");
+    const fs::path file2("file2.txt");
+
     std::auto_ptr< process::child_with_files > child =
         process::child_with_files::fork(
-            child_simple_function< 15, 'Z' >,
-            fs::path("file1.txt"), fs::path("file2.txt"));
+            child_simple_function< 15, 'Z' >, file1, file2);
     const process::status status = child->wait();
     ATF_REQUIRE(status.exited());
     ATF_REQUIRE_EQ(15, status.exitstatus());
 
-    ATF_REQUIRE(utils::grep_file("^To stdout: Z$",
-                                 fs::path("file1.txt")));
-    ATF_REQUIRE(utils::grep_file("^To stderr: Z",
-                                 fs::path("file2.txt")));
+    ATF_REQUIRE( utils::grep_file("^To stdout: Z$", file1));
+    ATF_REQUIRE(!utils::grep_file("^To stdout: Z$", file2));
+
+    ATF_REQUIRE( utils::grep_file("^To stderr: Z$", file2));
+    ATF_REQUIRE(!utils::grep_file("^To stderr: Z$", file1));
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(child_with_files__ok_functor);
 ATF_TEST_CASE_BODY(child_with_files__ok_functor)
 {
+    const fs::path filea("fileA.txt");
+    const fs::path fileb("fileB.txt");
+
+    {
+        std::ofstream output(filea.c_str());
+        output << "Initial stdout\n";
+    }
+    {
+        std::ofstream output(fileb.c_str());
+        output << "Initial stderr\n";
+    }
+
     std::auto_ptr< process::child_with_files > child =
         process::child_with_files::fork(
-            child_simple_functor(16, "a functor"),
-            fs::path("fileA.txt"), fs::path("fileB.txt"));
+            child_simple_functor(16, "a functor"), filea, fileb);
     const process::status status = child->wait();
     ATF_REQUIRE(status.exited());
     ATF_REQUIRE_EQ(16, status.exitstatus());
 
-    ATF_REQUIRE(utils::grep_file("^To stdout: a functor",
-                                 fs::path("fileA.txt")));
-    ATF_REQUIRE(utils::grep_file("^To stderr: a functor$",
-                                 fs::path("fileB.txt")));
+    ATF_REQUIRE( utils::grep_file("^Initial stdout$", filea));
+    ATF_REQUIRE(!utils::grep_file("^Initial stdout$", fileb));
+
+    ATF_REQUIRE( utils::grep_file("^To stdout: a functor$", filea));
+    ATF_REQUIRE(!utils::grep_file("^To stdout: a functor$", fileb));
+
+    ATF_REQUIRE( utils::grep_file("^Initial stderr$", fileb));
+    ATF_REQUIRE(!utils::grep_file("^Initial stderr$", filea));
+
+    ATF_REQUIRE( utils::grep_file("^To stderr: a functor$", fileb));
+    ATF_REQUIRE(!utils::grep_file("^To stderr: a functor$", filea));
 }
 
 

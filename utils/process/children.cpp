@@ -115,18 +115,18 @@ safe_dup(const int old_fd, const int new_fd)
 }
 
 
-/// Exception-based version of open(2).
+/// Exception-based version of open(2) to open (or create) a file for append.
 ///
-/// \param filename The file to create.
+/// \param filename The file to open in append mode.
 ///
-/// \return The file descriptor for the created file.
+/// \return The file descriptor for the opened or created file.
 ///
 /// \throw process::system_error If the call to open(2) fails.
 static int
-create_file(const fs::path& filename)
+open_for_append(const fs::path& filename)
 {
     const int fd = process::detail::syscall_open(
-        filename.c_str(), O_CREAT | O_WRONLY | O_TRUNC,
+        filename.c_str(), O_CREAT | O_WRONLY | O_APPEND,
         S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
     if (fd == -1) {
         const int original_errno = errno;
@@ -300,12 +300,12 @@ process::child_with_files::fork_aux(const fs::path& stdout_file,
 
         try {
             if (stdout_file != fs::path("/dev/stdout")) {
-                const int stdout_fd = create_file(stdout_file);
+                const int stdout_fd = open_for_append(stdout_file);
                 safe_dup(stdout_fd, STDOUT_FILENO);
                 ::close(stdout_fd);
             }
             if (stderr_file != fs::path("/dev/stderr")) {
-                const int stderr_fd = create_file(stderr_file);
+                const int stderr_fd = open_for_append(stderr_file);
                 safe_dup(stderr_fd, STDERR_FILENO);
                 ::close(stderr_fd);
             }
