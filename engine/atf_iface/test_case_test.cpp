@@ -35,6 +35,7 @@
 #include "engine/test_program.hpp"
 #include "engine/test_result.hpp"
 #include "engine/user_files/config.hpp"
+#include "utils/defs.hpp"
 #include "utils/env.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/passwd.hpp"
@@ -54,6 +55,29 @@ namespace {
 static const user_files::config mock_config(
     "mock-architecture", "mock-platform", utils::none,
     user_files::test_suites_map());
+
+
+/// Hooks to ensure that there is no stdout/stderr output.
+class ensure_silent_hooks : public engine::test_case_hooks {
+public:
+    /// Fails the test case if called.
+    ///
+    /// \param unused_file Path to the stdout of the test case.
+    void
+    got_stdout(const fs::path& UTILS_UNUSED_PARAM(file))
+    {
+        ATF_FAIL("got_stdout() should not have been called");
+    }
+
+    /// Fails the test case if called.
+    ///
+    /// \param unused_file Path to the stderr of the test case.
+    void
+    got_stderr(const fs::path& UTILS_UNUSED_PARAM(file))
+    {
+        ATF_FAIL("got_stderr() should not have been called");
+    }
+};
 
 
 /// Fake implementation of a test program.
@@ -541,7 +565,8 @@ ATF_TEST_CASE_BODY(test_case__run__fake)
     const atf_iface::test_case test_case(
         test_program, "__internal_name__", "Some description", result);
 
-    ATF_REQUIRE(result == test_case.run(mock_config));
+    ensure_silent_hooks hooks;
+    ATF_REQUIRE(result == test_case.run(mock_config, hooks));
 }
 
 

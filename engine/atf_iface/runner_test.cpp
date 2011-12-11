@@ -65,6 +65,39 @@ namespace user_files = engine::user_files;
 namespace {
 
 
+/// Test case hooks to capture stdout and stderr in memory.
+class capture_hooks : public engine::test_case_hooks {
+public:
+    /// Contents of the stdout of the test case.
+    std::vector< std::string > stdout_lines;
+
+    /// Contents of the stderr of the test case.
+    std::vector< std::string > stderr_lines;
+
+    /// Stores the stdout of the test case into stdout_lines.
+    ///
+    /// \param file The path to the file containing the stdout.
+    void
+    got_stdout(const fs::path& file)
+    {
+        utils::cat_file("helper stdout:", file);
+        ATF_REQUIRE(stdout_lines.empty());
+        stdout_lines = utils::read_lines(file);
+    }
+
+    /// Stores the stderr of the test case into stderr_lines.
+    ///
+    /// \param file The path to the file containing the stderr.
+    void
+    got_stderr(const fs::path& file)
+    {
+        utils::cat_file("helper stderr:", file);
+        ATF_REQUIRE(stderr_lines.empty());
+        stderr_lines = utils::read_lines(file);
+    }
+};
+
+
 /// Launcher for the helper test cases.
 ///
 /// This builder class can be used to construct the runtime state of the helper
@@ -168,10 +201,22 @@ public:
     engine::test_result
     run(void) const
     {
+        engine::test_case_hooks dummy_hooks;
+        return run(dummy_hooks);
+    }
+
+    /// Runs the helper.
+    ///
+    /// \param hooks The hooks to pass to the test case.
+    ///
+    /// \return The result of the execution.
+    engine::test_result
+    run(engine::test_case_hooks& hooks) const
+    {
         const atf_iface::test_program test_program(_binary_path, _root,
                                                    "the-suite");
         return atf_iface::test_case::from_properties(
-            test_program, _name, _metadata).run(_config);
+            test_program, _name, _metadata).run(_config, hooks);
     }
 };
 
@@ -508,9 +553,26 @@ ATF_TEST_CASE_BODY(run_test_case__missing_test_program)
 }
 
 
-// TODO(jmmv): Implement tests to validate that the stdout/stderr of the test
-// case body and cleanup are correctly captured by run_test_case.  We probably
-// have to wait until we have a mechanism to store this data to do so.
+ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__output);
+ATF_TEST_CASE_BODY(run_test_case__output)
+{
+    atf_helper helper(this, "output");
+    helper.set_metadata("has.cleanup", "true");
+
+    capture_hooks hooks;
+    ATF_REQUIRE(engine::test_result(engine::test_result::passed) ==
+                helper.run(hooks));
+
+    std::vector< std::string > expout;
+    expout.push_back("Body message to stdout");
+    expout.push_back("Cleanup message to stdout");
+    ATF_REQUIRE(hooks.stdout_lines == expout);
+
+    std::vector< std::string > experr;
+    experr.push_back("Body message to stderr");
+    experr.push_back("Cleanup message to stderr");
+    ATF_REQUIRE(hooks.stderr_lines == experr);
+}
 
 
 ATF_INIT_TEST_CASES(tcs)
@@ -536,4 +598,5 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, run_test_case__timeout_cleanup);
     ATF_ADD_TEST_CASE(tcs, run_test_case__missing_results_file);
     ATF_ADD_TEST_CASE(tcs, run_test_case__missing_test_program);
+    ATF_ADD_TEST_CASE(tcs, run_test_case__output);
 }

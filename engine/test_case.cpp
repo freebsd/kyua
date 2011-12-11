@@ -30,6 +30,7 @@
 #include "engine/test_program.hpp"
 #include "engine/test_result.hpp"
 #include "engine/user_files/config.hpp"
+#include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/optional.ipp"
 
@@ -38,6 +39,38 @@ namespace user_files = engine::user_files;
 
 using utils::none;
 using utils::optional;
+
+
+/// Destructor.
+engine::test_case_hooks::~test_case_hooks(void)
+{
+}
+
+
+/// Called once the test case's stdout is ready for processing.
+///
+/// It is important to note that this file is only available within this
+/// callback.  Attempting to read the file once the execute function has
+/// returned will result in an error because the file might have been deleted.
+///
+/// \param unused_file The path to the file containing the stdout.
+void
+engine::test_case_hooks::got_stdout(const fs::path& UTILS_UNUSED_PARAM(file))
+{
+}
+
+
+/// Called once the test case's stderr is ready for processing.
+///
+/// It is important to note that this file is only available within this
+/// callback.  Attempting to read the file once the execute function has
+/// returned will result in an error because the file might have been deleted.
+///
+/// \param unused_file The path to the file containing the stderr.
+void
+engine::test_case_hooks::got_stderr(const fs::path& UTILS_UNUSED_PARAM(file))
+{
+}
 
 
 /// Internal implementation for a base_test_case.
@@ -125,6 +158,7 @@ engine::base_test_case::all_properties(void) const
 ///
 /// \param config The user configuration that defines the execution of this test
 ///     case.
+/// \param hooks Hooks to introspect the execution of the test case.
 /// \param stdout_path The file to which to redirect the stdout of the test.
 ///     For interactive debugging, '/dev/stdout' is probably a reasonable value.
 /// \param stderr_path The file to which to redirect the stdout of the test.
@@ -133,10 +167,11 @@ engine::base_test_case::all_properties(void) const
 /// \return The result of the execution of the test case.
 engine::test_result
 engine::base_test_case::debug(const user_files::config& config,
+                              test_case_hooks& hooks,
                               const fs::path& stdout_path,
                               const fs::path& stderr_path) const
 {
-    return execute(config,
+    return execute(config, hooks,
                    utils::make_optional(stdout_path),
                    utils::make_optional(stderr_path));
 }
@@ -146,10 +181,12 @@ engine::base_test_case::debug(const user_files::config& config,
 ///
 /// \param config The user configuration that defines the execution of this test
 ///     case.
+/// \param hooks Hooks to introspect the execution of the test case.
 ///
 /// \return The result of the execution of the test case.
 engine::test_result
-engine::base_test_case::run(const user_files::config& config) const
+engine::base_test_case::run(const user_files::config& config,
+                            test_case_hooks& hooks) const
 {
-    return execute(config, none, none);
+    return execute(config, hooks, none, none);
 }

@@ -35,6 +35,7 @@
 #include "engine/user_files/kyuafile.hpp"
 #include "store/backend.hpp"
 #include "store/transaction.hpp"
+#include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
 
@@ -44,6 +45,45 @@ namespace user_files = engine::user_files;
 
 
 namespace {
+
+
+/// Test case hooks to save the output into the database.
+class file_saver_hooks : public engine::test_case_hooks {
+    /// Open write transaction for the test case's data.
+    store::transaction& _tx;
+
+    /// Identifier of the test case being stored.
+    const int64_t _test_case_id;
+
+public:
+    /// Constructs a new set of hooks.
+    ///
+    /// \param tx_ Open write transaction for the test case's data.
+    /// \param test_case_id_ Identifier of the test case being stored.
+    file_saver_hooks(store::transaction& tx_,
+                     const int64_t test_case_id_) :
+        _tx(tx_), _test_case_id(test_case_id_)
+    {
+    }
+
+    /// Stores the stdout of the test case into the database.
+    ///
+    /// \param unused_file Path to the stdout of the test case.
+    void
+    got_stdout(const fs::path& UTILS_UNUSED_PARAM(file))
+    {
+        // TODO(jmmv): Store file into database.
+    }
+
+    /// Stores the stderr of the test case into the database.
+    ///
+    /// \param unused_file Path to the stderr of the test case.
+    void
+    got_stderr(const fs::path& UTILS_UNUSED_PARAM(file))
+    {
+        // TODO(jmmv): Store file into database.
+    }
+};
 
 
 /// Runs a test program in a controlled manner.
@@ -80,7 +120,8 @@ run_test_program(const engine::base_test_program& test_program,
 
         const int64_t test_case_id = tx.put_test_case(*test_case,
                                                       test_program_id);
-        const engine::test_result result = test_case->run(config);
+        file_saver_hooks test_hooks(tx, test_case_id);
+        const engine::test_result result = test_case->run(config, test_hooks);
         tx.put_result(result, test_case_id);
         hooks.got_result(test_case, result);
     }

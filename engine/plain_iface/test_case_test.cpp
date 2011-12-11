@@ -142,7 +142,8 @@ public:
         const plain_iface::test_program test_program(_binary_path, _root,
                                                      "unit-tests", _timeout);
         const plain_iface::test_case test_case(test_program);
-        return test_case.run(config);
+        engine::test_case_hooks dummy_hooks;
+        return test_case.run(config, dummy_hooks);
     }
 };
 

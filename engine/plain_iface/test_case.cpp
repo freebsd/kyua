@@ -167,6 +167,9 @@ class run_test_case_safe {
     /// Data of the test case to debug.
     const plain_iface::test_case& _test_case;
 
+    /// Hooks to introspect the execution of the test case.
+    engine::test_case_hooks& _hooks;
+
     /// The file into which to store the test case's stdout.  If none, use a
     /// temporary file within the work directory.
     const optional< fs::path > _stdout_path;
@@ -180,14 +183,17 @@ public:
     ///
     /// \param test_case_ The data of the test case, including the path to the
     ///     test program that contains it, the test case name and its metadata.
+    /// \param hooks_ Hooks to introspect the execution of the test case.
     /// \param stdout_path_ The file into which to store the test case's stdout.
     ///     If none, use a temporary file within the work directory.
     /// \param stderr_path_ The file into which to store the test case's stderr.
     ///     If none, use a temporary file within the work directory.
     run_test_case_safe(const plain_iface::test_case& test_case_,
+                       engine::test_case_hooks& hooks_,
                        const optional< fs::path >& stdout_path_,
                        const optional< fs::path >& stderr_path_) :
         _test_case(test_case_),
+        _hooks(hooks_),
         _stdout_path(stdout_path_),
         _stderr_path(stderr_path_)
     {
@@ -216,14 +222,20 @@ public:
             dynamic_cast< const plain_iface::test_program* >(
                 &_test_case.test_program());
 
+        const fs::path stdout_file =
+            _stdout_path.get_default(workdir / "stdout.txt");
+        const fs::path stderr_file =
+            _stderr_path.get_default(workdir / "stderr.txt");
+
         LI(F("Running test case '%s'") % _test_case.name());
         optional< process::status > body_status = engine::fork_and_wait(
-            execute_test_case(_test_case, rundir),
-            _stdout_path.get_default(workdir / "stdout.txt"),
-            _stderr_path.get_default(workdir / "stderr.txt"),
+            execute_test_case(_test_case, rundir), stdout_file, stderr_file,
             test_program->timeout());
 
         engine::check_interrupt();
+
+        _hooks.got_stdout(stdout_file);
+        _hooks.got_stderr(stderr_file);
 
         return calculate_result(body_status);
     }
@@ -273,6 +285,7 @@ plain_iface::test_case::get_all_properties(void) const
 /// reported as a broken test case result.
 ///
 /// \param unused_config The run-time configuration for the test case.
+/// \param hooks Hooks to introspect the execution of the test case.
 /// \param stdout_path The file into which to store the test case's stdout.
 ///     If none, use a temporary file within the work directory.
 /// \param stderr_path The file into which to store the test case's stderr.
@@ -282,14 +295,15 @@ plain_iface::test_case::get_all_properties(void) const
 engine::test_result
 plain_iface::test_case::execute(
     const user_files::config& UTILS_UNUSED_PARAM(config),
+    test_case_hooks& hooks,
     const optional< fs::path >& stdout_path,
     const optional< fs::path >& stderr_path) const
 {
     LI(F("Processing test case '%s'") % name());
 
     try {
-        return engine::protected_run(run_test_case_safe(*this, stdout_path,
-                                                        stderr_path));
+        return engine::protected_run(run_test_case_safe(
+            *this, hooks, stdout_path, stderr_path));
     } catch (const interrupted_error& e) {
         throw e;
     } catch (const std::exception& e) {

@@ -81,7 +81,7 @@ class test_case : public base_test_case {
 
     properties_map get_all_properties(void) const;
     virtual engine::test_result execute(
-        const user_files::config&,
+        const user_files::config&, test_case_hooks&,
         const utils::optional< utils::fs::path >&,
         const utils::optional< utils::fs::path >&) const;
 

@@ -59,6 +59,24 @@ struct config;
 }  // namespace user_files
 
 
+/// Hooks to introspect the execution of a test case.
+///
+/// There is no guarantee that these hooks will be called during the execution
+/// of the test case.  There are conditions in which they don't make sense.
+///
+/// Note that this class is not abstract.  All hooks have default, empty
+/// implementations.  The purpose of this is to simplify some tests that need to
+/// pass hooks but that are not interested in the results.  We might want to
+/// rethink this and provide an "empty subclass" of a base abstract template.
+class test_case_hooks {
+public:
+    virtual ~test_case_hooks(void);
+
+    virtual void got_stdout(const utils::fs::path&);
+    virtual void got_stderr(const utils::fs::path&);
+};
+
+
 /// Representation of a test case.
 class base_test_case {
     struct base_impl;
@@ -80,6 +98,7 @@ class base_test_case {
     /// are reported as a broken test case result.
     ///
     /// \param config The run-time configuration for the test case.
+    /// \param hooks Run-time hooks to introspect the test case execution.
     /// \param stdout_path The file to which to redirect the stdout of the test.
     ///     If none, use a temporary file in the work directory.
     /// \param stderr_path The file to which to redirect the stdout of the test.
@@ -87,7 +106,7 @@ class base_test_case {
     ///
     /// \return The result of the execution.
     virtual test_result execute(
-        const user_files::config& config,
+        const user_files::config& config, test_case_hooks& hooks,
         const utils::optional< utils::fs::path >& stdout_path,
         const utils::optional< utils::fs::path >& stderr_path) const = 0;
 
@@ -100,9 +119,10 @@ public:
 
     properties_map all_properties(void) const;
     test_result debug(const user_files::config&,
+                      test_case_hooks&,
                       const utils::fs::path&,
                       const utils::fs::path&) const;
-    test_result run(const user_files::config&) const;
+    test_result run(const user_files::config&, test_case_hooks&) const;
 };
 
 

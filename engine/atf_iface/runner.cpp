@@ -264,6 +264,9 @@ class run_test_case_safe {
     /// Parameters to configure the runtime environment of the test case.
     const user_files::config& _config;
 
+    /// Hooks to introspect the execution of the test case.
+    engine::test_case_hooks& _hooks;
+
     /// The file into which to store the test case's stdout.  If none, use a
     /// temporary file within the work directory.
     const optional< fs::path > _stdout_path;
@@ -278,16 +281,19 @@ public:
     /// \param test_case_ The data of the test case, including the path to the
     ///     test program that contains it, the test case name and its metadata.
     /// \param config_ The values for the current engine configuration.
+    /// \param hooks_ Hooks to introspect the execution of the test case.
     /// \param stdout_path_ The file into which to store the test case's stdout.
     ///     If none, use a temporary file within the work directory.
     /// \param stderr_path_ The file into which to store the test case's stderr.
     ///     If none, use a temporary file within the work directory.
     run_test_case_safe(const atf_iface::test_case& test_case_,
                        const user_files::config& config_,
+                       engine::test_case_hooks& hooks_,
                        const optional< fs::path >& stdout_path_,
                        const optional< fs::path >& stderr_path_) :
         _test_case(test_case_),
         _config(config_),
+        _hooks(hooks_),
         _stdout_path(stdout_path_),
         _stderr_path(stderr_path_)
     {
@@ -345,6 +351,9 @@ public:
             cleanup_status = process::status::fake_exited(EXIT_SUCCESS);
         }
 
+        _hooks.got_stdout(stdout_file);
+        _hooks.got_stderr(stderr_file);
+
         engine::check_interrupt();
 
         return atf_iface::calculate_result(body_status, cleanup_status,
@@ -375,6 +384,7 @@ public:
 engine::test_result
 atf_iface::run_test_case(const atf_iface::test_case& test_case,
                          const user_files::config& config,
+                         test_case_hooks& hooks,
                          const optional< fs::path >& stdout_path,
                          const optional< fs::path >& stderr_path)
 {
@@ -384,7 +394,7 @@ atf_iface::run_test_case(const atf_iface::test_case& test_case,
         const std::string skip_reason = test_case.check_requirements(config);
         if (skip_reason.empty())
             return engine::protected_run(run_test_case_safe(
-                test_case, config, stdout_path, stderr_path));
+                test_case, config, hooks, stdout_path, stderr_path));
         else
             return engine::test_result(engine::test_result::skipped,
                                        skip_reason);

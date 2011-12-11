@@ -37,6 +37,7 @@
 
 
 namespace engine {
+class test_case_hooks;
 class test_result;
 namespace user_files {
 struct config;
@@ -49,6 +50,7 @@ namespace atf_iface {
 class test_case;
 
 test_result run_test_case(const test_case&, const user_files::config&,
+                          test_case_hooks&,
                           const utils::optional< utils::fs::path >&,
                           const utils::optional< utils::fs::path >&);
 

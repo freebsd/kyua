@@ -160,6 +160,22 @@ ATF_TEST_CASE_CLEANUP(create_cookie_from_cleanup)
 }
 
 
+ATF_TEST_CASE_WITH_CLEANUP(output);
+ATF_TEST_CASE_HEAD(output)
+{
+}
+ATF_TEST_CASE_BODY(output)
+{
+    std::cout << "Body message to stdout\n";
+    std::cerr << "Body message to stderr\n";
+}
+ATF_TEST_CASE_CLEANUP(output)
+{
+    std::cout << "Cleanup message to stdout\n";
+    std::cerr << "Cleanup message to stderr\n";
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(pass);
 ATF_TEST_CASE_BODY(pass)
 {
@@ -234,6 +250,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, create_cookie_in_control_dir);
     ATF_ADD_TEST_CASE(tcs, create_cookie_in_workdir);
     ATF_ADD_TEST_CASE(tcs, create_cookie_from_cleanup);
+    ATF_ADD_TEST_CASE(tcs, output);
     ATF_ADD_TEST_CASE(tcs, pass);
     ATF_ADD_TEST_CASE(tcs, spawn_blocking_child);
     ATF_ADD_TEST_CASE(tcs, timeout_body);

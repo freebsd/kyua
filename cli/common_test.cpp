@@ -103,6 +103,7 @@ class mock_test_case : public engine::base_test_case {
     ///
     /// \param unused_config The user configuration that defines the execution
     ///     of this test case.
+    /// \param unused_hooks Hooks to introspect the execution of the test case.
     /// \param unused_stdout_path The file to which to redirect the stdout of
     ///     the test.
     /// \param unused_stderr_path The file to which to redirect the stderr of
@@ -111,6 +112,7 @@ class mock_test_case : public engine::base_test_case {
     /// \return Nothing; this method is not supposed to be called.
     engine::test_result
     execute(const user_files::config& UTILS_UNUSED_PARAM(config),
+            engine::test_case_hooks& UTILS_UNUSED_PARAM(hooks),
             const optional< fs::path >& UTILS_UNUSED_PARAM(stdout_path),
             const optional< fs::path >& UTILS_UNUSED_PARAM(stderr_path)) const
     {

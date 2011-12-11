@@ -271,3 +271,22 @@ utils::mount_tmpfs(const fs::path& mount_point)
     ATF_REQUIRE(status.exited());
     ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
 }
+
+
+/// Reads a file in memory, line by line.
+///
+/// \param file The file to read.
+///
+/// \return All the lines in the file.
+std::vector< std::string >
+utils::read_lines(const fs::path& file)
+{
+    std::ifstream input(file.c_str());
+    ATF_REQUIRE(input);
+
+    std::vector< std::string > lines;
+    std::string line;
+    while (std::getline(input, line).good())
+        lines.push_back(line);
+    return lines;
+}

@@ -32,7 +32,9 @@
 #include "engine/test_program.hpp"
 #include "engine/test_result.hpp"
 #include "engine/user_files/config.hpp"
+#include "utils/optional.ipp"
 #include "utils/sanity.hpp"
+#include "utils/test_utils.hpp"
 
 namespace fs = utils::fs;
 namespace user_files = engine::user_files;
@@ -47,6 +49,41 @@ namespace {
 static const user_files::config mock_config(
     "mock-architecture", "mock-platform", utils::none,
     user_files::test_suites_map());
+
+
+/// Records the data passed to the hooks for later validation.
+class capture_hooks : public engine::test_case_hooks {
+public:
+    /// Path to the stdout file of the test case, if received.
+    optional< fs::path > stdout_path;
+
+    /// Path to the stderr file of the test case, if received.
+    optional< fs::path > stderr_path;
+
+    /// Records the path to the stdout.
+    ///
+    /// Note that, in normal execution, this file is not readable outside of
+    /// this hook because it is generated inside a temporary directory.
+    ///
+    /// \param file Fake path to the test case's stdout.
+    void
+    got_stdout(const fs::path& file)
+    {
+        stdout_path = file;
+    }
+
+    /// Records the path to the stderr.
+    ///
+    /// Note that, in normal execution, this file is not readable outside of
+    /// this hook because it is generated inside a temporary directory.
+    ///
+    /// \param file Fake path to the test case's stderr.
+    void
+    got_stderr(const fs::path& file)
+    {
+        stderr_path = file;
+    }
+};
 
 
 /// Fake implementation of a test program.
@@ -91,17 +128,20 @@ class mock_test_case : public engine::base_test_case {
     /// Fakes the execution of a test case.
     ///
     /// \param config The run-time configuration.  Must be mock_config.
+    /// \param hooks Hooks to introspect the execution of the test case.
     /// \param unused_stdout_path The file into which to write the stdout.
     /// \param unused_stderr_path The file into which to write the stderr.
     ///
     /// \return A static result for testing purposes.
     engine::test_result
-    execute(const user_files::config& config,
+    execute(const user_files::config& config, engine::test_case_hooks& hooks,
             const optional< fs::path >& UTILS_UNUSED_PARAM(stdout_path),
             const optional< fs::path >& UTILS_UNUSED_PARAM(stderr_path)) const
     {
         if (&config != &mock_config)
             throw std::runtime_error("Invalid config object");
+        hooks.got_stdout(fs::path("fake-stdout.txt"));
+        hooks.got_stderr(fs::path("fake-stderr.txt"));
         return engine::test_result(engine::test_result::skipped,
                                    "A test result");
     }
@@ -150,9 +190,14 @@ ATF_TEST_CASE_BODY(base_test_case__run__delegate)
     const mock_test_program test_program(fs::path("foo"));
     const mock_test_case test_case(test_program, "bar");
 
+    capture_hooks hooks;
     ATF_REQUIRE(engine::test_result(engine::test_result::skipped,
                                     "A test result") ==
-                test_case.run(mock_config));
+                test_case.run(mock_config, hooks));
+    ATF_REQUIRE(hooks.stdout_path);
+    ATF_REQUIRE_EQ(fs::path("fake-stdout.txt"), hooks.stdout_path.get());
+    ATF_REQUIRE(hooks.stderr_path);
+    ATF_REQUIRE_EQ(fs::path("fake-stderr.txt"), hooks.stderr_path.get());
 }
 
 

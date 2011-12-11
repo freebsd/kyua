@@ -114,7 +114,8 @@ check_test_cases_list_failure(const engine::test_cases_vector& test_cases,
     const atf_iface::test_case& test_case =
         *dynamic_cast< const atf_iface::test_case* >(test_cases[0].get());
     ATF_REQUIRE_EQ("__test_cases_list__", test_case.name());
-    const engine::test_result result = test_case.run(mock_config);
+    engine::test_case_hooks dummy_hooks;
+    const engine::test_result result = test_case.run(mock_config, dummy_hooks);
     ATF_REQUIRE(engine::test_result::broken == result.type());
     ATF_REQUIRE_MATCH(exp_reason, result.reason());
 }

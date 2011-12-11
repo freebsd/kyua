@@ -725,6 +725,7 @@ atf_iface::test_case::check_requirements(const user_files::config& config) const
 /// reported as a broken test case result.
 ///
 /// \param config The run-time configuration for the test case.
+/// \param hooks Hooks to introspect the execution of the test case.
 /// \param stdout_path The file to which to redirect the stdout of the test.
 ///     If none, use a temporary file in the work directory.
 /// \param stderr_path The file to which to redirect the stdout of the test.
@@ -733,11 +734,12 @@ atf_iface::test_case::check_requirements(const user_files::config& config) const
 /// \return The result of the execution.
 engine::test_result
 atf_iface::test_case::execute(const user_files::config& config,
+                              test_case_hooks& hooks,
                               const optional< fs::path >& stdout_path,
                               const optional< fs::path >& stderr_path) const
 {
     if (_pimpl->fake_result)
         return _pimpl->fake_result.get();
     else
-        return run_test_case(*this, config, stdout_path, stderr_path);
+        return run_test_case(*this, config, hooks, stdout_path, stderr_path);
 }
