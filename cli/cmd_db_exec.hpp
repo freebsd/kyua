@@ -32,9 +32,22 @@
 #if !defined(CLI_CMD_DB_EXEC_HPP)
 #define CLI_CMD_DB_EXEC_HPP
 
+#include <string>
+
 #include "cli/common.hpp"
 
+namespace utils {
+namespace sqlite {
+class statement;
+}  // namespace sqlite
+}  // namespace utils
+
 namespace cli {
+
+
+std::string format_cell(utils::sqlite::statement&, const int);
+std::string format_headers(utils::sqlite::statement&);
+std::string format_row(utils::sqlite::statement&);
 
 
 /// Implementation of the "db-exec" subcommand.

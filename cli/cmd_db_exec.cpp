@@ -69,13 +69,46 @@ flatten_args(const cmdline::args_vector& args)
 }
 
 
+}  // anonymous namespace
+
+
+/// Formats a particular cell of a statement result.
+///
+/// \param stmt The statement whose cell to format.
+/// \param index The index of the cell to format.
+///
+/// \return A textual representation of the cell.
+std::string
+cli::format_cell(sqlite::statement& stmt, const int index)
+{
+    switch (stmt.column_type(index)) {
+    case sqlite::type_blob: {
+        const sqlite::blob blob = stmt.column_blob(index);
+        return F("BLOB of %d bytes") % blob.size;
+    }
+
+    case sqlite::type_float:
+        return F("%f") % stmt.column_double(index);
+
+    case sqlite::type_integer:
+        return F("%d") % stmt.column_int64(index);
+
+    case sqlite::type_null:
+        return "NULL";
+
+    case sqlite::type_text:
+        return stmt.column_text(index);
+    }
+}
+
+
 /// Formats the column names of a statement for output as CSV.
 ///
 /// \param stmt The statement whose columns to format.
 ///
 /// \return A comma-separated list of column names.
-static std::string
-format_headers(sqlite::statement& stmt)
+std::string
+cli::format_headers(sqlite::statement& stmt)
 {
     std::string output;
     int i = 0;
@@ -86,45 +119,21 @@ format_headers(sqlite::statement& stmt)
 }
 
 
-/// Formats a particular cell of a statement result.
-///
-/// \param stmt The statement whose cell to format.
-/// \param index The index of the cell to format.
-///
-/// \return A textual representation of the cell.
-static std::string
-format_cell(sqlite::statement& stmt, const int index)
-{
-    if (stmt.column_type(index) == sqlite::type_integer) {
-        return F("%d") % stmt.column_int64(index);
-    } else if (stmt.column_type(index) == sqlite::type_null) {
-        return "NULL";
-    } else if (stmt.column_type(index) == sqlite::type_text) {
-        return stmt.column_text(index);
-    } else {
-        return "REPRESENTATION-NOT-IMPLEMENTED";
-    }
-}
-
-
 /// Formats a row of a statement for output as CSV.
 ///
 /// \param stmt The statement whose current row to format.
 ///
 /// \return A comma-separated list of values.
-static std::string
-format_row(sqlite::statement& stmt)
+std::string
+cli::format_row(sqlite::statement& stmt)
 {
     std::string output;
     int i = 0;
     for (; i < stmt.column_count() - 1; ++i)
-        output += format_cell(stmt, i) + ',';
-    output += format_cell(stmt, i);
+        output += cli::format_cell(stmt, i) + ',';
+    output += cli::format_cell(stmt, i);
     return output;
 }
-
-
-}  // anonymous namespace
 
 
 /// Default constructor for cmd_db_exec.
@@ -159,9 +168,9 @@ cmd_db_exec::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
 
         if (stmt.step()) {
             if (!cmdline.has_option("no-headers"))
-                ui->out(format_headers(stmt));
+                ui->out(cli::format_headers(stmt));
             do
-                ui->out(format_row(stmt));
+                ui->out(cli::format_row(stmt));
             while (stmt.step());
         }
 
