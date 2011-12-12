@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@ using utils::format::extra_args_error;
 using utils::format::formatter;
 
 
-static std::string valid_formatters = "cdsu%";
+static std::string valid_formatters = "cdfsu%";
 
 
 /// Constructs a new formatter object (internal).

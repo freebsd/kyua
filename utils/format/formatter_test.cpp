@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010, 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -95,6 +95,17 @@ ATF_TEST_CASE_BODY(extra_args_error)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(valid_formatters);
+ATF_TEST_CASE_BODY(valid_formatters)
+{
+    ATF_REQUIRE_EQ("a", (F("%c") % 'a').str());
+    ATF_REQUIRE_EQ("34", (F("%d") % 34).str());
+    ATF_REQUIRE_EQ("3.5", (F("%f") % 3.5).str());
+    ATF_REQUIRE_EQ("Some text", (F("%s") % "Some text").str());
+    ATF_REQUIRE_EQ("-45", (F("%u") % -45).str());
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(bad_format_error);
 ATF_TEST_CASE_BODY(bad_format_error)
 {
@@ -117,6 +128,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, one_field);
     ATF_ADD_TEST_CASE(tcs, many_fields);
     ATF_ADD_TEST_CASE(tcs, escape);
+    ATF_ADD_TEST_CASE(tcs, valid_formatters);
     ATF_ADD_TEST_CASE(tcs, bad_format_error);
     ATF_ADD_TEST_CASE(tcs, extra_args_error);
 }
