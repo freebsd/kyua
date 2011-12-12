@@ -45,6 +45,8 @@ libutils_a_SOURCES += utils/passwd.cpp
 libutils_a_SOURCES += utils/passwd.hpp
 libutils_a_SOURCES += utils/sanity.cpp
 libutils_a_SOURCES += utils/sanity.hpp
+libutils_a_SOURCES += utils/stream.cpp
+libutils_a_SOURCES += utils/stream.hpp
 
 UTILS_TEST_CFLAGS = $(UTILS_CFLAGS)
 UTILS_TEST_LIBS = libutils_test.a $(UTILS_LIBS)
@@ -91,6 +93,13 @@ utils_sanity_test_SOURCES = utils/sanity_test.cpp
 utils_sanity_test_CXXFLAGS = $(UTILS_TEST_CFLAGS) $(UTILS_CFLAGS) \
                              $(ATF_CXX_CFLAGS)
 utils_sanity_test_LDADD = $(UTILS_TEST_LIBS) $(UTILS_LIBS) \
+                          $(ATF_CXX_LIBS)
+
+tests_utils_PROGRAMS += utils/stream_test
+utils_stream_test_SOURCES = utils/stream_test.cpp
+utils_stream_test_CXXFLAGS = $(UTILS_TEST_CFLAGS) $(UTILS_CFLAGS) \
+                             $(ATF_CXX_CFLAGS)
+utils_stream_test_LDADD = $(UTILS_TEST_LIBS) $(UTILS_LIBS) \
                           $(ATF_CXX_LIBS)
 
 include utils/cmdline/Makefile.am.inc

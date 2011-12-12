@@ -36,10 +36,13 @@ extern "C" {
 #include <stdint.h>
 }
 
+#include <string>
 #include <tr1/memory>
 #include <utility>
 
 #include "engine/test_program.hpp"
+#include "utils/fs/path.hpp"
+#include "utils/optional.hpp"
 
 namespace engine {
 class action;
@@ -126,6 +129,9 @@ public:
     int64_t put_context(const engine::context&);
     int64_t put_test_program(const engine::base_test_program&, const int64_t);
     int64_t put_test_case(const engine::base_test_case&, const int64_t);
+    utils::optional< int64_t > put_test_case_file(const std::string&,
+                                                  const utils::fs::path&,
+                                                  const int64_t);
     int64_t put_result(const engine::test_result&, const int64_t);
 };
 

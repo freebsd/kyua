@@ -26,6 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <cstring>
+#include <fstream>
 #include <map>
 #include <set>
 #include <string>
@@ -48,6 +50,7 @@
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/exceptions.hpp"
 #include "utils/sqlite/statement.ipp"
+#include "utils/test_utils.hpp"
 
 namespace atf_iface = engine::atf_iface;
 namespace datetime = utils::datetime;
@@ -56,6 +59,7 @@ namespace plain_iface = engine::plain_iface;
 namespace sqlite = utils::sqlite;
 
 using utils::none;
+using utils::optional;
 
 
 namespace {
@@ -737,6 +741,83 @@ ATF_TEST_CASE_BODY(put_test_case__fail)
 }
 
 
+ATF_TEST_CASE(put_test_case_file__empty);
+ATF_TEST_CASE_HEAD(put_test_case_file__empty)
+{
+    set_md_var("require.files", store::detail::schema_file.c_str());
+}
+ATF_TEST_CASE_BODY(put_test_case_file__empty)
+{
+    {
+        std::ofstream output("input.txt");
+    }
+
+    store::backend backend = store::backend::open_rw(fs::path("test.db"));
+    backend.database().exec("PRAGMA foreign_keys = OFF");
+    store::transaction tx = backend.start();
+    const optional< int64_t > file_id = tx.put_test_case_file(
+        "my-file", fs::path("input.txt"), 123L);
+    tx.commit();
+    ATF_REQUIRE(!file_id);
+
+    sqlite::statement stmt = backend.database().create_statement(
+        "SELECT * FROM test_case_files NATURAL JOIN files");
+    ATF_REQUIRE(!stmt.step());
+}
+
+
+ATF_TEST_CASE(put_test_case_file__some);
+ATF_TEST_CASE_HEAD(put_test_case_file__some)
+{
+    set_md_var("require.files", store::detail::schema_file.c_str());
+}
+ATF_TEST_CASE_BODY(put_test_case_file__some)
+{
+    const char contents[] = "This is a test!";
+
+    utils::create_file(fs::path("input.txt"), contents);
+
+    store::backend backend = store::backend::open_rw(fs::path("test.db"));
+    backend.database().exec("PRAGMA foreign_keys = OFF");
+    store::transaction tx = backend.start();
+    const optional< int64_t > file_id = tx.put_test_case_file(
+        "my-file", fs::path("input.txt"), 123L);
+    tx.commit();
+    ATF_REQUIRE(file_id);
+
+    sqlite::statement stmt = backend.database().create_statement(
+        "SELECT * FROM test_case_files NATURAL JOIN files");
+
+    ATF_REQUIRE(stmt.step());
+    ATF_REQUIRE_EQ(123L, stmt.safe_column_int64("test_case_id"));
+    ATF_REQUIRE_EQ("my-file", stmt.safe_column_text("file_name"));
+    const sqlite::blob blob = stmt.safe_column_blob("contents");
+    ATF_REQUIRE(std::strlen(contents) == static_cast< std::size_t >(blob.size));
+    ATF_REQUIRE(std::memcmp(contents, blob.memory, blob.size) == 0);
+    ATF_REQUIRE(!stmt.step());
+}
+
+
+ATF_TEST_CASE(put_test_case_file__fail);
+ATF_TEST_CASE_HEAD(put_test_case_file__fail)
+{
+    set_md_var("require.files", store::detail::schema_file.c_str());
+}
+ATF_TEST_CASE_BODY(put_test_case_file__fail)
+{
+    store::backend backend = store::backend::open_rw(fs::path("test.db"));
+    backend.database().exec("PRAGMA foreign_keys = OFF");
+    store::transaction tx = backend.start();
+    ATF_REQUIRE_THROW(store::error,
+                      tx.put_test_case_file("foo", fs::path("missing"), 1L));
+    tx.commit();
+
+    sqlite::statement stmt = backend.database().create_statement(
+        "SELECT * FROM test_case_files NATURAL JOIN files");
+    ATF_REQUIRE(!stmt.step());
+}
+
+
 ATF_TEST_CASE(put_result__ok__broken);
 ATF_TEST_CASE_HEAD(put_result__ok__broken)
 {
@@ -843,6 +924,9 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, put_test_case__atf);
     ATF_ADD_TEST_CASE(tcs, put_test_case__plain);
     ATF_ADD_TEST_CASE(tcs, put_test_case__fail);
+    ATF_ADD_TEST_CASE(tcs, put_test_case_file__empty);
+    ATF_ADD_TEST_CASE(tcs, put_test_case_file__some);
+    ATF_ADD_TEST_CASE(tcs, put_test_case_file__fail);
 
     ATF_ADD_TEST_CASE(tcs, put_result__ok__broken);
     ATF_ADD_TEST_CASE(tcs, put_result__ok__expected_failure);

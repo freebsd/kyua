@@ -35,6 +35,7 @@
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/sanity.hpp"
+#include "utils/stream.hpp"
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/exceptions.hpp"
 #include "utils/sqlite/statement.ipp"
@@ -54,52 +55,6 @@ const int store::detail::current_schema_version = 1;
 
 
 namespace {
-
-
-/// Gets the length of a stream.
-///
-/// \param is The input stream for which to calculate its length.
-///
-/// \return The length of the stream.  If calculating the length fails, this
-/// returns 0 instead of raising an exception.
-static std::streampos
-stream_length(std::istream& is)
-{
-    const std::streampos current_pos = is.tellg();
-    try {
-        is.seekg(0, std::ios::end);
-        const std::streampos length = is.tellg();
-        is.seekg(current_pos, std::ios::beg);
-        return length;
-    } catch (...) {
-        is.seekg(current_pos, std::ios::beg);
-        LW("Failed to calculate stream length");
-        return 0;
-    }
-}
-
-
-/// Reads the whole contents of a stream into memory.
-///
-/// \param is The input stream from which to read.
-///
-/// \return A plain string containing the raw contents of the file.
-static std::string
-read_file(std::istream& is)
-{
-    std::string buffer;
-    buffer.reserve(stream_length(is));
-
-    char part[1024];
-    while (is.good()) {
-        is.read(part, sizeof(part) - 1);
-        INV(static_cast< unsigned long >(is.gcount()) < sizeof(part));
-        part[is.gcount()] = '\0';
-        buffer += part;
-    }
-
-    return buffer;
-}
 
 
 /// Opens a database and defines session pragmas.
@@ -165,7 +120,7 @@ store::detail::initialize(sqlite::database& db, const fs::path& file)
         throw error(F("Cannot open database schema '%s'") % file);
 
     LI(F("Populating new database with schema from %s") % file);
-    const std::string schema_string = read_file(input);
+    const std::string schema_string = utils::read_stream(input);
     try {
         db.exec(schema_string);
 

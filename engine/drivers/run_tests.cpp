@@ -68,20 +68,20 @@ public:
 
     /// Stores the stdout of the test case into the database.
     ///
-    /// \param unused_file Path to the stdout of the test case.
+    /// \param file Path to the stdout of the test case.
     void
-    got_stdout(const fs::path& UTILS_UNUSED_PARAM(file))
+    got_stdout(const fs::path& file)
     {
-        // TODO(jmmv): Store file into database.
+        _tx.put_test_case_file("__STDOUT__", file, _test_case_id);
     }
 
     /// Stores the stderr of the test case into the database.
     ///
-    /// \param unused_file Path to the stderr of the test case.
+    /// \param file Path to the stderr of the test case.
     void
-    got_stderr(const fs::path& UTILS_UNUSED_PARAM(file))
+    got_stderr(const fs::path& file)
     {
-        // TODO(jmmv): Store file into database.
+        _tx.put_test_case_file("__STDERR__", file, _test_case_id);
     }
 };
 

@@ -180,6 +180,25 @@ CREATE TABLE test_results (
 );
 
 
+-- Collection of output files of the test case.
+CREATE TABLE test_case_files (
+    test_case_id INTEGER NOT NULL REFERENCES test_cases,
+
+    -- The raw name of the file.
+    --
+    -- The special names '__STDOUT__' and '__STDERR__' are reserved to hold
+    -- the stdout and stderr of the test case, respectively.  If any of
+    -- these are empty, there will be no corresponding entry in this table
+    -- (hence why we do not allow NULLs in these fields).
+    file_name TEXT NOT NULL,
+
+    -- Pointer to the file itself.
+    file_id INTEGER NOT NULL REFERENCES files,
+
+    PRIMARY KEY (test_case_id, file_name)
+);
+
+
 -- -------------------------------------------------------------------------
 -- Detail tables for the 'atf' test interface.
 -- -------------------------------------------------------------------------
@@ -245,6 +264,22 @@ CREATE TABLE plain_test_programs (
     -- program was run might change over time, so we want to know what it
     -- was exactly when this was run.
     timeout INTEGER NOT NULL
+);
+
+
+-- -------------------------------------------------------------------------
+-- Verbatim files.
+-- -------------------------------------------------------------------------
+
+
+-- Copies of files or logs generated during testing.
+--
+-- TODO(jmmv): This will probably grow to unmanageable sizes.  We should add a
+-- hash to the file contents and use that as the primary key instead.
+CREATE TABLE files (
+    file_id INTEGER PRIMARY KEY,
+
+    contents BLOB NOT NULL
 );
 
 
