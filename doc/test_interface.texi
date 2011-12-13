@@ -1,4 +1,4 @@
-@c Copyright 2010, 2011 Google Inc.
+@c Copyright 2010 Google Inc.
 @c All rights reserved.
 @c
 @c Redistribution and use in source and binary forms, with or without

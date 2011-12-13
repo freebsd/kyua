@@ -1,4 +1,4 @@
-dnl Copyright 2010, 2011 Google Inc.
+dnl Copyright 2010 Google Inc.
 dnl All rights reserved.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
