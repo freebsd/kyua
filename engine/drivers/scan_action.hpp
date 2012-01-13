@@ -37,6 +37,10 @@
 #if !defined(ENGINE_DRIVERS_SCAN_ACTION_HPP)
 #define ENGINE_DRIVERS_SCAN_ACTION_HPP
 
+extern "C" {
+#include <stdint.h>
+}
+
 #include "engine/test_program.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"

@@ -32,6 +32,10 @@
 #if !defined(UTILS_DATETIME_HPP)
 #define UTILS_DATETIME_HPP
 
+extern "C" {
+#include <stdint.h>
+}
+
 #include <cstddef>
 #include <string>
 

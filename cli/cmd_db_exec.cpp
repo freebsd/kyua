@@ -37,6 +37,7 @@
 #include "store/backend.hpp"
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/sanity.hpp"
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/exceptions.hpp"
 #include "utils/sqlite/statement.hpp"
@@ -99,6 +100,8 @@ cli::format_cell(sqlite::statement& stmt, const int index)
     case sqlite::type_text:
         return stmt.column_text(index);
     }
+
+    UNREACHABLE;
 }
 
 

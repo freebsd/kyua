@@ -35,6 +35,10 @@
 #if !defined(UTILS_SQLITE_DATABASE_HPP)
 #define UTILS_SQLITE_DATABASE_HPP
 
+extern "C" {
+#include <stdint.h>
+}
+
 #include <cstddef>
 #include <tr1/memory>
 
