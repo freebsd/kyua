@@ -34,7 +34,7 @@ To build and use Kyua successfully you need:
 * The Automated Testing Framework, version 0.15 or greater.
 * Lutok 0.1 with Lua 5.1.
 * pkg-config.
-* SQLite 3.7.
+* SQLite 3.6.22.
 
 If you are building Kyua from the code on the repository, you will also
 need the following tools:
