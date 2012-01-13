@@ -26,9 +26,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "cli/cmd_list.hpp"
+
 #include <atf-c++.hpp>
 
-#include "cli/cmd_list.hpp"
 // TODO(jmmv): Should probably use a mock test case.
 #include "engine/atf_iface/test_case.hpp"
 // TODO(jmmv): Should probably use a mock test program.

@@ -26,6 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "utils/fs/path.hpp"
+
 extern "C" {
 #include <unistd.h>
 }
@@ -35,7 +37,6 @@ extern "C" {
 #include <atf-c++.hpp>
 
 #include "utils/fs/exceptions.hpp"
-#include "utils/fs/path.hpp"
 
 using utils::fs::invalid_path_error;
 using utils::fs::join_error;

@@ -26,6 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "cli/main.hpp"
+
 extern "C" {
 #include <signal.h>
 }
@@ -34,7 +36,6 @@ extern "C" {
 
 #include <atf-c++.hpp>
 
-#include "cli/main.hpp"
 #include "engine/user_files/config.hpp"
 #include "utils/cmdline/base_command.ipp"
 #include "utils/cmdline/exceptions.hpp"

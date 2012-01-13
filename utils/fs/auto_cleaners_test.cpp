@@ -26,13 +26,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "utils/fs/auto_cleaners.hpp"
+
 extern "C" {
 #include <unistd.h>
 }
 
 #include <atf-c++.hpp>
 
-#include "utils/fs/auto_cleaners.hpp"
 #include "utils/fs/operations.hpp"
 
 namespace fs = utils::fs;

@@ -26,6 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "utils/logging/macros.hpp"
+
 #include <fstream>
 #include <string>
 
@@ -33,7 +35,6 @@
 
 #include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
-#include "utils/logging/macros.hpp"
 #include "utils/logging/operations.hpp"
 
 namespace datetime = utils::datetime;

@@ -26,12 +26,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "utils/signals/timer.hpp"
+
 #include <iostream>
 
 #include <atf-c++.hpp>
 
 #include "utils/datetime.hpp"
-#include "utils/signals/timer.hpp"
 
 namespace datetime = utils::datetime;
 namespace signals = utils::signals;

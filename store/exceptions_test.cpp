@@ -26,11 +26,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "store/exceptions.hpp"
+
 #include <cstring>
 
 #include <atf-c++.hpp>
-
-#include "store/exceptions.hpp"
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(error);

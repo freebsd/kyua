@@ -26,11 +26,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "engine/atf_iface/test_case.hpp"
+
 #include <set>
 
 #include <atf-c++.hpp>
 
-#include "engine/atf_iface/test_case.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/test_program.hpp"
 #include "engine/test_result.hpp"

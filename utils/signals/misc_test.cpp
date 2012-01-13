@@ -26,6 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "utils/signals/misc.hpp"
+
 extern "C" {
 #include <signal.h>
 #include <unistd.h>
@@ -39,7 +41,6 @@ extern "C" {
 #include "utils/fs/path.hpp"
 #include "utils/process/children.ipp"
 #include "utils/signals/exceptions.hpp"
-#include "utils/signals/misc.hpp"
 
 namespace fs = utils::fs;
 namespace process = utils::process;

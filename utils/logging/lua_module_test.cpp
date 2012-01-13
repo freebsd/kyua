@@ -26,6 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "utils/logging/lua_module.hpp"
+
 #include <fstream>
 #include <string>
 
@@ -36,7 +38,6 @@
 
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
-#include "utils/logging/lua_module.hpp"
 #include "utils/logging/operations.hpp"
 
 namespace fs = utils::fs;

@@ -26,11 +26,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "utils/format/exceptions.hpp"
+
 #include <cstring>
 
 #include <atf-c++.hpp>
-
-#include "utils/format/exceptions.hpp"
 
 using utils::format::bad_format_error;
 using utils::format::error;

@@ -26,13 +26,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "utils/signals/exceptions.hpp"
+
 #include <cerrno>
 #include <cstring>
 
 #include <atf-c++.hpp>
 
 #include "utils/format/macros.hpp"
-#include "utils/signals/exceptions.hpp"
 
 namespace signals = utils::signals;
 

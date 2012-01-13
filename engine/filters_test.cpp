@@ -26,11 +26,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "engine/filters.hpp"
+
 #include <stdexcept>
 
 #include <atf-c++.hpp>
 
-#include "engine/filters.hpp"
 #include "engine/test_case.hpp"
 
 namespace fs = utils::fs;

@@ -26,6 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "utils/signals/programmer.hpp"
+
 extern "C" {
 #include <signal.h>
 #include <unistd.h>
@@ -34,7 +36,6 @@ extern "C" {
 #include <atf-c++.hpp>
 
 #include "utils/sanity.hpp"
-#include "utils/signals/programmer.hpp"
 
 namespace signals = utils::signals;
 

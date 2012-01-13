@@ -26,6 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "utils/logging/operations.hpp"
+
 extern "C" {
 #include <unistd.h>
 }
@@ -39,7 +41,6 @@ extern "C" {
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
-#include "utils/logging/operations.hpp"
 
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;

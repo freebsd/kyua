@@ -26,13 +26,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "engine/drivers/scan_action.hpp"
+
 #include <set>
 
 #include <atf-c++.hpp>
 
 #include "engine/action.hpp"
 #include "engine/context.hpp"
-#include "engine/drivers/scan_action.hpp"
 #include "engine/plain_iface/test_case.hpp"
 #include "engine/plain_iface/test_program.hpp"
 #include "engine/test_result.hpp"

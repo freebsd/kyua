@@ -26,6 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "utils/fs/operations.hpp"
+
 extern "C" {
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -47,7 +49,6 @@ extern "C" {
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/exceptions.hpp"
-#include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
 #include "utils/test_utils.hpp"

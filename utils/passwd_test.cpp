@@ -26,6 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "utils/passwd.hpp"
+
 extern "C" {
 #include <sys/wait.h>
 
@@ -37,8 +39,6 @@ extern "C" {
 #include <stdexcept>
 
 #include <atf-c++.hpp>
-
-#include "utils/passwd.hpp"
 
 namespace passwd_ns = utils::passwd;
 

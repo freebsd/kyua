@@ -26,9 +26,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "engine/plain_iface/test_program.hpp"
+
 #include <atf-c++.hpp>
 
-#include "engine/plain_iface/test_program.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
 

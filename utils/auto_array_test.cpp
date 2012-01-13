@@ -26,11 +26,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "utils/auto_array.ipp"
+
 #include <iostream>
 
 #include <atf-c++.hpp>
 
-#include "utils/auto_array.ipp"
 #include "utils/defs.hpp"
 
 using utils::auto_array;

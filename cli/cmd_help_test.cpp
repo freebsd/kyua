@@ -26,11 +26,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "cli/cmd_help.hpp"
+
 #include <cstdlib>
 
 #include <atf-c++.hpp>
 
-#include "cli/cmd_help.hpp"
 #include "cli/common.ipp"
 #include "engine/user_files/config.hpp"
 #include "utils/cmdline/commands_map.ipp"

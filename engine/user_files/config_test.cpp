@@ -26,6 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "engine/user_files/config.hpp"
+
 #if defined(HAVE_CONFIG_H)
 #   include "config.h"
 #endif
@@ -39,7 +41,6 @@
 #include <lutok/state.ipp>
 #include <lutok/test_utils.hpp>
 
-#include "engine/user_files/config.hpp"
 #include "engine/user_files/exceptions.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.hpp"

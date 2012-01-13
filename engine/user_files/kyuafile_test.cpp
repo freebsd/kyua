@@ -26,6 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "engine/user_files/kyuafile.hpp"
+
 #include <fstream>
 #include <stdexcept>
 #include <typeinfo>
@@ -38,7 +40,6 @@
 #include "engine/atf_iface/test_program.hpp"
 #include "engine/plain_iface/test_program.hpp"
 #include "engine/user_files/exceptions.hpp"
-#include "engine/user_files/kyuafile.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/test_utils.hpp"

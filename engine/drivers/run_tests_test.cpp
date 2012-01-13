@@ -26,9 +26,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <atf-c++.hpp>
-
 #include "engine/drivers/run_tests.hpp"
+
+#include <atf-c++.hpp>
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(TODO);

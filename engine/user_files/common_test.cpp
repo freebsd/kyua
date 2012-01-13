@@ -26,6 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "engine/user_files/common.hpp"
+
 #include <fstream>
 
 #include <atf-c++.hpp>
@@ -33,7 +35,6 @@
 #include <lutok/operations.hpp>
 #include <lutok/state.hpp>
 
-#include "engine/user_files/common.hpp"
 #include "utils/fs/path.hpp"
 
 namespace fs = utils::fs;

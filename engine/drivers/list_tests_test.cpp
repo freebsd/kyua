@@ -26,6 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "engine/drivers/list_tests.hpp"
+
 extern "C" {
 #include <sys/stat.h>
 
@@ -44,7 +46,6 @@ extern "C" {
 #include "engine/atf_iface/test_case.hpp"
 // TODO(jmmv): Should probably use a mock test program.
 #include "engine/atf_iface/test_program.hpp"
-#include "engine/drivers/list_tests.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/filters.hpp"
 #include "engine/user_files/kyuafile.hpp"

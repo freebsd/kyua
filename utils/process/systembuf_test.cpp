@@ -26,6 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "utils/process/systembuf.hpp"
+
 extern "C" {
 #include <fcntl.h>
 }
@@ -33,8 +35,6 @@ extern "C" {
 #include <fstream>
 
 #include <atf-c++.hpp>
-
-#include "utils/process/systembuf.hpp"
 
 using utils::process::systembuf;
 

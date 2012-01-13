@@ -26,12 +26,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "engine/action.hpp"
+
 #include <map>
 #include <string>
 
 #include <atf-c++.hpp>
 
-#include "engine/action.hpp"
 #include "engine/context.hpp"
 #include "utils/fs/path.hpp"
 

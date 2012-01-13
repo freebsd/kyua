@@ -26,11 +26,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "cli/cmd_db_exec.hpp"
+
 #include <cstring>
 
 #include <atf-c++.hpp>
 
-#include "cli/cmd_db_exec.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/statement.ipp"

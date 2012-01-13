@@ -26,10 +26,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "utils/cmdline/commands_map.ipp"
+
 #include <atf-c++.hpp>
 
 #include "utils/cmdline/base_command.hpp"
-#include "utils/cmdline/commands_map.ipp"
 #include "utils/defs.hpp"
 #include "utils/sanity.hpp"
 

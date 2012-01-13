@@ -26,11 +26,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "cli/config.hpp"
+
 #include <fstream>
 
 #include <atf-c++.hpp>
 
-#include "cli/config.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/user_files/config.hpp"
 #include "utils/env.hpp"

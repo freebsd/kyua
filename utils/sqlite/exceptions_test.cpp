@@ -26,13 +26,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "utils/sqlite/exceptions.hpp"
+
 #include <cstring>
 
 #include <atf-c++.hpp>
 
 #include "utils/sqlite/c_gate.hpp"
 #include "utils/sqlite/database.hpp"
-#include "utils/sqlite/exceptions.hpp"
 
 namespace sqlite = utils::sqlite;
 
