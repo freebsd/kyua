@@ -499,6 +499,8 @@ do_inherit_test(const char* fork_stdout, const char* fork_stderr,
     const pid_t pid = ::fork();
     ATF_REQUIRE(pid != -1);
     if (pid == 0) {
+        logging::set_inmemory();
+
         const int fd = ::open(child_file, O_CREAT | O_WRONLY | O_TRUNC, 0644);
         if (fd != child_fd) {
             if (::dup2(fd, child_fd) == -1)
