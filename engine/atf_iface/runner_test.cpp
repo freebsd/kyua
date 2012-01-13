@@ -38,6 +38,7 @@ extern "C" {
 #include <cerrno>
 #include <cstdlib>
 #include <fstream>
+#include <iostream>
 #include <stdexcept>
 
 #include <atf-c++.hpp>
@@ -326,11 +327,25 @@ ATF_TEST_CASE_BODY(run_test_case__kill_children)
     pidfile >> pid;
     pidfile.close();
 
+    int attempts = 3;
+retry:
     if (::kill(pid, SIGCONT) != -1 || errno != ESRCH) {
-        // Looks like the subchild did not die.  Note that this might be
-        // inaccurate: the system may have spawned a new process with the same
-        // pid as our subchild... but in practice, this does not happen because
-        // most systems do not immediately reuse pid numbers.
+        // Looks like the subchild did not die.
+        //
+        // Note that this might be inaccurate for two reasons:
+        // 1) The system may have spawned a new process with the same pid as
+        //    our subchild... but in practice, this does not happen because
+        //    most systems do not immediately reuse pid numbers.  If that
+        //    happens... well, we get a false test failure.
+        // 2) We ran so fast that even if the process was sent a signal to
+        //    die, it has not had enough time to process it yet.  This is why
+        //    we retry this a few times.
+        if (attempts > 0) {
+            std::cout << "Subprocess not dead yet; retrying wait\n";
+            --attempts;
+            ::sleep(1);
+            goto retry;
+        }
         fail(F("The subprocess %d of our child was not killed") % pid);
     }
 }
