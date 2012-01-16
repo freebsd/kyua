@@ -32,7 +32,7 @@ AC_INIT([Kyua - Command line interface], [0.3],
 AC_PREREQ([2.65])
 
 
-AC_COPYRIGHT([Copyright 2010, 2011 Google Inc.])
+AC_COPYRIGHT([Copyright 2010 Google Inc.])
 AC_CONFIG_AUX_DIR([admin])
 AC_CONFIG_FILES([Doxyfile Makefile utils/defs.hpp])
 AC_CONFIG_HEADERS([config.h])
