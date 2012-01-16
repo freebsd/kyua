@@ -30,6 +30,7 @@
 
 extern "C" {
 #include <fcntl.h>
+#include <unistd.h>
 }
 
 #include <fstream>

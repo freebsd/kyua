@@ -28,6 +28,7 @@
 
 extern "C" {
 #include <signal.h>
+#include <unistd.h>
 }
 
 #include <cerrno>

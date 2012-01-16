@@ -28,6 +28,10 @@
 
 #include "utils/process/fdstream.hpp"
 
+extern "C" {
+#include <unistd.h>
+}
+
 #include <atf-c++.hpp>
 
 #include "utils/process/systembuf.hpp"

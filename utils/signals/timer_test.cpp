@@ -28,6 +28,10 @@
 
 #include "utils/signals/timer.hpp"
 
+extern "C" {
+#include <unistd.h>
+}
+
 #include <iostream>
 
 #include <atf-c++.hpp>

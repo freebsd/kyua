@@ -28,6 +28,10 @@
 
 #include "utils/auto_array.ipp"
 
+extern "C" {
+#include <sys/types.h>
+}
+
 #include <iostream>
 
 #include <atf-c++.hpp>
