@@ -30,7 +30,7 @@
 
 This manual is for kyua-cli, version @value{VERSION}.
 
-Copyright @copyright{} 2011 Google Inc.
+Copyright @copyright{} 2011, 2012 Google Inc.
 All rights reserved.
 
 @quotation
