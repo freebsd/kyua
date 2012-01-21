@@ -35,6 +35,7 @@
 #if !defined(UTILS_FORMAT_FORMATTER_HPP)
 #define UTILS_FORMAT_FORMATTER_HPP
 
+#include <sstream>
 #include <string>
 
 namespace utils {
@@ -75,16 +76,27 @@ class formatter {
     /// The position of _expansion from which to scan for placeholders.
     std::string::size_type _last_pos;
 
+    /// The position of the first placeholder in the current expansion.
+    std::string::size_type _placeholder_pos;
+
+    /// The first placeholder in the current expansion.
+    std::string _placeholder;
+
+    /// Stream used to format any possible argument supplied by operator%().
+    std::ostringstream* _oss;
+
     formatter replace(const std::string&) const;
 
+    void init(void);
     formatter(const std::string&, const std::string&,
               const std::string::size_type);
 
 public:
-    formatter(const std::string&);
+    explicit formatter(const std::string&);
+    ~formatter(void);
 
-    std::string str(void) const;
-    operator std::string(void) const;
+    const std::string& str(void) const;
+    operator const std::string&(void) const;
 
     template< typename Type > formatter operator%(const Type&) const;
 };

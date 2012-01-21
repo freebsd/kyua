@@ -30,7 +30,6 @@
 #define UTILS_FORMAT_FORMATTER_IPP
 
 #include <ostream>
-#include <sstream>
 
 #include "utils/format/formatter.hpp"
 
@@ -48,13 +47,12 @@ namespace format {
 /// \param arg The argument to use as replacement for the format placeholder.
 ///
 /// \return A new formatter that has one less format placeholder.
-template< typename Type > inline
-formatter
+template< typename Type >
+inline formatter
 formatter::operator%(const Type& arg) const
 {
-    std::ostringstream oss;
-    oss << arg;
-    return replace(oss.str());
+    (*_oss) << arg;
+    return replace(_oss->str());
 }
 
 
