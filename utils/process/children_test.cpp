@@ -1101,6 +1101,7 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, child_with_output__ok_function);
     ATF_ADD_TEST_CASE(tcs, child_with_output__ok_functor);
+    ATF_ADD_TEST_CASE(tcs, child_with_output__pid);
     ATF_ADD_TEST_CASE(tcs, child_with_output__wait_killpg);
     ATF_ADD_TEST_CASE(tcs, child_with_output__wait_timeout_ok);
     ATF_ADD_TEST_CASE(tcs, child_with_output__wait_timeout_expired);

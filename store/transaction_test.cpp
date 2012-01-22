@@ -133,8 +133,8 @@ ATF_TEST_CASE_BODY(commit__fail)
         tx.put_context(context);
         backend.database().exec(
             "CREATE TABLE foo ("
-            "a REFERENCES contexts(context_id) DEFERRABLE INITIALLY DEFERRED");
-        backend.database().exec("INSERT INTO foo VALUES (912378472");
+            "a REFERENCES contexts(context_id) DEFERRABLE INITIALLY DEFERRED)");
+        backend.database().exec("INSERT INTO foo VALUES (912378472)");
         ATF_REQUIRE_THROW(store::error, tx.commit());
     }
     // If the code attempts to maintain any state regarding the already-put
@@ -899,6 +899,7 @@ ATF_TEST_CASE_BODY(put_result__fail)
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, commit__ok);
+    ATF_ADD_TEST_CASE(tcs, commit__fail);
     ATF_ADD_TEST_CASE(tcs, rollback__ok);
 
     ATF_ADD_TEST_CASE(tcs, get_put_action__ok);
