@@ -327,7 +327,7 @@ ATF_TEST_CASE_BODY(run_test_case__kill_children)
     pidfile >> pid;
     pidfile.close();
 
-    int attempts = 3;
+    int attempts = 30;
 retry:
     if (::kill(pid, SIGCONT) != -1 || errno != ESRCH) {
         // Looks like the subchild did not die.
@@ -343,7 +343,7 @@ retry:
         if (attempts > 0) {
             std::cout << "Subprocess not dead yet; retrying wait\n";
             --attempts;
-            ::sleep(1);
+            ::usleep(100000);
             goto retry;
         }
         fail(F("The subprocess %s of our child was not killed") % pid);

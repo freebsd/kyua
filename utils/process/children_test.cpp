@@ -157,7 +157,7 @@ child_blocking_subchild_check(Child child)
     input.close();
     std::cout << F("Subprocess was %s; checking if it died\n") % pid;
 
-    int attempts = 3;
+    int attempts = 30;
 retry:
     if (::kill(pid, SIGCONT) != -1 || errno != ESRCH) {
         // Looks like the subchild did not die.
@@ -173,7 +173,7 @@ retry:
         if (attempts > 0) {
             std::cout << "Subprocess not dead yet; retrying wait\n";
             --attempts;
-            ::sleep(1);
+            ::usleep(100000);
             goto retry;
         }
         ATF_FAIL(F("The subprocess %s of our child was not killed") % pid);
