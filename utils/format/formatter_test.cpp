@@ -110,7 +110,7 @@ ATF_TEST_CASE_BODY(one_field)
     EQ("foo ", F("foo %s") % "");
     EQ("foo bar", F("foo %s") % "bar");
     EQ("foo bar baz", F("foo %s baz") % "bar");
-    EQ("foo %s %d", F("foo %s %s") % "%s" % "%d");
+    EQ("foo %s %s", F("foo %s %s") % "%s" % "%s");
 }
 
 
@@ -119,8 +119,8 @@ ATF_TEST_CASE_BODY(many_fields)
 {
     EQ("", F("%s%s") % "" % "");
     EQ("foo", F("%s%s%s") % "" % "foo" % "");
-    EQ("some 5 text", F("%s %d %s") % "some" % 5 % "text");
-    EQ("f%s 5 text", F("%s %d %s") % "f%s" % 5 % "text");
+    EQ("some 5 text", F("%s %s %s") % "some" % 5 % "text");
+    EQ("f%s 5 text", F("%s %s %s") % "f%s" % 5 % "text");
 }
 
 
@@ -183,28 +183,28 @@ ATF_TEST_CASE_BODY(format__pointer)
 ATF_TEST_CASE_WITHOUT_HEAD(format__char);
 ATF_TEST_CASE_BODY(format__char)
 {
-    EQ("Z", F("%c") % 'Z');
+    EQ("Z", F("%s") % 'Z');
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(format__float);
 ATF_TEST_CASE_BODY(format__float)
 {
-    EQ("3", F("%f") % 3.0);
-    EQ("3.0", F("%.1f") % 3.0);
-    EQ("3.0", F("%0.1f") % 3.0);
-    EQ("  15.600", F("%8.3f") % 15.6);
-    EQ("01.52", F("%05.2f") % 1.52);
+    EQ("3", F("%s") % 3.0);
+    EQ("3.0", F("%.1s") % 3.0);
+    EQ("3.0", F("%0.1s") % 3.0);
+    EQ("  15.600", F("%8.3s") % 15.6);
+    EQ("01.52", F("%05.2s") % 1.52);
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(format__int);
 ATF_TEST_CASE_BODY(format__int)
 {
-    EQ("3", F("%d") % 3);
-    EQ("3", F("%0d") % 3);
-    EQ(" -123", F("%5d") % -123);
-    EQ("00078", F("%05d") % 78);
+    EQ("3", F("%s") % 3);
+    EQ("3", F("%0s") % 3);
+    EQ(" -123", F("%5s") % -123);
+    EQ("00078", F("%05s") % 78);
 }
 
 
@@ -218,12 +218,17 @@ ATF_TEST_CASE_BODY(format__error)
     ATF_REQUIRE_THROW_RE(bad_format_error, "Trailing %", F("f%%%"));
     ATF_REQUIRE_THROW_RE(bad_format_error, "Trailing %", F("ab %s cd%") % "cd");
 
-    ATF_REQUIRE_THROW_RE(bad_format_error, "Invalid width", F("%1bf"));
+    ATF_REQUIRE_THROW_RE(bad_format_error, "Invalid width", F("%1bs"));
 
-    ATF_REQUIRE_THROW_RE(bad_format_error, "Invalid precision", F("%.f"));
-    ATF_REQUIRE_THROW_RE(bad_format_error, "Invalid precision", F("%0.f"));
-    ATF_REQUIRE_THROW_RE(bad_format_error, "Invalid precision", F("%123.f"));
-    ATF_REQUIRE_THROW_RE(bad_format_error, "Invalid precision", F("%.12bf"));
+    ATF_REQUIRE_THROW_RE(bad_format_error, "Invalid precision", F("%.s"));
+    ATF_REQUIRE_THROW_RE(bad_format_error, "Invalid precision", F("%0.s"));
+    ATF_REQUIRE_THROW_RE(bad_format_error, "Invalid precision", F("%123.s"));
+    ATF_REQUIRE_THROW_RE(bad_format_error, "Invalid precision", F("%.12bs"));
+
+    ATF_REQUIRE_THROW_RE(bad_format_error, "Unterminated", F("%c") % 'Z');
+    ATF_REQUIRE_THROW_RE(bad_format_error, "Unterminated", F("%d") % 5);
+    ATF_REQUIRE_THROW_RE(bad_format_error, "Unterminated", F("%.1f") % 3);
+    ATF_REQUIRE_THROW_RE(bad_format_error, "Unterminated", F("%d%s") % 3 % "a");
 
     try {
         F("foo %s%") % "bar";

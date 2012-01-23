@@ -317,7 +317,7 @@ user_files::kyuafile::load(const utils::fs::path& file)
             throw std::runtime_error(F("Unexpected file format '%s'; "
                                        "need 'kyuafile'") % syntax.first);
         if (syntax.second != 1)
-            throw std::runtime_error(F("Unexpected file version '%d'; "
+            throw std::runtime_error(F("Unexpected file version '%s'; "
                                        "only 1 is supported") % syntax.second);
 
         test_programs = detail::get_test_programs(state,

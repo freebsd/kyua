@@ -232,9 +232,9 @@ static std::string
 format_status(const process::status& status)
 {
     if (status.exited())
-        return F("exited with code %d") % status.exitstatus();
+        return F("exited with code %s") % status.exitstatus();
     else if (status.signaled())
-        return F("received signal %d%s") % status.termsig() %
+        return F("received signal %s%s") % status.termsig() %
             (status.coredump() ? " (core dumped)" : "");
     else
         return F("terminated in an unknown manner");
@@ -453,7 +453,7 @@ atf_iface::detail::raw_result::apply(const optional< process::status >& status)
                 else
                     return raw_result(
                         raw_result::broken,
-                        F("Expected clean exit with code %d but got code %d") %
+                        F("Expected clean exit with code %s but got code %s") %
                         _argument.get() % status.get().exitstatus());
             } else
                 return *this;
@@ -477,7 +477,7 @@ atf_iface::detail::raw_result::apply(const optional< process::status >& status)
                 else
                     return raw_result(
                         raw_result::broken,
-                        F("Expected signal %d but got %d") %
+                        F("Expected signal %s but got %s") %
                         _argument.get() % status.get().termsig());
             } else
                 return *this;

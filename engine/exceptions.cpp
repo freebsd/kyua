@@ -64,7 +64,7 @@ engine::format_error::~format_error(void) throw()
 ///
 /// \param signo_ The signal that caused the interruption.
 engine::interrupted_error::interrupted_error(const int signo_) :
-    error(F("Interrupted by signal %d") % signo_),
+    error(F("Interrupted by signal %s") % signo_),
     _signo(signo_)
 {
 }

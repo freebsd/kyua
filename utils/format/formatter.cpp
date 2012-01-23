@@ -70,19 +70,15 @@ find_next_placeholder(const std::string& format,
     if (begin == expansion.length() - 1)
         throw format::bad_format_error(format, "Trailing %");
 
-    // TODO(jmmv): Given that these modifiers don't serve any purpose (the
-    // formatting depends on the parameter type, not on what the string says),
-    // we should just get rid of them all and only accept, for example '%s'.
-    // This would remove some mismatches that currently exist in the code and
-    // make this function faster.
-    static const std::string terminators = "cdfs";
-
     std::string::size_type end = begin + 1;
-    while (end < expansion.length() &&
-           terminators.find(expansion[end]) == std::string::npos) {
+    while (end < expansion.length() && expansion[end] != 's')
         end++;
-    }
-    return std::make_pair(begin, expansion.substr(begin, end - begin + 1));
+    const std::string placeholder = expansion.substr(begin, end - begin + 1);
+    if (end == expansion.length() ||
+        placeholder.find('%', 1) != std::string::npos)
+        throw format::bad_format_error(format, "Unterminated placeholder '" +
+                                       placeholder + "'");
+    return std::make_pair(begin, placeholder);
 }
 
 

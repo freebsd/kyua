@@ -121,14 +121,14 @@ cmd_test::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
     int exit_code;
     if (hooks.good_count > 0 || hooks.bad_count > 0) {
         ui->out("");
-        ui->out(F("%d/%d passed (%d failed)") % hooks.good_count %
+        ui->out(F("%s/%s passed (%s failed)") % hooks.good_count %
                 (hooks.good_count + hooks.bad_count) % hooks.bad_count);
 
         exit_code = (hooks.bad_count == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
     } else
         exit_code = EXIT_SUCCESS;
 
-    ui->out(F("Committed action %d") % result.action_id);
+    ui->out(F("Committed action %s") % result.action_id);
 
     return report_unused_filters(result.unused_filters, ui) ?
         EXIT_FAILURE : exit_code;

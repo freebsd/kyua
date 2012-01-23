@@ -109,7 +109,7 @@ safe_dup(const int old_fd, const int new_fd)
 {
     if (process::detail::syscall_dup2(old_fd, new_fd) == -1) {
         const int original_errno = errno;
-        throw process::system_error(F("dup2(%d, %d) failed") % old_fd % new_fd,
+        throw process::system_error(F("dup2(%s, %s) failed") % old_fd % new_fd,
                                     original_errno);
     }
 }
@@ -151,14 +151,14 @@ open_for_append(const fs::path& filename)
 static process::status
 safe_wait(const pid_t pid)
 {
-    LD(F("Waiting for pid=%d, no timeout") % pid);
+    LD(F("Waiting for pid=%s, no timeout") % pid);
     int stat_loc;
     if (process::detail::syscall_waitpid(pid, &stat_loc, 0) == -1) {
         const int original_errno = errno;
-        throw process::system_error(F("Failed to wait for PID %d") % pid,
+        throw process::system_error(F("Failed to wait for PID %s") % pid,
                                     original_errno);
     }
-    LD(F("Sending KILL signal to process group %d") % pid);
+    LD(F("Sending KILL signal to process group %s") % pid);
 retry:
     if (::killpg(pid, SIGKILL) == -1) {
         if (errno == EINTR)
@@ -205,7 +205,7 @@ callback(void)
 static process::status
 timed_wait(const pid_t pid, const datetime::delta& timeout)
 {
-    LD(F("Waiting for pid=%d: timeout seconds=%d, useconds=%d") % pid %
+    LD(F("Waiting for pid=%s: timeout seconds=%s, useconds=%s") % pid %
        timeout.seconds % timeout.useconds);
 
     timed_wait__aux::fired = false;
@@ -222,7 +222,7 @@ timed_wait(const pid_t pid, const datetime::delta& timeout)
                 (void)safe_wait(pid);
                 throw process::timeout_error(
                     F("The timeout was exceeded while waiting for process "
-                      "%d; forcibly killed") % pid);
+                      "%s; forcibly killed") % pid);
             } else
                 throw error;
         } else
@@ -315,7 +315,7 @@ process::child_with_files::fork_aux(const fs::path& stdout_file,
         }
         return std::auto_ptr< process::child_with_files >(NULL);
     } else {
-        LD(F("Spawned process %d: stdout=%s, stderr=%s") % pid % stdout_file %
+        LD(F("Spawned process %s: stdout=%s, stderr=%s") % pid % stdout_file %
            stderr_file);
         return std::auto_ptr< process::child_with_files >(
             new process::child_with_files(new impl(pid)));
@@ -419,7 +419,7 @@ process::child_with_output::fork_aux(void)
         return std::auto_ptr< process::child_with_output >(NULL);
     } else {
         ::close(fds[1]);
-        LD(F("Spawned process %d: stdout and stderr inherited") % pid);
+        LD(F("Spawned process %s: stdout and stderr inherited") % pid);
         return std::auto_ptr< process::child_with_output >(
             new process::child_with_output(new impl(
                 pid, new process::ifdstream(fds[0]))));

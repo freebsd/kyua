@@ -31,6 +31,17 @@
 ///
 /// The utils::format::formatter class is a poor man's replacement for the
 /// Boost.Format library, as it is much simpler and has less dependencies.
+///
+/// Be aware that the formatting supported by this module is NOT compatible
+/// with printf(3) nor with Boost.Format.  The general syntax for a
+/// placeholder in a formatting string is:
+///
+///     %[0][width][.precision]s
+///
+/// In particular, note that the only valid formatting specifier is %s: the
+/// library deduces what to print based on the type of the variable passed
+/// in, not based on what the format string says.  Also, note that the only
+/// valid padding character is 0.
 
 #if !defined(UTILS_FORMAT_FORMATTER_HPP)
 #define UTILS_FORMAT_FORMATTER_HPP
@@ -52,13 +63,13 @@ namespace format {
 /// In general, one can format a string in the following manner:
 ///
 /// \code
-/// const std::string s = (formatter("%s %d") % "foo" % 5).str();
+/// const std::string s = (formatter("%s %s") % "foo" % 5).str();
 /// \endcode
 ///
 /// which, following the explanation above, would correspond to:
 ///
 /// \code
-/// const formatter f1("%s %d");
+/// const formatter f1("%s %s");
 /// const formatter f2 = f1 % "foo";
 /// const formatter f3 = f2 % 5;
 /// const std::string s = f3.str();

@@ -122,7 +122,7 @@ populate_db(const char* db_name, const int count)
 
     std::map< std::string, std::string > env;
     for (int i = 0; i < count; i++)
-        env[F("VAR%d") % i] = F("Value %d") % i;
+        env[F("VAR%s") % i] = F("Value %s") % i;
     const engine::context context(fs::path("/root"), env);
     const engine::action action(context);
     const int64_t context_id = tx.put_context(context);
@@ -130,14 +130,14 @@ populate_db(const char* db_name, const int count)
 
     for (int i = 0; i < count; i++) {
         const plain_iface::test_program test_program(
-            fs::path(F("dir/prog_%d") % i), fs::path("/root"),
-            F("suite_%d") % i, none);
+            fs::path(F("dir/prog_%s") % i), fs::path("/root"),
+            F("suite_%s") % i, none);
         const int64_t tp_id = tx.put_test_program(test_program, action_id);
 
         for (int j = 0; j < count; j++) {
             const plain_iface::test_case test_case(test_program);
             const engine::test_result result(engine::test_result::skipped,
-                                             F("Count %d") % i);
+                                             F("Count %s") % i);
             const int64_t tc_id = tx.put_test_case(test_case, tp_id);
             tx.put_result(result, tc_id);
         }

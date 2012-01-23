@@ -65,7 +65,7 @@ do_logging_ok_check(const char exp_type, const char* function)
 
     std::string line;
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_MATCH(F(" %c .*test.lua:2: .*The message from lua!") % exp_type,
+    ATF_REQUIRE_MATCH(F(" %s .*test.lua:2: .*The message from lua!") % exp_type,
                       line);
 }
 

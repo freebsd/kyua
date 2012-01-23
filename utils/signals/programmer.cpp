@@ -88,7 +88,7 @@ signals::programmer::programmer(const int signo, const handler_type handler) :
 
     if (::sigaction(_pimpl->signo, &sa, &_pimpl->old_sa) == -1) {
         const int original_errno = errno;
-        throw system_error(F("Could not install handler for signal %d") %
+        throw system_error(F("Could not install handler for signal %s") %
                            _pimpl->signo, original_errno);
     } else
         _pimpl->programmed = true;
@@ -130,7 +130,7 @@ signals::programmer::unprogram(void)
 
     if (::sigaction(_pimpl->signo, &_pimpl->old_sa, NULL) == -1) {
         const int original_errno = errno;
-        throw system_error(F("Could not reset handler for signal %d") %
+        throw system_error(F("Could not reset handler for signal %s") %
                            _pimpl->signo, original_errno);
     }
 }

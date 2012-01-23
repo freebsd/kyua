@@ -83,9 +83,9 @@ fork_and_wait_hook_block(void)
         sigemptyset(&sa.sa_mask);
         sa.sa_flags = 0;
         if (::sigaction(i, &sa, NULL) == -1)
-            LD(F("Failed to ignore signal %d (may be normal!)") % i);
+            LD(F("Failed to ignore signal %s (may be normal!)") % i);
         else
-            LD(F("Ignoring signal %d") % i);
+            LD(F("Ignoring signal %s") % i);
     }
 
     for (;;)

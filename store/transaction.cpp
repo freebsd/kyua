@@ -118,7 +118,7 @@ get_atf_test_case(sqlite::database& db, const int64_t test_case_id,
         "SELECT * FROM atf_test_cases WHERE test_case_id == :test_case_id");
     stmt.bind(":test_case_id", test_case_id);
     if (!stmt.step())
-        throw store::integrity_error(F("No detail data for ATF test case %d") %
+        throw store::integrity_error(F("No detail data for ATF test case %s") %
                                      test_case_id);
 
     const std::string description = store::column_optional_string(
@@ -559,7 +559,7 @@ store::detail::get_test_program(backend& backend_, const int64_t id,
     }
     default:
         throw store::integrity_error(
-            F("Unknown interface in test program %d") % id);
+            F("Unknown interface in test program %s") % id);
     }
     INV(test_program.get() != NULL);
 
@@ -765,13 +765,13 @@ store::transaction::get_action(const int64_t action_id)
             "SELECT context_id FROM actions WHERE action_id == :action_id");
         stmt.bind(":action_id", action_id);
         if (!stmt.step())
-            throw error(F("Error loading action %d: does not exist") %
+            throw error(F("Error loading action %s: does not exist") %
                         action_id);
 
         return engine::action(
             get_context(stmt.safe_column_int64("context_id")));
     } catch (const sqlite::error& e) {
-        throw error(F("Error loading action %d: %s") % action_id % e.what());
+        throw error(F("Error loading action %s: %s") % action_id % e.what());
     }
 }
 
@@ -837,13 +837,13 @@ store::transaction::get_context(const int64_t context_id)
             "SELECT cwd FROM contexts WHERE context_id == :context_id");
         stmt.bind(":context_id", context_id);
         if (!stmt.step())
-            throw error(F("Error loading context %d: does not exist") %
+            throw error(F("Error loading context %s: does not exist") %
                         context_id);
 
         return engine::context(fs::path(stmt.safe_column_text("cwd")),
                                get_env_vars(_pimpl->_db, context_id));
     } catch (const sqlite::error& e) {
-        throw error(F("Error loading context %d: %s") % context_id % e.what());
+        throw error(F("Error loading context %s: %s") % context_id % e.what());
     }
 }
 
@@ -1000,7 +1000,7 @@ store::transaction::put_test_case_file(const std::string& name,
                                        const fs::path& path,
                                        const int64_t test_case_id)
 {
-    LD(F("Storing %s (%s) of test case %d") % name % path % test_case_id);
+    LD(F("Storing %s (%s) of test case %s") % name % path % test_case_id);
     try {
         const optional< int64_t > file_id = put_file(_pimpl->_db, path);
         if (!file_id) {

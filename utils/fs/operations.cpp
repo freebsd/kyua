@@ -297,7 +297,7 @@ try_unprotect(const fs::path& path)
 
     if (do_lchmod(path.c_str(), new_mode) == -1) {
         const int original_errno = errno;
-        LW(F("Failed to chmod '%s' to %d: %s") % path % new_mode %
+        LW(F("Failed to chmod '%s' to %s: %s") % path % new_mode %
            std::strerror(original_errno));
         return false;
     } else

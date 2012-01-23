@@ -602,7 +602,7 @@ atf_iface::test_case::get_all_properties(void) const
         props["has.cleanup"] = "true";
     if (_pimpl->timeout != default_timeout) {
         INV(_pimpl->timeout.useconds == 0);
-        props["timeout"] = F("%d") % _pimpl->timeout.seconds;
+        props["timeout"] = F("%s") % _pimpl->timeout.seconds;
     }
     if (!_pimpl->allowed_architectures.empty())
         props["require.arch"] = flatten_set(_pimpl->allowed_architectures);

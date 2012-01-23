@@ -125,7 +125,7 @@ store::detail::initialize(sqlite::database& db, const fs::path& file)
         db.exec(schema_string);
 
         const metadata metadata = metadata::fetch_latest(db);
-        LI(F("New metadata entry %d") % metadata.timestamp());
+        LI(F("New metadata entry %s") % metadata.timestamp());
         if (metadata.schema_version() != detail::current_schema_version) {
             UNREACHABLE_MSG("current_schema_version is out of sync with "
                             "schema.sql");
@@ -155,7 +155,7 @@ struct store::backend::impl {
         database(database_)
     {
         if (metadata_.schema_version() != detail::current_schema_version)
-            throw integrity_error(F("Found schema version %d in database but "
+            throw integrity_error(F("Found schema version %s in database but "
                                     "this version does not exist") %
                                   metadata_.schema_version());
     }

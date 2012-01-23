@@ -86,7 +86,7 @@ crash_handler(const int signo)
 {
     PRE(!logfile.empty());
 
-    err_write(F("*** Fatal signal %d received\n") % signo);
+    err_write(F("*** Fatal signal %s received\n") % signo);
     err_write(F("*** Log file is %s\n") % logfile);
     err_write(F("*** Please report this problem to %s detailing what you were "
                 "doing before the crash happened; if possible, include the log "
@@ -116,10 +116,10 @@ install_one_crash_handler(const int signo)
 
     if (::sigaction(signo, &sa, NULL) == -1) {
         const int original_errno = errno;
-        LW(F("Could not install crash handler for signal %d: %s") %
+        LW(F("Could not install crash handler for signal %s: %s") %
            signo % std::strerror(original_errno));
     } else
-        LD(F("Installed crash handler for signal %d") % signo);
+        LD(F("Installed crash handler for signal %s") % signo);
 }
 
 

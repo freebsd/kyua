@@ -183,7 +183,7 @@ find_option_name(const getopt_data& data, const int getopt_optopt,
     } else if (getopt_optopt < std::numeric_limits< char >::max()) {
         INV(getopt_optopt > 0);
         const char ch = static_cast< char >(getopt_optopt);
-        return F("-%c") % ch;
+        return F("-%s") % ch;
     } else {
         for (const ::option* opt = &data.long_options[0]; opt->name != NULL;
              opt++) {

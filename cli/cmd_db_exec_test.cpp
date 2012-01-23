@@ -80,7 +80,7 @@ ATF_TEST_CASE_BODY(format_cell__blob)
     const char* contents = "Some random contents";
     do_format_cell_test(
         "BLOB", sqlite::blob(contents, std::strlen(contents)),
-        F("BLOB of %d bytes") % strlen(contents));
+        F("BLOB of %s bytes") % strlen(contents));
 }
 
 
@@ -146,7 +146,7 @@ ATF_TEST_CASE_BODY(format_row)
     sqlite::statement query = db.create_statement("SELECT * FROM test");
     query.step();
     ATF_REQUIRE_EQ(
-        (F("A string,BLOB of %d bytes") % std::strlen(memory)).str(),
+        (F("A string,BLOB of %s bytes") % std::strlen(memory)).str(),
         cli::format_row(query));
 }
 

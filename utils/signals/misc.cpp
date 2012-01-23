@@ -64,7 +64,7 @@ signals::reset(const int signo)
 
     if (::sigaction(signo, &sa, NULL) == -1) {
         const int original_errno = errno;
-        throw system_error(F("Failed to reset signal %d") % signo,
+        throw system_error(F("Failed to reset signal %s") % signo,
                            original_errno);
     }
 }

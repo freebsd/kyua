@@ -55,7 +55,7 @@ check_in_table(sqlite::database& db, const char* table_name,
                const char* column_name, int exp_value)
 {
     sqlite::statement stmt = db.create_statement(
-        F("SELECT * FROM %s WHERE %s == %d") % table_name % column_name %
+        F("SELECT * FROM %s WHERE %s == %s") % table_name % column_name %
         exp_value);
     if (!stmt.step())
         return false;

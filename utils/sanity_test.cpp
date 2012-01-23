@@ -268,7 +268,7 @@ crash_handler_test(void)
     const process::status status = run_test(do_crash_handler_test< Signo >);
     ATF_REQUIRE(status.signaled());
     ATF_REQUIRE_EQ(Signo, status.termsig());
-    ATF_REQUIRE(utils::grep_file(F("Fatal signal %d") % Signo, Stderr_File));
+    ATF_REQUIRE(utils::grep_file(F("Fatal signal %s") % Signo, Stderr_File));
     ATF_REQUIRE(utils::grep_file("Log file is test-log.txt", Stderr_File));
     ATF_REQUIRE(!utils::grep_file("After signal", Stdout_File));
 }

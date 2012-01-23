@@ -207,7 +207,7 @@ get_user_var(lutok::state& state, const std::string& expr)
         try {
             return utils::make_optional(passwd::find_user_by_uid(uid));
         } catch (const std::runtime_error& e) {
-            throw std::runtime_error(F("Cannot find user with UID %d defined in "
+            throw std::runtime_error(F("Cannot find user with UID %s defined in "
                                        "variable '%s'") % uid % expr);
         }
     } else if (state.is_string()) {
@@ -248,7 +248,7 @@ get_user_override(const std::string& key, const std::string& value)
             try {
                 return utils::make_optional(passwd::find_user_by_uid(uid));
             } catch (const std::runtime_error& e2) {
-                throw user_files::error(F("Cannot find user with UID %d in "
+                throw user_files::error(F("Cannot find user with UID %s in "
                                           "override '%s=%s'") % uid % key %
                                         value);
             }
@@ -399,7 +399,7 @@ user_files::config::load(const utils::fs::path& file)
             throw std::runtime_error(F("Unexpected file format '%s'; "
                                        "need 'config'") % syntax.first);
         if (syntax.second != 1)
-            throw std::runtime_error(F("Unexpected file version '%d'; "
+            throw std::runtime_error(F("Unexpected file version '%s'; "
                                        "only 1 is supported") % syntax.second);
 
         values.architecture = detail::get_string_var(state, "architecture",

@@ -63,7 +63,7 @@ static std::vector< passwd_ns::user > mock_users;
 static std::string
 format_user(const passwd_ns::user& user)
 {
-    return F("name=%s, uid=%d, gid=%d") % user.name % user.uid % user.gid;
+    return F("name=%s, uid=%s, gid=%s") % user.name % user.uid % user.gid;
 }
 
 
@@ -126,12 +126,12 @@ passwd_ns::drop_privileges(const user& unprivileged_user)
 
     if (::setgid(unprivileged_user.gid) == -1)
         throw std::runtime_error(F("Failed to drop group privileges (current "
-                                   "GID %d, new GID %d)")
+                                   "GID %s, new GID %s)")
                                  % ::getgid() % unprivileged_user.gid);
 
     if (::setuid(unprivileged_user.uid) == -1)
         throw std::runtime_error(F("Failed to drop user privileges (current "
-                                   "UID %d, new UID %d")
+                                   "UID %s, new UID %s")
                                  % ::getuid() % unprivileged_user.uid);
 }
 
@@ -179,7 +179,7 @@ passwd_ns::find_user_by_uid(const unsigned int uid)
         const struct ::passwd* pw = ::getpwuid(uid);
         if (pw == NULL)
             throw std::runtime_error(F("Failed to get information about the "
-                                       "user with UID %d") % uid);
+                                       "user with UID %s") % uid);
         INV(pw->pw_uid == uid);
         return user(pw->pw_name, pw->pw_uid, pw->pw_gid);
     } else {
@@ -189,7 +189,7 @@ passwd_ns::find_user_by_uid(const unsigned int uid)
                 return *iter;
         }
         throw std::runtime_error(F("Failed to get information about the "
-                                   "user with UID %d") % uid);
+                                   "user with UID %s") % uid);
     }
 }
 

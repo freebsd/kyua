@@ -209,9 +209,9 @@ public:
             engine::test_result::failed, "Failed tests");
 
         _writer("===> Summary");
-        _writer(F("Action: %d") % _action_id);
-        _writer(F("Test cases: %d total, %d skipped, %d expected failures, "
-                  "%d broken, %d failed") %
+        _writer(F("Action: %s") % _action_id);
+        _writer(F("Test cases: %s total, %s skipped, %s expected failures, "
+                  "%s broken, %s failed") %
                 _total % skipped % xfail % broken % failed);
     }
 };

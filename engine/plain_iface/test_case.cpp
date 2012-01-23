@@ -66,9 +66,9 @@ static std::string
 format_status(const process::status& status)
 {
     if (status.exited())
-        return F("Exited with code %d") % status.exitstatus();
+        return F("Exited with code %s") % status.exitstatus();
     else if (status.signaled())
-        return F("Received signal %d%s") % status.termsig() %
+        return F("Received signal %s%s") % status.termsig() %
             (status.coredump() ? " (core dumped)" : "");
     else
         return F("Terminated in an unknown manner");
@@ -272,7 +272,7 @@ plain_iface::test_case::get_all_properties(void) const
     const datetime::delta& timeout = plain_test_program->timeout();
     if (timeout != detail::default_timeout) {
         INV(timeout.useconds == 0);
-        props["timeout"] = F("%d") % timeout.seconds;
+        props["timeout"] = F("%s") % timeout.seconds;
     }
 
     return props;

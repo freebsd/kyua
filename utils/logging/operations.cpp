@@ -173,7 +173,7 @@ logging::log(const level message_level, const char* file, const int line,
         return;
 
     // Update doc/troubleshooting.texi if you change the log format.
-    const std::string message = F("%s %c %d %s:%d: %s") %
+    const std::string message = F("%s %s %s %s:%s: %s") %
         now.strftime(timestamp_format) % level_to_char(message_level) %
         ::getpid() % file % line % user_message;
     if (logfile.get() == NULL)

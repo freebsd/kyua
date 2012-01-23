@@ -214,7 +214,7 @@ ATF_TEST_CASE_BODY(run__result_crash)
 {
     const engine::test_result result = plain_helper(this, "crash").run();
     ATF_REQUIRE(engine::test_result::broken == result.type());
-    ATF_REQUIRE_MATCH(F("Received signal %d") % SIGABRT, result.reason());
+    ATF_REQUIRE_MATCH(F("Received signal %s") % SIGABRT, result.reason());
 }
 
 
@@ -275,7 +275,7 @@ retry:
             ::sleep(1);
             goto retry;
         }
-        fail(F("The subprocess %d of our child was not killed") % pid);
+        fail(F("The subprocess %s of our child was not killed") % pid);
     }
 }
 

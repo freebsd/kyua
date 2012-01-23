@@ -280,6 +280,6 @@ cli::main(const int argc, const char* const* const argv)
     cmdline::ui ui;
 
     const int exit_code = main(&ui, argc, argv);
-    LI(F("Clean exit with code %d") % exit_code);
+    LI(F("Clean exit with code %s") % exit_code);
     return exit_code;
 }

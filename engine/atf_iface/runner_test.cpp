@@ -346,7 +346,7 @@ retry:
             ::sleep(1);
             goto retry;
         }
-        fail(F("The subprocess %d of our child was not killed") % pid);
+        fail(F("The subprocess %s of our child was not killed") % pid);
     }
 }
 
@@ -551,7 +551,7 @@ ATF_TEST_CASE_BODY(run_test_case__missing_results_file)
     ATF_REQUIRE(engine::test_result::broken == result.type());
     // Need to match instead of doing an explicit comparison because the string
     // may include the "core dumped" substring.
-    ATF_REQUIRE_MATCH(F("Premature exit: received signal %d") % SIGABRT,
+    ATF_REQUIRE_MATCH(F("Premature exit: received signal %s") % SIGABRT,
                       result.reason());
 }
 

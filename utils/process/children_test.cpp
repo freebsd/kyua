@@ -155,7 +155,7 @@ child_blocking_subchild_check(Child child)
     pid_t pid;
     input >> pid;
     input.close();
-    std::cout << F("Subprocess was %d; checking if it died\n") % pid;
+    std::cout << F("Subprocess was %s; checking if it died\n") % pid;
 
     int attempts = 3;
 retry:
@@ -176,7 +176,7 @@ retry:
             ::sleep(1);
             goto retry;
         }
-        ATF_FAIL(F("The subprocess %d of our child was not killed") % pid);
+        ATF_FAIL(F("The subprocess %s of our child was not killed") % pid);
     }
 }
 
@@ -550,7 +550,7 @@ child_with_output__ok(Hook hook)
         std::string line;
         ATF_REQUIRE(std::getline(output, line).good());
         ATF_REQUIRE_EQ((F("This is a message to stdout, "
-                          "sequence %d") % i).str(), line);
+                          "sequence %s") % i).str(), line);
     }
 
     std::string line;

@@ -85,14 +85,14 @@ cli::format_cell(sqlite::statement& stmt, const int index)
     switch (stmt.column_type(index)) {
     case sqlite::type_blob: {
         const sqlite::blob blob = stmt.column_blob(index);
-        return F("BLOB of %d bytes") % blob.size;
+        return F("BLOB of %s bytes") % blob.size;
     }
 
     case sqlite::type_float:
-        return F("%f") % stmt.column_double(index);
+        return F("%s") % stmt.column_double(index);
 
     case sqlite::type_integer:
-        return F("%d") % stmt.column_int64(index);
+        return F("%s") % stmt.column_int64(index);
 
     case sqlite::type_null:
         return "NULL";

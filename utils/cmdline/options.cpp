@@ -226,9 +226,9 @@ cmdline::base_option::format_short_name(void) const
     PRE(has_short_name());
 
     if (needs_arg()) {
-        return F("-%c %s") % short_name() % arg_name();
+        return F("-%s %s") % short_name() % arg_name();
     } else {
-        return F("-%c") % short_name();
+        return F("-%s") % short_name();
     }
 }
 
