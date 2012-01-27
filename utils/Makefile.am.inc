@@ -38,6 +38,8 @@ libutils_a_SOURCES += utils/datetime.hpp
 libutils_a_SOURCES += utils/defs.hpp
 libutils_a_SOURCES += utils/env.hpp
 libutils_a_SOURCES += utils/env.cpp
+libutils_a_SOURCES += utils/memory.hpp
+libutils_a_SOURCES += utils/memory.cpp
 libutils_a_SOURCES += utils/noncopyable.hpp
 libutils_a_SOURCES += utils/optional.hpp
 libutils_a_SOURCES += utils/optional.ipp
@@ -77,6 +79,11 @@ tests_utils_PROGRAMS += utils/env_test
 utils_env_test_SOURCES = utils/env_test.cpp
 utils_env_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 utils_env_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
+
+tests_utils_PROGRAMS += utils/memory_test
+utils_memory_test_SOURCES = utils/memory_test.cpp
+utils_memory_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_memory_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_PROGRAMS += utils/optional_test
 utils_optional_test_SOURCES = utils/optional_test.cpp
