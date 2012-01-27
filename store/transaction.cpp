@@ -57,12 +57,14 @@ extern "C" {
 #include "utils/sqlite/exceptions.hpp"
 #include "utils/sqlite/statement.ipp"
 #include "utils/sqlite/transaction.hpp"
+#include "utils/units.hpp"
 
 namespace atf_iface = engine::atf_iface;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace sqlite = utils::sqlite;
 namespace plain_iface = engine::plain_iface;
+namespace units = utils::units;
 
 using utils::none;
 using utils::optional;
@@ -125,6 +127,8 @@ get_atf_test_case(sqlite::database& db, const int64_t test_case_id,
         stmt, "description");
     const bool has_cleanup = store::column_bool(stmt, "has_cleanup");
     const datetime::delta timeout = store::column_delta(stmt, "timeout");
+    const units::bytes required_memory(stmt.safe_column_int64(
+        "required_memory"));
     const std::string required_user = store::column_optional_string(
         stmt, "required_user");
 
@@ -163,7 +167,8 @@ get_atf_test_case(sqlite::database& db, const int64_t test_case_id,
     return new atf_iface::test_case(
         test_program, name, description, has_cleanup, timeout,
         allowed_architectures, allowed_platforms, required_configs,
-        required_files, required_programs, required_user, user_metadata);
+        required_files, required_memory, required_programs, required_user,
+        user_metadata);
 }
 
 
@@ -404,13 +409,15 @@ put_test_case_detail(sqlite::database& db,
             dynamic_cast< const atf_iface::test_case& >(test_case);
         sqlite::statement stmt = db.create_statement(
             "INSERT INTO atf_test_cases (test_case_id, description, "
-            "    has_cleanup, timeout, required_user) "
+            "    has_cleanup, timeout, required_memory, required_user) "
             "VALUES (:test_case_id, :description, :has_cleanup, "
-            "    :timeout, :required_user)");
+            "    :timeout, :required_memory, :required_user)");
         stmt.bind(":test_case_id", test_case_id);
         store::bind_optional_string(stmt, ":description", atf.description());
         store::bind_bool(stmt, ":has_cleanup", atf.has_cleanup());
         store::bind_delta(stmt, ":timeout", atf.timeout());
+        stmt.bind(":required_memory",
+                  static_cast< int64_t >(atf.required_memory()));
         store::bind_optional_string(stmt, ":required_user",
                                     atf.required_user());
         stmt.step_without_results();

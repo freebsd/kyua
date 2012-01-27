@@ -225,6 +225,9 @@ CREATE TABLE atf_test_cases (
     -- The timeout for the test case in microseconds.
     timeout INTEGER,
 
+    -- The amount of physical memory required by the test case.
+    required_memory INTEGER,
+
     -- Either 'root' or 'unprivileged', indicating the privileges required by
     -- the test case.
     required_user TEXT

@@ -651,6 +651,7 @@ ATF_TEST_CASE_BODY(put_test_case__atf)
     props2["require.config"] = "var1 var2 var3";
     props2["require.files"] = "/file1/yes /file2/foo";
     props2["require.machine"] = "amd64 macppc";
+    props2["require.memory"] = "1k";
     props2["require.progs"] = "/bin/ls cp";
     props2["require.user"] = "root";
     props2["timeout"] = "520";

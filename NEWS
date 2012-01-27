@@ -26,6 +26,9 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   to generate trustworthy reports, and we do not want to give the
   impression that atf-run / atf-report are still supported.
 
+* Issue 28: Added support for the 'require.memory' test case property
+  introduced in ATF 0.15.
+
 
 Changes in version 0.2
 ======================

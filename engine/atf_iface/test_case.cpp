@@ -42,13 +42,16 @@
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/memory.hpp"
 #include "utils/passwd.hpp"
 #include "utils/sanity.hpp"
+#include "utils/units.hpp"
 
 namespace atf_iface = engine::atf_iface;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace passwd = utils::passwd;
+namespace units = utils::units;
 namespace user_files = engine::user_files;
 
 using utils::none;
@@ -105,6 +108,27 @@ engine::atf_iface::detail::parse_bool(const std::string& name,
     else
         throw format_error(F("Invalid value '%s' for boolean property '%s'") %
                            value % name);
+}
+
+
+/// Parses a bytes quantity.
+///
+/// \param name The name of the property; used for error messages.
+/// \param value The textual value to process.
+///
+/// \return The value as a bytes quantity.
+///
+/// \throw engine::format_error If the value is invalid.
+units::bytes
+engine::atf_iface::detail::parse_bytes(const std::string& name,
+                                       const std::string& value)
+{
+    try {
+        return units::bytes::parse(value);
+    } catch (const std::runtime_error& e) {
+        throw format_error(F("Invalid value '%s' for bytes property '%s': %s") %
+                           value % name % e.what());
+    }
 }
 
 
@@ -275,6 +299,9 @@ struct engine::atf_iface::test_case::impl {
     /// List of files needed by the test case.
     paths_set required_files;
 
+    /// Amount of physical memory needed by the test case.
+    units::bytes required_memory;
+
     /// List of programs needed by the test case.
     paths_set required_programs;
 
@@ -299,6 +326,7 @@ struct engine::atf_iface::test_case::impl {
     /// \param allowed_platforms_ See the parent class.
     /// \param required_configs_ See the parent class.
     /// \param required_files_ See the parent class.
+    /// \param required_memory_ See the parent class.
     /// \param required_programs_ See the parent class.
     /// \param required_user_ See the parent class.
     /// \param user_metadata_ See the parent class.
@@ -311,6 +339,7 @@ struct engine::atf_iface::test_case::impl {
          const strings_set& allowed_platforms_,
          const strings_set& required_configs_,
          const paths_set& required_files_,
+         const units::bytes& required_memory_,
          const paths_set& required_programs_,
          const std::string& required_user_,
          const properties_map& user_metadata_,
@@ -322,6 +351,7 @@ struct engine::atf_iface::test_case::impl {
         allowed_platforms(allowed_platforms_),
         required_configs(required_configs_),
         required_files(required_files_),
+        required_memory(required_memory_),
         required_programs(required_programs_),
         required_user(required_user_),
         user_metadata(user_metadata_),
@@ -356,6 +386,7 @@ struct engine::atf_iface::test_case::impl {
 /// \param required_configs_ List of configuration variables that must be
 ///     defined to run this test case.
 /// \param required_files_ List of files required by the test case.
+/// \param required_memory_ Amount of physical memory required by the test case.
 /// \param required_programs_ List of programs required by the test case.
 /// \param required_user_ The user required to run this test case.  Can be
 ///     empty, in which case any user is allowed, or any of 'unprivileged' or
@@ -371,14 +402,15 @@ atf_iface::test_case::test_case(const base_test_program& test_program_,
                                 const strings_set& allowed_platforms_,
                                 const strings_set& required_configs_,
                                 const paths_set& required_files_,
+                                const units::bytes& required_memory_,
                                 const paths_set& required_programs_,
                                 const std::string& required_user_,
                                 const properties_map& user_metadata_) :
     base_test_case(test_program_, name_),
     _pimpl(new impl(description_, has_cleanup_, timeout_,
                     allowed_architectures_, allowed_platforms_,
-                    required_configs_, required_files_, required_programs_,
-                    required_user_, user_metadata_, none))
+                    required_configs_, required_files_, required_memory_,
+                    required_programs_, required_user_, user_metadata_, none))
 {
 }
 
@@ -404,7 +436,7 @@ atf_iface::test_case::test_case(const base_test_program& test_program_,
     base_test_case(test_program_, name_),
     _pimpl(new impl(description_, false, default_timeout,
                     strings_set(), strings_set(), strings_set(), paths_set(),
-                    paths_set(), "", properties_map(),
+                    units::bytes(0), paths_set(), "", properties_map(),
                     utils::make_optional(test_result_)))
 {
     PRE_MSG(name_.length() > 4 && name_.substr(0, 2) == "__" &&
@@ -443,6 +475,7 @@ atf_iface::test_case::from_properties(const base_test_program& test_program_,
     strings_set allowed_platforms_;
     strings_set required_configs_;
     paths_set required_files_;
+    units::bytes required_memory_;
     paths_set required_programs_;
     std::string required_user_;
     properties_map user_metadata_;
@@ -464,6 +497,8 @@ atf_iface::test_case::from_properties(const base_test_program& test_program_,
             required_files_ = detail::parse_require_files(name, value);
         } else if (name == "require.machine") {
             allowed_platforms_ = detail::parse_list(name, value);
+        } else if (name == "require.memory") {
+            required_memory_ = detail::parse_bytes(name, value);
         } else if (name == "require.progs") {
             required_programs_ = detail::parse_require_progs(name, value);
         } else if (name == "require.user") {
@@ -480,8 +515,8 @@ atf_iface::test_case::from_properties(const base_test_program& test_program_,
 
     return test_case(test_program_, name_, description_, has_cleanup_,
                      timeout_, allowed_architectures_, allowed_platforms_,
-                     required_configs_, required_files_, required_programs_,
-                     required_user_, user_metadata_);
+                     required_configs_, required_files_, required_memory_,
+                     required_programs_, required_user_, user_metadata_);
 }
 
 
@@ -555,6 +590,16 @@ atf_iface::test_case::required_files(void) const
 }
 
 
+/// Gets the required memory.
+///
+/// \return The required memory.
+const units::bytes&
+atf_iface::test_case::required_memory(void) const
+{
+    return _pimpl->required_memory;
+}
+
+
 /// Gets the list of required programs.
 ///
 /// \return The list of required programs.
@@ -612,6 +657,8 @@ atf_iface::test_case::get_all_properties(void) const
         props["require.config"] = flatten_set(_pimpl->required_configs);
     if (!_pimpl->required_files.empty())
         props["require.files"] = flatten_set(_pimpl->required_files);
+    if (_pimpl->required_memory > 0)
+        props["require.memory"] = _pimpl->required_memory.format();
     if (!_pimpl->required_programs.empty())
         props["require.progs"] = flatten_set(_pimpl->required_programs);
     if (!_pimpl->required_user.empty())
@@ -641,6 +688,7 @@ atf_iface::test_case::operator==(const test_case& tc) const
         _pimpl->allowed_platforms == tc._pimpl->allowed_platforms &&
         _pimpl->required_configs == tc._pimpl->required_configs &&
         _pimpl->required_files == tc._pimpl->required_files &&
+        _pimpl->required_memory == tc._pimpl->required_memory &&
         _pimpl->required_programs == tc._pimpl->required_programs &&
         _pimpl->required_user == tc._pimpl->required_user &&
         _pimpl->timeout == tc._pimpl->timeout &&
@@ -713,6 +761,14 @@ atf_iface::test_case::check_requirements(const user_files::config& config) const
             if (!fs::find_in_path((*iter).c_str()))
                 return F("Required program '%s' not found in PATH") % *iter;
         }
+    }
+
+    if (_pimpl->required_memory > 0) {
+        const units::bytes physical_memory = utils::physical_memory();
+        if (physical_memory > 0 && physical_memory < _pimpl->required_memory)
+            return F("Requires %s bytes of physical memory but only %s "
+                     "available") %
+                _pimpl->required_memory.format() % physical_memory.format();
     }
 
     return "";

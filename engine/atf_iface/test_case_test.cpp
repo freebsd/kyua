@@ -41,11 +41,13 @@
 #include "utils/fs/operations.hpp"
 #include "utils/passwd.hpp"
 #include "utils/test_utils.hpp"
+#include "utils/units.hpp"
 
 namespace atf_iface = engine::atf_iface;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace passwd = utils::passwd;
+namespace units = utils::units;
 namespace user_files = engine::user_files;
 
 
@@ -125,6 +127,27 @@ ATF_TEST_CASE_BODY(parse_bool__false)
 {
     ATF_REQUIRE(!atf_iface::detail::parse_bool("unused-name", "no"));
     ATF_REQUIRE(!atf_iface::detail::parse_bool("unused-name", "false"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(parse_bytes__ok)
+ATF_TEST_CASE_BODY(parse_bytes__ok)
+{
+    // Basic validation; utils/units_test provides full testing.
+    ATF_REQUIRE_EQ(units::bytes(123456),
+                   atf_iface::detail::parse_bytes("unused-name", "123456"));
+    ATF_REQUIRE_EQ(units::bytes(1024),
+                   atf_iface::detail::parse_bytes("unused-name", "1k"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(parse_bytes__invalid)
+ATF_TEST_CASE_BODY(parse_bytes__invalid)
+{
+    // Basic validation; utils/units_test provides full testing.
+    ATF_REQUIRE_THROW_RE(engine::format_error,
+                         "value '1i'.*property 'a'",
+                         atf_iface::detail::parse_bytes("a", "1i"));
 }
 
 
@@ -342,6 +365,7 @@ ATF_TEST_CASE_BODY(test_case__ctor_and_getters)
                                          allowed_platforms,
                                          required_configs,
                                          required_files,
+                                         units::bytes(1234),
                                          required_programs,
                                          "root",
                                          user_metadata);
@@ -354,6 +378,7 @@ ATF_TEST_CASE_BODY(test_case__ctor_and_getters)
     ATF_REQUIRE(allowed_platforms == test_case.allowed_platforms());
     ATF_REQUIRE(required_configs == test_case.required_configs());
     ATF_REQUIRE(required_files == test_case.required_files());
+    ATF_REQUIRE(1234 == test_case.required_memory());
     ATF_REQUIRE(required_programs == test_case.required_programs());
     ATF_REQUIRE("root" == test_case.required_user());
     ATF_REQUIRE(user_metadata == test_case.user_metadata());
@@ -392,6 +417,7 @@ ATF_TEST_CASE_BODY(test_case__from_properties__defaults)
     ATF_REQUIRE(test_case.allowed_platforms().empty());
     ATF_REQUIRE(test_case.required_configs().empty());
     ATF_REQUIRE(test_case.required_files().empty());
+    ATF_REQUIRE(0 == test_case.required_memory());
     ATF_REQUIRE(test_case.required_programs().empty());
     ATF_REQUIRE(test_case.required_user().empty());
     ATF_REQUIRE(test_case.user_metadata().empty());
@@ -409,6 +435,7 @@ ATF_TEST_CASE_BODY(test_case__from_properties__override_all)
     properties["require.config"] = "var1 var2 var3";
     properties["require.files"] = "/file1 /dir/file2";
     properties["require.machine"] = "amd64";
+    properties["require.memory"] = "1m";
     properties["require.progs"] = "/bin/ls svn";
     properties["require.user"] = "root";
     properties["timeout"] = "123";
@@ -436,6 +463,7 @@ ATF_TEST_CASE_BODY(test_case__from_properties__override_all)
     ATF_REQUIRE_EQ(2, test_case.required_files().size());
     ATF_REQUIRE_IN(fs::path("/file1"), test_case.required_files());
     ATF_REQUIRE_IN(fs::path("/dir/file2"), test_case.required_files());
+    ATF_REQUIRE_EQ(units::bytes::parse("1m"), test_case.required_memory());
     ATF_REQUIRE_EQ(2, test_case.required_programs().size());
     ATF_REQUIRE_IN(fs::path("/bin/ls"), test_case.required_programs());
     ATF_REQUIRE_IN(fs::path("svn"), test_case.required_programs());
@@ -539,6 +567,7 @@ ATF_TEST_CASE_BODY(test_case__operator_eq)
     overrides["require.config"] = "var1 var2 var3";
     overrides["require.files"] = "/file1 /file2";
     overrides["require.machine"] = "amd64";
+    overrides["require.memory"] = "3m";
     overrides["require.progs"] = "/bin/ls svn";
     overrides["require.user"] = "root";
     overrides["timeout"] = "123";
@@ -916,6 +945,35 @@ ATF_TEST_CASE_BODY(check_requirements__required_files__fail)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(check_requirements__required_memory__ok);
+ATF_TEST_CASE_BODY(check_requirements__required_memory__ok)
+{
+    utils::create_file(fs::path("test-file"));
+
+    engine::properties_map metadata;
+    metadata["require.memory"] = "1m";
+    const mock_test_program test_program(fs::path("program"));
+    const atf_iface::test_case test_case =
+        atf_iface::test_case::from_properties(test_program, "name", metadata);
+
+    ATF_REQUIRE(test_case.check_requirements(mock_config).empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(check_requirements__required_memory__fail);
+ATF_TEST_CASE_BODY(check_requirements__required_memory__fail)
+{
+    engine::properties_map metadata;
+    metadata["require.memory"] = "100t";  // Some day we will laugh at this.
+    const mock_test_program test_program(fs::path("program"));
+    const atf_iface::test_case test_case =
+        atf_iface::test_case::from_properties(test_program, "name", metadata);
+
+    ATF_REQUIRE_MATCH("Requires 100.00T .*memory",
+                      test_case.check_requirements(mock_config));
+}
+
+
 ATF_TEST_CASE(check_requirements__required_programs__ok);
 ATF_TEST_CASE_HEAD(check_requirements__required_programs__ok)
 {
@@ -977,6 +1035,9 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, parse_bool__false);
     ATF_ADD_TEST_CASE(tcs, parse_bool__invalid);
 
+    ATF_ADD_TEST_CASE(tcs, parse_bytes__ok);
+    ATF_ADD_TEST_CASE(tcs, parse_bytes__invalid);
+
     ATF_ADD_TEST_CASE(tcs, parse_list__empty);
     ATF_ADD_TEST_CASE(tcs, parse_list__one_word);
     ATF_ADD_TEST_CASE(tcs, parse_list__many_words);
@@ -1030,6 +1091,8 @@ ATF_INIT_TEST_CASES(tcs)
                       check_requirements__required_user__unprivileged__fail);
     ATF_ADD_TEST_CASE(tcs, check_requirements__required_files__ok);
     ATF_ADD_TEST_CASE(tcs, check_requirements__required_files__fail);
+    ATF_ADD_TEST_CASE(tcs, check_requirements__required_memory__ok);
+    ATF_ADD_TEST_CASE(tcs, check_requirements__required_memory__fail);
     ATF_ADD_TEST_CASE(tcs, check_requirements__required_programs__ok);
     ATF_ADD_TEST_CASE(tcs,
                       check_requirements__required_programs__fail_absolute);

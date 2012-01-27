@@ -39,6 +39,7 @@
 #include "engine/test_case.hpp"
 #include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/units.hpp"
 
 namespace engine {
 namespace atf_iface {
@@ -56,6 +57,7 @@ namespace detail {
 
 
 bool parse_bool(const std::string&, const std::string&);
+utils::units::bytes parse_bytes(const std::string&, const std::string&);
 strings_set parse_list(const std::string&, const std::string&);
 unsigned long parse_ulong(const std::string&, const std::string&);
 
@@ -90,7 +92,8 @@ public:
               const std::string&, const bool,
               const utils::datetime::delta&, const strings_set&,
               const strings_set&, const strings_set&, const paths_set&,
-              const paths_set&, const std::string&, const properties_map&);
+              const utils::units::bytes&, const paths_set&, const std::string&,
+              const properties_map&);
     test_case(const base_test_program&, const std::string&, const std::string&,
               const test_result&);
     ~test_case(void);
@@ -105,6 +108,7 @@ public:
     const strings_set& allowed_platforms(void) const;
     const strings_set& required_configs(void) const;
     const paths_set& required_files(void) const;
+    const utils::units::bytes& required_memory(void) const;
     const paths_set& required_programs(void) const;
     const std::string& required_user(void) const;
     const properties_map& user_metadata(void) const;
