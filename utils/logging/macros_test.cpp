@@ -46,7 +46,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(ld);
 ATF_TEST_CASE_BODY(ld)
 {
     logging::set_persistency("debug", fs::path("test.log"));
-    datetime::set_mock_now(2011, 2, 21, 18, 30, 0);
+    datetime::set_mock_now(2011, 2, 21, 18, 30, 0, 0);
     LD("Debug message");
 
     std::ifstream input("test.log");
@@ -62,7 +62,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(le);
 ATF_TEST_CASE_BODY(le)
 {
     logging::set_persistency("debug", fs::path("test.log"));
-    datetime::set_mock_now(2011, 2, 21, 18, 30, 0);
+    datetime::set_mock_now(2011, 2, 21, 18, 30, 0, 0);
     LE("Error message");
 
     std::ifstream input("test.log");
@@ -78,7 +78,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(li);
 ATF_TEST_CASE_BODY(li)
 {
     logging::set_persistency("debug", fs::path("test.log"));
-    datetime::set_mock_now(2011, 2, 21, 18, 30, 0);
+    datetime::set_mock_now(2011, 2, 21, 18, 30, 0, 0);
     LI("Info message");
 
     std::ifstream input("test.log");
@@ -94,7 +94,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(lw);
 ATF_TEST_CASE_BODY(lw)
 {
     logging::set_persistency("debug", fs::path("test.log"));
-    datetime::set_mock_now(2011, 2, 21, 18, 30, 0);
+    datetime::set_mock_now(2011, 2, 21, 18, 30, 0, 0);
     LW("Warning message");
 
     std::ifstream input("test.log");

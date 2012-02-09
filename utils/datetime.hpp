@@ -79,17 +79,20 @@ class timestamp {
     timestamp(std::tr1::shared_ptr< impl >);
 
 public:
+    static timestamp from_microseconds(const int64_t);
     static timestamp from_values(const int, const int, const int,
-                                 const int, const int, const int);
+                                 const int, const int, const int,
+                                 const int);
     static timestamp now(void);
 
     std::string strftime(const std::string&) const;
-    int64_t timegm(void) const;
+    int64_t to_microseconds(void) const;
+    int64_t to_seconds(void) const;
 };
 
 
 void set_mock_now(const int, const int, const int, const int, const int,
-                  const int);
+                  const int, const int);
 
 
 }  // namespace datetime

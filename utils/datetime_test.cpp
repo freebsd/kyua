@@ -122,11 +122,11 @@ ATF_TEST_CASE_WITHOUT_HEAD(timestamp__copy);
 ATF_TEST_CASE_BODY(timestamp__copy)
 {
     const datetime::timestamp ts1 = datetime::timestamp::from_values(
-        2011, 2, 16, 19, 15, 30);
+        2011, 2, 16, 19, 15, 30, 0);
     {
         const datetime::timestamp ts2 = ts1;
         const datetime::timestamp ts3 = datetime::timestamp::from_values(
-            2012, 2, 16, 19, 15, 30);
+            2012, 2, 16, 19, 15, 30, 0);
         ATF_REQUIRE_EQ("2011", ts1.strftime("%Y"));
         ATF_REQUIRE_EQ("2011", ts2.strftime("%Y"));
         ATF_REQUIRE_EQ("2012", ts3.strftime("%Y"));
@@ -135,14 +135,25 @@ ATF_TEST_CASE_BODY(timestamp__copy)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(timestamp__from_microseconds);
+ATF_TEST_CASE_BODY(timestamp__from_microseconds)
+{
+    const datetime::timestamp ts = datetime::timestamp::from_microseconds(
+        1328829351987654);
+    ATF_REQUIRE_EQ("2012-02-09 23:15:51", ts.strftime("%Y-%m-%d %H:%M:%S"));
+    ATF_REQUIRE_EQ(1328829351987654, ts.to_microseconds());
+    ATF_REQUIRE_EQ(1328829351, ts.to_seconds());
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(timestamp__now__mock);
 ATF_TEST_CASE_BODY(timestamp__now__mock)
 {
-    datetime::set_mock_now(2011, 2, 21, 18, 5, 10);
+    datetime::set_mock_now(2011, 2, 21, 18, 5, 10, 0);
     ATF_REQUIRE_EQ("2011-02-21 18:05:10",
                    datetime::timestamp::now().strftime("%Y-%m-%d %H:%M:%S"));
 
-    datetime::set_mock_now(2012, 3, 22, 19, 6, 11);
+    datetime::set_mock_now(2012, 3, 22, 19, 6, 11, 54321);
     ATF_REQUIRE_EQ("2012-03-22 19:06:11",
                    datetime::timestamp::now().strftime("%Y-%m-%d %H:%M:%S"));
     ATF_REQUIRE_EQ("2012-03-22 19:06:11",
@@ -171,26 +182,45 @@ ATF_TEST_CASE_BODY(timestamp__now__real)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(timestamp__now__granularity);
+ATF_TEST_CASE_BODY(timestamp__now__granularity)
+{
+    const datetime::timestamp first = datetime::timestamp::now();
+    ::usleep(1);
+    const datetime::timestamp second = datetime::timestamp::now();
+    ATF_REQUIRE(first.to_microseconds() != second.to_microseconds());
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(timestamp__strftime);
 ATF_TEST_CASE_BODY(timestamp__strftime)
 {
     const datetime::timestamp ts1 = datetime::timestamp::from_values(
-        2010, 12, 10, 8, 45, 50);
+        2010, 12, 10, 8, 45, 50, 0);
     ATF_REQUIRE_EQ("2010-12-10", ts1.strftime("%Y-%m-%d"));
     ATF_REQUIRE_EQ("08:45:50", ts1.strftime("%H:%M:%S"));
 
     const datetime::timestamp ts2 = datetime::timestamp::from_values(
-        2011, 2, 16, 19, 15, 30);
+        2011, 2, 16, 19, 15, 30, 0);
     ATF_REQUIRE_EQ("2011-02-16T19:15:30", ts2.strftime("%Y-%m-%dT%H:%M:%S"));
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(timestamp__timegm);
-ATF_TEST_CASE_BODY(timestamp__timegm)
+ATF_TEST_CASE_WITHOUT_HEAD(timestamp__to_microseconds);
+ATF_TEST_CASE_BODY(timestamp__to_microseconds)
 {
     const datetime::timestamp ts1 = datetime::timestamp::from_values(
-        2010, 12, 10, 8, 45, 50);
-    ATF_REQUIRE_EQ(1291970750, ts1.timegm());
+        2010, 12, 10, 8, 45, 50, 123456);
+    ATF_REQUIRE_EQ(1291970750123456, ts1.to_microseconds());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(timestamp__to_seconds);
+ATF_TEST_CASE_BODY(timestamp__to_seconds)
+{
+    const datetime::timestamp ts1 = datetime::timestamp::from_values(
+        2010, 12, 10, 8, 45, 50, 123456);
+    ATF_REQUIRE_EQ(1291970750, ts1.to_seconds());
 }
 
 
@@ -204,8 +234,11 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, delta__differs);
 
     ATF_ADD_TEST_CASE(tcs, timestamp__copy);
+    ATF_ADD_TEST_CASE(tcs, timestamp__from_microseconds);
     ATF_ADD_TEST_CASE(tcs, timestamp__now__mock);
     ATF_ADD_TEST_CASE(tcs, timestamp__now__real);
+    ATF_ADD_TEST_CASE(tcs, timestamp__now__granularity);
     ATF_ADD_TEST_CASE(tcs, timestamp__strftime);
-    ATF_ADD_TEST_CASE(tcs, timestamp__timegm);
+    ATF_ADD_TEST_CASE(tcs, timestamp__to_microseconds);
+    ATF_ADD_TEST_CASE(tcs, timestamp__to_seconds);
 }

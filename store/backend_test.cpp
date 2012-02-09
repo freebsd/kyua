@@ -57,8 +57,8 @@ ATF_TEST_CASE_BODY(detail_initialize__ok)
     const store::metadata md = store::detail::initialize(db);
     const datetime::timestamp after = datetime::timestamp::now();
 
-    ATF_REQUIRE(md.timestamp() >= before.timegm());
-    ATF_REQUIRE(md.timestamp() <= after.timegm());
+    ATF_REQUIRE(md.timestamp() >= before.to_seconds());
+    ATF_REQUIRE(md.timestamp() <= after.to_microseconds());
     ATF_REQUIRE_EQ(store::detail::current_schema_version, md.schema_version());
 
     // Query some known tables to ensure they were created.

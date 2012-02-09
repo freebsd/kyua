@@ -50,14 +50,14 @@ namespace logging = utils::logging;
 ATF_TEST_CASE_WITHOUT_HEAD(generate_log_name__before_log);
 ATF_TEST_CASE_BODY(generate_log_name__before_log)
 {
-    datetime::set_mock_now(2011, 2, 21, 18, 10, 0);
+    datetime::set_mock_now(2011, 2, 21, 18, 10, 0, 0);
     ATF_REQUIRE_EQ(fs::path("/some/dir/foobar.20110221-181000.log"),
                    logging::generate_log_name(fs::path("/some/dir"), "foobar"));
 
-    datetime::set_mock_now(2011, 2, 21, 18, 10, 1);
+    datetime::set_mock_now(2011, 2, 21, 18, 10, 1, 987654);
     logging::log(logging::level_info, "file", 123, "A message");
 
-    datetime::set_mock_now(2011, 2, 21, 18, 10, 2);
+    datetime::set_mock_now(2011, 2, 21, 18, 10, 2, 123);
     ATF_REQUIRE_EQ(fs::path("/some/dir/foobar.20110221-181000.log"),
                    logging::generate_log_name(fs::path("/some/dir"), "foobar"));
 }
@@ -66,19 +66,19 @@ ATF_TEST_CASE_BODY(generate_log_name__before_log)
 ATF_TEST_CASE_WITHOUT_HEAD(generate_log_name__after_log);
 ATF_TEST_CASE_BODY(generate_log_name__after_log)
 {
-    datetime::set_mock_now(2011, 2, 21, 18, 15, 0);
+    datetime::set_mock_now(2011, 2, 21, 18, 15, 0, 0);
     logging::log(logging::level_info, "file", 123, "A message");
-    datetime::set_mock_now(2011, 2, 21, 18, 15, 1);
+    datetime::set_mock_now(2011, 2, 21, 18, 15, 1, 987654);
     logging::log(logging::level_info, "file", 123, "A message");
 
-    datetime::set_mock_now(2011, 2, 21, 18, 15, 2);
+    datetime::set_mock_now(2011, 2, 21, 18, 15, 2, 123);
     ATF_REQUIRE_EQ(fs::path("/some/dir/foobar.20110221-181500.log"),
                    logging::generate_log_name(fs::path("/some/dir"), "foobar"));
 
-    datetime::set_mock_now(2011, 2, 21, 18, 15, 3);
+    datetime::set_mock_now(2011, 2, 21, 18, 15, 3, 1);
     logging::log(logging::level_info, "file", 123, "A message");
 
-    datetime::set_mock_now(2011, 2, 21, 18, 15, 4);
+    datetime::set_mock_now(2011, 2, 21, 18, 15, 4, 91);
     ATF_REQUIRE_EQ(fs::path("/some/dir/foobar.20110221-181500.log"),
                    logging::generate_log_name(fs::path("/some/dir"), "foobar"));
 }
@@ -89,18 +89,18 @@ ATF_TEST_CASE_BODY(log)
 {
     logging::set_inmemory();
 
-    datetime::set_mock_now(2011, 2, 21, 18, 10, 0);
+    datetime::set_mock_now(2011, 2, 21, 18, 10, 0, 0);
     logging::log(logging::level_debug, "f1", 1, "Debug message");
 
-    datetime::set_mock_now(2011, 2, 21, 18, 10, 1);
+    datetime::set_mock_now(2011, 2, 21, 18, 10, 1, 987654);
     logging::log(logging::level_error, "f2", 2, "Error message");
 
     logging::set_persistency("debug", fs::path("test.log"));
 
-    datetime::set_mock_now(2011, 2, 21, 18, 10, 2);
+    datetime::set_mock_now(2011, 2, 21, 18, 10, 2, 123);
     logging::log(logging::level_info, "f3", 3, "Info message");
 
-    datetime::set_mock_now(2011, 2, 21, 18, 10, 3);
+    datetime::set_mock_now(2011, 2, 21, 18, 10, 3, 456);
     logging::log(logging::level_warning, "f4", 4, "Warning message");
 
     std::ifstream input("test.log");
@@ -129,7 +129,7 @@ ATF_TEST_CASE_BODY(set_persistency__no_backlog)
 {
     logging::set_persistency("debug", fs::path("test.log"));
 
-    datetime::set_mock_now(2011, 2, 21, 18, 20, 0);
+    datetime::set_mock_now(2011, 2, 21, 18, 20, 0, 654321);
     logging::log(logging::level_debug, "file", 123, "Debug message");
 
     std::ifstream input("test.log");
@@ -153,30 +153,30 @@ create_log(const std::string& level, const std::string& path)
 {
     logging::set_inmemory();
 
-    datetime::set_mock_now(2011, 3, 19, 11, 40, 0);
+    datetime::set_mock_now(2011, 3, 19, 11, 40, 0, 100);
     logging::log(logging::level_debug, "file1", 11, "Debug 1");
 
-    datetime::set_mock_now(2011, 3, 19, 11, 40, 1);
+    datetime::set_mock_now(2011, 3, 19, 11, 40, 1, 200);
     logging::log(logging::level_error, "file2", 22, "Error 1");
 
-    datetime::set_mock_now(2011, 3, 19, 11, 40, 2);
+    datetime::set_mock_now(2011, 3, 19, 11, 40, 2, 300);
     logging::log(logging::level_info, "file3", 33, "Info 1");
 
-    datetime::set_mock_now(2011, 3, 19, 11, 40, 3);
+    datetime::set_mock_now(2011, 3, 19, 11, 40, 3, 400);
     logging::log(logging::level_warning, "file4", 44, "Warning 1");
 
     logging::set_persistency(level, fs::path(path));
 
-    datetime::set_mock_now(2011, 3, 19, 11, 40, 4);
+    datetime::set_mock_now(2011, 3, 19, 11, 40, 4, 500);
     logging::log(logging::level_debug, "file1", 11, "Debug 2");
 
-    datetime::set_mock_now(2011, 3, 19, 11, 40, 5);
+    datetime::set_mock_now(2011, 3, 19, 11, 40, 5, 600);
     logging::log(logging::level_error, "file2", 22, "Error 2");
 
-    datetime::set_mock_now(2011, 3, 19, 11, 40, 6);
+    datetime::set_mock_now(2011, 3, 19, 11, 40, 6, 700);
     logging::log(logging::level_info, "file3", 33, "Info 2");
 
-    datetime::set_mock_now(2011, 3, 19, 11, 40, 7);
+    datetime::set_mock_now(2011, 3, 19, 11, 40, 7, 800);
     logging::log(logging::level_warning, "file4", 44, "Warning 2");
 }
 

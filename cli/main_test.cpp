@@ -181,7 +181,7 @@ public:
 ATF_TEST_CASE_WITHOUT_HEAD(detail__default_log_name__home);
 ATF_TEST_CASE_BODY(detail__default_log_name__home)
 {
-    datetime::set_mock_now(2011, 2, 21, 21, 10, 30);
+    datetime::set_mock_now(2011, 2, 21, 21, 10, 30, 0);
     cmdline::init("progname1");
 
     utils::setenv("HOME", "/home//fake");
@@ -195,7 +195,7 @@ ATF_TEST_CASE_BODY(detail__default_log_name__home)
 ATF_TEST_CASE_WITHOUT_HEAD(detail__default_log_name__tmpdir);
 ATF_TEST_CASE_BODY(detail__default_log_name__tmpdir)
 {
-    datetime::set_mock_now(2011, 2, 21, 21, 10, 50);
+    datetime::set_mock_now(2011, 2, 21, 21, 10, 50, 987);
     cmdline::init("progname2");
 
     utils::unsetenv("HOME");
@@ -208,7 +208,7 @@ ATF_TEST_CASE_BODY(detail__default_log_name__tmpdir)
 ATF_TEST_CASE_WITHOUT_HEAD(detail__default_log_name__hardcoded);
 ATF_TEST_CASE_BODY(detail__default_log_name__hardcoded)
 {
-    datetime::set_mock_now(2011, 2, 21, 21, 15, 00);
+    datetime::set_mock_now(2011, 2, 21, 21, 15, 00, 123456);
     cmdline::init("progname3");
 
     utils::unsetenv("HOME");
@@ -258,7 +258,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(main__logfile__default);
 ATF_TEST_CASE_BODY(main__logfile__default)
 {
     logging::set_inmemory();
-    datetime::set_mock_now(2011, 2, 21, 21, 30, 00);
+    datetime::set_mock_now(2011, 2, 21, 21, 30, 00, 0);
     cmdline::init("progname");
 
     const int argc = 1;
@@ -277,7 +277,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(main__logfile__override);
 ATF_TEST_CASE_BODY(main__logfile__override)
 {
     logging::set_inmemory();
-    datetime::set_mock_now(2011, 2, 21, 21, 30, 00);
+    datetime::set_mock_now(2011, 2, 21, 21, 30, 00, 321);
     cmdline::init("progname");
 
     const int argc = 2;

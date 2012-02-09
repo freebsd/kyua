@@ -27,6 +27,8 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 extern "C" {
+#include <sys/time.h>
+
 #include <time.h>
 }
 
@@ -123,12 +125,12 @@ namespace datetime {
 /// Internal representation for datetime::timestamp.
 struct timestamp::impl {
     /// The raw timestamp as provided by libc.
-    ::tm data;
+    ::timeval data;
 
     /// Constructs an impl object from initialized data.
     ///
     /// \param data_ The raw timestamp to use.
-    impl(const ::tm& data_) : data(data_)
+    impl(const ::timeval& data_) : data(data_)
     {
     }
 };
@@ -147,6 +149,21 @@ datetime::timestamp::timestamp(std::tr1::shared_ptr< impl > pimpl_) :
 }
 
 
+/// Constructs a timestamp from the amount of microseconds since the epoch.
+///
+/// \param value Microseconds since the epoch in UTC.
+///
+/// \return A new timestamp.
+datetime::timestamp
+datetime::timestamp::from_microseconds(const int64_t value)
+{
+    ::timeval data;
+    data.tv_sec = static_cast< time_t >(value / 1000000);
+    data.tv_usec = static_cast< suseconds_t >(value % 1000000);
+    return timestamp(std::tr1::shared_ptr< impl >(new impl(data)));
+}
+
+
 /// Constructs a timestamp based on user-friendly values.
 ///
 /// \param year The year in the [1900,inf) range.
@@ -155,12 +172,14 @@ datetime::timestamp::timestamp(std::tr1::shared_ptr< impl > pimpl_) :
 /// \param hour The hour in the [0,23] range.
 /// \param minute The minute in the [0,59] range.
 /// \param second The second in the [0,59] range.
+/// \param microsecond The microsecond in the [0,999999] range.
 ///
 /// \return A new timestamp.
 datetime::timestamp
 datetime::timestamp::from_values(const int year, const int month,
                                  const int day, const int hour,
-                                 const int minute, const int second)
+                                 const int minute, const int second,
+                                 const int microsecond)
 {
     PRE(year >= 1900);
     PRE(month >= 1 && month <= 12);
@@ -168,6 +187,7 @@ datetime::timestamp::from_values(const int year, const int month,
     PRE(hour >= 0 && hour <= 23);
     PRE(minute >= 0 && minute <= 59);
     PRE(second >= 0 && second <= 59);
+    PRE(microsecond >= 0 && microsecond <= 999999);
 
     // The code below is quite convoluted.  The problem is that we can't assume
     // that some fields (like tm_zone) of ::tm exist, and thus we can't blindly
@@ -179,23 +199,22 @@ datetime::timestamp::from_values(const int year, const int month,
 
     const time_t current_time = ::time(NULL);
 
-    ::tm data;
-    if (::gmtime_r(&current_time, &data) == NULL)
+    ::tm timedata;
+    if (::gmtime_r(&current_time, &timedata) == NULL)
         UNREACHABLE;
 
-    data.tm_sec = second;
-    data.tm_min = minute;
-    data.tm_hour = hour;
-    data.tm_mday = day;
-    data.tm_mon = month - 1;
-    data.tm_year = year - 1900;
-    // Ignored: data.tm_wday
-    // Ignored: data.tm_yday
+    timedata.tm_sec = second;
+    timedata.tm_min = minute;
+    timedata.tm_hour = hour;
+    timedata.tm_mday = day;
+    timedata.tm_mon = month - 1;
+    timedata.tm_year = year - 1900;
+    // Ignored: timedata.tm_wday
+    // Ignored: timedata.tm_yday
 
-    const time_t mock_time = ::mktime(&data);
-    if (::gmtime_r(&mock_time, &data) == NULL)
-        UNREACHABLE;
-
+    ::timeval data;
+    data.tv_sec = ::mktime(&timedata);
+    data.tv_usec = static_cast< suseconds_t >(microsecond);
     return timestamp(std::tr1::shared_ptr< impl >(new impl(data)));
 }
 
@@ -209,12 +228,10 @@ datetime::timestamp::now(void)
     if (mock_now)
         return mock_now.get();
 
-    ::tm data;
+    ::timeval data;
     {
-        const time_t current_time = ::time(NULL);
-        if (::gmtime_r(&current_time, &data) == NULL)
-            UNREACHABLE_MSG("gmtime_r(3) did not accept the value returned by "
-                            "time(3); this cannot happen");
+        const int ret = ::gettimeofday(&data, NULL);
+        INV(ret != -1);
     }
 
     return timestamp(std::tr1::shared_ptr< impl >(new impl(data)));
@@ -229,10 +246,25 @@ datetime::timestamp::now(void)
 std::string
 datetime::timestamp::strftime(const std::string& format) const
 {
+    ::tm timedata;
+    if (::gmtime_r(&_pimpl->data.tv_sec, &timedata) == NULL)
+        UNREACHABLE_MSG("gmtime_r(3) did not accept the value returned by "
+                        "gettimeofday(2)");
+
     char buf[128];
-    if (::strftime(buf, sizeof(buf), format.c_str(), &_pimpl->data) == 0)
+    if (::strftime(buf, sizeof(buf), format.c_str(), &timedata) == 0)
         UNREACHABLE_MSG("Arbitrary-long format strings are unimplemented");
     return buf;
+}
+
+
+/// Returns the number of microseconds since the epoch in UTC.
+///
+/// \return A number of microseconds.
+int64_t
+datetime::timestamp::to_microseconds(void) const
+{
+    return _pimpl->data.tv_sec * 1000000 + _pimpl->data.tv_usec;
 }
 
 
@@ -240,9 +272,9 @@ datetime::timestamp::strftime(const std::string& format) const
 ///
 /// \return A number of seconds.
 int64_t
-datetime::timestamp::timegm(void) const
+datetime::timestamp::to_seconds(void) const
 {
-    return ::timegm(&_pimpl->data);
+    return _pimpl->data.tv_sec;
 }
 
 
@@ -250,7 +282,9 @@ datetime::timestamp::timegm(void) const
 void
 datetime::set_mock_now(const int year, const int month,
                        const int day, const int hour,
-                       const int minute, const int second)
+                       const int minute, const int second,
+                       const int microsecond)
 {
-    mock_now = timestamp::from_values(year, month, day, hour, minute, second);
+    mock_now = timestamp::from_values(year, month, day, hour, minute, second,
+                                      microsecond);
 }

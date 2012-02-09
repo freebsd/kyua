@@ -373,7 +373,7 @@ ATF_TEST_CASE_BODY(isolate_process__timezone)
     engine::isolate_process(fs::path("workdir"));
 
     const datetime::timestamp fake = datetime::timestamp::from_values(
-        2011, 5, 13, 12, 20, 30);
+        2011, 5, 13, 12, 20, 30, 500);
     if ("2011-05-13 12:20:30" != fake.strftime("%Y-%m-%d %H:%M:%S"))
         fail("Invalid defaut TZ");
 }
