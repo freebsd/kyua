@@ -138,6 +138,13 @@ CREATE TABLE test_programs (
     test_program_id INTEGER PRIMARY KEY AUTOINCREMENT,
     action_id INTEGER REFERENCES actions,
 
+    -- The absolute path to the test program.  This should not be necessary
+    -- because it is basically the concatenation of root and relative_path.
+    -- However, this allows us to very easily search for test programs
+    -- regardless of where they were executed from.  (I.e. different
+    -- combinations of root + relative_path can map to the same absolute path).
+    absolute_path NOT NULL,
+
     -- The path to the root of the test suite (where the Kyuafile lives).
     root TEXT NOT NULL,
 

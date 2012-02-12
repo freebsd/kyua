@@ -947,11 +947,13 @@ store::transaction::put_test_program(
 {
     try {
         sqlite::statement stmt = _pimpl->_db.create_statement(
-            "INSERT INTO test_programs (action_id, root, relative_path, "
+            "INSERT INTO test_programs (action_id, absolute_path, "
+            "                           root, relative_path, "
             "                           test_suite_name, interface) "
-            "VALUES (:action_id, :root, :relative_path, :test_suite_name,"
-            "        :interface)");
+            "VALUES (:action_id, :absolute_path, :root, :relative_path, "
+            "        :test_suite_name, :interface)");
         stmt.bind(":action_id", action_id);
+        stmt.bind(":absolute_path", test_program.absolute_path().str());
         // TODO(jmmv): The root is not necessarily absolute.  We need to ensure
         // that we can recover the absolute path of the test program.  Maybe we
         // need to change the base_test_program to always ensure root is

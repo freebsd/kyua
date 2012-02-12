@@ -555,7 +555,7 @@ ATF_TEST_CASE_HEAD(put_test_program__atf)
 ATF_TEST_CASE_BODY(put_test_program__atf)
 {
     const atf_iface::test_program test_program(
-        fs::path("the/binary"), fs::path("/some/root"), "the-suite");
+        fs::path("the/binary"), fs::path("/some//root"), "the-suite");
 
     store::backend backend = store::backend::open_rw(fs::path("test.db"));
     backend.database().exec("PRAGMA foreign_keys = OFF");
@@ -571,6 +571,8 @@ ATF_TEST_CASE_BODY(put_test_program__atf)
         ATF_REQUIRE_EQ(test_program_id,
                        stmt.safe_column_int64("test_program_id"));
         ATF_REQUIRE_EQ(15, stmt.safe_column_int64("action_id"));
+        ATF_REQUIRE_EQ("/some/root/the/binary",
+                       stmt.safe_column_text("absolute_path"));
         ATF_REQUIRE_EQ("/some/root", stmt.safe_column_text("root"));
         ATF_REQUIRE_EQ("the/binary", stmt.safe_column_text("relative_path"));
         ATF_REQUIRE_EQ("the-suite", stmt.safe_column_text("test_suite_name"));
@@ -592,7 +594,7 @@ ATF_TEST_CASE_HEAD(put_test_program__plain)
 ATF_TEST_CASE_BODY(put_test_program__plain)
 {
     const plain_iface::test_program test_program(
-        fs::path("the/binary"), fs::path("/some/root"), "the-suite", none);
+        fs::path("the/binary"), fs::path("some/root"), "the-suite", none);
 
     store::backend backend = store::backend::open_rw(fs::path("test.db"));
     backend.database().exec("PRAGMA foreign_keys = OFF");
@@ -608,7 +610,9 @@ ATF_TEST_CASE_BODY(put_test_program__plain)
         ATF_REQUIRE_EQ(test_program_id,
                        stmt.safe_column_int64("test_program_id"));
         ATF_REQUIRE_EQ(15, stmt.safe_column_int64("action_id"));
-        ATF_REQUIRE_EQ("/some/root", stmt.safe_column_text("root"));
+        ATF_REQUIRE_EQ(fs::path("some/root/the/binary").to_absolute().str(),
+                       stmt.safe_column_text("absolute_path"));
+        ATF_REQUIRE_EQ("some/root", stmt.safe_column_text("root"));
         ATF_REQUIRE_EQ("the/binary", stmt.safe_column_text("relative_path"));
         ATF_REQUIRE_EQ("the-suite", stmt.safe_column_text("test_suite_name"));
         ATF_REQUIRE(!stmt.step());
