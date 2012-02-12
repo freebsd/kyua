@@ -45,6 +45,7 @@
 #include "utils/optional.ipp"
 
 namespace cmdline = utils::cmdline;
+namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace scan_action = engine::drivers::scan_action;
 namespace user_files = engine::user_files;
@@ -73,6 +74,9 @@ class console_hooks : public scan_action::base_hooks {
     /// does not include passed tests.
     std::size_t _total;
 
+    /// The total run time of the tests.
+    datetime::delta _runtime;
+
     /// Representation of a single result.
     struct result_data {
         /// The relative path to the test program.
@@ -84,16 +88,21 @@ class console_hooks : public scan_action::base_hooks {
         /// The result of the test case.
         engine::test_result result;
 
+        /// The duration of the test case execution.
+        datetime::delta duration;
+
         /// Constructs a new results data.
         ///
         /// \param binary_path_ The relative path to the test program.
         /// \param test_case_name_ The name of the test case.
         /// \param result_ The result of the test case.
+        /// \param duration_ The duration of the test case execution.
         result_data(const fs::path& binary_path_,
                     const std::string& test_case_name_,
-                    const engine::test_result& result_) :
+                    const engine::test_result& result_,
+                    const datetime::delta& duration_) :
             binary_path(binary_path_), test_case_name(test_case_name_),
-            result(result_)
+            result(result_), duration(duration_)
         {
         }
     };
@@ -141,9 +150,10 @@ class console_hooks : public scan_action::base_hooks {
         _writer(F("===> %s") % title);
         for (std::vector< result_data >::const_iterator iter = all.begin();
              iter != all.end(); iter++) {
-            _writer(F("%s:%s  ->  %s") % (*iter).binary_path %
+            _writer(F("%s:%s  ->  %s  [%s]") % (*iter).binary_path %
                     (*iter).test_case_name %
-                    cli::format_result((*iter).result));
+                    cli::format_result((*iter).result) %
+                    cli::format_delta((*iter).duration));
         }
         return all.size();
     }
@@ -180,16 +190,19 @@ public:
     /// \param test_program The test program the result belongs to.
     /// \param test_case_name The name of the test case.
     /// \param result The result of the test case.
+    /// \param duration The duration of the test case execution.
     void
     got_result(const engine::test_program_ptr& test_program,
                const std::string& test_case_name,
-               const engine::test_result& result)
+               const engine::test_result& result,
+               const utils::datetime::delta& duration)
     {
         ++_total;
+        _runtime += duration;
         if (result.type() != engine::test_result::passed)
             _results[result.type()].push_back(
                 result_data(test_program->relative_path(), test_case_name,
-                            result));
+                            result, duration));
     }
 
     /// Prints the tests summary.
@@ -213,6 +226,7 @@ public:
         _writer(F("Test cases: %s total, %s skipped, %s expected failures, "
                   "%s broken, %s failed") %
                 _total % skipped % xfail % broken % failed);
+        _writer(F("Total time: %s") % cli::format_delta(_runtime));
     }
 };
 

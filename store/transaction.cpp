@@ -599,7 +599,8 @@ struct store::results_iterator::impl {
         _stmt(backend_.database().create_statement(
             "SELECT test_programs.test_program_id, "
             "    test_programs.interface, test_cases.name, "
-            "    test_results.result_type, test_results.result_reason "
+            "    test_results.result_type, test_results.result_reason, "
+            "    test_results.start_time, test_results.end_time "
             "FROM test_programs NATURAL JOIN test_cases "
             "    NATURAL JOIN test_results "
             "WHERE test_programs.action_id == :action_id "
@@ -687,6 +688,20 @@ engine::test_result
 store::results_iterator::result(void) const
 {
     return parse_result(_pimpl->_stmt, "result_type", "result_reason");
+}
+
+
+/// Gets the duration of the test case execution.
+///
+/// \return A time delta representing the run time of the test case.
+datetime::delta
+store::results_iterator::duration(void) const
+{
+    const datetime::timestamp start_time = column_timestamp(
+        _pimpl->_stmt, "start_time");
+    const datetime::timestamp end_time = column_timestamp(
+        _pimpl->_stmt, "end_time");
+    return end_time - start_time;
 }
 
 
@@ -1037,19 +1052,25 @@ store::transaction::put_test_case_file(const std::string& name,
 ///
 /// \param result The result to put.
 /// \param test_case_id The test case this result corresponds to.
+/// \param start_time The time when the test started to run.
+/// \param end_time The time when the test finished running.
 ///
 /// \return The identifier of the inserted result.
 ///
 /// \throw error If there is any problem when talking to the database.
 int64_t
 store::transaction::put_result(const engine::test_result& result,
-                               const int64_t test_case_id)
+                               const int64_t test_case_id,
+                               const datetime::timestamp& start_time,
+                               const datetime::timestamp& end_time)
 {
     try {
         sqlite::statement stmt = _pimpl->_db.create_statement(
             "INSERT INTO test_results (test_case_id, result_type, "
-            "                          result_reason) "
-            "VALUES (:test_case_id, :result_type, :result_reason)");
+            "                          result_reason, start_time, "
+            "                          end_time) "
+            "VALUES (:test_case_id, :result_type, :result_reason, "
+            "        :start_time, :end_time)");
         stmt.bind(":test_case_id", test_case_id);
 
         switch (result.type()) {
@@ -1081,6 +1102,9 @@ store::transaction::put_result(const engine::test_result& result,
             stmt.bind(":result_reason", sqlite::null());
         else
             stmt.bind(":result_reason", result.reason());
+
+        store::bind_timestamp(stmt, ":start_time", start_time);
+        store::bind_timestamp(stmt, ":end_time", end_time);
 
         stmt.step_without_results();
         const int64_t result_id = _pimpl->_db.last_insert_rowid();

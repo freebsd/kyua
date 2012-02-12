@@ -29,6 +29,8 @@
 
 utils_test_case one_test_program__all_pass
 one_test_program__all_pass_body() {
+    utils_install_timestamp_wrapper
+
     cat >Kyuafile <<EOF
 syntax("kyuafile", 1)
 test_suite("integration")
@@ -36,8 +38,8 @@ atf_test_program{name="simple_all_pass"}
 EOF
 
     cat >expout <<EOF
-simple_all_pass:pass  ->  passed
-simple_all_pass:skip  ->  skipped: The reason for skipping is this
+simple_all_pass:pass  ->  passed  [S.UUUs]
+simple_all_pass:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 
 2/2 passed (0 failed)
 Committed action 1
@@ -50,6 +52,8 @@ EOF
 
 utils_test_case one_test_program__some_fail
 one_test_program__some_fail_body() {
+    utils_install_timestamp_wrapper
+
     cat >Kyuafile <<EOF
 syntax("kyuafile", 1)
 test_suite("integration")
@@ -57,8 +61,8 @@ atf_test_program{name="simple_some_fail"}
 EOF
 
     cat >expout <<EOF
-simple_some_fail:fail  ->  failed: This fails on purpose
-simple_some_fail:pass  ->  passed
+simple_some_fail:fail  ->  failed: This fails on purpose  [S.UUUs]
+simple_some_fail:pass  ->  passed  [S.UUUs]
 
 1/2 passed (1 failed)
 Committed action 1
@@ -71,6 +75,8 @@ EOF
 
 utils_test_case many_test_programs__all_pass
 many_test_programs__all_pass_body() {
+    utils_install_timestamp_wrapper
+
     cat >Kyuafile <<EOF
 syntax("kyuafile", 1)
 test_suite("integration")
@@ -80,12 +86,12 @@ atf_test_program{name="third"}
 EOF
 
     cat >expout <<EOF
-first:pass  ->  passed
-first:skip  ->  skipped: The reason for skipping is this
-second:pass  ->  passed
-second:skip  ->  skipped: The reason for skipping is this
-third:pass  ->  passed
-third:skip  ->  skipped: The reason for skipping is this
+first:pass  ->  passed  [S.UUUs]
+first:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
+second:pass  ->  passed  [S.UUUs]
+second:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
+third:pass  ->  passed  [S.UUUs]
+third:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 
 6/6 passed (0 failed)
 Committed action 1
@@ -100,6 +106,8 @@ EOF
 
 utils_test_case many_test_programs__some_fail
 many_test_programs__some_fail_body() {
+    utils_install_timestamp_wrapper
+
     cat >Kyuafile <<EOF
 syntax("kyuafile", 1)
 test_suite("integration")
@@ -109,12 +117,12 @@ atf_test_program{name="third"}
 EOF
 
     cat >expout <<EOF
-first:fail  ->  failed: This fails on purpose
-first:pass  ->  passed
-second:fail  ->  failed: This fails on purpose
-second:pass  ->  passed
-third:pass  ->  passed
-third:skip  ->  skipped: The reason for skipping is this
+first:fail  ->  failed: This fails on purpose  [S.UUUs]
+first:pass  ->  passed  [S.UUUs]
+second:fail  ->  failed: This fails on purpose  [S.UUUs]
+second:pass  ->  passed  [S.UUUs]
+third:pass  ->  passed  [S.UUUs]
+third:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 
 4/6 passed (2 failed)
 Committed action 1
@@ -129,6 +137,8 @@ EOF
 
 utils_test_case expect__all_pass
 expect__all_pass_body() {
+    utils_install_timestamp_wrapper
+
     cat >Kyuafile <<EOF
 syntax("kyuafile", 1)
 test_suite("integration")
@@ -136,11 +146,11 @@ atf_test_program{name="expect_all_pass"}
 EOF
 
     cat >expout <<EOF
-expect_all_pass:die  ->  expected_failure: This is the reason for death
-expect_all_pass:exit  ->  expected_failure: Exiting with correct code
-expect_all_pass:failure  ->  expected_failure: Oh no: Forced failure
-expect_all_pass:signal  ->  expected_failure: Exiting with correct signal
-expect_all_pass:timeout  ->  expected_failure: This times out
+expect_all_pass:die  ->  expected_failure: This is the reason for death  [S.UUUs]
+expect_all_pass:exit  ->  expected_failure: Exiting with correct code  [S.UUUs]
+expect_all_pass:failure  ->  expected_failure: Oh no: Forced failure  [S.UUUs]
+expect_all_pass:signal  ->  expected_failure: Exiting with correct signal  [S.UUUs]
+expect_all_pass:timeout  ->  expected_failure: This times out  [S.UUUs]
 
 5/5 passed (0 failed)
 Committed action 1
@@ -153,6 +163,8 @@ EOF
 
 utils_test_case expect__some_fail
 expect__some_fail_body() {
+    utils_install_timestamp_wrapper
+
     cat >Kyuafile <<EOF
 syntax("kyuafile", 1)
 test_suite("integration")
@@ -160,12 +172,12 @@ atf_test_program{name="expect_some_fail"}
 EOF
 
     cat >expout <<EOF
-expect_some_fail:die  ->  failed: Test case was expected to terminate abruptly but it continued execution
-expect_some_fail:exit  ->  broken: Expected clean exit with code 12 but got code 34
-expect_some_fail:failure  ->  failed: Test case was expecting a failure but none were raised
-expect_some_fail:pass  ->  passed
-expect_some_fail:signal  ->  broken: Expected signal 15 but got 9
-expect_some_fail:timeout  ->  failed: Test case was expected to hang but it continued execution
+expect_some_fail:die  ->  failed: Test case was expected to terminate abruptly but it continued execution  [S.UUUs]
+expect_some_fail:exit  ->  broken: Expected clean exit with code 12 but got code 34  [S.UUUs]
+expect_some_fail:failure  ->  failed: Test case was expecting a failure but none were raised  [S.UUUs]
+expect_some_fail:pass  ->  passed  [S.UUUs]
+expect_some_fail:signal  ->  broken: Expected signal 15 but got 9  [S.UUUs]
+expect_some_fail:timeout  ->  failed: Test case was expected to hang but it continued execution  [S.UUUs]
 
 1/6 passed (5 failed)
 Committed action 1
@@ -178,6 +190,8 @@ EOF
 
 utils_test_case premature_exit
 premature_exit_body() {
+    utils_install_timestamp_wrapper
+
     cat >Kyuafile <<EOF
 syntax("kyuafile", 1)
 test_suite("integration")
@@ -185,9 +199,9 @@ atf_test_program{name="bogus_test_cases"}
 EOF
 
     cat >expout <<EOF
-bogus_test_cases:die  ->  broken: Premature exit: received signal 9
-bogus_test_cases:exit  ->  broken: Premature exit: exited with code 0
-bogus_test_cases:pass  ->  passed
+bogus_test_cases:die  ->  broken: Premature exit: received signal 9  [S.UUUs]
+bogus_test_cases:exit  ->  broken: Premature exit: exited with code 0  [S.UUUs]
+bogus_test_cases:pass  ->  passed  [S.UUUs]
 
 1/3 passed (2 failed)
 Committed action 1
@@ -200,6 +214,8 @@ EOF
 
 utils_test_case no_args
 no_args_body() {
+    utils_install_timestamp_wrapper
+
     cat >Kyuafile <<EOF
 syntax("kyuafile", 1)
 test_suite("integration")
@@ -218,10 +234,10 @@ EOF
     utils_cp_helper simple_some_fail subdir
 
     cat >expout <<EOF
-simple_all_pass:pass  ->  passed
-simple_all_pass:skip  ->  skipped: The reason for skipping is this
-subdir/simple_some_fail:fail  ->  failed: This fails on purpose
-subdir/simple_some_fail:pass  ->  passed
+simple_all_pass:pass  ->  passed  [S.UUUs]
+simple_all_pass:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
+subdir/simple_some_fail:fail  ->  failed: This fails on purpose  [S.UUUs]
+subdir/simple_some_fail:pass  ->  passed  [S.UUUs]
 
 3/4 passed (1 failed)
 Committed action 1
@@ -232,6 +248,8 @@ EOF
 
 utils_test_case one_arg__subdir
 one_arg__subdir_body() {
+    utils_install_timestamp_wrapper
+
     cat >Kyuafile <<EOF
 syntax("kyuafile", 1)
 test_suite("top-level")
@@ -247,8 +265,8 @@ EOF
     utils_cp_helper simple_all_pass subdir
 
     cat >expout <<EOF
-subdir/simple_all_pass:pass  ->  passed
-subdir/simple_all_pass:skip  ->  skipped: The reason for skipping is this
+subdir/simple_all_pass:pass  ->  passed  [S.UUUs]
+subdir/simple_all_pass:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 
 2/2 passed (0 failed)
 Committed action 1
@@ -259,6 +277,8 @@ EOF
 
 utils_test_case one_arg__test_case
 one_arg__test_case_body() {
+    utils_install_timestamp_wrapper
+
     cat >Kyuafile <<EOF
 syntax("kyuafile", 1)
 test_suite("top-level")
@@ -269,7 +289,7 @@ EOF
     utils_cp_helper simple_all_pass second
 
     cat >expout <<EOF
-first:skip  ->  skipped: The reason for skipping is this
+first:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 
 1/1 passed (0 failed)
 Committed action 1
@@ -280,6 +300,8 @@ EOF
 
 utils_test_case one_arg__test_program
 one_arg__test_program_body() {
+    utils_install_timestamp_wrapper
+
     cat >Kyuafile <<EOF
 syntax("kyuafile", 1)
 test_suite("top-level")
@@ -290,8 +312,8 @@ EOF
     utils_cp_helper simple_some_fail second
 
     cat >expout <<EOF
-second:fail  ->  failed: This fails on purpose
-second:pass  ->  passed
+second:fail  ->  failed: This fails on purpose  [S.UUUs]
+second:pass  ->  passed  [S.UUUs]
 
 1/2 passed (1 failed)
 Committed action 1
@@ -316,6 +338,8 @@ EOF
 
 utils_test_case many_args__ok
 many_args__ok_body() {
+    utils_install_timestamp_wrapper
+
     cat >Kyuafile <<EOF
 syntax("kyuafile", 1)
 test_suite("top-level")
@@ -333,9 +357,9 @@ EOF
     utils_cp_helper simple_some_fail subdir/second
 
     cat >expout <<EOF
-subdir/second:fail  ->  failed: This fails on purpose
-subdir/second:pass  ->  passed
-first:pass  ->  passed
+subdir/second:fail  ->  failed: This fails on purpose  [S.UUUs]
+subdir/second:pass  ->  passed  [S.UUUs]
+first:pass  ->  passed  [S.UUUs]
 
 2/3 passed (1 failed)
 Committed action 1
@@ -381,6 +405,8 @@ EOF
 
 utils_test_case many_args__no_match__some
 many_args__no_match__some_body() {
+    utils_install_timestamp_wrapper
+
     cat >Kyuafile <<EOF
 syntax("kyuafile", 1)
 test_suite("top-level")
@@ -393,10 +419,10 @@ EOF
     utils_cp_helper simple_some_fail third
 
     cat >expout <<EOF
-first:pass  ->  passed
-first:skip  ->  skipped: The reason for skipping is this
-third:fail  ->  failed: This fails on purpose
-third:pass  ->  passed
+first:pass  ->  passed  [S.UUUs]
+first:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
+third:fail  ->  failed: This fails on purpose  [S.UUUs]
+third:pass  ->  passed  [S.UUUs]
 
 3/4 passed (1 failed)
 Committed action 1
@@ -413,6 +439,8 @@ EOF
 
 utils_test_case args_are_relative
 args_are_relative_body() {
+    utils_install_timestamp_wrapper
+
     mkdir root
     cat >root/Kyuafile <<EOF
 syntax("kyuafile", 1)
@@ -435,9 +463,9 @@ EOF
     utils_cp_helper simple_some_fail root/subdir/fourth
 
     cat >expout <<EOF
-first:pass  ->  passed
-first:skip  ->  skipped: The reason for skipping is this
-subdir/fourth:fail  ->  failed: This fails on purpose
+first:pass  ->  passed  [S.UUUs]
+first:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
+subdir/fourth:fail  ->  failed: This fails on purpose  [S.UUUs]
 
 2/3 passed (1 failed)
 Committed action 1
@@ -449,6 +477,8 @@ EOF
 
 utils_test_case only_load_used_test_programs
 only_load_used_test_programs_body() {
+    utils_install_timestamp_wrapper
+
     cat >Kyuafile <<EOF
 syntax("kyuafile", 1)
 test_suite("integration")
@@ -459,8 +489,8 @@ EOF
     utils_cp_helper bad_test_program second
 
     cat >expout <<EOF
-first:pass  ->  passed
-first:skip  ->  skipped: The reason for skipping is this
+first:pass  ->  passed  [S.UUUs]
+first:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 
 2/2 passed (0 failed)
 Committed action 1
@@ -505,14 +535,16 @@ EOF
 
 utils_test_case store_contents
 store_contents_body() {
+    utils_install_timestamp_wrapper
+
     cat >Kyuafile <<EOF
 syntax("kyuafile", 1)
 atf_test_program{name="some-program", test_suite="suite1"}
 EOF
     utils_cp_helper simple_all_pass some-program
     cat >expout <<EOF
-some-program:pass  ->  passed
-some-program:skip  ->  skipped: The reason for skipping is this
+some-program:pass  ->  passed  [S.UUUs]
+some-program:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 
 2/2 passed (0 failed)
 Committed action 1
@@ -532,8 +564,8 @@ EOF
     rm -f some-program
     utils_cp_helper simple_some_fail some-program
     cat >expout <<EOF
-some-program:fail  ->  failed: This fails on purpose
-some-program:pass  ->  passed
+some-program:fail  ->  failed: This fails on purpose  [S.UUUs]
+some-program:pass  ->  passed  [S.UUUs]
 
 1/2 passed (1 failed)
 Committed action 2
@@ -594,6 +626,8 @@ EOF
 
 utils_test_case kyuafile_flag__no_args
 kyuafile_flag__no_args_body() {
+    utils_install_timestamp_wrapper
+
     cat >Kyuafile <<EOF
 This file is bogus but it is not loaded.
 EOF
@@ -606,16 +640,16 @@ EOF
     utils_cp_helper simple_all_pass sometest
 
     cat >expout <<EOF
-sometest:pass  ->  passed
-sometest:skip  ->  skipped: The reason for skipping is this
+sometest:pass  ->  passed  [S.UUUs]
+sometest:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 
 2/2 passed (0 failed)
 Committed action 1
 EOF
     atf_check -s exit:0 -o file:expout -e empty kyua test -k myfile
     cat >expout <<EOF
-sometest:pass  ->  passed
-sometest:skip  ->  skipped: The reason for skipping is this
+sometest:pass  ->  passed  [S.UUUs]
+sometest:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 
 2/2 passed (0 failed)
 Committed action 2
@@ -626,6 +660,8 @@ EOF
 
 utils_test_case kyuafile_flag__some_args
 kyuafile_flag__some_args_body() {
+    utils_install_timestamp_wrapper
+
     cat >Kyuafile <<EOF
 This file is bogus but it is not loaded.
 EOF
@@ -638,16 +674,16 @@ EOF
     utils_cp_helper simple_all_pass sometest
 
     cat >expout <<EOF
-sometest:pass  ->  passed
-sometest:skip  ->  skipped: The reason for skipping is this
+sometest:pass  ->  passed  [S.UUUs]
+sometest:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 
 2/2 passed (0 failed)
 Committed action 1
 EOF
     atf_check -s exit:0 -o file:expout -e empty kyua test -k myfile sometest
     cat >expout <<EOF
-sometest:pass  ->  passed
-sometest:skip  ->  skipped: The reason for skipping is this
+sometest:pass  ->  passed  [S.UUUs]
+sometest:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 
 2/2 passed (0 failed)
 Committed action 2
@@ -801,6 +837,8 @@ EOF
 
 utils_test_case bogus_test_program
 bogus_test_program_body() {
+    utils_install_timestamp_wrapper
+
     cat >Kyuafile <<EOF
 syntax("kyuafile", 1)
 test_suite("integration")
@@ -811,8 +849,8 @@ EOF
     echo 'I am not executable' >non_executable
 
     cat >expout <<EOF
-crash_on_list:__test_cases_list__  ->  broken: Test program did not exit cleanly
-non_executable:__test_cases_list__  ->  broken: Failed to execute the test program
+crash_on_list:__test_cases_list__  ->  broken: Test program did not exit cleanly  [S.UUUs]
+non_executable:__test_cases_list__  ->  broken: Failed to execute the test program  [S.UUUs]
 
 0/2 passed (2 failed)
 Committed action 1

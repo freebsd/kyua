@@ -37,9 +37,11 @@
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/cmdline/ui.hpp"
+#include "utils/datetime.hpp"
 #include "utils/format/macros.hpp"
 
 namespace cmdline = utils::cmdline;
+namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace run_tests = engine::drivers::run_tests;
 namespace user_files = engine::user_files;
@@ -76,12 +78,14 @@ public:
     ///
     /// \param test_case The test case.
     /// \param result The result of the execution of the test case.
+    /// \param duration The time it took to run the test.
     virtual void
     got_result(const engine::test_case_ptr& test_case,
-               const engine::test_result& result)
+               const engine::test_result& result,
+               const datetime::delta& duration)
     {
-        _ui->out(F("%s  ->  %s") % cli::format_test_case_id(*test_case) %
-                 cli::format_result(result));
+        _ui->out(F("%s  ->  %s  [%s]") % cli::format_test_case_id(*test_case) %
+                 cli::format_result(result) % cli::format_delta(duration));
         if (result.good())
             good_count++;
         else

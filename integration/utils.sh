@@ -27,6 +27,17 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+# Subcommand to strip the timestamps of a report.
+#
+# This is to make the reports deterministic and thus easily testable.  The
+# timestamps are replaced by the fixed string S.UUUs.
+#
+# This variable should be used as shown here:
+#
+#     atf_check ... -x kyua report "| ${uilts_strip_timestamp}"
+utils_strip_timestamp='sed -e "s,[0-9][0-9]*.[0-9][0-9][0-9]s,S.UUUs,g"'
+
+
 # Copies a helper binary from the source directory to the work directory.
 #
 # \param name The name of the binary to copy.
@@ -37,6 +48,29 @@ utils_cp_helper() {
     local destination="${1}"; shift
 
     ln -s "$(atf_get_srcdir)"/helpers/"${name}" "${destination}"
+}
+
+
+# Creates a 'kyua' binary in the path that strips timestamps off the output.
+#
+# Call this on test cases that wish to replace timestamps in the *stdout* of
+# Kyua with the S.UUUs deterministic string.  This is usable for tests that
+# validate the 'test' subcommand, but also by a few specific tests for the
+# 'report' subcommand.
+utils_install_timestamp_wrapper() {
+    [ ! -x kyua ] || return
+    cat >kyua <<EOF
+#! /bin/sh
+
+PATH=${PATH}
+
+kyua "\${@}" >kyua.tmpout
+result=\${?}
+cat kyua.tmpout | ${utils_strip_timestamp}
+exit \${result}
+EOF
+    chmod +x kyua
+    PATH="$(pwd):${PATH}"
 }
 
 

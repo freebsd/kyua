@@ -40,10 +40,12 @@
 #include "store/backend.hpp"
 #include "store/exceptions.hpp"
 #include "store/transaction.hpp"
+#include "utils/datetime.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 
+namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace plain_iface = engine::plain_iface;
 namespace scan_action = engine::drivers::scan_action;
@@ -85,9 +87,11 @@ public:
     /// \param test_program The test program this result belongs to.
     /// \param test_case_name The name of the test case.
     /// \param result The result of the test case.
+    /// \param duration The duration of the test case execution.
     void got_result(const engine::test_program_ptr& test_program,
                     const std::string& test_case_name,
-                    const engine::test_result& result)
+                    const engine::test_result& result,
+                    const datetime::delta& duration)
     {
         const char* type;
         switch (result.type()) {
@@ -96,8 +100,9 @@ public:
         default:
             UNREACHABLE_MSG("Formatting unimplemented");
         }
-        _results.insert(F("%s:%s:%s:%s") % test_program->absolute_path() %
-                        test_case_name % type % result.reason());
+        _results.insert(F("%s:%s:%s:%s:%s:%s") % test_program->absolute_path() %
+                        test_case_name % type % result.reason() %
+                        duration.seconds % duration.useconds);
     }
 };
 
@@ -137,9 +142,13 @@ populate_db(const char* db_name, const int count)
         for (int j = 0; j < count; j++) {
             const plain_iface::test_case test_case(test_program);
             const engine::test_result result(engine::test_result::skipped,
-                                             F("Count %s") % i);
+                                             F("Count %s") % j);
             const int64_t tc_id = tx.put_test_case(test_case, tp_id);
-            tx.put_result(result, tc_id);
+            const datetime::timestamp start =
+                datetime::timestamp::from_microseconds(1000010);
+            const datetime::timestamp end =
+                datetime::timestamp::from_microseconds(5000020 + i + j);
+            tx.put_result(result, tc_id, start, end);
         }
     }
 
@@ -171,8 +180,10 @@ ATF_TEST_CASE_BODY(latest_action)
     ATF_REQUIRE(action == hooks._action.get());
 
     std::set< std::string > results;
-    results.insert("/root/dir/prog_0:main:skipped:Count 0");
-    results.insert("/root/dir/prog_1:main:skipped:Count 1");
+    results.insert("/root/dir/prog_0:main:skipped:Count 0:4:10");
+    results.insert("/root/dir/prog_0:main:skipped:Count 1:4:11");
+    results.insert("/root/dir/prog_1:main:skipped:Count 0:4:11");
+    results.insert("/root/dir/prog_1:main:skipped:Count 1:4:12");
     ATF_REQUIRE(results == hooks._results);
 }
 
@@ -197,7 +208,7 @@ ATF_TEST_CASE_BODY(explicit_action)
     ATF_REQUIRE(action == hooks._action.get());
 
     std::set< std::string > results;
-    results.insert("/root/dir/prog_0:main:skipped:Count 0");
+    results.insert("/root/dir/prog_0:main:skipped:Count 0:4:10");
     ATF_REQUIRE(results == hooks._results);
 }
 

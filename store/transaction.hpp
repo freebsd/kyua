@@ -41,6 +41,7 @@ extern "C" {
 #include <utility>
 
 #include "engine/test_program.hpp"
+#include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"
 
@@ -98,6 +99,7 @@ public:
     const engine::test_program_ptr test_program(void) const;
     std::string test_case_name(void) const;
     engine::test_result result(void) const;
+    utils::datetime::delta duration(void) const;
 };
 
 
@@ -132,7 +134,9 @@ public:
     utils::optional< int64_t > put_test_case_file(const std::string&,
                                                   const utils::fs::path&,
                                                   const int64_t);
-    int64_t put_result(const engine::test_result&, const int64_t);
+    int64_t put_result(const engine::test_result&, const int64_t,
+                       const utils::datetime::timestamp&,
+                       const utils::datetime::timestamp&);
 };
 
 

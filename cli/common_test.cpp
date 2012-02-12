@@ -41,6 +41,7 @@
 #include "utils/cmdline/globals.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/cmdline/ui_mock.hpp"
+#include "utils/datetime.hpp"
 #include "utils/env.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/operations.hpp"
@@ -50,6 +51,7 @@
 #include "utils/test_utils.hpp"
 
 namespace cmdline = utils::cmdline;
+namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace user_files = engine::user_files;
 
@@ -330,6 +332,16 @@ ATF_TEST_CASE_BODY(report_unused_filters__some)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(format_delta);
+ATF_TEST_CASE_BODY(format_delta)
+{
+    ATF_REQUIRE_EQ("0.000s", cli::format_delta(datetime::delta()));
+    ATF_REQUIRE_EQ("0.012s", cli::format_delta(datetime::delta(0, 12300)));
+    ATF_REQUIRE_EQ("0.999s", cli::format_delta(datetime::delta(0, 999000)));
+    ATF_REQUIRE_EQ("51.321s", cli::format_delta(datetime::delta(51, 321000)));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(format_result__no_reason);
 ATF_TEST_CASE_BODY(format_result__no_reason)
 {
@@ -392,6 +404,8 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, report_unused_filters__none);
     ATF_ADD_TEST_CASE(tcs, report_unused_filters__some);
+
+    ATF_ADD_TEST_CASE(tcs, format_delta);
 
     ATF_ADD_TEST_CASE(tcs, format_result__no_reason);
     ATF_ADD_TEST_CASE(tcs, format_result__with_reason);

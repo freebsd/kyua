@@ -176,7 +176,10 @@ CREATE TABLE test_cases (
 CREATE TABLE test_results (
     test_case_id INTEGER PRIMARY KEY REFERENCES test_cases,
     result_type TEXT NOT NULL,
-    result_reason TEXT
+    result_reason TEXT,
+
+    start_time TIMESTAMP NOT NULL,
+    end_time TIMESTAMP NOT NULL
 );
 
 

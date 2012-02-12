@@ -45,6 +45,7 @@ extern "C" {
 #include "engine/filters.hpp"
 #include "engine/test_case.hpp"
 #include "engine/user_files/config.hpp"
+#include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
 
 namespace engine {
@@ -62,8 +63,10 @@ public:
     ///
     /// \param test_case The test case.
     /// \param result The result of the execution of the test case.
+    /// \param duration The time it took to run the test.
     virtual void got_result(const engine::test_case_ptr& test_case,
-                            const engine::test_result& result) = 0;
+                            const engine::test_result& result,
+                            const utils::datetime::delta& duration) = 0;
 };
 
 

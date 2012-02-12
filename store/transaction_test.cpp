@@ -81,7 +81,11 @@ do_put_result_ok_test(const engine::test_result& result,
     store::backend backend = store::backend::open_rw(fs::path("test.db"));
     backend.database().exec("PRAGMA foreign_keys = OFF");
     store::transaction tx = backend.start();
-    tx.put_result(result, 312);
+    const datetime::timestamp start_time = datetime::timestamp::from_values(
+        2012, 01, 30, 22, 10, 00, 0);
+    const datetime::timestamp end_time = datetime::timestamp::from_values(
+        2012, 01, 30, 22, 15, 30, 123456);
+    tx.put_result(result, 312, start_time, end_time);
     tx.commit();
 
     sqlite::statement stmt = backend.database().create_statement(
@@ -287,6 +291,15 @@ ATF_TEST_CASE_BODY(get_action_results__many)
     const int64_t action_id = tx.put_action(action, context_id);
     const int64_t action2_id = tx.put_action(action, context_id);
 
+    const datetime::timestamp start_time1 = datetime::timestamp::from_values(
+        2012, 01, 30, 22, 10, 00, 0);
+    const datetime::timestamp end_time1 = datetime::timestamp::from_values(
+        2012, 01, 30, 22, 15, 30, 1234);
+    const datetime::timestamp start_time2 = datetime::timestamp::from_values(
+        2012, 01, 30, 22, 15, 40, 987);
+    const datetime::timestamp end_time2 = datetime::timestamp::from_values(
+        2012, 01, 30, 22, 16, 0, 0);
+
     {
         const plain_iface::test_program test_program(
             fs::path("a/prog1"), fs::path("/the/root"), "suite1", none);
@@ -295,11 +308,11 @@ ATF_TEST_CASE_BODY(get_action_results__many)
 
         const int64_t tp_id = tx.put_test_program(test_program, action_id);
         const int64_t tc_id = tx.put_test_case(test_case, tp_id);
-        tx.put_result(result, tc_id);
+        tx.put_result(result, tc_id, start_time1, end_time1);
 
         const int64_t tp2_id = tx.put_test_program(test_program, action2_id);
         const int64_t tc2_id = tx.put_test_case(test_case, tp2_id);
-        tx.put_result(result, tc2_id);
+        tx.put_result(result, tc2_id, start_time1, end_time1);
     }
     {
         const plain_iface::test_program test_program(
@@ -310,7 +323,7 @@ ATF_TEST_CASE_BODY(get_action_results__many)
 
         const int64_t tp_id = tx.put_test_program(test_program, action_id);
         const int64_t tc_id = tx.put_test_case(test_case, tp_id);
-        tx.put_result(result, tc_id);
+        tx.put_result(result, tc_id, start_time2, end_time2);
     }
 
     tx.commit();
@@ -323,12 +336,14 @@ ATF_TEST_CASE_BODY(get_action_results__many)
     ATF_REQUIRE_EQ("main", iter.test_case_name());
     ATF_REQUIRE(engine::test_result(engine::test_result::passed) ==
                 iter.result());
+    ATF_REQUIRE(end_time1 - start_time1 == iter.duration());
     ATF_REQUIRE(++iter);
     ATF_REQUIRE_EQ(fs::path("/the/root/b/prog2"),
                    iter.test_program()->absolute_path());
     ATF_REQUIRE_EQ("main", iter.test_case_name());
     ATF_REQUIRE(engine::test_result(engine::test_result::failed, "Some text") ==
                 iter.result());
+    ATF_REQUIRE(end_time2 - start_time2 == iter.duration());
     ATF_REQUIRE(!++iter);
 }
 
@@ -892,7 +907,8 @@ ATF_TEST_CASE_BODY(put_result__fail)
 
     store::backend backend = store::backend::open_rw(fs::path("test.db"));
     store::transaction tx = backend.start();
-    ATF_REQUIRE_THROW(store::error, tx.put_result(result, -1));
+    const datetime::timestamp zero = datetime::timestamp::from_microseconds(0);
+    ATF_REQUIRE_THROW(store::error, tx.put_result(result, -1, zero, zero));
     tx.commit();
 }
 

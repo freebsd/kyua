@@ -118,6 +118,42 @@ ATF_TEST_CASE_BODY(delta__differs)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(delta__addition);
+ATF_TEST_CASE_BODY(delta__addition)
+{
+    using datetime::delta;
+
+    ATF_REQUIRE(delta() == delta() + delta());
+    ATF_REQUIRE(delta(0, 10) == delta() + delta(0, 10));
+    ATF_REQUIRE(delta(10, 0) == delta(10, 0) + delta());
+
+    ATF_REQUIRE(delta(1, 234567) == delta(0, 1234567) + delta());
+    ATF_REQUIRE(delta(12, 34) == delta(10, 20) + delta(2, 14));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(delta__addition_and_set);
+ATF_TEST_CASE_BODY(delta__addition_and_set)
+{
+    using datetime::delta;
+
+    {
+        delta d;
+        d += delta(3, 5);
+        ATF_REQUIRE(delta(3, 5) == d);
+    }
+    {
+        delta d(1, 2);
+        d += delta(3, 5);
+        ATF_REQUIRE(delta(4, 7) == d);
+    }
+    {
+        delta d(1, 2);
+        ATF_REQUIRE(delta(4, 7) == (d += delta(3, 5)));
+    }
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(timestamp__copy);
 ATF_TEST_CASE_BODY(timestamp__copy)
 {
@@ -240,6 +276,23 @@ ATF_TEST_CASE_BODY(timestamp__differs)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(timestamp__subtraction);
+ATF_TEST_CASE_BODY(timestamp__subtraction)
+{
+    const datetime::timestamp ts1 = datetime::timestamp::from_microseconds(
+        1291970750123456);
+    const datetime::timestamp ts2 = datetime::timestamp::from_microseconds(
+        1291970750123468);
+    const datetime::timestamp ts3 = datetime::timestamp::from_microseconds(
+        1291970850123456);
+
+    ATF_REQUIRE(datetime::delta(0, 0) == ts1 - ts1);
+    ATF_REQUIRE(datetime::delta(0, 12) == ts2 - ts1);
+    ATF_REQUIRE(datetime::delta(100, 0) == ts3 - ts1);
+    ATF_REQUIRE(datetime::delta(99, 999988) == ts3 - ts2);
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, delta__defaults);
@@ -248,6 +301,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, delta__to_useconds);
     ATF_ADD_TEST_CASE(tcs, delta__equals);
     ATF_ADD_TEST_CASE(tcs, delta__differs);
+    ATF_ADD_TEST_CASE(tcs, delta__addition);
+    ATF_ADD_TEST_CASE(tcs, delta__addition_and_set);
 
     ATF_ADD_TEST_CASE(tcs, timestamp__copy);
     ATF_ADD_TEST_CASE(tcs, timestamp__from_microseconds);
@@ -259,4 +314,5 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, timestamp__to_seconds);
     ATF_ADD_TEST_CASE(tcs, timestamp__equals);
     ATF_ADD_TEST_CASE(tcs, timestamp__differs);
+    ATF_ADD_TEST_CASE(tcs, timestamp__subtraction);
 }

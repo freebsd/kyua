@@ -35,10 +35,12 @@
 #include "engine/user_files/kyuafile.hpp"
 #include "store/backend.hpp"
 #include "store/transaction.hpp"
+#include "utils/datetime.hpp"
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
 
+namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace run_tests = engine::drivers::run_tests;
 namespace user_files = engine::user_files;
@@ -121,9 +123,11 @@ run_test_program(const engine::base_test_program& test_program,
         const int64_t test_case_id = tx.put_test_case(*test_case,
                                                       test_program_id);
         file_saver_hooks test_hooks(tx, test_case_id);
+        const datetime::timestamp start_time = datetime::timestamp::now();
         const engine::test_result result = test_case->run(config, test_hooks);
-        tx.put_result(result, test_case_id);
-        hooks.got_result(test_case, result);
+        const datetime::timestamp end_time = datetime::timestamp::now();
+        tx.put_result(result, test_case_id, start_time, end_time);
+        hooks.got_result(test_case, result, end_time - start_time);
     }
 }
 

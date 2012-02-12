@@ -118,6 +118,31 @@ datetime::delta::operator!=(const datetime::delta& other) const
 }
 
 
+/// Adds a time delta to this one.
+///
+/// \param other The time delta to add.
+///
+/// \return The addition of this time delta with the other time delta.
+datetime::delta
+datetime::delta::operator+(const datetime::delta& other) const
+{
+    return delta::from_useconds(to_useconds() + other.to_useconds());
+}
+
+
+/// Adds a time delta to this one and updates this with the result.
+///
+/// \param other The time delta to add.
+///
+/// \return The addition of this time delta with the other time delta.
+datetime::delta
+datetime::delta::operator+=(const datetime::delta& other)
+{
+    *this = *this + other;
+    return *this;
+}
+
+
 namespace utils {
 namespace datetime {
 
@@ -313,4 +338,17 @@ bool
 datetime::timestamp::operator!=(const datetime::timestamp& other) const
 {
     return !(*this == other);
+}
+
+
+/// Calculates the delta between two timestamps.
+///
+/// \param other The subtrahend.
+///
+/// \return The difference between this object and the other object.
+datetime::delta
+datetime::timestamp::operator-(const datetime::timestamp& other) const
+{
+    return datetime::delta::from_useconds(to_microseconds() -
+                                          other.to_microseconds());
 }

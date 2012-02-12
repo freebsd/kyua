@@ -66,14 +66,17 @@ EOF
 
 utils_test_case default_behavior__ok
 default_behavior__ok_body() {
+    utils_install_timestamp_wrapper
+
     run_tests "mock1"
 
     cat >expout <<EOF
 ===> Skipped tests
-simple_all_pass:skip  ->  skipped: The reason for skipping is this
+simple_all_pass:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 ===> Summary
 Action: 1
 Test cases: 2 total, 1 skipped, 0 expected failures, 0 broken, 0 failed
+Total time: S.UUUs
 EOF
     atf_check -s exit:0 -o file:expout -e empty kyua report
 
@@ -81,10 +84,11 @@ EOF
 
     cat >expout <<EOF
 ===> Skipped tests
-simple_all_pass:skip  ->  skipped: The reason for skipping is this
+simple_all_pass:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 ===> Summary
 Action: 2
 Test cases: 2 total, 1 skipped, 0 expected failures, 0 broken, 0 failed
+Total time: S.UUUs
 EOF
     atf_check -s exit:0 -o file:expout -e empty kyua report
 }
@@ -140,12 +144,14 @@ Environment variables:
     HOME=$(pwd)/testsuite/home
     MOCK=mock1
 ===> Skipped tests
-simple_all_pass:skip  ->  skipped: The reason for skipping is this
+simple_all_pass:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 ===> Summary
 Action: 1
 Test cases: 2 total, 1 skipped, 0 expected failures, 0 broken, 0 failed
+Total time: S.UUUs
 EOF
-    atf_check -s exit:0 -o file:expout -e empty kyua report --show-context
+    atf_check -s exit:0 -o file:expout -e empty -x kyua report --show-context \
+        "| ${utils_strip_timestamp}"
 }
 
 
@@ -155,20 +161,24 @@ output__console__change_file_body() {
 
     cat >report <<EOF
 ===> Skipped tests
-simple_all_pass:skip  ->  skipped: The reason for skipping is this
+simple_all_pass:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 ===> Summary
 Action: 1
 Test cases: 2 total, 1 skipped, 0 expected failures, 0 broken, 0 failed
+Total time: S.UUUs
 EOF
 
-    atf_check -s exit:0 -o file:report -e empty kyua report \
-        --output=console:/dev/stdout
-    atf_check -s exit:0 -o empty -e file:report kyua report \
+    atf_check -s exit:0 -o file:report -e empty -x kyua report \
+        --output=console:/dev/stdout "| ${utils_strip_timestamp}"
+    atf_check -s exit:0 -o empty -e save:stderr kyua report \
         --output=console:/dev/stderr
+    atf_check -s exit:0 -o file:report -x cat stderr \
+        "| ${utils_strip_timestamp}"
 
     atf_check -s exit:0 -o empty -e empty kyua report \
         --output=console:my-file
-    atf_check -s exit:0 -o file:report cat my-file
+    atf_check -s exit:0 -o file:report -x cat my-file \
+        "| ${utils_strip_timestamp}"
 }
 
 

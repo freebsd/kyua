@@ -61,6 +61,9 @@ struct delta {
 
     bool operator==(const delta&) const;
     bool operator!=(const delta&) const;
+
+    delta operator+(const delta&) const;
+    delta operator+=(const delta&);
 };
 
 
@@ -91,6 +94,8 @@ public:
 
     bool operator==(const timestamp&) const;
     bool operator!=(const timestamp&) const;
+
+    delta operator-(const timestamp&) const;
 };
 
 

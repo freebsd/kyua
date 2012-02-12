@@ -39,6 +39,7 @@
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.hpp"
 #include "utils/cmdline/ui.hpp"
+#include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"
 
@@ -88,6 +89,7 @@ std::set< engine::test_filter > parse_filters(
 bool report_unused_filters(const std::set< engine::test_filter >&,
                            utils::cmdline::ui*);
 
+std::string format_delta(const utils::datetime::delta&);
 std::string format_result(const engine::test_result&);
 std::string format_test_case_id(const engine::base_test_case&);
 std::string format_test_case_id(const engine::test_filter&);

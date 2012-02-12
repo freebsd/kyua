@@ -42,6 +42,7 @@ extern "C" {
 }
 
 #include "engine/test_program.hpp"
+#include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"
 
@@ -71,9 +72,11 @@ public:
     /// \param test_program The test program to which the result belongs.
     /// \param test_case_name The name of the test case.
     /// \param result The result of the test case.
+    /// \param duration The duration of the test case execution.
     virtual void got_result(const engine::test_program_ptr& test_program,
                             const std::string& test_case_name,
-                            const engine::test_result& result) = 0;
+                            const engine::test_result& result,
+                            const utils::datetime::delta& duration) = 0;
 };
 
 

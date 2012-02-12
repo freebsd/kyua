@@ -35,6 +35,7 @@
 #include "engine/test_result.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.ipp"
+#include "utils/datetime.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
@@ -44,6 +45,7 @@
 #include "utils/optional.ipp"
 
 namespace cmdline = utils::cmdline;
+namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace user_files = engine::user_files;
 
@@ -182,6 +184,18 @@ cli::report_unused_filters(const std::set< engine::test_filter >& unused,
     }
 
     return !unused.empty();
+}
+
+
+/// Formats a time delta for user presentation.
+///
+/// \param delta The time delta to format.
+///
+/// \return A user-friendly representation of the time delta.
+std::string
+cli::format_delta(const datetime::delta& delta)
+{
+    return F("%.3ss") % (delta.seconds + (delta.useconds / 1000000.0));
 }
 
 
