@@ -151,12 +151,13 @@ datetime::timestamp::timestamp(std::tr1::shared_ptr< impl > pimpl_) :
 
 /// Constructs a timestamp from the amount of microseconds since the epoch.
 ///
-/// \param value Microseconds since the epoch in UTC.
+/// \param value Microseconds since the epoch in UTC.  Must be positive.
 ///
 /// \return A new timestamp.
 datetime::timestamp
 datetime::timestamp::from_microseconds(const int64_t value)
 {
+    PRE(value >= 0);
     ::timeval data;
     data.tv_sec = static_cast< time_t >(value / 1000000);
     data.tv_usec = static_cast< suseconds_t >(value % 1000000);
@@ -287,4 +288,29 @@ datetime::set_mock_now(const int year, const int month,
 {
     mock_now = timestamp::from_values(year, month, day, hour, minute, second,
                                       microsecond);
+}
+
+
+/// Checks if two timestamps are equal.
+///
+/// \param other The object to compare to.
+///
+/// \return True if the two timestamps are equals; false otherwise.
+bool
+datetime::timestamp::operator==(const datetime::timestamp& other) const
+{
+    return _pimpl->data.tv_sec == other._pimpl->data.tv_sec &&
+        _pimpl->data.tv_usec == other._pimpl->data.tv_usec;
+}
+
+
+/// Checks if two timestamps are different.
+///
+/// \param other The object to compare to.
+///
+/// \return True if the two timestamps are different; false otherwise.
+bool
+datetime::timestamp::operator!=(const datetime::timestamp& other) const
+{
+    return !(*this == other);
 }

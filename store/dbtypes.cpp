@@ -133,6 +133,19 @@ store::bind_optional_string(sqlite::statement& stmt, const char* field,
 }
 
 
+/// Binds a timestamp to a statement parameter.
+///
+/// \param stmt The statement to which to bind the parameter.
+/// \param field The name of the parameter; must exist.
+/// \param value The value to bind.
+void
+store::bind_timestamp(sqlite::statement& stmt, const char* field,
+                      const datetime::timestamp& timestamp)
+{
+    stmt.bind(field, timestamp.to_microseconds());
+}
+
+
 /// Queries a boolean value from a statement.
 ///
 /// \param stmt The statement from which to get the column.
@@ -222,4 +235,27 @@ store::column_optional_string(sqlite::statement& stmt, const char* column)
     default:
         throw integrity_error(F("Invalid string type in column %s") % column);
     }
+}
+
+
+/// Queries a timestamp from a statement.
+///
+/// \param stmt The statement from which to get the column.
+/// \param column The name of the column holding the value.
+///
+/// \return The parsed value if all goes well.
+///
+/// \throw integrity_error If the value in the specified column is invalid.
+datetime::timestamp
+store::column_timestamp(sqlite::statement& stmt, const char* column)
+{
+    const int id = stmt.column_id(column);
+    if (stmt.column_type(id) != sqlite::type_integer)
+        throw store::integrity_error(F("Timestamp in column %s is not an "
+                                       "integer") % column);
+    const int64_t value = stmt.column_int64(id);
+    if (value < 0)
+        throw store::integrity_error(F("Timestamp in column %s must be "
+                                       "positive") % column);
+    return datetime::timestamp::from_microseconds(value);
 }

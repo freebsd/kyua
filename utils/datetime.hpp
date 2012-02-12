@@ -88,6 +88,9 @@ public:
     std::string strftime(const std::string&) const;
     int64_t to_microseconds(void) const;
     int64_t to_seconds(void) const;
+
+    bool operator==(const timestamp&) const;
+    bool operator!=(const timestamp&) const;
 };
 
 

@@ -58,10 +58,14 @@ void bind_interface(utils::sqlite::statement&, const char*,
                     const detail::interface_type);
 void bind_optional_string(utils::sqlite::statement&, const char*,
                           const std::string&);
+void bind_timestamp(utils::sqlite::statement&, const char*,
+                    const utils::datetime::timestamp&);
 bool column_bool(utils::sqlite::statement&, const char*);
 utils::datetime::delta column_delta(utils::sqlite::statement&, const char*);
 detail::interface_type column_interface(utils::sqlite::statement&, const char*);
 std::string column_optional_string(utils::sqlite::statement&, const char*);
+utils::datetime::timestamp column_timestamp(utils::sqlite::statement&,
+                                            const char*);
 
 
 }  // namespace store

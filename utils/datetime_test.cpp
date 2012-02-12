@@ -224,6 +224,22 @@ ATF_TEST_CASE_BODY(timestamp__to_seconds)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(timestamp__equals);
+ATF_TEST_CASE_BODY(timestamp__equals)
+{
+    ATF_REQUIRE(datetime::timestamp::from_microseconds(1291970750123456) ==
+                datetime::timestamp::from_microseconds(1291970750123456));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(timestamp__differs);
+ATF_TEST_CASE_BODY(timestamp__differs)
+{
+    ATF_REQUIRE(datetime::timestamp::from_microseconds(1291970750123456) !=
+                datetime::timestamp::from_microseconds(1291970750123455));
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, delta__defaults);
@@ -241,4 +257,6 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, timestamp__strftime);
     ATF_ADD_TEST_CASE(tcs, timestamp__to_microseconds);
     ATF_ADD_TEST_CASE(tcs, timestamp__to_seconds);
+    ATF_ADD_TEST_CASE(tcs, timestamp__equals);
+    ATF_ADD_TEST_CASE(tcs, timestamp__differs);
 }

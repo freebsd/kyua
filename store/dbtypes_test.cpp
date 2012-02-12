@@ -33,6 +33,7 @@
 #include "engine/atf_iface/test_program.hpp"
 #include "engine/plain_iface/test_program.hpp"
 #include "store/exceptions.hpp"
+#include "utils/datetime.hpp"
 #include "utils/optional.ipp"
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/statement.ipp"
@@ -200,6 +201,39 @@ ATF_TEST_CASE_BODY(optional_string__get_invalid_type)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(timestamp__ok);
+ATF_TEST_CASE_BODY(timestamp__ok)
+{
+    do_ok_test(store::bind_timestamp,
+               datetime::timestamp::from_microseconds(0),
+               store::column_timestamp);
+    do_ok_test(store::bind_timestamp,
+               datetime::timestamp::from_microseconds(123),
+               store::column_timestamp);
+
+    do_ok_test(store::bind_timestamp,
+               datetime::timestamp::from_values(2012, 2, 9, 23, 15, 51, 987654),
+               store::column_timestamp);
+    do_ok_test(store::bind_timestamp,
+               datetime::timestamp::from_values(1980, 1, 2, 3, 4, 5, 0),
+               store::column_timestamp);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(timestamp__get_invalid_type);
+ATF_TEST_CASE_BODY(timestamp__get_invalid_type)
+{
+    do_invalid_test(35.6, store::column_timestamp, "not an integer");
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(timestamp__get_invalid_value);
+ATF_TEST_CASE_BODY(timestamp__get_invalid_value)
+{
+    do_invalid_test(-1234, store::column_timestamp, "must be positive");
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, bool__ok);
@@ -218,4 +252,8 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, optional_string__ok);
     ATF_ADD_TEST_CASE(tcs, optional_string__get_invalid_type);
+
+    ATF_ADD_TEST_CASE(tcs, timestamp__ok);
+    ATF_ADD_TEST_CASE(tcs, timestamp__get_invalid_type);
+    ATF_ADD_TEST_CASE(tcs, timestamp__get_invalid_value);
 }
