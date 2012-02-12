@@ -34,6 +34,7 @@
 
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "utils/fs/path.hpp"
 
@@ -149,6 +150,22 @@ public:
 
     virtual void validate(const std::string& str) const;
     static int convert(const std::string& str);
+};
+
+
+/// Definition of a comma-separated list of strings.
+class list_option : public base_option {
+public:
+    list_option(const char, const char*, const char*, const char*,
+                const char* = NULL);
+    list_option(const char*, const char*, const char*, const char* = NULL);
+    virtual ~list_option(void) {}
+
+    /// The data type of this option.
+    typedef std::vector< std::string > option_type;
+
+    virtual void validate(const std::string&) const;
+    static option_type convert(const std::string&);
 };
 
 

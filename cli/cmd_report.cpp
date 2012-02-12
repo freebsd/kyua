@@ -57,6 +57,45 @@ using utils::optional;
 namespace {
 
 
+/// Collection of result types.
+///
+/// This is a vector rather than a set because we want to respect the order in
+/// which the user provided the types.
+typedef std::vector< engine::test_result::result_type > result_types;
+
+
+/// Converts a set of result type names to identifiers.
+///
+/// \param names The collection of names to process; may be empty.
+///
+/// \return The result type identifiers corresponding to the input names.
+///
+/// \throw std::runtime_error If any name in the input names is invalid.
+static result_types
+parse_types(const std::vector< std::string >& names)
+{
+    using engine::test_result;
+    typedef std::map< std::string, test_result::result_type > types_map;
+    types_map valid_types;
+    valid_types["broken"] = test_result::broken;
+    valid_types["failed"] = test_result::failed;
+    valid_types["passed"] = test_result::passed;
+    valid_types["skipped"] = test_result::skipped;
+    valid_types["xfail"] = test_result::expected_failure;
+
+    result_types types;
+    for (std::vector< std::string >::const_iterator iter = names.begin();
+         iter != names.end(); ++iter) {
+        const types_map::const_iterator match = valid_types.find(*iter);
+        if (match == valid_types.end())
+            throw std::runtime_error(F("Unknown result type '%s'") % *iter);
+        else
+            types.push_back((*match).second);
+    }
+    return types;
+}
+
+
 /// Generates a plain-text report intended to be printed to the console.
 class console_hooks : public scan_action::base_hooks {
     /// Indirection to print the output to the correct file stream.
@@ -65,14 +104,11 @@ class console_hooks : public scan_action::base_hooks {
     /// Whether to include the runtime context in the output or not.
     const bool _show_context;
 
+    /// Collection of result types to include in the report.
+    const result_types& _results_filters;
+
     /// The action ID loaded.
     int64_t _action_id;
-
-    /// The amount of results received.
-    ///
-    /// We have to maintain this information aside _results, because _results
-    /// does not include passed tests.
-    std::size_t _total;
 
     /// The total run time of the tests.
     datetime::delta _runtime;
@@ -135,8 +171,21 @@ class console_hooks : public scan_action::base_hooks {
         }
     }
 
-    /// Prints a set of results.
+    /// Counts how many results of a given type have been received.
     std::size_t
+    count_results(const engine::test_result::result_type type)
+    {
+        const std::map< engine::test_result::result_type,
+                        std::vector< result_data > >::const_iterator iter =
+            _results.find(type);
+        if (iter == _results.end())
+            return 0;
+        else
+            return (*iter).second.size();
+    }
+
+    /// Prints a set of results.
+    void
     print_results(const engine::test_result::result_type type,
                   const char* title)
     {
@@ -144,7 +193,7 @@ class console_hooks : public scan_action::base_hooks {
                         std::vector< result_data > >::const_iterator iter2 =
             _results.find(type);
         if (iter2 == _results.end())
-            return 0;
+            return;
         const std::vector< result_data >& all = (*iter2).second;
 
         _writer(F("===> %s") % title);
@@ -155,7 +204,6 @@ class console_hooks : public scan_action::base_hooks {
                     cli::format_result((*iter).result) %
                     cli::format_delta((*iter).duration));
         }
-        return all.size();
     }
 
 public:
@@ -165,12 +213,16 @@ public:
     /// \param outfile_ The file to which to send the output.
     /// \param show_context_ Whether to include the runtime context in
     ///     the output or not.
+    /// \param results_filters_ The result types to include in the report.
+    ///     Cannot be empty.
     console_hooks(cmdline::ui* ui_, const fs::path& outfile_,
-                  bool show_context_) :
+                  const bool show_context_,
+                  const result_types& results_filters_) :
         _writer(ui_, outfile_),
         _show_context(show_context_),
-        _total(0)
+        _results_filters(results_filters_)
     {
+        PRE(!results_filters_.empty());
     }
 
     /// Callback executed when an action is found.
@@ -197,35 +249,46 @@ public:
                const engine::test_result& result,
                const utils::datetime::delta& duration)
     {
-        ++_total;
         _runtime += duration;
-        if (result.type() != engine::test_result::passed)
-            _results[result.type()].push_back(
-                result_data(test_program->relative_path(), test_case_name,
-                            result, duration));
+        _results[result.type()].push_back(
+            result_data(test_program->relative_path(), test_case_name,
+                        result, duration));
     }
 
     /// Prints the tests summary.
     void
     print_tests(void)
     {
-        if (_total == 0)
-            return;
+        using engine::test_result;
+        typedef std::map< test_result::result_type, const char* > types_map;
 
-        const std::size_t skipped = print_results(
-            engine::test_result::skipped, "Skipped tests");
-        const std::size_t xfail = print_results(
-            engine::test_result::expected_failure, "Expected failures");
-        const std::size_t broken = print_results(
-            engine::test_result::broken, "Broken tests");
-        const std::size_t failed = print_results(
-            engine::test_result::failed, "Failed tests");
+        types_map titles;
+        titles[engine::test_result::broken] = "Broken tests";
+        titles[engine::test_result::expected_failure] = "Expected failures";
+        titles[engine::test_result::failed] = "Failed tests";
+        titles[engine::test_result::passed] = "Passed tests";
+        titles[engine::test_result::skipped] = "Skipped tests";
+
+        for (result_types::const_iterator iter = _results_filters.begin();
+             iter != _results_filters.end(); ++iter) {
+            const types_map::const_iterator match = titles.find(*iter);
+            INV_MSG(match != titles.end(), "Conditional does not match user "
+                    "input validation in parse_types()");
+            print_results((*match).first, (*match).second);
+        }
+
+        const std::size_t broken = count_results(test_result::broken);
+        const std::size_t failed = count_results(test_result::failed);
+        const std::size_t passed = count_results(test_result::passed);
+        const std::size_t skipped = count_results(test_result::skipped);
+        const std::size_t xfail = count_results(test_result::expected_failure);
+        const std::size_t total = broken + failed + passed + skipped + xfail;
 
         _writer("===> Summary");
         _writer(F("Action: %s") % _action_id);
         _writer(F("Test cases: %s total, %s skipped, %s expected failures, "
                   "%s broken, %s failed") %
-                _total % skipped % xfail % broken % failed);
+                total % skipped % xfail % broken % failed);
         _writer(F("Total time: %s") % cli::format_delta(_runtime));
     }
 };
@@ -380,6 +443,9 @@ cmd_report::cmd_report(void) : cli_command(
         "action", "The action to report; if not specified, defaults to the "
         "latest action in the database", "id"));
     add_option(output_option());
+    add_option(cmdline::list_option(
+        "results-filter", "Comma-separated list of result types to include in "
+        "the report", "types", "skipped,xfail,broken,failed"));
 }
 
 
@@ -402,8 +468,19 @@ cmd_report::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
     if (cmdline.has_option("action"))
         action_id = cmdline.get_option< cmdline::int_option >("action");
 
+    result_types types = parse_types(
+        cmdline.get_option< cmdline::list_option >("results-filter"));
+    if (types.empty()) {
+        types.push_back(engine::test_result::passed);
+        types.push_back(engine::test_result::skipped);
+        types.push_back(engine::test_result::expected_failure);
+        types.push_back(engine::test_result::broken);
+        types.push_back(engine::test_result::failed);
+    }
+
     INV(output.first == output_option::console_format);
-    console_hooks hooks(ui, output.second, cmdline.has_option("show-context"));
+    console_hooks hooks(ui, output.second, cmdline.has_option("show-context"),
+                        types);
     scan_action::drive(store_path(cmdline), action_id, hooks);
     hooks.print_tests();
 

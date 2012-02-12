@@ -182,6 +182,85 @@ EOF
 }
 
 
+utils_test_case results_filter__empty
+results_filter__empty_body() {
+    utils_install_timestamp_wrapper
+
+    run_tests "mock1"
+
+    cat >expout <<EOF
+===> Passed tests
+simple_all_pass:pass  ->  passed  [S.UUUs]
+===> Skipped tests
+simple_all_pass:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
+===> Summary
+Action: 1
+Test cases: 2 total, 1 skipped, 0 expected failures, 0 broken, 0 failed
+Total time: S.UUUs
+EOF
+    atf_check -s exit:0 -o file:expout -e empty kyua report --results-filter=
+}
+
+
+utils_test_case results_filter__one
+results_filter__one_body() {
+    utils_install_timestamp_wrapper
+
+    run_tests "mock1"
+
+    cat >expout <<EOF
+===> Passed tests
+simple_all_pass:pass  ->  passed  [S.UUUs]
+===> Summary
+Action: 1
+Test cases: 2 total, 1 skipped, 0 expected failures, 0 broken, 0 failed
+Total time: S.UUUs
+EOF
+    atf_check -s exit:0 -o file:expout -e empty kyua report \
+        --results-filter=passed
+}
+
+
+utils_test_case results_filter__multiple_all_match
+results_filter__multiple_all_match_body() {
+    utils_install_timestamp_wrapper
+
+    run_tests "mock1"
+
+    cat >expout <<EOF
+===> Skipped tests
+simple_all_pass:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
+===> Passed tests
+simple_all_pass:pass  ->  passed  [S.UUUs]
+===> Summary
+Action: 1
+Test cases: 2 total, 1 skipped, 0 expected failures, 0 broken, 0 failed
+Total time: S.UUUs
+EOF
+    atf_check -s exit:0 -o file:expout -e empty kyua report \
+        --results-filter=skipped,passed
+}
+
+
+utils_test_case results_filter__multiple_some_match
+results_filter__multiple_some_match_body() {
+    utils_install_timestamp_wrapper
+
+    run_tests "mock1"
+
+    cat >expout <<EOF
+===> Skipped tests
+simple_all_pass:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
+===> Summary
+Action: 1
+Test cases: 2 total, 1 skipped, 0 expected failures, 0 broken, 0 failed
+Total time: S.UUUs
+EOF
+    atf_check -s exit:0 -o file:expout -e empty kyua report \
+        --results-filter=skipped,xfail,broken,failed
+}
+
+
 atf_init_test_cases() {
     atf_add_test_case default_behavior__ok
     atf_add_test_case default_behavior__no_actions
@@ -193,4 +272,9 @@ atf_init_test_cases() {
     atf_add_test_case show_context
 
     atf_add_test_case output__console__change_file
+
+    atf_add_test_case results_filter__empty
+    atf_add_test_case results_filter__one
+    atf_add_test_case results_filter__multiple_all_match
+    atf_add_test_case results_filter__multiple_some_match
 }

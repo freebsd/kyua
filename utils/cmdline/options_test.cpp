@@ -262,6 +262,97 @@ ATF_TEST_CASE_BODY(int_option__type)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(list_option__short_name);
+ATF_TEST_CASE_BODY(list_option__short_name)
+{
+    const cmdline::list_option o('p', "list", "The list", "arg", "value");
+    ATF_REQUIRE(o.has_short_name());
+    ATF_REQUIRE_EQ('p', o.short_name());
+    ATF_REQUIRE_EQ("list", o.long_name());
+    ATF_REQUIRE_EQ("The list", o.description());
+    ATF_REQUIRE(o.needs_arg());
+    ATF_REQUIRE_EQ("arg", o.arg_name());
+    ATF_REQUIRE(o.has_default_value());
+    ATF_REQUIRE_EQ("value", o.default_value());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(list_option__long_name);
+ATF_TEST_CASE_BODY(list_option__long_name)
+{
+    const cmdline::list_option o("list", "The list", "arg", "value");
+    ATF_REQUIRE(!o.has_short_name());
+    ATF_REQUIRE_EQ("list", o.long_name());
+    ATF_REQUIRE_EQ("The list", o.description());
+    ATF_REQUIRE(o.needs_arg());
+    ATF_REQUIRE_EQ("arg", o.arg_name());
+    ATF_REQUIRE(o.has_default_value());
+    ATF_REQUIRE_EQ("value", o.default_value());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(list_option__type);
+ATF_TEST_CASE_BODY(list_option__type)
+{
+    const cmdline::list_option o("list", "The list", "arg");
+
+    o.validate("");
+    {
+        const cmdline::list_option::option_type words =
+            cmdline::list_option::convert("");
+        ATF_REQUIRE(words.empty());
+    }
+
+    o.validate("foo");
+    {
+        const cmdline::list_option::option_type words =
+            cmdline::list_option::convert("foo");
+        ATF_REQUIRE_EQ(1, words.size());
+        ATF_REQUIRE_EQ("foo", words[0]);
+    }
+
+    o.validate("foo,bar,baz");
+    {
+        const cmdline::list_option::option_type words =
+            cmdline::list_option::convert("foo,bar,baz");
+        ATF_REQUIRE_EQ(3, words.size());
+        ATF_REQUIRE_EQ("foo", words[0]);
+        ATF_REQUIRE_EQ("bar", words[1]);
+        ATF_REQUIRE_EQ("baz", words[2]);
+    }
+
+    o.validate("foo,bar,");
+    {
+        const cmdline::list_option::option_type words =
+            cmdline::list_option::convert("foo,bar,");
+        ATF_REQUIRE_EQ(3, words.size());
+        ATF_REQUIRE_EQ("foo", words[0]);
+        ATF_REQUIRE_EQ("bar", words[1]);
+        ATF_REQUIRE_EQ("", words[2]);
+    }
+
+    o.validate(",foo,bar");
+    {
+        const cmdline::list_option::option_type words =
+            cmdline::list_option::convert(",foo,bar");
+        ATF_REQUIRE_EQ(3, words.size());
+        ATF_REQUIRE_EQ("", words[0]);
+        ATF_REQUIRE_EQ("foo", words[1]);
+        ATF_REQUIRE_EQ("bar", words[2]);
+    }
+
+    o.validate("foo,,bar");
+    {
+        const cmdline::list_option::option_type words =
+            cmdline::list_option::convert("foo,,bar");
+        ATF_REQUIRE_EQ(3, words.size());
+        ATF_REQUIRE_EQ("foo", words[0]);
+        ATF_REQUIRE_EQ("", words[1]);
+        ATF_REQUIRE_EQ("bar", words[2]);
+    }
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(path_option__short_name);
 ATF_TEST_CASE_BODY(path_option__short_name)
 {
@@ -417,6 +508,10 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, int_option__short_name);
     ATF_ADD_TEST_CASE(tcs, int_option__long_name);
     ATF_ADD_TEST_CASE(tcs, int_option__type);
+
+    ATF_ADD_TEST_CASE(tcs, list_option__short_name);
+    ATF_ADD_TEST_CASE(tcs, list_option__long_name);
+    ATF_ADD_TEST_CASE(tcs, list_option__type);
 
     ATF_ADD_TEST_CASE(tcs, path_option__short_name);
     ATF_ADD_TEST_CASE(tcs, path_option__long_name);

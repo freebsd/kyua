@@ -339,6 +339,22 @@ Specifies the format of the generated report and where it should be
 stored in the form @samp{format:path}.  At the moment, the only format
 type is @samp{console}.
 
+@item --results-filter=types
+@cindex @option{--results-filter}, @command{report}
+Comma-separated list of the test result types to include in the
+report.  The ordering of the values is respected so that you can
+determine how you want the list of tests to be shown.
+
+The valid values are: @samp{broken}, @samp{failed}, @samp{passed},
+@samp{skipped} and @samp{xfail}.  If the parameter supplied to the
+option is empty, filtering is suppressed and all result types are
+shown in the report.
+
+The default value for this flag includes all the test results except
+the passed tests.  Showing the passed tests by default clutters the
+report with too much information, so only abnormal conditions are
+included.
+
 @item --show-context
 @cindex @option{--show-context}, @command{report}
 Prints the runtime context of the action.

@@ -28,6 +28,7 @@
 
 #include <sstream>
 #include <stdexcept>
+#include <vector>
 
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/options.hpp"
@@ -40,6 +41,31 @@ namespace cmdline = utils::cmdline;
 
 
 namespace {
+
+
+/// Splits a string into different components.
+///
+/// \param str The string to split.
+/// \param delimiter The separator to use to split the words.
+///
+/// \return The different words in the input string as split by the provided
+/// delimiter.
+static std::vector< std::string >
+split_string(const std::string& str, const char delimiter)
+{
+    std::vector< std::string > words;
+    if (!str.empty()) {
+        std::string::size_type pos = str.find(delimiter);
+        words.push_back(str.substr(0, pos));
+        while (pos != std::string::npos) {
+            ++pos;
+            const std::string::size_type next = str.find(delimiter, pos);
+            words.push_back(str.substr(pos, next - pos));
+            pos = next;
+        }
+    }
+    return words;
+}
 
 
 /// Converts a string to an integer.
@@ -360,6 +386,74 @@ cmdline::int_option::convert(const std::string& raw_value)
         return to_int(raw_value);
     } catch (const std::runtime_error& e) {
         PRE_MSG(false, F("Raw value '%s' for int option not properly "
+                         "validated: %s") % raw_value % e.what());
+    }
+}
+
+
+/// Constructs a list option with both a short and a long name.
+///
+/// \param short_name_ The short name for the option.
+/// \param long_name_ The long name for the option.
+/// \param description_ A user-friendly description for the option.
+/// \param arg_name_ The name of the mandatory argument, for documentation
+///     purposes.
+/// \param default_value_ If not NULL, the default value for the mandatory
+///     argument.
+cmdline::list_option::list_option(const char short_name_,
+                                  const char* long_name_,
+                                  const char* description_,
+                                  const char* arg_name_,
+                                  const char* default_value_) :
+    base_option(short_name_, long_name_, description_, arg_name_,
+                default_value_)
+{
+}
+
+
+/// Constructs a list option with a long name only.
+///
+/// \param long_name_ The long name for the option.
+/// \param description_ A user-friendly description for the option.
+/// \param arg_name_ The name of the mandatory argument, for documentation
+///     purposes.
+/// \param default_value_ If not NULL, the default value for the mandatory
+///     argument.
+cmdline::list_option::list_option(const char* long_name_,
+                                  const char* description_,
+                                  const char* arg_name_,
+                                  const char* default_value_) :
+    base_option(long_name_, description_, arg_name_, default_value_)
+{
+}
+
+
+/// Ensures that a lisstring argument passed to the list_option is valid.
+///
+/// \param unused_raw_value The argument representing a list as provided by the
+///     user.
+void
+cmdline::list_option::validate(
+    const std::string& UTILS_UNUSED_PARAM(raw_value)) const
+{
+    // Any list is potentially valid; the caller must check for semantics.
+}
+
+
+/// Converts a string argument to a vector.
+///
+/// \param raw_value The argument representing a list as provided by the user.
+///
+/// \return The list.
+///
+/// \pre validate(raw_value) must be true.
+cmdline::list_option::option_type
+cmdline::list_option::convert(const std::string& raw_value)
+{
+    try {
+        return split_string(raw_value, ',');
+    } catch (const std::runtime_error& e) {
+        PRE_MSG(false, F("Raw value '%s' for list option not properly "
                          "validated: %s") % raw_value % e.what());
     }
 }
