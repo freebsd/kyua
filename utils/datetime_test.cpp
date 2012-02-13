@@ -30,6 +30,7 @@
 
 extern "C" {
 #include <time.h>
+#include <unistd.h>
 }
 
 #include <atf-c++.hpp>
