@@ -53,11 +53,10 @@ namespace detail {
 
 
 extern const int current_schema_version;
-extern const utils::fs::path schema_file;
 
 
-metadata initialize(utils::sqlite::database&,
-                    const utils::fs::path& = schema_file);
+utils::fs::path schema_file(void);
+metadata initialize(utils::sqlite::database&, const char* = NULL);
 
 
 }  // anonymous namespace

@@ -37,18 +37,21 @@
 #include "utils/datetime.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/logging/operations.hpp"
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/statement.ipp"
 
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
+namespace logging = utils::logging;
 namespace sqlite = utils::sqlite;
 
 
 ATF_TEST_CASE(detail_initialize__ok);
 ATF_TEST_CASE_HEAD(detail_initialize__ok)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(detail_initialize__ok)
 {
@@ -78,7 +81,7 @@ ATF_TEST_CASE_BODY(detail_initialize__missing_schema)
 {
     sqlite::database db = sqlite::database::in_memory();
     ATF_REQUIRE_THROW_RE(store::error, "Cannot open.*'abc.sql'",
-                         store::detail::initialize(db, fs::path("abc.sql")));
+                         store::detail::initialize(db, "abc.sql"));
 }
 
 
@@ -91,14 +94,15 @@ ATF_TEST_CASE_BODY(detail_initialize__sqlite_error)
 
     sqlite::database db = sqlite::database::in_memory();
     ATF_REQUIRE_THROW_RE(store::error, "Failed to initialize.*:.*foo_bar_baz",
-                         store::detail::initialize(db, fs::path("schema.sql")));
+                         store::detail::initialize(db, "schema.sql"));
 }
 
 
 ATF_TEST_CASE(backend__open_ro__ok);
 ATF_TEST_CASE_HEAD(backend__open_ro__ok)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(backend__open_ro__ok)
 {
@@ -124,7 +128,8 @@ ATF_TEST_CASE_BODY(backend__open_ro__missing_file)
 ATF_TEST_CASE(backend__open_ro__integrity_error);
 ATF_TEST_CASE_HEAD(backend__open_ro__integrity_error)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(backend__open_ro__integrity_error)
 {
@@ -142,7 +147,8 @@ ATF_TEST_CASE_BODY(backend__open_ro__integrity_error)
 ATF_TEST_CASE(backend__open_rw__ok);
 ATF_TEST_CASE_HEAD(backend__open_rw__ok)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(backend__open_rw__ok)
 {
@@ -167,7 +173,8 @@ ATF_TEST_CASE_BODY(backend__open_rw__create_missing)
 ATF_TEST_CASE(backend__open_rw__integrity_error);
 ATF_TEST_CASE_HEAD(backend__open_rw__integrity_error)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(backend__open_rw__integrity_error)
 {

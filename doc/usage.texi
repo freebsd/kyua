@@ -462,4 +462,11 @@ Path to the location of the installed Lua modules provided by @command{kyua}.
 
 Defaults to @file{@value{KYUA_LUADIR}}.
 
+@item KYUA_STOREDIR
+@cindex kYUA_STOREDIR
+Path to the location of the installed store support files; e.g. the
+directory containing the SQL database schema.
+
+Defaults to @file{@value{KYUA_STOREDIR}}.
+
 @end table

@@ -47,6 +47,7 @@
 #include "store/exceptions.hpp"
 #include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/logging/operations.hpp"
 #include "utils/optional.ipp"
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/exceptions.hpp"
@@ -56,6 +57,7 @@
 namespace atf_iface = engine::atf_iface;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
+namespace logging = utils::logging;
 namespace plain_iface = engine::plain_iface;
 namespace sqlite = utils::sqlite;
 
@@ -109,7 +111,8 @@ do_put_result_ok_test(const engine::test_result& result,
 ATF_TEST_CASE(commit__ok);
 ATF_TEST_CASE_HEAD(commit__ok)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(commit__ok)
 {
@@ -125,7 +128,8 @@ ATF_TEST_CASE_BODY(commit__ok)
 ATF_TEST_CASE(commit__fail);
 ATF_TEST_CASE_HEAD(commit__fail)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(commit__fail)
 {
@@ -153,7 +157,8 @@ ATF_TEST_CASE_BODY(commit__fail)
 ATF_TEST_CASE(rollback__ok);
 ATF_TEST_CASE_HEAD(rollback__ok)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(rollback__ok)
 {
@@ -170,7 +175,8 @@ ATF_TEST_CASE_BODY(rollback__ok)
 ATF_TEST_CASE(get_put_action__ok);
 ATF_TEST_CASE_HEAD(get_put_action__ok)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(get_put_action__ok)
 {
@@ -210,7 +216,8 @@ ATF_TEST_CASE_BODY(get_put_action__ok)
 ATF_TEST_CASE(get_put_action__get_fail__missing);
 ATF_TEST_CASE_HEAD(get_put_action__get_fail__missing)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(get_put_action__get_fail__missing)
 {
@@ -225,7 +232,8 @@ ATF_TEST_CASE_BODY(get_put_action__get_fail__missing)
 ATF_TEST_CASE(get_put_action__get_fail__invalid_context);
 ATF_TEST_CASE_HEAD(get_put_action__get_fail__invalid_context)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(get_put_action__get_fail__invalid_context)
 {
@@ -243,7 +251,8 @@ ATF_TEST_CASE_BODY(get_put_action__get_fail__invalid_context)
 ATF_TEST_CASE(get_put_action__put_fail);
 ATF_TEST_CASE_HEAD(get_put_action__put_fail)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(get_put_action__put_fail)
 {
@@ -262,7 +271,8 @@ ATF_TEST_CASE_BODY(get_put_action__put_fail)
 ATF_TEST_CASE(get_action_results__none);
 ATF_TEST_CASE_HEAD(get_action_results__none)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(get_action_results__none)
 {
@@ -276,7 +286,8 @@ ATF_TEST_CASE_BODY(get_action_results__none)
 ATF_TEST_CASE(get_action_results__many);
 ATF_TEST_CASE_HEAD(get_action_results__many)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(get_action_results__many)
 {
@@ -351,7 +362,8 @@ ATF_TEST_CASE_BODY(get_action_results__many)
 ATF_TEST_CASE(get_latest_action__ok);
 ATF_TEST_CASE_HEAD(get_latest_action__ok)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(get_latest_action__ok)
 {
@@ -387,7 +399,8 @@ ATF_TEST_CASE_BODY(get_latest_action__ok)
 ATF_TEST_CASE(get_latest_action__none);
 ATF_TEST_CASE_HEAD(get_latest_action__none)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(get_latest_action__none)
 {
@@ -400,7 +413,8 @@ ATF_TEST_CASE_BODY(get_latest_action__none)
 ATF_TEST_CASE(get_latest_action__invalid_context);
 ATF_TEST_CASE_HEAD(get_latest_action__invalid_context)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(get_latest_action__invalid_context)
 {
@@ -418,7 +432,8 @@ ATF_TEST_CASE_BODY(get_latest_action__invalid_context)
 ATF_TEST_CASE(get_put_context__ok);
 ATF_TEST_CASE_HEAD(get_put_context__ok)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(get_put_context__ok)
 {
@@ -457,7 +472,8 @@ ATF_TEST_CASE_BODY(get_put_context__ok)
 ATF_TEST_CASE(get_put_context__get_fail__missing);
 ATF_TEST_CASE_HEAD(get_put_context__get_fail__missing)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(get_put_context__get_fail__missing)
 {
@@ -472,7 +488,8 @@ ATF_TEST_CASE_BODY(get_put_context__get_fail__missing)
 ATF_TEST_CASE(get_put_context__get_fail__invalid_cwd);
 ATF_TEST_CASE_HEAD(get_put_context__get_fail__invalid_cwd)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(get_put_context__get_fail__invalid_cwd)
 {
@@ -493,7 +510,8 @@ ATF_TEST_CASE_BODY(get_put_context__get_fail__invalid_cwd)
 ATF_TEST_CASE(get_put_context__get_fail__invalid_env_vars);
 ATF_TEST_CASE_HEAD(get_put_context__get_fail__invalid_env_vars)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(get_put_context__get_fail__invalid_env_vars)
 {
@@ -533,7 +551,8 @@ ATF_TEST_CASE_BODY(get_put_context__get_fail__invalid_env_vars)
 ATF_TEST_CASE(get_put_context__put_fail);
 ATF_TEST_CASE_HEAD(get_put_context__put_fail)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(get_put_context__put_fail)
 {
@@ -550,7 +569,8 @@ ATF_TEST_CASE_BODY(get_put_context__put_fail)
 ATF_TEST_CASE(put_test_program__atf);
 ATF_TEST_CASE_HEAD(put_test_program__atf)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(put_test_program__atf)
 {
@@ -589,7 +609,8 @@ ATF_TEST_CASE_BODY(put_test_program__atf)
 ATF_TEST_CASE(put_test_program__plain);
 ATF_TEST_CASE_HEAD(put_test_program__plain)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(put_test_program__plain)
 {
@@ -634,7 +655,8 @@ ATF_TEST_CASE_BODY(put_test_program__plain)
 ATF_TEST_CASE(put_test_program__fail);
 ATF_TEST_CASE_HEAD(put_test_program__fail)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(put_test_program__fail)
 {
@@ -652,7 +674,8 @@ ATF_TEST_CASE_BODY(put_test_program__fail)
 ATF_TEST_CASE(put_test_case__atf);
 ATF_TEST_CASE_HEAD(put_test_case__atf)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(put_test_case__atf)
 {
@@ -708,7 +731,8 @@ ATF_TEST_CASE_BODY(put_test_case__atf)
 ATF_TEST_CASE(put_test_case__plain);
 ATF_TEST_CASE_HEAD(put_test_case__plain)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(put_test_case__plain)
 {
@@ -746,7 +770,8 @@ ATF_TEST_CASE_BODY(put_test_case__plain)
 ATF_TEST_CASE(put_test_case__fail);
 ATF_TEST_CASE_HEAD(put_test_case__fail)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(put_test_case__fail)
 {
@@ -765,7 +790,8 @@ ATF_TEST_CASE_BODY(put_test_case__fail)
 ATF_TEST_CASE(put_test_case_file__empty);
 ATF_TEST_CASE_HEAD(put_test_case_file__empty)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(put_test_case_file__empty)
 {
@@ -790,7 +816,8 @@ ATF_TEST_CASE_BODY(put_test_case_file__empty)
 ATF_TEST_CASE(put_test_case_file__some);
 ATF_TEST_CASE_HEAD(put_test_case_file__some)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(put_test_case_file__some)
 {
@@ -822,7 +849,8 @@ ATF_TEST_CASE_BODY(put_test_case_file__some)
 ATF_TEST_CASE(put_test_case_file__fail);
 ATF_TEST_CASE_HEAD(put_test_case_file__fail)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(put_test_case_file__fail)
 {
@@ -842,7 +870,8 @@ ATF_TEST_CASE_BODY(put_test_case_file__fail)
 ATF_TEST_CASE(put_result__ok__broken);
 ATF_TEST_CASE_HEAD(put_result__ok__broken)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(put_result__ok__broken)
 {
@@ -854,7 +883,8 @@ ATF_TEST_CASE_BODY(put_result__ok__broken)
 ATF_TEST_CASE(put_result__ok__expected_failure);
 ATF_TEST_CASE_HEAD(put_result__ok__expected_failure)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(put_result__ok__expected_failure)
 {
@@ -867,7 +897,8 @@ ATF_TEST_CASE_BODY(put_result__ok__expected_failure)
 ATF_TEST_CASE(put_result__ok__failed);
 ATF_TEST_CASE_HEAD(put_result__ok__failed)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(put_result__ok__failed)
 {
@@ -879,7 +910,8 @@ ATF_TEST_CASE_BODY(put_result__ok__failed)
 ATF_TEST_CASE(put_result__ok__passed);
 ATF_TEST_CASE_HEAD(put_result__ok__passed)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(put_result__ok__passed)
 {
@@ -891,7 +923,8 @@ ATF_TEST_CASE_BODY(put_result__ok__passed)
 ATF_TEST_CASE(put_result__ok__skipped);
 ATF_TEST_CASE_HEAD(put_result__ok__skipped)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(put_result__ok__skipped)
 {
@@ -903,7 +936,8 @@ ATF_TEST_CASE_BODY(put_result__ok__skipped)
 ATF_TEST_CASE(put_result__fail);
 ATF_TEST_CASE_HEAD(put_result__fail)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(put_result__fail)
 {

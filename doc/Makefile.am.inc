@@ -42,6 +42,7 @@ doc/paths.texi: $(srcdir)/Makefile
 	echo "@set KYUA_DOCDIR $(docdir)" >>doc/paths.texi.tmp
 	echo "@set KYUA_EGDIR $(pkgdatadir)/examples" >>doc/paths.texi.tmp
 	echo "@set KYUA_LUADIR $(luadir)" >>doc/paths.texi.tmp
+	echo "@set KYUA_STOREDIR $(storedir)" >>doc/paths.texi.tmp
 	echo "@set KYUA_TESTSDIR $(testsdir)" >>doc/paths.texi.tmp
 	mv doc/paths.texi.tmp doc/paths.texi
 

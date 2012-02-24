@@ -32,6 +32,7 @@
 #include "store/exceptions.hpp"
 #include "store/metadata.hpp"
 #include "store/transaction.hpp"
+#include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/sanity.hpp"
@@ -97,29 +98,37 @@ empty_database(sqlite::database& db)
 }  // anonymous namespace
 
 
-/// The path to the schema file to be used by initialize().
-const fs::path store::detail::schema_file =
-    fs::path(KYUA_STOREDIR) / "schema.sql";
+/// Calculates the path to the schema file for the database.
+///
+/// \return The path to the installed schema.sql file.
+fs::path
+store::detail::schema_file(void)
+{
+    return fs::path(utils::getenv_with_default("KYUA_STOREDIR", KYUA_STOREDIR))
+        / "schema.sql";
+}
 
 
 /// Initializes an empty database.
 ///
 /// \param db The database to initialize.
-/// \param file The schema file to use; for testing purposes.
+/// \param file If not NULL, the schema file to use; for testing purposes only.
 ///
 /// \return The metadata record written into the new database.
 ///
 /// \throw store::error If there is a problem initializing the database.
 store::metadata
-store::detail::initialize(sqlite::database& db, const fs::path& file)
+store::detail::initialize(sqlite::database& db, const char* file)
 {
     PRE(empty_database(db));
 
-    std::ifstream input(file.c_str());
-    if (!input)
-        throw error(F("Cannot open database schema '%s'") % file);
+    const fs::path schema = file == NULL ? schema_file() : fs::path(file);
 
-    LI(F("Populating new database with schema from %s") % file);
+    std::ifstream input(schema.c_str());
+    if (!input)
+        throw error(F("Cannot open database schema '%s'") % schema);
+
+    LI(F("Populating new database with schema from %s") % schema);
     const std::string schema_string = utils::read_stream(input);
     try {
         db.exec(schema_string);

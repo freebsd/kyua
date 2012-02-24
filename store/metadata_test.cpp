@@ -32,8 +32,10 @@
 
 #include "store/backend.hpp"
 #include "store/exceptions.hpp"
+#include "utils/logging/operations.hpp"
 #include "utils/sqlite/database.hpp"
 
+namespace logging = utils::logging;
 namespace sqlite = utils::sqlite;
 
 
@@ -43,7 +45,7 @@ namespace {
 /// Creates a test in-memory database.
 ///
 /// When using this function, you must define a 'require.files' property in this
-/// case pointing to store::detail::schema_file.
+/// case pointing to store::detail::schema_file().
 ///
 /// The database created by this function mimics a real complete database, but
 /// without any predefined values.  I.e. for our particular case, the metadata
@@ -66,7 +68,8 @@ create_database(void)
 ATF_TEST_CASE(fetch_latest__ok);
 ATF_TEST_CASE_HEAD(fetch_latest__ok)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(fetch_latest__ok)
 {
@@ -85,7 +88,8 @@ ATF_TEST_CASE_BODY(fetch_latest__ok)
 ATF_TEST_CASE(fetch_latest__empty_metadata);
 ATF_TEST_CASE_HEAD(fetch_latest__empty_metadata)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(fetch_latest__empty_metadata)
 {
@@ -124,7 +128,8 @@ ATF_TEST_CASE_BODY(fetch_latest__no_schema_version)
 ATF_TEST_CASE(fetch_latest__invalid_timestamp);
 ATF_TEST_CASE_HEAD(fetch_latest__invalid_timestamp)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(fetch_latest__invalid_timestamp)
 {
@@ -141,7 +146,8 @@ ATF_TEST_CASE_BODY(fetch_latest__invalid_timestamp)
 ATF_TEST_CASE(fetch_latest__invalid_schema_version);
 ATF_TEST_CASE_HEAD(fetch_latest__invalid_schema_version)
 {
-    set_md_var("require.files", store::detail::schema_file.c_str());
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
 }
 ATF_TEST_CASE_BODY(fetch_latest__invalid_schema_version)
 {
