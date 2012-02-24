@@ -1,33 +1,37 @@
 Changes in version 0.3
 ======================
 
-STILL UNDER DEVELOPMENT; NOT RELEASED YET.
+Experimental version released on February 24th, 2012.
 
-* Switched to use Lutok instead of our own wrappers over the Lua C
-  library.  Lutok is just what used to be our own utils::lua module,
-  but is now distributed separately.
+* Made the 'test' command record the results of the executed test
+  cases into a SQLite database.  As a side effect, 'test' now supports a
+  '--store' option to indicate where the database lives.
+
+* Added the 'report' command to generate plain-text reports of the
+  test results stored in the database.  The interface of this command is
+  certainly subject to change at this point.
+
+* Added the 'db-exec' command to directly interact with the store
+  database.
+
+* Issue 28: Added support for the 'require.memory' test case property
+  introduced in ATF 0.15.
 
 * Renamed the user-specific configuration file from ~/.kyuarc to
   ~/.kyua/kyua.conf for consistency with other files stored in the
   ~/.kyua/ subdirectory.
 
-* Added the db-exec command to directly interact with the store
-  database.
-
-* Made the 'test' command generate persistent output (SO FAR WE ONLY
-  STORE THE ACTION DATA; REWORD THIS ONCE WE ADD TEST RESULTS SUPPORT).
-  As a side effect, 'test' now supports a '--store' option to indicate
-  where the database lives.
-
-* Added the 'report' command to generate plain-text reports of the
-  test results stored in the database.
+* Switched to use Lutok instead of our own wrappers over the Lua C
+  library.  Lutok is just what used to be our own utils::lua module, but
+  is now distributed separately.
 
 * Removed the 'Atffile's from the source tree.  Kyua is stable enough
   to generate trustworthy reports, and we do not want to give the
   impression that atf-run / atf-report are still supported.
 
-* Issue 28: Added support for the 'require.memory' test case property
-  introduced in ATF 0.15.
+* Enabled logging to stderr for our own test programs.  This makes it
+  slightly easier to debug problems in our own code when we get a
+  failing test.
 
 
 Changes in version 0.2
