@@ -123,7 +123,9 @@ sysctlbyname(const char* UTILS_UNUSED_PARAM(name),
 static int64_t
 query_sysctl(const char* mib)
 {
-    int64_t value;
+    // This must be explicitly initialized to 0.  If the sysctl query returned a
+    // value smaller in size than value_length, we would get garbage otherwise.
+    int64_t value = 0;
     std::size_t value_length = sizeof(value);
     if (::sysctlbyname(mib, &value, &value_length, NULL, 0) == -1) {
         const int original_errno = errno;

@@ -50,6 +50,7 @@ ATF_TEST_CASE_BODY(physical_memory)
         ATF_REQUIRE(memory == 0);
     } else if (std::strcmp(MEMORY_QUERY_TYPE, "sysctlbyname") == 0) {
         ATF_REQUIRE(memory > 0);
+        ATF_REQUIRE(memory < 100 * units::TB);  // Large enough for now...
     } else {
         fail("Unimplemented memory query type");
     }
