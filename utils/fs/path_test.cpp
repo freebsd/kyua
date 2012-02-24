@@ -157,7 +157,14 @@ ATF_TEST_CASE_WITHOUT_HEAD(to_absolute);
 ATF_TEST_CASE_BODY(to_absolute)
 {
     ATF_REQUIRE(::chdir("/bin") != -1);
-    ATF_REQUIRE_EQ(path("/bin/ls"), path("ls").to_absolute());
+    const std::string absolute = path("ls").to_absolute().str();
+    // In some systems (e.g. in Fedora 17), /bin is really a symlink to
+    // /usr/bin.  Doing an explicit match of 'absolute' to /bin/ls fails in such
+    // case.  Instead, attempt doing a search in the generated path just for a
+    // substring containing '/bin/ls'.  Note that this can still fail if /bin is
+    // linked to something arbitrary like /a/b... but let's just assume this
+    // does not happen.
+    ATF_REQUIRE(absolute.find("/bin/ls") != std::string::npos);
 }
 
 
