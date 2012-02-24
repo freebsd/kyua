@@ -144,7 +144,7 @@ Environment variables:
 EOF
     mkdir testsuite
     ( cd testsuite && HOME=$(pwd)/home MOCK=mock1 env ) \
-        | sort | sed -e 's,^,    ,' >>expout
+        | sort | sed -e 's,^,    ,' | grep -v '^    _.*=.*' >>expout
     rmdir testsuite
     cat >>expout <<EOF
 ===> Skipped tests
@@ -155,7 +155,7 @@ Test cases: 2 total, 1 skipped, 0 expected failures, 0 broken, 0 failed
 Total time: S.UUUs
 EOF
     atf_check -s exit:0 -o file:expout -e empty -x kyua report --show-context \
-        "| ${utils_strip_timestamp}"
+        "| ${utils_strip_timestamp} | grep -v '^    _.*=.*'"
 }
 
 
