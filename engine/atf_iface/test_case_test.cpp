@@ -39,6 +39,7 @@
 #include "utils/defs.hpp"
 #include "utils/env.hpp"
 #include "utils/fs/operations.hpp"
+#include "utils/memory.hpp"
 #include "utils/passwd.hpp"
 #include "utils/test_utils.hpp"
 #include "utils/units.hpp"
@@ -969,6 +970,8 @@ ATF_TEST_CASE_BODY(check_requirements__required_memory__fail)
     const atf_iface::test_case test_case =
         atf_iface::test_case::from_properties(test_program, "name", metadata);
 
+    if (utils::physical_memory() == 0)
+        skip("Don't know how to query the amount of physical memory");
     ATF_REQUIRE_MATCH("Requires 100.00T .*memory",
                       test_case.check_requirements(mock_config));
 }
