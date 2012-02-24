@@ -49,7 +49,7 @@ EOF
     utils_cp_helper simple_all_pass .
     test -d ../.kyua || mkdir ../.kyua
     kyua=$(which kyua)
-    atf_check -s exit:0 -o save:stdout -e empty env -i \
+    atf_check -s exit:0 -o save:stdout -e empty env \
         HOME="$(pwd)/home" MOCK="${mock_env}" \
         "${kyua}" test --store=../.kyua/store.db
 
@@ -141,8 +141,12 @@ show_context_body() {
 ===> Execution context
 Current directory: $(pwd)/testsuite
 Environment variables:
-    HOME=$(pwd)/testsuite/home
-    MOCK=mock1
+EOF
+    mkdir testsuite
+    ( cd testsuite && HOME=$(pwd)/home MOCK=mock1 env ) \
+        | sort | sed -e 's,^,    ,' >>expout
+    rmdir testsuite
+    cat >>expout <<EOF
 ===> Skipped tests
 simple_all_pass:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 ===> Summary
