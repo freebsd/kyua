@@ -55,7 +55,7 @@ AC_DEFUN([KYUA_DEVELOPER_MODE], [
     AC_ARG_ENABLE(
         [developer],
         AS_HELP_STRING([--enable-developer], [enable developer features]),,
-        [if test -d ${srcdir}/.svn; then
+        [if test -d ${srcdir}/.git; then
              AC_MSG_NOTICE([building from HEAD; developer mode autoenabled])
              enable_developer=yes
          else
