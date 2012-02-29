@@ -58,6 +58,7 @@ libcli_a_CPPFLAGS += -DKYUA_DOCDIR="\"$(docdir)\""
 libcli_a_CPPFLAGS += $(ENGINE_CFLAGS) $(STORE_CFLAGS) $(UTILS_CFLAGS)
 libcli_a_LIBADD = libutils.a
 
+if WITH_ATF
 tests_clidir = $(pkgtestsdir)/cli
 
 tests_cli_DATA = cli/Kyuafile
@@ -124,3 +125,4 @@ tests_cli_PROGRAMS += cli/main_test
 cli_main_test_SOURCES = cli/main_test.cpp
 cli_main_test_CXXFLAGS = $(CLI_TESTS_CXXFLAGS)
 cli_main_test_LDADD = $(CLI_TESTS_LDADD)
+endif

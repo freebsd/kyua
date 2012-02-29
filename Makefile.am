@@ -28,6 +28,9 @@
 
 ACLOCAL_AMFLAGS = -I m4
 
+CHECK_LOCAL =
+PHONY_TARGETS =
+
 EXTRA_DIST =
 noinst_DATA =
 noinst_LIBRARIES =
@@ -36,6 +39,7 @@ doc_DATA = AUTHORS COPYING NEWS README
 noinst_DATA += INSTALL README
 EXTRA_DIST += $(doc_DATA) INSTALL README
 
+if WITH_ATF
 testsdir = $(exec_prefix)/tests
 pkgtestsdir = $(testsdir)/kyua-cli
 
@@ -43,6 +47,7 @@ tests_topdir = $(pkgtestsdir)
 
 tests_top_DATA = Kyuafile
 EXTRA_DIST += $(tests_top_DATA)
+endif
 
 include admin/Makefile.am.inc
 include bootstrap/Makefile.am.inc
@@ -68,12 +73,27 @@ CHECK_ENVIRONMENT = KYUA_CONFDIR=/non-existent \
 INSTALLCHECK_ENVIRONMENT = KYUA_CONFDIR=/non-existent \
                            PATH=$(prefix)/bin:$${PATH}
 
-check-local: check-kyua
-.PHONY: check-kyua
+if WITH_ATF
+CHECK_LOCAL += check-kyua
+PHONY_TARGETS += check-kyua
 check-kyua:
 	$(srcdir)/admin/populate-builddir.sh $(top_srcdir) $(top_builddir) \
 	    cleanlist
 	$(CHECK_ENVIRONMENT) $(TESTS_ENVIRONMENT) ./kyua --config=none test
+
+installcheck-local: installcheck-kyua
+PHONY_TARGETS += installcheck-kyua
+installcheck-kyua:
+	cd $(pkgtestsdir) && $(INSTALLCHECK_ENVIRONMENT) $(TESTS_ENVIRONMENT) \
+	    kyua --config=none test
+else
+dist-hook: forbid-dist
+PHONY_TARGETS += forbid-dist
+forbid-dist:
+	@echo "Sorry; cannot make dist without atf."
+	@false
+endif
+check-local: $(CHECK_LOCAL)
 
 CLEAN_TARGETS = clean-builddir
 clean-builddir:
@@ -81,12 +101,6 @@ clean-builddir:
 	    rm -f $$(cat cleanlist); \
 	    rm -f cleanlist; \
 	fi
-
-installcheck-local: installcheck-kyua
-.PHONY: installcheck-kyua
-installcheck-kyua:
-	cd $(pkgtestsdir) && $(INSTALLCHECK_ENVIRONMENT) $(TESTS_ENVIRONMENT) \
-	    kyua --config=none test
 
 EXTRA_DIST += Doxyfile
 if WITH_DOXYGEN
@@ -107,6 +121,8 @@ endif
 
 clean-local: $(CLEAN_TARGETS)
 
-.PHONY: clean-all
+PHONY_TARGETS += clean-all
 clean-all:
 	GIT="$(GIT)" $(SH) $(srcdir)/admin/clean-all.sh
+
+.PHONY: $(PHONY_TARGETS)

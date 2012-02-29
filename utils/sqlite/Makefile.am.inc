@@ -42,6 +42,7 @@ libutils_a_SOURCES += utils/sqlite/statement.ipp
 libutils_a_SOURCES += utils/sqlite/transaction.cpp
 libutils_a_SOURCES += utils/sqlite/transaction.hpp
 
+if WITH_ATF
 tests_utils_sqlitedir = $(pkgtestsdir)/utils/sqlite
 
 tests_utils_sqlite_DATA = utils/sqlite/Kyuafile
@@ -74,3 +75,4 @@ tests_utils_sqlite_PROGRAMS += utils/sqlite/transaction_test
 utils_sqlite_transaction_test_SOURCES = utils/sqlite/transaction_test.cpp
 utils_sqlite_transaction_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 utils_sqlite_transaction_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
+endif

@@ -47,6 +47,7 @@ dist_lua_modules_DATA  = engine/user_files/init.lua
 dist_lua_modules_DATA += engine/user_files/config_1.lua
 dist_lua_modules_DATA += engine/user_files/kyuafile_1.lua
 
+if WITH_ATF
 tests_engine_user_filesdir = $(pkgtestsdir)/engine/user_files
 
 tests_engine_user_files_DATA = engine/user_files/Kyuafile
@@ -106,3 +107,4 @@ engine_user_files_kyuafile_1_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
                                              $(ATF_CXX_CFLAGS)
 engine_user_files_kyuafile_1_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
                                           $(ATF_CXX_LIBS)
+endif

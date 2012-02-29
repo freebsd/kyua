@@ -31,6 +31,7 @@ examplesdir = $(pkgdatadir)/examples
 dist_examples_DATA  = examples/Kyuafile.top
 dist_examples_DATA += examples/kyua.conf
 
+if WITH_ATF
 tests_examplesdir = $(pkgtestsdir)/examples
 
 tests_examples_DATA = examples/Kyuafile
@@ -43,3 +44,4 @@ examples_syntax_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
                                 $(UTILS_TEST_CFLAGS) $(ATF_CXX_CFLAGS)
 examples_syntax_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
                              $(UTILS_TEST_LIBS) $(ATF_CXX_LIBS)
+endif

@@ -43,6 +43,7 @@ libutils_a_SOURCES += utils/cmdline/parser.ipp
 libutils_a_SOURCES += utils/cmdline/ui.cpp
 libutils_a_SOURCES += utils/cmdline/ui.hpp
 
+if WITH_ATF
 libutils_test_a_SOURCES += utils/cmdline/ui_mock.hpp
 libutils_test_a_SOURCES += utils/cmdline/ui_mock.cpp
 
@@ -89,3 +90,4 @@ tests_utils_cmdline_PROGRAMS += utils/cmdline/ui_test
 utils_cmdline_ui_test_SOURCES = utils/cmdline/ui_test.cpp
 utils_cmdline_ui_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 utils_cmdline_ui_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
+endif

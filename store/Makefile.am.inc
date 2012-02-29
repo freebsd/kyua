@@ -45,6 +45,7 @@ libstore_a_SOURCES += store/transaction.hpp
 storedir = $(pkgdatadir)/store
 dist_store_DATA = store/schema.sql
 
+if WITH_ATF
 tests_storedir = $(pkgtestsdir)/store
 
 tests_store_DATA = store/Kyuafile
@@ -85,3 +86,4 @@ store_transaction_test_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) \
                                   $(ATF_CXX_CFLAGS)
 store_transaction_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) \
                                $(UTILS_TEST_LIBS) $(UTILS_LIBS) $(ATF_CXX_LIBS)
+endif

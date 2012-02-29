@@ -26,6 +26,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+if WITH_ATF
 tests_integration_helpersdir = $(pkgtestsdir)/integration/helpers
 
 tests_integration_helpers_PROGRAMS = integration/helpers/bad_test_program
@@ -76,3 +77,4 @@ integration_helpers_simple_some_fail_SOURCES = \
     integration/helpers/simple_some_fail.cpp
 integration_helpers_simple_some_fail_CXXFLAGS = $(ATF_CXX_CFLAGS)
 integration_helpers_simple_some_fail_LDADD = $(ATF_CXX_LIBS)
+endif

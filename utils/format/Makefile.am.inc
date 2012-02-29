@@ -33,6 +33,7 @@ libutils_a_SOURCES += utils/format/formatter.hpp
 libutils_a_SOURCES += utils/format/formatter.ipp
 libutils_a_SOURCES += utils/format/macros.hpp
 
+if WITH_ATF
 tests_utils_formatdir = $(pkgtestsdir)/utils/format
 
 tests_utils_format_DATA = utils/format/Kyuafile
@@ -47,3 +48,4 @@ tests_utils_format_PROGRAMS += utils/format/formatter_test
 utils_format_formatter_test_SOURCES = utils/format/formatter_test.cpp
 utils_format_formatter_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 utils_format_formatter_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
+endif

@@ -41,6 +41,7 @@ libutils_a_SOURCES += utils/fs/operations.hpp
 libutils_a_SOURCES += utils/fs/path.cpp
 libutils_a_SOURCES += utils/fs/path.hpp
 
+if WITH_ATF
 tests_utils_fsdir = $(pkgtestsdir)/utils/fs
 
 tests_utils_fs_DATA = utils/fs/Kyuafile
@@ -74,3 +75,4 @@ tests_utils_fs_PROGRAMS += utils/fs/path_test
 utils_fs_path_test_SOURCES = utils/fs/path_test.cpp
 utils_fs_path_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 utils_fs_path_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
+endif

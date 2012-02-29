@@ -35,6 +35,7 @@ libutils_a_SOURCES += utils/signals/programmer.hpp
 libutils_a_SOURCES += utils/signals/timer.cpp
 libutils_a_SOURCES += utils/signals/timer.hpp
 
+if WITH_ATF
 tests_utils_signalsdir = $(pkgtestsdir)/utils/signals
 
 tests_utils_signals_DATA = utils/signals/Kyuafile
@@ -67,3 +68,4 @@ utils_signals_timer_test_CXXFLAGS = $(UTILS_TEST_CFLAGS) $(UTILS_CFLAGS) \
                                     $(ATF_CXX_CFLAGS)
 utils_signals_timer_test_LDADD = $(UTILS_TEST_LIBS) $(UTILS_LIBS) \
                                  $(ATF_CXX_LIBS)
+endif

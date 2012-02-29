@@ -52,6 +52,7 @@ libutils_a_SOURCES += utils/stream.hpp
 libutils_a_SOURCES += utils/units.cpp
 libutils_a_SOURCES += utils/units.hpp
 
+if WITH_ATF
 UTILS_TEST_CFLAGS = $(UTILS_CFLAGS)
 UTILS_TEST_LIBS = libutils_test.a $(UTILS_LIBS)
 
@@ -115,6 +116,7 @@ tests_utils_PROGRAMS += utils/units_test
 utils_units_test_SOURCES = utils/units_test.cpp
 utils_units_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 utils_units_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
+endif
 
 include utils/cmdline/Makefile.am.inc
 include utils/format/Makefile.am.inc

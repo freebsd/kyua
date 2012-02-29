@@ -31,10 +31,14 @@ Dependencies
 To build and use Kyua successfully you need:
 
 * A standards-compliant C++ complier.
-* The Automated Testing Framework, version 0.15 or greater.
 * Lutok 0.1 with Lua 5.1.
 * pkg-config.
 * SQLite 3.6.22.
+
+To build the Kyua tests, you optionally need:
+
+* The Automated Testing Framework (ATF), version 0.15 or greater.  This
+  is required if you want to create a distribution file.
 
 If you are building Kyua from the code on the repository, you will also
 need the following tools:
@@ -158,6 +162,22 @@ The following flags are specific to Kyua's 'configure' script:
   The compiler will be executed with an exhaustive collection of warning
   detection features regardless of the value of this flag.  However, such
   warnings are only fatal when --enable-developer is 'yes'.
+
+* --with-atf
+  Possible values: yes, no, auto.
+  Default: auto.
+
+  Enables usage of ATF to build (and later install) the tests.
+
+  Setting this to 'yes' causes the configure script to look for ATF
+  unconditionally and abort if not found.  Setting this to 'auto' lets
+  configure perform the best decision based on availability of ATF.
+  Setting this to 'no' explicitly disables ATF usage.
+
+  When support for tests is enabled, the build process will generate the
+  test programs and will later install them into the tests tree.
+  Running 'make check' or 'make installcheck' from within the source
+  directory will cause these tests to be run with Kyua.
 
 * --with-doxygen
   Possible values: yes, no, auto or a path.

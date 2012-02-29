@@ -35,6 +35,7 @@ libengine_a_SOURCES += engine/drivers/run_tests.hpp
 libengine_a_SOURCES += engine/drivers/scan_action.cpp
 libengine_a_SOURCES += engine/drivers/scan_action.hpp
 
+if WITH_ATF
 tests_engine_driversdir = $(pkgtestsdir)/engine/drivers
 
 tests_engine_drivers_DATA = engine/drivers/Kyuafile
@@ -73,3 +74,4 @@ engine_drivers_scan_action_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
                                            $(ATF_CXX_CFLAGS)
 engine_drivers_scan_action_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
                                         $(ATF_CXX_LIBS)
+endif

@@ -40,6 +40,7 @@ libutils_a_SOURCES += utils/process/system.hpp
 libutils_a_SOURCES += utils/process/systembuf.cpp
 libutils_a_SOURCES += utils/process/systembuf.hpp
 
+if WITH_ATF
 tests_utils_processdir = $(pkgtestsdir)/utils/process
 
 tests_utils_process_DATA = utils/process/Kyuafile
@@ -74,3 +75,4 @@ tests_utils_process_PROGRAMS += utils/process/systembuf_test
 utils_process_systembuf_test_SOURCES = utils/process/systembuf_test.cpp
 utils_process_systembuf_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 utils_process_systembuf_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
+endif

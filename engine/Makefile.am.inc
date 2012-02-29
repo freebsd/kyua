@@ -49,6 +49,7 @@ libengine_a_SOURCES += engine/test_program.hpp
 libengine_a_SOURCES += engine/test_result.cpp
 libengine_a_SOURCES += engine/test_result.hpp
 
+if WITH_ATF
 tests_enginedir = $(pkgtestsdir)/engine
 
 tests_engine_DATA = engine/Kyuafile
@@ -105,6 +106,7 @@ engine_test_result_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_TEST_CFLAGS) \
                                    $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 engine_test_result_test_LDADD = $(ENGINE_LIBS) $(UTILS_TEST_LIBS) \
                                 $(UTILS_LIBS) $(ATF_CXX_LIBS)
+endif
 
 include engine/atf_iface/Makefile.am.inc
 include engine/drivers/Makefile.am.inc

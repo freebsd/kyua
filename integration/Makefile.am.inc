@@ -26,6 +26,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+if WITH_ATF
 tests_integrationdir = $(pkgtestsdir)/integration
 
 tests_integration_DATA = integration/Kyuafile
@@ -121,5 +122,6 @@ integration/global_test: $(srcdir)/integration/global_test.sh $(ATF_SH_DEPS)
 	test -d integration || mkdir -p integration
 	@src="$(srcdir)/integration/global_test.sh"; \
 	dst="integration/global_test"; $(ATF_SH_BUILD)
+endif
 
 include integration/helpers/Makefile.am.inc
