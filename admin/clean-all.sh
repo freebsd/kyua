@@ -84,6 +84,7 @@ find . -name .libs | xargs rm -rf
 find . -name .tmp | xargs rm -rf
 
 # Show remaining files.
-if [ -n "${SVN}" ]; then
-    "${SVN}" status --no-ignore | grep '^[?I]'
+if [ -n "${GIT}" ]; then
+    echo ">>> untracked and ignored files"
+    "${GIT}" status --porcelain --ignored | grep -E '^(\?\?|!!)' || true
 fi

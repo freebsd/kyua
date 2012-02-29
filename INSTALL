@@ -149,7 +149,7 @@ The following flags are specific to Kyua's 'configure' script:
 
 * --enable-developer
   Possible values: yes, no
-  Default: 'yes' in svn HEAD builds; 'no' in formal releases.
+  Default: 'yes' in Git HEAD builds; 'no' in formal releases.
 
   Enables several features useful for development, such as the inclusion
   of debugging symbols in all objects or the enforcement of compilation

@@ -109,4 +109,4 @@ clean-local: $(CLEAN_TARGETS)
 
 .PHONY: clean-all
 clean-all:
-	SVN="$(SVN)" $(SH) $(srcdir)/admin/clean-all.sh
+	GIT="$(GIT)" $(SH) $(srcdir)/admin/clean-all.sh

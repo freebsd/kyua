@@ -87,7 +87,7 @@ m4_ifndef([ATF_CHECK_SH],
     [m4_fatal([Cannot find atf-sh.m4; see the INSTALL document for help])])
 ATF_CHECK_SH([>= 0.14])
 KYUA_DOXYGEN
-AC_PATH_PROG([SVN], [svn])
+AC_PATH_PROG([GIT], [git])
 
 
 KYUA_UNAME_ARCHITECTURE
