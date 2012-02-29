@@ -26,18 +26,11 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# TODO(jmmv): This is not true: the tests in this directory do not depend
-# on ATF so we could enable them unconditionally.  However, that would
-# complicate the Makefiles even further because we would need to deal with
-# different subsets of installed tests depending on whether ATF has been
-# enabled or not... and it is just not worth the hassle.
 if WITH_ATF
 tests_bootstrapdir = $(pkgtestsdir)/bootstrap
 
 tests_bootstrap_DATA = bootstrap/Kyuafile
-tests_bootstrap_SCRIPTS = bootstrap/testsuite
 EXTRA_DIST += $(tests_bootstrap_DATA)
-endif
 
 DISTCLEANFILES = bootstrap/atconfig \
                  bootstrap/testsuite.lineno \
@@ -52,6 +45,7 @@ EXTRA_DIST += bootstrap/Kyuafile \
               bootstrap/package.m4 \
               bootstrap/testsuite.at
 
+tests_bootstrap_SCRIPTS = bootstrap/testsuite
 @target_srcdir@bootstrap/package.m4: $(top_srcdir)/configure.ac
 	{ \
 	echo '# Signature of the current package.'; \
@@ -74,3 +68,4 @@ PHONY_TARGETS += check-bootstrap
 check-bootstrap: @target_srcdir@bootstrap/testsuite $(check_PROGRAMS)
 	cd bootstrap && $(CHECK_ENVIRONMENT) $(TESTS_ENVIRONMENT) \
 	    $(abs_srcdir)/bootstrap/testsuite
+endif
