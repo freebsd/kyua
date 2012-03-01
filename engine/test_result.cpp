@@ -27,6 +27,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "engine/test_result.hpp"
+
 #include "utils/sanity.hpp"
 
 

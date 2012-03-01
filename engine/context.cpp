@@ -27,6 +27,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "engine/context.hpp"
+
 #include "utils/env.hpp"
 #include "utils/fs/operations.hpp"
 

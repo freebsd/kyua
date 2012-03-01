@@ -26,6 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "utils/signals/timer.hpp"
+
 extern "C" {
 #include <sys/time.h>
 
@@ -39,7 +41,6 @@ extern "C" {
 #include "utils/sanity.hpp"
 #include "utils/signals/exceptions.hpp"
 #include "utils/signals/programmer.hpp"
-#include "utils/signals/timer.hpp"
 
 
 namespace {

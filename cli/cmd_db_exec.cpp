@@ -26,13 +26,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "cli/cmd_db_exec.hpp"
+
 #include <algorithm>
 #include <cstdlib>
 #include <iterator>
 #include <sstream>
 #include <string>
 
-#include "cli/cmd_db_exec.hpp"
 #include "cli/common.ipp"
 #include "store/backend.hpp"
 #include "utils/defs.hpp"

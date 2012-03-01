@@ -26,6 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "utils/passwd.hpp"
+
 extern "C" {
 #include <sys/types.h>
 
@@ -38,7 +40,6 @@ extern "C" {
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
-#include "utils/passwd.hpp"
 #include "utils/sanity.hpp"
 
 namespace passwd_ns = utils::passwd;

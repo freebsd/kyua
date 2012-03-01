@@ -26,6 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "utils/env.hpp"
+
 #if defined(HAVE_CONFIG_H)
 #  include "config.h"
 #endif
@@ -35,7 +37,6 @@
 #include <cstring>
 #include <stdexcept>
 
-#include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"

@@ -26,6 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "utils/units.hpp"
+
 extern "C" {
 #include <stdint.h>
 }
@@ -34,7 +36,6 @@ extern "C" {
 #include <stdexcept>
 
 #include "utils/format/macros.hpp"
-#include "utils/units.hpp"
 
 namespace units = utils::units;
 

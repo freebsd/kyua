@@ -27,6 +27,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "engine/test_case.hpp"
+
 #include "engine/test_program.hpp"
 #include "engine/test_result.hpp"
 #include "engine/user_files/config.hpp"

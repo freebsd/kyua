@@ -26,14 +26,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "utils/process/system.hpp"
+
 extern "C" {
 #include <sys/wait.h>
 
 #include <fcntl.h>
 #include <unistd.h>
 }
-
-#include "utils/process/system.hpp"
 
 namespace detail = utils::process::detail;
 

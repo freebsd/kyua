@@ -26,10 +26,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "engine/test_program.hpp"
+
 #include <stdexcept>
 
 #include "engine/exceptions.hpp"
-#include "engine/test_program.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"

@@ -26,13 +26,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "utils/datetime.hpp"
+
 extern "C" {
 #include <sys/time.h>
 
 #include <time.h>
 }
 
-#include "utils/datetime.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 

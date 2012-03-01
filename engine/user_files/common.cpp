@@ -26,11 +26,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "engine/user_files/common.hpp"
+
 #include <lutok/exceptions.hpp>
 #include <lutok/operations.hpp>
 #include <lutok/stack_cleaner.hpp>
 
-#include "engine/user_files/common.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/lua_module.hpp"

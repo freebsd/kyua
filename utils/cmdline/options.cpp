@@ -26,12 +26,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "utils/cmdline/options.hpp"
+
 #include <sstream>
 #include <stdexcept>
 #include <vector>
 
 #include "utils/cmdline/exceptions.hpp"
-#include "utils/cmdline/options.hpp"
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/exceptions.hpp"

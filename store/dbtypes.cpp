@@ -26,12 +26,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "store/dbtypes.hpp"
+
 #include <typeinfo>
 
 #include "engine/atf_iface/test_program.hpp"
 #include "engine/plain_iface/test_program.hpp"
 #include "engine/test_program.hpp"
-#include "store/dbtypes.hpp"
 #include "store/exceptions.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/sanity.hpp"

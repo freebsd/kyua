@@ -26,6 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "utils/cmdline/parser.hpp"
+
 #if defined(HAVE_CONFIG_H)
 #   include "config.h"
 #endif
@@ -41,7 +43,6 @@ extern "C" {
 #include "utils/auto_array.ipp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/options.hpp"
-#include "utils/cmdline/parser.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/noncopyable.hpp"
 #include "utils/sanity.hpp"

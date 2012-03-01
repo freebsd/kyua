@@ -26,6 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "engine/isolation.hpp"
+
 extern "C" {
 #include <sys/stat.h>
 
@@ -36,7 +38,6 @@ extern "C" {
 #include <cstring>
 
 #include "engine/exceptions.hpp"
-#include "engine/isolation.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"

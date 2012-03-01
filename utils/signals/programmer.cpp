@@ -26,6 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "utils/signals/programmer.hpp"
+
 extern "C" {
 #include <signal.h>
 }
@@ -36,7 +38,6 @@ extern "C" {
 #include "utils/logging/macros.hpp"
 #include "utils/sanity.hpp"
 #include "utils/signals/exceptions.hpp"
-#include "utils/signals/programmer.hpp"
 
 
 namespace utils {

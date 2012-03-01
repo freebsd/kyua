@@ -26,9 +26,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "cli/common.hpp"
+
 #include <algorithm>
 
-#include "cli/common.hpp"
 #include "engine/filters.hpp"
 #include "engine/test_case.hpp"
 #include "engine/test_program.hpp"

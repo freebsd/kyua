@@ -26,6 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "utils/test_utils.hpp"
+
 extern "C" {
 #include <regex.h>
 #include <unistd.h>
@@ -43,7 +45,6 @@ extern "C" {
 #include "utils/format/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/process/children.ipp"
-#include "utils/test_utils.hpp"
 
 namespace fs = utils::fs;
 namespace process = utils::process;

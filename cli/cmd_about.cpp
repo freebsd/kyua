@@ -26,12 +26,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "cli/cmd_about.hpp"
+
 #include <cstdlib>
 #include <fstream>
 #include <utility>
 #include <vector>
 
-#include "cli/cmd_about.hpp"
 #include "cli/common.ipp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.ipp"

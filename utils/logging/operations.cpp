@@ -26,6 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "utils/logging/operations.hpp"
+
 extern "C" {
 #include <unistd.h>
 }
@@ -38,7 +40,6 @@ extern "C" {
 
 #include "utils/datetime.hpp"
 #include "utils/format/macros.hpp"
-#include "utils/logging/operations.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 

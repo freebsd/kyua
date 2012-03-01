@@ -27,6 +27,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "utils/sqlite/c_gate.hpp"
+
 #include "utils/sqlite/database.hpp"
 
 namespace sqlite = utils::sqlite;

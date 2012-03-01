@@ -27,6 +27,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "utils/cmdline/globals.hpp"
+
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/fs/path.hpp"

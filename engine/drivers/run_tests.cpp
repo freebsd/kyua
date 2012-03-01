@@ -26,9 +26,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "engine/drivers/run_tests.hpp"
+
 #include "engine/action.hpp"
 #include "engine/context.hpp"
-#include "engine/drivers/run_tests.hpp"
 #include "engine/filters.hpp"
 #include "engine/test_program.hpp"
 #include "engine/test_result.hpp"

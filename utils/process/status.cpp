@@ -26,12 +26,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "utils/process/status.hpp"
+
 extern "C" {
 #include <sys/wait.h>
 }
 
 #include "utils/optional.ipp"
-#include "utils/process/status.hpp"
 #include "utils/sanity.hpp"
 
 namespace process = utils::process;

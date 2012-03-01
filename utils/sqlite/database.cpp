@@ -26,6 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "utils/sqlite/database.hpp"
+
 extern "C" {
 #include <sqlite3.h>
 }
@@ -35,7 +37,6 @@ extern "C" {
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/sanity.hpp"
-#include "utils/sqlite/database.hpp"
 #include "utils/sqlite/exceptions.hpp"
 #include "utils/sqlite/statement.ipp"
 #include "utils/sqlite/transaction.hpp"

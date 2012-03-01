@@ -27,6 +27,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "utils/cmdline/base_command.hpp"
+
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/options.hpp"
 #include "utils/sanity.hpp"

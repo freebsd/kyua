@@ -26,12 +26,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "utils/format/formatter.hpp"
+
 #include <memory>
 #include <string>
 #include <utility>
 
 #include "utils/format/exceptions.hpp"
-#include "utils/format/formatter.hpp"
 #include "utils/sanity.hpp"
 
 namespace format = utils::format;

@@ -26,11 +26,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "cli/cmd_list.hpp"
+
 #include <cstdlib>
 #include <utility>
 #include <vector>
 
-#include "cli/cmd_list.hpp"
 #include "cli/common.ipp"
 #include "engine/drivers/list_tests.hpp"
 #include "engine/filters.hpp"

@@ -26,6 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "utils/sqlite/statement.hpp"
+
 extern "C" {
 #include <sqlite3.h>
 }
@@ -38,7 +40,6 @@ extern "C" {
 #include "utils/sanity.hpp"
 #include "utils/sqlite/c_gate.hpp"
 #include "utils/sqlite/exceptions.hpp"
-#include "utils/sqlite/statement.hpp"
 
 namespace sqlite = utils::sqlite;
 

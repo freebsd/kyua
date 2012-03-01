@@ -26,6 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "utils/process/children.ipp"
+
 extern "C" {
 #include <sys/wait.h>
 
@@ -42,7 +44,6 @@ extern "C" {
 #include "utils/datetime.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
-#include "utils/process/children.ipp"
 #include "utils/process/exceptions.hpp"
 #include "utils/process/fdstream.hpp"
 #include "utils/process/system.hpp"

@@ -26,6 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "cli/main.hpp"
+
 #if defined(HAVE_CONFIG_H)
 #   include "config.h"
 #endif
@@ -45,7 +47,6 @@
 #include "cli/cmd_test.hpp"
 #include "cli/common.ipp"
 #include "cli/config.hpp"
-#include "cli/main.hpp"
 #include "engine/user_files/config.hpp"
 #include "utils/cmdline/commands_map.ipp"
 #include "utils/cmdline/exceptions.hpp"

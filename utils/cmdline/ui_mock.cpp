@@ -26,9 +26,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <iostream>
-
 #include "utils/cmdline/ui_mock.hpp"
+
+#include <iostream>
 
 using utils::cmdline::ui_mock;
 

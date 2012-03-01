@@ -26,6 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "engine/plain_iface/test_case.hpp"
+
 extern "C" {
 #include <signal.h>
 }
@@ -35,7 +37,6 @@ extern "C" {
 
 #include "engine/exceptions.hpp"
 #include "engine/isolation.ipp"
-#include "engine/plain_iface/test_case.hpp"
 #include "engine/plain_iface/test_program.hpp"
 #include "engine/test_result.hpp"
 #include "utils/defs.hpp"

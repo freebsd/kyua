@@ -26,13 +26,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "utils/logging/lua_module.hpp"
+
 #include <stdexcept>
 
 #include <lutok/debug.hpp>
 #include <lutok/operations.hpp>
 #include <lutok/state.ipp>
 
-#include "utils/logging/lua_module.hpp"
 #include "utils/logging/operations.hpp"
 
 namespace logging = utils::logging;

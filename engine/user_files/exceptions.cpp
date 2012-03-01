@@ -27,6 +27,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "engine/user_files/exceptions.hpp"
+
 #include "utils/format/macros.hpp"
 
 namespace fs = utils::fs;

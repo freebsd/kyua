@@ -26,12 +26,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "utils/process/systembuf.hpp"
+
 extern "C" {
 #include <unistd.h>
 }
 
 #include "utils/auto_array.ipp"
-#include "utils/process/systembuf.hpp"
 #include "utils/sanity.hpp"
 
 using utils::process::systembuf;

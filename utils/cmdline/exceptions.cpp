@@ -27,6 +27,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "utils/cmdline/exceptions.hpp"
+
 #include "utils/format/macros.hpp"
 #include "utils/sanity.hpp"
 
