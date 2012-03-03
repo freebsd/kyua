@@ -30,7 +30,6 @@
 
 #include <cstdlib>
 #include <fstream>
-#include <sstream>
 #include <utility>
 
 #include "engine/atf_iface/test_case.hpp"
@@ -39,11 +38,13 @@
 #include "utils/format/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
+#include "utils/text.ipp"
 
 namespace atf_iface = engine::atf_iface;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace process = utils::process;
+namespace text = utils::text;
 
 using utils::none;
 using utils::optional;
@@ -162,17 +163,10 @@ parse_with_reason(const std::string& status, const std::string& rest)
 static optional< int >
 parse_int(const std::string& str)
 {
-    if (str.empty()) {
+    try {
+        return utils::make_optional(text::to_type< int >(str));
+    } catch (const std::runtime_error& e) {
         return none;
-    } else {
-        std::istringstream iss(str);
-
-        int value;
-        iss >> value;
-        if (!iss.eof() || (!iss.eof() && !iss.good()))
-            return none;
-        else
-            return utils::make_optional(value);
     }
 }
 

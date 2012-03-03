@@ -32,10 +32,10 @@ extern "C" {
 #include <stdint.h>
 }
 
-#include <sstream>
 #include <stdexcept>
 
 #include "utils/format/macros.hpp"
+#include "utils/text.ipp"
 
 namespace units = utils::units;
 
@@ -93,12 +93,13 @@ units::bytes::parse(const std::string& in_str)
         // special-case this condition and just error out.
         throw std::runtime_error(F("Invalid bytes quantity '%s'") % in_str);
     }
-    std::istringstream input(str);
 
     double count;
-    input >> count;
-    if (!input.eof() || input.fail() || input.bad())
+    try {
+        count = text::to_type< double >(str);
+    } catch (const std::runtime_error& e) {
         throw std::runtime_error(F("Invalid bytes quantity '%s'") % in_str);
+    }
 
     return bytes(uint64_t(count * multiplier));
 }

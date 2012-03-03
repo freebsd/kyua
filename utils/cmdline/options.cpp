@@ -28,7 +28,6 @@
 
 #include "utils/cmdline/options.hpp"
 
-#include <sstream>
 #include <stdexcept>
 #include <vector>
 
@@ -37,64 +36,10 @@
 #include "utils/format/macros.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/sanity.hpp"
+#include "utils/text.ipp"
 
 namespace cmdline = utils::cmdline;
-
-
-namespace {
-
-
-/// Splits a string into different components.
-///
-/// \param str The string to split.
-/// \param delimiter The separator to use to split the words.
-///
-/// \return The different words in the input string as split by the provided
-/// delimiter.
-static std::vector< std::string >
-split_string(const std::string& str, const char delimiter)
-{
-    std::vector< std::string > words;
-    if (!str.empty()) {
-        std::string::size_type pos = str.find(delimiter);
-        words.push_back(str.substr(0, pos));
-        while (pos != std::string::npos) {
-            ++pos;
-            const std::string::size_type next = str.find(delimiter, pos);
-            words.push_back(str.substr(pos, next - pos));
-            pos = next;
-        }
-    }
-    return words;
-}
-
-
-/// Converts a string to an integer.
-///
-/// TODO(jmmv): This does not belong here.  It should be moved somewhere else,
-/// as I am sure it will be needed in other places.
-///
-/// \param str The string to convert.
-///
-/// \return The converted integer, if the input string was valid.
-///
-/// \throw std::runtime_error If the input string does not represent an integer.
-static int
-to_int(const std::string& str)
-{
-    if (str.empty())
-        throw std::runtime_error("Empty string is not an integer");
-
-    std::istringstream input(str);
-    int i;
-    input >> i;
-    if (!input.eof() || (!input.eof() && !input.good()))
-        throw std::runtime_error(F("Invalid integer '%s'") % str);
-    return i;
-}
-
-
-}  // anonymous namespace
+namespace text = utils::text;
 
 
 /// Constructs a generic option with both a short and a long name.
@@ -364,10 +309,10 @@ void
 cmdline::int_option::validate(const std::string& raw_value) const
 {
     try {
-        (void)to_int(raw_value);
+        (void)text::to_type< int >(raw_value);
     } catch (const std::runtime_error& e) {
-        throw cmdline::option_argument_value_error(F("--%s") % long_name(),
-                                                   raw_value, e.what());
+        throw cmdline::option_argument_value_error(
+            F("--%s") % long_name(), raw_value, "Not a valid integer");
     }
 }
 
@@ -384,7 +329,7 @@ int
 cmdline::int_option::convert(const std::string& raw_value)
 {
     try {
-        return to_int(raw_value);
+        return text::to_type< int >(raw_value);
     } catch (const std::runtime_error& e) {
         PRE_MSG(false, F("Raw value '%s' for int option not properly "
                          "validated: %s") % raw_value % e.what());
@@ -452,7 +397,7 @@ cmdline::list_option::option_type
 cmdline::list_option::convert(const std::string& raw_value)
 {
     try {
-        return split_string(raw_value, ',');
+        return text::split(raw_value, ',');
     } catch (const std::runtime_error& e) {
         PRE_MSG(false, F("Raw value '%s' for list option not properly "
                          "validated: %s") % raw_value % e.what());

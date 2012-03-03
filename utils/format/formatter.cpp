@@ -34,8 +34,10 @@
 
 #include "utils/format/exceptions.hpp"
 #include "utils/sanity.hpp"
+#include "utils/text.ipp"
 
 namespace format = utils::format;
+namespace text = utils::text;
 
 
 namespace {
@@ -94,16 +96,12 @@ find_next_placeholder(const std::string& format,
 inline int
 to_int(const std::string& format, const std::string& str, const char* what)
 {
-    std::istringstream input(str);
-    if (!input.good())
+    try {
+        return text::to_type< int >(str);
+    } catch (const std::runtime_error& e) {
         throw format::bad_format_error(format, "Invalid " + std::string(what) +
                                        "specifier");
-    int value;
-    input >> value;
-    if (!input.eof() || input.bad() || input.fail())
-        throw format::bad_format_error(format, "Invalid " + std::string(what) +
-                                       " specifier");
-    return value;
+    }
 }
 
 

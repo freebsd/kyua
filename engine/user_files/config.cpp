@@ -32,7 +32,6 @@
 #   include "config.h"
 #endif
 
-#include <sstream>
 #include <stdexcept>
 
 #include <lutok/exceptions.hpp>
@@ -46,9 +45,11 @@
 #include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/passwd.hpp"
+#include "utils/text.ipp"
 
 namespace fs = utils::fs;
 namespace passwd = utils::passwd;
+namespace text = utils::text;
 namespace user_files = engine::user_files;
 
 using utils::none;
@@ -242,21 +243,22 @@ get_user_override(const std::string& key, const std::string& value)
     try {
         return utils::make_optional(passwd::find_user_by_name(value));
     } catch (const std::runtime_error& e) {
-        std::istringstream iss(value);
         int uid;
-        iss >> uid;
-        if (!iss.good() && iss.eof()) {
-            try {
-                return utils::make_optional(passwd::find_user_by_uid(uid));
-            } catch (const std::runtime_error& e2) {
-                throw user_files::error(F("Cannot find user with UID %s in "
-                                          "override '%s=%s'") % uid % key %
-                                        value);
-            }
-        } else
+        try {
+            uid = text::to_type< int >(value);
+        } catch (const std::runtime_error& e) {
             throw user_files::error(F("Cannot find user with name '%s' in "
                                       "override '%s=%s'") % value % key %
                                     value);
+        }
+
+        try {
+            return utils::make_optional(passwd::find_user_by_uid(uid));
+        } catch (const std::runtime_error& e2) {
+            throw user_files::error(F("Cannot find user with UID %s in "
+                                      "override '%s=%s'") % uid % key %
+                                    value);
+        }
     }
 }
 
