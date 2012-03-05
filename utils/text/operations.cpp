@@ -26,26 +26,31 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file utils/text.hpp
-/// Utilities to manipulate strings.
+#include "utils/text/operations.ipp"
 
-#if !defined(UTILS_TEXT_HPP)
-#define UTILS_TEXT_HPP
-
-#include <string>
-#include <vector>
-
-namespace utils {
-namespace text {
+namespace text = utils::text;
 
 
-std::vector< std::string > split(const std::string&, const char);
-
-template< typename Type >
-Type to_type(const std::string&);
-
-
-}  // namespace text
-}  // namespace utils
-
-#endif  // !defined(UTILS_TEXT_HPP)
+/// Splits a string into different components.
+///
+/// \param str The string to split.
+/// \param delimiter The separator to use to split the words.
+///
+/// \return The different words in the input string as split by the provided
+/// delimiter.
+std::vector< std::string >
+text::split(const std::string& str, const char delimiter)
+{
+    std::vector< std::string > words;
+    if (!str.empty()) {
+        std::string::size_type pos = str.find(delimiter);
+        words.push_back(str.substr(0, pos));
+        while (pos != std::string::npos) {
+            ++pos;
+            const std::string::size_type next = str.find(delimiter, pos);
+            words.push_back(str.substr(pos, next - pos));
+            pos = next;
+        }
+    }
+    return words;
+}

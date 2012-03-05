@@ -26,42 +26,26 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#if !defined(UTILS_TEXT_IPP)
-#define UTILS_TEXT_IPP
+/// \file utils/text/operations.hpp
+/// Utilities to manipulate strings.
 
-#include "utils/text.hpp"
+#if !defined(UTILS_TEXT_OPERATIONS_HPP)
+#define UTILS_TEXT_OPERATIONS_HPP
 
-#include <sstream>
-#include <stdexcept>
+#include <string>
+#include <vector>
+
+namespace utils {
+namespace text {
 
 
-/// Converts a string to a native type.
-///
-/// \tparam Type The type to convert the string to.  An input stream operator
-///     must exist to extract such a type from an std::istream.
-/// \param str The string to convert.
-///
-/// \return The converted string, if the input string was valid.
-///
-/// \throw std::runtime_error If the input string does not represent a valid
-///     target type.  This exception does not include any details, so the caller
-///     must take care to re-raise it with appropriate details.
+std::vector< std::string > split(const std::string&, const char);
+
 template< typename Type >
-Type
-utils::text::to_type(const std::string& str)
-{
-    if (str.empty())
-        throw std::runtime_error("Empty string");
-    if (str[0] == ' ')
-        throw std::runtime_error("Invalid value");
-
-    std::istringstream input(str);
-    Type value;
-    input >> value;
-    if (!input.eof() || input.bad() || input.fail())
-        throw std::runtime_error("Invalid value");
-    return value;
-}
+Type to_type(const std::string&);
 
 
-#endif  // !defined(UTILS_TEXT_IPP)
+}  // namespace text
+}  // namespace utils
+
+#endif  // !defined(UTILS_TEXT_OPERATIONS_HPP)

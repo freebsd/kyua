@@ -34,7 +34,7 @@
 
 #include "utils/format/exceptions.hpp"
 #include "utils/sanity.hpp"
-#include "utils/text.ipp"
+#include "utils/text/operations.ipp"
 
 namespace format = utils::format;
 namespace text = utils::text;

@@ -26,31 +26,42 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/text.ipp"
+#if !defined(UTILS_TEXT_OPERATIONS_IPP)
+#define UTILS_TEXT_OPERATIONS_IPP
 
-namespace text = utils::text;
+#include "utils/text/operations.hpp"
+
+#include <sstream>
+#include <stdexcept>
 
 
-/// Splits a string into different components.
+/// Converts a string to a native type.
 ///
-/// \param str The string to split.
-/// \param delimiter The separator to use to split the words.
+/// \tparam Type The type to convert the string to.  An input stream operator
+///     must exist to extract such a type from an std::istream.
+/// \param str The string to convert.
 ///
-/// \return The different words in the input string as split by the provided
-/// delimiter.
-std::vector< std::string >
-text::split(const std::string& str, const char delimiter)
+/// \return The converted string, if the input string was valid.
+///
+/// \throw std::runtime_error If the input string does not represent a valid
+///     target type.  This exception does not include any details, so the caller
+///     must take care to re-raise it with appropriate details.
+template< typename Type >
+Type
+utils::text::to_type(const std::string& str)
 {
-    std::vector< std::string > words;
-    if (!str.empty()) {
-        std::string::size_type pos = str.find(delimiter);
-        words.push_back(str.substr(0, pos));
-        while (pos != std::string::npos) {
-            ++pos;
-            const std::string::size_type next = str.find(delimiter, pos);
-            words.push_back(str.substr(pos, next - pos));
-            pos = next;
-        }
-    }
-    return words;
+    if (str.empty())
+        throw std::runtime_error("Empty string");
+    if (str[0] == ' ')
+        throw std::runtime_error("Invalid value");
+
+    std::istringstream input(str);
+    Type value;
+    input >> value;
+    if (!input.eof() || input.bad() || input.fail())
+        throw std::runtime_error("Invalid value");
+    return value;
 }
+
+
+#endif  // !defined(UTILS_TEXT_OPERATIONS_IPP)

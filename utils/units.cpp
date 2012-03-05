@@ -35,7 +35,7 @@ extern "C" {
 #include <stdexcept>
 
 #include "utils/format/macros.hpp"
-#include "utils/text.ipp"
+#include "utils/text/operations.ipp"
 
 namespace units = utils::units;
 

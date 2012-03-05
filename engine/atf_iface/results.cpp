@@ -38,7 +38,7 @@
 #include "utils/format/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
-#include "utils/text.ipp"
+#include "utils/text/operations.ipp"
 
 namespace atf_iface = engine::atf_iface;
 namespace datetime = utils::datetime;

@@ -45,7 +45,7 @@
 #include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/passwd.hpp"
-#include "utils/text.ipp"
+#include "utils/text/operations.ipp"
 
 namespace fs = utils::fs;
 namespace passwd = utils::passwd;
