@@ -31,6 +31,8 @@ libutils_a_SOURCES += utils/text/exceptions.hpp
 libutils_a_SOURCES += utils/text/operations.cpp
 libutils_a_SOURCES += utils/text/operations.hpp
 libutils_a_SOURCES += utils/text/operations.ipp
+libutils_a_SOURCES += utils/text/templates.cpp
+libutils_a_SOURCES += utils/text/templates.hpp
 
 if WITH_ATF
 tests_utils_textdir = $(pkgtestsdir)/utils/text
@@ -47,4 +49,9 @@ tests_utils_text_PROGRAMS += utils/text/operations_test
 utils_text_operations_test_SOURCES = utils/text/operations_test.cpp
 utils_text_operations_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 utils_text_operations_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
+
+tests_utils_text_PROGRAMS += utils/text/templates_test
+utils_text_templates_test_SOURCES = utils/text/templates_test.cpp
+utils_text_templates_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_text_templates_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 endif

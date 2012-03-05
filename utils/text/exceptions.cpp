@@ -49,6 +49,21 @@ text::error::~error(void) throw()
 /// Constructs a new error with a plain-text message.
 ///
 /// \param message The plain-text error message.
+text::syntax_error::syntax_error(const std::string& message) :
+    error(message)
+{
+}
+
+
+/// Destructor for the error.
+text::syntax_error::~syntax_error(void) throw()
+{
+}
+
+
+/// Constructs a new error with a plain-text message.
+///
+/// \param message The plain-text error message.
 text::value_error::value_error(const std::string& message) :
     error(message)
 {

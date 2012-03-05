@@ -46,6 +46,14 @@ public:
 };
 
 
+/// Exception denoting an error while parsing templates.
+class syntax_error : public error {
+public:
+    explicit syntax_error(const std::string&);
+    ~syntax_error(void) throw();
+};
+
+
 /// Exception denoting an error in a text value format.
 class value_error : public error {
 public:
