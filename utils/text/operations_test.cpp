@@ -28,11 +28,12 @@
 
 #include "utils/text/operations.ipp"
 
-#include <stdexcept>
 #include <string>
 #include <vector>
 
 #include <atf-c++.hpp>
+
+#include "utils/text/exceptions.hpp"
 
 namespace text = utils::text;
 
@@ -101,17 +102,17 @@ ATF_TEST_CASE_BODY(to_type__ok)
 ATF_TEST_CASE_WITHOUT_HEAD(to_type__empty);
 ATF_TEST_CASE_BODY(to_type__empty)
 {
-    ATF_REQUIRE_THROW(std::runtime_error, text::to_type< int >(""));
+    ATF_REQUIRE_THROW(text::value_error, text::to_type< int >(""));
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(to_type__invalid);
 ATF_TEST_CASE_BODY(to_type__invalid)
 {
-    ATF_REQUIRE_THROW(std::runtime_error, text::to_type< int >(" 3"));
-    ATF_REQUIRE_THROW(std::runtime_error, text::to_type< int >("3 "));
-    ATF_REQUIRE_THROW(std::runtime_error, text::to_type< int >("3a"));
-    ATF_REQUIRE_THROW(std::runtime_error, text::to_type< int >("a3"));
+    ATF_REQUIRE_THROW(text::value_error, text::to_type< int >(" 3"));
+    ATF_REQUIRE_THROW(text::value_error, text::to_type< int >("3 "));
+    ATF_REQUIRE_THROW(text::value_error, text::to_type< int >("3a"));
+    ATF_REQUIRE_THROW(text::value_error, text::to_type< int >("a3"));
 }
 
 

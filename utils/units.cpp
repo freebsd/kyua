@@ -35,6 +35,7 @@ extern "C" {
 #include <stdexcept>
 
 #include "utils/format/macros.hpp"
+#include "utils/text/exceptions.hpp"
 #include "utils/text/operations.ipp"
 
 namespace units = utils::units;
@@ -97,7 +98,7 @@ units::bytes::parse(const std::string& in_str)
     double count;
     try {
         count = text::to_type< double >(str);
-    } catch (const std::runtime_error& e) {
+    } catch (const text::value_error& e) {
         throw std::runtime_error(F("Invalid bytes quantity '%s'") % in_str);
     }
 

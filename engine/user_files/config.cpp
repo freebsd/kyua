@@ -45,6 +45,7 @@
 #include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/passwd.hpp"
+#include "utils/text/exceptions.hpp"
 #include "utils/text/operations.ipp"
 
 namespace fs = utils::fs;
@@ -246,7 +247,7 @@ get_user_override(const std::string& key, const std::string& value)
         int uid;
         try {
             uid = text::to_type< int >(value);
-        } catch (const std::runtime_error& e) {
+        } catch (const text::value_error& e) {
             throw user_files::error(F("Cannot find user with name '%s' in "
                                       "override '%s=%s'") % value % key %
                                     value);

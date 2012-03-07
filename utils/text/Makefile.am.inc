@@ -26,6 +26,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+libutils_a_SOURCES += utils/text/exceptions.cpp
+libutils_a_SOURCES += utils/text/exceptions.hpp
 libutils_a_SOURCES += utils/text/operations.cpp
 libutils_a_SOURCES += utils/text/operations.hpp
 libutils_a_SOURCES += utils/text/operations.ipp
@@ -36,7 +38,12 @@ tests_utils_textdir = $(pkgtestsdir)/utils/text
 tests_utils_text_DATA = utils/text/Kyuafile
 EXTRA_DIST += $(tests_utils_text_DATA)
 
-tests_utils_text_PROGRAMS = utils/text/operations_test
+tests_utils_text_PROGRAMS = utils/text/exceptions_test
+utils_text_exceptions_test_SOURCES = utils/text/exceptions_test.cpp
+utils_text_exceptions_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_text_exceptions_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
+
+tests_utils_text_PROGRAMS += utils/text/operations_test
 utils_text_operations_test_SOURCES = utils/text/operations_test.cpp
 utils_text_operations_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 utils_text_operations_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)

@@ -38,6 +38,7 @@
 #include "utils/format/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
+#include "utils/text/exceptions.hpp"
 #include "utils/text/operations.ipp"
 
 namespace atf_iface = engine::atf_iface;
@@ -165,7 +166,7 @@ parse_int(const std::string& str)
 {
     try {
         return utils::make_optional(text::to_type< int >(str));
-    } catch (const std::runtime_error& e) {
+    } catch (const text::value_error& e) {
         return none;
     }
 }

@@ -34,6 +34,7 @@
 
 #include "utils/format/exceptions.hpp"
 #include "utils/sanity.hpp"
+#include "utils/text/exceptions.hpp"
 #include "utils/text/operations.ipp"
 
 namespace format = utils::format;
@@ -98,7 +99,7 @@ to_int(const std::string& format, const std::string& str, const char* what)
 {
     try {
         return text::to_type< int >(str);
-    } catch (const std::runtime_error& e) {
+    } catch (const text::value_error& e) {
         throw format::bad_format_error(format, "Invalid " + std::string(what) +
                                        "specifier");
     }

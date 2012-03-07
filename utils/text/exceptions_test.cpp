@@ -26,43 +26,33 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#if !defined(UTILS_TEXT_OPERATIONS_IPP)
-#define UTILS_TEXT_OPERATIONS_IPP
-
-#include "utils/text/operations.hpp"
-
-#include <sstream>
-
 #include "utils/text/exceptions.hpp"
 
+#include <cstring>
 
-/// Converts a string to a native type.
-///
-/// \tparam Type The type to convert the string to.  An input stream operator
-///     must exist to extract such a type from an std::istream.
-/// \param str The string to convert.
-///
-/// \return The converted string, if the input string was valid.
-///
-/// \throw std::value_error If the input string does not represent a valid
-///     target type.  This exception does not include any details, so the caller
-///     must take care to re-raise it with appropriate details.
-template< typename Type >
-Type
-utils::text::to_type(const std::string& str)
+#include <atf-c++.hpp>
+
+namespace text = utils::text;
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(error);
+ATF_TEST_CASE_BODY(error)
 {
-    if (str.empty())
-        throw text::value_error("Empty string");
-    if (str[0] == ' ')
-        throw text::value_error("Invalid value");
-
-    std::istringstream input(str);
-    Type value;
-    input >> value;
-    if (!input.eof() || input.bad() || input.fail())
-        throw text::value_error("Invalid value");
-    return value;
+    const text::error e("Some text");
+    ATF_REQUIRE(std::strcmp("Some text", e.what()) == 0);
 }
 
 
-#endif  // !defined(UTILS_TEXT_OPERATIONS_IPP)
+ATF_TEST_CASE_WITHOUT_HEAD(value_error);
+ATF_TEST_CASE_BODY(value_error)
+{
+    const text::value_error e("Some text");
+    ATF_REQUIRE(std::strcmp("Some text", e.what()) == 0);
+}
+
+
+ATF_INIT_TEST_CASES(tcs)
+{
+    ATF_ADD_TEST_CASE(tcs, error);
+    ATF_ADD_TEST_CASE(tcs, value_error);
+}
