@@ -128,14 +128,36 @@ ATF_TEST_CASE_BODY(cleanup__subdir__files_and_directories)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(cleanup__subdir__unprotect);
-ATF_TEST_CASE_BODY(cleanup__subdir__unprotect)
+ATF_TEST_CASE_WITHOUT_HEAD(cleanup__subdir__unprotect_regular);
+ATF_TEST_CASE_BODY(cleanup__subdir__unprotect_regular)
 {
     fs::mkdir(fs::path("root"), 0755);
-    fs::mkdir(fs::path("root/foo"), 0755);
-    utils::create_file(fs::path("root/foo/bar"));
-    ATF_REQUIRE(::chmod("root/foo/bar", 0555) != -1);
-    ATF_REQUIRE(::chmod("root/foo", 0555) != -1);
+    fs::mkdir(fs::path("root/dir1"), 0755);
+    fs::mkdir(fs::path("root/dir1/dir2"), 0755);
+    utils::create_file(fs::path("root/dir1/dir2/file"));
+    ATF_REQUIRE(::chmod("root/dir1/dir2/file", 0000) != -1);
+    ATF_REQUIRE(::chmod("root/dir1/dir2", 0000) != -1);
+    ATF_REQUIRE(::chmod("root/dir1", 0000) != -1);
+    fs::cleanup(fs::path("root"));
+    ATF_REQUIRE(!lookup(".", "root", DT_DIR));
+}
+
+
+ATF_TEST_CASE(cleanup__subdir__unprotect_symlink);
+ATF_TEST_CASE_HEAD(cleanup__subdir__unprotect_symlink)
+{
+    set_md_var("require.progs", "/bin/ls");
+    // We are ensuring that chmod is not run on the target of a symlink, so
+    // we cannot be root (nor we don't want to, to prevent unprotecting a
+    // system file!).
+    set_md_var("require.user", "unprivileged");
+}
+ATF_TEST_CASE_BODY(cleanup__subdir__unprotect_symlink)
+{
+    fs::mkdir(fs::path("root"), 0755);
+    fs::mkdir(fs::path("root/dir1"), 0755);
+    ATF_REQUIRE(::symlink("/bin/ls", "root/dir1/ls") != -1);
+    ATF_REQUIRE(::chmod("root/dir1", 0555) != -1);
     fs::cleanup(fs::path("root"));
     ATF_REQUIRE(!lookup(".", "root", DT_DIR));
 }
@@ -529,7 +551,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, cleanup__file);
     ATF_ADD_TEST_CASE(tcs, cleanup__subdir__empty);
     ATF_ADD_TEST_CASE(tcs, cleanup__subdir__files_and_directories);
-    ATF_ADD_TEST_CASE(tcs, cleanup__subdir__unprotect);
+    ATF_ADD_TEST_CASE(tcs, cleanup__subdir__unprotect_regular);
+    ATF_ADD_TEST_CASE(tcs, cleanup__subdir__unprotect_symlink);
     ATF_ADD_TEST_CASE(tcs, cleanup__subdir__links);
     ATF_ADD_TEST_CASE(tcs, cleanup__mount_point__root__one);
     ATF_ADD_TEST_CASE(tcs, cleanup__mount_point__root__many);

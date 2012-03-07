@@ -113,35 +113,6 @@ unmount(const char* UTILS_UNUSED_PARAM(path),
 namespace {
 
 
-/// Wrapper around lchmod(3).
-///
-/// In systems with a working lchmod(3), this does nothing more than calling
-/// the function.  On systems without lchmod(3), this uses chmod(2) as a
-/// replacement and logs the fact that the original call is missing.
-/// The cleanup of the work directory might end up not being as accurate as if
-/// we had lchmod(3), but it's not a huge deal.
-///
-/// \param path The path for which to change the permissions.
-/// \param mode The new mode for the file.
-///
-/// \return The return value of the executed chmod function.
-static int
-do_lchmod(const char* path, const mode_t mode)
-{
-#if HAVE_WORKING_LCHMOD
-    return ::lchmod(path, mode);
-#else
-    static bool logged_warning = false;
-    if (!logged_warning) {
-        LW("lchmod(3) was not available at compilation time; work directory "
-           "cleanup might fail unexpectedly");
-        logged_warning = true;
-    }
-    return ::chmod(path, mode);
-#endif
-}
-
-
 /// Scans a directory and executes a callback on each argument.
 ///
 /// Note that this does not raise any file system-related exception on purpose.
@@ -296,13 +267,42 @@ try_unprotect(const fs::path& path)
 {
     static const mode_t new_mode = 0700;
 
-    if (do_lchmod(path.c_str(), new_mode) == -1) {
+    if (::chmod(path.c_str(), new_mode) == -1) {
         const int original_errno = errno;
         LW(F("Failed to chmod '%s' to %s: %s") % path % new_mode %
            std::strerror(original_errno));
         return false;
     } else
         return true;
+}
+
+
+/// Attempts to weaken the permissions of a symbolic link.
+///
+/// Note that this does not raise any file system-related exception on purpose.
+/// Errors are logged and reported to the caller in the form of a return value.
+///
+/// \param path The symbolic link to unprotect.
+///
+/// \return True on success; false otherwise.
+static bool
+try_unprotect_symlink(const fs::path& path)
+{
+    static const mode_t new_mode = 0700;
+
+#if HAVE_WORKING_LCHMOD
+    if (::lchmod(path.c_str(), new_mode) == -1) {
+        const int original_errno = errno;
+        LW(F("Failed to lchmod '%s' to %s: %s") % path % new_mode %
+           std::strerror(original_errno));
+        return false;
+    } else
+        return true;
+#else
+    LW(F("Failed to lchmod '%s' to %s: lchmod(3) not implemented") %
+       path % new_mode);
+    return false;
+#endif
 }
 
 
@@ -356,12 +356,22 @@ recursive_cleanup(const fs::path& current_path, const struct ::stat& parent_sb)
 {
     bool ok = true;
 
-    ok &= try_unprotect(current_path);
-
     const optional< struct ::stat > current_sb = try_stat(current_path);
     if (!current_sb)
         ok &= false;
     else {
+        // Weakening the protections of a file is just a best-effort operation.
+        // If this fails, we may still be able to do the file/directory removal
+        // later on, so ignore any failures from try_unprotect().
+        //
+        // One particular case in which this fails is if try_unprotect() is run
+        // on a symbolic link that points to a file for which the unprotect is
+        // not possible, and lchmod(3) is not available.
+        if (S_ISLNK(current_sb.get().st_mode))
+            try_unprotect_symlink(current_path);
+        else
+            try_unprotect(current_path);
+
         if (current_sb.get().st_dev != parent_sb.st_dev) {
             ok &= recursive_unmount(current_path, parent_sb);
             if (ok)
