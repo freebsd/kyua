@@ -10,7 +10,6 @@ atf_test_program{name="optional_test"}
 atf_test_program{name="passwd_test"}
 atf_test_program{name="sanity_test"}
 atf_test_program{name="stream_test"}
-atf_test_program{name="text_test"}
 atf_test_program{name="units_test"}
 
 include("cmdline/Kyuafile")
@@ -20,3 +19,4 @@ include("logging/Kyuafile")
 include("process/Kyuafile")
 include("signals/Kyuafile")
 include("sqlite/Kyuafile")
+include("text/Kyuafile")

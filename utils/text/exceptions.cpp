@@ -26,26 +26,36 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file utils/text.hpp
-/// Utilities to manipulate strings.
+#include "utils/text/exceptions.hpp"
 
-#if !defined(UTILS_TEXT_HPP)
-#define UTILS_TEXT_HPP
-
-#include <string>
-#include <vector>
-
-namespace utils {
-namespace text {
+namespace text = utils::text;
 
 
-std::vector< std::string > split(const std::string&, const char);
+/// Constructs a new error with a plain-text message.
+///
+/// \param message The plain-text error message.
+text::error::error(const std::string& message) :
+    std::runtime_error(message)
+{
+}
 
-template< typename Type >
-Type to_type(const std::string&);
+
+/// Destructor for the error.
+text::error::~error(void) throw()
+{
+}
 
 
-}  // namespace text
-}  // namespace utils
+/// Constructs a new error with a plain-text message.
+///
+/// \param message The plain-text error message.
+text::value_error::value_error(const std::string& message) :
+    error(message)
+{
+}
 
-#endif  // !defined(UTILS_TEXT_HPP)
+
+/// Destructor for the error.
+text::value_error::~value_error(void) throw()
+{
+}

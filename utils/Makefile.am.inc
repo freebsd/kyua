@@ -49,9 +49,6 @@ libutils_a_SOURCES += utils/sanity.cpp
 libutils_a_SOURCES += utils/sanity.hpp
 libutils_a_SOURCES += utils/stream.cpp
 libutils_a_SOURCES += utils/stream.hpp
-libutils_a_SOURCES += utils/text.cpp
-libutils_a_SOURCES += utils/text.hpp
-libutils_a_SOURCES += utils/text.ipp
 libutils_a_SOURCES += utils/units.cpp
 libutils_a_SOURCES += utils/units.hpp
 
@@ -115,11 +112,6 @@ utils_stream_test_CXXFLAGS = $(UTILS_TEST_CFLAGS) $(UTILS_CFLAGS) \
 utils_stream_test_LDADD = $(UTILS_TEST_LIBS) $(UTILS_LIBS) \
                           $(ATF_CXX_LIBS)
 
-tests_utils_PROGRAMS += utils/text_test
-utils_text_test_SOURCES = utils/text_test.cpp
-utils_text_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-utils_text_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
-
 tests_utils_PROGRAMS += utils/units_test
 utils_units_test_SOURCES = utils/units_test.cpp
 utils_units_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
@@ -133,3 +125,4 @@ include utils/logging/Makefile.am.inc
 include utils/process/Makefile.am.inc
 include utils/signals/Makefile.am.inc
 include utils/sqlite/Makefile.am.inc
+include utils/text/Makefile.am.inc

@@ -26,42 +26,31 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#if !defined(UTILS_TEXT_IPP)
-#define UTILS_TEXT_IPP
+#include "utils/text/operations.ipp"
 
-#include "utils/text.hpp"
-
-#include <sstream>
-#include <stdexcept>
+namespace text = utils::text;
 
 
-/// Converts a string to a native type.
+/// Splits a string into different components.
 ///
-/// \tparam Type The type to convert the string to.  An input stream operator
-///     must exist to extract such a type from an std::istream.
-/// \param str The string to convert.
+/// \param str The string to split.
+/// \param delimiter The separator to use to split the words.
 ///
-/// \return The converted string, if the input string was valid.
-///
-/// \throw std::runtime_error If the input string does not represent a valid
-///     target type.  This exception does not include any details, so the caller
-///     must take care to re-raise it with appropriate details.
-template< typename Type >
-Type
-utils::text::to_type(const std::string& str)
+/// \return The different words in the input string as split by the provided
+/// delimiter.
+std::vector< std::string >
+text::split(const std::string& str, const char delimiter)
 {
-    if (str.empty())
-        throw std::runtime_error("Empty string");
-    if (str[0] == ' ')
-        throw std::runtime_error("Invalid value");
-
-    std::istringstream input(str);
-    Type value;
-    input >> value;
-    if (!input.eof() || input.bad() || input.fail())
-        throw std::runtime_error("Invalid value");
-    return value;
+    std::vector< std::string > words;
+    if (!str.empty()) {
+        std::string::size_type pos = str.find(delimiter);
+        words.push_back(str.substr(0, pos));
+        while (pos != std::string::npos) {
+            ++pos;
+            const std::string::size_type next = str.find(delimiter, pos);
+            words.push_back(str.substr(pos, next - pos));
+            pos = next;
+        }
+    }
+    return words;
 }
-
-
-#endif  // !defined(UTILS_TEXT_IPP)

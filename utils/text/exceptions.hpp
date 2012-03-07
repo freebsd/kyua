@@ -26,31 +26,36 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/text.ipp"
+/// \file utils/text/exceptions.hpp
+/// Exception types raised by the text module.
 
-namespace text = utils::text;
+#if !defined(UTILS_TEXT_EXCEPTIONS_HPP)
+#define UTILS_TEXT_EXCEPTIONS_HPP
+
+#include <stdexcept>
+
+namespace utils {
+namespace text {
 
 
-/// Splits a string into different components.
-///
-/// \param str The string to split.
-/// \param delimiter The separator to use to split the words.
-///
-/// \return The different words in the input string as split by the provided
-/// delimiter.
-std::vector< std::string >
-text::split(const std::string& str, const char delimiter)
-{
-    std::vector< std::string > words;
-    if (!str.empty()) {
-        std::string::size_type pos = str.find(delimiter);
-        words.push_back(str.substr(0, pos));
-        while (pos != std::string::npos) {
-            ++pos;
-            const std::string::size_type next = str.find(delimiter, pos);
-            words.push_back(str.substr(pos, next - pos));
-            pos = next;
-        }
-    }
-    return words;
-}
+/// Base exceptions for text errors.
+class error : public std::runtime_error {
+public:
+    explicit error(const std::string&);
+    ~error(void) throw();
+};
+
+
+/// Exception denoting an error in a text value format.
+class value_error : public error {
+public:
+    explicit value_error(const std::string&);
+    ~value_error(void) throw();
+};
+
+
+}  // namespace text
+}  // namespace utils
+
+
+#endif  // !defined(UTILS_TEXT_EXCEPTIONS_HPP)

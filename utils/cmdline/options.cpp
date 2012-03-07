@@ -36,7 +36,7 @@
 #include "utils/format/macros.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/sanity.hpp"
-#include "utils/text.ipp"
+#include "utils/text/operations.ipp"
 
 namespace cmdline = utils::cmdline;
 namespace text = utils::text;
