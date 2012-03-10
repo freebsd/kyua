@@ -28,12 +28,16 @@
 
 #include "utils/text/templates.hpp"
 
+#include <fstream>
 #include <sstream>
 
 #include <atf-c++.hpp>
 
+#include "utils/fs/operations.hpp"
+#include "utils/fs/path.hpp"
 #include "utils/text/exceptions.hpp"
 
+namespace fs = utils::fs;
 namespace text = utils::text;
 
 
@@ -780,6 +784,56 @@ ATF_TEST_CASE_BODY(instantiate__invalid_narguments)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(instantiate__files__ok);
+ATF_TEST_CASE_BODY(instantiate__files__ok)
+{
+    text::templates_def templates;
+    templates.add_variable("string", "Hello, world!");
+
+    std::ofstream input("input.txt");
+    input << "The string is: %%string%%\n";
+    input.close();
+
+    text::instantiate(templates, fs::path("input.txt"), fs::path("output.txt"));
+
+    std::ifstream output("output.txt");
+    std::string line;
+    ATF_REQUIRE(std::getline(output, line).good());
+    ATF_REQUIRE_EQ(line, "The string is: Hello, world!");
+    ATF_REQUIRE(std::getline(output, line).eof());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(instantiate__files__input_error);
+ATF_TEST_CASE_BODY(instantiate__files__input_error)
+{
+    text::templates_def templates;
+    ATF_REQUIRE_THROW_RE(text::error, "Failed to open input.txt for read",
+                         text::instantiate(templates, fs::path("input.txt"),
+                                           fs::path("output.txt")));
+}
+
+
+ATF_TEST_CASE(instantiate__files__output_error);
+ATF_TEST_CASE_HEAD(instantiate__files__output_error)
+{
+    set_md_var("require.user", "unprivileged");
+}
+ATF_TEST_CASE_BODY(instantiate__files__output_error)
+{
+    text::templates_def templates;
+
+    std::ofstream input("input.txt");
+    input.close();
+
+    fs::mkdir(fs::path("dir"), 0444);
+
+    ATF_REQUIRE_THROW_RE(text::error, "Failed to open dir/output.txt for write",
+                         text::instantiate(templates, fs::path("input.txt"),
+                                           fs::path("dir/output.txt")));
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, templates_def__add_variable__first);
@@ -825,4 +879,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, instantiate__empty_statement);
     ATF_ADD_TEST_CASE(tcs, instantiate__unknown_statement);
     ATF_ADD_TEST_CASE(tcs, instantiate__invalid_narguments);
+
+    ATF_ADD_TEST_CASE(tcs, instantiate__files__ok);
+    ATF_ADD_TEST_CASE(tcs, instantiate__files__input_error);
+    ATF_ADD_TEST_CASE(tcs, instantiate__files__output_error);
 }

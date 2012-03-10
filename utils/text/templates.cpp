@@ -29,6 +29,7 @@
 #include "utils/text/templates.hpp"
 
 #include <algorithm>
+#include <fstream>
 #include <sstream>
 #include <stack>
 
@@ -702,4 +703,28 @@ text::instantiate(const templates_def& templates,
 {
     templates_parser parser(templates, "%", "%%");
     parser.instantiate(input, output);
+}
+
+
+/// Applies a set of templates to an input file and writes an output file.
+///
+/// \param templates The templates to use.
+/// \param input_file The path to the input to process.
+/// \param output_file The path to the file into which to write the output.
+///
+/// \throw text::error If the input or output files cannot be opened.
+/// \throw text::syntax_error If there is any problem processing the input.
+void
+text::instantiate(const templates_def& templates,
+                  const fs::path& input_file, const fs::path& output_file)
+{
+    std::ifstream input(input_file.c_str());
+    if (!input)
+        throw text::error(F("Failed to open %s for read") % input_file);
+
+    std::ofstream output(output_file.c_str());
+    if (!output)
+        throw text::error(F("Failed to open %s for write") % output_file);
+
+    instantiate(templates, input, output);
 }
