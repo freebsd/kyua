@@ -83,38 +83,209 @@ do_test_fail(const text::templates_def& templates, const std::string& input_str,
 }  // anonymous namespace
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(parser__empty_statement);
-ATF_TEST_CASE_BODY(parser__empty_statement)
+ATF_TEST_CASE_WITHOUT_HEAD(templates_def__add_variable__first);
+ATF_TEST_CASE_BODY(templates_def__add_variable__first)
 {
-    do_test_fail(text::templates_def(), "%\n", "Empty statement");
+    text::templates_def templates;
+    templates.add_variable("the-name", "first-value");
+    ATF_REQUIRE_EQ("first-value", templates.get_variable("the-name"));
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(parser__unknown_statement);
-ATF_TEST_CASE_BODY(parser__unknown_statement)
+ATF_TEST_CASE_WITHOUT_HEAD(templates_def__add_variable__replace);
+ATF_TEST_CASE_BODY(templates_def__add_variable__replace)
 {
-    do_test_fail(text::templates_def(), "%if2\n", "Unknown statement 'if2'");
+    text::templates_def templates;
+    templates.add_variable("the-name", "first-value");
+    templates.add_variable("the-name", "second-value");
+    ATF_REQUIRE_EQ("second-value", templates.get_variable("the-name"));
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(parser__invalid_narguments);
-ATF_TEST_CASE_BODY(parser__invalid_narguments)
+ATF_TEST_CASE_WITHOUT_HEAD(templates_def__remove_variable);
+ATF_TEST_CASE_BODY(templates_def__remove_variable)
 {
-    do_test_fail(text::templates_def(), "%if a b\n",
-                 "Invalid number of arguments for statement 'if'");
+    text::templates_def templates;
+    templates.add_variable("the-name", "the-value");
+    templates.get_variable("the-name");  // Should not throw.
+    templates.remove_variable("the-name");
+    ATF_REQUIRE_THROW(text::syntax_error, templates.get_variable("the-name"));
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(empty_input);
-ATF_TEST_CASE_BODY(empty_input)
+ATF_TEST_CASE_WITHOUT_HEAD(templates_def__add_vector__first);
+ATF_TEST_CASE_BODY(templates_def__add_vector__first)
+{
+    text::templates_def templates;
+    templates.add_vector("the-name");
+    ATF_REQUIRE(templates.get_vector("the-name").empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(templates_def__add_vector__replace);
+ATF_TEST_CASE_BODY(templates_def__add_vector__replace)
+{
+    text::templates_def templates;
+    templates.add_vector("the-name");
+    templates.add_to_vector("the-name", "foo");
+    ATF_REQUIRE(!templates.get_vector("the-name").empty());
+    templates.add_vector("the-name");
+    ATF_REQUIRE(templates.get_vector("the-name").empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(templates_def__add_to_vector);
+ATF_TEST_CASE_BODY(templates_def__add_to_vector)
+{
+    text::templates_def templates;
+    templates.add_vector("the-name");
+    ATF_REQUIRE_EQ(0, templates.get_vector("the-name").size());
+    templates.add_to_vector("the-name", "first");
+    ATF_REQUIRE_EQ(1, templates.get_vector("the-name").size());
+    templates.add_to_vector("the-name", "second");
+    ATF_REQUIRE_EQ(2, templates.get_vector("the-name").size());
+    templates.add_to_vector("the-name", "third");
+    ATF_REQUIRE_EQ(3, templates.get_vector("the-name").size());
+
+    std::vector< std::string > expected;
+    expected.push_back("first");
+    expected.push_back("second");
+    expected.push_back("third");
+    ATF_REQUIRE(expected == templates.get_vector("the-name"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(templates_def__exists__variable);
+ATF_TEST_CASE_BODY(templates_def__exists__variable)
+{
+    text::templates_def templates;
+    ATF_REQUIRE(!templates.exists("some-name"));
+    templates.add_variable("some-name ", "foo");
+    ATF_REQUIRE(!templates.exists("some-name"));
+    templates.add_variable("some-name", "foo");
+    ATF_REQUIRE(templates.exists("some-name"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(templates_def__exists__vector);
+ATF_TEST_CASE_BODY(templates_def__exists__vector)
+{
+    text::templates_def templates;
+    ATF_REQUIRE(!templates.exists("some-name"));
+    templates.add_vector("some-name ");
+    ATF_REQUIRE(!templates.exists("some-name"));
+    templates.add_vector("some-name");
+    ATF_REQUIRE(templates.exists("some-name"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(templates_def__get_variable__ok);
+ATF_TEST_CASE_BODY(templates_def__get_variable__ok)
+{
+    text::templates_def templates;
+    templates.add_variable("foo", "");
+    templates.add_variable("bar", "    baz  ");
+    ATF_REQUIRE_EQ("", templates.get_variable("foo"));
+    ATF_REQUIRE_EQ("    baz  ", templates.get_variable("bar"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(templates_def__get_variable__unknown);
+ATF_TEST_CASE_BODY(templates_def__get_variable__unknown)
+{
+    text::templates_def templates;
+    templates.add_variable("foo", "");
+    ATF_REQUIRE_THROW_RE(text::syntax_error, "Unknown variable 'foo '",
+                         templates.get_variable("foo "));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(templates_def__get_vector__ok);
+ATF_TEST_CASE_BODY(templates_def__get_vector__ok)
+{
+    text::templates_def templates;
+    templates.add_vector("foo");
+    templates.add_vector("bar");
+    templates.add_to_vector("bar", "baz");
+    ATF_REQUIRE_EQ(0, templates.get_vector("foo").size());
+    ATF_REQUIRE_EQ(1, templates.get_vector("bar").size());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(templates_def__get_vector__unknown);
+ATF_TEST_CASE_BODY(templates_def__get_vector__unknown)
+{
+    text::templates_def templates;
+    templates.add_vector("foo");
+    ATF_REQUIRE_THROW_RE(text::syntax_error, "Unknown vector 'foo '",
+                         templates.get_vector("foo "));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(templates_def__get_vector_index__ok);
+ATF_TEST_CASE_BODY(templates_def__get_vector_index__ok)
+{
+    text::templates_def templates;
+    templates.add_vector("v");
+    templates.add_to_vector("v", "foo");
+    templates.add_to_vector("v", "bar");
+    templates.add_to_vector("v", "baz");
+
+    templates.add_variable("index", "0");
+    ATF_REQUIRE_EQ("foo", templates.get_vector("v", "index"));
+    templates.add_variable("index", "1");
+    ATF_REQUIRE_EQ("bar", templates.get_vector("v", "index"));
+    templates.add_variable("index", "2");
+    ATF_REQUIRE_EQ("baz", templates.get_vector("v", "index"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(templates_def__get_vector_index__unknown_vector);
+ATF_TEST_CASE_BODY(templates_def__get_vector_index__unknown_vector)
+{
+    text::templates_def templates;
+    templates.add_vector("v");
+    templates.add_to_vector("v", "foo");
+    templates.add_variable("index", "0");
+    ATF_REQUIRE_THROW_RE(text::syntax_error, "Unknown vector 'foo '",
+                         templates.get_vector("foo ", "index"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(templates_def__get_vector_index__unknown_index);
+ATF_TEST_CASE_BODY(templates_def__get_vector_index__unknown_index)
+{
+    text::templates_def templates;
+    templates.add_vector("v");
+    templates.add_to_vector("v", "foo");
+    templates.add_variable("index", "0");
+    ATF_REQUIRE_THROW_RE(text::syntax_error, "Unknown variable 'index '",
+                         templates.get_vector("v", "index "));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(templates_def__get_vector_index__out_of_range);
+ATF_TEST_CASE_BODY(templates_def__get_vector_index__out_of_range)
+{
+    text::templates_def templates;
+    templates.add_vector("v");
+    templates.add_to_vector("v", "foo");
+    templates.add_variable("index", "1");
+    ATF_REQUIRE_THROW_RE(text::syntax_error, "Index 'index' out of range "
+                         "at position '1'", templates.get_vector("v", "index"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(instantiate__empty_input);
+ATF_TEST_CASE_BODY(instantiate__empty_input)
 {
     const text::templates_def templates;
     do_test_ok(templates, "", "");
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(value__ok);
-ATF_TEST_CASE_BODY(value__ok)
+ATF_TEST_CASE_WITHOUT_HEAD(instantiate__value__ok);
+ATF_TEST_CASE_BODY(instantiate__value__ok)
 {
     const std::string input =
         "first line\n"
@@ -138,8 +309,8 @@ ATF_TEST_CASE_BODY(value__ok)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(value__unknown_variable);
-ATF_TEST_CASE_BODY(value__unknown_variable)
+ATF_TEST_CASE_WITHOUT_HEAD(instantiate__value__unknown_variable);
+ATF_TEST_CASE_BODY(instantiate__value__unknown_variable)
 {
     const std::string input =
         "%value testvar1\n";
@@ -151,8 +322,8 @@ ATF_TEST_CASE_BODY(value__unknown_variable)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(vector_length__ok);
-ATF_TEST_CASE_BODY(vector_length__ok)
+ATF_TEST_CASE_WITHOUT_HEAD(instantiate__vector_length__ok);
+ATF_TEST_CASE_BODY(instantiate__vector_length__ok)
 {
     const std::string input =
         "%vector-length testvector1\n"
@@ -178,8 +349,8 @@ ATF_TEST_CASE_BODY(vector_length__ok)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(vector_length__unknown_vector);
-ATF_TEST_CASE_BODY(vector_length__unknown_vector)
+ATF_TEST_CASE_WITHOUT_HEAD(instantiate__vector_length__unknown_vector);
+ATF_TEST_CASE_BODY(instantiate__vector_length__unknown_vector)
 {
     const std::string input =
         "%vector-length testvector\n";
@@ -191,8 +362,8 @@ ATF_TEST_CASE_BODY(vector_length__unknown_vector)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(vector_value__ok);
-ATF_TEST_CASE_BODY(vector_value__ok)
+ATF_TEST_CASE_WITHOUT_HEAD(instantiate__vector_value__ok);
+ATF_TEST_CASE_BODY(instantiate__vector_value__ok)
 {
     const std::string input =
         "first line\n"
@@ -223,8 +394,8 @@ ATF_TEST_CASE_BODY(vector_value__ok)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(vector_value__unknown_vector);
-ATF_TEST_CASE_BODY(vector_value__unknown_vector)
+ATF_TEST_CASE_WITHOUT_HEAD(instantiate__vector_value__unknown_vector);
+ATF_TEST_CASE_BODY(instantiate__vector_value__unknown_vector)
 {
     const std::string input =
         "%vector-value testvector j\n";
@@ -236,8 +407,8 @@ ATF_TEST_CASE_BODY(vector_value__unknown_vector)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(vector_value__out_of_range__empty);
-ATF_TEST_CASE_BODY(vector_value__out_of_range__empty)
+ATF_TEST_CASE_WITHOUT_HEAD(instantiate__vector_value__out_of_range__empty);
+ATF_TEST_CASE_BODY(instantiate__vector_value__out_of_range__empty)
 {
     const std::string input =
         "%vector-value testvector j\n";
@@ -250,8 +421,8 @@ ATF_TEST_CASE_BODY(vector_value__out_of_range__empty)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(vector_value__out_of_range__not_empty);
-ATF_TEST_CASE_BODY(vector_value__out_of_range__not_empty)
+ATF_TEST_CASE_WITHOUT_HEAD(instantiate__vector_value__out_of_range__not_empty);
+ATF_TEST_CASE_BODY(instantiate__vector_value__out_of_range__not_empty)
 {
     const std::string input =
         "%vector-value testvector j\n";
@@ -266,8 +437,8 @@ ATF_TEST_CASE_BODY(vector_value__out_of_range__not_empty)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(if__one_level__taken);
-ATF_TEST_CASE_BODY(if__one_level__taken)
+ATF_TEST_CASE_WITHOUT_HEAD(instantiate__if__one_level__taken);
+ATF_TEST_CASE_BODY(instantiate__if__one_level__taken)
 {
     const std::string input =
         "first line\n"
@@ -293,8 +464,8 @@ ATF_TEST_CASE_BODY(if__one_level__taken)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(if__one_level__not_taken);
-ATF_TEST_CASE_BODY(if__one_level__not_taken)
+ATF_TEST_CASE_WITHOUT_HEAD(instantiate__if__one_level__not_taken);
+ATF_TEST_CASE_BODY(instantiate__if__one_level__not_taken)
 {
     const std::string input =
         "first line\n"
@@ -316,8 +487,8 @@ ATF_TEST_CASE_BODY(if__one_level__not_taken)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(if__multiple_levels__taken);
-ATF_TEST_CASE_BODY(if__multiple_levels__taken)
+ATF_TEST_CASE_WITHOUT_HEAD(instantiate__if__multiple_levels__taken);
+ATF_TEST_CASE_BODY(instantiate__if__multiple_levels__taken)
 {
     const std::string input =
         "first line\n"
@@ -356,8 +527,8 @@ ATF_TEST_CASE_BODY(if__multiple_levels__taken)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(if__multiple_levels__not_taken);
-ATF_TEST_CASE_BODY(if__multiple_levels__not_taken)
+ATF_TEST_CASE_WITHOUT_HEAD(instantiate__if__multiple_levels__not_taken);
+ATF_TEST_CASE_BODY(instantiate__if__multiple_levels__not_taken)
 {
     const std::string input =
         "first line\n"
@@ -390,8 +561,8 @@ ATF_TEST_CASE_BODY(if__multiple_levels__not_taken)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(loop__no_iterations);
-ATF_TEST_CASE_BODY(loop__no_iterations)
+ATF_TEST_CASE_WITHOUT_HEAD(instantiate__loop__no_iterations);
+ATF_TEST_CASE_BODY(instantiate__loop__no_iterations)
 {
     const std::string input =
         "first line\n"
@@ -413,8 +584,8 @@ ATF_TEST_CASE_BODY(loop__no_iterations)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(loop__multiple_iterations);
-ATF_TEST_CASE_BODY(loop__multiple_iterations)
+ATF_TEST_CASE_WITHOUT_HEAD(instantiate__loop__multiple_iterations);
+ATF_TEST_CASE_BODY(instantiate__loop__multiple_iterations)
 {
     const std::string input =
         "first line\n"
@@ -441,8 +612,8 @@ ATF_TEST_CASE_BODY(loop__multiple_iterations)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(loop__nested);
-ATF_TEST_CASE_BODY(loop__nested)
+ATF_TEST_CASE_WITHOUT_HEAD(instantiate__loop__nested);
+ATF_TEST_CASE_BODY(instantiate__loop__nested)
 {
     const std::string input =
         "first line\n"
@@ -476,8 +647,8 @@ ATF_TEST_CASE_BODY(loop__nested)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(loop__scoping);
-ATF_TEST_CASE_BODY(loop__scoping)
+ATF_TEST_CASE_WITHOUT_HEAD(instantiate__loop__scoping);
+ATF_TEST_CASE_BODY(instantiate__loop__scoping)
 {
     const std::string input =
         "%loop table1 i\n"
@@ -510,32 +681,65 @@ ATF_TEST_CASE_BODY(loop__scoping)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(instantiate__empty_statement);
+ATF_TEST_CASE_BODY(instantiate__empty_statement)
+{
+    do_test_fail(text::templates_def(), "%\n", "Empty statement");
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(instantiate__unknown_statement);
+ATF_TEST_CASE_BODY(instantiate__unknown_statement)
+{
+    do_test_fail(text::templates_def(), "%if2\n", "Unknown statement 'if2'");
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(instantiate__invalid_narguments);
+ATF_TEST_CASE_BODY(instantiate__invalid_narguments)
+{
+    do_test_fail(text::templates_def(), "%if a b\n",
+                 "Invalid number of arguments for statement 'if'");
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
-    ATF_ADD_TEST_CASE(tcs, parser__empty_statement);
-    ATF_ADD_TEST_CASE(tcs, parser__unknown_statement);
-    ATF_ADD_TEST_CASE(tcs, parser__invalid_narguments);
+    ATF_ADD_TEST_CASE(tcs, templates_def__add_variable__first);
+    ATF_ADD_TEST_CASE(tcs, templates_def__add_variable__replace);
+    ATF_ADD_TEST_CASE(tcs, templates_def__remove_variable);
+    ATF_ADD_TEST_CASE(tcs, templates_def__add_vector__first);
+    ATF_ADD_TEST_CASE(tcs, templates_def__add_vector__replace);
+    ATF_ADD_TEST_CASE(tcs, templates_def__add_to_vector);
+    ATF_ADD_TEST_CASE(tcs, templates_def__exists__variable);
+    ATF_ADD_TEST_CASE(tcs, templates_def__exists__vector);
+    ATF_ADD_TEST_CASE(tcs, templates_def__get_variable__ok);
+    ATF_ADD_TEST_CASE(tcs, templates_def__get_variable__unknown);
+    ATF_ADD_TEST_CASE(tcs, templates_def__get_vector__ok);
+    ATF_ADD_TEST_CASE(tcs, templates_def__get_vector__unknown);
+    ATF_ADD_TEST_CASE(tcs, templates_def__get_vector_index__ok);
+    ATF_ADD_TEST_CASE(tcs, templates_def__get_vector_index__unknown_vector);
+    ATF_ADD_TEST_CASE(tcs, templates_def__get_vector_index__unknown_index);
+    ATF_ADD_TEST_CASE(tcs, templates_def__get_vector_index__out_of_range);
 
-    ATF_ADD_TEST_CASE(tcs, empty_input);
-
-    ATF_ADD_TEST_CASE(tcs, value__ok);
-    ATF_ADD_TEST_CASE(tcs, value__unknown_variable);
-
-    ATF_ADD_TEST_CASE(tcs, vector_length__ok);
-    ATF_ADD_TEST_CASE(tcs, vector_length__unknown_vector);
-
-    ATF_ADD_TEST_CASE(tcs, vector_value__ok);
-    ATF_ADD_TEST_CASE(tcs, vector_value__unknown_vector);
-    ATF_ADD_TEST_CASE(tcs, vector_value__out_of_range__empty);
-    ATF_ADD_TEST_CASE(tcs, vector_value__out_of_range__not_empty);
-
-    ATF_ADD_TEST_CASE(tcs, if__one_level__taken);
-    ATF_ADD_TEST_CASE(tcs, if__one_level__not_taken);
-    ATF_ADD_TEST_CASE(tcs, if__multiple_levels__taken);
-    ATF_ADD_TEST_CASE(tcs, if__multiple_levels__not_taken);
-
-    ATF_ADD_TEST_CASE(tcs, loop__no_iterations);
-    ATF_ADD_TEST_CASE(tcs, loop__multiple_iterations);
-    ATF_ADD_TEST_CASE(tcs, loop__nested);
-    ATF_ADD_TEST_CASE(tcs, loop__scoping);
+    ATF_ADD_TEST_CASE(tcs, instantiate__empty_input);
+    ATF_ADD_TEST_CASE(tcs, instantiate__value__ok);
+    ATF_ADD_TEST_CASE(tcs, instantiate__value__unknown_variable);
+    ATF_ADD_TEST_CASE(tcs, instantiate__vector_length__ok);
+    ATF_ADD_TEST_CASE(tcs, instantiate__vector_length__unknown_vector);
+    ATF_ADD_TEST_CASE(tcs, instantiate__vector_value__ok);
+    ATF_ADD_TEST_CASE(tcs, instantiate__vector_value__unknown_vector);
+    ATF_ADD_TEST_CASE(tcs, instantiate__vector_value__out_of_range__empty);
+    ATF_ADD_TEST_CASE(tcs, instantiate__vector_value__out_of_range__not_empty);
+    ATF_ADD_TEST_CASE(tcs, instantiate__if__one_level__taken);
+    ATF_ADD_TEST_CASE(tcs, instantiate__if__one_level__not_taken);
+    ATF_ADD_TEST_CASE(tcs, instantiate__if__multiple_levels__taken);
+    ATF_ADD_TEST_CASE(tcs, instantiate__if__multiple_levels__not_taken);
+    ATF_ADD_TEST_CASE(tcs, instantiate__loop__no_iterations);
+    ATF_ADD_TEST_CASE(tcs, instantiate__loop__multiple_iterations);
+    ATF_ADD_TEST_CASE(tcs, instantiate__loop__nested);
+    ATF_ADD_TEST_CASE(tcs, instantiate__loop__scoping);
+    ATF_ADD_TEST_CASE(tcs, instantiate__empty_statement);
+    ATF_ADD_TEST_CASE(tcs, instantiate__unknown_statement);
+    ATF_ADD_TEST_CASE(tcs, instantiate__invalid_narguments);
 }
