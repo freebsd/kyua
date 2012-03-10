@@ -222,8 +222,29 @@ ATF_TEST_CASE_BODY(templates_def__get_vector__unknown)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(templates_def__get_vector_index__ok);
-ATF_TEST_CASE_BODY(templates_def__get_vector_index__ok)
+ATF_TEST_CASE_WITHOUT_HEAD(templates_def__evaluate__variable__ok);
+ATF_TEST_CASE_BODY(templates_def__evaluate__variable__ok)
+{
+    text::templates_def templates;
+    templates.add_variable("foo", "");
+    templates.add_variable("bar", "    baz  ");
+    ATF_REQUIRE_EQ("", templates.evaluate("foo"));
+    ATF_REQUIRE_EQ("    baz  ", templates.evaluate("bar"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(templates_def__evaluate__variable__unknown);
+ATF_TEST_CASE_BODY(templates_def__evaluate__variable__unknown)
+{
+    text::templates_def templates;
+    templates.add_variable("foo", "");
+    ATF_REQUIRE_THROW_RE(text::syntax_error, "Unknown variable 'foo1'",
+                         templates.evaluate("foo1"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(templates_def__evaluate__vector__ok);
+ATF_TEST_CASE_BODY(templates_def__evaluate__vector__ok)
 {
     text::templates_def templates;
     templates.add_vector("v");
@@ -232,47 +253,85 @@ ATF_TEST_CASE_BODY(templates_def__get_vector_index__ok)
     templates.add_to_vector("v", "baz");
 
     templates.add_variable("index", "0");
-    ATF_REQUIRE_EQ("foo", templates.get_vector("v", "index"));
+    ATF_REQUIRE_EQ("foo", templates.evaluate("v(index)"));
     templates.add_variable("index", "1");
-    ATF_REQUIRE_EQ("bar", templates.get_vector("v", "index"));
+    ATF_REQUIRE_EQ("bar", templates.evaluate("v(index)"));
     templates.add_variable("index", "2");
-    ATF_REQUIRE_EQ("baz", templates.get_vector("v", "index"));
+    ATF_REQUIRE_EQ("baz", templates.evaluate("v(index)"));
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(templates_def__get_vector_index__unknown_vector);
-ATF_TEST_CASE_BODY(templates_def__get_vector_index__unknown_vector)
+ATF_TEST_CASE_WITHOUT_HEAD(templates_def__evaluate__vector__unknown_vector);
+ATF_TEST_CASE_BODY(templates_def__evaluate__vector__unknown_vector)
 {
     text::templates_def templates;
     templates.add_vector("v");
     templates.add_to_vector("v", "foo");
     templates.add_variable("index", "0");
-    ATF_REQUIRE_THROW_RE(text::syntax_error, "Unknown vector 'foo '",
-                         templates.get_vector("foo ", "index"));
+    ATF_REQUIRE_THROW_RE(text::syntax_error, "Unknown vector 'fooz'",
+                         templates.evaluate("fooz(index)"));
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(templates_def__get_vector_index__unknown_index);
-ATF_TEST_CASE_BODY(templates_def__get_vector_index__unknown_index)
+ATF_TEST_CASE_WITHOUT_HEAD(templates_def__evaluate__vector__unknown_index);
+ATF_TEST_CASE_BODY(templates_def__evaluate__vector__unknown_index)
 {
     text::templates_def templates;
     templates.add_vector("v");
     templates.add_to_vector("v", "foo");
     templates.add_variable("index", "0");
-    ATF_REQUIRE_THROW_RE(text::syntax_error, "Unknown variable 'index '",
-                         templates.get_vector("v", "index "));
+    ATF_REQUIRE_THROW_RE(text::syntax_error, "Unknown variable 'indexz'",
+                         templates.evaluate("v(indexz)"));
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(templates_def__get_vector_index__out_of_range);
-ATF_TEST_CASE_BODY(templates_def__get_vector_index__out_of_range)
+ATF_TEST_CASE_WITHOUT_HEAD(templates_def__evaluate__vector__out_of_range);
+ATF_TEST_CASE_BODY(templates_def__evaluate__vector__out_of_range)
 {
     text::templates_def templates;
     templates.add_vector("v");
     templates.add_to_vector("v", "foo");
     templates.add_variable("index", "1");
     ATF_REQUIRE_THROW_RE(text::syntax_error, "Index 'index' out of range "
-                         "at position '1'", templates.get_vector("v", "index"));
+                         "at position '1'", templates.evaluate("v(index)"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(templates_def__evaluate__length__ok);
+ATF_TEST_CASE_BODY(templates_def__evaluate__length__ok)
+{
+    text::templates_def templates;
+    templates.add_vector("v");
+    ATF_REQUIRE_EQ("0", templates.evaluate("length(v)"));
+    templates.add_to_vector("v", "foo");
+    ATF_REQUIRE_EQ("1", templates.evaluate("length(v)"));
+    templates.add_to_vector("v", "bar");
+    ATF_REQUIRE_EQ("2", templates.evaluate("length(v)"));
+    templates.add_to_vector("v", "baz");
+    ATF_REQUIRE_EQ("3", templates.evaluate("length(v)"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(templates_def__evaluate__length__unknown_vector);
+ATF_TEST_CASE_BODY(templates_def__evaluate__length__unknown_vector)
+{
+    text::templates_def templates;
+    templates.add_vector("foo1");
+    ATF_REQUIRE_THROW_RE(text::syntax_error, "Unknown vector 'foo'",
+                         templates.evaluate("length(foo)"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(templates_def__evaluate__parenthesis_error);
+ATF_TEST_CASE_BODY(templates_def__evaluate__parenthesis_error)
+{
+    text::templates_def templates;
+    ATF_REQUIRE_THROW_RE(text::syntax_error,
+                         "Expected '\\)' in.*'foo\\(abc'",
+                         templates.evaluate("foo(abc"));
+    ATF_REQUIRE_THROW_RE(text::syntax_error,
+                         "Unexpected text.*'\\)' in.*'a\\(b\\)c'",
+                         templates.evaluate("a(b)c"));
 }
 
 
@@ -289,21 +348,23 @@ ATF_TEST_CASE_BODY(instantiate__value__ok)
 {
     const std::string input =
         "first line\n"
-        "%value testvar1\n"
+        "%%testvar1%%\n"
         "third line\n"
-        "%value testvar2\n"
+        "%%testvar2%% %%testvar3%%%%testvar4%%\n"
         "fifth line\n";
 
     const std::string exp_output =
         "first line\n"
         "second line\n"
         "third line\n"
-        "fourth line\n"
+        "fourth line.\n"
         "fifth line\n";
 
     text::templates_def templates;
     templates.add_variable("testvar1", "second line");
-    templates.add_variable("testvar2", "fourth line");
+    templates.add_variable("testvar2", "fourth");
+    templates.add_variable("testvar3", "line");
+    templates.add_variable("testvar4", ".");
 
     do_test_ok(templates, input, exp_output);
 }
@@ -313,7 +374,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(instantiate__value__unknown_variable);
 ATF_TEST_CASE_BODY(instantiate__value__unknown_variable)
 {
     const std::string input =
-        "%value testvar1\n";
+        "%%testvar1%%\n";
 
     text::templates_def templates;
     templates.add_variable("testvar2", "fourth line");
@@ -326,14 +387,12 @@ ATF_TEST_CASE_WITHOUT_HEAD(instantiate__vector_length__ok);
 ATF_TEST_CASE_BODY(instantiate__vector_length__ok)
 {
     const std::string input =
-        "%vector-length testvector1\n"
-        "%vector-length testvector2\n"
-        "%vector-length testvector3\n";
+        "%%length(testvector1)%%\n"
+        "%%length(testvector2)%% - %%length(testvector3)%%\n";
 
     const std::string exp_output =
         "4\n"
-        "0\n"
-        "1\n";
+        "0 - 1\n";
 
     text::templates_def templates;
     templates.add_vector("testvector1");
@@ -353,7 +412,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(instantiate__vector_length__unknown_vector);
 ATF_TEST_CASE_BODY(instantiate__vector_length__unknown_vector)
 {
     const std::string input =
-        "%vector-length testvector\n";
+        "%%length(testvector)%%\n";
 
     text::templates_def templates;
     templates.add_vector("testvector2");
@@ -367,9 +426,9 @@ ATF_TEST_CASE_BODY(instantiate__vector_value__ok)
 {
     const std::string input =
         "first line\n"
-        "%vector-value testvector1 i\n"
+        "%%testvector1(i)%%\n"
         "third line\n"
-        "%vector-value testvector2 j\n"
+        "%%testvector2(j)%%\n"
         "fifth line\n";
 
     const std::string exp_output =
@@ -398,7 +457,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(instantiate__vector_value__unknown_vector);
 ATF_TEST_CASE_BODY(instantiate__vector_value__unknown_vector)
 {
     const std::string input =
-        "%vector-value testvector j\n";
+        "%%testvector(j)%%\n";
 
     text::templates_def templates;
     templates.add_vector("testvector2");
@@ -411,7 +470,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(instantiate__vector_value__out_of_range__empty);
 ATF_TEST_CASE_BODY(instantiate__vector_value__out_of_range__empty)
 {
     const std::string input =
-        "%vector-value testvector j\n";
+        "%%testvector(j)%%\n";
 
     text::templates_def templates;
     templates.add_vector("testvector");
@@ -425,7 +484,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(instantiate__vector_value__out_of_range__not_empty);
 ATF_TEST_CASE_BODY(instantiate__vector_value__out_of_range__not_empty)
 {
     const std::string input =
-        "%vector-value testvector j\n";
+        "%%testvector(j)%%\n";
 
     text::templates_def templates;
     templates.add_vector("testvector");
@@ -590,14 +649,14 @@ ATF_TEST_CASE_BODY(instantiate__loop__multiple_iterations)
     const std::string input =
         "first line\n"
         "%loop table1 i\n"
-        "hello\n%vector-value table1 i\n%vector-value table2 i\n"
+        "hello %%table1(i)%% %%table2(i)%%\n"
         "%endloop\n"
         "some more\n";
 
     const std::string exp_output =
         "first line\n"
-        "hello\nfoo1\nfoo2\n"
-        "hello\nbar1\nbar2\n"
+        "hello foo1 foo2\n"
+        "hello bar1 bar2\n"
         "some more\n";
 
     text::templates_def templates;
@@ -619,19 +678,19 @@ ATF_TEST_CASE_BODY(instantiate__loop__nested)
         "first line\n"
         "%loop table1 i\n"
         "%loop table2 j\n"
-        "%vector-value table1 i\n%vector-value table2 j\n"
+        "%%table1(i)%% %%table2(j)%%\n"
         "%endloop\n"
         "%endloop\n"
         "some more\n";
 
     const std::string exp_output =
         "first line\n"
-        "a\n1\n"
-        "a\n2\n"
-        "a\n3\n"
-        "b\n1\n"
-        "b\n2\n"
-        "b\n3\n"
+        "a 1\n"
+        "a 2\n"
+        "a 3\n"
+        "b 1\n"
+        "b 2\n"
+        "b 3\n"
         "some more\n";
 
     text::templates_def templates;
@@ -681,6 +740,24 @@ ATF_TEST_CASE_BODY(instantiate__loop__scoping)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(instantiate__mismatched_delimiters);
+ATF_TEST_CASE_BODY(instantiate__mismatched_delimiters)
+{
+    const std::string input =
+        "this is some %% text\n"
+        "and this is %%var%% text%%\n";
+
+    const std::string exp_output =
+        "this is some %% text\n"
+        "and this is some more text%%\n";
+
+    text::templates_def templates;
+    templates.add_variable("var", "some more");
+
+    do_test_ok(templates, input, exp_output);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(instantiate__empty_statement);
 ATF_TEST_CASE_BODY(instantiate__empty_statement)
 {
@@ -717,10 +794,15 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, templates_def__get_variable__unknown);
     ATF_ADD_TEST_CASE(tcs, templates_def__get_vector__ok);
     ATF_ADD_TEST_CASE(tcs, templates_def__get_vector__unknown);
-    ATF_ADD_TEST_CASE(tcs, templates_def__get_vector_index__ok);
-    ATF_ADD_TEST_CASE(tcs, templates_def__get_vector_index__unknown_vector);
-    ATF_ADD_TEST_CASE(tcs, templates_def__get_vector_index__unknown_index);
-    ATF_ADD_TEST_CASE(tcs, templates_def__get_vector_index__out_of_range);
+    ATF_ADD_TEST_CASE(tcs, templates_def__evaluate__variable__ok);
+    ATF_ADD_TEST_CASE(tcs, templates_def__evaluate__variable__unknown);
+    ATF_ADD_TEST_CASE(tcs, templates_def__evaluate__vector__ok);
+    ATF_ADD_TEST_CASE(tcs, templates_def__evaluate__vector__unknown_vector);
+    ATF_ADD_TEST_CASE(tcs, templates_def__evaluate__vector__unknown_index);
+    ATF_ADD_TEST_CASE(tcs, templates_def__evaluate__vector__out_of_range);
+    ATF_ADD_TEST_CASE(tcs, templates_def__evaluate__length__ok);
+    ATF_ADD_TEST_CASE(tcs, templates_def__evaluate__length__unknown_vector);
+    ATF_ADD_TEST_CASE(tcs, templates_def__evaluate__parenthesis_error);
 
     ATF_ADD_TEST_CASE(tcs, instantiate__empty_input);
     ATF_ADD_TEST_CASE(tcs, instantiate__value__ok);
@@ -739,6 +821,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, instantiate__loop__multiple_iterations);
     ATF_ADD_TEST_CASE(tcs, instantiate__loop__nested);
     ATF_ADD_TEST_CASE(tcs, instantiate__loop__scoping);
+    ATF_ADD_TEST_CASE(tcs, instantiate__mismatched_delimiters);
     ATF_ADD_TEST_CASE(tcs, instantiate__empty_statement);
     ATF_ADD_TEST_CASE(tcs, instantiate__unknown_statement);
     ATF_ADD_TEST_CASE(tcs, instantiate__invalid_narguments);

@@ -76,25 +76,6 @@ public:
         /// Takes two arguments: the name of the vector over which to iterate
         /// and the name of the iterator to later index this vector.
         type_loop,
-
-        /// Instantiate the value of the given variable.
-        ///
-        /// Takes a single argument, which denotes the variable name to get the
-        /// value of.
-        type_value,
-
-        /// Instantiate the length of a vector.
-        ///
-        /// Takes a single argument, which denotes the name of the vector of
-        /// which to instantiate the length.
-        type_vector_length,
-
-        /// Instantiate the value of a given vector position.
-        ///
-        /// Takes two arguments: the name of the vector to query and an iterator
-        /// indicating the position to access.  In general, this iterator comes
-        /// from the surrounding loop statement.
-        type_vector_value,
     };
 
 private:
@@ -143,12 +124,6 @@ private:
             "if", type_descriptor(type_if, 1)));
         types.insert(types_map::value_type(
             "loop", type_descriptor(type_loop, 2)));
-        types.insert(types_map::value_type(
-            "value", type_descriptor(type_value, 1)));
-        types.insert(types_map::value_type(
-            "vector-length", type_descriptor(type_vector_length, 1)));
-        types.insert(types_map::value_type(
-            "vector-value", type_descriptor(type_vector_value, 2)));
         return types;
     }
 
@@ -266,6 +241,9 @@ class templates_parser : utils::noncopyable {
     /// Prefix that marks a line as a statement.
     const std::string _prefix;
 
+    /// Delimiter to surround an expression instantiation.
+    const std::string _delimiter;
+
     /// Whether to skip incoming lines or not.
     ///
     /// This is true whenever we encounter a conditional that evaluates to false
@@ -298,8 +276,10 @@ class templates_parser : utils::noncopyable {
     bool
     is_statement(const std::string& line)
     {
-        return (line.length() >= _prefix.length() &&
-                line.substr(0, _prefix.length()) == _prefix);
+        return ((line.length() >= _prefix.length() &&
+                 line.substr(0, _prefix.length()) == _prefix) &&
+                (line.length() < _delimiter.length() ||
+                 line.substr(0, _delimiter.length()) != _delimiter));
     }
 
     /// Parses a given statement line into a statement definition.
@@ -376,20 +356,6 @@ class templates_parser : utils::noncopyable {
             }
             _loops.push(loop);
         } break;
-
-        case statement_def::type_value:
-            output << _templates.get_variable(statement.arguments[0]) << '\n';
-            break;
-
-        case statement_def::type_vector_length:
-            output << _templates.get_vector(statement.arguments[0]).size()
-                   << '\n';
-            break;
-
-        case statement_def::type_vector_value:
-            output << _templates.get_vector(statement.arguments[0],
-                                            statement.arguments[1]) << '\n';
-            break;
         }
     }
 
@@ -435,15 +401,64 @@ class templates_parser : utils::noncopyable {
         }
     }
 
+    /// Evaluates expressions on a given input line.
+    ///
+    /// An expression is surrounded by _delimiter on both sides.  We scan the
+    /// string from left to right finding any expressions that may appear, yank
+    /// them out and call templates_def::evaluate() to get their value.
+    ///
+    /// Lonely or unbalanced appearances of _delimiter on the input line are
+    /// not considered an error, given that the user may actually want to supply
+    /// that character sequence without being interpreted as a template.
+    ///
+    /// \param in_line The input line from which to evaluate expressions.
+    ///
+    /// \return The evaluated line.
+    ///
+    /// \throw text::syntax_error If the expressions in the line are malformed.
+    std::string
+    evaluate(const std::string& in_line)
+    {
+        std::string out_line;
+
+        std::string::size_type last_pos = 0;
+        while (last_pos != std::string::npos) {
+            const std::string::size_type open_pos = in_line.find(
+                _delimiter, last_pos);
+            if (open_pos == std::string::npos) {
+                out_line += in_line.substr(last_pos);
+                last_pos = std::string::npos;
+            } else {
+                const std::string::size_type close_pos = in_line.find(
+                    _delimiter, open_pos + _delimiter.length());
+                if (close_pos == std::string::npos) {
+                    out_line += in_line.substr(last_pos);
+                    last_pos = std::string::npos;
+                } else {
+                    out_line += in_line.substr(last_pos, open_pos - last_pos);
+                    out_line += _templates.evaluate(in_line.substr(
+                        open_pos + _delimiter.length(),
+                        close_pos - open_pos - _delimiter.length()));
+                    last_pos = close_pos + _delimiter.length();
+                }
+            }
+        }
+
+        return out_line;
+    }
+
 public:
     /// Constructs a new template parser.
     ///
     /// \param templates_ The templates to apply to the processed file.
     /// \param prefix_ The prefix that identifies lines as statements.
+    /// \param delimiter_ Delimiter to surround a variable instantiation.
     templates_parser(const text::templates_def& templates_,
-                     const std::string& prefix_) :
+                     const std::string& prefix_,
+                     const std::string& delimiter_) :
         _templates(templates_),
         _prefix(prefix_),
+        _delimiter(delimiter_),
         _skip(false),
         _if_level(0),
         _exit_if_level(0),
@@ -466,9 +481,9 @@ public:
         std::string line;
         while (std::getline(input, line).good()) {
             if (_skip)
-                handle_skip(line);
+                handle_skip(evaluate(line));
             else
-                handle_normal(line, input, output);
+                handle_normal(evaluate(line), input, output);
         }
     }
 };
@@ -632,6 +647,48 @@ text::templates_def::get_vector(const std::string& name,
 }
 
 
+/// Evaluates a expression using these templates.
+///
+/// An expression is a query on the current templates to fetch a particular
+/// value.  The value is always returned as a string, as this is how templates
+/// are internally stored.
+///
+/// \param expression The expression to evaluate.  This should not include any
+///     of the delimiters used in the user input, as otherwise the expression
+///     will not be evaluated properly.
+///
+/// \return The result of the expression evaluation as a string.
+///
+/// \throw text::syntax_error If there is any problem while evaluating the
+///     expression.
+std::string
+text::templates_def::evaluate(const std::string& expression) const
+{
+    const std::string::size_type paren_open = expression.find('(');
+    if (paren_open == std::string::npos) {
+        return get_variable(expression);
+    } else {
+        const std::string::size_type paren_close = expression.find(
+            ')', paren_open);
+        if (paren_close == std::string::npos)
+            throw text::syntax_error(F("Expected ')' in expression '%s')") %
+                                     expression);
+        if (paren_close != expression.length() - 1)
+            throw text::syntax_error(F("Unexpected text found after ')' in "
+                                       "expression '%s'") % expression);
+
+        const std::string arg0 = expression.substr(0, paren_open);
+        const std::string arg1 = expression.substr(
+            paren_open + 1, paren_close - paren_open - 1);
+        if (arg0 == "length") {
+            return F("%s") % get_vector(arg1).size();
+        } else {
+            return get_vector(arg0, arg1);
+        }
+    }
+}
+
+
 /// Applies a set of templates to an input stream.
 ///
 /// \param templates The templates to use.
@@ -643,6 +700,6 @@ void
 text::instantiate(const templates_def& templates,
                   std::istream& input, std::ostream& output)
 {
-    templates_parser parser(templates, "%");
+    templates_parser parser(templates, "%", "%%");
     parser.instantiate(input, output);
 }

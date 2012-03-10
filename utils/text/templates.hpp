@@ -37,6 +37,19 @@
 /// While this was originally written to handle HTML templates, it is actually
 /// generic enough to handle any kind of text document, hence why it lives
 /// within the utils::text library.
+///
+/// An example of how the templates look like:
+///
+///   %if names
+///   List of names
+///   -------------
+///   Amount of names: %%length(names)%%
+///   Most preferred name: %%preferred_name%%
+///   Full list:
+///   %loop names iter
+///     * %%last_names(iter)%%, %%names(iter)%%
+///   %endloop
+///   %endif names
 
 #if !defined(UTILS_TEXT_TEMPLATES_HPP)
 #define UTILS_TEXT_TEMPLATES_HPP
@@ -77,6 +90,8 @@ class templates_def {
     /// Collection of vectors available to the templates.
     vectors_map _vectors;
 
+    const std::string& get_vector(const std::string&, const std::string&) const;
+
 public:
     templates_def(void);
 
@@ -88,7 +103,8 @@ public:
     bool exists(const std::string&) const;
     const std::string& get_variable(const std::string&) const;
     const strings_vector& get_vector(const std::string&) const;
-    const std::string& get_vector(const std::string&, const std::string&) const;
+
+    std::string evaluate(const std::string&) const;
 };
 
 
