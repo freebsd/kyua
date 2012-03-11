@@ -631,6 +631,7 @@ ATF_TEST_CASE_BODY(instantiate__loop__no_iterations)
         "first line\n"
         "%loop table1 i\n"
         "hello\n"
+        "value in vector: %%table1(i)%%\n"
         "%if var1\n" "some other text\n" "%endif\n"
         "%endloop\n"
         "some more\n";

@@ -482,7 +482,7 @@ public:
         std::string line;
         while (std::getline(input, line).good()) {
             if (_skip)
-                handle_skip(evaluate(line));
+                handle_skip(line);
             else
                 handle_normal(evaluate(line), input, output);
         }
