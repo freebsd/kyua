@@ -523,6 +523,8 @@ ATF_TEST_CASE_BODY(instantiate__if__one_level__taken)
         "%endif\n"
         "%if defined(some_vector)\n"
         "hello from within the vector conditional\n"
+        "%else\n"
+        "bye from within the vector conditional\n"
         "%endif\n"
         "some more\n";
 
@@ -550,11 +552,14 @@ ATF_TEST_CASE_BODY(instantiate__if__one_level__not_taken)
         "%endif\n"
         "%if defined(some_vector)\n"
         "hello from within the vector conditional\n"
+        "%else\n"
+        "bye from within the vector conditional\n"
         "%endif\n"
         "some more\n";
 
     const std::string exp_output =
         "first line\n"
+        "bye from within the vector conditional\n"
         "some more\n";
 
     text::templates_def templates;
@@ -578,6 +583,8 @@ ATF_TEST_CASE_BODY(instantiate__if__multiple_levels__taken)
         "third after\n"
         "%endif\n"
         "second after\n"
+        "%else\n"
+        "second after not shown\n"
         "%endif\n"
         "first after\n"
         "%endif\n"
@@ -617,8 +624,12 @@ ATF_TEST_CASE_BODY(instantiate__if__multiple_levels__not_taken)
         "third before\n"
         "hello from within the conditional\n"
         "third after\n"
+        "%else\n"
+        "will not be shown either\n"
         "%endif\n"
         "second after\n"
+        "%else\n"
+        "second after shown\n"
         "%endif\n"
         "first after\n"
         "%endif\n"
@@ -627,6 +638,7 @@ ATF_TEST_CASE_BODY(instantiate__if__multiple_levels__not_taken)
     const std::string exp_output =
         "first line\n"
         "first before\n"
+        "second after shown\n"
         "first after\n"
         "some more\n";
 
