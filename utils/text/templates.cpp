@@ -324,7 +324,7 @@ class templates_parser : utils::noncopyable {
             break;
 
         case statement_def::type_endloop: {
-            PRE(!_loops.empty());
+            PRE(_loops.size() == _loop_level);
             loop_def& loop = _loops.top();
 
             const std::size_t next_index = 1 + text::to_type< std::size_t >(
@@ -334,6 +334,7 @@ class templates_parser : utils::noncopyable {
                 _templates.add_variable(loop.iterator, F("%s") % next_index);
                 input.seekg(loop.position);
             } else {
+                _loop_level--;
                 _loops.pop();
                 _templates.remove_variable(loop.iterator);
             }
@@ -348,14 +349,17 @@ class templates_parser : utils::noncopyable {
             break;
 
         case statement_def::type_loop: {
+            _loop_level++;
+
             const loop_def loop(statement.arguments[0], statement.arguments[1],
                                 input.tellg());
             if (_templates.get_vector(loop.vector).empty()) {
+                _exit_loop_level = _loop_level;
                 _skip = true;
             } else {
                 _templates.add_variable(loop.iterator, "0");
+                _loops.push(loop);
             }
-            _loops.push(loop);
         } break;
         }
     }

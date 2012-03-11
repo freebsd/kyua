@@ -676,8 +676,46 @@ ATF_TEST_CASE_BODY(instantiate__loop__multiple_iterations)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(instantiate__loop__nested);
-ATF_TEST_CASE_BODY(instantiate__loop__nested)
+ATF_TEST_CASE_WITHOUT_HEAD(instantiate__loop__nested__no_iterations);
+ATF_TEST_CASE_BODY(instantiate__loop__nested__no_iterations)
+{
+    const std::string input =
+        "first line\n"
+        "%loop table1 i\n"
+        "before: %%table1(i)%%\n"
+        "%loop table2 j\n"
+        "before: %%table2(j)%%\n"
+        "%loop table3 k\n"
+        "%%table3(k)%%\n"
+        "%endloop\n"
+        "after: %%table2(i)%%\n"
+        "%endloop\n"
+        "after: %%table1(i)%%\n"
+        "%endloop\n"
+        "some more\n";
+
+    const std::string exp_output =
+        "first line\n"
+        "before: a\n"
+        "after: a\n"
+        "before: b\n"
+        "after: b\n"
+        "some more\n";
+
+    text::templates_def templates;
+    templates.add_vector("table1");
+    templates.add_to_vector("table1", "a");
+    templates.add_to_vector("table1", "b");
+    templates.add_vector("table2");
+    templates.add_vector("table3");
+    templates.add_to_vector("table3", "1");
+
+    do_test_ok(templates, input, exp_output);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(instantiate__loop__nested__multiple_iterations);
+ATF_TEST_CASE_BODY(instantiate__loop__nested__multiple_iterations)
 {
     const std::string input =
         "first line\n"
@@ -706,6 +744,55 @@ ATF_TEST_CASE_BODY(instantiate__loop__nested)
     templates.add_to_vector("table2", "1");
     templates.add_to_vector("table2", "2");
     templates.add_to_vector("table2", "3");
+
+    do_test_ok(templates, input, exp_output);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(instantiate__loop__sequential);
+ATF_TEST_CASE_BODY(instantiate__loop__sequential)
+{
+    const std::string input =
+        "first line\n"
+        "%loop table1 iter\n"
+        "1: %%table1(iter)%%\n"
+        "%endloop\n"
+        "divider\n"
+        "%loop table2 iter\n"
+        "2: %%table2(iter)%%\n"
+        "%endloop\n"
+        "divider\n"
+        "%loop table3 iter\n"
+        "3: %%table3(iter)%%\n"
+        "%endloop\n"
+        "divider\n"
+        "%loop table4 iter\n"
+        "4: %%table4(iter)%%\n"
+        "%endloop\n"
+        "some more\n";
+
+    const std::string exp_output =
+        "first line\n"
+        "1: a\n"
+        "1: b\n"
+        "divider\n"
+        "divider\n"
+        "divider\n"
+        "4: 1\n"
+        "4: 2\n"
+        "4: 3\n"
+        "some more\n";
+
+    text::templates_def templates;
+    templates.add_vector("table1");
+    templates.add_to_vector("table1", "a");
+    templates.add_to_vector("table1", "b");
+    templates.add_vector("table2");
+    templates.add_vector("table3");
+    templates.add_vector("table4");
+    templates.add_to_vector("table4", "1");
+    templates.add_to_vector("table4", "2");
+    templates.add_to_vector("table4", "3");
 
     do_test_ok(templates, input, exp_output);
 }
@@ -874,7 +961,9 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, instantiate__if__multiple_levels__not_taken);
     ATF_ADD_TEST_CASE(tcs, instantiate__loop__no_iterations);
     ATF_ADD_TEST_CASE(tcs, instantiate__loop__multiple_iterations);
-    ATF_ADD_TEST_CASE(tcs, instantiate__loop__nested);
+    ATF_ADD_TEST_CASE(tcs, instantiate__loop__nested__no_iterations);
+    ATF_ADD_TEST_CASE(tcs, instantiate__loop__nested__multiple_iterations);
+    ATF_ADD_TEST_CASE(tcs, instantiate__loop__sequential);
     ATF_ADD_TEST_CASE(tcs, instantiate__loop__scoping);
     ATF_ADD_TEST_CASE(tcs, instantiate__mismatched_delimiters);
     ATF_ADD_TEST_CASE(tcs, instantiate__empty_statement);
