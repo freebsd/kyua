@@ -3,6 +3,9 @@ Changes in version 0.4
 
 STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 
+* Added the 'report-html' command to generate HTML reports of the
+  execution of any recorded action.
+
 * Added a '--with-atf' flag to the configure script to control whether
   the ATF tests get built or not.  May be useful for packaging systems
   that do not have ATF in them yet.  Disabling ATF also cuts down the
