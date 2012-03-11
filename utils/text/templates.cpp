@@ -340,13 +340,15 @@ class templates_parser : utils::noncopyable {
             }
         } break;
 
-        case statement_def::type_if:
+        case statement_def::type_if: {
             _if_level++;
-            if (!_templates.exists(statement.arguments[0])) {
+            const std::string value = _templates.evaluate(
+                statement.arguments[0]);
+            if (value.empty() || value == "0" || value == "false") {
                 _exit_if_level = _if_level;
                 _skip = true;
             }
-            break;
+        } break;
 
         case statement_def::type_loop: {
             _loop_level++;
@@ -685,7 +687,9 @@ text::templates_def::evaluate(const std::string& expression) const
         const std::string arg0 = expression.substr(0, paren_open);
         const std::string arg1 = expression.substr(
             paren_open + 1, paren_close - paren_open - 1);
-        if (arg0 == "length") {
+        if (arg0 == "defined") {
+            return exists(arg1) ? "true" : "false";
+        } else if (arg0 == "length") {
             return F("%s") % get_vector(arg1).size();
         } else {
             return get_vector(arg0, arg1);
