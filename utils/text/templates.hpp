@@ -60,6 +60,8 @@
 #include <string>
 #include <vector>
 
+#include "utils/fs/path.hpp"
+
 namespace utils {
 namespace text {
 
@@ -109,6 +111,7 @@ public:
 
 
 void instantiate(const templates_def&, std::istream&, std::ostream&);
+void instantiate(const templates_def&, const fs::path&, const fs::path&);
 
 
 }  // namespace text

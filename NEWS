@@ -3,6 +3,9 @@ Changes in version 0.4
 
 STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 
+* Added the 'report-html' command to generate HTML reports of the
+  execution of any recorded action.
+
 * Changed the '--output' flag of the 'report' command to only take a
   path to the target file, not its format.  Different formats are better
   supported by implementing different subcommands, as the options they

@@ -29,6 +29,7 @@
 #include "utils/text/templates.hpp"
 
 #include <algorithm>
+#include <fstream>
 #include <sstream>
 #include <stack>
 
@@ -54,6 +55,11 @@ class statement_def {
 public:
     /// Types of the known statements.
     enum statement_type {
+        /// Alternative clause of a conditional.
+        ///
+        /// Takes no arguments.
+        type_else,
+
         /// End of conditional marker.
         ///
         /// Takes no arguments.
@@ -116,6 +122,8 @@ private:
     {
         // If you change this, please edit the comments in the enum above.
         types_map types;
+        types.insert(types_map::value_type(
+            "else", type_descriptor(type_else, 0)));
         types.insert(types_map::value_type(
             "endif", type_descriptor(type_endif, 0)));
         types.insert(types_map::value_type(
@@ -246,11 +254,14 @@ class templates_parser : utils::noncopyable {
 
     /// Whether to skip incoming lines or not.
     ///
-    /// This is true whenever we encounter a conditional that evaluates to false
-    /// or a loop that does not have any iterations left.  Under these
-    /// circumstances, we need to continue scanning the input stream until we
-    /// find the matching closing endif or endloop construct.
-    bool _skip;
+    /// The top of the stack is true whenever we encounter a conditional that
+    /// evaluates to false or a loop that does not have any iterations left.
+    /// Under these circumstances, we need to continue scanning the input stream
+    /// until we find the matching closing endif or endloop construct.
+    ///
+    /// This is a stack rather than a plain boolean to allow us deal with
+    /// if-else clauses.
+    std::stack< bool > _skip;
 
     /// Current count of nested conditionals.
     unsigned int _if_level;
@@ -318,12 +329,16 @@ class templates_parser : utils::noncopyable {
         const statement_def statement = parse_statement(line);
 
         switch (statement.type) {
+        case statement_def::type_else:
+            _skip.top() = !_skip.top();
+            break;
+
         case statement_def::type_endif:
             _if_level--;
             break;
 
         case statement_def::type_endloop: {
-            PRE(!_loops.empty());
+            PRE(_loops.size() == _loop_level);
             loop_def& loop = _loops.top();
 
             const std::size_t next_index = 1 + text::to_type< std::size_t >(
@@ -333,28 +348,37 @@ class templates_parser : utils::noncopyable {
                 _templates.add_variable(loop.iterator, F("%s") % next_index);
                 input.seekg(loop.position);
             } else {
+                _loop_level--;
                 _loops.pop();
                 _templates.remove_variable(loop.iterator);
             }
         } break;
 
-        case statement_def::type_if:
+        case statement_def::type_if: {
             _if_level++;
-            if (!_templates.exists(statement.arguments[0])) {
+            const std::string value = _templates.evaluate(
+                statement.arguments[0]);
+            if (value.empty() || value == "0" || value == "false") {
                 _exit_if_level = _if_level;
-                _skip = true;
+                _skip.push(true);
+            } else {
+                _skip.push(false);
             }
-            break;
+        } break;
 
         case statement_def::type_loop: {
+            _loop_level++;
+
             const loop_def loop(statement.arguments[0], statement.arguments[1],
                                 input.tellg());
             if (_templates.get_vector(loop.vector).empty()) {
-                _skip = true;
+                _exit_loop_level = _loop_level;
+                _skip.push(true);
             } else {
                 _templates.add_variable(loop.iterator, "0");
+                _loops.push(loop);
+                _skip.push(false);
             }
-            _loops.push(loop);
         } break;
         }
     }
@@ -367,33 +391,42 @@ class templates_parser : utils::noncopyable {
     void
     handle_skip(const std::string& line)
     {
-        PRE(_skip);
+        PRE(_skip.top());
 
         if (!is_statement(line))
             return;
 
         const statement_def statement = parse_statement(line);
         switch (statement.type) {
+        case statement_def::type_else:
+            if (_exit_if_level == _if_level)
+                _skip.top() = !_skip.top();
+            break;
+
         case statement_def::type_endif:
             INV(_if_level >= _exit_if_level);
             if (_if_level == _exit_if_level)
-                _skip = false;
+                _skip.top() = false;
             _if_level--;
+            _skip.pop();
             break;
 
         case statement_def::type_endloop:
             INV(_loop_level >= _exit_loop_level);
             if (_loop_level == _exit_loop_level)
-                _skip = false;
+                _skip.top() = false;
             _loop_level--;
+            _skip.pop();
             break;
 
         case statement_def::type_if:
             _if_level++;
+            _skip.push(true);
             break;
 
         case statement_def::type_loop:
             _loop_level++;
+            _skip.push(true);
             break;
 
         default:
@@ -459,7 +492,6 @@ public:
         _templates(templates_),
         _prefix(prefix_),
         _delimiter(delimiter_),
-        _skip(false),
         _if_level(0),
         _exit_if_level(0),
         _loop_level(0),
@@ -480,8 +512,8 @@ public:
     {
         std::string line;
         while (std::getline(input, line).good()) {
-            if (_skip)
-                handle_skip(evaluate(line));
+            if (!_skip.empty() && _skip.top())
+                handle_skip(line);
             else
                 handle_normal(evaluate(line), input, output);
         }
@@ -680,7 +712,9 @@ text::templates_def::evaluate(const std::string& expression) const
         const std::string arg0 = expression.substr(0, paren_open);
         const std::string arg1 = expression.substr(
             paren_open + 1, paren_close - paren_open - 1);
-        if (arg0 == "length") {
+        if (arg0 == "defined") {
+            return exists(arg1) ? "true" : "false";
+        } else if (arg0 == "length") {
             return F("%s") % get_vector(arg1).size();
         } else {
             return get_vector(arg0, arg1);
@@ -702,4 +736,28 @@ text::instantiate(const templates_def& templates,
 {
     templates_parser parser(templates, "%", "%%");
     parser.instantiate(input, output);
+}
+
+
+/// Applies a set of templates to an input file and writes an output file.
+///
+/// \param templates The templates to use.
+/// \param input_file The path to the input to process.
+/// \param output_file The path to the file into which to write the output.
+///
+/// \throw text::error If the input or output files cannot be opened.
+/// \throw text::syntax_error If there is any problem processing the input.
+void
+text::instantiate(const templates_def& templates,
+                  const fs::path& input_file, const fs::path& output_file)
+{
+    std::ifstream input(input_file.c_str());
+    if (!input)
+        throw text::error(F("Failed to open %s for read") % input_file);
+
+    std::ofstream output(output_file.c_str());
+    if (!output)
+        throw text::error(F("Failed to open %s for write") % output_file);
+
+    instantiate(templates, input, output);
 }

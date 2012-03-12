@@ -68,6 +68,7 @@ kyua_LDADD = $(CLI_LIBS) $(ENGINE_LIBS) $(UTILS_LIBS)
 CHECK_ENVIRONMENT = KYUA_CONFDIR=/non-existent \
                     KYUA_DOCDIR=$(abs_top_srcdir) \
                     KYUA_LUADIR=$(abs_top_srcdir)/engine/user_files \
+                    KYUA_MISCDIR=$(abs_top_srcdir)/misc \
                     KYUA_STOREDIR=$(abs_top_srcdir)/store \
                     PATH=$(abs_top_builddir):$${PATH}
 INSTALLCHECK_ENVIRONMENT = KYUA_CONFDIR=/non-existent \

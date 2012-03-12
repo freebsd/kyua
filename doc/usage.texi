@@ -104,6 +104,7 @@ Commands list
 * help command:: Details about the help command.
 * list command:: Details about the list command.
 * report command:: Details about the report command.
+* report-html command:: Details about the report-html command.
 * test command:: Details about the test command.
 
 Miscellaneous topics
@@ -366,6 +367,47 @@ Specifies the database to use.  Defaults to @file{~/.kyua/store.db}.
 The database is created if it does not exist.
 @end table
 
+@node report-html command
+@subsection The report-html command
+
+@cindex @command{report-html}
+
+The @command{report-html} command provides a simple mechanism to
+generate HTML reports of the execution of a test suite.  The command
+processes an action stored in the database and then populates a
+directory with multiple HTML and supporting files to describe the
+results recorded in that action.
+
+The HTML output is static and self-contained, so it can easily be
+served by any simple web server.  The command expects the target
+directory to not exist, because it would overwrite any contents if not
+careful.
+
+The following subcommand options are recognized:
+
+@table @option
+@item --action=identifier
+@cindex @option{--action}, @command{report-html}
+Specifies the action for which to generate a report.  If not provided,
+defaults to the latest action stored in the database.
+
+@item --force
+@cindex @option{--force}, @command{report-html}
+Forces the deletion of the output directory if it exists.  Use care,
+as this effectively means a @samp{rm -rf}.
+
+@item --output=directory
+@cindex @option{--output}, @command{report-html}
+Specifies the target directory into which to generate the HTML files.
+The directory must not exist unless the @option{--force} option is
+provided.  The default is @file{./html}.
+
+@item --store=path
+@cindex @option{--store}, @command{db-exec}
+Specifies the database to use.  Defaults to @file{~/.kyua/store.db}.
+The database is created if it does not exist.
+@end table
+
 @node test command
 @subsection The test command
 
@@ -462,6 +504,13 @@ Defaults to @file{@value{KYUA_DOCDIR}}.
 Path to the location of the installed Lua modules provided by @command{kyua}.
 
 Defaults to @file{@value{KYUA_LUADIR}}.
+
+@item KYUA_MISCDIR
+@cindex KYUA_MISCDIR
+Path to the location of the installed miscellaneous scripts and data
+files provided by @command{kyua}.
+
+Defaults to @file{@value{KYUA_MISCDIR}}.
 
 @item KYUA_STOREDIR
 @cindex kYUA_STOREDIR
