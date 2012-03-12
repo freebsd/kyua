@@ -29,6 +29,7 @@
 #include "cli/cmd_report_html.hpp"
 
 #include <cerrno>
+#include <cstdlib>
 #include <stdexcept>
 
 #include "cli/common.ipp"
