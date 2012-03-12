@@ -159,8 +159,8 @@ EOF
 }
 
 
-utils_test_case output__console__change_file
-output__console__change_file_body() {
+utils_test_case output__change_file
+output__change_file_body() {
     run_tests
 
     cat >report <<EOF
@@ -173,14 +173,14 @@ Total time: S.UUUs
 EOF
 
     atf_check -s exit:0 -o file:report -e empty -x kyua report \
-        --output=console:/dev/stdout "| ${utils_strip_timestamp}"
+        --output=/dev/stdout "| ${utils_strip_timestamp}"
     atf_check -s exit:0 -o empty -e save:stderr kyua report \
-        --output=console:/dev/stderr
+        --output=/dev/stderr
     atf_check -s exit:0 -o file:report -x cat stderr \
         "| ${utils_strip_timestamp}"
 
     atf_check -s exit:0 -o empty -e empty kyua report \
-        --output=console:my-file
+        --output=my-file
     atf_check -s exit:0 -o file:report -x cat my-file \
         "| ${utils_strip_timestamp}"
 }
@@ -275,7 +275,7 @@ atf_init_test_cases() {
 
     atf_add_test_case show_context
 
-    atf_add_test_case output__console__change_file
+    atf_add_test_case output__change_file
 
     atf_add_test_case results_filter__empty
     atf_add_test_case results_filter__one

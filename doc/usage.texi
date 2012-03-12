@@ -320,10 +320,11 @@ invalid in any sense or if the filters matched no tests.
 
 @cindex @command{report}
 
-The @command{report} command provides the main mechanism to generate
-reports of the execution of a test suite.  The command processes an
-action stored in the database and then creates a textual summary of
-the test case results recorded in that action.
+The @command{report} command provides the mechanism to generate
+user-friendly, plain-text reports of the execution of a test suite.
+The command processes an action stored in the database and then
+creates a textual summary of the test case results recorded in that
+action.  These reports are not intended to be machine-parseable.
 
 The following subcommand options are recognized:
 
@@ -335,9 +336,9 @@ defaults to the latest action stored in the database.
 
 @item --output=format:path
 @cindex @option{--output}, @command{report}
-Specifies the format of the generated report and where it should be
-stored in the form @samp{format:path}.  At the moment, the only format
-type is @samp{console}.
+Specifies the path to which the report should be written to.  The
+special values @file{/dev/stdout} and @file{/dev/stderr} can be used
+to specify the standard output and the standard error respectively.
 
 @item --results-filter=types
 @cindex @option{--results-filter}, @command{report}
