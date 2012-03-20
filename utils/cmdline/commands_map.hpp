@@ -40,6 +40,7 @@
 
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 
 #include "utils/noncopyable.hpp"
@@ -55,8 +56,14 @@ class commands_map : noncopyable {
     /// Map of command names to their implementations.
     typedef std::map< std::string, BaseCommand* > impl_map;
 
+    /// Map of category names to the command names they contain.
+    typedef std::map< std::string, std::set< std::string > > categories_map;
+
     /// Collection of all available commands.
     impl_map _commands;
+
+    /// Collection of defined categories and their commands.
+    categories_map _categories;
 
 public:
     commands_map(void);
@@ -64,11 +71,11 @@ public:
 
     /// Scoped, strictly-owned pointer to a command from this map.
     typedef typename std::auto_ptr< BaseCommand > command_ptr;
-    void insert(command_ptr);
-    void insert(BaseCommand*);
+    void insert(command_ptr, const std::string& = "");
+    void insert(BaseCommand*, const std::string& = "");
 
     /// Type for a constant iterator.
-    typedef typename impl_map::const_iterator const_iterator;
+    typedef typename categories_map::const_iterator const_iterator;
 
     bool empty(void) const;
 

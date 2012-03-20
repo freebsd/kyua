@@ -97,13 +97,20 @@ general_help(cmdline::ui* ui, const cmdline::options_vector* options,
         options_help(ui, *options);
     }
 
-    ui->out("");
-    ui->out("Available commands:");
     for (cmdline::commands_map< cli::cli_command >::const_iterator
          iter = commands->begin(); iter != commands->end(); iter++) {
-        const cli::cli_command* command = (*iter).second;
-        ui->out(F("    %s: %s.") % command->name() %
-                command->short_description());
+        const std::string& category = (*iter).first;
+        const std::set< std::string >& command_names = (*iter).second;
+
+        ui->out("");
+        ui->out(F("%s commands:") %
+                (category.empty() ? "Generic" : category));
+        for (std::set< std::string >::const_iterator i2 = command_names.begin();
+             i2 != command_names.end(); i2++) {
+            const cli::cli_command* command = commands->find(*i2);
+            ui->out(F("    %s: %s.") % command->name() %
+                    command->short_description());
+        }
     }
 }
 

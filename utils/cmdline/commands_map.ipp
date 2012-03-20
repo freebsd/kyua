@@ -57,14 +57,18 @@ cmdline::commands_map< BaseCommand >::~commands_map(void)
 /// \param command The command to insert.  This must have been dynamically
 ///     allocated with new.  The call grabs ownership of the command, or the
 ///     command is freed if the call fails.
+/// \param category The category this command belongs to.  Defaults to the empty
+///     string, which indicates that the command has not be categorized.
 template< typename BaseCommand >
 void
-cmdline::commands_map< BaseCommand >::insert(command_ptr command)
+cmdline::commands_map< BaseCommand >::insert(command_ptr command,
+                                             const std::string& category)
 {
     INV(_commands.find(command->name()) == _commands.end());
     BaseCommand* ptr = command.release();
     INV(ptr != NULL);
     _commands[ptr->name()] = ptr;
+    _categories[category].insert(ptr->name());
 }
 
 
@@ -76,11 +80,14 @@ cmdline::commands_map< BaseCommand >::insert(command_ptr command)
 /// \param command The command to insert.  This must have been dynamically
 ///     allocated with new.  The call grabs ownership of the command, or the
 ///     command is freed if the call fails.
+/// \param category The category this command belongs to.  Defaults to the empty
+///     string, which indicates that the command has not be categorized.
 template< typename BaseCommand >
 void
-cmdline::commands_map< BaseCommand >::insert(BaseCommand* command)
+cmdline::commands_map< BaseCommand >::insert(BaseCommand* command,
+                                             const std::string& category)
 {
-    insert(command_ptr(command));
+    insert(command_ptr(command), category);
 }
 
 
@@ -95,25 +102,25 @@ cmdline::commands_map< BaseCommand >::empty(void) const
 }
 
 
-/// Returns a constant iterator to the beginning of the commands sequence.
+/// Returns a constant iterator to the beginning of the categories mapping.
 ///
 /// \return A map (string -> BaseCommand*) iterator.
 template< typename BaseCommand >
 typename cmdline::commands_map< BaseCommand >::const_iterator
 cmdline::commands_map< BaseCommand >::begin(void) const
 {
-    return _commands.begin();
+    return _categories.begin();
 }
 
 
-/// Returns a constant iterator to the end of the commands sequence.
+/// Returns a constant iterator to the end of the categories mapping.
 ///
 /// \return A map (string -> BaseCommand*) iterator.
 template< typename BaseCommand >
 typename cmdline::commands_map< BaseCommand >::const_iterator
 cmdline::commands_map< BaseCommand >::end(void) const
 {
-    return _commands.end();
+    return _categories.end();
 }
 
 
