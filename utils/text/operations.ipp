@@ -36,6 +36,29 @@
 #include "utils/text/exceptions.hpp"
 
 
+/// Concatenates a collection of strings into a single string.
+///
+/// \param strings The collection of strings to concatenate.  If the collection
+///     is unordered, the ordering in the output is undefined.
+/// \param delimiter The delimiter to use to separate the strings.
+///
+/// \return The concatenated strings.
+template< typename Collection >
+std::string
+utils::text::join(const Collection& strings, const std::string& delimiter)
+{
+    std::ostringstream output;
+    if (strings.size() > 1) {
+        for (typename Collection::const_iterator iter = strings.begin();
+             iter != --strings.end(); ++iter)
+            output << (*iter) << delimiter;
+    }
+    if (strings.size() > 0)
+        output << *(--strings.end());
+    return output.str();
+}
+
+
 /// Converts a string to a native type.
 ///
 /// \tparam Type The type to convert the string to.  An input stream operator

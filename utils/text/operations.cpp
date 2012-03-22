@@ -43,11 +43,11 @@ namespace text = utils::text;
 /// \param input The string to refill.
 /// \param target_width The width to refill the paragraph to.
 ///
-/// \return The refilled paragraph as a string with embedded newlines.
-std::string
+/// \return The refilled paragraph as a sequence of independent lines.
+std::vector< std::string >
 text::refill(const std::string& input, const std::size_t target_width)
 {
-    std::string output;
+    std::vector< std::string > output;
 
     std::string::size_type start = 0;
     while (start + target_width < input.length()) {
@@ -69,13 +69,29 @@ text::refill(const std::string& input, const std::size_t target_width)
         INV(width != std::string::npos);
         INV(start + width < input.length());
         INV(input[start + width] == ' ');
-        output += input.substr(start, width) + "\n";
+        output.push_back(input.substr(start, width));
 
         start += width + 1;
     }
-    output += input.substr(start);
+    if (!input.empty())
+        output.push_back(input.substr(start));
 
     return output;
+}
+
+
+/// Fills a paragraph to the specified length.
+///
+/// See the documentation for refill() for additional details.
+///
+/// \param input The string to refill.
+/// \param target_width The width to refill the paragraph to.
+///
+/// \return The refilled paragraph as a string with embedded newlines.
+std::string
+text::refill_as_string(const std::string& input, const std::size_t target_width)
+{
+    return join(refill(input, target_width), "\n");
 }
 
 
