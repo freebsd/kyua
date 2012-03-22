@@ -118,6 +118,16 @@ ATF_TEST_CASE_BODY(refill__break_many)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(refill__cannot_break);
+ATF_TEST_CASE_BODY(refill__cannot_break)
+{
+    refill_test("this-is-a-long-string", "this-is-a-long-string", 5, 5);
+
+    refill_test("this is\na-string-with-long-words",
+                "this is a-string-with-long-words", 10, 10);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(refill__preserve_whitespace);
 ATF_TEST_CASE_BODY(refill__preserve_whitespace)
 {
@@ -258,6 +268,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, refill__break_one);
     ATF_ADD_TEST_CASE(tcs, refill__break_one__not_first_word);
     ATF_ADD_TEST_CASE(tcs, refill__break_many);
+    ATF_ADD_TEST_CASE(tcs, refill__cannot_break);
     ATF_ADD_TEST_CASE(tcs, refill__preserve_whitespace);
 
     ATF_ADD_TEST_CASE(tcs, join__empty);

@@ -50,31 +50,34 @@ text::refill(const std::string& input, const std::size_t target_width)
     std::vector< std::string > output;
 
     std::string::size_type start = 0;
-    while (start + target_width < input.length()) {
+    while (start < input.length()) {
         std::string::size_type width;
-        if (input[start + target_width] != ' ') {
-            const std::string::size_type pos = input.find_last_of(
-                " ", start + target_width - 1);
-            if (pos == std::string::npos || pos < start + 1) {
-                width = input.find_first_of(" ", start + target_width);
-                if (width == std::string::npos)
-                    width = input.length() - start;
-                else
-                    width -= start;
+        if (start + target_width >= input.length())
+            width = input.length() - start;
+        else {
+            if (input[start + target_width] == ' ') {
+                width = target_width;
             } else {
-                width = pos - start;
+                const std::string::size_type pos = input.find_last_of(
+                    " ", start + target_width - 1);
+                if (pos == std::string::npos || pos < start + 1) {
+                    width = input.find_first_of(" ", start + target_width);
+                    if (width == std::string::npos)
+                        width = input.length() - start;
+                    else
+                        width -= start;
+                } else {
+                    width = pos - start;
+                }
             }
-        } else
-            width = target_width;
+        }
         INV(width != std::string::npos);
-        INV(start + width < input.length());
-        INV(input[start + width] == ' ');
+        INV(start + width <= input.length());
+        INV(input[start + width] == ' ' || input[start + width] == '\0');
         output.push_back(input.substr(start, width));
 
         start += width + 1;
     }
-    if (!input.empty())
-        output.push_back(input.substr(start));
 
     return output;
 }
