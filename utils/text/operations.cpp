@@ -28,7 +28,55 @@
 
 #include "utils/text/operations.ipp"
 
+#include "utils/sanity.hpp"
+
 namespace text = utils::text;
+
+
+/// Fills a paragraph to the specified length.
+///
+/// This preserves any sequence of spaces in the input and any possible
+/// newlines.  Sequences of spaces may be split in half (and thus one space is
+/// lost), but the rest of the spaces will be preserved as either trailing or
+/// leading spaces.
+///
+/// \param input The string to refill.
+/// \param target_width The width to refill the paragraph to.
+///
+/// \return The refilled paragraph as a string with embedded newlines.
+std::string
+text::refill(const std::string& input, const std::size_t target_width)
+{
+    std::string output;
+
+    std::string::size_type start = 0;
+    while (start + target_width < input.length()) {
+        std::string::size_type width;
+        if (input[start + target_width] != ' ') {
+            const std::string::size_type pos = input.find_last_of(
+                " ", start + target_width - 1);
+            if (pos == std::string::npos || pos < start + 1) {
+                width = input.find_first_of(" ", start + target_width);
+                if (width == std::string::npos)
+                    width = input.length() - start;
+                else
+                    width -= start;
+            } else {
+                width = pos - start;
+            }
+        } else
+            width = target_width;
+        INV(width != std::string::npos);
+        INV(start + width < input.length());
+        INV(input[start + width] == ' ');
+        output += input.substr(start, width) + "\n";
+
+        start += width + 1;
+    }
+    output += input.substr(start);
+
+    return output;
+}
 
 
 /// Splits a string into different components.

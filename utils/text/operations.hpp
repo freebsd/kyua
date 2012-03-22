@@ -32,12 +32,15 @@
 #if !defined(UTILS_TEXT_OPERATIONS_HPP)
 #define UTILS_TEXT_OPERATIONS_HPP
 
+#include <cstddef>
 #include <string>
 #include <vector>
 
 namespace utils {
 namespace text {
 
+
+std::string refill(const std::string&, const std::size_t);
 
 std::vector< std::string > split(const std::string&, const char);
 
