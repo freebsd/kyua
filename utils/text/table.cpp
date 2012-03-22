@@ -29,7 +29,6 @@
 #include "utils/text/table.hpp"
 
 #include <algorithm>
-#include <cstring>
 #include <iterator>
 #include <sstream>
 
@@ -165,7 +164,7 @@ refill_cell(const text::table_row& row, const widths_vector& widths,
 /// \return The textual lines that contain the formatted row.
 static std::vector< std::string >
 format_row(const text::table_row& row, const widths_vector& widths,
-           const char* separator)
+           const std::string& separator)
 {
     PRE(row.size() == widths.size());
 
@@ -253,35 +252,78 @@ text::table::end(void) const
 }
 
 
+/// Constructs a new table formatter.
+text::table_formatter::table_formatter(void) :
+    _separator(""),
+    _max_width(0),
+    _refill_column(0)
+{
+}
+
+
+/// Sets the separator to use between the cells.
+///
+/// \param separator The separator to use.
+///
+/// \return A reference to this formatter to allow using the builder pattern.
+text::table_formatter&
+text::table_formatter::set_separator(const char* separator)
+{
+    _separator = separator;
+    return *this;
+}
+
+
+/// Sets the maximum width of the table.
+///
+/// \param max_width The maximum width of the table; cannot be zero.
+///
+/// \return A reference to this formatter to allow using the builder pattern.
+text::table_formatter&
+text::table_formatter::set_max_width(const std::size_t max_width)
+{
+    PRE(max_width > 0);
+    _max_width = max_width;
+    return *this;
+}
+
+
+/// Sets the column to refill if the table would be wider than the max width.
+///
+/// Setting this filed without calling set_max_width() (before or after) makes
+/// no sense.
+///
+/// \param refill_column The index of the column to refill when the table would
+///     result in a wider width than max_width.
+///
+/// \return A reference to this formatter to allow using the builder pattern.
+text::table_formatter&
+text::table_formatter::set_refill_column(const std::size_t refill_column)
+{
+    _refill_column = refill_column;
+    return *this;
+}
+
+
 /// Formats a table into a collection of textual lines.
 ///
 /// \param t Table to format.
-/// \param separator String to use to separate cells form each other.  This
-///     separator does not surround the table.  May be empty.
-/// \param max_width_of_table If non-zero, specifies the maximum width that the
-///     table can have.
-/// \param expanding_column When max_width_of_table is non-zero, this indicates
-///     the column to be refilled if the table does not fit in the specified
-///     width.
 ///
 /// \return A collection of textual lines.
 std::vector< std::string >
-text::format_table(const table& t,
-                   const char* separator,
-                   const std::size_t max_width_of_table,
-                   const std::size_t expanding_column)
+text::table_formatter::format(const table& t) const
 {
     std::vector< std::string > lines;
 
     if (!t.empty()) {
         widths_vector widths = column_widths(t);
-        if (max_width_of_table > 0)
-            adjust_widths(widths, max_width_of_table, expanding_column,
-                          (t.ncolumns() - 1) * std::strlen(separator));
+        if (_max_width > 0)
+            adjust_widths(widths, _max_width, _refill_column,
+                          (t.ncolumns() - 1) * _separator.length());
 
         for (table::const_iterator iter = t.begin(); iter != t.end(); ++iter) {
             const std::vector< std::string > sublines =
-                format_row(*iter, widths, separator);
+                format_row(*iter, widths, _separator);
             std::copy(sublines.begin(), sublines.end(),
                       std::back_inserter(lines));
         }

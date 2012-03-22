@@ -35,12 +35,11 @@
 namespace text = utils::text;
 
 
-/// Performs a check on text::format_table().
+/// Performs a check on text::table_formatter.
 ///
-/// This is provided for simplicity reasons only.  This is a macro instead of a
-/// function because we want an easy way to delegate the multiple parameters of
-/// text::format_table() verbatim, regardless of whether its optional values
-/// have been supplied or not.
+/// This is provided for test simplicity's sake.  Having to match the result of
+/// the formatting on a line by line basis would result in too verbose tests
+/// (maybe not with C++11, but not using this yet).
 ///
 /// Because of the flattening of the formatted table into a string, we risk
 /// misdetecting problems when the algorithm bundles newlines into the lines of
@@ -49,12 +48,16 @@ namespace text = utils::text;
 ///
 /// \param expected Textual representation of the table, as a collection of
 ///     lines separated by newline characters.
-/// \param arguments The arguments to pass to text::format_table().  These have
-///     to be provided verbatim, including the surrounding parenthesis.  Note
-///     that the table to be formatted must not be empty.
-#define FORMAT_TABLE_CHECK(expected, arguments) \
-    ATF_REQUIRE_EQ(expected, \
-                   text::join(text::format_table arguments, "\n") + "\n")
+/// \param formatter The formatter to use.
+/// \param table The table to format.
+static void
+table_formatter_check(const std::string& expected,
+                      const text::table_formatter& formatter,
+                      const text::table& table)
+{
+    ATF_REQUIRE_EQ(expected, text::join(formatter.format(table), "\n") + "\n");
+}
+
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(table__ncolumns);
@@ -98,16 +101,44 @@ ATF_TEST_CASE_BODY(table__iterate)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(format_table__empty);
-ATF_TEST_CASE_BODY(format_table__empty)
+ATF_TEST_CASE_WITHOUT_HEAD(table_formatter__empty);
+ATF_TEST_CASE_BODY(table_formatter__empty)
 {
-    ATF_REQUIRE(text::format_table(text::table(1), " ").empty());
-    ATF_REQUIRE(text::format_table(text::table(10), " ").empty());
+    ATF_REQUIRE(text::table_formatter().set_separator(" ")
+                .format(text::table(1)).empty());
+    ATF_REQUIRE(text::table_formatter().set_separator(" ")
+                .format(text::table(10)).empty());
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(format_table__one_column__no_refill);
-ATF_TEST_CASE_BODY(format_table__one_column__no_refill)
+ATF_TEST_CASE_WITHOUT_HEAD(table_formatter__defaults);
+ATF_TEST_CASE_BODY(table_formatter__defaults)
+{
+    text::table table(3);
+    {
+        text::table_row row;
+        row.push_back("First");
+        row.push_back("Second");
+        row.push_back("Third");
+        table.add_row(row);
+    }
+    {
+        text::table_row row;
+        row.push_back("Fourth with some text");
+        row.push_back("Fifth with some more text");
+        row.push_back("Sixth foo");
+        table.add_row(row);
+    }
+
+    table_formatter_check(
+        "First                Second                   Third\n"
+        "Fourth with some textFifth with some more textSixth foo\n",
+        text::table_formatter(), table);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(table_formatter__one_column__no_max_width);
+ATF_TEST_CASE_BODY(table_formatter__one_column__no_max_width)
 {
     text::table table(1);
     {
@@ -121,15 +152,15 @@ ATF_TEST_CASE_BODY(format_table__one_column__no_refill)
         table.add_row(row);
     }
 
-    FORMAT_TABLE_CHECK(
+    table_formatter_check(
         "First row with some words\n"
         "Second row with some words\n",
-        (table, " | ", 0, 0));
+        text::table_formatter().set_separator(" | "), table);
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(format_table__one_column__refill);
-ATF_TEST_CASE_BODY(format_table__one_column__refill)
+ATF_TEST_CASE_WITHOUT_HEAD(table_formatter__one_column__max_width);
+ATF_TEST_CASE_BODY(table_formatter__one_column__max_width)
 {
     text::table table(1);
     {
@@ -143,15 +174,16 @@ ATF_TEST_CASE_BODY(format_table__one_column__refill)
         table.add_row(row);
     }
 
-    FORMAT_TABLE_CHECK(
+    table_formatter_check(
         "First row\nwith some\nwords\n"
         "Second row\nwith some\nwords\n",
-        (table, " | ", 11, 0));
+        text::table_formatter().set_separator(" | ").set_max_width(11),
+        table);
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(format_table__many_columns__no_refill);
-ATF_TEST_CASE_BODY(format_table__many_columns__no_refill)
+ATF_TEST_CASE_WITHOUT_HEAD(table_formatter__many_columns__no_max_width);
+ATF_TEST_CASE_BODY(table_formatter__many_columns__no_max_width)
 {
     text::table table(3);
     {
@@ -169,15 +201,15 @@ ATF_TEST_CASE_BODY(format_table__many_columns__no_refill)
         table.add_row(row);
     }
 
-    FORMAT_TABLE_CHECK(
+    table_formatter_check(
         "First                 | Second                    | Third\n"
         "Fourth with some text | Fifth with some more text | Sixth foo\n",
-        (table, " | "));
+        text::table_formatter().set_separator(" | "), table);
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(format_table__many_columns__refill);
-ATF_TEST_CASE_BODY(format_table__many_columns__refill)
+ATF_TEST_CASE_WITHOUT_HEAD(table_formatter__many_columns__max_width);
+ATF_TEST_CASE_BODY(table_formatter__many_columns__max_width)
 {
     text::table table(3);
     {
@@ -195,17 +227,18 @@ ATF_TEST_CASE_BODY(format_table__many_columns__refill)
         table.add_row(row);
     }
 
-    FORMAT_TABLE_CHECK(
+    table_formatter_check(
         "First                 | Second     | Third\n"
         "Fourth with some text | Fifth with | Sixth foo\n"
         "                      | some more  | \n"
         "                      | text       | \n",
-        (table, " | ", 46, 1));
+        text::table_formatter().set_separator(" | ").set_max_width(46)
+        .set_refill_column(1), table);
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(format_table__use_case__cli_help);
-ATF_TEST_CASE_BODY(format_table__use_case__cli_help)
+ATF_TEST_CASE_WITHOUT_HEAD(table_formatter__use_case__cli_help);
+ATF_TEST_CASE_BODY(table_formatter__use_case__cli_help)
 {
     text::table table(2);
     {
@@ -221,12 +254,13 @@ ATF_TEST_CASE_BODY(format_table__use_case__cli_help)
         table.add_row(row);
     }
 
-    FORMAT_TABLE_CHECK(
+    table_formatter_check(
         "-a a_value  This is the description\n"
         "            of the first flag\n"
         "-b          And this is the text for\n"
         "            the second flag\n",
-        (table, "  ", 36, 1));
+        text::table_formatter().set_separator("  ").set_max_width(36)
+        .set_refill_column(1), table);
 }
 
 
@@ -236,10 +270,11 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, table__empty);
     ATF_ADD_TEST_CASE(tcs, table__iterate);
 
-    ATF_ADD_TEST_CASE(tcs, format_table__empty);
-    ATF_ADD_TEST_CASE(tcs, format_table__one_column__no_refill);
-    ATF_ADD_TEST_CASE(tcs, format_table__one_column__refill);
-    ATF_ADD_TEST_CASE(tcs, format_table__many_columns__no_refill);
-    ATF_ADD_TEST_CASE(tcs, format_table__many_columns__refill);
-    ATF_ADD_TEST_CASE(tcs, format_table__use_case__cli_help);
+    ATF_ADD_TEST_CASE(tcs, table_formatter__empty);
+    ATF_ADD_TEST_CASE(tcs, table_formatter__defaults);
+    ATF_ADD_TEST_CASE(tcs, table_formatter__one_column__no_max_width);
+    ATF_ADD_TEST_CASE(tcs, table_formatter__one_column__max_width);
+    ATF_ADD_TEST_CASE(tcs, table_formatter__many_columns__no_max_width);
+    ATF_ADD_TEST_CASE(tcs, table_formatter__many_columns__max_width);
+    ATF_ADD_TEST_CASE(tcs, table_formatter__use_case__cli_help);
 }

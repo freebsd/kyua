@@ -83,9 +83,33 @@ public:
 };
 
 
-std::vector< std::string > format_table(const table&, const char* = " ",
-                                        const std::size_t = 0,
-                                        const std::size_t = 0);
+/// Settings to format a table.
+///
+/// This class implements a builder pattern to construct an object that contains
+/// all the knowledge to format a table.  Once all the settings have been set,
+/// the format() method provides the algorithm to apply such formatting settings
+/// to any input table.
+class table_formatter {
+    /// Text to use as the separator between cells.
+    std::string _separator;
+
+    /// Maximum width of the table; if zero, no maximum width set.
+    std::size_t _max_width;
+
+    /// Index of the column to refill if the table is wider than _max_width.
+    ///
+    /// This field only has a meaning if _max_width is not zero.
+    std::size_t _refill_column;
+
+public:
+    table_formatter(void);
+
+    table_formatter& set_separator(const char*);
+    table_formatter& set_max_width(const std::size_t);
+    table_formatter& set_refill_column(const std::size_t);
+
+    std::vector< std::string > format(const table&) const;
+};
 
 
 }  // namespace text
