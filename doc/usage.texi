@@ -470,6 +470,12 @@ The following environment variables are recognized by @command{kyua}
 and you may change them to suit your preferences:
 
 @table @env
+@item COLUMNS
+@cindex COLUMNS
+The width of the screen, in number of characters; used by
+@command{kyua} to wrap long lines.  If not present, the width of the
+screen is determined from the terminal stdout is connected to, if any.
+
 @item HOME
 @cindex HOME
 Path to the user's home directory.  @command{kyua} uses this location

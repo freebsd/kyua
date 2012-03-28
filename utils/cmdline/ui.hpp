@@ -32,7 +32,10 @@
 #if !defined(UTILS_CMDLINE_UI_HPP)
 #define UTILS_CMDLINE_UI_HPP
 
+#include <cstddef>
 #include <string>
+
+#include "utils/optional.hpp"
 
 namespace utils {
 namespace cmdline {
@@ -52,6 +55,8 @@ public:
 
     virtual void err(const std::string&);
     virtual void out(const std::string&);
+
+    virtual optional< std::size_t > screen_width(void) const;
 };
 
 

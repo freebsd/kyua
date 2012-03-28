@@ -30,7 +30,11 @@
 
 #include <iostream>
 
+#include "utils/optional.ipp"
+
 using utils::cmdline::ui_mock;
+using utils::none;
+using utils::optional;
 
 
 /// Writes a line to stderr and records it for further inspection.
@@ -54,6 +58,17 @@ ui_mock::out(const std::string& message)
 {
     std::cout << message << "\n";
     _out_log.push_back(message);
+}
+
+
+/// Queries the width of the screen.
+///
+/// \return Always none, as we do not want to depend on line wrapping in our
+/// tests.
+optional< std::size_t >
+ui_mock::screen_width(void) const
+{
+    return none;
 }
 
 

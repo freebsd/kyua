@@ -28,15 +28,27 @@
 
 #include "utils/cmdline/ui.hpp"
 
+extern "C" {
+#include <sys/ioctl.h>
+
+#include <unistd.h>
+}
+
 #include <iostream>
 
 #include "utils/cmdline/globals.hpp"
+#include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
+#include "utils/optional.ipp"
+#include "utils/text/operations.ipp"
 #include "utils/sanity.hpp"
 
 namespace cmdline = utils::cmdline;
+
+using utils::none;
+using utils::optional;
 
 
 /// Destructor for the class.
@@ -66,6 +78,57 @@ cmdline::ui::out(const std::string& message)
     PRE(message.empty() || message[message.length() - 1] != '\n');
     LI(F("stdout: %s") % message);
     std::cout << message << "\n";
+}
+
+
+/// Queries the width of the screen.
+///
+/// This information comes first from the COLUMNS environment variable.  If not
+/// present or invalid, and if the stdout of the current process is connected to
+/// a terminal the width is deduced from the terminal itself.  Ultimately, if
+/// all fails, none is returned.  This function shall not raise any errors.
+///
+/// Be aware that the results of this query are cached during execution.
+/// Subsequent calls to this function will always return the same value even if
+/// the terminal size has actually changed.
+///
+/// \todo Install a signal handler for SIGWINCH so that we can readjust our
+/// knowledge of the terminal width when the user resizes the window.
+///
+/// \return The width of the screen if it was possible to determine it, or none
+/// otherwise.
+optional< std::size_t >
+cmdline::ui::screen_width(void) const
+{
+    static bool done = false;
+    static optional< std::size_t > width = none;
+
+    if (!done) {
+        const optional< std::string > columns = utils::getenv("COLUMNS");
+        if (columns) {
+            if (columns.get().length() > 0) {
+                try {
+                    width = utils::make_optional(
+                        utils::text::to_type< std::size_t >(columns.get()));
+                } catch (const utils::text::value_error& e) {
+                    LD(F("Ignoring invalid value in COLUMNS variable: %s") %
+                       e.what());
+                }
+            }
+        }
+        if (!width) {
+            struct ::winsize ws;
+            if (::ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) != -1)
+                width = optional< std::size_t >(ws.ws_col);
+        }
+
+        if (width && width.get() >= 80)
+            width.get() -= 5;
+
+        done = true;
+    }
+
+    return width;
 }
 
 

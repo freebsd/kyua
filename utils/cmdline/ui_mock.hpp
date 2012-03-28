@@ -59,6 +59,8 @@ public:
     void err(const std::string&);
     void out(const std::string&);
 
+    optional< std::size_t > screen_width(void) const;
+
     const std::vector< std::string >& err_log(void) const;
     const std::vector< std::string >& out_log(void) const;
 };
