@@ -44,6 +44,10 @@ namespace text {
 typedef std::vector< std::string > table_row;
 
 
+/// Vector of column widths.
+typedef std::vector< std::size_t > widths_vector;
+
+
 /// Representation of a table.
 ///
 /// A table is nothing more than a matrix of rows by columns.  The number of
@@ -54,8 +58,8 @@ typedef std::vector< std::string > table_row;
 /// construction of a table, with additional sanity checks.  We could as well
 /// just expose the internal data representation to our users.
 class table {
-    /// Number of columns in the table.
-    table_row::size_type _ncolumns;
+    /// Widths of the table columns so far.
+    widths_vector _column_widths;
 
     /// Type defining the collection of rows in the table.
     typedef std::vector< table_row > rows_vector;
@@ -69,7 +73,10 @@ class table {
 public:
     table(const table_row::size_type);
 
-    table_row::size_type ncolumns(void) const;
+    widths_vector::size_type ncolumns(void) const;
+    widths_vector::value_type column_width(const widths_vector::size_type)
+        const;
+    const widths_vector& column_widths(void) const;
 
     void add_row(const table_row&);
 
@@ -90,11 +97,6 @@ public:
 /// the format() method provides the algorithm to apply such formatting settings
 /// to any input table.
 class table_formatter {
-public:
-    /// Vector of column widths.
-    typedef std::vector< std::size_t > widths_vector;
-
-private:
     /// Text to use as the separator between cells.
     std::string _separator;
 

@@ -28,6 +28,8 @@
 
 #include "utils/text/table.hpp"
 
+#include <algorithm>
+
 #include <atf-c++.hpp>
 
 #include "utils/text/operations.ipp"
@@ -65,6 +67,44 @@ ATF_TEST_CASE_BODY(table__ncolumns)
 {
     ATF_REQUIRE_EQ(5, text::table(5).ncolumns());
     ATF_REQUIRE_EQ(10, text::table(10).ncolumns());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(table__column_width);
+ATF_TEST_CASE_BODY(table__column_width)
+{
+    text::table_row row1;
+    row1.push_back("1234");
+    row1.push_back("123456");
+    text::table_row row2;
+    row2.push_back("12");
+    row2.push_back("12345678");
+
+    text::table table(2);
+    table.add_row(row1);
+    table.add_row(row2);
+
+    ATF_REQUIRE_EQ(4, table.column_width(0));
+    ATF_REQUIRE_EQ(8, table.column_width(1));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(table__column_widths);
+ATF_TEST_CASE_BODY(table__column_widths)
+{
+    text::table_row row1;
+    row1.push_back("1234");
+    row1.push_back("123456");
+    text::table_row row2;
+    row2.push_back("12");
+    row2.push_back("12345678");
+
+    text::table table(2);
+    table.add_row(row1);
+    table.add_row(row2);
+
+    ATF_REQUIRE_EQ(4, table.column_widths()[0]);
+    ATF_REQUIRE_EQ(8, table.column_widths()[1]);
 }
 
 
@@ -300,19 +340,36 @@ ATF_TEST_CASE_BODY(table_formatter__many_columns__max_width)
 ATF_TEST_CASE_WITHOUT_HEAD(table_formatter__use_case__cli_help);
 ATF_TEST_CASE_BODY(table_formatter__use_case__cli_help)
 {
-    text::table table(2);
+    text::table options_table(2);
     {
         text::table_row row;
         row.push_back("-a a_value");
         row.push_back("This is the description of the first flag");
-        table.add_row(row);
+        options_table.add_row(row);
     }
     {
         text::table_row row;
         row.push_back("-b");
         row.push_back("And this is the text for the second flag");
-        table.add_row(row);
+        options_table.add_row(row);
     }
+
+    text::table commands_table(2);
+    {
+        text::table_row row;
+        row.push_back("first");
+        row.push_back("This is the first command");
+        commands_table.add_row(row);
+    }
+    {
+        text::table_row row;
+        row.push_back("second");
+        row.push_back("And this is the second command");
+        commands_table.add_row(row);
+    }
+
+    const text::widths_vector::value_type first_width =
+        std::max(options_table.column_width(0), commands_table.column_width(0));
 
     table_formatter_check(
         "-a a_value  This is the description\n"
@@ -320,13 +377,27 @@ ATF_TEST_CASE_BODY(table_formatter__use_case__cli_help)
         "-b          And this is the text for\n"
         "            the second flag\n",
         text::table_formatter().set_separator("  ").set_table_width(36)
-        .set_column_width(1, text::table_formatter::width_refill), table);
+        .set_column_width(0, first_width)
+        .set_column_width(1, text::table_formatter::width_refill),
+        options_table);
+
+    table_formatter_check(
+        "first       This is the first\n"
+        "            command\n"
+        "second      And this is the second\n"
+        "            command\n",
+        text::table_formatter().set_separator("  ").set_table_width(36)
+        .set_column_width(0, first_width)
+        .set_column_width(1, text::table_formatter::width_refill),
+        commands_table);
 }
 
 
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, table__ncolumns);
+    ATF_ADD_TEST_CASE(tcs, table__column_width);
+    ATF_ADD_TEST_CASE(tcs, table__column_widths);
     ATF_ADD_TEST_CASE(tcs, table__empty);
     ATF_ADD_TEST_CASE(tcs, table__iterate);
 

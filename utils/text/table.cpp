@@ -42,11 +42,7 @@ namespace text = utils::text;
 namespace {
 
 
-/// Syntactic sugar to access a widths_vector.
-typedef text::table_formatter::widths_vector widths_vector;
-
-
-/// Calculates the maximum widths of the columns of a table.
+/// Applies user overrides to the column widths of a table.
 ///
 /// \param table The table from which to calculate the column widths.
 /// \param user_widths The column widths provided by the user.  This vector must
@@ -54,29 +50,18 @@ typedef text::table_formatter::widths_vector widths_vector;
 ///     Values of width_auto are ignored; any other explicit values are copied
 ///     to the output widths vector, including width_refill.
 ///
-/// \return A vector with the widths of the columns of the input table.
-static widths_vector
-calculate_column_widths(const text::table& table,
-                        const widths_vector& user_widths)
+/// \return A vector with the widths of the columns of the input table with any
+/// user overrides applied.
+static text::widths_vector
+override_column_widths(const text::table& table,
+                       const text::widths_vector& user_widths)
 {
     PRE(user_widths.size() <= table.ncolumns());
-    widths_vector widths(table.ncolumns(), 0);
+    text::widths_vector widths = table.column_widths();
 
-    // First step: calculate the actual width of the columns based on the length
-    // of the cells.
-    for (text::table::const_iterator iter = table.begin(); iter != table.end();
-         ++iter) {
-        const text::table_row& row = *iter;
-        INV(row.size() == table.ncolumns());
-        for (text::table_row::size_type i = 0; i < row.size(); ++i)
-            if (widths[i] < row[i].size())
-                widths[i] = row[i].size();
-    }
-
-    // Second step: override the actual width of the columns based on
-    // user-specified widths.
-    for (widths_vector::size_type i = 0; i < user_widths.size(); ++i) {
-        const widths_vector::value_type& user_width = user_widths[i];
+    // Override the actual width of the columns based on user-specified widths.
+    for (text::widths_vector::size_type i = 0; i < user_widths.size(); ++i) {
+        const text::widths_vector::value_type& user_width = user_widths[i];
         if (user_width != text::table_formatter::width_auto) {
             PRE_MSG(user_width == text::table_formatter::width_refill ||
                     user_width >= widths[i],
@@ -93,15 +78,15 @@ calculate_column_widths(const text::table& table,
 /// Locates the refill column, if any.
 ///
 /// \param widths The widths of the columns as returned by
-///     calculate_column_widths().  Note that one of the columns may or may not
+///     override_column_widths().  Note that one of the columns may or may not
 ///     be width_refill, which is the column we are looking for.
 ///
 /// \return The index of the refill column with a width_refill width if any, or
 /// otherwise the index of the last column (which is the default refill column).
-static widths_vector::size_type
-find_refill_column(const widths_vector& widths)
+static text::widths_vector::size_type
+find_refill_column(const text::widths_vector& widths)
 {
-    widths_vector::size_type i = 0;
+    text::widths_vector::size_type i = 0;
     for (; i < widths.size(); ++i) {
         if (widths[i] == text::table_formatter::width_refill)
             return i;
@@ -117,29 +102,30 @@ find_refill_column(const widths_vector& widths)
 /// maximum table width.
 ///
 /// \param [in,out] widths The widths of the columns as returned by
-///     calculate_column_widths().  One of these columns should have a value of
+///     override_column_widths().  One of these columns should have a value of
 ///     width_refill; if not, a default column is refilled.
 /// \param user_max_width The target width of the table; must not be zero.
 /// \param column_padding The padding between the cells, if any.  The target
 ///     width should be larger than the padding times the number of columns; if
 ///     that is not the case, we attempt a readjustment here.
 static void
-refill_widths(widths_vector& widths,
-              const widths_vector::value_type user_max_width,
+refill_widths(text::widths_vector& widths,
+              const text::widths_vector::value_type user_max_width,
               const std::size_t column_padding)
 {
     PRE(user_max_width != 0);
 
     // widths.size() is a proxy for the number of columns of the table.
     const std::size_t total_padding = column_padding * (widths.size() - 1);
-    const widths_vector::value_type max_width = std::max(
+    const text::widths_vector::value_type max_width = std::max(
         user_max_width, total_padding) - total_padding;
 
-    const widths_vector::size_type refill_column = find_refill_column(widths);
+    const text::widths_vector::size_type refill_column =
+        find_refill_column(widths);
     INV(refill_column < widths.size());
 
-    widths_vector::value_type width = 0;
-    for (widths_vector::size_type i = 0; i < widths.size(); ++i) {
+    text::widths_vector::value_type width = 0;
+    for (text::widths_vector::size_type i = 0; i < widths.size(); ++i) {
         if (i != refill_column)
             width += widths[i];
     }
@@ -182,7 +168,7 @@ pad_cell(const std::string& input, const std::size_t length, const bool is_last)
 ///     updated to accomodate for the contents of the refilled cell, extending
 ///     the rows as necessary.
 static void
-refill_cell(const text::table_row& row, const widths_vector& widths,
+refill_cell(const text::table_row& row, const text::widths_vector& widths,
             const text::table_row::size_type column,
             std::vector< text::table_row >& textual_rows)
 {
@@ -216,7 +202,7 @@ refill_cell(const text::table_row& row, const widths_vector& widths,
 ///
 /// \return The textual lines that contain the formatted row.
 static std::vector< std::string >
-format_row(const text::table_row& row, const widths_vector& widths,
+format_row(const text::table_row& row, const text::widths_vector& widths,
            const std::string& separator)
 {
     PRE(row.size() == widths.size());
@@ -246,9 +232,9 @@ format_row(const text::table_row& row, const widths_vector& widths,
 /// Constructs a new table.
 ///
 /// \param ncolumns_ The number of columns that the table will have.
-text::table::table(const table_row::size_type ncolumns_) :
-    _ncolumns(ncolumns_)
+text::table::table(const table_row::size_type ncolumns_)
 {
+    _column_widths.resize(ncolumns_, 0);
 }
 
 
@@ -256,10 +242,40 @@ text::table::table(const table_row::size_type ncolumns_) :
 ///
 /// \return The number of columns in the table.  This value remains constant
 /// during the existence of the table.
-text::table_row::size_type
+text::widths_vector::size_type
 text::table::ncolumns(void) const
 {
-    return _ncolumns;
+    return _column_widths.size();
+}
+
+
+/// Gets the width of a column.
+///
+/// The returned value is not valid if add_row() is called again, as the column
+/// may have grown in width.
+///
+/// \param column The index of the column of which to get the width.  Must be
+///     less than the total number of columns.
+///
+/// \return The width of a column.
+text::widths_vector::value_type
+text::table::column_width(const widths_vector::size_type column) const
+{
+    PRE(column < _column_widths.size());
+    return _column_widths[column];
+}
+
+
+/// Gets the widths of all columns.
+///
+/// The returned value is not valid if add_row() is called again, as the columns
+/// may have grown in width.
+///
+/// \return A vector with the width of all columns.
+const text::widths_vector&
+text::table::column_widths(void) const
+{
+    return _column_widths;
 }
 
 
@@ -280,8 +296,12 @@ text::table::empty(void) const
 void
 text::table::add_row(const table_row& row)
 {
-    PRE(row.size() == _ncolumns);
+    PRE(row.size() == _column_widths.size());
     _rows.push_back(row);
+
+    for (table_row::size_type i = 0; i < row.size(); ++i)
+        if (_column_widths[i] < row[i].length())
+            _column_widths[i] = row[i].length();
 }
 
 
@@ -392,7 +412,7 @@ text::table_formatter::format(const table& t) const
     std::vector< std::string > lines;
 
     if (!t.empty()) {
-        widths_vector widths = calculate_column_widths(t, _column_widths);
+        widths_vector widths = override_column_widths(t, _column_widths);
         if (_table_width != 0)
             refill_widths(widths, _table_width, _separator.length());
 
