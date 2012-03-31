@@ -177,7 +177,7 @@ ATF_TEST_CASE_BODY(table_formatter__one_column__max_width)
     table_formatter_check(
         "First row\nwith some\nwords\n"
         "Second row\nwith some\nwords\n",
-        text::table_formatter().set_separator(" | ").set_max_width(11),
+        text::table_formatter().set_separator(" | ").set_table_width(11),
         table);
 }
 
@@ -232,8 +232,8 @@ ATF_TEST_CASE_BODY(table_formatter__many_columns__max_width)
         "Fourth with some text | Fifth with | Sixth foo\n"
         "                      | some more  | \n"
         "                      | text       | \n",
-        text::table_formatter().set_separator(" | ").set_max_width(46)
-        .set_refill_column(1), table);
+        text::table_formatter().set_separator(" | ").set_table_width(46)
+        .set_column_width(1, text::table_formatter::width_refill), table);
 }
 
 
@@ -259,8 +259,8 @@ ATF_TEST_CASE_BODY(table_formatter__use_case__cli_help)
         "            of the first flag\n"
         "-b          And this is the text for\n"
         "            the second flag\n",
-        text::table_formatter().set_separator("  ").set_max_width(36)
-        .set_refill_column(1), table);
+        text::table_formatter().set_separator("  ").set_table_width(36)
+        .set_column_width(1, text::table_formatter::width_refill), table);
 }
 
 

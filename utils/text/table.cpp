@@ -30,6 +30,7 @@
 
 #include <algorithm>
 #include <iterator>
+#include <limits>
 #include <sstream>
 
 #include "utils/sanity.hpp"
@@ -252,12 +253,40 @@ text::table::end(void) const
 }
 
 
+/// Column width to denote that the column can be refilled to fit the table.
+const std::size_t text::table_formatter::width_refill =
+    std::numeric_limits< std::size_t >::max();
+
+
 /// Constructs a new table formatter.
 text::table_formatter::table_formatter(void) :
     _separator(""),
-    _max_width(0),
+    _table_width(0),
     _refill_column(0)
 {
+}
+
+
+/// Sets the width of a column.
+///
+/// All columns except one must have a width that is, at least, as wide as the
+/// widest cell in the column.  One of the columns can have a width of
+/// width_refill, which indicates that the column will be refilled if the table
+/// does not fit in its maximum width.
+///
+/// \param column The index of the column to set the width for.
+/// \param width The width to set the column to.
+///
+/// \return A reference to this formatter to allow using the builder pattern.
+text::table_formatter&
+text::table_formatter::set_column_width(const table_row::size_type column,
+                                        const std::size_t width)
+{
+    if (width == width_refill)
+        _refill_column = column;
+    else
+        UNREACHABLE_MSG("Not yet implemented");
+    return *this;
 }
 
 
@@ -276,31 +305,14 @@ text::table_formatter::set_separator(const char* separator)
 
 /// Sets the maximum width of the table.
 ///
-/// \param max_width The maximum width of the table; cannot be zero.
+/// \param table_width The maximum width of the table; cannot be zero.
 ///
 /// \return A reference to this formatter to allow using the builder pattern.
 text::table_formatter&
-text::table_formatter::set_max_width(const std::size_t max_width)
+text::table_formatter::set_table_width(const std::size_t table_width)
 {
-    PRE(max_width > 0);
-    _max_width = max_width;
-    return *this;
-}
-
-
-/// Sets the column to refill if the table would be wider than the max width.
-///
-/// Setting this filed without calling set_max_width() (before or after) makes
-/// no sense.
-///
-/// \param refill_column The index of the column to refill when the table would
-///     result in a wider width than max_width.
-///
-/// \return A reference to this formatter to allow using the builder pattern.
-text::table_formatter&
-text::table_formatter::set_refill_column(const std::size_t refill_column)
-{
-    _refill_column = refill_column;
+    PRE(table_width > 0);
+    _table_width = table_width;
     return *this;
 }
 
@@ -317,8 +329,8 @@ text::table_formatter::format(const table& t) const
 
     if (!t.empty()) {
         widths_vector widths = column_widths(t);
-        if (_max_width > 0)
-            adjust_widths(widths, _max_width, _refill_column,
+        if (_table_width > 0)
+            adjust_widths(widths, _table_width, _refill_column,
                           (t.ncolumns() - 1) * _separator.length());
 
         for (table::const_iterator iter = t.begin(); iter != t.end(); ++iter) {

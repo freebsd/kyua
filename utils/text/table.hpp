@@ -94,7 +94,7 @@ class table_formatter {
     std::string _separator;
 
     /// Maximum width of the table; if zero, no maximum width set.
-    std::size_t _max_width;
+    std::size_t _table_width;
 
     /// Index of the column to refill if the table is wider than _max_width.
     ///
@@ -104,9 +104,11 @@ class table_formatter {
 public:
     table_formatter(void);
 
+    static const std::size_t width_refill;
+    table_formatter& set_column_width(const table_row::size_type,
+                                      const std::size_t);
     table_formatter& set_separator(const char*);
-    table_formatter& set_max_width(const std::size_t);
-    table_formatter& set_refill_column(const std::size_t);
+    table_formatter& set_table_width(const std::size_t);
 
     std::vector< std::string > format(const table&) const;
 };
