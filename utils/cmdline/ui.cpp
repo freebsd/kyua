@@ -44,8 +44,10 @@ extern "C" {
 #include "utils/optional.ipp"
 #include "utils/text/operations.ipp"
 #include "utils/sanity.hpp"
+#include "utils/text/table.hpp"
 
 namespace cmdline = utils::cmdline;
+namespace text = utils::text;
 
 using utils::none;
 using utils::optional;
@@ -129,6 +131,31 @@ cmdline::ui::screen_width(void) const
     }
 
     return width;
+}
+
+
+/// Writes a table to stdout.
+///
+/// \param table The table to write.
+/// \param formatter The table formatter to use to convert the table to a
+///     console representation.
+/// \param prefix Text to prepend to all the lines of the output table.
+void
+cmdline::ui::out_table(const text::table& table,
+                       text::table_formatter formatter,
+                       const std::string& prefix)
+{
+    if (table.empty())
+        return;
+
+    const optional< std::size_t > max_width = screen_width();
+    if (max_width)
+        formatter.set_table_width(max_width.get() - prefix.length());
+
+    const std::vector< std::string > lines = formatter.format(table);
+    for (std::vector< std::string >::const_iterator iter = lines.begin();
+         iter != lines.end(); ++iter)
+        out(prefix + *iter);
 }
 
 

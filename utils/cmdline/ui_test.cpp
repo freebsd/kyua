@@ -41,64 +41,20 @@ extern "C" {
 #include <atf-c++.hpp>
 
 #include "utils/cmdline/globals.hpp"
+#include "utils/cmdline/ui_mock.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/optional.ipp"
+#include "utils/text/table.hpp"
 
 namespace cmdline = utils::cmdline;
+namespace text = utils::text;
 
 using utils::none;
 using utils::optional;
 
 
 namespace {
-
-
-/// Trivial implementation of the ui interface for testing purposes.
-class ui_test : public cmdline::ui {
-public:
-    /// Recording of the last call to err().
-    std::string err_message;
-
-    /// Recording of the last call to out().
-    std::string out_message;
-
-    /// Records an error message.
-    ///
-    /// \pre This function has not been called before.  We only record a single
-    ///     message for simplicity of the testing.
-    ///
-    /// \param message The message to record.
-    void
-    err(const std::string& message)
-    {
-        ATF_REQUIRE(err_message.empty());
-        err_message = message;
-    }
-
-    /// Records a message.
-    ///
-    /// \pre This function has not been called before.  We only record a single
-    ///     message for simplicity of the testing.
-    ///
-    /// \param message The message to record.
-    void
-    out(const std::string& message)
-    {
-        ATF_REQUIRE(out_message.empty());
-        out_message = message;
-    }
-
-    /// Queries the width of the screen.
-    ///
-    /// \return Always none, as we do not want to depend on line wrapping in our
-    /// tests.
-    optional< std::size_t >
-    screen_width(void) const
-    {
-        return none;
-    }
-};
 
 
 /// Reopens stdout as a tty and returns its width.
@@ -226,14 +182,69 @@ ATF_TEST_CASE_BODY(ui__screen_width__cached)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(ui__out_table__empty);
+ATF_TEST_CASE_BODY(ui__out_table__empty)
+{
+    const text::table table(3);
+
+    text::table_formatter formatter;
+    formatter.set_separator(" | ");
+    formatter.set_column_width(0, 23);
+    formatter.set_column_width(1, text::table_formatter::width_refill);
+
+    cmdline::ui_mock ui(52);
+    ui.out_table(table, formatter, "    ");
+    ATF_REQUIRE(ui.out_log().empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(ui__out_table__not_empty);
+ATF_TEST_CASE_BODY(ui__out_table__not_empty)
+{
+    text::table table(3);
+    {
+        text::table_row row;
+        row.push_back("First");
+        row.push_back("Second");
+        row.push_back("Third");
+        table.add_row(row);
+    }
+    {
+        text::table_row row;
+        row.push_back("Fourth with some text");
+        row.push_back("Fifth with some more text");
+        row.push_back("Sixth foo");
+        table.add_row(row);
+    }
+
+    text::table_formatter formatter;
+    formatter.set_separator(" | ");
+    formatter.set_column_width(0, 23);
+    formatter.set_column_width(1, text::table_formatter::width_refill);
+
+    cmdline::ui_mock ui(52);
+    ui.out_table(table, formatter, "    ");
+    ATF_REQUIRE_EQ(4, ui.out_log().size());
+    ATF_REQUIRE_EQ("    First                   | Second     | Third",
+                   ui.out_log()[0]);
+    ATF_REQUIRE_EQ("    Fourth with some text   | Fifth with | Sixth foo",
+                   ui.out_log()[1]);
+    ATF_REQUIRE_EQ("                            | some more  | ",
+                   ui.out_log()[2]);
+    ATF_REQUIRE_EQ("                            | text       | ",
+                   ui.out_log()[3]);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(print_error);
 ATF_TEST_CASE_BODY(print_error)
 {
     cmdline::init("error-program");
-    ui_test ui;
+    cmdline::ui_mock ui;
     cmdline::print_error(&ui, "The error");
-    ATF_REQUIRE(ui.out_message.empty());
-    ATF_REQUIRE_EQ("error-program: E: The error.", ui.err_message);
+    ATF_REQUIRE(ui.out_log().empty());
+    ATF_REQUIRE_EQ(1, ui.err_log().size());
+    ATF_REQUIRE_EQ("error-program: E: The error.", ui.err_log()[0]);
 }
 
 
@@ -241,10 +252,11 @@ ATF_TEST_CASE_WITHOUT_HEAD(print_info);
 ATF_TEST_CASE_BODY(print_info)
 {
     cmdline::init("info-program");
-    ui_test ui;
+    cmdline::ui_mock ui;
     cmdline::print_info(&ui, "The info");
-    ATF_REQUIRE(ui.out_message.empty());
-    ATF_REQUIRE_EQ("info-program: I: The info.", ui.err_message);
+    ATF_REQUIRE(ui.out_log().empty());
+    ATF_REQUIRE_EQ(1, ui.err_log().size());
+    ATF_REQUIRE_EQ("info-program: I: The info.", ui.err_log()[0]);
 }
 
 
@@ -252,10 +264,11 @@ ATF_TEST_CASE_WITHOUT_HEAD(print_warning);
 ATF_TEST_CASE_BODY(print_warning)
 {
     cmdline::init("warning-program");
-    ui_test ui;
+    cmdline::ui_mock ui;
     cmdline::print_warning(&ui, "The warning");
-    ATF_REQUIRE(ui.out_message.empty());
-    ATF_REQUIRE_EQ("warning-program: W: The warning.", ui.err_message);
+    ATF_REQUIRE(ui.out_log().empty());
+    ATF_REQUIRE_EQ(1, ui.err_log().size());
+    ATF_REQUIRE_EQ("warning-program: W: The warning.", ui.err_log()[0]);
 }
 
 
@@ -269,6 +282,9 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, ui__screen_width__columns_invalid__tty);
     ATF_ADD_TEST_CASE(tcs, ui__screen_width__tty_is_file);
     ATF_ADD_TEST_CASE(tcs, ui__screen_width__cached);
+
+    ATF_ADD_TEST_CASE(tcs, ui__out_table__empty);
+    ATF_ADD_TEST_CASE(tcs, ui__out_table__not_empty);
 
     ATF_ADD_TEST_CASE(tcs, print_error);
     ATF_ADD_TEST_CASE(tcs, print_info);

@@ -35,6 +35,7 @@
 #if !defined(UTILS_CMDLINE_UI_MOCK_HPP)
 #define UTILS_CMDLINE_UI_MOCK_HPP
 
+#include <cstddef>
 #include <string>
 #include <vector>
 
@@ -49,6 +50,9 @@ namespace cmdline {
 /// This class records all writes to stdout and stderr to allow further
 /// inspection for testing purposes.
 class ui_mock : public ui {
+    /// Fake width of the screen; if 0, represents none.
+    std::size_t _screen_width;
+
     /// Messages sent to stderr.
     std::vector< std::string > _err_log;
 
@@ -56,6 +60,8 @@ class ui_mock : public ui {
     std::vector< std::string > _out_log;
 
 public:
+    ui_mock(const std::size_t = 0);
+
     void err(const std::string&);
     void out(const std::string&);
 
