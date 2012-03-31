@@ -90,20 +90,29 @@ public:
 /// the format() method provides the algorithm to apply such formatting settings
 /// to any input table.
 class table_formatter {
+public:
+    /// Vector of column widths.
+    typedef std::vector< std::size_t > widths_vector;
+
+private:
     /// Text to use as the separator between cells.
     std::string _separator;
 
-    /// Maximum width of the table; if zero, no maximum width set.
+    /// Colletion of widths of the columns of a table.
     std::size_t _table_width;
 
-    /// Index of the column to refill if the table is wider than _max_width.
+    /// Widths of the table columns.
     ///
-    /// This field only has a meaning if _max_width is not zero.
-    std::size_t _refill_column;
+    /// Note that this only includes widths for the column widths explicitly
+    /// overriden by the caller.  In other words, this vector can be shorter
+    /// than the table passed to the format() method, which is just fine.  Any
+    /// non-specified column widths are assumed to be width_auto.
+    widths_vector _column_widths;
 
 public:
     table_formatter(void);
 
+    static const std::size_t width_auto;
     static const std::size_t width_refill;
     table_formatter& set_column_width(const table_row::size_type,
                                       const std::size_t);
