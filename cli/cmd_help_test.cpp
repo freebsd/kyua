@@ -178,15 +178,15 @@ global_test(const cmdline::options_vector& general_options,
     }
     expected.push_back("");
     expected.push_back("Generic commands:");
-    expected.push_back("    mock_complex: Complex command.");
-    expected.push_back("    mock_simple: Simple command.");
+    expected.push_back("  mock_complex    Complex command.");
+    expected.push_back("  mock_simple     Simple command.");
     expected.push_back("");
     expected.push_back("First commands:");
-    expected.push_back("    mock_complex_2: Complex command.");
-    expected.push_back("    mock_simple_2: Simple command.");
+    expected.push_back("  mock_complex_2  Complex command.");
+    expected.push_back("  mock_simple_2   Simple command.");
     expected.push_back("");
     expected.push_back("Second commands:");
-    expected.push_back("    mock_simple_3: Simple command.");
+    expected.push_back("  mock_simple_3   Simple command.");
 
     ATF_REQUIRE(expected == ui.out_log());
     ATF_REQUIRE(ui.err_log().empty());
@@ -215,12 +215,12 @@ ATF_TEST_CASE_BODY(global__some_options)
     cmdline::options_vector general_options;
     const cmdline::bool_option flag_a("flag_a", "Flag A");
     general_options.push_back(&flag_a);
-    const cmdline::string_option flag_c('c', "flag_c", "Flag C", "c_arg");
+    const cmdline::string_option flag_c('c', "lc", "Flag C", "X");
     general_options.push_back(&flag_c);
 
     std::vector< std::string > expected;
-    expected.push_back("    --flag_a: Flag A.");
-    expected.push_back("    -c c_arg, --flag_c=c_arg: Flag C.");
+    expected.push_back("  --flag_a        Flag A.");
+    expected.push_back("  -c X, --lc=X    Flag C.");
 
     global_test(general_options, expected, ui);
 }
@@ -275,11 +275,11 @@ ATF_TEST_CASE_BODY(subcommand__complex)
     ATF_REQUIRE(utils::grep_vector("--global_a", ui.out_log()));
     ATF_REQUIRE(utils::grep_vector("--global_c=c_global", ui.out_log()));
     ATF_REQUIRE(utils::grep_vector("Available command options", ui.out_log()));
-    ATF_REQUIRE(utils::grep_vector("--flag_a:.*Flag A", ui.out_log()));
-    ATF_REQUIRE(utils::grep_vector("-b.*--flag_b:.*Flag B", ui.out_log()));
-    ATF_REQUIRE(utils::grep_vector("-c c_arg.*--flag_c=c_arg:.*Flag C",
+    ATF_REQUIRE(utils::grep_vector("--flag_a   *Flag A", ui.out_log()));
+    ATF_REQUIRE(utils::grep_vector("-b.*--flag_b   *Flag B", ui.out_log()));
+    ATF_REQUIRE(utils::grep_vector("-c c_arg.*--flag_c=c_arg   *Flag C",
                                    ui.out_log()));
-    ATF_REQUIRE(utils::grep_vector("--flag_d=d_arg:.*Flag D.*default.*foo",
+    ATF_REQUIRE(utils::grep_vector("--flag_d=d_arg   *Flag D.*default.*foo",
                                    ui.out_log()));
     ATF_REQUIRE(ui.err_log().empty());
 }

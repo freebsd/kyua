@@ -297,7 +297,7 @@ EOF
 utils_test_case variable_flag__invalid
 variable_flag__invalid_body() {
     cat >experr <<EOF
-Usage error: Invalid argument '' for option --variable: Argument does not have the form 'name=value'.
+Usage error: Invalid argument '' for option --variable: Argument does not have the form 'K=V'.
 Type 'kyua help' for usage information.
 EOF
     atf_check -s exit:1 -o empty -e file:experr kyua \

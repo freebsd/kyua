@@ -21,6 +21,9 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   commands that rely on a current project and those commands that rely
   purely on the database to generate reports.
 
+* Made 'help' print the descriptions of options and commands properly
+  tabulated.
+
 
 Changes in version 0.3
 ======================
