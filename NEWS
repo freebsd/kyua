@@ -24,6 +24,9 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 * Made 'help' print the descriptions of options and commands properly
   tabulated.
 
+* Changed most informational messages to automatically wrap on screen
+  boundaries.
+
 
 Changes in version 0.3
 ======================

@@ -59,11 +59,14 @@ class ui {
 public:
     virtual ~ui(void);
 
-    virtual void err(const std::string&);
-    virtual void out(const std::string&);
-
+    virtual void err_raw(const std::string&);
+    virtual void out_raw(const std::string&);
     virtual optional< std::size_t > screen_width(void) const;
 
+    void err(const std::string&);
+    void out(const std::string&);
+    void err_tag(const std::string&, const std::string&, const bool = true);
+    void out_tag(const std::string&, const std::string&, const bool = true);
     void out_table(const utils::text::table&, utils::text::table_formatter,
                    const std::string&);
 };

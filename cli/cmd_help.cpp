@@ -98,8 +98,9 @@ general_help(cmdline::ui* ui, const cmdline::options_vector* options,
 {
     PRE(!commands->empty());
 
-    ui->out(F("Usage: %s [general_options] command [command_options] [args]") %
-              cmdline::progname());
+    ui->out_tag("Usage: ",
+                F("%s [general_options] command [command_options] [args]") %
+                cmdline::progname(), false);
 
     const text::table options_table = options_help(*options);
     text::widths_vector::value_type first_width =
@@ -162,10 +163,12 @@ subcommand_help(cmdline::ui* ui,
                 const utils::cmdline::options_vector* general_options,
                 const cli::cli_command* command)
 {
-    ui->out(F("Usage: %s [general_options] %s%s%s") %
-            cmdline::progname() % command->name() %
-            (command->options().empty() ? "" : " [command_options]") %
-            (command->arg_list().empty() ? "" : (" " + command->arg_list())));
+    ui->out_tag(
+        "Usage: ", F("%s [general_options] %s%s%s") %
+        cmdline::progname() % command->name() %
+        (command->options().empty() ? "" : " [command_options]") %
+        (command->arg_list().empty() ? "" : (" " + command->arg_list())),
+        false);
     ui->out("");
     ui->out(F("%s.") % command->short_description());
 

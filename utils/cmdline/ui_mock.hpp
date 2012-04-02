@@ -62,9 +62,8 @@ class ui_mock : public ui {
 public:
     ui_mock(const std::size_t = 0);
 
-    void err(const std::string&);
-    void out(const std::string&);
-
+    void err_raw(const std::string&);
+    void out_raw(const std::string&);
     optional< std::size_t > screen_width(void) const;
 
     const std::vector< std::string >& err_log(void) const;

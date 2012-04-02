@@ -330,9 +330,9 @@ void
 cli::file_writer::operator()(const std::string& message)
 {
     if (_output_path == _stdout_path)
-        _ui->out(message);
+        _ui->out_raw(message);
     else if (_output_path == _stderr_path)
-        _ui->err(message);
+        _ui->err_raw(message);
     else {
         INV(_output_file.get() != NULL);
         (*_output_file) << message << '\n';

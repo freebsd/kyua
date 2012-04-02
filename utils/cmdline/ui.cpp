@@ -61,9 +61,12 @@ cmdline::ui::~ui(void)
 
 /// Writes a line to stderr.
 ///
+/// The written line is printed as is, without being wrapped to fit within the
+/// screen width.
+///
 /// \param message The line to print, without the trailing newline character.
 void
-cmdline::ui::err(const std::string& message)
+cmdline::ui::err_raw(const std::string& message)
 {
     PRE(message.empty() || message[message.length() - 1] != '\n');
     LI(F("stderr: %s") % message);
@@ -73,9 +76,12 @@ cmdline::ui::err(const std::string& message)
 
 /// Writes a line to stdout.
 ///
+/// The written line is printed as is, without being wrapped to fit within the
+/// screen width.
+///
 /// \param message The line to print, without the trailing newline character.
 void
-cmdline::ui::out(const std::string& message)
+cmdline::ui::out_raw(const std::string& message)
 {
     PRE(message.empty() || message[message.length() - 1] != '\n');
     LI(F("stdout: %s") % message);
@@ -134,6 +140,104 @@ cmdline::ui::screen_width(void) const
 }
 
 
+/// Writes a line to stderr.
+///
+/// \param message The line to print, without the trailing newline character.
+void
+cmdline::ui::err(const std::string& message)
+{
+    const optional< std::size_t > max_width = screen_width();
+    if (max_width) {
+        const std::vector< std::string > lines = text::refill(
+            message, max_width.get());
+        for (std::vector< std::string >::const_iterator iter = lines.begin();
+             iter != lines.end(); iter++)
+            err_raw(*iter);
+    } else
+        err_raw(message);
+}
+
+
+/// Writes a line to stdout.
+///
+/// \param message The line to print, without the trailing newline character.
+void
+cmdline::ui::out(const std::string& message)
+{
+    const optional< std::size_t > max_width = screen_width();
+    if (max_width) {
+        const std::vector< std::string > lines = text::refill(
+            message, max_width.get());
+        for (std::vector< std::string >::const_iterator iter = lines.begin();
+             iter != lines.end(); iter++)
+            out_raw(*iter);
+    } else
+        out_raw(message);
+}
+
+
+/// Writes a line to stderr with a leading tag.
+///
+/// If the line does not fit on the current screen width, the line is broken
+/// into pieces and the tag is repeated on every line.
+///
+/// \param tag The leading line tag.
+/// \param message The message to be printed, without the trailing newline
+///     character.
+/// \param repeat If true, print the tag on every line; otherwise, indent the
+///     text of all lines to match the width of the tag on the first line.
+void
+cmdline::ui::err_tag(const std::string& tag, const std::string& message,
+                     const bool repeat)
+{
+    const optional< std::size_t > max_width = screen_width();
+    if (max_width && max_width.get() > tag.length()) {
+        const std::vector< std::string > lines = text::refill(
+            message, max_width.get() - tag.length());
+        for (std::vector< std::string >::const_iterator iter = lines.begin();
+             iter != lines.end(); iter++) {
+            if (repeat || iter == lines.begin())
+                err_raw(F("%s%s") % tag % *iter);
+            else
+                err_raw(F("%s%s") % std::string(tag.length(), ' ') % *iter);
+        }
+    } else {
+        err_raw(F("%s%s") % tag % message);
+    }
+}
+
+
+/// Writes a line to stdout with a leading tag.
+///
+/// If the line does not fit on the current screen width, the line is broken
+/// into pieces and the tag is repeated on every line.
+///
+/// \param tag The leading line tag.
+/// \param message The message to be printed, without the trailing newline
+///     character.
+/// \param repeat If true, print the tag on every line; otherwise, indent the
+///     text of all lines to match the width of the tag on the first line.
+void
+cmdline::ui::out_tag(const std::string& tag, const std::string& message,
+                     const bool repeat)
+{
+    const optional< std::size_t > max_width = screen_width();
+    if (max_width && max_width.get() > tag.length()) {
+        const std::vector< std::string > lines = text::refill(
+            message, max_width.get() - tag.length());
+        for (std::vector< std::string >::const_iterator iter = lines.begin();
+             iter != lines.end(); iter++) {
+            if (repeat || iter == lines.begin())
+                out_raw(F("%s%s") % tag % *iter);
+            else
+                out_raw(F("%s%s") % std::string(tag.length(), ' ') % *iter);
+        }
+    } else {
+        out_raw(F("%s%s") % tag % message);
+    }
+}
+
+
 /// Writes a table to stdout.
 ///
 /// \param table The table to write.
@@ -155,7 +259,7 @@ cmdline::ui::out_table(const text::table& table,
     const std::vector< std::string > lines = formatter.format(table);
     for (std::vector< std::string >::const_iterator iter = lines.begin();
          iter != lines.end(); ++iter)
-        out(prefix + *iter);
+        out_raw(prefix + *iter);
 }
 
 
@@ -169,7 +273,7 @@ cmdline::print_error(ui* ui_, const std::string& message)
 {
     PRE(!message.empty() && message[message.length() - 1] != '.');
     LE(message);
-    ui_->err(F("%s: E: %s.") % cmdline::progname() % message);
+    ui_->err_tag(F("%s: E: ") % cmdline::progname(), F("%s.") % message);
 }
 
 
@@ -183,7 +287,7 @@ cmdline::print_info(ui* ui_, const std::string& message)
 {
     PRE(!message.empty() && message[message.length() - 1] != '.');
     LI(message);
-    ui_->err(F("%s: I: %s.") % cmdline::progname() % message);
+    ui_->err_tag(F("%s: I: ") % cmdline::progname(), F("%s.") % message);
 }
 
 
@@ -197,5 +301,5 @@ cmdline::print_warning(ui* ui_, const std::string& message)
 {
     PRE(!message.empty() && message[message.length() - 1] != '.');
     LW(message);
-    ui_->err(F("%s: W: %s.") % cmdline::progname() % message);
+    ui_->err_tag(F("%s: W: ") % cmdline::progname(), F("%s.") % message);
 }

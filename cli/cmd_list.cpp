@@ -99,7 +99,8 @@ cli::detail::list_test_case(cmdline::ui* ui, const bool verbose,
     if (!verbose) {
         ui->out(id);
     } else {
-        ui->out(F("%s (%s)") % id % test_case.test_program().test_suite_name());
+        ui->out_raw(F("%s (%s)") % id %
+                    test_case.test_program().test_suite_name());
 
         const engine::properties_map props = test_case.all_properties();
         for (engine::properties_map::const_iterator iter = props.begin();

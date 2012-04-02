@@ -68,8 +68,13 @@ refill_test(const char* expected, const char* input,
 ATF_TEST_CASE_WITHOUT_HEAD(refill__empty);
 ATF_TEST_CASE_BODY(refill__empty)
 {
-    refill_test("", "", 0, 0);
-    refill_test("", "", 10, 10);
+    ATF_REQUIRE_EQ(1, text::refill("", 0).size());
+    ATF_REQUIRE(text::refill("", 0)[0].empty());
+    ATF_REQUIRE_EQ("", text::refill_as_string("", 0));
+
+    ATF_REQUIRE_EQ(1, text::refill("", 10).size());
+    ATF_REQUIRE(text::refill("", 10)[0].empty());
+    ATF_REQUIRE_EQ("", text::refill_as_string("", 10));
 }
 
 

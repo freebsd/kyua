@@ -79,6 +79,11 @@ text::refill(const std::string& input, const std::size_t target_width)
         start += width + 1;
     }
 
+    if (input.empty()) {
+        INV(output.empty());
+        output.push_back("");
+    }
+
     return output;
 }
 
