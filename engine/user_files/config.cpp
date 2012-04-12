@@ -247,7 +247,7 @@ get_user_override(const std::string& key, const std::string& value)
         int uid;
         try {
             uid = text::to_type< int >(value);
-        } catch (const text::value_error& e) {
+        } catch (const text::value_error& e2) {
             throw user_files::error(F("Cannot find user with name '%s' in "
                                       "override '%s=%s'") % value % key %
                                     value);

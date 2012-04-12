@@ -67,9 +67,9 @@ class cmd_mock_simple : public cli::cli_command {
 public:
     /// Constructs a new mock command.
     ///
-    /// \param name The name of the command to create.
-    cmd_mock_simple(const char* name) : cli::cli_command(
-        name, "", 0, 0, "Simple command")
+    /// \param name_ The name of the command to create.
+    cmd_mock_simple(const char* name_) : cli::cli_command(
+        name_, "", 0, 0, "Simple command")
     {
     }
 
@@ -100,8 +100,8 @@ public:
     /// Constructs a new mock command.
     ///
     /// \param name The name of the command to create.
-    cmd_mock_complex(const char* name) : cli::cli_command(
-        name, "[arg1 .. argN]", 0, 2, "Complex command")
+    cmd_mock_complex(const char* name_) : cli::cli_command(
+        name_, "[arg1 .. argN]", 0, 2, "Complex command")
     {
         add_option(cmdline::bool_option("flag_a", "Flag A"));
         add_option(cmdline::bool_option('b', "flag_b", "Flag B"));
