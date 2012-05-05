@@ -119,6 +119,7 @@ utils_units_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 endif
 
 include utils/cmdline/Makefile.am.inc
+include utils/config/Makefile.am.inc
 include utils/format/Makefile.am.inc
 include utils/fs/Makefile.am.inc
 include utils/logging/Makefile.am.inc
