@@ -60,7 +60,17 @@ AC_DEFUN([_KYUA_FLAG_AUX], [
         saved_flags="${$2}"
         $4=no
         $2="${$2} $5 $3"
-        AC_LINK_IFELSE([AC_LANG_PROGRAM([], [return 0;])],
+        # The inclusion of a header file in the test program below is needed
+        # because some compiler flags that we test for may actually not be
+        # compatible with other flags, and such compatibility checks are
+        # performed within the system header files.
+        #
+        # As an example, if we are testing for -D_FORTIFY_SOURCE=2 and the
+        # compilation is being done with -O2, Linux's /usr/include/features.h
+        # will abort the compilation of our code later on.  By including a
+        # generic header file here that pulls in features.h we ensure that
+        # this test is accurate for the build stage.
+        AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <stdio.h>], [return 0;])],
                        AC_MSG_RESULT(yes)
                        $4=yes,
                        AC_MSG_RESULT(no))
