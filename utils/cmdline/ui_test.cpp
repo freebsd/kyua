@@ -154,7 +154,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(ui__screen_width__tty_is_file);
 ATF_TEST_CASE_BODY(ui__screen_width__tty_is_file)
 {
     utils::unsetenv("COLUMNS");
-    const int fd = ::open("test.txt", O_WRONLY | O_CREAT | O_TRUNC);
+    const int fd = ::open("test.txt", O_WRONLY | O_CREAT | O_TRUNC, 0755);
     ATF_REQUIRE(fd != -1);
     if (fd != STDOUT_FILENO) {
         ATF_REQUIRE(::dup2(fd, STDOUT_FILENO) != -1);
