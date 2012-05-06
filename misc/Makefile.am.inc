@@ -31,7 +31,7 @@ miscdir = $(pkgdatadir)/misc
 misc_SCRIPTS = misc/kyuaify.sh
 EXTRA_DIST += $(misc_SCRIPTS)
 
-misc_DATA  = misc/context.html
-misc_DATA += misc/index.html
-misc_DATA += misc/report.css
-misc_DATA += misc/test_result.html
+dist_misc_DATA  = misc/context.html
+dist_misc_DATA += misc/index.html
+dist_misc_DATA += misc/report.css
+dist_misc_DATA += misc/test_result.html
