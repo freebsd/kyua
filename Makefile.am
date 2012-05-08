@@ -39,8 +39,11 @@ doc_DATA = AUTHORS COPYING NEWS README
 noinst_DATA += INSTALL README
 EXTRA_DIST += $(doc_DATA) INSTALL README
 
-if WITH_ATF
+# The default location of the tests is needed by the documentation.  This is
+# why testsdir cannot be defined inside the WITH_ATF conditional.
 testsdir = $(exec_prefix)/tests
+
+if WITH_ATF
 pkgtestsdir = $(testsdir)/kyua-cli
 
 tests_topdir = $(pkgtestsdir)
