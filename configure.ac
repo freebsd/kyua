@@ -119,6 +119,14 @@ else
 fi
 
 
+AC_SUBST(examplesdir, \${pkgdatadir}/examples)
+AC_SUBST(luadir, \${pkgdatadir}/lua)
+AC_SUBST(miscdir, \${pkgdatadir}/misc)
+AC_SUBST(pkgtestsdir, \${testsdir}/kyua-cli)
+AC_SUBST(storedir, \${pkgdatadir}/store)
+AC_SUBST(testsdir, \${exec_prefix}/tests)
+
+
 dnl BSD make(1) doesn't deal with targets specified as './foo' well: they
 dnl need to be specified as 'foo'.  The following hack is to workaround this
 dnl issue.

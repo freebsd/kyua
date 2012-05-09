@@ -26,8 +26,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-examplesdir = $(pkgdatadir)/examples
-
 dist_examples_DATA  = examples/Kyuafile.top
 dist_examples_DATA += examples/kyua.conf
 

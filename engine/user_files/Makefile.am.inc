@@ -29,8 +29,6 @@
 ENGINE_CFLAGS += $(LUTOK_CFLAGS)
 ENGINE_LIBS += $(LUTOK_LIBS)
 
-luadir = $(pkgdatadir)/lua
-
 libengine_a_CPPFLAGS += $(LUTOK_CFLAGS)
 libengine_a_CPPFLAGS += -DKYUA_LUADIR="\"$(luadir)\""
 libengine_a_SOURCES += engine/user_files/common.cpp
@@ -42,7 +40,7 @@ libengine_a_SOURCES += engine/user_files/exceptions.hpp
 libengine_a_SOURCES += engine/user_files/kyuafile.cpp
 libengine_a_SOURCES += engine/user_files/kyuafile.hpp
 
-lua_modulesdir = $(pkgdatadir)/lua
+lua_modulesdir = $(luadir)
 dist_lua_modules_DATA  = engine/user_files/init.lua
 dist_lua_modules_DATA += engine/user_files/config_1.lua
 dist_lua_modules_DATA += engine/user_files/kyuafile_1.lua

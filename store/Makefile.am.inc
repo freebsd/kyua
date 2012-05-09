@@ -42,7 +42,6 @@ libstore_a_SOURCES += store/metadata.hpp
 libstore_a_SOURCES += store/transaction.cpp
 libstore_a_SOURCES += store/transaction.hpp
 
-storedir = $(pkgdatadir)/store
 dist_store_DATA = store/schema.sql
 
 if WITH_ATF
