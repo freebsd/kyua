@@ -37,6 +37,17 @@ namespace config = utils::config;
 namespace text = utils::text;
 
 
+/// Converts a key to its textual representation.
+///
+/// \param key The key to convert.
+std::string
+config::detail::flatten_key(const tree_key& key)
+{
+    PRE(!key.empty());
+    return text::join(key, ".");
+}
+
+
 /// Parses and validates a textual key.
 ///
 /// \param str The key to process in dotted notation.
@@ -45,8 +56,8 @@ namespace text = utils::text;
 ///
 /// \throw invalid_key_error If the input key is empty or invalid for any other
 ///     reason.  Invalid does NOT mean unknown though.
-utils::config::detail::tree_key
-utils::config::detail::parse_key(const std::string& str)
+config::detail::tree_key
+config::detail::parse_key(const std::string& str)
 {
     const tree_key key = text::split(str, '.');
     if (key.empty())
@@ -82,6 +93,38 @@ config::detail::inner_node::~inner_node(void)
 }
 
 
+/// Converts the subtree to a collection of key/value string pairs.
+///
+/// \param [out] properties The accumulator for the generated properties.  The
+///     contents of the map are only extended.
+/// \param key The path to the current node.
+void
+config::detail::inner_node::get_all_properties(properties_map& properties,
+                                               const tree_key& key) const
+{
+    for (children_map::const_iterator iter = _children.begin();
+         iter != _children.end(); ++iter) {
+        tree_key child_key = key;
+        child_key.push_back((*iter).first);
+
+        try {
+            const leaf_node& node = dynamic_cast< const leaf_node& >(
+                *(*iter).second);
+            if (node.is_set())
+                properties[flatten_key(child_key)] = node.to_string();
+        } catch (const std::bad_cast& e) {
+            try {
+                const inner_node& node = dynamic_cast< const inner_node& >(
+                    *(*iter).second);
+                node.get_all_properties(properties, child_key);
+            } catch (const std::bad_cast& e2) {
+                UNREACHABLE_MSG("Node not inner nor leaf");
+            }
+        }
+    }
+}
+
+
 /// Constructor.
 config::detail::static_inner_node::static_inner_node(void) :
     inner_node(false)
@@ -92,6 +135,12 @@ config::detail::static_inner_node::static_inner_node(void) :
 /// Constructor.
 config::detail::dynamic_inner_node::dynamic_inner_node(void) :
     inner_node(true)
+{
+}
+
+
+/// Destructor.
+config::leaf_node::~leaf_node(void)
 {
 }
 
@@ -132,4 +181,16 @@ config::tree::define_dynamic(const std::string& dotted_key)
         UNREACHABLE_MSG("define() failing due to key errors is a programming "
                         "mistake: " + std::string(e.what()));
     }
+}
+
+
+/// Converts the tree to a collection of key/value string pairs.
+///
+/// \return A map of keys to values in their textual representation.
+config::properties_map
+config::tree::all_properties(void) const
+{
+    properties_map properties;
+    _root->get_all_properties(properties, detail::tree_key());
+    return properties;
 }

@@ -62,7 +62,7 @@ class static_inner_node;
 }  // namespace detail
 
 
-/// Leaf node holding an arbitrary type.
+/// Abstract leaf node without any specified type.
 ///
 /// It is important to understand that a leaf can exist without actually holding
 /// a value.  Our trees are "strictly keyed": keys must have been pre-defined
@@ -71,14 +71,44 @@ class static_inner_node;
 /// represent this condition, we define an "empty" key in the tree to denote
 /// that the key is valid, yet it has not been set by the user.  Only when an
 /// explicit set is performed on the key, it gets a value.
-template< typename ValueType >
 class leaf_node : public detail::base_node {
+public:
+    virtual ~leaf_node(void);
+
+    /// Checks whether the node has been set.
+    ///
+    /// Remember that a node can exist before holding a value (i.e. when the
+    /// node has been defined as "known" but not yet set by the user).  This
+    /// function checks whether the node laready holds a value.
+    ///
+    /// \return True if a value has been set in the node.
+    virtual bool is_set(void) const = 0;
+
+    /// Converts the contents of the node to a string.
+    ///
+    /// \pre The node must have a value.
+    ///
+    /// \return A string representation of the value held by the node.
+    virtual std::string to_string(void) const = 0;
+};
+
+
+/// Leaf node holding an arbitrary type.
+///
+/// This templated leaf node holds a native type.  The conversion to/from string
+/// representations of the value happens by means of iostreams.  You should
+/// reimplement this class for any type that needs additional
+/// processing/validation during conversion.
+template< typename ValueType >
+class typed_leaf_node : public leaf_node {
 public:
     /// The type of the value held by this node.
     typedef ValueType value_type;
 
-    leaf_node(void);
+    typed_leaf_node(void);
 
+    bool is_set(void) const;
+    std::string to_string(void) const;
     const value_type& value(void) const;
     void set(const value_type&);
 
@@ -89,11 +119,15 @@ private:
 
 
 /// Shorthand for an integral node.
-typedef leaf_node< int > int_node;
+typedef typed_leaf_node< int > int_node;
 
 
 /// Shorthand for a string node.
-typedef leaf_node< std::string > string_node;
+typedef typed_leaf_node< std::string > string_node;
+
+
+// Flat representation of all properties as strings.
+typedef std::map< std::string, std::string > properties_map;
 
 
 /// Representation of a tree.
@@ -142,6 +176,8 @@ public:
 
     template< class LeafType >
     void set(const std::string&, const typename LeafType::value_type&);
+
+    properties_map all_properties(void) const;
 };
 
 

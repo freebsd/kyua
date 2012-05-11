@@ -36,7 +36,10 @@
 #include <vector>
 
 #include "utils/config/exceptions.hpp"
+#include "utils/format/macros.hpp"
 #include "utils/optional.ipp"
+#include "utils/text/exceptions.hpp"
+#include "utils/text/operations.hpp"
 #include "utils/sanity.hpp"
 
 namespace utils {
@@ -50,6 +53,7 @@ namespace detail {
 typedef std::vector< std::string > tree_key;
 
 
+std::string flatten_key(const tree_key&);
 tree_key parse_key(const std::string&);
 
 
@@ -77,6 +81,8 @@ protected:
 public:
     inner_node(const bool);
     virtual ~inner_node(void) = 0;
+
+    void get_all_properties(properties_map&, const tree_key&) const;
 
     template< class LeafType >
     const typename LeafType::value_type& lookup(
@@ -146,10 +152,12 @@ config::detail::inner_node::lookup(const tree_key& key,
                 *(*child_iter).second);
             return child.value();
         } catch (const std::bad_cast& e) {
-            if (typeid(inner_node).before(typeid(*(*child_iter).second)))
+            try {
+                (void)dynamic_cast< inner_node& >(*(*child_iter).second);
                 throw unknown_key_error();
-            else
+            } catch (const std::bad_cast& e) {
                 UNREACHABLE_MSG("Invalid type for node");
+            }
         }
     } else {
         PRE(key_pos < key.size() - 1);
@@ -268,9 +276,38 @@ config::detail::static_inner_node::define(const tree_key& key,
 /// register a node as known but undefined.  The node will then serve as a
 /// placeholder for future values.
 template< typename ValueType >
-config::leaf_node< ValueType >::leaf_node(void) :
+config::typed_leaf_node< ValueType >::typed_leaf_node(void) :
     _value(none)
 {
+}
+
+
+/// Checks whether the node has been set.
+///
+/// Remember that a node can exist before holding a value (i.e. when the node
+/// has been defined as "known" but not yet set by the user).  This function
+/// checks whether the node laready holds a value.
+///
+/// \return True if a value has been set in the node.
+template< typename ValueType >
+bool
+config::typed_leaf_node< ValueType >::is_set(void) const
+{
+    return static_cast< bool >(_value);
+}
+
+
+/// Converts the contents of the node to a string.
+///
+/// \pre The node must have a value.
+///
+/// \return A string representation of the value held by the node.
+template< typename ValueType >
+std::string
+config::typed_leaf_node< ValueType >::to_string(void) const
+{
+    PRE(is_set());
+    return F("%s") % _value.get();
 }
 
 
@@ -283,8 +320,8 @@ config::leaf_node< ValueType >::leaf_node(void) :
 /// the user, and we want to be able to detect the latter.  From the user's
 /// point of view, a defined but unset node is the same as an unknown node.
 template< typename ValueType >
-const typename config::leaf_node< ValueType >::value_type&
-config::leaf_node< ValueType >::value(void) const
+const typename config::typed_leaf_node< ValueType >::value_type&
+config::typed_leaf_node< ValueType >::value(void) const
 {
     if (!_value)
         throw unknown_key_error();
@@ -298,7 +335,7 @@ config::leaf_node< ValueType >::value(void) const
 /// \param value_ The new value to set the node to.
 template< typename ValueType >
 void
-config::leaf_node< ValueType >::set(const value_type& value_)
+config::typed_leaf_node< ValueType >::set(const value_type& value_)
 {
     _value = optional< value_type >(value_);
 }
@@ -321,8 +358,8 @@ config::tree::define(const std::string& dotted_key)
         const detail::tree_key key = detail::parse_key(dotted_key);
         _root->define< LeafType >(key, 0);
     } catch (const error& e) {
-        UNREACHABLE_MSG("define() failing due to key errors is a programming "
-                        "mistake: " + std::string(e.what()));
+        UNREACHABLE_MSG(F("define() failing due to key errors is a programming "
+                          "mistake: %s") % e.what());
     }
 }
 
@@ -345,7 +382,7 @@ config::tree::lookup(const std::string& dotted_key) const
     try {
         return _root->lookup< LeafType >(key, 0);
     } catch (const unknown_key_error& e) {
-        throw unknown_key_error("Unknown key " + dotted_key);
+        throw unknown_key_error(F("Unknown key %s") % dotted_key);
     }
 }
 
@@ -369,9 +406,9 @@ config::tree::set(const std::string& dotted_key,
     try {
         _root->set< LeafType >(key, 0, value);
     } catch (const unknown_key_error& e) {
-        throw unknown_key_error("Unknown key " + dotted_key);
+        throw unknown_key_error(F("Unknown key %s") % dotted_key);
     } catch (const value_error& e) {
-        throw unknown_key_error("Invalid value for key " + dotted_key);
+        throw unknown_key_error(F("Invalid value for key %s") % dotted_key);
     }
 }
 

@@ -192,6 +192,62 @@ ATF_TEST_CASE_BODY(set__unknown_key)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(all_properties__none);
+ATF_TEST_CASE_BODY(all_properties__none)
+{
+    const config::tree tree;
+    ATF_REQUIRE(tree.all_properties().empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(all_properties__all_set);
+ATF_TEST_CASE_BODY(all_properties__all_set)
+{
+    config::tree tree;
+
+    tree.define< config::int_node >("plain");
+    tree.set< config::int_node >("plain", 1234);
+
+    tree.define< config::int_node >("static.first");
+    tree.set< config::int_node >("static.first", -3);
+    tree.define< config::string_node >("static.second");
+    tree.set< config::string_node >("static.second", "some text");
+
+    tree.define_dynamic("dynamic");
+    tree.set< config::string_node >("dynamic.first", "hello");
+    tree.set< config::string_node >("dynamic.second", "bye");
+
+    config::properties_map exp_properties;
+    exp_properties["plain"] = "1234";
+    exp_properties["static.first"] = "-3";
+    exp_properties["static.second"] = "some text";
+    exp_properties["dynamic.first"] = "hello";
+    exp_properties["dynamic.second"] = "bye";
+
+    const config::properties_map properties = tree.all_properties();
+    ATF_REQUIRE(exp_properties == properties);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(all_properties__some_unset);
+ATF_TEST_CASE_BODY(all_properties__some_unset)
+{
+    config::tree tree;
+
+    tree.define< config::int_node >("static.first");
+    tree.set< config::int_node >("static.first", -3);
+    tree.define< config::string_node >("static.second");
+
+    tree.define_dynamic("dynamic");
+
+    config::properties_map exp_properties;
+    exp_properties["static.first"] = "-3";
+
+    const config::properties_map properties = tree.all_properties();
+    ATF_REQUIRE(exp_properties == properties);
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, define_set_lookup__one_level);
@@ -202,4 +258,8 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, set__invalid_key);
     ATF_ADD_TEST_CASE(tcs, set__unknown_key);
+
+    ATF_ADD_TEST_CASE(tcs, all_properties__none);
+    ATF_ADD_TEST_CASE(tcs, all_properties__all_set);
+    ATF_ADD_TEST_CASE(tcs, all_properties__some_unset);
 }
