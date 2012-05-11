@@ -139,22 +139,27 @@ config::detail::inner_node::lookup(const tree_key& key,
                                    const tree_key::size_type key_pos) const
 {
     if (key_pos == key.size())
-        throw unknown_key_error();
+        throw unknown_key_error(F("Unknown key '%s'") % flatten_key(key));
 
     const children_map::const_iterator child_iter = _children.find(
         key[key_pos]);
     if (child_iter == _children.end())
-        throw unknown_key_error();
+        throw unknown_key_error(F("Unknown key '%s'") % flatten_key(key));
 
     if (key_pos == key.size() - 1) {
         try {
             const LeafType& child = dynamic_cast< const LeafType& >(
                 *(*child_iter).second);
-            return child.value();
+            if (child.is_set())
+                return child.value();
+            else
+                throw unknown_key_error(F("Unknown key '%s'") %
+                                        flatten_key(key));
         } catch (const std::bad_cast& e) {
             try {
                 (void)dynamic_cast< inner_node& >(*(*child_iter).second);
-                throw unknown_key_error();
+                throw unknown_key_error(F("Unknown key '%s'") %
+                                        flatten_key(key));
             } catch (const std::bad_cast& e) {
                 UNREACHABLE_MSG("Invalid type for node");
             }
@@ -166,7 +171,7 @@ config::detail::inner_node::lookup(const tree_key& key,
                 *(*child_iter).second);
             return child.lookup< LeafType >(key, key_pos + 1);
         } catch (const std::bad_cast& e) {
-            throw unknown_key_error();
+            throw unknown_key_error(F("Unknown key '%s'") % flatten_key(key));
         }
     }
 }
@@ -188,7 +193,7 @@ config::detail::inner_node::set(const tree_key& key,
                                 const typename LeafType::value_type& value)
 {
     if (key_pos == key.size())
-        throw unknown_key_error();
+        throw unknown_key_error(F("Unknown key '%s'") % flatten_key(key));
 
     children_map::const_iterator child_iter = _children.find(key[key_pos]);
     if (child_iter == _children.end()) {
@@ -199,7 +204,7 @@ config::detail::inner_node::set(const tree_key& key,
             _children.insert(children_map::value_type(key[key_pos], child));
             child_iter = _children.find(key[key_pos]);
         } else {
-            throw unknown_key_error();
+            throw unknown_key_error(F("Unknown key '%s'") % flatten_key(key));
         }
     }
 
@@ -208,7 +213,8 @@ config::detail::inner_node::set(const tree_key& key,
             LeafType& child = dynamic_cast< LeafType& >(*(*child_iter).second);
             child.set(value);
         } catch (const std::bad_cast& e) {
-            throw value_error();
+            throw value_error(F("Invalid value for key '%s'") %
+                              flatten_key(key));
         }
     } else {
         PRE(key_pos < key.size() - 1);
@@ -217,7 +223,7 @@ config::detail::inner_node::set(const tree_key& key,
                 *(*child_iter).second);
             child.set< LeafType >(key, key_pos + 1, value);
         } catch (const std::bad_cast& e) {
-            throw unknown_key_error();
+            throw unknown_key_error(F("Unknown key '%s'") % flatten_key(key));
         }
     }
 }
@@ -313,20 +319,15 @@ config::typed_leaf_node< ValueType >::to_string(void) const
 
 /// Gets the value stored in the node.
 ///
-/// \return The value in the node.
+/// \pre The node must have a value.
 ///
-/// \throw unknown_key_error If the node does not exist.  The rationale behind
-/// this is that a node may have been defined as "recognized" but not yet set by
-/// the user, and we want to be able to detect the latter.  From the user's
-/// point of view, a defined but unset node is the same as an unknown node.
+/// \return The value in the node.
 template< typename ValueType >
 const typename config::typed_leaf_node< ValueType >::value_type&
 config::typed_leaf_node< ValueType >::value(void) const
 {
-    if (!_value)
-        throw unknown_key_error();
-    else
-        return _value.get();
+    PRE(is_set());
+    return _value.get();
 }
 
 
@@ -378,12 +379,7 @@ const typename LeafType::value_type&
 config::tree::lookup(const std::string& dotted_key) const
 {
     const detail::tree_key key = detail::parse_key(dotted_key);
-
-    try {
-        return _root->lookup< LeafType >(key, 0);
-    } catch (const unknown_key_error& e) {
-        throw unknown_key_error(F("Unknown key %s") % dotted_key);
-    }
+    return _root->lookup< LeafType >(key, 0);
 }
 
 
@@ -402,14 +398,7 @@ config::tree::set(const std::string& dotted_key,
                   const typename LeafType::value_type& value)
 {
     const detail::tree_key key = detail::parse_key(dotted_key);
-
-    try {
-        _root->set< LeafType >(key, 0, value);
-    } catch (const unknown_key_error& e) {
-        throw unknown_key_error(F("Unknown key %s") % dotted_key);
-    } catch (const value_error& e) {
-        throw unknown_key_error(F("Invalid value for key %s") % dotted_key);
-    }
+    _root->set< LeafType >(key, 0, value);
 }
 
 

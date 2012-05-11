@@ -61,16 +61,6 @@ config::invalid_key_error::~invalid_key_error(void) throw()
 }
 
 
-/// Constructs a new error with a generic message.
-///
-/// This should only be used for internal exceptions that will be rewritten by
-/// the caller before propagating them to the user.
-config::unknown_key_error::unknown_key_error(void) :
-    error("Unknown key")
-{
-}
-
-
 /// Constructs a new error with a plain-text message.
 ///
 /// \param message The plain-text error message.
@@ -82,16 +72,6 @@ config::unknown_key_error::unknown_key_error(const std::string& message) :
 
 /// Destructor for the error.
 config::unknown_key_error::~unknown_key_error(void) throw()
-{
-}
-
-
-/// Constructs a new error with a generic message.
-///
-/// This should only be used for internal exceptions that will be rewritten by
-/// the caller before propagating them to the user.
-config::value_error::value_error(void) :
-    error("Invalid value")
 {
 }
 

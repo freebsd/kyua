@@ -49,7 +49,7 @@ public:
 /// Exception denoting that a key was not found within a tree.
 class invalid_key_error : public error {
 public:
-    invalid_key_error(const std::string&);
+    explicit invalid_key_error(const std::string&);
     ~invalid_key_error(void) throw();
 };
 
@@ -57,8 +57,7 @@ public:
 /// Exception denoting that a key was not found within a tree.
 class unknown_key_error : public error {
 public:
-    unknown_key_error(void);
-    unknown_key_error(const std::string&);
+    explicit unknown_key_error(const std::string&);
     ~unknown_key_error(void) throw();
 };
 
@@ -66,8 +65,7 @@ public:
 /// Exception denoting that a value was invalid.
 class value_error : public error {
 public:
-    value_error(void);
-    value_error(const std::string&);
+    explicit value_error(const std::string&);
     ~value_error(void) throw();
 };
 

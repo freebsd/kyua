@@ -31,6 +31,7 @@
 #include <typeinfo>
 
 #include "utils/config/exceptions.hpp"
+#include "utils/format/macros.hpp"
 #include "utils/text/operations.hpp"
 
 namespace config = utils::config;
@@ -41,7 +42,7 @@ namespace text = utils::text;
 ///
 /// \param key The key to convert.
 std::string
-config::detail::flatten_key(const tree_key& key)
+utils::config::detail::flatten_key(const tree_key& key)
 {
     PRE(!key.empty());
     return text::join(key, ".");
@@ -56,15 +57,15 @@ config::detail::flatten_key(const tree_key& key)
 ///
 /// \throw invalid_key_error If the input key is empty or invalid for any other
 ///     reason.  Invalid does NOT mean unknown though.
-config::detail::tree_key
-config::detail::parse_key(const std::string& str)
+utils::config::detail::tree_key
+utils::config::detail::parse_key(const std::string& str)
 {
     const tree_key key = text::split(str, '.');
     if (key.empty())
         throw invalid_key_error("Empty key");
     for (tree_key::const_iterator iter = key.begin(); iter != key.end(); iter++)
         if ((*iter).empty())
-            throw invalid_key_error("Empty component in key");
+            throw invalid_key_error(F("Empty component in key '%s'") % str);
     return key;
 }
 

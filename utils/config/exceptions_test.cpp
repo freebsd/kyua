@@ -51,32 +51,16 @@ ATF_TEST_CASE_BODY(invalid_key_error)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(unknown_key_error__internal);
-ATF_TEST_CASE_BODY(unknown_key_error__internal)
-{
-    const config::unknown_key_error e;
-    ATF_REQUIRE(std::strcmp("Unknown key", e.what()) == 0);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(unknown_key_error__public);
-ATF_TEST_CASE_BODY(unknown_key_error__public)
+ATF_TEST_CASE_WITHOUT_HEAD(unknown_key_error);
+ATF_TEST_CASE_BODY(unknown_key_error)
 {
     const config::unknown_key_error e("Some text");
     ATF_REQUIRE(std::strcmp("Some text", e.what()) == 0);
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(value_error__internal);
-ATF_TEST_CASE_BODY(value_error__internal)
-{
-    const config::value_error e;
-    ATF_REQUIRE(std::strcmp("Invalid value", e.what()) == 0);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(value_error__public);
-ATF_TEST_CASE_BODY(value_error__public)
+ATF_TEST_CASE_WITHOUT_HEAD(value_error);
+ATF_TEST_CASE_BODY(value_error)
 {
     const config::value_error e("Some text");
     ATF_REQUIRE(std::strcmp("Some text", e.what()) == 0);
@@ -86,12 +70,7 @@ ATF_TEST_CASE_BODY(value_error__public)
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, error);
-
     ATF_ADD_TEST_CASE(tcs, invalid_key_error);
-
-    ATF_ADD_TEST_CASE(tcs, unknown_key_error__internal);
-    ATF_ADD_TEST_CASE(tcs, unknown_key_error__public);
-
-    ATF_ADD_TEST_CASE(tcs, value_error__internal);
-    ATF_ADD_TEST_CASE(tcs, value_error__public);
+    ATF_ADD_TEST_CASE(tcs, unknown_key_error);
+    ATF_ADD_TEST_CASE(tcs, value_error);
 }

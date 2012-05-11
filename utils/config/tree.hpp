@@ -126,7 +126,7 @@ typedef typed_leaf_node< int > int_node;
 typedef typed_leaf_node< std::string > string_node;
 
 
-// Flat representation of all properties as strings.
+/// Flat representation of all properties as strings.
 typedef std::map< std::string, std::string > properties_map;
 
 
