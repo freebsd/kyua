@@ -28,6 +28,7 @@
 
 #include "cli/cmd_help.hpp"
 
+#include <algorithm>
 #include <cstdlib>
 
 #include "cli/common.ipp"
@@ -40,8 +41,10 @@
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/sanity.hpp"
+#include "utils/text/table.hpp"
 
 namespace cmdline = utils::cmdline;
+namespace text = utils::text;
 namespace user_files = engine::user_files;
 
 using cli::cmd_help;
@@ -50,14 +53,15 @@ using cli::cmd_help;
 namespace {
 
 
-/// Prints help for a set of options.
+/// Creates a table with the help of a set of options.
 ///
-/// \param ui Object to interact with the I/O of the program.
-/// \param options The set of options to describe.
-static void
-options_help(cmdline::ui* ui, const cmdline::options_vector& options)
+/// \param options The set of options to describe.  May be empty.
+///
+/// \return A 2-column wide table with the description of the options.
+static text::table
+options_help(const cmdline::options_vector& options)
 {
-    PRE(!options.empty());
+    text::table table(2);
 
     for (cmdline::options_vector::const_iterator iter = options.begin();
          iter != options.end(); iter++) {
@@ -67,13 +71,19 @@ options_help(cmdline::ui* ui, const cmdline::options_vector& options)
         if (option->needs_arg() && option->has_default_value())
             description += F(" (default: %s)") % option->default_value();
 
+        text::table_row row;
+
         if (option->has_short_name())
-            ui->out(F("    %s, %s: %s.") % option->format_short_name() %
-                    option->format_long_name() % description);
+            row.push_back(F("%s, %s") % option->format_short_name() %
+                          option->format_long_name());
         else
-            ui->out(F("    %s: %s.") % option->format_long_name() %
-                    description);
+            row.push_back(F("%s") % option->format_long_name());
+        row.push_back(F("%s.") % description);
+
+        table.add_row(row);
     }
+
+    return table;
 }
 
 
@@ -88,22 +98,57 @@ general_help(cmdline::ui* ui, const cmdline::options_vector* options,
 {
     PRE(!commands->empty());
 
-    ui->out(F("Usage: %s [general_options] command [command_options] [args]") %
-              cmdline::progname());
+    ui->out_tag("Usage: ",
+                F("%s [general_options] command [command_options] [args]") %
+                cmdline::progname(), false);
 
-    if (!options->empty()) {
-        ui->out("");
-        ui->out("Available general options:");
-        options_help(ui, *options);
-    }
+    const text::table options_table = options_help(*options);
+    text::widths_vector::value_type first_width =
+        options_table.column_width(0);
 
-    ui->out("");
-    ui->out("Available commands:");
+    std::map< std::string, text::table > command_tables;
+
     for (cmdline::commands_map< cli::cli_command >::const_iterator
          iter = commands->begin(); iter != commands->end(); iter++) {
-        const cli::cli_command* command = (*iter).second;
-        ui->out(F("    %s: %s.") % command->name() %
-                command->short_description());
+        const std::string& category = (*iter).first;
+        const std::set< std::string >& command_names = (*iter).second;
+
+        command_tables.insert(std::map< std::string, text::table >::value_type(
+            category, text::table(2)));
+        text::table& table = command_tables.find(category)->second;
+
+        for (std::set< std::string >::const_iterator i2 = command_names.begin();
+             i2 != command_names.end(); i2++) {
+            const cli::cli_command* command = commands->find(*i2);
+            text::table_row row;
+            row.push_back(command->name());
+            row.push_back(F("%s.") % command->short_description());
+            table.add_row(row);
+        }
+
+        if (table.column_width(0) > first_width)
+            first_width = table.column_width(0);
+    }
+
+    text::table_formatter formatter;
+    formatter.set_column_width(0, first_width);
+    formatter.set_column_width(1, text::table_formatter::width_refill);
+    formatter.set_separator("  ");
+
+    if (!options_table.empty()) {
+        ui->out("");
+        ui->out("Available general options:");
+        ui->out_table(options_table, formatter, "  ");
+    }
+
+    // Iterate using the same loop as above to preserve ordering.
+    for (cmdline::commands_map< cli::cli_command >::const_iterator
+         iter = commands->begin(); iter != commands->end(); iter++) {
+        const std::string& category = (*iter).first;
+        ui->out("");
+        ui->out(F("%s commands:") %
+                (category.empty() ? "Generic" : category));
+        ui->out_table(command_tables.find(category)->second, formatter, "  ");
     }
 }
 
@@ -118,24 +163,35 @@ subcommand_help(cmdline::ui* ui,
                 const utils::cmdline::options_vector* general_options,
                 const cli::cli_command* command)
 {
-    ui->out(F("Usage: %s [general_options] %s%s%s") %
-            cmdline::progname() % command->name() %
-            (command->options().empty() ? "" : " [command_options]") %
-            (command->arg_list().empty() ? "" : (" " + command->arg_list())));
+    ui->out_tag(
+        "Usage: ", F("%s [general_options] %s%s%s") %
+        cmdline::progname() % command->name() %
+        (command->options().empty() ? "" : " [command_options]") %
+        (command->arg_list().empty() ? "" : (" " + command->arg_list())),
+        false);
     ui->out("");
     ui->out(F("%s.") % command->short_description());
 
-    if (!general_options->empty()) {
+    const text::table general_table = options_help(*general_options);
+    const text::table command_table = options_help(command->options());
+
+    const text::widths_vector::value_type first_width =
+        std::max(general_table.column_width(0), command_table.column_width(0));
+    text::table_formatter formatter;
+    formatter.set_column_width(0, first_width);
+    formatter.set_column_width(1, text::table_formatter::width_refill);
+    formatter.set_separator("  ");
+
+    if (!general_table.empty()) {
         ui->out("");
         ui->out("Available general options:");
-        options_help(ui, *general_options);
+        ui->out_table(general_table, formatter, "  ");
     }
 
-    const cmdline::options_vector& options = command->options();
-    if (!options.empty()) {
+    if (!command_table.empty()) {
         ui->out("");
         ui->out("Available command options:");
-        options_help(ui, options);
+        ui->out_table(command_table, formatter, "  ");
     }
 }
 

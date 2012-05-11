@@ -16,6 +16,17 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   that do not have ATF in them yet.  Disabling ATF also cuts down the
   build time of Kyua significantly, but with the obvious drawbacks.
 
+* Grouped 'kyua' subcommands by topic both in the output of 'help' and
+  in the documentation.  In general, the user needs to be aware of
+  commands that rely on a current project and those commands that rely
+  purely on the database to generate reports.
+
+* Made 'help' print the descriptions of options and commands properly
+  tabulated.
+
+* Changed most informational messages to automatically wrap on screen
+  boundaries.
+
 
 Changes in version 0.3
 ======================

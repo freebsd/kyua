@@ -96,15 +96,19 @@ specific variable.
 @section Subcommands
 
 @menu
-Commands list
+Generic commands
 * about command:: Details about the about command.
 * config command:: Details about the config command.
 * db-exec command:: Details about the db-exec command.
-* debug command:: Details about the debug command.
 * help command:: Details about the help command.
-* list command:: Details about the list command.
+
+Reporting commands
 * report command:: Details about the report command.
 * report-html command:: Details about the report-html command.
+
+Workspace commands
+* debug command:: Details about the debug command.
+* list command:: Details about the list command.
 * test command:: Details about the test command.
 
 Miscellaneous topics
@@ -190,79 +194,6 @@ Specifies the database to use.  Defaults to @file{~/.kyua/store.db}.
 The database is created if it does not exist.
 @end table
 
-@node debug command
-@subsection The debug command
-
-@cindex @command{debug}
-
-The @command{debug} command provides a mechanism to execute a single test
-case bypassing some of the Kyua infrastructure and allowing the user to
-poke into the execution behavior of the test.
-
-The @command{debug} command prints the result of the test case as the
-last line of its output, and exits with 0 if the test case finished
-successfuly or 1 if the test case failed or the engine encountered an
-error processing the test case or user input.
-
-At the moment, the @command{debug} command allows the following
-aspects of a test case execution to be tweaked:
-
-@itemize
-@item
-Redirection of the test case's stdout and stderr to the console (the
-default) or to arbitraty files.  See the @option{--stdout} and
-@option{--stderr} options below.
-@end itemize
-
-The following subcommand options are recognized:
-
-@table @option
-@item --kyuafile=path
-@cindex @option{--kyuafile}, @command{debug}
-Specifies the Kyuafile to process.  Defaults to a @file{Kyuafile} file
-in the current directory.
-
-@item --stderr=path
-@cindex @option{--stderr}, @command{debug}
-Specifies the file to which to send the standard error of the test
-program's body.  The default is @file{/dev/stderr}, which is a special
-that redirects the output to the console.
-
-@item --stdout=path
-@cindex @option{--stdout}, @command{debug}
-Specifies the file to which to send the standard output of the test
-program's body.  The default is @file{/dev/stdout}, which is a special
-that redirects the output to the console.
-@end table
-
-For example, suppose the following Kyua session:
-
-@cindex example, debug
-
-@verbatim
-$ kyua test
-kernel/fs:mkdir  ->  passed
-kernel/fs:rmdir  ->  failed: Invalid argument
-
-1/2 passed (1 failed)
-@end verbatim
-
-At this point, we do not have a lot of information regarding the
-failure of the @samp{kernel/fs:rmdir} test.  We could run this test
-through the @command{debug} command to inspect its output a bit
-closer, hoping that the test case is kind enough to log its progress:
-
-@verbatim
-$ kyua debug kernel/fs:rmdir
-Trying rmdir('foo')
-Trying rmdir(NULL)
-kernel/fs:rmdir  ->  failed: Invalid argument
-@end verbatim
-
-Luckily, the offending test case was printing status lines as it
-progressed, so we could see the last attempted call and we can know
-match the failure message to the problem.
-
 @node help command
 @subsection The help command
 
@@ -282,39 +213,6 @@ argument is the name of a valid subcommand.  In that case,
 @command{help} prints a textual description of the command, the list
 of common options (@pxref{Common options}) and the list of
 subcommand-specific options.
-
-@node list command
-@subsection The list command
-
-@cindex @command{list}
-
-The @command{list} command scans all the test programs and test cases
-in a test suite and prints a list of all their names, optionally
-accompanied by any metadata properties they have.
-
-The user can provide filters on the test cases to list by specifying
-such filters as arguments; @ref{Filters}.
-
-This command must be run within a test suite (i.e. a directory
-containing a @file{Kyuafile}) or a test suite must be provided with
-the @option{--kyuafile} flag.
-
-The following subcommand options are recognized:
-
-@table @option
-@item --kyuafile=path
-@cindex @option{--kyuafile}, @command{list}
-Specifies the Kyuafile to process.  Defaults to a @file{Kyuafile} file
-in the current directory.
-
-@item --verbose
-@cindex @option{--verbose}, @command{list}
-Prints metadata properties for every test case.
-@end table
-
-This command exits with @samp{0} if there are no problems processing
-the test suite, or with any positive number if the test suite is
-invalid in any sense or if the filters matched no tests.
 
 @node report command
 @subsection The report command
@@ -408,6 +306,112 @@ Specifies the database to use.  Defaults to @file{~/.kyua/store.db}.
 The database is created if it does not exist.
 @end table
 
+@node debug command
+@subsection The debug command
+
+@cindex @command{debug}
+
+The @command{debug} command provides a mechanism to execute a single test
+case bypassing some of the Kyua infrastructure and allowing the user to
+poke into the execution behavior of the test.
+
+The @command{debug} command prints the result of the test case as the
+last line of its output, and exits with 0 if the test case finished
+successfuly or 1 if the test case failed or the engine encountered an
+error processing the test case or user input.
+
+At the moment, the @command{debug} command allows the following
+aspects of a test case execution to be tweaked:
+
+@itemize
+@item
+Redirection of the test case's stdout and stderr to the console (the
+default) or to arbitraty files.  See the @option{--stdout} and
+@option{--stderr} options below.
+@end itemize
+
+The following subcommand options are recognized:
+
+@table @option
+@item --kyuafile=path
+@cindex @option{--kyuafile}, @command{debug}
+Specifies the Kyuafile to process.  Defaults to a @file{Kyuafile} file
+in the current directory.
+
+@item --stderr=path
+@cindex @option{--stderr}, @command{debug}
+Specifies the file to which to send the standard error of the test
+program's body.  The default is @file{/dev/stderr}, which is a special
+that redirects the output to the console.
+
+@item --stdout=path
+@cindex @option{--stdout}, @command{debug}
+Specifies the file to which to send the standard output of the test
+program's body.  The default is @file{/dev/stdout}, which is a special
+that redirects the output to the console.
+@end table
+
+For example, suppose the following Kyua session:
+
+@cindex example, debug
+
+@verbatim
+$ kyua test
+kernel/fs:mkdir  ->  passed
+kernel/fs:rmdir  ->  failed: Invalid argument
+
+1/2 passed (1 failed)
+@end verbatim
+
+At this point, we do not have a lot of information regarding the
+failure of the @samp{kernel/fs:rmdir} test.  We could run this test
+through the @command{debug} command to inspect its output a bit
+closer, hoping that the test case is kind enough to log its progress:
+
+@verbatim
+$ kyua debug kernel/fs:rmdir
+Trying rmdir('foo')
+Trying rmdir(NULL)
+kernel/fs:rmdir  ->  failed: Invalid argument
+@end verbatim
+
+Luckily, the offending test case was printing status lines as it
+progressed, so we could see the last attempted call and we can know
+match the failure message to the problem.
+
+@node list command
+@subsection The list command
+
+@cindex @command{list}
+
+The @command{list} command scans all the test programs and test cases
+in a test suite and prints a list of all their names, optionally
+accompanied by any metadata properties they have.
+
+The user can provide filters on the test cases to list by specifying
+such filters as arguments; @ref{Filters}.
+
+This command must be run within a test suite (i.e. a directory
+containing a @file{Kyuafile}) or a test suite must be provided with
+the @option{--kyuafile} flag.
+
+The following subcommand options are recognized:
+
+@table @option
+@item --kyuafile=path
+@cindex @option{--kyuafile}, @command{list}
+Specifies the Kyuafile to process.  Defaults to a @file{Kyuafile} file
+in the current directory.
+
+@item --verbose
+@cindex @option{--verbose}, @command{list}
+Prints metadata properties for every test case.
+@end table
+
+This command exits with @samp{0} if there are no problems processing
+the test suite, or with any positive number if the test suite is
+invalid in any sense or if the filters matched no tests.
+
 @node test command
 @subsection The test command
 
@@ -466,6 +470,12 @@ The following environment variables are recognized by @command{kyua}
 and you may change them to suit your preferences:
 
 @table @env
+@item COLUMNS
+@cindex COLUMNS
+The width of the screen, in number of characters; used by
+@command{kyua} to wrap long lines.  If not present, the width of the
+screen is determined from the terminal stdout is connected to, if any.
+
 @item HOME
 @cindex HOME
 Path to the user's home directory.  @command{kyua} uses this location

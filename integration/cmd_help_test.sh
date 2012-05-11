@@ -35,7 +35,7 @@ global_body() {
     if grep -- '--show' stdout; then
         atf_fail 'One option of the about subcommand appeared in the output'
     fi
-    grep 'about: Shows general' stdout || atf_fail 'Commands not printed'
+    grep 'about  *Shows general' stdout || atf_fail 'Commands not printed'
 }
 
 

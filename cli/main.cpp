@@ -146,15 +146,19 @@ safe_main(cmdline::ui* ui, int argc, const char* const argv[],
     options.push_back(&logfile_option);
 
     cmdline::commands_map< cli::cli_command > commands;
+
     commands.insert(new cli::cmd_about());
     commands.insert(new cli::cmd_config());
     commands.insert(new cli::cmd_db_exec());
-    commands.insert(new cli::cmd_debug());
     commands.insert(new cli::cmd_help(&options, &commands));
-    commands.insert(new cli::cmd_list());
-    commands.insert(new cli::cmd_report());
-    commands.insert(new cli::cmd_report_html());
-    commands.insert(new cli::cmd_test());
+
+    commands.insert(new cli::cmd_debug(), "Workspace");
+    commands.insert(new cli::cmd_list(), "Workspace");
+    commands.insert(new cli::cmd_test(), "Workspace");
+
+    commands.insert(new cli::cmd_report(), "Reporting");
+    commands.insert(new cli::cmd_report_html(), "Reporting");
+
     if (mock_command.get() != NULL)
         commands.insert(mock_command);
 

@@ -92,18 +92,20 @@ ATF_TEST_CASE_BODY(some)
     cmdline::base_command_no_data* cmd1 = new mock_cmd("cmd1");
     commands.insert(cmd1);
     cmdline::base_command_no_data* cmd2 = new mock_cmd("cmd2");
-    commands.insert(cmd2);
+    commands.insert(cmd2, "foo");
 
     ATF_REQUIRE(!commands.empty());
 
     cmdline::commands_map< cmdline::base_command_no_data >::const_iterator
         iter = commands.begin();
-    ATF_REQUIRE((*iter).first == "cmd1");
-    ATF_REQUIRE((*iter).second == cmd1);
+    ATF_REQUIRE_EQ("", (*iter).first);
+    ATF_REQUIRE_EQ(1, (*iter).second.size());
+    ATF_REQUIRE_EQ("cmd1", *(*iter).second.begin());
 
     ++iter;
-    ATF_REQUIRE((*iter).first == "cmd2");
-    ATF_REQUIRE((*iter).second == cmd2);
+    ATF_REQUIRE_EQ("foo", (*iter).first);
+    ATF_REQUIRE_EQ(1, (*iter).second.size());
+    ATF_REQUIRE_EQ("cmd2", *(*iter).second.begin());
 
     ATF_REQUIRE(++iter == commands.end());
 }

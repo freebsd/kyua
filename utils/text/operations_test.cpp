@@ -28,6 +28,8 @@
 
 #include "utils/text/operations.ipp"
 
+#include <iostream>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -36,6 +38,154 @@
 #include "utils/text/exceptions.hpp"
 
 namespace text = utils::text;
+
+
+namespace {
+
+
+/// Tests text::refill() on an input string with a range of widths.
+///
+/// \param expected The expected refilled paragraph.
+/// \param input The input paragraph to be refilled.
+/// \param first_width The first width to validate.
+/// \param last_width The last width to validate (inclusive).
+static void
+refill_test(const char* expected, const char* input,
+            const std::size_t first_width, const std::size_t last_width)
+{
+    for (std::size_t width = first_width; width <= last_width; ++width) {
+        const std::vector< std::string > lines = text::split(expected, '\n');
+        std::cout << "Breaking at width " << width << '\n';
+        ATF_REQUIRE_EQ(expected, text::refill_as_string(input, width));
+        ATF_REQUIRE(lines == text::refill(input, width));
+    }
+}
+
+
+}  // anonymous namespace
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(refill__empty);
+ATF_TEST_CASE_BODY(refill__empty)
+{
+    ATF_REQUIRE_EQ(1, text::refill("", 0).size());
+    ATF_REQUIRE(text::refill("", 0)[0].empty());
+    ATF_REQUIRE_EQ("", text::refill_as_string("", 0));
+
+    ATF_REQUIRE_EQ(1, text::refill("", 10).size());
+    ATF_REQUIRE(text::refill("", 10)[0].empty());
+    ATF_REQUIRE_EQ("", text::refill_as_string("", 10));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(refill__no_changes);
+ATF_TEST_CASE_BODY(refill__no_changes)
+{
+    std::vector< std::string > exp_lines;
+    exp_lines.push_back("foo bar\nbaz");
+
+    ATF_REQUIRE(exp_lines == text::refill("foo bar\nbaz", 12));
+    ATF_REQUIRE_EQ("foo bar\nbaz", text::refill_as_string("foo bar\nbaz", 12));
+
+    ATF_REQUIRE(exp_lines == text::refill("foo bar\nbaz", 18));
+    ATF_REQUIRE_EQ("foo bar\nbaz", text::refill_as_string("foo bar\nbaz", 80));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(refill__break_one);
+ATF_TEST_CASE_BODY(refill__break_one)
+{
+    refill_test("only break the\nfirst line", "only break the first line",
+                14, 19);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(refill__break_one__not_first_word);
+ATF_TEST_CASE_BODY(refill__break_one__not_first_word)
+{
+    refill_test("first-long-word\nother\nwords", "first-long-word other words",
+                6, 10);
+    refill_test("first-long-word\nother words", "first-long-word other words",
+                11, 20);
+    refill_test("first-long-word other\nwords", "first-long-word other words",
+                21, 26);
+    refill_test("first-long-word other words", "first-long-word other words",
+                27, 28);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(refill__break_many);
+ATF_TEST_CASE_BODY(refill__break_many)
+{
+    refill_test("this is a long\nparagraph to be\nsplit into\npieces",
+                "this is a long paragraph to be split into pieces",
+                15, 15);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(refill__cannot_break);
+ATF_TEST_CASE_BODY(refill__cannot_break)
+{
+    refill_test("this-is-a-long-string", "this-is-a-long-string", 5, 5);
+
+    refill_test("this is\na-string-with-long-words",
+                "this is a-string-with-long-words", 10, 10);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(refill__preserve_whitespace);
+ATF_TEST_CASE_BODY(refill__preserve_whitespace)
+{
+    refill_test("foo  bar baz  ", "foo  bar baz  ", 80, 80);
+    refill_test("foo  \n bar", "foo    bar", 5, 5);
+
+    std::vector< std::string > exp_lines;
+    exp_lines.push_back("foo \n");
+    exp_lines.push_back(" bar");
+    ATF_REQUIRE(exp_lines == text::refill("foo \n  bar", 5));
+    ATF_REQUIRE_EQ("foo \n\n bar", text::refill_as_string("foo \n  bar", 5));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(join__empty);
+ATF_TEST_CASE_BODY(join__empty)
+{
+    std::vector< std::string > lines;
+    ATF_REQUIRE_EQ("", text::join(lines, " "));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(join__one);
+ATF_TEST_CASE_BODY(join__one)
+{
+    std::vector< std::string > lines;
+    lines.push_back("first line");
+    ATF_REQUIRE_EQ("first line", text::join(lines, "*"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(join__several);
+ATF_TEST_CASE_BODY(join__several)
+{
+    std::vector< std::string > lines;
+    lines.push_back("first abc");
+    lines.push_back("second");
+    lines.push_back("and last line");
+    ATF_REQUIRE_EQ("first abc second and last line", text::join(lines, " "));
+    ATF_REQUIRE_EQ("first abc***second***and last line",
+                   text::join(lines, "***"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(join__unordered);
+ATF_TEST_CASE_BODY(join__unordered)
+{
+    std::set< std::string > lines;
+    lines.insert("first");
+    lines.insert("second");
+    const std::string joined = text::join(lines, " ");
+    ATF_REQUIRE(joined == "first second" || joined == "second first");
+}
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(split__empty);
@@ -118,6 +268,19 @@ ATF_TEST_CASE_BODY(to_type__invalid)
 
 ATF_INIT_TEST_CASES(tcs)
 {
+    ATF_ADD_TEST_CASE(tcs, refill__empty);
+    ATF_ADD_TEST_CASE(tcs, refill__no_changes);
+    ATF_ADD_TEST_CASE(tcs, refill__break_one);
+    ATF_ADD_TEST_CASE(tcs, refill__break_one__not_first_word);
+    ATF_ADD_TEST_CASE(tcs, refill__break_many);
+    ATF_ADD_TEST_CASE(tcs, refill__cannot_break);
+    ATF_ADD_TEST_CASE(tcs, refill__preserve_whitespace);
+
+    ATF_ADD_TEST_CASE(tcs, join__empty);
+    ATF_ADD_TEST_CASE(tcs, join__one);
+    ATF_ADD_TEST_CASE(tcs, join__several);
+    ATF_ADD_TEST_CASE(tcs, join__unordered);
+
     ATF_ADD_TEST_CASE(tcs, split__empty);
     ATF_ADD_TEST_CASE(tcs, split__one);
     ATF_ADD_TEST_CASE(tcs, split__several__simple);

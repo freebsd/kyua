@@ -28,7 +28,79 @@
 
 #include "utils/text/operations.ipp"
 
+#include "utils/sanity.hpp"
+
 namespace text = utils::text;
+
+
+/// Fills a paragraph to the specified length.
+///
+/// This preserves any sequence of spaces in the input and any possible
+/// newlines.  Sequences of spaces may be split in half (and thus one space is
+/// lost), but the rest of the spaces will be preserved as either trailing or
+/// leading spaces.
+///
+/// \param input The string to refill.
+/// \param target_width The width to refill the paragraph to.
+///
+/// \return The refilled paragraph as a sequence of independent lines.
+std::vector< std::string >
+text::refill(const std::string& input, const std::size_t target_width)
+{
+    std::vector< std::string > output;
+
+    std::string::size_type start = 0;
+    while (start < input.length()) {
+        std::string::size_type width;
+        if (start + target_width >= input.length())
+            width = input.length() - start;
+        else {
+            if (input[start + target_width] == ' ') {
+                width = target_width;
+            } else {
+                const std::string::size_type pos = input.find_last_of(
+                    " ", start + target_width - 1);
+                if (pos == std::string::npos || pos < start + 1) {
+                    width = input.find_first_of(" ", start + target_width);
+                    if (width == std::string::npos)
+                        width = input.length() - start;
+                    else
+                        width -= start;
+                } else {
+                    width = pos - start;
+                }
+            }
+        }
+        INV(width != std::string::npos);
+        INV(start + width <= input.length());
+        INV(input[start + width] == ' ' || input[start + width] == '\0');
+        output.push_back(input.substr(start, width));
+
+        start += width + 1;
+    }
+
+    if (input.empty()) {
+        INV(output.empty());
+        output.push_back("");
+    }
+
+    return output;
+}
+
+
+/// Fills a paragraph to the specified length.
+///
+/// See the documentation for refill() for additional details.
+///
+/// \param input The string to refill.
+/// \param target_width The width to refill the paragraph to.
+///
+/// \return The refilled paragraph as a string with embedded newlines.
+std::string
+text::refill_as_string(const std::string& input, const std::size_t target_width)
+{
+    return join(refill(input, target_width), "\n");
+}
 
 
 /// Splits a string into different components.

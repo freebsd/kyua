@@ -84,8 +84,10 @@ public:
                const engine::test_result& result,
                const datetime::delta& duration)
     {
-        _ui->out(F("%s  ->  %s  [%s]") % cli::format_test_case_id(*test_case) %
-                 cli::format_result(result) % cli::format_delta(duration));
+        _ui->out_tag(
+            F("%s  ->  ") % cli::format_test_case_id(*test_case),
+            F("%s  [%s]") % cli::format_result(result) %
+            cli::format_delta(duration), false);
         if (result.good())
             good_count++;
         else

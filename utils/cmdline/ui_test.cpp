@@ -28,64 +28,361 @@
 
 #include "utils/cmdline/ui.hpp"
 
+extern "C" {
+#include <sys/ioctl.h>
+
+#include <fcntl.h>
+#include <unistd.h>
+}
+
+#include <cerrno>
+#include <cstring>
+
 #include <atf-c++.hpp>
 
 #include "utils/cmdline/globals.hpp"
+#include "utils/cmdline/ui_mock.hpp"
+#include "utils/env.hpp"
+#include "utils/format/macros.hpp"
+#include "utils/optional.ipp"
+#include "utils/text/table.hpp"
 
 namespace cmdline = utils::cmdline;
+namespace text = utils::text;
+
+using utils::none;
+using utils::optional;
 
 
 namespace {
 
 
-/// Trivial implementation of the ui interface for testing purposes.
-class ui_test : public cmdline::ui {
-public:
-    /// Recording of the last call to err().
-    std::string err_message;
+/// Reopens stdout as a tty and returns its width.
+///
+/// \return The width of the tty in columns.  If the width is wider than 80, the
+/// result is 5 columns narrower to match the screen_width() algorithm.
+static std::size_t
+reopen_stdout(void)
+{
+    const int fd = ::open("/dev/tty", O_WRONLY);
+    if (fd == -1)
+        ATF_SKIP(F("Cannot open tty for test: %s") % ::strerror(errno));
+    struct ::winsize ws;
+    if (::ioctl(fd, TIOCGWINSZ, &ws) == -1)
+        ATF_SKIP(F("Cannot determine size of tty: %s") % ::strerror(errno));
 
-    /// Recording of the last call to out().
-    std::string out_message;
-
-    /// Records an error message.
-    ///
-    /// \pre This function has not been called before.  We only record a single
-    ///     message for simplicity of the testing.
-    ///
-    /// \param message The message to record.
-    void
-    err(const std::string& message)
-    {
-        ATF_REQUIRE(err_message.empty());
-        err_message = message;
+    if (fd != STDOUT_FILENO) {
+        if (::dup2(fd, STDOUT_FILENO) == -1)
+            ATF_SKIP(F("Failed to redirect stdout: %s") % ::strerror(errno));
+        ::close(fd);
     }
 
-    /// Records a message.
-    ///
-    /// \pre This function has not been called before.  We only record a single
-    ///     message for simplicity of the testing.
-    ///
-    /// \param message The message to record.
-    void
-    out(const std::string& message)
-    {
-        ATF_REQUIRE(out_message.empty());
-        out_message = message;
-    }
-};
+    return ws.ws_col >= 80 ? ws.ws_col - 5 : ws.ws_col;
+}
 
 
 }  // anonymous namespace
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(ui__screen_width__columns_set__no_tty);
+ATF_TEST_CASE_BODY(ui__screen_width__columns_set__no_tty)
+{
+    utils::setenv("COLUMNS", "4321");
+    ::close(STDOUT_FILENO);
+
+    cmdline::ui ui;
+    ATF_REQUIRE_EQ(4321 - 5, ui.screen_width().get());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(ui__screen_width__columns_set__tty);
+ATF_TEST_CASE_BODY(ui__screen_width__columns_set__tty)
+{
+    utils::setenv("COLUMNS", "4321");
+    (void)reopen_stdout();
+
+    cmdline::ui ui;
+    ATF_REQUIRE_EQ(4321 - 5, ui.screen_width().get());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(ui__screen_width__columns_empty__no_tty);
+ATF_TEST_CASE_BODY(ui__screen_width__columns_empty__no_tty)
+{
+    utils::setenv("COLUMNS", "");
+    ::close(STDOUT_FILENO);
+
+    cmdline::ui ui;
+    ATF_REQUIRE(!ui.screen_width());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(ui__screen_width__columns_empty__tty);
+ATF_TEST_CASE_BODY(ui__screen_width__columns_empty__tty)
+{
+    utils::setenv("COLUMNS", "");
+    const std::size_t columns = reopen_stdout();
+
+    cmdline::ui ui;
+    ATF_REQUIRE_EQ(columns, ui.screen_width().get());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(ui__screen_width__columns_invalid__no_tty);
+ATF_TEST_CASE_BODY(ui__screen_width__columns_invalid__no_tty)
+{
+    utils::setenv("COLUMNS", "foo bar");
+    ::close(STDOUT_FILENO);
+
+    cmdline::ui ui;
+    ATF_REQUIRE(!ui.screen_width());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(ui__screen_width__columns_invalid__tty);
+ATF_TEST_CASE_BODY(ui__screen_width__columns_invalid__tty)
+{
+    utils::setenv("COLUMNS", "foo bar");
+    const std::size_t columns = reopen_stdout();
+
+    cmdline::ui ui;
+    ATF_REQUIRE_EQ(columns, ui.screen_width().get());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(ui__screen_width__tty_is_file);
+ATF_TEST_CASE_BODY(ui__screen_width__tty_is_file)
+{
+    utils::unsetenv("COLUMNS");
+    const int fd = ::open("test.txt", O_WRONLY | O_CREAT | O_TRUNC, 0755);
+    ATF_REQUIRE(fd != -1);
+    if (fd != STDOUT_FILENO) {
+        ATF_REQUIRE(::dup2(fd, STDOUT_FILENO) != -1);
+        ::close(fd);
+    }
+
+    cmdline::ui ui;
+    ATF_REQUIRE(!ui.screen_width());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(ui__screen_width__cached);
+ATF_TEST_CASE_BODY(ui__screen_width__cached)
+{
+    cmdline::ui ui;
+
+    utils::setenv("COLUMNS", "100");
+    ATF_REQUIRE_EQ(100 - 5, ui.screen_width().get());
+
+    utils::setenv("COLUMNS", "80");
+    ATF_REQUIRE_EQ(100 - 5, ui.screen_width().get());
+
+    utils::unsetenv("COLUMNS");
+    ATF_REQUIRE_EQ(100 - 5, ui.screen_width().get());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(ui__err__no_refill);
+ATF_TEST_CASE_BODY(ui__err__no_refill)
+{
+    cmdline::ui_mock ui(100);
+    ui.err("This is a short message");
+    ATF_REQUIRE_EQ(1, ui.err_log().size());
+    ATF_REQUIRE_EQ("This is a short message", ui.err_log()[0]);
+    ATF_REQUIRE(ui.out_log().empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(ui__err__refill);
+ATF_TEST_CASE_BODY(ui__err__refill)
+{
+    cmdline::ui_mock ui(16);
+    ui.err("This is a short message");
+    ATF_REQUIRE_EQ(2, ui.err_log().size());
+    ATF_REQUIRE_EQ("This is a short", ui.err_log()[0]);
+    ATF_REQUIRE_EQ("message", ui.err_log()[1]);
+    ATF_REQUIRE(ui.out_log().empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(ui__out__no_refill);
+ATF_TEST_CASE_BODY(ui__out__no_refill)
+{
+    cmdline::ui_mock ui(100);
+    ui.out("This is a short message");
+    ATF_REQUIRE(ui.err_log().empty());
+    ATF_REQUIRE_EQ(1, ui.out_log().size());
+    ATF_REQUIRE_EQ("This is a short message", ui.out_log()[0]);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(ui__out__refill);
+ATF_TEST_CASE_BODY(ui__out__refill)
+{
+    cmdline::ui_mock ui(16);
+    ui.out("This is a short message");
+    ATF_REQUIRE(ui.err_log().empty());
+    ATF_REQUIRE_EQ(2, ui.out_log().size());
+    ATF_REQUIRE_EQ("This is a short", ui.out_log()[0]);
+    ATF_REQUIRE_EQ("message", ui.out_log()[1]);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(ui__err_tag__no_refill);
+ATF_TEST_CASE_BODY(ui__err_tag__no_refill)
+{
+    cmdline::ui_mock ui(100);
+    ui.err_tag("Some long tag: ", "This is a short message");
+    ATF_REQUIRE_EQ(1, ui.err_log().size());
+    ATF_REQUIRE_EQ("Some long tag: This is a short message", ui.err_log()[0]);
+    ATF_REQUIRE(ui.out_log().empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(ui__err_tag__refill__repeat);
+ATF_TEST_CASE_BODY(ui__err_tag__refill__repeat)
+{
+    cmdline::ui_mock ui(32);
+    ui.err_tag("Some long tag: ", "This is a short message");
+    ATF_REQUIRE_EQ(2, ui.err_log().size());
+    ATF_REQUIRE_EQ("Some long tag: This is a short", ui.err_log()[0]);
+    ATF_REQUIRE_EQ("Some long tag: message", ui.err_log()[1]);
+    ATF_REQUIRE(ui.out_log().empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(ui__err_tag__refill__no_repeat);
+ATF_TEST_CASE_BODY(ui__err_tag__refill__no_repeat)
+{
+    cmdline::ui_mock ui(32);
+    ui.err_tag("Some long tag: ", "This is a short message", false);
+    ATF_REQUIRE_EQ(2, ui.err_log().size());
+    ATF_REQUIRE_EQ("Some long tag: This is a short", ui.err_log()[0]);
+    ATF_REQUIRE_EQ("               message", ui.err_log()[1]);
+    ATF_REQUIRE(ui.out_log().empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(ui__err_tag__tag_too_long);
+ATF_TEST_CASE_BODY(ui__err_tag__tag_too_long)
+{
+    cmdline::ui_mock ui(5);
+    ui.err_tag("Some long tag: ", "This is a short message");
+    ATF_REQUIRE_EQ(1, ui.err_log().size());
+    ATF_REQUIRE_EQ("Some long tag: This is a short message", ui.err_log()[0]);
+    ATF_REQUIRE(ui.out_log().empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(ui__out_tag__no_refill);
+ATF_TEST_CASE_BODY(ui__out_tag__no_refill)
+{
+    cmdline::ui_mock ui(100);
+    ui.out_tag("Some long tag: ", "This is a short message");
+    ATF_REQUIRE(ui.err_log().empty());
+    ATF_REQUIRE_EQ(1, ui.out_log().size());
+    ATF_REQUIRE_EQ("Some long tag: This is a short message", ui.out_log()[0]);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(ui__out_tag__refill__repeat);
+ATF_TEST_CASE_BODY(ui__out_tag__refill__repeat)
+{
+    cmdline::ui_mock ui(32);
+    ui.out_tag("Some long tag: ", "This is a short message");
+    ATF_REQUIRE(ui.err_log().empty());
+    ATF_REQUIRE_EQ(2, ui.out_log().size());
+    ATF_REQUIRE_EQ("Some long tag: This is a short", ui.out_log()[0]);
+    ATF_REQUIRE_EQ("Some long tag: message", ui.out_log()[1]);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(ui__out_tag__refill__no_repeat);
+ATF_TEST_CASE_BODY(ui__out_tag__refill__no_repeat)
+{
+    cmdline::ui_mock ui(32);
+    ui.out_tag("Some long tag: ", "This is a short message", false);
+    ATF_REQUIRE(ui.err_log().empty());
+    ATF_REQUIRE_EQ(2, ui.out_log().size());
+    ATF_REQUIRE_EQ("Some long tag: This is a short", ui.out_log()[0]);
+    ATF_REQUIRE_EQ("               message", ui.out_log()[1]);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(ui__out_tag__tag_too_long);
+ATF_TEST_CASE_BODY(ui__out_tag__tag_too_long)
+{
+    cmdline::ui_mock ui(5);
+    ui.out_tag("Some long tag: ", "This is a short message");
+    ATF_REQUIRE(ui.err_log().empty());
+    ATF_REQUIRE_EQ(1, ui.out_log().size());
+    ATF_REQUIRE_EQ("Some long tag: This is a short message", ui.out_log()[0]);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(ui__out_table__empty);
+ATF_TEST_CASE_BODY(ui__out_table__empty)
+{
+    const text::table table(3);
+
+    text::table_formatter formatter;
+    formatter.set_separator(" | ");
+    formatter.set_column_width(0, 23);
+    formatter.set_column_width(1, text::table_formatter::width_refill);
+
+    cmdline::ui_mock ui(52);
+    ui.out_table(table, formatter, "    ");
+    ATF_REQUIRE(ui.out_log().empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(ui__out_table__not_empty);
+ATF_TEST_CASE_BODY(ui__out_table__not_empty)
+{
+    text::table table(3);
+    {
+        text::table_row row;
+        row.push_back("First");
+        row.push_back("Second");
+        row.push_back("Third");
+        table.add_row(row);
+    }
+    {
+        text::table_row row;
+        row.push_back("Fourth with some text");
+        row.push_back("Fifth with some more text");
+        row.push_back("Sixth foo");
+        table.add_row(row);
+    }
+
+    text::table_formatter formatter;
+    formatter.set_separator(" | ");
+    formatter.set_column_width(0, 23);
+    formatter.set_column_width(1, text::table_formatter::width_refill);
+
+    cmdline::ui_mock ui(52);
+    ui.out_table(table, formatter, "    ");
+    ATF_REQUIRE_EQ(4, ui.out_log().size());
+    ATF_REQUIRE_EQ("    First                   | Second     | Third",
+                   ui.out_log()[0]);
+    ATF_REQUIRE_EQ("    Fourth with some text   | Fifth with | Sixth foo",
+                   ui.out_log()[1]);
+    ATF_REQUIRE_EQ("                            | some more  | ",
+                   ui.out_log()[2]);
+    ATF_REQUIRE_EQ("                            | text       | ",
+                   ui.out_log()[3]);
+}
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(print_error);
 ATF_TEST_CASE_BODY(print_error)
 {
     cmdline::init("error-program");
-    ui_test ui;
+    cmdline::ui_mock ui;
     cmdline::print_error(&ui, "The error");
-    ATF_REQUIRE(ui.out_message.empty());
-    ATF_REQUIRE_EQ("error-program: E: The error.", ui.err_message);
+    ATF_REQUIRE(ui.out_log().empty());
+    ATF_REQUIRE_EQ(1, ui.err_log().size());
+    ATF_REQUIRE_EQ("error-program: E: The error.", ui.err_log()[0]);
 }
 
 
@@ -93,10 +390,11 @@ ATF_TEST_CASE_WITHOUT_HEAD(print_info);
 ATF_TEST_CASE_BODY(print_info)
 {
     cmdline::init("info-program");
-    ui_test ui;
+    cmdline::ui_mock ui;
     cmdline::print_info(&ui, "The info");
-    ATF_REQUIRE(ui.out_message.empty());
-    ATF_REQUIRE_EQ("info-program: I: The info.", ui.err_message);
+    ATF_REQUIRE(ui.out_log().empty());
+    ATF_REQUIRE_EQ(1, ui.err_log().size());
+    ATF_REQUIRE_EQ("info-program: I: The info.", ui.err_log()[0]);
 }
 
 
@@ -104,15 +402,40 @@ ATF_TEST_CASE_WITHOUT_HEAD(print_warning);
 ATF_TEST_CASE_BODY(print_warning)
 {
     cmdline::init("warning-program");
-    ui_test ui;
+    cmdline::ui_mock ui;
     cmdline::print_warning(&ui, "The warning");
-    ATF_REQUIRE(ui.out_message.empty());
-    ATF_REQUIRE_EQ("warning-program: W: The warning.", ui.err_message);
+    ATF_REQUIRE(ui.out_log().empty());
+    ATF_REQUIRE_EQ(1, ui.err_log().size());
+    ATF_REQUIRE_EQ("warning-program: W: The warning.", ui.err_log()[0]);
 }
 
 
 ATF_INIT_TEST_CASES(tcs)
 {
+    ATF_ADD_TEST_CASE(tcs, ui__screen_width__columns_set__no_tty);
+    ATF_ADD_TEST_CASE(tcs, ui__screen_width__columns_set__tty);
+    ATF_ADD_TEST_CASE(tcs, ui__screen_width__columns_empty__no_tty);
+    ATF_ADD_TEST_CASE(tcs, ui__screen_width__columns_empty__tty);
+    ATF_ADD_TEST_CASE(tcs, ui__screen_width__columns_invalid__no_tty);
+    ATF_ADD_TEST_CASE(tcs, ui__screen_width__columns_invalid__tty);
+    ATF_ADD_TEST_CASE(tcs, ui__screen_width__tty_is_file);
+    ATF_ADD_TEST_CASE(tcs, ui__screen_width__cached);
+
+    ATF_ADD_TEST_CASE(tcs, ui__err__no_refill);
+    ATF_ADD_TEST_CASE(tcs, ui__err__refill);
+    ATF_ADD_TEST_CASE(tcs, ui__out__no_refill);
+    ATF_ADD_TEST_CASE(tcs, ui__out__refill);
+    ATF_ADD_TEST_CASE(tcs, ui__err_tag__no_refill);
+    ATF_ADD_TEST_CASE(tcs, ui__err_tag__refill__repeat);
+    ATF_ADD_TEST_CASE(tcs, ui__err_tag__refill__no_repeat);
+    ATF_ADD_TEST_CASE(tcs, ui__err_tag__tag_too_long);
+    ATF_ADD_TEST_CASE(tcs, ui__out_tag__no_refill);
+    ATF_ADD_TEST_CASE(tcs, ui__out_tag__refill__repeat);
+    ATF_ADD_TEST_CASE(tcs, ui__out_tag__refill__no_repeat);
+    ATF_ADD_TEST_CASE(tcs, ui__out_tag__tag_too_long);
+    ATF_ADD_TEST_CASE(tcs, ui__out_table__empty);
+    ATF_ADD_TEST_CASE(tcs, ui__out_table__not_empty);
+
     ATF_ADD_TEST_CASE(tcs, print_error);
     ATF_ADD_TEST_CASE(tcs, print_info);
     ATF_ADD_TEST_CASE(tcs, print_warning);

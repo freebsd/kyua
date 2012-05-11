@@ -143,7 +143,7 @@ const cmdline::path_option cli::config_option(
 const cmdline::property_option cli::variable_option(
     'v', "variable",
     "Overrides a particular configuration variable",
-    "name=value");
+    "K=V");
 
 
 /// Loads the configuration file for this session, if any.

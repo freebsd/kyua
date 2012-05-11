@@ -30,7 +30,21 @@
 
 #include <iostream>
 
+#include "utils/optional.ipp"
+
 using utils::cmdline::ui_mock;
+using utils::none;
+using utils::optional;
+
+
+/// Constructs a new mock UI.
+///
+/// \param screen_width_ The width of the screen to use for testing purposes.
+///     Defaults to 0 to prevent uncontrolled wrapping on our tests.
+ui_mock::ui_mock(const std::size_t screen_width_) :
+    _screen_width(screen_width_)
+{
+}
 
 
 /// Writes a line to stderr and records it for further inspection.
@@ -38,7 +52,7 @@ using utils::cmdline::ui_mock;
 /// \param message The line to print and record, without the trailing newline
 ///     character.
 void
-ui_mock::err(const std::string& message)
+ui_mock::err_raw(const std::string& message)
 {
     std::cerr << message << "\n";
     _err_log.push_back(message);
@@ -50,10 +64,21 @@ ui_mock::err(const std::string& message)
 /// \param message The line to print and record, without the trailing newline
 ///     character.
 void
-ui_mock::out(const std::string& message)
+ui_mock::out_raw(const std::string& message)
 {
     std::cout << message << "\n";
     _out_log.push_back(message);
+}
+
+
+/// Queries the width of the screen.
+///
+/// \return Always none, as we do not want to depend on line wrapping in our
+/// tests.
+optional< std::size_t >
+ui_mock::screen_width(void) const
+{
+    return _screen_width > 0 ? optional< std::size_t >(_screen_width) : none;
 }
 
 

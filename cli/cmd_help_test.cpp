@@ -28,7 +28,9 @@
 
 #include "cli/cmd_help.hpp"
 
+#include <algorithm>
 #include <cstdlib>
+#include <iterator>
 
 #include <atf-c++.hpp>
 
@@ -64,8 +66,10 @@ static const user_files::config default_config = user_files::config::defaults();
 class cmd_mock_simple : public cli::cli_command {
 public:
     /// Constructs a new mock command.
-    cmd_mock_simple(void) : cli::cli_command(
-        "mock_simple", "", 0, 0, "Simple command")
+    ///
+    /// \param name_ The name of the command to create.
+    cmd_mock_simple(const char* name_) : cli::cli_command(
+        name_, "", 0, 0, "Simple command")
     {
     }
 
@@ -94,8 +98,10 @@ public:
 class cmd_mock_complex : public cli::cli_command {
 public:
     /// Constructs a new mock command.
-    cmd_mock_complex(void) : cli::cli_command(
-        "mock_complex", "[arg1 .. argN]", 0, 2, "Complex command")
+    ///
+    /// \param name The name of the command to create.
+    cmd_mock_complex(const char* name_) : cli::cli_command(
+        name_, "[arg1 .. argN]", 0, 2, "Complex command")
     {
         add_option(cmdline::bool_option("flag_a", "Flag A"));
         add_option(cmdline::bool_option('b', "flag_b", "Flag B"));
@@ -130,17 +136,25 @@ setup(cmdline::commands_map< cli::cli_command >& commands)
 {
     cmdline::init("progname");
 
-    commands.insert(new cmd_mock_simple());
-    commands.insert(new cmd_mock_complex());
+    commands.insert(new cmd_mock_simple("mock_simple"));
+    commands.insert(new cmd_mock_complex("mock_complex"));
+
+    commands.insert(new cmd_mock_simple("mock_simple_2"), "First");
+    commands.insert(new cmd_mock_complex("mock_complex_2"), "First");
+
+    commands.insert(new cmd_mock_simple("mock_simple_3"), "Second");
 }
 
 
 /// Performs a test on the global help (not that of a subcommand).
 ///
 /// \param general_options The genral options supported by the tool, if any.
+/// \param expected_options Expected lines of help output documenting the
+///     options in general_options.
 /// \param ui The cmdline::mock_ui object to which to write the output.
 static void
 global_test(const cmdline::options_vector& general_options,
+            const std::vector< std::string >& expected_options,
             cmdline::ui_mock& ui)
 {
     cmdline::commands_map< cli::cli_command > mock_commands;
@@ -151,19 +165,30 @@ global_test(const cmdline::options_vector& general_options,
 
     cmd_help cmd(&general_options, &mock_commands);
     ATF_REQUIRE_EQ(EXIT_SUCCESS, cmd.main(&ui, args, default_config));
-    ATF_REQUIRE(utils::grep_vector("^Usage: progname \\[general_options\\] "
-                                   "command \\[command_options\\] \\[args\\]$",
-                                   ui.out_log()));
-    if (general_options.empty())
-        ATF_REQUIRE(!utils::grep_vector("Available general options",
-                                        ui.out_log()));
-    else
-        ATF_REQUIRE(utils::grep_vector("Available general options",
-                                       ui.out_log()));
-    ATF_REQUIRE(utils::grep_vector("mock_simple.*Simple command",
-                                   ui.out_log()));
-    ATF_REQUIRE(utils::grep_vector("mock_complex.*Complex command",
-                                   ui.out_log()));
+
+    std::vector< std::string > expected;
+
+    expected.push_back("Usage: progname [general_options] command "
+                       "[command_options] [args]");
+    if (!general_options.empty()) {
+        expected.push_back("");
+        expected.push_back("Available general options:");
+        std::copy(expected_options.begin(), expected_options.end(),
+                  std::back_inserter(expected));
+    }
+    expected.push_back("");
+    expected.push_back("Generic commands:");
+    expected.push_back("  mock_complex    Complex command.");
+    expected.push_back("  mock_simple     Simple command.");
+    expected.push_back("");
+    expected.push_back("First commands:");
+    expected.push_back("  mock_complex_2  Complex command.");
+    expected.push_back("  mock_simple_2   Simple command.");
+    expected.push_back("");
+    expected.push_back("Second commands:");
+    expected.push_back("  mock_simple_3   Simple command.");
+
+    ATF_REQUIRE(expected == ui.out_log());
     ATF_REQUIRE(ui.err_log().empty());
 }
 
@@ -178,7 +203,7 @@ ATF_TEST_CASE_BODY(global__no_options)
 
     cmdline::options_vector general_options;
 
-    global_test(general_options, ui);
+    global_test(general_options, std::vector< std::string >(), ui);
 }
 
 
@@ -190,13 +215,14 @@ ATF_TEST_CASE_BODY(global__some_options)
     cmdline::options_vector general_options;
     const cmdline::bool_option flag_a("flag_a", "Flag A");
     general_options.push_back(&flag_a);
-    const cmdline::string_option flag_c('c', "flag_c", "Flag C", "c_arg");
+    const cmdline::string_option flag_c('c', "lc", "Flag C", "X");
     general_options.push_back(&flag_c);
 
-    global_test(general_options, ui);
+    std::vector< std::string > expected;
+    expected.push_back("  --flag_a        Flag A.");
+    expected.push_back("  -c X, --lc=X    Flag C.");
 
-    ATF_REQUIRE(utils::grep_vector("--flag_a", ui.out_log()));
-    ATF_REQUIRE(utils::grep_vector("--flag_c=c_arg", ui.out_log()));
+    global_test(general_options, expected, ui);
 }
 
 
@@ -249,11 +275,11 @@ ATF_TEST_CASE_BODY(subcommand__complex)
     ATF_REQUIRE(utils::grep_vector("--global_a", ui.out_log()));
     ATF_REQUIRE(utils::grep_vector("--global_c=c_global", ui.out_log()));
     ATF_REQUIRE(utils::grep_vector("Available command options", ui.out_log()));
-    ATF_REQUIRE(utils::grep_vector("--flag_a:.*Flag A", ui.out_log()));
-    ATF_REQUIRE(utils::grep_vector("-b.*--flag_b:.*Flag B", ui.out_log()));
-    ATF_REQUIRE(utils::grep_vector("-c c_arg.*--flag_c=c_arg:.*Flag C",
+    ATF_REQUIRE(utils::grep_vector("--flag_a   *Flag A", ui.out_log()));
+    ATF_REQUIRE(utils::grep_vector("-b.*--flag_b   *Flag B", ui.out_log()));
+    ATF_REQUIRE(utils::grep_vector("-c c_arg.*--flag_c=c_arg   *Flag C",
                                    ui.out_log()));
-    ATF_REQUIRE(utils::grep_vector("--flag_d=d_arg:.*Flag D.*default.*foo",
+    ATF_REQUIRE(utils::grep_vector("--flag_d=d_arg   *Flag D.*default.*foo",
                                    ui.out_log()));
     ATF_REQUIRE(ui.err_log().empty());
 }

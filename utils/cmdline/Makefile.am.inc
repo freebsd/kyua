@@ -88,6 +88,7 @@ utils_cmdline_parser_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_cmdline_PROGRAMS += utils/cmdline/ui_test
 utils_cmdline_ui_test_SOURCES = utils/cmdline/ui_test.cpp
-utils_cmdline_ui_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-utils_cmdline_ui_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
+utils_cmdline_ui_test_CXXFLAGS = $(UTILS_TEST_CFLAGS) $(UTILS_CFLAGS) \
+                                 $(ATF_CXX_CFLAGS)
+utils_cmdline_ui_test_LDADD = $(UTILS_TEST_LIBS) $(UTILS_LIBS) $(ATF_CXX_LIBS)
 endif
