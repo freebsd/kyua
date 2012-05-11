@@ -99,7 +99,7 @@ class cmd_mock_complex : public cli::cli_command {
 public:
     /// Constructs a new mock command.
     ///
-    /// \param name The name of the command to create.
+    /// \param name_ The name of the command to create.
     cmd_mock_complex(const char* name_) : cli::cli_command(
         name_, "[arg1 .. argN]", 0, 2, "Complex command")
     {
