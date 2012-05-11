@@ -84,6 +84,13 @@ public:
     /// \return True if a value has been set in the node.
     virtual bool is_set(void) const = 0;
 
+    /// Sets the value of the node from a raw string representation.
+    ///
+    /// \param raw_value The value to set the node to.
+    ///
+    /// \throw value_error If the value is invalid.
+    virtual void set_string(const std::string& raw_value) = 0;
+
     /// Converts the contents of the node to a string.
     ///
     /// \pre The node must have a value.
@@ -108,7 +115,9 @@ public:
     typed_leaf_node(void);
 
     bool is_set(void) const;
+    void set_string(const std::string&);
     std::string to_string(void) const;
+
     const value_type& value(void) const;
     void set(const value_type&);
 
@@ -176,6 +185,8 @@ public:
 
     template< class LeafType >
     void set(const std::string&, const typename LeafType::value_type&);
+
+    void set_string(const std::string&, const std::string&);
 
     properties_map all_properties(void) const;
 };

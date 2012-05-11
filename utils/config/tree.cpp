@@ -94,6 +94,68 @@ config::detail::inner_node::~inner_node(void)
 }
 
 
+/// Sets the value of a leaf addressed by its key from a textual value.
+///
+/// This respects the native types of all the nodes that have been predefined.
+/// For new nodes under a dynamic subtree, this has no mechanism of determining
+/// what type they need to have, so they are created as plain string nodes.
+///
+/// \param key The key to be set.
+/// \param key_pos The current level within the key to be examined.
+/// \param raw_value The textual representation of the value to set the node to.
+///
+/// \throw unknown_key_error If the provided key is unknown.
+/// \throw value_error If the value mismatches the node type.
+void
+config::detail::inner_node::set_string(const tree_key& key,
+                                       const tree_key::size_type key_pos,
+                                       const std::string& raw_value)
+{
+    // TODO(jmmv): This function is pretty much a duplicate from set(), with a
+    // few subtle details here and there.  We should homogenize these somehow,
+    // preferably with non-template code, but it's tricky.
+
+    if (key_pos == key.size())
+        throw unknown_key_error(F("Unknown key '%s'") % flatten_key(key));
+
+    children_map::const_iterator child_iter = _children.find(key[key_pos]);
+    if (child_iter == _children.end()) {
+        if (_dynamic) {
+            base_node* const child = (key_pos == key.size() - 1) ?
+                static_cast< base_node* >(new string_node()) :
+                static_cast< base_node* >(new dynamic_inner_node());
+            _children.insert(children_map::value_type(key[key_pos], child));
+            child_iter = _children.find(key[key_pos]);
+        } else {
+            throw unknown_key_error(F("Unknown key '%s'") % flatten_key(key));
+        }
+    }
+
+    if (key_pos == key.size() - 1) {
+        try {
+            leaf_node& child = dynamic_cast< leaf_node& >(
+                *(*child_iter).second);
+            child.set_string(raw_value);
+        } catch (const value_error& e) {
+            throw value_error(F("Invalid value for key '%s': %s") %
+                              flatten_key(key) % e.what());
+        } catch (const std::bad_cast& e) {
+            throw value_error(F("Invalid value for key '%s'") %
+                              flatten_key(key));
+        }
+    } else {
+        PRE(key_pos < key.size() - 1);
+        try {
+            inner_node& child = dynamic_cast< inner_node& >(
+                *(*child_iter).second);
+            child.set_string(key, key_pos + 1, raw_value);
+        } catch (const std::bad_cast& e) {
+            throw unknown_key_error(F("Unknown key '%s'") % flatten_key(key));
+        }
+    }
+}
+
+
 /// Converts the subtree to a collection of key/value string pairs.
 ///
 /// \param [out] properties The accumulator for the generated properties.  The
@@ -182,6 +244,27 @@ config::tree::define_dynamic(const std::string& dotted_key)
         UNREACHABLE_MSG("define() failing due to key errors is a programming "
                         "mistake: " + std::string(e.what()));
     }
+}
+
+
+/// Sets the value of a leaf addressed by its key from a string value.
+///
+/// This respects the native types of all the nodes that have been predefined.
+/// For new nodes under a dynamic subtree, this has no mechanism of determining
+/// what type they need to have, so they are created as plain string nodes.
+///
+/// \param dotted_key The key to be registered in dotted representation.
+/// \param raw_value The string representation of the value to set the node to.
+///
+/// \throw invalid_key_error If the provided key has an invalid format.
+/// \throw unknown_key_error If the provided key is unknown.
+/// \throw value_error If the value mismatches the node type.
+void
+config::tree::set_string(const std::string& dotted_key,
+                         const std::string& raw_value)
+{
+    const detail::tree_key key = detail::parse_key(dotted_key);
+    _root->set_string(key, 0, raw_value);
 }
 
 

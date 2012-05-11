@@ -39,7 +39,7 @@
 #include "utils/format/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/text/exceptions.hpp"
-#include "utils/text/operations.hpp"
+#include "utils/text/operations.ipp"
 #include "utils/sanity.hpp"
 
 namespace utils {
@@ -91,6 +91,9 @@ public:
     template< class LeafType >
     void set(const tree_key&, const tree_key::size_type,
              const typename LeafType::value_type&);
+
+    void set_string(const tree_key&, const tree_key::size_type,
+                    const std::string&);
 };
 
 
@@ -300,6 +303,23 @@ bool
 config::typed_leaf_node< ValueType >::is_set(void) const
 {
     return static_cast< bool >(_value);
+}
+
+
+/// Sets the value of the node from a raw string representation.
+///
+/// \param raw_value The value to set the node to.
+///
+/// \throw value_error If the value is invalid.
+template< typename ValueType >
+void
+config::typed_leaf_node< ValueType >::set_string(const std::string& raw_value)
+{
+    try {
+        _value = text::to_type< ValueType >(raw_value);
+    } catch (const text::value_error& e) {
+        throw value_error(e.what());
+    }
 }
 
 

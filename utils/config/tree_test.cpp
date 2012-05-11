@@ -201,6 +201,83 @@ ATF_TEST_CASE_BODY(set__value_error)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(set_string__ok);
+ATF_TEST_CASE_BODY(set_string__ok)
+{
+    config::tree tree;
+
+    tree.define< config::int_node >("foo.bar.1");
+    tree.define< config::string_node >("foo.bar.2");
+    tree.define_dynamic("sub.tree");
+
+    tree.set_string("foo.bar.1", "42");
+    tree.set_string("foo.bar.2", "hello");
+    tree.set_string("sub.tree.2", "15");
+    tree.set_string("sub.tree.3.4", "bye");
+
+    ATF_REQUIRE_EQ(42, tree.lookup< config::int_node >("foo.bar.1"));
+    ATF_REQUIRE_EQ("hello", tree.lookup< config::string_node >("foo.bar.2"));
+    ATF_REQUIRE_EQ("15", tree.lookup< config::string_node >("sub.tree.2"));
+    ATF_REQUIRE_EQ("bye", tree.lookup< config::string_node >("sub.tree.3.4"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(set_string__invalid_key);
+ATF_TEST_CASE_BODY(set_string__invalid_key)
+{
+    config::tree tree;
+
+    ATF_REQUIRE_THROW(config::invalid_key_error,
+                      tree.set_string(".", "foo"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(set_string__unknown_key);
+ATF_TEST_CASE_BODY(set_string__unknown_key)
+{
+    config::tree tree;
+
+    tree.define< config::int_node >("foo.bar");
+    tree.define< config::int_node >("a.b.c");
+    tree.define_dynamic("a.d");
+    tree.set_string("a.b.c", "123");
+    tree.set_string("a.d.3", "foo");
+
+    ATF_REQUIRE_THROW(config::unknown_key_error, tree.set_string("abc", "2"));
+
+    tree.set_string("foo.bar", "15");
+    ATF_REQUIRE_THROW(config::unknown_key_error,
+                      tree.set_string("foo.bar.baz", "0"));
+
+    ATF_REQUIRE_THROW(config::unknown_key_error,
+                      tree.set_string("a.c", "100"));
+    tree.set_string("a.b.c", "-3");
+    ATF_REQUIRE_THROW(config::unknown_key_error,
+                      tree.set_string("a.b.c.d", "82"));
+    tree.set_string("a.d.3", "bar");
+    tree.set_string("a.d.4", "bar");
+    ATF_REQUIRE_THROW(config::unknown_key_error,
+                      tree.set_string("a.d.4.5", "82"));
+    tree.set_string("a.d.5.6", "82");
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(set_string__value_error);
+ATF_TEST_CASE_BODY(set_string__value_error)
+{
+    config::tree tree;
+
+    tree.define< config::int_node >("foo.bar");
+
+    ATF_REQUIRE_THROW(config::value_error,
+                      tree.set_string("foo", "abc"));
+    ATF_REQUIRE_THROW(config::value_error,
+                      tree.set_string("foo.bar", " -3"));
+    ATF_REQUIRE_THROW(config::value_error,
+                      tree.set_string("foo.bar", "3 "));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(all_properties__none);
 ATF_TEST_CASE_BODY(all_properties__none)
 {
@@ -268,6 +345,11 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, set__invalid_key);
     ATF_ADD_TEST_CASE(tcs, set__unknown_key);
     ATF_ADD_TEST_CASE(tcs, set__value_error);
+
+    ATF_ADD_TEST_CASE(tcs, set_string__ok);
+    ATF_ADD_TEST_CASE(tcs, set_string__invalid_key);
+    ATF_ADD_TEST_CASE(tcs, set_string__unknown_key);
+    ATF_ADD_TEST_CASE(tcs, set_string__value_error);
 
     ATF_ADD_TEST_CASE(tcs, all_properties__none);
     ATF_ADD_TEST_CASE(tcs, all_properties__all_set);
