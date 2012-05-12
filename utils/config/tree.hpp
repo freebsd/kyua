@@ -147,6 +147,10 @@ private:
 };
 
 
+/// Shorthand for a boolean node.
+typedef typed_leaf_node< bool > bool_node;
+
+
 /// Shorthand for an integral node.
 typedef typed_leaf_node< int > int_node;
 

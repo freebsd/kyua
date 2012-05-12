@@ -40,15 +40,15 @@ ATF_TEST_CASE_BODY(define_set_lookup__one_level)
 
     tree.define< config::int_node >("var1");
     tree.define< config::string_node >("var2");
-    tree.define< config::int_node >("var3");
+    tree.define< config::bool_node >("var3");
 
     tree.set< config::int_node >("var1", 42);
     tree.set< config::string_node >("var2", "hello");
-    tree.set< config::int_node >("var3", 12345);
+    tree.set< config::bool_node >("var3", false);
 
     ATF_REQUIRE_EQ(42, tree.lookup< config::int_node >("var1"));
     ATF_REQUIRE_EQ("hello", tree.lookup< config::string_node >("var2"));
-    ATF_REQUIRE_EQ(12345, tree.lookup< config::int_node >("var3"));
+    ATF_REQUIRE(!tree.lookup< config::bool_node >("var3"));
 }
 
 
@@ -59,19 +59,19 @@ ATF_TEST_CASE_BODY(define_set_lookup__multiple_levels)
 
     tree.define< config::int_node >("foo.bar.1");
     tree.define< config::string_node >("foo.bar.2");
-    tree.define< config::int_node >("foo.3");
+    tree.define< config::bool_node >("foo.3");
     tree.define_dynamic("sub.tree");
 
     tree.set< config::int_node >("foo.bar.1", 42);
     tree.set< config::string_node >("foo.bar.2", "hello");
-    tree.set< config::int_node >("foo.3", 12345);
+    tree.set< config::bool_node >("foo.3", true);
     tree.set< config::string_node >("sub.tree.1", "bye");
     tree.set< config::int_node >("sub.tree.2", 4);
     tree.set< config::int_node >("sub.tree.3.4", 123);
 
     ATF_REQUIRE_EQ(42, tree.lookup< config::int_node >("foo.bar.1"));
     ATF_REQUIRE_EQ("hello", tree.lookup< config::string_node >("foo.bar.2"));
-    ATF_REQUIRE_EQ(12345, tree.lookup< config::int_node >("foo.3"));
+    ATF_REQUIRE(tree.lookup< config::bool_node >("foo.3"));
     ATF_REQUIRE_EQ(4, tree.lookup< config::int_node >("sub.tree.2"));
     ATF_REQUIRE_EQ(123, tree.lookup< config::int_node >("sub.tree.3.4"));
 }
