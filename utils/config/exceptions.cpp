@@ -28,6 +28,9 @@
 
 #include "utils/config/exceptions.hpp"
 
+#include "utils/config/tree.ipp"
+#include "utils/format/macros.hpp"
+
 namespace config = utils::config;
 
 
@@ -63,9 +66,9 @@ config::invalid_key_error::~invalid_key_error(void) throw()
 
 /// Constructs a new error with a plain-text message.
 ///
-/// \param message The plain-text error message.
-config::unknown_key_error::unknown_key_error(const std::string& message) :
-    error(message)
+/// \param key The unknown key.
+config::unknown_key_error::unknown_key_error(const detail::tree_key& key) :
+    error(F("Unknown key '%s'") % detail::flatten_key(key))
 {
 }
 

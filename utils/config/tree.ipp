@@ -146,11 +146,11 @@ config::detail::inner_node::lookup(const tree_key& key,
         if (child.is_set())
             return child.value();
         else
-            throw unknown_key_error(F("Unknown key '%s'") % flatten_key(key));
+            throw unknown_key_error(key);
     } catch (const std::bad_cast& e) {
         try {
             (void)dynamic_cast< const inner_node& >(*base_child);
-            throw unknown_key_error(F("Unknown key '%s'") % flatten_key(key));
+            throw unknown_key_error(key);
         } catch (const std::bad_cast& e) {
             UNREACHABLE_MSG("Invalid type for node");
         }
@@ -174,7 +174,7 @@ config::detail::inner_node::set(const tree_key& key,
                                 const typename LeafType::value_type& value)
 {
     if (key_pos == key.size())
-        throw unknown_key_error(F("Unknown key '%s'") % flatten_key(key));
+        throw unknown_key_error(key);
 
     children_map::const_iterator child_iter = _children.find(key[key_pos]);
     if (child_iter == _children.end()) {
@@ -185,7 +185,7 @@ config::detail::inner_node::set(const tree_key& key,
             _children.insert(children_map::value_type(key[key_pos], child));
             child_iter = _children.find(key[key_pos]);
         } else {
-            throw unknown_key_error(F("Unknown key '%s'") % flatten_key(key));
+            throw unknown_key_error(key);
         }
     }
 
@@ -204,7 +204,7 @@ config::detail::inner_node::set(const tree_key& key,
                 *(*child_iter).second);
             child.set< LeafType >(key, key_pos + 1, value);
         } catch (const std::bad_cast& e) {
-            throw unknown_key_error(F("Unknown key '%s'") % flatten_key(key));
+            throw unknown_key_error(key);
         }
     }
 }
@@ -281,8 +281,7 @@ config::typed_leaf_node< ValueType >::all_properties(
     if (is_set())
         properties[detail::flatten_key(key)] = to_string();
     else
-        throw unknown_key_error(F("Unknown key '%s'") %
-                                detail::flatten_key(key));
+        throw unknown_key_error(key);
 }
 
 

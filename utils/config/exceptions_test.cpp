@@ -32,7 +32,10 @@
 
 #include <atf-c++.hpp>
 
+#include "utils/config/tree.ipp"
+
 namespace config = utils::config;
+namespace detail = utils::config::detail;
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(error);
@@ -54,8 +57,12 @@ ATF_TEST_CASE_BODY(invalid_key_error)
 ATF_TEST_CASE_WITHOUT_HEAD(unknown_key_error);
 ATF_TEST_CASE_BODY(unknown_key_error)
 {
-    const config::unknown_key_error e("Some text");
-    ATF_REQUIRE(std::strcmp("Some text", e.what()) == 0);
+    detail::tree_key key;
+    key.push_back("1");
+    key.push_back("two");
+
+    const config::unknown_key_error e(key);
+    ATF_REQUIRE(std::strcmp("Unknown key '1.two'", e.what()) == 0);
 }
 
 

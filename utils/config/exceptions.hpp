@@ -34,6 +34,8 @@
 
 #include <stdexcept>
 
+#include "utils/config/tree.hpp"
+
 namespace utils {
 namespace config {
 
@@ -57,7 +59,7 @@ public:
 /// Exception denoting that a key was not found within a tree.
 class unknown_key_error : public error {
 public:
-    explicit unknown_key_error(const std::string&);
+    explicit unknown_key_error(const detail::tree_key&);
     ~unknown_key_error(void) throw();
 };
 

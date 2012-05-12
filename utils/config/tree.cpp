@@ -114,7 +114,7 @@ config::detail::inner_node::set_string(const tree_key& key,
     // preferably with non-template code, but it's tricky.
 
     if (key_pos == key.size())
-        throw unknown_key_error(F("Unknown key '%s'") % flatten_key(key));
+        throw unknown_key_error(key);
 
     children_map::const_iterator child_iter = _children.find(key[key_pos]);
     if (child_iter == _children.end()) {
@@ -125,7 +125,7 @@ config::detail::inner_node::set_string(const tree_key& key,
             _children.insert(children_map::value_type(key[key_pos], child));
             child_iter = _children.find(key[key_pos]);
         } else {
-            throw unknown_key_error(F("Unknown key '%s'") % flatten_key(key));
+            throw unknown_key_error(key);
         }
     }
 
@@ -148,7 +148,7 @@ config::detail::inner_node::set_string(const tree_key& key,
                 *(*child_iter).second);
             child.set_string(key, key_pos + 1, raw_value);
         } catch (const std::bad_cast& e) {
-            throw unknown_key_error(F("Unknown key '%s'") % flatten_key(key));
+            throw unknown_key_error(key);
         }
     }
 }
@@ -167,12 +167,12 @@ config::detail::inner_node::lookup_node(const tree_key& key,
                                         const tree_key::size_type key_pos) const
 {
     if (key_pos == key.size())
-        throw unknown_key_error(F("Unknown key '%s'") % flatten_key(key));
+        throw unknown_key_error(key);
 
     const children_map::const_iterator child_iter = _children.find(
         key[key_pos]);
     if (child_iter == _children.end())
-        throw unknown_key_error(F("Unknown key '%s'") % flatten_key(key));
+        throw unknown_key_error(key);
 
     if (key_pos == key.size() - 1) {
         return (*child_iter).second;
@@ -183,7 +183,7 @@ config::detail::inner_node::lookup_node(const tree_key& key,
                 *(*child_iter).second);
             return child.lookup_node(key, key_pos + 1);
         } catch (const std::bad_cast& e) {
-            throw unknown_key_error(F("Unknown key '%s'") % flatten_key(key));
+            throw unknown_key_error(key);
         }
     }
 }
