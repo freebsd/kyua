@@ -32,8 +32,6 @@
 #define UTILS_CONFIG_TREE_IPP
 
 #include <stdexcept>
-#include <typeinfo>
-#include <vector>
 
 #include "utils/config/exceptions.hpp"
 #include "utils/format/macros.hpp"
@@ -47,10 +45,6 @@ namespace utils {
 
 namespace config {
 namespace detail {
-
-
-/// Representation of a valid, tokenized key.
-typedef std::vector< std::string > tree_key;
 
 
 std::string flatten_key(const tree_key&);
@@ -82,7 +76,11 @@ public:
     inner_node(const bool);
     virtual ~inner_node(void) = 0;
 
-    void get_all_properties(properties_map&, const tree_key&) const;
+    const base_node* lookup_node(const tree_key&,
+                                 const tree_key::size_type) const;
+
+    void all_properties(properties_map&, const tree_key&) const;
+    bool is_set(void) const;
 
     template< class LeafType >
     const typename LeafType::value_type& lookup(
@@ -141,40 +139,20 @@ const typename LeafType::value_type&
 config::detail::inner_node::lookup(const tree_key& key,
                                    const tree_key::size_type key_pos) const
 {
-    if (key_pos == key.size())
-        throw unknown_key_error(F("Unknown key '%s'") % flatten_key(key));
+    const base_node* base_child = lookup_node(key, key_pos);
 
-    const children_map::const_iterator child_iter = _children.find(
-        key[key_pos]);
-    if (child_iter == _children.end())
-        throw unknown_key_error(F("Unknown key '%s'") % flatten_key(key));
-
-    if (key_pos == key.size() - 1) {
-        try {
-            const LeafType& child = dynamic_cast< const LeafType& >(
-                *(*child_iter).second);
-            if (child.is_set())
-                return child.value();
-            else
-                throw unknown_key_error(F("Unknown key '%s'") %
-                                        flatten_key(key));
-        } catch (const std::bad_cast& e) {
-            try {
-                (void)dynamic_cast< inner_node& >(*(*child_iter).second);
-                throw unknown_key_error(F("Unknown key '%s'") %
-                                        flatten_key(key));
-            } catch (const std::bad_cast& e) {
-                UNREACHABLE_MSG("Invalid type for node");
-            }
-        }
-    } else {
-        PRE(key_pos < key.size() - 1);
-        try {
-            const inner_node& child = dynamic_cast< const inner_node& >(
-                *(*child_iter).second);
-            return child.lookup< LeafType >(key, key_pos + 1);
-        } catch (const std::bad_cast& e) {
+    try {
+        const LeafType& child = dynamic_cast< const LeafType& >(*base_child);
+        if (child.is_set())
+            return child.value();
+        else
             throw unknown_key_error(F("Unknown key '%s'") % flatten_key(key));
+    } catch (const std::bad_cast& e) {
+        try {
+            (void)dynamic_cast< const inner_node& >(*base_child);
+            throw unknown_key_error(F("Unknown key '%s'") % flatten_key(key));
+        } catch (const std::bad_cast& e) {
+            UNREACHABLE_MSG("Invalid type for node");
         }
     }
 }
@@ -267,12 +245,7 @@ config::detail::static_inner_node::define(const tree_key& key,
                     *(*child_iter).second);
                 child.define< LeafType >(key, key_pos + 1);
             } catch (const std::bad_cast& e) {
-                if (typeid(*(*child_iter).second) == typeid(dynamic_inner_node))
-                    UNREACHABLE_MSG("Attempted to define a key in a dynamic "
-                                    "node");
-                else
-                    UNREACHABLE_MSG("Attempted to recurse into an "
-                                    "already-defined leaf node");
+                UNREACHABLE;
             }
         }
     }
@@ -288,6 +261,28 @@ template< typename ValueType >
 config::typed_leaf_node< ValueType >::typed_leaf_node(void) :
     _value(none)
 {
+}
+
+
+/// Extracts a textual representation of the node as key/value string pair.
+///
+/// \param [out] properties The accumulator for the generated properties.
+///     The contents of the map are only extended.
+/// \param key The path to the current node.
+///
+/// \throw unknown_key_error If the node has been defined but not set yet.  The
+///     caller should use is_set() on the node before calling this method if it
+///     desires to avoid this exception.
+template< typename ValueType >
+void
+config::typed_leaf_node< ValueType >::all_properties(
+    properties_map& properties, const detail::tree_key& key) const
+{
+    if (is_set())
+        properties[detail::flatten_key(key)] = to_string();
+    else
+        throw unknown_key_error(F("Unknown key '%s'") %
+                                detail::flatten_key(key));
 }
 
 

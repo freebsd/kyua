@@ -334,6 +334,103 @@ ATF_TEST_CASE_BODY(all_properties__some_unset)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(all_properties__subtree__inner);
+ATF_TEST_CASE_BODY(all_properties__subtree__inner)
+{
+    config::tree tree;
+
+    tree.define< config::int_node >("root.a.b.c.first");
+    tree.define< config::int_node >("root.a.b.c.second");
+    tree.define< config::int_node >("root.a.d.first");
+
+    tree.set< config::int_node >("root.a.b.c.first", 1);
+    tree.set< config::int_node >("root.a.b.c.second", 2);
+    tree.set< config::int_node >("root.a.d.first", 3);
+
+    {
+        config::properties_map exp_properties;
+        exp_properties["root.a.b.c.first"] = "1";
+        exp_properties["root.a.b.c.second"] = "2";
+        exp_properties["root.a.d.first"] = "3";
+        ATF_REQUIRE(exp_properties == tree.all_properties("root"));
+        ATF_REQUIRE(exp_properties == tree.all_properties("root.a"));
+    }
+
+    {
+        config::properties_map exp_properties;
+        exp_properties["root.a.b.c.first"] = "1";
+        exp_properties["root.a.b.c.second"] = "2";
+        ATF_REQUIRE(exp_properties == tree.all_properties("root.a.b"));
+        ATF_REQUIRE(exp_properties == tree.all_properties("root.a.b.c"));
+    }
+
+    {
+        config::properties_map exp_properties;
+        exp_properties["root.a.d.first"] = "3";
+        ATF_REQUIRE(exp_properties == tree.all_properties("root.a.d"));
+    }
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(all_properties__subtree__leaf);
+ATF_TEST_CASE_BODY(all_properties__subtree__leaf)
+{
+    config::tree tree;
+
+    tree.define< config::int_node >("root.a.b.c.first");
+    tree.define< config::int_node >("root.a.b.c.second");
+    tree.define< config::int_node >("root.a.d.first");
+
+    tree.set< config::int_node >("root.a.b.c.first", 1);
+    tree.set< config::int_node >("root.a.b.c.second", 2);
+    tree.set< config::int_node >("root.a.d.first", 3);
+
+    {
+        config::properties_map exp_properties;
+        exp_properties["root.a.b.c.first"] = "1";
+        ATF_REQUIRE(exp_properties == tree.all_properties("root.a.b.c.first"));
+    }
+
+    {
+        config::properties_map exp_properties;
+        exp_properties["root.a.b.c.second"] = "2";
+        ATF_REQUIRE(exp_properties == tree.all_properties("root.a.b.c.second"));
+    }
+
+    {
+        config::properties_map exp_properties;
+        exp_properties["root.a.d.first"] = "3";
+        ATF_REQUIRE(exp_properties == tree.all_properties("root.a.d.first"));
+    }
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(all_properties__subtree__invalid_key);
+ATF_TEST_CASE_BODY(all_properties__subtree__invalid_key)
+{
+    config::tree tree;
+
+    ATF_REQUIRE_THROW(config::invalid_key_error,
+                      tree.all_properties("."));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(all_properties__subtree__unknown_key);
+ATF_TEST_CASE_BODY(all_properties__subtree__unknown_key)
+{
+    config::tree tree;
+
+    tree.define< config::int_node >("root.a.b.c.first");
+    tree.set< config::int_node >("root.a.b.c.first", 1);
+    tree.define< config::int_node >("root.a.b.c.unset");
+
+    ATF_REQUIRE_THROW(config::unknown_key_error,
+                      tree.all_properties("root.a.b.c.first.foo"));
+    ATF_REQUIRE_THROW(config::unknown_key_error,
+                      tree.all_properties("root.a.b.c.unset"));
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, define_set_lookup__one_level);
@@ -354,4 +451,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, all_properties__none);
     ATF_ADD_TEST_CASE(tcs, all_properties__all_set);
     ATF_ADD_TEST_CASE(tcs, all_properties__some_unset);
+    ATF_ADD_TEST_CASE(tcs, all_properties__subtree__inner);
+    ATF_ADD_TEST_CASE(tcs, all_properties__subtree__leaf);
+    ATF_ADD_TEST_CASE(tcs, all_properties__subtree__invalid_key);
+    ATF_ADD_TEST_CASE(tcs, all_properties__subtree__unknown_key);
 }

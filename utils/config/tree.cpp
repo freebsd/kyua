@@ -28,8 +28,6 @@
 
 #include "utils/config/tree.ipp"
 
-#include <typeinfo>
-
 #include "utils/config/exceptions.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/text/operations.hpp"
@@ -156,35 +154,71 @@ config::detail::inner_node::set_string(const tree_key& key,
 }
 
 
+/// Locates a node within the tree.
+///
+/// \param key The key to be queried.
+/// \param key_pos The current level within the key to be examined.
+///
+/// \return A reference to the located node, if successful.
+///
+/// \throw unknown_key_error If the provided key is unknown.
+const config::detail::base_node*
+config::detail::inner_node::lookup_node(const tree_key& key,
+                                        const tree_key::size_type key_pos) const
+{
+    if (key_pos == key.size())
+        throw unknown_key_error(F("Unknown key '%s'") % flatten_key(key));
+
+    const children_map::const_iterator child_iter = _children.find(
+        key[key_pos]);
+    if (child_iter == _children.end())
+        throw unknown_key_error(F("Unknown key '%s'") % flatten_key(key));
+
+    if (key_pos == key.size() - 1) {
+        return (*child_iter).second;
+    } else {
+        PRE(key_pos < key.size() - 1);
+        try {
+            const inner_node& child = dynamic_cast< const inner_node& >(
+                *(*child_iter).second);
+            return child.lookup_node(key, key_pos + 1);
+        } catch (const std::bad_cast& e) {
+            throw unknown_key_error(F("Unknown key '%s'") % flatten_key(key));
+        }
+    }
+}
+
+
 /// Converts the subtree to a collection of key/value string pairs.
 ///
 /// \param [out] properties The accumulator for the generated properties.  The
 ///     contents of the map are only extended.
 /// \param key The path to the current node.
 void
-config::detail::inner_node::get_all_properties(properties_map& properties,
-                                               const tree_key& key) const
+config::detail::inner_node::all_properties(properties_map& properties,
+                                           const tree_key& key) const
 {
     for (children_map::const_iterator iter = _children.begin();
          iter != _children.end(); ++iter) {
         tree_key child_key = key;
         child_key.push_back((*iter).first);
-
-        try {
-            const leaf_node& node = dynamic_cast< const leaf_node& >(
-                *(*iter).second);
-            if (node.is_set())
-                properties[flatten_key(child_key)] = node.to_string();
-        } catch (const std::bad_cast& e) {
-            try {
-                const inner_node& node = dynamic_cast< const inner_node& >(
-                    *(*iter).second);
-                node.get_all_properties(properties, child_key);
-            } catch (const std::bad_cast& e2) {
-                UNREACHABLE_MSG("Node not inner nor leaf");
-            }
-        }
+        if ((*iter).second->is_set())
+            (*iter).second->all_properties(properties, child_key);
     }
+}
+
+
+/// Checks if the node is set.
+///
+/// Inner nodes are assumed to be set all the time to allow traversals through
+/// them.  The leafs are the ones that will specify whether the node is valid or
+/// not.
+///
+/// \return Always true.
+bool
+config::detail::inner_node::is_set(void) const
+{
+    return true;
 }
 
 
@@ -271,10 +305,23 @@ config::tree::set_string(const std::string& dotted_key,
 /// Converts the tree to a collection of key/value string pairs.
 ///
 /// \return A map of keys to values in their textual representation.
+///
+/// \throw invalid_key_error If the provided key has an invalid format.
+/// \throw unknown_key_error If the provided key is unknown.
 config::properties_map
-config::tree::all_properties(void) const
+config::tree::all_properties(const std::string& dotted_key) const
 {
     properties_map properties;
-    _root->get_all_properties(properties, detail::tree_key());
+
+    detail::tree_key key;
+    const detail::base_node* raw_node;
+    if (dotted_key.empty()) {
+        raw_node = _root;
+    } else {
+        key = detail::parse_key(dotted_key);
+        raw_node = _root->lookup_node(key, 0);
+    }
+    raw_node->all_properties(properties, key);
+
     return properties;
 }

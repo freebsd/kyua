@@ -34,6 +34,7 @@
 
 #include <map>
 #include <string>
+#include <vector>
 
 #include "utils/noncopyable.hpp"
 #include "utils/optional.hpp"
@@ -42,7 +43,15 @@ namespace utils {
 namespace config {
 
 
+/// Flat representation of all properties as strings.
+typedef std::map< std::string, std::string > properties_map;
+
+
 namespace detail {
+
+
+/// Representation of a valid, tokenized key.
+typedef std::vector< std::string > tree_key;
 
 
 /// Base representation of a node.
@@ -53,6 +62,25 @@ namespace detail {
 class base_node : noncopyable {
 public:
     virtual ~base_node(void) = 0;
+
+    /// Extracts a textual representation of the node as key/value string pairs.
+    ///
+    /// \param [out] properties The accumulator for the generated properties.
+    ///     The contents of the map are only extended.
+    /// \param key The path to the current node.
+    virtual void all_properties(properties_map& properties,
+                                const tree_key& key) const = 0;
+
+    /// Checks whether the node has been set by the user.
+    ///
+    /// Nodes of the tree are predefined by the caller to specify the valid
+    /// types of the leaves.  Such predefinition results in the creation of
+    /// nodes within the tree, but these nodes have not yet been set.
+    /// Traversing these nodes is invalid and should result in an "unknown key"
+    /// error.
+    ///
+    /// \return True if a value has been set in the node.
+    virtual bool is_set(void) const = 0;
 };
 
 
@@ -74,15 +102,6 @@ class static_inner_node;
 class leaf_node : public detail::base_node {
 public:
     virtual ~leaf_node(void);
-
-    /// Checks whether the node has been set.
-    ///
-    /// Remember that a node can exist before holding a value (i.e. when the
-    /// node has been defined as "known" but not yet set by the user).  This
-    /// function checks whether the node laready holds a value.
-    ///
-    /// \return True if a value has been set in the node.
-    virtual bool is_set(void) const = 0;
 
     /// Sets the value of the node from a raw string representation.
     ///
@@ -114,6 +133,7 @@ public:
 
     typed_leaf_node(void);
 
+    void all_properties(properties_map&, const detail::tree_key&) const;
     bool is_set(void) const;
     void set_string(const std::string&);
     std::string to_string(void) const;
@@ -133,10 +153,6 @@ typedef typed_leaf_node< int > int_node;
 
 /// Shorthand for a string node.
 typedef typed_leaf_node< std::string > string_node;
-
-
-/// Flat representation of all properties as strings.
-typedef std::map< std::string, std::string > properties_map;
 
 
 /// Representation of a tree.
@@ -188,7 +204,7 @@ public:
 
     void set_string(const std::string&, const std::string&);
 
-    properties_map all_properties(void) const;
+    properties_map all_properties(const std::string& = "") const;
 };
 
 
