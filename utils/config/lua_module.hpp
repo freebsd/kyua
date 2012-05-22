@@ -26,62 +26,27 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file utils/config/exceptions.hpp
-/// Exception types raised by the config module.
+/// \file utils/config/lua_module.hpp
+/// Bindings to expose a configuration tree to Lua.
 
-#if !defined(UTILS_CONFIG_EXCEPTIONS_HPP)
-#define UTILS_CONFIG_EXCEPTIONS_HPP
+#if !defined(UTILS_CONFIG_LUA_MODULE_HPP)
+#define UTILS_CONFIG_LUA_MODULE_HPP
 
-#include <stdexcept>
+#include <string>
 
-#include "utils/config/tree.hpp"
+#include "lutok/state.hpp"
 
 namespace utils {
 namespace config {
 
 
-/// Base exceptions for config errors.
-class error : public std::runtime_error {
-public:
-    explicit error(const std::string&);
-    ~error(void) throw();
-};
+class tree;
 
 
-/// Exception denoting that a key was not found within a tree.
-class invalid_key_error : public error {
-public:
-    explicit invalid_key_error(const std::string&);
-    ~invalid_key_error(void) throw();
-};
-
-
-/// Exception denoting that a configuration file is invalid.
-class syntax_error : public error {
-public:
-    explicit syntax_error(const std::string&);
-    ~syntax_error(void) throw();
-};
-
-
-/// Exception denoting that a key was not found within a tree.
-class unknown_key_error : public error {
-public:
-    explicit unknown_key_error(const detail::tree_key&);
-    ~unknown_key_error(void) throw();
-};
-
-
-/// Exception denoting that a value was invalid.
-class value_error : public error {
-public:
-    explicit value_error(const std::string&);
-    ~value_error(void) throw();
-};
+void redirect(lutok::state&, tree&);
 
 
 }  // namespace config
 }  // namespace utils
 
-
-#endif  // !defined(UTILS_CONFIG_EXCEPTIONS_HPP)
+#endif  // !defined(UTILS_CONFIG_LUA_MODULE_HPP)

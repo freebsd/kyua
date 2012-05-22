@@ -31,7 +31,7 @@ Dependencies
 To build and use Kyua successfully you need:
 
 * A standards-compliant C++ complier.
-* Lutok 0.1 with Lua 5.1.
+* Lutok 0.2.
 * pkg-config.
 * SQLite 3.6.22.
 

@@ -54,6 +54,14 @@ ATF_TEST_CASE_BODY(invalid_key_error)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(syntax_error);
+ATF_TEST_CASE_BODY(syntax_error)
+{
+    const config::syntax_error e("Some text");
+    ATF_REQUIRE(std::strcmp("Some text", e.what()) == 0);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(unknown_key_error);
 ATF_TEST_CASE_BODY(unknown_key_error)
 {
@@ -78,6 +86,7 @@ ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, error);
     ATF_ADD_TEST_CASE(tcs, invalid_key_error);
+    ATF_ADD_TEST_CASE(tcs, syntax_error);
     ATF_ADD_TEST_CASE(tcs, unknown_key_error);
     ATF_ADD_TEST_CASE(tcs, value_error);
 }

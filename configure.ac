@@ -85,9 +85,9 @@ m4_ifndef([ATF_ARG_WITH],
     [m4_fatal([Cannot find atf-common.m4; see the INSTALL document for help])])
 ATF_ARG_WITH
 
-PKG_CHECK_MODULES([LUTOK], [lutok >= 0.1],
+PKG_CHECK_MODULES([LUTOK], [lutok >= 0.2],
                   [],
-                  AC_MSG_ERROR([lutok (0.1 or newer) is required]))
+                  AC_MSG_ERROR([lutok (0.2 or newer) is required]))
 PKG_CHECK_MODULES([SQLITE3], [sqlite3 >= 3.6.22],
                   [],
                   AC_MSG_ERROR([sqlite3 (3.6.22 or newer) is required]))

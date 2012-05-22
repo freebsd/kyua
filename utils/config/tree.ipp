@@ -31,7 +31,7 @@
 #if !defined(UTILS_CONFIG_TREE_IPP)
 #define UTILS_CONFIG_TREE_IPP
 
-#include <stdexcept>
+#include <typeinfo>
 
 #include "utils/config/exceptions.hpp"
 #include "utils/format/macros.hpp"

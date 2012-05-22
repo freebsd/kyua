@@ -66,6 +66,21 @@ config::invalid_key_error::~invalid_key_error(void) throw()
 
 /// Constructs a new error with a plain-text message.
 ///
+/// \param message The plain-text error message.
+config::syntax_error::syntax_error(const std::string& message) :
+    error(message)
+{
+}
+
+
+/// Destructor for the error.
+config::syntax_error::~syntax_error(void) throw()
+{
+}
+
+
+/// Constructs a new error with a plain-text message.
+///
 /// \param key The unknown key.
 config::unknown_key_error::unknown_key_error(const detail::tree_key& key) :
     error(F("Unknown key '%s'") % detail::flatten_key(key))
