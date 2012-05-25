@@ -300,37 +300,6 @@ config::typed_leaf_node< ValueType >::is_set(void) const
 }
 
 
-/// Sets the value of the node from a raw string representation.
-///
-/// \param raw_value The value to set the node to.
-///
-/// \throw value_error If the value is invalid.
-template< typename ValueType >
-void
-config::typed_leaf_node< ValueType >::set_string(const std::string& raw_value)
-{
-    try {
-        _value = text::to_type< ValueType >(raw_value);
-    } catch (const text::value_error& e) {
-        throw value_error(e.what());
-    }
-}
-
-
-/// Converts the contents of the node to a string.
-///
-/// \pre The node must have a value.
-///
-/// \return A string representation of the value held by the node.
-template< typename ValueType >
-std::string
-config::typed_leaf_node< ValueType >::to_string(void) const
-{
-    PRE(is_set());
-    return F("%s") % _value.get();
-}
-
-
 /// Gets the value stored in the node.
 ///
 /// \pre The node must have a value.
@@ -353,6 +322,38 @@ void
 config::typed_leaf_node< ValueType >::set(const value_type& value_)
 {
     _value = optional< value_type >(value_);
+}
+
+
+/// Sets the value of the node from a raw string representation.
+///
+/// \param raw_value The value to set the node to.
+///
+/// \throw value_error If the value is invalid.
+template< typename ValueType >
+void
+config::native_leaf_node< ValueType >::set_string(const std::string& raw_value)
+{
+    try {
+        typed_leaf_node< ValueType >::set(text::to_type< ValueType >(
+            raw_value));
+    } catch (const text::value_error& e) {
+        throw value_error(e.what());
+    }
+}
+
+
+/// Converts the contents of the node to a string.
+///
+/// \pre The node must have a value.
+///
+/// \return A string representation of the value held by the node.
+template< typename ValueType >
+std::string
+config::native_leaf_node< ValueType >::to_string(void) const
+{
+    PRE(typed_leaf_node< ValueType >::is_set());
+    return F("%s") % typed_leaf_node< ValueType >::value();
 }
 
 

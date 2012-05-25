@@ -92,6 +92,10 @@ class static_inner_node;
 
 /// Abstract leaf node without any specified type.
 ///
+/// This base abstract type is necessary to have a common pointer type to which
+/// to cast any leaf.  We later provide templated derivates of this class, and
+/// those cannot act in this manner.
+///
 /// It is important to understand that a leaf can exist without actually holding
 /// a value.  Our trees are "strictly keyed": keys must have been pre-defined
 /// before a value can be set on them.  This is to ensure that the end user is
@@ -119,12 +123,12 @@ public:
 };
 
 
-/// Leaf node holding an arbitrary type.
+/// Base leaf node for a single arbitrary type.
 ///
-/// This templated leaf node holds a native type.  The conversion to/from string
-/// representations of the value happens by means of iostreams.  You should
-/// reimplement this class for any type that needs additional
-/// processing/validation during conversion.
+/// This templated leaf node holds a single object of any type.  The conversion
+/// to/from string representations is undefined, as that depends on the
+/// particular type being processed.  You should reimplement this class for any
+/// type that needs additional processing/validation during conversion.
 template< typename ValueType >
 class typed_leaf_node : public leaf_node {
 public:
@@ -135,8 +139,6 @@ public:
 
     void all_properties(properties_map&, const detail::tree_key&) const;
     bool is_set(void) const;
-    void set_string(const std::string&);
-    std::string to_string(void) const;
 
     const value_type& value(void) const;
     void set(const value_type&);
@@ -147,16 +149,28 @@ private:
 };
 
 
+/// Leaf node holding a native type.
+///
+/// This templated leaf node holds a native type.  The conversion to/from string
+/// representations of the value happens by means of iostreams.
+template< typename ValueType >
+class native_leaf_node : public typed_leaf_node< ValueType > {
+public:
+    void set_string(const std::string&);
+    std::string to_string(void) const;
+};
+
+
 /// Shorthand for a boolean node.
-typedef typed_leaf_node< bool > bool_node;
+typedef native_leaf_node< bool > bool_node;
 
 
 /// Shorthand for an integral node.
-typedef typed_leaf_node< int > int_node;
+typedef native_leaf_node< int > int_node;
 
 
 /// Shorthand for a string node.
-typedef typed_leaf_node< std::string > string_node;
+typedef native_leaf_node< std::string > string_node;
 
 
 /// Representation of a tree.

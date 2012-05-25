@@ -30,7 +30,68 @@
 
 #include <atf-c++.hpp>
 
+#include "utils/format/macros.hpp"
+#include "utils/text/operations.ipp"
+
 namespace config = utils::config;
+namespace text = utils::text;
+
+
+namespace {
+
+
+/// Simple wrapper around an integer value without default constructors.
+///
+/// The purpose of this type is to have a simple class without default
+/// constructors to validate that we can use it as a leaf of a tree.
+class int_wrapper {
+    /// The wrapped integer value.
+    int _value;
+
+public:
+    /// Constructs a new wrapped integer.
+    ///
+    /// \param value_ The value to store in the object.
+    explicit int_wrapper(int value_) :
+        _value(value_)
+    {
+    }
+
+    /// Gets the integer value stored in the object.
+    int
+    value(void) const
+    {
+        return _value;
+    }
+};
+
+
+/// Custom tree leaf type for an object without defualt constructors.
+class wrapped_int_node : public config::typed_leaf_node< int_wrapper > {
+public:
+    /// Sets the value of the node from a raw string representation.
+    ///
+    /// \param raw_value The value to set the node to.
+    void
+    set_string(const std::string& raw_value)
+    {
+        int_wrapper new_value(text::to_type< int >(raw_value));
+        config::typed_leaf_node< int_wrapper >::set(new_value);
+    }
+
+    /// Converts the contents of the node to a string.
+    ///
+    /// \return A string representation of the value held by the node.
+    std::string
+    to_string(void) const
+    {
+        return F("%s") %
+            config::typed_leaf_node< int_wrapper >::value().value();
+    }
+};
+
+
+}  // anonymous namespace
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(define_set_lookup__one_level);
@@ -431,6 +492,22 @@ ATF_TEST_CASE_BODY(all_properties__subtree__unknown_key)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(custom_leaf__no_default_ctor);
+ATF_TEST_CASE_BODY(custom_leaf__no_default_ctor)
+{
+    config::tree tree;
+
+    tree.define< wrapped_int_node >("test1");
+    tree.define< wrapped_int_node >("test2");
+    tree.set< wrapped_int_node >("test1", int_wrapper(5));
+    tree.set< wrapped_int_node >("test2", int_wrapper(10));
+    const int_wrapper& test1 = tree.lookup< wrapped_int_node >("test1");
+    ATF_REQUIRE_EQ(5, test1.value());
+    const int_wrapper& test2 = tree.lookup< wrapped_int_node >("test2");
+    ATF_REQUIRE_EQ(10, test2.value());
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, define_set_lookup__one_level);
@@ -455,4 +532,6 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, all_properties__subtree__leaf);
     ATF_ADD_TEST_CASE(tcs, all_properties__subtree__invalid_key);
     ATF_ADD_TEST_CASE(tcs, all_properties__subtree__unknown_key);
+
+    ATF_ADD_TEST_CASE(tcs, custom_leaf__no_default_ctor);
 }
