@@ -79,7 +79,8 @@ utils::optional< utils::passwd::user > get_user_override(const std::string&,
 ///
 /// This class provides the parser for configuration files and methods to
 /// access the parsed data.
-struct config {
+class config {
+public:
     /// Name of the system architecture (aka processor type).
     std::string architecture;
 

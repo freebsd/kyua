@@ -40,7 +40,7 @@
 
 namespace engine {
 namespace user_files {
-struct config;
+class config;
 }  // namespace user_files
 }  // namespace engine
 

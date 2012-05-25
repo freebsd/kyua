@@ -54,7 +54,7 @@ class base_test_case;
 struct test_filter;
 class test_result;
 namespace user_files {
-struct config;
+class config;
 }  // namespace user_files
 }  // namespace engine
 

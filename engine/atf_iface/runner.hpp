@@ -40,7 +40,7 @@ namespace engine {
 class test_case_hooks;
 class test_result;
 namespace user_files {
-struct config;
+class config;
 }  // namespace user_files
 
 

@@ -55,7 +55,7 @@ typedef std::map< std::string, std::string > properties_map;
 class base_test_program;
 
 namespace user_files {
-struct config;
+class config;
 }  // namespace user_files
 
 
