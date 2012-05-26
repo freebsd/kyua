@@ -222,6 +222,7 @@ public:
     template< class LeafType >
     void set(const std::string&, const typename LeafType::value_type&);
 
+    std::string lookup_string(const std::string&) const;
     void set_string(const std::string&, const std::string&);
 
     properties_map all_properties(const std::string& = "") const;

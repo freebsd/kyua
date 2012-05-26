@@ -299,6 +299,28 @@ config::tree::is_set(const std::string& dotted_key) const
 }
 
 
+/// Gets the value of a node as a plain string.
+///
+/// \param dotted_key The key to be looked up.
+///
+/// \return The value of the located node as a string.
+///
+/// \throw invalid_key_error If the provided key has an invalid format.
+/// \throw unknown_key_error If the provided key is unknown.
+std::string
+config::tree::lookup_string(const std::string& dotted_key) const
+{
+    const detail::tree_key key = detail::parse_key(dotted_key);
+    const detail::base_node* raw_node = _root->lookup_node(key, 0);
+    try {
+        const leaf_node& child = dynamic_cast< const leaf_node& >(*raw_node);
+        return child.to_string();
+    } catch (const std::bad_cast& unused_error) {
+        throw unknown_key_error(key);
+    }
+}
+
+
 /// Sets the value of a leaf addressed by its key from a string value.
 ///
 /// This respects the native types of all the nodes that have been predefined.

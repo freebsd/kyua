@@ -118,6 +118,40 @@ set_tree(lutok::state& state, const std::string& key, const int value_index)
 }
 
 
+static int redirect_newindex(lutok::state&);
+static int redirect_index(lutok::state&);
+
+
+/// Creates a table for a new configuration inner node.
+///
+/// \post state(-1) Contains the new table.
+///
+/// \param state The Lua state in which to push the table.
+/// \param tree_key The key to which the new table corresponds.
+static void
+new_table_for_key(lutok::state& state, const std::string& tree_key)
+{
+    state.new_table();
+    {
+        state.new_table();
+        {
+            state.push_string("__index");
+            state.push_cxx_function(redirect_index);
+            state.set_table(-3);
+
+            state.push_string("__newindex");
+            state.push_cxx_function(redirect_newindex);
+            state.set_table(-3);
+
+            state.push_string("tree_key");
+            state.push_string(tree_key);
+            state.set_table(-3);
+        }
+        state.set_metatable(-2);
+    }
+}
+
+
 /// Sets the value of an configuration node.
 ///
 /// \pre state(-3) The table to index.  If this is not _G, then the table
@@ -195,35 +229,30 @@ redirect_index(lutok::state& state)
         INV(state.is_table(-2));
         INV(state.is_string(-1));
 
-        state.new_table();
-        {
-            state.new_table();
-            {
-                state.push_string("__index");
-                state.push_cxx_function(redirect_index);
-                state.set_table(-3);
+        const config::tree& tree = get_global_tree(state);
+        const std::string tree_key = get_tree_key(state, -2, -1);
+        if (tree.is_set(tree_key)) {
+            // Publish the pre-recorded value in the tree to the Lua state,
+            // instead of considering this table key a new inner node.
+            //
+            // Note that this is not "type-safe": we are converting our internal
+            // representation of the value to a string and then letting Lua cast
+            // this to the needed type if necessary.  We cannot do much better,
+            // and it may not be worth trying.
+            state.push_string(tree.lookup_string(tree_key));
+        } else {
+            new_table_for_key(state, tree_key);
 
-                state.push_string("__newindex");
-                state.push_cxx_function(redirect_newindex);
-                state.set_table(-3);
+            // Duplicate the newly created table and place it deep in the stack
+            // so that the raw_set below leaves us with the return value of this
+            // function at the top of the stack.
+            state.push_value(-1);
+            state.insert(-4);
 
-                state.push_string("tree_key");
-                state.push_string(get_tree_key(state, -5, -4));
-                state.set_table(-3);
-            }
-            state.set_metatable(-2);
+            state.raw_set(-3);
+            state.pop(1);
         }
-
-        // Duplicate the newly created table and place it deep in the stack so
-        // that the raw_set below leaves us with the return value of this
-        // function at the top of the stack.
-        state.push_value(-1);
-        state.insert(-4);
-
-        state.raw_set(-3);
-        state.pop(1);
     }
-    INV(state.is_table(-1));
     return 1;
 }
 

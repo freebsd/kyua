@@ -96,6 +96,23 @@ ATF_TEST_CASE_BODY(top__reset)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(top__already_set_on_entry);
+ATF_TEST_CASE_BODY(top__already_set_on_entry)
+{
+    config::tree tree;
+    tree.define< config::int_node >("first");
+    tree.set< config::int_node >("first", 100);
+
+    {
+        lutok::state state;
+        config::redirect(state, tree);
+        lutok::do_string(state, "first = first * 15");
+    }
+
+    ATF_REQUIRE_EQ(1500, tree.lookup< config::int_node >("first"));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(subtree__valid_types);
 ATF_TEST_CASE_BODY(subtree__valid_types)
 {
@@ -151,6 +168,23 @@ ATF_TEST_CASE_BODY(subtree__reset)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(subtree__already_set_on_entry);
+ATF_TEST_CASE_BODY(subtree__already_set_on_entry)
+{
+    config::tree tree;
+    tree.define< config::int_node >("a.first");
+    tree.set< config::int_node >("a.first", 100);
+
+    {
+        lutok::state state;
+        config::redirect(state, tree);
+        lutok::do_string(state, "a.first = a.first * 15");
+    }
+
+    ATF_REQUIRE_EQ(1500, tree.lookup< config::int_node >("a.first"));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(invalid_key);
 ATF_TEST_CASE_BODY(invalid_key)
 {
@@ -158,7 +192,7 @@ ATF_TEST_CASE_BODY(invalid_key)
 
     lutok::state state;
     config::redirect(state, tree);
-    ATF_REQUIRE_THROW_RE(lutok::error, "Empty component in key 'root..a'",
+    ATF_REQUIRE_THROW_RE(lutok::error, "Empty component in key 'root.'",
                          lutok::do_string(state, "root['']['a'] = 12345\n"));
 }
 
@@ -218,10 +252,12 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, top__valid_types);
     ATF_ADD_TEST_CASE(tcs, top__reuse);
     ATF_ADD_TEST_CASE(tcs, top__reset);
+    ATF_ADD_TEST_CASE(tcs, top__already_set_on_entry);
 
     ATF_ADD_TEST_CASE(tcs, subtree__valid_types);
     ATF_ADD_TEST_CASE(tcs, subtree__reuse);
     ATF_ADD_TEST_CASE(tcs, subtree__reset);
+    ATF_ADD_TEST_CASE(tcs, subtree__already_set_on_entry);
 
     ATF_ADD_TEST_CASE(tcs, locals);
 
