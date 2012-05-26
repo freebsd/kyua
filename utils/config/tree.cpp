@@ -30,220 +30,10 @@
 
 #include "utils/config/exceptions.hpp"
 #include "utils/config/keys.hpp"
+#include "utils/config/nodes.ipp"
 #include "utils/format/macros.hpp"
 
 namespace config = utils::config;
-
-
-/// Destructor.
-config::detail::base_node::~base_node(void)
-{
-}
-
-
-/// Constructor.
-///
-/// \param dynamic_ Whether the node is dynamic or not.
-config::detail::inner_node::inner_node(const bool dynamic_) :
-    _dynamic(dynamic_)
-{
-}
-
-
-/// Destructor.
-config::detail::inner_node::~inner_node(void)
-{
-    for (children_map::const_iterator iter = _children.begin();
-         iter != _children.end(); ++iter)
-        delete (*iter).second;
-}
-
-
-/// Finds a node without creating it if not found.
-///
-/// This recursive algorithm traverses the tree searching for a particular key.
-/// The returned node is constant, so this can only be used for querying
-/// purposes.  For this reason, this algorithm does not create intermediate
-/// nodes if they don't exist (as would be necessary to set a new node).
-///
-/// \param key The key to be queried.
-/// \param key_pos The current level within the key to be examined.
-///
-/// \return A reference to the located node, if successful.
-///
-/// \throw unknown_key_error If the provided key is unknown.
-const config::detail::base_node*
-config::detail::inner_node::lookup_ro(const tree_key& key,
-                                      const tree_key::size_type key_pos) const
-{
-    if (key_pos == key.size())
-        throw unknown_key_error(key);
-
-    const children_map::const_iterator child_iter = _children.find(
-        key[key_pos]);
-    if (child_iter == _children.end())
-        throw unknown_key_error(key);
-
-    if (key_pos == key.size() - 1) {
-        return (*child_iter).second;
-    } else {
-        PRE(key_pos < key.size() - 1);
-        try {
-            const inner_node& child = dynamic_cast< const inner_node& >(
-                *(*child_iter).second);
-            return child.lookup_ro(key, key_pos + 1);
-        } catch (const std::bad_cast& e) {
-            throw unknown_key_error(key);
-        }
-    }
-}
-
-
-/// Finds a node and creates it if not found.
-///
-/// This recursive algorithm traverses the tree searching for a particular key,
-/// creating any intermediate nodes if they do not already exist (for the case
-/// of dynamic inner nodes).  The returned node is non-constant, so this can be
-/// used by the algorithms that set key values.
-///
-/// \param key The key to be queried.
-/// \param key_pos The current level within the key to be examined.
-/// \param new_node A function that returns a new leaf node of the desired
-///     type.  This is only called if the leaf cannot be found, but it has
-///     already been defined.
-///
-/// \return A reference to the located node, if successful.
-///
-/// \throw unknown_key_error If the provided key is unknown.
-/// \throw value_error If the resulting node of the search would be an inner
-///     node.
-config::leaf_node*
-config::detail::inner_node::lookup_rw(const tree_key& key,
-                                      const tree_key::size_type key_pos,
-                                      new_node_hook new_node)
-{
-    if (key_pos == key.size())
-        throw unknown_key_error(key);
-
-    children_map::const_iterator child_iter = _children.find(key[key_pos]);
-    if (child_iter == _children.end()) {
-        if (_dynamic) {
-            base_node* const child = (key_pos == key.size() - 1) ?
-                static_cast< base_node* >(new_node()) :
-                static_cast< base_node* >(new dynamic_inner_node());
-            _children.insert(children_map::value_type(key[key_pos], child));
-            child_iter = _children.find(key[key_pos]);
-        } else {
-            throw unknown_key_error(key);
-        }
-    }
-
-    if (key_pos == key.size() - 1) {
-        try {
-            leaf_node& child = dynamic_cast< leaf_node& >(
-                *(*child_iter).second);
-            return &child;
-        } catch (const std::bad_cast& unused_error) {
-            throw value_error(F("Invalid value for key '%s'") %
-                              flatten_key(key));
-        }
-    } else {
-        PRE(key_pos < key.size() - 1);
-        try {
-            inner_node& child = dynamic_cast< inner_node& >(
-                *(*child_iter).second);
-            return child.lookup_rw(key, key_pos + 1, new_node);
-        } catch (const std::bad_cast& e) {
-            throw unknown_key_error(key);
-        }
-    }
-}
-
-
-/// Converts the subtree to a collection of key/value string pairs.
-///
-/// \param [out] properties The accumulator for the generated properties.  The
-///     contents of the map are only extended.
-/// \param key The path to the current node.
-void
-config::detail::inner_node::all_properties(properties_map& properties,
-                                           const tree_key& key) const
-{
-    for (children_map::const_iterator iter = _children.begin();
-         iter != _children.end(); ++iter) {
-        tree_key child_key = key;
-        child_key.push_back((*iter).first);
-        try {
-            (*iter).second->all_properties(properties, child_key);
-        } catch (const unknown_key_error& unused_error) {
-            // Ignore.  This can happen when we invoke all_properties on a
-            // defined but unset leaf node, and we don't want to consider this
-            // an error.
-        }
-    }
-}
-
-
-/// Constructor.
-config::detail::static_inner_node::static_inner_node(void) :
-    inner_node(false)
-{
-}
-
-
-/// Registers a key as valid and having a specific type.
-///
-/// This method does not raise errors on invalid/unknown keys or other
-/// tree-related issues.  The reasons is that define() is a method that does not
-/// depend on user input: it is intended to pre-populate the tree with a
-/// specific structure, and that happens once at coding time.
-///
-/// \param key The key to be registered.
-/// \param key_pos The current level within the key to be examined.
-/// \param new_node A function that returns a new leaf node of the desired
-///     type.
-void
-config::detail::static_inner_node::define(const tree_key& key,
-                                          const tree_key::size_type key_pos,
-                                          new_node_hook new_node)
-{
-    if (key_pos == key.size() - 1) {
-        PRE_MSG(_children.find(key[key_pos]) == _children.end(),
-                "Key already defined");
-        _children.insert(children_map::value_type(key[key_pos], new_node()));
-    } else {
-        PRE(key_pos < key.size() - 1);
-        const children_map::const_iterator child_iter = _children.find(
-            key[key_pos]);
-
-        if (child_iter == _children.end()) {
-            static_inner_node* const child_ptr = new static_inner_node();
-            _children.insert(children_map::value_type(key[key_pos], child_ptr));
-            child_ptr->define(key, key_pos + 1, new_node);
-        } else {
-            try {
-                static_inner_node& child = dynamic_cast< static_inner_node& >(
-                    *(*child_iter).second);
-                child.define(key, key_pos + 1, new_node);
-            } catch (const std::bad_cast& e) {
-                UNREACHABLE;
-            }
-        }
-    }
-}
-
-
-/// Constructor.
-config::detail::dynamic_inner_node::dynamic_inner_node(void) :
-    inner_node(true)
-{
-}
-
-
-/// Destructor.
-config::leaf_node::~leaf_node(void)
-{
-}
 
 
 /// Constructor.
@@ -365,6 +155,8 @@ config::tree::set_string(const std::string& dotted_key,
 
 /// Converts the tree to a collection of key/value string pairs.
 ///
+/// \param dotted_key Subtree from which to start the export.
+///
 /// \return A map of keys to values in their textual representation.
 ///
 /// \throw invalid_key_error If the provided key has an invalid format.
@@ -382,7 +174,13 @@ config::tree::all_properties(const std::string& dotted_key) const
         key = detail::parse_key(dotted_key);
         raw_node = _root->lookup_ro(key, 0);
     }
-    raw_node->all_properties(properties, key);
+    try {
+        const detail::inner_node& child =
+            dynamic_cast< const detail::inner_node& >(*raw_node);
+        child.all_properties(properties, key);
+    } catch (const std::bad_cast& unused_error) {
+        throw value_error("Cannot export properties from a leaf node");
+    }
 
     return properties;
 }

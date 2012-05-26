@@ -36,8 +36,8 @@
 #include <string>
 
 #include "utils/config/keys.hpp"
+#include "utils/config/nodes.hpp"
 #include "utils/noncopyable.hpp"
-#include "utils/optional.hpp"
 
 namespace utils {
 namespace config {
@@ -45,128 +45,6 @@ namespace config {
 
 /// Flat representation of all properties as strings.
 typedef std::map< std::string, std::string > properties_map;
-
-
-namespace detail {
-
-
-/// Base representation of a node.
-///
-/// This abstract class provides the base type for every node in the tree.  Due
-/// to the dynamic nature of our trees (each leaf being able to hold arbitrary
-/// data types), this base type is a necessity.
-class base_node : noncopyable {
-public:
-    virtual ~base_node(void) = 0;
-
-    /// Extracts a textual representation of the node as key/value string pairs.
-    ///
-    /// \param [out] properties The accumulator for the generated properties.
-    ///     The contents of the map are only extended.
-    /// \param key The path to the current node.
-    virtual void all_properties(properties_map& properties,
-                                const tree_key& key) const = 0;
-};
-
-
-class static_inner_node;
-
-
-}  // namespace detail
-
-
-/// Abstract leaf node without any specified type.
-///
-/// This base abstract type is necessary to have a common pointer type to which
-/// to cast any leaf.  We later provide templated derivates of this class, and
-/// those cannot act in this manner.
-///
-/// It is important to understand that a leaf can exist without actually holding
-/// a value.  Our trees are "strictly keyed": keys must have been pre-defined
-/// before a value can be set on them.  This is to ensure that the end user is
-/// using valid key names and not making mistakes due to typos, for example.  To
-/// represent this condition, we define an "empty" key in the tree to denote
-/// that the key is valid, yet it has not been set by the user.  Only when an
-/// explicit set is performed on the key, it gets a value.
-class leaf_node : public detail::base_node {
-public:
-    virtual ~leaf_node(void);
-
-    /// Checks whether the node has been set by the user.
-    ///
-    /// Nodes of the tree are predefined by the caller to specify the valid
-    /// types of the leaves.  Such predefinition results in the creation of
-    /// nodes within the tree, but these nodes have not yet been set.
-    /// Traversing these nodes is invalid and should result in an "unknown key"
-    /// error.
-    ///
-    /// \return True if a value has been set in the node.
-    virtual bool is_set(void) const = 0;
-
-    /// Sets the value of the node from a raw string representation.
-    ///
-    /// \param raw_value The value to set the node to.
-    ///
-    /// \throw value_error If the value is invalid.
-    virtual void set_string(const std::string& raw_value) = 0;
-
-    /// Converts the contents of the node to a string.
-    ///
-    /// \pre The node must have a value.
-    ///
-    /// \return A string representation of the value held by the node.
-    virtual std::string to_string(void) const = 0;
-};
-
-
-/// Base leaf node for a single arbitrary type.
-///
-/// This templated leaf node holds a single object of any type.  The conversion
-/// to/from string representations is undefined, as that depends on the
-/// particular type being processed.  You should reimplement this class for any
-/// type that needs additional processing/validation during conversion.
-template< typename ValueType >
-class typed_leaf_node : public leaf_node {
-public:
-    /// The type of the value held by this node.
-    typedef ValueType value_type;
-
-    typed_leaf_node(void);
-
-    void all_properties(properties_map&, const detail::tree_key&) const;
-    bool is_set(void) const;
-
-    const value_type& value(void) const;
-    void set(const value_type&);
-
-private:
-    /// The value held by this node.
-    optional< value_type > _value;
-};
-
-
-/// Leaf node holding a native type.
-///
-/// This templated leaf node holds a native type.  The conversion to/from string
-/// representations of the value happens by means of iostreams.
-template< typename ValueType >
-class native_leaf_node : public typed_leaf_node< ValueType > {
-public:
-    void set_string(const std::string&);
-    std::string to_string(void) const;
-};
-
-
-/// Shorthand for a boolean node.
-typedef native_leaf_node< bool > bool_node;
-
-
-/// Shorthand for an integral node.
-typedef native_leaf_node< int > int_node;
-
-
-/// Shorthand for a string node.
-typedef native_leaf_node< std::string > string_node;
 
 
 /// Representation of a tree.

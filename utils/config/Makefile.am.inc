@@ -36,6 +36,9 @@ libutils_a_SOURCES += utils/config/keys.cpp
 libutils_a_SOURCES += utils/config/keys.hpp
 libutils_a_SOURCES += utils/config/lua_module.cpp
 libutils_a_SOURCES += utils/config/lua_module.hpp
+libutils_a_SOURCES += utils/config/nodes.cpp
+libutils_a_SOURCES += utils/config/nodes.hpp
+libutils_a_SOURCES += utils/config/nodes.ipp
 libutils_a_SOURCES += utils/config/parser.cpp
 libutils_a_SOURCES += utils/config/parser.hpp
 libutils_a_SOURCES += utils/config/tree.cpp
@@ -62,6 +65,11 @@ tests_utils_config_PROGRAMS += utils/config/lua_module_test
 utils_config_lua_module_test_SOURCES = utils/config/lua_module_test.cpp
 utils_config_lua_module_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 utils_config_lua_module_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
+
+tests_utils_config_PROGRAMS += utils/config/nodes_test
+utils_config_nodes_test_SOURCES = utils/config/nodes_test.cpp
+utils_config_nodes_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_config_nodes_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_config_PROGRAMS += utils/config/parser_test
 utils_config_parser_test_SOURCES = utils/config/parser_test.cpp

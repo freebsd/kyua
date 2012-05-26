@@ -30,6 +30,7 @@
 
 #include <atf-c++.hpp>
 
+#include "utils/config/nodes.ipp"
 #include "utils/format/macros.hpp"
 #include "utils/text/operations.ipp"
 
