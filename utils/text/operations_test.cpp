@@ -237,8 +237,8 @@ ATF_TEST_CASE_BODY(split__several__delimiters)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(to_type__ok);
-ATF_TEST_CASE_BODY(to_type__ok)
+ATF_TEST_CASE_WITHOUT_HEAD(to_type__ok__numerical);
+ATF_TEST_CASE_BODY(to_type__ok__numerical)
 {
     ATF_REQUIRE_EQ(12, text::to_type< int >("12"));
     ATF_REQUIRE_EQ(18745, text::to_type< int >("18745"));
@@ -246,6 +246,17 @@ ATF_TEST_CASE_BODY(to_type__ok)
 
     ATF_REQUIRE_EQ(12.0, text::to_type< double >("12"));
     ATF_REQUIRE_EQ(12.5, text::to_type< double >("12.5"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(to_type__ok__string);
+ATF_TEST_CASE_BODY(to_type__ok__string)
+{
+    // While this seems redundant, having this particular specialization that
+    // does nothing allows callers to delegate work to to_type without worrying
+    // about the particular type being converted.
+    ATF_REQUIRE_EQ("", text::to_type< std::string >(""));
+    ATF_REQUIRE_EQ("  abcd  ", text::to_type< std::string >("  abcd  "));
 }
 
 
@@ -286,7 +297,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, split__several__simple);
     ATF_ADD_TEST_CASE(tcs, split__several__delimiters);
 
-    ATF_ADD_TEST_CASE(tcs, to_type__ok);
+    ATF_ADD_TEST_CASE(tcs, to_type__ok__numerical);
+    ATF_ADD_TEST_CASE(tcs, to_type__ok__string);
     ATF_ADD_TEST_CASE(tcs, to_type__empty);
     ATF_ADD_TEST_CASE(tcs, to_type__invalid);
 }
