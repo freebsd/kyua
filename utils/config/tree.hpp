@@ -34,8 +34,8 @@
 
 #include <map>
 #include <string>
-#include <vector>
 
+#include "utils/config/keys.hpp"
 #include "utils/noncopyable.hpp"
 #include "utils/optional.hpp"
 
@@ -48,10 +48,6 @@ typedef std::map< std::string, std::string > properties_map;
 
 
 namespace detail {
-
-
-/// Representation of a valid, tokenized key.
-typedef std::vector< std::string > tree_key;
 
 
 /// Base representation of a node.

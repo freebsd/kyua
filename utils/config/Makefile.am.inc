@@ -32,6 +32,8 @@ UTILS_LIBS += $(LUTOK_LIBS)
 libutils_a_CPPFLAGS += $(LUTOK_CFLAGS)
 libutils_a_SOURCES += utils/config/exceptions.cpp
 libutils_a_SOURCES += utils/config/exceptions.hpp
+libutils_a_SOURCES += utils/config/keys.cpp
+libutils_a_SOURCES += utils/config/keys.hpp
 libutils_a_SOURCES += utils/config/lua_module.cpp
 libutils_a_SOURCES += utils/config/lua_module.hpp
 libutils_a_SOURCES += utils/config/parser.cpp
@@ -50,6 +52,11 @@ tests_utils_config_PROGRAMS = utils/config/exceptions_test
 utils_config_exceptions_test_SOURCES = utils/config/exceptions_test.cpp
 utils_config_exceptions_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 utils_config_exceptions_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
+
+tests_utils_config_PROGRAMS += utils/config/keys_test
+utils_config_keys_test_SOURCES = utils/config/keys_test.cpp
+utils_config_keys_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_config_keys_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_config_PROGRAMS += utils/config/lua_module_test
 utils_config_lua_module_test_SOURCES = utils/config/lua_module_test.cpp

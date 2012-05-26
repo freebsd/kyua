@@ -47,10 +47,6 @@ namespace config {
 namespace detail {
 
 
-std::string flatten_key(const tree_key&);
-tree_key parse_key(const std::string&);
-
-
 /// Type of the new_node() family of functions.
 typedef base_node* (*new_node_hook)(void);
 

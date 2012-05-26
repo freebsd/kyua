@@ -144,15 +144,7 @@ ATF_TEST_CASE_BODY(lookup__invalid_key)
     config::tree tree;
 
     ATF_REQUIRE_THROW(config::invalid_key_error,
-                      tree.lookup< config::int_node >(""));
-    ATF_REQUIRE_THROW(config::invalid_key_error,
                       tree.lookup< config::int_node >("."));
-    ATF_REQUIRE_THROW(config::invalid_key_error,
-                      tree.lookup< config::int_node >("foo."));
-    ATF_REQUIRE_THROW(config::invalid_key_error,
-                      tree.lookup< config::int_node >(".foo"));
-    ATF_REQUIRE_THROW(config::invalid_key_error,
-                      tree.lookup< config::int_node >("foo..bar"));
 }
 
 
@@ -249,7 +241,6 @@ ATF_TEST_CASE_BODY(is_set__invalid_key)
 {
     config::tree tree;
 
-    ATF_REQUIRE_THROW(config::invalid_key_error, tree.is_set(""));
     ATF_REQUIRE_THROW(config::invalid_key_error, tree.is_set(".abc"));
 }
 
@@ -260,15 +251,7 @@ ATF_TEST_CASE_BODY(set__invalid_key)
     config::tree tree;
 
     ATF_REQUIRE_THROW(config::invalid_key_error,
-                      tree.set< config::int_node >("", 3));
-    ATF_REQUIRE_THROW(config::invalid_key_error,
-                      tree.set< config::int_node >(".", 18));
-    ATF_REQUIRE_THROW(config::invalid_key_error,
                       tree.set< config::int_node >("foo.", 54));
-    ATF_REQUIRE_THROW(config::invalid_key_error,
-                      tree.set< config::int_node >(".foo", 28));
-    ATF_REQUIRE_THROW(config::invalid_key_error,
-                      tree.set< config::int_node >("foo..bar", 43));
 }
 
 
@@ -356,7 +339,6 @@ ATF_TEST_CASE_BODY(lookup_string__invalid_key)
     config::tree tree;
 
     ATF_REQUIRE_THROW(config::invalid_key_error, tree.lookup_string(""));
-    ATF_REQUIRE_THROW(config::invalid_key_error, tree.lookup_string("a..b"));
 }
 
 
@@ -398,8 +380,7 @@ ATF_TEST_CASE_BODY(set_string__invalid_key)
 {
     config::tree tree;
 
-    ATF_REQUIRE_THROW(config::invalid_key_error,
-                      tree.set_string(".", "foo"));
+    ATF_REQUIRE_THROW(config::invalid_key_error, tree.set_string(".", "foo"));
 }
 
 
@@ -581,8 +562,7 @@ ATF_TEST_CASE_BODY(all_properties__subtree__invalid_key)
 {
     config::tree tree;
 
-    ATF_REQUIRE_THROW(config::invalid_key_error,
-                      tree.all_properties("."));
+    ATF_REQUIRE_THROW(config::invalid_key_error, tree.all_properties("."));
 }
 
 

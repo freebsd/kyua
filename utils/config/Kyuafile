@@ -3,6 +3,7 @@ syntax("kyuafile", 1)
 test_suite("kyua")
 
 atf_test_program{name="exceptions_test"}
+atf_test_program{name="keys_test"}
 atf_test_program{name="lua_module_test"}
 atf_test_program{name="parser_test"}
 atf_test_program{name="tree_test"}
