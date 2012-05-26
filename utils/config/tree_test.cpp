@@ -70,6 +70,28 @@ public:
 /// Custom tree leaf type for an object without defualt constructors.
 class wrapped_int_node : public config::typed_leaf_node< int_wrapper > {
 public:
+    /// Pushes the node's value onto the Lua stack.
+    ///
+    /// \param state The Lua state onto which to push the value.
+    void
+    push_lua(lutok::state& state) const
+    {
+        state.push_integer(
+            config::typed_leaf_node< int_wrapper >::value().value());
+    }
+
+    /// Sets the value of the node from an entry in the Lua stack.
+    ///
+    /// \param state The Lua state from which to get the value.
+    /// \param value_index The stack index in which the value resides.
+    void
+    set_lua(lutok::state& state, const int value_index)
+    {
+        ATF_REQUIRE(state.is_number(value_index));
+        int_wrapper new_value(state.to_integer(value_index));
+        config::typed_leaf_node< int_wrapper >::set(new_value);
+    }
+
     /// Sets the value of the node from a raw string representation.
     ///
     /// \param raw_value The value to set the node to.
@@ -302,6 +324,58 @@ ATF_TEST_CASE_BODY(set__value_error)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(push_lua__ok);
+ATF_TEST_CASE_BODY(push_lua__ok)
+{
+    config::tree tree;
+
+    tree.define< config::int_node >("top.integer");
+    tree.define< wrapped_int_node >("top.custom");
+    tree.define_dynamic("dynamic");
+    tree.set< config::int_node >("top.integer", 5);
+    tree.set< wrapped_int_node >("top.custom", int_wrapper(10));
+    tree.set_string("dynamic.first", "foo");
+
+    lutok::state state;
+    tree.push_lua("top.integer", state);
+    tree.push_lua("top.custom", state);
+    tree.push_lua("dynamic.first", state);
+    ATF_REQUIRE(state.is_number(-3));
+    ATF_REQUIRE_EQ(5, state.to_integer(-3));
+    ATF_REQUIRE(state.is_number(-2));
+    ATF_REQUIRE_EQ(10, state.to_integer(-2));
+    ATF_REQUIRE(state.is_string(-1));
+    ATF_REQUIRE_EQ("foo", state.to_string(-1));
+    state.pop(3);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(set_lua__ok);
+ATF_TEST_CASE_BODY(set_lua__ok)
+{
+    config::tree tree;
+
+    tree.define< config::int_node >("top.integer");
+    tree.define< wrapped_int_node >("top.custom");
+    tree.define_dynamic("dynamic");
+
+    {
+        lutok::state state;
+        state.push_integer(5);
+        state.push_integer(10);
+        state.push_string("foo");
+        tree.set_lua("top.integer", state, -3);
+        tree.set_lua("top.custom", state, -2);
+        tree.set_lua("dynamic.first", state, -1);
+        state.pop(3);
+    }
+
+    ATF_REQUIRE_EQ(5, tree.lookup< config::int_node >("top.integer"));
+    ATF_REQUIRE_EQ(10, tree.lookup< wrapped_int_node >("top.custom").value());
+    ATF_REQUIRE_EQ("foo", tree.lookup< config::string_node >("dynamic.first"));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(lookup_string__ok);
 ATF_TEST_CASE_BODY(lookup_string__ok)
 {
@@ -531,30 +605,9 @@ ATF_TEST_CASE_BODY(all_properties__subtree__leaf)
     config::tree tree;
 
     tree.define< config::int_node >("root.a.b.c.first");
-    tree.define< config::int_node >("root.a.b.c.second");
-    tree.define< config::int_node >("root.a.d.first");
-
     tree.set< config::int_node >("root.a.b.c.first", 1);
-    tree.set< config::int_node >("root.a.b.c.second", 2);
-    tree.set< config::int_node >("root.a.d.first", 3);
-
-    {
-        config::properties_map exp_properties;
-        exp_properties["root.a.b.c.first"] = "1";
-        ATF_REQUIRE(exp_properties == tree.all_properties("root.a.b.c.first"));
-    }
-
-    {
-        config::properties_map exp_properties;
-        exp_properties["root.a.b.c.second"] = "2";
-        ATF_REQUIRE(exp_properties == tree.all_properties("root.a.b.c.second"));
-    }
-
-    {
-        config::properties_map exp_properties;
-        exp_properties["root.a.d.first"] = "3";
-        ATF_REQUIRE(exp_properties == tree.all_properties("root.a.d.first"));
-    }
+    ATF_REQUIRE_THROW_RE(config::value_error, "Cannot export.*leaf",
+                         tree.all_properties("root.a.b.c.first"));
 }
 
 
@@ -578,8 +631,8 @@ ATF_TEST_CASE_BODY(all_properties__subtree__unknown_key)
 
     ATF_REQUIRE_THROW(config::unknown_key_error,
                       tree.all_properties("root.a.b.c.first.foo"));
-    ATF_REQUIRE_THROW(config::unknown_key_error,
-                      tree.all_properties("root.a.b.c.unset"));
+    ATF_REQUIRE_THROW_RE(config::value_error, "Cannot export.*leaf",
+                         tree.all_properties("root.a.b.c.unset"));
 }
 
 
@@ -614,6 +667,9 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, set__invalid_key);
     ATF_ADD_TEST_CASE(tcs, set__unknown_key);
     ATF_ADD_TEST_CASE(tcs, set__value_error);
+
+    ATF_ADD_TEST_CASE(tcs, push_lua__ok);
+    ATF_ADD_TEST_CASE(tcs, set_lua__ok);
 
     ATF_ADD_TEST_CASE(tcs, lookup_string__ok);
     ATF_ADD_TEST_CASE(tcs, lookup_string__ok__bool);

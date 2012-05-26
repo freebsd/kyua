@@ -89,35 +89,6 @@ get_tree_key(lutok::state& state, const int table_index, const int field_index)
 }
 
 
-/// Wrapper around tree::set callable from Lua.
-///
-/// This operates in a global "tree" instance defined by open_config().
-///
-/// \param state The Lua state in which to operate.
-/// \param key The key to set, in dotted notation.
-/// \param value_index An index to the Lua stack pointing to the value to set.
-///
-/// \throw invalid_key_error If the provided key is invalid.
-/// \throw unknown_key_error If the key cannot be located.
-/// \throw value_error If the value has an unsupported type or cannot be
-///     set on the key.
-static void
-set_tree(lutok::state& state, const std::string& key, const int value_index)
-{
-    config::tree& tree = get_global_tree(state);
-
-    if (state.is_boolean(value_index))
-        tree.set< config::bool_node >(key, state.to_boolean(value_index));
-    else if (state.is_number(value_index))
-        tree.set< config::int_node >(key, state.to_integer(value_index));
-    else if (state.is_string(value_index))
-        tree.set< config::string_node >(key, state.to_string(value_index));
-    else
-        throw config::value_error("Unsupported type; must be a boolean, an "
-                                  "integer or a string");
-}
-
-
 static int redirect_newindex(lutok::state&);
 static int redirect_index(lutok::state&);
 
@@ -177,7 +148,8 @@ redirect_newindex(lutok::state& state)
         throw config::value_error("Invalid field in configuration object "
                                   "reference; must be a string");
 
-    set_tree(state, get_tree_key(state, -3, -2), -1);
+    config::tree& tree = get_global_tree(state);
+    tree.set_lua(get_tree_key(state, -3, -2), state, -1);
 
     // Now really set the key in the Lua table, but prevent direct accesses from
     // the user by prefixing it.  We do this to ensure that re-setting the same
@@ -234,12 +206,7 @@ redirect_index(lutok::state& state)
         if (tree.is_set(tree_key)) {
             // Publish the pre-recorded value in the tree to the Lua state,
             // instead of considering this table key a new inner node.
-            //
-            // Note that this is not "type-safe": we are converting our internal
-            // representation of the value to a string and then letting Lua cast
-            // this to the needed type if necessary.  We cannot do much better,
-            // and it may not be worth trying.
-            state.push_string(tree.lookup_string(tree_key));
+            tree.push_lua(tree_key, state);
         } else {
             new_table_for_key(state, tree_key);
 

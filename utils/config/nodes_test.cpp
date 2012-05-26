@@ -30,6 +30,8 @@
 
 #include <atf-c++.hpp>
 
+#include <lutok/state.ipp>
+
 #include "utils/config/exceptions.hpp"
 #include "utils/config/keys.hpp"
 #include "utils/defs.hpp"
@@ -55,6 +57,46 @@ ATF_TEST_CASE_BODY(bool_node__value_and_set)
     ATF_REQUIRE(!node.value());
     node.set(true);
     ATF_REQUIRE( node.value());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(bool_node__push_lua);
+ATF_TEST_CASE_BODY(bool_node__push_lua)
+{
+    lutok::state state;
+
+    config::bool_node node;
+    node.set(true);
+    node.push_lua(state);
+    ATF_REQUIRE(state.is_boolean(-1));
+    ATF_REQUIRE(state.to_boolean(-1));
+    state.pop(1);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(bool_node__set_lua__ok);
+ATF_TEST_CASE_BODY(bool_node__set_lua__ok)
+{
+    lutok::state state;
+
+    config::bool_node node;
+    state.push_boolean(false);
+    node.set_lua(state, -1);
+    state.pop(1);
+    ATF_REQUIRE(!node.value());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(bool_node__set_lua__invalid_value);
+ATF_TEST_CASE_BODY(bool_node__set_lua__invalid_value)
+{
+    lutok::state state;
+
+    config::bool_node node;
+    state.push_string("foo bar");
+    ATF_REQUIRE_THROW(config::value_error, node.set_lua(state, -1));
+    state.pop(1);
+    ATF_REQUIRE(!node.is_set());
 }
 
 
@@ -112,6 +154,49 @@ ATF_TEST_CASE_BODY(int_node__value_and_set)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(int_node__push_lua);
+ATF_TEST_CASE_BODY(int_node__push_lua)
+{
+    lutok::state state;
+
+    config::int_node node;
+    node.set(754);
+    node.push_lua(state);
+    ATF_REQUIRE(state.is_number(-1));
+    ATF_REQUIRE_EQ(754, state.to_integer(-1));
+    state.pop(1);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(int_node__set_lua__ok);
+ATF_TEST_CASE_BODY(int_node__set_lua__ok)
+{
+    lutok::state state;
+
+    config::int_node node;
+    state.push_integer(123);
+    state.push_string("456");
+    node.set_lua(state, -2);
+    ATF_REQUIRE_EQ(123, node.value());
+    node.set_lua(state, -1);
+    ATF_REQUIRE_EQ(456, node.value());
+    state.pop(2);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(int_node__set_lua__invalid_value);
+ATF_TEST_CASE_BODY(int_node__set_lua__invalid_value)
+{
+    lutok::state state;
+
+    config::int_node node;
+    state.push_boolean(true);
+    ATF_REQUIRE_THROW(config::value_error, node.set_lua(state, -1));
+    state.pop(1);
+    ATF_REQUIRE(!node.is_set());
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(int_node__set_string__ok);
 ATF_TEST_CASE_BODY(int_node__set_string__ok)
 {
@@ -164,6 +249,49 @@ ATF_TEST_CASE_BODY(string_node__value_and_set)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(string_node__push_lua);
+ATF_TEST_CASE_BODY(string_node__push_lua)
+{
+    lutok::state state;
+
+    config::string_node node;
+    node.set("some message");
+    node.push_lua(state);
+    ATF_REQUIRE(state.is_string(-1));
+    ATF_REQUIRE_EQ("some message", state.to_string(-1));
+    state.pop(1);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(string_node__set_lua__ok);
+ATF_TEST_CASE_BODY(string_node__set_lua__ok)
+{
+    lutok::state state;
+
+    config::string_node node;
+    state.push_string("text 1");
+    state.push_integer(231);
+    node.set_lua(state, -2);
+    ATF_REQUIRE_EQ("text 1", node.value());
+    node.set_lua(state, -1);
+    ATF_REQUIRE_EQ("231", node.value());
+    state.pop(2);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(string_node__set_lua__invalid_value);
+ATF_TEST_CASE_BODY(string_node__set_lua__invalid_value)
+{
+    lutok::state state;
+
+    config::bool_node node;
+    state.new_table();
+    ATF_REQUIRE_THROW(config::value_error, node.set_lua(state, -1));
+    state.pop(1);
+    ATF_REQUIRE(!node.is_set());
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(string_node__set_string);
 ATF_TEST_CASE_BODY(string_node__set_string)
 {
@@ -190,18 +318,27 @@ ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, bool_node__is_set_and_set);
     ATF_ADD_TEST_CASE(tcs, bool_node__value_and_set);
+    ATF_ADD_TEST_CASE(tcs, bool_node__push_lua);
+    ATF_ADD_TEST_CASE(tcs, bool_node__set_lua__ok);
+    ATF_ADD_TEST_CASE(tcs, bool_node__set_lua__invalid_value);
     ATF_ADD_TEST_CASE(tcs, bool_node__set_string__ok);
     ATF_ADD_TEST_CASE(tcs, bool_node__set_string__invalid_value);
     ATF_ADD_TEST_CASE(tcs, bool_node__to_string);
 
     ATF_ADD_TEST_CASE(tcs, int_node__is_set_and_set);
     ATF_ADD_TEST_CASE(tcs, int_node__value_and_set);
+    ATF_ADD_TEST_CASE(tcs, int_node__push_lua);
+    ATF_ADD_TEST_CASE(tcs, int_node__set_lua__ok);
+    ATF_ADD_TEST_CASE(tcs, int_node__set_lua__invalid_value);
     ATF_ADD_TEST_CASE(tcs, int_node__set_string__ok);
     ATF_ADD_TEST_CASE(tcs, int_node__set_string__invalid_value);
     ATF_ADD_TEST_CASE(tcs, int_node__to_string);
 
     ATF_ADD_TEST_CASE(tcs, string_node__is_set_and_set);
     ATF_ADD_TEST_CASE(tcs, string_node__value_and_set);
+    ATF_ADD_TEST_CASE(tcs, string_node__push_lua);
+    ATF_ADD_TEST_CASE(tcs, string_node__set_lua__ok);
+    ATF_ADD_TEST_CASE(tcs, string_node__set_lua__invalid_value);
     ATF_ADD_TEST_CASE(tcs, string_node__set_string);
     ATF_ADD_TEST_CASE(tcs, string_node__to_string);
 }

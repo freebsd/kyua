@@ -28,6 +28,8 @@
 
 #include "utils/config/nodes.ipp"
 
+#include <lutok/state.ipp>
+
 #include "utils/config/exceptions.hpp"
 #include "utils/config/keys.hpp"
 #include "utils/format/macros.hpp"
@@ -244,4 +246,85 @@ config::detail::dynamic_inner_node::dynamic_inner_node(void) :
 /// Destructor.
 config::leaf_node::~leaf_node(void)
 {
+}
+
+
+/// Pushes the node's value onto the Lua stack.
+///
+/// \param state The Lua state onto which to push the value.
+void
+config::bool_node::push_lua(lutok::state& state) const
+{
+    state.push_boolean(value());
+}
+
+
+/// Sets the value of the node from an entry in the Lua stack.
+///
+/// \param state The Lua state from which to get the value.
+/// \param value_index The stack index in which the value resides.
+///
+/// \throw value_error If the value in state(value_index) cannot be
+///     processed by this node.
+void
+config::bool_node::set_lua(lutok::state& state, const int value_index)
+{
+    if (state.is_boolean(value_index))
+        set(state.to_boolean(value_index));
+    else
+        throw value_error("Invalid boolean value");
+}
+
+
+/// Pushes the node's value onto the Lua stack.
+///
+/// \param state The Lua state onto which to push the value.
+void
+config::int_node::push_lua(lutok::state& state) const
+{
+    state.push_integer(value());
+}
+
+
+/// Sets the value of the node from an entry in the Lua stack.
+///
+/// \param state The Lua state from which to get the value.
+/// \param value_index The stack index in which the value resides.
+///
+/// \throw value_error If the value in state(value_index) cannot be
+///     processed by this node.
+void
+config::int_node::set_lua(lutok::state& state, const int value_index)
+{
+    if (state.is_number(value_index))
+        set(state.to_integer(value_index));
+    else
+        throw value_error("Invalid integral value");
+}
+
+
+/// Pushes the node's value onto the Lua stack.
+///
+/// \param state The Lua state onto which to push the value.
+void
+config::string_node::push_lua(lutok::state& state) const
+{
+    state.push_string(value());
+}
+
+
+/// Sets the value of the node from an entry in the Lua stack.
+///
+/// \param state The Lua state from which to get the value.
+/// \param value_index The stack index in which the value resides.
+///
+/// \throw value_error If the value in state(value_index) cannot be
+///     processed by this node.
+void
+config::string_node::set_lua(lutok::state& state, const int value_index)
+{
+    if (state.is_string(value_index))
+        set(state.to_string(value_index));
+    else
+        throw value_error("Invalid string value");
 }

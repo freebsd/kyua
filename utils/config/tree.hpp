@@ -35,6 +35,8 @@
 #include <map>
 #include <string>
 
+#include <lutok/state.hpp>
+
 #include "utils/config/keys.hpp"
 #include "utils/config/nodes.hpp"
 #include "utils/noncopyable.hpp"
@@ -95,6 +97,9 @@ public:
 
     template< class LeafType >
     void set(const std::string&, const typename LeafType::value_type&);
+
+    void push_lua(const std::string&, lutok::state&) const;
+    void set_lua(const std::string&, lutok::state&, const int);
 
     std::string lookup_string(const std::string&) const;
     void set_string(const std::string&, const std::string&);

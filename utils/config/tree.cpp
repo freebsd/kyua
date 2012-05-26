@@ -102,6 +102,53 @@ config::tree::is_set(const std::string& dotted_key) const
 }
 
 
+/// Pushes a leaf node's value onto the Lua stack.
+///
+/// \param dotted_key The key to be pushed.
+/// \param state The Lua state into which to push the key's value.
+///
+/// \throw invalid_key_error If the provided key has an invalid format.
+/// \throw unknown_key_error If the provided key is unknown.
+void
+config::tree::push_lua(const std::string& dotted_key, lutok::state& state) const
+{
+    const detail::tree_key key = detail::parse_key(dotted_key);
+    const detail::base_node* raw_node = _root->lookup_ro(key, 0);
+    try {
+        const leaf_node& child = dynamic_cast< const leaf_node& >(*raw_node);
+        child.push_lua(state);
+    } catch (const std::bad_cast& unused_error) {
+        throw unknown_key_error(key);
+    }
+}
+
+
+/// Sets a leaf node's value from a value in the Lua stack.
+///
+/// \param dotted_key The key to be set.
+/// \param state The Lua state from which to retrieve the value.
+/// \param value_index The position in the Lua stack holding the value.
+///
+/// \throw invalid_key_error If the provided key has an invalid format.
+/// \throw unknown_key_error If the provided key is unknown.
+/// \throw value_error If the value mismatches the node type.
+void
+config::tree::set_lua(const std::string& dotted_key, lutok::state& state,
+                      const int value_index)
+{
+    const detail::tree_key key = detail::parse_key(dotted_key);
+    detail::base_node* raw_node = _root->lookup_rw(
+        key, 0, detail::new_node< string_node >);
+    try {
+        leaf_node& child = dynamic_cast< leaf_node& >(*raw_node);
+        child.set_lua(state, value_index);
+    } catch (const std::bad_cast& unused_error) {
+        throw value_error(F("Invalid value for key '%s'") %
+                          detail::flatten_key(key));
+    }
+}
+
+
 /// Gets the value of a node as a plain string.
 ///
 /// \param dotted_key The key to be looked up.

@@ -35,8 +35,79 @@
 #include <lutok/state.ipp>
 
 #include "utils/config/tree.ipp"
+#include "utils/defs.hpp"
 
 namespace config = utils::config;
+
+
+namespace {
+
+
+/// Non-native type to use as a leaf node.
+struct custom_type {
+    /// The value recorded in the object.
+    int value;
+
+    /// Constructs a new object.
+    ///
+    /// \param value_ The value to store in the object.
+    explicit custom_type(const int value_) :
+        value(value_)
+    {
+    }
+};
+
+
+/// Custom implementation of a node type for testing purposes.
+class custom_node : public config::typed_leaf_node< custom_type > {
+public:
+    /// Pushes the node's value onto the Lua stack.
+    ///
+    /// \param state The Lua state onto which to push the value.
+    void
+    push_lua(lutok::state& state) const
+    {
+        state.push_integer(value().value * 5);
+    }
+
+    /// Sets the value of the node from an entry in the Lua stack.
+    ///
+    /// \param state The Lua state from which to get the value.
+    /// \param value_index The stack index in which the value resides.
+    void
+    set_lua(lutok::state& state, const int value_index)
+    {
+        ATF_REQUIRE(state.is_number(value_index));
+        set(custom_type(state.to_integer(value_index) * 2));
+    }
+
+    /// Sets the value of the node from a raw string representation.
+    ///
+    /// \post The test case is marked as failed, as this function is not
+    /// supposed to be invoked by the lua_module code.
+    ///
+    /// \param unused_raw_value The value to set the node to.
+    void
+    set_string(const std::string& UTILS_UNUSED_PARAM(raw_value))
+    {
+        ATF_FAIL("Should not be used");
+    }
+
+    /// Converts the contents of the node to a string.
+    ///
+    /// \post The test case is marked as failed, as this function is not
+    /// supposed to be invoked by the lua_module code.
+    ///
+    /// \return Nothing.
+    std::string
+    to_string(void) const
+    {
+        ATF_FAIL("Should not be used");
+    }
+};
+
+
+}  // anonymous namespace
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(top__valid_types);
@@ -117,7 +188,9 @@ ATF_TEST_CASE_WITHOUT_HEAD(subtree__valid_types);
 ATF_TEST_CASE_BODY(subtree__valid_types)
 {
     config::tree tree;
-    tree.define_dynamic("root");
+    tree.define< config::bool_node >("root.boolean");
+    tree.define< config::int_node >("root.a.integer");
+    tree.define< config::string_node >("root.string");
 
     {
         lutok::state state;
@@ -185,6 +258,82 @@ ATF_TEST_CASE_BODY(subtree__already_set_on_entry)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(dynamic_subtree__strings);
+ATF_TEST_CASE_BODY(dynamic_subtree__strings)
+{
+    config::tree tree;
+    tree.define_dynamic("root");
+
+    lutok::state state;
+    config::redirect(state, tree);
+    lutok::do_string(state,
+                     "root.key1 = 1234\n"
+                     "root.a.b.key2 = 'foo bar'\n");
+
+    ATF_REQUIRE_EQ("1234", tree.lookup< config::string_node >("root.key1"));
+    ATF_REQUIRE_EQ("foo bar",
+                   tree.lookup< config::string_node >("root.a.b.key2"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(dynamic_subtree__invalid_types);
+ATF_TEST_CASE_BODY(dynamic_subtree__invalid_types)
+{
+    config::tree tree;
+    tree.define_dynamic("root");
+
+    lutok::state state;
+    config::redirect(state, tree);
+    ATF_REQUIRE_THROW_RE(lutok::error, "Invalid string value",
+                         lutok::do_string(state, "root.boolean = true"));
+    ATF_REQUIRE_THROW_RE(lutok::error, "Invalid string value",
+                         lutok::do_string(state, "root.table = {}"));
+    ATF_REQUIRE(!tree.is_set("root.boolean"));
+    ATF_REQUIRE(!tree.is_set("root.table"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(locals);
+ATF_TEST_CASE_BODY(locals)
+{
+    config::tree tree;
+    tree.define< config::int_node >("the_key");
+
+    {
+        lutok::state state;
+        config::redirect(state, tree);
+        lutok::do_string(state,
+                         "local function generate()\n"
+                         "    return 15\n"
+                         "end\n"
+                         "local test_var = 20\n"
+                         "the_key = generate() + test_var\n");
+    }
+
+    ATF_REQUIRE_EQ(35, tree.lookup< config::int_node >("the_key"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(custom_node);
+ATF_TEST_CASE_BODY(custom_node)
+{
+    config::tree tree;
+    tree.define< custom_node >("key1");
+    tree.define< custom_node >("key2");
+    tree.set< custom_node >("key2", custom_type(10));
+
+    {
+        lutok::state state;
+        config::redirect(state, tree);
+        lutok::do_string(state, "key1 = 512\n");
+        lutok::do_string(state, "key2 = key2 * 2\n");
+    }
+
+    ATF_REQUIRE_EQ(1024, tree.lookup< custom_node >("key1").value);
+    ATF_REQUIRE_EQ(200, tree.lookup< custom_node >("key2").value);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(invalid_key);
 ATF_TEST_CASE_BODY(invalid_key)
 {
@@ -226,27 +375,6 @@ ATF_TEST_CASE_BODY(value_error)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(locals);
-ATF_TEST_CASE_BODY(locals)
-{
-    config::tree tree;
-    tree.define< config::int_node >("the_key");
-
-    {
-        lutok::state state;
-        config::redirect(state, tree);
-        lutok::do_string(state,
-                         "local function generate()\n"
-                         "    return 15\n"
-                         "end\n"
-                         "local test_var = 20\n"
-                         "the_key = generate() + test_var\n");
-    }
-
-    ATF_REQUIRE_EQ(35, tree.lookup< config::int_node >("the_key"));
-}
-
-
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, top__valid_types);
@@ -259,7 +387,11 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, subtree__reset);
     ATF_ADD_TEST_CASE(tcs, subtree__already_set_on_entry);
 
+    ATF_ADD_TEST_CASE(tcs, dynamic_subtree__strings);
+    ATF_ADD_TEST_CASE(tcs, dynamic_subtree__invalid_types);
+
     ATF_ADD_TEST_CASE(tcs, locals);
+    ATF_ADD_TEST_CASE(tcs, custom_node);
 
     ATF_ADD_TEST_CASE(tcs, invalid_key);
     ATF_ADD_TEST_CASE(tcs, unknown_key);

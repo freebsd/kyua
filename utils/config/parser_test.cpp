@@ -121,15 +121,17 @@ ATF_TEST_CASE_BODY(some_keys__ok)
     output << "top_string = 'foo'\n";
     output << "inner.int = 12345\n";
     output << "inner.dynamic.foo = 78\n";
-    output << "inner.dynamic.bar = false\n";
+    output << "inner.dynamic.bar = 'some text'\n";
     output.flush();
 
     config::tree tree;
     mock_parser(tree).parse(fs::path("output.lua"));
     ATF_REQUIRE_EQ("foo", tree.lookup< config::string_node >("top_string"));
     ATF_REQUIRE_EQ(12345, tree.lookup< config::int_node >("inner.int"));
-    ATF_REQUIRE_EQ(78, tree.lookup< config::int_node >("inner.dynamic.foo"));
-    ATF_REQUIRE(!tree.lookup< config::bool_node >("inner.dynamic.bar"));
+    ATF_REQUIRE_EQ("78",
+                   tree.lookup< config::string_node >("inner.dynamic.foo"));
+    ATF_REQUIRE_EQ("some text",
+                   tree.lookup< config::string_node >("inner.dynamic.bar"));
 }
 
 

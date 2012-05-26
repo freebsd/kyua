@@ -35,6 +35,8 @@
 #include <map>
 #include <string>
 
+#include <lutok/state.hpp>
+
 #include "utils/config/keys.hpp"
 #include "utils/noncopyable.hpp"
 #include "utils/optional.hpp"
@@ -95,6 +97,20 @@ public:
     /// \return True if a value has been set in the node.
     virtual bool is_set(void) const = 0;
 
+    /// Pushes the node's value onto the Lua stack.
+    ///
+    /// \param state The Lua state onto which to push the value.
+    virtual void push_lua(lutok::state& state) const = 0;
+
+    /// Sets the value of the node from an entry in the Lua stack.
+    ///
+    /// \param state The Lua state from which to get the value.
+    /// \param value_index The stack index in which the value resides.
+    ///
+    /// \throw value_error If the value in state(value_index) cannot be
+    ///     processed by this node.
+    virtual void set_lua(lutok::state& state, const int value_index) = 0;
+
     /// Sets the value of the node from a raw string representation.
     ///
     /// \param raw_value The value to set the node to.
@@ -147,16 +163,28 @@ public:
 };
 
 
-/// Shorthand for a boolean node.
-typedef native_leaf_node< bool > bool_node;
+/// A leaf node that holds a boolean value.
+class bool_node : public native_leaf_node< bool > {
+public:
+    void push_lua(lutok::state&) const;
+    void set_lua(lutok::state&, const int);
+};
 
 
-/// Shorthand for an integral node.
-typedef native_leaf_node< int > int_node;
+/// A leaf node that holds an integer value.
+class int_node : public native_leaf_node< int > {
+public:
+    void push_lua(lutok::state&) const;
+    void set_lua(lutok::state&, const int);
+};
 
 
-/// Shorthand for a string node.
-typedef native_leaf_node< std::string > string_node;
+/// A leaf node that holds a string value.
+class string_node : public native_leaf_node< std::string > {
+public:
+    void push_lua(lutok::state&) const;
+    void set_lua(lutok::state&, const int);
+};
 
 
 }  // namespace config
