@@ -92,69 +92,12 @@ config::detail::inner_node::~inner_node(void)
 }
 
 
-/// Sets the value of a leaf addressed by its key from a textual value.
+/// Finds a node without creating it if not found.
 ///
-/// This respects the native types of all the nodes that have been predefined.
-/// For new nodes under a dynamic subtree, this has no mechanism of determining
-/// what type they need to have, so they are created as plain string nodes.
-///
-/// \param key The key to be set.
-/// \param key_pos The current level within the key to be examined.
-/// \param raw_value The textual representation of the value to set the node to.
-///
-/// \throw unknown_key_error If the provided key is unknown.
-/// \throw value_error If the value mismatches the node type.
-void
-config::detail::inner_node::set_string(const tree_key& key,
-                                       const tree_key::size_type key_pos,
-                                       const std::string& raw_value)
-{
-    // TODO(jmmv): This function is pretty much a duplicate from set(), with a
-    // few subtle details here and there.  We should homogenize these somehow,
-    // preferably with non-template code, but it's tricky.
-
-    if (key_pos == key.size())
-        throw unknown_key_error(key);
-
-    children_map::const_iterator child_iter = _children.find(key[key_pos]);
-    if (child_iter == _children.end()) {
-        if (_dynamic) {
-            base_node* const child = (key_pos == key.size() - 1) ?
-                static_cast< base_node* >(new string_node()) :
-                static_cast< base_node* >(new dynamic_inner_node());
-            _children.insert(children_map::value_type(key[key_pos], child));
-            child_iter = _children.find(key[key_pos]);
-        } else {
-            throw unknown_key_error(key);
-        }
-    }
-
-    if (key_pos == key.size() - 1) {
-        try {
-            leaf_node& child = dynamic_cast< leaf_node& >(
-                *(*child_iter).second);
-            child.set_string(raw_value);
-        } catch (const value_error& e) {
-            throw value_error(F("Invalid value for key '%s': %s") %
-                              flatten_key(key) % e.what());
-        } catch (const std::bad_cast& e) {
-            throw value_error(F("Invalid value for key '%s'") %
-                              flatten_key(key));
-        }
-    } else {
-        PRE(key_pos < key.size() - 1);
-        try {
-            inner_node& child = dynamic_cast< inner_node& >(
-                *(*child_iter).second);
-            child.set_string(key, key_pos + 1, raw_value);
-        } catch (const std::bad_cast& e) {
-            throw unknown_key_error(key);
-        }
-    }
-}
-
-
-/// Locates a node within the tree.
+/// This recursive algorithm traverses the tree searching for a particular key.
+/// The returned node is constant, so this can only be used for querying
+/// purposes.  For this reason, this algorithm does not create intermediate
+/// nodes if they don't exist (as would be necessary to set a new node).
 ///
 /// \param key The key to be queried.
 /// \param key_pos The current level within the key to be examined.
@@ -163,8 +106,8 @@ config::detail::inner_node::set_string(const tree_key& key,
 ///
 /// \throw unknown_key_error If the provided key is unknown.
 const config::detail::base_node*
-config::detail::inner_node::lookup_node(const tree_key& key,
-                                        const tree_key::size_type key_pos) const
+config::detail::inner_node::lookup_ro(const tree_key& key,
+                                      const tree_key::size_type key_pos) const
 {
     if (key_pos == key.size())
         throw unknown_key_error(key);
@@ -181,7 +124,68 @@ config::detail::inner_node::lookup_node(const tree_key& key,
         try {
             const inner_node& child = dynamic_cast< const inner_node& >(
                 *(*child_iter).second);
-            return child.lookup_node(key, key_pos + 1);
+            return child.lookup_ro(key, key_pos + 1);
+        } catch (const std::bad_cast& e) {
+            throw unknown_key_error(key);
+        }
+    }
+}
+
+
+/// Finds a node and creates it if not found.
+///
+/// This recursive algorithm traverses the tree searching for a particular key,
+/// creating any intermediate nodes if they do not already exist (for the case
+/// of dynamic inner nodes).  The returned node is non-constant, so this can be
+/// used by the algorithms that set key values.
+///
+/// \param key The key to be queried.
+/// \param key_pos The current level within the key to be examined.
+/// \param new_node A function that returns a new leaf node of the desired
+///     type.  This is only called if the leaf cannot be found, but it has
+///     already been defined.
+///
+/// \return A reference to the located node, if successful.
+///
+/// \throw unknown_key_error If the provided key is unknown.
+/// \throw value_error If the resulting node of the search would be an inner
+///     node.
+config::leaf_node*
+config::detail::inner_node::lookup_rw(const tree_key& key,
+                                      const tree_key::size_type key_pos,
+                                      new_node_hook new_node)
+{
+    if (key_pos == key.size())
+        throw unknown_key_error(key);
+
+    children_map::const_iterator child_iter = _children.find(key[key_pos]);
+    if (child_iter == _children.end()) {
+        if (_dynamic) {
+            base_node* const child = (key_pos == key.size() - 1) ?
+                static_cast< base_node* >(new_node()) :
+                static_cast< base_node* >(new dynamic_inner_node());
+            _children.insert(children_map::value_type(key[key_pos], child));
+            child_iter = _children.find(key[key_pos]);
+        } else {
+            throw unknown_key_error(key);
+        }
+    }
+
+    if (key_pos == key.size() - 1) {
+        try {
+            leaf_node& child = dynamic_cast< leaf_node& >(
+                *(*child_iter).second);
+            return &child;
+        } catch (const std::bad_cast& unused_error) {
+            throw value_error(F("Invalid value for key '%s'") %
+                              flatten_key(key));
+        }
+    } else {
+        PRE(key_pos < key.size() - 1);
+        try {
+            inner_node& child = dynamic_cast< inner_node& >(
+                *(*child_iter).second);
+            return child.lookup_rw(key, key_pos + 1, new_node);
         } catch (const std::bad_cast& e) {
             throw unknown_key_error(key);
         }
@@ -217,6 +221,48 @@ config::detail::inner_node::all_properties(properties_map& properties,
 config::detail::static_inner_node::static_inner_node(void) :
     inner_node(false)
 {
+}
+
+
+/// Registers a key as valid and having a specific type.
+///
+/// This method does not raise errors on invalid/unknown keys or other
+/// tree-related issues.  The reasons is that define() is a method that does not
+/// depend on user input: it is intended to pre-populate the tree with a
+/// specific structure, and that happens once at coding time.
+///
+/// \param key The key to be registered.
+/// \param key_pos The current level within the key to be examined.
+/// \param new_node A function that returns a new leaf node of the desired
+///     type.
+void
+config::detail::static_inner_node::define(const tree_key& key,
+                                          const tree_key::size_type key_pos,
+                                          new_node_hook new_node)
+{
+    if (key_pos == key.size() - 1) {
+        PRE_MSG(_children.find(key[key_pos]) == _children.end(),
+                "Key already defined");
+        _children.insert(children_map::value_type(key[key_pos], new_node()));
+    } else {
+        PRE(key_pos < key.size() - 1);
+        const children_map::const_iterator child_iter = _children.find(
+            key[key_pos]);
+
+        if (child_iter == _children.end()) {
+            static_inner_node* const child_ptr = new static_inner_node();
+            _children.insert(children_map::value_type(key[key_pos], child_ptr));
+            child_ptr->define(key, key_pos + 1, new_node);
+        } else {
+            try {
+                static_inner_node& child = dynamic_cast< static_inner_node& >(
+                    *(*child_iter).second);
+                child.define(key, key_pos + 1, new_node);
+            } catch (const std::bad_cast& e) {
+                UNREACHABLE;
+            }
+        }
+    }
 }
 
 
@@ -264,7 +310,7 @@ config::tree::define_dynamic(const std::string& dotted_key)
 {
     try {
         const detail::tree_key key = detail::parse_key(dotted_key);
-        _root->define< detail::dynamic_inner_node >(key, 0);
+        _root->define(key, 0, detail::new_node< detail::dynamic_inner_node >);
     } catch (const error& e) {
         UNREACHABLE_MSG("define() failing due to key errors is a programming "
                         "mistake: " + std::string(e.what()));
@@ -285,7 +331,7 @@ config::tree::is_set(const std::string& dotted_key) const
 {
     const detail::tree_key key = detail::parse_key(dotted_key);
     try {
-        const detail::base_node* raw_node = _root->lookup_node(key, 0);
+        const detail::base_node* raw_node = _root->lookup_ro(key, 0);
         try {
             const leaf_node& child = dynamic_cast< const leaf_node& >(
                 *raw_node);
@@ -311,7 +357,7 @@ std::string
 config::tree::lookup_string(const std::string& dotted_key) const
 {
     const detail::tree_key key = detail::parse_key(dotted_key);
-    const detail::base_node* raw_node = _root->lookup_node(key, 0);
+    const detail::base_node* raw_node = _root->lookup_ro(key, 0);
     try {
         const leaf_node& child = dynamic_cast< const leaf_node& >(*raw_node);
         return child.to_string();
@@ -338,7 +384,15 @@ config::tree::set_string(const std::string& dotted_key,
                          const std::string& raw_value)
 {
     const detail::tree_key key = detail::parse_key(dotted_key);
-    _root->set_string(key, 0, raw_value);
+    detail::base_node* raw_node = _root->lookup_rw(
+        key, 0, detail::new_node< string_node >);
+    try {
+        leaf_node& child = dynamic_cast< leaf_node& >(*raw_node);
+        child.set_string(raw_value);
+    } catch (const std::bad_cast& unused_error) {
+        throw value_error(F("Invalid value for key '%s'") %
+                          detail::flatten_key(key));
+    }
 }
 
 
@@ -359,7 +413,7 @@ config::tree::all_properties(const std::string& dotted_key) const
         raw_node = _root;
     } else {
         key = detail::parse_key(dotted_key);
-        raw_node = _root->lookup_node(key, 0);
+        raw_node = _root->lookup_ro(key, 0);
     }
     raw_node->all_properties(properties, key);
 

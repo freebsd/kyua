@@ -51,6 +51,23 @@ std::string flatten_key(const tree_key&);
 tree_key parse_key(const std::string&);
 
 
+/// Type of the new_node() family of functions.
+typedef base_node* (*new_node_hook)(void);
+
+
+/// Creates a new leaf node of a given type.
+///
+/// \tparam NodeType The type of the leaf node to create.
+///
+/// \return A pointer to the newly-created node.
+template< class NodeType >
+base_node*
+new_node(void)
+{
+    return new NodeType();
+}
+
+
 /// Internal node of the tree.
 ///
 /// This abstract base class provides the mechanism to implement both static and
@@ -76,21 +93,12 @@ public:
     inner_node(const bool);
     virtual ~inner_node(void) = 0;
 
-    const base_node* lookup_node(const tree_key&,
-                                 const tree_key::size_type) const;
+    const base_node* lookup_ro(const tree_key&,
+                               const tree_key::size_type) const;
+    leaf_node* lookup_rw(const tree_key&, const tree_key::size_type,
+                         new_node_hook);
 
     void all_properties(properties_map&, const tree_key&) const;
-
-    template< class LeafType >
-    const typename LeafType::value_type& lookup(
-        const tree_key&, const tree_key::size_type) const;
-
-    template< class LeafType >
-    void set(const tree_key&, const tree_key::size_type,
-             const typename LeafType::value_type&);
-
-    void set_string(const tree_key&, const tree_key::size_type,
-                    const std::string&);
 };
 
 
@@ -103,8 +111,7 @@ class static_inner_node : public config::detail::inner_node {
 public:
     static_inner_node(void);
 
-    template< class LeafType >
-    void define(const tree_key&, const tree_key::size_type);
+    void define(const tree_key&, const tree_key::size_type, new_node_hook);
 };
 
 
@@ -122,133 +129,6 @@ public:
 
 }  // namespace detail
 }  // namespace config
-
-
-/// Gets the value of a leaf addressed by its key.
-///
-/// \tparam LeafType The node type of the leaf we are querying.
-/// \param key The key to be queried.
-/// \param key_pos The current level within the key to be examined.
-///
-/// \return A reference to the value in the located leaf, if successful.
-///
-/// \throw unknown_key_error If the provided key is unknown.
-template< class LeafType >
-const typename LeafType::value_type&
-config::detail::inner_node::lookup(const tree_key& key,
-                                   const tree_key::size_type key_pos) const
-{
-    const base_node* base_child = lookup_node(key, key_pos);
-
-    try {
-        const LeafType& child = dynamic_cast< const LeafType& >(*base_child);
-        if (child.is_set())
-            return child.value();
-        else
-            throw unknown_key_error(key);
-    } catch (const std::bad_cast& e) {
-        try {
-            (void)dynamic_cast< const inner_node& >(*base_child);
-            throw unknown_key_error(key);
-        } catch (const std::bad_cast& e) {
-            UNREACHABLE_MSG("Invalid type for node");
-        }
-    }
-}
-
-
-/// Sets the value of a leaf addressed by its key.
-///
-/// \tparam LeafType The node type of the leaf we are setting.
-/// \param key The key to be set.
-/// \param key_pos The current level within the key to be examined.
-/// \param value The value to set into the node.
-///
-/// \throw unknown_key_error If the provided key is unknown.
-/// \throw value_error If the value mismatches the node type.
-template< class LeafType >
-void
-config::detail::inner_node::set(const tree_key& key,
-                                const tree_key::size_type key_pos,
-                                const typename LeafType::value_type& value)
-{
-    if (key_pos == key.size())
-        throw unknown_key_error(key);
-
-    children_map::const_iterator child_iter = _children.find(key[key_pos]);
-    if (child_iter == _children.end()) {
-        if (_dynamic) {
-            base_node* const child = (key_pos == key.size() - 1) ?
-                static_cast< base_node* >(new LeafType()) :
-                static_cast< base_node* >(new dynamic_inner_node());
-            _children.insert(children_map::value_type(key[key_pos], child));
-            child_iter = _children.find(key[key_pos]);
-        } else {
-            throw unknown_key_error(key);
-        }
-    }
-
-    if (key_pos == key.size() - 1) {
-        try {
-            LeafType& child = dynamic_cast< LeafType& >(*(*child_iter).second);
-            child.set(value);
-        } catch (const std::bad_cast& e) {
-            throw value_error(F("Invalid value for key '%s'") %
-                              flatten_key(key));
-        }
-    } else {
-        PRE(key_pos < key.size() - 1);
-        try {
-            inner_node& child = dynamic_cast< inner_node& >(
-                *(*child_iter).second);
-            child.set< LeafType >(key, key_pos + 1, value);
-        } catch (const std::bad_cast& e) {
-            throw unknown_key_error(key);
-        }
-    }
-}
-
-
-/// Registers a key as valid and having a specific type.
-///
-/// This method does not raise errors on invalid/unknown keys or other
-/// tree-related issues.  The reasons is that define() is a method that does not
-/// depend on user input: it is intended to pre-populate the tree with a
-/// specific structure, and that happens once at coding time.
-///
-/// \tparam LeafType The node type of the leaf we are defining.
-/// \param key The key to be registered.
-/// \param key_pos The current level within the key to be examined.
-template< class LeafType >
-void
-config::detail::static_inner_node::define(const tree_key& key,
-                                          const tree_key::size_type key_pos)
-{
-    if (key_pos == key.size() - 1) {
-        PRE_MSG(_children.find(key[key_pos]) == _children.end(),
-                "Key already defined");
-        _children.insert(children_map::value_type(key[key_pos],
-                                                  new LeafType()));
-    } else {
-        PRE(key_pos < key.size() - 1);
-        const children_map::const_iterator child_iter = _children.find(
-            key[key_pos]);
-
-        if (child_iter == _children.end()) {
-            static_inner_node* const child_ptr = new static_inner_node();
-            _children.insert(children_map::value_type(key[key_pos], child_ptr));
-            child_ptr->define< LeafType >(key, key_pos + 1);
-        } else {
-            try {
-                static_inner_node& child = dynamic_cast< static_inner_node& >(
-                    *(*child_iter).second);
-                child.define< LeafType >(key, key_pos + 1);
-            } catch (const std::bad_cast& e) {
-                UNREACHABLE;
-            }
-        }
-    }
-}
 
 
 /// Constructor for a node with an undefined value.
@@ -371,7 +251,7 @@ config::tree::define(const std::string& dotted_key)
 {
     try {
         const detail::tree_key key = detail::parse_key(dotted_key);
-        _root->define< LeafType >(key, 0);
+        _root->define(key, 0, detail::new_node< LeafType >);
     } catch (const error& e) {
         UNREACHABLE_MSG(F("define() failing due to key errors is a programming "
                           "mistake: %s") % e.what());
@@ -393,7 +273,16 @@ const typename LeafType::value_type&
 config::tree::lookup(const std::string& dotted_key) const
 {
     const detail::tree_key key = detail::parse_key(dotted_key);
-    return _root->lookup< LeafType >(key, 0);
+    const detail::base_node* raw_node = _root->lookup_ro(key, 0);
+    try {
+        const LeafType& child = dynamic_cast< const LeafType& >(*raw_node);
+        if (child.is_set())
+            return child.value();
+        else
+            throw unknown_key_error(key);
+    } catch (const std::bad_cast& unused_error) {
+        throw unknown_key_error(key);
+    }
 }
 
 
@@ -412,7 +301,15 @@ config::tree::set(const std::string& dotted_key,
                   const typename LeafType::value_type& value)
 {
     const detail::tree_key key = detail::parse_key(dotted_key);
-    _root->set< LeafType >(key, 0, value);
+    leaf_node* raw_node = _root->lookup_rw(key, 0,
+                                           detail::new_node< LeafType >);
+    try {
+        LeafType& child = dynamic_cast< LeafType& >(*raw_node);
+        child.set(value);
+    } catch (const std::bad_cast& unused_error) {
+        throw value_error(F("Invalid value for key '%s'") %
+                          detail::flatten_key(key));
+    }
 }
 
 
