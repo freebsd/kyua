@@ -80,7 +80,6 @@ public:
                                  const tree_key::size_type) const;
 
     void all_properties(properties_map&, const tree_key&) const;
-    bool is_set(void) const;
 
     template< class LeafType >
     const typename LeafType::value_type& lookup(

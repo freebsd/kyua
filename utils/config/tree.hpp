@@ -70,17 +70,6 @@ public:
     /// \param key The path to the current node.
     virtual void all_properties(properties_map& properties,
                                 const tree_key& key) const = 0;
-
-    /// Checks whether the node has been set by the user.
-    ///
-    /// Nodes of the tree are predefined by the caller to specify the valid
-    /// types of the leaves.  Such predefinition results in the creation of
-    /// nodes within the tree, but these nodes have not yet been set.
-    /// Traversing these nodes is invalid and should result in an "unknown key"
-    /// error.
-    ///
-    /// \return True if a value has been set in the node.
-    virtual bool is_set(void) const = 0;
 };
 
 
@@ -106,6 +95,17 @@ class static_inner_node;
 class leaf_node : public detail::base_node {
 public:
     virtual ~leaf_node(void);
+
+    /// Checks whether the node has been set by the user.
+    ///
+    /// Nodes of the tree are predefined by the caller to specify the valid
+    /// types of the leaves.  Such predefinition results in the creation of
+    /// nodes within the tree, but these nodes have not yet been set.
+    /// Traversing these nodes is invalid and should result in an "unknown key"
+    /// error.
+    ///
+    /// \return True if a value has been set in the node.
+    virtual bool is_set(void) const = 0;
 
     /// Sets the value of the node from a raw string representation.
     ///
@@ -213,6 +213,8 @@ public:
     void define(const std::string&);
 
     void define_dynamic(const std::string&);
+
+    bool is_set(const std::string&) const;
 
     template< class LeafType >
     const typename LeafType::value_type& lookup(const std::string&) const;

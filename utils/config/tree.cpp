@@ -202,23 +202,14 @@ config::detail::inner_node::all_properties(properties_map& properties,
          iter != _children.end(); ++iter) {
         tree_key child_key = key;
         child_key.push_back((*iter).first);
-        if ((*iter).second->is_set())
+        try {
             (*iter).second->all_properties(properties, child_key);
+        } catch (const unknown_key_error& unused_error) {
+            // Ignore.  This can happen when we invoke all_properties on a
+            // defined but unset leaf node, and we don't want to consider this
+            // an error.
+        }
     }
-}
-
-
-/// Checks if the node is set.
-///
-/// Inner nodes are assumed to be set all the time to allow traversals through
-/// them.  The leafs are the ones that will specify whether the node is valid or
-/// not.
-///
-/// \return Always true.
-bool
-config::detail::inner_node::is_set(void) const
-{
-    return true;
 }
 
 
@@ -277,6 +268,33 @@ config::tree::define_dynamic(const std::string& dotted_key)
     } catch (const error& e) {
         UNREACHABLE_MSG("define() failing due to key errors is a programming "
                         "mistake: " + std::string(e.what()));
+    }
+}
+
+
+/// Checks if a given node is set.
+///
+/// \param dotted_key The key to be checked.
+///
+/// \return True if the key is set to a specific value (not just defined).
+/// False if the key is not set or if the key does not exist.
+///
+/// \throw invalid_key_error If the provided key has an invalid format.
+bool
+config::tree::is_set(const std::string& dotted_key) const
+{
+    const detail::tree_key key = detail::parse_key(dotted_key);
+    try {
+        const detail::base_node* raw_node = _root->lookup_node(key, 0);
+        try {
+            const leaf_node& child = dynamic_cast< const leaf_node& >(
+                *raw_node);
+            return child.is_set();
+        } catch (const std::bad_cast& unused_error) {
+            return false;
+        }
+    } catch (const unknown_key_error& unused_error) {
+        return false;
     }
 }
 

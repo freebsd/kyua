@@ -198,6 +198,62 @@ ATF_TEST_CASE_BODY(lookup__unknown_key)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(is_set__one_level);
+ATF_TEST_CASE_BODY(is_set__one_level)
+{
+    config::tree tree;
+
+    tree.define< config::int_node >("var1");
+    tree.define< config::string_node >("var2");
+    tree.define< config::bool_node >("var3");
+
+    tree.set< config::int_node >("var1", 42);
+    tree.set< config::bool_node >("var3", false);
+
+    ATF_REQUIRE( tree.is_set("var1"));
+    ATF_REQUIRE(!tree.is_set("var2"));
+    ATF_REQUIRE( tree.is_set("var3"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(is_set__multiple_levels);
+ATF_TEST_CASE_BODY(is_set__multiple_levels)
+{
+    config::tree tree;
+
+    tree.define< config::int_node >("a.b.var1");
+    tree.define< config::string_node >("a.b.var2");
+    tree.define< config::bool_node >("e.var3");
+
+    tree.set< config::int_node >("a.b.var1", 42);
+    tree.set< config::bool_node >("e.var3", false);
+
+    ATF_REQUIRE(!tree.is_set("a"));
+    ATF_REQUIRE(!tree.is_set("a.b"));
+    ATF_REQUIRE( tree.is_set("a.b.var1"));
+    ATF_REQUIRE(!tree.is_set("a.b.var1.trailing"));
+
+    ATF_REQUIRE(!tree.is_set("a"));
+    ATF_REQUIRE(!tree.is_set("a.b"));
+    ATF_REQUIRE(!tree.is_set("a.b.var2"));
+    ATF_REQUIRE(!tree.is_set("a.b.var2.trailing"));
+
+    ATF_REQUIRE(!tree.is_set("e"));
+    ATF_REQUIRE( tree.is_set("e.var3"));
+    ATF_REQUIRE(!tree.is_set("e.var3.trailing"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(is_set__invalid_key);
+ATF_TEST_CASE_BODY(is_set__invalid_key)
+{
+    config::tree tree;
+
+    ATF_REQUIRE_THROW(config::invalid_key_error, tree.is_set(""));
+    ATF_REQUIRE_THROW(config::invalid_key_error, tree.is_set(".abc"));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(set__invalid_key);
 ATF_TEST_CASE_BODY(set__invalid_key)
 {
@@ -515,6 +571,10 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, lookup__invalid_key);
     ATF_ADD_TEST_CASE(tcs, lookup__unknown_key);
+
+    ATF_ADD_TEST_CASE(tcs, is_set__one_level);
+    ATF_ADD_TEST_CASE(tcs, is_set__multiple_levels);
+    ATF_ADD_TEST_CASE(tcs, is_set__invalid_key);
 
     ATF_ADD_TEST_CASE(tcs, set__invalid_key);
     ATF_ADD_TEST_CASE(tcs, set__unknown_key);
