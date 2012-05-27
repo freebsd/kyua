@@ -47,14 +47,24 @@ namespace user_files = engine::user_files;
 namespace {
 
 
-/// Path to the directory containing the examples.
-static const fs::path examplesdir(KYUA_EXAMPLESDIR);
-
-/// Path to the installed Kyuafile.top file.
-static const fs::path installed_kyuafile_top = examplesdir / "Kyuafile.top";
-
-/// Path to the installed kyua.conf file.
-static const fs::path installed_kyua_conf = examplesdir / "kyua.conf";
+/// Gets the path to an example file.
+///
+/// \param tc The caller test case.  Needed to obtain its 'examplesdir'
+///     property, if any.
+/// \param name The name of the example file.
+///
+/// \return A path to the desired example file.  This can either be inside the
+/// source tree before installing Kyua or in the target installation directory
+/// after installation.
+static fs::path
+example_file(const atf::tests::tc* tc, const char* name)
+{
+    const fs::path examplesdir =
+        tc->has_config_var("examplesdir") ?
+        fs::path(tc->get_config_var("examplesdir")) :
+        fs::path(KYUA_EXAMPLESDIR);
+    return examplesdir / name;
+}
 
 
 }  // anonymous namespace
@@ -63,7 +73,7 @@ static const fs::path installed_kyua_conf = examplesdir / "kyua.conf";
 ATF_TEST_CASE(kyua_conf);
 ATF_TEST_CASE_HEAD(kyua_conf)
 {
-    set_md_var("require.files", installed_kyua_conf.str());
+    set_md_var("require.files", example_file(this, "kyua.conf").str());
 }
 ATF_TEST_CASE_BODY(kyua_conf)
 {
@@ -72,7 +82,7 @@ ATF_TEST_CASE_BODY(kyua_conf)
     passwd::set_mock_users_for_testing(users);
 
     const user_files::config config = user_files::config::load(
-        installed_kyua_conf);
+        example_file(this, "kyua.conf"));
 
     ATF_REQUIRE_EQ("x86_64", config.architecture);
     ATF_REQUIRE_EQ("amd64", config.platform);
@@ -121,13 +131,13 @@ ATF_TEST_CASE_BODY(kyua_conf)
 ATF_TEST_CASE(kyuafile_top__no_matches);
 ATF_TEST_CASE_HEAD(kyuafile_top__no_matches)
 {
-    set_md_var("require.files", installed_kyuafile_top.str());
+    set_md_var("require.files", example_file(this, "Kyuafile.top").str());
 }
 ATF_TEST_CASE_BODY(kyuafile_top__no_matches)
 {
     fs::mkdir(fs::path("root"), 0755);
-    ATF_REQUIRE(::symlink(installed_kyuafile_top.c_str(),
-                          "root/Kyuafile") != -1);
+    const fs::path source_path = example_file(this, "Kyuafile.top");
+    ATF_REQUIRE(::symlink(source_path.c_str(), "root/Kyuafile") != -1);
 
     utils::create_file(fs::path("root/file"));
     fs::mkdir(fs::path("root/subdir"), 0755);
@@ -142,14 +152,13 @@ ATF_TEST_CASE_BODY(kyuafile_top__no_matches)
 ATF_TEST_CASE(kyuafile_top__some_matches);
 ATF_TEST_CASE_HEAD(kyuafile_top__some_matches)
 {
-    set_md_var("require.files", installed_kyuafile_top.str());
+    set_md_var("require.files", example_file(this, "Kyuafile.top").str());
 }
 ATF_TEST_CASE_BODY(kyuafile_top__some_matches)
 {
     fs::mkdir(fs::path("root"), 0755);
-    const fs::path source_path(examplesdir / "Kyuafile.top");
-    ATF_REQUIRE(::symlink(installed_kyuafile_top.c_str(),
-                          "root/Kyuafile") != -1);
+    const fs::path source_path = example_file(this, "Kyuafile.top");
+    ATF_REQUIRE(::symlink(source_path.c_str(), "root/Kyuafile") != -1);
 
     utils::create_file(fs::path("root/file"));
 
