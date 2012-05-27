@@ -183,6 +183,44 @@ ATF_TEST_CASE_BODY(invalid_syntax)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(syntax_not_called);
+ATF_TEST_CASE_BODY(syntax_not_called)
+{
+    config::tree tree;
+    tree.define< config::int_node >("var");
+
+    {
+        std::ofstream output("output.lua");
+        output << "var = 3\n";
+    }
+    ATF_REQUIRE_THROW_RE(config::syntax_error, "No syntax defined",
+                         mock_parser(tree).parse(fs::path("output.lua")));
+
+    ATF_REQUIRE(!tree.is_set("var"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(syntax_called_more_than_once);
+ATF_TEST_CASE_BODY(syntax_called_more_than_once)
+{
+    config::tree tree;
+    tree.define< config::int_node >("var");
+
+    {
+        std::ofstream output("output.lua");
+        output << "syntax('no-keys', 1)\n";
+        output << "var = 3\n";
+        output << "syntax('no-keys', 1)\n";
+        output << "var = 5\n";
+    }
+    ATF_REQUIRE_THROW_RE(config::syntax_error,
+                         "syntax\\(\\) can only be called once",
+                         mock_parser(tree).parse(fs::path("output.lua")));
+
+    ATF_REQUIRE_EQ(3, tree.lookup< config::int_node >("var"));
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, no_keys__ok);
@@ -192,4 +230,6 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, some_keys__unknown_key);
 
     ATF_ADD_TEST_CASE(tcs, invalid_syntax);
+    ATF_ADD_TEST_CASE(tcs, syntax_not_called);
+    ATF_ADD_TEST_CASE(tcs, syntax_called_more_than_once);
 }

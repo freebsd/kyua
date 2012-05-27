@@ -53,12 +53,15 @@ struct utils::config::parser::impl : utils::noncopyable {
     /// the caller.
     config::tree& _tree;
 
+    /// Whether syntax() has been called or not.
+    bool _syntax_called;
+
     /// Constructs a new implementation.
     ///
     /// \param parent_ Pointer to the class being constructed.
     /// \param config_tree_ The configuration tree provided by the user.
     impl(parser* const parent_, tree& config_tree_) :
-        _parent(parent_), _tree(config_tree_)
+        _parent(parent_), _tree(config_tree_), _syntax_called(false)
     {
     }
 
@@ -73,6 +76,10 @@ struct utils::config::parser::impl : utils::noncopyable {
     void
     syntax_callback(const std::string& syntax_format, const int syntax_version)
     {
+        if (_syntax_called)
+            throw syntax_error("syntax() can only be called once");
+        _syntax_called = true;
+
         // Allow the parser caller to populate the tree with its own schema
         // depending on the format/version combination.
         _parent->setup(_tree, syntax_format, syntax_version);
@@ -110,13 +117,6 @@ lua_syntax(lutok::state& state)
     if (!state.is_number(-1))
         throw config::value_error("Second argument to syntax must be a number");
     const int syntax_version = state.to_integer(-1);
-
-    state.get_global("_syntax_called");
-    if (!state.is_nil())
-        throw config::value_error("syntax() can only be invoked once");
-    state.push_boolean(true);
-    state.set_global("_syntax_called");
-    state.pop(1);
 
     state.get_global("_config_parser");
     config::parser::impl* impl = *state.to_userdata< config::parser::impl* >();
@@ -170,4 +170,7 @@ config::parser::parse(const fs::path& file)
     } catch (const lutok::error& e) {
         throw syntax_error(e.what());
     }
+
+    if (!_pimpl->_syntax_called)
+        throw syntax_error("No syntax defined (no call to syntax() found)");
 }
