@@ -217,6 +217,10 @@ redirect_index(lutok::state& state)
             // instead of considering this table key a new inner node.
             tree.push_lua(tree_key, state);
         } else {
+            state.push_string("_" + state.to_string(-1));
+            state.insert(-2);
+            state.pop(1);
+
             new_table_for_key(state, tree_key);
 
             // Duplicate the newly created table and place it deep in the stack

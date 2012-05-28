@@ -258,6 +258,29 @@ ATF_TEST_CASE_BODY(subtree__already_set_on_entry)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(subtree__override_inner);
+ATF_TEST_CASE_BODY(subtree__override_inner)
+{
+    config::tree tree;
+    tree.define_dynamic("root");
+
+    {
+        lutok::state state;
+        config::redirect(state, tree);
+        lutok::do_string(state, "root.test = 'a'");
+        ATF_REQUIRE_THROW_RE(lutok::error, "Invalid value for key 'root'",
+                             lutok::do_string(state, "root = 'b'"));
+        // Ensure that the previous assignment to 'root' did not cause any
+        // inconsistencies in the environment that would prevent a new
+        // assignment from working.
+        lutok::do_string(state, "root.test2 = 'c'");
+    }
+
+    ATF_REQUIRE_EQ("a", tree.lookup< config::string_node >("root.test"));
+    ATF_REQUIRE_EQ("c", tree.lookup< config::string_node >("root.test2"));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(dynamic_subtree__strings);
 ATF_TEST_CASE_BODY(dynamic_subtree__strings)
 {
@@ -393,6 +416,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, subtree__reuse);
     ATF_ADD_TEST_CASE(tcs, subtree__reset);
     ATF_ADD_TEST_CASE(tcs, subtree__already_set_on_entry);
+    ATF_ADD_TEST_CASE(tcs, subtree__override_inner);
 
     ATF_ADD_TEST_CASE(tcs, dynamic_subtree__strings);
     ATF_ADD_TEST_CASE(tcs, dynamic_subtree__invalid_types);
