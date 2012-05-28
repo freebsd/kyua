@@ -209,6 +209,7 @@ config::tree::set_string(const std::string& dotted_key,
 ///
 /// \throw invalid_key_error If the provided key has an invalid format.
 /// \throw unknown_key_error If the provided key is unknown.
+/// \throw value_error If the provided key points to a leaf.
 config::properties_map
 config::tree::all_properties(const std::string& dotted_key,
                              const bool strip_key) const
@@ -230,7 +231,9 @@ config::tree::all_properties(const std::string& dotted_key,
             dynamic_cast< const detail::inner_node& >(*raw_node);
         child.all_properties(properties, key);
     } catch (const std::bad_cast& unused_error) {
-        throw value_error("Cannot export properties from a leaf node");
+        INV(!dotted_key.empty());
+        throw value_error(F("Cannot export properties from a leaf node; "
+                            "'%s' given") % dotted_key);
     }
 
     if (strip_key) {

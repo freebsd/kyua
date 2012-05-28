@@ -67,7 +67,8 @@ public:
 /// Exception denoting that a key was not found within a tree.
 class unknown_key_error : public error {
 public:
-    explicit unknown_key_error(const detail::tree_key&);
+    explicit unknown_key_error(const detail::tree_key&,
+                               const std::string& = "");
     ~unknown_key_error(void) throw();
 };
 

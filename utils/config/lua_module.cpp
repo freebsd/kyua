@@ -47,14 +47,15 @@ namespace {
 ///
 /// \return A reference to the tree associated with the Lua state.
 ///
-/// \throw value_error If the tree cannot be located.
+/// \throw syntax_error If the tree cannot be located.
 config::tree&
 get_global_tree(lutok::state& state)
 {
     lutok::stack_cleaner cleaner(state);
 
     if (!state.get_metafield(lutok::globals_index, "tree"))
-        throw config::value_error("Cannot find tree singleton");
+        throw config::syntax_error("Cannot find tree singleton; global state "
+                                   "corrupted?");
     return **state.to_userdata< config::tree* >();
 }
 
@@ -77,7 +78,9 @@ get_tree_key(lutok::state& state, const int table_index, const int field_index)
     PRE(state.is_string(field_index));
     const std::string field = state.to_string(field_index);
     if (!field.empty() && field[0] == '_')
-        throw config::invalid_key_error("Cannot prefix key with _");
+        throw config::invalid_key_error(
+            F("Configuration key cannot have an underscore as a prefix; "
+              "found %s") % field);
 
     std::string tree_key;
     if (state.get_metafield(table_index, "tree_key")) {
@@ -148,8 +151,14 @@ redirect_newindex(lutok::state& state)
         throw config::value_error("Invalid field in configuration object "
                                   "reference; must be a string");
 
-    config::tree& tree = get_global_tree(state);
-    tree.set_lua(get_tree_key(state, -3, -2), state, -1);
+    const std::string dotted_key = get_tree_key(state, -3, -2);
+    try {
+        config::tree& tree = get_global_tree(state);
+        tree.set_lua(dotted_key, state, -1);
+    } catch (const config::value_error& e) {
+        throw config::value_error(F("Invalid value for key '%s' (%s)") %
+                                  dotted_key % e.what());
+    }
 
     // Now really set the key in the Lua table, but prevent direct accesses from
     // the user by prefixing it.  We do this to ensure that re-setting the same

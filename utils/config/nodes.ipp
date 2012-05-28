@@ -192,7 +192,8 @@ config::native_leaf_node< ValueType >::set_string(const std::string& raw_value)
         typed_leaf_node< ValueType >::set(text::to_type< ValueType >(
             raw_value));
     } catch (const text::value_error& e) {
-        throw value_error(e.what());
+        throw config::value_error(F("Failed to convert string value '%s' to "
+                                    "the node's type") % raw_value);
     }
 }
 

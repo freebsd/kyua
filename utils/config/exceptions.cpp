@@ -82,8 +82,12 @@ config::syntax_error::~syntax_error(void) throw()
 /// Constructs a new error with a plain-text message.
 ///
 /// \param key The unknown key.
-config::unknown_key_error::unknown_key_error(const detail::tree_key& key) :
-    error(F("Unknown configuration property '%s'") % detail::flatten_key(key))
+/// \param format The message for the error.  Must include a single "%s"
+///     placedholder, which will be replaced by the key itself.
+config::unknown_key_error::unknown_key_error(const detail::tree_key& key,
+                                             const std::string& format) :
+    error(F(format.empty() ? "Unknown configuration property '%s'" : format) %
+          detail::flatten_key(key))
 {
 }
 

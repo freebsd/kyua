@@ -78,8 +78,7 @@ const config::detail::base_node*
 config::detail::inner_node::lookup_ro(const tree_key& key,
                                       const tree_key::size_type key_pos) const
 {
-    if (key_pos == key.size())
-        throw unknown_key_error(key);
+    PRE(key_pos < key.size());
 
     const children_map::const_iterator child_iter = _children.find(
         key[key_pos]);
@@ -95,7 +94,8 @@ config::detail::inner_node::lookup_ro(const tree_key& key,
                 *(*child_iter).second);
             return child.lookup_ro(key, key_pos + 1);
         } catch (const std::bad_cast& e) {
-            throw unknown_key_error(key);
+            throw unknown_key_error(
+                key, "Cannot address incomplete configuration property '%s'");
         }
     }
 }
@@ -124,8 +124,7 @@ config::detail::inner_node::lookup_rw(const tree_key& key,
                                       const tree_key::size_type key_pos,
                                       new_node_hook new_node)
 {
-    if (key_pos == key.size())
-        throw unknown_key_error(key);
+    PRE(key_pos < key.size());
 
     children_map::const_iterator child_iter = _children.find(key[key_pos]);
     if (child_iter == _children.end()) {
@@ -156,7 +155,8 @@ config::detail::inner_node::lookup_rw(const tree_key& key,
                 *(*child_iter).second);
             return child.lookup_rw(key, key_pos + 1, new_node);
         } catch (const std::bad_cast& e) {
-            throw unknown_key_error(key);
+            throw unknown_key_error(
+                key, "Cannot address incomplete configuration property '%s'");
         }
     }
 }
@@ -210,6 +210,8 @@ config::detail::static_inner_node::define(const tree_key& key,
                                           const tree_key::size_type key_pos,
                                           new_node_hook new_node)
 {
+    PRE(key_pos < key.size());
+
     if (key_pos == key.size() - 1) {
         PRE_MSG(_children.find(key[key_pos]) == _children.end(),
                 "Key already defined");
@@ -272,7 +274,7 @@ config::bool_node::set_lua(lutok::state& state, const int value_index)
     if (state.is_boolean(value_index))
         set(state.to_boolean(value_index));
     else
-        throw value_error("Invalid boolean value");
+        throw value_error("Not a boolean");
 }
 
 
@@ -299,7 +301,7 @@ config::int_node::set_lua(lutok::state& state, const int value_index)
     if (state.is_number(value_index))
         set(state.to_integer(value_index));
     else
-        throw value_error("Invalid integral value");
+        throw value_error("Not an integer");
 }
 
 
@@ -326,5 +328,5 @@ config::string_node::set_lua(lutok::state& state, const int value_index)
     if (state.is_string(value_index))
         set(state.to_string(value_index));
     else
-        throw value_error("Invalid string value");
+        throw value_error("Not a string");
 }

@@ -62,8 +62,8 @@ ATF_TEST_CASE_BODY(syntax_error)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(unknown_key_error);
-ATF_TEST_CASE_BODY(unknown_key_error)
+ATF_TEST_CASE_WITHOUT_HEAD(unknown_key_error__default_message);
+ATF_TEST_CASE_BODY(unknown_key_error__default_message)
 {
     detail::tree_key key;
     key.push_back("1");
@@ -72,6 +72,18 @@ ATF_TEST_CASE_BODY(unknown_key_error)
     const config::unknown_key_error e(key);
     ATF_REQUIRE(std::strcmp("Unknown configuration property '1.two'",
                             e.what()) == 0);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(unknown_key_error__custom_message);
+ATF_TEST_CASE_BODY(unknown_key_error__custom_message)
+{
+    detail::tree_key key;
+    key.push_back("1");
+    key.push_back("two");
+
+    const config::unknown_key_error e(key, "The test '%s' string");
+    ATF_REQUIRE(std::strcmp("The test '1.two' string", e.what()) == 0);
 }
 
 
@@ -88,6 +100,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, error);
     ATF_ADD_TEST_CASE(tcs, invalid_key_error);
     ATF_ADD_TEST_CASE(tcs, syntax_error);
-    ATF_ADD_TEST_CASE(tcs, unknown_key_error);
+    ATF_ADD_TEST_CASE(tcs, unknown_key_error__default_message);
+    ATF_ADD_TEST_CASE(tcs, unknown_key_error__custom_message);
     ATF_ADD_TEST_CASE(tcs, value_error);
 }
