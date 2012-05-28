@@ -39,6 +39,7 @@
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.hpp"
 #include "utils/cmdline/ui.hpp"
+#include "utils/config/tree.hpp"
 #include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"
@@ -53,9 +54,6 @@ namespace engine {
 class base_test_case;
 struct test_filter;
 class test_result;
-namespace user_files {
-class config;
-}  // namespace user_files
 }  // namespace engine
 
 namespace cli {
@@ -71,8 +69,7 @@ extern const utils::cmdline::property_option variable_option;
 /// All commands in Kyua receive a configuration object as their runtime
 /// data parameter because the configuration file applies to all the
 /// commands.
-typedef utils::cmdline::base_command< engine::user_files::config >
-    cli_command;
+typedef utils::cmdline::base_command< utils::config::tree > cli_command;
 
 
 /// Scoped, strictly owned pointer to a cli_command.

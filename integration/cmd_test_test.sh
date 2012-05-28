@@ -523,7 +523,7 @@ EOF
     utils_cp_helper config config3
 
     atf_check -s exit:1 -o save:stdout -e empty \
-        kyua -c my-config -v suite2.X-the-variable=value2 test
+        kyua -c my-config -v test_suites.suite2.X-the-variable=value2 test
     atf_check -s exit:0 -o ignore -e empty \
         grep 'config1:get_variable.*failed' stdout
     atf_check -s exit:0 -o ignore -e empty \
@@ -703,8 +703,8 @@ EOF
     utils_cp_helper interrupts .
 
     kyua \
-        -v integration.X-body-cookie="$(pwd)/body" \
-        -v integration.X-cleanup-cookie="$(pwd)/cleanup" \
+        -v test_suites.integration.X-body-cookie="$(pwd)/body" \
+        -v test_suites.integration.X-cleanup-cookie="$(pwd)/cleanup" \
         test >stdout 2>stderr &
     pid=${!}
 

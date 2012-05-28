@@ -38,6 +38,7 @@
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 
+namespace config = utils::config;
 namespace fs = utils::fs;
 namespace debug_test = engine::drivers::debug_test;
 namespace user_files = engine::user_files;
@@ -100,7 +101,7 @@ find_test_case(const engine::test_filter& filter,
 ///
 /// \param kyuafile_path The path to the Kyuafile to be loaded.
 /// \param filter The test case filter to locate the test to debug.
-/// \param config The end-user configuration properties.
+/// \param user_config The end-user configuration properties.
 /// \param stdout_path The name of the file into which to store the test case
 ///     stdout.
 /// \param stderr_path The name of the file into which to store the test case
@@ -109,7 +110,7 @@ find_test_case(const engine::test_filter& filter,
 /// \returns A structure with all results computed by this driver.
 debug_test::result
 debug_test::drive(const fs::path& kyuafile_path, const test_filter& filter,
-                  const user_files::config& config, const fs::path& stdout_path,
+                  const config::tree& user_config, const fs::path& stdout_path,
                   const fs::path& stderr_path)
 {
     const user_files::kyuafile kyuafile = user_files::kyuafile::load(
@@ -117,7 +118,7 @@ debug_test::drive(const fs::path& kyuafile_path, const test_filter& filter,
     const engine::test_case_ptr test_case = find_test_case(filter, kyuafile);
     engine::test_case_hooks dummy_hooks;
     const engine::test_result test_result = test_case->debug(
-        config, dummy_hooks, stdout_path, stderr_path);
+        user_config, dummy_hooks, stdout_path, stderr_path);
     return result(test_filter(test_case->test_program().relative_path(),
                               test_case->name()), test_result);
 }

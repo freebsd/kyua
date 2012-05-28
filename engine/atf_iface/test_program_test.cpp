@@ -55,12 +55,6 @@ namespace user_files = engine::user_files;
 namespace {
 
 
-/// Fake configuration.
-static const user_files::config mock_config(
-    "mock-architecture", "mock-platform", utils::none,
-    user_files::test_suites_map());
-
-
 /// Gets the path to the atf-specific helpers.
 ///
 /// \param test_case A pointer to the currently running test case.
@@ -116,7 +110,8 @@ check_test_cases_list_failure(const engine::test_cases_vector& test_cases,
         *dynamic_cast< const atf_iface::test_case* >(test_cases[0].get());
     ATF_REQUIRE_EQ("__test_cases_list__", test_case.name());
     engine::test_case_hooks dummy_hooks;
-    const engine::test_result result = test_case.run(mock_config, dummy_hooks);
+    const engine::test_result result = test_case.run(
+        user_files::empty_config(), dummy_hooks);
     ATF_REQUIRE(engine::test_result::broken == result.type());
     ATF_REQUIRE_MATCH(exp_reason, result.reason());
 }

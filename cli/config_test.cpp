@@ -39,6 +39,7 @@
 #include "utils/fs/path.hpp"
 
 namespace cmdline = utils::cmdline;
+namespace config = utils::config;
 namespace fs = utils::fs;
 namespace user_files = engine::user_files;
 
@@ -63,7 +64,7 @@ create_mock_config(const char* name, const char* cookie)
         output << "syntax('config', 1)\n";
         output << "test_suites.suite.magic_value = '" << cookie << "'\n";
     } else {
-        output << "syntax('invalid-file', 1)\n";
+        output << "syntax('invalid-format', 1)\n";
     }
 }
 
@@ -97,16 +98,28 @@ mock_user_config(const char* cookie)
 
 /// Ensures that a loaded configuration was created with create_mock_config().
 ///
-/// \param config The configuration to validate.
+/// \param user_config The configuration to validate.
 /// \param cookie The magic value to expect in the configuration file.
 static void
-validate_mock_config(const user_files::config& config, const char* cookie)
+validate_mock_config(const config::tree& user_config, const char* cookie)
 {
-    const user_files::properties_map& properties = config.test_suite("suite");
-    const user_files::properties_map::const_iterator iter =
+    const config::properties_map& properties = user_config.all_properties(
+        "test_suites.suite", true);
+    const config::properties_map::const_iterator iter =
         properties.find("magic_value");
     ATF_REQUIRE(iter != properties.end());
     ATF_REQUIRE_EQ(cookie, (*iter).second);
+}
+
+
+/// Ensures that two configuration trees are equal.
+///
+/// \param exp_tree The expected configuration tree.
+/// \param actual_tree The configuration tree being validated against exp_tree.
+static void
+require_eq(const config::tree& exp_tree, const config::tree& actual_tree)
+{
+    ATF_REQUIRE(exp_tree.all_properties() == actual_tree.all_properties());
 }
 
 
@@ -123,8 +136,7 @@ ATF_TEST_CASE_BODY(load_config__none)
     options["config"].push_back(cli::config_option.default_value());
     const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
 
-    const user_files::config config = cli::load_config(mock_cmdline);
-    ATF_REQUIRE(config.test_suites.empty());
+    require_eq(user_files::default_config(), cli::load_config(mock_cmdline));
 }
 
 
@@ -140,8 +152,8 @@ ATF_TEST_CASE_BODY(load_config__explicit__ok)
     options["config"].push_back("test-file");
     const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
 
-    const user_files::config config = cli::load_config(mock_cmdline);
-    validate_mock_config(config, "hello");
+    const config::tree user_config = cli::load_config(mock_cmdline);
+    validate_mock_config(user_config, "hello");
 }
 
 
@@ -155,8 +167,7 @@ ATF_TEST_CASE_BODY(load_config__explicit__disable)
     options["config"].push_back("none");
     const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
 
-    const user_files::config config = cli::load_config(mock_cmdline);
-    ATF_REQUIRE(user_files::config::defaults() == config);
+    require_eq(user_files::default_config(), cli::load_config(mock_cmdline));
 }
 
 
@@ -172,7 +183,7 @@ ATF_TEST_CASE_BODY(load_config__explicit__fail)
     options["config"].push_back("test-file");
     const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
 
-    ATF_REQUIRE_THROW_RE(engine::error, "invalid-file",
+    ATF_REQUIRE_THROW_RE(engine::error, "invalid-format",
                          cli::load_config(mock_cmdline));
 }
 
@@ -187,8 +198,8 @@ ATF_TEST_CASE_BODY(load_config__user__ok)
     options["config"].push_back(cli::config_option.default_value());
     const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
 
-    const user_files::config config = cli::load_config(mock_cmdline);
-    validate_mock_config(config, "I am the user config");
+    const config::tree user_config = cli::load_config(mock_cmdline);
+    validate_mock_config(user_config, "I am the user config");
 }
 
 
@@ -202,7 +213,7 @@ ATF_TEST_CASE_BODY(load_config__user__fail)
     options["config"].push_back(cli::config_option.default_value());
     const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
 
-    ATF_REQUIRE_THROW_RE(engine::error, "invalid-file",
+    ATF_REQUIRE_THROW_RE(engine::error, "invalid-format",
                          cli::load_config(mock_cmdline));
 }
 
@@ -217,8 +228,8 @@ ATF_TEST_CASE_BODY(load_config__user__bad_home)
     options["config"].push_back(cli::config_option.default_value());
     const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
 
-    const user_files::config config = cli::load_config(mock_cmdline);
-    validate_mock_config(config, "Fallback system config");
+    const config::tree user_config = cli::load_config(mock_cmdline);
+    validate_mock_config(user_config, "Fallback system config");
 }
 
 
@@ -232,8 +243,8 @@ ATF_TEST_CASE_BODY(load_config__system__ok)
     options["config"].push_back(cli::config_option.default_value());
     const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
 
-    const user_files::config config = cli::load_config(mock_cmdline);
-    validate_mock_config(config, "I am the system config");
+    const config::tree user_config = cli::load_config(mock_cmdline);
+    validate_mock_config(user_config, "I am the system config");
 }
 
 
@@ -247,7 +258,7 @@ ATF_TEST_CASE_BODY(load_config__system__fail)
     options["config"].push_back(cli::config_option.default_value());
     const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
 
-    ATF_REQUIRE_THROW_RE(engine::error, "invalid-file",
+    ATF_REQUIRE_THROW_RE(engine::error, "invalid-format",
                          cli::load_config(mock_cmdline));
 }
 
@@ -263,9 +274,11 @@ ATF_TEST_CASE_BODY(load_config__overrides__no)
     options["variable"].push_back("platform=2");
     const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
 
-    const user_files::config config = cli::load_config(mock_cmdline);
-    ATF_REQUIRE_EQ("1", config.architecture);
-    ATF_REQUIRE_EQ("2", config.platform);
+    const config::tree user_config = cli::load_config(mock_cmdline);
+    ATF_REQUIRE_EQ("1",
+                   user_config.lookup< config::string_node >("architecture"));
+    ATF_REQUIRE_EQ("2",
+                   user_config.lookup< config::string_node >("platform"));
 }
 
 
@@ -283,9 +296,11 @@ ATF_TEST_CASE_BODY(load_config__overrides__yes)
     options["variable"].push_back("architecture=overriden");
     const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
 
-    const user_files::config config = cli::load_config(mock_cmdline);
-    ATF_REQUIRE_EQ("overriden", config.architecture);
-    ATF_REQUIRE_EQ("see me", config.platform);
+    const config::tree user_config = cli::load_config(mock_cmdline);
+    ATF_REQUIRE_EQ("overriden",
+                   user_config.lookup< config::string_node >("architecture"));
+    ATF_REQUIRE_EQ("see me",
+                   user_config.lookup< config::string_node >("platform"));
 }
 
 
@@ -299,7 +314,7 @@ ATF_TEST_CASE_BODY(load_config__overrides__fail)
     options["variable"].push_back(".a=d");
     const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
 
-    ATF_REQUIRE_THROW_RE(engine::error, "Empty test suite.*'\\.a=d'",
+    ATF_REQUIRE_THROW_RE(engine::error, "Empty component in key.*'\\.a'",
                          cli::load_config(mock_cmdline));
 }
 

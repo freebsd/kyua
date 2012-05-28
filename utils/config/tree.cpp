@@ -46,7 +46,6 @@ config::tree::tree(void) :
 /// Destructor.
 config::tree::~tree(void)
 {
-    delete _root;
 }
 
 
@@ -203,20 +202,25 @@ config::tree::set_string(const std::string& dotted_key,
 /// Converts the tree to a collection of key/value string pairs.
 ///
 /// \param dotted_key Subtree from which to start the export.
+/// \param strip_key If true, remove the dotted_key prefix from the resulting
+///     properties.
 ///
 /// \return A map of keys to values in their textual representation.
 ///
 /// \throw invalid_key_error If the provided key has an invalid format.
 /// \throw unknown_key_error If the provided key is unknown.
 config::properties_map
-config::tree::all_properties(const std::string& dotted_key) const
+config::tree::all_properties(const std::string& dotted_key,
+                             const bool strip_key) const
 {
+    PRE(!strip_key || !dotted_key.empty());
+
     properties_map properties;
 
     detail::tree_key key;
     const detail::base_node* raw_node;
     if (dotted_key.empty()) {
-        raw_node = _root;
+        raw_node = _root.get();
     } else {
         key = detail::parse_key(dotted_key);
         raw_node = _root->lookup_ro(key, 0);
@@ -227,6 +231,16 @@ config::tree::all_properties(const std::string& dotted_key) const
         child.all_properties(properties, key);
     } catch (const std::bad_cast& unused_error) {
         throw value_error("Cannot export properties from a leaf node");
+    }
+
+    if (strip_key) {
+        properties_map stripped;
+        for (properties_map::const_iterator iter = properties.begin();
+             iter != properties.end(); ++iter) {
+            stripped[(*iter).first.substr(dotted_key.length() + 1)] =
+                (*iter).second;
+        }
+        properties = stripped;
     }
 
     return properties;

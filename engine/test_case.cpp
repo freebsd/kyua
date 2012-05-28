@@ -30,13 +30,13 @@
 
 #include "engine/test_program.hpp"
 #include "engine/test_result.hpp"
-#include "engine/user_files/config.hpp"
+#include "utils/config/tree.hpp"
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/optional.ipp"
 
+namespace config = utils::config;
 namespace fs = utils::fs;
-namespace user_files = engine::user_files;
 
 using utils::none;
 using utils::optional;
@@ -157,8 +157,8 @@ engine::base_test_case::all_properties(void) const
 /// Debug mode gives the caller more control on the execution of the test.  It
 /// should not be used for normal execution of tests; instead, call run().
 ///
-/// \param config The user configuration that defines the execution of this test
-///     case.
+/// \param user_config The user configuration that defines the execution of this
+///     test case.
 /// \param hooks Hooks to introspect the execution of the test case.
 /// \param stdout_path The file to which to redirect the stdout of the test.
 ///     For interactive debugging, '/dev/stdout' is probably a reasonable value.
@@ -167,12 +167,12 @@ engine::base_test_case::all_properties(void) const
 ///
 /// \return The result of the execution of the test case.
 engine::test_result
-engine::base_test_case::debug(const user_files::config& config,
+engine::base_test_case::debug(const config::tree& user_config,
                               test_case_hooks& hooks,
                               const fs::path& stdout_path,
                               const fs::path& stderr_path) const
 {
-    return execute(config, hooks,
+    return execute(user_config, hooks,
                    utils::make_optional(stdout_path),
                    utils::make_optional(stderr_path));
 }
@@ -180,14 +180,14 @@ engine::base_test_case::debug(const user_files::config& config,
 
 /// Runs the test case.
 ///
-/// \param config The user configuration that defines the execution of this test
-///     case.
+/// \param user_config The user configuration that defines the execution of this
+///     test case.
 /// \param hooks Hooks to introspect the execution of the test case.
 ///
 /// \return The result of the execution of the test case.
 engine::test_result
-engine::base_test_case::run(const user_files::config& config,
+engine::base_test_case::run(const config::tree& user_config,
                             test_case_hooks& hooks) const
 {
-    return execute(config, hooks, none, none);
+    return execute(user_config, hooks, none, none);
 }

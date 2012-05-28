@@ -68,7 +68,7 @@ CHECK_ENVIRONMENT = KYUA_CONFDIR=/non-existent \
                     KYUA_MISCDIR=$(abs_top_srcdir)/misc \
                     KYUA_STOREDIR=$(abs_top_srcdir)/store \
                     PATH=$(abs_top_builddir):$${PATH}
-CHECK_VARS = -v kyua.examplesdir="$(abs_top_srcdir)/examples"
+CHECK_VARS = -v test_suites.kyua.examplesdir="$(abs_top_srcdir)/examples"
 INSTALLCHECK_ENVIRONMENT = KYUA_CONFDIR=/non-existent \
                            PATH=$(prefix)/bin:$${PATH}
 INSTALLCHECK_VARS =

@@ -34,11 +34,13 @@ extern "C" {
 
 #include "engine/user_files/config.hpp"
 #include "engine/user_files/kyuafile.hpp"
+#include "utils/config/tree.ipp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/passwd.hpp"
 #include "utils/test_utils.hpp"
 
+namespace config = utils::config;
 namespace fs = utils::fs;
 namespace passwd = utils::passwd;
 namespace user_files = engine::user_files;
@@ -81,50 +83,27 @@ ATF_TEST_CASE_BODY(kyua_conf)
     users.push_back(passwd::user("nobody", 1, 2));
     passwd::set_mock_users_for_testing(users);
 
-    const user_files::config config = user_files::config::load(
+    const config::tree user_config = user_files::load_config(
         example_file(this, "kyua.conf"));
 
-    ATF_REQUIRE_EQ("x86_64", config.architecture);
-    ATF_REQUIRE_EQ("amd64", config.platform);
+    ATF_REQUIRE_EQ(
+        "x86_64",
+        user_config.lookup< config::string_node >("architecture"));
+    ATF_REQUIRE_EQ(
+        "amd64",
+        user_config.lookup< config::string_node >("platform"));
 
-    ATF_REQUIRE(config.unprivileged_user);
-    ATF_REQUIRE_EQ("nobody", config.unprivileged_user.get().name);
+    ATF_REQUIRE_EQ(
+        "nobody",
+        user_config.lookup< user_files::user_node >("unprivileged_user").name);
 
-    ATF_REQUIRE_EQ(2, config.test_suites.size());
-    {
-        const user_files::properties_map& properties =
-            config.test_suite("FreeBSD");
-        ATF_REQUIRE_EQ(2, properties.size());
-
-        user_files::properties_map::const_iterator iter;
-
-        iter = properties.find("iterations");
-        ATF_REQUIRE(iter != properties.end());
-        ATF_REQUIRE_EQ("1000", (*iter).second);
-
-        iter = properties.find("run_old_tests");
-        ATF_REQUIRE(iter != properties.end());
-        ATF_REQUIRE_EQ("false", (*iter).second);
-    }
-    {
-        const user_files::properties_map& properties =
-            config.test_suite("NetBSD");
-        ATF_REQUIRE_EQ(3, properties.size());
-
-        user_files::properties_map::const_iterator iter;
-
-        iter = properties.find("file_systems");
-        ATF_REQUIRE(iter != properties.end());
-        ATF_REQUIRE_EQ("ffs lfs ext2fs", (*iter).second);
-
-        iter = properties.find("iterations");
-        ATF_REQUIRE(iter != properties.end());
-        ATF_REQUIRE_EQ("100", (*iter).second);
-
-        iter = properties.find("run_broken_tests");
-        ATF_REQUIRE(iter != properties.end());
-        ATF_REQUIRE_EQ("true", (*iter).second);
-    }
+    config::properties_map exp_test_suites;
+    exp_test_suites["test_suites.FreeBSD.iterations"] = "1000";
+    exp_test_suites["test_suites.FreeBSD.run_old_tests"] = "false";
+    exp_test_suites["test_suites.NetBSD.file_systems"] = "ffs lfs ext2fs";
+    exp_test_suites["test_suites.NetBSD.iterations"] = "100";
+    exp_test_suites["test_suites.NetBSD.run_broken_tests"] = "true";
+    ATF_REQUIRE(exp_test_suites == user_config.all_properties("test_suites"));
 }
 
 

@@ -45,6 +45,7 @@ extern "C" {
 #include "engine/plain_iface/test_program.hpp"
 #include "engine/test_result.hpp"
 #include "engine/user_files/config.hpp"
+#include "utils/config/tree.hpp"
 #include "utils/env.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/format/macros.hpp"
@@ -53,6 +54,7 @@ extern "C" {
 #include "utils/sanity.hpp"
 #include "utils/test_utils.hpp"
 
+namespace config = utils::config;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace plain_iface = engine::plain_iface;
@@ -135,18 +137,18 @@ public:
 
     /// Runs the helper.
     ///
-    /// \param config The runtime engine configuration, if different to the
+    /// \param user_config The runtime engine configuration, if different to the
     /// defaults.
     ///
     /// \return The result of the execution.
     engine::test_result
-    run(const user_files::config& config = user_files::config::defaults()) const
+    run(const config::tree& user_config = user_files::default_config()) const
     {
         const plain_iface::test_program test_program(_binary_path, _root,
                                                      "unit-tests", _timeout);
         const plain_iface::test_case test_case(test_program);
         engine::test_case_hooks dummy_hooks;
-        return test_case.run(config, dummy_hooks);
+        return test_case.run(user_config, dummy_hooks);
     }
 };
 

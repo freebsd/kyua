@@ -86,7 +86,7 @@ private:
                        const int syntax_version) = 0;
 
 public:
-    parser(tree&);
+    explicit parser(tree&);
     virtual ~parser(void);
 
     void parse(const fs::path&);

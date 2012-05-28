@@ -34,12 +34,12 @@
 
 #include <map>
 #include <string>
+#include <tr1/memory>
 
 #include <lutok/state.hpp>
 
 #include "utils/config/keys.hpp"
 #include "utils/config/nodes.hpp"
-#include "utils/noncopyable.hpp"
 
 namespace utils {
 namespace config {
@@ -77,9 +77,9 @@ typedef std::map< std::string, std::string > properties_map;
 /// root.  Having a separate class aids in clearly representing the concept of a
 /// tree and all of its public methods.  Also, the tree accepts dotted notations
 /// for the keys while the internal structures do not.
-class tree : noncopyable {
+class tree {
     /// The root of the tree.
-    detail::static_inner_node* _root;
+    std::tr1::shared_ptr< detail::static_inner_node > _root;
 
 public:
     tree(void);
@@ -104,7 +104,8 @@ public:
     std::string lookup_string(const std::string&) const;
     void set_string(const std::string&, const std::string&);
 
-    properties_map all_properties(const std::string& = "") const;
+    properties_map all_properties(const std::string& = "",
+                                  const bool = false) const;
 };
 
 

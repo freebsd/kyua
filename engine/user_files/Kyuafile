@@ -4,7 +4,6 @@ test_suite("kyua")
 
 atf_test_program{name="common_test"}
 atf_test_program{name="config_test"}
-atf_test_program{name="config_1_test"}
 atf_test_program{name="exceptions_test"}
 atf_test_program{name="init_test"}
 atf_test_program{name="kyuafile_test"}

@@ -70,7 +70,8 @@ ATF_TEST_CASE_BODY(unknown_key_error)
     key.push_back("two");
 
     const config::unknown_key_error e(key);
-    ATF_REQUIRE(std::strcmp("Unknown key '1.two'", e.what()) == 0);
+    ATF_REQUIRE(std::strcmp("Unknown configuration property '1.two'",
+                            e.what()) == 0);
 }
 
 

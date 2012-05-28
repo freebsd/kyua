@@ -30,7 +30,8 @@ STORE_CFLAGS = $(UTILS_CFLAGS)
 STORE_LIBS = libstore.a libengine.a $(UTILS_LIBS)
 
 noinst_LIBRARIES += libstore.a
-libstore_a_CPPFLAGS = -DKYUA_STOREDIR=\"$(storedir)\"
+libstore_a_CPPFLAGS  = -DKYUA_STOREDIR=\"$(storedir)\"
+libstore_a_CPPFLAGS += $(UTILS_CFLAGS)
 libstore_a_SOURCES  = store/backend.cpp
 libstore_a_SOURCES += store/backend.hpp
 libstore_a_SOURCES += store/dbtypes.cpp

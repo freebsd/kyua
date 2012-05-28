@@ -39,7 +39,7 @@
 #include "engine/filters.hpp"
 #include "engine/test_case.hpp"
 #include "engine/test_result.hpp"
-#include "engine/user_files/config.hpp"
+#include "utils/config/tree.hpp"
 #include "utils/fs/path.hpp"
 
 namespace engine {
@@ -69,7 +69,7 @@ struct result {
 
 
 result drive(const utils::fs::path&, const test_filter&,
-             const user_files::config&, const utils::fs::path&,
+             const utils::config::tree&, const utils::fs::path&,
              const utils::fs::path&);
 
 

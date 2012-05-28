@@ -36,7 +36,6 @@ extern "C" {
 
 #include <atf-c++.hpp>
 
-#include "engine/user_files/config.hpp"
 #include "utils/cmdline/base_command.ipp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/globals.hpp"
@@ -55,18 +54,14 @@ extern "C" {
 #include "utils/test_utils.hpp"
 
 namespace cmdline = utils::cmdline;
+namespace config = utils::config;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace logging = utils::logging;
 namespace process = utils::process;
-namespace user_files = engine::user_files;
 
 
 namespace {
-
-
-/// Instantiation of a default user configuration; syntactic sugar.
-static const user_files::config default_config = user_files::config::defaults();
 
 
 /// Fake command implementation that crashes during its execution.
@@ -85,13 +80,13 @@ public:
     /// \param unused_ui Object to interact with the I/O of the program.
     /// \param unused_cmdline Representation of the command line to the
     ///     subcommand.
-    /// \param unused_config The runtime configuration of the program.
+    /// \param unused_user_config The runtime configuration of the program.
     ///
     /// \return Nothing because this function always aborts.
     int
     run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
         const cmdline::parsed_cmdline& UTILS_UNUSED_PARAM(cmdline),
-        const user_files::config& UTILS_UNUSED_PARAM(config))
+        const config::tree& UTILS_UNUSED_PARAM(user_config))
     {
         std::abort();
     }
@@ -125,7 +120,7 @@ public:
     /// \param unused_ui Object to interact with the I/O of the program.
     /// \param unused_cmdline Representation of the command line to the
     ///     subcommand.
-    /// \param unused_config The runtime configuration of the program.
+    /// \param unused_user_config The runtime configuration of the program.
     ///
     /// \return Nothing because this function always aborts.
     ///
@@ -134,7 +129,7 @@ public:
     int
     run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
         const cmdline::parsed_cmdline& UTILS_UNUSED_PARAM(cmdline),
-        const user_files::config& UTILS_UNUSED_PARAM(config))
+        const config::tree& UTILS_UNUSED_PARAM(user_config))
     {
         if (_unhandled)
             throw std::logic_error("This is unhandled");
@@ -160,13 +155,13 @@ public:
     /// \param ui Object to interact with the I/O of the program.
     /// \param unused_cmdline Representation of the command line to the
     ///     subcommand.
-    /// \param unused_config The runtime configuration of the program.
+    /// \param unused_user_config The runtime configuration of the program.
     ///
     /// \return Nothing because this function always aborts.
     int
     run(cmdline::ui* ui,
         const cmdline::parsed_cmdline& UTILS_UNUSED_PARAM(cmdline),
-        const user_files::config& UTILS_UNUSED_PARAM(config))
+        const config::tree& UTILS_UNUSED_PARAM(user_config))
     {
         ui->out("stdout message from subcommand");
         ui->err("stderr message from subcommand");

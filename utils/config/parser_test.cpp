@@ -145,7 +145,7 @@ ATF_TEST_CASE_BODY(some_keys__unknown_key)
     }
     config::tree tree1;
     ATF_REQUIRE_THROW_RE(config::syntax_error,
-                         "Unknown key 'top_string2'",
+                         "Unknown configuration property 'top_string2'",
                          mock_parser(tree1).parse(fs::path("output.lua")));
 
     {
@@ -155,7 +155,7 @@ ATF_TEST_CASE_BODY(some_keys__unknown_key)
     }
     config::tree tree2;
     ATF_REQUIRE_THROW_RE(config::syntax_error,
-                         "Unknown key 'inner.int2'",
+                         "Unknown configuration property 'inner.int2'",
                          mock_parser(tree2).parse(fs::path("output.lua")));
 }
 

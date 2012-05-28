@@ -48,13 +48,13 @@
 #include "cli/cmd_test.hpp"
 #include "cli/common.ipp"
 #include "cli/config.hpp"
-#include "engine/user_files/config.hpp"
 #include "utils/cmdline/commands_map.ipp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/globals.hpp"
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/cmdline/ui.hpp"
+#include "utils/config/tree.ipp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
@@ -65,9 +65,9 @@
 #include "utils/sanity.hpp"
 
 namespace cmdline = utils::cmdline;
+namespace config = utils::config;
 namespace fs = utils::fs;
 namespace logging = utils::logging;
-namespace user_files = engine::user_files;
 
 using utils::none;
 using utils::optional;
@@ -82,7 +82,7 @@ namespace {
 /// \param command The subcommand to execute.
 /// \param args The part of the command line passed to the subcommand.  The
 ///     first item of this collection must match the command name.
-/// \param config The runtime configuration to pass to the subcommand.
+/// \param user_config The runtime configuration to pass to the subcommand.
 ///
 /// \return The exit code of the command.  Typically 0 on success, some other
 /// integer otherwise.
@@ -97,11 +97,11 @@ namespace {
 static int
 run_subcommand(cmdline::ui* ui, cli::cli_command* command,
                const cmdline::args_vector& args,
-               const user_files::config& config)
+               const config::tree& user_config)
 {
     try {
         PRE(command->name() == args[0]);
-        return command->main(ui, args, config);
+        return command->main(ui, args, user_config);
     } catch (const cmdline::usage_error& e) {
         throw std::pair< std::string, cmdline::usage_error >(
             command->name(), e);
@@ -164,7 +164,7 @@ safe_main(cmdline::ui* ui, int argc, const char* const argv[],
 
     cmdline::parsed_cmdline cmdline = cmdline::parse(argc, argv, options);
 
-    const user_files::config config = cli::load_config(cmdline);
+    const config::tree user_config = cli::load_config(cmdline);
 
     const fs::path logfile(cmdline.get_option< cmdline::path_option >(
         "logfile"));
@@ -185,7 +185,7 @@ safe_main(cmdline::ui* ui, int argc, const char* const argv[],
     cli::cli_command* command = commands.find(cmdname);
     if (command == NULL)
         throw cmdline::usage_error(F("Unknown command '%s'") % cmdname);
-    return run_subcommand(ui, command, cmdline.arguments(), config);
+    return run_subcommand(ui, command, cmdline.arguments(), user_config);
 }
 
 

@@ -36,10 +36,12 @@
 #include "engine/user_files/config.hpp"
 #include "utils/cmdline/globals.hpp"
 #include "utils/cmdline/ui_mock.hpp"
+#include "utils/config/tree.ipp"
 #include "utils/optional.ipp"
 #include "utils/test_utils.hpp"
 
 namespace cmdline = utils::cmdline;
+namespace config = utils::config;
 namespace user_files = engine::user_files;
 
 using cli::cmd_config;
@@ -55,19 +57,16 @@ namespace {
 /// properties and some hardcoded values for the generic configuration options.
 ///
 /// \return A new user configuration object.
-static user_files::config
+static config::tree
 fake_config(void)
 {
-    user_files::test_suites_map test_suites;
-    {
-        user_files::properties_map props;
-        props["bar"] = "first";
-        props["baz"] = "second";
-        test_suites["foo"] = props;
-    }
-
-    return user_files::config("the-architecture", "the-platform", none,
-                              test_suites);
+    config::tree user_config = user_files::default_config();
+    user_config.set_string("architecture", "the-architecture");
+    user_config.set_string("platform", "the-platform");
+    //user_config.set_string("unprivileged_user", "");
+    user_config.set_string("test_suites.foo.bar", "first");
+    user_config.set_string("test_suites.foo.baz", "second");
+    return user_config;
 }
 
 
@@ -86,9 +85,9 @@ ATF_TEST_CASE_BODY(all)
 
     ATF_REQUIRE_EQ(4, ui.out_log().size());
     ATF_REQUIRE_EQ("architecture = the-architecture", ui.out_log()[0]);
-    ATF_REQUIRE_EQ("foo.bar = first", ui.out_log()[1]);
-    ATF_REQUIRE_EQ("foo.baz = second", ui.out_log()[2]);
-    ATF_REQUIRE_EQ("platform = the-platform", ui.out_log()[3]);
+    ATF_REQUIRE_EQ("platform = the-platform", ui.out_log()[1]);
+    ATF_REQUIRE_EQ("test_suites.foo.bar = first", ui.out_log()[2]);
+    ATF_REQUIRE_EQ("test_suites.foo.baz = second", ui.out_log()[3]);
     ATF_REQUIRE(ui.err_log().empty());
 }
 
@@ -99,7 +98,7 @@ ATF_TEST_CASE_BODY(some__ok)
     cmdline::args_vector args;
     args.push_back("config");
     args.push_back("platform");
-    args.push_back("foo.baz");
+    args.push_back("test_suites.foo.baz");
 
     cmd_config cmd;
     cmdline::ui_mock ui;
@@ -107,7 +106,7 @@ ATF_TEST_CASE_BODY(some__ok)
 
     ATF_REQUIRE_EQ(2, ui.out_log().size());
     ATF_REQUIRE_EQ("platform = the-platform", ui.out_log()[0]);
-    ATF_REQUIRE_EQ("foo.baz = second", ui.out_log()[1]);
+    ATF_REQUIRE_EQ("test_suites.foo.baz = second", ui.out_log()[1]);
     ATF_REQUIRE(ui.err_log().empty());
 }
 
@@ -119,7 +118,7 @@ ATF_TEST_CASE_BODY(some__fail)
     args.push_back("config");
     args.push_back("platform");
     args.push_back("unknown");
-    args.push_back("foo.baz");
+    args.push_back("test_suites.foo.baz");
 
     cmdline::init("progname");
 
@@ -129,7 +128,7 @@ ATF_TEST_CASE_BODY(some__fail)
 
     ATF_REQUIRE_EQ(2, ui.out_log().size());
     ATF_REQUIRE_EQ("platform = the-platform", ui.out_log()[0]);
-    ATF_REQUIRE_EQ("foo.baz = second", ui.out_log()[1]);
+    ATF_REQUIRE_EQ("test_suites.foo.baz = second", ui.out_log()[1]);
     ATF_REQUIRE_EQ(1, ui.err_log().size());
     ATF_REQUIRE(utils::grep_string("unknown.*not defined", ui.err_log()[0]));
 }

@@ -36,6 +36,7 @@
 #include <string>
 #include <tr1/memory>
 
+#include "utils/config/tree.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"
 
@@ -53,10 +54,6 @@ typedef std::map< std::string, std::string > properties_map;
 
 
 class base_test_program;
-
-namespace user_files {
-class config;
-}  // namespace user_files
 
 
 /// Hooks to introspect the execution of a test case.
@@ -97,7 +94,7 @@ class base_test_case {
     /// This should not throw any exception: problems detected during execution
     /// are reported as a broken test case result.
     ///
-    /// \param config The run-time configuration for the test case.
+    /// \param user_config The run-time configuration for the test case.
     /// \param hooks Run-time hooks to introspect the test case execution.
     /// \param stdout_path The file to which to redirect the stdout of the test.
     ///     If none, use a temporary file in the work directory.
@@ -106,7 +103,7 @@ class base_test_case {
     ///
     /// \return The result of the execution.
     virtual test_result execute(
-        const user_files::config& config, test_case_hooks& hooks,
+        const utils::config::tree& user_config, test_case_hooks& hooks,
         const utils::optional< utils::fs::path >& stdout_path,
         const utils::optional< utils::fs::path >& stderr_path) const = 0;
 
@@ -118,11 +115,11 @@ public:
     const std::string& name(void) const;
 
     properties_map all_properties(void) const;
-    test_result debug(const user_files::config&,
+    test_result debug(const utils::config::tree&,
                       test_case_hooks&,
                       const utils::fs::path&,
                       const utils::fs::path&) const;
-    test_result run(const user_files::config&, test_case_hooks&) const;
+    test_result run(const utils::config::tree&, test_case_hooks&) const;
 };
 
 

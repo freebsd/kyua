@@ -354,7 +354,8 @@ ATF_TEST_CASE_BODY(unknown_key)
 
     lutok::state state;
     config::redirect(state, tree);
-    ATF_REQUIRE_THROW_RE(lutok::error, "Unknown key 'static.int'",
+    ATF_REQUIRE_THROW_RE(lutok::error,
+                         "Unknown configuration property 'static.int'",
                          lutok::do_string(state,
                                           "static.int = 12345\n"));
 }

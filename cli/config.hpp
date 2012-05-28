@@ -37,12 +37,7 @@
 
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.hpp"
-
-namespace engine {
-namespace user_files {
-class config;
-}  // namespace user_files
-}  // namespace engine
+#include "utils/config/tree.hpp"
 
 namespace cli {
 
@@ -51,7 +46,7 @@ extern const utils::cmdline::path_option config_option;
 extern const utils::cmdline::property_option variable_option;
 
 
-engine::user_files::config load_config(const utils::cmdline::parsed_cmdline&);
+utils::config::tree load_config(const utils::cmdline::parsed_cmdline&);
 
 
 }  // namespace cli

@@ -41,10 +41,10 @@
 #include "utils/format/macros.hpp"
 
 namespace cmdline = utils::cmdline;
+namespace config = utils::config;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace run_tests = engine::drivers::run_tests;
-namespace user_files = engine::user_files;
 
 using cli::cmd_test;
 
@@ -112,17 +112,17 @@ cmd_test::cmd_test(void) : cli_command(
 ///
 /// \param ui Object to interact with the I/O of the program.
 /// \param cmdline Representation of the command line to the subcommand.
-/// \param config The runtime configuration of the program.
+/// \param user_config The runtime configuration of the program.
 ///
 /// \return 0 if all tests passed, 1 otherwise.
 int
 cmd_test::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
-              const user_files::config& config)
+              const config::tree& user_config)
 {
     print_hooks hooks(ui);
     const run_tests::result result = run_tests::drive(
         kyuafile_path(cmdline), store_path(cmdline),
-        parse_filters(cmdline.arguments()), config, hooks);
+        parse_filters(cmdline.arguments()), user_config, hooks);
 
     int exit_code;
     if (hooks.good_count > 0 || hooks.bad_count > 0) {

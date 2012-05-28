@@ -29,8 +29,10 @@
 #include "cli/config.hpp"
 
 #include "cli/common.hpp"
+#include "engine/exceptions.hpp"
 #include "engine/user_files/config.hpp"
 #include "utils/cmdline/parser.ipp"
+#include "utils/config/tree.ipp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/operations.hpp"
@@ -40,6 +42,7 @@
 #include "utils/optional.ipp"
 
 namespace cmdline = utils::cmdline;
+namespace config = utils::config;
 namespace fs = utils::fs;
 namespace user_files = engine::user_files;
 
@@ -84,7 +87,7 @@ static const std::string config_lookup_names =
 /// \throw engine::error If the parsing of the configuration file fails.
 ///     TODO(jmmv): I'm not sure if this is the raised exception.  And even if
 ///     it is, we should make it more accurate.
-user_files::config
+config::tree
 load_config_file(const cmdline::parsed_cmdline& cmdline)
 {
     // TODO(jmmv): We should really be able to use cmdline.has_option here to
@@ -94,16 +97,16 @@ load_config_file(const cmdline::parsed_cmdline& cmdline)
         cli::config_option.long_name());
     if (filename.str() == none_config) {
         LD("Configuration loading disabled; using defaults");
-        return user_files::config::defaults();
+        return user_files::default_config();
     } else if (filename.str() != cli::config_option.default_value())
-        return user_files::config::load(filename);
+        return user_files::load_config(filename);
 
     const optional< fs::path > home = cli::get_home();
     if (home) {
         const fs::path path = home.get() / ".kyua" / config_basename;
         try {
             if (fs::exists(path))
-                return user_files::config::load(path);
+                return user_files::load_config(path);
         } catch (const fs::error& e) {
             // Fall through.  If we fail to load the user-specific configuration
             // file because it cannot be openend, we try to load the system-wide
@@ -118,9 +121,9 @@ load_config_file(const cmdline::parsed_cmdline& cmdline)
 
     const fs::path path = confdir / config_basename;
     if (fs::exists(path)) {
-        return user_files::config::load(path);
+        return user_files::load_config(path);
     } else {
-        return user_files::config::defaults();
+        return user_files::default_config();
     }
 }
 
@@ -157,18 +160,29 @@ const cmdline::property_option cli::variable_option(
 /// \param cmdline The parsed command line.
 ///
 /// \throw engine::error If the parsing of the configuration file fails.
-///     TODO(jmmv): I'm not sure if this is the raised exception.  And even if
-///     it is, we should make it more accurate.
-user_files::config
+config::tree
 cli::load_config(const cmdline::parsed_cmdline& cmdline)
 {
-    const user_files::config config = load_config_file(cmdline);
+    config::tree user_config = load_config_file(cmdline);
 
     if (cmdline.has_option(variable_option.long_name())) {
-        return config.apply_overrides(
+        typedef std::pair< std::string, std::string > override_pair;
+
+        const std::vector< override_pair >& overrides =
             cmdline.get_multi_option< cmdline::property_option >(
-                variable_option.long_name()));
-    } else {
-        return config;
+                variable_option.long_name());
+
+        for (std::vector< override_pair >::const_iterator
+                 iter = overrides.begin(); iter != overrides.end(); iter++) {
+            try {
+                user_config.set_string((*iter).first, (*iter).second);
+            } catch (const config::error& e) {
+                // TODO(jmmv): Raising this type from here is obviously the
+                // wrong thing to do.
+                throw engine::error(e.what());
+            }
+        }
     }
+
+    return user_config;
 }

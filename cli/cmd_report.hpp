@@ -86,7 +86,7 @@ public:
     cmd_report(void);
 
     int run(utils::cmdline::ui*, const utils::cmdline::parsed_cmdline&,
-            const engine::user_files::config&);
+            const utils::config::tree&);
 };
 
 

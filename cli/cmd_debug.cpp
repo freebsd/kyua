@@ -33,14 +33,13 @@
 #include "cli/common.ipp"
 #include "engine/drivers/debug_test.hpp"
 #include "engine/filters.hpp"
-#include "engine/user_files/config.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/format/macros.hpp"
 
 namespace cmdline = utils::cmdline;
+namespace config = utils::config;
 namespace debug_test = engine::drivers::debug_test;
-namespace user_files = engine::user_files;
 
 using cli::cmd_debug;
 
@@ -66,13 +65,13 @@ cmd_debug::cmd_debug(void) : cli_command(
 ///
 /// \param ui Object to interact with the I/O of the program.
 /// \param cmdline Representation of the command line to the subcommand.
-/// \param config The runtime debuguration of the program.
+/// \param user_config The runtime debuguration of the program.
 ///
 /// \return 0 if everything is OK, 1 if any of the necessary documents cannot be
 /// opened.
 int
 cmd_debug::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
-               const user_files::config& config)
+               const config::tree& user_config)
 {
     const std::string& test_case_name = cmdline.arguments()[0];
     if (test_case_name.find(':') == std::string::npos)
@@ -82,7 +81,7 @@ cmd_debug::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
         test_case_name);
 
     const debug_test::result result = debug_test::drive(
-        kyuafile_path(cmdline), filter, config,
+        kyuafile_path(cmdline), filter, user_config,
         cmdline.get_option< cmdline::path_option >("stdout"),
         cmdline.get_option< cmdline::path_option >("stderr"));
 

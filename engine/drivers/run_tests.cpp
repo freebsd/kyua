@@ -41,6 +41,7 @@
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
 
+namespace config = utils::config;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace run_tests = engine::drivers::run_tests;
@@ -95,14 +96,14 @@ public:
 /// named '__test_program__' is created and it is reported as broken.
 ///
 /// \param test_program The test program to execute.
-/// \param config The configuration variables provided by the user.
+/// \param user_config The configuration variables provided by the user.
 /// \param filters The matching state of the filters.
 /// \param hooks The user hooks to receive asynchronous notifications.
 /// \param tx The store transaction into which to put the results.
 /// \param action_id The action this program belongs to.
 void
 run_test_program(const engine::base_test_program& test_program,
-                 const user_files::config& config,
+                 const config::tree& user_config,
                  engine::filters_state& filters,
                  run_tests::base_hooks& hooks,
                  store::transaction& tx,
@@ -125,7 +126,8 @@ run_test_program(const engine::base_test_program& test_program,
                                                       test_program_id);
         file_saver_hooks test_hooks(tx, test_case_id);
         const datetime::timestamp start_time = datetime::timestamp::now();
-        const engine::test_result result = test_case->run(config, test_hooks);
+        const engine::test_result result = test_case->run(
+            user_config, test_hooks);
         const datetime::timestamp end_time = datetime::timestamp::now();
         tx.put_result(result, test_case_id, start_time, end_time);
         hooks.got_result(test_case, result, end_time - start_time);
@@ -147,7 +149,7 @@ run_tests::base_hooks::~base_hooks(void)
 /// \param kyuafile_path The path to the Kyuafile to be loaded.
 /// \param store_path The path to the store to be used.
 /// \param raw_filters The test case filters as provided by the user.
-/// \param config The end-user configuration properties.
+/// \param user_config The end-user configuration properties.
 /// \param hooks The hooks for this execution.
 ///
 /// \returns A structure with all results computed by this driver.
@@ -155,7 +157,7 @@ run_tests::result
 run_tests::drive(const fs::path& kyuafile_path,
                  const fs::path& store_path,
                  const std::set< engine::test_filter >& raw_filters,
-                 const user_files::config& config,
+                 const config::tree& user_config,
                  base_hooks& hooks)
 {
     const user_files::kyuafile kyuafile = user_files::kyuafile::load(
@@ -178,7 +180,7 @@ run_tests::drive(const fs::path& kyuafile_path,
         if (!filters.match_test_program(test_program->relative_path()))
             continue;
 
-        run_test_program(*test_program, config, filters, hooks,
+        run_test_program(*test_program, user_config, filters, hooks,
                          tx, action_id);
     }
 
