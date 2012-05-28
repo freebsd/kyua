@@ -72,6 +72,8 @@ The special value @samp{none} requests that no configuration files be
 loaded.  Overrides can still be provided through the @option{--variable}
 flag.
 
+See @ref{Configuration} for more details.
+
 @item --logfile=path
 @cindex @option{--logfile}
 Specifies the location of the file to which @command{kyua} will log
@@ -88,7 +90,7 @@ levels}.
 @cindex @option{--variable}
 Sets the @samp{name} configuration variable to @samp{value}.  The
 variable can either be a builtin variable for Kyua or a test-suite
-specific variable.
+specific variable.  See @ref{Configuration} for more details.
 
 @end table
 
