@@ -257,6 +257,19 @@ format::formatter::operator const std::string&(void) const
 }
 
 
+/// Specialization of operator% for booleans.
+///
+/// \param value The boolean to inject into the format string.
+///
+/// \return A new formatter that has one less format placeholder.
+format::formatter
+format::formatter::operator%(const bool& value) const
+{
+    (*_oss) << (value ? "true" : "false");
+    return replace(_oss->str());
+}
+
+
 /// Replaces the first formatting placeholder with a value.
 ///
 /// \param arg The replacement string.

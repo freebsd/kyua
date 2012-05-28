@@ -50,6 +50,8 @@ std::vector< std::string > split(const std::string&, const char);
 template< typename Type >
 Type to_type(const std::string&);
 template<>
+bool to_type(const std::string&);
+template<>
 std::string to_type(const std::string&);
 
 

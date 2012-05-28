@@ -104,7 +104,6 @@ ATF_TEST_CASE_WITHOUT_HEAD(bool_node__set_string__ok);
 ATF_TEST_CASE_BODY(bool_node__set_string__ok)
 {
     config::bool_node node;
-    expect_fail("Need to explicitly parse booleans");
     node.set_string("false");
     ATF_REQUIRE(!node.value());
     node.set_string("true");
@@ -125,7 +124,6 @@ ATF_TEST_CASE_WITHOUT_HEAD(bool_node__to_string);
 ATF_TEST_CASE_BODY(bool_node__to_string)
 {
     config::bool_node node;
-    expect_fail("Need to explicitly convert booleans to strings");
     node.set(false);
     ATF_REQUIRE_EQ("false", node.to_string());
     node.set(true);

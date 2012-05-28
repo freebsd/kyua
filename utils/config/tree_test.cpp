@@ -383,27 +383,14 @@ ATF_TEST_CASE_BODY(lookup_string__ok)
 
     tree.define< config::int_node >("var1");
     tree.define< config::string_node >("b.var2");
+    tree.define< config::bool_node >("c.d.var3");
 
     tree.set< config::int_node >("var1", 42);
     tree.set< config::string_node >("b.var2", "hello");
+    tree.set< config::bool_node >("c.d.var3", false);
 
     ATF_REQUIRE_EQ("42", tree.lookup_string("var1"));
     ATF_REQUIRE_EQ("hello", tree.lookup_string("b.var2"));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(lookup_string__ok__bool);
-ATF_TEST_CASE_BODY(lookup_string__ok__bool)
-{
-    config::tree tree;
-
-    tree.define< config::bool_node >("c.d.var3");
-    tree.set< config::bool_node >("c.d.var3", false);
-
-    // TODO(jmmv): Merge this test with lookup_string__ok once this problem is
-    // resolved.
-    expect_fail("Explicit conversion from booleans to string not implemented; "
-                "need to modify (F() % bool) to support this");
     ATF_REQUIRE_EQ("false", tree.lookup_string("c.d.var3"));
 }
 
@@ -693,7 +680,6 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, set_lua__ok);
 
     ATF_ADD_TEST_CASE(tcs, lookup_string__ok);
-    ATF_ADD_TEST_CASE(tcs, lookup_string__ok__bool);
     ATF_ADD_TEST_CASE(tcs, lookup_string__invalid_key);
     ATF_ADD_TEST_CASE(tcs, lookup_string__unknown_key);
 
