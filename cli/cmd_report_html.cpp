@@ -37,7 +37,6 @@
 #include "engine/context.hpp"
 #include "engine/drivers/scan_action.hpp"
 #include "engine/test_result.hpp"
-#include "engine/user_files/config.hpp"
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/datetime.hpp"
@@ -50,11 +49,11 @@
 #include "utils/text/templates.hpp"
 
 namespace cmdline = utils::cmdline;
+namespace config = utils::config;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace scan_action = engine::drivers::scan_action;
 namespace text = utils::text;
-namespace user_files = engine::user_files;
 
 using utils::optional;
 
@@ -319,14 +318,14 @@ cli::cmd_report_html::cmd_report_html(void) : cli_command(
 ///
 /// \param ui Object to interact with the I/O of the program.
 /// \param cmdline Representation of the command line to the subcommand.
-/// \param unused_config The runtime configuration of the program.
+/// \param unused_user_config The runtime configuration of the program.
 ///
 /// \return 0 if everything is OK, 1 if the statement is invalid or if there is
 /// any other problem.
 int
 cli::cmd_report_html::run(cmdline::ui* ui,
                           const cmdline::parsed_cmdline& cmdline,
-                          const user_files::config& UTILS_UNUSED_PARAM(config))
+                          const config::tree& UTILS_UNUSED_PARAM(user_config))
 {
     optional< int64_t > action_id;
     if (cmdline.has_option("action"))

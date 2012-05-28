@@ -31,14 +31,13 @@
 #include <cstdlib>
 
 #include "cli/common.ipp"
-#include "engine/user_files/config.hpp"
+#include "utils/config/tree.ipp"
 #include "utils/format/macros.hpp"
 
 namespace cmdline = utils::cmdline;
-namespace user_files = engine::user_files;
+namespace config = utils::config;
 
 using cli::cmd_config;
-using user_files::properties_map;
 
 
 namespace {
@@ -52,9 +51,9 @@ namespace {
 ///
 /// \return 0 for success.
 static int
-print_all(cmdline::ui* ui, const properties_map& properties)
+print_all(cmdline::ui* ui, const config::properties_map& properties)
 {
-    for (properties_map::const_iterator iter = properties.begin();
+    for (config::properties_map::const_iterator iter = properties.begin();
          iter != properties.end(); iter++)
         ui->out(F("%s = %s") % (*iter).first % (*iter).second);
     return EXIT_SUCCESS;
@@ -70,14 +69,15 @@ print_all(cmdline::ui* ui, const properties_map& properties)
 ///
 /// \return 0 if all specified filters are valid; 1 otherwise.
 static int
-print_some(cmdline::ui* ui, const properties_map& properties,
+print_some(cmdline::ui* ui, const config::properties_map& properties,
            const cmdline::args_vector& filters)
 {
     bool ok = true;
 
     for (cmdline::args_vector::const_iterator iter = filters.begin();
          iter != filters.end(); iter++) {
-        const properties_map::const_iterator match = properties.find(*iter);
+        const config::properties_map::const_iterator match =
+            properties.find(*iter);
         if (match == properties.end()) {
             cmdline::print_warning(ui, F("'%s' is not defined") % *iter);
             ok = false;
@@ -104,15 +104,15 @@ cmd_config::cmd_config(void) : cli_command(
 ///
 /// \param ui Object to interact with the I/O of the program.
 /// \param cmdline Representation of the command line to the subcommand.
-/// \param config The runtime configuration of the program.
+/// \param user_config The runtime configuration of the program.
 ///
 /// \return 0 if everything is OK, 1 if any of the necessary documents cannot be
 /// opened.
 int
 cmd_config::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
-               const user_files::config& config)
+               const config::tree& user_config)
 {
-    const properties_map properties = config.all_properties();
+    const config::properties_map properties = user_config.all_properties();
     if (cmdline.arguments().empty())
         return print_all(ui, properties);
     else

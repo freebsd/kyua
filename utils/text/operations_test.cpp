@@ -237,8 +237,16 @@ ATF_TEST_CASE_BODY(split__several__delimiters)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(to_type__ok);
-ATF_TEST_CASE_BODY(to_type__ok)
+ATF_TEST_CASE_WITHOUT_HEAD(to_type__ok__bool);
+ATF_TEST_CASE_BODY(to_type__ok__bool)
+{
+    ATF_REQUIRE( text::to_type< bool >("true"));
+    ATF_REQUIRE(!text::to_type< bool >("false"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(to_type__ok__numerical);
+ATF_TEST_CASE_BODY(to_type__ok__numerical)
 {
     ATF_REQUIRE_EQ(12, text::to_type< int >("12"));
     ATF_REQUIRE_EQ(18745, text::to_type< int >("18745"));
@@ -249,6 +257,17 @@ ATF_TEST_CASE_BODY(to_type__ok)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(to_type__ok__string);
+ATF_TEST_CASE_BODY(to_type__ok__string)
+{
+    // While this seems redundant, having this particular specialization that
+    // does nothing allows callers to delegate work to to_type without worrying
+    // about the particular type being converted.
+    ATF_REQUIRE_EQ("", text::to_type< std::string >(""));
+    ATF_REQUIRE_EQ("  abcd  ", text::to_type< std::string >("  abcd  "));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(to_type__empty);
 ATF_TEST_CASE_BODY(to_type__empty)
 {
@@ -256,8 +275,17 @@ ATF_TEST_CASE_BODY(to_type__empty)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(to_type__invalid);
-ATF_TEST_CASE_BODY(to_type__invalid)
+ATF_TEST_CASE_WITHOUT_HEAD(to_type__invalid__bool);
+ATF_TEST_CASE_BODY(to_type__invalid__bool)
+{
+    ATF_REQUIRE_THROW(text::value_error, text::to_type< bool >(""));
+    ATF_REQUIRE_THROW(text::value_error, text::to_type< bool >("true "));
+    ATF_REQUIRE_THROW(text::value_error, text::to_type< bool >("foo"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(to_type__invalid__numerical);
+ATF_TEST_CASE_BODY(to_type__invalid__numerical)
 {
     ATF_REQUIRE_THROW(text::value_error, text::to_type< int >(" 3"));
     ATF_REQUIRE_THROW(text::value_error, text::to_type< int >("3 "));
@@ -286,7 +314,10 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, split__several__simple);
     ATF_ADD_TEST_CASE(tcs, split__several__delimiters);
 
-    ATF_ADD_TEST_CASE(tcs, to_type__ok);
+    ATF_ADD_TEST_CASE(tcs, to_type__ok__bool);
+    ATF_ADD_TEST_CASE(tcs, to_type__ok__numerical);
+    ATF_ADD_TEST_CASE(tcs, to_type__ok__string);
     ATF_ADD_TEST_CASE(tcs, to_type__empty);
-    ATF_ADD_TEST_CASE(tcs, to_type__invalid);
+    ATF_ADD_TEST_CASE(tcs, to_type__invalid__bool);
+    ATF_ADD_TEST_CASE(tcs, to_type__invalid__numerical);
 }

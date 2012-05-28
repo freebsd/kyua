@@ -83,7 +83,7 @@ class test_case : public base_test_case {
 
     properties_map get_all_properties(void) const;
     virtual engine::test_result execute(
-        const user_files::config&, test_case_hooks&,
+        const utils::config::tree&, test_case_hooks&,
         const utils::optional< utils::fs::path >&,
         const utils::optional< utils::fs::path >&) const;
 
@@ -113,7 +113,7 @@ public:
     const std::string& required_user(void) const;
     const properties_map& user_metadata(void) const;
 
-    std::string check_requirements(const user_files::config&) const;
+    std::string check_requirements(const utils::config::tree&) const;
 
     bool operator==(const test_case&) const;
 };

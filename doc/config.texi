@@ -50,18 +50,11 @@ context of particular test suites.
 Configuration variables are first read from the configuration file,
 which is either @file{~/.kyua/kyua.conf} if it exists, or otherwise
 @file{@value{KYUA_CONFDIR}/kyua.conf}.  The user can override this
-file by providing the @option{--config} option to the @command{test}
-subcommand.
+file by providing the generic @option{--config}.
 
-Later, any overrides provided through the
-@option{--variable} option are applied; in other words: values
-specified on the command line have preference over values in the
-configuration file.
-
-@c TODO(jmmv): I realize now that --config and --variable being part
-@c of 'test' may not make sense.  We want configuration to be
-@c tool-wide, not subcommand specific, so these options really need to
-@c be generalized.
+Later, any overrides provided through the @option{--variable} option
+are applied; in other words: values specified on the command line have
+preference over values in the configuration file.
 
 @node Configuration file syntax
 @section Configuration file syntax
@@ -79,7 +72,7 @@ syntax('config', 1)
 architecture = 'foo'
 platform = 'bar'
 
--- Assign test-suite variables.
+-- Assign test-suite variables.  All of these must be strings.
 test_suites.NetBSD.file_systems = 'ffs ext2fs'
 test_suites.X11.graphics_driver = 'vesa'
 @end example

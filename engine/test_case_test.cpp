@@ -33,12 +33,13 @@
 #include "engine/test_program.hpp"
 #include "engine/test_result.hpp"
 #include "engine/user_files/config.hpp"
+#include "utils/config/tree.ipp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 #include "utils/test_utils.hpp"
 
+namespace config = utils::config;
 namespace fs = utils::fs;
-namespace user_files = engine::user_files;
 
 using utils::optional;
 
@@ -47,9 +48,7 @@ namespace {
 
 
 /// Fake configuration.
-static const user_files::config mock_config(
-    "mock-architecture", "mock-platform", utils::none,
-    user_files::test_suites_map());
+static const config::tree mock_config;
 
 
 /// Records the data passed to the hooks for later validation.
@@ -128,18 +127,19 @@ class mock_test_case : public engine::base_test_case {
 
     /// Fakes the execution of a test case.
     ///
-    /// \param config The run-time configuration.  Must be mock_config.
+    /// \param user_config The run-time configuration.  Must be mock_config.
     /// \param hooks Hooks to introspect the execution of the test case.
     /// \param unused_stdout_path The file into which to write the stdout.
     /// \param unused_stderr_path The file into which to write the stderr.
     ///
     /// \return A static result for testing purposes.
     engine::test_result
-    execute(const user_files::config& config, engine::test_case_hooks& hooks,
+    execute(const utils::config::tree& user_config,
+            engine::test_case_hooks& hooks,
             const optional< fs::path >& UTILS_UNUSED_PARAM(stdout_path),
             const optional< fs::path >& UTILS_UNUSED_PARAM(stderr_path)) const
     {
-        if (&config != &mock_config)
+        if (&user_config != &mock_config)
             throw std::runtime_error("Invalid config object");
         hooks.got_stdout(fs::path("fake-stdout.txt"));
         hooks.got_stderr(fs::path("fake-stderr.txt"));

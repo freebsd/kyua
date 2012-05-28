@@ -32,81 +32,28 @@
 #if !defined(ENGINE_USER_FILES_CONFIG_HPP)
 #define ENGINE_USER_FILES_CONFIG_HPP
 
-#include <map>
-#include <string>
-#include <utility>
-#include <vector>
-
-#include <lutok/state.hpp>
-
+#include "utils/config/tree.hpp"
 #include "utils/fs/path.hpp"
-#include "utils/optional.ipp"
 #include "utils/passwd.hpp"
 
 namespace engine {
 namespace user_files {
 
 
-/// An override for a configuration property in the form of a key/value pair.
-typedef std::pair< std::string, std::string > override_pair;
+/// Tree node to hold a system user identifier.
+class user_node : public utils::config::typed_leaf_node< utils::passwd::user > {
+public:
+    void push_lua(lutok::state&) const;
+    void set_lua(lutok::state&, const int);
 
-
-/// Collection of key/value string pairs describing test suite properties.
-typedef std::map< std::string, std::string > properties_map;
-
-
-/// Collection of properties for different test suites.
-typedef std::map< std::string, properties_map > test_suites_map;
-
-
-namespace detail {
-
-
-properties_map get_properties(lutok::state&, const std::string&);
-std::string get_string_var(lutok::state&, const std::string&,
-                           const std::string&);
-test_suites_map get_test_suites(lutok::state&, const std::string&);
-utils::optional< utils::passwd::user > get_user_var(lutok::state&,
-                                                    const std::string&);
-utils::optional< utils::passwd::user > get_user_override(const std::string&,
-                                                         const std::string&);
-
-
-}  // namespace detail
-
-
-/// Representation of Kyua configuration files.
-///
-/// This class provides the parser for configuration files and methods to
-/// access the parsed data.
-struct config {
-    /// Name of the system architecture (aka processor type).
-    std::string architecture;
-
-    /// Name of the system platform (aka machine name).
-    std::string platform;
-
-    /// The unprivileged user to run test cases as, if any.
-    utils::optional< utils::passwd::user > unprivileged_user;
-
-    /// Free-form configuration variables for the test suites.
-    test_suites_map test_suites;
-
-    config(const std::string&, const std::string&,
-           const utils::optional< utils::passwd::user >&,
-           const test_suites_map&);
-    static config defaults(void);
-    static config load(const utils::fs::path&);
-
-    config apply_overrides(const std::vector< override_pair >&) const;
-
-    const properties_map& test_suite(const std::string&) const;
-
-    properties_map all_properties(void) const;
-
-    bool operator==(const config&) const;
-    bool operator!=(const config&) const;
+    void set_string(const std::string&);
+    std::string to_string(void) const;
 };
+
+
+utils::config::tree default_config(void);
+utils::config::tree empty_config(void);
+utils::config::tree load_config(const utils::fs::path&);
 
 
 }  // namespace user_files

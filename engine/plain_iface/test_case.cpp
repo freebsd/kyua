@@ -43,6 +43,7 @@ extern "C" {
 #include "utils/fs/operations.hpp"
 #include "utils/optional.ipp"
 
+namespace config = utils::config;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace plain_iface = engine::plain_iface;
@@ -285,7 +286,7 @@ plain_iface::test_case::get_all_properties(void) const
 /// This should not throw any exception: problems detected during execution are
 /// reported as a broken test case result.
 ///
-/// \param unused_config The run-time configuration for the test case.
+/// \param unused_user_config The run-time configuration for the test case.
 /// \param hooks Hooks to introspect the execution of the test case.
 /// \param stdout_path The file into which to store the test case's stdout.
 ///     If none, use a temporary file within the work directory.
@@ -295,7 +296,7 @@ plain_iface::test_case::get_all_properties(void) const
 /// \return The result of the execution.
 engine::test_result
 plain_iface::test_case::execute(
-    const user_files::config& UTILS_UNUSED_PARAM(config),
+    const config::tree& UTILS_UNUSED_PARAM(user_config),
     test_case_hooks& hooks,
     const optional< fs::path >& stdout_path,
     const optional< fs::path >& stderr_path) const

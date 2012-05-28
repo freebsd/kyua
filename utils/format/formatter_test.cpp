@@ -180,6 +180,14 @@ ATF_TEST_CASE_BODY(format__pointer)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(format__bool);
+ATF_TEST_CASE_BODY(format__bool)
+{
+    EQ("true", F("%s") % true);
+    EQ("false", F("%s") % false);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(format__char);
 ATF_TEST_CASE_BODY(format__char)
 {
@@ -249,6 +257,7 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, format__class);
     ATF_ADD_TEST_CASE(tcs, format__pointer);
+    ATF_ADD_TEST_CASE(tcs, format__bool);
     ATF_ADD_TEST_CASE(tcs, format__char);
     ATF_ADD_TEST_CASE(tcs, format__float);
     ATF_ADD_TEST_CASE(tcs, format__int);

@@ -39,21 +39,22 @@
 #include "engine/exceptions.hpp"
 #include "engine/test_program.hpp"
 #include "engine/test_result.hpp"
-#include "engine/user_files/config.hpp"
+#include "utils/config/tree.ipp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/memory.hpp"
+#include "utils/optional.ipp"
 #include "utils/passwd.hpp"
 #include "utils/sanity.hpp"
 #include "utils/units.hpp"
 
 namespace atf_iface = engine::atf_iface;
+namespace config = utils::config;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace passwd = utils::passwd;
 namespace units = utils::units;
-namespace user_files = engine::user_files;
 
 using utils::none;
 using utils::optional;
@@ -699,36 +700,40 @@ atf_iface::test_case::operator==(const test_case& tc) const
 
 /// Checks if all the requirements specified by the test case are met.
 ///
-/// \param config The engine configuration.
+/// \param user_config The engine configuration.
 ///
 /// \return A string describing what is missing; empty if everything is OK.
 std::string
-atf_iface::test_case::check_requirements(const user_files::config& config) const
+atf_iface::test_case::check_requirements(const config::tree& user_config) const
 {
     for (strings_set::const_iterator iter = _pimpl->required_configs.begin();
          iter != _pimpl->required_configs.end(); iter++) {
-        const user_files::properties_map& properties = config.test_suite(
-            test_program().test_suite_name());
-        if (*iter == "unprivileged-user") {
-            if (!config.unprivileged_user)
-                return F("Required configuration property '%s' not defined") %
-                    *iter;
-        } else if (properties.find(*iter) == properties.end())
+        std::string property;
+        if ((*iter) == "unprivileged-user" || (*iter) == "unprivileged_user")
+            property = "unprivileged_user";
+        else
+            property = F("test_suites.%s.%s") %
+                test_program().test_suite_name() % (*iter);
+
+        if (!user_config.is_set(property))
             return F("Required configuration property '%s' not defined") %
-                *iter;
+                (*iter);
     }
 
     if (!_pimpl->allowed_architectures.empty()) {
-        if (_pimpl->allowed_architectures.find(config.architecture) ==
+        const std::string architecture =
+            user_config.lookup< config::string_node >("architecture");
+        if (_pimpl->allowed_architectures.find(architecture) ==
             _pimpl->allowed_architectures.end())
-            return F("Current architecture '%s' not supported") %
-                config.architecture;
+            return F("Current architecture '%s' not supported") % architecture;
     }
 
     if (!_pimpl->allowed_platforms.empty()) {
-        if (_pimpl->allowed_platforms.find(config.platform) ==
+        const std::string platform =
+            user_config.lookup< config::string_node >("platform");
+        if (_pimpl->allowed_platforms.find(platform) ==
             _pimpl->allowed_platforms.end())
-            return F("Current platform '%s' not supported") % config.platform;
+            return F("Current platform '%s' not supported") % platform;
     }
 
     if (!_pimpl->required_user.empty()) {
@@ -738,7 +743,7 @@ atf_iface::test_case::check_requirements(const user_files::config& config) const
                 return "Requires root privileges";
         } else if (_pimpl->required_user == "unprivileged") {
             if (user.is_root())
-                if (!config.unprivileged_user)
+                if (!user_config.is_set("unprivileged_user"))
                     return "Requires an unprivileged user but the "
                         "unprivileged-user configuration variable is not "
                         "defined";
@@ -781,7 +786,7 @@ atf_iface::test_case::check_requirements(const user_files::config& config) const
 /// This should not throw any exception: problems detected during execution are
 /// reported as a broken test case result.
 ///
-/// \param config The run-time configuration for the test case.
+/// \param user_config The run-time configuration for the test case.
 /// \param hooks Hooks to introspect the execution of the test case.
 /// \param stdout_path The file to which to redirect the stdout of the test.
 ///     If none, use a temporary file in the work directory.
@@ -790,7 +795,7 @@ atf_iface::test_case::check_requirements(const user_files::config& config) const
 ///
 /// \return The result of the execution.
 engine::test_result
-atf_iface::test_case::execute(const user_files::config& config,
+atf_iface::test_case::execute(const config::tree& user_config,
                               test_case_hooks& hooks,
                               const optional< fs::path >& stdout_path,
                               const optional< fs::path >& stderr_path) const
@@ -798,5 +803,6 @@ atf_iface::test_case::execute(const user_files::config& config,
     if (_pimpl->fake_result)
         return _pimpl->fake_result.get();
     else
-        return run_test_case(*this, config, hooks, stdout_path, stderr_path);
+        return run_test_case(*this, user_config, hooks, stdout_path,
+                             stderr_path);
 }

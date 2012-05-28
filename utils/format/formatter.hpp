@@ -110,6 +110,7 @@ public:
     operator const std::string&(void) const;
 
     template< typename Type > formatter operator%(const Type&) const;
+    formatter operator%(const bool&) const;
 };
 
 

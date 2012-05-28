@@ -49,6 +49,7 @@ extern "C" {
 #include "engine/test_result.hpp"
 #include "engine/user_files/config.hpp"
 #include "engine/user_files/kyuafile.hpp"
+#include "utils/config/tree.ipp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/env.hpp"
@@ -58,6 +59,7 @@ extern "C" {
 #include "utils/test_utils.hpp"
 
 namespace atf_iface = engine::atf_iface;
+namespace config = utils::config;
 namespace fs = utils::fs;
 namespace passwd = utils::passwd;
 namespace process = utils::process;
@@ -122,7 +124,7 @@ class atf_helper : utils::noncopyable {
     engine::properties_map _metadata;
 
     /// Run-time configuration for the test case.
-    user_files::config _config;
+    config::tree _user_config;
 
 public:
     /// Constructs a new helper.
@@ -135,9 +137,10 @@ public:
         _root(_srcdir),
         _binary_path("runner_helpers"),
         _name(name),
-        _config("mock-architecture", "mock-platform", utils::none,
-                user_files::test_suites_map())
+        _user_config(user_files::default_config())
     {
+        _user_config.set_string("architecture", "mock-architecture");
+        _user_config.set_string("platform", "mock-platform");
     }
 
     /// Provides raw access to the run-time configuration.
@@ -146,10 +149,10 @@ public:
     /// abstracts away the name of the fake test suite.
     ///
     /// \returns A reference to the test case configuration.
-    user_files::config&
+    config::tree&
     config(void)
     {
-        return _config;
+        return _user_config;
     }
 
     /// Sets a test-suite-specific configuration variable for the helper.
@@ -160,7 +163,8 @@ public:
     void
     set_config(const char* variable, const T& value)
     {
-        _config.test_suites["the-suite"][variable] = F("%s") % value;
+        _user_config.set_string(F("test_suites.the-suite.%s") % variable,
+                                F("%s") % value);
     }
 
     /// Sets a metadata variable for the helper.
@@ -218,7 +222,7 @@ public:
         const atf_iface::test_program test_program(_binary_path, _root,
                                                    "the-suite");
         return atf_iface::test_case::from_properties(
-            test_program, _name, _metadata).run(_config, hooks);
+            test_program, _name, _metadata).run(_user_config, hooks);
     }
 };
 
@@ -368,8 +372,8 @@ ATF_TEST_CASE_BODY(run_test_case__allowed_architectures)
 {
     atf_helper helper(this, "create_cookie_in_control_dir");
     helper.set_metadata("require.arch", "i386 x86_64");
-    helper.config().architecture = "powerpc";
-    helper.config().platform = "";
+    helper.config().set_string("architecture", "powerpc");
+    helper.config().set_string("platform", "");
     ATF_REQUIRE(engine::test_result(engine::test_result::skipped, "Current "
                                     "architecture 'powerpc' not supported") ==
                 helper.run());
@@ -385,8 +389,8 @@ ATF_TEST_CASE_BODY(run_test_case__allowed_platforms)
 {
     atf_helper helper(this, "create_cookie_in_control_dir");
     helper.set_metadata("require.machine", "i386 amd64");
-    helper.config().architecture = "";
-    helper.config().platform = "macppc";
+    helper.config().set_string("architecture", "");
+    helper.config().set_string("platform", "macppc");
     ATF_REQUIRE(engine::test_result(engine::test_result::skipped, "Current "
                                     "platform 'macppc' not supported") ==
                 helper.run());
@@ -471,7 +475,7 @@ ATF_TEST_CASE_BODY(run_test_case__required_user__unprivileged__ok)
 {
     atf_helper helper(this, "create_cookie_in_workdir");
     helper.set_metadata("require.user", "unprivileged");
-    helper.config().unprivileged_user = utils::none;
+    ATF_REQUIRE(!helper.config().is_set("unprivileged_user"));
     ATF_REQUIRE(engine::test_result(engine::test_result::passed) ==
                 helper.run());
 }
@@ -486,7 +490,7 @@ ATF_TEST_CASE_BODY(run_test_case__required_user__unprivileged__skip)
 {
     atf_helper helper(this, "create_cookie_in_workdir");
     helper.set_metadata("require.user", "unprivileged");
-    helper.config().unprivileged_user = utils::none;
+    ATF_REQUIRE(!helper.config().is_set("unprivileged_user"));
     ATF_REQUIRE(engine::test_result(engine::test_result::skipped, "Requires "
                                     "an unprivileged user but the "
                                     "unprivileged-user configuration variable "
@@ -505,8 +509,9 @@ ATF_TEST_CASE_BODY(run_test_case__required_user__unprivileged__drop)
 {
     atf_helper helper(this, "check_unprivileged");
     helper.set_metadata("require.user", "unprivileged");
-    helper.config().unprivileged_user = passwd::find_user_by_name(
-        get_config_var("unprivileged-user"));
+    helper.config().set< user_files::user_node >(
+        "unprivileged_user",
+        passwd::find_user_by_name(get_config_var("unprivileged-user")));
     ATF_REQUIRE(engine::test_result(engine::test_result::passed) ==
                 helper.run());
 }

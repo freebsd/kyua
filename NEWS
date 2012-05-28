@@ -27,6 +27,19 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 * Changed most informational messages to automatically wrap on screen
   boundaries.
 
+* Rewrote the configuration file parsing module for extensibility.  This
+  will allow future versions of Kyua to provide additional user-facing
+  options in the configuration file.
+
+  No syntax changes have been made, so existing configuration files
+  (version 1) will continue to be parsed without problems.  There is one
+  little exception though: all variables under the top-level
+  'test_suites' tree must be declared as strings.
+
+  Similarly, the '-v' and '--variable' flags to the command line must
+  now carry a 'test_suites.' prefix when referencing any variables under
+  such tree.
+
 
 Changes in version 0.3
 ======================

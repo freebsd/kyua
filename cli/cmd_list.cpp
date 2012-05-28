@@ -45,9 +45,9 @@
 #include "utils/fs/path.hpp"
 
 namespace cmdline = utils::cmdline;
+namespace config = utils::config;
 namespace fs = utils::fs;
 namespace list_tests = engine::drivers::list_tests;
-namespace user_files = engine::user_files;
 
 
 namespace {
@@ -124,12 +124,12 @@ cli::cmd_list::cmd_list(void) :
 ///
 /// \param ui Object to interact with the I/O of the program.
 /// \param cmdline Representation of the command line to the subcommand.
-/// \param unused_config The runtime configuration of the program.
+/// \param unused_user_config The runtime configuration of the program.
 ///
 /// \return 0 to indicate success.
 int
 cli::cmd_list::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
-                   const user_files::config& UTILS_UNUSED_PARAM(config))
+                   const config::tree& UTILS_UNUSED_PARAM(user_config))
 {
     progress_hooks hooks(ui, cmdline.has_option("verbose"));
     const list_tests::result result = list_tests::drive(

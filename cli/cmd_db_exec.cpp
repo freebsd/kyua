@@ -44,8 +44,8 @@
 #include "utils/sqlite/statement.hpp"
 
 namespace cmdline = utils::cmdline;
+namespace config = utils::config;
 namespace sqlite = utils::sqlite;
-namespace user_files = engine::user_files;
 
 using cli::cmd_db_exec;
 
@@ -156,13 +156,13 @@ cmd_db_exec::cmd_db_exec(void) : cli_command(
 ///
 /// \param ui Object to interact with the I/O of the program.
 /// \param cmdline Representation of the command line to the subcommand.
-/// \param unused_config The runtime configuration of the program.
+/// \param unused_user_config The runtime configuration of the program.
 ///
 /// \return 0 if everything is OK, 1 if the statement is invalid or if there is
 /// any other problem.
 int
 cmd_db_exec::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
-                 const user_files::config& UTILS_UNUSED_PARAM(config))
+                 const config::tree& UTILS_UNUSED_PARAM(user_config))
 {
     try {
         store::backend backend = store::backend::open_rw(

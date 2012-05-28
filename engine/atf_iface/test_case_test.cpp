@@ -36,15 +36,18 @@
 #include "engine/test_program.hpp"
 #include "engine/test_result.hpp"
 #include "engine/user_files/config.hpp"
+#include "utils/config/tree.ipp"
 #include "utils/defs.hpp"
 #include "utils/env.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/memory.hpp"
 #include "utils/passwd.hpp"
+#include "utils/sanity.hpp"
 #include "utils/test_utils.hpp"
 #include "utils/units.hpp"
 
 namespace atf_iface = engine::atf_iface;
+namespace config = utils::config;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace passwd = utils::passwd;
@@ -53,12 +56,6 @@ namespace user_files = engine::user_files;
 
 
 namespace {
-
-
-/// Fake configuration.
-static const user_files::config mock_config(
-    "mock-architecture", "mock-platform", utils::none,
-    user_files::test_suites_map());
 
 
 /// Hooks to ensure that there is no stdout/stderr output.
@@ -597,7 +594,7 @@ ATF_TEST_CASE_BODY(test_case__run__fake)
         test_program, "__internal_name__", "Some description", result);
 
     ensure_silent_hooks hooks;
-    ATF_REQUIRE(result == test_case.run(mock_config, hooks));
+    ATF_REQUIRE(result == test_case.run(user_files::empty_config(), hooks));
 }
 
 
@@ -608,7 +605,8 @@ ATF_TEST_CASE_BODY(check_requirements__none)
     const atf_iface::test_case test_case =
         atf_iface::test_case::from_properties(test_program, "name",
                                               engine::properties_map());
-    ATF_REQUIRE(test_case.check_requirements(mock_config).empty());
+    ATF_REQUIRE(test_case.check_requirements(
+                    user_files::empty_config()).empty());
 }
 
 
@@ -621,10 +619,10 @@ ATF_TEST_CASE_BODY(check_requirements__required_architectures__one_ok)
     const atf_iface::test_case test_case =
         atf_iface::test_case::from_properties(test_program, "name", metadata);
 
-    user_files::config config = mock_config;
-    config.architecture = "x86_64";
-    config.platform = "";
-    ATF_REQUIRE(test_case.check_requirements(config).empty());
+    config::tree user_config = user_files::default_config();
+    user_config.set_string("architecture", "x86_64");
+    user_config.set_string("platform", "");
+    ATF_REQUIRE(test_case.check_requirements(user_config).empty());
 }
 
 
@@ -638,11 +636,11 @@ ATF_TEST_CASE_BODY(check_requirements__required_architectures__one_fail)
     const atf_iface::test_case test_case =
         atf_iface::test_case::from_properties(test_program, "name", metadata);
 
-    user_files::config config = mock_config;
-    config.architecture = "i386";
-    config.platform = "";
+    config::tree user_config = user_files::default_config();
+    user_config.set_string("architecture", "i386");
+    user_config.set_string("platform", "");
     ATF_REQUIRE_MATCH("Current architecture 'i386' not supported",
-                      test_case.check_requirements(config));
+                      test_case.check_requirements(user_config));
 }
 
 
@@ -655,10 +653,10 @@ ATF_TEST_CASE_BODY(check_requirements__required_architectures__many_ok)
     const atf_iface::test_case test_case =
         atf_iface::test_case::from_properties(test_program, "name", metadata);
 
-    user_files::config config = mock_config;
-    config.architecture = "i386";
-    config.platform = "";
-    ATF_REQUIRE(test_case.check_requirements(config).empty());
+    config::tree user_config = user_files::default_config();
+    user_config.set_string("architecture", "i386");
+    user_config.set_string("platform", "");
+    ATF_REQUIRE(test_case.check_requirements(user_config).empty());
 }
 
 
@@ -672,11 +670,11 @@ ATF_TEST_CASE_BODY(check_requirements__required_architectures__many_fail)
     const atf_iface::test_case test_case =
         atf_iface::test_case::from_properties(test_program, "name", metadata);
 
-    user_files::config config = mock_config;
-    config.architecture = "arm";
-    config.platform = "";
+    config::tree user_config = user_files::default_config();
+    user_config.set_string("architecture", "arm");
+    user_config.set_string("platform", "");
     ATF_REQUIRE_MATCH("Current architecture 'arm' not supported",
-                      test_case.check_requirements(config));
+                      test_case.check_requirements(user_config));
 }
 
 
@@ -689,10 +687,10 @@ ATF_TEST_CASE_BODY(check_requirements__required_platforms__one_ok)
     const atf_iface::test_case test_case =
         atf_iface::test_case::from_properties(test_program, "name", metadata);
 
-    user_files::config config = mock_config;
-    config.architecture = "";
-    config.platform = "amd64";
-    ATF_REQUIRE(test_case.check_requirements(config).empty());
+    config::tree user_config = user_files::default_config();
+    user_config.set_string("architecture", "");
+    user_config.set_string("platform", "amd64");
+    ATF_REQUIRE(test_case.check_requirements(user_config).empty());
 }
 
 
@@ -705,11 +703,11 @@ ATF_TEST_CASE_BODY(check_requirements__required_platforms__one_fail)
     const atf_iface::test_case test_case =
         atf_iface::test_case::from_properties(test_program, "name", metadata);
 
-    user_files::config config = mock_config;
-    config.architecture = "";
-    config.platform = "i386";
+    config::tree user_config = user_files::default_config();
+    user_config.set_string("architecture", "");
+    user_config.set_string("platform", "i386");
     ATF_REQUIRE_MATCH("Current platform 'i386' not supported",
-                      test_case.check_requirements(config));
+                      test_case.check_requirements(user_config));
 }
 
 
@@ -722,10 +720,10 @@ ATF_TEST_CASE_BODY(check_requirements__required_platforms__many_ok)
     const atf_iface::test_case test_case =
         atf_iface::test_case::from_properties(test_program, "name", metadata);
 
-    user_files::config config = mock_config;
-    config.architecture = "";
-    config.platform = "i386";
-    ATF_REQUIRE(test_case.check_requirements(config).empty());
+    config::tree user_config = user_files::default_config();
+    user_config.set_string("architecture", "");
+    user_config.set_string("platform", "i386");
+    ATF_REQUIRE(test_case.check_requirements(user_config).empty());
 }
 
 
@@ -738,11 +736,11 @@ ATF_TEST_CASE_BODY(check_requirements__required_platforms__many_fail)
     const atf_iface::test_case test_case =
          atf_iface::test_case::from_properties(test_program, "name", metadata);
 
-    user_files::config config = mock_config;
-    config.architecture = "";
-    config.platform = "shark";
+    config::tree user_config = user_files::default_config();
+    user_config.set_string("architecture", "");
+    user_config.set_string("platform", "shark");
     ATF_REQUIRE_MATCH("Current platform 'shark' not supported",
-                      test_case.check_requirements(config));
+                      test_case.check_requirements(user_config));
 }
 
 
@@ -755,11 +753,11 @@ ATF_TEST_CASE_BODY(check_requirements__required_configs__one_ok)
     const atf_iface::test_case test_case =
         atf_iface::test_case::from_properties(test_program, "name", metadata);
 
-    user_files::config config = mock_config;
-    config.test_suites["suite"]["aaa"] = "value1";
-    config.test_suites["suite"]["my-var"] = "value2";
-    config.test_suites["suite"]["zzz"] = "value3";
-    ATF_REQUIRE(test_case.check_requirements(config).empty());
+    config::tree user_config = user_files::default_config();
+    user_config.set_string("test_suites.suite.aaa", "value1");
+    user_config.set_string("test_suites.suite.my-var", "value2");
+    user_config.set_string("test_suites.suite.zzz", "value3");
+    ATF_REQUIRE(test_case.check_requirements(user_config).empty());
 }
 
 
@@ -767,18 +765,18 @@ ATF_TEST_CASE_WITHOUT_HEAD(check_requirements__required_configs__one_fail);
 ATF_TEST_CASE_BODY(check_requirements__required_configs__one_fail)
 {
     engine::properties_map metadata;
-    metadata["require.config"] = "unprivileged-user";
+    metadata["require.config"] = "unprivileged_user";
     const mock_test_program test_program(fs::path("program"), "suite");
     const atf_iface::test_case test_case =
         atf_iface::test_case::from_properties(test_program, "name", metadata);
 
-    user_files::config config = mock_config;
-    config.test_suites["suite"]["aaa"] = "value1";
-    config.test_suites["suite"]["myvar"] = "value2";
-    config.test_suites["suite"]["zzz"] = "value3";
-    ATF_REQUIRE_MATCH("Required configuration property 'unprivileged-user' not "
+    config::tree user_config = user_files::default_config();
+    user_config.set_string("test_suites.suite.aaa", "value1");
+    user_config.set_string("test_suites.suite.my-var", "value2");
+    user_config.set_string("test_suites.suite.zzz", "value3");
+    ATF_REQUIRE_MATCH("Required configuration property 'unprivileged_user' not "
                       "defined",
-                      test_case.check_requirements(config));
+                      test_case.check_requirements(user_config));
 }
 
 
@@ -791,13 +789,13 @@ ATF_TEST_CASE_BODY(check_requirements__required_configs__many_ok)
     const atf_iface::test_case test_case =
         atf_iface::test_case::from_properties(test_program, "name", metadata);
 
-    user_files::config config = mock_config;
-    config.test_suites["suite"]["aaa"] = "value1";
-    config.test_suites["suite"]["foo"] = "value2";
-    config.test_suites["suite"]["bar"] = "value3";
-    config.test_suites["suite"]["baz"] = "value4";
-    config.test_suites["suite"]["zzz"] = "value5";
-    ATF_REQUIRE(test_case.check_requirements(config).empty());
+    config::tree user_config = user_files::default_config();
+    user_config.set_string("test_suites.suite.aaa", "value1");
+    user_config.set_string("test_suites.suite.foo", "value2");
+    user_config.set_string("test_suites.suite.bar", "value3");
+    user_config.set_string("test_suites.suite.baz", "value4");
+    user_config.set_string("test_suites.suite.zzz", "value5");
+    ATF_REQUIRE(test_case.check_requirements(user_config).empty());
 }
 
 
@@ -806,16 +804,16 @@ ATF_TEST_CASE_BODY(check_requirements__required_configs__many_fail)
 {
     engine::properties_map metadata;
     metadata["require.config"] = "foo bar baz";
-    const mock_test_program test_program(fs::path("program"), "config");
+    const mock_test_program test_program(fs::path("program"), "suite");
     const atf_iface::test_case test_case =
         atf_iface::test_case::from_properties(test_program, "name", metadata);
 
-    user_files::config config = mock_config;
-    config.test_suites["suite"]["aaa"] = "value1";
-    config.test_suites["suite"]["foo"] = "value2";
-    config.test_suites["suite"]["zzz"] = "value3";
+    config::tree user_config = user_files::default_config();
+    user_config.set_string("test_suites.suite.aaa", "value1");
+    user_config.set_string("test_suites.suite.foo", "value2");
+    user_config.set_string("test_suites.suite.zzz", "value3");
     ATF_REQUIRE_MATCH("Required configuration property 'bar' not defined",
-                      test_case.check_requirements(config));
+                      test_case.check_requirements(user_config));
 }
 
 
@@ -828,9 +826,13 @@ ATF_TEST_CASE_BODY(check_requirements__required_configs__special)
     const atf_iface::test_case test_case =
         atf_iface::test_case::from_properties(test_program, "name", metadata);
 
-    user_files::config config = mock_config;
-    config.unprivileged_user = passwd::user("foo", 1, 2);
-    ATF_REQUIRE(test_case.check_requirements(config).empty());
+    config::tree user_config = user_files::default_config();
+    ATF_REQUIRE_MATCH("Required configuration property 'unprivileged-user' "
+                      "not defined",
+                      test_case.check_requirements(user_config));
+    user_config.set< user_files::user_node >(
+        "unprivileged_user", passwd::user("foo", 1, 2));
+    ATF_REQUIRE(test_case.check_requirements(user_config).empty());
 }
 
 
@@ -843,8 +845,11 @@ ATF_TEST_CASE_BODY(check_requirements__required_user__root__ok)
     const atf_iface::test_case test_case =
         atf_iface::test_case::from_properties(test_program, "name", metadata);
 
+    config::tree user_config = user_files::default_config();
+    ATF_REQUIRE(!user_config.is_set("unprivileged_user"));
+
     passwd::set_current_user_for_testing(passwd::user("", 0, 1));
-    ATF_REQUIRE(test_case.check_requirements(mock_config).empty());
+    ATF_REQUIRE(test_case.check_requirements(user_config).empty());
 }
 
 
@@ -859,7 +864,7 @@ ATF_TEST_CASE_BODY(check_requirements__required_user__root__fail)
 
     passwd::set_current_user_for_testing(passwd::user("", 123, 1));
     ATF_REQUIRE_MATCH("Requires root privileges",
-                      test_case.check_requirements(mock_config));
+                      test_case.check_requirements(user_files::empty_config()));
 }
 
 
@@ -873,11 +878,11 @@ ATF_TEST_CASE_BODY(check_requirements__required_user__unprivileged__same)
     const atf_iface::test_case test_case =
         atf_iface::test_case::from_properties(test_program, "name", metadata);
 
-    user_files::config config = mock_config;
-    config.unprivileged_user = utils::none;
+    config::tree user_config = user_files::default_config();
+    ATF_REQUIRE(!user_config.is_set("unprivileged_user"));
 
     passwd::set_current_user_for_testing(passwd::user("", 123, 1));
-    ATF_REQUIRE(test_case.check_requirements(config).empty());
+    ATF_REQUIRE(test_case.check_requirements(user_config).empty());
 }
 
 
@@ -890,11 +895,12 @@ ATF_TEST_CASE_BODY(check_requirements__required_user__unprivileged__ok)
     const atf_iface::test_case test_case =
         atf_iface::test_case::from_properties(test_program, "name", metadata);
 
-    user_files::config config = mock_config;
-    config.unprivileged_user = passwd::user("", 123, 1);
+    config::tree user_config = user_files::default_config();
+    user_config.set< user_files::user_node >(
+        "unprivileged_user", passwd::user("", 123, 1));
 
     passwd::set_current_user_for_testing(passwd::user("", 0, 1));
-    ATF_REQUIRE(test_case.check_requirements(config).empty());
+    ATF_REQUIRE(test_case.check_requirements(user_config).empty());
 }
 
 
@@ -908,12 +914,12 @@ ATF_TEST_CASE_BODY(check_requirements__required_user__unprivileged__fail)
     const atf_iface::test_case test_case =
         atf_iface::test_case::from_properties(test_program, "name", metadata);
 
-    user_files::config config = mock_config;
-    config.unprivileged_user = utils::none;
+    config::tree user_config = user_files::default_config();
+    ATF_REQUIRE(!user_config.is_set("unprivileged_user"));
 
     passwd::set_current_user_for_testing(passwd::user("", 0, 1));
     ATF_REQUIRE_MATCH("Requires.*unprivileged.*unprivileged-user",
-                      test_case.check_requirements(config));
+                      test_case.check_requirements(user_config));
 }
 
 
@@ -928,7 +934,8 @@ ATF_TEST_CASE_BODY(check_requirements__required_files__ok)
     const atf_iface::test_case test_case =
         atf_iface::test_case::from_properties(test_program, "name", metadata);
 
-    ATF_REQUIRE(test_case.check_requirements(mock_config).empty());
+    ATF_REQUIRE(test_case.check_requirements(
+                    user_files::empty_config()).empty());
 }
 
 
@@ -942,7 +949,7 @@ ATF_TEST_CASE_BODY(check_requirements__required_files__fail)
         atf_iface::test_case::from_properties(test_program, "name", metadata);
 
     ATF_REQUIRE_MATCH("'/non-existent/file' not found$",
-                      test_case.check_requirements(mock_config));
+                      test_case.check_requirements(user_files::empty_config()));
 }
 
 
@@ -957,7 +964,8 @@ ATF_TEST_CASE_BODY(check_requirements__required_memory__ok)
     const atf_iface::test_case test_case =
         atf_iface::test_case::from_properties(test_program, "name", metadata);
 
-    ATF_REQUIRE(test_case.check_requirements(mock_config).empty());
+    ATF_REQUIRE(test_case.check_requirements(
+                    user_files::empty_config()).empty());
 }
 
 
@@ -973,7 +981,7 @@ ATF_TEST_CASE_BODY(check_requirements__required_memory__fail)
     if (utils::physical_memory() == 0)
         skip("Don't know how to query the amount of physical memory");
     ATF_REQUIRE_MATCH("Requires 100.00T .*memory",
-                      test_case.check_requirements(mock_config));
+                      test_case.check_requirements(user_files::empty_config()));
 }
 
 
@@ -994,7 +1002,8 @@ ATF_TEST_CASE_BODY(check_requirements__required_programs__ok)
     const atf_iface::test_case test_case =
         atf_iface::test_case::from_properties(test_program, "name", metadata);
 
-    ATF_REQUIRE(test_case.check_requirements(mock_config).empty());
+    ATF_REQUIRE(test_case.check_requirements(
+                    user_files::empty_config()).empty());
 }
 
 
@@ -1009,7 +1018,7 @@ ATF_TEST_CASE_BODY(check_requirements__required_programs__fail_absolute)
         atf_iface::test_case::from_properties(test_program, "name", metadata);
 
     ATF_REQUIRE_MATCH("'/non-existent/program' not found$",
-                      test_case.check_requirements(mock_config));
+                      test_case.check_requirements(user_files::empty_config()));
 }
 
 
@@ -1028,7 +1037,7 @@ ATF_TEST_CASE_BODY(check_requirements__required_programs__fail_relative)
         atf_iface::test_case::from_properties(test_program, "name", metadata);
 
     ATF_REQUIRE_MATCH("'bar' not found in PATH$",
-                      test_case.check_requirements(mock_config));
+                      test_case.check_requirements(user_files::empty_config()));
 }
 
 

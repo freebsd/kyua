@@ -13,6 +13,7 @@ atf_test_program{name="stream_test"}
 atf_test_program{name="units_test"}
 
 include("cmdline/Kyuafile")
+include("config/Kyuafile")
 include("format/Kyuafile")
 include("fs/Kyuafile")
 include("logging/Kyuafile")

@@ -48,8 +48,8 @@
 #endif
 
 namespace cmdline = utils::cmdline;
+namespace config = utils::config;
 namespace fs = utils::fs;
-namespace user_files = engine::user_files;
 
 using cli::cmd_about;
 
@@ -98,13 +98,13 @@ cmd_about::cmd_about(void) : cli_command(
 ///
 /// \param ui Object to interact with the I/O of the program.
 /// \param cmdline Representation of the command line to the subcommand.
-/// \param unused_config The runtime configuration of the program.
+/// \param unused_user_config The runtime configuration of the program.
 ///
 /// \return 0 if everything is OK, 1 if any of the necessary documents cannot be
 /// opened.
 int
 cmd_about::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
-               const user_files::config& UTILS_UNUSED_PARAM(config))
+               const config::tree& UTILS_UNUSED_PARAM(user_config))
 {
     const fs::path docdir(utils::getenv_with_default(
         "KYUA_DOCDIR", KYUA_DOCDIR));

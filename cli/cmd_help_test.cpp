@@ -47,16 +47,13 @@
 #include "utils/test_utils.hpp"
 
 namespace cmdline = utils::cmdline;
+namespace config = utils::config;
 namespace user_files = engine::user_files;
 
 using cli::cmd_help;
 
 
 namespace {
-
-
-/// Instantiation of a default user configuration; syntactic sugar.
-static const user_files::config default_config = user_files::config::defaults();
 
 
 /// Mock command with a simple definition (no options, no arguments).
@@ -78,13 +75,13 @@ public:
     /// \param unused_ui Object to interact with the I/O of the program.
     /// \param unused_cmdline Representation of the command line to the
     ///     subcommand.
-    /// \param unused_config The runtime configuration of the program.
+    /// \param unused_user_config The runtime configuration of the program.
     ///
     /// \return Nothing because this function is never called.
     int
     run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
         const cmdline::parsed_cmdline& UTILS_UNUSED_PARAM(cmdline),
-        const user_files::config& UTILS_UNUSED_PARAM(config))
+        const config::tree& UTILS_UNUSED_PARAM(user_config))
     {
         UNREACHABLE;
     }
@@ -114,13 +111,13 @@ public:
     /// \param unused_ui Object to interact with the I/O of the program.
     /// \param unused_cmdline Representation of the command line to the
     ///     subcommand.
-    /// \param unused_config The runtime configuration of the program.
+    /// \param unused_user_config The runtime configuration of the program.
     ///
     /// \return Nothing because this function is never called.
     int
     run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
         const cmdline::parsed_cmdline& UTILS_UNUSED_PARAM(cmdline),
-        const user_files::config& UTILS_UNUSED_PARAM(config))
+        const config::tree& UTILS_UNUSED_PARAM(user_config))
     {
         UNREACHABLE;
     }
@@ -164,7 +161,8 @@ global_test(const cmdline::options_vector& general_options,
     args.push_back("help");
 
     cmd_help cmd(&general_options, &mock_commands);
-    ATF_REQUIRE_EQ(EXIT_SUCCESS, cmd.main(&ui, args, default_config));
+    ATF_REQUIRE_EQ(EXIT_SUCCESS,
+                   cmd.main(&ui, args, user_files::default_config()));
 
     std::vector< std::string > expected;
 
@@ -240,7 +238,8 @@ ATF_TEST_CASE_BODY(subcommand__simple)
 
     cmd_help cmd(&general_options, &mock_commands);
     cmdline::ui_mock ui;
-    ATF_REQUIRE_EQ(EXIT_SUCCESS, cmd.main(&ui, args, default_config));
+    ATF_REQUIRE_EQ(EXIT_SUCCESS,
+                   cmd.main(&ui, args, user_files::default_config()));
     ATF_REQUIRE(utils::grep_vector("^Usage: progname \\[general_options\\] "
                                    "mock_simple$", ui.out_log()));
     ATF_REQUIRE(!utils::grep_vector("Available.*options", ui.out_log()));
@@ -267,7 +266,8 @@ ATF_TEST_CASE_BODY(subcommand__complex)
 
     cmd_help cmd(&general_options, &mock_commands);
     cmdline::ui_mock ui;
-    ATF_REQUIRE_EQ(EXIT_SUCCESS, cmd.main(&ui, args, default_config));
+    ATF_REQUIRE_EQ(EXIT_SUCCESS,
+                   cmd.main(&ui, args, user_files::default_config()));
     ATF_REQUIRE(utils::grep_vector("^Usage: progname \\[general_options\\] "
                                    "mock_complex \\[command_options\\] "
                                    "\\[arg1 .. argN\\]$", ui.out_log()));
@@ -300,7 +300,7 @@ ATF_TEST_CASE_BODY(subcommand__unknown)
     cmd_help cmd(&general_options, &mock_commands);
     cmdline::ui_mock ui;
     ATF_REQUIRE_THROW_RE(cmdline::usage_error, "command foobar.*not exist",
-                         cmd.main(&ui, args, default_config));
+                         cmd.main(&ui, args, user_files::default_config()));
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE(ui.err_log().empty());
 }
@@ -322,7 +322,7 @@ ATF_TEST_CASE_BODY(invalid_args)
     cmd_help cmd(&general_options, &mock_commands);
     cmdline::ui_mock ui;
     ATF_REQUIRE_THROW_RE(cmdline::usage_error, "Too many arguments",
-                         cmd.main(&ui, args, default_config));
+                         cmd.main(&ui, args, user_files::default_config()));
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE(ui.err_log().empty());
 }

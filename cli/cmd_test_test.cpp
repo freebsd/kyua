@@ -40,16 +40,6 @@ namespace cmdline = utils::cmdline;
 namespace user_files = engine::user_files;
 
 
-namespace {
-
-
-/// Instantiation of a default user configuration; syntactic sugar.
-static const user_files::config default_config = user_files::config::defaults();
-
-
-}  // anonymous namespace
-
-
 ATF_TEST_CASE_WITHOUT_HEAD(invalid_filter);
 ATF_TEST_CASE_BODY(invalid_filter)
 {
@@ -61,7 +51,7 @@ ATF_TEST_CASE_BODY(invalid_filter)
     cli::cmd_test cmd;
     cmdline::ui_mock ui;
     ATF_REQUIRE_THROW_RE(cmdline::error, "Test case.*'incorrect:'.*empty",
-                         cmd.main(&ui, args, default_config));
+                         cmd.main(&ui, args, user_files::default_config()));
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE(ui.err_log().empty());
 }

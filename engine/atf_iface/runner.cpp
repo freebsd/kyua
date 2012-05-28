@@ -42,17 +42,20 @@ extern "C" {
 #include "engine/exceptions.hpp"
 #include "engine/isolation.ipp"
 #include "engine/user_files/config.hpp"
+#include "utils/config/tree.ipp"
 #include "utils/env.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/optional.ipp"
 #include "utils/passwd.hpp"
 
 namespace atf_iface = engine::atf_iface;
+namespace config = utils::config;
 namespace fs = utils::fs;
 namespace passwd = utils::passwd;
 namespace process = utils::process;
 namespace user_files = engine::user_files;
 
+using utils::none;
 using utils::optional;
 
 
@@ -74,42 +77,62 @@ set_owner(const fs::path& path, const passwd::user& owner)
 }
 
 
+/// Extracts the value of 'unprivileged_user' from the configuration.
+///
+/// \param user_config The user configuration.
+///
+/// \return None if the user configuration does not define an unprivileged user,
+/// or the unprivileged user itself if defined.
+static optional< passwd::user >
+get_unprivileged_user(const config::tree& user_config)
+{
+    if (!user_config.is_set("unprivileged_user"))
+        return none;
+    return utils::make_optional(
+        user_config.lookup< user_files::user_node >("unprivileged_user"));
+}
+
+
 /// Check if we can (and should) drop privileges for a test case.
 ///
 /// \param test_case The test case to be run.  Needed to inspect its
 ///     required_user property.
-/// \param config The current configuration.  Needed to query if
+/// \param user_config The current configuration.  Needed to query if
 ///     unprivileged_user is defined or not.
 ///
 /// \return True if we can drop privileges; false otherwise.
 static bool
 can_do_unprivileged(const atf_iface::test_case& test_case,
-                    const user_files::config& config)
+                    const config::tree& user_config)
 {
     return test_case.required_user() == "unprivileged" &&
-        config.unprivileged_user && passwd::current_user().is_root();
+        get_unprivileged_user(user_config) && passwd::current_user().is_root();
 }
 
 
 /// Converts a set of configuration variables to test program flags.
 ///
-/// \param config The configuration variables provided by the user.
+/// \param user_config The configuration variables provided by the user.
 /// \param test_suite The name of the test suite.
 /// \param args [out] The test program arguments in which to add the new flags.
 static void
-config_to_args(const user_files::config& config,
+config_to_args(const config::tree& user_config,
                const std::string& test_suite,
                std::vector< std::string >& args)
 {
-    if (config.unprivileged_user)
+    if (get_unprivileged_user(user_config))
         args.push_back(F("-vunprivileged-user=%s") %
-                       config.unprivileged_user.get().name);
+                       get_unprivileged_user(user_config).get().name);
 
-    const user_files::properties_map& properties = config.test_suite(
-        test_suite);
-    for (user_files::properties_map::const_iterator iter = properties.begin();
-         iter != properties.end(); iter++) {
-        args.push_back(F("-v%s=%s") % (*iter).first % (*iter).second);
+    try {
+        const config::properties_map& properties = user_config.all_properties(
+            F("test_suites.%s") % test_suite, true);
+        for (config::properties_map::const_iterator iter = properties.begin();
+             iter != properties.end(); iter++) {
+            args.push_back(F("-v%s=%s") % (*iter).first % (*iter).second);
+        }
+    } catch (const config::unknown_key_error& unused_error) {
+        // Ignore: not all test suites have entries in the configuration.
     }
 }
 
@@ -144,7 +167,7 @@ class execute_test_case_body {
     fs::path _work_directory;
 
     /// Parameters to configure the runtime environment of the test case.
-    user_files::config _config;
+    config::tree _user_config;
 
     /// Exception-safe version of operator().
     void
@@ -157,14 +180,14 @@ class execute_test_case_body {
         engine::isolate_process(_work_directory);
         utils::setenv("__RUNNING_INSIDE_ATF_RUN", "internal-yes-value");
 
-        if (can_do_unprivileged(_test_case, _config))
-            passwd::drop_privileges(_config.unprivileged_user.get());
+        if (can_do_unprivileged(_test_case, _user_config))
+            passwd::drop_privileges(get_unprivileged_user(_user_config).get());
 
         std::vector< std::string > args;
         args.push_back(F("-r%s") % _result_file);
         args.push_back(F("-s%s") % abs_test_program.branch_path());
-        config_to_args(_config, _test_case.test_program().test_suite_name(),
-                       args);
+        config_to_args(_user_config,
+                       _test_case.test_program().test_suite_name(), args);
         args.push_back(_test_case.name());
         process::exec(abs_test_program, args);
     }
@@ -178,15 +201,15 @@ public:
     ///     the test case execution.
     /// \param work_directory_ The path to the directory to chdir into when
     ///     running the test program.
-    /// \param config_ The configuration variables provided by the user.
+    /// \param user_config_ The configuration variables provided by the user.
     execute_test_case_body(const atf_iface::test_case& test_case_,
                            const fs::path& result_file_,
                            const fs::path& work_directory_,
-                           const user_files::config& config_) :
+                           const config::tree& user_config_) :
         _test_case(test_case_),
         _result_file(result_file_),
         _work_directory(work_directory_),
-        _config(config_)
+        _user_config(user_config_)
     {
     }
 
@@ -215,7 +238,7 @@ class execute_test_case_cleanup {
     fs::path _work_directory;
 
     /// Parameters to configure the runtime environment of the test case.
-    user_files::config _config;
+    config::tree _user_config;
 
 public:
     /// Constructor for the functor.
@@ -224,13 +247,13 @@ public:
     ///     test program that contains it, the test case name and its metadata.
     /// \param work_directory_ The path to the directory to chdir into when
     ///     running the test program.
-    /// \param config_ The values for the current engine configuration.
+    /// \param user_config_ The values for the current engine configuration.
     execute_test_case_cleanup(const atf_iface::test_case& test_case_,
                               const fs::path& work_directory_,
-                              const user_files::config& config_) :
+                              const config::tree& user_config_) :
         _test_case(test_case_),
         _work_directory(work_directory_),
-        _config(config_)
+        _user_config(user_config_)
     {
     }
 
@@ -245,13 +268,13 @@ public:
         engine::isolate_process(_work_directory);
         utils::setenv("__RUNNING_INSIDE_ATF_RUN", "internal-yes-value");
 
-        if (can_do_unprivileged(_test_case, _config))
-            passwd::drop_privileges(_config.unprivileged_user.get());
+        if (can_do_unprivileged(_test_case, _user_config))
+            passwd::drop_privileges(get_unprivileged_user(_user_config).get());
 
         std::vector< std::string > args;
         args.push_back(F("-s%s") % abs_test_program.branch_path());
-        config_to_args(_config, _test_case.test_program().test_suite_name(),
-                       args);
+        config_to_args(_user_config,
+                       _test_case.test_program().test_suite_name(), args);
         args.push_back(F("%s:cleanup") % _test_case.name());
         process::exec(abs_test_program, args);
     }
@@ -264,7 +287,7 @@ class run_test_case_safe {
     const atf_iface::test_case& _test_case;
 
     /// Parameters to configure the runtime environment of the test case.
-    const user_files::config& _config;
+    const config::tree& _user_config;
 
     /// Hooks to introspect the execution of the test case.
     engine::test_case_hooks& _hooks;
@@ -282,19 +305,19 @@ public:
     ///
     /// \param test_case_ The data of the test case, including the path to the
     ///     test program that contains it, the test case name and its metadata.
-    /// \param config_ The values for the current engine configuration.
+    /// \param user_config_ The values for the current engine configuration.
     /// \param hooks_ Hooks to introspect the execution of the test case.
     /// \param stdout_path_ The file into which to store the test case's stdout.
     ///     If none, use a temporary file within the work directory.
     /// \param stderr_path_ The file into which to store the test case's stderr.
     ///     If none, use a temporary file within the work directory.
     run_test_case_safe(const atf_iface::test_case& test_case_,
-                       const user_files::config& config_,
+                       const config::tree& user_config_,
                        engine::test_case_hooks& hooks_,
                        const optional< fs::path >& stdout_path_,
                        const optional< fs::path >& stderr_path_) :
         _test_case(test_case_),
-        _config(config_),
+        _user_config(user_config_),
         _hooks(hooks_),
         _stdout_path(stdout_path_),
         _stderr_path(stderr_path_)
@@ -318,9 +341,9 @@ public:
         const fs::path rundir(workdir / "run");
         fs::mkdir(rundir, 0755);
 
-        if (can_do_unprivileged(_test_case, _config)) {
-            set_owner(workdir, _config.unprivileged_user.get());
-            set_owner(rundir, _config.unprivileged_user.get());
+        if (can_do_unprivileged(_test_case, _user_config)) {
+            set_owner(workdir, get_unprivileged_user(_user_config).get());
+            set_owner(rundir, get_unprivileged_user(_user_config).get());
         }
 
         const fs::path result_file = workdir / "__RESULT__";
@@ -335,7 +358,8 @@ public:
         optional< process::status > body_status;
         try {
             body_status = engine::fork_and_wait(
-                execute_test_case_body(_test_case, result_file, rundir, _config),
+                execute_test_case_body(_test_case, result_file, rundir,
+                                       _user_config),
                 stdout_file, stderr_file, _test_case.timeout());
         } catch (const engine::interrupted_error& e) {
             // Ignore: we want to attempt to run the cleanup function before we
@@ -347,7 +371,7 @@ public:
         if (_test_case.has_cleanup()) {
             LI(F("Running test case cleanup of '%s'") % _test_case.name());
             cleanup_status = engine::fork_and_wait(
-                execute_test_case_cleanup(_test_case, rundir, _config),
+                execute_test_case_cleanup(_test_case, rundir, _user_config),
                 stdout_file, stderr_file, _test_case.timeout());
         } else {
             cleanup_status = process::status::fake_exited(EXIT_SUCCESS);
@@ -374,7 +398,7 @@ public:
 /// want them to crash the runtime system.
 ///
 /// \param test_case The test to execute.
-/// \param config The values for the current engine configuration.
+/// \param user_config The values for the current engine configuration.
 /// \param stdout_path The file into which to store the test case's stdout.
 ///     If none, use a temporary file within the work directory.
 /// \param stderr_path The file into which to store the test case's stderr.
@@ -385,7 +409,7 @@ public:
 /// \throw interrupted_error If the execution has been interrupted by the user.
 engine::test_result
 atf_iface::run_test_case(const atf_iface::test_case& test_case,
-                         const user_files::config& config,
+                         const config::tree& user_config,
                          test_case_hooks& hooks,
                          const optional< fs::path >& stdout_path,
                          const optional< fs::path >& stderr_path)
@@ -393,10 +417,11 @@ atf_iface::run_test_case(const atf_iface::test_case& test_case,
     LI(F("Processing test case '%s'") % test_case.name());
 
     try {
-        const std::string skip_reason = test_case.check_requirements(config);
+        const std::string skip_reason = test_case.check_requirements(
+            user_config);
         if (skip_reason.empty())
             return engine::protected_run(run_test_case_safe(
-                test_case, config, hooks, stdout_path, stderr_path));
+                test_case, user_config, hooks, stdout_path, stderr_path));
         else
             return engine::test_result(engine::test_result::skipped,
                                        skip_reason);

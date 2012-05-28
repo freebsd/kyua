@@ -35,6 +35,7 @@
 #include <string>
 
 #include "engine/test_case.hpp"
+#include "utils/config/tree.hpp"
 #include "utils/fs/path.hpp"
 
 namespace engine {
@@ -45,7 +46,7 @@ namespace plain_iface {
 class test_case : public base_test_case {
     properties_map get_all_properties(void) const;
     virtual test_result execute(
-        const user_files::config&, test_case_hooks&,
+        const utils::config::tree&, test_case_hooks&,
         const utils::optional< utils::fs::path >&,
         const utils::optional< utils::fs::path >&) const;
 

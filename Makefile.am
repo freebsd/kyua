@@ -68,8 +68,10 @@ CHECK_ENVIRONMENT = KYUA_CONFDIR=/non-existent \
                     KYUA_MISCDIR=$(abs_top_srcdir)/misc \
                     KYUA_STOREDIR=$(abs_top_srcdir)/store \
                     PATH=$(abs_top_builddir):$${PATH}
+CHECK_VARS = -v test_suites.kyua.examplesdir="$(abs_top_srcdir)/examples"
 INSTALLCHECK_ENVIRONMENT = KYUA_CONFDIR=/non-existent \
                            PATH=$(prefix)/bin:$${PATH}
+INSTALLCHECK_VARS =
 
 if WITH_ATF
 CHECK_LOCAL += check-kyua
@@ -77,13 +79,14 @@ PHONY_TARGETS += check-kyua
 check-kyua:
 	$(srcdir)/admin/populate-builddir.sh $(top_srcdir) $(top_builddir) \
 	    cleanlist
-	$(CHECK_ENVIRONMENT) $(TESTS_ENVIRONMENT) ./kyua --config=none test
+	$(CHECK_ENVIRONMENT) $(TESTS_ENVIRONMENT) \
+	    ./kyua --config=none $(CHECK_VARS) test
 
 installcheck-local: installcheck-kyua
 PHONY_TARGETS += installcheck-kyua
 installcheck-kyua:
 	cd $(pkgtestsdir) && $(INSTALLCHECK_ENVIRONMENT) $(TESTS_ENVIRONMENT) \
-	    kyua --config=none test
+	    kyua --config=none $(INSTALLCHECK_VARS) test
 else
 dist-hook: forbid-dist
 PHONY_TARGETS += forbid-dist

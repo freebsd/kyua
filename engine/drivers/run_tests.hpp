@@ -44,7 +44,7 @@ extern "C" {
 
 #include "engine/filters.hpp"
 #include "engine/test_case.hpp"
-#include "engine/user_files/config.hpp"
+#include "utils/config/tree.hpp"
 #include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
 
@@ -95,7 +95,7 @@ struct result {
 
 
 result drive(const utils::fs::path&, const utils::fs::path&,
-             const std::set< test_filter >&, const user_files::config&,
+             const std::set< test_filter >&, const utils::config::tree&,
              base_hooks&);
 
 
