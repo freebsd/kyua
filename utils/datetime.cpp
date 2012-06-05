@@ -274,7 +274,11 @@ std::string
 datetime::timestamp::strftime(const std::string& format) const
 {
     ::tm timedata;
-    if (::gmtime_r(&_pimpl->data.tv_sec, &timedata) == NULL)
+    // This conversion to time_t is necessary because tv_sec is not guaranteed
+    // to be a time_t.  For example, it isn't in NetBSD 5.x
+    ::time_t epoch_seconds;
+    epoch_seconds = _pimpl->data.tv_sec;
+    if (::gmtime_r(&epoch_seconds, &timedata) == NULL)
         UNREACHABLE_MSG("gmtime_r(3) did not accept the value returned by "
                         "gettimeofday(2)");
 
