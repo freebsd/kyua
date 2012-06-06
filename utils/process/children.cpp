@@ -29,6 +29,7 @@
 #include "utils/process/children.ipp"
 
 extern "C" {
+#include <sys/stat.h>
 #include <sys/wait.h>
 
 #include <fcntl.h>

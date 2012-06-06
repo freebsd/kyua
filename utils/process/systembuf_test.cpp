@@ -29,6 +29,8 @@
 #include "utils/process/systembuf.hpp"
 
 extern "C" {
+#include <sys/stat.h>
+
 #include <fcntl.h>
 #include <unistd.h>
 }
