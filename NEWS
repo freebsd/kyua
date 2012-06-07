@@ -1,7 +1,7 @@
 Changes in version 0.4
 ======================
 
-STILL UNDER DEVELOPMENT; NOT RELEASED YET.
+Experimental version released on June 6th, 2012.
 
 * Added the 'report-html' command to generate HTML reports of the
   execution of any recorded action.
