@@ -249,18 +249,15 @@ public:
 
     /// Callback executed when a test results is found.
     ///
-    /// \param test_program The test program the result belongs to.
-    /// \param test_case_name The name of the test case.
-    /// \param result The result of the test case.
-    /// \param duration The duration of the test case execution.
+    /// \param iter Container for the test result's data.
     void
-    got_result(const engine::test_program_ptr& test_program,
-               const std::string& test_case_name,
-               const engine::test_result& result,
-               const datetime::delta& duration)
+    got_result(store::results_iterator& iter)
     {
+        const engine::test_program_ptr test_program = iter.test_program();
+        const engine::test_result result = iter.result();
+
         const engine::base_test_case& test_case = *test_program->find(
-            test_case_name);
+            iter.test_case_name());
 
         add_to_summary(test_case, result);
 
@@ -270,7 +267,7 @@ public:
         templates.add_variable("test_program",
                                test_program->absolute_path().str());
         templates.add_variable("result", cli::format_result(result));
-        templates.add_variable("duration", cli::format_delta(duration));
+        templates.add_variable("duration", cli::format_delta(iter.duration()));
 
         generate(templates, "test_result.html", test_case_filename(test_case));
     }
