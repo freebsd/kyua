@@ -32,10 +32,13 @@
 #include "engine/filters.hpp"
 #include "engine/test_program.hpp"
 #include "engine/user_files/kyuafile.hpp"
+#include "utils/optional.ipp"
 
 namespace fs = utils::fs;
 namespace list_tests = engine::drivers::list_tests;
 namespace user_files = engine::user_files;
+
+using utils::none;
 
 
 namespace {
@@ -87,7 +90,7 @@ list_tests::drive(const fs::path& kyuafile_path,
                   base_hooks& hooks)
 {
     const user_files::kyuafile kyuafile = user_files::kyuafile::load(
-        kyuafile_path);
+        kyuafile_path, none);
     filters_state filters(raw_filters);
 
     for (test_programs_vector::const_iterator iter =

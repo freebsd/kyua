@@ -37,11 +37,14 @@
 #include "engine/user_files/kyuafile.hpp"
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/optional.ipp"
 
 namespace config = utils::config;
 namespace fs = utils::fs;
 namespace debug_test = engine::drivers::debug_test;
 namespace user_files = engine::user_files;
+
+using utils::none;
 
 
 namespace {
@@ -114,7 +117,7 @@ debug_test::drive(const fs::path& kyuafile_path, const test_filter& filter,
                   const fs::path& stderr_path)
 {
     const user_files::kyuafile kyuafile = user_files::kyuafile::load(
-        kyuafile_path);
+        kyuafile_path, none);
     const engine::test_case_ptr test_case = find_test_case(filter, kyuafile);
     engine::test_case_hooks dummy_hooks;
     const engine::test_result test_result = test_case->debug(

@@ -40,12 +40,15 @@
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
+#include "utils/optional.ipp"
 
 namespace config = utils::config;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace run_tests = engine::drivers::run_tests;
 namespace user_files = engine::user_files;
+
+using utils::none;
 
 
 namespace {
@@ -161,7 +164,7 @@ run_tests::drive(const fs::path& kyuafile_path,
                  base_hooks& hooks)
 {
     const user_files::kyuafile kyuafile = user_files::kyuafile::load(
-        kyuafile_path);
+        kyuafile_path, none);
     filters_state filters(raw_filters);
     store::backend db = store::backend::open_rw(store_path);
     store::transaction tx = db.start();
