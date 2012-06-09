@@ -30,14 +30,16 @@ info_TEXINFOS = doc/kyua-cli.texi
 doc_kyua_cli_TEXINFOS  = doc/copying.texi
 doc_kyua_cli_TEXINFOS += doc/config.texi
 doc_kyua_cli_TEXINFOS += doc/overview.texi
-doc_kyua_cli_TEXINFOS += doc/paths.texi
 doc_kyua_cli_TEXINFOS += doc/test_interface.texi
 doc_kyua_cli_TEXINFOS += doc/test_suites.texi
 doc_kyua_cli_TEXINFOS += doc/troubleshooting.texi
 doc_kyua_cli_TEXINFOS += doc/usage.texi
+nodist_doc_kyua_cli_TEXINFOS = doc/paths.texi
 
+BUILT_SOURCES = doc/paths.texi
 CLEANFILES = doc/paths.texi
-doc/paths.texi: $(srcdir)/Makefile
+doc/paths.texi: $(builddir)/Makefile
+	test -d doc || mkdir -p doc
 	echo "@set KYUA_CONFDIR $(kyua_confdir)" >doc/paths.texi.tmp
 	echo "@set KYUA_DOCDIR $(docdir)" >>doc/paths.texi.tmp
 	echo "@set KYUA_EGDIR $(pkgdatadir)/examples" >>doc/paths.texi.tmp
