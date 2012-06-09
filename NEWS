@@ -3,7 +3,8 @@ Changes in version 0.5
 
 STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 
-* No changes recorded.
+* Fixed the build when using a "build directory" and a clean source tree
+  from the repository.
 
 
 Changes in version 0.4
