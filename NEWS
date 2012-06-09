@@ -8,6 +8,9 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   where the Kyuafile scripts live.  See the 'Build roots' section in the
   manual for more details.
 
+* Fixed the build when using a "build directory" and a clean source tree
+  from the repository.
+
 
 Changes in version 0.4
 ======================

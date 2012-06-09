@@ -103,7 +103,6 @@ clean-builddir:
 	    rm -f cleanlist; \
 	fi
 
-EXTRA_DIST += Doxyfile
 if WITH_DOXYGEN
 # This should probably be html-local, but it seems better to generate the
 # documentation in all cases to get warnings about missing documentation every
@@ -111,9 +110,9 @@ if WITH_DOXYGEN
 # installed so generating it unconditionally is not a big problem.)
 all-local: api-docs/api-docs.tag
 
-api-docs/api-docs.tag: $(srcdir)/Doxyfile $(SOURCES)
+api-docs/api-docs.tag: $(builddir)/Doxyfile $(SOURCES)
 	mkdir -p api-docs
-	${DOXYGEN} $(srcdir)/Doxyfile 2>&1 | tee api-docs/warnings
+	${DOXYGEN} $(builddir)/Doxyfile 2>&1 | tee api-docs/warnings
 
 CLEAN_TARGETS += clean-api-docs
 clean-api-docs:
