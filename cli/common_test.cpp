@@ -138,6 +138,28 @@ public:
 }  // anonymous namespace
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(build_root_path__default);
+ATF_TEST_CASE_BODY(build_root_path__default)
+{
+    std::map< std::string, std::vector< std::string > > options;
+    const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
+
+    ATF_REQUIRE(!cli::build_root_path(mock_cmdline));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(build_root_path__explicit);
+ATF_TEST_CASE_BODY(build_root_path__explicit)
+{
+    std::map< std::string, std::vector< std::string > > options;
+    options["build-root"].push_back("/my//path");
+    const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
+
+    ATF_REQUIRE(cli::build_root_path(mock_cmdline));
+    ATF_REQUIRE_EQ("/my/path", cli::build_root_path(mock_cmdline).get().str());
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(get_home__ok);
 ATF_TEST_CASE_BODY(get_home__ok)
 {
@@ -385,6 +407,9 @@ ATF_TEST_CASE_BODY(format_test_case_id__test_filter)
 
 ATF_INIT_TEST_CASES(tcs)
 {
+    ATF_ADD_TEST_CASE(tcs, build_root_path__default);
+    ATF_ADD_TEST_CASE(tcs, build_root_path__explicit);
+
     ATF_ADD_TEST_CASE(tcs, get_home__ok);
     ATF_ADD_TEST_CASE(tcs, get_home__missing);
     ATF_ADD_TEST_CASE(tcs, get_home__invalid);

@@ -291,6 +291,30 @@ EOF
 }
 
 
+utils_test_case build_root_flag
+build_root_flag_body() {
+    cat >Kyuafile <<EOF
+syntax("kyuafile", 1)
+test_suite("integration")
+atf_test_program{name="first"}
+atf_test_program{name="second"}
+EOF
+    mkdir build
+    utils_cp_helper expect_all_pass build/first
+    utils_cp_helper simple_all_pass build/second
+
+    cat >expout <<EOF
+This is the stdout of pass
+second:pass  ->  passed
+EOF
+cat >experr <<EOF
+This is the stderr of pass
+EOF
+    atf_check -s exit:0 -o file:expout -e file:experr \
+        kyua debug --build-root=build second:pass
+}
+
+
 utils_test_case kyuafile_flag__ok
 kyuafile_flag__ok_body() {
     cat >Kyuafile <<EOF
@@ -384,6 +408,7 @@ atf_init_test_cases() {
 
     atf_add_test_case config_behavior
 
+    atf_add_test_case build_root_flag
     atf_add_test_case kyuafile_flag__ok
     atf_add_test_case missing_kyuafile
     atf_add_test_case bogus_kyuafile

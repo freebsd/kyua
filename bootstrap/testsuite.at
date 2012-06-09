@@ -53,7 +53,7 @@ atf_test_program{name="atf_helpers"}
         atf_helpers
 ])
 m4_define([RUN_ATF_HELPERS],
-    [HOME=$(pwd) TESTS="$1" kyua --config=none test --store=bootstrap.db])
+    [HOME=$(pwd) TESTS="$1" kyua --config=none test --store=bootstrap.db $2])
 
 
 m4_define([CREATE_PLAIN_HELPERS], [
@@ -171,6 +171,26 @@ AT_TESTED([kyua])
 
 CREATE_ATF_HELPERS
 AT_CHECK([RUN_ATF_HELPERS([fails passes skips])], [1], [stdout], [])
+AT_CHECK([grep "atf_helpers:fails.*failure.*Failed on purpose" stdout],
+         [1], [], [])
+AT_CHECK([grep "atf_helpers:passes.*passed" stdout], [0], [ignore], [])
+AT_CHECK([grep "atf_helpers:skips.*skipped.*Skipped on purpose" stdout],
+         [0], [ignore], [])
+
+AT_CLEANUP
+
+
+AT_SETUP([run tests from build directories])
+AT_TESTED([kyua])
+
+CREATE_ATF_HELPERS
+AT_CHECK([mkdir src], [0], [], [])
+AT_CHECK([mv Kyuafile src], [0], [], [])
+AT_CHECK([mkdir obj], [0], [], [])
+AT_CHECK([mv atf_helpers obj], [0], [], [])
+AT_CHECK([RUN_ATF_HELPERS([fails passes skips],
+                          [--kyuafile=src/Kyuafile --build-root=obj])],
+         [1], [stdout], [])
 AT_CHECK([grep "atf_helpers:fails.*failure.*Failed on purpose" stdout],
          [1], [], [])
 AT_CHECK([grep "atf_helpers:passes.*passed" stdout], [0], [ignore], [])

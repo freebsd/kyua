@@ -53,6 +53,14 @@ using utils::none;
 using utils::optional;
 
 
+/// Standard definition of the option to specify the build root.
+const cmdline::path_option cli::build_root_option(
+    "build-root",
+    "Path to the built test programs, if different from the location of the "
+    "Kyuafile scripts",
+    "path");
+
+
 /// Standard definition of the option to specify a Kyuafile.
 const cmdline::path_option cli::kyuafile_option(
     'k', "kyuafile",
@@ -65,6 +73,24 @@ const cmdline::path_option cli::store_option(
     's', "store",
     "Path to the store database",
     "file", "~/.kyua/store.db");
+
+
+/// Gets the path to the build root, if any.
+///
+/// This is just syntactic sugar to simplify quierying the 'build_root_option'.
+///
+/// \param cmdline The parsed command line.
+///
+/// \return The path to the build root, if specified; none otherwise.
+optional< fs::path >
+cli::build_root_path(const cmdline::parsed_cmdline& cmdline)
+{
+    optional< fs::path > build_root;
+    if (cmdline.has_option(build_root_option.long_name()))
+        build_root = cmdline.get_option< cmdline::path_option >(
+            build_root_option.long_name());
+    return build_root;
+}
 
 
 /// Gets the value of the HOME environment variable with path validation.

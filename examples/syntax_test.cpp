@@ -37,6 +37,7 @@ extern "C" {
 #include "utils/config/tree.ipp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/optional.ipp"
 #include "utils/passwd.hpp"
 #include "utils/test_utils.hpp"
 
@@ -44,6 +45,8 @@ namespace config = utils::config;
 namespace fs = utils::fs;
 namespace passwd = utils::passwd;
 namespace user_files = engine::user_files;
+
+using utils::none;
 
 
 namespace {
@@ -122,8 +125,9 @@ ATF_TEST_CASE_BODY(kyuafile_top__no_matches)
     fs::mkdir(fs::path("root/subdir"), 0755);
 
     const user_files::kyuafile kyuafile = user_files::kyuafile::load(
-        fs::path("root/Kyuafile"));
-    ATF_REQUIRE_EQ(fs::path("root"), kyuafile.root());
+        fs::path("root/Kyuafile"), none);
+    ATF_REQUIRE_EQ(fs::path("root"), kyuafile.source_root());
+    ATF_REQUIRE_EQ(fs::path("root"), kyuafile.build_root());
     ATF_REQUIRE(kyuafile.test_programs().empty());
 }
 
@@ -155,8 +159,9 @@ ATF_TEST_CASE_BODY(kyuafile_top__some_matches)
     utils::create_file(fs::path("root/subdir2/Kyuafile.etc"), "invalid");
 
     const user_files::kyuafile kyuafile = user_files::kyuafile::load(
-        fs::path("root/Kyuafile"));
-    ATF_REQUIRE_EQ(fs::path("root"), kyuafile.root());
+        fs::path("root/Kyuafile"), none);
+    ATF_REQUIRE_EQ(fs::path("root"), kyuafile.source_root());
+    ATF_REQUIRE_EQ(fs::path("root"), kyuafile.build_root());
     ATF_REQUIRE_EQ(2, kyuafile.test_programs().size());
     if (kyuafile.test_programs()[0]->relative_path() == fs::path("subdir1/a")) {
         ATF_REQUIRE_EQ("b", kyuafile.test_programs()[0]->test_suite_name());

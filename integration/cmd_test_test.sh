@@ -624,6 +624,47 @@ EOF
 }
 
 
+utils_test_case build_root_flag
+build_root_flag_body() {
+    utils_install_timestamp_wrapper
+
+    cat >Kyuafile <<EOF
+syntax("kyuafile", 1)
+test_suite("integration")
+atf_test_program{name="first"}
+include("subdir/Kyuafile")
+EOF
+
+    mkdir subdir
+    cat >subdir/Kyuafile <<EOF
+syntax("kyuafile", 1)
+test_suite("integration")
+atf_test_program{name="second"}
+atf_test_program{name="third"}
+EOF
+
+    cat >expout <<EOF
+first:pass  ->  passed  [S.UUUs]
+first:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
+subdir/second:pass  ->  passed  [S.UUUs]
+subdir/second:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
+subdir/third:pass  ->  passed  [S.UUUs]
+subdir/third:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
+
+6/6 passed (0 failed)
+Committed action 1
+EOF
+
+    mkdir build
+    mkdir build/subdir
+    utils_cp_helper simple_all_pass build/first
+    utils_cp_helper simple_all_pass build/subdir/second
+    utils_cp_helper simple_all_pass build/subdir/third
+
+    atf_check -s exit:0 -o file:expout -e empty kyua test --build-root=build
+}
+
+
 utils_test_case kyuafile_flag__no_args
 kyuafile_flag__no_args_body() {
     utils_install_timestamp_wrapper
@@ -909,6 +950,8 @@ atf_init_test_cases() {
     atf_add_test_case store_contents
     atf_add_test_case store_flag__ok
     atf_add_test_case store_flag__fail
+
+    atf_add_test_case build_root_flag
 
     atf_add_test_case kyuafile_flag__no_args
     atf_add_test_case kyuafile_flag__some_args

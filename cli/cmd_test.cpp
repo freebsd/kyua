@@ -103,6 +103,7 @@ public:
 cmd_test::cmd_test(void) : cli_command(
     "test", "[test-program ...]", 0, -1, "Run tests")
 {
+    add_option(build_root_option);
     add_option(kyuafile_option);
     add_option(store_option);
 }
@@ -121,7 +122,7 @@ cmd_test::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
 {
     print_hooks hooks(ui);
     const run_tests::result result = run_tests::drive(
-        kyuafile_path(cmdline), store_path(cmdline),
+        kyuafile_path(cmdline), build_root_path(cmdline), store_path(cmdline),
         parse_filters(cmdline.arguments()), user_config, hooks);
 
     int exit_code;

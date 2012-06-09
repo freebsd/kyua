@@ -47,6 +47,7 @@ extern "C" {
 #include "utils/config/tree.hpp"
 #include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/optional.hpp"
 
 namespace engine {
 class test_result;
@@ -94,9 +95,9 @@ struct result {
 };
 
 
-result drive(const utils::fs::path&, const utils::fs::path&,
-             const std::set< test_filter >&, const utils::config::tree&,
-             base_hooks&);
+result drive(const utils::fs::path&, const utils::optional< utils::fs::path >,
+             const utils::fs::path&, const std::set< test_filter >&,
+             const utils::config::tree&, base_hooks&);
 
 
 }  // namespace run_tests

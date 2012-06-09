@@ -281,6 +281,39 @@ EOF
 }
 
 
+utils_test_case build_root_flag
+build_root_flag_body() {
+    mkdir subdir
+    mkdir build
+    mkdir build/subdir
+
+    cat >Kyuafile <<EOF
+syntax("kyuafile", 1)
+test_suite("top-level")
+include("subdir/Kyuafile")
+atf_test_program{name="first"}
+EOF
+    echo 'invalid' >first
+    utils_cp_helper simple_all_pass build/first
+
+    cat >subdir/Kyuafile <<EOF
+syntax("kyuafile", 1)
+test_suite("in-subdir")
+atf_test_program{name="second"}
+EOF
+    echo 'invalid' >subdir/second
+    utils_cp_helper simple_some_fail build/subdir/second
+
+    cat >expout <<EOF
+subdir/second:fail
+subdir/second:pass
+first:pass
+EOF
+    atf_check -s exit:0 -o file:expout -e empty kyua list --build-root=build \
+        subdir first:pass
+}
+
+
 utils_test_case kyuafile_flag__no_args
 kyuafile_flag__no_args_body() {
     cat >Kyuafile <<EOF
@@ -516,6 +549,8 @@ atf_init_test_cases() {
     atf_add_test_case args_are_relative
 
     atf_add_test_case only_load_used_test_programs
+
+    atf_add_test_case build_root_flag
 
     atf_add_test_case kyuafile_flag__no_args
     atf_add_test_case kyuafile_flag__some_args

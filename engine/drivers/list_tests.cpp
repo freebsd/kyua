@@ -32,10 +32,14 @@
 #include "engine/filters.hpp"
 #include "engine/test_program.hpp"
 #include "engine/user_files/kyuafile.hpp"
+#include "utils/optional.ipp"
 
 namespace fs = utils::fs;
 namespace list_tests = engine::drivers::list_tests;
 namespace user_files = engine::user_files;
+
+using utils::none;
+using utils::optional;
 
 
 namespace {
@@ -77,17 +81,19 @@ list_tests::base_hooks::~base_hooks(void)
 /// Executes the operation.
 ///
 /// \param kyuafile_path The path to the Kyuafile to be loaded.
+/// \param build_root If not none, path to the built test programs.
 /// \param raw_filters The test case filters as provided by the user.
 /// \param hooks The hooks for this execution.
 ///
 /// \returns A structure with all results computed by this driver.
 list_tests::result
 list_tests::drive(const fs::path& kyuafile_path,
+                  const optional< fs::path > build_root,
                   const std::set< engine::test_filter >& raw_filters,
                   base_hooks& hooks)
 {
     const user_files::kyuafile kyuafile = user_files::kyuafile::load(
-        kyuafile_path);
+        kyuafile_path, build_root);
     filters_state filters(raw_filters);
 
     for (test_programs_vector::const_iterator iter =

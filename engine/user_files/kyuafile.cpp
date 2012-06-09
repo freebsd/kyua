@@ -93,14 +93,14 @@ get_table_string(lutok::state& state, const char* field,
 /// \pre state(-1) contains a table representing a test program.
 ///
 /// \param state The Lua state.
-/// \param root The root location of the test suite.
+/// \param build_root The root location of the test suite.
 ///
 /// \return The path to the test program relative to root.
 ///
 /// \throw std::runtime_error If the table definition is invalid or if the test
 ///     program does not exist.
 static fs::path
-get_path(lutok::state& state, const fs::path& root)
+get_path(lutok::state& state, const fs::path& build_root)
 {
     const fs::path path = fs::path(get_table_string(
         state, "name", "Found non-string name for test program"));
@@ -108,7 +108,7 @@ get_path(lutok::state& state, const fs::path& root)
         throw std::runtime_error(F("Got unexpected absolute path for test "
                                    "program '%s'") % path);
 
-    if (!fs::exists(root / path))
+    if (!fs::exists(build_root / path))
         throw std::runtime_error(F("Non-existent test program '%s'") % path);
 
     return path;
@@ -139,22 +139,22 @@ get_test_suite(lutok::state& state, const fs::path& path)
 /// \pre stack(-1) contains a table describing a test program.
 ///
 /// \param state The Lua state.
-/// \param root The directory where the initial Kyuafile is located.
+/// \param build_root The directory where the initial Kyuafile is located.
 ///
 /// \return The ATF test program definition.
 ///
 /// \throw std::runtime_error If there is any problem in the input data.
 /// \throw fs::error If there is an invalid path in the input data.
 static engine::test_program_ptr
-get_atf_test_program(lutok::state& state, const fs::path& root)
+get_atf_test_program(lutok::state& state, const fs::path& build_root)
 {
     PRE(state.is_table());
 
-    const fs::path path = get_path(state, root);
+    const fs::path path = get_path(state, build_root);
     const std::string test_suite = get_test_suite(state, path);
 
     return engine::test_program_ptr(new atf_iface::test_program(
-        path, root, test_suite));
+        path, build_root, test_suite));
 }
 
 
@@ -163,20 +163,20 @@ get_atf_test_program(lutok::state& state, const fs::path& root)
 /// \pre stack(-1) contains a table describing a test program.
 ///
 /// \param state The Lua state.
-/// \param root The directory where the initial Kyuafile is located.
+/// \param build_root The directory where the initial Kyuafile is located.
 ///
 /// \return The plain test program definition.
 ///
 /// \throw std::runtime_error If there is any problem in the input data.
 /// \throw fs::error If there is an invalid path in the input data.
 static engine::test_program_ptr
-get_plain_test_program(lutok::state& state, const fs::path& root)
+get_plain_test_program(lutok::state& state, const fs::path& build_root)
 {
     PRE(state.is_table());
 
     lutok::stack_cleaner cleaner(state);
 
-    const fs::path path = get_path(state, root);
+    const fs::path path = get_path(state, build_root);
     const std::string test_suite = get_test_suite(state, path);
 
     optional< datetime::delta > timeout;
@@ -194,7 +194,7 @@ get_plain_test_program(lutok::state& state, const fs::path& root)
     }
 
     return engine::test_program_ptr(new plain_iface::test_program(
-        path, root, test_suite, timeout));
+        path, build_root, test_suite, timeout));
 }
 
 
@@ -213,14 +213,14 @@ namespace detail {
 /// \pre stack(-1) contains a table describing a test program.
 ///
 /// \param state The Lua state.
-/// \param root The directory where the initial Kyuafile is located.
+/// \param build_root The directory where the initial Kyuafile is located.
 ///
 /// \return The test program definition.
 ///
 /// \throw std::runtime_error If there is any problem in the input data.
 /// \throw fs::error If there is an invalid path in the input data.
 test_program_ptr
-get_test_program(lutok::state& state, const fs::path& root)
+get_test_program(lutok::state& state, const fs::path& build_root)
 {
     PRE(state.is_table());
 
@@ -228,9 +228,9 @@ get_test_program(lutok::state& state, const fs::path& root)
         state, "interface", "Missing test case interface");
 
     if (interface == "atf")
-        return get_atf_test_program(state, root);
+        return get_atf_test_program(state, build_root);
     else if (interface == "plain")
-        return get_plain_test_program(state, root);
+        return get_plain_test_program(state, build_root);
     else
         throw std::runtime_error(F("Unsupported test interface '%s'") %
                                  interface);
@@ -242,7 +242,7 @@ get_test_program(lutok::state& state, const fs::path& root)
 /// \param state The Lua state.
 /// \param expr The expression that evaluates to the table with the test program
 ///     data.
-/// \param root The directory where the initial Kyuafile is located.
+/// \param build_root The directory where the initial Kyuafile is located.
 ///
 /// \return The definition of the test programs.
 ///
@@ -250,7 +250,7 @@ get_test_program(lutok::state& state, const fs::path& root)
 /// \throw fs::error If there is an invalid path in the input data.
 test_programs_vector
 get_test_programs(lutok::state& state, const std::string& expr,
-                  const fs::path& root)
+                  const fs::path& build_root)
 {
     lutok::stack_cleaner cleaner(state);
 
@@ -265,7 +265,7 @@ get_test_programs(lutok::state& state, const std::string& expr,
         if (!state.is_table(-1))
             throw std::runtime_error(F("Expected table in '%s'") % expr);
 
-        test_programs.push_back(get_test_program(state, root));
+        test_programs.push_back(get_test_program(state, build_root));
 
         state.pop(1);
     }
@@ -284,13 +284,18 @@ get_test_programs(lutok::state& state, const std::string& expr,
 /// Use load() to parse a test suite configuration file and construct a
 /// kyuafile object.
 ///
-/// \param root_ The root directory for the test suite represented by the
+/// \param source_root_ The root directory for the test suite represented by the
 ///     Kyuafile.  In other words, the directory containing the first Kyuafile
 ///     processed.
+/// \param build_root_ The root directory for the test programs themselves.  In
+///     general, this will be the same as source_root_.  If different, the
+///     specified directory must follow the exact same layout of source_root_.
 /// \param tps_ Collection of test programs that belong to this test suite.
-user_files::kyuafile::kyuafile(const fs::path& root_,
+user_files::kyuafile::kyuafile(const fs::path& source_root_,
+                               const fs::path& build_root_,
                                const test_programs_vector& tps_) :
-    _root(root_),
+    _source_root(source_root_),
+    _build_root(build_root_),
     _test_programs(tps_)
 {
 }
@@ -299,14 +304,23 @@ user_files::kyuafile::kyuafile(const fs::path& root_,
 /// Parses a test suite configuration file.
 ///
 /// \param file The file to parse.
+/// \param user_build_root If not none, specifies a path to a directory
+///     containing the test programs themselves.  The layout of the build root
+///     must match the layout of the source root (which is just the directory
+///     from which the Kyuafile is being read).
 ///
 /// \return High-level representation of the configuration file.
 ///
 /// \throw load_error If there is any problem loading the file.  This includes
 ///     file access errors and syntax errors.
 user_files::kyuafile
-user_files::kyuafile::load(const utils::fs::path& file)
+user_files::kyuafile::load(const fs::path& file,
+                           const optional< fs::path > user_build_root)
 {
+    const fs::path source_root_ = file.branch_path();
+    const fs::path build_root_ = user_build_root ?
+        user_build_root.get() : source_root_;
+
     test_programs_vector test_programs;
     try {
         lutok::state state;
@@ -323,11 +337,11 @@ user_files::kyuafile::load(const utils::fs::path& file)
 
         test_programs = detail::get_test_programs(state,
                                                   "kyuafile.TEST_PROGRAMS",
-                                                  file.branch_path());
+                                                  build_root_);
     } catch (const std::runtime_error& e) {
         throw load_error(file, e.what());
     }
-    return kyuafile(file.branch_path(), test_programs);
+    return kyuafile(source_root_, build_root_, test_programs);
 }
 
 
@@ -335,9 +349,19 @@ user_files::kyuafile::load(const utils::fs::path& file)
 ///
 /// \return A path.
 const fs::path&
-user_files::kyuafile::root(void) const
+user_files::kyuafile::source_root(void) const
 {
-    return _root;
+    return _source_root;
+}
+
+
+/// Gets the root directory of the test programs.
+///
+/// \return A path.
+const fs::path&
+user_files::kyuafile::build_root(void) const
+{
+    return _build_root;
 }
 
 

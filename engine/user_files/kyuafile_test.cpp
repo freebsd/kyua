@@ -42,12 +42,15 @@
 #include "engine/user_files/exceptions.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
+#include "utils/optional.ipp"
 #include "utils/test_utils.hpp"
 
 namespace atf_iface = engine::atf_iface;
 namespace fs = utils::fs;
 namespace plain_iface = engine::plain_iface;
 namespace user_files = engine::user_files;
+
+using utils::none;
 
 
 /// Checks test program name validation in get_test_program().
@@ -335,8 +338,9 @@ ATF_TEST_CASE_BODY(kyuafile__load__integration)
     utils::create_file(fs::path("dir/1st"));
 
     const user_files::kyuafile suite = user_files::kyuafile::load(
-        fs::path("config"));
-    ATF_REQUIRE_EQ(fs::path("."), suite.root());
+        fs::path("config"), none);
+    ATF_REQUIRE_EQ(fs::path("."), suite.source_root());
+    ATF_REQUIRE_EQ(fs::path("."), suite.build_root());
     ATF_REQUIRE_EQ(5, suite.test_programs().size());
 
     ATF_REQUIRE(typeid(atf_iface::test_program) ==
@@ -391,8 +395,9 @@ ATF_TEST_CASE_BODY(kyuafile__load__current_directory)
     utils::create_file(fs::path("dir/two"));
 
     const user_files::kyuafile suite = user_files::kyuafile::load(
-        fs::path("config"));
-    ATF_REQUIRE_EQ(fs::path("."), suite.root());
+        fs::path("config"), none);
+    ATF_REQUIRE_EQ(fs::path("."), suite.source_root());
+    ATF_REQUIRE_EQ(fs::path("."), suite.build_root());
     ATF_REQUIRE_EQ(2, suite.test_programs().size());
     ATF_REQUIRE_EQ(fs::path("one"), suite.test_programs()[0]->relative_path());
     ATF_REQUIRE_EQ("first", suite.test_programs()[0]->test_suite_name());
@@ -430,14 +435,66 @@ ATF_TEST_CASE_BODY(kyuafile__load__other_directory)
     utils::create_file(fs::path("root/dir/three"));
 
     const user_files::kyuafile suite = user_files::kyuafile::load(
-        fs::path("root/config"));
-    ATF_REQUIRE_EQ(fs::path("root"), suite.root());
+        fs::path("root/config"), none);
+    ATF_REQUIRE_EQ(fs::path("root"), suite.source_root());
+    ATF_REQUIRE_EQ(fs::path("root"), suite.build_root());
     ATF_REQUIRE_EQ(3, suite.test_programs().size());
     ATF_REQUIRE_EQ(fs::path("one"), suite.test_programs()[0]->relative_path());
     ATF_REQUIRE_EQ("abc", suite.test_programs()[0]->test_suite_name());
     ATF_REQUIRE_EQ(fs::path("dir/two"),
                    suite.test_programs()[1]->relative_path());
     ATF_REQUIRE_EQ("def", suite.test_programs()[1]->test_suite_name());
+    ATF_REQUIRE_EQ(fs::path("dir/three"),
+                   suite.test_programs()[2]->relative_path());
+    ATF_REQUIRE_EQ("foo", suite.test_programs()[2]->test_suite_name());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__build_directory);
+ATF_TEST_CASE_BODY(kyuafile__load__build_directory)
+{
+    {
+        fs::mkdir(fs::path("srcdir"), 0755);
+        std::ofstream file("srcdir/config");
+        file << "syntax('kyuafile', 1)\n";
+        file << "test_suite('abc')\n";
+        file << "atf_test_program{name='one'}\n";
+        file << "include('dir/config')\n";
+        file.close();
+    }
+
+    {
+        fs::mkdir(fs::path("srcdir/dir"), 0755);
+        std::ofstream file("srcdir/dir/config");
+        file << "syntax('kyuafile', 1)\n";
+        file << "test_suite('foo')\n";
+        file << "atf_test_program{name='two', test_suite='def'}\n";
+        file << "atf_test_program{name='three'}\n";
+        file.close();
+    }
+
+    fs::mkdir(fs::path("builddir"), 0755);
+    utils::create_file(fs::path("builddir/one"));
+    fs::mkdir(fs::path("builddir/dir"), 0755);
+    utils::create_file(fs::path("builddir/dir/two"));
+    utils::create_file(fs::path("builddir/dir/three"));
+
+    const user_files::kyuafile suite = user_files::kyuafile::load(
+        fs::path("srcdir/config"), utils::make_optional(fs::path("builddir")));
+    ATF_REQUIRE_EQ(fs::path("srcdir"), suite.source_root());
+    ATF_REQUIRE_EQ(fs::path("builddir"), suite.build_root());
+    ATF_REQUIRE_EQ(3, suite.test_programs().size());
+    ATF_REQUIRE_EQ(fs::path("builddir/one").to_absolute(),
+                   suite.test_programs()[0]->absolute_path());
+    ATF_REQUIRE_EQ(fs::path("one"), suite.test_programs()[0]->relative_path());
+    ATF_REQUIRE_EQ("abc", suite.test_programs()[0]->test_suite_name());
+    ATF_REQUIRE_EQ(fs::path("builddir/dir/two").to_absolute(),
+                   suite.test_programs()[1]->absolute_path());
+    ATF_REQUIRE_EQ(fs::path("dir/two"),
+                   suite.test_programs()[1]->relative_path());
+    ATF_REQUIRE_EQ("def", suite.test_programs()[1]->test_suite_name());
+    ATF_REQUIRE_EQ(fs::path("builddir/dir/three").to_absolute(),
+                   suite.test_programs()[2]->absolute_path());
     ATF_REQUIRE_EQ(fs::path("dir/three"),
                    suite.test_programs()[2]->relative_path());
     ATF_REQUIRE_EQ("foo", suite.test_programs()[2]->test_suite_name());
@@ -457,7 +514,7 @@ ATF_TEST_CASE_BODY(kyuafile__load__test_program_not_basename)
     }
 
     ATF_REQUIRE_THROW_RE(user_files::load_error, "./ls.*path components",
-                         user_files::kyuafile::load(fs::path("config")));
+                         user_files::kyuafile::load(fs::path("config"), none));
 }
 
 
@@ -469,7 +526,7 @@ ATF_TEST_CASE_BODY(kyuafile__load__lua_error)
     file.close();
 
     ATF_REQUIRE_THROW(user_files::load_error, user_files::kyuafile::load(
-        fs::path("config")));
+                          fs::path("config"), none));
 }
 
 
@@ -482,7 +539,7 @@ ATF_TEST_CASE_BODY(kyuafile__load__bad_syntax__format)
     file.close();
 
     ATF_REQUIRE_THROW_RE(user_files::load_error, "Unexpected file format 'foo'",
-                         user_files::kyuafile::load(fs::path("config")));
+                         user_files::kyuafile::load(fs::path("config"), none));
 }
 
 
@@ -495,7 +552,7 @@ ATF_TEST_CASE_BODY(kyuafile__load__bad_syntax__version)
     file.close();
 
     ATF_REQUIRE_THROW_RE(user_files::load_error, "Unexpected file version '12'",
-                         user_files::kyuafile::load(fs::path("config")));
+                         user_files::kyuafile::load(fs::path("config"), none));
 }
 
 
@@ -503,7 +560,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__missing_file);
 ATF_TEST_CASE_BODY(kyuafile__load__missing_file)
 {
     ATF_REQUIRE_THROW_RE(user_files::load_error, "Load of 'missing' failed",
-                         user_files::kyuafile::load(fs::path("missing")));
+                         user_files::kyuafile::load(fs::path("missing"), none));
 }
 
 
@@ -521,7 +578,7 @@ ATF_TEST_CASE_BODY(kyuafile__load__missing_test_program)
     utils::create_file(fs::path("one"));
 
     ATF_REQUIRE_THROW_RE(user_files::load_error, "Non-existent.*'two'",
-                         user_files::kyuafile::load(fs::path("config")));
+                         user_files::kyuafile::load(fs::path("config"), none));
 }
 
 
@@ -546,6 +603,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__integration);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__current_directory);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__other_directory);
+    ATF_ADD_TEST_CASE(tcs, kyuafile__load__build_directory);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__test_program_not_basename);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__lua_error);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__bad_syntax__format);

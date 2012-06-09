@@ -39,6 +39,7 @@
 
 #include "engine/test_program.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/optional.hpp"
 
 namespace engine {
 namespace user_files {
@@ -60,20 +61,36 @@ test_programs_vector get_test_programs(lutok::state&, const std::string&,
 /// Test suites are collections of related test programs.  They are described by
 /// a configuration file.
 ///
+/// Test suites have two path references: one to the "source root" and another
+/// one to the "build root".  The source root points to the directory from which
+/// the Kyuafile is being read, and all recursive inclusions are resolved
+/// relative to that directory.  The build root points to the directory
+/// containing the generated test programs and is prepended to the absolute path
+/// of the test programs referenced by the Kyuafiles.  In general, the build
+/// root will be the same as the source root; however, when using a build system
+/// that supports "build directories", providing this option comes in handy to
+/// allow running the tests without much hassle.
+///
 /// This class provides the parser for test suite configuration files and
 /// methods to access the parsed data.
 class kyuafile {
     /// Path to the directory containing the top-level Kyuafile loaded.
-    utils::fs::path _root;
+    utils::fs::path _source_root;
+
+    /// Path to the directory containing the test programs.
+    utils::fs::path _build_root;
 
     /// Collection of the test programs defined in the Kyuafile.
     test_programs_vector _test_programs;
 
 public:
-    explicit kyuafile(const utils::fs::path&, const test_programs_vector&);
-    static kyuafile load(const utils::fs::path&);
+    explicit kyuafile(const utils::fs::path&, const utils::fs::path&,
+                      const test_programs_vector&);
+    static kyuafile load(const utils::fs::path&,
+                         const utils::optional< utils::fs::path >);
 
-    const utils::fs::path& root(void) const;
+    const utils::fs::path& source_root(void) const;
+    const utils::fs::path& build_root(void) const;
     const test_programs_vector& test_programs(void) const;
 };
 

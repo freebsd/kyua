@@ -59,6 +59,7 @@ class test_result;
 namespace cli {
 
 
+extern const utils::cmdline::path_option build_root_option;
 extern const utils::cmdline::path_option kyuafile_option;
 extern const utils::cmdline::path_option store_option;
 extern const utils::cmdline::property_option variable_option;
@@ -78,6 +79,8 @@ typedef std::auto_ptr< cli_command > cli_command_ptr;
 
 utils::optional< utils::fs::path > get_home(void);
 
+utils::optional< utils::fs::path > build_root_path(
+    const utils::cmdline::parsed_cmdline&);
 utils::fs::path kyuafile_path(const utils::cmdline::parsed_cmdline&);
 utils::fs::path store_path(const utils::cmdline::parsed_cmdline&);
 

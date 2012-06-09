@@ -29,6 +29,7 @@
 ACLOCAL_AMFLAGS = -I m4
 
 CHECK_LOCAL =
+CLEAN_TARGETS =
 PHONY_TARGETS =
 
 EXTRA_DIST =
@@ -46,7 +47,6 @@ tests_top_DATA = Kyuafile
 EXTRA_DIST += $(tests_top_DATA)
 endif
 
-include admin/Makefile.am.inc
 include bootstrap/Makefile.am.inc
 include cli/Makefile.am.inc
 include doc/Makefile.am.inc
@@ -77,10 +77,9 @@ if WITH_ATF
 CHECK_LOCAL += check-kyua
 PHONY_TARGETS += check-kyua
 check-kyua:
-	$(srcdir)/admin/populate-builddir.sh $(top_srcdir) $(top_builddir) \
-	    cleanlist
 	$(CHECK_ENVIRONMENT) $(TESTS_ENVIRONMENT) \
-	    ./kyua --config=none $(CHECK_VARS) test
+	    ./kyua --config=none $(CHECK_VARS) test \
+            --kyuafile='$(top_srcdir)/Kyuafile' --build-root='$(top_builddir)'
 
 installcheck-local: installcheck-kyua
 PHONY_TARGETS += installcheck-kyua
@@ -95,13 +94,6 @@ forbid-dist:
 	@false
 endif
 check-local: $(CHECK_LOCAL)
-
-CLEAN_TARGETS = clean-builddir
-clean-builddir:
-	if test -f cleanlist; then \
-	    rm -f $$(cat cleanlist); \
-	    rm -f cleanlist; \
-	fi
 
 if WITH_DOXYGEN
 # This should probably be html-local, but it seems better to generate the

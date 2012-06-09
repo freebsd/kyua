@@ -51,11 +51,15 @@ extern "C" {
 #include "engine/user_files/kyuafile.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/optional.ipp"
 
 namespace atf_iface = engine::atf_iface;
 namespace list_tests = engine::drivers::list_tests;
 namespace user_files = engine::user_files;
 namespace fs = utils::fs;
+
+using utils::none;
+using utils::optional;
 
 
 namespace {
@@ -93,35 +97,67 @@ public:
 };
 
 
-}  // anonymous namespace
-
-
-static list_tests::result
-run_helpers(const atf::tests::tc* tc, list_tests::base_hooks& hooks,
-            const char* filter_program = NULL,
-            const char* filter_test_case = NULL)
+/// Creates a mock test suite.
+///
+/// \param tc Pointer to the caller test case; needed to obtain the srcdir
+///     variable of the caller.
+/// \param source_root Basename of the directory that will contain the
+///     Kyuafiles.
+/// \param build_root Basename of the directory that will contain the test
+///     programs.  May or may not be the same as source_root.
+static void
+create_helpers(const atf::tests::tc* tc, const fs::path& source_root,
+               const fs::path& build_root)
 {
-    ATF_REQUIRE(::mkdir("root", 0755) != -1);
-    ATF_REQUIRE(::mkdir("root/dir", 0755) != -1);
-    ATF_REQUIRE(::symlink(helpers(tc).c_str(), "root/dir/program") != -1);
+    ATF_REQUIRE(::mkdir(source_root.c_str(), 0755) != -1);
+    ATF_REQUIRE(::mkdir((source_root / "dir").c_str(), 0755) != -1);
+    if (source_root != build_root) {
+        ATF_REQUIRE(::mkdir(build_root.c_str(), 0755) != -1);
+        ATF_REQUIRE(::mkdir((build_root / "dir").c_str(), 0755) != -1);
+    }
+    ATF_REQUIRE(::symlink(helpers(tc).c_str(),
+                          (build_root / "dir/program").c_str()) != -1);
 
-    std::ofstream kyuafile1("root/Kyuafile");
+    std::ofstream kyuafile1((source_root / "Kyuafile").c_str());
     kyuafile1 << "syntax('kyuafile', 1)\n";
     kyuafile1 << "include('dir/Kyuafile')\n";
     kyuafile1.close();
 
-    std::ofstream kyuafile2("root/dir/Kyuafile");
+    std::ofstream kyuafile2((source_root / "dir/Kyuafile").c_str());
     kyuafile2 << "syntax('kyuafile', 1)\n";
     kyuafile2 << "atf_test_program{name='program', test_suite='suite-name'}\n";
     kyuafile2.close();
+}
 
+
+/// Runs the mock test suite.
+///
+/// \param source_root Path to the directory that contains the Kyuafiles.
+/// \param build_root If not none, path to the directory that contains the test
+///     programs.
+/// \param hooks The hooks to use during the listing.
+/// \param filter_program If not null, the filter on the test program name.
+/// \param filter_test_case If not null, the filter on the test case name.
+///
+/// \return The result data of the driver.
+static list_tests::result
+run_helpers(const fs::path& source_root,
+            const optional< fs::path > build_root,
+            list_tests::base_hooks& hooks,
+            const char* filter_program = NULL,
+            const char* filter_test_case = NULL)
+{
     std::set< engine::test_filter > filters;
     if (filter_program != NULL && filter_test_case != NULL)
         filters.insert(engine::test_filter(fs::path(filter_program),
                                            filter_test_case));
 
-    return list_tests::drive(fs::path("root/Kyuafile"), filters, hooks);
+    return list_tests::drive(source_root / "Kyuafile", build_root, filters,
+                             hooks);
 }
+
+
+}  // anonymous namespace
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(one_test_case);
@@ -129,7 +165,8 @@ ATF_TEST_CASE_BODY(one_test_case)
 {
     utils::setenv("TESTS", "some_properties");
     capture_hooks hooks;
-    run_helpers(this, hooks);
+    create_helpers(this, fs::path("root"), fs::path("root"));
+    run_helpers(fs::path("root"), none, hooks);
 
     std::set< std::string > exp_test_cases;
     exp_test_cases.insert("dir/program:some_properties");
@@ -142,7 +179,8 @@ ATF_TEST_CASE_BODY(many_test_cases)
 {
     utils::setenv("TESTS", "no_properties some_properties");
     capture_hooks hooks;
-    run_helpers(this, hooks);
+    create_helpers(this, fs::path("root"), fs::path("root"));
+    run_helpers(fs::path("root"), none, hooks);
 
     std::set< std::string > exp_test_cases;
     exp_test_cases.insert("dir/program:no_properties");
@@ -156,9 +194,27 @@ ATF_TEST_CASE_BODY(filter_match)
 {
     utils::setenv("TESTS", "no_properties some_properties");
     capture_hooks hooks;
-    run_helpers(this, hooks, "dir/program", "some_properties");
+    create_helpers(this, fs::path("root"), fs::path("root"));
+    run_helpers(fs::path("root"), none, hooks, "dir/program",
+                "some_properties");
 
     std::set< std::string > exp_test_cases;
+    exp_test_cases.insert("dir/program:some_properties");
+    ATF_REQUIRE(exp_test_cases == hooks.test_cases);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(build_root);
+ATF_TEST_CASE_BODY(build_root)
+{
+    utils::setenv("TESTS", "no_properties some_properties");
+    capture_hooks hooks;
+    create_helpers(this, fs::path("source"), fs::path("build"));
+    run_helpers(fs::path("source"), utils::make_optional(fs::path("build")),
+                hooks);
+
+    std::set< std::string > exp_test_cases;
+    exp_test_cases.insert("dir/program:no_properties");
     exp_test_cases.insert("dir/program:some_properties");
     ATF_REQUIRE(exp_test_cases == hooks.test_cases);
 }
@@ -169,7 +225,8 @@ ATF_TEST_CASE_BODY(crash)
 {
     utils::setenv("TESTS", "crash_list some_properties");
     capture_hooks hooks;
-    run_helpers(this, hooks, "dir/program");
+    create_helpers(this, fs::path("root"), fs::path("root"));
+    run_helpers(fs::path("root"), none, hooks, "dir/program");
 
     std::set< std::string > exp_test_cases;
     exp_test_cases.insert("dir/program:__test_cases_list__");
@@ -182,5 +239,6 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, one_test_case);
     ATF_ADD_TEST_CASE(tcs, many_test_cases);
     ATF_ADD_TEST_CASE(tcs, filter_match);
+    ATF_ADD_TEST_CASE(tcs, build_root);
     ATF_ADD_TEST_CASE(tcs, crash);
 }
