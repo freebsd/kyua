@@ -115,6 +115,7 @@ cli::cmd_list::cmd_list(void) :
     cli_command("list", "[test-program ...]", 0, -1,
                 "Lists test cases and their meta-data")
 {
+    add_option(build_root_option);
     add_option(kyuafile_option);
     add_option(cmdline::bool_option('v', "verbose", "Show properties"));
 }
@@ -133,7 +134,8 @@ cli::cmd_list::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
 {
     progress_hooks hooks(ui, cmdline.has_option("verbose"));
     const list_tests::result result = list_tests::drive(
-        kyuafile_path(cmdline), parse_filters(cmdline.arguments()), hooks);
+        kyuafile_path(cmdline), build_root_path(cmdline),
+        parse_filters(cmdline.arguments()), hooks);
 
     return report_unused_filters(result.unused_filters, ui) ?
         EXIT_FAILURE : EXIT_SUCCESS;

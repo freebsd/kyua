@@ -41,6 +41,7 @@
 #include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/optional.hpp"
 
 namespace engine {
 namespace drivers {
@@ -77,8 +78,8 @@ struct result {
 };
 
 
-result drive(const utils::fs::path&, const std::set< test_filter >&,
-             base_hooks&);
+result drive(const utils::fs::path&, const utils::optional< utils::fs::path >,
+             const std::set< test_filter >&, base_hooks&);
 
 
 }  // namespace list_tests

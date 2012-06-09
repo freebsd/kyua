@@ -3,7 +3,10 @@ Changes in version 0.5
 
 STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 
-* No changes recorded.
+* Added the '--build-root' option to the debug, list and test commands.
+  This allows executing test programs from a different directory than
+  where the Kyuafile scripts live.  See the 'Build roots' section in the
+  manual for more details.
 
 
 Changes in version 0.4

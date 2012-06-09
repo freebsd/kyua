@@ -48,7 +48,7 @@ namespace fs = utils::fs;
 namespace run_tests = engine::drivers::run_tests;
 namespace user_files = engine::user_files;
 
-using utils::none;
+using utils::optional;
 
 
 namespace {
@@ -150,6 +150,7 @@ run_tests::base_hooks::~base_hooks(void)
 /// Executes the operation.
 ///
 /// \param kyuafile_path The path to the Kyuafile to be loaded.
+/// \param build_root If not none, path to the built test programs.
 /// \param store_path The path to the store to be used.
 /// \param raw_filters The test case filters as provided by the user.
 /// \param user_config The end-user configuration properties.
@@ -158,13 +159,14 @@ run_tests::base_hooks::~base_hooks(void)
 /// \returns A structure with all results computed by this driver.
 run_tests::result
 run_tests::drive(const fs::path& kyuafile_path,
+                 const optional< fs::path > build_root,
                  const fs::path& store_path,
                  const std::set< engine::test_filter >& raw_filters,
                  const config::tree& user_config,
                  base_hooks& hooks)
 {
     const user_files::kyuafile kyuafile = user_files::kyuafile::load(
-        kyuafile_path, none);
+        kyuafile_path, build_root);
     filters_state filters(raw_filters);
     store::backend db = store::backend::open_rw(store_path);
     store::transaction tx = db.start();

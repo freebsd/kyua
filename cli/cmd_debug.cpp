@@ -49,6 +49,7 @@ cmd_debug::cmd_debug(void) : cli_command(
     "debug", "test_case", 1, 1,
     "Executes a single test case providing facilities for debugging")
 {
+    add_option(build_root_option);
     add_option(kyuafile_option);
 
     add_option(cmdline::path_option(
@@ -81,7 +82,7 @@ cmd_debug::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
         test_case_name);
 
     const debug_test::result result = debug_test::drive(
-        kyuafile_path(cmdline), filter, user_config,
+        kyuafile_path(cmdline), build_root_path(cmdline), filter, user_config,
         cmdline.get_option< cmdline::path_option >("stdout"),
         cmdline.get_option< cmdline::path_option >("stderr"));
 

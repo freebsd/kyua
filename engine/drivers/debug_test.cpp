@@ -45,6 +45,7 @@ namespace debug_test = engine::drivers::debug_test;
 namespace user_files = engine::user_files;
 
 using utils::none;
+using utils::optional;
 
 
 namespace {
@@ -103,6 +104,7 @@ find_test_case(const engine::test_filter& filter,
 /// Executes the operation.
 ///
 /// \param kyuafile_path The path to the Kyuafile to be loaded.
+/// \param build_root If not none, path to the built test programs.
 /// \param filter The test case filter to locate the test to debug.
 /// \param user_config The end-user configuration properties.
 /// \param stdout_path The name of the file into which to store the test case
@@ -112,12 +114,15 @@ find_test_case(const engine::test_filter& filter,
 ///
 /// \returns A structure with all results computed by this driver.
 debug_test::result
-debug_test::drive(const fs::path& kyuafile_path, const test_filter& filter,
-                  const config::tree& user_config, const fs::path& stdout_path,
+debug_test::drive(const fs::path& kyuafile_path,
+                  const optional< fs::path > build_root,
+                  const test_filter& filter,
+                  const config::tree& user_config,
+                  const fs::path& stdout_path,
                   const fs::path& stderr_path)
 {
     const user_files::kyuafile kyuafile = user_files::kyuafile::load(
-        kyuafile_path, none);
+        kyuafile_path, build_root);
     const engine::test_case_ptr test_case = find_test_case(filter, kyuafile);
     engine::test_case_hooks dummy_hooks;
     const engine::test_result test_result = test_case->debug(
