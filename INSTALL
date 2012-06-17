@@ -87,13 +87,17 @@ To build and install the source package, you must follow these steps:
    'make' on the sources' top directory after configuring them.  No
    problems should arise.
 
-3. Install the program by running 'make install'.  You may need to
+3. Check that the built programs work by running 'make check'.  You do
+   not need to be root to do this, but if you are not, some checks will
+   be skipped.
+
+4. Install the program by running 'make install'.  You may need to
    become root to issue this step.
 
-4. Issue any manual installation steps that may be required.  These are
+5. Issue any manual installation steps that may be required.  These are
    described later in their own section.
 
-5. Check that the installed programs work by running 'make
+6. Check that the installed programs work by running 'make
    installcheck'.  You do not need to be root to do this, but if you are
    not, some checks will be skipped.
 
