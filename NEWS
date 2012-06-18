@@ -11,6 +11,10 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 * Fixed the build when using a "build directory" and a clean source tree
   from the repository.
 
+* Removed the kyuaify.sh script.  This has been renamed to atf2kyua and
+  moved to the kyua-atf-compat module, where it ships as a first-class
+  utility (with a manual page and tests).
+
 
 Changes in version 0.4
 ======================
