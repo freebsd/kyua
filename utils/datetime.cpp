@@ -296,7 +296,8 @@ datetime::timestamp::strftime(const std::string& format) const
 int64_t
 datetime::timestamp::to_microseconds(void) const
 {
-    return _pimpl->data.tv_sec * 1000000 + _pimpl->data.tv_usec;
+    return static_cast< int64_t >(_pimpl->data.tv_sec) * 1000000 +
+        _pimpl->data.tv_usec;
 }
 
 
@@ -306,7 +307,7 @@ datetime::timestamp::to_microseconds(void) const
 int64_t
 datetime::timestamp::to_seconds(void) const
 {
-    return _pimpl->data.tv_sec;
+    return static_cast< int64_t >(_pimpl->data.tv_sec);
 }
 
 
