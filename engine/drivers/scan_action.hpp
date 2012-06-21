@@ -42,6 +42,7 @@ extern "C" {
 }
 
 #include "engine/test_program.hpp"
+#include "store/transaction.hpp"
 #include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"
@@ -69,14 +70,10 @@ public:
 
     /// Callback executed when a test results is found.
     ///
-    /// \param test_program The test program to which the result belongs.
-    /// \param test_case_name The name of the test case.
-    /// \param result The result of the test case.
-    /// \param duration The duration of the test case execution.
-    virtual void got_result(const engine::test_program_ptr& test_program,
-                            const std::string& test_case_name,
-                            const engine::test_result& result,
-                            const utils::datetime::delta& duration) = 0;
+    /// \param iter Container for the test result's data.  Some of the data are
+    ///     lazily fetched, hence why we receive the object instead of the
+    ///     individual elements.
+    virtual void got_result(store::results_iterator& iter) = 0;
 };
 
 

@@ -84,25 +84,20 @@ public:
 
     /// Callback executed when a test results is found.
     ///
-    /// \param test_program The test program this result belongs to.
-    /// \param test_case_name The name of the test case.
-    /// \param result The result of the test case.
-    /// \param duration The duration of the test case execution.
-    void got_result(const engine::test_program_ptr& test_program,
-                    const std::string& test_case_name,
-                    const engine::test_result& result,
-                    const datetime::delta& duration)
+    /// \param iter Container for the test result's data.
+    void got_result(store::results_iterator& iter)
     {
         const char* type;
-        switch (result.type()) {
+        switch (iter.result().type()) {
         case engine::test_result::passed: type = "passed"; break;
         case engine::test_result::skipped: type = "skipped"; break;
         default:
             UNREACHABLE_MSG("Formatting unimplemented");
         }
-        _results.insert(F("%s:%s:%s:%s:%s:%s") % test_program->absolute_path() %
-                        test_case_name % type % result.reason() %
-                        duration.seconds % duration.useconds);
+        _results.insert(F("%s:%s:%s:%s:%s:%s") %
+                        iter.test_program()->absolute_path() %
+                        iter.test_case_name() % type % iter.result().reason() %
+                        iter.duration().seconds % iter.duration().useconds);
     }
 };
 

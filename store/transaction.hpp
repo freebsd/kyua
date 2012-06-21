@@ -100,6 +100,9 @@ public:
     std::string test_case_name(void) const;
     engine::test_result result(void) const;
     utils::datetime::delta duration(void) const;
+
+    std::string stdout_contents(void) const;
+    std::string stderr_contents(void) const;
 };
 
 

@@ -8,6 +8,9 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   where the Kyuafile scripts live.  See the 'Build roots' section in the
   manual for more details.
 
+* Changed the HTML reports to include the stdout and stderr of every
+  test case.
+
 * Fixed the build when using a "build directory" and a clean source tree
   from the repository.
 

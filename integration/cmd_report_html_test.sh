@@ -44,12 +44,14 @@ run_tests() {
 syntax("kyuafile", 1)
 test_suite("integration")
 atf_test_program{name="simple_all_pass"}
+atf_test_program{name="simple_some_fail"}
 EOF
 
     utils_cp_helper simple_all_pass .
+    utils_cp_helper simple_some_fail .
     test -d ../.kyua || mkdir ../.kyua
     kyua=$(which kyua)
-    atf_check -s exit:0 -o save:stdout -e empty env \
+    atf_check -s exit:1 -o save:stdout -e empty env \
         HOME="$(pwd)/home" MOCK="${mock_env}" \
         "${kyua}" test --store=../.kyua/store.db
 
@@ -64,6 +66,42 @@ EOF
 }
 
 
+# Ensure a file has a set of strings.
+#
+# \param file The name of the file to check.
+# \param ... List of strings to check.
+check_in_file() {
+    local file="${1}"; shift
+
+    while [ ${#} -gt 0 ]; do
+        echo "Checking for presence of '${1}' in ${file}"
+        if grep "${1}" "${file}" >/dev/null; then
+            :
+        else
+            atf_fail "Test case output not found in HTML page"
+        fi
+        shift
+    done
+}
+
+
+# Ensure a file does not have a set of strings.
+#
+# \param file The name of the file to check.
+# \param ... List of strings to check.
+check_not_in_file() {
+    local file="${1}"; shift
+
+    while [ ${#} -gt 0 ]; do
+        echo "Checking for lack of '${1}' in ${file}"
+        if grep "${1}" "${file}" >/dev/null; then
+            atf_fail "Spurious test case output found in HTML page"
+        fi
+        shift
+    done
+}
+
+
 utils_test_case default_behavior__ok
 default_behavior__ok_body() {
     utils_install_timestamp_wrapper
@@ -75,8 +113,39 @@ default_behavior__ok_body() {
     test -f html/context.html || atf_fail "Missing context.html"
     test -f html/simple_all_pass_pass.html || atf_fail "Missing test file"
     test -f html/simple_all_pass_skip.html || atf_fail "Missing test file"
+    test -f html/simple_some_fail_fail.html || atf_fail "Missing test file"
+    test -f html/simple_some_fail_pass.html || atf_fail "Missing test file"
 
-    grep "ALL TESTS PASSING" html/index.html || atf-fail "Bad result"
+    grep "1 TESTS FAILING" html/index.html || atf_fail "Bad result"
+
+    check_in_file html/simple_all_pass_pass.html \
+        "This is the stdout of pass" "This is the stderr of pass"
+    check_not_in_file html/simple_all_pass_pass.html \
+        "This is the stdout of skip" "This is the stderr of skip" \
+        "This is the stdout of fail" "This is the stderr of fail" \
+        "Test case did not write anything to"
+
+    check_in_file html/simple_all_pass_skip.html \
+        "This is the stdout of skip" "This is the stderr of skip"
+    check_not_in_file html/simple_all_pass_skip.html \
+        "This is the stdout of pass" "This is the stderr of pass" \
+        "This is the stdout of fail" "This is the stderr of fail" \
+        "Test case did not write anything to"
+
+    check_in_file html/simple_some_fail_fail.html \
+        "This is the stdout of fail" "This is the stderr of fail"
+    check_not_in_file html/simple_some_fail_fail.html \
+        "This is the stdout of pass" "This is the stderr of pass" \
+        "This is the stdout of skip" "This is the stderr of skip" \
+        "Test case did not write anything to"
+
+    check_in_file html/simple_some_fail_pass.html \
+        "Test case did not write anything to stdout" \
+        "Test case did not write anything to stderr"
+    check_not_in_file html/simple_some_fail_pass.html \
+        "This is the stdout of pass" "This is the stderr of pass" \
+        "This is the stdout of skip" "This is the stderr of skip" \
+        "This is the stdout of fail" "This is the stderr of fail"
 }
 
 
