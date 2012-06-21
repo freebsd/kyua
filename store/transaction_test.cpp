@@ -311,6 +311,8 @@ ATF_TEST_CASE_BODY(get_action_results__many)
     const datetime::timestamp end_time2 = datetime::timestamp::from_values(
         2012, 01, 30, 22, 16, 0, 0);
 
+    utils::create_file(fs::path("unused.txt"), "unused file\n");
+
     {
         const plain_iface::test_program test_program(
             fs::path("a/prog1"), fs::path("/the/root"), "suite1", none);
@@ -319,10 +321,15 @@ ATF_TEST_CASE_BODY(get_action_results__many)
 
         const int64_t tp_id = tx.put_test_program(test_program, action_id);
         const int64_t tc_id = tx.put_test_case(test_case, tp_id);
+        utils::create_file(fs::path("prog1.out"), "stdout of prog1\n");
+        tx.put_test_case_file("__STDOUT__", fs::path("prog1.out"), tc_id);
+        tx.put_test_case_file("unused.txt", fs::path("unused.txt"), tc_id);
         tx.put_result(result, tc_id, start_time1, end_time1);
 
         const int64_t tp2_id = tx.put_test_program(test_program, action2_id);
         const int64_t tc2_id = tx.put_test_case(test_case, tp2_id);
+        tx.put_test_case_file("__STDOUT__", fs::path("unused.txt"), tc2_id);
+        tx.put_test_case_file("__STDERR__", fs::path("unused.txt"), tc2_id);
         tx.put_result(result, tc2_id, start_time1, end_time1);
     }
     {
@@ -334,6 +341,9 @@ ATF_TEST_CASE_BODY(get_action_results__many)
 
         const int64_t tp_id = tx.put_test_program(test_program, action_id);
         const int64_t tc_id = tx.put_test_case(test_case, tp_id);
+        utils::create_file(fs::path("prog2.err"), "stderr of prog2\n");
+        tx.put_test_case_file("__STDERR__", fs::path("prog2.err"), tc_id);
+        tx.put_test_case_file("unused.txt", fs::path("unused.txt"), tc_id);
         tx.put_result(result, tc_id, start_time2, end_time2);
     }
 
@@ -345,6 +355,8 @@ ATF_TEST_CASE_BODY(get_action_results__many)
     ATF_REQUIRE_EQ(fs::path("/the/root/a/prog1"),
                    iter.test_program()->absolute_path());
     ATF_REQUIRE_EQ("main", iter.test_case_name());
+    ATF_REQUIRE_EQ("stdout of prog1\n", iter.stdout_contents());
+    ATF_REQUIRE(iter.stderr_contents().empty());
     ATF_REQUIRE(engine::test_result(engine::test_result::passed) ==
                 iter.result());
     ATF_REQUIRE(end_time1 - start_time1 == iter.duration());
@@ -352,6 +364,8 @@ ATF_TEST_CASE_BODY(get_action_results__many)
     ATF_REQUIRE_EQ(fs::path("/the/root/b/prog2"),
                    iter.test_program()->absolute_path());
     ATF_REQUIRE_EQ("main", iter.test_case_name());
+    ATF_REQUIRE(iter.stdout_contents().empty());
+    ATF_REQUIRE_EQ("stderr of prog2\n", iter.stderr_contents());
     ATF_REQUIRE(engine::test_result(engine::test_result::failed, "Some text") ==
                 iter.result());
     ATF_REQUIRE(end_time2 - start_time2 == iter.duration());

@@ -173,6 +173,40 @@ get_atf_test_case(sqlite::database& db, const int64_t test_case_id,
 }
 
 
+/// Gets a file from the database.
+///
+/// \param db The database to query the file from.
+/// \param file_id The identifier of the file to be queried.
+///
+/// \return A textual representation of the file contents.
+///
+/// \throw integrity_error If there is any problem in the loaded data or if the
+///     file cannot be found.
+static std::string
+get_file(sqlite::database& db, const int64_t file_id)
+{
+    sqlite::statement stmt = db.create_statement(
+        "SELECT contents FROM files WHERE file_id == :file_id");
+    stmt.bind(":file_id", file_id);
+    if (!stmt.step())
+        throw store::integrity_error(F("Cannot find referenced file %s") %
+                                     file_id);
+
+    try {
+        const sqlite::blob raw_contents = stmt.safe_column_blob("contents");
+        const std::string contents(
+            static_cast< const char *>(raw_contents.memory), raw_contents.size);
+
+        const bool more = stmt.step();
+        INV(!more);
+
+        return contents;
+    } catch (const sqlite::error& e) {
+        throw store::integrity_error(e.what());
+    }
+}
+
+
 /// Gets all the test cases within a particular test program.
 ///
 /// \param db The database to query the information from.
@@ -599,7 +633,8 @@ struct store::results_iterator::impl {
         _backend(backend_),
         _stmt(backend_.database().create_statement(
             "SELECT test_programs.test_program_id, "
-            "    test_programs.interface, test_cases.name, "
+            "    test_programs.interface, "
+            "    test_cases.test_case_id, test_cases.name, "
             "    test_results.result_type, test_results.result_reason, "
             "    test_results.start_time, test_results.end_time "
             "FROM test_programs NATURAL JOIN test_cases "
@@ -703,6 +738,58 @@ store::results_iterator::duration(void) const
     const datetime::timestamp end_time = column_timestamp(
         _pimpl->_stmt, "end_time");
     return end_time - start_time;
+}
+
+
+/// Gets a file from a test case.
+///
+/// \param db The database to query the file from.
+/// \param test_case_id The identifier of the test case.
+/// \param filename The name of the file to be retrieved.
+///
+/// \return A textual representation of the file contents.
+///
+/// \throw integrity_error If there is any problem in the loaded data or if the
+///     file cannot be found.
+static std::string
+get_test_case_file(sqlite::database& db, const int64_t test_case_id,
+                   const char* filename)
+{
+    sqlite::statement stmt = db.create_statement(
+        "SELECT file_id FROM test_case_files "
+        "WHERE test_case_id == :test_case_id AND file_name == :file_name");
+    stmt.bind(":test_case_id", test_case_id);
+    stmt.bind(":file_name", filename);
+    if (stmt.step())
+        return get_file(db, stmt.safe_column_int64("file_id"));
+    else
+        return "";
+}
+
+
+/// Gets the contents of stdout of a test case.
+///
+/// \return A textual representation of the stdout contents of the test case.
+/// This may of course be empty if the test case didn't print anything.
+std::string
+store::results_iterator::stdout_contents(void) const
+{
+    return get_test_case_file(_pimpl->_backend.database(),
+                              _pimpl->_stmt.safe_column_int64("test_case_id"),
+                              "__STDOUT__");
+}
+
+
+/// Gets the contents of stderr of a test case.
+///
+/// \return A textual representation of the stderr contents of the test case.
+/// This may of course be empty if the test case didn't print anything.
+std::string
+store::results_iterator::stderr_contents(void) const
+{
+    return get_test_case_file(_pimpl->_backend.database(),
+                              _pimpl->_stmt.safe_column_int64("test_case_id"),
+                              "__STDERR__");
 }
 
 
