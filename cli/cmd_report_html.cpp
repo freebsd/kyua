@@ -269,6 +269,17 @@ public:
         templates.add_variable("result", cli::format_result(result));
         templates.add_variable("duration", cli::format_delta(iter.duration()));
 
+        {
+            const std::string stdout_text = iter.stdout_contents();
+            if (!stdout_text.empty())
+                templates.add_variable("stdout", stdout_text);
+        }
+        {
+            const std::string stderr_text = iter.stderr_contents();
+            if (!stderr_text.empty())
+                templates.add_variable("stderr", stderr_text);
+        }
+
         generate(templates, "test_result.html", test_case_filename(test_case));
     }
 

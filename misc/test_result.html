@@ -46,5 +46,21 @@
   <li><a href="context.html">Execution context</a></li>
 </ul>
 
+<h2>Standard output</h2>
+
+%if defined(stdout)
+<pre>%%stdout%%</pre>
+%else
+Test case did not write anything to stdout.
+%endif
+
+<h2>Standard error</h2>
+
+%if defined(stderr)
+<pre>%%stderr%%</pre>
+%else
+Test case did not write anything to stderr.
+%endif
+
 </body>
 </html>

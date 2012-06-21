@@ -47,6 +47,13 @@ p.overall font.bad {
     color: #ff0000;
 }
 
+pre {
+    background-color: #e0f0e0;
+    margin-left: 20px;
+    margin-right: 20px;
+    padding: 5px;
+}
+
 table.tests-count {
     border-width: 1;
     border-style: solid;

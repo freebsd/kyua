@@ -43,8 +43,6 @@ ATF_TEST_CASE_BODY(fail)
 ATF_TEST_CASE_WITHOUT_HEAD(pass);
 ATF_TEST_CASE_BODY(pass)
 {
-    std::cout << "This is the stdout of pass\n";
-    std::cerr << "This is the stderr of pass\n";
 }
 
 
