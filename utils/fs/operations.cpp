@@ -575,7 +575,8 @@ fs::exists(const fs::path& path)
 ///
 /// \param name The file to locate.
 ///
-/// \return The path to the located file or none if it was not found
+/// \return The path to the located file or none if it was not found.  The
+/// returned path is always absolute.
 optional< fs::path >
 fs::find_in_path(const char* name)
 {
@@ -588,8 +589,12 @@ fs::find_in_path(const char* name)
     while (std::getline(path_input, path_component, ':').good()) {
         const fs::path candidate = path_component.empty() ?
             fs::path(name) : (fs::path(path_component) / name);
-        if (exists(candidate))
-            return utils::make_optional(candidate);
+        if (exists(candidate)) {
+            if (candidate.is_absolute())
+                return utils::make_optional(candidate);
+            else
+                return utils::make_optional(candidate.to_absolute());
+        }
     }
     return none;
 }

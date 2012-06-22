@@ -422,7 +422,21 @@ ATF_TEST_CASE_BODY(find_in_path__current_directory)
 
     ATF_REQUIRE(!fs::find_in_path("foo-bar"));
     utils::create_file(fs::path("foo-bar"));
-    ATF_REQUIRE_EQ(fs::path("foo-bar"), fs::find_in_path("foo-bar").get());
+    ATF_REQUIRE_EQ(fs::path("foo-bar").to_absolute(),
+                   fs::find_in_path("foo-bar").get());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(find_in_path__always_absolute);
+ATF_TEST_CASE_BODY(find_in_path__always_absolute)
+{
+    fs::mkdir(fs::path("my-bin"), 0755);
+    utils::setenv("PATH", "my-bin");
+
+    ATF_REQUIRE(!fs::find_in_path("abcd"));
+    utils::create_file(fs::path("my-bin/abcd"));
+    ATF_REQUIRE_EQ(fs::path("my-bin/abcd").to_absolute(),
+                   fs::find_in_path("abcd").get());
 }
 
 
@@ -572,6 +586,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, find_in_path__one_component);
     ATF_ADD_TEST_CASE(tcs, find_in_path__many_components);
     ATF_ADD_TEST_CASE(tcs, find_in_path__current_directory);
+    ATF_ADD_TEST_CASE(tcs, find_in_path__always_absolute);
 
     ATF_ADD_TEST_CASE(tcs, mkdir__ok);
     ATF_ADD_TEST_CASE(tcs, mkdir__enoent);
