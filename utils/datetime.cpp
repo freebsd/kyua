@@ -198,7 +198,8 @@ datetime::timestamp::from_microseconds(const int64_t value)
 /// \param day The day in the [1,30] range.
 /// \param hour The hour in the [0,23] range.
 /// \param minute The minute in the [0,59] range.
-/// \param second The second in the [0,59] range.
+/// \param second The second in the [0,60] range.  Yes, that is 60, which can be
+///     the case on leap seconds.
 /// \param microsecond The microsecond in the [0,999999] range.
 ///
 /// \return A new timestamp.
@@ -213,7 +214,7 @@ datetime::timestamp::from_values(const int year, const int month,
     PRE(day >= 1 && day <= 30);
     PRE(hour >= 0 && hour <= 23);
     PRE(minute >= 0 && minute <= 59);
-    PRE(second >= 0 && second <= 59);
+    PRE(second >= 0 && second <= 60);
     PRE(microsecond >= 0 && microsecond <= 999999);
 
     // The code below is quite convoluted.  The problem is that we can't assume

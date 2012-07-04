@@ -261,6 +261,17 @@ ATF_TEST_CASE_BODY(timestamp__to_seconds)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(timestamp__leap_second);
+ATF_TEST_CASE_BODY(timestamp__leap_second)
+{
+    // This is actually a test for from_values(), which is the function that
+    // includes assertions to validate the input parameters.
+    const datetime::timestamp ts1 = datetime::timestamp::from_values(
+        2012, 6, 30, 23, 59, 60, 543);
+    ATF_REQUIRE_EQ(1341100800, ts1.to_seconds());
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(timestamp__equals);
 ATF_TEST_CASE_BODY(timestamp__equals)
 {
@@ -313,6 +324,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, timestamp__strftime);
     ATF_ADD_TEST_CASE(tcs, timestamp__to_microseconds);
     ATF_ADD_TEST_CASE(tcs, timestamp__to_seconds);
+    ATF_ADD_TEST_CASE(tcs, timestamp__leap_second);
     ATF_ADD_TEST_CASE(tcs, timestamp__equals);
     ATF_ADD_TEST_CASE(tcs, timestamp__differs);
     ATF_ADD_TEST_CASE(tcs, timestamp__subtraction);
