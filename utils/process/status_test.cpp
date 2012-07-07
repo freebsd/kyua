@@ -82,7 +82,9 @@ fork_and_wait(void (*hook)(void))
     } else {
         int stat_loc;
         ATF_REQUIRE(::waitpid(pid, &stat_loc, 0) != -1);
-        return status(stat_loc);
+        const status s = status(pid, stat_loc);
+        ATF_REQUIRE_EQ(pid, s.dead_pid());
+        return s;
     }
 }
 
@@ -94,6 +96,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(fake_exited)
 ATF_TEST_CASE_BODY(fake_exited)
 {
     const status fake = status::fake_exited(123);
+    ATF_REQUIRE_EQ(-1, fake.dead_pid());
     ATF_REQUIRE(fake.exited());
     ATF_REQUIRE_EQ(123, fake.exitstatus());
     ATF_REQUIRE(!fake.signaled());
@@ -104,6 +107,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(fake_signaled)
 ATF_TEST_CASE_BODY(fake_signaled)
 {
     const status fake = status::fake_signaled(567, true);
+    ATF_REQUIRE_EQ(-1, fake.dead_pid());
     ATF_REQUIRE(!fake.exited());
     ATF_REQUIRE(fake.signaled());
     ATF_REQUIRE_EQ(567, fake.termsig());

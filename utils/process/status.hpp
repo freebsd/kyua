@@ -42,6 +42,12 @@ namespace process {
 
 /// Representation of the termination status of a process.
 class status {
+    /// The PID of the process that generated this status.
+    ///
+    /// Note that the process has exited already and been awaited for, so the
+    /// PID cannot be used to address the process.
+    int _dead_pid;
+
     /// The exit status of the process, if it exited cleanly.
     optional< int > _exited;
 
@@ -51,9 +57,11 @@ class status {
     status(const optional< int >&, const optional< std::pair< int, bool > >&);
 
 public:
-    status(int);
+    status(const int, const int);
     static status fake_exited(const int);
     static status fake_signaled(const int, const bool);
+
+    int dead_pid(void) const;
 
     bool exited(void) const;
     int exitstatus(void) const;
