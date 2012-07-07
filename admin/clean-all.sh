@@ -52,6 +52,7 @@ rm -f mkinstalldirs
 rm -f kyua-*.tar.gz
 
 # admin directory.
+rm -f admin/ar-lib
 rm -f admin/compile
 rm -f admin/config.guess
 rm -f admin/config.sub
