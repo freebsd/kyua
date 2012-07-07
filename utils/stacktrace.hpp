@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2012 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,50 +26,39 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file utils/test_utils.hpp
-/// Helper utilities for test programs.
-///
-/// The routines provided in this file are only supposed to be used from test
-/// programs.  They rely on atf-c++ being linked in and assume they are being
-/// called from within test cases.  In particular, none of these routines bother
-/// to report errors to the caller: any internal, unexpected error causes the
-/// test case to fail immediately.
+/// \file utils/stacktrace.hpp
+/// Utilities to gather a stacktrace of a crashing binary.
 
-#if !defined(UTILS_TEST_UTILS_HPP)
-#define UTILS_TEST_UTILS_HPP
+#if !defined(ENGINE_STACKTRACE_HPP)
+#define ENGINE_STACKTRACE_HPP
 
-#include <string>
-#include <vector>
+#include <ostream>
 
 #include "utils/fs/path.hpp"
+#include "utils/optional.hpp"
+#include "utils/process/status.hpp"
 
 namespace utils {
 
 
-/// Operating systems recognized by the helper test routines.
-enum os_type {
-    os_unsupported = 0,
-    os_freebsd,
-    os_linux,
-    os_netbsd,
-    os_sunos,
-};
+extern const char* builtin_gdb;
 
+utils::optional< utils::fs::path > find_gdb(void);
 
-/// The current operating system.
-extern os_type current_os;
+utils::optional< utils::fs::path > find_core(const utils::fs::path&,
+                                             const utils::process::status&,
+                                             const utils::fs::path&);
 
+void unlimit_core_size(void);
 
-void cat_file(const std::string&, const fs::path&);
-void copy_file(const fs::path&, const fs::path&);
-void create_file(const fs::path&, const std::string& = "");
-bool grep_file(const std::string&, const fs::path&);
-bool grep_string(const std::string&, const std::string&);
-bool grep_vector(const std::string&, const std::vector< std::string >&);
-void mount_tmpfs(const fs::path&);
-std::vector< std::string > read_lines(const fs::path&);
+void dump_stacktrace(const utils::fs::path&, const utils::process::status&,
+                     const utils::fs::path&, std::ostream&);
+
+void dump_stacktrace_if_available(
+    const utils::fs::path&, const utils::optional< utils::process::status >&,
+    const utils::fs::path&, const utils::fs::path&);
 
 
 }  // namespace utils
 
-#endif  // !defined(UTILS_TEST_UTILS_HPP)
+#endif  // !defined(ENGINE_STACKTRACE_HPP)

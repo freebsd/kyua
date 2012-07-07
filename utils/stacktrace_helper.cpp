@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2012 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,50 +26,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file utils/test_utils.hpp
-/// Helper utilities for test programs.
-///
-/// The routines provided in this file are only supposed to be used from test
-/// programs.  They rely on atf-c++ being linked in and assume they are being
-/// called from within test cases.  In particular, none of these routines bother
-/// to report errors to the caller: any internal, unexpected error causes the
-/// test case to fail immediately.
-
-#if !defined(UTILS_TEST_UTILS_HPP)
-#define UTILS_TEST_UTILS_HPP
-
-#include <string>
-#include <vector>
-
-#include "utils/fs/path.hpp"
-
-namespace utils {
+#include <cstdlib>
 
 
-/// Operating systems recognized by the helper test routines.
-enum os_type {
-    os_unsupported = 0,
-    os_freebsd,
-    os_linux,
-    os_netbsd,
-    os_sunos,
-};
-
-
-/// The current operating system.
-extern os_type current_os;
-
-
-void cat_file(const std::string&, const fs::path&);
-void copy_file(const fs::path&, const fs::path&);
-void create_file(const fs::path&, const std::string& = "");
-bool grep_file(const std::string&, const fs::path&);
-bool grep_string(const std::string&, const std::string&);
-bool grep_vector(const std::string&, const std::vector< std::string >&);
-void mount_tmpfs(const fs::path&);
-std::vector< std::string > read_lines(const fs::path&);
-
-
-}  // namespace utils
-
-#endif  // !defined(UTILS_TEST_UTILS_HPP)
+int
+main(void)
+{
+    std::abort();
+}
