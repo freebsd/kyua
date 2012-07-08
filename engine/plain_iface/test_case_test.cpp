@@ -68,6 +68,29 @@ using utils::optional;
 namespace {
 
 
+/// Hooks to retrieve stdout and stderr.
+class fetch_output_hooks : public engine::test_case_hooks {
+public:
+    /// Copies the stdout of the test case outside of its work directory.
+    ///
+    /// \param file The location of the test case's stdout.
+    void
+    got_stdout(const utils::fs::path& file)
+    {
+        utils::copy_file(file, fs::path("helper-stdout.txt"));
+    }
+
+    /// Copies the stderr of the test case outside of its work directory.
+    ///
+    /// \param file The location of the test case's stderr.
+    void
+    got_stderr(const utils::fs::path& file)
+    {
+        utils::copy_file(file, fs::path("helper-stderr.txt"));
+    }
+};
+
+
 /// Simplifies the execution of the helper test cases.
 class plain_helper {
     /// Path to the test program's source directory.
@@ -147,8 +170,8 @@ public:
         const plain_iface::test_program test_program(_binary_path, _root,
                                                      "unit-tests", _timeout);
         const plain_iface::test_case test_case(test_program);
-        engine::test_case_hooks dummy_hooks;
-        return test_case.run(user_config, dummy_hooks);
+        fetch_output_hooks fetcher;
+        return test_case.run(user_config, fetcher);
     }
 };
 
@@ -310,6 +333,23 @@ ATF_TEST_CASE_BODY(run__timeout)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(run__stacktrace);
+ATF_TEST_CASE_BODY(run__stacktrace)
+{
+    plain_helper helper(this, "crash");
+    helper.set("CONTROL_DIR", fs::current_path());
+
+    const engine::test_result result = plain_helper(this, "crash").run();
+    ATF_REQUIRE(engine::test_result::broken == result.type());
+    ATF_REQUIRE_MATCH(F("Received signal %s") % SIGABRT, result.reason());
+
+    ATF_REQUIRE(!utils::grep_file("attempting to gather stack trace",
+                                  fs::path("helper-stdout.txt")));
+    ATF_REQUIRE( utils::grep_file("attempting to gather stack trace",
+                                  fs::path("helper-stderr.txt")));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(run__missing_test_program);
 ATF_TEST_CASE_BODY(run__missing_test_program)
 {
@@ -337,5 +377,6 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, run__kill_children);
     ATF_ADD_TEST_CASE(tcs, run__isolation);
     ATF_ADD_TEST_CASE(tcs, run__timeout);
+    ATF_ADD_TEST_CASE(tcs, run__stacktrace);
     ATF_ADD_TEST_CASE(tcs, run__missing_test_program);
 }

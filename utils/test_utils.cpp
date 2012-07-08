@@ -29,6 +29,8 @@
 #include "utils/test_utils.hpp"
 
 extern "C" {
+#include <sys/stat.h>
+
 #include <regex.h>
 #include <unistd.h>
 }
@@ -83,6 +85,40 @@ utils::cat_file(const std::string& prefix, const fs::path& path)
     while (std::getline(input, line).good()) {
         std::cout << prefix << line << "\n";
     }
+}
+
+
+/// Copies a file, preserving its permissions.
+///
+/// \param source Path to the source file.
+/// \param destination Path to the destination file.
+void
+utils::copy_file(const fs::path& source, const fs::path& destination)
+{
+    std::ifstream input(source.c_str());
+    if (!input)
+        ATF_FAIL(F("Failed to open source file %s") % source);
+
+    std::ofstream output(destination.c_str());
+    if (!output)
+        ATF_FAIL(F("Failed to open destination file %s") % destination);
+
+    char buffer[1024];
+    while (!input.eof()) {
+        input.read(buffer, sizeof(buffer));
+        if (!input.eof() && (input.bad() || input.fail()))
+            ATF_FAIL(F("Failed to read from source file %s") % source);
+
+        output.write(buffer, input.gcount());
+        if (output.bad() || output.fail())
+            ATF_FAIL(F("Failed to write to destination file %s") % destination);
+    }
+
+    struct ::stat sb;
+    if (::stat(source.c_str(), &sb) == -1)
+        ATF_FAIL(F("Cannot stat source file %s") % source);
+    if (::chmod(destination.c_str(), sb.st_mode) == -1)
+        ATF_FAIL(F("Cannot set mode of destination file %s") % destination);
 }
 
 

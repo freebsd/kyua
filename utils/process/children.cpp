@@ -168,7 +168,7 @@ retry:
         // Otherwise, just ignore the error and continue.  It should not have
         // happened.
     }
-    return process::status(stat_loc);
+    return process::status(pid, stat_loc);
 }
 
 

@@ -47,8 +47,10 @@ using utils::optional;
 
 /// Constructs a new status object based on the status value of waitpid(2).
 ///
+/// \param dead_pid_ The PID of the process this status belonged to.
 /// \param stat_loc The status value returnd by waitpid(2).
-process::status::status(int stat_loc) :
+process::status::status(const int dead_pid_, const int stat_loc) :
+    _dead_pid(dead_pid_),
     _exited(WIFEXITED(stat_loc) ?
             optional< int >(WEXITSTATUS(stat_loc)) : none),
     _signaled(WIFSIGNALED(stat_loc) ?
@@ -66,6 +68,7 @@ process::status::status(int stat_loc) :
 ///     the process dumped core or not.
 process::status::status(const optional< int >& exited_,
                         const optional< std::pair< int, bool > >& signaled_) :
+    _dead_pid(-1),
     _exited(exited_),
     _signaled(signaled_)
 {
@@ -95,6 +98,20 @@ process::status::fake_signaled(const int termsig_, const bool coredump_)
 {
     return status(none, utils::make_optional(std::make_pair(termsig_,
                                                             coredump_)));
+}
+
+
+/// Returns the PID of the process this status was taken from.
+///
+/// Please note that the process is already dead and gone from the system.  This
+/// PID can only be used for informational reasons and not to address the
+/// process in any way.
+///
+/// \return The PID of the original process.
+int
+process::status::dead_pid(void) const
+{
+    return _dead_pid;
 }
 
 

@@ -11,6 +11,9 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 * Changed the HTML reports to include the stdout and stderr of every
   test case.
 
+* Issue 15: Added automatic stacktrace gathering of crashing test cases.
+  This relies on GDB and is a best-effort operation.
+
 * Fixed the build when using a "build directory" and a clean source tree
   from the repository.
 

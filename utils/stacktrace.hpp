@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2012 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,53 +26,39 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file utils/process/status.hpp
-/// Provides the utils::process::status class.
+/// \file utils/stacktrace.hpp
+/// Utilities to gather a stacktrace of a crashing binary.
 
-#if !defined(UTILS_PROCESS_STATUS_HPP)
-#define UTILS_PROCESS_STATUS_HPP
+#if !defined(ENGINE_STACKTRACE_HPP)
+#define ENGINE_STACKTRACE_HPP
 
-#include <utility>
+#include <ostream>
 
-#include "utils/optional.ipp"
+#include "utils/fs/path.hpp"
+#include "utils/optional.hpp"
+#include "utils/process/status.hpp"
 
 namespace utils {
-namespace process {
 
 
-/// Representation of the termination status of a process.
-class status {
-    /// The PID of the process that generated this status.
-    ///
-    /// Note that the process has exited already and been awaited for, so the
-    /// PID cannot be used to address the process.
-    int _dead_pid;
+extern const char* builtin_gdb;
 
-    /// The exit status of the process, if it exited cleanly.
-    optional< int > _exited;
+utils::optional< utils::fs::path > find_gdb(void);
 
-    /// The signal that terminated the program, if any, and if it dumped core.
-    optional< std::pair< int, bool > > _signaled;
+utils::optional< utils::fs::path > find_core(const utils::fs::path&,
+                                             const utils::process::status&,
+                                             const utils::fs::path&);
 
-    status(const optional< int >&, const optional< std::pair< int, bool > >&);
+void unlimit_core_size(void);
 
-public:
-    status(const int, const int);
-    static status fake_exited(const int);
-    static status fake_signaled(const int, const bool);
+void dump_stacktrace(const utils::fs::path&, const utils::process::status&,
+                     const utils::fs::path&, std::ostream&);
 
-    int dead_pid(void) const;
-
-    bool exited(void) const;
-    int exitstatus(void) const;
-
-    bool signaled(void) const;
-    int termsig(void) const;
-    bool coredump(void) const;
-};
+void dump_stacktrace_if_available(
+    const utils::fs::path&, const utils::optional< utils::process::status >&,
+    const utils::fs::path&, const utils::fs::path&);
 
 
-}  // namespace process
 }  // namespace utils
 
-#endif  // !defined(UTILS_PROCESS_STATUS_HPP)
+#endif  // !defined(ENGINE_STACKTRACE_HPP)

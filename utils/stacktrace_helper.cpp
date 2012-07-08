@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2012 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,53 +26,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file utils/process/status.hpp
-/// Provides the utils::process::status class.
-
-#if !defined(UTILS_PROCESS_STATUS_HPP)
-#define UTILS_PROCESS_STATUS_HPP
-
-#include <utility>
-
-#include "utils/optional.ipp"
-
-namespace utils {
-namespace process {
+#include <cstdlib>
 
 
-/// Representation of the termination status of a process.
-class status {
-    /// The PID of the process that generated this status.
-    ///
-    /// Note that the process has exited already and been awaited for, so the
-    /// PID cannot be used to address the process.
-    int _dead_pid;
-
-    /// The exit status of the process, if it exited cleanly.
-    optional< int > _exited;
-
-    /// The signal that terminated the program, if any, and if it dumped core.
-    optional< std::pair< int, bool > > _signaled;
-
-    status(const optional< int >&, const optional< std::pair< int, bool > >&);
-
-public:
-    status(const int, const int);
-    static status fake_exited(const int);
-    static status fake_signaled(const int, const bool);
-
-    int dead_pid(void) const;
-
-    bool exited(void) const;
-    int exitstatus(void) const;
-
-    bool signaled(void) const;
-    int termsig(void) const;
-    bool coredump(void) const;
-};
-
-
-}  // namespace process
-}  // namespace utils
-
-#endif  // !defined(UTILS_PROCESS_STATUS_HPP)
+int
+main(void)
+{
+    std::abort();
+}
