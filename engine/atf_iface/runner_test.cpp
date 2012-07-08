@@ -548,6 +548,40 @@ ATF_TEST_CASE_BODY(run_test_case__timeout_cleanup)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__stacktrace__body);
+ATF_TEST_CASE_BODY(run_test_case__stacktrace__body)
+{
+    atf_helper helper(this, "crash");
+    capture_hooks hooks;
+    const engine::test_result result = helper.run(hooks);
+    ATF_REQUIRE(engine::test_result::broken == result.type());
+    ATF_REQUIRE_MATCH("received signal.*core dumped", result.reason());
+
+    ATF_REQUIRE(!utils::grep_vector("attempting to gather stack trace",
+                                    hooks.stdout_lines));
+    ATF_REQUIRE( utils::grep_vector("attempting to gather stack trace",
+                                    hooks.stderr_lines));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__stacktrace__cleanup);
+ATF_TEST_CASE_BODY(run_test_case__stacktrace__cleanup)
+{
+    atf_helper helper(this, "crash_cleanup");
+    helper.set_metadata("has.cleanup", "true");
+    capture_hooks hooks;
+    const engine::test_result result = helper.run(hooks);
+    ATF_REQUIRE(engine::test_result::broken == result.type());
+    ATF_REQUIRE_MATCH("cleanup did not terminate successfully",
+                      result.reason());
+
+    ATF_REQUIRE(!utils::grep_vector("attempting to gather stack trace",
+                                    hooks.stdout_lines));
+    ATF_REQUIRE( utils::grep_vector("attempting to gather stack trace",
+                                    hooks.stderr_lines));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__missing_results_file);
 ATF_TEST_CASE_BODY(run_test_case__missing_results_file)
 {
@@ -617,6 +651,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, run_test_case__required_user__unprivileged__drop);
     ATF_ADD_TEST_CASE(tcs, run_test_case__timeout_body);
     ATF_ADD_TEST_CASE(tcs, run_test_case__timeout_cleanup);
+    ATF_ADD_TEST_CASE(tcs, run_test_case__stacktrace__body);
+    ATF_ADD_TEST_CASE(tcs, run_test_case__stacktrace__cleanup);
     ATF_ADD_TEST_CASE(tcs, run_test_case__missing_results_file);
     ATF_ADD_TEST_CASE(tcs, run_test_case__missing_test_program);
     ATF_ADD_TEST_CASE(tcs, run_test_case__output);

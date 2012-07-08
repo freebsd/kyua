@@ -42,6 +42,7 @@ extern "C" {
 #include "utils/defs.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/optional.ipp"
+#include "utils/stacktrace.hpp"
 
 namespace config = utils::config;
 namespace datetime = utils::datetime;
@@ -233,6 +234,9 @@ public:
         optional< process::status > body_status = engine::fork_and_wait(
             execute_test_case(_test_case, rundir), stdout_file, stderr_file,
             test_program->timeout());
+        utils::dump_stacktrace_if_available(
+            _test_case.test_program().absolute_path(), body_status, rundir,
+            stderr_file);
 
         engine::check_interrupt();
 

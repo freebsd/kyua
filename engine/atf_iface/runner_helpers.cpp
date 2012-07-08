@@ -130,6 +130,19 @@ ATF_TEST_CASE_BODY(crash)
 }
 
 
+ATF_TEST_CASE_WITH_CLEANUP(crash_cleanup);
+ATF_TEST_CASE_HEAD(crash_cleanup)
+{
+}
+ATF_TEST_CASE_BODY(crash_cleanup)
+{
+}
+ATF_TEST_CASE_CLEANUP(crash_cleanup)
+{
+    std::abort();
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(create_cookie_in_control_dir);
 ATF_TEST_CASE_BODY(create_cookie_in_control_dir)
 {
@@ -247,6 +260,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, check_cleanup_workdir);
     ATF_ADD_TEST_CASE(tcs, check_unprivileged);
     ATF_ADD_TEST_CASE(tcs, crash);
+    ATF_ADD_TEST_CASE(tcs, crash_cleanup);
     ATF_ADD_TEST_CASE(tcs, create_cookie_in_control_dir);
     ATF_ADD_TEST_CASE(tcs, create_cookie_in_workdir);
     ATF_ADD_TEST_CASE(tcs, create_cookie_from_cleanup);

@@ -330,6 +330,11 @@ Environment: The @env{LANG}, @env{LC_ALL}, @env{LC_COLLATE},
 @env{LC_CTYPE}, @env{LC_MESSAGES}, @env{LC_MONETARY},
 @env{LC_NUMERIC} and @env{LC_TIME} variables are unset.
 The @env{TZ} variable is set to @samp{UTC}.
+
+@item
+Process limits: The maximum soft core size limit is raised to its
+corresponding hard limit.  This is a simple, best-effort attempt at
+allowing test cases to dump core for further diagnostic purposes.
 @end itemize
 
 @node ATF Test Programs

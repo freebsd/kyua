@@ -29,6 +29,7 @@
 #include "engine/isolation.ipp"
 
 extern "C" {
+#include <sys/resource.h>
 #include <sys/stat.h>
 
 #include <signal.h>
@@ -389,6 +390,24 @@ ATF_TEST_CASE_BODY(isolate_process__umask)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(isolate_process__core_size);
+ATF_TEST_CASE_BODY(isolate_process__core_size)
+{
+    struct rlimit rl;
+    rl.rlim_cur = 0;
+    rl.rlim_max = 10;
+    if (::setrlimit(RLIMIT_CORE, &rl) == -1)
+        skip("Failed to lower the core size limit");
+
+    ATF_REQUIRE(::mkdir("workdir", 0755) != -1);
+    engine::isolate_process(fs::path("workdir"));
+
+    ATF_REQUIRE(::getrlimit(RLIMIT_CORE, &rl) != -1);
+    ATF_REQUIRE_EQ(rl.rlim_max, rl.rlim_cur);
+    ATF_REQUIRE_EQ(10, rl.rlim_cur);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(protected_run__ok);
 ATF_TEST_CASE_BODY(protected_run__ok)
 {
@@ -464,6 +483,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, isolate_process__signals);
     ATF_ADD_TEST_CASE(tcs, isolate_process__timezone);
     ATF_ADD_TEST_CASE(tcs, isolate_process__umask);
+    ATF_ADD_TEST_CASE(tcs, isolate_process__core_size);
 
     ATF_ADD_TEST_CASE(tcs, protected_run__ok);
     ATF_ADD_TEST_CASE(tcs, protected_run__ok_but_cleanup_fail);

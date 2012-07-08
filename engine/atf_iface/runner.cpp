@@ -47,6 +47,7 @@ extern "C" {
 #include "utils/fs/operations.hpp"
 #include "utils/optional.ipp"
 #include "utils/passwd.hpp"
+#include "utils/stacktrace.hpp"
 
 namespace atf_iface = engine::atf_iface;
 namespace config = utils::config;
@@ -361,6 +362,9 @@ public:
                 execute_test_case_body(_test_case, result_file, rundir,
                                        _user_config),
                 stdout_file, stderr_file, _test_case.timeout());
+            utils::dump_stacktrace_if_available(
+                _test_case.test_program().absolute_path(), body_status,
+                rundir, stderr_file);
         } catch (const engine::interrupted_error& e) {
             // Ignore: we want to attempt to run the cleanup function before we
             // return.  The call below to check_interrupt will reraise this
@@ -373,6 +377,9 @@ public:
             cleanup_status = engine::fork_and_wait(
                 execute_test_case_cleanup(_test_case, rundir, _user_config),
                 stdout_file, stderr_file, _test_case.timeout());
+            utils::dump_stacktrace_if_available(
+                _test_case.test_program().absolute_path(), cleanup_status,
+                rundir, stderr_file);
         } else {
             cleanup_status = process::status::fake_exited(EXIT_SUCCESS);
         }
