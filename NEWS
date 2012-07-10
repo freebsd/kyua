@@ -1,25 +1,25 @@
 Changes in version 0.5
 ======================
 
-STILL UNDER DEVELOPMENT; NOT RELEASED YET.
-
-* Added the '--build-root' option to the debug, list and test commands.
-  This allows executing test programs from a different directory than
-  where the Kyuafile scripts live.  See the 'Build roots' section in the
-  manual for more details.
-
-* Changed the HTML reports to include the stdout and stderr of every
-  test case.
+Experimental version released on June 10th, 2012.
 
 * Issue 15: Added automatic stacktrace gathering of crashing test cases.
   This relies on GDB and is a best-effort operation.
 
+* Issue 32: Added the '--build-root' option to the debug, list and test
+  commands.  This allows executing test programs from a different
+  directory than where the Kyuafile scripts live.  See the 'Build roots'
+  section in the manual for more details.
+
+* Issue 33: Removed the kyuaify.sh script.  This has been renamed to
+  atf2kyua and moved to the kyua-atf-compat module, where it ships as a
+  first-class utility (with a manual page and tests).
+
+* Issue 34: Changed the HTML reports to include the stdout and stderr of
+  every test case.
+
 * Fixed the build when using a "build directory" and a clean source tree
   from the repository.
-
-* Removed the kyuaify.sh script.  This has been renamed to atf2kyua and
-  moved to the kyua-atf-compat module, where it ships as a first-class
-  utility (with a manual page and tests).
 
 
 Changes in version 0.4
