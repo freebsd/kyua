@@ -1,7 +1,7 @@
 Changes in version 0.5
 ======================
 
-Experimental version released on June 10th, 2012.
+Experimental version released on July 10th, 2012.
 
 * Issue 15: Added automatic stacktrace gathering of crashing test cases.
   This relies on GDB and is a best-effort operation.
