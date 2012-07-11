@@ -69,6 +69,7 @@ lib_info() {
 #     that case, they are joined together by a single whitespace.
 lib_error() {
     echo "${Lib_ProgName}: E: $*" 1>&2
+    lib_cleanup
     exit 1
 }
 
@@ -89,6 +90,7 @@ lib_warning() {
 lib_usage_error() {
     echo "${Lib_ProgName}: E: $*" 1>&2
     usage "${Lib_ProgName}" 1>&2
+    lib_cleanup
     exit 1
 }
 
