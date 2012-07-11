@@ -118,7 +118,7 @@ lib_register_cleanup() {
 #
 # \post Lib_TempDir is set to the path of the created temporary directory.
 lib_init_tempdir() {
-    Lib_TempDir=$(mktemp -d -t "${_Lib_ProgName}.XXXXXX")
+    Lib_TempDir=$(mktemp -d "${TMPDIR:-/tmp}/${Lib_ProgName}.XXXXXX")
     lib_register_cleanup "lib_clean_tempdir"
 }
 
