@@ -57,7 +57,7 @@ class status {
     status(const optional< int >&, const optional< std::pair< int, bool > >&);
 
 public:
-    status(const int, const int);
+    status(const int, int);
     static status fake_exited(const int);
     static status fake_signaled(const int, const bool);
 

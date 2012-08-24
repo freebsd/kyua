@@ -49,7 +49,7 @@ using utils::optional;
 ///
 /// \param dead_pid_ The PID of the process this status belonged to.
 /// \param stat_loc The status value returnd by waitpid(2).
-process::status::status(const int dead_pid_, const int stat_loc) :
+process::status::status(const int dead_pid_, int stat_loc) :
     _dead_pid(dead_pid_),
     _exited(WIFEXITED(stat_loc) ?
             optional< int >(WEXITSTATUS(stat_loc)) : none),
