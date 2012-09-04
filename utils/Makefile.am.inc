@@ -35,7 +35,6 @@ libutils_a_SOURCES  = utils/auto_array.hpp
 libutils_a_SOURCES += utils/auto_array.ipp
 libutils_a_SOURCES += utils/datetime.cpp
 libutils_a_SOURCES += utils/datetime.hpp
-libutils_a_SOURCES += utils/defs.hpp
 libutils_a_SOURCES += utils/env.hpp
 libutils_a_SOURCES += utils/env.cpp
 libutils_a_SOURCES += utils/memory.hpp
@@ -53,6 +52,7 @@ libutils_a_SOURCES += utils/stream.cpp
 libutils_a_SOURCES += utils/stream.hpp
 libutils_a_SOURCES += utils/units.cpp
 libutils_a_SOURCES += utils/units.hpp
+nodist_libutils_a_SOURCES = utils/defs.hpp
 
 if WITH_ATF
 UTILS_TEST_CFLAGS = $(UTILS_CFLAGS)
