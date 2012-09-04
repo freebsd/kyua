@@ -26,43 +26,112 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-info_TEXINFOS = doc/kyua-cli.texi
-doc_kyua_cli_TEXINFOS  = doc/copying.texi
-doc_kyua_cli_TEXINFOS += doc/config.texi
-doc_kyua_cli_TEXINFOS += doc/overview.texi
-doc_kyua_cli_TEXINFOS += doc/test_interface.texi
-doc_kyua_cli_TEXINFOS += doc/test_suites.texi
-doc_kyua_cli_TEXINFOS += doc/troubleshooting.texi
-doc_kyua_cli_TEXINFOS += doc/usage.texi
-nodist_doc_kyua_cli_TEXINFOS = doc/paths.texi
+BUILD_MANPAGE = \
+	test -d doc || mkdir -p doc; \
+	sed -e 's,__CONFDIR__,$(kyua_confdir),g' \
+	    -e 's,__DOCDIR__,$(docdir),g' \
+	    -e 's,__EGDIR__,$(examplesdir),g' \
+	    -e 's,__LUADIR__,$(luadir),g' \
+	    -e 's,__MISCDIR__,$(miscdir),g' \
+	    -e 's,__PACKAGE__,$(PACKAGE_TARNAME),g' \
+	    -e 's,__STOREDIR__,$(storedir),g' \
+	    -e 's,__TESTSDIR__,$(testsdir),g' \
+	    -e 's,__VERSION__,$(PACKAGE_VERSION),g' \
+	    <$(srcdir)/doc/$${name}.in >doc/$${name}.tmp; \
+	mv doc/$${name}.tmp doc/$${name}
 
-BUILT_SOURCES = doc/paths.texi
-CLEANFILES = doc/paths.texi
-doc/paths.texi: $(builddir)/Makefile
-	test -d doc || mkdir -p doc
-	echo "@set KYUA_CONFDIR $(kyua_confdir)" >doc/paths.texi.tmp
-	echo "@set KYUA_DOCDIR $(docdir)" >>doc/paths.texi.tmp
-	echo "@set KYUA_EGDIR $(pkgdatadir)/examples" >>doc/paths.texi.tmp
-	echo "@set KYUA_LUADIR $(luadir)" >>doc/paths.texi.tmp
-	echo "@set KYUA_MISCDIR $(miscdir)" >>doc/paths.texi.tmp
-	echo "@set KYUA_STOREDIR $(storedir)" >>doc/paths.texi.tmp
-	echo "@set KYUA_TESTSDIR $(testsdir)" >>doc/paths.texi.tmp
-	mv doc/paths.texi.tmp doc/paths.texi
+man_MANS = doc/kyua-about.1
+CLEANFILES += doc/kyua-about.1
+EXTRA_DIST += doc/kyua-about.1.in
+doc/kyua-about.1: $(srcdir)/doc/kyua-about.1.in
+	name=kyua-about.1; $(BUILD_MANPAGE)
 
-man_MANS = doc/kyua.1
+man_MANS += doc/kyua-atf-interface.7
+CLEANFILES += doc/kyua-atf-interface.7
+EXTRA_DIST += doc/kyua-atf-interface.7.in
+doc/kyua-atf-interface.7: $(srcdir)/doc/kyua-atf-interface.7.in
+	name=kyua-atf-interface.7; $(BUILD_MANPAGE)
+
+man_MANS += doc/kyua-build-root.7
+CLEANFILES += doc/kyua-build-root.7
+EXTRA_DIST += doc/kyua-build-root.7.in
+doc/kyua-build-root.7: $(srcdir)/doc/kyua-build-root.7.in
+	name=kyua-build-root.7; $(BUILD_MANPAGE)
+
+man_MANS += doc/kyua-config.1
+CLEANFILES += doc/kyua-config.1
+EXTRA_DIST += doc/kyua-config.1.in
+doc/kyua-config.1: $(srcdir)/doc/kyua-config.1.in
+	name=kyua-config.1; $(BUILD_MANPAGE)
+
+man_MANS += doc/kyua-db-exec.1
+CLEANFILES += doc/kyua-db-exec.1
+EXTRA_DIST += doc/kyua-db-exec.1.in
+doc/kyua-db-exec.1: $(srcdir)/doc/kyua-db-exec.1.in
+	name=kyua-db-exec.1; $(BUILD_MANPAGE)
+
+man_MANS += doc/kyua-debug.1
+CLEANFILES += doc/kyua-debug.1
+EXTRA_DIST += doc/kyua-debug.1.in
+doc/kyua-debug.1: $(srcdir)/doc/kyua-debug.1.in
+	name=kyua-debug.1; $(BUILD_MANPAGE)
+
+man_MANS += doc/kyua-help.1
+CLEANFILES += doc/kyua-help.1
+EXTRA_DIST += doc/kyua-help.1.in
+doc/kyua-help.1: $(srcdir)/doc/kyua-help.1.in
+	name=kyua-help.1; $(BUILD_MANPAGE)
+
+man_MANS += doc/kyua-list.1
+CLEANFILES += doc/kyua-list.1
+EXTRA_DIST += doc/kyua-list.1.in
+doc/kyua-list.1: $(srcdir)/doc/kyua-list.1.in
+	name=kyua-list.1; $(BUILD_MANPAGE)
+
+man_MANS += doc/kyua-plain-interface.7
+CLEANFILES += doc/kyua-plain-interface.7
+EXTRA_DIST += doc/kyua-plain-interface.7.in
+doc/kyua-plain-interface.7: $(srcdir)/doc/kyua-plain-interface.7.in
+	name=kyua-plain-interface.7; $(BUILD_MANPAGE)
+
+man_MANS += doc/kyua-report-html.1
+CLEANFILES += doc/kyua-report-html.1
+EXTRA_DIST += doc/kyua-report-html.1.in
+doc/kyua-report-html.1: $(srcdir)/doc/kyua-report-html.1.in
+	name=kyua-report-html.1; $(BUILD_MANPAGE)
+
+man_MANS += doc/kyua-report.1
+CLEANFILES += doc/kyua-report.1
+EXTRA_DIST += doc/kyua-report.1.in
+doc/kyua-report.1: $(srcdir)/doc/kyua-report.1.in
+	name=kyua-report.1; $(BUILD_MANPAGE)
+
+man_MANS += doc/kyua-test.1
+CLEANFILES += doc/kyua-test.1
+EXTRA_DIST += doc/kyua-test.1.in
+doc/kyua-test.1: $(srcdir)/doc/kyua-test.1.in
+	name=kyua-test.1; $(BUILD_MANPAGE)
+
+man_MANS += doc/kyua-test-filters.7
+CLEANFILES += doc/kyua-test-filters.7
+EXTRA_DIST += doc/kyua-test-filters.7.in
+doc/kyua-test-filters.7: $(srcdir)/doc/kyua-test-filters.7.in
+	name=kyua-test-filters.7; $(BUILD_MANPAGE)
+
+man_MANS += doc/kyua.1
 CLEANFILES += doc/kyua.1
 EXTRA_DIST += doc/kyua.1.in
-
 doc/kyua.1: $(srcdir)/doc/kyua.1.in
-	test -d doc || mkdir -p doc
-	sed -e 's,__DOCDIR__,$(docdir),g' \
-	    -e 's,__INFODIR__,$(infodir),g' \
-	    -e 's,__TESTSDIR__,$(testsdir),g' \
-	    <$(srcdir)/doc/kyua.1.in >doc/kyua.1.tmp
-	mv doc/kyua.1.tmp doc/kyua.1
+	name=kyua.1; $(BUILD_MANPAGE)
 
-# Little hack to disable building of the 'dvi' documentation when
-# running 'make distcheck'.  If you want to build the DVI documents,
-# you can still use the 'dvi-am' target.
-dvi:
-	@true
+man_MANS += doc/kyua.conf.5
+CLEANFILES += doc/kyua.conf.5
+EXTRA_DIST += doc/kyua.conf.5.in
+doc/kyua.conf.5: $(srcdir)/doc/kyua.conf.5.in
+	name=kyua.conf.5; $(BUILD_MANPAGE)
+
+man_MANS += doc/kyuafile.5
+CLEANFILES += doc/kyuafile.5
+EXTRA_DIST += doc/kyuafile.5.in
+doc/kyuafile.5: $(srcdir)/doc/kyuafile.5.in
+	name=kyuafile.5; $(BUILD_MANPAGE)

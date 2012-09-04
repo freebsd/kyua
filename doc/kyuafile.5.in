@@ -1,0 +1,116 @@
+.\" Copyright 2012 Google Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions are
+.\" met:
+.\"
+.\" * Redistributions of source code must retain the above copyright
+.\"   notice, this list of conditions and the following disclaimer.
+.\" * Redistributions in binary form must reproduce the above copyright
+.\"   notice, this list of conditions and the following disclaimer in the
+.\"   documentation and/or other materials provided with the distribution.
+.\" * Neither the name of Google Inc. nor the names of its contributors
+.\"   may be used to endorse or promote products derived from this software
+.\"   without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+.\" OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+.\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.Dd September 9, 2012
+.Dt KYUAFILE 5
+.Os
+.Sh NAME
+.Nm Kyuafile
+.Nd Test suite description files
+.Sh DESCRIPTION
+A test suite is a collection of test programs and is represented by a
+hierarchical layout of test binaries on the file system.  Any subtree of
+the file system can represent a test suite, provided that it includes one
+or more test suite definition files (also known as Kyuafiles).
+.Ss Syntax
+Kyuafiles are the files that define test suites.  A test suite must
+contain, at the very least, a Kyuafile at the root of the test suite
+hierarchy.  The job of the Kyuafile is to define what binaries are test
+programs.
+.Pp
+Kyuafiles are Lua scripts.  The general structure of a Kyuafile is:
+.Bd -literal -offset indent
+syntax('kyuafile', 1)
+
+test_suite('first')
+
+-- Declare the test programs that are in this directory.
+atf_test_program{name='foo_test'}
+atf_test_program{name='bar_test', test_suite='second'}
+plain_test_program{name='legacy_test'}
+plain_test_program{name='legacy2_test', timeout=30}
+
+-- Recurse into any subdirectories that may have other tests.
+include('dir1/Kyuafile')
+include('dir2/Kyuafile')
+.Ed
+.Pp
+Kyuafiles are only allowed to reference test programs in the current
+directory.  The main reason for this is deterministic behavior: by
+referencing files in the current directory only, there is no room for
+mistakes.  The runtime knows where to look for the test programs and it
+does not have to resolve paths outside of the current directory.
+.Pp
+If any recursion is required, the Kyuafile must include other files by
+using the
+.Fn include
+primitive.  Note that each file is processed in its own Lua environment:
+there is no mechanism to pass state from one file to the other.  The reason
+for this is that there is no such thing as a
+.Dq top-level
+.Nm :
+the user has to be able to run the test suite from any directory in a given
+hierarchy, and this execution must not depend on files on parent
+directories.
+.Pp
+The
+.Fn atf_test_program
+and
+.Fn plain_test_program
+are used to register new test programs that use the
+.Xr kyua-atf-interface 7
+and
+.Xr kyua-plain-interface 7
+interfaces respectively.
+.Ss Top-level Kyuafile
+Every system has a top directory into which test suites get installed.  The
+default is
+.Pa __TESTSDIR__ .
+Within this directory live test suites, each of which is in an independent
+subdirectory.  Each subdirectory can be provided separately by independent
+third-party packages.
+.Pp
+Kyua allows running all the installed test suites at once in order to
+provide comprehensive cross-component reports.  In order to do this, there
+is a special file in the top directory that knows how to inspect the
+subdirectories in search for other Kyuafiles and include them.
+.Pp
+The default top-level Kyuafile lives in
+.Pa __TESTSDIR__/Kyuafile .
+This is just a copy of the sample file installed in
+.Pa __EGDIR__/Kyuafile.top .
+.Sh FILES
+.Bl -tag -width XX
+.It Pa __TESTSDIR__/Kyuafile .
+Top-level
+.Nm .
+.It Pa __EGDIR__/Kyuafile.top .
+Sample file to install as the top-level
+.Nm .
+.El
+.Sh SEE ALSO
+.Xr kyua 1

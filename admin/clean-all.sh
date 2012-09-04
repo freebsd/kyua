@@ -61,7 +61,6 @@ rm -f admin/install-sh
 rm -f admin/ltmain.sh
 rm -f admin/mdate-sh
 rm -f admin/missing
-rm -f admin/texinfo.tex
 
 # bootstrap directory.
 rm -f bootstrap/package.m4

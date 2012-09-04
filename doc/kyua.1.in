@@ -25,32 +25,299 @@
 .\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 .\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-.Dd February 2, 2011
+.Dd September 9, 2012
 .Dt KYUA 1
 .Os
 .Sh NAME
 .Nm kyua
-.Nd Kyua testing framework (command-line tool)
-.Sh DESCRIPTION
-.Pp
+.Nd Command-line interface to Kyua quality assurance toolkit
+.Sh SYNOPSIS
 .Nm
-is the command-line interface to the Kyua testing framework.
-.Pp
-The canonical documentation for the tool lives in the GNU Info system.
-To access the full documentation for the utility, just type one of the
-following:
-.Bd -literal -offset indent
-$ info kyua
-$ info -d __INFODIR__ kyua
-.Ed
-.Pp
+.Op Fl -config Ar file
+.Op Fl -logfile Ar file
+.Op Fl -loglevel Ar level
+.Op Fl -variable Ar K=V
+.Ar command
+.Op Ar command_options
+.Op Ar command_arguments
+.Sh DESCRIPTION
+.Nm
+is the command-line interface to the Kyua quality assurance toolkit.
+This page provides an introduction to the tool.
 If you are here because all you want to know is how to run the tests in
 .Pa __TESTSDIR__ ,
 you most likely want to read the
 .Xr tests 7
-manual page instead.
+manual page instead if your system provides one.
+.Pp
+The interface of the
+.Nm
+utility follows that of a traditional subcommand-based interface.  The tool
+recognizes, in this order: a set of common options that all the commands
+accept, a
+.Ar command
+that specifies what
+.Nm
+should do, and
+a set of
+.Ar command_options
+and
+.Ar command_arguments
+that are specific to the chosen command.
+.Pp
+Before dwelving into a more detailed description of the tool, you should know
+that the
+.Sq help
+command provides interactive help at the command line.
+Jump straight to
+.Xr kyua-help 1
+if you would like more details on how this works.
+.Ss Options supported by all commands
+The following options are recognized by all the commands.
+Keep in mind that these must always be specified before the command name.
+.Bl -tag -width XX
+.It Fl c Ar path , Fl -config Ar path
+Specifies the configuration file to process, which must be in the format
+described in
+.Xr kyua.conf 5 .
+.Pp
+Defaults to a
+.Pa ~/.kyua/kyua.conf
+if it exists, otherwise to
+.Pa __CONFDIR__/kyua.conf .
+None of the default files has to exist, but any path explicitly specified
+has to.
+.Pp
+The special value
+.Sq none
+requests that no configuration files be loaded.
+.It Fl -logfile Ar path
+Specifies the location of the file into which
+.Nm
+will log run-time events useful for postmortem debugging.
+See
+.Sx Logging
+for more details.
+.Pp
+The default depends on different environment variables but, usually, the log
+file will be stored within the user's home directory.
+.It Fl -loglevel level
+Specifies the logging level.
+See
+.Sx Logging
+for more details.
+.Pp
+The default is
+.Sq info .
+.It Fl v Ar name=value , Fl -variable Ar name=value
+Sets the
+.Ar name
+configuration variable to
+.Ar value .
+The values set through this option have preference over the values set in the
+configuration file.
+.Pp
+The variable can either be a builtin variable or a test-suite specific variable.
+See
+.Xr kyua.conf 5
+for more details.
+.El
+.Ss Available commands
+The following commands are generic and do not have any relation to the execution
+of tests or the inspection of their results:
+.Bl -tag -width reportXhtmlXX
+.It Ar about
+Shows general program information.
+See
+.Xr kyua-about 1 .
+.It Ar config
+Inspects the values of the configuration variables.
+See
+.Xr kyua-config 1 .
+.It Ar db-exec
+Executes an arbitrary SQL statement in the store database and prints the
+resulting table.
+See
+.Xr kyua-db-exec 1 .
+.It Ar help
+Shows usage information.
+See
+.Xr kyua-help 1 .
+.El
+.Pp
+The following commands are used to generate reports based on the data previously
+stored in the database:
+.Bl -tag -width reportXhtmlXX
+.It Ar report
+Generates a plain-text report.
+See
+.Xr kyua-report 1 .
+.It Ar report-html
+Generates an HTML report.
+See
+.Xr kyua-report-html 1 .
+.El
+.Pp
+The following commands are used to interact with a test suite:
+.Bl -tag -width reportXhtmlXX
+.It Ar debug
+Executes a single test case in a controlled environment for debugging purposes.
+See
+.Xr kyua-debug 1 .
+.It Ar list
+Lists test cases and their metadata.
+See
+.Xr kyua-list 1 .
+.It Ar test
+Runs tests.
+See
+.Xr kyua-test 1 .
+.El
+.Ss Logging
+.Nm
+has a logging facility that collects all kinds of events at run time.  These
+events are always logged to a file so that the log is available when it is most
+needed: right after a problem happens (e.g. right after the tool crashes,
+because the crash might be not easy to reproduce!).
+.Pp
+Log files are always created; there is currently no way to disable them other
+than by sending the log file to
+.Pa /dev/null .
+The reason for this is that log files are most useful right after a problem
+happens, but it is not possible to predict when this will be.
+.Pp
+The location of the log file can be manually specified with the
+.Fl -logfile
+option, which applies to all commands.  If no file is explicitly specified, the
+location of the log files is chosen in this order:
+.Bl -enum
+.It
+.Pa ${HOME}/.kyua/logs/
+if
+.Va HOME
+is defined.
+.It
+.Pa ${TMPDIR}/
+if
+.Va TMPDIR
+is defined.
+.It
+.Pa /tmp/ .
+.El
+.Pp
+And the default naming scheme of the log files is:
+.Sq <progname>.<timestamp>.log .
+.Pp
+The messages stored in the log file have a level (or severity) attached to
+them.  These are:
+.Bl -tag -width warningXX
+.It error
+Fatal error messages.  The program generally terminates after these, either
+in a clean manner or by crashing.
+.It warning
+Non-fatal error messages.  These generally report a condition that must be
+addressed but the application can continue to run.
+.It info
+Informational messages.  These tell the user what the program was doing at
+a general level of operation.
+.It debug
+Detailed informational messages.  These are often useful when debugging
+problems in the application, as they contain lots of internal details.
+.El
+.Pp
+The default log level is
+.Sq info
+unless expicitly overriden with
+.Fl -loglevel .
+.Pp
+The log file is a plain text file containing one line per log record.  The
+format of each line is as follows:
+.Bd -literal -offset indent
+timestamp entry_type pid file:line: message
+.Ed
+.Pp
+When doing so, please include as much detail as possible.  Among other
+things, explain what operating system and platform you are running
+.Nm
+on, what were you trying to do, what exact messages you saw on the screen,
+how did you expect the program to behave, and any other details that you
+may find relevant.
+.Pp
+Also, please include a copy of the log file corresponding to the problem
+you are experiencing.  Unless you have changed the location of the log
+files, you can most likely find them in
+.Pa ~/.kyua/logs/ .
+If the problem is reproducible, it is good idea to regenerate the log file
+with an increased log level so as to provide more information.  For
+example:
+.Bd -literal -offset indent
+$ kyua --logfile=problem.log --loglevel=debug \\
+    [rest of the command line]
+.Ed
+.Sh ENVIRONMENT
+The following variables are recognized and can be freely tuned by the end user:
+.Bl -tag -width COLUMNSXX
+.It Va COLUMNS
+The width of the screen, in number of characters; used by
+.Nm
+to wrap long lines.
+If not present, the width of the screen is determined from the terminal
+stdout is connected to, if any.
+.It Va HOME
+Path to the user's home directory.
+.Nm
+uses this location to determine paths to configuration files and default log
+files.
+.It Va TMPDIR
+Path to the system-wide temporary directory.
+.Nm
+uses this location to place the work directory of test cases, among other
+things.
+.Pp
+The default for this variable depends on the operating system.  In
+general, it is
+.Pa /tmp .
+.El
+.Pp
+The following variables are also recognized, but you should not need to set them
+during normal operation.
+They are only provided to override the value of built-in values, which is useful
+when testing
+.Nm
+itself:
+.Bl -tag -width KYUAXCONFDIRXX
+.It Va KYUA_CONFDIR
+Path to the system-wide configuration files for
+.Nm .
+.Pp
+Defaults to
+.Pa __CONFDIR__ .
+.It Va KYUA_DOCDIR
+Path to the location of installed documentation.
+.Pp
+Defaults to
+.Pa __DOCDIR__ .
+.It Va KYUA_LUADIR
+Path to the location of the installed Lua modules provided by
+.Nm .
+.Pp
+Defaults to
+.Pa __LUADIR__ .
+.It Va KYUA_MISCDIR
+Path to the location of the installed miscellaneous scripts and data
+files provided by
+.Nm .
+.Pp
+Defaults to
+.Pa __MISCDIR__ .
+.It Va KYUA_STOREDIR
+Path to the location of the installed store support files; e.g. the
+directory containing the SQL database schema.
+.Pp
+Defaults to
+.Pa __STOREDIR__ .
+.El
 .Sh SEE ALSO
-.Xr info 1 ,
 .Xr atf 7 ,
 .Xr tests 7
 .Sh AUTHORS
