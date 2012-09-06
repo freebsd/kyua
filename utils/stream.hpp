@@ -35,13 +35,14 @@
 #if !defined(UTILS_STREAM_HPP)
 #define UTILS_STREAM_HPP
 
+#include <cstddef>
 #include <istream>
 #include <string>
 
 namespace utils {
 
 
-std::streampos stream_length(std::istream&);
+std::size_t stream_length(std::istream&);
 std::string read_stream(std::istream&);
 
 

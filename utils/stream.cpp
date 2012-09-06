@@ -39,10 +39,13 @@
 ///
 /// \param is The input stream for which to calculate its length.
 ///
-/// \return The length of the stream.
+/// \return The length of the stream.  This is of size_t type instead of
+/// directly std::streampos to simplify the caller.  Some systems do not
+/// support comparing a std::streampos directly to an integer (see
+/// NetBSD 1.5.x), which is what we often want to do.
 ///
 /// \throw std::exception If calculating the length fails due to a stream error.
-std::streampos
+std::size_t
 utils::stream_length(std::istream& is)
 {
     const std::streampos current_pos = is.tellg();
@@ -50,7 +53,7 @@ utils::stream_length(std::istream& is)
         is.seekg(0, std::ios::end);
         const std::streampos length = is.tellg();
         is.seekg(current_pos, std::ios::beg);
-        return length;
+        return static_cast< std::size_t >(length);
     } catch (...) {
         is.seekg(current_pos, std::ios::beg);
         throw;
