@@ -283,7 +283,7 @@ ATF_TEST_CASE_BODY(column_int64)
             "INSERT INTO foo VALUES (NULL, 4294967419, NULL);");
     sqlite::statement stmt = db.create_statement("SELECT * FROM foo");
     ATF_REQUIRE(stmt.step());
-    ATF_REQUIRE_EQ(4294967419L, stmt.column_int64(1));
+    ATF_REQUIRE_EQ(4294967419LL, stmt.column_int64(1));
     ATF_REQUIRE(!stmt.step());
 }
 
@@ -424,7 +424,7 @@ ATF_TEST_CASE_BODY(safe_column_int64__ok)
             "INSERT INTO foo VALUES (NULL, 4294967419, NULL);");
     sqlite::statement stmt = db.create_statement("SELECT * FROM foo");
     ATF_REQUIRE(stmt.step());
-    ATF_REQUIRE_EQ(4294967419L, stmt.safe_column_int64("b"));
+    ATF_REQUIRE_EQ(4294967419LL, stmt.safe_column_int64("b"));
     ATF_REQUIRE(!stmt.step());
 }
 
@@ -588,12 +588,12 @@ ATF_TEST_CASE_BODY(bind__int64)
     sqlite::database db = sqlite::database::in_memory();
     sqlite::statement stmt = db.create_statement("SELECT 3, ?");
 
-    stmt.bind(1, static_cast< int64_t >(4294967419L));
+    stmt.bind(1, static_cast< int64_t >(4294967419LL));
     ATF_REQUIRE(stmt.step());
     ATF_REQUIRE(sqlite::type_integer == stmt.column_type(0));
     ATF_REQUIRE_EQ(3, stmt.column_int(0));
     ATF_REQUIRE(sqlite::type_integer == stmt.column_type(1));
-    ATF_REQUIRE_EQ(4294967419, stmt.column_int64(1));
+    ATF_REQUIRE_EQ(4294967419LL, stmt.column_int64(1));
     ATF_REQUIRE(!stmt.step());
 }
 

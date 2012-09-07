@@ -176,9 +176,9 @@ ATF_TEST_CASE_WITHOUT_HEAD(timestamp__from_microseconds);
 ATF_TEST_CASE_BODY(timestamp__from_microseconds)
 {
     const datetime::timestamp ts = datetime::timestamp::from_microseconds(
-        1328829351987654);
+        1328829351987654LL);
     ATF_REQUIRE_EQ("2012-02-09 23:15:51", ts.strftime("%Y-%m-%d %H:%M:%S"));
-    ATF_REQUIRE_EQ(1328829351987654, ts.to_microseconds());
+    ATF_REQUIRE_EQ(1328829351987654LL, ts.to_microseconds());
     ATF_REQUIRE_EQ(1328829351, ts.to_seconds());
 }
 
@@ -248,7 +248,7 @@ ATF_TEST_CASE_BODY(timestamp__to_microseconds)
 {
     const datetime::timestamp ts1 = datetime::timestamp::from_values(
         2010, 12, 10, 8, 45, 50, 123456);
-    ATF_REQUIRE_EQ(1291970750123456, ts1.to_microseconds());
+    ATF_REQUIRE_EQ(1291970750123456LL, ts1.to_microseconds());
 }
 
 
@@ -275,16 +275,16 @@ ATF_TEST_CASE_BODY(timestamp__leap_second)
 ATF_TEST_CASE_WITHOUT_HEAD(timestamp__equals);
 ATF_TEST_CASE_BODY(timestamp__equals)
 {
-    ATF_REQUIRE(datetime::timestamp::from_microseconds(1291970750123456) ==
-                datetime::timestamp::from_microseconds(1291970750123456));
+    ATF_REQUIRE(datetime::timestamp::from_microseconds(1291970750123456LL) ==
+                datetime::timestamp::from_microseconds(1291970750123456LL));
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(timestamp__differs);
 ATF_TEST_CASE_BODY(timestamp__differs)
 {
-    ATF_REQUIRE(datetime::timestamp::from_microseconds(1291970750123456) !=
-                datetime::timestamp::from_microseconds(1291970750123455));
+    ATF_REQUIRE(datetime::timestamp::from_microseconds(1291970750123456LL) !=
+                datetime::timestamp::from_microseconds(1291970750123455LL));
 }
 
 
@@ -292,11 +292,11 @@ ATF_TEST_CASE_WITHOUT_HEAD(timestamp__subtraction);
 ATF_TEST_CASE_BODY(timestamp__subtraction)
 {
     const datetime::timestamp ts1 = datetime::timestamp::from_microseconds(
-        1291970750123456);
+        1291970750123456LL);
     const datetime::timestamp ts2 = datetime::timestamp::from_microseconds(
-        1291970750123468);
+        1291970750123468LL);
     const datetime::timestamp ts3 = datetime::timestamp::from_microseconds(
-        1291970850123456);
+        1291970850123456LL);
 
     ATF_REQUIRE(datetime::delta(0, 0) == ts1 - ts1);
     ATF_REQUIRE(datetime::delta(0, 12) == ts2 - ts1);

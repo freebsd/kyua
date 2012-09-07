@@ -97,7 +97,7 @@ ATF_TEST_CASE_BODY(bytes__parse__tb)
     ATF_REQUIRE_EQ(0, units::bytes::parse("0T"));
     ATF_REQUIRE_EQ(units::bytes(TB), units::bytes::parse("1T"));
     ATF_REQUIRE_EQ(units::bytes(TB), units::bytes::parse("1t"));
-    ATF_REQUIRE_EQ(13567973486755, units::bytes::parse("12.340000T"));
+    ATF_REQUIRE_EQ(13567973486755LL, units::bytes::parse("12.340000T"));
 }
 
 
@@ -110,7 +110,7 @@ ATF_TEST_CASE_BODY(bytes__parse__gb)
     ATF_REQUIRE_EQ(0, units::bytes::parse("0G"));
     ATF_REQUIRE_EQ(units::bytes(GB), units::bytes::parse("1G"));
     ATF_REQUIRE_EQ(units::bytes(GB), units::bytes::parse("1g"));
-    ATF_REQUIRE_EQ(13249974108, units::bytes::parse("12.340G"));
+    ATF_REQUIRE_EQ(13249974108LL, units::bytes::parse("12.340G"));
 }
 
 
