@@ -3,7 +3,8 @@ Changes in version 0.6
 
 STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 
-* No changes recorded.
+* Issue 40: Rewrote the documentation as manual pages and removed the
+  previous GNU Info document.
 
 
 Changes in version 0.5
