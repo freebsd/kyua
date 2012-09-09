@@ -185,6 +185,8 @@ global_test(const cmdline::options_vector& general_options,
     expected.push_back("");
     expected.push_back("Second commands:");
     expected.push_back("  mock_simple_3   Simple command.");
+    expected.push_back("");
+    expected.push_back("See kyua(1) for more details.");
 
     ATF_REQUIRE(expected == ui.out_log());
     ATF_REQUIRE(ui.err_log().empty());
@@ -243,6 +245,8 @@ ATF_TEST_CASE_BODY(subcommand__simple)
     ATF_REQUIRE(utils::grep_vector("^Usage: progname \\[general_options\\] "
                                    "mock_simple$", ui.out_log()));
     ATF_REQUIRE(!utils::grep_vector("Available.*options", ui.out_log()));
+    ATF_REQUIRE(utils::grep_vector("^See kyua-mock_simple\\(1\\) for more "
+                                   "details.", ui.out_log()));
     ATF_REQUIRE(ui.err_log().empty());
 }
 
@@ -281,6 +285,8 @@ ATF_TEST_CASE_BODY(subcommand__complex)
                                    ui.out_log()));
     ATF_REQUIRE(utils::grep_vector("--flag_d=d_arg   *Flag D.*default.*foo",
                                    ui.out_log()));
+    ATF_REQUIRE(utils::grep_vector("^See kyua-mock_complex\\(1\\) for more "
+                                   "details.", ui.out_log()));
     ATF_REQUIRE(ui.err_log().empty());
 }
 
