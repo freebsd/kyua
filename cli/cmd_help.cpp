@@ -150,6 +150,9 @@ general_help(cmdline::ui* ui, const cmdline::options_vector* options,
                 (category.empty() ? "Generic" : category));
         ui->out_table(command_tables.find(category)->second, formatter, "  ");
     }
+
+    ui->out("");
+    ui->out("See kyua(1) for more details.");
 }
 
 
@@ -193,6 +196,9 @@ subcommand_help(cmdline::ui* ui,
         ui->out("Available command options:");
         ui->out_table(command_table, formatter, "  ");
     }
+
+    ui->out("");
+    ui->out(F("See kyua-%s(1) for more details.") % command->name());
 }
 
 
