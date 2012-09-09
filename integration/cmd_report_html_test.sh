@@ -154,13 +154,13 @@ default_behavior__no_actions_body() {
     kyua db-exec "SELECT * FROM actions"
 
     echo 'kyua: E: No actions in the database.' >experr
-    atf_check -s exit:1 -o empty -e file:experr kyua report-html
+    atf_check -s exit:2 -o empty -e file:experr kyua report-html
 }
 
 
 utils_test_case default_behavior__no_store
 default_behavior__no_store_body() {
-    atf_check -s exit:1 -o empty \
+    atf_check -s exit:2 -o empty \
         -e match:"kyua: E: Cannot open '.*/.kyua/store.db': " kyua report-html
 }
 
@@ -188,7 +188,7 @@ action__not_found_body() {
     kyua db-exec "SELECT * FROM actions"
 
     echo 'kyua: E: Error loading action 514: does not exist.' >experr
-    atf_check -s exit:1 -o empty -e file:experr kyua report-html --action=514
+    atf_check -s exit:2 -o empty -e file:experr kyua report-html --action=514
 }
 
 
@@ -215,7 +215,7 @@ force__no_body() {
 cat >experr <<EOF
 kyua: E: Output directory 'html' already exists; maybe use --force?.
 EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua report-html
+    atf_check -s exit:2 -o empty -e file:experr kyua report-html
     test ! -f html/index.html || atf_fail "Not expected file created"
 }
 

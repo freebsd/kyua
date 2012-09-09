@@ -72,7 +72,10 @@ The database is created if it does not exist.
 .Sh EXIT STATUS
 The
 .Nm
-command returns 0 on success or 1 if something went wrong.
+command always returns 0.
+.Pp
+Additional exit codes may be returned as described in
+.Xr kyua 1 .
 .Sh SEE ALSO
 .Xr kyua 1 ,
 .Xr kyua-report 1

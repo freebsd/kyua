@@ -6,6 +6,12 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 * Issue 40: Rewrote the documentation as manual pages and removed the
   previous GNU Info document.
 
+* Increased the granularity of the error codes returned by kyua(1) to
+  denote different error conditions.  This avoids the overload of '1'
+  to indicate both "expected" errors from specific subcommands from
+  unexpected errors caused by the internals of the code.  The manual
+  now correctly explain how the exit codes behave on a command basis.
+
 
 Changes in version 0.5
 ======================

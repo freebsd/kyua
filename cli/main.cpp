@@ -116,8 +116,9 @@ run_subcommand(cmdline::ui* ui, cli::cli_command* command,
 /// Doing so keeps this function simpler and allow tests to actually validate
 /// that the errors reported are accurate.
 ///
-/// \return The exit code of the program.  Typically 0 on success, some other
-/// integer otherwise, but this depends on the subcommand executed (if any).
+/// \return The exit code of the program.  Should be EXIT_SUCCESS on success and
+/// EXIT_FAILURE on failure.  The caller extends this to additional integers for
+/// errors reported through exceptions.
 ///
 /// \param ui Object to interact with the I/O of the program.
 /// \param argc The number of arguments passed on the command line.
@@ -237,7 +238,13 @@ cli::main(cmdline::ui* ui, const int argc, const char* const* const argv,
           cli_command_ptr mock_command)
 {
     try {
-        return safe_main(ui, argc, argv, mock_command);
+        const int exit_code = safe_main(ui, argc, argv, mock_command);
+
+        // Codes above 1 are reserved to report conditions captured as
+        // exceptions below.
+        INV(exit_code == EXIT_SUCCESS || exit_code == EXIT_FAILURE);
+
+        return exit_code;
     } catch (const std::pair< std::string, cmdline::usage_error >& e) {
         const std::string message = F("Usage error for command %s: %s.") %
             e.first % e.second.what();
@@ -245,17 +252,17 @@ cli::main(cmdline::ui* ui, const int argc, const char* const* const argv,
         ui->err(message);
         ui->err(F("Type '%s help %s' for usage information.") %
                 cmdline::progname() % e.first);
-        return EXIT_FAILURE;
+        return 3;
     } catch (const cmdline::usage_error& e) {
         const std::string message = F("Usage error: %s.") % e.what();
         LE(message);
         ui->err(message);
         ui->err(F("Type '%s help' for usage information.") %
                 cmdline::progname());
-        return EXIT_FAILURE;
+        return 3;
     } catch (const std::runtime_error& e) {
         cmdline::print_error(ui, e.what());
-        return EXIT_FAILURE;
+        return 2;
     }
 }
 

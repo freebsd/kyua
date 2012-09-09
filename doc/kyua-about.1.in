@@ -75,8 +75,10 @@ Use this whenever you have to query the version number of the package.
 .Sh EXIT STATUS
 The
 .Nm
-command returns 0 on success or 1 if there is any problem loading the
-auxiliary data files or if there is a syntax error in the command line.
+command always returns 0.
+.Pp
+Additional exit codes may be returned as described in
+.Xr kyua 1 .
 .Sh FILES
 The following files are read by the
 .Nm

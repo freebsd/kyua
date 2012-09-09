@@ -63,8 +63,11 @@ The database is created if it does not exist.
 .Sh EXIT STATUS
 The
 .Nm
-command returns 0 if the SQL statement was executed properly, or 1 if the
-SQL statement was invalid or any other error occurred.
+command returns 0 on success or 1 if the SQL statement is invalid or fails
+to run.
+.Pp
+Additional exit codes may be returned as described in
+.Xr kyua 1 .
 .Sh SEE ALSO
 .Xr kyua 1 ,
 .Xr kyua-test 1

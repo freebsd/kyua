@@ -72,9 +72,11 @@ Prints metadata properties for every test case.
 .Sh EXIT STATUS
 The
 .Nm
-command exits with 0 if there are no problems processing the test suite, or
-with any positive number if the test suite is invalid in any sense or if
-the filters matched no tests.
+command returns 0 on success or 1 if any of the given test case filters
+does not match any test case.
+.Pp
+Additional exit codes may be returned as described in
+.Xr kyua 1 .
 .Sh SEE ALSO
 .Xr kyua 1 ,
 .Xr kyua-build-root 7 ,

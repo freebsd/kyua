@@ -77,8 +77,12 @@ or you can execute a single test case with debugging functionality by using
 .Sh EXIT STATUS
 The
 .Nm
-command returns 0 on success or non-zero if the execution of a test failed
-or if there was any other problem during the execution.
+command returns 0 if all executed test cases pass or 1 if any of the
+executed test cases fails or if any of the given test case filters does not
+match any test case.
+.Pp
+Additional exit codes may be returned as described in
+.Xr kyua 1 .
 .Sh SEE ALSO
 .Xr kyua 1 ,
 .Xr kyua-report 1

@@ -117,9 +117,10 @@ the failure message to the problem.
 .Sh EXIT STATUS
 The
 .Nm
-command returns 0 if the test case finished successfuly or 1 if the test
-case failed or the engine encountered an error processing the test case or
-user input.
+command returns 0 if the test case passes or 1 if the test case fails.
+.Pp
+Additional exit codes may be returned as described in
+.Xr kyua 1 .
 .Sh SEE ALSO
 .Xr kyua 1 ,
 .Xr kyua-build-root 7 ,

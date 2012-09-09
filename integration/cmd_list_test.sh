@@ -127,12 +127,12 @@ one_arg__invalid_body() {
 cat >experr <<EOF
 kyua: E: Test case component in 'foo:' is empty.
 EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua list foo:
+    atf_check -s exit:2 -o empty -e file:experr kyua list foo:
 
 cat >experr <<EOF
 kyua: E: Program name '/a/b' must be relative to the test suite, not absolute.
 EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua list /a/b
+    atf_check -s exit:2 -o empty -e file:experr kyua list /a/b
 }
 
 
@@ -168,12 +168,12 @@ many_args__invalid_body() {
 cat >experr <<EOF
 kyua: E: Program name component in ':badbad' is empty.
 EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua list this-is-ok :badbad
+    atf_check -s exit:2 -o empty -e file:experr kyua list this-is-ok :badbad
 
 cat >experr <<EOF
 kyua: E: Program name '/foo' must be relative to the test suite, not absolute.
 EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua list this-is-ok /foo
+    atf_check -s exit:2 -o empty -e file:experr kyua list this-is-ok /foo
 }
 
 
@@ -443,7 +443,7 @@ missing_kyuafile__no_args_body() {
     cat >experr <<EOF
 kyua: E: Load of 'Kyuafile' failed: File 'Kyuafile' not found.
 EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua list
+    atf_check -s exit:2 -o empty -e file:experr kyua list
 }
 
 
@@ -460,7 +460,7 @@ EOF
     cat >experr <<EOF
 kyua: E: Load of 'Kyuafile' failed: File 'Kyuafile' not found.
 EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua list subdir/unused
+    atf_check -s exit:2 -o empty -e file:experr kyua list subdir/unused
 }
 
 
@@ -477,7 +477,7 @@ EOF
     cat >experr <<EOF
 kyua: E: Load of 'Kyuafile' failed: File 'Kyuafile' not found.
 EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua list subdir
+    atf_check -s exit:2 -o empty -e file:experr kyua list subdir
 }
 
 
@@ -490,7 +490,7 @@ EOF
     cat >experr <<EOF
 kyua: E: Load of 'Kyuafile' failed: Failed to load Lua file 'Kyuafile': Kyuafile:2: '<name>' expected near '<eof>'.
 EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua list
+    atf_check -s exit:2 -o empty -e file:experr kyua list
 }
 
 
@@ -531,7 +531,7 @@ EOF
     cat >experr <<EOF
 kyua: E: Load of 'Kyuafile' failed: Non-existent test program 'subdir/i-am-missing'.
 EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua list
+    atf_check -s exit:2 -o empty -e file:experr kyua list
 }
 
 

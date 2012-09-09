@@ -123,7 +123,7 @@ topic__invalid_body() {
 Usage error for command about: Invalid about topic 'foo'.
 Type 'kyua help about' for usage information.
 EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua about foo
+    atf_check -s exit:3 -o empty -e file:experr kyua about foo
 }
 
 
@@ -133,7 +133,7 @@ too_many_arguments_body() {
 Usage error for command about: Too many arguments.
 Type 'kyua help about' for usage information.
 EOF
-    atf_check -s exit:1 -o empty -e file:stderr kyua about abc def
+    atf_check -s exit:3 -o empty -e file:stderr kyua about abc def
 }
 
 

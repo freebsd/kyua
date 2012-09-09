@@ -165,7 +165,7 @@ public:
     {
         ui->out("stdout message from subcommand");
         ui->err("stderr message from subcommand");
-        return 98;
+        return EXIT_FAILURE;
     }
 };
 
@@ -223,7 +223,7 @@ ATF_TEST_CASE_BODY(main__no_args)
     const char* const argv[] = {"progname", NULL};
 
     cmdline::ui_mock ui;
-    ATF_REQUIRE_EQ(EXIT_FAILURE, cli::main(&ui, argc, argv));
+    ATF_REQUIRE_EQ(3, cli::main(&ui, argc, argv));
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE(utils::grep_vector("Usage error: No command provided",
                                    ui.err_log()));
@@ -241,7 +241,7 @@ ATF_TEST_CASE_BODY(main__unknown_command)
     const char* const argv[] = {"progname", "foo", NULL};
 
     cmdline::ui_mock ui;
-    ATF_REQUIRE_EQ(EXIT_FAILURE, cli::main(&ui, argc, argv));
+    ATF_REQUIRE_EQ(3, cli::main(&ui, argc, argv));
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE(utils::grep_vector("Usage error: Unknown command.*foo",
                                    ui.err_log()));
@@ -262,7 +262,7 @@ ATF_TEST_CASE_BODY(main__logfile__default)
     cmdline::ui_mock ui;
     ATF_REQUIRE(!fs::exists(fs::path(
         ".kyua/logs/progname.20110221-213000.log")));
-    ATF_REQUIRE_EQ(EXIT_FAILURE, cli::main(&ui, argc, argv));
+    ATF_REQUIRE_EQ(3, cli::main(&ui, argc, argv));
     ATF_REQUIRE(fs::exists(fs::path(
         ".kyua/logs/progname.20110221-213000.log")));
 }
@@ -280,7 +280,7 @@ ATF_TEST_CASE_BODY(main__logfile__override)
 
     cmdline::ui_mock ui;
     ATF_REQUIRE(!fs::exists(fs::path("test.log")));
-    ATF_REQUIRE_EQ(EXIT_FAILURE, cli::main(&ui, argc, argv));
+    ATF_REQUIRE_EQ(3, cli::main(&ui, argc, argv));
     ATF_REQUIRE(!fs::exists(fs::path(
         ".kyua/logs/progname.20110221-213000.log")));
     ATF_REQUIRE(fs::exists(fs::path("test.log")));
@@ -302,7 +302,7 @@ ATF_TEST_CASE_BODY(main__loglevel__default)
     LW("Mock warning message");
 
     cmdline::ui_mock ui;
-    ATF_REQUIRE_EQ(EXIT_FAILURE, cli::main(&ui, argc, argv));
+    ATF_REQUIRE_EQ(3, cli::main(&ui, argc, argv));
     ATF_REQUIRE(!utils::grep_file("Mock debug message", fs::path("test.log")));
     ATF_REQUIRE(utils::grep_file("Mock error message", fs::path("test.log")));
     ATF_REQUIRE(utils::grep_file("Mock info message", fs::path("test.log")));
@@ -326,7 +326,7 @@ ATF_TEST_CASE_BODY(main__loglevel__higher)
     LW("Mock warning message");
 
     cmdline::ui_mock ui;
-    ATF_REQUIRE_EQ(EXIT_FAILURE, cli::main(&ui, argc, argv));
+    ATF_REQUIRE_EQ(3, cli::main(&ui, argc, argv));
     ATF_REQUIRE(utils::grep_file("Mock debug message", fs::path("test.log")));
     ATF_REQUIRE(utils::grep_file("Mock error message", fs::path("test.log")));
     ATF_REQUIRE(utils::grep_file("Mock info message", fs::path("test.log")));
@@ -350,7 +350,7 @@ ATF_TEST_CASE_BODY(main__loglevel__lower)
     LW("Mock warning message");
 
     cmdline::ui_mock ui;
-    ATF_REQUIRE_EQ(EXIT_FAILURE, cli::main(&ui, argc, argv));
+    ATF_REQUIRE_EQ(3, cli::main(&ui, argc, argv));
     ATF_REQUIRE(!utils::grep_file("Mock debug message", fs::path("test.log")));
     ATF_REQUIRE(utils::grep_file("Mock error message", fs::path("test.log")));
     ATF_REQUIRE(!utils::grep_file("Mock info message", fs::path("test.log")));
@@ -369,7 +369,7 @@ ATF_TEST_CASE_BODY(main__loglevel__error)
                                 "--loglevel=i-am-invalid", NULL};
 
     cmdline::ui_mock ui;
-    ATF_REQUIRE_EQ(EXIT_FAILURE, cli::main(&ui, argc, argv));
+    ATF_REQUIRE_EQ(3, cli::main(&ui, argc, argv));
     ATF_REQUIRE(utils::grep_vector("Usage error.*i-am-invalid", ui.err_log()));
     ATF_REQUIRE(!fs::exists(fs::path("test.log")));
 }
@@ -385,7 +385,7 @@ ATF_TEST_CASE_BODY(main__subcommand__ok)
     const char* const argv[] = {"progname", "mock_write", NULL};
 
     cmdline::ui_mock ui;
-    ATF_REQUIRE_EQ(98,
+    ATF_REQUIRE_EQ(EXIT_FAILURE,
                    cli::main(&ui, argc, argv,
                              cli::cli_command_ptr(new cmd_mock_write())));
     ATF_REQUIRE_EQ(1, ui.out_log().size());
@@ -405,7 +405,7 @@ ATF_TEST_CASE_BODY(main__subcommand__invalid_args)
     const char* const argv[] = {"progname", "mock_write", "bar", NULL};
 
     cmdline::ui_mock ui;
-    ATF_REQUIRE_EQ(EXIT_FAILURE,
+    ATF_REQUIRE_EQ(3,
                    cli::main(&ui, argc, argv,
                              cli::cli_command_ptr(new cmd_mock_write())));
     ATF_REQUIRE(ui.out_log().empty());
@@ -426,7 +426,7 @@ ATF_TEST_CASE_BODY(main__subcommand__runtime_error)
     const char* const argv[] = {"progname", "mock_error", NULL};
 
     cmdline::ui_mock ui;
-    ATF_REQUIRE_EQ(EXIT_FAILURE, cli::main(&ui, argc, argv,
+    ATF_REQUIRE_EQ(2, cli::main(&ui, argc, argv,
         cli::cli_command_ptr(new cmd_mock_error(false))));
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE(utils::grep_vector("progname: E: Runtime error.",

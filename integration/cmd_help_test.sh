@@ -58,7 +58,7 @@ unknown_command_body() {
 Usage error for command help: The command abc does not exist.
 Type 'kyua help help' for usage information.
 EOF
-    atf_check -s exit:1 -o empty -e file:stderr kyua help abc
+    atf_check -s exit:3 -o empty -e file:stderr kyua help abc
 }
 
 
@@ -68,7 +68,7 @@ too_many_arguments_body() {
 Usage error for command help: Too many arguments.
 Type 'kyua help help' for usage information.
 EOF
-    atf_check -s exit:1 -o empty -e file:stderr kyua help about cde
+    atf_check -s exit:3 -o empty -e file:stderr kyua help about cde
 }
 
 

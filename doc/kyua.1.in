@@ -277,7 +277,13 @@ $ kyua --logfile=problem.log --loglevel=debug \\
 .Ed
 .Sh EXIT STATUS
 .Nm
-returns 0 on success or any positive number in case of an error.
+returns 0 on success, 1 on a controlled error condition in the given
+subcommand, 2 on a general unexpected error and 3 on a usage error.
+.Pp
+The documentation of the subcommands in the corresponding manual pages only
+details the difference between a successful exit (0) and the detection of a
+controlled error (1).  Even though when those manual pages do not describe
+any other exit statuses, codes above 1 can be returned.
 .Sh ENVIRONMENT
 The following variables are recognized and can be freely tuned by the end user:
 .Bl -tag -width COLUMNSXX

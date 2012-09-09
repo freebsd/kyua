@@ -47,7 +47,7 @@ many_args_body() {
 
 utils_test_case no_args
 no_args_body() {
-    atf_check -s exit:1 -o empty -e match:"Not enough arguments" kyua db-exec
+    atf_check -s exit:3 -o empty -e match:"Not enough arguments" kyua db-exec
     test ! -f .kyua/store.db || atf_fail "Database created but it should" \
         "not have been"
 }
@@ -94,7 +94,7 @@ store_flag__explicit__fail_head() {
 store_flag__explicit__fail_body() {
     mkdir dir
     chmod 555 dir
-    atf_check -s exit:1 -o empty -e match:"Cannot open.*dir/foo.db" \
+    atf_check -s exit:2 -o empty -e match:"Cannot open.*dir/foo.db" \
         kyua db-exec --store=dir/foo.db "SELECT * FROM metadata"
 }
 

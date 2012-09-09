@@ -50,7 +50,10 @@ requested variables.
 .Sh EXIT STATUS
 The
 .Nm
-command returns 0 on success or 1 if the configuration file fails to
-load or if any of the specified variables does not exist.
+command returns 0 on success or 1 if any of the specified configuration
+variables does not exist.
+.Pp
+Additional exit codes may be returned as described in
+.Xr kyua 1 .
 .Sh SEE ALSO
 .Xr kyua 1

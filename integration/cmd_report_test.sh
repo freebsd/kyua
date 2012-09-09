@@ -99,13 +99,13 @@ default_behavior__no_actions_body() {
     kyua db-exec "SELECT * FROM actions"
 
     echo 'kyua: E: No actions in the database.' >experr
-    atf_check -s exit:1 -o empty -e file:experr kyua report
+    atf_check -s exit:2 -o empty -e file:experr kyua report
 }
 
 
 utils_test_case default_behavior__no_store
 default_behavior__no_store_body() {
-    atf_check -s exit:1 -o empty \
+    atf_check -s exit:2 -o empty \
         -e match:"kyua: E: Cannot open '.*/.kyua/store.db': " kyua report
 }
 
@@ -129,7 +129,7 @@ action__not_found_body() {
     kyua db-exec "SELECT * FROM actions"
 
     echo 'kyua: E: Error loading action 514: does not exist.' >experr
-    atf_check -s exit:1 -o empty -e file:experr kyua report --action=514
+    atf_check -s exit:2 -o empty -e file:experr kyua report --action=514
 }
 
 

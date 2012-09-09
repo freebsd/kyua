@@ -40,7 +40,7 @@ EOF
 Usage error for command debug: Not enough arguments.
 Type 'kyua help debug' for usage information.
 EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua debug
+    atf_check -s exit:3 -o empty -e file:experr kyua debug
 }
 
 
@@ -59,7 +59,7 @@ EOF
 Usage error for command debug: Too many arguments.
 Type 'kyua help debug' for usage information.
 EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua debug first:pass \
+    atf_check -s exit:3 -o empty -e file:experr kyua debug first:pass \
         second:pass
 }
 
@@ -120,7 +120,7 @@ EOF
     cat >experr <<EOF
 kyua: E: Unknown test case 'second:die'.
 EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua debug second:die
+    atf_check -s exit:2 -o empty -e file:experr kyua debug second:die
 }
 
 
@@ -130,7 +130,7 @@ one_arg__no_test_case_body() {
 Usage error for command debug: 'foo' is not a test case identifier (missing ':'?).
 Type 'kyua help debug' for usage information.
 EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua debug foo
+    atf_check -s exit:3 -o empty -e file:experr kyua debug foo
 }
 
 
@@ -139,7 +139,7 @@ one_arg__bad_filter_body() {
     cat >experr <<EOF
 kyua: E: Test case component in 'foo:' is empty.
 EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua debug foo:
+    atf_check -s exit:2 -o empty -e file:experr kyua debug foo:
 }
 
 
@@ -339,7 +339,7 @@ missing_kyuafile_body() {
     cat >experr <<EOF
 kyua: E: Load of 'Kyuafile' failed: File 'Kyuafile' not found.
 EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua debug foo:bar
+    atf_check -s exit:2 -o empty -e file:experr kyua debug foo:bar
 }
 
 
@@ -352,7 +352,7 @@ EOF
     cat >experr <<EOF
 kyua: E: Load of 'Kyuafile' failed: Failed to load Lua file 'Kyuafile': Kyuafile:2: '<name>' expected near '<eof>'.
 EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua debug foo:bar
+    atf_check -s exit:2 -o empty -e file:experr kyua debug foo:bar
 }
 
 
@@ -370,12 +370,12 @@ EOF
     cat >experr <<EOF
 kyua: E: Unknown test case 'crash_on_list:a'.
 EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua debug crash_on_list:a
+    atf_check -s exit:2 -o empty -e file:experr kyua debug crash_on_list:a
 
     cat >experr <<EOF
 kyua: E: Unknown test case 'non_executable:a'.
 EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua debug non_executable:a
+    atf_check -s exit:2 -o empty -e file:experr kyua debug non_executable:a
 
     cat >expout <<EOF
 crash_on_list:__test_cases_list__  ->  broken: Test program did not exit cleanly

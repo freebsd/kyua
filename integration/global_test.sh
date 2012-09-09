@@ -34,7 +34,7 @@ Usage error: No command provided.
 Type 'kyua help' for usage information.
 EOF
 
-    atf_check -s exit:1 -o empty -e file:experr kyua
+    atf_check -s exit:3 -o empty -e file:experr kyua
 }
 
 
@@ -45,7 +45,7 @@ Usage error: Unknown option --this_is_unknown.
 Type 'kyua help' for usage information.
 EOF
 
-    atf_check -s exit:1 -o empty -e file:experr kyua --this_is_unknown
+    atf_check -s exit:3 -o empty -e file:experr kyua --this_is_unknown
 }
 
 
@@ -56,14 +56,14 @@ Usage error: Unknown command 'i_am_not_known'.
 Type 'kyua help' for usage information.
 EOF
 
-    atf_check -s exit:1 -o empty -e file:experr kyua i_am_not_known
+    atf_check -s exit:3 -o empty -e file:experr kyua i_am_not_known
 }
 
 
 utils_test_case logfile__default
 logfile__default_body() {
     atf_check -s exit:0 test ! -d .kyua/logs/
-    atf_check -s exit:1 -o empty -e ignore kyua
+    atf_check -s exit:3 -o empty -e ignore kyua
     atf_check -s exit:0 test -d .kyua/logs/
 }
 
@@ -71,7 +71,7 @@ logfile__default_body() {
 utils_test_case logfile__override
 logfile__override_body() {
     atf_check -s exit:0 test ! -f test.log
-    atf_check -s exit:1 -o empty -e ignore kyua --logfile=test.log
+    atf_check -s exit:3 -o empty -e ignore kyua --logfile=test.log
 
     atf_check -s exit:0 test ! -d .kyua/logs/
     atf_check -s exit:0 test -f test.log
@@ -84,7 +84,7 @@ logfile__override_body() {
 utils_test_case loglevel__default
 loglevel__default_body() {
     atf_check -s exit:0 test ! -f test.log
-    atf_check -s exit:1 -o empty -e ignore kyua --logfile=test.log
+    atf_check -s exit:3 -o empty -e ignore kyua --logfile=test.log
 
     atf_check -s exit:0 test ! -d .kyua/logs/
     atf_check -s exit:0 test -f test.log
@@ -100,7 +100,7 @@ loglevel__default_body() {
 utils_test_case loglevel__lower
 loglevel__lower_body() {
     atf_check -s exit:0 test ! -f test.log
-    atf_check -s exit:1 -o empty -e ignore kyua --logfile=test.log \
+    atf_check -s exit:3 -o empty -e ignore kyua --logfile=test.log \
         --loglevel=warning
 
     atf_check -s exit:0 test ! -d .kyua/logs/
@@ -117,7 +117,7 @@ loglevel__lower_body() {
 utils_test_case loglevel__higher
 loglevel__higher_body() {
     atf_check -s exit:0 test ! -f test.log
-    atf_check -s exit:1 -o empty -e ignore kyua --logfile=test.log \
+    atf_check -s exit:3 -o empty -e ignore kyua --logfile=test.log \
         --loglevel=debug
 
     atf_check -s exit:0 test ! -d .kyua/logs/

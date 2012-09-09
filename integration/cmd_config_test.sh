@@ -218,14 +218,14 @@ config_flag__explicit__missing_file_body() {
     cat >experr <<EOF
 kyua: E: Load of 'foo' failed: File 'foo' not found.
 EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua --config=foo config
+    atf_check -s exit:2 -o empty -e file:experr kyua --config=foo config
 }
 
 
 utils_test_case config_flag__explicit__bad_file
 config_flag__explicit__bad_file_body() {
     touch custom
-    atf_check -s exit:1 -o empty -e match:"No syntax defined" \
+    atf_check -s exit:2 -o empty -e match:"No syntax defined" \
         kyua --config=custom config
 }
 
@@ -307,13 +307,13 @@ variable_flag__invalid_body() {
 Usage error: Invalid argument '' for option --variable: Argument does not have the form 'K=V'.
 Type 'kyua help' for usage information.
 EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua \
+    atf_check -s exit:3 -o empty -e file:experr kyua \
         -v "test_suites.a.b=c" -v "" config
 
     cat >experr <<EOF
 kyua: E: Unknown configuration property 'foo'.
 EOF
-    atf_check -s exit:1 -o empty -e file:experr kyua \
+    atf_check -s exit:2 -o empty -e file:experr kyua \
         -v "test_suites.a.b=c" -v "foo=bar" config
 }
 
