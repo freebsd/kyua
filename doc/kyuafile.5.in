@@ -31,18 +31,30 @@
 .Sh NAME
 .Nm Kyuafile
 .Nd Test suite description files
+.Sh SYNOPSIS
+.Fn atf_test_program "string name" "[string test_suite]"
+.Fn include "string path"
+.Fn plain_test_program "string name" "[int timeout]" "[string test_suite]"
+.Fn syntax "string type" "int version"
+.Fn test_suite "string name"
 .Sh DESCRIPTION
 A test suite is a collection of test programs and is represented by a
 hierarchical layout of test binaries on the file system.  Any subtree of
 the file system can represent a test suite, provided that it includes one
-or more test suite definition files (also known as Kyuafiles).
-.Ss Syntax
-Kyuafiles are the files that define test suites.  A test suite must
-contain, at the very least, a Kyuafile at the root of the test suite
-hierarchy.  The job of the Kyuafile is to define what binaries are test
-programs.
+or more
+.Nm Ns s ,
+which are the test suite definition files.
 .Pp
-Kyuafiles are Lua scripts.  The general structure of a Kyuafile is:
+A
+.Nm
+is a Lua script whose purpose is to describe the structure of the test
+suite it belongs to.  To do so, the script has access to a collection of
+special functions provided by
+.Xr kyua 1 .
+.Pp
+A typical
+.Nm
+will look similar to this:
 .Bd -literal -offset indent
 syntax('kyuafile', 1)
 
@@ -58,34 +70,92 @@ plain_test_program{name='legacy2_test', timeout=30}
 include('dir1/Kyuafile')
 include('dir2/Kyuafile')
 .Ed
+.Ss File versioning
+Every
+.Nm
+file starts with a call to
+.Fn syntax "string type" "int version" .
+This call determines the specific schema used by the file so that future
+backwards-incompatible modifications to the file can be introduced.
 .Pp
-Kyuafiles are only allowed to reference test programs in the current
-directory.  The main reason for this is deterministic behavior: by
-referencing files in the current directory only, there is no room for
-mistakes.  The runtime knows where to look for the test programs and it
-does not have to resolve paths outside of the current directory.
-.Pp
-If any recursion is required, the Kyuafile must include other files by
-using the
-.Fn include
-primitive.  Note that each file is processed in its own Lua environment:
-there is no mechanism to pass state from one file to the other.  The reason
-for this is that there is no such thing as a
-.Dq top-level
-.Nm :
-the user has to be able to run the test suite from any directory in a given
-hierarchy, and this execution must not depend on files on parent
-directories.
-.Pp
-The
-.Fn atf_test_program
+Any new
+.Nm
+file should set
+.Fa type
+to
+.Sq kyuafile
 and
-.Fn plain_test_program
-are used to register new test programs that use the
+.Fa version
+to
+.Sq 1 .
+.Ss Test suite definition
+Every
+.Nm
+should define the name of the test suite it belongs to by calling the
+.Fn test_suite
+function at the very beginning.
+Individual test programs can override this value in their definition, but
+the most common style is to list a single test suite name for the whole
+file.
+.Pp
+The purpose of the test suite name definition is to tell
+.Xr kyua 1
+scoping for the run-time configuration variables that these programs
+accept.
+.Ss Test program registration
+A
+.Nm
+can register test programs by means of a variety of
+.Fn *_test_program
+functions, all of which take the name of a test program and a set of
+optional metadata properties that describe such test program.
+.Pp
+The test programs to be registered must live in the current directory; in
+other words, the various
+.Fn *_test_program
+calls cannot reference test programs in other directories.
+The rationale for this is to force all
+.Nm
+files to be self-contained, and to simplify their internal representation.
+.Pp
+ATF-based test programs (those that implement the
 .Xr kyua-atf-interface 7
-and
+interface) can be registered with the
+.Fn atf_test_program
+table constructor.  This function takes the
+.Fa name
+of the test program and an optional
+.Fa test_suite
+name that overrides the global test suite name.
+.Pp
+Plain test programs (those that implement the
 .Xr kyua-plain-interface 7
-interfaces respectively.
+interface) can be registered with the
+.Fn plain_test_program
+table constructor.  This function takes the
+.Fa name
+of the test program, an optional
+.Fa timeout
+in seconds and an optional
+.Fa test_suite
+name that overrides the global test suite name.
+.Ss Recursion
+To reference test programs in another subdirectory, a different
+.Nm
+must be created in that directory and it must be included into the original
+.Nm
+by means of the
+.Fn include
+function.
+.Pp
+Note that each file is processed in its own Lua environment: there is no
+mechanism to pass state from one file to the other.  The reason for this is
+that there is no such thing as a
+.Dq top-level
+.Nm
+in a test suite: the user has to be able to run the test suite from any
+directory in a given hierarchy, and this execution must not depend on files
+that live in parent directories.
 .Ss Top-level Kyuafile
 Every system has a top directory into which test suites get installed.  The
 default is
@@ -99,17 +169,17 @@ provide comprehensive cross-component reports.  In order to do this, there
 is a special file in the top directory that knows how to inspect the
 subdirectories in search for other Kyuafiles and include them.
 .Pp
-The default top-level Kyuafile lives in
-.Pa __TESTSDIR__/Kyuafile .
-This is just a copy of the sample file installed in
-.Pa __EGDIR__/Kyuafile.top .
+The
+.Sx FILES
+section includes more details on where this file lives.
 .Sh FILES
 .Bl -tag -width XX
 .It Pa __TESTSDIR__/Kyuafile .
 Top-level
-.Nm .
+.Nm
+for the current system.
 .It Pa __EGDIR__/Kyuafile.top .
-Sample file to install as the top-level
+Sample file to serve as a top-level
 .Nm .
 .El
 .Sh SEE ALSO
