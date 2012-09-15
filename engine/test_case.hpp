@@ -89,42 +89,28 @@ class base_test_case {
     /// \return A key/value mapping describing all the test case properties.
     virtual properties_map get_all_properties(void) const = 0;
 
-    /// Executes the test case.
-    ///
-    /// This should not throw any exception: problems detected during execution
-    /// are reported as a broken test case result.
-    ///
-    /// \param user_config The run-time configuration for the test case.
-    /// \param hooks Run-time hooks to introspect the test case execution.
-    /// \param stdout_path The file to which to redirect the stdout of the test.
-    ///     If none, use a temporary file in the work directory.
-    /// \param stderr_path The file to which to redirect the stdout of the test.
-    ///     If none, use a temporary file in the work directory.
-    ///
-    /// \return The result of the execution.
-    virtual test_result execute(
-        const utils::config::tree& user_config, test_case_hooks& hooks,
-        const utils::optional< utils::fs::path >& stdout_path,
-        const utils::optional< utils::fs::path >& stderr_path) const = 0;
-
 public:
-    base_test_case(const base_test_program&, const std::string&);
+    base_test_case(const std::string&, const base_test_program&,
+                   const std::string&);
     virtual ~base_test_case(void);
 
+    const std::string& interface_name(void) const;
     const base_test_program& test_program(void) const;
     const std::string& name(void) const;
 
     properties_map all_properties(void) const;
-    test_result debug(const utils::config::tree&,
-                      test_case_hooks&,
-                      const utils::fs::path&,
-                      const utils::fs::path&) const;
-    test_result run(const utils::config::tree&, test_case_hooks&) const;
 };
 
 
 /// Pointer to a test case.
 typedef std::tr1::shared_ptr< base_test_case > test_case_ptr;
+
+
+test_result debug_test_case(const base_test_case*, const utils::config::tree&,
+                            test_case_hooks&, const utils::fs::path&,
+                            const utils::fs::path&);
+test_result run_test_case(const base_test_case*, const utils::config::tree&,
+                          test_case_hooks&);
 
 
 }  // namespace engine

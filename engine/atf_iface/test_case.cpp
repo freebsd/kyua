@@ -88,6 +88,37 @@ flatten_set(const std::set< T >& set)
 }
 
 
+/// Executes the test case.
+///
+/// This should not throw any exception: problems detected during execution are
+/// reported as a broken test case result.
+///
+/// \param test_case The test case to debug or run.
+/// \param user_config The run-time configuration for the test case.
+/// \param hooks Hooks to introspect the execution of the test case.
+/// \param stdout_path The file to which to redirect the stdout of the test.
+///     If none, use a temporary file in the work directory.
+/// \param stderr_path The file to which to redirect the stdout of the test.
+///     If none, use a temporary file in the work directory.
+///
+/// \return The result of the execution.
+static engine::test_result
+execute(const engine::base_test_case* test_case,
+        const config::tree& user_config,
+        engine::test_case_hooks& hooks,
+        const optional< fs::path >& stdout_path,
+        const optional< fs::path >& stderr_path)
+{
+    const engine::atf_iface::test_case* tc =
+        dynamic_cast< const engine::atf_iface::test_case* >(test_case);
+    if (tc->fake_result())
+        return tc->fake_result().get();
+    else
+        return engine::atf_iface::run_test_case(
+            *tc, user_config, hooks, stdout_path, stderr_path);
+}
+
+
 }  // anonymous namespace
 
 
@@ -408,7 +439,7 @@ atf_iface::test_case::test_case(const base_test_program& test_program_,
                                 const paths_set& required_programs_,
                                 const std::string& required_user_,
                                 const properties_map& user_metadata_) :
-    base_test_case(test_program_, name_),
+    base_test_case("atf", test_program_, name_),
     _pimpl(new impl(description_, has_cleanup_, timeout_,
                     allowed_architectures_, allowed_platforms_,
                     required_configs_, required_files_, required_memory_,
@@ -435,7 +466,7 @@ atf_iface::test_case::test_case(const base_test_program& test_program_,
                                 const std::string& name_,
                                 const std::string& description_,
                                 const engine::test_result& test_result_) :
-    base_test_case(test_program_, name_),
+    base_test_case("atf", test_program_, name_),
     _pimpl(new impl(description_, false, default_timeout,
                     strings_set(), strings_set(), strings_set(), paths_set(),
                     units::bytes(0), paths_set(), "", properties_map(),
@@ -632,6 +663,16 @@ atf_iface::test_case::user_metadata(void) const
 }
 
 
+/// Gets the fake result pre-stored for this test case.
+///
+/// \return A fake result, or none if not defined.
+optional< engine::test_result >
+atf_iface::test_case::fake_result(void) const
+{
+    return _pimpl->fake_result;
+}
+
+
 /// Returns a string representation of all test case properties.
 ///
 /// The returned keys and values match those that can be defined by the test
@@ -781,28 +822,46 @@ atf_iface::test_case::check_requirements(const config::tree& user_config) const
 }
 
 
-/// Executes the test case.
+/// Runs the test case in debug mode.
 ///
-/// This should not throw any exception: problems detected during execution are
-/// reported as a broken test case result.
+/// Debug mode gives the caller more control on the execution of the test.  It
+/// should not be used for normal execution of tests; instead, call run().
 ///
-/// \param user_config The run-time configuration for the test case.
+/// \param test_case The test case to debug.
+/// \param user_config The user configuration that defines the execution of this
+///     test case.
 /// \param hooks Hooks to introspect the execution of the test case.
 /// \param stdout_path The file to which to redirect the stdout of the test.
-///     If none, use a temporary file in the work directory.
+///     For interactive debugging, '/dev/stdout' is probably a reasonable value.
 /// \param stderr_path The file to which to redirect the stdout of the test.
-///     If none, use a temporary file in the work directory.
+///     For interactive debugging, '/dev/stderr' is probably a reasonable value.
 ///
-/// \return The result of the execution.
+/// \return The result of the execution of the test case.
 engine::test_result
-atf_iface::test_case::execute(const config::tree& user_config,
-                              test_case_hooks& hooks,
-                              const optional< fs::path >& stdout_path,
-                              const optional< fs::path >& stderr_path) const
+engine::atf_iface::debug_atf_test_case(const base_test_case* test_case,
+                                       const config::tree& user_config,
+                                       test_case_hooks& hooks,
+                                       const fs::path& stdout_path,
+                                       const fs::path& stderr_path)
 {
-    if (_pimpl->fake_result)
-        return _pimpl->fake_result.get();
-    else
-        return run_test_case(*this, user_config, hooks, stdout_path,
-                             stderr_path);
+    return execute(test_case, user_config, hooks,
+                   utils::make_optional(stdout_path),
+                   utils::make_optional(stderr_path));
+}
+
+
+/// Runs the test case.
+///
+/// \param test_case The test case to run.
+/// \param user_config The user configuration that defines the execution of this
+///     test case.
+/// \param hooks Hooks to introspect the execution of the test case.
+///
+/// \return The result of the execution of the test case.
+engine::test_result
+engine::atf_iface::run_atf_test_case(const base_test_case* test_case,
+                                     const config::tree& user_config,
+                                     test_case_hooks& hooks)
+{
+    return execute(test_case, user_config, hooks, none, none);
 }

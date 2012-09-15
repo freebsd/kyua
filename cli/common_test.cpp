@@ -101,26 +101,6 @@ class mock_test_case : public engine::base_test_case {
         return engine::properties_map();
     }
 
-    /// Fakes the execution of a test case.
-    ///
-    /// \param unused_user_config The user configuration that defines the
-    ///     execution of this test case.
-    /// \param unused_hooks Hooks to introspect the execution of the test case.
-    /// \param unused_stdout_path The file to which to redirect the stdout of
-    ///     the test.
-    /// \param unused_stderr_path The file to which to redirect the stderr of
-    ///     the test.
-    ///
-    /// \return Nothing; this method is not supposed to be called.
-    engine::test_result
-    execute(const config::tree& UTILS_UNUSED_PARAM(user_config),
-            engine::test_case_hooks& UTILS_UNUSED_PARAM(hooks),
-            const optional< fs::path >& UTILS_UNUSED_PARAM(stdout_path),
-            const optional< fs::path >& UTILS_UNUSED_PARAM(stderr_path)) const
-    {
-        UNREACHABLE;
-    }
-
 public:
     /// Constructs a new test case.
     ///
@@ -128,7 +108,7 @@ public:
     /// \param name_ The name of the test case within the test program.
     mock_test_case(const engine::base_test_program& test_program_,
                    const std::string& name_) :
-        base_test_case(test_program_, name_)
+        base_test_case("mock", test_program_, name_)
     {
     }
 };

@@ -170,7 +170,7 @@ public:
                                                      "unit-tests", _timeout);
         const plain_iface::test_case test_case(test_program);
         fetch_output_hooks fetcher;
-        return test_case.run(user_config, fetcher);
+        return engine::run_test_case(&test_case, user_config, fetcher);
     }
 };
 

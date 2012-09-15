@@ -124,28 +124,6 @@ class mock_test_case : public engine::base_test_case {
         return properties;
     }
 
-    /// Fakes the execution of a test case.
-    ///
-    /// \param user_config The run-time configuration.  Must be mock_config.
-    /// \param hooks Hooks to introspect the execution of the test case.
-    /// \param unused_stdout_path The file into which to write the stdout.
-    /// \param unused_stderr_path The file into which to write the stderr.
-    ///
-    /// \return A static result for testing purposes.
-    engine::test_result
-    execute(const utils::config::tree& user_config,
-            engine::test_case_hooks& hooks,
-            const optional< fs::path >& UTILS_UNUSED_PARAM(stdout_path),
-            const optional< fs::path >& UTILS_UNUSED_PARAM(stderr_path)) const
-    {
-        if (&user_config != &mock_config)
-            throw std::runtime_error("Invalid config object");
-        hooks.got_stdout(fs::path("fake-stdout.txt"));
-        hooks.got_stderr(fs::path("fake-stderr.txt"));
-        return engine::test_result(engine::test_result::skipped,
-                                   "A test result");
-    }
-
 public:
     /// Constructs a new test case.
     ///
@@ -153,7 +131,7 @@ public:
     /// \param name_ The name of the test case within the test program.
     mock_test_case(const engine::base_test_program& test_program_,
                    const std::string& name_) :
-        base_test_case(test_program_, name_)
+        base_test_case("mock", test_program_, name_)
     {
     }
 };
@@ -184,26 +162,8 @@ ATF_TEST_CASE_BODY(base_test_case__all_properties__delegate)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(base_test_case__run__delegate)
-ATF_TEST_CASE_BODY(base_test_case__run__delegate)
-{
-    const mock_test_program test_program(fs::path("foo"));
-    const mock_test_case test_case(test_program, "bar");
-
-    capture_hooks hooks;
-    ATF_REQUIRE(engine::test_result(engine::test_result::skipped,
-                                    "A test result") ==
-                test_case.run(mock_config, hooks));
-    ATF_REQUIRE(hooks.stdout_path);
-    ATF_REQUIRE_EQ(fs::path("fake-stdout.txt"), hooks.stdout_path.get());
-    ATF_REQUIRE(hooks.stderr_path);
-    ATF_REQUIRE_EQ(fs::path("fake-stderr.txt"), hooks.stderr_path.get());
-}
-
-
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, base_test_case__ctor_and_getters);
     ATF_ADD_TEST_CASE(tcs, base_test_case__all_properties__delegate);
-    ATF_ADD_TEST_CASE(tcs, base_test_case__run__delegate);
 }

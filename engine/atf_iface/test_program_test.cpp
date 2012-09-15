@@ -105,12 +105,12 @@ check_test_cases_list_failure(const engine::test_cases_vector& test_cases,
                               const std::string& exp_reason)
 {
     ATF_REQUIRE_EQ(1, test_cases.size());
-    const atf_iface::test_case& test_case =
-        *dynamic_cast< const atf_iface::test_case* >(test_cases[0].get());
-    ATF_REQUIRE_EQ("__test_cases_list__", test_case.name());
+    const atf_iface::test_case* test_case =
+        dynamic_cast< const atf_iface::test_case* >(test_cases[0].get());
+    ATF_REQUIRE_EQ("__test_cases_list__", test_case->name());
     engine::test_case_hooks dummy_hooks;
-    const engine::test_result result = test_case.run(
-        user_files::empty_config(), dummy_hooks);
+    const engine::test_result result = engine::run_test_case(
+        test_case, user_files::empty_config(), dummy_hooks);
     ATF_REQUIRE(engine::test_result::broken == result.type());
     ATF_REQUIRE_MATCH(exp_reason, result.reason());
 }

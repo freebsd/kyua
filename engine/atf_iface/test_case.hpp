@@ -82,10 +82,6 @@ class test_case : public base_test_case {
     std::tr1::shared_ptr< impl > _pimpl;
 
     properties_map get_all_properties(void) const;
-    virtual engine::test_result execute(
-        const utils::config::tree&, test_case_hooks&,
-        const utils::optional< utils::fs::path >&,
-        const utils::optional< utils::fs::path >&) const;
 
 public:
     test_case(const base_test_program&, const std::string&,
@@ -113,10 +109,19 @@ public:
     const std::string& required_user(void) const;
     const properties_map& user_metadata(void) const;
 
+    utils::optional< test_result > fake_result(void) const;
+
     std::string check_requirements(const utils::config::tree&) const;
 
     bool operator==(const test_case&) const;
 };
+
+
+test_result debug_atf_test_case(const base_test_case*,
+                                const utils::config::tree&, test_case_hooks&,
+                                const utils::fs::path&, const utils::fs::path&);
+test_result run_atf_test_case(const base_test_case*, const utils::config::tree&,
+                              test_case_hooks&);
 
 
 }  // namespace atf_iface

@@ -130,8 +130,8 @@ run_test_program(const engine::base_test_program& test_program,
         file_saver_hooks test_hooks(tx, test_case_id);
         hooks.got_test_case(test_case);
         const datetime::timestamp start_time = datetime::timestamp::now();
-        const engine::test_result result = test_case->run(
-            user_config, test_hooks);
+        const engine::test_result result = run_test_case(
+            test_case.get(), user_config, test_hooks);
         const datetime::timestamp end_time = datetime::timestamp::now();
         tx.put_result(result, test_case_id, start_time, end_time);
         hooks.got_result(test_case, result, end_time - start_time);

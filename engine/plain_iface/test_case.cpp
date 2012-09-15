@@ -50,6 +50,7 @@ namespace fs = utils::fs;
 namespace plain_iface = engine::plain_iface;
 namespace process = utils::process;
 
+using utils::none;
 using utils::optional;
 
 
@@ -248,6 +249,43 @@ public:
 };
 
 
+/// Executes the test case.
+///
+/// This should not throw any exception: problems detected during execution are
+/// reported as a broken test case result.
+///
+/// \param test_case The test case to debug or run.
+/// \param unused_user_config The run-time configuration for the test case.
+/// \param hooks Hooks to introspect the execution of the test case.
+/// \param stdout_path The file into which to store the test case's stdout.
+///     If none, use a temporary file within the work directory.
+/// \param stderr_path The file into which to store the test case's stderr.
+///     If none, use a temporary file within the work directory.
+///
+/// \return The result of the execution.
+static engine::test_result
+execute(const engine::base_test_case* test_case,
+        const config::tree& UTILS_UNUSED_PARAM(user_config),
+        engine::test_case_hooks& hooks,
+        const optional< fs::path >& stdout_path,
+        const optional< fs::path >& stderr_path)
+{
+    LI(F("Processing test case '%s'") % test_case->name());
+
+    try {
+        const engine::plain_iface::test_case* tc =
+            dynamic_cast< const engine::plain_iface::test_case* >(test_case);
+        return engine::protected_run(run_test_case_safe(
+            *tc, hooks, stdout_path, stderr_path));
+    } catch (const engine::interrupted_error& e) {
+        throw e;
+    } catch (const std::exception& e) {
+        return engine::test_result(engine::test_result::broken, F(
+            "The test caused an error in the runtime system: %s") % e.what());
+    }
+}
+
+
 }  // anonymous namespace
 
 
@@ -256,7 +294,7 @@ public:
 /// \param test_program_ The test program this test case belongs to.  This
 ///     object must exist during the lifetime of the test case.
 plain_iface::test_case::test_case(const base_test_program& test_program_) :
-    base_test_case(test_program_, "main")
+    base_test_case("plain", test_program_, "main")
 {
 }
 
@@ -285,35 +323,46 @@ plain_iface::test_case::get_all_properties(void) const
 }
 
 
-/// Executes the test case.
+/// Runs the test case in debug mode.
 ///
-/// This should not throw any exception: problems detected during execution are
-/// reported as a broken test case result.
+/// Debug mode gives the caller more control on the execution of the test.  It
+/// should not be used for normal execution of tests; instead, call run().
 ///
-/// \param unused_user_config The run-time configuration for the test case.
+/// \param test_case The test case to debug.
+/// \param user_config The user configuration that defines the execution of this
+///     test case.
 /// \param hooks Hooks to introspect the execution of the test case.
-/// \param stdout_path The file into which to store the test case's stdout.
-///     If none, use a temporary file within the work directory.
-/// \param stderr_path The file into which to store the test case's stderr.
-///     If none, use a temporary file within the work directory.
+/// \param stdout_path The file to which to redirect the stdout of the test.
+///     For interactive debugging, '/dev/stdout' is probably a reasonable value.
+/// \param stderr_path The file to which to redirect the stdout of the test.
+///     For interactive debugging, '/dev/stderr' is probably a reasonable value.
 ///
-/// \return The result of the execution.
+/// \return The result of the execution of the test case.
 engine::test_result
-plain_iface::test_case::execute(
-    const config::tree& UTILS_UNUSED_PARAM(user_config),
-    test_case_hooks& hooks,
-    const optional< fs::path >& stdout_path,
-    const optional< fs::path >& stderr_path) const
+engine::plain_iface::debug_plain_test_case(const base_test_case* test_case,
+                                           const config::tree& user_config,
+                                           test_case_hooks& hooks,
+                                           const fs::path& stdout_path,
+                                           const fs::path& stderr_path)
 {
-    LI(F("Processing test case '%s'") % name());
+    return execute(test_case, user_config, hooks,
+                   utils::make_optional(stdout_path),
+                   utils::make_optional(stderr_path));
+}
 
-    try {
-        return engine::protected_run(run_test_case_safe(
-            *this, hooks, stdout_path, stderr_path));
-    } catch (const interrupted_error& e) {
-        throw e;
-    } catch (const std::exception& e) {
-        return test_result(test_result::broken, F(
-            "The test caused an error in the runtime system: %s") % e.what());
-    }
+
+/// Runs the test case.
+///
+/// \param test_case The test case to run.
+/// \param user_config The user configuration that defines the execution of this
+///     test case.
+/// \param hooks Hooks to introspect the execution of the test case.
+///
+/// \return The result of the execution of the test case.
+engine::test_result
+engine::plain_iface::run_plain_test_case(const base_test_case* test_case,
+                                         const config::tree& user_config,
+                                         test_case_hooks& hooks)
+{
+    return execute(test_case, user_config, hooks, none, none);
 }

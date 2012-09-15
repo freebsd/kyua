@@ -593,7 +593,8 @@ ATF_TEST_CASE_BODY(test_case__run__fake)
         test_program, "__internal_name__", "Some description", result);
 
     ensure_silent_hooks hooks;
-    ATF_REQUIRE(result == test_case.run(user_files::empty_config(), hooks));
+    ATF_REQUIRE(result == engine::run_test_case(
+                    &test_case, user_files::empty_config(), hooks));
 }
 
 

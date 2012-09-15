@@ -28,6 +28,8 @@
 
 #include "engine/test_case.hpp"
 
+#include "engine/atf_iface/test_case.hpp"
+#include "engine/plain_iface/test_case.hpp"
 #include "engine/test_program.hpp"
 #include "engine/test_result.hpp"
 #include "utils/config/tree.hpp"
@@ -76,6 +78,9 @@ engine::test_case_hooks::got_stderr(const fs::path& UTILS_UNUSED_PARAM(file))
 
 /// Internal implementation for a base_test_case.
 struct engine::base_test_case::base_impl {
+    /// Name of the interface implemented by the test program.
+    const std::string interface_name;
+
     /// Test program this test case belongs to.
     const base_test_program& test_program;
 
@@ -84,10 +89,14 @@ struct engine::base_test_case::base_impl {
 
     /// Constructor.
     ///
+    /// \param interface_name_ Name of the interface implemented by the test
+    ///     program.
     /// \param test_program_ The test program this test case belongs to.
     /// \param name_ The name of the test case within the test program.
-    base_impl(const base_test_program& test_program_,
+    base_impl(const std::string& interface_name_,
+              const base_test_program& test_program_,
               const std::string& name_) :
+        interface_name(interface_name_),
         test_program(test_program_),
         name(name_)
     {
@@ -97,14 +106,17 @@ struct engine::base_test_case::base_impl {
 
 /// Constructs a new test case.
 ///
+/// \param interface_name_ Name of the interface implemented by the test
+///     program.
 /// \param test_program_ The test program this test case belongs to.  This is a
 ///     static reference (instead of a test_program_ptr) because the test
 ///     program must exist in order for the test case to exist.
 /// \param name_ The name of the test case within the test program.  Must be
 ///     unique.
-engine::base_test_case::base_test_case(const base_test_program& test_program_,
+engine::base_test_case::base_test_case(const std::string& interface_name_,
+                                       const base_test_program& test_program_,
                                        const std::string& name_) :
-    _pbimpl(new base_impl(test_program_, name_))
+    _pbimpl(new base_impl(interface_name_, test_program_, name_))
 {
 }
 
@@ -112,6 +124,16 @@ engine::base_test_case::base_test_case(const base_test_program& test_program_,
 /// Destroys a test case.
 engine::base_test_case::~base_test_case(void)
 {
+}
+
+
+/// Gets the name of the interface implemented by the test program.
+///
+/// \return An interface name.
+const std::string&
+engine::base_test_case::interface_name(void) const
+{
+    return _pbimpl->interface_name;
 }
 
 
@@ -157,6 +179,7 @@ engine::base_test_case::all_properties(void) const
 /// Debug mode gives the caller more control on the execution of the test.  It
 /// should not be used for normal execution of tests; instead, call run().
 ///
+/// \param test_case The test case to debug.
 /// \param user_config The user configuration that defines the execution of this
 ///     test case.
 /// \param hooks Hooks to introspect the execution of the test case.
@@ -167,27 +190,46 @@ engine::base_test_case::all_properties(void) const
 ///
 /// \return The result of the execution of the test case.
 engine::test_result
-engine::base_test_case::debug(const config::tree& user_config,
-                              test_case_hooks& hooks,
-                              const fs::path& stdout_path,
-                              const fs::path& stderr_path) const
+engine::debug_test_case(const base_test_case* test_case,
+                        const config::tree& user_config,
+                        test_case_hooks& hooks,
+                        const fs::path& stdout_path,
+                        const fs::path& stderr_path)
 {
-    return execute(user_config, hooks,
-                   utils::make_optional(stdout_path),
-                   utils::make_optional(stderr_path));
+    // TODO(jmmv): Yes, hardcoding the interface names here is nasty.  But this
+    // will go away once we implement the testers as individual binaries, as we
+    // just auto-discover the ones that exist and use their generic interface.
+    if (test_case->interface_name() == "atf") {
+        return atf_iface::debug_atf_test_case(
+            test_case, user_config, hooks, stdout_path, stderr_path);
+    } else if (test_case->interface_name() == "plain") {
+        return plain_iface::debug_plain_test_case(
+            test_case, user_config, hooks, stdout_path, stderr_path);
+    } else
+        UNREACHABLE_MSG("Unknown interface " + test_case->interface_name());
 }
 
 
 /// Runs the test case.
 ///
+/// \param test_case The test case to run.
 /// \param user_config The user configuration that defines the execution of this
 ///     test case.
 /// \param hooks Hooks to introspect the execution of the test case.
 ///
 /// \return The result of the execution of the test case.
 engine::test_result
-engine::base_test_case::run(const config::tree& user_config,
-                            test_case_hooks& hooks) const
+engine::run_test_case(const base_test_case* test_case,
+                      const config::tree& user_config,
+                      test_case_hooks& hooks)
 {
-    return execute(user_config, hooks, none, none);
+    // TODO(jmmv): Yes, hardcoding the interface names here is nasty.  But this
+    // will go away once we implement the testers as individual binaries, as we
+    // just auto-discover the ones that exist and use their generic interface.
+    if (test_case->interface_name() == "atf") {
+        return atf_iface::run_atf_test_case(test_case, user_config, hooks);
+    } else if (test_case->interface_name() == "plain") {
+        return plain_iface::run_plain_test_case(test_case, user_config, hooks);
+    } else
+        UNREACHABLE_MSG("Unknown interface " + test_case->interface_name());
 }

@@ -241,8 +241,10 @@ public:
     {
         const atf_iface::test_program test_program(_binary_path, _root,
                                                    "the-suite");
-        return atf_iface::test_case::from_properties(
-            test_program, _name, _metadata).run(_user_config, hooks);
+        const atf_iface::test_case test_case =
+            atf_iface::test_case::from_properties(test_program, _name,
+                                                  _metadata);
+        return engine::run_test_case(&test_case, _user_config, hooks);
     }
 };
 

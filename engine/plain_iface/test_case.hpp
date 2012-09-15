@@ -45,14 +45,18 @@ namespace plain_iface {
 /// Representation of a plain test case.
 class test_case : public base_test_case {
     properties_map get_all_properties(void) const;
-    virtual test_result execute(
-        const utils::config::tree&, test_case_hooks&,
-        const utils::optional< utils::fs::path >&,
-        const utils::optional< utils::fs::path >&) const;
 
 public:
     test_case(const base_test_program&);
 };
+
+
+test_result debug_plain_test_case(const base_test_case*,
+                                  const utils::config::tree&,
+                                  test_case_hooks&, const utils::fs::path&,
+                                  const utils::fs::path&);
+test_result run_plain_test_case(const base_test_case*,
+                                const utils::config::tree&, test_case_hooks&);
 
 
 }  // namespace plain_iface
