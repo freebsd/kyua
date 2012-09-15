@@ -49,13 +49,13 @@ test_cases_vector parse_test_cases(const base_test_program&, std::istream&);
 
 /// Representation of an ATF test program.
 class test_program : public base_test_program {
-    test_cases_vector safe_load_test_cases(void) const;
-    test_cases_vector load_test_cases(void) const;
-
 public:
     test_program(const utils::fs::path&, const utils::fs::path&,
                  const std::string&);
 };
+
+
+test_cases_vector load_atf_test_cases(const base_test_program*);
 
 
 }  // namespace atf_iface

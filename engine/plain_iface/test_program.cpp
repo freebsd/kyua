@@ -71,7 +71,7 @@ plain_iface::test_program::test_program(
     const utils::fs::path& root_,
     const std::string& test_suite_name_,
     const optional< datetime::delta >& optional_timeout_) :
-    base_test_program(binary_, root_, test_suite_name_),
+    base_test_program("plain", binary_, root_, test_suite_name_),
     _pimpl(new impl(optional_timeout_))
 {
 }
@@ -80,18 +80,6 @@ plain_iface::test_program::test_program(
 /// Destructor.
 plain_iface::test_program::~test_program(void)
 {
-}
-
-
-/// Loads the list of test cases contained in a test program.
-///
-/// \return A single test_case object representing the whole test program.
-engine::test_cases_vector
-plain_iface::test_program::load_test_cases(void) const
-{
-    test_cases_vector loaded_test_cases;
-    loaded_test_cases.push_back(engine::test_case_ptr(new test_case(*this)));
-    return loaded_test_cases;
 }
 
 
@@ -105,4 +93,19 @@ const datetime::delta&
 plain_iface::test_program::timeout(void) const
 {
     return _pimpl->timeout;
+}
+
+
+/// Loads the list of test cases contained in a test program.
+///
+/// \param test_program Test program from which to load the test cases.
+///
+/// \return A single test_case object representing the whole test program.
+engine::test_cases_vector
+plain_iface::load_plain_test_cases(const base_test_program* test_program)
+{
+    test_cases_vector loaded_test_cases;
+    loaded_test_cases.push_back(engine::test_case_ptr(
+                                    new test_case(*test_program)));
+    return loaded_test_cases;
 }

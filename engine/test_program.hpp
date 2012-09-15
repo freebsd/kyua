@@ -59,20 +59,9 @@ class base_test_program {
     /// Pointer to the shared internal implementation.
     std::tr1::shared_ptr< base_impl > _pbimpl;
 
-    /// Loads the list of test cases contained in a test program.
-    ///
-    /// \return A collection of test_case objects representing the input test
-    /// case list.
-    ///
-    /// \note If the test cases have to be loaded from the test program itself,
-    /// and the test program fails to run, this function should report the
-    /// failure as a fake test case with a fixed broken-type result.  This
-    /// method should not throw errors on these conditions.
-    virtual test_cases_vector load_test_cases(void) const = 0;
-
 public:
-    base_test_program(const utils::fs::path&, const utils::fs::path&,
-                      const std::string&);
+    base_test_program(const std::string&, const utils::fs::path&,
+                      const utils::fs::path&, const std::string&);
     virtual ~base_test_program(void);
 
     const utils::fs::path& root(void) const;

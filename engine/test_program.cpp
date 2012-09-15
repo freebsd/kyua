@@ -30,7 +30,9 @@
 
 #include <stdexcept>
 
+#include "engine/atf_iface/test_program.hpp"
 #include "engine/exceptions.hpp"
+#include "engine/plain_iface/test_program.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
@@ -42,6 +44,9 @@ using utils::optional;
 
 /// Internal implementation of a base_test_program.
 struct engine::base_test_program::base_impl {
+    /// Name of the test program interface.
+    std::string interface_name;
+
     /// Name of the test program binary relative to root.
     fs::path binary;
 
@@ -55,12 +60,15 @@ struct engine::base_test_program::base_impl {
     optional< test_cases_vector > test_cases;
 
     /// Constructor.
+    ///
+    /// \param interface_name_ Name of the test program interface.
     /// \param binary_ The name of the test program binary relative to root_.
     /// \param root_ The root of the test suite containing the test program.
     /// \param test_suite_name_ The name of the test suite this program
     ///     belongs to.
-    base_impl(const fs::path& binary_, const fs::path& root_,
-              const std::string& test_suite_name_) :
+    base_impl(const std::string& interface_name_, const fs::path& binary_,
+              const fs::path& root_, const std::string& test_suite_name_) :
+        interface_name(interface_name_),
         binary(binary_),
         root(root_),
         test_suite_name(test_suite_name_)
@@ -74,14 +82,16 @@ struct engine::base_test_program::base_impl {
 
 /// Constructs a new test program.
 ///
+/// \param interface_name_ Name of the test program interface.
 /// \param binary_ The name of the test program binary relative to root_.
 /// \param root_ The root of the test suite containing the test program.
 /// \param test_suite_name_ The name of the test suite this program belongs to.
 engine::base_test_program::base_test_program(
+    const std::string& interface_name_,
     const fs::path& binary_,
     const fs::path& root_,
     const std::string& test_suite_name_) :
-    _pbimpl(new base_impl(binary_, root_, test_suite_name_))
+    _pbimpl(new base_impl(interface_name_, binary_, root_, test_suite_name_))
 {
 }
 
@@ -169,9 +179,19 @@ engine::base_test_program::test_cases(void) const
 {
     if (!_pbimpl->test_cases) {
         try {
-            _pbimpl->test_cases = load_test_cases();
+            // TODO(jmmv): Yes, hardcoding the interface names here is nasty.
+            // But this will go away once we implement the testers as individual
+            // binaries, as we just auto-discover the ones that exist and use
+            // their generic interface.
+            if (_pbimpl->interface_name == "atf") {
+                _pbimpl->test_cases = atf_iface::load_atf_test_cases(this);
+            } else if (_pbimpl->interface_name == "plain") {
+                _pbimpl->test_cases = plain_iface::load_plain_test_cases(this);
+            } else
+                UNREACHABLE_MSG("Unknown interface " + _pbimpl->interface_name);
         } catch (const std::runtime_error& e) {
-            UNREACHABLE_MSG(F("Should not have thrown, but got: %s") % e.what());
+            UNREACHABLE_MSG(F("Should not have thrown, but got: %s") %
+                            e.what());
         }
     }
     return _pbimpl->test_cases.get();

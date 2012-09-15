@@ -129,6 +129,52 @@ public:
 };
 
 
+/// Auxiliary function for load_test_cases.
+///
+/// This function differs from load_test_cases in that it can throw exceptions.
+/// The caller takes this into account and generates a fake test case to
+/// represent the failure.
+///
+/// \param test_program Test program from which to load the test cases.
+///
+/// \return A collection of test_case objects representing the input test case
+/// list.
+///
+/// \throw engine::error If there is a problem executing the test program.
+/// \throw format_error If the test case list has an invalid format.
+/// \throw process::error If the spawning of the child process fails.
+static engine::test_cases_vector
+safe_load_test_cases(const engine::base_test_program* test_program)
+{
+    LI(F("Obtaining test cases list from test program '%s' of root '%s'") %
+       test_program->relative_path() % test_program->root());
+
+    const std::auto_ptr< process::child_with_output > child =
+        process::child_with_output::fork(list_test_cases(
+                                             test_program->absolute_path()));
+
+    engine::test_cases_vector loaded_test_cases;
+    std::string format_error_message;
+    try {
+        loaded_test_cases = atf_iface::detail::parse_test_cases(
+            *test_program, child->output());
+    } catch (const engine::format_error& e) {
+        format_error_message = F("%s: %s") % test_program->relative_path().str()
+            % e.what();
+    }
+
+    const utils::process::status status = child->wait();
+    if (status.exited() && status.exitstatus() == list_failure_exitcode)
+        throw engine::error("Failed to execute the test program");
+    if (!status.exited() || status.exitstatus() != EXIT_SUCCESS)
+        throw engine::error("Test program did not exit cleanly");
+    if (!format_error_message.empty())
+        throw engine::format_error(format_error_message);
+
+    return loaded_test_cases;
+}
+
+
 }  // anonymous namespace
 
 
@@ -193,53 +239,14 @@ engine::atf_iface::detail::parse_test_cases(const base_test_program& program,
 atf_iface::test_program::test_program(const utils::fs::path& binary_,
                                       const utils::fs::path& root_,
                                       const std::string& test_suite_name_) :
-    base_test_program(binary_, root_, test_suite_name_)
+    base_test_program("atf", binary_, root_, test_suite_name_)
 {
-}
-
-
-/// Auxiliary function for load_test_cases.
-///
-/// This function differs from load_test_cases in that it can throw exceptions.
-/// The caller takes this into account and generates a fake test case to
-/// represent the failure.
-///
-/// \return A collection of test_case objects representing the input test case
-/// list.
-///
-/// \throw engine::error If there is a problem executing the test program.
-/// \throw format_error If the test case list has an invalid format.
-/// \throw process::error If the spawning of the child process fails.
-engine::test_cases_vector
-atf_iface::test_program::safe_load_test_cases(void) const
-{
-    LI(F("Obtaining test cases list from test program '%s' of root '%s'") %
-       relative_path() % root());
-
-    const std::auto_ptr< process::child_with_output > child =
-        process::child_with_output::fork(list_test_cases(absolute_path()));
-
-    test_cases_vector loaded_test_cases;
-    std::string format_error_message;
-    try {
-        loaded_test_cases = detail::parse_test_cases(*this, child->output());
-    } catch (const format_error& e) {
-        format_error_message = F("%s: %s") % relative_path().str() % e.what();
-    }
-
-    const utils::process::status status = child->wait();
-    if (status.exited() && status.exitstatus() == list_failure_exitcode)
-        throw error("Failed to execute the test program");
-    if (!status.exited() || status.exitstatus() != EXIT_SUCCESS)
-        throw error("Test program did not exit cleanly");
-    if (!format_error_message.empty())
-        throw format_error(format_error_message);
-
-    return loaded_test_cases;
 }
 
 
 /// Loads the list of test cases contained in a test program.
+///
+/// \param test_program Test program from which to load the test cases.
 ///
 /// \return A collection of test_case objects representing the input test case
 /// list.  If the test cases cannot be properly loaded from the test program,
@@ -247,14 +254,14 @@ atf_iface::test_program::safe_load_test_cases(void) const
 /// fake test case return is "runnable" in the sense that it will report an
 /// error when attempted to be run.
 engine::test_cases_vector
-atf_iface::test_program::load_test_cases(void) const
+atf_iface::load_atf_test_cases(const base_test_program* test_program)
 {
     try {
-        return safe_load_test_cases();
+        return safe_load_test_cases(test_program);
     } catch (const std::runtime_error& e) {
         test_cases_vector loaded_test_cases;
         loaded_test_cases.push_back(test_case_ptr(new test_case(
-            *this, "__test_cases_list__",
+            *test_program, "__test_cases_list__",
             "Represents the correct processing of the test cases list",
             test_result(test_result::broken, e.what()))));
         return loaded_test_cases;

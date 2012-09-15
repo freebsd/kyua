@@ -92,18 +92,9 @@ public:
     /// \param test_suite_name_ The name of the test suite, if necessary.
     mock_test_program(const fs::path& binary_,
                       const std::string& test_suite_name_ = "unused-suite") :
-        base_test_program(binary_, fs::path("unused-root"), test_suite_name_)
+        base_test_program("mock", binary_, fs::path("unused-root"),
+                          test_suite_name_)
     {
-    }
-
-
-    /// Gets the list of test cases from the test program.
-    ///
-    /// \return Nothing; this method is not supposed to be called.
-    engine::test_cases_vector
-    load_test_cases(void) const
-    {
-        UNREACHABLE;
     }
 };
 

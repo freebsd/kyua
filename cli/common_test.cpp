@@ -75,17 +75,9 @@ public:
     ///
     /// \param binary_ The name of the test program binary.
     mock_test_program(const fs::path& binary_) :
-        base_test_program(binary_, fs::path("unused-root"), "unused-suite-name")
+        base_test_program("mock", binary_, fs::path("unused-root"),
+                          "unused-suite-name")
     {
-    }
-
-    /// Gets the list of test cases from the test program.
-    ///
-    /// \return Nothing; this method is not supposed to be called.
-    engine::test_cases_vector
-    load_test_cases(void) const
-    {
-        UNREACHABLE;
     }
 };
 
