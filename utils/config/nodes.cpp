@@ -330,3 +330,15 @@ config::string_node::set_lua(lutok::state& state, const int value_index)
     else
         throw value_error("Not a string");
 }
+
+
+/// Converts a single word to the native type.
+///
+/// \param raw_value The value to parse.
+///
+/// \return The parsed value.
+std::string
+config::strings_set_node::parse_one(const std::string& raw_value) const
+{
+    return raw_value;
+}

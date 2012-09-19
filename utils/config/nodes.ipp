@@ -34,6 +34,7 @@
 #include <typeinfo>
 
 #include "utils/config/exceptions.hpp"
+#include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/text/exceptions.hpp"
@@ -209,6 +210,123 @@ config::native_leaf_node< ValueType >::to_string(void) const
 {
     PRE(typed_leaf_node< ValueType >::is_set());
     return F("%s") % typed_leaf_node< ValueType >::value();
+}
+
+
+/// Constructor for a node with an undefined value.
+///
+/// This should only be called by the tree's define() method as a way to
+/// register a node as known but undefined.  The node will then serve as a
+/// placeholder for future values.
+template< typename ValueType >
+config::base_set_node< ValueType >::base_set_node(void) :
+    _value(none)
+{
+}
+
+
+/// Checks whether the node has been set.
+///
+/// Remember that a node can exist before holding a value (i.e. when the node
+/// has been defined as "known" but not yet set by the user).  This function
+/// checks whether the node laready holds a value.
+///
+/// \return True if a value has been set in the node.
+template< typename ValueType >
+bool
+config::base_set_node< ValueType >::is_set(void) const
+{
+    return static_cast< bool >(_value);
+}
+
+
+/// Gets the value stored in the node.
+///
+/// \pre The node must have a value.
+///
+/// \return The value in the node.
+template< typename ValueType >
+const typename config::base_set_node< ValueType >::value_type&
+config::base_set_node< ValueType >::value(void) const
+{
+    PRE(is_set());
+    return _value.get();
+}
+
+
+/// Sets the value of the node.
+///
+/// \param value_ The new value to set the node to.
+template< typename ValueType >
+void
+config::base_set_node< ValueType >::set(const value_type& value_)
+{
+    _value = optional< value_type >(value_);
+}
+
+
+/// Sets the value of the node from a raw string representation.
+///
+/// \param raw_value The value to set the node to.
+///
+/// \throw value_error If the value is invalid.
+template< typename ValueType >
+void
+config::base_set_node< ValueType >::set_string(const std::string& raw_value)
+{
+    std::set< ValueType > new_value;
+
+    const std::vector< std::string > words = text::split(raw_value, ' ');
+    for (std::vector< std::string >::const_iterator iter = words.begin();
+         iter != words.end(); ++iter) {
+        if (!(*iter).empty())
+            new_value.insert(parse_one(*iter));
+    }
+
+    _value = make_optional(new_value);
+}
+
+
+/// Converts the contents of the node to a string.
+///
+/// \pre The node must have a value.
+///
+/// \return A string representation of the value held by the node.
+template< typename ValueType >
+std::string
+config::base_set_node< ValueType >::to_string(void) const
+{
+    PRE(is_set());
+    return text::join(_value.get(), " ");
+}
+
+
+/// Pushes the node's value onto the Lua stack.
+///
+/// \param unused_state The Lua state onto which to push the value.
+template< typename ValueType >
+void
+config::base_set_node< ValueType >::push_lua(
+    lutok::state& UTILS_UNUSED_PARAM(state)) const
+{
+    UNREACHABLE;
+}
+
+
+/// Sets the value of the node from an entry in the Lua stack.
+///
+/// \param unused_state The Lua state from which to get the value.
+/// \param unused_value_index The stack index in which the value resides.
+///
+/// \throw value_error If the value in state(value_index) cannot be
+///     processed by this node.
+template< typename ValueType >
+void
+config::base_set_node< ValueType >::set_lua(
+    lutok::state& UTILS_UNUSED_PARAM(state),
+    const int UTILS_UNUSED_PARAM(value_index))
+{
+    UNREACHABLE;
 }
 
 

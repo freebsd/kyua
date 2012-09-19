@@ -33,6 +33,7 @@
 #define UTILS_CONFIG_NODES_HPP
 
 #include <map>
+#include <set>
 #include <string>
 
 #include <lutok/state.hpp>
@@ -200,6 +201,50 @@ class string_node : public native_leaf_node< std::string > {
 public:
     void push_lua(lutok::state&) const;
     void set_lua(lutok::state&, const int);
+};
+
+
+/// Base leaf node for a set of native types.
+///
+/// This is a base abstract class because there is no generic way to parse a
+/// single word in the textual representation of the set to the native value.
+template< typename ValueType >
+class base_set_node : public leaf_node {
+public:
+    /// The type of the value held by this node.
+    typedef std::set< ValueType > value_type;
+
+    base_set_node(void);
+
+    bool is_set(void) const;
+    const value_type& value(void) const;
+    void set(const value_type&);
+
+    void set_string(const std::string&);
+    std::string to_string(void) const;
+
+    void push_lua(lutok::state&) const;
+    void set_lua(lutok::state&, const int);
+
+private:
+    /// The value held by this node.
+    optional< value_type > _value;
+
+    /// Converts a single word to the native type.
+    ///
+    /// \param raw_value The value to parse.
+    ///
+    /// \return The parsed value.
+    ///
+    /// \throw value_error If the value is invalid.
+    virtual ValueType parse_one(const std::string& raw_value) const = 0;
+};
+
+
+/// A leaf node that holds a set of strings.
+class strings_set_node : public base_set_node< std::string > {
+private:
+    std::string parse_one(const std::string&) const;
 };
 
 
