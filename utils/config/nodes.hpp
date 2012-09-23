@@ -165,6 +165,8 @@ public:
 private:
     /// The value held by this node.
     optional< value_type > _value;
+
+    virtual void validate(const value_type&) const;
 };
 
 
@@ -238,6 +240,8 @@ private:
     ///
     /// \throw value_error If the value is invalid.
     virtual ValueType parse_one(const std::string& raw_value) const = 0;
+
+    virtual void validate(const value_type&) const;
 };
 
 

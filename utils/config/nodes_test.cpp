@@ -39,6 +39,46 @@
 namespace config = utils::config;
 
 
+namespace {
+
+
+/// Typed leaf node that specializes the validate() method.
+class validation_node : public config::int_node {
+    /// Checks a given value for validity against a fake value.
+    ///
+    /// \param new_value The value to validate.
+    ///
+    /// \throw value_error If the value is not valid.
+    void
+    validate(const value_type& new_value) const
+    {
+        if (new_value == 12345)
+            throw config::value_error("Custom validate method");
+    }
+};
+
+
+/// Set node that specializes the validate() method.
+class set_validation_node : public config::strings_set_node {
+    /// Checks a given value for validity against a fake value.
+    ///
+    /// \param new_value The value to validate.
+    ///
+    /// \throw value_error If the value is not valid.
+    void
+    validate(const value_type& new_value) const
+    {
+        for (value_type::const_iterator iter = new_value.begin();
+             iter != new_value.end(); ++iter)
+            if (*iter == "throw")
+                throw config::value_error("Custom validate method");
+    }
+};
+
+
+}  // anonymous namespace
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(bool_node__is_set_and_set);
 ATF_TEST_CASE_BODY(bool_node__is_set_and_set)
 {
@@ -375,6 +415,51 @@ ATF_TEST_CASE_BODY(strings_set_node__to_string)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(typed_leaf_node__validate_set);
+ATF_TEST_CASE_BODY(typed_leaf_node__validate_set)
+{
+    validation_node node;
+    node.set(1234);
+    ATF_REQUIRE_THROW_RE(config::value_error, "Custom validate method",
+                         node.set(12345));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(typed_leaf_node__validate_set_string);
+ATF_TEST_CASE_BODY(typed_leaf_node__validate_set_string)
+{
+    validation_node node;
+    node.set_string("1234");
+    ATF_REQUIRE_THROW_RE(config::value_error, "Custom validate method",
+                         node.set_string("12345"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(base_set_node__validate_set);
+ATF_TEST_CASE_BODY(base_set_node__validate_set)
+{
+    set_validation_node node;
+    set_validation_node::value_type values;
+    values.insert("foo");
+    values.insert("bar");
+    node.set(values);
+    values.insert("throw");
+    values.insert("baz");
+    ATF_REQUIRE_THROW_RE(config::value_error, "Custom validate method",
+                         node.set(values));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(base_set_node__validate_set_string);
+ATF_TEST_CASE_BODY(base_set_node__validate_set_string)
+{
+    set_validation_node node;
+    node.set_string("foo bar");
+    ATF_REQUIRE_THROW_RE(config::value_error, "Custom validate method",
+                         node.set_string("foo bar throw baz"));
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, bool_node__is_set_and_set);
@@ -407,4 +492,9 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, strings_set_node__value_and_set);
     ATF_ADD_TEST_CASE(tcs, strings_set_node__set_string);
     ATF_ADD_TEST_CASE(tcs, strings_set_node__to_string);
+
+    ATF_ADD_TEST_CASE(tcs, typed_leaf_node__validate_set);
+    ATF_ADD_TEST_CASE(tcs, typed_leaf_node__validate_set_string);
+    ATF_ADD_TEST_CASE(tcs, base_set_node__validate_set);
+    ATF_ADD_TEST_CASE(tcs, base_set_node__validate_set_string);
 }

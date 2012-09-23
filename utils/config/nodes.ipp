@@ -172,11 +172,30 @@ config::typed_leaf_node< ValueType >::value(void) const
 /// Sets the value of the node.
 ///
 /// \param value_ The new value to set the node to.
+///
+/// \throw value_error If the value is invalid, according to validate().
 template< typename ValueType >
 void
 config::typed_leaf_node< ValueType >::set(const value_type& value_)
 {
+    validate(value_);
     _value = optional< value_type >(value_);
+}
+
+
+/// Checks a given value for validity.
+///
+/// This is called internally by the node right before updating the recorded
+/// value.  This method can be redefined by subclasses.
+///
+/// \param unused_new_value The value to validate.
+///
+/// \throw value_error If the value is not valid.
+template< typename ValueType >
+void
+config::typed_leaf_node< ValueType >::validate(
+    const value_type& UTILS_UNUSED_PARAM(new_value)) const
+{
 }
 
 
@@ -257,10 +276,13 @@ config::base_set_node< ValueType >::value(void) const
 /// Sets the value of the node.
 ///
 /// \param value_ The new value to set the node to.
+///
+/// \throw value_error If the value is invalid, according to validate().
 template< typename ValueType >
 void
 config::base_set_node< ValueType >::set(const value_type& value_)
 {
+    validate(value_);
     _value = optional< value_type >(value_);
 }
 
@@ -283,7 +305,7 @@ config::base_set_node< ValueType >::set_string(const std::string& raw_value)
             new_value.insert(parse_one(*iter));
     }
 
-    _value = make_optional(new_value);
+    set(new_value);
 }
 
 
@@ -327,6 +349,22 @@ config::base_set_node< ValueType >::set_lua(
     const int UTILS_UNUSED_PARAM(value_index))
 {
     UNREACHABLE;
+}
+
+
+/// Checks a given value for validity.
+///
+/// This is called internally by the node right before updating the recorded
+/// value.  This method can be redefined by subclasses.
+///
+/// \param unused_new_value The value to validate.
+///
+/// \throw value_error If the value is not valid.
+template< typename ValueType >
+void
+config::base_set_node< ValueType >::validate(
+    const value_type& UTILS_UNUSED_PARAM(new_value)) const
+{
 }
 
 
