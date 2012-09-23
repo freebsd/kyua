@@ -104,6 +104,21 @@ do_put_result_ok_test(const engine::test_result& result,
 }
 
 
+/// Checks if two test cases are the same.
+///
+/// \param tc1 The first test case to compare.
+/// \param tc2 The second test case to compare.
+///
+/// \return True if the test cases match.
+static bool
+compare_test_cases(const atf_iface::test_case& tc1,
+                   const atf_iface::test_case& tc2)
+{
+    return tc1.name() == tc2.name() &&
+        tc1.all_properties() == tc2.all_properties();
+}
+
+
 }  // anonymous namespace
 
 
@@ -734,10 +749,12 @@ ATF_TEST_CASE_BODY(put_test_case__atf)
     const atf_iface::test_program& loaded_test_program =
         *dynamic_cast< const atf_iface::test_program* >(
             generic_loaded_test_program.get());
-    ATF_REQUIRE(test_case1 == *dynamic_cast< const atf_iface::test_case* >(
-        loaded_test_program.find("tc1").get()));
-    ATF_REQUIRE(test_case2 == *dynamic_cast< const atf_iface::test_case* >(
-        loaded_test_program.find("tc2").get()));
+    ATF_REQUIRE(compare_test_cases(
+        test_case1, *dynamic_cast< const atf_iface::test_case* >(
+        loaded_test_program.find("tc1").get())));
+    ATF_REQUIRE(compare_test_cases(
+        test_case2, *dynamic_cast< const atf_iface::test_case* >(
+        loaded_test_program.find("tc2").get())));
 }
 
 

@@ -711,34 +711,6 @@ atf_iface::test_case::get_all_properties(void) const
 }
 
 
-/// Equality comparator.
-///
-/// \todo It looks like this is only used for testing purposes.  Maybe we should
-/// just get rid of this.
-///
-/// \param tc The test case to compare this test case to.
-///
-/// \return bool True if the test cases are equal, false otherwise.
-bool
-atf_iface::test_case::operator==(const test_case& tc) const
-{
-    return
-        test_program().relative_path() == tc.test_program().relative_path() &&
-        name() == tc.name() &&
-        _pimpl->description == tc._pimpl->description &&
-        _pimpl->has_cleanup == tc._pimpl->has_cleanup &&
-        _pimpl->allowed_architectures == tc._pimpl->allowed_architectures &&
-        _pimpl->allowed_platforms == tc._pimpl->allowed_platforms &&
-        _pimpl->required_configs == tc._pimpl->required_configs &&
-        _pimpl->required_files == tc._pimpl->required_files &&
-        _pimpl->required_memory == tc._pimpl->required_memory &&
-        _pimpl->required_programs == tc._pimpl->required_programs &&
-        _pimpl->required_user == tc._pimpl->required_user &&
-        _pimpl->timeout == tc._pimpl->timeout &&
-        _pimpl->user_metadata == tc._pimpl->user_metadata;
-}
-
-
 /// Checks if all the requirements specified by the test case are met.
 ///
 /// \param user_config The engine configuration.

@@ -533,47 +533,6 @@ ATF_TEST_CASE_BODY(test_case__all_properties__all)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(test_case__operator_eq);
-ATF_TEST_CASE_BODY(test_case__operator_eq)
-{
-    const mock_test_program test_program1(fs::path("program"));
-    const atf_iface::test_case original =
-        atf_iface::test_case::from_properties(test_program1, "name",
-                                              engine::properties_map());
-    ATF_REQUIRE(original == original);
-
-    const mock_test_program test_program2(fs::path("program2"));
-    const atf_iface::test_case change_id =
-        atf_iface::test_case::from_properties(test_program2, "name",
-                                              engine::properties_map());
-    ATF_REQUIRE(!(original == change_id));
-
-    engine::properties_map overrides;
-    overrides["descr"] = "Some text";
-    overrides["has.cleanup"] = "true";
-    overrides["require.arch"] = "i386 x86_64";
-    overrides["require.config"] = "var1 var2 var3";
-    overrides["require.files"] = "/file1 /file2";
-    overrides["require.machine"] = "amd64";
-    overrides["require.memory"] = "3m";
-    overrides["require.progs"] = "/bin/ls svn";
-    overrides["require.user"] = "root";
-    overrides["timeout"] = "123";
-    overrides["X-foo"] = "value1";
-
-    for (engine::properties_map::const_iterator iter = overrides.begin();
-         iter != overrides.end(); iter++) {
-        engine::properties_map properties;
-        properties[(*iter).first] = (*iter).second;
-        const atf_iface::test_case modified =
-            atf_iface::test_case::from_properties(original.test_program(),
-                                                  original.name(), properties);
-        ATF_REQUIRE(modified == modified);
-        ATF_REQUIRE(!(original == modified));
-    }
-}
-
-
 ATF_TEST_CASE_WITHOUT_HEAD(test_case__run__fake)
 ATF_TEST_CASE_BODY(test_case__run__fake)
 {
@@ -1066,7 +1025,6 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, test_case__all_properties__none);
     ATF_ADD_TEST_CASE(tcs, test_case__all_properties__only_user);
     ATF_ADD_TEST_CASE(tcs, test_case__all_properties__all);
-    ATF_ADD_TEST_CASE(tcs, test_case__operator_eq);
     ATF_ADD_TEST_CASE(tcs, test_case__run__fake);
 
     ATF_ADD_TEST_CASE(tcs, check_requirements__none);

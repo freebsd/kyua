@@ -112,8 +112,6 @@ public:
     utils::optional< test_result > fake_result(void) const;
 
     std::string check_requirements(const utils::config::tree&) const;
-
-    bool operator==(const test_case&) const;
 };
 
 
