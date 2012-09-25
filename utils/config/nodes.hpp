@@ -154,6 +154,16 @@ public:
     /// \return The value in the node.
     const value_type& value(void) const;
 
+    /// Gets the read-write value stored in the node.
+    ///
+    /// \todo Figure out why Doxygen is unable to pick up the documentation for
+    /// this function from the nodes.ipp file.
+    ///
+    /// \pre The node must have a value.
+    ///
+    /// \return The value in the node.
+    value_type& value(void);
+
     /// Sets the value of the node.
     ///
     /// \todo Figure out why Doxygen is unable to pick up the documentation for
@@ -219,7 +229,33 @@ public:
     base_set_node(void);
 
     bool is_set(void) const;
+
+    /// Gets the value stored in the node.
+    ///
+    /// \todo Figure out why Doxygen is unable to pick up the documentation for
+    /// this function from the nodes.ipp file.
+    ///
+    /// \pre The node must have a value.
+    ///
+    /// \return The value in the node.
     const value_type& value(void) const;
+
+    /// Gets the read-write value stored in the node.
+    ///
+    /// \todo Figure out why Doxygen is unable to pick up the documentation for
+    /// this function from the nodes.ipp file.
+    ///
+    /// \pre The node must have a value.
+    ///
+    /// \return The value in the node.
+    value_type& value(void);
+
+    /// Sets the value of the node.
+    ///
+    /// \todo Figure out why Doxygen is unable to pick up the documentation for
+    /// this function from the nodes.ipp file.
+    ///
+    /// \param value_ The new value to set the node to.
     void set(const value_type&);
 
     void set_string(const std::string&);

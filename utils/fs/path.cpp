@@ -180,6 +180,26 @@ fs::path::is_parent_of(path p) const
 }
 
 
+/// Counts the number of components in the path.
+///
+/// \return The number of components.
+int
+fs::path::ncomponents(void) const
+{
+    int count = 0;
+    if (_repr == "/")
+        return 1;
+    else {
+        for (std::string::const_iterator iter = _repr.begin();
+             iter != _repr.end(); ++iter) {
+            if (*iter == '/')
+                count++;
+        }
+        return count + 1;
+    }
+}
+
+
 /// Less-than comparator for paths.
 ///
 /// This is provided to make identifiers useful as map keys.

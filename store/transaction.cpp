@@ -124,23 +124,20 @@ get_atf_test_case(sqlite::database& db, const int64_t test_case_id,
         throw store::integrity_error(F("No detail data for ATF test case %s") %
                                      test_case_id);
 
+    engine::metadata_builder mdbuilder;
+
     const std::string description = store::column_optional_string(
         stmt, "description");
     const bool has_cleanup = store::column_bool(stmt, "has_cleanup");
     const datetime::delta timeout = store::column_delta(stmt, "timeout");
-    const units::bytes required_memory(stmt.safe_column_int64(
-        "required_memory"));
-    const std::string required_user = store::column_optional_string(
-        stmt, "required_user");
+    mdbuilder.set_required_memory(units::bytes(
+        stmt.safe_column_int64("required_memory")));
+    mdbuilder.set_required_user(store::column_optional_string(stmt,
+                                                              "required_user"));
 
     const bool more = stmt.step();
     INV(!more);
 
-    atf_iface::strings_set allowed_architectures;
-    atf_iface::strings_set required_configs;
-    atf_iface::paths_set required_files;
-    atf_iface::strings_set allowed_platforms;
-    atf_iface::paths_set required_programs;
     engine::properties_map user_metadata;
 
     sqlite::statement stmt2 = db.create_statement(
@@ -152,24 +149,22 @@ get_atf_test_case(sqlite::database& db, const int64_t test_case_id,
         const std::string pvalue = stmt2.safe_column_text("property_value");
 
         if (pname == "require.arch")
-            allowed_architectures.insert(pvalue);
+            mdbuilder.add_allowed_architecture(pvalue);
         else if (pname == "require.config")
-            required_configs.insert(pvalue);
+            mdbuilder.add_required_config(pvalue);
         else if (pname == "require.files")
-            required_files.insert(fs::path(pvalue));
+            mdbuilder.add_required_file(fs::path(pvalue));
         else if (pname == "require.machine")
-            allowed_platforms.insert(pvalue);
+            mdbuilder.add_allowed_platform(pvalue);
         else if (pname == "require.progs")
-            required_programs.insert(fs::path(pvalue));
+            mdbuilder.add_required_program(fs::path(pvalue));
         else
             user_metadata[pname] = pvalue;
     }
 
     return new atf_iface::test_case(
         test_program, name, description, has_cleanup, timeout,
-        allowed_architectures, allowed_platforms, required_configs,
-        required_files, required_memory, required_programs, required_user,
-        user_metadata);
+        mdbuilder.build(), user_metadata);
 }
 
 
@@ -458,15 +453,17 @@ put_test_case_detail(sqlite::database& db,
         stmt.step_without_results();
 
         put_atf_multivalues(db, test_case_id, "require.arch",
-                            atf.allowed_architectures(), identity());
+                            atf.get_metadata().allowed_architectures(),
+                            identity());
         put_atf_multivalues(db, test_case_id, "require.config",
-                            atf.required_configs(), identity());
+                            atf.get_metadata().required_configs(), identity());
         put_atf_multivalues(db, test_case_id, "require.files",
-                            atf.required_files(), path_to_str());
+                            atf.get_metadata().required_files(), path_to_str());
         put_atf_multivalues(db, test_case_id, "require.machine",
-                            atf.allowed_platforms(), identity());
+                            atf.get_metadata().allowed_platforms(), identity());
         put_atf_multivalues(db, test_case_id, "require.progs",
-                            atf.required_programs(), path_to_str());
+                            atf.get_metadata().required_programs(),
+                            path_to_str());
 
         put_atf_user_metadata(db, test_case_id, atf.user_metadata());
     } else if (typeid(test_case) == typeid(plain_iface::test_case)) {

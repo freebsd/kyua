@@ -32,10 +32,10 @@
 #if !defined(ENGINE_TEST_CASE_HPP)
 #define ENGINE_TEST_CASE_HPP
 
-#include <map>
 #include <string>
 #include <tr1/memory>
 
+#include "engine/metadata.hpp"
 #include "utils/config/tree.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"
@@ -44,15 +44,6 @@ namespace engine {
 
 
 class test_result;
-
-
-/// Collection of test case properties.
-///
-/// A property is just a (name, value) pair, and we represent them as a map
-/// because callers always want to locate properties by name.
-typedef std::map< std::string, std::string > properties_map;
-
-
 class base_test_program;
 
 

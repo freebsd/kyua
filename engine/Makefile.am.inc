@@ -42,6 +42,8 @@ libengine_a_SOURCES += engine/filters.hpp
 libengine_a_SOURCES += engine/isolation.cpp
 libengine_a_SOURCES += engine/isolation.hpp
 libengine_a_SOURCES += engine/isolation.ipp
+libengine_a_SOURCES += engine/metadata.cpp
+libengine_a_SOURCES += engine/metadata.hpp
 libengine_a_SOURCES += engine/test_case.cpp
 libengine_a_SOURCES += engine/test_case.hpp
 libengine_a_SOURCES += engine/test_program.cpp
@@ -85,6 +87,12 @@ engine_isolation_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
                                  $(ATF_CXX_CFLAGS)
 engine_isolation_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
                               $(ATF_CXX_LIBS)
+
+tests_engine_PROGRAMS += engine/metadata_test
+engine_metadata_test_SOURCES = engine/metadata_test.cpp
+engine_metadata_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
+                                $(ATF_CXX_CFLAGS)
+engine_metadata_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_engine_PROGRAMS += engine/test_case_test
 engine_test_case_test_SOURCES = engine/test_case_test.cpp

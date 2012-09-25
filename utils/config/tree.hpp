@@ -94,6 +94,8 @@ public:
 
     template< class LeafType >
     const typename LeafType::value_type& lookup(const std::string&) const;
+    template< class LeafType >
+    typename LeafType::value_type& lookup_rw(const std::string&);
 
     template< class LeafType >
     void set(const std::string&, const typename LeafType::value_type&);

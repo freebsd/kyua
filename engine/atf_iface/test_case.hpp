@@ -36,6 +36,7 @@
 #include <set>
 #include <string>
 
+#include "engine/metadata.hpp"
 #include "engine/test_case.hpp"
 #include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
@@ -45,25 +46,11 @@ namespace engine {
 namespace atf_iface {
 
 
-/// Collection of paths.
-typedef std::set< utils::fs::path > paths_set;
-
-
-/// Collection of strings.
-typedef std::set< std::string > strings_set;
-
-
 namespace detail {
 
 
 bool parse_bool(const std::string&, const std::string&);
-utils::units::bytes parse_bytes(const std::string&, const std::string&);
-strings_set parse_list(const std::string&, const std::string&);
 unsigned long parse_ulong(const std::string&, const std::string&);
-
-paths_set parse_require_files(const std::string&, const std::string&);
-paths_set parse_require_progs(const std::string&, const std::string&);
-std::string parse_require_user(const std::string&, const std::string&);
 
 
 }  // namespace detail
@@ -84,11 +71,8 @@ class test_case : public base_test_case {
     properties_map get_all_properties(void) const;
 
 public:
-    test_case(const base_test_program&, const std::string&,
-              const std::string&, const bool,
-              const utils::datetime::delta&, const strings_set&,
-              const strings_set&, const strings_set&, const paths_set&,
-              const utils::units::bytes&, const paths_set&, const std::string&,
+    test_case(const base_test_program&, const std::string&, const std::string&,
+              const bool, const utils::datetime::delta&, const metadata&,
               const properties_map&);
     test_case(const base_test_program&, const std::string&, const std::string&,
               const test_result&);
@@ -100,6 +84,7 @@ public:
     const std::string& description(void) const;
     bool has_cleanup(void) const;
     const utils::datetime::delta& timeout(void) const;
+    const metadata& get_metadata(void) const;
     const strings_set& allowed_architectures(void) const;
     const strings_set& allowed_platforms(void) const;
     const strings_set& required_configs(void) const;

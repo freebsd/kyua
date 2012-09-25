@@ -376,6 +376,23 @@ ATF_TEST_CASE_BODY(set_lua__ok)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(lookup_rw);
+ATF_TEST_CASE_BODY(lookup_rw)
+{
+    config::tree tree;
+
+    tree.define< config::int_node >("var1");
+    tree.define< config::bool_node >("var3");
+
+    tree.set< config::int_node >("var1", 42);
+    tree.set< config::bool_node >("var3", false);
+
+    tree.lookup_rw< config::int_node >("var1") += 10;
+    ATF_REQUIRE_EQ(52, tree.lookup< config::int_node >("var1"));
+    ATF_REQUIRE(!tree.lookup< config::bool_node >("var3"));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(lookup_string__ok);
 ATF_TEST_CASE_BODY(lookup_string__ok)
 {
@@ -678,6 +695,8 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, push_lua__ok);
     ATF_ADD_TEST_CASE(tcs, set_lua__ok);
+
+    ATF_ADD_TEST_CASE(tcs, lookup_rw);
 
     ATF_ADD_TEST_CASE(tcs, lookup_string__ok);
     ATF_ADD_TEST_CASE(tcs, lookup_string__invalid_key);

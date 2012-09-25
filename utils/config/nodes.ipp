@@ -169,6 +169,20 @@ config::typed_leaf_node< ValueType >::value(void) const
 }
 
 
+/// Gets the read-write value stored in the node.
+///
+/// \pre The node must have a value.
+///
+/// \return The value in the node.
+template< typename ValueType >
+typename config::typed_leaf_node< ValueType >::value_type&
+config::typed_leaf_node< ValueType >::value(void)
+{
+    PRE(is_set());
+    return _value.get();
+}
+
+
 /// Sets the value of the node.
 ///
 /// \param value_ The new value to set the node to.
@@ -267,6 +281,20 @@ config::base_set_node< ValueType >::is_set(void) const
 template< typename ValueType >
 const typename config::base_set_node< ValueType >::value_type&
 config::base_set_node< ValueType >::value(void) const
+{
+    PRE(is_set());
+    return _value.get();
+}
+
+
+/// Gets the read-write value stored in the node.
+///
+/// \pre The node must have a value.
+///
+/// \return The value in the node.
+template< typename ValueType >
+typename config::base_set_node< ValueType >::value_type&
+config::base_set_node< ValueType >::value(void)
 {
     PRE(is_set());
     return _value.get();

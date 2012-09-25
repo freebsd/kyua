@@ -118,27 +118,6 @@ ATF_TEST_CASE_BODY(parse_bool__false)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(parse_bytes__ok)
-ATF_TEST_CASE_BODY(parse_bytes__ok)
-{
-    // Basic validation; utils/units_test provides full testing.
-    ATF_REQUIRE_EQ(units::bytes(123456),
-                   atf_iface::detail::parse_bytes("unused-name", "123456"));
-    ATF_REQUIRE_EQ(units::bytes(1024),
-                   atf_iface::detail::parse_bytes("unused-name", "1k"));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(parse_bytes__invalid)
-ATF_TEST_CASE_BODY(parse_bytes__invalid)
-{
-    // Basic validation; utils/units_test provides full testing.
-    ATF_REQUIRE_THROW_RE(engine::format_error,
-                         "value '1i'.*property 'a'",
-                         atf_iface::detail::parse_bytes("a", "1i"));
-}
-
-
 ATF_TEST_CASE_WITHOUT_HEAD(parse_bool__invalid)
 ATF_TEST_CASE_BODY(parse_bool__invalid)
 {
@@ -154,54 +133,6 @@ ATF_TEST_CASE_BODY(parse_bool__invalid)
     ATF_REQUIRE_THROW_RE(engine::format_error,
                          "value 'False'.*property 'name'",
                          atf_iface::detail::parse_bool("name", "False"));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(parse_list__empty)
-ATF_TEST_CASE_BODY(parse_list__empty)
-{
-    ATF_REQUIRE_THROW_RE(engine::format_error, "empty.*property 'i-am-empty'",
-                         atf_iface::detail::parse_list("i-am-empty", ""));
-    ATF_REQUIRE_THROW_RE(engine::format_error, "empty.*property 'i-am-empty'",
-                         atf_iface::detail::parse_list("i-am-empty", "    "));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(parse_list__one_word)
-ATF_TEST_CASE_BODY(parse_list__one_word)
-{
-    atf_iface::strings_set words;
-
-    words = atf_iface::detail::parse_list("unused-name", "foo");
-    ATF_REQUIRE_EQ(1, words.size());
-    ATF_REQUIRE(words.find("foo") != words.end());
-
-    words = atf_iface::detail::parse_list("unused-name", "  foo");
-    ATF_REQUIRE_EQ(1, words.size());
-    ATF_REQUIRE(words.find("foo") != words.end());
-
-    words = atf_iface::detail::parse_list("unused-name", "foo  ");
-    ATF_REQUIRE_EQ(1, words.size());
-    ATF_REQUIRE(words.find("foo") != words.end());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(parse_list__many_words)
-ATF_TEST_CASE_BODY(parse_list__many_words)
-{
-    atf_iface::strings_set words;
-
-    words = atf_iface::detail::parse_list("unused-name", "foo bar baz");
-    ATF_REQUIRE_EQ(3, words.size());
-    ATF_REQUIRE(words.find("foo") != words.end());
-    ATF_REQUIRE(words.find("bar") != words.end());
-    ATF_REQUIRE(words.find("baz") != words.end());
-
-    words = atf_iface::detail::parse_list("unused-name", " foo  ba   b    ");
-    ATF_REQUIRE_EQ(3, words.size());
-    ATF_REQUIRE(words.find("foo") != words.end());
-    ATF_REQUIRE(words.find("ba") != words.end());
-    ATF_REQUIRE(words.find("b") != words.end());
 }
 
 
@@ -252,74 +183,6 @@ ATF_TEST_CASE_BODY(parse_ulong__invalid)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(parse_require_files__ok)
-ATF_TEST_CASE_BODY(parse_require_files__ok)
-{
-    const atf_iface::paths_set paths = atf_iface::detail::parse_require_files(
-        "unused-name", " /bin/ls /f2 ");
-    ATF_REQUIRE_EQ(2, paths.size());
-    ATF_REQUIRE_IN(fs::path("/bin/ls"), paths);
-    ATF_REQUIRE_IN(fs::path("/f2"), paths);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(parse_require_files__invalid)
-ATF_TEST_CASE_BODY(parse_require_files__invalid)
-{
-    ATF_REQUIRE_THROW_RE(engine::format_error,
-                         "Relative path 'data/foo'.*property 'require.files'",
-                         atf_iface::detail::parse_require_files(
-                             "require.files", "  /bin/ls data/foo "));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(parse_require_progs__ok)
-ATF_TEST_CASE_BODY(parse_require_progs__ok)
-{
-    atf_iface::paths_set paths;
-
-    paths = atf_iface::detail::parse_require_progs("unused-name", " /bin/ls svn ");
-    ATF_REQUIRE_EQ(2, paths.size());
-    ATF_REQUIRE_IN(fs::path("/bin/ls"), paths);
-    ATF_REQUIRE_IN(fs::path("svn"), paths);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(parse_require_progs__invalid)
-ATF_TEST_CASE_BODY(parse_require_progs__invalid)
-{
-    ATF_REQUIRE_THROW_RE(engine::format_error,
-                         "Relative path 'bin/svn'.*property 'require.progs'",
-                         atf_iface::detail::parse_require_progs(
-                             "require.progs", "  /bin/ls bin/svn "));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(parse_require_user__ok)
-ATF_TEST_CASE_BODY(parse_require_user__ok)
-{
-    ATF_REQUIRE_EQ("", atf_iface::detail::parse_require_user("unused-name", ""));
-    ATF_REQUIRE_EQ("root", atf_iface::detail::parse_require_user(
-        "unused-name", "root"));
-    ATF_REQUIRE_EQ("unprivileged", atf_iface::detail::parse_require_user(
-        "unused-name", "unprivileged"));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(parse_require_user__invalid)
-ATF_TEST_CASE_BODY(parse_require_user__invalid)
-{
-    ATF_REQUIRE_THROW_RE(engine::format_error,
-                         "user ' root'.*property 'require.user'",
-                         atf_iface::detail::parse_require_user(
-                             "require.user", " root"));
-    ATF_REQUIRE_THROW_RE(engine::format_error,
-                         "user 'nobody'.*property 'require.user'",
-                         atf_iface::detail::parse_require_user(
-                             "require.user", "nobody"));
-}
-
-
 ATF_TEST_CASE_WITHOUT_HEAD(test_case__ctor_and_getters)
 ATF_TEST_CASE_BODY(test_case__ctor_and_getters)
 {
@@ -327,48 +190,25 @@ ATF_TEST_CASE_BODY(test_case__ctor_and_getters)
     const std::string description("some text");
     const datetime::delta timeout(1, 2);
 
-    atf_iface::strings_set allowed_architectures;
-    allowed_architectures.insert("x86_64");
-
-    atf_iface::strings_set allowed_platforms;
-    allowed_platforms.insert("amd64");
-
-    atf_iface::strings_set required_configs;
-    required_configs.insert("myvar1");
-
-    atf_iface::paths_set required_files;
-    required_files.insert(fs::path("/file1"));
-
-    atf_iface::paths_set required_programs;
-    required_programs.insert(fs::path("bin1"));
+    engine::metadata_builder mdbuilder;
+    mdbuilder.set_string("allowed_platforms", "foo bar baz");
 
     engine::properties_map user_metadata;
     user_metadata["X-foo"] = "value1";
 
+    const engine::metadata md = mdbuilder.build();
     const atf_iface::test_case test_case(test_program, "name",
                                          description,
                                          true,
                                          timeout,
-                                         allowed_architectures,
-                                         allowed_platforms,
-                                         required_configs,
-                                         required_files,
-                                         units::bytes(1234),
-                                         required_programs,
-                                         "root",
+                                         md,
                                          user_metadata);
     ATF_REQUIRE_EQ(&test_program, &test_case.test_program());
     ATF_REQUIRE_EQ("name", test_case.name());
     ATF_REQUIRE(description == test_case.description());
     ATF_REQUIRE(test_case.has_cleanup());
     ATF_REQUIRE(timeout == test_case.timeout());
-    ATF_REQUIRE(allowed_architectures == test_case.allowed_architectures());
-    ATF_REQUIRE(allowed_platforms == test_case.allowed_platforms());
-    ATF_REQUIRE(required_configs == test_case.required_configs());
-    ATF_REQUIRE(required_files == test_case.required_files());
-    ATF_REQUIRE(1234 == test_case.required_memory());
-    ATF_REQUIRE(required_programs == test_case.required_programs());
-    ATF_REQUIRE("root" == test_case.required_user());
+    ATF_REQUIRE(md.to_properties() == test_case.get_metadata().to_properties());
     ATF_REQUIRE(user_metadata == test_case.user_metadata());
 }
 
@@ -996,22 +836,6 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, parse_bool__true);
     ATF_ADD_TEST_CASE(tcs, parse_bool__false);
     ATF_ADD_TEST_CASE(tcs, parse_bool__invalid);
-
-    ATF_ADD_TEST_CASE(tcs, parse_bytes__ok);
-    ATF_ADD_TEST_CASE(tcs, parse_bytes__invalid);
-
-    ATF_ADD_TEST_CASE(tcs, parse_list__empty);
-    ATF_ADD_TEST_CASE(tcs, parse_list__one_word);
-    ATF_ADD_TEST_CASE(tcs, parse_list__many_words);
-
-    ATF_ADD_TEST_CASE(tcs, parse_require_files__ok);
-    ATF_ADD_TEST_CASE(tcs, parse_require_files__invalid);
-
-    ATF_ADD_TEST_CASE(tcs, parse_require_progs__ok);
-    ATF_ADD_TEST_CASE(tcs, parse_require_progs__invalid);
-
-    ATF_ADD_TEST_CASE(tcs, parse_require_user__ok);
-    ATF_ADD_TEST_CASE(tcs, parse_require_user__invalid);
 
     ATF_ADD_TEST_CASE(tcs, parse_ulong__ok);
     ATF_ADD_TEST_CASE(tcs, parse_ulong__empty);

@@ -66,6 +66,7 @@ public:
 
     bool is_absolute(void) const;
     bool is_parent_of(path) const;
+    int ncomponents(void) const;
 
     bool operator<(const path&) const;
     bool operator==(const path&) const;
