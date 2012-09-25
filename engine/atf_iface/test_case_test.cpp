@@ -102,114 +102,19 @@ public:
 }  // anonymous namespace
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(parse_bool__true)
-ATF_TEST_CASE_BODY(parse_bool__true)
-{
-    ATF_REQUIRE(atf_iface::detail::parse_bool("unused-name", "yes"));
-    ATF_REQUIRE(atf_iface::detail::parse_bool("unused-name", "true"));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(parse_bool__false)
-ATF_TEST_CASE_BODY(parse_bool__false)
-{
-    ATF_REQUIRE(!atf_iface::detail::parse_bool("unused-name", "no"));
-    ATF_REQUIRE(!atf_iface::detail::parse_bool("unused-name", "false"));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(parse_bool__invalid)
-ATF_TEST_CASE_BODY(parse_bool__invalid)
-{
-    ATF_REQUIRE_THROW_RE(engine::format_error,
-                         "value ''.*property 'a'",
-                         atf_iface::detail::parse_bool("a", ""));
-    ATF_REQUIRE_THROW_RE(engine::format_error,
-                         "value 'foo'.*property 'a'",
-                         atf_iface::detail::parse_bool("a", "foo"));
-    ATF_REQUIRE_THROW_RE(engine::format_error,
-                         "value 'True'.*property 'abcd'",
-                         atf_iface::detail::parse_bool("abcd", "True"));
-    ATF_REQUIRE_THROW_RE(engine::format_error,
-                         "value 'False'.*property 'name'",
-                         atf_iface::detail::parse_bool("name", "False"));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(parse_ulong__ok)
-ATF_TEST_CASE_BODY(parse_ulong__ok)
-{
-    ATF_REQUIRE_EQ(0, atf_iface::detail::parse_ulong("unused-name", "0"));
-    ATF_REQUIRE_EQ(312, atf_iface::detail::parse_ulong("unused-name", "312"));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(parse_ulong__empty)
-ATF_TEST_CASE_BODY(parse_ulong__empty)
-{
-    ATF_REQUIRE_THROW_RE(engine::format_error, "empty.*property 'i-am-empty'",
-                         atf_iface::detail::parse_ulong("i-am-empty", ""));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(parse_ulong__invalid)
-ATF_TEST_CASE_BODY(parse_ulong__invalid)
-{
-    ATF_REQUIRE_THROW_RE(engine::format_error,
-                         "value '  '.*property 'blanks'",
-                         atf_iface::detail::parse_ulong("blanks", "  "));
-
-    ATF_REQUIRE_THROW_RE(engine::format_error,
-                         "value '-3'.*property 'negative'",
-                         atf_iface::detail::parse_ulong("negative", "-3"));
-
-    ATF_REQUIRE_THROW_RE(engine::format_error,
-                         "value ' 123'.*property 'space-first'",
-                         atf_iface::detail::parse_ulong("space-first", " 123"));
-    ATF_REQUIRE_THROW_RE(engine::format_error,
-                         "value '123 '.*property 'space-last'",
-                         atf_iface::detail::parse_ulong("space-last", "123 "));
-
-    ATF_REQUIRE_THROW_RE(engine::format_error,
-                         "value 'z78'.*property 'alpha-first'",
-                         atf_iface::detail::parse_ulong("alpha-first", "z78"));
-    ATF_REQUIRE_THROW_RE(engine::format_error,
-                         "value '3a'.*property 'alpha-last'",
-                         atf_iface::detail::parse_ulong("alpha-last", "3a"));
-
-    ATF_REQUIRE_THROW_RE(engine::format_error,
-                         "value '3 5'.*property 'two-ints'",
-                         atf_iface::detail::parse_ulong("two-ints", "3 5"));
-}
-
-
 ATF_TEST_CASE_WITHOUT_HEAD(test_case__ctor_and_getters)
 ATF_TEST_CASE_BODY(test_case__ctor_and_getters)
 {
     const mock_test_program test_program(fs::path("bin"));
-    const std::string description("some text");
-    const datetime::delta timeout(1, 2);
 
     engine::metadata_builder mdbuilder;
     mdbuilder.set_string("allowed_platforms", "foo bar baz");
 
-    engine::properties_map user_metadata;
-    user_metadata["X-foo"] = "value1";
-
     const engine::metadata md = mdbuilder.build();
-    const atf_iface::test_case test_case(test_program, "name",
-                                         description,
-                                         true,
-                                         timeout,
-                                         md,
-                                         user_metadata);
+    const atf_iface::test_case test_case(test_program, "name", md);
     ATF_REQUIRE_EQ(&test_program, &test_case.test_program());
     ATF_REQUIRE_EQ("name", test_case.name());
-    ATF_REQUIRE(description == test_case.description());
-    ATF_REQUIRE(test_case.has_cleanup());
-    ATF_REQUIRE(timeout == test_case.timeout());
     ATF_REQUIRE(md.to_properties() == test_case.get_metadata().to_properties());
-    ATF_REQUIRE(user_metadata == test_case.user_metadata());
 }
 
 
@@ -240,7 +145,7 @@ ATF_TEST_CASE_BODY(test_case__from_properties__defaults)
     ATF_REQUIRE_EQ(&test_program, &test_case.test_program());
     ATF_REQUIRE_EQ("test-case", test_case.name());
     ATF_REQUIRE(!test_case.has_cleanup());
-    ATF_REQUIRE(datetime::delta(300, 0) == test_case.timeout());
+    ATF_REQUIRE(engine::default_timeout == test_case.timeout());
     ATF_REQUIRE(test_case.allowed_architectures().empty());
     ATF_REQUIRE(test_case.allowed_platforms().empty());
     ATF_REQUIRE(test_case.required_configs().empty());
@@ -833,14 +738,6 @@ ATF_TEST_CASE_BODY(check_requirements__required_programs__fail_relative)
 
 ATF_INIT_TEST_CASES(tcs)
 {
-    ATF_ADD_TEST_CASE(tcs, parse_bool__true);
-    ATF_ADD_TEST_CASE(tcs, parse_bool__false);
-    ATF_ADD_TEST_CASE(tcs, parse_bool__invalid);
-
-    ATF_ADD_TEST_CASE(tcs, parse_ulong__ok);
-    ATF_ADD_TEST_CASE(tcs, parse_ulong__empty);
-    ATF_ADD_TEST_CASE(tcs, parse_ulong__invalid);
-
     ATF_ADD_TEST_CASE(tcs, test_case__ctor_and_getters);
     ATF_ADD_TEST_CASE(tcs, test_case__fake_ctor_and_getters);
     ATF_ADD_TEST_CASE(tcs, test_case__from_properties__defaults);

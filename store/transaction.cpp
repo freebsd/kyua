@@ -126,10 +126,10 @@ get_atf_test_case(sqlite::database& db, const int64_t test_case_id,
 
     engine::metadata_builder mdbuilder;
 
-    const std::string description = store::column_optional_string(
-        stmt, "description");
-    const bool has_cleanup = store::column_bool(stmt, "has_cleanup");
-    const datetime::delta timeout = store::column_delta(stmt, "timeout");
+    mdbuilder.set_description(store::column_optional_string(
+        stmt, "description"));
+    mdbuilder.set_has_cleanup(store::column_bool(stmt, "has_cleanup"));
+    mdbuilder.set_timeout(store::column_delta(stmt, "timeout"));
     mdbuilder.set_required_memory(units::bytes(
         stmt.safe_column_int64("required_memory")));
     mdbuilder.set_required_user(store::column_optional_string(stmt,
@@ -137,8 +137,6 @@ get_atf_test_case(sqlite::database& db, const int64_t test_case_id,
 
     const bool more = stmt.step();
     INV(!more);
-
-    engine::properties_map user_metadata;
 
     sqlite::statement stmt2 = db.create_statement(
         "SELECT * FROM atf_test_cases_multivalues "
@@ -159,12 +157,10 @@ get_atf_test_case(sqlite::database& db, const int64_t test_case_id,
         else if (pname == "require.progs")
             mdbuilder.add_required_program(fs::path(pvalue));
         else
-            user_metadata[pname] = pvalue;
+            mdbuilder.add_custom(pname, pvalue);
     }
 
-    return new atf_iface::test_case(
-        test_program, name, description, has_cleanup, timeout,
-        mdbuilder.build(), user_metadata);
+    return new atf_iface::test_case(test_program, name, mdbuilder.build());
 }
 
 

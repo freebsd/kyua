@@ -32,16 +32,26 @@
 #include "utils/config/exceptions.hpp"
 #include "utils/config/nodes.ipp"
 #include "utils/config/tree.ipp"
+#include "utils/datetime.hpp"
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/sanity.hpp"
+#include "utils/text/exceptions.hpp"
+#include "utils/text/operations.hpp"
 #include "utils/units.hpp"
 
 namespace config = utils::config;
+namespace datetime = utils::datetime;
 namespace fs = utils::fs;
+namespace text = utils::text;
 namespace units = utils::units;
+
+
+/// The default timeout value for test cases that do not provide one.
+/// TODO(jmmv): We should not be doing this; see issue 5 for details.
+datetime::delta engine::default_timeout(300, 0);
 
 
 namespace {
@@ -50,6 +60,59 @@ namespace {
 /// A leaf node that holds a bytes quantity.
 class bytes_node : public config::native_leaf_node< units::bytes > {
 public:
+    /// Pushes the node's value onto the Lua stack.
+    ///
+    /// \param unused_state The Lua state onto which to push the value.
+    void
+    push_lua(lutok::state& UTILS_UNUSED_PARAM(state)) const
+    {
+        UNREACHABLE;
+    }
+
+    /// Sets the value of the node from an entry in the Lua stack.
+    ///
+    /// \param unused_state The Lua state from which to get the value.
+    /// \param unused_index The stack index in which the value resides.
+    void
+    set_lua(lutok::state& UTILS_UNUSED_PARAM(state),
+            const int UTILS_UNUSED_PARAM(index))
+    {
+        UNREACHABLE;
+    }
+};
+
+
+/// A leaf node that holds a time delta.
+class delta_node : public config::typed_leaf_node< datetime::delta > {
+public:
+    /// Sets the value of the node from a raw string representation.
+    ///
+    /// \param raw_value The value to set the node to.
+    ///
+    /// \throw value_error If the value is invalid.
+    void
+    set_string(const std::string& raw_value)
+    {
+        unsigned int seconds;
+        try {
+            seconds = text::to_type< unsigned int >(raw_value);
+        } catch (const text::error& e) {
+            throw config::value_error(F("Invalid time delta %s") % raw_value);
+        }
+        set(datetime::delta(seconds, 0));
+    }
+
+    /// Converts the contents of the node to a string.
+    ///
+    /// \pre The node must have a value.
+    ///
+    /// \return A string representation of the value held by the node.
+    std::string
+    to_string(void) const
+    {
+        return F("%s") % value().seconds;
+    }
+
     /// Pushes the node's value onto the Lua stack.
     ///
     /// \param unused_state The Lua state onto which to push the value.
@@ -147,6 +210,14 @@ init_reqs_tree(config::tree& tree)
     tree.set< config::strings_set_node >("allowed_platforms",
                                          engine::strings_set());
 
+    tree.define_dynamic("custom");
+
+    tree.define< config::string_node >("description");
+    tree.set< config::string_node >("description", "");
+
+    tree.define< config::bool_node >("has_cleanup");
+    tree.set< config::bool_node >("has_cleanup", false);
+
     tree.define< config::strings_set_node >("required_configs");
     tree.set< config::strings_set_node >("required_configs",
                                          engine::strings_set());
@@ -162,6 +233,9 @@ init_reqs_tree(config::tree& tree)
 
     tree.define< user_node >("required_user");
     tree.set< user_node >("required_user", "");
+
+    tree.define< delta_node >("timeout");
+    tree.set< delta_node >("timeout", engine::default_timeout);
 }
 
 
@@ -267,6 +341,36 @@ engine::metadata::allowed_platforms(void) const
 }
 
 
+/// Returns all the user-defined metadata properties.
+///
+/// \return A key/value map of properties.
+engine::properties_map
+engine::metadata::custom(void) const
+{
+    return _pimpl->reqs.all_properties("custom", true);
+}
+
+
+/// Returns the description of the test.
+///
+/// \return Textual description; may be empty.
+const std::string&
+engine::metadata::description(void) const
+{
+    return _pimpl->reqs.lookup< config::string_node >("description");
+}
+
+
+/// Returns whether the test has a cleanup part or not.
+///
+/// \return True if there is a cleanup part; false otherwise.
+bool
+engine::metadata::has_cleanup(void) const
+{
+    return _pimpl->reqs.lookup< config::bool_node >("has_cleanup");
+}
+
+
 /// Returns the list of configuration variables needed by the test.
 ///
 /// \return Set of configuration variables.
@@ -314,6 +418,17 @@ const std::string&
 engine::metadata::required_user(void) const
 {
     return _pimpl->reqs.lookup< user_node >("required_user");
+}
+
+
+/// Returns the timeout of the test.
+///
+/// \return A time delta; should be compared to default_timeout to see if it has
+/// been overriden.
+const datetime::delta&
+engine::metadata::timeout(void) const
+{
+    return _pimpl->reqs.lookup< delta_node >("timeout");
 }
 
 
@@ -385,6 +500,23 @@ engine::metadata_builder::add_allowed_platform(const std::string& platform)
 {
     lookup_rw< config::strings_set_node >(
         _pimpl->reqs, "allowed_platforms").insert(platform);
+    return *this;
+}
+
+
+/// Accumulates a single user-defined property.
+///
+/// \param key Name of the property to define.
+/// \param value Value of the property.
+///
+/// \return A reference to this builder.
+///
+/// \throw engine::error If the value is invalid.
+engine::metadata_builder&
+engine::metadata_builder::add_custom(const std::string& key,
+                                     const std::string& value)
+{
+    _pimpl->reqs.set_string(F("custom.%s") % key, value);
     return *this;
 }
 
@@ -461,6 +593,54 @@ engine::metadata_builder&
 engine::metadata_builder::set_allowed_platforms(const strings_set& ps)
 {
     set< config::strings_set_node >(_pimpl->reqs, "allowed_platforms", ps);
+    return *this;
+}
+
+
+/// Sets the user-defined properties.
+///
+/// \param props The custom properties to set.
+///
+/// \return A reference to this builder.
+///
+/// \throw engine::error If the value is invalid.
+engine::metadata_builder&
+engine::metadata_builder::set_custom(const properties_map& props)
+{
+    for (properties_map::const_iterator iter = props.begin();
+         iter != props.end(); ++iter)
+        _pimpl->reqs.set_string(F("custom.%s") % (*iter).first,
+                                (*iter).second);
+    return *this;
+}
+
+
+/// Sets the description of the test.
+///
+/// \param description Textual description of the test.
+///
+/// \return A reference to this builder.
+///
+/// \throw engine::error If the value is invalid.
+engine::metadata_builder&
+engine::metadata_builder::set_description(const std::string& description)
+{
+    set< config::string_node >(_pimpl->reqs, "description", description);
+    return *this;
+}
+
+
+/// Sets whether the test has a cleanup part or not.
+///
+/// \param cleanup True if the test has a cleanup part; false otherwise.
+///
+/// \return A reference to this builder.
+///
+/// \throw engine::error If the value is invalid.
+engine::metadata_builder&
+engine::metadata_builder::set_has_cleanup(const bool cleanup)
+{
+    set< config::bool_node >(_pimpl->reqs, "has_cleanup", cleanup);
     return *this;
 }
 
@@ -560,6 +740,21 @@ engine::metadata_builder::set_string(const std::string& key,
         throw engine::format_error(
             F("Invalid value for metadata property %s: %s") % key % e.what());
     }
+    return *this;
+}
+
+
+/// Sets the timeout of the test.
+///
+/// \param timeout The timeout to set.
+///
+/// \return A reference to this builder.
+///
+/// \throw engine::error If the value is invalid.
+engine::metadata_builder&
+engine::metadata_builder::set_timeout(const datetime::delta& timeout)
+{
+    set< delta_node >(_pimpl->reqs, "timeout", timeout);
     return *this;
 }
 

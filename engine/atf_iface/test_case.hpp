@@ -46,16 +46,6 @@ namespace engine {
 namespace atf_iface {
 
 
-namespace detail {
-
-
-bool parse_bool(const std::string&, const std::string&);
-unsigned long parse_ulong(const std::string&, const std::string&);
-
-
-}  // namespace detail
-
-
 /// Representation of an ATF test case.
 ///
 /// Test cases should be thought as free-standing entities: even though they
@@ -71,9 +61,7 @@ class test_case : public base_test_case {
     properties_map get_all_properties(void) const;
 
 public:
-    test_case(const base_test_program&, const std::string&, const std::string&,
-              const bool, const utils::datetime::delta&, const metadata&,
-              const properties_map&);
+    test_case(const base_test_program&, const std::string&, const metadata&);
     test_case(const base_test_program&, const std::string&, const std::string&,
               const test_result&);
     ~test_case(void);
@@ -92,7 +80,7 @@ public:
     const utils::units::bytes& required_memory(void) const;
     const paths_set& required_programs(void) const;
     const std::string& required_user(void) const;
-    const properties_map& user_metadata(void) const;
+    properties_map user_metadata(void) const;
 
     utils::optional< test_result > fake_result(void) const;
 

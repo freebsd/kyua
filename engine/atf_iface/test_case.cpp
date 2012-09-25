@@ -29,10 +29,8 @@
 #include "engine/atf_iface/test_case.hpp"
 
 #include <algorithm>
-#include <cerrno>
 #include <cstdlib>
 #include <iterator>
-#include <limits>
 #include <sstream>
 
 #include "engine/atf_iface/runner.hpp"
@@ -62,11 +60,6 @@ using utils::optional;
 
 
 namespace {
-
-
-/// The default timeout value for test cases that do not provide one.
-/// TODO(jmmv): We should not be doing this; see issue 5 for details.
-static datetime::delta default_timeout(300, 0);
 
 
 /// Concatenates a collection of objects in a string using ' ' as a separator.
@@ -123,104 +116,24 @@ execute(const engine::base_test_case* test_case,
 }  // anonymous namespace
 
 
-/// Parses a boolean property.
-///
-/// \param name The name of the property; used for error messages.
-/// \param value The textual value to process.
-///
-/// \return The value as a boolean.
-///
-/// \throw engine::format_error If the value is invalid.
-bool
-engine::atf_iface::detail::parse_bool(const std::string& name,
-                                      const std::string& value)
-{
-    if (value == "true" || value == "yes")
-        return true;
-    else if (value == "false" || value == "no")
-        return false;
-    else
-        throw format_error(F("Invalid value '%s' for boolean property '%s'") %
-                           value % name);
-}
-
-
-/// Parses an integer property.
-///
-/// \param name The name of the property; used for error messages.
-/// \param value The textual value to process.
-///
-/// \return The value as an integer.
-///
-/// \throw engine::format_error If the value is invalid.
-unsigned long
-engine::atf_iface::detail::parse_ulong(const std::string& name,
-                                       const std::string& value)
-{
-    if (value.empty())
-        throw format_error(F("Invalid empty value for integer property '%s'") %
-                           name);
-
-    char* endptr;
-    const unsigned long l = std::strtoul(value.c_str(), &endptr, 10);
-    if (value.find_first_of("- \t") != std::string::npos || *endptr != '\0' ||
-        (l == 0 && errno == EINVAL) ||
-        (l == std::numeric_limits< unsigned long >::max() && errno == ERANGE))
-        throw format_error(F("Invalid value '%s' for integer property '%s'") %
-                           value % name);
-    return l;
-}
-
-
 /// Internal implementation of a test case.
 struct engine::atf_iface::test_case::impl {
-    /// The test case description.
-    std::string description;
-
-    /// Whether the test case has a cleanup routine or not.
-    bool has_cleanup;
-
-    /// The maximum amount of time the test case can run for.
-    datetime::delta timeout;
-
     /// Test case metadata.
     metadata md;
-
-    /// User-defined meta-data properties.
-    properties_map user_metadata;
 
     /// Fake result to return instead of running the test case.
     optional< test_result > fake_result;
 
     /// Constructor.
     ///
-    /// \param description_ See the parent class.
-    /// \param has_cleanup_ See the parent class.
-    /// \param timeout_ See the parent class.
     /// \param md_ See the parent class.
-    /// \param user_metadata_ See the parent class.
     /// \param fake_result_ Fake result to return instead of running the test
     ///     case.
-    impl(const std::string& description_,
-         const bool has_cleanup_,
-         const datetime::delta& timeout_,
-         const metadata& md_,
-         const properties_map& user_metadata_,
+    impl(const metadata& md_,
          const optional< test_result >& fake_result_) :
-        description(description_),
-        has_cleanup(has_cleanup_),
-        timeout(timeout_),
         md(md_),
-        user_metadata(user_metadata_),
         fake_result(fake_result_)
     {
-        for (properties_map::const_iterator iter = user_metadata.begin();
-             iter != user_metadata.end(); iter++) {
-            const std::string& property_name = (*iter).first;
-            PRE_MSG(property_name.size() > 2 &&
-                    property_name.substr(0, 2) == "X-",
-                    "User properties must be prefixed by X-");
-        }
     }
 };
 
@@ -230,22 +143,12 @@ struct engine::atf_iface::test_case::impl {
 /// \param test_program_ The test program this test case belongs to.  This
 ///     object must exist during the lifetime of the test case.
 /// \param name_ The name of the test case.
-/// \param description_ The description of the test case, if any.
-/// \param has_cleanup_ Whether the test case has a cleanup routine or not.
-/// \param timeout_ The maximum time the test case can run for.
 /// \param md_ The test case metadata.
-/// \param user_metadata_ User-defined meta-data properties.  The names of all
-///     of these properties must start by 'X-'.
 atf_iface::test_case::test_case(const base_test_program& test_program_,
                                 const std::string& name_,
-                                const std::string& description_,
-                                const bool has_cleanup_,
-                                const datetime::delta& timeout_,
-                                const metadata& md_,
-                                const properties_map& user_metadata_) :
+                                const metadata& md_) :
     base_test_case("atf", test_program_, name_),
-    _pimpl(new impl(description_, has_cleanup_, timeout_, md_,
-                    user_metadata_, none))
+    _pimpl(new impl(md_, none))
 {
 }
 
@@ -269,8 +172,7 @@ atf_iface::test_case::test_case(const base_test_program& test_program_,
                                 const std::string& description_,
                                 const engine::test_result& test_result_) :
     base_test_case("atf", test_program_, name_),
-    _pimpl(new impl(description_, false, default_timeout,
-                    metadata_builder().build(), properties_map(),
+    _pimpl(new impl(metadata_builder().set_description(description_).build(),
                     utils::make_optional(test_result_)))
 {
     PRE_MSG(name_.length() > 4 && name_.substr(0, 2) == "__" &&
@@ -302,11 +204,7 @@ atf_iface::test_case::from_properties(const base_test_program& test_program_,
                                       const std::string& name_,
                                       const properties_map& raw_properties)
 {
-    std::string description_;
-    bool has_cleanup_ = false;
-    datetime::delta timeout_ = default_timeout;
     metadata_builder mdbuilder;
-    properties_map user_metadata_;
 
     try {
         for (properties_map::const_iterator iter = raw_properties.begin();
@@ -315,9 +213,9 @@ atf_iface::test_case::from_properties(const base_test_program& test_program_,
             const std::string& value = (*iter).second;
 
             if (name == "descr") {
-                description_ = value;
+                mdbuilder.set_string("description", value);
             } else if (name == "has.cleanup") {
-                has_cleanup_ = detail::parse_bool(name, value);
+                mdbuilder.set_string("has_cleanup", value);
             } else if (name == "require.arch") {
                 mdbuilder.set_string("allowed_architectures", value);
             } else if (name == "require.config") {
@@ -333,9 +231,9 @@ atf_iface::test_case::from_properties(const base_test_program& test_program_,
             } else if (name == "require.user") {
                 mdbuilder.set_string("required_user", value);
             } else if (name == "timeout") {
-                timeout_ = datetime::delta(detail::parse_ulong(name, value), 0);
+                mdbuilder.set_string("timeout", value);
             } else if (name.length() > 2 && name.substr(0, 2) == "X-") {
-                user_metadata_[name] = value;
+                mdbuilder.add_custom(name, value);
             } else {
                 throw engine::format_error(F("Unknown test case metadata "
                                              "property '%s'") % name);
@@ -345,8 +243,7 @@ atf_iface::test_case::from_properties(const base_test_program& test_program_,
         throw engine::format_error(e.what());
     }
 
-    return test_case(test_program_, name_, description_, has_cleanup_,
-                     timeout_, mdbuilder.build(), user_metadata_);
+    return test_case(test_program_, name_, mdbuilder.build());
 }
 
 
@@ -356,7 +253,7 @@ atf_iface::test_case::from_properties(const base_test_program& test_program_,
 const std::string&
 atf_iface::test_case::description(void) const
 {
-    return _pimpl->description;
+    return _pimpl->md.description();
 }
 
 
@@ -366,7 +263,7 @@ atf_iface::test_case::description(void) const
 bool
 atf_iface::test_case::has_cleanup(void) const
 {
-    return _pimpl->has_cleanup;
+    return _pimpl->md.has_cleanup();
 }
 
 
@@ -376,7 +273,7 @@ atf_iface::test_case::has_cleanup(void) const
 const datetime::delta&
 atf_iface::test_case::timeout(void) const
 {
-    return _pimpl->timeout;
+    return _pimpl->md.timeout();
 }
 
 
@@ -463,10 +360,10 @@ atf_iface::test_case::required_user(void) const
 /// Gets the custom user metadata, if any.
 ///
 /// \return The user metadata.
-const engine::properties_map&
+engine::properties_map
 atf_iface::test_case::user_metadata(void) const
 {
-    return _pimpl->user_metadata;
+    return _pimpl->md.custom();
 }
 
 
@@ -489,17 +386,17 @@ atf_iface::test_case::fake_result(void) const
 engine::properties_map
 atf_iface::test_case::get_all_properties(void) const
 {
-    properties_map props = _pimpl->user_metadata;
+    properties_map props = user_metadata();
 
     // TODO(jmmv): This is unnecessary.  We just need to let the caller query
     // the metadata object and convert that to a properties map directly.
-    if (!_pimpl->description.empty())
-        props["descr"] = _pimpl->description;
-    if (_pimpl->has_cleanup)
+    if (!description().empty())
+        props["descr"] = description();
+    if (has_cleanup())
         props["has.cleanup"] = "true";
-    if (_pimpl->timeout != default_timeout) {
-        INV(_pimpl->timeout.useconds == 0);
-        props["timeout"] = F("%s") % _pimpl->timeout.seconds;
+    if (timeout() != default_timeout) {
+        INV(timeout().useconds == 0);
+        props["timeout"] = F("%s") % timeout().seconds;
     }
     if (!allowed_architectures().empty())
         props["require.arch"] = flatten_set(allowed_architectures());

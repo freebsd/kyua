@@ -43,6 +43,7 @@
 
 namespace utils {
 namespace config { class tree; }
+namespace datetime { class delta; }
 namespace fs { class path; }
 namespace units { class bytes; }
 }  // namespace utils
@@ -60,6 +61,9 @@ typedef std::set< std::string > strings_set;
 typedef std::map< std::string, std::string > properties_map;
 
 
+extern utils::datetime::delta default_timeout;
+
+
 /// Collection of metadata properties of a test.
 class metadata {
     struct impl;
@@ -73,11 +77,15 @@ public:
 
     const strings_set& allowed_architectures(void) const;
     const strings_set& allowed_platforms(void) const;
+    properties_map custom(void) const;
+    const std::string& description(void) const;
+    bool has_cleanup(void) const;
     const strings_set& required_configs(void) const;
     const paths_set& required_files(void) const;
     const utils::units::bytes& required_memory(void) const;
     const paths_set& required_programs(void) const;
     const std::string& required_user(void) const;
+    const utils::datetime::delta& timeout(void) const;
 
     engine::properties_map to_properties(void) const;
 };
@@ -96,18 +104,23 @@ public:
 
     metadata_builder& add_allowed_architecture(const std::string&);
     metadata_builder& add_allowed_platform(const std::string&);
+    metadata_builder& add_custom(const std::string&, const std::string&);
     metadata_builder& add_required_config(const std::string&);
     metadata_builder& add_required_file(const utils::fs::path&);
     metadata_builder& add_required_program(const utils::fs::path&);
 
     metadata_builder& set_allowed_architectures(const strings_set&);
     metadata_builder& set_allowed_platforms(const strings_set&);
+    metadata_builder& set_custom(const properties_map&);
+    metadata_builder& set_description(const std::string&);
+    metadata_builder& set_has_cleanup(const bool);
     metadata_builder& set_required_configs(const strings_set&);
     metadata_builder& set_required_files(const paths_set&);
     metadata_builder& set_required_memory(const utils::units::bytes&);
     metadata_builder& set_required_programs(const paths_set&);
     metadata_builder& set_required_user(const std::string&);
     metadata_builder& set_string(const std::string&, const std::string&);
+    metadata_builder& set_timeout(const utils::datetime::delta&);
 
     metadata build(void) const;
 };

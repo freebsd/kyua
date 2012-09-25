@@ -30,9 +30,11 @@
 
 #include <atf-c++.hpp>
 
+#include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/units.hpp"
 
+namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace units = utils::units;
 
@@ -43,11 +45,16 @@ ATF_TEST_CASE_BODY(defaults)
     const engine::metadata md = engine::metadata_builder().build();
     ATF_REQUIRE(md.allowed_architectures().empty());
     ATF_REQUIRE(md.allowed_platforms().empty());
+    ATF_REQUIRE(md.allowed_platforms().empty());
+    ATF_REQUIRE(md.custom().empty());
+    ATF_REQUIRE(md.description().empty());
+    ATF_REQUIRE(!md.has_cleanup());
     ATF_REQUIRE(md.required_configs().empty());
     ATF_REQUIRE(md.required_files().empty());
     ATF_REQUIRE_EQ(units::bytes(0), md.required_memory());
     ATF_REQUIRE(md.required_programs().empty());
     ATF_REQUIRE(md.required_user().empty());
+    ATF_REQUIRE(engine::default_timeout == md.timeout());
 }
 
 
@@ -61,6 +68,10 @@ ATF_TEST_CASE_BODY(add)
     engine::strings_set platforms;
     platforms.insert("1-platform");
     platforms.insert("2-platform");
+
+    engine::properties_map custom;
+    custom["1-custom"] = "first";
+    custom["2-custom"] = "second";
 
     engine::strings_set configs;
     configs.insert("1-config");
@@ -77,6 +88,8 @@ ATF_TEST_CASE_BODY(add)
     const engine::metadata md = engine::metadata_builder()
         .add_allowed_architecture("1-architecture")
         .add_allowed_platform("1-platform")
+        .add_custom("1-custom", "first")
+        .add_custom("2-custom", "second")
         .add_required_config("1-config")
         .add_required_file(fs::path("1-file"))
         .add_required_program(fs::path("1-program"))
@@ -89,6 +102,7 @@ ATF_TEST_CASE_BODY(add)
 
     ATF_REQUIRE(architectures == md.allowed_architectures());
     ATF_REQUIRE(platforms == md.allowed_platforms());
+    ATF_REQUIRE(custom == md.custom());
     ATF_REQUIRE(configs == md.required_configs());
     ATF_REQUIRE(files == md.required_files());
     ATF_REQUIRE(programs == md.required_programs());
@@ -104,6 +118,12 @@ ATF_TEST_CASE_BODY(override_all_with_setters)
     engine::strings_set platforms;
     platforms.insert("the-platforms");
 
+    engine::properties_map custom;
+    custom["first"] = "hello";
+    custom["second"] = "bye";
+
+    const std::string description = "Some long text";
+
     engine::strings_set configs;
     configs.insert("the-configs");
 
@@ -117,23 +137,33 @@ ATF_TEST_CASE_BODY(override_all_with_setters)
 
     const std::string user = "root";
 
+    const datetime::delta timeout(123, 0);
+
     const engine::metadata md = engine::metadata_builder()
         .set_allowed_architectures(architectures)
         .set_allowed_platforms(platforms)
+        .set_custom(custom)
+        .set_description(description)
+        .set_has_cleanup(true)
         .set_required_configs(configs)
         .set_required_files(files)
         .set_required_memory(memory)
         .set_required_programs(programs)
         .set_required_user(user)
+        .set_timeout(timeout)
         .build();
 
     ATF_REQUIRE(architectures == md.allowed_architectures());
     ATF_REQUIRE(platforms == md.allowed_platforms());
+    ATF_REQUIRE(custom == md.custom());
+    ATF_REQUIRE_EQ(description, md.description());
+    ATF_REQUIRE(md.has_cleanup());
     ATF_REQUIRE(configs == md.required_configs());
     ATF_REQUIRE(files == md.required_files());
     ATF_REQUIRE_EQ(memory, md.required_memory());
     ATF_REQUIRE(programs == md.required_programs());
     ATF_REQUIRE_EQ(user, md.required_user());
+    ATF_REQUIRE(timeout == md.timeout());
 }
 
 
@@ -147,6 +177,11 @@ ATF_TEST_CASE_BODY(override_all_with_set_string)
     engine::strings_set platforms;
     platforms.insert("p1");
     platforms.insert("p2");
+
+    engine::properties_map custom;
+    custom["user-defined"] = "the-value";
+
+    const std::string description = "Another long text";
 
     engine::strings_set configs;
     configs.insert("config-var");
@@ -163,23 +198,33 @@ ATF_TEST_CASE_BODY(override_all_with_set_string)
 
     const std::string user = "unprivileged";
 
+    const datetime::delta timeout(45, 0);
+
     const engine::metadata md = engine::metadata_builder()
         .set_string("allowed_architectures", "a1 a2")
         .set_string("allowed_platforms", "p1 p2")
+        .set_string("custom.user-defined", "the-value")
+        .set_string("description", "Another long text")
+        .set_string("has_cleanup", "true")
         .set_string("required_configs", "config-var")
         .set_string("required_files", "plain /absolute/path")
         .set_string("required_memory", "1M")
         .set_string("required_programs", "program /absolute/prog")
         .set_string("required_user", "unprivileged")
+        .set_string("timeout", "45")
         .build();
 
     ATF_REQUIRE(architectures == md.allowed_architectures());
     ATF_REQUIRE(platforms == md.allowed_platforms());
+    ATF_REQUIRE(custom == md.custom());
+    ATF_REQUIRE_EQ(description, md.description());
+    ATF_REQUIRE(md.has_cleanup());
     ATF_REQUIRE(configs == md.required_configs());
     ATF_REQUIRE(files == md.required_files());
     ATF_REQUIRE_EQ(memory, md.required_memory());
     ATF_REQUIRE(programs == md.required_programs());
     ATF_REQUIRE_EQ(user, md.required_user());
+    ATF_REQUIRE(timeout == md.timeout());
 }
 
 
