@@ -430,38 +430,36 @@ put_test_case_detail(sqlite::database& db,
                      const engine::base_test_case& test_case,
                      const int64_t test_case_id)
 {
+    const engine::metadata& md = test_case.get_metadata();
+
+    // TODO(jmmv): This conditional must go.
     if (typeid(test_case) == typeid(atf_iface::test_case)) {
-        const atf_iface::test_case& atf =
-            dynamic_cast< const atf_iface::test_case& >(test_case);
         sqlite::statement stmt = db.create_statement(
             "INSERT INTO atf_test_cases (test_case_id, description, "
             "    has_cleanup, timeout, required_memory, required_user) "
             "VALUES (:test_case_id, :description, :has_cleanup, "
             "    :timeout, :required_memory, :required_user)");
         stmt.bind(":test_case_id", test_case_id);
-        store::bind_optional_string(stmt, ":description", atf.description());
-        store::bind_bool(stmt, ":has_cleanup", atf.has_cleanup());
-        store::bind_delta(stmt, ":timeout", atf.timeout());
+        store::bind_optional_string(stmt, ":description", md.description());
+        store::bind_bool(stmt, ":has_cleanup", md.has_cleanup());
+        store::bind_delta(stmt, ":timeout", md.timeout());
         stmt.bind(":required_memory",
-                  static_cast< int64_t >(atf.required_memory()));
-        store::bind_optional_string(stmt, ":required_user",
-                                    atf.required_user());
+                  static_cast< int64_t >(md.required_memory()));
+        store::bind_optional_string(stmt, ":required_user", md.required_user());
         stmt.step_without_results();
 
         put_atf_multivalues(db, test_case_id, "require.arch",
-                            atf.get_metadata().allowed_architectures(),
-                            identity());
+                            md.allowed_architectures(), identity());
         put_atf_multivalues(db, test_case_id, "require.config",
-                            atf.get_metadata().required_configs(), identity());
+                            md.required_configs(), identity());
         put_atf_multivalues(db, test_case_id, "require.files",
-                            atf.get_metadata().required_files(), path_to_str());
+                            md.required_files(), path_to_str());
         put_atf_multivalues(db, test_case_id, "require.machine",
-                            atf.get_metadata().allowed_platforms(), identity());
+                            md.allowed_platforms(), identity());
         put_atf_multivalues(db, test_case_id, "require.progs",
-                            atf.get_metadata().required_programs(),
-                            path_to_str());
+                            md.required_programs(), path_to_str());
 
-        put_atf_user_metadata(db, test_case_id, atf.user_metadata());
+        put_atf_user_metadata(db, test_case_id, md.custom());
     } else if (typeid(test_case) == typeid(plain_iface::test_case)) {
         // Nothing to do.
     } else

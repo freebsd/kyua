@@ -237,116 +237,6 @@ atf_iface::test_case::from_properties(const base_test_program& test_program_,
 }
 
 
-/// Gets the description of the test case.
-///
-/// \return The description of the test case.
-const std::string&
-atf_iface::test_case::description(void) const
-{
-    return get_metadata().description();
-}
-
-
-/// Gets whether the test case has a cleanup routine or not.
-///
-/// \return True if the test case has a cleanup routine, false otherwise.
-bool
-atf_iface::test_case::has_cleanup(void) const
-{
-    return get_metadata().has_cleanup();
-}
-
-
-/// Gets the test case timeout.
-///
-/// \return The test case timeout.
-const datetime::delta&
-atf_iface::test_case::timeout(void) const
-{
-    return get_metadata().timeout();
-}
-
-
-/// Gets the list of allowed architectures.
-///
-/// \return The list of allowed architectures.
-const engine::strings_set&
-atf_iface::test_case::allowed_architectures(void) const
-{
-    return get_metadata().allowed_architectures();
-}
-
-
-/// Gets the list of allowed platforms.
-///
-/// \return The list of allowed platforms.
-const engine::strings_set&
-atf_iface::test_case::allowed_platforms(void) const
-{
-    return get_metadata().allowed_platforms();
-}
-
-
-/// Gets the list of required configuration variables.
-///
-/// \return The list of required configuration variables.
-const engine::strings_set&
-atf_iface::test_case::required_configs(void) const
-{
-    return get_metadata().required_configs();
-}
-
-
-/// Gets the list of required files.
-///
-/// \return The list of required files.
-const engine::paths_set&
-atf_iface::test_case::required_files(void) const
-{
-    return get_metadata().required_files();
-}
-
-
-/// Gets the required memory.
-///
-/// \return The required memory.
-const units::bytes&
-atf_iface::test_case::required_memory(void) const
-{
-    return get_metadata().required_memory();
-}
-
-
-/// Gets the list of required programs.
-///
-/// \return The list of required programs.
-const engine::paths_set&
-atf_iface::test_case::required_programs(void) const
-{
-    return get_metadata().required_programs();
-}
-
-
-/// Gets the required user name.
-///
-/// \return The required user name.
-const std::string&
-atf_iface::test_case::required_user(void) const
-{
-    return get_metadata().required_user();
-}
-
-
-/// Gets the custom user metadata, if any.
-///
-/// \return The user metadata.
-engine::properties_map
-atf_iface::test_case::user_metadata(void) const
-{
-    return get_metadata().custom();
-}
-
-
 /// Gets the fake result pre-stored for this test case.
 ///
 /// \return A fake result, or none if not defined.
@@ -366,32 +256,33 @@ atf_iface::test_case::fake_result(void) const
 engine::properties_map
 atf_iface::test_case::get_all_properties(void) const
 {
-    properties_map props = user_metadata();
+    const metadata& md = get_metadata();
+    properties_map props = md.custom();
 
     // TODO(jmmv): This is unnecessary.  We just need to let the caller query
     // the metadata object and convert that to a properties map directly.
-    if (!description().empty())
-        props["descr"] = description();
-    if (has_cleanup())
+    if (!md.description().empty())
+        props["descr"] = md.description();
+    if (md.has_cleanup())
         props["has.cleanup"] = "true";
-    if (timeout() != default_timeout) {
-        INV(timeout().useconds == 0);
-        props["timeout"] = F("%s") % timeout().seconds;
+    if (md.timeout() != default_timeout) {
+        INV(md.timeout().useconds == 0);
+        props["timeout"] = F("%s") % md.timeout().seconds;
     }
-    if (!allowed_architectures().empty())
-        props["require.arch"] = flatten_set(allowed_architectures());
-    if (!allowed_platforms().empty())
-        props["require.machine"] = flatten_set(allowed_platforms());
-    if (!required_configs().empty())
-        props["require.config"] = flatten_set(required_configs());
-    if (!required_files().empty())
-        props["require.files"] = flatten_set(required_files());
-    if (required_memory() > 0)
-        props["require.memory"] = required_memory().format();
-    if (!required_programs().empty())
-        props["require.progs"] = flatten_set(required_programs());
-    if (!required_user().empty())
-        props["require.user"] = required_user();
+    if (!md.allowed_architectures().empty())
+        props["require.arch"] = flatten_set(md.allowed_architectures());
+    if (!md.allowed_platforms().empty())
+        props["require.machine"] = flatten_set(md.allowed_platforms());
+    if (!md.required_configs().empty())
+        props["require.config"] = flatten_set(md.required_configs());
+    if (!md.required_files().empty())
+        props["require.files"] = flatten_set(md.required_files());
+    if (md.required_memory() > 0)
+        props["require.memory"] = md.required_memory().format();
+    if (!md.required_programs().empty())
+        props["require.progs"] = flatten_set(md.required_programs());
+    if (!md.required_user().empty())
+        props["require.user"] = md.required_user();
 
     return props;
 }

@@ -106,7 +106,7 @@ static bool
 can_do_unprivileged(const atf_iface::test_case& test_case,
                     const config::tree& user_config)
 {
-    return test_case.required_user() == "unprivileged" &&
+    return test_case.get_metadata().required_user() == "unprivileged" &&
         get_unprivileged_user(user_config) && passwd::current_user().is_root();
 }
 
@@ -361,7 +361,7 @@ public:
             body_status = engine::fork_and_wait(
                 execute_test_case_body(_test_case, result_file, rundir,
                                        _user_config),
-                stdout_file, stderr_file, _test_case.timeout());
+                stdout_file, stderr_file, _test_case.get_metadata().timeout());
             utils::dump_stacktrace_if_available(
                 _test_case.test_program().absolute_path(), body_status,
                 rundir, stderr_file);
@@ -372,11 +372,11 @@ public:
         }
 
         optional< process::status > cleanup_status;
-        if (_test_case.has_cleanup()) {
+        if (_test_case.get_metadata().has_cleanup()) {
             LI(F("Running test case cleanup of '%s'") % _test_case.name());
             cleanup_status = engine::fork_and_wait(
                 execute_test_case_cleanup(_test_case, rundir, _user_config),
-                stdout_file, stderr_file, _test_case.timeout());
+                stdout_file, stderr_file, _test_case.get_metadata().timeout());
             utils::dump_stacktrace_if_available(
                 _test_case.test_program().absolute_path(), cleanup_status,
                 rundir, stderr_file);

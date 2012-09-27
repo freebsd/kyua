@@ -122,7 +122,7 @@ ATF_TEST_CASE_BODY(test_case__fake_ctor_and_getters)
 
     ATF_REQUIRE_EQ(&test_program, &test_case.test_program());
     ATF_REQUIRE_EQ("__internal_name__", test_case.name());
-    ATF_REQUIRE_EQ("Some description", test_case.description());
+    ATF_REQUIRE_EQ("Some description", test_case.get_metadata().description());
 }
 
 
@@ -138,16 +138,9 @@ ATF_TEST_CASE_BODY(test_case__from_properties__defaults)
 
     ATF_REQUIRE_EQ(&test_program, &test_case.test_program());
     ATF_REQUIRE_EQ("test-case", test_case.name());
-    ATF_REQUIRE(!test_case.has_cleanup());
-    ATF_REQUIRE(engine::default_timeout == test_case.timeout());
-    ATF_REQUIRE(test_case.allowed_architectures().empty());
-    ATF_REQUIRE(test_case.allowed_platforms().empty());
-    ATF_REQUIRE(test_case.required_configs().empty());
-    ATF_REQUIRE(test_case.required_files().empty());
-    ATF_REQUIRE(0 == test_case.required_memory());
-    ATF_REQUIRE(test_case.required_programs().empty());
-    ATF_REQUIRE(test_case.required_user().empty());
-    ATF_REQUIRE(test_case.user_metadata().empty());
+
+    const engine::metadata md = engine::metadata_builder().build();
+    ATF_REQUIRE(md.to_properties() == test_case.get_metadata().to_properties());
 }
 
 
@@ -176,30 +169,28 @@ ATF_TEST_CASE_BODY(test_case__from_properties__override_all)
 
     ATF_REQUIRE_EQ(&test_program, &test_case.test_program());
     ATF_REQUIRE_EQ("test-case", test_case.name());
-    ATF_REQUIRE(test_case.has_cleanup());
-    ATF_REQUIRE(datetime::delta(123, 0) == test_case.timeout());
-    ATF_REQUIRE_EQ(2, test_case.allowed_architectures().size());
-    ATF_REQUIRE_IN("i386", test_case.allowed_architectures());
-    ATF_REQUIRE_IN("x86_64", test_case.allowed_architectures());
-    ATF_REQUIRE_EQ(1, test_case.allowed_platforms().size());
-    ATF_REQUIRE_IN("amd64", test_case.allowed_platforms());
-    ATF_REQUIRE_EQ(3, test_case.required_configs().size());
-    ATF_REQUIRE_IN("var1", test_case.required_configs());
-    ATF_REQUIRE_IN("var2", test_case.required_configs());
-    ATF_REQUIRE_IN("var3", test_case.required_configs());
-    ATF_REQUIRE_EQ(2, test_case.required_files().size());
-    ATF_REQUIRE_IN(fs::path("/file1"), test_case.required_files());
-    ATF_REQUIRE_IN(fs::path("/dir/file2"), test_case.required_files());
-    ATF_REQUIRE_EQ(units::bytes::parse("1m"), test_case.required_memory());
-    ATF_REQUIRE_EQ(2, test_case.required_programs().size());
-    ATF_REQUIRE_IN(fs::path("/bin/ls"), test_case.required_programs());
-    ATF_REQUIRE_IN(fs::path("svn"), test_case.required_programs());
-    ATF_REQUIRE_EQ("root", test_case.required_user());
-    ATF_REQUIRE_EQ(3, test_case.user_metadata().size());
-    ATF_REQUIRE_EQ("value1", test_case.user_metadata().find("X-foo")->second);
-    ATF_REQUIRE_EQ("value2", test_case.user_metadata().find("X-bar")->second);
-    ATF_REQUIRE_EQ("value3", test_case.user_metadata().find(
-                       "X-baz-www")->second);
+
+    const engine::metadata md = engine::metadata_builder()
+        .add_allowed_architecture("i386")
+        .add_allowed_architecture("x86_64")
+        .add_allowed_platform("amd64")
+        .add_custom("X-foo", "value1")
+        .add_custom("X-bar", "value2")
+        .add_custom("X-baz-www", "value3")
+        .add_required_config("var1")
+        .add_required_config("var2")
+        .add_required_config("var3")
+        .add_required_file(fs::path("/file1"))
+        .add_required_file(fs::path("/dir/file2"))
+        .add_required_program(fs::path("/bin/ls"))
+        .add_required_program(fs::path("svn"))
+        .set_description("Some text")
+        .set_has_cleanup(true)
+        .set_required_memory(units::bytes::parse("1m"))
+        .set_required_user("root")
+        .set_timeout(datetime::delta(123, 0))
+        .build();
+    ATF_REQUIRE(md.to_properties() == test_case.get_metadata().to_properties());
 }
 
 

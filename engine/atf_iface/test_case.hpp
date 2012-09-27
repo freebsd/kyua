@@ -68,18 +68,6 @@ public:
     static test_case from_properties(const base_test_program&,
                                      const std::string&, const properties_map&);
 
-    const std::string& description(void) const;
-    bool has_cleanup(void) const;
-    const utils::datetime::delta& timeout(void) const;
-    const strings_set& allowed_architectures(void) const;
-    const strings_set& allowed_platforms(void) const;
-    const strings_set& required_configs(void) const;
-    const paths_set& required_files(void) const;
-    const utils::units::bytes& required_memory(void) const;
-    const paths_set& required_programs(void) const;
-    const std::string& required_user(void) const;
-    properties_map user_metadata(void) const;
-
     utils::optional< test_result > fake_result(void) const;
 };
 
