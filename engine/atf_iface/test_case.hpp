@@ -83,8 +83,6 @@ public:
     properties_map user_metadata(void) const;
 
     utils::optional< test_result > fake_result(void) const;
-
-    std::string check_requirements(const utils::config::tree&) const;
 };
 
 

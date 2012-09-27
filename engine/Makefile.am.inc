@@ -90,9 +90,10 @@ engine_isolation_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
 
 tests_engine_PROGRAMS += engine/metadata_test
 engine_metadata_test_SOURCES = engine/metadata_test.cpp
-engine_metadata_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
-                                $(ATF_CXX_CFLAGS)
-engine_metadata_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) $(ATF_CXX_LIBS)
+engine_metadata_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_TEST_CFLAGS) \
+                                $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+engine_metadata_test_LDADD = $(ENGINE_LIBS) $(UTILS_TEST_LIBS) $(UTILS_LIBS) \
+                             $(ATF_CXX_LIBS)
 
 tests_engine_PROGRAMS += engine/test_case_test
 engine_test_case_test_SOURCES = engine/test_case_test.cpp

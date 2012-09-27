@@ -425,8 +425,9 @@ atf_iface::run_test_case(const atf_iface::test_case& test_case,
     LI(F("Processing test case '%s'") % test_case.name());
 
     try {
-        const std::string skip_reason = test_case.check_requirements(
-            user_config);
+        const std::string skip_reason = check_reqs(
+            test_case.get_metadata(), user_config,
+            test_case.test_program().test_suite_name());
         if (skip_reason.empty())
             return engine::protected_run(run_test_case_safe(
                 test_case, user_config, hooks, stdout_path, stderr_path));

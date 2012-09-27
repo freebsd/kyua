@@ -126,6 +126,10 @@ public:
 };
 
 
+std::string check_reqs(const engine::metadata&, const utils::config::tree&,
+                       const std::string&);
+
+
 }  // namespace engine
 
 

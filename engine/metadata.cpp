@@ -36,7 +36,10 @@
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/exceptions.hpp"
+#include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/memory.hpp"
+#include "utils/passwd.hpp"
 #include "utils/sanity.hpp"
 #include "utils/text/exceptions.hpp"
 #include "utils/text/operations.hpp"
@@ -45,6 +48,7 @@
 namespace config = utils::config;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
+namespace passwd = utils::passwd;
 namespace text = utils::text;
 namespace units = utils::units;
 
@@ -200,7 +204,7 @@ class paths_set_node : public config::base_set_node< fs::path > {
 ///
 /// \param [in,out] tree The tree to initialize.
 static void
-init_reqs_tree(config::tree& tree)
+init_tree(config::tree& tree)
 {
     tree.define< config::strings_set_node >("allowed_architectures");
     tree.set< config::strings_set_node >("allowed_architectures",
@@ -287,19 +291,182 @@ set(config::tree& tree, const std::string& key,
 }
 
 
+/// Checks if all required configuration variables are present.
+///
+/// \param required_configs Set of required variable names.
+/// \param user_config Runtime user configuration.
+/// \param test_suite_name Name of the test suite the test belongs to.
+///
+/// \return Empty if all variables are present or an error message otherwise.
+static std::string
+check_required_configs(const engine::strings_set& required_configs,
+                       const config::tree& user_config,
+                       const std::string& test_suite_name)
+{
+    for (engine::strings_set::const_iterator iter = required_configs.begin();
+         iter != required_configs.end(); iter++) {
+        std::string property;
+        // TODO(jmmv): All this rewrite logic belongs in the ATF interface.
+        if ((*iter) == "unprivileged-user" || (*iter) == "unprivileged_user")
+            property = "unprivileged_user";
+        else
+            property = F("test_suites.%s.%s") % test_suite_name % (*iter);
+
+        if (!user_config.is_set(property))
+            return F("Required configuration property '%s' not defined") %
+                (*iter);
+    }
+    return "";
+}
+
+
+/// Checks if the allowed architectures match the current architecture.
+///
+/// \param allowed_architectures Set of allowed architectures.
+/// \param user_config Runtime user configuration.
+///
+/// \return Empty if the current architecture is in the list or an error
+/// message otherwise.
+static std::string
+check_allowed_architectures(const engine::strings_set& allowed_architectures,
+                            const config::tree& user_config)
+{
+    if (!allowed_architectures.empty()) {
+        const std::string architecture =
+            user_config.lookup< config::string_node >("architecture");
+        if (allowed_architectures.find(architecture) ==
+            allowed_architectures.end())
+            return F("Current architecture '%s' not supported") % architecture;
+    }
+    return "";
+}
+
+
+/// Checks if the allowed platforms match the current architecture.
+///
+/// \param allowed_platforms Set of allowed platforms.
+/// \param user_config Runtime user configuration.
+///
+/// \return Empty if the current platform is in the list or an error message
+/// otherwise.
+static std::string
+check_allowed_platforms(const engine::strings_set& allowed_platforms,
+                        const config::tree& user_config)
+{
+    if (!allowed_platforms.empty()) {
+        const std::string platform =
+            user_config.lookup< config::string_node >("platform");
+        if (allowed_platforms.find(platform) == allowed_platforms.end())
+            return F("Current platform '%s' not supported") % platform;
+    }
+    return "";
+}
+
+
+/// Checks if the current user matches the required user.
+///
+/// \param required_user Name of the required user category.
+/// \param user_config Runtime user configuration.
+///
+/// \return Empty if the current user fits the required user characteristics or
+/// an error message otherwise.
+static std::string
+check_required_user(const std::string& required_user,
+                    const config::tree& user_config)
+{
+    if (!required_user.empty()) {
+        const passwd::user user = passwd::current_user();
+        if (required_user == "root") {
+            if (!user.is_root())
+                return "Requires root privileges";
+        } else if (required_user == "unprivileged") {
+            if (user.is_root())
+                if (!user_config.is_set("unprivileged_user"))
+                    return "Requires an unprivileged user but the "
+                        "unprivileged-user configuration variable is not "
+                        "defined";
+        } else
+            UNREACHABLE_MSG("Value of require.user not properly validated");
+    }
+    return "";
+}
+
+
+/// Checks if all required files exist.
+///
+/// \param required_files Set of paths.
+///
+/// \return Empty if the required files all exist or an error message otherwise.
+static std::string
+check_required_files(const engine::paths_set& required_files)
+{
+    for (engine::paths_set::const_iterator iter = required_files.begin();
+         iter != required_files.end(); iter++) {
+        INV((*iter).is_absolute());
+        if (!fs::exists(*iter))
+            return F("Required file '%s' not found") % *iter;
+    }
+    return "";
+}
+
+
+/// Checks if all required programs exist.
+///
+/// \param required_programs Set of paths.
+///
+/// \return Empty if the required programs all exist or an error message
+/// otherwise.
+static std::string
+check_required_programs(const engine::paths_set& required_programs)
+{
+    for (engine::paths_set::const_iterator iter = required_programs.begin();
+         iter != required_programs.end(); iter++) {
+        if ((*iter).is_absolute()) {
+            if (!fs::exists(*iter))
+                return F("Required program '%s' not found") % *iter;
+        } else {
+            if (!fs::find_in_path((*iter).c_str()))
+                return F("Required program '%s' not found in PATH") % *iter;
+        }
+    }
+    return "";
+}
+
+
+/// Checks if the current system has the specified amount of memory.
+///
+/// \param required_memory Amount of required physical memory, or zero if not
+///     applicable.
+///
+/// \return Empty if the current system has the required amount of memory or an
+/// error message otherwise.
+static std::string
+check_required_memory(const units::bytes& required_memory)
+{
+    if (required_memory > 0) {
+        const units::bytes physical_memory = utils::physical_memory();
+        if (physical_memory > 0 && physical_memory < required_memory)
+            return F("Requires %s bytes of physical memory but only %s "
+                     "available") %
+                required_memory.format() % physical_memory.format();
+    }
+    return "";
+}
+
+
 }  // anonymous namespace
 
 
 /// Internal implementation of the metadata class.
 struct engine::metadata::impl {
-    /// Collection of requirements.
-    config::tree reqs;
+    /// Metadata properties.
+    config::tree props;
 
     /// Constructor.
     ///
-    /// \param reqs_ Requirements of the test.
-    impl(const utils::config::tree& reqs_) :
-        reqs(reqs_)
+    /// \param props_ Metadata properties of the test.
+    impl(const utils::config::tree& props_) :
+        props(props_)
     {
     }
 };
@@ -307,9 +474,9 @@ struct engine::metadata::impl {
 
 /// Constructor.
 ///
-/// \param reqs Requirements of the test.
-engine::metadata::metadata(const utils::config::tree& reqs) :
-    _pimpl(new impl(reqs))
+/// \param props Metadata properties of the test.
+engine::metadata::metadata(const utils::config::tree& props) :
+    _pimpl(new impl(props))
 {
 }
 
@@ -326,7 +493,7 @@ engine::metadata::~metadata(void)
 const engine::strings_set&
 engine::metadata::allowed_architectures(void) const
 {
-    return _pimpl->reqs.lookup< config::strings_set_node >(
+    return _pimpl->props.lookup< config::strings_set_node >(
         "allowed_architectures");
 }
 
@@ -337,7 +504,7 @@ engine::metadata::allowed_architectures(void) const
 const engine::strings_set&
 engine::metadata::allowed_platforms(void) const
 {
-    return _pimpl->reqs.lookup< config::strings_set_node >("allowed_platforms");
+    return _pimpl->props.lookup< config::strings_set_node >("allowed_platforms");
 }
 
 
@@ -347,7 +514,7 @@ engine::metadata::allowed_platforms(void) const
 engine::properties_map
 engine::metadata::custom(void) const
 {
-    return _pimpl->reqs.all_properties("custom", true);
+    return _pimpl->props.all_properties("custom", true);
 }
 
 
@@ -357,7 +524,7 @@ engine::metadata::custom(void) const
 const std::string&
 engine::metadata::description(void) const
 {
-    return _pimpl->reqs.lookup< config::string_node >("description");
+    return _pimpl->props.lookup< config::string_node >("description");
 }
 
 
@@ -367,7 +534,7 @@ engine::metadata::description(void) const
 bool
 engine::metadata::has_cleanup(void) const
 {
-    return _pimpl->reqs.lookup< config::bool_node >("has_cleanup");
+    return _pimpl->props.lookup< config::bool_node >("has_cleanup");
 }
 
 
@@ -377,7 +544,7 @@ engine::metadata::has_cleanup(void) const
 const engine::strings_set&
 engine::metadata::required_configs(void) const
 {
-    return _pimpl->reqs.lookup< config::strings_set_node >("required_configs");
+    return _pimpl->props.lookup< config::strings_set_node >("required_configs");
 }
 
 
@@ -387,7 +554,7 @@ engine::metadata::required_configs(void) const
 const engine::paths_set&
 engine::metadata::required_files(void) const
 {
-    return _pimpl->reqs.lookup< paths_set_node >("required_files");
+    return _pimpl->props.lookup< paths_set_node >("required_files");
 }
 
 
@@ -397,7 +564,7 @@ engine::metadata::required_files(void) const
 const units::bytes&
 engine::metadata::required_memory(void) const
 {
-    return _pimpl->reqs.lookup< bytes_node >("required_memory");
+    return _pimpl->props.lookup< bytes_node >("required_memory");
 }
 
 
@@ -407,7 +574,7 @@ engine::metadata::required_memory(void) const
 const engine::paths_set&
 engine::metadata::required_programs(void) const
 {
-    return _pimpl->reqs.lookup< paths_set_node >("required_programs");
+    return _pimpl->props.lookup< paths_set_node >("required_programs");
 }
 
 
@@ -417,7 +584,7 @@ engine::metadata::required_programs(void) const
 const std::string&
 engine::metadata::required_user(void) const
 {
-    return _pimpl->reqs.lookup< user_node >("required_user");
+    return _pimpl->props.lookup< user_node >("required_user");
 }
 
 
@@ -428,7 +595,7 @@ engine::metadata::required_user(void) const
 const datetime::delta&
 engine::metadata::timeout(void) const
 {
-    return _pimpl->reqs.lookup< delta_node >("timeout");
+    return _pimpl->props.lookup< delta_node >("timeout");
 }
 
 
@@ -438,14 +605,14 @@ engine::metadata::timeout(void) const
 engine::properties_map
 engine::metadata::to_properties(void) const
 {
-    return _pimpl->reqs.all_properties();
+    return _pimpl->props.all_properties();
 }
 
 
 /// Internal implementation of the metadata_builder class.
 struct engine::metadata_builder::impl {
     /// Collection of requirements.
-    config::tree reqs;
+    config::tree props;
 
     /// Whether we have created a metadata object or not.
     bool built;
@@ -454,7 +621,7 @@ struct engine::metadata_builder::impl {
     impl(void) :
         built(false)
     {
-        init_reqs_tree(reqs);
+        init_tree(props);
     }
 };
 
@@ -483,7 +650,7 @@ engine::metadata_builder&
 engine::metadata_builder::add_allowed_architecture(const std::string& arch)
 {
     lookup_rw< config::strings_set_node >(
-        _pimpl->reqs, "allowed_architectures").insert(arch);
+        _pimpl->props, "allowed_architectures").insert(arch);
     return *this;
 }
 
@@ -499,7 +666,7 @@ engine::metadata_builder&
 engine::metadata_builder::add_allowed_platform(const std::string& platform)
 {
     lookup_rw< config::strings_set_node >(
-        _pimpl->reqs, "allowed_platforms").insert(platform);
+        _pimpl->props, "allowed_platforms").insert(platform);
     return *this;
 }
 
@@ -516,7 +683,7 @@ engine::metadata_builder&
 engine::metadata_builder::add_custom(const std::string& key,
                                      const std::string& value)
 {
-    _pimpl->reqs.set_string(F("custom.%s") % key, value);
+    _pimpl->props.set_string(F("custom.%s") % key, value);
     return *this;
 }
 
@@ -532,7 +699,7 @@ engine::metadata_builder&
 engine::metadata_builder::add_required_config(const std::string& var)
 {
     lookup_rw< config::strings_set_node >(
-        _pimpl->reqs, "required_configs").insert(var);
+        _pimpl->props, "required_configs").insert(var);
     return *this;
 }
 
@@ -547,7 +714,7 @@ engine::metadata_builder::add_required_config(const std::string& var)
 engine::metadata_builder&
 engine::metadata_builder::add_required_file(const fs::path& path)
 {
-    lookup_rw< paths_set_node >(_pimpl->reqs, "required_files").insert(path);
+    lookup_rw< paths_set_node >(_pimpl->props, "required_files").insert(path);
     return *this;
 }
 
@@ -562,7 +729,8 @@ engine::metadata_builder::add_required_file(const fs::path& path)
 engine::metadata_builder&
 engine::metadata_builder::add_required_program(const fs::path& path)
 {
-    lookup_rw< paths_set_node >(_pimpl->reqs, "required_programs").insert(path);
+    lookup_rw< paths_set_node >(_pimpl->props,
+                                "required_programs").insert(path);
     return *this;
 }
 
@@ -577,7 +745,7 @@ engine::metadata_builder::add_required_program(const fs::path& path)
 engine::metadata_builder&
 engine::metadata_builder::set_allowed_architectures(const strings_set& as)
 {
-    set< config::strings_set_node >(_pimpl->reqs, "allowed_architectures", as);
+    set< config::strings_set_node >(_pimpl->props, "allowed_architectures", as);
     return *this;
 }
 
@@ -592,7 +760,7 @@ engine::metadata_builder::set_allowed_architectures(const strings_set& as)
 engine::metadata_builder&
 engine::metadata_builder::set_allowed_platforms(const strings_set& ps)
 {
-    set< config::strings_set_node >(_pimpl->reqs, "allowed_platforms", ps);
+    set< config::strings_set_node >(_pimpl->props, "allowed_platforms", ps);
     return *this;
 }
 
@@ -609,8 +777,8 @@ engine::metadata_builder::set_custom(const properties_map& props)
 {
     for (properties_map::const_iterator iter = props.begin();
          iter != props.end(); ++iter)
-        _pimpl->reqs.set_string(F("custom.%s") % (*iter).first,
-                                (*iter).second);
+        _pimpl->props.set_string(F("custom.%s") % (*iter).first,
+                                 (*iter).second);
     return *this;
 }
 
@@ -625,7 +793,7 @@ engine::metadata_builder::set_custom(const properties_map& props)
 engine::metadata_builder&
 engine::metadata_builder::set_description(const std::string& description)
 {
-    set< config::string_node >(_pimpl->reqs, "description", description);
+    set< config::string_node >(_pimpl->props, "description", description);
     return *this;
 }
 
@@ -640,7 +808,7 @@ engine::metadata_builder::set_description(const std::string& description)
 engine::metadata_builder&
 engine::metadata_builder::set_has_cleanup(const bool cleanup)
 {
-    set< config::bool_node >(_pimpl->reqs, "has_cleanup", cleanup);
+    set< config::bool_node >(_pimpl->props, "has_cleanup", cleanup);
     return *this;
 }
 
@@ -655,7 +823,7 @@ engine::metadata_builder::set_has_cleanup(const bool cleanup)
 engine::metadata_builder&
 engine::metadata_builder::set_required_configs(const strings_set& vars)
 {
-    set< config::strings_set_node >(_pimpl->reqs, "required_configs", vars);
+    set< config::strings_set_node >(_pimpl->props, "required_configs", vars);
     return *this;
 }
 
@@ -670,7 +838,7 @@ engine::metadata_builder::set_required_configs(const strings_set& vars)
 engine::metadata_builder&
 engine::metadata_builder::set_required_files(const paths_set& files)
 {
-    set< paths_set_node >(_pimpl->reqs, "required_files", files);
+    set< paths_set_node >(_pimpl->props, "required_files", files);
     return *this;
 }
 
@@ -685,7 +853,7 @@ engine::metadata_builder::set_required_files(const paths_set& files)
 engine::metadata_builder&
 engine::metadata_builder::set_required_memory(const units::bytes& bytes)
 {
-    set< bytes_node >(_pimpl->reqs, "required_memory", bytes);
+    set< bytes_node >(_pimpl->props, "required_memory", bytes);
     return *this;
 }
 
@@ -700,7 +868,7 @@ engine::metadata_builder::set_required_memory(const units::bytes& bytes)
 engine::metadata_builder&
 engine::metadata_builder::set_required_programs(const paths_set& progs)
 {
-    set< paths_set_node >(_pimpl->reqs, "required_programs", progs);
+    set< paths_set_node >(_pimpl->props, "required_programs", progs);
     return *this;
 }
 
@@ -715,7 +883,7 @@ engine::metadata_builder::set_required_programs(const paths_set& progs)
 engine::metadata_builder&
 engine::metadata_builder::set_required_user(const std::string& user)
 {
-    set< user_node >(_pimpl->reqs, "required_user", user);
+    set< user_node >(_pimpl->props, "required_user", user);
     return *this;
 }
 
@@ -733,7 +901,7 @@ engine::metadata_builder::set_string(const std::string& key,
                                      const std::string& value)
 {
     try {
-        _pimpl->reqs.set_string(key, value);
+        _pimpl->props.set_string(key, value);
     } catch (const config::unknown_key_error& e) {
         throw engine::format_error(F("Unknown metadata property %s") % key);
     } catch (const config::value_error& e) {
@@ -754,7 +922,7 @@ engine::metadata_builder::set_string(const std::string& key,
 engine::metadata_builder&
 engine::metadata_builder::set_timeout(const datetime::delta& timeout)
 {
-    set< delta_node >(_pimpl->reqs, "timeout", timeout);
+    set< delta_node >(_pimpl->props, "timeout", timeout);
     return *this;
 }
 
@@ -774,5 +942,52 @@ engine::metadata_builder::build(void) const
     PRE(!_pimpl->built);
     _pimpl->built = true;
 
-    return metadata(_pimpl->reqs);
+    return metadata(_pimpl->props);
+}
+
+
+/// Checks if all the requirements specified by the test case are met.
+///
+/// \param md The test metadata.
+/// \param cfg The engine configuration.
+/// \param test_suite Name of the test suite the test belongs to.
+///
+/// \return A string describing the reason for skipping the test, or empty if
+/// the test should be executed.
+std::string
+engine::check_reqs(const engine::metadata& md, const config::tree& cfg,
+                   const std::string& test_suite)
+{
+    std::string reason;
+
+    reason = check_required_configs(md.required_configs(), cfg, test_suite);
+    if (!reason.empty())
+        return reason;
+
+    reason = check_allowed_architectures(md.allowed_architectures(), cfg);
+    if (!reason.empty())
+        return reason;
+
+    reason = check_allowed_platforms(md.allowed_platforms(), cfg);
+    if (!reason.empty())
+        return reason;
+
+    reason = check_required_user(md.required_user(), cfg);
+    if (!reason.empty())
+        return reason;
+
+    reason = check_required_files(md.required_files());
+    if (!reason.empty())
+        return reason;
+
+    reason = check_required_programs(md.required_programs());
+    if (!reason.empty())
+        return reason;
+
+    reason = check_required_memory(md.required_memory());
+    if (!reason.empty())
+        return reason;
+
+    INV(reason.empty());
+    return reason;
 }

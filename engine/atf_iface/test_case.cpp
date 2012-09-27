@@ -40,11 +40,8 @@
 #include "engine/test_result.hpp"
 #include "utils/config/tree.ipp"
 #include "utils/fs/exceptions.hpp"
-#include "utils/fs/operations.hpp"
 #include "utils/format/macros.hpp"
-#include "utils/memory.hpp"
 #include "utils/optional.ipp"
-#include "utils/passwd.hpp"
 #include "utils/sanity.hpp"
 #include "utils/units.hpp"
 
@@ -52,7 +49,6 @@ namespace atf_iface = engine::atf_iface;
 namespace config = utils::config;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
-namespace passwd = utils::passwd;
 namespace units = utils::units;
 
 using utils::none;
@@ -414,95 +410,6 @@ atf_iface::test_case::get_all_properties(void) const
         props["require.user"] = required_user();
 
     return props;
-}
-
-
-/// Checks if all the requirements specified by the test case are met.
-///
-/// \param user_config The engine configuration.
-///
-/// \return A string describing what is missing; empty if everything is OK.
-std::string
-atf_iface::test_case::check_requirements(const config::tree& user_config) const
-{
-    const strings_set& required_configs_ = required_configs();
-    for (strings_set::const_iterator iter = required_configs_.begin();
-         iter != required_configs_.end(); iter++) {
-        std::string property;
-        if ((*iter) == "unprivileged-user" || (*iter) == "unprivileged_user")
-            property = "unprivileged_user";
-        else
-            property = F("test_suites.%s.%s") %
-                test_program().test_suite_name() % (*iter);
-
-        if (!user_config.is_set(property))
-            return F("Required configuration property '%s' not defined") %
-                (*iter);
-    }
-
-    const strings_set& allowed_architectures_ = allowed_architectures();
-    if (!allowed_architectures_.empty()) {
-        const std::string architecture =
-            user_config.lookup< config::string_node >("architecture");
-        if (allowed_architectures_.find(architecture) ==
-            allowed_architectures_.end())
-            return F("Current architecture '%s' not supported") % architecture;
-    }
-
-    const strings_set& allowed_platforms_ = allowed_platforms();
-    if (!allowed_platforms_.empty()) {
-        const std::string platform =
-            user_config.lookup< config::string_node >("platform");
-        if (allowed_platforms_.find(platform) == allowed_platforms_.end())
-            return F("Current platform '%s' not supported") % platform;
-    }
-
-    const std::string& required_user_ = required_user();
-    if (!required_user_.empty()) {
-        const passwd::user user = passwd::current_user();
-        if (required_user_ == "root") {
-            if (!user.is_root())
-                return "Requires root privileges";
-        } else if (required_user_ == "unprivileged") {
-            if (user.is_root())
-                if (!user_config.is_set("unprivileged_user"))
-                    return "Requires an unprivileged user but the "
-                        "unprivileged-user configuration variable is not "
-                        "defined";
-        } else
-            UNREACHABLE_MSG("Value of require.user not properly validated");
-    }
-
-    const paths_set& required_files_ = required_files();
-    for (paths_set::const_iterator iter = required_files_.begin();
-         iter != required_files_.end(); iter++) {
-        INV((*iter).is_absolute());
-        if (!fs::exists(*iter))
-            return F("Required file '%s' not found") % *iter;
-    }
-
-    const paths_set& required_programs_ = required_programs();
-    for (paths_set::const_iterator iter = required_programs_.begin();
-         iter != required_programs_.end(); iter++) {
-        if ((*iter).is_absolute()) {
-            if (!fs::exists(*iter))
-                return F("Required program '%s' not found") % *iter;
-        } else {
-            if (!fs::find_in_path((*iter).c_str()))
-                return F("Required program '%s' not found in PATH") % *iter;
-        }
-    }
-
-    const units::bytes& required_memory_ = required_memory();
-    if (required_memory_ > 0) {
-        const units::bytes physical_memory = utils::physical_memory();
-        if (physical_memory > 0 && physical_memory < required_memory_)
-            return F("Requires %s bytes of physical memory but only %s "
-                     "available") %
-                required_memory_.format() % physical_memory.format();
-    }
-
-    return "";
 }
 
 
