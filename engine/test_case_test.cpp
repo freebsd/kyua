@@ -135,7 +135,24 @@ ATF_TEST_CASE_BODY(base_test_case__ctor_and_getters)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(fake_result)
+ATF_TEST_CASE_BODY(fake_result)
+{
+    const engine::test_result result(engine::test_result::skipped,
+                                     "Some reason");
+    const mock_test_program test_program(fs::path("abc"));
+    const engine::base_test_case test_case("mock", test_program, "__foo__",
+                                           "Some description", result);
+    ATF_REQUIRE_EQ(&test_program, &test_case.test_program());
+    ATF_REQUIRE_EQ("__foo__", test_case.name());
+    ATF_REQUIRE(result == test_case.fake_result().get());
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, base_test_case__ctor_and_getters);
+    ATF_ADD_TEST_CASE(tcs, fake_result);
+
+    // TODO(jmmv): Add test cases for debug and run.
 }

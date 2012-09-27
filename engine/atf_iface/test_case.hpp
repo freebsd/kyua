@@ -52,11 +52,6 @@ namespace atf_iface {
 /// than to provide a way to execute the test cases.  Therefore, no information
 /// needs to be stored for the test programs themselves.
 class test_case : public base_test_case {
-    struct impl;
-
-    /// Pointer to the shared internal implementation.
-    std::tr1::shared_ptr< impl > _pimpl;
-
 public:
     test_case(const base_test_program&, const std::string&, const metadata&);
     test_case(const base_test_program&, const std::string&, const std::string&,
@@ -65,8 +60,6 @@ public:
 
     static test_case from_properties(const base_test_program&,
                                      const std::string&, const properties_map&);
-
-    utils::optional< test_result > fake_result(void) const;
 };
 
 

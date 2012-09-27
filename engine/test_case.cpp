@@ -90,6 +90,9 @@ struct engine::base_test_case::base_impl {
     /// Test case metadata.
     metadata md;
 
+    /// Fake result to return instead of running the test case.
+    optional< test_result > fake_result;
+
     /// Constructor.
     ///
     /// \param interface_name_ Name of the interface implemented by the test
@@ -97,14 +100,18 @@ struct engine::base_test_case::base_impl {
     /// \param test_program_ The test program this test case belongs to.
     /// \param name_ The name of the test case within the test program.
     /// \param md_ Metadata of the test case.
+    /// \param fake_result_ Fake result to return instead of running the test
+    ///     case.
     base_impl(const std::string& interface_name_,
               const base_test_program& test_program_,
               const std::string& name_,
-              const metadata& md_) :
+              const metadata& md_,
+              const optional< test_result >& fake_result_) :
         interface_name(interface_name_),
         test_program(test_program_),
         name(name_),
-        md(md_)
+        md(md_),
+        fake_result(fake_result_)
     {
     }
 };
@@ -124,8 +131,47 @@ engine::base_test_case::base_test_case(const std::string& interface_name_,
                                        const base_test_program& test_program_,
                                        const std::string& name_,
                                        const metadata& md_) :
-    _pbimpl(new base_impl(interface_name_, test_program_, name_, md_))
+    _pbimpl(new base_impl(interface_name_, test_program_, name_, md_, none))
 {
+}
+
+
+
+/// Constructs a new fake test case.
+///
+/// A fake test case is a test case that is not really defined by the test
+/// program.  Such test cases have a name surrounded by '__' and, when executed,
+/// they return a fixed, pre-recorded result.
+///
+/// This is necessary for the cases where listing the test cases of a test
+/// program fails.  In this scenario, we generate a single test case within
+/// the test program that unconditionally returns a failure.
+///
+/// TODO(jmmv): Need to get rid of this.  We should be able to report the
+/// status of test programs independently of test cases, as some interfaces
+/// don't know about the latter at all.
+///
+/// \param interface_name_ Name of the interface implemented by the test
+///     program.
+/// \param test_program_ The test program this test case belongs to.
+/// \param name_ The name to give to this fake test case.  This name has to be
+///     prefixed and suffixed by '__' to clearly denote that this is internal.
+/// \param description_ The description of the test case, if any.
+/// \param test_result_ The fake result to return when this test case is run.
+engine::base_test_case::base_test_case(
+    const std::string& interface_name_,
+    const base_test_program& test_program_,
+    const std::string& name_,
+    const std::string& description_,
+    const engine::test_result& test_result_) :
+    _pbimpl(new base_impl(
+                interface_name_, test_program_, name_,
+                metadata_builder().set_description(description_).build(),
+                utils::make_optional(test_result_)))
+{
+    PRE_MSG(name_.length() > 4 && name_.substr(0, 2) == "__" &&
+            name_.substr(name_.length() - 2) == "__",
+            "Invalid fake name provided to fake test case");
 }
 
 
@@ -175,6 +221,16 @@ engine::base_test_case::get_metadata(void) const
 }
 
 
+/// Gets the fake result pre-stored for this test case.
+///
+/// \return A fake result, or none if not defined.
+optional< engine::test_result >
+engine::base_test_case::fake_result(void) const
+{
+    return _pbimpl->fake_result;
+}
+
+
 /// Runs the test case in debug mode.
 ///
 /// Debug mode gives the caller more control on the execution of the test.  It
@@ -197,6 +253,9 @@ engine::debug_test_case(const base_test_case* test_case,
                         const fs::path& stdout_path,
                         const fs::path& stderr_path)
 {
+    if (test_case->fake_result())
+        return test_case->fake_result().get();
+
     // TODO(jmmv): Yes, hardcoding the interface names here is nasty.  But this
     // will go away once we implement the testers as individual binaries, as we
     // just auto-discover the ones that exist and use their generic interface.
@@ -224,6 +283,9 @@ engine::run_test_case(const base_test_case* test_case,
                       const config::tree& user_config,
                       test_case_hooks& hooks)
 {
+    if (test_case->fake_result())
+        return test_case->fake_result().get();
+
     // TODO(jmmv): Yes, hardcoding the interface names here is nasty.  But this
     // will go away once we implement the testers as individual binaries, as we
     // just auto-discover the ones that exist and use their generic interface.

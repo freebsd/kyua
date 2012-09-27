@@ -75,12 +75,16 @@ class base_test_case {
 public:
     base_test_case(const std::string&, const base_test_program&,
                    const std::string&, const metadata&);
+    base_test_case(const std::string&, const base_test_program&,
+                   const std::string&, const std::string&,
+                   const engine::test_result&);
     virtual ~base_test_case(void);
 
     const std::string& interface_name(void) const;
     const base_test_program& test_program(void) const;
     const std::string& name(void) const;
     const metadata& get_metadata(void) const;
+    utils::optional< test_result > fake_result(void) const;
 };
 
 

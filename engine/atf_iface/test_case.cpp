@@ -79,31 +79,12 @@ execute(const engine::base_test_case* test_case,
 {
     const engine::atf_iface::test_case* tc =
         dynamic_cast< const engine::atf_iface::test_case* >(test_case);
-    if (tc->fake_result())
-        return tc->fake_result().get();
-    else
-        return engine::atf_iface::run_test_case(
-            *tc, user_config, hooks, stdout_path, stderr_path);
+    return engine::atf_iface::run_test_case(
+        *tc, user_config, hooks, stdout_path, stderr_path);
 }
 
 
 }  // anonymous namespace
-
-
-/// Internal implementation of a test case.
-struct engine::atf_iface::test_case::impl {
-    /// Fake result to return instead of running the test case.
-    optional< test_result > fake_result;
-
-    /// Constructor.
-    ///
-    /// \param fake_result_ Fake result to return instead of running the test
-    ///     case.
-    impl(const optional< test_result >& fake_result_) :
-        fake_result(fake_result_)
-    {
-    }
-};
 
 
 /// Constructs a new test case.
@@ -115,8 +96,7 @@ struct engine::atf_iface::test_case::impl {
 atf_iface::test_case::test_case(const base_test_program& test_program_,
                                 const std::string& name_,
                                 const metadata& md_) :
-    base_test_case("atf", test_program_, name_, md_),
-    _pimpl(new impl(none))
+    base_test_case("atf", test_program_, name_, md_)
 {
 }
 
@@ -139,13 +119,8 @@ atf_iface::test_case::test_case(const base_test_program& test_program_,
                                 const std::string& name_,
                                 const std::string& description_,
                                 const engine::test_result& test_result_) :
-    base_test_case("atf", test_program_, name_,
-                   metadata_builder().set_description(description_).build()),
-    _pimpl(new impl(utils::make_optional(test_result_)))
+    base_test_case("atf", test_program_, name_, description_, test_result_)
 {
-    PRE_MSG(name_.length() > 4 && name_.substr(0, 2) == "__" &&
-            name_.substr(name_.length() - 2) == "__",
-            "Invalid fake name provided to fake test case");
 }
 
 
@@ -212,16 +187,6 @@ atf_iface::test_case::from_properties(const base_test_program& test_program_,
     }
 
     return test_case(test_program_, name_, mdbuilder.build());
-}
-
-
-/// Gets the fake result pre-stored for this test case.
-///
-/// \return A fake result, or none if not defined.
-optional< engine::test_result >
-atf_iface::test_case::fake_result(void) const
-{
-    return _pimpl->fake_result;
 }
 
 
