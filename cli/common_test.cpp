@@ -100,7 +100,8 @@ public:
     /// \param name_ The name of the test case within the test program.
     mock_test_case(const engine::base_test_program& test_program_,
                    const std::string& name_) :
-        base_test_case("mock", test_program_, name_)
+        base_test_case("mock", test_program_, name_,
+                       engine::metadata_builder().build())
     {
     }
 };

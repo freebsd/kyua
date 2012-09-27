@@ -120,9 +120,10 @@ public:
     ///
     /// \param test_program_ The test program this test case belongs to.
     /// \param name_ The name of the test case within the test program.
+    /// \param md_ Test case metadata.
     mock_test_case(const engine::base_test_program& test_program_,
-                   const std::string& name_) :
-        base_test_case("mock", test_program_, name_)
+                   const std::string& name_, const engine::metadata& md_) :
+        base_test_case("mock", test_program_, name_, md_)
     {
     }
 };
@@ -134,10 +135,14 @@ public:
 ATF_TEST_CASE_WITHOUT_HEAD(base_test_case__ctor_and_getters)
 ATF_TEST_CASE_BODY(base_test_case__ctor_and_getters)
 {
+    const engine::metadata md = engine::metadata_builder()
+        .add_custom("first", "value")
+        .build();
     const mock_test_program test_program(fs::path("abc"));
-    const mock_test_case test_case(test_program, "foo");
+    const mock_test_case test_case(test_program, "foo", md);
     ATF_REQUIRE_EQ(&test_program, &test_case.test_program());
     ATF_REQUIRE_EQ("foo", test_case.name());
+    ATF_REQUIRE(md.to_properties() == test_case.get_metadata().to_properties());
 }
 
 
@@ -145,7 +150,8 @@ ATF_TEST_CASE_WITHOUT_HEAD(base_test_case__all_properties__delegate)
 ATF_TEST_CASE_BODY(base_test_case__all_properties__delegate)
 {
     const mock_test_program test_program(fs::path("foo"));
-    const mock_test_case test_case(test_program, "bar");
+    const mock_test_case test_case(test_program, "bar",
+                                   engine::metadata_builder().build());
 
     engine::properties_map exp_properties;
     exp_properties["first"] = "value";

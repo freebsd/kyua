@@ -114,20 +114,14 @@ execute(const engine::base_test_case* test_case,
 
 /// Internal implementation of a test case.
 struct engine::atf_iface::test_case::impl {
-    /// Test case metadata.
-    metadata md;
-
     /// Fake result to return instead of running the test case.
     optional< test_result > fake_result;
 
     /// Constructor.
     ///
-    /// \param md_ See the parent class.
     /// \param fake_result_ Fake result to return instead of running the test
     ///     case.
-    impl(const metadata& md_,
-         const optional< test_result >& fake_result_) :
-        md(md_),
+    impl(const optional< test_result >& fake_result_) :
         fake_result(fake_result_)
     {
     }
@@ -143,8 +137,8 @@ struct engine::atf_iface::test_case::impl {
 atf_iface::test_case::test_case(const base_test_program& test_program_,
                                 const std::string& name_,
                                 const metadata& md_) :
-    base_test_case("atf", test_program_, name_),
-    _pimpl(new impl(md_, none))
+    base_test_case("atf", test_program_, name_, md_),
+    _pimpl(new impl(none))
 {
 }
 
@@ -167,9 +161,9 @@ atf_iface::test_case::test_case(const base_test_program& test_program_,
                                 const std::string& name_,
                                 const std::string& description_,
                                 const engine::test_result& test_result_) :
-    base_test_case("atf", test_program_, name_),
-    _pimpl(new impl(metadata_builder().set_description(description_).build(),
-                    utils::make_optional(test_result_)))
+    base_test_case("atf", test_program_, name_,
+                   metadata_builder().set_description(description_).build()),
+    _pimpl(new impl(utils::make_optional(test_result_)))
 {
     PRE_MSG(name_.length() > 4 && name_.substr(0, 2) == "__" &&
             name_.substr(name_.length() - 2) == "__",
@@ -249,7 +243,7 @@ atf_iface::test_case::from_properties(const base_test_program& test_program_,
 const std::string&
 atf_iface::test_case::description(void) const
 {
-    return _pimpl->md.description();
+    return get_metadata().description();
 }
 
 
@@ -259,7 +253,7 @@ atf_iface::test_case::description(void) const
 bool
 atf_iface::test_case::has_cleanup(void) const
 {
-    return _pimpl->md.has_cleanup();
+    return get_metadata().has_cleanup();
 }
 
 
@@ -269,17 +263,7 @@ atf_iface::test_case::has_cleanup(void) const
 const datetime::delta&
 atf_iface::test_case::timeout(void) const
 {
-    return _pimpl->md.timeout();
-}
-
-
-/// Gets the test case metadata.
-///
-/// \return The test case metadata.
-const engine::metadata&
-atf_iface::test_case::get_metadata(void) const
-{
-    return _pimpl->md;
+    return get_metadata().timeout();
 }
 
 
@@ -289,7 +273,7 @@ atf_iface::test_case::get_metadata(void) const
 const engine::strings_set&
 atf_iface::test_case::allowed_architectures(void) const
 {
-    return _pimpl->md.allowed_architectures();
+    return get_metadata().allowed_architectures();
 }
 
 
@@ -299,7 +283,7 @@ atf_iface::test_case::allowed_architectures(void) const
 const engine::strings_set&
 atf_iface::test_case::allowed_platforms(void) const
 {
-    return _pimpl->md.allowed_platforms();
+    return get_metadata().allowed_platforms();
 }
 
 
@@ -309,7 +293,7 @@ atf_iface::test_case::allowed_platforms(void) const
 const engine::strings_set&
 atf_iface::test_case::required_configs(void) const
 {
-    return _pimpl->md.required_configs();
+    return get_metadata().required_configs();
 }
 
 
@@ -319,7 +303,7 @@ atf_iface::test_case::required_configs(void) const
 const engine::paths_set&
 atf_iface::test_case::required_files(void) const
 {
-    return _pimpl->md.required_files();
+    return get_metadata().required_files();
 }
 
 
@@ -329,7 +313,7 @@ atf_iface::test_case::required_files(void) const
 const units::bytes&
 atf_iface::test_case::required_memory(void) const
 {
-    return _pimpl->md.required_memory();
+    return get_metadata().required_memory();
 }
 
 
@@ -339,7 +323,7 @@ atf_iface::test_case::required_memory(void) const
 const engine::paths_set&
 atf_iface::test_case::required_programs(void) const
 {
-    return _pimpl->md.required_programs();
+    return get_metadata().required_programs();
 }
 
 
@@ -349,7 +333,7 @@ atf_iface::test_case::required_programs(void) const
 const std::string&
 atf_iface::test_case::required_user(void) const
 {
-    return _pimpl->md.required_user();
+    return get_metadata().required_user();
 }
 
 
@@ -359,7 +343,7 @@ atf_iface::test_case::required_user(void) const
 engine::properties_map
 atf_iface::test_case::user_metadata(void) const
 {
-    return _pimpl->md.custom();
+    return get_metadata().custom();
 }
 
 

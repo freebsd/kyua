@@ -286,6 +286,22 @@ execute(const engine::base_test_case* test_case,
 }
 
 
+/// Constructs a metadata object for the single test case in the test program.
+///
+/// \param test_program_ Reference to the generic test program.
+///
+/// \return A metadata object.
+static engine::metadata
+new_metadata(const engine::base_test_program& test_program_)
+{
+    const plain_iface::test_program& plain_test_program =
+        dynamic_cast< const plain_iface::test_program& >(test_program_);
+    return engine::metadata_builder()
+        .set_timeout(plain_test_program.timeout())
+        .build();
+}
+
+
 }  // anonymous namespace
 
 
@@ -294,7 +310,7 @@ execute(const engine::base_test_case* test_case,
 /// \param test_program_ The test program this test case belongs to.  This
 ///     object must exist during the lifetime of the test case.
 plain_iface::test_case::test_case(const base_test_program& test_program_) :
-    base_test_case("plain", test_program_, "main")
+    base_test_case("plain", test_program_, "main", new_metadata(test_program_))
 {
 }
 
@@ -310,11 +326,8 @@ plain_iface::test_case::get_all_properties(void) const
 {
     properties_map props;
 
-    const plain_iface::test_program* plain_test_program =
-        dynamic_cast< const plain_iface::test_program* >(&this->test_program());
-
-    const datetime::delta& timeout = plain_test_program->timeout();
-    if (timeout != detail::default_timeout) {
+    const datetime::delta& timeout = get_metadata().timeout();
+    if (timeout != engine::default_timeout) {
         INV(timeout.useconds == 0);
         props["timeout"] = F("%s") % timeout.seconds;
     }

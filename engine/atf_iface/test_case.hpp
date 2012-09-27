@@ -36,7 +36,6 @@
 #include <set>
 #include <string>
 
-#include "engine/metadata.hpp"
 #include "engine/test_case.hpp"
 #include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
@@ -72,7 +71,6 @@ public:
     const std::string& description(void) const;
     bool has_cleanup(void) const;
     const utils::datetime::delta& timeout(void) const;
-    const metadata& get_metadata(void) const;
     const strings_set& allowed_architectures(void) const;
     const strings_set& allowed_platforms(void) const;
     const strings_set& required_configs(void) const;

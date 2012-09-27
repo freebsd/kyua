@@ -37,9 +37,6 @@ namespace plain_iface = engine::plain_iface;
 using utils::optional;
 
 
-datetime::delta engine::plain_iface::detail::default_timeout(300, 0);
-
-
 /// Internal implementation for a test_program.
 struct engine::plain_iface::test_program::impl {
     /// The timeout for the single test case in the test program.
@@ -51,7 +48,7 @@ struct engine::plain_iface::test_program::impl {
     ///     test case.  If none, a default timeout is used.
     impl(const optional< datetime::delta >& optional_timeout_) :
         timeout(optional_timeout_ ?
-                optional_timeout_.get() : detail::default_timeout)
+                optional_timeout_.get() : engine::default_timeout)
 
     {
     }

@@ -87,18 +87,24 @@ struct engine::base_test_case::base_impl {
     /// Name of the test case; must be unique within the test program.
     std::string name;
 
+    /// Test case metadata.
+    metadata md;
+
     /// Constructor.
     ///
     /// \param interface_name_ Name of the interface implemented by the test
     ///     program.
     /// \param test_program_ The test program this test case belongs to.
     /// \param name_ The name of the test case within the test program.
+    /// \param md_ Metadata of the test case.
     base_impl(const std::string& interface_name_,
               const base_test_program& test_program_,
-              const std::string& name_) :
+              const std::string& name_,
+              const metadata& md_) :
         interface_name(interface_name_),
         test_program(test_program_),
-        name(name_)
+        name(name_),
+        md(md_)
     {
     }
 };
@@ -113,10 +119,12 @@ struct engine::base_test_case::base_impl {
 ///     program must exist in order for the test case to exist.
 /// \param name_ The name of the test case within the test program.  Must be
 ///     unique.
+/// \param md_ Metadata of the test case.
 engine::base_test_case::base_test_case(const std::string& interface_name_,
                                        const base_test_program& test_program_,
-                                       const std::string& name_) :
-    _pbimpl(new base_impl(interface_name_, test_program_, name_))
+                                       const std::string& name_,
+                                       const metadata& md_) :
+    _pbimpl(new base_impl(interface_name_, test_program_, name_, md_))
 {
 }
 
@@ -154,6 +162,16 @@ const std::string&
 engine::base_test_case::name(void) const
 {
     return _pbimpl->name;
+}
+
+
+/// Gets the test case metadata.
+///
+/// \return The test case metadata.
+const engine::metadata&
+engine::base_test_case::get_metadata(void) const
+{
+    return _pbimpl->md;
 }
 
 

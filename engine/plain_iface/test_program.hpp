@@ -40,17 +40,6 @@ namespace engine {
 namespace plain_iface {
 
 
-namespace detail {
-
-
-/// The default timeout value for test cases that do not provide one.
-/// \todo We should not be doing this; see issue 5 for details.
-extern utils::datetime::delta default_timeout;
-
-
-}  // namespace detail
-
-
 /// Representation of a plain test program.
 class test_program : public base_test_program {
     struct impl;
