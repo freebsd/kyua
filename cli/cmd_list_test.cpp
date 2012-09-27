@@ -86,6 +86,7 @@ ATF_TEST_CASE_BODY(list_test_case__verbose__some_properties)
     engine::properties_map properties;
     properties["descr"] = "Some description";
     properties["has.cleanup"] = "true";
+    properties["X-my-property"] = "value";
     const atf_iface::test_program test_program(fs::path("hello/world"),
                                                fs::path("root"), "the-suite");
     const atf_iface::test_case test_case =
@@ -94,10 +95,11 @@ ATF_TEST_CASE_BODY(list_test_case__verbose__some_properties)
 
     cmdline::ui_mock ui;
     cli::detail::list_test_case(&ui, true, test_case);
-    ATF_REQUIRE_EQ(3, ui.out_log().size());
+    ATF_REQUIRE_EQ(4, ui.out_log().size());
     ATF_REQUIRE_EQ("hello/world:my_name (the-suite)", ui.out_log()[0]);
-    ATF_REQUIRE_EQ("    descr = Some description", ui.out_log()[1]);
-    ATF_REQUIRE_EQ("    has.cleanup = true", ui.out_log()[2]);
+    ATF_REQUIRE_EQ("    custom.X-my-property = value", ui.out_log()[1]);
+    ATF_REQUIRE_EQ("    description = Some description", ui.out_log()[2]);
+    ATF_REQUIRE_EQ("    has_cleanup = true", ui.out_log()[3]);
     ATF_REQUIRE(ui.err_log().empty());
 }
 

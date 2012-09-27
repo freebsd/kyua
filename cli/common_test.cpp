@@ -84,15 +84,6 @@ public:
 
 /// Fake implementation of a test case.
 class mock_test_case : public engine::base_test_case {
-    /// Gets the collection of metadata properties of the test case.
-    ///
-    /// \return A static collection of properties for testing purposes.
-    engine::properties_map
-    get_all_properties(void) const
-    {
-        return engine::properties_map();
-    }
-
 public:
     /// Constructs a new test case.
     ///

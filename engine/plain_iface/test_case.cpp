@@ -315,27 +315,6 @@ plain_iface::test_case::test_case(const base_test_program& test_program_) :
 }
 
 
-/// Returns a string representation of all test case properties.
-///
-/// The returned keys and values match those that can be defined by the test
-/// case.
-///
-/// \return A key/value mapping describing all the test case properties.
-engine::properties_map
-plain_iface::test_case::get_all_properties(void) const
-{
-    properties_map props;
-
-    const datetime::delta& timeout = get_metadata().timeout();
-    if (timeout != engine::default_timeout) {
-        INV(timeout.useconds == 0);
-        props["timeout"] = F("%s") % timeout.seconds;
-    }
-
-    return props;
-}
-
-
 /// Runs the test case in debug mode.
 ///
 /// Debug mode gives the caller more control on the execution of the test.  It

@@ -197,7 +197,8 @@ ATF_TEST_CASE_BODY(all_properties__none)
                                                  fs::path("root"),
                                                  "test-suite", none);
     const plain_iface::test_case test_case(test_program);
-    ATF_REQUIRE(test_case.all_properties().empty());
+    const engine::metadata md = engine::metadata_builder().build();
+    ATF_REQUIRE(md.to_properties() == test_case.get_metadata().to_properties());
 }
 
 
@@ -209,10 +210,10 @@ ATF_TEST_CASE_BODY(all_properties__all)
         utils::make_optional(datetime::delta(123, 0)));
     const plain_iface::test_case test_case(test_program);
 
-    engine::properties_map exp_properties;
-    exp_properties["timeout"] = "123";
-
-    ATF_REQUIRE(exp_properties == test_case.all_properties());
+    const engine::metadata md = engine::metadata_builder()
+        .set_timeout(datetime::delta(123, 0))
+        .build();
+    ATF_REQUIRE(md.to_properties() == test_case.get_metadata().to_properties());
 }
 
 

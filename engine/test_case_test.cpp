@@ -104,17 +104,6 @@ public:
 
 /// Fake implementation of a test case.
 class mock_test_case : public engine::base_test_case {
-    /// Gets the collection of metadata properties of the test case.
-    ///
-    /// \return A static collection of properties for testing purposes.
-    engine::properties_map
-    get_all_properties(void) const
-    {
-        engine::properties_map properties;
-        properties["first"] = "value";
-        return properties;
-    }
-
 public:
     /// Constructs a new test case.
     ///
@@ -146,21 +135,7 @@ ATF_TEST_CASE_BODY(base_test_case__ctor_and_getters)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(base_test_case__all_properties__delegate)
-ATF_TEST_CASE_BODY(base_test_case__all_properties__delegate)
-{
-    const mock_test_program test_program(fs::path("foo"));
-    const mock_test_case test_case(test_program, "bar",
-                                   engine::metadata_builder().build());
-
-    engine::properties_map exp_properties;
-    exp_properties["first"] = "value";
-    ATF_REQUIRE(exp_properties == test_case.all_properties());
-}
-
-
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, base_test_case__ctor_and_getters);
-    ATF_ADD_TEST_CASE(tcs, base_test_case__all_properties__delegate);
 }

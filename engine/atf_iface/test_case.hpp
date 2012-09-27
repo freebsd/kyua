@@ -57,8 +57,6 @@ class test_case : public base_test_case {
     /// Pointer to the shared internal implementation.
     std::tr1::shared_ptr< impl > _pimpl;
 
-    properties_map get_all_properties(void) const;
-
 public:
     test_case(const base_test_program&, const std::string&, const metadata&);
     test_case(const base_test_program&, const std::string&, const std::string&,

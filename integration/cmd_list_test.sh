@@ -386,18 +386,18 @@ i_am_plain:main (integration-suite-1)
     timeout = 654
 subdir/metadata:no_properties (integration-suite-2)
 subdir/metadata:one_property (integration-suite-2)
-    descr = Does nothing but has one metadata property
+    description = Does nothing but has one metadata property
 subdir/metadata:many_properties (integration-suite-2)
-    X-no-meaning = I am a custom variable
-    descr =     A description with some padding
-    require.arch = some-architecture
-    require.config = var1 var2 var3
-    require.files = /my/file1 /some/other/file
-    require.machine = some-platform
-    require.progs = /nonexistent/bin3 bin1 bin2
-    require.user = root
+    allowed_architectures = some-architecture
+    allowed_platforms = some-platform
+    custom.X-no-meaning = I am a custom variable
+    description =     A description with some padding
+    required_configs = var1 var2 var3
+    required_files = /my/file1 /some/other/file
+    required_programs = /nonexistent/bin3 bin1 bin2
+    required_user = root
 subdir/metadata:with_cleanup (integration-suite-2)
-    has.cleanup = true
+    has_cleanup = true
     timeout = 250
 EOF
     atf_check -s exit:0 -o file:expout -e empty kyua list -v

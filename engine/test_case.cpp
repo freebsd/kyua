@@ -175,23 +175,6 @@ engine::base_test_case::get_metadata(void) const
 }
 
 
-/// Returns a textual description of all metadata properties of this test case.
-///
-/// This is useful for informative purposes only, as the name of the properties
-/// is free form and this abstract class cannot impose any restrictions in them.
-///
-/// \return A property name to value mapping.
-///
-/// \todo This probably indicates a bad abstraction.  The 'list' CLI command
-/// should maybe just do specific things for every kind of supported test case,
-/// instead of having this here.
-engine::properties_map
-engine::base_test_case::all_properties(void) const
-{
-    return get_all_properties();
-}
-
-
 /// Runs the test case in debug mode.
 ///
 /// Debug mode gives the caller more control on the execution of the test.  It

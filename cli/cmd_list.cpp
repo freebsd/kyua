@@ -102,10 +102,22 @@ cli::detail::list_test_case(cmdline::ui* ui, const bool verbose,
         ui->out_raw(F("%s (%s)") % id %
                     test_case.test_program().test_suite_name());
 
-        const engine::properties_map props = test_case.all_properties();
-        for (engine::properties_map::const_iterator iter = props.begin();
-             iter != props.end(); iter++)
-            ui->out_raw(F("    %s = %s") % (*iter).first % (*iter).second);
+        // TODO(jmmv): Running these for every test case is probably not the
+        // fastest thing to do.
+        const engine::metadata default_md = engine::metadata_builder().build();
+        const engine::properties_map default_props = default_md.to_properties();
+
+        const engine::metadata& test_md = test_case.get_metadata();
+        const engine::properties_map test_props = test_md.to_properties();
+
+        for (engine::properties_map::const_iterator iter = test_props.begin();
+             iter != test_props.end(); iter++) {
+            const engine::properties_map::const_iterator default_iter =
+                default_props.find((*iter).first);
+            if (default_iter == default_props.end() ||
+                (*iter).second != (*default_iter).second)
+                ui->out_raw(F("    %s = %s") % (*iter).first % (*iter).second);
+        }
     }
 }
 

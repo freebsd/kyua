@@ -72,14 +72,6 @@ class base_test_case {
     /// Pointer to the shared internal implementation.
     std::tr1::shared_ptr< base_impl > _pbimpl;
 
-    /// Returns a string representation of all test case properties.
-    ///
-    /// The returned keys and values match those that can be defined by the test
-    /// case.
-    ///
-    /// \return A key/value mapping describing all the test case properties.
-    virtual properties_map get_all_properties(void) const = 0;
-
 public:
     base_test_case(const std::string&, const base_test_program&,
                    const std::string&, const metadata&);
@@ -89,8 +81,6 @@ public:
     const base_test_program& test_program(void) const;
     const std::string& name(void) const;
     const metadata& get_metadata(void) const;
-
-    properties_map all_properties(void) const;
 };
 
 

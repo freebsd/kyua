@@ -30,8 +30,6 @@
 
 #include <algorithm>
 #include <cstdlib>
-#include <iterator>
-#include <sstream>
 
 #include "engine/atf_iface/runner.hpp"
 #include "engine/exceptions.hpp"
@@ -56,26 +54,6 @@ using utils::optional;
 
 
 namespace {
-
-
-/// Concatenates a collection of objects in a string using ' ' as a separator.
-///
-/// \param set The objects to join.  This cannot be empty.
-///
-/// \return The concatenation of all the objects in the set.
-template< class T >
-std::string
-flatten_set(const std::set< T >& set)
-{
-    PRE(!set.empty());
-
-    std::ostringstream output;
-    std::copy(set.begin(), set.end(), std::ostream_iterator< T >(output, " "));
-
-    std::string result = output.str();
-    result.erase(result.end() - 1);
-    return result;
-}
 
 
 /// Executes the test case.
@@ -244,47 +222,6 @@ optional< engine::test_result >
 atf_iface::test_case::fake_result(void) const
 {
     return _pimpl->fake_result;
-}
-
-
-/// Returns a string representation of all test case properties.
-///
-/// The returned keys and values match those that can be defined by the test
-/// case.
-///
-/// \return A key/value mapping describing all the test case properties.
-engine::properties_map
-atf_iface::test_case::get_all_properties(void) const
-{
-    const metadata& md = get_metadata();
-    properties_map props = md.custom();
-
-    // TODO(jmmv): This is unnecessary.  We just need to let the caller query
-    // the metadata object and convert that to a properties map directly.
-    if (!md.description().empty())
-        props["descr"] = md.description();
-    if (md.has_cleanup())
-        props["has.cleanup"] = "true";
-    if (md.timeout() != default_timeout) {
-        INV(md.timeout().useconds == 0);
-        props["timeout"] = F("%s") % md.timeout().seconds;
-    }
-    if (!md.allowed_architectures().empty())
-        props["require.arch"] = flatten_set(md.allowed_architectures());
-    if (!md.allowed_platforms().empty())
-        props["require.machine"] = flatten_set(md.allowed_platforms());
-    if (!md.required_configs().empty())
-        props["require.config"] = flatten_set(md.required_configs());
-    if (!md.required_files().empty())
-        props["require.files"] = flatten_set(md.required_files());
-    if (md.required_memory() > 0)
-        props["require.memory"] = md.required_memory().format();
-    if (!md.required_programs().empty())
-        props["require.progs"] = flatten_set(md.required_programs());
-    if (!md.required_user().empty())
-        props["require.user"] = md.required_user();
-
-    return props;
 }
 
 

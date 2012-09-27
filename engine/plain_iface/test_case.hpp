@@ -44,8 +44,6 @@ namespace plain_iface {
 
 /// Representation of a plain test case.
 class test_case : public base_test_case {
-    properties_map get_all_properties(void) const;
-
 public:
     test_case(const base_test_program&);
 };

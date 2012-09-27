@@ -432,7 +432,9 @@ put_test_case_detail(sqlite::database& db,
 {
     const engine::metadata& md = test_case.get_metadata();
 
-    // TODO(jmmv): This conditional must go.
+    // TODO(jmmv): This conditional must go.  Also, the properties should be
+    // stored in their textual form for simplicity.  We should not be dealing
+    // with individual properties in here.
     if (typeid(test_case) == typeid(atf_iface::test_case)) {
         sqlite::statement stmt = db.create_statement(
             "INSERT INTO atf_test_cases (test_case_id, description, "
@@ -440,12 +442,14 @@ put_test_case_detail(sqlite::database& db,
             "VALUES (:test_case_id, :description, :has_cleanup, "
             "    :timeout, :required_memory, :required_user)");
         stmt.bind(":test_case_id", test_case_id);
+
         store::bind_optional_string(stmt, ":description", md.description());
         store::bind_bool(stmt, ":has_cleanup", md.has_cleanup());
         store::bind_delta(stmt, ":timeout", md.timeout());
         stmt.bind(":required_memory",
                   static_cast< int64_t >(md.required_memory()));
-        store::bind_optional_string(stmt, ":required_user", md.required_user());
+        store::bind_optional_string(stmt, ":required_user",
+                                    md.required_user());
         stmt.step_without_results();
 
         put_atf_multivalues(db, test_case_id, "require.arch",

@@ -114,8 +114,10 @@ static bool
 compare_test_cases(const atf_iface::test_case& tc1,
                    const atf_iface::test_case& tc2)
 {
+    const engine::metadata& md1 = tc1.get_metadata();
+    const engine::metadata& md2 = tc2.get_metadata();
     return tc1.name() == tc2.name() &&
-        tc1.all_properties() == tc2.all_properties();
+        md1.to_properties() == md2.to_properties();
 }
 
 
