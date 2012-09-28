@@ -753,8 +753,7 @@ ATF_TEST_CASE_BODY(put_test_case__atf)
 
     store::transaction tx = backend.start();
     const engine::test_program_ptr loaded_test_program =
-        store::detail::get_test_program(backend, test_program_id,
-                                        store::detail::atf_interface);
+        store::detail::get_test_program(backend, test_program_id, "atf");
     ATF_REQUIRE(compare_test_cases(test_case1,
                                    *loaded_test_program->find("tc1").get()));
     ATF_REQUIRE(compare_test_cases(test_case2,

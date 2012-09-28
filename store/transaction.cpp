@@ -208,7 +208,7 @@ get_file(sqlite::database& db, const int64_t file_id)
 static engine::test_cases_vector
 get_test_cases(sqlite::database& db, const int64_t test_program_id,
                const engine::test_program& test_program,
-               const store::detail::interface_type interface)
+               const std::string& interface)
 {
     engine::test_cases_vector test_cases;
 
@@ -220,19 +220,14 @@ get_test_cases(sqlite::database& db, const int64_t test_program_id,
         const std::string name = stmt.safe_column_text("name");
 
         engine::test_case_ptr test_case;
-        switch (interface) {
-        case store::detail::atf_interface:
+        if (interface == "atf") {
             test_case.reset(get_atf_test_case(db, test_case_id, test_program,
                                               name));
-            break;
-
-        case store::detail::plain_interface:
+        } else if (interface == "plain") {
             test_case.reset(
                 new engine::test_case("plain", test_program, name,
                                       engine::metadata_builder().build()));
-            break;
-
-        default:
+        } else {
             UNREACHABLE_MSG("Unsanitized interface value");
         }
 
@@ -552,14 +547,12 @@ put_file(sqlite::database& db, const fs::path& path)
 ///     interpreted.
 engine::test_program_ptr
 store::detail::get_test_program(backend& backend_, const int64_t id,
-                                const store::detail::interface_type interface)
+                                const std::string& interface)
 {
     sqlite::database& db = backend_.database();
 
     engine::test_program_ptr test_program;
-    switch (interface) {
-    case store::detail::atf_interface:
-    {
+    if (interface == "atf") {
         sqlite::statement stmt = db.create_statement(
             "SELECT * FROM test_programs WHERE test_program_id == :id");
         stmt.bind(":id", id);
@@ -572,10 +565,7 @@ store::detail::get_test_program(backend& backend_, const int64_t id,
             engine::metadata_builder().build()));
         const bool more = stmt.step();
         INV(!more);
-        break;
-    }
-    case store::detail::plain_interface:
-    {
+    } else if (interface == "plain") {
         sqlite::statement stmt = db.create_statement(
             "SELECT * FROM test_programs NATURAL JOIN plain_test_programs "
             "    WHERE test_program_id == :id");
@@ -591,9 +581,7 @@ store::detail::get_test_program(backend& backend_, const int64_t id,
             stmt.safe_column_text("test_suite_name"), md));
         const bool more = stmt.step();
         INV(!more);
-        break;
-    }
-    default:
+    } else {
         throw store::integrity_error(
             F("Unknown interface in test program %s") % id);
     }
@@ -688,8 +676,8 @@ store::results_iterator::test_program(void) const
     if (!_pimpl->_last_test_program ||
         _pimpl->_last_test_program.get().first != id)
     {
-        const detail::interface_type interface = store::column_interface(
-            _pimpl->_stmt, "interface");
+        const std::string interface = _pimpl->_stmt.safe_column_text(
+            "interface");
         const engine::test_program_ptr tp = detail::get_test_program(
             _pimpl->_backend, id, interface);
         _pimpl->_last_test_program = std::make_pair(id, tp);
@@ -1041,7 +1029,7 @@ store::transaction::put_test_program(const engine::test_program& test_program,
         stmt.bind(":root", test_program.root().str());
         stmt.bind(":relative_path", test_program.relative_path().str());
         stmt.bind(":test_suite_name", test_program.test_suite_name());
-        bind_interface(stmt, ":interface", guess_interface(test_program));
+        stmt.bind(":interface", test_program.interface_name());
         stmt.step_without_results();
         const int64_t test_program_id = _pimpl->_db.last_insert_rowid();
 

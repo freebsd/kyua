@@ -61,15 +61,8 @@ class transaction;
 namespace detail {
 
 
-/// Internal representation of the test interfaces for the storage layer.
-enum interface_type {
-    atf_interface,
-    plain_interface,
-};
-
-
 engine::test_program_ptr get_test_program(backend&, const int64_t,
-                                          const interface_type);
+                                          const std::string&);
 
 
 }  // namespace detail

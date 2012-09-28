@@ -28,8 +28,6 @@
 
 #include "store/dbtypes.hpp"
 
-#include <typeinfo>
-
 #include "engine/test_program.hpp"
 #include "store/exceptions.hpp"
 #include "utils/format/macros.hpp"
@@ -38,29 +36,6 @@
 
 namespace datetime = utils::datetime;
 namespace sqlite = utils::sqlite;
-
-
-/// Determines the interface type of a given test program.
-///
-/// \param test_program The test program to determine the interface of.
-///
-/// \return The test program interface.
-///
-/// \todo It might make sense to make this a method of test_program and
-/// make every subclass return its own type.  However, even doing this would not
-/// free the storage layer from doing nasty 'switches' to act differently on
-/// each interface.  Also the whole interface_type thing is only required by the
-/// storage layer, so moving it into the engine may not be that appropriate.
-store::detail::interface_type
-store::guess_interface(const engine::test_program& test_program)
-{
-    if (test_program.interface_name() == "atf") {
-        return detail::atf_interface;
-    } else if (test_program.interface_name() == "plain") {
-        return detail::plain_interface;
-    } else
-        UNREACHABLE_MSG("Unsupported test program interface");
-}
 
 
 /// Binds a boolean value to a statement parameter.
@@ -85,28 +60,6 @@ store::bind_delta(sqlite::statement& stmt, const char* field,
                   const datetime::delta& delta)
 {
     stmt.bind(field, static_cast< int64_t >(delta.to_useconds()));
-}
-
-
-/// Binds a test interface type to a statement parameter.
-///
-/// \param stmt The statement to which to bind the parameter.
-/// \param field The name of the parameter; must exist.
-/// \param interface The value to bind.
-void
-store::bind_interface(sqlite::statement& stmt, const char* field,
-                      const detail::interface_type interface)
-{
-    switch (interface) {
-    case detail::atf_interface:
-        stmt.bind(field, "atf");
-        break;
-    case detail::plain_interface:
-        stmt.bind(field, "plain");
-        break;
-    default:
-        UNREACHABLE_MSG("Unsupported test program interface");
-    }
 }
 
 
@@ -184,31 +137,6 @@ store::column_delta(sqlite::statement& stmt, const char* column)
         throw store::integrity_error(F("Time delta in column %s is not an "
                                        "integer") % column);
     return datetime::delta::from_useconds(stmt.column_int64(id));
-}
-
-
-/// Queries an interface type from a statement.
-///
-/// \param stmt The statement from which to get the column.
-/// \param column The name of the column holding the value.
-///
-/// \return The parsed value if all goes well.
-///
-/// \throw integrity_error If the value in the specified column is invalid.
-store::detail::interface_type
-store::column_interface(sqlite::statement& stmt, const char* column)
-{
-    const int id = stmt.column_id(column);
-    if (stmt.column_type(id) != sqlite::type_text)
-        throw store::integrity_error(F("Interface name value in column %s is "
-                                       "not a string") % column);
-    const std::string value = stmt.column_text(id);
-    if (value == "atf")
-        return detail::atf_interface;
-    else if (value == "plain")
-        return detail::plain_interface;
-    else
-        throw store::integrity_error(F("Unknown interface name '%s'") % value);
 }
 
 
