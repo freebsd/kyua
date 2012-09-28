@@ -588,8 +588,13 @@ EOF
         "SELECT actions.action_id, " \
         "       test_programs.relative_path, test_cases.name, " \
         "       test_results.result_type, test_results.result_reason " \
-        "FROM actions NATURAL JOIN test_programs NATURAL JOIN test_cases " \
-        "     NATURAL JOIN test_results " \
+        "FROM actions " \
+        "     JOIN test_programs " \
+        "     ON actions.action_id = test_programs.action_id " \
+        "     JOIN test_cases " \
+        "     ON test_programs.test_program_id = test_cases.test_program_id " \
+        "     JOIN test_results " \
+        "     ON test_cases.test_case_id = test_results.test_case_id " \
         "ORDER BY actions.action_id, test_programs.relative_path, " \
         "         test_cases.name"
 }

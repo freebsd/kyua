@@ -53,7 +53,7 @@ namespace sqlite = utils::sqlite;
 /// be used.
 ///
 /// This must be kept in sync with the value in schema.sql.
-const int store::detail::current_schema_version = 1;
+const int store::detail::current_schema_version = 2;
 
 
 namespace {
@@ -166,7 +166,7 @@ struct store::backend::impl {
     {
         if (metadata_.schema_version() != detail::current_schema_version)
             throw integrity_error(F("Found schema version %s in database but "
-                                    "this version does not exist") %
+                                    "this version is not supported") %
                                   metadata_.schema_version());
     }
 };
