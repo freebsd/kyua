@@ -30,10 +30,9 @@
 
 #include <atf-c++.hpp>
 
-// TODO(jmmv): Should probably use a mock test case.
-#include "engine/atf_iface/test_case.hpp"
 // TODO(jmmv): Should probably use a mock test program.
 #include "engine/atf_iface/test_program.hpp"
+#include "engine/test_case.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.hpp"
 #include "utils/cmdline/ui_mock.hpp"
@@ -52,7 +51,7 @@ ATF_TEST_CASE_BODY(list_test_case__no_verbose)
     const atf_iface::test_program test_program(fs::path("the/test-program"),
                                                fs::path("root"),
                                                "unused-suite");
-    const engine::base_test_case test_case("mock", test_program, "abc", md);
+    const engine::test_case test_case("mock", test_program, "abc", md);
 
     cmdline::ui_mock ui;
     cli::detail::list_test_case(&ui, false, test_case);
@@ -68,7 +67,7 @@ ATF_TEST_CASE_BODY(list_test_case__verbose__no_properties)
     const engine::metadata md = engine::metadata_builder().build();
     const atf_iface::test_program test_program(fs::path("hello/world"),
                                                fs::path("root"), "the-suite");
-    const engine::base_test_case test_case("mock", test_program, "my_name", md);
+    const engine::test_case test_case("mock", test_program, "my_name", md);
 
     cmdline::ui_mock ui;
     cli::detail::list_test_case(&ui, true, test_case);
@@ -88,7 +87,7 @@ ATF_TEST_CASE_BODY(list_test_case__verbose__some_properties)
         .build();
     const atf_iface::test_program test_program(fs::path("hello/world"),
                                                fs::path("root"), "the-suite");
-    const engine::base_test_case test_case("mock", test_program, "my_name", md);
+    const engine::test_case test_case("mock", test_program, "my_name", md);
 
     cmdline::ui_mock ui;
     cli::detail::list_test_case(&ui, true, test_case);

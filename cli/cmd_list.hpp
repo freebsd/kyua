@@ -37,9 +37,9 @@
 #include "cli/common.hpp"
 
 namespace engine {
-class base_test_case;
 class base_test_program;
 class filters_state;
+class test_case;
 }  // namespace engine
 
 namespace utils {
@@ -53,8 +53,7 @@ namespace cli {
 
 namespace detail {
 
-void list_test_case(utils::cmdline::ui*, const bool,
-                    const engine::base_test_case&);
+void list_test_case(utils::cmdline::ui*, const bool, const engine::test_case&);
 
 }  // namespace detail
 

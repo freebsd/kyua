@@ -96,7 +96,7 @@ create_top_directory(const fs::path& directory, const bool force)
 ///
 /// \return A filename unique within a directory with a trailing HTML extension.
 static std::string
-test_case_filename(const engine::base_test_case& test_case)
+test_case_filename(const engine::test_case& test_case)
 {
     static const char* special_characters = "/:";
 
@@ -137,7 +137,7 @@ class html_hooks : public scan_action::base_hooks {
     /// \param test_case The test case to be added.
     /// \param result The result of the test case.
     void
-    add_to_summary(const engine::base_test_case& test_case,
+    add_to_summary(const engine::test_case& test_case,
                    const engine::test_result& result)
     {
         std::string test_cases_vector;
@@ -256,7 +256,7 @@ public:
         const engine::test_program_ptr test_program = iter.test_program();
         const engine::test_result result = iter.result();
 
-        const engine::base_test_case& test_case = *test_program->find(
+        const engine::test_case& test_case = *test_program->find(
             iter.test_case_name());
 
         add_to_summary(test_case, result);

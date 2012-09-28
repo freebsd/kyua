@@ -151,10 +151,10 @@ ATF_TEST_CASE_BODY(test_cases__set__some)
 
     //ATF_REQUIRE_EQ(0, test_program.loads);
     engine::test_cases_vector exp_test_cases;
-    const atf_iface::test_case test_case(test_program, "hello",
-                                         engine::metadata_builder().build());
+    const engine::test_case test_case("mock", test_program, "hello",
+                                      engine::metadata_builder().build());
     exp_test_cases.push_back(engine::test_case_ptr(
-        new atf_iface::test_case(test_case)));
+        new engine::test_case(test_case)));
     test_program.set_test_cases(exp_test_cases);
 
     ATF_REQUIRE(exp_test_cases == test_program.test_cases());

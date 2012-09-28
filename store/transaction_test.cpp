@@ -37,7 +37,6 @@
 #include <atf-c++.hpp>
 
 #include "engine/action.hpp"
-#include "engine/atf_iface/test_case.hpp"
 #include "engine/atf_iface/test_program.hpp"
 #include "engine/context.hpp"
 #include "engine/plain_iface/test_case.hpp"
@@ -113,8 +112,7 @@ do_put_result_ok_test(const engine::test_result& result,
 ///
 /// \return True if the test cases match.
 static bool
-compare_test_cases(const atf_iface::test_case& tc1,
-                   const atf_iface::test_case& tc2)
+compare_test_cases(const engine::test_case& tc1, const engine::test_case& tc2)
 {
     const engine::metadata& md1 = tc1.get_metadata();
     const engine::metadata& md2 = tc2.get_metadata();
@@ -334,7 +332,8 @@ ATF_TEST_CASE_BODY(get_action_results__many)
     {
         const plain_iface::test_program test_program(
             fs::path("a/prog1"), fs::path("/the/root"), "suite1", none);
-        const plain_iface::test_case test_case(test_program);
+        const engine::test_case test_case("plain", test_program, "main",
+                                          engine::metadata_builder().build());
         const engine::test_result result(engine::test_result::passed);
 
         const int64_t tp_id = tx.put_test_program(test_program, action_id);
@@ -353,7 +352,8 @@ ATF_TEST_CASE_BODY(get_action_results__many)
     {
         const plain_iface::test_program test_program(
             fs::path("b/prog2"), fs::path("/the/root"), "suite2", none);
-        const plain_iface::test_case test_case(test_program);
+        const engine::test_case test_case("plain", test_program, "main",
+                                          engine::metadata_builder().build());
         const engine::test_result result(engine::test_result::failed,
                                          "Some text");
 
@@ -714,8 +714,8 @@ ATF_TEST_CASE_BODY(put_test_case__atf)
     const atf_iface::test_program test_program(
         fs::path("the/binary"), fs::path("/some/root"), "the-suite");
 
-    const atf_iface::test_case test_case1(test_program, "tc1",
-                                          engine::metadata_builder().build());
+    const engine::test_case test_case1("atf", test_program, "tc1",
+                                       engine::metadata_builder().build());
 
     const engine::metadata md2 = engine::metadata_builder()
         .add_allowed_architecture("powerpc")
@@ -737,7 +737,7 @@ ATF_TEST_CASE_BODY(put_test_case__atf)
         .set_required_user("root")
         .set_timeout(datetime::delta(520, 0))
         .build();
-    const atf_iface::test_case test_case2(test_program, "tc2", md2);
+    const engine::test_case test_case2("atf", test_program, "tc2", md2);
 
     store::backend backend = store::backend::open_rw(fs::path("test.db"));
     backend.database().exec("PRAGMA foreign_keys = OFF");
@@ -758,12 +758,10 @@ ATF_TEST_CASE_BODY(put_test_case__atf)
     const atf_iface::test_program& loaded_test_program =
         *dynamic_cast< const atf_iface::test_program* >(
             generic_loaded_test_program.get());
-    ATF_REQUIRE(compare_test_cases(
-        test_case1, *dynamic_cast< const atf_iface::test_case* >(
-        loaded_test_program.find("tc1").get())));
-    ATF_REQUIRE(compare_test_cases(
-        test_case2, *dynamic_cast< const atf_iface::test_case* >(
-        loaded_test_program.find("tc2").get())));
+    ATF_REQUIRE(compare_test_cases(test_case1,
+                                   *loaded_test_program.find("tc1").get()));
+    ATF_REQUIRE(compare_test_cases(test_case2,
+                                   *loaded_test_program.find("tc2").get()));
 }
 
 
@@ -778,7 +776,8 @@ ATF_TEST_CASE_BODY(put_test_case__plain)
     const plain_iface::test_program test_program(
         fs::path("the/binary"), fs::path("/some/root"), "the-suite",
         utils::make_optional(datetime::delta(512, 0)));
-    const plain_iface::test_case test_case(test_program);
+    const engine::test_case test_case("plain", test_program, "main",
+                                      engine::metadata_builder().build());
 
     store::backend backend = store::backend::open_rw(fs::path("test.db"));
     backend.database().exec("PRAGMA foreign_keys = OFF");
@@ -817,7 +816,8 @@ ATF_TEST_CASE_BODY(put_test_case__fail)
     // TODO(jmmv): Use a mock test program and test case.
     const plain_iface::test_program test_program(
         fs::path("the/binary"), fs::path("/some/root"), "the-suite", none);
-    const plain_iface::test_case test_case(test_program);
+    const engine::test_case test_case("plain", test_program, "main",
+                                      engine::metadata_builder().build());
 
     store::backend backend = store::backend::open_rw(fs::path("test.db"));
     store::transaction tx = backend.start();

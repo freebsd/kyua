@@ -168,7 +168,8 @@ public:
     {
         const plain_iface::test_program test_program(_binary_path, _root,
                                                      "unit-tests", _timeout);
-        const plain_iface::test_case test_case(test_program);
+        const engine::test_case test_case("plain", test_program, "main",
+                                          engine::metadata_builder().build());
         fetch_output_hooks fetcher;
         return engine::run_test_case(&test_case, user_config, fetcher);
     }
@@ -176,45 +177,6 @@ public:
 
 
 }  // anonymous namespace
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(ctor);
-ATF_TEST_CASE_BODY(ctor)
-{
-    const plain_iface::test_program test_program(fs::path("program"),
-                                                 fs::path("root"),
-                                                 "test-suite", none);
-    const plain_iface::test_case test_case(test_program);
-    ATF_REQUIRE(&test_program == &test_case.test_program());
-    ATF_REQUIRE_EQ("main", test_case.name());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(all_properties__none);
-ATF_TEST_CASE_BODY(all_properties__none)
-{
-    const plain_iface::test_program test_program(fs::path("program"),
-                                                 fs::path("root"),
-                                                 "test-suite", none);
-    const plain_iface::test_case test_case(test_program);
-    const engine::metadata md = engine::metadata_builder().build();
-    ATF_REQUIRE(md.to_properties() == test_case.get_metadata().to_properties());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(all_properties__all);
-ATF_TEST_CASE_BODY(all_properties__all)
-{
-    const plain_iface::test_program test_program(
-        fs::path("program"), fs::path("root"), "test-suite",
-        utils::make_optional(datetime::delta(123, 0)));
-    const plain_iface::test_case test_case(test_program);
-
-    const engine::metadata md = engine::metadata_builder()
-        .set_timeout(datetime::delta(123, 0))
-        .build();
-    ATF_REQUIRE(md.to_properties() == test_case.get_metadata().to_properties());
-}
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(run__result_pass);
@@ -365,10 +327,6 @@ ATF_TEST_CASE_BODY(run__missing_test_program)
 
 ATF_INIT_TEST_CASES(tcs)
 {
-    ATF_ADD_TEST_CASE(tcs, ctor);
-    ATF_ADD_TEST_CASE(tcs, all_properties__none);
-    ATF_ADD_TEST_CASE(tcs, all_properties__all);
-
     ATF_ADD_TEST_CASE(tcs, run__result_pass);
     ATF_ADD_TEST_CASE(tcs, run__result_fail);
     ATF_ADD_TEST_CASE(tcs, run__result_crash);

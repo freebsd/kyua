@@ -103,7 +103,7 @@ get_unprivileged_user(const config::tree& user_config)
 ///
 /// \return True if we can drop privileges; false otherwise.
 static bool
-can_do_unprivileged(const atf_iface::test_case& test_case,
+can_do_unprivileged(const engine::test_case& test_case,
                     const config::tree& user_config)
 {
     return test_case.get_metadata().required_user() == "unprivileged" &&
@@ -159,7 +159,7 @@ report_broken_result(const fs::path& result_file, const std::string& reason)
 /// Functor to execute a test case's body in a subprocess.
 class execute_test_case_body {
     /// Data of the test case to execute.
-    atf_iface::test_case _test_case;
+    engine::test_case _test_case;
 
     /// Path to the results file to create.
     fs::path _result_file;
@@ -203,7 +203,7 @@ public:
     /// \param work_directory_ The path to the directory to chdir into when
     ///     running the test program.
     /// \param user_config_ The configuration variables provided by the user.
-    execute_test_case_body(const atf_iface::test_case& test_case_,
+    execute_test_case_body(const engine::test_case& test_case_,
                            const fs::path& result_file_,
                            const fs::path& work_directory_,
                            const config::tree& user_config_) :
@@ -233,7 +233,7 @@ public:
 /// Functor to execute a test case's cleanup routine in a subprocess.
 class execute_test_case_cleanup {
     /// Data of the test case to execute.
-    atf_iface::test_case _test_case;
+    engine::test_case _test_case;
 
     /// Path to the work directory in which to run the test case.
     fs::path _work_directory;
@@ -249,7 +249,7 @@ public:
     /// \param work_directory_ The path to the directory to chdir into when
     ///     running the test program.
     /// \param user_config_ The values for the current engine configuration.
-    execute_test_case_cleanup(const atf_iface::test_case& test_case_,
+    execute_test_case_cleanup(const engine::test_case& test_case_,
                               const fs::path& work_directory_,
                               const config::tree& user_config_) :
         _test_case(test_case_),
@@ -285,7 +285,7 @@ public:
 /// Functor to run a test case inside a controlled environment.
 class run_test_case_safe {
     /// Data of the test case to debug.
-    const atf_iface::test_case& _test_case;
+    const engine::test_case& _test_case;
 
     /// Parameters to configure the runtime environment of the test case.
     const config::tree& _user_config;
@@ -312,7 +312,7 @@ public:
     ///     If none, use a temporary file within the work directory.
     /// \param stderr_path_ The file into which to store the test case's stderr.
     ///     If none, use a temporary file within the work directory.
-    run_test_case_safe(const atf_iface::test_case& test_case_,
+    run_test_case_safe(const engine::test_case& test_case_,
                        const config::tree& user_config_,
                        engine::test_case_hooks& hooks_,
                        const optional< fs::path >& stdout_path_,
@@ -416,7 +416,7 @@ public:
 ///
 /// \throw interrupted_error If the execution has been interrupted by the user.
 engine::test_result
-atf_iface::run_test_case(const atf_iface::test_case& test_case,
+atf_iface::run_test_case(const engine::test_case& test_case,
                          const config::tree& user_config,
                          test_case_hooks& hooks,
                          const optional< fs::path >& stdout_path,

@@ -75,7 +75,7 @@ ATF_TEST_CASE_BODY(test_cases)
     const engine::test_cases_vector test_cases(test_program.test_cases());
     ATF_REQUIRE_EQ(1, test_cases.size());
 
-    const engine::base_test_case* main_test_case = test_cases[0].get();
+    const engine::test_case* main_test_case = test_cases[0].get();
     ATF_REQUIRE(&test_program == &main_test_case->test_program());
     ATF_REQUIRE_EQ("main", main_test_case->name());
 }

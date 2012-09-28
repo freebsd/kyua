@@ -101,8 +101,14 @@ plain_iface::test_program::timeout(void) const
 engine::test_cases_vector
 plain_iface::load_plain_test_cases(const base_test_program* test_program)
 {
+    const plain_iface::test_program* ptp =
+        dynamic_cast< const plain_iface::test_program* >(test_program);
+    const engine::metadata md = engine::metadata_builder()
+        .set_timeout(ptp->timeout())
+        .build();
+
     test_cases_vector loaded_test_cases;
     loaded_test_cases.push_back(engine::test_case_ptr(
-                                    new test_case(*test_program)));
+         new test_case("plain", *test_program, "main", md)));
     return loaded_test_cases;
 }

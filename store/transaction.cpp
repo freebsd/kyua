@@ -112,7 +112,7 @@ get_env_vars(sqlite::database& db, const int64_t context_id)
 /// \param name The name of the test case.
 ///
 /// \return A new ATF test case.
-static atf_iface::test_case*
+static engine::test_case*
 get_atf_test_case(sqlite::database& db, const int64_t test_case_id,
                   const engine::base_test_program& test_program,
                   const std::string& name)
@@ -160,7 +160,7 @@ get_atf_test_case(sqlite::database& db, const int64_t test_case_id,
             mdbuilder.add_custom(pname, pvalue);
     }
 
-    return new atf_iface::test_case(test_program, name, mdbuilder.build());
+    return new engine::test_case("atf", test_program, name, mdbuilder.build());
 }
 
 
@@ -234,7 +234,9 @@ get_test_cases(sqlite::database& db, const int64_t test_program_id,
             break;
 
         case store::detail::plain_interface:
-            test_case.reset(new plain_iface::test_case(test_program));
+            test_case.reset(
+                new engine::test_case("plain", test_program, name,
+                                      engine::metadata_builder().build()));
             break;
 
         default:
@@ -427,7 +429,7 @@ put_atf_multivalues(sqlite::database& db,
 ///     previous insert of the generic data.
 static void
 put_test_case_detail(sqlite::database& db,
-                     const engine::base_test_case& test_case,
+                     const engine::test_case& test_case,
                      const int64_t test_case_id)
 {
     const engine::metadata& md = test_case.get_metadata();
@@ -435,7 +437,7 @@ put_test_case_detail(sqlite::database& db,
     // TODO(jmmv): This conditional must go.  Also, the properties should be
     // stored in their textual form for simplicity.  We should not be dealing
     // with individual properties in here.
-    if (typeid(test_case) == typeid(atf_iface::test_case)) {
+    if (test_case.interface_name() == "atf") {
         sqlite::statement stmt = db.create_statement(
             "INSERT INTO atf_test_cases (test_case_id, description, "
             "    has_cleanup, timeout, required_memory, required_user) "
@@ -464,7 +466,7 @@ put_test_case_detail(sqlite::database& db,
                             md.required_programs(), path_to_str());
 
         put_atf_user_metadata(db, test_case_id, md.custom());
-    } else if (typeid(test_case) == typeid(plain_iface::test_case)) {
+    } else if (test_case.interface_name() == "plain") {
         // Nothing to do.
     } else
         UNREACHABLE_MSG("Unsupported test case interface");
@@ -1069,7 +1071,7 @@ store::transaction::put_test_program(
 ///
 /// \throw error If there is any problem when talking to the database.
 int64_t
-store::transaction::put_test_case(const engine::base_test_case& test_case,
+store::transaction::put_test_case(const engine::test_case& test_case,
                                   const int64_t test_program_id)
 {
     try {

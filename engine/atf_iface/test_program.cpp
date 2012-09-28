@@ -276,10 +276,9 @@ engine::atf_iface::detail::parse_test_cases(const base_test_program& program,
 
         const properties_map raw_properties = parse_properties(input);
         const engine::metadata md = detail::parse_metadata(raw_properties);
-        const atf_iface::test_case test_case =
-            atf_iface::test_case(program, ident.second, md);
+        const engine::test_case test_case("atf", program, ident.second, md);
         test_cases.push_back(engine::test_case_ptr(
-             new atf_iface::test_case(test_case)));
+            new engine::test_case(test_case)));
     }
     if (test_cases.empty())
         throw format_error("No test cases");
@@ -318,7 +317,7 @@ atf_iface::load_atf_test_cases(const base_test_program* test_program)
     } catch (const std::runtime_error& e) {
         test_cases_vector loaded_test_cases;
         loaded_test_cases.push_back(test_case_ptr(new test_case(
-            *test_program, "__test_cases_list__",
+            "atf", *test_program, "__test_cases_list__",
             "Represents the correct processing of the test cases list",
             test_result(test_result::broken, e.what()))));
         return loaded_test_cases;

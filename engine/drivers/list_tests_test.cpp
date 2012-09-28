@@ -88,7 +88,7 @@ public:
     ///
     /// \param test_case The data describing the test case.
     virtual void
-    got_test_case(const engine::base_test_case& test_case)
+    got_test_case(const engine::test_case& test_case)
     {
         test_cases.insert(F("%s:%s") %
                           test_case.test_program().relative_path() %

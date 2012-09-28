@@ -82,7 +82,7 @@ format_status(const process::status& status)
 /// Functor to execute a test case in a subprocess.
 class execute_test_case {
     /// Data of the test case to execute.
-    plain_iface::test_case _test_case;
+    engine::test_case _test_case;
 
     /// Path to the work directory in which to run the test case.
     fs::path _work_directory;
@@ -113,7 +113,7 @@ public:
     ///     the test case name and its metadata.
     /// \param work_directory_ The path to the directory to chdir into when
     ///     running the test program.
-    execute_test_case(const plain_iface::test_case& test_case_,
+    execute_test_case(const engine::test_case& test_case_,
                       const fs::path& work_directory_) :
         _test_case(test_case_),
         _work_directory(work_directory_)
@@ -169,7 +169,7 @@ calculate_result(const optional< process::status >& maybe_status)
 /// Functor to execute the test case.
 class run_test_case_safe {
     /// Data of the test case to debug.
-    const plain_iface::test_case& _test_case;
+    const engine::test_case& _test_case;
 
     /// Hooks to introspect the execution of the test case.
     engine::test_case_hooks& _hooks;
@@ -192,7 +192,7 @@ public:
     ///     If none, use a temporary file within the work directory.
     /// \param stderr_path_ The file into which to store the test case's stderr.
     ///     If none, use a temporary file within the work directory.
-    run_test_case_safe(const plain_iface::test_case& test_case_,
+    run_test_case_safe(const engine::test_case& test_case_,
                        engine::test_case_hooks& hooks_,
                        const optional< fs::path >& stdout_path_,
                        const optional< fs::path >& stderr_path_) :
@@ -264,7 +264,7 @@ public:
 ///
 /// \return The result of the execution.
 static engine::test_result
-execute(const engine::base_test_case* test_case,
+execute(const engine::test_case* test_case,
         const config::tree& UTILS_UNUSED_PARAM(user_config),
         engine::test_case_hooks& hooks,
         const optional< fs::path >& stdout_path,
@@ -273,10 +273,8 @@ execute(const engine::base_test_case* test_case,
     LI(F("Processing test case '%s'") % test_case->name());
 
     try {
-        const engine::plain_iface::test_case* tc =
-            dynamic_cast< const engine::plain_iface::test_case* >(test_case);
         return engine::protected_run(run_test_case_safe(
-            *tc, hooks, stdout_path, stderr_path));
+            *test_case, hooks, stdout_path, stderr_path));
     } catch (const engine::interrupted_error& e) {
         throw e;
     } catch (const std::exception& e) {
@@ -286,33 +284,7 @@ execute(const engine::base_test_case* test_case,
 }
 
 
-/// Constructs a metadata object for the single test case in the test program.
-///
-/// \param test_program_ Reference to the generic test program.
-///
-/// \return A metadata object.
-static engine::metadata
-new_metadata(const engine::base_test_program& test_program_)
-{
-    const plain_iface::test_program& plain_test_program =
-        dynamic_cast< const plain_iface::test_program& >(test_program_);
-    return engine::metadata_builder()
-        .set_timeout(plain_test_program.timeout())
-        .build();
-}
-
-
 }  // anonymous namespace
-
-
-/// Constructs a new test case.
-///
-/// \param test_program_ The test program this test case belongs to.  This
-///     object must exist during the lifetime of the test case.
-plain_iface::test_case::test_case(const base_test_program& test_program_) :
-    base_test_case("plain", test_program_, "main", new_metadata(test_program_))
-{
-}
 
 
 /// Runs the test case in debug mode.
@@ -331,7 +303,7 @@ plain_iface::test_case::test_case(const base_test_program& test_program_) :
 ///
 /// \return The result of the execution of the test case.
 engine::test_result
-engine::plain_iface::debug_plain_test_case(const base_test_case* test_case,
+engine::plain_iface::debug_plain_test_case(const test_case* test_case,
                                            const config::tree& user_config,
                                            test_case_hooks& hooks,
                                            const fs::path& stdout_path,
@@ -352,7 +324,7 @@ engine::plain_iface::debug_plain_test_case(const base_test_case* test_case,
 ///
 /// \return The result of the execution of the test case.
 engine::test_result
-engine::plain_iface::run_plain_test_case(const base_test_case* test_case,
+engine::plain_iface::run_plain_test_case(const test_case* test_case,
                                          const config::tree& user_config,
                                          test_case_hooks& hooks)
 {

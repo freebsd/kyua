@@ -102,33 +102,17 @@ public:
 };
 
 
-/// Fake implementation of a test case.
-class mock_test_case : public engine::base_test_case {
-public:
-    /// Constructs a new test case.
-    ///
-    /// \param test_program_ The test program this test case belongs to.
-    /// \param name_ The name of the test case within the test program.
-    /// \param md_ Test case metadata.
-    mock_test_case(const engine::base_test_program& test_program_,
-                   const std::string& name_, const engine::metadata& md_) :
-        base_test_case("mock", test_program_, name_, md_)
-    {
-    }
-};
-
-
 }  // anonymous namespace
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(base_test_case__ctor_and_getters)
-ATF_TEST_CASE_BODY(base_test_case__ctor_and_getters)
+ATF_TEST_CASE_WITHOUT_HEAD(test_case__ctor_and_getters)
+ATF_TEST_CASE_BODY(test_case__ctor_and_getters)
 {
     const engine::metadata md = engine::metadata_builder()
         .add_custom("first", "value")
         .build();
     const mock_test_program test_program(fs::path("abc"));
-    const mock_test_case test_case(test_program, "foo", md);
+    const engine::test_case test_case("mock", test_program, "foo", md);
     ATF_REQUIRE_EQ(&test_program, &test_case.test_program());
     ATF_REQUIRE_EQ("foo", test_case.name());
     ATF_REQUIRE(md.to_properties() == test_case.get_metadata().to_properties());
@@ -141,8 +125,8 @@ ATF_TEST_CASE_BODY(fake_result)
     const engine::test_result result(engine::test_result::skipped,
                                      "Some reason");
     const mock_test_program test_program(fs::path("abc"));
-    const engine::base_test_case test_case("mock", test_program, "__foo__",
-                                           "Some description", result);
+    const engine::test_case test_case("mock", test_program, "__foo__",
+                                      "Some description", result);
     ATF_REQUIRE_EQ(&test_program, &test_case.test_program());
     ATF_REQUIRE_EQ("__foo__", test_case.name());
     ATF_REQUIRE(result == test_case.fake_result().get());
@@ -151,7 +135,7 @@ ATF_TEST_CASE_BODY(fake_result)
 
 ATF_INIT_TEST_CASES(tcs)
 {
-    ATF_ADD_TEST_CASE(tcs, base_test_case__ctor_and_getters);
+    ATF_ADD_TEST_CASE(tcs, test_case__ctor_and_getters);
     ATF_ADD_TEST_CASE(tcs, fake_result);
 
     // TODO(jmmv): Add test cases for debug and run.

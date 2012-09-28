@@ -76,7 +76,7 @@ public:
     ///
     /// \param test_case The test case to report.
     void
-    got_test_case(const engine::base_test_case& test_case)
+    got_test_case(const engine::test_case& test_case)
     {
         cli::detail::list_test_case(_ui, _verbose, test_case);
     }
@@ -93,7 +93,7 @@ public:
 /// \param test_case The test case to print.
 void
 cli::detail::list_test_case(cmdline::ui* ui, const bool verbose,
-                            const engine::base_test_case& test_case)
+                            const engine::test_case& test_case)
 {
     const std::string id = format_test_case_id(test_case);
     if (!verbose) {

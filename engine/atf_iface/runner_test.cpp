@@ -241,8 +241,8 @@ public:
     {
         const atf_iface::test_program test_program(_binary_path, _root,
                                                    "the-suite");
-        const atf_iface::test_case test_case(test_program, _name,
-                                             _mdbuilder.build());
+        const engine::test_case test_case("atf", test_program, _name,
+                                          _mdbuilder.build());
         return engine::run_test_case(&test_case, _user_config, hooks);
     }
 };

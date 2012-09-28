@@ -135,7 +135,9 @@ populate_db(const char* db_name, const int count)
         const int64_t tp_id = tx.put_test_program(test_program, action_id);
 
         for (int j = 0; j < count; j++) {
-            const plain_iface::test_case test_case(test_program);
+            const engine::test_case test_case(
+                "plain", test_program, "main",
+                engine::metadata_builder().build());
             const engine::test_result result(engine::test_result::skipped,
                                              F("Count %s") % j);
             const int64_t tc_id = tx.put_test_case(test_case, tp_id);

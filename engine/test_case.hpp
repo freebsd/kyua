@@ -66,19 +66,19 @@ public:
 
 
 /// Representation of a test case.
-class base_test_case {
-    struct base_impl;
+class test_case {
+    struct impl;
 
     /// Pointer to the shared internal implementation.
-    std::tr1::shared_ptr< base_impl > _pbimpl;
+    std::tr1::shared_ptr< impl > _pimpl;
 
 public:
-    base_test_case(const std::string&, const base_test_program&,
-                   const std::string&, const metadata&);
-    base_test_case(const std::string&, const base_test_program&,
-                   const std::string&, const std::string&,
-                   const engine::test_result&);
-    virtual ~base_test_case(void);
+    test_case(const std::string&, const base_test_program&,
+              const std::string&, const metadata&);
+    test_case(const std::string&, const base_test_program&,
+              const std::string&, const std::string&,
+              const engine::test_result&);
+    ~test_case(void);
 
     const std::string& interface_name(void) const;
     const base_test_program& test_program(void) const;
@@ -89,13 +89,13 @@ public:
 
 
 /// Pointer to a test case.
-typedef std::tr1::shared_ptr< base_test_case > test_case_ptr;
+typedef std::tr1::shared_ptr< test_case > test_case_ptr;
 
 
-test_result debug_test_case(const base_test_case*, const utils::config::tree&,
+test_result debug_test_case(const test_case*, const utils::config::tree&,
                             test_case_hooks&, const utils::fs::path&,
                             const utils::fs::path&);
-test_result run_test_case(const base_test_case*, const utils::config::tree&,
+test_result run_test_case(const test_case*, const utils::config::tree&,
                           test_case_hooks&);
 
 

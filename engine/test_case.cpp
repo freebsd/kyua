@@ -76,8 +76,8 @@ engine::test_case_hooks::got_stderr(const fs::path& UTILS_UNUSED_PARAM(file))
 }
 
 
-/// Internal implementation for a base_test_case.
-struct engine::base_test_case::base_impl {
+/// Internal implementation for a test_case.
+struct engine::test_case::impl {
     /// Name of the interface implemented by the test program.
     const std::string interface_name;
 
@@ -102,11 +102,11 @@ struct engine::base_test_case::base_impl {
     /// \param md_ Metadata of the test case.
     /// \param fake_result_ Fake result to return instead of running the test
     ///     case.
-    base_impl(const std::string& interface_name_,
-              const base_test_program& test_program_,
-              const std::string& name_,
-              const metadata& md_,
-              const optional< test_result >& fake_result_) :
+    impl(const std::string& interface_name_,
+         const base_test_program& test_program_,
+         const std::string& name_,
+         const metadata& md_,
+         const optional< test_result >& fake_result_) :
         interface_name(interface_name_),
         test_program(test_program_),
         name(name_),
@@ -127,11 +127,11 @@ struct engine::base_test_case::base_impl {
 /// \param name_ The name of the test case within the test program.  Must be
 ///     unique.
 /// \param md_ Metadata of the test case.
-engine::base_test_case::base_test_case(const std::string& interface_name_,
-                                       const base_test_program& test_program_,
-                                       const std::string& name_,
-                                       const metadata& md_) :
-    _pbimpl(new base_impl(interface_name_, test_program_, name_, md_, none))
+engine::test_case::test_case(const std::string& interface_name_,
+                             const base_test_program& test_program_,
+                             const std::string& name_,
+                             const metadata& md_) :
+    _pimpl(new impl(interface_name_, test_program_, name_, md_, none))
 {
 }
 
@@ -158,16 +158,15 @@ engine::base_test_case::base_test_case(const std::string& interface_name_,
 ///     prefixed and suffixed by '__' to clearly denote that this is internal.
 /// \param description_ The description of the test case, if any.
 /// \param test_result_ The fake result to return when this test case is run.
-engine::base_test_case::base_test_case(
+engine::test_case::test_case(
     const std::string& interface_name_,
     const base_test_program& test_program_,
     const std::string& name_,
     const std::string& description_,
     const engine::test_result& test_result_) :
-    _pbimpl(new base_impl(
-                interface_name_, test_program_, name_,
-                metadata_builder().set_description(description_).build(),
-                utils::make_optional(test_result_)))
+    _pimpl(new impl(interface_name_, test_program_, name_,
+                    metadata_builder().set_description(description_).build(),
+                    utils::make_optional(test_result_)))
 {
     PRE_MSG(name_.length() > 4 && name_.substr(0, 2) == "__" &&
             name_.substr(name_.length() - 2) == "__",
@@ -176,7 +175,7 @@ engine::base_test_case::base_test_case(
 
 
 /// Destroys a test case.
-engine::base_test_case::~base_test_case(void)
+engine::test_case::~test_case(void)
 {
 }
 
@@ -185,9 +184,9 @@ engine::base_test_case::~base_test_case(void)
 ///
 /// \return An interface name.
 const std::string&
-engine::base_test_case::interface_name(void) const
+engine::test_case::interface_name(void) const
 {
-    return _pbimpl->interface_name;
+    return _pimpl->interface_name;
 }
 
 
@@ -195,9 +194,9 @@ engine::base_test_case::interface_name(void) const
 ///
 /// \return A reference to the container test program.
 const engine::base_test_program&
-engine::base_test_case::test_program(void) const
+engine::test_case::test_program(void) const
 {
-    return _pbimpl->test_program;
+    return _pimpl->test_program;
 }
 
 
@@ -205,9 +204,9 @@ engine::base_test_case::test_program(void) const
 ///
 /// \return The test case name, relative to the test program.
 const std::string&
-engine::base_test_case::name(void) const
+engine::test_case::name(void) const
 {
-    return _pbimpl->name;
+    return _pimpl->name;
 }
 
 
@@ -215,9 +214,9 @@ engine::base_test_case::name(void) const
 ///
 /// \return The test case metadata.
 const engine::metadata&
-engine::base_test_case::get_metadata(void) const
+engine::test_case::get_metadata(void) const
 {
-    return _pbimpl->md;
+    return _pimpl->md;
 }
 
 
@@ -225,9 +224,9 @@ engine::base_test_case::get_metadata(void) const
 ///
 /// \return A fake result, or none if not defined.
 optional< engine::test_result >
-engine::base_test_case::fake_result(void) const
+engine::test_case::fake_result(void) const
 {
-    return _pbimpl->fake_result;
+    return _pimpl->fake_result;
 }
 
 
@@ -247,7 +246,7 @@ engine::base_test_case::fake_result(void) const
 ///
 /// \return The result of the execution of the test case.
 engine::test_result
-engine::debug_test_case(const base_test_case* test_case,
+engine::debug_test_case(const test_case* test_case,
                         const config::tree& user_config,
                         test_case_hooks& hooks,
                         const fs::path& stdout_path,
@@ -279,7 +278,7 @@ engine::debug_test_case(const base_test_case* test_case,
 ///
 /// \return The result of the execution of the test case.
 engine::test_result
-engine::run_test_case(const base_test_case* test_case,
+engine::run_test_case(const test_case* test_case,
                       const config::tree& user_config,
                       test_case_hooks& hooks)
 {

@@ -51,8 +51,8 @@ class path;
 }  // namespace utils
 
 namespace engine {
-class base_test_case;
 struct test_filter;
+class test_case;
 class test_result;
 }  // namespace engine
 
@@ -91,7 +91,7 @@ bool report_unused_filters(const std::set< engine::test_filter >&,
 
 std::string format_delta(const utils::datetime::delta&);
 std::string format_result(const engine::test_result&);
-std::string format_test_case_id(const engine::base_test_case&);
+std::string format_test_case_id(const engine::test_case&);
 std::string format_test_case_id(const engine::test_filter&);
 
 

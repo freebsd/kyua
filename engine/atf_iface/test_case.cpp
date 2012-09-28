@@ -28,26 +28,18 @@
 
 #include "engine/atf_iface/test_case.hpp"
 
-#include <algorithm>
-#include <cstdlib>
-
 #include "engine/atf_iface/runner.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/metadata.hpp"
 #include "engine/test_program.hpp"
 #include "engine/test_result.hpp"
 #include "utils/config/tree.ipp"
-#include "utils/fs/exceptions.hpp"
-#include "utils/format/macros.hpp"
 #include "utils/optional.ipp"
-#include "utils/sanity.hpp"
-#include "utils/units.hpp"
 
 namespace atf_iface = engine::atf_iface;
 namespace config = utils::config;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
-namespace units = utils::units;
 
 using utils::none;
 using utils::optional;
@@ -71,63 +63,18 @@ namespace {
 ///
 /// \return The result of the execution.
 static engine::test_result
-execute(const engine::base_test_case* test_case,
+execute(const engine::test_case* test_case,
         const config::tree& user_config,
         engine::test_case_hooks& hooks,
         const optional< fs::path >& stdout_path,
         const optional< fs::path >& stderr_path)
 {
-    const engine::atf_iface::test_case* tc =
-        dynamic_cast< const engine::atf_iface::test_case* >(test_case);
-    return engine::atf_iface::run_test_case(
-        *tc, user_config, hooks, stdout_path, stderr_path);
+    return engine::atf_iface::run_test_case(*test_case, user_config, hooks,
+                                            stdout_path, stderr_path);
 }
 
 
 }  // anonymous namespace
-
-
-/// Constructs a new test case.
-///
-/// \param test_program_ The test program this test case belongs to.  This
-///     object must exist during the lifetime of the test case.
-/// \param name_ The name of the test case.
-/// \param md_ The test case metadata.
-atf_iface::test_case::test_case(const base_test_program& test_program_,
-                                const std::string& name_,
-                                const metadata& md_) :
-    base_test_case("atf", test_program_, name_, md_)
-{
-}
-
-
-/// Constructs a new fake test case.
-///
-/// A fake test case is a test case that is not really defined by the test
-/// program.  Such test cases have a name surrounded by '__' and, when executed,
-/// they return a fixed, pre-recorded result.  This functionality is used, for
-/// example, to dynamically create a test case representing the test program
-/// itself when it is broken (i.e. when it's even unable to provide a list of
-/// its own test cases).
-///
-/// \param test_program_ The test program this test case belongs to.
-/// \param name_ The name to give to this fake test case.  This name has to be
-///     prefixed and suffixed by '__' to clearly denote that this is internal.
-/// \param description_ The description of the test case, if any.
-/// \param test_result_ The fake result to return when this test case is run.
-atf_iface::test_case::test_case(const base_test_program& test_program_,
-                                const std::string& name_,
-                                const std::string& description_,
-                                const engine::test_result& test_result_) :
-    base_test_case("atf", test_program_, name_, description_, test_result_)
-{
-}
-
-
-/// Destructor.
-atf_iface::test_case::~test_case(void)
-{
-}
 
 
 /// Runs the test case in debug mode.
@@ -146,7 +93,7 @@ atf_iface::test_case::~test_case(void)
 ///
 /// \return The result of the execution of the test case.
 engine::test_result
-engine::atf_iface::debug_atf_test_case(const base_test_case* test_case,
+engine::atf_iface::debug_atf_test_case(const test_case* test_case,
                                        const config::tree& user_config,
                                        test_case_hooks& hooks,
                                        const fs::path& stdout_path,
@@ -167,7 +114,7 @@ engine::atf_iface::debug_atf_test_case(const base_test_case* test_case,
 ///
 /// \return The result of the execution of the test case.
 engine::test_result
-engine::atf_iface::run_atf_test_case(const base_test_case* test_case,
+engine::atf_iface::run_atf_test_case(const test_case* test_case,
                                      const config::tree& user_config,
                                      test_case_hooks& hooks)
 {

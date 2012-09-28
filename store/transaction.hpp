@@ -133,7 +133,7 @@ public:
     int64_t put_action(const engine::action&, const int64_t);
     int64_t put_context(const engine::context&);
     int64_t put_test_program(const engine::base_test_program&, const int64_t);
-    int64_t put_test_case(const engine::base_test_case&, const int64_t);
+    int64_t put_test_case(const engine::test_case&, const int64_t);
     utils::optional< int64_t > put_test_case_file(const std::string&,
                                                   const utils::fs::path&,
                                                   const int64_t);

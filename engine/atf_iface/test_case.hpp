@@ -32,38 +32,17 @@
 #if !defined(ENGINE_ATF_IFACE_TEST_CASE_HPP)
 #define ENGINE_ATF_IFACE_TEST_CASE_HPP
 
-#include <map>
-#include <set>
-#include <string>
-
 #include "engine/test_case.hpp"
-#include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
-#include "utils/units.hpp"
 
 namespace engine {
 namespace atf_iface {
 
 
-/// Representation of an ATF test case.
-///
-/// Test cases should be thought as free-standing entities: even though they
-/// are located within a test program, the test program serves no other purpose
-/// than to provide a way to execute the test cases.  Therefore, no information
-/// needs to be stored for the test programs themselves.
-class test_case : public base_test_case {
-public:
-    test_case(const base_test_program&, const std::string&, const metadata&);
-    test_case(const base_test_program&, const std::string&, const std::string&,
-              const test_result&);
-    ~test_case(void);
-};
-
-
-test_result debug_atf_test_case(const base_test_case*,
-                                const utils::config::tree&, test_case_hooks&,
-                                const utils::fs::path&, const utils::fs::path&);
-test_result run_atf_test_case(const base_test_case*, const utils::config::tree&,
+test_result debug_atf_test_case(const test_case*, const utils::config::tree&,
+                                test_case_hooks&, const utils::fs::path&,
+                                const utils::fs::path&);
+test_result run_atf_test_case(const test_case*, const utils::config::tree&,
                               test_case_hooks&);
 
 

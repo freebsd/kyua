@@ -38,14 +38,13 @@
 
 
 namespace engine {
+class test_case;
 class test_case_hooks;
 class test_result;
 
 
 namespace atf_iface {
 
-
-class test_case;
 
 test_result run_test_case(const test_case&, const utils::config::tree&,
                           test_case_hooks&,

@@ -91,12 +91,12 @@ plain_helpers(const atf::tests::tc* test_case)
 /// \param props The raw properties to pass to the test case.
 ///
 /// \return The new test case.
-static atf_iface::test_case
+static engine::test_case
 make_test_case(const engine::base_test_program& test_program, const char* name,
                const engine::properties_map& props = engine::properties_map())
 {
-    return atf_iface::test_case(test_program, name,
-                                atf_iface::detail::parse_metadata(props));
+    return engine::test_case("atf", test_program, name,
+                             atf_iface::detail::parse_metadata(props));
 }
 
 
@@ -107,8 +107,7 @@ make_test_case(const engine::base_test_program& test_program, const char* name,
 ///
 /// \return True if the test cases match.
 static bool
-compare_test_cases(const atf_iface::test_case& tc1,
-                   const atf_iface::test_case& tc2)
+compare_test_cases(const engine::test_case& tc1, const engine::test_case& tc2)
 {
     const engine::metadata& md1 = tc1.get_metadata();
     const engine::metadata& md2 = tc2.get_metadata();
@@ -127,8 +126,7 @@ check_test_cases_list_failure(const engine::test_cases_vector& test_cases,
                               const std::string& exp_reason)
 {
     ATF_REQUIRE_EQ(1, test_cases.size());
-    const atf_iface::test_case* test_case =
-        dynamic_cast< const atf_iface::test_case* >(test_cases[0].get());
+    const engine::test_case* test_case = test_cases[0].get();
     ATF_REQUIRE_EQ("__test_cases_list__", test_case->name());
     engine::test_case_hooks dummy_hooks;
     const engine::test_result result = engine::run_test_case(
@@ -279,12 +277,10 @@ ATF_TEST_CASE_BODY(parse_test_cases__one_test_case_simple)
     const engine::test_cases_vector tests = atf_iface::detail::parse_test_cases(
         test_program, input);
 
-    const atf_iface::test_case test1 = make_test_case(test_program,
-                                                      "test-case");
+    const engine::test_case test1 = make_test_case(test_program, "test-case");
 
     ATF_REQUIRE_EQ(1, tests.size());
-    ATF_REQUIRE(compare_test_cases(
-        test1, *dynamic_cast< atf_iface::test_case* >(tests[0].get())));
+    ATF_REQUIRE(compare_test_cases(test1, *tests[0].get()));
 }
 
 
@@ -307,12 +303,11 @@ ATF_TEST_CASE_BODY(parse_test_cases__one_test_case_complex)
     engine::properties_map props1;
     props1["descr"] = "This is the description";
     props1["timeout"] = "500";
-    const atf_iface::test_case test1 = make_test_case(test_program, "first",
-                                                      props1);
+    const engine::test_case test1 = make_test_case(test_program, "first",
+                                                   props1);
 
     ATF_REQUIRE_EQ(1, tests.size());
-    ATF_REQUIRE(compare_test_cases(
-        test1, *dynamic_cast< atf_iface::test_case* >(tests[0].get())));
+    ATF_REQUIRE(compare_test_cases(test1, *tests[0].get()));
 }
 
 
@@ -375,26 +370,23 @@ ATF_TEST_CASE_BODY(parse_test_cases__many_test_cases)
 
     engine::properties_map props1;
     props1["descr"] = "This is the description";
-    const atf_iface::test_case test1 = make_test_case(test_program, "first",
-                                                      props1);
+    const engine::test_case test1 = make_test_case(test_program, "first",
+                                                   props1);
 
     engine::properties_map props2;
     props2["descr"] = "Some text";
     props2["timeout"] = "500";
-    const atf_iface::test_case test2 = make_test_case(test_program, "second",
-                                                      props2);
+    const engine::test_case test2 = make_test_case(test_program, "second",
+                                                   props2);
 
     engine::properties_map props3;
-    const atf_iface::test_case test3 = make_test_case(test_program, "third",
-                                                      props3);
+    const engine::test_case test3 = make_test_case(test_program, "third",
+                                                   props3);
 
     ATF_REQUIRE_EQ(3, tests.size());
-    ATF_REQUIRE(compare_test_cases(
-        test1, *dynamic_cast< atf_iface::test_case* >(tests[0].get())));
-    ATF_REQUIRE(compare_test_cases(
-        test2, *dynamic_cast< atf_iface::test_case* >(tests[1].get())));
-    ATF_REQUIRE(compare_test_cases(
-        test3, *dynamic_cast< atf_iface::test_case* >(tests[2].get())));
+    ATF_REQUIRE(compare_test_cases(test1, *tests[0].get()));
+    ATF_REQUIRE(compare_test_cases(test2, *tests[1].get()));
+    ATF_REQUIRE(compare_test_cases(test3, *tests[2].get()));
 }
 
 

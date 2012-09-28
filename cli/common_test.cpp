@@ -82,22 +82,6 @@ public:
 };
 
 
-/// Fake implementation of a test case.
-class mock_test_case : public engine::base_test_case {
-public:
-    /// Constructs a new test case.
-    ///
-    /// \param test_program_ The test program this test case belongs to.
-    /// \param name_ The name of the test case within the test program.
-    mock_test_case(const engine::base_test_program& test_program_,
-                   const std::string& name_) :
-        base_test_case("mock", test_program_, name_,
-                       engine::metadata_builder().build())
-    {
-    }
-};
-
-
 }  // anonymous namespace
 
 
@@ -357,7 +341,8 @@ ATF_TEST_CASE_WITHOUT_HEAD(format_test_case_id__test_case);
 ATF_TEST_CASE_BODY(format_test_case_id__test_case)
 {
     const mock_test_program test_program(fs::path("foo/bar/baz"));
-    const mock_test_case test_case(test_program, "abc");
+    const engine::test_case test_case("mock", test_program, "abc",
+                                      engine::metadata_builder().build());
     ATF_REQUIRE_EQ("foo/bar/baz:abc", cli::format_test_case_id(test_case));
 }
 
