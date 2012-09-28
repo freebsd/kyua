@@ -154,8 +154,9 @@ ATF_TEST_CASE_BODY(guess_interface__atf)
 ATF_TEST_CASE_WITHOUT_HEAD(guess_interface__plain);
 ATF_TEST_CASE_BODY(guess_interface__plain)
 {
-    const plain_iface::test_program program(fs::path("foo"), fs::path("bar"),
-                                            "", none);
+    const plain_iface::test_program program(
+        fs::path("foo"), fs::path("bar"), "",
+        engine::metadata_builder().build());
     ATF_REQUIRE(store::detail::plain_interface ==
                 store::guess_interface(program));
 }

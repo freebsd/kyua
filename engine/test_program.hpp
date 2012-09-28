@@ -61,13 +61,16 @@ class base_test_program {
 
 public:
     base_test_program(const std::string&, const utils::fs::path&,
-                      const utils::fs::path&, const std::string&);
+                      const utils::fs::path&, const std::string&,
+                      const metadata&);
     virtual ~base_test_program(void);
 
+    const std::string& interface_name(void) const;
     const utils::fs::path& root(void) const;
     const utils::fs::path& relative_path(void) const;
     const utils::fs::path absolute_path(void) const;
     const std::string& test_suite_name(void) const;
+    const metadata& get_metadata(void) const;
 
     const test_case_ptr& find(const std::string&) const;
     const test_cases_vector& test_cases(void) const;

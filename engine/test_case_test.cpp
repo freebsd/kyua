@@ -85,23 +85,6 @@ public:
 };
 
 
-/// Fake implementation of a test program.
-class mock_test_program : public engine::base_test_program {
-public:
-    /// Constructs a new test program.
-    ///
-    /// Both the test suite root and the test suite name are fixed and
-    /// supposedly unused in this module.
-    ///
-    /// \param binary_ The name of the test program binary.
-    mock_test_program(const fs::path& binary_) :
-        base_test_program("mock", binary_, fs::path("unused-root"),
-                          "unused-suite-name")
-    {
-    }
-};
-
-
 }  // anonymous namespace
 
 
@@ -111,7 +94,9 @@ ATF_TEST_CASE_BODY(test_case__ctor_and_getters)
     const engine::metadata md = engine::metadata_builder()
         .add_custom("first", "value")
         .build();
-    const mock_test_program test_program(fs::path("abc"));
+    const engine::base_test_program test_program(
+        "mock", fs::path("abc"), fs::path("unused-root"),
+        "unused-suite-name", engine::metadata_builder().build());
     const engine::test_case test_case("mock", test_program, "foo", md);
     ATF_REQUIRE_EQ(&test_program, &test_case.test_program());
     ATF_REQUIRE_EQ("foo", test_case.name());
@@ -124,7 +109,9 @@ ATF_TEST_CASE_BODY(fake_result)
 {
     const engine::test_result result(engine::test_result::skipped,
                                      "Some reason");
-    const mock_test_program test_program(fs::path("abc"));
+    const engine::base_test_program test_program(
+        "mock", fs::path("abc"), fs::path("unused-root"),
+        "unused-suite-name", engine::metadata_builder().build());
     const engine::test_case test_case("mock", test_program, "__foo__",
                                       "Some description", result);
     ATF_REQUIRE_EQ(&test_program, &test_case.test_program());

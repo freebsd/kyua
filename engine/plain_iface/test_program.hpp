@@ -33,7 +33,6 @@
 #define ENGINE_PLAIN_IFACE_TEST_PROGRAM_HPP
 
 #include "engine/test_program.hpp"
-#include "utils/datetime.hpp"
 #include "utils/optional.hpp"
 
 namespace engine {
@@ -42,18 +41,10 @@ namespace plain_iface {
 
 /// Representation of a plain test program.
 class test_program : public base_test_program {
-    struct impl;
-
-    /// Pointer to the shared internal implementation.
-    std::tr1::shared_ptr< impl > _pimpl;
-
 public:
     test_program(const utils::fs::path&, const utils::fs::path&,
-                 const std::string&,
-                 const utils::optional< utils::datetime::delta >&);
+                 const std::string&, const metadata&);
     ~test_program(void);
-
-    const utils::datetime::delta& timeout(void) const;
 };
 
 

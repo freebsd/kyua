@@ -295,7 +295,8 @@ engine::atf_iface::detail::parse_test_cases(const base_test_program& program,
 atf_iface::test_program::test_program(const utils::fs::path& binary_,
                                       const utils::fs::path& root_,
                                       const std::string& test_suite_name_) :
-    base_test_program("atf", binary_, root_, test_suite_name_)
+    base_test_program("atf", binary_, root_, test_suite_name_,
+                      engine::metadata_builder().build())
 {
 }
 

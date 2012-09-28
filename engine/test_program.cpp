@@ -56,6 +56,9 @@ struct engine::base_test_program::base_impl {
     /// Name of the test suite this program belongs to.
     std::string test_suite_name;
 
+    /// Metadata of the test program.
+    metadata md;
+
     /// List of test casees in the test program; lazily initialized.
     optional< test_cases_vector > test_cases;
 
@@ -66,12 +69,15 @@ struct engine::base_test_program::base_impl {
     /// \param root_ The root of the test suite containing the test program.
     /// \param test_suite_name_ The name of the test suite this program
     ///     belongs to.
+    /// \param md_ Metadata of the test program.
     base_impl(const std::string& interface_name_, const fs::path& binary_,
-              const fs::path& root_, const std::string& test_suite_name_) :
+              const fs::path& root_, const std::string& test_suite_name_,
+              const metadata& md_) :
         interface_name(interface_name_),
         binary(binary_),
         root(root_),
-        test_suite_name(test_suite_name_)
+        test_suite_name(test_suite_name_),
+        md(md_)
     {
         PRE_MSG(!binary.is_absolute(),
                 F("The program '%s' must be relative to the root of the test "
@@ -86,12 +92,15 @@ struct engine::base_test_program::base_impl {
 /// \param binary_ The name of the test program binary relative to root_.
 /// \param root_ The root of the test suite containing the test program.
 /// \param test_suite_name_ The name of the test suite this program belongs to.
+/// \param md_ Metadata of the test program.
 engine::base_test_program::base_test_program(
     const std::string& interface_name_,
     const fs::path& binary_,
     const fs::path& root_,
-    const std::string& test_suite_name_) :
-    _pbimpl(new base_impl(interface_name_, binary_, root_, test_suite_name_))
+    const std::string& test_suite_name_,
+    const metadata& md_) :
+    _pbimpl(new base_impl(interface_name_, binary_, root_,
+                          test_suite_name_, md_))
 {
 }
 
@@ -99,6 +108,16 @@ engine::base_test_program::base_test_program(
 /// Destroys a test program.
 engine::base_test_program::~base_test_program(void)
 {
+}
+
+
+/// Gets the name of the test program interface.
+///
+/// \return An interface name.
+const std::string&
+engine::base_test_program::interface_name(void) const
+{
+    return _pbimpl->interface_name;
 }
 
 
@@ -140,6 +159,16 @@ const std::string&
 engine::base_test_program::test_suite_name(void) const
 {
     return _pbimpl->test_suite_name;
+}
+
+
+/// Gets the metadata of the test program.
+///
+/// \return The metadata.
+const engine::metadata&
+engine::base_test_program::get_metadata(void) const
+{
+    return _pbimpl->md;
 }
 
 

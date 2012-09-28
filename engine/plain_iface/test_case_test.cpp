@@ -166,12 +166,14 @@ public:
     engine::test_result
     run(const config::tree& user_config = user_files::default_config()) const
     {
-        const plain_iface::test_program test_program(_binary_path, _root,
-                                                     "unit-tests", _timeout);
-        const engine::test_case test_case("plain", test_program, "main",
-                                          engine::metadata_builder().build());
+        engine::metadata_builder mdbuilder;
+        if (_timeout)
+            mdbuilder.set_timeout(_timeout.get());
+        const plain_iface::test_program test_program(
+            _binary_path, _root, "unit-tests", mdbuilder.build());
+        const engine::test_cases_vector& tcs = test_program.test_cases();
         fetch_output_hooks fetcher;
-        return engine::run_test_case(&test_case, user_config, fetcher);
+        return engine::run_test_case(tcs[0].get(), user_config, fetcher);
     }
 };
 

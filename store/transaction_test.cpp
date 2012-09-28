@@ -331,7 +331,8 @@ ATF_TEST_CASE_BODY(get_action_results__many)
 
     {
         const plain_iface::test_program test_program(
-            fs::path("a/prog1"), fs::path("/the/root"), "suite1", none);
+            fs::path("a/prog1"), fs::path("/the/root"), "suite1",
+            engine::metadata_builder().build());
         const engine::test_case test_case("plain", test_program, "main",
                                           engine::metadata_builder().build());
         const engine::test_result result(engine::test_result::passed);
@@ -351,7 +352,8 @@ ATF_TEST_CASE_BODY(get_action_results__many)
     }
     {
         const plain_iface::test_program test_program(
-            fs::path("b/prog2"), fs::path("/the/root"), "suite2", none);
+            fs::path("b/prog2"), fs::path("/the/root"), "suite2",
+            engine::metadata_builder().build());
         const engine::test_case test_case("plain", test_program, "main",
                                           engine::metadata_builder().build());
         const engine::test_result result(engine::test_result::failed,
@@ -647,7 +649,8 @@ ATF_TEST_CASE_HEAD(put_test_program__plain)
 ATF_TEST_CASE_BODY(put_test_program__plain)
 {
     const plain_iface::test_program test_program(
-        fs::path("the/binary"), fs::path("some/root"), "the-suite", none);
+        fs::path("the/binary"), fs::path("some/root"), "the-suite",
+        engine::metadata_builder().build());
 
     store::backend backend = store::backend::open_rw(fs::path("test.db"));
     backend.database().exec("PRAGMA foreign_keys = OFF");
@@ -678,7 +681,7 @@ ATF_TEST_CASE_BODY(put_test_program__plain)
         ATF_REQUIRE_EQ(test_program_id,
                        stmt.safe_column_int64("test_program_id"));
         ATF_REQUIRE_EQ(
-            static_cast< int64_t >(test_program.timeout().to_useconds()),
+            static_cast< int64_t >(test_program.get_metadata().timeout().to_useconds()),
             stmt.safe_column_int64("timeout"));
     }
 }
@@ -694,7 +697,8 @@ ATF_TEST_CASE_BODY(put_test_program__fail)
 {
     // TODO(jmmv): Use a mock test program.
     const plain_iface::test_program test_program(
-        fs::path("the/binary"), fs::path("/some/root"), "the-suite", none);
+        fs::path("the/binary"), fs::path("/some/root"), "the-suite",
+        engine::metadata_builder().build());
 
     store::backend backend = store::backend::open_rw(fs::path("test.db"));
     store::transaction tx = backend.start();
@@ -773,9 +777,11 @@ ATF_TEST_CASE_HEAD(put_test_case__plain)
 }
 ATF_TEST_CASE_BODY(put_test_case__plain)
 {
+    const engine::metadata md = engine::metadata_builder()
+        .set_timeout(datetime::delta(512, 0))
+        .build();
     const plain_iface::test_program test_program(
-        fs::path("the/binary"), fs::path("/some/root"), "the-suite",
-        utils::make_optional(datetime::delta(512, 0)));
+        fs::path("the/binary"), fs::path("/some/root"), "the-suite", md);
     const engine::test_case test_case("plain", test_program, "main",
                                       engine::metadata_builder().build());
 
@@ -815,7 +821,8 @@ ATF_TEST_CASE_BODY(put_test_case__fail)
 {
     // TODO(jmmv): Use a mock test program and test case.
     const plain_iface::test_program test_program(
-        fs::path("the/binary"), fs::path("/some/root"), "the-suite", none);
+        fs::path("the/binary"), fs::path("/some/root"), "the-suite",
+        engine::metadata_builder().build());
     const engine::test_case test_case("plain", test_program, "main",
                                       engine::metadata_builder().build());
 

@@ -39,6 +39,7 @@
 #include "engine/plain_iface/test_program.hpp"
 #include "engine/user_files/common.hpp"
 #include "engine/user_files/exceptions.hpp"
+#include "utils/datetime.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/operations.hpp"
@@ -179,22 +180,24 @@ get_plain_test_program(lutok::state& state, const fs::path& build_root)
     const fs::path path = get_path(state, build_root);
     const std::string test_suite = get_test_suite(state, path);
 
-    optional< datetime::delta > timeout;
+    engine::metadata_builder mdbuilder;
+
     {
         state.push_string("timeout");
         state.get_table();
-        if (state.is_nil())
-            timeout = none;
-        else if (state.is_number())
-            timeout = datetime::delta(state.to_integer(), 0);
-        else
+        if (state.is_nil()) {
+            // Nothing to do.
+        } else if (state.is_number()) {
+            mdbuilder.set_timeout(datetime::delta(state.to_integer(), 0));
+        } else {
             throw std::runtime_error(F("Non-integer value provided as timeout "
                                        "for test program '%s'") % path);
+        }
         state.pop(1);
     }
 
     return engine::test_program_ptr(new plain_iface::test_program(
-        path, build_root, test_suite, timeout));
+        path, build_root, test_suite, mdbuilder.build()));
 }
 
 

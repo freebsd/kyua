@@ -68,20 +68,6 @@ mkfilter(const char* test_program, const char* test_case)
 }
 
 
-/// Fake implementation of a test program.
-class mock_test_program : public engine::base_test_program {
-public:
-    /// Constructs a new test program.
-    ///
-    /// \param binary_ The name of the test program binary.
-    mock_test_program(const fs::path& binary_) :
-        base_test_program("mock", binary_, fs::path("unused-root"),
-                          "unused-suite-name")
-    {
-    }
-};
-
-
 }  // anonymous namespace
 
 
@@ -340,7 +326,9 @@ ATF_TEST_CASE_BODY(format_result__with_reason)
 ATF_TEST_CASE_WITHOUT_HEAD(format_test_case_id__test_case);
 ATF_TEST_CASE_BODY(format_test_case_id__test_case)
 {
-    const mock_test_program test_program(fs::path("foo/bar/baz"));
+    const engine::base_test_program test_program(
+        "mock", fs::path("foo/bar/baz"), fs::path("unused-root"),
+        "unused-suite-name", engine::metadata_builder().build());
     const engine::test_case test_case("mock", test_program, "abc",
                                       engine::metadata_builder().build());
     ATF_REQUIRE_EQ("foo/bar/baz:abc", cli::format_test_case_id(test_case));

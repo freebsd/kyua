@@ -222,10 +222,6 @@ public:
 
         engine::check_interrupt();
 
-        const plain_iface::test_program* test_program =
-            dynamic_cast< const plain_iface::test_program* >(
-                &_test_case.test_program());
-
         const fs::path stdout_file =
             _stdout_path.get_default(workdir / "stdout.txt");
         const fs::path stderr_file =
@@ -234,7 +230,7 @@ public:
         LI(F("Running test case '%s'") % _test_case.name());
         optional< process::status > body_status = engine::fork_and_wait(
             execute_test_case(_test_case, rundir), stdout_file, stderr_file,
-            test_program->timeout());
+            _test_case.get_metadata().timeout());
         utils::dump_stacktrace_if_available(
             _test_case.test_program().absolute_path(), body_status, rundir,
             stderr_file);

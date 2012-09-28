@@ -29,30 +29,8 @@
 #include "engine/plain_iface/test_program.hpp"
 
 #include "engine/plain_iface/test_case.hpp"
-#include "utils/optional.ipp"
 
-namespace datetime = utils::datetime;
 namespace plain_iface = engine::plain_iface;
-
-using utils::optional;
-
-
-/// Internal implementation for a test_program.
-struct engine::plain_iface::test_program::impl {
-    /// The timeout for the single test case in the test program.
-    datetime::delta timeout;
-
-    /// Constructor.
-    ///
-    /// \param optional_timeout_ The timeout for the test program's only single
-    ///     test case.  If none, a default timeout is used.
-    impl(const optional< datetime::delta >& optional_timeout_) :
-        timeout(optional_timeout_ ?
-                optional_timeout_.get() : engine::default_timeout)
-
-    {
-    }
-};
 
 
 /// Constructs a new plain test program.
@@ -60,16 +38,13 @@ struct engine::plain_iface::test_program::impl {
 /// \param binary_ The name of the test program binary relative to root_.
 /// \param root_ The root of the test suite containing the test program.
 /// \param test_suite_name_ The name of the test suite this program belongs to.
-/// \param optional_timeout_ The timeout for the test program's only single test
-///     case.  If none, a default timeout is used.
-///
+/// \param md_ The metadata of the test program.
 plain_iface::test_program::test_program(
     const utils::fs::path& binary_,
     const utils::fs::path& root_,
     const std::string& test_suite_name_,
-    const optional< datetime::delta >& optional_timeout_) :
-    base_test_program("plain", binary_, root_, test_suite_name_),
-    _pimpl(new impl(optional_timeout_))
+    const engine::metadata& md_) :
+    base_test_program("plain", binary_, root_, test_suite_name_, md_)
 {
 }
 
@@ -77,19 +52,6 @@ plain_iface::test_program::test_program(
 /// Destructor.
 plain_iface::test_program::~test_program(void)
 {
-}
-
-
-/// Returns the timeout of the test program.
-///
-/// Note that this is always defined, even in those cases where the test program
-/// is constructed with a 'none' timeout.
-///
-/// \return The timeout value.
-const datetime::delta&
-plain_iface::test_program::timeout(void) const
-{
-    return _pimpl->timeout;
 }
 
 
@@ -101,14 +63,9 @@ plain_iface::test_program::timeout(void) const
 engine::test_cases_vector
 plain_iface::load_plain_test_cases(const base_test_program* test_program)
 {
-    const plain_iface::test_program* ptp =
-        dynamic_cast< const plain_iface::test_program* >(test_program);
-    const engine::metadata md = engine::metadata_builder()
-        .set_timeout(ptp->timeout())
-        .build();
-
     test_cases_vector loaded_test_cases;
     loaded_test_cases.push_back(engine::test_case_ptr(
-         new test_case("plain", *test_program, "main", md)));
+        new test_case("plain", *test_program, "main",
+                      test_program->get_metadata())));
     return loaded_test_cases;
 }

@@ -34,7 +34,6 @@ extern "C" {
 
 #include <fstream>
 #include <map>
-#include <typeinfo>
 #include <utility>
 
 #include "engine/action.hpp"
@@ -488,16 +487,15 @@ put_test_program_detail(sqlite::database& db,
                         const engine::base_test_program& test_program,
                         const int64_t test_program_id)
 {
-    if (typeid(test_program) == typeid(atf_iface::test_program)) {
+    if (test_program.interface_name() == "atf") {
         // Nothing to do.
-    } else if (typeid(test_program) == typeid(plain_iface::test_program)) {
-        const plain_iface::test_program& plain =
-            dynamic_cast< const plain_iface::test_program& >(test_program);
+    } else if (test_program.interface_name() == "plain") {
         sqlite::statement stmt = db.create_statement(
             "INSERT INTO plain_test_programs (test_program_id, timeout) "
             "VALUES (:test_program_id, :timeout)");
         stmt.bind(":test_program_id", test_program_id);
-        store::bind_delta(stmt, ":timeout", plain.timeout());
+        store::bind_delta(stmt, ":timeout",
+                          test_program.get_metadata().timeout());
         stmt.step_without_results();
     } else
         UNREACHABLE_MSG("Unsupported test program interface");
@@ -587,11 +585,13 @@ store::detail::get_test_program(backend& backend_, const int64_t id,
             "    WHERE test_program_id == :id");
         stmt.bind(":id", id);
         stmt.step();
+        const engine::metadata md = engine::metadata_builder()
+            .set_timeout(store::column_delta(stmt, "timeout"))
+            .build();
         test_program.reset(new plain_iface::test_program(
             fs::path(stmt.safe_column_text("relative_path")),
             fs::path(stmt.safe_column_text("root")),
-            stmt.safe_column_text("test_suite_name"),
-            utils::make_optional(store::column_delta(stmt, "timeout"))));
+            stmt.safe_column_text("test_suite_name"), md));
         const bool more = stmt.step();
         INV(!more);
         break;
