@@ -39,12 +39,9 @@
 #include "utils/defs.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/sanity.hpp"
-#include "utils/units.hpp"
 
 namespace atf_iface = engine::atf_iface;
-namespace datetime = utils::datetime;
 namespace fs = utils::fs;
-namespace units = utils::units;
 namespace user_files = engine::user_files;
 
 
@@ -126,87 +123,6 @@ ATF_TEST_CASE_BODY(test_case__fake_ctor_and_getters)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(test_case__from_properties__defaults)
-ATF_TEST_CASE_BODY(test_case__from_properties__defaults)
-{
-    const mock_test_program test_program(fs::path("program"));
-    const engine::properties_map properties;
-
-    const atf_iface::test_case test_case =
-        atf_iface::test_case::from_properties(test_program, "test-case",
-                                              properties);
-
-    ATF_REQUIRE_EQ(&test_program, &test_case.test_program());
-    ATF_REQUIRE_EQ("test-case", test_case.name());
-
-    const engine::metadata md = engine::metadata_builder().build();
-    ATF_REQUIRE(md.to_properties() == test_case.get_metadata().to_properties());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(test_case__from_properties__override_all)
-ATF_TEST_CASE_BODY(test_case__from_properties__override_all)
-{
-    const mock_test_program test_program(fs::path("program"));
-    engine::properties_map properties;
-    properties["descr"] = "Some text";
-    properties["has.cleanup"] = "true";
-    properties["require.arch"] = "i386 x86_64";
-    properties["require.config"] = "var1 var2 var3";
-    properties["require.files"] = "/file1 /dir/file2";
-    properties["require.machine"] = "amd64";
-    properties["require.memory"] = "1m";
-    properties["require.progs"] = "/bin/ls svn";
-    properties["require.user"] = "root";
-    properties["timeout"] = "123";
-    properties["X-foo"] = "value1";
-    properties["X-bar"] = "value2";
-    properties["X-baz-www"] = "value3";
-
-    const atf_iface::test_case test_case =
-        atf_iface::test_case::from_properties(test_program, "test-case",
-                                              properties);
-
-    ATF_REQUIRE_EQ(&test_program, &test_case.test_program());
-    ATF_REQUIRE_EQ("test-case", test_case.name());
-
-    const engine::metadata md = engine::metadata_builder()
-        .add_allowed_architecture("i386")
-        .add_allowed_architecture("x86_64")
-        .add_allowed_platform("amd64")
-        .add_custom("X-foo", "value1")
-        .add_custom("X-bar", "value2")
-        .add_custom("X-baz-www", "value3")
-        .add_required_config("var1")
-        .add_required_config("var2")
-        .add_required_config("var3")
-        .add_required_file(fs::path("/file1"))
-        .add_required_file(fs::path("/dir/file2"))
-        .add_required_program(fs::path("/bin/ls"))
-        .add_required_program(fs::path("svn"))
-        .set_description("Some text")
-        .set_has_cleanup(true)
-        .set_required_memory(units::bytes::parse("1m"))
-        .set_required_user("root")
-        .set_timeout(datetime::delta(123, 0))
-        .build();
-    ATF_REQUIRE(md.to_properties() == test_case.get_metadata().to_properties());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(test_case__from_properties__unknown)
-ATF_TEST_CASE_BODY(test_case__from_properties__unknown)
-{
-    const mock_test_program test_program(fs::path("program"));
-    engine::properties_map properties;
-    properties["foobar"] = "Some text";
-
-    ATF_REQUIRE_THROW_RE(engine::format_error, "Unknown.*property.*'foobar'",
-        atf_iface::test_case::from_properties(test_program, "test-case",
-                                              properties));
-}
-
-
 ATF_TEST_CASE_WITHOUT_HEAD(test_case__run__fake)
 ATF_TEST_CASE_BODY(test_case__run__fake)
 {
@@ -226,8 +142,5 @@ ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, test_case__ctor_and_getters);
     ATF_ADD_TEST_CASE(tcs, test_case__fake_ctor_and_getters);
-    ATF_ADD_TEST_CASE(tcs, test_case__from_properties__defaults);
-    ATF_ADD_TEST_CASE(tcs, test_case__from_properties__override_all);
-    ATF_ADD_TEST_CASE(tcs, test_case__from_properties__unknown);
     ATF_ADD_TEST_CASE(tcs, test_case__run__fake);
 }

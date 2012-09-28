@@ -130,66 +130,6 @@ atf_iface::test_case::~test_case(void)
 }
 
 
-/// Creates a test case from a set of raw properties (the test program output).
-///
-/// \param test_program_ The test program this test case belongs to.  This
-///     object must exist during the lifetime of the test case.
-/// \param name_ The name of the test case.
-/// \param raw_properties The properties (name/value string pairs) as provided
-///     by the test program.
-///
-/// \return A new test_case.
-///
-/// \throw engine::format_error If the syntax of any of the properties is
-///     invalid.
-atf_iface::test_case
-atf_iface::test_case::from_properties(const base_test_program& test_program_,
-                                      const std::string& name_,
-                                      const properties_map& raw_properties)
-{
-    metadata_builder mdbuilder;
-
-    try {
-        for (properties_map::const_iterator iter = raw_properties.begin();
-             iter != raw_properties.end(); iter++) {
-            const std::string& name = (*iter).first;
-            const std::string& value = (*iter).second;
-
-            if (name == "descr") {
-                mdbuilder.set_string("description", value);
-            } else if (name == "has.cleanup") {
-                mdbuilder.set_string("has_cleanup", value);
-            } else if (name == "require.arch") {
-                mdbuilder.set_string("allowed_architectures", value);
-            } else if (name == "require.config") {
-                mdbuilder.set_string("required_configs", value);
-            } else if (name == "require.files") {
-                mdbuilder.set_string("required_files", value);
-            } else if (name == "require.machine") {
-                mdbuilder.set_string("allowed_platforms", value);
-            } else if (name == "require.memory") {
-                mdbuilder.set_string("required_memory", value);
-            } else if (name == "require.progs") {
-                mdbuilder.set_string("required_programs", value);
-            } else if (name == "require.user") {
-                mdbuilder.set_string("required_user", value);
-            } else if (name == "timeout") {
-                mdbuilder.set_string("timeout", value);
-            } else if (name.length() > 2 && name.substr(0, 2) == "X-") {
-                mdbuilder.add_custom(name, value);
-            } else {
-                throw engine::format_error(F("Unknown test case metadata "
-                                             "property '%s'") % name);
-            }
-        }
-    } catch (const config::error& e) {
-        throw engine::format_error(e.what());
-    }
-
-    return test_case(test_program_, name_, mdbuilder.build());
-}
-
-
 /// Runs the test case in debug mode.
 ///
 /// Debug mode gives the caller more control on the execution of the test.  It

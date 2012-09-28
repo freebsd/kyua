@@ -46,13 +46,13 @@ namespace fs = utils::fs;
 ATF_TEST_CASE_WITHOUT_HEAD(list_test_case__no_verbose);
 ATF_TEST_CASE_BODY(list_test_case__no_verbose)
 {
-    engine::properties_map properties;
-    properties["descr"] = "Unused description";
+    const engine::metadata md = engine::metadata_builder()
+        .set_description("This should not be shown")
+        .build();
     const atf_iface::test_program test_program(fs::path("the/test-program"),
                                                fs::path("root"),
                                                "unused-suite");
-    const atf_iface::test_case test_case =
-        atf_iface::test_case::from_properties(test_program, "abc", properties);
+    const engine::base_test_case test_case("mock", test_program, "abc", md);
 
     cmdline::ui_mock ui;
     cli::detail::list_test_case(&ui, false, test_case);
@@ -65,12 +65,10 @@ ATF_TEST_CASE_BODY(list_test_case__no_verbose)
 ATF_TEST_CASE_WITHOUT_HEAD(list_test_case__verbose__no_properties);
 ATF_TEST_CASE_BODY(list_test_case__verbose__no_properties)
 {
-    engine::properties_map properties;
+    const engine::metadata md = engine::metadata_builder().build();
     const atf_iface::test_program test_program(fs::path("hello/world"),
                                                fs::path("root"), "the-suite");
-    const atf_iface::test_case test_case =
-        atf_iface::test_case::from_properties(test_program, "my_name",
-                                              properties);
+    const engine::base_test_case test_case("mock", test_program, "my_name", md);
 
     cmdline::ui_mock ui;
     cli::detail::list_test_case(&ui, true, test_case);
@@ -83,15 +81,14 @@ ATF_TEST_CASE_BODY(list_test_case__verbose__no_properties)
 ATF_TEST_CASE_WITHOUT_HEAD(list_test_case__verbose__some_properties);
 ATF_TEST_CASE_BODY(list_test_case__verbose__some_properties)
 {
-    engine::properties_map properties;
-    properties["descr"] = "Some description";
-    properties["has.cleanup"] = "true";
-    properties["X-my-property"] = "value";
+    const engine::metadata md = engine::metadata_builder()
+        .add_custom("X-my-property", "value")
+        .set_description("Some description")
+        .set_has_cleanup(true)
+        .build();
     const atf_iface::test_program test_program(fs::path("hello/world"),
                                                fs::path("root"), "the-suite");
-    const atf_iface::test_case test_case =
-        atf_iface::test_case::from_properties(test_program, "my_name",
-                                              properties);
+    const engine::base_test_case test_case("mock", test_program, "my_name", md);
 
     cmdline::ui_mock ui;
     cli::detail::list_test_case(&ui, true, test_case);

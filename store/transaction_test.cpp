@@ -52,6 +52,7 @@
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/exceptions.hpp"
 #include "utils/sqlite/statement.ipp"
+#include "utils/units.hpp"
 
 namespace atf_iface = engine::atf_iface;
 namespace datetime = utils::datetime;
@@ -59,6 +60,7 @@ namespace fs = utils::fs;
 namespace logging = utils::logging;
 namespace plain_iface = engine::plain_iface;
 namespace sqlite = utils::sqlite;
+namespace units = utils::units;
 
 using utils::none;
 using utils::optional;
@@ -712,25 +714,30 @@ ATF_TEST_CASE_BODY(put_test_case__atf)
     const atf_iface::test_program test_program(
         fs::path("the/binary"), fs::path("/some/root"), "the-suite");
 
-    const atf_iface::test_case test_case1 =
-        atf_iface::test_case::from_properties(test_program, "tc1",
-                                              engine::properties_map());
+    const atf_iface::test_case test_case1(test_program, "tc1",
+                                          engine::metadata_builder().build());
 
-    engine::properties_map props2;
-    props2["descr"] = "The description";
-    props2["has.cleanup"] = "true";
-    props2["require.arch"] = "powerpc x86_64";
-    props2["require.config"] = "var1 var2 var3";
-    props2["require.files"] = "/file1/yes /file2/foo";
-    props2["require.machine"] = "amd64 macppc";
-    props2["require.memory"] = "1k";
-    props2["require.progs"] = "/bin/ls cp";
-    props2["require.user"] = "root";
-    props2["timeout"] = "520";
-    props2["X-user1"] = "value1";
-    props2["X-user2"] = "value2";
-    const atf_iface::test_case test_case2 =
-        atf_iface::test_case::from_properties(test_program, "tc2", props2);
+    const engine::metadata md2 = engine::metadata_builder()
+        .add_allowed_architecture("powerpc")
+        .add_allowed_architecture("x86_64")
+        .add_allowed_platform("amd64")
+        .add_allowed_platform("macppc")
+        .add_custom("X-user1", "value1")
+        .add_custom("X-user2", "value2")
+        .add_required_config("var1")
+        .add_required_config("var2")
+        .add_required_config("var3")
+        .add_required_file(fs::path("/file1/yes"))
+        .add_required_file(fs::path("/file2/foo"))
+        .add_required_program(fs::path("/bin/ls"))
+        .add_required_program(fs::path("cp"))
+        .set_description("The description")
+        .set_has_cleanup(true)
+        .set_required_memory(units::bytes::parse("1k"))
+        .set_required_user("root")
+        .set_timeout(datetime::delta(520, 0))
+        .build();
+    const atf_iface::test_case test_case2(test_program, "tc2", md2);
 
     store::backend backend = store::backend::open_rw(fs::path("test.db"));
     backend.database().exec("PRAGMA foreign_keys = OFF");

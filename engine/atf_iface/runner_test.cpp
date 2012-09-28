@@ -140,8 +140,8 @@ class atf_helper : utils::noncopyable {
     /// Name of the helper test case to run.
     const std::string _name;
 
-    /// Metadata variables of the test case.
-    engine::properties_map _metadata;
+    /// Metadata of the test case.
+    engine::metadata_builder _mdbuilder;
 
     /// Run-time configuration for the test case.
     config::tree _user_config;
@@ -195,7 +195,7 @@ public:
     void
     set_metadata(const char* variable, const T& value)
     {
-        _metadata[variable] = F("%s") % value;
+        _mdbuilder.set_string(variable, F("%s") % value);
     }
 
     /// Places the helper in a different location.
@@ -241,9 +241,8 @@ public:
     {
         const atf_iface::test_program test_program(_binary_path, _root,
                                                    "the-suite");
-        const atf_iface::test_case test_case =
-            atf_iface::test_case::from_properties(test_program, _name,
-                                                  _metadata);
+        const atf_iface::test_case test_case(test_program, _name,
+                                             _mdbuilder.build());
         return engine::run_test_case(&test_case, _user_config, hooks);
     }
 };
@@ -292,7 +291,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__cleanup_shares_workdir);
 ATF_TEST_CASE_BODY(run_test_case__cleanup_shares_workdir)
 {
     atf_helper helper(this, "check_cleanup_workdir");
-    helper.set_metadata("has.cleanup", "true");
+    helper.set_metadata("has_cleanup", "true");
     helper.set_config("control_dir", fs::current_path());
     ATF_REQUIRE(engine::test_result(engine::test_result::skipped,
                                     "cookie created") == helper.run());
@@ -311,7 +310,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__has_cleanup__false);
 ATF_TEST_CASE_BODY(run_test_case__has_cleanup__false)
 {
     atf_helper helper(this, "create_cookie_from_cleanup");
-    helper.set_metadata("has.cleanup", "false");
+    helper.set_metadata("has_cleanup", "false");
     helper.set_config("control_dir", fs::current_path());
     ATF_REQUIRE(engine::test_result(engine::test_result::passed) ==
                 helper.run());
@@ -326,7 +325,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__has_cleanup__true);
 ATF_TEST_CASE_BODY(run_test_case__has_cleanup__true)
 {
     atf_helper helper(this, "create_cookie_from_cleanup");
-    helper.set_metadata("has.cleanup", "true");
+    helper.set_metadata("has_cleanup", "true");
     helper.set_config("control_dir", fs::current_path());
     ATF_REQUIRE(engine::test_result(engine::test_result::passed) ==
                 helper.run());
@@ -393,7 +392,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__allowed_architectures);
 ATF_TEST_CASE_BODY(run_test_case__allowed_architectures)
 {
     atf_helper helper(this, "create_cookie_in_control_dir");
-    helper.set_metadata("require.arch", "i386 x86_64");
+    helper.set_metadata("allowed_architectures", "i386 x86_64");
     helper.config().set_string("architecture", "powerpc");
     helper.config().set_string("platform", "");
     ATF_REQUIRE(engine::test_result(engine::test_result::skipped, "Current "
@@ -410,7 +409,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__allowed_platforms);
 ATF_TEST_CASE_BODY(run_test_case__allowed_platforms)
 {
     atf_helper helper(this, "create_cookie_in_control_dir");
-    helper.set_metadata("require.machine", "i386 amd64");
+    helper.set_metadata("allowed_platforms", "i386 amd64");
     helper.config().set_string("architecture", "");
     helper.config().set_string("platform", "macppc");
     ATF_REQUIRE(engine::test_result(engine::test_result::skipped, "Current "
@@ -427,7 +426,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__required_configs);
 ATF_TEST_CASE_BODY(run_test_case__required_configs)
 {
     atf_helper helper(this, "create_cookie_in_control_dir");
-    helper.set_metadata("require.config", "used-var");
+    helper.set_metadata("required_configs", "used-var");
     helper.set_config("control_dir", fs::current_path());
     helper.set_config("unused-var", "value");
     ATF_REQUIRE(engine::test_result(engine::test_result::skipped, "Required "
@@ -445,7 +444,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__required_programs);
 ATF_TEST_CASE_BODY(run_test_case__required_programs)
 {
     atf_helper helper(this, "create_cookie_in_control_dir");
-    helper.set_metadata("require.progs", "/non-existent/program");
+    helper.set_metadata("required_programs", "/non-existent/program");
     ATF_REQUIRE(engine::test_result(engine::test_result::skipped, "Required "
                                     "program '/non-existent/program' not "
                                     "found") ==
@@ -465,7 +464,7 @@ ATF_TEST_CASE_HEAD(run_test_case__required_user__root__ok)
 ATF_TEST_CASE_BODY(run_test_case__required_user__root__ok)
 {
     atf_helper helper(this, "create_cookie_in_workdir");
-    helper.set_metadata("require.user", "root");
+    helper.set_metadata("required_user", "root");
     ATF_REQUIRE(passwd::current_user().is_root());
     ATF_REQUIRE(engine::test_result(engine::test_result::passed) ==
                 helper.run());
@@ -480,7 +479,7 @@ ATF_TEST_CASE_HEAD(run_test_case__required_user__root__skip)
 ATF_TEST_CASE_BODY(run_test_case__required_user__root__skip)
 {
     atf_helper helper(this, "create_cookie_in_workdir");
-    helper.set_metadata("require.user", "root");
+    helper.set_metadata("required_user", "root");
     ATF_REQUIRE(!passwd::current_user().is_root());
     ATF_REQUIRE(engine::test_result(engine::test_result::skipped, "Requires "
                                     "root privileges") ==
@@ -496,7 +495,7 @@ ATF_TEST_CASE_HEAD(run_test_case__required_user__unprivileged__ok)
 ATF_TEST_CASE_BODY(run_test_case__required_user__unprivileged__ok)
 {
     atf_helper helper(this, "create_cookie_in_workdir");
-    helper.set_metadata("require.user", "unprivileged");
+    helper.set_metadata("required_user", "unprivileged");
     ATF_REQUIRE(!helper.config().is_set("unprivileged_user"));
     ATF_REQUIRE(engine::test_result(engine::test_result::passed) ==
                 helper.run());
@@ -511,7 +510,7 @@ ATF_TEST_CASE_HEAD(run_test_case__required_user__unprivileged__skip)
 ATF_TEST_CASE_BODY(run_test_case__required_user__unprivileged__skip)
 {
     atf_helper helper(this, "create_cookie_in_workdir");
-    helper.set_metadata("require.user", "unprivileged");
+    helper.set_metadata("required_user", "unprivileged");
     ATF_REQUIRE(!helper.config().is_set("unprivileged_user"));
     ATF_REQUIRE(engine::test_result(engine::test_result::skipped, "Requires "
                                     "an unprivileged user but the "
@@ -530,7 +529,7 @@ ATF_TEST_CASE_HEAD(run_test_case__required_user__unprivileged__drop)
 ATF_TEST_CASE_BODY(run_test_case__required_user__unprivileged__drop)
 {
     atf_helper helper(this, "check_unprivileged");
-    helper.set_metadata("require.user", "unprivileged");
+    helper.set_metadata("required_user", "unprivileged");
     helper.config().set< user_files::user_node >(
         "unprivileged_user",
         passwd::find_user_by_name(get_config_var("unprivileged-user")));
@@ -558,7 +557,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__timeout_cleanup);
 ATF_TEST_CASE_BODY(run_test_case__timeout_cleanup)
 {
     atf_helper helper(this, "timeout_cleanup");
-    helper.set_metadata("has.cleanup", "true");
+    helper.set_metadata("has_cleanup", "true");
     helper.set_metadata("timeout", "1");
     helper.set_config("control_dir", fs::current_path());
     ATF_REQUIRE(engine::test_result(engine::test_result::broken,
@@ -590,7 +589,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__stacktrace__cleanup);
 ATF_TEST_CASE_BODY(run_test_case__stacktrace__cleanup)
 {
     atf_helper helper(this, "crash_cleanup");
-    helper.set_metadata("has.cleanup", "true");
+    helper.set_metadata("has_cleanup", "true");
     capture_hooks hooks;
     const engine::test_result result = helper.run(hooks);
     ATF_REQUIRE(engine::test_result::broken == result.type());
@@ -634,7 +633,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__output);
 ATF_TEST_CASE_BODY(run_test_case__output)
 {
     atf_helper helper(this, "output");
-    helper.set_metadata("has.cleanup", "true");
+    helper.set_metadata("has_cleanup", "true");
 
     capture_hooks hooks;
     ATF_REQUIRE(engine::test_result(engine::test_result::passed) ==

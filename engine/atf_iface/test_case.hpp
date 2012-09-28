@@ -57,9 +57,6 @@ public:
     test_case(const base_test_program&, const std::string&, const std::string&,
               const test_result&);
     ~test_case(void);
-
-    static test_case from_properties(const base_test_program&,
-                                     const std::string&, const properties_map&);
 };
 
 

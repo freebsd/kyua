@@ -151,9 +151,8 @@ ATF_TEST_CASE_BODY(test_cases__set__some)
 
     //ATF_REQUIRE_EQ(0, test_program.loads);
     engine::test_cases_vector exp_test_cases;
-    const atf_iface::test_case test_case =
-        atf_iface::test_case::from_properties(test_program, "hello",
-                                              engine::properties_map());
+    const atf_iface::test_case test_case(test_program, "hello",
+                                         engine::metadata_builder().build());
     exp_test_cases.push_back(engine::test_case_ptr(
         new atf_iface::test_case(test_case)));
     test_program.set_test_cases(exp_test_cases);

@@ -42,6 +42,7 @@ namespace detail {
 
 
 test_cases_vector parse_test_cases(const base_test_program&, std::istream&);
+metadata parse_metadata(const properties_map&);
 
 
 }  // namespace detail
