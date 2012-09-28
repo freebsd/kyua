@@ -39,35 +39,22 @@ namespace plain_iface = engine::plain_iface;
 using utils::none;
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(ctor);
-ATF_TEST_CASE_BODY(ctor)
-{
-    const engine::metadata md = engine::metadata_builder().build();
-    const plain_iface::test_program test_program(
-        fs::path("program"), fs::path("root"), "test-suite", md);
-    ATF_REQUIRE_EQ("program", test_program.relative_path().str());
-    ATF_REQUIRE_EQ("root", test_program.root().str());
-    ATF_REQUIRE_EQ("test-suite", test_program.test_suite_name());
-}
-
-
 ATF_TEST_CASE_WITHOUT_HEAD(test_cases);
 ATF_TEST_CASE_BODY(test_cases)
 {
     const engine::metadata md = engine::metadata_builder().build();
-    const plain_iface::test_program test_program(
-        fs::path("program"), fs::path("root"), "test-suite", md);
+    const engine::test_program test_program(
+        "plain", fs::path("program"), fs::path("root"), "test-suite", md);
     const engine::test_cases_vector test_cases(test_program.test_cases());
     ATF_REQUIRE_EQ(1, test_cases.size());
 
     const engine::test_case* main_test_case = test_cases[0].get();
-    ATF_REQUIRE(&test_program == &main_test_case->test_program());
+    ATF_REQUIRE(&test_program == &main_test_case->container_test_program());
     ATF_REQUIRE_EQ("main", main_test_case->name());
 }
 
 
 ATF_INIT_TEST_CASES(tcs)
 {
-    ATF_ADD_TEST_CASE(tcs, ctor);
     ATF_ADD_TEST_CASE(tcs, test_cases);
 }

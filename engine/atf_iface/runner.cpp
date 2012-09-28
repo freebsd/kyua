@@ -174,7 +174,8 @@ class execute_test_case_body {
     void
     safe_run(void) const
     {
-        const fs::path test_program = _test_case.test_program().absolute_path();
+        const fs::path test_program =
+            _test_case.container_test_program().absolute_path();
         const fs::path abs_test_program = test_program.is_absolute() ?
             test_program : test_program.to_absolute();
 
@@ -188,7 +189,8 @@ class execute_test_case_body {
         args.push_back(F("-r%s") % _result_file);
         args.push_back(F("-s%s") % abs_test_program.branch_path());
         config_to_args(_user_config,
-                       _test_case.test_program().test_suite_name(), args);
+                       _test_case.container_test_program().test_suite_name(),
+                       args);
         args.push_back(_test_case.name());
         process::exec(abs_test_program, args);
     }
@@ -262,7 +264,8 @@ public:
     void
     operator()(void)
     {
-        const fs::path test_program = _test_case.test_program().absolute_path();
+        const fs::path test_program =
+            _test_case.container_test_program().absolute_path();
         const fs::path abs_test_program = test_program.is_absolute() ?
             test_program : test_program.to_absolute();
 
@@ -275,7 +278,8 @@ public:
         std::vector< std::string > args;
         args.push_back(F("-s%s") % abs_test_program.branch_path());
         config_to_args(_user_config,
-                       _test_case.test_program().test_suite_name(), args);
+                       _test_case.container_test_program().test_suite_name(),
+                       args);
         args.push_back(F("%s:cleanup") % _test_case.name());
         process::exec(abs_test_program, args);
     }
@@ -363,8 +367,8 @@ public:
                                        _user_config),
                 stdout_file, stderr_file, _test_case.get_metadata().timeout());
             utils::dump_stacktrace_if_available(
-                _test_case.test_program().absolute_path(), body_status,
-                rundir, stderr_file);
+                _test_case.container_test_program().absolute_path(),
+                body_status, rundir, stderr_file);
         } catch (const engine::interrupted_error& e) {
             // Ignore: we want to attempt to run the cleanup function before we
             // return.  The call below to check_interrupt will reraise this
@@ -378,8 +382,8 @@ public:
                 execute_test_case_cleanup(_test_case, rundir, _user_config),
                 stdout_file, stderr_file, _test_case.get_metadata().timeout());
             utils::dump_stacktrace_if_available(
-                _test_case.test_program().absolute_path(), cleanup_status,
-                rundir, stderr_file);
+                _test_case.container_test_program().absolute_path(),
+                cleanup_status, rundir, stderr_file);
         } else {
             cleanup_status = process::status::fake_exited(EXIT_SUCCESS);
         }
@@ -427,7 +431,7 @@ atf_iface::run_test_case(const engine::test_case& test_case,
     try {
         const std::string skip_reason = check_reqs(
             test_case.get_metadata(), user_config,
-            test_case.test_program().test_suite_name());
+            test_case.container_test_program().test_suite_name());
         if (skip_reason.empty())
             return engine::protected_run(run_test_case_safe(
                 test_case, user_config, hooks, stdout_path, stderr_path));

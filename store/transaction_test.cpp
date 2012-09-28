@@ -37,10 +37,7 @@
 #include <atf-c++.hpp>
 
 #include "engine/action.hpp"
-#include "engine/atf_iface/test_program.hpp"
 #include "engine/context.hpp"
-#include "engine/plain_iface/test_case.hpp"
-#include "engine/plain_iface/test_program.hpp"
 #include "engine/test_result.hpp"
 #include "store/backend.hpp"
 #include "store/exceptions.hpp"
@@ -53,11 +50,9 @@
 #include "utils/sqlite/statement.ipp"
 #include "utils/units.hpp"
 
-namespace atf_iface = engine::atf_iface;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace logging = utils::logging;
-namespace plain_iface = engine::plain_iface;
 namespace sqlite = utils::sqlite;
 namespace units = utils::units;
 
@@ -330,8 +325,8 @@ ATF_TEST_CASE_BODY(get_action_results__many)
     atf::utils::create_file("unused.txt", "unused file\n");
 
     {
-        const plain_iface::test_program test_program(
-            fs::path("a/prog1"), fs::path("/the/root"), "suite1",
+        const engine::test_program test_program(
+            "plain", fs::path("a/prog1"), fs::path("/the/root"), "suite1",
             engine::metadata_builder().build());
         const engine::test_case test_case("plain", test_program, "main",
                                           engine::metadata_builder().build());
@@ -351,8 +346,8 @@ ATF_TEST_CASE_BODY(get_action_results__many)
         tx.put_result(result, tc2_id, start_time1, end_time1);
     }
     {
-        const plain_iface::test_program test_program(
-            fs::path("b/prog2"), fs::path("/the/root"), "suite2",
+        const engine::test_program test_program(
+            "plain", fs::path("b/prog2"), fs::path("/the/root"), "suite2",
             engine::metadata_builder().build());
         const engine::test_case test_case("plain", test_program, "main",
                                           engine::metadata_builder().build());
@@ -608,8 +603,9 @@ ATF_TEST_CASE_HEAD(put_test_program__atf)
 }
 ATF_TEST_CASE_BODY(put_test_program__atf)
 {
-    const atf_iface::test_program test_program(
-        fs::path("the/binary"), fs::path("/some//root"), "the-suite");
+    const engine::test_program test_program(
+        "atf", fs::path("the/binary"), fs::path("/some//root"), "the-suite",
+        engine::metadata_builder().build());
 
     store::backend backend = store::backend::open_rw(fs::path("test.db"));
     backend.database().exec("PRAGMA foreign_keys = OFF");
@@ -648,8 +644,8 @@ ATF_TEST_CASE_HEAD(put_test_program__plain)
 }
 ATF_TEST_CASE_BODY(put_test_program__plain)
 {
-    const plain_iface::test_program test_program(
-        fs::path("the/binary"), fs::path("some/root"), "the-suite",
+    const engine::test_program test_program(
+        "plain", fs::path("the/binary"), fs::path("some/root"), "the-suite",
         engine::metadata_builder().build());
 
     store::backend backend = store::backend::open_rw(fs::path("test.db"));
@@ -696,8 +692,8 @@ ATF_TEST_CASE_HEAD(put_test_program__fail)
 ATF_TEST_CASE_BODY(put_test_program__fail)
 {
     // TODO(jmmv): Use a mock test program.
-    const plain_iface::test_program test_program(
-        fs::path("the/binary"), fs::path("/some/root"), "the-suite",
+    const engine::test_program test_program(
+        "plain", fs::path("the/binary"), fs::path("/some/root"), "the-suite",
         engine::metadata_builder().build());
 
     store::backend backend = store::backend::open_rw(fs::path("test.db"));
@@ -715,8 +711,9 @@ ATF_TEST_CASE_HEAD(put_test_case__atf)
 }
 ATF_TEST_CASE_BODY(put_test_case__atf)
 {
-    const atf_iface::test_program test_program(
-        fs::path("the/binary"), fs::path("/some/root"), "the-suite");
+    const engine::test_program test_program(
+        "atf", fs::path("the/binary"), fs::path("/some/root"), "the-suite",
+        engine::metadata_builder().build());
 
     const engine::test_case test_case1("atf", test_program, "tc1",
                                        engine::metadata_builder().build());
@@ -755,17 +752,13 @@ ATF_TEST_CASE_BODY(put_test_case__atf)
     }
 
     store::transaction tx = backend.start();
-    const engine::test_program_ptr generic_loaded_test_program =
+    const engine::test_program_ptr loaded_test_program =
         store::detail::get_test_program(backend, test_program_id,
                                         store::detail::atf_interface);
-
-    const atf_iface::test_program& loaded_test_program =
-        *dynamic_cast< const atf_iface::test_program* >(
-            generic_loaded_test_program.get());
     ATF_REQUIRE(compare_test_cases(test_case1,
-                                   *loaded_test_program.find("tc1").get()));
+                                   *loaded_test_program->find("tc1").get()));
     ATF_REQUIRE(compare_test_cases(test_case2,
-                                   *loaded_test_program.find("tc2").get()));
+                                   *loaded_test_program->find("tc2").get()));
 }
 
 
@@ -780,8 +773,9 @@ ATF_TEST_CASE_BODY(put_test_case__plain)
     const engine::metadata md = engine::metadata_builder()
         .set_timeout(datetime::delta(512, 0))
         .build();
-    const plain_iface::test_program test_program(
-        fs::path("the/binary"), fs::path("/some/root"), "the-suite", md);
+    const engine::test_program test_program(
+        "plain", fs::path("the/binary"), fs::path("/some/root"),
+        "the-suite", md);
     const engine::test_case test_case("plain", test_program, "main",
                                       engine::metadata_builder().build());
 
@@ -820,8 +814,8 @@ ATF_TEST_CASE_HEAD(put_test_case__fail)
 ATF_TEST_CASE_BODY(put_test_case__fail)
 {
     // TODO(jmmv): Use a mock test program and test case.
-    const plain_iface::test_program test_program(
-        fs::path("the/binary"), fs::path("/some/root"), "the-suite",
+    const engine::test_program test_program(
+        "plain", fs::path("the/binary"), fs::path("/some/root"), "the-suite",
         engine::metadata_builder().build());
     const engine::test_case test_case("plain", test_program, "main",
                                       engine::metadata_builder().build());

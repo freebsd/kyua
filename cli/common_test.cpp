@@ -326,7 +326,7 @@ ATF_TEST_CASE_BODY(format_result__with_reason)
 ATF_TEST_CASE_WITHOUT_HEAD(format_test_case_id__test_case);
 ATF_TEST_CASE_BODY(format_test_case_id__test_case)
 {
-    const engine::base_test_program test_program(
+    const engine::test_program test_program(
         "mock", fs::path("foo/bar/baz"), fs::path("unused-root"),
         "unused-suite-name", engine::metadata_builder().build());
     const engine::test_case test_case("mock", test_program, "abc",

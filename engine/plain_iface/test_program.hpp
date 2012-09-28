@@ -39,16 +39,7 @@ namespace engine {
 namespace plain_iface {
 
 
-/// Representation of a plain test program.
-class test_program : public base_test_program {
-public:
-    test_program(const utils::fs::path&, const utils::fs::path&,
-                 const std::string&, const metadata&);
-    ~test_program(void);
-};
-
-
-test_cases_vector load_plain_test_cases(const base_test_program*);
+test_cases_vector load_plain_test_cases(const test_program*);
 
 
 }  // namespace plain_iface

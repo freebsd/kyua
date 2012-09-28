@@ -98,30 +98,29 @@ public:
 /// If the test program fails to provide a list of test cases, a fake test case
 /// named '__test_program__' is created and it is reported as broken.
 ///
-/// \param test_program The test program to execute.
+/// \param program The test program to execute.
 /// \param user_config The configuration variables provided by the user.
 /// \param filters The matching state of the filters.
 /// \param hooks The user hooks to receive asynchronous notifications.
 /// \param tx The store transaction into which to put the results.
 /// \param action_id The action this program belongs to.
 void
-run_test_program(const engine::base_test_program& test_program,
+run_test_program(const engine::test_program& program,
                  const config::tree& user_config,
                  engine::filters_state& filters,
                  run_tests::base_hooks& hooks,
                  store::transaction& tx,
                  const int64_t action_id)
 {
-    LI(F("Processing test program '%s'") % test_program.relative_path());
-    const int64_t test_program_id = tx.put_test_program(test_program,
-                                                        action_id);
+    LI(F("Processing test program '%s'") % program.relative_path());
+    const int64_t test_program_id = tx.put_test_program(program, action_id);
 
-    const engine::test_cases_vector& test_cases = test_program.test_cases();
+    const engine::test_cases_vector& test_cases = program.test_cases();
     for (engine::test_cases_vector::const_iterator iter = test_cases.begin();
          iter != test_cases.end(); iter++) {
         const engine::test_case_ptr test_case = *iter;
 
-        if (!filters.match_test_case(test_program.relative_path(),
+        if (!filters.match_test_case(program.relative_path(),
                                      test_case->name()))
             continue;
 

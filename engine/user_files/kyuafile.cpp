@@ -35,8 +35,7 @@
 #include <lutok/stack_cleaner.hpp>
 #include <lutok/state.ipp>
 
-#include "engine/atf_iface/test_program.hpp"
-#include "engine/plain_iface/test_program.hpp"
+#include "engine/test_program.hpp"
 #include "engine/user_files/common.hpp"
 #include "engine/user_files/exceptions.hpp"
 #include "utils/datetime.hpp"
@@ -46,10 +45,8 @@
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 
-namespace atf_iface = engine::atf_iface;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
-namespace plain_iface = engine::plain_iface;
 namespace user_files = engine::user_files;
 
 using utils::none;
@@ -154,8 +151,9 @@ get_atf_test_program(lutok::state& state, const fs::path& build_root)
     const fs::path path = get_path(state, build_root);
     const std::string test_suite = get_test_suite(state, path);
 
-    return engine::test_program_ptr(new atf_iface::test_program(
-        path, build_root, test_suite));
+    return engine::test_program_ptr(new engine::test_program(
+        "atf", path, build_root, test_suite,
+        engine::metadata_builder().build()));
 }
 
 
@@ -196,8 +194,8 @@ get_plain_test_program(lutok::state& state, const fs::path& build_root)
         state.pop(1);
     }
 
-    return engine::test_program_ptr(new plain_iface::test_program(
-        path, build_root, test_suite, mdbuilder.build()));
+    return engine::test_program_ptr(new engine::test_program(
+        "plain", path, build_root, test_suite, mdbuilder.build()));
 }
 
 

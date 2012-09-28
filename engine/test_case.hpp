@@ -44,7 +44,7 @@ namespace engine {
 
 
 class test_result;
-class base_test_program;
+class test_program;
 
 
 /// Hooks to introspect the execution of a test case.
@@ -73,15 +73,15 @@ class test_case {
     std::tr1::shared_ptr< impl > _pimpl;
 
 public:
-    test_case(const std::string&, const base_test_program&,
+    test_case(const std::string&, const test_program&,
               const std::string&, const metadata&);
-    test_case(const std::string&, const base_test_program&,
+    test_case(const std::string&, const test_program&,
               const std::string&, const std::string&,
               const engine::test_result&);
     ~test_case(void);
 
     const std::string& interface_name(void) const;
-    const base_test_program& test_program(void) const;
+    const test_program& container_test_program(void) const;
     const std::string& name(void) const;
     const metadata& get_metadata(void) const;
     utils::optional< test_result > fake_result(void) const;

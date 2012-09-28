@@ -52,18 +52,18 @@ namespace engine {
 typedef std::vector< test_case_ptr > test_cases_vector;
 
 
-/// Abstract representation of a test program.
-class base_test_program {
-    struct base_impl;
+/// Representation of a test program.
+class test_program {
+    struct impl;
 
     /// Pointer to the shared internal implementation.
-    std::tr1::shared_ptr< base_impl > _pbimpl;
+    std::tr1::shared_ptr< impl > _pimpl;
 
 public:
-    base_test_program(const std::string&, const utils::fs::path&,
-                      const utils::fs::path&, const std::string&,
-                      const metadata&);
-    virtual ~base_test_program(void);
+    test_program(const std::string&, const utils::fs::path&,
+                 const utils::fs::path&, const std::string&,
+                 const metadata&);
+    ~test_program(void);
 
     const std::string& interface_name(void) const;
     const utils::fs::path& root(void) const;
@@ -79,7 +79,7 @@ public:
 
 
 /// Pointer to a test program.
-typedef std::tr1::shared_ptr< base_test_program > test_program_ptr;
+typedef std::tr1::shared_ptr< test_program > test_program_ptr;
 
 
 /// Collection of test programs.

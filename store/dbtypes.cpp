@@ -30,17 +30,13 @@
 
 #include <typeinfo>
 
-#include "engine/atf_iface/test_program.hpp"
-#include "engine/plain_iface/test_program.hpp"
 #include "engine/test_program.hpp"
 #include "store/exceptions.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/sanity.hpp"
 #include "utils/sqlite/statement.ipp"
 
-namespace atf_iface = engine::atf_iface;
 namespace datetime = utils::datetime;
-namespace plain_iface = engine::plain_iface;
 namespace sqlite = utils::sqlite;
 
 
@@ -50,17 +46,17 @@ namespace sqlite = utils::sqlite;
 ///
 /// \return The test program interface.
 ///
-/// \todo It might make sense to make this a method of base_test_program and
+/// \todo It might make sense to make this a method of test_program and
 /// make every subclass return its own type.  However, even doing this would not
 /// free the storage layer from doing nasty 'switches' to act differently on
 /// each interface.  Also the whole interface_type thing is only required by the
 /// storage layer, so moving it into the engine may not be that appropriate.
 store::detail::interface_type
-store::guess_interface(const engine::base_test_program& test_program)
+store::guess_interface(const engine::test_program& test_program)
 {
-    if (typeid(test_program) == typeid(atf_iface::test_program)) {
+    if (test_program.interface_name() == "atf") {
         return detail::atf_interface;
-    } else if (typeid(test_program) == typeid(plain_iface::test_program)) {
+    } else if (test_program.interface_name() == "plain") {
         return detail::plain_interface;
     } else
         UNREACHABLE_MSG("Unsupported test program interface");

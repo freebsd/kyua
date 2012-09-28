@@ -91,7 +91,8 @@ class execute_test_case {
     void
     safe_run(void) const
     {
-        const fs::path test_program = _test_case.test_program().absolute_path();
+        const fs::path test_program =
+            _test_case.container_test_program().absolute_path();
         const fs::path abs_test_program = test_program.is_absolute() ?
             test_program : test_program.to_absolute();
 
@@ -232,8 +233,8 @@ public:
             execute_test_case(_test_case, rundir), stdout_file, stderr_file,
             _test_case.get_metadata().timeout());
         utils::dump_stacktrace_if_available(
-            _test_case.test_program().absolute_path(), body_status, rundir,
-            stderr_file);
+            _test_case.container_test_program().absolute_path(), body_status,
+            rundir, stderr_file);
 
         engine::check_interrupt();
 

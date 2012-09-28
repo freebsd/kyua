@@ -30,14 +30,12 @@
 
 #include <atf-c++.hpp>
 
-// TODO(jmmv): Should probably use a mock test program.
-#include "engine/atf_iface/test_program.hpp"
 #include "engine/test_case.hpp"
+#include "engine/test_program.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.hpp"
 #include "utils/cmdline/ui_mock.hpp"
 
-namespace atf_iface = engine::atf_iface;
 namespace cmdline = utils::cmdline;
 namespace fs = utils::fs;
 
@@ -48,9 +46,8 @@ ATF_TEST_CASE_BODY(list_test_case__no_verbose)
     const engine::metadata md = engine::metadata_builder()
         .set_description("This should not be shown")
         .build();
-    const atf_iface::test_program test_program(fs::path("the/test-program"),
-                                               fs::path("root"),
-                                               "unused-suite");
+    const engine::test_program test_program(
+        "mock", fs::path("the/test-program"), fs::path("root"), "suite", md);
     const engine::test_case test_case("mock", test_program, "abc", md);
 
     cmdline::ui_mock ui;
@@ -65,8 +62,8 @@ ATF_TEST_CASE_WITHOUT_HEAD(list_test_case__verbose__no_properties);
 ATF_TEST_CASE_BODY(list_test_case__verbose__no_properties)
 {
     const engine::metadata md = engine::metadata_builder().build();
-    const atf_iface::test_program test_program(fs::path("hello/world"),
-                                               fs::path("root"), "the-suite");
+    const engine::test_program test_program("mock", fs::path("hello/world"),
+                                            fs::path("root"), "the-suite", md);
     const engine::test_case test_case("mock", test_program, "my_name", md);
 
     cmdline::ui_mock ui;
@@ -85,8 +82,8 @@ ATF_TEST_CASE_BODY(list_test_case__verbose__some_properties)
         .set_description("Some description")
         .set_has_cleanup(true)
         .build();
-    const atf_iface::test_program test_program(fs::path("hello/world"),
-                                               fs::path("root"), "the-suite");
+    const engine::test_program test_program("mock", fs::path("hello/world"),
+                                            fs::path("root"), "the-suite", md);
     const engine::test_case test_case("mock", test_program, "my_name", md);
 
     cmdline::ui_mock ui;

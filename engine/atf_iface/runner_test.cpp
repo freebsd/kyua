@@ -45,8 +45,6 @@ extern "C" {
 
 #include <atf-c++.hpp>
 
-#include "engine/atf_iface/test_case.hpp"
-#include "engine/atf_iface/test_program.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/test_result.hpp"
 #include "engine/user_files/config.hpp"
@@ -59,7 +57,6 @@ extern "C" {
 #include "utils/passwd.hpp"
 #include "utils/process/children.ipp"
 
-namespace atf_iface = engine::atf_iface;
 namespace config = utils::config;
 namespace fs = utils::fs;
 namespace passwd = utils::passwd;
@@ -239,8 +236,9 @@ public:
     engine::test_result
     run(engine::test_case_hooks& hooks) const
     {
-        const atf_iface::test_program test_program(_binary_path, _root,
-                                                   "the-suite");
+        const engine::test_program test_program(
+            "atf", _binary_path, _root, "the-suite",
+            engine::metadata_builder().build());
         const engine::test_case test_case("atf", test_program, _name,
                                           _mdbuilder.build());
         return engine::run_test_case(&test_case, _user_config, hooks);

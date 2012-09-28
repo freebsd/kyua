@@ -37,11 +37,7 @@ extern "C" {
 #include <utility>
 
 #include "engine/action.hpp"
-#include "engine/atf_iface/test_case.hpp"
-#include "engine/atf_iface/test_program.hpp"
 #include "engine/context.hpp"
-#include "engine/plain_iface/test_case.hpp"
-#include "engine/plain_iface/test_program.hpp"
 #include "engine/test_result.hpp"
 #include "store/backend.hpp"
 #include "store/dbtypes.hpp"
@@ -59,11 +55,9 @@ extern "C" {
 #include "utils/sqlite/transaction.hpp"
 #include "utils/units.hpp"
 
-namespace atf_iface = engine::atf_iface;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace sqlite = utils::sqlite;
-namespace plain_iface = engine::plain_iface;
 namespace units = utils::units;
 
 using utils::none;
@@ -113,7 +107,7 @@ get_env_vars(sqlite::database& db, const int64_t context_id)
 /// \return A new ATF test case.
 static engine::test_case*
 get_atf_test_case(sqlite::database& db, const int64_t test_case_id,
-                  const engine::base_test_program& test_program,
+                  const engine::test_program& test_program,
                   const std::string& name)
 {
     sqlite::statement stmt = db.create_statement(
@@ -213,7 +207,7 @@ get_file(sqlite::database& db, const int64_t file_id)
 /// \throw integrity_error If there is any problem in the loaded data.
 static engine::test_cases_vector
 get_test_cases(sqlite::database& db, const int64_t test_program_id,
-               const engine::base_test_program& test_program,
+               const engine::test_program& test_program,
                const store::detail::interface_type interface)
 {
     engine::test_cases_vector test_cases;
@@ -484,7 +478,7 @@ put_test_case_detail(sqlite::database& db,
 ///     the previous insert of the generic data.
 static void
 put_test_program_detail(sqlite::database& db,
-                        const engine::base_test_program& test_program,
+                        const engine::test_program& test_program,
                         const int64_t test_program_id)
 {
     if (test_program.interface_name() == "atf") {
@@ -570,10 +564,12 @@ store::detail::get_test_program(backend& backend_, const int64_t id,
             "SELECT * FROM test_programs WHERE test_program_id == :id");
         stmt.bind(":id", id);
         stmt.step();
-        test_program.reset(new atf_iface::test_program(
+        test_program.reset(new engine::test_program(
+            "atf",
             fs::path(stmt.safe_column_text("relative_path")),
             fs::path(stmt.safe_column_text("root")),
-            stmt.safe_column_text("test_suite_name")));
+            stmt.safe_column_text("test_suite_name"),
+            engine::metadata_builder().build()));
         const bool more = stmt.step();
         INV(!more);
         break;
@@ -588,7 +584,8 @@ store::detail::get_test_program(backend& backend_, const int64_t id,
         const engine::metadata md = engine::metadata_builder()
             .set_timeout(store::column_delta(stmt, "timeout"))
             .build();
-        test_program.reset(new plain_iface::test_program(
+        test_program.reset(new engine::test_program(
+            "plain",
             fs::path(stmt.safe_column_text("relative_path")),
             fs::path(stmt.safe_column_text("root")),
             stmt.safe_column_text("test_suite_name"), md));
@@ -1026,9 +1023,8 @@ store::transaction::put_context(const engine::context& context)
 ///
 /// \throw error If there is any problem when talking to the database.
 int64_t
-store::transaction::put_test_program(
-    const engine::base_test_program& test_program,
-    const int64_t action_id)
+store::transaction::put_test_program(const engine::test_program& test_program,
+                                     const int64_t action_id)
 {
     try {
         sqlite::statement stmt = _pimpl->_db.create_statement(
@@ -1041,8 +1037,7 @@ store::transaction::put_test_program(
         stmt.bind(":absolute_path", test_program.absolute_path().str());
         // TODO(jmmv): The root is not necessarily absolute.  We need to ensure
         // that we can recover the absolute path of the test program.  Maybe we
-        // need to change the base_test_program to always ensure root is
-        // absolute?
+        // need to change the test_program to always ensure root is absolute?
         stmt.bind(":root", test_program.root().str());
         stmt.bind(":relative_path", test_program.relative_path().str());
         stmt.bind(":test_suite_name", test_program.test_suite_name());

@@ -37,9 +37,9 @@
 #include "cli/common.hpp"
 
 namespace engine {
-class base_test_program;
 class filters_state;
 class test_case;
+class test_program;
 }  // namespace engine
 
 namespace utils {

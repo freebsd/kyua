@@ -100,7 +100,7 @@ cli::detail::list_test_case(cmdline::ui* ui, const bool verbose,
         ui->out_raw(id);
     } else {
         ui->out_raw(F("%s (%s)") % id %
-                    test_case.test_program().test_suite_name());
+                    test_case.container_test_program().test_suite_name());
 
         // TODO(jmmv): Running these for every test case is probably not the
         // fastest thing to do.

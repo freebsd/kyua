@@ -33,39 +33,16 @@
 namespace plain_iface = engine::plain_iface;
 
 
-/// Constructs a new plain test program.
-///
-/// \param binary_ The name of the test program binary relative to root_.
-/// \param root_ The root of the test suite containing the test program.
-/// \param test_suite_name_ The name of the test suite this program belongs to.
-/// \param md_ The metadata of the test program.
-plain_iface::test_program::test_program(
-    const utils::fs::path& binary_,
-    const utils::fs::path& root_,
-    const std::string& test_suite_name_,
-    const engine::metadata& md_) :
-    base_test_program("plain", binary_, root_, test_suite_name_, md_)
-{
-}
-
-
-/// Destructor.
-plain_iface::test_program::~test_program(void)
-{
-}
-
-
 /// Loads the list of test cases contained in a test program.
 ///
-/// \param test_program Test program from which to load the test cases.
+/// \param program Test program from which to load the test cases.
 ///
 /// \return A single test_case object representing the whole test program.
 engine::test_cases_vector
-plain_iface::load_plain_test_cases(const base_test_program* test_program)
+plain_iface::load_plain_test_cases(const test_program* program)
 {
     test_cases_vector loaded_test_cases;
     loaded_test_cases.push_back(engine::test_case_ptr(
-        new test_case("plain", *test_program, "main",
-                      test_program->get_metadata())));
+        new test_case("plain", *program, "main", program->get_metadata())));
     return loaded_test_cases;
 }

@@ -42,8 +42,8 @@ namespace fs = utils::fs;
 using utils::optional;
 
 
-/// Internal implementation of a base_test_program.
-struct engine::base_test_program::base_impl {
+/// Internal implementation of a test_program.
+struct engine::test_program::impl {
     /// Name of the test program interface.
     std::string interface_name;
 
@@ -70,9 +70,9 @@ struct engine::base_test_program::base_impl {
     /// \param test_suite_name_ The name of the test suite this program
     ///     belongs to.
     /// \param md_ Metadata of the test program.
-    base_impl(const std::string& interface_name_, const fs::path& binary_,
-              const fs::path& root_, const std::string& test_suite_name_,
-              const metadata& md_) :
+    impl(const std::string& interface_name_, const fs::path& binary_,
+         const fs::path& root_, const std::string& test_suite_name_,
+         const metadata& md_) :
         interface_name(interface_name_),
         binary(binary_),
         root(root_),
@@ -93,20 +93,18 @@ struct engine::base_test_program::base_impl {
 /// \param root_ The root of the test suite containing the test program.
 /// \param test_suite_name_ The name of the test suite this program belongs to.
 /// \param md_ Metadata of the test program.
-engine::base_test_program::base_test_program(
-    const std::string& interface_name_,
-    const fs::path& binary_,
-    const fs::path& root_,
-    const std::string& test_suite_name_,
-    const metadata& md_) :
-    _pbimpl(new base_impl(interface_name_, binary_, root_,
-                          test_suite_name_, md_))
+engine::test_program::test_program(const std::string& interface_name_,
+                                   const fs::path& binary_,
+                                   const fs::path& root_,
+                                   const std::string& test_suite_name_,
+                                   const metadata& md_) :
+    _pimpl(new impl(interface_name_, binary_, root_, test_suite_name_, md_))
 {
 }
 
 
 /// Destroys a test program.
-engine::base_test_program::~base_test_program(void)
+engine::test_program::~test_program(void)
 {
 }
 
@@ -115,9 +113,9 @@ engine::base_test_program::~base_test_program(void)
 ///
 /// \return An interface name.
 const std::string&
-engine::base_test_program::interface_name(void) const
+engine::test_program::interface_name(void) const
 {
-    return _pbimpl->interface_name;
+    return _pimpl->interface_name;
 }
 
 
@@ -125,9 +123,9 @@ engine::base_test_program::interface_name(void) const
 ///
 /// \return The relative path to the test program binary.
 const fs::path&
-engine::base_test_program::relative_path(void) const
+engine::test_program::relative_path(void) const
 {
-    return _pbimpl->binary;
+    return _pimpl->binary;
 }
 
 
@@ -135,9 +133,9 @@ engine::base_test_program::relative_path(void) const
 ///
 /// \return The absolute path to the test program binary.
 const fs::path
-engine::base_test_program::absolute_path(void) const
+engine::test_program::absolute_path(void) const
 {
-    const fs::path full_path = _pbimpl->root / _pbimpl->binary;
+    const fs::path full_path = _pimpl->root / _pimpl->binary;
     return full_path.is_absolute() ? full_path : full_path.to_absolute();
 }
 
@@ -146,9 +144,9 @@ engine::base_test_program::absolute_path(void) const
 ///
 /// \return The path to the root of the test suite.
 const fs::path&
-engine::base_test_program::root(void) const
+engine::test_program::root(void) const
 {
-    return _pbimpl->root;
+    return _pimpl->root;
 }
 
 
@@ -156,9 +154,9 @@ engine::base_test_program::root(void) const
 ///
 /// \return The name of the test suite.
 const std::string&
-engine::base_test_program::test_suite_name(void) const
+engine::test_program::test_suite_name(void) const
 {
-    return _pbimpl->test_suite_name;
+    return _pimpl->test_suite_name;
 }
 
 
@@ -166,9 +164,9 @@ engine::base_test_program::test_suite_name(void) const
 ///
 /// \return The metadata.
 const engine::metadata&
-engine::base_test_program::get_metadata(void) const
+engine::test_program::get_metadata(void) const
 {
-    return _pbimpl->md;
+    return _pimpl->md;
 }
 
 
@@ -181,7 +179,7 @@ engine::base_test_program::get_metadata(void) const
 /// \throw not_found_error If the specified test case is not in the test
 ///     program.
 const engine::test_case_ptr&
-engine::base_test_program::find(const std::string& name) const
+engine::test_program::find(const std::string& name) const
 {
     // TODO(jmmv): Should use a test_cases_map instead of a vector to optimize
     // lookups.
@@ -204,26 +202,26 @@ engine::base_test_program::find(const std::string& name) const
 ///
 /// \return The list of test cases provided by the test program.
 const engine::test_cases_vector&
-engine::base_test_program::test_cases(void) const
+engine::test_program::test_cases(void) const
 {
-    if (!_pbimpl->test_cases) {
+    if (!_pimpl->test_cases) {
         try {
             // TODO(jmmv): Yes, hardcoding the interface names here is nasty.
             // But this will go away once we implement the testers as individual
             // binaries, as we just auto-discover the ones that exist and use
             // their generic interface.
-            if (_pbimpl->interface_name == "atf") {
-                _pbimpl->test_cases = atf_iface::load_atf_test_cases(this);
-            } else if (_pbimpl->interface_name == "plain") {
-                _pbimpl->test_cases = plain_iface::load_plain_test_cases(this);
+            if (_pimpl->interface_name == "atf") {
+                _pimpl->test_cases = atf_iface::load_atf_test_cases(this);
+            } else if (_pimpl->interface_name == "plain") {
+                _pimpl->test_cases = plain_iface::load_plain_test_cases(this);
             } else
-                UNREACHABLE_MSG("Unknown interface " + _pbimpl->interface_name);
+                UNREACHABLE_MSG("Unknown interface " + _pimpl->interface_name);
         } catch (const std::runtime_error& e) {
             UNREACHABLE_MSG(F("Should not have thrown, but got: %s") %
                             e.what());
         }
     }
-    return _pbimpl->test_cases.get();
+    return _pimpl->test_cases.get();
 }
 
 
@@ -241,8 +239,8 @@ engine::base_test_program::test_cases(void) const
 ///
 /// \param test_cases_ The test cases to add to this test program.
 void
-engine::base_test_program::set_test_cases(const test_cases_vector& test_cases_)
+engine::test_program::set_test_cases(const test_cases_vector& test_cases_)
 {
-    PRE(!_pbimpl->test_cases);
-    _pbimpl->test_cases = test_cases_;
+    PRE(!_pimpl->test_cases);
+    _pimpl->test_cases = test_cases_;
 }

@@ -91,7 +91,7 @@ public:
     got_test_case(const engine::test_case& test_case)
     {
         test_cases.insert(F("%s:%s") %
-                          test_case.test_program().relative_path() %
+                          test_case.container_test_program().relative_path() %
                           test_case.name());
     }
 };

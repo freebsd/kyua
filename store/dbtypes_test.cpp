@@ -30,18 +30,15 @@
 
 #include <atf-c++.hpp>
 
-#include "engine/atf_iface/test_program.hpp"
-#include "engine/plain_iface/test_program.hpp"
+#include "engine/test_program.hpp"
 #include "store/exceptions.hpp"
 #include "utils/datetime.hpp"
 #include "utils/optional.ipp"
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/statement.ipp"
 
-namespace atf_iface = engine::atf_iface;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
-namespace plain_iface = engine::plain_iface;
 namespace sqlite = utils::sqlite;
 
 using utils::none;
@@ -145,7 +142,9 @@ ATF_TEST_CASE_BODY(delta__get_invalid_type)
 ATF_TEST_CASE_WITHOUT_HEAD(guess_interface__atf);
 ATF_TEST_CASE_BODY(guess_interface__atf)
 {
-    const atf_iface::test_program program(fs::path("foo"), fs::path("bar"), "");
+    const engine::test_program program(
+        "atf", fs::path("foo"), fs::path("bar"), "",
+        engine::metadata_builder().build());
     ATF_REQUIRE(store::detail::atf_interface ==
                 store::guess_interface(program));
 }
@@ -154,8 +153,8 @@ ATF_TEST_CASE_BODY(guess_interface__atf)
 ATF_TEST_CASE_WITHOUT_HEAD(guess_interface__plain);
 ATF_TEST_CASE_BODY(guess_interface__plain)
 {
-    const plain_iface::test_program program(
-        fs::path("foo"), fs::path("bar"), "",
+    const engine::test_program program(
+        "plain", fs::path("foo"), fs::path("bar"), "",
         engine::metadata_builder().build());
     ATF_REQUIRE(store::detail::plain_interface ==
                 store::guess_interface(program));

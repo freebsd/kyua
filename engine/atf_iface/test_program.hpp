@@ -41,22 +41,14 @@ namespace atf_iface {
 namespace detail {
 
 
-test_cases_vector parse_test_cases(const base_test_program&, std::istream&);
+test_cases_vector parse_test_cases(const test_program&, std::istream&);
 metadata parse_metadata(const properties_map&);
 
 
 }  // namespace detail
 
 
-/// Representation of an ATF test program.
-class test_program : public base_test_program {
-public:
-    test_program(const utils::fs::path&, const utils::fs::path&,
-                 const std::string&);
-};
-
-
-test_cases_vector load_atf_test_cases(const base_test_program*);
+test_cases_vector load_atf_test_cases(const test_program*);
 
 
 }  // namespace atf_iface

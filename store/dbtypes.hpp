@@ -43,13 +43,13 @@
 #include "utils/sqlite/statement.hpp"
 
 namespace engine {
-class base_test_program;
+class test_program;
 }  // namespace engine
 
 namespace store {
 
 
-detail::interface_type guess_interface(const engine::base_test_program&);
+detail::interface_type guess_interface(const engine::test_program&);
 
 void bind_bool(utils::sqlite::statement&, const char*, const bool);
 void bind_delta(utils::sqlite::statement&, const char*,

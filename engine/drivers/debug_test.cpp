@@ -127,6 +127,7 @@ debug_test::drive(const fs::path& kyuafile_path,
     engine::test_case_hooks dummy_hooks;
     const engine::test_result test_result = debug_test_case(
         test_case.get(), user_config, dummy_hooks, stdout_path, stderr_path);
-    return result(test_filter(test_case->test_program().relative_path(),
-                              test_case->name()), test_result);
+    return result(test_filter(
+                      test_case->container_test_program().relative_path(),
+                      test_case->name()), test_result);
 }

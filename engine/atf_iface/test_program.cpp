@@ -146,7 +146,7 @@ public:
 /// \throw format_error If the test case list has an invalid format.
 /// \throw process::error If the spawning of the child process fails.
 static engine::test_cases_vector
-safe_load_test_cases(const engine::base_test_program* test_program)
+safe_load_test_cases(const engine::test_program* test_program)
 {
     LI(F("Obtaining test cases list from test program '%s' of root '%s'") %
        test_program->relative_path() % test_program->root());
@@ -249,7 +249,7 @@ engine::atf_iface::detail::parse_metadata(const properties_map& raw_properties)
 ///
 /// \throw format_error If the test case list has an invalid format.
 engine::test_cases_vector
-engine::atf_iface::detail::parse_test_cases(const base_test_program& program,
+engine::atf_iface::detail::parse_test_cases(const test_program& program,
                                             std::istream& input)
 {
     std::string line;
@@ -286,24 +286,9 @@ engine::atf_iface::detail::parse_test_cases(const base_test_program& program,
 }
 
 
-/// Constructs a new ATF test program.
-///
-/// \param binary_ The name of the test program binary relative to root_.
-/// \param root_ The root of the test suite containing the test program.
-/// \param test_suite_name_ The name of the test suite this program belongs to.
-///
-atf_iface::test_program::test_program(const utils::fs::path& binary_,
-                                      const utils::fs::path& root_,
-                                      const std::string& test_suite_name_) :
-    base_test_program("atf", binary_, root_, test_suite_name_,
-                      engine::metadata_builder().build())
-{
-}
-
-
 /// Loads the list of test cases contained in a test program.
 ///
-/// \param test_program Test program from which to load the test cases.
+/// \param program Test program from which to load the test cases.
 ///
 /// \return A collection of test_case objects representing the input test case
 /// list.  If the test cases cannot be properly loaded from the test program,
@@ -311,14 +296,14 @@ atf_iface::test_program::test_program(const utils::fs::path& binary_,
 /// fake test case return is "runnable" in the sense that it will report an
 /// error when attempted to be run.
 engine::test_cases_vector
-atf_iface::load_atf_test_cases(const base_test_program* test_program)
+atf_iface::load_atf_test_cases(const test_program* program)
 {
     try {
-        return safe_load_test_cases(test_program);
+        return safe_load_test_cases(program);
     } catch (const std::runtime_error& e) {
         test_cases_vector loaded_test_cases;
         loaded_test_cases.push_back(test_case_ptr(new test_case(
-            "atf", *test_program, "__test_cases_list__",
+            "atf", *program, "__test_cases_list__",
             "Represents the correct processing of the test cases list",
             test_result(test_result::broken, e.what()))));
         return loaded_test_cases;

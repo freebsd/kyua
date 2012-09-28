@@ -82,7 +82,7 @@ struct engine::test_case::impl {
     const std::string interface_name;
 
     /// Test program this test case belongs to.
-    const base_test_program& test_program;
+    const test_program& _test_program;
 
     /// Name of the test case; must be unique within the test program.
     std::string name;
@@ -103,12 +103,12 @@ struct engine::test_case::impl {
     /// \param fake_result_ Fake result to return instead of running the test
     ///     case.
     impl(const std::string& interface_name_,
-         const base_test_program& test_program_,
+         const test_program& test_program_,
          const std::string& name_,
          const metadata& md_,
          const optional< test_result >& fake_result_) :
         interface_name(interface_name_),
-        test_program(test_program_),
+        _test_program(test_program_),
         name(name_),
         md(md_),
         fake_result(fake_result_)
@@ -128,7 +128,7 @@ struct engine::test_case::impl {
 ///     unique.
 /// \param md_ Metadata of the test case.
 engine::test_case::test_case(const std::string& interface_name_,
-                             const base_test_program& test_program_,
+                             const test_program& test_program_,
                              const std::string& name_,
                              const metadata& md_) :
     _pimpl(new impl(interface_name_, test_program_, name_, md_, none))
@@ -160,7 +160,7 @@ engine::test_case::test_case(const std::string& interface_name_,
 /// \param test_result_ The fake result to return when this test case is run.
 engine::test_case::test_case(
     const std::string& interface_name_,
-    const base_test_program& test_program_,
+    const test_program& test_program_,
     const std::string& name_,
     const std::string& description_,
     const engine::test_result& test_result_) :
@@ -193,10 +193,10 @@ engine::test_case::interface_name(void) const
 /// Gets the test program this test case belongs to.
 ///
 /// \return A reference to the container test program.
-const engine::base_test_program&
-engine::test_case::test_program(void) const
+const engine::test_program&
+engine::test_case::container_test_program(void) const
 {
-    return _pimpl->test_program;
+    return _pimpl->_test_program;
 }
 
 

@@ -42,7 +42,7 @@ extern "C" {
 #include <atf-c++.hpp>
 
 #include "engine/exceptions.hpp"
-#include "engine/plain_iface/test_program.hpp"
+#include "engine/test_program.hpp"
 #include "engine/test_result.hpp"
 #include "engine/user_files/config.hpp"
 #include "utils/config/tree.hpp"
@@ -56,7 +56,6 @@ extern "C" {
 namespace config = utils::config;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
-namespace plain_iface = engine::plain_iface;
 namespace process = utils::process;
 namespace user_files = engine::user_files;
 
@@ -169,8 +168,8 @@ public:
         engine::metadata_builder mdbuilder;
         if (_timeout)
             mdbuilder.set_timeout(_timeout.get());
-        const plain_iface::test_program test_program(
-            _binary_path, _root, "unit-tests", mdbuilder.build());
+        const engine::test_program test_program(
+            "plain", _binary_path, _root, "unit-tests", mdbuilder.build());
         const engine::test_cases_vector& tcs = test_program.test_cases();
         fetch_output_hooks fetcher;
         return engine::run_test_case(tcs[0].get(), user_config, fetcher);

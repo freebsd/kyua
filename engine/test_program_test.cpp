@@ -45,7 +45,7 @@ ATF_TEST_CASE_BODY(ctor_and_getters)
     const engine::metadata md = engine::metadata_builder()
         .add_custom("foo", "bar")
         .build();
-    const engine::base_test_program test_program(
+    const engine::test_program test_program(
         "mock", fs::path("binary"), fs::path("root"), "suite-name", md);
     ATF_REQUIRE_EQ("mock", test_program.interface_name());
     ATF_REQUIRE_EQ(fs::path("binary"), test_program.relative_path());
@@ -61,13 +61,13 @@ ATF_TEST_CASE_BODY(ctor_and_getters)
 ATF_TEST_CASE_WITHOUT_HEAD(find__ok);
 ATF_TEST_CASE_BODY(find__ok)
 {
-    const engine::base_test_program test_program(
+    const engine::test_program test_program(
         "mock", fs::path("binary"), fs::path("root"), "suite-name",
         engine::metadata_builder().build());
     expect_death("Cannot implement mock test case without TestersDesign");
     const engine::test_case_ptr test_case = test_program.find("foo");
     ATF_REQUIRE_EQ(fs::path("binary"),
-                   test_case->test_program().relative_path());
+                   test_case->container_test_program().relative_path());
     ATF_REQUIRE_EQ("foo", test_case->name());
 }
 
@@ -75,7 +75,7 @@ ATF_TEST_CASE_BODY(find__ok)
 ATF_TEST_CASE_WITHOUT_HEAD(find__missing);
 ATF_TEST_CASE_BODY(find__missing)
 {
-    const engine::base_test_program test_program(
+    const engine::test_program test_program(
         "mock", fs::path("binary"), fs::path("root"), "suite-name",
         engine::metadata_builder().build());
     expect_death("Cannot implement mock test case without TestersDesign");
@@ -88,14 +88,14 @@ ATF_TEST_CASE_BODY(find__missing)
 ATF_TEST_CASE_WITHOUT_HEAD(test_cases__get);
 ATF_TEST_CASE_BODY(test_cases__get)
 {
-    const engine::base_test_program test_program(
+    const engine::test_program test_program(
         "mock", fs::path("binary"), fs::path("root"), "suite-name",
         engine::metadata_builder().build());
     expect_death("Cannot implement mock test case without TestersDesign");
     const engine::test_cases_vector& test_cases = test_program.test_cases();
     ATF_REQUIRE_EQ(1, test_cases.size());
     ATF_REQUIRE_EQ(fs::path("binary"),
-                   test_cases[0]->test_program().relative_path());
+                   test_cases[0]->container_test_program().relative_path());
     ATF_REQUIRE_EQ("foo", test_cases[0]->name());
 }
 
@@ -103,7 +103,7 @@ ATF_TEST_CASE_BODY(test_cases__get)
 ATF_TEST_CASE_WITHOUT_HEAD(test_cases__cached);
 ATF_TEST_CASE_BODY(test_cases__cached)
 {
-    const engine::base_test_program test_program(
+    const engine::test_program test_program(
         "mock", fs::path("binary"), fs::path("root"), "suite-name",
         engine::metadata_builder().build());
     expect_death("Cannot implement mock test case without TestersDesign");
@@ -118,7 +118,7 @@ ATF_TEST_CASE_BODY(test_cases__cached)
 ATF_TEST_CASE_WITHOUT_HEAD(test_cases__set__empty);
 ATF_TEST_CASE_BODY(test_cases__set__empty)
 {
-    engine::base_test_program test_program(
+    engine::test_program test_program(
         "mock", fs::path("binary"), fs::path("root"), "suite-name",
         engine::metadata_builder().build());
 
@@ -134,7 +134,7 @@ ATF_TEST_CASE_BODY(test_cases__set__empty)
 ATF_TEST_CASE_WITHOUT_HEAD(test_cases__set__some);
 ATF_TEST_CASE_BODY(test_cases__set__some)
 {
-    engine::base_test_program test_program(
+    engine::test_program test_program(
         "mock", fs::path("binary"), fs::path("root"), "suite-name",
         engine::metadata_builder().build());
 

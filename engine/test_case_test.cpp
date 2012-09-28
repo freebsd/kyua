@@ -94,11 +94,11 @@ ATF_TEST_CASE_BODY(test_case__ctor_and_getters)
     const engine::metadata md = engine::metadata_builder()
         .add_custom("first", "value")
         .build();
-    const engine::base_test_program test_program(
+    const engine::test_program test_program(
         "mock", fs::path("abc"), fs::path("unused-root"),
         "unused-suite-name", engine::metadata_builder().build());
     const engine::test_case test_case("mock", test_program, "foo", md);
-    ATF_REQUIRE_EQ(&test_program, &test_case.test_program());
+    ATF_REQUIRE_EQ(&test_program, &test_case.container_test_program());
     ATF_REQUIRE_EQ("foo", test_case.name());
     ATF_REQUIRE(md.to_properties() == test_case.get_metadata().to_properties());
 }
@@ -109,12 +109,12 @@ ATF_TEST_CASE_BODY(fake_result)
 {
     const engine::test_result result(engine::test_result::skipped,
                                      "Some reason");
-    const engine::base_test_program test_program(
+    const engine::test_program test_program(
         "mock", fs::path("abc"), fs::path("unused-root"),
         "unused-suite-name", engine::metadata_builder().build());
     const engine::test_case test_case("mock", test_program, "__foo__",
                                       "Some description", result);
-    ATF_REQUIRE_EQ(&test_program, &test_case.test_program());
+    ATF_REQUIRE_EQ(&test_program, &test_case.container_test_program());
     ATF_REQUIRE_EQ("__foo__", test_case.name());
     ATF_REQUIRE(result == test_case.fake_result().get());
 }

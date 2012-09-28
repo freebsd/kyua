@@ -129,8 +129,8 @@ populate_db(const char* db_name, const int count)
     const int64_t action_id = tx.put_action(action, context_id);
 
     for (int i = 0; i < count; i++) {
-        const plain_iface::test_program test_program(
-            fs::path(F("dir/prog_%s") % i), fs::path("/root"),
+        const engine::test_program test_program(
+            "plain", fs::path(F("dir/prog_%s") % i), fs::path("/root"),
             F("suite_%s") % i, engine::metadata_builder().build());
         const int64_t tp_id = tx.put_test_program(test_program, action_id);
 
