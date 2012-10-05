@@ -55,14 +55,6 @@ libutils_a_SOURCES += utils/units.hpp
 nodist_libutils_a_SOURCES = utils/defs.hpp
 
 if WITH_ATF
-UTILS_TEST_CFLAGS = $(UTILS_CFLAGS)
-UTILS_TEST_LIBS = libutils_test.a $(UTILS_LIBS)
-
-noinst_LIBRARIES += libutils_test.a
-libutils_test_a_SOURCES  = utils/test_utils.cpp
-libutils_test_a_SOURCES += utils/test_utils.hpp
-libutils_test_a_CXXFLAGS = $(ATF_CXX_CFLAGS)
-
 tests_utilsdir = $(pkgtestsdir)/utils
 
 tests_utils_DATA = utils/Kyuafile

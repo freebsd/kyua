@@ -43,6 +43,8 @@ extern "C" {
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <string>
+#include <vector>
 
 #include <atf-c++.hpp>
 
@@ -51,12 +53,41 @@ extern "C" {
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
-#include "utils/test_utils.hpp"
+#include "utils/process/children.ipp"
 
 namespace fs = utils::fs;
+namespace process = utils::process;
+
+using utils::optional;
 
 
 namespace {
+
+
+/// Operating systems recognized by the code below.
+enum os_type {
+    os_unsupported = 0,
+    os_freebsd,
+    os_linux,
+    os_netbsd,
+    os_sunos,
+};
+
+
+/// The current operating system.
+static os_type current_os =
+#if defined(__FreeBSD__)
+    os_freebsd
+#elif defined(__linux__)
+    os_linux
+#elif defined(__NetBSD__)
+    os_netbsd
+#elif defined(__SunOS__)
+    os_sunos
+#else
+    os_unsupported
+#endif
+    ;
 
 
 /// Checks if a directory entry exists and matches a specific type.
@@ -83,6 +114,106 @@ lookup(const char* dir, const char* name, const int expected_type)
     }
     ::closedir(dirp);
     return found;
+}
+
+
+/// Functor to execute 'mount -t tmpfs' (or a similar variant) in a subprocess.
+class run_mount_tmpfs {
+    /// Path to the mount(8) binary, if known.
+    optional< fs::path > _mount_binary;
+
+    /// Arguments to mount(8) to mount a temporary file system.
+    std::vector< std::string > _mount_args;
+
+public:
+    /// Constructor for the functor.
+    ///
+    /// \param mount_point The mount point location.  Must be absolute.
+    run_mount_tmpfs(const fs::path& mount_point)
+    {
+        // Required for compatibility with, at least, SunOS.
+        PRE(mount_point.is_absolute());
+
+        switch (current_os) {
+        case os_freebsd:
+            _mount_binary = fs::find_in_path("mdmfs");
+            _mount_args.push_back("-s");
+            _mount_args.push_back("16m");
+            _mount_args.push_back("md");
+            _mount_args.push_back(mount_point.str());
+            break;
+
+        case os_linux:
+            _mount_binary = fs::find_in_path("mount");
+            _mount_args.push_back("-t");
+            _mount_args.push_back("tmpfs");
+            _mount_args.push_back("tmpfs");
+            _mount_args.push_back(mount_point.str());
+            break;
+
+        case os_netbsd:
+            _mount_binary = fs::find_in_path("mount");
+            _mount_args.push_back("-t");
+            _mount_args.push_back("tmpfs");
+            _mount_args.push_back("tmpfs");
+            _mount_args.push_back(mount_point.str());
+            break;
+
+        case os_sunos:
+            _mount_binary = fs::find_in_path("mount");
+            _mount_args.push_back("-F");
+            _mount_args.push_back("tmpfs");
+            _mount_args.push_back("tmpfs");
+            _mount_args.push_back(mount_point.str());
+            break;
+
+        default:
+            ATF_SKIP("Don't know how to mount a file system for testing "
+                     "purposes");
+        }
+
+        if (!_mount_binary)
+            ATF_FAIL("Cannot locate tool '%s'; maybe sbin is not in the PATH?");
+    }
+
+    /// Does the actual mount.
+    void
+    operator()(void) const
+    {
+        PRE(_mount_binary);
+        process::exec(_mount_binary.get(), _mount_args);
+    }
+};
+
+
+/// Mounts a temporary file system.
+///
+/// This is only provided for testing purposes.  The mounted file system
+/// contains no valuable data.
+///
+/// Note that the calling test case is skipped if the current operating system
+/// is not supported.
+///
+/// \param mount_point The path on which the file system will be mounted.
+static void
+mount_tmpfs(const fs::path& mount_point)
+{
+    // SunOS's mount(8) requires paths to be absolute.  To err on the side of
+    // caution, let's make it absolute in all cases.
+    const fs::path abs_mount_point = mount_point.is_absolute() ?
+        mount_point : mount_point.to_absolute();
+
+    const fs::path mount_out("mount.out");
+    const fs::path mount_err("mount.err");
+
+    std::auto_ptr< process::child_with_files > child =
+        process::child_with_files::fork(run_mount_tmpfs(abs_mount_point),
+                                        mount_out, mount_err);
+    const process::status status = child->wait();
+    atf::utils::cat_file(mount_out.str(), "mount stdout: ");
+    atf::utils::cat_file(mount_err.str(), "mount stderr: ");
+    ATF_REQUIRE(status.exited());
+    ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
 }
 
 
@@ -194,7 +325,7 @@ ATF_TEST_CASE_HEAD(cleanup__mount_point__root__one)
 ATF_TEST_CASE_BODY(cleanup__mount_point__root__one)
 {
     fs::mkdir(fs::path("root"), 0755);
-    utils::mount_tmpfs(fs::path("root"));
+    mount_tmpfs(fs::path("root"));
     fs::cleanup(fs::path("root"));
     ATF_REQUIRE(!lookup(".", "root", DT_DIR));
 }
@@ -208,8 +339,8 @@ ATF_TEST_CASE_HEAD(cleanup__mount_point__root__many)
 ATF_TEST_CASE_BODY(cleanup__mount_point__root__many)
 {
     fs::mkdir(fs::path("root"), 0755);
-    utils::mount_tmpfs(fs::path("root"));
-    utils::mount_tmpfs(fs::path("root"));
+    mount_tmpfs(fs::path("root"));
+    mount_tmpfs(fs::path("root"));
     fs::cleanup(fs::path("root"));
     ATF_REQUIRE(!lookup(".", "root", DT_DIR));
 }
@@ -225,7 +356,7 @@ ATF_TEST_CASE_BODY(cleanup__mount_point__subdir__one)
     fs::mkdir(fs::path("root"), 0755);
     fs::mkdir(fs::path("root/dir1"), 0755);
     atf::utils::create_file("root/zz", "");
-    utils::mount_tmpfs(fs::path("root/dir1"));
+    mount_tmpfs(fs::path("root/dir1"));
     fs::cleanup(fs::path("root"));
     ATF_REQUIRE(!lookup(".", "root", DT_DIR));
 }
@@ -241,8 +372,8 @@ ATF_TEST_CASE_BODY(cleanup__mount_point__subdir__many)
     fs::mkdir(fs::path("root"), 0755);
     fs::mkdir(fs::path("root/dir1"), 0755);
     atf::utils::create_file("root/zz", "");
-    utils::mount_tmpfs(fs::path("root/dir1"));
-    utils::mount_tmpfs(fs::path("root/dir1"));
+    mount_tmpfs(fs::path("root/dir1"));
+    mount_tmpfs(fs::path("root/dir1"));
     fs::cleanup(fs::path("root"));
     ATF_REQUIRE(!lookup(".", "root", DT_DIR));
 }
@@ -259,10 +390,10 @@ ATF_TEST_CASE_BODY(cleanup__mount_point__nested)
     fs::mkdir(fs::path("root/dir1"), 0755);
     fs::mkdir(fs::path("root/dir1/dir2"), 0755);
     fs::mkdir(fs::path("root/dir3"), 0755);
-    utils::mount_tmpfs(fs::path("root/dir1/dir2"));
-    utils::mount_tmpfs(fs::path("root/dir3"));
+    mount_tmpfs(fs::path("root/dir1/dir2"));
+    mount_tmpfs(fs::path("root/dir3"));
     fs::mkdir(fs::path("root/dir1/dir2/dir4"), 0755);
-    utils::mount_tmpfs(fs::path("root/dir1/dir2/dir4"));
+    mount_tmpfs(fs::path("root/dir1/dir2/dir4"));
     fs::mkdir(fs::path("root/dir1/dir2/not-mount-point"), 0755);
     fs::cleanup(fs::path("root"));
     ATF_REQUIRE(!lookup(".", "root", DT_DIR));
@@ -279,7 +410,7 @@ ATF_TEST_CASE_BODY(cleanup__mount_point__links)
     fs::mkdir(fs::path("root"), 0755);
     fs::mkdir(fs::path("root/dir1"), 0755);
     fs::mkdir(fs::path("root/dir3"), 0755);
-    utils::mount_tmpfs(fs::path("root/dir1"));
+    mount_tmpfs(fs::path("root/dir1"));
     ATF_REQUIRE(::symlink("../dir3", "root/dir1/link") != -1);
     fs::cleanup(fs::path("root"));
     ATF_REQUIRE(!lookup(".", "root", DT_DIR));
@@ -295,7 +426,7 @@ ATF_TEST_CASE_BODY(cleanup__mount_point__busy)
 {
     fs::mkdir(fs::path("root"), 0755);
     fs::mkdir(fs::path("root/dir1"), 0755);
-    utils::mount_tmpfs(fs::path("root/dir1"));
+    mount_tmpfs(fs::path("root/dir1"));
 
     pid_t pid = ::fork();
     ATF_REQUIRE(pid != -1);
@@ -536,7 +667,7 @@ ATF_TEST_CASE_BODY(unmount__ok)
     fs::mkdir(mount_point, 0755);
 
     atf::utils::create_file((mount_point / "test1").str(), "");
-    utils::mount_tmpfs(mount_point);
+    mount_tmpfs(mount_point);
     atf::utils::create_file((mount_point / "test2").str(), "");
 
     ATF_REQUIRE(!fs::exists(mount_point / "test1"));
