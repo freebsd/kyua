@@ -51,7 +51,6 @@ extern "C" {
 #include "utils/logging/operations.hpp"
 #include "utils/process/children.ipp"
 #include "utils/process/status.hpp"
-#include "utils/test_utils.hpp"
 
 namespace cmdline = utils::cmdline;
 namespace config = utils::config;
@@ -225,9 +224,10 @@ ATF_TEST_CASE_BODY(main__no_args)
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(3, cli::main(&ui, argc, argv));
     ATF_REQUIRE(ui.out_log().empty());
-    ATF_REQUIRE(utils::grep_vector("Usage error: No command provided",
-                                   ui.err_log()));
-    ATF_REQUIRE(utils::grep_vector("Type.*progname help", ui.err_log()));
+    ATF_REQUIRE(atf::utils::grep_collection("Usage error: No command provided",
+                                            ui.err_log()));
+    ATF_REQUIRE(atf::utils::grep_collection("Type.*progname help",
+                                            ui.err_log()));
 }
 
 
@@ -243,9 +243,10 @@ ATF_TEST_CASE_BODY(main__unknown_command)
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(3, cli::main(&ui, argc, argv));
     ATF_REQUIRE(ui.out_log().empty());
-    ATF_REQUIRE(utils::grep_vector("Usage error: Unknown command.*foo",
-                                   ui.err_log()));
-    ATF_REQUIRE(utils::grep_vector("Type.*progname help", ui.err_log()));
+    ATF_REQUIRE(atf::utils::grep_collection("Usage error: Unknown command.*foo",
+                                            ui.err_log()));
+    ATF_REQUIRE(atf::utils::grep_collection("Type.*progname help",
+                                            ui.err_log()));
 }
 
 
@@ -303,10 +304,10 @@ ATF_TEST_CASE_BODY(main__loglevel__default)
 
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(3, cli::main(&ui, argc, argv));
-    ATF_REQUIRE(!utils::grep_file("Mock debug message", fs::path("test.log")));
-    ATF_REQUIRE(utils::grep_file("Mock error message", fs::path("test.log")));
-    ATF_REQUIRE(utils::grep_file("Mock info message", fs::path("test.log")));
-    ATF_REQUIRE(utils::grep_file("Mock warning message", fs::path("test.log")));
+    ATF_REQUIRE(!atf::utils::grep_file("Mock debug message", "test.log"));
+    ATF_REQUIRE(atf::utils::grep_file("Mock error message", "test.log"));
+    ATF_REQUIRE(atf::utils::grep_file("Mock info message", "test.log"));
+    ATF_REQUIRE(atf::utils::grep_file("Mock warning message", "test.log"));
 }
 
 
@@ -327,10 +328,10 @@ ATF_TEST_CASE_BODY(main__loglevel__higher)
 
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(3, cli::main(&ui, argc, argv));
-    ATF_REQUIRE(utils::grep_file("Mock debug message", fs::path("test.log")));
-    ATF_REQUIRE(utils::grep_file("Mock error message", fs::path("test.log")));
-    ATF_REQUIRE(utils::grep_file("Mock info message", fs::path("test.log")));
-    ATF_REQUIRE(utils::grep_file("Mock warning message", fs::path("test.log")));
+    ATF_REQUIRE(atf::utils::grep_file("Mock debug message", "test.log"));
+    ATF_REQUIRE(atf::utils::grep_file("Mock error message", "test.log"));
+    ATF_REQUIRE(atf::utils::grep_file("Mock info message", "test.log"));
+    ATF_REQUIRE(atf::utils::grep_file("Mock warning message", "test.log"));
 }
 
 
@@ -351,10 +352,10 @@ ATF_TEST_CASE_BODY(main__loglevel__lower)
 
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(3, cli::main(&ui, argc, argv));
-    ATF_REQUIRE(!utils::grep_file("Mock debug message", fs::path("test.log")));
-    ATF_REQUIRE(utils::grep_file("Mock error message", fs::path("test.log")));
-    ATF_REQUIRE(!utils::grep_file("Mock info message", fs::path("test.log")));
-    ATF_REQUIRE(utils::grep_file("Mock warning message", fs::path("test.log")));
+    ATF_REQUIRE(!atf::utils::grep_file("Mock debug message", "test.log"));
+    ATF_REQUIRE(atf::utils::grep_file("Mock error message", "test.log"));
+    ATF_REQUIRE(!atf::utils::grep_file("Mock info message", "test.log"));
+    ATF_REQUIRE(atf::utils::grep_file("Mock warning message", "test.log"));
 }
 
 
@@ -370,7 +371,8 @@ ATF_TEST_CASE_BODY(main__loglevel__error)
 
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(3, cli::main(&ui, argc, argv));
-    ATF_REQUIRE(utils::grep_vector("Usage error.*i-am-invalid", ui.err_log()));
+    ATF_REQUIRE(atf::utils::grep_collection("Usage error.*i-am-invalid",
+                                            ui.err_log()));
     ATF_REQUIRE(!fs::exists(fs::path("test.log")));
 }
 
@@ -409,10 +411,11 @@ ATF_TEST_CASE_BODY(main__subcommand__invalid_args)
                    cli::main(&ui, argc, argv,
                              cli::cli_command_ptr(new cmd_mock_write())));
     ATF_REQUIRE(ui.out_log().empty());
-    ATF_REQUIRE(utils::grep_vector(
+    ATF_REQUIRE(atf::utils::grep_collection(
         "Usage error for command mock_write: Too many arguments.",
         ui.err_log()));
-    ATF_REQUIRE(utils::grep_vector("Type.*progname help", ui.err_log()));
+    ATF_REQUIRE(atf::utils::grep_collection("Type.*progname help",
+                                            ui.err_log()));
 }
 
 
@@ -429,8 +432,8 @@ ATF_TEST_CASE_BODY(main__subcommand__runtime_error)
     ATF_REQUIRE_EQ(2, cli::main(&ui, argc, argv,
         cli::cli_command_ptr(new cmd_mock_error(false))));
     ATF_REQUIRE(ui.out_log().empty());
-    ATF_REQUIRE(utils::grep_vector("progname: E: Runtime error.",
-                                   ui.err_log()));
+    ATF_REQUIRE(atf::utils::grep_collection("progname: E: Runtime error.",
+                                            ui.err_log()));
 }
 
 
@@ -472,7 +475,7 @@ ATF_TEST_CASE_BODY(main__subcommand__crash)
         fs::path("stderr.txt"))->wait();
     ATF_REQUIRE(status.signaled());
     ATF_REQUIRE_EQ(SIGABRT, status.termsig());
-    ATF_REQUIRE(utils::grep_file("Fatal signal", fs::path("stderr.txt")));
+    ATF_REQUIRE(atf::utils::grep_file("Fatal signal", "stderr.txt"));
 }
 
 

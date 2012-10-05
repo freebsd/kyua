@@ -46,19 +46,17 @@ engine_plain_iface_test_case_helpers_LDADD = $(UTILS_LIBS)
 tests_engine_plain_iface_PROGRAMS += engine/plain_iface/test_case_test
 engine_plain_iface_test_case_test_SOURCES = \
     engine/plain_iface/test_case_test.cpp
-engine_plain_iface_test_case_test_CXXFLAGS = $(ENGINE_CFLAGS) \
-                                             $(UTILS_TEST_CFLAGS) \
-                                             $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-engine_plain_iface_test_case_test_LDADD = $(ENGINE_LIBS) $(UTILS_TEST_LIBS) \
-                                          $(UTILS_LIBS) $(ATF_CXX_LIBS)
+engine_plain_iface_test_case_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
+                                             $(ATF_CXX_CFLAGS)
+engine_plain_iface_test_case_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
+                                          $(ATF_CXX_LIBS)
 
 tests_engine_plain_iface_PROGRAMS += engine/plain_iface/test_program_test
 engine_plain_iface_test_program_test_SOURCES = \
     engine/plain_iface/test_program_test.cpp
 engine_plain_iface_test_program_test_CXXFLAGS = $(ENGINE_CFLAGS) \
-                                                $(UTILS_TEST_CFLAGS) \
                                                 $(UTILS_CFLAGS) \
                                                 $(ATF_CXX_CFLAGS)
-engine_plain_iface_test_program_test_LDADD = $(ENGINE_LIBS) $(UTILS_TEST_LIBS) \
-                                             $(UTILS_LIBS) $(ATF_CXX_LIBS)
+engine_plain_iface_test_program_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
+                                             $(ATF_CXX_LIBS)
 endif

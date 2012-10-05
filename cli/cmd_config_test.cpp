@@ -38,7 +38,6 @@
 #include "utils/cmdline/ui_mock.hpp"
 #include "utils/config/tree.ipp"
 #include "utils/optional.ipp"
-#include "utils/test_utils.hpp"
 
 namespace cmdline = utils::cmdline;
 namespace config = utils::config;
@@ -130,7 +129,8 @@ ATF_TEST_CASE_BODY(some__fail)
     ATF_REQUIRE_EQ("platform = the-platform", ui.out_log()[0]);
     ATF_REQUIRE_EQ("test_suites.foo.baz = second", ui.out_log()[1]);
     ATF_REQUIRE_EQ(1, ui.err_log().size());
-    ATF_REQUIRE(utils::grep_string("unknown.*not defined", ui.err_log()[0]));
+    ATF_REQUIRE(atf::utils::grep_string("unknown.*not defined",
+                                        ui.err_log()[0]));
 }
 
 

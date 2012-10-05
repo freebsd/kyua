@@ -43,29 +43,21 @@ EXTRA_DIST += $(tests_utils_signals_DATA)
 
 tests_utils_signals_PROGRAMS = utils/signals/exceptions_test
 utils_signals_exceptions_test_SOURCES = utils/signals/exceptions_test.cpp
-utils_signals_exceptions_test_CXXFLAGS = $(UTILS_TEST_CFLAGS) $(UTILS_CFLAGS) \
-                                         $(ATF_CXX_CFLAGS)
-utils_signals_exceptions_test_LDADD = $(UTILS_TEST_LIBS) $(UTILS_LIBS) \
-                                      $(ATF_CXX_LIBS)
+utils_signals_exceptions_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_signals_exceptions_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_signals_PROGRAMS += utils/signals/misc_test
 utils_signals_misc_test_SOURCES = utils/signals/misc_test.cpp
-utils_signals_misc_test_CXXFLAGS = $(UTILS_TEST_CFLAGS) $(UTILS_CFLAGS) \
-                                   $(ATF_CXX_CFLAGS)
-utils_signals_misc_test_LDADD = $(UTILS_TEST_LIBS) $(UTILS_LIBS) \
-                                $(ATF_CXX_LIBS)
+utils_signals_misc_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_signals_misc_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_signals_PROGRAMS += utils/signals/programmer_test
 utils_signals_programmer_test_SOURCES = utils/signals/programmer_test.cpp
-utils_signals_programmer_test_CXXFLAGS = $(UTILS_TEST_CFLAGS) $(UTILS_CFLAGS) \
-                                         $(ATF_CXX_CFLAGS)
-utils_signals_programmer_test_LDADD = $(UTILS_TEST_LIBS) $(UTILS_LIBS) \
-                                      $(ATF_CXX_LIBS)
+utils_signals_programmer_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_signals_programmer_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_signals_PROGRAMS += utils/signals/timer_test
 utils_signals_timer_test_SOURCES = utils/signals/timer_test.cpp
-utils_signals_timer_test_CXXFLAGS = $(UTILS_TEST_CFLAGS) $(UTILS_CFLAGS) \
-                                    $(ATF_CXX_CFLAGS)
-utils_signals_timer_test_LDADD = $(UTILS_TEST_LIBS) $(UTILS_LIBS) \
-                                 $(ATF_CXX_LIBS)
+utils_signals_timer_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_signals_timer_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 endif

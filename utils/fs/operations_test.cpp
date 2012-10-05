@@ -92,7 +92,7 @@ lookup(const char* dir, const char* name, const int expected_type)
 ATF_TEST_CASE_WITHOUT_HEAD(cleanup__file);
 ATF_TEST_CASE_BODY(cleanup__file)
 {
-    utils::create_file(fs::path("root"));
+    atf::utils::create_file("root", "");
     ATF_REQUIRE(lookup(".", "root", DT_REG));
     fs::cleanup(fs::path("root"));
     ATF_REQUIRE(!lookup(".", "root", DT_REG));
@@ -113,14 +113,14 @@ ATF_TEST_CASE_WITHOUT_HEAD(cleanup__subdir__files_and_directories);
 ATF_TEST_CASE_BODY(cleanup__subdir__files_and_directories)
 {
     fs::mkdir(fs::path("root"), 0755);
-    utils::create_file(fs::path("root/.hidden_file"));
+    atf::utils::create_file("root/.hidden_file", "");
     fs::mkdir(fs::path("root/.hidden_dir"), 0755);
-    utils::create_file(fs::path("root/.hidden_dir/a"));
-    utils::create_file(fs::path("root/file"));
-    utils::create_file(fs::path("root/with spaces"));
+    atf::utils::create_file("root/.hidden_dir/a", "");
+    atf::utils::create_file("root/file", "");
+    atf::utils::create_file("root/with spaces", "");
     fs::mkdir(fs::path("root/dir1"), 0755);
     fs::mkdir(fs::path("root/dir1/dir2"), 0755);
-    utils::create_file(fs::path("root/dir1/dir2/file"));
+    atf::utils::create_file("root/dir1/dir2/file", "");
     fs::mkdir(fs::path("root/dir1/dir3"), 0755);
     ATF_REQUIRE(lookup(".", "root", DT_DIR));
     fs::cleanup(fs::path("root"));
@@ -134,7 +134,7 @@ ATF_TEST_CASE_BODY(cleanup__subdir__unprotect_regular)
     fs::mkdir(fs::path("root"), 0755);
     fs::mkdir(fs::path("root/dir1"), 0755);
     fs::mkdir(fs::path("root/dir1/dir2"), 0755);
-    utils::create_file(fs::path("root/dir1/dir2/file"));
+    atf::utils::create_file("root/dir1/dir2/file", "");
     ATF_REQUIRE(::chmod("root/dir1/dir2/file", 0000) != -1);
     ATF_REQUIRE(::chmod("root/dir1/dir2", 0000) != -1);
     ATF_REQUIRE(::chmod("root/dir1", 0000) != -1);
@@ -224,7 +224,7 @@ ATF_TEST_CASE_BODY(cleanup__mount_point__subdir__one)
 {
     fs::mkdir(fs::path("root"), 0755);
     fs::mkdir(fs::path("root/dir1"), 0755);
-    utils::create_file(fs::path("root/zz"));
+    atf::utils::create_file("root/zz", "");
     utils::mount_tmpfs(fs::path("root/dir1"));
     fs::cleanup(fs::path("root"));
     ATF_REQUIRE(!lookup(".", "root", DT_DIR));
@@ -240,7 +240,7 @@ ATF_TEST_CASE_BODY(cleanup__mount_point__subdir__many)
 {
     fs::mkdir(fs::path("root"), 0755);
     fs::mkdir(fs::path("root/dir1"), 0755);
-    utils::create_file(fs::path("root/zz"));
+    atf::utils::create_file("root/zz", "");
     utils::mount_tmpfs(fs::path("root/dir1"));
     utils::mount_tmpfs(fs::path("root/dir1"));
     fs::cleanup(fs::path("root"));
@@ -303,8 +303,8 @@ ATF_TEST_CASE_BODY(cleanup__mount_point__busy)
         if (::chdir("root/dir1") == -1)
             std::abort();
 
-        utils::create_file(fs::path("dont-delete-me"));
-        utils::create_file(fs::path("../../done"));
+        atf::utils::create_file("dont-delete-me", "");
+        atf::utils::create_file("../../done", "");
 
         ::pause();
         std::exit(EXIT_SUCCESS);
@@ -370,7 +370,7 @@ ATF_TEST_CASE_BODY(find_in_path__no_path)
 {
     utils::unsetenv("PATH");
     ATF_REQUIRE(!fs::find_in_path("ls"));
-    utils::create_file(fs::path("ls"));
+    atf::utils::create_file("ls", "");
     ATF_REQUIRE(!fs::find_in_path("ls"));
 }
 
@@ -380,7 +380,7 @@ ATF_TEST_CASE_BODY(find_in_path__empty_path)
 {
     utils::setenv("PATH", "");
     ATF_REQUIRE(!fs::find_in_path("ls"));
-    utils::create_file(fs::path("ls"));
+    atf::utils::create_file("ls", "");
     ATF_REQUIRE(!fs::find_in_path("ls"));
 }
 
@@ -393,7 +393,7 @@ ATF_TEST_CASE_BODY(find_in_path__one_component)
     utils::setenv("PATH", dir.str());
 
     ATF_REQUIRE(!fs::find_in_path("ls"));
-    utils::create_file(dir / "ls");
+    atf::utils::create_file((dir / "ls").str(), "");
     ATF_REQUIRE_EQ(dir / "ls", fs::find_in_path("ls").get());
 }
 
@@ -408,9 +408,9 @@ ATF_TEST_CASE_BODY(find_in_path__many_components)
     utils::setenv("PATH", dir1.str() + ":" + dir2.str());
 
     ATF_REQUIRE(!fs::find_in_path("ls"));
-    utils::create_file(dir2 / "ls");
+    atf::utils::create_file((dir2 / "ls").str(), "");
     ATF_REQUIRE_EQ(dir2 / "ls", fs::find_in_path("ls").get());
-    utils::create_file(dir1 / "ls");
+    atf::utils::create_file((dir1 / "ls").str(), "");
     ATF_REQUIRE_EQ(dir1 / "ls", fs::find_in_path("ls").get());
 }
 
@@ -421,7 +421,7 @@ ATF_TEST_CASE_BODY(find_in_path__current_directory)
     utils::setenv("PATH", "bin:");
 
     ATF_REQUIRE(!fs::find_in_path("foo-bar"));
-    utils::create_file(fs::path("foo-bar"));
+    atf::utils::create_file("foo-bar", "");
     ATF_REQUIRE_EQ(fs::path("foo-bar").to_absolute(),
                    fs::find_in_path("foo-bar").get());
 }
@@ -434,7 +434,7 @@ ATF_TEST_CASE_BODY(find_in_path__always_absolute)
     utils::setenv("PATH", "my-bin");
 
     ATF_REQUIRE(!fs::find_in_path("abcd"));
-    utils::create_file(fs::path("my-bin/abcd"));
+    atf::utils::create_file("my-bin/abcd", "");
     ATF_REQUIRE_EQ(fs::path("my-bin/abcd").to_absolute(),
                    fs::find_in_path("abcd").get());
 }
@@ -535,9 +535,9 @@ ATF_TEST_CASE_BODY(unmount__ok)
     const fs::path mount_point("mount_point");
     fs::mkdir(mount_point, 0755);
 
-    utils::create_file(mount_point / "test1");
+    atf::utils::create_file((mount_point / "test1").str(), "");
     utils::mount_tmpfs(mount_point);
-    utils::create_file(mount_point / "test2");
+    atf::utils::create_file((mount_point / "test2").str(), "");
 
     ATF_REQUIRE(!fs::exists(mount_point / "test1"));
     ATF_REQUIRE( fs::exists(mount_point / "test2"));

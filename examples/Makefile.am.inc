@@ -39,7 +39,7 @@ tests_examples_PROGRAMS = examples/syntax_test
 examples_syntax_test_SOURCES = examples/syntax_test.cpp
 examples_syntax_test_CPPFLAGS = -DKYUA_EXAMPLESDIR="\"$(examplesdir)\""
 examples_syntax_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
-                                $(UTILS_TEST_CFLAGS) $(ATF_CXX_CFLAGS)
+                                $(ATF_CXX_CFLAGS)
 examples_syntax_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
-                             $(UTILS_TEST_LIBS) $(ATF_CXX_LIBS)
+                             $(ATF_CXX_LIBS)
 endif

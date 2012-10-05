@@ -60,14 +60,7 @@ enum os_type {
 extern os_type current_os;
 
 
-void cat_file(const std::string&, const fs::path&);
-void copy_file(const fs::path&, const fs::path&);
-void create_file(const fs::path&, const std::string& = "");
-bool grep_file(const std::string&, const fs::path&);
-bool grep_string(const std::string&, const std::string&);
-bool grep_vector(const std::string&, const std::vector< std::string >&);
 void mount_tmpfs(const fs::path&);
-std::vector< std::string > read_lines(const fs::path&);
 
 
 }  // namespace utils

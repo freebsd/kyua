@@ -40,6 +40,8 @@ extern "C" {
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
+#include <string>
+#include <vector>
 
 #include <atf-c++.hpp>
 
@@ -56,7 +58,6 @@ extern "C" {
 #include "utils/noncopyable.hpp"
 #include "utils/passwd.hpp"
 #include "utils/process/children.ipp"
-#include "utils/test_utils.hpp"
 
 namespace atf_iface = engine::atf_iface;
 namespace config = utils::config;
@@ -67,6 +68,25 @@ namespace user_files = engine::user_files;
 
 
 namespace {
+
+
+/// Reads a file in memory, line by line.
+///
+/// \param file The file to read.
+///
+/// \return All the lines in the file.
+std::vector< std::string >
+read_lines(const fs::path& file)
+{
+    std::ifstream input(file.c_str());
+    ATF_REQUIRE(input);
+
+    std::vector< std::string > lines;
+    std::string line;
+    while (std::getline(input, line).good())
+        lines.push_back(line);
+    return lines;
+}
 
 
 /// Test case hooks to capture stdout and stderr in memory.
@@ -84,9 +104,9 @@ public:
     void
     got_stdout(const fs::path& file)
     {
-        utils::cat_file("helper stdout:", file);
+        atf::utils::cat_file(file.str(), "helper stdout:");
         ATF_REQUIRE(stdout_lines.empty());
-        stdout_lines = utils::read_lines(file);
+        stdout_lines = read_lines(file);
     }
 
     /// Stores the stderr of the test case into stderr_lines.
@@ -95,9 +115,9 @@ public:
     void
     got_stderr(const fs::path& file)
     {
-        utils::cat_file("helper stderr:", file);
+        atf::utils::cat_file(file.str(), "helper stderr:");
         ATF_REQUIRE(stderr_lines.empty());
-        stderr_lines = utils::read_lines(file);
+        stderr_lines = read_lines(file);
     }
 };
 
@@ -557,10 +577,10 @@ ATF_TEST_CASE_BODY(run_test_case__stacktrace__body)
     ATF_REQUIRE(engine::test_result::broken == result.type());
     ATF_REQUIRE_MATCH("received signal.*core dumped", result.reason());
 
-    ATF_REQUIRE(!utils::grep_vector("attempting to gather stack trace",
-                                    hooks.stdout_lines));
-    ATF_REQUIRE( utils::grep_vector("attempting to gather stack trace",
-                                    hooks.stderr_lines));
+    ATF_REQUIRE(!atf::utils::grep_collection("attempting to gather stack trace",
+                                             hooks.stdout_lines));
+    ATF_REQUIRE( atf::utils::grep_collection("attempting to gather stack trace",
+                                             hooks.stderr_lines));
 }
 
 
@@ -575,10 +595,10 @@ ATF_TEST_CASE_BODY(run_test_case__stacktrace__cleanup)
     ATF_REQUIRE_MATCH("cleanup did not terminate successfully",
                       result.reason());
 
-    ATF_REQUIRE(!utils::grep_vector("attempting to gather stack trace",
-                                    hooks.stdout_lines));
-    ATF_REQUIRE( utils::grep_vector("attempting to gather stack trace",
-                                    hooks.stderr_lines));
+    ATF_REQUIRE(!atf::utils::grep_collection("attempting to gather stack trace",
+                                             hooks.stdout_lines));
+    ATF_REQUIRE( atf::utils::grep_collection("attempting to gather stack trace",
+                                             hooks.stderr_lines));
 }
 
 

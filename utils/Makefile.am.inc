@@ -95,33 +95,26 @@ utils_optional_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_PROGRAMS += utils/passwd_test
 utils_passwd_test_SOURCES = utils/passwd_test.cpp
-utils_passwd_test_CXXFLAGS = $(UTILS_TEST_CFLAGS) $(UTILS_CFLAGS) \
-                             $(ATF_CXX_CFLAGS)
-utils_passwd_test_LDADD = $(UTILS_TEST_LIBS) $(UTILS_LIBS) \
-                          $(ATF_CXX_LIBS)
+utils_passwd_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_passwd_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_PROGRAMS += utils/sanity_test
 utils_sanity_test_SOURCES = utils/sanity_test.cpp
-utils_sanity_test_CXXFLAGS = $(UTILS_TEST_CFLAGS) $(UTILS_CFLAGS) \
-                             $(ATF_CXX_CFLAGS)
-utils_sanity_test_LDADD = $(UTILS_TEST_LIBS) $(UTILS_LIBS) \
-                          $(ATF_CXX_LIBS)
+utils_sanity_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_sanity_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_PROGRAMS += utils/stacktrace_helper
 utils_stacktrace_helper_SOURCES = utils/stacktrace_helper.cpp
 
 tests_utils_PROGRAMS += utils/stacktrace_test
 utils_stacktrace_test_SOURCES = utils/stacktrace_test.cpp
-utils_stacktrace_test_CXXFLAGS = $(UTILS_TEST_CFLAGS) $(UTILS_CFLAGS) \
-                                 $(ATF_CXX_CFLAGS)
-utils_stacktrace_test_LDADD = $(UTILS_TEST_LIBS) $(UTILS_LIBS) $(ATF_CXX_LIBS)
+utils_stacktrace_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_stacktrace_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_PROGRAMS += utils/stream_test
 utils_stream_test_SOURCES = utils/stream_test.cpp
-utils_stream_test_CXXFLAGS = $(UTILS_TEST_CFLAGS) $(UTILS_CFLAGS) \
-                             $(ATF_CXX_CFLAGS)
-utils_stream_test_LDADD = $(UTILS_TEST_LIBS) $(UTILS_LIBS) \
-                          $(ATF_CXX_LIBS)
+utils_stream_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_stream_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_PROGRAMS += utils/units_test
 utils_units_test_SOURCES = utils/units_test.cpp

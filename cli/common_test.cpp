@@ -48,7 +48,6 @@
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
-#include "utils/test_utils.hpp"
 
 namespace cmdline = utils::cmdline;
 namespace config = utils::config;
@@ -349,8 +348,10 @@ ATF_TEST_CASE_BODY(report_unused_filters__some)
     ATF_REQUIRE(cli::report_unused_filters(unused, &ui));
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE_EQ(2, ui.err_log().size());
-    ATF_REQUIRE( utils::grep_vector("No.*matched.*'a/b'", ui.err_log()));
-    ATF_REQUIRE( utils::grep_vector("No.*matched.*'hey/d:yes'", ui.err_log()));
+    ATF_REQUIRE( atf::utils::grep_collection("No.*matched.*'a/b'",
+                                             ui.err_log()));
+    ATF_REQUIRE( atf::utils::grep_collection("No.*matched.*'hey/d:yes'",
+                                             ui.err_log()));
 }
 
 

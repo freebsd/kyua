@@ -48,10 +48,8 @@ EXTRA_DIST += $(tests_utils_process_DATA)
 
 tests_utils_process_PROGRAMS = utils/process/children_test
 utils_process_children_test_SOURCES = utils/process/children_test.cpp
-utils_process_children_test_CXXFLAGS = $(UTILS_TEST_CFLAGS) $(UTILS_CFLAGS) \
-                                       $(ATF_CXX_CFLAGS)
-utils_process_children_test_LDADD = $(UTILS_TEST_LIBS) $(UTILS_LIBS) \
-                                    $(ATF_CXX_LIBS)
+utils_process_children_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_process_children_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_process_PROGRAMS += utils/process/exceptions_test
 utils_process_exceptions_test_SOURCES = utils/process/exceptions_test.cpp

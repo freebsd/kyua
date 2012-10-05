@@ -33,7 +33,6 @@
 #include "utils/fs/path.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/ui_mock.hpp"
-#include "utils/test_utils.hpp"
 
 namespace cmdline = utils::cmdline;
 namespace fs = utils::fs;
@@ -80,7 +79,7 @@ ATF_TEST_CASE_BODY(file_writer__other)
 
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE(ui.err_log().empty());
-    ATF_REQUIRE(utils::grep_file("A simple message", fs::path("custom")));
+    ATF_REQUIRE(atf::utils::grep_file("A simple message", "custom"));
 }
 
 

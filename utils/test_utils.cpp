@@ -29,9 +29,6 @@
 #include "utils/test_utils.hpp"
 
 extern "C" {
-#include <sys/stat.h>
-
-#include <regex.h>
 #include <unistd.h>
 }
 
@@ -67,141 +64,6 @@ utils::os_type utils::current_os =
     utils::os_unsupported
 #endif
     ;
-
-
-/// Dumps the contents of a file on the standard output.
-///
-/// \param prefix A string to use as a prefix for all the printed lines.  May be
-///     empty.
-/// \param path The path to the file to print.
-void
-utils::cat_file(const std::string& prefix, const fs::path& path)
-{
-    std::ifstream input(path.c_str());
-    if (!input)
-        ATF_FAIL(F("Cannot open file %s") % path);
-
-    std::string line;
-    while (std::getline(input, line).good()) {
-        std::cout << prefix << line << "\n";
-    }
-}
-
-
-/// Copies a file, preserving its permissions.
-///
-/// \param source Path to the source file.
-/// \param destination Path to the destination file.
-void
-utils::copy_file(const fs::path& source, const fs::path& destination)
-{
-    std::ifstream input(source.c_str());
-    if (!input)
-        ATF_FAIL(F("Failed to open source file %s") % source);
-
-    std::ofstream output(destination.c_str());
-    if (!output)
-        ATF_FAIL(F("Failed to open destination file %s") % destination);
-
-    char buffer[1024];
-    while (!input.eof()) {
-        input.read(buffer, sizeof(buffer));
-        if (!input.eof() && (input.bad() || input.fail()))
-            ATF_FAIL(F("Failed to read from source file %s") % source);
-
-        output.write(buffer, input.gcount());
-        if (output.bad() || output.fail())
-            ATF_FAIL(F("Failed to write to destination file %s") % destination);
-    }
-
-    struct ::stat sb;
-    if (::stat(source.c_str(), &sb) == -1)
-        ATF_FAIL(F("Cannot stat source file %s") % source);
-    if (::chmod(destination.c_str(), sb.st_mode) == -1)
-        ATF_FAIL(F("Cannot set mode of destination file %s") % destination);
-}
-
-
-/// Creates a file for testing.
-///
-/// Fails the test case if the file cannot be created.
-///
-/// \param file The name of the file to create.
-/// \param contents The contents of the file, if any.  If empty, this writes
-///     some arbitrary text into the file.
-void
-utils::create_file(const fs::path& file, const std::string& contents)
-{
-    std::ofstream output(file.c_str());
-    if (!output)
-        ATF_FAIL(F("Failed to create test file %s") % file);
-    if (contents.empty())
-        output << "Some contents\n";
-    else
-        output << contents;
-}
-
-
-/// Looks for a regular expression in a file.
-///
-/// \param regexp The regular expression.
-/// \param path The path to the file to query.
-///
-/// \return True if the regular expression matches anywhere in the file; false
-/// otherwise.
-bool
-utils::grep_file(const std::string& regexp, const fs::path& path)
-{
-    std::ifstream input(path.c_str());
-    if (!input)
-        ATF_FAIL(F("Cannot open file %s") % path);
-
-    std::string line;
-    while (std::getline(input, line).good()) {
-        if (grep_string(regexp, line))
-            return true;
-    }
-    return false;
-}
-
-
-/// Looks for a regular expression in a string.
-///
-/// \param regexp The regular expression.
-/// \param str The string to query.
-///
-/// \return True if the regular expression matches anywhere in the string; false
-/// otherwise.
-bool
-utils::grep_string(const std::string& regexp, const std::string& str)
-{
-    regex_t preg;
-    ATF_REQUIRE(::regcomp(&preg, regexp.c_str(), REG_EXTENDED) == 0);
-    const int res = ::regexec(&preg, str.c_str(), 0, NULL, 0);
-    ATF_REQUIRE(res == 0 || res == REG_NOMATCH);
-    ::regfree(&preg);
-    return res == 0;
-}
-
-
-/// Looks for a regular expression in a vector of strings.
-///
-/// \param regexp The regular expression.
-/// \param v The vector to query.
-///
-/// \return True if the regular expression matches anywhere in the vector; false
-/// otherwise.
-bool
-utils::grep_vector(const std::string& regexp,
-                   const std::vector< std::string >& v)
-{
-    for (std::vector< std::string >::const_iterator iter = v.begin();
-         iter != v.end(); iter++) {
-        if (grep_string(regexp, *iter))
-            return true;
-    }
-    return false;
-}
 
 
 namespace {
@@ -303,27 +165,8 @@ utils::mount_tmpfs(const fs::path& mount_point)
         process::child_with_files::fork(run_mount_tmpfs(abs_mount_point),
                                         mount_out, mount_err);
     const process::status status = child->wait();
-    cat_file("mount stdout: ", mount_out);
-    cat_file("mount stderr: ", mount_err);
+    atf::utils::cat_file(mount_out.str(), "mount stdout: ");
+    atf::utils::cat_file(mount_err.str(), "mount stderr: ");
     ATF_REQUIRE(status.exited());
     ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
-}
-
-
-/// Reads a file in memory, line by line.
-///
-/// \param file The file to read.
-///
-/// \return All the lines in the file.
-std::vector< std::string >
-utils::read_lines(const fs::path& file)
-{
-    std::ifstream input(file.c_str());
-    ATF_REQUIRE(input);
-
-    std::vector< std::string > lines;
-    std::string line;
-    while (std::getline(input, line).good())
-        lines.push_back(line);
-    return lines;
 }

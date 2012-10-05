@@ -43,7 +43,6 @@
 #include "utils/memory.hpp"
 #include "utils/passwd.hpp"
 #include "utils/sanity.hpp"
-#include "utils/test_utils.hpp"
 #include "utils/units.hpp"
 
 namespace atf_iface = engine::atf_iface;
@@ -926,7 +925,7 @@ ATF_TEST_CASE_BODY(check_requirements__required_user__unprivileged__fail)
 ATF_TEST_CASE_WITHOUT_HEAD(check_requirements__required_files__ok);
 ATF_TEST_CASE_BODY(check_requirements__required_files__ok)
 {
-    utils::create_file(fs::path("test-file"));
+    atf::utils::create_file("test-file", "");
 
     engine::properties_map metadata;
     metadata["require.files"] = (fs::current_path() / "test-file").str();
@@ -956,7 +955,7 @@ ATF_TEST_CASE_BODY(check_requirements__required_files__fail)
 ATF_TEST_CASE_WITHOUT_HEAD(check_requirements__required_memory__ok);
 ATF_TEST_CASE_BODY(check_requirements__required_memory__ok)
 {
-    utils::create_file(fs::path("test-file"));
+    atf::utils::create_file("test-file", "");
 
     engine::properties_map metadata;
     metadata["require.memory"] = "1m";
@@ -993,7 +992,7 @@ ATF_TEST_CASE_HEAD(check_requirements__required_programs__ok)
 ATF_TEST_CASE_BODY(check_requirements__required_programs__ok)
 {
     fs::mkdir(fs::path("bin"), 0755);
-    utils::create_file(fs::path("bin/foo"));
+    atf::utils::create_file("bin/foo", "");
     utils::setenv("PATH", (fs::current_path() / "bin").str());
 
     engine::properties_map metadata;
@@ -1027,7 +1026,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(
 ATF_TEST_CASE_BODY(check_requirements__required_programs__fail_relative)
 {
     fs::mkdir(fs::path("bin"), 0755);
-    utils::create_file(fs::path("bin/foo"));
+    atf::utils::create_file("bin/foo", "");
     utils::setenv("PATH", (fs::current_path() / "bin").str());
 
     engine::properties_map metadata;

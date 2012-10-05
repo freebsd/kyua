@@ -34,7 +34,7 @@
 #include <lutok/test_utils.hpp>
 
 #include "utils/fs/operations.hpp"
-#include "utils/test_utils.hpp"
+#include "utils/fs/path.hpp"
 
 namespace fs = utils::fs;
 
@@ -111,7 +111,7 @@ ATF_TEST_CASE_BODY(exists__ok)
     lutok::state state;
     fs::open_fs(state);
 
-    utils::create_file(fs::path("foo"));
+    atf::utils::create_file("foo", "");
 
     lutok::do_string(state, "return fs.exists('foo')", 1);
     ATF_REQUIRE(state.to_boolean());
@@ -165,8 +165,8 @@ ATF_TEST_CASE_BODY(files__some)
     fs::open_fs(state);
 
     fs::mkdir(fs::path("root"), 0755);
-    utils::create_file(fs::path("root/file1"));
-    utils::create_file(fs::path("root/file2"));
+    atf::utils::create_file("root/file1", "");
+    atf::utils::create_file("root/file2", "");
 
     lutok::do_string(state,
                      "names = {}\n"

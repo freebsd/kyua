@@ -81,31 +81,31 @@ engine_filters_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_engine_PROGRAMS += engine/isolation_test
 engine_isolation_test_SOURCES = engine/isolation_test.cpp
-engine_isolation_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_TEST_CFLAGS) \
-                                 $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-engine_isolation_test_LDADD = $(ENGINE_LIBS) $(UTILS_TEST_LIBS) \
-                              $(UTILS_LIBS) $(ATF_CXX_LIBS)
+engine_isolation_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
+                                 $(ATF_CXX_CFLAGS)
+engine_isolation_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
+                              $(ATF_CXX_LIBS)
 
 tests_engine_PROGRAMS += engine/test_case_test
 engine_test_case_test_SOURCES = engine/test_case_test.cpp
-engine_test_case_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_TEST_CFLAGS) \
-                                 $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-engine_test_case_test_LDADD = $(ENGINE_LIBS) $(UTILS_TEST_LIBS) \
-                              $(UTILS_LIBS) $(ATF_CXX_LIBS)
+engine_test_case_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
+                                 $(ATF_CXX_CFLAGS)
+engine_test_case_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
+                              $(ATF_CXX_LIBS)
 
 tests_engine_PROGRAMS += engine/test_program_test
 engine_test_program_test_SOURCES = engine/test_program_test.cpp
-engine_test_program_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_TEST_CFLAGS) \
-                                    $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-engine_test_program_test_LDADD = $(ENGINE_LIBS) $(UTILS_TEST_LIBS) \
-                                 $(UTILS_LIBS) $(ATF_CXX_LIBS)
+engine_test_program_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
+                                    $(ATF_CXX_CFLAGS)
+engine_test_program_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
+                                 $(ATF_CXX_LIBS)
 
 tests_engine_PROGRAMS += engine/test_result_test
 engine_test_result_test_SOURCES = engine/test_result_test.cpp
-engine_test_result_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_TEST_CFLAGS) \
-                                   $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-engine_test_result_test_LDADD = $(ENGINE_LIBS) $(UTILS_TEST_LIBS) \
-                                $(UTILS_LIBS) $(ATF_CXX_LIBS)
+engine_test_result_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
+                                   $(ATF_CXX_CFLAGS)
+engine_test_result_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
+                                $(ATF_CXX_LIBS)
 endif
 
 include engine/atf_iface/Makefile.am.inc

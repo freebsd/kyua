@@ -56,7 +56,6 @@ extern "C" {
 #include "utils/process/system.hpp"
 #include "utils/sanity.hpp"
 #include "utils/signals/timer.hpp"
-#include "utils/test_utils.hpp"
 
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
@@ -273,7 +272,7 @@ child_wait(void)
     else
         ::usleep(Microseconds);
     std::cout << "Resuming subprocess and exiting\n";
-    utils::create_file(fs::path("finished"));
+    atf::utils::create_file("finished", "");
     std::exit(EXIT_SUCCESS);
 }
 
@@ -297,11 +296,11 @@ child_wait_with_subchild(void)
         std::abort();
     } else if (ret == 0) {
         ::usleep(Microseconds);
-        utils::create_file(fs::path("subfinished"));
+        atf::utils::create_file("subfinished", "");
         std::exit(EXIT_SUCCESS);
     } else {
         ::usleep(Microseconds);
-        utils::create_file(fs::path("finished"));
+        atf::utils::create_file("finished", "");
 
         int status;
         (void)::wait(&status);
@@ -521,8 +520,8 @@ do_inherit_test(const char* fork_stdout, const char* fork_stderr,
         ATF_REQUIRE(::waitpid(pid, &status, 0) != -1);
         ATF_REQUIRE(WIFEXITED(status));
         ATF_REQUIRE_EQ(EXIT_SUCCESS, WEXITSTATUS(status));
-        ATF_REQUIRE(utils::grep_file("stdout: Z", fs::path("stdout.txt")));
-        ATF_REQUIRE(utils::grep_file("stderr: Z", fs::path("stderr.txt")));
+        ATF_REQUIRE(atf::utils::grep_file("stdout: Z", "stdout.txt"));
+        ATF_REQUIRE(atf::utils::grep_file("stderr: Z", "stderr.txt"));
     }
 }
 
@@ -579,11 +578,11 @@ ATF_TEST_CASE_BODY(child_with_files__ok_function)
     ATF_REQUIRE(status.exited());
     ATF_REQUIRE_EQ(15, status.exitstatus());
 
-    ATF_REQUIRE( utils::grep_file("^To stdout: Z$", file1));
-    ATF_REQUIRE(!utils::grep_file("^To stdout: Z$", file2));
+    ATF_REQUIRE( atf::utils::grep_file("^To stdout: Z$", file1.str()));
+    ATF_REQUIRE(!atf::utils::grep_file("^To stdout: Z$", file2.str()));
 
-    ATF_REQUIRE( utils::grep_file("^To stderr: Z$", file2));
-    ATF_REQUIRE(!utils::grep_file("^To stderr: Z$", file1));
+    ATF_REQUIRE( atf::utils::grep_file("^To stderr: Z$", file2.str()));
+    ATF_REQUIRE(!atf::utils::grep_file("^To stderr: Z$", file1.str()));
 }
 
 
@@ -609,17 +608,17 @@ ATF_TEST_CASE_BODY(child_with_files__ok_functor)
     ATF_REQUIRE(status.exited());
     ATF_REQUIRE_EQ(16, status.exitstatus());
 
-    ATF_REQUIRE( utils::grep_file("^Initial stdout$", filea));
-    ATF_REQUIRE(!utils::grep_file("^Initial stdout$", fileb));
+    ATF_REQUIRE( atf::utils::grep_file("^Initial stdout$", filea.str()));
+    ATF_REQUIRE(!atf::utils::grep_file("^Initial stdout$", fileb.str()));
 
-    ATF_REQUIRE( utils::grep_file("^To stdout: a functor$", filea));
-    ATF_REQUIRE(!utils::grep_file("^To stdout: a functor$", fileb));
+    ATF_REQUIRE( atf::utils::grep_file("^To stdout: a functor$", filea.str()));
+    ATF_REQUIRE(!atf::utils::grep_file("^To stdout: a functor$", fileb.str()));
 
-    ATF_REQUIRE( utils::grep_file("^Initial stderr$", fileb));
-    ATF_REQUIRE(!utils::grep_file("^Initial stderr$", filea));
+    ATF_REQUIRE( atf::utils::grep_file("^Initial stderr$", fileb.str()));
+    ATF_REQUIRE(!atf::utils::grep_file("^Initial stderr$", filea.str()));
 
-    ATF_REQUIRE( utils::grep_file("^To stderr: a functor$", fileb));
-    ATF_REQUIRE(!utils::grep_file("^To stderr: a functor$", filea));
+    ATF_REQUIRE( atf::utils::grep_file("^To stderr: a functor$", fileb.str()));
+    ATF_REQUIRE(!atf::utils::grep_file("^To stderr: a functor$", filea.str()));
 }
 
 
@@ -703,7 +702,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(child_with_files__fork_cannot_exit);
 ATF_TEST_CASE_BODY(child_with_files__fork_cannot_exit)
 {
     const pid_t parent_pid = ::getpid();
-    utils::create_file(fs::path("to-not-be-deleted"));
+    atf::utils::create_file("to-not-be-deleted", "");
 
     std::auto_ptr< process::child_with_files > child =
         process::child_with_files::fork(child_return,
@@ -724,7 +723,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(child_with_files__fork_cannot_unwind);
 ATF_TEST_CASE_BODY(child_with_files__fork_cannot_unwind)
 {
     const pid_t parent_pid = ::getpid();
-    utils::create_file(fs::path("to-not-be-deleted"));
+    atf::utils::create_file("to-not-be-deleted", "");
     try {
         std::auto_ptr< process::child_with_files > child =
             process::child_with_files::fork(child_raise_exception< int, 123 >,
@@ -753,7 +752,7 @@ ATF_TEST_CASE_BODY(child_with_files__fork_fail)
                                         fs::path("b.txt"));
         fail("Expected exception but none raised");
     } catch (const process::system_error& e) {
-        ATF_REQUIRE(utils::grep_string("fork.*failed", e.what()));
+        ATF_REQUIRE(atf::utils::grep_string("fork.*failed", e.what()));
         ATF_REQUIRE_EQ(1234, e.original_errno());
     }
     ATF_REQUIRE(!fs::exists(fs::path("a.txt")));
@@ -870,7 +869,7 @@ ATF_TEST_CASE_BODY(child_with_output__pipe_fail)
         process::child_with_output::fork(child_simple_function< 1, 'A' >);
         fail("Expected exception but none raised");
     } catch (const process::system_error& e) {
-        ATF_REQUIRE(utils::grep_string("pipe.*failed", e.what()));
+        ATF_REQUIRE(atf::utils::grep_string("pipe.*failed", e.what()));
         ATF_REQUIRE_EQ(23, e.original_errno());
     }
 }
@@ -880,7 +879,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(child_with_output__fork_cannot_exit);
 ATF_TEST_CASE_BODY(child_with_output__fork_cannot_exit)
 {
     const pid_t parent_pid = ::getpid();
-    utils::create_file(fs::path("to-not-be-deleted"));
+    atf::utils::create_file("to-not-be-deleted", "");
 
     std::auto_ptr< process::child_with_output > child =
         process::child_with_output::fork(child_return);
@@ -900,7 +899,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(child_with_output__fork_cannot_unwind);
 ATF_TEST_CASE_BODY(child_with_output__fork_cannot_unwind)
 {
     const pid_t parent_pid = ::getpid();
-    utils::create_file(fs::path("to-not-be-deleted"));
+    atf::utils::create_file("to-not-be-deleted", "");
     try {
         std::auto_ptr< process::child_with_output > child =
             process::child_with_output::fork(child_raise_exception< int, 123 >);
@@ -926,7 +925,7 @@ ATF_TEST_CASE_BODY(child_with_output__fork_fail)
         process::child_with_output::fork(child_simple_function< 1, 'A' >);
         fail("Expected exception but none raised");
     } catch (const process::system_error& e) {
-        ATF_REQUIRE(utils::grep_string("fork.*failed", e.what()));
+        ATF_REQUIRE(atf::utils::grep_string("fork.*failed", e.what()));
         ATF_REQUIRE_EQ(89, e.original_errno());
     }
 }

@@ -39,7 +39,6 @@ extern "C" {
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
 #include "utils/passwd.hpp"
-#include "utils/test_utils.hpp"
 
 namespace config = utils::config;
 namespace fs = utils::fs;
@@ -121,7 +120,7 @@ ATF_TEST_CASE_BODY(kyuafile_top__no_matches)
     const fs::path source_path = example_file(this, "Kyuafile.top");
     ATF_REQUIRE(::symlink(source_path.c_str(), "root/Kyuafile") != -1);
 
-    utils::create_file(fs::path("root/file"));
+    atf::utils::create_file("root/file", "");
     fs::mkdir(fs::path("root/subdir"), 0755);
 
     const user_files::kyuafile kyuafile = user_files::kyuafile::load(
@@ -143,20 +142,20 @@ ATF_TEST_CASE_BODY(kyuafile_top__some_matches)
     const fs::path source_path = example_file(this, "Kyuafile.top");
     ATF_REQUIRE(::symlink(source_path.c_str(), "root/Kyuafile") != -1);
 
-    utils::create_file(fs::path("root/file"));
+    atf::utils::create_file("root/file", "");
 
     fs::mkdir(fs::path("root/subdir1"), 0755);
-    utils::create_file(fs::path("root/subdir1/Kyuafile"),
-                       "syntax('kyuafile', 1)\n"
-                       "atf_test_program{name='a', test_suite='b'}\n");
-    utils::create_file(fs::path("root/subdir1/a"));
+    atf::utils::create_file("root/subdir1/Kyuafile",
+                            "syntax('kyuafile', 1)\n"
+                            "atf_test_program{name='a', test_suite='b'}\n");
+    atf::utils::create_file("root/subdir1/a", "");
 
     fs::mkdir(fs::path("root/subdir2"), 0755);
-    utils::create_file(fs::path("root/subdir2/Kyuafile"),
-                       "syntax('kyuafile', 1)\n"
-                       "atf_test_program{name='c', test_suite='d'}\n");
-    utils::create_file(fs::path("root/subdir2/c"));
-    utils::create_file(fs::path("root/subdir2/Kyuafile.etc"), "invalid");
+    atf::utils::create_file("root/subdir2/Kyuafile",
+                            "syntax('kyuafile', 1)\n"
+                            "atf_test_program{name='c', test_suite='d'}\n");
+    atf::utils::create_file("root/subdir2/c", "");
+    atf::utils::create_file("root/subdir2/Kyuafile.etc", "invalid");
 
     const user_files::kyuafile kyuafile = user_files::kyuafile::load(
         fs::path("root/Kyuafile"), none);

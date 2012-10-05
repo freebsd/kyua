@@ -43,7 +43,6 @@
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/optional.ipp"
-#include "utils/test_utils.hpp"
 
 namespace atf_iface = engine::atf_iface;
 namespace fs = utils::fs;
@@ -85,7 +84,7 @@ bad_test_suite_test(const char* interface)
     lutok::do_string(state, F("return {name='foo', interface='%s', "
                               "test_suite={}}") % interface, 1);
     fs::mkdir(fs::path("bar"), 0755);
-    utils::create_file(fs::path("bar/foo"));
+    atf::utils::create_file("bar/foo", "");
 
     ATF_REQUIRE_THROW_RE(std::runtime_error,
                          "non-string.*test suite.*'foo'",
@@ -105,7 +104,7 @@ missing_binary_test(const char* interface)
     lutok::state state;
     stack_balance_checker checker(state);
 
-    utils::create_file(fs::path("i-exist"));
+    atf::utils::create_file("i-exist", "");
     lutok::do_string(state, F("return {name='i-exist', interface='%s', "
                               "test_suite='the-suite'}") % interface, 1);
 
@@ -129,7 +128,7 @@ ATF_TEST_CASE_BODY(get_test_program__atf__ok)
 
     fs::mkdir(fs::path("root"), 0755);
     fs::mkdir(fs::path("root/directory"), 0755);
-    utils::create_file(fs::path("root/directory/the-name"));
+    atf::utils::create_file("root/directory/the-name", "");
 
     const engine::test_program_ptr program =
         user_files::detail::get_test_program(state, fs::path("root/directory"));
@@ -173,7 +172,7 @@ ATF_TEST_CASE_BODY(get_test_program__plain__ok)
 
     fs::mkdir(fs::path("root"), 0755);
     fs::mkdir(fs::path("root/directory"), 0755);
-    utils::create_file(fs::path("root/directory/the-name"));
+    atf::utils::create_file("root/directory/the-name", "");
 
     const engine::test_program_ptr program =
         user_files::detail::get_test_program(state, fs::path("root/directory"));
@@ -264,9 +263,9 @@ ATF_TEST_CASE_BODY(get_test_programs__some)
         "t[2] = {name='c/d', interface='atf', test_suite='e'}");
 
     fs::mkdir(fs::path("root"), 0755);
-    utils::create_file(fs::path("root/a"));
+    atf::utils::create_file("root/a", "");
     fs::mkdir(fs::path("root/c"), 0755);
-    utils::create_file(fs::path("root/c/d"));
+    atf::utils::create_file("root/c/d", "");
 
     const engine::test_programs_vector programs =
         user_files::detail::get_test_programs(state, "t", fs::path("root"));
@@ -331,11 +330,11 @@ ATF_TEST_CASE_BODY(kyuafile__load__integration)
         file.close();
     }
 
-    utils::create_file(fs::path("1st"));
-    utils::create_file(fs::path("2nd"));
-    utils::create_file(fs::path("3rd"));
-    utils::create_file(fs::path("4th"));
-    utils::create_file(fs::path("dir/1st"));
+    atf::utils::create_file("1st", "");
+    atf::utils::create_file("2nd", "");
+    atf::utils::create_file("3rd", "");
+    atf::utils::create_file("4th", "");
+    atf::utils::create_file("dir/1st", "");
 
     const user_files::kyuafile suite = user_files::kyuafile::load(
         fs::path("config"), none);
@@ -391,8 +390,8 @@ ATF_TEST_CASE_BODY(kyuafile__load__current_directory)
         file.close();
     }
 
-    utils::create_file(fs::path("one"));
-    utils::create_file(fs::path("dir/two"));
+    atf::utils::create_file("one", "");
+    atf::utils::create_file("dir/two", "");
 
     const user_files::kyuafile suite = user_files::kyuafile::load(
         fs::path("config"), none);
@@ -430,9 +429,9 @@ ATF_TEST_CASE_BODY(kyuafile__load__other_directory)
         file.close();
     }
 
-    utils::create_file(fs::path("root/one"));
-    utils::create_file(fs::path("root/dir/two"));
-    utils::create_file(fs::path("root/dir/three"));
+    atf::utils::create_file("root/one", "");
+    atf::utils::create_file("root/dir/two", "");
+    atf::utils::create_file("root/dir/three", "");
 
     const user_files::kyuafile suite = user_files::kyuafile::load(
         fs::path("root/config"), none);
@@ -474,10 +473,10 @@ ATF_TEST_CASE_BODY(kyuafile__load__build_directory)
     }
 
     fs::mkdir(fs::path("builddir"), 0755);
-    utils::create_file(fs::path("builddir/one"));
+    atf::utils::create_file("builddir/one", "");
     fs::mkdir(fs::path("builddir/dir"), 0755);
-    utils::create_file(fs::path("builddir/dir/two"));
-    utils::create_file(fs::path("builddir/dir/three"));
+    atf::utils::create_file("builddir/dir/two", "");
+    atf::utils::create_file("builddir/dir/three", "");
 
     const user_files::kyuafile suite = user_files::kyuafile::load(
         fs::path("srcdir/config"), utils::make_optional(fs::path("builddir")));
@@ -575,7 +574,7 @@ ATF_TEST_CASE_BODY(kyuafile__load__missing_test_program)
         file.close();
     }
 
-    utils::create_file(fs::path("one"));
+    atf::utils::create_file("one", "");
 
     ATF_REQUIRE_THROW_RE(user_files::load_error, "Non-existent.*'two'",
                          user_files::kyuafile::load(fs::path("config"), none));

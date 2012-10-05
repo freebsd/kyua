@@ -45,7 +45,6 @@
 #include "utils/env.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
-#include "utils/test_utils.hpp"
 
 namespace cmdline = utils::cmdline;
 namespace fs = utils::fs;
@@ -89,11 +88,13 @@ ATF_TEST_CASE_BODY(all_topics__ok)
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(EXIT_SUCCESS,
                    cmd.main(&ui, args, user_files::default_config()));
-    ATF_REQUIRE(utils::grep_string(PACKAGE_NAME, ui.out_log()[0]));
-    ATF_REQUIRE(utils::grep_string(PACKAGE_VERSION, ui.out_log()[0]));
-    ATF_REQUIRE(utils::grep_vector("Content of AUTHORS", ui.out_log()));
-    ATF_REQUIRE(utils::grep_vector("Content of COPYING", ui.out_log()));
-    ATF_REQUIRE(utils::grep_vector("Homepage", ui.out_log()));
+    ATF_REQUIRE(atf::utils::grep_string(PACKAGE_NAME, ui.out_log()[0]));
+    ATF_REQUIRE(atf::utils::grep_string(PACKAGE_VERSION, ui.out_log()[0]));
+    ATF_REQUIRE(atf::utils::grep_collection("Content of AUTHORS",
+                                            ui.out_log()));
+    ATF_REQUIRE(atf::utils::grep_collection("Content of COPYING",
+                                            ui.out_log()));
+    ATF_REQUIRE(atf::utils::grep_collection("Homepage", ui.out_log()));
     ATF_REQUIRE(ui.err_log().empty());
 }
 
@@ -110,13 +111,15 @@ ATF_TEST_CASE_BODY(all_topics__missing_docs)
     ATF_REQUIRE_EQ(EXIT_FAILURE,
                    cmd.main(&ui, args, user_files::default_config()));
 
-    ATF_REQUIRE(utils::grep_string(PACKAGE_NAME, ui.out_log()[0]));
-    ATF_REQUIRE(utils::grep_string(PACKAGE_VERSION, ui.out_log()[0]));
+    ATF_REQUIRE(atf::utils::grep_string(PACKAGE_NAME, ui.out_log()[0]));
+    ATF_REQUIRE(atf::utils::grep_string(PACKAGE_VERSION, ui.out_log()[0]));
 
-    ATF_REQUIRE(utils::grep_vector("Homepage", ui.out_log()));
+    ATF_REQUIRE(atf::utils::grep_collection("Homepage", ui.out_log()));
 
-    ATF_REQUIRE(utils::grep_vector("Failed to open.*AUTHORS", ui.err_log()));
-    ATF_REQUIRE(utils::grep_vector("Failed to open.*COPYING", ui.err_log()));
+    ATF_REQUIRE(atf::utils::grep_collection("Failed to open.*AUTHORS",
+                                            ui.err_log()));
+    ATF_REQUIRE(atf::utils::grep_collection("Failed to open.*COPYING",
+                                            ui.err_log()));
 }
 
 
@@ -135,10 +138,11 @@ ATF_TEST_CASE_BODY(topic_authors__ok)
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(EXIT_SUCCESS,
                    cmd.main(&ui, args, user_files::default_config()));
-    ATF_REQUIRE(!utils::grep_string(PACKAGE_NAME, ui.out_log()[0]));
-    ATF_REQUIRE(utils::grep_vector("Content of AUTHORS", ui.out_log()));
-    ATF_REQUIRE(!utils::grep_vector("COPYING", ui.out_log()));
-    ATF_REQUIRE(!utils::grep_vector("Homepage", ui.out_log()));
+    ATF_REQUIRE(!atf::utils::grep_string(PACKAGE_NAME, ui.out_log()[0]));
+    ATF_REQUIRE(atf::utils::grep_collection("Content of AUTHORS",
+                                            ui.out_log()));
+    ATF_REQUIRE(!atf::utils::grep_collection("COPYING", ui.out_log()));
+    ATF_REQUIRE(!atf::utils::grep_collection("Homepage", ui.out_log()));
     ATF_REQUIRE(ui.err_log().empty());
 }
 
@@ -158,8 +162,10 @@ ATF_TEST_CASE_BODY(topic_authors__missing_doc)
 
     ATF_REQUIRE_EQ(0, ui.out_log().size());
 
-    ATF_REQUIRE(utils::grep_vector("Failed to open.*AUTHORS", ui.err_log()));
-    ATF_REQUIRE(!utils::grep_vector("Failed to open.*COPYING", ui.err_log()));
+    ATF_REQUIRE(atf::utils::grep_collection("Failed to open.*AUTHORS",
+                                            ui.err_log()));
+    ATF_REQUIRE(!atf::utils::grep_collection("Failed to open.*COPYING",
+                                             ui.err_log()));
 }
 
 
@@ -178,10 +184,11 @@ ATF_TEST_CASE_BODY(topic_license__ok)
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(EXIT_SUCCESS,
                    cmd.main(&ui, args, user_files::default_config()));
-    ATF_REQUIRE(!utils::grep_string(PACKAGE_NAME, ui.out_log()[0]));
-    ATF_REQUIRE(!utils::grep_vector("AUTHORS", ui.out_log()));
-    ATF_REQUIRE(utils::grep_vector("Content of COPYING", ui.out_log()));
-    ATF_REQUIRE(!utils::grep_vector("Homepage", ui.out_log()));
+    ATF_REQUIRE(!atf::utils::grep_string(PACKAGE_NAME, ui.out_log()[0]));
+    ATF_REQUIRE(!atf::utils::grep_collection("AUTHORS", ui.out_log()));
+    ATF_REQUIRE(atf::utils::grep_collection("Content of COPYING",
+                                            ui.out_log()));
+    ATF_REQUIRE(!atf::utils::grep_collection("Homepage", ui.out_log()));
     ATF_REQUIRE(ui.err_log().empty());
 }
 
@@ -201,8 +208,10 @@ ATF_TEST_CASE_BODY(topic_license__missing_doc)
 
     ATF_REQUIRE_EQ(0, ui.out_log().size());
 
-    ATF_REQUIRE(!utils::grep_vector("Failed to open.*AUTHORS", ui.err_log()));
-    ATF_REQUIRE(utils::grep_vector("Failed to open.*COPYING", ui.err_log()));
+    ATF_REQUIRE(!atf::utils::grep_collection("Failed to open.*AUTHORS",
+                                             ui.err_log()));
+    ATF_REQUIRE(atf::utils::grep_collection("Failed to open.*COPYING",
+                                            ui.err_log()));
 }
 
 
@@ -219,8 +228,8 @@ ATF_TEST_CASE_BODY(topic_version__ok)
     ATF_REQUIRE_EQ(EXIT_SUCCESS,
                    cmd.main(&ui, args, user_files::default_config()));
     ATF_REQUIRE_EQ(1, ui.out_log().size());
-    ATF_REQUIRE(utils::grep_string(PACKAGE_NAME, ui.out_log()[0]));
-    ATF_REQUIRE(utils::grep_string(PACKAGE_VERSION, ui.out_log()[0]));
+    ATF_REQUIRE(atf::utils::grep_string(PACKAGE_NAME, ui.out_log()[0]));
+    ATF_REQUIRE(atf::utils::grep_string(PACKAGE_VERSION, ui.out_log()[0]));
     ATF_REQUIRE(ui.err_log().empty());
 }
 

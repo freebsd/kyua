@@ -82,8 +82,7 @@ store_metadata_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) \
 tests_store_PROGRAMS += store/transaction_test
 store_transaction_test_SOURCES = store/transaction_test.cpp
 store_transaction_test_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) \
-                                  $(UTILS_TEST_CFLAGS) $(UTILS_CFLAGS) \
-                                  $(ATF_CXX_CFLAGS)
+                                  $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 store_transaction_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) \
-                               $(UTILS_TEST_LIBS) $(UTILS_LIBS) $(ATF_CXX_LIBS)
+                               $(UTILS_LIBS) $(ATF_CXX_LIBS)
 endif

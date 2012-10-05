@@ -36,7 +36,6 @@
 #include "utils/config/tree.ipp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
-#include "utils/test_utils.hpp"
 
 namespace config = utils::config;
 namespace fs = utils::fs;

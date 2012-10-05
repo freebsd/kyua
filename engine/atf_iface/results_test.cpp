@@ -46,7 +46,6 @@ extern "C" {
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/process/status.hpp"
-#include "utils/test_utils.hpp"
 
 namespace atf_iface = engine::atf_iface;
 namespace datetime = utils::datetime;
@@ -634,7 +633,7 @@ ATF_TEST_CASE_BODY(calculate_result__bad_file)
     using process::status;
 
     const status body_status = status::fake_exited(EXIT_SUCCESS);
-    utils::create_file(fs::path("foo"), "invalid\n");
+    atf::utils::create_file("foo", "invalid\n");
     const engine::test_result expected(engine::test_result::broken,
                                        "Unknown test result 'invalid'");
     ATF_REQUIRE(expected == atf_iface::calculate_result(
@@ -647,7 +646,7 @@ ATF_TEST_CASE_BODY(calculate_result__body_ok__cleanup_ok)
 {
     using process::status;
 
-    utils::create_file(fs::path("result.txt"), "skipped: Something\n");
+    atf::utils::create_file("result.txt", "skipped: Something\n");
     const status body_status = status::fake_exited(EXIT_SUCCESS);
     const status cleanup_status = status::fake_exited(EXIT_SUCCESS);
     ATF_REQUIRE(
@@ -663,7 +662,7 @@ ATF_TEST_CASE_BODY(calculate_result__body_ok__cleanup_bad)
 {
     using process::status;
 
-    utils::create_file(fs::path("result.txt"), "skipped: Something\n");
+    atf::utils::create_file("result.txt", "skipped: Something\n");
     const status body_status = status::fake_exited(EXIT_SUCCESS);
     const status cleanup_status = status::fake_exited(EXIT_FAILURE);
     ATF_REQUIRE(
@@ -680,7 +679,7 @@ ATF_TEST_CASE_BODY(calculate_result__body_ok__cleanup_timeout)
 {
     using process::status;
 
-    utils::create_file(fs::path("result.txt"), "skipped: Something\n");
+    atf::utils::create_file("result.txt", "skipped: Something\n");
     const status body_status = status::fake_exited(EXIT_SUCCESS);
     ATF_REQUIRE(
         engine::test_result(engine::test_result::broken, "Test case "
@@ -695,7 +694,7 @@ ATF_TEST_CASE_BODY(calculate_result__body_bad__cleanup_ok)
 {
     using process::status;
 
-    utils::create_file(fs::path("result.txt"), "skipped: Something\n");
+    atf::utils::create_file("result.txt", "skipped: Something\n");
     const status body_status = status::fake_exited(EXIT_FAILURE);
     const status cleanup_status = status::fake_exited(EXIT_SUCCESS);
     ATF_REQUIRE(
@@ -713,7 +712,7 @@ ATF_TEST_CASE_BODY(calculate_result__body_bad__cleanup_bad)
 {
     using process::status;
 
-    utils::create_file(fs::path("result.txt"), "passed\n");
+    atf::utils::create_file("result.txt", "passed\n");
     const status body_status = status::fake_signaled(3, false);
     const status cleanup_status = status::fake_exited(EXIT_FAILURE);
     ATF_REQUIRE(

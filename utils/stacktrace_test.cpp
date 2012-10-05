@@ -49,7 +49,6 @@ extern "C" {
 #include "utils/process/children.ipp"
 #include "utils/process/status.hpp"
 #include "utils/sanity.hpp"
-#include "utils/test_utils.hpp"
 
 namespace fs = utils::fs;
 namespace process = utils::process;
@@ -104,7 +103,7 @@ generate_core(const atf::tests::tc* test_case, const char* base_name)
 
     const fs::path helper = fs::path(test_case->get_config_var("srcdir")) /
         "stacktrace_helper";
-    utils::copy_file(helper, fs::path(base_name));
+    atf::utils::copy_file(helper.str(), base_name);
 
     const process::status status = process::child_with_files::fork(
         crash_me(base_name),
@@ -123,7 +122,7 @@ generate_core(const atf::tests::tc* test_case, const char* base_name)
 static void
 create_script(const char* script, const std::string& contents)
 {
-    utils::create_file(fs::path(script), "#! /bin/sh\n\n" + contents);
+    atf::utils::create_file(script, "#! /bin/sh\n\n" + contents);
     ATF_REQUIRE(::chmod(script, 0755) != -1);
 }
 
@@ -166,7 +165,7 @@ ATF_TEST_CASE_BODY(find_gdb__use_builtin)
 ATF_TEST_CASE_WITHOUT_HEAD(find_gdb__search_builtin__ok);
 ATF_TEST_CASE_BODY(find_gdb__search_builtin__ok)
 {
-    utils::create_file(fs::path("custom-name"));
+    atf::utils::create_file("custom-name", "");
     ATF_REQUIRE(::chmod("custom-name", 0755) != -1);
     const fs::path exp_gdb = fs::path("custom-name").to_absolute();
 
@@ -318,7 +317,7 @@ ATF_TEST_CASE_BODY(dump_stacktrace__gdb_fail)
     utils::builtin_gdb = "fake-gdb";
 
     const process::status status = process::status::fake_signaled(SIGILL, true);
-    utils::create_file(fs::path("fake.core"), "");
+    atf::utils::create_file("fake.core", "");
 
     std::ostringstream output;
     utils::dump_stacktrace(fs::path("fake"), status, fs::path("."), output);
@@ -337,14 +336,14 @@ ATF_TEST_CASE_BODY(dump_stacktrace_if_available__append)
     create_script("fake-gdb", "echo 'frame 1'; exit 0");
     utils::builtin_gdb = "fake-gdb";
 
-    utils::create_file(fs::path("output.txt"), "Pre-contents");
+    atf::utils::create_file("output.txt", "Pre-contents");
     const process::status status = generate_core(this, "short");
     utils::dump_stacktrace_if_available(
         fs::path("short"), utils::make_optional(status), fs::path("."),
         fs::path("output.txt"));
 
-    ATF_REQUIRE(utils::grep_file("Pre-contents", fs::path("output.txt")));
-    ATF_REQUIRE(utils::grep_file("frame 1", fs::path("output.txt")));
+    ATF_REQUIRE(atf::utils::grep_file("Pre-contents", "output.txt"));
+    ATF_REQUIRE(atf::utils::grep_file("frame 1", "output.txt"));
 }
 
 
@@ -360,7 +359,7 @@ ATF_TEST_CASE_BODY(dump_stacktrace_if_available__create)
         fs::path("short"), utils::make_optional(status), fs::path("."),
         fs::path("output.txt"));
 
-    ATF_REQUIRE(utils::grep_file("frame 1", fs::path("output.txt")));
+    ATF_REQUIRE(atf::utils::grep_file("frame 1", "output.txt"));
 }
 
 

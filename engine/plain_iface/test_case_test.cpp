@@ -52,7 +52,6 @@ extern "C" {
 #include "utils/optional.ipp"
 #include "utils/process/children.ipp"
 #include "utils/sanity.hpp"
-#include "utils/test_utils.hpp"
 
 namespace config = utils::config;
 namespace datetime = utils::datetime;
@@ -77,7 +76,7 @@ public:
     void
     got_stdout(const utils::fs::path& file)
     {
-        utils::copy_file(file, fs::path("helper-stdout.txt"));
+        atf::utils::copy_file(file.str(), "helper-stdout.txt");
     }
 
     /// Copies the stderr of the test case outside of its work directory.
@@ -86,7 +85,7 @@ public:
     void
     got_stderr(const utils::fs::path& file)
     {
-        utils::copy_file(file, fs::path("helper-stderr.txt"));
+        atf::utils::copy_file(file.str(), "helper-stderr.txt");
     }
 };
 
@@ -343,10 +342,10 @@ ATF_TEST_CASE_BODY(run__stacktrace)
     ATF_REQUIRE(engine::test_result::broken == result.type());
     ATF_REQUIRE_MATCH(F("Received signal %s") % SIGABRT, result.reason());
 
-    ATF_REQUIRE(!utils::grep_file("attempting to gather stack trace",
-                                  fs::path("helper-stdout.txt")));
-    ATF_REQUIRE( utils::grep_file("attempting to gather stack trace",
-                                  fs::path("helper-stderr.txt")));
+    ATF_REQUIRE(!atf::utils::grep_file("attempting to gather stack trace",
+                                       "helper-stdout.txt"));
+    ATF_REQUIRE( atf::utils::grep_file("attempting to gather stack trace",
+                                       "helper-stderr.txt"));
 }
 
 

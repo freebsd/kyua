@@ -42,11 +42,13 @@ libutils_a_SOURCES += utils/cmdline/parser.hpp
 libutils_a_SOURCES += utils/cmdline/parser.ipp
 libutils_a_SOURCES += utils/cmdline/ui.cpp
 libutils_a_SOURCES += utils/cmdline/ui.hpp
+# The following two files are only supposed to be used from test code.  They
+# should not be bundled into libutils.a, but doing so simplifies the build
+# significantly.
+libutils_a_SOURCES += utils/cmdline/ui_mock.hpp
+libutils_a_SOURCES += utils/cmdline/ui_mock.cpp
 
 if WITH_ATF
-libutils_test_a_SOURCES += utils/cmdline/ui_mock.hpp
-libutils_test_a_SOURCES += utils/cmdline/ui_mock.cpp
-
 tests_utils_cmdlinedir = $(pkgtestsdir)/utils/cmdline
 
 tests_utils_cmdline_DATA = utils/cmdline/Kyuafile
@@ -54,12 +56,8 @@ EXTRA_DIST += $(tests_utils_cmdline_DATA)
 
 tests_utils_cmdline_PROGRAMS = utils/cmdline/base_command_test
 utils_cmdline_base_command_test_SOURCES = utils/cmdline/base_command_test.cpp
-utils_cmdline_base_command_test_CXXFLAGS = $(UTILS_TEST_CFLAGS) \
-                                           $(UTILS_CFLAGS) \
-                                           $(ATF_CXX_CFLAGS)
-utils_cmdline_base_command_test_LDADD = $(UTILS_TEST_LIBS) \
-                                        $(UTILS_LIBS) \
-                                        $(ATF_CXX_LIBS)
+utils_cmdline_base_command_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_cmdline_base_command_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_cmdline_PROGRAMS += utils/cmdline/commands_map_test
 utils_cmdline_commands_map_test_SOURCES = utils/cmdline/commands_map_test.cpp
@@ -88,7 +86,6 @@ utils_cmdline_parser_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_cmdline_PROGRAMS += utils/cmdline/ui_test
 utils_cmdline_ui_test_SOURCES = utils/cmdline/ui_test.cpp
-utils_cmdline_ui_test_CXXFLAGS = $(UTILS_TEST_CFLAGS) $(UTILS_CFLAGS) \
-                                 $(ATF_CXX_CFLAGS)
-utils_cmdline_ui_test_LDADD = $(UTILS_TEST_LIBS) $(UTILS_LIBS) $(ATF_CXX_LIBS)
+utils_cmdline_ui_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_cmdline_ui_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 endif

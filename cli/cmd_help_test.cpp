@@ -44,7 +44,6 @@
 #include "utils/cmdline/ui_mock.hpp"
 #include "utils/defs.hpp"
 #include "utils/sanity.hpp"
-#include "utils/test_utils.hpp"
 
 namespace cmdline = utils::cmdline;
 namespace config = utils::config;
@@ -242,10 +241,10 @@ ATF_TEST_CASE_BODY(subcommand__simple)
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(EXIT_SUCCESS,
                    cmd.main(&ui, args, user_files::default_config()));
-    ATF_REQUIRE(utils::grep_vector("^Usage: progname \\[general_options\\] "
+    ATF_REQUIRE(atf::utils::grep_collection("^Usage: progname \\[general_options\\] "
                                    "mock_simple$", ui.out_log()));
-    ATF_REQUIRE(!utils::grep_vector("Available.*options", ui.out_log()));
-    ATF_REQUIRE(utils::grep_vector("^See kyua-mock_simple\\(1\\) for more "
+    ATF_REQUIRE(!atf::utils::grep_collection("Available.*options", ui.out_log()));
+    ATF_REQUIRE(atf::utils::grep_collection("^See kyua-mock_simple\\(1\\) for more "
                                    "details.", ui.out_log()));
     ATF_REQUIRE(ui.err_log().empty());
 }
@@ -272,21 +271,26 @@ ATF_TEST_CASE_BODY(subcommand__complex)
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(EXIT_SUCCESS,
                    cmd.main(&ui, args, user_files::default_config()));
-    ATF_REQUIRE(utils::grep_vector("^Usage: progname \\[general_options\\] "
-                                   "mock_complex \\[command_options\\] "
-                                   "\\[arg1 .. argN\\]$", ui.out_log()));
-    ATF_REQUIRE(utils::grep_vector("Available general options", ui.out_log()));
-    ATF_REQUIRE(utils::grep_vector("--global_a", ui.out_log()));
-    ATF_REQUIRE(utils::grep_vector("--global_c=c_global", ui.out_log()));
-    ATF_REQUIRE(utils::grep_vector("Available command options", ui.out_log()));
-    ATF_REQUIRE(utils::grep_vector("--flag_a   *Flag A", ui.out_log()));
-    ATF_REQUIRE(utils::grep_vector("-b.*--flag_b   *Flag B", ui.out_log()));
-    ATF_REQUIRE(utils::grep_vector("-c c_arg.*--flag_c=c_arg   *Flag C",
-                                   ui.out_log()));
-    ATF_REQUIRE(utils::grep_vector("--flag_d=d_arg   *Flag D.*default.*foo",
-                                   ui.out_log()));
-    ATF_REQUIRE(utils::grep_vector("^See kyua-mock_complex\\(1\\) for more "
-                                   "details.", ui.out_log()));
+    ATF_REQUIRE(atf::utils::grep_collection(
+        "^Usage: progname \\[general_options\\] mock_complex "
+        "\\[command_options\\] \\[arg1 .. argN\\]$", ui.out_log()));
+    ATF_REQUIRE(atf::utils::grep_collection("Available general options",
+                                            ui.out_log()));
+    ATF_REQUIRE(atf::utils::grep_collection("--global_a", ui.out_log()));
+    ATF_REQUIRE(atf::utils::grep_collection("--global_c=c_global",
+                                            ui.out_log()));
+    ATF_REQUIRE(atf::utils::grep_collection("Available command options",
+                                            ui.out_log()));
+    ATF_REQUIRE(atf::utils::grep_collection("--flag_a   *Flag A",
+                                            ui.out_log()));
+    ATF_REQUIRE(atf::utils::grep_collection("-b.*--flag_b   *Flag B",
+                                            ui.out_log()));
+    ATF_REQUIRE(atf::utils::grep_collection(
+        "-c c_arg.*--flag_c=c_arg   *Flag C", ui.out_log()));
+    ATF_REQUIRE(atf::utils::grep_collection(
+        "--flag_d=d_arg   *Flag D.*default.*foo", ui.out_log()));
+    ATF_REQUIRE(atf::utils::grep_collection(
+        "^See kyua-mock_complex\\(1\\) for more details.", ui.out_log()));
     ATF_REQUIRE(ui.err_log().empty());
 }
 

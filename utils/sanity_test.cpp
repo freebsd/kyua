@@ -42,7 +42,6 @@ extern "C" {
 #include "utils/fs/path.hpp"
 #include "utils/process/children.ipp"
 #include "utils/process/status.hpp"
-#include "utils/test_utils.hpp"
 
 namespace fs = utils::fs;
 namespace process = utils::process;
@@ -68,8 +67,8 @@ run_test(Function function)
 {
     const process::status status = process::child_with_files::fork(
         function, Stdout_File, Stderr_File)->wait();
-    utils::cat_file("Helper stdout: ", Stdout_File);
-    utils::cat_file("Helper stderr: ", Stderr_File);
+    atf::utils::cat_file(Stdout_File.str(), "Helper stdout: ");
+    atf::utils::cat_file(Stderr_File.str(), "Helper stderr: ");
     return status;
 }
 
@@ -79,8 +78,8 @@ verify_success(const process::status& status)
 {
     ATF_REQUIRE(status.exited());
     ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
-    ATF_REQUIRE(utils::grep_file("Before test", Stdout_File));
-    ATF_REQUIRE(utils::grep_file("After test", Stdout_File));
+    ATF_REQUIRE(atf::utils::grep_file("Before test", Stdout_File.str()));
+    ATF_REQUIRE(atf::utils::grep_file("After test", Stdout_File.str()));
 }
 
 
@@ -94,14 +93,15 @@ verify_failed(const process::status& status, const char* type,
     } else {
         ATF_REQUIRE(status.signaled());
         ATF_REQUIRE_EQ(SIGABRT, status.termsig());
-        ATF_REQUIRE(utils::grep_file("Before test", Stdout_File));
-        ATF_REQUIRE(!utils::grep_file("After test", Stdout_File));
+        ATF_REQUIRE(atf::utils::grep_file("Before test", Stdout_File.str()));
+        ATF_REQUIRE(!atf::utils::grep_file("After test", Stdout_File.str()));
         if (exp_message != NULL)
-            ATF_REQUIRE(utils::grep_file(F(FILE_REGEXP "%s: %s") %
-                                         type % exp_message, Stderr_File));
+            ATF_REQUIRE(atf::utils::grep_file(F(FILE_REGEXP "%s: %s") %
+                                              type % exp_message,
+                                              Stderr_File.str()));
         else
-            ATF_REQUIRE(utils::grep_file(F(FILE_REGEXP "%s") % type,
-                                         Stderr_File));
+            ATF_REQUIRE(atf::utils::grep_file(F(FILE_REGEXP "%s") % type,
+                                              Stderr_File.str()));
     }
 }
 
@@ -268,9 +268,11 @@ crash_handler_test(void)
     const process::status status = run_test(do_crash_handler_test< Signo >);
     ATF_REQUIRE(status.signaled());
     ATF_REQUIRE_EQ(Signo, status.termsig());
-    ATF_REQUIRE(utils::grep_file(F("Fatal signal %s") % Signo, Stderr_File));
-    ATF_REQUIRE(utils::grep_file("Log file is test-log.txt", Stderr_File));
-    ATF_REQUIRE(!utils::grep_file("After signal", Stdout_File));
+    ATF_REQUIRE(atf::utils::grep_file(F("Fatal signal %s") % Signo,
+                                      Stderr_File.str()));
+    ATF_REQUIRE(atf::utils::grep_file("Log file is test-log.txt",
+                                      Stderr_File.str()));
+    ATF_REQUIRE(!atf::utils::grep_file("After signal", Stdout_File.str()));
 }
 
 

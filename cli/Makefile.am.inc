@@ -67,12 +67,9 @@ tests_clidir = $(pkgtestsdir)/cli
 tests_cli_DATA = cli/Kyuafile
 EXTRA_DIST += $(tests_cli_DATA)
 
-CLI_TESTS_CXXFLAGS = $(CLI_CFLAGS) $(ENGINE_CFLAGS) \
-                     $(UTILS_TEST_CFLAGS) $(UTILS_CFLAGS) \
+CLI_TESTS_CXXFLAGS = $(CLI_CFLAGS) $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
                      $(ATF_CXX_CFLAGS)
-CLI_TESTS_LDADD = $(CLI_LIBS) $(ENGINE_LIBS) \
-                  $(UTILS_TEST_LIBS) $(UTILS_LIBS) \
-                  $(ATF_CXX_LIBS)
+CLI_TESTS_LDADD = $(CLI_LIBS) $(ENGINE_LIBS) $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_cli_PROGRAMS = cli/cmd_about_test
 cli_cmd_about_test_SOURCES = cli/cmd_about_test.cpp

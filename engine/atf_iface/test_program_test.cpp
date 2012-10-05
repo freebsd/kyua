@@ -45,7 +45,6 @@ extern "C" {
 #include "utils/env.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
-#include "utils/test_utils.hpp"
 
 namespace atf_iface = engine::atf_iface;
 namespace fs = utils::fs;
@@ -325,7 +324,7 @@ ATF_TEST_CASE_BODY(load_test_cases__missing_test_program)
 ATF_TEST_CASE_WITHOUT_HEAD(load_test_cases__not_a_test_program);
 ATF_TEST_CASE_BODY(load_test_cases__not_a_test_program)
 {
-    utils::create_file(fs::path("text-file"));
+    atf::utils::create_file("text-file", "");
     const atf_iface::test_program test_program(fs::path("text-file"),
                                                fs::path("."), "suite-name");
     check_test_cases_list_failure(test_program.test_cases(),

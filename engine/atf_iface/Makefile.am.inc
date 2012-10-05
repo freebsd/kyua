@@ -43,10 +43,10 @@ EXTRA_DIST += $(tests_engine_atf_iface_DATA)
 
 tests_engine_atf_iface_PROGRAMS = engine/atf_iface/results_test
 engine_atf_iface_results_test_SOURCES = engine/atf_iface/results_test.cpp
-engine_atf_iface_results_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_TEST_CFLAGS) \
-                                         $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-engine_atf_iface_results_test_LDADD = $(ENGINE_LIBS) $(UTILS_TEST_LIBS) \
-                                $(UTILS_LIBS) $(ATF_CXX_LIBS)
+engine_atf_iface_results_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
+                                         $(ATF_CXX_CFLAGS)
+engine_atf_iface_results_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
+                                      $(ATF_CXX_LIBS)
 
 tests_engine_atf_iface_PROGRAMS += engine/atf_iface/runner_helpers
 engine_atf_iface_runner_helpers_SOURCES = engine/atf_iface/runner_helpers.cpp
@@ -56,17 +56,16 @@ engine_atf_iface_runner_helpers_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 tests_engine_atf_iface_PROGRAMS += engine/atf_iface/runner_test
 engine_atf_iface_runner_test_SOURCES = engine/atf_iface/runner_test.cpp
 engine_atf_iface_runner_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
-                                        $(UTILS_TEST_CFLAGS) $(ATF_CXX_CFLAGS)
+                                        $(ATF_CXX_CFLAGS)
 engine_atf_iface_runner_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
-                                     $(UTILS_TEST_LIBS) $(ATF_CXX_LIBS)
+                                     $(ATF_CXX_LIBS)
 
 tests_engine_atf_iface_PROGRAMS += engine/atf_iface/test_case_test
 engine_atf_iface_test_case_test_SOURCES = engine/atf_iface/test_case_test.cpp
-engine_atf_iface_test_case_test_CXXFLAGS = $(ENGINE_CFLAGS) \
-                                           $(UTILS_TEST_CFLAGS) \
-                                           $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-engine_atf_iface_test_case_test_LDADD = $(ENGINE_LIBS) $(UTILS_TEST_LIBS) \
-                                  $(UTILS_LIBS) $(ATF_CXX_LIBS)
+engine_atf_iface_test_case_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
+                                           $(ATF_CXX_CFLAGS)
+engine_atf_iface_test_case_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
+                                        $(ATF_CXX_LIBS)
 
 tests_engine_atf_iface_PROGRAMS += engine/atf_iface/test_program_atf_helpers
 engine_atf_iface_test_program_atf_helpers_SOURCES = \
@@ -82,9 +81,8 @@ engine_atf_iface_test_program_plain_helpers_CXXFLAGS = $(UTILS_CFLAGS)
 tests_engine_atf_iface_PROGRAMS += engine/atf_iface/test_program_test
 engine_atf_iface_test_program_test_SOURCES = \
     engine/atf_iface/test_program_test.cpp
-engine_atf_iface_test_program_test_CXXFLAGS = $(ENGINE_CFLAGS) \
-                                              $(UTILS_TEST_CFLAGS) \
-                                              $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-engine_atf_iface_test_program_test_LDADD = $(ENGINE_LIBS) $(UTILS_TEST_LIBS) \
-                                           $(UTILS_LIBS) $(ATF_CXX_LIBS)
+engine_atf_iface_test_program_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
+                                              $(ATF_CXX_CFLAGS)
+engine_atf_iface_test_program_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
+                                           $(ATF_CXX_LIBS)
 endif

@@ -78,7 +78,7 @@ m4_ifndef([PKG_CHECK_MODULES],
 
 m4_ifndef([ATF_CHECK_CXX],
     [m4_fatal([Cannot find atf-c++.m4; see the INSTALL document for help])])
-ATF_CHECK_CXX([>= 0.15])
+ATF_CHECK_CXX([>= 0.17])
 m4_ifndef([ATF_CHECK_SH],
     [m4_fatal([Cannot find atf-sh.m4; see the INSTALL document for help])])
 ATF_CHECK_SH([>= 0.15])

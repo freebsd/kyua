@@ -52,7 +52,6 @@
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/exceptions.hpp"
 #include "utils/sqlite/statement.ipp"
-#include "utils/test_utils.hpp"
 
 namespace atf_iface = engine::atf_iface;
 namespace datetime = utils::datetime;
@@ -311,7 +310,7 @@ ATF_TEST_CASE_BODY(get_action_results__many)
     const datetime::timestamp end_time2 = datetime::timestamp::from_values(
         2012, 01, 30, 22, 16, 0, 0);
 
-    utils::create_file(fs::path("unused.txt"), "unused file\n");
+    atf::utils::create_file("unused.txt", "unused file\n");
 
     {
         const plain_iface::test_program test_program(
@@ -321,7 +320,7 @@ ATF_TEST_CASE_BODY(get_action_results__many)
 
         const int64_t tp_id = tx.put_test_program(test_program, action_id);
         const int64_t tc_id = tx.put_test_case(test_case, tp_id);
-        utils::create_file(fs::path("prog1.out"), "stdout of prog1\n");
+        atf::utils::create_file("prog1.out", "stdout of prog1\n");
         tx.put_test_case_file("__STDOUT__", fs::path("prog1.out"), tc_id);
         tx.put_test_case_file("unused.txt", fs::path("unused.txt"), tc_id);
         tx.put_result(result, tc_id, start_time1, end_time1);
@@ -341,7 +340,7 @@ ATF_TEST_CASE_BODY(get_action_results__many)
 
         const int64_t tp_id = tx.put_test_program(test_program, action_id);
         const int64_t tc_id = tx.put_test_case(test_case, tp_id);
-        utils::create_file(fs::path("prog2.err"), "stderr of prog2\n");
+        atf::utils::create_file("prog2.err", "stderr of prog2\n");
         tx.put_test_case_file("__STDERR__", fs::path("prog2.err"), tc_id);
         tx.put_test_case_file("unused.txt", fs::path("unused.txt"), tc_id);
         tx.put_result(result, tc_id, start_time2, end_time2);
@@ -837,7 +836,7 @@ ATF_TEST_CASE_BODY(put_test_case_file__some)
 {
     const char contents[] = "This is a test!";
 
-    utils::create_file(fs::path("input.txt"), contents);
+    atf::utils::create_file("input.txt", contents);
 
     store::backend backend = store::backend::open_rw(fs::path("test.db"));
     backend.database().exec("PRAGMA foreign_keys = OFF");
