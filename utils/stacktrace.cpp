@@ -319,9 +319,8 @@ utils::dump_stacktrace(const fs::path& program, const process::status& status,
 /// \param status The exit status of the program if available; may be none when
 ///     the program timed out.
 /// \param work_directory The directory from which the program was run.
-/// \param output File into which to dump the stack trace and any additional
-///     information.
-///
+/// \param output_file File into which to dump the stack trace and any
+///     additional information.
 ///
 /// \throw std::runtime_error If the output file cannot be opened.
 ///

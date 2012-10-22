@@ -552,7 +552,7 @@ put_file(sqlite::database& db, const fs::path& path)
 
 /// Loads a specific test program from the database.
 ///
-/// \param db The database to load the test program from.
+/// \param backend_ The store backend we are dealing with.
 /// \param id The identifier of the test program to load.
 /// \param interface The name of the interface of the test program.  Used to
 ///     address detail tables.

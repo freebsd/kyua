@@ -83,7 +83,7 @@ store::bind_bool(sqlite::statement& stmt, const char* field, const bool value)
 ///
 /// \param stmt The statement to which to bind the parameter.
 /// \param field The name of the parameter; must exist.
-/// \param value The value to bind.
+/// \param delta The value to bind.
 void
 store::bind_delta(sqlite::statement& stmt, const char* field,
                   const datetime::delta& delta)
@@ -96,7 +96,7 @@ store::bind_delta(sqlite::statement& stmt, const char* field,
 ///
 /// \param stmt The statement to which to bind the parameter.
 /// \param field The name of the parameter; must exist.
-/// \param value The value to bind.
+/// \param interface The value to bind.
 void
 store::bind_interface(sqlite::statement& stmt, const char* field,
                       const detail::interface_type interface)
@@ -138,7 +138,7 @@ store::bind_optional_string(sqlite::statement& stmt, const char* field,
 ///
 /// \param stmt The statement to which to bind the parameter.
 /// \param field The name of the parameter; must exist.
-/// \param value The value to bind.
+/// \param timestamp The value to bind.
 void
 store::bind_timestamp(sqlite::statement& stmt, const char* field,
                       const datetime::timestamp& timestamp)

@@ -406,6 +406,7 @@ public:
 ///
 /// \param test_case The test to execute.
 /// \param user_config The values for the current engine configuration.
+/// \param hooks Hooks to introspect the execution of the test case.
 /// \param stdout_path The file into which to store the test case's stdout.
 ///     If none, use a temporary file within the work directory.
 /// \param stderr_path The file into which to store the test case's stderr.

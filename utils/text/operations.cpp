@@ -129,14 +129,6 @@ text::split(const std::string& str, const char delimiter)
 }
 
 
-/// Specialization of to_type() for booleans.
-///
-/// \param str The input string.
-///
-/// \return A boolean that corresponds to the input string, if valid.
-///
-/// \throw value_error If str carries a string that does not map to a valid
-///     boolean value.
 template<>
 bool
 text::to_type(const std::string& str)
@@ -150,14 +142,6 @@ text::to_type(const std::string& str)
 }
 
 
-/// Specialization of to_type() for strings.
-///
-/// Converting a string to a string is a no-op, so just do nothing and return
-/// the input value.
-///
-/// \param str The input string.
-///
-/// \return The same as str.
 template<>
 std::string
 text::to_type(const std::string& str)
