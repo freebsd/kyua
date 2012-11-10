@@ -3,4 +3,3 @@ syntax("kyuafile", 1)
 test_suite("kyua")
 
 atf_test_program{name="test_case_test"}
-atf_test_program{name="test_program_test"}

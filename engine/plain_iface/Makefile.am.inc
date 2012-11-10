@@ -28,8 +28,6 @@
 
 libengine_a_SOURCES += engine/plain_iface/test_case.cpp
 libengine_a_SOURCES += engine/plain_iface/test_case.hpp
-libengine_a_SOURCES += engine/plain_iface/test_program.cpp
-libengine_a_SOURCES += engine/plain_iface/test_program.hpp
 
 if WITH_ATF
 tests_engine_plain_ifacedir = $(pkgtestsdir)/engine/plain_iface
@@ -50,13 +48,4 @@ engine_plain_iface_test_case_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
                                              $(ATF_CXX_CFLAGS)
 engine_plain_iface_test_case_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
                                           $(ATF_CXX_LIBS)
-
-tests_engine_plain_iface_PROGRAMS += engine/plain_iface/test_program_test
-engine_plain_iface_test_program_test_SOURCES = \
-    engine/plain_iface/test_program_test.cpp
-engine_plain_iface_test_program_test_CXXFLAGS = $(ENGINE_CFLAGS) \
-                                                $(UTILS_CFLAGS) \
-                                                $(ATF_CXX_CFLAGS)
-engine_plain_iface_test_program_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
-                                             $(ATF_CXX_LIBS)
 endif

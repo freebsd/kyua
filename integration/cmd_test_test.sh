@@ -895,8 +895,8 @@ EOF
     echo 'I am not executable' >non_executable
 
     cat >expout <<EOF
-crash_on_list:__test_cases_list__  ->  broken: Test program did not exit cleanly  [S.UUUs]
-non_executable:__test_cases_list__  ->  broken: Failed to execute the test program  [S.UUUs]
+crash_on_list:__test_cases_list__  ->  broken: atf_tester: Invalid test cases list header 'This is not a valid test program!'  [S.UUUs]
+non_executable:__test_cases_list__  ->  broken: atf_tester: execvp failed: Permission denied  [S.UUUs]
 
 0/2 passed (2 failed)
 Committed action 1

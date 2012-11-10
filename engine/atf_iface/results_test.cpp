@@ -40,7 +40,6 @@ extern "C" {
 #include <atf-c++.hpp>
 
 #include "engine/atf_iface/test_case.hpp"
-#include "engine/atf_iface/test_program.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/test_result.hpp"
 #include "utils/format/macros.hpp"

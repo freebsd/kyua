@@ -28,18 +28,218 @@
 
 #include "engine/test_program.hpp"
 
+#include <sstream>
 #include <stdexcept>
 
-#include "engine/atf_iface/test_program.hpp"
+#include <lutok/operations.hpp>
+#include <lutok/state.ipp>
+
 #include "engine/exceptions.hpp"
-#include "engine/plain_iface/test_program.hpp"
+#include "engine/test_result.hpp"
+#include "engine/testers.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/logging/macros.hpp"
+#include "utils/logging/operations.hpp"
 #include "utils/optional.ipp"
+#include "utils/process/children.ipp"
+#include "utils/process/status.hpp"
 #include "utils/sanity.hpp"
 
 namespace fs = utils::fs;
+namespace logging = utils::logging;
+namespace process = utils::process;
 
 using utils::optional;
+
+
+namespace {
+
+
+/// Functor to execute a tester's list operation.
+class list_test_cases {
+    /// Path to the tester binary.
+    const fs::path _tester;
+
+    /// Absolute path to the test program to list.
+    const fs::path& _program;
+
+public:
+    /// Constructor.
+    ///
+    /// \param interface Name of the interface of the tester.
+    /// \param program Absolute path to the test program to list.
+    list_test_cases(const std::string& interface, const fs::path& program) :
+        _tester(engine::tester_path(interface)), _program(program)
+    {
+        PRE(_program.is_absolute());
+    }
+
+    /// Executes the tester.
+    void
+    operator()(void)
+    {
+        // We rely on parsing the output of the tester verbatim.  Disable any of
+        // our own log messages so that they do not end up intermixed with such
+        // output.
+        logging::set_inmemory();
+
+        std::vector< std::string > args;
+        args.push_back("list");
+        args.push_back(_program.str());
+        process::exec(_tester, args);
+    }
+};
+
+
+/// Lua hook for the test_case function.
+///
+/// \pre state(-1) contains the arguments to the function.
+///
+/// \param state The Lua state in which we are running.
+///
+/// \return The number of return values, which is always 0.
+static int
+lua_test_case(lutok::state& state)
+{
+    if (!state.is_table())
+        throw std::runtime_error("Oh noes"); // XXX
+
+    state.get_global("_test_cases");
+    engine::test_cases_vector* test_cases =
+        *state.to_userdata< engine::test_cases_vector* >();
+    state.pop(1);
+
+    state.get_global("_test_program");
+    const engine::test_program* test_program =
+        *state.to_userdata< engine::test_program* >();
+    state.pop(1);
+
+    state.push_string("name");
+    state.get_table(-2);
+    const std::string name = state.to_string();
+    state.pop(1);
+
+    engine::metadata_builder mdbuilder(test_program->get_metadata());
+
+    state.push_nil();
+    while (state.next(-2)) {
+        if (!state.is_string(-2))
+            throw std::runtime_error("Oh oh");  // XXX
+        const std::string property = state.to_string(-2);
+
+        if (!state.is_string(-1))
+            throw std::runtime_error("Oh oh");  // XXX
+        const std::string value = state.to_string(-1);
+
+        if (property != "name")
+            mdbuilder.set_string(property, value);
+
+        state.pop(1);
+    }
+    state.pop(1);
+
+    engine::test_case_ptr test_case(
+        new engine::test_case(test_program->interface_name(), *test_program,
+                              name, mdbuilder.build()));
+    test_cases->push_back(test_case);
+
+    return 0;
+}
+
+
+/// Sets up the Lua state to process the output of a test case list.
+///
+/// \param [in,out] state The Lua state to configure.
+/// \param test_program Pointer to the test program being loaded.
+/// \param [out] test_cases Vector that will contain the list of test cases.
+static void
+setup_lua_state(lutok::state& state, const engine::test_program* test_program,
+                engine::test_cases_vector* test_cases)
+{
+    *state.new_userdata< engine::test_cases_vector* >() = test_cases;
+    state.set_global("_test_cases");
+
+    *state.new_userdata< const engine::test_program* >() = test_program;
+    state.set_global("_test_program");
+
+    state.push_cxx_function(lua_test_case);
+    state.set_global("test_case");
+}
+
+
+/// Reads a stream to the end and records the output in a string.
+///
+/// \param input The stream to read from.
+///
+/// \return The text of the stream.
+static std::string
+read_all(std::istream& input)
+{
+    std::ostringstream buffer;
+
+    char tmp[1024];
+    while (input.good()) {
+        input.read(tmp, sizeof(tmp));
+        if (input.good() || input.eof()) {
+            buffer.write(tmp, input.gcount());
+        }
+    }
+
+    return buffer.str();
+}
+
+
+/// Drops the trailing newline in a string and replaces others with a literal.
+///
+/// \param input The string in which to perform the replacements.
+///
+/// \return The modified string.
+static std::string
+replace_newlines(const std::string input)
+{
+    std::string output = input;
+
+    while (output.length() > 0 && output[output.length() - 1] == '\n') {
+        output.erase(output.end() - 1);
+    }
+
+    std::string::size_type newline = output.find('\n', 0);
+    while (newline != std::string::npos) {
+        output.replace(newline, 1, "<<NEWLINE>>");
+        newline = output.find('\n', newline + 1);
+    }
+
+    return output;
+}
+
+
+/// Loads the list of test cases from a test program.
+///
+/// \param test_program Representation of the test program to load.
+///
+/// \return A list of test cases.
+static engine::test_cases_vector
+load_test_cases(const engine::test_program& test_program)
+{
+    std::auto_ptr< process::child_with_output > child =
+        process::child_with_output::fork(list_test_cases(
+            test_program.interface_name(), test_program.absolute_path()));
+
+    const std::string output = read_all(child->output());
+
+    const process::status status = child->wait();
+    if (!status.exited() || status.exitstatus() != EXIT_SUCCESS)
+        throw engine::error(replace_newlines(output));
+
+    engine::test_cases_vector test_cases;
+    lutok::state state;
+    setup_lua_state(state, &test_program, &test_cases);
+    lutok::do_string(state, output, 0);
+    return test_cases;
+}
+
+
+}  // anonymous namespace
 
 
 /// Internal implementation of a test_program.
@@ -206,19 +406,19 @@ engine::test_program::test_cases(void) const
 {
     if (!_pimpl->test_cases) {
         try {
-            // TODO(jmmv): Yes, hardcoding the interface names here is nasty.
-            // But this will go away once we implement the testers as individual
-            // binaries, as we just auto-discover the ones that exist and use
-            // their generic interface.
-            if (_pimpl->interface_name == "atf") {
-                _pimpl->test_cases = atf_iface::load_atf_test_cases(this);
-            } else if (_pimpl->interface_name == "plain") {
-                _pimpl->test_cases = plain_iface::load_plain_test_cases(this);
-            } else
-                UNREACHABLE_MSG("Unknown interface " + _pimpl->interface_name);
+            _pimpl->test_cases = load_test_cases(*this);
         } catch (const std::runtime_error& e) {
-            UNREACHABLE_MSG(F("Should not have thrown, but got: %s") %
-                            e.what());
+            // TODO(jmmv): This is a very ugly workaround for the fact that we
+            // cannot report failures at the test-program level.  We should
+            // either address this, or move this reporting to the testers
+            // themselves.
+            LW(F("Failed to load test cases list: %s") % e.what());
+            engine::test_cases_vector fake_test_cases;
+            fake_test_cases.push_back(test_case_ptr(new test_case(
+                _pimpl->interface_name, *this, "__test_cases_list__",
+                "Represents the correct processing of the test cases list",
+                test_result(engine::test_result::broken, e.what()))));
+            _pimpl->test_cases = fake_test_cases;
         }
     }
     return _pimpl->test_cases.get();

@@ -4,4 +4,3 @@ test_suite("kyua")
 
 atf_test_program{name="results_test"}
 atf_test_program{name="runner_test"}
-atf_test_program{name="test_program_test"}

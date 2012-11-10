@@ -44,8 +44,6 @@ extern "C" {
 #include "cli/common.ipp"
 // TODO(jmmv): Should probably use a mock test case.
 #include "engine/atf_iface/test_case.hpp"
-// TODO(jmmv): Should probably use a mock test program.
-#include "engine/atf_iface/test_program.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/filters.hpp"
 #include "engine/user_files/kyuafile.hpp"

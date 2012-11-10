@@ -34,6 +34,7 @@ To build and use Kyua successfully you need:
 * Lutok 0.2.
 * pkg-config.
 * SQLite 3.6.22.
+* Kyua Testers 0.1.
 
 To build the Kyua tests, you optionally need:
 

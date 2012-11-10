@@ -37,7 +37,7 @@ extern "C" {
 
 #include "engine/exceptions.hpp"
 #include "engine/isolation.ipp"
-#include "engine/plain_iface/test_program.hpp"
+#include "engine/test_program.hpp"
 #include "engine/test_result.hpp"
 #include "utils/defs.hpp"
 #include "utils/fs/operations.hpp"

@@ -35,7 +35,6 @@
 #include "engine/action.hpp"
 #include "engine/context.hpp"
 #include "engine/plain_iface/test_case.hpp"
-#include "engine/plain_iface/test_program.hpp"
 #include "engine/test_result.hpp"
 #include "store/backend.hpp"
 #include "store/exceptions.hpp"

@@ -38,9 +38,9 @@ extern "C" {
 
 #include "engine/atf_iface/results.hpp"
 #include "engine/atf_iface/test_case.hpp"
-#include "engine/atf_iface/test_program.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/isolation.ipp"
+#include "engine/test_program.hpp"
 #include "engine/user_files/config.hpp"
 #include "utils/config/tree.ipp"
 #include "utils/env.hpp"

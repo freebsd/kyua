@@ -76,6 +76,7 @@ public:
     got_stdout(const utils::fs::path& file)
     {
         atf::utils::copy_file(file.str(), "helper-stdout.txt");
+        atf::utils::cat_file("helper-stdout.txt", "helper stdout: ");
     }
 
     /// Copies the stderr of the test case outside of its work directory.
@@ -85,6 +86,7 @@ public:
     got_stderr(const utils::fs::path& file)
     {
         atf::utils::copy_file(file.str(), "helper-stderr.txt");
+        atf::utils::cat_file("helper-stderr.txt", "helper stderr: ");
     }
 };
 

@@ -62,13 +62,12 @@ ATF_TEST_CASE_WITHOUT_HEAD(find__ok);
 ATF_TEST_CASE_BODY(find__ok)
 {
     const engine::test_program test_program(
-        "mock", fs::path("binary"), fs::path("root"), "suite-name",
+        "plain", fs::path("non-existent"), fs::path("."), "suite-name",
         engine::metadata_builder().build());
-    expect_death("Cannot implement mock test case without TestersDesign");
-    const engine::test_case_ptr test_case = test_program.find("foo");
-    ATF_REQUIRE_EQ(fs::path("binary"),
+    const engine::test_case_ptr test_case = test_program.find("main");
+    ATF_REQUIRE_EQ(fs::path("non-existent"),
                    test_case->container_test_program().relative_path());
-    ATF_REQUIRE_EQ("foo", test_case->name());
+    ATF_REQUIRE_EQ("main", test_case->name());
 }
 
 
@@ -76,12 +75,11 @@ ATF_TEST_CASE_WITHOUT_HEAD(find__missing);
 ATF_TEST_CASE_BODY(find__missing)
 {
     const engine::test_program test_program(
-        "mock", fs::path("binary"), fs::path("root"), "suite-name",
+        "plain", fs::path("non-existent"), fs::path("."), "suite-name",
         engine::metadata_builder().build());
-    expect_death("Cannot implement mock test case without TestersDesign");
-    ATF_REQUIRE_THROW_RE(engine::not_found_error, "case.*abc.*program.*binary",
+    ATF_REQUIRE_THROW_RE(engine::not_found_error,
+                         "case.*abc.*program.*non-existent",
                          test_program.find("abc"));
-    //ATF_REQUIRE_EQ(1, test_program.loads);
 }
 
 
@@ -89,75 +87,43 @@ ATF_TEST_CASE_WITHOUT_HEAD(test_cases__get);
 ATF_TEST_CASE_BODY(test_cases__get)
 {
     const engine::test_program test_program(
-        "mock", fs::path("binary"), fs::path("root"), "suite-name",
+        "plain", fs::path("non-existent"), fs::path("."), "suite-name",
         engine::metadata_builder().build());
-    expect_death("Cannot implement mock test case without TestersDesign");
     const engine::test_cases_vector& test_cases = test_program.test_cases();
     ATF_REQUIRE_EQ(1, test_cases.size());
-    ATF_REQUIRE_EQ(fs::path("binary"),
+    ATF_REQUIRE_EQ(fs::path("non-existent"),
                    test_cases[0]->container_test_program().relative_path());
-    ATF_REQUIRE_EQ("foo", test_cases[0]->name());
+    ATF_REQUIRE_EQ("main", test_cases[0]->name());
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(test_cases__cached);
-ATF_TEST_CASE_BODY(test_cases__cached)
-{
-    const engine::test_program test_program(
-        "mock", fs::path("binary"), fs::path("root"), "suite-name",
-        engine::metadata_builder().build());
-    expect_death("Cannot implement mock test case without TestersDesign");
-    //ATF_REQUIRE_EQ(0, test_program.loads);
-    (void)test_program.test_cases();
-    //ATF_REQUIRE_EQ(1, test_program.loads);
-    (void)test_program.test_cases();
-    //ATF_REQUIRE_EQ(1, test_program.loads);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(test_cases__set__empty);
-ATF_TEST_CASE_BODY(test_cases__set__empty)
+ATF_TEST_CASE_WITHOUT_HEAD(test_cases__some);
+ATF_TEST_CASE_BODY(test_cases__some)
 {
     engine::test_program test_program(
-        "mock", fs::path("binary"), fs::path("root"), "suite-name",
+        "plain", fs::path("non-existent"), fs::path("."), "suite-name",
         engine::metadata_builder().build());
 
-    //ATF_REQUIRE_EQ(0, test_program.loads);
-    const engine::test_cases_vector exp_test_cases;
-    test_program.set_test_cases(exp_test_cases);
-
-    ATF_REQUIRE(exp_test_cases == test_program.test_cases());
-    //ATF_REQUIRE_EQ(0, test_program.loads);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(test_cases__set__some);
-ATF_TEST_CASE_BODY(test_cases__set__some)
-{
-    engine::test_program test_program(
-        "mock", fs::path("binary"), fs::path("root"), "suite-name",
-        engine::metadata_builder().build());
-
-    //ATF_REQUIRE_EQ(0, test_program.loads);
     engine::test_cases_vector exp_test_cases;
-    const engine::test_case test_case("mock", test_program, "hello",
+    const engine::test_case test_case("plain", test_program, "main",
                                       engine::metadata_builder().build());
     exp_test_cases.push_back(engine::test_case_ptr(
         new engine::test_case(test_case)));
     test_program.set_test_cases(exp_test_cases);
 
     ATF_REQUIRE(exp_test_cases == test_program.test_cases());
-    //ATF_REQUIRE_EQ(0, test_program.loads);
 }
 
 
 ATF_INIT_TEST_CASES(tcs)
 {
+    // TODO(jmmv): These tests have ceased to be realistic with the move to
+    // TestersDesign.  We probably should have some (few!) integration tests for
+    // the various known testers... or, alternatively, provide a mock tester to
+    // run our tests with.
     ATF_ADD_TEST_CASE(tcs, ctor_and_getters);
     ATF_ADD_TEST_CASE(tcs, find__ok);
     ATF_ADD_TEST_CASE(tcs, find__missing);
     ATF_ADD_TEST_CASE(tcs, test_cases__get);
-    ATF_ADD_TEST_CASE(tcs, test_cases__cached);
-    ATF_ADD_TEST_CASE(tcs, test_cases__set__empty);
-    ATF_ADD_TEST_CASE(tcs, test_cases__set__some);
+    ATF_ADD_TEST_CASE(tcs, test_cases__some);
 }
