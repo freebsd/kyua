@@ -128,6 +128,7 @@ run_test_program(const engine::base_test_program& test_program,
         const int64_t test_case_id = tx.put_test_case(*test_case,
                                                       test_program_id);
         file_saver_hooks test_hooks(tx, test_case_id);
+        hooks.got_test_case(test_case);
         const datetime::timestamp start_time = datetime::timestamp::now();
         const engine::test_result result = test_case->run(
             user_config, test_hooks);

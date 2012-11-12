@@ -65,12 +65,18 @@ cmdline::ui::~ui(void)
 /// screen width.
 ///
 /// \param message The line to print, without the trailing newline character.
+/// \param newline Whether to append a newline to the message or not.
 void
-cmdline::ui::err_raw(const std::string& message)
+cmdline::ui::err_raw(const std::string& message, const bool newline)
 {
     PRE(message.empty() || message[message.length() - 1] != '\n');
     LI(F("stderr: %s") % message);
-    std::cerr << message << "\n";
+    if (newline)
+        std::cerr << message << "\n";
+    else {
+        std::cerr << message;
+        std::cerr.flush();
+    }
 }
 
 
@@ -80,12 +86,18 @@ cmdline::ui::err_raw(const std::string& message)
 /// screen width.
 ///
 /// \param message The line to print, without the trailing newline character.
+/// \param newline Whether to append a newline to the message or not.
 void
-cmdline::ui::out_raw(const std::string& message)
+cmdline::ui::out_raw(const std::string& message, const bool newline)
 {
     PRE(message.empty() || message[message.length() - 1] != '\n');
     LI(F("stdout: %s") % message);
-    std::cout << message << "\n";
+    if (newline)
+        std::cout << message << "\n";
+    else {
+        std::cout << message;
+        std::cout.flush();
+    }
 }
 
 

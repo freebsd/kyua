@@ -60,6 +60,11 @@ class base_hooks {
 public:
     virtual ~base_hooks(void) = 0;
 
+    /// Called when the processing of a test case begins.
+    ///
+    /// \param test_case The test case.
+    virtual void got_test_case(const engine::test_case_ptr& test_case) = 0;
+
     /// Called when a result of a test case becomes available.
     ///
     /// \param test_case The test case.

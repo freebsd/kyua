@@ -74,18 +74,27 @@ public:
     {
     }
 
-    /// Called when a result of a test case becomes available.
+    /// Called when the processing of a test case begins.
     ///
     /// \param test_case The test case.
+    virtual void
+    got_test_case(const engine::test_case_ptr& test_case)
+    {
+        _ui->out_raw(F("%s  ->  ") % cli::format_test_case_id(*test_case),
+                     false);
+    }
+
+    /// Called when a result of a test case becomes available.
+    ///
+    /// \param unused_test_case The test case.
     /// \param result The result of the execution of the test case.
     /// \param duration The time it took to run the test.
     virtual void
-    got_result(const engine::test_case_ptr& test_case,
+    got_result(const engine::test_case_ptr& UTILS_UNUSED_PARAM(test_case),
                const engine::test_result& result,
                const datetime::delta& duration)
     {
-        _ui->out_raw(F("%s  ->  %s  [%s]") %
-            cli::format_test_case_id(*test_case) % cli::format_result(result) %
+        _ui->out_raw(F("%s  [%s]") % cli::format_result(result) %
             cli::format_delta(duration));
         if (result.good())
             good_count++;

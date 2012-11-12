@@ -51,10 +51,16 @@ ui_mock::ui_mock(const std::size_t screen_width_) :
 ///
 /// \param message The line to print and record, without the trailing newline
 ///     character.
+/// \param newline Whether to append a newline to the message or not.
 void
-ui_mock::err_raw(const std::string& message)
+ui_mock::err_raw(const std::string& message, const bool newline)
 {
-    std::cerr << message << "\n";
+    if (newline)
+        std::cerr << message << "\n";
+    else {
+        std::cerr << message << "\n";
+        std::cerr.flush();
+    }
     _err_log.push_back(message);
 }
 
@@ -63,10 +69,16 @@ ui_mock::err_raw(const std::string& message)
 ///
 /// \param message The line to print and record, without the trailing newline
 ///     character.
+/// \param newline Whether to append a newline to the message or not.
 void
-ui_mock::out_raw(const std::string& message)
+ui_mock::out_raw(const std::string& message, const bool newline)
 {
-    std::cout << message << "\n";
+    if (newline)
+        std::cout << message << "\n";
+    else {
+        std::cout << message << "\n";
+        std::cout.flush();
+    }
     _out_log.push_back(message);
 }
 
