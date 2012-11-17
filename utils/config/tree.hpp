@@ -77,13 +77,20 @@ typedef std::map< std::string, std::string > properties_map;
 /// root.  Having a separate class aids in clearly representing the concept of a
 /// tree and all of its public methods.  Also, the tree accepts dotted notations
 /// for the keys while the internal structures do not.
+///
+/// Note that trees are shallow-copied unless a deep copy is requested with
+/// deep_copy().
 class tree {
     /// The root of the tree.
     std::tr1::shared_ptr< detail::static_inner_node > _root;
 
+    explicit tree(detail::static_inner_node*);
+
 public:
     tree(void);
     ~tree(void);
+
+    tree deep_copy(void) const;
 
     template< class LeafType >
     void define(const std::string&);

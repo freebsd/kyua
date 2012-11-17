@@ -43,9 +43,30 @@ config::tree::tree(void) :
 }
 
 
+/// Constructor with a non-empty root.
+///
+/// \param root The root to the tree to be owned by this instance.
+config::tree::tree(detail::static_inner_node* root) :
+    _root(root)
+{
+}
+
+
 /// Destructor.
 config::tree::~tree(void)
 {
+}
+
+
+/// Generates a deep copy of the input tree.
+///
+/// \return A new tree that is an exact copy of this tree.
+config::tree
+config::tree::deep_copy(void) const
+{
+    detail::static_inner_node* new_root =
+        dynamic_cast< detail::static_inner_node* >(_root->deep_copy());
+    return config::tree(new_root);
 }
 
 

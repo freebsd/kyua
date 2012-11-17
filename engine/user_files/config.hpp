@@ -43,6 +43,8 @@ namespace user_files {
 /// Tree node to hold a system user identifier.
 class user_node : public utils::config::typed_leaf_node< utils::passwd::user > {
 public:
+    virtual base_node* deep_copy(void) const;
+
     void push_lua(lutok::state&) const;
     void set_lua(lutok::state&, const int);
 

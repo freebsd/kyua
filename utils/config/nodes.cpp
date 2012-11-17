@@ -28,6 +28,8 @@
 
 #include "utils/config/nodes.ipp"
 
+#include <memory>
+
 #include <lutok/state.ipp>
 
 #include "utils/config/exceptions.hpp"
@@ -58,6 +60,27 @@ config::detail::inner_node::~inner_node(void)
     for (children_map::const_iterator iter = _children.begin();
          iter != _children.end(); ++iter)
         delete (*iter).second;
+}
+
+
+/// Fills the given node with a copy of this node's data.
+///
+/// \param node The node to fill.  Should be the fresh return value of a
+///     deep_copy() operation.
+void
+config::detail::inner_node::copy_into(inner_node* node) const
+{
+    node->_dynamic = _dynamic;
+    for (children_map::const_iterator iter = _children.begin();
+         iter != _children.end(); ++iter) {
+        base_node* new_node = (*iter).second->deep_copy();
+        try {
+            node->_children[(*iter).first] = new_node;
+        } catch (...) {
+            delete new_node;
+            throw;
+        }
+    }
 }
 
 
@@ -194,6 +217,18 @@ config::detail::static_inner_node::static_inner_node(void) :
 }
 
 
+/// Copies the node.
+///
+/// \return A dynamically-allocated node.
+config::detail::base_node*
+config::detail::static_inner_node::deep_copy(void) const
+{
+    std::auto_ptr< inner_node > new_node(new static_inner_node());
+    copy_into(new_node.get());
+    return new_node.release();
+}
+
+
 /// Registers a key as valid and having a specific type.
 ///
 /// This method does not raise errors on invalid/unknown keys or other
@@ -245,9 +280,33 @@ config::detail::dynamic_inner_node::dynamic_inner_node(void) :
 }
 
 
+/// Copies the node.
+///
+/// \return A dynamically-allocated node.
+config::detail::base_node*
+config::detail::dynamic_inner_node::deep_copy(void) const
+{
+    std::auto_ptr< inner_node > new_node(new dynamic_inner_node());
+    copy_into(new_node.get());
+    return new_node.release();
+}
+
+
 /// Destructor.
 config::leaf_node::~leaf_node(void)
 {
+}
+
+
+/// Copies the node.
+///
+/// \return A dynamically-allocated node.
+config::detail::base_node*
+config::bool_node::deep_copy(void) const
+{
+    std::auto_ptr< bool_node > new_node(new bool_node());
+    new_node->_value = _value;
+    return new_node.release();
 }
 
 
@@ -278,6 +337,18 @@ config::bool_node::set_lua(lutok::state& state, const int value_index)
 }
 
 
+/// Copies the node.
+///
+/// \return A dynamically-allocated node.
+config::detail::base_node*
+config::int_node::deep_copy(void) const
+{
+    std::auto_ptr< int_node > new_node(new int_node());
+    new_node->_value = _value;
+    return new_node.release();
+}
+
+
 /// Pushes the node's value onto the Lua stack.
 ///
 /// \param state The Lua state onto which to push the value.
@@ -305,6 +376,18 @@ config::int_node::set_lua(lutok::state& state, const int value_index)
 }
 
 
+/// Copies the node.
+///
+/// \return A dynamically-allocated node.
+config::detail::base_node*
+config::string_node::deep_copy(void) const
+{
+    std::auto_ptr< string_node > new_node(new string_node());
+    new_node->_value = _value;
+    return new_node.release();
+}
+
+
 /// Pushes the node's value onto the Lua stack.
 ///
 /// \param state The Lua state onto which to push the value.
@@ -329,6 +412,18 @@ config::string_node::set_lua(lutok::state& state, const int value_index)
         set(state.to_string(value_index));
     else
         throw value_error("Not a string");
+}
+
+
+/// Copies the node.
+///
+/// \return A dynamically-allocated node.
+config::detail::base_node*
+config::strings_set_node::deep_copy(void) const
+{
+    std::auto_ptr< strings_set_node > new_node(new strings_set_node());
+    new_node->_value = _value;
+    return new_node.release();
 }
 
 

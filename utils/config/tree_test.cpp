@@ -70,6 +70,17 @@ public:
 /// Custom tree leaf type for an object without defualt constructors.
 class wrapped_int_node : public config::typed_leaf_node< int_wrapper > {
 public:
+    /// Copies the node.
+    ///
+    /// \return A dynamically-allocated node.
+    virtual base_node*
+    deep_copy(void) const
+    {
+        std::auto_ptr< wrapped_int_node > new_node(new wrapped_int_node());
+        new_node->_value = _value;
+        return new_node.release();
+    }
+
     /// Pushes the node's value onto the Lua stack.
     ///
     /// \param state The Lua state onto which to push the value.
@@ -158,6 +169,44 @@ ATF_TEST_CASE_BODY(define_set_lookup__multiple_levels)
     ATF_REQUIRE(tree.lookup< config::bool_node >("foo.3"));
     ATF_REQUIRE_EQ(4, tree.lookup< config::int_node >("sub.tree.2"));
     ATF_REQUIRE_EQ(123, tree.lookup< config::int_node >("sub.tree.3.4"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(deep_copy__empty);
+ATF_TEST_CASE_BODY(deep_copy__empty)
+{
+    config::tree tree1;
+    config::tree tree2 = tree1.deep_copy();
+
+    tree1.define< config::bool_node >("var1");
+    // This would crash if the copy shared the internal data.
+    tree2.define< config::int_node >("var1");
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(deep_copy__some);
+ATF_TEST_CASE_BODY(deep_copy__some)
+{
+    config::tree tree1;
+    tree1.define< config::bool_node >("this.is.a.var");
+    tree1.set< config::bool_node >("this.is.a.var", true);
+    tree1.define< config::int_node >("this.is.another.var");
+    tree1.set< config::int_node >("this.is.another.var", 34);
+    tree1.define< config::int_node >("and.another");
+    tree1.set< config::int_node >("and.another", 123);
+
+    config::tree tree2 = tree1.deep_copy();
+    tree2.set< config::bool_node >("this.is.a.var", false);
+    tree2.set< config::int_node >("this.is.another.var", 43);
+
+    ATF_REQUIRE( tree1.lookup< config::bool_node >("this.is.a.var"));
+    ATF_REQUIRE(!tree2.lookup< config::bool_node >("this.is.a.var"));
+
+    ATF_REQUIRE_EQ(34, tree1.lookup< config::int_node >("this.is.another.var"));
+    ATF_REQUIRE_EQ(43, tree2.lookup< config::int_node >("this.is.another.var"));
+
+    ATF_REQUIRE_EQ(123, tree1.lookup< config::int_node >("and.another"));
+    ATF_REQUIRE_EQ(123, tree2.lookup< config::int_node >("and.another"));
 }
 
 
@@ -681,6 +730,9 @@ ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, define_set_lookup__one_level);
     ATF_ADD_TEST_CASE(tcs, define_set_lookup__multiple_levels);
+
+    ATF_ADD_TEST_CASE(tcs, deep_copy__empty);
+    ATF_ADD_TEST_CASE(tcs, deep_copy__some);
 
     ATF_ADD_TEST_CASE(tcs, lookup__invalid_key);
     ATF_ADD_TEST_CASE(tcs, lookup__unknown_key);

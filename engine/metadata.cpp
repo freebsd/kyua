@@ -28,6 +28,8 @@
 
 #include "engine/metadata.hpp"
 
+#include <memory>
+
 #include "engine/exceptions.hpp"
 #include "utils/config/exceptions.hpp"
 #include "utils/config/nodes.ipp"
@@ -64,6 +66,17 @@ namespace {
 /// A leaf node that holds a bytes quantity.
 class bytes_node : public config::native_leaf_node< units::bytes > {
 public:
+    /// Copies the node.
+    ///
+    /// \return A dynamically-allocated node.
+    virtual base_node*
+    deep_copy(void) const
+    {
+        std::auto_ptr< bytes_node > new_node(new bytes_node());
+        new_node->_value = _value;
+        return new_node.release();
+    }
+
     /// Pushes the node's value onto the Lua stack.
     ///
     /// \param unused_state The Lua state onto which to push the value.
@@ -89,6 +102,17 @@ public:
 /// A leaf node that holds a time delta.
 class delta_node : public config::typed_leaf_node< datetime::delta > {
 public:
+    /// Copies the node.
+    ///
+    /// \return A dynamically-allocated node.
+    virtual base_node*
+    deep_copy(void) const
+    {
+        std::auto_ptr< delta_node > new_node(new delta_node());
+        new_node->_value = _value;
+        return new_node.release();
+    }
+
     /// Sets the value of the node from a raw string representation.
     ///
     /// \param raw_value The value to set the node to.
@@ -144,6 +168,17 @@ public:
 /// This node is just a string, but it provides validation of the only allowed
 /// values.
 class user_node : public config::string_node {
+    /// Copies the node.
+    ///
+    /// \return A dynamically-allocated node.
+    virtual base_node*
+    deep_copy(void) const
+    {
+        std::auto_ptr< user_node > new_node(new user_node());
+        new_node->_value = _value;
+        return new_node.release();
+    }
+
     /// Checks a given user textual representation for validity.
     ///
     /// \param user The value to validate.
@@ -164,6 +199,17 @@ class user_node : public config::string_node {
 /// required programs, for example, and these do not allow relative paths.  We
 /// check this here.
 class paths_set_node : public config::base_set_node< fs::path > {
+    /// Copies the node.
+    ///
+    /// \return A dynamically-allocated node.
+    virtual base_node*
+    deep_copy(void) const
+    {
+        std::auto_ptr< paths_set_node > new_node(new paths_set_node());
+        new_node->_value = _value;
+        return new_node.release();
+    }
+
     /// Converts a single path to the native type.
     ///
     /// \param raw_value The value to parse.

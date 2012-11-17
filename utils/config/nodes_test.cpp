@@ -79,6 +79,21 @@ class set_validation_node : public config::strings_set_node {
 }  // anonymous namespace
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(bool_node__deep_copy);
+ATF_TEST_CASE_BODY(bool_node__deep_copy)
+{
+    config::bool_node node;
+    node.set(true);
+    config::detail::base_node* raw_copy = node.deep_copy();
+    config::bool_node* copy = static_cast< config::bool_node* >(raw_copy);
+    ATF_REQUIRE(copy->value());
+    copy->set(false);
+    ATF_REQUIRE(node.value());
+    ATF_REQUIRE(!copy->value());
+    delete copy;
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(bool_node__is_set_and_set);
 ATF_TEST_CASE_BODY(bool_node__is_set_and_set)
 {
@@ -168,6 +183,21 @@ ATF_TEST_CASE_BODY(bool_node__to_string)
     ATF_REQUIRE_EQ("false", node.to_string());
     node.set(true);
     ATF_REQUIRE_EQ("true", node.to_string());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(int_node__deep_copy);
+ATF_TEST_CASE_BODY(int_node__deep_copy)
+{
+    config::int_node node;
+    node.set(5);
+    config::detail::base_node* raw_copy = node.deep_copy();
+    config::int_node* copy = static_cast< config::int_node* >(raw_copy);
+    ATF_REQUIRE_EQ(5, copy->value());
+    copy->set(10);
+    ATF_REQUIRE_EQ(5, node.value());
+    ATF_REQUIRE_EQ(10, copy->value());
+    delete copy;
 }
 
 
@@ -266,6 +296,21 @@ ATF_TEST_CASE_BODY(int_node__to_string)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(string_node__deep_copy);
+ATF_TEST_CASE_BODY(string_node__deep_copy)
+{
+    config::string_node node;
+    node.set("first");
+    config::detail::base_node* raw_copy = node.deep_copy();
+    config::string_node* copy = static_cast< config::string_node* >(raw_copy);
+    ATF_REQUIRE_EQ("first", copy->value());
+    copy->set("second");
+    ATF_REQUIRE_EQ("first", node.value());
+    ATF_REQUIRE_EQ("second", copy->value());
+    delete copy;
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(string_node__is_set_and_set);
 ATF_TEST_CASE_BODY(string_node__is_set_and_set)
 {
@@ -349,6 +394,25 @@ ATF_TEST_CASE_BODY(string_node__to_string)
     ATF_REQUIRE_EQ("", node.to_string());
     node.set("aaa");
     ATF_REQUIRE_EQ("aaa", node.to_string());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(strings_set_node__deep_copy);
+ATF_TEST_CASE_BODY(strings_set_node__deep_copy)
+{
+    std::set< std::string > value;
+    config::strings_set_node node;
+    value.insert("foo");
+    node.set(value);
+    config::detail::base_node* raw_copy = node.deep_copy();
+    config::strings_set_node* copy =
+        static_cast< config::strings_set_node* >(raw_copy);
+    value.insert("bar");
+    ATF_REQUIRE_EQ(1, copy->value().size());
+    copy->set(value);
+    ATF_REQUIRE_EQ(1, node.value().size());
+    ATF_REQUIRE_EQ(2, copy->value().size());
+    delete copy;
 }
 
 
@@ -462,6 +526,7 @@ ATF_TEST_CASE_BODY(base_set_node__validate_set_string)
 
 ATF_INIT_TEST_CASES(tcs)
 {
+    ATF_ADD_TEST_CASE(tcs, bool_node__deep_copy);
     ATF_ADD_TEST_CASE(tcs, bool_node__is_set_and_set);
     ATF_ADD_TEST_CASE(tcs, bool_node__value_and_set);
     ATF_ADD_TEST_CASE(tcs, bool_node__push_lua);
@@ -471,6 +536,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, bool_node__set_string__invalid_value);
     ATF_ADD_TEST_CASE(tcs, bool_node__to_string);
 
+    ATF_ADD_TEST_CASE(tcs, int_node__deep_copy);
     ATF_ADD_TEST_CASE(tcs, int_node__is_set_and_set);
     ATF_ADD_TEST_CASE(tcs, int_node__value_and_set);
     ATF_ADD_TEST_CASE(tcs, int_node__push_lua);
@@ -480,6 +546,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, int_node__set_string__invalid_value);
     ATF_ADD_TEST_CASE(tcs, int_node__to_string);
 
+    ATF_ADD_TEST_CASE(tcs, string_node__deep_copy);
     ATF_ADD_TEST_CASE(tcs, string_node__is_set_and_set);
     ATF_ADD_TEST_CASE(tcs, string_node__value_and_set);
     ATF_ADD_TEST_CASE(tcs, string_node__push_lua);
@@ -488,6 +555,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, string_node__set_string);
     ATF_ADD_TEST_CASE(tcs, string_node__to_string);
 
+    ATF_ADD_TEST_CASE(tcs, strings_set_node__deep_copy);
     ATF_ADD_TEST_CASE(tcs, strings_set_node__is_set_and_set);
     ATF_ADD_TEST_CASE(tcs, strings_set_node__value_and_set);
     ATF_ADD_TEST_CASE(tcs, strings_set_node__set_string);

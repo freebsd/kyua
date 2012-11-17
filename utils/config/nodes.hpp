@@ -61,6 +61,11 @@ namespace detail {
 class base_node : noncopyable {
 public:
     virtual ~base_node(void) = 0;
+
+    /// Copies the node.
+    ///
+    /// \return A dynamically-allocated node.
+    virtual base_node* deep_copy(void) const = 0;
 };
 
 
@@ -172,10 +177,11 @@ public:
     /// \param value_ The new value to set the node to.
     void set(const value_type&);
 
-private:
+protected:
     /// The value held by this node.
     optional< value_type > _value;
 
+private:
     virtual void validate(const value_type&) const;
 };
 
@@ -195,6 +201,8 @@ public:
 /// A leaf node that holds a boolean value.
 class bool_node : public native_leaf_node< bool > {
 public:
+    virtual base_node* deep_copy(void) const;
+
     void push_lua(lutok::state&) const;
     void set_lua(lutok::state&, const int);
 };
@@ -203,6 +211,8 @@ public:
 /// A leaf node that holds an integer value.
 class int_node : public native_leaf_node< int > {
 public:
+    virtual base_node* deep_copy(void) const;
+
     void push_lua(lutok::state&) const;
     void set_lua(lutok::state&, const int);
 };
@@ -211,6 +221,8 @@ public:
 /// A leaf node that holds a string value.
 class string_node : public native_leaf_node< std::string > {
 public:
+    virtual base_node* deep_copy(void) const;
+
     void push_lua(lutok::state&) const;
     void set_lua(lutok::state&, const int);
 };
@@ -264,10 +276,11 @@ public:
     void push_lua(lutok::state&) const;
     void set_lua(lutok::state&, const int);
 
-private:
+protected:
     /// The value held by this node.
     optional< value_type > _value;
 
+private:
     /// Converts a single word to the native type.
     ///
     /// \param raw_value The value to parse.
@@ -283,6 +296,9 @@ private:
 
 /// A leaf node that holds a set of strings.
 class strings_set_node : public base_set_node< std::string > {
+public:
+    virtual base_node* deep_copy(void) const;
+
 private:
     std::string parse_one(const std::string&) const;
 };

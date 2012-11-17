@@ -31,6 +31,7 @@
 #if !defined(UTILS_CONFIG_NODES_IPP)
 #define UTILS_CONFIG_NODES_IPP
 
+#include <memory>
 #include <typeinfo>
 
 #include "utils/config/exceptions.hpp"
@@ -86,6 +87,8 @@ protected:
     /// Mapping of keys to values that are descendants of this node.
     children_map _children;
 
+    void copy_into(inner_node* new_node) const;
+
 public:
     inner_node(const bool);
     virtual ~inner_node(void) = 0;
@@ -108,6 +111,8 @@ class static_inner_node : public config::detail::inner_node {
 public:
     static_inner_node(void);
 
+    virtual base_node* deep_copy(void) const;
+
     void define(const tree_key&, const tree_key::size_type, new_node_hook);
 };
 
@@ -120,6 +125,8 @@ public:
 /// inner nodes as well.
 class dynamic_inner_node : public config::detail::inner_node {
 public:
+    virtual base_node* deep_copy(void) const;
+
     dynamic_inner_node(void);
 };
 
