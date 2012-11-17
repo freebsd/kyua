@@ -64,12 +64,17 @@ typedef std::map< std::string, std::string > properties_map;
 extern utils::datetime::delta default_timeout;
 
 
+class metadata_builder;
+
+
 /// Collection of metadata properties of a test.
 class metadata {
     struct impl;
 
     /// Pointer to the shared internal implementation.
     std::tr1::shared_ptr< impl > _pimpl;
+
+    friend class metadata_builder;
 
 public:
     metadata(const utils::config::tree&);
@@ -100,6 +105,7 @@ class metadata_builder : utils::noncopyable {
 
 public:
     metadata_builder(void);
+    explicit metadata_builder(const engine::metadata&);
     ~metadata_builder(void);
 
     metadata_builder& add_allowed_architecture(const std::string&);

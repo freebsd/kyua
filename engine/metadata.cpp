@@ -669,12 +669,26 @@ struct engine::metadata_builder::impl {
     {
         init_tree(props);
     }
+
+    /// Constructor.
+    impl(const engine::metadata& base) :
+        props(base._pimpl->props.deep_copy()),
+        built(false)
+    {
+    }
 };
 
 
 /// Constructor.
 engine::metadata_builder::metadata_builder(void) :
     _pimpl(new impl())
+{
+}
+
+
+/// Constructor.
+engine::metadata_builder::metadata_builder(const engine::metadata& base) :
+    _pimpl(new impl(base))
 {
 }
 

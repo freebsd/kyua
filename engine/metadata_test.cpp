@@ -118,6 +118,25 @@ ATF_TEST_CASE_BODY(add)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(copy);
+ATF_TEST_CASE_BODY(copy)
+{
+    const engine::metadata md1 = engine::metadata_builder()
+        .add_allowed_architecture("1-architecture")
+        .add_allowed_platform("1-platform")
+        .build();
+
+    const engine::metadata md2 = engine::metadata_builder(md1)
+        .add_allowed_architecture("2-architecture")
+        .build();
+
+    ATF_REQUIRE_EQ(1, md1.allowed_architectures().size());
+    ATF_REQUIRE_EQ(2, md2.allowed_architectures().size());
+    ATF_REQUIRE_EQ(1, md1.allowed_platforms().size());
+    ATF_REQUIRE_EQ(1, md2.allowed_platforms().size());
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(override_all_with_setters);
 ATF_TEST_CASE_BODY(override_all_with_setters)
 {
@@ -634,6 +653,7 @@ ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, defaults);
     ATF_ADD_TEST_CASE(tcs, add);
+    ATF_ADD_TEST_CASE(tcs, copy);
     ATF_ADD_TEST_CASE(tcs, override_all_with_setters);
     ATF_ADD_TEST_CASE(tcs, override_all_with_set_string);
 
