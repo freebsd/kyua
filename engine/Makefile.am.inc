@@ -30,7 +30,8 @@ ENGINE_CFLAGS = $(STORE_CFLAGS) $(UTILS_CFLAGS)
 ENGINE_LIBS = libengine.a $(STORE_LIBS) $(UTILS_LIBS)
 
 noinst_LIBRARIES += libengine.a
-libengine_a_CPPFLAGS = $(UTILS_CFLAGS)
+libengine_a_CPPFLAGS  = $(UTILS_CFLAGS)
+libengine_a_CPPFLAGS += -DKYUA_TESTERSDIR="\"$(testersdir)\""
 libengine_a_SOURCES  = engine/action.cpp
 libengine_a_SOURCES += engine/action.hpp
 libengine_a_SOURCES += engine/context.cpp
@@ -50,6 +51,8 @@ libengine_a_SOURCES += engine/test_program.cpp
 libengine_a_SOURCES += engine/test_program.hpp
 libengine_a_SOURCES += engine/test_result.cpp
 libengine_a_SOURCES += engine/test_result.hpp
+libengine_a_SOURCES += engine/testers.cpp
+libengine_a_SOURCES += engine/testers.hpp
 
 if WITH_ATF
 tests_enginedir = $(pkgtestsdir)/engine
@@ -115,6 +118,12 @@ engine_test_result_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
                                    $(ATF_CXX_CFLAGS)
 engine_test_result_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
                                 $(ATF_CXX_LIBS)
+
+tests_engine_PROGRAMS += engine/testers_test
+engine_testers_test_SOURCES = engine/testers_test.cpp
+engine_testers_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
+                               $(ATF_CXX_CFLAGS)
+engine_testers_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) $(ATF_CXX_LIBS)
 endif
 
 include engine/atf_iface/Makefile.am.inc

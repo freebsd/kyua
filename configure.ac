@@ -86,6 +86,11 @@ m4_ifndef([ATF_ARG_WITH],
     [m4_fatal([Cannot find atf-common.m4; see the INSTALL document for help])])
 ATF_ARG_WITH
 
+PKG_PROG_PKG_CONFIG
+PKG_CHECK_EXISTS([kyua-testers],
+    [testersdir=$("${PKG_CONFIG}" --variable=testersdir kyua-testers)],
+    [AC_MSG_ERROR([kyua-testers >= 0.1 required])])
+
 PKG_CHECK_MODULES([LUTOK], [lutok >= 0.2],
                   [],
                   AC_MSG_ERROR([lutok (0.2 or newer) is required]))
@@ -127,6 +132,7 @@ AC_SUBST(luadir, \${pkgdatadir}/lua)
 AC_SUBST(miscdir, \${pkgdatadir}/misc)
 AC_SUBST(pkgtestsdir, \${testsdir}/kyua-cli)
 AC_SUBST(storedir, \${pkgdatadir}/store)
+AC_SUBST(testersdir)  dnl Defined above by the pkg-config check.
 AC_SUBST(testsdir, \${exec_prefix}/tests)
 
 

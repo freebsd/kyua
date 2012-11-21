@@ -36,6 +36,7 @@ BUILD_MANPAGE = \
 	    -e 's,__PACKAGE__,$(PACKAGE_TARNAME),g' \
 	    -e 's,__STOREDIR__,$(storedir),g' \
 	    -e 's,__TESTSDIR__,$(testsdir),g' \
+	    -e 's,__TESTERSDIR__,$(testersdir),g' \
 	    -e 's,__VERSION__,$(PACKAGE_VERSION),g' \
 	    <$(srcdir)/doc/$${name}.in >doc/$${name}.tmp; \
 	mv doc/$${name}.tmp doc/$${name}
