@@ -101,7 +101,7 @@ engine::protected_run(Hook hook)
 
     test_result result(test_result::broken, "Test result not yet initialized");
 
-    utils::fs::auto_directory workdir(detail::create_work_directory());
+    utils::fs::auto_directory workdir(create_work_directory());
     try {
         check_interrupt();
         result = hook(workdir.directory());

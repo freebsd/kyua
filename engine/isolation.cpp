@@ -75,7 +75,7 @@ static int interrupted_signo = 0;
 ///
 /// \throw fs::error If there is a problem creating the temporary directory.
 fs::path
-engine::detail::create_work_directory(void)
+engine::create_work_directory(void)
 {
     const optional< std::string > tmpdir = utils::getenv("TMPDIR");
     if (!tmpdir)

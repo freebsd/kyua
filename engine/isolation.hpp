@@ -48,8 +48,6 @@ namespace engine {
 namespace detail {
 
 
-utils::fs::path create_work_directory(void);
-
 void interrupt_handler(const int);
 
 
@@ -60,6 +58,8 @@ class test_result;
 
 
 void check_interrupt(void);
+
+utils::fs::path create_work_directory(void);
 
 template< class Hook >
 utils::optional< utils::process::status > fork_and_wait(
