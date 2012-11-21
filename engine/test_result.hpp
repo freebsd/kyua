@@ -32,6 +32,7 @@
 #if !defined(ENGINE_TEST_RESULT_HPP)
 #define ENGINE_TEST_RESULT_HPP
 
+#include <istream>
 #include <string>
 
 namespace engine {
@@ -68,6 +69,7 @@ private:
 
 public:
     test_result(const result_type, const std::string& = "");
+    static test_result parse(std::istream&);
 
     result_type type(void) const;
     const std::string& reason(void) const;

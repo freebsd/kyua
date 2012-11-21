@@ -28,6 +28,8 @@
 
 #include "engine/test_result.hpp"
 
+#include "engine/exceptions.hpp"
+#include "utils/format/macros.hpp"
 #include "utils/sanity.hpp"
 
 
@@ -41,6 +43,66 @@ engine::test_result::test_result(const result_type type_,
     _type(type_),
     _reason(reason_)
 {
+}
+
+
+/// Parses a result from an input stream.
+///
+/// The parsing of a results file is quite permissive in terms of file syntax
+/// validation.  We accept result files with or without trailing new lines, and
+/// with descriptions that may span multiple lines.  This is to avoid getting in
+/// trouble when the result is generated from user code, in which case it is
+/// hard to predict how newlines look like.  Just swallow them; it's better for
+/// the consumer.
+///
+/// \param input The stream from which to read the result.
+///
+/// \return The parsed result.  If there is any problem during parsing, the
+/// failure is encoded as a broken result.
+engine::test_result
+engine::test_result::parse(std::istream& input)
+{
+    std::string line;
+    if (!std::getline(input, line).good() && line.empty())
+        return test_result(broken, "Empty result file");
+
+    // Fast-path for the most common case.
+    if (line == "passed")
+        return test_result(passed);
+
+    std::string type, reason;
+    const std::string::size_type pos = line.find(": ");
+    if (pos == std::string::npos) {
+        type = line;
+        reason = "";
+    } else {
+        type = line.substr(0, pos);
+        reason = line.substr(pos + 2);
+    }
+
+    if (input.good()) {
+        line.clear();
+        while (std::getline(input, line).good() && !line.empty()) {
+            reason += "<<NEWLINE>>" + line;
+            line.clear();
+        }
+        if (!line.empty())
+            reason += "<<NEWLINE>>" + line;
+    }
+
+    if (type == "broken") {
+        return test_result(broken, reason);
+    } else if (type == "expected_failure") {
+        return test_result(expected_failure, reason);
+    } else if (type == "failed") {
+        return test_result(failed, reason);
+    } else if (type == "passed") {
+        return test_result(passed, reason);
+    } else if (type == "skipped") {
+        return test_result(skipped, reason);
+    } else {
+        return test_result(broken, F("Unknown result type '%s'") % type);
+    }
 }
 
 

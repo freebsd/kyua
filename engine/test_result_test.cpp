@@ -28,7 +28,11 @@
 
 #include "engine/test_result.hpp"
 
+#include <sstream>
+
 #include <atf-c++.hpp>
+
+#include "engine/exceptions.hpp"
 
 using engine::test_result;
 
@@ -64,7 +68,90 @@ namespace {
     }
 
 
+/// Validates the parse() method on a particular test result type.
+///
+/// \param result_name Textual representation of the type, to be written to the
+///     input data.
+/// \param result_type Expected result type.
+static void
+parse_test(const std::string& result_name,
+           const test_result::result_type result_type)
+{
+    std::istringstream input(result_name);
+    ATF_REQUIRE(test_result(result_type) == test_result::parse(input));
+
+    input.clear();
+    input.str(result_name + ": Some message");
+    ATF_REQUIRE(test_result(result_type, "Some message") ==
+                test_result::parse(input));
+
+    input.clear();
+    input.str(result_name + ": Some message\n");
+    ATF_REQUIRE(test_result(result_type, "Some message") ==
+                test_result::parse(input));
+
+    input.clear();
+    input.str(result_name + ": foo\nbar");
+    ATF_REQUIRE(test_result(result_type, "foo<<NEWLINE>>bar") ==
+                    test_result::parse(input));
+
+    input.clear();
+    input.str(result_name + ": foo\nbar\n");
+    ATF_REQUIRE(test_result(result_type, "foo<<NEWLINE>>bar") ==
+                    test_result::parse(input));
+}
+
+
+/// Creates a test case to validate the parse() method for a given type.
+///
+/// \param name The name of the test case; "parse__" will be prepended.
+#define PARSE_TEST(name) \
+    ATF_TEST_CASE_WITHOUT_HEAD(parse__ ## name); \
+    ATF_TEST_CASE_BODY(parse__ ## name) \
+    { \
+        parse_test(#name, test_result:: name); \
+    }
+
+
 }  // anonymous namespace
+
+
+PARSE_TEST(broken);
+PARSE_TEST(expected_failure);
+PARSE_TEST(failed);
+PARSE_TEST(passed);
+PARSE_TEST(skipped);
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(parse__empty);
+ATF_TEST_CASE_BODY(parse__empty)
+{
+    std::istringstream input("");
+    ATF_REQUIRE(test_result(test_result::broken, "Empty result file") ==
+                test_result::parse(input));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(parse__unknown_type);
+ATF_TEST_CASE_BODY(parse__unknown_type)
+{
+    std::istringstream input("passed ");
+    ATF_REQUIRE(
+        test_result(test_result::broken, "Unknown result type 'passed '") ==
+        test_result::parse(input));
+
+    input.clear();
+    input.str("fail");
+    ATF_REQUIRE(
+        test_result(test_result::broken, "Unknown result type 'fail'") ==
+        test_result::parse(input));
+
+    input.clear();
+    input.str("a b");
+    ATF_REQUIRE(
+        test_result(test_result::broken, "Unknown result type 'a b'") ==
+        test_result::parse(input));
+}
 
 
 GETTERS_TEST(broken, test_result::broken, "The reason",
@@ -118,6 +205,14 @@ ATF_TEST_CASE_BODY(operator_ne)
 
 ATF_INIT_TEST_CASES(tcs)
 {
+    ATF_ADD_TEST_CASE(tcs, parse__broken);
+    ATF_ADD_TEST_CASE(tcs, parse__expected_failure);
+    ATF_ADD_TEST_CASE(tcs, parse__failed);
+    ATF_ADD_TEST_CASE(tcs, parse__passed);
+    ATF_ADD_TEST_CASE(tcs, parse__skipped);
+    ATF_ADD_TEST_CASE(tcs, parse__empty);
+    ATF_ADD_TEST_CASE(tcs, parse__unknown_type);
+
     ATF_ADD_TEST_CASE(tcs, broken__getters);
     ATF_ADD_TEST_CASE(tcs, broken__good);
     ATF_ADD_TEST_CASE(tcs, expected_failure__getters);
