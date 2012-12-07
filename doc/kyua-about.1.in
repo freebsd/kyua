@@ -72,13 +72,6 @@ compatible with the output of GNU tools that support a
 flag.
 Use this whenever you have to query the version number of the package.
 .El
-.Sh EXIT STATUS
-The
-.Nm
-command always returns 0.
-.Pp
-Additional exit codes may be returned as described in
-.Xr kyua 1 .
 .Sh FILES
 The following files are read by the
 .Nm
@@ -89,5 +82,12 @@ List of authors and contributors.
 .It Pa __DOCDIR__/COPYING
 License information.
 .El
+.Sh EXIT STATUS
+The
+.Nm
+command always returns 0.
+.Pp
+Additional exit codes may be returned as described in
+.Xr kyua 1 .
 .Sh SEE ALSO
 .Xr kyua 1

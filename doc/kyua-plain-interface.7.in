@@ -44,7 +44,7 @@ to ensure that the Kyua run-time engine does not become tied to a
 particular test interface.
 .Pp
 The results of a plain test are one of the following:
-.Bl -tag width passedXX
+.Bl -tag -width passedXX
 .It passed
 If the test program exits with a success exit code; i.e. 0.
 .It failed

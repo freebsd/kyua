@@ -37,7 +37,7 @@
 the concept that allows a developer to keep the source tree clean from
 build products by asking the build system to place such build products
 under a separate subtree.
-.PP
+.Pp
 Most build systems today support build directories.  For example, the GNU
 Automake/Autoconf build system exposes such concept when invoked as
 follows:

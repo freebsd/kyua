@@ -48,7 +48,6 @@ results recorded in that action.  These reports are not intended to be
 machine-parseable.
 .Pp
 The following subcommand options are recognized:
-.Pp
 .Bl -tag -width XX
 .It Fl -action Ar id
 Specifies the action for which to generate a report.  If not provided,
