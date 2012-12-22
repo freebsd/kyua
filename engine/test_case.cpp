@@ -28,20 +28,277 @@
 
 #include "engine/test_case.hpp"
 
+extern "C" {
+#include <signal.h>
+}
+
+#include <fstream>
+
 #include "engine/atf_iface/test_case.hpp"
+#include "engine/exceptions.hpp"
+#include "engine/isolation.ipp"
 #include "engine/plain_iface/test_case.hpp"
 #include "engine/test_program.hpp"
 #include "engine/test_result.hpp"
-#include "utils/config/tree.hpp"
+#include "engine/testers.hpp"
+#include "engine/user_files/config.hpp"
+#include "utils/config/exceptions.hpp"
+#include "utils/config/tree.ipp"
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/logging/operations.hpp"
+#include "utils/fs/auto_cleaners.hpp"
+#include "utils/fs/operations.hpp"
+#include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
+#include "utils/passwd.hpp"
+#include "utils/process/children.ipp"
 
 namespace config = utils::config;
 namespace fs = utils::fs;
+namespace logging = utils::logging;
+namespace passwd = utils::passwd;
+namespace process = utils::process;
+namespace user_files = engine::user_files;
 
 using utils::none;
 using utils::optional;
+
+
+namespace {
+
+
+/// Extracts the value of 'unprivileged_user' from the configuration.
+///
+/// \param user_config The user configuration.
+///
+/// \return None if the user configuration does not define an unprivileged user,
+/// or the unprivileged user itself if defined.
+static optional< passwd::user >
+get_unprivileged_user(const config::tree& user_config)
+{
+    if (!user_config.is_set("unprivileged_user"))
+        return none;
+    return utils::make_optional(
+        user_config.lookup< user_files::user_node >("unprivileged_user"));
+}
+
+
+/// Converts a set of configuration variables to test program flags.
+///
+/// \param user_config The configuration variables provided by the user.
+/// \param test_suite The name of the test suite.
+/// \param args [out] The test program arguments in which to add the new flags.
+static void
+config_to_args(const config::tree& user_config,
+               const std::string& test_suite,
+               std::vector< std::string >& args)
+{
+    if (get_unprivileged_user(user_config))
+        args.push_back(F("-vunprivileged-user=%s") %
+                       get_unprivileged_user(user_config).get().name);
+
+    try {
+        const config::properties_map& properties = user_config.all_properties(
+            F("test_suites.%s") % test_suite, true);
+        for (config::properties_map::const_iterator iter = properties.begin();
+             iter != properties.end(); iter++) {
+            args.push_back(F("-v%s=%s") % (*iter).first % (*iter).second);
+        }
+    } catch (const config::unknown_key_error& unused_error) {
+        // Ignore: not all test suites have entries in the configuration.
+    }
+}
+
+
+/// Functor to execute a tester's run operation.
+class run_test_case {
+    /// Path to the tester binary.
+    const fs::path _tester;
+
+    /// Absolute path to the test program to run.
+    const fs::path _program;
+
+    /// Data of the test case to run.
+    const engine::test_case& _test_case;
+
+    /// Path to the result file to create.
+    const fs::path _result_path;
+
+    /// User-provided configuration variables.
+    const config::tree& _user_config;
+
+public:
+    /// Constructor.
+    ///
+    /// \param interface Name of the interface of the tester.
+    /// \param program Absolute path to the test program to run.
+    /// \param test_case Data of the test case to run.
+    /// \param result_path Path to the result file to create.
+    /// \param user_config User-provided configuration variables.
+    run_test_case(const std::string& interface, const fs::path& program,
+                  const engine::test_case& test_case,
+                  const fs::path& result_path,
+                  const config::tree& user_config) :
+        _tester(engine::tester_path(interface)), _program(program),
+        _test_case(test_case), _result_path(result_path),
+        _user_config(user_config)
+    {
+        PRE(_program.is_absolute());
+    }
+
+    /// Executes the tester.
+    void
+    operator()(void)
+    {
+        // We rely on parsing the output of the tester verbatim.  Disable any of
+        // our own log messages so that they do not end up intermixed with such
+        // output.
+        logging::set_inmemory();
+
+        std::vector< std::string > args;
+
+        INV(_test_case.get_metadata().timeout().useconds == 0);
+        args.push_back(F("-t%s") % _test_case.get_metadata().timeout().seconds);
+
+        optional< passwd::user > unprivileged_user = get_unprivileged_user(
+            _user_config);
+        if (_test_case.get_metadata().required_user() == "unprivileged" &&
+            unprivileged_user) {
+            args.push_back(F("-u%s") % unprivileged_user.get().uid);
+            args.push_back(F("-g%s") % unprivileged_user.get().gid);
+        }
+
+        args.push_back("test");
+        config_to_args(_user_config,
+                       _test_case.container_test_program().test_suite_name(),
+                       args);
+
+        // TODO(jmmv): This is an ugly hack to cope with an atf-specific
+        // property.  We should not be doing this at all, so just consider this
+        // a temporary optimization...
+        if (_test_case.get_metadata().has_cleanup())
+            args.push_back("-vhas.cleanup=true");
+        else
+            args.push_back("-vhas.cleanup=false");
+
+        args.push_back(_program.str());
+        args.push_back(_test_case.name());
+        args.push_back(_result_path.str());
+        process::exec(_tester, args);
+    }
+};
+
+
+/// Functor to execute run_test_case() in a protected environment.
+class run_test_case_safe {
+    /// Data of the test case to run.
+    const engine::test_case* _test_case;
+
+    /// User-provided configuration variables.
+    const config::tree& _user_config;
+
+    /// Caller-provided runtime hooks.
+    engine::test_case_hooks& _hooks;
+
+    /// The file into which to store the test case's stdout.  If none, use a
+    /// temporary file within the work directory.
+    const optional< fs::path > _stdout_path;
+
+    /// The file into which to store the test case's stderr.  If none, use a
+    /// temporary file within the work directory.
+    const optional< fs::path > _stderr_path;
+
+public:
+    /// Constructor.
+    ///
+    /// \param test_case Data of the test case to run.
+    /// \param user_config User-provided configuration variables.
+    /// \param hooks Caller-provided runtime hooks.
+    /// \param stdout_path The file into which to store the test case's stdout.
+    ///     If none, use a temporary file within the work directory.
+    /// \param stderr_path The file into which to store the test case's stderr.
+    ///     If none, use a temporary file within the work directory.
+    run_test_case_safe(const engine::test_case* test_case,
+                       const config::tree& user_config,
+                       engine::test_case_hooks& hooks,
+                       const optional< fs::path >& stdout_path,
+                       const optional< fs::path >& stderr_path) :
+        _test_case(test_case), _user_config(user_config), _hooks(hooks),
+        _stdout_path(stdout_path), _stderr_path(stderr_path)
+    {
+    }
+
+    /// Executes the test case.
+    ///
+    /// \param workdir Directory in which we are running.
+    ///
+    /// \return The result of the executed test case.
+    engine::test_result
+    operator()(const fs::path& workdir) const
+    {
+        const fs::path stdout_path =
+            _stdout_path.get_default(workdir / "stdout.txt");
+        const fs::path stderr_path =
+            _stderr_path.get_default(workdir / "stderr.txt");
+
+        const fs::path result_path = workdir / "result.txt";
+
+        std::auto_ptr< process::child_with_files > child;
+        process::status status = process::status::fake_exited(1);  // XXX
+        try {
+            child = process::child_with_files::fork(::run_test_case(
+                _test_case->container_test_program().interface_name(),
+                _test_case->container_test_program().absolute_path(),
+                *_test_case, result_path, _user_config),
+                stdout_path, stderr_path);
+
+            status = child->wait();
+        } catch (const process::error& e) {
+            // TODO(jmmv): This really is horrible.  We ought to redo all the
+            // signal handling, as this check_interrupt() aberration is racy and
+            // ugly...
+            //
+            // We use SIGTERM because we assume the tester process is
+            // well-behaved and this will cause the proper cleanup of the
+            // environment.
+            ::kill(child->pid(), SIGTERM);
+            (void)child->wait();
+            engine::check_interrupt();
+            throw;
+        }
+
+        if (status.exited()) {
+            if (status.exitstatus() == EXIT_SUCCESS) {
+                // OK; the tester exited cleanly.
+                // TODO(jmmv): We should validate that the result file encodes a
+                // postive result.
+            } else if (status.exitstatus() == EXIT_FAILURE) {
+                // OK; the tester reported that the test itself failed and we
+                // have the result file to indicate this.  TODO(jmmv): We should
+                // validate that the result file encodes a negative result.
+            } else {
+                throw engine::error(F("Tester failed with code %s; that's "
+                                      "really bad") % status.exitstatus());
+            }
+        } else {
+            INV(status.signaled());
+            throw engine::error("Tester received a signal; that's really bad");
+        }
+
+        _hooks.got_stdout(stdout_path);
+        _hooks.got_stderr(stderr_path);
+
+        std::ifstream result_file(result_path.c_str());
+        const engine::test_result result = engine::test_result::parse(
+            result_file);
+
+        return result;
+    }
+};
+
+
+}  // anonymous namespace
 
 
 /// Destructor.
@@ -255,17 +512,18 @@ engine::debug_test_case(const test_case* test_case,
     if (test_case->fake_result())
         return test_case->fake_result().get();
 
-    // TODO(jmmv): Yes, hardcoding the interface names here is nasty.  But this
-    // will go away once we implement the testers as individual binaries, as we
-    // just auto-discover the ones that exist and use their generic interface.
-    if (test_case->interface_name() == "atf") {
-        return atf_iface::debug_atf_test_case(
-            test_case, user_config, hooks, stdout_path, stderr_path);
-    } else if (test_case->interface_name() == "plain") {
-        return plain_iface::debug_plain_test_case(
-            test_case, user_config, hooks, stdout_path, stderr_path);
-    } else
-        UNREACHABLE_MSG("Unknown interface " + test_case->interface_name());
+    const std::string skip_reason = check_reqs(
+        test_case->get_metadata(), user_config,
+        test_case->container_test_program().test_suite_name());
+    if (!skip_reason.empty())
+        return test_result(test_result::skipped, skip_reason);
+
+    if (!fs::exists(test_case->container_test_program().absolute_path()))
+        return test_result(test_result::broken, "Test program does not exist");
+
+    return protected_run(run_test_case_safe(test_case, user_config, hooks,
+                                            utils::make_optional(stdout_path),
+                                            utils::make_optional(stderr_path)));
 }
 
 
@@ -285,13 +543,15 @@ engine::run_test_case(const test_case* test_case,
     if (test_case->fake_result())
         return test_case->fake_result().get();
 
-    // TODO(jmmv): Yes, hardcoding the interface names here is nasty.  But this
-    // will go away once we implement the testers as individual binaries, as we
-    // just auto-discover the ones that exist and use their generic interface.
-    if (test_case->interface_name() == "atf") {
-        return atf_iface::run_atf_test_case(test_case, user_config, hooks);
-    } else if (test_case->interface_name() == "plain") {
-        return plain_iface::run_plain_test_case(test_case, user_config, hooks);
-    } else
-        UNREACHABLE_MSG("Unknown interface " + test_case->interface_name());
+    const std::string skip_reason = check_reqs(
+        test_case->get_metadata(), user_config,
+        test_case->container_test_program().test_suite_name());
+    if (!skip_reason.empty())
+        return test_result(test_result::skipped, skip_reason);
+
+    if (!fs::exists(test_case->container_test_program().absolute_path()))
+        return test_result(test_result::broken, "Test program does not exist");
+
+    return protected_run(run_test_case_safe(test_case, user_config, hooks,
+                                            none, none));
 }

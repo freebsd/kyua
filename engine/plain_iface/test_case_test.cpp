@@ -174,7 +174,10 @@ public:
             "plain", _binary_path, _root, "unit-tests", mdbuilder.build());
         const engine::test_cases_vector& tcs = test_program.test_cases();
         fetch_output_hooks fetcher;
-        return engine::run_test_case(tcs[0].get(), user_config, fetcher);
+        const engine::test_result result = engine::run_test_case(
+            tcs[0].get(),user_config, fetcher);
+        std::cerr << "Result is: " << result << '\n';
+        return result;
     }
 };
 
@@ -194,7 +197,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(run__result_fail);
 ATF_TEST_CASE_BODY(run__result_fail)
 {
     ATF_REQUIRE(engine::test_result(engine::test_result::failed,
-                                    "Exited with code 8") ==
+                                    "Returned non-success exit status 8") ==
                 plain_helper(this, "fail").run());
 }
 
@@ -324,7 +327,7 @@ ATF_TEST_CASE_BODY(run__missing_test_program)
     ATF_REQUIRE(::unlink("dir/test_case_helpers") != -1);
     const engine::test_result result = helper.run();
     ATF_REQUIRE(engine::test_result::broken == result.type());
-    ATF_REQUIRE_MATCH("Failed to execute", result.reason());
+    ATF_REQUIRE_MATCH("Test program does not exist", result.reason());
 }
 
 

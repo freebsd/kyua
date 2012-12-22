@@ -12,6 +12,11 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   unexpected errors caused by the internals of the code.  The manual
   now correctly explain how the exit codes behave on a command basis.
 
+* Issue 47: Started using the independent testers in the kyua-testers
+  package to run the test cases.  Kyua does not implement the logic to
+  invoke test cases any more, which provides for better modularity,
+  extensibility and robustness.
+
 
 Changes in version 0.5
 ======================

@@ -591,7 +591,7 @@ ATF_TEST_CASE_BODY(run_test_case__stacktrace__cleanup)
     capture_hooks hooks;
     const engine::test_result result = helper.run(hooks);
     ATF_REQUIRE(engine::test_result::broken == result.type());
-    ATF_REQUIRE_MATCH("cleanup did not terminate successfully",
+    ATF_REQUIRE_MATCH(F("cleanup received signal %s") % SIGABRT,
                       result.reason());
 
     ATF_REQUIRE(!atf::utils::grep_collection("attempting to gather stack trace",
@@ -609,7 +609,7 @@ ATF_TEST_CASE_BODY(run_test_case__missing_results_file)
     ATF_REQUIRE(engine::test_result::broken == result.type());
     // Need to match instead of doing an explicit comparison because the string
     // may include the "core dumped" substring.
-    ATF_REQUIRE_MATCH(F("Premature exit: received signal %s") % SIGABRT,
+    ATF_REQUIRE_MATCH(F("test case received signal %s") % SIGABRT,
                       result.reason());
 }
 
@@ -623,7 +623,7 @@ ATF_TEST_CASE_BODY(run_test_case__missing_test_program)
     ATF_REQUIRE(::unlink("dir/runner_helpers") != -1);
     const engine::test_result result = helper.run();
     ATF_REQUIRE(engine::test_result::broken == result.type());
-    ATF_REQUIRE_MATCH("Failed to execute", result.reason());
+    ATF_REQUIRE_MATCH("Test program does not exist", result.reason());
 }
 
 
