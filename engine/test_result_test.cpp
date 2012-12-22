@@ -68,6 +68,22 @@ namespace {
     }
 
 
+/// Creates a test case to validate the operator<< method.
+///
+/// \param name The name of the test case; "__output" will be appended.
+/// \param expected The expected string in the output.
+/// \param result The result to format.
+#define OUTPUT_TEST(name, expected, result) \
+    ATF_TEST_CASE_WITHOUT_HEAD(name ## __output); \
+    ATF_TEST_CASE_BODY(name ## __output) \
+    { \
+        std::ostringstream output; \
+        output << "prefix" << result << "suffix"; \
+        ATF_REQUIRE_EQ("prefix" + std::string(expected) + "suffix", \
+                       output.str()); \
+    }
+
+
 /// Validates the parse() method on a particular test result type.
 ///
 /// \param result_name Textual representation of the type, to be written to the
@@ -173,6 +189,18 @@ GOOD_TEST(passed, true, test_result::passed);
 GOOD_TEST(skipped, true, test_result::skipped);
 
 
+OUTPUT_TEST(broken, "broken: foo",
+            test_result(test_result::broken, "foo"));
+OUTPUT_TEST(expected_failure, "expected_failure: abc def",
+            test_result(test_result::expected_failure, "abc def"));
+OUTPUT_TEST(failed, "failed: some string",
+            test_result(test_result::failed, "some string"));
+OUTPUT_TEST(passed, "passed",
+            test_result(test_result::passed, ""));
+OUTPUT_TEST(skipped, "skipped: last message for testing",
+            test_result(test_result::skipped, "last message for testing"));
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(operator_eq);
 ATF_TEST_CASE_BODY(operator_eq)
 {
@@ -215,14 +243,19 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, broken__getters);
     ATF_ADD_TEST_CASE(tcs, broken__good);
+    ATF_ADD_TEST_CASE(tcs, broken__output);
     ATF_ADD_TEST_CASE(tcs, expected_failure__getters);
     ATF_ADD_TEST_CASE(tcs, expected_failure__good);
+    ATF_ADD_TEST_CASE(tcs, expected_failure__output);
     ATF_ADD_TEST_CASE(tcs, failed__getters);
     ATF_ADD_TEST_CASE(tcs, failed__good);
+    ATF_ADD_TEST_CASE(tcs, failed__output);
     ATF_ADD_TEST_CASE(tcs, passed__getters);
     ATF_ADD_TEST_CASE(tcs, passed__good);
+    ATF_ADD_TEST_CASE(tcs, passed__output);
     ATF_ADD_TEST_CASE(tcs, skipped__getters);
     ATF_ADD_TEST_CASE(tcs, skipped__good);
+    ATF_ADD_TEST_CASE(tcs, skipped__output);
     ATF_ADD_TEST_CASE(tcs, operator_eq);
     ATF_ADD_TEST_CASE(tcs, operator_ne);
 }

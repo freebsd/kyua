@@ -169,3 +169,29 @@ engine::test_result::operator!=(const test_result& other) const
 {
     return !(*this == other);
 }
+
+
+/// Injects a result into a stream.
+///
+/// This should be used for debugging and testing purposes only, as the frontend
+/// should perform the formatting explicitly.
+///
+/// \param output The stream into which to inject the result.
+/// \param result The result to format.
+///
+/// \return The output stream.
+std::ostream&
+engine::operator<<(std::ostream& output, const test_result& result)
+{
+    switch (result.type()) {
+    case test_result::broken: output << "broken"; break;
+    case test_result::expected_failure: output << "expected_failure"; break;
+    case test_result::failed: output << "failed"; break;
+    case test_result::passed: output << "passed"; break;
+    case test_result::skipped: output << "skipped"; break;
+    }
+    const std::string& reason = result.reason();
+    if (!reason.empty())
+        output << ": " << reason;
+    return output;
+}

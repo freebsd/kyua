@@ -33,6 +33,7 @@
 #define ENGINE_TEST_RESULT_HPP
 
 #include <istream>
+#include <ostream>
 #include <string>
 
 namespace engine {
@@ -79,6 +80,9 @@ public:
     bool operator==(const test_result&) const;
     bool operator!=(const test_result&) const;
 };
+
+
+std::ostream& operator<<(std::ostream&, const test_result&);
 
 
 }  // namespace engine
