@@ -45,7 +45,6 @@ extern "C" {
 #include "utils/optional.ipp"
 #include "utils/signals/exceptions.hpp"
 #include "utils/signals/misc.hpp"
-#include "utils/stacktrace.hpp"
 
 namespace fs = utils::fs;
 namespace signals = utils::signals;
@@ -179,6 +178,4 @@ engine::isolate_process(const fs::path& cwd)
     if (::chdir(cwd.c_str()) == -1)
         throw std::runtime_error(F("Failed to enter work directory %s") % cwd);
     utils::setenv("HOME", fs::current_path().str());
-
-    utils::unlimit_core_size();
 }

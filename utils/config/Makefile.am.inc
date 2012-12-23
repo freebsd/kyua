@@ -29,7 +29,7 @@
 UTILS_CFLAGS += $(LUTOK_CFLAGS)
 UTILS_LIBS += $(LUTOK_LIBS)
 
-libutils_a_CPPFLAGS += $(LUTOK_CFLAGS)
+libutils_a_CPPFLAGS = $(LUTOK_CFLAGS)
 libutils_a_SOURCES += utils/config/exceptions.cpp
 libutils_a_SOURCES += utils/config/exceptions.hpp
 libutils_a_SOURCES += utils/config/keys.cpp

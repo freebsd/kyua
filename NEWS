@@ -17,6 +17,9 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   invoke test cases any more, which provides for better modularity,
   extensibility and robustness.
 
+* Removed the GDB build-time configuration variable.  This is now part
+  of the kyua-testers package.
+
 
 Changes in version 0.5
 ======================
