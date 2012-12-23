@@ -129,6 +129,14 @@ text::split(const std::string& str, const char delimiter)
 }
 
 
+/// Converts a string to a boolean.
+///
+/// \param str The string to convert.
+///
+/// \return The converted string, if the input string was valid.
+///
+/// \throw std::value_error If the input string does not represent a valid
+///     boolean value.
 template<>
 bool
 text::to_type(const std::string& str)
@@ -142,6 +150,11 @@ text::to_type(const std::string& str)
 }
 
 
+/// Identity function for to_type, for genericity purposes.
+///
+/// \param str The string to convert.
+///
+/// \return The input string.
 template<>
 std::string
 text::to_type(const std::string& str)
