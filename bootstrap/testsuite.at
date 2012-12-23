@@ -49,8 +49,7 @@ syntax("kyuafile", 1)
 test_suite("bootstrap")
 atf_test_program{name="atf_helpers"}
 ])
-    ln -s $(GUESS_TOPDIR)/engine/atf_iface/test_program_atf_helpers \
-        atf_helpers
+    ln -s $(GUESS_TOPDIR)/bootstrap/atf_helpers atf_helpers
 ])
 m4_define([RUN_ATF_HELPERS],
     [HOME=$(pwd) TESTS="$1" kyua --config=none test --store=bootstrap.db $2])
@@ -62,8 +61,7 @@ syntax("kyuafile", 1)
 test_suite("bootstrap")
 atf_test_program{name="plain_helpers"}
 ])
-    ln -s $(GUESS_TOPDIR)/engine/atf_iface/test_program_plain_helpers \
-        plain_helpers
+    ln -s $(GUESS_TOPDIR)/bootstrap/plain_helpers plain_helpers
 ])
 m4_define([RUN_PLAIN_HELPER],
     [HOME=$(pwd) HELPER="$1" kyua --config=none test --store=bootstrap.db])

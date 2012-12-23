@@ -13,7 +13,5 @@ atf_test_program{name="test_program_test"}
 atf_test_program{name="test_result_test"}
 atf_test_program{name="testers_test"}
 
-include("atf_iface/Kyuafile")
 include("drivers/Kyuafile")
-include("plain_iface/Kyuafile")
 include("user_files/Kyuafile")

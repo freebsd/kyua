@@ -98,6 +98,16 @@ engine_metadata_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_TEST_CFLAGS) \
 engine_metadata_test_LDADD = $(ENGINE_LIBS) $(UTILS_TEST_LIBS) $(UTILS_LIBS) \
                              $(ATF_CXX_LIBS)
 
+tests_engine_PROGRAMS += engine/test_case_atf_helpers
+engine_test_case_atf_helpers_SOURCES = engine/test_case_atf_helpers.cpp
+engine_test_case_atf_helpers_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+engine_test_case_atf_helpers_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
+
+tests_engine_PROGRAMS += engine/test_case_plain_helpers
+engine_test_case_plain_helpers_SOURCES = engine/test_case_plain_helpers.cpp
+engine_test_case_plain_helpers_CXXFLAGS = $(UTILS_CFLAGS)
+engine_test_case_plain_helpers_LDADD = $(UTILS_LIBS)
+
 tests_engine_PROGRAMS += engine/test_case_test
 engine_test_case_test_SOURCES = engine/test_case_test.cpp
 engine_test_case_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
@@ -126,7 +136,5 @@ engine_testers_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
 engine_testers_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) $(ATF_CXX_LIBS)
 endif
 
-include engine/atf_iface/Makefile.am.inc
 include engine/drivers/Makefile.am.inc
-include engine/plain_iface/Makefile.am.inc
 include engine/user_files/Makefile.am.inc

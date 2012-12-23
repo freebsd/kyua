@@ -1,6 +1,5 @@
 *.a
 *.o
-*_helper
 *_helpers
 *_test
 

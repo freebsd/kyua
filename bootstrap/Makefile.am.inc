@@ -45,6 +45,15 @@ EXTRA_DIST += bootstrap/Kyuafile \
               bootstrap/package.m4 \
               bootstrap/testsuite.at
 
+tests_bootstrap_PROGRAMS = bootstrap/atf_helpers
+bootstrap_atf_helpers_SOURCES = bootstrap/atf_helpers.cpp
+bootstrap_atf_helpers_CXXFLAGS = $(ATF_CXX_CFLAGS)
+bootstrap_atf_helpers_LDADD = $(ATF_CXX_LIBS)
+
+tests_bootstrap_PROGRAMS += bootstrap/plain_helpers
+bootstrap_plain_helpers_SOURCES = bootstrap/plain_helpers.cpp
+bootstrap_plain_helpers_CXXFLAGS = $(UTILS_CFLAGS)
+
 tests_bootstrap_SCRIPTS = bootstrap/testsuite
 @target_srcdir@bootstrap/package.m4: $(top_srcdir)/configure.ac
 	{ \
