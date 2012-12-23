@@ -34,10 +34,8 @@ extern "C" {
 
 #include <fstream>
 
-#include "engine/atf_iface/test_case.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/isolation.ipp"
-#include "engine/plain_iface/test_case.hpp"
 #include "engine/test_program.hpp"
 #include "engine/test_result.hpp"
 #include "engine/testers.hpp"

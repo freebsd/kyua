@@ -42,8 +42,6 @@ extern "C" {
 
 #include "cli/cmd_list.hpp"
 #include "cli/common.ipp"
-// TODO(jmmv): Should probably use a mock test case.
-#include "engine/atf_iface/test_case.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/filters.hpp"
 #include "engine/user_files/kyuafile.hpp"
@@ -51,7 +49,6 @@ extern "C" {
 #include "utils/format/macros.hpp"
 #include "utils/optional.ipp"
 
-namespace atf_iface = engine::atf_iface;
 namespace list_tests = engine::drivers::list_tests;
 namespace user_files = engine::user_files;
 namespace fs = utils::fs;

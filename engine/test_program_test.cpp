@@ -30,12 +30,10 @@
 
 #include <atf-c++.hpp>
 
-#include "engine/atf_iface/test_case.hpp"
 #include "engine/exceptions.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 
-namespace atf_iface = engine::atf_iface;
 namespace fs = utils::fs;
 
 

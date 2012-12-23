@@ -26,9 +26,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-libengine_a_SOURCES += engine/plain_iface/test_case.cpp
-libengine_a_SOURCES += engine/plain_iface/test_case.hpp
-
 if WITH_ATF
 tests_engine_plain_ifacedir = $(pkgtestsdir)/engine/plain_iface
 

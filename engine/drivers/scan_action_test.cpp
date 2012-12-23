@@ -34,7 +34,6 @@
 
 #include "engine/action.hpp"
 #include "engine/context.hpp"
-#include "engine/plain_iface/test_case.hpp"
 #include "engine/test_result.hpp"
 #include "store/backend.hpp"
 #include "store/exceptions.hpp"
@@ -46,7 +45,6 @@
 
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
-namespace plain_iface = engine::plain_iface;
 namespace scan_action = engine::drivers::scan_action;
 
 using utils::none;

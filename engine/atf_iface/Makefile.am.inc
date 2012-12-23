@@ -26,27 +26,13 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-libengine_a_SOURCES += engine/atf_iface/results.cpp
-libengine_a_SOURCES += engine/atf_iface/results.hpp
-libengine_a_SOURCES += engine/atf_iface/runner.cpp
-libengine_a_SOURCES += engine/atf_iface/runner.hpp
-libengine_a_SOURCES += engine/atf_iface/test_case.cpp
-libengine_a_SOURCES += engine/atf_iface/test_case.hpp
-
 if WITH_ATF
 tests_engine_atf_ifacedir = $(pkgtestsdir)/engine/atf_iface
 
 tests_engine_atf_iface_DATA = engine/atf_iface/Kyuafile
 EXTRA_DIST += $(tests_engine_atf_iface_DATA)
 
-tests_engine_atf_iface_PROGRAMS = engine/atf_iface/results_test
-engine_atf_iface_results_test_SOURCES = engine/atf_iface/results_test.cpp
-engine_atf_iface_results_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
-                                         $(ATF_CXX_CFLAGS)
-engine_atf_iface_results_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
-                                      $(ATF_CXX_LIBS)
-
-tests_engine_atf_iface_PROGRAMS += engine/atf_iface/runner_helpers
+tests_engine_atf_iface_PROGRAMS = engine/atf_iface/runner_helpers
 engine_atf_iface_runner_helpers_SOURCES = engine/atf_iface/runner_helpers.cpp
 engine_atf_iface_runner_helpers_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 engine_atf_iface_runner_helpers_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
