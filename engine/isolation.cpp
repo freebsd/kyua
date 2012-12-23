@@ -26,12 +26,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/isolation.hpp"
+#include "engine/isolation.ipp"
 
 extern "C" {
-#include <sys/stat.h>
-
-#include <signal.h>
 #include <unistd.h>
 }
 
@@ -41,13 +38,9 @@ extern "C" {
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
-#include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
-#include "utils/signals/exceptions.hpp"
-#include "utils/signals/misc.hpp"
 
 namespace fs = utils::fs;
-namespace signals = utils::signals;
 
 using utils::optional;
 
@@ -118,64 +111,4 @@ engine::check_interrupt(void)
         LI("Interrupt pending; raising error to cause cleanup");
         throw engine::interrupted_error(interrupted_signo);
     }
-}
-
-
-/// Isolates the current process from the rest of the system.
-///
-/// This is intended to be used right before executing a test program because it
-/// attempts to isolate the current process from the rest of the system.
-///
-/// By isolation, we understand:
-///
-/// * Change the cwd of the process to a known location that will be cleaned up
-///   afterwards by the runner monitor.
-/// * Reset a set of critical environment variables to known good values.
-/// * Reset the umask to a known value.
-/// * Reset the signal handlers.
-/// * Raise the core size to the maximum allowed to permit gathering a stack
-///   trace of crashed tests.
-///
-/// \param cwd Path to the new cwd for the process.
-///
-/// \throw std::runtime_error If there is a problem setting up the process
-///     environment.
-void
-engine::isolate_process(const fs::path& cwd)
-{
-    // The utils::process library takes care of creating a process group for
-    // us.  Just ensure that is still true, or otherwise things will go pretty
-    // badly.
-    INV(::getpgrp() == ::getpid());
-
-    ::umask(0022);
-
-    for (int i = 0; i <= signals::last_signo; i++) {
-        try {
-            if (i != SIGKILL && i != SIGSTOP)
-                signals::reset(i);
-        } catch (const signals::system_error& e) {
-            // Just ignore errors trying to reset signals.  It might happen
-            // that we try to reset an immutable signal that we are not aware
-            // of, so we certainly do not want to make a big deal of it.
-        }
-    }
-
-    // TODO(jmmv): It might be better to do the opposite: just pass a good known
-    // set of variables to the child (aka HOME, PATH, ...).  But how do we
-    // determine this minimum set?
-    utils::unsetenv("LANG");
-    utils::unsetenv("LC_ALL");
-    utils::unsetenv("LC_COLLATE");
-    utils::unsetenv("LC_CTYPE");
-    utils::unsetenv("LC_MESSAGES");
-    utils::unsetenv("LC_MONETARY");
-    utils::unsetenv("LC_NUMERIC");
-    utils::unsetenv("LC_TIME");
-
-    utils::setenv("TZ", "UTC");
-
-    if (::chdir(cwd.c_str()) == -1)
-        throw std::runtime_error(F("Failed to enter work directory %s") % cwd);
-    utils::setenv("HOME", fs::current_path().str());
 }

@@ -93,35 +93,6 @@ fork_and_wait_hook_block(void)
 }
 
 
-/// Body for a subprocess that checks if isolate_process() defines a pgrp.
-///
-/// The subprocess exits with 0 if the pgrp has been created; otherwise exits
-/// with 1.
-void
-isolate_process_check_pgrp(void)
-{
-    engine::isolate_process(fs::path("workdir"));
-    std::exit(::getpid() == ::getpgrp() ? EXIT_SUCCESS : EXIT_FAILURE);
-}
-
-
-/// Body for a subprocess that kills itself.
-///
-/// This is used to verify that the caller notices that the child received a
-/// signal instead of exiting cleanly.
-///
-/// \tparam Signo The signal to send to self.  It should be a signal that has
-///     not been programmed yet whose default action is to die.
-template< int Signo >
-void
-isolate_process_kill_self(void)
-{
-    engine::isolate_process(fs::path("workdir"));
-    ::kill(::getpid(), Signo);
-    std::exit(EXIT_SUCCESS);
-}
-
-
 /// Hook for protected_run() that validates the value of the work directory.
 ///
 /// The caller needs to arrange for a mechanism to make the work directory
@@ -282,113 +253,6 @@ ATF_TEST_CASE_BODY(fork_and_wait__timeout)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(isolate_process__cwd);
-ATF_TEST_CASE_BODY(isolate_process__cwd)
-{
-    ATF_REQUIRE(::mkdir("workdir", 0755) != -1);
-    const fs::path exp_workdir = fs::current_path() / "workdir";
-
-    engine::isolate_process(fs::path("workdir"));
-    ATF_REQUIRE_EQ(exp_workdir, fs::current_path());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(isolate_process__env);
-ATF_TEST_CASE_BODY(isolate_process__env)
-{
-    utils::setenv("HOME", "foobar");
-    utils::setenv("LANG", "C");
-    utils::setenv("LC_ALL", "C");
-    utils::setenv("LC_COLLATE", "C");
-    utils::setenv("LC_CTYPE", "C");
-    utils::setenv("LC_MESSAGES", "C");
-    utils::setenv("LC_MONETARY", "C");
-    utils::setenv("LC_NUMERIC", "C");
-    utils::setenv("LC_TIME", "C");
-    utils::setenv("LEAVE_ME_ALONE", "kill-some-day");
-    utils::setenv("TZ", "EST+5");
-
-    ATF_REQUIRE(::mkdir("workdir", 0755) != -1);
-    engine::isolate_process(fs::path("workdir"));
-
-    const char* to_unset[] = {"LANG", "LC_ALL", "LC_COLLATE", "LC_CTYPE",
-                              "LC_MESSAGES", "LC_MONETARY", "LC_NUMERIC",
-                              "LC_TIME", NULL};
-    for (const char** varp = to_unset; *varp != NULL; varp++)
-        if (utils::getenv(*varp))
-            fail(F("%s not unset") % *varp);
-
-    if (utils::getenv("HOME").get() != fs::current_path().str())
-        fail("HOME not reset");
-    if (utils::getenv("TZ").get() != "UTC")
-        fail("TZ not set to UTC");
-
-    if (utils::getenv("LEAVE_ME_ALONE").get() != "kill-some-day")
-        fail("Modified environment variable that should have not been touched");
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(isolate_process__pgrp);
-ATF_TEST_CASE_BODY(isolate_process__pgrp)
-{
-    ATF_REQUIRE(::mkdir("workdir", 0755) != -1);
-
-    // We have to run this test through the process library because
-    // isolate_process assumes that the library creates the process group.
-    // Therefore, think about this as an integration test only.
-    const process::status status = process::child_with_files::fork(
-        isolate_process_check_pgrp, fs::path("out"), fs::path("err"))->wait();
-
-    if (!status.exited())
-        fail("Subprocess died unexpectedly");
-    if (status.exitstatus() != EXIT_SUCCESS)
-        fail("Subprocess did not run in a different process group");
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(isolate_process__signals);
-ATF_TEST_CASE_BODY(isolate_process__signals)
-{
-    ATF_REQUIRE(::mkdir("workdir", 0755) != -1);
-
-    struct ::sigaction sa;
-    sa.sa_handler = SIG_IGN;
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags = 0;
-    ATF_REQUIRE(::sigaction(SIGUSR2, &sa, NULL) != -1);
-    ::kill(::getpid(), SIGUSR2);
-
-    const process::status status = process::child_with_files::fork(
-        isolate_process_kill_self< SIGUSR2 >,
-        fs::path("out"), fs::path("err"))->wait();
-    ATF_REQUIRE(status.signaled());
-    ATF_REQUIRE_EQ(SIGUSR2, status.termsig());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(isolate_process__timezone);
-ATF_TEST_CASE_BODY(isolate_process__timezone)
-{
-    ATF_REQUIRE(::mkdir("workdir", 0755) != -1);
-    engine::isolate_process(fs::path("workdir"));
-
-    const datetime::timestamp fake = datetime::timestamp::from_values(
-        2011, 5, 13, 12, 20, 30, 500);
-    if ("2011-05-13 12:20:30" != fake.strftime("%Y-%m-%d %H:%M:%S"))
-        fail("Invalid defaut TZ");
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(isolate_process__umask);
-ATF_TEST_CASE_BODY(isolate_process__umask)
-{
-    ATF_REQUIRE(::mkdir("workdir", 0755) != -1);
-    engine::isolate_process(fs::path("workdir"));
-    const mode_t old_umask = ::umask(0111);
-    ATF_REQUIRE_EQ(0022, old_umask);
-}
-
-
 ATF_TEST_CASE_WITHOUT_HEAD(protected_run__ok);
 ATF_TEST_CASE_BODY(protected_run__ok)
 {
@@ -457,13 +321,6 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, fork_and_wait__ok);
     ATF_ADD_TEST_CASE(tcs, fork_and_wait__timeout);
-
-    ATF_ADD_TEST_CASE(tcs, isolate_process__cwd);
-    ATF_ADD_TEST_CASE(tcs, isolate_process__env);
-    ATF_ADD_TEST_CASE(tcs, isolate_process__pgrp);
-    ATF_ADD_TEST_CASE(tcs, isolate_process__signals);
-    ATF_ADD_TEST_CASE(tcs, isolate_process__timezone);
-    ATF_ADD_TEST_CASE(tcs, isolate_process__umask);
 
     ATF_ADD_TEST_CASE(tcs, protected_run__ok);
     ATF_ADD_TEST_CASE(tcs, protected_run__ok_but_cleanup_fail);

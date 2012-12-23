@@ -66,8 +66,6 @@ utils::optional< utils::process::status > fork_and_wait(
     Hook, const utils::fs::path&, const utils::fs::path&,
     const utils::datetime::delta&);
 
-void isolate_process(const utils::fs::path&);
-
 template< class Hook >
 test_result protected_run(Hook);
 
