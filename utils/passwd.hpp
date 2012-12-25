@@ -57,7 +57,6 @@ struct user {
 
 
 user current_user(void);
-void drop_privileges(const user&);
 user find_user_by_name(const std::string&);
 user find_user_by_uid(const unsigned int);
 void set_current_user_for_testing(const user&);
