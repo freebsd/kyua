@@ -97,7 +97,11 @@ ATF_TEST_CASE_BODY(open__create__ok)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(open__create__fail);
+ATF_TEST_CASE(open__create__fail);
+ATF_TEST_CASE_HEAD(open__create__fail)
+{
+    set_md_var("require.user", "unprivileged");
+}
 ATF_TEST_CASE_BODY(open__create__fail)
 {
     fs::mkdir(fs::path("protected"), 0555);
