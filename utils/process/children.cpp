@@ -57,24 +57,12 @@ namespace utils {
 namespace process {
 
 
-/// Private implementation fields for child_with_files.
-struct child_with_files::impl {
+/// Private implementation fields for child objects.
+struct child::impl {
     /// The process identifier.
     pid_t _pid;
 
-    /// Initializes private implementation data.
-    ///
-    /// \param pid The process identifier.
-    impl(const pid_t pid) : _pid(pid) {}
-};
-
-
-/// Private implementation fields for child_with_files.
-struct child_with_output::impl {
-    /// The process identifier.
-    pid_t _pid;
-
-    /// The input stream for the process' stdout and stderr.
+    /// The input stream for the process' stdout and stderr.  May be NULL.
     std::auto_ptr< process::ifdstream > _output;
 
     /// Initializes private implementation data.
@@ -254,18 +242,18 @@ duplicate_cstring(const char* str)
 }  // anonymous namespace
 
 
-/// Creates a new child_with_files.
+/// Creates a new child.
 ///
 /// \param implptr A dynamically-allocated impl object with the contents of the
-///     new child_with_files.
-process::child_with_files::child_with_files(impl *implptr) :
+///     new child.
+process::child::child(impl *implptr) :
     _pimpl(implptr)
 {
 }
 
 
-/// Destructor for child_with_files.
-process::child_with_files::~child_with_files(void)
+/// Destructor for child.
+process::child::~child(void)
 {
 }
 
@@ -275,124 +263,13 @@ process::child_with_files::~child_with_files(void)
 /// Please note: if you update this function to change the return type or to
 /// raise different errors, do not forget to update fork() accordingly.
 ///
-/// \param stdout_file The name of the file in which to store the stdout.
-///     If this has the magic value /dev/stdout, then the parent's stdout is
-///     reused without applying any redirection.
-/// \param stderr_file The name of the file in which to store the stderr.
-///     If this has the magic value /dev/stderr, then the parent's stderr is
-///     reused without applying any redirection.
-///
-/// \return In the case of the parent, a new child_with_files object returned
-/// as a dynamically-allocated object because children classes are unique and
-/// thus noncopyable.  In the case of the child, a NULL pointer.
-///
-/// \throw process::system_error If the call to fork(2) fails.
-std::auto_ptr< process::child_with_files >
-process::child_with_files::fork_aux(const fs::path& stdout_file,
-                                    const fs::path& stderr_file)
-{
-    std::cout.flush();
-    std::cerr.flush();
-
-    pid_t pid = detail::syscall_fork();
-    if (pid == -1) {
-        throw process::system_error("fork(2) failed", errno);
-    } else if (pid == 0) {
-        ::setpgid(::getpid(), ::getpid());
-
-        try {
-            if (stdout_file != fs::path("/dev/stdout")) {
-                const int stdout_fd = open_for_append(stdout_file);
-                safe_dup(stdout_fd, STDOUT_FILENO);
-                ::close(stdout_fd);
-            }
-            if (stderr_file != fs::path("/dev/stderr")) {
-                const int stderr_fd = open_for_append(stderr_file);
-                safe_dup(stderr_fd, STDERR_FILENO);
-                ::close(stderr_fd);
-            }
-        } catch (const system_error& e) {
-            std::cerr << F("Failed to set up subprocess: %s\n") % e.what();
-            std::abort();
-        }
-        return std::auto_ptr< process::child_with_files >(NULL);
-    } else {
-        LD(F("Spawned process %s: stdout=%s, stderr=%s") % pid % stdout_file %
-           stderr_file);
-        return std::auto_ptr< process::child_with_files >(
-            new process::child_with_files(new impl(pid)));
-    }
-}
-
-
-/// Returns the process identifier of this child.
-///
-/// \return A process identifier.
-int
-process::child_with_files::pid(void) const
-{
-    return _pimpl->_pid;
-}
-
-
-/// Blocks to wait for completion.
-///
-/// Note that this does not loop in case the wait call is interrupted.  We need
-/// callers to know when this condition happens and let them retry on their own.
-///
-/// \param timeout The timeout for the wait.  If zero, no timeout logic is
-///     applied.
-///
-/// \return The termination status of the child process.
-///
-/// \throw process::system_error If the call to waitpid(2) fails.
-/// \throw process::timeout_error If the timeout expires.
-process::status
-process::child_with_files::wait(const datetime::delta& timeout)
-{
-    if (timeout == datetime::delta())
-        return safe_wait(_pimpl->_pid);
-    else
-        return timed_wait(_pimpl->_pid, timeout);
-}
-
-
-/// Creates a new child_with_output.
-///
-/// \param implptr A dynamically-allocated impl object with the contents of the
-///     new child_with_output.
-process::child_with_output::child_with_output(impl *implptr) :
-    _pimpl(implptr)
-{
-}
-
-
-/// Destructor for child_with_output.
-process::child_with_output::~child_with_output(void)
-{
-}
-
-
-/// Gets the input stream corresponding to the stdout and stderr of the child.
-std::istream&
-process::child_with_output::output(void)
-{
-    return *_pimpl->_output;
-}
-
-
-/// Helper function for fork().
-///
-/// Please note: if you update this function to change the return type or to
-/// raise different errors, do not forget to update fork() accordingly.
-///
-/// \return In the case of the parent, a new child_with_output object returned
-/// as a dynamically-allocated object because children classes are unique and
-/// thus noncopyable.  In the case of the child, a NULL pointer.
+/// \return In the case of the parent, a new child object returned as a
+/// dynamically-allocated object because children classes are unique and thus
+/// noncopyable.  In the case of the child, a NULL pointer.
 ///
 /// \throw process::system_error If the calls to pipe(2) or fork(2) fail.
-std::auto_ptr< process::child_with_output >
-process::child_with_output::fork_aux(void)
+std::auto_ptr< process::child >
+process::child::fork_capture_aux(void)
 {
     std::cout.flush();
     std::cerr.flush();
@@ -418,13 +295,67 @@ process::child_with_output::fork_aux(void)
             std::cerr << F("Failed to set up subprocess: %s\n") % e.what();
             std::abort();
         }
-        return std::auto_ptr< process::child_with_output >(NULL);
+        return std::auto_ptr< process::child >(NULL);
     } else {
         ::close(fds[1]);
         LD(F("Spawned process %s: stdout and stderr inherited") % pid);
-        return std::auto_ptr< process::child_with_output >(
-            new process::child_with_output(new impl(
-                pid, new process::ifdstream(fds[0]))));
+        return std::auto_ptr< process::child >(
+            new process::child(new impl(pid, new process::ifdstream(fds[0]))));
+    }
+}
+
+
+/// Helper function for fork().
+///
+/// Please note: if you update this function to change the return type or to
+/// raise different errors, do not forget to update fork() accordingly.
+///
+/// \param stdout_file The name of the file in which to store the stdout.
+///     If this has the magic value /dev/stdout, then the parent's stdout is
+///     reused without applying any redirection.
+/// \param stderr_file The name of the file in which to store the stderr.
+///     If this has the magic value /dev/stderr, then the parent's stderr is
+///     reused without applying any redirection.
+///
+/// \return In the case of the parent, a new child object returned as a
+/// dynamically-allocated object because children classes are unique and thus
+/// noncopyable.  In the case of the child, a NULL pointer.
+///
+/// \throw process::system_error If the call to fork(2) fails.
+std::auto_ptr< process::child >
+process::child::fork_files_aux(const fs::path& stdout_file,
+                               const fs::path& stderr_file)
+{
+    std::cout.flush();
+    std::cerr.flush();
+
+    pid_t pid = detail::syscall_fork();
+    if (pid == -1) {
+        throw process::system_error("fork(2) failed", errno);
+    } else if (pid == 0) {
+        ::setpgid(::getpid(), ::getpid());
+
+        try {
+            if (stdout_file != fs::path("/dev/stdout")) {
+                const int stdout_fd = open_for_append(stdout_file);
+                safe_dup(stdout_fd, STDOUT_FILENO);
+                ::close(stdout_fd);
+            }
+            if (stderr_file != fs::path("/dev/stderr")) {
+                const int stderr_fd = open_for_append(stderr_file);
+                safe_dup(stderr_fd, STDERR_FILENO);
+                ::close(stderr_fd);
+            }
+        } catch (const system_error& e) {
+            std::cerr << F("Failed to set up subprocess: %s\n") % e.what();
+            std::abort();
+        }
+        return std::auto_ptr< process::child >(NULL);
+    } else {
+        LD(F("Spawned process %s: stdout=%s, stderr=%s") % pid % stdout_file %
+           stderr_file);
+        return std::auto_ptr< process::child >(
+            new process::child(new impl(pid, NULL)));
     }
 }
 
@@ -433,9 +364,20 @@ process::child_with_output::fork_aux(void)
 ///
 /// \return A process identifier.
 int
-process::child_with_output::pid(void) const
+process::child::pid(void) const
 {
     return _pimpl->_pid;
+}
+
+
+/// Gets the input stream corresponding to the stdout and stderr of the child.
+///
+/// \pre The child must have been started by fork_capture().
+std::istream&
+process::child::output(void)
+{
+    PRE(_pimpl->_output.get() != NULL);
+    return *_pimpl->_output;
 }
 
 
@@ -452,7 +394,7 @@ process::child_with_output::pid(void) const
 /// \throw process::system_error If the call to waitpid(2) fails.
 /// \throw process::timeout_error If the timeout expires.
 process::status
-process::child_with_output::wait(const datetime::delta& timeout)
+process::child::wait(const datetime::delta& timeout)
 {
     if (timeout == datetime::delta())
         return safe_wait(_pimpl->_pid);

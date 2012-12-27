@@ -60,59 +60,31 @@ namespace utils {
 namespace process {
 
 
-/// Child process that writes stdout and stderr to files.
-///
-/// Use this class when you want to start a child process and you want to store
-/// all of its output to stdout and stderr in separate files for later
-/// processing.  Note that the specified files are NOT overwritten if they
-/// already exist: they are opened in append mode.
-class child_with_files : noncopyable {
+/// Child process spawner and controller.
+class child : noncopyable {
     struct impl;
 
     /// Pointer to the shared internal implementation.
     std::auto_ptr< impl > _pimpl;
 
-    static std::auto_ptr< child_with_files > fork_aux(
-        const fs::path&, const fs::path&);
+    static std::auto_ptr< child > fork_capture_aux(void);
 
-    explicit child_with_files(impl *);
+    static std::auto_ptr< child > fork_files_aux(const fs::path&,
+                                                 const fs::path&);
 
-public:
-    ~child_with_files(void);
-
-    template< typename Hook >
-    static std::auto_ptr< child_with_files > fork(Hook, const fs::path&,
-                                                  const fs::path&);
-
-    int pid(void) const;
-
-    status wait(const datetime::delta& = datetime::delta());
-};
-
-
-/// Child process that merges stdout and stderr and exposes them as an stream.
-///
-/// Use this class when you want to start a child process and you want to
-/// process its output programmatically as it is generated.  The muxing of
-/// stdout and stderr is performed at the subprocess level so that the caller
-/// does not have to deal with poll(2).
-class child_with_output : noncopyable {
-    struct impl;
-
-    /// Pointer to the shared internal implementation.
-    std::auto_ptr< impl > _pimpl;
-
-    explicit child_with_output(impl *);
-
-    static std::auto_ptr< child_with_output > fork_aux(void);
+    explicit child(impl *);
 
 public:
-    ~child_with_output(void);
+    ~child(void);
 
     template< typename Hook >
-    static std::auto_ptr< child_with_output > fork(Hook);
-
+    static std::auto_ptr< child > fork_capture(Hook);
     std::istream& output(void);
+
+    template< typename Hook >
+    static std::auto_ptr< child > fork_files(Hook, const fs::path&,
+                                             const fs::path&);
+
     int pid(void) const;
 
     status wait(const datetime::delta& = datetime::delta());

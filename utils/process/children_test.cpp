@@ -79,32 +79,6 @@ timer_callback(void)
 }
 
 
-/// Validates that interrupting the wait call raises the proper error.
-///
-/// \tparam child The type of the child to validate.
-/// \param child The child to validate.
-template< class Child >
-void
-interrupted_check(Child& child)
-{
-    timer_pid = ::getpid();
-    signals::timer timer(datetime::delta(0, 500000), timer_callback);
-
-    std::cout << "Waiting for subprocess; should be aborted\n";
-    ATF_REQUIRE_THROW(process::system_error,
-                      child->wait(datetime::delta()));
-
-    timer.unprogram();
-
-    std::cout << "Now terminating process for real\n";
-    ::kill(child->pid(), SIGKILL);
-    const process::status status = child->wait(datetime::delta());
-    ATF_REQUIRE(status.signaled());
-
-    ATF_REQUIRE(!fs::exists(fs::path("finished")));
-}
-
-
 /// Body for a process that spawns a subprocess.
 ///
 /// This is supposed to be passed as a hook to one of the fork() functions.  The
@@ -129,54 +103,6 @@ child_blocking_subchild(void)
         std::exit(EXIT_SUCCESS);
     }
     UNREACHABLE;
-}
-
-
-/// Ensures that the subprocess started by child_blocking_subchild is dead.
-///
-/// This function has to be called after running the child_blocking_subchild
-/// function through a fork call.  It ensures that the subchild spawned is
-/// ready, waits for the process group and ensures that both the child and the
-/// subchild have died.
-///
-/// \param child The child object.
-template< class Child >
-void
-child_blocking_subchild_check(Child child)
-{
-    const process::status status = child->wait();
-
-    ATF_REQUIRE(status.exited());
-    ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
-
-    std::ifstream input("subchild_pid");
-    ATF_REQUIRE(input);
-    pid_t pid;
-    input >> pid;
-    input.close();
-    std::cout << F("Subprocess was %s; checking if it died\n") % pid;
-
-    int attempts = 30;
-retry:
-    if (::kill(pid, SIGCONT) != -1 || errno != ESRCH) {
-        // Looks like the subchild did not die.
-        //
-        // Note that this might be inaccurate for two reasons:
-        // 1) The system may have spawned a new process with the same pid as
-        //    our subchild... but in practice, this does not happen because
-        //    most systems do not immediately reuse pid numbers.  If that
-        //    happens... well, we get a false test failure.
-        // 2) We ran so fast that even if the process was sent a signal to
-        //    die, it has not had enough time to process it yet.  This is why
-        //    we retry this a few times.
-        if (attempts > 0) {
-            std::cout << "Subprocess not dead yet; retrying wait\n";
-            --attempts;
-            ::usleep(100000);
-            goto retry;
-        }
-        ATF_FAIL(F("The subprocess %s of our child was not killed") % pid);
-    }
 }
 
 
@@ -320,30 +246,6 @@ child_write_pid(void)
 }
 
 
-/// Validates that the value of the pidfile matches the pid file in the child.
-///
-/// \tparam Child The type of the child to validate.
-/// \param child The child to validate.
-template< class Child >
-void
-child_write_pid_check(Child& child)
-{
-    const int pid = child->pid();
-
-    const process::status status = child->wait();
-    ATF_REQUIRE(status.exited());
-    ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
-
-    std::ifstream input("pidfile");
-    ATF_REQUIRE(input);
-    int read_pid;
-    input >> read_pid;
-    input.close();
-
-    ATF_REQUIRE_EQ(read_pid, pid);
-}
-
-
 /// A child process that returns.
 ///
 /// The fork() wrappers are supposed to capture this condition and terminate the
@@ -478,10 +380,10 @@ pipe_fail(int* UTILS_UNUSED_PARAM(fildes)) throw()
 }
 
 
-/// Helper for child_with_files tests to validate inheritance of stdout/stderr.
+/// Helper for child tests to validate inheritance of stdout/stderr.
 ///
 /// This function ensures that passing one of /dev/stdout or /dev/stderr to
-/// the child_with_files fork method does the right thing.  The idea is that we
+/// the child__fork_files fork method does the right thing.  The idea is that we
 /// call fork with the given parameters and then make our child redirect one of
 /// its file descriptors to a specific file without going through the process
 /// library.  We then validate if this redirection worked and got the expected
@@ -507,10 +409,9 @@ do_inherit_test(const char* fork_stdout, const char* fork_stderr,
             ::close(fd);
         }
 
-        std::auto_ptr< process::child_with_files > child =
-            process::child_with_files::fork(
-                child_simple_function< 123, 'Z' >,
-                fs::path(fork_stdout), fs::path(fork_stderr));
+        std::auto_ptr< process::child > child = process::child::fork_files(
+            child_simple_function< 123, 'Z' >,
+            fs::path(fork_stdout), fs::path(fork_stderr));
         const process::status status = child->wait();
         if (!status.exited() || status.exitstatus() != 123)
             std::abort();
@@ -526,21 +427,20 @@ do_inherit_test(const char* fork_stdout, const char* fork_stderr,
 }
 
 
-/// Performs a "child_with_output__ok_*" test.
+/// Performs a "child__fork_capture__ok_*" test.
 ///
-/// This test basically ensures that the child_with_output class spawns a
+/// This test basically ensures that the child__fork_capture class spawns a
 /// process whose output is captured in an input stream.
 ///
 /// \tparam Hook The type of the fork hook to use.
 /// \param hook The hook to the fork call.
 template< class Hook >
 static void
-child_with_output__ok(Hook hook)
+child__fork_capture__ok(Hook hook)
 {
     std::cout << "This unflushed message should not propagate to the child";
     std::cerr << "This unflushed message should not propagate to the child";
-    std::auto_ptr< process::child_with_output > child =
-        process::child_with_output::fork(hook);
+    std::auto_ptr< process::child > child = process::child::fork_capture(hook);
     std::cout << std::endl;
     std::cerr << std::endl;
 
@@ -565,15 +465,98 @@ child_with_output__ok(Hook hook)
 }  // anonymous namespace
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(child_with_files__ok_function);
-ATF_TEST_CASE_BODY(child_with_files__ok_function)
+ATF_TEST_CASE_WITHOUT_HEAD(child__fork_capture__ok_function);
+ATF_TEST_CASE_BODY(child__fork_capture__ok_function)
+{
+    child__fork_capture__ok(child_printer_function);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(child__fork_capture__ok_functor);
+ATF_TEST_CASE_BODY(child__fork_capture__ok_functor)
+{
+    child__fork_capture__ok(child_printer_functor());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(child__fork_capture__pipe_fail);
+ATF_TEST_CASE_BODY(child__fork_capture__pipe_fail)
+{
+    process::detail::syscall_pipe = pipe_fail< 23 >;
+    try {
+        process::child::fork_capture(child_simple_function< 1, 'A' >);
+        fail("Expected exception but none raised");
+    } catch (const process::system_error& e) {
+        ATF_REQUIRE(atf::utils::grep_string("pipe.*failed", e.what()));
+        ATF_REQUIRE_EQ(23, e.original_errno());
+    }
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(child__fork_capture__fork_cannot_exit);
+ATF_TEST_CASE_BODY(child__fork_capture__fork_cannot_exit)
+{
+    const pid_t parent_pid = ::getpid();
+    atf::utils::create_file("to-not-be-deleted", "");
+
+    std::auto_ptr< process::child > child = process::child::fork_capture(
+        child_return);
+    if (::getpid() != parent_pid) {
+        // If we enter this clause, it is because the hook returned.
+        ::unlink("to-not-be-deleted");
+        std::exit(EXIT_SUCCESS);
+    }
+
+    const process::status status = child->wait();
+    ATF_REQUIRE(status.signaled());
+    ATF_REQUIRE(fs::exists(fs::path("to-not-be-deleted")));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(child__fork_capture__fork_cannot_unwind);
+ATF_TEST_CASE_BODY(child__fork_capture__fork_cannot_unwind)
+{
+    const pid_t parent_pid = ::getpid();
+    atf::utils::create_file("to-not-be-deleted", "");
+    try {
+        std::auto_ptr< process::child > child = process::child::fork_capture(
+            child_raise_exception< int, 123 >);
+        const process::status status = child->wait();
+        ATF_REQUIRE(status.signaled());
+        ATF_REQUIRE(fs::exists(fs::path("to-not-be-deleted")));
+    } catch (const int i) {
+        // If we enter this clause, it is because an exception leaked from the
+        // hook.
+        INV(parent_pid != ::getpid());
+        INV(i == 123);
+        ::unlink("to-not-be-deleted");
+        std::exit(EXIT_SUCCESS);
+    }
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(child__fork_capture__fork_fail);
+ATF_TEST_CASE_BODY(child__fork_capture__fork_fail)
+{
+    process::detail::syscall_fork = fork_fail< 89 >;
+    try {
+        process::child::fork_capture(child_simple_function< 1, 'A' >);
+        fail("Expected exception but none raised");
+    } catch (const process::system_error& e) {
+        ATF_REQUIRE(atf::utils::grep_string("fork.*failed", e.what()));
+        ATF_REQUIRE_EQ(89, e.original_errno());
+    }
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(child__fork_files__ok_function);
+ATF_TEST_CASE_BODY(child__fork_files__ok_function)
 {
     const fs::path file1("file1.txt");
     const fs::path file2("file2.txt");
 
-    std::auto_ptr< process::child_with_files > child =
-        process::child_with_files::fork(
-            child_simple_function< 15, 'Z' >, file1, file2);
+    std::auto_ptr< process::child > child = process::child::fork_files(
+        child_simple_function< 15, 'Z' >, file1, file2);
     const process::status status = child->wait();
     ATF_REQUIRE(status.exited());
     ATF_REQUIRE_EQ(15, status.exitstatus());
@@ -586,8 +569,8 @@ ATF_TEST_CASE_BODY(child_with_files__ok_function)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(child_with_files__ok_functor);
-ATF_TEST_CASE_BODY(child_with_files__ok_functor)
+ATF_TEST_CASE_WITHOUT_HEAD(child__fork_files__ok_functor);
+ATF_TEST_CASE_BODY(child__fork_files__ok_functor)
 {
     const fs::path filea("fileA.txt");
     const fs::path fileb("fileB.txt");
@@ -601,9 +584,8 @@ ATF_TEST_CASE_BODY(child_with_files__ok_functor)
         output << "Initial stderr\n";
     }
 
-    std::auto_ptr< process::child_with_files > child =
-        process::child_with_files::fork(
-            child_simple_functor(16, "a functor"), filea, fileb);
+    std::auto_ptr< process::child > child = process::child::fork_files(
+        child_simple_functor(16, "a functor"), filea, fileb);
     const process::status status = child->wait();
     ATF_REQUIRE(status.exited());
     ATF_REQUIRE_EQ(16, status.exitstatus());
@@ -622,91 +604,28 @@ ATF_TEST_CASE_BODY(child_with_files__ok_functor)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(child_with_files__pid);
-ATF_TEST_CASE_BODY(child_with_files__pid)
-{
-    std::auto_ptr< process::child_with_files > child =
-        process::child_with_files::fork(
-            child_write_pid, fs::path("file1.txt"), fs::path("file2.txt"));
-
-    child_write_pid_check(child);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(child_with_files__inherit_stdout);
-ATF_TEST_CASE_BODY(child_with_files__inherit_stdout)
+ATF_TEST_CASE_WITHOUT_HEAD(child__fork_files__inherit_stdout);
+ATF_TEST_CASE_BODY(child__fork_files__inherit_stdout)
 {
     do_inherit_test("/dev/stdout", "stderr.txt", "stdout.txt", STDOUT_FILENO);
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(child_with_files__inherit_stderr);
-ATF_TEST_CASE_BODY(child_with_files__inherit_stderr)
+ATF_TEST_CASE_WITHOUT_HEAD(child__fork_files__inherit_stderr);
+ATF_TEST_CASE_BODY(child__fork_files__inherit_stderr)
 {
     do_inherit_test("stdout.txt", "/dev/stderr", "stderr.txt", STDERR_FILENO);
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(child_with_files__wait_killpg);
-ATF_TEST_CASE_BODY(child_with_files__wait_killpg)
-{
-    std::auto_ptr< process::child_with_files > child =
-        process::child_with_files::fork(child_blocking_subchild,
-                                        fs::path("out"), fs::path("err"));
-
-    child_blocking_subchild_check(child);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(child_with_files__wait_timeout_ok);
-ATF_TEST_CASE_BODY(child_with_files__wait_timeout_ok)
-{
-    std::auto_ptr< process::child_with_files > child =
-        process::child_with_files::fork(
-            child_wait< 500000 >, fs::path("out"), fs::path("err"));
-    const process::status status = child->wait(datetime::delta(5, 0));
-    ATF_REQUIRE(fs::exists(fs::path("finished")));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(child_with_files__wait_timeout_expired);
-ATF_TEST_CASE_BODY(child_with_files__wait_timeout_expired)
-{
-    std::auto_ptr< process::child_with_files > child =
-        process::child_with_files::fork(
-            child_wait_with_subchild< 500000 >, fs::path("out"),
-            fs::path("err"));
-    ATF_REQUIRE_THROW(process::timeout_error,
-                      child->wait(datetime::delta(0, 50000)));
-    ATF_REQUIRE(!fs::exists(fs::path("finished")));
-
-    // Check that the subprocess of the child is also killed.
-    ::sleep(1);
-    ATF_REQUIRE(!fs::exists(fs::path("finished")));
-    ATF_REQUIRE(!fs::exists(fs::path("subfinished")));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(child_with_files__interrupted);
-ATF_TEST_CASE_BODY(child_with_files__interrupted)
-{
-    std::auto_ptr< process::child_with_files > child =
-        process::child_with_files::fork(child_wait< 30000000 >,
-                                        fs::path("out"), fs::path("err"));
-
-    interrupted_check(child);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(child_with_files__fork_cannot_exit);
-ATF_TEST_CASE_BODY(child_with_files__fork_cannot_exit)
+ATF_TEST_CASE_WITHOUT_HEAD(child__fork_files__fork_cannot_exit);
+ATF_TEST_CASE_BODY(child__fork_files__fork_cannot_exit)
 {
     const pid_t parent_pid = ::getpid();
     atf::utils::create_file("to-not-be-deleted", "");
 
-    std::auto_ptr< process::child_with_files > child =
-        process::child_with_files::fork(child_return,
-                                        fs::path("out"), fs::path("err"));
+    std::auto_ptr< process::child > child = process::child::fork_files(
+        child_return, fs::path("out"), fs::path("err"));
     if (::getpid() != parent_pid) {
         // If we enter this clause, it is because the hook returned.
         ::unlink("to-not-be-deleted");
@@ -719,15 +638,15 @@ ATF_TEST_CASE_BODY(child_with_files__fork_cannot_exit)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(child_with_files__fork_cannot_unwind);
-ATF_TEST_CASE_BODY(child_with_files__fork_cannot_unwind)
+ATF_TEST_CASE_WITHOUT_HEAD(child__fork_files__fork_cannot_unwind);
+ATF_TEST_CASE_BODY(child__fork_files__fork_cannot_unwind)
 {
     const pid_t parent_pid = ::getpid();
     atf::utils::create_file("to-not-be-deleted", "");
     try {
-        std::auto_ptr< process::child_with_files > child =
-            process::child_with_files::fork(child_raise_exception< int, 123 >,
-                                            fs::path("out"), fs::path("err"));
+        std::auto_ptr< process::child > child = process::child::fork_files(
+            child_raise_exception< int, 123 >, fs::path("out"),
+            fs::path("err"));
         const process::status status = child->wait();
         ATF_REQUIRE(status.signaled());
         ATF_REQUIRE(fs::exists(fs::path("to-not-be-deleted")));
@@ -742,14 +661,13 @@ ATF_TEST_CASE_BODY(child_with_files__fork_cannot_unwind)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(child_with_files__fork_fail);
-ATF_TEST_CASE_BODY(child_with_files__fork_fail)
+ATF_TEST_CASE_WITHOUT_HEAD(child__fork_files__fork_fail);
+ATF_TEST_CASE_BODY(child__fork_files__fork_fail)
 {
     process::detail::syscall_fork = fork_fail< 1234 >;
     try {
-        process::child_with_files::fork(child_simple_function< 1, 'A' >,
-                                        fs::path("a.txt"),
-                                        fs::path("b.txt"));
+        process::child::fork_files(child_simple_function< 1, 'A' >,
+                                   fs::path("a.txt"), fs::path("b.txt"));
         fail("Expected exception but none raised");
     } catch (const process::system_error& e) {
         ATF_REQUIRE(atf::utils::grep_string("fork.*failed", e.what()));
@@ -760,14 +678,13 @@ ATF_TEST_CASE_BODY(child_with_files__fork_fail)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(child_with_files__create_stdout_fail);
-ATF_TEST_CASE_BODY(child_with_files__create_stdout_fail)
+ATF_TEST_CASE_WITHOUT_HEAD(child__fork_files__create_stdout_fail);
+ATF_TEST_CASE_BODY(child__fork_files__create_stdout_fail)
 {
     process::detail::syscall_open = open_fail< ENOENT >;
-    std::auto_ptr< process::child_with_files > child =
-        process::child_with_files::fork(child_simple_function< 1, 'A' >,
-                                        fs::path("raise-error"),
-                                        fs::path("created"));
+    std::auto_ptr< process::child > child = process::child::fork_files(
+        child_simple_function< 1, 'A' >, fs::path("raise-error"),
+        fs::path("created"));
     const process::status status = child->wait();
     ATF_REQUIRE(status.signaled());
     ATF_REQUIRE_EQ(SIGABRT, status.termsig());
@@ -776,14 +693,13 @@ ATF_TEST_CASE_BODY(child_with_files__create_stdout_fail)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(child_with_files__create_stderr_fail);
-ATF_TEST_CASE_BODY(child_with_files__create_stderr_fail)
+ATF_TEST_CASE_WITHOUT_HEAD(child__fork_files__create_stderr_fail);
+ATF_TEST_CASE_BODY(child__fork_files__create_stderr_fail)
 {
     process::detail::syscall_open = open_fail< ENOENT >;
-    std::auto_ptr< process::child_with_files > child =
-        process::child_with_files::fork(child_simple_function< 1, 'A' >,
-                                        fs::path("created"),
-                                        fs::path("raise-error"));
+    std::auto_ptr< process::child > child = process::child::fork_files(
+        child_simple_function< 1, 'A' >, fs::path("created"),
+        fs::path("raise-error"));
     const process::status status = child->wait();
     ATF_REQUIRE(status.signaled());
     ATF_REQUIRE_EQ(SIGABRT, status.termsig());
@@ -792,54 +708,107 @@ ATF_TEST_CASE_BODY(child_with_files__create_stderr_fail)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(child_with_output__ok_function);
-ATF_TEST_CASE_BODY(child_with_output__ok_function)
+ATF_TEST_CASE_WITHOUT_HEAD(child__pid);
+ATF_TEST_CASE_BODY(child__pid)
 {
-    child_with_output__ok(child_printer_function);
+    std::auto_ptr< process::child > child = process::child::fork_capture(
+        child_write_pid);
+
+    const int pid = child->pid();
+
+    const process::status status = child->wait();
+    ATF_REQUIRE(status.exited());
+    ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
+
+    std::ifstream input("pidfile");
+    ATF_REQUIRE(input);
+    int read_pid;
+    input >> read_pid;
+    input.close();
+
+    ATF_REQUIRE_EQ(read_pid, pid);
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(child_with_output__ok_functor);
-ATF_TEST_CASE_BODY(child_with_output__ok_functor)
+ATF_TEST_CASE_WITHOUT_HEAD(child__wait__interrupted);
+ATF_TEST_CASE_BODY(child__wait__interrupted)
 {
-    child_with_output__ok(child_printer_functor());
+    std::auto_ptr< process::child > child = process::child::fork_capture(
+        child_wait< 30000000 >);
+
+    timer_pid = ::getpid();
+    signals::timer timer(datetime::delta(0, 500000), timer_callback);
+
+    std::cout << "Waiting for subprocess; should be aborted\n";
+    ATF_REQUIRE_THROW(process::system_error,
+                      child->wait(datetime::delta()));
+
+    timer.unprogram();
+
+    std::cout << "Now terminating process for real\n";
+    ::kill(child->pid(), SIGKILL);
+    const process::status status = child->wait(datetime::delta());
+    ATF_REQUIRE(status.signaled());
+
+    ATF_REQUIRE(!fs::exists(fs::path("finished")));
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(child_with_output__pid);
-ATF_TEST_CASE_BODY(child_with_output__pid)
+ATF_TEST_CASE_WITHOUT_HEAD(child__wait__killpg);
+ATF_TEST_CASE_BODY(child__wait__killpg)
 {
-    std::auto_ptr< process::child_with_output > child =
-        process::child_with_output::fork(child_write_pid);
+    const process::status status = process::child::fork_capture(
+        child_blocking_subchild)->wait();
 
-    child_write_pid_check(child);
+    ATF_REQUIRE(status.exited());
+    ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
+
+    std::ifstream input("subchild_pid");
+    ATF_REQUIRE(input);
+    pid_t pid;
+    input >> pid;
+    input.close();
+    std::cout << F("Subprocess was %s; checking if it died\n") % pid;
+
+    int attempts = 30;
+retry:
+    if (::kill(pid, SIGCONT) != -1 || errno != ESRCH) {
+        // Looks like the subchild did not die.
+        //
+        // Note that this might be inaccurate for two reasons:
+        // 1) The system may have spawned a new process with the same pid as
+        //    our subchild... but in practice, this does not happen because
+        //    most systems do not immediately reuse pid numbers.  If that
+        //    happens... well, we get a false test failure.
+        // 2) We ran so fast that even if the process was sent a signal to
+        //    die, it has not had enough time to process it yet.  This is why
+        //    we retry this a few times.
+        if (attempts > 0) {
+            std::cout << "Subprocess not dead yet; retrying wait\n";
+            --attempts;
+            ::usleep(100000);
+            goto retry;
+        }
+        ATF_FAIL(F("The subprocess %s of our child was not killed") % pid);
+    }
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(child_with_output__wait_killpg);
-ATF_TEST_CASE_BODY(child_with_output__wait_killpg)
+ATF_TEST_CASE_WITHOUT_HEAD(child__wait__timeout_ok);
+ATF_TEST_CASE_BODY(child__wait__timeout_ok)
 {
-    std::auto_ptr< process::child_with_output > child =
-        process::child_with_output::fork(child_blocking_subchild);
-    child_blocking_subchild_check(child);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(child_with_output__wait_timeout_ok);
-ATF_TEST_CASE_BODY(child_with_output__wait_timeout_ok)
-{
-    std::auto_ptr< process::child_with_output > child =
-        process::child_with_output::fork(child_wait< 500000 >);
+    std::auto_ptr< process::child > child = process::child::fork_capture(
+        child_wait< 500000 >);
     const process::status status = child->wait(datetime::delta(5, 0));
     ATF_REQUIRE(fs::exists(fs::path("finished")));
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(child_with_output__wait_timeout_expired);
-ATF_TEST_CASE_BODY(child_with_output__wait_timeout_expired)
+ATF_TEST_CASE_WITHOUT_HEAD(child__wait__timeout_expired);
+ATF_TEST_CASE_BODY(child__wait__timeout_expired)
 {
-    std::auto_ptr< process::child_with_output > child =
-        process::child_with_output::fork(child_wait_with_subchild< 500000 >);
+    std::auto_ptr< process::child > child = process::child::fork_capture(
+        child_wait_with_subchild< 500000 >);
     ATF_REQUIRE_THROW(process::timeout_error,
                       child->wait(datetime::delta(0, 50000)));
     ATF_REQUIRE(!fs::exists(fs::path("finished")));
@@ -848,86 +817,6 @@ ATF_TEST_CASE_BODY(child_with_output__wait_timeout_expired)
     ::sleep(1);
     ATF_REQUIRE(!fs::exists(fs::path("finished")));
     ATF_REQUIRE(!fs::exists(fs::path("subfinished")));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(child_with_output__interrupted);
-ATF_TEST_CASE_BODY(child_with_output__interrupted)
-{
-    std::auto_ptr< process::child_with_output > child =
-        process::child_with_output::fork(child_wait< 30000000 >);
-
-    interrupted_check(child);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(child_with_output__pipe_fail);
-ATF_TEST_CASE_BODY(child_with_output__pipe_fail)
-{
-    process::detail::syscall_pipe = pipe_fail< 23 >;
-    try {
-        process::child_with_output::fork(child_simple_function< 1, 'A' >);
-        fail("Expected exception but none raised");
-    } catch (const process::system_error& e) {
-        ATF_REQUIRE(atf::utils::grep_string("pipe.*failed", e.what()));
-        ATF_REQUIRE_EQ(23, e.original_errno());
-    }
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(child_with_output__fork_cannot_exit);
-ATF_TEST_CASE_BODY(child_with_output__fork_cannot_exit)
-{
-    const pid_t parent_pid = ::getpid();
-    atf::utils::create_file("to-not-be-deleted", "");
-
-    std::auto_ptr< process::child_with_output > child =
-        process::child_with_output::fork(child_return);
-    if (::getpid() != parent_pid) {
-        // If we enter this clause, it is because the hook returned.
-        ::unlink("to-not-be-deleted");
-        std::exit(EXIT_SUCCESS);
-    }
-
-    const process::status status = child->wait();
-    ATF_REQUIRE(status.signaled());
-    ATF_REQUIRE(fs::exists(fs::path("to-not-be-deleted")));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(child_with_output__fork_cannot_unwind);
-ATF_TEST_CASE_BODY(child_with_output__fork_cannot_unwind)
-{
-    const pid_t parent_pid = ::getpid();
-    atf::utils::create_file("to-not-be-deleted", "");
-    try {
-        std::auto_ptr< process::child_with_output > child =
-            process::child_with_output::fork(child_raise_exception< int, 123 >);
-        const process::status status = child->wait();
-        ATF_REQUIRE(status.signaled());
-        ATF_REQUIRE(fs::exists(fs::path("to-not-be-deleted")));
-    } catch (const int i) {
-        // If we enter this clause, it is because an exception leaked from the
-        // hook.
-        INV(parent_pid != ::getpid());
-        INV(i == 123);
-        ::unlink("to-not-be-deleted");
-        std::exit(EXIT_SUCCESS);
-    }
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(child_with_output__fork_fail);
-ATF_TEST_CASE_BODY(child_with_output__fork_fail)
-{
-    process::detail::syscall_fork = fork_fail< 89 >;
-    try {
-        process::child_with_output::fork(child_simple_function< 1, 'A' >);
-        fail("Expected exception but none raised");
-    } catch (const process::system_error& e) {
-        ATF_REQUIRE(atf::utils::grep_string("fork.*failed", e.what()));
-        ATF_REQUIRE_EQ(89, e.original_errno());
-    }
 }
 
 
@@ -940,9 +829,8 @@ ATF_TEST_CASE_BODY(exec__absolute_path)
 
     const fs::path program = get_helpers(this);
     INV(program.is_absolute());
-    std::auto_ptr< process::child_with_files > child =
-        process::child_with_files::fork(do_exec(program, args),
-                                        fs::path("out"), fs::path("err"));
+    std::auto_ptr< process::child > child = process::child::fork_files(
+        do_exec(program, args), fs::path("out"), fs::path("err"));
 
     const process::status status = child->wait();
     ATF_REQUIRE(status.exited());
@@ -960,9 +848,9 @@ ATF_TEST_CASE_BODY(exec__relative_path)
     ATF_REQUIRE(::mkdir("root", 0755) != -1);
     ATF_REQUIRE(::symlink(get_helpers(this).c_str(), "root/helpers") != -1);
 
-    std::auto_ptr< process::child_with_files > child =
-        process::child_with_files::fork(do_exec(fs::path("root/helpers"), args),
-                                        fs::path("out"), fs::path("err"));
+    std::auto_ptr< process::child > child = process::child::fork_files(
+        do_exec(fs::path("root/helpers"), args), fs::path("out"),
+        fs::path("err"));
 
     const process::status status = child->wait();
     ATF_REQUIRE(status.exited());
@@ -979,9 +867,8 @@ ATF_TEST_CASE_BODY(exec__basename_only)
 
     ATF_REQUIRE(::symlink(get_helpers(this).c_str(), "helpers") != -1);
 
-    std::auto_ptr< process::child_with_files > child =
-        process::child_with_files::fork(do_exec(fs::path("helpers"), args),
-                                        fs::path("out"), fs::path("err"));
+    std::auto_ptr< process::child > child = process::child::fork_files(
+        do_exec(fs::path("helpers"), args), fs::path("out"), fs::path("err"));
 
     const process::status status = child->wait();
     ATF_REQUIRE(status.exited());
@@ -1000,9 +887,8 @@ ATF_TEST_CASE_BODY(exec__no_path)
 
     const fs::path helpers = get_helpers(this);
     utils::setenv("PATH", helpers.branch_path().c_str());
-    std::auto_ptr< process::child_with_output > child =
-        process::child_with_output::fork(do_exec(fs::path(helpers.leaf_name()),
-                                                 args));
+    std::auto_ptr< process::child > child = process::child::fork_capture(
+        do_exec(fs::path(helpers.leaf_name()), args));
 
     std::string line;
     ATF_REQUIRE(std::getline(child->output(), line).good());
@@ -1019,8 +905,8 @@ ATF_TEST_CASE_WITHOUT_HEAD(exec__no_args);
 ATF_TEST_CASE_BODY(exec__no_args)
 {
     std::vector< std::string > args;
-    std::auto_ptr< process::child_with_output > child =
-        process::child_with_output::fork(do_exec(get_helpers(this), args));
+    std::auto_ptr< process::child > child = process::child::fork_capture(
+        do_exec(get_helpers(this), args));
 
     std::string line;
     ATF_REQUIRE(std::getline(child->output(), line).good());
@@ -1040,8 +926,8 @@ ATF_TEST_CASE_BODY(exec__some_args)
     args.push_back("print-args");
     args.push_back("foo");
     args.push_back("   bar baz ");
-    std::auto_ptr< process::child_with_output > child =
-        process::child_with_output::fork(do_exec(get_helpers(this), args));
+    std::auto_ptr< process::child > child = process::child::fork_capture(
+        do_exec(get_helpers(this), args));
 
     std::string line;
     ATF_REQUIRE(std::getline(child->output(), line).good());
@@ -1066,8 +952,8 @@ ATF_TEST_CASE_WITHOUT_HEAD(exec__missing_program);
 ATF_TEST_CASE_BODY(exec__missing_program)
 {
     std::vector< std::string > args;
-    std::auto_ptr< process::child_with_output > child =
-        process::child_with_output::fork(do_exec(fs::path("a/b/c"), args));
+    std::auto_ptr< process::child > child = process::child::fork_capture(
+        do_exec(fs::path("a/b/c"), args));
 
     std::string line;
     ATF_REQUIRE(std::getline(child->output(), line).good());
@@ -1083,32 +969,28 @@ ATF_TEST_CASE_BODY(exec__missing_program)
 
 ATF_INIT_TEST_CASES(tcs)
 {
-    ATF_ADD_TEST_CASE(tcs, child_with_files__ok_function);
-    ATF_ADD_TEST_CASE(tcs, child_with_files__ok_functor);
-    ATF_ADD_TEST_CASE(tcs, child_with_files__pid);
-    ATF_ADD_TEST_CASE(tcs, child_with_files__inherit_stdout);
-    ATF_ADD_TEST_CASE(tcs, child_with_files__inherit_stderr);
-    ATF_ADD_TEST_CASE(tcs, child_with_files__wait_killpg);
-    ATF_ADD_TEST_CASE(tcs, child_with_files__wait_timeout_ok);
-    ATF_ADD_TEST_CASE(tcs, child_with_files__wait_timeout_expired);
-    ATF_ADD_TEST_CASE(tcs, child_with_files__interrupted);
-    ATF_ADD_TEST_CASE(tcs, child_with_files__fork_cannot_exit);
-    ATF_ADD_TEST_CASE(tcs, child_with_files__fork_cannot_unwind);
-    ATF_ADD_TEST_CASE(tcs, child_with_files__fork_fail);
-    ATF_ADD_TEST_CASE(tcs, child_with_files__create_stdout_fail);
-    ATF_ADD_TEST_CASE(tcs, child_with_files__create_stderr_fail);
+    ATF_ADD_TEST_CASE(tcs, child__fork_capture__ok_function);
+    ATF_ADD_TEST_CASE(tcs, child__fork_capture__ok_functor);
+    ATF_ADD_TEST_CASE(tcs, child__fork_capture__pipe_fail);
+    ATF_ADD_TEST_CASE(tcs, child__fork_capture__fork_cannot_exit);
+    ATF_ADD_TEST_CASE(tcs, child__fork_capture__fork_cannot_unwind);
+    ATF_ADD_TEST_CASE(tcs, child__fork_capture__fork_fail);
 
-    ATF_ADD_TEST_CASE(tcs, child_with_output__ok_function);
-    ATF_ADD_TEST_CASE(tcs, child_with_output__ok_functor);
-    ATF_ADD_TEST_CASE(tcs, child_with_output__pid);
-    ATF_ADD_TEST_CASE(tcs, child_with_output__wait_killpg);
-    ATF_ADD_TEST_CASE(tcs, child_with_output__wait_timeout_ok);
-    ATF_ADD_TEST_CASE(tcs, child_with_output__wait_timeout_expired);
-    ATF_ADD_TEST_CASE(tcs, child_with_output__interrupted);
-    ATF_ADD_TEST_CASE(tcs, child_with_output__pipe_fail);
-    ATF_ADD_TEST_CASE(tcs, child_with_output__fork_cannot_exit);
-    ATF_ADD_TEST_CASE(tcs, child_with_output__fork_cannot_unwind);
-    ATF_ADD_TEST_CASE(tcs, child_with_output__fork_fail);
+    ATF_ADD_TEST_CASE(tcs, child__fork_files__ok_function);
+    ATF_ADD_TEST_CASE(tcs, child__fork_files__ok_functor);
+    ATF_ADD_TEST_CASE(tcs, child__fork_files__inherit_stdout);
+    ATF_ADD_TEST_CASE(tcs, child__fork_files__inherit_stderr);
+    ATF_ADD_TEST_CASE(tcs, child__fork_files__fork_cannot_exit);
+    ATF_ADD_TEST_CASE(tcs, child__fork_files__fork_cannot_unwind);
+    ATF_ADD_TEST_CASE(tcs, child__fork_files__fork_fail);
+    ATF_ADD_TEST_CASE(tcs, child__fork_files__create_stdout_fail);
+    ATF_ADD_TEST_CASE(tcs, child__fork_files__create_stderr_fail);
+
+    ATF_ADD_TEST_CASE(tcs, child__pid);
+    ATF_ADD_TEST_CASE(tcs, child__wait__interrupted);
+    ATF_ADD_TEST_CASE(tcs, child__wait__killpg);
+    ATF_ADD_TEST_CASE(tcs, child__wait__timeout_ok);
+    ATF_ADD_TEST_CASE(tcs, child__wait__timeout_expired);
 
     ATF_ADD_TEST_CASE(tcs, exec__absolute_path);
     ATF_ADD_TEST_CASE(tcs, exec__relative_path);

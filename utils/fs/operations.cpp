@@ -476,8 +476,8 @@ unmount_with_umount8(const fs::path& mount_point)
 
     static const datetime::delta timeout(30, 0);
 
-    std::auto_ptr< process::child_with_output > child(
-        process::child_with_output::fork(run_umount(mount_point)));
+    std::auto_ptr< process::child > child(process::child::fork_capture(
+        run_umount(mount_point)));
 
     try {
         std::string line;

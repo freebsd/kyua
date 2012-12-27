@@ -206,9 +206,8 @@ mount_tmpfs(const fs::path& mount_point)
     const fs::path mount_out("mount.out");
     const fs::path mount_err("mount.err");
 
-    std::auto_ptr< process::child_with_files > child =
-        process::child_with_files::fork(run_mount_tmpfs(abs_mount_point),
-                                        mount_out, mount_err);
+    std::auto_ptr< process::child > child = process::child::fork_files(
+        run_mount_tmpfs(abs_mount_point), mount_out, mount_err);
     const process::status status = child->wait();
     atf::utils::cat_file(mount_out.str(), "mount stdout: ");
     atf::utils::cat_file(mount_err.str(), "mount stderr: ");

@@ -221,9 +221,9 @@ replace_newlines(const std::string input)
 static engine::test_cases_vector
 load_test_cases(const engine::test_program& test_program)
 {
-    std::auto_ptr< process::child_with_output > child =
-        process::child_with_output::fork(list_test_cases(
-            test_program.interface_name(), test_program.absolute_path()));
+    std::auto_ptr< process::child > child = process::child::fork_capture(
+        list_test_cases(test_program.interface_name(),
+                        test_program.absolute_path()));
 
     const std::string output = read_all(child->output());
 

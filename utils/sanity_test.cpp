@@ -65,7 +65,7 @@ template< typename Function >
 static process::status
 run_test(Function function)
 {
-    const process::status status = process::child_with_files::fork(
+    const process::status status = process::child::fork_files(
         function, Stdout_File, Stderr_File)->wait();
     atf::utils::cat_file(Stdout_File.str(), "Helper stdout: ");
     atf::utils::cat_file(Stderr_File.str(), "Helper stderr: ");

@@ -61,8 +61,8 @@ engine::fork_and_wait(Hook hook, const utils::fs::path& outfile,
                       const utils::fs::path& errfile,
                       const utils::datetime::delta& timeout)
 {
-    std::auto_ptr< utils::process::child_with_files > child =
-        utils::process::child_with_files::fork(hook, outfile, errfile);
+    std::auto_ptr< utils::process::child > child =
+        utils::process::child::fork_files(hook, outfile, errfile);
     try {
         return utils::make_optional(child->wait(timeout));
     } catch (const utils::process::system_error& error) {

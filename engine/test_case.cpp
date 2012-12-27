@@ -242,10 +242,10 @@ public:
 
         const fs::path result_path = workdir / "result.txt";
 
-        std::auto_ptr< process::child_with_files > child;
+        std::auto_ptr< process::child > child;
         process::status status = process::status::fake_exited(1);  // XXX
         try {
-            child = process::child_with_files::fork(::run_test_case(
+            child = process::child::fork_files(::run_test_case(
                 _test_case->container_test_program().interface_name(),
                 _test_case->container_test_program().absolute_path(),
                 *_test_case, result_path, _user_config),
