@@ -49,7 +49,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(tester_path__custom);
 ATF_TEST_CASE_BODY(tester_path__custom)
 {
     fs::mkdir(fs::path("testers"), 0755);
-    atf::utils::create_file("testers/mock_tester", "Not a binary");
+    atf::utils::create_file("testers/kyua-mock-tester", "Not a binary");
 
     utils::setenv("KYUA_TESTERSDIR", (fs::current_path() / "unknown").str());
     ATF_REQUIRE_THROW_RE(engine::error, "Unknown interface mock",
