@@ -37,10 +37,7 @@
 #if !defined(ENGINE_ISOLATION_HPP)
 #define ENGINE_ISOLATION_HPP
 
-#include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
-#include "utils/optional.hpp"
-#include "utils/process/status.hpp"
 
 namespace engine {
 
@@ -60,11 +57,6 @@ class test_result;
 void check_interrupt(void);
 
 utils::fs::path create_work_directory(void);
-
-template< class Hook >
-utils::optional< utils::process::status > fork_and_wait(
-    Hook, const utils::fs::path&, const utils::fs::path&,
-    const utils::datetime::delta&);
 
 template< class Hook >
 test_result protected_run(Hook);

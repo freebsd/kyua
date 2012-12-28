@@ -215,44 +215,6 @@ ATF_TEST_CASE_BODY(create_work_directory__tmpdir)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(fork_and_wait__ok);
-ATF_TEST_CASE_BODY(fork_and_wait__ok)
-{
-    const optional< process::status > status = engine::fork_and_wait(
-        fork_and_wait_hook_ok, fs::path("out"), fs::path("err"),
-        datetime::delta(60, 0));
-    ATF_REQUIRE(status);
-    ATF_REQUIRE(status.get().exited());
-    ATF_REQUIRE_EQ(32, status.get().exitstatus());
-
-    {
-        std::ifstream input("out");
-        ATF_REQUIRE(input);
-        std::string line;
-        ATF_REQUIRE(std::getline(input, line).good());
-        ATF_REQUIRE_EQ("stdout message", line);
-    }
-
-    {
-        std::ifstream input("err");
-        ATF_REQUIRE(input);
-        std::string line;
-        ATF_REQUIRE(std::getline(input, line).good());
-        ATF_REQUIRE_EQ("stderr message", line);
-    }
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(fork_and_wait__timeout);
-ATF_TEST_CASE_BODY(fork_and_wait__timeout)
-{
-    const optional< process::status > status = engine::fork_and_wait(
-        fork_and_wait_hook_block, fs::path("out"), fs::path("err"),
-        datetime::delta(1, 0));
-    ATF_REQUIRE(!status);
-}
-
-
 ATF_TEST_CASE_WITHOUT_HEAD(protected_run__ok);
 ATF_TEST_CASE_BODY(protected_run__ok)
 {
@@ -318,9 +280,6 @@ ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, create_work_directory__hardcoded);
     ATF_ADD_TEST_CASE(tcs, create_work_directory__tmpdir);
-
-    ATF_ADD_TEST_CASE(tcs, fork_and_wait__ok);
-    ATF_ADD_TEST_CASE(tcs, fork_and_wait__timeout);
 
     ATF_ADD_TEST_CASE(tcs, protected_run__ok);
     ATF_ADD_TEST_CASE(tcs, protected_run__ok_but_cleanup_fail);

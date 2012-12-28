@@ -373,6 +373,9 @@ process::child::pid(void) const
 /// Gets the input stream corresponding to the stdout and stderr of the child.
 ///
 /// \pre The child must have been started by fork_capture().
+///
+/// \return A reference to the input stream connected to the output of the test
+/// case.
 std::istream&
 process::child::output(void)
 {

@@ -39,44 +39,7 @@ extern "C" {
 #include "utils/fs/auto_cleaners.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/logging/macros.hpp"
-#include "utils/process/children.ipp"
-#include "utils/process/exceptions.hpp"
 #include "utils/signals/programmer.hpp"
-
-
-/// Forks a subprocess and waits for its completion.
-///
-/// \pre This function can only be used in the context of a hook executed by
-/// protected_run().
-///
-/// \param hook The code to execute in the subprocess.
-/// \param outfile The file that will receive the stdout output.
-/// \param errfile The file that will receive the stderr output.
-/// \param timeout The amount of time given to the subprocess to execute.
-///
-/// \return The exit status of the process or none if the timeout expired.
-template< class Hook >
-utils::optional< utils::process::status >
-engine::fork_and_wait(Hook hook, const utils::fs::path& outfile,
-                      const utils::fs::path& errfile,
-                      const utils::datetime::delta& timeout)
-{
-    std::auto_ptr< utils::process::child > child =
-        utils::process::child::fork_files(hook, outfile, errfile);
-    try {
-        return utils::make_optional(child->wait(timeout));
-    } catch (const utils::process::system_error& error) {
-        if (error.original_errno() == EINTR) {
-            (void)::kill(child->pid(), SIGKILL);
-            (void)child->wait();
-            check_interrupt();
-            UNREACHABLE_MSG("fork_and_wait not wrapped by protected_run");
-        } else
-            throw error;
-    } catch (const utils::process::timeout_error& error) {
-        return utils::none;
-    }
-}
 
 
 /// Auxiliary function to execute a test case.

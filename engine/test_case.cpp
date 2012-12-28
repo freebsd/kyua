@@ -51,6 +51,7 @@ extern "C" {
 #include "utils/optional.ipp"
 #include "utils/passwd.hpp"
 #include "utils/process/children.ipp"
+#include "utils/process/exceptions.hpp"
 
 namespace config = utils::config;
 namespace fs = utils::fs;
