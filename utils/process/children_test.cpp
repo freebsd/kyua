@@ -46,7 +46,6 @@ extern "C" {
 
 #include <atf-c++.hpp>
 
-#include "utils/datetime.hpp"
 #include "utils/defs.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
@@ -55,28 +54,13 @@ extern "C" {
 #include "utils/process/exceptions.hpp"
 #include "utils/process/system.hpp"
 #include "utils/sanity.hpp"
-#include "utils/signals/timer.hpp"
 
-namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace logging = utils::logging;
 namespace process = utils::process;
-namespace signals = utils::signals;
 
 
 namespace {
-
-
-/// Process that the timer will terminate.
-static int timer_pid = 0;
-
-
-/// Callback for a timer to set timer_fired to true.
-static void
-timer_callback(void)
-{
-    ::kill(timer_pid, SIGCONT);
-}
 
 
 /// Body for a process that spawns a subprocess.
@@ -177,62 +161,6 @@ public:
         child_printer_function();
     }
 };
-
-
-/// Body for a process that sleeps for an amount of time and exits.
-///
-/// The goal of this body is to validate the timeout functionality of the
-/// parent.  This is done by sleeping first and later creating a "cookie" file
-/// in the current directory that indicates that the process actually finished
-/// its execution.  If the child is killed while it is sleeping, then the cookie
-/// is not created and we can check that the timeout worked.
-///
-/// \tparam Microseconds The time to sleep for before creating the cookie.
-template< int Microseconds >
-static void
-child_wait(void)
-{
-    std::cout << "Sleeping in subprocess\n";
-    if (Microseconds > 1000000)
-        ::sleep(Microseconds / 1000000);
-    else
-        ::usleep(Microseconds);
-    std::cout << "Resuming subprocess and exiting\n";
-    atf::utils::create_file("finished", "");
-    std::exit(EXIT_SUCCESS);
-}
-
-
-/// Body for a process that spawns another process and sleeps.
-///
-/// The goal of this body is similar to that of child_wait.  However, we
-/// generate a "subprocess tree" from here by spawning another subprocess.  This
-/// is to allow the caller to validate that, when the timeout for the process is
-/// reached, all of the children are killed (i.e. all the process group is
-/// terminated), not just the directly-spawned child.  These checks are also
-/// performed by file system cookies.
-///
-/// \tparam Microseconds The time to sleep for before creating the cookies.
-template< int Microseconds >
-static void
-child_wait_with_subchild(void)
-{
-    const int ret = ::fork();
-    if (ret == -1) {
-        std::abort();
-    } else if (ret == 0) {
-        ::usleep(Microseconds);
-        atf::utils::create_file("subfinished", "");
-        std::exit(EXIT_SUCCESS);
-    } else {
-        ::usleep(Microseconds);
-        atf::utils::create_file("finished", "");
-
-        int status;
-        (void)::wait(&status);
-        std::exit(EXIT_SUCCESS);
-    }
-}
 
 
 /// Body for a child process that creates a pidfile.
@@ -730,30 +658,6 @@ ATF_TEST_CASE_BODY(child__pid)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(child__wait__interrupted);
-ATF_TEST_CASE_BODY(child__wait__interrupted)
-{
-    std::auto_ptr< process::child > child = process::child::fork_capture(
-        child_wait< 30000000 >);
-
-    timer_pid = ::getpid();
-    signals::timer timer(datetime::delta(0, 500000), timer_callback);
-
-    std::cout << "Waiting for subprocess; should be aborted\n";
-    ATF_REQUIRE_THROW(process::system_error,
-                      child->wait(datetime::delta()));
-
-    timer.unprogram();
-
-    std::cout << "Now terminating process for real\n";
-    ::kill(child->pid(), SIGKILL);
-    const process::status status = child->wait(datetime::delta());
-    ATF_REQUIRE(status.signaled());
-
-    ATF_REQUIRE(!fs::exists(fs::path("finished")));
-}
-
-
 ATF_TEST_CASE_WITHOUT_HEAD(child__wait__killpg);
 ATF_TEST_CASE_BODY(child__wait__killpg)
 {
@@ -791,32 +695,6 @@ retry:
         }
         ATF_FAIL(F("The subprocess %s of our child was not killed") % pid);
     }
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(child__wait__timeout_ok);
-ATF_TEST_CASE_BODY(child__wait__timeout_ok)
-{
-    std::auto_ptr< process::child > child = process::child::fork_capture(
-        child_wait< 500000 >);
-    const process::status status = child->wait(datetime::delta(5, 0));
-    ATF_REQUIRE(fs::exists(fs::path("finished")));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(child__wait__timeout_expired);
-ATF_TEST_CASE_BODY(child__wait__timeout_expired)
-{
-    std::auto_ptr< process::child > child = process::child::fork_capture(
-        child_wait_with_subchild< 500000 >);
-    ATF_REQUIRE_THROW(process::timeout_error,
-                      child->wait(datetime::delta(0, 50000)));
-    ATF_REQUIRE(!fs::exists(fs::path("finished")));
-
-    // Check that the subprocess of the child is also killed.
-    ::sleep(1);
-    ATF_REQUIRE(!fs::exists(fs::path("finished")));
-    ATF_REQUIRE(!fs::exists(fs::path("subfinished")));
 }
 
 
@@ -987,10 +865,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, child__fork_files__create_stderr_fail);
 
     ATF_ADD_TEST_CASE(tcs, child__pid);
-    ATF_ADD_TEST_CASE(tcs, child__wait__interrupted);
     ATF_ADD_TEST_CASE(tcs, child__wait__killpg);
-    ATF_ADD_TEST_CASE(tcs, child__wait__timeout_ok);
-    ATF_ADD_TEST_CASE(tcs, child__wait__timeout_expired);
 
     ATF_ADD_TEST_CASE(tcs, exec__absolute_path);
     ATF_ADD_TEST_CASE(tcs, exec__relative_path);

@@ -474,8 +474,6 @@ unmount_with_umount8(const fs::path& mount_point)
 {
     PRE(!have_unmount2);
 
-    static const datetime::delta timeout(30, 0);
-
     std::auto_ptr< process::child > child(process::child::fork_capture(
         run_umount(mount_point)));
 
@@ -490,7 +488,7 @@ unmount_with_umount8(const fs::path& mount_point)
         LD("Caught exception while processing umount(8) output");
     }
 
-    const process::status status = child->wait(timeout);
+    const process::status status = child->wait();
     if (!status.exited() || status.exitstatus() != EXIT_SUCCESS)
         throw fs::error(F("umount(8) failed while unmounting '%s'") %
                         mount_point);

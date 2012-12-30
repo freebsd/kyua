@@ -43,7 +43,6 @@ extern "C" {
 #include <iostream>
 #include <memory>
 
-#include "utils/datetime.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/process/exceptions.hpp"
@@ -52,7 +51,6 @@ extern "C" {
 #include "utils/process/status.hpp"
 #include "utils/sanity.hpp"
 #include "utils/signals/interrupts.hpp"
-#include "utils/signals/timer.hpp"
 
 
 namespace utils {
@@ -80,7 +78,6 @@ struct child::impl {
 }  // namespace utils
 
 
-namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace process = utils::process;
 namespace signals = utils::signals;
@@ -143,7 +140,7 @@ open_for_append(const fs::path& filename)
 static process::status
 safe_wait(const pid_t pid)
 {
-    LD(F("Waiting for pid=%s, no timeout") % pid);
+    LD(F("Waiting for pid=%s") % pid);
     int stat_loc;
     if (process::detail::syscall_waitpid(pid, &stat_loc, 0) == -1) {
         const int original_errno = errno;
@@ -161,67 +158,6 @@ retry:
     }
     signals::remove_pid_to_kill(pid);
     return process::status(pid, stat_loc);
-}
-
-
-namespace timed_wait__aux {
-
-
-/// Whether the timer fired or not.
-static bool fired;
-
-
-/// The process to be killed when the timer expires.
-static pid_t pid;
-
-
-/// The handler for the timer.
-static void
-callback(void)
-{
-    fired = true;
-    ::kill(pid, SIGKILL);
-}
-
-
-}  // namespace child_timer
-
-
-/// Waits for a process enforcing a deadline.
-///
-/// \param pid The identifier of the process to wait for.
-/// \param timeout The timeout for the wait.  If the timeout is exceeded, the
-///     child process and its process group are forcibly killed.
-///
-/// \return The exit status of the process.
-///
-/// throw process::timeout_error If the deadline is exceeded.
-static process::status
-timed_wait(const pid_t pid, const datetime::delta& timeout)
-{
-    LD(F("Waiting for pid=%s: timeout seconds=%s, useconds=%s") % pid %
-       timeout.seconds % timeout.useconds);
-
-    timed_wait__aux::fired = false;
-    timed_wait__aux::pid = pid;
-    signals::timer timer(timeout, timed_wait__aux::callback);
-    try {
-        const process::status status = safe_wait(pid);
-        timer.unprogram();
-        return status;
-    } catch (const process::system_error& error) {
-        if (error.original_errno() == EINTR) {
-            if (timed_wait__aux::fired) {
-                timer.unprogram();
-                (void)safe_wait(pid);
-                throw process::timeout_error(
-                    F("The timeout was exceeded while waiting for process "
-                      "%s; forcibly killed") % pid);
-            } else
-                throw error;
-        } else
-            throw error;
-    }
 }
 
 
@@ -402,23 +338,13 @@ process::child::output(void)
 
 /// Blocks to wait for completion.
 ///
-/// Note that this does not loop in case the wait call is interrupted.  We need
-/// callers to know when this condition happens and let them retry on their own.
-///
-/// \param timeout The timeout for the wait.  If zero, no timeout logic is
-///     applied.
-///
 /// \return The termination status of the child process.
 ///
 /// \throw process::system_error If the call to waitpid(2) fails.
-/// \throw process::timeout_error If the timeout expires.
 process::status
-process::child::wait(const datetime::delta& timeout)
+process::child::wait(void)
 {
-    if (timeout == datetime::delta())
-        return safe_wait(_pimpl->_pid);
-    else
-        return timed_wait(_pimpl->_pid, timeout);
+    return safe_wait(_pimpl->_pid);
 }
 
 

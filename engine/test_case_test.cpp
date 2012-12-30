@@ -51,6 +51,7 @@ extern "C" {
 #include "engine/user_files/config.hpp"
 #include "engine/user_files/kyuafile.hpp"
 #include "utils/config/tree.ipp"
+#include "utils/datetime.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"

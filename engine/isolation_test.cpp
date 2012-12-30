@@ -49,7 +49,6 @@ extern "C" {
 #include "utils/sanity.hpp"
 #include "utils/signals/misc.hpp"
 
-namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace process = utils::process;
 namespace signals = utils::signals;

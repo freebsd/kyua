@@ -42,6 +42,7 @@ extern "C" {
 #include "engine/user_files/config.hpp"
 #include "utils/config/exceptions.hpp"
 #include "utils/config/tree.ipp"
+#include "utils/datetime.hpp"
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/operations.hpp"

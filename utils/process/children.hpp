@@ -51,7 +51,6 @@
 #include <string>
 #include <vector>
 
-#include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/noncopyable.hpp"
 #include "utils/process/status.hpp"
@@ -87,7 +86,7 @@ public:
 
     int pid(void) const;
 
-    status wait(const datetime::delta& = datetime::delta());
+    status wait(void);
 };
 
 
