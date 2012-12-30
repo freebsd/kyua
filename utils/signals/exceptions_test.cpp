@@ -49,8 +49,9 @@ ATF_TEST_CASE_BODY(error)
 ATF_TEST_CASE_WITHOUT_HEAD(interrupted_error);
 ATF_TEST_CASE_BODY(interrupted_error)
 {
-    const signals::interrupted_error e;
-    ATF_REQUIRE(std::strcmp("Interrupt signal caught", e.what()) == 0);
+    const signals::interrupted_error e(5);
+    ATF_REQUIRE(std::strcmp("Interrupted by signal 5", e.what()) == 0);
+    ATF_REQUIRE_EQ(5, e.signo());
 }
 
 

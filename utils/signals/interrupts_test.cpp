@@ -37,6 +37,7 @@ extern "C" {
 
 #include <atf-c++.hpp>
 
+#include "utils/format/macros.hpp"
 #include "utils/process/children.ipp"
 #include "utils/process/status.hpp"
 #include "utils/signals/exceptions.hpp"
@@ -50,18 +51,18 @@ namespace {
 
 
 /// Set to the signal that fired; -1 if none.
-static volatile int signal_fired = -1;
+static volatile int fired_signal = -1;
 
 
 /// Test handler for signals.
 ///
-/// \post signal_fired is set to the signal that triggered the handler.
+/// \post fired_signal is set to the signal that triggered the handler.
 ///
 /// \param signo The signal that triggered the handler.
 static void
 signal_handler(const int signo)
 {
-    signal_fired = signo;
+    fired_signal = signo;
 }
 
 
@@ -98,13 +99,14 @@ check_interrupts_handler(const int signo)
 
         signals::check_interrupt();
         ::kill(getpid(), signo);
-        ATF_REQUIRE_THROW(signals::interrupted_error,
-                          signals::check_interrupt());
+        ATF_REQUIRE_THROW_RE(signals::interrupted_error,
+                             F("Interrupted by signal %s") % signo,
+                             signals::check_interrupt());
     }
 
-    ATF_REQUIRE_EQ(-1, signal_fired);
+    ATF_REQUIRE_EQ(-1, fired_signal);
     ::kill(getpid(), signo);
-    ATF_REQUIRE_EQ(signo, signal_fired);
+    ATF_REQUIRE_EQ(signo, fired_signal);
 
     test_handler.unprogram();
 }
@@ -121,9 +123,9 @@ check_interrupts_inhibiter(const int signo)
     {
         signals::interrupts_inhibiter inhibiter;
         ::kill(::getpid(), signo);
-        ATF_REQUIRE_EQ(-1, signal_fired);
+        ATF_REQUIRE_EQ(-1, fired_signal);
     }
-    ATF_REQUIRE_EQ(signo, signal_fired);
+    ATF_REQUIRE_EQ(signo, fired_signal);
 
     test_handler.unprogram();
 }

@@ -51,8 +51,11 @@ signals::error::~error(void) throw()
 
 
 /// Constructs a new interrupted error.
-signals::interrupted_error::interrupted_error(void) :
-    error("Interrupt signal caught")
+///
+/// \param signo_ The signal that caused the interrupt.
+signals::interrupted_error::interrupted_error(const int signo_) :
+    error(F("Interrupted by signal %s") % signo_),
+    _signo(signo_)
 {
 }
 
@@ -60,6 +63,16 @@ signals::interrupted_error::interrupted_error(void) :
 /// Destructor for the error.
 signals::interrupted_error::~interrupted_error(void) throw()
 {
+}
+
+
+/// Queries the signal number of the interruption.
+///
+/// \return A signal number.
+int
+signals::interrupted_error::signo(void) const
+{
+    return _signo;
 }
 
 

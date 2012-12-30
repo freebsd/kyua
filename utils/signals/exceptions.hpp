@@ -48,9 +48,14 @@ public:
 
 /// Denotes the reception of a signal to controlledly terminate execution.
 class interrupted_error : public error {
+    /// Signal that caused the interrupt.
+    int _signo;
+
 public:
-    explicit interrupted_error(void);
+    explicit interrupted_error(const int signo_);
     ~interrupted_error(void) throw();
+
+    int signo(void) const;
 };
 
 

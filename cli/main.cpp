@@ -32,6 +32,11 @@
 #   include "config.h"
 #endif
 
+extern "C" {
+#include <signal.h>
+#include <unistd.h>
+}
+
 #include <cstdlib>
 #include <iostream>
 #include <string>
@@ -63,11 +68,13 @@
 #include "utils/logging/operations.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
+#include "utils/signals/exceptions.hpp"
 
 namespace cmdline = utils::cmdline;
 namespace config = utils::config;
 namespace fs = utils::fs;
 namespace logging = utils::logging;
+namespace signals = utils::signals;
 
 using utils::none;
 using utils::optional;
@@ -245,6 +252,18 @@ cli::main(cmdline::ui* ui, const int argc, const char* const* const argv,
         INV(exit_code == EXIT_SUCCESS || exit_code == EXIT_FAILURE);
 
         return exit_code;
+    } catch (const signals::interrupted_error& e) {
+        cmdline::print_error(ui, e.what());
+        // Re-deliver the interruption signal to self so that we terminate with
+        // the right status.  At this point we should NOT have any custom signal
+        // handlers in place.
+        ::kill(getpid(), e.signo());
+        LD("Interrupt signal re-delivery did not terminate program");
+        // If we reach this, something went wrong because we did not exit as
+        // intended.  Return an internal error instead.  (Would be nicer to
+        // abort in principle, but it wouldn't be a nice experience if it ever
+        // happened.)
+        return 2;
     } catch (const std::pair< std::string, cmdline::usage_error >& e) {
         const std::string message = F("Usage error for command %s: %s.") %
             e.first % e.second.what();

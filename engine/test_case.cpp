@@ -35,7 +35,6 @@ extern "C" {
 #include <fstream>
 
 #include "engine/exceptions.hpp"
-#include "engine/isolation.ipp"
 #include "engine/test_program.hpp"
 #include "engine/test_result.hpp"
 #include "engine/testers.hpp"
@@ -44,6 +43,7 @@ extern "C" {
 #include "utils/config/tree.ipp"
 #include "utils/datetime.hpp"
 #include "utils/defs.hpp"
+#include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/operations.hpp"
 #include "utils/fs/auto_cleaners.hpp"
@@ -53,12 +53,14 @@ extern "C" {
 #include "utils/passwd.hpp"
 #include "utils/process/children.ipp"
 #include "utils/process/exceptions.hpp"
+#include "utils/signals/interrupts.hpp"
 
 namespace config = utils::config;
 namespace fs = utils::fs;
 namespace logging = utils::logging;
 namespace passwd = utils::passwd;
 namespace process = utils::process;
+namespace signals = utils::signals;
 namespace user_files = engine::user_files;
 
 using utils::none;
@@ -190,115 +192,98 @@ public:
 };
 
 
-/// Functor to execute run_test_case() in a protected environment.
-class run_test_case_safe {
-    /// Data of the test case to run.
-    const engine::test_case* _test_case;
+/// Common code to run run_test_case for test and debug.
+///
+/// \param test_case Data of the test case to run.
+/// \param user_config User-provided configuration variables.
+/// \param hooks Caller-provided runtime hooks.
+/// \param opt_stdout_path The file into which to store the test case's stdout.
+///     If none, use a temporary file within the work directory.
+/// \param opt_stderr_path The file into which to store the test case's stderr.
+///     If none, use a temporary file within the work directory.
+///
+/// \return The test result.
+static engine::test_result
+run_test_case_safe(const engine::test_case* test_case,
+                   const config::tree& user_config,
+                   engine::test_case_hooks& hooks,
+                   const optional< fs::path >& opt_stdout_path,
+                   const optional< fs::path >& opt_stderr_path)
+{
+    // TODO(jmmv): The creation of the work directory belongs in the engine
+    // drivers.  There is no need to recreate the work directory for every
+    // single test (with the associated costs of signal programming, etc.)
+    std::auto_ptr< signals::interrupts_inhibiter > inhibiter(
+        new signals::interrupts_inhibiter);
+    const fs::path workdir = engine::create_work_directory();
+    fs::auto_directory workdir_cleaner(workdir);
+    inhibiter.reset(NULL);
 
-    /// User-provided configuration variables.
-    const config::tree& _user_config;
+    const fs::path stdout_path =
+        opt_stdout_path.get_default(workdir / "stdout.txt");
+    const fs::path stderr_path =
+        opt_stderr_path.get_default(workdir / "stderr.txt");
 
-    /// Caller-provided runtime hooks.
-    engine::test_case_hooks& _hooks;
+    const fs::path result_path = workdir / "result.txt";
 
-    /// The file into which to store the test case's stdout.  If none, use a
-    /// temporary file within the work directory.
-    const optional< fs::path > _stdout_path;
+    std::auto_ptr< process::child > child = process::child::fork_files(
+        ::run_test_case(
+            test_case->container_test_program().interface_name(),
+            test_case->container_test_program().absolute_path(),
+            *test_case, result_path, user_config),
+        stdout_path, stderr_path);
 
-    /// The file into which to store the test case's stderr.  If none, use a
-    /// temporary file within the work directory.
-    const optional< fs::path > _stderr_path;
+    const process::status status = child->wait();
 
-public:
-    /// Constructor.
-    ///
-    /// \param test_case Data of the test case to run.
-    /// \param user_config User-provided configuration variables.
-    /// \param hooks Caller-provided runtime hooks.
-    /// \param stdout_path The file into which to store the test case's stdout.
-    ///     If none, use a temporary file within the work directory.
-    /// \param stderr_path The file into which to store the test case's stderr.
-    ///     If none, use a temporary file within the work directory.
-    run_test_case_safe(const engine::test_case* test_case,
-                       const config::tree& user_config,
-                       engine::test_case_hooks& hooks,
-                       const optional< fs::path >& stdout_path,
-                       const optional< fs::path >& stderr_path) :
-        _test_case(test_case), _user_config(user_config), _hooks(hooks),
-        _stdout_path(stdout_path), _stderr_path(stderr_path)
-    {
-    }
-
-    /// Executes the test case.
-    ///
-    /// \param workdir Directory in which we are running.
-    ///
-    /// \return The result of the executed test case.
-    engine::test_result
-    operator()(const fs::path& workdir) const
-    {
-        const fs::path stdout_path =
-            _stdout_path.get_default(workdir / "stdout.txt");
-        const fs::path stderr_path =
-            _stderr_path.get_default(workdir / "stderr.txt");
-
-        const fs::path result_path = workdir / "result.txt";
-
-        std::auto_ptr< process::child > child;
-        process::status status = process::status::fake_exited(1);  // XXX
-        try {
-            child = process::child::fork_files(::run_test_case(
-                _test_case->container_test_program().interface_name(),
-                _test_case->container_test_program().absolute_path(),
-                *_test_case, result_path, _user_config),
-                stdout_path, stderr_path);
-
-            status = child->wait();
-        } catch (const process::error& e) {
-            // TODO(jmmv): This really is horrible.  We ought to redo all the
-            // signal handling, as this check_interrupt() aberration is racy and
-            // ugly...
-            //
-            // We use SIGTERM because we assume the tester process is
-            // well-behaved and this will cause the proper cleanup of the
-            // environment.
-            ::kill(child->pid(), SIGTERM);
-            (void)child->wait();
-            engine::check_interrupt();
-            throw;
-        }
-
-        if (status.exited()) {
-            if (status.exitstatus() == EXIT_SUCCESS) {
-                // OK; the tester exited cleanly.
-                // TODO(jmmv): We should validate that the result file encodes a
-                // postive result.
-            } else if (status.exitstatus() == EXIT_FAILURE) {
-                // OK; the tester reported that the test itself failed and we
-                // have the result file to indicate this.  TODO(jmmv): We should
-                // validate that the result file encodes a negative result.
-            } else {
-                throw engine::error(F("Tester failed with code %s; that's "
-                                      "really bad") % status.exitstatus());
-            }
+    if (status.exited()) {
+        if (status.exitstatus() == EXIT_SUCCESS) {
+            // OK; the tester exited cleanly.
+            // TODO(jmmv): We should validate that the result file encodes a
+            // postive result.
+        } else if (status.exitstatus() == EXIT_FAILURE) {
+            // OK; the tester reported that the test itself failed and we
+            // have the result file to indicate this.  TODO(jmmv): We should
+            // validate that the result file encodes a negative result.
         } else {
-            INV(status.signaled());
-            throw engine::error("Tester received a signal; that's really bad");
+            throw engine::error(F("Tester failed with code %s; that's "
+                                  "really bad") % status.exitstatus());
         }
-
-        _hooks.got_stdout(stdout_path);
-        _hooks.got_stderr(stderr_path);
-
-        std::ifstream result_file(result_path.c_str());
-        const engine::test_result result = engine::test_result::parse(
-            result_file);
-
-        return result;
+    } else {
+        INV(status.signaled());
+        throw engine::error("Tester received a signal; that's really bad");
     }
-};
+
+    hooks.got_stdout(stdout_path);
+    hooks.got_stderr(stderr_path);
+
+    std::ifstream result_file(result_path.c_str());
+    const engine::test_result result = engine::test_result::parse(
+        result_file);
+
+    return result;
+}
 
 
 }  // anonymous namespace
+
+
+/// Atomically creates a new work directory with a unique name.
+///
+/// The directory is created under the system-wide configured temporary
+/// directory as defined by the TMPDIR environment variable.
+///
+/// \return The path to the new work directory.
+///
+/// \throw fs::error If there is a problem creating the temporary directory.
+fs::path
+engine::create_work_directory(void)
+{
+    const optional< std::string > tmpdir = utils::getenv("TMPDIR");
+    if (!tmpdir)
+        return fs::mkdtemp(fs::path("/tmp/kyua.XXXXXX"));
+    else
+        return fs::mkdtemp(fs::path(F("%s/kyua.XXXXXX") % tmpdir.get()));
+}
 
 
 /// Destructor.
@@ -521,9 +506,12 @@ engine::debug_test_case(const test_case* test_case,
     if (!fs::exists(test_case->container_test_program().absolute_path()))
         return test_result(test_result::broken, "Test program does not exist");
 
-    return protected_run(run_test_case_safe(test_case, user_config, hooks,
-                                            utils::make_optional(stdout_path),
-                                            utils::make_optional(stderr_path)));
+    signals::interrupts_handler interrupts;
+    const engine::test_result result = run_test_case_safe(
+        test_case, user_config, hooks, utils::make_optional(stdout_path),
+        utils::make_optional(stderr_path));
+    signals::check_interrupt();
+    return result;
 }
 
 
@@ -552,6 +540,9 @@ engine::run_test_case(const test_case* test_case,
     if (!fs::exists(test_case->container_test_program().absolute_path()))
         return test_result(test_result::broken, "Test program does not exist");
 
-    return protected_run(run_test_case_safe(test_case, user_config, hooks,
-                                            none, none));
+    signals::interrupts_handler interrupts;
+    const engine::test_result result = run_test_case_safe(
+        test_case, user_config, hooks, none, none);
+    signals::check_interrupt();
+    return result;
 }

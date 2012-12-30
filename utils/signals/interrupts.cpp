@@ -33,6 +33,7 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include <cstdlib>
 #include <cstring>
 #include <set>
 
@@ -46,8 +47,8 @@ namespace signals = utils::signals;
 namespace {
 
 
-/// Whether an interrupt signal has fired or not.
-static volatile bool signal_fired = false;
+/// The interrupt signal that fired, or -1 if none.
+static volatile int fired_signal = -1;
 
 
 /// Collection of PIDs.
@@ -98,7 +99,8 @@ signal_handler(const int signo)
         // is really bad), there is not much we can do within the signal
         // handler, so just ignore this.
     }
-    signal_fired = true;
+
+    fired_signal = signo;
 
     for (pids_set::const_iterator iter = pids_to_kill.begin();
         iter != pids_to_kill.end(); ++iter) {
@@ -110,7 +112,7 @@ signal_handler(const int signo)
         // and because we assume that such processes are well-behaved and
         // terminate according to our expectations, we do it this way, which
         // allows the testers to know which specific signal made them terminate.
-        (void)kill(*iter, signo);
+        (void)::kill(*iter, signo);
     }
 }
 
@@ -222,8 +224,8 @@ signals::interrupts_inhibiter::~interrupts_inhibiter(void)
 void
 signals::check_interrupt(void)
 {
-    if (signal_fired)
-        throw interrupted_error();
+    if (fired_signal != -1)
+        throw interrupted_error(fired_signal);
 }
 
 

@@ -132,13 +132,9 @@ try_iterate_directory(const fs::path& directory,
 {
     bool ok = true;
 
-    DIR* dirp;
-retry:
-    dirp = ::opendir(directory.c_str());
+    DIR* dirp = ::opendir(directory.c_str());
     if (dirp == NULL) {
         const int original_errno = errno;
-        if (original_errno == EINTR)
-            goto retry;
         LW(F("Failed to open directory %s: %s") % directory.str() %
            std::strerror(original_errno));
         ok &= false;
@@ -177,12 +173,8 @@ static optional< struct ::stat >
 try_stat(const fs::path& path)
 {
     struct ::stat sb;
-
-retry:
     if (::lstat(path.c_str(), &sb) == -1) {
         const int original_errno = errno;
-        if (original_errno == EINTR)
-            goto retry;
         LW(F("Cannot get information about %s: %s") % path %
            std::strerror(original_errno));
         return none;

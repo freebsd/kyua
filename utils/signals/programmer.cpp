@@ -85,7 +85,7 @@ signals::programmer::programmer(const int signo, const handler_type handler) :
     struct ::sigaction sa;
     sa.sa_handler = handler;
     sigemptyset(&sa.sa_mask);
-    sa.sa_flags = 0;
+    sa.sa_flags = SA_RESTART;
 
     if (::sigaction(_pimpl->signo, &sa, &_pimpl->old_sa) == -1) {
         const int original_errno = errno;

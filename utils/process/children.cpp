@@ -149,12 +149,8 @@ safe_wait(const pid_t pid)
     }
     signals::interrupts_inhibiter inhibiter;
     LD(F("Sending KILL signal to process group %s") % pid);
-retry:
     if (::killpg(pid, SIGKILL) == -1) {
-        if (errno == EINTR)
-            goto retry;
-        // Otherwise, just ignore the error and continue.  It should not have
-        // happened.
+        // Just ignore the error and continue; it should not have happened.
     }
     signals::remove_pid_to_kill(pid);
     return process::status(pid, stat_loc);
