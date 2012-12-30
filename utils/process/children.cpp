@@ -147,12 +147,6 @@ safe_wait(const pid_t pid)
         throw process::system_error(F("Failed to wait for PID %s") % pid,
                                     original_errno);
     }
-    signals::interrupts_inhibiter inhibiter;
-    LD(F("Sending KILL signal to process group %s") % pid);
-    if (::killpg(pid, SIGKILL) == -1) {
-        // Just ignore the error and continue; it should not have happened.
-    }
-    signals::remove_pid_to_kill(pid);
     return process::status(pid, stat_loc);
 }
 
@@ -340,7 +334,12 @@ process::child::output(void)
 process::status
 process::child::wait(void)
 {
-    return safe_wait(_pimpl->_pid);
+    const process::status status = safe_wait(_pimpl->_pid);
+    {
+        signals::interrupts_inhibiter inhibiter;
+        signals::remove_pid_to_kill(_pimpl->_pid);
+    }
+    return status;
 }
 
 

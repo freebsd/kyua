@@ -63,33 +63,6 @@ namespace process = utils::process;
 namespace {
 
 
-/// Body for a process that spawns a subprocess.
-///
-/// This is supposed to be passed as a hook to one of the fork() functions.  The
-/// fork() functions run their children in a new process group, so it is
-/// expected that the subprocess we spawn here is part of this process group as
-/// well.
-static void
-child_blocking_subchild(void)
-{
-    pid_t pid = ::fork();
-    if (pid == -1) {
-        std::abort();
-    } else if (pid == 0) {
-        for (;;)
-            ::pause();
-    } else {
-        std::ofstream output("subchild_pid");
-        if (!output)
-            std::abort();
-        output << pid << "\n";
-        output.close();
-        std::exit(EXIT_SUCCESS);
-    }
-    UNREACHABLE;
-}
-
-
 /// Body for a process that prints a simple message and exits.
 ///
 /// \tparam ExitStatus The exit status for the subprocess.
@@ -658,46 +631,6 @@ ATF_TEST_CASE_BODY(child__pid)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(child__wait__killpg);
-ATF_TEST_CASE_BODY(child__wait__killpg)
-{
-    const process::status status = process::child::fork_capture(
-        child_blocking_subchild)->wait();
-
-    ATF_REQUIRE(status.exited());
-    ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
-
-    std::ifstream input("subchild_pid");
-    ATF_REQUIRE(input);
-    pid_t pid;
-    input >> pid;
-    input.close();
-    std::cout << F("Subprocess was %s; checking if it died\n") % pid;
-
-    int attempts = 30;
-retry:
-    if (::kill(pid, SIGCONT) != -1 || errno != ESRCH) {
-        // Looks like the subchild did not die.
-        //
-        // Note that this might be inaccurate for two reasons:
-        // 1) The system may have spawned a new process with the same pid as
-        //    our subchild... but in practice, this does not happen because
-        //    most systems do not immediately reuse pid numbers.  If that
-        //    happens... well, we get a false test failure.
-        // 2) We ran so fast that even if the process was sent a signal to
-        //    die, it has not had enough time to process it yet.  This is why
-        //    we retry this a few times.
-        if (attempts > 0) {
-            std::cout << "Subprocess not dead yet; retrying wait\n";
-            --attempts;
-            ::usleep(100000);
-            goto retry;
-        }
-        ATF_FAIL(F("The subprocess %s of our child was not killed") % pid);
-    }
-}
-
-
 ATF_TEST_CASE_WITHOUT_HEAD(exec__absolute_path);
 ATF_TEST_CASE_BODY(exec__absolute_path)
 {
@@ -865,7 +798,6 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, child__fork_files__create_stderr_fail);
 
     ATF_ADD_TEST_CASE(tcs, child__pid);
-    ATF_ADD_TEST_CASE(tcs, child__wait__killpg);
 
     ATF_ADD_TEST_CASE(tcs, exec__absolute_path);
     ATF_ADD_TEST_CASE(tcs, exec__relative_path);
