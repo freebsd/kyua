@@ -46,6 +46,14 @@ public:
 };
 
 
+/// Denotes the reception of a signal to controlledly terminate execution.
+class interrupted_error : public error {
+public:
+    explicit interrupted_error(void);
+    ~interrupted_error(void) throw();
+};
+
+
 /// Exceptions for errno-based errors.
 ///
 /// TODO(jmmv): This code is duplicated in, at least, utils::fs.  Figure

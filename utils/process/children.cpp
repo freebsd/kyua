@@ -41,6 +41,7 @@ extern "C" {
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <memory>
 
 #include "utils/datetime.hpp"
 #include "utils/format/macros.hpp"
@@ -50,6 +51,7 @@ extern "C" {
 #include "utils/process/system.hpp"
 #include "utils/process/status.hpp"
 #include "utils/sanity.hpp"
+#include "utils/signals/interrupts.hpp"
 #include "utils/signals/timer.hpp"
 
 
@@ -148,6 +150,7 @@ safe_wait(const pid_t pid)
         throw process::system_error(F("Failed to wait for PID %s") % pid,
                                     original_errno);
     }
+    signals::interrupts_inhibiter inhibiter;
     LD(F("Sending KILL signal to process group %s") % pid);
 retry:
     if (::killpg(pid, SIGKILL) == -1) {
@@ -156,6 +159,7 @@ retry:
         // Otherwise, just ignore the error and continue.  It should not have
         // happened.
     }
+    signals::remove_pid_to_kill(pid);
     return process::status(pid, stat_loc);
 }
 
@@ -278,12 +282,16 @@ process::child::fork_capture_aux(void)
     if (detail::syscall_pipe(fds) == -1)
         throw process::system_error("pipe(2) failed", errno);
 
+    std::auto_ptr< signals::interrupts_inhibiter > inhibiter(
+        new signals::interrupts_inhibiter);
     pid_t pid = detail::syscall_fork();
     if (pid == -1) {
+        inhibiter.reset(NULL);  // Unblock signals.
         ::close(fds[0]);
         ::close(fds[1]);
         throw process::system_error("fork(2) failed", errno);
     } else if (pid == 0) {
+        inhibiter.reset(NULL);  // Unblock signals.
         ::setpgid(::getpid(), ::getpid());
 
         try {
@@ -299,6 +307,8 @@ process::child::fork_capture_aux(void)
     } else {
         ::close(fds[1]);
         LD(F("Spawned process %s: stdout and stderr inherited") % pid);
+        signals::add_pid_to_kill(pid);
+        inhibiter.reset(NULL);  // Unblock signals.
         return std::auto_ptr< process::child >(
             new process::child(new impl(pid, new process::ifdstream(fds[0]))));
     }
@@ -329,10 +339,14 @@ process::child::fork_files_aux(const fs::path& stdout_file,
     std::cout.flush();
     std::cerr.flush();
 
+    std::auto_ptr< signals::interrupts_inhibiter > inhibiter(
+        new signals::interrupts_inhibiter);
     pid_t pid = detail::syscall_fork();
     if (pid == -1) {
+        inhibiter.reset(NULL);  // Unblock signals.
         throw process::system_error("fork(2) failed", errno);
     } else if (pid == 0) {
+        inhibiter.reset(NULL);  // Unblock signals.
         ::setpgid(::getpid(), ::getpid());
 
         try {
@@ -354,6 +368,8 @@ process::child::fork_files_aux(const fs::path& stdout_file,
     } else {
         LD(F("Spawned process %s: stdout=%s, stderr=%s") % pid % stdout_file %
            stderr_file);
+        signals::add_pid_to_kill(pid);
+        inhibiter.reset(NULL);  // Unblock signals.
         return std::auto_ptr< process::child >(
             new process::child(new impl(pid, NULL)));
     }

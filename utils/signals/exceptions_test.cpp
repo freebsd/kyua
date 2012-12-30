@@ -46,6 +46,14 @@ ATF_TEST_CASE_BODY(error)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(interrupted_error);
+ATF_TEST_CASE_BODY(interrupted_error)
+{
+    const signals::interrupted_error e;
+    ATF_REQUIRE(std::strcmp("Interrupt signal caught", e.what()) == 0);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(system_error);
 ATF_TEST_CASE_BODY(system_error)
 {
@@ -59,5 +67,6 @@ ATF_TEST_CASE_BODY(system_error)
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, error);
+    ATF_ADD_TEST_CASE(tcs, interrupted_error);
     ATF_ADD_TEST_CASE(tcs, system_error);
 }

@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2012 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,64 +26,48 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/signals/exceptions.hpp"
+/// \file utils/signals/interrupts.hpp
+/// Handling of interrupts.
 
-#include <cstring>
+#if !defined(UTILS_SIGNALS_INTERRUPTS_HPP)
+#define UTILS_SIGNALS_INTERRUPTS_HPP
 
-#include "utils/format/macros.hpp"
+#include <unistd.h>
 
-namespace signals = utils::signals;
+#include "utils/noncopyable.hpp"
+
+namespace utils {
+namespace signals {
 
 
-/// Constructs a new error with a plain-text message.
+/// Provides a scope in which interrupts can be detected and handled.
 ///
-/// \param message The plain-text error message.
-signals::error::error(const std::string& message) :
-    std::runtime_error(message)
-{
-}
+/// This RAII-modeled object installs signal handler when instantiated and
+/// removes them upon destruction.  While this object is active, the
+/// check_interrupt() free function can be used to determine if an interrupt has
+/// happened.
+class interrupts_handler : noncopyable {
+public:
+    interrupts_handler(void);
+    ~interrupts_handler(void);
+};
 
 
-/// Destructor for the error.
-signals::error::~error(void) throw()
-{
-}
+/// Disables interrupts while the object is alive.
+class interrupts_inhibiter : noncopyable {
+public:
+    interrupts_inhibiter(void);
+    ~interrupts_inhibiter(void);
+};
 
 
-/// Constructs a new interrupted error.
-signals::interrupted_error::interrupted_error(void) :
-    error("Interrupt signal caught")
-{
-}
+void check_interrupt(void);
+
+void add_pid_to_kill(const pid_t);
+void remove_pid_to_kill(const pid_t);
 
 
-/// Destructor for the error.
-signals::interrupted_error::~interrupted_error(void) throw()
-{
-}
+} // namespace signals
+} // namespace utils
 
-
-/// Constructs a new error based on an errno code.
-///
-/// \param message_ The message describing what caused the error.
-/// \param errno_ The error code.
-signals::system_error::system_error(const std::string& message_,
-                                    const int errno_) :
-    error(F("%s: %s") % message_ % strerror(errno_)),
-    _original_errno(errno_)
-{
-}
-
-
-/// Destructor for the error.
-signals::system_error::~system_error(void) throw()
-{
-}
-
-
-/// Gets the original errno code.
-int
-signals::system_error::original_errno(void) const throw()
-{
-    return _original_errno;
-}
+#endif // !defined(UTILS_SIGNALS_INTERRUPTS_HPP)

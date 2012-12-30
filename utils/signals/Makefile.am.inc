@@ -28,6 +28,8 @@
 
 libutils_a_SOURCES += utils/signals/exceptions.cpp
 libutils_a_SOURCES += utils/signals/exceptions.hpp
+libutils_a_SOURCES += utils/signals/interrupts.cpp
+libutils_a_SOURCES += utils/signals/interrupts.hpp
 libutils_a_SOURCES += utils/signals/misc.cpp
 libutils_a_SOURCES += utils/signals/misc.hpp
 libutils_a_SOURCES += utils/signals/programmer.cpp
@@ -45,6 +47,11 @@ tests_utils_signals_PROGRAMS = utils/signals/exceptions_test
 utils_signals_exceptions_test_SOURCES = utils/signals/exceptions_test.cpp
 utils_signals_exceptions_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 utils_signals_exceptions_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
+
+tests_utils_signals_PROGRAMS += utils/signals/interrupts_test
+utils_signals_interrupts_test_SOURCES = utils/signals/interrupts_test.cpp
+utils_signals_interrupts_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_signals_interrupts_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_signals_PROGRAMS += utils/signals/misc_test
 utils_signals_misc_test_SOURCES = utils/signals/misc_test.cpp
