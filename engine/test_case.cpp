@@ -52,14 +52,12 @@ extern "C" {
 #include "utils/passwd.hpp"
 #include "utils/process/children.ipp"
 #include "utils/process/exceptions.hpp"
-#include "utils/signals/interrupts.hpp"
 
 namespace config = utils::config;
 namespace fs = utils::fs;
 namespace logging = utils::logging;
 namespace passwd = utils::passwd;
 namespace process = utils::process;
-namespace signals = utils::signals;
 namespace user_files = engine::user_files;
 
 using utils::none;
@@ -196,37 +194,27 @@ public:
 /// \param test_case Data of the test case to run.
 /// \param user_config User-provided configuration variables.
 /// \param hooks Caller-provided runtime hooks.
-/// \param opt_stdout_path The file into which to store the test case's stdout.
-///     If none, use a temporary file within the work directory.
-/// \param opt_stderr_path The file into which to store the test case's stderr.
-///     If none, use a temporary file within the work directory.
+/// \param work_directory Path to a temporary directory into which auxiliary
+///     files can be stored.
+/// \param stdout_path The file into which to store the test case's stdout.
+/// \param stderr_path The file into which to store the test case's stderr.
 ///
 /// \return The test result.
 static engine::test_result
 run_test_case_safe(const engine::test_case* test_case,
                    const config::tree& user_config,
                    engine::test_case_hooks& hooks,
-                   const optional< fs::path >& opt_stdout_path,
-                   const optional< fs::path >& opt_stderr_path)
+                   const fs::path& work_directory,
+                   const fs::path& stdout_path,
+                   const fs::path& stderr_path)
 {
-    // TODO(jmmv): The creation of the work directory belongs in the engine
-    // drivers.  There is no need to recreate the work directory for every
-    // single test (with the associated costs of signal programming, etc.)
-    const fs::auto_directory workdir = fs::auto_directory::mkdtemp(
-        "kyua.XXXXXX");
-
-    const fs::path stdout_path =
-        opt_stdout_path.get_default(workdir.directory() / "stdout.txt");
-    const fs::path stderr_path =
-        opt_stderr_path.get_default(workdir.directory() / "stderr.txt");
-
-    const fs::path result_path = workdir.directory() / "result.txt";
+    const fs::auto_file result_file(work_directory / "result.txt");
 
     std::auto_ptr< process::child > child = process::child::fork_files(
         ::run_test_case(
             test_case->container_test_program().interface_name(),
             test_case->container_test_program().absolute_path(),
-            *test_case, result_path, user_config),
+            *test_case, result_file.file(), user_config),
         stdout_path, stderr_path);
 
     const process::status status = child->wait();
@@ -252,9 +240,9 @@ run_test_case_safe(const engine::test_case* test_case,
     hooks.got_stdout(stdout_path);
     hooks.got_stderr(stderr_path);
 
-    std::ifstream result_file(result_path.c_str());
+    std::ifstream result_input(result_file.file().c_str());
     const engine::test_result result = engine::test_result::parse(
-        result_file);
+        result_input);
 
     return result;
 }
@@ -458,6 +446,7 @@ engine::test_case::fake_result(void) const
 /// \param user_config The user configuration that defines the execution of this
 ///     test case.
 /// \param hooks Hooks to introspect the execution of the test case.
+/// \param work_directory A directory that can be used to place temporary files.
 /// \param stdout_path The file to which to redirect the stdout of the test.
 ///     For interactive debugging, '/dev/stdout' is probably a reasonable value.
 /// \param stderr_path The file to which to redirect the stdout of the test.
@@ -468,6 +457,7 @@ engine::test_result
 engine::debug_test_case(const test_case* test_case,
                         const config::tree& user_config,
                         test_case_hooks& hooks,
+                        const fs::path& work_directory,
                         const fs::path& stdout_path,
                         const fs::path& stderr_path)
 {
@@ -483,11 +473,9 @@ engine::debug_test_case(const test_case* test_case,
     if (!fs::exists(test_case->container_test_program().absolute_path()))
         return test_result(test_result::broken, "Test program does not exist");
 
-    signals::interrupts_handler interrupts;
     const engine::test_result result = run_test_case_safe(
-        test_case, user_config, hooks, utils::make_optional(stdout_path),
-        utils::make_optional(stderr_path));
-    signals::check_interrupt();
+        test_case, user_config, hooks, work_directory, stdout_path,
+        stderr_path);
     return result;
 }
 
@@ -498,12 +486,14 @@ engine::debug_test_case(const test_case* test_case,
 /// \param user_config The user configuration that defines the execution of this
 ///     test case.
 /// \param hooks Hooks to introspect the execution of the test case.
+/// \param work_directory A directory that can be used to place temporary files.
 ///
 /// \return The result of the execution of the test case.
 engine::test_result
 engine::run_test_case(const test_case* test_case,
                       const config::tree& user_config,
-                      test_case_hooks& hooks)
+                      test_case_hooks& hooks,
+                      const fs::path& work_directory)
 {
     if (test_case->fake_result())
         return test_case->fake_result().get();
@@ -517,9 +507,11 @@ engine::run_test_case(const test_case* test_case,
     if (!fs::exists(test_case->container_test_program().absolute_path()))
         return test_result(test_result::broken, "Test program does not exist");
 
-    signals::interrupts_handler interrupts;
+    const fs::auto_file stdout_file(work_directory / "stdout.txt");
+    const fs::auto_file stderr_file(work_directory / "stderr.txt");
+
     const engine::test_result result = run_test_case_safe(
-        test_case, user_config, hooks, none, none);
-    signals::check_interrupt();
+        test_case, user_config, hooks, work_directory,
+        stdout_file.file(), stderr_file.file());
     return result;
 }

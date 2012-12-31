@@ -47,9 +47,6 @@ class test_result;
 class test_program;
 
 
-utils::fs::path create_work_directory(void);
-
-
 /// Hooks to introspect the execution of a test case.
 ///
 /// There is no guarantee that these hooks will be called during the execution
@@ -97,9 +94,9 @@ typedef std::tr1::shared_ptr< test_case > test_case_ptr;
 
 test_result debug_test_case(const test_case*, const utils::config::tree&,
                             test_case_hooks&, const utils::fs::path&,
-                            const utils::fs::path&);
+                            const utils::fs::path&, const utils::fs::path&);
 test_result run_test_case(const test_case*, const utils::config::tree&,
-                          test_case_hooks&);
+                          test_case_hooks&, const utils::fs::path&);
 
 
 }  // namespace engine

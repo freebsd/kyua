@@ -37,11 +37,14 @@
 #include "engine/user_files/kyuafile.hpp"
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/fs/auto_cleaners.hpp"
 #include "utils/optional.ipp"
+#include "utils/signals/interrupts.hpp"
 
 namespace config = utils::config;
 namespace fs = utils::fs;
 namespace debug_test = engine::drivers::debug_test;
+namespace signals = utils::signals;
 namespace user_files = engine::user_files;
 
 using utils::none;
@@ -125,8 +128,17 @@ debug_test::drive(const fs::path& kyuafile_path,
         kyuafile_path, build_root);
     const engine::test_case_ptr test_case = find_test_case(filter, kyuafile);
     engine::test_case_hooks dummy_hooks;
+
+    signals::interrupts_handler interrupts;
+
+    const fs::auto_directory work_directory = fs::auto_directory::mkdtemp(
+        "kyua.XXXXXX");
+
     const engine::test_result test_result = debug_test_case(
-        test_case.get(), user_config, dummy_hooks, stdout_path, stderr_path);
+        test_case.get(), user_config, dummy_hooks, work_directory.directory(),
+        stdout_path, stderr_path);
+
+    signals::check_interrupt();
     return result(test_filter(
                       test_case->container_test_program().relative_path(),
                       test_case->name()), test_result);

@@ -39,13 +39,16 @@
 #include "utils/datetime.hpp"
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/fs/auto_cleaners.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
+#include "utils/signals/interrupts.hpp"
 
 namespace config = utils::config;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace run_tests = engine::drivers::run_tests;
+namespace signals = utils::signals;
 namespace user_files = engine::user_files;
 
 using utils::optional;
@@ -102,6 +105,7 @@ public:
 /// \param user_config The configuration variables provided by the user.
 /// \param filters The matching state of the filters.
 /// \param hooks The user hooks to receive asynchronous notifications.
+/// \param work_directory Temporary directory to use.
 /// \param tx The store transaction into which to put the results.
 /// \param action_id The action this program belongs to.
 void
@@ -109,6 +113,7 @@ run_test_program(const engine::test_program& program,
                  const config::tree& user_config,
                  engine::filters_state& filters,
                  run_tests::base_hooks& hooks,
+                 const fs::path& work_directory,
                  store::transaction& tx,
                  const int64_t action_id)
 {
@@ -130,10 +135,12 @@ run_test_program(const engine::test_program& program,
         hooks.got_test_case(test_case);
         const datetime::timestamp start_time = datetime::timestamp::now();
         const engine::test_result result = run_test_case(
-            test_case.get(), user_config, test_hooks);
+            test_case.get(), user_config, test_hooks, work_directory);
         const datetime::timestamp end_time = datetime::timestamp::now();
         tx.put_result(result, test_case_id, start_time, end_time);
         hooks.got_result(test_case, result, end_time - start_time);
+
+        signals::check_interrupt();
     }
 }
 
@@ -177,6 +184,11 @@ run_tests::drive(const fs::path& kyuafile_path,
     engine::action action(context);
     const int64_t action_id = tx.put_action(action, context_id);
 
+    signals::interrupts_handler interrupts;
+
+    const fs::auto_directory work_directory = fs::auto_directory::mkdtemp(
+        "kyua.XXXXXX");
+
     for (test_programs_vector::const_iterator iter =
          kyuafile.test_programs().begin();
          iter != kyuafile.test_programs().end(); iter++) {
@@ -186,7 +198,9 @@ run_tests::drive(const fs::path& kyuafile_path,
             continue;
 
         run_test_program(*test_program, user_config, filters, hooks,
-                         tx, action_id);
+                         work_directory.directory(), tx, action_id);
+
+        signals::check_interrupt();
     }
 
     tx.commit();

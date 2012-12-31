@@ -249,7 +249,14 @@ public:
             engine::metadata_builder().build());
         const engine::test_case test_case("atf", test_program, _name,
                                           _mdbuilder.build());
-        return engine::run_test_case(&test_case, _user_config, hooks);
+
+        const fs::path workdir("work");
+        fs::mkdir(workdir, 0755);
+
+        const engine::test_result result = engine::run_test_case(
+            &test_case, _user_config, hooks, workdir);
+        ATF_REQUIRE(::rmdir(workdir.c_str()) != -1);
+        return result;
     }
 };
 
@@ -363,7 +370,7 @@ public:
         const engine::test_cases_vector& tcs = test_program.test_cases();
         fetch_output_hooks fetcher;
         const engine::test_result result = engine::run_test_case(
-            tcs[0].get(),user_config, fetcher);
+            tcs[0].get(), user_config, fetcher, fs::path("."));
         std::cerr << "Result is: " << result << '\n';
         return result;
     }
