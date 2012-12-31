@@ -673,6 +673,24 @@ ATF_TEST_CASE_BODY(mkstemp)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(unlink__ok)
+ATF_TEST_CASE_BODY(unlink__ok)
+{
+    atf::utils::create_file("foo", "");
+    ATF_REQUIRE(::access("foo", R_OK) == 0);
+    fs::unlink(fs::path("foo"));
+    ATF_REQUIRE(::access("foo", R_OK) == -1);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(unlink__fail)
+ATF_TEST_CASE_BODY(unlink__fail)
+{
+    ATF_REQUIRE_THROW_RE(fs::system_error, "Removal of foo failed",
+                         fs::unlink(fs::path("foo")));
+}
+
+
 ATF_TEST_CASE(unmount__ok)
 ATF_TEST_CASE_HEAD(unmount__ok)
 {
@@ -747,6 +765,9 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, mkdtemp);
 
     ATF_ADD_TEST_CASE(tcs, mkstemp);
+
+    ATF_ADD_TEST_CASE(tcs, unlink__ok);
+    ATF_ADD_TEST_CASE(tcs, unlink__fail);
 
     ATF_ADD_TEST_CASE(tcs, unmount__ok);
     ATF_ADD_TEST_CASE(tcs, unmount__fail);

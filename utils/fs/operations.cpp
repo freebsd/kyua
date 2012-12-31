@@ -695,6 +695,22 @@ fs::mkstemp(const std::string& path_template)
 }
 
 
+/// Removes a file.
+///
+/// \param file The file to remove.
+///
+/// \throw fs::system_error If the call to unlink(2) fails.
+void
+fs::unlink(const path& file)
+{
+    if (::unlink(file.c_str()) == -1) {
+        const int original_errno = errno;
+        throw fs::system_error(F("Removal of %s failed") % file,
+                               original_errno);
+    }
+}
+
+
 /// Unmounts a file system.
 ///
 /// \param mount_point The file system to unmount.

@@ -212,18 +212,15 @@ run_test_case_safe(const engine::test_case* test_case,
     // TODO(jmmv): The creation of the work directory belongs in the engine
     // drivers.  There is no need to recreate the work directory for every
     // single test (with the associated costs of signal programming, etc.)
-    std::auto_ptr< signals::interrupts_inhibiter > inhibiter(
-        new signals::interrupts_inhibiter);
-    const fs::path workdir = fs::mkdtemp("kyua.XXXXXX");
-    fs::auto_directory workdir_cleaner(workdir);
-    inhibiter.reset(NULL);
+    const fs::auto_directory workdir = fs::auto_directory::mkdtemp(
+        "kyua.XXXXXX");
 
     const fs::path stdout_path =
-        opt_stdout_path.get_default(workdir / "stdout.txt");
+        opt_stdout_path.get_default(workdir.directory() / "stdout.txt");
     const fs::path stderr_path =
-        opt_stderr_path.get_default(workdir / "stderr.txt");
+        opt_stderr_path.get_default(workdir.directory() / "stderr.txt");
 
-    const fs::path result_path = workdir / "result.txt";
+    const fs::path result_path = workdir.directory() / "result.txt";
 
     std::auto_ptr< process::child > child = process::child::fork_files(
         ::run_test_case(

@@ -32,8 +32,10 @@
 #if !defined(UTILS_FS_AUTO_CLEANERS_HPP)
 #define UTILS_FS_AUTO_CLEANERS_HPP
 
+#include <string>
+#include <tr1/memory>
+
 #include "utils/fs/path.hpp"
-#include "utils/noncopyable.hpp"
 
 namespace utils {
 namespace fs {
@@ -41,18 +43,18 @@ namespace fs {
 
 /// Grabs ownership of a directory and removes it upon destruction.
 ///
-/// The directory is removed recursively using the fs::cleanup() function.
-/// Use this in conjunction with fs::mkdtemp, for example.
-class auto_directory : noncopyable {
-    /// The path to the directory being managed.
-    fs::path _directory;
-
-    /// Whether cleanup() has been already executed or not.
-    bool _cleaned;
+/// This class is reference-counted and therefore only the destruction of the
+/// last instance will cause the removal of the directory.
+class auto_directory {
+    struct impl;
+    /// Reference-counted, shared implementation.
+    std::tr1::shared_ptr< impl > _pimpl;
 
 public:
     explicit auto_directory(const path&);
     ~auto_directory(void);
+
+    static auto_directory mkdtemp(const std::string&);
 
     const path& directory(void) const;
     void cleanup(void);
@@ -60,16 +62,19 @@ public:
 
 
 /// Grabs ownership of a file and removes it upon destruction.
-class auto_file : noncopyable {
-    /// The path to the file being managed.
-    fs::path _file;
-
-    /// Whether removed() has been already executed or not.
-    bool _removed;
+///
+/// This class is reference-counted and therefore only the destruction of the
+/// last instance will cause the removal of the file.
+class auto_file {
+    struct impl;
+    /// Reference-counted, shared implementation.
+    std::tr1::shared_ptr< impl > _pimpl;
 
 public:
     explicit auto_file(const path&);
     ~auto_file(void);
+
+    static auto_file mkstemp(const std::string&);
 
     const path& file(void) const;
     void remove(void);

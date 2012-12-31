@@ -28,26 +28,67 @@
 
 #include "utils/fs/auto_cleaners.hpp"
 
-extern "C" {
-#include <unistd.h>
-}
-
-#include <cerrno>
-
 #include "utils/format/macros.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/logging/macros.hpp"
+#include "utils/sanity.hpp"
+#include "utils/signals/interrupts.hpp"
 
 namespace fs = utils::fs;
+namespace signals = utils::signals;
+
+
+/// Shared implementation of the auto_directory.
+struct utils::fs::auto_directory::impl {
+    /// The path to the directory being managed.
+    fs::path _directory;
+
+    /// Whether cleanup() has been already executed or not.
+    bool _cleaned;
+
+    /// Constructor.
+    ///
+    /// \param directory_ The directory to grab the ownership of.
+    impl(const path& directory_) :
+        _directory(directory_),
+        _cleaned(false)
+    {
+    }
+
+    /// Destructor.
+    ~impl(void)
+    {
+        try {
+            this->cleanup();
+        } catch (const fs::error& e) {
+            LW(F("Failed to auto-cleanup directory '%s': %s") % _directory %
+               e.what());
+        }
+    }
+
+    /// Removes the directory.
+    ///
+    /// See the cleanup() method of the auto_directory class for details.
+    void
+    cleanup(void)
+    {
+        if (!_cleaned) {
+            // Mark this as cleaned first so that, in case of failure, we don't
+            // reraise the error from the destructor.
+            _cleaned = true;
+
+            fs::cleanup(_directory);
+        }
+    }
+};
 
 
 /// Constructs a new auto_directory and grabs ownership of a directory.
 ///
 /// \param directory_ The directory to grab the ownership of.
 fs::auto_directory::auto_directory(const path& directory_) :
-    _directory(directory_),
-    _cleaned(false)
+    _pimpl(new impl(directory_))
 {
 }
 
@@ -58,11 +99,28 @@ fs::auto_directory::auto_directory(const path& directory_) :
 /// reporting.  Instead, the caller should use the cleanup() method.
 fs::auto_directory::~auto_directory(void)
 {
+}
+
+
+/// Creates a self-destructing temporary directory.
+///
+/// \param path_template The template for the temporary path, which is a
+///     basename that is created within the TMPDIR.  Must contain the XXXXXX
+///     pattern, which is atomically replaced by a random unique string.
+///
+/// \return The self-destructing directory.
+///
+/// \throw fs::error If the creation fails.
+fs::auto_directory
+fs::auto_directory::mkdtemp(const std::string& path_template)
+{
+    signals::interrupts_inhibiter inhibiter;
+    const fs::path directory_ = fs::mkdtemp(path_template);
     try {
-        this->cleanup();
-    } catch (const fs::error& e) {
-        LW(F("Failed to auto-cleanup directory '%s': %s") % _directory %
-           e.what());
+        return auto_directory(directory_);
+    } catch (...) {
+        fs::cleanup(directory_);
+        throw;
     }
 }
 
@@ -73,7 +131,7 @@ fs::auto_directory::~auto_directory(void)
 const fs::path&
 fs::auto_directory::directory(void) const
 {
-    return _directory;
+    return _pimpl->_directory;
 }
 
 
@@ -85,22 +143,60 @@ fs::auto_directory::directory(void) const
 void
 fs::auto_directory::cleanup(void)
 {
-    if (!_cleaned) {
-        // Mark this as cleaned first so that, in case of failure, we don't
-        // reraise the error from the destructor.
-        _cleaned = true;
-
-        fs::cleanup(_directory);
-    }
+    _pimpl->cleanup();
 }
+
+
+/// Shared implementation of the auto_file.
+struct utils::fs::auto_file::impl {
+    /// The path to the file being managed.
+    fs::path _file;
+
+    /// Whether removed() has been already executed or not.
+    bool _removed;
+
+    /// Constructor.
+    ///
+    /// \param file_ The file to grab the ownership of.
+    impl(const path& file_) :
+        _file(file_),
+        _removed(false)
+    {
+    }
+
+    /// Destructor.
+    ~impl(void)
+    {
+        try {
+            this->remove();
+        } catch (const fs::error& e) {
+            LW(F("Failed to auto-cleanup file '%s': %s") % _file %
+               e.what());
+        }
+    }
+
+    /// Removes the file.
+    ///
+    /// See the remove() method of the auto_file class for details.
+    void
+    remove(void)
+    {
+        if (!_removed) {
+            // Mark this as cleaned first so that, in case of failure, we don't
+            // reraise the error from the destructor.
+            _removed = true;
+
+            fs::unlink(_file);
+        }
+    }
+};
 
 
 /// Constructs a new auto_file and grabs ownership of a file.
 ///
 /// \param file_ The file to grab the ownership of.
 fs::auto_file::auto_file(const path& file_) :
-    _file(file_),
-    _removed(false)
+    _pimpl(new impl(file_))
 {
 }
 
@@ -111,11 +207,28 @@ fs::auto_file::auto_file(const path& file_) :
 /// reporting.  Instead, the caller should use the remove() method.
 fs::auto_file::~auto_file(void)
 {
+}
+
+
+/// Creates a self-destructing temporary file.
+///
+/// \param path_template The template for the temporary path, which is a
+///     basename that is created within the TMPDIR.  Must contain the XXXXXX
+///     pattern, which is atomically replaced by a random unique string.
+///
+/// \return The self-destructing file.
+///
+/// \throw fs::error If the creation fails.
+fs::auto_file
+fs::auto_file::mkstemp(const std::string& path_template)
+{
+    signals::interrupts_inhibiter inhibiter;
+    const fs::path file_ = fs::mkstemp(path_template);
     try {
-        this->remove();
-    } catch (const fs::error& e) {
-        LW(F("Failed to auto-cleanup file '%s': %s") % _file %
-           e.what());
+        return auto_file(file_);
+    } catch (...) {
+        fs::unlink(file_);
+        throw;
     }
 }
 
@@ -126,7 +239,7 @@ fs::auto_file::~auto_file(void)
 const fs::path&
 fs::auto_file::file(void) const
 {
-    return _file;
+    return _pimpl->_file;
 }
 
 
@@ -138,15 +251,5 @@ fs::auto_file::file(void) const
 void
 fs::auto_file::remove(void)
 {
-    if (!_removed) {
-        // Mark this as cleaned first so that, in case of failure, we don't
-        // reraise the error from the destructor.
-        _removed = true;
-
-        if (::unlink(_file.c_str()) == -1) {
-            const int original_errno = errno;
-            throw fs::system_error(F("Removal of %s failed") % _file,
-                                   original_errno);
-        }
-    }
+    _pimpl->remove();
 }

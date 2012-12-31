@@ -34,6 +34,7 @@ extern "C" {
 
 #include <atf-c++.hpp>
 
+#include "utils/env.hpp"
 #include "utils/fs/operations.hpp"
 
 namespace fs = utils::fs;
@@ -50,6 +51,13 @@ ATF_TEST_CASE_BODY(auto_directory__automatic)
         fs::auto_directory dir(root);
         ATF_REQUIRE_EQ(root, dir.directory());
 
+        ATF_REQUIRE(::access("root", X_OK) == 0);
+        ATF_REQUIRE(::access("root/foo", X_OK) == 0);
+
+        {
+            fs::auto_directory dir_copy(dir);
+        }
+        // Should still exist after a copy is destructed.
         ATF_REQUIRE(::access("root", X_OK) == 0);
         ATF_REQUIRE(::access("root/foo", X_OK) == 0);
     }
@@ -77,6 +85,26 @@ ATF_TEST_CASE_BODY(auto_directory__explicit)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(auto_directory__mkdtemp);
+ATF_TEST_CASE_BODY(auto_directory__mkdtemp)
+{
+    utils::setenv("TMPDIR", (fs::current_path() / "tmp").str());
+    fs::mkdir(fs::path("tmp"), 0755);
+
+    const std::string path_template("test.XXXXXX");
+    {
+        fs::auto_directory auto_directory = fs::auto_directory::mkdtemp(
+            path_template);
+        ATF_REQUIRE(::access((fs::path("tmp") / path_template).c_str(),
+                             X_OK) == -1);
+        ATF_REQUIRE(::rmdir("tmp") == -1);
+
+        ATF_REQUIRE(::access(auto_directory.directory().c_str(), X_OK) == 0);
+    }
+    ATF_REQUIRE(::rmdir("tmp") != -1);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(auto_file__automatic);
 ATF_TEST_CASE_BODY(auto_file__automatic)
 {
@@ -86,6 +114,12 @@ ATF_TEST_CASE_BODY(auto_file__automatic)
         fs::auto_file auto_file(file);
         ATF_REQUIRE_EQ(file, auto_file.file());
 
+        ATF_REQUIRE(::access(file.c_str(), R_OK) == 0);
+
+        {
+            fs::auto_file auto_file_copy(auto_file);
+        }
+        // Should still exist after a copy is destructed.
         ATF_REQUIRE(::access(file.c_str(), R_OK) == 0);
     }
     ATF_REQUIRE(::access(file.c_str(), R_OK) == -1);
@@ -108,11 +142,32 @@ ATF_TEST_CASE_BODY(auto_file__explicit)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(auto_file__mkstemp);
+ATF_TEST_CASE_BODY(auto_file__mkstemp)
+{
+    utils::setenv("TMPDIR", (fs::current_path() / "tmp").str());
+    fs::mkdir(fs::path("tmp"), 0755);
+
+    const std::string path_template("test.XXXXXX");
+    {
+        fs::auto_file auto_file = fs::auto_file::mkstemp(path_template);
+        ATF_REQUIRE(::access((fs::path("tmp") / path_template).c_str(),
+                             X_OK) == -1);
+        ATF_REQUIRE(::rmdir("tmp") == -1);
+
+        ATF_REQUIRE(::access(auto_file.file().c_str(), R_OK) == 0);
+    }
+    ATF_REQUIRE(::rmdir("tmp") != -1);
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, auto_directory__automatic);
     ATF_ADD_TEST_CASE(tcs, auto_directory__explicit);
+    ATF_ADD_TEST_CASE(tcs, auto_directory__mkdtemp);
 
     ATF_ADD_TEST_CASE(tcs, auto_file__automatic);
     ATF_ADD_TEST_CASE(tcs, auto_file__explicit);
+    ATF_ADD_TEST_CASE(tcs, auto_file__mkstemp);
 }

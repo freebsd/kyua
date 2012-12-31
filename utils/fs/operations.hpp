@@ -54,6 +54,7 @@ void mkdir(const path&, const int);
 void mkdir_p(const path&, const int);
 fs::path mkdtemp(const std::string&);
 fs::path mkstemp(const std::string&);
+void unlink(const path&);
 void unmount(const path&);
 
 
