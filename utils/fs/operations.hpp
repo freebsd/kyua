@@ -46,7 +46,6 @@ namespace fs {
 class path;
 
 
-void cleanup(const path&);
 path current_path(void);
 bool exists(const fs::path&);
 utils::optional< path > find_in_path(const char*);
@@ -54,9 +53,9 @@ void mkdir(const path&, const int);
 void mkdir_p(const path&, const int);
 fs::path mkdtemp(const std::string&);
 fs::path mkstemp(const std::string&);
+void rm_r(const path&);
 void rmdir(const path&);
 void unlink(const path&);
-void unmount(const path&);
 
 
 }  // namespace fs

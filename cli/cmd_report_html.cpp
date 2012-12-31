@@ -74,7 +74,7 @@ create_top_directory(const fs::path& directory, const bool force)
 {
     if (force) {
         if (fs::exists(directory))
-            fs::cleanup(directory);
+            fs::rm_r(directory);
     }
 
     try {
