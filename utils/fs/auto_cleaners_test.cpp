@@ -77,8 +77,42 @@ ATF_TEST_CASE_BODY(auto_directory__explicit)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(auto_file__automatic);
+ATF_TEST_CASE_BODY(auto_file__automatic)
+{
+    const fs::path file("foo");
+    atf::utils::create_file(file.str(), "");
+    {
+        fs::auto_file auto_file(file);
+        ATF_REQUIRE_EQ(file, auto_file.file());
+
+        ATF_REQUIRE(::access(file.c_str(), R_OK) == 0);
+    }
+    ATF_REQUIRE(::access(file.c_str(), R_OK) == -1);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(auto_file__explicit);
+ATF_TEST_CASE_BODY(auto_file__explicit)
+{
+    const fs::path file("bar");
+    atf::utils::create_file(file.str(), "");
+
+    fs::auto_file auto_file(file);
+    ATF_REQUIRE_EQ(file, auto_file.file());
+
+    ATF_REQUIRE(::access(file.c_str(), R_OK) == 0);
+    auto_file.remove();
+    auto_file.remove();
+    ATF_REQUIRE(::access(file.c_str(), R_OK) == -1);
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, auto_directory__automatic);
     ATF_ADD_TEST_CASE(tcs, auto_directory__explicit);
+
+    ATF_ADD_TEST_CASE(tcs, auto_file__automatic);
+    ATF_ADD_TEST_CASE(tcs, auto_file__explicit);
 }

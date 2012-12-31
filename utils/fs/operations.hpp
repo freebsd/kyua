@@ -51,6 +51,7 @@ utils::optional< path > find_in_path(const char*);
 void mkdir(const path&, const int);
 void mkdir_p(const path&, const int);
 fs::path mkdtemp(const path&);
+fs::path mkstemp(const path&);
 void unmount(const path&);
 
 

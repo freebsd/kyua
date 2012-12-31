@@ -28,6 +28,12 @@
 
 #include "utils/fs/auto_cleaners.hpp"
 
+extern "C" {
+#include <unistd.h>
+}
+
+#include <cerrno>
+
 #include "utils/format/macros.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/operations.hpp"
@@ -85,5 +91,62 @@ fs::auto_directory::cleanup(void)
         _cleaned = true;
 
         fs::cleanup(_directory);
+    }
+}
+
+
+/// Constructs a new auto_file and grabs ownership of a file.
+///
+/// \param file_ The file to grab the ownership of.
+fs::auto_file::auto_file(const path& file_) :
+    _file(file_),
+    _removed(false)
+{
+}
+
+
+/// Deletes the managed file.
+///
+/// This should not be relied on because it cannot provide proper error
+/// reporting.  Instead, the caller should use the remove() method.
+fs::auto_file::~auto_file(void)
+{
+    try {
+        this->remove();
+    } catch (const fs::error& e) {
+        LW(F("Failed to auto-cleanup file '%s': %s") % _file %
+           e.what());
+    }
+}
+
+
+/// Gets the file managed by this auto_file.
+///
+/// \return The path to the managed file.
+const fs::path&
+fs::auto_file::file(void) const
+{
+    return _file;
+}
+
+
+/// Deletes the managed file.
+///
+/// This operation is idempotent.
+///
+/// \throw fs::error If there is a problem removing the file.
+void
+fs::auto_file::remove(void)
+{
+    if (!_removed) {
+        // Mark this as cleaned first so that, in case of failure, we don't
+        // reraise the error from the destructor.
+        _removed = true;
+
+        if (::unlink(_file.c_str()) == -1) {
+            const int original_errno = errno;
+            throw fs::system_error(F("Removal of %s failed") % _file,
+                                   original_errno);
+        }
     }
 }

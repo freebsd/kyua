@@ -59,6 +59,23 @@ public:
 };
 
 
+/// Grabs ownership of a file and removes it upon destruction.
+class auto_file : noncopyable {
+    /// The path to the file being managed.
+    fs::path _file;
+
+    /// Whether removed() has been already executed or not.
+    bool _removed;
+
+public:
+    explicit auto_file(const path&);
+    ~auto_file(void);
+
+    const path& file(void) const;
+    void remove(void);
+};
+
+
 }  // namespace fs
 }  // namespace utils
 

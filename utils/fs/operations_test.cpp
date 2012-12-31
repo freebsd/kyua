@@ -655,6 +655,16 @@ ATF_TEST_CASE_BODY(mkdtemp)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(mkstemp)
+ATF_TEST_CASE_BODY(mkstemp)
+{
+    const fs::path file_template("tempfile.XXXXXX");
+    const fs::path tempfile = fs::mkstemp(file_template);
+    ATF_REQUIRE(!lookup(".", file_template.c_str(), DT_REG));
+    ATF_REQUIRE(lookup(".", tempfile.c_str(), DT_REG));
+}
+
+
 ATF_TEST_CASE(unmount__ok)
 ATF_TEST_CASE_HEAD(unmount__ok)
 {
@@ -727,6 +737,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, mkdir_p__eacces);
 
     ATF_ADD_TEST_CASE(tcs, mkdtemp);
+
+    ATF_ADD_TEST_CASE(tcs, mkstemp);
 
     ATF_ADD_TEST_CASE(tcs, unmount__ok);
     ATF_ADD_TEST_CASE(tcs, unmount__fail);
