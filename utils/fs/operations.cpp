@@ -637,22 +637,27 @@ fs::mkdir_p(const fs::path& dir, const int mode)
 /// template.  This should be most likely used in conjunction with
 /// fs::auto_directory.
 ///
-/// \param path_template The template for the temporary path.  Must contain the
-///     XXXXXX pattern, which is atomically replaced by a random unique string.
+/// \param path_template The template for the temporary path, which is a
+///     basename that is created within the TMPDIR.  Must contain the XXXXXX
+///     pattern, which is atomically replaced by a random unique string.
 ///
 /// \return The generated path for the temporary directory.
 ///
 /// \throw fs::system_error If the call to mkdtemp(3) fails.
 fs::path
-fs::mkdtemp(const path& path_template)
+fs::mkdtemp(const std::string& path_template)
 {
-    PRE(path_template.str().find("XXXXXX") != std::string::npos);
-    utils::auto_array< char > buf(new char[path_template.str().length() + 1]);
-    std::strcpy(buf.get(), path_template.c_str());
+    PRE(path_template.find("XXXXXX") != std::string::npos);
+
+    const fs::path tmpdir(utils::getenv_with_default("TMPDIR", "/tmp"));
+    const fs::path full_template = tmpdir / path_template;
+
+    utils::auto_array< char > buf(new char[full_template.str().length() + 1]);
+    std::strcpy(buf.get(), full_template.c_str());
     if (::mkdtemp(buf.get()) == NULL) {
         const int original_errno = errno;
         throw fs::system_error(F("Cannot create temporary directory using "
-                                 "template %s") % path_template,
+                                 "template %s") % full_template,
                                original_errno);
     }
     return fs::path(buf.get());
@@ -664,22 +669,27 @@ fs::mkdtemp(const path& path_template)
 /// The temporary file is created using mkstemp(3) using the provided template.
 /// This should be most likely used in conjunction with fs::auto_file.
 ///
-/// \param path_template The template for the temporary path.  Must contain the
-///     XXXXXX pattern, which is atomically replaced by a random unique string.
+/// \param path_template The template for the temporary path, which is a
+///     basename that is created within the TMPDIR.  Must contain the XXXXXX
+///     pattern, which is atomically replaced by a random unique string.
 ///
 /// \return The generated path for the temporary directory.
 ///
 /// \throw fs::system_error If the call to mkstemp(3) fails.
 fs::path
-fs::mkstemp(const path& path_template)
+fs::mkstemp(const std::string& path_template)
 {
-    PRE(path_template.str().find("XXXXXX") != std::string::npos);
-    utils::auto_array< char > buf(new char[path_template.str().length() + 1]);
-    std::strcpy(buf.get(), path_template.c_str());
+    PRE(path_template.find("XXXXXX") != std::string::npos);
+
+    const fs::path tmpdir(utils::getenv_with_default("TMPDIR", "/tmp"));
+    const fs::path full_template = tmpdir / path_template;
+
+    utils::auto_array< char > buf(new char[full_template.str().length() + 1]);
+    std::strcpy(buf.get(), full_template.c_str());
     if (::mkstemp(buf.get()) == -1) {
         const int original_errno = errno;
         throw fs::system_error(F("Cannot create temporary file using template "
-                                 "%s") % path_template, original_errno);
+                                 "%s") % full_template, original_errno);
     }
     return fs::path(buf.get());
 }

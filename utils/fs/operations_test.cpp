@@ -648,20 +648,28 @@ ATF_TEST_CASE_BODY(mkdir_p__eacces)
 ATF_TEST_CASE_WITHOUT_HEAD(mkdtemp)
 ATF_TEST_CASE_BODY(mkdtemp)
 {
-    const fs::path dir_template("tempdir.XXXXXX");
+    const fs::path tmpdir = fs::current_path() / "tmp";
+    utils::setenv("TMPDIR", tmpdir.str());
+    fs::mkdir(tmpdir, 0755);
+
+    const std::string dir_template("tempdir.XXXXXX");
     const fs::path tempdir = fs::mkdtemp(dir_template);
-    ATF_REQUIRE(!lookup(".", dir_template.c_str(), DT_DIR));
-    ATF_REQUIRE(lookup(".", tempdir.c_str(), DT_DIR));
+    ATF_REQUIRE(!lookup("tmp", dir_template.c_str(), DT_DIR));
+    ATF_REQUIRE(lookup("tmp", tempdir.leaf_name().c_str(), DT_DIR));
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(mkstemp)
 ATF_TEST_CASE_BODY(mkstemp)
 {
-    const fs::path file_template("tempfile.XXXXXX");
+    const fs::path tmpdir = fs::current_path() / "tmp";
+    utils::setenv("TMPDIR", tmpdir.str());
+    fs::mkdir(tmpdir, 0755);
+
+    const std::string file_template("tempfile.XXXXXX");
     const fs::path tempfile = fs::mkstemp(file_template);
-    ATF_REQUIRE(!lookup(".", file_template.c_str(), DT_REG));
-    ATF_REQUIRE(lookup(".", tempfile.c_str(), DT_REG));
+    ATF_REQUIRE(!lookup("tmp", file_template.c_str(), DT_REG));
+    ATF_REQUIRE(lookup("tmp", tempfile.leaf_name().c_str(), DT_REG));
 }
 
 

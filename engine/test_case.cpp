@@ -43,7 +43,6 @@ extern "C" {
 #include "utils/config/tree.ipp"
 #include "utils/datetime.hpp"
 #include "utils/defs.hpp"
-#include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/operations.hpp"
 #include "utils/fs/auto_cleaners.hpp"
@@ -215,7 +214,7 @@ run_test_case_safe(const engine::test_case* test_case,
     // single test (with the associated costs of signal programming, etc.)
     std::auto_ptr< signals::interrupts_inhibiter > inhibiter(
         new signals::interrupts_inhibiter);
-    const fs::path workdir = engine::create_work_directory();
+    const fs::path workdir = fs::mkdtemp("kyua.XXXXXX");
     fs::auto_directory workdir_cleaner(workdir);
     inhibiter.reset(NULL);
 
@@ -265,25 +264,6 @@ run_test_case_safe(const engine::test_case* test_case,
 
 
 }  // anonymous namespace
-
-
-/// Atomically creates a new work directory with a unique name.
-///
-/// The directory is created under the system-wide configured temporary
-/// directory as defined by the TMPDIR environment variable.
-///
-/// \return The path to the new work directory.
-///
-/// \throw fs::error If there is a problem creating the temporary directory.
-fs::path
-engine::create_work_directory(void)
-{
-    const optional< std::string > tmpdir = utils::getenv("TMPDIR");
-    if (!tmpdir)
-        return fs::mkdtemp(fs::path("/tmp/kyua.XXXXXX"));
-    else
-        return fs::mkdtemp(fs::path(F("%s/kyua.XXXXXX") % tmpdir.get()));
-}
 
 
 /// Destructor.

@@ -373,27 +373,6 @@ public:
 }  // anonymous namespace
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(create_work_directory__hardcoded);
-ATF_TEST_CASE_BODY(create_work_directory__hardcoded)
-{
-    utils::unsetenv("TMPDIR");
-    const fs::path workdir(engine::create_work_directory());
-    ATF_REQUIRE(::rmdir(workdir.c_str()) != -1);
-    ATF_REQUIRE_EQ(fs::path("/tmp"), workdir.branch_path());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(create_work_directory__tmpdir);
-ATF_TEST_CASE_BODY(create_work_directory__tmpdir)
-{
-    utils::setenv("TMPDIR", ".");
-    const fs::path workdir(engine::create_work_directory());
-    ATF_REQUIRE(::rmdir(workdir.c_str()) != -1);
-    ATF_REQUIRE_EQ(fs::path("."), workdir.branch_path());
-    ATF_REQUIRE_EQ("kyua.", workdir.leaf_name().substr(0, 5));
-}
-
-
 ATF_TEST_CASE_WITHOUT_HEAD(test_case__ctor_and_getters)
 ATF_TEST_CASE_BODY(test_case__ctor_and_getters)
 {
@@ -974,9 +953,6 @@ ATF_TEST_CASE_BODY(run_test_case__plain__missing_test_program)
 
 ATF_INIT_TEST_CASES(tcs)
 {
-    ATF_ADD_TEST_CASE(tcs, create_work_directory__hardcoded);
-    ATF_ADD_TEST_CASE(tcs, create_work_directory__tmpdir);
-
     ATF_ADD_TEST_CASE(tcs, test_case__ctor_and_getters);
     ATF_ADD_TEST_CASE(tcs, fake_result);
 
