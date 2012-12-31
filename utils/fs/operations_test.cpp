@@ -673,6 +673,24 @@ ATF_TEST_CASE_BODY(mkstemp)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(rmdir__ok)
+ATF_TEST_CASE_BODY(rmdir__ok)
+{
+    ATF_REQUIRE(::mkdir("foo", 0755) != -1);
+    ATF_REQUIRE(::access("foo", X_OK) == 0);
+    fs::rmdir(fs::path("foo"));
+    ATF_REQUIRE(::access("foo", X_OK) == -1);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(rmdir__fail)
+ATF_TEST_CASE_BODY(rmdir__fail)
+{
+    ATF_REQUIRE_THROW_RE(fs::system_error, "Removal of foo failed",
+                         fs::rmdir(fs::path("foo")));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(unlink__ok)
 ATF_TEST_CASE_BODY(unlink__ok)
 {
@@ -765,6 +783,9 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, mkdtemp);
 
     ATF_ADD_TEST_CASE(tcs, mkstemp);
+
+    ATF_ADD_TEST_CASE(tcs, rmdir__ok);
+    ATF_ADD_TEST_CASE(tcs, rmdir__fail);
 
     ATF_ADD_TEST_CASE(tcs, unlink__ok);
     ATF_ADD_TEST_CASE(tcs, unlink__fail);

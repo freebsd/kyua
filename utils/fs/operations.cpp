@@ -695,6 +695,22 @@ fs::mkstemp(const std::string& path_template)
 }
 
 
+/// Removes an empty directory.
+///
+/// \param file The directory to remove.
+///
+/// \throw fs::system_error If the call to rmdir(2) fails.
+void
+fs::rmdir(const path& file)
+{
+    if (::rmdir(file.c_str()) == -1) {
+        const int original_errno = errno;
+        throw fs::system_error(F("Removal of %s failed") % file,
+                               original_errno);
+    }
+}
+
+
 /// Removes a file.
 ///
 /// \param file The file to remove.

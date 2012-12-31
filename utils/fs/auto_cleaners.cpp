@@ -78,7 +78,7 @@ struct utils::fs::auto_directory::impl {
             // reraise the error from the destructor.
             _cleaned = true;
 
-            fs::cleanup(_directory);
+            fs::rmdir(_directory);
         }
     }
 };
@@ -93,7 +93,7 @@ fs::auto_directory::auto_directory(const path& directory_) :
 }
 
 
-/// Recursively deletes the managed directory.
+/// Deletes the managed directory; must be empty.
 ///
 /// This should not be relied on because it cannot provide proper error
 /// reporting.  Instead, the caller should use the cleanup() method.
@@ -119,7 +119,7 @@ fs::auto_directory::mkdtemp(const std::string& path_template)
     try {
         return auto_directory(directory_);
     } catch (...) {
-        fs::cleanup(directory_);
+        fs::rmdir(directory_);
         throw;
     }
 }
@@ -135,7 +135,7 @@ fs::auto_directory::directory(void) const
 }
 
 
-/// Recursively deletes the managed directory.
+/// Deletes the managed directory; must be empty.
 ///
 /// This operation is idempotent.
 ///

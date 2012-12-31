@@ -45,24 +45,20 @@ ATF_TEST_CASE_BODY(auto_directory__automatic)
 {
     const fs::path root("root");
     fs::mkdir(root, 0755);
-    fs::mkdir(root / "foo", 0555);
 
     {
         fs::auto_directory dir(root);
         ATF_REQUIRE_EQ(root, dir.directory());
 
         ATF_REQUIRE(::access("root", X_OK) == 0);
-        ATF_REQUIRE(::access("root/foo", X_OK) == 0);
 
         {
             fs::auto_directory dir_copy(dir);
         }
         // Should still exist after a copy is destructed.
         ATF_REQUIRE(::access("root", X_OK) == 0);
-        ATF_REQUIRE(::access("root/foo", X_OK) == 0);
     }
     ATF_REQUIRE(::access("root", X_OK) == -1);
-    ATF_REQUIRE(::access("root/foo", X_OK) == -1);
 }
 
 
@@ -71,17 +67,14 @@ ATF_TEST_CASE_BODY(auto_directory__explicit)
 {
     const fs::path root("root");
     fs::mkdir(root, 0755);
-    fs::mkdir(root / "foo", 0555);
 
     fs::auto_directory dir(root);
     ATF_REQUIRE_EQ(root, dir.directory());
 
     ATF_REQUIRE(::access("root", X_OK) == 0);
-    ATF_REQUIRE(::access("root/foo", X_OK) == 0);
     dir.cleanup();
     dir.cleanup();
     ATF_REQUIRE(::access("root", X_OK) == -1);
-    ATF_REQUIRE(::access("root/foo", X_OK) == -1);
 }
 
 
