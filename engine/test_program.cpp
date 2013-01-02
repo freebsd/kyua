@@ -41,54 +41,16 @@
 #include "utils/logging/macros.hpp"
 #include "utils/logging/operations.hpp"
 #include "utils/optional.ipp"
-#include "utils/process/children.ipp"
-#include "utils/process/status.hpp"
 #include "utils/sanity.hpp"
 
 namespace fs = utils::fs;
 namespace logging = utils::logging;
-namespace process = utils::process;
 
+using utils::none;
 using utils::optional;
 
 
 namespace {
-
-
-/// Functor to execute a tester's list operation.
-class list_test_cases {
-    /// Path to the tester binary.
-    const fs::path _tester;
-
-    /// Absolute path to the test program to list.
-    const fs::path& _program;
-
-public:
-    /// Constructor.
-    ///
-    /// \param interface Name of the interface of the tester.
-    /// \param program Absolute path to the test program to list.
-    list_test_cases(const std::string& interface, const fs::path& program) :
-        _tester(engine::tester_path(interface)), _program(program)
-    {
-        PRE(_program.is_absolute());
-    }
-
-    /// Executes the tester.
-    void
-    operator()(void)
-    {
-        // We rely on parsing the output of the tester verbatim.  Disable any of
-        // our own log messages so that they do not end up intermixed with such
-        // output.
-        logging::set_inmemory();
-
-        std::vector< std::string > args;
-        args.push_back("list");
-        args.push_back(_program.str());
-        process::exec(_tester, args);
-    }
-};
 
 
 /// Lua hook for the test_case function.
@@ -167,52 +129,6 @@ setup_lua_state(lutok::state& state, const engine::test_program* test_program,
 }
 
 
-/// Reads a stream to the end and records the output in a string.
-///
-/// \param input The stream to read from.
-///
-/// \return The text of the stream.
-static std::string
-read_all(std::istream& input)
-{
-    std::ostringstream buffer;
-
-    char tmp[1024];
-    while (input.good()) {
-        input.read(tmp, sizeof(tmp));
-        if (input.good() || input.eof()) {
-            buffer.write(tmp, input.gcount());
-        }
-    }
-
-    return buffer.str();
-}
-
-
-/// Drops the trailing newline in a string and replaces others with a literal.
-///
-/// \param input The string in which to perform the replacements.
-///
-/// \return The modified string.
-static std::string
-replace_newlines(const std::string input)
-{
-    std::string output = input;
-
-    while (output.length() > 0 && output[output.length() - 1] == '\n') {
-        output.erase(output.end() - 1);
-    }
-
-    std::string::size_type newline = output.find('\n', 0);
-    while (newline != std::string::npos) {
-        output.replace(newline, 1, "<<NEWLINE>>");
-        newline = output.find('\n', newline + 1);
-    }
-
-    return output;
-}
-
-
 /// Loads the list of test cases from a test program.
 ///
 /// \param test_program Representation of the test program to load.
@@ -221,15 +137,8 @@ replace_newlines(const std::string input)
 static engine::test_cases_vector
 load_test_cases(const engine::test_program& test_program)
 {
-    std::auto_ptr< process::child > child = process::child::fork_capture(
-        list_test_cases(test_program.interface_name(),
-                        test_program.absolute_path()));
-
-    const std::string output = read_all(child->output());
-
-    const process::status status = child->wait();
-    if (!status.exited() || status.exitstatus() != EXIT_SUCCESS)
-        throw engine::error(replace_newlines(output));
+    const engine::tester tester(test_program.interface_name(), none, none);
+    const std::string output = tester.list(test_program.absolute_path());
 
     engine::test_cases_vector test_cases;
     lutok::state state;

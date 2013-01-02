@@ -27,15 +27,54 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /// \file engine/testers.hpp
-/// Access to independent testers.
+/// Invocation of external tester binaries.
 
 #if !defined(ENGINE_TESTERS_HPP)
 #define ENGINE_TESTERS_HPP
 
-#include "utils/fs/path.hpp"
-#include "utils/process/children.hpp"
+#include <map>
+#include <string>
+#include <vector>
+
+#include "utils/datetime.hpp"
+#include "utils/optional.hpp"
+#include "utils/passwd.hpp"
+
+namespace utils {
+namespace config {
+class tree;
+}  // namespace config
+namespace fs {
+class path;
+}  // namespace fs
+}  // namespace utils
 
 namespace engine {
+
+
+/// Abstraction to invoke an external tester.
+///
+/// This class provides the primitives to construct an invocation of an external
+/// tester.  In other words: this is the place where the knowledge of what
+/// arguments a tester receives and the output it returns.
+class tester {
+    /// Name of the tester interface to use.
+    std::string _interface;
+
+    /// Common arguments to the tester, to be passed before the subcommand.
+    std::vector< std::string > _common_args;
+
+public:
+    tester(const std::string&, const utils::optional< utils::passwd::user >&,
+           const utils::optional< utils::datetime::delta >&);
+    ~tester(void);
+
+    std::string list(const utils::fs::path&) const;
+    void test(const utils::fs::path&, const std::string&,
+              const utils::fs::path&, const utils::fs::path&,
+              const utils::fs::path&,
+              const std::map< std::string, std::string >&) const;
+};
 
 
 utils::fs::path tester_path(const std::string&);

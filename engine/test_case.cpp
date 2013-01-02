@@ -39,7 +39,6 @@ extern "C" {
 #include "engine/test_result.hpp"
 #include "engine/testers.hpp"
 #include "engine/user_files/config.hpp"
-#include "utils/config/exceptions.hpp"
 #include "utils/config/tree.ipp"
 #include "utils/datetime.hpp"
 #include "utils/defs.hpp"
@@ -50,14 +49,11 @@ extern "C" {
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
 #include "utils/passwd.hpp"
-#include "utils/process/children.ipp"
-#include "utils/process/exceptions.hpp"
 
 namespace config = utils::config;
 namespace fs = utils::fs;
 namespace logging = utils::logging;
 namespace passwd = utils::passwd;
-namespace process = utils::process;
 namespace user_files = engine::user_files;
 
 using utils::none;
@@ -67,184 +63,63 @@ using utils::optional;
 namespace {
 
 
-/// Extracts the value of 'unprivileged_user' from the configuration.
+/// Generates the set of configuration variables for the tester.
 ///
-/// \param user_config The user configuration.
-///
-/// \return None if the user configuration does not define an unprivileged user,
-/// or the unprivileged user itself if defined.
-static optional< passwd::user >
-get_unprivileged_user(const config::tree& user_config)
-{
-    if (!user_config.is_set("unprivileged_user"))
-        return none;
-    return utils::make_optional(
-        user_config.lookup< user_files::user_node >("unprivileged_user"));
-}
-
-
-/// Converts a set of configuration variables to test program flags.
-///
+/// \param metadata The metadata of the test.
 /// \param user_config The configuration variables provided by the user.
 /// \param test_suite The name of the test suite.
-/// \param args [out] The test program arguments in which to add the new flags.
-static void
-config_to_args(const config::tree& user_config,
-               const std::string& test_suite,
-               std::vector< std::string >& args)
+///
+/// \return The mapping of configuration variables for the tester.
+static config::properties_map
+generate_tester_config(const engine::metadata& metadata,
+                       const config::tree& user_config,
+                       const std::string& test_suite)
 {
-    if (get_unprivileged_user(user_config))
-        args.push_back(F("-vunprivileged-user=%s") %
-                       get_unprivileged_user(user_config).get().name);
+    config::properties_map props;
 
     try {
-        const config::properties_map& properties = user_config.all_properties(
-            F("test_suites.%s") % test_suite, true);
-        for (config::properties_map::const_iterator iter = properties.begin();
-             iter != properties.end(); iter++) {
-            args.push_back(F("-v%s=%s") % (*iter).first % (*iter).second);
-        }
+        props = user_config.all_properties(F("test_suites.%s") % test_suite,
+                                           true);
     } catch (const config::unknown_key_error& unused_error) {
         // Ignore: not all test suites have entries in the configuration.
     }
+
+    if (user_config.is_set("unprivileged_user")) {
+        const passwd::user& user =
+            user_config.lookup< user_files::user_node >("unprivileged_user");
+        props["unprivileged-user"] = user.name;
+    }
+
+    // TODO(jmmv): This is an ugly hack to cope with an atf-specific
+    // property.  We should not be doing this at all, so just consider this
+    // a temporary optimization...
+    if (metadata.has_cleanup())
+        props["has.cleanup"] = "true";
+    else
+        props["has.cleanup"] = "false";
+
+    return props;
 }
 
 
-/// Functor to execute a tester's run operation.
-class run_test_case {
-    /// Path to the tester binary.
-    const fs::path _tester;
-
-    /// Absolute path to the test program to run.
-    const fs::path _program;
-
-    /// Data of the test case to run.
-    const engine::test_case& _test_case;
-
-    /// Path to the result file to create.
-    const fs::path _result_path;
-
-    /// User-provided configuration variables.
-    const config::tree& _user_config;
-
-public:
-    /// Constructor.
-    ///
-    /// \param interface Name of the interface of the tester.
-    /// \param program Absolute path to the test program to run.
-    /// \param test_case Data of the test case to run.
-    /// \param result_path Path to the result file to create.
-    /// \param user_config User-provided configuration variables.
-    run_test_case(const std::string& interface, const fs::path& program,
-                  const engine::test_case& test_case,
-                  const fs::path& result_path,
-                  const config::tree& user_config) :
-        _tester(engine::tester_path(interface)), _program(program),
-        _test_case(test_case), _result_path(result_path),
-        _user_config(user_config)
-    {
-        PRE(_program.is_absolute());
-    }
-
-    /// Executes the tester.
-    void
-    operator()(void)
-    {
-        // We rely on parsing the output of the tester verbatim.  Disable any of
-        // our own log messages so that they do not end up intermixed with such
-        // output.
-        logging::set_inmemory();
-
-        std::vector< std::string > args;
-
-        INV(_test_case.get_metadata().timeout().useconds == 0);
-        args.push_back(F("-t%s") % _test_case.get_metadata().timeout().seconds);
-
-        optional< passwd::user > unprivileged_user = get_unprivileged_user(
-            _user_config);
-        if (_test_case.get_metadata().required_user() == "unprivileged" &&
-            unprivileged_user) {
-            args.push_back(F("-u%s") % unprivileged_user.get().uid);
-            args.push_back(F("-g%s") % unprivileged_user.get().gid);
-        }
-
-        args.push_back("test");
-        config_to_args(_user_config,
-                       _test_case.container_test_program().test_suite_name(),
-                       args);
-
-        // TODO(jmmv): This is an ugly hack to cope with an atf-specific
-        // property.  We should not be doing this at all, so just consider this
-        // a temporary optimization...
-        if (_test_case.get_metadata().has_cleanup())
-            args.push_back("-vhas.cleanup=true");
-        else
-            args.push_back("-vhas.cleanup=false");
-
-        args.push_back(_program.str());
-        args.push_back(_test_case.name());
-        args.push_back(_result_path.str());
-        process::exec(_tester, args);
-    }
-};
-
-
-/// Common code to run run_test_case for test and debug.
+/// Creates a tester.
 ///
-/// \param test_case Data of the test case to run.
+/// \param interface_name The name of the tester interface to use.
+/// \param metadata Metadata of the test case.
 /// \param user_config User-provided configuration variables.
-/// \param hooks Caller-provided runtime hooks.
-/// \param work_directory Path to a temporary directory into which auxiliary
-///     files can be stored.
-/// \param stdout_path The file into which to store the test case's stdout.
-/// \param stderr_path The file into which to store the test case's stderr.
 ///
-/// \return The test result.
-static engine::test_result
-run_test_case_safe(const engine::test_case* test_case,
-                   const config::tree& user_config,
-                   engine::test_case_hooks& hooks,
-                   const fs::path& work_directory,
-                   const fs::path& stdout_path,
-                   const fs::path& stderr_path)
+/// \return The created tester, on which the test() method can be executed.
+static engine::tester
+create_tester(const std::string& interface_name,
+              const engine::metadata& metadata, const config::tree& user_config)
 {
-    const fs::auto_file result_file(work_directory / "result.txt");
+    optional< passwd::user > user;
+    if (user_config.is_set("unprivileged_user") &&
+        metadata.required_user() == "unprivileged")
+        user = user_config.lookup< user_files::user_node >("unprivileged_user");
 
-    std::auto_ptr< process::child > child = process::child::fork_files(
-        ::run_test_case(
-            test_case->container_test_program().interface_name(),
-            test_case->container_test_program().absolute_path(),
-            *test_case, result_file.file(), user_config),
-        stdout_path, stderr_path);
-
-    const process::status status = child->wait();
-
-    if (status.exited()) {
-        if (status.exitstatus() == EXIT_SUCCESS) {
-            // OK; the tester exited cleanly.
-            // TODO(jmmv): We should validate that the result file encodes a
-            // postive result.
-        } else if (status.exitstatus() == EXIT_FAILURE) {
-            // OK; the tester reported that the test itself failed and we
-            // have the result file to indicate this.  TODO(jmmv): We should
-            // validate that the result file encodes a negative result.
-        } else {
-            throw engine::error(F("Tester failed with code %s; that's "
-                                  "really bad") % status.exitstatus());
-        }
-    } else {
-        INV(status.signaled());
-        throw engine::error("Tester received a signal; that's really bad");
-    }
-
-    hooks.got_stdout(stdout_path);
-    hooks.got_stderr(stderr_path);
-
-    std::ifstream result_input(result_file.file().c_str());
-    const engine::test_result result = engine::test_result::parse(
-        result_input);
-
-    return result;
+    return engine::tester(interface_name, user,
+                          utils::make_optional(metadata.timeout()));
 }
 
 
@@ -473,10 +348,23 @@ engine::debug_test_case(const test_case* test_case,
     if (!fs::exists(test_case->container_test_program().absolute_path()))
         return test_result(test_result::broken, "Test program does not exist");
 
-    const engine::test_result result = run_test_case_safe(
-        test_case, user_config, hooks, work_directory, stdout_path,
-        stderr_path);
-    return result;
+    const fs::auto_file result_file(work_directory / "result.txt");
+
+    const engine::test_program& test_program =
+        test_case->container_test_program();
+
+    const engine::tester tester = create_tester(
+        test_program.interface_name(), test_case->get_metadata(), user_config);
+    tester.test(test_program.absolute_path(), test_case->name(),
+                result_file.file(), stdout_path, stderr_path,
+                generate_tester_config(test_case->get_metadata(), user_config,
+                                       test_program.test_suite_name()));
+
+    hooks.got_stdout(stdout_path);
+    hooks.got_stderr(stderr_path);
+
+    std::ifstream result_input(result_file.file().c_str());
+    return engine::test_result::parse(result_input);
 }
 
 
@@ -509,9 +397,21 @@ engine::run_test_case(const test_case* test_case,
 
     const fs::auto_file stdout_file(work_directory / "stdout.txt");
     const fs::auto_file stderr_file(work_directory / "stderr.txt");
+    const fs::auto_file result_file(work_directory / "result.txt");
 
-    const engine::test_result result = run_test_case_safe(
-        test_case, user_config, hooks, work_directory,
-        stdout_file.file(), stderr_file.file());
-    return result;
+    const engine::test_program& test_program =
+        test_case->container_test_program();
+
+    const engine::tester tester = create_tester(
+        test_program.interface_name(), test_case->get_metadata(), user_config);
+    tester.test(test_program.absolute_path(), test_case->name(),
+                result_file.file(), stdout_file.file(), stderr_file.file(),
+                generate_tester_config(test_case->get_metadata(), user_config,
+                                       test_program.test_suite_name()));
+
+    hooks.got_stdout(stdout_file.file());
+    hooks.got_stderr(stderr_file.file());
+
+    std::ifstream result_input(result_file.file().c_str());
+    return engine::test_result::parse(result_input);
 }
