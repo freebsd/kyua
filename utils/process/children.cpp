@@ -37,12 +37,14 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include <cassert>
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include <memory>
 
+#include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/process/exceptions.hpp"
@@ -151,21 +153,73 @@ safe_wait(const pid_t pid)
 }
 
 
-/// Replacement for strdup(3).
+/// Logs the execution of another program.
 ///
-/// strdup(3) is not a standard function and, therefore, cannot be assumed to be
-/// present in the std namespace.  Just reimplement it and use standard C++
-/// memory allocation functions.
-///
-/// \param str The C string to duplicate.
-///
-/// \return The duplicated string.  Must be deleted with operator delete[].
-char*
-duplicate_cstring(const char* str)
+/// \param program The binary to execute.
+/// \param args The arguments to pass to the binary, without the program name.
+static void
+log_exec(const fs::path& program, const process::args_vector& args)
 {
-    char* copy = new char[std::strlen(str) + 1];
-    std::strcpy(copy, str);
-    return copy;
+    std::string plain_command = program.str();
+    for (process::args_vector::const_iterator iter = args.begin();
+         iter != args.end(); ++iter)
+        plain_command += F(" %s") % *iter;
+    LD(F("Executing%s") % plain_command);
+}
+
+
+/// Maximum number of arguments supported by cxx_exec.
+///
+/// We need this limit to avoid having to allocate dynamic memory in the child
+/// process to construct the arguments list, which would have side-effects in
+/// the parent's memory if we use vfork().
+#define MAX_ARGS 128
+
+
+static void cxx_exec(const fs::path& program, const process::args_vector& args)
+    throw() UTILS_NORETURN;
+
+
+/// Executes an external binary and replaces the current process.
+///
+/// This function must not use any of the logging features, so that the output
+/// of the subprocess is not "polluted" by our own messages.
+///
+/// This function must also not affect the global state of the current process
+/// as otherwise we would not be able to use vfork().  Only state stored in the
+/// stack can be touched.
+///
+/// \param program The binary to execute.
+/// \param args The arguments to pass to the binary, without the program name.
+static void
+cxx_exec(const fs::path& program, const process::args_vector& args) throw()
+{
+    assert(args.size() < MAX_ARGS);
+    try {
+        const char* argv[MAX_ARGS + 1];
+
+        argv[0] = program.c_str();
+        for (process::args_vector::size_type i = 0; i < args.size(); i++)
+            argv[1 + i] = args[i].c_str();
+        argv[1 + args.size()] = NULL;
+
+        const int ret = ::execv(program.c_str(),
+                                (char* const*)(unsigned long)(const void*)argv);
+        const int original_errno = errno;
+        assert(ret == -1);
+
+        std::cerr << "Failed to execute " << program << ": "
+                  << std::strerror(original_errno) << "\n";
+        std::abort();
+    } catch (const std::runtime_error& error) {
+        std::cerr << "Failed to execute " << program << ": "
+                  << error.what() << "\n";
+        std::abort();
+    } catch (...) {
+        std::cerr << "Failed to execute " << program << "; got unexpected "
+            "exception during exec\n";
+        std::abort();
+    }
 }
 
 
@@ -302,6 +356,59 @@ process::child::fork_files_aux(const fs::path& stdout_file,
 }
 
 
+/// Spawns a new binary and multiplexes and captures its stdout and stderr.
+///
+/// If the subprocess cannot be completely set up for any reason, it attempts to
+/// dump an error message to its stderr channel and it then calls std::abort().
+///
+/// \param program The binary to execute.
+/// \param args The arguments to pass to the binary, without the program name.
+///
+/// \return A new child object, returned as a dynamically-allocated object
+/// because children classes are unique and thus noncopyable.
+///
+/// \throw process::system_error If the process cannot be spawned due to a
+///     system call error.
+std::auto_ptr< process::child >
+process::child::spawn_capture(const fs::path& program, const args_vector& args)
+{
+    std::auto_ptr< child > child = fork_capture_aux();
+    if (child.get() == NULL)
+        cxx_exec(program, args);
+    log_exec(program, args);
+    return child;
+}
+
+
+/// Spawns a new binary and redirects its stdout and stderr to files.
+///
+/// If the subprocess cannot be completely set up for any reason, it attempts to
+/// dump an error message to its stderr channel and it then calls std::abort().
+///
+/// \param program The binary to execute.
+/// \param args The arguments to pass to the binary, without the program name.
+/// \param stdout_file The name of the file in which to store the stdout.
+/// \param stderr_file The name of the file in which to store the stderr.
+///
+/// \return A new child object, returned as a dynamically-allocated object
+/// because children classes are unique and thus noncopyable.
+///
+/// \throw process::system_error If the process cannot be spawned due to a
+///     system call error.
+std::auto_ptr< process::child >
+process::child::spawn_files(const fs::path& program,
+                            const args_vector& args,
+                            const fs::path& stdout_file,
+                            const fs::path& stderr_file)
+{
+    std::auto_ptr< child > child = fork_files_aux(stdout_file, stderr_file);
+    if (child.get() == NULL)
+        cxx_exec(program, args);
+    log_exec(program, args);
+    return child;
+}
+
+
 /// Returns the process identifier of this child.
 ///
 /// \return A process identifier.
@@ -340,37 +447,4 @@ process::child::wait(void)
         signals::remove_pid_to_kill(_pimpl->_pid);
     }
     return status;
-}
-
-
-/// Executes an external binary and replaces the current process.
-///
-/// \param program The binary to execute.
-/// \param args The arguments to pass to the binary, without the program name.
-///
-/// \throw process::system_error If the call to exec(3) fails.
-void
-process::exec(const fs::path& program, const std::vector< std::string >& args)
-{
-    char** argv = new char*[1 + args.size() + 1];
-
-    argv[0] = duplicate_cstring(program.c_str());
-    for (std::vector< std::string >::size_type i = 0; i < args.size(); i++)
-        argv[1 + i] = duplicate_cstring(args[i].c_str());
-    argv[1 + args.size()] = NULL;
-
-    std::string plain_command;
-    for (char** arg = argv; *arg != NULL; arg++)
-        plain_command += F(" %s") % *arg;
-    LD(F("Executing%s") % plain_command);
-
-    const int ret = ::execv(program.c_str(), argv);
-    const int original_errno = errno;
-    INV(ret == -1);
-
-    for (char** arg = argv; *arg != NULL; arg++)
-        delete *arg;
-    delete [] argv;
-
-    throw system_error(F("Failed to execute %s") % program, original_errno);
 }

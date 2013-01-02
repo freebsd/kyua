@@ -55,46 +55,6 @@ using utils::optional;
 namespace {
 
 
-/// Functor to execute a tester.
-class run_tester {
-    /// Absolute path to the tester.
-    fs::path _tester_path;
-
-    /// Arguments to the tester, without the program name.
-    std::vector< std::string > _args;
-
-public:
-    /// Constructor.
-    ///
-    /// \param tester_path Absolute path to the tester.
-    /// \param args Arguments to the tester, without the program name.
-    run_tester(const fs::path& tester_path,
-               const std::vector< std::string >& args) :
-        _tester_path(tester_path), _args(args)
-    {
-    }
-
-    /// Executes the tester.
-    void
-    operator()(void)
-    {
-        // Prevent any of our own log messages from leaking into the tester's
-        // output.
-        logging::set_inmemory();
-
-        try {
-            process::exec(_tester_path, _args);
-        } catch (const engine::error& e) {
-            // If we fail for some reason, consider this a failure on our side
-            // and report it accordingly.
-            std::cerr << F("Failed to execute the tester %s: %s\n") %
-                _tester_path % e.what();
-            ::exit(3);
-        }
-    }
-};
-
-
 /// Reads a stream to the end and records the output in a string.
 ///
 /// \param input The stream to read from.
@@ -210,8 +170,8 @@ engine::tester::list(const fs::path& program) const
     args.push_back(program.str());
 
     const fs::path tester_path = engine::tester_path(_interface);
-    std::auto_ptr< process::child > child = process::child::fork_capture(
-        run_tester(tester_path, args));
+    std::auto_ptr< process::child > child = process::child::spawn_capture(
+        tester_path, args);
 
     const std::string output = read_all(child->output());
 
@@ -251,8 +211,8 @@ engine::tester::test(const fs::path& program, const std::string& test_case_name,
     args.push_back(result_file.str());
 
     const fs::path tester_path = engine::tester_path(_interface);
-    std::auto_ptr< process::child > child = process::child::fork_files(
-        run_tester(tester_path, args), stdout_file, stderr_file);
+    std::auto_ptr< process::child > child = process::child::spawn_files(
+        tester_path, args, stdout_file, stderr_file);
     const process::status status = child->wait();
 
     if (status.exited()) {

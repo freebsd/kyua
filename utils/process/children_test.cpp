@@ -176,44 +176,6 @@ child_raise_exception(void)
 }
 
 
-/// Functor for the body of a process that calls process::exec.
-///
-/// In order to be able to test the process::exec function, we must execute it
-/// under a subprocess so that we can inspect the actions taken in such
-/// subprocess from the test case itself.
-class do_exec {
-    /// The path to the program to execute.
-    fs::path _program;
-
-    /// The arguments to pass to the executed program.
-    const std::vector< std::string > _args;
-
-public:
-    /// Constructs a new functor.
-    ///
-    /// \param program The path to the program to execute.
-    /// \param args The arguments to pass to the executed program.
-    do_exec(const fs::path& program, const std::vector< std::string >& args) :
-        _program(program),
-        _args(args)
-    {
-    }
-
-    /// Body for the subprocess.
-    void
-    operator()(void)
-    {
-        logging::set_inmemory();
-        try {
-            process::exec(_program, _args);
-        } catch (const process::system_error& e) {
-            std::cerr << "Caught system_error: " << e.what() << '\n';
-            std::abort();
-        }
-    }
-};
-
-
 /// Calculates the path to the test helpers binary.
 ///
 /// \param tc A pointer to the caller test case, needed to extract the value of
@@ -609,6 +571,152 @@ ATF_TEST_CASE_BODY(child__fork_files__create_stderr_fail)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(child__spawn__absolute_path);
+ATF_TEST_CASE_BODY(child__spawn__absolute_path)
+{
+    std::vector< std::string > args;
+    args.push_back("return-code");
+    args.push_back("12");
+
+    const fs::path program = get_helpers(this);
+    INV(program.is_absolute());
+    std::auto_ptr< process::child > child = process::child::spawn_files(
+        program, args, fs::path("out"), fs::path("err"));
+
+    const process::status status = child->wait();
+    ATF_REQUIRE(status.exited());
+    ATF_REQUIRE_EQ(12, status.exitstatus());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(child__spawn__relative_path);
+ATF_TEST_CASE_BODY(child__spawn__relative_path)
+{
+    std::vector< std::string > args;
+    args.push_back("return-code");
+    args.push_back("13");
+
+    ATF_REQUIRE(::mkdir("root", 0755) != -1);
+    ATF_REQUIRE(::symlink(get_helpers(this).c_str(), "root/helpers") != -1);
+
+    std::auto_ptr< process::child > child = process::child::spawn_files(
+        fs::path("root/helpers"), args, fs::path("out"), fs::path("err"));
+
+    const process::status status = child->wait();
+    ATF_REQUIRE(status.exited());
+    ATF_REQUIRE_EQ(13, status.exitstatus());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(child__spawn__basename_only);
+ATF_TEST_CASE_BODY(child__spawn__basename_only)
+{
+    std::vector< std::string > args;
+    args.push_back("return-code");
+    args.push_back("14");
+
+    ATF_REQUIRE(::symlink(get_helpers(this).c_str(), "helpers") != -1);
+
+    std::auto_ptr< process::child > child = process::child::spawn_files(
+        fs::path("helpers"), args, fs::path("out"), fs::path("err"));
+
+    const process::status status = child->wait();
+    ATF_REQUIRE(status.exited());
+    ATF_REQUIRE_EQ(14, status.exitstatus());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(child__spawn__no_path);
+ATF_TEST_CASE_BODY(child__spawn__no_path)
+{
+    logging::set_inmemory();
+
+    std::vector< std::string > args;
+    args.push_back("return-code");
+    args.push_back("14");
+
+    const fs::path helpers = get_helpers(this);
+    utils::setenv("PATH", helpers.branch_path().c_str());
+    std::auto_ptr< process::child > child = process::child::spawn_capture(
+        fs::path(helpers.leaf_name()), args);
+
+    std::string line;
+    ATF_REQUIRE(std::getline(child->output(), line).good());
+    ATF_REQUIRE_MATCH("Failed to execute", line);
+    ATF_REQUIRE(!std::getline(child->output(), line));
+
+    const process::status status = child->wait();
+    ATF_REQUIRE(status.signaled());
+    ATF_REQUIRE_EQ(SIGABRT, status.termsig());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(child__spawn__no_args);
+ATF_TEST_CASE_BODY(child__spawn__no_args)
+{
+    std::vector< std::string > args;
+    std::auto_ptr< process::child > child = process::child::spawn_capture(
+        get_helpers(this), args);
+
+    std::string line;
+    ATF_REQUIRE(std::getline(child->output(), line).good());
+    ATF_REQUIRE_EQ("Must provide a helper name", line);
+    ATF_REQUIRE(!std::getline(child->output(), line));
+
+    const process::status status = child->wait();
+    ATF_REQUIRE(status.exited());
+    ATF_REQUIRE_EQ(EXIT_FAILURE, status.exitstatus());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(child__spawn__some_args);
+ATF_TEST_CASE_BODY(child__spawn__some_args)
+{
+    std::vector< std::string > args;
+    args.push_back("print-args");
+    args.push_back("foo");
+    args.push_back("   bar baz ");
+    std::auto_ptr< process::child > child = process::child::spawn_capture(
+        get_helpers(this), args);
+
+    std::string line;
+    ATF_REQUIRE(std::getline(child->output(), line).good());
+    ATF_REQUIRE_EQ("argv[0] = " + get_helpers(this).str(), line);
+    ATF_REQUIRE(std::getline(child->output(), line).good());
+    ATF_REQUIRE_EQ("argv[1] = print-args", line);
+    ATF_REQUIRE(std::getline(child->output(), line));
+    ATF_REQUIRE_EQ("argv[2] = foo", line);
+    ATF_REQUIRE(std::getline(child->output(), line));
+    ATF_REQUIRE_EQ("argv[3] =    bar baz ", line);
+    ATF_REQUIRE(std::getline(child->output(), line));
+    ATF_REQUIRE_EQ("argv[4] = NULL", line);
+    ATF_REQUIRE(!std::getline(child->output(), line));
+
+    const process::status status = child->wait();
+    ATF_REQUIRE(status.exited());
+    ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(child__spawn__missing_program);
+ATF_TEST_CASE_BODY(child__spawn__missing_program)
+{
+    std::vector< std::string > args;
+    std::auto_ptr< process::child > child = process::child::spawn_capture(
+        fs::path("a/b/c"), args);
+
+    std::string line;
+    ATF_REQUIRE(std::getline(child->output(), line).good());
+    const std::string exp = "Failed to execute a/b/c: ";
+    ATF_REQUIRE_EQ(exp, line.substr(0, exp.length()));
+    ATF_REQUIRE(!std::getline(child->output(), line));
+
+    const process::status status = child->wait();
+    ATF_REQUIRE(status.signaled());
+    ATF_REQUIRE_EQ(SIGABRT, status.termsig());
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(child__pid);
 ATF_TEST_CASE_BODY(child__pid)
 {
@@ -631,153 +739,6 @@ ATF_TEST_CASE_BODY(child__pid)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(exec__absolute_path);
-ATF_TEST_CASE_BODY(exec__absolute_path)
-{
-    std::vector< std::string > args;
-    args.push_back("return-code");
-    args.push_back("12");
-
-    const fs::path program = get_helpers(this);
-    INV(program.is_absolute());
-    std::auto_ptr< process::child > child = process::child::fork_files(
-        do_exec(program, args), fs::path("out"), fs::path("err"));
-
-    const process::status status = child->wait();
-    ATF_REQUIRE(status.exited());
-    ATF_REQUIRE_EQ(12, status.exitstatus());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(exec__relative_path);
-ATF_TEST_CASE_BODY(exec__relative_path)
-{
-    std::vector< std::string > args;
-    args.push_back("return-code");
-    args.push_back("13");
-
-    ATF_REQUIRE(::mkdir("root", 0755) != -1);
-    ATF_REQUIRE(::symlink(get_helpers(this).c_str(), "root/helpers") != -1);
-
-    std::auto_ptr< process::child > child = process::child::fork_files(
-        do_exec(fs::path("root/helpers"), args), fs::path("out"),
-        fs::path("err"));
-
-    const process::status status = child->wait();
-    ATF_REQUIRE(status.exited());
-    ATF_REQUIRE_EQ(13, status.exitstatus());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(exec__basename_only);
-ATF_TEST_CASE_BODY(exec__basename_only)
-{
-    std::vector< std::string > args;
-    args.push_back("return-code");
-    args.push_back("14");
-
-    ATF_REQUIRE(::symlink(get_helpers(this).c_str(), "helpers") != -1);
-
-    std::auto_ptr< process::child > child = process::child::fork_files(
-        do_exec(fs::path("helpers"), args), fs::path("out"), fs::path("err"));
-
-    const process::status status = child->wait();
-    ATF_REQUIRE(status.exited());
-    ATF_REQUIRE_EQ(14, status.exitstatus());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(exec__no_path);
-ATF_TEST_CASE_BODY(exec__no_path)
-{
-    logging::set_inmemory();
-
-    std::vector< std::string > args;
-    args.push_back("return-code");
-    args.push_back("14");
-
-    const fs::path helpers = get_helpers(this);
-    utils::setenv("PATH", helpers.branch_path().c_str());
-    std::auto_ptr< process::child > child = process::child::fork_capture(
-        do_exec(fs::path(helpers.leaf_name()), args));
-
-    std::string line;
-    ATF_REQUIRE(std::getline(child->output(), line).good());
-    ATF_REQUIRE_MATCH("Failed to execute", line);
-    ATF_REQUIRE(!std::getline(child->output(), line));
-
-    const process::status status = child->wait();
-    ATF_REQUIRE(status.signaled());
-    ATF_REQUIRE_EQ(SIGABRT, status.termsig());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(exec__no_args);
-ATF_TEST_CASE_BODY(exec__no_args)
-{
-    std::vector< std::string > args;
-    std::auto_ptr< process::child > child = process::child::fork_capture(
-        do_exec(get_helpers(this), args));
-
-    std::string line;
-    ATF_REQUIRE(std::getline(child->output(), line).good());
-    ATF_REQUIRE_EQ("Must provide a helper name", line);
-    ATF_REQUIRE(!std::getline(child->output(), line));
-
-    const process::status status = child->wait();
-    ATF_REQUIRE(status.exited());
-    ATF_REQUIRE_EQ(EXIT_FAILURE, status.exitstatus());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(exec__some_args);
-ATF_TEST_CASE_BODY(exec__some_args)
-{
-    std::vector< std::string > args;
-    args.push_back("print-args");
-    args.push_back("foo");
-    args.push_back("   bar baz ");
-    std::auto_ptr< process::child > child = process::child::fork_capture(
-        do_exec(get_helpers(this), args));
-
-    std::string line;
-    ATF_REQUIRE(std::getline(child->output(), line).good());
-    ATF_REQUIRE_EQ("argv[0] = " + get_helpers(this).str(), line);
-    ATF_REQUIRE(std::getline(child->output(), line).good());
-    ATF_REQUIRE_EQ("argv[1] = print-args", line);
-    ATF_REQUIRE(std::getline(child->output(), line));
-    ATF_REQUIRE_EQ("argv[2] = foo", line);
-    ATF_REQUIRE(std::getline(child->output(), line));
-    ATF_REQUIRE_EQ("argv[3] =    bar baz ", line);
-    ATF_REQUIRE(std::getline(child->output(), line));
-    ATF_REQUIRE_EQ("argv[4] = NULL", line);
-    ATF_REQUIRE(!std::getline(child->output(), line));
-
-    const process::status status = child->wait();
-    ATF_REQUIRE(status.exited());
-    ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(exec__missing_program);
-ATF_TEST_CASE_BODY(exec__missing_program)
-{
-    std::vector< std::string > args;
-    std::auto_ptr< process::child > child = process::child::fork_capture(
-        do_exec(fs::path("a/b/c"), args));
-
-    std::string line;
-    ATF_REQUIRE(std::getline(child->output(), line).good());
-    const std::string exp = "Caught system_error: Failed to execute a/b/c: ";
-    ATF_REQUIRE_EQ(exp, line.substr(0, exp.length()));
-    ATF_REQUIRE(!std::getline(child->output(), line));
-
-    const process::status status = child->wait();
-    ATF_REQUIRE(status.signaled());
-    ATF_REQUIRE_EQ(SIGABRT, status.termsig());
-}
-
-
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, child__fork_capture__ok_function);
@@ -797,13 +758,13 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, child__fork_files__create_stdout_fail);
     ATF_ADD_TEST_CASE(tcs, child__fork_files__create_stderr_fail);
 
-    ATF_ADD_TEST_CASE(tcs, child__pid);
+    ATF_ADD_TEST_CASE(tcs, child__spawn__absolute_path);
+    ATF_ADD_TEST_CASE(tcs, child__spawn__relative_path);
+    ATF_ADD_TEST_CASE(tcs, child__spawn__basename_only);
+    ATF_ADD_TEST_CASE(tcs, child__spawn__no_path);
+    ATF_ADD_TEST_CASE(tcs, child__spawn__no_args);
+    ATF_ADD_TEST_CASE(tcs, child__spawn__some_args);
+    ATF_ADD_TEST_CASE(tcs, child__spawn__missing_program);
 
-    ATF_ADD_TEST_CASE(tcs, exec__absolute_path);
-    ATF_ADD_TEST_CASE(tcs, exec__relative_path);
-    ATF_ADD_TEST_CASE(tcs, exec__basename_only);
-    ATF_ADD_TEST_CASE(tcs, exec__no_path);
-    ATF_ADD_TEST_CASE(tcs, exec__no_args);
-    ATF_ADD_TEST_CASE(tcs, exec__some_args);
-    ATF_ADD_TEST_CASE(tcs, exec__missing_program);
+    ATF_ADD_TEST_CASE(tcs, child__pid);
 }
