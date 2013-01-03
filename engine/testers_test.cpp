@@ -243,13 +243,47 @@ ATF_TEST_CASE_WITHOUT_HEAD(tester_path__custom);
 ATF_TEST_CASE_BODY(tester_path__custom)
 {
     fs::mkdir(fs::path("testers"), 0755);
-    atf::utils::create_file("testers/kyua-mock-tester", "Not a binary");
-
-    utils::setenv("KYUA_TESTERSDIR", (fs::current_path() / "unknown").str());
-    ATF_REQUIRE_THROW_RE(engine::error, "Unknown interface mock",
-                         engine::tester_path("mock"));
+    atf::utils::create_file("testers/kyua-mock-1-tester", "Not a binary");
+    atf::utils::create_file("testers/kyua-mock-2-tester", "Not a binary");
     utils::setenv("KYUA_TESTERSDIR", (fs::current_path() / "testers").str());
-    ATF_REQUIRE(atf::utils::file_exists(engine::tester_path("mock").str()));
+
+    const fs::path mock1 = engine::tester_path("mock-1");
+    ATF_REQUIRE(mock1.is_absolute());
+    ATF_REQUIRE(atf::utils::file_exists(mock1.str()));
+
+    const fs::path mock2 = engine::tester_path("mock-2");
+    ATF_REQUIRE(mock2.is_absolute());
+    ATF_REQUIRE(atf::utils::file_exists(mock2.str()));
+
+    ATF_REQUIRE_THROW_RE(engine::error, "Unknown interface mock-3",
+                         engine::tester_path("mock-3"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(tester_path__cached);
+ATF_TEST_CASE_BODY(tester_path__cached)
+{
+    fs::mkdir(fs::path("testers"), 0755);
+    atf::utils::create_file("testers/kyua-mock-tester", "Not a binary");
+    utils::setenv("KYUA_TESTERSDIR", (fs::current_path() / "testers").str());
+
+    const fs::path mock = engine::tester_path("mock");
+    ATF_REQUIRE(atf::utils::file_exists(mock.str()));
+    ATF_REQUIRE(::unlink(mock.c_str()) != -1);
+    ATF_REQUIRE(!atf::utils::file_exists(mock.str()));
+    ATF_REQUIRE_EQ(mock, engine::tester_path("mock"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(tester_path__empty);
+ATF_TEST_CASE_BODY(tester_path__empty)
+{
+    fs::mkdir(fs::path("testers"), 0755);
+    atf::utils::create_file("testers/kyua--tester", "Not a binary");
+    utils::setenv("KYUA_TESTERSDIR", (fs::current_path() / "testers").str());
+
+    ATF_REQUIRE_THROW_RE(engine::error, "Unknown interface ",
+                         engine::tester_path(""));
 }
 
 
@@ -276,5 +310,7 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, tester_path__default);
     ATF_ADD_TEST_CASE(tcs, tester_path__custom);
+    ATF_ADD_TEST_CASE(tcs, tester_path__cached);
+    ATF_ADD_TEST_CASE(tcs, tester_path__empty);
     ATF_ADD_TEST_CASE(tcs, tester_path__missing);
 }

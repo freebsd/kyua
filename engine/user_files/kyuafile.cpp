@@ -36,6 +36,7 @@
 #include <lutok/state.ipp>
 
 #include "engine/test_program.hpp"
+#include "engine/testers.hpp"
 #include "engine/user_files/common.hpp"
 #include "engine/user_files/exceptions.hpp"
 #include "utils/datetime.hpp"
@@ -132,73 +133,6 @@ get_test_suite(lutok::state& state, const fs::path& path)
 }
 
 
-/// Gets the data of an ATF test program from the Lua state.
-///
-/// \pre stack(-1) contains a table describing a test program.
-///
-/// \param state The Lua state.
-/// \param build_root The directory where the initial Kyuafile is located.
-///
-/// \return The ATF test program definition.
-///
-/// \throw std::runtime_error If there is any problem in the input data.
-/// \throw fs::error If there is an invalid path in the input data.
-static engine::test_program_ptr
-get_atf_test_program(lutok::state& state, const fs::path& build_root)
-{
-    PRE(state.is_table());
-
-    const fs::path path = get_path(state, build_root);
-    const std::string test_suite = get_test_suite(state, path);
-
-    return engine::test_program_ptr(new engine::test_program(
-        "atf", path, build_root, test_suite,
-        engine::metadata_builder().build()));
-}
-
-
-/// Gets the data of a plain test program from the Lua state.
-///
-/// \pre stack(-1) contains a table describing a test program.
-///
-/// \param state The Lua state.
-/// \param build_root The directory where the initial Kyuafile is located.
-///
-/// \return The plain test program definition.
-///
-/// \throw std::runtime_error If there is any problem in the input data.
-/// \throw fs::error If there is an invalid path in the input data.
-static engine::test_program_ptr
-get_plain_test_program(lutok::state& state, const fs::path& build_root)
-{
-    PRE(state.is_table());
-
-    lutok::stack_cleaner cleaner(state);
-
-    const fs::path path = get_path(state, build_root);
-    const std::string test_suite = get_test_suite(state, path);
-
-    engine::metadata_builder mdbuilder;
-
-    {
-        state.push_string("timeout");
-        state.get_table();
-        if (state.is_nil()) {
-            // Nothing to do.
-        } else if (state.is_number()) {
-            mdbuilder.set_timeout(datetime::delta(state.to_integer(), 0));
-        } else {
-            throw std::runtime_error(F("Non-integer value provided as timeout "
-                                       "for test program '%s'") % path);
-        }
-        state.pop(1);
-    }
-
-    return engine::test_program_ptr(new engine::test_program(
-        "plain", path, build_root, test_suite, mdbuilder.build()));
-}
-
-
 }  // anonymous namespace
 
 
@@ -225,16 +159,40 @@ get_test_program(lutok::state& state, const fs::path& build_root)
 {
     PRE(state.is_table());
 
+    lutok::stack_cleaner cleaner(state);
+
     const std::string interface = get_table_string(
         state, "interface", "Missing test case interface");
-
-    if (interface == "atf")
-        return get_atf_test_program(state, build_root);
-    else if (interface == "plain")
-        return get_plain_test_program(state, build_root);
-    else
+    try {
+        (void)engine::tester_path(interface);
+    } catch (const engine::error& e) {
         throw std::runtime_error(F("Unsupported test interface '%s'") %
                                  interface);
+    }
+
+    const fs::path path = get_path(state, build_root);
+    const std::string test_suite = get_test_suite(state, path);
+
+    metadata_builder mdbuilder;
+
+    // TODO(jmmv): The definition of a test program should allow overriding ALL
+    // of the metadata properties, not just the timeout.  See Issue 57.
+    {
+        state.push_string("timeout");
+        state.get_table();
+        if (state.is_nil()) {
+            // Nothing to do.
+        } else if (state.is_number()) {
+            mdbuilder.set_timeout(datetime::delta(state.to_integer(), 0));
+        } else {
+            throw std::runtime_error(F("Non-integer value provided as timeout "
+                                       "for test program '%s'") % path);
+        }
+        state.pop(1);
+    }
+
+    return test_program_ptr(new test_program(
+        interface, path, build_root, test_suite, mdbuilder.build()));
 }
 
 

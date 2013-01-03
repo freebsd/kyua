@@ -28,15 +28,24 @@
 
 #include "engine/testers.hpp"
 
+extern "C" {
+#include <dirent.h>
+#include <regex.h>
+}
+
+#include <cerrno>
+#include <cstring>
 #include <iostream>
+#include <map>
 #include <sstream>
+#include <string>
 
 #include "engine/exceptions.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
-#include "utils/logging/operations.hpp"
+#include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/passwd.hpp"
 #include "utils/process/children.ipp"
@@ -53,6 +62,14 @@ using utils::optional;
 
 
 namespace {
+
+
+/// Mapping of interface names to tester binaries.
+typedef std::map< std::string, std::string > testers_map;
+
+
+/// Collection of known-good interface to tester mappings.
+static testers_map interfaces_to_testers;
 
 
 /// Reads a stream to the end and records the output in a string.
@@ -101,6 +118,88 @@ replace_newlines(const std::string input)
 }
 
 
+/// RAII pattern to invoke a release method on destruction.
+///
+/// \todo The existence of this class here is a hack.  We should either
+/// generalize the class and use it wherever we need release on destruction
+/// semantics, or we should have proper abstractions for the objects below that
+/// use this class.
+///
+/// \tparam Object The type of the object to be released.  Not a pointer.
+/// \tparam ReturnType The return type of the release method.
+template< typename Object, typename ReturnType >
+class object_releaser {
+    /// Pointer to the object being managed.
+    Object* _object;
+
+    /// Release hook.
+    ReturnType (*_free_hook)(Object*);
+
+public:
+    /// Constructor.
+    ///
+    /// \param object Pointer to the object being managed.
+    /// \param free_hook Release hook.
+    object_releaser(Object* object, ReturnType (*free_hook)(Object*)) :
+        _object(object), _free_hook(free_hook)
+    {
+    }
+
+    /// Destructor.
+    ~object_releaser(void)
+    {
+        _free_hook(_object);
+    }
+};
+
+
+/// Finds all available testers and caches their data.
+///
+/// \param [out] testers Map into which to store the list of available testers.
+static void
+load_testers(testers_map& testers)
+{
+    PRE(testers.empty());
+
+    const fs::path raw_testersdir(utils::getenv_with_default(
+        "KYUA_TESTERSDIR", KYUA_TESTERSDIR));
+    const fs::path testersdir = raw_testersdir.is_absolute() ?
+        raw_testersdir : raw_testersdir.to_absolute();
+
+    ::DIR* dir = ::opendir(testersdir.c_str());
+    if (dir == NULL) {
+        const int original_errno = errno;
+        LW(F("Failed to open testers dir %s: %s") % testersdir %
+           strerror(original_errno));
+        return;  // No testers available in the given location.
+    }
+    const object_releaser< ::DIR, int > dir_releaser(dir, ::closedir);
+
+    ::regex_t preg;
+    if (::regcomp(&preg, "^kyua-(.+)-tester$", REG_EXTENDED) != 0)
+        throw engine::error("Failed to compile regular expression");
+    const object_releaser< ::regex_t, void > preg_releaser(&preg, ::regfree);
+
+    ::dirent* de;
+    while ((de = readdir(dir)) != NULL) {
+        ::regmatch_t matches[2];
+        const int ret = ::regexec(&preg, de->d_name, 2, matches, 0);
+        if (ret == 0) {
+            const std::string interface(de->d_name + matches[1].rm_so,
+                                        matches[1].rm_eo - matches[1].rm_so);
+            const fs::path path = testersdir / de->d_name;
+            LI(F("Found tester for interface %s in %s") % interface % path);
+            INV(path.is_absolute());
+            testers[interface] = path.str();
+        } else if (ret == REG_NOMATCH) {
+            // Not a tester; skip.
+        } else {
+            throw engine::error("Failed to match regular expression");
+        }
+    }
+}
+
+
 }  // anonymous namespace
 
 
@@ -112,17 +211,17 @@ replace_newlines(const std::string input)
 fs::path
 engine::tester_path(const std::string& interface)
 {
-    const fs::path testersdir(utils::getenv_with_default(
-        "KYUA_TESTERSDIR", KYUA_TESTERSDIR));
+    if (interfaces_to_testers.empty())
+        load_testers(interfaces_to_testers);
 
-    const fs::path tester = testersdir / ("kyua-" + interface + "-tester");
-    if (!fs::exists(tester))
+    const testers_map::const_iterator iter = interfaces_to_testers.find(
+        interface);
+    if (iter == interfaces_to_testers.end())
         throw engine::error("Unknown interface " + interface);
 
-    if (tester.is_absolute())
-        return tester;
-    else
-        return tester.to_absolute();
+    const fs::path path((*iter).second);
+    INV(path.is_absolute());
+    return path;
 }
 
 
