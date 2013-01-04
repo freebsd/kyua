@@ -141,8 +141,23 @@ CREATE TABLE metadatas (
     property_name TEXT NOT NULL,
 
     -- One of the values of the property.
-    property_value TEXT
+    property_value TEXT,
+
+    PRIMARY KEY (metadata_id, property_name)
 );
+
+
+-- Optimize the loading of the metadata of any single entity.
+--
+-- The metadata_id column of the metadatas table is not enough to act as a
+-- primary key, yet we need to locate entries in the metadatas table solely by
+-- their identifier.
+--
+-- TODO(jmmv): I think this index is useless given that the primary key in the
+-- metadatas table includes the metadata_id as the first component.  Need to
+-- verify this and drop the index or this comment appropriately.
+CREATE INDEX index_metadatas_by_id
+    ON metadatas (metadata_id);
 
 
 -- Representation of a test program.
@@ -182,6 +197,11 @@ CREATE TABLE test_programs (
 );
 
 
+-- Optimize the lookup of test programs by the action they belong to.
+CREATE INDEX index_test_programs_by_action_id
+    ON test_programs (action_id);
+
+
 -- Representation of a test case.
 --
 -- At the moment, there are no substantial differences between the
@@ -197,6 +217,10 @@ CREATE TABLE test_cases (
     metadata_id INTEGER
 );
 
+
+-- Optimize the loading of all test cases that are part of a test program.
+CREATE INDEX index_test_cases_by_test_programs_id
+    ON test_cases (test_program_id);
 
 
 -- Representation of test case results.
