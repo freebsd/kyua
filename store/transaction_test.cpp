@@ -100,22 +100,6 @@ do_put_result_ok_test(const engine::test_result& result,
 }
 
 
-/// Checks if two test cases are the same.
-///
-/// \param tc1 The first test case to compare.
-/// \param tc2 The second test case to compare.
-///
-/// \return True if the test cases match.
-static bool
-compare_test_cases(const engine::test_case& tc1, const engine::test_case& tc2)
-{
-    const engine::metadata& md1 = tc1.get_metadata();
-    const engine::metadata& md2 = tc2.get_metadata();
-    return tc1.name() == tc2.name() &&
-        md1.to_properties() == md2.to_properties();
-}
-
-
 }  // anonymous namespace
 
 
@@ -324,42 +308,47 @@ ATF_TEST_CASE_BODY(get_action_results__many)
 
     atf::utils::create_file("unused.txt", "unused file\n");
 
+    engine::test_program test_program_1(
+        "plain", fs::path("a/prog1"), fs::path("/the/root"), "suite1",
+        engine::metadata_builder().build());
+    engine::test_case_ptr test_case_1(new engine::test_case(
+        "plain", test_program_1, "main", engine::metadata_builder().build()));
+    engine::test_cases_vector test_cases_1;
+    test_cases_1.push_back(test_case_1);
+    test_program_1.set_test_cases(test_cases_1);
+    const engine::test_result result_1(engine::test_result::passed);
     {
-        const engine::test_program test_program(
-            "plain", fs::path("a/prog1"), fs::path("/the/root"), "suite1",
-            engine::metadata_builder().build());
-        const engine::test_case test_case("plain", test_program, "main",
-                                          engine::metadata_builder().build());
-        const engine::test_result result(engine::test_result::passed);
-
-        const int64_t tp_id = tx.put_test_program(test_program, action_id);
-        const int64_t tc_id = tx.put_test_case(test_case, tp_id);
+        const int64_t tp_id = tx.put_test_program(test_program_1, action_id);
+        const int64_t tc_id = tx.put_test_case(*test_case_1, tp_id);
         atf::utils::create_file("prog1.out", "stdout of prog1\n");
         tx.put_test_case_file("__STDOUT__", fs::path("prog1.out"), tc_id);
         tx.put_test_case_file("unused.txt", fs::path("unused.txt"), tc_id);
-        tx.put_result(result, tc_id, start_time1, end_time1);
+        tx.put_result(result_1, tc_id, start_time1, end_time1);
 
-        const int64_t tp2_id = tx.put_test_program(test_program, action2_id);
-        const int64_t tc2_id = tx.put_test_case(test_case, tp2_id);
+        const int64_t tp2_id = tx.put_test_program(test_program_1, action2_id);
+        const int64_t tc2_id = tx.put_test_case(*test_case_1, tp2_id);
         tx.put_test_case_file("__STDOUT__", fs::path("unused.txt"), tc2_id);
         tx.put_test_case_file("__STDERR__", fs::path("unused.txt"), tc2_id);
-        tx.put_result(result, tc2_id, start_time1, end_time1);
+        tx.put_result(result_1, tc2_id, start_time1, end_time1);
     }
-    {
-        const engine::test_program test_program(
-            "plain", fs::path("b/prog2"), fs::path("/the/root"), "suite2",
-            engine::metadata_builder().build());
-        const engine::test_case test_case("plain", test_program, "main",
-                                          engine::metadata_builder().build());
-        const engine::test_result result(engine::test_result::failed,
-                                         "Some text");
 
-        const int64_t tp_id = tx.put_test_program(test_program, action_id);
-        const int64_t tc_id = tx.put_test_case(test_case, tp_id);
+    engine::test_program test_program_2(
+        "plain", fs::path("b/prog2"), fs::path("/the/root"), "suite2",
+        engine::metadata_builder().build());
+    engine::test_case_ptr test_case_2(new engine::test_case(
+        "plain", test_program_2, "main", engine::metadata_builder().build()));
+    engine::test_cases_vector test_cases_2;
+    test_cases_2.push_back(test_case_2);
+    test_program_2.set_test_cases(test_cases_2);
+    const engine::test_result result_2(engine::test_result::failed,
+                                       "Some text");
+    {
+        const int64_t tp_id = tx.put_test_program(test_program_2, action_id);
+        const int64_t tc_id = tx.put_test_case(*test_case_2, tp_id);
         atf::utils::create_file("prog2.err", "stderr of prog2\n");
         tx.put_test_case_file("__STDERR__", fs::path("prog2.err"), tc_id);
         tx.put_test_case_file("unused.txt", fs::path("unused.txt"), tc_id);
-        tx.put_result(result, tc_id, start_time2, end_time2);
+        tx.put_result(result_2, tc_id, start_time2, end_time2);
     }
 
     tx.commit();
@@ -367,22 +356,18 @@ ATF_TEST_CASE_BODY(get_action_results__many)
     store::transaction tx2 = backend.start();
     store::results_iterator iter = tx2.get_action_results(action_id);
     ATF_REQUIRE(iter);
-    ATF_REQUIRE_EQ(fs::path("/the/root/a/prog1"),
-                   iter.test_program()->absolute_path());
+    ATF_REQUIRE(test_program_1 == *iter.test_program());
     ATF_REQUIRE_EQ("main", iter.test_case_name());
     ATF_REQUIRE_EQ("stdout of prog1\n", iter.stdout_contents());
     ATF_REQUIRE(iter.stderr_contents().empty());
-    ATF_REQUIRE(engine::test_result(engine::test_result::passed) ==
-                iter.result());
+    ATF_REQUIRE(result_1 == iter.result());
     ATF_REQUIRE(end_time1 - start_time1 == iter.duration());
     ATF_REQUIRE(++iter);
-    ATF_REQUIRE_EQ(fs::path("/the/root/b/prog2"),
-                   iter.test_program()->absolute_path());
+    ATF_REQUIRE(test_program_2 == *iter.test_program());
     ATF_REQUIRE_EQ("main", iter.test_case_name());
     ATF_REQUIRE(iter.stdout_contents().empty());
     ATF_REQUIRE_EQ("stderr of prog2\n", iter.stderr_contents());
-    ATF_REQUIRE(engine::test_result(engine::test_result::failed, "Some text") ==
-                iter.result());
+    ATF_REQUIRE(result_2 == iter.result());
     ATF_REQUIRE(end_time2 - start_time2 == iter.duration());
     ATF_REQUIRE(!++iter);
 }
@@ -662,12 +647,12 @@ ATF_TEST_CASE_HEAD(put_test_case__ok)
 }
 ATF_TEST_CASE_BODY(put_test_case__ok)
 {
-    const engine::test_program test_program(
+    engine::test_program test_program(
         "atf", fs::path("the/binary"), fs::path("/some/root"), "the-suite",
         engine::metadata_builder().build());
 
-    const engine::test_case test_case1("atf", test_program, "tc1",
-                                       engine::metadata_builder().build());
+    const engine::test_case_ptr test_case1(new engine::test_case(
+        "atf", test_program, "tc1", engine::metadata_builder().build()));
 
     const engine::metadata md2 = engine::metadata_builder()
         .add_allowed_architecture("powerpc")
@@ -689,7 +674,15 @@ ATF_TEST_CASE_BODY(put_test_case__ok)
         .set_required_user("root")
         .set_timeout(datetime::delta(520, 0))
         .build();
-    const engine::test_case test_case2("mock", test_program, "tc2", md2);
+    const engine::test_case_ptr test_case2(new engine::test_case(
+        "atf", test_program, "tc2", md2));
+
+    {
+        engine::test_cases_vector test_cases;
+        test_cases.push_back(test_case1);
+        test_cases.push_back(test_case2);
+        test_program.set_test_cases(test_cases);
+    }
 
     store::backend backend = store::backend::open_rw(fs::path("test.db"));
     backend.database().exec("PRAGMA foreign_keys = OFF");
@@ -697,18 +690,15 @@ ATF_TEST_CASE_BODY(put_test_case__ok)
     {
         store::transaction tx = backend.start();
         test_program_id = tx.put_test_program(test_program, 15);
-        tx.put_test_case(test_case1, test_program_id);
-        tx.put_test_case(test_case2, test_program_id);
+        tx.put_test_case(*test_case1, test_program_id);
+        tx.put_test_case(*test_case2, test_program_id);
         tx.commit();
     }
 
     store::transaction tx = backend.start();
     const engine::test_program_ptr loaded_test_program =
         store::detail::get_test_program(backend, test_program_id, "atf");
-    ATF_REQUIRE(compare_test_cases(test_case1,
-                                   *loaded_test_program->find("tc1").get()));
-    ATF_REQUIRE(compare_test_cases(test_case2,
-                                   *loaded_test_program->find("tc2").get()));
+    ATF_REQUIRE(test_program == *loaded_test_program);
 }
 
 

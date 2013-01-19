@@ -58,6 +58,7 @@ public:
     const context& runtime_context(void) const;
 
     bool operator==(const action&) const;
+    bool operator!=(const action&) const;
 };
 
 

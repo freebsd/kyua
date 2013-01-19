@@ -62,6 +62,7 @@ public:
     const std::map< std::string, std::string >& env(void) const;
 
     bool operator==(const context&) const;
+    bool operator!=(const context&) const;
 };
 
 

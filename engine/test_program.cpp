@@ -28,6 +28,8 @@
 
 #include "engine/test_program.hpp"
 
+#include <algorithm>
+#include <map>
 #include <sstream>
 #include <stdexcept>
 
@@ -148,6 +150,52 @@ load_test_cases(const engine::test_program& test_program)
 }
 
 
+/// Predicate to compare two test cases via pointers to them.
+///
+/// \param tc1 Entry in a map of test case names to test case pointers.
+/// \param tc2 Entry in a map of test case names to test case pointers.
+///
+/// \return True if the test case in tc1 is the same as in tc2.  Note that the
+/// container test programs are NOT compared.
+static bool
+compare_test_case(const std::pair< std::string, engine::test_case_ptr >& tc1,
+                  const std::pair< std::string, engine::test_case_ptr >& tc2)
+{
+    return tc1.first == tc2.first && *tc1.second == *tc2.second;
+}
+
+
+/// Compares if two sets of test cases hold the same values.
+///
+/// \param tests1 First collection of test cases.
+/// \param tests2 Second collection of test cases.
+///
+/// \return True if both collections hold the same test cases (value-wise, not
+/// pointer-wise); false otherwise.
+static bool
+compare_test_cases(const optional< engine::test_cases_vector >& tests1,
+                   const optional< engine::test_cases_vector >& tests2)
+{
+    if (!tests1 && !tests2)
+        return true;
+    else if ((tests1 && !tests2) || (!tests1 && tests2))
+        return false;
+    INV(tests1 && tests2);
+
+    // This is very inefficient, but because it should only be used in our own
+    // tests, it doesn't matter.
+    std::map< std::string, engine::test_case_ptr > map1, map2;
+    for (engine::test_cases_vector::const_iterator iter = tests1.get().begin();
+         iter != tests1.get().end(); ++iter)
+        map1.insert(make_pair((*iter)->name(), *iter));
+    for (engine::test_cases_vector::const_iterator iter = tests2.get().begin();
+         iter != tests2.get().end(); ++iter)
+        map2.insert(make_pair((*iter)->name(), *iter));
+    return std::equal(map1.begin(), map1.end(), map2.begin(),
+                      compare_test_case);
+}
+
+
 }  // anonymous namespace
 
 
@@ -168,7 +216,7 @@ struct engine::test_program::impl {
     /// Metadata of the test program.
     metadata md;
 
-    /// List of test casees in the test program; lazily initialized.
+    /// List of test cases in the test program; lazily initialized.
     optional< test_cases_vector > test_cases;
 
     /// Constructor.
@@ -191,6 +239,22 @@ struct engine::test_program::impl {
         PRE_MSG(!binary.is_absolute(),
                 F("The program '%s' must be relative to the root of the test "
                   "suite '%s'") % binary % root);
+    }
+
+    /// Equality comparator.
+    ///
+    /// \param other The other object to compare this one to.
+    ///
+    /// \return True if this object and other are equal; false otherwise.
+    bool
+    operator==(const impl& other) const
+    {
+        return (interface_name == other.interface_name &&
+                binary == other.binary &&
+                root == other.root &&
+                test_suite_name == other.test_suite_name &&
+                md == other.md &&
+                compare_test_cases(test_cases, other.test_cases));
     }
 };
 
@@ -352,4 +416,28 @@ engine::test_program::set_test_cases(const test_cases_vector& test_cases_)
 {
     PRE(!_pimpl->test_cases);
     _pimpl->test_cases = test_cases_;
+}
+
+
+/// Equality comparator.
+///
+/// \param other The other object to compare this one to.
+///
+/// \return True if this object and other are equal; false otherwise.
+bool
+engine::test_program::operator==(const test_program& other) const
+{
+    return _pimpl == other._pimpl || *_pimpl == *other._pimpl;
+}
+
+
+/// Inequality comparator.
+///
+/// \param other The other object to compare this one to.
+///
+/// \return True if this object and other are different; false otherwise.
+bool
+engine::test_program::operator!=(const test_program& other) const
+{
+    return !(*this == other);
 }

@@ -75,6 +75,9 @@ public:
     const test_case_ptr& find(const std::string&) const;
     const test_cases_vector& test_cases(void) const;
     void set_test_cases(const test_cases_vector&);
+
+    bool operator==(const test_program&) const;
+    bool operator!=(const test_program&) const;
 };
 
 

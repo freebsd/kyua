@@ -51,8 +51,7 @@ ATF_TEST_CASE_BODY(ctor_and_getters)
                    test_program.absolute_path());
     ATF_REQUIRE_EQ(fs::path("root"), test_program.root());
     ATF_REQUIRE_EQ("suite-name", test_program.test_suite_name());
-    ATF_REQUIRE(md.to_properties() ==
-                test_program.get_metadata().to_properties());
+    ATF_REQUIRE(md == test_program.get_metadata());
 }
 
 
@@ -113,6 +112,136 @@ ATF_TEST_CASE_BODY(test_cases__some)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(operators_eq_and_ne__copy);
+ATF_TEST_CASE_BODY(operators_eq_and_ne__copy)
+{
+    const engine::test_program tp1(
+        "plain", fs::path("non-existent"), fs::path("."), "suite-name",
+        engine::metadata_builder().build());
+    const engine::test_program tp2 = tp1;
+    ATF_REQUIRE(  tp1 == tp2);
+    ATF_REQUIRE(!(tp1 != tp2));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(operators_eq_and_ne__not_copy);
+ATF_TEST_CASE_BODY(operators_eq_and_ne__not_copy)
+{
+    const std::string base_interface("plain");
+    const fs::path base_relative_path("the/test/program");
+    const fs::path base_root("/the/root");
+    const std::string base_test_suite("suite-name");
+    const engine::metadata base_metadata = engine::metadata_builder()
+        .add_custom("X-foo", "bar")
+        .build();
+
+    engine::test_program base_tp(
+        base_interface, base_relative_path, base_root, base_test_suite,
+        base_metadata);
+
+    engine::test_cases_vector base_tcs;
+    {
+        const engine::test_case tc1("plain", base_tp, "main",
+                                    engine::metadata_builder().build());
+        base_tcs.push_back(engine::test_case_ptr(new engine::test_case(tc1)));
+    }
+    base_tp.set_test_cases(base_tcs);
+
+    // Construct with all same values.
+    {
+        engine::test_program other_tp(
+            base_interface, base_relative_path, base_root, base_test_suite,
+            base_metadata);
+
+        engine::test_cases_vector other_tcs;
+        {
+            const engine::test_case tc1("plain", other_tp, "main",
+                                        engine::metadata_builder().build());
+            other_tcs.push_back(engine::test_case_ptr(
+                new engine::test_case(tc1)));
+        }
+        other_tp.set_test_cases(other_tcs);
+
+        ATF_REQUIRE(  base_tp == other_tp);
+        ATF_REQUIRE(!(base_tp != other_tp));
+    }
+
+    // Different interface.
+    {
+        engine::test_program other_tp(
+            "atf", base_relative_path, base_root, base_test_suite,
+            base_metadata);
+        other_tp.set_test_cases(base_tcs);
+
+        ATF_REQUIRE(!(base_tp == other_tp));
+        ATF_REQUIRE(  base_tp != other_tp);
+    }
+
+    // Different relative path.
+    {
+        engine::test_program other_tp(
+            base_interface, fs::path("a/b/c"), base_root, base_test_suite,
+            base_metadata);
+        other_tp.set_test_cases(base_tcs);
+
+        ATF_REQUIRE(!(base_tp == other_tp));
+        ATF_REQUIRE(  base_tp != other_tp);
+    }
+
+    // Different root.
+    {
+        engine::test_program other_tp(
+            base_interface, base_relative_path, fs::path("."), base_test_suite,
+            base_metadata);
+        other_tp.set_test_cases(base_tcs);
+
+        ATF_REQUIRE(!(base_tp == other_tp));
+        ATF_REQUIRE(  base_tp != other_tp);
+    }
+
+    // Different test suite.
+    {
+        engine::test_program other_tp(
+            base_interface, base_relative_path, base_root, "different-suite",
+            base_metadata);
+        other_tp.set_test_cases(base_tcs);
+
+        ATF_REQUIRE(!(base_tp == other_tp));
+        ATF_REQUIRE(  base_tp != other_tp);
+    }
+
+    // Different metadata.
+    {
+        engine::test_program other_tp(
+            base_interface, base_relative_path, base_root, base_test_suite,
+            engine::metadata_builder().build());
+        other_tp.set_test_cases(base_tcs);
+
+        ATF_REQUIRE(!(base_tp == other_tp));
+        ATF_REQUIRE(  base_tp != other_tp);
+    }
+
+    // Different test cases.
+    {
+        engine::test_program other_tp(
+            base_interface, base_relative_path, base_root, base_test_suite,
+            base_metadata);
+
+        engine::test_cases_vector other_tcs;
+        {
+            const engine::test_case tc1("atf", base_tp, "foo",
+                                        engine::metadata_builder().build());
+            other_tcs.push_back(engine::test_case_ptr(
+                                    new engine::test_case(tc1)));
+        }
+        other_tp.set_test_cases(other_tcs);
+
+        ATF_REQUIRE(!(base_tp == other_tp));
+        ATF_REQUIRE(  base_tp != other_tp);
+    }
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     // TODO(jmmv): These tests have ceased to be realistic with the move to
@@ -124,4 +253,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, find__missing);
     ATF_ADD_TEST_CASE(tcs, test_cases__get);
     ATF_ADD_TEST_CASE(tcs, test_cases__some);
+
+    ATF_ADD_TEST_CASE(tcs, operators_eq_and_ne__copy);
+    ATF_ADD_TEST_CASE(tcs, operators_eq_and_ne__not_copy);
 }

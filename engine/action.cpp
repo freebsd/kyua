@@ -86,11 +86,23 @@ engine::action::runtime_context(void) const
 
 /// Equality comparator.
 ///
-/// \param other The object to compare to.
+/// \param other The other object to compare this one to.
 ///
-/// \return True if the two objects are equal; false otherwise.
+/// \return True if this object and other are equal; false otherwise.
 bool
 engine::action::operator==(const action& other) const
 {
     return *_pimpl == *other._pimpl;
+}
+
+
+/// Inequality comparator.
+///
+/// \param other The other object to compare this one to.
+///
+/// \return True if this object and other are different; false otherwise.
+bool
+engine::action::operator!=(const action& other) const
+{
+    return !(*this == other);
 }

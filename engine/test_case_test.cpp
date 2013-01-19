@@ -392,12 +392,12 @@ ATF_TEST_CASE_BODY(test_case__ctor_and_getters)
     const engine::test_case test_case("mock", test_program, "foo", md);
     ATF_REQUIRE_EQ(&test_program, &test_case.container_test_program());
     ATF_REQUIRE_EQ("foo", test_case.name());
-    ATF_REQUIRE(md.to_properties() == test_case.get_metadata().to_properties());
+    ATF_REQUIRE(md == test_case.get_metadata());
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(fake_result)
-ATF_TEST_CASE_BODY(fake_result)
+ATF_TEST_CASE_WITHOUT_HEAD(test_case__fake_result)
+ATF_TEST_CASE_BODY(test_case__fake_result)
 {
     const engine::test_result result(engine::test_result::skipped,
                                      "Some reason");
@@ -409,6 +409,98 @@ ATF_TEST_CASE_BODY(fake_result)
     ATF_REQUIRE_EQ(&test_program, &test_case.container_test_program());
     ATF_REQUIRE_EQ("__foo__", test_case.name());
     ATF_REQUIRE(result == test_case.fake_result().get());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(test_case__operators_eq_and_ne__copy);
+ATF_TEST_CASE_BODY(test_case__operators_eq_and_ne__copy)
+{
+    const engine::test_program tp(
+        "plain", fs::path("non-existent"), fs::path("."), "suite-name",
+        engine::metadata_builder().build());
+
+    const engine::test_case tc1("plain", tp, "name",
+                                engine::metadata_builder().build());
+    const engine::test_case tc2 = tc1;
+    ATF_REQUIRE(  tc1 == tc2);
+    ATF_REQUIRE(!(tc1 != tc2));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(test_case__operators_eq_and_ne__not_copy);
+ATF_TEST_CASE_BODY(test_case__operators_eq_and_ne__not_copy)
+{
+    const std::string base_interface("plain");
+    const engine::test_program base_tp(
+        "plain", fs::path("non-existent"), fs::path("."), "suite-name",
+        engine::metadata_builder().build());
+    const std::string base_name("name");
+    const engine::metadata base_metadata = engine::metadata_builder()
+        .add_custom("X-foo", "bar")
+        .build();
+
+    const engine::test_case base_tc(base_interface, base_tp, base_name,
+                                    base_metadata);
+
+    // Construct with all same values.
+    {
+        const engine::test_case other_tc(base_interface, base_tp, base_name,
+                                        base_metadata);
+
+        ATF_REQUIRE(  base_tc == other_tc);
+        ATF_REQUIRE(!(base_tc != other_tc));
+    }
+
+    // Different interface.
+    {
+        const engine::test_case other_tc("atf", base_tp, base_name,
+                                         base_metadata);
+
+        ATF_REQUIRE(!(base_tc == other_tc));
+        ATF_REQUIRE(  base_tc != other_tc);
+    }
+
+    // Different test program, different identifier.
+    {
+        const engine::test_program other_tp(
+            "plain", fs::path("another-name"), fs::path("."), "suite2-name",
+        engine::metadata_builder().build());
+        const engine::test_case other_tc(base_interface, other_tp, base_name,
+                                         base_metadata);
+
+        ATF_REQUIRE(!(base_tc == other_tc));
+        ATF_REQUIRE(  base_tc != other_tc);
+    }
+
+    // Different test program, same identifier.  Cannot be detected!
+    {
+        const engine::test_program other_tp(
+            "plain", fs::path("non-existent"), fs::path("."), "suite2-name",
+        engine::metadata_builder().build());
+        const engine::test_case other_tc(base_interface, other_tp, base_name,
+                                         base_metadata);
+
+        ATF_REQUIRE(  base_tc == other_tc);
+        ATF_REQUIRE(!(base_tc != other_tc));
+    }
+
+    // Different name.
+    {
+        const engine::test_case other_tc(base_interface, base_tp, "other",
+                                         base_metadata);
+
+        ATF_REQUIRE(!(base_tc == other_tc));
+        ATF_REQUIRE(  base_tc != other_tc);
+    }
+
+    // Different metadata.
+    {
+        const engine::test_case other_tc(base_interface, base_tp, base_name,
+                                         engine::metadata_builder().build());
+
+        ATF_REQUIRE(!(base_tc == other_tc));
+        ATF_REQUIRE(  base_tc != other_tc);
+    }
 }
 
 
@@ -961,7 +1053,10 @@ ATF_TEST_CASE_BODY(run_test_case__plain__missing_test_program)
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, test_case__ctor_and_getters);
-    ATF_ADD_TEST_CASE(tcs, fake_result);
+    ATF_ADD_TEST_CASE(tcs, test_case__fake_result);
+
+    ATF_ADD_TEST_CASE(tcs, test_case__operators_eq_and_ne__copy);
+    ATF_ADD_TEST_CASE(tcs, test_case__operators_eq_and_ne__not_copy);
 
     ATF_ADD_TEST_CASE(tcs, run_test_case__atf__current_directory);
     ATF_ADD_TEST_CASE(tcs, run_test_case__atf__subdirectory);

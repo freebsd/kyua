@@ -81,6 +81,9 @@ public:
     optional& operator=(const T&);
     optional& operator=(const optional< T >&);
 
+    bool operator==(const optional< T >&) const;
+    bool operator!=(const optional< T >&) const;
+
     operator bool(void) const;
 
     const T& get(void) const;

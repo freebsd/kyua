@@ -85,6 +85,9 @@ public:
     const std::string& name(void) const;
     const metadata& get_metadata(void) const;
     utils::optional< test_result > fake_result(void) const;
+
+    bool operator==(const test_case&) const;
+    bool operator!=(const test_case&) const;
 };
 
 

@@ -515,6 +515,17 @@ struct engine::metadata::impl {
         props(props_)
     {
     }
+
+    /// Equality comparator.
+    ///
+    /// \param other The other object to compare this one to.
+    ///
+    /// \return True if this object and other are equal; false otherwise.
+    bool
+    operator==(const impl& other) const
+    {
+        return props == other.props;
+    }
 };
 
 
@@ -652,6 +663,30 @@ engine::properties_map
 engine::metadata::to_properties(void) const
 {
     return _pimpl->props.all_properties();
+}
+
+
+/// Equality comparator.
+///
+/// \param other The other object to compare this one to.
+///
+/// \return True if this object and other are equal; false otherwise.
+bool
+engine::metadata::operator==(const metadata& other) const
+{
+    return _pimpl == other._pimpl || *_pimpl == *other._pimpl;
+}
+
+
+/// Inequality comparator.
+///
+/// \param other The other object to compare this one to.
+///
+/// \return True if this object and other are different; false otherwise.
+bool
+engine::metadata::operator!=(const metadata& other) const
+{
+    return !(*this == other);
 }
 
 

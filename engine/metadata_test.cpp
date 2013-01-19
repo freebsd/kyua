@@ -256,6 +256,61 @@ ATF_TEST_CASE_BODY(override_all_with_set_string)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(operators_eq_and_ne__empty);
+ATF_TEST_CASE_BODY(operators_eq_and_ne__empty)
+{
+    const engine::metadata md1 = engine::metadata_builder().build();
+    const engine::metadata md2 = engine::metadata_builder().build();
+    ATF_REQUIRE(  md1 == md2);
+    ATF_REQUIRE(!(md1 != md2));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(operators_eq_and_ne__copy);
+ATF_TEST_CASE_BODY(operators_eq_and_ne__copy)
+{
+    const engine::metadata md1 = engine::metadata_builder()
+        .add_custom("X-foo", "bar")
+        .build();
+    const engine::metadata md2 = md1;
+    ATF_REQUIRE(  md1 == md2);
+    ATF_REQUIRE(!(md1 != md2));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(operators_eq_and_ne__equal);
+ATF_TEST_CASE_BODY(operators_eq_and_ne__equal)
+{
+    const engine::metadata md1 = engine::metadata_builder()
+        .add_allowed_architecture("a")
+        .add_allowed_architecture("b")
+        .add_custom("X-foo", "bar")
+        .build();
+    const engine::metadata md2 = engine::metadata_builder()
+        .add_allowed_architecture("b")
+        .add_allowed_architecture("a")
+        .add_custom("X-foo", "bar")
+        .build();
+    ATF_REQUIRE(  md1 == md2);
+    ATF_REQUIRE(!(md1 != md2));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(operators_eq_and_ne__different);
+ATF_TEST_CASE_BODY(operators_eq_and_ne__different)
+{
+    const engine::metadata md1 = engine::metadata_builder()
+        .add_custom("X-foo", "bar")
+        .build();
+    const engine::metadata md2 = engine::metadata_builder()
+        .add_custom("X-foo", "bar")
+        .add_custom("X-baz", "foo bar")
+        .build();
+    ATF_REQUIRE(!(md1 == md2));
+    ATF_REQUIRE(  md1 != md2);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(check_reqs__none);
 ATF_TEST_CASE_BODY(check_reqs__none)
 {
@@ -656,6 +711,11 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, copy);
     ATF_ADD_TEST_CASE(tcs, override_all_with_setters);
     ATF_ADD_TEST_CASE(tcs, override_all_with_set_string);
+
+    ATF_ADD_TEST_CASE(tcs, operators_eq_and_ne__empty);
+    ATF_ADD_TEST_CASE(tcs, operators_eq_and_ne__copy);
+    ATF_ADD_TEST_CASE(tcs, operators_eq_and_ne__equal);
+    ATF_ADD_TEST_CASE(tcs, operators_eq_and_ne__different);
 
     // TODO(jmmv): Add tests for error conditions (invalid keys and invalid
     // values).

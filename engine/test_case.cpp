@@ -196,6 +196,22 @@ struct engine::test_case::impl {
         fake_result(fake_result_)
     {
     }
+
+    /// Equality comparator.
+    ///
+    /// \param other The other object to compare this one to.
+    ///
+    /// \return True if this object and other are equal; false otherwise.
+    bool
+    operator==(const impl& other) const
+    {
+        return (interface_name == other.interface_name &&
+                (_test_program.absolute_path() ==
+                 other._test_program.absolute_path()) &&
+                name == other.name &&
+                md == other.md &&
+                fake_result == other.fake_result);
+    }
 };
 
 
@@ -309,6 +325,36 @@ optional< engine::test_result >
 engine::test_case::fake_result(void) const
 {
     return _pimpl->fake_result;
+}
+
+
+/// Equality comparator.
+///
+/// \warning Because test cases reference their container test programs, and
+/// test programs include test cases, we cannot perform a full comparison here:
+/// otherwise, we'd enter an inifinte loop.  Therefore, out of necessity, this
+/// does NOT compare whether the container test programs of the affected test
+/// cases are the same.
+///
+/// \param other The other object to compare this one to.
+///
+/// \return True if this object and other are equal; false otherwise.
+bool
+engine::test_case::operator==(const test_case& other) const
+{
+    return _pimpl == other._pimpl || *_pimpl == *other._pimpl;
+}
+
+
+/// Inequality comparator.
+///
+/// \param other The other object to compare this one to.
+///
+/// \return True if this object and other are different; false otherwise.
+bool
+engine::test_case::operator!=(const test_case& other) const
+{
+    return !(*this == other);
 }
 
 

@@ -61,8 +61,8 @@ ATF_TEST_CASE_BODY(current)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(operator_eq);
-ATF_TEST_CASE_BODY(operator_eq)
+ATF_TEST_CASE_WITHOUT_HEAD(operators_eq_and_ne);
+ATF_TEST_CASE_BODY(operators_eq_and_ne)
 {
     std::map< std::string, std::string > env;
     env["foo"] = "first";
@@ -72,8 +72,11 @@ ATF_TEST_CASE_BODY(operator_eq)
     env["bar"] = "second";
     const engine::context context4(fs::path("/foo/bar"), env);
     ATF_REQUIRE(  context1 == context2);
+    ATF_REQUIRE(!(context1 != context2));
     ATF_REQUIRE(!(context1 == context3));
+    ATF_REQUIRE(  context1 != context3);
     ATF_REQUIRE(!(context1 == context4));
+    ATF_REQUIRE(  context1 != context4);
 }
 
 
@@ -81,5 +84,5 @@ ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, ctor_and_getters);
     ATF_ADD_TEST_CASE(tcs, current);
-    ATF_ADD_TEST_CASE(tcs, operator_eq);
+    ATF_ADD_TEST_CASE(tcs, operators_eq_and_ne);
 }

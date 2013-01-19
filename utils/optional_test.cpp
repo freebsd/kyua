@@ -222,6 +222,33 @@ ATF_TEST_CASE_BODY(make_optional)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(operators_eq_and_ne);
+ATF_TEST_CASE_BODY(operators_eq_and_ne)
+{
+    optional< int > opt1, opt2;
+
+    opt1 = none; opt2 = none;
+    ATF_REQUIRE(  opt1 == opt2);
+    ATF_REQUIRE(!(opt1 != opt2));
+
+    opt1 = utils::make_optional(5); opt2 = none;
+    ATF_REQUIRE(!(opt1 == opt2));
+    ATF_REQUIRE(  opt1 != opt2);
+
+    opt1 = none; opt2 = utils::make_optional(5);
+    ATF_REQUIRE(!(opt1 == opt2));
+    ATF_REQUIRE(  opt1 != opt2);
+
+    opt1 = utils::make_optional(5); opt2 = utils::make_optional(5);
+    ATF_REQUIRE(  opt1 == opt2);
+    ATF_REQUIRE(!(opt1 != opt2));
+
+    opt1 = utils::make_optional(6); opt2 = utils::make_optional(5);
+    ATF_REQUIRE(!(opt1 == opt2));
+    ATF_REQUIRE(  opt1 != opt2);
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, ctors__native_type);
@@ -231,4 +258,5 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, memory);
     ATF_ADD_TEST_CASE(tcs, get_default);
     ATF_ADD_TEST_CASE(tcs, make_optional);
+    ATF_ADD_TEST_CASE(tcs, operators_eq_and_ne);
 }

@@ -93,6 +93,9 @@ public:
     const utils::datetime::delta& timeout(void) const;
 
     engine::properties_map to_properties(void) const;
+
+    bool operator==(const metadata&) const;
+    bool operator!=(const metadata&) const;
 };
 
 

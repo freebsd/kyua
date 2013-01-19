@@ -115,6 +115,9 @@ public:
 
     properties_map all_properties(const std::string& = "",
                                   const bool = false) const;
+
+    bool operator==(const tree&) const;
+    bool operator!=(const tree&) const;
 };
 
 

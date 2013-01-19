@@ -710,6 +710,75 @@ ATF_TEST_CASE_BODY(all_properties__subtree__unknown_key)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(operators_eq_and_ne__empty);
+ATF_TEST_CASE_BODY(operators_eq_and_ne__empty)
+{
+    config::tree t1;
+    config::tree t2;
+    ATF_REQUIRE(  t1 == t2);
+    ATF_REQUIRE(!(t1 != t2));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(operators_eq_and_ne__shallow_copy);
+ATF_TEST_CASE_BODY(operators_eq_and_ne__shallow_copy)
+{
+    config::tree t1;
+    t1.define< config::int_node >("root.a.b.c.first");
+    t1.set< config::int_node >("root.a.b.c.first", 1);
+    config::tree t2 = t1;
+    ATF_REQUIRE(  t1 == t2);
+    ATF_REQUIRE(!(t1 != t2));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(operators_eq_and_ne__deep_copy);
+ATF_TEST_CASE_BODY(operators_eq_and_ne__deep_copy)
+{
+    config::tree t1;
+    t1.define< config::int_node >("root.a.b.c.first");
+    t1.set< config::int_node >("root.a.b.c.first", 1);
+    config::tree t2 = t1.deep_copy();
+    ATF_REQUIRE(  t1 == t2);
+    ATF_REQUIRE(!(t1 != t2));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(operators_eq_and_ne__some_contents);
+ATF_TEST_CASE_BODY(operators_eq_and_ne__some_contents)
+{
+    config::tree t1, t2;
+
+    t1.define< config::int_node >("root.a.b.c.first");
+    t1.set< config::int_node >("root.a.b.c.first", 1);
+    ATF_REQUIRE(!(t1 == t2));
+    ATF_REQUIRE(  t1 != t2);
+
+    t2.define< config::int_node >("root.a.b.c.first");
+    t2.set< config::int_node >("root.a.b.c.first", 1);
+    ATF_REQUIRE(  t1 == t2);
+    ATF_REQUIRE(!(t1 != t2));
+
+    t1.set< config::int_node >("root.a.b.c.first", 2);
+    ATF_REQUIRE(!(t1 == t2));
+    ATF_REQUIRE(  t1 != t2);
+
+    t2.set< config::int_node >("root.a.b.c.first", 2);
+    ATF_REQUIRE(  t1 == t2);
+    ATF_REQUIRE(!(t1 != t2));
+
+    t1.define< config::string_node >("another.key");
+    t1.set< config::string_node >("another.key", "some text");
+    ATF_REQUIRE(!(t1 == t2));
+    ATF_REQUIRE(  t1 != t2);
+
+    t2.define< config::string_node >("another.key");
+    t2.set< config::string_node >("another.key", "some text");
+    ATF_REQUIRE(  t1 == t2);
+    ATF_REQUIRE(!(t1 != t2));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(custom_leaf__no_default_ctor);
 ATF_TEST_CASE_BODY(custom_leaf__no_default_ctor)
 {
@@ -767,6 +836,11 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, all_properties__subtree__strip_key);
     ATF_ADD_TEST_CASE(tcs, all_properties__subtree__invalid_key);
     ATF_ADD_TEST_CASE(tcs, all_properties__subtree__unknown_key);
+
+    ATF_ADD_TEST_CASE(tcs, operators_eq_and_ne__empty);
+    ATF_ADD_TEST_CASE(tcs, operators_eq_and_ne__shallow_copy);
+    ATF_ADD_TEST_CASE(tcs, operators_eq_and_ne__deep_copy);
+    ATF_ADD_TEST_CASE(tcs, operators_eq_and_ne__some_contents);
 
     ATF_ADD_TEST_CASE(tcs, custom_leaf__no_default_ctor);
 }
