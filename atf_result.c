@@ -401,6 +401,7 @@ convert_expected_exit(const int status_arg, const char* reason, int status,
             return kyua_result_write(
                 output, KYUA_RESULT_EXPECTED_FAILURE, "%s", reason);
         } else {
+            *success = false;
             return kyua_result_write(
                 output, KYUA_RESULT_FAILED, "Test case expected to exit with "
                 "code %d but got code %d", status_arg, WEXITSTATUS(status));
@@ -471,6 +472,7 @@ convert_expected_signal(const int status_arg, const char* reason, int status,
             return kyua_result_write(
                 output, KYUA_RESULT_EXPECTED_FAILURE, "%s", reason);
         } else {
+            *success = false;
             return kyua_result_write(
                 output, KYUA_RESULT_FAILED, "Test case expected to receive "
                 "signal %d but got %d", status_arg, WTERMSIG(status));
