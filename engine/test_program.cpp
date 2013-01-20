@@ -44,9 +44,11 @@
 #include "utils/logging/operations.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
+#include "utils/text/operations.ipp"
 
 namespace fs = utils::fs;
 namespace logging = utils::logging;
+namespace text = utils::text;
 
 using utils::none;
 using utils::optional;
@@ -440,4 +442,45 @@ bool
 engine::test_program::operator!=(const test_program& other) const
 {
     return !(*this == other);
+}
+
+
+/// Injects the object into a stream.
+///
+/// \param output The stream into which to inject the object.
+/// \param object The object to format.
+///
+/// \return The output stream.
+std::ostream&
+engine::operator<<(std::ostream& output, const test_cases_vector& object)
+{
+    output << "[";
+    for (test_cases_vector::size_type i = 0; i < object.size(); ++i) {
+        if (i != 0)
+            output << ", ";
+        output << *object[i];
+    }
+    output << "]";
+    return output;
+}
+
+
+/// Injects the object into a stream.
+///
+/// \param output The stream into which to inject the object.
+/// \param object The object to format.
+///
+/// \return The output stream.
+std::ostream&
+engine::operator<<(std::ostream& output, const test_program& object)
+{
+    output << F("test_program{interface=%s, binary=%s, root=%s, test_suite=%s, "
+                "metadata=%s, test_cases=%s}")
+        % text::quote(object.interface_name(), '\'')
+        % text::quote(object.relative_path().str(), '\'')
+        % text::quote(object.root().str(), '\'')
+        % text::quote(object.test_suite_name(), '\'')
+        % object.get_metadata()
+        % object.test_cases();
+    return output;
 }

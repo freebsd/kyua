@@ -33,6 +33,8 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include <sstream>
+
 #include <atf-c++.hpp>
 
 namespace datetime = utils::datetime;
@@ -160,6 +162,22 @@ ATF_TEST_CASE_BODY(delta__addition_and_set)
     {
         delta d(1, 2);
         ATF_REQUIRE(delta(4, 7) == (d += delta(3, 5)));
+    }
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(delta__output);
+ATF_TEST_CASE_BODY(delta__output)
+{
+    {
+        std::ostringstream str;
+        str << datetime::delta(15, 8791);
+        ATF_REQUIRE_EQ("15008791us", str.str());
+    }
+    {
+        std::ostringstream str;
+        str << datetime::delta(12345678, 0);
+        ATF_REQUIRE_EQ("12345678000000us", str.str());
     }
 }
 
@@ -314,6 +332,22 @@ ATF_TEST_CASE_BODY(timestamp__subtraction)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(timestamp__output);
+ATF_TEST_CASE_BODY(timestamp__output)
+{
+    {
+        std::ostringstream str;
+        str << datetime::timestamp::from_microseconds(1291970750123456LL);
+        ATF_REQUIRE_EQ("1291970750123456us", str.str());
+    }
+    {
+        std::ostringstream str;
+        str << datetime::timestamp::from_microseconds(1028309798759812LL);
+        ATF_REQUIRE_EQ("1028309798759812us", str.str());
+    }
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, delta__defaults);
@@ -324,6 +358,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, delta__differs);
     ATF_ADD_TEST_CASE(tcs, delta__addition);
     ATF_ADD_TEST_CASE(tcs, delta__addition_and_set);
+    ATF_ADD_TEST_CASE(tcs, delta__output);
 
     ATF_ADD_TEST_CASE(tcs, timestamp__copy);
     ATF_ADD_TEST_CASE(tcs, timestamp__from_microseconds);
@@ -337,4 +372,5 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, timestamp__equals);
     ATF_ADD_TEST_CASE(tcs, timestamp__differs);
     ATF_ADD_TEST_CASE(tcs, timestamp__subtraction);
+    ATF_ADD_TEST_CASE(tcs, timestamp__output);
 }

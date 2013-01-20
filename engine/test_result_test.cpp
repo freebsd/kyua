@@ -189,16 +189,17 @@ GOOD_TEST(passed, true, test_result::passed);
 GOOD_TEST(skipped, true, test_result::skipped);
 
 
-OUTPUT_TEST(broken, "broken: foo",
+OUTPUT_TEST(broken, "test_result{type='broken', reason='foo'}",
             test_result(test_result::broken, "foo"));
-OUTPUT_TEST(expected_failure, "expected_failure: abc def",
+OUTPUT_TEST(expected_failure,
+            "test_result{type='expected_failure', reason='abc def'}",
             test_result(test_result::expected_failure, "abc def"));
-OUTPUT_TEST(failed, "failed: some string",
-            test_result(test_result::failed, "some string"));
-OUTPUT_TEST(passed, "passed",
+OUTPUT_TEST(failed, "test_result{type='failed', reason='some \\'string'}",
+            test_result(test_result::failed, "some 'string"));
+OUTPUT_TEST(passed, "test_result{type='passed'}",
             test_result(test_result::passed, ""));
-OUTPUT_TEST(skipped, "skipped: last message for testing",
-            test_result(test_result::skipped, "last message for testing"));
+OUTPUT_TEST(skipped, "test_result{type='skipped', reason='last message'}",
+            test_result(test_result::skipped, "last message"));
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(operator_eq);

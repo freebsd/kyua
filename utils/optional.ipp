@@ -221,6 +221,25 @@ utils::optional< T >::get(void)
 }
 
 
+/// Injects the object into a stream.
+///
+/// \param output The stream into which to inject the object.
+/// \param object The object to format.
+///
+/// \return The output stream.
+template< class T >
+std::ostream& utils::operator<<(std::ostream& output,
+                                const optional< T >& object)
+{
+    if (!object) {
+        output << "none";
+    } else {
+        output << object.get();
+    }
+    return output;
+}
+
+
 /// Helper function to instantiate optional objects.
 ///
 /// \param value The value for the optional object.  Shouldn't be none, as

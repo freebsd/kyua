@@ -35,6 +35,8 @@
 #if !defined(UTILS_OPTIONAL_HPP)
 #define UTILS_OPTIONAL_HPP
 
+#include <ostream>
+
 
 namespace utils {
 
@@ -90,6 +92,10 @@ public:
     const T& get_default(const T&) const;
     T& get(void);
 };
+
+
+template< class T >
+std::ostream& operator<<(std::ostream&, const optional< T >&);
 
 
 template< class T >

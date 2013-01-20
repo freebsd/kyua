@@ -29,6 +29,7 @@
 #include "engine/action.hpp"
 
 #include "engine/context.hpp"
+#include "utils/format/macros.hpp"
 
 namespace fs = utils::fs;
 
@@ -105,4 +106,18 @@ bool
 engine::action::operator!=(const action& other) const
 {
     return !(*this == other);
+}
+
+
+/// Injects the object into a stream.
+///
+/// \param output The stream into which to inject the object.
+/// \param object The object to format.
+///
+/// \return The output stream.
+std::ostream&
+engine::operator<<(std::ostream& output, const action& object)
+{
+    output << F("action{context=%s}") % object.runtime_context();
+    return output;
 }

@@ -145,6 +145,19 @@ datetime::delta::operator+=(const datetime::delta& other)
 }
 
 
+/// Injects the object into a stream.
+///
+/// \param output The stream into which to inject the object.
+/// \param object The object to format.
+///
+/// \return The output stream.
+std::ostream&
+datetime::operator<<(std::ostream& output, const delta& object)
+{
+    return (output << object.to_microseconds() << "us");
+}
+
+
 namespace utils {
 namespace datetime {
 
@@ -359,4 +372,17 @@ datetime::timestamp::operator-(const datetime::timestamp& other) const
 {
     return datetime::delta::from_microseconds(to_microseconds() -
                                               other.to_microseconds());
+}
+
+
+/// Injects the object into a stream.
+///
+/// \param output The stream into which to inject the object.
+/// \param object The object to format.
+///
+/// \return The output stream.
+std::ostream&
+datetime::operator<<(std::ostream& output, const timestamp& object)
+{
+    return (output << object.to_microseconds() << "us");
 }

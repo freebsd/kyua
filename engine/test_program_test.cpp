@@ -28,6 +28,8 @@
 
 #include "engine/test_program.hpp"
 
+#include <sstream>
+
 #include <atf-c++.hpp>
 
 #include "engine/exceptions.hpp"
@@ -51,7 +53,7 @@ ATF_TEST_CASE_BODY(ctor_and_getters)
                    test_program.absolute_path());
     ATF_REQUIRE_EQ(fs::path("root"), test_program.root());
     ATF_REQUIRE_EQ("suite-name", test_program.test_suite_name());
-    ATF_REQUIRE(md == test_program.get_metadata());
+    ATF_REQUIRE_EQ(md, test_program.get_metadata());
 }
 
 
@@ -108,7 +110,7 @@ ATF_TEST_CASE_BODY(test_cases__some)
         new engine::test_case(test_case)));
     test_program.set_test_cases(exp_test_cases);
 
-    ATF_REQUIRE(exp_test_cases == test_program.test_cases());
+    ATF_REQUIRE_EQ(exp_test_cases, test_program.test_cases());
 }
 
 
@@ -242,6 +244,69 @@ ATF_TEST_CASE_BODY(operators_eq_and_ne__not_copy)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(output__no_test_cases);
+ATF_TEST_CASE_BODY(output__no_test_cases)
+{
+    engine::test_program tp(
+        "plain", fs::path("binary/path"), fs::path("/the/root"), "suite-name",
+        engine::metadata_builder().add_allowed_architecture("a").build());
+    tp.set_test_cases(engine::test_cases_vector());
+
+    std::ostringstream str;
+    str << tp;
+    ATF_REQUIRE_EQ(
+        "test_program{interface='plain', binary='binary/path', "
+        "root='/the/root', test_suite='suite-name', "
+        "metadata=metadata{allowed_architectures='a', allowed_platforms='', "
+        "description='', has_cleanup='false', "
+        "required_configs='', required_files='', required_memory='0', "
+        "required_programs='', required_user='', timeout='300'}, "
+        "test_cases=[]}",
+        str.str());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(output__some_test_cases);
+ATF_TEST_CASE_BODY(output__some_test_cases)
+{
+    engine::test_program tp(
+        "plain", fs::path("binary/path"), fs::path("/the/root"), "suite-name",
+        engine::metadata_builder().add_allowed_architecture("a").build());
+
+    const engine::test_case_ptr tc1(new engine::test_case(
+        "plain", tp, "the-name", engine::metadata_builder()
+        .add_allowed_platform("foo").add_custom("X-bar", "baz").build()));
+    const engine::test_case_ptr tc2(new engine::test_case(
+        "plain", tp, "another-name", engine::metadata_builder().build()));
+    engine::test_cases_vector tcs;
+    tcs.push_back(tc1);
+    tcs.push_back(tc2);
+    tp.set_test_cases(tcs);
+
+    std::ostringstream str;
+    str << tp;
+    ATF_REQUIRE_EQ(
+        "test_program{interface='plain', binary='binary/path', "
+        "root='/the/root', test_suite='suite-name', "
+        "metadata=metadata{allowed_architectures='a', allowed_platforms='', "
+        "description='', has_cleanup='false', "
+        "required_configs='', required_files='', required_memory='0', "
+        "required_programs='', required_user='', timeout='300'}, "
+        "test_cases=["
+        "test_case{interface='plain', name='the-name', "
+        "metadata=metadata{allowed_architectures='', allowed_platforms='foo', "
+        "custom.X-bar='baz', description='', has_cleanup='false', "
+        "required_configs='', required_files='', required_memory='0', "
+        "required_programs='', required_user='', timeout='300'}}, "
+        "test_case{interface='plain', name='another-name', "
+        "metadata=metadata{allowed_architectures='', allowed_platforms='', "
+        "description='', has_cleanup='false', "
+        "required_configs='', required_files='', required_memory='0', "
+        "required_programs='', required_user='', timeout='300'}}]}",
+        str.str());
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     // TODO(jmmv): These tests have ceased to be realistic with the move to
@@ -256,4 +321,7 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, operators_eq_and_ne__copy);
     ATF_ADD_TEST_CASE(tcs, operators_eq_and_ne__not_copy);
+
+    ATF_ADD_TEST_CASE(tcs, output__no_test_cases);
+    ATF_ADD_TEST_CASE(tcs, output__some_test_cases);
 }

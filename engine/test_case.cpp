@@ -49,11 +49,13 @@ extern "C" {
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
 #include "utils/passwd.hpp"
+#include "utils/text/operations.ipp"
 
 namespace config = utils::config;
 namespace fs = utils::fs;
 namespace logging = utils::logging;
 namespace passwd = utils::passwd;
+namespace text = utils::text;
 namespace user_files = engine::user_files;
 
 using utils::none;
@@ -355,6 +357,24 @@ bool
 engine::test_case::operator!=(const test_case& other) const
 {
     return !(*this == other);
+}
+
+
+/// Injects the object into a stream.
+///
+/// \param output The stream into which to inject the object.
+/// \param object The object to format.
+///
+/// \return The output stream.
+std::ostream&
+engine::operator<<(std::ostream& output, const test_case& object)
+{
+    // We skip injecting container_test_program() on purpose to avoid a loop.
+    output << F("test_case{interface=%s, name=%s, metadata=%s}")
+        % text::quote(object.interface_name(), '\'')
+        % text::quote(object.name(), '\'')
+        % object.get_metadata();
+    return output;
 }
 
 

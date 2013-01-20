@@ -29,6 +29,7 @@
 #include "engine/action.hpp"
 
 #include <map>
+#include <sstream>
 #include <string>
 
 #include <atf-c++.hpp>
@@ -82,8 +83,22 @@ ATF_TEST_CASE_BODY(operators_eq_and_ne)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(output);
+ATF_TEST_CASE_BODY(output)
+{
+    const engine::context context = fake_context();
+    const engine::action action(context);
+
+    std::ostringstream str;
+    str << action;
+    ATF_REQUIRE_EQ("action{context=context{cwd='/foo/bar', env=[foo='bar']}}",
+                   str.str());
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, ctor_and_getters);
     ATF_ADD_TEST_CASE(tcs, operators_eq_and_ne);
+    ATF_ADD_TEST_CASE(tcs, output);
 }

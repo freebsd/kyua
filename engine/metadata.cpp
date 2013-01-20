@@ -690,6 +690,33 @@ engine::metadata::operator!=(const metadata& other) const
 }
 
 
+/// Injects the object into a stream.
+///
+/// \param output The stream into which to inject the object.
+/// \param object The object to format.
+///
+/// \return The output stream.
+std::ostream&
+engine::operator<<(std::ostream& output, const metadata& object)
+{
+    output << "metadata{";
+
+    bool first = true;
+    const engine::properties_map props = object.to_properties();
+    for (engine::properties_map::const_iterator iter = props.begin();
+         iter != props.end(); ++iter) {
+        if (!first)
+            output << ", ";
+        output << F("%s=%s") % (*iter).first %
+            text::quote((*iter).second, '\'');
+        first = false;
+    }
+
+    output << "}";
+    return output;
+}
+
+
 /// Internal implementation of the metadata_builder class.
 struct engine::metadata_builder::impl {
     /// Collection of requirements.

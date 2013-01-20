@@ -38,6 +38,7 @@
 #if !defined(ENGINE_TEST_PROGRAM_HPP)
 #define ENGINE_TEST_PROGRAM_HPP
 
+#include <ostream>
 #include <string>
 #include <tr1/memory>
 #include <vector>
@@ -50,6 +51,9 @@ namespace engine {
 
 /// Collection of test cases.
 typedef std::vector< test_case_ptr > test_cases_vector;
+
+
+std::ostream& operator<<(std::ostream&, const test_cases_vector&);
 
 
 /// Representation of a test program.
@@ -79,6 +83,9 @@ public:
     bool operator==(const test_program&) const;
     bool operator!=(const test_program&) const;
 };
+
+
+std::ostream& operator<<(std::ostream&, const test_program&);
 
 
 /// Pointer to a test program.

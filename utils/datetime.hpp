@@ -37,6 +37,7 @@ extern "C" {
 }
 
 #include <cstddef>
+#include <ostream>
 #include <string>
 
 #include <tr1/memory>
@@ -65,6 +66,9 @@ struct delta {
     delta operator+(const delta&) const;
     delta operator+=(const delta&);
 };
+
+
+std::ostream& operator<<(std::ostream&, const delta&);
 
 
 /// Represents a fixed date/time.
@@ -97,6 +101,9 @@ public:
 
     delta operator-(const timestamp&) const;
 };
+
+
+std::ostream& operator<<(std::ostream&, const timestamp&);
 
 
 void set_mock_now(const int, const int, const int, const int, const int,

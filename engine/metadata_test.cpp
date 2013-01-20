@@ -28,6 +28,8 @@
 
 #include "engine/metadata.hpp"
 
+#include <sstream>
+
 #include <atf-c++.hpp>
 
 #include "engine/user_files/config.hpp"
@@ -308,6 +310,38 @@ ATF_TEST_CASE_BODY(operators_eq_and_ne__different)
         .build();
     ATF_REQUIRE(!(md1 == md2));
     ATF_REQUIRE(  md1 != md2);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(output__defaults);
+ATF_TEST_CASE_BODY(output__defaults)
+{
+    std::ostringstream str;
+    str << engine::metadata_builder().build();
+    ATF_REQUIRE_EQ("metadata{allowed_architectures='', allowed_platforms='', "
+                   "description='', has_cleanup='false', required_configs='', "
+                   "required_files='', required_memory='0', "
+                   "required_programs='', required_user='', timeout='300'}",
+                   str.str());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(output__some_values);
+ATF_TEST_CASE_BODY(output__some_values)
+{
+    std::ostringstream str;
+    str << engine::metadata_builder()
+        .add_allowed_architecture("abc")
+        .add_required_file(fs::path("foo"))
+        .add_required_file(fs::path("bar"))
+        .set_required_memory(units::bytes(1024))
+        .build();
+    ATF_REQUIRE_EQ(
+        "metadata{allowed_architectures='abc', allowed_platforms='', "
+        "description='', has_cleanup='false', required_configs='', "
+        "required_files='bar foo', required_memory='1024', "
+        "required_programs='', required_user='', timeout='300'}",
+        str.str());
 }
 
 
@@ -716,6 +750,9 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, operators_eq_and_ne__copy);
     ATF_ADD_TEST_CASE(tcs, operators_eq_and_ne__equal);
     ATF_ADD_TEST_CASE(tcs, operators_eq_and_ne__different);
+
+    ATF_ADD_TEST_CASE(tcs, output__defaults);
+    ATF_ADD_TEST_CASE(tcs, output__some_values);
 
     // TODO(jmmv): Add tests for error conditions (invalid keys and invalid
     // values).

@@ -40,6 +40,9 @@ namespace utils {
 namespace text {
 
 
+std::string quote(const std::string&, const char);
+
+
 std::vector< std::string > refill(const std::string&, const std::size_t);
 std::string refill_as_string(const std::string&, const std::size_t);
 

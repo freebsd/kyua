@@ -32,6 +32,7 @@
 #if !defined(ENGINE_ACTION_HPP)
 #define ENGINE_ACTION_HPP
 
+#include <ostream>
 #include <tr1/memory>
 
 namespace engine {
@@ -60,6 +61,9 @@ public:
     bool operator==(const action&) const;
     bool operator!=(const action&) const;
 };
+
+
+std::ostream& operator<<(std::ostream&, const action&);
 
 
 }  // namespace engine

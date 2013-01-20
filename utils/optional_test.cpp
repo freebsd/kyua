@@ -29,6 +29,7 @@
 #include "utils/optional.ipp"
 
 #include <iostream>
+#include <sstream>
 
 #include <atf-c++.hpp>
 
@@ -249,6 +250,27 @@ ATF_TEST_CASE_BODY(operators_eq_and_ne)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(output);
+ATF_TEST_CASE_BODY(output)
+{
+    {
+        std::ostringstream str;
+        str << optional< int >(none);
+        ATF_REQUIRE_EQ("none", str.str());
+    }
+    {
+        std::ostringstream str;
+        str << optional< int >(5);
+        ATF_REQUIRE_EQ("5", str.str());
+    }
+    {
+        std::ostringstream str;
+        str << optional< std::string >("this is a text");
+        ATF_REQUIRE_EQ("this is a text", str.str());
+    }
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, ctors__native_type);
@@ -259,4 +281,5 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, get_default);
     ATF_ADD_TEST_CASE(tcs, make_optional);
     ATF_ADD_TEST_CASE(tcs, operators_eq_and_ne);
+    ATF_ADD_TEST_CASE(tcs, output);
 }

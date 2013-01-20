@@ -31,6 +31,9 @@
 #include "engine/exceptions.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/sanity.hpp"
+#include "utils/text/operations.ipp"
+
+namespace text = utils::text;
 
 
 /// Constructs a base result.
@@ -171,27 +174,29 @@ engine::test_result::operator!=(const test_result& other) const
 }
 
 
-/// Injects a result into a stream.
+/// Injects the object into a stream.
 ///
-/// This should be used for debugging and testing purposes only, as the frontend
-/// should perform the formatting explicitly.
-///
-/// \param output The stream into which to inject the result.
-/// \param result The result to format.
+/// \param output The stream into which to inject the object.
+/// \param object The object to format.
 ///
 /// \return The output stream.
 std::ostream&
-engine::operator<<(std::ostream& output, const test_result& result)
+engine::operator<<(std::ostream& output, const test_result& object)
 {
-    switch (result.type()) {
-    case test_result::broken: output << "broken"; break;
-    case test_result::expected_failure: output << "expected_failure"; break;
-    case test_result::failed: output << "failed"; break;
-    case test_result::passed: output << "passed"; break;
-    case test_result::skipped: output << "skipped"; break;
+    std::string result_name;
+    switch (object.type()) {
+    case test_result::broken: result_name = "broken"; break;
+    case test_result::expected_failure: result_name = "expected_failure"; break;
+    case test_result::failed: result_name = "failed"; break;
+    case test_result::passed: result_name = "passed"; break;
+    case test_result::skipped: result_name = "skipped"; break;
     }
-    const std::string& reason = result.reason();
-    if (!reason.empty())
-        output << ": " << reason;
+    const std::string& reason = object.reason();
+    if (reason.empty()) {
+        output << F("test_result{type=%s}") % text::quote(result_name, '\'');
+    } else {
+        output << F("test_result{type=%s, reason=%s}")
+            % text::quote(result_name, '\'') % text::quote(reason, '\'');
+    }
     return output;
 }

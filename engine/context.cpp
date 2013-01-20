@@ -29,9 +29,12 @@
 #include "engine/context.hpp"
 
 #include "utils/env.hpp"
+#include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
+#include "utils/text/operations.ipp"
 
 namespace fs = utils::fs;
+namespace text = utils::text;
 
 
 /// Internal implementation of a context.
@@ -132,4 +135,33 @@ bool
 engine::context::operator!=(const context& other) const
 {
     return !(*this == other);
+}
+
+
+/// Injects the object into a stream.
+///
+/// \param output The stream into which to inject the object.
+/// \param object The object to format.
+///
+/// \return The output stream.
+std::ostream&
+engine::operator<<(std::ostream& output, const context& object)
+{
+    output << F("context{cwd=%s, env=[")
+        % text::quote(object.cwd().str(), '\'');
+
+    const std::map< std::string, std::string >& env = object.env();
+    bool first = true;
+    for (std::map< std::string, std::string >::const_iterator
+             iter = env.begin(); iter != env.end(); ++iter) {
+        if (!first)
+            output << ", ";
+        first = false;
+
+        output << F("%s=%s") % (*iter).first
+            % text::quote((*iter).second, '\'');
+    }
+
+    output << "]}";
+    return output;
 }

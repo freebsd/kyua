@@ -29,6 +29,7 @@
 #include "engine/context.hpp"
 
 #include <map>
+#include <sstream>
 #include <string>
 
 #include <atf-c++.hpp>
@@ -80,9 +81,38 @@ ATF_TEST_CASE_BODY(operators_eq_and_ne)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(output__empty_env);
+ATF_TEST_CASE_BODY(output__empty_env)
+{
+    const std::map< std::string, std::string > env;
+    const engine::context context(fs::path("/foo/bar"), env);
+
+    std::ostringstream str;
+    str << context;
+    ATF_REQUIRE_EQ("context{cwd='/foo/bar', env=[]}", str.str());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(output__some_env);
+ATF_TEST_CASE_BODY(output__some_env)
+{
+    std::map< std::string, std::string > env;
+    env["foo"] = "first";
+    env["bar"] = "second' var";
+    const engine::context context(fs::path("/foo/bar"), env);
+
+    std::ostringstream str;
+    str << context;
+    ATF_REQUIRE_EQ("context{cwd='/foo/bar', env=[bar='second\\' var', "
+        "foo='first']}", str.str());
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, ctor_and_getters);
     ATF_ADD_TEST_CASE(tcs, current);
     ATF_ADD_TEST_CASE(tcs, operators_eq_and_ne);
+    ATF_ADD_TEST_CASE(tcs, output__empty_env);
+    ATF_ADD_TEST_CASE(tcs, output__some_env);
 }

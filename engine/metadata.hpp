@@ -34,6 +34,7 @@
 
 #include <map>
 #include <memory>
+#include <ostream>
 #include <set>
 #include <string>
 
@@ -97,6 +98,9 @@ public:
     bool operator==(const metadata&) const;
     bool operator!=(const metadata&) const;
 };
+
+
+std::ostream& operator<<(std::ostream&, const metadata&);
 
 
 /// Builder for a metadata object.

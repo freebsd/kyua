@@ -39,6 +39,7 @@ extern "C" {
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -427,6 +428,28 @@ ATF_TEST_CASE_BODY(test_case__operators_eq_and_ne__copy)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(test_case__output);
+ATF_TEST_CASE_BODY(test_case__output)
+{
+    const engine::test_program tp(
+        "plain", fs::path("non-existent"), fs::path("."), "suite-name",
+        engine::metadata_builder().build());
+
+    const engine::test_case tc1(
+        "plain", tp, "the-name", engine::metadata_builder()
+        .add_allowed_platform("foo").add_custom("X-bar", "baz").build());
+    std::ostringstream str;
+    str << tc1;
+    ATF_REQUIRE_EQ(
+        "test_case{interface='plain', name='the-name', "
+        "metadata=metadata{allowed_architectures='', allowed_platforms='foo', "
+        "custom.X-bar='baz', description='', has_cleanup='false', "
+        "required_configs='', required_files='', required_memory='0', "
+        "required_programs='', required_user='', timeout='300'}}",
+        str.str());
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(test_case__operators_eq_and_ne__not_copy);
 ATF_TEST_CASE_BODY(test_case__operators_eq_and_ne__not_copy)
 {
@@ -509,8 +532,8 @@ ATF_TEST_CASE_BODY(run_test_case__atf__current_directory)
 {
     atf_helper helper(this, "pass");
     helper.move("program", ".");
-    ATF_REQUIRE(engine::test_result(engine::test_result::passed) ==
-                helper.run());
+    ATF_REQUIRE_EQ(engine::test_result(engine::test_result::passed),
+                   helper.run());
 }
 
 
@@ -521,8 +544,8 @@ ATF_TEST_CASE_BODY(run_test_case__atf__subdirectory)
     ATF_REQUIRE(::mkdir("dir1", 0755) != -1);
     ATF_REQUIRE(::mkdir("dir1/dir2", 0755) != -1);
     helper.move("dir2/program", "dir1");
-    ATF_REQUIRE(engine::test_result(engine::test_result::passed) ==
-                helper.run());
+    ATF_REQUIRE_EQ(engine::test_result(engine::test_result::passed),
+                   helper.run());
 }
 
 
@@ -531,8 +554,8 @@ ATF_TEST_CASE_BODY(run_test_case__atf__config_variables)
 {
     atf_helper helper(this, "create_cookie_in_control_dir");
     helper.set_config("control_dir", fs::current_path());
-    ATF_REQUIRE(engine::test_result(engine::test_result::passed) ==
-                helper.run());
+    ATF_REQUIRE_EQ(engine::test_result(engine::test_result::passed),
+                   helper.run());
 
     if (!fs::exists(fs::path("cookie")))
         fail("The cookie was not created where we expected; the test program "
@@ -546,8 +569,8 @@ ATF_TEST_CASE_BODY(run_test_case__atf__cleanup_shares_workdir)
     atf_helper helper(this, "check_cleanup_workdir");
     helper.set_metadata("has_cleanup", "true");
     helper.set_config("control_dir", fs::current_path());
-    ATF_REQUIRE(engine::test_result(engine::test_result::skipped,
-                                    "cookie created") == helper.run());
+    ATF_REQUIRE_EQ(engine::test_result(engine::test_result::skipped,
+                                       "cookie created"), helper.run());
 
     if (fs::exists(fs::path("missing_cookie")))
         fail("The cleanup part did not see the cookie; the work directory "
@@ -565,8 +588,8 @@ ATF_TEST_CASE_BODY(run_test_case__atf__has_cleanup__atf__false)
     atf_helper helper(this, "create_cookie_from_cleanup");
     helper.set_metadata("has_cleanup", "false");
     helper.set_config("control_dir", fs::current_path());
-    ATF_REQUIRE(engine::test_result(engine::test_result::passed) ==
-                helper.run());
+    ATF_REQUIRE_EQ(engine::test_result(engine::test_result::passed),
+                   helper.run());
 
     if (fs::exists(fs::path("cookie")))
         fail("The cleanup part was executed even though the test case set "
@@ -580,8 +603,8 @@ ATF_TEST_CASE_BODY(run_test_case__atf__has_cleanup__atf__true)
     atf_helper helper(this, "create_cookie_from_cleanup");
     helper.set_metadata("has_cleanup", "true");
     helper.set_config("control_dir", fs::current_path());
-    ATF_REQUIRE(engine::test_result(engine::test_result::passed) ==
-                helper.run());
+    ATF_REQUIRE_EQ(engine::test_result(engine::test_result::passed),
+                   helper.run());
 
     if (!fs::exists(fs::path("cookie")))
         fail("The cleanup part was not executed even though the test case set "
@@ -594,8 +617,8 @@ ATF_TEST_CASE_BODY(run_test_case__atf__kill_children)
 {
     atf_helper helper(this, "spawn_blocking_child");
     helper.set_config("control_dir", fs::current_path());
-    ATF_REQUIRE(engine::test_result(engine::test_result::passed) ==
-                helper.run());
+    ATF_REQUIRE_EQ(engine::test_result(engine::test_result::passed),
+                   helper.run());
 
     if (!fs::exists(fs::path("pid")))
         fail("The pid file was not created");
@@ -636,8 +659,8 @@ ATF_TEST_CASE_BODY(run_test_case__atf__isolation)
     // Simple checks to make sure that the test case has been isolated.
     utils::setenv("HOME", "foobar");
     utils::setenv("LANG", "C");
-    ATF_REQUIRE(engine::test_result(engine::test_result::passed) ==
-                helper.run());
+    ATF_REQUIRE_EQ(engine::test_result(engine::test_result::passed),
+                   helper.run());
 }
 
 
@@ -648,9 +671,9 @@ ATF_TEST_CASE_BODY(run_test_case__atf__allowed_architectures)
     helper.set_metadata("allowed_architectures", "i386 x86_64");
     helper.config().set_string("architecture", "powerpc");
     helper.config().set_string("platform", "");
-    ATF_REQUIRE(engine::test_result(engine::test_result::skipped, "Current "
-                                    "architecture 'powerpc' not supported") ==
-                helper.run());
+    ATF_REQUIRE_EQ(engine::test_result(engine::test_result::skipped, "Current "
+                                       "architecture 'powerpc' not supported"),
+                   helper.run());
 
     if (fs::exists(fs::path("cookie")))
         fail("The test case was not really skipped when the requirements "
@@ -665,9 +688,9 @@ ATF_TEST_CASE_BODY(run_test_case__atf__allowed_platforms)
     helper.set_metadata("allowed_platforms", "i386 amd64");
     helper.config().set_string("architecture", "");
     helper.config().set_string("platform", "macppc");
-    ATF_REQUIRE(engine::test_result(engine::test_result::skipped, "Current "
-                                    "platform 'macppc' not supported") ==
-                helper.run());
+    ATF_REQUIRE_EQ(engine::test_result(engine::test_result::skipped, "Current "
+                                       "platform 'macppc' not supported"),
+                   helper.run());
 
     if (fs::exists(fs::path("cookie")))
         fail("The test case was not really skipped when the requirements "
@@ -682,10 +705,10 @@ ATF_TEST_CASE_BODY(run_test_case__atf__required_configs)
     helper.set_metadata("required_configs", "used-var");
     helper.set_config("control_dir", fs::current_path());
     helper.set_config("unused-var", "value");
-    ATF_REQUIRE(engine::test_result(engine::test_result::skipped, "Required "
-                                    "configuration property 'used-var' not "
-                                    "defined") ==
-                helper.run());
+    ATF_REQUIRE_EQ(engine::test_result(engine::test_result::skipped, "Required "
+                                       "configuration property 'used-var' not "
+                                       "defined"),
+                   helper.run());
 
     if (fs::exists(fs::path("cookie")))
         fail("The test case was not really skipped when the requirements "
@@ -698,10 +721,10 @@ ATF_TEST_CASE_BODY(run_test_case__atf__required_programs)
 {
     atf_helper helper(this, "create_cookie_in_control_dir");
     helper.set_metadata("required_programs", "/non-existent/program");
-    ATF_REQUIRE(engine::test_result(engine::test_result::skipped, "Required "
-                                    "program '/non-existent/program' not "
-                                    "found") ==
-                helper.run());
+    ATF_REQUIRE_EQ(engine::test_result(engine::test_result::skipped, "Required "
+                                       "program '/non-existent/program' not "
+                                       "found"),
+                   helper.run());
 
     if (fs::exists(fs::path("cookie")))
         fail("The test case was not really skipped when the requirements "
@@ -719,8 +742,8 @@ ATF_TEST_CASE_BODY(run_test_case__atf__required_user__atf__root__atf__ok)
     atf_helper helper(this, "create_cookie_in_workdir");
     helper.set_metadata("required_user", "root");
     ATF_REQUIRE(passwd::current_user().is_root());
-    ATF_REQUIRE(engine::test_result(engine::test_result::passed) ==
-                helper.run());
+    ATF_REQUIRE_EQ(engine::test_result(engine::test_result::passed),
+                   helper.run());
 }
 
 
@@ -734,9 +757,9 @@ ATF_TEST_CASE_BODY(run_test_case__atf__required_user__atf__root__atf__skip)
     atf_helper helper(this, "create_cookie_in_workdir");
     helper.set_metadata("required_user", "root");
     ATF_REQUIRE(!passwd::current_user().is_root());
-    ATF_REQUIRE(engine::test_result(engine::test_result::skipped, "Requires "
-                                    "root privileges") ==
-                helper.run());
+    ATF_REQUIRE_EQ(engine::test_result(engine::test_result::skipped, "Requires "
+                                       "root privileges"),
+                   helper.run());
 }
 
 
@@ -750,8 +773,8 @@ ATF_TEST_CASE_BODY(run_test_case__atf__required_user__atf__unprivileged__atf__ok
     atf_helper helper(this, "create_cookie_in_workdir");
     helper.set_metadata("required_user", "unprivileged");
     ATF_REQUIRE(!helper.config().is_set("unprivileged_user"));
-    ATF_REQUIRE(engine::test_result(engine::test_result::passed) ==
-                helper.run());
+    ATF_REQUIRE_EQ(engine::test_result(engine::test_result::passed),
+                   helper.run());
 }
 
 
@@ -765,11 +788,11 @@ ATF_TEST_CASE_BODY(run_test_case__atf__required_user__atf__unprivileged__atf__sk
     atf_helper helper(this, "create_cookie_in_workdir");
     helper.set_metadata("required_user", "unprivileged");
     ATF_REQUIRE(!helper.config().is_set("unprivileged_user"));
-    ATF_REQUIRE(engine::test_result(engine::test_result::skipped, "Requires "
-                                    "an unprivileged user but the "
-                                    "unprivileged-user configuration variable "
-                                    "is not defined") ==
-                helper.run());
+    ATF_REQUIRE_EQ(engine::test_result(engine::test_result::skipped, "Requires "
+                                       "an unprivileged user but the "
+                                       "unprivileged-user configuration "
+                                       "variable is not defined"),
+                   helper.run());
 }
 
 
@@ -786,8 +809,8 @@ ATF_TEST_CASE_BODY(run_test_case__atf__required_user__atf__unprivileged__atf__dr
     helper.config().set< user_files::user_node >(
         "unprivileged_user",
         passwd::find_user_by_name(get_config_var("unprivileged-user")));
-    ATF_REQUIRE(engine::test_result(engine::test_result::passed) ==
-                helper.run());
+    ATF_REQUIRE_EQ(engine::test_result(engine::test_result::passed),
+                   helper.run());
 }
 
 
@@ -797,9 +820,9 @@ ATF_TEST_CASE_BODY(run_test_case__atf__timeout_body)
     atf_helper helper(this, "timeout_body");
     helper.set_metadata("timeout", "1");
     helper.set_config("control_dir", fs::current_path());
-    ATF_REQUIRE(engine::test_result(engine::test_result::broken,
-                                    "Test case body timed out") ==
-                helper.run());
+    ATF_REQUIRE_EQ(engine::test_result(engine::test_result::broken,
+                                       "Test case body timed out"),
+                   helper.run());
 
     if (fs::exists(fs::path("cookie")))
         fail("It seems that the test case was not killed after it timed out");
@@ -813,9 +836,9 @@ ATF_TEST_CASE_BODY(run_test_case__atf__timeout_cleanup)
     helper.set_metadata("has_cleanup", "true");
     helper.set_metadata("timeout", "1");
     helper.set_config("control_dir", fs::current_path());
-    ATF_REQUIRE(engine::test_result(engine::test_result::broken,
-                                    "Test case cleanup timed out") ==
-                helper.run());
+    ATF_REQUIRE_EQ(engine::test_result(engine::test_result::broken,
+                                       "Test case cleanup timed out"),
+                   helper.run());
 
     if (fs::exists(fs::path("cookie")))
         fail("It seems that the test case was not killed after it timed out");
@@ -889,8 +912,8 @@ ATF_TEST_CASE_BODY(run_test_case__atf__output)
     helper.set_metadata("has_cleanup", "true");
 
     capture_hooks hooks;
-    ATF_REQUIRE(engine::test_result(engine::test_result::passed) ==
-                helper.run(hooks));
+    ATF_REQUIRE_EQ(engine::test_result(engine::test_result::passed),
+                   helper.run(hooks));
 
     std::vector< std::string > expout;
     expout.push_back("Body message to stdout");
@@ -907,17 +930,17 @@ ATF_TEST_CASE_BODY(run_test_case__atf__output)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__plain__result_pass);
 ATF_TEST_CASE_BODY(run_test_case__plain__result_pass)
 {
-    ATF_REQUIRE(engine::test_result(engine::test_result::passed) ==
-                plain_helper(this, "pass").run());
+    ATF_REQUIRE_EQ(engine::test_result(engine::test_result::passed),
+                   plain_helper(this, "pass").run());
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__plain__result_fail);
 ATF_TEST_CASE_BODY(run_test_case__plain__result_fail)
 {
-    ATF_REQUIRE(engine::test_result(engine::test_result::failed,
-                                    "Returned non-success exit status 8") ==
-                plain_helper(this, "fail").run());
+    ATF_REQUIRE_EQ(engine::test_result(engine::test_result::failed,
+                                       "Returned non-success exit status 8"),
+                   plain_helper(this, "fail").run());
 }
 
 
@@ -935,8 +958,8 @@ ATF_TEST_CASE_BODY(run_test_case__plain__current_directory)
 {
     plain_helper helper(this, "pass");
     helper.move("program", ".");
-    ATF_REQUIRE(engine::test_result(engine::test_result::passed) ==
-                helper.run());
+    ATF_REQUIRE_EQ(engine::test_result(engine::test_result::passed),
+                   helper.run());
 }
 
 
@@ -947,8 +970,8 @@ ATF_TEST_CASE_BODY(run_test_case__plain__subdirectory)
     ATF_REQUIRE(::mkdir("dir1", 0755) != -1);
     ATF_REQUIRE(::mkdir("dir1/dir2", 0755) != -1);
     helper.move("dir2/program", "dir1");
-    ATF_REQUIRE(engine::test_result(engine::test_result::passed) ==
-                helper.run());
+    ATF_REQUIRE_EQ(engine::test_result(engine::test_result::passed),
+                   helper.run());
 }
 
 
@@ -957,8 +980,8 @@ ATF_TEST_CASE_BODY(run_test_case__plain__kill_children)
 {
     plain_helper helper(this, "spawn_blocking_child");
     helper.set("CONTROL_DIR", fs::current_path());
-    ATF_REQUIRE(engine::test_result(engine::test_result::passed) ==
-                helper.run());
+    ATF_REQUIRE_EQ(engine::test_result(engine::test_result::passed),
+                   helper.run());
 
     if (!fs::exists(fs::path("pid")))
         fail("The pid file was not created");
@@ -1000,8 +1023,8 @@ ATF_TEST_CASE_BODY(run_test_case__plain__isolation)
     // Simple checks to make sure that the test case has been isolated.
     utils::setenv("HOME", "foobar");
     utils::setenv("LANG", "C");
-    ATF_REQUIRE(engine::test_result(engine::test_result::passed) ==
-                helper.run());
+    ATF_REQUIRE_EQ(engine::test_result(engine::test_result::passed),
+                   helper.run());
 }
 
 
@@ -1011,9 +1034,9 @@ ATF_TEST_CASE_BODY(run_test_case__plain__timeout)
     plain_helper helper(this, "timeout",
                         utils::make_optional(datetime::delta(1, 0)));
     helper.set("CONTROL_DIR", fs::current_path());
-    ATF_REQUIRE(engine::test_result(engine::test_result::broken,
-                                    "Test case timed out") ==
-                helper.run());
+    ATF_REQUIRE_EQ(engine::test_result(engine::test_result::broken,
+                                       "Test case timed out"),
+                   helper.run());
 
     if (fs::exists(fs::path("cookie")))
         fail("It seems that the test case was not killed after it timed out");
@@ -1057,6 +1080,8 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, test_case__operators_eq_and_ne__copy);
     ATF_ADD_TEST_CASE(tcs, test_case__operators_eq_and_ne__not_copy);
+
+    ATF_ADD_TEST_CASE(tcs, test_case__output);
 
     ATF_ADD_TEST_CASE(tcs, run_test_case__atf__current_directory);
     ATF_ADD_TEST_CASE(tcs, run_test_case__atf__subdirectory);

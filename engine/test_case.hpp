@@ -32,6 +32,7 @@
 #if !defined(ENGINE_TEST_CASE_HPP)
 #define ENGINE_TEST_CASE_HPP
 
+#include <ostream>
 #include <string>
 #include <tr1/memory>
 
@@ -89,6 +90,9 @@ public:
     bool operator==(const test_case&) const;
     bool operator!=(const test_case&) const;
 };
+
+
+std::ostream& operator<<(std::ostream&, const test_case&);
 
 
 /// Pointer to a test case.
