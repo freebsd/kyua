@@ -59,7 +59,7 @@ void
 store::bind_delta(sqlite::statement& stmt, const char* field,
                   const datetime::delta& delta)
 {
-    stmt.bind(field, static_cast< int64_t >(delta.to_useconds()));
+    stmt.bind(field, static_cast< int64_t >(delta.to_microseconds()));
 }
 
 
@@ -136,7 +136,7 @@ store::column_delta(sqlite::statement& stmt, const char* column)
     if (stmt.column_type(id) != sqlite::type_integer)
         throw store::integrity_error(F("Time delta in column %s is not an "
                                        "integer") % column);
-    return datetime::delta::from_useconds(stmt.column_int64(id));
+    return datetime::delta::from_microseconds(stmt.column_int64(id));
 }
 
 
