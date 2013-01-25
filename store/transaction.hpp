@@ -61,8 +61,7 @@ class transaction;
 namespace detail {
 
 
-engine::test_program_ptr get_test_program(backend&, const int64_t,
-                                          const std::string&);
+engine::test_program_ptr get_test_program(backend&, const int64_t);
 
 
 }  // namespace detail

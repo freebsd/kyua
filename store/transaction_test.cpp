@@ -697,7 +697,7 @@ ATF_TEST_CASE_BODY(put_test_case__ok)
 
     store::transaction tx = backend.start();
     const engine::test_program_ptr loaded_test_program =
-        store::detail::get_test_program(backend, test_program_id, "atf");
+        store::detail::get_test_program(backend, test_program_id);
     ATF_REQUIRE(test_program == *loaded_test_program);
 }
 

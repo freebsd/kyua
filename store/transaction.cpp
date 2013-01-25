@@ -362,16 +362,13 @@ put_file(sqlite::database& db, const fs::path& path)
 ///
 /// \param backend_ The store backend we are dealing with.
 /// \param id The identifier of the test program to load.
-/// \param interface The name of the interface of the test program.  Used to
-///     address detail tables.
 ///
 /// \return The instantiated test program.
 ///
 /// \throw integrity_error If the data read from the database cannot be properly
 ///     interpreted.
 engine::test_program_ptr
-store::detail::get_test_program(backend& backend_, const int64_t id,
-                                const std::string& interface)
+store::detail::get_test_program(backend& backend_, const int64_t id)
 {
     sqlite::database& db = backend_.database();
 
@@ -380,6 +377,7 @@ store::detail::get_test_program(backend& backend_, const int64_t id,
         "SELECT * FROM test_programs WHERE test_program_id == :id");
     stmt.bind(":id", id);
     stmt.step();
+    const std::string interface = stmt.safe_column_text("interface");
     test_program.reset(new engine::test_program(
         interface,
         fs::path(stmt.safe_column_text("relative_path")),
@@ -481,10 +479,8 @@ store::results_iterator::test_program(void) const
     if (!_pimpl->_last_test_program ||
         _pimpl->_last_test_program.get().first != id)
     {
-        const std::string interface = _pimpl->_stmt.safe_column_text(
-            "interface");
         const engine::test_program_ptr tp = detail::get_test_program(
-            _pimpl->_backend, id, interface);
+            _pimpl->_backend, id);
         _pimpl->_last_test_program = std::make_pair(id, tp);
     }
     return _pimpl->_last_test_program.get().second;
