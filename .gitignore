@@ -1,6 +1,7 @@
 *.a
 *.o
 *_helpers
+*_inttest
 *_test
 
 .deps

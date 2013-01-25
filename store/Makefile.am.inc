@@ -43,16 +43,21 @@ libstore_a_SOURCES += store/metadata.hpp
 libstore_a_SOURCES += store/transaction.cpp
 libstore_a_SOURCES += store/transaction.hpp
 
-dist_store_DATA = store/schema.sql
+dist_store_DATA  = store/migrate_v1_v2.sql
+dist_store_DATA += store/schema_v2.sql
 
 if WITH_ATF
 tests_storedir = $(pkgtestsdir)/store
 
-tests_store_DATA = store/Kyuafile
+tests_store_DATA  = store/Kyuafile
+tests_store_DATA += store/schema_v1.sql
+tests_store_DATA += store/testdata_v1.sql
+tests_store_DATA += store/testdata_v2.sql
 EXTRA_DIST += $(tests_store_DATA)
 
 tests_store_PROGRAMS = store/backend_test
 store_backend_test_SOURCES = store/backend_test.cpp
+store_backend_test_CPPFLAGS = -DKYUA_STOREDIR=\"$(storedir)\"
 store_backend_test_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) \
                               $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 store_backend_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) \
@@ -78,6 +83,13 @@ store_metadata_test_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) \
                                $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 store_metadata_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) \
                             $(UTILS_LIBS) $(ATF_CXX_LIBS)
+
+tests_store_PROGRAMS += store/schema_inttest
+store_schema_inttest_SOURCES = store/schema_inttest.cpp
+store_schema_inttest_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) \
+                                $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+store_schema_inttest_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) \
+                             $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_store_PROGRAMS += store/transaction_test
 store_transaction_test_SOURCES = store/transaction_test.cpp

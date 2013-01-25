@@ -49,11 +49,15 @@ namespace sqlite = utils::sqlite;
 /// The current schema version.
 ///
 /// Any new database gets this schema version.  Existing databases with an older
-/// schema version must be first migrated to the current schema before they can
-/// be used.
+/// schema version must be first migrated to the current schema with
+/// migrate_schema() before they can be used.
 ///
-/// This must be kept in sync with the value in schema.sql.
-const int store::detail::current_schema_version = 2;
+/// This must be kept in sync with the value in the corresponding schema_vX.sql
+/// file, where X matches this version number.
+///
+/// This variable is not const to allow tests to modify it.  No other code
+/// should change its value.
+int store::detail::current_schema_version = 2;
 
 
 namespace {
@@ -96,34 +100,77 @@ empty_database(sqlite::database& db)
 }
 
 
+/// Performs a single migration step.
+///
+/// \param db Open database to which to apply the migration step.
+/// \param version_from Current schema version in the database.
+/// \param version_to Schema version to migrate to.
+///
+/// \throw error If there is a problem applying the migration.
+static void
+migrate_schema_step(sqlite::database& db, const int version_from,
+                    const int version_to)
+{
+    PRE(version_to == version_from + 1);
+
+    const fs::path migration = store::detail::migration_file(version_from,
+                                                             version_to);
+
+    std::ifstream input(migration.c_str());
+    if (!input)
+        throw store::error(F("Cannot open migration file '%s'") % migration);
+
+    const std::string migration_string = utils::read_stream(input);
+    try {
+        db.exec(migration_string);
+    } catch (const sqlite::error& e) {
+        throw store::error(F("Schema migration failed: %s") % e.what());
+    }
+}
+
+
 }  // anonymous namespace
+
+
+/// Calculates the path to a schema migration file.
+///
+/// \param version_from The version from which the database is being upgraded.
+/// \param version_to The version to which the database is being upgraded.
+///
+/// \return The path to the installed migrate_vX_vY.sql file.
+fs::path
+store::detail::migration_file(const int version_from, const int version_to)
+{
+    return fs::path(utils::getenv_with_default("KYUA_STOREDIR", KYUA_STOREDIR))
+        / (F("migrate_v%s_v%s.sql") % version_from % version_to);
+}
 
 
 /// Calculates the path to the schema file for the database.
 ///
-/// \return The path to the installed schema.sql file.
+/// \return The path to the installed schema_vX.sql file that matches the
+/// current_schema_version.
 fs::path
 store::detail::schema_file(void)
 {
     return fs::path(utils::getenv_with_default("KYUA_STOREDIR", KYUA_STOREDIR))
-        / "schema.sql";
+        / (F("schema_v%s.sql") % current_schema_version);
 }
 
 
 /// Initializes an empty database.
 ///
 /// \param db The database to initialize.
-/// \param file If not NULL, the schema file to use; for testing purposes only.
 ///
 /// \return The metadata record written into the new database.
 ///
 /// \throw store::error If there is a problem initializing the database.
 store::metadata
-store::detail::initialize(sqlite::database& db, const char* file)
+store::detail::initialize(sqlite::database& db)
 {
     PRE(empty_database(db));
 
-    const fs::path schema = file == NULL ? schema_file() : fs::path(file);
+    const fs::path schema = schema_file();
 
     std::ifstream input(schema.c_str());
     if (!input)
@@ -137,8 +184,8 @@ store::detail::initialize(sqlite::database& db, const char* file)
         const metadata metadata = metadata::fetch_latest(db);
         LI(F("New metadata entry %s") % metadata.timestamp());
         if (metadata.schema_version() != detail::current_schema_version) {
-            UNREACHABLE_MSG("current_schema_version is out of sync with "
-                            "schema.sql");
+            UNREACHABLE_MSG(F("current_schema_version is out of sync with "
+                              "%s") % schema);
         }
         return metadata;
     } catch (const store::integrity_error& e) {
@@ -147,6 +194,43 @@ store::detail::initialize(sqlite::database& db, const char* file)
     } catch (const sqlite::error& e) {
         throw error(F("Failed to initialize database: %s") % e.what());
     }
+}
+
+
+/// Backs up a database for schema migration purposes.
+///
+/// \todo We should probably use the SQLite backup API instead of doing a raw
+/// file copy.  We issue our backup call with the database already open, but
+/// because it is quiescent, it's OK to do so.
+///
+/// \param source Location of the database to be backed up.
+/// \param old_version Version of the database's CURRENT schema, used to
+///     determine the name of the backup file.
+///
+/// \throw error If there is a problem during the backup.
+void
+store::detail::backup_database(const fs::path& source, const int old_version)
+{
+    const fs::path target(F("%s.v%s.backup") % source.str() % old_version);
+
+    LI(F("Backing up database %s to %s") % source % target);
+
+    std::ifstream input(source.c_str());
+    if (!input)
+        throw error(F("Cannot open database file %s") % source);
+
+    std::ofstream output(target.c_str());
+    if (!output)
+        throw error(F("Cannot create database backup file %s") % target);
+
+    char buffer[1024];
+    while (input.good()) {
+        input.read(buffer, sizeof(buffer));
+        if (input.good() || input.eof())
+            output.write(buffer, input.gcount());
+    }
+    if (!input.good() && !input.eof())
+        throw error(F("Error while reading input file %s") % source);
 }
 
 
@@ -161,13 +245,27 @@ struct store::backend::impl {
     /// \param metadata_ The metadata for the loaded database.  This must match
     ///     the schema version we implement in this module; otherwise, a
     ///     migration is necessary.
+    ///
+    /// \throw integrity_error If the schema in the database is too modern,
+    ///     which might indicate some form of corruption or an old binary.
+    /// \throw old_schema_error If the schema in the database is older than our
+    ///     currently-implemented version and needs an upgrade.  The caller can
+    ///     use migrate_schema() to fix this problem.
     impl(sqlite::database& database_, const metadata& metadata_) :
         database(database_)
     {
-        if (metadata_.schema_version() != detail::current_schema_version)
-            throw integrity_error(F("Found schema version %s in database but "
-                                    "this version is not supported") %
-                                  metadata_.schema_version());
+        const int database_version = metadata_.schema_version();
+
+        if (database_version == detail::current_schema_version) {
+            // OK.
+        } else if (database_version < detail::current_schema_version) {
+            throw old_schema_error(database_version);
+        } else if (database_version > detail::current_schema_version) {
+            throw integrity_error(
+                F("Database at schema version %s, which is newer than the "
+                  "supported version %s")
+                % database_version % detail::current_schema_version);
+        }
     }
 };
 
@@ -239,4 +337,38 @@ store::transaction
 store::backend::start(void)
 {
     return transaction(*this);
+}
+
+
+/// Migrates the schema of a database to the current version.
+///
+/// The algorithm implemented here performs a migration step for every
+/// intermediate version between the schema version in the database to the
+/// version implemented in this file.  This should permit upgrades from
+/// arbitrary old databases.
+///
+/// \param file The database whose schema to upgrade.
+///
+/// \throw error If there is a problem with the migration.
+void
+store::migrate_schema(const utils::fs::path& file)
+{
+    sqlite::database db = do_open(file, sqlite::open_readwrite);
+
+    const int version_from = metadata::fetch_latest(db).schema_version();
+    const int version_to = detail::current_schema_version;
+    if (version_from == version_to) {
+        throw error(F("Database already at schema version %s; migration not "
+                      "needed") % version_from);
+    } else if (version_from > version_to) {
+        throw error(F("Database at schema version %s, which is newer than the "
+                      "supported version %s") % version_from % version_to);
+    }
+
+    detail::backup_database(file, version_from);
+
+    for (int i = version_from; i < version_to; ++i) {
+        LI(F("Migrating schema from version %s to %s") % i % (i + 1));
+        migrate_schema_step(db, i, i + 1);
+    }
 }

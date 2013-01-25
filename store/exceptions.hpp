@@ -53,6 +53,19 @@ public:
 };
 
 
+/// The database schema is old and needs a migration.
+class old_schema_error : public error {
+    /// Version in the database that caused this error.
+    int _old_version;
+
+public:
+    explicit old_schema_error(const int);
+    virtual ~old_schema_error(void) throw();
+
+    int old_version(void) const;
+};
+
+
 }  // namespace store
 
 

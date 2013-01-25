@@ -427,7 +427,7 @@ struct store::results_iterator::impl {
             "    JOIN test_results "
             "    ON test_cases.test_case_id = test_results.test_case_id "
             "WHERE test_programs.action_id == :action_id "
-            "ORDER BY test_programs.test_program_id, test_cases.name"))
+            "ORDER BY test_programs.absolute_path, test_cases.name"))
     {
         _stmt.bind(":action_id", action_id_);
         _valid = _stmt.step();

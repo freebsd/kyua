@@ -26,8 +26,7 @@
 -- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 -- OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
--- \file store/schema.sql
+-- \file store/schema_v1.sql
 -- Definition of the database schema.
 --
 -- The whole contents of this file are wrapped in a transaction.  We want
@@ -128,38 +127,6 @@ CREATE TABLE actions (
 -- -------------------------------------------------------------------------
 
 
--- Representation of the metadata objects.
---
--- The way this table works is like this: every time we record a metadata
--- object, we calculate what its identifier should be as the last rowid of
--- the table.  All properties of that metadata object thus receive the same
--- identifier.
-CREATE TABLE metadatas (
-    metadata_id INTEGER NOT NULL,
-
-    -- The name of the property.
-    property_name TEXT NOT NULL,
-
-    -- One of the values of the property.
-    property_value TEXT,
-
-    PRIMARY KEY (metadata_id, property_name)
-);
-
-
--- Optimize the loading of the metadata of any single entity.
---
--- The metadata_id column of the metadatas table is not enough to act as a
--- primary key, yet we need to locate entries in the metadatas table solely by
--- their identifier.
---
--- TODO(jmmv): I think this index is useless given that the primary key in the
--- metadatas table includes the metadata_id as the first component.  Need to
--- verify this and drop the index or this comment appropriately.
-CREATE INDEX index_metadatas_by_id
-    ON metadatas (metadata_id);
-
-
 -- Representation of a test program.
 --
 -- At the moment, there are no substantial differences between the
@@ -186,20 +153,12 @@ CREATE TABLE test_programs (
     -- Name of the test suite the test program belongs to.
     test_suite_name TEXT NOT NULL,
 
-    -- Reference to the various rows of metadatas.
-    metadata_id INTEGER,
-
     -- The name of the test program interface.
     --
     -- Note that this indicates both the interface for the test program and
     -- its test cases.  See below for the corresponding detail tables.
     interface TEXT NOT NULL
 );
-
-
--- Optimize the lookup of test programs by the action they belong to.
-CREATE INDEX index_test_programs_by_action_id
-    ON test_programs (action_id);
 
 
 -- Representation of a test case.
@@ -211,16 +170,8 @@ CREATE INDEX index_test_programs_by_action_id
 CREATE TABLE test_cases (
     test_case_id INTEGER PRIMARY KEY AUTOINCREMENT,
     test_program_id INTEGER REFERENCES test_programs,
-    name TEXT NOT NULL,
-
-    -- Reference to the various rows of metadatas.
-    metadata_id INTEGER
+    name TEXT NOT NULL
 );
-
-
--- Optimize the loading of all test cases that are part of a test program.
-CREATE INDEX index_test_cases_by_test_programs_id
-    ON test_cases (test_program_id);
 
 
 -- Representation of test case results.
@@ -258,6 +209,77 @@ CREATE TABLE test_case_files (
 
 
 -- -------------------------------------------------------------------------
+-- Detail tables for the 'atf' test interface.
+-- -------------------------------------------------------------------------
+
+
+-- Properties specific to 'atf' test cases.
+--
+-- This table contains the representation of singly-valued properties such
+-- as 'timeout'.  Properties that can have more than one (textual) value
+-- are stored in the atf_test_cases_multivalues table.
+--
+-- Note that all properties can be NULL because test cases are not required
+-- to define them.
+CREATE TABLE atf_test_cases (
+    test_case_id INTEGER PRIMARY KEY REFERENCES test_cases,
+
+    -- Free-form description of the text case.
+    description TEXT,
+
+    -- Either 'true' or 'false', indicating whether the test case has a
+    -- cleanup routine or not.
+    has_cleanup TEXT,
+
+    -- The timeout for the test case in microseconds.
+    timeout INTEGER,
+
+    -- The amount of physical memory required by the test case.
+    required_memory INTEGER,
+
+    -- Either 'root' or 'unprivileged', indicating the privileges required by
+    -- the test case.
+    required_user TEXT
+);
+
+
+-- Representation of test case properties that have more than one value.
+--
+-- While we could store the flattened values of the properties as provided
+-- by the test case itself, we choose to store the processed, split
+-- representation.  This allows us to perform queries about the test cases
+-- directly on the database without doing text processing; for example,
+-- "get all test cases that require /bin/ls".
+CREATE TABLE atf_test_cases_multivalues (
+    test_case_id INTEGER REFERENCES test_cases,
+
+    -- The name of the property; for example, 'require.progs'.
+    property_name TEXT NOT NULL,
+
+    -- One of the values of the property.
+    property_value TEXT NOT NULL
+);
+
+
+-- -------------------------------------------------------------------------
+-- Detail tables for the 'plain' test interface.
+-- -------------------------------------------------------------------------
+
+
+-- Properties specific to 'plain' test programs.
+CREATE TABLE plain_test_programs (
+    test_program_id INTEGER PRIMARY KEY REFERENCES test_programs,
+
+    -- The timeout for the test cases in this test program.  While this
+    -- setting has a default value for test programs, we explicitly record
+    -- the information here.  The "default value" used when the test
+    -- program was run might change over time, so we want to know what it
+    -- was exactly when this was run.
+    timeout INTEGER NOT NULL
+);
+
+
+-- -------------------------------------------------------------------------
 -- Verbatim files.
 -- -------------------------------------------------------------------------
 
@@ -286,7 +308,7 @@ CREATE TABLE files (
 -- If you modify the value of the schema version in this statement, you
 -- will also have to modify the version encoded in the backend module.
 INSERT INTO metadata (timestamp, schema_version)
-    VALUES (strftime('%s', 'now'), 2);
+    VALUES (strftime('%s', 'now'), 1);
 
 
 COMMIT TRANSACTION;
