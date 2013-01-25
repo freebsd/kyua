@@ -42,7 +42,6 @@ extern "C" {
 #include <sstream>
 #include <stdexcept>
 #include <string>
-#include <vector>
 
 #include <atf-c++.hpp>
 
@@ -61,6 +60,7 @@ extern "C" {
 #include "utils/passwd.hpp"
 #include "utils/process/children.ipp"
 #include "utils/sanity.hpp"
+#include "utils/stream.hpp"
 
 namespace config = utils::config;
 namespace datetime = utils::datetime;
@@ -76,54 +76,41 @@ using utils::optional;
 namespace {
 
 
-/// Reads a file in memory, line by line.
-///
-/// \param file The file to read.
-///
-/// \return All the lines in the file.
-std::vector< std::string >
-read_lines(const fs::path& file)
-{
-    std::ifstream input(file.c_str());
-    ATF_REQUIRE(input);
-
-    std::vector< std::string > lines;
-    std::string line;
-    while (std::getline(input, line).good())
-        lines.push_back(line);
-    return lines;
-}
-
-
 /// Test case hooks to capture stdout and stderr in memory.
 class capture_hooks : public engine::test_case_hooks {
 public:
     /// Contents of the stdout of the test case.
-    std::vector< std::string > stdout_lines;
+    std::string stdout_contents;
 
     /// Contents of the stderr of the test case.
-    std::vector< std::string > stderr_lines;
+    std::string stderr_contents;
 
-    /// Stores the stdout of the test case into stdout_lines.
+    /// Stores the stdout of the test case into stdout_contents.
     ///
     /// \param file The path to the file containing the stdout.
     void
     got_stdout(const fs::path& file)
     {
         atf::utils::cat_file(file.str(), "helper stdout:");
-        ATF_REQUIRE(stdout_lines.empty());
-        stdout_lines = read_lines(file);
+        ATF_REQUIRE(stdout_contents.empty());
+
+        std::ifstream input(file.c_str());
+        ATF_REQUIRE(input);
+        stdout_contents = utils::read_stream(input);
     }
 
-    /// Stores the stderr of the test case into stderr_lines.
+    /// Stores the stderr of the test case into stderr_contents.
     ///
     /// \param file The path to the file containing the stderr.
     void
     got_stderr(const fs::path& file)
     {
         atf::utils::cat_file(file.str(), "helper stderr:");
-        ATF_REQUIRE(stderr_lines.empty());
-        stderr_lines = read_lines(file);
+        ATF_REQUIRE(stderr_contents.empty());
+
+        std::ifstream input(file.c_str());
+        ATF_REQUIRE(input);
+        stderr_contents = utils::read_stream(input);
     }
 };
 
@@ -854,10 +841,10 @@ ATF_TEST_CASE_BODY(run_test_case__atf__stacktrace__atf__body)
     ATF_REQUIRE(engine::test_result::broken == result.type());
     ATF_REQUIRE_MATCH("received signal.*core dumped", result.reason());
 
-    ATF_REQUIRE(!atf::utils::grep_collection("attempting to gather stack trace",
-                                             hooks.stdout_lines));
-    ATF_REQUIRE( atf::utils::grep_collection("attempting to gather stack trace",
-                                             hooks.stderr_lines));
+    ATF_REQUIRE(!atf::utils::grep_string("attempting to gather stack trace",
+                                         hooks.stdout_contents));
+    ATF_REQUIRE( atf::utils::grep_string("attempting to gather stack trace",
+                                         hooks.stderr_contents));
 }
 
 
@@ -872,10 +859,10 @@ ATF_TEST_CASE_BODY(run_test_case__atf__stacktrace__atf__cleanup)
     ATF_REQUIRE_MATCH(F("cleanup received signal %s") % SIGABRT,
                       result.reason());
 
-    ATF_REQUIRE(!atf::utils::grep_collection("attempting to gather stack trace",
-                                             hooks.stdout_lines));
-    ATF_REQUIRE( atf::utils::grep_collection("attempting to gather stack trace",
-                                             hooks.stderr_lines));
+    ATF_REQUIRE(!atf::utils::grep_string("attempting to gather stack trace",
+                                         hooks.stdout_contents));
+    ATF_REQUIRE( atf::utils::grep_string("attempting to gather stack trace",
+                                         hooks.stderr_contents));
 }
 
 
@@ -915,15 +902,10 @@ ATF_TEST_CASE_BODY(run_test_case__atf__output)
     ATF_REQUIRE_EQ(engine::test_result(engine::test_result::passed),
                    helper.run(hooks));
 
-    std::vector< std::string > expout;
-    expout.push_back("Body message to stdout");
-    expout.push_back("Cleanup message to stdout");
-    ATF_REQUIRE(hooks.stdout_lines == expout);
-
-    std::vector< std::string > experr;
-    experr.push_back("Body message to stderr");
-    experr.push_back("Cleanup message to stderr");
-    ATF_REQUIRE(hooks.stderr_lines == experr);
+    ATF_REQUIRE_EQ("Body message to stdout\nCleanup message to stdout\n",
+                   hooks.stdout_contents);
+    ATF_REQUIRE_EQ("Body message to stderr\nCleanup message to stderr\n",
+                   hooks.stderr_contents);
 }
 
 

@@ -37,7 +37,6 @@ extern "C" {
 #include <cstring>
 #include <iostream>
 #include <map>
-#include <sstream>
 #include <string>
 
 #include "engine/exceptions.hpp"
@@ -50,6 +49,7 @@ extern "C" {
 #include "utils/passwd.hpp"
 #include "utils/process/children.ipp"
 #include "utils/process/status.hpp"
+#include "utils/stream.hpp"
 
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
@@ -70,28 +70,6 @@ typedef std::map< std::string, std::string > testers_map;
 
 /// Collection of known-good interface to tester mappings.
 static testers_map interfaces_to_testers;
-
-
-/// Reads a stream to the end and records the output in a string.
-///
-/// \param input The stream to read from.
-///
-/// \return The text of the stream.
-static std::string
-read_all(std::istream& input)
-{
-    std::ostringstream buffer;
-
-    char tmp[1024];
-    while (input.good()) {
-        input.read(tmp, sizeof(tmp));
-        if (input.good() || input.eof()) {
-            buffer.write(tmp, input.gcount());
-        }
-    }
-
-    return buffer.str();
-}
 
 
 /// Drops the trailing newline in a string and replaces others with a literal.
@@ -272,7 +250,7 @@ engine::tester::list(const fs::path& program) const
     std::auto_ptr< process::child > child = process::child::spawn_capture(
         tester_path, args);
 
-    const std::string output = read_all(child->output());
+    const std::string output = utils::read_stream(child->output());
 
     const process::status status = child->wait();
     if (!status.exited() || status.exitstatus() != EXIT_SUCCESS)
