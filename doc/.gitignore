@@ -4,6 +4,7 @@ kyua-build-root.7
 kyua-cli.info
 kyua-config.1
 kyua-db-exec.1
+kyua-db-migrate.1
 kyua-debug.1
 kyua-help.1
 kyua-list.1

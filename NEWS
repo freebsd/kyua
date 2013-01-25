@@ -24,6 +24,9 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   metadata of both test programs and test cases generically, without
   knowledge of their interface.
 
+* Added the 'db-migrate' command to provide a mechanism to upgrade a
+  database with an old schema to the current schema.
+
 * Removed the GDB build-time configuration variable.  This is now part
   of the kyua-testers package.
 

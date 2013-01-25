@@ -36,6 +36,8 @@ libcli_a_SOURCES += cli/cmd_config.cpp
 libcli_a_SOURCES += cli/cmd_config.hpp
 libcli_a_SOURCES += cli/cmd_db_exec.cpp
 libcli_a_SOURCES += cli/cmd_db_exec.hpp
+libcli_a_SOURCES += cli/cmd_db_migrate.cpp
+libcli_a_SOURCES += cli/cmd_db_migrate.hpp
 libcli_a_SOURCES += cli/cmd_debug.cpp
 libcli_a_SOURCES += cli/cmd_debug.hpp
 libcli_a_SOURCES += cli/cmd_help.cpp
@@ -85,6 +87,11 @@ tests_cli_PROGRAMS += cli/cmd_db_exec_test
 cli_cmd_db_exec_test_SOURCES = cli/cmd_db_exec_test.cpp
 cli_cmd_db_exec_test_CXXFLAGS = $(CLI_TESTS_CXXFLAGS)
 cli_cmd_db_exec_test_LDADD = $(CLI_TESTS_LDADD)
+
+tests_cli_PROGRAMS += cli/cmd_db_migrate_test
+cli_cmd_db_migrate_test_SOURCES = cli/cmd_db_migrate_test.cpp
+cli_cmd_db_migrate_test_CXXFLAGS = $(CLI_TESTS_CXXFLAGS)
+cli_cmd_db_migrate_test_LDADD = $(CLI_TESTS_LDADD)
 
 tests_cli_PROGRAMS += cli/cmd_debug_test
 cli_cmd_debug_test_SOURCES = cli/cmd_debug_test.cpp

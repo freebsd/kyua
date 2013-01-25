@@ -71,6 +71,12 @@ EXTRA_DIST += doc/kyua-db-exec.1.in
 doc/kyua-db-exec.1: $(srcdir)/doc/kyua-db-exec.1.in
 	name=kyua-db-exec.1; $(BUILD_MANPAGE)
 
+man_MANS += doc/kyua-db-migrate.1
+CLEANFILES += doc/kyua-db-migrate.1
+EXTRA_DIST += doc/kyua-db-migrate.1.in
+doc/kyua-db-migrate.1: $(srcdir)/doc/kyua-db-migrate.1.in
+	name=kyua-db-migrate.1; $(BUILD_MANPAGE)
+
 man_MANS += doc/kyua-debug.1
 CLEANFILES += doc/kyua-debug.1
 EXTRA_DIST += doc/kyua-debug.1.in
