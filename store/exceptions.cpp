@@ -59,3 +59,30 @@ store::integrity_error::integrity_error(const std::string& message) :
 store::integrity_error::~integrity_error(void) throw()
 {
 }
+
+
+/// Constructs a new error with a plain-text message.
+///
+/// \param version Version of the current schema.
+store::old_schema_error::old_schema_error(const int version) :
+    error(F("The database contains version %s of the schema, which is "
+            "stale and needs to be upgraded") % version),
+    _old_version(version)
+{
+}
+
+
+/// Destructor for the error.
+store::old_schema_error::~old_schema_error(void) throw()
+{
+}
+
+
+/// Returns the current schema version in the database.
+///
+/// \return A version number.
+int
+store::old_schema_error::old_version(void) const
+{
+    return _old_version;
+}

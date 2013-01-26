@@ -258,9 +258,9 @@ cli::format_result(const engine::test_result& result)
 ///
 /// \return A string representing the test case uniquely within a test suite.
 std::string
-cli::format_test_case_id(const engine::base_test_case& test_case)
+cli::format_test_case_id(const engine::test_case& test_case)
 {
-    return F("%s:%s") % test_case.test_program().relative_path() %
+    return F("%s:%s") % test_case.container_test_program().relative_path() %
         test_case.name();
 }
 

@@ -30,15 +30,12 @@
 
 #include <atf-c++.hpp>
 
-// TODO(jmmv): Should probably use a mock test case.
-#include "engine/atf_iface/test_case.hpp"
-// TODO(jmmv): Should probably use a mock test program.
-#include "engine/atf_iface/test_program.hpp"
+#include "engine/test_case.hpp"
+#include "engine/test_program.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.hpp"
 #include "utils/cmdline/ui_mock.hpp"
 
-namespace atf_iface = engine::atf_iface;
 namespace cmdline = utils::cmdline;
 namespace fs = utils::fs;
 
@@ -46,13 +43,12 @@ namespace fs = utils::fs;
 ATF_TEST_CASE_WITHOUT_HEAD(list_test_case__no_verbose);
 ATF_TEST_CASE_BODY(list_test_case__no_verbose)
 {
-    engine::properties_map properties;
-    properties["descr"] = "Unused description";
-    const atf_iface::test_program test_program(fs::path("the/test-program"),
-                                               fs::path("root"),
-                                               "unused-suite");
-    const atf_iface::test_case test_case =
-        atf_iface::test_case::from_properties(test_program, "abc", properties);
+    const engine::metadata md = engine::metadata_builder()
+        .set_description("This should not be shown")
+        .build();
+    const engine::test_program test_program(
+        "mock", fs::path("the/test-program"), fs::path("root"), "suite", md);
+    const engine::test_case test_case("mock", test_program, "abc", md);
 
     cmdline::ui_mock ui;
     cli::detail::list_test_case(&ui, false, test_case);
@@ -65,12 +61,10 @@ ATF_TEST_CASE_BODY(list_test_case__no_verbose)
 ATF_TEST_CASE_WITHOUT_HEAD(list_test_case__verbose__no_properties);
 ATF_TEST_CASE_BODY(list_test_case__verbose__no_properties)
 {
-    engine::properties_map properties;
-    const atf_iface::test_program test_program(fs::path("hello/world"),
-                                               fs::path("root"), "the-suite");
-    const atf_iface::test_case test_case =
-        atf_iface::test_case::from_properties(test_program, "my_name",
-                                              properties);
+    const engine::metadata md = engine::metadata_builder().build();
+    const engine::test_program test_program("mock", fs::path("hello/world"),
+                                            fs::path("root"), "the-suite", md);
+    const engine::test_case test_case("mock", test_program, "my_name", md);
 
     cmdline::ui_mock ui;
     cli::detail::list_test_case(&ui, true, test_case);
@@ -83,21 +77,22 @@ ATF_TEST_CASE_BODY(list_test_case__verbose__no_properties)
 ATF_TEST_CASE_WITHOUT_HEAD(list_test_case__verbose__some_properties);
 ATF_TEST_CASE_BODY(list_test_case__verbose__some_properties)
 {
-    engine::properties_map properties;
-    properties["descr"] = "Some description";
-    properties["has.cleanup"] = "true";
-    const atf_iface::test_program test_program(fs::path("hello/world"),
-                                               fs::path("root"), "the-suite");
-    const atf_iface::test_case test_case =
-        atf_iface::test_case::from_properties(test_program, "my_name",
-                                              properties);
+    const engine::metadata md = engine::metadata_builder()
+        .add_custom("X-my-property", "value")
+        .set_description("Some description")
+        .set_has_cleanup(true)
+        .build();
+    const engine::test_program test_program("mock", fs::path("hello/world"),
+                                            fs::path("root"), "the-suite", md);
+    const engine::test_case test_case("mock", test_program, "my_name", md);
 
     cmdline::ui_mock ui;
     cli::detail::list_test_case(&ui, true, test_case);
-    ATF_REQUIRE_EQ(3, ui.out_log().size());
+    ATF_REQUIRE_EQ(4, ui.out_log().size());
     ATF_REQUIRE_EQ("hello/world:my_name (the-suite)", ui.out_log()[0]);
-    ATF_REQUIRE_EQ("    descr = Some description", ui.out_log()[1]);
-    ATF_REQUIRE_EQ("    has.cleanup = true", ui.out_log()[2]);
+    ATF_REQUIRE_EQ("    custom.X-my-property = value", ui.out_log()[1]);
+    ATF_REQUIRE_EQ("    description = Some description", ui.out_log()[2]);
+    ATF_REQUIRE_EQ("    has_cleanup = true", ui.out_log()[3]);
     ATF_REQUIRE(ui.err_log().empty());
 }
 

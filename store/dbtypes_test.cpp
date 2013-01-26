@@ -30,18 +30,15 @@
 
 #include <atf-c++.hpp>
 
-#include "engine/atf_iface/test_program.hpp"
-#include "engine/plain_iface/test_program.hpp"
+#include "engine/test_program.hpp"
 #include "store/exceptions.hpp"
 #include "utils/datetime.hpp"
 #include "utils/optional.ipp"
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/statement.ipp"
 
-namespace atf_iface = engine::atf_iface;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
-namespace plain_iface = engine::plain_iface;
 namespace sqlite = utils::sqlite;
 
 using utils::none;
@@ -142,50 +139,6 @@ ATF_TEST_CASE_BODY(delta__get_invalid_type)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(guess_interface__atf);
-ATF_TEST_CASE_BODY(guess_interface__atf)
-{
-    const atf_iface::test_program program(fs::path("foo"), fs::path("bar"), "");
-    ATF_REQUIRE(store::detail::atf_interface ==
-                store::guess_interface(program));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(guess_interface__plain);
-ATF_TEST_CASE_BODY(guess_interface__plain)
-{
-    const plain_iface::test_program program(fs::path("foo"), fs::path("bar"),
-                                            "", none);
-    ATF_REQUIRE(store::detail::plain_interface ==
-                store::guess_interface(program));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(interface__ok);
-ATF_TEST_CASE_BODY(interface__ok)
-{
-    do_ok_test(store::bind_interface, store::detail::atf_interface,
-               store::column_interface);
-    do_ok_test(store::bind_interface, store::detail::plain_interface,
-               store::column_interface);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(interface__get_invalid_type);
-ATF_TEST_CASE_BODY(interface__get_invalid_type)
-{
-    do_invalid_test(35, store::column_interface, "not a string");
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(interface__get_invalid_value);
-ATF_TEST_CASE_BODY(interface__get_invalid_value)
-{
-    do_invalid_test("foobar", store::column_interface,
-                    "Unknown interface.*'foobar'");
-}
-
-
 ATF_TEST_CASE_WITHOUT_HEAD(optional_string__ok);
 ATF_TEST_CASE_BODY(optional_string__ok)
 {
@@ -242,13 +195,6 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, delta__ok);
     ATF_ADD_TEST_CASE(tcs, delta__get_invalid_type);
-
-    ATF_ADD_TEST_CASE(tcs, guess_interface__atf);
-    ATF_ADD_TEST_CASE(tcs, guess_interface__plain);
-
-    ATF_ADD_TEST_CASE(tcs, interface__ok);
-    ATF_ADD_TEST_CASE(tcs, interface__get_invalid_type);
-    ATF_ADD_TEST_CASE(tcs, interface__get_invalid_value);
 
     ATF_ADD_TEST_CASE(tcs, optional_string__ok);
     ATF_ADD_TEST_CASE(tcs, optional_string__get_invalid_type);

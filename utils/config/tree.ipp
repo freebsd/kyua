@@ -64,7 +64,7 @@ config::tree::define(const std::string& dotted_key)
 }
 
 
-/// Gets the value of a leaf addressed by its key.
+/// Gets a read-only reference to the value of a leaf addressed by its key.
 ///
 /// \tparam LeafType The node type of the leaf we are querying.
 /// \param dotted_key The key to be registered in dotted representation.
@@ -81,6 +81,34 @@ config::tree::lookup(const std::string& dotted_key) const
     const detail::base_node* raw_node = _root->lookup_ro(key, 0);
     try {
         const LeafType& child = dynamic_cast< const LeafType& >(*raw_node);
+        if (child.is_set())
+            return child.value();
+        else
+            throw unknown_key_error(key);
+    } catch (const std::bad_cast& unused_error) {
+        throw unknown_key_error(key);
+    }
+}
+
+
+/// Gets a read-write reference to the value of a leaf addressed by its key.
+///
+/// \tparam LeafType The node type of the leaf we are querying.
+/// \param dotted_key The key to be registered in dotted representation.
+///
+/// \return A reference to the value in the located leaf, if successful.
+///
+/// \throw invalid_key_error If the provided key has an invalid format.
+/// \throw unknown_key_error If the provided key is unknown.
+template< class LeafType >
+typename LeafType::value_type&
+config::tree::lookup_rw(const std::string& dotted_key)
+{
+    const detail::tree_key key = detail::parse_key(dotted_key);
+    detail::base_node* raw_node = _root->lookup_rw(
+        key, 0, detail::new_node< LeafType >);
+    try {
+        LeafType& child = dynamic_cast< LeafType& >(*raw_node);
         if (child.is_set())
             return child.value();
         else

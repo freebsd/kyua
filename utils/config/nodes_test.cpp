@@ -39,6 +39,61 @@
 namespace config = utils::config;
 
 
+namespace {
+
+
+/// Typed leaf node that specializes the validate() method.
+class validation_node : public config::int_node {
+    /// Checks a given value for validity against a fake value.
+    ///
+    /// \param new_value The value to validate.
+    ///
+    /// \throw value_error If the value is not valid.
+    void
+    validate(const value_type& new_value) const
+    {
+        if (new_value == 12345)
+            throw config::value_error("Custom validate method");
+    }
+};
+
+
+/// Set node that specializes the validate() method.
+class set_validation_node : public config::strings_set_node {
+    /// Checks a given value for validity against a fake value.
+    ///
+    /// \param new_value The value to validate.
+    ///
+    /// \throw value_error If the value is not valid.
+    void
+    validate(const value_type& new_value) const
+    {
+        for (value_type::const_iterator iter = new_value.begin();
+             iter != new_value.end(); ++iter)
+            if (*iter == "throw")
+                throw config::value_error("Custom validate method");
+    }
+};
+
+
+}  // anonymous namespace
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(bool_node__deep_copy);
+ATF_TEST_CASE_BODY(bool_node__deep_copy)
+{
+    config::bool_node node;
+    node.set(true);
+    config::detail::base_node* raw_copy = node.deep_copy();
+    config::bool_node* copy = static_cast< config::bool_node* >(raw_copy);
+    ATF_REQUIRE(copy->value());
+    copy->set(false);
+    ATF_REQUIRE(node.value());
+    ATF_REQUIRE(!copy->value());
+    delete copy;
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(bool_node__is_set_and_set);
 ATF_TEST_CASE_BODY(bool_node__is_set_and_set)
 {
@@ -128,6 +183,21 @@ ATF_TEST_CASE_BODY(bool_node__to_string)
     ATF_REQUIRE_EQ("false", node.to_string());
     node.set(true);
     ATF_REQUIRE_EQ("true", node.to_string());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(int_node__deep_copy);
+ATF_TEST_CASE_BODY(int_node__deep_copy)
+{
+    config::int_node node;
+    node.set(5);
+    config::detail::base_node* raw_copy = node.deep_copy();
+    config::int_node* copy = static_cast< config::int_node* >(raw_copy);
+    ATF_REQUIRE_EQ(5, copy->value());
+    copy->set(10);
+    ATF_REQUIRE_EQ(5, node.value());
+    ATF_REQUIRE_EQ(10, copy->value());
+    delete copy;
 }
 
 
@@ -226,6 +296,21 @@ ATF_TEST_CASE_BODY(int_node__to_string)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(string_node__deep_copy);
+ATF_TEST_CASE_BODY(string_node__deep_copy)
+{
+    config::string_node node;
+    node.set("first");
+    config::detail::base_node* raw_copy = node.deep_copy();
+    config::string_node* copy = static_cast< config::string_node* >(raw_copy);
+    ATF_REQUIRE_EQ("first", copy->value());
+    copy->set("second");
+    ATF_REQUIRE_EQ("first", node.value());
+    ATF_REQUIRE_EQ("second", copy->value());
+    delete copy;
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(string_node__is_set_and_set);
 ATF_TEST_CASE_BODY(string_node__is_set_and_set)
 {
@@ -312,8 +397,136 @@ ATF_TEST_CASE_BODY(string_node__to_string)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(strings_set_node__deep_copy);
+ATF_TEST_CASE_BODY(strings_set_node__deep_copy)
+{
+    std::set< std::string > value;
+    config::strings_set_node node;
+    value.insert("foo");
+    node.set(value);
+    config::detail::base_node* raw_copy = node.deep_copy();
+    config::strings_set_node* copy =
+        static_cast< config::strings_set_node* >(raw_copy);
+    value.insert("bar");
+    ATF_REQUIRE_EQ(1, copy->value().size());
+    copy->set(value);
+    ATF_REQUIRE_EQ(1, node.value().size());
+    ATF_REQUIRE_EQ(2, copy->value().size());
+    delete copy;
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(strings_set_node__is_set_and_set);
+ATF_TEST_CASE_BODY(strings_set_node__is_set_and_set)
+{
+    std::set< std::string > value;
+    value.insert("foo");
+
+    config::strings_set_node node;
+    ATF_REQUIRE(!node.is_set());
+    node.set(value);
+    ATF_REQUIRE( node.is_set());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(strings_set_node__value_and_set);
+ATF_TEST_CASE_BODY(strings_set_node__value_and_set)
+{
+    std::set< std::string > value;
+    value.insert("first");
+
+    config::strings_set_node node;
+    node.set(value);
+    ATF_REQUIRE(value == node.value());
+    value.clear();
+    node.set(value);
+    value.insert("second");
+    ATF_REQUIRE(node.value().empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(strings_set_node__set_string);
+ATF_TEST_CASE_BODY(strings_set_node__set_string)
+{
+    config::strings_set_node node;
+    {
+        std::set< std::string > expected;
+        expected.insert("abcd");
+        expected.insert("efgh");
+
+        node.set_string("abcd efgh");
+        ATF_REQUIRE(expected == node.value());
+    }
+    {
+        std::set< std::string > expected;
+        expected.insert("1234");
+
+        node.set_string("  1234  ");
+        ATF_REQUIRE(expected == node.value());
+    }
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(strings_set_node__to_string);
+ATF_TEST_CASE_BODY(strings_set_node__to_string)
+{
+    std::set< std::string > value;
+    config::strings_set_node node;
+    value.insert("second");
+    value.insert("first");
+    node.set(value);
+    ATF_REQUIRE_EQ("first second", node.to_string());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(typed_leaf_node__validate_set);
+ATF_TEST_CASE_BODY(typed_leaf_node__validate_set)
+{
+    validation_node node;
+    node.set(1234);
+    ATF_REQUIRE_THROW_RE(config::value_error, "Custom validate method",
+                         node.set(12345));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(typed_leaf_node__validate_set_string);
+ATF_TEST_CASE_BODY(typed_leaf_node__validate_set_string)
+{
+    validation_node node;
+    node.set_string("1234");
+    ATF_REQUIRE_THROW_RE(config::value_error, "Custom validate method",
+                         node.set_string("12345"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(base_set_node__validate_set);
+ATF_TEST_CASE_BODY(base_set_node__validate_set)
+{
+    set_validation_node node;
+    set_validation_node::value_type values;
+    values.insert("foo");
+    values.insert("bar");
+    node.set(values);
+    values.insert("throw");
+    values.insert("baz");
+    ATF_REQUIRE_THROW_RE(config::value_error, "Custom validate method",
+                         node.set(values));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(base_set_node__validate_set_string);
+ATF_TEST_CASE_BODY(base_set_node__validate_set_string)
+{
+    set_validation_node node;
+    node.set_string("foo bar");
+    ATF_REQUIRE_THROW_RE(config::value_error, "Custom validate method",
+                         node.set_string("foo bar throw baz"));
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
+    ATF_ADD_TEST_CASE(tcs, bool_node__deep_copy);
     ATF_ADD_TEST_CASE(tcs, bool_node__is_set_and_set);
     ATF_ADD_TEST_CASE(tcs, bool_node__value_and_set);
     ATF_ADD_TEST_CASE(tcs, bool_node__push_lua);
@@ -323,6 +536,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, bool_node__set_string__invalid_value);
     ATF_ADD_TEST_CASE(tcs, bool_node__to_string);
 
+    ATF_ADD_TEST_CASE(tcs, int_node__deep_copy);
     ATF_ADD_TEST_CASE(tcs, int_node__is_set_and_set);
     ATF_ADD_TEST_CASE(tcs, int_node__value_and_set);
     ATF_ADD_TEST_CASE(tcs, int_node__push_lua);
@@ -332,6 +546,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, int_node__set_string__invalid_value);
     ATF_ADD_TEST_CASE(tcs, int_node__to_string);
 
+    ATF_ADD_TEST_CASE(tcs, string_node__deep_copy);
     ATF_ADD_TEST_CASE(tcs, string_node__is_set_and_set);
     ATF_ADD_TEST_CASE(tcs, string_node__value_and_set);
     ATF_ADD_TEST_CASE(tcs, string_node__push_lua);
@@ -339,4 +554,15 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, string_node__set_lua__invalid_value);
     ATF_ADD_TEST_CASE(tcs, string_node__set_string);
     ATF_ADD_TEST_CASE(tcs, string_node__to_string);
+
+    ATF_ADD_TEST_CASE(tcs, strings_set_node__deep_copy);
+    ATF_ADD_TEST_CASE(tcs, strings_set_node__is_set_and_set);
+    ATF_ADD_TEST_CASE(tcs, strings_set_node__value_and_set);
+    ATF_ADD_TEST_CASE(tcs, strings_set_node__set_string);
+    ATF_ADD_TEST_CASE(tcs, strings_set_node__to_string);
+
+    ATF_ADD_TEST_CASE(tcs, typed_leaf_node__validate_set);
+    ATF_ADD_TEST_CASE(tcs, typed_leaf_node__validate_set_string);
+    ATF_ADD_TEST_CASE(tcs, base_set_node__validate_set);
+    ATF_ADD_TEST_CASE(tcs, base_set_node__validate_set_string);
 }

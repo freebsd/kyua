@@ -74,10 +74,10 @@ ATF_TEST_CASE_HEAD(fetch_latest__ok)
 ATF_TEST_CASE_BODY(fetch_latest__ok)
 {
     sqlite::database db = create_database();
-    db.exec("INSERT INTO metadata (timestamp, schema_version) "
-            "VALUES (5678, 512)");
-    db.exec("INSERT INTO metadata (timestamp, schema_version) "
-            "VALUES (1234, 256)");
+    db.exec("INSERT INTO metadata (schema_version, timestamp) "
+            "VALUES (512, 5678)");
+    db.exec("INSERT INTO metadata (schema_version, timestamp) "
+            "VALUES (256, 1234)");
 
     const store::metadata metadata = store::metadata::fetch_latest(db);
     ATF_REQUIRE_EQ(5678L, metadata.timestamp());
@@ -134,29 +134,11 @@ ATF_TEST_CASE_HEAD(fetch_latest__invalid_timestamp)
 ATF_TEST_CASE_BODY(fetch_latest__invalid_timestamp)
 {
     sqlite::database db = create_database();
-    db.exec("INSERT INTO metadata (timestamp, schema_version) "
-            "VALUES ('foo', 3)");
-
-    ATF_REQUIRE_THROW_RE(store::integrity_error,
-                         "timestamp.*invalid type",
-                         store::metadata::fetch_latest(db));
-}
-
-
-ATF_TEST_CASE(fetch_latest__invalid_schema_version);
-ATF_TEST_CASE_HEAD(fetch_latest__invalid_schema_version)
-{
-    logging::set_inmemory();
-    set_md_var("require.files", store::detail::schema_file().c_str());
-}
-ATF_TEST_CASE_BODY(fetch_latest__invalid_schema_version)
-{
-    sqlite::database db = create_database();
-    db.exec("INSERT INTO metadata (timestamp, schema_version) "
+    db.exec("INSERT INTO metadata (schema_version, timestamp) "
             "VALUES (3, 'foo')");
 
     ATF_REQUIRE_THROW_RE(store::integrity_error,
-                         "schema_version.*invalid type",
+                         "timestamp.*invalid type",
                          store::metadata::fetch_latest(db));
 }
 
@@ -168,5 +150,4 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, fetch_latest__no_timestamp);
     ATF_ADD_TEST_CASE(tcs, fetch_latest__no_schema_version);
     ATF_ADD_TEST_CASE(tcs, fetch_latest__invalid_timestamp);
-    ATF_ADD_TEST_CASE(tcs, fetch_latest__invalid_schema_version);
 }

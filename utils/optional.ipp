@@ -135,6 +135,39 @@ utils::optional< T >::operator=(const optional< T >& other)
 }
 
 
+/// Equality comparator.
+///
+/// \param other The other object to compare this one to.
+///
+/// \return True if this object and other are equal; false otherwise.
+template< class T >
+bool
+utils::optional< T >::operator==(const optional< T >& other) const
+{
+    if (_data == NULL && other._data == NULL) {
+        return true;
+    } else if (_data == NULL || other._data == NULL) {
+        return false;
+    } else {
+        INV(_data != NULL && other._data != NULL);
+        return *_data == *other._data;
+    }
+}
+
+
+/// Inequality comparator.
+///
+/// \param other The other object to compare this one to.
+///
+/// \return True if this object and other are different; false otherwise.
+template< class T >
+bool
+utils::optional< T >::operator!=(const optional< T >& other) const
+{
+    return !(*this == other);
+}
+
+
 /// Gets the value hold by the optional object.
 ///
 /// \pre The optional object must not be none.
@@ -185,6 +218,25 @@ utils::optional< T >::get(void)
 {
     PRE(_data != NULL);
     return *_data;
+}
+
+
+/// Injects the object into a stream.
+///
+/// \param output The stream into which to inject the object.
+/// \param object The object to format.
+///
+/// \return The output stream.
+template< class T >
+std::ostream& utils::operator<<(std::ostream& output,
+                                const optional< T >& object)
+{
+    if (!object) {
+        output << "none";
+    } else {
+        output << object.get();
+    }
+    return output;
 }
 
 

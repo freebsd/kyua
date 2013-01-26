@@ -56,7 +56,7 @@ public:
     /// Called when a test case is identified in a test suite.
     ///
     /// \param test_case The data describing the test case.
-    virtual void got_test_case(const engine::base_test_case& test_case) = 0;
+    virtual void got_test_case(const engine::test_case& test_case) = 0;
 };
 
 

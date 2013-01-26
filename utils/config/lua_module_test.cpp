@@ -61,6 +61,17 @@ struct custom_type {
 /// Custom implementation of a node type for testing purposes.
 class custom_node : public config::typed_leaf_node< custom_type > {
 public:
+    /// Copies the node.
+    ///
+    /// \return A dynamically-allocated node.
+    virtual base_node*
+    deep_copy(void) const
+    {
+        std::auto_ptr< custom_node > new_node(new custom_node());
+        new_node->_value = _value;
+        return new_node.release();
+    }
+
     /// Pushes the node's value onto the Lua stack.
     ///
     /// \param state The Lua state onto which to push the value.

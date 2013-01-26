@@ -76,7 +76,7 @@ public:
     ///
     /// \param test_case The test case to report.
     void
-    got_test_case(const engine::base_test_case& test_case)
+    got_test_case(const engine::test_case& test_case)
     {
         cli::detail::list_test_case(_ui, _verbose, test_case);
     }
@@ -93,19 +93,31 @@ public:
 /// \param test_case The test case to print.
 void
 cli::detail::list_test_case(cmdline::ui* ui, const bool verbose,
-                            const engine::base_test_case& test_case)
+                            const engine::test_case& test_case)
 {
     const std::string id = format_test_case_id(test_case);
     if (!verbose) {
         ui->out_raw(id);
     } else {
         ui->out_raw(F("%s (%s)") % id %
-                    test_case.test_program().test_suite_name());
+                    test_case.container_test_program().test_suite_name());
 
-        const engine::properties_map props = test_case.all_properties();
-        for (engine::properties_map::const_iterator iter = props.begin();
-             iter != props.end(); iter++)
-            ui->out_raw(F("    %s = %s") % (*iter).first % (*iter).second);
+        // TODO(jmmv): Running these for every test case is probably not the
+        // fastest thing to do.
+        const engine::metadata default_md = engine::metadata_builder().build();
+        const engine::properties_map default_props = default_md.to_properties();
+
+        const engine::metadata& test_md = test_case.get_metadata();
+        const engine::properties_map test_props = test_md.to_properties();
+
+        for (engine::properties_map::const_iterator iter = test_props.begin();
+             iter != test_props.end(); iter++) {
+            const engine::properties_map::const_iterator default_iter =
+                default_props.find((*iter).first);
+            if (default_iter == default_props.end() ||
+                (*iter).second != (*default_iter).second)
+                ui->out_raw(F("    %s = %s") % (*iter).first % (*iter).second);
+        }
     }
 }
 

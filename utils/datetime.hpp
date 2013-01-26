@@ -37,6 +37,7 @@ extern "C" {
 }
 
 #include <cstddef>
+#include <ostream>
 #include <string>
 
 #include <tr1/memory>
@@ -48,16 +49,16 @@ namespace datetime {
 /// Represents a time delta to describe deadlines.
 struct delta {
     /// The amount of seconds in the time delta.
-    unsigned int seconds;
+    int64_t seconds;
 
     /// The amount of microseconds in the time delta.
     unsigned long useconds;
 
     delta(void);
-    delta(const unsigned int, const unsigned long);
+    delta(const int64_t, const unsigned long);
 
-    static delta from_useconds(const unsigned long);
-    unsigned long to_useconds(void) const;
+    static delta from_microseconds(const int64_t);
+    int64_t to_microseconds(void) const;
 
     bool operator==(const delta&) const;
     bool operator!=(const delta&) const;
@@ -65,6 +66,9 @@ struct delta {
     delta operator+(const delta&) const;
     delta operator+=(const delta&);
 };
+
+
+std::ostream& operator<<(std::ostream&, const delta&);
 
 
 /// Represents a fixed date/time.
@@ -97,6 +101,9 @@ public:
 
     delta operator-(const timestamp&) const;
 };
+
+
+std::ostream& operator<<(std::ostream&, const timestamp&);
 
 
 void set_mock_now(const int, const int, const int, const int, const int,

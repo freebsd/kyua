@@ -65,7 +65,7 @@ datetime::delta::delta(void) :
 ///
 /// \param seconds_ The seconds in the delta.
 /// \param useconds_ The microseconds in the delta.
-datetime::delta::delta(const unsigned int seconds_,
+datetime::delta::delta(const int64_t seconds_,
                        const unsigned long useconds_) :
     seconds(seconds_),
     useconds(useconds_)
@@ -79,7 +79,7 @@ datetime::delta::delta(const unsigned int seconds_,
 ///
 /// \return A new delta object.
 datetime::delta
-datetime::delta::from_useconds(const unsigned long useconds)
+datetime::delta::from_microseconds(const int64_t useconds)
 {
     return delta(useconds / 1000000, useconds % 1000000);
 }
@@ -88,8 +88,8 @@ datetime::delta::from_useconds(const unsigned long useconds)
 /// Convers the delta to a flat representation expressed in microseconds.
 ///
 /// \return The amount of microseconds that corresponds to this delta.
-unsigned long
-datetime::delta::to_useconds(void) const
+int64_t
+datetime::delta::to_microseconds(void) const
 {
     return seconds * 1000000 + useconds;
 }
@@ -127,7 +127,8 @@ datetime::delta::operator!=(const datetime::delta& other) const
 datetime::delta
 datetime::delta::operator+(const datetime::delta& other) const
 {
-    return delta::from_useconds(to_useconds() + other.to_useconds());
+    return delta::from_microseconds(to_microseconds() +
+                                    other.to_microseconds());
 }
 
 
@@ -141,6 +142,19 @@ datetime::delta::operator+=(const datetime::delta& other)
 {
     *this = *this + other;
     return *this;
+}
+
+
+/// Injects the object into a stream.
+///
+/// \param output The stream into which to inject the object.
+/// \param object The object to format.
+///
+/// \return The output stream.
+std::ostream&
+datetime::operator<<(std::ostream& output, const delta& object)
+{
+    return (output << object.to_microseconds() << "us");
 }
 
 
@@ -356,6 +370,19 @@ datetime::timestamp::operator!=(const datetime::timestamp& other) const
 datetime::delta
 datetime::timestamp::operator-(const datetime::timestamp& other) const
 {
-    return datetime::delta::from_useconds(to_microseconds() -
-                                          other.to_microseconds());
+    return datetime::delta::from_microseconds(to_microseconds() -
+                                              other.to_microseconds());
+}
+
+
+/// Injects the object into a stream.
+///
+/// \param output The stream into which to inject the object.
+/// \param object The object to format.
+///
+/// \return The output stream.
+std::ostream&
+datetime::operator<<(std::ostream& output, const timestamp& object)
+{
+    return (output << object.to_microseconds() << "us");
 }

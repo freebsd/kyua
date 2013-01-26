@@ -28,7 +28,11 @@
 
 #include "engine/test_result.hpp"
 
+#include <sstream>
+
 #include <atf-c++.hpp>
+
+#include "engine/exceptions.hpp"
 
 using engine::test_result;
 
@@ -64,7 +68,106 @@ namespace {
     }
 
 
+/// Creates a test case to validate the operator<< method.
+///
+/// \param name The name of the test case; "__output" will be appended.
+/// \param expected The expected string in the output.
+/// \param result The result to format.
+#define OUTPUT_TEST(name, expected, result) \
+    ATF_TEST_CASE_WITHOUT_HEAD(name ## __output); \
+    ATF_TEST_CASE_BODY(name ## __output) \
+    { \
+        std::ostringstream output; \
+        output << "prefix" << result << "suffix"; \
+        ATF_REQUIRE_EQ("prefix" + std::string(expected) + "suffix", \
+                       output.str()); \
+    }
+
+
+/// Validates the parse() method on a particular test result type.
+///
+/// \param result_name Textual representation of the type, to be written to the
+///     input data.
+/// \param result_type Expected result type.
+static void
+parse_test(const std::string& result_name,
+           const test_result::result_type result_type)
+{
+    std::istringstream input(result_name);
+    ATF_REQUIRE(test_result(result_type) == test_result::parse(input));
+
+    input.clear();
+    input.str(result_name + ": Some message");
+    ATF_REQUIRE(test_result(result_type, "Some message") ==
+                test_result::parse(input));
+
+    input.clear();
+    input.str(result_name + ": Some message\n");
+    ATF_REQUIRE(test_result(result_type, "Some message") ==
+                test_result::parse(input));
+
+    input.clear();
+    input.str(result_name + ": foo\nbar");
+    ATF_REQUIRE(test_result(result_type, "foo<<NEWLINE>>bar") ==
+                    test_result::parse(input));
+
+    input.clear();
+    input.str(result_name + ": foo\nbar\n");
+    ATF_REQUIRE(test_result(result_type, "foo<<NEWLINE>>bar") ==
+                    test_result::parse(input));
+}
+
+
+/// Creates a test case to validate the parse() method for a given type.
+///
+/// \param name The name of the test case; "parse__" will be prepended.
+#define PARSE_TEST(name) \
+    ATF_TEST_CASE_WITHOUT_HEAD(parse__ ## name); \
+    ATF_TEST_CASE_BODY(parse__ ## name) \
+    { \
+        parse_test(#name, test_result:: name); \
+    }
+
+
 }  // anonymous namespace
+
+
+PARSE_TEST(broken);
+PARSE_TEST(expected_failure);
+PARSE_TEST(failed);
+PARSE_TEST(passed);
+PARSE_TEST(skipped);
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(parse__empty);
+ATF_TEST_CASE_BODY(parse__empty)
+{
+    std::istringstream input("");
+    ATF_REQUIRE(test_result(test_result::broken, "Empty result file") ==
+                test_result::parse(input));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(parse__unknown_type);
+ATF_TEST_CASE_BODY(parse__unknown_type)
+{
+    std::istringstream input("passed ");
+    ATF_REQUIRE(
+        test_result(test_result::broken, "Unknown result type 'passed '") ==
+        test_result::parse(input));
+
+    input.clear();
+    input.str("fail");
+    ATF_REQUIRE(
+        test_result(test_result::broken, "Unknown result type 'fail'") ==
+        test_result::parse(input));
+
+    input.clear();
+    input.str("a b");
+    ATF_REQUIRE(
+        test_result(test_result::broken, "Unknown result type 'a b'") ==
+        test_result::parse(input));
+}
 
 
 GETTERS_TEST(broken, test_result::broken, "The reason",
@@ -84,6 +187,19 @@ GOOD_TEST(expected_failure, true, test_result::expected_failure);
 GOOD_TEST(failed, false, test_result::failed);
 GOOD_TEST(passed, true, test_result::passed);
 GOOD_TEST(skipped, true, test_result::skipped);
+
+
+OUTPUT_TEST(broken, "test_result{type='broken', reason='foo'}",
+            test_result(test_result::broken, "foo"));
+OUTPUT_TEST(expected_failure,
+            "test_result{type='expected_failure', reason='abc def'}",
+            test_result(test_result::expected_failure, "abc def"));
+OUTPUT_TEST(failed, "test_result{type='failed', reason='some \\'string'}",
+            test_result(test_result::failed, "some 'string"));
+OUTPUT_TEST(passed, "test_result{type='passed'}",
+            test_result(test_result::passed, ""));
+OUTPUT_TEST(skipped, "test_result{type='skipped', reason='last message'}",
+            test_result(test_result::skipped, "last message"));
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(operator_eq);
@@ -118,16 +234,29 @@ ATF_TEST_CASE_BODY(operator_ne)
 
 ATF_INIT_TEST_CASES(tcs)
 {
+    ATF_ADD_TEST_CASE(tcs, parse__broken);
+    ATF_ADD_TEST_CASE(tcs, parse__expected_failure);
+    ATF_ADD_TEST_CASE(tcs, parse__failed);
+    ATF_ADD_TEST_CASE(tcs, parse__passed);
+    ATF_ADD_TEST_CASE(tcs, parse__skipped);
+    ATF_ADD_TEST_CASE(tcs, parse__empty);
+    ATF_ADD_TEST_CASE(tcs, parse__unknown_type);
+
     ATF_ADD_TEST_CASE(tcs, broken__getters);
     ATF_ADD_TEST_CASE(tcs, broken__good);
+    ATF_ADD_TEST_CASE(tcs, broken__output);
     ATF_ADD_TEST_CASE(tcs, expected_failure__getters);
     ATF_ADD_TEST_CASE(tcs, expected_failure__good);
+    ATF_ADD_TEST_CASE(tcs, expected_failure__output);
     ATF_ADD_TEST_CASE(tcs, failed__getters);
     ATF_ADD_TEST_CASE(tcs, failed__good);
+    ATF_ADD_TEST_CASE(tcs, failed__output);
     ATF_ADD_TEST_CASE(tcs, passed__getters);
     ATF_ADD_TEST_CASE(tcs, passed__good);
+    ATF_ADD_TEST_CASE(tcs, passed__output);
     ATF_ADD_TEST_CASE(tcs, skipped__getters);
     ATF_ADD_TEST_CASE(tcs, skipped__good);
+    ATF_ADD_TEST_CASE(tcs, skipped__output);
     ATF_ADD_TEST_CASE(tcs, operator_eq);
     ATF_ADD_TEST_CASE(tcs, operator_ne);
 }

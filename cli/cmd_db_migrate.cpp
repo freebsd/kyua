@@ -1,4 +1,4 @@
-// Copyright 2012 Google Inc.
+// Copyright 2013 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,39 +26,50 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file utils/stacktrace.hpp
-/// Utilities to gather a stacktrace of a crashing binary.
+#include "cli/cmd_db_migrate.hpp"
 
-#if !defined(ENGINE_STACKTRACE_HPP)
-#define ENGINE_STACKTRACE_HPP
+#include <cstdlib>
 
-#include <ostream>
+#include "cli/common.ipp"
+#include "store/backend.hpp"
+#include "store/exceptions.hpp"
+#include "utils/defs.hpp"
+#include "utils/format/macros.hpp"
 
-#include "utils/fs/path.hpp"
-#include "utils/optional.hpp"
-#include "utils/process/status.hpp"
+namespace cmdline = utils::cmdline;
+namespace config = utils::config;
 
-namespace utils {
-
-
-extern const char* builtin_gdb;
-
-utils::optional< utils::fs::path > find_gdb(void);
-
-utils::optional< utils::fs::path > find_core(const utils::fs::path&,
-                                             const utils::process::status&,
-                                             const utils::fs::path&);
-
-void unlimit_core_size(void);
-
-void dump_stacktrace(const utils::fs::path&, const utils::process::status&,
-                     const utils::fs::path&, std::ostream&);
-
-void dump_stacktrace_if_available(
-    const utils::fs::path&, const utils::optional< utils::process::status >&,
-    const utils::fs::path&, const utils::fs::path&);
+using cli::cmd_db_migrate;
 
 
-}  // namespace utils
+/// Default constructor for cmd_db_migrate.
+cmd_db_migrate::cmd_db_migrate(void) : cli_command(
+    "db-migrate", "", 0, 0,
+    "Upgrades the schema of an existing store database to the currently "
+    "implemented version.  A backup of the database is created, but this "
+    "operation is not reversible.")
+{
+    add_option(store_option);
+}
 
-#endif  // !defined(ENGINE_STACKTRACE_HPP)
+
+/// Entry point for the "db-migrate" subcommand.
+///
+/// \param ui Object to interact with the I/O of the program.
+/// \param cmdline Representation of the command line to the subcommand.
+/// \param unused_user_config The runtime configuration of the program.
+///
+/// \return 0 if everything is OK, 1 if the statement is invalid or if there is
+/// any other problem.
+int
+cmd_db_migrate::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
+                    const config::tree& UTILS_UNUSED_PARAM(user_config))
+{
+    try {
+        store::migrate_schema(cli::store_path(cmdline));
+        return EXIT_SUCCESS;
+    } catch (const store::error& e) {
+        cmdline::print_error(ui, F("Migration failed: %s") % e.what());
+        return EXIT_FAILURE;
+    }
+}

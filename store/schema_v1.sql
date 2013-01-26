@@ -26,8 +26,7 @@
 -- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 -- OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
--- \file store/schema.sql
+-- \file store/schema_v1.sql
 -- Definition of the database schema.
 --
 -- The whole contents of this file are wrapped in a transaction.  We want

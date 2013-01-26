@@ -37,16 +37,13 @@
 #include <lutok/state.ipp>
 #include <lutok/test_utils.hpp>
 
-#include "engine/atf_iface/test_program.hpp"
-#include "engine/plain_iface/test_program.hpp"
+#include "engine/test_program.hpp"
 #include "engine/user_files/exceptions.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/optional.ipp"
 
-namespace atf_iface = engine::atf_iface;
 namespace fs = utils::fs;
-namespace plain_iface = engine::plain_iface;
 namespace user_files = engine::user_files;
 
 using utils::none;
@@ -132,7 +129,7 @@ ATF_TEST_CASE_BODY(get_test_program__atf__ok)
 
     const engine::test_program_ptr program =
         user_files::detail::get_test_program(state, fs::path("root/directory"));
-    ATF_REQUIRE(typeid(atf_iface::test_program) == typeid(*program));
+    ATF_REQUIRE_EQ("atf", program->interface_name());
     ATF_REQUIRE_EQ(fs::path("the-name"), program->relative_path());
     ATF_REQUIRE_EQ("the-suite", program->test_suite_name());
 
@@ -176,7 +173,7 @@ ATF_TEST_CASE_BODY(get_test_program__plain__ok)
 
     const engine::test_program_ptr program =
         user_files::detail::get_test_program(state, fs::path("root/directory"));
-    ATF_REQUIRE(typeid(plain_iface::test_program) == typeid(*program));
+    ATF_REQUIRE_EQ("plain", program->interface_name());
     ATF_REQUIRE_EQ(fs::path("the-name"), program->relative_path());
     ATF_REQUIRE_EQ("the-suite", program->test_suite_name());
 
@@ -342,28 +339,23 @@ ATF_TEST_CASE_BODY(kyuafile__load__integration)
     ATF_REQUIRE_EQ(fs::path("."), suite.build_root());
     ATF_REQUIRE_EQ(5, suite.test_programs().size());
 
-    ATF_REQUIRE(typeid(atf_iface::test_program) ==
-                typeid(*suite.test_programs()[0]));
+    ATF_REQUIRE_EQ("atf", suite.test_programs()[0]->interface_name());
     ATF_REQUIRE_EQ(fs::path("1st"), suite.test_programs()[0]->relative_path());
     ATF_REQUIRE_EQ("one-suite", suite.test_programs()[0]->test_suite_name());
 
-    ATF_REQUIRE(typeid(atf_iface::test_program) ==
-                typeid(*suite.test_programs()[1]));
+    ATF_REQUIRE_EQ("atf", suite.test_programs()[1]->interface_name());
     ATF_REQUIRE_EQ(fs::path("2nd"), suite.test_programs()[1]->relative_path());
     ATF_REQUIRE_EQ("first", suite.test_programs()[1]->test_suite_name());
 
-    ATF_REQUIRE(typeid(plain_iface::test_program) ==
-                typeid(*suite.test_programs()[2]));
+    ATF_REQUIRE_EQ("plain", suite.test_programs()[2]->interface_name());
     ATF_REQUIRE_EQ(fs::path("3rd"), suite.test_programs()[2]->relative_path());
     ATF_REQUIRE_EQ("one-suite", suite.test_programs()[2]->test_suite_name());
 
-    ATF_REQUIRE(typeid(plain_iface::test_program) ==
-                typeid(*suite.test_programs()[3]));
+    ATF_REQUIRE_EQ("plain", suite.test_programs()[3]->interface_name());
     ATF_REQUIRE_EQ(fs::path("4th"), suite.test_programs()[3]->relative_path());
     ATF_REQUIRE_EQ("second", suite.test_programs()[3]->test_suite_name());
 
-    ATF_REQUIRE(typeid(atf_iface::test_program) ==
-                typeid(*suite.test_programs()[4]));
+    ATF_REQUIRE_EQ("atf", suite.test_programs()[4]->interface_name());
     ATF_REQUIRE_EQ(fs::path("dir/1st"),
                    suite.test_programs()[4]->relative_path());
     ATF_REQUIRE_EQ("other-suite", suite.test_programs()[4]->test_suite_name());

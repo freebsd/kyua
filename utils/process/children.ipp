@@ -46,18 +46,17 @@ namespace process {
 /// \param stdout_file The name of the file in which to store the stdout.
 /// \param stderr_file The name of the file in which to store the stderr.
 ///
-/// \return A new child_with_files object, returned as a dynamically-allocated
-/// object because children classes are unique and thus noncopyable.
+/// \return A new child object, returned as a dynamically-allocated object
+/// because children classes are unique and thus noncopyable.
 ///
 /// \throw process::system_error If the process cannot be spawned due to a
 ///     system call error.
 template< typename Hook >
-std::auto_ptr< child_with_files >
-child_with_files::fork(Hook hook, const fs::path& stdout_file,
-                       const fs::path& stderr_file)
+std::auto_ptr< child >
+child::fork_files(Hook hook, const fs::path& stdout_file,
+                  const fs::path& stderr_file)
 {
-    std::auto_ptr< child_with_files > child = fork_aux(stdout_file,
-                                                       stderr_file);
+    std::auto_ptr< child > child = fork_files_aux(stdout_file, stderr_file);
     if (child.get() == NULL) {
         try {
             hook();
@@ -78,16 +77,16 @@ child_with_files::fork(Hook hook, const fs::path& stdout_file,
 ///
 /// \param hook The function to execute in the subprocess.  Must not return.
 ///
-/// \return A new child_with_output object, returned as a dynamically-allocated
-/// object because children classes are unique and thus noncopyable.
+/// \return A new child object, returned as a dynamically-allocated object
+/// because children classes are unique and thus noncopyable.
 ///
 /// \throw process::system_error If the process cannot be spawned due to a
 ///     system call error.
 template< typename Hook >
-std::auto_ptr< child_with_output >
-child_with_output::fork(Hook hook)
+std::auto_ptr< child >
+child::fork_capture(Hook hook)
 {
-    std::auto_ptr< child_with_output > child = fork_aux();
+    std::auto_ptr< child > child = fork_capture_aux();
     if (child.get() == NULL) {
         try {
             hook();

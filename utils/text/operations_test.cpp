@@ -65,6 +65,40 @@ refill_test(const char* expected, const char* input,
 }  // anonymous namespace
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(quote__empty);
+ATF_TEST_CASE_BODY(quote__empty)
+{
+    ATF_REQUIRE_EQ("''", text::quote("", '\''));
+    ATF_REQUIRE_EQ("##", text::quote("", '#'));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(quote__no_escaping);
+ATF_TEST_CASE_BODY(quote__no_escaping)
+{
+    ATF_REQUIRE_EQ("'Some text\"'", text::quote("Some text\"", '\''));
+    ATF_REQUIRE_EQ("#Another'string#", text::quote("Another'string", '#'));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(quote__some_escaping);
+ATF_TEST_CASE_BODY(quote__some_escaping)
+{
+    ATF_REQUIRE_EQ("'Some\\'text'", text::quote("Some'text", '\''));
+    ATF_REQUIRE_EQ("#Some\\#text#", text::quote("Some#text", '#'));
+
+    ATF_REQUIRE_EQ("'More than one\\' quote\\''",
+                   text::quote("More than one' quote'", '\''));
+    ATF_REQUIRE_EQ("'Multiple quotes \\'\\'\\' together'",
+                   text::quote("Multiple quotes ''' together", '\''));
+
+    ATF_REQUIRE_EQ("'\\'escape at the beginning'",
+                   text::quote("'escape at the beginning", '\''));
+    ATF_REQUIRE_EQ("'escape at the end\\''",
+                   text::quote("escape at the end'", '\''));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(refill__empty);
 ATF_TEST_CASE_BODY(refill__empty)
 {
@@ -296,6 +330,10 @@ ATF_TEST_CASE_BODY(to_type__invalid__numerical)
 
 ATF_INIT_TEST_CASES(tcs)
 {
+    ATF_ADD_TEST_CASE(tcs, quote__empty);
+    ATF_ADD_TEST_CASE(tcs, quote__no_escaping);
+    ATF_ADD_TEST_CASE(tcs, quote__some_escaping);
+
     ATF_ADD_TEST_CASE(tcs, refill__empty);
     ATF_ADD_TEST_CASE(tcs, refill__no_changes);
     ATF_ADD_TEST_CASE(tcs, refill__break_one);

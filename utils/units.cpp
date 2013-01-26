@@ -147,7 +147,7 @@ operator>>(std::istream& input, units::bytes& rhs)
 {
     std::string word;
     input >> word;
-    if (input.good()) {
+    if (input.good() || input.eof()) {
         try {
             rhs = units::bytes::parse(word);
         } catch (const std::runtime_error& e) {

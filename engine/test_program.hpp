@@ -38,6 +38,7 @@
 #if !defined(ENGINE_TEST_PROGRAM_HPP)
 #define ENGINE_TEST_PROGRAM_HPP
 
+#include <ostream>
 #include <string>
 #include <tr1/memory>
 #include <vector>
@@ -52,42 +53,43 @@ namespace engine {
 typedef std::vector< test_case_ptr > test_cases_vector;
 
 
-/// Abstract representation of a test program.
-class base_test_program {
-    struct base_impl;
+std::ostream& operator<<(std::ostream&, const test_cases_vector&);
+
+
+/// Representation of a test program.
+class test_program {
+    struct impl;
 
     /// Pointer to the shared internal implementation.
-    std::tr1::shared_ptr< base_impl > _pbimpl;
-
-    /// Loads the list of test cases contained in a test program.
-    ///
-    /// \return A collection of test_case objects representing the input test
-    /// case list.
-    ///
-    /// \note If the test cases have to be loaded from the test program itself,
-    /// and the test program fails to run, this function should report the
-    /// failure as a fake test case with a fixed broken-type result.  This
-    /// method should not throw errors on these conditions.
-    virtual test_cases_vector load_test_cases(void) const = 0;
+    std::tr1::shared_ptr< impl > _pimpl;
 
 public:
-    base_test_program(const utils::fs::path&, const utils::fs::path&,
-                      const std::string&);
-    virtual ~base_test_program(void);
+    test_program(const std::string&, const utils::fs::path&,
+                 const utils::fs::path&, const std::string&,
+                 const metadata&);
+    ~test_program(void);
 
+    const std::string& interface_name(void) const;
     const utils::fs::path& root(void) const;
     const utils::fs::path& relative_path(void) const;
     const utils::fs::path absolute_path(void) const;
     const std::string& test_suite_name(void) const;
+    const metadata& get_metadata(void) const;
 
     const test_case_ptr& find(const std::string&) const;
     const test_cases_vector& test_cases(void) const;
     void set_test_cases(const test_cases_vector&);
+
+    bool operator==(const test_program&) const;
+    bool operator!=(const test_program&) const;
 };
 
 
+std::ostream& operator<<(std::ostream&, const test_program&);
+
+
 /// Pointer to a test program.
-typedef std::tr1::shared_ptr< base_test_program > test_program_ptr;
+typedef std::tr1::shared_ptr< test_program > test_program_ptr;
 
 
 /// Collection of test programs.

@@ -72,11 +72,11 @@ int64_column(sqlite::statement& stmt, const char* column)
 
 /// Constructs a new metadata object.
 ///
-/// \param timestamp_ The object identifier.
 /// \param schema_version_ The schema version.
-store::metadata::metadata(const int64_t timestamp_, const int schema_version_) :
-    _timestamp(timestamp_),
-    _schema_version(schema_version_)
+/// \param timestamp_ The time at which this version was created.
+store::metadata::metadata(const int schema_version_, const int64_t timestamp_) :
+    _schema_version(schema_version_),
+    _timestamp(timestamp_)
 {
 }
 
@@ -116,20 +116,20 @@ store::metadata::fetch_latest(sqlite::database& db)
 {
     try {
         sqlite::statement stmt = db.create_statement(
-            "SELECT timestamp, schema_version FROM metadata "
-            "ORDER BY timestamp DESC LIMIT 1");
+            "SELECT schema_version, timestamp FROM metadata "
+            "ORDER BY schema_version DESC LIMIT 1");
         if (!stmt.step())
             throw store::integrity_error("The 'metadata' table is empty");
 
-        const int64_t timestamp_ = int64_column(stmt, "timestamp");
         const int schema_version_ =
             static_cast< int >(int64_column(stmt, "schema_version"));
+        const int64_t timestamp_ = int64_column(stmt, "timestamp");
 
         if (stmt.step())
             UNREACHABLE_MSG("Got more than one result from a query that "
                             "does not permit this; any pragmas defined?");
 
-        return metadata(timestamp_, schema_version_);
+        return metadata(schema_version_, timestamp_);
     } catch (const sqlite::error& e) {
         throw store::integrity_error(F("Invalid metadata schema: %s") %
                                      e.what());

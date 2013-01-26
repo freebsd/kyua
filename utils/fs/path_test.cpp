@@ -131,6 +131,22 @@ ATF_TEST_CASE_BODY(is_parent_of)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(ncomponents);
+ATF_TEST_CASE_BODY(ncomponents)
+{
+    ATF_REQUIRE_EQ(1, path(".").ncomponents());
+    ATF_REQUIRE_EQ(1, path("/").ncomponents());
+
+    ATF_REQUIRE_EQ(1, path("abc").ncomponents());
+    ATF_REQUIRE_EQ(1, path("abc/").ncomponents());
+
+    ATF_REQUIRE_EQ(2, path("/abc").ncomponents());
+    ATF_REQUIRE_EQ(3, path("/abc/def").ncomponents());
+
+    ATF_REQUIRE_EQ(2, path("abc/def").ncomponents());
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(branch_path);
 ATF_TEST_CASE_BODY(branch_path)
 {
@@ -248,6 +264,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, normalize__invalid);
     ATF_ADD_TEST_CASE(tcs, is_absolute);
     ATF_ADD_TEST_CASE(tcs, is_parent_of);
+    ATF_ADD_TEST_CASE(tcs, ncomponents);
     ATF_ADD_TEST_CASE(tcs, branch_path);
     ATF_ADD_TEST_CASE(tcs, leaf_name);
     ATF_ADD_TEST_CASE(tcs, to_absolute);

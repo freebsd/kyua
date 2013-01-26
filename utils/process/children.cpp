@@ -37,12 +37,14 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include <cassert>
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <memory>
 
-#include "utils/datetime.hpp"
+#include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/process/exceptions.hpp"
@@ -50,31 +52,19 @@ extern "C" {
 #include "utils/process/system.hpp"
 #include "utils/process/status.hpp"
 #include "utils/sanity.hpp"
-#include "utils/signals/timer.hpp"
+#include "utils/signals/interrupts.hpp"
 
 
 namespace utils {
 namespace process {
 
 
-/// Private implementation fields for child_with_files.
-struct child_with_files::impl {
+/// Private implementation fields for child objects.
+struct child::impl {
     /// The process identifier.
     pid_t _pid;
 
-    /// Initializes private implementation data.
-    ///
-    /// \param pid The process identifier.
-    impl(const pid_t pid) : _pid(pid) {}
-};
-
-
-/// Private implementation fields for child_with_files.
-struct child_with_output::impl {
-    /// The process identifier.
-    pid_t _pid;
-
-    /// The input stream for the process' stdout and stderr.
+    /// The input stream for the process' stdout and stderr.  May be NULL.
     std::auto_ptr< process::ifdstream > _output;
 
     /// Initializes private implementation data.
@@ -90,7 +80,6 @@ struct child_with_output::impl {
 }  // namespace utils
 
 
-namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace process = utils::process;
 namespace signals = utils::signals;
@@ -153,120 +142,156 @@ open_for_append(const fs::path& filename)
 static process::status
 safe_wait(const pid_t pid)
 {
-    LD(F("Waiting for pid=%s, no timeout") % pid);
+    LD(F("Waiting for pid=%s") % pid);
     int stat_loc;
     if (process::detail::syscall_waitpid(pid, &stat_loc, 0) == -1) {
         const int original_errno = errno;
         throw process::system_error(F("Failed to wait for PID %s") % pid,
                                     original_errno);
     }
-    LD(F("Sending KILL signal to process group %s") % pid);
-retry:
-    if (::killpg(pid, SIGKILL) == -1) {
-        if (errno == EINTR)
-            goto retry;
-        // Otherwise, just ignore the error and continue.  It should not have
-        // happened.
-    }
     return process::status(pid, stat_loc);
 }
 
 
-namespace timed_wait__aux {
-
-
-/// Whether the timer fired or not.
-static bool fired;
-
-
-/// The process to be killed when the timer expires.
-static pid_t pid;
-
-
-/// The handler for the timer.
+/// Logs the execution of another program.
+///
+/// \param program The binary to execute.
+/// \param args The arguments to pass to the binary, without the program name.
 static void
-callback(void)
+log_exec(const fs::path& program, const process::args_vector& args)
 {
-    fired = true;
-    ::kill(pid, SIGKILL);
+    std::string plain_command = program.str();
+    for (process::args_vector::const_iterator iter = args.begin();
+         iter != args.end(); ++iter)
+        plain_command += F(" %s") % *iter;
+    LD(F("Executing%s") % plain_command);
 }
 
 
-}  // namespace child_timer
+/// Maximum number of arguments supported by cxx_exec.
+///
+/// We need this limit to avoid having to allocate dynamic memory in the child
+/// process to construct the arguments list, which would have side-effects in
+/// the parent's memory if we use vfork().
+#define MAX_ARGS 128
 
 
-/// Waits for a process enforcing a deadline.
+static void cxx_exec(const fs::path& program, const process::args_vector& args)
+    throw() UTILS_NORETURN;
+
+
+/// Executes an external binary and replaces the current process.
 ///
-/// \param pid The identifier of the process to wait for.
-/// \param timeout The timeout for the wait.  If the timeout is exceeded, the
-///     child process and its process group are forcibly killed.
+/// This function must not use any of the logging features, so that the output
+/// of the subprocess is not "polluted" by our own messages.
 ///
-/// \return The exit status of the process.
+/// This function must also not affect the global state of the current process
+/// as otherwise we would not be able to use vfork().  Only state stored in the
+/// stack can be touched.
 ///
-/// throw process::timeout_error If the deadline is exceeded.
-static process::status
-timed_wait(const pid_t pid, const datetime::delta& timeout)
+/// \param program The binary to execute.
+/// \param args The arguments to pass to the binary, without the program name.
+static void
+cxx_exec(const fs::path& program, const process::args_vector& args) throw()
 {
-    LD(F("Waiting for pid=%s: timeout seconds=%s, useconds=%s") % pid %
-       timeout.seconds % timeout.useconds);
-
-    timed_wait__aux::fired = false;
-    timed_wait__aux::pid = pid;
-    signals::timer timer(timeout, timed_wait__aux::callback);
+    assert(args.size() < MAX_ARGS);
     try {
-        const process::status status = safe_wait(pid);
-        timer.unprogram();
-        return status;
-    } catch (const process::system_error& error) {
-        if (error.original_errno() == EINTR) {
-            if (timed_wait__aux::fired) {
-                timer.unprogram();
-                (void)safe_wait(pid);
-                throw process::timeout_error(
-                    F("The timeout was exceeded while waiting for process "
-                      "%s; forcibly killed") % pid);
-            } else
-                throw error;
-        } else
-            throw error;
+        const char* argv[MAX_ARGS + 1];
+
+        argv[0] = program.c_str();
+        for (process::args_vector::size_type i = 0; i < args.size(); i++)
+            argv[1 + i] = args[i].c_str();
+        argv[1 + args.size()] = NULL;
+
+        const int ret = ::execv(program.c_str(),
+                                (char* const*)(unsigned long)(const void*)argv);
+        const int original_errno = errno;
+        assert(ret == -1);
+
+        std::cerr << "Failed to execute " << program << ": "
+                  << std::strerror(original_errno) << "\n";
+        std::abort();
+    } catch (const std::runtime_error& error) {
+        std::cerr << "Failed to execute " << program << ": "
+                  << error.what() << "\n";
+        std::abort();
+    } catch (...) {
+        std::cerr << "Failed to execute " << program << "; got unexpected "
+            "exception during exec\n";
+        std::abort();
     }
-}
-
-
-/// Replacement for strdup(3).
-///
-/// strdup(3) is not a standard function and, therefore, cannot be assumed to be
-/// present in the std namespace.  Just reimplement it and use standard C++
-/// memory allocation functions.
-///
-/// \param str The C string to duplicate.
-///
-/// \return The duplicated string.  Must be deleted with operator delete[].
-char*
-duplicate_cstring(const char* str)
-{
-    char* copy = new char[std::strlen(str) + 1];
-    std::strcpy(copy, str);
-    return copy;
 }
 
 
 }  // anonymous namespace
 
 
-/// Creates a new child_with_files.
+/// Creates a new child.
 ///
 /// \param implptr A dynamically-allocated impl object with the contents of the
-///     new child_with_files.
-process::child_with_files::child_with_files(impl *implptr) :
+///     new child.
+process::child::child(impl *implptr) :
     _pimpl(implptr)
 {
 }
 
 
-/// Destructor for child_with_files.
-process::child_with_files::~child_with_files(void)
+/// Destructor for child.
+process::child::~child(void)
 {
+}
+
+
+/// Helper function for fork().
+///
+/// Please note: if you update this function to change the return type or to
+/// raise different errors, do not forget to update fork() accordingly.
+///
+/// \return In the case of the parent, a new child object returned as a
+/// dynamically-allocated object because children classes are unique and thus
+/// noncopyable.  In the case of the child, a NULL pointer.
+///
+/// \throw process::system_error If the calls to pipe(2) or fork(2) fail.
+std::auto_ptr< process::child >
+process::child::fork_capture_aux(void)
+{
+    std::cout.flush();
+    std::cerr.flush();
+
+    int fds[2];
+    if (detail::syscall_pipe(fds) == -1)
+        throw process::system_error("pipe(2) failed", errno);
+
+    std::auto_ptr< signals::interrupts_inhibiter > inhibiter(
+        new signals::interrupts_inhibiter);
+    pid_t pid = detail::syscall_fork();
+    if (pid == -1) {
+        inhibiter.reset(NULL);  // Unblock signals.
+        ::close(fds[0]);
+        ::close(fds[1]);
+        throw process::system_error("fork(2) failed", errno);
+    } else if (pid == 0) {
+        inhibiter.reset(NULL);  // Unblock signals.
+        ::setpgid(::getpid(), ::getpid());
+
+        try {
+            ::close(fds[0]);
+            safe_dup(fds[1], STDOUT_FILENO);
+            safe_dup(fds[1], STDERR_FILENO);
+            ::close(fds[1]);
+        } catch (const system_error& e) {
+            std::cerr << F("Failed to set up subprocess: %s\n") % e.what();
+            std::abort();
+        }
+        return std::auto_ptr< process::child >(NULL);
+    } else {
+        ::close(fds[1]);
+        LD(F("Spawned process %s: stdout and stderr inherited") % pid);
+        signals::add_pid_to_kill(pid);
+        inhibiter.reset(NULL);  // Unblock signals.
+        return std::auto_ptr< process::child >(
+            new process::child(new impl(pid, new process::ifdstream(fds[0]))));
+    }
 }
 
 
@@ -282,22 +307,26 @@ process::child_with_files::~child_with_files(void)
 ///     If this has the magic value /dev/stderr, then the parent's stderr is
 ///     reused without applying any redirection.
 ///
-/// \return In the case of the parent, a new child_with_files object returned
-/// as a dynamically-allocated object because children classes are unique and
-/// thus noncopyable.  In the case of the child, a NULL pointer.
+/// \return In the case of the parent, a new child object returned as a
+/// dynamically-allocated object because children classes are unique and thus
+/// noncopyable.  In the case of the child, a NULL pointer.
 ///
 /// \throw process::system_error If the call to fork(2) fails.
-std::auto_ptr< process::child_with_files >
-process::child_with_files::fork_aux(const fs::path& stdout_file,
-                                    const fs::path& stderr_file)
+std::auto_ptr< process::child >
+process::child::fork_files_aux(const fs::path& stdout_file,
+                               const fs::path& stderr_file)
 {
     std::cout.flush();
     std::cerr.flush();
 
+    std::auto_ptr< signals::interrupts_inhibiter > inhibiter(
+        new signals::interrupts_inhibiter);
     pid_t pid = detail::syscall_fork();
     if (pid == -1) {
+        inhibiter.reset(NULL);  // Unblock signals.
         throw process::system_error("fork(2) failed", errno);
     } else if (pid == 0) {
+        inhibiter.reset(NULL);  // Unblock signals.
         ::setpgid(::getpid(), ::getpid());
 
         try {
@@ -315,180 +344,107 @@ process::child_with_files::fork_aux(const fs::path& stdout_file,
             std::cerr << F("Failed to set up subprocess: %s\n") % e.what();
             std::abort();
         }
-        return std::auto_ptr< process::child_with_files >(NULL);
+        return std::auto_ptr< process::child >(NULL);
     } else {
         LD(F("Spawned process %s: stdout=%s, stderr=%s") % pid % stdout_file %
            stderr_file);
-        return std::auto_ptr< process::child_with_files >(
-            new process::child_with_files(new impl(pid)));
+        signals::add_pid_to_kill(pid);
+        inhibiter.reset(NULL);  // Unblock signals.
+        return std::auto_ptr< process::child >(
+            new process::child(new impl(pid, NULL)));
     }
 }
 
 
-/// Returns the process identifier of this child.
+/// Spawns a new binary and multiplexes and captures its stdout and stderr.
 ///
-/// \return A process identifier.
-int
-process::child_with_files::pid(void) const
-{
-    return _pimpl->_pid;
-}
-
-
-/// Blocks to wait for completion.
-///
-/// Note that this does not loop in case the wait call is interrupted.  We need
-/// callers to know when this condition happens and let them retry on their own.
-///
-/// \param timeout The timeout for the wait.  If zero, no timeout logic is
-///     applied.
-///
-/// \return The termination status of the child process.
-///
-/// \throw process::system_error If the call to waitpid(2) fails.
-/// \throw process::timeout_error If the timeout expires.
-process::status
-process::child_with_files::wait(const datetime::delta& timeout)
-{
-    if (timeout == datetime::delta())
-        return safe_wait(_pimpl->_pid);
-    else
-        return timed_wait(_pimpl->_pid, timeout);
-}
-
-
-/// Creates a new child_with_output.
-///
-/// \param implptr A dynamically-allocated impl object with the contents of the
-///     new child_with_output.
-process::child_with_output::child_with_output(impl *implptr) :
-    _pimpl(implptr)
-{
-}
-
-
-/// Destructor for child_with_output.
-process::child_with_output::~child_with_output(void)
-{
-}
-
-
-/// Gets the input stream corresponding to the stdout and stderr of the child.
-std::istream&
-process::child_with_output::output(void)
-{
-    return *_pimpl->_output;
-}
-
-
-/// Helper function for fork().
-///
-/// Please note: if you update this function to change the return type or to
-/// raise different errors, do not forget to update fork() accordingly.
-///
-/// \return In the case of the parent, a new child_with_output object returned
-/// as a dynamically-allocated object because children classes are unique and
-/// thus noncopyable.  In the case of the child, a NULL pointer.
-///
-/// \throw process::system_error If the calls to pipe(2) or fork(2) fail.
-std::auto_ptr< process::child_with_output >
-process::child_with_output::fork_aux(void)
-{
-    std::cout.flush();
-    std::cerr.flush();
-
-    int fds[2];
-    if (detail::syscall_pipe(fds) == -1)
-        throw process::system_error("pipe(2) failed", errno);
-
-    pid_t pid = detail::syscall_fork();
-    if (pid == -1) {
-        ::close(fds[0]);
-        ::close(fds[1]);
-        throw process::system_error("fork(2) failed", errno);
-    } else if (pid == 0) {
-        ::setpgid(::getpid(), ::getpid());
-
-        try {
-            ::close(fds[0]);
-            safe_dup(fds[1], STDOUT_FILENO);
-            safe_dup(fds[1], STDERR_FILENO);
-            ::close(fds[1]);
-        } catch (const system_error& e) {
-            std::cerr << F("Failed to set up subprocess: %s\n") % e.what();
-            std::abort();
-        }
-        return std::auto_ptr< process::child_with_output >(NULL);
-    } else {
-        ::close(fds[1]);
-        LD(F("Spawned process %s: stdout and stderr inherited") % pid);
-        return std::auto_ptr< process::child_with_output >(
-            new process::child_with_output(new impl(
-                pid, new process::ifdstream(fds[0]))));
-    }
-}
-
-
-/// Returns the process identifier of this child.
-///
-/// \return A process identifier.
-int
-process::child_with_output::pid(void) const
-{
-    return _pimpl->_pid;
-}
-
-
-/// Blocks to wait for completion.
-///
-/// Note that this does not loop in case the wait call is interrupted.  We need
-/// callers to know when this condition happens and let them retry on their own.
-///
-/// \param timeout The timeout for the wait.  If zero, no timeout logic is
-///     applied.
-///
-/// \return The termination status of the child process.
-///
-/// \throw process::system_error If the call to waitpid(2) fails.
-/// \throw process::timeout_error If the timeout expires.
-process::status
-process::child_with_output::wait(const datetime::delta& timeout)
-{
-    if (timeout == datetime::delta())
-        return safe_wait(_pimpl->_pid);
-    else
-        return timed_wait(_pimpl->_pid, timeout);
-}
-
-
-/// Executes an external binary and replaces the current process.
+/// If the subprocess cannot be completely set up for any reason, it attempts to
+/// dump an error message to its stderr channel and it then calls std::abort().
 ///
 /// \param program The binary to execute.
 /// \param args The arguments to pass to the binary, without the program name.
 ///
-/// \throw process::system_error If the call to exec(3) fails.
-void
-process::exec(const fs::path& program, const std::vector< std::string >& args)
+/// \return A new child object, returned as a dynamically-allocated object
+/// because children classes are unique and thus noncopyable.
+///
+/// \throw process::system_error If the process cannot be spawned due to a
+///     system call error.
+std::auto_ptr< process::child >
+process::child::spawn_capture(const fs::path& program, const args_vector& args)
 {
-    char** argv = new char*[1 + args.size() + 1];
+    std::auto_ptr< child > child = fork_capture_aux();
+    if (child.get() == NULL)
+        cxx_exec(program, args);
+    log_exec(program, args);
+    return child;
+}
 
-    argv[0] = duplicate_cstring(program.c_str());
-    for (std::vector< std::string >::size_type i = 0; i < args.size(); i++)
-        argv[1 + i] = duplicate_cstring(args[i].c_str());
-    argv[1 + args.size()] = NULL;
 
-    std::string plain_command;
-    for (char** arg = argv; *arg != NULL; arg++)
-        plain_command += F(" %s") % *arg;
-    LD(F("Executing%s") % plain_command);
+/// Spawns a new binary and redirects its stdout and stderr to files.
+///
+/// If the subprocess cannot be completely set up for any reason, it attempts to
+/// dump an error message to its stderr channel and it then calls std::abort().
+///
+/// \param program The binary to execute.
+/// \param args The arguments to pass to the binary, without the program name.
+/// \param stdout_file The name of the file in which to store the stdout.
+/// \param stderr_file The name of the file in which to store the stderr.
+///
+/// \return A new child object, returned as a dynamically-allocated object
+/// because children classes are unique and thus noncopyable.
+///
+/// \throw process::system_error If the process cannot be spawned due to a
+///     system call error.
+std::auto_ptr< process::child >
+process::child::spawn_files(const fs::path& program,
+                            const args_vector& args,
+                            const fs::path& stdout_file,
+                            const fs::path& stderr_file)
+{
+    std::auto_ptr< child > child = fork_files_aux(stdout_file, stderr_file);
+    if (child.get() == NULL)
+        cxx_exec(program, args);
+    log_exec(program, args);
+    return child;
+}
 
-    const int ret = ::execv(program.c_str(), argv);
-    const int original_errno = errno;
-    INV(ret == -1);
 
-    for (char** arg = argv; *arg != NULL; arg++)
-        delete *arg;
-    delete [] argv;
+/// Returns the process identifier of this child.
+///
+/// \return A process identifier.
+int
+process::child::pid(void) const
+{
+    return _pimpl->_pid;
+}
 
-    throw system_error(F("Failed to execute %s") % program, original_errno);
+
+/// Gets the input stream corresponding to the stdout and stderr of the child.
+///
+/// \pre The child must have been started by fork_capture().
+///
+/// \return A reference to the input stream connected to the output of the test
+/// case.
+std::istream&
+process::child::output(void)
+{
+    PRE(_pimpl->_output.get() != NULL);
+    return *_pimpl->_output;
+}
+
+
+/// Blocks to wait for completion.
+///
+/// \return The termination status of the child process.
+///
+/// \throw process::system_error If the call to waitpid(2) fails.
+process::status
+process::child::wait(void)
+{
+    const process::status status = safe_wait(_pimpl->_pid);
+    {
+        signals::interrupts_inhibiter inhibiter;
+        signals::remove_pid_to_kill(_pimpl->_pid);
+    }
+    return status;
 }

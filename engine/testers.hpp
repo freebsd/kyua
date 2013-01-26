@@ -1,4 +1,4 @@
-// Copyright 2011 Google Inc.
+// Copyright 2012 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,36 +26,60 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/plain_iface/test_case.hpp
-/// Provides the plain-specific test_case class and other auxiliary types.
+/// \file engine/testers.hpp
+/// Invocation of external tester binaries.
 
-#if !defined(ENGINE_PLAIN_IFACE_TEST_CASE_HPP)
-#define ENGINE_PLAIN_IFACE_TEST_CASE_HPP
+#if !defined(ENGINE_TESTERS_HPP)
+#define ENGINE_TESTERS_HPP
 
+#include <map>
 #include <string>
+#include <vector>
 
-#include "engine/test_case.hpp"
-#include "utils/config/tree.hpp"
-#include "utils/fs/path.hpp"
+#include "utils/datetime.hpp"
+#include "utils/optional.hpp"
+#include "utils/passwd.hpp"
+
+namespace utils {
+namespace config {
+class tree;
+}  // namespace config
+namespace fs {
+class path;
+}  // namespace fs
+}  // namespace utils
 
 namespace engine {
-namespace plain_iface {
 
 
-/// Representation of a plain test case.
-class test_case : public base_test_case {
-    properties_map get_all_properties(void) const;
-    virtual test_result execute(
-        const utils::config::tree&, test_case_hooks&,
-        const utils::optional< utils::fs::path >&,
-        const utils::optional< utils::fs::path >&) const;
+/// Abstraction to invoke an external tester.
+///
+/// This class provides the primitives to construct an invocation of an external
+/// tester.  In other words: this is the place where the knowledge of what
+/// arguments a tester receives and the output it returns.
+class tester {
+    /// Name of the tester interface to use.
+    std::string _interface;
+
+    /// Common arguments to the tester, to be passed before the subcommand.
+    std::vector< std::string > _common_args;
 
 public:
-    test_case(const base_test_program&);
+    tester(const std::string&, const utils::optional< utils::passwd::user >&,
+           const utils::optional< utils::datetime::delta >&);
+    ~tester(void);
+
+    std::string list(const utils::fs::path&) const;
+    void test(const utils::fs::path&, const std::string&,
+              const utils::fs::path&, const utils::fs::path&,
+              const utils::fs::path&,
+              const std::map< std::string, std::string >&) const;
 };
 
 
-}  // namespace plain_iface
+utils::fs::path tester_path(const std::string&);
+
+
 }  // namespace engine
 
-#endif  // !defined(ENGINE_PLAIN_IFACE_TEST_CASE_HPP)
+#endif  // !defined(ENGINE_TESTERS_HPP)

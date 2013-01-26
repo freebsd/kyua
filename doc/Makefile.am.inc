@@ -36,6 +36,7 @@ BUILD_MANPAGE = \
 	    -e 's,__PACKAGE__,$(PACKAGE_TARNAME),g' \
 	    -e 's,__STOREDIR__,$(storedir),g' \
 	    -e 's,__TESTSDIR__,$(testsdir),g' \
+	    -e 's,__TESTERSDIR__,$(testersdir),g' \
 	    -e 's,__VERSION__,$(PACKAGE_VERSION),g' \
 	    <$(srcdir)/doc/$${name}.in >doc/$${name}.tmp; \
 	mv doc/$${name}.tmp doc/$${name}
@@ -69,6 +70,12 @@ CLEANFILES += doc/kyua-db-exec.1
 EXTRA_DIST += doc/kyua-db-exec.1.in
 doc/kyua-db-exec.1: $(srcdir)/doc/kyua-db-exec.1.in
 	name=kyua-db-exec.1; $(BUILD_MANPAGE)
+
+man_MANS += doc/kyua-db-migrate.1
+CLEANFILES += doc/kyua-db-migrate.1
+EXTRA_DIST += doc/kyua-db-migrate.1.in
+doc/kyua-db-migrate.1: $(srcdir)/doc/kyua-db-migrate.1.in
+	name=kyua-db-migrate.1; $(BUILD_MANPAGE)
 
 man_MANS += doc/kyua-debug.1
 CLEANFILES += doc/kyua-debug.1

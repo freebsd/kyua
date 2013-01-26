@@ -470,7 +470,7 @@ do_subcommand_crash(void)
 ATF_TEST_CASE_WITHOUT_HEAD(main__subcommand__crash);
 ATF_TEST_CASE_BODY(main__subcommand__crash)
 {
-    const process::status status = process::child_with_files::fork(
+    const process::status status = process::child::fork_files(
         do_subcommand_crash, fs::path("stdout.txt"),
         fs::path("stderr.txt"))->wait();
     ATF_REQUIRE(status.signaled());

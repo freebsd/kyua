@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2013 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,39 +26,26 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/atf_iface/test_program.hpp
-/// Implementation of test programs that follow the ATF interface.
+#include "cli/cmd_db_migrate.hpp"
 
-#if !defined(ENGINE_ATF_IFACE_TEST_PROGRAM_HPP)
-#define ENGINE_ATF_IFACE_TEST_PROGRAM_HPP
+#include <cstring>
 
-#include "engine/test_program.hpp"
+#include <atf-c++.hpp>
 
-namespace engine {
-namespace atf_iface {
+#include "utils/format/macros.hpp"
+#include "utils/sqlite/database.hpp"
+#include "utils/sqlite/statement.ipp"
 
-
-namespace detail {
+namespace sqlite = utils::sqlite;
 
 
-test_cases_vector parse_test_cases(const base_test_program&, std::istream&);
+ATF_TEST_CASE_WITHOUT_HEAD(todo);
+ATF_TEST_CASE_BODY(todo)
+{
+}
 
 
-}  // namespace detail
-
-
-/// Representation of an ATF test program.
-class test_program : public base_test_program {
-    test_cases_vector safe_load_test_cases(void) const;
-    test_cases_vector load_test_cases(void) const;
-
-public:
-    test_program(const utils::fs::path&, const utils::fs::path&,
-                 const std::string&);
-};
-
-
-}  // namespace atf_iface
-}  // namespace engine
-
-#endif  // !defined(ENGINE_ATF_IFACE_TEST_PROGRAM_HPP)
+ATF_INIT_TEST_CASES(tcs)
+{
+    ATF_ADD_TEST_CASE(tcs, todo);
+}

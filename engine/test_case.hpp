@@ -32,10 +32,11 @@
 #if !defined(ENGINE_TEST_CASE_HPP)
 #define ENGINE_TEST_CASE_HPP
 
-#include <map>
+#include <ostream>
 #include <string>
 #include <tr1/memory>
 
+#include "engine/metadata.hpp"
 #include "utils/config/tree.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"
@@ -44,16 +45,7 @@ namespace engine {
 
 
 class test_result;
-
-
-/// Collection of test case properties.
-///
-/// A property is just a (name, value) pair, and we represent them as a map
-/// because callers always want to locate properties by name.
-typedef std::map< std::string, std::string > properties_map;
-
-
-class base_test_program;
+class test_program;
 
 
 /// Hooks to introspect the execution of a test case.
@@ -75,56 +67,43 @@ public:
 
 
 /// Representation of a test case.
-class base_test_case {
-    struct base_impl;
+class test_case {
+    struct impl;
 
     /// Pointer to the shared internal implementation.
-    std::tr1::shared_ptr< base_impl > _pbimpl;
-
-    /// Returns a string representation of all test case properties.
-    ///
-    /// The returned keys and values match those that can be defined by the test
-    /// case.
-    ///
-    /// \return A key/value mapping describing all the test case properties.
-    virtual properties_map get_all_properties(void) const = 0;
-
-    /// Executes the test case.
-    ///
-    /// This should not throw any exception: problems detected during execution
-    /// are reported as a broken test case result.
-    ///
-    /// \param user_config The run-time configuration for the test case.
-    /// \param hooks Run-time hooks to introspect the test case execution.
-    /// \param stdout_path The file to which to redirect the stdout of the test.
-    ///     If none, use a temporary file in the work directory.
-    /// \param stderr_path The file to which to redirect the stdout of the test.
-    ///     If none, use a temporary file in the work directory.
-    ///
-    /// \return The result of the execution.
-    virtual test_result execute(
-        const utils::config::tree& user_config, test_case_hooks& hooks,
-        const utils::optional< utils::fs::path >& stdout_path,
-        const utils::optional< utils::fs::path >& stderr_path) const = 0;
+    std::tr1::shared_ptr< impl > _pimpl;
 
 public:
-    base_test_case(const base_test_program&, const std::string&);
-    virtual ~base_test_case(void);
+    test_case(const std::string&, const test_program&,
+              const std::string&, const metadata&);
+    test_case(const std::string&, const test_program&,
+              const std::string&, const std::string&,
+              const engine::test_result&);
+    ~test_case(void);
 
-    const base_test_program& test_program(void) const;
+    const std::string& interface_name(void) const;
+    const test_program& container_test_program(void) const;
     const std::string& name(void) const;
+    const metadata& get_metadata(void) const;
+    utils::optional< test_result > fake_result(void) const;
 
-    properties_map all_properties(void) const;
-    test_result debug(const utils::config::tree&,
-                      test_case_hooks&,
-                      const utils::fs::path&,
-                      const utils::fs::path&) const;
-    test_result run(const utils::config::tree&, test_case_hooks&) const;
+    bool operator==(const test_case&) const;
+    bool operator!=(const test_case&) const;
 };
 
 
+std::ostream& operator<<(std::ostream&, const test_case&);
+
+
 /// Pointer to a test case.
-typedef std::tr1::shared_ptr< base_test_case > test_case_ptr;
+typedef std::tr1::shared_ptr< test_case > test_case_ptr;
+
+
+test_result debug_test_case(const test_case*, const utils::config::tree&,
+                            test_case_hooks&, const utils::fs::path&,
+                            const utils::fs::path&, const utils::fs::path&);
+test_result run_test_case(const test_case*, const utils::config::tree&,
+                          test_case_hooks&, const utils::fs::path&);
 
 
 }  // namespace engine

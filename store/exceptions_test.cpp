@@ -49,8 +49,17 @@ ATF_TEST_CASE_BODY(integrity_error)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(old_schema_error);
+ATF_TEST_CASE_BODY(old_schema_error)
+{
+    const store::old_schema_error e(15);
+    ATF_REQUIRE_MATCH("version 15 .*upgraded", e.what());
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, error);
     ATF_ADD_TEST_CASE(tcs, integrity_error);
+    ATF_ADD_TEST_CASE(tcs, old_schema_error);
 }

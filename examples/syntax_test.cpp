@@ -161,20 +161,20 @@ ATF_TEST_CASE_BODY(kyuafile_top__some_matches)
         fs::path("root/Kyuafile"), none);
     ATF_REQUIRE_EQ(fs::path("root"), kyuafile.source_root());
     ATF_REQUIRE_EQ(fs::path("root"), kyuafile.build_root());
+
+    engine::test_program exp_test_program_a(
+        "atf", fs::path("subdir1/a"), fs::path("root"), "b",
+        engine::metadata_builder().build());
+    engine::test_program exp_test_program_c(
+        "atf", fs::path("subdir2/c"), fs::path("root"), "d",
+        engine::metadata_builder().build());
+
     ATF_REQUIRE_EQ(2, kyuafile.test_programs().size());
-    if (kyuafile.test_programs()[0]->relative_path() == fs::path("subdir1/a")) {
-        ATF_REQUIRE_EQ("b", kyuafile.test_programs()[0]->test_suite_name());
-        ATF_REQUIRE_EQ(fs::path("subdir2/c"),
-                       kyuafile.test_programs()[1]->relative_path());
-        ATF_REQUIRE_EQ("d", kyuafile.test_programs()[1]->test_suite_name());
-    } else {
-        ATF_REQUIRE_EQ(fs::path("subdir2/c"),
-                       kyuafile.test_programs()[0]->relative_path());
-        ATF_REQUIRE_EQ("d", kyuafile.test_programs()[0]->test_suite_name());
-        ATF_REQUIRE_EQ(fs::path("subdir1/a"),
-                       kyuafile.test_programs()[1]->relative_path());
-        ATF_REQUIRE_EQ("b", kyuafile.test_programs()[1]->test_suite_name());
-    }
+    ATF_REQUIRE((exp_test_program_a == *kyuafile.test_programs()[0] &&
+                 exp_test_program_c == *kyuafile.test_programs()[1])
+                ||
+                (exp_test_program_a == *kyuafile.test_programs()[1] &&
+                 exp_test_program_c == *kyuafile.test_programs()[0]));
 }
 
 

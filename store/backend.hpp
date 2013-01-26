@@ -52,11 +52,13 @@ class metadata;
 namespace detail {
 
 
-extern const int current_schema_version;
+extern int current_schema_version;
 
 
+utils::fs::path migration_file(const int, const int);
 utils::fs::path schema_file(void);
-metadata initialize(utils::sqlite::database&, const char* = NULL);
+metadata initialize(utils::sqlite::database&);
+void backup_database(const utils::fs::path&, const int);
 
 
 }  // anonymous namespace
@@ -85,6 +87,9 @@ public:
     utils::sqlite::database& database(void);
     transaction start(void);
 };
+
+
+void migrate_schema(const utils::fs::path&);
 
 
 }  // namespace store

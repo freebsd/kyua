@@ -33,6 +33,7 @@
 #define UTILS_CONFIG_NODES_HPP
 
 #include <map>
+#include <set>
 #include <string>
 
 #include <lutok/state.hpp>
@@ -60,6 +61,11 @@ namespace detail {
 class base_node : noncopyable {
 public:
     virtual ~base_node(void) = 0;
+
+    /// Copies the node.
+    ///
+    /// \return A dynamically-allocated node.
+    virtual base_node* deep_copy(void) const = 0;
 };
 
 
@@ -153,6 +159,16 @@ public:
     /// \return The value in the node.
     const value_type& value(void) const;
 
+    /// Gets the read-write value stored in the node.
+    ///
+    /// \todo Figure out why Doxygen is unable to pick up the documentation for
+    /// this function from the nodes.ipp file.
+    ///
+    /// \pre The node must have a value.
+    ///
+    /// \return The value in the node.
+    value_type& value(void);
+
     /// Sets the value of the node.
     ///
     /// \todo Figure out why Doxygen is unable to pick up the documentation for
@@ -161,9 +177,12 @@ public:
     /// \param value_ The new value to set the node to.
     void set(const value_type&);
 
-private:
+protected:
     /// The value held by this node.
     optional< value_type > _value;
+
+private:
+    virtual void validate(const value_type&) const;
 };
 
 
@@ -182,6 +201,8 @@ public:
 /// A leaf node that holds a boolean value.
 class bool_node : public native_leaf_node< bool > {
 public:
+    virtual base_node* deep_copy(void) const;
+
     void push_lua(lutok::state&) const;
     void set_lua(lutok::state&, const int);
 };
@@ -190,6 +211,8 @@ public:
 /// A leaf node that holds an integer value.
 class int_node : public native_leaf_node< int > {
 public:
+    virtual base_node* deep_copy(void) const;
+
     void push_lua(lutok::state&) const;
     void set_lua(lutok::state&, const int);
 };
@@ -198,8 +221,86 @@ public:
 /// A leaf node that holds a string value.
 class string_node : public native_leaf_node< std::string > {
 public:
+    virtual base_node* deep_copy(void) const;
+
     void push_lua(lutok::state&) const;
     void set_lua(lutok::state&, const int);
+};
+
+
+/// Base leaf node for a set of native types.
+///
+/// This is a base abstract class because there is no generic way to parse a
+/// single word in the textual representation of the set to the native value.
+template< typename ValueType >
+class base_set_node : public leaf_node {
+public:
+    /// The type of the value held by this node.
+    typedef std::set< ValueType > value_type;
+
+    base_set_node(void);
+
+    bool is_set(void) const;
+
+    /// Gets the value stored in the node.
+    ///
+    /// \todo Figure out why Doxygen is unable to pick up the documentation for
+    /// this function from the nodes.ipp file.
+    ///
+    /// \pre The node must have a value.
+    ///
+    /// \return The value in the node.
+    const value_type& value(void) const;
+
+    /// Gets the read-write value stored in the node.
+    ///
+    /// \todo Figure out why Doxygen is unable to pick up the documentation for
+    /// this function from the nodes.ipp file.
+    ///
+    /// \pre The node must have a value.
+    ///
+    /// \return The value in the node.
+    value_type& value(void);
+
+    /// Sets the value of the node.
+    ///
+    /// \todo Figure out why Doxygen is unable to pick up the documentation for
+    /// this function from the nodes.ipp file.
+    ///
+    /// \param value_ The new value to set the node to.
+    void set(const value_type&);
+
+    void set_string(const std::string&);
+    std::string to_string(void) const;
+
+    void push_lua(lutok::state&) const;
+    void set_lua(lutok::state&, const int);
+
+protected:
+    /// The value held by this node.
+    optional< value_type > _value;
+
+private:
+    /// Converts a single word to the native type.
+    ///
+    /// \param raw_value The value to parse.
+    ///
+    /// \return The parsed value.
+    ///
+    /// \throw value_error If the value is invalid.
+    virtual ValueType parse_one(const std::string& raw_value) const = 0;
+
+    virtual void validate(const value_type&) const;
+};
+
+
+/// A leaf node that holds a set of strings.
+class strings_set_node : public base_set_node< std::string > {
+public:
+    virtual base_node* deep_copy(void) const;
+
+private:
+    std::string parse_one(const std::string&) const;
 };
 
 

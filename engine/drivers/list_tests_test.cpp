@@ -42,10 +42,6 @@ extern "C" {
 
 #include "cli/cmd_list.hpp"
 #include "cli/common.ipp"
-// TODO(jmmv): Should probably use a mock test case.
-#include "engine/atf_iface/test_case.hpp"
-// TODO(jmmv): Should probably use a mock test program.
-#include "engine/atf_iface/test_program.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/filters.hpp"
 #include "engine/user_files/kyuafile.hpp"
@@ -53,7 +49,6 @@ extern "C" {
 #include "utils/format/macros.hpp"
 #include "utils/optional.ipp"
 
-namespace atf_iface = engine::atf_iface;
 namespace list_tests = engine::drivers::list_tests;
 namespace user_files = engine::user_files;
 namespace fs = utils::fs;
@@ -88,10 +83,10 @@ public:
     ///
     /// \param test_case The data describing the test case.
     virtual void
-    got_test_case(const engine::base_test_case& test_case)
+    got_test_case(const engine::test_case& test_case)
     {
         test_cases.insert(F("%s:%s") %
-                          test_case.test_program().relative_path() %
+                          test_case.container_test_program().relative_path() %
                           test_case.name());
     }
 };

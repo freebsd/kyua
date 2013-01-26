@@ -61,15 +61,7 @@ class transaction;
 namespace detail {
 
 
-/// Internal representation of the test interfaces for the storage layer.
-enum interface_type {
-    atf_interface,
-    plain_interface,
-};
-
-
-engine::test_program_ptr get_test_program(backend&, const int64_t,
-                                          const interface_type);
+engine::test_program_ptr get_test_program(backend&, const int64_t);
 
 
 }  // namespace detail
@@ -132,8 +124,8 @@ public:
 
     int64_t put_action(const engine::action&, const int64_t);
     int64_t put_context(const engine::context&);
-    int64_t put_test_program(const engine::base_test_program&, const int64_t);
-    int64_t put_test_case(const engine::base_test_case&, const int64_t);
+    int64_t put_test_program(const engine::test_program&, const int64_t);
+    int64_t put_test_case(const engine::test_case&, const int64_t);
     utils::optional< int64_t > put_test_case_file(const std::string&,
                                                   const utils::fs::path&,
                                                   const int64_t);

@@ -177,8 +177,20 @@ ATF_TEST_CASE_BODY(bytes__parse__error)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(bytes__istream__ok);
-ATF_TEST_CASE_BODY(bytes__istream__ok)
+ATF_TEST_CASE_WITHOUT_HEAD(bytes__istream__one_word);
+ATF_TEST_CASE_BODY(bytes__istream__one_word)
+{
+    std::istringstream input("12M");
+
+    units::bytes bytes;
+    input >> bytes;
+    ATF_REQUIRE(input.eof());
+    ATF_REQUIRE_EQ(units::bytes(12 * units::MB), bytes);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(bytes__istream__many_words);
+ATF_TEST_CASE_BODY(bytes__istream__many_words)
 {
     std::istringstream input("12M more");
 
@@ -229,7 +241,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, bytes__parse__b);
     ATF_ADD_TEST_CASE(tcs, bytes__parse__error);
 
-    ATF_ADD_TEST_CASE(tcs, bytes__istream__ok);
+    ATF_ADD_TEST_CASE(tcs, bytes__istream__one_word);
+    ATF_ADD_TEST_CASE(tcs, bytes__istream__many_words);
     ATF_ADD_TEST_CASE(tcs, bytes__istream__error);
     ATF_ADD_TEST_CASE(tcs, bytes__ostream);
 }

@@ -53,19 +53,6 @@ public:
 };
 
 
-/// Execution has been interrupted due to the reception of a signal.
-class interrupted_error : public error {
-    /// Signal that caused the interrupt.
-    int _signo;
-
-public:
-    explicit interrupted_error(const int);
-    virtual ~interrupted_error(void) throw();
-
-    int signo(void) const;
-};
-
-
 /// A requested element could not be found.
 class not_found_error : public error {
 public:

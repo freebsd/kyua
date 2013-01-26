@@ -28,10 +28,38 @@
 
 #include "utils/text/operations.ipp"
 
+#include <sstream>
+
 #include "utils/format/macros.hpp"
 #include "utils/sanity.hpp"
 
 namespace text = utils::text;
+
+
+/// Surrounds a string with quotes, escaping the quote itself if needed.
+///
+/// \param text The string to quote.
+/// \param quote The quote character to use.
+///
+/// \return The quoted string.
+std::string
+text::quote(const std::string& text, const char quote)
+{
+    std::ostringstream quoted;
+    quoted << quote;
+
+    std::string::size_type start_pos = 0;
+    std::string::size_type last_pos = text.find(quote);
+    while (last_pos != std::string::npos) {
+        quoted << text.substr(start_pos, last_pos - start_pos) << '\\';
+        start_pos = last_pos;
+        last_pos = text.find(quote, start_pos + 1);
+    }
+    quoted << text.substr(start_pos);
+
+    quoted << quote;
+    return quoted.str();
+}
 
 
 /// Fills a paragraph to the specified length.

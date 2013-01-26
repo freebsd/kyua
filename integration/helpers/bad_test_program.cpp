@@ -46,5 +46,5 @@ main(void)
         file.close();
     }
 
-    return EXIT_FAILURE;
+    return EXIT_SUCCESS;
 }

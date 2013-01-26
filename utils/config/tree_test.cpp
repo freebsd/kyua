@@ -70,6 +70,17 @@ public:
 /// Custom tree leaf type for an object without defualt constructors.
 class wrapped_int_node : public config::typed_leaf_node< int_wrapper > {
 public:
+    /// Copies the node.
+    ///
+    /// \return A dynamically-allocated node.
+    virtual base_node*
+    deep_copy(void) const
+    {
+        std::auto_ptr< wrapped_int_node > new_node(new wrapped_int_node());
+        new_node->_value = _value;
+        return new_node.release();
+    }
+
     /// Pushes the node's value onto the Lua stack.
     ///
     /// \param state The Lua state onto which to push the value.
@@ -158,6 +169,44 @@ ATF_TEST_CASE_BODY(define_set_lookup__multiple_levels)
     ATF_REQUIRE(tree.lookup< config::bool_node >("foo.3"));
     ATF_REQUIRE_EQ(4, tree.lookup< config::int_node >("sub.tree.2"));
     ATF_REQUIRE_EQ(123, tree.lookup< config::int_node >("sub.tree.3.4"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(deep_copy__empty);
+ATF_TEST_CASE_BODY(deep_copy__empty)
+{
+    config::tree tree1;
+    config::tree tree2 = tree1.deep_copy();
+
+    tree1.define< config::bool_node >("var1");
+    // This would crash if the copy shared the internal data.
+    tree2.define< config::int_node >("var1");
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(deep_copy__some);
+ATF_TEST_CASE_BODY(deep_copy__some)
+{
+    config::tree tree1;
+    tree1.define< config::bool_node >("this.is.a.var");
+    tree1.set< config::bool_node >("this.is.a.var", true);
+    tree1.define< config::int_node >("this.is.another.var");
+    tree1.set< config::int_node >("this.is.another.var", 34);
+    tree1.define< config::int_node >("and.another");
+    tree1.set< config::int_node >("and.another", 123);
+
+    config::tree tree2 = tree1.deep_copy();
+    tree2.set< config::bool_node >("this.is.a.var", false);
+    tree2.set< config::int_node >("this.is.another.var", 43);
+
+    ATF_REQUIRE( tree1.lookup< config::bool_node >("this.is.a.var"));
+    ATF_REQUIRE(!tree2.lookup< config::bool_node >("this.is.a.var"));
+
+    ATF_REQUIRE_EQ(34, tree1.lookup< config::int_node >("this.is.another.var"));
+    ATF_REQUIRE_EQ(43, tree2.lookup< config::int_node >("this.is.another.var"));
+
+    ATF_REQUIRE_EQ(123, tree1.lookup< config::int_node >("and.another"));
+    ATF_REQUIRE_EQ(123, tree2.lookup< config::int_node >("and.another"));
 }
 
 
@@ -373,6 +422,23 @@ ATF_TEST_CASE_BODY(set_lua__ok)
     ATF_REQUIRE_EQ(5, tree.lookup< config::int_node >("top.integer"));
     ATF_REQUIRE_EQ(10, tree.lookup< wrapped_int_node >("top.custom").value());
     ATF_REQUIRE_EQ("foo", tree.lookup< config::string_node >("dynamic.first"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(lookup_rw);
+ATF_TEST_CASE_BODY(lookup_rw)
+{
+    config::tree tree;
+
+    tree.define< config::int_node >("var1");
+    tree.define< config::bool_node >("var3");
+
+    tree.set< config::int_node >("var1", 42);
+    tree.set< config::bool_node >("var3", false);
+
+    tree.lookup_rw< config::int_node >("var1") += 10;
+    ATF_REQUIRE_EQ(52, tree.lookup< config::int_node >("var1"));
+    ATF_REQUIRE(!tree.lookup< config::bool_node >("var3"));
 }
 
 
@@ -644,6 +710,75 @@ ATF_TEST_CASE_BODY(all_properties__subtree__unknown_key)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(operators_eq_and_ne__empty);
+ATF_TEST_CASE_BODY(operators_eq_and_ne__empty)
+{
+    config::tree t1;
+    config::tree t2;
+    ATF_REQUIRE(  t1 == t2);
+    ATF_REQUIRE(!(t1 != t2));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(operators_eq_and_ne__shallow_copy);
+ATF_TEST_CASE_BODY(operators_eq_and_ne__shallow_copy)
+{
+    config::tree t1;
+    t1.define< config::int_node >("root.a.b.c.first");
+    t1.set< config::int_node >("root.a.b.c.first", 1);
+    config::tree t2 = t1;
+    ATF_REQUIRE(  t1 == t2);
+    ATF_REQUIRE(!(t1 != t2));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(operators_eq_and_ne__deep_copy);
+ATF_TEST_CASE_BODY(operators_eq_and_ne__deep_copy)
+{
+    config::tree t1;
+    t1.define< config::int_node >("root.a.b.c.first");
+    t1.set< config::int_node >("root.a.b.c.first", 1);
+    config::tree t2 = t1.deep_copy();
+    ATF_REQUIRE(  t1 == t2);
+    ATF_REQUIRE(!(t1 != t2));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(operators_eq_and_ne__some_contents);
+ATF_TEST_CASE_BODY(operators_eq_and_ne__some_contents)
+{
+    config::tree t1, t2;
+
+    t1.define< config::int_node >("root.a.b.c.first");
+    t1.set< config::int_node >("root.a.b.c.first", 1);
+    ATF_REQUIRE(!(t1 == t2));
+    ATF_REQUIRE(  t1 != t2);
+
+    t2.define< config::int_node >("root.a.b.c.first");
+    t2.set< config::int_node >("root.a.b.c.first", 1);
+    ATF_REQUIRE(  t1 == t2);
+    ATF_REQUIRE(!(t1 != t2));
+
+    t1.set< config::int_node >("root.a.b.c.first", 2);
+    ATF_REQUIRE(!(t1 == t2));
+    ATF_REQUIRE(  t1 != t2);
+
+    t2.set< config::int_node >("root.a.b.c.first", 2);
+    ATF_REQUIRE(  t1 == t2);
+    ATF_REQUIRE(!(t1 != t2));
+
+    t1.define< config::string_node >("another.key");
+    t1.set< config::string_node >("another.key", "some text");
+    ATF_REQUIRE(!(t1 == t2));
+    ATF_REQUIRE(  t1 != t2);
+
+    t2.define< config::string_node >("another.key");
+    t2.set< config::string_node >("another.key", "some text");
+    ATF_REQUIRE(  t1 == t2);
+    ATF_REQUIRE(!(t1 != t2));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(custom_leaf__no_default_ctor);
 ATF_TEST_CASE_BODY(custom_leaf__no_default_ctor)
 {
@@ -665,6 +800,9 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, define_set_lookup__one_level);
     ATF_ADD_TEST_CASE(tcs, define_set_lookup__multiple_levels);
 
+    ATF_ADD_TEST_CASE(tcs, deep_copy__empty);
+    ATF_ADD_TEST_CASE(tcs, deep_copy__some);
+
     ATF_ADD_TEST_CASE(tcs, lookup__invalid_key);
     ATF_ADD_TEST_CASE(tcs, lookup__unknown_key);
 
@@ -678,6 +816,8 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, push_lua__ok);
     ATF_ADD_TEST_CASE(tcs, set_lua__ok);
+
+    ATF_ADD_TEST_CASE(tcs, lookup_rw);
 
     ATF_ADD_TEST_CASE(tcs, lookup_string__ok);
     ATF_ADD_TEST_CASE(tcs, lookup_string__invalid_key);
@@ -696,6 +836,11 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, all_properties__subtree__strip_key);
     ATF_ADD_TEST_CASE(tcs, all_properties__subtree__invalid_key);
     ATF_ADD_TEST_CASE(tcs, all_properties__subtree__unknown_key);
+
+    ATF_ADD_TEST_CASE(tcs, operators_eq_and_ne__empty);
+    ATF_ADD_TEST_CASE(tcs, operators_eq_and_ne__shallow_copy);
+    ATF_ADD_TEST_CASE(tcs, operators_eq_and_ne__deep_copy);
+    ATF_ADD_TEST_CASE(tcs, operators_eq_and_ne__some_contents);
 
     ATF_ADD_TEST_CASE(tcs, custom_leaf__no_default_ctor);
 }

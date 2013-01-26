@@ -113,30 +113,6 @@ passwd_ns::current_user(void)
 }
 
 
-/// Drops privileges to the specified user.
-///
-/// \param unprivileged_user The user to drop privileges to.
-///
-/// \throw std::runtime_error If there is any problem dropping privileges.
-void
-passwd_ns::drop_privileges(const user& unprivileged_user)
-{
-    PRE(::getuid() == 0);
-
-    LD(F("Dropping privileges to user: %s") % format_user(unprivileged_user));
-
-    if (::setgid(unprivileged_user.gid) == -1)
-        throw std::runtime_error(F("Failed to drop group privileges (current "
-                                   "GID %s, new GID %s)")
-                                 % ::getgid() % unprivileged_user.gid);
-
-    if (::setuid(unprivileged_user.uid) == -1)
-        throw std::runtime_error(F("Failed to drop user privileges (current "
-                                   "UID %s, new UID %s")
-                                 % ::getuid() % unprivileged_user.uid);
-}
-
-
 /// Gets information about a user by its name.
 ///
 /// \param name The name of the user to query.

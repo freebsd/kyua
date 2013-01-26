@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2013 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,46 +26,29 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file utils/signals/timer.hpp
-/// Provides the signals::timer class.
+/// \file cli/cmd_db_migrate.hpp
+/// Provides the cmd_db_migrate class.
 
-#if !defined(UTILS_SIGNALS_TIMER_HPP)
-#define UTILS_SIGNALS_TIMER_HPP
+#if !defined(CLI_CMD_DB_MIGRATE_HPP)
+#define CLI_CMD_DB_MIGRATE_HPP
 
-#include <memory>
+#include "cli/common.hpp"
 
-#include "utils/noncopyable.hpp"
-
-namespace utils {
-
-namespace datetime {
-struct delta;
-}  // namespace datetime
+namespace cli {
 
 
-namespace signals {
-
-
-/// Function type for the callback executed when a timer expires.
-typedef void (*timer_callback)(void);
-
-
-/// A RAII class to program a timer.
-class timer : noncopyable {
-    struct impl;
-
-    /// Pointer to the shared internal implementation.
-    std::auto_ptr< impl > _pimpl;
-
+/// Implementation of the "db-migrate" subcommand.
+class cmd_db_migrate : public cli_command
+{
 public:
-    timer(const datetime::delta&, const timer_callback);
-    ~timer(void);
+    cmd_db_migrate(void);
 
-    void unprogram(void);
+    int run(utils::cmdline::ui*, const utils::cmdline::parsed_cmdline&,
+            const utils::config::tree&);
 };
 
 
-} // namespace signals
-} // namespace utils
+}  // namespace cli
 
-#endif // !defined(UTILS_SIGNALS_TIMER_HPP)
+
+#endif  // !defined(CLI_CMD_DB_MIGRATE_HPP)

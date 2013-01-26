@@ -43,9 +43,30 @@ config::tree::tree(void) :
 }
 
 
+/// Constructor with a non-empty root.
+///
+/// \param root The root to the tree to be owned by this instance.
+config::tree::tree(detail::static_inner_node* root) :
+    _root(root)
+{
+}
+
+
 /// Destructor.
 config::tree::~tree(void)
 {
+}
+
+
+/// Generates a deep copy of the input tree.
+///
+/// \return A new tree that is an exact copy of this tree.
+config::tree
+config::tree::deep_copy(void) const
+{
+    detail::static_inner_node* new_root =
+        dynamic_cast< detail::static_inner_node* >(_root->deep_copy());
+    return config::tree(new_root);
 }
 
 
@@ -247,4 +268,30 @@ config::tree::all_properties(const std::string& dotted_key,
     }
 
     return properties;
+}
+
+
+/// Equality comparator.
+///
+/// \param other The other object to compare this one to.
+///
+/// \return True if this object and other are equal; false otherwise.
+bool
+config::tree::operator==(const tree& other) const
+{
+    // TODO(jmmv): Would be nicer to perform the comparison directly on the
+    // nodes, instead of exporting the values to strings first.
+    return _root == other._root || all_properties() == other.all_properties();
+}
+
+
+/// Inequality comparator.
+///
+/// \param other The other object to compare this one to.
+///
+/// \return True if this object and other are different; false otherwise.
+bool
+config::tree::operator!=(const tree& other) const
+{
+    return !(*this == other);
 }

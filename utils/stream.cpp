@@ -28,10 +28,10 @@
 
 #include "utils/stream.hpp"
 
-#include <fstream>
+#include <istream>
+#include <sstream>
 
 #include "utils/format/macros.hpp"
-#include "utils/logging/macros.hpp"
 #include "utils/sanity.hpp"
 
 
@@ -63,27 +63,21 @@ utils::stream_length(std::istream& is)
 
 /// Reads the whole contents of a stream into memory.
 ///
-/// \param is The input stream from which to read.
+/// \param input The input stream from which to read.
 ///
 /// \return A plain string containing the raw contents of the file.
 std::string
-utils::read_stream(std::istream& is)
+utils::read_stream(std::istream& input)
 {
-    std::string buffer;
+    std::ostringstream buffer;
 
-    try {
-        buffer.reserve(stream_length(is));
-    } catch (...) {
-        LW("Failed to calculate stream length; reading may be inefficient");
+    char tmp[1024];
+    while (input.good()) {
+        input.read(tmp, sizeof(tmp));
+        if (input.good() || input.eof()) {
+            buffer.write(tmp, input.gcount());
+        }
     }
 
-    char part[1024];
-    while (is.good()) {
-        is.read(part, sizeof(part) - 1);
-        INV(static_cast< unsigned long >(is.gcount()) < sizeof(part));
-        part[is.gcount()] = '\0';
-        buffer += part;
-    }
-
-    return buffer;
+    return buffer.str();
 }

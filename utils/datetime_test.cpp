@@ -33,6 +33,8 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include <sstream>
+
 #include <atf-c++.hpp>
 
 namespace datetime = utils::datetime;
@@ -56,40 +58,49 @@ ATF_TEST_CASE_BODY(delta__overrides)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(delta__from_useconds);
-ATF_TEST_CASE_BODY(delta__from_useconds)
+ATF_TEST_CASE_WITHOUT_HEAD(delta__from_microseconds);
+ATF_TEST_CASE_BODY(delta__from_microseconds)
 {
     {
-        const datetime::delta delta = datetime::delta::from_useconds(0);
+        const datetime::delta delta = datetime::delta::from_microseconds(0);
         ATF_REQUIRE_EQ(0, delta.seconds);
         ATF_REQUIRE_EQ(0, delta.useconds);
     }
     {
-        const datetime::delta delta = datetime::delta::from_useconds(999999);
+        const datetime::delta delta = datetime::delta::from_microseconds(
+            999999);
         ATF_REQUIRE_EQ(0, delta.seconds);
         ATF_REQUIRE_EQ(999999, delta.useconds);
     }
     {
-        const datetime::delta delta = datetime::delta::from_useconds(1000000);
+        const datetime::delta delta = datetime::delta::from_microseconds(
+            1000000);
         ATF_REQUIRE_EQ(1, delta.seconds);
         ATF_REQUIRE_EQ(0, delta.useconds);
     }
     {
-        const datetime::delta delta = datetime::delta::from_useconds(10576293);
+        const datetime::delta delta = datetime::delta::from_microseconds(
+            10576293);
         ATF_REQUIRE_EQ(10, delta.seconds);
         ATF_REQUIRE_EQ(576293, delta.useconds);
+    }
+    {
+        const datetime::delta delta = datetime::delta::from_microseconds(
+            123456789123456);
+        ATF_REQUIRE_EQ(123456789, delta.seconds);
+        ATF_REQUIRE_EQ(123456, delta.useconds);
     }
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(delta__to_useconds);
-ATF_TEST_CASE_BODY(delta__to_useconds)
+ATF_TEST_CASE_WITHOUT_HEAD(delta__to_microseconds);
+ATF_TEST_CASE_BODY(delta__to_microseconds)
 {
-    ATF_REQUIRE_EQ(0, datetime::delta(0, 0).to_useconds());
-    ATF_REQUIRE_EQ(999999, datetime::delta(0, 999999).to_useconds());
-    ATF_REQUIRE_EQ(1000000, datetime::delta(1, 0).to_useconds());
-    ATF_REQUIRE_EQ(10576293, datetime::delta(10, 576293).to_useconds());
-    ATF_REQUIRE_EQ(11576293, datetime::delta(10, 1576293).to_useconds());
+    ATF_REQUIRE_EQ(0, datetime::delta(0, 0).to_microseconds());
+    ATF_REQUIRE_EQ(999999, datetime::delta(0, 999999).to_microseconds());
+    ATF_REQUIRE_EQ(1000000, datetime::delta(1, 0).to_microseconds());
+    ATF_REQUIRE_EQ(10576293, datetime::delta(10, 576293).to_microseconds());
+    ATF_REQUIRE_EQ(11576293, datetime::delta(10, 1576293).to_microseconds());
 }
 
 
@@ -151,6 +162,22 @@ ATF_TEST_CASE_BODY(delta__addition_and_set)
     {
         delta d(1, 2);
         ATF_REQUIRE(delta(4, 7) == (d += delta(3, 5)));
+    }
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(delta__output);
+ATF_TEST_CASE_BODY(delta__output)
+{
+    {
+        std::ostringstream str;
+        str << datetime::delta(15, 8791);
+        ATF_REQUIRE_EQ("15008791us", str.str());
+    }
+    {
+        std::ostringstream str;
+        str << datetime::delta(12345678, 0);
+        ATF_REQUIRE_EQ("12345678000000us", str.str());
     }
 }
 
@@ -305,16 +332,33 @@ ATF_TEST_CASE_BODY(timestamp__subtraction)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(timestamp__output);
+ATF_TEST_CASE_BODY(timestamp__output)
+{
+    {
+        std::ostringstream str;
+        str << datetime::timestamp::from_microseconds(1291970750123456LL);
+        ATF_REQUIRE_EQ("1291970750123456us", str.str());
+    }
+    {
+        std::ostringstream str;
+        str << datetime::timestamp::from_microseconds(1028309798759812LL);
+        ATF_REQUIRE_EQ("1028309798759812us", str.str());
+    }
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, delta__defaults);
     ATF_ADD_TEST_CASE(tcs, delta__overrides);
-    ATF_ADD_TEST_CASE(tcs, delta__from_useconds);
-    ATF_ADD_TEST_CASE(tcs, delta__to_useconds);
+    ATF_ADD_TEST_CASE(tcs, delta__from_microseconds);
+    ATF_ADD_TEST_CASE(tcs, delta__to_microseconds);
     ATF_ADD_TEST_CASE(tcs, delta__equals);
     ATF_ADD_TEST_CASE(tcs, delta__differs);
     ATF_ADD_TEST_CASE(tcs, delta__addition);
     ATF_ADD_TEST_CASE(tcs, delta__addition_and_set);
+    ATF_ADD_TEST_CASE(tcs, delta__output);
 
     ATF_ADD_TEST_CASE(tcs, timestamp__copy);
     ATF_ADD_TEST_CASE(tcs, timestamp__from_microseconds);
@@ -328,4 +372,5 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, timestamp__equals);
     ATF_ADD_TEST_CASE(tcs, timestamp__differs);
     ATF_ADD_TEST_CASE(tcs, timestamp__subtraction);
+    ATF_ADD_TEST_CASE(tcs, timestamp__output);
 }

@@ -47,23 +47,23 @@ namespace {
 
 /// Lists a single test program.
 ///
-/// \param test_program The test program to print.
+/// \param program The test program to print.
 /// \param filters [in,out] The filters used to select which test cases to
 ///     print.  These filters are updated on output to mark which of them
 ///     actually matched a test case.
 /// \param hooks The runtime hooks.
 static void
-list_test_program(const engine::base_test_program& test_program,
+list_test_program(const engine::test_program& program,
                   engine::filters_state& filters,
                   list_tests::base_hooks& hooks)
 {
-    const engine::test_cases_vector test_cases = test_program.test_cases();
+    const engine::test_cases_vector test_cases = program.test_cases();
 
     for (engine::test_cases_vector::const_iterator iter = test_cases.begin();
          iter != test_cases.end(); iter++) {
         const engine::test_case_ptr tc = *iter;
 
-        if (filters.match_test_case(test_program.relative_path(), tc->name()))
+        if (filters.match_test_case(program.relative_path(), tc->name()))
             hooks.got_test_case(*tc);
     }
 }

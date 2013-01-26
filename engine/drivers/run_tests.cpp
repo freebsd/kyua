@@ -39,13 +39,16 @@
 #include "utils/datetime.hpp"
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/fs/auto_cleaners.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
+#include "utils/signals/interrupts.hpp"
 
 namespace config = utils::config;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace run_tests = engine::drivers::run_tests;
+namespace signals = utils::signals;
 namespace user_files = engine::user_files;
 
 using utils::optional;
@@ -98,30 +101,31 @@ public:
 /// If the test program fails to provide a list of test cases, a fake test case
 /// named '__test_program__' is created and it is reported as broken.
 ///
-/// \param test_program The test program to execute.
+/// \param program The test program to execute.
 /// \param user_config The configuration variables provided by the user.
 /// \param filters The matching state of the filters.
 /// \param hooks The user hooks to receive asynchronous notifications.
+/// \param work_directory Temporary directory to use.
 /// \param tx The store transaction into which to put the results.
 /// \param action_id The action this program belongs to.
 void
-run_test_program(const engine::base_test_program& test_program,
+run_test_program(const engine::test_program& program,
                  const config::tree& user_config,
                  engine::filters_state& filters,
                  run_tests::base_hooks& hooks,
+                 const fs::path& work_directory,
                  store::transaction& tx,
                  const int64_t action_id)
 {
-    LI(F("Processing test program '%s'") % test_program.relative_path());
-    const int64_t test_program_id = tx.put_test_program(test_program,
-                                                        action_id);
+    LI(F("Processing test program '%s'") % program.relative_path());
+    const int64_t test_program_id = tx.put_test_program(program, action_id);
 
-    const engine::test_cases_vector& test_cases = test_program.test_cases();
+    const engine::test_cases_vector& test_cases = program.test_cases();
     for (engine::test_cases_vector::const_iterator iter = test_cases.begin();
          iter != test_cases.end(); iter++) {
         const engine::test_case_ptr test_case = *iter;
 
-        if (!filters.match_test_case(test_program.relative_path(),
+        if (!filters.match_test_case(program.relative_path(),
                                      test_case->name()))
             continue;
 
@@ -130,11 +134,13 @@ run_test_program(const engine::base_test_program& test_program,
         file_saver_hooks test_hooks(tx, test_case_id);
         hooks.got_test_case(test_case);
         const datetime::timestamp start_time = datetime::timestamp::now();
-        const engine::test_result result = test_case->run(
-            user_config, test_hooks);
+        const engine::test_result result = run_test_case(
+            test_case.get(), user_config, test_hooks, work_directory);
         const datetime::timestamp end_time = datetime::timestamp::now();
         tx.put_result(result, test_case_id, start_time, end_time);
         hooks.got_result(test_case, result, end_time - start_time);
+
+        signals::check_interrupt();
     }
 }
 
@@ -178,6 +184,11 @@ run_tests::drive(const fs::path& kyuafile_path,
     engine::action action(context);
     const int64_t action_id = tx.put_action(action, context_id);
 
+    signals::interrupts_handler interrupts;
+
+    const fs::auto_directory work_directory = fs::auto_directory::mkdtemp(
+        "kyua.XXXXXX");
+
     for (test_programs_vector::const_iterator iter =
          kyuafile.test_programs().begin();
          iter != kyuafile.test_programs().end(); iter++) {
@@ -187,7 +198,9 @@ run_tests::drive(const fs::path& kyuafile_path,
             continue;
 
         run_test_program(*test_program, user_config, filters, hooks,
-                         tx, action_id);
+                         work_directory.directory(), tx, action_id);
+
+        signals::check_interrupt();
     }
 
     tx.commit();

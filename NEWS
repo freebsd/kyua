@@ -12,6 +12,24 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   unexpected errors caused by the internals of the code.  The manual
   now correctly explain how the exit codes behave on a command basis.
 
+* Issue 47: Started using the independent testers in the kyua-testers
+  package to run the test cases.  Kyua does not implement the logic to
+  invoke test cases any more, which provides for better modularity,
+  extensibility and robustness.
+
+* Optimized the database schema to make report generation almost
+  instantaneous.
+
+* Bumped the database schema to 2.  The database now records the
+  metadata of both test programs and test cases generically, without
+  knowledge of their interface.
+
+* Added the 'db-migrate' command to provide a mechanism to upgrade a
+  database with an old schema to the current schema.
+
+* Removed the GDB build-time configuration variable.  This is now part
+  of the kyua-testers package.
+
 
 Changes in version 0.5
 ======================

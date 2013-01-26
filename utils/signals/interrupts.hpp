@@ -26,11 +26,48 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <cstdlib>
+/// \file utils/signals/interrupts.hpp
+/// Handling of interrupts.
+
+#if !defined(UTILS_SIGNALS_INTERRUPTS_HPP)
+#define UTILS_SIGNALS_INTERRUPTS_HPP
+
+#include <unistd.h>
+
+#include "utils/noncopyable.hpp"
+
+namespace utils {
+namespace signals {
 
 
-int
-main(void)
-{
-    std::abort();
-}
+/// Provides a scope in which interrupts can be detected and handled.
+///
+/// This RAII-modeled object installs signal handler when instantiated and
+/// removes them upon destruction.  While this object is active, the
+/// check_interrupt() free function can be used to determine if an interrupt has
+/// happened.
+class interrupts_handler : noncopyable {
+public:
+    interrupts_handler(void);
+    ~interrupts_handler(void);
+};
+
+
+/// Disables interrupts while the object is alive.
+class interrupts_inhibiter : noncopyable {
+public:
+    interrupts_inhibiter(void);
+    ~interrupts_inhibiter(void);
+};
+
+
+void check_interrupt(void);
+
+void add_pid_to_kill(const pid_t);
+void remove_pid_to_kill(const pid_t);
+
+
+} // namespace signals
+} // namespace utils
+
+#endif // !defined(UTILS_SIGNALS_INTERRUPTS_HPP)

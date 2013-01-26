@@ -29,6 +29,7 @@
 #include "engine/action.hpp"
 
 #include "engine/context.hpp"
+#include "utils/format/macros.hpp"
 
 namespace fs = utils::fs;
 
@@ -86,11 +87,37 @@ engine::action::runtime_context(void) const
 
 /// Equality comparator.
 ///
-/// \param other The object to compare to.
+/// \param other The other object to compare this one to.
 ///
-/// \return True if the two objects are equal; false otherwise.
+/// \return True if this object and other are equal; false otherwise.
 bool
 engine::action::operator==(const action& other) const
 {
     return *_pimpl == *other._pimpl;
+}
+
+
+/// Inequality comparator.
+///
+/// \param other The other object to compare this one to.
+///
+/// \return True if this object and other are different; false otherwise.
+bool
+engine::action::operator!=(const action& other) const
+{
+    return !(*this == other);
+}
+
+
+/// Injects the object into a stream.
+///
+/// \param output The stream into which to inject the object.
+/// \param object The object to format.
+///
+/// \return The output stream.
+std::ostream&
+engine::operator<<(std::ostream& output, const action& object)
+{
+    output << F("action{context=%s}") % object.runtime_context();
+    return output;
 }

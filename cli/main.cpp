@@ -32,6 +32,11 @@
 #   include "config.h"
 #endif
 
+extern "C" {
+#include <signal.h>
+#include <unistd.h>
+}
+
 #include <cstdlib>
 #include <iostream>
 #include <string>
@@ -40,6 +45,7 @@
 #include "cli/cmd_about.hpp"
 #include "cli/cmd_config.hpp"
 #include "cli/cmd_db_exec.hpp"
+#include "cli/cmd_db_migrate.hpp"
 #include "cli/cmd_debug.hpp"
 #include "cli/cmd_help.hpp"
 #include "cli/cmd_list.hpp"
@@ -48,6 +54,7 @@
 #include "cli/cmd_test.hpp"
 #include "cli/common.ipp"
 #include "cli/config.hpp"
+#include "store/exceptions.hpp"
 #include "utils/cmdline/commands_map.ipp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/globals.hpp"
@@ -63,11 +70,13 @@
 #include "utils/logging/operations.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
+#include "utils/signals/exceptions.hpp"
 
 namespace cmdline = utils::cmdline;
 namespace config = utils::config;
 namespace fs = utils::fs;
 namespace logging = utils::logging;
+namespace signals = utils::signals;
 
 using utils::none;
 using utils::optional;
@@ -151,6 +160,7 @@ safe_main(cmdline::ui* ui, int argc, const char* const argv[],
     commands.insert(new cli::cmd_about());
     commands.insert(new cli::cmd_config());
     commands.insert(new cli::cmd_db_exec());
+    commands.insert(new cli::cmd_db_migrate());
     commands.insert(new cli::cmd_help(&options, &commands));
 
     commands.insert(new cli::cmd_debug(), "Workspace");
@@ -245,6 +255,18 @@ cli::main(cmdline::ui* ui, const int argc, const char* const* const argv,
         INV(exit_code == EXIT_SUCCESS || exit_code == EXIT_FAILURE);
 
         return exit_code;
+    } catch (const signals::interrupted_error& e) {
+        cmdline::print_error(ui, e.what());
+        // Re-deliver the interruption signal to self so that we terminate with
+        // the right status.  At this point we should NOT have any custom signal
+        // handlers in place.
+        ::kill(getpid(), e.signo());
+        LD("Interrupt signal re-delivery did not terminate program");
+        // If we reach this, something went wrong because we did not exit as
+        // intended.  Return an internal error instead.  (Would be nicer to
+        // abort in principle, but it wouldn't be a nice experience if it ever
+        // happened.)
+        return 2;
     } catch (const std::pair< std::string, cmdline::usage_error >& e) {
         const std::string message = F("Usage error for command %s: %s.") %
             e.first % e.second.what();
@@ -260,6 +282,12 @@ cli::main(cmdline::ui* ui, const int argc, const char* const* const argv,
         ui->err(F("Type '%s help' for usage information.") %
                 cmdline::progname());
         return 3;
+    } catch (const store::old_schema_error& e) {
+        const std::string message = F("The database has schema version %s, "
+                                      "which is too old; please use db-migrate "
+                                      "to upgrade it") % e.old_version();
+        cmdline::print_error(ui, message);
+        return 2;
     } catch (const std::runtime_error& e) {
         cmdline::print_error(ui, e.what());
         return 2;

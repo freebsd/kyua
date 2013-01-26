@@ -50,6 +50,32 @@ signals::error::~error(void) throw()
 }
 
 
+/// Constructs a new interrupted error.
+///
+/// \param signo_ The signal that caused the interrupt.
+signals::interrupted_error::interrupted_error(const int signo_) :
+    error(F("Interrupted by signal %s") % signo_),
+    _signo(signo_)
+{
+}
+
+
+/// Destructor for the error.
+signals::interrupted_error::~interrupted_error(void) throw()
+{
+}
+
+
+/// Queries the signal number of the interruption.
+///
+/// \return A signal number.
+int
+signals::interrupted_error::signo(void) const
+{
+    return _signo;
+}
+
+
 /// Constructs a new error based on an errno code.
 ///
 /// \param message_ The message describing what caused the error.
@@ -66,7 +92,6 @@ signals::system_error::system_error(const std::string& message_,
 signals::system_error::~system_error(void) throw()
 {
 }
-
 
 
 /// Gets the original errno code.

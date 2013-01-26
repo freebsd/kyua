@@ -32,7 +32,7 @@ one_arg_body() {
     atf_check -s exit:0 -o save:metadata.csv -e empty \
         kyua db-exec "SELECT * FROM metadata"
     atf_check -s exit:0 -o ignore -e empty \
-        grep 'timestamp,.*schema_version' metadata.csv
+        grep 'schema_version,.*timestamp' metadata.csv
 }
 
 
@@ -41,7 +41,7 @@ many_args_body() {
     atf_check -s exit:0 -o save:metadata.csv -e empty \
         kyua db-exec SELECT "*" FROM metadata
     atf_check -s exit:0 -o ignore -e empty \
-        grep 'timestamp,.*schema_version' metadata.csv
+        grep 'schema_version,.*timestamp' metadata.csv
 }
 
 
@@ -70,7 +70,7 @@ store_flag__default_home_body() {
     test -f home-dir/.kyua/store.db || atf_fail "Database not created in" \
         "the home directory"
     atf_check -s exit:0 -o ignore -e empty \
-        grep 'timestamp,.*schema_version' metadata.csv
+        grep 'schema_version,.*timestamp' metadata.csv
 }
 
 
@@ -83,7 +83,7 @@ store_flag__explicit__ok_body() {
         "should not have happened"
     test -f store.db || atf_fail "Database not created in expected directory"
     atf_check -s exit:0 -o ignore -e empty \
-        grep 'timestamp,.*schema_version' metadata.csv
+        grep 'schema_version,.*timestamp' metadata.csv
 }
 
 

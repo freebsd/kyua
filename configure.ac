@@ -52,7 +52,6 @@ KYUA_DEVELOPER_MODE([C++])
 KYUA_ATTRIBUTE_NORETURN
 KYUA_ATTRIBUTE_PURE
 KYUA_ATTRIBUTE_UNUSED
-KYUA_FS_MODULE
 KYUA_GETOPT
 KYUA_LAST_SIGNO
 KYUA_MEMORY
@@ -86,6 +85,11 @@ m4_ifndef([ATF_ARG_WITH],
     [m4_fatal([Cannot find atf-common.m4; see the INSTALL document for help])])
 ATF_ARG_WITH
 
+PKG_PROG_PKG_CONFIG
+PKG_CHECK_EXISTS([kyua-testers],
+    [testersdir=$("${PKG_CONFIG}" --variable=testersdir kyua-testers)],
+    [AC_MSG_ERROR([kyua-testers >= 0.1 required])])
+
 PKG_CHECK_MODULES([LUTOK], [lutok >= 0.2],
                   [],
                   AC_MSG_ERROR([lutok (0.2 or newer) is required]))
@@ -93,8 +97,6 @@ PKG_CHECK_MODULES([SQLITE3], [sqlite3 >= 3.6.22],
                   [],
                   AC_MSG_ERROR([sqlite3 (3.6.22 or newer) is required]))
 KYUA_DOXYGEN
-AC_PATH_PROG([GDB], [gdb])
-test -n "${GDB}" || GDB=gdb
 AC_PATH_PROG([GIT], [git])
 
 
@@ -127,6 +129,7 @@ AC_SUBST(luadir, \${pkgdatadir}/lua)
 AC_SUBST(miscdir, \${pkgdatadir}/misc)
 AC_SUBST(pkgtestsdir, \${testsdir}/kyua-cli)
 AC_SUBST(storedir, \${pkgdatadir}/store)
+AC_SUBST(testersdir)  dnl Defined above by the pkg-config check.
 AC_SUBST(testsdir, \${exec_prefix}/tests)
 
 

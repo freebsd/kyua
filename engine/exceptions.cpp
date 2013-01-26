@@ -61,32 +61,6 @@ engine::format_error::~format_error(void) throw()
 }
 
 
-/// Constructs a new interrupted_error.
-///
-/// \param signo_ The signal that caused the interruption.
-engine::interrupted_error::interrupted_error(const int signo_) :
-    error(F("Interrupted by signal %s") % signo_),
-    _signo(signo_)
-{
-}
-
-
-/// Destructor for the error.
-engine::interrupted_error::~interrupted_error(void) throw()
-{
-}
-
-
-/// Queries the signal number of the interruption.
-///
-/// \return A signal number.
-int
-engine::interrupted_error::signo(void) const
-{
-    return _signo;
-}
-
-
 /// Constructs a new not_found_error.
 ///
 /// \param message The plain-text error message.

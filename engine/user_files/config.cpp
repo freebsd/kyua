@@ -129,6 +129,18 @@ public:
 }  // anonymous namespace
 
 
+/// Copies the node.
+///
+/// \return A dynamically-allocated node.
+config::detail::base_node*
+user_files::user_node::deep_copy(void) const
+{
+    std::auto_ptr< user_node > new_node(new user_node());
+    new_node->_value = _value;
+    return new_node.release();
+}
+
+
 /// Pushes the node's value onto the Lua stack.
 ///
 /// \param state The Lua state onto which to push the value.

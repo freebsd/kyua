@@ -33,6 +33,7 @@
 #define ENGINE_CONTEXT_HPP
 
 #include <map>
+#include <ostream>
 #include <string>
 #include <tr1/memory>
 
@@ -62,7 +63,11 @@ public:
     const std::map< std::string, std::string >& env(void) const;
 
     bool operator==(const context&) const;
+    bool operator!=(const context&) const;
 };
+
+
+std::ostream& operator<<(std::ostream&, const context&);
 
 
 }  // namespace engine

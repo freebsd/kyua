@@ -173,10 +173,10 @@ EOF
 
     cat >expout <<EOF
 expect_some_fail:die  ->  failed: Test case was expected to terminate abruptly but it continued execution  [S.UUUs]
-expect_some_fail:exit  ->  broken: Expected clean exit with code 12 but got code 34  [S.UUUs]
+expect_some_fail:exit  ->  failed: Test case expected to exit with code 12 but got code 34  [S.UUUs]
 expect_some_fail:failure  ->  failed: Test case was expecting a failure but none were raised  [S.UUUs]
 expect_some_fail:pass  ->  passed  [S.UUUs]
-expect_some_fail:signal  ->  broken: Expected signal 15 but got 9  [S.UUUs]
+expect_some_fail:signal  ->  failed: Test case expected to receive signal 15 but got 9  [S.UUUs]
 expect_some_fail:timeout  ->  failed: Test case was expected to hang but it continued execution  [S.UUUs]
 
 1/6 passed (5 failed)
@@ -199,8 +199,8 @@ atf_test_program{name="bogus_test_cases"}
 EOF
 
     cat >expout <<EOF
-bogus_test_cases:die  ->  broken: Premature exit: received signal 9  [S.UUUs]
-bogus_test_cases:exit  ->  broken: Premature exit: exited with code 0  [S.UUUs]
+bogus_test_cases:die  ->  broken: Premature exit; test case received signal 9  [S.UUUs]
+bogus_test_cases:exit  ->  broken: Premature exit; test case exited with code 0  [S.UUUs]
 bogus_test_cases:pass  ->  passed  [S.UUUs]
 
 1/3 passed (2 failed)
@@ -588,8 +588,13 @@ EOF
         "SELECT actions.action_id, " \
         "       test_programs.relative_path, test_cases.name, " \
         "       test_results.result_type, test_results.result_reason " \
-        "FROM actions NATURAL JOIN test_programs NATURAL JOIN test_cases " \
-        "     NATURAL JOIN test_results " \
+        "FROM actions " \
+        "     JOIN test_programs " \
+        "     ON actions.action_id = test_programs.action_id " \
+        "     JOIN test_cases " \
+        "     ON test_programs.test_program_id = test_cases.test_program_id " \
+        "     JOIN test_results " \
+        "     ON test_cases.test_case_id = test_results.test_case_id " \
         "ORDER BY actions.action_id, test_programs.relative_path, " \
         "         test_cases.name"
 }
@@ -748,16 +753,24 @@ EOF
         -v test_suites.integration.X-cleanup-cookie="$(pwd)/cleanup" \
         test >stdout 2>stderr &
     pid=${!}
+    echo "Kyua subprocess is PID ${pid}"
 
     while [ ! -f body ]; do
         echo "Waiting for body to start"
         sleep 1
     done
+    echo "Body started"
     sleep 1
 
+    echo "Sending INT signal to ${pid}"
     kill -INT ${pid}
+    echo "Waiting for process ${pid} to exit"
     wait ${pid}
-    [ ${?} -ne 0 ] || atf_fail 'No error code reported'
+    ret=${?}
+    sed -e 's,^,kyua stdout:,' stdout
+    sed -e 's,^,kyua stderr:,' stderr
+    echo "Process ${pid} exited"
+    [ ${ret} -ne 0 ] || atf_fail 'No error code reported'
 
     [ -f cleanup ] || atf_fail 'Cleanup part not executed after signal'
 
@@ -890,8 +903,8 @@ EOF
     echo 'I am not executable' >non_executable
 
     cat >expout <<EOF
-crash_on_list:__test_cases_list__  ->  broken: Test program did not exit cleanly  [S.UUUs]
-non_executable:__test_cases_list__  ->  broken: Failed to execute the test program  [S.UUUs]
+crash_on_list:__test_cases_list__  ->  broken: Tester did not exit cleanly: kyua-atf-tester: Invalid test cases list header 'This is not a valid test program!'  [S.UUUs]
+non_executable:__test_cases_list__  ->  broken: Tester did not exit cleanly: kyua-atf-tester: execvp failed: Permission denied  [S.UUUs]
 
 0/2 passed (2 failed)
 Committed action 1

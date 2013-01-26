@@ -37,11 +37,7 @@
 #include <atf-c++.hpp>
 
 #include "engine/action.hpp"
-#include "engine/atf_iface/test_case.hpp"
-#include "engine/atf_iface/test_program.hpp"
 #include "engine/context.hpp"
-#include "engine/plain_iface/test_case.hpp"
-#include "engine/plain_iface/test_program.hpp"
 #include "engine/test_result.hpp"
 #include "store/backend.hpp"
 #include "store/exceptions.hpp"
@@ -52,13 +48,13 @@
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/exceptions.hpp"
 #include "utils/sqlite/statement.ipp"
+#include "utils/units.hpp"
 
-namespace atf_iface = engine::atf_iface;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace logging = utils::logging;
-namespace plain_iface = engine::plain_iface;
 namespace sqlite = utils::sqlite;
+namespace units = utils::units;
 
 using utils::none;
 using utils::optional;
@@ -312,38 +308,47 @@ ATF_TEST_CASE_BODY(get_action_results__many)
 
     atf::utils::create_file("unused.txt", "unused file\n");
 
+    engine::test_program test_program_1(
+        "plain", fs::path("a/prog1"), fs::path("/the/root"), "suite1",
+        engine::metadata_builder().build());
+    engine::test_case_ptr test_case_1(new engine::test_case(
+        "plain", test_program_1, "main", engine::metadata_builder().build()));
+    engine::test_cases_vector test_cases_1;
+    test_cases_1.push_back(test_case_1);
+    test_program_1.set_test_cases(test_cases_1);
+    const engine::test_result result_1(engine::test_result::passed);
     {
-        const plain_iface::test_program test_program(
-            fs::path("a/prog1"), fs::path("/the/root"), "suite1", none);
-        const plain_iface::test_case test_case(test_program);
-        const engine::test_result result(engine::test_result::passed);
-
-        const int64_t tp_id = tx.put_test_program(test_program, action_id);
-        const int64_t tc_id = tx.put_test_case(test_case, tp_id);
+        const int64_t tp_id = tx.put_test_program(test_program_1, action_id);
+        const int64_t tc_id = tx.put_test_case(*test_case_1, tp_id);
         atf::utils::create_file("prog1.out", "stdout of prog1\n");
         tx.put_test_case_file("__STDOUT__", fs::path("prog1.out"), tc_id);
         tx.put_test_case_file("unused.txt", fs::path("unused.txt"), tc_id);
-        tx.put_result(result, tc_id, start_time1, end_time1);
+        tx.put_result(result_1, tc_id, start_time1, end_time1);
 
-        const int64_t tp2_id = tx.put_test_program(test_program, action2_id);
-        const int64_t tc2_id = tx.put_test_case(test_case, tp2_id);
+        const int64_t tp2_id = tx.put_test_program(test_program_1, action2_id);
+        const int64_t tc2_id = tx.put_test_case(*test_case_1, tp2_id);
         tx.put_test_case_file("__STDOUT__", fs::path("unused.txt"), tc2_id);
         tx.put_test_case_file("__STDERR__", fs::path("unused.txt"), tc2_id);
-        tx.put_result(result, tc2_id, start_time1, end_time1);
+        tx.put_result(result_1, tc2_id, start_time1, end_time1);
     }
-    {
-        const plain_iface::test_program test_program(
-            fs::path("b/prog2"), fs::path("/the/root"), "suite2", none);
-        const plain_iface::test_case test_case(test_program);
-        const engine::test_result result(engine::test_result::failed,
-                                         "Some text");
 
-        const int64_t tp_id = tx.put_test_program(test_program, action_id);
-        const int64_t tc_id = tx.put_test_case(test_case, tp_id);
+    engine::test_program test_program_2(
+        "plain", fs::path("b/prog2"), fs::path("/the/root"), "suite2",
+        engine::metadata_builder().build());
+    engine::test_case_ptr test_case_2(new engine::test_case(
+        "plain", test_program_2, "main", engine::metadata_builder().build()));
+    engine::test_cases_vector test_cases_2;
+    test_cases_2.push_back(test_case_2);
+    test_program_2.set_test_cases(test_cases_2);
+    const engine::test_result result_2(engine::test_result::failed,
+                                       "Some text");
+    {
+        const int64_t tp_id = tx.put_test_program(test_program_2, action_id);
+        const int64_t tc_id = tx.put_test_case(*test_case_2, tp_id);
         atf::utils::create_file("prog2.err", "stderr of prog2\n");
         tx.put_test_case_file("__STDERR__", fs::path("prog2.err"), tc_id);
         tx.put_test_case_file("unused.txt", fs::path("unused.txt"), tc_id);
-        tx.put_result(result, tc_id, start_time2, end_time2);
+        tx.put_result(result_2, tc_id, start_time2, end_time2);
     }
 
     tx.commit();
@@ -351,22 +356,18 @@ ATF_TEST_CASE_BODY(get_action_results__many)
     store::transaction tx2 = backend.start();
     store::results_iterator iter = tx2.get_action_results(action_id);
     ATF_REQUIRE(iter);
-    ATF_REQUIRE_EQ(fs::path("/the/root/a/prog1"),
-                   iter.test_program()->absolute_path());
+    ATF_REQUIRE(test_program_1 == *iter.test_program());
     ATF_REQUIRE_EQ("main", iter.test_case_name());
     ATF_REQUIRE_EQ("stdout of prog1\n", iter.stdout_contents());
     ATF_REQUIRE(iter.stderr_contents().empty());
-    ATF_REQUIRE(engine::test_result(engine::test_result::passed) ==
-                iter.result());
+    ATF_REQUIRE(result_1 == iter.result());
     ATF_REQUIRE(end_time1 - start_time1 == iter.duration());
     ATF_REQUIRE(++iter);
-    ATF_REQUIRE_EQ(fs::path("/the/root/b/prog2"),
-                   iter.test_program()->absolute_path());
+    ATF_REQUIRE(test_program_2 == *iter.test_program());
     ATF_REQUIRE_EQ("main", iter.test_case_name());
     ATF_REQUIRE(iter.stdout_contents().empty());
     ATF_REQUIRE_EQ("stderr of prog2\n", iter.stderr_contents());
-    ATF_REQUIRE(engine::test_result(engine::test_result::failed, "Some text") ==
-                iter.result());
+    ATF_REQUIRE(result_2 == iter.result());
     ATF_REQUIRE(end_time2 - start_time2 == iter.duration());
     ATF_REQUIRE(!++iter);
 }
@@ -579,16 +580,21 @@ ATF_TEST_CASE_BODY(get_put_context__put_fail)
 }
 
 
-ATF_TEST_CASE(put_test_program__atf);
-ATF_TEST_CASE_HEAD(put_test_program__atf)
+ATF_TEST_CASE(put_test_program__ok);
+ATF_TEST_CASE_HEAD(put_test_program__ok)
 {
     logging::set_inmemory();
     set_md_var("require.files", store::detail::schema_file().c_str());
 }
-ATF_TEST_CASE_BODY(put_test_program__atf)
+ATF_TEST_CASE_BODY(put_test_program__ok)
 {
-    const atf_iface::test_program test_program(
-        fs::path("the/binary"), fs::path("/some//root"), "the-suite");
+    const engine::metadata md = engine::metadata_builder()
+        .add_custom("var1", "value1")
+        .add_custom("var2", "value2")
+        .build();
+    const engine::test_program test_program(
+        "mock", fs::path("the/binary"), fs::path("/some//root"),
+        "the-suite", md);
 
     store::backend backend = store::backend::open_rw(fs::path("test.db"));
     backend.database().exec("PRAGMA foreign_keys = OFF");
@@ -611,57 +617,6 @@ ATF_TEST_CASE_BODY(put_test_program__atf)
         ATF_REQUIRE_EQ("the-suite", stmt.safe_column_text("test_suite_name"));
         ATF_REQUIRE(!stmt.step());
     }
-    {
-        sqlite::statement stmt = backend.database().create_statement(
-            "SELECT * FROM plain_test_programs");
-        ATF_REQUIRE(!stmt.step());
-    }
-}
-
-
-ATF_TEST_CASE(put_test_program__plain);
-ATF_TEST_CASE_HEAD(put_test_program__plain)
-{
-    logging::set_inmemory();
-    set_md_var("require.files", store::detail::schema_file().c_str());
-}
-ATF_TEST_CASE_BODY(put_test_program__plain)
-{
-    const plain_iface::test_program test_program(
-        fs::path("the/binary"), fs::path("some/root"), "the-suite", none);
-
-    store::backend backend = store::backend::open_rw(fs::path("test.db"));
-    backend.database().exec("PRAGMA foreign_keys = OFF");
-    store::transaction tx = backend.start();
-    const int64_t test_program_id = tx.put_test_program(test_program, 15);
-    tx.commit();
-
-    {
-        sqlite::statement stmt = backend.database().create_statement(
-            "SELECT * FROM test_programs");
-
-        ATF_REQUIRE(stmt.step());
-        ATF_REQUIRE_EQ(test_program_id,
-                       stmt.safe_column_int64("test_program_id"));
-        ATF_REQUIRE_EQ(15, stmt.safe_column_int64("action_id"));
-        ATF_REQUIRE_EQ(fs::path("some/root/the/binary").to_absolute().str(),
-                       stmt.safe_column_text("absolute_path"));
-        ATF_REQUIRE_EQ("some/root", stmt.safe_column_text("root"));
-        ATF_REQUIRE_EQ("the/binary", stmt.safe_column_text("relative_path"));
-        ATF_REQUIRE_EQ("the-suite", stmt.safe_column_text("test_suite_name"));
-        ATF_REQUIRE(!stmt.step());
-    }
-    {
-        sqlite::statement stmt = backend.database().create_statement(
-            "SELECT * FROM plain_test_programs");
-
-        ATF_REQUIRE(stmt.step());
-        ATF_REQUIRE_EQ(test_program_id,
-                       stmt.safe_column_int64("test_program_id"));
-        ATF_REQUIRE_EQ(
-            static_cast< int64_t >(test_program.timeout().to_useconds()),
-            stmt.safe_column_int64("timeout"));
-    }
 }
 
 
@@ -673,9 +628,9 @@ ATF_TEST_CASE_HEAD(put_test_program__fail)
 }
 ATF_TEST_CASE_BODY(put_test_program__fail)
 {
-    // TODO(jmmv): Use a mock test program.
-    const plain_iface::test_program test_program(
-        fs::path("the/binary"), fs::path("/some/root"), "the-suite", none);
+    const engine::test_program test_program(
+        "mock", fs::path("the/binary"), fs::path("/some/root"), "the-suite",
+        engine::metadata_builder().build());
 
     store::backend backend = store::backend::open_rw(fs::path("test.db"));
     store::transaction tx = backend.start();
@@ -684,36 +639,50 @@ ATF_TEST_CASE_BODY(put_test_program__fail)
 }
 
 
-ATF_TEST_CASE(put_test_case__atf);
-ATF_TEST_CASE_HEAD(put_test_case__atf)
+ATF_TEST_CASE(put_test_case__ok);
+ATF_TEST_CASE_HEAD(put_test_case__ok)
 {
     logging::set_inmemory();
     set_md_var("require.files", store::detail::schema_file().c_str());
 }
-ATF_TEST_CASE_BODY(put_test_case__atf)
+ATF_TEST_CASE_BODY(put_test_case__ok)
 {
-    const atf_iface::test_program test_program(
-        fs::path("the/binary"), fs::path("/some/root"), "the-suite");
+    engine::test_program test_program(
+        "atf", fs::path("the/binary"), fs::path("/some/root"), "the-suite",
+        engine::metadata_builder().build());
 
-    const atf_iface::test_case test_case1 =
-        atf_iface::test_case::from_properties(test_program, "tc1",
-                                              engine::properties_map());
+    const engine::test_case_ptr test_case1(new engine::test_case(
+        "atf", test_program, "tc1", engine::metadata_builder().build()));
 
-    engine::properties_map props2;
-    props2["descr"] = "The description";
-    props2["has.cleanup"] = "true";
-    props2["require.arch"] = "powerpc x86_64";
-    props2["require.config"] = "var1 var2 var3";
-    props2["require.files"] = "/file1/yes /file2/foo";
-    props2["require.machine"] = "amd64 macppc";
-    props2["require.memory"] = "1k";
-    props2["require.progs"] = "/bin/ls cp";
-    props2["require.user"] = "root";
-    props2["timeout"] = "520";
-    props2["X-user1"] = "value1";
-    props2["X-user2"] = "value2";
-    const atf_iface::test_case test_case2 =
-        atf_iface::test_case::from_properties(test_program, "tc2", props2);
+    const engine::metadata md2 = engine::metadata_builder()
+        .add_allowed_architecture("powerpc")
+        .add_allowed_architecture("x86_64")
+        .add_allowed_platform("amd64")
+        .add_allowed_platform("macppc")
+        .add_custom("X-user1", "value1")
+        .add_custom("X-user2", "value2")
+        .add_required_config("var1")
+        .add_required_config("var2")
+        .add_required_config("var3")
+        .add_required_file(fs::path("/file1/yes"))
+        .add_required_file(fs::path("/file2/foo"))
+        .add_required_program(fs::path("/bin/ls"))
+        .add_required_program(fs::path("cp"))
+        .set_description("The description")
+        .set_has_cleanup(true)
+        .set_required_memory(units::bytes::parse("1k"))
+        .set_required_user("root")
+        .set_timeout(datetime::delta(520, 0))
+        .build();
+    const engine::test_case_ptr test_case2(new engine::test_case(
+        "atf", test_program, "tc2", md2));
+
+    {
+        engine::test_cases_vector test_cases;
+        test_cases.push_back(test_case1);
+        test_cases.push_back(test_case2);
+        test_program.set_test_cases(test_cases);
+    }
 
     store::backend backend = store::backend::open_rw(fs::path("test.db"));
     backend.database().exec("PRAGMA foreign_keys = OFF");
@@ -721,62 +690,15 @@ ATF_TEST_CASE_BODY(put_test_case__atf)
     {
         store::transaction tx = backend.start();
         test_program_id = tx.put_test_program(test_program, 15);
-        tx.put_test_case(test_case1, test_program_id);
-        tx.put_test_case(test_case2, test_program_id);
+        tx.put_test_case(*test_case1, test_program_id);
+        tx.put_test_case(*test_case2, test_program_id);
         tx.commit();
     }
 
     store::transaction tx = backend.start();
-    const engine::test_program_ptr generic_loaded_test_program =
-        store::detail::get_test_program(backend, test_program_id,
-                                        store::detail::atf_interface);
-
-    const atf_iface::test_program& loaded_test_program =
-        *dynamic_cast< const atf_iface::test_program* >(
-            generic_loaded_test_program.get());
-    ATF_REQUIRE(test_case1 == *dynamic_cast< const atf_iface::test_case* >(
-        loaded_test_program.find("tc1").get()));
-    ATF_REQUIRE(test_case2 == *dynamic_cast< const atf_iface::test_case* >(
-        loaded_test_program.find("tc2").get()));
-}
-
-
-ATF_TEST_CASE(put_test_case__plain);
-ATF_TEST_CASE_HEAD(put_test_case__plain)
-{
-    logging::set_inmemory();
-    set_md_var("require.files", store::detail::schema_file().c_str());
-}
-ATF_TEST_CASE_BODY(put_test_case__plain)
-{
-    const plain_iface::test_program test_program(
-        fs::path("the/binary"), fs::path("/some/root"), "the-suite",
-        utils::make_optional(datetime::delta(512, 0)));
-    const plain_iface::test_case test_case(test_program);
-
-    store::backend backend = store::backend::open_rw(fs::path("test.db"));
-    backend.database().exec("PRAGMA foreign_keys = OFF");
-    store::transaction tx = backend.start();
-    const int64_t test_program_id = tx.put_test_program(test_program, 15);
-    const int64_t test_case_id = tx.put_test_case(test_case, test_program_id);
-    tx.commit();
-
-    {
-        sqlite::statement stmt = backend.database().create_statement(
-            "SELECT test_case_id, test_program_id, name "
-            "FROM test_cases");
-
-        ATF_REQUIRE(stmt.step());
-        ATF_REQUIRE_EQ(test_case_id, stmt.column_int64(0));
-        ATF_REQUIRE_EQ(test_program_id, stmt.column_int64(1));
-        ATF_REQUIRE_EQ("main", stmt.column_text(2));
-        ATF_REQUIRE(!stmt.step());
-    }
-
-    ATF_REQUIRE(!backend.database().create_statement(
-        "SELECT * FROM atf_test_cases").step());
-    ATF_REQUIRE(!backend.database().create_statement(
-        "SELECT * FROM atf_test_cases_multivalues").step());
+    const engine::test_program_ptr loaded_test_program =
+        store::detail::get_test_program(backend, test_program_id);
+    ATF_REQUIRE(test_program == *loaded_test_program);
 }
 
 
@@ -789,9 +711,11 @@ ATF_TEST_CASE_HEAD(put_test_case__fail)
 ATF_TEST_CASE_BODY(put_test_case__fail)
 {
     // TODO(jmmv): Use a mock test program and test case.
-    const plain_iface::test_program test_program(
-        fs::path("the/binary"), fs::path("/some/root"), "the-suite", none);
-    const plain_iface::test_case test_case(test_program);
+    const engine::test_program test_program(
+        "plain", fs::path("the/binary"), fs::path("/some/root"), "the-suite",
+        engine::metadata_builder().build());
+    const engine::test_case test_case("plain", test_program, "main",
+                                      engine::metadata_builder().build());
 
     store::backend backend = store::backend::open_rw(fs::path("test.db"));
     store::transaction tx = backend.start();
@@ -988,11 +912,9 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, get_put_context__get_fail__invalid_env_vars);
     ATF_ADD_TEST_CASE(tcs, get_put_context__put_fail);
 
-    ATF_ADD_TEST_CASE(tcs, put_test_program__atf);
-    ATF_ADD_TEST_CASE(tcs, put_test_program__plain);
+    ATF_ADD_TEST_CASE(tcs, put_test_program__ok);
     ATF_ADD_TEST_CASE(tcs, put_test_program__fail);
-    ATF_ADD_TEST_CASE(tcs, put_test_case__atf);
-    ATF_ADD_TEST_CASE(tcs, put_test_case__plain);
+    ATF_ADD_TEST_CASE(tcs, put_test_case__ok);
     ATF_ADD_TEST_CASE(tcs, put_test_case__fail);
     ATF_ADD_TEST_CASE(tcs, put_test_case_file__empty);
     ATF_ADD_TEST_CASE(tcs, put_test_case_file__some);

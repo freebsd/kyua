@@ -30,7 +30,6 @@ UTILS_CFLAGS =
 UTILS_LIBS = libutils.a
 
 noinst_LIBRARIES += libutils.a
-libutils_a_CPPFLAGS = "-DGDB=\"$(GDB)\""
 libutils_a_SOURCES  = utils/auto_array.hpp
 libutils_a_SOURCES += utils/auto_array.ipp
 libutils_a_SOURCES += utils/datetime.cpp
@@ -46,8 +45,6 @@ libutils_a_SOURCES += utils/passwd.cpp
 libutils_a_SOURCES += utils/passwd.hpp
 libutils_a_SOURCES += utils/sanity.cpp
 libutils_a_SOURCES += utils/sanity.hpp
-libutils_a_SOURCES += utils/stacktrace.cpp
-libutils_a_SOURCES += utils/stacktrace.hpp
 libutils_a_SOURCES += utils/stream.cpp
 libutils_a_SOURCES += utils/stream.hpp
 libutils_a_SOURCES += utils/units.cpp
@@ -94,14 +91,6 @@ tests_utils_PROGRAMS += utils/sanity_test
 utils_sanity_test_SOURCES = utils/sanity_test.cpp
 utils_sanity_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 utils_sanity_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
-
-tests_utils_PROGRAMS += utils/stacktrace_helper
-utils_stacktrace_helper_SOURCES = utils/stacktrace_helper.cpp
-
-tests_utils_PROGRAMS += utils/stacktrace_test
-utils_stacktrace_test_SOURCES = utils/stacktrace_test.cpp
-utils_stacktrace_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-utils_stacktrace_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_PROGRAMS += utils/stream_test
 utils_stream_test_SOURCES = utils/stream_test.cpp
