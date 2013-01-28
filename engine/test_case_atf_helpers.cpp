@@ -250,7 +250,7 @@ ATF_TEST_CASE_CLEANUP(timeout_cleanup)
 ATF_TEST_CASE_WITHOUT_HEAD(validate_isolation);
 ATF_TEST_CASE_BODY(validate_isolation)
 {
-    ATF_REQUIRE(utils::getenv("HOME").get() == fs::current_path().str());
+    ATF_REQUIRE(utils::getenv("HOME").get() != "fake-value");
     ATF_REQUIRE(!utils::getenv("LANG"));
 }
 

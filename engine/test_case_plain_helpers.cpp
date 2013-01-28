@@ -133,7 +133,7 @@ test_timeout(void)
 static void
 test_validate_isolation(void)
 {
-    if (utils::getenv("HOME").get() != fs::current_path().str())
+    if (utils::getenv("HOME").get() == "fake-value")
         fail("HOME not reset");
     if (utils::getenv("LANG"))
         fail("LANG not unset");

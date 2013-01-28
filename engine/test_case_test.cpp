@@ -644,7 +644,7 @@ ATF_TEST_CASE_BODY(run_test_case__atf__isolation)
 {
     atf_helper helper(this, "validate_isolation");
     // Simple checks to make sure that the test case has been isolated.
-    utils::setenv("HOME", "foobar");
+    utils::setenv("HOME", "fake-value");
     utils::setenv("LANG", "C");
     ATF_REQUIRE_EQ(engine::test_result(engine::test_result::passed),
                    helper.run());
@@ -1003,7 +1003,7 @@ ATF_TEST_CASE_BODY(run_test_case__plain__isolation)
     const plain_helper helper(this, "validate_isolation");
     utils::setenv("TEST_CASE", "validate_isolation");
     // Simple checks to make sure that the test case has been isolated.
-    utils::setenv("HOME", "foobar");
+    utils::setenv("HOME", "fake-value");
     utils::setenv("LANG", "C");
     ATF_REQUIRE_EQ(engine::test_result(engine::test_result::passed),
                    helper.run());
