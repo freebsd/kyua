@@ -61,7 +61,7 @@ do_ok_test(const char* input_name, const char* exp_output)
     fclose(output);
 
     if (!atf_utils_compare_file("output.txt", exp_output)) {
-        atf_utils_create_file("expout.txt", exp_output);
+        atf_utils_create_file("expout.txt", "%s", exp_output);
         atf_utils_cat_file("expout.txt", "EXPECTED: ");
         atf_utils_cat_file("output.txt", "ACTUAL:   ");
         atf_tc_fail_nonfatal("Output of atf_list_parse does not match expected "

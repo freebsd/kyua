@@ -133,6 +133,13 @@ check_signals(const void* KYUA_DEFS_UNUSED_PARAM(cookie))
 {
     int signo;
     for (signo = 1; signo <= LAST_SIGNO; signo++) {
+        if (signo == SIGKILL || signo == SIGSTOP) {
+            // Don't attempt to check immutable signals, as this results in
+            // an unconditional error in some systems.  E.g. Mac OS X 10.8
+            // reports 'Invalid argument' when querying SIGKILL.
+            continue;
+        }
+
         struct sigaction old_sa;
         if (sigaction(signo, NULL, &old_sa) == -1) {
             err(EXIT_FAILURE, "Failed to query signal information for %d",

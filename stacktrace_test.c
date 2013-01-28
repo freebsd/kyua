@@ -252,14 +252,13 @@ ATF_TC_BODY(dump__ok, tc)
 ATF_TC_WITHOUT_HEAD(dump__cannot_find_core);
 ATF_TC_BODY(dump__cannot_find_core, tc)
 {
-    const pid_t pid = generate_core(tc, ".", "program");
-
     kyua_run_params_t run_params;
     kyua_run_params_init(&run_params);
 
     FILE* output = fopen("stacktrace", "w");
     ATF_REQUIRE(output != NULL);
-    kyua_stacktrace_dump("missing", pid, &run_params, output);
+    // This assumes that init(8) has never core dumped.
+    kyua_stacktrace_dump("missing", 1, &run_params, output);
     fclose(output);
     atf_utils_cat_file("stacktrace", "dump output: ");
 
