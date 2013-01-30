@@ -151,14 +151,18 @@ cleanup_handler(const int KYUA_DEFS_UNUSED_PARAM(signo))
     protect();
     if (!signal_fired) {
         signal_fired = true;
-        (void)write(STDERR_FILENO, clean_message, strlen(clean_message));
+        if (write(STDERR_FILENO, clean_message, strlen(clean_message)) == -1) {
+            // Ignore.
+        }
         if (pid_to_kill != -1) {
             kill(pid_to_kill, SIGKILL);
             pid_to_kill = -1;
         }
         unprotect();
     } else {
-        (void)write(STDERR_FILENO, abort_message, strlen(abort_message));
+        if (write(STDERR_FILENO, abort_message, strlen(abort_message)) == -1) {
+            // Ignore.
+        }
         if (pid_to_kill != -1) {
             kill(pid_to_kill, SIGKILL);
             pid_to_kill = -1;
@@ -179,7 +183,9 @@ timeout_handler(const int KYUA_DEFS_UNUSED_PARAM(signo))
 
     protect();
     process_timed_out = true;
-    (void)write(STDERR_FILENO, message, strlen(message));
+    if (write(STDERR_FILENO, message, strlen(message)) == -1) {
+        // Ignore.
+    }
     if (pid_to_kill != -1) {
         kill(pid_to_kill, SIGKILL);
         pid_to_kill = -1;

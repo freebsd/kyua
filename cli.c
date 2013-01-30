@@ -45,6 +45,9 @@
 #include "error.h"
 #include "run.h"
 
+#if !defined(GID_MAX)
+#   define GID_MAX INT_MAX
+#endif
 #if !defined(UID_MAX)
 #   define UID_MAX INT_MAX
 #endif
