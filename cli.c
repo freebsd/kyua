@@ -52,6 +52,12 @@
 #   define UID_MAX INT_MAX
 #endif
 
+#if defined(HAVE_GETOPT_GNU)
+#   define GETOPT_PLUS "+"
+#else
+#   define GETOPT_PLUS
+#endif
+
 
 /// Terminates execution if the given error is set.
 ///
@@ -158,7 +164,7 @@ test_command(int argc, char* const* argv, const kyua_cli_tester_t* tester,
 
     const char** last_variable = user_variables;
     int ch;
-    while ((ch = getopt(argc, argv, ":v:")) != -1) {
+    while ((ch = getopt(argc, argv, GETOPT_PLUS":v:")) != -1) {
         switch (ch) {
         case 'v':
             *last_variable++ = optarg;
@@ -209,7 +215,7 @@ kyua_cli_main(int argc, char* const* argv, const kyua_cli_tester_t* tester)
     kyua_run_params_init(&run_params);
 
     int ch;
-    while ((ch = getopt(argc, argv, ":g:t:u:")) != -1) {
+    while ((ch = getopt(argc, argv, GETOPT_PLUS":g:t:u:")) != -1) {
         switch (ch) {
         case 'g':
             run_params.unprivileged_group = (uid_t)parse_ulong(
