@@ -128,6 +128,44 @@ load_config_file(const cmdline::parsed_cmdline& cmdline)
 }
 
 
+/// Loads the configuration file for this session, if any.
+///
+/// This is a helper function for cli::load_config() that attempts to load the
+/// configuration unconditionally.
+///
+/// \param cmdline The parsed command line.
+///
+/// \return The loaded configuration file data.
+///
+/// \throw engine::error If the parsing of the configuration file fails.
+static config::tree
+load_required_config(const cmdline::parsed_cmdline& cmdline)
+{
+    config::tree user_config = load_config_file(cmdline);
+
+    if (cmdline.has_option(cli::variable_option.long_name())) {
+        typedef std::pair< std::string, std::string > override_pair;
+
+        const std::vector< override_pair >& overrides =
+            cmdline.get_multi_option< cmdline::property_option >(
+                cli::variable_option.long_name());
+
+        for (std::vector< override_pair >::const_iterator
+                 iter = overrides.begin(); iter != overrides.end(); iter++) {
+            try {
+                user_config.set_string((*iter).first, (*iter).second);
+            } catch (const config::error& e) {
+                // TODO(jmmv): Raising this type from here is obviously the
+                // wrong thing to do.
+                throw engine::error(e.what());
+            }
+        }
+    }
+
+    return user_config;
+}
+
+
 }  // anonymous namespace
 
 
@@ -158,31 +196,28 @@ const cmdline::property_option cli::variable_option(
 /// 4) Lastly, apply any user-provided overrides.
 ///
 /// \param cmdline The parsed command line.
+/// \param required Whether the loading of the configuration file must succeed.
+///     Some commands should run regardless, and therefore we need to set this
+///     to false for those commands.
+///
+/// \return The loaded configuration file data.  If required was set to false,
+/// this might be the default configuration data if the requested file could not
+/// be properly loaded.
 ///
 /// \throw engine::error If the parsing of the configuration file fails.
 config::tree
-cli::load_config(const cmdline::parsed_cmdline& cmdline)
+cli::load_config(const cmdline::parsed_cmdline& cmdline,
+                 const bool required)
 {
-    config::tree user_config = load_config_file(cmdline);
-
-    if (cmdline.has_option(variable_option.long_name())) {
-        typedef std::pair< std::string, std::string > override_pair;
-
-        const std::vector< override_pair >& overrides =
-            cmdline.get_multi_option< cmdline::property_option >(
-                variable_option.long_name());
-
-        for (std::vector< override_pair >::const_iterator
-                 iter = overrides.begin(); iter != overrides.end(); iter++) {
-            try {
-                user_config.set_string((*iter).first, (*iter).second);
-            } catch (const config::error& e) {
-                // TODO(jmmv): Raising this type from here is obviously the
-                // wrong thing to do.
-                throw engine::error(e.what());
-            }
+    try {
+        return load_required_config(cmdline);
+    } catch (const engine::error& e) {
+        if (required) {
+            throw;
+        } else {
+            LW(F("Ignoring failure to load configuration because the requested "
+                 "command should not fail: %s") % e.what());
+            return user_files::default_config();
         }
     }
-
-    return user_config;
 }

@@ -173,9 +173,7 @@ safe_main(cmdline::ui* ui, int argc, const char* const argv[],
     if (mock_command.get() != NULL)
         commands.insert(mock_command);
 
-    cmdline::parsed_cmdline cmdline = cmdline::parse(argc, argv, options);
-
-    const config::tree user_config = cli::load_config(cmdline);
+    const cmdline::parsed_cmdline cmdline = cmdline::parse(argc, argv, options);
 
     const fs::path logfile(cmdline.get_option< cmdline::path_option >(
         "logfile"));
@@ -192,6 +190,9 @@ safe_main(cmdline::ui* ui, int argc, const char* const argv[],
     if (cmdline.arguments().empty())
         throw cmdline::usage_error("No command provided");
     const std::string cmdname = cmdline.arguments()[0];
+
+    const config::tree user_config = cli::load_config(cmdline,
+                                                      cmdname != "help");
 
     cli::cli_command* command = commands.find(cmdname);
     if (command == NULL)

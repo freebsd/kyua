@@ -6,6 +6,9 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 * Issue 40: Rewrote the documentation as manual pages and removed the
   previous GNU Info document.
 
+* Issue 36: Changed 'kyua help' to not fail when the configuration file
+  is bogus.  Help should always work.
+
 * Increased the granularity of the error codes returned by kyua(1) to
   denote different error conditions.  This avoids the overload of '1'
   to indicate both "expected" errors from specific subcommands from

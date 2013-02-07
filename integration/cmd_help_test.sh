@@ -52,6 +52,15 @@ one_command_body() {
 }
 
 
+utils_test_case ignore_bad_config
+ignore_bad_config_body() {
+    echo 'this is an invalid configuration file' >bad-config
+    atf_check -s exit:0 -o save:stdout -e empty kyua -c bad-config help
+    grep '^Usage: kyua' stdout || atf_fail 'No usage line printed'
+    grep -- '--loglevel' stdout || atf_fail 'Generic options not printed'
+}
+
+
 utils_test_case unknown_command
 unknown_command_body() {
     cat >stderr <<EOF
@@ -74,9 +83,9 @@ EOF
 
 atf_init_test_cases() {
     atf_add_test_case global
-
     atf_add_test_case one_command
-    atf_add_test_case unknown_command
 
+    atf_add_test_case ignore_bad_config
+    atf_add_test_case unknown_command
     atf_add_test_case too_many_arguments
 }

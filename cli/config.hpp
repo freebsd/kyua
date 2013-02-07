@@ -46,7 +46,8 @@ extern const utils::cmdline::path_option config_option;
 extern const utils::cmdline::property_option variable_option;
 
 
-utils::config::tree load_config(const utils::cmdline::parsed_cmdline&);
+utils::config::tree load_config(const utils::cmdline::parsed_cmdline&,
+                                const bool);
 
 
 }  // namespace cli
