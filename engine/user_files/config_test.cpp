@@ -106,7 +106,7 @@ ATF_TEST_CASE_BODY(config__load__defaults)
 {
     {
         std::ofstream file("config");
-        file << "syntax('config', 1)\n";
+        file << "syntax(1)\n";
         file.close();
     }
 
@@ -123,7 +123,7 @@ ATF_TEST_CASE_BODY(config__load__overrides)
 
     {
         std::ofstream file("config");
-        file << "syntax('config', 1)\n";
+        file << "syntax(1)\n";
         file << "architecture = 'test-architecture'\n";
         file << "platform = 'test-platform'\n";
         file << "unprivileged_user = 'user2'\n";
@@ -163,23 +163,11 @@ ATF_TEST_CASE_BODY(config__load__lua_error)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(config__load__bad_syntax__format);
-ATF_TEST_CASE_BODY(config__load__bad_syntax__format)
-{
-    std::ofstream file("config");
-    file << "syntax('foo', 1)\n";
-    file.close();
-
-    ATF_REQUIRE_THROW_RE(user_files::load_error, "Invalid file format 'foo'",
-                         user_files::load_config(fs::path("config")));
-}
-
-
 ATF_TEST_CASE_WITHOUT_HEAD(config__load__bad_syntax__version);
 ATF_TEST_CASE_BODY(config__load__bad_syntax__version)
 {
     std::ofstream file("config");
-    file << "syntax('config', 123)\n";
+    file << "syntax(123)\n";
     file.close();
 
     ATF_REQUIRE_THROW_RE(user_files::load_error,
@@ -202,7 +190,6 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, config__load__defaults);
     ATF_ADD_TEST_CASE(tcs, config__load__overrides);
     ATF_ADD_TEST_CASE(tcs, config__load__lua_error);
-    ATF_ADD_TEST_CASE(tcs, config__load__bad_syntax__format);
     ATF_ADD_TEST_CASE(tcs, config__load__bad_syntax__version);
     ATF_ADD_TEST_CASE(tcs, config__load__missing_file);
 }

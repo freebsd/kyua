@@ -45,7 +45,7 @@ m4_define([GUESS_TOPDIR], {
 
 m4_define([CREATE_ATF_HELPERS], [
     AT_DATA([Kyuafile], [
-syntax("kyuafile", 1)
+syntax(1)
 test_suite("bootstrap")
 atf_test_program{name="atf_helpers"}
 ])
@@ -57,7 +57,7 @@ m4_define([RUN_ATF_HELPERS],
 
 m4_define([CREATE_PLAIN_HELPERS], [
     AT_DATA([Kyuafile], [
-syntax("kyuafile", 1)
+syntax(1)
 test_suite("bootstrap")
 atf_test_program{name="plain_helpers"}
 ])

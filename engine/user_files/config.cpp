@@ -87,23 +87,14 @@ class config_parser : public config::parser {
     /// schema version requested by the file.
     ///
     /// \param [in,out] tree The tree to populate.
-    /// \param syntax_format The first parameter to the syntax() call as given
-    ///     by the user.
-    /// \param syntax_version The second parameter to the syntax() call as given
-    ///     by the user.
+    /// \param syntax_version The version of the file format as specified in the
+    ///     configuration file.
     ///
     /// \throw config::syntax_error If the syntax_format/syntax_version
     /// combination is not supported.
     void
-    setup(config::tree& tree,
-          const std::string& syntax_format,
-          const int syntax_version)
+    setup(config::tree& tree, const int syntax_version)
     {
-        if (syntax_format != "config")
-            throw config::syntax_error(
-                F("Invalid file format '%s'; expected 'config'") %
-                syntax_format);
-
         if (syntax_version != 1)
             throw config::syntax_error(F("Unsupported config version %s") %
                                        syntax_version);

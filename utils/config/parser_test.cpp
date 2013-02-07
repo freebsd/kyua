@@ -51,24 +51,20 @@ class mock_parser : public config::parser {
     /// Initializes the tree keys before reading the file.
     ///
     /// \param [in,out] tree The tree in which to define the key structure.
-    /// \param syntax_format The name of the file format as specified in the
-    ///     configuration file.
     /// \param syntax_version The version of the file format as specified in the
     ///     configuration file.
     void
-    setup(config::tree& tree,
-          const std::string& syntax_format,
-          const int syntax_version)
+    setup(config::tree& tree, const int syntax_version)
     {
-        if (syntax_format == "no-keys" && syntax_version == 1) {
+        if (syntax_version == 1) {
             // Do nothing on config_tree.
-        } else if (syntax_format == "some-keys" && syntax_version == 2) {
+        } else if (syntax_version == 2) {
             tree.define< config::string_node >("top_string");
             tree.define< config::int_node >("inner.int");
             tree.define_dynamic("inner.dynamic");
         } else {
-            throw std::runtime_error(F("Unknown syntax %s, version %s") %
-                                     syntax_format % syntax_version);
+            throw std::runtime_error(F("Unknown syntax version %s") %
+                                     syntax_version);
         }
     }
 
@@ -88,7 +84,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(no_keys__ok);
 ATF_TEST_CASE_BODY(no_keys__ok)
 {
     std::ofstream output("output.lua");
-    output << "syntax('no-keys', 1)\n";
+    output << "syntax(1)\n";
     output << "local foo = 'value'\n";
     output.flush();
 
@@ -103,7 +99,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(no_keys__unknown_key);
 ATF_TEST_CASE_BODY(no_keys__unknown_key)
 {
     std::ofstream output("output.lua");
-    output << "syntax('no-keys', 1)\n";
+    output << "syntax(1)\n";
     output << "foo = 'value'\n";
     output.flush();
 
@@ -117,7 +113,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(some_keys__ok);
 ATF_TEST_CASE_BODY(some_keys__ok)
 {
     std::ofstream output("output.lua");
-    output << "syntax('some-keys', 2)\n";
+    output << "syntax(2)\n";
     output << "top_string = 'foo'\n";
     output << "inner.int = 12345\n";
     output << "inner.dynamic.foo = 78\n";
@@ -140,7 +136,7 @@ ATF_TEST_CASE_BODY(some_keys__unknown_key)
 {
     {
         std::ofstream output("output.lua");
-        output << "syntax('some-keys', 2)\n";
+        output << "syntax(2)\n";
         output << "top_string2 = 'foo'\n";
     }
     config::tree tree1;
@@ -150,7 +146,7 @@ ATF_TEST_CASE_BODY(some_keys__unknown_key)
 
     {
         std::ofstream output("output.lua");
-        output << "syntax('some-keys', 2)\n";
+        output << "syntax(2)\n";
         output << "inner.int2 = 12345\n";
     }
     config::tree tree2;
@@ -167,19 +163,24 @@ ATF_TEST_CASE_BODY(invalid_syntax)
 
     {
         std::ofstream output("output.lua");
-        output << "syntax('invalid', 1234)\n";
+        output << "syntax(56)\n";
     }
     ATF_REQUIRE_THROW_RE(config::syntax_error,
-                         "Unknown syntax invalid, version 1234",
+                         "Unknown syntax version 56",
                          mock_parser(tree).parse(fs::path("output.lua")));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(syntax_deprecated_format);
+ATF_TEST_CASE_BODY(syntax_deprecated_format)
+{
+    config::tree tree;
 
     {
         std::ofstream output("output.lua");
-        output << "syntax('no-keys', 2)\n";
+        output << "syntax('invalid', 1)\n";
     }
-    ATF_REQUIRE_THROW_RE(config::syntax_error,
-                         "Unknown syntax no-keys, version 2",
-                         mock_parser(tree).parse(fs::path("output.lua")));
+    (void)mock_parser(tree).parse(fs::path("output.lua"));
 }
 
 
@@ -208,9 +209,9 @@ ATF_TEST_CASE_BODY(syntax_called_more_than_once)
 
     {
         std::ofstream output("output.lua");
-        output << "syntax('no-keys', 1)\n";
+        output << "syntax(1)\n";
         output << "var = 3\n";
-        output << "syntax('no-keys', 1)\n";
+        output << "syntax(1)\n";
         output << "var = 5\n";
     }
     ATF_REQUIRE_THROW_RE(config::syntax_error,
@@ -230,6 +231,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, some_keys__unknown_key);
 
     ATF_ADD_TEST_CASE(tcs, invalid_syntax);
+    ATF_ADD_TEST_CASE(tcs, syntax_deprecated_format);
     ATF_ADD_TEST_CASE(tcs, syntax_not_called);
     ATF_ADD_TEST_CASE(tcs, syntax_called_more_than_once);
 }

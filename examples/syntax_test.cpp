@@ -146,13 +146,13 @@ ATF_TEST_CASE_BODY(kyuafile_top__some_matches)
 
     fs::mkdir(fs::path("root/subdir1"), 0755);
     atf::utils::create_file("root/subdir1/Kyuafile",
-                            "syntax('kyuafile', 1)\n"
+                            "syntax(1)\n"
                             "atf_test_program{name='a', test_suite='b'}\n");
     atf::utils::create_file("root/subdir1/a", "");
 
     fs::mkdir(fs::path("root/subdir2"), 0755);
     atf::utils::create_file("root/subdir2/Kyuafile",
-                            "syntax('kyuafile', 1)\n"
+                            "syntax(1)\n"
                             "atf_test_program{name='c', test_suite='d'}\n");
     atf::utils::create_file("root/subdir2/c", "");
     atf::utils::create_file("root/subdir2/Kyuafile.etc", "invalid");

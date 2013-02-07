@@ -36,6 +36,7 @@
 #include "utils/config/exceptions.hpp"
 #include "utils/config/lua_module.hpp"
 #include "utils/config/tree.ipp"
+#include "utils/logging/macros.hpp"
 #include "utils/noncopyable.hpp"
 
 namespace config = utils::config;
@@ -69,12 +70,10 @@ struct utils::config::parser::impl : utils::noncopyable {
 
     /// Callback executed by the Lua syntax() function.
     ///
-    /// \param syntax_format The syntax format name as provided by the
-    ///     configuration file in the call to syntax().
     /// \param syntax_version The syntax format version as provided by the
     ///     configuration file in the call to syntax().
     void
-    syntax_callback(const std::string& syntax_format, const int syntax_version)
+    syntax_callback(const int syntax_version)
     {
         if (_syntax_called)
             throw syntax_error("syntax() can only be called once");
@@ -82,7 +81,7 @@ struct utils::config::parser::impl : utils::noncopyable {
 
         // Allow the parser caller to populate the tree with its own schema
         // depending on the format/version combination.
-        _parent->setup(_tree, syntax_format, syntax_version);
+        _parent->setup(_tree, syntax_version);
 
         // Export the config module to the Lua state so that all global variable
         // accesses are redirected to the configuration tree.
@@ -98,8 +97,8 @@ namespace {
 ///
 /// The syntax() function has to be called by configuration files as the very
 /// first thing they do.  Once called, this function populates the configuration
-/// tree based on the syntax format/version combination and then continues to
-/// process the rest of the file.
+/// tree based on the syntax version and then continues to process the rest of
+/// the file.
 ///
 /// \pre state(-2) The syntax format name.
 /// \pre state(-1) The syntax format version.
@@ -110,19 +109,19 @@ namespace {
 static int
 lua_syntax(lutok::state& state)
 {
-    if (!state.is_string(-2))
-        throw config::value_error("First argument to syntax must be a string");
-    const std::string syntax_format = state.to_string(-2);
+    if (state.is_string(-2))
+        LW(F("Found deprecated format name in syntax() call '%s': ignoring")
+           % state.to_string(-2));
 
     if (!state.is_number(-1))
-        throw config::value_error("Second argument to syntax must be a number");
+        throw config::value_error("First argument to syntax must be a number");
     const int syntax_version = state.to_integer(-1);
 
     state.get_global("_config_parser");
     config::parser::impl* impl = *state.to_userdata< config::parser::impl* >();
     state.pop(1);
 
-    impl->syntax_callback(syntax_format, syntax_version);
+    impl->syntax_callback(syntax_version);
 
     return 0;
 }

@@ -1,4 +1,4 @@
-syntax("kyuafile", 1)
+syntax(1)
 
 test_suite("kyua")
 

@@ -114,12 +114,12 @@ create_helpers(const atf::tests::tc* tc, const fs::path& source_root,
                           (build_root / "dir/program").c_str()) != -1);
 
     std::ofstream kyuafile1((source_root / "Kyuafile").c_str());
-    kyuafile1 << "syntax('kyuafile', 1)\n";
+    kyuafile1 << "syntax(1)\n";
     kyuafile1 << "include('dir/Kyuafile')\n";
     kyuafile1.close();
 
     std::ofstream kyuafile2((source_root / "dir/Kyuafile").c_str());
-    kyuafile2 << "syntax('kyuafile', 1)\n";
+    kyuafile2 << "syntax(1)\n";
     kyuafile2 << "atf_test_program{name='program', test_suite='suite-name'}\n";
     kyuafile2.close();
 }

@@ -61,10 +61,10 @@ create_mock_config(const char* name, const char* cookie)
     std::ofstream output(name);
     ATF_REQUIRE(output);
     if (cookie != NULL) {
-        output << "syntax('config', 1)\n";
+        output << "syntax(1)\n";
         output << "test_suites.suite.magic_value = '" << cookie << "'\n";
     } else {
-        output << "syntax('invalid-format', 1)\n";
+        output << "syntax(200)\n";
     }
 }
 
@@ -185,7 +185,7 @@ ATF_TEST_CASE_BODY(load_config__explicit__fail)
     options["config"].push_back("test-file");
     const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
 
-    ATF_REQUIRE_THROW_RE(engine::error, "invalid-format",
+    ATF_REQUIRE_THROW_RE(engine::error, "200",
                          cli::load_config(mock_cmdline, true));
 
     const config::tree config = cli::load_config(mock_cmdline, false);
@@ -218,7 +218,7 @@ ATF_TEST_CASE_BODY(load_config__user__fail)
     options["config"].push_back(cli::config_option.default_value());
     const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
 
-    ATF_REQUIRE_THROW_RE(engine::error, "invalid-format",
+    ATF_REQUIRE_THROW_RE(engine::error, "200",
                          cli::load_config(mock_cmdline, true));
 
     const config::tree config = cli::load_config(mock_cmdline, false);
@@ -266,7 +266,7 @@ ATF_TEST_CASE_BODY(load_config__system__fail)
     options["config"].push_back(cli::config_option.default_value());
     const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
 
-    ATF_REQUIRE_THROW_RE(engine::error, "invalid-format",
+    ATF_REQUIRE_THROW_RE(engine::error, "200",
                          cli::load_config(mock_cmdline, true));
 
     const config::tree config = cli::load_config(mock_cmdline, false);
@@ -297,7 +297,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(load_config__overrides__yes);
 ATF_TEST_CASE_BODY(load_config__overrides__yes)
 {
     std::ofstream output("config");
-    output << "syntax('config', 1)\n";
+    output << "syntax(1)\n";
     output << "architecture = 'do not see me'\n";
     output << "platform = 'see me'\n";
     output.close();

@@ -30,7 +30,7 @@
 utils_test_case no_args
 no_args_body() {
     cat >Kyuafile <<EOF
-syntax("kyuafile", 1)
+syntax(1)
 test_suite("integration")
 atf_test_program{name="metadata"}
 atf_test_program{name="simple_all_pass"}
@@ -41,7 +41,7 @@ EOF
 
     mkdir subdir
     cat >subdir/Kyuafile <<EOF
-syntax("kyuafile", 1)
+syntax(1)
 test_suite("integration2")
 atf_test_program{name="simple_some_fail"}
 EOF
@@ -64,14 +64,14 @@ EOF
 utils_test_case one_arg__subdir
 one_arg__subdir_body() {
     cat >Kyuafile <<EOF
-syntax("kyuafile", 1)
+syntax(1)
 test_suite("top-level")
 include("subdir/Kyuafile")
 EOF
 
     mkdir subdir
     cat >subdir/Kyuafile <<EOF
-syntax("kyuafile", 1)
+syntax(1)
 test_suite("in-subdir")
 atf_test_program{name="simple_all_pass"}
 EOF
@@ -88,7 +88,7 @@ EOF
 utils_test_case one_arg__test_case
 one_arg__test_case_body() {
     cat >Kyuafile <<EOF
-syntax("kyuafile", 1)
+syntax(1)
 test_suite("top-level")
 atf_test_program{name="first"}
 atf_test_program{name="second"}
@@ -106,7 +106,7 @@ EOF
 utils_test_case one_arg__test_program
 one_arg__test_program_body() {
     cat >Kyuafile <<EOF
-syntax("kyuafile", 1)
+syntax(1)
 test_suite("top-level")
 atf_test_program{name="first"}
 atf_test_program{name="second"}
@@ -139,7 +139,7 @@ EOF
 utils_test_case many_args__ok
 many_args__ok_body() {
     cat >Kyuafile <<EOF
-syntax("kyuafile", 1)
+syntax(1)
 test_suite("top-level")
 include("subdir/Kyuafile")
 atf_test_program{name="first"}
@@ -148,7 +148,7 @@ EOF
 
     mkdir subdir
     cat >subdir/Kyuafile <<EOF
-syntax("kyuafile", 1)
+syntax(1)
 test_suite("in-subdir")
 atf_test_program{name="second"}
 EOF
@@ -180,7 +180,7 @@ EOF
 utils_test_case many_args__no_match__all
 many_args__no_match__all_body() {
     cat >Kyuafile <<EOF
-syntax("kyuafile", 1)
+syntax(1)
 test_suite("top-level")
 atf_test_program{name="first"}
 atf_test_program{name="second"}
@@ -198,7 +198,7 @@ EOF
 utils_test_case many_args__no_match__some
 many_args__no_match__some_body() {
     cat >Kyuafile <<EOF
-syntax("kyuafile", 1)
+syntax(1)
 test_suite("top-level")
 atf_test_program{name="first"}
 atf_test_program{name="second"}
@@ -228,7 +228,7 @@ utils_test_case args_are_relative
 args_are_relative_body() {
     mkdir root
     cat >root/Kyuafile <<EOF
-syntax("kyuafile", 1)
+syntax(1)
 test_suite("integration-1")
 atf_test_program{name="first"}
 atf_test_program{name="second"}
@@ -239,7 +239,7 @@ EOF
 
     mkdir root/subdir
     cat >root/subdir/Kyuafile <<EOF
-syntax("kyuafile", 1)
+syntax(1)
 test_suite("integration-2")
 atf_test_program{name="third"}
 atf_test_program{name="fourth"}
@@ -260,7 +260,7 @@ EOF
 utils_test_case only_load_used_test_programs
 only_load_used_test_programs_body() {
     cat >Kyuafile <<EOF
-syntax("kyuafile", 1)
+syntax(1)
 test_suite("integration")
 atf_test_program{name="first"}
 atf_test_program{name="second"}
@@ -288,7 +288,7 @@ build_root_flag_body() {
     mkdir build/subdir
 
     cat >Kyuafile <<EOF
-syntax("kyuafile", 1)
+syntax(1)
 test_suite("top-level")
 include("subdir/Kyuafile")
 atf_test_program{name="first"}
@@ -297,7 +297,7 @@ EOF
     utils_cp_helper simple_all_pass build/first
 
     cat >subdir/Kyuafile <<EOF
-syntax("kyuafile", 1)
+syntax(1)
 test_suite("in-subdir")
 atf_test_program{name="second"}
 EOF
@@ -321,7 +321,7 @@ This file is bogus but it is not loaded.
 EOF
 
     cat >myfile <<EOF
-syntax("kyuafile", 1)
+syntax(1)
 test_suite("integration")
 atf_test_program{name="sometest"}
 EOF
@@ -343,7 +343,7 @@ This file is bogus but it is not loaded.
 EOF
 
     cat >myfile <<EOF
-syntax("kyuafile", 1)
+syntax(1)
 test_suite("hello-world")
 atf_test_program{name="sometest"}
 EOF
@@ -362,7 +362,7 @@ EOF
 utils_test_case verbose_flag
 verbose_flag_body() {
     cat >Kyuafile <<EOF
-syntax("kyuafile", 1)
+syntax(1)
 test_suite("integration-suite-1")
 atf_test_program{name="simple_all_pass"}
 plain_test_program{name="i_am_plain", timeout=654}
@@ -373,7 +373,7 @@ EOF
 
     mkdir subdir
     cat >subdir/Kyuafile <<EOF
-syntax("kyuafile", 1)
+syntax(1)
 test_suite("integration-suite-2")
 atf_test_program{name="metadata"}
 EOF
@@ -408,7 +408,7 @@ EOF
 utils_test_case no_test_program_match
 no_test_program_match_body() {
     cat >Kyuafile <<EOF
-syntax("kyuafile", 1)
+syntax(1)
 test_suite("integration")
 atf_test_program{name="first"}
 EOF
@@ -425,7 +425,7 @@ EOF
 utils_test_case no_test_case_match
 no_test_case_match_body() {
     cat >Kyuafile <<EOF
-syntax("kyuafile", 1)
+syntax(1)
 test_suite("integration")
 atf_test_program{name="first"}
 EOF
@@ -451,7 +451,7 @@ utils_test_case missing_kyuafile__test_program
 missing_kyuafile__test_program_body() {
     mkdir subdir
     cat >subdir/Kyuafile <<EOF
-syntax("kyuafile", 1)
+syntax(1)
 test_suite("integration")
 atf_test_program{name="unused"}
 EOF
@@ -468,7 +468,7 @@ utils_test_case missing_kyuafile__subdir
 missing_kyuafile__subdir_body() {
     mkdir subdir
     cat >subdir/Kyuafile <<EOF
-syntax("kyuafile", 1)
+syntax(1)
 test_suite("integration")
 atf_test_program{name="unused"}
 EOF
@@ -497,7 +497,7 @@ EOF
 utils_test_case bogus_test_program
 bogus_test_program_body() {
     cat >Kyuafile <<EOF
-syntax("kyuafile", 1)
+syntax(1)
 test_suite("integration")
 atf_test_program{name="crash_on_list"}
 atf_test_program{name="non_executable"}
@@ -516,12 +516,12 @@ EOF
 utils_test_case missing_test_program
 missing_test_program_body() {
     cat >Kyuafile <<EOF
-syntax("kyuafile", 1)
+syntax(1)
 include("subdir/Kyuafile")
 EOF
     mkdir subdir
     cat >subdir/Kyuafile <<EOF
-syntax("kyuafile", 1)
+syntax(1)
 test_suite("integration")
 atf_test_program{name="ok"}
 atf_test_program{name="i-am-missing"}

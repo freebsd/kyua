@@ -11,6 +11,11 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 
 * Issue 39: Added per-test-case metadata values to the HTML reports.
 
+* Issue 37: Simplified the syntax() calls in configuration and Kyuafile
+  files to only specify the requested version instead of also the format
+  name.  The format name is implied by the file being loaded, so there
+  is no use in the caller having to specify it.
+
 * Increased the granularity of the error codes returned by kyua(1) to
   denote different error conditions.  This avoids the overload of '1'
   to indicate both "expected" errors from specific subcommands from

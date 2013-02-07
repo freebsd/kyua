@@ -77,13 +77,9 @@ private:
     ///
     /// \param [in,out] config_tree The tree in which to define the key
     ///     structure.
-    /// \param syntax_format The name of the file format as specified in the
-    ///     configuration file.
     /// \param syntax_version The version of the file format as specified in the
     ///     configuration file.
-    virtual void setup(tree& config_tree,
-                       const std::string& syntax_format,
-                       const int syntax_version) = 0;
+    virtual void setup(tree& config_tree, const int syntax_version) = 0;
 
 public:
     explicit parser(tree&);

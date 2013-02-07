@@ -44,6 +44,7 @@
 #include "utils/format/macros.hpp"
 #include "utils/fs/lua_module.hpp"
 #include "utils/fs/operations.hpp"
+#include "utils/logging/macros.hpp"
 #include "utils/noncopyable.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
@@ -209,20 +210,16 @@ public:
     ///
     /// \post _version is set to the requested version.
     ///
-    /// \param format Name of the format defined by the file.
     /// \param version Version of the Kyuafile syntax requested by the file.
     ///
     /// \throw std::runtime_error If the format or the version are invalid, or
     /// if syntax() has already been called.
     void
-    callback_syntax(const std::string& format, const int version)
+    callback_syntax(const int version)
     {
         if (_version)
             throw std::runtime_error("Can only call syntax() once");
 
-        if (format != "kyuafile")
-            throw std::runtime_error(F("Unexpected file format '%s'; "
-                                       "need 'kyuafile'") % format);
         if (version != 1)
             throw std::runtime_error(F("Unexpected file version '%s'; "
                                        "only 1 is supported") % version);
@@ -491,7 +488,8 @@ lua_plain_test_program(lutok::state& state)
 
 /// Glue to invoke parser::callback_syntax() from Lua.
 ///
-/// \pre state(-2) The syntax format name.
+/// \pre state(-2) The syntax format name, or nil.  This is ignored and is only
+///     allowed to be present for backwards-compatibility reasons.
 /// \pre state(-1) The syntax format version.
 ///
 /// \param state The Lua state that executed the function.
@@ -500,17 +498,15 @@ lua_plain_test_program(lutok::state& state)
 static int
 lua_syntax(lutok::state& state)
 {
-    if (!state.is_string(-2))
-        throw std::runtime_error("First argument to syntax must be a "
-                                 "string");
-    const std::string format = state.to_string(-2);
+    if (state.is_string(-2))
+        LW(F("Found deprecated format name in syntax() call '%s': ignoring")
+           % state.to_string(-2));
 
     if (!state.is_number(-1))
-        throw std::runtime_error("Second argument to syntax must be a "
-                                 "number");
+        throw std::runtime_error("First argument to syntax must be a number");
     const int version = state.to_integer(-1);
 
-    parser::get_from_state(state)->callback_syntax(format, version);
+    parser::get_from_state(state)->callback_syntax(version);
     return 0;
 }
 

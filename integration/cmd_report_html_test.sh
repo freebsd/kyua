@@ -41,7 +41,7 @@ run_tests() {
     cd testsuite
 
     cat >Kyuafile <<EOF
-syntax("kyuafile", 1)
+syntax(1)
 test_suite("integration")
 atf_test_program{name="simple_all_pass"}
 atf_test_program{name="simple_some_fail"}

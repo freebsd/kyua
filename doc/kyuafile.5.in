@@ -25,7 +25,7 @@
 .\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 .\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-.Dd September 9, 2012
+.Dd February 7, 2013
 .Dt KYUAFILE 5
 .Os
 .Sh NAME
@@ -35,7 +35,7 @@
 .Fn atf_test_program "string name" "[string test_suite]"
 .Fn include "string path"
 .Fn plain_test_program "string name" "[int timeout]" "[string test_suite]"
-.Fn syntax "string type" "int version"
+.Fn syntax "int version"
 .Fn test_suite "string name"
 .Sh DESCRIPTION
 A test suite is a collection of test programs and is represented by a
@@ -56,7 +56,7 @@ A typical
 .Nm
 will look similar to this:
 .Bd -literal -offset indent
-syntax('kyuafile', 1)
+syntax(1)
 
 test_suite('first')
 
@@ -74,17 +74,13 @@ include('dir2/Kyuafile')
 Every
 .Nm
 file starts with a call to
-.Fn syntax "string type" "int version" .
+.Fn syntax "int version" .
 This call determines the specific schema used by the file so that future
 backwards-incompatible modifications to the file can be introduced.
 .Pp
 Any new
 .Nm
 file should set
-.Fa type
-to
-.Sq kyuafile
-and
 .Fa version
 to
 .Sq 1 .
