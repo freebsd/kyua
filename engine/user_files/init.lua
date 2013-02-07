@@ -192,16 +192,7 @@ function syntax(format, version)
 
    logging.debug(string.format("Setting syntax to '%s', version %d", format,
                                version))
-   if format == "config" then
-      if version == 1 then
-         local module = dofile_in_env(fs.join(LUADIR, "config_1.lua"),
-                                      getfenv(2))
-         module.export()
-      else
-         error(string.format("Syntax request error: unknown version %d for " ..
-                             "format '%s'", version, format))
-      end
-   elseif format == "kyuafile" then
+   if format == "kyuafile" then
       if version == 1 then
          local module = dofile_in_env(fs.join(LUADIR, "kyuafile_1.lua"),
                                       getfenv(2))

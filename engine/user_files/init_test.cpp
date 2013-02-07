@@ -206,69 +206,6 @@ ATF_TEST_CASE_BODY(run__chain)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(syntax__config_1__ok);
-ATF_TEST_CASE_BODY(syntax__config_1__ok)
-{
-    mock_init();
-
-    lutok::state state;
-    user_files::init(state, fs::path("the-file"));
-
-    create_mock_module("config_1.lua", "i-am-the-config");
-    lutok::do_string(state, "syntax('config', 1)");
-
-    lutok::eval(state, "init.get_syntax().format");
-    ATF_REQUIRE_EQ("config", state.to_string());
-    lutok::eval(state, "init.get_syntax().version");
-    ATF_REQUIRE_EQ(1, state.to_integer());
-    lutok::eval(state, "loaded_cookie");
-    ATF_REQUIRE_EQ("i-am-the-config", state.to_string());
-    state.pop(3);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(syntax__config_1__version_error);
-ATF_TEST_CASE_BODY(syntax__config_1__version_error)
-{
-    mock_init();
-
-    lutok::state state;
-    user_files::init(state, fs::path("the-file"));
-
-    create_mock_module("config_1.lua", "unused");
-    ATF_REQUIRE_THROW_RE(lutok::error, "Syntax request error: unknown version "
-                         "2 for format 'config'",
-                         lutok::do_string(state, "syntax('config', 2)"));
-
-    ATF_REQUIRE_THROW_RE(lutok::error, "not defined",
-                         lutok::eval(state, "init.get_syntax()"));
-
-    lutok::eval(state, "loaded_cookie");
-    ATF_REQUIRE(state.is_nil());
-    state.pop(1);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(syntax__config_1__missing_file);
-ATF_TEST_CASE_BODY(syntax__config_1__missing_file)
-{
-    mock_init();
-
-    lutok::state state;
-    user_files::init(state, fs::path("the-file"));
-
-    ATF_REQUIRE_THROW_RE(lutok::error, "config_1.lua",
-                         lutok::do_string(state, "syntax('config', 1)"));
-
-    ATF_REQUIRE_THROW_RE(lutok::error, "not defined",
-                         lutok::eval(state, "init.get_syntax()"));
-
-    lutok::eval(state, "loaded_cookie");
-    ATF_REQUIRE(state.is_nil());
-    state.pop(1);
-}
-
-
 ATF_TEST_CASE_WITHOUT_HEAD(syntax__kyuafile_1__ok);
 ATF_TEST_CASE_BODY(syntax__kyuafile_1__ok)
 {
@@ -379,9 +316,6 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, run__simple);
     ATF_ADD_TEST_CASE(tcs, run__chain);
 
-    ATF_ADD_TEST_CASE(tcs, syntax__config_1__ok);
-    ATF_ADD_TEST_CASE(tcs, syntax__config_1__version_error);
-    ATF_ADD_TEST_CASE(tcs, syntax__config_1__missing_file);
     ATF_ADD_TEST_CASE(tcs, syntax__kyuafile_1__ok);
     ATF_ADD_TEST_CASE(tcs, syntax__kyuafile_1__version_error);
     ATF_ADD_TEST_CASE(tcs, syntax__kyuafile_1__missing_file);
