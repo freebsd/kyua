@@ -98,9 +98,10 @@ general_help(cmdline::ui* ui, const cmdline::options_vector* options,
 {
     PRE(!commands->empty());
 
-    ui->out_tag("Usage: ",
-                F("%s [general_options] command [command_options] [args]") %
-                cmdline::progname(), false);
+    ui->out_tag_wrap(
+        "Usage: ",
+        F("%s [general_options] command [command_options] [args]") %
+        cmdline::progname(), false);
 
     const text::table options_table = options_help(*options);
     text::widths_vector::value_type first_width =
@@ -136,8 +137,8 @@ general_help(cmdline::ui* ui, const cmdline::options_vector* options,
     formatter.set_separator("  ");
 
     if (!options_table.empty()) {
-        ui->out("");
-        ui->out("Available general options:");
+        ui->out_wrap("");
+        ui->out_wrap("Available general options:");
         ui->out_table(options_table, formatter, "  ");
     }
 
@@ -145,14 +146,14 @@ general_help(cmdline::ui* ui, const cmdline::options_vector* options,
     for (cmdline::commands_map< cli::cli_command >::const_iterator
          iter = commands->begin(); iter != commands->end(); iter++) {
         const std::string& category = (*iter).first;
-        ui->out("");
-        ui->out(F("%s commands:") %
+        ui->out_wrap("");
+        ui->out_wrap(F("%s commands:") %
                 (category.empty() ? "Generic" : category));
         ui->out_table(command_tables.find(category)->second, formatter, "  ");
     }
 
-    ui->out("");
-    ui->out("See kyua(1) for more details.");
+    ui->out_wrap("");
+    ui->out_wrap("See kyua(1) for more details.");
 }
 
 
@@ -166,14 +167,14 @@ subcommand_help(cmdline::ui* ui,
                 const utils::cmdline::options_vector* general_options,
                 const cli::cli_command* command)
 {
-    ui->out_tag(
+    ui->out_tag_wrap(
         "Usage: ", F("%s [general_options] %s%s%s") %
         cmdline::progname() % command->name() %
         (command->options().empty() ? "" : " [command_options]") %
         (command->arg_list().empty() ? "" : (" " + command->arg_list())),
         false);
-    ui->out("");
-    ui->out(F("%s.") % command->short_description());
+    ui->out_wrap("");
+    ui->out_wrap(F("%s.") % command->short_description());
 
     const text::table general_table = options_help(*general_options);
     const text::table command_table = options_help(command->options());
@@ -186,19 +187,19 @@ subcommand_help(cmdline::ui* ui,
     formatter.set_separator("  ");
 
     if (!general_table.empty()) {
-        ui->out("");
-        ui->out("Available general options:");
+        ui->out_wrap("");
+        ui->out_wrap("Available general options:");
         ui->out_table(general_table, formatter, "  ");
     }
 
     if (!command_table.empty()) {
-        ui->out("");
-        ui->out("Available command options:");
+        ui->out_wrap("");
+        ui->out_wrap("Available command options:");
         ui->out_table(command_table, formatter, "  ");
     }
 
-    ui->out("");
-    ui->out(F("See kyua-%s(1) for more details.") % command->name());
+    ui->out_wrap("");
+    ui->out_wrap(F("See kyua-%s(1) for more details.") % command->name());
 }
 
 

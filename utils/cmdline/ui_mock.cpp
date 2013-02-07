@@ -53,7 +53,7 @@ ui_mock::ui_mock(const std::size_t screen_width_) :
 ///     character.
 /// \param newline Whether to append a newline to the message or not.
 void
-ui_mock::err_raw(const std::string& message, const bool newline)
+ui_mock::err(const std::string& message, const bool newline)
 {
     if (newline)
         std::cerr << message << "\n";
@@ -71,7 +71,7 @@ ui_mock::err_raw(const std::string& message, const bool newline)
 ///     character.
 /// \param newline Whether to append a newline to the message or not.
 void
-ui_mock::out_raw(const std::string& message, const bool newline)
+ui_mock::out(const std::string& message, const bool newline)
 {
     if (newline)
         std::cout << message << "\n";

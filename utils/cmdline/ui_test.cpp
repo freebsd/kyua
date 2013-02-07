@@ -182,10 +182,10 @@ ATF_TEST_CASE_BODY(ui__screen_width__cached)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(ui__err__no_refill);
-ATF_TEST_CASE_BODY(ui__err__no_refill)
+ATF_TEST_CASE_WITHOUT_HEAD(ui__err);
+ATF_TEST_CASE_BODY(ui__err)
 {
-    cmdline::ui_mock ui(100);
+    cmdline::ui_mock ui(10);  // Keep shorter than message.
     ui.err("This is a short message");
     ATF_REQUIRE_EQ(1, ui.err_log().size());
     ATF_REQUIRE_EQ("This is a short message", ui.err_log()[0]);
@@ -193,22 +193,10 @@ ATF_TEST_CASE_BODY(ui__err__no_refill)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(ui__err__refill);
-ATF_TEST_CASE_BODY(ui__err__refill)
+ATF_TEST_CASE_WITHOUT_HEAD(ui__out);
+ATF_TEST_CASE_BODY(ui__out)
 {
-    cmdline::ui_mock ui(16);
-    ui.err("This is a short message");
-    ATF_REQUIRE_EQ(2, ui.err_log().size());
-    ATF_REQUIRE_EQ("This is a short", ui.err_log()[0]);
-    ATF_REQUIRE_EQ("message", ui.err_log()[1]);
-    ATF_REQUIRE(ui.out_log().empty());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(ui__out__no_refill);
-ATF_TEST_CASE_BODY(ui__out__no_refill)
-{
-    cmdline::ui_mock ui(100);
+    cmdline::ui_mock ui(10);  // Keep shorter than message.
     ui.out("This is a short message");
     ATF_REQUIRE(ui.err_log().empty());
     ATF_REQUIRE_EQ(1, ui.out_log().size());
@@ -216,11 +204,22 @@ ATF_TEST_CASE_BODY(ui__out__no_refill)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(ui__out__refill);
-ATF_TEST_CASE_BODY(ui__out__refill)
+ATF_TEST_CASE_WITHOUT_HEAD(ui__out_wrap__no_refill);
+ATF_TEST_CASE_BODY(ui__out_wrap__no_refill)
+{
+    cmdline::ui_mock ui(100);
+    ui.out_wrap("This is a short message");
+    ATF_REQUIRE(ui.err_log().empty());
+    ATF_REQUIRE_EQ(1, ui.out_log().size());
+    ATF_REQUIRE_EQ("This is a short message", ui.out_log()[0]);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(ui__out_wrap__refill);
+ATF_TEST_CASE_BODY(ui__out_wrap__refill)
 {
     cmdline::ui_mock ui(16);
-    ui.out("This is a short message");
+    ui.out_wrap("This is a short message");
     ATF_REQUIRE(ui.err_log().empty());
     ATF_REQUIRE_EQ(2, ui.out_log().size());
     ATF_REQUIRE_EQ("This is a short", ui.out_log()[0]);
@@ -228,68 +227,22 @@ ATF_TEST_CASE_BODY(ui__out__refill)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(ui__err_tag__no_refill);
-ATF_TEST_CASE_BODY(ui__err_tag__no_refill)
+ATF_TEST_CASE_WITHOUT_HEAD(ui__out_tag_wrap__no_refill);
+ATF_TEST_CASE_BODY(ui__out_tag_wrap__no_refill)
 {
     cmdline::ui_mock ui(100);
-    ui.err_tag("Some long tag: ", "This is a short message");
-    ATF_REQUIRE_EQ(1, ui.err_log().size());
-    ATF_REQUIRE_EQ("Some long tag: This is a short message", ui.err_log()[0]);
-    ATF_REQUIRE(ui.out_log().empty());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(ui__err_tag__refill__repeat);
-ATF_TEST_CASE_BODY(ui__err_tag__refill__repeat)
-{
-    cmdline::ui_mock ui(32);
-    ui.err_tag("Some long tag: ", "This is a short message");
-    ATF_REQUIRE_EQ(2, ui.err_log().size());
-    ATF_REQUIRE_EQ("Some long tag: This is a short", ui.err_log()[0]);
-    ATF_REQUIRE_EQ("Some long tag: message", ui.err_log()[1]);
-    ATF_REQUIRE(ui.out_log().empty());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(ui__err_tag__refill__no_repeat);
-ATF_TEST_CASE_BODY(ui__err_tag__refill__no_repeat)
-{
-    cmdline::ui_mock ui(32);
-    ui.err_tag("Some long tag: ", "This is a short message", false);
-    ATF_REQUIRE_EQ(2, ui.err_log().size());
-    ATF_REQUIRE_EQ("Some long tag: This is a short", ui.err_log()[0]);
-    ATF_REQUIRE_EQ("               message", ui.err_log()[1]);
-    ATF_REQUIRE(ui.out_log().empty());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(ui__err_tag__tag_too_long);
-ATF_TEST_CASE_BODY(ui__err_tag__tag_too_long)
-{
-    cmdline::ui_mock ui(5);
-    ui.err_tag("Some long tag: ", "This is a short message");
-    ATF_REQUIRE_EQ(1, ui.err_log().size());
-    ATF_REQUIRE_EQ("Some long tag: This is a short message", ui.err_log()[0]);
-    ATF_REQUIRE(ui.out_log().empty());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(ui__out_tag__no_refill);
-ATF_TEST_CASE_BODY(ui__out_tag__no_refill)
-{
-    cmdline::ui_mock ui(100);
-    ui.out_tag("Some long tag: ", "This is a short message");
+    ui.out_tag_wrap("Some long tag: ", "This is a short message");
     ATF_REQUIRE(ui.err_log().empty());
     ATF_REQUIRE_EQ(1, ui.out_log().size());
     ATF_REQUIRE_EQ("Some long tag: This is a short message", ui.out_log()[0]);
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(ui__out_tag__refill__repeat);
-ATF_TEST_CASE_BODY(ui__out_tag__refill__repeat)
+ATF_TEST_CASE_WITHOUT_HEAD(ui__out_tag_wrap__refill__repeat);
+ATF_TEST_CASE_BODY(ui__out_tag_wrap__refill__repeat)
 {
     cmdline::ui_mock ui(32);
-    ui.out_tag("Some long tag: ", "This is a short message");
+    ui.out_tag_wrap("Some long tag: ", "This is a short message");
     ATF_REQUIRE(ui.err_log().empty());
     ATF_REQUIRE_EQ(2, ui.out_log().size());
     ATF_REQUIRE_EQ("Some long tag: This is a short", ui.out_log()[0]);
@@ -297,11 +250,11 @@ ATF_TEST_CASE_BODY(ui__out_tag__refill__repeat)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(ui__out_tag__refill__no_repeat);
-ATF_TEST_CASE_BODY(ui__out_tag__refill__no_repeat)
+ATF_TEST_CASE_WITHOUT_HEAD(ui__out_tag_wrap__refill__no_repeat);
+ATF_TEST_CASE_BODY(ui__out_tag_wrap__refill__no_repeat)
 {
     cmdline::ui_mock ui(32);
-    ui.out_tag("Some long tag: ", "This is a short message", false);
+    ui.out_tag_wrap("Some long tag: ", "This is a short message", false);
     ATF_REQUIRE(ui.err_log().empty());
     ATF_REQUIRE_EQ(2, ui.out_log().size());
     ATF_REQUIRE_EQ("Some long tag: This is a short", ui.out_log()[0]);
@@ -309,11 +262,11 @@ ATF_TEST_CASE_BODY(ui__out_tag__refill__no_repeat)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(ui__out_tag__tag_too_long);
-ATF_TEST_CASE_BODY(ui__out_tag__tag_too_long)
+ATF_TEST_CASE_WITHOUT_HEAD(ui__out_tag_wrap__tag_too_long);
+ATF_TEST_CASE_BODY(ui__out_tag_wrap__tag_too_long)
 {
     cmdline::ui_mock ui(5);
-    ui.out_tag("Some long tag: ", "This is a short message");
+    ui.out_tag_wrap("Some long tag: ", "This is a short message");
     ATF_REQUIRE(ui.err_log().empty());
     ATF_REQUIRE_EQ(1, ui.out_log().size());
     ATF_REQUIRE_EQ("Some long tag: This is a short message", ui.out_log()[0]);
@@ -421,18 +374,15 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, ui__screen_width__tty_is_file);
     ATF_ADD_TEST_CASE(tcs, ui__screen_width__cached);
 
-    ATF_ADD_TEST_CASE(tcs, ui__err__no_refill);
-    ATF_ADD_TEST_CASE(tcs, ui__err__refill);
-    ATF_ADD_TEST_CASE(tcs, ui__out__no_refill);
-    ATF_ADD_TEST_CASE(tcs, ui__out__refill);
-    ATF_ADD_TEST_CASE(tcs, ui__err_tag__no_refill);
-    ATF_ADD_TEST_CASE(tcs, ui__err_tag__refill__repeat);
-    ATF_ADD_TEST_CASE(tcs, ui__err_tag__refill__no_repeat);
-    ATF_ADD_TEST_CASE(tcs, ui__err_tag__tag_too_long);
-    ATF_ADD_TEST_CASE(tcs, ui__out_tag__no_refill);
-    ATF_ADD_TEST_CASE(tcs, ui__out_tag__refill__repeat);
-    ATF_ADD_TEST_CASE(tcs, ui__out_tag__refill__no_repeat);
-    ATF_ADD_TEST_CASE(tcs, ui__out_tag__tag_too_long);
+    ATF_ADD_TEST_CASE(tcs, ui__err);
+    ATF_ADD_TEST_CASE(tcs, ui__out);
+
+    ATF_ADD_TEST_CASE(tcs, ui__out_wrap__no_refill);
+    ATF_ADD_TEST_CASE(tcs, ui__out_wrap__refill);
+    ATF_ADD_TEST_CASE(tcs, ui__out_tag_wrap__no_refill);
+    ATF_ADD_TEST_CASE(tcs, ui__out_tag_wrap__refill__repeat);
+    ATF_ADD_TEST_CASE(tcs, ui__out_tag_wrap__refill__no_repeat);
+    ATF_ADD_TEST_CASE(tcs, ui__out_tag_wrap__tag_too_long);
     ATF_ADD_TEST_CASE(tcs, ui__out_table__empty);
     ATF_ADD_TEST_CASE(tcs, ui__out_table__not_empty);
 

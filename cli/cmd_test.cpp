@@ -80,8 +80,7 @@ public:
     virtual void
     got_test_case(const engine::test_case_ptr& test_case)
     {
-        _ui->out_raw(F("%s  ->  ") % cli::format_test_case_id(*test_case),
-                     false);
+        _ui->out(F("%s  ->  ") % cli::format_test_case_id(*test_case), false);
     }
 
     /// Called when a result of a test case becomes available.
@@ -94,7 +93,7 @@ public:
                const engine::test_result& result,
                const datetime::delta& duration)
     {
-        _ui->out_raw(F("%s  [%s]") % cli::format_result(result) %
+        _ui->out(F("%s  [%s]") % cli::format_result(result) %
             cli::format_delta(duration));
         if (result.good())
             good_count++;
@@ -135,15 +134,15 @@ cmd_test::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
 
     int exit_code;
     if (hooks.good_count > 0 || hooks.bad_count > 0) {
-        ui->out_raw("");
-        ui->out_raw(F("%s/%s passed (%s failed)") % hooks.good_count %
-                    (hooks.good_count + hooks.bad_count) % hooks.bad_count);
+        ui->out("");
+        ui->out(F("%s/%s passed (%s failed)") % hooks.good_count %
+                (hooks.good_count + hooks.bad_count) % hooks.bad_count);
 
         exit_code = (hooks.bad_count == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
     } else
         exit_code = EXIT_SUCCESS;
 
-    ui->out_raw(F("Committed action %s") % result.action_id);
+    ui->out(F("Committed action %s") % result.action_id);
 
     return report_unused_filters(result.unused_filters, ui) ?
         EXIT_FAILURE : exit_code;

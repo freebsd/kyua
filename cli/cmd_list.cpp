@@ -97,10 +97,10 @@ cli::detail::list_test_case(cmdline::ui* ui, const bool verbose,
 {
     const std::string id = format_test_case_id(test_case);
     if (!verbose) {
-        ui->out_raw(id);
+        ui->out(id);
     } else {
-        ui->out_raw(F("%s (%s)") % id %
-                    test_case.container_test_program().test_suite_name());
+        ui->out(F("%s (%s)") % id %
+                test_case.container_test_program().test_suite_name());
 
         // TODO(jmmv): Running these for every test case is probably not the
         // fastest thing to do.
@@ -116,7 +116,7 @@ cli::detail::list_test_case(cmdline::ui* ui, const bool verbose,
                 default_props.find((*iter).first);
             if (default_iter == default_props.end() ||
                 (*iter).second != (*default_iter).second)
-                ui->out_raw(F("    %s = %s") % (*iter).first % (*iter).second);
+                ui->out(F("    %s = %s") % (*iter).first % (*iter).second);
         }
     }
 }

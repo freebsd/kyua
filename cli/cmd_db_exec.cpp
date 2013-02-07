@@ -172,9 +172,9 @@ cmd_db_exec::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
 
         if (stmt.step()) {
             if (!cmdline.has_option("no-headers"))
-                ui->out_raw(cli::format_headers(stmt));
+                ui->out(cli::format_headers(stmt));
             do
-                ui->out_raw(cli::format_row(stmt));
+                ui->out(cli::format_row(stmt));
             while (stmt.step());
         }
 
