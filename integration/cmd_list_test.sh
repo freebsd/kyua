@@ -529,9 +529,9 @@ EOF
     echo 'I should not be touched because the Kyuafile is bogus' >subdir/ok
 
     cat >experr <<EOF
-kyua: E: Load of 'Kyuafile' failed: Non-existent test program 'subdir/i-am-missing'.
+kyua: E: Load of 'Kyuafile' failed: .*Non-existent test program 'subdir/i-am-missing'.
 EOF
-    atf_check -s exit:2 -o empty -e file:experr kyua list
+    atf_check -s exit:2 -o empty -e "match:$(cat experr)" kyua list
 }
 
 

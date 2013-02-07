@@ -28,6 +28,8 @@
 
 #include "engine/user_files/kyuafile.hpp"
 
+#include <algorithm>
+#include <iterator>
 #include <stdexcept>
 
 #include <lutok/exceptions.hpp>
@@ -37,12 +39,12 @@
 
 #include "engine/test_program.hpp"
 #include "engine/testers.hpp"
-#include "engine/user_files/common.hpp"
 #include "engine/user_files/exceptions.hpp"
 #include "utils/datetime.hpp"
 #include "utils/format/macros.hpp"
-#include "utils/fs/exceptions.hpp"
+#include "utils/fs/lua_module.hpp"
 #include "utils/fs/operations.hpp"
+#include "utils/noncopyable.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 
@@ -55,6 +57,267 @@ using utils::optional;
 
 
 namespace {
+
+
+static int lua_atf_test_program(lutok::state&);
+static int lua_current_kyuafile(lutok::state&);
+static int lua_include(lutok::state&);
+static int lua_plain_test_program(lutok::state&);
+static int lua_syntax(lutok::state&);
+static int lua_test_suite(lutok::state&);
+
+
+/// Concatenates two paths while avoiding paths to start with './'.
+///
+/// \param root Path to the directory containing the file.
+/// \param file Path to concatenate to root.  Cannot be absolute.
+///
+/// \return The concatenated path.
+static fs::path
+relativize(const fs::path& root, const fs::path& file)
+{
+    PRE(!file.is_absolute());
+
+    if (root == fs::path("."))
+        return file;
+    else
+        return root / file;
+}
+
+
+/// Implementation of a parser for Kyuafiles.
+///
+/// The main purpose of having this as a class is to keep track of global state
+/// within the Lua files and allowing the Lua callbacks to easily access such
+/// data.
+class parser : utils::noncopyable {
+    /// Lua state to parse a single Kyuafile file.
+    lutok::state _state;
+
+    /// Root directory of the test suite represented by the Kyuafile.
+    const fs::path _source_root;
+
+    /// Root directory of the test programs.
+    const fs::path _build_root;
+
+    /// Name of the Kyuafile to load relative to _source_root.
+    const fs::path _relative_filename;
+
+    /// Version of the Kyuafile file format requested by the parsed file.
+    ///
+    /// This is set once the Kyuafile invokes the syntax() call.
+    optional< int > _version;
+
+    /// Name of the test suite defined by the Kyuafile.
+    ///
+    /// This is set once the Kyuafile invokes the test_suite() call.
+    optional< std::string > _test_suite;
+
+    /// Collection of test programs defined by the Kyuafile.
+    ///
+    /// This acts as an accumulator for all the *_test_program() calls within
+    /// the Kyuafile.
+    engine::test_programs_vector _test_programs;
+
+public:
+    /// Initializes the parser and the Lua state.
+    ///
+    /// \param source_root_ The root directory of the test suite represented by
+    ///     the Kyuafile.
+    /// \param build_root_ The root directory of the test programs.
+    /// \param relative_filename_ Name of the Kyuafile to load relative to
+    ///     source_root_.
+    parser(const fs::path& source_root_, const fs::path& build_root_,
+           const fs::path& relative_filename_) :
+        _source_root(source_root_), _build_root(build_root_),
+        _relative_filename(relative_filename_)
+    {
+        lutok::stack_cleaner cleaner(_state);
+
+        _state.push_cxx_function(lua_syntax);
+        _state.set_global("syntax");
+        *_state.new_userdata< parser* >() = this;
+        _state.set_global("_parser");
+
+        _state.push_cxx_function(lua_atf_test_program);
+        _state.set_global("atf_test_program");
+        _state.push_cxx_function(lua_current_kyuafile);
+        _state.set_global("current_kyuafile");
+        _state.push_cxx_function(lua_include);
+        _state.set_global("include");
+        _state.push_cxx_function(lua_plain_test_program);
+        _state.set_global("plain_test_program");
+        _state.push_cxx_function(lua_test_suite);
+        _state.set_global("test_suite");
+
+        _state.open_base();
+        _state.open_string();
+        _state.open_table();
+        fs::open_fs(_state);
+    }
+
+    /// Destructor.
+    ~parser(void)
+    {
+    }
+
+    /// Gets the parser object associated to a Lua state.
+    ///
+    /// \param state The Lua state from which to obtain the parser object.
+    ///
+    /// \return A pointer to the parser.
+    static parser*
+    get_from_state(lutok::state& state)
+    {
+        lutok::stack_cleaner cleaner(state);
+        state.get_global("_parser");
+        return *state.to_userdata< parser* >();
+    }
+
+    /// Callback for the Kyuafile current_kyuafile() function.
+    ///
+    /// \return Returns the absolute path to the current Kyuafile.
+    fs::path
+    callback_current_kyuafile(void) const
+    {
+        const fs::path file = relativize(_source_root, _relative_filename);
+        if (file.is_absolute())
+            return file;
+        else
+            return file.to_absolute();
+    }
+
+    /// Callback for the Kyuafile include() function.
+    ///
+    /// \post _test_programs is extended with the the test programs defined by
+    /// the included file.
+    ///
+    /// \param raw_file Path to the file to include.
+    void
+    callback_include(const fs::path& raw_file)
+    {
+        const fs::path file = relativize(_relative_filename.branch_path(),
+                                         raw_file);
+        const engine::test_programs_vector subtps =
+            parser(_source_root, _build_root, file).parse();
+
+        std::copy(subtps.begin(), subtps.end(),
+                  std::back_inserter(_test_programs));
+    }
+
+    /// Callback for the Kyuafile syntax() function.
+    ///
+    /// \post _version is set to the requested version.
+    ///
+    /// \param format Name of the format defined by the file.
+    /// \param version Version of the Kyuafile syntax requested by the file.
+    ///
+    /// \throw std::runtime_error If the format or the version are invalid, or
+    /// if syntax() has already been called.
+    void
+    callback_syntax(const std::string& format, const int version)
+    {
+        if (_version)
+            throw std::runtime_error("Can only call syntax() once");
+
+        if (format != "kyuafile")
+            throw std::runtime_error(F("Unexpected file format '%s'; "
+                                       "need 'kyuafile'") % format);
+        if (version != 1)
+            throw std::runtime_error(F("Unexpected file version '%s'; "
+                                       "only 1 is supported") % version);
+
+        _version = utils::make_optional(version);
+    }
+
+    /// Callback for the various Kyuafile *_test_program() functions.
+    ///
+    /// \post _test_programs is extended to include the newly defined test
+    /// program.
+    ///
+    /// \param interface Name of the test program interface.
+    /// \param raw_path Path to the test program, relative to the Kyuafile.
+    ///     This has to be adjusted according to the relative location of this
+    ///     Kyuafile to _source_root.
+    /// \param test_suite_override Name of the test suite this test program
+    ///     belongs to, if explicitly defined at the test program level.
+    /// \param metadata Metadata variables passed to the test program.
+    ///
+    /// \throw std::runtime_error If the test program definition is invalid or
+    ///     if the test program does not exist.
+    void
+    callback_test_program(const std::string& interface,
+                          const fs::path& raw_path,
+                          const std::string& test_suite_override,
+                          const engine::metadata& metadata)
+    {
+        if (raw_path.is_absolute())
+            throw std::runtime_error(F("Got unexpected absolute path for test "
+                                       "program '%s'") % raw_path);
+        else if (raw_path.str() != raw_path.leaf_name())
+            throw std::runtime_error(F("Test program '%s' cannot contain path "
+                                       "components") % raw_path);
+
+        const fs::path path = relativize(_relative_filename.branch_path(),
+                                         raw_path);
+
+        if (!fs::exists(_build_root / path))
+            throw std::runtime_error(F("Non-existent test program '%s'") %
+                                     path);
+
+        const std::string test_suite = test_suite_override.empty()
+            ? _test_suite.get() : test_suite_override;
+        _test_programs.push_back(engine::test_program_ptr(
+            new engine::test_program(interface, path, _build_root, test_suite,
+                                     metadata)));
+    }
+
+    /// Callback for the Kyuafile test_suite() function.
+    ///
+    /// \post _version is set to the requested version.
+    ///
+    /// \param name Name of the test suite.
+    ///
+    /// \throw std::runtime_error If test_suite() has already been called.
+    void
+    callback_test_suite(const std::string& name)
+    {
+        if (_test_suite)
+            throw std::runtime_error("Can only call test_suite() once");
+        _test_suite = utils::make_optional(name);
+    }
+
+    /// Parses the Kyuafile.
+    ///
+    /// \pre Can only be invoked once.
+    ///
+    /// \return The collection of test programs defined by the Kyuafile.
+    ///
+    /// \throw load_error If there is any problem parsing the file.
+    const engine::test_programs_vector&
+    parse(void)
+    {
+        PRE(_test_programs.empty());
+
+        const fs::path load_path = relativize(_source_root, _relative_filename);
+        try {
+            lutok::do_file(_state, load_path.str());
+        } catch (const std::runtime_error& e) {
+            // It is tempting to think that all of our various auxiliary
+            // functions above could raise load_error by themselves thus making
+            // this exception rewriting here unnecessary.  Howver, that would
+            // not work because the helper functions above are executed within a
+            // Lua context, and we lose their type when they are propagated out
+            // of it.
+            throw user_files::load_error(load_path, e.what());
+        }
+
+        if (!_version)
+            throw user_files::load_error(load_path, "syntax() never called");
+
+        return _test_programs;
+    }
+};
 
 
 /// Gets a string field from a Lua table.
@@ -81,102 +344,78 @@ get_table_string(lutok::state& state, const char* field,
     state.get_table();
     if (!state.is_string())
         throw std::runtime_error(error);
-    const std::string str(state.to_string());
-    state.pop(1);
-    return str;
+    return state.to_string();
 }
 
 
-/// Gets a test program path name from a Lua test program definition.
+/// Checks if the given interface name is valid.
 ///
-/// \pre state(-1) contains a table representing a test program.
+/// \param interface The name of the interface to validate.
 ///
-/// \param state The Lua state.
-/// \param build_root The root location of the test suite.
-///
-/// \return The path to the test program relative to root.
-///
-/// \throw std::runtime_error If the table definition is invalid or if the test
-///     program does not exist.
-static fs::path
-get_path(lutok::state& state, const fs::path& build_root)
+/// \throw std::runtime_error If the given interface is not supported.
+static void
+ensure_valid_interface(const std::string& interface)
 {
-    const fs::path path = fs::path(get_table_string(
-        state, "name", "Found non-string name for test program"));
-    if (path.is_absolute())
-        throw std::runtime_error(F("Got unexpected absolute path for test "
-                                   "program '%s'") % path);
-
-    if (!fs::exists(build_root / path))
-        throw std::runtime_error(F("Non-existent test program '%s'") % path);
-
-    return path;
-}
-
-
-/// Gets a test suite name from a Lua test program definition.
-///
-/// \pre state(-1) contains a table representing a test program.
-///
-/// \param state The Lua state.
-/// \param path The path to the test program; used for error reporting purposes.
-///
-/// \return The name of the test suite the test program belongs to.
-///
-/// \throw std::runtime_error If the table definition is invalid.
-static std::string
-get_test_suite(lutok::state& state, const fs::path& path)
-{
-    return get_table_string(
-        state, "test_suite", F("Found non-string name for test suite of "
-                               "test program '%s'") % path);
-}
-
-
-}  // anonymous namespace
-
-
-// These namespace blocks are here to help Doxygen match the functions to their
-// prototypes...
-namespace engine {
-namespace user_files {
-namespace detail {
-
-
-/// Gets the data of a test program from the Lua state.
-///
-/// \pre stack(-1) contains a table describing a test program.
-///
-/// \param state The Lua state.
-/// \param build_root The directory where the initial Kyuafile is located.
-///
-/// \return The test program definition.
-///
-/// \throw std::runtime_error If there is any problem in the input data.
-/// \throw fs::error If there is an invalid path in the input data.
-test_program_ptr
-get_test_program(lutok::state& state, const fs::path& build_root)
-{
-    PRE(state.is_table());
-
-    lutok::stack_cleaner cleaner(state);
-
-    const std::string interface = get_table_string(
-        state, "interface", "Missing test case interface");
     try {
         (void)engine::tester_path(interface);
     } catch (const engine::error& e) {
         throw std::runtime_error(F("Unsupported test interface '%s'") %
                                  interface);
     }
+}
 
-    const fs::path path = get_path(state, build_root);
-    const std::string test_suite = get_test_suite(state, path);
 
-    metadata_builder mdbuilder;
+/// Glue to invoke parser::callback_test_program() from Lua.
+///
+/// This is a helper function for the various *_test_program() calls, as they
+/// only differ in the interface of the defined test program.
+///
+/// \pre state(-1) A table with the arguments that define the test program.  The
+/// special argument 'test_suite' provides an override to the global test suite
+/// name.  The rest of the arguments are part of the test program metadata.
+///
+/// \param state The Lua state that executed the function.
+/// \param interface Name of the test program interface.
+///
+/// \return Number of return values left on the Lua stack.
+///
+/// \throw std::runtime_error If the arguments to the function are invalid.
+static int
+lua_generic_test_program(lutok::state& state, const std::string& interface)
+{
+    if (!state.is_table())
+        throw std::runtime_error(
+            F("%s_test_program expects a table of properties as its single "
+              "argument") % interface);
 
-    // TODO(jmmv): The definition of a test program should allow overriding ALL
-    // of the metadata properties, not just the timeout.  See Issue 57.
+    ensure_valid_interface(interface);
+
+    lutok::stack_cleaner cleaner(state);
+
+    state.push_string("name");
+    state.get_table();
+    if (!state.is_string())
+        throw std::runtime_error("Test program name not defined or not a "
+                                 "string");
+    const fs::path path(state.to_string());
+    state.pop(1);
+
+    state.push_string("test_suite");
+    state.get_table();
+    std::string test_suite;
+    if (state.is_nil()) {
+        // Leave empty to use the global test-suite value.
+    } else if (state.is_string()) {
+        test_suite = state.to_string();
+    } else {
+        throw std::runtime_error(F("Found non-string value in the test_suite "
+                                   "property of test program '%s'") % path);
+    }
+    state.pop(1);
+
+    engine::metadata_builder mdbuilder;
+    // TODO(jmmv): The definition of a test program should allow overriding
+    // ALL of the metadata properties, not just the timeout.  See Issue 57.
     {
         state.push_string("timeout");
         state.get_table();
@@ -185,57 +424,111 @@ get_test_program(lutok::state& state, const fs::path& build_root)
         } else if (state.is_number()) {
             mdbuilder.set_timeout(datetime::delta(state.to_integer(), 0));
         } else {
-            throw std::runtime_error(F("Non-integer value provided as timeout "
-                                       "for test program '%s'") % path);
+            throw std::runtime_error(F("Non-integer value provided as "
+                                       "timeout for test program '%s'") %
+                                     path);
         }
         state.pop(1);
     }
 
-    return test_program_ptr(new test_program(
-        interface, path, build_root, test_suite, mdbuilder.build()));
+    parser::get_from_state(state)->callback_test_program(
+        interface, path, test_suite, mdbuilder.build());
+    return 0;
 }
 
 
-/// Gets the data of a collection of test programs from the Lua state.
+/// Specialization of lua_generic_test_program for ATF test programs.
 ///
-/// \param state The Lua state.
-/// \param expr The expression that evaluates to the table with the test program
-///     data.
-/// \param build_root The directory where the initial Kyuafile is located.
+/// \param state The Lua state that executed the function.
 ///
-/// \return The definition of the test programs.
-///
-/// \throw std::runtime_error If there is any problem in the input data.
-/// \throw fs::error If there is an invalid path in the input data.
-test_programs_vector
-get_test_programs(lutok::state& state, const std::string& expr,
-                  const fs::path& build_root)
+/// \return Number of return values left on the Lua stack.
+static int
+lua_atf_test_program(lutok::state& state)
 {
-    lutok::stack_cleaner cleaner(state);
-
-    lutok::eval(state, expr);
-    if (!state.is_table())
-        throw std::runtime_error(F("'%s' is not a table") % expr);
-
-    test_programs_vector test_programs;
-
-    state.push_nil();
-    while (state.next()) {
-        if (!state.is_table(-1))
-            throw std::runtime_error(F("Expected table in '%s'") % expr);
-
-        test_programs.push_back(get_test_program(state, build_root));
-
-        state.pop(1);
-    }
-
-    return test_programs;
+    return lua_generic_test_program(state, "atf");
 }
 
 
-}  // namespace detail
-}  // namespace user_files
-}  // namespace engine
+/// Glue to invoke parser::callback_current_kyuafile() from Lua.
+///
+/// \param state The Lua state that executed the function.
+///
+/// \return Number of return values left on the Lua stack.
+static int
+lua_current_kyuafile(lutok::state& state)
+{
+    state.push_string(parser::get_from_state(state)->
+                      callback_current_kyuafile().str());
+    return 1;
+}
+
+
+/// Glue to invoke parser::callback_include() from Lua.
+///
+/// \param state The Lua state that executed the function.
+///
+/// \return Number of return values left on the Lua stack.
+static int
+lua_include(lutok::state& state)
+{
+    parser::get_from_state(state)->callback_include(
+        fs::path(state.to_string()));
+    return 0;
+}
+
+
+/// Specialization of lua_generic_test_program for plain test programs.
+///
+/// \param state The Lua state that executed the function.
+///
+/// \return Number of return values left on the Lua stack.
+static int
+lua_plain_test_program(lutok::state& state)
+{
+    return lua_generic_test_program(state, "plain");
+}
+
+
+/// Glue to invoke parser::callback_syntax() from Lua.
+///
+/// \pre state(-2) The syntax format name.
+/// \pre state(-1) The syntax format version.
+///
+/// \param state The Lua state that executed the function.
+///
+/// \return Number of return values left on the Lua stack.
+static int
+lua_syntax(lutok::state& state)
+{
+    if (!state.is_string(-2))
+        throw std::runtime_error("First argument to syntax must be a "
+                                 "string");
+    const std::string format = state.to_string(-2);
+
+    if (!state.is_number(-1))
+        throw std::runtime_error("Second argument to syntax must be a "
+                                 "number");
+    const int version = state.to_integer(-1);
+
+    parser::get_from_state(state)->callback_syntax(format, version);
+    return 0;
+}
+
+
+/// Glue to invoke parser::callback_test_suite() from Lua.
+///
+/// \param state The Lua state that executed the function.
+///
+/// \return Number of return values left on the Lua stack.
+static int
+lua_test_suite(lutok::state& state)
+{
+    parser::get_from_state(state)->callback_test_suite(state.to_string());
+    return 0;
+}
+
+
+}  // anonymous namespace
 
 
 /// Constructs a kyuafile form initialized data.
@@ -260,6 +553,11 @@ user_files::kyuafile::kyuafile(const fs::path& source_root_,
 }
 
 
+user_files::kyuafile::~kyuafile(void)
+{
+}
+
+
 /// Parses a test suite configuration file.
 ///
 /// \param file The file to parse.
@@ -280,27 +578,9 @@ user_files::kyuafile::load(const fs::path& file,
     const fs::path build_root_ = user_build_root ?
         user_build_root.get() : source_root_;
 
-    test_programs_vector test_programs;
-    try {
-        lutok::state state;
-        lutok::stack_cleaner cleaner(state);
-
-        const user_files::syntax_def syntax = user_files::do_user_file(
-            state, file);
-        if (syntax.first != "kyuafile")
-            throw std::runtime_error(F("Unexpected file format '%s'; "
-                                       "need 'kyuafile'") % syntax.first);
-        if (syntax.second != 1)
-            throw std::runtime_error(F("Unexpected file version '%s'; "
-                                       "only 1 is supported") % syntax.second);
-
-        test_programs = detail::get_test_programs(state,
-                                                  "kyuafile.TEST_PROGRAMS",
-                                                  build_root_);
-    } catch (const std::runtime_error& e) {
-        throw load_error(file, e.what());
-    }
-    return kyuafile(source_root_, build_root_, test_programs);
+    return kyuafile(source_root_, build_root_,
+                    parser(source_root_, build_root_,
+                           fs::path(file.leaf_name())).parse());
 }
 
 

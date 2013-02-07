@@ -30,9 +30,6 @@ ENGINE_CFLAGS += $(LUTOK_CFLAGS)
 ENGINE_LIBS += $(LUTOK_LIBS)
 
 libengine_a_CPPFLAGS += $(LUTOK_CFLAGS)
-libengine_a_CPPFLAGS += -DKYUA_LUADIR="\"$(luadir)\""
-libengine_a_SOURCES += engine/user_files/common.cpp
-libengine_a_SOURCES += engine/user_files/common.hpp
 libengine_a_SOURCES += engine/user_files/config.cpp
 libengine_a_SOURCES += engine/user_files/config.hpp
 libengine_a_SOURCES += engine/user_files/exceptions.cpp
@@ -40,25 +37,13 @@ libengine_a_SOURCES += engine/user_files/exceptions.hpp
 libengine_a_SOURCES += engine/user_files/kyuafile.cpp
 libengine_a_SOURCES += engine/user_files/kyuafile.hpp
 
-lua_modulesdir = $(luadir)
-dist_lua_modules_DATA  = engine/user_files/init.lua
-dist_lua_modules_DATA += engine/user_files/kyuafile_1.lua
-
 if WITH_ATF
 tests_engine_user_filesdir = $(pkgtestsdir)/engine/user_files
 
 tests_engine_user_files_DATA = engine/user_files/Kyuafile
 EXTRA_DIST += $(tests_engine_user_files_DATA)
 
-tests_engine_user_files_PROGRAMS = engine/user_files/common_test
-engine_user_files_common_test_SOURCES = engine/user_files/common_test.cpp
-engine_user_files_common_test_CPPFLAGS = -DKYUA_LUADIR="\"$(luadir)\""
-engine_user_files_common_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
-                                         $(ATF_CXX_CFLAGS)
-engine_user_files_common_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
-                                      $(ATF_CXX_LIBS)
-
-tests_engine_user_files_PROGRAMS += engine/user_files/config_test
+tests_engine_user_files_PROGRAMS = engine/user_files/config_test
 engine_user_files_config_test_SOURCES = engine/user_files/config_test.cpp
 engine_user_files_config_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
                                          $(ATF_CXX_CFLAGS)
@@ -73,14 +58,6 @@ engine_user_files_exceptions_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
 engine_user_files_exceptions_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
                                           $(ATF_CXX_LIBS)
 
-tests_engine_user_files_PROGRAMS += engine/user_files/init_test
-engine_user_files_init_test_SOURCES = engine/user_files/init_test.cpp
-engine_user_files_init_test_CPPFLAGS = -DKYUA_LUADIR="\"$(luadir)\""
-engine_user_files_init_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
-                                       $(ATF_CXX_CFLAGS)
-engine_user_files_init_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
-                                    $(ATF_CXX_LIBS)
-
 tests_engine_user_files_PROGRAMS += engine/user_files/kyuafile_test
 engine_user_files_kyuafile_test_SOURCES = engine/user_files/kyuafile_test.cpp
 engine_user_files_kyuafile_test_CXXFLAGS = $(ENGINE_CFLAGS) \
@@ -88,12 +65,4 @@ engine_user_files_kyuafile_test_CXXFLAGS = $(ENGINE_CFLAGS) \
                                            $(ATF_CXX_CFLAGS)
 engine_user_files_kyuafile_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
                                         $(ATF_CXX_LIBS)
-
-tests_engine_user_files_PROGRAMS += engine/user_files/kyuafile_1_test
-engine_user_files_kyuafile_1_test_SOURCES = \
-    engine/user_files/kyuafile_1_test.cpp
-engine_user_files_kyuafile_1_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
-                                             $(ATF_CXX_CFLAGS)
-engine_user_files_kyuafile_1_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
-                                          $(ATF_CXX_LIBS)
 endif

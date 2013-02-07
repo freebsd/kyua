@@ -28,7 +28,6 @@
 
 #include "engine/user_files/kyuafile.hpp"
 
-#include <fstream>
 #include <stdexcept>
 #include <typeinfo>
 
@@ -49,295 +48,57 @@ namespace user_files = engine::user_files;
 using utils::none;
 
 
-/// Checks test program name validation in get_test_program().
-///
-/// \param interface The name of the test interface to check.
-static void
-bad_name_test(const char* interface)
+ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__empty);
+ATF_TEST_CASE_BODY(kyuafile__load__empty)
 {
-    lutok::state state;
-    stack_balance_checker checker(state);
+    atf::utils::create_file("config", "syntax('kyuafile', 1)\n");
 
-    lutok::do_string(state, F("return {name={}, interface='%s', "
-                              "test_suite='the-suite'}") % interface, 1);
-
-    ATF_REQUIRE_THROW_RE(std::runtime_error, "non-string.*test program$",
-                         user_files::detail::get_test_program(
-                             state, fs::path(".")));
-
-    state.pop(1);
+    const user_files::kyuafile suite = user_files::kyuafile::load(
+        fs::path("config"), none);
+    ATF_REQUIRE_EQ(fs::path("."), suite.source_root());
+    ATF_REQUIRE_EQ(fs::path("."), suite.build_root());
+    ATF_REQUIRE_EQ(0, suite.test_programs().size());
 }
 
 
-/// Checks test suite name validation in get_test_program().
-///
-/// \param interface The name of the test interface to check.
-static void
-bad_test_suite_test(const char* interface)
+ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__some_programs);
+ATF_TEST_CASE_BODY(kyuafile__load__some_programs)
 {
-    lutok::state state;
-    stack_balance_checker checker(state);
-
-    lutok::do_string(state, F("return {name='foo', interface='%s', "
-                              "test_suite={}}") % interface, 1);
-    fs::mkdir(fs::path("bar"), 0755);
-    atf::utils::create_file("bar/foo", "");
-
-    ATF_REQUIRE_THROW_RE(std::runtime_error,
-                         "non-string.*test suite.*'foo'",
-                         user_files::detail::get_test_program(
-                             state, fs::path("bar")));
-
-    state.pop(1);
-}
-
-
-/// Checks test program existance validation in get_test_program().
-///
-/// \param interface The name of the test interface to check.
-static void
-missing_binary_test(const char* interface)
-{
-    lutok::state state;
-    stack_balance_checker checker(state);
-
-    atf::utils::create_file("i-exist", "");
-    lutok::do_string(state, F("return {name='i-exist', interface='%s', "
-                              "test_suite='the-suite'}") % interface, 1);
-
-    ATF_REQUIRE_THROW_RE(std::runtime_error,
-                         "Non-existent.*'i-exist'",
-                         user_files::detail::get_test_program(
-                             state, fs::path("root")));
-
-    state.pop(1);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(get_test_program__atf__ok);
-ATF_TEST_CASE_BODY(get_test_program__atf__ok)
-{
-    lutok::state state;
-    stack_balance_checker checker(state);
-
-    lutok::do_string(state, "return {name='the-name', interface='atf', "
-                     "test_suite='the-suite'}", 1);
-
-    fs::mkdir(fs::path("root"), 0755);
-    fs::mkdir(fs::path("root/directory"), 0755);
-    atf::utils::create_file("root/directory/the-name", "");
-
-    const engine::test_program_ptr program =
-        user_files::detail::get_test_program(state, fs::path("root/directory"));
-    ATF_REQUIRE_EQ("atf", program->interface_name());
-    ATF_REQUIRE_EQ(fs::path("the-name"), program->relative_path());
-    ATF_REQUIRE_EQ("the-suite", program->test_suite_name());
-
-    state.pop(1);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(get_test_program__atf__bad_name);
-ATF_TEST_CASE_BODY(get_test_program__atf__bad_name)
-{
-    bad_name_test("atf");
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(get_test_program__atf__bad_test_suite);
-ATF_TEST_CASE_BODY(get_test_program__atf__bad_test_suite)
-{
-    bad_test_suite_test("atf");
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(get_test_program__atf__missing_binary);
-ATF_TEST_CASE_BODY(get_test_program__atf__missing_binary)
-{
-    missing_binary_test("atf");
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(get_test_program__plain__ok);
-ATF_TEST_CASE_BODY(get_test_program__plain__ok)
-{
-    lutok::state state;
-    stack_balance_checker checker(state);
-
-    lutok::do_string(state, "return {name='the-name', interface='plain', "
-                     "test_suite='the-suite'}", 1);
-
-    fs::mkdir(fs::path("root"), 0755);
-    fs::mkdir(fs::path("root/directory"), 0755);
-    atf::utils::create_file("root/directory/the-name", "");
-
-    const engine::test_program_ptr program =
-        user_files::detail::get_test_program(state, fs::path("root/directory"));
-    ATF_REQUIRE_EQ("plain", program->interface_name());
-    ATF_REQUIRE_EQ(fs::path("the-name"), program->relative_path());
-    ATF_REQUIRE_EQ("the-suite", program->test_suite_name());
-
-    state.pop(1);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(get_test_program__plain__bad_name);
-ATF_TEST_CASE_BODY(get_test_program__plain__bad_name)
-{
-    bad_name_test("plain");
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(get_test_program__plain__bad_test_suite);
-ATF_TEST_CASE_BODY(get_test_program__plain__bad_test_suite)
-{
-    bad_test_suite_test("plain");
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(get_test_program__plain__missing_binary);
-ATF_TEST_CASE_BODY(get_test_program__plain__missing_binary)
-{
-    missing_binary_test("plain");
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(get_test_program__missing_interface);
-ATF_TEST_CASE_BODY(get_test_program__missing_interface)
-{
-    lutok::state state;
-    stack_balance_checker checker(state);
-
-    lutok::do_string(state, "return {name='the-name'}", 1);
-
-    ATF_REQUIRE_THROW_RE(std::runtime_error, "Missing test case interface",
-                         user_files::detail::get_test_program(
-                             state, fs::path("root")));
-
-    state.pop(1);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(get_test_program__unsupported_interface);
-ATF_TEST_CASE_BODY(get_test_program__unsupported_interface)
-{
-    lutok::state state;
-    stack_balance_checker checker(state);
-
-    lutok::do_string(state, "return {name='the-name', interface='foo'}", 1);
-
-    ATF_REQUIRE_THROW_RE(std::runtime_error,
-                         "Unsupported test interface 'foo'",
-                         user_files::detail::get_test_program(
-                             state, fs::path("root")));
-
-    state.pop(1);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(get_test_programs__empty);
-ATF_TEST_CASE_BODY(get_test_programs__empty)
-{
-    lutok::state state;
-    stack_balance_checker checker(state);
-
-    lutok::do_string(state, "t = {}");
-
-    const engine::test_programs_vector programs =
-        user_files::detail::get_test_programs(state, "t", fs::path("a/b"));
-    ATF_REQUIRE(programs.empty());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(get_test_programs__some);
-ATF_TEST_CASE_BODY(get_test_programs__some)
-{
-    lutok::state state;
-    stack_balance_checker checker(state);
-
-    lutok::do_string(
-        state, "t = {}; t[1] = {name='a', interface='atf', test_suite='b'};"
-        "t[2] = {name='c/d', interface='atf', test_suite='e'}");
-
-    fs::mkdir(fs::path("root"), 0755);
-    atf::utils::create_file("root/a", "");
-    fs::mkdir(fs::path("root/c"), 0755);
-    atf::utils::create_file("root/c/d", "");
-
-    const engine::test_programs_vector programs =
-        user_files::detail::get_test_programs(state, "t", fs::path("root"));
-    ATF_REQUIRE_EQ(2, programs.size());
-
-    ATF_REQUIRE_EQ(fs::path("a"), programs[0]->relative_path());
-    ATF_REQUIRE_EQ("b", programs[0]->test_suite_name());
-
-    ATF_REQUIRE_EQ(fs::path("c/d"), programs[1]->relative_path());
-    ATF_REQUIRE_EQ("e", programs[1]->test_suite_name());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(get_test_programs__invalid);
-ATF_TEST_CASE_BODY(get_test_programs__invalid)
-{
-    lutok::state state;
-    stack_balance_checker checker(state);
-
-    lutok::do_string(state, "t = 'foo'");
-
-    ATF_REQUIRE_THROW_RE(std::runtime_error, "'t' is not a table",
-                         user_files::detail::get_test_programs(
-                             state, "t", fs::path(".")));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(get_test_programs__bad_value);
-ATF_TEST_CASE_BODY(get_test_programs__bad_value)
-{
-    lutok::state state;
-    stack_balance_checker checker(state);
-
-    lutok::do_string(state, "t = {}; t[1] = 'foo'");
-
-    ATF_REQUIRE_THROW_RE(std::runtime_error, "Expected table in 't'",
-                         user_files::detail::get_test_programs(
-                             state, "t", fs::path(".")));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__integration);
-ATF_TEST_CASE_BODY(kyuafile__load__integration)
-{
-    {
-        std::ofstream file("config");
-        file << "syntax('kyuafile', 1)\n";
-        file << "test_suite('one-suite')\n";
-        file << "atf_test_program{name='1st'}\n";
-        file << "atf_test_program{name='2nd', test_suite='first'}\n";
-        file << "plain_test_program{name='3rd'}\n";
-        file << "plain_test_program{name='4th', test_suite='second'}\n";
-        file << "include('dir/config')\n";
-        file.close();
-    }
-
-    {
-        fs::mkdir(fs::path("dir"), 0755);
-        std::ofstream file("dir/config");
-        file << "syntax('kyuafile', 1)\n";
-        file << "atf_test_program{name='1st', test_suite='other-suite'}\n";
-        file.close();
-    }
+    atf::utils::create_file(
+        "config",
+        "syntax('kyuafile', 1)\n"
+        "test_suite('one-suite')\n"
+        "atf_test_program{name='1st'}\n"
+        "atf_test_program{name='2nd', test_suite='first'}\n"
+        "plain_test_program{name='3rd'}\n"
+        "plain_test_program{name='4th', test_suite='second'}\n"
+        "include('dir/config')\n");
+
+    fs::mkdir(fs::path("dir"), 0755);
+    atf::utils::create_file(
+        "dir/config",
+        "syntax('kyuafile', 1)\n"
+        "atf_test_program{name='1st', test_suite='other-suite'}\n"
+        "include('subdir/config')\n");
+
+    fs::mkdir(fs::path("dir/subdir"), 0755);
+    atf::utils::create_file(
+        "dir/subdir/config",
+        "syntax('kyuafile', 1)\n"
+        "atf_test_program{name='5th', test_suite='last-suite'}\n");
 
     atf::utils::create_file("1st", "");
     atf::utils::create_file("2nd", "");
     atf::utils::create_file("3rd", "");
     atf::utils::create_file("4th", "");
     atf::utils::create_file("dir/1st", "");
+    atf::utils::create_file("dir/subdir/5th", "");
 
     const user_files::kyuafile suite = user_files::kyuafile::load(
         fs::path("config"), none);
     ATF_REQUIRE_EQ(fs::path("."), suite.source_root());
     ATF_REQUIRE_EQ(fs::path("."), suite.build_root());
-    ATF_REQUIRE_EQ(5, suite.test_programs().size());
+    ATF_REQUIRE_EQ(6, suite.test_programs().size());
 
     ATF_REQUIRE_EQ("atf", suite.test_programs()[0]->interface_name());
     ATF_REQUIRE_EQ(fs::path("1st"), suite.test_programs()[0]->relative_path());
@@ -359,31 +120,31 @@ ATF_TEST_CASE_BODY(kyuafile__load__integration)
     ATF_REQUIRE_EQ(fs::path("dir/1st"),
                    suite.test_programs()[4]->relative_path());
     ATF_REQUIRE_EQ("other-suite", suite.test_programs()[4]->test_suite_name());
+
+    ATF_REQUIRE_EQ("atf", suite.test_programs()[5]->interface_name());
+    ATF_REQUIRE_EQ(fs::path("dir/subdir/5th"),
+                   suite.test_programs()[5]->relative_path());
+    ATF_REQUIRE_EQ("last-suite", suite.test_programs()[5]->test_suite_name());
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__current_directory);
 ATF_TEST_CASE_BODY(kyuafile__load__current_directory)
 {
-    {
-        std::ofstream file("config");
-        file << "syntax('kyuafile', 1)\n";
-        file << "atf_test_program{name='one', test_suite='first'}\n";
-        file << "include('dir/config')\n";
-        file.close();
-    }
+    atf::utils::create_file(
+        "config",
+        "syntax('kyuafile', 1)\n"
+        "atf_test_program{name='one', test_suite='first'}\n"
+        "include('config2')\n");
 
-    {
-        fs::mkdir(fs::path("dir"), 0755);
-        std::ofstream file("dir/config");
-        file << "syntax('kyuafile', 1)\n";
-        file << "test_suite('second')\n";
-        file << "atf_test_program{name='two'}\n";
-        file.close();
-    }
+    atf::utils::create_file(
+        "config2",
+        "syntax('kyuafile', 1)\n"
+        "test_suite('second')\n"
+        "atf_test_program{name='two'}\n");
 
     atf::utils::create_file("one", "");
-    atf::utils::create_file("dir/two", "");
+    atf::utils::create_file("two", "");
 
     const user_files::kyuafile suite = user_files::kyuafile::load(
         fs::path("config"), none);
@@ -392,7 +153,7 @@ ATF_TEST_CASE_BODY(kyuafile__load__current_directory)
     ATF_REQUIRE_EQ(2, suite.test_programs().size());
     ATF_REQUIRE_EQ(fs::path("one"), suite.test_programs()[0]->relative_path());
     ATF_REQUIRE_EQ("first", suite.test_programs()[0]->test_suite_name());
-    ATF_REQUIRE_EQ(fs::path("dir/two"),
+    ATF_REQUIRE_EQ(fs::path("two"),
                    suite.test_programs()[1]->relative_path());
     ATF_REQUIRE_EQ("second", suite.test_programs()[1]->test_suite_name());
 }
@@ -401,25 +162,21 @@ ATF_TEST_CASE_BODY(kyuafile__load__current_directory)
 ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__other_directory);
 ATF_TEST_CASE_BODY(kyuafile__load__other_directory)
 {
-    {
-        fs::mkdir(fs::path("root"), 0755);
-        std::ofstream file("root/config");
-        file << "syntax('kyuafile', 1)\n";
-        file << "test_suite('abc')\n";
-        file << "atf_test_program{name='one'}\n";
-        file << "include('dir/config')\n";
-        file.close();
-    }
+    fs::mkdir(fs::path("root"), 0755);
+    atf::utils::create_file(
+        "root/config",
+        "syntax('kyuafile', 1)\n"
+        "test_suite('abc')\n"
+        "atf_test_program{name='one'}\n"
+        "include('dir/config')\n");
 
-    {
-        fs::mkdir(fs::path("root/dir"), 0755);
-        std::ofstream file("root/dir/config");
-        file << "syntax('kyuafile', 1)\n";
-        file << "test_suite('foo')\n";
-        file << "atf_test_program{name='two', test_suite='def'}\n";
-        file << "atf_test_program{name='three'}\n";
-        file.close();
-    }
+    fs::mkdir(fs::path("root/dir"), 0755);
+    atf::utils::create_file(
+        "root/dir/config",
+        "syntax('kyuafile', 1)\n"
+        "test_suite('foo')\n"
+        "atf_test_program{name='two', test_suite='def'}\n"
+        "atf_test_program{name='three'}\n");
 
     atf::utils::create_file("root/one", "");
     atf::utils::create_file("root/dir/two", "");
@@ -444,25 +201,21 @@ ATF_TEST_CASE_BODY(kyuafile__load__other_directory)
 ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__build_directory);
 ATF_TEST_CASE_BODY(kyuafile__load__build_directory)
 {
-    {
-        fs::mkdir(fs::path("srcdir"), 0755);
-        std::ofstream file("srcdir/config");
-        file << "syntax('kyuafile', 1)\n";
-        file << "test_suite('abc')\n";
-        file << "atf_test_program{name='one'}\n";
-        file << "include('dir/config')\n";
-        file.close();
-    }
+    fs::mkdir(fs::path("srcdir"), 0755);
+    atf::utils::create_file(
+        "srcdir/config",
+        "syntax('kyuafile', 1)\n"
+        "test_suite('abc')\n"
+        "atf_test_program{name='one'}\n"
+        "include('dir/config')\n");
 
-    {
-        fs::mkdir(fs::path("srcdir/dir"), 0755);
-        std::ofstream file("srcdir/dir/config");
-        file << "syntax('kyuafile', 1)\n";
-        file << "test_suite('foo')\n";
-        file << "atf_test_program{name='two', test_suite='def'}\n";
-        file << "atf_test_program{name='three'}\n";
-        file.close();
-    }
+    fs::mkdir(fs::path("srcdir/dir"), 0755);
+    atf::utils::create_file(
+        "srcdir/dir/config",
+        "syntax('kyuafile', 1)\n"
+        "test_suite('foo')\n"
+        "atf_test_program{name='two', test_suite='def'}\n"
+        "atf_test_program{name='three'}\n");
 
     fs::mkdir(fs::path("builddir"), 0755);
     atf::utils::create_file("builddir/one", "");
@@ -495,15 +248,14 @@ ATF_TEST_CASE_BODY(kyuafile__load__build_directory)
 ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__test_program_not_basename);
 ATF_TEST_CASE_BODY(kyuafile__load__test_program_not_basename)
 {
-    {
-        std::ofstream file("config");
-        file << "syntax('kyuafile', 1)\n";
-        file << "test_suite('abc')\n";
-        file << "atf_test_program{name='one'}\n";
-        file << "atf_test_program{name='./ls'}\n";
-        file.close();
-    }
+    atf::utils::create_file(
+        "config",
+        "syntax('kyuafile', 1)\n"
+        "test_suite('abc')\n"
+        "atf_test_program{name='one'}\n"
+        "atf_test_program{name='./ls'}\n");
 
+    atf::utils::create_file("one", "");
     ATF_REQUIRE_THROW_RE(user_files::load_error, "./ls.*path components",
                          user_files::kyuafile::load(fs::path("config"), none));
 }
@@ -512,22 +264,40 @@ ATF_TEST_CASE_BODY(kyuafile__load__test_program_not_basename)
 ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__lua_error);
 ATF_TEST_CASE_BODY(kyuafile__load__lua_error)
 {
-    std::ofstream file("config");
-    file << "this syntax is invalid\n";
-    file.close();
+    atf::utils::create_file("config", "this syntax is invalid\n");
 
     ATF_REQUIRE_THROW(user_files::load_error, user_files::kyuafile::load(
                           fs::path("config"), none));
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__syntax__not_called);
+ATF_TEST_CASE_BODY(kyuafile__load__syntax__not_called)
+{
+    atf::utils::create_file("config", "");
+
+    ATF_REQUIRE_THROW_RE(user_files::load_error, "syntax.* never called",
+                         user_files::kyuafile::load(fs::path("config"), none));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__syntax__twice);
+ATF_TEST_CASE_BODY(kyuafile__load__syntax__twice)
+{
+    atf::utils::create_file(
+        "config",
+        "syntax('kyuafile', 1)\n"
+        "syntax('kyuafile', 1)\n");
+
+    ATF_REQUIRE_THROW_RE(user_files::load_error, "Can only call syntax.* once",
+                         user_files::kyuafile::load(fs::path("config"), none));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__bad_syntax__format);
 ATF_TEST_CASE_BODY(kyuafile__load__bad_syntax__format)
 {
-    std::ofstream file("config");
-    file << "syntax('kyuafile', 1)\n";
-    file << "init.get_syntax().format = 'foo'\n";
-    file.close();
+    atf::utils::create_file("config", "syntax('foo', 1)\n");
 
     ATF_REQUIRE_THROW_RE(user_files::load_error, "Unexpected file format 'foo'",
                          user_files::kyuafile::load(fs::path("config"), none));
@@ -537,12 +307,24 @@ ATF_TEST_CASE_BODY(kyuafile__load__bad_syntax__format)
 ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__bad_syntax__version);
 ATF_TEST_CASE_BODY(kyuafile__load__bad_syntax__version)
 {
-    std::ofstream file("config");
-    file << "syntax('kyuafile', 1)\n";
-    file << "init.get_syntax().version = 12\n";
-    file.close();
+    atf::utils::create_file("config", "syntax('kyuafile', 12)\n");
 
     ATF_REQUIRE_THROW_RE(user_files::load_error, "Unexpected file version '12'",
+                         user_files::kyuafile::load(fs::path("config"), none));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__test_suite__twice);
+ATF_TEST_CASE_BODY(kyuafile__load__test_suite__twice)
+{
+    atf::utils::create_file(
+        "config",
+        "syntax('kyuafile', 1)\n"
+        "test_suite('foo')\n"
+        "test_suite('bar')\n");
+
+    ATF_REQUIRE_THROW_RE(user_files::load_error,
+                         "Can only call test_suite.* once",
                          user_files::kyuafile::load(fs::path("config"), none));
 }
 
@@ -558,13 +340,11 @@ ATF_TEST_CASE_BODY(kyuafile__load__missing_file)
 ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__missing_test_program);
 ATF_TEST_CASE_BODY(kyuafile__load__missing_test_program)
 {
-    {
-        std::ofstream file("config");
-        file << "syntax('kyuafile', 1)\n";
-        file << "atf_test_program{name='one', test_suite='first'}\n";
-        file << "atf_test_program{name='two', test_suite='first'}\n";
-        file.close();
-    }
+    atf::utils::create_file(
+        "config",
+        "syntax('kyuafile', 1)\n"
+        "atf_test_program{name='one', test_suite='first'}\n"
+        "atf_test_program{name='two', test_suite='first'}\n");
 
     atf::utils::create_file("one", "");
 
@@ -575,30 +355,18 @@ ATF_TEST_CASE_BODY(kyuafile__load__missing_test_program)
 
 ATF_INIT_TEST_CASES(tcs)
 {
-    ATF_ADD_TEST_CASE(tcs, get_test_program__atf__ok);
-    ATF_ADD_TEST_CASE(tcs, get_test_program__atf__bad_name);
-    ATF_ADD_TEST_CASE(tcs, get_test_program__atf__bad_test_suite);
-    ATF_ADD_TEST_CASE(tcs, get_test_program__atf__missing_binary);
-    ATF_ADD_TEST_CASE(tcs, get_test_program__plain__ok);
-    ATF_ADD_TEST_CASE(tcs, get_test_program__plain__bad_name);
-    ATF_ADD_TEST_CASE(tcs, get_test_program__plain__bad_test_suite);
-    ATF_ADD_TEST_CASE(tcs, get_test_program__plain__missing_binary);
-    ATF_ADD_TEST_CASE(tcs, get_test_program__missing_interface);
-    ATF_ADD_TEST_CASE(tcs, get_test_program__unsupported_interface);
-
-    ATF_ADD_TEST_CASE(tcs, get_test_programs__empty);
-    ATF_ADD_TEST_CASE(tcs, get_test_programs__some);
-    ATF_ADD_TEST_CASE(tcs, get_test_programs__invalid);
-    ATF_ADD_TEST_CASE(tcs, get_test_programs__bad_value);
-
-    ATF_ADD_TEST_CASE(tcs, kyuafile__load__integration);
+    ATF_ADD_TEST_CASE(tcs, kyuafile__load__empty);
+    ATF_ADD_TEST_CASE(tcs, kyuafile__load__some_programs);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__current_directory);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__other_directory);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__build_directory);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__test_program_not_basename);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__lua_error);
+    ATF_ADD_TEST_CASE(tcs, kyuafile__load__syntax__not_called);
+    ATF_ADD_TEST_CASE(tcs, kyuafile__load__syntax__twice);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__bad_syntax__format);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__bad_syntax__version);
+    ATF_ADD_TEST_CASE(tcs, kyuafile__load__test_suite__twice);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__missing_file);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__missing_test_program);
 }

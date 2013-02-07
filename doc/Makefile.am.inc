@@ -31,7 +31,6 @@ BUILD_MANPAGE = \
 	sed -e 's,__CONFDIR__,$(kyua_confdir),g' \
 	    -e 's,__DOCDIR__,$(docdir),g' \
 	    -e 's,__EGDIR__,$(examplesdir),g' \
-	    -e 's,__LUADIR__,$(luadir),g' \
 	    -e 's,__MISCDIR__,$(miscdir),g' \
 	    -e 's,__PACKAGE__,$(PACKAGE_TARNAME),g' \
 	    -e 's,__STOREDIR__,$(storedir),g' \

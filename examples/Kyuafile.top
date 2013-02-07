@@ -40,7 +40,7 @@
 
 syntax("kyuafile", 1)
 
-local directory = fs.dirname(init.get_filename())
+local directory = fs.dirname(current_kyuafile())
 for file in fs.files(directory) do
     if file == "." or file == ".." then
         -- Skip these special entries.

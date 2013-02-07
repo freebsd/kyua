@@ -45,17 +45,6 @@ namespace engine {
 namespace user_files {
 
 
-namespace detail {
-
-
-test_program_ptr get_test_program(lutok::state&, const utils::fs::path&);
-test_programs_vector get_test_programs(lutok::state&, const std::string&,
-                                       const utils::fs::path&);
-
-
-}  // namespace detail
-
-
 /// Representation of the configuration of a test suite.
 ///
 /// Test suites are collections of related test programs.  They are described by
@@ -86,6 +75,8 @@ class kyuafile {
 public:
     explicit kyuafile(const utils::fs::path&, const utils::fs::path&,
                       const test_programs_vector&);
+    ~kyuafile(void);
+
     static kyuafile load(const utils::fs::path&,
                          const utils::optional< utils::fs::path >);
 
