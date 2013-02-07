@@ -46,6 +46,14 @@
   <li><a href="context.html">Execution context</a></li>
 </ul>
 
+<h2>Metadata</h2>
+
+<ul>
+%loop metadata_var iter
+  <li><tt>%%metadata_var(iter)%% = %%metadata_value(iter)%%</tt></li>
+%endloop
+</ul>
+
 <h2>Standard output</h2>
 
 %if defined(stdout)

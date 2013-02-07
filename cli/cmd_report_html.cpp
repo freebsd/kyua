@@ -110,6 +110,27 @@ test_case_filename(const engine::test_case& test_case)
 }
 
 
+/// Adds a string to string map to the templates.
+///
+/// \param [in,out] templates The templates to add the map to.
+/// \param props The map to add to the templates.
+/// \param key_vector Name of the template vector that holds the keys.
+/// \param value_vector Name of the template vector that holds the values.
+static void
+add_map(text::templates_def& templates, const config::properties_map& props,
+        const std::string& key_vector, const std::string& value_vector)
+{
+    templates.add_vector(key_vector);
+    templates.add_vector(value_vector);
+
+    for (config::properties_map::const_iterator iter = props.begin();
+         iter != props.end(); ++iter) {
+        templates.add_to_vector(key_vector, (*iter).first);
+        templates.add_to_vector(value_vector, (*iter).second);
+    }
+}
+
+
 /// Generates an HTML report.
 class html_hooks : public scan_action::base_hooks {
     /// User interface object where to report progress.
@@ -237,13 +258,7 @@ public:
         text::templates_def templates = common_templates();
         templates.add_variable("action_id", F("%s") % action_id);
         templates.add_variable("cwd", context.cwd().str());
-        templates.add_vector("env_var");
-        templates.add_vector("env_var_value");
-        for (std::map< std::string, std::string >::const_iterator iter =
-                 context.env().begin(); iter != context.env().end(); ++iter) {
-            templates.add_to_vector("env_var", (*iter).first);
-            templates.add_to_vector("env_var_value", (*iter).second);
-        }
+        add_map(templates, context.env(), "env_var", "env_var_value");
         generate(templates, "context.html", "context.html");
     }
 
@@ -268,6 +283,9 @@ public:
                                test_program->absolute_path().str());
         templates.add_variable("result", cli::format_result(result));
         templates.add_variable("duration", cli::format_delta(iter.duration()));
+
+        add_map(templates, test_case.get_metadata().to_properties(),
+                "metadata_var", "metadata_value");
 
         {
             const std::string stdout_text = iter.stdout_contents();

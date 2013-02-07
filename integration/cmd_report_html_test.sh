@@ -45,10 +45,12 @@ syntax("kyuafile", 1)
 test_suite("integration")
 atf_test_program{name="simple_all_pass"}
 atf_test_program{name="simple_some_fail"}
+atf_test_program{name="metadata"}
 EOF
 
     utils_cp_helper simple_all_pass .
     utils_cp_helper simple_some_fail .
+    utils_cp_helper metadata .
     test -d ../.kyua || mkdir ../.kyua
     kyua=$(which kyua)
     atf_check -s exit:1 -o save:stdout -e empty env \
@@ -109,14 +111,22 @@ default_behavior__ok_body() {
     run_tests "mock1"
 
     atf_check -s exit:0 -o ignore -e empty kyua report-html
-    test -f html/index.html || atf_fail "Missing index.html"
-    test -f html/context.html || atf_fail "Missing context.html"
-    test -f html/simple_all_pass_pass.html || atf_fail "Missing test file"
-    test -f html/simple_all_pass_skip.html || atf_fail "Missing test file"
-    test -f html/simple_some_fail_fail.html || atf_fail "Missing test file"
-    test -f html/simple_some_fail_pass.html || atf_fail "Missing test file"
+    for f in \
+        html/index.html \
+        html/context.html \
+        html/simple_all_pass_pass.html \
+        html/simple_all_pass_skip.html \
+        html/simple_some_fail_fail.html \
+        html/simple_some_fail_pass.html \
+        html/metadata_no_properties.html \
+        html/metadata_one_property.html \
+        html/metadata_many_properties.html \
+        html/metadata_with_cleanup.html
+    do
+        test -f "${f}" || atf_fail "Missing ${f}"
+    done
 
-    grep "1 TESTS FAILING" html/index.html || atf_fail "Bad result"
+    atf_check -o match:"2 TESTS FAILING" cat html/index.html
 
     check_in_file html/simple_all_pass_pass.html \
         "This is the stdout of pass" "This is the stderr of pass"
@@ -146,6 +156,16 @@ default_behavior__ok_body() {
         "This is the stdout of pass" "This is the stderr of pass" \
         "This is the stdout of skip" "This is the stderr of skip" \
         "This is the stdout of fail" "This is the stderr of fail"
+
+    check_in_file html/metadata_one_property.html \
+        "description = Does nothing but has one metadata property"
+    check_not_in_file html/metadata_one_property.html \
+        "allowed_architectures = some-architecture"
+
+    check_in_file html/metadata_many_properties.html \
+        "allowed_architectures = some-architecture"
+    check_not_in_file html/metadata_many_properties.html \
+        "description = Does nothing but has one metadata property"
 }
 
 
