@@ -34,12 +34,16 @@ libengine_a_CPPFLAGS  = $(UTILS_CFLAGS)
 libengine_a_CPPFLAGS += -DKYUA_TESTERSDIR="\"$(testersdir)\""
 libengine_a_SOURCES  = engine/action.cpp
 libengine_a_SOURCES += engine/action.hpp
+libengine_a_SOURCES += engine/config.cpp
+libengine_a_SOURCES += engine/config.hpp
 libengine_a_SOURCES += engine/context.cpp
 libengine_a_SOURCES += engine/context.hpp
 libengine_a_SOURCES += engine/exceptions.cpp
 libengine_a_SOURCES += engine/exceptions.hpp
 libengine_a_SOURCES += engine/filters.cpp
 libengine_a_SOURCES += engine/filters.hpp
+libengine_a_SOURCES += engine/kyuafile.cpp
+libengine_a_SOURCES += engine/kyuafile.hpp
 libengine_a_SOURCES += engine/metadata.cpp
 libengine_a_SOURCES += engine/metadata.hpp
 libengine_a_SOURCES += engine/test_case.cpp
@@ -62,6 +66,11 @@ engine_action_test_SOURCES = engine/action_test.cpp
 engine_action_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 engine_action_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
+tests_engine_PROGRAMS += engine/config_test
+engine_config_test_SOURCES = engine/config_test.cpp
+engine_config_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+engine_config_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) $(ATF_CXX_LIBS)
+
 tests_engine_PROGRAMS += engine/context_test
 engine_context_test_SOURCES = engine/context_test.cpp
 engine_context_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
@@ -80,6 +89,12 @@ engine_filters_test_SOURCES = engine/filters_test.cpp
 engine_filters_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
                                $(ATF_CXX_CFLAGS)
 engine_filters_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) $(ATF_CXX_LIBS)
+
+tests_engine_PROGRAMS += engine/kyuafile_test
+engine_kyuafile_test_SOURCES = engine/kyuafile_test.cpp
+engine_kyuafile_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
+                                $(ATF_CXX_CFLAGS)
+engine_kyuafile_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_engine_PROGRAMS += engine/metadata_test
 engine_metadata_test_SOURCES = engine/metadata_test.cpp
@@ -127,4 +142,3 @@ engine_testers_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) $(ATF_CXX_LIBS)
 endif
 
 include engine/drivers/Makefile.am.inc
-include engine/user_files/Makefile.am.inc

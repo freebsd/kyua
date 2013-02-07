@@ -31,10 +31,10 @@
 #include <stdexcept>
 
 #include "engine/filters.hpp"
+#include "engine/kyuafile.hpp"
 #include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
 #include "engine/test_result.hpp"
-#include "engine/user_files/kyuafile.hpp"
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/auto_cleaners.hpp"
@@ -45,7 +45,6 @@ namespace config = utils::config;
 namespace fs = utils::fs;
 namespace debug_test = engine::drivers::debug_test;
 namespace signals = utils::signals;
-namespace user_files = engine::user_files;
 
 using utils::none;
 using utils::optional;
@@ -65,7 +64,7 @@ namespace {
 ///     case or if the test case cannot be found.
 static const engine::test_case_ptr
 find_test_case(const engine::test_filter& filter,
-               const user_files::kyuafile& kyuafile)
+               const engine::kyuafile& kyuafile)
 {
     engine::test_case_ptr found;;
 
@@ -124,7 +123,7 @@ debug_test::drive(const fs::path& kyuafile_path,
                   const fs::path& stdout_path,
                   const fs::path& stderr_path)
 {
-    const user_files::kyuafile kyuafile = user_files::kyuafile::load(
+    const engine::kyuafile kyuafile = engine::kyuafile::load(
         kyuafile_path, build_root);
     const engine::test_case_ptr test_case = find_test_case(filter, kyuafile);
     engine::test_case_hooks dummy_hooks;

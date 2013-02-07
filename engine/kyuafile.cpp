@@ -26,7 +26,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/user_files/kyuafile.hpp"
+#include "engine/kyuafile.hpp"
 
 #include <algorithm>
 #include <iterator>
@@ -37,9 +37,9 @@
 #include <lutok/stack_cleaner.hpp>
 #include <lutok/state.ipp>
 
+#include "engine/exceptions.hpp"
 #include "engine/test_program.hpp"
 #include "engine/testers.hpp"
-#include "engine/user_files/exceptions.hpp"
 #include "utils/datetime.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/lua_module.hpp"
@@ -51,7 +51,6 @@
 
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
-namespace user_files = engine::user_files;
 
 using utils::none;
 using utils::optional;
@@ -306,11 +305,11 @@ public:
             // not work because the helper functions above are executed within a
             // Lua context, and we lose their type when they are propagated out
             // of it.
-            throw user_files::load_error(load_path, e.what());
+            throw engine::load_error(load_path, e.what());
         }
 
         if (!_version)
-            throw user_files::load_error(load_path, "syntax() never called");
+            throw engine::load_error(load_path, "syntax() never called");
 
         return _test_programs;
     }
@@ -539,9 +538,9 @@ lua_test_suite(lutok::state& state)
 ///     general, this will be the same as source_root_.  If different, the
 ///     specified directory must follow the exact same layout of source_root_.
 /// \param tps_ Collection of test programs that belong to this test suite.
-user_files::kyuafile::kyuafile(const fs::path& source_root_,
-                               const fs::path& build_root_,
-                               const test_programs_vector& tps_) :
+engine::kyuafile::kyuafile(const fs::path& source_root_,
+                           const fs::path& build_root_,
+                           const test_programs_vector& tps_) :
     _source_root(source_root_),
     _build_root(build_root_),
     _test_programs(tps_)
@@ -549,7 +548,8 @@ user_files::kyuafile::kyuafile(const fs::path& source_root_,
 }
 
 
-user_files::kyuafile::~kyuafile(void)
+/// Destructor.
+engine::kyuafile::~kyuafile(void)
 {
 }
 
@@ -566,9 +566,9 @@ user_files::kyuafile::~kyuafile(void)
 ///
 /// \throw load_error If there is any problem loading the file.  This includes
 ///     file access errors and syntax errors.
-user_files::kyuafile
-user_files::kyuafile::load(const fs::path& file,
-                           const optional< fs::path > user_build_root)
+engine::kyuafile
+engine::kyuafile::load(const fs::path& file,
+                       const optional< fs::path > user_build_root)
 {
     const fs::path source_root_ = file.branch_path();
     const fs::path build_root_ = user_build_root ?
@@ -584,7 +584,7 @@ user_files::kyuafile::load(const fs::path& file,
 ///
 /// \return A path.
 const fs::path&
-user_files::kyuafile::source_root(void) const
+engine::kyuafile::source_root(void) const
 {
     return _source_root;
 }
@@ -594,7 +594,7 @@ user_files::kyuafile::source_root(void) const
 ///
 /// \return A path.
 const fs::path&
-user_files::kyuafile::build_root(void) const
+engine::kyuafile::build_root(void) const
 {
     return _build_root;
 }
@@ -604,7 +604,7 @@ user_files::kyuafile::build_root(void) const
 ///
 /// \return Collection of test program executable names.
 const engine::test_programs_vector&
-user_files::kyuafile::test_programs(void) const
+engine::kyuafile::test_programs(void) const
 {
     return _test_programs;
 }

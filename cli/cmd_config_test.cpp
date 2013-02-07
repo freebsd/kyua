@@ -33,7 +33,7 @@
 #include <atf-c++.hpp>
 
 #include "cli/common.ipp"
-#include "engine/user_files/config.hpp"
+#include "engine/config.hpp"
 #include "utils/cmdline/globals.hpp"
 #include "utils/cmdline/ui_mock.hpp"
 #include "utils/config/tree.ipp"
@@ -41,7 +41,6 @@
 
 namespace cmdline = utils::cmdline;
 namespace config = utils::config;
-namespace user_files = engine::user_files;
 
 using cli::cmd_config;
 using utils::none;
@@ -59,7 +58,7 @@ namespace {
 static config::tree
 fake_config(void)
 {
-    config::tree user_config = user_files::default_config();
+    config::tree user_config = engine::default_config();
     user_config.set_string("architecture", "the-architecture");
     user_config.set_string("platform", "the-platform");
     //user_config.set_string("unprivileged_user", "");

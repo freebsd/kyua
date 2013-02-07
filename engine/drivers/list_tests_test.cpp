@@ -43,13 +43,11 @@ extern "C" {
 #include "cli/common.ipp"
 #include "engine/exceptions.hpp"
 #include "engine/filters.hpp"
-#include "engine/user_files/kyuafile.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/optional.ipp"
 
 namespace list_tests = engine::drivers::list_tests;
-namespace user_files = engine::user_files;
 namespace fs = utils::fs;
 
 using utils::none;

@@ -30,6 +30,7 @@
 
 #include "utils/format/macros.hpp"
 
+namespace fs = utils::fs;
 
 /// Constructs a new error with a plain-text message.
 ///
@@ -57,6 +58,25 @@ engine::format_error::format_error(const std::string& message) :
 
 /// Destructor for the error.
 engine::format_error::~format_error(void) throw()
+{
+}
+
+
+/// Constructs a new load_error.
+///
+/// \param file_ The file in which the error was encountered.
+/// \param reason_ Description of the load problem.
+engine::load_error::load_error(const fs::path& file_,
+                               const std::string& reason_) :
+    error(F("Load of '%s' failed: %s") % file_ % reason_),
+    file(file_),
+    reason(reason_)
+{
+}
+
+
+/// Destructor for the error.
+engine::load_error::~load_error(void) throw()
 {
 }
 

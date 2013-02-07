@@ -1,7 +1,0 @@
-syntax(1)
-
-test_suite("kyua")
-
-atf_test_program{name="config_test"}
-atf_test_program{name="exceptions_test"}
-atf_test_program{name="kyuafile_test"}

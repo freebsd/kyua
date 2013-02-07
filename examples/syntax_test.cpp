@@ -32,8 +32,8 @@ extern "C" {
 
 #include <atf-c++.hpp>
 
-#include "engine/user_files/config.hpp"
-#include "engine/user_files/kyuafile.hpp"
+#include "engine/config.hpp"
+#include "engine/kyuafile.hpp"
 #include "utils/config/tree.ipp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
@@ -43,7 +43,6 @@ extern "C" {
 namespace config = utils::config;
 namespace fs = utils::fs;
 namespace passwd = utils::passwd;
-namespace user_files = engine::user_files;
 
 using utils::none;
 
@@ -85,7 +84,7 @@ ATF_TEST_CASE_BODY(kyua_conf)
     users.push_back(passwd::user("nobody", 1, 2));
     passwd::set_mock_users_for_testing(users);
 
-    const config::tree user_config = user_files::load_config(
+    const config::tree user_config = engine::load_config(
         example_file(this, "kyua.conf"));
 
     ATF_REQUIRE_EQ(
@@ -97,7 +96,7 @@ ATF_TEST_CASE_BODY(kyua_conf)
 
     ATF_REQUIRE_EQ(
         "nobody",
-        user_config.lookup< user_files::user_node >("unprivileged_user").name);
+        user_config.lookup< engine::user_node >("unprivileged_user").name);
 
     config::properties_map exp_test_suites;
     exp_test_suites["test_suites.FreeBSD.iterations"] = "1000";
@@ -123,7 +122,7 @@ ATF_TEST_CASE_BODY(kyuafile_top__no_matches)
     atf::utils::create_file("root/file", "");
     fs::mkdir(fs::path("root/subdir"), 0755);
 
-    const user_files::kyuafile kyuafile = user_files::kyuafile::load(
+    const engine::kyuafile kyuafile = engine::kyuafile::load(
         fs::path("root/Kyuafile"), none);
     ATF_REQUIRE_EQ(fs::path("root"), kyuafile.source_root());
     ATF_REQUIRE_EQ(fs::path("root"), kyuafile.build_root());
@@ -157,7 +156,7 @@ ATF_TEST_CASE_BODY(kyuafile_top__some_matches)
     atf::utils::create_file("root/subdir2/c", "");
     atf::utils::create_file("root/subdir2/Kyuafile.etc", "invalid");
 
-    const user_files::kyuafile kyuafile = user_files::kyuafile::load(
+    const engine::kyuafile kyuafile = engine::kyuafile::load(
         fs::path("root/Kyuafile"), none);
     ATF_REQUIRE_EQ(fs::path("root"), kyuafile.source_root());
     ATF_REQUIRE_EQ(fs::path("root"), kyuafile.build_root());

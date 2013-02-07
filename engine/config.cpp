@@ -26,7 +26,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/user_files/config.hpp"
+#include "engine/config.hpp"
 
 #if defined(HAVE_CONFIG_H)
 #   include "config.h"
@@ -34,7 +34,7 @@
 
 #include <stdexcept>
 
-#include "engine/user_files/exceptions.hpp"
+#include "engine/exceptions.hpp"
 #include "utils/config/exceptions.hpp"
 #include "utils/config/parser.hpp"
 #include "utils/config/tree.ipp"
@@ -46,7 +46,6 @@ namespace config = utils::config;
 namespace fs = utils::fs;
 namespace passwd = utils::passwd;
 namespace text = utils::text;
-namespace user_files = engine::user_files;
 
 
 namespace {
@@ -61,7 +60,7 @@ init_tree(config::tree& tree)
 {
     tree.define< config::string_node >("architecture");
     tree.define< config::string_node >("platform");
-    tree.define< user_files::user_node >("unprivileged_user");
+    tree.define< engine::user_node >("unprivileged_user");
     tree.define_dynamic("test_suites");
 }
 
@@ -124,7 +123,7 @@ public:
 ///
 /// \return A dynamically-allocated node.
 config::detail::base_node*
-user_files::user_node::deep_copy(void) const
+engine::user_node::deep_copy(void) const
 {
     std::auto_ptr< user_node > new_node(new user_node());
     new_node->_value = _value;
@@ -136,7 +135,7 @@ user_files::user_node::deep_copy(void) const
 ///
 /// \param state The Lua state onto which to push the value.
 void
-user_files::user_node::push_lua(lutok::state& state) const
+engine::user_node::push_lua(lutok::state& state) const
 {
     state.push_string(value().name);
 }
@@ -150,7 +149,7 @@ user_files::user_node::push_lua(lutok::state& state) const
 /// \throw value_error If the value in state(value_index) cannot be
 ///     processed by this node.
 void
-user_files::user_node::set_lua(lutok::state& state, const int value_index)
+engine::user_node::set_lua(lutok::state& state, const int value_index)
 {
     if (state.is_number(value_index)) {
         config::typed_leaf_node< passwd::user >::set(
@@ -164,7 +163,7 @@ user_files::user_node::set_lua(lutok::state& state, const int value_index)
 
 
 void
-user_files::user_node::set_string(const std::string& raw_value)
+engine::user_node::set_string(const std::string& raw_value)
 {
     try {
         config::typed_leaf_node< passwd::user >::set(
@@ -174,22 +173,21 @@ user_files::user_node::set_string(const std::string& raw_value)
         try {
             uid = text::to_type< int >(raw_value);
         } catch (const text::value_error& e2) {
-            throw user_files::error(F("Cannot find user with name '%s'") %
-                                    raw_value);
+            throw error(F("Cannot find user with name '%s'") % raw_value);
         }
 
         try {
             config::typed_leaf_node< passwd::user >::set(
                 passwd::find_user_by_uid(uid));
         } catch (const std::runtime_error& e2) {
-            throw user_files::error(F("Cannot find user with UID %s") % uid);
+            throw error(F("Cannot find user with UID %s") % uid);
         }
     }
 }
 
 
 std::string
-user_files::user_node::to_string(void) const
+engine::user_node::to_string(void) const
 {
     return config::typed_leaf_node< passwd::user >::value().name;
 }
@@ -197,7 +195,7 @@ user_files::user_node::to_string(void) const
 
 /// Constructs a config with the built-in settings.
 config::tree
-user_files::default_config(void)
+engine::default_config(void)
 {
     config::tree tree;
     init_tree(tree);
@@ -208,7 +206,7 @@ user_files::default_config(void)
 
 /// Constructs a config with the built-in settings.
 config::tree
-user_files::empty_config(void)
+engine::empty_config(void)
 {
     config::tree tree;
     init_tree(tree);
@@ -225,7 +223,7 @@ user_files::empty_config(void)
 /// \throw load_error If there is any problem loading the file.  This includes
 ///     file access errors and syntax errors.
 config::tree
-user_files::load_config(const utils::fs::path& file)
+engine::load_config(const utils::fs::path& file)
 {
     config::tree tree;
     try {

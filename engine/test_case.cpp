@@ -34,11 +34,11 @@ extern "C" {
 
 #include <fstream>
 
+#include "engine/config.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/test_program.hpp"
 #include "engine/test_result.hpp"
 #include "engine/testers.hpp"
-#include "engine/user_files/config.hpp"
 #include "utils/config/tree.ipp"
 #include "utils/datetime.hpp"
 #include "utils/defs.hpp"
@@ -56,7 +56,6 @@ namespace fs = utils::fs;
 namespace logging = utils::logging;
 namespace passwd = utils::passwd;
 namespace text = utils::text;
-namespace user_files = engine::user_files;
 
 using utils::none;
 using utils::optional;
@@ -88,7 +87,7 @@ generate_tester_config(const engine::metadata& metadata,
 
     if (user_config.is_set("unprivileged_user")) {
         const passwd::user& user =
-            user_config.lookup< user_files::user_node >("unprivileged_user");
+            user_config.lookup< engine::user_node >("unprivileged_user");
         props["unprivileged-user"] = user.name;
     }
 
@@ -118,7 +117,7 @@ create_tester(const std::string& interface_name,
     optional< passwd::user > user;
     if (user_config.is_set("unprivileged_user") &&
         metadata.required_user() == "unprivileged")
-        user = user_config.lookup< user_files::user_node >("unprivileged_user");
+        user = user_config.lookup< engine::user_node >("unprivileged_user");
 
     return engine::tester(interface_name, user,
                           utils::make_optional(metadata.timeout()));

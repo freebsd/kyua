@@ -26,7 +26,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/user_files/kyuafile.hpp"
+#include "engine/kyuafile.hpp"
 
 #include <stdexcept>
 #include <typeinfo>
@@ -36,14 +36,13 @@
 #include <lutok/state.ipp>
 #include <lutok/test_utils.hpp>
 
+#include "engine/exceptions.hpp"
 #include "engine/test_program.hpp"
-#include "engine/user_files/exceptions.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/optional.ipp"
 
 namespace fs = utils::fs;
-namespace user_files = engine::user_files;
 
 using utils::none;
 
@@ -53,7 +52,7 @@ ATF_TEST_CASE_BODY(kyuafile__load__empty)
 {
     atf::utils::create_file("config", "syntax(1)\n");
 
-    const user_files::kyuafile suite = user_files::kyuafile::load(
+    const engine::kyuafile suite = engine::kyuafile::load(
         fs::path("config"), none);
     ATF_REQUIRE_EQ(fs::path("."), suite.source_root());
     ATF_REQUIRE_EQ(fs::path("."), suite.build_root());
@@ -94,7 +93,7 @@ ATF_TEST_CASE_BODY(kyuafile__load__some_programs)
     atf::utils::create_file("dir/1st", "");
     atf::utils::create_file("dir/subdir/5th", "");
 
-    const user_files::kyuafile suite = user_files::kyuafile::load(
+    const engine::kyuafile suite = engine::kyuafile::load(
         fs::path("config"), none);
     ATF_REQUIRE_EQ(fs::path("."), suite.source_root());
     ATF_REQUIRE_EQ(fs::path("."), suite.build_root());
@@ -146,7 +145,7 @@ ATF_TEST_CASE_BODY(kyuafile__load__current_directory)
     atf::utils::create_file("one", "");
     atf::utils::create_file("two", "");
 
-    const user_files::kyuafile suite = user_files::kyuafile::load(
+    const engine::kyuafile suite = engine::kyuafile::load(
         fs::path("config"), none);
     ATF_REQUIRE_EQ(fs::path("."), suite.source_root());
     ATF_REQUIRE_EQ(fs::path("."), suite.build_root());
@@ -182,7 +181,7 @@ ATF_TEST_CASE_BODY(kyuafile__load__other_directory)
     atf::utils::create_file("root/dir/two", "");
     atf::utils::create_file("root/dir/three", "");
 
-    const user_files::kyuafile suite = user_files::kyuafile::load(
+    const engine::kyuafile suite = engine::kyuafile::load(
         fs::path("root/config"), none);
     ATF_REQUIRE_EQ(fs::path("root"), suite.source_root());
     ATF_REQUIRE_EQ(fs::path("root"), suite.build_root());
@@ -223,7 +222,7 @@ ATF_TEST_CASE_BODY(kyuafile__load__build_directory)
     atf::utils::create_file("builddir/dir/two", "");
     atf::utils::create_file("builddir/dir/three", "");
 
-    const user_files::kyuafile suite = user_files::kyuafile::load(
+    const engine::kyuafile suite = engine::kyuafile::load(
         fs::path("srcdir/config"), utils::make_optional(fs::path("builddir")));
     ATF_REQUIRE_EQ(fs::path("srcdir"), suite.source_root());
     ATF_REQUIRE_EQ(fs::path("builddir"), suite.build_root());
@@ -256,8 +255,8 @@ ATF_TEST_CASE_BODY(kyuafile__load__test_program_not_basename)
         "atf_test_program{name='./ls'}\n");
 
     atf::utils::create_file("one", "");
-    ATF_REQUIRE_THROW_RE(user_files::load_error, "./ls.*path components",
-                         user_files::kyuafile::load(fs::path("config"), none));
+    ATF_REQUIRE_THROW_RE(engine::load_error, "./ls.*path components",
+                         engine::kyuafile::load(fs::path("config"), none));
 }
 
 
@@ -266,7 +265,7 @@ ATF_TEST_CASE_BODY(kyuafile__load__lua_error)
 {
     atf::utils::create_file("config", "this syntax is invalid\n");
 
-    ATF_REQUIRE_THROW(user_files::load_error, user_files::kyuafile::load(
+    ATF_REQUIRE_THROW(engine::load_error, engine::kyuafile::load(
                           fs::path("config"), none));
 }
 
@@ -276,8 +275,8 @@ ATF_TEST_CASE_BODY(kyuafile__load__syntax__not_called)
 {
     atf::utils::create_file("config", "");
 
-    ATF_REQUIRE_THROW_RE(user_files::load_error, "syntax.* never called",
-                         user_files::kyuafile::load(fs::path("config"), none));
+    ATF_REQUIRE_THROW_RE(engine::load_error, "syntax.* never called",
+                         engine::kyuafile::load(fs::path("config"), none));
 }
 
 
@@ -285,7 +284,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__syntax__deprecated_format);
 ATF_TEST_CASE_BODY(kyuafile__load__syntax__deprecated_format)
 {
     atf::utils::create_file("config", "syntax('invalid', 1)\n");
-    (void)user_files::kyuafile::load(fs::path("config"), none);
+    (void)engine::kyuafile::load(fs::path("config"), none);
 }
 
 
@@ -297,8 +296,8 @@ ATF_TEST_CASE_BODY(kyuafile__load__syntax__twice)
         "syntax(1)\n"
         "syntax(1)\n");
 
-    ATF_REQUIRE_THROW_RE(user_files::load_error, "Can only call syntax.* once",
-                         user_files::kyuafile::load(fs::path("config"), none));
+    ATF_REQUIRE_THROW_RE(engine::load_error, "Can only call syntax.* once",
+                         engine::kyuafile::load(fs::path("config"), none));
 }
 
 
@@ -307,8 +306,8 @@ ATF_TEST_CASE_BODY(kyuafile__load__syntax__bad_version)
 {
     atf::utils::create_file("config", "syntax(12)\n");
 
-    ATF_REQUIRE_THROW_RE(user_files::load_error, "Unexpected file version '12'",
-                         user_files::kyuafile::load(fs::path("config"), none));
+    ATF_REQUIRE_THROW_RE(engine::load_error, "Unexpected file version '12'",
+                         engine::kyuafile::load(fs::path("config"), none));
 }
 
 
@@ -321,17 +320,16 @@ ATF_TEST_CASE_BODY(kyuafile__load__test_suite__twice)
         "test_suite('foo')\n"
         "test_suite('bar')\n");
 
-    ATF_REQUIRE_THROW_RE(user_files::load_error,
-                         "Can only call test_suite.* once",
-                         user_files::kyuafile::load(fs::path("config"), none));
+    ATF_REQUIRE_THROW_RE(engine::load_error, "Can only call test_suite.* once",
+                         engine::kyuafile::load(fs::path("config"), none));
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__missing_file);
 ATF_TEST_CASE_BODY(kyuafile__load__missing_file)
 {
-    ATF_REQUIRE_THROW_RE(user_files::load_error, "Load of 'missing' failed",
-                         user_files::kyuafile::load(fs::path("missing"), none));
+    ATF_REQUIRE_THROW_RE(engine::load_error, "Load of 'missing' failed",
+                         engine::kyuafile::load(fs::path("missing"), none));
 }
 
 
@@ -346,8 +344,8 @@ ATF_TEST_CASE_BODY(kyuafile__load__missing_test_program)
 
     atf::utils::create_file("one", "");
 
-    ATF_REQUIRE_THROW_RE(user_files::load_error, "Non-existent.*'two'",
-                         user_files::kyuafile::load(fs::path("config"), none));
+    ATF_REQUIRE_THROW_RE(engine::load_error, "Non-existent.*'two'",
+                         engine::kyuafile::load(fs::path("config"), none));
 }
 
 

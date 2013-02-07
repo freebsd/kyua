@@ -31,9 +31,9 @@
 #include "engine/action.hpp"
 #include "engine/context.hpp"
 #include "engine/filters.hpp"
+#include "engine/kyuafile.hpp"
 #include "engine/test_program.hpp"
 #include "engine/test_result.hpp"
-#include "engine/user_files/kyuafile.hpp"
 #include "store/backend.hpp"
 #include "store/transaction.hpp"
 #include "utils/datetime.hpp"
@@ -49,7 +49,6 @@ namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace run_tests = engine::drivers::run_tests;
 namespace signals = utils::signals;
-namespace user_files = engine::user_files;
 
 using utils::optional;
 
@@ -172,7 +171,7 @@ run_tests::drive(const fs::path& kyuafile_path,
                  const config::tree& user_config,
                  base_hooks& hooks)
 {
-    const user_files::kyuafile kyuafile = user_files::kyuafile::load(
+    const engine::kyuafile kyuafile = engine::kyuafile::load(
         kyuafile_path, build_root);
     filters_state filters(raw_filters);
     store::backend db = store::backend::open_rw(store_path);

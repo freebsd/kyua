@@ -35,7 +35,7 @@
 #include <atf-c++.hpp>
 
 #include "cli/common.ipp"
-#include "engine/user_files/config.hpp"
+#include "engine/config.hpp"
 #include "utils/cmdline/commands_map.ipp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/globals.hpp"
@@ -47,7 +47,6 @@
 
 namespace cmdline = utils::cmdline;
 namespace config = utils::config;
-namespace user_files = engine::user_files;
 
 using cli::cmd_help;
 
@@ -160,8 +159,7 @@ global_test(const cmdline::options_vector& general_options,
     args.push_back("help");
 
     cmd_help cmd(&general_options, &mock_commands);
-    ATF_REQUIRE_EQ(EXIT_SUCCESS,
-                   cmd.main(&ui, args, user_files::default_config()));
+    ATF_REQUIRE_EQ(EXIT_SUCCESS, cmd.main(&ui, args, engine::default_config()));
 
     std::vector< std::string > expected;
 
@@ -239,8 +237,7 @@ ATF_TEST_CASE_BODY(subcommand__simple)
 
     cmd_help cmd(&general_options, &mock_commands);
     cmdline::ui_mock ui;
-    ATF_REQUIRE_EQ(EXIT_SUCCESS,
-                   cmd.main(&ui, args, user_files::default_config()));
+    ATF_REQUIRE_EQ(EXIT_SUCCESS, cmd.main(&ui, args, engine::default_config()));
     ATF_REQUIRE(atf::utils::grep_collection("^Usage: progname \\[general_options\\] "
                                    "mock_simple$", ui.out_log()));
     ATF_REQUIRE(!atf::utils::grep_collection("Available.*options", ui.out_log()));
@@ -269,8 +266,7 @@ ATF_TEST_CASE_BODY(subcommand__complex)
 
     cmd_help cmd(&general_options, &mock_commands);
     cmdline::ui_mock ui;
-    ATF_REQUIRE_EQ(EXIT_SUCCESS,
-                   cmd.main(&ui, args, user_files::default_config()));
+    ATF_REQUIRE_EQ(EXIT_SUCCESS, cmd.main(&ui, args, engine::default_config()));
     ATF_REQUIRE(atf::utils::grep_collection(
         "^Usage: progname \\[general_options\\] mock_complex "
         "\\[command_options\\] \\[arg1 .. argN\\]$", ui.out_log()));
@@ -310,7 +306,7 @@ ATF_TEST_CASE_BODY(subcommand__unknown)
     cmd_help cmd(&general_options, &mock_commands);
     cmdline::ui_mock ui;
     ATF_REQUIRE_THROW_RE(cmdline::usage_error, "command foobar.*not exist",
-                         cmd.main(&ui, args, user_files::default_config()));
+                         cmd.main(&ui, args, engine::default_config()));
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE(ui.err_log().empty());
 }
@@ -332,7 +328,7 @@ ATF_TEST_CASE_BODY(invalid_args)
     cmd_help cmd(&general_options, &mock_commands);
     cmdline::ui_mock ui;
     ATF_REQUIRE_THROW_RE(cmdline::usage_error, "Too many arguments",
-                         cmd.main(&ui, args, user_files::default_config()));
+                         cmd.main(&ui, args, engine::default_config()));
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE(ui.err_log().empty());
 }

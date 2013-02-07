@@ -1,4 +1,4 @@
-// Copyright 2011 Google Inc.
+// Copyright 2010 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,43 +26,37 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/user_files/exceptions.hpp"
+/// \file engine/config.hpp
+/// Test suite configuration parsing and representation.
 
-#include "utils/format/macros.hpp"
+#if !defined(ENGINE_CONFIG_HPP)
+#define ENGINE_CONFIG_HPP
 
-namespace fs = utils::fs;
-namespace user_files = engine::user_files;
+#include "utils/config/tree.hpp"
+#include "utils/fs/path.hpp"
+#include "utils/passwd.hpp"
 
-
-/// Constructs a new error with a plain-text message.
-///
-/// \param message The plain-text error message.
-user_files::error::error(const std::string& message) :
-    engine::error(message)
-{
-}
+namespace engine {
 
 
-/// Destructor for the error.
-user_files::error::~error(void) throw()
-{
-}
+/// Tree node to hold a system user identifier.
+class user_node : public utils::config::typed_leaf_node< utils::passwd::user > {
+public:
+    virtual base_node* deep_copy(void) const;
+
+    void push_lua(lutok::state&) const;
+    void set_lua(lutok::state&, const int);
+
+    void set_string(const std::string&);
+    std::string to_string(void) const;
+};
 
 
-/// Constructs a new load_error.
-///
-/// \param file_ The file in which the error was encountered.
-/// \param reason_ Description of the load problem.
-user_files::load_error::load_error(const fs::path& file_,
-                                   const std::string& reason_) :
-    error(F("Load of '%s' failed: %s") % file_ % reason_),
-    file(file_),
-    reason(reason_)
-{
-}
+utils::config::tree default_config(void);
+utils::config::tree empty_config(void);
+utils::config::tree load_config(const utils::fs::path&);
 
 
-/// Destructor for the error.
-user_files::load_error::~load_error(void) throw()
-{
-}
+}  // namespace engine
+
+#endif  // !defined(ENGINE_CONFIG_HPP)

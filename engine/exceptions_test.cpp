@@ -32,6 +32,8 @@
 
 #include <atf-c++.hpp>
 
+namespace fs = utils::fs;
+
 
 ATF_TEST_CASE_WITHOUT_HEAD(error);
 ATF_TEST_CASE_BODY(error)
@@ -49,6 +51,16 @@ ATF_TEST_CASE_BODY(format_error)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(load_error);
+ATF_TEST_CASE_BODY(load_error)
+{
+    const engine::load_error e(fs::path("/my/file"), "foo");
+    ATF_REQUIRE_EQ(fs::path("/my/file"), e.file);
+    ATF_REQUIRE_EQ("foo", e.reason);
+    ATF_REQUIRE(std::strcmp("Load of '/my/file' failed: foo", e.what()) == 0);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(not_found_error);
 ATF_TEST_CASE_BODY(not_found_error)
 {
@@ -61,5 +73,6 @@ ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, error);
     ATF_ADD_TEST_CASE(tcs, format_error);
+    ATF_ADD_TEST_CASE(tcs, load_error);
     ATF_ADD_TEST_CASE(tcs, not_found_error);
 }

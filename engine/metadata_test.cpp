@@ -32,7 +32,7 @@
 
 #include <atf-c++.hpp>
 
-#include "engine/user_files/config.hpp"
+#include "engine/config.hpp"
 #include "utils/config/tree.ipp"
 #include "utils/datetime.hpp"
 #include "utils/env.hpp"
@@ -47,7 +47,6 @@ namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace passwd = utils::passwd;
 namespace units = utils::units;
-namespace user_files = engine::user_files;
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(defaults);
@@ -349,7 +348,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(check_reqs__none);
 ATF_TEST_CASE_BODY(check_reqs__none)
 {
     const engine::metadata md = engine::metadata_builder().build();
-    ATF_REQUIRE(engine::check_reqs(md, user_files::empty_config(), "").empty());
+    ATF_REQUIRE(engine::check_reqs(md, engine::empty_config(), "").empty());
 }
 
 
@@ -360,7 +359,7 @@ ATF_TEST_CASE_BODY(check_reqs__allowed_architectures__one_ok)
         .add_allowed_architecture("x86_64")
         .build();
 
-    config::tree user_config = user_files::default_config();
+    config::tree user_config = engine::default_config();
     user_config.set_string("architecture", "x86_64");
     user_config.set_string("platform", "");
     ATF_REQUIRE(engine::check_reqs(md, user_config, "").empty());
@@ -374,7 +373,7 @@ ATF_TEST_CASE_BODY(check_reqs__allowed_architectures__one_fail)
         .add_allowed_architecture("x86_64")
         .build();
 
-    config::tree user_config = user_files::default_config();
+    config::tree user_config = engine::default_config();
     user_config.set_string("architecture", "i386");
     user_config.set_string("platform", "");
     ATF_REQUIRE_MATCH("Current architecture 'i386' not supported",
@@ -391,7 +390,7 @@ ATF_TEST_CASE_BODY(check_reqs__allowed_architectures__many_ok)
         .add_allowed_architecture("powerpc")
         .build();
 
-    config::tree user_config = user_files::default_config();
+    config::tree user_config = engine::default_config();
     user_config.set_string("architecture", "i386");
     user_config.set_string("platform", "");
     ATF_REQUIRE(engine::check_reqs(md, user_config, "").empty());
@@ -407,7 +406,7 @@ ATF_TEST_CASE_BODY(check_reqs__allowed_architectures__many_fail)
         .add_allowed_architecture("powerpc")
         .build();
 
-    config::tree user_config = user_files::default_config();
+    config::tree user_config = engine::default_config();
     user_config.set_string("architecture", "arm");
     user_config.set_string("platform", "");
     ATF_REQUIRE_MATCH("Current architecture 'arm' not supported",
@@ -422,7 +421,7 @@ ATF_TEST_CASE_BODY(check_reqs__allowed_platforms__one_ok)
         .add_allowed_platform("amd64")
         .build();
 
-    config::tree user_config = user_files::default_config();
+    config::tree user_config = engine::default_config();
     user_config.set_string("architecture", "");
     user_config.set_string("platform", "amd64");
     ATF_REQUIRE(engine::check_reqs(md, user_config, "").empty());
@@ -436,7 +435,7 @@ ATF_TEST_CASE_BODY(check_reqs__allowed_platforms__one_fail)
         .add_allowed_platform("amd64")
         .build();
 
-    config::tree user_config = user_files::default_config();
+    config::tree user_config = engine::default_config();
     user_config.set_string("architecture", "");
     user_config.set_string("platform", "i386");
     ATF_REQUIRE_MATCH("Current platform 'i386' not supported",
@@ -453,7 +452,7 @@ ATF_TEST_CASE_BODY(check_reqs__allowed_platforms__many_ok)
         .add_allowed_platform("macppc")
         .build();
 
-    config::tree user_config = user_files::default_config();
+    config::tree user_config = engine::default_config();
     user_config.set_string("architecture", "");
     user_config.set_string("platform", "i386");
     ATF_REQUIRE(engine::check_reqs(md, user_config, "").empty());
@@ -469,7 +468,7 @@ ATF_TEST_CASE_BODY(check_reqs__allowed_platforms__many_fail)
         .add_allowed_platform("macppc")
         .build();
 
-    config::tree user_config = user_files::default_config();
+    config::tree user_config = engine::default_config();
     user_config.set_string("architecture", "");
     user_config.set_string("platform", "shark");
     ATF_REQUIRE_MATCH("Current platform 'shark' not supported",
@@ -484,7 +483,7 @@ ATF_TEST_CASE_BODY(check_reqs__required_configs__one_ok)
         .add_required_config("my-var")
         .build();
 
-    config::tree user_config = user_files::default_config();
+    config::tree user_config = engine::default_config();
     user_config.set_string("test_suites.suite.aaa", "value1");
     user_config.set_string("test_suites.suite.my-var", "value2");
     user_config.set_string("test_suites.suite.zzz", "value3");
@@ -499,7 +498,7 @@ ATF_TEST_CASE_BODY(check_reqs__required_configs__one_fail)
         .add_required_config("unprivileged_user")
         .build();
 
-    config::tree user_config = user_files::default_config();
+    config::tree user_config = engine::default_config();
     user_config.set_string("test_suites.suite.aaa", "value1");
     user_config.set_string("test_suites.suite.my-var", "value2");
     user_config.set_string("test_suites.suite.zzz", "value3");
@@ -518,7 +517,7 @@ ATF_TEST_CASE_BODY(check_reqs__required_configs__many_ok)
         .add_required_config("baz")
         .build();
 
-    config::tree user_config = user_files::default_config();
+    config::tree user_config = engine::default_config();
     user_config.set_string("test_suites.suite.aaa", "value1");
     user_config.set_string("test_suites.suite.foo", "value2");
     user_config.set_string("test_suites.suite.bar", "value3");
@@ -537,7 +536,7 @@ ATF_TEST_CASE_BODY(check_reqs__required_configs__many_fail)
         .add_required_config("baz")
         .build();
 
-    config::tree user_config = user_files::default_config();
+    config::tree user_config = engine::default_config();
     user_config.set_string("test_suites.suite.aaa", "value1");
     user_config.set_string("test_suites.suite.foo", "value2");
     user_config.set_string("test_suites.suite.zzz", "value3");
@@ -553,11 +552,11 @@ ATF_TEST_CASE_BODY(check_reqs__required_configs__special)
         .add_required_config("unprivileged-user")
         .build();
 
-    config::tree user_config = user_files::default_config();
+    config::tree user_config = engine::default_config();
     ATF_REQUIRE_MATCH("Required configuration property 'unprivileged-user' "
                       "not defined",
                       engine::check_reqs(md, user_config, ""));
-    user_config.set< user_files::user_node >(
+    user_config.set< engine::user_node >(
         "unprivileged_user", passwd::user("foo", 1, 2));
     ATF_REQUIRE(engine::check_reqs(md, user_config, "foo").empty());
 }
@@ -570,7 +569,7 @@ ATF_TEST_CASE_BODY(check_reqs__required_user__root__ok)
         .set_required_user("root")
         .build();
 
-    config::tree user_config = user_files::default_config();
+    config::tree user_config = engine::default_config();
     ATF_REQUIRE(!user_config.is_set("unprivileged_user"));
 
     passwd::set_current_user_for_testing(passwd::user("", 0, 1));
@@ -587,7 +586,7 @@ ATF_TEST_CASE_BODY(check_reqs__required_user__root__fail)
 
     passwd::set_current_user_for_testing(passwd::user("", 123, 1));
     ATF_REQUIRE_MATCH("Requires root privileges",
-                      engine::check_reqs(md, user_files::empty_config(), ""));
+                      engine::check_reqs(md, engine::empty_config(), ""));
 }
 
 
@@ -598,7 +597,7 @@ ATF_TEST_CASE_BODY(check_reqs__required_user__unprivileged__same)
         .set_required_user("unprivileged")
         .build();
 
-    config::tree user_config = user_files::default_config();
+    config::tree user_config = engine::default_config();
     ATF_REQUIRE(!user_config.is_set("unprivileged_user"));
 
     passwd::set_current_user_for_testing(passwd::user("", 123, 1));
@@ -613,8 +612,8 @@ ATF_TEST_CASE_BODY(check_reqs__required_user__unprivileged__ok)
         .set_required_user("unprivileged")
         .build();
 
-    config::tree user_config = user_files::default_config();
-    user_config.set< user_files::user_node >(
+    config::tree user_config = engine::default_config();
+    user_config.set< engine::user_node >(
         "unprivileged_user", passwd::user("", 123, 1));
 
     passwd::set_current_user_for_testing(passwd::user("", 0, 1));
@@ -629,7 +628,7 @@ ATF_TEST_CASE_BODY(check_reqs__required_user__unprivileged__fail)
         .set_required_user("unprivileged")
         .build();
 
-    config::tree user_config = user_files::default_config();
+    config::tree user_config = engine::default_config();
     ATF_REQUIRE(!user_config.is_set("unprivileged_user"));
 
     passwd::set_current_user_for_testing(passwd::user("", 0, 1));
@@ -647,7 +646,7 @@ ATF_TEST_CASE_BODY(check_reqs__required_files__ok)
 
     atf::utils::create_file("test-file", "");
 
-    ATF_REQUIRE(engine::check_reqs(md, user_files::empty_config(), "").empty());
+    ATF_REQUIRE(engine::check_reqs(md, engine::empty_config(), "").empty());
 }
 
 
@@ -659,7 +658,7 @@ ATF_TEST_CASE_BODY(check_reqs__required_files__fail)
         .build();
 
     ATF_REQUIRE_MATCH("'/non-existent/file' not found$",
-                      engine::check_reqs(md, user_files::empty_config(), ""));
+                      engine::check_reqs(md, engine::empty_config(), ""));
 }
 
 
@@ -670,7 +669,7 @@ ATF_TEST_CASE_BODY(check_reqs__required_memory__ok)
         .set_required_memory(units::bytes::parse("1m"))
         .build();
 
-    ATF_REQUIRE(engine::check_reqs(md, user_files::empty_config(), "").empty());
+    ATF_REQUIRE(engine::check_reqs(md, engine::empty_config(), "").empty());
 }
 
 
@@ -684,7 +683,7 @@ ATF_TEST_CASE_BODY(check_reqs__required_memory__fail)
     if (utils::physical_memory() == 0)
         skip("Don't know how to query the amount of physical memory");
     ATF_REQUIRE_MATCH("Requires 100.00T .*memory",
-                      engine::check_reqs(md, user_files::empty_config(), ""));
+                      engine::check_reqs(md, engine::empty_config(), ""));
 }
 
 
@@ -705,7 +704,7 @@ ATF_TEST_CASE_BODY(check_reqs__required_programs__ok)
     atf::utils::create_file("bin/foo", "");
     utils::setenv("PATH", (fs::current_path() / "bin").str());
 
-    ATF_REQUIRE(engine::check_reqs(md, user_files::empty_config(), "").empty());
+    ATF_REQUIRE(engine::check_reqs(md, engine::empty_config(), "").empty());
 }
 
 
@@ -717,7 +716,7 @@ ATF_TEST_CASE_BODY(check_reqs__required_programs__fail_absolute)
         .build();
 
     ATF_REQUIRE_MATCH("'/non-existent/program' not found$",
-                      engine::check_reqs(md, user_files::empty_config(), ""));
+                      engine::check_reqs(md, engine::empty_config(), ""));
 }
 
 
@@ -734,7 +733,7 @@ ATF_TEST_CASE_BODY(check_reqs__required_programs__fail_relative)
     utils::setenv("PATH", (fs::current_path() / "bin").str());
 
     ATF_REQUIRE_MATCH("'bar' not found in PATH$",
-                      engine::check_reqs(md, user_files::empty_config(), ""));
+                      engine::check_reqs(md, engine::empty_config(), ""));
 }
 
 

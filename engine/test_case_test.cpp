@@ -45,11 +45,11 @@ extern "C" {
 
 #include <atf-c++.hpp>
 
+#include "engine/config.hpp"
 #include "engine/exceptions.hpp"
+#include "engine/kyuafile.hpp"
 #include "engine/test_program.hpp"
 #include "engine/test_result.hpp"
-#include "engine/user_files/config.hpp"
-#include "engine/user_files/kyuafile.hpp"
 #include "utils/config/tree.ipp"
 #include "utils/datetime.hpp"
 #include "utils/env.hpp"
@@ -67,7 +67,6 @@ namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace passwd = utils::passwd;
 namespace process = utils::process;
-namespace user_files = engine::user_files;
 
 using utils::none;
 using utils::optional;
@@ -150,7 +149,7 @@ public:
         _root(_srcdir),
         _binary_path("test_case_atf_helpers"),
         _name(name),
-        _user_config(user_files::default_config())
+        _user_config(engine::default_config())
     {
         _user_config.set_string("architecture", "mock-architecture");
         _user_config.set_string("platform", "mock-platform");
@@ -348,7 +347,7 @@ public:
     ///
     /// \return The result of the execution.
     engine::test_result
-    run(const config::tree& user_config = user_files::default_config()) const
+    run(const config::tree& user_config = engine::default_config()) const
     {
         engine::metadata_builder mdbuilder;
         if (_timeout)
@@ -793,7 +792,7 @@ ATF_TEST_CASE_BODY(run_test_case__atf__required_user__atf__unprivileged__atf__dr
 {
     atf_helper helper(this, "check_unprivileged");
     helper.set_metadata("required_user", "unprivileged");
-    helper.config().set< user_files::user_node >(
+    helper.config().set< engine::user_node >(
         "unprivileged_user",
         passwd::find_user_by_name(get_config_var("unprivileged-user")));
     ATF_REQUIRE_EQ(engine::test_result(engine::test_result::passed),

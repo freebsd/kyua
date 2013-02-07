@@ -31,13 +31,12 @@
 #include <atf-c++.hpp>
 
 #include "cli/common.ipp"
-#include "engine/user_files/config.hpp"
+#include "engine/config.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.hpp"
 #include "utils/cmdline/ui_mock.hpp"
 
 namespace cmdline = utils::cmdline;
-namespace user_files = engine::user_files;
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(invalid_filter);
@@ -51,7 +50,7 @@ ATF_TEST_CASE_BODY(invalid_filter)
     cli::cmd_test cmd;
     cmdline::ui_mock ui;
     ATF_REQUIRE_THROW_RE(cmdline::error, "Test case.*'incorrect:'.*empty",
-                         cmd.main(&ui, args, user_files::default_config()));
+                         cmd.main(&ui, args, engine::default_config()));
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE(ui.err_log().empty());
 }

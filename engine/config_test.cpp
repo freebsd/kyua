@@ -26,7 +26,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/user_files/config.hpp"
+#include "engine/config.hpp"
 
 #if defined(HAVE_CONFIG_H)
 #   include "config.h"
@@ -37,7 +37,7 @@
 
 #include <atf-c++.hpp>
 
-#include "engine/user_files/exceptions.hpp"
+#include "engine/exceptions.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.hpp"
 #include "utils/config/tree.ipp"
@@ -46,7 +46,6 @@
 namespace config = utils::config;
 namespace fs = utils::fs;
 namespace passwd = utils::passwd;
-namespace user_files = engine::user_files;
 
 using utils::none;
 using utils::optional;
@@ -95,7 +94,7 @@ validate_defaults(const config::tree& config)
 ATF_TEST_CASE_WITHOUT_HEAD(config__defaults);
 ATF_TEST_CASE_BODY(config__defaults)
 {
-    const config::tree user_config = user_files::default_config();
+    const config::tree user_config = engine::default_config();
     validate_defaults(user_config);
 }
 
@@ -105,8 +104,7 @@ ATF_TEST_CASE_BODY(config__load__defaults)
 {
     atf::utils::create_file("config", "syntax(1)\n");
 
-    const config::tree user_config = user_files::load_config(
-        fs::path("config"));
+    const config::tree user_config = engine::load_config(fs::path("config"));
     validate_defaults(user_config);
 }
 
@@ -124,15 +122,14 @@ ATF_TEST_CASE_BODY(config__load__overrides)
         "unprivileged_user = 'user2'\n"
         "test_suites.mysuite.myvar = 'myvalue'\n");
 
-    const config::tree user_config = user_files::load_config(
-        fs::path("config"));
+    const config::tree user_config = engine::load_config(fs::path("config"));
 
     ATF_REQUIRE_EQ("test-architecture",
                    user_config.lookup_string("architecture"));
     ATF_REQUIRE_EQ("test-platform",
                    user_config.lookup_string("platform"));
 
-    const passwd::user& user = user_config.lookup< user_files::user_node >(
+    const passwd::user& user = user_config.lookup< engine::user_node >(
         "unprivileged_user");
     ATF_REQUIRE_EQ("user2", user.name);
     ATF_REQUIRE_EQ(200, user.uid);
@@ -149,7 +146,7 @@ ATF_TEST_CASE_BODY(config__load__lua_error)
 {
     atf::utils::create_file("config", "this syntax is invalid\n");
 
-    ATF_REQUIRE_THROW(user_files::load_error, user_files::load_config(
+    ATF_REQUIRE_THROW(engine::load_error, engine::load_config(
         fs::path("config")));
 }
 
@@ -159,17 +156,17 @@ ATF_TEST_CASE_BODY(config__load__bad_syntax__version)
 {
     atf::utils::create_file("config", "syntax(123)\n");
 
-    ATF_REQUIRE_THROW_RE(user_files::load_error,
+    ATF_REQUIRE_THROW_RE(engine::load_error,
                          "Unsupported config version 123",
-                         user_files::load_config(fs::path("config")));
+                         engine::load_config(fs::path("config")));
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(config__load__missing_file);
 ATF_TEST_CASE_BODY(config__load__missing_file)
 {
-    ATF_REQUIRE_THROW_RE(user_files::load_error, "Load of 'missing' failed",
-                         user_files::load_config(fs::path("missing")));
+    ATF_REQUIRE_THROW_RE(engine::load_error, "Load of 'missing' failed",
+                         engine::load_config(fs::path("missing")));
 }
 
 

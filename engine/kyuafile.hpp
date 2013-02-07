@@ -26,11 +26,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/user_files/kyuafile.hpp
+/// \file engine/kyuafile.hpp
 /// Test suite configuration parsing and representation.
 
-#if !defined(ENGINE_USER_FILES_KYUAFILE_HPP)
-#define ENGINE_USER_FILES_KYUAFILE_HPP
+#if !defined(ENGINE_KYUAFILE_HPP)
+#define ENGINE_KYUAFILE_HPP
 
 #include <string>
 #include <vector>
@@ -42,7 +42,6 @@
 #include "utils/optional.hpp"
 
 namespace engine {
-namespace user_files {
 
 
 /// Representation of the configuration of a test suite.
@@ -86,7 +85,6 @@ public:
 };
 
 
-}  // namespace user_files
 }  // namespace engine
 
-#endif  // !defined(ENGINE_USER_FILES_KYUAFILE_HPP)
+#endif  // !defined(ENGINE_KYUAFILE_HPP)

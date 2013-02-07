@@ -29,8 +29,8 @@
 #include "cli/config.hpp"
 
 #include "cli/common.hpp"
+#include "engine/config.hpp"
 #include "engine/exceptions.hpp"
-#include "engine/user_files/config.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/config/tree.ipp"
 #include "utils/format/macros.hpp"
@@ -44,7 +44,6 @@
 namespace cmdline = utils::cmdline;
 namespace config = utils::config;
 namespace fs = utils::fs;
-namespace user_files = engine::user_files;
 
 using utils::optional;
 
@@ -97,16 +96,16 @@ load_config_file(const cmdline::parsed_cmdline& cmdline)
         cli::config_option.long_name());
     if (filename.str() == none_config) {
         LD("Configuration loading disabled; using defaults");
-        return user_files::default_config();
+        return engine::default_config();
     } else if (filename.str() != cli::config_option.default_value())
-        return user_files::load_config(filename);
+        return engine::load_config(filename);
 
     const optional< fs::path > home = cli::get_home();
     if (home) {
         const fs::path path = home.get() / ".kyua" / config_basename;
         try {
             if (fs::exists(path))
-                return user_files::load_config(path);
+                return engine::load_config(path);
         } catch (const fs::error& e) {
             // Fall through.  If we fail to load the user-specific configuration
             // file because it cannot be openend, we try to load the system-wide
@@ -121,9 +120,9 @@ load_config_file(const cmdline::parsed_cmdline& cmdline)
 
     const fs::path path = confdir / config_basename;
     if (fs::exists(path)) {
-        return user_files::load_config(path);
+        return engine::load_config(path);
     } else {
-        return user_files::default_config();
+        return engine::default_config();
     }
 }
 
@@ -217,7 +216,7 @@ cli::load_config(const cmdline::parsed_cmdline& cmdline,
         } else {
             LW(F("Ignoring failure to load configuration because the requested "
                  "command should not fail: %s") % e.what());
-            return user_files::default_config();
+            return engine::default_config();
         }
     }
 }

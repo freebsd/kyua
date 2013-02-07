@@ -30,8 +30,8 @@
 
 #include <atf-c++.hpp>
 
+#include "engine/config.hpp"
 #include "engine/exceptions.hpp"
-#include "engine/user_files/config.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
@@ -40,7 +40,6 @@
 namespace cmdline = utils::cmdline;
 namespace config = utils::config;
 namespace fs = utils::fs;
-namespace user_files = engine::user_files;
 
 
 namespace {
@@ -135,7 +134,7 @@ ATF_TEST_CASE_BODY(load_config__none)
     options["config"].push_back(cli::config_option.default_value());
     const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
 
-    require_eq(user_files::default_config(),
+    require_eq(engine::default_config(),
                cli::load_config(mock_cmdline, true));
 }
 
@@ -167,7 +166,7 @@ ATF_TEST_CASE_BODY(load_config__explicit__disable)
     options["config"].push_back("none");
     const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
 
-    require_eq(user_files::default_config(),
+    require_eq(engine::default_config(),
                cli::load_config(mock_cmdline, true));
 }
 
@@ -188,7 +187,7 @@ ATF_TEST_CASE_BODY(load_config__explicit__fail)
                          cli::load_config(mock_cmdline, true));
 
     const config::tree config = cli::load_config(mock_cmdline, false);
-    require_eq(user_files::default_config(), config);
+    require_eq(engine::default_config(), config);
 }
 
 
@@ -221,7 +220,7 @@ ATF_TEST_CASE_BODY(load_config__user__fail)
                          cli::load_config(mock_cmdline, true));
 
     const config::tree config = cli::load_config(mock_cmdline, false);
-    require_eq(user_files::default_config(), config);
+    require_eq(engine::default_config(), config);
 }
 
 
@@ -269,7 +268,7 @@ ATF_TEST_CASE_BODY(load_config__system__fail)
                          cli::load_config(mock_cmdline, true));
 
     const config::tree config = cli::load_config(mock_cmdline, false);
-    require_eq(user_files::default_config(), config);
+    require_eq(engine::default_config(), config);
 }
 
 
@@ -328,7 +327,7 @@ ATF_TEST_CASE_BODY(load_config__overrides__fail)
                          cli::load_config(mock_cmdline, true));
 
     const config::tree config = cli::load_config(mock_cmdline, false);
-    require_eq(user_files::default_config(), config);
+    require_eq(engine::default_config(), config);
 }
 
 

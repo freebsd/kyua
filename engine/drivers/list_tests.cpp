@@ -30,13 +30,12 @@
 
 #include "engine/exceptions.hpp"
 #include "engine/filters.hpp"
+#include "engine/kyuafile.hpp"
 #include "engine/test_program.hpp"
-#include "engine/user_files/kyuafile.hpp"
 #include "utils/optional.ipp"
 
 namespace fs = utils::fs;
 namespace list_tests = engine::drivers::list_tests;
-namespace user_files = engine::user_files;
 
 using utils::none;
 using utils::optional;
@@ -92,7 +91,7 @@ list_tests::drive(const fs::path& kyuafile_path,
                   const std::set< engine::test_filter >& raw_filters,
                   base_hooks& hooks)
 {
-    const user_files::kyuafile kyuafile = user_files::kyuafile::load(
+    const engine::kyuafile kyuafile = engine::kyuafile::load(
         kyuafile_path, build_root);
     filters_state filters(raw_filters);
 

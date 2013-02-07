@@ -34,6 +34,8 @@
 
 #include <stdexcept>
 
+#include "utils/fs/path.hpp"
+
 namespace engine {
 
 
@@ -50,6 +52,20 @@ class format_error : public error {
 public:
     explicit format_error(const std::string&);
     virtual ~format_error(void) throw();
+};
+
+
+/// Error while parsing external data.
+class load_error : public error {
+public:
+    /// The path to the file that caused the load error.
+    utils::fs::path file;
+
+    /// The reason for the error; may not include the file name.
+    std::string reason;
+
+    explicit load_error(const utils::fs::path&, const std::string&);
+    virtual ~load_error(void) throw();
 };
 
 
