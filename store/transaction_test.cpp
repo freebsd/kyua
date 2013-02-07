@@ -29,7 +29,6 @@
 #include "store/transaction.hpp"
 
 #include <cstring>
-#include <fstream>
 #include <map>
 #include <set>
 #include <string>
@@ -732,9 +731,7 @@ ATF_TEST_CASE_HEAD(put_test_case_file__empty)
 }
 ATF_TEST_CASE_BODY(put_test_case_file__empty)
 {
-    {
-        std::ofstream output("input.txt");
-    }
+    atf::utils::create_file("input.txt", "");
 
     store::backend backend = store::backend::open_rw(fs::path("test.db"));
     backend.database().exec("PRAGMA foreign_keys = OFF");

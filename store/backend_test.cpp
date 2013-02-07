@@ -32,8 +32,6 @@ extern "C" {
 #include <sys/stat.h>
 }
 
-#include <fstream>
-
 #include <atf-c++.hpp>
 
 #include "store/exceptions.hpp"
@@ -148,9 +146,7 @@ ATF_TEST_CASE_BODY(detail__initialize__sqlite_error)
     utils::setenv("KYUA_STOREDIR", ".");
     store::detail::current_schema_version = 712;
 
-    std::ofstream output("schema_v712.sql");
-    output << "foo_bar_baz;\n";
-    output.close();
+    atf::utils::create_file("schema_v712.sql", "foo_bar_baz;\n");
 
     sqlite::database db = sqlite::database::in_memory();
     ATF_REQUIRE_THROW_RE(store::error, "Failed to initialize.*:.*foo_bar_baz",

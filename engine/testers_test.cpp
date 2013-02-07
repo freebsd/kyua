@@ -33,13 +33,13 @@ extern "C" {
 }
 
 #include <cstdlib>
-#include <fstream>
 
 #include <atf-c++.hpp>
 
 #include "engine/exceptions.hpp"
 #include "utils/datetime.hpp"
 #include "utils/env.hpp"
+#include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/optional.ipp"
@@ -66,16 +66,16 @@ namespace {
 static void
 create_mock_tester(const int exit_status)
 {
-    std::ofstream mock("kyua-mock-tester");
-    mock << "#! /bin/sh\n"
-         << "while [ ${#} -gt 0 ]; do\n"
-         << "    echo \"Arg: ${1}\"\n"
-         << "    shift\n"
-         << "done\n"
-         << "echo 'tester output'\n"
-         << "echo 'tester error' 1>&2\n"
-         << "exit " << exit_status << "\n";
-    mock.flush();
+    atf::utils::create_file(
+        "kyua-mock-tester",
+        F("#! /bin/sh\n"
+          "while [ ${#} -gt 0 ]; do\n"
+          "    echo \"Arg: ${1}\"\n"
+          "    shift\n"
+          "done\n"
+          "echo 'tester output'\n"
+          "echo 'tester error' 1>&2\n"
+          "exit %s\n") % exit_status);
     ATF_REQUIRE(::chmod("kyua-mock-tester", 0755) != -1);
 
     utils::setenv("KYUA_TESTERSDIR", fs::current_path().str());

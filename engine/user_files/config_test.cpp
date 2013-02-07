@@ -32,7 +32,6 @@
 #   include "config.h"
 #endif
 
-#include <fstream>
 #include <stdexcept>
 #include <vector>
 
@@ -104,11 +103,7 @@ ATF_TEST_CASE_BODY(config__defaults)
 ATF_TEST_CASE_WITHOUT_HEAD(config__load__defaults);
 ATF_TEST_CASE_BODY(config__load__defaults)
 {
-    {
-        std::ofstream file("config");
-        file << "syntax(1)\n";
-        file.close();
-    }
+    atf::utils::create_file("config", "syntax(1)\n");
 
     const config::tree user_config = user_files::load_config(
         fs::path("config"));
@@ -121,15 +116,13 @@ ATF_TEST_CASE_BODY(config__load__overrides)
 {
     set_mock_users();
 
-    {
-        std::ofstream file("config");
-        file << "syntax(1)\n";
-        file << "architecture = 'test-architecture'\n";
-        file << "platform = 'test-platform'\n";
-        file << "unprivileged_user = 'user2'\n";
-        file << "test_suites.mysuite.myvar = 'myvalue'\n";
-        file.close();
-    }
+    atf::utils::create_file(
+        "config",
+        "syntax(1)\n"
+        "architecture = 'test-architecture'\n"
+        "platform = 'test-platform'\n"
+        "unprivileged_user = 'user2'\n"
+        "test_suites.mysuite.myvar = 'myvalue'\n");
 
     const config::tree user_config = user_files::load_config(
         fs::path("config"));
@@ -154,9 +147,7 @@ ATF_TEST_CASE_BODY(config__load__overrides)
 ATF_TEST_CASE_WITHOUT_HEAD(config__load__lua_error);
 ATF_TEST_CASE_BODY(config__load__lua_error)
 {
-    std::ofstream file("config");
-    file << "this syntax is invalid\n";
-    file.close();
+    atf::utils::create_file("config", "this syntax is invalid\n");
 
     ATF_REQUIRE_THROW(user_files::load_error, user_files::load_config(
         fs::path("config")));
@@ -166,9 +157,7 @@ ATF_TEST_CASE_BODY(config__load__lua_error)
 ATF_TEST_CASE_WITHOUT_HEAD(config__load__bad_syntax__version);
 ATF_TEST_CASE_BODY(config__load__bad_syntax__version)
 {
-    std::ofstream file("config");
-    file << "syntax(123)\n";
-    file.close();
+    atf::utils::create_file("config", "syntax(123)\n");
 
     ATF_REQUIRE_THROW_RE(user_files::load_error,
                          "Unsupported config version 123",

@@ -28,13 +28,12 @@
 
 #include "cli/config.hpp"
 
-#include <fstream>
-
 #include <atf-c++.hpp>
 
 #include "engine/exceptions.hpp"
 #include "engine/user_files/config.hpp"
 #include "utils/env.hpp"
+#include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 
@@ -58,13 +57,13 @@ namespace {
 static void
 create_mock_config(const char* name, const char* cookie)
 {
-    std::ofstream output(name);
-    ATF_REQUIRE(output);
     if (cookie != NULL) {
-        output << "syntax(1)\n";
-        output << "test_suites.suite.magic_value = '" << cookie << "'\n";
+        atf::utils::create_file(
+            name,
+            F("syntax(1)\n"
+              "test_suites.suite.magic_value = '%s'\n") % cookie);
     } else {
-        output << "syntax(200)\n";
+        atf::utils::create_file(name, "syntax(200)\n");
     }
 }
 
@@ -296,11 +295,11 @@ ATF_TEST_CASE_BODY(load_config__overrides__no)
 ATF_TEST_CASE_WITHOUT_HEAD(load_config__overrides__yes);
 ATF_TEST_CASE_BODY(load_config__overrides__yes)
 {
-    std::ofstream output("config");
-    output << "syntax(1)\n";
-    output << "architecture = 'do not see me'\n";
-    output << "platform = 'see me'\n";
-    output.close();
+    atf::utils::create_file(
+        "config",
+        "syntax(1)\n"
+        "architecture = 'do not see me'\n"
+        "platform = 'see me'\n");
 
     std::map< std::string, std::vector< std::string > > options;
     options["config"].push_back("config");

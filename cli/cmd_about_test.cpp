@@ -33,7 +33,6 @@
 #endif
 
 #include <cstdlib>
-#include <fstream>
 
 #include <atf-c++.hpp>
 
@@ -53,26 +52,6 @@ namespace user_files = engine::user_files;
 using cli::cmd_about;
 
 
-namespace {
-
-
-/// Creates a fake document file in the provided location.
-///
-/// \param dirname The documents directory.
-/// \param docname The base name of the document to create.
-static void
-create_fake_doc(const char* dirname, const char* docname)
-{
-    std::ofstream doc((fs::path(dirname) / docname).c_str());
-    ATF_REQUIRE(doc);
-    doc << "Content of " << docname << "\n";
-    doc.close();
-}
-
-
-}  // anonymous namespace
-
-
 ATF_TEST_CASE_WITHOUT_HEAD(all_topics__ok);
 ATF_TEST_CASE_BODY(all_topics__ok)
 {
@@ -80,8 +59,8 @@ ATF_TEST_CASE_BODY(all_topics__ok)
     args.push_back("about");
 
     fs::mkdir(fs::path("fake-docs"), 0755);
-    create_fake_doc("fake-docs", "AUTHORS");
-    create_fake_doc("fake-docs", "COPYING");
+    atf::utils::create_file("fake-docs/AUTHORS", "Content of AUTHORS\n");
+    atf::utils::create_file("fake-docs/COPYING", "Content of COPYING\n");
 
     utils::setenv("KYUA_DOCDIR", "fake-docs");
     cmd_about cmd;
@@ -131,7 +110,7 @@ ATF_TEST_CASE_BODY(topic_authors__ok)
     args.push_back("authors");
 
     fs::mkdir(fs::path("fake-docs"), 0755);
-    create_fake_doc("fake-docs", "AUTHORS");
+    atf::utils::create_file("fake-docs/AUTHORS", "Content of AUTHORS\n");
 
     utils::setenv("KYUA_DOCDIR", "fake-docs");
     cmd_about cmd;
@@ -177,7 +156,7 @@ ATF_TEST_CASE_BODY(topic_license__ok)
     args.push_back("license");
 
     fs::mkdir(fs::path("fake-docs"), 0755);
-    create_fake_doc("fake-docs", "COPYING");
+    atf::utils::create_file("fake-docs/COPYING", "Content of COPYING\n");
 
     utils::setenv("KYUA_DOCDIR", "fake-docs");
     cmd_about cmd;

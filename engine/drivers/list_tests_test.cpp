@@ -34,7 +34,6 @@ extern "C" {
 #include <unistd.h>
 }
 
-#include <fstream>
 #include <map>
 #include <set>
 
@@ -113,15 +112,15 @@ create_helpers(const atf::tests::tc* tc, const fs::path& source_root,
     ATF_REQUIRE(::symlink(helpers(tc).c_str(),
                           (build_root / "dir/program").c_str()) != -1);
 
-    std::ofstream kyuafile1((source_root / "Kyuafile").c_str());
-    kyuafile1 << "syntax(1)\n";
-    kyuafile1 << "include('dir/Kyuafile')\n";
-    kyuafile1.close();
+    atf::utils::create_file(
+        (source_root / "Kyuafile").str(),
+        "syntax(1)\n"
+        "include('dir/Kyuafile')\n");
 
-    std::ofstream kyuafile2((source_root / "dir/Kyuafile").c_str());
-    kyuafile2 << "syntax(1)\n";
-    kyuafile2 << "atf_test_program{name='program', test_suite='suite-name'}\n";
-    kyuafile2.close();
+    atf::utils::create_file(
+        (source_root / "dir/Kyuafile").str(),
+        "syntax(1)\n"
+        "atf_test_program{name='program', test_suite='suite-name'}\n");
 }
 
 

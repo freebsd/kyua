@@ -905,9 +905,7 @@ ATF_TEST_CASE_BODY(instantiate__files__ok)
     text::templates_def templates;
     templates.add_variable("string", "Hello, world!");
 
-    std::ofstream input("input.txt");
-    input << "The string is: %%string%%\n";
-    input.close();
+    atf::utils::create_file("input.txt", "The string is: %%string%%\n");
 
     text::instantiate(templates, fs::path("input.txt"), fs::path("output.txt"));
 
@@ -938,8 +936,7 @@ ATF_TEST_CASE_BODY(instantiate__files__output_error)
 {
     text::templates_def templates;
 
-    std::ofstream input("input.txt");
-    input.close();
+    atf::utils::create_file("input.txt", "");
 
     fs::mkdir(fs::path("dir"), 0444);
 

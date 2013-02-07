@@ -28,7 +28,6 @@
 
 #include "utils/config/parser.hpp"
 
-#include <fstream>
 #include <stdexcept>
 
 #include <atf-c++.hpp>
@@ -83,10 +82,10 @@ public:
 ATF_TEST_CASE_WITHOUT_HEAD(no_keys__ok);
 ATF_TEST_CASE_BODY(no_keys__ok)
 {
-    std::ofstream output("output.lua");
-    output << "syntax(1)\n";
-    output << "local foo = 'value'\n";
-    output.flush();
+    atf::utils::create_file(
+        "output.lua",
+        "syntax(1)\n"
+        "local foo = 'value'\n");
 
     config::tree tree;
     mock_parser(tree).parse(fs::path("output.lua"));
@@ -98,10 +97,10 @@ ATF_TEST_CASE_BODY(no_keys__ok)
 ATF_TEST_CASE_WITHOUT_HEAD(no_keys__unknown_key);
 ATF_TEST_CASE_BODY(no_keys__unknown_key)
 {
-    std::ofstream output("output.lua");
-    output << "syntax(1)\n";
-    output << "foo = 'value'\n";
-    output.flush();
+    atf::utils::create_file(
+        "output.lua",
+        "syntax(1)\n"
+        "foo = 'value'\n");
 
     config::tree tree;
     ATF_REQUIRE_THROW_RE(config::syntax_error, "foo",
@@ -112,13 +111,13 @@ ATF_TEST_CASE_BODY(no_keys__unknown_key)
 ATF_TEST_CASE_WITHOUT_HEAD(some_keys__ok);
 ATF_TEST_CASE_BODY(some_keys__ok)
 {
-    std::ofstream output("output.lua");
-    output << "syntax(2)\n";
-    output << "top_string = 'foo'\n";
-    output << "inner.int = 12345\n";
-    output << "inner.dynamic.foo = 78\n";
-    output << "inner.dynamic.bar = 'some text'\n";
-    output.flush();
+    atf::utils::create_file(
+        "output.lua",
+        "syntax(2)\n"
+        "top_string = 'foo'\n"
+        "inner.int = 12345\n"
+        "inner.dynamic.foo = 78\n"
+        "inner.dynamic.bar = 'some text'\n");
 
     config::tree tree;
     mock_parser(tree).parse(fs::path("output.lua"));
@@ -134,21 +133,19 @@ ATF_TEST_CASE_BODY(some_keys__ok)
 ATF_TEST_CASE_WITHOUT_HEAD(some_keys__unknown_key);
 ATF_TEST_CASE_BODY(some_keys__unknown_key)
 {
-    {
-        std::ofstream output("output.lua");
-        output << "syntax(2)\n";
-        output << "top_string2 = 'foo'\n";
-    }
+    atf::utils::create_file(
+        "output.lua",
+        "syntax(2)\n"
+        "top_string2 = 'foo'\n");
     config::tree tree1;
     ATF_REQUIRE_THROW_RE(config::syntax_error,
                          "Unknown configuration property 'top_string2'",
                          mock_parser(tree1).parse(fs::path("output.lua")));
 
-    {
-        std::ofstream output("output.lua");
-        output << "syntax(2)\n";
-        output << "inner.int2 = 12345\n";
-    }
+    atf::utils::create_file(
+        "output.lua",
+        "syntax(2)\n"
+        "inner.int2 = 12345\n");
     config::tree tree2;
     ATF_REQUIRE_THROW_RE(config::syntax_error,
                          "Unknown configuration property 'inner.int2'",
@@ -161,10 +158,7 @@ ATF_TEST_CASE_BODY(invalid_syntax)
 {
     config::tree tree;
 
-    {
-        std::ofstream output("output.lua");
-        output << "syntax(56)\n";
-    }
+    atf::utils::create_file("output.lua", "syntax(56)\n");
     ATF_REQUIRE_THROW_RE(config::syntax_error,
                          "Unknown syntax version 56",
                          mock_parser(tree).parse(fs::path("output.lua")));
@@ -176,10 +170,7 @@ ATF_TEST_CASE_BODY(syntax_deprecated_format)
 {
     config::tree tree;
 
-    {
-        std::ofstream output("output.lua");
-        output << "syntax('invalid', 1)\n";
-    }
+    atf::utils::create_file("output.lua", "syntax('invalid', 1)\n");
     (void)mock_parser(tree).parse(fs::path("output.lua"));
 }
 
@@ -190,10 +181,7 @@ ATF_TEST_CASE_BODY(syntax_not_called)
     config::tree tree;
     tree.define< config::int_node >("var");
 
-    {
-        std::ofstream output("output.lua");
-        output << "var = 3\n";
-    }
+    atf::utils::create_file("output.lua", "var = 3\n");
     ATF_REQUIRE_THROW_RE(config::syntax_error, "No syntax defined",
                          mock_parser(tree).parse(fs::path("output.lua")));
 
@@ -207,13 +195,12 @@ ATF_TEST_CASE_BODY(syntax_called_more_than_once)
     config::tree tree;
     tree.define< config::int_node >("var");
 
-    {
-        std::ofstream output("output.lua");
-        output << "syntax(1)\n";
-        output << "var = 3\n";
-        output << "syntax(1)\n";
-        output << "var = 5\n";
-    }
+    atf::utils::create_file(
+        "output.lua",
+        "syntax(1)\n"
+        "var = 3\n"
+        "syntax(1)\n"
+        "var = 5\n");
     ATF_REQUIRE_THROW_RE(config::syntax_error,
                          "syntax\\(\\) can only be called once",
                          mock_parser(tree).parse(fs::path("output.lua")));

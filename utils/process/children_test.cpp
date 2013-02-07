@@ -438,14 +438,8 @@ ATF_TEST_CASE_BODY(child__fork_files__ok_functor)
     const fs::path filea("fileA.txt");
     const fs::path fileb("fileB.txt");
 
-    {
-        std::ofstream output(filea.c_str());
-        output << "Initial stdout\n";
-    }
-    {
-        std::ofstream output(fileb.c_str());
-        output << "Initial stderr\n";
-    }
+    atf::utils::create_file(filea.str(), "Initial stdout\n");
+    atf::utils::create_file(fileb.str(), "Initial stderr\n");
 
     std::auto_ptr< process::child > child = process::child::fork_files(
         child_simple_functor(16, "a functor"), filea, fileb);
