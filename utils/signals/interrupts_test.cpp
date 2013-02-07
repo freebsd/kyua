@@ -38,7 +38,7 @@ extern "C" {
 #include <atf-c++.hpp>
 
 #include "utils/format/macros.hpp"
-#include "utils/process/children.ipp"
+#include "utils/process/child.ipp"
 #include "utils/process/status.hpp"
 #include "utils/signals/exceptions.hpp"
 #include "utils/signals/programmer.hpp"

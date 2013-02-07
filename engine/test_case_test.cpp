@@ -58,7 +58,7 @@ extern "C" {
 #include "utils/noncopyable.hpp"
 #include "utils/optional.ipp"
 #include "utils/passwd.hpp"
-#include "utils/process/children.ipp"
+#include "utils/process/child.ipp"
 #include "utils/sanity.hpp"
 #include "utils/stream.hpp"
 

@@ -26,10 +26,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file utils/process/children.hpp
+/// \file utils/process/child.hpp
 /// Spawning and manipulation of children processes.
 ///
-/// The children module provides a set of functions to spawn subprocesses with
+/// The child module provides a set of functions to spawn subprocesses with
 /// different settings, and the corresponding set of classes to interact with
 /// said subprocesses.  The interfaces to fork subprocesses are very simplified
 /// and only provide the minimum functionality required by the rest of the
@@ -43,8 +43,8 @@
 /// that test programs (and, for that matter, external utilities) do not leak
 /// subprocesses on the system.
 
-#if !defined(UTILS_PROCESS_CHILDREN_HPP)
-#define UTILS_PROCESS_CHILDREN_HPP
+#if !defined(UTILS_PROCESS_CHILD_HPP)
+#define UTILS_PROCESS_CHILD_HPP
 
 #include <istream>
 #include <memory>
@@ -102,4 +102,4 @@ public:
 }  // namespace process
 }  // namespace utils
 
-#endif  // !defined(UTILS_PROCESS_CHILDREN_HPP)
+#endif  // !defined(UTILS_PROCESS_CHILD_HPP)

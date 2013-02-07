@@ -26,9 +26,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-libutils_a_SOURCES += utils/process/children.cpp
-libutils_a_SOURCES += utils/process/children.hpp
-libutils_a_SOURCES += utils/process/children.ipp
+libutils_a_SOURCES += utils/process/child.cpp
+libutils_a_SOURCES += utils/process/child.hpp
+libutils_a_SOURCES += utils/process/child.ipp
 libutils_a_SOURCES += utils/process/exceptions.cpp
 libutils_a_SOURCES += utils/process/exceptions.hpp
 libutils_a_SOURCES += utils/process/fdstream.cpp
@@ -46,10 +46,10 @@ tests_utils_processdir = $(pkgtestsdir)/utils/process
 tests_utils_process_DATA = utils/process/Kyuafile
 EXTRA_DIST += $(tests_utils_process_DATA)
 
-tests_utils_process_PROGRAMS = utils/process/children_test
-utils_process_children_test_SOURCES = utils/process/children_test.cpp
-utils_process_children_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-utils_process_children_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
+tests_utils_process_PROGRAMS = utils/process/child_test
+utils_process_child_test_SOURCES = utils/process/child_test.cpp
+utils_process_child_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_process_child_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_process_PROGRAMS += utils/process/exceptions_test
 utils_process_exceptions_test_SOURCES = utils/process/exceptions_test.cpp

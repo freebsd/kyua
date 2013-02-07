@@ -26,12 +26,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#if !defined(UTILS_PROCESS_CHILDREN_IPP)
-#define UTILS_PROCESS_CHILDREN_IPP
+#if !defined(UTILS_PROCESS_CHILD_IPP)
+#define UTILS_PROCESS_CHILD_IPP
 
 #include <cstdlib>
 
-#include "utils/process/children.hpp"
+#include "utils/process/child.hpp"
 
 namespace utils {
 namespace process {
@@ -103,4 +103,4 @@ child::fork_capture(Hook hook)
 }  // namespace process
 }  // namespace utils
 
-#endif  // !defined(UTILS_PROCESS_CHILDREN_IPP)
+#endif  // !defined(UTILS_PROCESS_CHILD_IPP)

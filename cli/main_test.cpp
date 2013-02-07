@@ -49,7 +49,7 @@ extern "C" {
 #include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/logging/operations.hpp"
-#include "utils/process/children.ipp"
+#include "utils/process/child.ipp"
 #include "utils/process/status.hpp"
 
 namespace cmdline = utils::cmdline;

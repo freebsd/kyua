@@ -47,7 +47,7 @@ extern "C" {
 #include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/passwd.hpp"
-#include "utils/process/children.ipp"
+#include "utils/process/child.ipp"
 #include "utils/process/status.hpp"
 #include "utils/stream.hpp"
 
