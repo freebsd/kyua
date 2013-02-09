@@ -102,7 +102,7 @@ ATF_TEST_CASE_BODY(config__defaults)
 ATF_TEST_CASE_WITHOUT_HEAD(config__load__defaults);
 ATF_TEST_CASE_BODY(config__load__defaults)
 {
-    atf::utils::create_file("config", "syntax(1)\n");
+    atf::utils::create_file("config", "syntax(2)\n");
 
     const config::tree user_config = engine::load_config(fs::path("config"));
     validate_defaults(user_config);
@@ -116,7 +116,7 @@ ATF_TEST_CASE_BODY(config__load__overrides)
 
     atf::utils::create_file(
         "config",
-        "syntax(1)\n"
+        "syntax(2)\n"
         "architecture = 'test-architecture'\n"
         "platform = 'test-platform'\n"
         "unprivileged_user = 'user2'\n"

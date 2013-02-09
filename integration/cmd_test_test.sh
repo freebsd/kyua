@@ -32,7 +32,7 @@ one_test_program__all_pass_body() {
     utils_install_timestamp_wrapper
 
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("integration")
 atf_test_program{name="simple_all_pass"}
 EOF
@@ -55,7 +55,7 @@ one_test_program__some_fail_body() {
     utils_install_timestamp_wrapper
 
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("integration")
 atf_test_program{name="simple_some_fail"}
 EOF
@@ -78,7 +78,7 @@ many_test_programs__all_pass_body() {
     utils_install_timestamp_wrapper
 
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("integration")
 atf_test_program{name="first"}
 atf_test_program{name="second"}
@@ -109,7 +109,7 @@ many_test_programs__some_fail_body() {
     utils_install_timestamp_wrapper
 
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("integration")
 atf_test_program{name="first"}
 atf_test_program{name="second"}
@@ -140,7 +140,7 @@ expect__all_pass_body() {
     utils_install_timestamp_wrapper
 
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("integration")
 atf_test_program{name="expect_all_pass"}
 EOF
@@ -166,7 +166,7 @@ expect__some_fail_body() {
     utils_install_timestamp_wrapper
 
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("integration")
 atf_test_program{name="expect_some_fail"}
 EOF
@@ -193,7 +193,7 @@ premature_exit_body() {
     utils_install_timestamp_wrapper
 
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("integration")
 atf_test_program{name="bogus_test_cases"}
 EOF
@@ -217,7 +217,7 @@ no_args_body() {
     utils_install_timestamp_wrapper
 
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("integration")
 atf_test_program{name="simple_all_pass"}
 include("subdir/Kyuafile")
@@ -227,7 +227,7 @@ EOF
 
     mkdir subdir
     cat >subdir/Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("integration2")
 atf_test_program{name="simple_some_fail"}
 EOF
@@ -251,14 +251,14 @@ one_arg__subdir_body() {
     utils_install_timestamp_wrapper
 
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("top-level")
 include("subdir/Kyuafile")
 EOF
 
     mkdir subdir
     cat >subdir/Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("in-subdir")
 atf_test_program{name="simple_all_pass"}
 EOF
@@ -280,7 +280,7 @@ one_arg__test_case_body() {
     utils_install_timestamp_wrapper
 
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("top-level")
 atf_test_program{name="first"}
 atf_test_program{name="second"}
@@ -303,7 +303,7 @@ one_arg__test_program_body() {
     utils_install_timestamp_wrapper
 
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("top-level")
 atf_test_program{name="first"}
 atf_test_program{name="second"}
@@ -341,7 +341,7 @@ many_args__ok_body() {
     utils_install_timestamp_wrapper
 
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("top-level")
 include("subdir/Kyuafile")
 atf_test_program{name="first"}
@@ -350,7 +350,7 @@ EOF
 
     mkdir subdir
     cat >subdir/Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("in-subdir")
 atf_test_program{name="second"}
 EOF
@@ -385,7 +385,7 @@ EOF
 utils_test_case many_args__no_match__all
 many_args__no_match__all_body() {
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("top-level")
 atf_test_program{name="first"}
 atf_test_program{name="second"}
@@ -408,7 +408,7 @@ many_args__no_match__some_body() {
     utils_install_timestamp_wrapper
 
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("top-level")
 atf_test_program{name="first"}
 atf_test_program{name="second"}
@@ -443,7 +443,7 @@ args_are_relative_body() {
 
     mkdir root
     cat >root/Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("integration-1")
 atf_test_program{name="first"}
 atf_test_program{name="second"}
@@ -454,7 +454,7 @@ EOF
 
     mkdir root/subdir
     cat >root/subdir/Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("integration-2")
 atf_test_program{name="third"}
 atf_test_program{name="fourth"}
@@ -480,7 +480,7 @@ only_load_used_test_programs_body() {
     utils_install_timestamp_wrapper
 
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("integration")
 atf_test_program{name="first"}
 atf_test_program{name="second"}
@@ -507,13 +507,13 @@ EOF
 utils_test_case config_behavior
 config_behavior_body() {
     cat >"my-config" <<EOF
-syntax(1)
+syntax(2)
 test_suites.suite1["X-the-variable"] = "value1"
 test_suites.suite2["X-the-variable"] = "override me"
 EOF
 
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 atf_test_program{name="config1", test_suite="suite1"}
 atf_test_program{name="config2", test_suite="suite2"}
 atf_test_program{name="config3", test_suite="suite3"}
@@ -538,7 +538,7 @@ store_contents_body() {
     utils_install_timestamp_wrapper
 
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 atf_test_program{name="some-program", test_suite="suite1"}
 EOF
     utils_cp_helper simple_all_pass some-program
@@ -603,7 +603,7 @@ EOF
 utils_test_case store_flag__ok
 store_flag__ok_body() {
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 atf_test_program{name="config1", test_suite="suite1"}
 EOF
     utils_cp_helper config config1
@@ -619,7 +619,7 @@ EOF
 utils_test_case store_flag__fail
 store_flag__fail_body() {
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 atf_test_program{name="config1", test_suite="suite1"}
 EOF
     utils_cp_helper config config1
@@ -634,7 +634,7 @@ build_root_flag_body() {
     utils_install_timestamp_wrapper
 
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("integration")
 atf_test_program{name="first"}
 include("subdir/Kyuafile")
@@ -642,7 +642,7 @@ EOF
 
     mkdir subdir
     cat >subdir/Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("integration")
 atf_test_program{name="second"}
 atf_test_program{name="third"}
@@ -679,7 +679,7 @@ This file is bogus but it is not loaded.
 EOF
 
     cat >myfile <<EOF
-syntax(1)
+syntax(2)
 test_suite("integration")
 atf_test_program{name="sometest"}
 EOF
@@ -713,7 +713,7 @@ This file is bogus but it is not loaded.
 EOF
 
     cat >myfile <<EOF
-syntax(1)
+syntax(2)
 test_suite("hello-world")
 atf_test_program{name="sometest"}
 EOF
@@ -742,7 +742,7 @@ EOF
 utils_test_case interrupt
 interrupt_body() {
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("integration")
 atf_test_program{name="interrupts"}
 EOF
@@ -783,7 +783,7 @@ EOF
 utils_test_case no_test_program_match
 no_test_program_match_body() {
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("integration")
 atf_test_program{name="first"}
 EOF
@@ -803,7 +803,7 @@ EOF
 utils_test_case no_test_case_match
 no_test_case_match_body() {
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("integration")
 atf_test_program{name="first"}
 EOF
@@ -832,7 +832,7 @@ utils_test_case missing_kyuafile__test_program
 missing_kyuafile__test_program_body() {
     mkdir subdir
     cat >subdir/Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("integration")
 atf_test_program{name="unused"}
 EOF
@@ -849,7 +849,7 @@ utils_test_case missing_kyuafile__subdir
 missing_kyuafile__subdir_body() {
     mkdir subdir
     cat >subdir/Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("integration")
 atf_test_program{name="unused"}
 EOF
@@ -894,7 +894,7 @@ bogus_test_program_body() {
     utils_install_timestamp_wrapper
 
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("integration")
 atf_test_program{name="crash_on_list"}
 atf_test_program{name="non_executable"}
@@ -916,12 +916,12 @@ EOF
 utils_test_case missing_test_program
 missing_test_program_body() {
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 include("subdir/Kyuafile")
 EOF
     mkdir subdir
     cat >subdir/Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("integration")
 atf_test_program{name="ok"}
 atf_test_program{name="i-am-missing"}

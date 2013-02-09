@@ -112,12 +112,12 @@ create_helpers(const atf::tests::tc* tc, const fs::path& source_root,
 
     atf::utils::create_file(
         (source_root / "Kyuafile").str(),
-        "syntax(1)\n"
+        "syntax(2)\n"
         "include('dir/Kyuafile')\n");
 
     atf::utils::create_file(
         (source_root / "dir/Kyuafile").str(),
-        "syntax(1)\n"
+        "syntax(2)\n"
         "atf_test_program{name='program', test_suite='suite-name'}\n");
 }
 

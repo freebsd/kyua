@@ -40,7 +40,7 @@ utils_test_case all
 all_body() {
     mkdir "${HOME}/.kyua"
     cat >"${HOME}/.kyua/kyua.conf" <<EOF
-syntax(1)
+syntax(2)
 architecture = "my-architecture"
 platform = "my-platform"
 unprivileged_user = "$(id -u -n)"
@@ -64,7 +64,7 @@ utils_test_case one__ok
 one__ok_body() {
     mkdir "${HOME}/.kyua"
     cat >"${HOME}/.kyua/kyua.conf" <<EOF
-syntax(1)
+syntax(2)
 test_suites.first["X-one"] = 1
 test_suites.first["X-two"] = 2
 EOF
@@ -82,7 +82,7 @@ utils_test_case one__fail
 one__fail_body() {
     mkdir "${HOME}/.kyua"
     cat >"${HOME}/.kyua/kyua.conf" <<EOF
-syntax(1)
+syntax(2)
 test_suites.first["X-one"] = 1
 test_suites.first["X-three"] = 3
 EOF
@@ -100,7 +100,7 @@ utils_test_case many__ok
 many__ok_body() {
     mkdir "${HOME}/.kyua"
     cat >"${HOME}/.kyua/kyua.conf" <<EOF
-syntax(1)
+syntax(2)
 test_suites.first["X-one"] = 1
 test_suites.first["X-two"] = 2
 EOF
@@ -120,7 +120,7 @@ utils_test_case many__fail
 many__fail_body() {
     mkdir "${HOME}/.kyua"
     cat >"${HOME}/.kyua/kyua.conf" <<EOF
-syntax(1)
+syntax(2)
 test_suites.first["X-one"] = 1
 test_suites.first["X-three"] = 3
 EOF
@@ -144,7 +144,7 @@ EOF
 utils_test_case config_flag__default_system
 config_flag__default_system_body() {
     cat >kyua.conf <<EOF
-syntax(1)
+syntax(2)
 test_suites.foo["X-var"] = "baz"
 EOF
 
@@ -160,7 +160,7 @@ EOF
 utils_test_case config_flag__default_home
 config_flag__default_home_body() {
     cat >kyua.conf <<EOF
-syntax(1)
+syntax(2)
 test_suites.foo["X-var"] = "bar"
 EOF
     export KYUA_CONFDIR="$(pwd)"
@@ -170,7 +170,7 @@ EOF
     # The previously-created "system-wide" file has to be ignored.
     mkdir .kyua
     cat >.kyua/kyua.conf <<EOF
-syntax(1)
+syntax(2)
 test_suites.foo["X-var"] = "baz"
 EOF
     atf_check -s exit:0 -o match:"test_suites.foo.X-var = baz" -e empty \
@@ -181,7 +181,7 @@ EOF
 utils_test_case config_flag__explicit__ok
 config_flag__explicit__ok_body() {
     cat >kyua.conf <<EOF
-syntax(1)
+syntax(2)
 test_suites.foo["X-var"] = "baz"
 EOF
 
@@ -198,7 +198,7 @@ EOF
 utils_test_case config_flag__explicit__disable
 config_flag__explicit__disable_body() {
     cat >kyua.conf <<EOF
-syntax(1)
+syntax(2)
 test_suites.foo["X-var"] = "baz"
 EOF
     mkdir .kyua
@@ -256,7 +256,7 @@ utils_test_case variable_flag__override_default_config
 variable_flag__override_default_config_body() {
     mkdir "${HOME}/.kyua"
     cat >"${HOME}/.kyua/kyua.conf" <<EOF
-syntax(1)
+syntax(2)
 test_suites.suite1["X-the-variable"] = "value1"
 test_suites.suite2["X-the-variable"] = "should not be used"
 EOF
@@ -284,7 +284,7 @@ EOF
 utils_test_case variable_flag__override_custom_config
 variable_flag__override_custom_config_body() {
     cat >config <<EOF
-syntax(1)
+syntax(2)
 test_suites.suite1["X-the-variable"] = "value1"
 test_suites.suite2["X-the-variable"] = "should not be used"
 EOF

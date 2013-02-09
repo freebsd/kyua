@@ -56,6 +56,15 @@ using utils::none;
 using utils::optional;
 
 
+// History of Kyuafile file versions:
+//
+// 2 - Changed the syntax() call to take only a version number, instead of the
+//     word 'config' as the first argument and the version as the second one.
+//     Files now start with syntax(2) instead of syntax('kyuafile', 1).
+//
+// 1 - Initial version.
+
+
 namespace {
 
 
@@ -219,9 +228,9 @@ public:
         if (_version)
             throw std::runtime_error("Can only call syntax() once");
 
-        if (version != 1)
-            throw std::runtime_error(F("Unexpected file version '%s'; "
-                                       "only 1 is supported") % version);
+        if (version < 1 || version > 2)
+            throw std::runtime_error(F("Unsupported file version %s") %
+                                     version);
 
         _version = utils::make_optional(version);
     }
@@ -487,8 +496,7 @@ lua_plain_test_program(lutok::state& state)
 
 /// Glue to invoke parser::callback_syntax() from Lua.
 ///
-/// \pre state(-2) The syntax format name, or nil.  This is ignored and is only
-///     allowed to be present for backwards-compatibility reasons.
+/// \pre state(-2) The syntax format name, if a v1 file.
 /// \pre state(-1) The syntax format version.
 ///
 /// \param state The Lua state that executed the function.
@@ -497,15 +505,23 @@ lua_plain_test_program(lutok::state& state)
 static int
 lua_syntax(lutok::state& state)
 {
-    if (state.is_string(-2))
-        LW(F("Found deprecated format name in syntax() call '%s': ignoring")
-           % state.to_string(-2));
-
     if (!state.is_number(-1))
-        throw std::runtime_error("First argument to syntax must be a number");
-    const int version = state.to_integer(-1);
+        throw std::runtime_error("Last argument to syntax must be a number");
+    const int syntax_version = state.to_integer(-1);
 
-    parser::get_from_state(state)->callback_syntax(version);
+    if (syntax_version == 1) {
+        if (state.get_top() != 2)
+            throw std::runtime_error("Version 1 files need two arguments to "
+                                     "syntax()");
+        if (!state.is_string(-2) || state.to_string(-2) != "kyuafile")
+            throw std::runtime_error("First argument to syntax must be "
+                                     "'kyuafile' for version 1 files");
+    } else {
+        if (state.get_top() != 1)
+            throw std::runtime_error("syntax() only takes one argument");
+    }
+
+    parser::get_from_state(state)->callback_syntax(syntax_version);
     return 0;
 }
 

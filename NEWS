@@ -14,7 +14,8 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 * Issue 37: Simplified the syntax() calls in configuration and Kyuafile
   files to only specify the requested version instead of also the format
   name.  The format name is implied by the file being loaded, so there
-  is no use in the caller having to specify it.
+  is no use in the caller having to specify it.  The version number of these
+  files has been bumped to 2.
 
 * Reduced automatic screen line wrapping of messages to the help command
   and the output of tables by db-exec.  Wrapping any other messages

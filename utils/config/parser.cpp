@@ -42,6 +42,15 @@
 namespace config = utils::config;
 
 
+// History of configuration file versions:
+//
+// 2 - Changed the syntax() call to take only a version number, instead of the
+//     word 'config' as the first argument and the version as the second one.
+//     Files now start with syntax(2) instead of syntax('config', 1).
+//
+// 1 - Initial version.
+
+
 /// Internal implementation of the parser.
 struct utils::config::parser::impl : utils::noncopyable {
     /// Pointer to the parent parser.  Needed for callbacks.
@@ -100,7 +109,7 @@ namespace {
 /// tree based on the syntax version and then continues to process the rest of
 /// the file.
 ///
-/// \pre state(-2) The syntax format name.
+/// \pre state(-2) The syntax format name, if a v1 file.
 /// \pre state(-1) The syntax format version.
 ///
 /// \param state The Lua state to operate in.
@@ -109,13 +118,21 @@ namespace {
 static int
 lua_syntax(lutok::state& state)
 {
-    if (state.is_string(-2))
-        LW(F("Found deprecated format name in syntax() call '%s': ignoring")
-           % state.to_string(-2));
-
     if (!state.is_number(-1))
-        throw config::value_error("First argument to syntax must be a number");
+        throw config::value_error("Last argument to syntax must be a number");
     const int syntax_version = state.to_integer(-1);
+
+    if (syntax_version == 1) {
+        if (state.get_top() != 2)
+            throw config::value_error("Version 1 files need two arguments to "
+                                      "syntax()");
+        if (!state.is_string(-2) || state.to_string(-2) != "config")
+            throw config::value_error("First argument to syntax must be "
+                                      "'config' for version 1 files");
+    } else {
+        if (state.get_top() != 1)
+            throw config::value_error("syntax() only takes one argument");
+    }
 
     state.get_global("_config_parser");
     config::parser::impl* impl = *state.to_userdata< config::parser::impl* >();

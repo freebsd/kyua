@@ -94,7 +94,7 @@ class config_parser : public config::parser {
     void
     setup(config::tree& tree, const int syntax_version)
     {
-        if (syntax_version != 1)
+        if (syntax_version < 1 || syntax_version > 2)
             throw config::syntax_error(F("Unsupported config version %s") %
                                        syntax_version);
 

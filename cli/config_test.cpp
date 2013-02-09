@@ -59,7 +59,7 @@ create_mock_config(const char* name, const char* cookie)
     if (cookie != NULL) {
         atf::utils::create_file(
             name,
-            F("syntax(1)\n"
+            F("syntax(2)\n"
               "test_suites.suite.magic_value = '%s'\n") % cookie);
     } else {
         atf::utils::create_file(name, "syntax(200)\n");
@@ -296,7 +296,7 @@ ATF_TEST_CASE_BODY(load_config__overrides__yes)
 {
     atf::utils::create_file(
         "config",
-        "syntax(1)\n"
+        "syntax(2)\n"
         "architecture = 'do not see me'\n"
         "platform = 'see me'\n");
 

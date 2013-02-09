@@ -38,7 +38,7 @@
 -- the contents of the top-level Kyuafile; in other words, Kyua needs to
 -- discover tests in such subdirectories automatically.
 
-syntax(1)
+syntax(2)
 
 local directory = fs.dirname(current_kyuafile())
 for file in fs.files(directory) do

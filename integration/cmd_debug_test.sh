@@ -30,7 +30,7 @@
 utils_test_case no_args
 no_args_body() {
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("integration")
 atf_test_program{name="simple_all_pass"}
 EOF
@@ -47,7 +47,7 @@ EOF
 utils_test_case many_args
 many_args_body() {
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("integration")
 atf_test_program{name="first"}
 atf_test_program{name="second"}
@@ -67,7 +67,7 @@ EOF
 utils_test_case one_arg__ok_pass
 one_arg__ok_pass_body() {
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("integration")
 atf_test_program{name="first"}
 atf_test_program{name="second"}
@@ -89,7 +89,7 @@ EOF
 utils_test_case one_arg__ok_fail
 one_arg__ok_fail_body() {
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("integration")
 atf_test_program{name="first"}
 EOF
@@ -109,7 +109,7 @@ EOF
 utils_test_case one_arg__no_match
 one_arg__no_match_body() {
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("integration")
 atf_test_program{name="first"}
 atf_test_program{name="second"}
@@ -146,7 +146,7 @@ EOF
 utils_test_case body_and_cleanup
 body_and_cleanup_body() {
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("integration")
 atf_test_program{name="single"}
 EOF
@@ -175,7 +175,7 @@ EOF
 utils_test_case stdout_stderr_flags
 stdout_stderr_flags_body() {
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("integration")
 atf_test_program{name="first"}
 atf_test_program{name="second"}
@@ -207,7 +207,7 @@ utils_test_case args_are_relative
 args_are_relative_body() {
     mkdir root
     cat >root/Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("integration")
 include("subdir/Kyuafile")
 atf_test_program{name="prog"}
@@ -216,7 +216,7 @@ EOF
 
     mkdir root/subdir
     cat >root/subdir/Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("integration")
 atf_test_program{name="prog"}
 EOF
@@ -237,7 +237,7 @@ EOF
 utils_test_case only_load_used_test_programs
 only_load_used_test_programs_body() {
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("integration")
 atf_test_program{name="first"}
 atf_test_program{name="second"}
@@ -264,13 +264,13 @@ EOF
 utils_test_case config_behavior
 config_behavior_body() {
     cat >"my-config" <<EOF
-syntax(1)
+syntax(2)
 test_suites.suite1["X-the-variable"] = "value1"
 test_suites.suite2["X-the-variable"] = "override me"
 EOF
 
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 atf_test_program{name="config1", test_suite="suite1"}
 atf_test_program{name="config2", test_suite="suite2"}
 atf_test_program{name="config3", test_suite="suite3"}
@@ -294,7 +294,7 @@ EOF
 utils_test_case build_root_flag
 build_root_flag_body() {
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("integration")
 atf_test_program{name="first"}
 atf_test_program{name="second"}
@@ -322,7 +322,7 @@ This file is bogus but it is not loaded.
 EOF
 
     cat >myfile <<EOF
-syntax(1)
+syntax(2)
 test_suite("hello-world")
 atf_test_program{name="sometest"}
 EOF
@@ -359,7 +359,7 @@ EOF
 utils_test_case bogus_test_program
 bogus_test_program_body() {
     cat >Kyuafile <<EOF
-syntax(1)
+syntax(2)
 test_suite("integration")
 atf_test_program{name="crash_on_list"}
 atf_test_program{name="non_executable"}

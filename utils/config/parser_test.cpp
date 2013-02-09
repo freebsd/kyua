@@ -84,7 +84,7 @@ ATF_TEST_CASE_BODY(no_keys__ok)
 {
     atf::utils::create_file(
         "output.lua",
-        "syntax(1)\n"
+        "syntax(2)\n"
         "local foo = 'value'\n");
 
     config::tree tree;
@@ -99,7 +99,7 @@ ATF_TEST_CASE_BODY(no_keys__unknown_key)
 {
     atf::utils::create_file(
         "output.lua",
-        "syntax(1)\n"
+        "syntax(2)\n"
         "foo = 'value'\n");
 
     config::tree tree;
@@ -170,8 +170,16 @@ ATF_TEST_CASE_BODY(syntax_deprecated_format)
 {
     config::tree tree;
 
-    atf::utils::create_file("output.lua", "syntax('invalid', 1)\n");
+    atf::utils::create_file("output.lua", "syntax('config', 1)\n");
     (void)mock_parser(tree).parse(fs::path("output.lua"));
+
+    atf::utils::create_file("output.lua", "syntax('foo', 1)\n");
+    ATF_REQUIRE_THROW_RE(config::syntax_error, "must be 'config'",
+                         mock_parser(tree).parse(fs::path("output.lua")));
+
+    atf::utils::create_file("output.lua", "syntax('config', 2)\n");
+    ATF_REQUIRE_THROW_RE(config::syntax_error, "only takes one argument",
+                         mock_parser(tree).parse(fs::path("output.lua")));
 }
 
 
@@ -197,9 +205,9 @@ ATF_TEST_CASE_BODY(syntax_called_more_than_once)
 
     atf::utils::create_file(
         "output.lua",
-        "syntax(1)\n"
+        "syntax(2)\n"
         "var = 3\n"
-        "syntax(1)\n"
+        "syntax(2)\n"
         "var = 5\n");
     ATF_REQUIRE_THROW_RE(config::syntax_error,
                          "syntax\\(\\) can only be called once",
