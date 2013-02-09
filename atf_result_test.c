@@ -28,6 +28,7 @@
 
 #include "atf_result.h"
 
+#include <sys/resource.h>
 #include <sys/wait.h>
 
 #include <signal.h>
@@ -73,6 +74,17 @@ generate_wait_exitstatus(const int exitstatus)
 static int
 generate_wait_termsig(const int signo)
 {
+    // Explicitly disable core files to avoid inconsistent behaviors across
+    // operating systems.  Some of the signal numbers passed to this function
+    // may have a meaning or not depending on the system, and this might mean
+    // that a core gets generated arbitrarily.  As a result of this, our string
+    // comparisons below fail.
+    struct rlimit rl;
+    rl.rlim_cur = 0;
+    rl.rlim_max = RLIM_INFINITY;
+    if (setrlimit(RLIMIT_CORE, &rl) == -1)
+        atf_tc_skip("Failed to lower the core size limit");
+
     const pid_t pid = fork();
     ATF_REQUIRE(pid != -1);
     if (pid == 0) {
