@@ -282,15 +282,15 @@ ATF_TC_WITHOUT_HEAD(dump__gdb_fail);
 ATF_TC_BODY(dump__gdb_fail, tc)
 {
     RE(kyua_env_set("PATH", "."));
-    create_script("fake-gdb", "echo 'foo'; echo 'bar' 1>&2; exit 1");
+    create_script("fake-gdb", "echo 'foo'; echo 'bar' 1>&2; exit 56");
     kyua_stacktrace_gdb = "fake-gdb";
 
     do_dump(tc, ".", "short", "stacktrace", 10);
 
     ATF_REQUIRE(atf_utils_grep_file("foo", "stacktrace"));
     ATF_REQUIRE(atf_utils_grep_file("bar", "stacktrace"));
-    ATF_REQUIRE(atf_utils_grep_file("GDB failed; see output above for details",
-                                    "stacktrace"));
+    ATF_REQUIRE(atf_utils_grep_file("GDB failed with code 56; see output above "
+                                    "for details", "stacktrace"));
 }
 
 

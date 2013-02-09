@@ -32,6 +32,7 @@
 #include <sys/wait.h>
 
 #include <assert.h>
+#include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -105,6 +106,9 @@ gdb_run_params(const kyua_run_params_t* original_run_params)
 /// This should be called from the child created by a kyua_run_fork() call,
 /// which means that we do not have to take care of isolating the process.
 ///
+/// \pre The caller must have flushed stdout before spawning this process, to
+///     prevent double-flushing and/or corruption of data.
+///
 /// \param program Path to the program being debugged.  Can be relative to
 ///     the given work directory.
 /// \param core_name Path to the dumped core.  Use find_core() to deduce
@@ -122,8 +126,9 @@ run_gdb(const char* program, const char* core_name, FILE* output)
     }
 
     (void)close(STDIN_FILENO);
+    const int input_fd = open("/dev/null", O_RDONLY);
+    assert(input_fd == STDIN_FILENO);
 
-    fflush(output);
     const int output_fd = fileno(output);
     assert(output_fd != -1);  // We expect a file-backed stream.
     if (output_fd != STDOUT_FILENO) {
@@ -232,24 +237,39 @@ kyua_stacktrace_find_core(const char* name, const char* directory,
 {
     char* candidate = NULL;
 
-    // TODO(jmmv): Other than checking all these defaults, we should also
-    // inspect the value of the kern.defcorename sysctl(2) MIB and use that
+    // TODO(jmmv): Other than checking all these defaults, in NetBSD we should
+    // also inspect the value of the kern.defcorename sysctl(2) MIB and use that
     // as the first candidate.
+    //
+    // In Linux, the way to determine the name is by looking at
+    // /proc/sys/kernel/core_{pattern,uses_pid} as described by core(5).
+    // Unfortunately, there does not seem to be a standard API to parse these
+    // files, which makes checking for core files quite difficult if the
+    // defaults have been modified.
 
+    // Default NetBSD naming scheme.
     if (candidate == NULL && MAXCOMLEN > 0) {
         char truncated[MAXCOMLEN + 1];
         candidate = try_core("%s/%s.core", directory,
                              slice(name, truncated, sizeof(truncated)));
     }
 
+    // Common naming scheme without the MAXCOMLEN truncation.
     if (candidate == NULL)
         candidate = try_core("%s/%s.core", directory, name);
 
+    // Common naming scheme found in Linux systems.
     if (candidate == NULL)
         candidate = try_core("%s/core.%d", directory, (int)dead_pid);
 
+    // Default Mac OS X naming scheme.
     if (candidate == NULL)
         candidate = try_core("/cores/core.%d", (int)dead_pid);
+
+    // Common naming scheme found in Linux systems.  Attempted last due to the
+    // genericity of the core file name.
+    if (candidate == NULL)
+        candidate = try_core("%s/core", directory);
 
     if (candidate != NULL) {
         char* abs_candidate;
@@ -300,6 +320,10 @@ kyua_stacktrace_dump(const char* program, const pid_t dead_pid,
         goto out;
     }
 
+    // We must flush the output stream right before invoking fork, so that the
+    // subprocess does not have any unflushed data.  Failure to do so results in
+    // the messages above being written twice to the output.
+    fflush(output);
     pid_t pid;
     error = kyua_run_fork(&run_params, &pid);
     if (!kyua_error_is_set(error) && pid == 0) {
@@ -317,10 +341,17 @@ kyua_stacktrace_dump(const char* program, const pid_t dead_pid,
     if (timed_out) {
         fprintf(output, "GDB failed; timed out\n");
     } else {
-        if (WIFEXITED(status) && WEXITSTATUS(status) == EXIT_SUCCESS)
-            fprintf(output, "GDB exited successfully\n");
-        else
-            fprintf(output, "GDB failed; see output above for details\n");
+        if (WIFEXITED(status)) {
+            if (WEXITSTATUS(status) == EXIT_SUCCESS)
+                fprintf(output, "GDB exited successfully\n");
+            else
+                fprintf(output, "GDB failed with code %d; see output above for "
+                        "details\n", WEXITSTATUS(status));
+        } else {
+            assert(WIFSIGNALED(status));
+            fprintf(output, "GDB received signal %d; see output above for "
+                    "details\n", WTERMSIG(status));
+        }
     }
 
 out_core_file:
