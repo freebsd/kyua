@@ -17,6 +17,12 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   is no use in the caller having to specify it.  The version number of these
   files has been bumped to 2.
 
+* Issue 57: Added support to specify arbitrary metadata properties for
+  test programs right from the Kyuafile.  This is to make plain test
+  programs more versatile, by allowing them to specify any of the
+  requirements (allowed architectures, required files, etc.) supported
+  by Kyua.
+
 * Reduced automatic screen line wrapping of messages to the help command
   and the output of tables by db-exec.  Wrapping any other messages
   (specially anything going to stderr) was very annoying because it

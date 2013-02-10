@@ -38,10 +38,12 @@
 
 #include "engine/exceptions.hpp"
 #include "engine/test_program.hpp"
+#include "utils/datetime.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/optional.ipp"
 
+namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 
 using utils::none;
@@ -124,6 +126,45 @@ ATF_TEST_CASE_BODY(kyuafile__load__some_programs)
     ATF_REQUIRE_EQ(fs::path("dir/subdir/5th"),
                    suite.test_programs()[5]->relative_path());
     ATF_REQUIRE_EQ("last-suite", suite.test_programs()[5]->test_suite_name());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__metadata);
+ATF_TEST_CASE_BODY(kyuafile__load__metadata)
+{
+    atf::utils::create_file(
+        "config",
+        "syntax(2)\n"
+        "atf_test_program{name='1st', test_suite='first',"
+        " allowed_architectures='amd64 i386', timeout=15}\n"
+        "plain_test_program{name='2nd', test_suite='second',"
+        " required_files='foo /bar//baz', required_user='root'}\n");
+    atf::utils::create_file("1st", "");
+    atf::utils::create_file("2nd", "");
+
+    const engine::kyuafile suite = engine::kyuafile::load(
+        fs::path("config"), none);
+    ATF_REQUIRE_EQ(2, suite.test_programs().size());
+
+    ATF_REQUIRE_EQ("atf", suite.test_programs()[0]->interface_name());
+    ATF_REQUIRE_EQ(fs::path("1st"), suite.test_programs()[0]->relative_path());
+    ATF_REQUIRE_EQ("first", suite.test_programs()[0]->test_suite_name());
+    const engine::metadata md1 = engine::metadata_builder()
+        .add_allowed_architecture("amd64")
+        .add_allowed_architecture("i386")
+        .set_timeout(datetime::delta(15, 0))
+        .build();
+    ATF_REQUIRE_EQ(md1, suite.test_programs()[0]->get_metadata());
+
+    ATF_REQUIRE_EQ("plain", suite.test_programs()[1]->interface_name());
+    ATF_REQUIRE_EQ(fs::path("2nd"), suite.test_programs()[1]->relative_path());
+    ATF_REQUIRE_EQ("second", suite.test_programs()[1]->test_suite_name());
+    const engine::metadata md2 = engine::metadata_builder()
+        .add_required_file(fs::path("foo"))
+        .add_required_file(fs::path("/bar/baz"))
+        .set_required_user("root")
+        .build();
+    ATF_REQUIRE_EQ(md2, suite.test_programs()[1]->get_metadata());
 }
 
 
@@ -361,6 +402,7 @@ ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__empty);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__some_programs);
+    ATF_ADD_TEST_CASE(tcs, kyuafile__load__metadata);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__current_directory);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__other_directory);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__build_directory);

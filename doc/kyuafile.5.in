@@ -32,9 +32,9 @@
 .Nm Kyuafile
 .Nd Test suite description files
 .Sh SYNOPSIS
-.Fn atf_test_program "string name" "[string test_suite]"
+.Fn atf_test_program "string name" "[string test_suite]" "[string metadata]"
 .Fn include "string path"
-.Fn plain_test_program "string name" "[int timeout]" "[string test_suite]"
+.Fn plain_test_program "string name" "[string test_suite]" "[string metadata]"
 .Fn syntax "int version"
 .Fn test_suite "string name"
 .Sh DESCRIPTION
@@ -64,7 +64,8 @@ test_suite('first')
 atf_test_program{name='foo_test'}
 atf_test_program{name='bar_test', test_suite='second'}
 plain_test_program{name='legacy_test'}
-plain_test_program{name='legacy2_test', timeout=30}
+plain_test_program{name='legacy2_test', allowed_architectures='amd64 i386',
+                   required_files='/bin/ls', timeout=30}
 
 -- Recurse into any subdirectories that may have other tests.
 include('dir1/Kyuafile')
@@ -120,9 +121,12 @@ interface) can be registered with the
 .Fn atf_test_program
 table constructor.  This function takes the
 .Fa name
-of the test program and an optional
+of the test program, an optional
 .Fa test_suite
-name that overrides the global test suite name.
+name that overrides the global test suite name and a collection of optional
+metadata settings for all the test cases in the test program.  Any metadata
+properties defined by the test cases themselves override the metadata values
+defined here.
 .Pp
 Plain test programs (those that implement the
 .Xr kyua-plain-interface 7
@@ -130,11 +134,16 @@ interface) can be registered with the
 .Fn plain_test_program
 table constructor.  This function takes the
 .Fa name
-of the test program, an optional
-.Fa timeout
-in seconds and an optional
+of the test program an optional
 .Fa test_suite
-name that overrides the global test suite name.
+name that overrides the global test suite name and a collection of optional
+metadata settings for the test program.
+.Pp
+Please see
+.Xr kyua-tester-list 5
+for the list of metadata properties that can be given to test programs.
+All the properties that can be given to a test case can also be given to a test
+program.
 .Ss Recursion
 To reference test programs in another subdirectory, a different
 .Nm

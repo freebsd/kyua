@@ -83,6 +83,7 @@ test_suite("integration")
 atf_test_program{name="first"}
 atf_test_program{name="second"}
 atf_test_program{name="third"}
+plain_test_program{name="fourth", required_files="/non-existent/foo"}
 EOF
 
     cat >expout <<EOF
@@ -92,14 +93,16 @@ second:pass  ->  passed  [S.UUUs]
 second:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 third:pass  ->  passed  [S.UUUs]
 third:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
+fourth:main  ->  skipped: Required file '/non-existent/foo' not found  [S.UUUs]
 
-6/6 passed (0 failed)
+7/7 passed (0 failed)
 Committed action 1
 EOF
 
     utils_cp_helper simple_all_pass first
     utils_cp_helper simple_all_pass second
     utils_cp_helper simple_all_pass third
+    echo "not executed" >fourth; chmod +x fourth
     atf_check -s exit:0 -o file:expout -e empty kyua test
 }
 
@@ -114,6 +117,7 @@ test_suite("integration")
 atf_test_program{name="first"}
 atf_test_program{name="second"}
 atf_test_program{name="third"}
+plain_test_program{name="fourth"}
 EOF
 
     cat >expout <<EOF
@@ -123,14 +127,18 @@ second:fail  ->  failed: This fails on purpose  [S.UUUs]
 second:pass  ->  passed  [S.UUUs]
 third:pass  ->  passed  [S.UUUs]
 third:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
+fourth:main  ->  failed: Returned non-success exit status 76  [S.UUUs]
 
-4/6 passed (2 failed)
+4/7 passed (3 failed)
 Committed action 1
 EOF
 
     utils_cp_helper simple_some_fail first
     utils_cp_helper simple_some_fail second
     utils_cp_helper simple_all_pass third
+    echo '#! /bin/sh' >fourth
+    echo 'exit 76' >>fourth
+    chmod +x fourth
     atf_check -s exit:1 -o file:expout -e empty kyua test
 }
 

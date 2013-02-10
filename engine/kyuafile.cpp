@@ -419,20 +419,24 @@ lua_generic_test_program(lutok::state& state, const std::string& interface)
     state.pop(1);
 
     engine::metadata_builder mdbuilder;
-    // TODO(jmmv): The definition of a test program should allow overriding
-    // ALL of the metadata properties, not just the timeout.  See Issue 57.
-    {
-        state.push_string("timeout");
-        state.get_table();
-        if (state.is_nil()) {
-            // Nothing to do.
-        } else if (state.is_number()) {
-            mdbuilder.set_timeout(datetime::delta(state.to_integer(), 0));
-        } else {
-            throw std::runtime_error(F("Non-integer value provided as "
-                                       "timeout for test program '%s'") %
+    state.push_nil();
+    while (state.next()) {
+        if (!state.is_string(-2))
+            throw std::runtime_error(F("Found non-string metadata property "
+                                       "name in test program '%s'") %
                                      path);
+        const std::string property = state.to_string(-2);
+
+        if (property != "name" && property != "test_suite") {
+            if (!state.is_number(-1) && !state.is_string(-1))
+                throw std::runtime_error(
+                    F("Metadata property '%s' in test program '%s' cannot be "
+                      "converted to a string") % property % path);
+            const std::string value = state.to_string(-1);
+
+            mdbuilder.set_string(property, value);
         }
+
         state.pop(1);
     }
 
