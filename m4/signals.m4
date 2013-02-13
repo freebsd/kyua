@@ -32,8 +32,10 @@ dnl
 dnl Detect the last valid signal number.
 dnl
 AC_DEFUN([KYUA_LAST_SIGNO], [
-    AC_MSG_CHECKING(for the last valid signal)
-    AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <err.h>
+    AC_CACHE_CHECK(
+        [for the last valid signal],
+        [kyua_cv_signals_lastno], [
+        AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <err.h>
 #include <errno.h>
 #include <signal.h>
 #include <stdio.h>
@@ -75,16 +77,14 @@ AC_DEFUN([KYUA_LAST_SIGNO], [
 
     return EXIT_SUCCESS;
 ])],
-    [if test ! -f conftest.cnt; then
-         last_signo=15
-         AC_MSG_RESULT(failed; assuming ${last_signo})
-     else
-         last_signo=$(cat conftest.cnt)
-         rm -f conftest.cnt
-         AC_MSG_RESULT(${last_signo})
-     fi],
-    [last_signo=15
-     AC_MSG_RESULT(failed; assuming ${last_signo})])
-    AC_DEFINE_UNQUOTED([LAST_SIGNO], [${last_signo}],
+        [if test ! -f conftest.cnt; then
+             kyua_cv_signals_lastno=15
+         else
+             kyua_cv_signals_lastno=$(cat conftest.cnt)
+             rm -f conftest.cnt
+         fi],
+        [kyua_cv_signals_lastno=15])
+    ])
+    AC_DEFINE_UNQUOTED([LAST_SIGNO], [${kyua_cv_signals_lastno}],
                        [Define to the last valid signal number])
 ])

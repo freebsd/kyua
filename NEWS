@@ -57,6 +57,11 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   external Lua files required by 'kyua', which in turn make the tool
   self-contained.
 
+* Added caching of various configure test results (particularly in those
+  tests that need to execute a test program) so that cross-compilers can
+  predefine the results of the tests without having to run the
+  executables.
+
 
 Changes in version 0.5
 ======================
