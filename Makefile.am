@@ -77,12 +77,12 @@ BUILD_MANPAGE = \
 	    <$(srcdir)/$${name}.in >$${name}.tmp; \
 	mv $${name}.tmp $${name}
 
-man_MANS  = kyua-atf-interface.7
-man_MANS += kyua-plain-interface.7
-man_MANS += kyua-tester-list.5
-man_MANS += kyua-tester-result.5
+dist_man_MANS  = kyua-atf-interface.7
+dist_man_MANS += kyua-plain-interface.7
+dist_man_MANS += kyua-tester-list.5
+dist_man_MANS += kyua-tester-result.5
 
-man_MANS += kyua-atf-tester.1
+man_MANS = kyua-atf-tester.1
 CLEANFILES = kyua-atf-tester.1
 EXTRA_DIST += kyua-atf-tester.1.in
 kyua-atf-tester.1: $(srcdir)/kyua-atf-tester.1.in
@@ -110,7 +110,7 @@ kyua-testers.pc: $(srcdir)/kyua-testers.pc.in Makefile
 	mv kyua-testers.pc.tmp kyua-testers.pc
 
 if WITH_ATF
-pkgtests_DATA = Kyuafile
+dist_pkgtests_DATA = Kyuafile
 
 pkgtests_PROGRAMS = atf_list_test
 atf_list_test_SOURCES = atf_list_test.c
