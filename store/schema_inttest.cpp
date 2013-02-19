@@ -40,6 +40,7 @@
 #include "engine/test_result.hpp"
 #include "store/backend.hpp"
 #include "store/transaction.hpp"
+#include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/logging/operations.hpp"
 #include "utils/sqlite/database.hpp"
@@ -55,16 +56,14 @@ namespace units = utils::units;
 
 /// Executes an SQL script within a database.
 ///
-/// \param tc Caller test case, to get the source directory form.
 /// \param db Database in which to run the script.
-/// \param testdata Name of the data file in the source directory.
+/// \param path Path to the data file.
 static void
-exec_db_file(const atf::tests::tc* tc, sqlite::database& db,
-             const char* testdata)
+exec_db_file(sqlite::database& db, const fs::path& path)
 {
-    const fs::path path = fs::path(tc->get_config_var("srcdir")) / testdata;
     std::ifstream input(path.c_str());
-    ATF_REQUIRE(input);
+    if (!input)
+        ATF_FAIL(F("Failed to open %s") % path);
     db.exec(utils::read_stream(input));
 }
 
@@ -459,8 +458,8 @@ ATF_TEST_CASE_BODY(current_schema)
 
     sqlite::database db = sqlite::database::open(
         testpath, sqlite::open_readwrite | sqlite::open_create);
-    exec_db_file(this, db, "schema_v2.sql");
-    exec_db_file(this, db, "testdata_v2.sql");
+    exec_db_file(db, store::detail::schema_file());
+    exec_db_file(db, fs::path(get_config_var("srcdir")) / "testdata_v2.sql");
     db.close();
 
     store::backend backend = store::backend::open_ro(testpath);
@@ -484,8 +483,8 @@ ATF_TEST_CASE_BODY(migrate_schema__v1_to_v2)
 
     sqlite::database db = sqlite::database::open(
         testpath, sqlite::open_readwrite | sqlite::open_create);
-    exec_db_file(this, db, "schema_v1.sql");
-    exec_db_file(this, db, "testdata_v1.sql");
+    exec_db_file(db, fs::path(get_config_var("srcdir")) / "schema_v1.sql");
+    exec_db_file(db, fs::path(get_config_var("srcdir")) / "testdata_v1.sql");
     db.close();
 
     store::migrate_schema(fs::path("test.db"));
