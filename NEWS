@@ -1,21 +1,26 @@
 Changes in version 0.6
 ======================
 
-STILL UNDER DEVELOPMENT; NOT RELEASED YET.
-
-* Issue 40: Rewrote the documentation as manual pages and removed the
-  previous GNU Info document.
+Experimental version released on February 22nd, 2013.
 
 * Issue 36: Changed 'kyua help' to not fail when the configuration file
   is bogus.  Help should always work.
 
-* Issue 39: Added per-test-case metadata values to the HTML reports.
-
 * Issue 37: Simplified the syntax() calls in configuration and Kyuafile
   files to only specify the requested version instead of also the format
   name.  The format name is implied by the file being loaded, so there
-  is no use in the caller having to specify it.  The version number of these
-  files has been bumped to 2.
+  is no use in the caller having to specify it.  The version number of
+  these file formats has been bumped to 2.
+
+* Issue 39: Added per-test-case metadata values to the HTML reports.
+
+* Issue 40: Rewrote the documentation as manual pages and removed the
+  previous GNU Info document.
+
+* Issue 47: Started using the independent testers in the kyua-testers
+  package to run the test cases.  Kyua does not implement the logic to
+  invoke test cases any more, which provides for better modularity,
+  extensibility and robustness.
 
 * Issue 57: Added support to specify arbitrary metadata properties for
   test programs right from the Kyuafile.  This is to make plain test
@@ -23,21 +28,16 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   requirements (allowed architectures, required files, etc.) supported
   by Kyua.
 
-* Reduced automatic screen line wrapping of messages to the help command
-  and the output of tables by db-exec.  Wrapping any other messages
-  (specially anything going to stderr) was very annoying because it
-  prevented natural copy/pasting of text.
+* Reduced automatic screen line wrapping of messages to the 'help'
+  command and the output of tables by 'db-exec'.  Wrapping any other
+  messages (specially anything going to stderr) was very annoying
+  because it prevented natural copy/pasting of text.
 
 * Increased the granularity of the error codes returned by kyua(1) to
-  denote different error conditions.  This avoids the overload of '1'
-  to indicate both "expected" errors from specific subcommands from
-  unexpected errors caused by the internals of the code.  The manual
-  now correctly explain how the exit codes behave on a command basis.
-
-* Issue 47: Started using the independent testers in the kyua-testers
-  package to run the test cases.  Kyua does not implement the logic to
-  invoke test cases any more, which provides for better modularity,
-  extensibility and robustness.
+  denote different error conditions.  This avoids the overload of '1' to
+  indicate both "expected" errors from specific subcommands and
+  unexpected errors caused by the internals of the code.  The manual now
+  correctly explain how the exit codes behave on a command basis.
 
 * Optimized the database schema to make report generation almost
   instantaneous.
