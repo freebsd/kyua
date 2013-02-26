@@ -1,3 +1,13 @@
+Changes in version 0.2
+======================
+
+STILL UNDER DEVELOPMENT; NOT RELEASED YET.
+
+* Fixed two problems regarding configuration parsing in atf-run: one
+  to properly handle tab characters and one that caused an error with
+  NetBSD's /bin/sh.
+
+
 Changes in version 0.1
 ======================
 
