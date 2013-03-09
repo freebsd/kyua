@@ -52,8 +52,8 @@ Experimental version released on February 22nd, 2013.
 * Removed the GDB build-time configuration variable.  This is now part
   of the kyua-testers package.
 
-* Rewrote the Kyuafile parsing code in C++, which results in a much
-  simpler implementation.  As a side-effect, this gets rid of the
+* Issue 31: Rewrote the Kyuafile parsing code in C++, which results in
+  a much simpler implementation.  As a side-effect, this gets rid of the
   external Lua files required by 'kyua', which in turn make the tool
   self-contained.
 
