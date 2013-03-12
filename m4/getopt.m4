@@ -34,8 +34,10 @@ dnl the beginning of the options string to request POSIX behavior.
 dnl
 dnl Defines HAVE_GETOPT_GNU if a + sign is supported.
 AC_DEFUN([_KYUA_GETOPT_GNU], [
-    AC_MSG_CHECKING([whether getopt allows a + sign for POSIX behavior])
-    AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <stdlib.h>
+    AC_CACHE_CHECK(
+        [whether getopt allows a + sign for POSIX behavior optreset],
+        [kyua_cv_getopt_gnu], [
+        AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>], [
     int argc = 4;
@@ -67,11 +69,13 @@ AC_DEFUN([_KYUA_GETOPT_GNU], [
 
     return (seen_a && !seen_plus) ? EXIT_SUCCESS : EXIT_FAILURE;
 ])],
-    [getopt_allows_plus=yes
-     AC_DEFINE([HAVE_GETOPT_GNU], [1],
-               [Define to 1 if getopt allows a + sign for POSIX behavior])],
-    [getopt_allows_plus=no])
-    AC_MSG_RESULT(${getopt_allows_plus})
+        [kyua_cv_getopt_gnu=yes],
+        [kyua_cv_getopt_gnu=no])
+    ])
+    if test "${kyua_cv_getopt_gnu}" = yes; then
+        AC_DEFINE([HAVE_GETOPT_GNU], [1],
+                   [Define to 1 if getopt allows a + sign for POSIX behavior])
+    fi
 ])
 
 dnl Checks if optreset exists to reset the processing of getopt(3) options.
@@ -82,9 +86,10 @@ dnl is only present in the BSD versions of getopt(3).
 dnl
 dnl Defines HAVE_GETOPT_WITH_OPTRESET if optreset exists.
 AC_DEFUN([_KYUA_GETOPT_WITH_OPTRESET], [
-    AC_MSG_CHECKING([whether getopt has optreset])
-
-    AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+    AC_CACHE_CHECK(
+        [whether getopt has optreset],
+        [kyua_cv_getopt_optreset], [
+        AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -95,12 +100,13 @@ main(void)
     return EXIT_SUCCESS;
 }
 ])],
-    [getopt_optreset=yes
-     AC_DEFINE([HAVE_GETOPT_WITH_OPTRESET], [1],
-               [Define to 1 if getopt has optreset])],
-    [getopt_optreset=no])
-
-    AC_MSG_RESULT([${getopt_optreset}])
+        [kyua_cv_getopt_optreset=yes],
+        [kyua_cv_getopt_optreset=no])
+    ])
+    if test "${kyua_cv_getopt_optreset}" = yes; then
+        AC_DEFINE([HAVE_GETOPT_WITH_OPTRESET], [1],
+                  [Define to 1 if getopt has optreset])
+    fi
 ])
 
 
@@ -114,9 +120,10 @@ dnl
 dnl Sets the GETOPT_OPTIND_RESET_VALUE macro to the integer value that has to
 dnl be passed to optind to reset option processing.
 AC_DEFUN([_KYUA_GETOPT_OPTIND_RESET_VALUE], [
-    AC_MSG_CHECKING([for the optind value to reset getopt processing])
-
-    AC_RUN_IFELSE([AC_LANG_SOURCE([
+    AC_CACHE_CHECK(
+        [for the optind value to reset getopt processing],
+        [kyua_cv_getopt_optind_reset_value], [
+        AC_RUN_IFELSE([AC_LANG_SOURCE([
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -189,12 +196,12 @@ main(void)
     return EXIT_SUCCESS;
 }
 ])],
-    [optind_reset_value=0],
-    [optind_reset_value=1])
-
-    AC_DEFINE_UNQUOTED([GETOPT_OPTIND_RESET_VALUE], [${optind_reset_value}],
+        [kyua_cv_getopt_optind_reset_value=0],
+        [kyua_cv_getopt_optind_reset_value=1])
+    ])
+    AC_DEFINE_UNQUOTED([GETOPT_OPTIND_RESET_VALUE],
+        [${kyua_cv_getopt_optind_reset_value}],
         [Define to the optind value to reset getopt processing])
-    AC_MSG_RESULT([${optind_reset_value}])
 ])
 
 

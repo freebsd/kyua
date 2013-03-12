@@ -43,9 +43,10 @@ dnl nice to detect if lchmod(3) works at run time to prevent side-effects of
 dnl this test but doing so means we will keep receiving a noisy compiler
 dnl warning.
 AC_DEFUN([KYUA_FS_LCHMOD], [
-    AC_MSG_CHECKING([for a working lchmod])
-    working_lchmod=no
-    AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <sys/stat.h>
+    AC_CACHE_CHECK(
+        [for a working lchmod],
+        [kyua_cv_lchmod_works], [
+        AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <sys/stat.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -59,15 +60,14 @@ AC_DEFUN([KYUA_FS_LCHMOD], [
 
     return lchmod("conftest.txt", 0640) != -1 ?  EXIT_SUCCESS : EXIT_FAILURE;
 ])],
-    [AC_MSG_RESULT([yes])
-     AC_DEFINE_UNQUOTED([HAVE_WORKING_LCHMOD], [1],
-                        [Define to 1 if your lchmod works])],
-    [if test ! -f conftest.txt; then
-         AC_MSG_RESULT([failed; assuming no])
-     else
-         rm -f conftest.txt
-         AC_MSG_RESULT([no])
-     fi])
+        [kyua_cv_lchmod_works=yes],
+        [kyua_cv_lchmod_works=no])
+    ])
+    rm -f conftest.txt
+    if test "${kyua_cv_lchmod_works}" = yes; then
+        AC_DEFINE_UNQUOTED([HAVE_WORKING_LCHMOD], [1],
+                           [Define to 1 if your lchmod works])
+    fi
 ])
 
 

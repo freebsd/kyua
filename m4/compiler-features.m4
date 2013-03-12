@@ -35,13 +35,13 @@ dnl does not allow it.
 dnl
 AC_DEFUN([KYUA_REQUIRE_CXX], [
     AC_CACHE_CHECK([whether the C++ compiler works],
-                   [atf_cv_prog_cxx_works],
+                   [kyua_cv_prog_cxx_works],
                    [AC_LANG_PUSH([C++])
                     AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])],
-                                   [atf_cv_prog_cxx_works=yes],
-                                   [atf_cv_prog_cxx_works=no])
+                                   [kyua_cv_prog_cxx_works=yes],
+                                   [kyua_cv_prog_cxx_works=no])
                     AC_LANG_POP([C++])])
-    if test "${atf_cv_prog_cxx_works}" = no; then
+    if test "${kyua_cv_prog_cxx_works}" = no; then
         AC_MSG_ERROR([C++ compiler cannot create executables])
     fi
 ])
@@ -96,20 +96,25 @@ AC_DEFUN([KYUA_ATTRIBUTE_NORETURN], [
     dnl Sun's cc does support the noreturn attribute but CC (the C++
     dnl compiler) does not.  And in that case, CC just raises a warning
     dnl during compilation, not an error.
-    AC_MSG_CHECKING(whether __attribute__((noreturn)) is supported)
-    AC_RUN_IFELSE([AC_LANG_PROGRAM([], [
+    AC_CACHE_CHECK(
+        [whether __attribute__((noreturn)) is supported],
+        [kyua_cv_attribute_noreturn], [
+        AC_RUN_IFELSE([AC_LANG_PROGRAM([], [
 #if ((__GNUC__ == 2 && __GNUC_MINOR__ >= 5) || __GNUC__ > 2)
     return 0;
 #else
     return 1;
 #endif
-        ])],
-        [AC_MSG_RESULT(yes)
-         value="__attribute__((noreturn))"],
-        [AC_MSG_RESULT(no)
-         value=""]
-    )
-    AC_SUBST([ATTRIBUTE_NORETURN], [${value}])
+            ])],
+            [kyua_cv_attribute_noreturn=yes],
+            [kyua_cv_attribute_noreturn=no])
+    ])
+    if test "${kyua_cv_attribute_noreturn}" = yes; then
+        attribute_value="__attribute__((noreturn))"
+    else
+        attribute_value=""
+    fi
+    AC_SUBST([ATTRIBUTE_NORETURN], [${attribute_value}])
 ])
 
 
@@ -119,9 +124,11 @@ dnl
 dnl Checks if the current compiler has a way to mark functions as pure.
 dnl
 AC_DEFUN([KYUA_ATTRIBUTE_PURE], [
-    AC_MSG_CHECKING(whether __attribute__((__pure__)) is supported)
-    AC_COMPILE_IFELSE(
-        [AC_LANG_PROGRAM([
+    AC_CACHE_CHECK(
+        [whether __attribute__((__pure__)) is supported],
+        [kyua_cv_attribute_pure], [
+        AC_COMPILE_IFELSE(
+            [AC_LANG_PROGRAM([
 static int function(int, int) __attribute__((__pure__));
 
 static int
@@ -131,12 +138,15 @@ function(int a, int b)
 }], [
     return function(3, 4);
 ])],
-        [AC_MSG_RESULT(yes)
-         value="__attribute__((__pure__))"],
-        [AC_MSG_RESULT(no)
-         value=""]
-    )
-    AC_SUBST([ATTRIBUTE_PURE], [${value}])
+            [kyua_cv_attribute_pure=yes],
+            [kyua_cv_attribute_pure=no])
+    ])
+    if test "${kyua_cv_attribute_pure}" = yes; then
+        attribute_value="__attribute__((__pure__))"
+    else
+        attribute_value=""
+    fi
+    AC_SUBST([ATTRIBUTE_PURE], [${attribute_value}])
 ])
 
 
@@ -147,9 +157,11 @@ dnl Checks if the current compiler has a way to mark parameters as unused
 dnl so that the -Wunused-parameter warning can be avoided.
 dnl
 AC_DEFUN([KYUA_ATTRIBUTE_UNUSED], [
-    AC_MSG_CHECKING(whether __attribute__((__unused__)) is supported)
-    AC_COMPILE_IFELSE(
-        [AC_LANG_PROGRAM([
+    AC_CACHE_CHECK(
+        [whether __attribute__((__unused__)) is supported],
+        [kyua_cv_attribute_unused], [
+        AC_COMPILE_IFELSE(
+            [AC_LANG_PROGRAM([
 static void
 function(int a __attribute__((__unused__)))
 {
@@ -157,10 +169,13 @@ function(int a __attribute__((__unused__)))
     function(3);
     return 0;
 ])],
-        [AC_MSG_RESULT(yes)
-         value="__attribute__((__unused__))"],
-        [AC_MSG_RESULT(no)
-         value=""]
-    )
-    AC_SUBST([ATTRIBUTE_UNUSED], [${value}])
+            [kyua_cv_attribute_unused=yes],
+            [kyua_cv_attribute_unused=no])
+    ])
+    if test "${kyua_cv_attribute_unused}" = yes; then
+        attribute_value="__attribute__((__unused__))"
+    else
+        attribute_value=""
+    fi
+    AC_SUBST([ATTRIBUTE_UNUSED], [${attribute_value}])
 ])
