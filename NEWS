@@ -3,7 +3,9 @@ Changes in version 0.7
 
 STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 
-* No changes recorded yet.
+* Made failures from testers more resilent.  If a tester fails, the
+  corresponding test case will be marked as broken instead of causing
+  kyua to exit.
 
 
 Changes in version 0.6
