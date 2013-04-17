@@ -28,6 +28,7 @@
 
 #include "cli/cmd_report_html.hpp"
 
+#include <algorithm>
 #include <cerrno>
 #include <cstdlib>
 #include <stdexcept>
@@ -139,6 +140,9 @@ class html_hooks : public scan_action::base_hooks {
     /// The top directory in which to create the HTML files.
     fs::path _directory;
 
+    /// Collection of result types to include in the report.
+    const cli::result_types& _results_filters;
+
     /// Templates accumulator to generate the index.html file.
     text::templates_def _summary_templates;
 
@@ -226,11 +230,17 @@ public:
     ///
     /// \param ui_ User interface object where to report progress.
     /// \param directory_ The directory in which to create the HTML files.
-    html_hooks(cmdline::ui* ui_, const fs::path& directory_) :
+    /// \param results_filters_ The result types to include in the report.
+    ///     Cannot be empty.
+    html_hooks(cmdline::ui* ui_, const fs::path& directory_,
+               const cli::result_types& results_filters_) :
         _ui(ui_),
         _directory(directory_),
+        _results_filters(results_filters_),
         _summary_templates(common_templates())
     {
+        PRE(!results_filters_.empty());
+
         // Keep in sync with add_to_summary().
         _summary_templates.add_vector("broken_test_cases");
         _summary_templates.add_vector("broken_test_cases_file");
@@ -273,6 +283,10 @@ public:
 
         const engine::test_case& test_case = *test_program->find(
             iter.test_case_name());
+
+        if (std::find(_results_filters.begin(), _results_filters.end(),
+                      result.type()) == _results_filters.end())
+            return;
 
         add_to_summary(test_case, result);
 
@@ -337,6 +351,9 @@ cli::cmd_report_html::cmd_report_html(void) : cli_command(
     add_option(cmdline::path_option(
         "output", "The directory in which to store the HTML files",
         "path", "html"));
+    add_option(cmdline::list_option(
+        "results-filter", "Comma-separated list of result types to include in "
+        "the report", "types", "skipped,xfail,broken,failed"));
 }
 
 
@@ -357,10 +374,11 @@ cli::cmd_report_html::run(cmdline::ui* ui,
     if (cmdline.has_option("action"))
         action_id = cmdline.get_option< cmdline::int_option >("action");
 
+    const result_types types = get_result_types(cmdline);
     const fs::path directory =
         cmdline.get_option< cmdline::path_option >("output");
     create_top_directory(directory, cmdline.has_option("force"));
-    html_hooks hooks(ui, directory);
+    html_hooks hooks(ui, directory, types);
     scan_action::drive(store_path(cmdline), action_id, hooks);
     hooks.write_summary();
 
