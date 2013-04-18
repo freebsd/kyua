@@ -249,9 +249,7 @@ results_filter__ok_body() {
         test -f "${f}" || atf_fail "Missing ${f}"
     done
 
-    atf_expect_fail "Results accounting does not work with filtering"
     atf_check -o match:"2 TESTS FAILING" cat html/index.html
-    atf_expect_pass
 
     check_in_file html/simple_all_pass_pass.html \
         "This is the stdout of pass" "This is the stderr of pass"
