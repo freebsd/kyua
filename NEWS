@@ -7,6 +7,11 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   corresponding test case will be marked as broken instead of causing
   kyua to exit.
 
+* Added the '--results-filter' option to the 'report-html' command and
+  set its default value to skip passed results from HTML reports.  This
+  is to keep these reports more succint and to avoid generating tons of
+  detail files that will be, in general, useless.
+
 
 Changes in version 0.6
 ======================
