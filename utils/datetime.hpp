@@ -47,7 +47,8 @@ namespace datetime {
 
 
 /// Represents a time delta to describe deadlines.
-struct delta {
+class delta {
+public:
     /// The amount of seconds in the time delta.
     int64_t seconds;
 

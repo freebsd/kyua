@@ -53,8 +53,8 @@ class path;
 }  // namespace utils
 
 namespace engine {
-struct test_filter;
 class test_case;
+class test_filter;
 }  // namespace engine
 
 namespace cli {
