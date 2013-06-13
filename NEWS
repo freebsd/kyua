@@ -12,6 +12,8 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   is to keep these reports more succint and to avoid generating tons of
   detail files that will be, in general, useless.
 
+* Switched to use Lutok 0.3 to gain compatibility with Lua 5.2.
+
 
 Changes in version 0.6
 ======================
