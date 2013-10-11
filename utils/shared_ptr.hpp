@@ -32,6 +32,8 @@
 #if !defined(UTILS_SHARED_PTR_HPP)
 #define UTILS_SHARED_PTR_HPP
 
+#include <ciso646>
+
 #if defined(_LIBCPP_VERSION) || __cplusplus >= 201103L
 #   include <memory>
 #else
