@@ -45,6 +45,7 @@ libutils_a_SOURCES += utils/passwd.cpp
 libutils_a_SOURCES += utils/passwd.hpp
 libutils_a_SOURCES += utils/sanity.cpp
 libutils_a_SOURCES += utils/sanity.hpp
+libutils_a_SOURCES += utils/shared_ptr.hpp
 libutils_a_SOURCES += utils/stream.cpp
 libutils_a_SOURCES += utils/stream.hpp
 libutils_a_SOURCES += utils/units.cpp
