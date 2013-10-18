@@ -1,7 +1,7 @@
 Changes in version 0.7
 ======================
 
-STILL UNDER DEVELOPMENT; NOT RELEASED YET.
+Experimental version released on October 18th, 2013.
 
 * Made failures from testers more resilent.  If a tester fails, the
   corresponding test case will be marked as broken instead of causing
