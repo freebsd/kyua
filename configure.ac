@@ -46,7 +46,7 @@ AM_INIT_AUTOMAKE([1.9 check-news foreign subdir-objects -Wall])
 
 AC_LANG([C++])
 AC_PROG_CXX
-AM_PROG_AR
+m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 KYUA_REQUIRE_CXX
 KYUA_DEVELOPER_MODE([C++])
 KYUA_ATTRIBUTE_NORETURN
