@@ -3,7 +3,9 @@ Changes in version 0.2
 
 STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 
-* No changes recorded.
+* Issue 69: Cope with the lack of AM_PROG_AR in configure.ac, which
+  first appeared in Automake 1.11.2.  Fixes a problem in Ubuntu 10.04
+  LTS, which appears stuck in 1.11.1.
 
 
 Changes in version 0.1
