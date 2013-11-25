@@ -19,3 +19,7 @@ atf_test_program{name="atf_inttest"}
 
 -- Tests for the plain_tester.
 atf_test_program{name="plain_inttest"}
+
+-- Tests for the tap_tester.
+atf_test_program{name="tap_inttest"}
+atf_test_program{name="tap_parser_test"}

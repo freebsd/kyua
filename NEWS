@@ -3,6 +3,9 @@ Changes in version 0.2
 
 STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 
+* Issue 74: Added the kyua-tap-tester, a new backend to interact with
+  test programs that comply with the Test Anything Protocol.
+
 * Issue 69: Cope with the lack of AM_PROG_AR in configure.ac, which
   first appeared in Automake 1.11.2.  Fixes a problem in Ubuntu 10.04
   LTS, which appears stuck in 1.11.1.

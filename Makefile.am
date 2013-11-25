@@ -63,6 +63,10 @@ libatf_tester_a_SOURCES += atf_list.h
 libatf_tester_a_SOURCES += atf_result.c
 libatf_tester_a_SOURCES += atf_result.h
 
+noinst_LIBRARIES += libtap_tester.a
+libtap_tester_a_SOURCES  = tap_parser.c
+libtap_tester_a_SOURCES += tap_parser.h
+
 libexec_PROGRAMS = kyua-atf-tester
 kyua_atf_tester_SOURCES = atf_main.c
 kyua_atf_tester_LDADD = libatf_tester.a libtester.a
@@ -70,6 +74,10 @@ kyua_atf_tester_LDADD = libatf_tester.a libtester.a
 libexec_PROGRAMS += kyua-plain-tester
 kyua_plain_tester_SOURCES = plain_main.c
 kyua_plain_tester_LDADD = libtester.a
+
+libexec_PROGRAMS += kyua-tap-tester
+kyua_tap_tester_SOURCES = tap_main.c
+kyua_tap_tester_LDADD = libtap_tester.a libtester.a
 
 BUILD_MANPAGE = \
 	sed -e 's,__PACKAGE__,$(PACKAGE_TARNAME),g' \
@@ -79,6 +87,7 @@ BUILD_MANPAGE = \
 
 dist_man_MANS  = kyua-atf-interface.7
 dist_man_MANS += kyua-plain-interface.7
+dist_man_MANS += kyua-tap-interface.7
 dist_man_MANS += kyua-tester-list.5
 dist_man_MANS += kyua-tester-result.5
 
@@ -93,6 +102,12 @@ CLEANFILES += kyua-plain-tester.1
 EXTRA_DIST += kyua-plain-tester.1.in
 kyua-plain-tester.1: $(srcdir)/kyua-plain-tester.1.in
 	name=kyua-plain-tester.1; $(BUILD_MANPAGE)
+
+man_MANS += kyua-tap-tester.1
+CLEANFILES += kyua-tap-tester.1
+EXTRA_DIST += kyua-tap-tester.1.in
+kyua-tap-tester.1: $(srcdir)/kyua-tap-tester.1.in
+	name=kyua-tap-tester.1; $(BUILD_MANPAGE)
 
 man_MANS += kyua-tester.1
 CLEANFILES += kyua-tester.1
@@ -177,6 +192,19 @@ pkgtests_PROGRAMS += stacktrace_test
 stacktrace_test_SOURCES = stacktrace_test.c
 stacktrace_test_CPPFLAGS = $(ATF_C_CFLAGS)
 stacktrace_test_LDADD = libtester.a $(ATF_C_LIBS)
+
+pkgtests_PROGRAMS += tap_inttest
+tap_inttest_SOURCES = tap_inttest.c common_inttest.h
+tap_inttest_CPPFLAGS  = -DTESTERSDIR=\"$(libexecdir)\" $(ATF_C_CFLAGS)
+tap_inttest_LDADD = $(ATF_C_LIBS)
+
+pkgtests_PROGRAMS += tap_helpers
+tap_helpers_SOURCES = tap_helpers.c
+
+pkgtests_PROGRAMS += tap_parser_test
+tap_parser_test_SOURCES = tap_parser_test.c
+tap_parser_test_CPPFLAGS = $(ATF_C_CFLAGS)
+tap_parser_test_LDADD = libtap_tester.a libtester.a $(ATF_C_LIBS)
 
 pkgtests_PROGRAMS += text_test
 text_test_SOURCES = text_test.c
