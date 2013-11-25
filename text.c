@@ -33,6 +33,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "error.h"
 
@@ -53,6 +54,66 @@ calculate_length(const char* format, va_list ap)
     const int needed = vsnprintf(buffer, sizeof(buffer), format, ap);
     va_end(ap2);
     return needed;
+}
+
+
+/// Same as fgets, but removes any trailing newline from the output string.
+///
+/// \param [out] str Pointer to the output buffer.
+/// \param size Length of the output buffer.
+/// \param [in,out] stream File from which to read the line.
+///
+/// \return A pointer to the output buffer if successful; otherwise NULL.
+char*
+kyua_text_fgets_no_newline(char* str, int size, FILE* stream)
+{
+    char* result = fgets(str, size, stream);
+    if (result != NULL) {
+        const size_t length = strlen(str);
+        if (length > 0 && str[length - 1] == '\n')
+            str[length - 1] = '\0';
+    }
+    return result;
+}
+
+
+/// Generates an error for the case where fgets() returns NULL.
+///
+/// \param input Stream on which fgets() returned an error.
+/// \param message Error message.
+///
+/// \return An error object with the error message and any relevant details.
+kyua_error_t
+kyua_text_fgets_error(FILE* input, const char* message)
+{
+    if (feof(input)) {
+        return kyua_generic_error_new("%s: unexpected EOF", message);
+    } else {
+        assert(ferror(input));
+        return kyua_libc_error_new(errno, "%s", message);
+    }
+}
+
+
+/// Looks for the first occurrence of any of the specified delimiters.
+///
+/// \param container String in which to look for the delimiters.  This is not
+///     const on purpose because we want to return a mutable pointer within the
+///     container string.
+/// \param delimiters List of delimiters to look for.
+///
+/// \return A pointer to the first occurrence of the delimiter, or NULL if
+/// there is none.
+char*
+kyua_text_find_first_of(char* container, const char* delimiters)
+{
+    char* ptr = container;
+    while (*ptr != '\0') {
+        if (strchr(delimiters, *ptr) != NULL)
+            return ptr;
+        ++ptr;
+    }
+    return NULL;
 }
 
 

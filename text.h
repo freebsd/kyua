@@ -33,10 +33,16 @@
 #define KYUA_TEXT_H
 
 #include <stdarg.h>
+#include <stdio.h>
 
 #include "defs.h"
 #include "error_fwd.h"
 
+
+char* kyua_text_fgets_no_newline(char*, int, FILE*);
+kyua_error_t kyua_text_fgets_error(FILE*, const char*);
+
+char* kyua_text_find_first_of(char*, const char*);
 
 kyua_error_t kyua_text_printf(char**, const char*, ...)
     KYUA_DEFS_FORMAT_PRINTF(2, 3);

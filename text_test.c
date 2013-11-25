@@ -29,6 +29,7 @@
 #include "text.h"
 
 #include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include <atf-c.h>
@@ -55,6 +56,128 @@ call_vprintf(char** output, const char* format, ...)
     kyua_error_t error = kyua_text_vprintf(output, format, ap);
     va_end(ap);
     return error;
+}
+
+
+ATF_TC_WITHOUT_HEAD(fgets_no_newline__ok);
+ATF_TC_BODY(fgets_no_newline__ok, tc)
+{
+    atf_utils_create_file("test.txt", "Line one\nSecond line\nLine 3");
+
+    char buffer[20];
+    FILE* input = fopen("test.txt", "r");
+
+    ATF_REQUIRE(kyua_text_fgets_no_newline(buffer, sizeof(buffer), input)
+                == buffer);
+    ATF_REQUIRE_STREQ("Line one", buffer);
+
+    ATF_REQUIRE(kyua_text_fgets_no_newline(buffer, sizeof(buffer), input)
+                == buffer);
+    ATF_REQUIRE_STREQ("Second line", buffer);
+
+    ATF_REQUIRE(kyua_text_fgets_no_newline(buffer, sizeof(buffer), input)
+                == buffer);
+    ATF_REQUIRE_STREQ("Line 3", buffer);
+
+    ATF_REQUIRE(kyua_text_fgets_no_newline(buffer, sizeof(buffer), input)
+                == NULL);
+
+    fclose(input);
+}
+
+
+ATF_TC_WITHOUT_HEAD(fgets_no_newline__overflow);
+ATF_TC_BODY(fgets_no_newline__overflow, tc)
+{
+    atf_utils_create_file("test.txt", "0123456789\nabcdef\n");
+
+    char buffer[8];
+    FILE* input = fopen("test.txt", "r");
+
+    ATF_REQUIRE(kyua_text_fgets_no_newline(buffer, sizeof(buffer), input)
+                == buffer);
+    ATF_REQUIRE_STREQ("0123456", buffer);
+
+    ATF_REQUIRE(kyua_text_fgets_no_newline(buffer, sizeof(buffer), input)
+                == buffer);
+    ATF_REQUIRE_STREQ("789", buffer);
+
+    ATF_REQUIRE(kyua_text_fgets_no_newline(buffer, sizeof(buffer), input)
+                == buffer);
+    ATF_REQUIRE_STREQ("abcdef", buffer);
+
+    ATF_REQUIRE(kyua_text_fgets_no_newline(buffer, sizeof(buffer), input)
+                == NULL);
+
+    fclose(input);
+}
+
+
+ATF_TC_WITHOUT_HEAD(fgets_error__unexpected_eof);
+ATF_TC_BODY(fgets_error__unexpected_eof, tc)
+{
+    atf_utils_create_file("test.txt", "Some line\n");
+
+    char buffer[1024];
+    FILE* input = fopen("test.txt", "r");
+
+    ATF_REQUIRE(kyua_text_fgets_no_newline(buffer, sizeof(buffer), input)
+                == buffer);
+    ATF_REQUIRE_STREQ("Some line", buffer);
+
+    ATF_REQUIRE(kyua_text_fgets_no_newline(buffer, sizeof(buffer), input)
+                == NULL);
+    kyua_error_t error = kyua_text_fgets_error(input, "Foo bar");
+    ATF_REQUIRE(kyua_error_is_set(error));
+    kyua_error_format(error, buffer, sizeof(buffer));
+    ATF_REQUIRE_STREQ("Foo bar: unexpected EOF", buffer);
+    kyua_error_free(error);
+
+    fclose(input);
+}
+
+
+ATF_TC_WITHOUT_HEAD(fgets_error__libc_error);
+ATF_TC_BODY(fgets_error__libc_error, tc)
+{
+    atf_utils_create_file("test.txt", "Some line\n");
+
+    char buffer[1024];
+    FILE* input = fopen("test.txt", "w");
+
+    ATF_REQUIRE(kyua_text_fgets_no_newline(buffer, sizeof(buffer), input)
+                == NULL);
+    kyua_error_t error = kyua_text_fgets_error(input, "Foo bar");
+    ATF_REQUIRE(kyua_error_is_set(error));
+    kyua_error_format(error, buffer, sizeof(buffer));
+    ATF_REQUIRE_MATCH("^Foo bar: .*", buffer);
+    kyua_error_free(error);
+
+    fclose(input);
+}
+
+
+ATF_TC_WITHOUT_HEAD(find_first_of__found);
+ATF_TC_BODY(find_first_of__found, tc)
+{
+    char text[] = "abcdedcba";
+    char* ptr = kyua_text_find_first_of(text, "ce");
+    ATF_REQUIRE_EQ(text + 2, ptr);
+    ptr = kyua_text_find_first_of(ptr + 1, "ce");
+    ATF_REQUIRE_EQ(text + 4, ptr);
+    ptr = kyua_text_find_first_of(ptr + 1, "ce");
+    ATF_REQUIRE_EQ(text + 6, ptr);
+    ptr = kyua_text_find_first_of(ptr + 1, "ce");
+    ATF_REQUIRE_EQ(NULL, ptr);
+}
+
+
+ATF_TC_WITHOUT_HEAD(find_first_of__not_found);
+ATF_TC_BODY(find_first_of__not_found, tc)
+{
+    char text[] = "abcdedcba";
+    char* ptr = kyua_text_find_first_of(text, "g6");
+    ATF_REQUIRE_EQ(NULL, ptr);
 }
 
 
@@ -102,6 +225,15 @@ ATF_TC_BODY(vprintf__some, tc)
 
 ATF_TP_ADD_TCS(tp)
 {
+    ATF_TP_ADD_TC(tp, fgets_no_newline__ok);
+    ATF_TP_ADD_TC(tp, fgets_no_newline__overflow);
+
+    ATF_TP_ADD_TC(tp, fgets_error__unexpected_eof);
+    ATF_TP_ADD_TC(tp, fgets_error__libc_error);
+
+    ATF_TP_ADD_TC(tp, find_first_of__found);
+    ATF_TP_ADD_TC(tp, find_first_of__not_found);
+
     ATF_TP_ADD_TC(tp, printf__empty);
     ATF_TP_ADD_TC(tp, printf__some);
 

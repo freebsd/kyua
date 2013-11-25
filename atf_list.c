@@ -37,48 +37,11 @@
 #include <unistd.h>
 
 #include "error.h"
+#include "text.h"
 
 
 /// Expected header in the test program list.
 #define TP_LIST_HEADER "Content-Type: application/X-atf-tp; version=\"1\""
-
-
-/// Same as fgets, but removes any trailing newline from the output string.
-///
-/// \param [out] str Pointer to the output buffer.
-/// \param size Length of the output buffer.
-/// \param [in,out] stream File from which to read the line.
-///
-/// \return A pointer to the output buffer if successful; otherwise NULL.
-static char*
-fgets_no_newline(char* str, int size, FILE* stream)
-{
-    char* result = fgets(str, size, stream);
-    if (result != NULL) {
-        const size_t length = strlen(str);
-        if (length > 0 && str[length - 1] == '\n')
-            str[length - 1] = '\0';
-    }
-    return result;
-}
-
-
-/// Generates an error for the case where fgets() returns NULL.
-///
-/// \param input Stream on which fgets() returned an error.
-/// \param message Error message.
-///
-/// \return An error object with the error message and any relevant details.
-static kyua_error_t
-fgets_error(FILE* input, const char* message)
-{
-    if (feof(input)) {
-        return kyua_generic_error_new("%s: unexpected EOF", message);
-    } else {
-        assert(ferror(input));
-        return kyua_libc_error_new(errno, "%s", message);
-    }
-}
 
 
 /// Reads the header of the test cases list.
@@ -94,40 +57,20 @@ parse_header(FILE* input)
 {
     char line[80];  // It's ugly to have a limit, but it's easier this way.
 
-    if (fgets_no_newline(line, sizeof(line), input) == NULL)
-        return fgets_error(input, "fgets failed to read test cases list "
-                           "header");
+    if (kyua_text_fgets_no_newline(line, sizeof(line), input) == NULL)
+        return kyua_text_fgets_error(input, "fgets failed to read test cases "
+                                     "list header");
     if (strcmp(line, TP_LIST_HEADER) != 0)
         return kyua_generic_error_new("Invalid test cases list header '%s'",
                                       line);
 
-    if (fgets_no_newline(line, sizeof(line), input) == NULL)
-        return fgets_error(input, "fgets failed to read test cases list "
-                           "header");
+    if (kyua_text_fgets_no_newline(line, sizeof(line), input) == NULL)
+        return kyua_text_fgets_error(input, "fgets failed to read test cases "
+                                     "list header");
     if (strcmp(line, "") != 0)
         return kyua_generic_error_new("Incomplete test cases list header");
 
     return kyua_error_ok();
-}
-
-
-/// Looks for the first occurrence of any of the specified delimiters.
-///
-/// \param container String in which to look for the delimiters.
-/// \param delimiters List of delimiters to look for.
-///
-/// \return A pointer to the first occurrence of the delimiter, or NULL if
-/// there is none.
-static char*
-find_first_of(char* container, const char* delimiters)
-{
-    char* ptr = container;
-    while (*ptr != '\0') {
-        if (strchr(delimiters, *ptr) != NULL)
-            return ptr;
-        ++ptr;
-    }
-    return NULL;
 }
 
 
@@ -144,7 +87,7 @@ print_quoted(char* line, FILE* output, const bool surrounding)
         fprintf(output, "'");
 
     char* quoteptr;
-    while ((quoteptr = find_first_of(line, "\'\\")) != NULL) {
+    while ((quoteptr = kyua_text_find_first_of(line, "\'\\")) != NULL) {
         const char quote = *quoteptr;
         *quoteptr = '\0';
         fprintf(output, "%s\\%c", line, quote);
@@ -254,7 +197,7 @@ parse_test_case(FILE* input, FILE* output, char* name)
 
     error = kyua_error_ok();
     while (!kyua_error_is_set(error) &&
-           fgets_no_newline(line, sizeof(line), input) != NULL &&
+           kyua_text_fgets_no_newline(line, sizeof(line), input) != NULL &&
            strcmp(line, "") != 0) {
         char* key; char* value;
         error = parse_property(line, &key, &value);
@@ -293,8 +236,8 @@ parse_tests(FILE* input, FILE* output)
 {
     char line[512];  // It's ugly to have a limit, but it's easier this way.
 
-    if (fgets_no_newline(line, sizeof(line), input) == NULL) {
-        return fgets_error(input, "Empty test cases list");
+    if (kyua_text_fgets_no_newline(line, sizeof(line), input) == NULL) {
+        return kyua_text_fgets_error(input, "Empty test cases list");
     }
 
     kyua_error_t error;
@@ -312,7 +255,7 @@ parse_tests(FILE* input, FILE* output)
                                            key);
         }
     } while (!kyua_error_is_set(error) &&
-             fgets_no_newline(line, sizeof(line), input) != NULL);
+             kyua_text_fgets_no_newline(line, sizeof(line), input) != NULL);
 
     if (!kyua_error_is_set(error)) {
         if (ferror(input))
