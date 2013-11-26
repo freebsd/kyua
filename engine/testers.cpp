@@ -181,6 +181,23 @@ load_testers(testers_map& testers)
 }  // anonymous namespace
 
 
+/// Returns the name of all supported test interfaces.
+///
+/// \return Collection of test interface names.
+std::set< std::string >
+engine::all_test_interfaces(void)
+{
+    if (interfaces_to_testers.empty())
+        load_testers(interfaces_to_testers);
+
+    std::set< std::string > test_interfaces;
+    for (testers_map::const_iterator iter = interfaces_to_testers.begin();
+         iter != interfaces_to_testers.end(); ++iter)
+        test_interfaces.insert((*iter).first);
+    return test_interfaces;
+}
+
+
 /// Returns the path to a tester binary.
 ///
 /// \param interface Name of the interface of the tester being looked for.

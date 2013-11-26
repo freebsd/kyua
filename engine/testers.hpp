@@ -33,6 +33,7 @@
 #define ENGINE_TESTERS_HPP
 
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -77,6 +78,7 @@ public:
 };
 
 
+std::set< std::string > all_test_interfaces(void);
 utils::fs::path tester_path(const std::string&);
 
 

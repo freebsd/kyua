@@ -289,6 +289,34 @@ ATF_TEST_CASE_BODY(tester__test__tester_crashes)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(all_test_interfaces__none);
+ATF_TEST_CASE_BODY(all_test_interfaces__none)
+{
+    fs::mkdir(fs::path("testers"), 0755);
+    utils::setenv("KYUA_TESTERSDIR", (fs::current_path() / "testers").str());
+
+    ATF_REQUIRE(engine::all_test_interfaces().empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(all_test_interfaces__some);
+ATF_TEST_CASE_BODY(all_test_interfaces__some)
+{
+    fs::mkdir(fs::path("testers"), 0755);
+    atf::utils::create_file("testers/kyua-foo-tester", "Not a binary");
+    atf::utils::create_file("testers/kyua-bar-tester", "Not a binary");
+    atf::utils::create_file("testers/kyua-baz-tester", "Not a binary");
+    utils::setenv("KYUA_TESTERSDIR", (fs::current_path() / "testers").str());
+
+    std::set< std::string > exp_interfaces;
+    exp_interfaces.insert("foo");
+    exp_interfaces.insert("bar");
+    exp_interfaces.insert("baz");
+
+    ATF_REQUIRE(exp_interfaces == engine::all_test_interfaces());
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(tester_path__default);
 ATF_TEST_CASE_BODY(tester_path__default)
 {
@@ -367,6 +395,9 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, tester__test__unknown_interface);
     ATF_ADD_TEST_CASE(tcs, tester__test__tester_fails);
     ATF_ADD_TEST_CASE(tcs, tester__test__tester_crashes);
+
+    ATF_ADD_TEST_CASE(tcs, all_test_interfaces__none);
+    ATF_ADD_TEST_CASE(tcs, all_test_interfaces__some);
 
     ATF_ADD_TEST_CASE(tcs, tester_path__default);
     ATF_ADD_TEST_CASE(tcs, tester_path__custom);
