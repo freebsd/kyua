@@ -25,7 +25,7 @@
 .\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 .\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-.Dd September 9, 2012
+.Dd November 26, 2013
 .Dt KYUA-ATF-INTERFACE 7
 .Os
 .Sh NAME
@@ -249,11 +249,18 @@ Each test case body and cleanup routines are executed in independent
 processes.  Corollary: the test case can do whatever it wants to the
 current process (such as modifying global variables) without having to undo
 such changes.
-.It Process group
-The test case body and cleanup are executed in their own process groups.
-Should they spawn any children, such children should maintain the same
-process group.  This is done to allow the runtime engine to kill the whole
-process subtree once the test case finishes (or if the test case hangs).
+.It Session and process group
+The test case body and cleanup are executed in their own session and their
+own process group.  There is no controlling terminal attached to the
+session.
+.Pp
+Should the test case spawn any children, the children should maintain the
+same session and process group.  Modifying any of these prevents the tester
+from killing any stray subprocess as part of the cleanup phase.  If
+modifying these is necessary, or if any subprocess started by the test
+case decides to use a different process group or session,  it is the
+responsibility of the test case to ensure they are forcibly terminated
+during cleanup.
 .It Work directory
 The test case body and its cleanup (if any) are executed in a temporary
 directory automatically created by the runtime engine.  This temporary

@@ -10,6 +10,9 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   first appeared in Automake 1.11.2.  Fixes a problem in Ubuntu 10.04
   LTS, which appears stuck in 1.11.1.
 
+* Issue 24: Improve test case isolation by confining the tests to their
+  own session instead of just to their own process group.
+
 
 Changes in version 0.1
 ======================

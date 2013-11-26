@@ -101,6 +101,31 @@ check_env(const void* KYUA_DEFS_UNUSED_PARAM(cookie))
 }
 
 
+static void check_no_terminal(
+    const void* KYUA_DEFS_UNUSED_PARAM(cookie)) KYUA_DEFS_NORETURN;
+
+
+/// Subprocess that validates the disconnection from any terminal.
+///
+/// \param unused_cookie NULL.
+///
+/// \post Exits with success if the environment is clean; failure otherwise.
+static void
+check_no_terminal(const void* KYUA_DEFS_UNUSED_PARAM(cookie))
+{
+    const char* const args[] = {
+        "/bin/sh",
+        "-i",
+        "-c",
+        "echo success",
+        NULL
+    };
+
+    execv("/bin/sh", KYUA_DEFS_UNCONST(args));
+    abort();
+}
+
+
 static void check_process_group(const void* KYUA_DEFS_UNUSED_PARAM(cookie))
     KYUA_DEFS_NORETURN;
 
@@ -115,6 +140,23 @@ static void
 check_process_group(const void* KYUA_DEFS_UNUSED_PARAM(cookie))
 {
     exit(getpgid(getpid()) == getpid() ? EXIT_SUCCESS : EXIT_FAILURE);
+}
+
+
+static void check_session(const void* KYUA_DEFS_UNUSED_PARAM(cookie))
+    KYUA_DEFS_NORETURN;
+
+
+/// Subprocess that validates that it owns a session.
+///
+/// \param unused_cookie NULL.
+///
+/// \post Exits with success if the process lives in its own session;
+/// failure otherwise.
+static void
+check_session(const void* KYUA_DEFS_UNUSED_PARAM(cookie))
+{
+    exit(getsid(getpid()) == getpid() ? EXIT_SUCCESS : EXIT_FAILURE);
 }
 
 
@@ -406,10 +448,31 @@ ATF_TC_BODY(fork_wait__env, tc)
 }
 
 
+ATF_TC_WITHOUT_HEAD(fork_wait__no_terminal);
+ATF_TC_BODY(fork_wait__no_terminal, tc)
+{
+    kyua_run_params_t run_params;
+    kyua_run_params_init(&run_params);
+    // If we fail to disconnect the subprocess from the terminal, our test
+    // function will probably get stuck.  Don't let it run for too long.
+    run_params.timeout_seconds = 10;
+    ATF_REQUIRE_MSG(fork_check(&run_params, check_no_terminal, NULL),
+                    "Subprocess apparently still has a terminal");
+}
+
+
 ATF_TC_WITHOUT_HEAD(fork_wait__process_group);
 ATF_TC_BODY(fork_wait__process_group, tc)
 {
     ATF_REQUIRE_MSG(fork_check(NULL, check_process_group, NULL),
+                    "Subprocess not in its own process group");
+}
+
+
+ATF_TC_WITHOUT_HEAD(fork_wait__session);
+ATF_TC_BODY(fork_wait__session, tc)
+{
+    ATF_REQUIRE_MSG(fork_check(NULL, check_session, NULL),
                     "Subprocess not in its own process group");
 }
 
@@ -768,7 +831,9 @@ ATF_TP_ADD_TCS(tp)
 
     ATF_TP_ADD_TC(tp, fork_wait__core_size);
     ATF_TP_ADD_TC(tp, fork_wait__env);
+    ATF_TP_ADD_TC(tp, fork_wait__no_terminal);
     ATF_TP_ADD_TC(tp, fork_wait__process_group);
+    ATF_TP_ADD_TC(tp, fork_wait__session);
     ATF_TP_ADD_TC(tp, fork_wait__signals);
     ATF_TP_ADD_TC(tp, fork_wait__timeout);
     ATF_TP_ADD_TC(tp, fork_wait__umask);
