@@ -74,7 +74,17 @@ tests_bootstrap_SCRIPTS = bootstrap/testsuite
 
 CHECK_LOCAL += check-bootstrap
 PHONY_TARGETS += check-bootstrap
-check-bootstrap: @target_srcdir@bootstrap/testsuite $(check_PROGRAMS)
+check-bootstrap: @target_srcdir@bootstrap/testsuite $(check_PROGRAMS) \
+                 $(CHECK_BOOTSTRAP_DEPS)
 	cd bootstrap && $(CHECK_ENVIRONMENT) $(TESTS_ENVIRONMENT) \
-	    $(abs_srcdir)/bootstrap/testsuite
+	    ./testsuite
+
+if !TARGET_SRCDIR_EMPTY
+CHECK_BOOTSTRAP_DEPS += copy-bootstrap-testsuite
+CHECK_KYUA_DEPS += copy-bootstrap-testsuite
+PHONY_TARGETS += copy-bootstrap-testsuite
+copy-bootstrap-testsuite:
+	    cp -f @target_srcdir@bootstrap/testsuite bootstrap/testsuite
+CLEANFILES += bootstrap/testsuite
+endif
 endif

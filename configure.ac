@@ -88,7 +88,7 @@ ATF_ARG_WITH
 PKG_PROG_PKG_CONFIG
 PKG_CHECK_EXISTS([kyua-testers],
     [testersdir=$("${PKG_CONFIG}" --variable=testersdir kyua-testers)],
-    [AC_MSG_ERROR([kyua-testers >= 0.1 required])])
+    [AC_MSG_ERROR([kyua-testers >= 0.2 required])])
 
 PKG_CHECK_MODULES([LUTOK], [lutok >= 0.3],
                   [],
@@ -141,6 +141,7 @@ if test "${srcdir}" = .; then
 else
     target_srcdir="${srcdir}/"
 fi
+AM_CONDITIONAL(TARGET_SRCDIR_EMPTY, [test -z "${target_srcdir}"])
 AC_SUBST([target_srcdir])
 
 

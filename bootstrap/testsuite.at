@@ -31,10 +31,10 @@ AT_INIT([bootstrapping tests])
 
 m4_define([GUESS_TOPDIR], {
     old=$(pwd)
-    cd "${at_suite_dir}"
+    cd "$(dirname ${as_myself})"
     # We need to locate a build product, not a source file, because the
     # test suite may be run outside of the source tree (think distcheck).
-    while test $(pwd) != '/' -a ! -e engine/test_case_test; do
+    while test $(pwd) != '/' -a ! -e bootstrap/plain_helpers; do
         cd ..
     done
     topdir=$(pwd)

@@ -3,6 +3,10 @@ Changes in version 0.8
 
 STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 
+* Issue 24: Plug the bootstrap tests back into the test suite.  Fixes
+  in kyua-testers-0.2 to isolate test cases into their own sessions
+  should allow these to run fine.
+
 * Issue 74: Changed the kyuafile(5) parser to automatically discover
   existing tester interfaces.  The various *_test_program() functions
   will now exist (or not) based on tester availability, which simplifies

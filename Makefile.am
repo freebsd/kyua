@@ -28,6 +28,8 @@
 
 ACLOCAL_AMFLAGS = -I m4
 
+CHECK_BOOTSTRAP_DEPS =
+CHECK_KYUA_DEPS =
 CHECK_LOCAL =
 CLEAN_TARGETS =
 PHONY_TARGETS =
@@ -76,7 +78,7 @@ INSTALLCHECK_VARS =
 if WITH_ATF
 CHECK_LOCAL += check-kyua
 PHONY_TARGETS += check-kyua
-check-kyua:
+check-kyua: $(CHECK_KYUA_DEPS)
 	$(CHECK_ENVIRONMENT) $(TESTS_ENVIRONMENT) \
 	    ./kyua --config=none $(CHECK_VARS) test \
             --kyuafile='$(top_srcdir)/Kyuafile' --build-root='$(top_builddir)'
