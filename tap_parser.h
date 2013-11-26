@@ -1,4 +1,4 @@
-// Copyright 2012 Google Inc.
+// Copyright 2013 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,27 +26,47 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file text.h
-/// Routines for file system manipulation.
+/// \file tap_parser.h
+/// Utilities to parse the output of a TAP test program.
 
-#if !defined(KYUA_TEXT_H)
-#define KYUA_TEXT_H
+#if !defined(KYUA_TAP_PARSER_H)
+#define KYUA_TAP_PARSER_H
 
-#include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 
-#include "defs.h"
 #include "error_fwd.h"
 
 
-char* kyua_text_fgets_no_newline(char*, int, FILE*);
-kyua_error_t kyua_text_fgets_error(FILE*, const char*);
+/// Results of the parsing of a TAP test output.
+struct kyua_tap_summary {
+    /// If not NULL, describes the reason for a parse failure.  In this case,
+    /// none of the other files should be checked.
+    const char* parse_error;
 
-char* kyua_text_find_first_of(char*, const char*);
+    /// Set to true if the program asked to bail out.  In this case, the
+    /// remaining fields may be inconsistent.
+    bool bail_out;
 
-kyua_error_t kyua_text_printf(char**, const char*, ...)
-    KYUA_DEFS_FORMAT_PRINTF(2, 3);
-kyua_error_t kyua_text_vprintf(char**, const char*, va_list);
+    /// Index of the first test as reported by the test plan.
+    long first_index;
+
+    /// Index of the last test as reported by the test plan.
+    long last_index;
+
+    /// Total number of "ok" tests.
+    long ok_count;
+
+    /// Total number of "not ok" tests.
+    long not_ok_count;
+};
+/// Shorthand for a kyua_tap_summary structure.
+typedef struct kyua_tap_summary kyua_tap_summary_t;
 
 
-#endif  // !defined(KYUA_TEXT_H)
+kyua_error_t kyua_tap_try_parse_plan(const char*, kyua_tap_summary_t*);
+
+kyua_error_t kyua_tap_parse(const int, FILE*, kyua_tap_summary_t*);
+
+
+#endif  // !defined(KYUA_TAP_PARSER_H)

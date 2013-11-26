@@ -41,7 +41,8 @@ ATF_TC_WITHOUT_HEAD(error_new__oom);
 ATF_TC_BODY(error_new__oom, tc)
 {
     void* invalid = (void*)1;
-    kyua_error_t error = kyua_error_new("test_error", invalid, SIZE_MAX, NULL);
+    kyua_error_t error = kyua_error_new("test_error", invalid, SIZE_MAX, NULL,
+                                        NULL);
     ATF_REQUIRE(kyua_error_is_type(error, kyua_oom_error_type));
     ATF_REQUIRE(kyua_error_data(error) == NULL);
     kyua_error_free(error);
@@ -60,8 +61,9 @@ ATF_TC_BODY(error_subsume__none, tc)
 ATF_TC_WITHOUT_HEAD(error_subsume__primary);
 ATF_TC_BODY(error_subsume__primary, tc)
 {
-    kyua_error_t primary = kyua_error_new("primary_error", NULL, 0, NULL);
-    kyua_error_t secondary = kyua_error_new("secondary_error", NULL, 0, NULL);
+    kyua_error_t primary = kyua_error_new("primary_error", NULL, 0, NULL, NULL);
+    kyua_error_t secondary = kyua_error_new("secondary_error", NULL, 0, NULL,
+                                            NULL);
     kyua_error_t error = kyua_error_subsume(primary, secondary);
     ATF_REQUIRE(kyua_error_is_type(error, "primary_error"));
     kyua_error_free(error);
@@ -72,7 +74,8 @@ ATF_TC_WITHOUT_HEAD(error_subsume__secondary);
 ATF_TC_BODY(error_subsume__secondary, tc)
 {
     kyua_error_t primary = kyua_error_ok();
-    kyua_error_t secondary = kyua_error_new("secondary_error", NULL, 0, NULL);
+    kyua_error_t secondary = kyua_error_new("secondary_error", NULL, 0, NULL,
+                                            NULL);
     kyua_error_t error = kyua_error_subsume(primary, secondary);
     ATF_REQUIRE(kyua_error_is_type(error, "secondary_error"));
     kyua_error_free(error);
@@ -82,7 +85,7 @@ ATF_TC_BODY(error_subsume__secondary, tc)
 ATF_TC_WITHOUT_HEAD(error_is_type__match);
 ATF_TC_BODY(error_is_type__match, tc)
 {
-    kyua_error_t error = kyua_error_new("test_error", NULL, 0, NULL);
+    kyua_error_t error = kyua_error_new("test_error", NULL, 0, NULL, NULL);
     ATF_REQUIRE(kyua_error_is_type(error, "test_error"));
     kyua_error_free(error);
 }
@@ -91,7 +94,7 @@ ATF_TC_BODY(error_is_type__match, tc)
 ATF_TC_WITHOUT_HEAD(error_is_type__not_match);
 ATF_TC_BODY(error_is_type__not_match, tc)
 {
-    kyua_error_t error = kyua_error_new("test_error", NULL, 0, NULL);
+    kyua_error_t error = kyua_error_new("test_error", NULL, 0, NULL, NULL);
     ATF_REQUIRE(!kyua_error_is_type(error, "test_erro"));
     ATF_REQUIRE(!kyua_error_is_type(error, "test_error2"));
     ATF_REQUIRE(!kyua_error_is_type(error, "foo"));
@@ -102,7 +105,7 @@ ATF_TC_BODY(error_is_type__not_match, tc)
 ATF_TC_WITHOUT_HEAD(error_data__none);
 ATF_TC_BODY(error_data__none, tc)
 {
-    kyua_error_t error = kyua_error_new("test_error", NULL, 0, NULL);
+    kyua_error_t error = kyua_error_new("test_error", NULL, 0, NULL, NULL);
     ATF_REQUIRE(kyua_error_data(error) == NULL);
     kyua_error_free(error);
 }
@@ -113,10 +116,36 @@ ATF_TC_BODY(error_data__some, tc)
 {
     int data = 5;
     kyua_error_t error = kyua_error_new("test_data_error", &data, sizeof(data),
-                                        NULL);
+                                        NULL, NULL);
     ATF_REQUIRE(kyua_error_data(error) != NULL);
     ATF_REQUIRE_EQ(*((const int*)kyua_error_data(error)), 5);
     kyua_error_free(error);
+}
+
+
+/// Whether test_free() has been called or not.
+static bool test_free_called = false;
+
+
+/// Error-specific free function for testing purposes.
+static void
+test_free(void* opaque_data)
+{
+    ATF_REQUIRE(opaque_data != NULL);
+    ATF_REQUIRE_EQ(1234, *((int *)opaque_data));
+    test_free_called = true;
+}
+
+
+ATF_TC_WITHOUT_HEAD(error_data__free);
+ATF_TC_BODY(error_data__free, tc)
+{
+    int data = 1234;
+    kyua_error_t error = kyua_error_new("test_data_error", &data, sizeof(data),
+                                        NULL, test_free);
+    ATF_REQUIRE(!test_free_called);
+    kyua_error_free(error);
+    ATF_REQUIRE( test_free_called);
 }
 
 
@@ -131,7 +160,7 @@ ATF_TC_BODY(error_is_set__no, tc)
 ATF_TC_WITHOUT_HEAD(error_is_set__yes);
 ATF_TC_BODY(error_is_set__yes, tc)
 {
-    kyua_error_t error = kyua_error_new("test_error", NULL, 0, NULL);
+    kyua_error_t error = kyua_error_new("test_error", NULL, 0, NULL, NULL);
     ATF_REQUIRE(kyua_error_is_set(error));
     kyua_error_free(error);
 }
@@ -140,7 +169,7 @@ ATF_TC_BODY(error_is_set__yes, tc)
 ATF_TC_WITHOUT_HEAD(error_format__default);
 ATF_TC_BODY(error_format__default, tc)
 {
-    kyua_error_t error = kyua_error_new("test_error", NULL, 0, NULL);
+    kyua_error_t error = kyua_error_new("test_error", NULL, 0, NULL, NULL);
     char buffer[1024];
     kyua_error_format(error, buffer, sizeof(buffer));
     ATF_REQUIRE_STREQ("Error 'test_error'", buffer);
@@ -161,7 +190,8 @@ test_format(const kyua_error_t error, char* const output_buffer,
 ATF_TC_WITHOUT_HEAD(error_format__custom__ok);
 ATF_TC_BODY(error_format__custom__ok, tc)
 {
-    kyua_error_t error = kyua_error_new("test_error", NULL, 0, test_format);
+    kyua_error_t error = kyua_error_new("test_error", NULL, 0, test_format,
+                                        NULL);
     const char* exp_message = "Test formatting function";
     char buffer[1024];
     ATF_REQUIRE_EQ((int)strlen(exp_message),
@@ -174,7 +204,8 @@ ATF_TC_BODY(error_format__custom__ok, tc)
 ATF_TC_WITHOUT_HEAD(error_format__custom__error);
 ATF_TC_BODY(error_format__custom__error, tc)
 {
-    kyua_error_t error = kyua_error_new("test_error", NULL, 0, test_format);
+    kyua_error_t error = kyua_error_new("test_error", NULL, 0, test_format,
+                                        NULL);
     char buffer[5];
     ATF_REQUIRE(kyua_error_format(error, buffer, sizeof(buffer))
                 >= (int)sizeof(buffer));
@@ -384,6 +415,7 @@ ATF_TP_ADD_TCS(tp)
     ATF_TP_ADD_TC(tp, error_is_type__not_match);
     ATF_TP_ADD_TC(tp, error_data__none);
     ATF_TP_ADD_TC(tp, error_data__some);
+    ATF_TP_ADD_TC(tp, error_data__free);
     ATF_TP_ADD_TC(tp, error_is_set__no);
     ATF_TP_ADD_TC(tp, error_is_set__yes);
     ATF_TP_ADD_TC(tp, error_format__default);

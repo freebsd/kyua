@@ -58,6 +58,14 @@ typedef int (*kyua_error_format_callback)(
     struct kyua_error* const, char* const, const size_t);
 
 
+/// Type of the per-error free function.
+///
+/// These functions takes a pointer to the inner error data as its only
+/// argument.  Its responsibility is to free the contents of this object, if
+/// necessary.
+typedef void (*kyua_error_free_callback)(void*);
+
+
 /// Representation of an error.
 struct kyua_error {
     /// Whether the error object has to be released or not.
@@ -74,11 +82,15 @@ struct kyua_error {
 
     /// Method to generate a textual representation of the error.
     kyua_error_format_callback format_callback;
+
+    /// Method to free the contents of the data object; may be NULL.
+    kyua_error_free_callback free_callback;
 };
 
 
 kyua_error_t kyua_error_new(const char*, void*, size_t,
-                            kyua_error_format_callback);
+                            kyua_error_format_callback,
+                            kyua_error_free_callback);
 void kyua_error_free(kyua_error_t);
 kyua_error_t kyua_error_subsume(kyua_error_t, kyua_error_t);
 

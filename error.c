@@ -59,13 +59,16 @@ generic_format_callback(const kyua_error_t error, char* const output_buffer,
 /// \param data_size Size of the opaque data object.
 /// \param format_callback Type-specific method to generate a user
 ///     representation of the error.
+/// \param free_callback Type-specific method to release the contents
+///     the data object.
 ///
 /// \return True if the initialization succeeds; false otherwise.  If
 /// false, the error object passed in has not been modified.
 static bool
 error_init(kyua_error_t const error, const char* const type_name,
            void* const data, const size_t data_size,
-           const kyua_error_format_callback format_callback)
+           const kyua_error_format_callback format_callback,
+           const kyua_error_free_callback free_callback)
 {
     assert(data != NULL || data_size == 0);
     assert(data_size != 0 || data == NULL);
@@ -91,6 +94,7 @@ error_init(kyua_error_t const error, const char* const type_name,
         error->type_name = type_name;
         error->format_callback = (format_callback == NULL) ?
             generic_format_callback : format_callback;
+        error->free_callback = free_callback;
     }
 
     return ok;
@@ -105,12 +109,15 @@ error_init(kyua_error_t const error, const char* const type_name,
 /// \param data_size Size of the opaque data object.
 /// \param format_callback Type-specific method to generate a user
 ///     representation of the error.
+/// \param free_callback Type-specific method to release the contents
+///     the data object.
 ///
 /// \return The newly initialized error, or an out of memory error.
 kyua_error_t
 kyua_error_new(const char* const type_name, void* const data,
                const size_t data_size,
-               const kyua_error_format_callback format_callback)
+               const kyua_error_format_callback format_callback,
+               const kyua_error_free_callback free_callback)
 {
     assert(data != NULL || data_size == 0);
     assert(data_size != 0 || data == NULL);
@@ -119,7 +126,8 @@ kyua_error_new(const char* const type_name, void* const data,
     if (error == NULL)
         error = kyua_oom_error_new();
     else {
-        if (!error_init(error, type_name, data, data_size, format_callback)) {
+        if (!error_init(error, type_name, data, data_size, format_callback,
+                        free_callback)) {
             free(error);
             error = kyua_oom_error_new();
         } else {
@@ -142,6 +150,8 @@ kyua_error_free(kyua_error_t error)
 
     const bool needs_free = error->needs_free;
 
+    if (error->free_callback != NULL)
+        (*error->free_callback)(error->data);
     if (error->data != NULL)
         free(error->data);
     if (needs_free)
@@ -392,7 +402,7 @@ kyua_generic_error_new(const char* message, ...)
     va_end(ap);
 
     return kyua_error_new(kyua_generic_error_type, formatted, sizeof(formatted),
-                          generic_format);
+                          generic_format, NULL);
 }
 
 
@@ -457,7 +467,8 @@ kyua_libc_error_new(const int original_errno, const char* description, ...)
                     description, ap);
     va_end(ap);
 
-    return kyua_error_new(kyua_libc_error_type, data, data_size, libc_format);
+    return kyua_error_new(kyua_libc_error_type, data, data_size, libc_format,
+                          NULL);
 }
 
 
@@ -523,7 +534,7 @@ kyua_oom_error_new(void)
 {
     // This is idempotent; no need to ensure that we call it only once.
     const bool ok = error_init(&oom_error, kyua_oom_error_type, NULL, 0,
-                               oom_format);
+                               oom_format, NULL);
     assert(ok);
 
     return &oom_error;
@@ -572,5 +583,5 @@ kyua_usage_error_new(const char* message, ...)
     va_end(ap);
 
     return kyua_error_new(kyua_usage_error_type, formatted, sizeof(formatted),
-                          usage_format);
+                          usage_format, NULL);
 }
