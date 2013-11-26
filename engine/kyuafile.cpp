@@ -68,10 +68,9 @@ using utils::optional;
 namespace {
 
 
-static int lua_atf_test_program(lutok::state&);
 static int lua_current_kyuafile(lutok::state&);
+static int lua_generic_test_program(lutok::state&);
 static int lua_include(lutok::state&);
-static int lua_plain_test_program(lutok::state&);
 static int lua_syntax(lutok::state&);
 static int lua_test_suite(lutok::state&);
 
@@ -148,16 +147,23 @@ public:
         *_state.new_userdata< parser* >() = this;
         _state.set_global("_parser");
 
-        _state.push_cxx_function(lua_atf_test_program);
-        _state.set_global("atf_test_program");
         _state.push_cxx_function(lua_current_kyuafile);
         _state.set_global("current_kyuafile");
         _state.push_cxx_function(lua_include);
         _state.set_global("include");
-        _state.push_cxx_function(lua_plain_test_program);
-        _state.set_global("plain_test_program");
         _state.push_cxx_function(lua_test_suite);
         _state.set_global("test_suite");
+
+        const std::set< std::string > interfaces =
+            engine::all_test_interfaces();
+        for (std::set< std::string >::const_iterator iter = interfaces.begin();
+             iter != interfaces.end(); ++iter) {
+            const std::string& interface = *iter;
+
+            _state.push_string(interface);
+            _state.push_cxx_closure(lua_generic_test_program, 1);
+            _state.set_global(interface + "_test_program");
+        }
 
         _state.open_base();
         _state.open_string();
@@ -378,6 +384,7 @@ ensure_valid_interface(const std::string& interface)
 /// \pre state(-1) A table with the arguments that define the test program.  The
 /// special argument 'test_suite' provides an override to the global test suite
 /// name.  The rest of the arguments are part of the test program metadata.
+/// \pre state(upvalue 1) String with the name of the interface.
 ///
 /// \param state The Lua state that executed the function.
 /// \param interface Name of the test program interface.
@@ -386,8 +393,13 @@ ensure_valid_interface(const std::string& interface)
 ///
 /// \throw std::runtime_error If the arguments to the function are invalid.
 static int
-lua_generic_test_program(lutok::state& state, const std::string& interface)
+lua_generic_test_program(lutok::state& state)
 {
+    if (!state.is_string(state.upvalue_index(1)))
+        throw std::runtime_error("Found corrupt state for test_program "
+                                 "function");
+    const std::string interface = state.to_string(state.upvalue_index(1));
+
     if (!state.is_table())
         throw std::runtime_error(
             F("%s_test_program expects a table of properties as its single "
@@ -446,18 +458,6 @@ lua_generic_test_program(lutok::state& state, const std::string& interface)
 }
 
 
-/// Specialization of lua_generic_test_program for ATF test programs.
-///
-/// \param state The Lua state that executed the function.
-///
-/// \return Number of return values left on the Lua stack.
-static int
-lua_atf_test_program(lutok::state& state)
-{
-    return lua_generic_test_program(state, "atf");
-}
-
-
 /// Glue to invoke parser::callback_current_kyuafile() from Lua.
 ///
 /// \param state The Lua state that executed the function.
@@ -483,18 +483,6 @@ lua_include(lutok::state& state)
     parser::get_from_state(state)->callback_include(
         fs::path(state.to_string()));
     return 0;
-}
-
-
-/// Specialization of lua_generic_test_program for plain test programs.
-///
-/// \param state The Lua state that executed the function.
-///
-/// \return Number of return values left on the Lua stack.
-static int
-lua_plain_test_program(lutok::state& state)
-{
-    return lua_generic_test_program(state, "plain");
 }
 
 

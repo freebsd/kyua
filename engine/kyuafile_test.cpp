@@ -39,6 +39,7 @@
 #include "engine/exceptions.hpp"
 #include "engine/test_program.hpp"
 #include "utils/datetime.hpp"
+#include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/optional.ipp"
@@ -62,8 +63,8 @@ ATF_TEST_CASE_BODY(kyuafile__load__empty)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__some_programs);
-ATF_TEST_CASE_BODY(kyuafile__load__some_programs)
+ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__real_interfaces);
+ATF_TEST_CASE_BODY(kyuafile__load__real_interfaces)
 {
     atf::utils::create_file(
         "config",
@@ -126,6 +127,44 @@ ATF_TEST_CASE_BODY(kyuafile__load__some_programs)
     ATF_REQUIRE_EQ(fs::path("dir/subdir/5th"),
                    suite.test_programs()[5]->relative_path());
     ATF_REQUIRE_EQ("last-suite", suite.test_programs()[5]->test_suite_name());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__mock_interfaces);
+ATF_TEST_CASE_BODY(kyuafile__load__mock_interfaces)
+{
+    fs::mkdir(fs::path("testers"), 0755);
+    atf::utils::create_file("testers/kyua-some-tester", "Not a binary");
+    atf::utils::create_file("testers/kyua-random-tester", "Not a binary");
+    atf::utils::create_file("testers/kyua-names-tester", "Not a binary");
+    utils::setenv("KYUA_TESTERSDIR", (fs::current_path() / "testers").str());
+
+    atf::utils::create_file(
+        "config",
+        "syntax(2)\n"
+        "test_suite('one-suite')\n"
+        "some_test_program{name='1st'}\n"
+        "random_test_program{name='2nd'}\n"
+        "names_test_program{name='3rd'}\n");
+
+    atf::utils::create_file("1st", "");
+    atf::utils::create_file("2nd", "");
+    atf::utils::create_file("3rd", "");
+
+    const engine::kyuafile suite = engine::kyuafile::load(
+        fs::path("config"), none);
+    ATF_REQUIRE_EQ(fs::path("."), suite.source_root());
+    ATF_REQUIRE_EQ(fs::path("."), suite.build_root());
+    ATF_REQUIRE_EQ(3, suite.test_programs().size());
+
+    ATF_REQUIRE_EQ("some", suite.test_programs()[0]->interface_name());
+    ATF_REQUIRE_EQ(fs::path("1st"), suite.test_programs()[0]->relative_path());
+
+    ATF_REQUIRE_EQ("random", suite.test_programs()[1]->interface_name());
+    ATF_REQUIRE_EQ(fs::path("2nd"), suite.test_programs()[1]->relative_path());
+
+    ATF_REQUIRE_EQ("names", suite.test_programs()[2]->interface_name());
+    ATF_REQUIRE_EQ(fs::path("3rd"), suite.test_programs()[2]->relative_path());
 }
 
 
@@ -401,7 +440,8 @@ ATF_TEST_CASE_BODY(kyuafile__load__missing_test_program)
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__empty);
-    ATF_ADD_TEST_CASE(tcs, kyuafile__load__some_programs);
+    ATF_ADD_TEST_CASE(tcs, kyuafile__load__real_interfaces);
+    ATF_ADD_TEST_CASE(tcs, kyuafile__load__mock_interfaces);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__metadata);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__current_directory);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__other_directory);
