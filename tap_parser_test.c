@@ -101,8 +101,9 @@ ATF_TC_BODY(parse__ok__pass, tc)
         "garbage line\n"
         "ok - 3 This test passed\n";
 
-    kyua_tap_summary_t summary;
+    kyua_tap_summary_t summary; memset(&summary, 0, sizeof(summary));
     summary.parse_error = NULL;
+    summary.bail_out = false;
     summary.first_index = 1;
     summary.last_index = 3;
     summary.ok_count = 3;
@@ -124,8 +125,9 @@ ATF_TC_BODY(parse__ok__fail, tc)
         "not ok - 4 This test failed\n"
         "ok - 5 This test passed\n";
 
-    kyua_tap_summary_t summary;
+    kyua_tap_summary_t summary; memset(&summary, 0, sizeof(summary));
     summary.parse_error = NULL;
+    summary.bail_out = false;
     summary.first_index = 1;
     summary.last_index = 5;
     summary.ok_count = 2;
