@@ -135,7 +135,8 @@ ATF_TEST_CASE_BODY(top__valid_types)
         lutok::do_string(state,
                          "top_boolean = true\n"
                          "top_integer = 12345\n"
-                         "top_string = 'a foo'\n");
+                         "top_string = 'a foo'\n",
+                         0, 0, 0);
     }
 
     ATF_REQUIRE_EQ(true, tree.lookup< config::bool_node >("top_boolean"));
@@ -154,7 +155,7 @@ ATF_TEST_CASE_BODY(top__reuse)
     {
         lutok::state state;
         config::redirect(state, tree);
-        lutok::do_string(state, "first = 100; second = first * 2");
+        lutok::do_string(state, "first = 100; second = first * 2", 0, 0, 0);
     }
 
     ATF_REQUIRE_EQ(100, tree.lookup< config::int_node >("first"));
@@ -171,7 +172,7 @@ ATF_TEST_CASE_BODY(top__reset)
     {
         lutok::state state;
         config::redirect(state, tree);
-        lutok::do_string(state, "first = 100; first = 200");
+        lutok::do_string(state, "first = 100; first = 200", 0, 0, 0);
     }
 
     ATF_REQUIRE_EQ(200, tree.lookup< config::int_node >("first"));
@@ -188,7 +189,7 @@ ATF_TEST_CASE_BODY(top__already_set_on_entry)
     {
         lutok::state state;
         config::redirect(state, tree);
-        lutok::do_string(state, "first = first * 15");
+        lutok::do_string(state, "first = first * 15", 0, 0, 0);
     }
 
     ATF_REQUIRE_EQ(1500, tree.lookup< config::int_node >("first"));
@@ -209,7 +210,8 @@ ATF_TEST_CASE_BODY(subtree__valid_types)
         lutok::do_string(state,
                          "root.boolean = true\n"
                          "root.a.integer = 12345\n"
-                         "root.string = 'a foo'\n");
+                         "root.string = 'a foo'\n",
+                         0, 0, 0);
     }
 
     ATF_REQUIRE_EQ(true, tree.lookup< config::bool_node >("root.boolean"));
@@ -228,7 +230,8 @@ ATF_TEST_CASE_BODY(subtree__reuse)
     {
         lutok::state state;
         config::redirect(state, tree);
-        lutok::do_string(state, "a.first = 100; a.second = a.first * 2");
+        lutok::do_string(state, "a.first = 100; a.second = a.first * 2",
+                         0, 0, 0);
     }
 
     ATF_REQUIRE_EQ(100, tree.lookup< config::int_node >("a.first"));
@@ -245,7 +248,7 @@ ATF_TEST_CASE_BODY(subtree__reset)
     {
         lutok::state state;
         config::redirect(state, tree);
-        lutok::do_string(state, "a.first = 100; a.first = 200");
+        lutok::do_string(state, "a.first = 100; a.first = 200", 0, 0, 0);
     }
 
     ATF_REQUIRE_EQ(200, tree.lookup< config::int_node >("a.first"));
@@ -262,7 +265,7 @@ ATF_TEST_CASE_BODY(subtree__already_set_on_entry)
     {
         lutok::state state;
         config::redirect(state, tree);
-        lutok::do_string(state, "a.first = a.first * 15");
+        lutok::do_string(state, "a.first = a.first * 15", 0, 0, 0);
     }
 
     ATF_REQUIRE_EQ(1500, tree.lookup< config::int_node >("a.first"));
@@ -278,13 +281,13 @@ ATF_TEST_CASE_BODY(subtree__override_inner)
     {
         lutok::state state;
         config::redirect(state, tree);
-        lutok::do_string(state, "root.test = 'a'");
+        lutok::do_string(state, "root.test = 'a'", 0, 0, 0);
         ATF_REQUIRE_THROW_RE(lutok::error, "Invalid value for key 'root'",
-                             lutok::do_string(state, "root = 'b'"));
+                             lutok::do_string(state, "root = 'b'", 0, 0, 0));
         // Ensure that the previous assignment to 'root' did not cause any
         // inconsistencies in the environment that would prevent a new
         // assignment from working.
-        lutok::do_string(state, "root.test2 = 'c'");
+        lutok::do_string(state, "root.test2 = 'c'", 0, 0, 0);
     }
 
     ATF_REQUIRE_EQ("a", tree.lookup< config::string_node >("root.test"));
@@ -302,7 +305,8 @@ ATF_TEST_CASE_BODY(dynamic_subtree__strings)
     config::redirect(state, tree);
     lutok::do_string(state,
                      "root.key1 = 1234\n"
-                     "root.a.b.key2 = 'foo bar'\n");
+                     "root.a.b.key2 = 'foo bar'\n",
+                     0, 0, 0);
 
     ATF_REQUIRE_EQ("1234", tree.lookup< config::string_node >("root.key1"));
     ATF_REQUIRE_EQ("foo bar",
@@ -321,11 +325,13 @@ ATF_TEST_CASE_BODY(dynamic_subtree__invalid_types)
     ATF_REQUIRE_THROW_RE(lutok::error,
                          "Invalid value for key 'root.boolean' "
                          "\\(Not a string\\)",
-                         lutok::do_string(state, "root.boolean = true"));
+                         lutok::do_string(state, "root.boolean = true",
+                                          0, 0, 0));
     ATF_REQUIRE_THROW_RE(lutok::error,
                          "Invalid value for key 'root.table' "
                          "\\(Not a string\\)",
-                         lutok::do_string(state, "root.table = {}"));
+                         lutok::do_string(state, "root.table = {}",
+                                          0, 0, 0));
     ATF_REQUIRE(!tree.is_set("root.boolean"));
     ATF_REQUIRE(!tree.is_set("root.table"));
 }
@@ -345,7 +351,8 @@ ATF_TEST_CASE_BODY(locals)
                          "    return 15\n"
                          "end\n"
                          "local test_var = 20\n"
-                         "the_key = generate() + test_var\n");
+                         "the_key = generate() + test_var\n",
+                         0, 0, 0);
     }
 
     ATF_REQUIRE_EQ(35, tree.lookup< config::int_node >("the_key"));
@@ -363,8 +370,8 @@ ATF_TEST_CASE_BODY(custom_node)
     {
         lutok::state state;
         config::redirect(state, tree);
-        lutok::do_string(state, "key1 = 512\n");
-        lutok::do_string(state, "key2 = key2 * 2\n");
+        lutok::do_string(state, "key1 = 512\n", 0, 0, 0);
+        lutok::do_string(state, "key2 = key2 * 2\n", 0, 0, 0);
     }
 
     ATF_REQUIRE_EQ(1024, tree.lookup< custom_node >("key1").value);
@@ -380,7 +387,8 @@ ATF_TEST_CASE_BODY(invalid_key)
     lutok::state state;
     config::redirect(state, tree);
     ATF_REQUIRE_THROW_RE(lutok::error, "Empty component in key 'root.'",
-                         lutok::do_string(state, "root['']['a'] = 12345\n"));
+                         lutok::do_string(state, "root['']['a'] = 12345\n",
+                                          0, 0, 0));
 }
 
 
@@ -395,7 +403,8 @@ ATF_TEST_CASE_BODY(unknown_key)
     ATF_REQUIRE_THROW_RE(lutok::error,
                          "Unknown configuration property 'static.int'",
                          lutok::do_string(state,
-                                          "static.int = 12345\n"));
+                                          "static.int = 12345\n",
+                                          0, 0, 0));
 }
 
 
@@ -409,10 +418,10 @@ ATF_TEST_CASE_BODY(value_error)
     config::redirect(state, tree);
     ATF_REQUIRE_THROW_RE(lutok::error,
                          "Invalid value for key 'a.b' \\(Not a boolean\\)",
-                         lutok::do_string(state, "a.b = 12345\n"));
+                         lutok::do_string(state, "a.b = 12345\n", 0, 0, 0));
     ATF_REQUIRE_THROW_RE(lutok::error,
                          "Invalid value for key 'a'",
-                         lutok::do_string(state, "a = 1\n"));
+                         lutok::do_string(state, "a = 1\n", 0, 0, 0));
 }
 
 

@@ -56,10 +56,10 @@ get_global_tree(lutok::state& state)
     state.push_value(lutok::registry_index);
     state.push_string("tree");
     state.get_table(-2);
-    if (state.is_nil())
+    if (state.is_nil(-1))
         throw config::syntax_error("Cannot find tree singleton; global state "
                                    "corrupted?");
-    config::tree& tree = **state.to_userdata< config::tree* >();
+    config::tree& tree = **state.to_userdata< config::tree* >(-1);
     state.pop(1);
     return tree;
 }

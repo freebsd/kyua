@@ -45,12 +45,12 @@ ATF_TEST_CASE_BODY(open_fs)
     lutok::state state;
     stack_balance_checker checker(state);
     fs::open_fs(state);
-    lutok::do_string(state, "return fs.basename", 1);
-    ATF_REQUIRE(state.is_function());
-    lutok::do_string(state, "return fs.dirname", 1);
-    ATF_REQUIRE(state.is_function());
-    lutok::do_string(state, "return fs.join", 1);
-    ATF_REQUIRE(state.is_function());
+    lutok::do_string(state, "return fs.basename", 0, 1, 0);
+    ATF_REQUIRE(state.is_function(-1));
+    lutok::do_string(state, "return fs.dirname", 0, 1, 0);
+    ATF_REQUIRE(state.is_function(-1));
+    lutok::do_string(state, "return fs.join", 0, 1, 0);
+    ATF_REQUIRE(state.is_function(-1));
     state.pop(3);
 }
 
@@ -61,8 +61,9 @@ ATF_TEST_CASE_BODY(basename__ok)
     lutok::state state;
     fs::open_fs(state);
 
-    lutok::do_string(state, "return fs.basename('/my/test//file_foobar')", 1);
-    ATF_REQUIRE_EQ("file_foobar", state.to_string());
+    lutok::do_string(state, "return fs.basename('/my/test//file_foobar')",
+                     0, 1, 0);
+    ATF_REQUIRE_EQ("file_foobar", state.to_string(-1));
     state.pop(1);
 }
 
@@ -74,9 +75,11 @@ ATF_TEST_CASE_BODY(basename__fail)
     fs::open_fs(state);
 
     ATF_REQUIRE_THROW_RE(lutok::error, "Need a string",
-                         lutok::do_string(state, "return fs.basename({})", 1));
+                         lutok::do_string(state, "return fs.basename({})",
+                                          0, 1, 0));
     ATF_REQUIRE_THROW_RE(lutok::error, "Invalid path",
-                         lutok::do_string(state, "return fs.basename('')", 1));
+                         lutok::do_string(state, "return fs.basename('')",
+                                          0, 1, 0));
 }
 
 
@@ -86,8 +89,9 @@ ATF_TEST_CASE_BODY(dirname__ok)
     lutok::state state;
     fs::open_fs(state);
 
-    lutok::do_string(state, "return fs.dirname('/my/test//file_foobar')", 1);
-    ATF_REQUIRE_EQ("/my/test", state.to_string());
+    lutok::do_string(state, "return fs.dirname('/my/test//file_foobar')",
+                     0, 1, 0);
+    ATF_REQUIRE_EQ("/my/test", state.to_string(-1));
     state.pop(1);
 }
 
@@ -99,9 +103,11 @@ ATF_TEST_CASE_BODY(dirname__fail)
     fs::open_fs(state);
 
     ATF_REQUIRE_THROW_RE(lutok::error, "Need a string",
-                         lutok::do_string(state, "return fs.dirname({})", 1));
+                         lutok::do_string(state, "return fs.dirname({})",
+                                          0, 1, 0));
     ATF_REQUIRE_THROW_RE(lutok::error, "Invalid path",
-                         lutok::do_string(state, "return fs.dirname('')", 1));
+                         lutok::do_string(state, "return fs.dirname('')",
+                                          0, 1, 0));
 }
 
 
@@ -113,12 +119,12 @@ ATF_TEST_CASE_BODY(exists__ok)
 
     atf::utils::create_file("foo", "");
 
-    lutok::do_string(state, "return fs.exists('foo')", 1);
-    ATF_REQUIRE(state.to_boolean());
+    lutok::do_string(state, "return fs.exists('foo')", 0, 1, 0);
+    ATF_REQUIRE(state.to_boolean(-1));
     state.pop(1);
 
-    lutok::do_string(state, "return fs.exists('bar')", 1);
-    ATF_REQUIRE(!state.to_boolean());
+    lutok::do_string(state, "return fs.exists('bar')", 0, 1, 0);
+    ATF_REQUIRE(!state.to_boolean(-1));
     state.pop(1);
 }
 
@@ -130,9 +136,11 @@ ATF_TEST_CASE_BODY(exists__fail)
     fs::open_fs(state);
 
     ATF_REQUIRE_THROW_RE(lutok::error, "Need a string",
-                         lutok::do_string(state, "return fs.exists({})", 1));
+                         lutok::do_string(state, "return fs.exists({})",
+                                          0, 1, 0));
     ATF_REQUIRE_THROW_RE(lutok::error, "Invalid path",
-                         lutok::do_string(state, "return fs.exists('')", 1));
+                         lutok::do_string(state, "return fs.exists('')",
+                                          0, 1, 0));
 }
 
 
@@ -151,8 +159,9 @@ ATF_TEST_CASE_BODY(files__none)
                      "    table.insert(names, file)\n"
                      "end\n"
                      "table.sort(names)\n"
-                     "return table.concat(names, ' ')", 1);
-    ATF_REQUIRE_EQ(". ..", state.to_string());
+                     "return table.concat(names, ' ')",
+                     0, 1, 0);
+    ATF_REQUIRE_EQ(". ..", state.to_string(-1));
     state.pop(1);
 }
 
@@ -174,8 +183,9 @@ ATF_TEST_CASE_BODY(files__some)
                      "    table.insert(names, file)\n"
                      "end\n"
                      "table.sort(names)\n"
-                     "return table.concat(names, ' ')", 1);
-    ATF_REQUIRE_EQ(". .. file1 file2", state.to_string());
+                     "return table.concat(names, ' ')",
+                     0, 1, 0);
+    ATF_REQUIRE_EQ(". .. file1 file2", state.to_string(-1));
     state.pop(1);
 }
 
@@ -187,9 +197,9 @@ ATF_TEST_CASE_BODY(files__fail_arg)
     fs::open_fs(state);
 
     ATF_REQUIRE_THROW_RE(lutok::error, "Need a string parameter",
-                         lutok::do_string(state, "fs.files({})"));
+                         lutok::do_string(state, "fs.files({})", 0, 0, 0));
     ATF_REQUIRE_THROW_RE(lutok::error, "Invalid path",
-                         lutok::do_string(state, "fs.files('')"));
+                         lutok::do_string(state, "fs.files('')", 0, 0, 0));
 }
 
 
@@ -200,7 +210,7 @@ ATF_TEST_CASE_BODY(files__fail_opendir)
     fs::open_fs(state);
 
     ATF_REQUIRE_THROW_RE(lutok::error, "Failed to open directory",
-                         lutok::do_string(state, "fs.files('root')"));
+                         lutok::do_string(state, "fs.files('root')", 0, 0, 0));
 }
 
 
@@ -210,10 +220,12 @@ ATF_TEST_CASE_BODY(is_absolute__ok)
     lutok::state state;
     fs::open_fs(state);
 
-    lutok::do_string(state, "return fs.is_absolute('my/test//file_foobar')", 1);
-    ATF_REQUIRE(!state.to_boolean());
-    lutok::do_string(state, "return fs.is_absolute('/my/test//file_foobar')", 1);
-    ATF_REQUIRE(state.to_boolean());
+    lutok::do_string(state, "return fs.is_absolute('my/test//file_foobar')",
+                     0, 1, 0);
+    ATF_REQUIRE(!state.to_boolean(-1));
+    lutok::do_string(state, "return fs.is_absolute('/my/test//file_foobar')",
+                     0, 1, 0);
+    ATF_REQUIRE(state.to_boolean(-1));
     state.pop(2);
 }
 
@@ -225,9 +237,11 @@ ATF_TEST_CASE_BODY(is_absolute__fail)
     fs::open_fs(state);
 
     ATF_REQUIRE_THROW_RE(lutok::error, "Need a string",
-                         lutok::do_string(state, "return fs.is_absolute({})", 1));
+                         lutok::do_string(state, "return fs.is_absolute({})",
+                                          0, 1, 0));
     ATF_REQUIRE_THROW_RE(lutok::error, "Invalid path",
-                         lutok::do_string(state, "return fs.is_absolute('')", 1));
+                         lutok::do_string(state, "return fs.is_absolute('')",
+                                          0, 1, 0));
 }
 
 
@@ -237,8 +251,8 @@ ATF_TEST_CASE_BODY(join__ok)
     lutok::state state;
     fs::open_fs(state);
 
-    lutok::do_string(state, "return fs.join('/a/b///', 'c/d')", 1);
-    ATF_REQUIRE_EQ("/a/b/c/d", state.to_string());
+    lutok::do_string(state, "return fs.join('/a/b///', 'c/d')", 0, 1, 0);
+    ATF_REQUIRE_EQ("/a/b/c/d", state.to_string(-1));
     state.pop(1);
 }
 
@@ -250,17 +264,22 @@ ATF_TEST_CASE_BODY(join__fail)
     fs::open_fs(state);
 
     ATF_REQUIRE_THROW_RE(lutok::error, "Need a string",
-                         lutok::do_string(state, "return fs.join({}, 'a')", 1));
+                         lutok::do_string(state, "return fs.join({}, 'a')",
+                                          0, 1, 0));
     ATF_REQUIRE_THROW_RE(lutok::error, "Need a string",
-                         lutok::do_string(state, "return fs.join('a', {})", 1));
+                         lutok::do_string(state, "return fs.join('a', {})",
+                                          0, 1, 0));
 
     ATF_REQUIRE_THROW_RE(lutok::error, "Invalid path",
-                         lutok::do_string(state, "return fs.join('', 'a')", 1));
+                         lutok::do_string(state, "return fs.join('', 'a')",
+                                          0, 1, 0));
     ATF_REQUIRE_THROW_RE(lutok::error, "Invalid path",
-                         lutok::do_string(state, "return fs.join('a', '')", 1));
+                         lutok::do_string(state, "return fs.join('a', '')",
+                                          0, 1, 0));
 
     ATF_REQUIRE_THROW_RE(lutok::error, "Cannot join.*'a/b'.*'/c'",
-                         lutok::do_string(state, "fs.join('a/b', '/c')"));
+                         lutok::do_string(state, "fs.join('a/b', '/c')",
+                                          0, 0, 0));
 }
 
 

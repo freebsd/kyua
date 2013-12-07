@@ -186,7 +186,7 @@ public:
     {
         lutok::stack_cleaner cleaner(state);
         state.get_global("_parser");
-        return *state.to_userdata< parser* >();
+        return *state.to_userdata< parser* >(-1);
     }
 
     /// Callback for the Kyuafile current_kyuafile() function.
@@ -312,7 +312,7 @@ public:
 
         const fs::path load_path = relativize(_source_root, _relative_filename);
         try {
-            lutok::do_file(_state, load_path.str());
+            lutok::do_file(_state, load_path.str(), 0, 0, 0);
         } catch (const std::runtime_error& e) {
             // It is tempting to think that all of our various auxiliary
             // functions above could raise load_error by themselves thus making
@@ -347,15 +347,15 @@ static inline std::string
 get_table_string(lutok::state& state, const char* field,
                  const std::string& error)
 {
-    PRE(state.is_table());
+    PRE(state.is_table(-1));
 
     lutok::stack_cleaner cleaner(state);
 
     state.push_string(field);
-    state.get_table();
-    if (!state.is_string())
+    state.get_table(-2);
+    if (!state.is_string(-1))
         throw std::runtime_error(error);
-    return state.to_string();
+    return state.to_string(-1);
 }
 
 
@@ -400,7 +400,7 @@ lua_generic_test_program(lutok::state& state)
                                  "function");
     const std::string interface = state.to_string(state.upvalue_index(1));
 
-    if (!state.is_table())
+    if (!state.is_table(-1))
         throw std::runtime_error(
             F("%s_test_program expects a table of properties as its single "
               "argument") % interface);
@@ -410,20 +410,20 @@ lua_generic_test_program(lutok::state& state)
     lutok::stack_cleaner cleaner(state);
 
     state.push_string("name");
-    state.get_table();
-    if (!state.is_string())
+    state.get_table(-2);
+    if (!state.is_string(-1))
         throw std::runtime_error("Test program name not defined or not a "
                                  "string");
-    const fs::path path(state.to_string());
+    const fs::path path(state.to_string(-1));
     state.pop(1);
 
     state.push_string("test_suite");
-    state.get_table();
+    state.get_table(-2);
     std::string test_suite;
-    if (state.is_nil()) {
+    if (state.is_nil(-1)) {
         // Leave empty to use the global test-suite value.
-    } else if (state.is_string()) {
-        test_suite = state.to_string();
+    } else if (state.is_string(-1)) {
+        test_suite = state.to_string(-1);
     } else {
         throw std::runtime_error(F("Found non-string value in the test_suite "
                                    "property of test program '%s'") % path);
@@ -432,7 +432,7 @@ lua_generic_test_program(lutok::state& state)
 
     engine::metadata_builder mdbuilder;
     state.push_nil();
-    while (state.next()) {
+    while (state.next(-2)) {
         if (!state.is_string(-2))
             throw std::runtime_error(F("Found non-string metadata property "
                                        "name in test program '%s'") %
@@ -481,7 +481,7 @@ static int
 lua_include(lutok::state& state)
 {
     parser::get_from_state(state)->callback_include(
-        fs::path(state.to_string()));
+        fs::path(state.to_string(-1)));
     return 0;
 }
 
@@ -526,7 +526,7 @@ lua_syntax(lutok::state& state)
 static int
 lua_test_suite(lutok::state& state)
 {
-    parser::get_from_state(state)->callback_test_suite(state.to_string());
+    parser::get_from_state(state)->callback_test_suite(state.to_string(-1));
     return 0;
 }
 

@@ -62,9 +62,9 @@ namespace {
 static int
 lua_fs_basename(lutok::state& state)
 {
-    if (!state.is_string())
+    if (!state.is_string(-1))
         throw std::runtime_error("Need a string parameter");
-    const fs::path path(state.to_string());
+    const fs::path path(state.to_string(-1));
 
     state.push_string(path.leaf_name().c_str());
     return 1;
@@ -82,9 +82,9 @@ lua_fs_basename(lutok::state& state)
 static int
 lua_fs_dirname(lutok::state& state)
 {
-    if (!state.is_string())
+    if (!state.is_string(-1))
         throw std::runtime_error("Need a string parameter");
-    const fs::path path(state.to_string());
+    const fs::path path(state.to_string(-1));
 
     state.push_string(path.branch_path().c_str());
     return 1;
@@ -102,9 +102,9 @@ lua_fs_dirname(lutok::state& state)
 static int
 lua_fs_exists(lutok::state& state)
 {
-    if (!state.is_string())
+    if (!state.is_string(-1))
         throw std::runtime_error("Need a string parameter");
-    const fs::path path(state.to_string());
+    const fs::path path(state.to_string(-1));
 
     state.push_boolean(fs::exists(path));
     return 1;
@@ -151,9 +151,9 @@ files_iterator(lutok::state& state)
 static int
 files_gc(lutok::state& state)
 {
-    PRE(state.is_userdata());
+    PRE(state.is_userdata(-1));
 
-    DIR** dirp = state.to_userdata< DIR* >();
+    DIR** dirp = state.to_userdata< DIR* >(-1);
     // For some reason, this may be called more than once.  I don't know why
     // this happens, but we must protect against it.
     if (*dirp != NULL) {
@@ -176,18 +176,18 @@ files_gc(lutok::state& state)
 static int
 lua_fs_files(lutok::state& state)
 {
-    if (!state.is_string())
+    if (!state.is_string(-1))
         throw std::runtime_error("Need a string parameter");
-    const fs::path path(state.to_string());
+    const fs::path path(state.to_string(-1));
 
     DIR** dirp = state.new_userdata< DIR* >();
 
     state.new_table();
     state.push_string("__gc");
     state.push_cxx_function(files_gc);
-    state.set_table();
+    state.set_table(-3);
 
-    state.set_metatable();
+    state.set_metatable(-2);
 
     *dirp = ::opendir(path.c_str());
     if (*dirp == NULL) {
@@ -213,9 +213,9 @@ lua_fs_files(lutok::state& state)
 static int
 lua_fs_is_absolute(lutok::state& state)
 {
-    if (!state.is_string())
+    if (!state.is_string(-1))
         throw std::runtime_error("Need a string parameter");
-    const fs::path path(state.to_string());
+    const fs::path path(state.to_string(-1));
 
     state.push_boolean(path.is_absolute());
     return 1;

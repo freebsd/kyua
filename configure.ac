@@ -90,9 +90,9 @@ PKG_CHECK_EXISTS([kyua-testers],
     [testersdir=$("${PKG_CONFIG}" --variable=testersdir kyua-testers)],
     [AC_MSG_ERROR([kyua-testers >= 0.2 required])])
 
-PKG_CHECK_MODULES([LUTOK], [lutok >= 0.3],
+PKG_CHECK_MODULES([LUTOK], [lutok >= 0.4],
                   [],
-                  AC_MSG_ERROR([lutok (0.3 or newer) is required]))
+                  AC_MSG_ERROR([lutok (0.4 or newer) is required]))
 PKG_CHECK_MODULES([SQLITE3], [sqlite3 >= 3.6.22],
                   [],
                   AC_MSG_ERROR([sqlite3 (3.6.22 or newer) is required]))

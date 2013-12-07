@@ -135,7 +135,8 @@ lua_syntax(lutok::state& state)
     }
 
     state.get_global("_config_parser");
-    config::parser::impl* impl = *state.to_userdata< config::parser::impl* >();
+    config::parser::impl* impl =
+        *state.to_userdata< config::parser::impl* >(-1);
     state.pop(1);
 
     impl->syntax_callback(syntax_version);
@@ -182,7 +183,7 @@ void
 config::parser::parse(const fs::path& file)
 {
     try {
-        lutok::do_file(_pimpl->_state, file.str());
+        lutok::do_file(_pimpl->_state, file.str(), 0, 0, 0);
     } catch (const lutok::error& e) {
         throw syntax_error(e.what());
     }

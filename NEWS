@@ -3,6 +3,8 @@ Changes in version 0.8
 
 STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 
+* Added support for Lutok 0.4.
+
 * Issue 24: Plug the bootstrap tests back into the test suite.  Fixes
   in kyua-testers-0.2 to isolate test cases into their own sessions
   should allow these to run fine.

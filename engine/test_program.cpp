@@ -67,22 +67,22 @@ namespace {
 static int
 lua_test_case(lutok::state& state)
 {
-    if (!state.is_table())
+    if (!state.is_table(-1))
         throw std::runtime_error("Oh noes"); // XXX
 
     state.get_global("_test_cases");
     engine::test_cases_vector* test_cases =
-        *state.to_userdata< engine::test_cases_vector* >();
+        *state.to_userdata< engine::test_cases_vector* >(-1);
     state.pop(1);
 
     state.get_global("_test_program");
     const engine::test_program* test_program =
-        *state.to_userdata< engine::test_program* >();
+        *state.to_userdata< engine::test_program* >(-1);
     state.pop(1);
 
     state.push_string("name");
     state.get_table(-2);
-    const std::string name = state.to_string();
+    const std::string name = state.to_string(-1);
     state.pop(1);
 
     engine::metadata_builder mdbuilder(test_program->get_metadata());
@@ -147,7 +147,7 @@ load_test_cases(const engine::test_program& test_program)
     engine::test_cases_vector test_cases;
     lutok::state state;
     setup_lua_state(state, &test_program, &test_cases);
-    lutok::do_string(state, output, 0);
+    lutok::do_string(state, output, 0, 0, 0);
     return test_cases;
 }
 
