@@ -39,6 +39,7 @@ kyua_error_t kyua_fs_cleanup(const char*);
 kyua_error_t kyua_fs_concat(char** const, const char*, ...);
 kyua_error_t kyua_fs_current_path(char**);
 kyua_error_t kyua_fs_make_absolute(const char*, char**);
+kyua_error_t kyua_fs_sanitize(const char*, char**);
 kyua_error_t kyua_fs_unmount(const char*);
 
 

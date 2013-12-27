@@ -511,6 +511,40 @@ ATF_TC_BODY(make_absolute__relative, tc)
 }
 
 
+ATF_TC_WITHOUT_HEAD(sanitize__ok);
+ATF_TC_BODY(sanitize__ok, tc)
+{
+    ATF_REQUIRE(mkdir("a", 0755) != -1);
+    ATF_REQUIRE(mkdir("a/bc", 0755) != -1);
+    ATF_REQUIRE(mkdir("a/bc/12-34", 0755) != -1);
+
+    char* sane;
+    ATF_REQUIRE(!kyua_error_is_set(kyua_fs_sanitize(
+        ".//a/bc///12-34", &sane)));
+
+    char *expected;
+    ATF_REQUIRE(!kyua_error_is_set(kyua_fs_make_absolute(
+        "a/bc/12-34", &expected)));
+
+    ATF_REQUIRE_STREQ(expected, sane);
+
+    free(sane);
+    free(expected);
+}
+
+
+ATF_TC_WITHOUT_HEAD(sanitize__fail);
+ATF_TC_BODY(sanitize__fail, tc)
+{
+    char* sane;
+    kyua_error_t error = kyua_fs_sanitize("non-existent/path", &sane);
+    ATF_REQUIRE(kyua_error_is_set(error));
+    ATF_REQUIRE(kyua_error_is_type(error, "libc"));
+    ATF_REQUIRE_EQ(ENOENT, kyua_libc_error_errno(error));
+    kyua_error_free(error);
+}
+
+
 ATF_TC(unmount__ok);
 ATF_TC_HEAD(unmount__ok, tc)
 {
@@ -568,6 +602,9 @@ ATF_TP_ADD_TCS(tp)
 
     ATF_TP_ADD_TC(tp, make_absolute__absolute);
     ATF_TP_ADD_TC(tp, make_absolute__relative);
+
+    ATF_TP_ADD_TC(tp, sanitize__ok);
+    ATF_TP_ADD_TC(tp, sanitize__fail);
 
     ATF_TP_ADD_TC(tp, unmount__ok);
     ATF_TP_ADD_TC(tp, unmount__fail);

@@ -680,6 +680,26 @@ ATF_TC_BODY(work_directory__env_tmpdir, tc)
 }
 
 
+ATF_TC_WITHOUT_HEAD(work_directory__sanitized);
+ATF_TC_BODY(work_directory__sanitized, tc)
+{
+    ATF_REQUIRE(mkdir("foo", 0755) != -1);
+    ATF_REQUIRE(mkdir("foo/bar", 0755) != -1);
+
+    char* tmpdir;
+    RE(kyua_fs_make_absolute("foo///bar/./", &tmpdir));
+    RE(kyua_env_set("TMPDIR", tmpdir));
+
+    char* work_directory;
+    RE(kyua_run_work_directory_enter("template.XXXXXX", getuid(), getgid(),
+                                     &work_directory));
+    ATF_REQUIRE(strstr(work_directory, "/foo/bar/template.") != NULL);
+
+    RE(kyua_run_work_directory_leave(&work_directory));
+    free(tmpdir);
+}
+
+
 ATF_TC(work_directory__permissions);
 ATF_TC_HEAD(work_directory__permissions, tc)
 {
@@ -844,6 +864,7 @@ ATF_TP_ADD_TCS(tp)
 
     ATF_TP_ADD_TC(tp, work_directory__builtin_tmpdir);
     ATF_TP_ADD_TC(tp, work_directory__env_tmpdir);
+    ATF_TP_ADD_TC(tp, work_directory__sanitized);
     ATF_TP_ADD_TC(tp, work_directory__permissions);
     ATF_TP_ADD_TC(tp, work_directory__permissions_error);
     ATF_TP_ADD_TC(tp, work_directory__mkdtemp_error);

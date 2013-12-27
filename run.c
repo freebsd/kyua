@@ -547,7 +547,13 @@ kyua_run_work_directory_enter(const char* template, const uid_t uid,
         }
     }
 
-    *out_work_directory = work_directory;
+    char* sane_work_directory;
+    error = kyua_fs_sanitize(work_directory, &sane_work_directory);
+    if (kyua_error_is_set(error))
+        goto err_work_directory_file;
+    free(work_directory);
+
+    *out_work_directory = sane_work_directory;
     assert(!kyua_error_is_set(error));
     goto out;
 

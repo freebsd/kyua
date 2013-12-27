@@ -3,7 +3,11 @@ Changes in version 0.3
 
 STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 
-* No changes recorded.
+* Made the testers set a "sanitized" value for the HOME environment
+  variable where, for example, consecutive and trailing slashes have
+  been cleared.  Mac OS X has a tendency to append a trailing slash to
+  the value of TMPDIR, which can cause third-party tests to fail if they
+  compare ${HOME} with $(pwd).
 
 
 Changes in version 0.2

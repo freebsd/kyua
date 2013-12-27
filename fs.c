@@ -532,6 +532,46 @@ kyua_fs_make_absolute(const char* original, char** const output)
 }
 
 
+/// Sanitizes slashes in a path to an existing directory.
+///
+/// \param original The path to sanitize.
+/// \param [out] output Pointer to a dynamically-allocated string that will hold
+///     the sanitized (and absolute) path, if all goes well.
+///
+/// \return An error if there is not enough memory to fulfill the request; OK
+/// otherwise.
+kyua_error_t
+kyua_fs_sanitize(const char* original, char** const output)
+{
+    kyua_error_t error;
+
+    DIR* current_directory = opendir(".");
+    if (current_directory == NULL) {
+        error = kyua_libc_error_new(errno, "opendir of %s failed", original);
+        goto out;
+    }
+
+    if (chdir(original) == -1) {
+        error = kyua_libc_error_new(errno, "cannot enter %s", original);
+        goto out_current_directory;
+    }
+
+    error = kyua_fs_current_path(output);
+    if (kyua_error_is_set(error))
+        goto out_chdir;
+
+    assert(!kyua_error_is_set(error));
+out_chdir:
+    if (fchdir(dirfd(current_directory)) == -1) {
+        // There is not much we can do here... but this shouldn't fail anyway.
+    }
+out_current_directory:
+    closedir(current_directory);
+out:
+    return error;
+}
+
+
 /// Unmounts a file system.
 ///
 /// \param mount_point The file system to unmount.
