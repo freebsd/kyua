@@ -71,7 +71,7 @@ report_html() {
     local files_name="$(echo "${index_name}" | sed -e 's,\.[a-zA-Z]*$,,').files"
 
     kyua report-html --action="$(get_action /dev/stdin)" \
-        --output="${dir}/${files_name}"
+        --output="${dir}/${files_name}" --results-filter=
 
     echo "Pointing ${index_name} to ${files_name}/index.html"
     ( cd "${dir}" && ln -s "${files_name}/index.html" "${index_name}" )

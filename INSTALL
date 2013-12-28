@@ -33,7 +33,7 @@ To build and use kyua-atf-compat successfully you need:
 
 * A POSIX shell interpreter.
 * pkg-config.
-* Kyua 0.5 or greater.
+* Kyua 0.7 or greater.
 
 To build the bundled tests, you optionally need:
 

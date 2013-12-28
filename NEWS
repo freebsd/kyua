@@ -7,6 +7,9 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   to properly handle tab characters and one that caused an error with
   NetBSD's /bin/sh.
 
+* Fixed the HTML output of atf-report to include all tests after
+  kyua-cli-0.7 stopped listing passed tests by default.
+
 
 Changes in version 0.1
 ======================
