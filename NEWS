@@ -1,7 +1,7 @@
 Changes in version 0.2
 ======================
 
-STILL UNDER DEVELOPMENT; NOT RELEASED YET.
+Experimental version released on December 28th, 2013.
 
 * Fixed two problems regarding configuration parsing in atf-run: one
   to properly handle tab characters and one that caused an error with
