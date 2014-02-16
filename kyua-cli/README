@@ -1,8 +1,10 @@
-Kyua (pronounced Q.A.) is a testing framework for both developers and
-users.  Kyua is different from most other testing frameworks in that it
-puts the end user experience before anything else.  There are multiple
-reasons for users to run the tests themselves, and Kyua ensures that
-they can do so in the most convenient way.
+Kyua is a testing framework for both developers and users.  Kyua differs
+from other testing frameworks in that it implements a generic runtime
+and reporting engine that is able to execute test programs regardless of
+the language they are implemented in or the unit-testing libraries that
+they use.  Additionally, Kyua puts the user experience before anything
+else by allowing end users (not only developers) to run the tests
+themselves.
 
 This module, kyua-cli, provides the command-line interface to the Kyua
 runtime system.  The major purpose of this tool is to run test cases and
