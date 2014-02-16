@@ -1,0 +1,16 @@
+Makefile
+Makefile.in
+aclocal.m4
+admin/install-sh
+admin/missing
+atf-report
+atf-report_test
+atf-run
+atf-run_test
+atf2kyua
+atf2kyua_test
+autom4te.cache
+config.log
+config.status
+configure
+helpers
