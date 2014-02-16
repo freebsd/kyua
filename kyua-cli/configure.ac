@@ -28,7 +28,7 @@ dnl OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 AC_INIT([Kyua - Command line interface], [0.8],
         [kyua-discuss@googlegroups.com], [kyua-cli],
-        [http://code.google.com/p/kyua/])
+        [https://github.com/jmmv/kyua/])
 AC_PREREQ([2.65])
 
 
