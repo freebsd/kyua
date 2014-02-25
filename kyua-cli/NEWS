@@ -3,7 +3,9 @@ Changes in version 0.9
 
 STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 
-* No changes recorded.
+* Changed the 'report' command, again, to support outputing various
+  different formats.  The '--output' flag has been modified to support
+  specifying the format to generate.
 
 
 Changes in version 0.8

@@ -25,41 +25,41 @@
 .\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 .\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-.Dd September 9, 2012
+.Dd February 25, 2014
 .Dt KYUA-REPORT 1
 .Os
 .Sh NAME
 .Nm report
-.Nd Generates a plain-text report with the results of a test action
+.Nd Generates reports with the results of a test action
 .Sh SYNOPSIS
 .Nm
 .Op Fl -action Ar id
-.Op Fl -output Ar path
+.Op Fl -output Ar format:path
 .Op Fl -results-filter Ar types
 .Op Fl -show-context
 .Op Fl -store Ar file
 .Sh DESCRIPTION
 The
 .Nm
-command provides the mechanism to generate user-friendly, plain-text
-reports of the execution of a test suite.  The command processes an action
-stored in the database and then creates a textual summary of the test case
-results recorded in that action.  These reports are not intended to be
-machine-parseable.
+command provides the mechanism to generate reports of the execution of a test
+suite.  The command processes an action stored in the database and then creates
+a textual summary of the test case results recorded in that action.
 .Pp
 The following subcommand options are recognized:
 .Bl -tag -width XX
 .It Fl -action Ar id
 Specifies the action for which to generate a report.  If not provided,
 defaults to the latest action stored in the database.
-.It Fl -output Ar path
-Specifies the path to which the report should be written to.  The special
-values
+.It Fl -output Ar format:path
+Specifies the format of the report and the path to which the report should be
+written to.  The special values
 .Pa /dev/stdout
 and
 .Pa /dev/stderr
 can be used to specify the standard output and the standard error
-respectively.
+respectively.  For the list of valid formats, see the
+.Sx Report formats
+section below.
 .It Fl -results-filter Ar types
 Comma-separated list of the test result types to include in the report.
 The ordering of the values is respected so that you can determine how you
@@ -84,6 +84,15 @@ Prints the runtime context of the action.
 Specifies the database to use.  Defaults to
 .Pa ~/.kyua/store.db .
 The database is created if it does not exist.
+.El
+.Ss Report formats
+The
+.Nm
+command can generate reports in the following formats:
+.Bl -tag -width XX
+.It console
+A user-friendly, plain-text report designed to be consumed by the user from the
+terminal.  Not intended to be machine-parseable.
 .El
 .Sh EXIT STATUS
 The
