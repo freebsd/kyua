@@ -47,7 +47,7 @@ cmd_db_migrate::cmd_db_migrate(void) : cli_command(
     "db-migrate", "", 0, 0,
     "Upgrades the schema of an existing store database to the currently "
     "implemented version.  A backup of the database is created, but this "
-    "operation is not reversible.")
+    "operation is not reversible")
 {
     add_option(store_option);
 }
