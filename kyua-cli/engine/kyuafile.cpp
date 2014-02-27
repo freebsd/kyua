@@ -387,7 +387,6 @@ ensure_valid_interface(const std::string& interface)
 /// \pre state(upvalue 1) String with the name of the interface.
 ///
 /// \param state The Lua state that executed the function.
-/// \param interface Name of the test program interface.
 ///
 /// \return Number of return values left on the Lua stack.
 ///
