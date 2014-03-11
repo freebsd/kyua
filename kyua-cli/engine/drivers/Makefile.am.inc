@@ -41,14 +41,7 @@ tests_engine_driversdir = $(pkgtestsdir)/engine/drivers
 tests_engine_drivers_DATA = engine/drivers/Kyuafile
 EXTRA_DIST += $(tests_engine_drivers_DATA)
 
-tests_engine_drivers_PROGRAMS = engine/drivers/debug_test_test
-engine_drivers_debug_test_test_SOURCES = engine/drivers/debug_test_test.cpp
-engine_drivers_debug_test_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
-                                          $(ATF_CXX_CFLAGS)
-engine_drivers_debug_test_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
-                                       $(ATF_CXX_LIBS)
-
-tests_engine_drivers_PROGRAMS += engine/drivers/list_tests_helpers
+tests_engine_drivers_PROGRAMS = engine/drivers/list_tests_helpers
 engine_drivers_list_tests_helpers_SOURCES = \
     engine/drivers/list_tests_helpers.cpp
 engine_drivers_list_tests_helpers_CXXFLAGS = $(ATF_CXX_CFLAGS)
@@ -60,13 +53,6 @@ engine_drivers_list_tests_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
                                           $(ATF_CXX_CFLAGS)
 engine_drivers_list_tests_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
                                        $(ATF_CXX_LIBS)
-
-tests_engine_drivers_PROGRAMS += engine/drivers/run_tests_test
-engine_drivers_run_tests_test_SOURCES = engine/drivers/run_tests_test.cpp
-engine_drivers_run_tests_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
-                                         $(ATF_CXX_CFLAGS)
-engine_drivers_run_tests_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
-                                      $(ATF_CXX_LIBS)
 
 tests_engine_drivers_PROGRAMS += engine/drivers/scan_action_test
 engine_drivers_scan_action_test_SOURCES = engine/drivers/scan_action_test.cpp
