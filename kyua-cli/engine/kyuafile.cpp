@@ -331,34 +331,6 @@ public:
 };
 
 
-/// Gets a string field from a Lua table.
-///
-/// \pre state(-1) contains a table.
-///
-/// \param state The Lua state.
-/// \param field The name of the field to query.
-/// \param error The error message to raise when an error condition is
-///     encoutered.
-///
-/// \return The string value from the table.
-///
-/// \throw std::runtime_error If there is any problem accessing the table.
-static inline std::string
-get_table_string(lutok::state& state, const char* field,
-                 const std::string& error)
-{
-    PRE(state.is_table(-1));
-
-    lutok::stack_cleaner cleaner(state);
-
-    state.push_string(field);
-    state.get_table(-2);
-    if (!state.is_string(-1))
-        throw std::runtime_error(error);
-    return state.to_string(-1);
-}
-
-
 /// Checks if the given interface name is valid.
 ///
 /// \param interface The name of the interface to validate.
