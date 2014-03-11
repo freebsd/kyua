@@ -86,6 +86,41 @@ typedef std::auto_ptr< cli_command > cli_command_ptr;
 typedef std::vector< engine::test_result::result_type > result_types;
 
 
+/// Wrapper class to send messages through the UI or to a file.
+///
+/// The cmdline::ui object provides methods to write messages to stdout and
+/// stderr.  We are interested in using these methods when dumping a report to
+/// any of these channels, because this provides us proper logging among other
+/// goodies during testing.  However, these are unsuitable to write the output
+/// to an arbitrary file, which is a necessity for reports.
+///
+/// Therefore, this class provides a mechanism to write stdout and stderr
+/// messages through the cmdline::ui object if the user so wishes, but otherwise
+/// prints messages to the user selected file.
+class file_writer : utils::noncopyable {
+    /// The UI object to write stdout and stderr messages through.
+    utils::cmdline::ui* const _ui;
+
+    /// The path to the output file.
+    const utils::fs::path _output_path;
+
+    /// The output file, if not stdout nor stderr.
+    std::auto_ptr< std::ofstream > _output_file;
+
+    /// Constant that represents the path to stdout.
+    static const utils::fs::path _stdout_path;
+
+    /// Constant that represents the path to stderr.
+    static const utils::fs::path _stderr_path;
+
+public:
+    file_writer(utils::cmdline::ui* const, const utils::fs::path&);
+    ~file_writer(void);
+
+    void operator()(const std::string&);
+};
+
+
 utils::optional< utils::fs::path > get_home(void);
 
 utils::optional< utils::fs::path > build_root_path(

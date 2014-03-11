@@ -30,7 +30,6 @@
 
 #include <cstddef>
 #include <cstdlib>
-#include <fstream>
 #include <map>
 #include <vector>
 
@@ -349,44 +348,6 @@ cli::output_option::convert(const std::string& raw_value)
 
 const fs::path cli::file_writer::_stdout_path("/dev/stdout");
 const fs::path cli::file_writer::_stderr_path("/dev/stderr");
-
-
-/// Constructs a new file_writer wrapper.
-///
-/// \param ui_ The UI object of the caller command.
-/// \param path_ The path to the output file.
-cli::file_writer::file_writer(cmdline::ui* const ui_, const fs::path& path_) :
-    _ui(ui_), _output_path(path_)
-{
-    if (path_ != _stdout_path && path_ != _stderr_path) {
-        _output_file.reset(new std::ofstream(path_.c_str()));
-        if (!*(_output_file)) {
-            throw std::runtime_error(F("Cannot open output file %s") % path_);
-        }
-    }
-}
-
-/// Destructor.
-cli::file_writer::~file_writer(void)
-{
-}
-
-/// Writes a message to the selected output.
-///
-/// \param message The message to write; should not include a termination
-///     new line.
-void
-cli::file_writer::operator()(const std::string& message)
-{
-    if (_output_path == _stdout_path)
-        _ui->out(message);
-    else if (_output_path == _stderr_path)
-        _ui->err(message);
-    else {
-        INV(_output_file.get() != NULL);
-        (*_output_file) << message << '\n';
-    }
-}
 
 
 /// Default constructor for cmd_report.
