@@ -375,7 +375,9 @@ ATF_TC_HEAD(fork_exec_wait__eacces, tc)
 }
 ATF_TC_BODY(fork_exec_wait__eacces, tc)
 {
-    ATF_REQUIRE(mkdir("dir", 0000) != -1);
+    ATF_REQUIRE(mkdir("dir", 0755) != -1);
+    atf_utils_create_file("dir/foo", "#! /bin/sh\nexit 0");
+    ATF_REQUIRE(chmod("dir/foo", 0000) != -1);
 
     const char* const args[] = {"foo", NULL};
     int unused_exitstatus;
