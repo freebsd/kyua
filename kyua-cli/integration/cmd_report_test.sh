@@ -159,8 +159,8 @@ EOF
 }
 
 
-utils_test_case output__change_file
-output__change_file_body() {
+utils_test_case output__console__change_file
+output__console__change_file_body() {
     run_tests
 
     cat >report <<EOF
@@ -173,16 +173,26 @@ Total time: S.UUUs
 EOF
 
     atf_check -s exit:0 -o file:report -e empty -x kyua report \
-        --output=/dev/stdout "| ${utils_strip_timestamp}"
+        --output=console:/dev/stdout "| ${utils_strip_timestamp}"
     atf_check -s exit:0 -o empty -e save:stderr kyua report \
-        --output=/dev/stderr
+        --output=console:/dev/stderr
     atf_check -s exit:0 -o file:report -x cat stderr \
         "| ${utils_strip_timestamp}"
 
     atf_check -s exit:0 -o empty -e empty kyua report \
-        --output=my-file
+        --output=console:my-file
     atf_check -s exit:0 -o file:report -x cat my-file \
         "| ${utils_strip_timestamp}"
+}
+
+
+utils_test_case output__unknown_format
+output__unknown_format_body() {
+    cat >experr <<EOF
+Usage error for command report: Invalid argument 'abc:/dev/stdout' for option --output: Unknown output format 'abc'.
+Type 'kyua help report' for usage information.
+EOF
+    atf_check -s exit:3 -e file:experr -x kyua report --output=abc:/dev/stdout
 }
 
 
@@ -275,7 +285,8 @@ atf_init_test_cases() {
 
     atf_add_test_case show_context
 
-    atf_add_test_case output__change_file
+    atf_add_test_case output__console__change_file
+    atf_add_test_case output__unknown_format
 
     atf_add_test_case results_filter__empty
     atf_add_test_case results_filter__one

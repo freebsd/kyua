@@ -37,45 +37,39 @@
 
 #include "cli/common.hpp"
 #include "utils/cmdline/options.hpp"
-#include "utils/cmdline/ui.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/noncopyable.hpp"
 
 namespace cli {
 
 
-/// Wrapper class to send messages through the UI or to a file.
+/// Option to specify an output selector.
 ///
-/// The cmdline::ui object provides methods to write messages to stdout and
-/// stderr.  We are interested in using these methods when dumping a report to
-/// any of these channels, because this provides us proper logging among other
-/// goodies during testing.  However, these are unsuitable to write the output
-/// to an arbitrary file, which is a necessity for reports.
-///
-/// Therefore, this class provides a mechanism to write stdout and stderr
-/// messages through the cmdline::ui object if the user so wishes, but otherwise
-/// prints messages to the user selected file.
-class file_writer : utils::noncopyable {
-    /// The UI object to write stdout and stderr messages through.
-    utils::cmdline::ui* const _ui;
+/// An output selector is composed of an output format and a location for the
+/// output.  The output format is something like "html" whereas the location is
+/// either a file or a directory on disk.  The semantics of the location vary
+/// depending on the format.
+class output_option : public utils::cmdline::base_option {
+public:
+    /// Identifiers for the valid format types.
+    enum format_type {
+        console_format,
+    };
 
-    /// The path to the output file.
-    const utils::fs::path _output_path;
+    /// Output format and location pair; i.e. the type of the native value.
+    typedef std::pair< format_type, utils::fs::path > option_type;
 
-    /// The output file, if not stdout nor stderr.
-    std::auto_ptr< std::ofstream > _output_file;
-
-    /// Constant that represents the path to stdout.
-    static const utils::fs::path _stdout_path;
-
-    /// Constant that represents the path to stderr.
-    static const utils::fs::path _stderr_path;
+private:
+    static format_type format_from_string(const std::string&);
+    static option_type split_value(const std::string&);
 
 public:
-    file_writer(utils::cmdline::ui* const, const utils::fs::path&);
-    ~file_writer(void);
+    output_option(void);
+    virtual ~output_option(void);
 
-    void operator()(const std::string&);
+    virtual void validate(const std::string&) const;
+
+    static option_type convert(const std::string&);
 };
 
 

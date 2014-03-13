@@ -32,60 +32,59 @@
 
 #include "utils/fs/path.hpp"
 #include "utils/cmdline/exceptions.hpp"
-#include "utils/cmdline/ui_mock.hpp"
 
 namespace cmdline = utils::cmdline;
 namespace fs = utils::fs;
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(file_writer__stdout);
-ATF_TEST_CASE_BODY(file_writer__stdout)
+ATF_TEST_CASE_WITHOUT_HEAD(output_option__settings);
+ATF_TEST_CASE_BODY(output_option__settings)
 {
-    cmdline::ui_mock ui;
-    {
-        cli::file_writer writer(&ui, fs::path("/dev/stdout"));
-        writer("A simple message");
-    }
-
-    ATF_REQUIRE_EQ(1, ui.out_log().size());
-    ATF_REQUIRE_EQ("A simple message", ui.out_log()[0]);
-    ATF_REQUIRE(ui.err_log().empty());
+    const cli::output_option o;
+    ATF_REQUIRE(o.has_short_name());
+    ATF_REQUIRE_EQ('o', o.short_name());
+    ATF_REQUIRE_EQ("output", o.long_name());
+    ATF_REQUIRE(o.needs_arg());
+    ATF_REQUIRE_EQ("format:output", o.arg_name());
+    ATF_REQUIRE(o.has_default_value());
+    ATF_REQUIRE_EQ("console:/dev/stdout", o.default_value());
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(file_writer__stderr);
-ATF_TEST_CASE_BODY(file_writer__stderr)
+ATF_TEST_CASE_WITHOUT_HEAD(output_option__validate);
+ATF_TEST_CASE_BODY(output_option__validate)
 {
-    cmdline::ui_mock ui;
-    {
-        cli::file_writer writer(&ui, fs::path("/dev/stderr"));
-        writer("A simple message");
-    }
+    const cli::output_option o;
 
-    ATF_REQUIRE(ui.out_log().empty());
-    ATF_REQUIRE_EQ(1, ui.err_log().size());
-    ATF_REQUIRE_EQ("A simple message", ui.err_log()[0]);
+    o.validate("console:/dev/stdout");
+    o.validate("console:abc");
+
+    ATF_REQUIRE_THROW_RE(cmdline::option_argument_value_error,
+                         "form.*format:path", o.validate(""));
+    ATF_REQUIRE_THROW_RE(cmdline::option_argument_value_error,
+                         "empty", o.validate("console:"));
+    ATF_REQUIRE_THROW_RE(cmdline::option_argument_value_error,
+                         "Unknown output format.*foo", o.validate("foo:b"));
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(file_writer__other);
-ATF_TEST_CASE_BODY(file_writer__other)
+ATF_TEST_CASE_WITHOUT_HEAD(output_option__convert);
+ATF_TEST_CASE_BODY(output_option__convert)
 {
-    cmdline::ui_mock ui;
-    {
-        cli::file_writer writer(&ui, fs::path("custom"));
-        writer("A simple message");
-    }
+    using cli::output_option;
 
-    ATF_REQUIRE(ui.out_log().empty());
-    ATF_REQUIRE(ui.err_log().empty());
-    ATF_REQUIRE(atf::utils::grep_file("A simple message", "custom"));
+    ATF_REQUIRE(output_option::option_type(output_option::console_format,
+                                           fs::path("/dev/stdout")) ==
+                output_option::convert("console:/dev/stdout"));
+    ATF_REQUIRE(output_option::option_type(output_option::console_format,
+                                           fs::path("abcd/efg")) ==
+                output_option::convert("console:abcd//efg/"));
 }
 
 
 ATF_INIT_TEST_CASES(tcs)
 {
-    ATF_ADD_TEST_CASE(tcs, file_writer__stdout);
-    ATF_ADD_TEST_CASE(tcs, file_writer__stderr);
-    ATF_ADD_TEST_CASE(tcs, file_writer__other);
+    ATF_ADD_TEST_CASE(tcs, output_option__settings);
+    ATF_ADD_TEST_CASE(tcs, output_option__validate);
+    ATF_ADD_TEST_CASE(tcs, output_option__convert);
 }

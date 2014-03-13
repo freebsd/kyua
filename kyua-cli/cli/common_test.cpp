@@ -71,6 +71,51 @@ mkfilter(const char* test_program, const char* test_case)
 }  // anonymous namespace
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(file_writer__stdout);
+ATF_TEST_CASE_BODY(file_writer__stdout)
+{
+    cmdline::ui_mock ui;
+    {
+        cli::file_writer writer(&ui, fs::path("/dev/stdout"));
+        writer("A simple message");
+    }
+
+    ATF_REQUIRE_EQ(1, ui.out_log().size());
+    ATF_REQUIRE_EQ("A simple message", ui.out_log()[0]);
+    ATF_REQUIRE(ui.err_log().empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(file_writer__stderr);
+ATF_TEST_CASE_BODY(file_writer__stderr)
+{
+    cmdline::ui_mock ui;
+    {
+        cli::file_writer writer(&ui, fs::path("/dev/stderr"));
+        writer("A simple message");
+    }
+
+    ATF_REQUIRE(ui.out_log().empty());
+    ATF_REQUIRE_EQ(1, ui.err_log().size());
+    ATF_REQUIRE_EQ("A simple message", ui.err_log()[0]);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(file_writer__other);
+ATF_TEST_CASE_BODY(file_writer__other)
+{
+    cmdline::ui_mock ui;
+    {
+        cli::file_writer writer(&ui, fs::path("custom"));
+        writer("A simple message");
+    }
+
+    ATF_REQUIRE(ui.out_log().empty());
+    ATF_REQUIRE(ui.err_log().empty());
+    ATF_REQUIRE(atf::utils::grep_file("A simple message", "custom"));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(build_root_path__default);
 ATF_TEST_CASE_BODY(build_root_path__default)
 {
@@ -422,6 +467,10 @@ ATF_TEST_CASE_BODY(format_test_case_id__test_filter)
 
 ATF_INIT_TEST_CASES(tcs)
 {
+    ATF_ADD_TEST_CASE(tcs, file_writer__stdout);
+    ATF_ADD_TEST_CASE(tcs, file_writer__stderr);
+    ATF_ADD_TEST_CASE(tcs, file_writer__other);
+
     ATF_ADD_TEST_CASE(tcs, build_root_path__default);
     ATF_ADD_TEST_CASE(tcs, build_root_path__explicit);
 

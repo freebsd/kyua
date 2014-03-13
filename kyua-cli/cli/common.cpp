@@ -29,6 +29,8 @@
 #include "cli/common.hpp"
 
 #include <algorithm>
+#include <fstream>
+#include <stdexcept>
 
 #include "engine/filters.hpp"
 #include "engine/test_case.hpp"
@@ -44,6 +46,7 @@
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
+#include "utils/sanity.hpp"
 
 namespace cmdline = utils::cmdline;
 namespace datetime = utils::datetime;
@@ -117,6 +120,44 @@ parse_types(const std::vector< std::string >& names)
 
 
 }  // anonymous namespace
+
+
+/// Constructs a new file_writer wrapper.
+///
+/// \param ui_ The UI object of the caller command.
+/// \param path_ The path to the output file.
+cli::file_writer::file_writer(cmdline::ui* const ui_, const fs::path& path_) :
+    _ui(ui_), _output_path(path_)
+{
+    if (path_ != _stdout_path && path_ != _stderr_path) {
+        _output_file.reset(new std::ofstream(path_.c_str()));
+        if (!*(_output_file)) {
+            throw std::runtime_error(F("Cannot open output file %s") % path_);
+        }
+    }
+}
+
+/// Destructor.
+cli::file_writer::~file_writer(void)
+{
+}
+
+/// Writes a message to the selected output.
+///
+/// \param message The message to write; should not include a termination
+///     new line.
+void
+cli::file_writer::operator()(const std::string& message)
+{
+    if (_output_path == _stdout_path)
+        _ui->out(message);
+    else if (_output_path == _stderr_path)
+        _ui->err(message);
+    else {
+        INV(_output_file.get() != NULL);
+        (*_output_file) << message << '\n';
+    }
+}
 
 
 /// Gets the path to the build root, if any.
