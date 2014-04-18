@@ -357,6 +357,7 @@ controlled error (1).  Even though when those manual pages do not describe
 any other exit statuses, codes above 1 can be returned.
 .Sh SEE ALSO
 .Xr atf 7 ,
+.Xr kyua.conf 5 ,
 .Xr tests 7
 .Sh AUTHORS
 For more details on the people that made
