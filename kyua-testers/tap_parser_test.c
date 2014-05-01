@@ -47,6 +47,17 @@ ATF_TC_BODY(try_parse_plan__ok, tc)
 }
 
 
+ATF_TC_WITHOUT_HEAD(try_parse_plan__skip);
+ATF_TC_BODY(try_parse_plan__skip, tc)
+{
+    kyua_tap_summary_t summary; memset(&summary, 0, sizeof(summary));
+    ATF_REQUIRE(!kyua_error_is_set(kyua_tap_try_parse_plan("1..0", &summary)));
+    ATF_REQUIRE_EQ(NULL, summary.parse_error);
+    ATF_REQUIRE_EQ(1, summary.first_index);
+    ATF_REQUIRE_EQ(0, summary.last_index);
+}
+
+
 ATF_TC_WITHOUT_HEAD(try_parse_plan__reversed);
 ATF_TC_BODY(try_parse_plan__reversed, tc)
 {
@@ -232,6 +243,7 @@ ATF_TC_BODY(parse__bail_out, tc)
 ATF_TP_ADD_TCS(tp)
 {
     ATF_TP_ADD_TC(tp, try_parse_plan__ok);
+    ATF_TP_ADD_TC(tp, try_parse_plan__skip);
     ATF_TP_ADD_TC(tp, try_parse_plan__reversed);
     ATF_TP_ADD_TC(tp, try_parse_plan__insane);
 
