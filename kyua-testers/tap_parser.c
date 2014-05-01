@@ -112,8 +112,10 @@ regex_error_new(const int original_code, regex_t* original_preg,
 
     const size_t data_size = sizeof(regex_error_data_t);
     regex_error_data_t* data = (regex_error_data_t*)malloc(data_size);
-    if (data == NULL)
+    if (data == NULL) {
+        regfree(original_preg);
         return kyua_oom_error_new();
+    }
 
     data->original_code = original_code;
     data->original_preg = *original_preg;
@@ -121,6 +123,8 @@ regex_error_new(const int original_code, regex_t* original_preg,
     (void)vsnprintf(data->description, sizeof(data->description),
                     description, ap);
     va_end(ap);
+
+    regfree(original_preg);
 
     return kyua_error_new(regex_error_type, data, data_size, regex_format,
                           regex_free);
@@ -170,48 +174,51 @@ regex_match_to_long(const char* line, const regmatch_t* match, long* output)
 kyua_error_t
 kyua_tap_try_parse_plan(const char* line, kyua_tap_summary_t* summary)
 {
+    kyua_error_t kyua_error;
+    regex_t preg;
+    const char* error;
+    long first_index, last_index;
     int code;
 
-    regex_t preg;
+    kyua_error = kyua_error_ok();
+
     code = regcomp(&preg, "^([0-9]+)\\.\\.([0-9]+)(.*#.*)?$", REG_EXTENDED);
-    if (code != 0)
-        return regex_error_new(code, &preg, "regcomp failed");
+    if (code != 0) {
+        kyua_error = regex_error_new(code, &preg, "regcomp failed");
+        goto end;
+    }
 
     regmatch_t matches[4];
     code = regexec(&preg, line, sizeof(matches)/sizeof(*matches), matches, 0);
     if (code != 0) {
-        if (code == REG_NOMATCH) {
-            regfree(&preg);
-            return kyua_error_ok();
-        } else
-            return regex_error_new(code, &preg, "regexec failed");
+        if (code != REG_NOMATCH)
+            kyua_error = regex_error_new(code, &preg, "regexec failed");
+        goto end;
     }
     regfree(&preg);
 
     if (summary->first_index != 0 || summary->last_index != 0) {
         summary->parse_error = "Output includes two test plans";
-        return kyua_error_ok();
+        goto end;
     }
 
-    const char* error;
-
-    long first_index;
     error = regex_match_to_long(line, &matches[1], &first_index);
     if (error != NULL) {
         summary->parse_error = error;
-        return kyua_error_ok();
+        goto end;
     }
 
-    long last_index;
     error = regex_match_to_long(line, &matches[2], &last_index);
     if (error != NULL) {
         summary->parse_error = error;
-        return kyua_error_ok();
+        goto end;
     }
 
     if (last_index == 0 && first_index == 1) {
         // TODO: fill this in with a skipped plan
         // TODO: grab the reason, if provided
+        summary->first_index = first_index;
+        summary->last_index = last_index;
     } else if (last_index < first_index) {
         summary->parse_error = "Test plan is reversed";
     } else {
@@ -219,7 +226,9 @@ kyua_tap_try_parse_plan(const char* line, kyua_tap_summary_t* summary)
         summary->last_index = last_index;
     }
 
-    return kyua_error_ok();
+end:
+    regfree(&preg);
+    return kyua_error;
 }
 
 
