@@ -173,12 +173,12 @@ kyua_tap_try_parse_plan(const char* line, kyua_tap_summary_t* summary)
     int code;
 
     regex_t preg;
-    code = regcomp(&preg, "^([0-9]+)\\.\\.([0-9]+)$", REG_EXTENDED);
+    code = regcomp(&preg, "^([0-9]+)\\.\\.([0-9]+)(.*#.*)?$", REG_EXTENDED);
     if (code != 0)
         return regex_error_new(code, &preg, "regcomp failed");
 
-    regmatch_t matches[3];
-    code = regexec(&preg, line, 3, matches, 0);
+    regmatch_t matches[4];
+    code = regexec(&preg, line, sizeof(matches)/sizeof(*matches), matches, 0);
     if (code != 0) {
         if (code == REG_NOMATCH) {
             regfree(&preg);
@@ -209,7 +209,10 @@ kyua_tap_try_parse_plan(const char* line, kyua_tap_summary_t* summary)
         return kyua_error_ok();
     }
 
-    if (last_index < first_index) {
+    if (last_index == 0 && first_index == 1) {
+        // TODO: fill this in with a skipped plan
+        // TODO: grab the reason, if provided
+    } else if (last_index < first_index) {
         summary->parse_error = "Test plan is reversed";
     } else {
         summary->first_index = first_index;
@@ -250,13 +253,18 @@ kyua_tap_parse(const int fd, FILE* output, kyua_tap_summary_t* summary)
            strcmp(line, "") != 0) {
         fprintf(output, "%s\n", line);
 
+        // XXX: should the summary always be parsed?
         error = kyua_tap_try_parse_plan(line, summary);
 
+        // TODO: if line is SKIP
+        // TODO: if line is a comment?
         if (strstr(line, "Bail out!") == line)
             summary->bail_out = true;
         else if (strstr(line, "ok") == line)
             summary->ok_count++;
         else if (strstr(line, "not ok") == line)
+            summary->not_ok_count++;
+        else if (strstr(line, "SKIP") == line)
             summary->not_ok_count++;
     }
     fclose(input);

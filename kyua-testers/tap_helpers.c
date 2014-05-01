@@ -61,6 +61,23 @@ bogus_plan_helper(void)
     return EXIT_SUCCESS;
 }
 
+/// Test case that produces an invalid output TAP plan.
+static int
+bogus_plan_negative_count_helper(void)
+{
+    fprintf(stdout, "1..-1\n");
+    fprintf(stdout, "ok\n");
+    return EXIT_SUCCESS;
+}
+
+static int
+comment_helper(void)
+{
+    fprintf(stdout, "1..1\n");
+    fprintf(stdout, "ok\n");
+    fprintf(stdout, "# hello world!\n");
+    return EXIT_SUCCESS;
+}
 
 /// Test case that always fails.
 static int
@@ -89,6 +106,44 @@ pass_helper(void)
     fprintf(stdout, "garbage line\n");
     fprintf(stdout, "ok - 3 This test passed\n");
     fprintf(stderr, "garbage line\n");
+    return EXIT_SUCCESS;
+}
+
+
+/// Test case that always dies due to a signal and dumps core.
+static int
+skip_helper(void)
+{
+    fprintf(stdout, "1..1\n");
+    fprintf(stdout, "# SKIP\n");
+    return EXIT_SUCCESS;
+}
+
+
+/// Test case that always dies due to a signal and dumps core.
+static int
+skip_with_reason_helper(void)
+{
+    fprintf(stdout, "1..1\n");
+    fprintf(stdout, "# SKIP this test is not valid on this OS\n");
+    return EXIT_SUCCESS;
+}
+
+
+/// Test case that always dies due to a signal and dumps core.
+static int
+skip_all_helper(void)
+{
+    fprintf(stdout, "1..0 # SKIP\n");
+    return EXIT_SUCCESS;
+}
+
+
+/// Test case that always dies due to a signal and dumps core.
+static int
+skip_all_with_reason_helper(void)
+{
+    fprintf(stdout, "1..0 # SKIP not running this test suite\n");
     return EXIT_SUCCESS;
 }
 
@@ -132,12 +187,22 @@ main(const int argc, char* const* const KYUA_DEFS_UNUSED_PARAM(argv))
         return bail_out_helper();
     } else if (strcmp(helper_name, "bogus_plan") == 0) {
         return bogus_plan_helper();
+    } else if (strcmp(helper_name, "bogus_plan_negative_count") == 0) {
+        return bogus_plan_negative_count_helper();
     } else if (strcmp(helper_name, "fail") == 0) {
         return fail_helper();
     } else if (strcmp(helper_name, "pass") == 0) {
         return pass_helper();
     } else if (strcmp(helper_name, "signal") == 0) {
         return signal_helper();
+    } else if (strcmp(helper_name, "skip") == 0) {
+        return skip_helper();
+    } else if (strcmp(helper_name, "skip_with_reason") == 0) {
+        return skip_with_reason_helper();
+    } else if (strcmp(helper_name, "skip_all") == 0) {
+        return skip_all_helper();
+    } else if (strcmp(helper_name, "skip_all_with_reason") == 0) {
+        return skip_all_with_reason_helper();
     } else if (strcmp(helper_name, "sleep") == 0) {
         return sleep_helper();
     } else {
