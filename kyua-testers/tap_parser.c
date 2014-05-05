@@ -124,8 +124,6 @@ regex_error_new(const int original_code, regex_t* original_preg,
                     description, ap);
     va_end(ap);
 
-    regfree(original_preg);
-
     return kyua_error_new(regex_error_type, data, data_size, regex_format,
                           regex_free);
 }
