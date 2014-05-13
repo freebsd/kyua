@@ -34,6 +34,7 @@
 #include "store/backend.hpp"
 #include "store/exceptions.hpp"
 #include "store/transaction.hpp"
+#include "utils/defs.hpp"
 #include "utils/optional.ipp"
 
 namespace fs = utils::fs;
@@ -82,6 +83,23 @@ scan_action::base_hooks::~base_hooks(void)
 }
 
 
+/// Callback executed before any operation is performed.
+void
+scan_action::base_hooks::begin(void)
+{
+}
+
+
+/// Callback executed after all operations are performed.
+///
+/// \param unused_r A structure with all results computed by this driver.  Note
+///     that this is also returned by the drive operation.
+void
+scan_action::base_hooks::end(const result& UTILS_UNUSED_PARAM(r))
+{
+}
+
+
 /// Executes the operation.
 ///
 /// \param store_path The path to the database store.
@@ -98,6 +116,8 @@ scan_action::drive(const fs::path& store_path,
     store::backend db = store::backend::open_ro(store_path);
     store::transaction tx = db.start();
 
+    hooks.begin();
+
     const engine::action action = get_action(tx, action_id);
     hooks.got_action(action_id.get(), action);
 
@@ -107,5 +127,7 @@ scan_action::drive(const fs::path& store_path,
         ++iter;
     }
 
-    return result();
+    result r;
+    hooks.end(r);
+    return r;
 }

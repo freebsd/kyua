@@ -40,6 +40,7 @@
 
 namespace cmdline = utils::cmdline;
 namespace fs = utils::fs;
+namespace scan_action = engine::drivers::scan_action;
 
 
 /// Prints the execution context to the output.
@@ -153,8 +154,10 @@ cli::report_console_hooks::got_result(store::results_iterator& iter)
 
 
 /// Prints the tests summary.
+///
+/// \param unused_r Result of the scan_action driver execution.
 void
-cli::report_console_hooks::print_tests(void)
+cli::report_console_hooks::end(const scan_action::result& UTILS_UNUSED_PARAM(r))
 {
     using engine::test_result;
     typedef std::map< test_result::result_type, const char* > types_map;

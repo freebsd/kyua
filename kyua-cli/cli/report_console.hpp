@@ -112,7 +112,7 @@ public:
     void got_action(const int64_t, const engine::action&);
     void got_result(store::results_iterator&);
 
-    void print_tests(void);
+    void end(const engine::drivers::scan_action::result&);
 };
 
 

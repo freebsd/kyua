@@ -57,6 +57,12 @@ namespace {
 /// Records the callback values for futher investigation.
 class capture_hooks : public scan_action::base_hooks {
 public:
+    /// Whether begin() was called or not.
+    bool _begin_called;
+
+    /// The captured driver result, if any.
+    optional< scan_action::result > _end_result;
+
     /// The captured action ID, if any.
     optional< int64_t > _action_id;
 
@@ -65,6 +71,30 @@ public:
 
     /// The captured results, flattened as "program:test_case:result".
     std::set< std::string > _results;
+
+    /// Constructor.
+    capture_hooks(void) :
+        _begin_called(false)
+    {
+    }
+
+    /// Callback executed before any operation is performed.
+    void
+    begin(void)
+    {
+        _begin_called = true;
+    }
+
+    /// Callback executed after all operations are performed.
+    ///
+    /// \param r A structure with all results computed by this driver.  Note
+    ///     that this is also returned by the drive operation.
+    void
+    end(const scan_action::result& r)
+    {
+        PRE(!_end_result);
+        _end_result = r;
+    }
 
     /// Callback executed when an action is found.
     ///
@@ -163,6 +193,8 @@ ATF_TEST_CASE_BODY(latest_action)
 
     capture_hooks hooks;
     scan_action::drive(fs::path("test.db"), none, hooks);
+    ATF_REQUIRE(hooks._begin_called);
+    ATF_REQUIRE(hooks._end_result);
 
     ATF_REQUIRE_EQ(action_id, hooks._action_id.get());
 
@@ -192,6 +224,8 @@ ATF_TEST_CASE_BODY(explicit_action)
     capture_hooks hooks;
     scan_action::drive(fs::path("test.db"),
                        optional< int64_t >(action_id), hooks);
+    ATF_REQUIRE(hooks._begin_called);
+    ATF_REQUIRE(hooks._end_result);
 
     ATF_REQUIRE_EQ(action_id, hooks._action_id.get());
 

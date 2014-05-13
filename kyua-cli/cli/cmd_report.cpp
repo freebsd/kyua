@@ -192,7 +192,6 @@ cmd_report::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
     report_console_hooks hooks(ui, output.second,
                                cmdline.has_option("show-context"), types);
     scan_action::drive(store_path(cmdline), action_id, hooks);
-    hooks.print_tests();
 
     return EXIT_SUCCESS;
 }
