@@ -133,32 +133,6 @@ action__not_found_body() {
 }
 
 
-utils_test_case show_context
-show_context_body() {
-    run_tests "mock1"
-
-    cat >expout <<EOF
-===> Execution context
-Current directory: $(pwd)/testsuite
-Environment variables:
-EOF
-    mkdir testsuite
-    ( cd testsuite && HOME=$(pwd)/home MOCK=mock1 env ) \
-        | sort | sed -e 's,^,    ,' | grep -v '^    _.*=.*' >>expout
-    rmdir testsuite
-    cat >>expout <<EOF
-===> Skipped tests
-simple_all_pass:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
-===> Summary
-Action: 1
-Test cases: 2 total, 1 skipped, 0 expected failures, 0 broken, 0 failed
-Total time: S.UUUs
-EOF
-    atf_check -s exit:0 -o file:expout -e empty -x kyua report --show-context \
-        "| ${utils_strip_timestamp} | grep -v '^    _.*=.*'"
-}
-
-
 utils_test_case output__console__change_file
 output__console__change_file_body() {
     run_tests
@@ -196,8 +170,34 @@ EOF
 }
 
 
-utils_test_case results_filter__empty
-results_filter__empty_body() {
+utils_test_case console__show_context
+console__show_context_body() {
+    run_tests "mock1"
+
+    cat >expout <<EOF
+===> Execution context
+Current directory: $(pwd)/testsuite
+Environment variables:
+EOF
+    mkdir testsuite
+    ( cd testsuite && HOME=$(pwd)/home MOCK=mock1 env ) \
+        | sort | sed -e 's,^,    ,' | grep -v '^    _.*=.*' >>expout
+    rmdir testsuite
+    cat >>expout <<EOF
+===> Skipped tests
+simple_all_pass:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
+===> Summary
+Action: 1
+Test cases: 2 total, 1 skipped, 0 expected failures, 0 broken, 0 failed
+Total time: S.UUUs
+EOF
+    atf_check -s exit:0 -o file:expout -e empty -x kyua report --show-context \
+        "| ${utils_strip_timestamp} | grep -v '^    _.*=.*'"
+}
+
+
+utils_test_case console__results_filter__empty
+console__results_filter__empty_body() {
     utils_install_timestamp_wrapper
 
     run_tests "mock1"
@@ -216,8 +216,8 @@ EOF
 }
 
 
-utils_test_case results_filter__one
-results_filter__one_body() {
+utils_test_case console__results_filter__one
+console__results_filter__one_body() {
     utils_install_timestamp_wrapper
 
     run_tests "mock1"
@@ -235,8 +235,8 @@ EOF
 }
 
 
-utils_test_case results_filter__multiple_all_match
-results_filter__multiple_all_match_body() {
+utils_test_case console__results_filter__multiple_all_match
+console__results_filter__multiple_all_match_body() {
     utils_install_timestamp_wrapper
 
     run_tests "mock1"
@@ -256,8 +256,8 @@ EOF
 }
 
 
-utils_test_case results_filter__multiple_some_match
-results_filter__multiple_some_match_body() {
+utils_test_case console__results_filter__multiple_some_match
+console__results_filter__multiple_some_match_body() {
     utils_install_timestamp_wrapper
 
     run_tests "mock1"
@@ -275,6 +275,35 @@ EOF
 }
 
 
+utils_test_case junit__simple__ok
+junit__simple__ok_body() {
+    utils_install_timestamp_wrapper
+
+    run_tests "mock1"
+
+    cat >expout <<EOF
+<?xml version="1.0" encoding="iso-8859-1"?>
+<testsuite>
+<testcase classname="simple_all_pass" name="pass" time="S.UUU">
+<system-out>This is the stdout of pass
+</system-out>
+<system-err>This is the stderr of pass
+</system-err>
+</testcase>
+<testcase classname="simple_all_pass" name="skip" time="S.UUU">
+<skipped/>
+<system-out>This is the stdout of skip
+</system-out>
+<system-err>This is the stderr of skip
+</system-err>
+</testcase>
+</testsuite>
+EOF
+    atf_check -s exit:0 -o file:expout -e empty \
+        kyua report --output=junit:/dev/stdout --results-filter=
+}
+
+
 atf_init_test_cases() {
     atf_add_test_case default_behavior__ok
     atf_add_test_case default_behavior__no_actions
@@ -283,13 +312,15 @@ atf_init_test_cases() {
     atf_add_test_case action__explicit
     atf_add_test_case action__not_found
 
-    atf_add_test_case show_context
+    atf_add_test_case console__show_context
 
     atf_add_test_case output__console__change_file
     atf_add_test_case output__unknown_format
 
-    atf_add_test_case results_filter__empty
-    atf_add_test_case results_filter__one
-    atf_add_test_case results_filter__multiple_all_match
-    atf_add_test_case results_filter__multiple_some_match
+    atf_add_test_case console__results_filter__empty
+    atf_add_test_case console__results_filter__one
+    atf_add_test_case console__results_filter__multiple_all_match
+    atf_add_test_case console__results_filter__multiple_some_match
+
+    atf_add_test_case junit__simple__ok
 }

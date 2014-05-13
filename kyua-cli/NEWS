@@ -7,6 +7,9 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   different formats.  The '--output' flag has been modified to support
   specifying the format to generate.
 
+* Added a 'junit' output format to the 'report' command.  This has been
+  verified to generate reports that are compatible with Jenkins.
+
 
 Changes in version 0.8
 ======================

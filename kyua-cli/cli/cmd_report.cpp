@@ -35,6 +35,7 @@
 
 #include "cli/common.ipp"
 #include "cli/report_console.hpp"
+#include "cli/report_junit.hpp"
 #include "engine/action.hpp"
 #include "engine/context.hpp"
 #include "engine/drivers/scan_action.hpp"
@@ -84,6 +85,8 @@ cli::output_option::format_from_string(const std::string& value)
 {
     if (value == "console")
         return console_format;
+    else if (value == "junit")
+        return junit_format;
     else
         throw std::runtime_error(F("Unknown output format '%s'") % value);
 }
@@ -188,10 +191,21 @@ cmd_report::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
         action_id = cmdline.get_option< cmdline::int_option >("action");
 
     const result_types types = get_result_types(cmdline);
-    INV(output.first == output_option::console_format);
-    report_console_hooks hooks(ui, output.second,
-                               cmdline.has_option("show-context"), types);
-    scan_action::drive(store_path(cmdline), action_id, hooks);
+    std::auto_ptr< scan_action::base_hooks > hooks;
+    switch (output.first) {
+    case output_option::console_format:
+        hooks.reset(new report_console_hooks(
+                        ui, output.second, cmdline.has_option("show-context"),
+                        types));
+        break;
+    case output_option::junit_format:
+        hooks.reset(new report_junit_hooks(
+                        ui, output.second, cmdline.has_option("show-context"),
+                        types));
+        break;
+    }
+    INV(hooks.get() != NULL);
+    scan_action::drive(store_path(cmdline), action_id, *hooks);
 
     return EXIT_SUCCESS;
 }

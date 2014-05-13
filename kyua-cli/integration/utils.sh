@@ -30,12 +30,12 @@
 # Subcommand to strip the timestamps of a report.
 #
 # This is to make the reports deterministic and thus easily testable.  The
-# timestamps are replaced by the fixed string S.UUUs.
+# timestamps are replaced by the fixed string S.UUU.
 #
 # This variable should be used as shown here:
 #
 #     atf_check ... -x kyua report "| ${uilts_strip_timestamp}"
-utils_strip_timestamp='sed -e "s,[0-9][0-9]*.[0-9][0-9][0-9]s,S.UUUs,g"'
+utils_strip_timestamp='sed -E "s,( |\[|\")[0-9][0-9]*.[0-9][0-9][0-9](s]|s|\"),\1S.UUU\2,g"'
 
 
 # Copies a helper binary from the source directory to the work directory.

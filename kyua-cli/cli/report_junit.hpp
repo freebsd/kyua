@@ -1,4 +1,4 @@
-// Copyright 2011 Google Inc.
+// Copyright 2014 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,66 +26,50 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file cli/cmd_report.hpp
-/// Provides the cmd_report class.
+/// \file cli/report_junit.hpp
+/// Provides the 'junit' format of the report command.
 
-#if !defined(CLI_CMD_REPORT_HPP)
-#define CLI_CMD_REPORT_HPP
+#if !defined(CLI_REPORT_JUNIT_HPP)
+#define CLI_REPORT_JUNIT_HPP
 
-#include <fstream>
-#include <memory>
+#include <cstddef>
 
 #include "cli/common.hpp"
-#include "utils/cmdline/options.hpp"
+#include "engine/drivers/scan_action.hpp"
+#include "utils/cmdline/ui.hpp"
 #include "utils/fs/path.hpp"
-#include "utils/noncopyable.hpp"
 
 namespace cli {
 
 
-/// Option to specify an output selector.
-///
-/// An output selector is composed of an output format and a location for the
-/// output.  The output format is something like "html" whereas the location is
-/// either a file or a directory on disk.  The semantics of the location vary
-/// depending on the format.
-class output_option : public utils::cmdline::base_option {
-public:
-    /// Identifiers for the valid format types.
-    enum format_type {
-        console_format,
-        junit_format,
-    };
+/// Generates a plain-text report intended to be printed to the junit.
+class report_junit_hooks : public engine::drivers::scan_action::base_hooks {
+    /// Indirection to print the output to the correct file stream.
+    cli::file_writer _writer;
 
-    /// Output format and location pair; i.e. the type of the native value.
-    typedef std::pair< format_type, utils::fs::path > option_type;
+    /// Whether to include the runtime context in the output or not.
+    const bool _show_context;
 
-private:
-    static format_type format_from_string(const std::string&);
-    static option_type split_value(const std::string&);
+    /// Collection of result types to include in the report.
+    const cli::result_types& _results_filters;
+
+    /// The action ID loaded.
+    int64_t _action_id;
 
 public:
-    output_option(void);
-    virtual ~output_option(void);
+    report_junit_hooks(utils::cmdline::ui*, const utils::fs::path&,
+                       const bool, const cli::result_types&);
 
-    virtual void validate(const std::string&) const;
+    void begin(void);
 
-    static option_type convert(const std::string&);
-};
+    void got_action(const int64_t, const engine::action&);
+    void got_result(store::results_iterator&);
 
-
-/// Implementation of the "report" subcommand.
-class cmd_report : public cli_command
-{
-public:
-    cmd_report(void);
-
-    int run(utils::cmdline::ui*, const utils::cmdline::parsed_cmdline&,
-            const utils::config::tree&);
+    void end(const engine::drivers::scan_action::result&);
 };
 
 
 }  // namespace cli
 
 
-#endif  // !defined(CLI_CMD_REPORT_HPP)
+#endif  // !defined(CLI_REPORT_JUNIT_HPP)
