@@ -40,6 +40,7 @@ namespace utils {
 namespace text {
 
 
+std::string escape_xml(const std::string&);
 std::string quote(const std::string&, const char);
 
 

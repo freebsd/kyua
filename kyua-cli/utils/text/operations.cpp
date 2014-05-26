@@ -36,6 +36,39 @@
 namespace text = utils::text;
 
 
+/// Replaces XML special characters from an input string.
+///
+/// \param in The input to quote.
+///
+/// \return A quoted string without any XML special characters.
+std::string
+text::escape_xml(const std::string& in)
+{
+    std::ostringstream quoted;
+
+    const char* delims = "\"&<>'";  // Keep in sync with 'switch' below.
+    std::string::size_type start_pos = 0;
+    std::string::size_type last_pos = in.find_first_of(delims);
+    while (last_pos != std::string::npos) {
+        quoted << in.substr(start_pos, last_pos - start_pos);
+        switch (in[last_pos]) {
+        case '"':  quoted << "&quot;"; break;
+        case '&':  quoted << "&amp;"; break;
+        case '<':  quoted << "&lt;"; break;
+        case '>':  quoted << "&gt;"; break;
+        case '\'': quoted << "&apos;"; break;
+        default:   UNREACHABLE;
+        }
+        start_pos = last_pos + 1;
+        last_pos = in.find_first_of(delims, start_pos);
+    }
+    if (start_pos < in.length())
+        quoted << in.substr(start_pos);
+
+    return quoted.str();
+}
+
+
 /// Surrounds a string with quotes, escaping the quote itself if needed.
 ///
 /// \param text The string to quote.

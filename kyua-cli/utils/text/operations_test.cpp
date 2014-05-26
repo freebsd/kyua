@@ -65,6 +65,34 @@ refill_test(const char* expected, const char* input,
 }  // anonymous namespace
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(escape_xml__empty);
+ATF_TEST_CASE_BODY(escape_xml__empty)
+{
+    ATF_REQUIRE_EQ("", text::escape_xml(""));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(escape_xml__no_escaping);
+ATF_TEST_CASE_BODY(escape_xml__no_escaping)
+{
+    ATF_REQUIRE_EQ("a", text::escape_xml("a"));
+    ATF_REQUIRE_EQ("Some text!", text::escape_xml("Some text!"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(escape_xml__some_escaping);
+ATF_TEST_CASE_BODY(escape_xml__some_escaping)
+{
+    ATF_REQUIRE_EQ("&apos;", text::escape_xml("'"));
+
+    ATF_REQUIRE_EQ("foo &quot;bar&amp; &lt;tag&gt; yay&apos; baz",
+                   text::escape_xml("foo \"bar& <tag> yay' baz"));
+
+    ATF_REQUIRE_EQ("&quot;&amp;&lt;&gt;&apos;", text::escape_xml("\"&<>'"));
+    ATF_REQUIRE_EQ("&amp;&amp;&amp;", text::escape_xml("&&&"));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(quote__empty);
 ATF_TEST_CASE_BODY(quote__empty)
 {
@@ -330,6 +358,10 @@ ATF_TEST_CASE_BODY(to_type__invalid__numerical)
 
 ATF_INIT_TEST_CASES(tcs)
 {
+    ATF_ADD_TEST_CASE(tcs, escape_xml__empty);
+    ATF_ADD_TEST_CASE(tcs, escape_xml__no_escaping);
+    ATF_ADD_TEST_CASE(tcs, escape_xml__some_escaping);
+
     ATF_ADD_TEST_CASE(tcs, quote__empty);
     ATF_ADD_TEST_CASE(tcs, quote__no_escaping);
     ATF_ADD_TEST_CASE(tcs, quote__some_escaping);

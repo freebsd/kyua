@@ -56,10 +56,22 @@ namespace drivers {
 namespace scan_action {
 
 
+/// Tuple containing the results of this driver.
+class result {
+public:
+    /// Initializer for the tuple's fields.
+    result(void)
+    {
+    }
+};
+
+
 /// Abstract definition of the hooks for this driver.
 class base_hooks {
 public:
     virtual ~base_hooks(void) = 0;
+
+    virtual void begin(void);
 
     /// Callback executed when an action is found.
     ///
@@ -74,16 +86,8 @@ public:
     ///     lazily fetched, hence why we receive the object instead of the
     ///     individual elements.
     virtual void got_result(store::results_iterator& iter) = 0;
-};
 
-
-/// Tuple containing the results of this driver.
-class result {
-public:
-    /// Initializer for the tuple's fields.
-    result(void)
-    {
-    }
+    virtual void end(const result& r);
 };
 
 

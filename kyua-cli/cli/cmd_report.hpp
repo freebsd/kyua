@@ -54,6 +54,7 @@ public:
     /// Identifiers for the valid format types.
     enum format_type {
         console_format,
+        junit_format,
     };
 
     /// Output format and location pair; i.e. the type of the native value.
