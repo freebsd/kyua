@@ -26,48 +26,29 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file cli/report_junit.hpp
-/// Provides the 'junit' format of the report command.
+/// \file cli/cmd_report_junit.hpp
+/// Provides the cmd_report_junit class.
 
-#if !defined(CLI_REPORT_JUNIT_HPP)
-#define CLI_REPORT_JUNIT_HPP
-
-#include <cstddef>
+#if !defined(CLI_CMD_REPORT_JUNIT_HPP)
+#define CLI_CMD_REPORT_JUNIT_HPP
 
 #include "cli/common.hpp"
-#include "engine/drivers/scan_action.hpp"
-#include "utils/cmdline/ui.hpp"
-#include "utils/fs/path.hpp"
 
 namespace cli {
 
 
-/// Generates a plain-text report intended to be printed to the junit.
-class report_junit_hooks : public engine::drivers::scan_action::base_hooks {
-    /// Indirection to print the output to the correct file stream.
-    cli::file_writer _writer;
-
-    /// Whether to include the runtime context in the output or not.
-    const bool _show_context;
-
-    /// Collection of result types to include in the report.
-    const cli::result_types& _results_filters;
-
-    /// The action ID loaded.
-    int64_t _action_id;
-
+/// Implementation of the "report-junit" subcommand.
+class cmd_report_junit : public cli_command
+{
 public:
-    report_junit_hooks(utils::cmdline::ui*, const utils::fs::path&,
-                       const bool, const cli::result_types&);
+    cmd_report_junit(void);
 
-    void got_action(const int64_t, const engine::action&);
-    void got_result(store::results_iterator&);
-
-    void end(const engine::drivers::scan_action::result&);
+    int run(utils::cmdline::ui*, const utils::cmdline::parsed_cmdline&,
+            const utils::config::tree&);
 };
 
 
 }  // namespace cli
 
 
-#endif  // !defined(CLI_REPORT_JUNIT_HPP)
+#endif  // !defined(CLI_CMD_REPORT_JUNIT_HPP)

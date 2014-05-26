@@ -124,6 +124,15 @@ integration/cmd_report_html_test: \
 	@src="$(srcdir)/integration/cmd_report_html_test.sh"; \
 	dst="integration/cmd_report_html_test"; $(ATF_SH_BUILD)
 
+tests_integration_SCRIPTS += integration/cmd_report_junit_test
+CLEANFILES += integration/cmd_report_junit_test
+EXTRA_DIST += integration/cmd_report_junit_test.sh
+integration/cmd_report_junit_test: \
+    $(srcdir)/integration/cmd_report_junit_test.sh $(ATF_SH_DEPS)
+	test -d integration || mkdir -p integration
+	@src="$(srcdir)/integration/cmd_report_junit_test.sh"; \
+	dst="integration/cmd_report_junit_test"; $(ATF_SH_BUILD)
+
 tests_integration_SCRIPTS += integration/cmd_test_test
 CLEANFILES += integration/cmd_test_test
 EXTRA_DIST += integration/cmd_test_test.sh

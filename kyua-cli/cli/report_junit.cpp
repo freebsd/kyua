@@ -100,15 +100,6 @@ cli::report_junit_hooks::report_junit_hooks(
 }
 
 
-/// Starts the report.
-void
-cli::report_junit_hooks::begin(void)
-{
-    _writer("<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>");
-    _writer("<testsuite>");
-}
-
-
 /// Callback executed when an action is found.
 ///
 /// \param action_id The identifier of the loaded action.
@@ -117,10 +108,15 @@ void
 cli::report_junit_hooks::got_action(const int64_t action_id,
                                     const engine::action& action)
 {
+    _writer("<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>");
+    _writer("<testsuite>");
+
     _action_id = action_id;
     if (_show_context) {
         const engine::context& context = action.runtime_context();
         _writer("<properties>");
+        _writer(F("<property name=\"kyua.action_id\" value=\"%s\"/>")
+                % _action_id);
         _writer(F("<property name=\"cwd\" value=\"%s\"/>")
                 % text::escape_xml(context.cwd().str()));
         for (config::properties_map::const_iterator iter =
