@@ -33,6 +33,7 @@
 #define CLI_REPORT_CONSOLE_HPP
 
 #include <cstddef>
+#include <ostream>
 #include <string>
 
 #include "cli/common.hpp"
@@ -47,8 +48,8 @@ namespace cli {
 
 /// Generates a plain-text report intended to be printed to the console.
 class report_console_hooks : public engine::drivers::scan_action::base_hooks {
-    /// Indirection to print the output to the correct file stream.
-    cli::file_writer _writer;
+    /// Stream to which to write the report.
+    std::ostream& _output;
 
     /// Whether to include the runtime context in the output or not.
     const bool _show_context;
@@ -106,8 +107,7 @@ class report_console_hooks : public engine::drivers::scan_action::base_hooks {
     void print_results(const engine::test_result::result_type, const char*);
 
 public:
-    report_console_hooks(utils::cmdline::ui*, const utils::fs::path&,
-                         const bool, const cli::result_types&);
+    report_console_hooks(std::ostream&, const bool, const cli::result_types&);
 
     void got_action(const int64_t, const engine::action&);
     void got_result(store::results_iterator&);

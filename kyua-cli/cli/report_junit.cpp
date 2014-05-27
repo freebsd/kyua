@@ -81,18 +81,16 @@ junit_duration(const datetime::delta& delta)
 
 /// Constructor for the hooks.
 ///
-/// \param ui_ The user interface object of the caller command.
-/// \param outfile_ The file to which to send the output.
+/// \param [out] output_ Stream to which to write the report.
 /// \param show_context_ Whether to include the runtime context in
 ///     the output or not.
 /// \param results_filters_ The result types to include in the report.
 ///     Cannot be empty.
 cli::report_junit_hooks::report_junit_hooks(
-    cmdline::ui* ui_,
-    const fs::path& outfile_,
+    std::ostream& output_,
     const bool show_context_,
     const cli::result_types& results_filters_) :
-    _writer(ui_, outfile_),
+    _output(output_),
     _show_context(show_context_),
     _results_filters(results_filters_)
 {
@@ -108,24 +106,24 @@ void
 cli::report_junit_hooks::got_action(const int64_t action_id,
                                     const engine::action& action)
 {
-    _writer("<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>");
-    _writer("<testsuite>");
+    _output << "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n";
+    _output << "<testsuite>\n";
 
     _action_id = action_id;
     if (_show_context) {
         const engine::context& context = action.runtime_context();
-        _writer("<properties>");
-        _writer(F("<property name=\"kyua.action_id\" value=\"%s\"/>")
-                % _action_id);
-        _writer(F("<property name=\"cwd\" value=\"%s\"/>")
-                % text::escape_xml(context.cwd().str()));
+        _output << "<properties>\n";
+        _output << F("<property name=\"kyua.action_id\" value=\"%s\"/>\n")
+            % _action_id;
+        _output << F("<property name=\"cwd\" value=\"%s\"/>\n")
+            % text::escape_xml(context.cwd().str());
         for (config::properties_map::const_iterator iter =
                  context.env().begin(); iter != context.env().end(); ++iter) {
-            _writer(F("<property name=\"env.%s\" value=\"%s\"/>")
-                    % text::escape_xml((*iter).first)
-                    % text::escape_xml((*iter).second));
+            _output << F("<property name=\"env.%s\" value=\"%s\"/>\n")
+                % text::escape_xml((*iter).first)
+                % text::escape_xml((*iter).second);
         }
-        _writer("</properties>");
+        _output << "</properties>\n";
     }
 }
 
@@ -142,15 +140,15 @@ cli::report_junit_hooks::got_result(store::results_iterator& iter)
                   result.type()) == _results_filters.end())
         return;
 
-    _writer(F("<testcase classname=\"%s\" name=\"%s\" time=\"%s\">")
-            % text::escape_xml(junit_classname(*iter.test_program()))
-            % text::escape_xml(iter.test_case_name())
-            % junit_duration(iter.duration()));
+    _output << F("<testcase classname=\"%s\" name=\"%s\" time=\"%s\">\n")
+        % text::escape_xml(junit_classname(*iter.test_program()))
+        % text::escape_xml(iter.test_case_name())
+        % junit_duration(iter.duration());
 
     switch (result.type()) {
     case engine::test_result::failed:
-        _writer(F("<failure message=\"%s\"/>")
-                % text::escape_xml(result.reason()));
+        _output << F("<failure message=\"%s\"/>\n")
+            % text::escape_xml(result.reason());
         break;
 
     case engine::test_result::passed:
@@ -158,19 +156,19 @@ cli::report_junit_hooks::got_result(store::results_iterator& iter)
         break;
 
     case engine::test_result::skipped:
-        _writer("<skipped/>");
+        _output << "<skipped/>\n";
         break;
 
     default:
-        _writer(F("<error message=\"%s\"/>")
-                % text::escape_xml(result.reason()));
+        _output << F("<error message=\"%s\"/>\n")
+            % text::escape_xml(result.reason());
     }
 
-    _writer(F("<system-out>%s</system-out>")
-            % text::escape_xml(iter.stdout_contents()));
-    _writer(F("<system-err>%s</system-err>")
-            % text::escape_xml(iter.stderr_contents()));
-    _writer("</testcase>");
+    _output << F("<system-out>%s</system-out>\n")
+            % text::escape_xml(iter.stdout_contents());
+    _output << F("<system-err>%s</system-err>\n")
+            % text::escape_xml(iter.stderr_contents());
+    _output << "</testcase>\n";
 }
 
 
@@ -180,5 +178,5 @@ cli::report_junit_hooks::got_result(store::results_iterator& iter)
 void
 cli::report_junit_hooks::end(const scan_action::result& UTILS_UNUSED_PARAM(r))
 {
-    _writer("</testsuite>");
+    _output << "</testsuite>\n";
 }

@@ -64,19 +64,23 @@ cmd_report_junit::cmd_report_junit(void) : cli_command(
 
 /// Entry point for the "report" subcommand.
 ///
-/// \param ui Object to interact with the I/O of the program.
+/// \param unused_ui Object to interact with the I/O of the program.
 /// \param cmdline Representation of the command line to the subcommand.
 /// \param unused_user_config The runtime configuration of the program.
 ///
 /// \return 0 if everything is OK, 1 if the statement is invalid or if there is
 /// any other problem.
 int
-cmd_report_junit::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
+cmd_report_junit::run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
+                      const cmdline::parsed_cmdline& cmdline,
                       const config::tree& UTILS_UNUSED_PARAM(user_config))
 {
     optional< int64_t > action_id;
     if (cmdline.has_option("action"))
         action_id = cmdline.get_option< cmdline::int_option >("action");
+
+    std::auto_ptr< std::ostream > output = open_output_file(
+        cmdline.get_option< cmdline::path_option >("output"));
 
     result_types no_filter;
     no_filter.push_back(engine::test_result::passed);
@@ -85,9 +89,7 @@ cmd_report_junit::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
     no_filter.push_back(engine::test_result::broken);
     no_filter.push_back(engine::test_result::failed);
 
-    report_junit_hooks hooks(
-        ui, cmdline.get_option< cmdline::path_option >("output"), true,
-        no_filter);
+    report_junit_hooks hooks(*output.get(), true, no_filter);
     scan_action::drive(store_path(cmdline), action_id, hooks);
 
     return EXIT_SUCCESS;

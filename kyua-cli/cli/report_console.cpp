@@ -49,17 +49,17 @@ namespace scan_action = engine::drivers::scan_action;
 void
 cli::report_console_hooks::print_context(const engine::context& context)
 {
-    _writer("===> Execution context");
+    _output << "===> Execution context\n";
 
-    _writer(F("Current directory: %s") % context.cwd());
+    _output << F("Current directory: %s\n") % context.cwd();
     const std::map< std::string, std::string >& env = context.env();
     if (env.empty())
-        _writer("No environment variables recorded");
+        _output << "No environment variables recorded\n";
     else {
-        _writer("Environment variables:");
+        _output << "Environment variables:\n";
         for (std::map< std::string, std::string >::const_iterator
                  iter = env.begin(); iter != env.end(); iter++) {
-            _writer(F("    %s=%s") % (*iter).first % (*iter).second);
+            _output << F("    %s=%s\n") % (*iter).first % (*iter).second;
         }
     }
 }
@@ -93,31 +93,29 @@ cli::report_console_hooks::print_results(
         return;
     const std::vector< result_data >& all = (*iter2).second;
 
-    _writer(F("===> %s") % title);
+    _output << F("===> %s\n") % title;
     for (std::vector< result_data >::const_iterator iter = all.begin();
          iter != all.end(); iter++) {
-        _writer(F("%s:%s  ->  %s  [%s]") % (*iter).binary_path %
-                (*iter).test_case_name %
-                cli::format_result((*iter).result) %
-                cli::format_delta((*iter).duration));
+        _output << F("%s:%s  ->  %s  [%s]\n") % (*iter).binary_path %
+            (*iter).test_case_name %
+            cli::format_result((*iter).result) %
+            cli::format_delta((*iter).duration);
     }
 }
 
 
 /// Constructor for the hooks.
 ///
-/// \param ui_ The user interface object of the caller command.
-/// \param outfile_ The file to which to send the output.
+/// \param [out] output_ Stream to which to write the report.
 /// \param show_context_ Whether to include the runtime context in
 ///     the output or not.
 /// \param results_filters_ The result types to include in the report.
 ///     Cannot be empty.
 cli::report_console_hooks::report_console_hooks(
-    cmdline::ui* ui_,
-    const fs::path& outfile_,
+    std::ostream& output_,
     const bool show_context_,
     const cli::result_types& results_filters_) :
-    _writer(ui_, outfile_),
+    _output(output_),
     _show_context(show_context_),
     _results_filters(results_filters_)
 {
@@ -184,10 +182,10 @@ cli::report_console_hooks::end(const scan_action::result& UTILS_UNUSED_PARAM(r))
     const std::size_t xfail = count_results(test_result::expected_failure);
     const std::size_t total = broken + failed + passed + skipped + xfail;
 
-    _writer("===> Summary");
-    _writer(F("Action: %s") % _action_id);
-    _writer(F("Test cases: %s total, %s skipped, %s expected failures, "
-              "%s broken, %s failed") %
-            total % skipped % xfail % broken % failed);
-    _writer(F("Total time: %s") % cli::format_delta(_runtime));
+    _output << "===> Summary\n";
+    _output << F("Action: %s\n") % _action_id;
+    _output << F("Test cases: %s total, %s skipped, %s expected failures, "
+                 "%s broken, %s failed\n") %
+        total % skipped % xfail % broken % failed;
+    _output << F("Total time: %s\n") % cli::format_delta(_runtime);
 }

@@ -56,10 +56,6 @@ using cli::cmd_report;
 using utils::optional;
 
 
-const fs::path cli::file_writer::_stdout_path("/dev/stdout");
-const fs::path cli::file_writer::_stderr_path("/dev/stderr");
-
-
 /// Default constructor for cmd_report.
 cmd_report::cmd_report(void) : cli_command(
     "report", "", 0, 0,
@@ -79,24 +75,27 @@ cmd_report::cmd_report(void) : cli_command(
 
 /// Entry point for the "report" subcommand.
 ///
-/// \param ui Object to interact with the I/O of the program.
+/// \param unused_ui Object to interact with the I/O of the program.
 /// \param cmdline Representation of the command line to the subcommand.
 /// \param unused_user_config The runtime configuration of the program.
 ///
 /// \return 0 if everything is OK, 1 if the statement is invalid or if there is
 /// any other problem.
 int
-cmd_report::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
+cmd_report::run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
+                const cmdline::parsed_cmdline& cmdline,
                 const config::tree& UTILS_UNUSED_PARAM(user_config))
 {
     optional< int64_t > action_id;
     if (cmdline.has_option("action"))
         action_id = cmdline.get_option< cmdline::int_option >("action");
 
+    std::auto_ptr< std::ostream > output = open_output_file(
+        cmdline.get_option< cmdline::path_option >("output"));
+
     const result_types types = get_result_types(cmdline);
-    report_console_hooks hooks(
-        ui, cmdline.get_option< cmdline::path_option >("output"),
-        cmdline.has_option("show-context"), types);
+    report_console_hooks hooks(*output.get(),
+                               cmdline.has_option("show-context"), types);
     scan_action::drive(store_path(cmdline), action_id, hooks);
 
     return EXIT_SUCCESS;

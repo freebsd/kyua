@@ -33,6 +33,7 @@
 #define CLI_REPORT_JUNIT_HPP
 
 #include <cstddef>
+#include <ostream>
 
 #include "cli/common.hpp"
 #include "engine/drivers/scan_action.hpp"
@@ -44,8 +45,8 @@ namespace cli {
 
 /// Generates a plain-text report intended to be printed to the junit.
 class report_junit_hooks : public engine::drivers::scan_action::base_hooks {
-    /// Indirection to print the output to the correct file stream.
-    cli::file_writer _writer;
+    /// Stream to which to write the report.
+    std::ostream& _output;
 
     /// Whether to include the runtime context in the output or not.
     const bool _show_context;
@@ -57,8 +58,7 @@ class report_junit_hooks : public engine::drivers::scan_action::base_hooks {
     int64_t _action_id;
 
 public:
-    report_junit_hooks(utils::cmdline::ui*, const utils::fs::path&,
-                       const bool, const cli::result_types&);
+    report_junit_hooks(std::ostream&, const bool, const cli::result_types&);
 
     void got_action(const int64_t, const engine::action&);
     void got_result(store::results_iterator&);
