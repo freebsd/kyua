@@ -57,7 +57,6 @@ Specifies the file into which to store the JUnit report.
 .It Fl -store Ar path , Fl s Ar path
 Specifies the database to use.  Defaults to
 .Pa ~/.kyua/store.db .
-The database is created if it does not exist.
 .El
 .Sh EXIT STATUS
 The
@@ -68,4 +67,5 @@ Additional exit codes may be returned as described in
 .Xr kyua 1 .
 .Sh SEE ALSO
 .Xr kyua 1 ,
-.Xr kyua-report 1
+.Xr kyua-report 1 ,
+.Xr kyua-report-html 1
