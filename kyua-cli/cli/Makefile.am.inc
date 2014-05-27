@@ -114,11 +114,6 @@ cli_cmd_list_test_SOURCES = cli/cmd_list_test.cpp
 cli_cmd_list_test_CXXFLAGS = $(CLI_TESTS_CXXFLAGS)
 cli_cmd_list_test_LDADD = $(CLI_TESTS_LDADD)
 
-tests_cli_PROGRAMS += cli/cmd_report_test
-cli_cmd_report_test_SOURCES = cli/cmd_report_test.cpp
-cli_cmd_report_test_CXXFLAGS = $(CLI_TESTS_CXXFLAGS)
-cli_cmd_report_test_LDADD = $(CLI_TESTS_LDADD)
-
 tests_cli_PROGRAMS += cli/cmd_test_test
 cli_cmd_test_test_SOURCES = cli/cmd_test_test.cpp
 cli_cmd_test_test_CXXFLAGS = $(CLI_TESTS_CXXFLAGS)

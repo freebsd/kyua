@@ -6,13 +6,6 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 * Added the 'report-junit' command to generate JUnit XML result files.
   The output has been verified to work within Jenkins.
 
-* Changed the 'report' command, again, to support outputing various
-  different formats.  The '--output' flag has been modified to support
-  specifying the format to generate.
-
-* Added a 'junit' output format to the 'report' command.  This has been
-  verified to generate reports that are compatible with Jenkins.
-
 
 Changes in version 0.8
 ======================

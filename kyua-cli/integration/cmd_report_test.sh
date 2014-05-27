@@ -133,8 +133,8 @@ action__not_found_body() {
 }
 
 
-utils_test_case output__console__change_file
-output__console__change_file_body() {
+utils_test_case output__explicit
+output__explicit_body() {
     run_tests
 
     cat >report <<EOF
@@ -147,31 +147,21 @@ Total time: S.UUUs
 EOF
 
     atf_check -s exit:0 -o file:report -e empty -x kyua report \
-        --output=console:/dev/stdout "| ${utils_strip_timestamp}"
+        --output=/dev/stdout "| ${utils_strip_timestamp}"
     atf_check -s exit:0 -o empty -e save:stderr kyua report \
-        --output=console:/dev/stderr
+        --output=/dev/stderr
     atf_check -s exit:0 -o file:report -x cat stderr \
         "| ${utils_strip_timestamp}"
 
     atf_check -s exit:0 -o empty -e empty kyua report \
-        --output=console:my-file
+        --output=my-file
     atf_check -s exit:0 -o file:report -x cat my-file \
         "| ${utils_strip_timestamp}"
 }
 
 
-utils_test_case output__unknown_format
-output__unknown_format_body() {
-    cat >experr <<EOF
-Usage error for command report: Invalid argument 'abc:/dev/stdout' for option --output: Unknown output format 'abc'.
-Type 'kyua help report' for usage information.
-EOF
-    atf_check -s exit:3 -e file:experr -x kyua report --output=abc:/dev/stdout
-}
-
-
-utils_test_case console__show_context
-console__show_context_body() {
+utils_test_case show_context
+show_context_body() {
     run_tests "mock1"
 
     cat >expout <<EOF
@@ -196,8 +186,8 @@ EOF
 }
 
 
-utils_test_case console__results_filter__empty
-console__results_filter__empty_body() {
+utils_test_case results_filter__empty
+results_filter__empty_body() {
     utils_install_timestamp_wrapper
 
     run_tests "mock1"
@@ -216,8 +206,8 @@ EOF
 }
 
 
-utils_test_case console__results_filter__one
-console__results_filter__one_body() {
+utils_test_case results_filter__one
+results_filter__one_body() {
     utils_install_timestamp_wrapper
 
     run_tests "mock1"
@@ -235,8 +225,8 @@ EOF
 }
 
 
-utils_test_case console__results_filter__multiple_all_match
-console__results_filter__multiple_all_match_body() {
+utils_test_case results_filter__multiple_all_match
+results_filter__multiple_all_match_body() {
     utils_install_timestamp_wrapper
 
     run_tests "mock1"
@@ -256,8 +246,8 @@ EOF
 }
 
 
-utils_test_case console__results_filter__multiple_some_match
-console__results_filter__multiple_some_match_body() {
+utils_test_case results_filter__multiple_some_match
+results_filter__multiple_some_match_body() {
     utils_install_timestamp_wrapper
 
     run_tests "mock1"
@@ -275,35 +265,6 @@ EOF
 }
 
 
-utils_test_case junit__simple__ok
-junit__simple__ok_body() {
-    utils_install_timestamp_wrapper
-
-    run_tests "mock1"
-
-    cat >expout <<EOF
-<?xml version="1.0" encoding="iso-8859-1"?>
-<testsuite>
-<testcase classname="simple_all_pass" name="pass" time="S.UUU">
-<system-out>This is the stdout of pass
-</system-out>
-<system-err>This is the stderr of pass
-</system-err>
-</testcase>
-<testcase classname="simple_all_pass" name="skip" time="S.UUU">
-<skipped/>
-<system-out>This is the stdout of skip
-</system-out>
-<system-err>This is the stderr of skip
-</system-err>
-</testcase>
-</testsuite>
-EOF
-    atf_check -s exit:0 -o file:expout -e empty \
-        kyua report --output=junit:/dev/stdout --results-filter=
-}
-
-
 atf_init_test_cases() {
     atf_add_test_case default_behavior__ok
     atf_add_test_case default_behavior__no_actions
@@ -312,15 +273,12 @@ atf_init_test_cases() {
     atf_add_test_case action__explicit
     atf_add_test_case action__not_found
 
-    atf_add_test_case console__show_context
+    atf_add_test_case show_context
 
-    atf_add_test_case output__console__change_file
-    atf_add_test_case output__unknown_format
+    atf_add_test_case output__explicit
 
-    atf_add_test_case console__results_filter__empty
-    atf_add_test_case console__results_filter__one
-    atf_add_test_case console__results_filter__multiple_all_match
-    atf_add_test_case console__results_filter__multiple_some_match
-
-    atf_add_test_case junit__simple__ok
+    atf_add_test_case results_filter__empty
+    atf_add_test_case results_filter__one
+    atf_add_test_case results_filter__multiple_all_match
+    atf_add_test_case results_filter__multiple_some_match
 }
