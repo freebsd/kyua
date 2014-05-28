@@ -81,7 +81,7 @@ cmd_report_junit::run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
     std::auto_ptr< std::ostream > output = open_output_file(
         cmdline.get_option< cmdline::path_option >("output"));
 
-    engine::report_junit_hooks hooks(*output.get(), true);
+    engine::report_junit_hooks hooks(*output.get());
     scan_action::drive(store_path(cmdline), action_id, hooks);
 
     return EXIT_SUCCESS;

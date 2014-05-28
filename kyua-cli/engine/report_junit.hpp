@@ -32,7 +32,6 @@
 #if !defined(ENGINE_REPORT_JUNIT_HPP)
 #define ENGINE_REPORT_JUNIT_HPP
 
-#include <cstddef>
 #include <ostream>
 
 #include "engine/drivers/scan_action.hpp"
@@ -45,14 +44,8 @@ class report_junit_hooks : public engine::drivers::scan_action::base_hooks {
     /// Stream to which to write the report.
     std::ostream& _output;
 
-    /// Whether to include the runtime context in the output or not.
-    const bool _show_context;
-
-    /// The action ID loaded.
-    int64_t _action_id;
-
 public:
-    report_junit_hooks(std::ostream&, const bool);
+    report_junit_hooks(std::ostream&);
 
     void got_action(const int64_t, const engine::action&);
     void got_result(store::results_iterator&);

@@ -80,12 +80,8 @@ junit_duration(const datetime::delta& delta)
 /// Constructor for the hooks.
 ///
 /// \param [out] output_ Stream to which to write the report.
-/// \param show_context_ Whether to include the runtime context in
-///     the output or not.
-engine::report_junit_hooks::report_junit_hooks(std::ostream& output_,
-                                               const bool show_context_) :
-    _output(output_),
-    _show_context(show_context_)
+engine::report_junit_hooks::report_junit_hooks(std::ostream& output_) :
+    _output(output_)
 {
 }
 
@@ -101,22 +97,20 @@ engine::report_junit_hooks::got_action(const int64_t action_id,
     _output << "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n";
     _output << "<testsuite>\n";
 
-    _action_id = action_id;
-    if (_show_context) {
-        const engine::context& context = action.runtime_context();
-        _output << "<properties>\n";
-        _output << F("<property name=\"kyua.action_id\" value=\"%s\"/>\n")
-            % _action_id;
-        _output << F("<property name=\"cwd\" value=\"%s\"/>\n")
-            % text::escape_xml(context.cwd().str());
-        for (config::properties_map::const_iterator iter =
-                 context.env().begin(); iter != context.env().end(); ++iter) {
-            _output << F("<property name=\"env.%s\" value=\"%s\"/>\n")
-                % text::escape_xml((*iter).first)
-                % text::escape_xml((*iter).second);
-        }
-        _output << "</properties>\n";
+
+    const engine::context& context = action.runtime_context();
+    _output << "<properties>\n";
+    _output << F("<property name=\"kyua.action_id\" value=\"%s\"/>\n")
+        % action_id;
+    _output << F("<property name=\"cwd\" value=\"%s\"/>\n")
+        % text::escape_xml(context.cwd().str());
+    for (config::properties_map::const_iterator iter =
+             context.env().begin(); iter != context.env().end(); ++iter) {
+        _output << F("<property name=\"env.%s\" value=\"%s\"/>\n")
+            % text::escape_xml((*iter).first)
+            % text::escape_xml((*iter).second);
     }
+    _output << "</properties>\n";
 }
 
 
