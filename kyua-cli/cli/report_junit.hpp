@@ -35,7 +35,6 @@
 #include <cstddef>
 #include <ostream>
 
-#include "cli/common.hpp"
 #include "engine/drivers/scan_action.hpp"
 #include "utils/cmdline/ui.hpp"
 #include "utils/fs/path.hpp"
@@ -51,14 +50,11 @@ class report_junit_hooks : public engine::drivers::scan_action::base_hooks {
     /// Whether to include the runtime context in the output or not.
     const bool _show_context;
 
-    /// Collection of result types to include in the report.
-    const cli::result_types& _results_filters;
-
     /// The action ID loaded.
     int64_t _action_id;
 
 public:
-    report_junit_hooks(std::ostream&, const bool, const cli::result_types&);
+    report_junit_hooks(std::ostream&, const bool);
 
     void got_action(const int64_t, const engine::action&);
     void got_result(store::results_iterator&);

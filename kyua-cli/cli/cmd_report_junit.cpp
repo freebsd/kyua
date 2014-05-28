@@ -34,7 +34,6 @@
 #include "cli/common.ipp"
 #include "cli/report_junit.hpp"
 #include "engine/drivers/scan_action.hpp"
-#include "engine/test_result.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/defs.hpp"
 #include "utils/optional.ipp"
@@ -82,14 +81,7 @@ cmd_report_junit::run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
     std::auto_ptr< std::ostream > output = open_output_file(
         cmdline.get_option< cmdline::path_option >("output"));
 
-    result_types no_filter;
-    no_filter.push_back(engine::test_result::passed);
-    no_filter.push_back(engine::test_result::skipped);
-    no_filter.push_back(engine::test_result::expected_failure);
-    no_filter.push_back(engine::test_result::broken);
-    no_filter.push_back(engine::test_result::failed);
-
-    report_junit_hooks hooks(*output.get(), true, no_filter);
+    report_junit_hooks hooks(*output.get(), true);
     scan_action::drive(store_path(cmdline), action_id, hooks);
 
     return EXIT_SUCCESS;

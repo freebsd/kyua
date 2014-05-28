@@ -30,12 +30,12 @@
 
 #include <algorithm>
 
-#include "cli/common.ipp"
 #include "engine/action.hpp"
 #include "engine/context.hpp"
+#include "engine/test_result.hpp"
 #include "utils/datetime.hpp"
+#include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
-#include "utils/sanity.hpp"
 #include "utils/text/operations.hpp"
 
 namespace cmdline = utils::cmdline;
@@ -84,17 +84,11 @@ junit_duration(const datetime::delta& delta)
 /// \param [out] output_ Stream to which to write the report.
 /// \param show_context_ Whether to include the runtime context in
 ///     the output or not.
-/// \param results_filters_ The result types to include in the report.
-///     Cannot be empty.
-cli::report_junit_hooks::report_junit_hooks(
-    std::ostream& output_,
-    const bool show_context_,
-    const cli::result_types& results_filters_) :
+cli::report_junit_hooks::report_junit_hooks(std::ostream& output_,
+                                            const bool show_context_) :
     _output(output_),
-    _show_context(show_context_),
-    _results_filters(results_filters_)
+    _show_context(show_context_)
 {
-    PRE(!results_filters_.empty());
 }
 
 
@@ -135,10 +129,6 @@ void
 cli::report_junit_hooks::got_result(store::results_iterator& iter)
 {
     const engine::test_result result = iter.result();
-
-    if (std::find(_results_filters.begin(), _results_filters.end(),
-                  result.type()) == _results_filters.end())
-        return;
 
     _output << F("<testcase classname=\"%s\" name=\"%s\" time=\"%s\">\n")
         % text::escape_xml(junit_classname(*iter.test_program()))
