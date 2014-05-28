@@ -26,23 +26,21 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file cli/report_junit.hpp
-/// Provides the 'junit' format of the report command.
+/// \file engine/report_junit.hpp
+/// Generates a JUnit report out of a test suite execution.
 
-#if !defined(CLI_REPORT_JUNIT_HPP)
-#define CLI_REPORT_JUNIT_HPP
+#if !defined(ENGINE_REPORT_JUNIT_HPP)
+#define ENGINE_REPORT_JUNIT_HPP
 
 #include <cstddef>
 #include <ostream>
 
 #include "engine/drivers/scan_action.hpp"
-#include "utils/cmdline/ui.hpp"
-#include "utils/fs/path.hpp"
 
-namespace cli {
+namespace engine {
 
 
-/// Generates a plain-text report intended to be printed to the junit.
+/// Hooks for the scan_action driver to generate a JUnit report.
 class report_junit_hooks : public engine::drivers::scan_action::base_hooks {
     /// Stream to which to write the report.
     std::ostream& _output;
@@ -63,7 +61,6 @@ public:
 };
 
 
-}  // namespace cli
+}  // namespace engine
 
-
-#endif  // !defined(CLI_REPORT_JUNIT_HPP)
+#endif  // !defined(ENGINE_REPORT_JUNIT_HPP)

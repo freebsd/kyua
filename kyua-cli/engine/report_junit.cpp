@@ -26,7 +26,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "cli/report_junit.hpp"
+#include "engine/report_junit.hpp"
 
 #include <algorithm>
 
@@ -38,10 +38,8 @@
 #include "utils/format/macros.hpp"
 #include "utils/text/operations.hpp"
 
-namespace cmdline = utils::cmdline;
 namespace config = utils::config;
 namespace datetime = utils::datetime;
-namespace fs = utils::fs;
 namespace scan_action = engine::drivers::scan_action;
 namespace text = utils::text;
 
@@ -84,8 +82,8 @@ junit_duration(const datetime::delta& delta)
 /// \param [out] output_ Stream to which to write the report.
 /// \param show_context_ Whether to include the runtime context in
 ///     the output or not.
-cli::report_junit_hooks::report_junit_hooks(std::ostream& output_,
-                                            const bool show_context_) :
+engine::report_junit_hooks::report_junit_hooks(std::ostream& output_,
+                                               const bool show_context_) :
     _output(output_),
     _show_context(show_context_)
 {
@@ -97,8 +95,8 @@ cli::report_junit_hooks::report_junit_hooks(std::ostream& output_,
 /// \param action_id The identifier of the loaded action.
 /// \param action The action loaded from the database.
 void
-cli::report_junit_hooks::got_action(const int64_t action_id,
-                                    const engine::action& action)
+engine::report_junit_hooks::got_action(const int64_t action_id,
+                                       const engine::action& action)
 {
     _output << "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n";
     _output << "<testsuite>\n";
@@ -126,7 +124,7 @@ cli::report_junit_hooks::got_action(const int64_t action_id,
 ///
 /// \param iter Container for the test result's data.
 void
-cli::report_junit_hooks::got_result(store::results_iterator& iter)
+engine::report_junit_hooks::got_result(store::results_iterator& iter)
 {
     const engine::test_result result = iter.result();
 
@@ -166,7 +164,8 @@ cli::report_junit_hooks::got_result(store::results_iterator& iter)
 ///
 /// \param unused_r The result of the driver execution.
 void
-cli::report_junit_hooks::end(const scan_action::result& UTILS_UNUSED_PARAM(r))
+engine::report_junit_hooks::end(
+    const scan_action::result& UTILS_UNUSED_PARAM(r))
 {
     _output << "</testsuite>\n";
 }

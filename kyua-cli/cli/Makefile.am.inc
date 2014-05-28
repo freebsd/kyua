@@ -59,8 +59,6 @@ libcli_a_SOURCES += cli/config.cpp
 libcli_a_SOURCES += cli/config.hpp
 libcli_a_SOURCES += cli/main.cpp
 libcli_a_SOURCES += cli/main.hpp
-libcli_a_SOURCES += cli/report_junit.cpp
-libcli_a_SOURCES += cli/report_junit.hpp
 libcli_a_CPPFLAGS  = -DKYUA_CONFDIR="\"$(kyua_confdir)\""
 libcli_a_CPPFLAGS += -DKYUA_DOCDIR="\"$(docdir)\""
 libcli_a_CPPFLAGS += -DKYUA_MISCDIR="\"$(miscdir)\""
