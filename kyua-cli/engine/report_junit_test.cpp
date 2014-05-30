@@ -36,6 +36,7 @@
 #include "engine/action.hpp"
 #include "engine/context.hpp"
 #include "engine/drivers/scan_action.hpp"
+#include "engine/metadata.hpp"
 #include "engine/test_result.hpp"
 #include "store/backend.hpp"
 #include "store/transaction.hpp"
@@ -43,15 +44,46 @@
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
+#include "utils/units.hpp"
 
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace scan_action = engine::drivers::scan_action;
+namespace units = utils::units;
 
 using utils::none;
 
 
 namespace {
+
+
+/// Formatted metadata for a test case with defaults.
+static const char* const default_metadata =
+    "allowed_architectures is empty\n"
+    "allowed_platforms is empty\n"
+    "description is empty\n"
+    "has_cleanup = false\n"
+    "required_configs is empty\n"
+    "required_files is empty\n"
+    "required_memory = 0\n"
+    "required_programs is empty\n"
+    "required_user is empty\n"
+    "timeout = 300\n";
+
+
+/// Formatted metadata for a test case constructed with the "with_metadata" flag
+/// set to true in add_tests.
+static const char* const overriden_metadata =
+    "allowed_architectures is empty\n"
+    "allowed_platforms is empty\n"
+    "description = Textual description\n"
+    "has_cleanup = false\n"
+    "required_configs is empty\n"
+    "required_files is empty\n"
+    "required_memory = 0\n"
+    "required_programs is empty\n"
+    "required_user is empty\n"
+    "timeout = 5678\n";
 
 
 /// Adds a new action to the given database.
@@ -82,11 +114,12 @@ add_action(store::transaction& tx, const std::size_t env_vars)
 /// \param action_id Identifier of the action to which to add the tests.
 /// \param results Collection of results for the added test cases.  The size of
 ///     this vector indicates the number of tests in the test program.
+/// \param with_metadata Whether to add metadata overrides to the test cases.
 /// \param with_output Whether to add stdout/stderr messages to the test cases.
 static void
 add_tests(store::transaction& tx, const char* prog, const int64_t action_id,
           const std::vector< engine::test_result >& results,
-          const bool with_output)
+          const bool with_metadata, const bool with_output)
 {
     const engine::test_program test_program(
         "plain", fs::path(prog), fs::path("/root"), "suite",
@@ -94,8 +127,13 @@ add_tests(store::transaction& tx, const char* prog, const int64_t action_id,
     const int64_t tp_id = tx.put_test_program(test_program, action_id);
 
     for (std::size_t j = 0; j < results.size(); j++) {
+        engine::metadata_builder builder;
+        if (with_metadata) {
+            builder.set_description("Textual description");
+            builder.set_timeout(datetime::delta(5678, 0));
+        }
         const engine::test_case test_case("plain", test_program, F("t%s") % j,
-                                          engine::metadata_builder().build());
+                                          builder.build());
         const int64_t tc_id = tx.put_test_case(test_case, tp_id);
         const datetime::timestamp start =
             datetime::timestamp::from_microseconds(0);
@@ -133,6 +171,54 @@ ATF_TEST_CASE_BODY(junit_duration)
     ATF_REQUIRE_EQ("0.457", engine::junit_duration(datetime::delta(0, 456700)));
     ATF_REQUIRE_EQ("3.120", engine::junit_duration(datetime::delta(3, 120000)));
     ATF_REQUIRE_EQ("5.000", engine::junit_duration(datetime::delta(5, 0)));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(junit_metadata__defaults);
+ATF_TEST_CASE_BODY(junit_metadata__defaults)
+{
+    const engine::metadata metadata = engine::metadata_builder().build();
+
+    const std::string expected = std::string()
+        + engine::junit_metadata_prefix
+        + default_metadata
+        + engine::junit_metadata_suffix;
+
+    ATF_REQUIRE_EQ(expected, engine::junit_metadata(metadata));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(junit_metadata__overrides);
+ATF_TEST_CASE_BODY(junit_metadata__overrides)
+{
+    const engine::metadata metadata = engine::metadata_builder()
+        .add_allowed_architecture("arch1")
+        .add_allowed_platform("platform1")
+        .set_description("This is a test")
+        .set_has_cleanup(true)
+        .add_required_config("config1")
+        .add_required_file(fs::path("file1"))
+        .set_required_memory(units::bytes(123))
+        .add_required_program(fs::path("prog1"))
+        .set_required_user("root")
+        .set_timeout(datetime::delta(10, 0))
+        .build();
+
+    const std::string expected = std::string()
+        + engine::junit_metadata_prefix
+        + "allowed_architectures = arch1\n"
+        + "allowed_platforms = platform1\n"
+        + "description = This is a test\n"
+        + "has_cleanup = true\n"
+        + "required_configs = config1\n"
+        + "required_files = file1\n"
+        + "required_memory = 123\n"
+        + "required_programs = prog1\n"
+        + "required_user = root\n"
+        + "timeout = 10\n"
+        + engine::junit_metadata_suffix;
+
+    ATF_REQUIRE_EQ(expected, engine::junit_metadata(metadata));
 }
 
 
@@ -178,8 +264,8 @@ ATF_TEST_CASE_BODY(report_junit_hooks__some_tests)
     store::backend backend = store::backend::open_rw(fs::path("test.db"));
     store::transaction tx = backend.start();
     const int64_t action_id = add_action(tx, 2);
-    add_tests(tx, "dir/prog-1", action_id, results1, false);
-    add_tests(tx, "dir/sub/prog-2", action_id, results2, true);
+    add_tests(tx, "dir/prog-1", action_id, results1, false, false);
+    add_tests(tx, "dir/sub/prog-2", action_id, results2, true, true);
     tx.commit();
     backend.close();
 
@@ -188,7 +274,7 @@ ATF_TEST_CASE_BODY(report_junit_hooks__some_tests)
     engine::report_junit_hooks hooks(output);
     scan_action::drive(fs::path("test.db"), none, hooks);
 
-    const char* expected =
+    const std::string expected = std::string() +
         "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n"
         "<testsuite>\n"
         "<properties>\n"
@@ -197,23 +283,55 @@ ATF_TEST_CASE_BODY(report_junit_hooks__some_tests)
         "<property name=\"env.VAR0\" value=\"Value 0\"/>\n"
         "<property name=\"env.VAR1\" value=\"Value 1\"/>\n"
         "</properties>\n"
+
         "<testcase classname=\"dir.prog-1\" name=\"t0\" time=\"0.500\">\n"
         "<error message=\"Broken\"/>\n"
+        "<system-err>"
+        + engine::junit_metadata_prefix +
+        default_metadata
+        + engine::junit_metadata_suffix +
+        "&lt;EMPTY&gt;\n"
+        "</system-err>\n"
         "</testcase>\n"
+
         "<testcase classname=\"dir.prog-1\" name=\"t1\" time=\"1.500\">\n"
+        "<system-err>"
+        + engine::junit_metadata_prefix +
+        default_metadata
+        + engine::junit_metadata_suffix +
+        "&lt;EMPTY&gt;\n"
+        "</system-err>\n"
         "</testcase>\n"
+
         "<testcase classname=\"dir.prog-1\" name=\"t2\" time=\"2.500\">\n"
         "<failure message=\"Failed\"/>\n"
+        "<system-err>"
+        + engine::junit_metadata_prefix +
+        default_metadata
+        +  engine::junit_metadata_suffix +
+        "&lt;EMPTY&gt;\n"
+        "</system-err>\n"
         "</testcase>\n"
+
         "<testcase classname=\"dir.sub.prog-2\" name=\"t0\" time=\"0.500\">\n"
         "<system-out>stdout file 0</system-out>\n"
-        "<system-err>stderr file 0</system-err>\n"
+        "<system-err>"
+        + engine::junit_metadata_prefix +
+        overriden_metadata
+        + engine::junit_metadata_suffix +
+        "stderr file 0</system-err>\n"
         "</testcase>\n"
+
         "<testcase classname=\"dir.sub.prog-2\" name=\"t1\" time=\"1.500\">\n"
         "<skipped/>\n"
         "<system-out>stdout file 1</system-out>\n"
-        "<system-err>stderr file 1</system-err>\n"
+        "<system-err>"
+        + engine::junit_metadata_prefix +
+        overriden_metadata
+        + engine::junit_metadata_suffix +
+        "stderr file 1</system-err>\n"
         "</testcase>\n"
+
         "</testsuite>\n";
     ATF_REQUIRE_EQ(expected, output.str());
 }
@@ -222,7 +340,11 @@ ATF_TEST_CASE_BODY(report_junit_hooks__some_tests)
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, junit_classname);
+
     ATF_ADD_TEST_CASE(tcs, junit_duration);
+
+    ATF_ADD_TEST_CASE(tcs, junit_metadata__defaults);
+    ATF_ADD_TEST_CASE(tcs, junit_metadata__overrides);
 
     ATF_ADD_TEST_CASE(tcs, report_junit_hooks__minimal);
     ATF_ADD_TEST_CASE(tcs, report_junit_hooks__some_tests);

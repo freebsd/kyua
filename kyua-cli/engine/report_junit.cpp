@@ -32,6 +32,7 @@
 
 #include "engine/action.hpp"
 #include "engine/context.hpp"
+#include "engine/metadata.hpp"
 #include "engine/test_result.hpp"
 #include "utils/datetime.hpp"
 #include "utils/defs.hpp"
@@ -68,6 +69,49 @@ std::string
 engine::junit_duration(const datetime::delta& delta)
 {
     return F("%.3s") % (delta.seconds + (delta.useconds / 1000000.0));
+}
+
+
+/// String to prepend to the formatted test case metadata.
+const char* const engine::junit_metadata_prefix =
+    "Test case metadata\n"
+    "------------------\n"
+    "\n";
+
+
+/// String to append to the formatted test case metadata.
+const char* const engine::junit_metadata_suffix =
+    "\n"
+    "Original stderr\n"
+    "---------------\n"
+    "\n";
+
+
+/// Formats a test's metadata for recording in stderr.
+///
+/// \param metadata The metadata to format.
+///
+/// \return A string with the metadata contents that can be prefixed to the
+/// original test's stderr.
+std::string
+engine::junit_metadata(const engine::metadata& metadata)
+{
+    const engine::properties_map props = metadata.to_properties();
+    if (props.empty())
+        return "";
+
+    std::ostringstream output;
+    output << junit_metadata_prefix;
+    for (engine::properties_map::const_iterator iter = props.begin();
+         iter != props.end(); ++iter) {
+        if ((*iter).second.empty()) {
+            output << F("%s is empty\n") % (*iter).first;
+        } else {
+            output << F("%s = %s\n") % (*iter).first % (*iter).second;
+        }
+    }
+    output << junit_metadata_suffix;
+    return output.str();
 }
 
 
@@ -149,9 +193,16 @@ engine::report_junit_hooks::got_result(store::results_iterator& iter)
         _output << F("<system-out>%s</system-out>\n")
             % text::escape_xml(stdout_contents);
     }
+
+    const engine::test_case_ptr test_case = iter.test_program()->find(
+        iter.test_case_name());
     const std::string stderr_contents = iter.stderr_contents();
-    if (!stderr_contents.empty()) {
-        _output << F("<system-err>%s</system-err>\n")
+    if (stderr_contents.empty()) {
+        _output << F("<system-err>%s&lt;EMPTY&gt;\n</system-err>\n")
+            % text::escape_xml(junit_metadata(test_case->get_metadata()));
+    } else {
+        _output << F("<system-err>%s%s</system-err>\n")
+            % text::escape_xml(junit_metadata(test_case->get_metadata()))
             % text::escape_xml(stderr_contents);
     }
 

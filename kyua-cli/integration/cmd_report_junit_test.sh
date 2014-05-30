@@ -78,14 +78,48 @@ default_behavior__ok_body() {
 <testcase classname="simple_all_pass" name="pass" time="S.UUU">
 <system-out>This is the stdout of pass
 </system-out>
-<system-err>This is the stderr of pass
+<system-err>Test case metadata
+------------------
+
+allowed_architectures is empty
+allowed_platforms is empty
+description is empty
+has_cleanup = false
+required_configs is empty
+required_files is empty
+required_memory = 0
+required_programs is empty
+required_user is empty
+timeout = 300
+
+Original stderr
+---------------
+
+This is the stderr of pass
 </system-err>
 </testcase>
 <testcase classname="simple_all_pass" name="skip" time="S.UUU">
 <skipped/>
 <system-out>This is the stdout of skip
 </system-out>
-<system-err>This is the stderr of skip
+<system-err>Test case metadata
+------------------
+
+allowed_architectures is empty
+allowed_platforms is empty
+description is empty
+has_cleanup = false
+required_configs is empty
+required_files is empty
+required_memory = 0
+required_programs is empty
+required_user is empty
+timeout = 300
+
+Original stderr
+---------------
+
+This is the stderr of skip
 </system-err>
 </testcase>
 </testsuite>
@@ -148,14 +182,48 @@ output__explicit_body() {
 <testcase classname="simple_all_pass" name="pass" time="S.UUU">
 <system-out>This is the stdout of pass
 </system-out>
-<system-err>This is the stderr of pass
+<system-err>Test case metadata
+------------------
+
+allowed_architectures is empty
+allowed_platforms is empty
+description is empty
+has_cleanup = false
+required_configs is empty
+required_files is empty
+required_memory = 0
+required_programs is empty
+required_user is empty
+timeout = 300
+
+Original stderr
+---------------
+
+This is the stderr of pass
 </system-err>
 </testcase>
 <testcase classname="simple_all_pass" name="skip" time="S.UUU">
 <skipped/>
 <system-out>This is the stdout of skip
 </system-out>
-<system-err>This is the stderr of skip
+<system-err>Test case metadata
+------------------
+
+allowed_architectures is empty
+allowed_platforms is empty
+description is empty
+has_cleanup = false
+required_configs is empty
+required_files is empty
+required_memory = 0
+required_programs is empty
+required_user is empty
+timeout = 300
+
+Original stderr
+---------------
+
+This is the stderr of skip
 </system-err>
 </testcase>
 </testsuite>
