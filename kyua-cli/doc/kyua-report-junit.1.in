@@ -68,6 +68,10 @@ command shovels these data into the JUnit output.  In particular:
 .It
 The test case metadata values are prepended to the test case's standard error
 output.
+.It
+Test cases that report expected failures as their results are recorded as
+passed.  The fact that they failed as expected is recorded in the test case's
+standard error output along with the corresponding reason.
 .El
 .Sh EXIT STATUS
 The

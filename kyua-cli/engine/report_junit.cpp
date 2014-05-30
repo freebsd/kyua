@@ -165,6 +165,8 @@ engine::report_junit_hooks::got_result(store::results_iterator& iter)
         % text::escape_xml(iter.test_case_name())
         % junit_duration(iter.duration());
 
+    std::string stderr_contents;
+
     switch (result.type()) {
     case engine::test_result::failed:
         _output << F("<failure message=\"%s\"/>\n")
@@ -172,7 +174,11 @@ engine::report_junit_hooks::got_result(store::results_iterator& iter)
         break;
 
     case engine::test_result::expected_failure:
-        // Expected failures cannot be represented, so treat as passed.
+        stderr_contents += ("Expected failure result details\n"
+                            "-------------------------------\n"
+                            "\n"
+                            + result.reason() + "\n"
+                            "\n");
         break;
 
     case engine::test_result::passed:
@@ -194,17 +200,21 @@ engine::report_junit_hooks::got_result(store::results_iterator& iter)
             % text::escape_xml(stdout_contents);
     }
 
-    const engine::test_case_ptr test_case = iter.test_program()->find(
-        iter.test_case_name());
-    const std::string stderr_contents = iter.stderr_contents();
-    if (stderr_contents.empty()) {
-        _output << F("<system-err>%s&lt;EMPTY&gt;\n</system-err>\n")
-            % text::escape_xml(junit_metadata(test_case->get_metadata()));
-    } else {
-        _output << F("<system-err>%s%s</system-err>\n")
-            % text::escape_xml(junit_metadata(test_case->get_metadata()))
-            % text::escape_xml(stderr_contents);
+    {
+        const engine::test_case_ptr test_case = iter.test_program()->find(
+            iter.test_case_name());
+        stderr_contents += junit_metadata(test_case->get_metadata());
     }
+    {
+        const std::string real_stderr_contents = iter.stderr_contents();
+        if (real_stderr_contents.empty()) {
+            stderr_contents += "<EMPTY>\n";
+        } else {
+            stderr_contents += real_stderr_contents;
+        }
+    }
+    _output << "<system-err>" << text::escape_xml(stderr_contents)
+            << "</system-err>\n";
 
     _output << "</testcase>\n";
 }

@@ -296,6 +296,11 @@ ATF_TEST_CASE_BODY(report_junit_hooks__some_tests)
 
         "<testcase classname=\"dir.prog-1\" name=\"t1\" time=\"1.500\">\n"
         "<system-err>"
+        "Expected failure result details\n"
+        "-------------------------------\n"
+        "\n"
+        "XFail\n"
+        "\n"
         + engine::junit_metadata_prefix +
         default_metadata
         + engine::junit_metadata_suffix +
