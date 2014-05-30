@@ -83,6 +83,7 @@ public:
 
     static backend open_ro(const utils::fs::path&);
     static backend open_rw(const utils::fs::path&);
+    void close(void);
 
     utils::sqlite::database& database(void);
     transaction start(void);
