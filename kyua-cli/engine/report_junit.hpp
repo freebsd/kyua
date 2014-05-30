@@ -26,41 +26,44 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file cli/report_junit.hpp
-/// Provides the 'junit' format of the report command.
+/// \file engine/report_junit.hpp
+/// Generates a JUnit report out of a test suite execution.
 
-#if !defined(CLI_REPORT_JUNIT_HPP)
-#define CLI_REPORT_JUNIT_HPP
+#if !defined(ENGINE_REPORT_JUNIT_HPP)
+#define ENGINE_REPORT_JUNIT_HPP
 
-#include <cstddef>
+#include <ostream>
+#include <string>
 
-#include "cli/common.hpp"
 #include "engine/drivers/scan_action.hpp"
-#include "utils/cmdline/ui.hpp"
-#include "utils/fs/path.hpp"
 
-namespace cli {
+namespace utils {
+namespace datetime {
+class delta;
+}  // namespace datetime
+}  // namespace utils
+
+namespace engine {
 
 
-/// Generates a plain-text report intended to be printed to the junit.
+class metadata;
+class test_program;
+
+
+std::string junit_classname(const engine::test_program&);
+std::string junit_duration(const utils::datetime::delta&);
+extern const char* const junit_metadata_prefix;
+extern const char* const junit_metadata_suffix;
+std::string junit_metadata(const engine::metadata&);
+
+
+/// Hooks for the scan_action driver to generate a JUnit report.
 class report_junit_hooks : public engine::drivers::scan_action::base_hooks {
-    /// Indirection to print the output to the correct file stream.
-    cli::file_writer _writer;
-
-    /// Whether to include the runtime context in the output or not.
-    const bool _show_context;
-
-    /// Collection of result types to include in the report.
-    const cli::result_types& _results_filters;
-
-    /// The action ID loaded.
-    int64_t _action_id;
+    /// Stream to which to write the report.
+    std::ostream& _output;
 
 public:
-    report_junit_hooks(utils::cmdline::ui*, const utils::fs::path&,
-                       const bool, const cli::result_types&);
-
-    void begin(void);
+    report_junit_hooks(std::ostream&);
 
     void got_action(const int64_t, const engine::action&);
     void got_result(store::results_iterator&);
@@ -69,7 +72,6 @@ public:
 };
 
 
-}  // namespace cli
+}  // namespace engine
 
-
-#endif  // !defined(CLI_REPORT_JUNIT_HPP)
+#endif  // !defined(ENGINE_REPORT_JUNIT_HPP)

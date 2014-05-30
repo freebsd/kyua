@@ -48,6 +48,8 @@ libcli_a_SOURCES += cli/cmd_report.cpp
 libcli_a_SOURCES += cli/cmd_report.hpp
 libcli_a_SOURCES += cli/cmd_report_html.cpp
 libcli_a_SOURCES += cli/cmd_report_html.hpp
+libcli_a_SOURCES += cli/cmd_report_junit.cpp
+libcli_a_SOURCES += cli/cmd_report_junit.hpp
 libcli_a_SOURCES += cli/cmd_test.cpp
 libcli_a_SOURCES += cli/cmd_test.hpp
 libcli_a_SOURCES += cli/common.cpp
@@ -57,10 +59,6 @@ libcli_a_SOURCES += cli/config.cpp
 libcli_a_SOURCES += cli/config.hpp
 libcli_a_SOURCES += cli/main.cpp
 libcli_a_SOURCES += cli/main.hpp
-libcli_a_SOURCES += cli/report_console.cpp
-libcli_a_SOURCES += cli/report_console.hpp
-libcli_a_SOURCES += cli/report_junit.cpp
-libcli_a_SOURCES += cli/report_junit.hpp
 libcli_a_CPPFLAGS  = -DKYUA_CONFDIR="\"$(kyua_confdir)\""
 libcli_a_CPPFLAGS += -DKYUA_DOCDIR="\"$(docdir)\""
 libcli_a_CPPFLAGS += -DKYUA_MISCDIR="\"$(miscdir)\""
@@ -111,11 +109,6 @@ tests_cli_PROGRAMS += cli/cmd_list_test
 cli_cmd_list_test_SOURCES = cli/cmd_list_test.cpp
 cli_cmd_list_test_CXXFLAGS = $(CLI_TESTS_CXXFLAGS)
 cli_cmd_list_test_LDADD = $(CLI_TESTS_LDADD)
-
-tests_cli_PROGRAMS += cli/cmd_report_test
-cli_cmd_report_test_SOURCES = cli/cmd_report_test.cpp
-cli_cmd_report_test_CXXFLAGS = $(CLI_TESTS_CXXFLAGS)
-cli_cmd_report_test_LDADD = $(CLI_TESTS_LDADD)
 
 tests_cli_PROGRAMS += cli/cmd_test_test
 cli_cmd_test_test_SOURCES = cli/cmd_test_test.cpp
