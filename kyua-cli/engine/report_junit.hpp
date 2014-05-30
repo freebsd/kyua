@@ -33,10 +33,24 @@
 #define ENGINE_REPORT_JUNIT_HPP
 
 #include <ostream>
+#include <string>
 
 #include "engine/drivers/scan_action.hpp"
 
+namespace utils {
+namespace datetime {
+class delta;
+}  // namespace datetime
+}  // namespace utils
+
 namespace engine {
+
+
+class test_program;
+
+
+std::string junit_classname(const engine::test_program&);
+std::string junit_duration(const utils::datetime::delta&);
 
 
 /// Hooks for the scan_action driver to generate a JUnit report.

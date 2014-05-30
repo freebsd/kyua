@@ -105,6 +105,13 @@ engine_metadata_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_TEST_CFLAGS) \
 engine_metadata_test_LDADD = $(ENGINE_LIBS) $(UTILS_TEST_LIBS) $(UTILS_LIBS) \
                              $(ATF_CXX_LIBS)
 
+tests_engine_PROGRAMS += engine/report_junit_test
+engine_report_junit_test_SOURCES = engine/report_junit_test.cpp
+engine_report_junit_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
+                                    $(ATF_CXX_CFLAGS)
+engine_report_junit_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
+                                 $(ATF_CXX_LIBS)
+
 tests_engine_PROGRAMS += engine/test_case_atf_helpers
 engine_test_case_atf_helpers_SOURCES = engine/test_case_atf_helpers.cpp
 engine_test_case_atf_helpers_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)

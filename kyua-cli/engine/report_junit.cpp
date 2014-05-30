@@ -44,16 +44,13 @@ namespace scan_action = engine::drivers::scan_action;
 namespace text = utils::text;
 
 
-namespace {
-
-
 /// Converts a test program name into a class-like name.
 ///
 /// \param test_program Test program from which to extract the name.
 ///
 /// \return A class-like representation of the test program's identifier.
-static std::string
-junit_classname(const engine::test_program& test_program)
+std::string
+engine::junit_classname(const engine::test_program& test_program)
 {
     std::string classname = test_program.relative_path().str();
     std::replace(classname.begin(), classname.end(), '/', '.');
@@ -67,14 +64,11 @@ junit_classname(const engine::test_program& test_program)
 ///
 /// \return A second-based with millisecond-precision representation of the
 /// input duration.
-static std::string
-junit_duration(const datetime::delta& delta)
+std::string
+engine::junit_duration(const datetime::delta& delta)
 {
     return F("%.3s") % (delta.seconds + (delta.useconds / 1000000.0));
 }
-
-
-}  // anonymous namespace
 
 
 /// Constructor for the hooks.
@@ -133,6 +127,10 @@ engine::report_junit_hooks::got_result(store::results_iterator& iter)
             % text::escape_xml(result.reason());
         break;
 
+    case engine::test_result::expected_failure:
+        // Expected failures cannot be represented, so treat as passed.
+        break;
+
     case engine::test_result::passed:
         // Passed results have no status nodes.
         break;
@@ -146,10 +144,17 @@ engine::report_junit_hooks::got_result(store::results_iterator& iter)
             % text::escape_xml(result.reason());
     }
 
-    _output << F("<system-out>%s</system-out>\n")
-            % text::escape_xml(iter.stdout_contents());
-    _output << F("<system-err>%s</system-err>\n")
-            % text::escape_xml(iter.stderr_contents());
+    const std::string stdout_contents = iter.stdout_contents();
+    if (!stdout_contents.empty()) {
+        _output << F("<system-out>%s</system-out>\n")
+            % text::escape_xml(stdout_contents);
+    }
+    const std::string stderr_contents = iter.stderr_contents();
+    if (!stderr_contents.empty()) {
+        _output << F("<system-err>%s</system-err>\n")
+            % text::escape_xml(stderr_contents);
+    }
+
     _output << "</testcase>\n";
 }
 
