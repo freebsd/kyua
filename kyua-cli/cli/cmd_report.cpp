@@ -40,6 +40,7 @@
 #include "engine/context.hpp"
 #include "engine/drivers/scan_action.hpp"
 #include "engine/test_result.hpp"
+#include "store/read_transaction.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/cmdline/ui.hpp"

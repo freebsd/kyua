@@ -37,7 +37,8 @@
 #include "engine/test_result.hpp"
 #include "store/backend.hpp"
 #include "store/exceptions.hpp"
-#include "store/transaction.hpp"
+#include "store/read_transaction.hpp"
+#include "store/write_transaction.hpp"
 #include "utils/datetime.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/optional.ipp"
@@ -145,7 +146,7 @@ populate_db(const char* db_name, const int count)
 {
     store::backend backend = store::backend::open_rw(fs::path(db_name));
 
-    store::transaction tx = backend.start();
+    store::write_transaction tx = backend.start_write();
 
     std::map< std::string, std::string > env;
     for (int i = 0; i < count; i++)

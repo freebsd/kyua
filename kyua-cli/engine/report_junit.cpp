@@ -34,6 +34,7 @@
 #include "engine/context.hpp"
 #include "engine/metadata.hpp"
 #include "engine/test_result.hpp"
+#include "store/read_transaction.hpp"
 #include "utils/datetime.hpp"
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"

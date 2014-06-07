@@ -26,13 +26,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "store/transaction.hpp"
+#include "store/read_transaction.hpp"
 
 extern "C" {
 #include <stdint.h>
 }
 
-#include <fstream>
 #include <map>
 #include <utility>
 
@@ -43,24 +42,19 @@ extern "C" {
 #include "store/dbtypes.hpp"
 #include "store/exceptions.hpp"
 #include "utils/datetime.hpp"
-#include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
-#include "utils/stream.hpp"
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/exceptions.hpp"
 #include "utils/sqlite/statement.ipp"
 #include "utils/sqlite/transaction.hpp"
-#include "utils/units.hpp"
 
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace sqlite = utils::sqlite;
-namespace units = utils::units;
 
-using utils::none;
 using utils::optional;
 
 
@@ -236,122 +230,6 @@ parse_result(sqlite::statement& stmt, const char* type_column,
     } catch (const sqlite::error& e) {
         throw store::integrity_error(e.what());
     }
-}
-
-
-/// Stores the environment variables of a context.
-///
-/// \param db The SQLite database.
-/// \param context_id The identifier of the context.
-/// \param env The environment variables to store.
-///
-/// \throw sqlite::error If there is a problem storing the variables.
-static void
-put_env_vars(sqlite::database& db, const int64_t context_id,
-             const std::map< std::string, std::string >& env)
-{
-    sqlite::statement stmt = db.create_statement(
-        "INSERT INTO env_vars (context_id, var_name, var_value) "
-        "VALUES (:context_id, :var_name, :var_value)");
-    stmt.bind(":context_id", context_id);
-    for (std::map< std::string, std::string >::const_iterator iter =
-             env.begin(); iter != env.end(); iter++) {
-        stmt.bind(":var_name", (*iter).first);
-        stmt.bind(":var_value", (*iter).second);
-        stmt.step_without_results();
-        stmt.reset();
-    }
-}
-
-
-/// Calculates the last rowid of a table.
-///
-/// \param db The SQLite database.
-/// \param table Name of the table.
-///
-/// \return The last rowid; 0 if the table is empty.
-static int64_t
-last_rowid(sqlite::database& db, const std::string& table)
-{
-    sqlite::statement stmt = db.create_statement(
-        F("SELECT MAX(ROWID) AS max_rowid FROM %s") % table);
-    stmt.step();
-    if (stmt.column_type(0) == sqlite::type_null) {
-        return 0;
-    } else {
-        INV(stmt.column_type(0) == sqlite::type_integer);
-        return stmt.column_int64(0);
-    }
-}
-
-
-/// Stores a metadata object.
-///
-/// \param db The database into which to store the information.
-/// \param md The metadata to store.
-///
-/// \return The identifier of the new metadata object.
-static int64_t
-put_metadata(sqlite::database& db, const engine::metadata& md)
-{
-    const engine::properties_map props = md.to_properties();
-
-    const int64_t metadata_id = last_rowid(db, "metadatas");
-
-    sqlite::statement stmt = db.create_statement(
-        "INSERT INTO metadatas (metadata_id, property_name, property_value) "
-        "VALUES (:metadata_id, :property_name, :property_value)");
-    stmt.bind(":metadata_id", metadata_id);
-
-    for (engine::properties_map::const_iterator iter = props.begin();
-         iter != props.end(); ++iter) {
-        stmt.bind(":property_name", (*iter).first);
-        stmt.bind(":property_value", (*iter).second);
-        stmt.step_without_results();
-        stmt.reset();
-    }
-
-    return metadata_id;
-}
-
-
-/// Stores an arbitrary file into the database as a BLOB.
-///
-/// \param db The database into which to store the file.
-/// \param path Path to the file to be stored.
-///
-/// \return The identifier of the stored file, or none if the file was empty.
-///
-/// \throw sqlite::error If there are problems writing to the database.
-static optional< int64_t >
-put_file(sqlite::database& db, const fs::path& path)
-{
-    std::ifstream input(path.c_str());
-    if (!input)
-        throw store::error(F("Cannot open file %s") % path);
-
-    try {
-        if (utils::stream_length(input) == 0)
-            return none;
-    } catch (const std::runtime_error& e) {
-        // Skipping empty files is an optimization.  If we fail to calculate the
-        // size of the file, just ignore the problem.  If there are real issues
-        // with the file, the read below will fail anyway.
-        LD(F("Cannot determine if file is empty: %s") % e.what());
-    }
-
-    // TODO(jmmv): This will probably cause an unreasonable amount of memory
-    // consumption if we decide to store arbitrary files in the database (other
-    // than stdout or stderr).  Should this happen, we need to investigate a
-    // better way to feel blobs into SQLite.
-    const std::string contents = utils::read_stream(input);
-
-    sqlite::statement stmt = db.create_statement(
-        "INSERT INTO files (contents) VALUES (:contents)");
-    stmt.bind(":contents", sqlite::blob(contents.c_str(), contents.length()));
-    stmt.step_without_results();
-
-    return optional< int64_t >(db.last_insert_rowid());
 }
 
 
@@ -576,8 +454,8 @@ store::results_iterator::stderr_contents(void) const
 }
 
 
-/// Internal implementation for a store transaction.
-struct store::transaction::impl {
+/// Internal implementation for a store read-only transaction.
+struct store::read_transaction::impl {
     /// The backend instance.
     store::backend& _backend;
 
@@ -600,43 +478,33 @@ struct store::transaction::impl {
 };
 
 
-/// Creates a new transaction.
+/// Creates a new read-only transaction.
 ///
 /// \param backend_ The backend this transaction belongs to.
-store::transaction::transaction(backend& backend_) :
+store::read_transaction::read_transaction(backend& backend_) :
     _pimpl(new impl(backend_))
 {
 }
 
 
 /// Destructor.
-store::transaction::~transaction(void)
+store::read_transaction::~read_transaction(void)
 {
 }
 
 
-/// Commits the transaction.
+/// Finishes the transaction.
+///
+/// This actually commits the result of the transaction, but because the
+/// transaction is read-only, we use a different term to denote that there is no
+/// distinction between commit and rollback.
 ///
 /// \throw error If there is any problem when talking to the database.
 void
-store::transaction::commit(void)
+store::read_transaction::finish(void)
 {
     try {
         _pimpl->_tx.commit();
-    } catch (const sqlite::error& e) {
-        throw error(e.what());
-    }
-}
-
-
-/// Rolls the transaction back.
-///
-/// \throw error If there is any problem when talking to the database.
-void
-store::transaction::rollback(void)
-{
-    try {
-        _pimpl->_tx.rollback();
     } catch (const sqlite::error& e) {
         throw error(e.what());
     }
@@ -651,7 +519,7 @@ store::transaction::rollback(void)
 ///
 /// \throw error If there is a problem loading the action.
 engine::action
-store::transaction::get_action(const int64_t action_id)
+store::read_transaction::get_action(const int64_t action_id)
 {
     try {
         sqlite::statement stmt = _pimpl->_db.create_statement(
@@ -677,7 +545,7 @@ store::transaction::get_action(const int64_t action_id)
 ///
 /// \throw error If there is any problem constructing the iterator.
 store::results_iterator
-store::transaction::get_action_results(const int64_t action_id)
+store::read_transaction::get_action_results(const int64_t action_id)
 {
     try {
         return results_iterator(std::shared_ptr< results_iterator::impl >(
@@ -694,7 +562,7 @@ store::transaction::get_action_results(const int64_t action_id)
 ///
 /// \throw error If there is a problem loading the action.
 std::pair< int64_t, engine::action >
-store::transaction::get_latest_action(void)
+store::read_transaction::get_latest_action(void)
 {
     try {
         sqlite::statement stmt = _pimpl->_db.create_statement(
@@ -723,7 +591,7 @@ store::transaction::get_latest_action(void)
 ///
 /// \throw error If there is a problem loading the context.
 engine::context
-store::transaction::get_context(const int64_t context_id)
+store::read_transaction::get_context(const int64_t context_id)
 {
     try {
         sqlite::statement stmt = _pimpl->_db.create_statement(
@@ -737,251 +605,5 @@ store::transaction::get_context(const int64_t context_id)
                                get_env_vars(_pimpl->_db, context_id));
     } catch (const sqlite::error& e) {
         throw error(F("Error loading context %s: %s") % context_id % e.what());
-    }
-}
-
-
-/// Puts an action into the database.
-///
-/// \pre The action has not been put yet.
-/// \pre The dependent objects have already been put.
-/// \post The action is stored into the database with a new identifier.
-///
-/// \param unused_action The action to put.
-/// \param context_id The identifier for the action's context.
-///
-/// \return The identifier of the inserted action.
-///
-/// \throw error If there is any problem when talking to the database.
-int64_t
-store::transaction::put_action(const engine::action& UTILS_UNUSED_PARAM(action),
-                               const int64_t context_id)
-{
-    try {
-        sqlite::statement stmt = _pimpl->_db.create_statement(
-            "INSERT INTO actions (context_id) VALUES (:context_id)");
-        stmt.bind(":context_id", context_id);
-        stmt.step_without_results();
-        const int64_t action_id = _pimpl->_db.last_insert_rowid();
-
-        return action_id;
-    } catch (const sqlite::error& e) {
-        throw error(e.what());
-    }
-}
-
-
-/// Puts a context into the database.
-///
-/// \pre The context has not been put yet.
-/// \post The context is stored into the database with a new identifier.
-///
-/// \param context The context to put.
-///
-/// \return The identifier of the inserted context.
-///
-/// \throw error If there is any problem when talking to the database.
-int64_t
-store::transaction::put_context(const engine::context& context)
-{
-    try {
-        sqlite::statement stmt = _pimpl->_db.create_statement(
-            "INSERT INTO contexts (cwd) VALUES (:cwd)");
-        stmt.bind(":cwd", context.cwd().str());
-        stmt.step_without_results();
-        const int64_t context_id = _pimpl->_db.last_insert_rowid();
-
-        put_env_vars(_pimpl->_db, context_id, context.env());
-
-        return context_id;
-    } catch (const sqlite::error& e) {
-        throw error(e.what());
-    }
-}
-
-
-/// Puts a test program into the database.
-///
-/// \pre The test program has not been put yet.
-/// \post The test program is stored into the database with a new identifier.
-///
-/// \param test_program The test program to put.
-/// \param action_id The action this test program belongs to.
-///
-/// \return The identifier of the inserted test program.
-///
-/// \throw error If there is any problem when talking to the database.
-int64_t
-store::transaction::put_test_program(const engine::test_program& test_program,
-                                     const int64_t action_id)
-{
-    try {
-        const int64_t metadata_id = put_metadata(
-            _pimpl->_db, test_program.get_metadata());
-
-        sqlite::statement stmt = _pimpl->_db.create_statement(
-            "INSERT INTO test_programs (action_id, absolute_path, "
-            "                           root, relative_path, test_suite_name, "
-            "                           metadata_id, interface) "
-            "VALUES (:action_id, :absolute_path, :root, :relative_path, "
-            "        :test_suite_name, :metadata_id, :interface)");
-        stmt.bind(":action_id", action_id);
-        stmt.bind(":absolute_path", test_program.absolute_path().str());
-        // TODO(jmmv): The root is not necessarily absolute.  We need to ensure
-        // that we can recover the absolute path of the test program.  Maybe we
-        // need to change the test_program to always ensure root is absolute?
-        stmt.bind(":root", test_program.root().str());
-        stmt.bind(":relative_path", test_program.relative_path().str());
-        stmt.bind(":test_suite_name", test_program.test_suite_name());
-        stmt.bind(":metadata_id", metadata_id);
-        stmt.bind(":interface", test_program.interface_name());
-        stmt.step_without_results();
-        return _pimpl->_db.last_insert_rowid();
-    } catch (const sqlite::error& e) {
-        throw error(e.what());
-    }
-}
-
-
-/// Puts a test case into the database.
-///
-/// \pre The test case has not been put yet.
-/// \post The test case is stored into the database with a new identifier.
-///
-/// \param test_case The test case to put.
-/// \param test_program_id The test program this test case belongs to.
-///
-/// \return The identifier of the inserted test case.
-///
-/// \throw error If there is any problem when talking to the database.
-int64_t
-store::transaction::put_test_case(const engine::test_case& test_case,
-                                  const int64_t test_program_id)
-{
-    try {
-        const int64_t metadata_id = put_metadata(
-            _pimpl->_db, test_case.get_metadata());
-
-        sqlite::statement stmt = _pimpl->_db.create_statement(
-            "INSERT INTO test_cases (test_program_id, name, metadata_id) "
-            "VALUES (:test_program_id, :name, :metadata_id)");
-        stmt.bind(":test_program_id", test_program_id);
-        stmt.bind(":name", test_case.name());
-        stmt.bind(":metadata_id", metadata_id);
-        stmt.step_without_results();
-        return _pimpl->_db.last_insert_rowid();
-    } catch (const sqlite::error& e) {
-        throw error(e.what());
-    }
-}
-
-
-/// Stores a file generated by a test case into the database as a BLOB.
-///
-/// \param name The name of the file to store in the database.  This needs to be
-///     unique per test case.  The caller is free to decide what names to use
-///     for which files.  For example, it might make sense to always call
-///     __STDOUT__ the stdout of the test case so that it is easy to locate.
-/// \param path The path to the file to be stored.
-/// \param test_case_id The identifier of the test case this file belongs to.
-///
-/// \return The identifier of the stored file, or none if the file was empty.
-///
-/// \throw store::error If there are problems writing to the database.
-optional< int64_t >
-store::transaction::put_test_case_file(const std::string& name,
-                                       const fs::path& path,
-                                       const int64_t test_case_id)
-{
-    LD(F("Storing %s (%s) of test case %s") % name % path % test_case_id);
-    try {
-        const optional< int64_t > file_id = put_file(_pimpl->_db, path);
-        if (!file_id) {
-            LD("Not storing empty file");
-            return none;
-        }
-
-        sqlite::statement stmt = _pimpl->_db.create_statement(
-            "INSERT INTO test_case_files (test_case_id, file_name, file_id) "
-            "VALUES (:test_case_id, :file_name, :file_id)");
-        stmt.bind(":test_case_id", test_case_id);
-        stmt.bind(":file_name", name);
-        stmt.bind(":file_id", file_id.get());
-        stmt.step_without_results();
-
-        return optional< int64_t >(_pimpl->_db.last_insert_rowid());
-    } catch (const sqlite::error& e) {
-        throw error(e.what());
-    }
-}
-
-
-/// Puts a result into the database.
-///
-/// \pre The result has not been put yet.
-/// \post The result is stored into the database with a new identifier.
-///
-/// \param result The result to put.
-/// \param test_case_id The test case this result corresponds to.
-/// \param start_time The time when the test started to run.
-/// \param end_time The time when the test finished running.
-///
-/// \return The identifier of the inserted result.
-///
-/// \throw error If there is any problem when talking to the database.
-int64_t
-store::transaction::put_result(const engine::test_result& result,
-                               const int64_t test_case_id,
-                               const datetime::timestamp& start_time,
-                               const datetime::timestamp& end_time)
-{
-    try {
-        sqlite::statement stmt = _pimpl->_db.create_statement(
-            "INSERT INTO test_results (test_case_id, result_type, "
-            "                          result_reason, start_time, "
-            "                          end_time) "
-            "VALUES (:test_case_id, :result_type, :result_reason, "
-            "        :start_time, :end_time)");
-        stmt.bind(":test_case_id", test_case_id);
-
-        switch (result.type()) {
-        case engine::test_result::broken:
-            stmt.bind(":result_type", "broken");
-            break;
-
-        case engine::test_result::expected_failure:
-            stmt.bind(":result_type", "expected_failure");
-            break;
-
-        case engine::test_result::failed:
-            stmt.bind(":result_type", "failed");
-            break;
-
-        case engine::test_result::passed:
-            stmt.bind(":result_type", "passed");
-            break;
-
-        case engine::test_result::skipped:
-            stmt.bind(":result_type", "skipped");
-            break;
-
-        default:
-            UNREACHABLE;
-        }
-
-        if (result.reason().empty())
-            stmt.bind(":result_reason", sqlite::null());
-        else
-            stmt.bind(":result_reason", result.reason());
-
-        store::bind_timestamp(stmt, ":start_time", start_time);
-        store::bind_timestamp(stmt, ":end_time", end_time);
-
-        stmt.step_without_results();
-        const int64_t result_id = _pimpl->_db.last_insert_rowid();
-
-        return result_id;
-    } catch (const sqlite::error& e) {
-        throw error(e.what());
     }
 }

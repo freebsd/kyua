@@ -35,7 +35,7 @@
 #include "engine/test_program.hpp"
 #include "engine/test_result.hpp"
 #include "store/backend.hpp"
-#include "store/transaction.hpp"
+#include "store/write_transaction.hpp"
 #include "utils/datetime.hpp"
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
@@ -59,7 +59,7 @@ namespace {
 /// Test case hooks to save the output into the database.
 class file_saver_hooks : public engine::test_case_hooks {
     /// Open write transaction for the test case's data.
-    store::transaction& _tx;
+    store::write_transaction& _tx;
 
     /// Identifier of the test case being stored.
     const int64_t _test_case_id;
@@ -69,7 +69,7 @@ public:
     ///
     /// \param tx_ Open write transaction for the test case's data.
     /// \param test_case_id_ Identifier of the test case being stored.
-    file_saver_hooks(store::transaction& tx_,
+    file_saver_hooks(store::write_transaction& tx_,
                      const int64_t test_case_id_) :
         _tx(tx_), _test_case_id(test_case_id_)
     {
@@ -113,7 +113,7 @@ run_test_program(const engine::test_program& program,
                  engine::filters_state& filters,
                  run_tests::base_hooks& hooks,
                  const fs::path& work_directory,
-                 store::transaction& tx,
+                 store::write_transaction& tx,
                  const int64_t action_id)
 {
     LI(F("Processing test program '%s'") % program.relative_path());
@@ -175,7 +175,7 @@ run_tests::drive(const fs::path& kyuafile_path,
         kyuafile_path, build_root);
     filters_state filters(raw_filters);
     store::backend db = store::backend::open_rw(store_path);
-    store::transaction tx = db.start();
+    store::write_transaction tx = db.start_write();
 
     engine::context context = engine::context::current();
     const int64_t context_id = tx.put_context(context);

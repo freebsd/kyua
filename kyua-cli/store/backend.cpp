@@ -32,7 +32,8 @@
 
 #include "store/exceptions.hpp"
 #include "store/metadata.hpp"
-#include "store/transaction.hpp"
+#include "store/read_transaction.hpp"
+#include "store/write_transaction.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
@@ -338,13 +339,23 @@ store::backend::database(void)
 }
 
 
-/// Opens a transaction.
+/// Opens a read-only transaction.
 ///
 /// \return A new transaction.
-store::transaction
-store::backend::start(void)
+store::read_transaction
+store::backend::start_read(void)
 {
-    return transaction(*this);
+    return read_transaction(*this);
+}
+
+
+/// Opens a write-only transaction.
+///
+/// \return A new transaction.
+store::write_transaction
+store::backend::start_write(void)
+{
+    return write_transaction(*this);
 }
 
 

@@ -26,18 +26,17 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file store/transaction.hpp
-/// Implementation of transactions on the backend.
+/// \file store/write_transaction.hpp
+/// Implementation of write-only transactions on the backend.
 
-#if !defined(STORE_TRANSACTION_HPP)
-#define STORE_TRANSACTION_HPP
+#if !defined(STORE_WRITE_TRANSACTION_HPP)
+#define STORE_WRITE_TRANSACTION_HPP
 
 extern "C" {
 #include <stdint.h>
 }
 
 #include <string>
-#include <utility>
 
 #include "engine/test_program.hpp"
 #include "utils/datetime.hpp"
@@ -55,72 +54,26 @@ namespace store {
 
 
 class backend;
-class transaction;
 
 
-namespace detail {
-
-
-engine::test_program_ptr get_test_program(backend&, const int64_t);
-
-
-}  // namespace detail
-
-
-/// Iterator for the set of test case results that are part of an action.
-///
-/// \todo Note that this is not a "standard" C++ iterator.  I have chosen to
-/// implement a different interface because it makes things easier to represent
-/// an SQL statement state.  Rewrite as a proper C++ iterator, inheriting from
-/// std::iterator.
-class results_iterator {
-    struct impl;
-
-    /// Pointer to the shared internal implementation.
-    std::shared_ptr< impl > _pimpl;
-
-    friend class transaction;
-    results_iterator(std::shared_ptr< impl >);
-
-public:
-    ~results_iterator(void);
-
-    results_iterator& operator++(void);
-    operator bool(void) const;
-
-    const engine::test_program_ptr test_program(void) const;
-    std::string test_case_name(void) const;
-    engine::test_result result(void) const;
-    utils::datetime::delta duration(void) const;
-
-    std::string stdout_contents(void) const;
-    std::string stderr_contents(void) const;
-};
-
-
-/// Representation of a transaction.
+/// Representation of a write-only transaction.
 ///
 /// Transactions are the entry place for high-level calls that access the
 /// database.
-class transaction {
+class write_transaction {
     struct impl;
 
     /// Pointer to the shared internal implementation.
     std::shared_ptr< impl > _pimpl;
 
     friend class backend;
-    transaction(backend&);
+    write_transaction(backend&);
 
 public:
-    ~transaction(void);
+    ~write_transaction(void);
 
     void commit(void);
     void rollback(void);
-
-    engine::action get_action(const int64_t);
-    results_iterator get_action_results(const int64_t);
-    std::pair< int64_t, engine::action > get_latest_action(void);
-    engine::context get_context(const int64_t);
 
     int64_t put_action(const engine::action&, const int64_t);
     int64_t put_context(const engine::context&);
@@ -137,4 +90,4 @@ public:
 
 }  // namespace store
 
-#endif  // !defined(STORE_TRANSACTION_HPP)
+#endif  // !defined(STORE_WRITE_TRANSACTION_HPP)

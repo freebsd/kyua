@@ -39,7 +39,7 @@
 #include "engine/metadata.hpp"
 #include "engine/test_result.hpp"
 #include "store/backend.hpp"
-#include "store/transaction.hpp"
+#include "store/write_transaction.hpp"
 #include "utils/datetime.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
@@ -93,7 +93,7 @@ static const char* const overriden_metadata =
 ///
 /// \return The identifier of the new action.
 static int64_t
-add_action(store::transaction& tx, const std::size_t env_vars)
+add_action(store::write_transaction& tx, const std::size_t env_vars)
 {
     std::map< std::string, std::string > env;
     for (std::size_t i = 0; i < env_vars; i++)
@@ -117,7 +117,9 @@ add_action(store::transaction& tx, const std::size_t env_vars)
 /// \param with_metadata Whether to add metadata overrides to the test cases.
 /// \param with_output Whether to add stdout/stderr messages to the test cases.
 static void
-add_tests(store::transaction& tx, const char* prog, const int64_t action_id,
+add_tests(store::write_transaction& tx,
+          const char* prog,
+          const int64_t action_id,
           const std::vector< engine::test_result >& results,
           const bool with_metadata, const bool with_output)
 {
@@ -226,7 +228,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(report_junit_hooks__minimal);
 ATF_TEST_CASE_BODY(report_junit_hooks__minimal)
 {
     store::backend backend = store::backend::open_rw(fs::path("test.db"));
-    store::transaction tx = backend.start();
+    store::write_transaction tx = backend.start_write();
     (void)add_action(tx, 0);
     tx.commit();
     backend.close();
@@ -262,7 +264,7 @@ ATF_TEST_CASE_BODY(report_junit_hooks__some_tests)
     results2.push_back(test_result(test_result::skipped, "Skipped"));
 
     store::backend backend = store::backend::open_rw(fs::path("test.db"));
-    store::transaction tx = backend.start();
+    store::write_transaction tx = backend.start_write();
     const int64_t action_id = add_action(tx, 2);
     add_tests(tx, "dir/prog-1", action_id, results1, false, false);
     add_tests(tx, "dir/sub/prog-2", action_id, results2, true, true);

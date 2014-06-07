@@ -38,7 +38,6 @@
 #endif  // !defined(STORE_DBTYPES_HPP)
 #define STORE_DBTYPES_HPP
 
-#include "store/transaction.hpp"
 #include "utils/datetime.hpp"
 #include "utils/sqlite/statement.hpp"
 

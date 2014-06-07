@@ -33,7 +33,7 @@
 #include "engine/test_result.hpp"
 #include "store/backend.hpp"
 #include "store/exceptions.hpp"
-#include "store/transaction.hpp"
+#include "store/read_transaction.hpp"
 #include "utils/defs.hpp"
 #include "utils/optional.ipp"
 
@@ -57,7 +57,7 @@ namespace {
 ///
 /// \throw error If there is any problem while loading the action.
 static engine::action
-get_action(store::transaction& tx, optional< int64_t >& action_id)
+get_action(store::read_transaction& tx, optional< int64_t >& action_id)
 {
     try {
         if (action_id)
@@ -114,7 +114,7 @@ scan_action::drive(const fs::path& store_path,
                    base_hooks& hooks)
 {
     store::backend db = store::backend::open_ro(store_path);
-    store::transaction tx = db.start();
+    store::read_transaction tx = db.start_read();
 
     hooks.begin();
 

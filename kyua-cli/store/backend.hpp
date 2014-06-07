@@ -64,7 +64,8 @@ void backup_database(const utils::fs::path&, const int);
 }  // anonymous namespace
 
 
-class transaction;
+class read_transaction;
+class write_transaction;
 
 
 /// Public interface to the database store.
@@ -86,7 +87,8 @@ public:
     void close(void);
 
     utils::sqlite::database& database(void);
-    transaction start(void);
+    read_transaction start_read(void);
+    write_transaction start_write(void);
 };
 
 

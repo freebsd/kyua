@@ -39,7 +39,7 @@
 #include "engine/test_program.hpp"
 #include "engine/test_result.hpp"
 #include "store/backend.hpp"
-#include "store/transaction.hpp"
+#include "store/read_transaction.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/logging/operations.hpp"
@@ -72,7 +72,7 @@ exec_db_file(sqlite::database& db, const fs::path& path)
 ///
 /// \param transaction An open read transaction in the backend.
 static void
-check_action_1(store::transaction& transaction)
+check_action_1(store::read_transaction& transaction)
 {
     const fs::path root("/some/root");
     std::map< std::string, std::string > environment;
@@ -91,7 +91,7 @@ check_action_1(store::transaction& transaction)
 ///
 /// \param transaction An open read transaction in the backend.
 static void
-check_action_2(store::transaction& transaction)
+check_action_2(store::read_transaction& transaction)
 {
     const fs::path root("/test/suite/root");
     std::map< std::string, std::string > environment;
@@ -227,7 +227,7 @@ check_action_2(store::transaction& transaction)
 ///
 /// \param transaction An open read transaction in the backend.
 static void
-check_action_3(store::transaction& transaction)
+check_action_3(store::read_transaction& transaction)
 {
     const fs::path root("/usr/tests");
     std::map< std::string, std::string > environment;
@@ -346,7 +346,7 @@ check_action_3(store::transaction& transaction)
 ///
 /// \param transaction An open read transaction in the backend.
 static void
-check_action_4(store::transaction& transaction)
+check_action_4(store::read_transaction& transaction)
 {
     const fs::path root("/usr/tests");
     std::map< std::string, std::string > environment;
@@ -435,7 +435,7 @@ check_action_4(store::transaction& transaction)
 static void
 check_data(store::backend& backend)
 {
-    store::transaction transaction = backend.start();
+    store::read_transaction transaction = backend.start_read();
     check_action_1(transaction);
     check_action_2(transaction);
     check_action_3(transaction);

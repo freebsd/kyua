@@ -42,10 +42,13 @@ extern "C" {
 }
 
 #include "engine/test_program.hpp"
-#include "store/transaction.hpp"
 #include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"
+
+namespace store {
+class results_iterator;
+}  // namespace store
 
 namespace engine {
 

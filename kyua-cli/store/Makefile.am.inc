@@ -40,8 +40,10 @@ libstore_a_SOURCES += store/exceptions.cpp
 libstore_a_SOURCES += store/exceptions.hpp
 libstore_a_SOURCES += store/metadata.cpp
 libstore_a_SOURCES += store/metadata.hpp
-libstore_a_SOURCES += store/transaction.cpp
-libstore_a_SOURCES += store/transaction.hpp
+libstore_a_SOURCES += store/read_transaction.cpp
+libstore_a_SOURCES += store/read_transaction.hpp
+libstore_a_SOURCES += store/write_transaction.cpp
+libstore_a_SOURCES += store/write_transaction.hpp
 
 dist_store_DATA  = store/migrate_v1_v2.sql
 dist_store_DATA += store/schema_v2.sql
@@ -84,6 +86,13 @@ store_metadata_test_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) \
 store_metadata_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) \
                             $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
+tests_store_PROGRAMS += store/read_transaction_test
+store_read_transaction_test_SOURCES = store/read_transaction_test.cpp
+store_read_transaction_test_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) \
+                                       $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+store_read_transaction_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) \
+                                    $(UTILS_LIBS) $(ATF_CXX_LIBS)
+
 tests_store_PROGRAMS += store/schema_inttest
 store_schema_inttest_SOURCES = store/schema_inttest.cpp
 store_schema_inttest_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) \
@@ -97,4 +106,11 @@ store_transaction_test_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) \
                                   $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 store_transaction_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) \
                                $(UTILS_LIBS) $(ATF_CXX_LIBS)
+
+tests_store_PROGRAMS += store/write_transaction_test
+store_write_transaction_test_SOURCES = store/write_transaction_test.cpp
+store_write_transaction_test_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) \
+                                        $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+store_write_transaction_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) \
+                                     $(UTILS_LIBS) $(ATF_CXX_LIBS)
 endif
