@@ -52,14 +52,14 @@ class test_result;
 namespace store {
 
 
-class backend;
+class read_backend;
 class read_transaction;
 
 
 namespace detail {
 
 
-engine::test_program_ptr get_test_program(backend&, const int64_t);
+engine::test_program_ptr get_test_program(read_backend&, const int64_t);
 
 
 }  // namespace detail
@@ -106,8 +106,8 @@ class read_transaction {
     /// Pointer to the shared internal implementation.
     std::shared_ptr< impl > _pimpl;
 
-    friend class backend;
-    read_transaction(backend&);
+    friend class read_backend;
+    read_transaction(read_backend&);
 
 public:
     ~read_transaction(void);

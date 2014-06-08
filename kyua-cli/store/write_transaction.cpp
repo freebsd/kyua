@@ -38,9 +38,9 @@ extern "C" {
 #include "engine/action.hpp"
 #include "engine/context.hpp"
 #include "engine/test_result.hpp"
-#include "store/backend.hpp"
 #include "store/dbtypes.hpp"
 #include "store/exceptions.hpp"
+#include "store/write_backend.hpp"
 #include "utils/datetime.hpp"
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
@@ -186,7 +186,7 @@ put_file(sqlite::database& db, const fs::path& path)
 /// Internal implementation for a store write-only transaction.
 struct store::write_transaction::impl {
     /// The backend instance.
-    store::backend& _backend;
+    store::write_backend& _backend;
 
     /// The SQLite database this transaction deals with.
     sqlite::database _db;
@@ -197,7 +197,7 @@ struct store::write_transaction::impl {
     /// Opens a transaction.
     ///
     /// \param backend_ The backend this transaction is connected to.
-    impl(backend& backend_) :
+    impl(write_backend& backend_) :
         _backend(backend_),
         _db(backend_.database()),
         _tx(backend_.database().begin_transaction())
@@ -209,7 +209,7 @@ struct store::write_transaction::impl {
 /// Creates a new write-only transaction.
 ///
 /// \param backend_ The backend this transaction belongs to.
-store::write_transaction::write_transaction(backend& backend_) :
+store::write_transaction::write_transaction(write_backend& backend_) :
     _pimpl(new impl(backend_))
 {
 }

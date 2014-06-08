@@ -35,7 +35,7 @@
 #include <string>
 
 #include "cli/common.ipp"
-#include "store/backend.hpp"
+#include "store/write_backend.hpp"
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/sanity.hpp"
@@ -165,7 +165,9 @@ cmd_db_exec::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
                  const config::tree& UTILS_UNUSED_PARAM(user_config))
 {
     try {
-        store::backend backend = store::backend::open_rw(
+        // TODO(jmmv): This should probably call open_and_setup directly,
+        // instead of going through the backend indirection.
+        store::write_backend backend = store::write_backend::open_rw(
             cli::store_path(cmdline));
         sqlite::statement stmt = backend.database().create_statement(
             flatten_args(cmdline.arguments()));

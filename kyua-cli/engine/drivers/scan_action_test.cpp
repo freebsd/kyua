@@ -35,9 +35,9 @@
 #include "engine/action.hpp"
 #include "engine/context.hpp"
 #include "engine/test_result.hpp"
-#include "store/backend.hpp"
 #include "store/exceptions.hpp"
 #include "store/read_transaction.hpp"
+#include "store/write_backend.hpp"
 #include "store/write_transaction.hpp"
 #include "utils/datetime.hpp"
 #include "utils/format/macros.hpp"
@@ -144,7 +144,8 @@ public:
 static int64_t
 populate_db(const char* db_name, const int count)
 {
-    store::backend backend = store::backend::open_rw(fs::path(db_name));
+    store::write_backend backend = store::write_backend::open_rw(
+        fs::path(db_name));
 
     store::write_transaction tx = backend.start_write();
 

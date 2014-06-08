@@ -26,13 +26,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "store/backend.hpp"
+#include "store/write_backend.hpp"
 
 #include <fstream>
 
 #include "store/exceptions.hpp"
 #include "store/metadata.hpp"
-#include "store/read_transaction.hpp"
+#include "store/read_backend.hpp"
 #include "store/write_transaction.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
@@ -131,32 +131,8 @@ store::detail::initialize(sqlite::database& db)
 }
 
 
-/// Opens a database and defines session pragmas.
-///
-/// This auxiliary function ensures that, every time we open a SQLite database,
-/// we define the same set of pragmas for it.
-///
-/// \param file The database file to be opened.
-/// \param flags The flags for the open; see sqlite::database::open.
-///
-/// \return The opened database.
-///
-/// \throw store::error If there is a problem opening or creating the database.
-sqlite::database
-store::detail::open_and_setup(const fs::path& file, const int flags)
-{
-    try {
-        sqlite::database database = sqlite::database::open(file, flags);
-        database.exec("PRAGMA foreign_keys = ON");
-        return database;
-    } catch (const sqlite::error& e) {
-        throw store::error(F("Cannot open '%s': %s") % file % e.what());
-    }
-}
-
-
 /// Internal implementation for the backend.
-struct store::backend::impl {
+struct store::write_backend::impl {
     /// The SQLite database this backend talks to.
     sqlite::database database;
 
@@ -194,30 +170,15 @@ struct store::backend::impl {
 /// Constructs a new backend.
 ///
 /// \param pimpl_ The internal data.
-store::backend::backend(impl* pimpl_) :
+store::write_backend::write_backend(impl* pimpl_) :
     _pimpl(pimpl_)
 {
 }
 
 
 /// Destructor.
-store::backend::~backend(void)
+store::write_backend::~write_backend(void)
 {
-}
-
-
-/// Opens a database in read-only mode.
-///
-/// \param file The database file to be opened.
-///
-/// \return The backend representation.
-///
-/// \throw store::error If there is any problem opening the database.
-store::backend
-store::backend::open_ro(const fs::path& file)
-{
-    sqlite::database db = detail::open_and_setup(file, sqlite::open_readonly);
-    return backend(new impl(db, metadata::fetch_latest(db)));
 }
 
 
@@ -229,21 +190,21 @@ store::backend::open_ro(const fs::path& file)
 ///
 /// \throw store::error If there is any problem opening or creating
 ///     the database.
-store::backend
-store::backend::open_rw(const fs::path& file)
+store::write_backend
+store::write_backend::open_rw(const fs::path& file)
 {
     sqlite::database db = detail::open_and_setup(
         file, sqlite::open_readwrite | sqlite::open_create);
     if (empty_database(db))
-        return backend(new impl(db, detail::initialize(db)));
+        return write_backend(new impl(db, detail::initialize(db)));
     else
-        return backend(new impl(db, metadata::fetch_latest(db)));
+        return write_backend(new impl(db, metadata::fetch_latest(db)));
 }
 
 
 /// Closes the SQLite database.
 void
-store::backend::close(void)
+store::write_backend::close(void)
 {
     _pimpl->database.close();
 }
@@ -253,19 +214,9 @@ store::backend::close(void)
 ///
 /// \return A database connection.
 sqlite::database&
-store::backend::database(void)
+store::write_backend::database(void)
 {
     return _pimpl->database;
-}
-
-
-/// Opens a read-only transaction.
-///
-/// \return A new transaction.
-store::read_transaction
-store::backend::start_read(void)
-{
-    return read_transaction(*this);
 }
 
 
@@ -273,7 +224,7 @@ store::backend::start_read(void)
 ///
 /// \return A new transaction.
 store::write_transaction
-store::backend::start_write(void)
+store::write_backend::start_write(void)
 {
     return write_transaction(*this);
 }

@@ -36,9 +36,10 @@
 #include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
 #include "engine/test_result.hpp"
-#include "store/backend.hpp"
 #include "store/migrate.hpp"
+#include "store/read_backend.hpp"
 #include "store/read_transaction.hpp"
+#include "store/write_backend.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/logging/operations.hpp"
@@ -432,7 +433,7 @@ check_action_4(store::read_transaction& transaction)
 ///
 /// \param transaction An open read-only backend.
 static void
-check_data(store::backend& backend)
+check_data(store::read_backend& backend)
 {
     store::read_transaction transaction = backend.start_read();
     check_action_1(transaction);
@@ -461,7 +462,7 @@ ATF_TEST_CASE_BODY(current_schema)
     exec_db_file(db, fs::path(get_config_var("srcdir")) / "testdata_v2.sql");
     db.close();
 
-    store::backend backend = store::backend::open_ro(testpath);
+    store::read_backend backend = store::read_backend::open_ro(testpath);
     check_data(backend);
 }
 
@@ -488,7 +489,7 @@ ATF_TEST_CASE_BODY(migrate_schema__v1_to_v2)
 
     store::migrate_schema(fs::path("test.db"));
 
-    store::backend backend = store::backend::open_ro(testpath);
+    store::read_backend backend = store::read_backend::open_ro(testpath);
     check_data(backend);
 }
 

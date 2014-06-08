@@ -26,68 +26,58 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file store/write_transaction.hpp
-/// Implementation of write-only transactions on the backend.
+/// \file store/read_backend.hpp
+/// Interface to the backend database for read-only operations.
 
-#if !defined(STORE_WRITE_TRANSACTION_HPP)
-#define STORE_WRITE_TRANSACTION_HPP
+#if !defined(STORE_READ_BACKEND_HPP)
+#define STORE_READ_BACKEND_HPP
 
-extern "C" {
-#include <stdint.h>
-}
-
-#include <string>
-
-#include "engine/test_program.hpp"
-#include "utils/datetime.hpp"
-#include "utils/fs/path.hpp"
-#include "utils/optional.hpp"
 #include "utils/shared_ptr.hpp"
 
-namespace engine {
-class action;
-class context;
-class test_result;
-}  // namespace engine
+namespace utils {
+namespace fs {
+class path;
+}  // namespace fs
+namespace sqlite {
+class database;
+}  // namespace sqlite
+}  // namespace utils
 
 namespace store {
 
 
-class write_backend;
+namespace detail {
 
 
-/// Representation of a write-only transaction.
-///
-/// Transactions are the entry place for high-level calls that access the
-/// database.
-class write_transaction {
+utils::sqlite::database open_and_setup(const utils::fs::path&, const int);
+
+
+}  // anonymous namespace
+
+
+class read_transaction;
+
+
+/// Public interface to the database store for read-only operations.
+class read_backend {
     struct impl;
 
     /// Pointer to the shared internal implementation.
     std::shared_ptr< impl > _pimpl;
 
-    friend class write_backend;
-    write_transaction(write_backend&);
+    read_backend(impl*);
 
 public:
-    ~write_transaction(void);
+    ~read_backend(void);
 
-    void commit(void);
-    void rollback(void);
+    static read_backend open_ro(const utils::fs::path&);
+    void close(void);
 
-    int64_t put_action(const engine::action&, const int64_t);
-    int64_t put_context(const engine::context&);
-    int64_t put_test_program(const engine::test_program&, const int64_t);
-    int64_t put_test_case(const engine::test_case&, const int64_t);
-    utils::optional< int64_t > put_test_case_file(const std::string&,
-                                                  const utils::fs::path&,
-                                                  const int64_t);
-    int64_t put_result(const engine::test_result&, const int64_t,
-                       const utils::datetime::timestamp&,
-                       const utils::datetime::timestamp&);
+    utils::sqlite::database& database(void);
+    read_transaction start_read(void);
 };
 
 
 }  // namespace store
 
-#endif  // !defined(STORE_WRITE_TRANSACTION_HPP)
+#endif  // !defined(STORE_READ_BACKEND_HPP)

@@ -37,8 +37,8 @@
 #include "engine/action.hpp"
 #include "engine/context.hpp"
 #include "engine/test_result.hpp"
-#include "store/backend.hpp"
 #include "store/exceptions.hpp"
+#include "store/write_backend.hpp"
 #include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/logging/operations.hpp"
@@ -70,7 +70,8 @@ static void
 do_put_result_ok_test(const engine::test_result& result,
                       const char* result_type, const char* exp_reason)
 {
-    store::backend backend = store::backend::open_rw(fs::path("test.db"));
+    store::write_backend backend = store::write_backend::open_rw(
+        fs::path("test.db"));
     backend.database().exec("PRAGMA foreign_keys = OFF");
     store::write_transaction tx = backend.start_write();
     const datetime::timestamp start_time = datetime::timestamp::from_values(
@@ -106,7 +107,8 @@ ATF_TEST_CASE_HEAD(commit__ok)
 }
 ATF_TEST_CASE_BODY(commit__ok)
 {
-    store::backend backend = store::backend::open_rw(fs::path("test.db"));
+    store::write_backend backend = store::write_backend::open_rw(
+        fs::path("test.db"));
     store::write_transaction tx = backend.start_write();
     backend.database().exec("CREATE TABLE a (b INTEGER PRIMARY KEY)");
     backend.database().exec("SELECT * FROM a");
@@ -123,7 +125,8 @@ ATF_TEST_CASE_HEAD(commit__fail)
 }
 ATF_TEST_CASE_BODY(commit__fail)
 {
-    store::backend backend = store::backend::open_rw(fs::path("test.db"));
+    store::write_backend backend = store::write_backend::open_rw(
+        fs::path("test.db"));
     const engine::context context(fs::path("/foo/bar"),
                                   std::map< std::string, std::string >());
     {
@@ -152,7 +155,8 @@ ATF_TEST_CASE_HEAD(rollback__ok)
 }
 ATF_TEST_CASE_BODY(rollback__ok)
 {
-    store::backend backend = store::backend::open_rw(fs::path("test.db"));
+    store::write_backend backend = store::write_backend::open_rw(
+        fs::path("test.db"));
     store::write_transaction tx = backend.start_write();
     backend.database().exec("CREATE TABLE a_table (b INTEGER PRIMARY KEY)");
     backend.database().exec("SELECT * FROM a_table");
@@ -170,7 +174,8 @@ ATF_TEST_CASE_HEAD(put_action__fail)
 }
 ATF_TEST_CASE_BODY(put_action__fail)
 {
-    store::backend backend = store::backend::open_rw(fs::path("test.db"));
+    store::write_backend backend = store::write_backend::open_rw(
+        fs::path("test.db"));
     store::write_transaction tx = backend.start_write();
     const engine::context context(fs::path("/foo/bar"),
                                   std::map< std::string, std::string >());
@@ -178,24 +183,6 @@ ATF_TEST_CASE_BODY(put_action__fail)
     const engine::action action(context);
     backend.database().exec("DROP TABLE actions");
     ATF_REQUIRE_THROW(store::error, tx.put_action(action, context_id));
-    tx.commit();
-}
-
-
-ATF_TEST_CASE(put_context__fail);
-ATF_TEST_CASE_HEAD(put_context__fail)
-{
-    logging::set_inmemory();
-    set_md_var("require.files", store::detail::schema_file().c_str());
-}
-ATF_TEST_CASE_BODY(put_context__fail)
-{
-    (void)store::backend::open_rw(fs::path("test.db"));
-    store::backend backend = store::backend::open_ro(fs::path("test.db"));
-    store::write_transaction tx = backend.start_write();
-    const engine::context context(fs::path("/foo/bar"),
-                                  std::map< std::string, std::string >());
-    ATF_REQUIRE_THROW(store::error, tx.put_context(context));
     tx.commit();
 }
 
@@ -216,7 +203,8 @@ ATF_TEST_CASE_BODY(put_test_program__ok)
         "mock", fs::path("the/binary"), fs::path("/some//root"),
         "the-suite", md);
 
-    store::backend backend = store::backend::open_rw(fs::path("test.db"));
+    store::write_backend backend = store::write_backend::open_rw(
+        fs::path("test.db"));
     backend.database().exec("PRAGMA foreign_keys = OFF");
     store::write_transaction tx = backend.start_write();
     const int64_t test_program_id = tx.put_test_program(test_program, 15);
@@ -252,7 +240,8 @@ ATF_TEST_CASE_BODY(put_test_program__fail)
         "mock", fs::path("the/binary"), fs::path("/some/root"), "the-suite",
         engine::metadata_builder().build());
 
-    store::backend backend = store::backend::open_rw(fs::path("test.db"));
+    store::write_backend backend = store::write_backend::open_rw(
+        fs::path("test.db"));
     store::write_transaction tx = backend.start_write();
     ATF_REQUIRE_THROW(store::error, tx.put_test_program(test_program, -1));
     tx.commit();
@@ -274,7 +263,8 @@ ATF_TEST_CASE_BODY(put_test_case__fail)
     const engine::test_case test_case("plain", test_program, "main",
                                       engine::metadata_builder().build());
 
-    store::backend backend = store::backend::open_rw(fs::path("test.db"));
+    store::write_backend backend = store::write_backend::open_rw(
+        fs::path("test.db"));
     store::write_transaction tx = backend.start_write();
     ATF_REQUIRE_THROW(store::error, tx.put_test_case(test_case, -1));
     tx.commit();
@@ -291,7 +281,8 @@ ATF_TEST_CASE_BODY(put_test_case_file__empty)
 {
     atf::utils::create_file("input.txt", "");
 
-    store::backend backend = store::backend::open_rw(fs::path("test.db"));
+    store::write_backend backend = store::write_backend::open_rw(
+        fs::path("test.db"));
     backend.database().exec("PRAGMA foreign_keys = OFF");
     store::write_transaction tx = backend.start_write();
     const optional< int64_t > file_id = tx.put_test_case_file(
@@ -317,7 +308,8 @@ ATF_TEST_CASE_BODY(put_test_case_file__some)
 
     atf::utils::create_file("input.txt", contents);
 
-    store::backend backend = store::backend::open_rw(fs::path("test.db"));
+    store::write_backend backend = store::write_backend::open_rw(
+        fs::path("test.db"));
     backend.database().exec("PRAGMA foreign_keys = OFF");
     store::write_transaction tx = backend.start_write();
     const optional< int64_t > file_id = tx.put_test_case_file(
@@ -346,7 +338,8 @@ ATF_TEST_CASE_HEAD(put_test_case_file__fail)
 }
 ATF_TEST_CASE_BODY(put_test_case_file__fail)
 {
-    store::backend backend = store::backend::open_rw(fs::path("test.db"));
+    store::write_backend backend = store::write_backend::open_rw(
+        fs::path("test.db"));
     backend.database().exec("PRAGMA foreign_keys = OFF");
     store::write_transaction tx = backend.start_write();
     ATF_REQUIRE_THROW(store::error,
@@ -435,7 +428,8 @@ ATF_TEST_CASE_BODY(put_result__fail)
 {
     const engine::test_result result(engine::test_result::broken, "foo");
 
-    store::backend backend = store::backend::open_rw(fs::path("test.db"));
+    store::write_backend backend = store::write_backend::open_rw(
+        fs::path("test.db"));
     store::write_transaction tx = backend.start_write();
     const datetime::timestamp zero = datetime::timestamp::from_microseconds(0);
     ATF_REQUIRE_THROW(store::error, tx.put_result(result, -1, zero, zero));
@@ -450,8 +444,6 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, rollback__ok);
 
     ATF_ADD_TEST_CASE(tcs, put_action__fail);
-
-    ATF_ADD_TEST_CASE(tcs, put_context__fail);
 
     ATF_ADD_TEST_CASE(tcs, put_test_program__ok);
     ATF_ADD_TEST_CASE(tcs, put_test_program__fail);

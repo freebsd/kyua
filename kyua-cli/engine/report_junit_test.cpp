@@ -38,7 +38,7 @@
 #include "engine/drivers/scan_action.hpp"
 #include "engine/metadata.hpp"
 #include "engine/test_result.hpp"
-#include "store/backend.hpp"
+#include "store/write_backend.hpp"
 #include "store/write_transaction.hpp"
 #include "utils/datetime.hpp"
 #include "utils/format/macros.hpp"
@@ -227,7 +227,8 @@ ATF_TEST_CASE_BODY(junit_metadata__overrides)
 ATF_TEST_CASE_WITHOUT_HEAD(report_junit_hooks__minimal);
 ATF_TEST_CASE_BODY(report_junit_hooks__minimal)
 {
-    store::backend backend = store::backend::open_rw(fs::path("test.db"));
+    store::write_backend backend = store::write_backend::open_rw(
+        fs::path("test.db"));
     store::write_transaction tx = backend.start_write();
     (void)add_action(tx, 0);
     tx.commit();
@@ -263,7 +264,8 @@ ATF_TEST_CASE_BODY(report_junit_hooks__some_tests)
     results2.push_back(test_result(test_result::passed));
     results2.push_back(test_result(test_result::skipped, "Skipped"));
 
-    store::backend backend = store::backend::open_rw(fs::path("test.db"));
+    store::write_backend backend = store::write_backend::open_rw(
+        fs::path("test.db"));
     store::write_transaction tx = backend.start_write();
     const int64_t action_id = add_action(tx, 2);
     add_tests(tx, "dir/prog-1", action_id, results1, false, false);

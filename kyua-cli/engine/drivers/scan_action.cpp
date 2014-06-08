@@ -31,8 +31,8 @@
 #include "engine/action.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/test_result.hpp"
-#include "store/backend.hpp"
 #include "store/exceptions.hpp"
+#include "store/read_backend.hpp"
 #include "store/read_transaction.hpp"
 #include "utils/defs.hpp"
 #include "utils/optional.ipp"
@@ -113,7 +113,7 @@ scan_action::drive(const fs::path& store_path,
                    optional< int64_t > action_id,
                    base_hooks& hooks)
 {
-    store::backend db = store::backend::open_ro(store_path);
+    store::read_backend db = store::read_backend::open_ro(store_path);
     store::read_transaction tx = db.start_read();
 
     hooks.begin();

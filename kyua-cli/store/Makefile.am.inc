@@ -32,9 +32,7 @@ STORE_LIBS = libstore.a libengine.a $(UTILS_LIBS)
 noinst_LIBRARIES += libstore.a
 libstore_a_CPPFLAGS  = -DKYUA_STOREDIR=\"$(storedir)\"
 libstore_a_CPPFLAGS += $(UTILS_CFLAGS)
-libstore_a_SOURCES  = store/backend.cpp
-libstore_a_SOURCES += store/backend.hpp
-libstore_a_SOURCES += store/dbtypes.cpp
+libstore_a_SOURCES  = store/dbtypes.cpp
 libstore_a_SOURCES += store/dbtypes.hpp
 libstore_a_SOURCES += store/exceptions.cpp
 libstore_a_SOURCES += store/exceptions.hpp
@@ -42,8 +40,12 @@ libstore_a_SOURCES += store/metadata.cpp
 libstore_a_SOURCES += store/metadata.hpp
 libstore_a_SOURCES += store/migrate.cpp
 libstore_a_SOURCES += store/migrate.hpp
+libstore_a_SOURCES += store/read_backend.cpp
+libstore_a_SOURCES += store/read_backend.hpp
 libstore_a_SOURCES += store/read_transaction.cpp
 libstore_a_SOURCES += store/read_transaction.hpp
+libstore_a_SOURCES += store/write_backend.cpp
+libstore_a_SOURCES += store/write_backend.hpp
 libstore_a_SOURCES += store/write_transaction.cpp
 libstore_a_SOURCES += store/write_transaction.hpp
 
@@ -59,15 +61,7 @@ tests_store_DATA += store/testdata_v1.sql
 tests_store_DATA += store/testdata_v2.sql
 EXTRA_DIST += $(tests_store_DATA)
 
-tests_store_PROGRAMS = store/backend_test
-store_backend_test_SOURCES = store/backend_test.cpp
-store_backend_test_CPPFLAGS = -DKYUA_STOREDIR=\"$(storedir)\"
-store_backend_test_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) \
-                              $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-store_backend_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) \
-                           $(UTILS_LIBS) $(ATF_CXX_LIBS)
-
-tests_store_PROGRAMS += store/dbtypes_test
+tests_store_PROGRAMS = store/dbtypes_test
 store_dbtypes_test_SOURCES = store/dbtypes_test.cpp
 store_dbtypes_test_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) \
                               $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
@@ -96,6 +90,13 @@ store_migrate_test_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) \
 store_migrate_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) \
                            $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
+tests_store_PROGRAMS += store/read_backend_test
+store_read_backend_test_SOURCES = store/read_backend_test.cpp
+store_read_backend_test_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) \
+                                   $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+store_read_backend_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) \
+                                $(UTILS_LIBS) $(ATF_CXX_LIBS)
+
 tests_store_PROGRAMS += store/read_transaction_test
 store_read_transaction_test_SOURCES = store/read_transaction_test.cpp
 store_read_transaction_test_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) \
@@ -116,6 +117,14 @@ store_transaction_test_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) \
                                   $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 store_transaction_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) \
                                $(UTILS_LIBS) $(ATF_CXX_LIBS)
+
+tests_store_PROGRAMS += store/write_backend_test
+store_write_backend_test_SOURCES = store/write_backend_test.cpp
+store_write_backend_test_CPPFLAGS = -DKYUA_STOREDIR=\"$(storedir)\"
+store_write_backend_test_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) \
+                                    $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+store_write_backend_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) \
+                                 $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_store_PROGRAMS += store/write_transaction_test
 store_write_transaction_test_SOURCES = store/write_transaction_test.cpp

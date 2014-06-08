@@ -30,8 +30,8 @@
 
 #include <atf-c++.hpp>
 
-#include "store/backend.hpp"
 #include "store/exceptions.hpp"
+#include "store/write_backend.hpp"
 #include "utils/logging/operations.hpp"
 #include "utils/sqlite/database.hpp"
 

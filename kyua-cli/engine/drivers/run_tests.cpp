@@ -34,7 +34,7 @@
 #include "engine/kyuafile.hpp"
 #include "engine/test_program.hpp"
 #include "engine/test_result.hpp"
-#include "store/backend.hpp"
+#include "store/write_backend.hpp"
 #include "store/write_transaction.hpp"
 #include "utils/datetime.hpp"
 #include "utils/defs.hpp"
@@ -174,7 +174,7 @@ run_tests::drive(const fs::path& kyuafile_path,
     const engine::kyuafile kyuafile = engine::kyuafile::load(
         kyuafile_path, build_root);
     filters_state filters(raw_filters);
-    store::backend db = store::backend::open_rw(store_path);
+    store::write_backend db = store::write_backend::open_rw(store_path);
     store::write_transaction tx = db.start_write();
 
     engine::context context = engine::context::current();

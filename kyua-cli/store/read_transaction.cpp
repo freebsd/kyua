@@ -38,9 +38,9 @@ extern "C" {
 #include "engine/action.hpp"
 #include "engine/context.hpp"
 #include "engine/test_result.hpp"
-#include "store/backend.hpp"
 #include "store/dbtypes.hpp"
 #include "store/exceptions.hpp"
+#include "store/read_backend.hpp"
 #include "utils/datetime.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
@@ -246,7 +246,7 @@ parse_result(sqlite::statement& stmt, const char* type_column,
 /// \throw integrity_error If the data read from the database cannot be properly
 ///     interpreted.
 engine::test_program_ptr
-store::detail::get_test_program(backend& backend_, const int64_t id)
+store::detail::get_test_program(read_backend& backend_, const int64_t id)
 {
     sqlite::database& db = backend_.database();
 
@@ -276,7 +276,7 @@ store::detail::get_test_program(backend& backend_, const int64_t id)
 /// Internal implementation for a results iterator.
 struct store::results_iterator::impl {
     /// The store backend we are dealing with.
-    store::backend _backend;
+    store::read_backend _backend;
 
     /// The statement to iterate on.
     sqlite::statement _stmt;
@@ -289,7 +289,7 @@ struct store::results_iterator::impl {
     bool _valid;
 
     /// Constructor.
-    impl(store::backend& backend_, const int64_t action_id_) :
+    impl(store::read_backend& backend_, const int64_t action_id_) :
         _backend(backend_),
         _stmt(backend_.database().create_statement(
             "SELECT test_programs.test_program_id, "
@@ -457,8 +457,7 @@ store::results_iterator::stderr_contents(void) const
 /// Internal implementation for a store read-only transaction.
 struct store::read_transaction::impl {
     /// The backend instance.
-    store::backend& _backend;
-
+    store::read_backend& _backend;
 
     /// The SQLite database this transaction deals with.
     sqlite::database _db;
@@ -469,7 +468,7 @@ struct store::read_transaction::impl {
     /// Opens a transaction.
     ///
     /// \param backend_ The backend this transaction is connected to.
-    impl(backend& backend_) :
+    impl(read_backend& backend_) :
         _backend(backend_),
         _db(backend_.database()),
         _tx(backend_.database().begin_transaction())
@@ -481,7 +480,7 @@ struct store::read_transaction::impl {
 /// Creates a new read-only transaction.
 ///
 /// \param backend_ The backend this transaction belongs to.
-store::read_transaction::read_transaction(backend& backend_) :
+store::read_transaction::read_transaction(read_backend& backend_) :
     _pimpl(new impl(backend_))
 {
 }

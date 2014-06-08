@@ -26,11 +26,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file store/backend.hpp
-/// Interface to the backend database.
+/// \file store/write_backend.hpp
+/// Interface to the backend database for write-only operations.
 
-#if !defined(STORE_BACKEND_HPP)
-#define STORE_BACKEND_HPP
+#if !defined(STORE_WRITE_BACKEND_HPP)
+#define STORE_WRITE_BACKEND_HPP
 
 #include "utils/shared_ptr.hpp"
 
@@ -57,18 +57,16 @@ extern int current_schema_version;
 
 utils::fs::path schema_file(void);
 metadata initialize(utils::sqlite::database&);
-utils::sqlite::database open_and_setup(const utils::fs::path&, const int);
 
 
 }  // anonymous namespace
 
 
-class read_transaction;
 class write_transaction;
 
 
-/// Public interface to the database store.
-class backend {
+/// Public interface to the database store for write-only operations.
+class write_backend {
     struct impl;
 
     /// Pointer to the shared internal implementation.
@@ -76,21 +74,19 @@ class backend {
 
     friend class metadata;
 
-    backend(impl*);
+    write_backend(impl*);
 
 public:
-    ~backend(void);
+    ~write_backend(void);
 
-    static backend open_ro(const utils::fs::path&);
-    static backend open_rw(const utils::fs::path&);
+    static write_backend open_rw(const utils::fs::path&);
     void close(void);
 
     utils::sqlite::database& database(void);
-    read_transaction start_read(void);
     write_transaction start_write(void);
 };
 
 
 }  // namespace store
 
-#endif  // !defined(STORE_BACKEND_HPP)
+#endif  // !defined(STORE_WRITE_BACKEND_HPP)

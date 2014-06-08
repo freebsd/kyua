@@ -33,8 +33,9 @@
 
 #include "engine/action.hpp"
 #include "engine/context.hpp"
-#include "store/backend.hpp"
+#include "store/read_backend.hpp"
 #include "store/read_transaction.hpp"
+#include "store/write_backend.hpp"
 #include "store/write_transaction.hpp"
 #include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
@@ -56,7 +57,6 @@ ATF_TEST_CASE_HEAD(get_put_action__ok)
 }
 ATF_TEST_CASE_BODY(get_put_action__ok)
 {
-    store::backend backend = store::backend::open_rw(fs::path("test.db"));
     const engine::context context1(fs::path("/foo/bar"),
                                    std::map< std::string, std::string >());
     const engine::context context2(fs::path("/foo/baz"),
@@ -67,6 +67,8 @@ ATF_TEST_CASE_BODY(get_put_action__ok)
 
     int64_t id1, id2, id3;
     {
+        store::write_backend backend = store::write_backend::open_rw(
+            fs::path("test.db"));
         store::write_transaction tx = backend.start_write();
         const int64_t context1_id = tx.put_context(context1);
         const int64_t context2_id = tx.put_context(context2);
@@ -76,6 +78,8 @@ ATF_TEST_CASE_BODY(get_put_action__ok)
         tx.commit();
     }
     {
+        store::read_backend backend = store::read_backend::open_ro(
+            fs::path("test.db"));
         store::read_transaction tx = backend.start_read();
         const engine::action action1 = tx.get_action(id1);
         const engine::action action2 = tx.get_action(id2);
@@ -97,8 +101,6 @@ ATF_TEST_CASE_HEAD(get_put_context__ok)
 }
 ATF_TEST_CASE_BODY(get_put_context__ok)
 {
-    store::backend backend = store::backend::open_rw(fs::path("test.db"));
-
     std::map< std::string, std::string > env1;
     env1["A1"] = "foo";
     env1["A2"] = "bar";
@@ -109,6 +111,8 @@ ATF_TEST_CASE_BODY(get_put_context__ok)
 
     int64_t id1, id2, id3;
     {
+        store::write_backend backend = store::write_backend::open_rw(
+            fs::path("test.db"));
         store::write_transaction tx = backend.start_write();
         id1 = tx.put_context(exp_context1);
         id3 = tx.put_context(exp_context3);
@@ -116,6 +120,8 @@ ATF_TEST_CASE_BODY(get_put_context__ok)
         tx.commit();
     }
     {
+        store::read_backend backend = store::read_backend::open_ro(
+            fs::path("test.db"));
         store::read_transaction tx = backend.start_read();
         const engine::context context1 = tx.get_context(id1);
         const engine::context context2 = tx.get_context(id2);
@@ -174,16 +180,22 @@ ATF_TEST_CASE_BODY(get_put_test_case__ok)
         test_program.set_test_cases(test_cases);
     }
 
-    store::backend backend = store::backend::open_rw(fs::path("test.db"));
-    backend.database().exec("PRAGMA foreign_keys = OFF");
     int64_t test_program_id;
     {
+        store::write_backend backend = store::write_backend::open_rw(
+            fs::path("test.db"));
+        backend.database().exec("PRAGMA foreign_keys = OFF");
+
         store::write_transaction tx = backend.start_write();
         test_program_id = tx.put_test_program(test_program, 15);
         tx.put_test_case(*test_case1, test_program_id);
         tx.put_test_case(*test_case2, test_program_id);
         tx.commit();
     }
+
+    store::read_backend backend = store::read_backend::open_ro(
+        fs::path("test.db"));
+    backend.database().exec("PRAGMA foreign_keys = OFF");
 
     store::read_transaction tx = backend.start_read();
     const engine::test_program_ptr loaded_test_program =
