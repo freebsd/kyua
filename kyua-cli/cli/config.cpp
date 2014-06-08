@@ -100,7 +100,7 @@ load_config_file(const cmdline::parsed_cmdline& cmdline)
     } else if (filename.str() != cli::config_option.default_value())
         return engine::load_config(filename);
 
-    const optional< fs::path > home = cli::get_home();
+    const optional< fs::path > home = utils::get_home();
     if (home) {
         const fs::path path = home.get() / ".kyua" / config_basename;
         try {

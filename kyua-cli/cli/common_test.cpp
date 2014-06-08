@@ -140,33 +140,6 @@ ATF_TEST_CASE_BODY(build_root_path__explicit)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(get_home__ok);
-ATF_TEST_CASE_BODY(get_home__ok)
-{
-    const fs::path home("/foo/bar");
-    utils::setenv("HOME", home.str());
-    const optional< fs::path > computed = cli::get_home();
-    ATF_REQUIRE(computed);
-    ATF_REQUIRE_EQ(home, computed.get());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(get_home__missing);
-ATF_TEST_CASE_BODY(get_home__missing)
-{
-    utils::unsetenv("HOME");
-    ATF_REQUIRE(!cli::get_home());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(get_home__invalid);
-ATF_TEST_CASE_BODY(get_home__invalid)
-{
-    utils::setenv("HOME", "");
-    ATF_REQUIRE(!cli::get_home());
-}
-
-
 ATF_TEST_CASE_WITHOUT_HEAD(kyuafile_path__default);
 ATF_TEST_CASE_BODY(kyuafile_path__default)
 {
@@ -475,10 +448,6 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, build_root_path__default);
     ATF_ADD_TEST_CASE(tcs, build_root_path__explicit);
-
-    ATF_ADD_TEST_CASE(tcs, get_home__ok);
-    ATF_ADD_TEST_CASE(tcs, get_home__missing);
-    ATF_ADD_TEST_CASE(tcs, get_home__invalid);
 
     ATF_ADD_TEST_CASE(tcs, kyuafile_path__default);
     ATF_ADD_TEST_CASE(tcs, kyuafile_path__explicit);

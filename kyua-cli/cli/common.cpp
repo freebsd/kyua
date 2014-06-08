@@ -43,7 +43,6 @@
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
-#include "utils/fs/exceptions.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
@@ -185,27 +184,6 @@ cli::build_root_path(const cmdline::parsed_cmdline& cmdline)
 }
 
 
-/// Gets the value of the HOME environment variable with path validation.
-///
-/// \return The value of the HOME environment variable if it is a valid path;
-///     none if it is not defined or if it contains an invalid path.
-optional< fs::path >
-cli::get_home(void)
-{
-    const optional< std::string > home = utils::getenv("HOME");
-    if (home) {
-        try {
-            return utils::make_optional(fs::path(home.get()));
-        } catch (const fs::error& e) {
-            LW(F("Invalid value '%s' in HOME environment variable: %s") %
-               home.get() % e.what());
-            return none;
-        }
-    } else
-        return none;
-}
-
-
 /// Gets the path to the Kyuafile to be loaded.
 ///
 /// This is just syntactic sugar to simplify quierying the 'kyuafile_option'.
@@ -264,7 +242,7 @@ cli::store_path(const cmdline::parsed_cmdline& cmdline)
     fs::path store = cmdline.get_option< cmdline::path_option >(
         store_option.long_name());
     if (store == fs::path(store_option.default_value())) {
-        const optional< fs::path > home = cli::get_home();
+        const optional< fs::path > home = utils::get_home();
         if (home) {
             store = home.get() / ".kyua/store.db";
             fs::mkdir_p(store.branch_path(), 0777);

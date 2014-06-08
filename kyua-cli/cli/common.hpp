@@ -89,8 +89,6 @@ typedef std::vector< engine::test_result::result_type > result_types;
 
 std::auto_ptr< std::ostream > open_output_file(const utils::fs::path& path);
 
-utils::optional< utils::fs::path > get_home(void);
-
 utils::optional< utils::fs::path > build_root_path(
     const utils::cmdline::parsed_cmdline&);
 utils::fs::path kyuafile_path(const utils::cmdline::parsed_cmdline&);

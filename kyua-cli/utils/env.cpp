@@ -38,8 +38,12 @@
 #include <stdexcept>
 
 #include "utils/format/macros.hpp"
+#include "utils/fs/exceptions.hpp"
+#include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
+
+namespace fs = utils::fs;
 
 using utils::none;
 using utils::optional;
@@ -109,6 +113,28 @@ utils::getenv_with_default(const std::string& name,
     } else {
         LD(F("Environment variable '%s' is '%s'") % name % value);
         return value;
+    }
+}
+
+
+/// Gets the value of the HOME environment variable with path validation.
+///
+/// \return The value of the HOME environment variable if it is a valid path;
+///     none if it is not defined or if it contains an invalid path.
+optional< fs::path >
+utils::get_home(void)
+{
+    const optional< std::string > home = utils::getenv("HOME");
+    if (home) {
+        try {
+            return utils::make_optional(fs::path(home.get()));
+        } catch (const fs::error& e) {
+            LW(F("Invalid value '%s' in HOME environment variable: %s") %
+               home.get() % e.what());
+            return none;
+        }
+    } else {
+        return none;
     }
 }
 
