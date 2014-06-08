@@ -1,4 +1,4 @@
-// Copyright 2013 Google Inc.
+// Copyright 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,50 +26,34 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "cli/cmd_db_migrate.hpp"
+/// \file store/migrate.hpp
+/// Utilities to upgrade a database with an old schema to the latest one.
 
-#include <cstdlib>
+#if !defined(STORE_MIGRATE_HPP)
+#define STORE_MIGRATE_HPP
 
-#include "cli/common.ipp"
-#include "store/exceptions.hpp"
-#include "store/migrate.hpp"
-#include "utils/defs.hpp"
-#include "utils/format/macros.hpp"
+namespace utils {
+namespace fs {
+class path;
+}  // namespace fs
+}  // namespace utils
 
-namespace cmdline = utils::cmdline;
-namespace config = utils::config;
-
-using cli::cmd_db_migrate;
-
-
-/// Default constructor for cmd_db_migrate.
-cmd_db_migrate::cmd_db_migrate(void) : cli_command(
-    "db-migrate", "", 0, 0,
-    "Upgrades the schema of an existing store database to the currently "
-    "implemented version.  A backup of the database is created, but this "
-    "operation is not reversible")
-{
-    add_option(store_option);
-}
+namespace store {
 
 
-/// Entry point for the "db-migrate" subcommand.
-///
-/// \param ui Object to interact with the I/O of the program.
-/// \param cmdline Representation of the command line to the subcommand.
-/// \param unused_user_config The runtime configuration of the program.
-///
-/// \return 0 if everything is OK, 1 if the statement is invalid or if there is
-/// any other problem.
-int
-cmd_db_migrate::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
-                    const config::tree& UTILS_UNUSED_PARAM(user_config))
-{
-    try {
-        store::migrate_schema(cli::store_path(cmdline));
-        return EXIT_SUCCESS;
-    } catch (const store::error& e) {
-        cmdline::print_error(ui, F("Migration failed: %s") % e.what());
-        return EXIT_FAILURE;
-    }
-}
+namespace detail {
+
+
+utils::fs::path migration_file(const int, const int);
+void backup_database(const utils::fs::path&, const int);
+
+
+}  // anonymous namespace
+
+
+void migrate_schema(const utils::fs::path&);
+
+
+}  // namespace store
+
+#endif  // !defined(STORE_MIGRATE_HPP)

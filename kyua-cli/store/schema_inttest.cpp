@@ -26,8 +26,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "store/backend.hpp"
-
 #include <fstream>
 #include <map>
 
@@ -39,6 +37,7 @@
 #include "engine/test_program.hpp"
 #include "engine/test_result.hpp"
 #include "store/backend.hpp"
+#include "store/migrate.hpp"
 #include "store/read_transaction.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"

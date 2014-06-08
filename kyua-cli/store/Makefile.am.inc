@@ -40,6 +40,8 @@ libstore_a_SOURCES += store/exceptions.cpp
 libstore_a_SOURCES += store/exceptions.hpp
 libstore_a_SOURCES += store/metadata.cpp
 libstore_a_SOURCES += store/metadata.hpp
+libstore_a_SOURCES += store/migrate.cpp
+libstore_a_SOURCES += store/migrate.hpp
 libstore_a_SOURCES += store/read_transaction.cpp
 libstore_a_SOURCES += store/read_transaction.hpp
 libstore_a_SOURCES += store/write_transaction.cpp
@@ -85,6 +87,14 @@ store_metadata_test_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) \
                                $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 store_metadata_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) \
                             $(UTILS_LIBS) $(ATF_CXX_LIBS)
+
+tests_store_PROGRAMS += store/migrate_test
+store_migrate_test_SOURCES = store/migrate_test.cpp
+store_migrate_test_CPPFLAGS = -DKYUA_STOREDIR=\"$(storedir)\"
+store_migrate_test_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) \
+                              $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+store_migrate_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) \
+                           $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_store_PROGRAMS += store/read_transaction_test
 store_read_transaction_test_SOURCES = store/read_transaction_test.cpp
