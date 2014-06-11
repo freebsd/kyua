@@ -187,6 +187,11 @@ engine::report_junit_hooks::got_result(store::results_iterator& iter)
 
     case engine::test_result::skipped:
         _output << "<skipped/>\n";
+        stderr_contents += ("Skipped result details\n"
+                            "----------------------\n"
+                            "\n"
+                            + result.reason() + "\n"
+                            "\n");
         break;
 
     default:

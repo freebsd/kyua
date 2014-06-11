@@ -102,7 +102,12 @@ This is the stderr of pass
 <skipped/>
 <system-out>This is the stdout of skip
 </system-out>
-<system-err>Test case metadata
+<system-err>Skipped result details
+----------------------
+
+The reason for skipping is this
+
+Test case metadata
 ------------------
 
 allowed_architectures is empty
@@ -206,7 +211,12 @@ This is the stderr of pass
 <skipped/>
 <system-out>This is the stdout of skip
 </system-out>
-<system-err>Test case metadata
+<system-err>Skipped result details
+----------------------
+
+The reason for skipping is this
+
+Test case metadata
 ------------------
 
 allowed_architectures is empty

@@ -331,6 +331,11 @@ ATF_TEST_CASE_BODY(report_junit_hooks__some_tests)
         "<skipped/>\n"
         "<system-out>stdout file 1</system-out>\n"
         "<system-err>"
+        "Skipped result details\n"
+        "----------------------\n"
+        "\n"
+        "Skipped\n"
+        "\n"
         + engine::junit_metadata_prefix +
         overriden_metadata
         + engine::junit_metadata_suffix +
