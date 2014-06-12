@@ -8,6 +8,7 @@ atf_test_program{name="env_test"}
 atf_test_program{name="memory_test"}
 atf_test_program{name="optional_test"}
 atf_test_program{name="passwd_test"}
+atf_test_program{name="releaser_test"}
 atf_test_program{name="sanity_test"}
 atf_test_program{name="stream_test"}
 atf_test_program{name="units_test"}

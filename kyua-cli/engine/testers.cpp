@@ -49,6 +49,7 @@ extern "C" {
 #include "utils/passwd.hpp"
 #include "utils/process/child.ipp"
 #include "utils/process/status.hpp"
+#include "utils/releaser.hpp"
 #include "utils/stream.hpp"
 
 namespace datetime = utils::datetime;
@@ -96,41 +97,6 @@ replace_newlines(const std::string input)
 }
 
 
-/// RAII pattern to invoke a release method on destruction.
-///
-/// \todo The existence of this class here is a hack.  We should either
-/// generalize the class and use it wherever we need release on destruction
-/// semantics, or we should have proper abstractions for the objects below that
-/// use this class.
-///
-/// \tparam Object The type of the object to be released.  Not a pointer.
-/// \tparam ReturnType The return type of the release method.
-template< typename Object, typename ReturnType >
-class object_releaser {
-    /// Pointer to the object being managed.
-    Object* _object;
-
-    /// Release hook.
-    ReturnType (*_free_hook)(Object*);
-
-public:
-    /// Constructor.
-    ///
-    /// \param object Pointer to the object being managed.
-    /// \param free_hook Release hook.
-    object_releaser(Object* object, ReturnType (*free_hook)(Object*)) :
-        _object(object), _free_hook(free_hook)
-    {
-    }
-
-    /// Destructor.
-    ~object_releaser(void)
-    {
-        _free_hook(_object);
-    }
-};
-
-
 /// Finds all available testers and caches their data.
 ///
 /// \param [out] testers Map into which to store the list of available testers.
@@ -151,12 +117,12 @@ load_testers(testers_map& testers)
            strerror(original_errno));
         return;  // No testers available in the given location.
     }
-    const object_releaser< ::DIR, int > dir_releaser(dir, ::closedir);
+    const utils::releaser< ::DIR, int > dir_releaser(dir, ::closedir);
 
     ::regex_t preg;
     if (::regcomp(&preg, "^kyua-(.+)-tester$", REG_EXTENDED) != 0)
         throw engine::error("Failed to compile regular expression");
-    const object_releaser< ::regex_t, void > preg_releaser(&preg, ::regfree);
+    const utils::releaser< ::regex_t, void > preg_releaser(&preg, ::regfree);
 
     ::dirent* de;
     while ((de = readdir(dir)) != NULL) {
