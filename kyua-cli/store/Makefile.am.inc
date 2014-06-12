@@ -36,6 +36,8 @@ libstore_a_SOURCES  = store/dbtypes.cpp
 libstore_a_SOURCES += store/dbtypes.hpp
 libstore_a_SOURCES += store/exceptions.cpp
 libstore_a_SOURCES += store/exceptions.hpp
+libstore_a_SOURCES += store/layout.cpp
+libstore_a_SOURCES += store/layout.hpp
 libstore_a_SOURCES += store/metadata.cpp
 libstore_a_SOURCES += store/metadata.hpp
 libstore_a_SOURCES += store/migrate.cpp
@@ -74,6 +76,13 @@ store_exceptions_test_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) \
                                  $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 store_exceptions_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) \
                               $(UTILS_LIBS) $(ATF_CXX_LIBS)
+
+tests_store_PROGRAMS += store/layout_test
+store_layout_test_SOURCES = store/layout_test.cpp
+store_layout_test_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) \
+                             $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+store_layout_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) \
+                          $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_store_PROGRAMS += store/metadata_test
 store_metadata_test_SOURCES = store/metadata_test.cpp
