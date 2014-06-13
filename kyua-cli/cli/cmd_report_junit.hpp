@@ -1,4 +1,4 @@
-// Copyright 2011 Google Inc.
+// Copyright 2014 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,73 +26,29 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file store/backend.hpp
-/// Interface to the backend database.
+/// \file cli/cmd_report_junit.hpp
+/// Provides the cmd_report_junit class.
 
-#if !defined(STORE_BACKEND_HPP)
-#define STORE_BACKEND_HPP
+#if !defined(CLI_CMD_REPORT_JUNIT_HPP)
+#define CLI_CMD_REPORT_JUNIT_HPP
 
-#include "utils/shared_ptr.hpp"
+#include "cli/common.hpp"
 
-namespace utils {
-namespace fs {
-class path;
-}  // namespace fs
-namespace sqlite {
-class database;
-}  // namespace sqlite
-}  // namespace utils
-
-namespace store {
+namespace cli {
 
 
-class metadata;
-
-
-namespace detail {
-
-
-extern int current_schema_version;
-
-
-utils::fs::path migration_file(const int, const int);
-utils::fs::path schema_file(void);
-metadata initialize(utils::sqlite::database&);
-void backup_database(const utils::fs::path&, const int);
-
-
-}  // anonymous namespace
-
-
-class transaction;
-
-
-/// Public interface to the database store.
-class backend {
-    struct impl;
-
-    /// Pointer to the shared internal implementation.
-    std::shared_ptr< impl > _pimpl;
-
-    friend class metadata;
-
-    backend(impl*);
-
+/// Implementation of the "report-junit" subcommand.
+class cmd_report_junit : public cli_command
+{
 public:
-    ~backend(void);
+    cmd_report_junit(void);
 
-    static backend open_ro(const utils::fs::path&);
-    static backend open_rw(const utils::fs::path&);
-    void close(void);
-
-    utils::sqlite::database& database(void);
-    transaction start(void);
+    int run(utils::cmdline::ui*, const utils::cmdline::parsed_cmdline&,
+            const utils::config::tree&);
 };
 
 
-void migrate_schema(const utils::fs::path&);
+}  // namespace cli
 
 
-}  // namespace store
-
-#endif  // !defined(STORE_BACKEND_HPP)
+#endif  // !defined(CLI_CMD_REPORT_JUNIT_HPP)
