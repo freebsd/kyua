@@ -25,7 +25,7 @@
 .\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 .\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-.Dd February 16, 2014
+.Dd May 26, 2014
 .Dt KYUA 1
 .Os
 .Sh NAME
@@ -121,7 +121,7 @@ for more details.
 .Ss Available commands
 The following commands are generic and do not have any relation to the execution
 of tests or the inspection of their results:
-.Bl -tag -width reportXhtmlXX -offset indent
+.Bl -tag -width reportXjunitXX -offset indent
 .It Ar about
 Shows general program information.
 See
@@ -143,7 +143,7 @@ See
 .Pp
 The following commands are used to generate reports based on the data previously
 stored in the database:
-.Bl -tag -width reportXhtmlXX -offset indent
+.Bl -tag -width reportXjunitXX -offset indent
 .It Ar report
 Generates a plain-text report.
 See
@@ -152,10 +152,14 @@ See
 Generates an HTML report.
 See
 .Xr kyua-report-html 1 .
+.It Ar report-junit
+Generates a JUnit report.
+See
+.Xr kyua-report-junit 1 .
 .El
 .Pp
 The following commands are used to interact with a test suite:
-.Bl -tag -width reportXhtmlXX -offset indent
+.Bl -tag -width reportXjunitXX -offset indent
 .It Ar debug
 Executes a single test case in a controlled environment for debugging purposes.
 See

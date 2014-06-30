@@ -320,6 +320,14 @@ store::backend::open_rw(const fs::path& file)
 }
 
 
+/// Closes the SQLite database.
+void
+store::backend::close(void)
+{
+    _pimpl->database.close();
+}
+
+
 /// Gets the connection to the SQLite database.
 ///
 /// \return A database connection.
