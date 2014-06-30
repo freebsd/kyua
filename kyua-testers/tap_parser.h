@@ -59,9 +59,6 @@ struct kyua_tap_summary {
 
     /// Total number of "not ok" tests.
     long not_ok_count;
-
-    /// Total number of "SKIP" tests.
-    long skip_count;
 };
 /// Shorthand for a kyua_tap_summary structure.
 typedef struct kyua_tap_summary kyua_tap_summary_t;

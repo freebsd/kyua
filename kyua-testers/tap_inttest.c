@@ -76,6 +76,66 @@ ATF_TC_BODY(test__pass, tc)
 }
 
 
+ATF_TC(test__skip_plan);
+ATF_TC_HEAD(test__skip_plan, tc) { setup(tc, true); }
+ATF_TC_BODY(test__skip_plan, tc)
+{
+    char* helpers = select_helper(tc, "skip_plan");
+    check(EXIT_SUCCESS,
+          "1..0 # SKIP not running this test suite\n",
+          "test", helpers, "main", "test-result", NULL);
+    free(helpers);
+
+    ATF_REQUIRE(atf_utils_compare_file("test-result", "passed\n"));
+}
+
+
+ATF_TC(test__skip_testcase);
+ATF_TC_HEAD(test__skip_testcase, tc) { setup(tc, true); }
+ATF_TC_BODY(test__skip_testcase, tc)
+{
+    char* helpers = select_helper(tc, "skip_testcase");
+    check(EXIT_SUCCESS,
+          "1..1\n",
+          "ok - 1 # SKIP\n",
+          "test", helpers, "main", "test-result", NULL);
+    free(helpers);
+
+    ATF_REQUIRE(atf_utils_compare_file("test-result", "passed\n"));
+}
+
+
+ATF_TC(test__todo_testcase_not_ok);
+ATF_TC_HEAD(test__todo_testcase_not_ok, tc) { setup(tc, true); }
+ATF_TC_BODY(test__todo_testcase_not_ok, tc)
+{
+    char* helpers = select_helper(tc, "todo_testcase_not_ok");
+    check(EXIT_SUCCESS,
+          "1..1\n",
+          "not ok - 1 # TODO: need to implement this testcase\n",
+          "test", helpers, "main", "test-result", NULL);
+    free(helpers);
+
+    ATF_REQUIRE(atf_utils_compare_file("test-result", "passed\n"));
+}
+
+
+ATF_TC(test__todo_testcase_ok);
+ATF_TC_HEAD(test__todo_testcase_ok, tc) { setup(tc, true); }
+ATF_TC_BODY(test__todo_testcase_ok, tc)
+{
+    char* helpers = select_helper(tc, "todo_testcase_ok");
+    check(EXIT_SUCCESS,
+          "1..1\n",
+          "ok - 1 # TODO: need to implement this testcase\n",
+          "test", helpers, "main", "test-result", NULL);
+    free(helpers);
+
+    ATF_REQUIRE(atf_utils_compare_file("test-result", "passed\n"));
+}
+
+
+
 ATF_TC(test__fail);
 ATF_TC_HEAD(test__fail, tc) { setup(tc, true); }
 ATF_TC_BODY(test__fail, tc)
@@ -106,6 +166,23 @@ ATF_TC_BODY(test__bogus_plan, tc)
     char* helpers = select_helper(tc, "bogus_plan");
     check(EXIT_FAILURE,
           "1..3\n"
+          "ok\n",
+          "",
+          "test", helpers, "main", "test-result", NULL);
+    free(helpers);
+
+    ATF_REQUIRE(atf_utils_compare_file("test-result",
+        "broken: Reported plan differs from actual executed tests\n"));
+}
+
+
+ATF_TC(test__bogus_plan_negative_count);
+ATF_TC_HEAD(test__bogus_plan_negative_count, tc) { setup(tc, true); }
+ATF_TC_BODY(test__bogus_plan_negative_count, tc)
+{
+    char* helpers = select_helper(tc, "bogus_plan_negative_count");
+    check(EXIT_FAILURE,
+          "1..-3\n"
           "ok\n",
           "",
           "test", helpers, "main", "test-result", NULL);
@@ -221,12 +298,17 @@ ATF_TP_ADD_TCS(tp)
     ATF_TP_ADD_TC(tp, test__pass);
     ATF_TP_ADD_TC(tp, test__fail);
     ATF_TP_ADD_TC(tp, test__bogus_plan);
+    ATF_TP_ADD_TC(tp, test__bogus_plan_negative_count);
     ATF_TP_ADD_TC(tp, test__bail_out);
     ATF_TP_ADD_TC(tp, test__crash);
     ATF_TP_ADD_TC(tp, test__timeout);
     ATF_TP_ADD_TC(tp, test__config_ignored);
     ATF_TP_ADD_TC(tp, test__missing_test_program);
     ATF_TP_ADD_TC(tp, test__invalid_test_case_name);
+    ATF_TP_ADD_TC(tp, test__skip_plan);
+    ATF_TP_ADD_TC(tp, test__skip_testcase);
+    ATF_TP_ADD_TC(tp, test__todo_testcase_not_ok);
+    ATF_TP_ADD_TC(tp, test__todo_testcase_ok);
 
     return atf_no_error();
 }

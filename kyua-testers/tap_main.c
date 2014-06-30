@@ -187,7 +187,7 @@ run_test_case(const char* test_program, const char* test_case,
         const char* const program_args[] = { test_program, NULL };
         kyua_run_exec(test_program, program_args);
     }
-    assert(pid != -1 && pid != 0);
+    assert(0 < pid);
     if (kyua_error_is_set(error))
         goto out_pipe;
 

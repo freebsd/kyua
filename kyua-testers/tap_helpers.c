@@ -61,23 +61,16 @@ bogus_plan_helper(void)
     return EXIT_SUCCESS;
 }
 
+
 /// Test case that produces an invalid output TAP plan.
 static int
 bogus_plan_negative_count_helper(void)
 {
-    fprintf(stdout, "1..-1\n");
+    fprintf(stdout, "1..-3\n");
     fprintf(stdout, "ok\n");
     return EXIT_SUCCESS;
 }
 
-static int
-comment_helper(void)
-{
-    fprintf(stdout, "1..1\n");
-    fprintf(stdout, "ok\n");
-    fprintf(stdout, "# hello world!\n");
-    return EXIT_SUCCESS;
-}
 
 /// Test case that always fails.
 static int
@@ -110,38 +103,19 @@ pass_helper(void)
 }
 
 
-/// Test case that always dies due to a signal and dumps core.
+/// Test case that's skipped.
 static int
-skip_helper(void)
+skip_testcase_helper(void)
 {
     fprintf(stdout, "1..1\n");
-    fprintf(stdout, "# SKIP\n");
+    fprintf(stdout, "ok - 1 # SKIP\n");
     return EXIT_SUCCESS;
 }
 
 
-/// Test case that always dies due to a signal and dumps core.
+/// Test suite that's completely skipped.
 static int
-skip_with_reason_helper(void)
-{
-    fprintf(stdout, "1..1\n");
-    fprintf(stdout, "# SKIP this test is not valid on this OS\n");
-    return EXIT_SUCCESS;
-}
-
-
-/// Test case that always dies due to a signal and dumps core.
-static int
-skip_all_helper(void)
-{
-    fprintf(stdout, "1..0 # SKIP\n");
-    return EXIT_SUCCESS;
-}
-
-
-/// Test case that always dies due to a signal and dumps core.
-static int
-skip_all_with_reason_helper(void)
+skip_plan_helper(void)
 {
     fprintf(stdout, "1..0 # SKIP not running this test suite\n");
     return EXIT_SUCCESS;
@@ -163,6 +137,26 @@ sleep_helper(void)
 {
     sleep(300);
     return EXIT_FAILURE;
+}
+
+
+/// Test case marked not ok/TODO
+static int
+todo_testcase_not_ok_helper(void)
+{
+    fprintf(stdout, "1..1\n");
+    fprintf(stdout, "not ok - 1 # TODO: need to implement this testcase\n");
+    return EXIT_SUCCESS;
+}
+
+
+/// Test case marked ok/TODO
+static int
+todo_testcase_ok_helper(void)
+{
+    fprintf(stdout, "1..1\n");
+    fprintf(stdout, "ok - 1 # TODO: need to implement this testcase\n");
+    return EXIT_SUCCESS;
 }
 
 
@@ -196,15 +190,15 @@ main(const int argc, char* const* const KYUA_DEFS_UNUSED_PARAM(argv))
     } else if (strcmp(helper_name, "signal") == 0) {
         return signal_helper();
     } else if (strcmp(helper_name, "skip") == 0) {
-        return skip_helper();
-    } else if (strcmp(helper_name, "skip_with_reason") == 0) {
-        return skip_with_reason_helper();
-    } else if (strcmp(helper_name, "skip_all") == 0) {
-        return skip_all_helper();
-    } else if (strcmp(helper_name, "skip_all_with_reason") == 0) {
-        return skip_all_with_reason_helper();
+        return skip_testcase_helper();
+    } else if (strcmp(helper_name, "skip_plan") == 0) {
+        return skip_plan_helper();
     } else if (strcmp(helper_name, "sleep") == 0) {
         return sleep_helper();
+    } else if (strcmp(helper_name, "todo_testcase_not_ok") == 0) {
+        return todo_testcase_not_ok_helper();
+    } else if (strcmp(helper_name, "todo_testcase_ok") == 0) {
+	return todo_testcase_ok_helper();
     } else {
         errx(EXIT_BOGUS, "Unknown helper '%s'", helper_name);
     }

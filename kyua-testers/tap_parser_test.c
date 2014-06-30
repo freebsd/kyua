@@ -51,7 +51,9 @@ ATF_TC_WITHOUT_HEAD(try_parse_plan__skip);
 ATF_TC_BODY(try_parse_plan__skip, tc)
 {
     kyua_tap_summary_t summary; memset(&summary, 0, sizeof(summary));
-    ATF_REQUIRE(!kyua_error_is_set(kyua_tap_try_parse_plan("1..0", &summary)));
+    ATF_REQUIRE(!kyua_error_is_set(kyua_tap_try_parse_plan(
+        "1..0 # SKIP: got better things to do",
+	&summary)));
     ATF_REQUIRE_EQ(NULL, summary.parse_error);
     ATF_REQUIRE_EQ(1, summary.first_index);
     ATF_REQUIRE_EQ(0, summary.last_index);
@@ -69,6 +71,18 @@ ATF_TC_BODY(try_parse_plan__reversed, tc)
 
 ATF_TC_WITHOUT_HEAD(try_parse_plan__insane);
 ATF_TC_BODY(try_parse_plan__insane, tc)
+{
+    kyua_tap_summary_t summary; memset(&summary, 0, sizeof(summary));
+    ATF_REQUIRE(!kyua_error_is_set(kyua_tap_try_parse_plan(
+        "120830981209831..23489179387408098109280398109231200000000000000000000000000000000000000000000000000000000000",
+        &summary)));
+    ATF_REQUIRE_MATCH("Plan line too long",
+        summary.parse_error);
+}
+
+
+ATF_TC_WITHOUT_HEAD(try_parse_plan__insane_ERANGE);
+ATF_TC_BODY(try_parse_plan__insane_ERANGE, tc)
 {
     kyua_tap_summary_t summary; memset(&summary, 0, sizeof(summary));
     ATF_REQUIRE(!kyua_error_is_set(kyua_tap_try_parse_plan(
@@ -97,7 +111,15 @@ ok_test(const char* contents, const kyua_tap_summary_t* expected_summary)
     ATF_REQUIRE(!kyua_error_is_set(kyua_tap_parse(fd, output, &summary)));
     fclose(output);
 
-    ATF_REQUIRE_EQ(0, memcmp(&summary, expected_summary, sizeof(summary)));
+    ATF_REQUIRE_EQ(summary.parse_error, expected_summary->parse_error);
+    ATF_REQUIRE_EQ(summary.bail_out, expected_summary->bail_out);
+    ATF_REQUIRE_EQ(summary.first_index, expected_summary->first_index);
+    ATF_REQUIRE_EQ(summary.last_index, expected_summary->last_index);
+    ATF_REQUIRE_EQ_MSG(summary.ok_count, expected_summary->ok_count,
+        "%ld != %ld", summary.ok_count, expected_summary->ok_count);
+    ATF_REQUIRE_EQ_MSG(summary.not_ok_count, expected_summary->not_ok_count,
+        "%ld != %ld", summary.not_ok_count, expected_summary->not_ok_count);
+
     ATF_REQUIRE(atf_utils_compare_file("output.txt", contents));
 }
 
@@ -247,6 +269,7 @@ ATF_TP_ADD_TCS(tp)
     ATF_TP_ADD_TC(tp, try_parse_plan__skip);
     ATF_TP_ADD_TC(tp, try_parse_plan__reversed);
     ATF_TP_ADD_TC(tp, try_parse_plan__insane);
+    ATF_TP_ADD_TC(tp, try_parse_plan__insane_ERANGE);
 
     ATF_TP_ADD_TC(tp, parse__ok__pass);
     ATF_TP_ADD_TC(tp, parse__ok__fail);
