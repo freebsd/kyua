@@ -264,14 +264,7 @@ check_gid_not_root(const void* KYUA_DEFS_UNUSED_PARAM(cookie))
     if (getgid() == 0)
         exit(EXIT_FAILURE);
 
-    gid_t groups[1];
-    if (getgroups(1, groups) == -1) {
-        // Should only fail if we get more than one group notifying about
-        // not enough space in the groups variable to store the whole result.
-        assert(errno == EINVAL);
-        exit(EXIT_FAILURE);
-    }
-    if (groups[0] == 0)
+    if (getegid() == 0)
         exit(EXIT_FAILURE);
 
     exit(EXIT_SUCCESS);

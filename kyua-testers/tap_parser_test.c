@@ -62,7 +62,8 @@ ATF_TC_BODY(try_parse_plan__insane, tc)
     kyua_tap_summary_t summary; memset(&summary, 0, sizeof(summary));
     ATF_REQUIRE(!kyua_error_is_set(kyua_tap_try_parse_plan(
         "120830981209831..234891793874080981092803981092312", &summary)));
-    ATF_REQUIRE_MATCH("too long", summary.parse_error);
+    ATF_REQUIRE_MATCH("Plan line includes out of range numbers",
+        summary.parse_error);
 }
 
 
