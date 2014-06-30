@@ -42,6 +42,7 @@ extern "C" {
 #include "utils/fs/path.hpp"
 #include "utils/logging/operations.hpp"
 #include "utils/sqlite/database.hpp"
+#include "utils/sqlite/exceptions.hpp"
 #include "utils/sqlite/statement.ipp"
 
 namespace datetime = utils::datetime;
@@ -287,6 +288,22 @@ ATF_TEST_CASE_BODY(backend__open_rw__integrity_error)
 }
 
 
+ATF_TEST_CASE(backend__close);
+ATF_TEST_CASE_HEAD(backend__close)
+{
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
+}
+ATF_TEST_CASE_BODY(backend__close)
+{
+    store::backend backend = store::backend::open_rw(fs::path("test.db"));
+    backend.database().exec("SELECT * FROM metadata");
+    backend.close();
+    ATF_REQUIRE_THROW(utils::sqlite::error,
+                      backend.database().exec("SELECT * FROM metadata"));
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, detail__backup_database__ok);
@@ -310,6 +327,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, backend__open_rw__ok);
     ATF_ADD_TEST_CASE(tcs, backend__open_rw__create_missing);
     ATF_ADD_TEST_CASE(tcs, backend__open_rw__integrity_error);
+    ATF_ADD_TEST_CASE(tcs, backend__close);
 
     // Tests for migrate_schema are in schema_inttest.  This is because, for
     // such tests to be meaningful, they need to be integration tests and don't

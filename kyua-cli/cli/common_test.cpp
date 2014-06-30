@@ -28,6 +28,7 @@
 
 #include "cli/common.hpp"
 
+#include <cstdlib>
 #include <fstream>
 
 #include <atf-c++.hpp>
@@ -71,48 +72,49 @@ mkfilter(const char* test_program, const char* test_case)
 }  // anonymous namespace
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(file_writer__stdout);
-ATF_TEST_CASE_BODY(file_writer__stdout)
+ATF_TEST_CASE_WITHOUT_HEAD(open_output_file__stdout);
+ATF_TEST_CASE_BODY(open_output_file__stdout)
 {
-    cmdline::ui_mock ui;
-    {
-        cli::file_writer writer(&ui, fs::path("/dev/stdout"));
-        writer("A simple message");
+    const pid_t pid = atf::utils::fork();
+    if (pid == 0) {
+        std::auto_ptr< std::ostream > output = cli::open_output_file(
+            fs::path("/dev/stdout"));
+        (*output) << "Message to stdout\n";
+        output.reset();
+        std::exit(EXIT_SUCCESS);
     }
-
-    ATF_REQUIRE_EQ(1, ui.out_log().size());
-    ATF_REQUIRE_EQ("A simple message", ui.out_log()[0]);
-    ATF_REQUIRE(ui.err_log().empty());
+    atf::utils::wait(pid, EXIT_SUCCESS, "Message to stdout\n", "");
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(file_writer__stderr);
-ATF_TEST_CASE_BODY(file_writer__stderr)
+ATF_TEST_CASE_WITHOUT_HEAD(open_output_file__stderr);
+ATF_TEST_CASE_BODY(open_output_file__stderr)
 {
-    cmdline::ui_mock ui;
-    {
-        cli::file_writer writer(&ui, fs::path("/dev/stderr"));
-        writer("A simple message");
+    const pid_t pid = atf::utils::fork();
+    if (pid == 0) {
+        std::auto_ptr< std::ostream > output = cli::open_output_file(
+            fs::path("/dev/stderr"));
+        (*output) << "Message to stderr\n";
+        output.reset();
+        std::exit(EXIT_SUCCESS);
     }
-
-    ATF_REQUIRE(ui.out_log().empty());
-    ATF_REQUIRE_EQ(1, ui.err_log().size());
-    ATF_REQUIRE_EQ("A simple message", ui.err_log()[0]);
+    atf::utils::wait(pid, EXIT_SUCCESS, "", "Message to stderr\n");
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(file_writer__other);
-ATF_TEST_CASE_BODY(file_writer__other)
+ATF_TEST_CASE_WITHOUT_HEAD(open_output_file__other);
+ATF_TEST_CASE_BODY(open_output_file__other)
 {
-    cmdline::ui_mock ui;
-    {
-        cli::file_writer writer(&ui, fs::path("custom"));
-        writer("A simple message");
+    const pid_t pid = atf::utils::fork();
+    if (pid == 0) {
+        std::auto_ptr< std::ostream > output = cli::open_output_file(
+            fs::path("some-file.txt"));
+        (*output) << "Message to other file\n";
+        output.reset();
+        std::exit(EXIT_SUCCESS);
     }
-
-    ATF_REQUIRE(ui.out_log().empty());
-    ATF_REQUIRE(ui.err_log().empty());
-    ATF_REQUIRE(atf::utils::grep_file("A simple message", "custom"));
+    atf::utils::wait(pid, EXIT_SUCCESS, "", "");
+    atf::utils::compare_file("some-file.txt", "Message to other file\n");
 }
 
 
@@ -467,9 +469,9 @@ ATF_TEST_CASE_BODY(format_test_case_id__test_filter)
 
 ATF_INIT_TEST_CASES(tcs)
 {
-    ATF_ADD_TEST_CASE(tcs, file_writer__stdout);
-    ATF_ADD_TEST_CASE(tcs, file_writer__stderr);
-    ATF_ADD_TEST_CASE(tcs, file_writer__other);
+    ATF_ADD_TEST_CASE(tcs, open_output_file__stdout);
+    ATF_ADD_TEST_CASE(tcs, open_output_file__stderr);
+    ATF_ADD_TEST_CASE(tcs, open_output_file__other);
 
     ATF_ADD_TEST_CASE(tcs, build_root_path__default);
     ATF_ADD_TEST_CASE(tcs, build_root_path__explicit);

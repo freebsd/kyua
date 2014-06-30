@@ -380,6 +380,46 @@ CHECK(rewrite__timed_out,
       false);
 
 
+/// Fills a buffer with a prefix string and multiple copies of another.
+///
+/// \param prefix Prefix for the output string.
+/// \param rep String to be repeated until the output buffer is full.
+/// \param buffer Output buffer.
+/// \param bufsize Size of the output buffer.
+static void
+fill_buffer(const char* prefix, const char* rep, char* buffer,
+            const size_t bufsize)
+{
+    char* ptr = stpncpy(buffer, prefix, bufsize);
+    while (ptr < buffer + bufsize) {
+        ptr = stpncpy(ptr, rep, bufsize - (ptr - buffer));
+    }
+    buffer[bufsize - 1] = '\0';
+}
+
+
+ATF_TC_WITHOUT_HEAD(rewrite__too_long_with_newlines);
+ATF_TC_BODY(rewrite__too_long_with_newlines, tc)
+{
+    char input[1000];
+    fill_buffer("failed: ", "line\n", input, sizeof(input));
+
+    // This is quite awful but is the price we have to pay for using fixed-size
+    // buffers in the code for simplicity and speed...
+    char exp_output[1024 + 8 /* strlen("failed: ") */ + 1];
+    fill_buffer("failed: ", "line<<NEWLINE>>", exp_output, sizeof(exp_output));
+    exp_output[sizeof(exp_output) - 2] = '\n';
+
+    bool success;
+    atf_utils_create_file("in.txt", "%s", input);
+    RE(kyua_atf_result_rewrite("in.txt", "out.txt",
+                               generate_wait_exitstatus(EXIT_FAILURE),
+                               false, &success));
+    atf_utils_cat_file("out.txt", "OUTPUT:   ");
+    printf("EXPECTED: %s", exp_output);
+    ATF_REQUIRE(atf_utils_compare_file("out.txt", exp_output));
+    ATF_REQUIRE_EQ(false, success);
+}
 ATF_TC_WITHOUT_HEAD(rewrite__missing_file);
 ATF_TC_BODY(rewrite__missing_file, tc)
 {
@@ -517,6 +557,7 @@ ATF_TP_ADD_TCS(tp)
 
     ATF_TP_ADD_TC(tp, rewrite__timed_out);
 
+    ATF_TP_ADD_TC(tp, rewrite__too_long_with_newlines);
     ATF_TP_ADD_TC(tp, rewrite__missing_file);
     ATF_TP_ADD_TC(tp, rewrite__empty);
     ATF_TP_ADD_TC(tp, rewrite__unknown_status);

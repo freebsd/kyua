@@ -238,7 +238,7 @@ read_reason(FILE* input, const char* first_line, char* output,
     advance(&output, &output_size);
 
     bool had_newline = true;
-    while (!is_really_eof(input)) {
+    while (output_size > 1 && !is_really_eof(input)) {
         if (had_newline) {
             snprintf(output, output_size, "<<NEWLINE>>");
             advance(&output, &output_size);

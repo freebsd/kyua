@@ -1,4 +1,4 @@
-// Copyright 2011 Google Inc.
+// Copyright 2014 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,73 +26,52 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file store/backend.hpp
-/// Interface to the backend database.
+/// \file engine/report_junit.hpp
+/// Generates a JUnit report out of a test suite execution.
 
-#if !defined(STORE_BACKEND_HPP)
-#define STORE_BACKEND_HPP
+#if !defined(ENGINE_REPORT_JUNIT_HPP)
+#define ENGINE_REPORT_JUNIT_HPP
 
-#include "utils/shared_ptr.hpp"
+#include <ostream>
+#include <string>
+
+#include "engine/drivers/scan_action.hpp"
 
 namespace utils {
-namespace fs {
-class path;
-}  // namespace fs
-namespace sqlite {
-class database;
-}  // namespace sqlite
+namespace datetime {
+class delta;
+}  // namespace datetime
 }  // namespace utils
 
-namespace store {
+namespace engine {
 
 
 class metadata;
+class test_program;
 
 
-namespace detail {
+std::string junit_classname(const engine::test_program&);
+std::string junit_duration(const utils::datetime::delta&);
+extern const char* const junit_metadata_prefix;
+extern const char* const junit_metadata_suffix;
+std::string junit_metadata(const engine::metadata&);
 
 
-extern int current_schema_version;
-
-
-utils::fs::path migration_file(const int, const int);
-utils::fs::path schema_file(void);
-metadata initialize(utils::sqlite::database&);
-void backup_database(const utils::fs::path&, const int);
-
-
-}  // anonymous namespace
-
-
-class transaction;
-
-
-/// Public interface to the database store.
-class backend {
-    struct impl;
-
-    /// Pointer to the shared internal implementation.
-    std::shared_ptr< impl > _pimpl;
-
-    friend class metadata;
-
-    backend(impl*);
+/// Hooks for the scan_action driver to generate a JUnit report.
+class report_junit_hooks : public engine::drivers::scan_action::base_hooks {
+    /// Stream to which to write the report.
+    std::ostream& _output;
 
 public:
-    ~backend(void);
+    report_junit_hooks(std::ostream&);
 
-    static backend open_ro(const utils::fs::path&);
-    static backend open_rw(const utils::fs::path&);
-    void close(void);
+    void got_action(const int64_t, const engine::action&);
+    void got_result(store::results_iterator&);
 
-    utils::sqlite::database& database(void);
-    transaction start(void);
+    void end(const engine::drivers::scan_action::result&);
 };
 
 
-void migrate_schema(const utils::fs::path&);
+}  // namespace engine
 
-
-}  // namespace store
-
-#endif  // !defined(STORE_BACKEND_HPP)
+#endif  // !defined(ENGINE_REPORT_JUNIT_HPP)

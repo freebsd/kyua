@@ -3,9 +3,8 @@ Changes in version 0.9
 
 STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 
-* Changed the 'report' command, again, to support outputing various
-  different formats.  The '--output' flag has been modified to support
-  specifying the format to generate.
+* Added the 'report-junit' command to generate JUnit XML result files.
+  The output has been verified to work within Jenkins.
 
 
 Changes in version 0.8
