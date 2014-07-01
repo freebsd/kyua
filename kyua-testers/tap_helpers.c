@@ -195,9 +195,9 @@ main(const int argc, char* const* const KYUA_DEFS_UNUSED_PARAM(argv))
         return skip_plan_helper();
     } else if (strcmp(helper_name, "sleep") == 0) {
         return sleep_helper();
-    } else if (strcmp(helper_name, "todo_testcase_not_ok") == 0) {
+    } else if (strcmp(helper_name, "todo_not_ok") == 0) {
         return todo_testcase_not_ok_helper();
-    } else if (strcmp(helper_name, "todo_testcase_ok") == 0) {
+    } else if (strcmp(helper_name, "todo_ok") == 0) {
 	return todo_testcase_ok_helper();
     } else {
         errx(EXIT_BOGUS, "Unknown helper '%s'", helper_name);

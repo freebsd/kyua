@@ -44,7 +44,6 @@
 /// Name of a regex error type.
 static const char* const regex_error_type = "regex";
 
-
 /// Representation of a regex error.
 struct regex_error_data {
     /// Value of the error code captured during the error creation.
@@ -177,7 +176,6 @@ kyua_tap_try_parse_plan(const char* line, kyua_tap_summary_t* summary)
     regex_t preg;
     const char* error;
     long first_index, last_index;
-    bool skip_plan;
     int code;
 
     kyua_error = kyua_error_ok();
@@ -197,7 +195,7 @@ kyua_tap_try_parse_plan(const char* line, kyua_tap_summary_t* summary)
     }
     regfree(&preg);
 
-    if (summary->first_index != 0 || summary->last_index != 0) {
+    if (summary->first_index != -1) {
         summary->parse_error = "Output includes two test plans";
         goto end;
     }
@@ -214,29 +212,23 @@ kyua_tap_try_parse_plan(const char* line, kyua_tap_summary_t* summary)
         goto end;
     }
 
-    skip_plan = false;
+    summary->skipped_all = false;
     if (matches[3].rm_so != -1 && matches[3].rm_eo != -1) {
-        char buffer[1024];
-        const size_t length = matches[3].rm_eo - matches[3].rm_so;
-
-        if (length > sizeof(buffer) - 1) {
-            summary->parse_error =
-                "Reason/description attached to plan too long";
+        if (matches[3].rm_eo - matches[3].rm_so > 1024) {
+            summary->parse_error = "Description attached to plan too long";
             goto end;
         }
-        memcpy(buffer, line + matches[3].rm_so, length);
-        buffer[length] = '\0';
 
-        if (strstr(buffer, "SKIP") != NULL) {
+        if (strstr(line + matches[3].rm_so, "SKIP") != NULL) {
             if (summary->ok_count || summary->not_ok_count ||
-                summary->bail_out)
-                summary->parse_error =
-                    "SKIP testplans must be declared at the top of the test";
-            summary->bail_out = skip_plan = true;
+                summary->bail_out) {
+                summary->parse_error= "No plan found in TAP output";
+            }
+            summary->skipped_all = true;
         }
     }
 
-    if (!skip_plan && last_index < first_index) {
+    if (!summary->skipped_all && last_index < first_index) {
         summary->parse_error = "Test plan is reversed";
     } else {
         summary->first_index = first_index;
@@ -261,9 +253,10 @@ end:
 kyua_error_t
 kyua_tap_parse(const int fd, FILE* output, kyua_tap_summary_t* summary)
 {
-    regmatch_t matches[3];
+    regmatch_t simple_test_matches[3], test_matches[5];
     kyua_error_t error;
-    regex_t linereg;
+    regex_t simple_test_reg;
+    regex_t test_reg;
     char line[1024];  // It's ugly to have a limit, but it's easier this way.
     int code;
 
@@ -273,14 +266,28 @@ kyua_tap_parse(const int fd, FILE* output, kyua_tap_summary_t* summary)
         return kyua_libc_error_new(errno, "fdopen(3) failed");
     }
 
-    memset(summary, 0, sizeof(kyua_tap_summary_t));
+    kyua_tap_summary_new(*summary);
 
-    code = regcomp(&linereg, "^(not )?ok[ \t]+[^#]+(.*)?$",
+    /// There are two flavors of grammar with TAP:
+    /// 1. "simple tests" -> `($ok)\s+([0-9]+)\s*(:\s*([^#]+))?`?
+    /// 2. "tests" ->        `($ok)\s*([0-9]+)?\s*(.*)`
+    code = regcomp(&simple_test_reg, "^(not )?ok[ \t]+[0-9]+[ \t]+([^#]+)?$",
         REG_EXTENDED);
-    if (code == 0)
-        error = kyua_error_ok();
-    else
-        error = regex_error_new(code, &linereg, "regcomp failed");
+    if (code != 0) {
+        error = regex_error_new(code, &simple_test_reg, "regcomp failed");
+        goto end2;
+    }
+
+    code = regcomp(&test_reg, "^(not )?ok[ \t]*([0-9]+)?([^#]+)?(.*)?$",
+        REG_EXTENDED);
+
+    if (code != 0) {
+        regfree(&simple_test_reg);
+        error = regex_error_new(code, &test_reg, "regcomp failed");
+        goto end;
+    }
+
+    error = kyua_error_ok();
 
     while (!kyua_error_is_set(error) &&
            summary->parse_error == NULL && !summary->bail_out &&
@@ -290,37 +297,64 @@ kyua_tap_parse(const int fd, FILE* output, kyua_tap_summary_t* summary)
         fprintf(output, "%s\n", line);
 
         error = kyua_tap_try_parse_plan(line, summary);
+        if (kyua_error_is_set(error)) {
+            continue;
+        }
 
-        if (strstr(line, "Bail out!") == line)
+        if (strstr(line, "Bail out!") == line) {
             summary->bail_out = true;
-        else {
-            code = regexec(&linereg, line, sizeof(matches)/sizeof(*matches),
-                matches, 0);
-            if (code == 0) {
-                /// not SKIP/TODO and "not ok"
-                //
-                /// NOTE: the TAP protocol states that all SKIP/TODO testcases
-                /// should be marked "ok".
-                ///
-                /// XXX: TODO should be xfail in kyua-speak.
-                if (matches[1].rm_so != -1 && matches[1].rm_eo != -1 &&
-                    matches[2].rm_so != -1 && matches[2].rm_eo != -1 &&
-                    strcasestr(line + matches[2].rm_so, "SKIP") == NULL &&
-                    strcasestr(line + matches[2].rm_so, "TODO") == NULL) {
-		    summary->not_ok_count++;
-                } else
-                    summary->ok_count++;
+            continue;
+        }
 
+        code = regexec(&simple_test_reg, line,
+            sizeof(simple_test_matches)/sizeof(*simple_test_matches),
+            simple_test_matches, 0);
+
+        if (code == 0) {
+            if (simple_test_matches[1].rm_so != -1 &&
+                simple_test_matches[1].rm_eo != -1) {
+                summary->not_ok_count++;
             } else {
-                if (code != REG_NOMATCH) {
-                    error = regex_error_new(code, &linereg, "regexec failed");
-                }
+                summary->ok_count++;
+            }
+        } else {
+            if (code != REG_NOMATCH) {
+                error = regex_error_new(code, &simple_test_reg, "regexec failed");
             }
         }
-    }
-    fclose(input);
+        // There was a match per the simple_test pattern
+        if (code != REG_NOMATCH) {
+            continue;
+        }
 
-    if (summary->parse_error == NULL && !summary->bail_out) {
+        code = regexec(&test_reg, line, sizeof(test_matches)/sizeof(*test_matches),
+            test_matches, 0);
+        if (code == 0) {
+            /// not SKIP/TODO and "not ok"
+            //
+            /// NOTE: the TAP protocol states that all SKIP/TODO testcases
+            /// should be marked "ok".
+            ///
+            /// XXX: TODO should be xfail in kyua-speak.
+            if (test_matches[1].rm_so != -1 && test_matches[1].rm_eo != -1 &&
+                test_matches[4].rm_so != -1 && test_matches[4].rm_eo != -1 &&
+                strcasestr(line + test_matches[4].rm_so, "SKIP") == NULL &&
+                strcasestr(line + test_matches[4].rm_so, "TODO") == NULL) {
+                summary->not_ok_count++;
+            } else {
+                summary->ok_count++;
+            }
+        } else {
+            if (code != REG_NOMATCH) {
+                error = regex_error_new(code, &test_reg, "regexec failed");
+            }
+        }
+
+    }
+
+    if (summary->first_index == -1) {
+        summary->parse_error = "No plan found in TAP output";
+    } else if (summary->parse_error == NULL && !summary->bail_out) {
         const long exp_count = summary->last_index - summary->first_index + 1;
         const long actual_count = summary->ok_count + summary->not_ok_count;
         if (exp_count != actual_count) {
@@ -328,6 +362,13 @@ kyua_tap_parse(const int fd, FILE* output, kyua_tap_summary_t* summary)
                 "tests";
         }
     }
-    regfree(&linereg);
-    return kyua_error_ok();
+
+end:
+    regfree(&simple_test_reg);
+end2:
+    regfree(&test_reg);
+
+    fclose(input);
+
+    return error;
 }

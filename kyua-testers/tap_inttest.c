@@ -83,6 +83,7 @@ ATF_TC_BODY(test__skip_plan, tc)
     char* helpers = select_helper(tc, "skip_plan");
     check(EXIT_SUCCESS,
           "1..0 # SKIP not running this test suite\n",
+          "",
           "test", helpers, "main", "test-result", NULL);
     free(helpers);
 
@@ -94,10 +95,11 @@ ATF_TC(test__skip_testcase);
 ATF_TC_HEAD(test__skip_testcase, tc) { setup(tc, true); }
 ATF_TC_BODY(test__skip_testcase, tc)
 {
-    char* helpers = select_helper(tc, "skip_testcase");
+    char* helpers = select_helper(tc, "skip");
     check(EXIT_SUCCESS,
-          "1..1\n",
+          "1..1\n"
           "ok - 1 # SKIP\n",
+          "",
           "test", helpers, "main", "test-result", NULL);
     free(helpers);
 
@@ -109,10 +111,11 @@ ATF_TC(test__todo_testcase_not_ok);
 ATF_TC_HEAD(test__todo_testcase_not_ok, tc) { setup(tc, true); }
 ATF_TC_BODY(test__todo_testcase_not_ok, tc)
 {
-    char* helpers = select_helper(tc, "todo_testcase_not_ok");
+    char* helpers = select_helper(tc, "todo_not_ok");
     check(EXIT_SUCCESS,
-          "1..1\n",
+          "1..1\n"
           "not ok - 1 # TODO: need to implement this testcase\n",
+          "",
           "test", helpers, "main", "test-result", NULL);
     free(helpers);
 
@@ -124,10 +127,11 @@ ATF_TC(test__todo_testcase_ok);
 ATF_TC_HEAD(test__todo_testcase_ok, tc) { setup(tc, true); }
 ATF_TC_BODY(test__todo_testcase_ok, tc)
 {
-    char* helpers = select_helper(tc, "todo_testcase_ok");
+    char* helpers = select_helper(tc, "todo_ok");
     check(EXIT_SUCCESS,
-          "1..1\n",
+          "1..1\n"
           "ok - 1 # TODO: need to implement this testcase\n",
+          "",
           "test", helpers, "main", "test-result", NULL);
     free(helpers);
 
@@ -189,7 +193,7 @@ ATF_TC_BODY(test__bogus_plan_negative_count, tc)
     free(helpers);
 
     ATF_REQUIRE(atf_utils_compare_file("test-result",
-        "broken: Reported plan differs from actual executed tests\n"));
+        "broken: No plan found in TAP output\n"));
 }
 
 

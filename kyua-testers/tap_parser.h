@@ -34,6 +34,7 @@
 
 #include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "error_fwd.h"
 
@@ -47,6 +48,10 @@ struct kyua_tap_summary {
     /// Set to true if the program asked to bail out.  In this case, the
     /// remaining fields may be inconsistent.
     bool bail_out;
+
+    /// Set to true if the program specified a SKIP test plan.  In this case,
+    /// the remaining fields may be inconsistent.
+    bool skipped_all;
 
     /// Index of the first test as reported by the test plan.
     long first_index;
@@ -63,6 +68,10 @@ struct kyua_tap_summary {
 /// Shorthand for a kyua_tap_summary structure.
 typedef struct kyua_tap_summary kyua_tap_summary_t;
 
+#define	kyua_tap_summary_new(_summary) do {			\
+		memset(&(_summary), 0, sizeof((_summary)));	\
+		(_summary).first_index = -1;			\
+	} while (0)
 
 kyua_error_t kyua_tap_try_parse_plan(const char*, kyua_tap_summary_t*);
 

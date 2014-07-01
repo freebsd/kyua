@@ -39,9 +39,12 @@
 ATF_TC_WITHOUT_HEAD(try_parse_plan__ok);
 ATF_TC_BODY(try_parse_plan__ok, tc)
 {
-    kyua_tap_summary_t summary; memset(&summary, 0, sizeof(summary));
+    kyua_tap_summary_t summary;
+
+    kyua_tap_summary_new(summary);
     ATF_REQUIRE(!kyua_error_is_set(kyua_tap_try_parse_plan("3..85", &summary)));
-    ATF_REQUIRE_EQ(NULL, summary.parse_error);
+    ATF_REQUIRE_EQ_MSG(NULL, summary.parse_error,
+        "Encountered a parse error: %s", summary.parse_error);
     ATF_REQUIRE_EQ(3, summary.first_index);
     ATF_REQUIRE_EQ(85, summary.last_index);
 }
@@ -50,7 +53,9 @@ ATF_TC_BODY(try_parse_plan__ok, tc)
 ATF_TC_WITHOUT_HEAD(try_parse_plan__skip);
 ATF_TC_BODY(try_parse_plan__skip, tc)
 {
-    kyua_tap_summary_t summary; memset(&summary, 0, sizeof(summary));
+    kyua_tap_summary_t summary;
+
+    kyua_tap_summary_new(summary);
     ATF_REQUIRE(!kyua_error_is_set(kyua_tap_try_parse_plan(
         "1..0 # SKIP: got better things to do",
 	&summary)));
@@ -63,7 +68,9 @@ ATF_TC_BODY(try_parse_plan__skip, tc)
 ATF_TC_WITHOUT_HEAD(try_parse_plan__reversed);
 ATF_TC_BODY(try_parse_plan__reversed, tc)
 {
-    kyua_tap_summary_t summary; memset(&summary, 0, sizeof(summary));
+    kyua_tap_summary_t summary;
+
+    kyua_tap_summary_new(summary);
     ATF_REQUIRE(!kyua_error_is_set(kyua_tap_try_parse_plan("8..5", &summary)));
     ATF_REQUIRE_MATCH("is reversed", summary.parse_error);
 }
@@ -72,7 +79,9 @@ ATF_TC_BODY(try_parse_plan__reversed, tc)
 ATF_TC_WITHOUT_HEAD(try_parse_plan__insane);
 ATF_TC_BODY(try_parse_plan__insane, tc)
 {
-    kyua_tap_summary_t summary; memset(&summary, 0, sizeof(summary));
+    kyua_tap_summary_t summary;
+
+    kyua_tap_summary_new(summary);
     ATF_REQUIRE(!kyua_error_is_set(kyua_tap_try_parse_plan(
         "120830981209831..23489179387408098109280398109231200000000000000000000000000000000000000000000000000000000000",
         &summary)));
@@ -84,7 +93,9 @@ ATF_TC_BODY(try_parse_plan__insane, tc)
 ATF_TC_WITHOUT_HEAD(try_parse_plan__insane_ERANGE);
 ATF_TC_BODY(try_parse_plan__insane_ERANGE, tc)
 {
-    kyua_tap_summary_t summary; memset(&summary, 0, sizeof(summary));
+    kyua_tap_summary_t summary;
+
+    kyua_tap_summary_new(summary);
     ATF_REQUIRE(!kyua_error_is_set(kyua_tap_try_parse_plan(
         "120830981209831..234891793874080981092803981092312", &summary)));
     ATF_REQUIRE_MATCH("Plan line includes out of range numbers",
