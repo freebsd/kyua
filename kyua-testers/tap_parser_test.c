@@ -58,7 +58,7 @@ ATF_TC_BODY(try_parse_plan__skip, tc)
     kyua_tap_summary_new(summary);
     ATF_REQUIRE(!kyua_error_is_set(kyua_tap_try_parse_plan(
         "1..0 # SKIP: got better things to do",
-	&summary)));
+        &summary)));
     ATF_REQUIRE_EQ(NULL, summary.parse_error);
     ATF_REQUIRE_EQ(1, summary.first_index);
     ATF_REQUIRE_EQ(0, summary.last_index);
