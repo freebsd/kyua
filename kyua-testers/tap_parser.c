@@ -44,6 +44,7 @@
 /// Name of a regex error type.
 static const char* const regex_error_type = "regex";
 
+
 /// Representation of a regex error.
 struct regex_error_data {
     /// Value of the error code captured during the error creation.
@@ -182,18 +183,15 @@ kyua_tap_try_parse_plan(const char* line, kyua_tap_summary_t* summary)
 
     code = regcomp(&preg, "^([0-9]+)\\.\\.([0-9]+)(.*#.*)?$",
         REG_EXTENDED);
-    if (code != 0) {
-        kyua_error = regex_error_new(code, &preg, "regcomp failed");
-        goto end;
-    }
+    if (code != 0)
+        return regex_error_new(code, &preg, "regcomp failed");
 
     code = regexec(&preg, line, sizeof(matches)/sizeof(*matches), matches, 0);
     if (code != 0) {
         if (code != REG_NOMATCH)
-            kyua_error = regex_error_new(code, &preg, "regexec failed");
+            return regex_error_new(code, &preg, "regexec failed");
         goto end;
     }
-    regfree(&preg);
 
     if (summary->first_index != -1) {
         summary->parse_error = "Output includes two test plans";
@@ -275,7 +273,7 @@ kyua_tap_parse(const int fd, FILE* output, kyua_tap_summary_t* summary)
         REG_EXTENDED);
     if (code != 0) {
         error = regex_error_new(code, &simple_test_reg, "regcomp failed");
-        goto end2;
+        goto end;
     }
 
     code = regcomp(&test_reg, "^(not )?ok[ \t]*([0-9]+)?([^#]+)?(.*)?$",
@@ -363,11 +361,10 @@ kyua_tap_parse(const int fd, FILE* output, kyua_tap_summary_t* summary)
         }
     }
 
-end:
     regfree(&simple_test_reg);
-end2:
     regfree(&test_reg);
 
+end:
     fclose(input);
 
     return error;
