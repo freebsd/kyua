@@ -27,8 +27,21 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+# Creates a new database file in the store directory.
+#
+# Subsequent invocations of db-exec should just pick this new file up.
+create_empty_store() {
+    cat >Kyuafile <<EOF
+syntax(2)
+EOF
+    atf_check -s exit:0 -o ignore -e empty kyua test
+}
+
+
 utils_test_case one_arg
 one_arg_body() {
+    create_empty_store
+
     atf_check -s exit:0 -o save:metadata.csv -e empty \
         kyua db-exec "SELECT * FROM metadata"
     atf_check -s exit:0 -o ignore -e empty \
@@ -38,6 +51,8 @@ one_arg_body() {
 
 utils_test_case many_args
 many_args_body() {
+    create_empty_store
+
     atf_check -s exit:0 -o save:metadata.csv -e empty \
         kyua db-exec SELECT "*" FROM metadata
     atf_check -s exit:0 -o ignore -e empty \
@@ -48,26 +63,38 @@ many_args_body() {
 utils_test_case no_args
 no_args_body() {
     atf_check -s exit:3 -o empty -e match:"Not enough arguments" kyua db-exec
-    test ! -f .kyua/store.db || atf_fail "Database created but it should" \
+    test ! -d .kyua/actions/ || atf_fail "Database created but it should" \
         "not have been"
 }
 
 
 utils_test_case invalid_statement
 invalid_statement_body() {
+    create_empty_store
+
     atf_check -s exit:1 -o empty -e match:"SQLite error.*foo" \
         kyua db-exec foo
-    test -f .kyua/store.db || atf_fail "Database not created as part of" \
-        "initialization"
+}
+
+
+utils_test_case no_create_store
+no_create_store_body() {
+    atf_check -s exit:1 -o empty -e match:"Cannot open 'not-here'" \
+        kyua db-exec --store=not-here "SELECT * FROM metadata"
+    if test -f not-here; then
+        atf_fail "Database created but it should not have been"
+    fi
 }
 
 
 utils_test_case store_flag__default_home
 store_flag__default_home_body() {
     HOME=home-dir
+    create_empty_store
+
     atf_check -s exit:0 -o save:metadata.csv -e empty \
         kyua db-exec "SELECT * FROM metadata"
-    test -f home-dir/.kyua/store.db || atf_fail "Database not created in" \
+    test -f home-dir/.kyua/actions/*.db || atf_fail "Database not created in" \
         "the home directory"
     atf_check -s exit:0 -o ignore -e empty \
         grep 'schema_version,.*timestamp' metadata.csv
@@ -76,12 +103,15 @@ store_flag__default_home_body() {
 
 utils_test_case store_flag__explicit__ok
 store_flag__explicit__ok_body() {
+    create_empty_store
+    mv .kyua/actions/*.db custom.db
+    rmdir .kyua/actions
+
     HOME=home-dir
     atf_check -s exit:0 -o save:metadata.csv -e empty \
-        kyua --logfile=/dev/null db-exec -s store.db "SELECT * FROM metadata"
+        kyua --logfile=/dev/null db-exec -s custom.db "SELECT * FROM metadata"
     test ! -d home-dir/.kyua || atf_fail "Home directory created but this" \
         "should not have happened"
-    test -f store.db || atf_fail "Database not created in expected directory"
     atf_check -s exit:0 -o ignore -e empty \
         grep 'schema_version,.*timestamp' metadata.csv
 }
@@ -92,15 +122,15 @@ store_flag__explicit__fail_head() {
     atf_set "require.user" "unprivileged"
 }
 store_flag__explicit__fail_body() {
-    mkdir dir
-    chmod 555 dir
-    atf_check -s exit:2 -o empty -e match:"Cannot open.*dir/foo.db" \
-        kyua db-exec --store=dir/foo.db "SELECT * FROM metadata"
+    atf_check -s exit:1 -o empty -e match:"Cannot open.*foo.db" \
+        kyua db-exec --store=foo.db "SELECT * FROM metadata"
 }
 
 
 utils_test_case no_headers_flag
 no_headers_flag_body() {
+    create_empty_store
+
     atf_check kyua db-exec "CREATE TABLE data" \
         "(a INTEGER PRIMARY KEY, b INTEGER, c TEXT)"
     atf_check kyua db-exec "INSERT INTO data VALUES (65, 43, NULL)"
@@ -125,6 +155,7 @@ atf_init_test_cases() {
     atf_add_test_case many_args
     atf_add_test_case no_args
     atf_add_test_case invalid_statement
+    atf_add_test_case no_create_store
 
     atf_add_test_case store_flag__default_home
     atf_add_test_case store_flag__explicit__ok

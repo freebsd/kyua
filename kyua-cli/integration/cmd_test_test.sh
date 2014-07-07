@@ -41,8 +41,8 @@ EOF
 simple_all_pass:pass  ->  passed  [S.UUUs]
 simple_all_pass:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 
+Results saved to $(utils_action_file)
 2/2 passed (0 failed)
-Committed action 1
 EOF
 
     utils_cp_helper simple_all_pass .
@@ -64,8 +64,8 @@ EOF
 simple_some_fail:fail  ->  failed: This fails on purpose  [S.UUUs]
 simple_some_fail:pass  ->  passed  [S.UUUs]
 
+Results saved to $(utils_action_file)
 1/2 passed (1 failed)
-Committed action 1
 EOF
 
     utils_cp_helper simple_some_fail .
@@ -95,8 +95,8 @@ third:pass  ->  passed  [S.UUUs]
 third:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 fourth:main  ->  skipped: Required file '/non-existent/foo' not found  [S.UUUs]
 
+Results saved to $(utils_action_file)
 7/7 passed (0 failed)
-Committed action 1
 EOF
 
     utils_cp_helper simple_all_pass first
@@ -129,8 +129,8 @@ third:pass  ->  passed  [S.UUUs]
 third:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 fourth:main  ->  failed: Returned non-success exit status 76  [S.UUUs]
 
+Results saved to $(utils_action_file)
 4/7 passed (3 failed)
-Committed action 1
 EOF
 
     utils_cp_helper simple_some_fail first
@@ -160,8 +160,8 @@ expect_all_pass:failure  ->  expected_failure: Oh no: Forced failure  [S.UUUs]
 expect_all_pass:signal  ->  expected_failure: Exiting with correct signal  [S.UUUs]
 expect_all_pass:timeout  ->  expected_failure: This times out  [S.UUUs]
 
+Results saved to $(utils_action_file)
 5/5 passed (0 failed)
-Committed action 1
 EOF
 
     utils_cp_helper expect_all_pass .
@@ -187,8 +187,8 @@ expect_some_fail:pass  ->  passed  [S.UUUs]
 expect_some_fail:signal  ->  failed: Test case expected to receive signal 15 but got 9  [S.UUUs]
 expect_some_fail:timeout  ->  failed: Test case was expected to hang but it continued execution  [S.UUUs]
 
+Results saved to $(utils_action_file)
 1/6 passed (5 failed)
-Committed action 1
 EOF
 
     utils_cp_helper expect_some_fail .
@@ -211,8 +211,8 @@ bogus_test_cases:die  ->  broken: Premature exit; test case received signal 9  [
 bogus_test_cases:exit  ->  broken: Premature exit; test case exited with code 0  [S.UUUs]
 bogus_test_cases:pass  ->  passed  [S.UUUs]
 
+Results saved to $(utils_action_file)
 1/3 passed (2 failed)
-Committed action 1
 EOF
 
     utils_cp_helper bogus_test_cases .
@@ -247,8 +247,8 @@ simple_all_pass:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 subdir/simple_some_fail:fail  ->  failed: This fails on purpose  [S.UUUs]
 subdir/simple_some_fail:pass  ->  passed  [S.UUUs]
 
+Results saved to $(utils_action_file)
 3/4 passed (1 failed)
-Committed action 1
 EOF
     atf_check -s exit:1 -o file:expout -e empty kyua test
 }
@@ -276,8 +276,8 @@ EOF
 subdir/simple_all_pass:pass  ->  passed  [S.UUUs]
 subdir/simple_all_pass:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 
+Results saved to $(utils_action_file)
 2/2 passed (0 failed)
-Committed action 1
 EOF
     atf_check -s exit:0 -o file:expout -e empty kyua test subdir
 }
@@ -299,8 +299,8 @@ EOF
     cat >expout <<EOF
 first:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 
+Results saved to $(utils_action_file)
 1/1 passed (0 failed)
-Committed action 1
 EOF
     atf_check -s exit:0 -o file:expout -e empty kyua test first:skip
 }
@@ -323,8 +323,8 @@ EOF
 second:fail  ->  failed: This fails on purpose  [S.UUUs]
 second:pass  ->  passed  [S.UUUs]
 
+Results saved to $(utils_action_file)
 1/2 passed (1 failed)
-Committed action 1
 EOF
     atf_check -s exit:1 -o file:expout -e empty kyua test second
 }
@@ -369,8 +369,8 @@ subdir/second:fail  ->  failed: This fails on purpose  [S.UUUs]
 subdir/second:pass  ->  passed  [S.UUUs]
 first:pass  ->  passed  [S.UUUs]
 
+Results saved to $(utils_action_file)
 2/3 passed (1 failed)
-Committed action 1
 EOF
     atf_check -s exit:1 -o file:expout -e empty kyua test subdir first:pass
 }
@@ -392,6 +392,8 @@ EOF
 
 utils_test_case many_args__no_match__all
 many_args__no_match__all_body() {
+    utils_install_timestamp_wrapper
+
     cat >Kyuafile <<EOF
 syntax(2)
 test_suite("top-level")
@@ -402,7 +404,7 @@ EOF
     utils_cp_helper simple_all_pass second
 
     cat >expout <<EOF
-Committed action 1
+Results saved to $(utils_action_file)
 EOF
     cat >experr <<EOF
 kyua: W: No test cases matched by the filter 'first1'.
@@ -432,8 +434,8 @@ first:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 third:fail  ->  failed: This fails on purpose  [S.UUUs]
 third:pass  ->  passed  [S.UUUs]
 
+Results saved to $(utils_action_file)
 3/4 passed (1 failed)
-Committed action 1
 EOF
 
     cat >experr <<EOF
@@ -475,8 +477,8 @@ first:pass  ->  passed  [S.UUUs]
 first:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 subdir/fourth:fail  ->  failed: This fails on purpose  [S.UUUs]
 
+Results saved to $(utils_action_file root)
 2/3 passed (1 failed)
-Committed action 1
 EOF
     atf_check -s exit:1 -o file:expout -e empty kyua test \
         -k "$(pwd)/root/Kyuafile" first subdir/fourth:fail
@@ -500,8 +502,8 @@ EOF
 first:pass  ->  passed  [S.UUUs]
 first:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 
+Results saved to $(utils_action_file)
 2/2 passed (0 failed)
-Committed action 1
 EOF
     CREATE_COOKIE="$(pwd)/cookie"; export CREATE_COOKIE
     atf_check -s exit:0 -o file:expout -e empty kyua test first
@@ -549,51 +551,24 @@ store_contents_body() {
 syntax(2)
 atf_test_program{name="some-program", test_suite="suite1"}
 EOF
-    utils_cp_helper simple_all_pass some-program
-    cat >expout <<EOF
-some-program:pass  ->  passed  [S.UUUs]
-some-program:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
-
-2/2 passed (0 failed)
-Committed action 1
-EOF
-
-    # TODO(jmmv): The tests below should not care about the specific contents of
-    # the database, but we cannot do better yet.  Instead, we should bundle
-    # these tests with the tests of the future "report" tests so that we can
-    # actually validate the integration of testing plus reporting.
-
-    atf_check -s exit:0 -o file:expout -e empty kyua test
-    atf_check -s exit:0 -o inline:'1\n' -e empty \
-        kyua db-exec --no-headers "SELECT COUNT(action_id) FROM ACTIONS"
-    atf_check -s exit:0 -o inline:'1\n' -e empty \
-        kyua db-exec --no-headers "SELECT COUNT(context_id) FROM CONTEXTS"
-
-    rm -f some-program
     utils_cp_helper simple_some_fail some-program
     cat >expout <<EOF
 some-program:fail  ->  failed: This fails on purpose  [S.UUUs]
 some-program:pass  ->  passed  [S.UUUs]
 
+Results saved to $(utils_action_file)
 1/2 passed (1 failed)
-Committed action 2
 EOF
 
     atf_check -s exit:1 -o file:expout -e empty kyua test
-    atf_check -s exit:0 -o inline:'2\n' -e empty \
-        kyua db-exec --no-headers "SELECT COUNT(action_id) FROM ACTIONS"
-    atf_check -s exit:0 -o inline:'2\n' -e empty \
-        kyua db-exec --no-headers "SELECT COUNT(context_id) FROM CONTEXTS"
 
 cat >expout <<EOF
-1,some-program,pass,passed,NULL
-1,some-program,skip,skipped,The reason for skipping is this
-2,some-program,fail,failed,This fails on purpose
-2,some-program,pass,passed,NULL
+some-program,fail,failed,This fails on purpose
+some-program,pass,passed,NULL
 EOF
     atf_check -s exit:0 -o file:expout -e empty \
         kyua db-exec --no-headers \
-        "SELECT actions.action_id, " \
+        "SELECT " \
         "       test_programs.relative_path, test_cases.name, " \
         "       test_results.result_type, test_results.result_reason " \
         "FROM actions " \
@@ -603,8 +578,7 @@ EOF
         "     ON test_programs.test_program_id = test_cases.test_program_id " \
         "     JOIN test_results " \
         "     ON test_cases.test_case_id = test_results.test_case_id " \
-        "ORDER BY actions.action_id, test_programs.relative_path, " \
-        "         test_cases.name"
+        "ORDER BY test_programs.relative_path, test_cases.name"
 }
 
 
@@ -617,7 +591,7 @@ EOF
     utils_cp_helper config config1
 
     atf_check -s exit:0 -o ignore -e empty kyua test -s foo1.db
-    test -f foo1.db || atf_fail "-s did not work"
+   test -f foo1.db || atf_fail "-s did not work"
     atf_check -s exit:0 -o ignore -e empty kyua test --store=foo2.db
     test -f foo2.db || atf_fail "--store did not work"
     test ! -f .kyua/store.db || atf_fail "Default database created"
@@ -664,8 +638,8 @@ subdir/second:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 subdir/third:pass  ->  passed  [S.UUUs]
 subdir/third:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 
+Results saved to $(utils_action_file)
 6/6 passed (0 failed)
-Committed action 1
 EOF
 
     mkdir build
@@ -697,17 +671,10 @@ EOF
 sometest:pass  ->  passed  [S.UUUs]
 sometest:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 
+Results saved to $(utils_action_file)
 2/2 passed (0 failed)
-Committed action 1
 EOF
     atf_check -s exit:0 -o file:expout -e empty kyua test -k myfile
-    cat >expout <<EOF
-sometest:pass  ->  passed  [S.UUUs]
-sometest:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
-
-2/2 passed (0 failed)
-Committed action 2
-EOF
     atf_check -s exit:0 -o file:expout -e empty kyua test --kyuafile=myfile
 }
 
@@ -731,16 +698,16 @@ EOF
 sometest:pass  ->  passed  [S.UUUs]
 sometest:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 
+Results saved to $(utils_action_file)
 2/2 passed (0 failed)
-Committed action 1
 EOF
     atf_check -s exit:0 -o file:expout -e empty kyua test -k myfile sometest
     cat >expout <<EOF
 sometest:pass  ->  passed  [S.UUUs]
 sometest:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 
+Results saved to $(utils_action_file)
 2/2 passed (0 failed)
-Committed action 2
 EOF
     atf_check -s exit:0 -o file:expout -e empty kyua test --kyuafile=myfile \
         sometest
@@ -790,6 +757,8 @@ EOF
 
 utils_test_case no_test_program_match
 no_test_program_match_body() {
+    utils_install_timestamp_wrapper
+
     cat >Kyuafile <<EOF
 syntax(2)
 test_suite("integration")
@@ -799,7 +768,7 @@ EOF
     utils_cp_helper simple_all_pass second
 
     cat >expout <<EOF
-Committed action 1
+Results saved to $(utils_action_file)
 EOF
     cat >experr <<EOF
 kyua: W: No test cases matched by the filter 'second'.
@@ -810,6 +779,8 @@ EOF
 
 utils_test_case no_test_case_match
 no_test_case_match_body() {
+    utils_install_timestamp_wrapper
+
     cat >Kyuafile <<EOF
 syntax(2)
 test_suite("integration")
@@ -818,7 +789,7 @@ EOF
     utils_cp_helper simple_all_pass first
 
     cat >expout <<EOF
-Committed action 1
+Results saved to $(utils_action_file)
 EOF
     cat >experr <<EOF
 kyua: W: No test cases matched by the filter 'first:foobar'.
@@ -911,8 +882,8 @@ EOF
 crash_on_list:__test_cases_list__  ->  broken: Tester did not exit cleanly: kyua-atf-tester: Invalid test cases list header 'This is not a valid test program!'  [S.UUUs]
 non_executable:__test_cases_list__  ->  broken: Tester did not exit cleanly: kyua-atf-tester: execvp failed: Permission denied  [S.UUUs]
 
+Results saved to $(utils_action_file)
 0/2 passed (2 failed)
-Committed action 1
 EOF
     atf_check -s exit:1 -o file:expout -e empty kyua test
 }

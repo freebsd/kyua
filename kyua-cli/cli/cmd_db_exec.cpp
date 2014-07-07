@@ -35,7 +35,8 @@
 #include <string>
 
 #include "cli/common.ipp"
-#include "store/write_backend.hpp"
+#include "store/exceptions.hpp"
+#include "store/read_backend.hpp"
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/sanity.hpp"
@@ -165,11 +166,10 @@ cmd_db_exec::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
                  const config::tree& UTILS_UNUSED_PARAM(user_config))
 {
     try {
-        // TODO(jmmv): This should probably call open_and_setup directly,
-        // instead of going through the backend indirection.
-        store::write_backend backend = store::write_backend::open_rw(
-            cli::store_path(cmdline));
-        sqlite::statement stmt = backend.database().create_statement(
+        // TODO(jmmv): Shouldn't be using store::detail here...
+        sqlite::database db = store::detail::open_and_setup(
+            cli::store_path_open(cmdline), sqlite::open_readwrite);
+        sqlite::statement stmt = db.create_statement(
             flatten_args(cmdline.arguments()));
 
         if (stmt.step()) {
@@ -183,6 +183,9 @@ cmd_db_exec::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
         return EXIT_SUCCESS;
     } catch (const sqlite::error& e) {
         cmdline::print_error(ui, F("SQLite error: %s") % e.what());
+        return EXIT_FAILURE;
+    } catch (const store::error& e) {
+        cmdline::print_error(ui, e.what());
         return EXIT_FAILURE;
     }
 }

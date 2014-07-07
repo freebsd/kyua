@@ -30,7 +30,7 @@
 .Os
 .Sh NAME
 .Nm db-migrate
-.Nd Upgrades the schema of an existing database
+.Nd Upgrades the schema of an existing action file
 .Sh SYNOPSIS
 .Nm
 .Op Fl -store Ar file
@@ -47,7 +47,14 @@ created in the same directory where the database lives.
 The following subcommand options are recognized:
 .Bl -tag -width XX
 .It Fl -store Ar path , Fl s Ar path
-Specifies the database to use.
+Specifies the action file to operate on.  Defaults to
+.Sq LATEST ,
+which causes
+.Nm
+to automatically load the latest action file for the current test suite.
+See
+.Xr kyua-action-files 7
+for more information.
 .El
 .Sh EXIT STATUS
 The

@@ -27,15 +27,38 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-# Subcommand to strip the timestamps of a report.
+# Subcommand to strip out the durations in a report.
+#
+# This is a subset of utils_strip_timestamps; see the documentation of that
+# variable for details.
+utils_strip_durations='sed -E \
+    -e "s,( |\[|\")[0-9][0-9]*.[0-9][0-9][0-9](s]|s|\"),\1S.UUU\2,g"'
+
+
+# Subcommand to strip out the durations and timestamps in a report.
 #
 # This is to make the reports deterministic and thus easily testable.  The
-# timestamps are replaced by the fixed string S.UUU.
+# time deltas are replaced by the fixed string S.UUU and the timestamps are
+# replaced by the fixed string YYYYMMDD.HHMMSS.ssssss.
 #
 # This variable should be used as shown here:
 #
-#     atf_check ... -x kyua report "| ${uilts_strip_timestamp}"
-utils_strip_timestamp='sed -E "s,( |\[|\")[0-9][0-9]*.[0-9][0-9][0-9](s]|s|\"),\1S.UUU\2,g"'
+#     atf_check ... -x kyua report "| ${utils_strip_timestamp}"
+#
+# Use the utils_install_timestamp_wrapper function to create a 'kyua' wrapper
+# script that automatically does this.
+utils_strip_timestamps='sed -E \
+    -e "s,( |\[|\")[0-9][0-9]*.[0-9][0-9][0-9](s]|s|\"),\1S.UUU\2,g" \
+    -e "s,[0-9]{8}-[0-9]{6}-[0-9]{6}\.db,YYYYMMDD-HHMMSS-ssssss.db,g"'
+
+
+# Computes the action file for a test suite.
+#
+# \param path Optional path to use; if not given, use the cwd.
+utils_action_file() {
+    local test_suite_id="$(utils_test_suite_id "${@}")"
+    echo "${HOME}/.kyua/actions/kyua.${test_suite_id}.YYYYMMDD-HHMMSS-ssssss.db"
+}
 
 
 # Copies a helper binary from the source directory to the work directory.
@@ -51,12 +74,34 @@ utils_cp_helper() {
 }
 
 
-# Creates a 'kyua' binary in the path that strips timestamps off the output.
+# Creates a 'kyua' binary in the path that strips durations off the output.
 #
 # Call this on test cases that wish to replace timestamps in the *stdout* of
-# Kyua with the S.UUUs deterministic string.  This is usable for tests that
+# Kyua with the S.UUUs deterministic string.  This is to be used by tests that
 # validate the 'test' subcommand, but also by a few specific tests for the
 # 'report' subcommand.
+utils_install_durations_wrapper() {
+    [ ! -x kyua ] || return
+    cat >kyua <<EOF
+#! /bin/sh
+
+PATH=${PATH}
+
+kyua "\${@}" >kyua.tmpout
+result=\${?}
+cat kyua.tmpout | ${utils_strip_durations}
+exit \${result}
+EOF
+    chmod +x kyua
+    PATH="$(pwd):${PATH}"
+}
+
+
+# Creates a 'kyua' binary in the path that strips timestamps off the output.
+#
+# Call this on test cases that wish to replace durations and timestamps with a
+# deterministic string.  This is to be used by tests that validate the 'test'
+# subcommand, but also by a few specific tests for the 'report' subcommand.
 utils_install_timestamp_wrapper() {
     [ ! -x kyua ] || return
     cat >kyua <<EOF
@@ -66,7 +111,7 @@ PATH=${PATH}
 
 kyua "\${@}" >kyua.tmpout
 result=\${?}
-cat kyua.tmpout | ${utils_strip_timestamp}
+cat kyua.tmpout | ${utils_strip_timestamps}
 exit \${result}
 EOF
     chmod +x kyua
@@ -82,4 +127,18 @@ utils_test_case() {
     eval "${name}_head() {
         atf_set require.progs kyua
     }"
+}
+
+
+# Computes the test suite identifier for action files.
+#
+# \param path Optional path to use; if not given, use the cwd.
+utils_test_suite_id() {
+    local path=
+    if [ ${#} -gt 0 ]; then
+        path="$(cd ${1} && pwd)"; shift
+    else
+        path="$(pwd)"
+    fi
+    echo "${path}" | sed -e 's,^/,,' -e 's,/,_,g'
 }

@@ -93,7 +93,8 @@ utils::optional< utils::fs::path > build_root_path(
     const utils::cmdline::parsed_cmdline&);
 utils::fs::path kyuafile_path(const utils::cmdline::parsed_cmdline&);
 result_types get_result_types(const utils::cmdline::parsed_cmdline&);
-utils::fs::path store_path(const utils::cmdline::parsed_cmdline&);
+utils::fs::path store_path_new(const utils::cmdline::parsed_cmdline&);
+utils::fs::path store_path_open(const utils::cmdline::parsed_cmdline&);
 
 std::set< engine::test_filter > parse_filters(
     const utils::cmdline::args_vector&);

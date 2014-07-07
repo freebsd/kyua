@@ -27,6 +27,16 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+# Creates an empty action database.
+#
+# \param ... Files that contain SQL commands to be run.
+create_db() {
+    mkdir -p "${HOME}/.kyua/actions"
+    local dbname="kyua.$(utils_test_suite_id)-20140718-173200-123456.db"
+    cat "${@}" | sqlite3 "${HOME}/.kyua/actions/${dbname}"
+}
+
+
 utils_test_case upgrade
 upgrade_head() {
     data=$(atf_get_srcdir)/../store
@@ -37,17 +47,22 @@ upgrade_head() {
 upgrade_body() {
     data=$(atf_get_srcdir)/../store
 
-    mkdir .kyua
-    cat "${data}/schema_v1.sql" "${data}/testdata_v1.sql" \
-        | sqlite3 .kyua/store.db
+    create_db "${data}/schema_v1.sql" "${data}/testdata_v1.sql"
     atf_check -s exit:0 -o empty -e empty kyua db-migrate
 }
 
 
 utils_test_case already_up_to_date
 already_up_to_date_body() {
-    atf_check -s exit:0 -o ignore -e empty \
-        kyua db-exec "SELECT * FROM metadata"  # Create database.
+    data=$(atf_get_srcdir)/../store
+
+    atf_set require.files "${data}/schema_v2.sql"
+    atf_set require.progs "sqlite3"
+}
+already_up_to_date_body() {
+    data=$(atf_get_srcdir)/../store
+
+    create_db "${data}/schema_v2.sql"
     atf_check -s exit:1 -o empty -e match:"already at schema version" \
         kyua db-migrate
 }
@@ -63,8 +78,7 @@ need_upgrade_head() {
 need_upgrade_body() {
     data=$(atf_get_srcdir)/../store
 
-    mkdir .kyua
-    sqlite3 .kyua/store.db <"${data}/schema_v1.sql"
+    create_db "${data}/schema_v1.sql"
     atf_check -s exit:2 -o empty \
         -e match:"database has schema version 1.*use db-migrate" kyua report
 }

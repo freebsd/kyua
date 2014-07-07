@@ -46,6 +46,12 @@ EXTRA_DIST += doc/kyua-about.1.in
 doc/kyua-about.1: $(srcdir)/doc/kyua-about.1.in
 	name=kyua-about.1; $(BUILD_MANPAGE)
 
+man_MANS += doc/kyua-action-files.7
+CLEANFILES += doc/kyua-action-files.7
+EXTRA_DIST += doc/kyua-action-files.7.in
+doc/kyua-action-files.7: $(srcdir)/doc/kyua-action-files.7.in
+	name=kyua-action-files.7; $(BUILD_MANPAGE)
+
 man_MANS += doc/kyua-build-root.7
 CLEANFILES += doc/kyua-build-root.7
 EXTRA_DIST += doc/kyua-build-root.7.in

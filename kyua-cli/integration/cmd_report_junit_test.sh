@@ -32,13 +32,11 @@
 # \param mock_env The value to store in a MOCK variable in the environment.
 #     Use this to be able to differentiate executions by inspecting the
 #     context of the output.
-#
-# \return The action identifier of the committed action.
+# \param dbfile_name File to which to write the path to the generated database
+#     file.
 run_tests() {
-    local mock_env="${1}"
-
-    mkdir testsuite
-    cd testsuite
+    local mock_env="${1}"; shift
+    local dbfile_name="${1}"; shift
 
     cat >Kyuafile <<EOF
 syntax(2)
@@ -47,28 +45,20 @@ atf_test_program{name="simple_all_pass"}
 EOF
 
     utils_cp_helper simple_all_pass .
-    test -d ../.kyua || mkdir ../.kyua
-    kyua=$(which kyua)
-    atf_check -s exit:0 -o save:stdout -e empty env \
-        HOME="$(pwd)/home" MOCK="${mock_env}" \
-        "${kyua}" test --store=../.kyua/store.db
+    atf_check -s exit:0 -o save:stdout -e empty env MOCK="${mock_env}" kyua test
+    grep '^Results saved to ' stdout | cut -d ' ' -f 4 >"${dbfile_name}"
+    rm stdout
 
-    action_id=$(grep '^Committed action ' stdout | cut -d ' ' -f 3)
-    echo "New action is ${action_id}"
-
-    cd -
-    # Ensure the results of 'report' come from the database.
-    rm -rf testsuite
-
-    return "${action_id}"
+    # Ensure the results of 'report-junit' come from the database.
+    rm Kyuafile simple_all_pass
 }
 
 
 utils_test_case default_behavior__ok
 default_behavior__ok_body() {
-    utils_install_timestamp_wrapper
+    utils_install_durations_wrapper
 
-    run_tests "mock1"
+    run_tests "mock1" unused_dbfile_name
 
     cat >expout <<EOF
 <?xml version="1.0" encoding="iso-8859-1"?>
@@ -134,50 +124,36 @@ EOF
 }
 
 
-utils_test_case default_behavior__no_actions
-default_behavior__no_actions_body() {
-    kyua db-exec "SELECT * FROM actions"
-
-    echo 'kyua: E: No actions in the database.' >experr
+utils_test_case default_behavior__no_store
+default_behavior__no_store_body() {
+    echo 'kyua: E: No previous action found for test suite' \
+        "$(utils_test_suite_id)." >experr
     atf_check -s exit:2 -o empty -e file:experr kyua report-junit
 }
 
 
-utils_test_case default_behavior__no_store
-default_behavior__no_store_body() {
-    atf_check -s exit:2 -o empty \
-        -e match:"kyua: E: Cannot open '.*/.kyua/store.db': " kyua report-junit
-}
-
-
-utils_test_case action__explicit
-action__explicit_body() {
-    run_tests "mock1"; action1=$?
-    run_tests "mock2"; action2=$?
+utils_test_case store__explicit
+store__explicit_body() {
+    run_tests "mock1" dbfile_name1
+    run_tests "mock2" dbfile_name2
 
     atf_check -s exit:0 -o match:"MOCK.*mock1" -o not-match:"MOCK.*mock2" \
-        -o match:"property.*kyua.action_id.*\"1\"" \
-        -o not-match:"property.*kyua.action_id.*\"2\"" \
-        -e empty kyua report-junit --action="${action1}"
+        -e empty kyua report-junit --store="$(cat dbfile_name1)"
     atf_check -s exit:0 -o not-match:"MOCK.*mock1" -o match:"MOCK.*mock2" \
-        -o match:"property.*kyua.action_id.*\"2\"" \
-        -o not-match:"property.*kyua.action_id.*\"1\"" \
-        -e empty kyua report-junit --action="${action2}"
+        -e empty kyua report-junit --store="$(cat dbfile_name2)"
 }
 
 
-utils_test_case action__not_found
-action__not_found_body() {
-    kyua db-exec "SELECT * FROM actions"
-
-    echo 'kyua: E: Error loading action 514: does not exist.' >experr
-    atf_check -s exit:2 -o empty -e file:experr kyua report-junit --action=514
+utils_test_case store__not_found
+store__not_found_body() {
+    atf_check -s exit:2 -o empty -e match:"kyua: E: Cannot open 'foo': " \
+        kyua report-junit --store=foo
 }
 
 
 utils_test_case output__explicit
 output__explicit_body() {
-    run_tests
+    run_tests unused_mock unused_dbfile_name
 
     cat >report <<EOF
 <?xml version="1.0" encoding="iso-8859-1"?>
@@ -240,26 +216,25 @@ This is the stderr of skip
 EOF
 
     atf_check -s exit:0 -o file:report -e empty -x kyua report-junit \
-        --output=/dev/stdout "| grep -v '<property' | ${utils_strip_timestamp}"
+        --output=/dev/stdout "| grep -v '<property' | ${utils_strip_durations}"
     atf_check -s exit:0 -o empty -e save:stderr kyua report-junit \
         --output=/dev/stderr
     atf_check -s exit:0 -o file:report -x cat stderr \
-        "| grep -v '<property' | ${utils_strip_timestamp}"
+        "| grep -v '<property' | ${utils_strip_durations}"
 
     atf_check -s exit:0 -o empty -e empty kyua report-junit \
         --output=my-file
     atf_check -s exit:0 -o file:report -x cat my-file \
-        "| grep -v '<property' | ${utils_strip_timestamp}"
+        "| grep -v '<property' | ${utils_strip_durations}"
 }
 
 
 atf_init_test_cases() {
     atf_add_test_case default_behavior__ok
-    atf_add_test_case default_behavior__no_actions
     atf_add_test_case default_behavior__no_store
 
-    atf_add_test_case action__explicit
-    atf_add_test_case action__not_found
+    atf_add_test_case store__explicit
+    atf_add_test_case store__not_found
 
     atf_add_test_case output__explicit
 }

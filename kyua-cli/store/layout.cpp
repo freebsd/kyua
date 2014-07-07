@@ -76,7 +76,7 @@ layout::find_latest(const std::string& test_suite)
     }
     const utils::releaser< ::DIR, int > dir_releaser(dir, ::closedir);
 
-    const std::string pattern = F("^kyua.%s.[0-9]{8}-[0-9]{6}.db$") %
+    const std::string pattern = F("^kyua.%s.[0-9]{8}-[0-9]{6}-[0-9]{6}.db$") %
         test_suite;
     ::regex_t preg;
     if (::regcomp(&preg, pattern.c_str(), REG_EXTENDED) != 0)
@@ -94,7 +94,7 @@ layout::find_latest(const std::string& test_suite)
                 latest = de->d_name;
             }
         } else if (ret == REG_NOMATCH) {
-            // Not a tester; skip.
+            // Not a database file; skip.
         } else {
             throw store::error("Failed to match regular expression");
         }
@@ -119,11 +119,11 @@ layout::find_latest(const std::string& test_suite)
 fs::path
 layout::new_db(const std::string& test_suite)
 {
-    // TODO(jmmv): This is not unique enough probably.
-    const std::string now = datetime::timestamp::now().strftime(
-        "%Y%m%d-%H%M%S");
+    const datetime::timestamp now = datetime::timestamp::now();
+    const std::string now_datetime = now.strftime("%Y%m%d-%H%M%S");
+    const int now_ms = static_cast<int>(now.to_microseconds() % 1000000);
     const fs::path path = query_store_dir() /
-        (F("kyua.%s.%s.db") % test_suite % now);
+        (F("kyua.%s.%s-%06s.db") % test_suite % now_datetime % now_ms);
     if (fs::exists(path))
         throw store::error("Computed test suite store already exists");
     return path;

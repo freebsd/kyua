@@ -55,18 +55,18 @@ ATF_TEST_CASE_BODY(find_latest__time)
     fs::mkdir_p(store_dir, 0755);
 
     atf::utils::create_file(
-        (store_dir / "kyua.the_suite.20140613-194515.db").str(), "");
-    ATF_REQUIRE_EQ(store_dir / "kyua.the_suite.20140613-194515.db",
+        (store_dir / "kyua.the_suite.20140613-194515-000000.db").str(), "");
+    ATF_REQUIRE_EQ(store_dir / "kyua.the_suite.20140613-194515-000000.db",
                    layout::find_latest("the_suite"));
 
     atf::utils::create_file(
-        (store_dir / "kyua.the_suite.20140614-194515.db").str(), "");
-    ATF_REQUIRE_EQ(store_dir / "kyua.the_suite.20140614-194515.db",
+        (store_dir / "kyua.the_suite.20140614-194515-123456.db").str(), "");
+    ATF_REQUIRE_EQ(store_dir / "kyua.the_suite.20140614-194515-123456.db",
                    layout::find_latest("the_suite"));
 
     atf::utils::create_file(
-        (store_dir / "kyua.the_suite.20130614-194515.db").str(), "");
-    ATF_REQUIRE_EQ(store_dir / "kyua.the_suite.20140614-194515.db",
+        (store_dir / "kyua.the_suite.20130614-194515-999999.db").str(), "");
+    ATF_REQUIRE_EQ(store_dir / "kyua.the_suite.20140614-194515-123456.db",
                    layout::find_latest("the_suite"));
 }
 
@@ -85,11 +85,12 @@ ATF_TEST_CASE_BODY(find_latest__not_found)
                          layout::find_latest("foo_bar"));
 
     const char* candidates[] = {
-        "kyua.foo.20140613-194515.db",  // Bad test suite.
-        "kyua.foo_bar.20140613-194515",  // Missing extension.
-        "foo_bar.20140613-194515.db",  // Missing prefix.
-        "kyua.foo_bar.2010613-194515.db",  // Bad date.
-        "kyua.foo_bar.20140613-19515.db",  // Bad time.
+        "kyua.foo.20140613-194515-012345.db",  // Bad test suite.
+        "kyua.foo_bar.20140613-194515-012345",  // Missing extension.
+        "foo_bar.20140613-194515-012345.db",  // Missing prefix.
+        "kyua.foo_bar.2010613-194515-012345.db",  // Bad date.
+        "kyua.foo_bar.20140613-19515-012345.db",  // Bad time.
+        "kyua.foo_bar.20140613-194515-01245.db",  // Bad microseconds.
         NULL,
     };
     for (const char** candidate = candidates; *candidate != NULL; ++candidate) {
@@ -101,7 +102,7 @@ ATF_TEST_CASE_BODY(find_latest__not_found)
     }
 
     atf::utils::create_file(
-        (store_dir / "kyua.foo_bar.20140613-194515.db").str(), "");
+        (store_dir / "kyua.foo_bar.20140613-194515-012345.db").str(), "");
     layout::find_latest("foo_bar");  // Expected not to throw.
 }
 
@@ -111,7 +112,7 @@ ATF_TEST_CASE_BODY(new_db__ok)
 {
     datetime::set_mock_now(2014, 6, 13, 19, 45, 15, 5000);
     ATF_REQUIRE_EQ(
-        layout::query_store_dir() / "kyua.the_suite.20140613-194515.db",
+        layout::query_store_dir() / "kyua.the_suite.20140613-194515-005000.db",
         layout::new_db("the_suite"));
 }
 

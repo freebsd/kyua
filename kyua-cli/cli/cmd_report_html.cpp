@@ -428,7 +428,7 @@ cli::cmd_report_html::run(cmdline::ui* ui,
         cmdline.get_option< cmdline::path_option >("output");
     create_top_directory(directory, cmdline.has_option("force"));
     html_hooks hooks(ui, directory, types);
-    scan_action::drive(store_path(cmdline), action_id, hooks);
+    scan_action::drive(store_path_open(cmdline), action_id, hooks);
     hooks.write_summary();
 
     return EXIT_SUCCESS;

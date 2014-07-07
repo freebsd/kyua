@@ -82,7 +82,7 @@ cmd_report_junit::run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
         cmdline.get_option< cmdline::path_option >("output"));
 
     engine::report_junit_hooks hooks(*output.get());
-    scan_action::drive(store_path(cmdline), action_id, hooks);
+    scan_action::drive(store_path_open(cmdline), action_id, hooks);
 
     return EXIT_SUCCESS;
 }

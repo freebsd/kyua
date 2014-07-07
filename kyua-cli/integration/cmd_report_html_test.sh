@@ -32,13 +32,11 @@
 # \param mock_env The value to store in a MOCK variable in the environment.
 #     Use this to be able to differentiate executions by inspecting the
 #     context of the output.
-#
-# \return The action identifier of the committed action.
+# \param dbfile_name File to which to write the path to the generated database
+#     file.
 run_tests() {
-    local mock_env="${1}"
-
-    mkdir testsuite
-    cd testsuite
+    local mock_env="${1}"; shift
+    local dbfile_name="${1}"; shift
 
     cat >Kyuafile <<EOF
 syntax(2)
@@ -51,20 +49,12 @@ EOF
     utils_cp_helper simple_all_pass .
     utils_cp_helper simple_some_fail .
     utils_cp_helper metadata .
-    test -d ../.kyua || mkdir ../.kyua
-    kyua=$(which kyua)
-    atf_check -s exit:1 -o save:stdout -e empty env \
-        HOME="$(pwd)/home" MOCK="${mock_env}" \
-        "${kyua}" test --store=../.kyua/store.db
+    atf_check -s exit:1 -o save:stdout -e empty env MOCK="${mock_env}" kyua test
+    grep '^Results saved to ' stdout | cut -d ' ' -f 4 >"${dbfile_name}"
+    rm stdout
 
-    action_id=$(grep '^Committed action ' stdout | cut -d ' ' -f 3)
-    echo "New action is ${action_id}"
-
-    cd -
-    # Ensure the results of 'report' come from the database.
-    rm -rf testsuite
-
-    return "${action_id}"
+    # Ensure the results of 'report-html' come from the database.
+    rm Kyuafile simple_all_pass simple_some_fail metadata
 }
 
 
@@ -106,9 +96,7 @@ check_not_in_file() {
 
 utils_test_case default_behavior__ok
 default_behavior__ok_body() {
-    utils_install_timestamp_wrapper
-
-    run_tests "mock1"
+    run_tests "mock1" unused_dbfile_name
 
     atf_check -s exit:0 -o ignore -e empty kyua report-html
     for f in \
@@ -148,52 +136,40 @@ default_behavior__ok_body() {
 }
 
 
-utils_test_case default_behavior__no_actions
-default_behavior__no_actions_body() {
-    kyua db-exec "SELECT * FROM actions"
-
-    echo 'kyua: E: No actions in the database.' >experr
+utils_test_case default_behavior__no_store
+default_behavior__no_store_body() {
+    echo 'kyua: E: No previous action found for test suite' \
+        "$(utils_test_suite_id)." >experr
     atf_check -s exit:2 -o empty -e file:experr kyua report-html
 }
 
 
-utils_test_case default_behavior__no_store
-default_behavior__no_store_body() {
-    atf_check -s exit:2 -o empty \
-        -e match:"kyua: E: Cannot open '.*/.kyua/store.db': " kyua report-html
-}
-
-
-utils_test_case action__explicit
-action__explicit_body() {
-    run_tests "mock1"; action1=$?
-    run_tests "mock2"; action2=$?
+utils_test_case store__explicit
+store__explicit_body() {
+    run_tests "mock1" dbfile_name1
+    run_tests "mock2" dbfile_name2
 
     atf_check -s exit:0 -o ignore -e empty kyua report-html \
-        --action="${action1}"
-    grep "action 1" html/index.html || atf_fail "Invalid action in report"
+        --store="$(cat dbfile_name1)"
     grep "MOCK.*mock1" html/context.html || atf_fail "Invalid context in report"
 
     rm -rf html
     atf_check -s exit:0 -o ignore -e empty kyua report-html \
-        --action="${action2}"
-    grep "action 2" html/index.html || atf_fail "Invalid action in report"
+        --store="$(cat dbfile_name2)"
     grep "MOCK.*mock2" html/context.html || atf_fail "Invalid context in report"
 }
 
 
-utils_test_case action__not_found
-action__not_found_body() {
-    kyua db-exec "SELECT * FROM actions"
-
-    echo 'kyua: E: Error loading action 514: does not exist.' >experr
-    atf_check -s exit:2 -o empty -e file:experr kyua report-html --action=514
+utils_test_case store__not_found
+store__not_found_body() {
+    atf_check -s exit:2 -o empty -e match:"kyua: E: Cannot open 'foo': " \
+        kyua report-html --store=foo
 }
 
 
 utils_test_case force__yes
 force__yes_body() {
-    run_tests "mock1"
+    run_tests "mock1" unused_dbfile_name
 
     atf_check -s exit:0 -o ignore -e empty kyua report-html
     test -f html/index.html || atf_fail "Expected file not created"
@@ -205,7 +181,7 @@ force__yes_body() {
 
 utils_test_case force__no
 force__no_body() {
-    run_tests "mock1"
+    run_tests "mock1" unused_dbfile_name
 
     atf_check -s exit:0 -o ignore -e empty kyua report-html
     test -f html/index.html || atf_fail "Expected file not created"
@@ -221,7 +197,7 @@ EOF
 
 utils_test_case output__explicit
 output__explicit_body() {
-    run_tests "mock1"
+    run_tests "mock1" unused_dbfile_name
 
     mkdir output
     atf_check -s exit:0 -o ignore -e empty kyua report-html --output=output/foo
@@ -232,9 +208,7 @@ output__explicit_body() {
 
 utils_test_case results_filter__ok
 results_filter__ok_body() {
-    utils_install_timestamp_wrapper
-
-    run_tests "mock1"
+    run_tests "mock1" unused_dbfile_name
 
     atf_check -s exit:0 -o ignore -e empty kyua report-html \
         --results-filter=passed
@@ -280,11 +254,10 @@ results_filter__invalid_body() {
 
 atf_init_test_cases() {
     atf_add_test_case default_behavior__ok
-    atf_add_test_case default_behavior__no_actions
     atf_add_test_case default_behavior__no_store
 
-    atf_add_test_case action__explicit
-    atf_add_test_case action__not_found
+    atf_add_test_case store__explicit
+    atf_add_test_case store__not_found
 
     atf_add_test_case force__yes
     atf_add_test_case force__no
