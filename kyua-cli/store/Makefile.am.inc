@@ -52,15 +52,17 @@ libstore_a_SOURCES += store/write_transaction.cpp
 libstore_a_SOURCES += store/write_transaction.hpp
 
 dist_store_DATA  = store/migrate_v1_v2.sql
-dist_store_DATA += store/schema_v2.sql
+dist_store_DATA += store/schema_v3.sql
 
 if WITH_ATF
 tests_storedir = $(pkgtestsdir)/store
 
 tests_store_DATA  = store/Kyuafile
 tests_store_DATA += store/schema_v1.sql
+tests_store_DATA += store/schema_v2.sql
 tests_store_DATA += store/testdata_v1.sql
 tests_store_DATA += store/testdata_v2.sql
+tests_store_DATA += store/testdata_v3.sql
 EXTRA_DIST += $(tests_store_DATA)
 
 tests_store_PROGRAMS = store/dbtypes_test

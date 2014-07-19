@@ -106,7 +106,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(detail__schema_file__builtin);
 ATF_TEST_CASE_BODY(detail__schema_file__builtin)
 {
     utils::unsetenv("KYUA_STOREDIR");
-    ATF_REQUIRE_EQ(fs::path(KYUA_STOREDIR) / "schema_v2.sql",
+    ATF_REQUIRE_EQ(fs::path(KYUA_STOREDIR) / "schema_v3.sql",
                    store::detail::schema_file());
 }
 

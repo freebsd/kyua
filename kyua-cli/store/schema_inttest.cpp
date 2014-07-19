@@ -449,7 +449,7 @@ ATF_TEST_CASE_HEAD(current_schema)
     logging::set_inmemory();
     const std::string required_files =
         store::detail::schema_file().str()
-        + " " + (fs::path(get_config_var("srcdir")) / "testdata_v2.sql").str();
+        + " " + (fs::path(get_config_var("srcdir")) / "testdata_v3.sql").str();
     set_md_var("require.files", required_files);
 }
 ATF_TEST_CASE_BODY(current_schema)
@@ -459,7 +459,7 @@ ATF_TEST_CASE_BODY(current_schema)
     sqlite::database db = sqlite::database::open(
         testpath, sqlite::open_readwrite | sqlite::open_create);
     exec_db_file(db, store::detail::schema_file());
-    exec_db_file(db, fs::path(get_config_var("srcdir")) / "testdata_v2.sql");
+    exec_db_file(db, fs::path(get_config_var("srcdir")) / "testdata_v3.sql");
     db.close();
 
     store::read_backend backend = store::read_backend::open_ro(testpath);
@@ -467,8 +467,8 @@ ATF_TEST_CASE_BODY(current_schema)
 }
 
 
-ATF_TEST_CASE(migrate_schema__v1_to_v2);
-ATF_TEST_CASE_HEAD(migrate_schema__v1_to_v2)
+ATF_TEST_CASE(migrate_schema__v1_to_v3);
+ATF_TEST_CASE_HEAD(migrate_schema__v1_to_v3)
 {
     logging::set_inmemory();
     const std::string required_files =
@@ -477,7 +477,7 @@ ATF_TEST_CASE_HEAD(migrate_schema__v1_to_v2)
         + " " + (fs::path(get_config_var("srcdir")) / "testdata_v1.sql").str();
     set_md_var("require.files", required_files);
 }
-ATF_TEST_CASE_BODY(migrate_schema__v1_to_v2)
+ATF_TEST_CASE_BODY(migrate_schema__v1_to_v3)
 {
     const fs::path testpath("test.db");
 
@@ -487,6 +487,7 @@ ATF_TEST_CASE_BODY(migrate_schema__v1_to_v2)
     exec_db_file(db, fs::path(get_config_var("srcdir")) / "testdata_v1.sql");
     db.close();
 
+    expect_fail("Migration from v2 to v3 not yet implemented");
     store::migrate_schema(fs::path("test.db"));
 
     store::read_backend backend = store::read_backend::open_ro(testpath);
@@ -498,5 +499,5 @@ ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, current_schema);
 
-    ATF_ADD_TEST_CASE(tcs, migrate_schema__v1_to_v2);
+    ATF_ADD_TEST_CASE(tcs, migrate_schema__v1_to_v3);
 }

@@ -48,6 +48,7 @@ upgrade_body() {
     data=$(atf_get_srcdir)/../store
 
     create_db "${data}/schema_v1.sql" "${data}/testdata_v1.sql"
+    atf_expect_fail "Migration from v2 to v3 not yet implemented"
     atf_check -s exit:0 -o empty -e empty kyua db-migrate
 }
 
@@ -56,13 +57,13 @@ utils_test_case already_up_to_date
 already_up_to_date_body() {
     data=$(atf_get_srcdir)/../store
 
-    atf_set require.files "${data}/schema_v2.sql"
+    atf_set require.files "${data}/schema_v3.sql"
     atf_set require.progs "sqlite3"
 }
 already_up_to_date_body() {
     data=$(atf_get_srcdir)/../store
 
-    create_db "${data}/schema_v2.sql"
+    create_db "${data}/schema_v3.sql"
     atf_check -s exit:1 -o empty -e match:"already at schema version" \
         kyua db-migrate
 }

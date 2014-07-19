@@ -58,7 +58,7 @@ namespace sqlite = utils::sqlite;
 ///
 /// This variable is not const to allow tests to modify it.  No other code
 /// should change its value.
-int store::detail::current_schema_version = 2;
+int store::detail::current_schema_version = 3;
 
 
 namespace {
