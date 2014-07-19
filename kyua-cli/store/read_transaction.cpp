@@ -35,7 +35,6 @@ extern "C" {
 #include <map>
 #include <utility>
 
-#include "engine/action.hpp"
 #include "engine/context.hpp"
 #include "engine/test_result.hpp"
 #include "store/dbtypes.hpp"
@@ -289,7 +288,7 @@ struct store::results_iterator::impl {
     bool _valid;
 
     /// Constructor.
-    impl(store::read_backend& backend_, const int64_t action_id_) :
+    impl(store::read_backend& backend_) :
         _backend(backend_),
         _stmt(backend_.database().create_statement(
             "SELECT test_programs.test_program_id, "
@@ -302,10 +301,8 @@ struct store::results_iterator::impl {
             "    ON test_programs.test_program_id = test_cases.test_program_id "
             "    JOIN test_results "
             "    ON test_cases.test_case_id = test_results.test_case_id "
-            "WHERE test_programs.action_id == :action_id "
             "ORDER BY test_programs.absolute_path, test_cases.name"))
     {
-        _stmt.bind(":action_id", action_id_);
         _valid = _stmt.step();
     }
 };
@@ -510,78 +507,6 @@ store::read_transaction::finish(void)
 }
 
 
-/// Retrieves an action from the database.
-///
-/// \param action_id The identifier of the action to retrieve.
-///
-/// \return The retrieved action.
-///
-/// \throw error If there is a problem loading the action.
-engine::action
-store::read_transaction::get_action(const int64_t action_id)
-{
-    try {
-        sqlite::statement stmt = _pimpl->_db.create_statement(
-            "SELECT context_id FROM actions WHERE action_id == :action_id");
-        stmt.bind(":action_id", action_id);
-        if (!stmt.step())
-            throw error(F("Error loading action %s: does not exist") %
-                        action_id);
-
-        return engine::action(
-            get_context(stmt.safe_column_int64("context_id")));
-    } catch (const sqlite::error& e) {
-        throw error(F("Error loading action %s: %s") % action_id % e.what());
-    }
-}
-
-
-/// Creates a new iterator to scan the test results of an action.
-///
-/// \param action_id The identifier of the action for which to get the results.
-///
-/// \return The constructed iterator.
-///
-/// \throw error If there is any problem constructing the iterator.
-store::results_iterator
-store::read_transaction::get_action_results(const int64_t action_id)
-{
-    try {
-        return results_iterator(std::shared_ptr< results_iterator::impl >(
-           new results_iterator::impl(_pimpl->_backend, action_id)));
-    } catch (const sqlite::error& e) {
-        throw error(e.what());
-    }
-}
-
-
-/// Retrieves the latest action from the database.
-///
-/// \return The retrieved action.
-///
-/// \throw error If there is a problem loading the action.
-std::pair< int64_t, engine::action >
-store::read_transaction::get_latest_action(void)
-{
-    try {
-        sqlite::statement stmt = _pimpl->_db.create_statement(
-            "SELECT action_id, context_id FROM actions WHERE "
-            "action_id == (SELECT max(action_id) FROM actions)");
-        if (!stmt.step())
-            throw error("No actions in the database");
-
-        const int64_t action_id = stmt.safe_column_int64("action_id");
-        const engine::context context = get_context(
-            stmt.safe_column_int64("context_id"));
-
-        return std::pair< int64_t, engine::action >(
-            action_id, engine::action(context));
-    } catch (const sqlite::error& e) {
-        throw error(F("Error loading latest action: %s") % e.what());
-    }
-}
-
-
 /// Retrieves an context from the database.
 ///
 /// \param context_id The identifier of the context to retrieve.
@@ -604,5 +529,22 @@ store::read_transaction::get_context(const int64_t context_id)
                                get_env_vars(_pimpl->_db, context_id));
     } catch (const sqlite::error& e) {
         throw error(F("Error loading context %s: %s") % context_id % e.what());
+    }
+}
+
+
+/// Creates a new iterator to scan the test results of an action.
+///
+/// \return The constructed iterator.
+///
+/// \throw error If there is any problem constructing the iterator.
+store::results_iterator
+store::read_transaction::get_results(void)
+{
+    try {
+        return results_iterator(std::shared_ptr< results_iterator::impl >(
+           new results_iterator::impl(_pimpl->_backend)));
+    } catch (const sqlite::error& e) {
+        throw error(e.what());
     }
 }

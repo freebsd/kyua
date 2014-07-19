@@ -32,7 +32,7 @@
 #include <cstdlib>
 
 #include "cli/common.ipp"
-#include "engine/drivers/scan_action.hpp"
+#include "engine/drivers/scan_results.hpp"
 #include "engine/report_junit.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/defs.hpp"
@@ -41,7 +41,7 @@
 namespace cmdline = utils::cmdline;
 namespace config = utils::config;
 namespace fs = utils::fs;
-namespace scan_action = engine::drivers::scan_action;
+namespace scan_results = engine::drivers::scan_results;
 
 using cli::cmd_report_junit;
 using utils::optional;
@@ -53,9 +53,6 @@ cmd_report_junit::cmd_report_junit(void) : cli_command(
     "Generates a JUnit report with the result of a previous action")
 {
     add_option(store_option);
-    add_option(cmdline::int_option(
-        "action", "The action to report; if not specified, defaults to the "
-        "latest action in the database", "id"));
     add_option(cmdline::path_option("output", "Path to the output file", "path",
                                     "/dev/stdout"));
 }
@@ -74,15 +71,11 @@ cmd_report_junit::run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
                       const cmdline::parsed_cmdline& cmdline,
                       const config::tree& UTILS_UNUSED_PARAM(user_config))
 {
-    optional< int64_t > action_id;
-    if (cmdline.has_option("action"))
-        action_id = cmdline.get_option< cmdline::int_option >("action");
-
     std::auto_ptr< std::ostream > output = open_output_file(
         cmdline.get_option< cmdline::path_option >("output"));
 
     engine::report_junit_hooks hooks(*output.get());
-    scan_action::drive(store_path_open(cmdline), action_id, hooks);
+    scan_results::drive(store_path_open(cmdline), hooks);
 
     return EXIT_SUCCESS;
 }

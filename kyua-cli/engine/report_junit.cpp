@@ -30,7 +30,6 @@
 
 #include <algorithm>
 
-#include "engine/action.hpp"
 #include "engine/context.hpp"
 #include "engine/metadata.hpp"
 #include "engine/test_result.hpp"
@@ -42,7 +41,7 @@
 
 namespace config = utils::config;
 namespace datetime = utils::datetime;
-namespace scan_action = engine::drivers::scan_action;
+namespace scan_results = engine::drivers::scan_results;
 namespace text = utils::text;
 
 
@@ -125,22 +124,16 @@ engine::report_junit_hooks::report_junit_hooks(std::ostream& output_) :
 }
 
 
-/// Callback executed when an action is found.
+/// Callback executed when the context is loaded.
 ///
-/// \param action_id The identifier of the loaded action.
-/// \param action The action loaded from the database.
+/// \param context The context loaded from the database.
 void
-engine::report_junit_hooks::got_action(const int64_t action_id,
-                                       const engine::action& action)
+engine::report_junit_hooks::got_context(const engine::context& context)
 {
     _output << "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n";
     _output << "<testsuite>\n";
 
-
-    const engine::context& context = action.runtime_context();
     _output << "<properties>\n";
-    _output << F("<property name=\"kyua.action_id\" value=\"%s\"/>\n")
-        % action_id;
     _output << F("<property name=\"cwd\" value=\"%s\"/>\n")
         % text::escape_xml(context.cwd().str());
     for (config::properties_map::const_iterator iter =
@@ -231,7 +224,7 @@ engine::report_junit_hooks::got_result(store::results_iterator& iter)
 /// \param unused_r The result of the driver execution.
 void
 engine::report_junit_hooks::end(
-    const scan_action::result& UTILS_UNUSED_PARAM(r))
+    const scan_results::result& UTILS_UNUSED_PARAM(r))
 {
     _output << "</testsuite>\n";
 }

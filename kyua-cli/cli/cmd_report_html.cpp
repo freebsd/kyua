@@ -34,9 +34,8 @@
 #include <stdexcept>
 
 #include "cli/common.ipp"
-#include "engine/action.hpp"
 #include "engine/context.hpp"
-#include "engine/drivers/scan_action.hpp"
+#include "engine/drivers/scan_results.hpp"
 #include "engine/test_result.hpp"
 #include "store/read_transaction.hpp"
 #include "utils/cmdline/options.hpp"
@@ -54,7 +53,7 @@ namespace cmdline = utils::cmdline;
 namespace config = utils::config;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
-namespace scan_action = engine::drivers::scan_action;
+namespace scan_results = engine::drivers::scan_results;
 namespace text = utils::text;
 
 using utils::optional;
@@ -134,7 +133,7 @@ add_map(text::templates_def& templates, const config::properties_map& props,
 
 
 /// Generates an HTML report.
-class html_hooks : public scan_action::base_hooks {
+class html_hooks : public scan_results::base_hooks {
     /// User interface object where to report progress.
     cmdline::ui* _ui;
 
@@ -285,19 +284,13 @@ public:
         _summary_templates.add_vector("skipped_test_cases_file");
     }
 
-    /// Callback executed when an action is found.
+    /// Callback executed when the context is loaded.
     ///
-    /// \param action_id The identifier of the loaded action.
-    /// \param action The action loaded from the database.
+    /// \param context The context loaded from the database.
     void
-    got_action(const int64_t action_id,
-               const engine::action& action)
+    got_context(const engine::context& context)
     {
-        _summary_templates.add_variable("action_id", F("%s") % action_id);
-
-        const engine::context& context = action.runtime_context();
         text::templates_def templates = common_templates();
-        templates.add_variable("action_id", F("%s") % action_id);
         templates.add_variable("cwd", context.cwd().str());
         add_map(templates, context.env(), "env_var", "env_var_value");
         generate(templates, "context.html", "context.html");
@@ -351,7 +344,7 @@ public:
     /// Writes the index.html file in the output directory.
     ///
     /// This should only be called once all the processing has been done;
-    /// i.e. when the scan_action driver returns.
+    /// i.e. when the scan_results driver returns.
     void
     write_summary(void)
     {
@@ -391,9 +384,6 @@ cli::cmd_report_html::cmd_report_html(void) : cli_command(
     "Generates an HTML report with the result of a previous action")
 {
     add_option(store_option);
-    add_option(cmdline::int_option(
-        "action", "The action to report; if not specified, defaults to the "
-        "latest action in the database", "id"));
     add_option(cmdline::bool_option(
         "force", "Wipe the output directory before generating the new report; "
         "use care"));
@@ -419,16 +409,12 @@ cli::cmd_report_html::run(cmdline::ui* ui,
                           const cmdline::parsed_cmdline& cmdline,
                           const config::tree& UTILS_UNUSED_PARAM(user_config))
 {
-    optional< int64_t > action_id;
-    if (cmdline.has_option("action"))
-        action_id = cmdline.get_option< cmdline::int_option >("action");
-
     const result_types types = get_result_types(cmdline);
     const fs::path directory =
         cmdline.get_option< cmdline::path_option >("output");
     create_top_directory(directory, cmdline.has_option("force"));
     html_hooks hooks(ui, directory, types);
-    scan_action::drive(store_path_open(cmdline), action_id, hooks);
+    scan_results::drive(store_path_open(cmdline), hooks);
     hooks.write_summary();
 
     return EXIT_SUCCESS;

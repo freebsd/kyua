@@ -28,7 +28,6 @@
 
 #include "engine/drivers/run_tests.hpp"
 
-#include "engine/action.hpp"
 #include "engine/context.hpp"
 #include "engine/filters.hpp"
 #include "engine/kyuafile.hpp"
@@ -106,18 +105,16 @@ public:
 /// \param hooks The user hooks to receive asynchronous notifications.
 /// \param work_directory Temporary directory to use.
 /// \param tx The store transaction into which to put the results.
-/// \param action_id The action this program belongs to.
 void
 run_test_program(const engine::test_program& program,
                  const config::tree& user_config,
                  engine::filters_state& filters,
                  run_tests::base_hooks& hooks,
                  const fs::path& work_directory,
-                 store::write_transaction& tx,
-                 const int64_t action_id)
+                 store::write_transaction& tx)
 {
     LI(F("Processing test program '%s'") % program.relative_path());
-    const int64_t test_program_id = tx.put_test_program(program, action_id);
+    const int64_t test_program_id = tx.put_test_program(program);
 
     const engine::test_cases_vector& test_cases = program.test_cases();
     for (engine::test_cases_vector::const_iterator iter = test_cases.begin();
@@ -178,10 +175,7 @@ run_tests::drive(const fs::path& kyuafile_path,
     store::write_transaction tx = db.start_write();
 
     engine::context context = engine::context::current();
-    const int64_t context_id = tx.put_context(context);
-
-    engine::action action(context);
-    const int64_t action_id = tx.put_action(action, context_id);
+    (void)tx.put_context(context);
 
     signals::interrupts_handler interrupts;
 
@@ -197,12 +191,12 @@ run_tests::drive(const fs::path& kyuafile_path,
             continue;
 
         run_test_program(*test_program, user_config, filters, hooks,
-                         work_directory.directory(), tx, action_id);
+                         work_directory.directory(), tx);
 
         signals::check_interrupt();
     }
 
     tx.commit();
 
-    return result(action_id, filters.unused());
+    return result(filters.unused());
 }

@@ -31,7 +31,6 @@
 
 #include <atf-c++.hpp>
 
-#include "engine/action.hpp"
 #include "engine/context.hpp"
 #include "store/read_backend.hpp"
 #include "store/read_transaction.hpp"
@@ -47,50 +46,6 @@ namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace logging = utils::logging;
 namespace units = utils::units;
-
-
-ATF_TEST_CASE(get_put_action__ok);
-ATF_TEST_CASE_HEAD(get_put_action__ok)
-{
-    logging::set_inmemory();
-    set_md_var("require.files", store::detail::schema_file().c_str());
-}
-ATF_TEST_CASE_BODY(get_put_action__ok)
-{
-    const engine::context context1(fs::path("/foo/bar"),
-                                   std::map< std::string, std::string >());
-    const engine::context context2(fs::path("/foo/baz"),
-                                   std::map< std::string, std::string >());
-    const engine::action exp_action1(context1);
-    const engine::action exp_action2(context2);
-    const engine::action exp_action3(context1);
-
-    int64_t id1, id2, id3;
-    {
-        store::write_backend backend = store::write_backend::open_rw(
-            fs::path("test.db"));
-        store::write_transaction tx = backend.start_write();
-        const int64_t context1_id = tx.put_context(context1);
-        const int64_t context2_id = tx.put_context(context2);
-        id1 = tx.put_action(exp_action1, context1_id);
-        id3 = tx.put_action(exp_action3, context1_id);
-        id2 = tx.put_action(exp_action2, context2_id);
-        tx.commit();
-    }
-    {
-        store::read_backend backend = store::read_backend::open_ro(
-            fs::path("test.db"));
-        store::read_transaction tx = backend.start_read();
-        const engine::action action1 = tx.get_action(id1);
-        const engine::action action2 = tx.get_action(id2);
-        const engine::action action3 = tx.get_action(id3);
-        tx.finish();
-
-        ATF_REQUIRE(exp_action1 == action1);
-        ATF_REQUIRE(exp_action2 == action2);
-        ATF_REQUIRE(exp_action3 == action3);
-    }
-}
 
 
 ATF_TEST_CASE(get_put_context__ok);
@@ -187,7 +142,7 @@ ATF_TEST_CASE_BODY(get_put_test_case__ok)
         backend.database().exec("PRAGMA foreign_keys = OFF");
 
         store::write_transaction tx = backend.start_write();
-        test_program_id = tx.put_test_program(test_program, 15);
+        test_program_id = tx.put_test_program(test_program);
         tx.put_test_case(*test_case1, test_program_id);
         tx.put_test_case(*test_case2, test_program_id);
         tx.commit();
@@ -206,8 +161,6 @@ ATF_TEST_CASE_BODY(get_put_test_case__ok)
 
 ATF_INIT_TEST_CASES(tcs)
 {
-    ATF_ADD_TEST_CASE(tcs, get_put_action__ok);
-
     ATF_ADD_TEST_CASE(tcs, get_put_context__ok);
 
     ATF_ADD_TEST_CASE(tcs, get_put_test_case__ok);

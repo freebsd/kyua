@@ -35,14 +35,12 @@ extern "C" {
 #include <fstream>
 #include <map>
 
-#include "engine/action.hpp"
 #include "engine/context.hpp"
 #include "engine/test_result.hpp"
 #include "store/dbtypes.hpp"
 #include "store/exceptions.hpp"
 #include "store/write_backend.hpp"
 #include "utils/datetime.hpp"
-#include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
@@ -249,37 +247,6 @@ store::write_transaction::rollback(void)
 }
 
 
-/// Puts an action into the database.
-///
-/// \pre The action has not been put yet.
-/// \pre The dependent objects have already been put.
-/// \post The action is stored into the database with a new identifier.
-///
-/// \param unused_action The action to put.
-/// \param context_id The identifier for the action's context.
-///
-/// \return The identifier of the inserted action.
-///
-/// \throw error If there is any problem when talking to the database.
-int64_t
-store::write_transaction::put_action(
-    const engine::action& UTILS_UNUSED_PARAM(action),
-    const int64_t context_id)
-{
-    try {
-        sqlite::statement stmt = _pimpl->_db.create_statement(
-            "INSERT INTO actions (context_id) VALUES (:context_id)");
-        stmt.bind(":context_id", context_id);
-        stmt.step_without_results();
-        const int64_t action_id = _pimpl->_db.last_insert_rowid();
-
-        return action_id;
-    } catch (const sqlite::error& e) {
-        throw error(e.what());
-    }
-}
-
-
 /// Puts a context into the database.
 ///
 /// \pre The context has not been put yet.
@@ -315,27 +282,24 @@ store::write_transaction::put_context(const engine::context& context)
 /// \post The test program is stored into the database with a new identifier.
 ///
 /// \param test_program The test program to put.
-/// \param action_id The action this test program belongs to.
 ///
 /// \return The identifier of the inserted test program.
 ///
 /// \throw error If there is any problem when talking to the database.
 int64_t
 store::write_transaction::put_test_program(
-    const engine::test_program& test_program,
-    const int64_t action_id)
+    const engine::test_program& test_program)
 {
     try {
         const int64_t metadata_id = put_metadata(
             _pimpl->_db, test_program.get_metadata());
 
         sqlite::statement stmt = _pimpl->_db.create_statement(
-            "INSERT INTO test_programs (action_id, absolute_path, "
+            "INSERT INTO test_programs (absolute_path, "
             "                           root, relative_path, test_suite_name, "
             "                           metadata_id, interface) "
-            "VALUES (:action_id, :absolute_path, :root, :relative_path, "
+            "VALUES (:absolute_path, :root, :relative_path, "
             "        :test_suite_name, :metadata_id, :interface)");
-        stmt.bind(":action_id", action_id);
         stmt.bind(":absolute_path", test_program.absolute_path().str());
         // TODO(jmmv): The root is not necessarily absolute.  We need to ensure
         // that we can recover the absolute path of the test program.  Maybe we

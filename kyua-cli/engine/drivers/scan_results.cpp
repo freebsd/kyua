@@ -26,66 +26,27 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/drivers/scan_action.hpp"
+#include "engine/drivers/scan_results.hpp"
 
-#include "engine/action.hpp"
-#include "engine/exceptions.hpp"
+#include "engine/context.hpp"
 #include "engine/test_result.hpp"
-#include "store/exceptions.hpp"
 #include "store/read_backend.hpp"
 #include "store/read_transaction.hpp"
 #include "utils/defs.hpp"
-#include "utils/optional.ipp"
 
 namespace fs = utils::fs;
-namespace scan_action = engine::drivers::scan_action;
-
-using utils::optional;
-
-
-namespace {
-
-
-/// Gets an action from the store.
-///
-/// \param tx The open store transaction.
-/// \param [in,out] action_id The specific action to get, or none to fetch the
-///     latest available action.  This is updated to contain the action id of
-///     the returned action.
-///
-/// \return The fetched action.
-///
-/// \throw error If there is any problem while loading the action.
-static engine::action
-get_action(store::read_transaction& tx, optional< int64_t >& action_id)
-{
-    try {
-        if (action_id)
-            return tx.get_action(action_id.get());
-        else {
-            const std::pair< int64_t, engine::action > latest_action =
-                tx.get_latest_action();
-            action_id = latest_action.first;
-            return latest_action.second;
-        }
-    } catch (const store::error& e) {
-        throw engine::error(e.what());
-    }
-}
-
-
-}  // anonymous namespace
+namespace scan_results = engine::drivers::scan_results;
 
 
 /// Pure abstract destructor.
-scan_action::base_hooks::~base_hooks(void)
+scan_results::base_hooks::~base_hooks(void)
 {
 }
 
 
 /// Callback executed before any operation is performed.
 void
-scan_action::base_hooks::begin(void)
+scan_results::base_hooks::begin(void)
 {
 }
 
@@ -95,7 +56,7 @@ scan_action::base_hooks::begin(void)
 /// \param unused_r A structure with all results computed by this driver.  Note
 ///     that this is also returned by the drive operation.
 void
-scan_action::base_hooks::end(const result& UTILS_UNUSED_PARAM(r))
+scan_results::base_hooks::end(const result& UTILS_UNUSED_PARAM(r))
 {
 }
 
@@ -103,25 +64,21 @@ scan_action::base_hooks::end(const result& UTILS_UNUSED_PARAM(r))
 /// Executes the operation.
 ///
 /// \param store_path The path to the database store.
-/// \param action_id The identifier of the action to scan; if none, scans the
-///     latest action in the store.
 /// \param hooks The hooks for this execution.
 ///
 /// \returns A structure with all results computed by this driver.
-scan_action::result
-scan_action::drive(const fs::path& store_path,
-                   optional< int64_t > action_id,
-                   base_hooks& hooks)
+scan_results::result
+scan_results::drive(const fs::path& store_path, base_hooks& hooks)
 {
     store::read_backend db = store::read_backend::open_ro(store_path);
     store::read_transaction tx = db.start_read();
 
     hooks.begin();
 
-    const engine::action action = get_action(tx, action_id);
-    hooks.got_action(action_id.get(), action);
+    const engine::context context = tx.get_context(1);
+    hooks.got_context(context);
 
-    store::results_iterator iter = tx.get_action_results(action_id.get());
+    store::results_iterator iter = tx.get_results();
     while (iter) {
         hooks.got_result(iter);
         ++iter;

@@ -37,14 +37,12 @@ extern "C" {
 }
 
 #include <string>
-#include <utility>
 
 #include "engine/test_program.hpp"
 #include "utils/datetime.hpp"
 #include "utils/shared_ptr.hpp"
 
 namespace engine {
-class action;
 class context;
 class test_result;
 }  // namespace engine
@@ -114,10 +112,8 @@ public:
 
     void finish(void);
 
-    engine::action get_action(const int64_t);
-    results_iterator get_action_results(const int64_t);
-    std::pair< int64_t, engine::action > get_latest_action(void);
     engine::context get_context(const int64_t);
+    results_iterator get_results(void);
 };
 
 

@@ -31,7 +31,6 @@
 
 #include <atf-c++.hpp>
 
-#include "engine/action.hpp"
 #include "engine/context.hpp"
 #include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
@@ -78,11 +77,9 @@ check_action_1(store::read_transaction& transaction)
     std::map< std::string, std::string > environment;
     const engine::context context_1(root, environment);
 
-    const engine::action action_1(context_1);
+    ATF_REQUIRE_EQ(context_1, transaction.get_context(1));
 
-    ATF_REQUIRE_EQ(action_1, transaction.get_action(1));
-
-    store::results_iterator iter = transaction.get_action_results(1);
+    store::results_iterator iter = transaction.get_results();
     ATF_REQUIRE(!iter);
 }
 
@@ -99,9 +96,7 @@ check_action_2(store::read_transaction& transaction)
     environment["PATH"] = "/bin:/usr/bin";
     const engine::context context_2(root, environment);
 
-    const engine::action action_2(context_2);
-
-    ATF_REQUIRE_EQ(action_2, transaction.get_action(2));
+    ATF_REQUIRE_EQ(context_2, transaction.get_context(2));
 
     engine::test_program test_program_1(
         "plain", fs::path("foo_test"), fs::path("/test/suite/root"),
@@ -173,7 +168,7 @@ check_action_2(store::read_transaction& transaction)
     const engine::test_result result_5(engine::test_result::skipped,
                                        "Does not apply");
 
-    store::results_iterator iter = transaction.get_action_results(2);
+    store::results_iterator iter = transaction.get_results();
     ATF_REQUIRE(iter);
     ATF_REQUIRE_EQ(test_program_1, *iter.test_program());
     ATF_REQUIRE_EQ("main", iter.test_case_name());
@@ -234,9 +229,7 @@ check_action_3(store::read_transaction& transaction)
     environment["PATH"] = "/bin:/usr/bin";
     const engine::context context_3(root, environment);
 
-    const engine::action action_3(context_3);
-
-    ATF_REQUIRE_EQ(action_3, transaction.get_action(3));
+    ATF_REQUIRE_EQ(context_3, transaction.get_context(3));
 
     engine::test_program test_program_6(
         "atf", fs::path("complex_test"), fs::path("/usr/tests"),
@@ -301,7 +294,7 @@ check_action_3(store::read_transaction& transaction)
     const engine::test_result result_9(engine::test_result::failed,
                                        "Exited with code 1");
 
-    store::results_iterator iter = transaction.get_action_results(3);
+    store::results_iterator iter = transaction.get_results();
     ATF_REQUIRE(iter);
     ATF_REQUIRE_EQ(test_program_6, *iter.test_program());
     ATF_REQUIRE_EQ("this_fails", iter.test_case_name());
@@ -355,9 +348,7 @@ check_action_4(store::read_transaction& transaction)
     environment["TERM"] = "xterm";
     const engine::context context_4(root, environment);
 
-    const engine::action action_4(context_4);
-
-    ATF_REQUIRE_EQ(action_4, transaction.get_action(4));
+    ATF_REQUIRE_EQ(context_4, transaction.get_context(4));
 
     engine::test_program test_program_8(
         "plain", fs::path("subdir/another_test"), fs::path("/usr/tests"),
@@ -397,7 +388,7 @@ check_action_4(store::read_transaction& transaction)
     const engine::test_result result_12(engine::test_result::failed,
                                         "Some reason");
 
-    store::results_iterator iter = transaction.get_action_results(4);
+    store::results_iterator iter = transaction.get_results();
     ATF_REQUIRE(iter);
     ATF_REQUIRE_EQ(test_program_9, *iter.test_program());
     ATF_REQUIRE_EQ("this_fails", iter.test_case_name());
@@ -459,6 +450,7 @@ ATF_TEST_CASE_BODY(current_schema)
     sqlite::database db = sqlite::database::open(
         testpath, sqlite::open_readwrite | sqlite::open_create);
     exec_db_file(db, store::detail::schema_file());
+    expect_fail("Database lost support for multiple actions");
     exec_db_file(db, fs::path(get_config_var("srcdir")) / "testdata_v3.sql");
     db.close();
 

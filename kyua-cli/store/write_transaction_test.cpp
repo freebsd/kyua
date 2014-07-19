@@ -34,7 +34,6 @@
 
 #include <atf-c++.hpp>
 
-#include "engine/action.hpp"
 #include "engine/context.hpp"
 #include "engine/test_result.hpp"
 #include "store/exceptions.hpp"
@@ -166,27 +165,6 @@ ATF_TEST_CASE_BODY(rollback__ok)
 }
 
 
-ATF_TEST_CASE(put_action__fail);
-ATF_TEST_CASE_HEAD(put_action__fail)
-{
-    logging::set_inmemory();
-    set_md_var("require.files", store::detail::schema_file().c_str());
-}
-ATF_TEST_CASE_BODY(put_action__fail)
-{
-    store::write_backend backend = store::write_backend::open_rw(
-        fs::path("test.db"));
-    store::write_transaction tx = backend.start_write();
-    const engine::context context(fs::path("/foo/bar"),
-                                  std::map< std::string, std::string >());
-    const int64_t context_id = tx.put_context(context);
-    const engine::action action(context);
-    backend.database().exec("DROP TABLE actions");
-    ATF_REQUIRE_THROW(store::error, tx.put_action(action, context_id));
-    tx.commit();
-}
-
-
 ATF_TEST_CASE(put_test_program__ok);
 ATF_TEST_CASE_HEAD(put_test_program__ok)
 {
@@ -207,7 +185,7 @@ ATF_TEST_CASE_BODY(put_test_program__ok)
         fs::path("test.db"));
     backend.database().exec("PRAGMA foreign_keys = OFF");
     store::write_transaction tx = backend.start_write();
-    const int64_t test_program_id = tx.put_test_program(test_program, 15);
+    const int64_t test_program_id = tx.put_test_program(test_program);
     tx.commit();
 
     {
@@ -217,7 +195,6 @@ ATF_TEST_CASE_BODY(put_test_program__ok)
         ATF_REQUIRE(stmt.step());
         ATF_REQUIRE_EQ(test_program_id,
                        stmt.safe_column_int64("test_program_id"));
-        ATF_REQUIRE_EQ(15, stmt.safe_column_int64("action_id"));
         ATF_REQUIRE_EQ("/some/root/the/binary",
                        stmt.safe_column_text("absolute_path"));
         ATF_REQUIRE_EQ("/some/root", stmt.safe_column_text("root"));
@@ -225,26 +202,6 @@ ATF_TEST_CASE_BODY(put_test_program__ok)
         ATF_REQUIRE_EQ("the-suite", stmt.safe_column_text("test_suite_name"));
         ATF_REQUIRE(!stmt.step());
     }
-}
-
-
-ATF_TEST_CASE(put_test_program__fail);
-ATF_TEST_CASE_HEAD(put_test_program__fail)
-{
-    logging::set_inmemory();
-    set_md_var("require.files", store::detail::schema_file().c_str());
-}
-ATF_TEST_CASE_BODY(put_test_program__fail)
-{
-    const engine::test_program test_program(
-        "mock", fs::path("the/binary"), fs::path("/some/root"), "the-suite",
-        engine::metadata_builder().build());
-
-    store::write_backend backend = store::write_backend::open_rw(
-        fs::path("test.db"));
-    store::write_transaction tx = backend.start_write();
-    ATF_REQUIRE_THROW(store::error, tx.put_test_program(test_program, -1));
-    tx.commit();
 }
 
 
@@ -443,10 +400,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, commit__fail);
     ATF_ADD_TEST_CASE(tcs, rollback__ok);
 
-    ATF_ADD_TEST_CASE(tcs, put_action__fail);
-
     ATF_ADD_TEST_CASE(tcs, put_test_program__ok);
-    ATF_ADD_TEST_CASE(tcs, put_test_program__fail);
     ATF_ADD_TEST_CASE(tcs, put_test_case__fail);
     ATF_ADD_TEST_CASE(tcs, put_test_case_file__empty);
     ATF_ADD_TEST_CASE(tcs, put_test_case_file__some);

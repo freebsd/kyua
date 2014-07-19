@@ -571,9 +571,7 @@ EOF
         "SELECT " \
         "       test_programs.relative_path, test_cases.name, " \
         "       test_results.result_type, test_results.result_reason " \
-        "FROM actions " \
-        "     JOIN test_programs " \
-        "     ON actions.action_id = test_programs.action_id " \
+        "FROM test_programs " \
         "     JOIN test_cases " \
         "     ON test_programs.test_program_id = test_cases.test_program_id " \
         "     JOIN test_results " \

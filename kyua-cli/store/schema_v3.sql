@@ -69,10 +69,8 @@ CREATE TABLE metadata (
 
 -- Execution contexts.
 --
--- A context represents the execution environment of a particular action.
--- Because every action is invoked by the user, the context may have
--- changed.  We record such information for information and debugging
--- purposes.
+-- A context represents the execution environment of the test run.
+-- We record such information for information and debugging purposes.
 CREATE TABLE contexts (
     context_id INTEGER PRIMARY KEY AUTOINCREMENT,
     cwd TEXT NOT NULL
@@ -92,40 +90,16 @@ CREATE TABLE env_vars (
 
 
 -- -------------------------------------------------------------------------
--- Actions.
--- -------------------------------------------------------------------------
-
-
--- Representation of user-initiated actions.
---
--- An action is an operation initiated by the user.  At the moment, the
--- only operation Kyua supports is the "test" operation (in the future we
--- should be able to store, e.g. build logs).  To keep things simple the
--- database schema is restricted to represent one single action.
-CREATE TABLE actions (
-    action_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    context_id INTEGER REFERENCES contexts
-);
-
-
--- -------------------------------------------------------------------------
 -- Test suites.
 --
 -- The tables in this section represent all the components that form a test
 -- suite.  This includes data about the test suite itself (test programs
 -- and test cases), and also the data about particular runs (test results).
 --
--- As you will notice, every object belongs to a particular action, has a
--- unique identifier and there is no attempt to deduplicate data.  This
--- comes from the fact that a test suite is not "stable" over time: i.e. on
--- each execution of the test suite, test programs and test cases may have
--- come and gone.  This has the interesting result of making the
--- distinction of a test case and a test result a pure syntactic
+-- As you will notice, every object has a unique identifier and there is no
+-- attempt to deduplicate data.  This has the interesting result of making
+-- the distinction of a test case and a test result a pure syntactic
 -- difference, because there is always a 1:1 relation.
---
--- The code that performs the processing of the actions is the component in
--- charge of finding correlations between test programs and test cases
--- across different actions.
 -- -------------------------------------------------------------------------
 
 
@@ -169,7 +143,6 @@ CREATE INDEX index_metadatas_by_id
 -- the future.
 CREATE TABLE test_programs (
     test_program_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    action_id INTEGER REFERENCES actions,
 
     -- The absolute path to the test program.  This should not be necessary
     -- because it is basically the concatenation of root and relative_path.
@@ -198,11 +171,6 @@ CREATE TABLE test_programs (
 );
 
 
--- Optimize the lookup of test programs by the action they belong to.
-CREATE INDEX index_test_programs_by_action_id
-    ON test_programs (action_id);
-
-
 -- Representation of a test case.
 --
 -- At the moment, there are no substantial differences between the
@@ -227,8 +195,6 @@ CREATE INDEX index_test_cases_by_test_programs_id
 -- Representation of test case results.
 --
 -- Note that there is a 1:1 relation between test cases and their results.
--- This is a result of storing the information of a test case on every
--- single action.
 CREATE TABLE test_results (
     test_case_id INTEGER PRIMARY KEY REFERENCES test_cases,
     result_type TEXT NOT NULL,

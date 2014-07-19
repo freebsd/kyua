@@ -32,9 +32,7 @@ ENGINE_LIBS = libengine.a $(STORE_LIBS) $(UTILS_LIBS)
 noinst_LIBRARIES += libengine.a
 libengine_a_CPPFLAGS  = $(UTILS_CFLAGS)
 libengine_a_CPPFLAGS += -DKYUA_TESTERSDIR="\"$(testersdir)\""
-libengine_a_SOURCES  = engine/action.cpp
-libengine_a_SOURCES += engine/action.hpp
-libengine_a_SOURCES += engine/config.cpp
+libengine_a_SOURCES  = engine/config.cpp
 libengine_a_SOURCES += engine/config.hpp
 libengine_a_SOURCES += engine/context.cpp
 libengine_a_SOURCES += engine/context.hpp
@@ -63,12 +61,7 @@ tests_enginedir = $(pkgtestsdir)/engine
 tests_engine_DATA = engine/Kyuafile
 EXTRA_DIST += $(tests_engine_DATA)
 
-tests_engine_PROGRAMS = engine/action_test
-engine_action_test_SOURCES = engine/action_test.cpp
-engine_action_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-engine_action_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) $(ATF_CXX_LIBS)
-
-tests_engine_PROGRAMS += engine/config_test
+tests_engine_PROGRAMS = engine/config_test
 engine_config_test_SOURCES = engine/config_test.cpp
 engine_config_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 engine_config_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) $(ATF_CXX_LIBS)

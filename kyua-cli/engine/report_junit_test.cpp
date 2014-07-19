@@ -33,9 +33,8 @@
 
 #include <atf-c++.hpp>
 
-#include "engine/action.hpp"
 #include "engine/context.hpp"
-#include "engine/drivers/scan_action.hpp"
+#include "engine/drivers/scan_results.hpp"
 #include "engine/metadata.hpp"
 #include "engine/test_result.hpp"
 #include "store/write_backend.hpp"
@@ -48,7 +47,7 @@
 
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
-namespace scan_action = engine::drivers::scan_action;
+namespace scan_results = engine::drivers::scan_results;
 namespace units = utils::units;
 
 using utils::none;
@@ -90,20 +89,14 @@ static const char* const overriden_metadata =
 ///
 /// \param tx Transaction to use for the writes to the database.
 /// \param env_vars Number of environment variables to add to the context.
-///
-/// \return The identifier of the new action.
-static int64_t
+static void
 add_action(store::write_transaction& tx, const std::size_t env_vars)
 {
     std::map< std::string, std::string > env;
     for (std::size_t i = 0; i < env_vars; i++)
         env[F("VAR%s") % i] = F("Value %s") % i;
     const engine::context context(fs::path("/root"), env);
-    const engine::action action(context);
-    const int64_t context_id = tx.put_context(context);
-    const int64_t action_id = tx.put_action(action, context_id);
-
-    return action_id;
+    (void)tx.put_context(context);
 }
 
 
@@ -111,7 +104,6 @@ add_action(store::write_transaction& tx, const std::size_t env_vars)
 ///
 /// \param tx Transaction to use for the writes to the database.
 /// \param prog Test program name.
-/// \param action_id Identifier of the action to which to add the tests.
 /// \param results Collection of results for the added test cases.  The size of
 ///     this vector indicates the number of tests in the test program.
 /// \param with_metadata Whether to add metadata overrides to the test cases.
@@ -119,14 +111,13 @@ add_action(store::write_transaction& tx, const std::size_t env_vars)
 static void
 add_tests(store::write_transaction& tx,
           const char* prog,
-          const int64_t action_id,
           const std::vector< engine::test_result >& results,
           const bool with_metadata, const bool with_output)
 {
     const engine::test_program test_program(
         "plain", fs::path(prog), fs::path("/root"), "suite",
         engine::metadata_builder().build());
-    const int64_t tp_id = tx.put_test_program(test_program, action_id);
+    const int64_t tp_id = tx.put_test_program(test_program);
 
     for (std::size_t j = 0; j < results.size(); j++) {
         engine::metadata_builder builder;
@@ -230,20 +221,19 @@ ATF_TEST_CASE_BODY(report_junit_hooks__minimal)
     store::write_backend backend = store::write_backend::open_rw(
         fs::path("test.db"));
     store::write_transaction tx = backend.start_write();
-    (void)add_action(tx, 0);
+    add_action(tx, 0);
     tx.commit();
     backend.close();
 
     std::ostringstream output;
 
     engine::report_junit_hooks hooks(output);
-    scan_action::drive(fs::path("test.db"), none, hooks);
+    scan_results::drive(fs::path("test.db"), hooks);
 
     const char* expected =
         "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n"
         "<testsuite>\n"
         "<properties>\n"
-        "<property name=\"kyua.action_id\" value=\"1\"/>\n"
         "<property name=\"cwd\" value=\"/root\"/>\n"
         "</properties>\n"
         "</testsuite>\n";
@@ -267,22 +257,21 @@ ATF_TEST_CASE_BODY(report_junit_hooks__some_tests)
     store::write_backend backend = store::write_backend::open_rw(
         fs::path("test.db"));
     store::write_transaction tx = backend.start_write();
-    const int64_t action_id = add_action(tx, 2);
-    add_tests(tx, "dir/prog-1", action_id, results1, false, false);
-    add_tests(tx, "dir/sub/prog-2", action_id, results2, true, true);
+    add_action(tx, 2);
+    add_tests(tx, "dir/prog-1", results1, false, false);
+    add_tests(tx, "dir/sub/prog-2", results2, true, true);
     tx.commit();
     backend.close();
 
     std::ostringstream output;
 
     engine::report_junit_hooks hooks(output);
-    scan_action::drive(fs::path("test.db"), none, hooks);
+    scan_results::drive(fs::path("test.db"), hooks);
 
     const std::string expected = std::string() +
         "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n"
         "<testsuite>\n"
         "<properties>\n"
-        "<property name=\"kyua.action_id\" value=\"1\"/>\n"
         "<property name=\"cwd\" value=\"/root\"/>\n"
         "<property name=\"env.VAR0\" value=\"Value 0\"/>\n"
         "<property name=\"env.VAR1\" value=\"Value 1\"/>\n"

@@ -26,13 +26,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/drivers/scan_action.hpp"
+#include "engine/drivers/scan_results.hpp"
 
 #include <set>
 
 #include <atf-c++.hpp>
 
-#include "engine/action.hpp"
 #include "engine/context.hpp"
 #include "engine/test_result.hpp"
 #include "store/exceptions.hpp"
@@ -46,7 +45,7 @@
 
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
-namespace scan_action = engine::drivers::scan_action;
+namespace scan_results = engine::drivers::scan_results;
 
 using utils::none;
 using utils::optional;
@@ -56,19 +55,16 @@ namespace {
 
 
 /// Records the callback values for futher investigation.
-class capture_hooks : public scan_action::base_hooks {
+class capture_hooks : public scan_results::base_hooks {
 public:
     /// Whether begin() was called or not.
     bool _begin_called;
 
     /// The captured driver result, if any.
-    optional< scan_action::result > _end_result;
+    optional< scan_results::result > _end_result;
 
-    /// The captured action ID, if any.
-    optional< int64_t > _action_id;
-
-    /// The captured action, if any.
-    optional< engine::action > _action;
+    /// The captured context, if any.
+    optional< engine::context > _context;
 
     /// The captured results, flattened as "program:test_case:result".
     std::set< std::string > _results;
@@ -91,23 +87,19 @@ public:
     /// \param r A structure with all results computed by this driver.  Note
     ///     that this is also returned by the drive operation.
     void
-    end(const scan_action::result& r)
+    end(const scan_results::result& r)
     {
         PRE(!_end_result);
         _end_result = r;
     }
 
-    /// Callback executed when an action is found.
+    /// Callback executed when the context is loaded.
     ///
-    /// \param action_id The identifier of the loaded action.
-    /// \param action The action loaded from the database.
-    void got_action(const int64_t action_id,
-                    const engine::action& action)
+    /// \param context The context loaded from the database.
+    void got_context(const engine::context& context)
     {
-        PRE(!_action_id);
-        _action_id = action_id;
-        PRE(!_action);
-        _action = action;
+        PRE(!_context);
+        _context = context;
     }
 
     /// Callback executed when a test results is found.
@@ -132,16 +124,13 @@ public:
 
 /// Populates a test database with a new action.
 ///
-/// It is OK to call this function multiple times on the same file.  Doing this
-/// will generate a new action every time on the test database.
+/// It is not OK to call this function multiple times on the same file.
 ///
 /// \param db_name The database to update.
 /// \param count A number that indicates how many elements to insert in the
 ///     action.  Can be used to determine from the caller which particular
 ///     action has been loaded.
-///
-/// \return The identifier of the committed action.
-static int64_t
+static void
 populate_db(const char* db_name, const int count)
 {
     store::write_backend backend = store::write_backend::open_rw(
@@ -153,15 +142,13 @@ populate_db(const char* db_name, const int count)
     for (int i = 0; i < count; i++)
         env[F("VAR%s") % i] = F("Value %s") % i;
     const engine::context context(fs::path("/root"), env);
-    const engine::action action(context);
-    const int64_t context_id = tx.put_context(context);
-    const int64_t action_id = tx.put_action(action, context_id);
+    tx.put_context(context);
 
     for (int i = 0; i < count; i++) {
         const engine::test_program test_program(
             "plain", fs::path(F("dir/prog_%s") % i), fs::path("/root"),
             F("suite_%s") % i, engine::metadata_builder().build());
-        const int64_t tp_id = tx.put_test_program(test_program, action_id);
+        const int64_t tp_id = tx.put_test_program(test_program);
 
         for (int j = 0; j < count; j++) {
             const engine::test_case test_case(
@@ -179,33 +166,27 @@ populate_db(const char* db_name, const int count)
     }
 
     tx.commit();
-
-    return action_id;
 }
 
 
 }  // anonymous namespace
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(latest_action);
-ATF_TEST_CASE_BODY(latest_action)
+ATF_TEST_CASE_WITHOUT_HEAD(ok);
+ATF_TEST_CASE_BODY(ok)
 {
-    (void)populate_db("test.db", 3);
-    const int64_t action_id = populate_db("test.db", 2);
+    populate_db("test.db", 2);
 
     capture_hooks hooks;
-    scan_action::drive(fs::path("test.db"), none, hooks);
+    scan_results::drive(fs::path("test.db"), hooks);
     ATF_REQUIRE(hooks._begin_called);
     ATF_REQUIRE(hooks._end_result);
-
-    ATF_REQUIRE_EQ(action_id, hooks._action_id.get());
 
     std::map< std::string, std::string > env;
     env["VAR0"] = "Value 0";
     env["VAR1"] = "Value 1";
     const engine::context context(fs::path("/root"), env);
-    const engine::action action(context);
-    ATF_REQUIRE(action == hooks._action.get());
+    ATF_REQUIRE(context == hooks._context.get());
 
     std::set< std::string > results;
     results.insert("/root/dir/prog_0:main:skipped:Count 0:4:10");
@@ -216,45 +197,17 @@ ATF_TEST_CASE_BODY(latest_action)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(explicit_action);
-ATF_TEST_CASE_BODY(explicit_action)
-{
-    (void)populate_db("test.db", 5);
-    const int64_t action_id = populate_db("test.db", 1);
-    (void)populate_db("test.db", 2);
-
-    capture_hooks hooks;
-    scan_action::drive(fs::path("test.db"),
-                       optional< int64_t >(action_id), hooks);
-    ATF_REQUIRE(hooks._begin_called);
-    ATF_REQUIRE(hooks._end_result);
-
-    ATF_REQUIRE_EQ(action_id, hooks._action_id.get());
-
-    std::map< std::string, std::string > env;
-    env["VAR0"] = "Value 0";
-    const engine::context context(fs::path("/root"), env);
-    const engine::action action(context);
-    ATF_REQUIRE(action == hooks._action.get());
-
-    std::set< std::string > results;
-    results.insert("/root/dir/prog_0:main:skipped:Count 0:4:10");
-    ATF_REQUIRE(results == hooks._results);
-}
-
-
 ATF_TEST_CASE_WITHOUT_HEAD(missing_db);
 ATF_TEST_CASE_BODY(missing_db)
 {
     capture_hooks hooks;
     ATF_REQUIRE_THROW(store::error,
-                      scan_action::drive(fs::path("test.db"), none, hooks));
+                      scan_results::drive(fs::path("test.db"), hooks));
 }
 
 
 ATF_INIT_TEST_CASES(tcs)
 {
-    ATF_ADD_TEST_CASE(tcs, latest_action);
-    ATF_ADD_TEST_CASE(tcs, explicit_action);
+    ATF_ADD_TEST_CASE(tcs, ok);
     ATF_ADD_TEST_CASE(tcs, missing_db);
 }

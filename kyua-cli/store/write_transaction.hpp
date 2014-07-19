@@ -45,7 +45,6 @@ extern "C" {
 #include "utils/shared_ptr.hpp"
 
 namespace engine {
-class action;
 class context;
 class test_result;
 }  // namespace engine
@@ -75,9 +74,8 @@ public:
     void commit(void);
     void rollback(void);
 
-    int64_t put_action(const engine::action&, const int64_t);
     int64_t put_context(const engine::context&);
-    int64_t put_test_program(const engine::test_program&, const int64_t);
+    int64_t put_test_program(const engine::test_program&);
     int64_t put_test_case(const engine::test_case&, const int64_t);
     utils::optional< int64_t > put_test_case_file(const std::string&,
                                                   const utils::fs::path&,
