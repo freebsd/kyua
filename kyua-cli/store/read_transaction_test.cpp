@@ -65,8 +65,7 @@ ATF_TEST_CASE_BODY(get_context__missing)
         fs::path("test.db"));
 
     store::read_transaction tx = backend.start_read();
-    ATF_REQUIRE_THROW_RE(store::error, "context 456: does not exist",
-                         tx.get_context(456));
+    ATF_REQUIRE_THROW_RE(store::error, "context: no data", tx.get_context());
 }
 
 
@@ -83,7 +82,7 @@ ATF_TEST_CASE_BODY(get_context__invalid_cwd)
             fs::path("test.db"));
 
         sqlite::statement stmt = backend.database().create_statement(
-            "INSERT INTO contexts (context_id, cwd) VALUES (78, :cwd)");
+            "INSERT INTO contexts (cwd) VALUES (:cwd)");
         const char buffer[10] = "foo bar";
         stmt.bind(":cwd", sqlite::blob(buffer, sizeof(buffer)));
         stmt.step_without_results();
@@ -92,8 +91,8 @@ ATF_TEST_CASE_BODY(get_context__invalid_cwd)
     store::read_backend backend = store::read_backend::open_ro(
         fs::path("test.db"));
     store::read_transaction tx = backend.start_read();
-    ATF_REQUIRE_THROW_RE(store::error, "context 78: .*cwd.*not a string",
-                         tx.get_context(78));
+    ATF_REQUIRE_THROW_RE(store::error, "context: .*cwd.*not a string",
+                         tx.get_context());
 }
 
 
@@ -105,41 +104,47 @@ ATF_TEST_CASE_HEAD(get_context__invalid_env_vars)
 }
 ATF_TEST_CASE_BODY(get_context__invalid_env_vars)
 {
-    store::write_backend backend = store::write_backend::open_rw(
-        fs::path("test.db"));
-
-    backend.database().exec("INSERT INTO contexts (context_id, cwd) "
-                            "VALUES (10, '/foo/bar')");
-    backend.database().exec("INSERT INTO contexts (context_id, cwd) "
-                            "VALUES (20, '/foo/bar')");
-
-    const char buffer[10] = "foo bar";
-
     {
+        store::write_backend backend = store::write_backend::open_rw(
+            fs::path("test-bad-name.db"));
+        backend.database().exec("INSERT INTO contexts (cwd) "
+                                "VALUES ('/foo/bar')");
+        const char buffer[10] = "foo bar";
+
         sqlite::statement stmt = backend.database().create_statement(
-            "INSERT INTO env_vars (context_id, var_name, var_value) "
-            "VALUES (10, :var_name, 'abc')");
+            "INSERT INTO env_vars (var_name, var_value) "
+            "VALUES (:var_name, 'abc')");
         stmt.bind(":var_name", sqlite::blob(buffer, sizeof(buffer)));
         stmt.step_without_results();
     }
+    {
+        store::read_backend backend = store::read_backend::open_ro(
+            fs::path("test-bad-name.db"));
+        store::read_transaction tx = backend.start_read();
+        ATF_REQUIRE_THROW_RE(store::error, "context: .*var_name.*not a string",
+                             tx.get_context());
+    }
 
     {
+        store::write_backend backend = store::write_backend::open_rw(
+            fs::path("test-bad-value.db"));
+        backend.database().exec("INSERT INTO contexts (cwd) "
+                                "VALUES ('/foo/bar')");
+        const char buffer[10] = "foo bar";
+
         sqlite::statement stmt = backend.database().create_statement(
-            "INSERT INTO env_vars (context_id, var_name, var_value) "
-            "VALUES (20, 'abc', :var_value)");
+            "INSERT INTO env_vars (var_name, var_value) "
+            "VALUES ('abc', :var_value)");
         stmt.bind(":var_value", sqlite::blob(buffer, sizeof(buffer)));
         stmt.step_without_results();
     }
-
-    backend.close();
-
-    store::read_backend backend2 = store::read_backend::open_ro(
-        fs::path("test.db"));
-    store::read_transaction tx = backend2.start_read();
-    ATF_REQUIRE_THROW_RE(store::error, "context 10: .*var_name.*not a string",
-                         tx.get_context(10));
-    ATF_REQUIRE_THROW_RE(store::error, "context 20: .*var_value.*not a string",
-                         tx.get_context(20));
+    {
+        store::read_backend backend = store::read_backend::open_ro(
+            fs::path("test-bad-value.db"));
+        store::read_transaction tx = backend.start_read();
+        ATF_REQUIRE_THROW_RE(store::error, "context: .*var_value.*not a string",
+                             tx.get_context());
+    }
 }
 
 

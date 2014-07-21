@@ -65,18 +65,16 @@ namespace {
 /// Stores the environment variables of a context.
 ///
 /// \param db The SQLite database.
-/// \param context_id The identifier of the context.
 /// \param env The environment variables to store.
 ///
 /// \throw sqlite::error If there is a problem storing the variables.
 static void
-put_env_vars(sqlite::database& db, const int64_t context_id,
+put_env_vars(sqlite::database& db,
              const std::map< std::string, std::string >& env)
 {
     sqlite::statement stmt = db.create_statement(
-        "INSERT INTO env_vars (context_id, var_name, var_value) "
-        "VALUES (:context_id, :var_name, :var_value)");
-    stmt.bind(":context_id", context_id);
+        "INSERT INTO env_vars (var_name, var_value) "
+        "VALUES (:var_name, :var_value)");
     for (std::map< std::string, std::string >::const_iterator iter =
              env.begin(); iter != env.end(); iter++) {
         stmt.bind(":var_name", (*iter).first);
@@ -254,10 +252,8 @@ store::write_transaction::rollback(void)
 ///
 /// \param context The context to put.
 ///
-/// \return The identifier of the inserted context.
-///
 /// \throw error If there is any problem when talking to the database.
-int64_t
+void
 store::write_transaction::put_context(const engine::context& context)
 {
     try {
@@ -265,11 +261,8 @@ store::write_transaction::put_context(const engine::context& context)
             "INSERT INTO contexts (cwd) VALUES (:cwd)");
         stmt.bind(":cwd", context.cwd().str());
         stmt.step_without_results();
-        const int64_t context_id = _pimpl->_db.last_insert_rowid();
 
-        put_env_vars(_pimpl->_db, context_id, context.env());
-
-        return context_id;
+        put_env_vars(_pimpl->_db, context.env());
     } catch (const sqlite::error& e) {
         throw error(e.what());
     }

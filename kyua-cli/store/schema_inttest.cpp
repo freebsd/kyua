@@ -75,9 +75,9 @@ check_action_1(store::read_transaction& transaction)
 {
     const fs::path root("/some/root");
     std::map< std::string, std::string > environment;
-    const engine::context context_1(root, environment);
+    const engine::context context(root, environment);
 
-    ATF_REQUIRE_EQ(context_1, transaction.get_context(1));
+    ATF_REQUIRE_EQ(context, transaction.get_context());
 
     store::results_iterator iter = transaction.get_results();
     ATF_REQUIRE(!iter);
@@ -94,9 +94,9 @@ check_action_2(store::read_transaction& transaction)
     std::map< std::string, std::string > environment;
     environment["HOME"] = "/home/test";
     environment["PATH"] = "/bin:/usr/bin";
-    const engine::context context_2(root, environment);
+    const engine::context context(root, environment);
 
-    ATF_REQUIRE_EQ(context_2, transaction.get_context(2));
+    ATF_REQUIRE_EQ(context, transaction.get_context());
 
     engine::test_program test_program_1(
         "plain", fs::path("foo_test"), fs::path("/test/suite/root"),
@@ -227,9 +227,9 @@ check_action_3(store::read_transaction& transaction)
     const fs::path root("/usr/tests");
     std::map< std::string, std::string > environment;
     environment["PATH"] = "/bin:/usr/bin";
-    const engine::context context_3(root, environment);
+    const engine::context context(root, environment);
 
-    ATF_REQUIRE_EQ(context_3, transaction.get_context(3));
+    ATF_REQUIRE_EQ(context, transaction.get_context());
 
     engine::test_program test_program_6(
         "atf", fs::path("complex_test"), fs::path("/usr/tests"),
@@ -346,9 +346,9 @@ check_action_4(store::read_transaction& transaction)
     environment["LANG"] = "C";
     environment["PATH"] = "/bin:/usr/bin";
     environment["TERM"] = "xterm";
-    const engine::context context_4(root, environment);
+    const engine::context context(root, environment);
 
-    ATF_REQUIRE_EQ(context_4, transaction.get_context(4));
+    ATF_REQUIRE_EQ(context, transaction.get_context());
 
     engine::test_program test_program_8(
         "plain", fs::path("subdir/another_test"), fs::path("/usr/tests"),
@@ -450,7 +450,7 @@ ATF_TEST_CASE_BODY(current_schema)
     sqlite::database db = sqlite::database::open(
         testpath, sqlite::open_readwrite | sqlite::open_create);
     exec_db_file(db, store::detail::schema_file());
-    expect_fail("Database lost support for multiple actions");
+    expect_death("Database lost support for multiple actions");
     exec_db_file(db, fs::path(get_config_var("srcdir")) / "testdata_v3.sql");
     db.close();
 
@@ -479,7 +479,7 @@ ATF_TEST_CASE_BODY(migrate_schema__v1_to_v3)
     exec_db_file(db, fs::path(get_config_var("srcdir")) / "testdata_v1.sql");
     db.close();
 
-    expect_fail("Migration from v2 to v3 not yet implemented");
+    expect_death("Migration from v2 to v3 not yet implemented");
     store::migrate_schema(fs::path("test.db"));
 
     store::read_backend backend = store::read_backend::open_ro(testpath);

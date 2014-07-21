@@ -37,6 +37,7 @@
 #include "store/write_backend.hpp"
 #include "store/write_transaction.hpp"
 #include "utils/datetime.hpp"
+#include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/logging/operations.hpp"
 #include "utils/sqlite/database.hpp"
@@ -46,6 +47,40 @@ namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace logging = utils::logging;
 namespace units = utils::units;
+
+
+namespace {
+
+
+/// Puts and gets a context and validates the results.
+///
+/// \param exp_context The context to save and restore.
+static void
+check_get_put_context(const engine::context& exp_context)
+{
+    const fs::path test_db("test.db");
+
+    if (fs::exists(test_db))
+        fs::unlink(test_db);
+
+    {
+        store::write_backend backend = store::write_backend::open_rw(test_db);
+        store::write_transaction tx = backend.start_write();
+        tx.put_context(exp_context);
+        tx.commit();
+    }
+    {
+        store::read_backend backend = store::read_backend::open_ro(test_db);
+        store::read_transaction tx = backend.start_read();
+        engine::context context = tx.get_context();
+        tx.finish();
+
+        ATF_REQUIRE(exp_context == context);
+    }
+}
+
+
+}  // anonymous namespace
 
 
 ATF_TEST_CASE(get_put_context__ok);
@@ -60,33 +95,9 @@ ATF_TEST_CASE_BODY(get_put_context__ok)
     env1["A1"] = "foo";
     env1["A2"] = "bar";
     std::map< std::string, std::string > env2;
-    const engine::context exp_context1(fs::path("/foo/bar"), env1);
-    const engine::context exp_context2(fs::path("/foo/bar"), env1);
-    const engine::context exp_context3(fs::path("/foo/baz"), env2);
-
-    int64_t id1, id2, id3;
-    {
-        store::write_backend backend = store::write_backend::open_rw(
-            fs::path("test.db"));
-        store::write_transaction tx = backend.start_write();
-        id1 = tx.put_context(exp_context1);
-        id3 = tx.put_context(exp_context3);
-        id2 = tx.put_context(exp_context2);
-        tx.commit();
-    }
-    {
-        store::read_backend backend = store::read_backend::open_ro(
-            fs::path("test.db"));
-        store::read_transaction tx = backend.start_read();
-        const engine::context context1 = tx.get_context(id1);
-        const engine::context context2 = tx.get_context(id2);
-        const engine::context context3 = tx.get_context(id3);
-        tx.finish();
-
-        ATF_REQUIRE(exp_context1 == context1);
-        ATF_REQUIRE(exp_context2 == context2);
-        ATF_REQUIRE(exp_context3 == context3);
-    }
+    check_get_put_context(engine::context(fs::path("/foo/bar"), env1));
+    check_get_put_context(engine::context(fs::path("/foo/bar"), env1));
+    check_get_put_context(engine::context(fs::path("/foo/baz"), env2));
 }
 
 

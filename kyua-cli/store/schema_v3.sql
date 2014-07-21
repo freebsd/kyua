@@ -72,7 +72,6 @@ CREATE TABLE metadata (
 -- A context represents the execution environment of the test run.
 -- We record such information for information and debugging purposes.
 CREATE TABLE contexts (
-    context_id INTEGER PRIMARY KEY AUTOINCREMENT,
     cwd TEXT NOT NULL
 
     -- TODO(jmmv): Record the run-time configuration.
@@ -81,11 +80,10 @@ CREATE TABLE contexts (
 
 -- Environment variables of a context.
 CREATE TABLE env_vars (
-    context_id INTEGER REFERENCES contexts,
     var_name TEXT NOT NULL,
     var_value TEXT NOT NULL,
 
-    PRIMARY KEY (context_id, var_name)
+    PRIMARY KEY (var_name)
 );
 
 

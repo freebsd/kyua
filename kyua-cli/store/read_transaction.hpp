@@ -112,7 +112,7 @@ public:
 
     void finish(void);
 
-    engine::context get_context(const int64_t);
+    engine::context get_context(void);
     results_iterator get_results(void);
 };
 

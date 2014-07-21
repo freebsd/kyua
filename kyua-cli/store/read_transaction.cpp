@@ -60,23 +60,20 @@ using utils::optional;
 namespace {
 
 
-/// Retrieves the environment variables of a context.
+/// Retrieves the environment variables of the context.
 ///
 /// \param db The SQLite database.
-/// \param context_id The identifier of the context.
 ///
 /// \return The environment variables of the specified context.
 ///
-/// \throw sqlite::error If there is a problem storing the variables.
+/// \throw sqlite::error If there is a problem loading the variables.
 static std::map< std::string, std::string >
-get_env_vars(sqlite::database& db, const int64_t context_id)
+get_env_vars(sqlite::database& db)
 {
     std::map< std::string, std::string > env;
 
     sqlite::statement stmt = db.create_statement(
-        "SELECT var_name, var_value FROM env_vars "
-        "WHERE context_id == :context_id");
-    stmt.bind(":context_id", context_id);
+        "SELECT var_name, var_value FROM env_vars");
 
     while (stmt.step()) {
         const std::string name = stmt.safe_column_text("var_name");
@@ -509,26 +506,22 @@ store::read_transaction::finish(void)
 
 /// Retrieves an context from the database.
 ///
-/// \param context_id The identifier of the context to retrieve.
-///
 /// \return The retrieved context.
 ///
 /// \throw error If there is a problem loading the context.
 engine::context
-store::read_transaction::get_context(const int64_t context_id)
+store::read_transaction::get_context(void)
 {
     try {
         sqlite::statement stmt = _pimpl->_db.create_statement(
-            "SELECT cwd FROM contexts WHERE context_id == :context_id");
-        stmt.bind(":context_id", context_id);
+            "SELECT cwd FROM contexts");
         if (!stmt.step())
-            throw error(F("Error loading context %s: does not exist") %
-                        context_id);
+            throw error("Error loading context: no data");
 
         return engine::context(fs::path(stmt.safe_column_text("cwd")),
-                               get_env_vars(_pimpl->_db, context_id));
+                               get_env_vars(_pimpl->_db));
     } catch (const sqlite::error& e) {
-        throw error(F("Error loading context %s: %s") % context_id % e.what());
+        throw error(F("Error loading context: %s") % e.what());
     }
 }
 
