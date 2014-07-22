@@ -103,6 +103,8 @@ ATF_TC(test__bogus_plan);
 ATF_TC_HEAD(test__bogus_plan, tc) { setup(tc, true); }
 ATF_TC_BODY(test__bogus_plan, tc)
 {
+    require_coredump_ability();
+
     char* helpers = select_helper(tc, "bogus_plan");
     check(EXIT_FAILURE,
           "1..3\n"
@@ -137,6 +139,8 @@ ATF_TC(test__crash);
 ATF_TC_HEAD(test__crash, tc) { setup(tc, true); }
 ATF_TC_BODY(test__crash, tc)
 {
+    require_coredump_ability();
+
     char* helpers = select_helper(tc, "signal");
     check(EXIT_FAILURE, "", "save:crash.err",
           "test", helpers, "main", "test-result", NULL);

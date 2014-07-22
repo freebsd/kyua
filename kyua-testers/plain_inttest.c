@@ -90,6 +90,8 @@ ATF_TC(test__crash);
 ATF_TC_HEAD(test__crash, tc) { setup(tc, true); }
 ATF_TC_BODY(test__crash, tc)
 {
+    require_coredump_ability();
+
     char* helpers = select_helper(tc, "signal");
     check(EXIT_FAILURE, "", "save:crash.err",
           "test", helpers, "main", "test-result", NULL);

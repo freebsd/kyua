@@ -30,6 +30,7 @@
 
 extern "C" {
 #include <sys/stat.h>
+#include <sys/resource.h>
 
 #include <signal.h>
 #include <unistd.h>
@@ -385,6 +386,20 @@ create_mock_tester_signal(const char* interface, const int term_sig)
     ATF_REQUIRE(::chmod(tester_name.c_str(), 0755) != -1);
 
     utils::setenv("KYUA_TESTERSDIR", fs::current_path().str());
+}
+
+
+/// Ensures we can dump core and marks the test as skipped otherwise.
+///
+/// \param tc The calling test case.
+static void
+require_coredump_ability(const atf::tests::tc* tc)
+{
+    struct rlimit rl;
+    rl.rlim_cur = RLIM_INFINITY;
+    rl.rlim_max = RLIM_INFINITY;
+    if (::setrlimit(RLIMIT_CORE, &rl) == -1)
+        tc->skip("Cannot unlimit the core file size; check limits manually");
 }
 
 
@@ -875,6 +890,8 @@ ATF_TEST_CASE_BODY(run_test_case__atf__timeout_cleanup)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__atf__stacktrace__atf__body);
 ATF_TEST_CASE_BODY(run_test_case__atf__stacktrace__atf__body)
 {
+    require_coredump_ability(this);
+
     atf_helper helper(this, "crash");
     capture_hooks hooks;
     const engine::test_result result = helper.run(hooks);
@@ -891,6 +908,8 @@ ATF_TEST_CASE_BODY(run_test_case__atf__stacktrace__atf__body)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__atf__stacktrace__atf__cleanup);
 ATF_TEST_CASE_BODY(run_test_case__atf__stacktrace__atf__cleanup)
 {
+    require_coredump_ability(this);
+
     atf_helper helper(this, "crash_cleanup");
     helper.set_metadata("has_cleanup", "true");
     capture_hooks hooks;
@@ -1068,6 +1087,8 @@ ATF_TEST_CASE_BODY(run_test_case__plain__timeout)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__plain__stacktrace);
 ATF_TEST_CASE_BODY(run_test_case__plain__stacktrace)
 {
+    require_coredump_ability(this);
+
     plain_helper helper(this, "crash");
     helper.set("CONTROL_DIR", fs::current_path());
 
