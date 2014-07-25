@@ -560,13 +560,15 @@ convert_failed(const char* reason, int status, const char* output,
 static kyua_error_t
 convert_passed(int status, const char* output, bool* success)
 {
+    kyua_error_t error;
+
     if (WIFEXITED(status)) {
         if (WEXITSTATUS(status) == EXIT_SUCCESS) {
             *success = true;
-            return kyua_result_write(output, KYUA_RESULT_PASSED, NULL);
+            error = kyua_result_write(output, KYUA_RESULT_PASSED, NULL);
         } else {
             *success = false;
-            return kyua_result_write(
+            error = kyua_result_write(
                 output, KYUA_RESULT_BROKEN, "Test case reported a passed "
                 "result but returned a non-zero exit code %d",
                 WEXITSTATUS(status));
@@ -574,11 +576,12 @@ convert_passed(int status, const char* output, bool* success)
     } else {
         assert(WIFSIGNALED(status));
         *success = false;
-        return kyua_result_write(
+        error = kyua_result_write(
             output, KYUA_RESULT_BROKEN, "Test case reported a passed result "
             "but received signal %d%s", WTERMSIG(status),
             WCOREDUMP(status) ? " (core dumped)" : "");
     }
+    return error;
 }
 
 
@@ -679,6 +682,9 @@ convert_result(const enum atf_status status, const int status_arg,
     }
 
     assert(false);
+    return kyua_result_write(
+        output, KYUA_RESULT_BROKEN, "Received an unexpected status: %d",
+        status);
 }
 
 

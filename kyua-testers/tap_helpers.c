@@ -62,6 +62,16 @@ bogus_plan_helper(void)
 }
 
 
+/// Test case that produces an invalid output TAP plan.
+static int
+bogus_plan_negative_count_helper(void)
+{
+    fprintf(stdout, "1..-3\n");
+    fprintf(stdout, "ok\n");
+    return EXIT_SUCCESS;
+}
+
+
 /// Test case that always fails.
 static int
 fail_helper(void)
@@ -93,6 +103,25 @@ pass_helper(void)
 }
 
 
+/// Test case that's skipped.
+static int
+skip_testcase_helper(void)
+{
+    fprintf(stdout, "1..1\n");
+    fprintf(stdout, "ok - 1 # SKIP\n");
+    return EXIT_SUCCESS;
+}
+
+
+/// Test suite that's completely skipped.
+static int
+skip_plan_helper(void)
+{
+    fprintf(stdout, "1..0 # SKIP not running this test suite\n");
+    return EXIT_SUCCESS;
+}
+
+
 /// Test case that always dies due to a signal and dumps core.
 static int
 signal_helper(void)
@@ -108,6 +137,26 @@ sleep_helper(void)
 {
     sleep(300);
     return EXIT_FAILURE;
+}
+
+
+/// Test case marked not ok/TODO
+static int
+todo_testcase_not_ok_helper(void)
+{
+    fprintf(stdout, "1..1\n");
+    fprintf(stdout, "not ok - 1 # TODO: need to implement this testcase\n");
+    return EXIT_SUCCESS;
+}
+
+
+/// Test case marked ok/TODO
+static int
+todo_testcase_ok_helper(void)
+{
+    fprintf(stdout, "1..1\n");
+    fprintf(stdout, "ok - 1 # TODO: need to implement this testcase\n");
+    return EXIT_SUCCESS;
 }
 
 
@@ -132,14 +181,24 @@ main(const int argc, char* const* const KYUA_DEFS_UNUSED_PARAM(argv))
         return bail_out_helper();
     } else if (strcmp(helper_name, "bogus_plan") == 0) {
         return bogus_plan_helper();
+    } else if (strcmp(helper_name, "bogus_plan_negative_count") == 0) {
+        return bogus_plan_negative_count_helper();
     } else if (strcmp(helper_name, "fail") == 0) {
         return fail_helper();
     } else if (strcmp(helper_name, "pass") == 0) {
         return pass_helper();
     } else if (strcmp(helper_name, "signal") == 0) {
         return signal_helper();
+    } else if (strcmp(helper_name, "skip") == 0) {
+        return skip_testcase_helper();
+    } else if (strcmp(helper_name, "skip_plan") == 0) {
+        return skip_plan_helper();
     } else if (strcmp(helper_name, "sleep") == 0) {
         return sleep_helper();
+    } else if (strcmp(helper_name, "todo_not_ok") == 0) {
+        return todo_testcase_not_ok_helper();
+    } else if (strcmp(helper_name, "todo_ok") == 0) {
+	return todo_testcase_ok_helper();
     } else {
         errx(EXIT_BOGUS, "Unknown helper '%s'", helper_name);
     }

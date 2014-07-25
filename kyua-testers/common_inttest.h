@@ -148,8 +148,9 @@ execute(va_list ap)
 
     char* program = tester_path();
     (void)execv(program, KYUA_DEFS_UNCONST(args));
-    free(program);
     err(111, "Failed to execute %s", program);
+    free(program);
+    abort();
 }
 
 
