@@ -62,7 +62,10 @@ tests_store_DATA += store/schema_v1.sql
 tests_store_DATA += store/schema_v2.sql
 tests_store_DATA += store/testdata_v1.sql
 tests_store_DATA += store/testdata_v2.sql
-tests_store_DATA += store/testdata_v3.sql
+tests_store_DATA += store/testdata_v3_1.sql
+tests_store_DATA += store/testdata_v3_2.sql
+tests_store_DATA += store/testdata_v3_3.sql
+tests_store_DATA += store/testdata_v3_4.sql
 EXTRA_DIST += $(tests_store_DATA)
 
 tests_store_PROGRAMS = store/dbtypes_test

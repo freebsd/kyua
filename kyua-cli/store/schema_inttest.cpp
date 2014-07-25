@@ -434,29 +434,36 @@ check_data(store::read_backend& backend)
 }
 
 
-ATF_TEST_CASE(current_schema);
-ATF_TEST_CASE_HEAD(current_schema)
-{
-    logging::set_inmemory();
-    const std::string required_files =
-        store::detail::schema_file().str()
-        + " " + (fs::path(get_config_var("srcdir")) / "testdata_v3.sql").str();
-    set_md_var("require.files", required_files);
-}
-ATF_TEST_CASE_BODY(current_schema)
-{
-    const fs::path testpath("test.db");
-
-    sqlite::database db = sqlite::database::open(
-        testpath, sqlite::open_readwrite | sqlite::open_create);
-    exec_db_file(db, store::detail::schema_file());
-    expect_death("Database lost support for multiple actions");
-    exec_db_file(db, fs::path(get_config_var("srcdir")) / "testdata_v3.sql");
-    db.close();
-
-    store::read_backend backend = store::read_backend::open_ro(testpath);
-    check_data(backend);
-}
+#define CURRENT_SCHEMA_TEST(dataset) \
+    ATF_TEST_CASE(current_schema_ ##dataset); \
+    ATF_TEST_CASE_HEAD(current_schema_ ##dataset) \
+    { \
+        logging::set_inmemory(); \
+        const std::string required_files = \
+            store::detail::schema_file().str() \
+            + " " + (fs::path(get_config_var("srcdir")) \
+                     / "testdata_v3_" #dataset ".sql").str(); \
+        set_md_var("require.files", required_files); \
+    } \
+    ATF_TEST_CASE_BODY(current_schema_ ##dataset) \
+    { \
+        const fs::path testpath("test.db"); \
+        \
+        sqlite::database db = sqlite::database::open( \
+            testpath, sqlite::open_readwrite | sqlite::open_create); \
+        exec_db_file(db, store::detail::schema_file()); \
+        exec_db_file(db, fs::path(get_config_var("srcdir")) \
+                     / "testdata_v3_" #dataset ".sql"); \
+        db.close(); \
+        \
+        store::read_backend backend = store::read_backend::open_ro(testpath); \
+        store::read_transaction transaction = backend.start_read(); \
+        check_action_ ## dataset (transaction); \
+    }
+CURRENT_SCHEMA_TEST(1);
+CURRENT_SCHEMA_TEST(2);
+CURRENT_SCHEMA_TEST(3);
+CURRENT_SCHEMA_TEST(4);
 
 
 ATF_TEST_CASE(migrate_schema__v1_to_v3);
@@ -489,7 +496,10 @@ ATF_TEST_CASE_BODY(migrate_schema__v1_to_v3)
 
 ATF_INIT_TEST_CASES(tcs)
 {
-    ATF_ADD_TEST_CASE(tcs, current_schema);
+    ATF_ADD_TEST_CASE(tcs, current_schema_1);
+    ATF_ADD_TEST_CASE(tcs, current_schema_2);
+    ATF_ADD_TEST_CASE(tcs, current_schema_3);
+    ATF_ADD_TEST_CASE(tcs, current_schema_4);
 
     ATF_ADD_TEST_CASE(tcs, migrate_schema__v1_to_v3);
 }
