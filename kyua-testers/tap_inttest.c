@@ -67,7 +67,7 @@ ATF_TC_BODY(test__pass, tc)
           "ok - 1\n"
           "ok - 2 This test also passed\n"
           "garbage line\n"
-          "ok - 3 This test passed\n",
+          "not ok - 3 This test passed # TODO Not yet done\n",
           "garbage line\n",
           "test", helpers, "main", "test-result", NULL);
     free(helpers);
@@ -180,7 +180,7 @@ ATF_TC_BODY(test__config_ignored, tc)
           "ok - 1\n"
           "ok - 2 This test also passed\n"
           "garbage line\n"
-          "ok - 3 This test passed\n",
+          "not ok - 3 This test passed # TODO Not yet done\n",
           "save:stderr.txt",
           "test", "-va=b", "-vfoo=a b c", helpers, "main", "test-result", NULL);
     free(helpers);
