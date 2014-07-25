@@ -139,19 +139,23 @@ ATF_TC_WITHOUT_HEAD(parse__ok__pass);
 ATF_TC_BODY(parse__ok__pass, tc)
 {
     const char* contents =
-        "1..3\n"
+        "1..7\n"
         "ok - 1\n"
         "    Some diagnostic message\n"
         "ok - 2 This test also passed\n"
         "garbage line\n"
-        "ok - 3 This test passed\n";
+        "ok - 3 This test passed\n"
+        "not ok # SKIP Some reason\n"
+        "not ok # TODO Another reason\n"
+        "ok - 6 Doesn't make a difference SKIP\n"
+        "ok - 7 Doesn't make a difference either TODO\n";
 
     kyua_tap_summary_t summary; memset(&summary, 0, sizeof(summary));
     summary.parse_error = NULL;
     summary.bail_out = false;
     summary.first_index = 1;
-    summary.last_index = 3;
-    summary.ok_count = 3;
+    summary.last_index = 7;
+    summary.ok_count = 7;
     summary.not_ok_count = 0;
 
     ok_test(contents, &summary);

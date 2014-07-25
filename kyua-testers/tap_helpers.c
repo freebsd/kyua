@@ -97,7 +97,7 @@ pass_helper(void)
     fprintf(stdout, "ok - 1\n");
     fprintf(stdout, "ok - 2 This test also passed\n");
     fprintf(stdout, "garbage line\n");
-    fprintf(stdout, "ok - 3 This test passed\n");
+    fprintf(stdout, "not ok - 3 This test passed # TODO Not yet done\n");
     fprintf(stderr, "garbage line\n");
     return EXIT_SUCCESS;
 }

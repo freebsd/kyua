@@ -67,7 +67,7 @@ ATF_TC_BODY(test__pass, tc)
           "ok - 1\n"
           "ok - 2 This test also passed\n"
           "garbage line\n"
-          "ok - 3 This test passed\n",
+          "not ok - 3 This test passed # TODO Not yet done\n",
           "garbage line\n",
           "test", helpers, "main", "test-result", NULL);
     free(helpers);
@@ -167,6 +167,8 @@ ATF_TC(test__bogus_plan);
 ATF_TC_HEAD(test__bogus_plan, tc) { setup(tc, true); }
 ATF_TC_BODY(test__bogus_plan, tc)
 {
+    require_coredump_ability();
+
     char* helpers = select_helper(tc, "bogus_plan");
     check(EXIT_FAILURE,
           "1..3\n"
@@ -218,6 +220,8 @@ ATF_TC(test__crash);
 ATF_TC_HEAD(test__crash, tc) { setup(tc, true); }
 ATF_TC_BODY(test__crash, tc)
 {
+    require_coredump_ability();
+
     char* helpers = select_helper(tc, "signal");
     check(EXIT_FAILURE, "", "save:crash.err",
           "test", helpers, "main", "test-result", NULL);
@@ -257,7 +261,7 @@ ATF_TC_BODY(test__config_ignored, tc)
           "ok - 1\n"
           "ok - 2 This test also passed\n"
           "garbage line\n"
-          "ok - 3 This test passed\n",
+          "not ok - 3 This test passed # TODO Not yet done\n",
           "save:stderr.txt",
           "test", "-va=b", "-vfoo=a b c", helpers, "main", "test-result", NULL);
     free(helpers);

@@ -39,6 +39,8 @@
 #   error "Must define INTERFACE to the name of the tester interface"
 #endif
 
+#include <sys/resource.h>
+
 #include <err.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -74,6 +76,18 @@ helpers_path(const atf_tc_t* tc)
     char* buffer = (char*)malloc(length);
     (void)snprintf(buffer, length, "%s/%s", srcdir, name);
     return buffer;
+}
+
+
+/// Ensures we can dump core and marks the test as skipped otherwise.
+static void
+require_coredump_ability(void)
+{
+    struct rlimit rl;
+    rl.rlim_cur = RLIM_INFINITY;
+    rl.rlim_max = RLIM_INFINITY;
+    if (setrlimit(RLIMIT_CORE, &rl) == -1)
+        atf_tc_skip("Cannot unlimit the core file size; check limits manually");
 }
 
 
