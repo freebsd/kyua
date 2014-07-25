@@ -256,8 +256,12 @@ kyua_tap_parse(const int fd, FILE* output, kyua_tap_summary_t* summary)
             summary->bail_out = true;
         else if (strstr(line, "ok") == line)
             summary->ok_count++;
-        else if (strstr(line, "not ok") == line)
-            summary->not_ok_count++;
+        else if (strstr(line, "not ok") == line) {
+            if (strstr(line, "TODO") != NULL || strstr(line, "SKIP") != NULL)
+                summary->ok_count++;
+            else
+                summary->not_ok_count++;
+        }
     }
     fclose(input);
 

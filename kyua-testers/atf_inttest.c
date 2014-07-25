@@ -89,6 +89,8 @@ ATF_TC(test__crash);
 ATF_TC_HEAD(test__crash, tc) { setup(tc, true); }
 ATF_TC_BODY(test__crash, tc)
 {
+    require_coredump_ability();
+
     char* helpers = helpers_path(tc);
     check(EXIT_FAILURE, "", "save:crash.err",
           "test", helpers, "signal", "test-result", NULL);
@@ -168,6 +170,8 @@ ATF_TC(test__cleanup__crash);
 ATF_TC_HEAD(test__cleanup__crash, tc) { setup(tc, true); }
 ATF_TC_BODY(test__cleanup__crash, tc)
 {
+    require_coredump_ability();
+
     char* helpers = helpers_path(tc);
     check(EXIT_FAILURE, "", "save:crash.err",
           "test", "-vhas.cleanup=true", helpers, "cleanup_signal",

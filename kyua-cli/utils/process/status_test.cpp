@@ -89,6 +89,20 @@ fork_and_wait(void (*hook)(void))
 }
 
 
+/// Ensures we can dump core and marks the test as skipped otherwise.
+///
+/// \param tc The calling test case.
+static void
+require_coredump_ability(const atf::tests::tc* tc)
+{
+    struct rlimit rl;
+    rl.rlim_cur = RLIM_INFINITY;
+    rl.rlim_max = RLIM_INFINITY;
+    if (::setrlimit(RLIMIT_CORE, &rl) == -1)
+        tc->skip("Cannot unlimit the core file size; check limits manually");
+}
+
+
 }  // anonymous namespace
 
 
@@ -150,11 +164,7 @@ ATF_TEST_CASE_BODY(integration__signaled)
 ATF_TEST_CASE_WITHOUT_HEAD(integration__coredump);
 ATF_TEST_CASE_BODY(integration__coredump)
 {
-    struct rlimit rl;
-    rl.rlim_cur = RLIM_INFINITY;
-    rl.rlim_max = RLIM_INFINITY;
-    if (::setrlimit(RLIMIT_CORE, &rl) == -1)
-        skip("Cannot unlimit the core file size; check limits manually");
+    require_coredump_ability(this);
 
     const status coredump = fork_and_wait(child_signal< SIGQUIT >);
     ATF_REQUIRE(!coredump.exited());
