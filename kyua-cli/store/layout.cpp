@@ -119,13 +119,28 @@ layout::find_latest(const std::string& test_suite)
 fs::path
 layout::new_db(const std::string& test_suite)
 {
-    const datetime::timestamp now = datetime::timestamp::now();
-    const std::string now_datetime = now.strftime("%Y%m%d-%H%M%S");
-    const int now_ms = static_cast<int>(now.to_microseconds() % 1000000);
-    const fs::path path = query_store_dir() /
-        (F("kyua.%s.%s-%06s.db") % test_suite % now_datetime % now_ms);
+    const fs::path path = new_db(test_suite, datetime::timestamp::now());
     if (fs::exists(path))
         throw store::error("Computed test suite store already exists");
+    return path;
+}
+
+
+/// Computes the path to a new database for the given test suite.
+///
+/// \param test_suite Identifier of the test suite to create.
+///
+/// \return Path to the newly-determined path for the database to be created.
+///
+/// \raises store::error If the computed name already exists; this should not
+///     happen.
+fs::path
+layout::new_db(const std::string& test_suite, const datetime::timestamp& when)
+{
+    const std::string when_datetime = when.strftime("%Y%m%d-%H%M%S");
+    const int when_ms = static_cast<int>(when.to_microseconds() % 1000000);
+    const fs::path path = query_store_dir() /
+        (F("kyua.%s.%s-%06s.db") % test_suite % when_datetime % when_ms);
     return path;
 }
 

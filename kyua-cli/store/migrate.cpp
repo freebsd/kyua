@@ -30,39 +30,86 @@
 
 #include <fstream>
 
+#include "store/dbtypes.hpp"
 #include "store/exceptions.hpp"
+#include "store/layout.hpp"
 #include "store/metadata.hpp"
 #include "store/read_backend.hpp"
 #include "store/write_backend.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/operations.hpp"
+#include "utils/datetime.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/fs/exceptions.hpp"
+#include "utils/fs/operations.hpp"
 #include "utils/logging/macros.hpp"
+#include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 #include "utils/stream.hpp"
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/exceptions.hpp"
+#include "utils/text/operations.hpp"
 
+namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace sqlite = utils::sqlite;
+namespace text = utils::text;
+
+using utils::none;
+using utils::optional;
 
 
 namespace {
 
 
+/// Schema version at which we switched to per-action files.
+const int first_chunked_schema_version = 3;
+
+
+/// Queries the schema version of the given database.
+///
+/// \param file The database from which to query the schema version.
+///
+/// \return The schema version number.
+static int
+get_schema_version(const fs::path& file)
+{
+    sqlite::database db = store::detail::open_and_setup(
+        file, sqlite::open_readonly);
+    return store::metadata::fetch_latest(db).schema_version();
+}
+
+
 /// Performs a single migration step.
 ///
-/// \param db Open database to which to apply the migration step.
+/// Both action_id and old_database are little hacks to support the migration
+/// from the historical database to chunked files.  We'd use a more generic
+/// "replacements" map, but it's not worth it.
+///
+/// \param file Database on which to apply the migration step.
 /// \param version_from Current schema version in the database.
 /// \param version_to Schema version to migrate to.
+/// \param action_id If not none, replace ACTION_ID in the migration file with
+///     this value.
+/// \param old_database If not none, replace OLD_DATABASE in the migration
+///     file with this value.
 ///
 /// \throw error If there is a problem applying the migration.
 static void
-migrate_schema_step(sqlite::database& db, const int version_from,
-                    const int version_to)
+migrate_schema_step(const fs::path& file,
+                    const int version_from,
+                    const int version_to,
+                    const optional< int64_t > action_id = none,
+                    const optional< fs::path > old_database = none)
 {
+    LI(F("Migrating schema of %s from version %s to %s") % file % version_from
+       % version_to);
+
     PRE(version_to == version_from + 1);
+
+    sqlite::database db = store::detail::open_and_setup(
+        file, sqlite::open_readwrite);
 
     const fs::path migration = store::detail::migration_file(version_from,
                                                              version_to);
@@ -71,12 +118,95 @@ migrate_schema_step(sqlite::database& db, const int version_from,
     if (!input)
         throw store::error(F("Cannot open migration file '%s'") % migration);
 
-    const std::string migration_string = utils::read_stream(input);
+    std::string migration_string = utils::read_stream(input);
+    if (action_id) {
+        migration_string = text::replace_all(migration_string, "@ACTION_ID@",
+                                             F("%s") % action_id.get());
+    }
+    if (old_database) {
+        migration_string = text::replace_all(migration_string, "@OLD_DATABASE@",
+                                             old_database.get().str());
+    }
     try {
         db.exec(migration_string);
     } catch (const sqlite::error& e) {
         throw store::error(F("Schema migration failed: %s") % e.what());
     }
+}
+
+
+/// Given a historical database, chunks it up into per-action files.
+///
+/// The given database is DELETED on success given that it will have been
+/// split up into various different files.
+///
+/// \param old_file Path to the old database.
+static void
+chunk_database(const fs::path& old_file)
+{
+    PRE(get_schema_version(old_file) == first_chunked_schema_version - 1);
+
+    LI(F("Need to split %s into per-action files") % old_file);
+
+    sqlite::database old_db = store::detail::open_and_setup(
+        old_file, sqlite::open_readonly);
+
+    sqlite::statement actions_stmt = old_db.create_statement(
+        "SELECT action_id, cwd FROM actions NATURAL JOIN contexts");
+
+    sqlite::statement start_time_stmt = old_db.create_statement(
+        "SELECT test_results.start_time AS start_time "
+        "FROM test_programs "
+        "    JOIN test_cases "
+        "        ON test_programs.test_program_id == test_cases.test_program_id"
+        "    JOIN test_results "
+        "        ON test_cases.test_case_id == test_results.test_case_id "
+        "WHERE test_programs.action_id == :action_id "
+        "ORDER BY start_time LIMIT 1");
+
+    while (actions_stmt.step()) {
+        const int64_t action_id = actions_stmt.safe_column_int64("action_id");
+        const fs::path cwd(actions_stmt.safe_column_text("cwd"));
+
+        LI(F("Extracting action %s") % action_id);
+
+        start_time_stmt.reset();
+        start_time_stmt.bind(":action_id", action_id);
+        if (!start_time_stmt.step()) {
+            LI(F("Skipping empty action %s") % action_id);
+            continue;
+        }
+        const datetime::timestamp start_time = store::column_timestamp(
+            start_time_stmt, "start_time");
+        start_time_stmt.step_without_results();
+
+        const fs::path new_file = store::layout::new_db(
+            store::layout::test_suite_for_path(cwd), start_time);
+        if (fs::exists(new_file)) {
+            LI(F("Skipping action because %s already exists") % new_file);
+            continue;
+        }
+
+        LI(F("Creating %s for previous action %s") % new_file % action_id);
+
+        try {
+            fs::mkdir_p(new_file.branch_path(), 0755);
+            sqlite::database db = store::detail::open_and_setup(
+                new_file, sqlite::open_readwrite | sqlite::open_create);
+            store::detail::initialize(db);
+            db.close();
+            migrate_schema_step(new_file,
+                                first_chunked_schema_version - 1,
+                                first_chunked_schema_version,
+                                utils::make_optional(action_id),
+                                utils::make_optional(old_file));
+        } catch (...) {
+            // TODO(jmmv): Handle this better.
+            fs::unlink(new_file);
+        }
+    }
+
+    fs::unlink(old_file);
 }
 
 
@@ -135,9 +265,7 @@ store::detail::backup_database(const fs::path& source, const int old_version)
 void
 store::migrate_schema(const utils::fs::path& file)
 {
-    sqlite::database db = detail::open_and_setup(file, sqlite::open_readwrite);
-
-    const int version_from = metadata::fetch_latest(db).schema_version();
+    const int version_from = get_schema_version(file);
     const int version_to = detail::current_schema_version;
     if (version_from == version_to) {
         throw error(F("Database already at schema version %s; migration not "
@@ -149,8 +277,10 @@ store::migrate_schema(const utils::fs::path& file)
 
     detail::backup_database(file, version_from);
 
-    for (int i = version_from; i < version_to; ++i) {
-        LI(F("Migrating schema from version %s to %s") % i % (i + 1));
-        migrate_schema_step(db, i, i + 1);
+    int i;
+    for (i = version_from; i < first_chunked_schema_version - 1; ++i) {
+        migrate_schema_step(file, i, i + 1);
     }
+    chunk_database(file);
+    INV(version_to == first_chunked_schema_version);
 }

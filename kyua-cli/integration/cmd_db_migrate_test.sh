@@ -27,6 +27,19 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+# Location of installed schema files.
+KYUA_STOREDIR='__KYUA_STOREDIR__'
+
+
+# Creates an empty old-style action database.
+#
+# \param ... Files that contain SQL commands to be run.
+create_historical_db() {
+    mkdir -p "${HOME}/.kyua"
+    cat "${@}" | sqlite3 "${HOME}/.kyua/store.db"
+}
+
+
 # Creates an empty action database.
 #
 # \param ... Files that contain SQL commands to be run.
@@ -37,33 +50,63 @@ create_db() {
 }
 
 
-utils_test_case upgrade
-upgrade_head() {
+utils_test_case upgrade__from_v1
+upgrade__from_v1_head() {
     data=$(atf_get_srcdir)/../store
 
     atf_set require.files "${data}/schema_v1.sql ${data}/testdata_v1.sql"
     atf_set require.progs "sqlite3"
 }
-upgrade_body() {
+upgrade__from_v1_body() {
     data=$(atf_get_srcdir)/../store
 
-    create_db "${data}/schema_v1.sql" "${data}/testdata_v1.sql"
-    atf_expect_fail "Migration from v2 to v3 not yet implemented"
+    create_historical_db "${data}/schema_v1.sql" "${data}/testdata_v1.sql"
     atf_check -s exit:0 -o empty -e empty kyua db-migrate
+    for f in \
+        "kyua.test_suite_root.20130108-111331-000000.db" \
+        "kyua.usr_tests.20130108-123832-000000.db" \
+        "kyua.usr_tests.20130108-112635-000000.db"
+    do
+        [ -f "${HOME}/.kyua/actions/${f}" ] || atf_fail "Expected file ${f}" \
+            "was not created"
+    done
+    [ ! -f "${HOME}/.kyua/store.db" ] || atf_fail "Historical database not" \
+        "deleted"
+}
+
+
+utils_test_case upgrade__from_v2
+upgrade__from_v2_head() {
+    data=$(atf_get_srcdir)/../store
+
+    atf_set require.files "${data}/schema_v2.sql ${data}/testdata_v2.sql"
+    atf_set require.progs "sqlite3"
+}
+upgrade__from_v2_body() {
+    data=$(atf_get_srcdir)/../store
+
+    create_historical_db "${data}/schema_v2.sql" "${data}/testdata_v2.sql"
+    atf_check -s exit:0 -o empty -e empty kyua db-migrate
+    for f in \
+        "kyua.test_suite_root.20130108-111331-000000.db" \
+        "kyua.usr_tests.20130108-123832-000000.db" \
+        "kyua.usr_tests.20130108-112635-000000.db"
+    do
+        [ -f "${HOME}/.kyua/actions/${f}" ] || atf_fail "Expected file ${f}" \
+            "was not created"
+    done
+    [ ! -f "${HOME}/.kyua/store.db" ] || atf_fail "Historical database not" \
+        "deleted"
 }
 
 
 utils_test_case already_up_to_date
 already_up_to_date_body() {
-    data=$(atf_get_srcdir)/../store
-
-    atf_set require.files "${data}/schema_v3.sql"
+    atf_set require.files "${KYUA_STOREDIR}/schema_v3.sql"
     atf_set require.progs "sqlite3"
 }
 already_up_to_date_body() {
-    data=$(atf_get_srcdir)/../store
-
-    create_db "${data}/schema_v3.sql"
+    create_db "${KYUA_STOREDIR}/schema_v3.sql"
     atf_check -s exit:1 -o empty -e match:"already at schema version" \
         kyua db-migrate
 }
@@ -111,7 +154,8 @@ EOF
 
 
 atf_init_test_cases() {
-    atf_add_test_case upgrade
+    atf_add_test_case upgrade__from_v1
+    atf_add_test_case upgrade__from_v2
     atf_add_test_case already_up_to_date
     atf_add_test_case need_upgrade
 

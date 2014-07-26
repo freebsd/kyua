@@ -69,10 +69,13 @@ exec_db_file(sqlite::database& db, const fs::path& path)
 
 /// Validates the contents of the action with identifier 1.
 ///
-/// \param transaction An open read transaction in the backend.
+/// \param dbpath Path to the database in which to check the action contents.
 static void
-check_action_1(store::read_transaction& transaction)
+check_action_1(const fs::path& dbpath)
 {
+    store::read_backend backend = store::read_backend::open_ro(dbpath);
+    store::read_transaction transaction = backend.start_read();
+
     const fs::path root("/some/root");
     std::map< std::string, std::string > environment;
     const engine::context context(root, environment);
@@ -86,10 +89,13 @@ check_action_1(store::read_transaction& transaction)
 
 /// Validates the contents of the action with identifier 2.
 ///
-/// \param transaction An open read transaction in the backend.
+/// \param dbpath Path to the database in which to check the action contents.
 static void
-check_action_2(store::read_transaction& transaction)
+check_action_2(const fs::path& dbpath)
 {
+    store::read_backend backend = store::read_backend::open_ro(dbpath);
+    store::read_transaction transaction = backend.start_read();
+
     const fs::path root("/test/suite/root");
     std::map< std::string, std::string > environment;
     environment["HOME"] = "/home/test";
@@ -220,10 +226,13 @@ check_action_2(store::read_transaction& transaction)
 
 /// Validates the contents of the action with identifier 3.
 ///
-/// \param transaction An open read transaction in the backend.
+/// \param dbpath Path to the database in which to check the action contents.
 static void
-check_action_3(store::read_transaction& transaction)
+check_action_3(const fs::path& dbpath)
 {
+    store::read_backend backend = store::read_backend::open_ro(dbpath);
+    store::read_transaction transaction = backend.start_read();
+
     const fs::path root("/usr/tests");
     std::map< std::string, std::string > environment;
     environment["PATH"] = "/bin:/usr/bin";
@@ -337,10 +346,13 @@ check_action_3(store::read_transaction& transaction)
 
 /// Validates the contents of the action with identifier 4.
 ///
-/// \param transaction An open read transaction in the backend.
+/// \param dbpath Path to the database in which to check the action contents.
 static void
-check_action_4(store::read_transaction& transaction)
+check_action_4(const fs::path& dbpath)
 {
+    store::read_backend backend = store::read_backend::open_ro(dbpath);
+    store::read_transaction transaction = backend.start_read();
+
     const fs::path root("/usr/tests");
     std::map< std::string, std::string > environment;
     environment["LANG"] = "C";
@@ -420,20 +432,6 @@ check_action_4(store::read_transaction& transaction)
 }
 
 
-/// Validates the contents of an open database agains good known values.
-///
-/// \param transaction An open read-only backend.
-static void
-check_data(store::read_backend& backend)
-{
-    store::read_transaction transaction = backend.start_read();
-    check_action_1(transaction);
-    check_action_2(transaction);
-    check_action_3(transaction);
-    check_action_4(transaction);
-}
-
-
 #define CURRENT_SCHEMA_TEST(dataset) \
     ATF_TEST_CASE(current_schema_ ##dataset); \
     ATF_TEST_CASE_HEAD(current_schema_ ##dataset) \
@@ -456,9 +454,7 @@ check_data(store::read_backend& backend)
                      / "testdata_v3_" #dataset ".sql"); \
         db.close(); \
         \
-        store::read_backend backend = store::read_backend::open_ro(testpath); \
-        store::read_transaction transaction = backend.start_read(); \
-        check_action_ ## dataset (transaction); \
+        check_action_ ## dataset (testpath); \
     }
 CURRENT_SCHEMA_TEST(1);
 CURRENT_SCHEMA_TEST(2);
@@ -466,32 +462,49 @@ CURRENT_SCHEMA_TEST(3);
 CURRENT_SCHEMA_TEST(4);
 
 
-ATF_TEST_CASE(migrate_schema__v1_to_v3);
-ATF_TEST_CASE_HEAD(migrate_schema__v1_to_v3)
-{
-    logging::set_inmemory();
-    const std::string required_files =
-        store::detail::migration_file(1, 2).str()
-        + " " + (fs::path(get_config_var("srcdir")) / "schema_v1.sql").str()
-        + " " + (fs::path(get_config_var("srcdir")) / "testdata_v1.sql").str();
-    set_md_var("require.files", required_files);
-}
-ATF_TEST_CASE_BODY(migrate_schema__v1_to_v3)
-{
-    const fs::path testpath("test.db");
-
-    sqlite::database db = sqlite::database::open(
-        testpath, sqlite::open_readwrite | sqlite::open_create);
-    exec_db_file(db, fs::path(get_config_var("srcdir")) / "schema_v1.sql");
-    exec_db_file(db, fs::path(get_config_var("srcdir")) / "testdata_v1.sql");
-    db.close();
-
-    expect_death("Migration from v2 to v3 not yet implemented");
-    store::migrate_schema(fs::path("test.db"));
-
-    store::read_backend backend = store::read_backend::open_ro(testpath);
-    check_data(backend);
-}
+#define MIGRATE_SCHEMA_TEST(from_version) \
+    ATF_TEST_CASE(migrate_schema__from_v ##from_version); \
+    ATF_TEST_CASE_HEAD(migrate_schema__from_v ##from_version) \
+    { \
+        logging::set_inmemory(); \
+        \
+        const char* schema = "schema_v" #from_version ".sql"; \
+        const char* testdata = "testdata_v" #from_version ".sql"; \
+        \
+        std::string required_files = \
+            (fs::path(get_config_var("srcdir")) / schema).str() \
+            + " " + (fs::path(get_config_var("srcdir")) / testdata).str(); \
+        for (int i = from_version; i < store::detail::current_schema_version; \
+             ++i) \
+            required_files += " " + store::detail::migration_file( \
+                i, i + 1).str(); \
+        \
+        set_md_var("require.files", required_files); \
+    } \
+    ATF_TEST_CASE_BODY(migrate_schema__from_v ##from_version) \
+    { \
+        const char* schema = "schema_v" #from_version ".sql"; \
+        const char* testdata = "testdata_v" #from_version ".sql"; \
+        \
+        const fs::path testpath("test.db"); \
+        \
+        sqlite::database db = sqlite::database::open( \
+            testpath, sqlite::open_readwrite | sqlite::open_create); \
+        exec_db_file(db, fs::path(get_config_var("srcdir")) / schema); \
+        exec_db_file(db, fs::path(get_config_var("srcdir")) / testdata); \
+        db.close(); \
+        \
+        store::migrate_schema(fs::path("test.db")); \
+        \
+        check_action_2(fs::path(".kyua/actions/" \
+            "kyua.test_suite_root.20130108-111331-000000.db")); \
+        check_action_3(fs::path(".kyua/actions/" \
+            "kyua.usr_tests.20130108-123832-000000.db")); \
+        check_action_4(fs::path(".kyua/actions/" \
+            "kyua.usr_tests.20130108-112635-000000.db")); \
+    }
+MIGRATE_SCHEMA_TEST(1);
+MIGRATE_SCHEMA_TEST(2);
 
 
 ATF_INIT_TEST_CASES(tcs)
@@ -501,5 +514,6 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, current_schema_3);
     ATF_ADD_TEST_CASE(tcs, current_schema_4);
 
-    ATF_ADD_TEST_CASE(tcs, migrate_schema__v1_to_v3);
+    ATF_ADD_TEST_CASE(tcs, migrate_schema__from_v1);
+    ATF_ADD_TEST_CASE(tcs, migrate_schema__from_v2);
 }

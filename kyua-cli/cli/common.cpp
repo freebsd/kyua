@@ -254,10 +254,23 @@ cli::store_path_new(const cmdline::parsed_cmdline& cmdline)
     fs::path store = cmdline.get_option< cmdline::path_option >(
         store_option.long_name());
     if (store == fs::path(store_option.default_value())) {
-        const std::string test_suite = layout::test_suite_for_path(
-            kyuafile_path(cmdline).branch_path());
-        store = layout::new_db(test_suite);
-        fs::mkdir_p(store.branch_path(), 0755);
+        optional< fs::path > home = utils::get_home();
+        if (home) {
+            const fs::path old_db = home.get() / ".kyua/store.db";
+            if (fs::exists(old_db)) {
+                if (old_db.is_absolute())
+                    store = old_db;
+                else
+                    store = old_db.to_absolute();
+            }
+        }
+
+        if (store == fs::path(store_option.default_value())) {
+            const std::string test_suite = layout::test_suite_for_path(
+                kyuafile_path(cmdline).branch_path());
+            store = layout::new_db(test_suite);
+            fs::mkdir_p(store.branch_path(), 0755);
+        }
     }
     LI(F("Creating new store %s") % store);
     return store;
@@ -278,9 +291,22 @@ cli::store_path_open(const cmdline::parsed_cmdline& cmdline)
     fs::path store = cmdline.get_option< cmdline::path_option >(
         store_option.long_name());
     if (store == fs::path(store_option.default_value())) {
-        const std::string test_suite = layout::test_suite_for_path(
-            fs::current_path());
-        store = layout::find_latest(test_suite);
+        optional< fs::path > home = utils::get_home();
+        if (home) {
+            const fs::path old_db = home.get() / ".kyua/store.db";
+            if (fs::exists(old_db)) {
+                if (old_db.is_absolute())
+                    store = old_db;
+                else
+                    store = old_db.to_absolute();
+            }
+        }
+
+        if (store == fs::path(store_option.default_value())) {
+            const std::string test_suite = layout::test_suite_for_path(
+                fs::current_path());
+            store = layout::find_latest(test_suite);
+        }
     }
     LI(F("Opening existing store %s") % store);
     return store;

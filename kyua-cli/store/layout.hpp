@@ -35,6 +35,9 @@
 #include <string>
 
 namespace utils {
+namespace datetime {
+class timestamp;
+}  // namespace datetime
 namespace fs {
 class path;
 }  // namespace fs
@@ -46,6 +49,7 @@ namespace layout {
 
 utils::fs::path find_latest(const std::string&);
 utils::fs::path new_db(const std::string&);
+utils::fs::path new_db(const std::string&, const utils::datetime::timestamp&);
 utils::fs::path query_store_dir(void);
 std::string test_suite_for_path(const utils::fs::path&);
 

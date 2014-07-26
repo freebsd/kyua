@@ -80,10 +80,8 @@ CREATE TABLE contexts (
 
 -- Environment variables of a context.
 CREATE TABLE env_vars (
-    var_name TEXT NOT NULL,
-    var_value TEXT NOT NULL,
-
-    PRIMARY KEY (var_name)
+    var_name TEXT PRIMARY KEY,
+    var_value TEXT NOT NULL
 );
 
 

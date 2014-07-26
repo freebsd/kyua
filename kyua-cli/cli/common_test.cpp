@@ -299,6 +299,25 @@ ATF_TEST_CASE_BODY(store_path_new__default__no_home)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(store_path_new__default__old_db);
+ATF_TEST_CASE_BODY(store_path_new__default__old_db)
+{
+    std::map< std::string, std::vector< std::string > > options;
+    options["kyuafile"].push_back("/path/to/my/test/suite/Kyuafile");
+    options["store"].push_back(cli::store_option.default_value());
+    const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
+
+    const fs::path home("homedir");
+    utils::setenv("HOME", home.str());
+    fs::mkdir_p(home / ".kyua", 0755);
+    atf::utils::create_file("homedir/.kyua/store.db", "");
+
+    ATF_REQUIRE_EQ(fs::path("homedir/.kyua/store.db").to_absolute(),
+                   cli::store_path_new(mock_cmdline));
+    ATF_REQUIRE(!fs::exists(home / ".kyua/actions"));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(store_path_new__explicit);
 ATF_TEST_CASE_BODY(store_path_new__explicit)
 {
@@ -313,8 +332,8 @@ ATF_TEST_CASE_BODY(store_path_new__explicit)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(store_path_open__default);
-ATF_TEST_CASE_BODY(store_path_open__default)
+ATF_TEST_CASE_WITHOUT_HEAD(store_path_open__default__ok);
+ATF_TEST_CASE_BODY(store_path_open__default__ok)
 {
     std::map< std::string, std::vector< std::string > > options;
     options["store"].push_back(cli::store_option.default_value());
@@ -329,6 +348,28 @@ ATF_TEST_CASE_BODY(store_path_open__default)
     atf::utils::create_file(db.str(), "");
 
     ATF_REQUIRE_EQ(db, cli::store_path_open(mock_cmdline));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(store_path_open__default__old_db);
+ATF_TEST_CASE_BODY(store_path_open__default__old_db)
+{
+    std::map< std::string, std::vector< std::string > > options;
+    options["store"].push_back(cli::store_option.default_value());
+    const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
+
+    const fs::path home("homedir");
+    utils::setenv("HOME", home.str());
+    fs::mkdir_p(home / ".kyua", 0755);
+
+    const fs::path db = layout::new_db(layout::test_suite_for_path(
+                                           fs::current_path()));
+    fs::mkdir_p(db.branch_path(), 0755);
+    atf::utils::create_file(db.str(), "");
+    atf::utils::create_file("homedir/.kyua/store.db", "");
+
+    ATF_REQUIRE_EQ(fs::path("homedir/.kyua/store.db").to_absolute(),
+                   cli::store_path_open(mock_cmdline));
 }
 
 
@@ -504,9 +545,11 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, store_path_new__default__create_directory__ok);
     ATF_ADD_TEST_CASE(tcs, store_path_new__default__create_directory__fail);
     ATF_ADD_TEST_CASE(tcs, store_path_new__default__no_home);
+    ATF_ADD_TEST_CASE(tcs, store_path_new__default__old_db);
     ATF_ADD_TEST_CASE(tcs, store_path_new__explicit);
 
-    ATF_ADD_TEST_CASE(tcs, store_path_open__default);
+    ATF_ADD_TEST_CASE(tcs, store_path_open__default__ok);
+    ATF_ADD_TEST_CASE(tcs, store_path_open__default__old_db);
     ATF_ADD_TEST_CASE(tcs, store_path_open__explicit);
 
     ATF_ADD_TEST_CASE(tcs, parse_filters__none);

@@ -52,6 +52,7 @@ libstore_a_SOURCES += store/write_transaction.cpp
 libstore_a_SOURCES += store/write_transaction.hpp
 
 dist_store_DATA  = store/migrate_v1_v2.sql
+dist_store_DATA += store/migrate_v2_v3.sql
 dist_store_DATA += store/schema_v3.sql
 
 if WITH_ATF
