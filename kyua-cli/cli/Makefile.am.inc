@@ -90,11 +90,6 @@ cli_cmd_db_exec_test_SOURCES = cli/cmd_db_exec_test.cpp
 cli_cmd_db_exec_test_CXXFLAGS = $(CLI_TESTS_CXXFLAGS)
 cli_cmd_db_exec_test_LDADD = $(CLI_TESTS_LDADD)
 
-tests_cli_PROGRAMS += cli/cmd_db_migrate_test
-cli_cmd_db_migrate_test_SOURCES = cli/cmd_db_migrate_test.cpp
-cli_cmd_db_migrate_test_CXXFLAGS = $(CLI_TESTS_CXXFLAGS)
-cli_cmd_db_migrate_test_LDADD = $(CLI_TESTS_LDADD)
-
 tests_cli_PROGRAMS += cli/cmd_debug_test
 cli_cmd_debug_test_SOURCES = cli/cmd_debug_test.cpp
 cli_cmd_debug_test_CXXFLAGS = $(CLI_TESTS_CXXFLAGS)
