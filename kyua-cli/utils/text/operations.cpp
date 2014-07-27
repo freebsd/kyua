@@ -165,6 +165,31 @@ text::refill_as_string(const std::string& input, const std::size_t target_width)
 }
 
 
+/// Replaces all occurrences of a substring in a string.
+///
+/// \param input The string in which to perform the replacement.
+/// \param search The pattern to be replaced.
+/// \param replacement The substring to replace search with.
+///
+/// \return A copy of input with the replacements performed.
+std::string
+text::replace_all(const std::string& input, const std::string& search,
+                  const std::string& replacement)
+{
+    std::string output;
+
+    std::string::size_type pos, lastpos = 0;
+    while ((pos = input.find(search, lastpos)) != std::string::npos) {
+        output += input.substr(lastpos, pos - lastpos);
+        output += replacement;
+        lastpos = pos + search.length();
+    }
+    output += input.substr(lastpos);
+
+    return output;
+}
+
+
 /// Splits a string into different components.
 ///
 /// \param str The string to split.
