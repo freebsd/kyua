@@ -92,6 +92,48 @@ lookup(const char* dir, const char* name, const int expected_type)
 }  // anonymous namespace
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(copy__ok);
+ATF_TEST_CASE_BODY(copy__ok)
+{
+    const fs::path source("f1.txt");
+    const fs::path target("f2.txt");
+
+    atf::utils::create_file(source.str(), "This is the input");
+    fs::copy(source, target);
+    ATF_REQUIRE(atf::utils::compare_file(target.str(), "This is the input"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(copy__fail_open);
+ATF_TEST_CASE_BODY(copy__fail_open)
+{
+    const fs::path source("f1.txt");
+    const fs::path target("f2.txt");
+
+    ATF_REQUIRE_THROW_RE(fs::error, "Cannot open copy source f1.txt",
+                         fs::copy(source, target));
+}
+
+
+ATF_TEST_CASE(copy__fail_create);
+ATF_TEST_CASE_HEAD(copy__fail_create)
+{
+    set_md_var("require.user", "unprivileged");
+}
+ATF_TEST_CASE_BODY(copy__fail_create)
+{
+    const fs::path source("f1.txt");
+    const fs::path target("f2.txt");
+
+    atf::utils::create_file(target.str(), "Do not override");
+    ATF_REQUIRE(::chmod(target.c_str(), 0444) != -1);
+
+    atf::utils::create_file(source.str(), "This is the input");
+    ATF_REQUIRE_THROW_RE(fs::error, "Cannot create copy target f2.txt",
+                         fs::copy(source, target));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(current_path__ok);
 ATF_TEST_CASE_BODY(current_path__ok)
 {
@@ -375,6 +417,10 @@ ATF_TEST_CASE_BODY(unlink__fail)
 
 ATF_INIT_TEST_CASES(tcs)
 {
+    ATF_ADD_TEST_CASE(tcs, copy__ok);
+    ATF_ADD_TEST_CASE(tcs, copy__fail_open);
+    ATF_ADD_TEST_CASE(tcs, copy__fail_create);
+
     ATF_ADD_TEST_CASE(tcs, current_path__ok);
     ATF_ADD_TEST_CASE(tcs, current_path__enoent);
 

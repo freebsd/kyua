@@ -46,6 +46,7 @@ namespace fs {
 class path;
 
 
+void copy(const fs::path&, const fs::path&);
 path current_path(void);
 bool exists(const fs::path&);
 utils::optional< path > find_in_path(const char*);

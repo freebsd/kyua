@@ -34,6 +34,8 @@
 #include "store/metadata.hpp"
 #include "store/read_backend.hpp"
 #include "store/write_backend.hpp"
+#include "utils/fs/exceptions.hpp"
+#include "utils/fs/operations.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
@@ -112,23 +114,11 @@ store::detail::backup_database(const fs::path& source, const int old_version)
     const fs::path target(F("%s.v%s.backup") % source.str() % old_version);
 
     LI(F("Backing up database %s to %s") % source % target);
-
-    std::ifstream input(source.c_str());
-    if (!input)
-        throw error(F("Cannot open database file %s") % source);
-
-    std::ofstream output(target.c_str());
-    if (!output)
-        throw error(F("Cannot create database backup file %s") % target);
-
-    char buffer[1024];
-    while (input.good()) {
-        input.read(buffer, sizeof(buffer));
-        if (input.good() || input.eof())
-            output.write(buffer, input.gcount());
+    try {
+        fs::copy(source, target);
+    } catch (const fs::error& e) {
+        throw store::error(e.what());
     }
-    if (!input.good() && !input.eof())
-        throw error(F("Error while reading input file %s") % source);
 }
 
 
