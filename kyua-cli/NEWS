@@ -6,6 +6,7 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 * Added the 'report-junit' command to generate JUnit XML result files.
   The output has been verified to work within Jenkins.
 
+* Issue 79: Added reference to kyua.conf(5) in kyua(1).
 
 Changes in version 0.8
 ======================
