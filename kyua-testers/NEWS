@@ -12,6 +12,7 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 * Issue 85: Improved the TAP parser to recognize tests marked TODO or
   SKIP as passed.
 
+* Issue 17: Added reference to kyua.conf(5) in kyua(1).
 
 Changes in version 0.2
 ======================
