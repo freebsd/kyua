@@ -27,11 +27,11 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /// \file engine/drivers/scan_results.hpp
-/// Driver to scan the contents of an action.
+/// Driver to scan the contents of a results file.
 ///
-/// This driver module implements the logic to scan the contents of an stored
-/// action and to notify the presentation layer as soon as data becomes
-/// available.  This is to prevent reading all the data from the action at once,
+/// This driver module implements the logic to scan the contents of a results
+/// file and to notify the presentation layer as soon as data becomes
+/// available.  This is to prevent reading all the data from the file at once,
 /// which could take too much memory.
 
 #if !defined(ENGINE_DRIVERS_SCAN_RESULTS_HPP)

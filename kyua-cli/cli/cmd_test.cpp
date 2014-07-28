@@ -127,24 +127,24 @@ int
 cmd_test::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
               const config::tree& user_config)
 {
-    const fs::path store_file = results_file_new(cmdline);
+    const fs::path results_file = results_file_new(cmdline);
 
     print_hooks hooks(ui);
     const run_tests::result result = run_tests::drive(
-        kyuafile_path(cmdline), build_root_path(cmdline), store_file,
+        kyuafile_path(cmdline), build_root_path(cmdline), results_file,
         parse_filters(cmdline.arguments()), user_config, hooks);
 
     int exit_code;
     if (hooks.good_count > 0 || hooks.bad_count > 0) {
         ui->out("");
-        ui->out(F("Results saved to %s") % store_file);
+        ui->out(F("Results saved to %s") % results_file);
 
         ui->out(F("%s/%s passed (%s failed)") % hooks.good_count %
                 (hooks.good_count + hooks.bad_count) % hooks.bad_count);
 
         exit_code = (hooks.bad_count == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
     } else {
-        ui->out(F("Results saved to %s") % store_file);
+        ui->out(F("Results saved to %s") % results_file);
         exit_code = EXIT_SUCCESS;
     }
 

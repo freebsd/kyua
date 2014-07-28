@@ -52,10 +52,15 @@ utils_strip_timestamps='sed -E \
     -e "s,[0-9]{8}-[0-9]{6}-[0-9]{6}\.db,YYYYMMDD-HHMMSS-ssssss.db,g"'
 
 
-# Computes the action file for a test suite.
+# Computes the results file for a test suite run.
+#
+# The computed path is "generic" in the sense that it does not include a
+# real timestamp: it only includes a placeholder.  This function should be
+# used along the utils_strip_timestamps function so that the timestampts of
+# the real results files are stripped out.
 #
 # \param path Optional path to use; if not given, use the cwd.
-utils_action_file() {
+utils_results_file() {
     local test_suite_id="$(utils_test_suite_id "${@}")"
     echo "${HOME}/.kyua/results/kyua.${test_suite_id}.YYYYMMDD-HHMMSS-ssssss.db"
 }
@@ -130,7 +135,7 @@ utils_test_case() {
 }
 
 
-# Computes the test suite identifier for action files.
+# Computes the test suite identifier for results files files.
 #
 # \param path Optional path to use; if not given, use the cwd.
 utils_test_suite_id() {

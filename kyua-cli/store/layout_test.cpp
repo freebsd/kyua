@@ -74,15 +74,17 @@ ATF_TEST_CASE_BODY(find_latest__time)
 ATF_TEST_CASE_WITHOUT_HEAD(find_latest__not_found);
 ATF_TEST_CASE_BODY(find_latest__not_found)
 {
-    ATF_REQUIRE_THROW_RE(store::error,
-                         "No previous action found for test suite foo_bar",
-                         layout::find_latest("foo_bar"));
+    ATF_REQUIRE_THROW_RE(
+        store::error,
+        "No previous results file found for test suite foo_bar",
+        layout::find_latest("foo_bar"));
 
     const fs::path store_dir = layout::query_store_dir();
     fs::mkdir_p(store_dir, 0755);
-    ATF_REQUIRE_THROW_RE(store::error,
-                         "No previous action found for test suite foo_bar",
-                         layout::find_latest("foo_bar"));
+    ATF_REQUIRE_THROW_RE(
+        store::error,
+        "No previous results file found for test suite foo_bar",
+        layout::find_latest("foo_bar"));
 
     const char* candidates[] = {
         "kyua.foo.20140613-194515-012345.db",  // Bad test suite.
@@ -96,9 +98,10 @@ ATF_TEST_CASE_BODY(find_latest__not_found)
     for (const char** candidate = candidates; *candidate != NULL; ++candidate) {
         std::cout << "Current candidate: " << *candidate << '\n';
         atf::utils::create_file((store_dir / *candidate).str(), "");
-        ATF_REQUIRE_THROW_RE(store::error,
-                             "No previous action found for test suite foo_bar",
-                             layout::find_latest("foo_bar"));
+        ATF_REQUIRE_THROW_RE(
+            store::error,
+            "No previous results file found for test suite foo_bar",
+            layout::find_latest("foo_bar"));
     }
 
     atf::utils::create_file(

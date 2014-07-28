@@ -138,14 +138,14 @@ default_behavior__ok_body() {
 
 utils_test_case default_behavior__no_store
 default_behavior__no_store_body() {
-    echo 'kyua: E: No previous action found for test suite' \
+    echo 'kyua: E: No previous results file found for test suite' \
         "$(utils_test_suite_id)." >experr
     atf_check -s exit:2 -o empty -e file:experr kyua report-html
 }
 
 
-utils_test_case store__explicit
-store__explicit_body() {
+utils_test_case results_file__explicit
+results_file__explicit_body() {
     run_tests "mock1" dbfile_name1
     run_tests "mock2" dbfile_name2
 
@@ -160,8 +160,8 @@ store__explicit_body() {
 }
 
 
-utils_test_case store__not_found
-store__not_found_body() {
+utils_test_case results_file__not_found
+results_file__not_found_body() {
     atf_check -s exit:2 -o empty -e match:"kyua: E: Cannot open 'foo': " \
         kyua report-html --results-file=foo
 }
@@ -244,8 +244,6 @@ results_filter__ok_body() {
 
 utils_test_case results_filter__invalid
 results_filter__invalid_body() {
-    kyua db-exec "SELECT * FROM actions"
-
     echo "kyua: E: Unknown result type 'foo-bar'." >experr
     atf_check -s exit:2 -o empty -e file:experr kyua report-html \
         --results-filter=passed,foo-bar
@@ -256,8 +254,8 @@ atf_init_test_cases() {
     atf_add_test_case default_behavior__ok
     atf_add_test_case default_behavior__no_store
 
-    atf_add_test_case store__explicit
-    atf_add_test_case store__not_found
+    atf_add_test_case results_file__explicit
+    atf_add_test_case results_file__not_found
 
     atf_add_test_case force__yes
     atf_add_test_case force__no

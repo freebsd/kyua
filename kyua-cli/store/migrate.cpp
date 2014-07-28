@@ -63,7 +63,7 @@ using utils::optional;
 namespace {
 
 
-/// Schema version at which we switched to per-action files.
+/// Schema version at which we switched to results files.
 const int first_chunked_schema_version = 3;
 
 
@@ -135,7 +135,7 @@ migrate_schema_step(const fs::path& file,
 }
 
 
-/// Given a historical database, chunks it up into per-action files.
+/// Given a historical database, chunks it up into results files.
 ///
 /// The given database is DELETED on success given that it will have been
 /// split up into various different files.

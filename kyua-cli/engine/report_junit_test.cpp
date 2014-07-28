@@ -85,12 +85,12 @@ static const char* const overriden_metadata =
     "timeout = 5678\n";
 
 
-/// Adds a new action to the given database.
+/// Populates the context of the given database.
 ///
 /// \param tx Transaction to use for the writes to the database.
 /// \param env_vars Number of environment variables to add to the context.
 static void
-add_action(store::write_transaction& tx, const std::size_t env_vars)
+add_context(store::write_transaction& tx, const std::size_t env_vars)
 {
     std::map< std::string, std::string > env;
     for (std::size_t i = 0; i < env_vars; i++)
@@ -100,7 +100,7 @@ add_action(store::write_transaction& tx, const std::size_t env_vars)
 }
 
 
-/// Adds a new test program with various test cases to the given action.
+/// Adds a new test program with various test cases to the given database.
 ///
 /// \param tx Transaction to use for the writes to the database.
 /// \param prog Test program name.
@@ -221,7 +221,7 @@ ATF_TEST_CASE_BODY(report_junit_hooks__minimal)
     store::write_backend backend = store::write_backend::open_rw(
         fs::path("test.db"));
     store::write_transaction tx = backend.start_write();
-    add_action(tx, 0);
+    add_context(tx, 0);
     tx.commit();
     backend.close();
 
@@ -257,7 +257,7 @@ ATF_TEST_CASE_BODY(report_junit_hooks__some_tests)
     store::write_backend backend = store::write_backend::open_rw(
         fs::path("test.db"));
     store::write_transaction tx = backend.start_write();
-    add_action(tx, 2);
+    add_context(tx, 2);
     add_tests(tx, "dir/prog-1", results1, false, false);
     add_tests(tx, "dir/sub/prog-2", results2, true, true);
     tx.commit();

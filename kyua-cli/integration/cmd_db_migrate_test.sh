@@ -40,10 +40,10 @@ create_historical_db() {
 }
 
 
-# Creates an empty action database.
+# Creates an empty results file.
 #
 # \param ... Files that contain SQL commands to be run.
-create_db() {
+create_results_file() {
     mkdir -p "${HOME}/.kyua/results"
     local dbname="kyua.$(utils_test_suite_id)-20140718-173200-123456.db"
     cat "${@}" | sqlite3 "${HOME}/.kyua/results/${dbname}"
@@ -106,7 +106,7 @@ already_up_to_date_body() {
     atf_set require.progs "sqlite3"
 }
 already_up_to_date_body() {
-    create_db "${KYUA_STOREDIR}/schema_v3.sql"
+    create_results_file "${KYUA_STOREDIR}/schema_v3.sql"
     atf_check -s exit:1 -o empty -e match:"already at schema version" \
         kyua db-migrate
 }
@@ -122,7 +122,7 @@ need_upgrade_head() {
 need_upgrade_body() {
     data=$(atf_get_srcdir)/../store
 
-    create_db "${data}/schema_v1.sql"
+    create_results_file "${data}/schema_v1.sql"
     atf_check -s exit:2 -o empty \
         -e match:"database has schema version 1.*use db-migrate" kyua report
 }

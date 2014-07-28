@@ -144,7 +144,7 @@ cli::format_row(sqlite::statement& stmt)
 /// Default constructor for cmd_db_exec.
 cmd_db_exec::cmd_db_exec(void) : cli_command(
     "db-exec", "sql_statement", 1, -1,
-    "Executes an arbitrary SQL statement in the store database and prints "
+    "Executes an arbitrary SQL statement in a results file and prints "
     "the resulting table")
 {
     add_option(results_file_option);

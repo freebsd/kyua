@@ -50,7 +50,7 @@ using utils::optional;
 /// Default constructor for cmd_report.
 cmd_report_junit::cmd_report_junit(void) : cli_command(
     "report-junit", "", 0, 0,
-    "Generates a JUnit report with the result of a previous action")
+    "Generates a JUnit report with the result of a test suite run")
 {
     add_option(results_file_option);
     add_option(cmdline::path_option("output", "Path to the output file", "path",

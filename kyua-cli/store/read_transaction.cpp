@@ -526,7 +526,7 @@ store::read_transaction::get_context(void)
 }
 
 
-/// Creates a new iterator to scan the test results of an action.
+/// Creates a new iterator to scan tests results.
 ///
 /// \return The constructed iterator.
 ///

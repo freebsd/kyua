@@ -122,16 +122,17 @@ public:
 };
 
 
-/// Populates a test database with a new action.
+/// Populates a results file.
 ///
 /// It is not OK to call this function multiple times on the same file.
 ///
 /// \param db_name The database to update.
-/// \param count A number that indicates how many elements to insert in the
-///     action.  Can be used to determine from the caller which particular
-///     action has been loaded.
+/// \param count The number of "elements" to insert into the results file.
+///     Determines the number of test programs and the number of test cases
+///     each has.  Can be used to determine from the caller which particular
+///     results file has been loaded.
 static void
-populate_db(const char* db_name, const int count)
+populate_results_file(const char* db_name, const int count)
 {
     store::write_backend backend = store::write_backend::open_rw(
         fs::path(db_name));
@@ -175,7 +176,7 @@ populate_db(const char* db_name, const int count)
 ATF_TEST_CASE_WITHOUT_HEAD(ok);
 ATF_TEST_CASE_BODY(ok)
 {
-    populate_db("test.db", 2);
+    populate_results_file("test.db", 2);
 
     capture_hooks hooks;
     scan_results::drive(fs::path("test.db"), hooks);

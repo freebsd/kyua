@@ -381,7 +381,7 @@ public:
 /// Default constructor for cmd_report_html.
 cli::cmd_report_html::cmd_report_html(void) : cli_command(
     "report-html", "", 0, 0,
-    "Generates an HTML report with the result of a previous action")
+    "Generates an HTML report with the result of a test suite run")
 {
     add_option(results_file_option);
     add_option(cmdline::bool_option(

@@ -74,8 +74,8 @@ class report_console_hooks : public engine::drivers::scan_results::base_hooks {
     /// Collection of result types to include in the report.
     const cli::result_types& _results_filters;
 
-    /// Path to the store file being read.
-    const fs::path& _store_file;
+    /// Path to the results file being read.
+    const fs::path& _results_file;
 
     /// The total run time of the tests.
     utils::datetime::delta _runtime;
@@ -181,14 +181,14 @@ public:
     ///     the output or not.
     /// \param results_filters_ The result types to include in the report.
     ///     Cannot be empty.
-    /// \param store_file_ Path to the store file being read.
+    /// \param results_file_ Path to the results file being read.
     report_console_hooks(std::ostream& output_, const bool show_context_,
                          const cli::result_types& results_filters_,
-                         const fs::path& store_file_) :
+                         const fs::path& results_file_) :
         _output(output_),
         _show_context(show_context_),
         _results_filters(results_filters_),
-        _store_file(store_file_)
+        _results_file(results_file_)
     {
         PRE(!results_filters_.empty());
     }
@@ -248,7 +248,7 @@ public:
         const std::size_t total = broken + failed + passed + skipped + xfail;
 
         _output << "===> Summary\n";
-        _output << F("Results read from %s\n") % _store_file;
+        _output << F("Results read from %s\n") % _results_file;
         _output << F("Test cases: %s total, %s skipped, %s expected failures, "
                      "%s broken, %s failed\n") %
             total % skipped % xfail % broken % failed;
@@ -263,7 +263,7 @@ public:
 /// Default constructor for cmd_report.
 cmd_report::cmd_report(void) : cli_command(
     "report", "", 0, 0,
-    "Generates a report with the result of a previous action")
+    "Generates a report with the result of a test suite run")
 {
     add_option(results_file_option);
     add_option(cmdline::bool_option(
@@ -290,13 +290,13 @@ cmd_report::run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
     std::auto_ptr< std::ostream > output = open_output_file(
         cmdline.get_option< cmdline::path_option >("output"));
 
-    const fs::path store_file = results_file_open(cmdline);
+    const fs::path results_file = results_file_open(cmdline);
 
     const result_types types = get_result_types(cmdline);
     report_console_hooks hooks(*output.get(),
                                cmdline.has_option("show-context"), types,
-                               store_file);
-    scan_results::drive(store_file, hooks);
+                               results_file);
+    scan_results::drive(results_file, hooks);
 
     return EXIT_SUCCESS;
 }

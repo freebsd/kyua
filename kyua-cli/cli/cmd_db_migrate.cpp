@@ -45,9 +45,9 @@ using cli::cmd_db_migrate;
 /// Default constructor for cmd_db_migrate.
 cmd_db_migrate::cmd_db_migrate(void) : cli_command(
     "db-migrate", "", 0, 0,
-    "Upgrades the schema of an existing store database to the currently "
-    "implemented version.  A backup of the database is created, but this "
-    "operation is not reversible")
+    "Upgrades the schema of an existing results file to the currently "
+    "implemented version.  A backup of the results file is created, but "
+    "this operation is not reversible")
 {
     add_option(results_file_option);
 }

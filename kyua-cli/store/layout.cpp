@@ -53,14 +53,14 @@ namespace layout = store::layout;
 using utils::optional;
 
 
-/// Finds the database corresponding to the latest run for the given test suite.
+/// Finds the results file for the latest run of the given test suite.
 ///
 /// \param test_suite Identifier of the test suite to query.
 ///
 /// \return Path to the located database holding the most recent data for the
 /// given test suite.
 ///
-/// \raises store::error If no previous action can be found.
+/// \raises store::error If no previous results file can be found.
 fs::path
 layout::find_latest(const std::string& test_suite)
 {
@@ -71,8 +71,9 @@ layout::find_latest(const std::string& test_suite)
         const int original_errno = errno;
         LW(F("Failed to open store dir %s: %s") % store_dir %
            strerror(original_errno));
-        throw store::error(F("No previous action found for test suite %s") %
-                           test_suite);
+        throw store::error(
+            F("No previous results file found for test suite %s")
+            % test_suite);
     }
     const utils::releaser< ::DIR, int > dir_releaser(dir, ::closedir);
 
@@ -101,8 +102,9 @@ layout::find_latest(const std::string& test_suite)
     }
 
     if (latest.empty())
-        throw store::error(F("No previous action found for test suite %s") %
-                           test_suite);
+        throw store::error(
+            F("No previous results file found for test suite %s")
+            % test_suite);
 
     return store_dir / latest;
 }
