@@ -51,7 +51,7 @@ struct regex_error_data {
     int original_code;
 
     /// Value of the regex captured during the error creation.
-    regex_t original_preg;
+    regex_t *original_preg;
 
     /// Explanation of the problem that lead to the error.
     char description[4096];
@@ -79,7 +79,7 @@ regex_format(const kyua_error_t error, char* const output_buffer,
     const regex_error_data_t* data = kyua_error_data(error);
     int prefix_length = snprintf(output_buffer, output_size, "%s: ",
                                  data->description);
-    (void)regerror(data->original_code, &data->original_preg,
+    (void)regerror(data->original_code, data->original_preg,
                    output_buffer + prefix_length, output_size - prefix_length);
     return strlen(output_buffer);
 }
@@ -92,7 +92,8 @@ static void
 regex_free(void* opaque_data)
 {
     regex_error_data_t* data = opaque_data;
-    regfree(&data->original_preg);
+    regfree(data->original_preg);
+    free(data->original_preg);
 }
 
 
@@ -111,14 +112,19 @@ regex_error_new(const int original_code, regex_t* original_preg,
     va_list ap;
 
     const size_t data_size = sizeof(regex_error_data_t);
-    regex_error_data_t* data = (regex_error_data_t*)malloc(data_size);
+    regex_error_data_t* data = (regex_error_data_t*)calloc(1, data_size);
     if (data == NULL) {
         regfree(original_preg);
         return kyua_oom_error_new();
     }
 
     data->original_code = original_code;
-    data->original_preg = *original_preg;
+    data->original_preg = malloc(sizeof(regex_t));
+    if (data->original_preg == NULL) {
+        regfree(original_preg);
+        return kyua_oom_error_new();
+    }
+    memcpy(data->original_preg, original_preg, sizeof(regex_t));
     va_start(ap, description);
     (void)vsnprintf(data->description, sizeof(data->description),
                     description, ap);
@@ -187,7 +193,6 @@ kyua_tap_try_parse_plan(const char* line, kyua_tap_summary_t* summary)
         else
             return regex_error_new(code, &preg, "regexec failed");
     }
-    regfree(&preg);
 
     if (summary->first_index != 0 || summary->last_index != 0) {
         summary->parse_error = "Output includes two test plans";
