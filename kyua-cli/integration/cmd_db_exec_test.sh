@@ -63,7 +63,7 @@ many_args_body() {
 utils_test_case no_args
 no_args_body() {
     atf_check -s exit:3 -o empty -e match:"Not enough arguments" kyua db-exec
-    test ! -d .kyua/actions/ || atf_fail "Database created but it should" \
+    test ! -d .kyua/results/ || atf_fail "Database created but it should" \
         "not have been"
 }
 
@@ -94,7 +94,7 @@ store_flag__default_home_body() {
 
     atf_check -s exit:0 -o save:metadata.csv -e empty \
         kyua db-exec "SELECT * FROM metadata"
-    test -f home-dir/.kyua/actions/*.db || atf_fail "Database not created in" \
+    test -f home-dir/.kyua/results/*.db || atf_fail "Database not created in" \
         "the home directory"
     atf_check -s exit:0 -o ignore -e empty \
         grep 'schema_version,.*timestamp' metadata.csv
@@ -104,8 +104,8 @@ store_flag__default_home_body() {
 utils_test_case store_flag__explicit__ok
 store_flag__explicit__ok_body() {
     create_empty_store
-    mv .kyua/actions/*.db custom.db
-    rmdir .kyua/actions
+    mv .kyua/results/*.db custom.db
+    rmdir .kyua/results
 
     HOME=home-dir
     atf_check -s exit:0 -o save:metadata.csv -e empty \

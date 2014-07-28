@@ -136,7 +136,7 @@ ATF_TEST_CASE_BODY(query_store_dir__home_absolute)
     utils::setenv("HOME", home.str());
     const fs::path store_dir = layout::query_store_dir();
     ATF_REQUIRE(store_dir.is_absolute());
-    ATF_REQUIRE_EQ(home / ".kyua/actions", store_dir);
+    ATF_REQUIRE_EQ(home / ".kyua/results", store_dir);
 }
 
 
@@ -147,7 +147,7 @@ ATF_TEST_CASE_BODY(query_store_dir__home_relative)
     utils::setenv("HOME", home.str());
     const fs::path store_dir = layout::query_store_dir();
     ATF_REQUIRE(store_dir.is_absolute());
-    ATF_REQUIRE_MATCH((home / ".kyua/actions").str(), store_dir.str());
+    ATF_REQUIRE_MATCH((home / ".kyua/results").str(), store_dir.str());
 }
 
 

@@ -57,7 +57,7 @@ utils_strip_timestamps='sed -E \
 # \param path Optional path to use; if not given, use the cwd.
 utils_action_file() {
     local test_suite_id="$(utils_test_suite_id "${@}")"
-    echo "${HOME}/.kyua/actions/kyua.${test_suite_id}.YYYYMMDD-HHMMSS-ssssss.db"
+    echo "${HOME}/.kyua/results/kyua.${test_suite_id}.YYYYMMDD-HHMMSS-ssssss.db"
 }
 
 

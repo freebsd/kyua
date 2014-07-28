@@ -257,9 +257,9 @@ ATF_TEST_CASE_BODY(store_path_new__default__create_directory__ok)
     ATF_REQUIRE(!fs::exists(home / ".kyua"));
     ATF_REQUIRE_MATCH(
         F("^%s/kyua\\.path_to_my_test_suite\\.[0-9]")
-        % (home.to_absolute() / ".kyua/actions").str(),
+        % (home.to_absolute() / ".kyua/results").str(),
         cli::store_path_new(mock_cmdline).str());
-    ATF_REQUIRE(fs::exists(home / ".kyua/actions"));
+    ATF_REQUIRE(fs::exists(home / ".kyua/results"));
 }
 
 
@@ -314,7 +314,7 @@ ATF_TEST_CASE_BODY(store_path_new__default__old_db)
 
     ATF_REQUIRE_EQ(fs::path("homedir/.kyua/store.db").to_absolute(),
                    cli::store_path_new(mock_cmdline));
-    ATF_REQUIRE(!fs::exists(home / ".kyua/actions"));
+    ATF_REQUIRE(!fs::exists(home / ".kyua/results"));
 }
 
 

@@ -50,7 +50,7 @@ Kyua will automatically determine the name of the results file as described in
 below.  Otherwise, Kyua will use the provided file.
 .Ss Naming scheme
 Results files are stored, by default, under
-.Pa ~/.kyua/actions/ .
+.Pa ~/.kyua/results/ .
 .Pp
 The name of each results file follows this pattern:
 .Bd -literal -offset indent
@@ -70,7 +70,7 @@ files.  For details on the schema, please refer to the heavily commented SQL
 file.
 .Sh FILES
 .Bl -tag -width XXXX
-.It Pa ~/.kyua/actions/
+.It Pa ~/.kyua/results/
 Default location for the results files.
 .It Pa __STOREDIR__/schema_v?.sql
 SQL schema to apply to new results files.

@@ -496,11 +496,11 @@ CURRENT_SCHEMA_TEST(4);
         \
         store::migrate_schema(fs::path("test.db")); \
         \
-        check_action_2(fs::path(".kyua/actions/" \
+        check_action_2(fs::path(".kyua/results/" \
             "kyua.test_suite_root.20130108-111331-000000.db")); \
-        check_action_3(fs::path(".kyua/actions/" \
+        check_action_3(fs::path(".kyua/results/" \
             "kyua.usr_tests.20130108-123832-000000.db")); \
-        check_action_4(fs::path(".kyua/actions/" \
+        check_action_4(fs::path(".kyua/results/" \
             "kyua.usr_tests.20130108-112635-000000.db")); \
     }
 MIGRATE_SCHEMA_TEST(1);

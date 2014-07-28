@@ -44,9 +44,9 @@ create_historical_db() {
 #
 # \param ... Files that contain SQL commands to be run.
 create_db() {
-    mkdir -p "${HOME}/.kyua/actions"
+    mkdir -p "${HOME}/.kyua/results"
     local dbname="kyua.$(utils_test_suite_id)-20140718-173200-123456.db"
-    cat "${@}" | sqlite3 "${HOME}/.kyua/actions/${dbname}"
+    cat "${@}" | sqlite3 "${HOME}/.kyua/results/${dbname}"
 }
 
 
@@ -67,7 +67,7 @@ upgrade__from_v1_body() {
         "kyua.usr_tests.20130108-123832-000000.db" \
         "kyua.usr_tests.20130108-112635-000000.db"
     do
-        [ -f "${HOME}/.kyua/actions/${f}" ] || atf_fail "Expected file ${f}" \
+        [ -f "${HOME}/.kyua/results/${f}" ] || atf_fail "Expected file ${f}" \
             "was not created"
     done
     [ ! -f "${HOME}/.kyua/store.db" ] || atf_fail "Historical database not" \
@@ -92,7 +92,7 @@ upgrade__from_v2_body() {
         "kyua.usr_tests.20130108-123832-000000.db" \
         "kyua.usr_tests.20130108-112635-000000.db"
     do
-        [ -f "${HOME}/.kyua/actions/${f}" ] || atf_fail "Expected file ${f}" \
+        [ -f "${HOME}/.kyua/results/${f}" ] || atf_fail "Expected file ${f}" \
             "was not created"
     done
     [ ! -f "${HOME}/.kyua/store.db" ] || atf_fail "Historical database not" \

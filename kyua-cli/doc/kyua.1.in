@@ -343,7 +343,7 @@ Defaults to
 .El
 .Sh FILES
 .Bl -tag -width XXXX
-.It Pa ~/.kyua/action/
+.It Pa ~/.kyua/results/
 Default location for the results files.  See
 .Xr kyua-results-files 7
 for details.

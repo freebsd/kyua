@@ -158,9 +158,9 @@ layout::query_store_dir(void)
     if (home) {
         const fs::path& home_path = home.get();
         if (home_path.is_absolute())
-            return home_path / ".kyua/actions";
+            return home_path / ".kyua/results";
         else
-            return home_path.to_absolute() / ".kyua/actions";
+            return home_path.to_absolute() / ".kyua/results";
     } else {
         LW("HOME not defined; creating store database in current "
            "directory");
