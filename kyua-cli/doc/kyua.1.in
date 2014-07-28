@@ -131,7 +131,7 @@ Inspects the values of the configuration variables.
 See
 .Xr kyua-config 1 .
 .It Ar db-exec
-Executes an arbitrary SQL statement on an action file and prints the
+Executes an arbitrary SQL statement on a results file and prints the
 resulting table.
 See
 .Xr kyua-db-exec 1 .
@@ -142,7 +142,7 @@ See
 .El
 .Pp
 The following commands are used to generate reports based on the data previously
-recorded in an action file:
+recorded in a results file:
 .Bl -tag -width reportXjunitXX -offset indent
 .It Ar report
 Generates a plain-text report.
@@ -344,8 +344,8 @@ Defaults to
 .Sh FILES
 .Bl -tag -width XXXX
 .It Pa ~/.kyua/action/
-Default location for the action files.  See
-.Xr kyua-action-files 7
+Default location for the results files.  See
+.Xr kyua-results-files 7
 for details.
 .It Pa ~/.kyua/kyua.conf
 User-specific configuration file.

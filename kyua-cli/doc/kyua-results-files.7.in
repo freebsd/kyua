@@ -25,34 +25,34 @@
 .\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 .\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-.Dd June 17, 2014
-.Dt KYUA-ACTION-FILES 7
+.Dd July 27, 2014
+.Dt KYUA-RESULTS-FILES 7
 .Os
 .Sh NAME
-.Nm action-files
-.Nd Description of the action files naming scheme
+.Nm results-files
+.Nd Description of the results files naming scheme
 .Sh DESCRIPTION
-Action files contain the results of the execution of a test suite.
-Each test suite execution by
+Results files contain, as their name implies, the results of the execution of a
+test suite.  Each test suite executed by
 .Xr kyua-test 1
-generates a new action file, and such action files can be loaded later on by
+generates a new results file, and such results files can be loaded later on by
 inspection commands such as
 .Xr kyua-report 1
 to analyze their contents.
 .Pp
-All Kyua commands that create or operate on action files accept a
+All Kyua commands that create or operate on results files accept a
 .Fl -store
-flag to specify the location of the action file to create or open.
+flag to specify the location of the results file to create or open.
 When this flag holds its default value,
 .Sq LATEST ,
-Kyua will automatically determine the name of the action file as described in
+Kyua will automatically determine the name of the results file as described in
 .Sx Naming scheme
 below.  Otherwise, Kyua will use the provided file.
 .Ss Naming scheme
-Action files are stored, by default, under
+Results files are stored, by default, under
 .Pa ~/.kyua/actions/ .
 .Pp
-The name of each action file follows this pattern:
+The name of each results file follows this pattern:
 .Bd -literal -offset indent
 kyua.\*(Lttest_suite\*(Gt.\*(LtYYMMDD\*(Gt.\*(LtHHMMSS\*(Gt.db
 .Ed
@@ -64,15 +64,16 @@ at and
 .Sq YYMMDD.HHMMSS
 is assigned based on the current time.
 .Ss Internals
-Action files are simple SQLite databases with the schema described in the
+Results files are simple SQLite databases with the schema described in the
 .Pa __STOREDIR__/schema_v?.sql
-files.  For details on the schema, please refer to the heavily commented SQL.
+files.  For details on the schema, please refer to the heavily commented SQL
+file.
 .Sh FILES
 .Bl -tag -width XXXX
-.It Pa ~/.kyua/action/
-Default location for the action files.
+.It Pa ~/.kyua/actions/
+Default location for the results files.
 .It Pa __STOREDIR__/schema_v?.sql
-SQL schema to apply to new action files.
+SQL schema to apply to new results files.
 .El
 .Sh SEE ALSO
 .Xr kyua 1

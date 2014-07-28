@@ -30,7 +30,7 @@
 .Os
 .Sh NAME
 .Nm report
-.Nd Generates reports with the results of a test action
+.Nd Generates reports with the results of a test suite run
 .Sh SYNOPSIS
 .Nm
 .Op Fl -output Ar path
@@ -42,9 +42,9 @@ The
 .Nm
 command generates a user-friendly, plain-text report designed to be
 consumed by the user from the terminal.  This report is not intended to be
-machine-parseable.  To do so, the command processes an action file and then
+machine-parseable.  To do so, the command processes a results file and then
 creates a textual summary of the test case results
-recorded in that action.
+recorded in that results file.
 .Pp
 The following subcommand options are recognized:
 .Bl -tag -width XX
@@ -74,15 +74,15 @@ The default value for this flag includes all the test results except the
 passed tests.  Showing the passed tests by default clutters the report with
 too much information, so only abnormal conditions are included.
 .It Fl -show-context
-Prints the runtime context of the action.
+Prints the runtime context of the test suite run.
 .It Fl -store Ar path , Fl s Ar path
-Specifies the action file to operate on.  Defaults to
+Specifies the results file to operate on.  Defaults to
 .Sq LATEST ,
 which causes
 .Nm
-to automatically load the latest action file for the current test suite.
+to automatically load the latest results file for the current test suite.
 See
-.Xr kyua-action-files 7
+.Xr kyua-results-files 7
 for more information.
 .El
 .Sh EXIT STATUS

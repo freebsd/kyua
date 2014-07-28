@@ -30,7 +30,7 @@
 .Os
 .Sh NAME
 .Nm report-html
-.Nd Generates an HTML report with the results of a test action
+.Nd Generates an HTML report with the results of a test suite run
 .Sh SYNOPSIS
 .Nm
 .Op Fl -force
@@ -41,9 +41,9 @@
 The
 .Nm
 command provides a simple mechanism to generate HTML reports of the
-execution of a test suite.  The command processes an action file and then
+execution of a test suite.  The command processes a results file and then
 populates a directory with multiple HTML and supporting
-files to describe the results recorded in that action.
+files to describe the results recorded in that results file.
 .Pp
 The HTML output is static and self-contained, so it can easily be served by
 any simple web server.  The command expects the target directory to not
@@ -80,13 +80,13 @@ The default value for this flag includes all the test results except the
 passed tests.  Showing the passed tests by default clutters the report with
 too much information, so only abnormal conditions are included.
 .It Fl -store Ar path , Fl s Ar path
-Specifies the action file to operate on.  Defaults to
+Specifies the results file to operate on.  Defaults to
 .Sq LATEST ,
 which causes
 .Nm
-to automatically load the latest action file for the current test suite.
+to automatically load the latest results file for the current test suite.
 See
-.Xr kyua-action-files 7
+.Xr kyua-results-files 7
 for more information.
 .El
 .Sh EXIT STATUS

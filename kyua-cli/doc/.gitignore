@@ -1,5 +1,4 @@
 kyua-about.1
-kyua-action-files.7
 kyua-atf-interface.7
 kyua-build-root.7
 kyua-cli.info
@@ -13,6 +12,7 @@ kyua-plain-interface.7
 kyua-report-html.1
 kyua-report-junit.1
 kyua-report.1
+kyua-results-files.7
 kyua-test.1
 kyua-test-filters.7
 kyua.1

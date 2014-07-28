@@ -30,7 +30,7 @@
 .Os
 .Sh NAME
 .Nm db-exec
-.Nd Executes a SQL statement in an action file
+.Nd Executes a SQL statement in a results file
 .Sh SYNOPSIS
 .Nm
 .Op Fl -no-headers
@@ -60,13 +60,13 @@ The following subcommand options are recognized:
 .It Fl -no-headers
 Avoids printing the headers of the table in the output of the command.
 .It Fl -store Ar path , Fl s Ar path
-Specifies the action file to operate on.  Defaults to
+Specifies the results file to operate on.  Defaults to
 .Sq LATEST ,
 which causes
 .Nm
-to automatically load the latest action file for the current test suite.
+to automatically load the latest results file for the current test suite.
 See
-.Xr kyua-action-files 7
+.Xr kyua-results-files 7
 for more information.
 .El
 .Sh EXIT STATUS

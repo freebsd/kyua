@@ -21,16 +21,18 @@ Changes in more detail:
 * Added the 'report-junit' command to generate JUnit XML result files.
   The output has been verified to work within Jenkins.
 
-* Switched to per-action database files.  The unified store.db file is
-  now gone: 'kyua test' creates a new results file for every run and
-  the 'kyua report*' commands are able to locate the latest file for
-  a corresponding test suite automatically.
+* Switched to results files specific to their corresponding test suite
+  run.  The unified store.db file is now gone: 'kyua test' creates a
+  new results file for every invocation and the 'kyua report*' commands
+  are able to locate the latest file for a corresponding test suite
+  automatically.
 
 * The 'db-migrate' command takes an old store.db file and generates one
-  results file for every action, later deleting the store.db file.
+  results file for every previously-recorded action, later deleting the
+  store.db file.
 
 * The '--action' flag has been removed from all commands that accepted
-  it.  This has been superseded by the per-run databases.
+  it.  This has been superseded by the tests results files.
 
 * The 'db-exec' command no longer creates an empty database when none
   is found.  This command is now intended to run only over existing

@@ -41,7 +41,7 @@
 The
 .Nm
 command runs the tests of a test suite and records the results into a new
-action file.
+results file.
 .Pp
 The optional arguments to
 .Nm
@@ -61,13 +61,13 @@ Specifies the Kyuafile to process.  Defaults to a
 .Pa Kyuafile
 file in the current directory.
 .It Fl -store Ar path , Fl s Ar path
-Specifies the action file to create.  Defaults to
+Specifies the results file to create.  Defaults to
 .Sq LATEST ,
 which causes
 .Nm
-to automatically generate a new action file for the test run.
+to automatically generate a new results file for the test run.
 See
-.Xr kyua-action-files 7
+.Xr kyua-results-files 7
 for more information.
 .El
 .Pp
