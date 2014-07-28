@@ -112,8 +112,10 @@ regex_error_new(const int original_code, regex_t* original_preg,
 
     const size_t data_size = sizeof(regex_error_data_t);
     regex_error_data_t* data = (regex_error_data_t*)malloc(data_size);
-    if (data == NULL)
+    if (data == NULL) {
+        regfree(original_preg);
         return kyua_oom_error_new();
+    }
 
     data->original_code = original_code;
     data->original_preg = *original_preg;
@@ -170,6 +172,7 @@ regex_match_to_long(const char* line, const regmatch_t* match, long* output)
 kyua_error_t
 kyua_tap_try_parse_plan(const char* line, kyua_tap_summary_t* summary)
 {
+    kyua_error_t kyua_error;
     int code;
 
     regex_t preg;
@@ -180,17 +183,16 @@ kyua_tap_try_parse_plan(const char* line, kyua_tap_summary_t* summary)
     regmatch_t matches[3];
     code = regexec(&preg, line, 3, matches, 0);
     if (code != 0) {
-        if (code == REG_NOMATCH) {
-            regfree(&preg);
-            return kyua_error_ok();
-        } else
+        if (code == REG_NOMATCH)
+            goto end;
+        else
             return regex_error_new(code, &preg, "regexec failed");
     }
     regfree(&preg);
 
     if (summary->first_index != 0 || summary->last_index != 0) {
         summary->parse_error = "Output includes two test plans";
-        return kyua_error_ok();
+        goto end;
     }
 
     const char* error;
@@ -199,14 +201,14 @@ kyua_tap_try_parse_plan(const char* line, kyua_tap_summary_t* summary)
     error = regex_match_to_long(line, &matches[1], &first_index);
     if (error != NULL) {
         summary->parse_error = error;
-        return kyua_error_ok();
+        goto end;
     }
 
     long last_index;
     error = regex_match_to_long(line, &matches[2], &last_index);
     if (error != NULL) {
         summary->parse_error = error;
-        return kyua_error_ok();
+        goto end;
     }
 
     if (last_index < first_index) {
@@ -216,6 +218,8 @@ kyua_tap_try_parse_plan(const char* line, kyua_tap_summary_t* summary)
         summary->last_index = last_index;
     }
 
+end:
+    regfree(&preg);
     return kyua_error_ok();
 }
 
