@@ -580,32 +580,32 @@ EOF
 }
 
 
-utils_test_case store_flag__ok
-store_flag__ok_body() {
+utils_test_case results_file__ok
+results_file__ok_body() {
     cat >Kyuafile <<EOF
 syntax(2)
 atf_test_program{name="config1", test_suite="suite1"}
 EOF
     utils_cp_helper config config1
 
-    atf_check -s exit:0 -o ignore -e empty kyua test -s foo1.db
+    atf_check -s exit:0 -o ignore -e empty kyua test -r foo1.db
    test -f foo1.db || atf_fail "-s did not work"
-    atf_check -s exit:0 -o ignore -e empty kyua test --store=foo2.db
-    test -f foo2.db || atf_fail "--store did not work"
+    atf_check -s exit:0 -o ignore -e empty kyua test --results-file=foo2.db
+    test -f foo2.db || atf_fail "--results-file did not work"
     test ! -f .kyua/store.db || atf_fail "Default database created"
 }
 
 
-utils_test_case store_flag__fail
-store_flag__fail_body() {
+utils_test_case results_file__fail
+results_file__fail_body() {
     cat >Kyuafile <<EOF
 syntax(2)
 atf_test_program{name="config1", test_suite="suite1"}
 EOF
     utils_cp_helper config config1
 
-    atf_check -s exit:3 -o empty -e match:"Invalid.*--store" \
-        kyua test --store=""
+    atf_check -s exit:3 -o empty -e match:"Invalid.*--results-file" \
+        kyua test --results-file=""
 }
 
 
@@ -935,8 +935,8 @@ atf_init_test_cases() {
     atf_add_test_case config_behavior
 
     atf_add_test_case store_contents
-    atf_add_test_case store_flag__ok
-    atf_add_test_case store_flag__fail
+    atf_add_test_case results_file__ok
+    atf_add_test_case results_file__fail
 
     atf_add_test_case build_root_flag
 

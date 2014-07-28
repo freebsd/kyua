@@ -383,7 +383,7 @@ cli::cmd_report_html::cmd_report_html(void) : cli_command(
     "report-html", "", 0, 0,
     "Generates an HTML report with the result of a previous action")
 {
-    add_option(store_option);
+    add_option(results_file_option);
     add_option(cmdline::bool_option(
         "force", "Wipe the output directory before generating the new report; "
         "use care"));
@@ -414,7 +414,7 @@ cli::cmd_report_html::run(cmdline::ui* ui,
         cmdline.get_option< cmdline::path_option >("output");
     create_top_directory(directory, cmdline.has_option("force"));
     html_hooks hooks(ui, directory, types);
-    scan_results::drive(store_path_open(cmdline), hooks);
+    scan_results::drive(results_file_open(cmdline), hooks);
     hooks.write_summary();
 
     return EXIT_SUCCESS;

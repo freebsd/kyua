@@ -138,16 +138,16 @@ store__explicit_body() {
     run_tests "mock2" dbfile_name2
 
     atf_check -s exit:0 -o match:"MOCK.*mock1" -o not-match:"MOCK.*mock2" \
-        -e empty kyua report-junit --store="$(cat dbfile_name1)"
+        -e empty kyua report-junit --results-file="$(cat dbfile_name1)"
     atf_check -s exit:0 -o not-match:"MOCK.*mock1" -o match:"MOCK.*mock2" \
-        -e empty kyua report-junit --store="$(cat dbfile_name2)"
+        -e empty kyua report-junit --results-file="$(cat dbfile_name2)"
 }
 
 
 utils_test_case store__not_found
 store__not_found_body() {
     atf_check -s exit:2 -o empty -e match:"kyua: E: Cannot open 'foo': " \
-        kyua report-junit --store=foo
+        kyua report-junit --results-file=foo
 }
 
 

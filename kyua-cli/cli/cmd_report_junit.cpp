@@ -52,7 +52,7 @@ cmd_report_junit::cmd_report_junit(void) : cli_command(
     "report-junit", "", 0, 0,
     "Generates a JUnit report with the result of a previous action")
 {
-    add_option(store_option);
+    add_option(results_file_option);
     add_option(cmdline::path_option("output", "Path to the output file", "path",
                                     "/dev/stdout"));
 }
@@ -75,7 +75,7 @@ cmd_report_junit::run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
         cmdline.get_option< cmdline::path_option >("output"));
 
     engine::report_junit_hooks hooks(*output.get());
-    scan_results::drive(store_path_open(cmdline), hooks);
+    scan_results::drive(results_file_open(cmdline), hooks);
 
     return EXIT_SUCCESS;
 }

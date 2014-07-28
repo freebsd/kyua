@@ -52,7 +52,8 @@ atf_test_program{name="atf_helpers"}
     ln -s $(GUESS_TOPDIR)/bootstrap/atf_helpers atf_helpers
 ])
 m4_define([RUN_ATF_HELPERS],
-    [HOME=$(pwd) TESTS="$1" kyua --config=none test --store=bootstrap.db $2])
+    [HOME=$(pwd) TESTS="$1" kyua --config=none \
+        test --results-file=bootstrap.db $2])
 
 
 m4_define([CREATE_PLAIN_HELPERS], [
@@ -64,7 +65,8 @@ atf_test_program{name="plain_helpers"}
     ln -s $(GUESS_TOPDIR)/bootstrap/plain_helpers plain_helpers
 ])
 m4_define([RUN_PLAIN_HELPER],
-    [HOME=$(pwd) HELPER="$1" kyua --config=none test --store=bootstrap.db])
+    [HOME=$(pwd) HELPER="$1" kyua --config=none \
+        test --results-file=bootstrap.db])
 
 
 AT_SETUP([test program crashes in test list])

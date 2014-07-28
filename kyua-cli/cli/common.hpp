@@ -63,8 +63,8 @@ namespace cli {
 
 extern const utils::cmdline::path_option build_root_option;
 extern const utils::cmdline::path_option kyuafile_option;
+extern const utils::cmdline::path_option results_file_option;
 extern const utils::cmdline::list_option results_filter_option;
-extern const utils::cmdline::path_option store_option;
 extern const utils::cmdline::property_option variable_option;
 
 
@@ -92,9 +92,9 @@ std::auto_ptr< std::ostream > open_output_file(const utils::fs::path& path);
 utils::optional< utils::fs::path > build_root_path(
     const utils::cmdline::parsed_cmdline&);
 utils::fs::path kyuafile_path(const utils::cmdline::parsed_cmdline&);
+utils::fs::path results_file_new(const utils::cmdline::parsed_cmdline&);
+utils::fs::path results_file_open(const utils::cmdline::parsed_cmdline&);
 result_types get_result_types(const utils::cmdline::parsed_cmdline&);
-utils::fs::path store_path_new(const utils::cmdline::parsed_cmdline&);
-utils::fs::path store_path_open(const utils::cmdline::parsed_cmdline&);
 
 std::set< engine::test_filter > parse_filters(
     const utils::cmdline::args_vector&);

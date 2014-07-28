@@ -128,18 +128,18 @@ need_upgrade_body() {
 }
 
 
-utils_test_case store_flag__ok
-store_flag__ok_body() {
+utils_test_case results_file__ok
+results_file__ok_body() {
     echo "This is not a valid database" >test.db
     atf_check -s exit:1 -o empty -e match:"Migration failed" \
-        kyua db-migrate --store ./test.db
+        kyua db-migrate --results-file ./test.db
 }
 
 
-utils_test_case store_flag__fail
-store_flag__fail_body() {
+utils_test_case results_file__fail
+results_file__fail_body() {
     atf_check -s exit:1 -o empty -e match:"Cannot open.*test.db" \
-        kyua db-migrate --store ./test.db
+        kyua db-migrate --results-file ./test.db
 }
 
 
@@ -159,8 +159,8 @@ atf_init_test_cases() {
     atf_add_test_case already_up_to_date
     atf_add_test_case need_upgrade
 
-    atf_add_test_case store_flag__ok
-    atf_add_test_case store_flag__fail
+    atf_add_test_case results_file__ok
+    atf_add_test_case results_file__fail
 
     atf_add_test_case too_many_arguments
 }

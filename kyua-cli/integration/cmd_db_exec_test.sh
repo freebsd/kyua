@@ -80,15 +80,15 @@ invalid_statement_body() {
 utils_test_case no_create_store
 no_create_store_body() {
     atf_check -s exit:1 -o empty -e match:"Cannot open 'not-here'" \
-        kyua db-exec --store=not-here "SELECT * FROM metadata"
+        kyua db-exec --results-file=not-here "SELECT * FROM metadata"
     if test -f not-here; then
         atf_fail "Database created but it should not have been"
     fi
 }
 
 
-utils_test_case store_flag__default_home
-store_flag__default_home_body() {
+utils_test_case results_file__default_home
+results_file__default_home_body() {
     HOME=home-dir
     create_empty_store
 
@@ -101,15 +101,15 @@ store_flag__default_home_body() {
 }
 
 
-utils_test_case store_flag__explicit__ok
-store_flag__explicit__ok_body() {
+utils_test_case results_file__explicit__ok
+results_file__explicit__ok_body() {
     create_empty_store
     mv .kyua/results/*.db custom.db
     rmdir .kyua/results
 
     HOME=home-dir
     atf_check -s exit:0 -o save:metadata.csv -e empty \
-        kyua --logfile=/dev/null db-exec -s custom.db "SELECT * FROM metadata"
+        kyua --logfile=/dev/null db-exec -r custom.db "SELECT * FROM metadata"
     test ! -d home-dir/.kyua || atf_fail "Home directory created but this" \
         "should not have happened"
     atf_check -s exit:0 -o ignore -e empty \
@@ -117,13 +117,13 @@ store_flag__explicit__ok_body() {
 }
 
 
-utils_test_case store_flag__explicit__fail
-store_flag__explicit__fail_head() {
+utils_test_case results_file__explicit__fail
+results_file__explicit__fail_head() {
     atf_set "require.user" "unprivileged"
 }
-store_flag__explicit__fail_body() {
+results_file__explicit__fail_body() {
     atf_check -s exit:1 -o empty -e match:"Cannot open.*foo.db" \
-        kyua db-exec --store=foo.db "SELECT * FROM metadata"
+        kyua db-exec --results-file=foo.db "SELECT * FROM metadata"
 }
 
 
@@ -157,9 +157,9 @@ atf_init_test_cases() {
     atf_add_test_case invalid_statement
     atf_add_test_case no_create_store
 
-    atf_add_test_case store_flag__default_home
-    atf_add_test_case store_flag__explicit__ok
-    atf_add_test_case store_flag__explicit__fail
+    atf_add_test_case results_file__default_home
+    atf_add_test_case results_file__explicit__ok
+    atf_add_test_case results_file__explicit__fail
 
     atf_add_test_case no_headers_flag
 }

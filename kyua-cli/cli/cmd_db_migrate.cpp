@@ -49,7 +49,7 @@ cmd_db_migrate::cmd_db_migrate(void) : cli_command(
     "implemented version.  A backup of the database is created, but this "
     "operation is not reversible")
 {
-    add_option(store_option);
+    add_option(results_file_option);
 }
 
 
@@ -66,7 +66,7 @@ cmd_db_migrate::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
                     const config::tree& UTILS_UNUSED_PARAM(user_config))
 {
     try {
-        store::migrate_schema(cli::store_path_open(cmdline));
+        store::migrate_schema(cli::results_file_open(cmdline));
         return EXIT_SUCCESS;
     } catch (const store::error& e) {
         cmdline::print_error(ui, F("Migration failed: %s") % e.what());

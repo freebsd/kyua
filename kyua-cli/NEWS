@@ -34,6 +34,9 @@ Changes in more detail:
 * The '--action' flag has been removed from all commands that accepted
   it.  This has been superseded by the tests results files.
 
+* The '--store' flag that many commands took has been renamed to
+  '--results-file' in line with the semantical changes.
+
 * The 'db-exec' command no longer creates an empty database when none
   is found.  This command is now intended to run only over existing
   files.

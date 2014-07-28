@@ -147,7 +147,7 @@ cmd_db_exec::cmd_db_exec(void) : cli_command(
     "Executes an arbitrary SQL statement in the store database and prints "
     "the resulting table")
 {
-    add_option(store_option);
+    add_option(results_file_option);
     add_option(cmdline::bool_option("no-headers", "Do not show headers in the "
                                     "output table"));
 }
@@ -168,7 +168,7 @@ cmd_db_exec::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
     try {
         // TODO(jmmv): Shouldn't be using store::detail here...
         sqlite::database db = store::detail::open_and_setup(
-            cli::store_path_open(cmdline), sqlite::open_readwrite);
+            cli::results_file_open(cmdline), sqlite::open_readwrite);
         sqlite::statement stmt = db.create_statement(
             flatten_args(cmdline.arguments()));
 

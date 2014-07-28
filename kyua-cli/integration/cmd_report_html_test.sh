@@ -150,12 +150,12 @@ store__explicit_body() {
     run_tests "mock2" dbfile_name2
 
     atf_check -s exit:0 -o ignore -e empty kyua report-html \
-        --store="$(cat dbfile_name1)"
+        --results-file="$(cat dbfile_name1)"
     grep "MOCK.*mock1" html/context.html || atf_fail "Invalid context in report"
 
     rm -rf html
     atf_check -s exit:0 -o ignore -e empty kyua report-html \
-        --store="$(cat dbfile_name2)"
+        --results-file="$(cat dbfile_name2)"
     grep "MOCK.*mock2" html/context.html || atf_fail "Invalid context in report"
 }
 
@@ -163,7 +163,7 @@ store__explicit_body() {
 utils_test_case store__not_found
 store__not_found_body() {
     atf_check -s exit:2 -o empty -e match:"kyua: E: Cannot open 'foo': " \
-        kyua report-html --store=foo
+        kyua report-html --results-file=foo
 }
 
 

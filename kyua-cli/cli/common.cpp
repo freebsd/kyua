@@ -79,13 +79,13 @@ const cmdline::list_option cli::results_filter_option(
     "the report", "types", "skipped,xfail,broken,failed");
 
 
-/// Standard definition of the option to specify the store.
+/// Standard definition of the option to specify the results file.
 ///
 /// TODO(jmmv): Should support a git-like syntax to go back in time, like
-/// --store=LATEST^N where N indicates how many runs to go back to.
-const cmdline::path_option cli::store_option(
-    's', "store",
-    "Path to the store database",
+/// --results-file=LATEST^N where N indicates how many runs to go back to.
+const cmdline::path_option cli::results_file_option(
+    'r', "results-file",
+    "Path to the results-file database",
     "file", "LATEST");
 
 
@@ -204,6 +204,92 @@ cli::kyuafile_path(const cmdline::parsed_cmdline& cmdline)
 }
 
 
+/// Gets the path to the database file for a new action.
+///
+/// This has the side-effect of creating the directory in which to store the
+/// database if and only if the path to the database matches the default value.
+/// When the user does not specify an override for the location of the database,
+/// he should not care about the directory existing.  Any of this is not a big
+/// deal though, because logs are also stored within ~/.kyua and thus we will
+/// most likely end up creating the directory anyway.
+///
+/// \param cmdline The parsed command line from which to extract any possible
+///     override for the location of the database via the --results-file flag.
+///
+/// \return The path to the database to be used.
+///
+/// \throw fs::error If the creation of the database directory fails.
+/// \throw store::error If the location of the database cannot be computed.
+fs::path
+cli::results_file_new(const cmdline::parsed_cmdline& cmdline)
+{
+    // We need the command line to include the --kyuafile flag because the path
+    // to the Kyuafile defines the root of the test suite, and we need this
+    // information when auto-determining the path to the database.
+    PRE(cmdline.has_option(kyuafile_option.long_name()));
+
+    fs::path store = cmdline.get_option< cmdline::path_option >(
+        results_file_option.long_name());
+    if (store == fs::path(results_file_option.default_value())) {
+        optional< fs::path > home = utils::get_home();
+        if (home) {
+            const fs::path old_db = home.get() / ".kyua/store.db";
+            if (fs::exists(old_db)) {
+                if (old_db.is_absolute())
+                    store = old_db;
+                else
+                    store = old_db.to_absolute();
+            }
+        }
+
+        if (store == fs::path(results_file_option.default_value())) {
+            const std::string test_suite = layout::test_suite_for_path(
+                kyuafile_path(cmdline).branch_path());
+            store = layout::new_db(test_suite);
+            fs::mkdir_p(store.branch_path(), 0755);
+        }
+    }
+    LI(F("Creating new store %s") % store);
+    return store;
+}
+
+
+/// Gets the path to the database file for an existing action.
+///
+/// \param cmdline The parsed command line from which to extract any possible
+///     override for the location of the database via the --results-file flag.
+///
+/// \return The path to the database to be used.
+///
+/// \throw store::error If the location of the database cannot be computed.
+fs::path
+cli::results_file_open(const cmdline::parsed_cmdline& cmdline)
+{
+    fs::path store = cmdline.get_option< cmdline::path_option >(
+        results_file_option.long_name());
+    if (store == fs::path(results_file_option.default_value())) {
+        optional< fs::path > home = utils::get_home();
+        if (home) {
+            const fs::path old_db = home.get() / ".kyua/store.db";
+            if (fs::exists(old_db)) {
+                if (old_db.is_absolute())
+                    store = old_db;
+                else
+                    store = old_db.to_absolute();
+            }
+        }
+
+        if (store == fs::path(results_file_option.default_value())) {
+            const std::string test_suite = layout::test_suite_for_path(
+                fs::current_path());
+            store = layout::find_latest(test_suite);
+        }
+    }
+    LI(F("Opening existing store %s") % store);
+    return store;
+}
+
+
 /// Gets the filters for the result types.
 ///
 /// \param cmdline The parsed command line.
@@ -224,92 +310,6 @@ cli::get_result_types(const utils::cmdline::parsed_cmdline& cmdline)
         types.push_back(engine::test_result::failed);
     }
     return types;
-}
-
-
-/// Gets the path to the database file for a new action.
-///
-/// This has the side-effect of creating the directory in which to store the
-/// database if and only if the path to the database matches the default value.
-/// When the user does not specify an override for the location of the database,
-/// he should not care about the directory existing.  Any of this is not a big
-/// deal though, because logs are also stored within ~/.kyua and thus we will
-/// most likely end up creating the directory anyway.
-///
-/// \param cmdline The parsed command line from which to extract any possible
-///     override for the location of the database via the --store flag.
-///
-/// \return The path to the database to be used.
-///
-/// \throw fs::error If the creation of the database directory fails.
-/// \throw store::error If the location of the database cannot be computed.
-fs::path
-cli::store_path_new(const cmdline::parsed_cmdline& cmdline)
-{
-    // We need the command line to include the --kyuafile flag because the path
-    // to the Kyuafile defines the root of the test suite, and we need this
-    // information when auto-determining the path to the database.
-    PRE(cmdline.has_option(kyuafile_option.long_name()));
-
-    fs::path store = cmdline.get_option< cmdline::path_option >(
-        store_option.long_name());
-    if (store == fs::path(store_option.default_value())) {
-        optional< fs::path > home = utils::get_home();
-        if (home) {
-            const fs::path old_db = home.get() / ".kyua/store.db";
-            if (fs::exists(old_db)) {
-                if (old_db.is_absolute())
-                    store = old_db;
-                else
-                    store = old_db.to_absolute();
-            }
-        }
-
-        if (store == fs::path(store_option.default_value())) {
-            const std::string test_suite = layout::test_suite_for_path(
-                kyuafile_path(cmdline).branch_path());
-            store = layout::new_db(test_suite);
-            fs::mkdir_p(store.branch_path(), 0755);
-        }
-    }
-    LI(F("Creating new store %s") % store);
-    return store;
-}
-
-
-/// Gets the path to the database file for an existing action.
-///
-/// \param cmdline The parsed command line from which to extract any possible
-///     override for the location of the database via the --store flag.
-///
-/// \return The path to the database to be used.
-///
-/// \throw store::error If the location of the database cannot be computed.
-fs::path
-cli::store_path_open(const cmdline::parsed_cmdline& cmdline)
-{
-    fs::path store = cmdline.get_option< cmdline::path_option >(
-        store_option.long_name());
-    if (store == fs::path(store_option.default_value())) {
-        optional< fs::path > home = utils::get_home();
-        if (home) {
-            const fs::path old_db = home.get() / ".kyua/store.db";
-            if (fs::exists(old_db)) {
-                if (old_db.is_absolute())
-                    store = old_db;
-                else
-                    store = old_db.to_absolute();
-            }
-        }
-
-        if (store == fs::path(store_option.default_value())) {
-            const std::string test_suite = layout::test_suite_for_path(
-                fs::current_path());
-            store = layout::find_latest(test_suite);
-        }
-    }
-    LI(F("Opening existing store %s") % store);
-    return store;
 }
 
 

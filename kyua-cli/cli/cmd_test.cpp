@@ -112,7 +112,7 @@ cmd_test::cmd_test(void) : cli_command(
 {
     add_option(build_root_option);
     add_option(kyuafile_option);
-    add_option(store_option);
+    add_option(results_file_option);
 }
 
 
@@ -127,7 +127,7 @@ int
 cmd_test::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
               const config::tree& user_config)
 {
-    const fs::path store_file = store_path_new(cmdline);
+    const fs::path store_file = results_file_new(cmdline);
 
     print_hooks hooks(ui);
     const run_tests::result result = run_tests::drive(
