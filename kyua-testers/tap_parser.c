@@ -172,7 +172,6 @@ regex_match_to_long(const char* line, const regmatch_t* match, long* output)
 kyua_error_t
 kyua_tap_try_parse_plan(const char* line, kyua_tap_summary_t* summary)
 {
-    kyua_error_t kyua_error;
     int code;
 
     regex_t preg;
