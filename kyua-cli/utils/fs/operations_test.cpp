@@ -247,6 +247,31 @@ ATF_TEST_CASE_BODY(find_in_path__always_absolute)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(is_directory__ok);
+ATF_TEST_CASE_BODY(is_directory__ok)
+{
+    const fs::path file("file");
+    atf::utils::create_file(file.str(), "");
+    ATF_REQUIRE(!fs::is_directory(file));
+
+    const fs::path dir("dir");
+    fs::mkdir(dir, 0755);
+    ATF_REQUIRE(fs::is_directory(dir));
+}
+
+
+ATF_TEST_CASE(is_directory__fail);
+ATF_TEST_CASE_HEAD(is_directory__fail)
+{
+    set_md_var("require.user", "unprivileged");
+}
+ATF_TEST_CASE_BODY(is_directory__fail)
+{
+    fs::mkdir(fs::path("dir"), 0000);
+    ATF_REQUIRE_THROW(fs::error, fs::is_directory(fs::path("dir/foo")));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(mkdir__ok);
 ATF_TEST_CASE_BODY(mkdir__ok)
 {
@@ -432,6 +457,9 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, find_in_path__many_components);
     ATF_ADD_TEST_CASE(tcs, find_in_path__current_directory);
     ATF_ADD_TEST_CASE(tcs, find_in_path__always_absolute);
+
+    ATF_ADD_TEST_CASE(tcs, is_directory__ok);
+    ATF_ADD_TEST_CASE(tcs, is_directory__fail);
 
     ATF_ADD_TEST_CASE(tcs, mkdir__ok);
     ATF_ADD_TEST_CASE(tcs, mkdir__enoent);

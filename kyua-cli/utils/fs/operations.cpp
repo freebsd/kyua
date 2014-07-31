@@ -190,6 +190,17 @@ fs::find_in_path(const char* name)
 }
 
 
+/// Checks if the given path is a directory or not.
+///
+/// \return True if the path is a directory; false otherwise.
+bool
+fs::is_directory(const fs::path& path)
+{
+    const struct ::stat sb = safe_stat(path);
+    return S_ISDIR(sb.st_mode);
+}
+
+
 /// Creates a directory.
 ///
 /// \param dir The path to the directory to create.
@@ -321,8 +332,7 @@ fs::rm_r(const fs::path& directory)
 
             const fs::path entry = directory / dp->d_name;
 
-            const struct ::stat sb = safe_stat(entry);
-            if (S_ISDIR(sb.st_mode)) {
+            if (fs::is_directory(entry)) {
                 LD(F("Descending into %s") % entry);
                 fs::rm_r(entry);
             } else {
