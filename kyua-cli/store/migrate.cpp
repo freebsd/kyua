@@ -180,8 +180,8 @@ chunk_database(const fs::path& old_file)
             start_time_stmt, "start_time");
         start_time_stmt.step_without_results();
 
-        const fs::path new_file = store::layout::new_db(
-            store::layout::test_suite_for_path(cwd), start_time);
+        const fs::path new_file = store::layout::new_db_for_migration(
+            cwd, start_time);
         if (fs::exists(new_file)) {
             LI(F("Skipping action because %s already exists") % new_file);
             continue;

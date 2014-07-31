@@ -41,7 +41,9 @@ EOF
 simple_all_pass:pass  ->  passed  [S.UUUs]
 simple_all_pass:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 
+Results file id is $(utils_results_id)
 Results saved to $(utils_results_file)
+
 2/2 passed (0 failed)
 EOF
 
@@ -64,7 +66,9 @@ EOF
 simple_some_fail:fail  ->  failed: This fails on purpose  [S.UUUs]
 simple_some_fail:pass  ->  passed  [S.UUUs]
 
+Results file id is $(utils_results_id)
 Results saved to $(utils_results_file)
+
 1/2 passed (1 failed)
 EOF
 
@@ -95,7 +99,9 @@ third:pass  ->  passed  [S.UUUs]
 third:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 fourth:main  ->  skipped: Required file '/non-existent/foo' not found  [S.UUUs]
 
+Results file id is $(utils_results_id)
 Results saved to $(utils_results_file)
+
 7/7 passed (0 failed)
 EOF
 
@@ -129,7 +135,9 @@ third:pass  ->  passed  [S.UUUs]
 third:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 fourth:main  ->  failed: Returned non-success exit status 76  [S.UUUs]
 
+Results file id is $(utils_results_id)
 Results saved to $(utils_results_file)
+
 4/7 passed (3 failed)
 EOF
 
@@ -160,7 +168,9 @@ expect_all_pass:failure  ->  expected_failure: Oh no: Forced failure  [S.UUUs]
 expect_all_pass:signal  ->  expected_failure: Exiting with correct signal  [S.UUUs]
 expect_all_pass:timeout  ->  expected_failure: This times out  [S.UUUs]
 
+Results file id is $(utils_results_id)
 Results saved to $(utils_results_file)
+
 5/5 passed (0 failed)
 EOF
 
@@ -187,7 +197,9 @@ expect_some_fail:pass  ->  passed  [S.UUUs]
 expect_some_fail:signal  ->  failed: Test case expected to receive signal 15 but got 9  [S.UUUs]
 expect_some_fail:timeout  ->  failed: Test case was expected to hang but it continued execution  [S.UUUs]
 
+Results file id is $(utils_results_id)
 Results saved to $(utils_results_file)
+
 1/6 passed (5 failed)
 EOF
 
@@ -211,7 +223,9 @@ bogus_test_cases:die  ->  broken: Premature exit; test case received signal 9  [
 bogus_test_cases:exit  ->  broken: Premature exit; test case exited with code 0  [S.UUUs]
 bogus_test_cases:pass  ->  passed  [S.UUUs]
 
+Results file id is $(utils_results_id)
 Results saved to $(utils_results_file)
+
 1/3 passed (2 failed)
 EOF
 
@@ -247,7 +261,9 @@ simple_all_pass:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 subdir/simple_some_fail:fail  ->  failed: This fails on purpose  [S.UUUs]
 subdir/simple_some_fail:pass  ->  passed  [S.UUUs]
 
+Results file id is $(utils_results_id)
 Results saved to $(utils_results_file)
+
 3/4 passed (1 failed)
 EOF
     atf_check -s exit:1 -o file:expout -e empty kyua test
@@ -276,7 +292,9 @@ EOF
 subdir/simple_all_pass:pass  ->  passed  [S.UUUs]
 subdir/simple_all_pass:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 
+Results file id is $(utils_results_id)
 Results saved to $(utils_results_file)
+
 2/2 passed (0 failed)
 EOF
     atf_check -s exit:0 -o file:expout -e empty kyua test subdir
@@ -299,7 +317,9 @@ EOF
     cat >expout <<EOF
 first:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 
+Results file id is $(utils_results_id)
 Results saved to $(utils_results_file)
+
 1/1 passed (0 failed)
 EOF
     atf_check -s exit:0 -o file:expout -e empty kyua test first:skip
@@ -323,7 +343,9 @@ EOF
 second:fail  ->  failed: This fails on purpose  [S.UUUs]
 second:pass  ->  passed  [S.UUUs]
 
+Results file id is $(utils_results_id)
 Results saved to $(utils_results_file)
+
 1/2 passed (1 failed)
 EOF
     atf_check -s exit:1 -o file:expout -e empty kyua test second
@@ -369,7 +391,9 @@ subdir/second:fail  ->  failed: This fails on purpose  [S.UUUs]
 subdir/second:pass  ->  passed  [S.UUUs]
 first:pass  ->  passed  [S.UUUs]
 
+Results file id is $(utils_results_id)
 Results saved to $(utils_results_file)
+
 2/3 passed (1 failed)
 EOF
     atf_check -s exit:1 -o file:expout -e empty kyua test subdir first:pass
@@ -404,6 +428,7 @@ EOF
     utils_cp_helper simple_all_pass second
 
     cat >expout <<EOF
+Results file id is $(utils_results_id)
 Results saved to $(utils_results_file)
 EOF
     cat >experr <<EOF
@@ -434,7 +459,9 @@ first:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 third:fail  ->  failed: This fails on purpose  [S.UUUs]
 third:pass  ->  passed  [S.UUUs]
 
+Results file id is $(utils_results_id)
 Results saved to $(utils_results_file)
+
 3/4 passed (1 failed)
 EOF
 
@@ -477,7 +504,9 @@ first:pass  ->  passed  [S.UUUs]
 first:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 subdir/fourth:fail  ->  failed: This fails on purpose  [S.UUUs]
 
+Results file id is $(utils_results_id root)
 Results saved to $(utils_results_file root)
+
 2/3 passed (1 failed)
 EOF
     atf_check -s exit:1 -o file:expout -e empty kyua test \
@@ -502,7 +531,9 @@ EOF
 first:pass  ->  passed  [S.UUUs]
 first:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 
+Results file id is $(utils_results_id)
 Results saved to $(utils_results_file)
+
 2/2 passed (0 failed)
 EOF
     CREATE_COOKIE="$(pwd)/cookie"; export CREATE_COOKIE
@@ -556,7 +587,9 @@ EOF
 some-program:fail  ->  failed: This fails on purpose  [S.UUUs]
 some-program:pass  ->  passed  [S.UUUs]
 
+Results file id is $(utils_results_id)
 Results saved to $(utils_results_file)
+
 1/2 passed (1 failed)
 EOF
 
@@ -636,7 +669,9 @@ subdir/second:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 subdir/third:pass  ->  passed  [S.UUUs]
 subdir/third:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 
+Results file id is $(utils_results_id)
 Results saved to $(utils_results_file)
+
 6/6 passed (0 failed)
 EOF
 
@@ -669,7 +704,9 @@ EOF
 sometest:pass  ->  passed  [S.UUUs]
 sometest:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 
+Results file id is $(utils_results_id)
 Results saved to $(utils_results_file)
+
 2/2 passed (0 failed)
 EOF
     atf_check -s exit:0 -o file:expout -e empty kyua test -k myfile
@@ -696,7 +733,9 @@ EOF
 sometest:pass  ->  passed  [S.UUUs]
 sometest:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 
+Results file id is $(utils_results_id)
 Results saved to $(utils_results_file)
+
 2/2 passed (0 failed)
 EOF
     atf_check -s exit:0 -o file:expout -e empty kyua test -k myfile sometest
@@ -704,7 +743,9 @@ EOF
 sometest:pass  ->  passed  [S.UUUs]
 sometest:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 
+Results file id is $(utils_results_id)
 Results saved to $(utils_results_file)
+
 2/2 passed (0 failed)
 EOF
     atf_check -s exit:0 -o file:expout -e empty kyua test --kyuafile=myfile \
@@ -766,6 +807,7 @@ EOF
     utils_cp_helper simple_all_pass second
 
     cat >expout <<EOF
+Results file id is $(utils_results_id)
 Results saved to $(utils_results_file)
 EOF
     cat >experr <<EOF
@@ -787,6 +829,7 @@ EOF
     utils_cp_helper simple_all_pass first
 
     cat >expout <<EOF
+Results file id is $(utils_results_id)
 Results saved to $(utils_results_file)
 EOF
     cat >experr <<EOF
@@ -880,7 +923,9 @@ EOF
 crash_on_list:__test_cases_list__  ->  broken: Tester did not exit cleanly: kyua-atf-tester: Invalid test cases list header 'This is not a valid test program!'  [S.UUUs]
 non_executable:__test_cases_list__  ->  broken: Tester did not exit cleanly: kyua-atf-tester: execvp failed: Permission denied  [S.UUUs]
 
+Results file id is $(utils_results_id)
 Results saved to $(utils_results_file)
+
 0/2 passed (2 failed)
 EOF
     atf_check -s exit:1 -o file:expout -e empty kyua test

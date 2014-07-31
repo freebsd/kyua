@@ -34,6 +34,7 @@
 #include "cli/common.ipp"
 #include "engine/drivers/scan_results.hpp"
 #include "engine/report_junit.hpp"
+#include "store/layout.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/defs.hpp"
 #include "utils/optional.ipp"
@@ -41,6 +42,7 @@
 namespace cmdline = utils::cmdline;
 namespace config = utils::config;
 namespace fs = utils::fs;
+namespace layout = store::layout;
 namespace scan_results = engine::drivers::scan_results;
 
 using cli::cmd_report_junit;
@@ -52,7 +54,7 @@ cmd_report_junit::cmd_report_junit(void) : cli_command(
     "report-junit", "", 0, 0,
     "Generates a JUnit report with the result of a test suite run")
 {
-    add_option(results_file_option);
+    add_option(results_file_open_option);
     add_option(cmdline::path_option("output", "Path to the output file", "path",
                                     "/dev/stdout"));
 }
@@ -71,11 +73,14 @@ cmd_report_junit::run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
                       const cmdline::parsed_cmdline& cmdline,
                       const config::tree& UTILS_UNUSED_PARAM(user_config))
 {
+    const fs::path results_file = layout::find_results(
+        results_file_open(cmdline));
+
     std::auto_ptr< std::ostream > output = open_output_file(
         cmdline.get_option< cmdline::path_option >("output"));
 
     engine::report_junit_hooks hooks(*output.get());
-    scan_results::drive(results_file_open(cmdline), hooks);
+    scan_results::drive(results_file, hooks);
 
     return EXIT_SUCCESS;
 }

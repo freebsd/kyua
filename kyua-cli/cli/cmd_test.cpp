@@ -34,6 +34,7 @@
 #include "engine/drivers/run_tests.hpp"
 #include "engine/test_case.hpp"
 #include "engine/test_result.hpp"
+#include "store/layout.hpp"
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/cmdline/ui.hpp"
@@ -44,6 +45,7 @@ namespace cmdline = utils::cmdline;
 namespace config = utils::config;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
+namespace layout = store::layout;
 namespace run_tests = engine::drivers::run_tests;
 
 using cli::cmd_test;
@@ -112,7 +114,7 @@ cmd_test::cmd_test(void) : cli_command(
 {
     add_option(build_root_option);
     add_option(kyuafile_option);
-    add_option(results_file_option);
+    add_option(results_file_create_option);
 }
 
 
@@ -127,24 +129,33 @@ int
 cmd_test::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
               const config::tree& user_config)
 {
-    const fs::path results_file = results_file_new(cmdline);
+    const layout::results_id_file_pair results = layout::new_db(
+        results_file_create(cmdline), kyuafile_path(cmdline).branch_path());
 
     print_hooks hooks(ui);
     const run_tests::result result = run_tests::drive(
-        kyuafile_path(cmdline), build_root_path(cmdline), results_file,
+        kyuafile_path(cmdline), build_root_path(cmdline), results.second,
         parse_filters(cmdline.arguments()), user_config, hooks);
 
     int exit_code;
     if (hooks.good_count > 0 || hooks.bad_count > 0) {
         ui->out("");
-        ui->out(F("Results saved to %s") % results_file);
+        if (!results.first.empty()) {
+            ui->out(F("Results file id is %s") % results.first);
+        }
+        ui->out(F("Results saved to %s") % results.second);
+        ui->out("");
 
         ui->out(F("%s/%s passed (%s failed)") % hooks.good_count %
                 (hooks.good_count + hooks.bad_count) % hooks.bad_count);
 
         exit_code = (hooks.bad_count == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
     } else {
-        ui->out(F("Results saved to %s") % results_file);
+        // TODO(jmmv): Delete created empty file; it's useless!
+        if (!results.first.empty()) {
+            ui->out(F("Results file id is %s") % results.first);
+        }
+        ui->out(F("Results saved to %s") % results.second);
         exit_code = EXIT_SUCCESS;
     }
 

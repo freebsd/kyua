@@ -79,7 +79,7 @@ invalid_statement_body() {
 
 utils_test_case no_create_store
 no_create_store_body() {
-    atf_check -s exit:1 -o empty -e match:"Cannot open 'not-here'" \
+    atf_check -s exit:1 -o empty -e match:"No previous results.*not-here" \
         kyua db-exec --results-file=not-here "SELECT * FROM metadata"
     if test -f not-here; then
         atf_fail "Database created but it should not have been"
@@ -122,7 +122,7 @@ results_file__explicit__fail_head() {
     atf_set "require.user" "unprivileged"
 }
 results_file__explicit__fail_body() {
-    atf_check -s exit:1 -o empty -e match:"Cannot open.*foo.db" \
+    atf_check -s exit:1 -o empty -e match:"No previous results.*foo.db" \
         kyua db-exec --results-file=foo.db "SELECT * FROM metadata"
 }
 

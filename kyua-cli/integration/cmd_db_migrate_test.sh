@@ -138,7 +138,7 @@ results_file__ok_body() {
 
 utils_test_case results_file__fail
 results_file__fail_body() {
-    atf_check -s exit:1 -o empty -e match:"Cannot open.*test.db" \
+    atf_check -s exit:1 -o empty -e match:"No previous results.*test.db" \
         kyua db-migrate --results-file ./test.db
 }
 

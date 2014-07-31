@@ -28,11 +28,36 @@
 
 /// \file store/layout.hpp
 /// File system layout definition for the Kyua data files.
+///
+/// Tests results files are all stored in a centralized directory by default.
+/// In the general case, we do not want the user to have to worry about files:
+/// we expose an identifier-based interface where each tests results file has a
+/// unique identifier.  However, we also want to give full freedom to the user
+/// to store such files wherever he likes so we have to deal with paths as well.
+///
+/// When creating a new results file, the inputs to resolve the path can be:
+/// - NEW: Automatic generation of a new results file, so we want to return its
+///   public identifier and the path for internal consumption.
+/// - A path: The user provided the specific location where he wants the file
+///   stored, so we just obey that.  There is no public identifier in this case
+///   because there is no naming scheme imposed on the generated files.
+///
+/// When opening an existing results file, the inputs to resolve the path can
+/// be:
+/// - LATEST: Given the current directory, we derive the corresponding test
+///   suite name and find the latest timestamped file in the centralized
+///   location.
+/// - A path: If the file exists, we just open that.  If it doesn't exist or if
+///   it is a directory, we try to resolve that as a test suite name and locate
+///   the latest matching timestamped file.
+/// - Everything else: Treated as a test suite identifier, so we try to locate
+///   the latest matchin timestamped file.
 
 #if !defined(STORE_LAYOUT_HPP)
 #define STORE_LAYOUT_HPP
 
 #include <string>
+#include <utility>
 
 namespace utils {
 namespace datetime {
@@ -46,10 +71,19 @@ class path;
 namespace store {
 namespace layout {
 
+extern const char* results_auto_create_name;
+extern const char* results_auto_open_name;
 
-utils::fs::path find_latest(const std::string&);
-utils::fs::path new_db(const std::string&);
-utils::fs::path new_db(const std::string&, const utils::datetime::timestamp&);
+/// A pair with the user-visible ID of the results file and its path.
+///
+/// It is possible for the ID (first component) to be empty in the cases where
+/// the user explicitly requested to create the database in a specific path.
+typedef std::pair< std::string, utils::fs::path > results_id_file_pair;
+
+utils::fs::path find_results(const std::string&);
+results_id_file_pair new_db(const std::string&, const utils::fs::path&);
+utils::fs::path new_db_for_migration(const utils::fs::path&,
+                                     const utils::datetime::timestamp&);
 utils::fs::path query_store_dir(void);
 std::string test_suite_for_path(const utils::fs::path&);
 

@@ -36,9 +36,11 @@
 
 #include "cli/common.ipp"
 #include "store/exceptions.hpp"
+#include "store/layout.hpp"
 #include "store/read_backend.hpp"
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/fs/path.hpp"
 #include "utils/sanity.hpp"
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/exceptions.hpp"
@@ -46,6 +48,8 @@
 
 namespace cmdline = utils::cmdline;
 namespace config = utils::config;
+namespace fs = utils::fs;
+namespace layout = store::layout;
 namespace sqlite = utils::sqlite;
 
 using cli::cmd_db_exec;
@@ -147,7 +151,7 @@ cmd_db_exec::cmd_db_exec(void) : cli_command(
     "Executes an arbitrary SQL statement in a results file and prints "
     "the resulting table")
 {
-    add_option(results_file_option);
+    add_option(results_file_open_option);
     add_option(cmdline::bool_option("no-headers", "Do not show headers in the "
                                     "output table"));
 }
@@ -166,9 +170,12 @@ cmd_db_exec::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
                  const config::tree& UTILS_UNUSED_PARAM(user_config))
 {
     try {
+        const fs::path results_file = layout::find_results(
+            results_file_open(cmdline));
+
         // TODO(jmmv): Shouldn't be using store::detail here...
         sqlite::database db = store::detail::open_and_setup(
-            cli::results_file_open(cmdline), sqlite::open_readwrite);
+            results_file, sqlite::open_readwrite);
         sqlite::statement stmt = db.create_statement(
             flatten_args(cmdline.arguments()));
 

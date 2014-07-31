@@ -49,7 +49,21 @@ utils_strip_durations='sed -E \
 # script that automatically does this.
 utils_strip_timestamps='sed -E \
     -e "s,( |\[|\")[0-9][0-9]*.[0-9][0-9][0-9](s]|s|\"),\1S.UUU\2,g" \
-    -e "s,[0-9]{8}-[0-9]{6}-[0-9]{6}\.db,YYYYMMDD-HHMMSS-ssssss.db,g"'
+    -e "s,[0-9]{8}-[0-9]{6}-[0-9]{6},YYYYMMDD-HHMMSS-ssssss,g"'
+
+
+# Computes the results id for a test suite run.
+#
+# The computed path is "generic" in the sense that it does not include a
+# real timestamp: it only includes a placeholder.  This function should be
+# used along the utils_strip_timestamps function so that the timestampts of
+# the real results files are stripped out.
+#
+# \param path Optional path to use; if not given, use the cwd.
+utils_results_id() {
+    local test_suite_id="$(utils_test_suite_id "${@}")"
+    echo "${test_suite_id}.YYYYMMDD-HHMMSS-ssssss"
+}
 
 
 # Computes the results file for a test suite run.
@@ -61,8 +75,7 @@ utils_strip_timestamps='sed -E \
 #
 # \param path Optional path to use; if not given, use the cwd.
 utils_results_file() {
-    local test_suite_id="$(utils_test_suite_id "${@}")"
-    echo "${HOME}/.kyua/results/kyua.${test_suite_id}.YYYYMMDD-HHMMSS-ssssss.db"
+    echo "${HOME}/.kyua/results/kyua.$(utils_results_id "${@}").db"
 }
 
 

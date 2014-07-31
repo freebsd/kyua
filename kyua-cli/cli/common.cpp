@@ -44,6 +44,7 @@
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
+#include "utils/fs/exceptions.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
@@ -83,10 +84,23 @@ const cmdline::list_option cli::results_filter_option(
 ///
 /// TODO(jmmv): Should support a git-like syntax to go back in time, like
 /// --results-file=LATEST^N where N indicates how many runs to go back to.
-const cmdline::path_option cli::results_file_option(
+const cmdline::string_option cli::results_file_create_option(
     'r', "results-file",
-    "Path to the results file database",
-    "file", "LATEST");
+    "Path to the results file to create; if left to the default value, the "
+    "name of the file is automatically computed for the current test suite",
+    "file", layout::results_auto_create_name);
+
+
+/// Standard definition of the option to specify the results file.
+///
+/// TODO(jmmv): Should support a git-like syntax to go back in time, like
+/// --results-file=LATEST^N where N indicates how many runs to go back to.
+const cmdline::string_option cli::results_file_open_option(
+    'r', "results-file",
+    "Path to the results file to open or the identifier of the current test "
+    "suite or a previous results file for automatic lookup; if left to the "
+    "default value, uses the current directory as the test suite name",
+    "file", layout::results_auto_open_name);
 
 
 namespace {
@@ -96,6 +110,33 @@ namespace {
 static const fs::path stdout_path("/dev/stdout");
 /// Constant that represents the path to stderr.
 static const fs::path stderr_path("/dev/stderr");
+
+
+/// Gets the path to the historical database if it exists.
+///
+/// TODO(jmmv): This function should go away.  It only exists as a temporary
+/// transitional path to force the use of the stale ~/.kyua/store.db if it
+/// exists.
+///
+/// \return A path if the file is found; none otherwise.
+static optional< fs::path >
+get_historical_db(void)
+{
+    optional< fs::path > home = utils::get_home();
+    if (home) {
+        const fs::path old_db = home.get() / ".kyua/store.db";
+        if (fs::exists(old_db)) {
+            if (old_db.is_absolute())
+                return utils::make_optional(old_db);
+            else
+                return utils::make_optional(old_db.to_absolute());
+        } else {
+            return none;
+        }
+    } else {
+        return none;
+    }
+}
 
 
 /// Converts a set of result type names to identifiers.
@@ -204,90 +245,60 @@ cli::kyuafile_path(const cmdline::parsed_cmdline& cmdline)
 }
 
 
-/// Gets the path to a new tests results file.
-///
-/// This has the side-effect of creating the directory in which to store the
-/// results file if and only if the path to the database matches the default
-/// value.
-///
-/// When the user does not specify an override for the location of the database,
-/// he should not care about the directory existing.  Any of this is not a big
-/// deal though, because logs are also stored within ~/.kyua and thus we will
-/// most likely end up creating the directory anyway.
+/// Gets the value of the results-file flag for the creation of a new file.
 ///
 /// \param cmdline The parsed command line from which to extract any possible
 ///     override for the location of the database via the --results-file flag.
 ///
 /// \return The path to the database to be used.
 ///
-/// \throw fs::error If the creation of the database directory fails.
-/// \throw store::error If the location of the database cannot be computed.
-fs::path
-cli::results_file_new(const cmdline::parsed_cmdline& cmdline)
+/// \throw cmdline::error If the value passed to the flag is invalid.
+std::string
+cli::results_file_create(const cmdline::parsed_cmdline& cmdline)
 {
-    // We need the command line to include the --kyuafile flag because the path
-    // to the Kyuafile defines the root of the test suite, and we need this
-    // information when auto-determining the path to the database.
-    PRE(cmdline.has_option(kyuafile_option.long_name()));
-
-    fs::path results_file = cmdline.get_option< cmdline::path_option >(
-        results_file_option.long_name());
-    if (results_file == fs::path(results_file_option.default_value())) {
-        optional< fs::path > home = utils::get_home();
-        if (home) {
-            const fs::path old_db = home.get() / ".kyua/store.db";
-            if (fs::exists(old_db)) {
-                if (old_db.is_absolute())
-                    results_file = old_db;
-                else
-                    results_file = old_db.to_absolute();
-            }
-        }
-
-        if (results_file == fs::path(results_file_option.default_value())) {
-            const std::string test_suite = layout::test_suite_for_path(
-                kyuafile_path(cmdline).branch_path());
-            results_file = layout::new_db(test_suite);
-            fs::mkdir_p(results_file.branch_path(), 0755);
+    std::string results_file = cmdline.get_option< cmdline::string_option >(
+        results_file_create_option.long_name());
+    if (results_file == results_file_create_option.default_value()) {
+        const optional< fs::path > historical_db = get_historical_db();
+        if (historical_db)
+            results_file = historical_db.get().str();
+    } else {
+        try {
+            (void)fs::path(results_file);
+        } catch (const fs::error& e) {
+            throw cmdline::usage_error(F("Invalid value passed to --%s") %
+                                       results_file_create_option.long_name());
         }
     }
-    LI(F("Creating new results file %s") % results_file);
     return results_file;
 }
 
 
-/// Gets the path to an existing tests results file.
+/// Gets the value of the results-file flag for the lookup of the file.
 ///
 /// \param cmdline The parsed command line from which to extract any possible
 ///     override for the location of the database via the --results-file flag.
 ///
 /// \return The path to the database to be used.
 ///
-/// \throw store::error If the location of the database cannot be computed.
-fs::path
+/// \throw cmdline::error If the value passed to the flag is invalid.
+std::string
 cli::results_file_open(const cmdline::parsed_cmdline& cmdline)
 {
-    fs::path results_file = cmdline.get_option< cmdline::path_option >(
-        results_file_option.long_name());
-    if (results_file == fs::path(results_file_option.default_value())) {
-        optional< fs::path > home = utils::get_home();
-        if (home) {
-            const fs::path old_db = home.get() / ".kyua/store.db";
-            if (fs::exists(old_db)) {
-                if (old_db.is_absolute())
-                    results_file = old_db;
-                else
-                    results_file = old_db.to_absolute();
-            }
-        }
-
-        if (results_file == fs::path(results_file_option.default_value())) {
-            const std::string test_suite = layout::test_suite_for_path(
-                fs::current_path());
-            results_file = layout::find_latest(test_suite);
+    std::string results_file = cmdline.get_option< cmdline::string_option >(
+        results_file_open_option.long_name());
+    if (results_file == results_file_open_option.default_value()) {
+        const optional< fs::path > historical_db = get_historical_db();
+        if (historical_db)
+            results_file = historical_db.get().str();
+    } else {
+        try {
+            (void)fs::path(results_file);
+        } catch (const fs::error& e) {
+            throw cmdline::usage_error(F("Invalid value passed to --%s") %
+                                       results_file_open_option.long_name());
         }
     }
-    LI(F("Opening existing results file %s") % results_file);
     return results_file;
 }
 

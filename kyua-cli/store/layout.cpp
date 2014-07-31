@@ -53,6 +53,9 @@ namespace layout = store::layout;
 using utils::optional;
 
 
+namespace {
+
+
 /// Finds the results file for the latest run of the given test suite.
 ///
 /// \param test_suite Identifier of the test suite to query.
@@ -60,11 +63,11 @@ using utils::optional;
 /// \return Path to the located database holding the most recent data for the
 /// given test suite.
 ///
-/// \raises store::error If no previous results file can be found.
-fs::path
-layout::find_latest(const std::string& test_suite)
+/// \throw store::error If no previous results file can be found.
+static fs::path
+find_latest(const std::string& test_suite)
 {
-    const fs::path store_dir = query_store_dir();
+    const fs::path store_dir = layout::query_store_dir();
 
     ::DIR* dir = ::opendir(store_dir.c_str());
     if (dir == NULL) {
@@ -110,39 +113,117 @@ layout::find_latest(const std::string& test_suite)
 }
 
 
-/// Computes the path to a new database for the given test suite.
+/// Computes the identifier of a new tests results file.
 ///
-/// \param test_suite Identifier of the test suite to create.
+/// \param test_suite Identifier of the test suite.
+/// \param when Timestamp to attach to the identifier.
 ///
-/// \return Path to the newly-determined path for the database to be created.
-///
-/// \raises store::error If the computed name already exists; this should not
-///     happen.
-fs::path
-layout::new_db(const std::string& test_suite)
+/// \return Identifier of the file to be created.
+static std::string
+new_id(const std::string& test_suite, const datetime::timestamp& when)
 {
-    const fs::path path = new_db(test_suite, datetime::timestamp::now());
-    if (fs::exists(path))
-        throw store::error("Computed test suite store already exists");
-    return path;
+    const std::string when_datetime = when.strftime("%Y%m%d-%H%M%S");
+    const int when_ms = static_cast<int>(when.to_microseconds() % 1000000);
+    return F("%s.%s-%06s") % test_suite % when_datetime % when_ms;
+}
+
+
+}  // anonymous namespace
+
+
+/// Value to request the creation of a new results file with an automatic name.
+///
+/// Can be passed to new_db().
+const char* layout::results_auto_create_name = "NEW";
+
+
+/// Value to request the opening of the latest results file.
+///
+/// Can be passed to find_results().
+const char* layout::results_auto_open_name = "LATEST";
+
+
+/// Resolves the results file for the given identifier.
+///
+/// \param id Identifier of the test suite to open.
+///
+/// \return Path to the requested file, if any.
+///
+/// \throw store::error If there is no matching entry.
+fs::path
+layout::find_results(const std::string& id)
+{
+    LI(F("Searching for a results file with id %s") % id);
+
+    if (id == results_auto_open_name) {
+        const std::string test_suite = test_suite_for_path(fs::current_path());
+        return find_latest(test_suite);
+    } else {
+        const fs::path id_as_path(id);
+
+        if (fs::exists(id_as_path) && !fs::is_directory(id_as_path)) {
+            if (id_as_path.is_absolute())
+                return id_as_path;
+            else
+                return id_as_path.to_absolute();
+        } else if (id.find('/') == std::string::npos) {
+            const fs::path candidate =
+                query_store_dir() / (F("kyua.%s.db") % id);
+            if (fs::exists(candidate)) {
+                return candidate;
+            } else {
+                return find_latest(id);
+            }
+        } else {
+            INV(id.find('/') != std::string::npos);
+            return find_latest(test_suite_for_path(id_as_path));
+        }
+    }
 }
 
 
 /// Computes the path to a new database for the given test suite.
 ///
-/// \param test_suite Identifier of the test suite to create.
+/// \param id Identifier of the test suite to create.
+/// \param root Path to the root of the test suite being run, needed to properly
+///     autogenerate the identifiers.
 ///
-/// \return Path to the newly-determined path for the database to be created.
-///
-/// \raises store::error If the computed name already exists; this should not
-///     happen.
-fs::path
-layout::new_db(const std::string& test_suite, const datetime::timestamp& when)
+/// \return Identifier of the created results file, if applicable, and the path
+/// to such file.
+layout::results_id_file_pair
+layout::new_db(const std::string& id, const fs::path& root)
 {
-    const std::string when_datetime = when.strftime("%Y%m%d-%H%M%S");
-    const int when_ms = static_cast<int>(when.to_microseconds() % 1000000);
-    const fs::path path = query_store_dir() /
-        (F("kyua.%s.%s-%06s.db") % test_suite % when_datetime % when_ms);
+    std::string generated_id;
+    optional< fs::path > path;
+
+    if (id == results_auto_create_name) {
+        generated_id = new_id(test_suite_for_path(root),
+                              datetime::timestamp::now());
+        path = query_store_dir() / (F("kyua.%s.db") % generated_id);
+        fs::mkdir_p(path.get().branch_path(), 0755);
+    } else {
+        path = fs::path(id);
+    }
+
+    return std::make_pair(generated_id, path.get());
+}
+
+
+/// Computes the path to a new database for the given test suite.
+///
+/// \param id Identifier of the test suite to create.
+/// \param root Path to the root of the test suite being run, needed to properly
+///     autogenerate the identifiers.
+///
+/// \return Identifier of the created results file, if applicable, and the path
+/// to such file.
+fs::path
+layout::new_db_for_migration(const fs::path& root,
+                             const datetime::timestamp& when)
+{
+    const std::string generated_id = new_id(test_suite_for_path(root), when);
+    const fs::path path = query_store_dir() / (F("kyua.%s.db") % generated_id);
+    fs::mkdir_p(path.branch_path(), 0755);
     return path;
 }
 

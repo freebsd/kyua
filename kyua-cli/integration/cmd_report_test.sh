@@ -108,7 +108,7 @@ results_file__explicit_body() {
 
 utils_test_case results_file__not_found
 results_file__not_found_body() {
-    atf_check -s exit:2 -o empty -e match:"kyua: E: Cannot open 'foo': " \
+    atf_check -s exit:2 -o empty -e match:"kyua: E: No previous results.*foo" \
         kyua report --results-file=foo
 }
 

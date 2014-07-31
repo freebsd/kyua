@@ -39,6 +39,7 @@
 #include "engine/context.hpp"
 #include "engine/drivers/scan_results.hpp"
 #include "engine/test_result.hpp"
+#include "store/layout.hpp"
 #include "store/read_transaction.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.ipp"
@@ -54,6 +55,7 @@ namespace cmdline = utils::cmdline;
 namespace config = utils::config;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
+namespace layout = store::layout;
 namespace scan_results = engine::drivers::scan_results;
 
 using cli::cmd_report;
@@ -265,7 +267,7 @@ cmd_report::cmd_report(void) : cli_command(
     "report", "", 0, 0,
     "Generates a report with the result of a test suite run")
 {
-    add_option(results_file_option);
+    add_option(results_file_open_option);
     add_option(cmdline::bool_option(
         "show-context", "Include the execution context in the report"));
     add_option(cmdline::path_option("output", "Path to the output file", "path",
@@ -290,7 +292,8 @@ cmd_report::run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
     std::auto_ptr< std::ostream > output = open_output_file(
         cmdline.get_option< cmdline::path_option >("output"));
 
-    const fs::path results_file = results_file_open(cmdline);
+    const fs::path results_file = layout::find_results(
+        results_file_open(cmdline));
 
     const result_types types = get_result_types(cmdline);
     report_console_hooks hooks(*output.get(),
