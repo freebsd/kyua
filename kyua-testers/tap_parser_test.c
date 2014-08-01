@@ -39,30 +39,36 @@
 ATF_TC_WITHOUT_HEAD(try_parse_plan__ok);
 ATF_TC_BODY(try_parse_plan__ok, tc)
 {
-    kyua_tap_summary_t summary; memset(&summary, 0, sizeof(summary));
+    kyua_tap_summary_t summary;
+    kyua_tap_summary_init(&summary);
     ATF_REQUIRE(!kyua_error_is_set(kyua_tap_try_parse_plan("3..85", &summary)));
     ATF_REQUIRE_EQ(NULL, summary.parse_error);
     ATF_REQUIRE_EQ(3, summary.first_index);
     ATF_REQUIRE_EQ(85, summary.last_index);
+    kyua_tap_summary_fini(&summary);
 }
 
 
 ATF_TC_WITHOUT_HEAD(try_parse_plan__reversed);
 ATF_TC_BODY(try_parse_plan__reversed, tc)
 {
-    kyua_tap_summary_t summary; memset(&summary, 0, sizeof(summary));
+    kyua_tap_summary_t summary;
+    kyua_tap_summary_init(&summary);
     ATF_REQUIRE(!kyua_error_is_set(kyua_tap_try_parse_plan("8..5", &summary)));
     ATF_REQUIRE_MATCH("is reversed", summary.parse_error);
+    kyua_tap_summary_fini(&summary);
 }
 
 
 ATF_TC_WITHOUT_HEAD(try_parse_plan__insane);
 ATF_TC_BODY(try_parse_plan__insane, tc)
 {
-    kyua_tap_summary_t summary; memset(&summary, 0, sizeof(summary));
+    kyua_tap_summary_t summary;
+    kyua_tap_summary_init(&summary);
     ATF_REQUIRE(!kyua_error_is_set(kyua_tap_try_parse_plan(
         "120830981209831..234891793874080981092803981092312", &summary)));
     ATF_REQUIRE_MATCH("too long", summary.parse_error);
+    kyua_tap_summary_fini(&summary);
 }
 
 
@@ -87,6 +93,7 @@ ok_test(const char* contents, const kyua_tap_summary_t* expected_summary)
 
     ATF_REQUIRE_EQ(0, memcmp(&summary, expected_summary, sizeof(summary)));
     ATF_REQUIRE(atf_utils_compare_file("output.txt", contents));
+    kyua_tap_summary_fini(&summary);
 }
 
 
@@ -105,15 +112,15 @@ ATF_TC_BODY(parse__ok__pass, tc)
         "ok - 6 Doesn't make a difference SKIP\n"
         "ok - 7 Doesn't make a difference either TODO\n";
 
-    kyua_tap_summary_t summary; memset(&summary, 0, sizeof(summary));
-    summary.parse_error = NULL;
-    summary.bail_out = false;
+    kyua_tap_summary_t summary;
+    kyua_tap_summary_init(&summary);
     summary.first_index = 1;
     summary.last_index = 7;
     summary.ok_count = 7;
     summary.not_ok_count = 0;
 
     ok_test(contents, &summary);
+    kyua_tap_summary_fini(&summary);
 }
 
 
@@ -129,15 +136,15 @@ ATF_TC_BODY(parse__ok__fail, tc)
         "not ok - 4 This test failed\n"
         "ok - 5 This test passed\n";
 
-    kyua_tap_summary_t summary; memset(&summary, 0, sizeof(summary));
-    summary.parse_error = NULL;
-    summary.bail_out = false;
+    kyua_tap_summary_t summary;
+    kyua_tap_summary_init(&summary);
     summary.first_index = 1;
     summary.last_index = 5;
     summary.ok_count = 2;
     summary.not_ok_count = 3;
 
     ok_test(contents, &summary);
+    kyua_tap_summary_fini(&summary);
 }
 
 
@@ -156,15 +163,15 @@ ATF_TC_BODY(parse__ok__plan_at_the_end, tc)
         "ok - 7 Doesn't make a difference either TODO\n"
         "1..7\n";
 
-    kyua_tap_summary_t summary; memset(&summary, 0, sizeof(summary));
-    summary.parse_error = NULL;
-    summary.bail_out = false;
+    kyua_tap_summary_t summary;
+    kyua_tap_summary_init(&summary);
     summary.first_index = 1;
     summary.last_index = 7;
     summary.ok_count = 7;
     summary.not_ok_count = 0;
 
     ok_test(contents, &summary);
+    kyua_tap_summary_fini(&summary);
 }
 
 
@@ -192,6 +199,7 @@ fail_test(const char* contents, const char* exp_output, const char* exp_regex)
     ATF_REQUIRE_MATCH(exp_regex, summary.parse_error);
 
     ATF_REQUIRE(atf_utils_compare_file("output.txt", exp_output));
+    kyua_tap_summary_fini(&summary);
 }
 
 
@@ -269,6 +277,7 @@ ATF_TC_BODY(parse__bail_out, tc)
         "not ok - 1 This test failed\n"
         "Bail out! There is some unknown problem\n";
     ATF_REQUIRE(atf_utils_compare_file("output.txt", exp_output));
+    kyua_tap_summary_fini(&summary);
 }
 
 

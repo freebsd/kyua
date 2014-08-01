@@ -166,6 +166,31 @@ regex_match_to_long(const char* line, const regmatch_t* match, long* output)
 }
 
 
+/// Initializes the contents of a kyua_tap_summary_t object with default values.
+///
+/// \param summary The object to initialize.
+void
+kyua_tap_summary_init(kyua_tap_summary_t* summary)
+{
+    memset(summary, 0, sizeof(*summary));
+    summary->parse_error = NULL;
+    summary->bail_out = false;
+    summary->first_index = 0;
+    summary->last_index = 0;
+    summary->ok_count = 0;
+    summary->not_ok_count = 0;
+}
+
+
+/// Releases the contents of a kyua_tap_summary_t object.
+///
+/// \param unused_summary The object to release.
+void
+kyua_tap_summary_fini(kyua_tap_summary_t* KYUA_DEFS_UNUSED_PARAM(summary))
+{
+}
+
+
 /// Attempts to parse a TAP plan line.
 ///
 /// \param line The line to parse from the output of the TAP test program.
@@ -249,7 +274,7 @@ kyua_tap_parse(const int fd, FILE* output, kyua_tap_summary_t* summary)
         return kyua_libc_error_new(errno, "fdopen(3) failed");
     }
 
-    memset(summary, 0, sizeof(kyua_tap_summary_t));
+    kyua_tap_summary_init(summary);
 
     error = kyua_error_ok();
     while (!kyua_error_is_set(error) &&

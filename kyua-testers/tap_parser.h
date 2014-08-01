@@ -64,6 +64,9 @@ struct kyua_tap_summary {
 typedef struct kyua_tap_summary kyua_tap_summary_t;
 
 
+void kyua_tap_summary_init(kyua_tap_summary_t*);
+void kyua_tap_summary_fini(kyua_tap_summary_t*);
+
 kyua_error_t kyua_tap_try_parse_plan(const char*, kyua_tap_summary_t*);
 
 kyua_error_t kyua_tap_parse(const int, FILE*, kyua_tap_summary_t*);

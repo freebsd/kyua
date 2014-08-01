@@ -203,14 +203,17 @@ run_test_case(const char* test_program, const char* test_case,
 
     int status; bool timed_out;
     error = kyua_run_wait(pid, &status, &timed_out);
-    if (kyua_error_is_set(error))
+    if (kyua_error_is_set(error)) {
+        kyua_tap_summary_fini(&summary);
         goto out_work_directory;
+    }
 
     if (WIFSIGNALED(status) && WCOREDUMP(status)) {
         kyua_stacktrace_dump(test_program, pid, run_params, stderr);
     }
 
     error = status_to_result(status, &summary, timed_out, result_file, success);
+    kyua_tap_summary_fini(&summary);
 
 out_pipe:
     if (stdout_pipe[0] != -1)
