@@ -144,7 +144,7 @@ regex_error_new(const int original_code, regex_t* original_preg,
 /// \return NULL if all is OK; a pointer to a constant string to an error
 /// message otherwise.
 static const char*
-regex_match_too_long(const char* line, const regmatch_t* match, long* output)
+regex_match_to_long(const char* line, const regmatch_t* match, long* output)
 {
     char buffer[16];
     const size_t length = match->rm_eo - match->rm_so;
@@ -202,14 +202,14 @@ kyua_tap_try_parse_plan(const char* line, kyua_tap_summary_t* summary)
     const char* error;
 
     long first_index;
-    error = regex_match_too_long(line, &matches[1], &first_index);
+    error = regex_match_to_long(line, &matches[1], &first_index);
     if (error != NULL) {
         summary->parse_error = error;
         goto end;
     }
 
     long last_index;
-    error = regex_match_too_long(line, &matches[2], &last_index);
+    error = regex_match_to_long(line, &matches[2], &last_index);
     if (error != NULL) {
         summary->parse_error = error;
         goto end;
