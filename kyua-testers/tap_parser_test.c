@@ -141,6 +141,33 @@ ATF_TC_BODY(parse__ok__fail, tc)
 }
 
 
+ATF_TC_WITHOUT_HEAD(parse__ok__plan_at_the_end);
+ATF_TC_BODY(parse__ok__plan_at_the_end, tc)
+{
+    const char* contents =
+        "ok - 1\n"
+        "    Some diagnostic message\n"
+        "ok - 2 This test also passed\n"
+        "garbage line\n"
+        "ok - 3 This test passed\n"
+        "not ok # SKIP Some reason\n"
+        "not ok # TODO Another reason\n"
+        "ok - 6 Doesn't make a difference SKIP\n"
+        "ok - 7 Doesn't make a difference either TODO\n"
+        "1..7\n";
+
+    kyua_tap_summary_t summary; memset(&summary, 0, sizeof(summary));
+    summary.parse_error = NULL;
+    summary.bail_out = false;
+    summary.first_index = 1;
+    summary.last_index = 7;
+    summary.ok_count = 7;
+    summary.not_ok_count = 0;
+
+    ok_test(contents, &summary);
+}
+
+
 /// Executes kyua_tap_parse expecting a failure and validates the results.
 ///
 /// \param contents The text to parse.
@@ -202,6 +229,18 @@ ATF_TC_BODY(parse__fail__inconsistent_plan, tc)
 }
 
 
+ATF_TC_WITHOUT_HEAD(parse__fail__inconsistent_plan_at_the_end);
+ATF_TC_BODY(parse__fail__inconsistent_plan_at_the_end, tc)
+{
+    const char* contents =
+        "not ok - 1 This test failed\n"
+        "ok - 2 This test passed\n"
+        "1..3\n";
+
+    fail_test(contents, contents, "plan differs from actual executed tests");
+}
+
+
 ATF_TC_WITHOUT_HEAD(parse__bail_out);
 ATF_TC_BODY(parse__bail_out, tc)
 {
@@ -241,8 +280,10 @@ ATF_TP_ADD_TCS(tp)
 
     ATF_TP_ADD_TC(tp, parse__ok__pass);
     ATF_TP_ADD_TC(tp, parse__ok__fail);
+    ATF_TP_ADD_TC(tp, parse__ok__plan_at_the_end);
     ATF_TP_ADD_TC(tp, parse__fail__double_plan);
     ATF_TP_ADD_TC(tp, parse__fail__inconsistent_plan);
+    ATF_TP_ADD_TC(tp, parse__fail__inconsistent_plan_at_the_end);
     ATF_TP_ADD_TC(tp, parse__bail_out);
 
     return atf_no_error();
