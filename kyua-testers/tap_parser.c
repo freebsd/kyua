@@ -29,6 +29,7 @@
 #include "tap_parser.h"
 
 #include <assert.h>
+#include <ctype.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
@@ -166,6 +167,34 @@ regex_match_to_long(const char* line, const regmatch_t* match, long* output)
 }
 
 
+/// Initializes the contents of a kyua_tap_summary_t object with default values.
+///
+/// \param summary The object to initialize.
+void
+kyua_tap_summary_init(kyua_tap_summary_t* summary)
+{
+    memset(summary, 0, sizeof(*summary));
+    summary->parse_error = NULL;
+    summary->bail_out = false;
+    summary->first_index = 0;
+    summary->last_index = 0;
+    summary->all_skipped_reason = NULL;
+    summary->ok_count = 0;
+    summary->not_ok_count = 0;
+}
+
+
+/// Releases the contents of a kyua_tap_summary_t object.
+///
+/// \param summary The object to release.
+void
+kyua_tap_summary_fini(kyua_tap_summary_t* summary)
+{
+    if (summary->all_skipped_reason != NULL)
+        free(summary->all_skipped_reason);
+}
+
+
 /// Attempts to parse a TAP plan line.
 ///
 /// \param line The line to parse from the output of the TAP test program.
@@ -181,7 +210,7 @@ kyua_tap_try_parse_plan(const char* line, kyua_tap_summary_t* summary)
     int code;
 
     regex_t preg;
-    code = regcomp(&preg, "^([0-9]+)\\.\\.([0-9]+)$", REG_EXTENDED);
+    code = regcomp(&preg, "^([0-9]+)\\.\\.([0-9]+)", REG_EXTENDED);
     if (code != 0)
         return regex_error_new(code, &preg, "regcomp failed");
 
@@ -194,7 +223,8 @@ kyua_tap_try_parse_plan(const char* line, kyua_tap_summary_t* summary)
             return regex_error_new(code, &preg, "regexec failed");
     }
 
-    if (summary->first_index != 0 || summary->last_index != 0) {
+    if (summary->first_index != 0 || summary->last_index != 0 ||
+        summary->all_skipped_reason != NULL) {
         summary->parse_error = "Output includes two test plans";
         goto end;
     }
@@ -215,7 +245,26 @@ kyua_tap_try_parse_plan(const char* line, kyua_tap_summary_t* summary)
         goto end;
     }
 
-    if (last_index < first_index) {
+    const char* skip_start = strcasestr(line, "SKIP");
+    if (skip_start != NULL) {
+        const char *reason = skip_start + strlen("SKIP");
+        while (*reason != '\0' && isspace(*reason))
+            ++reason;
+        if (*reason == '\0') {
+            summary->all_skipped_reason = strdup("No reason specified");
+        } else {
+            summary->all_skipped_reason = strdup(reason);
+        }
+    }
+
+    if (summary->all_skipped_reason != NULL) {
+        if (first_index != 1 || last_index != 0) {
+            summary->parse_error = "Skipped test plan has invalid range";
+        } else {
+            summary->first_index = first_index;
+            summary->last_index = last_index;
+        }
+    } else if (last_index < first_index) {
         summary->parse_error = "Test plan is reversed";
     } else {
         summary->first_index = first_index;
@@ -246,10 +295,18 @@ kyua_tap_parse(const int fd, FILE* output, kyua_tap_summary_t* summary)
     FILE* input = fdopen(fd, "r");
     if (input == NULL) {
         close(fd);
-        return kyua_libc_error_new(errno, "fdopen(3) failed");
+        error = kyua_libc_error_new(errno, "fdopen(3) failed");
+        goto out;
     }
 
-    memset(summary, 0, sizeof(kyua_tap_summary_t));
+    regex_t preg;
+    int code = regcomp(&preg, "^(not )?ok[ \t-]+[0-9]+", REG_EXTENDED);
+    if (code != 0) {
+        error = regex_error_new(code, &preg, "regcomp failed");
+        goto out_input;
+    }
+
+    kyua_tap_summary_init(summary);
 
     error = kyua_error_ok();
     while (!kyua_error_is_set(error) &&
@@ -260,20 +317,37 @@ kyua_tap_parse(const int fd, FILE* output, kyua_tap_summary_t* summary)
 
         error = kyua_tap_try_parse_plan(line, summary);
 
-        if (strstr(line, "Bail out!") == line)
-            summary->bail_out = true;
-        else if (strstr(line, "ok") == line)
-            summary->ok_count++;
-        else if (strstr(line, "not ok") == line) {
-            if (strstr(line, "TODO") != NULL || strstr(line, "SKIP") != NULL)
+        regmatch_t matches[2];
+        code = regexec(&preg, line, 2, matches, 0);
+        if (code == 0) {
+            if (matches[1].rm_so == matches[1].rm_eo) {
+                // This is an "ok" result because "not" did not match.
                 summary->ok_count++;
-            else
-                summary->not_ok_count++;
+            } else {
+                // This is a "not ok" result.
+                if (strstr(line, "TODO") != NULL ||
+                    strstr(line, "SKIP") != NULL) {
+                    summary->ok_count++;
+                } else {
+                    summary->not_ok_count++;
+                }
+            }
+        } else {
+            if (code != REG_NOMATCH) {
+                error = regex_error_new(code, &preg, "regexec failed");
+                goto out_preg;
+            } else {
+                // The line is neither an "ok" nor a "not ok" result.
+                if (strstr(line, "Bail out!") == line) {
+                    summary->bail_out = true;
+                }
+            }
         }
     }
-    fclose(input);
 
-    if (summary->parse_error == NULL && !summary->bail_out) {
+    if (summary->parse_error == NULL &&
+        !summary->bail_out &&
+        summary->all_skipped_reason == NULL) {
         const long exp_count = summary->last_index - summary->first_index + 1;
         const long actual_count = summary->ok_count + summary->not_ok_count;
         if (exp_count != actual_count) {
@@ -281,5 +355,11 @@ kyua_tap_parse(const int fd, FILE* output, kyua_tap_summary_t* summary)
                 "tests";
         }
     }
-    return kyua_error_ok();
+
+out_preg:
+    regfree(&preg);
+out_input:
+    fclose(input);
+out:
+    return error;
 }

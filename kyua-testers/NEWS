@@ -9,8 +9,10 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   the value of TMPDIR, which can cause third-party tests to fail if they
   compare ${HOME} with $(pwd).
 
-* Issue 85: Improved the TAP parser to recognize tests marked TODO or
-  SKIP as passed.
+* Issues 85, 86, 90 and 92: Made the TAP parser more complete: mark test
+  cases reported as TODO or SKIP as passed; handle skip plans; ignore
+  lines that look like "ok" and "not ok" but aren't results; and handle
+  test programs that report a pass but exit with a non-zero code.
 
 
 Changes in version 0.2

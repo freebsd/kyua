@@ -74,14 +74,15 @@ status_to_result(int status, const kyua_tap_summary_t* summary,
     }
 
     if (WIFEXITED(status)) {
-        // Exit status codes are not defined by the protocol, so we should not
-        // look at them.
-
         if (summary->parse_error == NULL) {
             if (summary->bail_out) {
                 *success = false;
                 return kyua_result_write(result_file, KYUA_RESULT_FAILED,
                                          "Bailed out");
+            } else if (summary->all_skipped_reason != NULL) {
+                *success = true;
+                return kyua_result_write(result_file, KYUA_RESULT_SKIPPED,
+                                         "%s", summary->all_skipped_reason);
             } else if (summary->not_ok_count != 0) {
                 *success = false;
                 return kyua_result_write(
@@ -90,8 +91,18 @@ status_to_result(int status, const kyua_tap_summary_t* summary,
                     summary->not_ok_count,
                     summary->ok_count + summary->not_ok_count);
             } else {
-                *success = true;
-                return kyua_result_write(result_file, KYUA_RESULT_PASSED, NULL);
+                if (WEXITSTATUS(status) == EXIT_SUCCESS) {
+                    *success = true;
+                    return kyua_result_write(result_file, KYUA_RESULT_PASSED,
+                                             NULL);
+                } else {
+                    *success = false;
+                    return kyua_result_write(result_file, KYUA_RESULT_BROKEN,
+                                             "Dubious test program: reported "
+                                             "all tests as passed but returned "
+                                             "exit code %d",
+                                             WEXITSTATUS(status));
+                }
             }
         } else {
             return kyua_result_write(result_file, KYUA_RESULT_BROKEN,
@@ -203,14 +214,17 @@ run_test_case(const char* test_program, const char* test_case,
 
     int status; bool timed_out;
     error = kyua_run_wait(pid, &status, &timed_out);
-    if (kyua_error_is_set(error))
+    if (kyua_error_is_set(error)) {
+        kyua_tap_summary_fini(&summary);
         goto out_work_directory;
+    }
 
     if (WIFSIGNALED(status) && WCOREDUMP(status)) {
         kyua_stacktrace_dump(test_program, pid, run_params, stderr);
     }
 
     error = status_to_result(status, &summary, timed_out, result_file, success);
+    kyua_tap_summary_fini(&summary);
 
 out_pipe:
     if (stdout_pipe[0] != -1)
