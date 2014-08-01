@@ -76,6 +76,25 @@ ATF_TC_BODY(test__pass, tc)
 }
 
 
+ATF_TC(test__pass_but_return_failure);
+ATF_TC_HEAD(test__pass_but_return_failure, tc) { setup(tc, true); }
+ATF_TC_BODY(test__pass_but_return_failure, tc)
+{
+    char* helpers = select_helper(tc, "pass_but_return_failure");
+    check(EXIT_FAILURE,
+          "1..2\n"
+          "ok - 1\n"
+          "ok - 2 This test also passed\n",
+          "",
+          "test", helpers, "main", "test-result", NULL);
+    free(helpers);
+
+    ATF_REQUIRE(atf_utils_compare_file("test-result",
+        "broken: Dubious test program: reported all tests as passed but "
+        "returned exit code 56\n"));
+}
+
+
 ATF_TC(test__fail);
 ATF_TC_HEAD(test__fail, tc) { setup(tc, true); }
 ATF_TC_BODY(test__fail, tc)
@@ -262,6 +281,7 @@ ATF_TP_ADD_TCS(tp)
     ATF_TP_ADD_TC(tp, list__ok);
 
     ATF_TP_ADD_TC(tp, test__pass);
+    ATF_TP_ADD_TC(tp, test__pass_but_return_failure);
     ATF_TP_ADD_TC(tp, test__fail);
     ATF_TP_ADD_TC(tp, test__skip_plan);
     ATF_TP_ADD_TC(tp, test__bogus_plan);

@@ -104,6 +104,17 @@ pass_helper(void)
 }
 
 
+/// Test case that passes but returns a non-zero exit code.
+static int
+pass_but_return_failure_helper(void)
+{
+    fprintf(stdout, "1..2\n");
+    fprintf(stdout, "ok - 1\n");
+    fprintf(stdout, "ok - 2 This test also passed\n");
+    return 56;
+}
+
+
 /// Test case with a skip plan.
 static int
 skip_helper(void)
@@ -163,6 +174,8 @@ main(const int argc, char* const* const KYUA_DEFS_UNUSED_PARAM(argv))
         return fail_helper();
     } else if (strcmp(helper_name, "pass") == 0) {
         return pass_helper();
+    } else if (strcmp(helper_name, "pass_but_return_failure") == 0) {
+        return pass_but_return_failure_helper();
     } else if (strcmp(helper_name, "signal") == 0) {
         return signal_helper();
     } else if (strcmp(helper_name, "skip") == 0) {

@@ -74,9 +74,6 @@ status_to_result(int status, const kyua_tap_summary_t* summary,
     }
 
     if (WIFEXITED(status)) {
-        // Exit status codes are not defined by the protocol, so we should not
-        // look at them.
-
         if (summary->parse_error == NULL) {
             if (summary->bail_out) {
                 *success = false;
@@ -94,8 +91,18 @@ status_to_result(int status, const kyua_tap_summary_t* summary,
                     summary->not_ok_count,
                     summary->ok_count + summary->not_ok_count);
             } else {
-                *success = true;
-                return kyua_result_write(result_file, KYUA_RESULT_PASSED, NULL);
+                if (WEXITSTATUS(status) == EXIT_SUCCESS) {
+                    *success = true;
+                    return kyua_result_write(result_file, KYUA_RESULT_PASSED,
+                                             NULL);
+                } else {
+                    *success = false;
+                    return kyua_result_write(result_file, KYUA_RESULT_BROKEN,
+                                             "Dubious test program: reported "
+                                             "all tests as passed but returned "
+                                             "exit code %d",
+                                             WEXITSTATUS(status));
+                }
             }
         } else {
             return kyua_result_write(result_file, KYUA_RESULT_BROKEN,
