@@ -62,6 +62,17 @@ bogus_plan_helper(void)
 }
 
 
+/// Test case that produces an invalid output TAP plan.
+static int
+bogus_skip_plan_helper(void)
+{
+    fprintf(stdout, "before\n");
+    fprintf(stdout, "1..3 # SKIP Pretends to skip but doesn't\n");
+    fprintf(stdout, "after not seen\n");
+    return EXIT_SUCCESS;
+}
+
+
 /// Test case that always fails.
 static int
 fail_helper(void)
@@ -84,6 +95,20 @@ static int
 pass_helper(void)
 {
     fprintf(stdout, "1..3\n");
+    fprintf(stdout, "ok - 1\n");
+    fprintf(stdout, "ok - 2 This test also passed\n");
+    fprintf(stdout, "garbage line\n");
+    fprintf(stdout, "not ok - 3 This test passed # TODO Not yet done\n");
+    fprintf(stderr, "garbage line\n");
+    return EXIT_SUCCESS;
+}
+
+
+/// Test case with a skip plan.
+static int
+skip_helper(void)
+{
+    fprintf(stdout, "1..0 # skip    Other results are irrelevant\n");
     fprintf(stdout, "ok - 1\n");
     fprintf(stdout, "ok - 2 This test also passed\n");
     fprintf(stdout, "garbage line\n");
@@ -132,12 +157,16 @@ main(const int argc, char* const* const KYUA_DEFS_UNUSED_PARAM(argv))
         return bail_out_helper();
     } else if (strcmp(helper_name, "bogus_plan") == 0) {
         return bogus_plan_helper();
+    } else if (strcmp(helper_name, "bogus_skip_plan") == 0) {
+        return bogus_skip_plan_helper();
     } else if (strcmp(helper_name, "fail") == 0) {
         return fail_helper();
     } else if (strcmp(helper_name, "pass") == 0) {
         return pass_helper();
     } else if (strcmp(helper_name, "signal") == 0) {
         return signal_helper();
+    } else if (strcmp(helper_name, "skip") == 0) {
+        return skip_helper();
     } else if (strcmp(helper_name, "sleep") == 0) {
         return sleep_helper();
     } else {

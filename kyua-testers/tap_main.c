@@ -82,6 +82,10 @@ status_to_result(int status, const kyua_tap_summary_t* summary,
                 *success = false;
                 return kyua_result_write(result_file, KYUA_RESULT_FAILED,
                                          "Bailed out");
+            } else if (summary->all_skipped_reason != NULL) {
+                *success = true;
+                return kyua_result_write(result_file, KYUA_RESULT_SKIPPED,
+                                         "%s", summary->all_skipped_reason);
             } else if (summary->not_ok_count != 0) {
                 *success = false;
                 return kyua_result_write(

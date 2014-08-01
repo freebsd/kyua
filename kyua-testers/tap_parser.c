@@ -29,6 +29,7 @@
 #include "tap_parser.h"
 
 #include <assert.h>
+#include <ctype.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
@@ -177,6 +178,7 @@ kyua_tap_summary_init(kyua_tap_summary_t* summary)
     summary->bail_out = false;
     summary->first_index = 0;
     summary->last_index = 0;
+    summary->all_skipped_reason = NULL;
     summary->ok_count = 0;
     summary->not_ok_count = 0;
 }
@@ -184,10 +186,12 @@ kyua_tap_summary_init(kyua_tap_summary_t* summary)
 
 /// Releases the contents of a kyua_tap_summary_t object.
 ///
-/// \param unused_summary The object to release.
+/// \param summary The object to release.
 void
-kyua_tap_summary_fini(kyua_tap_summary_t* KYUA_DEFS_UNUSED_PARAM(summary))
+kyua_tap_summary_fini(kyua_tap_summary_t* summary)
 {
+    if (summary->all_skipped_reason != NULL)
+        free(summary->all_skipped_reason);
 }
 
 
@@ -206,7 +210,7 @@ kyua_tap_try_parse_plan(const char* line, kyua_tap_summary_t* summary)
     int code;
 
     regex_t preg;
-    code = regcomp(&preg, "^([0-9]+)\\.\\.([0-9]+)$", REG_EXTENDED);
+    code = regcomp(&preg, "^([0-9]+)\\.\\.([0-9]+)", REG_EXTENDED);
     if (code != 0)
         return regex_error_new(code, &preg, "regcomp failed");
 
@@ -219,7 +223,8 @@ kyua_tap_try_parse_plan(const char* line, kyua_tap_summary_t* summary)
             return regex_error_new(code, &preg, "regexec failed");
     }
 
-    if (summary->first_index != 0 || summary->last_index != 0) {
+    if (summary->first_index != 0 || summary->last_index != 0 ||
+        summary->all_skipped_reason != NULL) {
         summary->parse_error = "Output includes two test plans";
         goto end;
     }
@@ -240,7 +245,26 @@ kyua_tap_try_parse_plan(const char* line, kyua_tap_summary_t* summary)
         goto end;
     }
 
-    if (last_index < first_index) {
+    const char* skip_start = strcasestr(line, "SKIP");
+    if (skip_start != NULL) {
+        const char *reason = skip_start + strlen("SKIP");
+        while (*reason != '\0' && isspace(*reason))
+            ++reason;
+        if (*reason == '\0') {
+            summary->all_skipped_reason = strdup("No reason specified");
+        } else {
+            summary->all_skipped_reason = strdup(reason);
+        }
+    }
+
+    if (summary->all_skipped_reason != NULL) {
+        if (first_index != 1 || last_index != 0) {
+            summary->parse_error = "Skipped test plan has invalid range";
+        } else {
+            summary->first_index = first_index;
+            summary->last_index = last_index;
+        }
+    } else if (last_index < first_index) {
         summary->parse_error = "Test plan is reversed";
     } else {
         summary->first_index = first_index;
@@ -298,7 +322,9 @@ kyua_tap_parse(const int fd, FILE* output, kyua_tap_summary_t* summary)
     }
     fclose(input);
 
-    if (summary->parse_error == NULL && !summary->bail_out) {
+    if (summary->parse_error == NULL &&
+        !summary->bail_out &&
+        summary->all_skipped_reason == NULL) {
         const long exp_count = summary->last_index - summary->first_index + 1;
         const long actual_count = summary->ok_count + summary->not_ok_count;
         if (exp_count != actual_count) {

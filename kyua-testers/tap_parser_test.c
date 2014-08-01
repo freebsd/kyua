@@ -36,6 +36,27 @@
 #include "error.h"
 
 
+/// Compares two kyua_tap_summary_t objects and fails the test if they differ.
+///
+/// \param expected The expected value for the TAP summary.
+/// \param actual The expected value of the TAP summary.
+static void
+summary_require_eq(const kyua_tap_summary_t* expected,
+                   const kyua_tap_summary_t* actual)
+{
+    if (expected->parse_error != actual->parse_error)
+        ATF_REQUIRE_STREQ(expected->parse_error, actual->parse_error);
+    ATF_REQUIRE_EQ(expected->bail_out, actual->bail_out);
+    ATF_REQUIRE_EQ(expected->first_index, actual->first_index);
+    ATF_REQUIRE_EQ(expected->last_index, actual->last_index);
+    if (expected->all_skipped_reason != actual->all_skipped_reason)
+        ATF_REQUIRE_STREQ(expected->all_skipped_reason,
+                          actual->all_skipped_reason);
+    ATF_REQUIRE_EQ(expected->ok_count, actual->ok_count);
+    ATF_REQUIRE_EQ(expected->not_ok_count, actual->not_ok_count);
+}
+
+
 ATF_TC_WITHOUT_HEAD(try_parse_plan__ok);
 ATF_TC_BODY(try_parse_plan__ok, tc)
 {
@@ -45,6 +66,50 @@ ATF_TC_BODY(try_parse_plan__ok, tc)
     ATF_REQUIRE_EQ(NULL, summary.parse_error);
     ATF_REQUIRE_EQ(3, summary.first_index);
     ATF_REQUIRE_EQ(85, summary.last_index);
+    ATF_REQUIRE_EQ(NULL, summary.all_skipped_reason);
+    kyua_tap_summary_fini(&summary);
+}
+
+
+ATF_TC_WITHOUT_HEAD(try_parse_plan__ok__skip_without_reason);
+ATF_TC_BODY(try_parse_plan__ok__skip_without_reason, tc)
+{
+    kyua_tap_summary_t summary;
+    kyua_tap_summary_init(&summary);
+    ATF_REQUIRE(!kyua_error_is_set(kyua_tap_try_parse_plan(
+        "1..0 unrecognized # garbage skip", &summary)));
+    ATF_REQUIRE_EQ(NULL, summary.parse_error);
+    ATF_REQUIRE_EQ(1, summary.first_index);
+    ATF_REQUIRE_EQ(0, summary.last_index);
+    ATF_REQUIRE_STREQ("No reason specified", summary.all_skipped_reason);
+    kyua_tap_summary_fini(&summary);
+}
+
+
+ATF_TC_WITHOUT_HEAD(try_parse_plan__ok__skip_with_reason);
+ATF_TC_BODY(try_parse_plan__ok__skip_with_reason, tc)
+{
+    kyua_tap_summary_t summary;
+    kyua_tap_summary_init(&summary);
+    ATF_REQUIRE(!kyua_error_is_set(kyua_tap_try_parse_plan(
+        "1..0 # SKIP all the things", &summary)));
+    ATF_REQUIRE_EQ(NULL, summary.parse_error);
+    ATF_REQUIRE_EQ(1, summary.first_index);
+    ATF_REQUIRE_EQ(0, summary.last_index);
+    ATF_REQUIRE_STREQ("all the things", summary.all_skipped_reason);
+    kyua_tap_summary_fini(&summary);
+}
+
+
+ATF_TC_WITHOUT_HEAD(try_parse_plan__invalid__skip);
+ATF_TC_BODY(try_parse_plan__invalid__skip, tc)
+{
+    kyua_tap_summary_t summary;
+    kyua_tap_summary_init(&summary);
+    ATF_REQUIRE(!kyua_error_is_set(kyua_tap_try_parse_plan(
+        "1..3 # skip", &summary)));
+    ATF_REQUIRE_MATCH("Skipped test plan has invalid range",
+                      summary.parse_error);
     kyua_tap_summary_fini(&summary);
 }
 
@@ -91,7 +156,7 @@ ok_test(const char* contents, const kyua_tap_summary_t* expected_summary)
     ATF_REQUIRE(!kyua_error_is_set(kyua_tap_parse(fd, output, &summary)));
     fclose(output);
 
-    ATF_REQUIRE_EQ(0, memcmp(&summary, expected_summary, sizeof(summary)));
+    summary_require_eq(expected_summary, &summary);
     ATF_REQUIRE(atf_utils_compare_file("output.txt", contents));
     kyua_tap_summary_fini(&summary);
 }
@@ -142,6 +207,31 @@ ATF_TC_BODY(parse__ok__fail, tc)
     summary.last_index = 5;
     summary.ok_count = 2;
     summary.not_ok_count = 3;
+
+    ok_test(contents, &summary);
+    kyua_tap_summary_fini(&summary);
+}
+
+
+ATF_TC_WITHOUT_HEAD(parse__ok__skip);
+ATF_TC_BODY(parse__ok__skip, tc)
+{
+    const char* contents =
+        "1..0 skip Some reason for skipping\n"
+        "ok - 1\n"
+        "    Some diagnostic message\n"
+        "ok - 6 Doesn't make a difference SKIP\n"
+        "ok - 7 Doesn't make a difference either TODO\n";
+
+    kyua_tap_summary_t summary;
+    kyua_tap_summary_init(&summary);
+    summary.first_index = 1;
+    summary.last_index = 0;
+    summary.all_skipped_reason = strdup("Some reason for skipping");
+    // Don't matter for our validation, but we need to set these due to the
+    // simplicity of our validation in ok_test.
+    summary.ok_count = 3;
+    summary.not_ok_count = 0;
 
     ok_test(contents, &summary);
     kyua_tap_summary_fini(&summary);
@@ -284,11 +374,15 @@ ATF_TC_BODY(parse__bail_out, tc)
 ATF_TP_ADD_TCS(tp)
 {
     ATF_TP_ADD_TC(tp, try_parse_plan__ok);
+    ATF_TP_ADD_TC(tp, try_parse_plan__ok__skip_with_reason);
+    ATF_TP_ADD_TC(tp, try_parse_plan__ok__skip_without_reason);
+    ATF_TP_ADD_TC(tp, try_parse_plan__invalid__skip);
     ATF_TP_ADD_TC(tp, try_parse_plan__reversed);
     ATF_TP_ADD_TC(tp, try_parse_plan__insane);
 
     ATF_TP_ADD_TC(tp, parse__ok__pass);
     ATF_TP_ADD_TC(tp, parse__ok__fail);
+    ATF_TP_ADD_TC(tp, parse__ok__skip);
     ATF_TP_ADD_TC(tp, parse__ok__plan_at_the_end);
     ATF_TP_ADD_TC(tp, parse__fail__double_plan);
     ATF_TP_ADD_TC(tp, parse__fail__inconsistent_plan);

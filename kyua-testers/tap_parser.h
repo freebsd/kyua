@@ -54,6 +54,10 @@ struct kyua_tap_summary {
     /// Index of the last test as reported by the test plan.
     long last_index;
 
+    /// If not NULL, the test plan reported the program as skipped and this
+    /// provides the reason.
+    char* all_skipped_reason;
+
     /// Total number of "ok" tests.
     long ok_count;
 

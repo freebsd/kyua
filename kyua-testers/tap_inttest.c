@@ -99,6 +99,26 @@ ATF_TC_BODY(test__fail, tc)
 }
 
 
+ATF_TC(test__skip_plan);
+ATF_TC_HEAD(test__skip_plan, tc) { setup(tc, true); }
+ATF_TC_BODY(test__skip_plan, tc)
+{
+    char* helpers = select_helper(tc, "skip");
+    check(EXIT_SUCCESS,
+          "1..0 # skip    Other results are irrelevant\n"
+          "ok - 1\n"
+          "ok - 2 This test also passed\n"
+          "garbage line\n"
+          "not ok - 3 This test passed # TODO Not yet done\n",
+          "garbage line\n",
+          "test", helpers, "main", "test-result", NULL);
+    free(helpers);
+
+    ATF_REQUIRE(atf_utils_compare_file(
+        "test-result", "skipped: Other results are irrelevant\n"));
+}
+
+
 ATF_TC(test__bogus_plan);
 ATF_TC_HEAD(test__bogus_plan, tc) { setup(tc, true); }
 ATF_TC_BODY(test__bogus_plan, tc)
@@ -115,6 +135,25 @@ ATF_TC_BODY(test__bogus_plan, tc)
 
     ATF_REQUIRE(atf_utils_compare_file("test-result",
         "broken: Reported plan differs from actual executed tests\n"));
+}
+
+
+ATF_TC(test__bogus_skip_plan);
+ATF_TC_HEAD(test__bogus_skip_plan, tc) { setup(tc, true); }
+ATF_TC_BODY(test__bogus_skip_plan, tc)
+{
+    require_coredump_ability();
+
+    char* helpers = select_helper(tc, "bogus_skip_plan");
+    check(EXIT_FAILURE,
+          "before\n"
+          "1..3 # SKIP Pretends to skip but doesn't\n",
+          "",
+          "test", helpers, "main", "test-result", NULL);
+    free(helpers);
+
+    ATF_REQUIRE(atf_utils_compare_file("test-result",
+        "broken: Skipped test plan has invalid range\n"));
 }
 
 
@@ -224,7 +263,9 @@ ATF_TP_ADD_TCS(tp)
 
     ATF_TP_ADD_TC(tp, test__pass);
     ATF_TP_ADD_TC(tp, test__fail);
+    ATF_TP_ADD_TC(tp, test__skip_plan);
     ATF_TP_ADD_TC(tp, test__bogus_plan);
+    ATF_TP_ADD_TC(tp, test__bogus_skip_plan);
     ATF_TP_ADD_TC(tp, test__bail_out);
     ATF_TP_ADD_TC(tp, test__crash);
     ATF_TP_ADD_TC(tp, test__timeout);
