@@ -295,7 +295,15 @@ kyua_tap_parse(const int fd, FILE* output, kyua_tap_summary_t* summary)
     FILE* input = fdopen(fd, "r");
     if (input == NULL) {
         close(fd);
-        return kyua_libc_error_new(errno, "fdopen(3) failed");
+        error = kyua_libc_error_new(errno, "fdopen(3) failed");
+        goto out;
+    }
+
+    regex_t preg;
+    int code = regcomp(&preg, "^(not )?ok[ \t-]+[0-9]+", REG_EXTENDED);
+    if (code != 0) {
+        error = regex_error_new(code, &preg, "regcomp failed");
+        goto out_input;
     }
 
     kyua_tap_summary_init(summary);
@@ -309,18 +317,33 @@ kyua_tap_parse(const int fd, FILE* output, kyua_tap_summary_t* summary)
 
         error = kyua_tap_try_parse_plan(line, summary);
 
-        if (strstr(line, "Bail out!") == line)
-            summary->bail_out = true;
-        else if (strstr(line, "ok") == line)
-            summary->ok_count++;
-        else if (strstr(line, "not ok") == line) {
-            if (strstr(line, "TODO") != NULL || strstr(line, "SKIP") != NULL)
+        regmatch_t matches[2];
+        code = regexec(&preg, line, 2, matches, 0);
+        if (code == 0) {
+            if (matches[1].rm_so == matches[1].rm_eo) {
+                // This is an "ok" result because "not" did not match.
                 summary->ok_count++;
-            else
-                summary->not_ok_count++;
+            } else {
+                // This is a "not ok" result.
+                if (strstr(line, "TODO") != NULL ||
+                    strstr(line, "SKIP") != NULL) {
+                    summary->ok_count++;
+                } else {
+                    summary->not_ok_count++;
+                }
+            }
+        } else {
+            if (code != REG_NOMATCH) {
+                error = regex_error_new(code, &preg, "regexec failed");
+                goto out_preg;
+            } else {
+                // The line is neither an "ok" nor a "not ok" result.
+                if (strstr(line, "Bail out!") == line) {
+                    summary->bail_out = true;
+                }
+            }
         }
     }
-    fclose(input);
 
     if (summary->parse_error == NULL &&
         !summary->bail_out &&
@@ -332,5 +355,11 @@ kyua_tap_parse(const int fd, FILE* output, kyua_tap_summary_t* summary)
                 "tests";
         }
     }
-    return kyua_error_ok();
+
+out_preg:
+    regfree(&preg);
+out_input:
+    fclose(input);
+out:
+    return error;
 }

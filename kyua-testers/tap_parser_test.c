@@ -172,8 +172,8 @@ ATF_TC_BODY(parse__ok__pass, tc)
         "ok - 2 This test also passed\n"
         "garbage line\n"
         "ok - 3 This test passed\n"
-        "not ok # SKIP Some reason\n"
-        "not ok # TODO Another reason\n"
+        "not ok 4 # SKIP Some reason\n"
+        "not ok 5 # TODO Another reason\n"
         "ok - 6 Doesn't make a difference SKIP\n"
         "ok - 7 Doesn't make a difference either TODO\n";
 
@@ -247,8 +247,8 @@ ATF_TC_BODY(parse__ok__plan_at_the_end, tc)
         "ok - 2 This test also passed\n"
         "garbage line\n"
         "ok - 3 This test passed\n"
-        "not ok # SKIP Some reason\n"
-        "not ok # TODO Another reason\n"
+        "not ok 4 # SKIP Some reason\n"
+        "not ok 5 # TODO Another reason\n"
         "ok - 6 Doesn't make a difference SKIP\n"
         "ok - 7 Doesn't make a difference either TODO\n"
         "1..7\n";
@@ -258,6 +258,29 @@ ATF_TC_BODY(parse__ok__plan_at_the_end, tc)
     summary.first_index = 1;
     summary.last_index = 7;
     summary.ok_count = 7;
+    summary.not_ok_count = 0;
+
+    ok_test(contents, &summary);
+    kyua_tap_summary_fini(&summary);
+}
+
+
+ATF_TC_WITHOUT_HEAD(parse__ok__stray_oks);
+ATF_TC_BODY(parse__ok__stray_oks, tc)
+{
+    const char* contents =
+        "1..3\n"
+        "ok - 1\n"
+        "ok\n"
+        "ok - 2 This test also passed\n"
+        "not ok\n"
+        "ok - 3 This test passed\n";
+
+    kyua_tap_summary_t summary;
+    kyua_tap_summary_init(&summary);
+    summary.first_index = 1;
+    summary.last_index = 3;
+    summary.ok_count = 3;
     summary.not_ok_count = 0;
 
     ok_test(contents, &summary);
@@ -384,6 +407,7 @@ ATF_TP_ADD_TCS(tp)
     ATF_TP_ADD_TC(tp, parse__ok__fail);
     ATF_TP_ADD_TC(tp, parse__ok__skip);
     ATF_TP_ADD_TC(tp, parse__ok__plan_at_the_end);
+    ATF_TP_ADD_TC(tp, parse__ok__stray_oks);
     ATF_TP_ADD_TC(tp, parse__fail__double_plan);
     ATF_TP_ADD_TC(tp, parse__fail__inconsistent_plan);
     ATF_TP_ADD_TC(tp, parse__fail__inconsistent_plan_at_the_end);
