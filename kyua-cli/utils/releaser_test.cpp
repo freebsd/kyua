@@ -1,4 +1,4 @@
-// Copyright 2011 Google Inc.
+// Copyright 2014 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,47 +26,59 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/action.hpp
-/// Representation of user-initiated actions.
+#include "utils/releaser.hpp"
 
-#if !defined(ENGINE_ACTION_HPP)
-#define ENGINE_ACTION_HPP
+#include <cstddef>
+#include <string>
 
-#include <ostream>
-
-#include "utils/shared_ptr.hpp"
-
-namespace engine {
+#include <atf-c++.hpp>
 
 
-class context;
+namespace {
 
 
-/// Representation of an action.
+/// Number of times free_hook has been caller.
+static ssize_t free_calls = 0;
+
+
+/// Deletes the given object of integer type for testing purposes.
 ///
-/// The instances of this class are unique (i.e. copying the objects only yields
-/// a shallow copy that shares the same internal implementation).  This is a
-/// requirement for the 'store' API model.
-class action {
-    struct impl;
-
-    /// Pointer to the shared internal implementation.
-    std::shared_ptr< impl > _pimpl;
-
-public:
-    explicit action(const context&);
-    ~action(void);
-
-    const context& runtime_context(void) const;
-
-    bool operator==(const action&) const;
-    bool operator!=(const action&) const;
-};
+/// \tparam T The type of the object to be released.
+/// \param value The actual object to be released.
+template< class T >
+void
+free_hook(T* value)
+{
+    delete value;
+    ++free_calls;
+}
 
 
-std::ostream& operator<<(std::ostream&, const action&);
+}  // anonymous namespace
 
 
-}  // namespace engine
+ATF_TEST_CASE_WITHOUT_HEAD(scope);
+ATF_TEST_CASE_BODY(scope)
+{
+    {
+        int* i = new int(5);
+        ATF_REQUIRE_EQ(::free_calls, 0);
+        utils::releaser< int, void > releaser(i, ::free_hook< int >);
+        ATF_REQUIRE_EQ(::free_calls, 0);
+    }
+    ATF_REQUIRE_EQ(::free_calls, 1);
+    {
+        std::string* s = new std::string("foo bar");
+        ATF_REQUIRE_EQ(::free_calls, 1);
+        utils::releaser< std::string, void > releaser(
+            s, ::free_hook< std::string >);
+        ATF_REQUIRE_EQ(::free_calls, 1);
+    }
+    ATF_REQUIRE_EQ(::free_calls, 2);
+}
 
-#endif  // !defined(ENGINE_ACTION_HPP)
+
+ATF_INIT_TEST_CASES(tcs)
+{
+    ATF_ADD_TEST_CASE(tcs, scope);
+}

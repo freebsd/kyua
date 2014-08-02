@@ -1,4 +1,4 @@
-// Copyright 2013 Google Inc.
+// Copyright 2014 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,26 +26,46 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "cli/cmd_db_migrate.hpp"
+/// \file utils/releaser.hpp
+/// Provides the utils::releaser class.
 
-#include <cstring>
+#if !defined(UTILS_RELEASER_HPP)
+#define UTILS_RELEASER_HPP
 
-#include <atf-c++.hpp>
-
-#include "utils/format/macros.hpp"
-#include "utils/sqlite/database.hpp"
-#include "utils/sqlite/statement.ipp"
-
-namespace sqlite = utils::sqlite;
+namespace utils {
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(todo);
-ATF_TEST_CASE_BODY(todo)
-{
-}
+/// RAII pattern to invoke a release method on destruction.
+///
+/// \tparam Object The type of the object to be released.  Not a pointer.
+/// \tparam ReturnType The return type of the release method.
+template< typename Object, typename ReturnType >
+class releaser {
+    /// Pointer to the object being managed.
+    Object* _object;
+
+    /// Release hook.
+    ReturnType (*_free_hook)(Object*);
+
+public:
+    /// Constructor.
+    ///
+    /// \param object Pointer to the object being managed.
+    /// \param free_hook Release hook.
+    releaser(Object* object, ReturnType (*free_hook)(Object*)) :
+        _object(object), _free_hook(free_hook)
+    {
+    }
+
+    /// Destructor.
+    ~releaser(void)
+    {
+        _free_hook(_object);
+    }
+};
 
 
-ATF_INIT_TEST_CASES(tcs)
-{
-    ATF_ADD_TEST_CASE(tcs, todo);
-}
+}  // namespace utils
+
+
+#endif  // !defined(UTILS_RELEASER_HPP)

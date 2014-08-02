@@ -36,10 +36,11 @@
 #include <vector>
 
 #include "cli/common.ipp"
-#include "engine/action.hpp"
 #include "engine/context.hpp"
-#include "engine/drivers/scan_action.hpp"
+#include "engine/drivers/scan_results.hpp"
 #include "engine/test_result.hpp"
+#include "store/layout.hpp"
+#include "store/read_transaction.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/cmdline/ui.hpp"
@@ -54,7 +55,8 @@ namespace cmdline = utils::cmdline;
 namespace config = utils::config;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
-namespace scan_action = engine::drivers::scan_action;
+namespace layout = store::layout;
+namespace scan_results = engine::drivers::scan_results;
 
 using cli::cmd_report;
 using utils::optional;
@@ -64,7 +66,7 @@ namespace {
 
 
 /// Generates a plain-text report intended to be printed to the console.
-class report_console_hooks : public engine::drivers::scan_action::base_hooks {
+class report_console_hooks : public engine::drivers::scan_results::base_hooks {
     /// Stream to which to write the report.
     std::ostream& _output;
 
@@ -74,8 +76,8 @@ class report_console_hooks : public engine::drivers::scan_action::base_hooks {
     /// Collection of result types to include in the report.
     const cli::result_types& _results_filters;
 
-    /// The action ID loaded.
-    int64_t _action_id;
+    /// Path to the results file being read.
+    const fs::path& _results_file;
 
     /// The total run time of the tests.
     utils::datetime::delta _runtime;
@@ -181,25 +183,26 @@ public:
     ///     the output or not.
     /// \param results_filters_ The result types to include in the report.
     ///     Cannot be empty.
+    /// \param results_file_ Path to the results file being read.
     report_console_hooks(std::ostream& output_, const bool show_context_,
-                         const cli::result_types& results_filters_) :
+                         const cli::result_types& results_filters_,
+                         const fs::path& results_file_) :
         _output(output_),
         _show_context(show_context_),
-        _results_filters(results_filters_)
+        _results_filters(results_filters_),
+        _results_file(results_file_)
     {
         PRE(!results_filters_.empty());
     }
 
-    /// Callback executed when an action is found.
+    /// Callback executed when the context is loaded.
     ///
-    /// \param action_id The identifier of the loaded action.
-    /// \param action The action loaded from the database.
+    /// \param context The context loaded from the database.
     void
-    got_action(const int64_t action_id, const engine::action& action)
+    got_context(const engine::context& context)
     {
-        _action_id = action_id;
         if (_show_context)
-            print_context(action.runtime_context());
+            print_context(context);
     }
 
     /// Callback executed when a test results is found.
@@ -217,9 +220,9 @@ public:
 
     /// Prints the tests summary.
     ///
-    /// \param unused_r Result of the scan_action driver execution.
+    /// \param unused_r Result of the scan_results driver execution.
     void
-    end(const engine::drivers::scan_action::result& UTILS_UNUSED_PARAM(r))
+    end(const engine::drivers::scan_results::result& UTILS_UNUSED_PARAM(r))
     {
         using engine::test_result;
         typedef std::map< test_result::result_type, const char* > types_map;
@@ -247,7 +250,7 @@ public:
         const std::size_t total = broken + failed + passed + skipped + xfail;
 
         _output << "===> Summary\n";
-        _output << F("Action: %s\n") % _action_id;
+        _output << F("Results read from %s\n") % _results_file;
         _output << F("Test cases: %s total, %s skipped, %s expected failures, "
                      "%s broken, %s failed\n") %
             total % skipped % xfail % broken % failed;
@@ -262,14 +265,11 @@ public:
 /// Default constructor for cmd_report.
 cmd_report::cmd_report(void) : cli_command(
     "report", "", 0, 0,
-    "Generates a report with the result of a previous action")
+    "Generates a report with the result of a test suite run")
 {
-    add_option(store_option);
+    add_option(results_file_open_option);
     add_option(cmdline::bool_option(
         "show-context", "Include the execution context in the report"));
-    add_option(cmdline::int_option(
-        "action", "The action to report; if not specified, defaults to the "
-        "latest action in the database", "id"));
     add_option(cmdline::path_option("output", "Path to the output file", "path",
                                     "/dev/stdout"));
     add_option(results_filter_option);
@@ -289,17 +289,17 @@ cmd_report::run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
                 const cmdline::parsed_cmdline& cmdline,
                 const config::tree& UTILS_UNUSED_PARAM(user_config))
 {
-    optional< int64_t > action_id;
-    if (cmdline.has_option("action"))
-        action_id = cmdline.get_option< cmdline::int_option >("action");
-
     std::auto_ptr< std::ostream > output = open_output_file(
         cmdline.get_option< cmdline::path_option >("output"));
 
+    const fs::path results_file = layout::find_results(
+        results_file_open(cmdline));
+
     const result_types types = get_result_types(cmdline);
     report_console_hooks hooks(*output.get(),
-                               cmdline.has_option("show-context"), types);
-    scan_action::drive(store_path(cmdline), action_id, hooks);
+                               cmdline.has_option("show-context"), types,
+                               results_file);
+    scan_results::drive(results_file, hooks);
 
     return EXIT_SUCCESS;
 }

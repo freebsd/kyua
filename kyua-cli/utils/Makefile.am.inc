@@ -43,6 +43,7 @@ libutils_a_SOURCES += utils/optional.hpp
 libutils_a_SOURCES += utils/optional.ipp
 libutils_a_SOURCES += utils/passwd.cpp
 libutils_a_SOURCES += utils/passwd.hpp
+libutils_a_SOURCES += utils/releaser.hpp
 libutils_a_SOURCES += utils/sanity.cpp
 libutils_a_SOURCES += utils/sanity.hpp
 libutils_a_SOURCES += utils/shared_ptr.hpp
@@ -87,6 +88,11 @@ tests_utils_PROGRAMS += utils/passwd_test
 utils_passwd_test_SOURCES = utils/passwd_test.cpp
 utils_passwd_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 utils_passwd_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
+
+tests_utils_PROGRAMS += utils/releaser_test
+utils_releaser_test_SOURCES = utils/releaser_test.cpp
+utils_releaser_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_releaser_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_PROGRAMS += utils/sanity_test
 utils_sanity_test_SOURCES = utils/sanity_test.cpp

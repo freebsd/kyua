@@ -38,12 +38,14 @@
 #include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
 #include "engine/test_result.hpp"
+#include "store/layout.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/globals.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/cmdline/ui_mock.hpp"
 #include "utils/datetime.hpp"
 #include "utils/env.hpp"
+#include "utils/format/macros.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
@@ -54,6 +56,7 @@ namespace cmdline = utils::cmdline;
 namespace config = utils::config;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
+namespace layout = store::layout;
 
 using utils::optional;
 
@@ -137,33 +140,6 @@ ATF_TEST_CASE_BODY(build_root_path__explicit)
 
     ATF_REQUIRE(cli::build_root_path(mock_cmdline));
     ATF_REQUIRE_EQ("/my/path", cli::build_root_path(mock_cmdline).get().str());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(get_home__ok);
-ATF_TEST_CASE_BODY(get_home__ok)
-{
-    const fs::path home("/foo/bar");
-    utils::setenv("HOME", home.str());
-    const optional< fs::path > computed = cli::get_home();
-    ATF_REQUIRE(computed);
-    ATF_REQUIRE_EQ(home, computed.get());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(get_home__missing);
-ATF_TEST_CASE_BODY(get_home__missing)
-{
-    utils::unsetenv("HOME");
-    ATF_REQUIRE(!cli::get_home());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(get_home__invalid);
-ATF_TEST_CASE_BODY(get_home__invalid)
-{
-    utils::setenv("HOME", "");
-    ATF_REQUIRE(!cli::get_home());
 }
 
 
@@ -267,65 +243,96 @@ ATF_TEST_CASE_BODY(result_types__explicit__invalid)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(store_path__default__create_directory__ok);
-ATF_TEST_CASE_BODY(store_path__default__create_directory__ok)
+ATF_TEST_CASE_WITHOUT_HEAD(results_file_create__default__new);
+ATF_TEST_CASE_BODY(results_file_create__default__new)
 {
     std::map< std::string, std::vector< std::string > > options;
-    options["store"].push_back(cli::store_option.default_value());
+    options["results-file"].push_back(
+        cli::results_file_create_option.default_value());
     const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
 
     const fs::path home("homedir");
     utils::setenv("HOME", home.str());
 
+    ATF_REQUIRE_EQ(cli::results_file_create_option.default_value(),
+                   cli::results_file_create(mock_cmdline));
     ATF_REQUIRE(!fs::exists(home / ".kyua"));
-    ATF_REQUIRE_EQ(home / ".kyua/store.db", cli::store_path(mock_cmdline));
-    ATF_REQUIRE(fs::exists(home / ".kyua"));
 }
 
 
-ATF_TEST_CASE(store_path__default__create_directory__fail);
-ATF_TEST_CASE_HEAD(store_path__default__create_directory__fail)
-{
-    set_md_var("require.user", "unprivileged");
-}
-ATF_TEST_CASE_BODY(store_path__default__create_directory__fail)
+ATF_TEST_CASE_WITHOUT_HEAD(results_file_create__default__historical);
+ATF_TEST_CASE_BODY(results_file_create__default__historical)
 {
     std::map< std::string, std::vector< std::string > > options;
-    options["store"].push_back(cli::store_option.default_value());
+    options["results-file"].push_back(
+        cli::results_file_create_option.default_value());
     const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
 
     const fs::path home("homedir");
     utils::setenv("HOME", home.str());
-    fs::mkdir(home, 0555);
+    fs::mkdir_p(fs::path("homedir/.kyua"), 0755);
+    atf::utils::create_file("homedir/.kyua/store.db", "fake store");
 
-    ATF_REQUIRE_THROW(fs::error, cli::store_path(mock_cmdline).str());
-    ATF_REQUIRE(!fs::exists(home / ".kyua"));
+    ATF_REQUIRE_EQ(fs::path("homedir/.kyua/store.db").to_absolute(),
+                   fs::path(cli::results_file_create(mock_cmdline)));
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(store_path__default__no_home);
-ATF_TEST_CASE_BODY(store_path__default__no_home)
+ATF_TEST_CASE_WITHOUT_HEAD(results_file_create__explicit);
+ATF_TEST_CASE_BODY(results_file_create__explicit)
 {
     std::map< std::string, std::vector< std::string > > options;
-    options["store"].push_back(cli::store_option.default_value());
+    options["results-file"].push_back("/my//path/f.db");
     const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
 
-    utils::unsetenv("HOME");
-
-    ATF_REQUIRE_EQ("kyua-store.db", cli::store_path(mock_cmdline).str());
+    ATF_REQUIRE_EQ("/my//path/f.db",
+                   cli::results_file_create(mock_cmdline));
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(store_path__explicit);
-ATF_TEST_CASE_BODY(store_path__explicit)
+ATF_TEST_CASE_WITHOUT_HEAD(results_file_open__default__latest);
+ATF_TEST_CASE_BODY(results_file_open__default__latest)
 {
     std::map< std::string, std::vector< std::string > > options;
-    options["store"].push_back("/my//path");
+    options["results-file"].push_back(
+        cli::results_file_open_option.default_value());
     const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
 
     const fs::path home("homedir");
-    ATF_REQUIRE_EQ("/my/path", cli::store_path(mock_cmdline).str());
+    utils::setenv("HOME", home.str());
+
+    ATF_REQUIRE_EQ(cli::results_file_open_option.default_value(),
+                   cli::results_file_open(mock_cmdline));
     ATF_REQUIRE(!fs::exists(home / ".kyua"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(results_file_open__default__historical);
+ATF_TEST_CASE_BODY(results_file_open__default__historical)
+{
+    std::map< std::string, std::vector< std::string > > options;
+    options["results-file"].push_back(
+        cli::results_file_open_option.default_value());
+    const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
+
+    const fs::path home("homedir");
+    utils::setenv("HOME", home.str());
+    fs::mkdir_p(fs::path("homedir/.kyua"), 0755);
+    atf::utils::create_file("homedir/.kyua/store.db", "fake store");
+
+    ATF_REQUIRE_EQ(fs::path("homedir/.kyua/store.db").to_absolute(),
+                   fs::path(cli::results_file_open(mock_cmdline)));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(results_file_open__explicit);
+ATF_TEST_CASE_BODY(results_file_open__explicit)
+{
+    std::map< std::string, std::vector< std::string > > options;
+    options["results-file"].push_back("/my//path/f.db");
+    const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
+
+    ATF_REQUIRE_EQ("/my//path/f.db", cli::results_file_open(mock_cmdline));
 }
 
 
@@ -476,10 +483,6 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, build_root_path__default);
     ATF_ADD_TEST_CASE(tcs, build_root_path__explicit);
 
-    ATF_ADD_TEST_CASE(tcs, get_home__ok);
-    ATF_ADD_TEST_CASE(tcs, get_home__missing);
-    ATF_ADD_TEST_CASE(tcs, get_home__invalid);
-
     ATF_ADD_TEST_CASE(tcs, kyuafile_path__default);
     ATF_ADD_TEST_CASE(tcs, kyuafile_path__explicit);
 
@@ -489,10 +492,13 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, result_types__explicit__some);
     ATF_ADD_TEST_CASE(tcs, result_types__explicit__invalid);
 
-    ATF_ADD_TEST_CASE(tcs, store_path__default__create_directory__ok);
-    ATF_ADD_TEST_CASE(tcs, store_path__default__create_directory__fail);
-    ATF_ADD_TEST_CASE(tcs, store_path__default__no_home);
-    ATF_ADD_TEST_CASE(tcs, store_path__explicit);
+    ATF_ADD_TEST_CASE(tcs, results_file_create__default__new);
+    ATF_ADD_TEST_CASE(tcs, results_file_create__default__historical);
+    ATF_ADD_TEST_CASE(tcs, results_file_create__explicit);
+
+    ATF_ADD_TEST_CASE(tcs, results_file_open__default__latest);
+    ATF_ADD_TEST_CASE(tcs, results_file_open__default__historical);
+    ATF_ADD_TEST_CASE(tcs, results_file_open__explicit);
 
     ATF_ADD_TEST_CASE(tcs, parse_filters__none);
     ATF_ADD_TEST_CASE(tcs, parse_filters__ok);

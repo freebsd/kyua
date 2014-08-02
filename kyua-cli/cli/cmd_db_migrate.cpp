@@ -31,13 +31,17 @@
 #include <cstdlib>
 
 #include "cli/common.ipp"
-#include "store/backend.hpp"
 #include "store/exceptions.hpp"
+#include "store/layout.hpp"
+#include "store/migrate.hpp"
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/fs/path.hpp"
 
 namespace cmdline = utils::cmdline;
 namespace config = utils::config;
+namespace fs = utils::fs;
+namespace layout = store::layout;
 
 using cli::cmd_db_migrate;
 
@@ -45,11 +49,11 @@ using cli::cmd_db_migrate;
 /// Default constructor for cmd_db_migrate.
 cmd_db_migrate::cmd_db_migrate(void) : cli_command(
     "db-migrate", "", 0, 0,
-    "Upgrades the schema of an existing store database to the currently "
-    "implemented version.  A backup of the database is created, but this "
-    "operation is not reversible")
+    "Upgrades the schema of an existing results file to the currently "
+    "implemented version.  A backup of the results file is created, but "
+    "this operation is not reversible")
 {
-    add_option(store_option);
+    add_option(results_file_open_option);
 }
 
 
@@ -66,7 +70,9 @@ cmd_db_migrate::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
                     const config::tree& UTILS_UNUSED_PARAM(user_config))
 {
     try {
-        store::migrate_schema(cli::store_path(cmdline));
+        const fs::path results_file = layout::find_results(
+            results_file_open(cmdline));
+        store::migrate_schema(results_file);
         return EXIT_SUCCESS;
     } catch (const store::error& e) {
         cmdline::print_error(ui, F("Migration failed: %s") % e.what());

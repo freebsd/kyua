@@ -27,27 +27,86 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-utils_test_case upgrade
-upgrade_head() {
+# Location of installed schema files.
+KYUA_STOREDIR='__KYUA_STOREDIR__'
+
+
+# Creates an empty old-style action database.
+#
+# \param ... Files that contain SQL commands to be run.
+create_historical_db() {
+    mkdir -p "${HOME}/.kyua"
+    cat "${@}" | sqlite3 "${HOME}/.kyua/store.db"
+}
+
+
+# Creates an empty results file.
+#
+# \param ... Files that contain SQL commands to be run.
+create_results_file() {
+    mkdir -p "${HOME}/.kyua/store"
+    local dbname="results.$(utils_test_suite_id)-20140718-173200-123456.db"
+    cat "${@}" | sqlite3 "${HOME}/.kyua/store/${dbname}"
+}
+
+
+utils_test_case upgrade__from_v1
+upgrade__from_v1_head() {
     data=$(atf_get_srcdir)/../store
 
     atf_set require.files "${data}/schema_v1.sql ${data}/testdata_v1.sql"
     atf_set require.progs "sqlite3"
 }
-upgrade_body() {
+upgrade__from_v1_body() {
     data=$(atf_get_srcdir)/../store
 
-    mkdir .kyua
-    cat "${data}/schema_v1.sql" "${data}/testdata_v1.sql" \
-        | sqlite3 .kyua/store.db
+    create_historical_db "${data}/schema_v1.sql" "${data}/testdata_v1.sql"
     atf_check -s exit:0 -o empty -e empty kyua db-migrate
+    for f in \
+        "results.test_suite_root.20130108-111331-000000.db" \
+        "results.usr_tests.20130108-123832-000000.db" \
+        "results.usr_tests.20130108-112635-000000.db"
+    do
+        [ -f "${HOME}/.kyua/store/${f}" ] || atf_fail "Expected file ${f}" \
+            "was not created"
+    done
+    [ ! -f "${HOME}/.kyua/store.db" ] || atf_fail "Historical database not" \
+        "deleted"
+}
+
+
+utils_test_case upgrade__from_v2
+upgrade__from_v2_head() {
+    data=$(atf_get_srcdir)/../store
+
+    atf_set require.files "${data}/schema_v2.sql ${data}/testdata_v2.sql"
+    atf_set require.progs "sqlite3"
+}
+upgrade__from_v2_body() {
+    data=$(atf_get_srcdir)/../store
+
+    create_historical_db "${data}/schema_v2.sql" "${data}/testdata_v2.sql"
+    atf_check -s exit:0 -o empty -e empty kyua db-migrate
+    for f in \
+        "results.test_suite_root.20130108-111331-000000.db" \
+        "results.usr_tests.20130108-123832-000000.db" \
+        "results.usr_tests.20130108-112635-000000.db"
+    do
+        [ -f "${HOME}/.kyua/store/${f}" ] || atf_fail "Expected file ${f}" \
+            "was not created"
+    done
+    [ ! -f "${HOME}/.kyua/store.db" ] || atf_fail "Historical database not" \
+        "deleted"
 }
 
 
 utils_test_case already_up_to_date
 already_up_to_date_body() {
-    atf_check -s exit:0 -o ignore -e empty \
-        kyua db-exec "SELECT * FROM metadata"  # Create database.
+    atf_set require.files "${KYUA_STOREDIR}/schema_v3.sql"
+    atf_set require.progs "sqlite3"
+}
+already_up_to_date_body() {
+    create_results_file "${KYUA_STOREDIR}/schema_v3.sql"
     atf_check -s exit:1 -o empty -e match:"already at schema version" \
         kyua db-migrate
 }
@@ -63,25 +122,24 @@ need_upgrade_head() {
 need_upgrade_body() {
     data=$(atf_get_srcdir)/../store
 
-    mkdir .kyua
-    sqlite3 .kyua/store.db <"${data}/schema_v1.sql"
+    create_results_file "${data}/schema_v1.sql"
     atf_check -s exit:2 -o empty \
         -e match:"database has schema version 1.*use db-migrate" kyua report
 }
 
 
-utils_test_case store_flag__ok
-store_flag__ok_body() {
+utils_test_case results_file__ok
+results_file__ok_body() {
     echo "This is not a valid database" >test.db
     atf_check -s exit:1 -o empty -e match:"Migration failed" \
-        kyua db-migrate --store ./test.db
+        kyua db-migrate --results-file ./test.db
 }
 
 
-utils_test_case store_flag__fail
-store_flag__fail_body() {
-    atf_check -s exit:1 -o empty -e match:"Cannot open.*test.db" \
-        kyua db-migrate --store ./test.db
+utils_test_case results_file__fail
+results_file__fail_body() {
+    atf_check -s exit:1 -o empty -e match:"No previous results.*test.db" \
+        kyua db-migrate --results-file ./test.db
 }
 
 
@@ -96,12 +154,13 @@ EOF
 
 
 atf_init_test_cases() {
-    atf_add_test_case upgrade
+    atf_add_test_case upgrade__from_v1
+    atf_add_test_case upgrade__from_v2
     atf_add_test_case already_up_to_date
     atf_add_test_case need_upgrade
 
-    atf_add_test_case store_flag__ok
-    atf_add_test_case store_flag__fail
+    atf_add_test_case results_file__ok
+    atf_add_test_case results_file__fail
 
     atf_add_test_case too_many_arguments
 }

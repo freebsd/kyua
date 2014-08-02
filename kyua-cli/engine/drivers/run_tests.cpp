@@ -28,14 +28,13 @@
 
 #include "engine/drivers/run_tests.hpp"
 
-#include "engine/action.hpp"
 #include "engine/context.hpp"
 #include "engine/filters.hpp"
 #include "engine/kyuafile.hpp"
 #include "engine/test_program.hpp"
 #include "engine/test_result.hpp"
-#include "store/backend.hpp"
-#include "store/transaction.hpp"
+#include "store/write_backend.hpp"
+#include "store/write_transaction.hpp"
 #include "utils/datetime.hpp"
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
@@ -59,7 +58,7 @@ namespace {
 /// Test case hooks to save the output into the database.
 class file_saver_hooks : public engine::test_case_hooks {
     /// Open write transaction for the test case's data.
-    store::transaction& _tx;
+    store::write_transaction& _tx;
 
     /// Identifier of the test case being stored.
     const int64_t _test_case_id;
@@ -69,7 +68,7 @@ public:
     ///
     /// \param tx_ Open write transaction for the test case's data.
     /// \param test_case_id_ Identifier of the test case being stored.
-    file_saver_hooks(store::transaction& tx_,
+    file_saver_hooks(store::write_transaction& tx_,
                      const int64_t test_case_id_) :
         _tx(tx_), _test_case_id(test_case_id_)
     {
@@ -106,18 +105,16 @@ public:
 /// \param hooks The user hooks to receive asynchronous notifications.
 /// \param work_directory Temporary directory to use.
 /// \param tx The store transaction into which to put the results.
-/// \param action_id The action this program belongs to.
 void
 run_test_program(const engine::test_program& program,
                  const config::tree& user_config,
                  engine::filters_state& filters,
                  run_tests::base_hooks& hooks,
                  const fs::path& work_directory,
-                 store::transaction& tx,
-                 const int64_t action_id)
+                 store::write_transaction& tx)
 {
     LI(F("Processing test program '%s'") % program.relative_path());
-    const int64_t test_program_id = tx.put_test_program(program, action_id);
+    const int64_t test_program_id = tx.put_test_program(program);
 
     const engine::test_cases_vector& test_cases = program.test_cases();
     for (engine::test_cases_vector::const_iterator iter = test_cases.begin();
@@ -174,14 +171,11 @@ run_tests::drive(const fs::path& kyuafile_path,
     const engine::kyuafile kyuafile = engine::kyuafile::load(
         kyuafile_path, build_root);
     filters_state filters(raw_filters);
-    store::backend db = store::backend::open_rw(store_path);
-    store::transaction tx = db.start();
+    store::write_backend db = store::write_backend::open_rw(store_path);
+    store::write_transaction tx = db.start_write();
 
     engine::context context = engine::context::current();
-    const int64_t context_id = tx.put_context(context);
-
-    engine::action action(context);
-    const int64_t action_id = tx.put_action(action, context_id);
+    (void)tx.put_context(context);
 
     signals::interrupts_handler interrupts;
 
@@ -197,12 +191,12 @@ run_tests::drive(const fs::path& kyuafile_path,
             continue;
 
         run_test_program(*test_program, user_config, filters, hooks,
-                         work_directory.directory(), tx, action_id);
+                         work_directory.directory(), tx);
 
         signals::check_interrupt();
     }
 
     tx.commit();
 
-    return result(action_id, filters.unused());
+    return result(filters.unused());
 }

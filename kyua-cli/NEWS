@@ -3,8 +3,43 @@ Changes in version 0.9
 
 STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 
+Major changes:
+
+The internal architecture of Kyua to record the results of test suite
+runs has completely changed in this release.  Kyua no longer stores all
+the different test suite run results as different "actions" within the
+single store.db database.  Instead, Kyua now generates a separate
+results file inside ~/.kyua/store/ for every test suite run.
+
+Due to the complexity involved in the migration process and the little
+need for it, this is probably going to be the only release where the
+'db-migrate' command is able to convert an old store.db file to the
+new scheme.
+
+Changes in more detail:
+
 * Added the 'report-junit' command to generate JUnit XML result files.
   The output has been verified to work within Jenkins.
+
+* Switched to results files specific to their corresponding test suite
+  run.  The unified store.db file is now gone: 'kyua test' creates a
+  new results file for every invocation under ~/.kyua/store/ and the
+  'kyua report*' commands are able to locate the latest file for a
+  corresponding test suite automatically.
+
+* The 'db-migrate' command takes an old store.db file and generates one
+  results file for every previously-recorded action, later deleting the
+  store.db file.
+
+* The '--action' flag has been removed from all commands that accepted
+  it.  This has been superseded by the tests results files.
+
+* The '--store' flag that many commands took has been renamed to
+  '--results-file' in line with the semantical changes.
+
+* The 'db-exec' command no longer creates an empty database when none
+  is found.  This command is now intended to run only over existing
+  files.
 
 
 Changes in version 0.8

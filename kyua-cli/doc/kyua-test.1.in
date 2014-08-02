@@ -25,7 +25,7 @@
 .\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 .\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-.Dd September 9, 2012
+.Dd July 28, 2014
 .Dt KYUA-TEST 1
 .Os
 .Sh NAME
@@ -35,13 +35,13 @@
 .Nm
 .Op Fl -build-root Ar path
 .Op Fl -kyuafile Ar file
-.Op Fl -store Ar file
+.Op Fl -results-file Ar file
 .Op Ar test_filter1 .. test_filterN
 .Sh DESCRIPTION
 The
 .Nm
-command runs the tests of a test suite and records the results into the
-store in the form of a new action.
+command runs the tests of a test suite and records the results into a new
+results file.
 .Pp
 The optional arguments to
 .Nm
@@ -60,17 +60,18 @@ for more information.
 Specifies the Kyuafile to process.  Defaults to a
 .Pa Kyuafile
 file in the current directory.
-.It Fl -store Ar path , Fl s Ar path
-Specifies the database to use.  Defaults to
-.Pa ~/.kyua/store.db .
-The database is created if it does not exist.
+.It Fl -results-file Ar path , Fl s Ar path
+Specifies the results file to create.  Defaults to
+.Sq LATEST ,
+which causes
+.Nm
+to automatically generate a new results file for the test run.
+See
+.Xr kyua-results-files 7
+for more information.
 .El
 .Pp
-Because
-.Nm
-records the result of the execution into the database, it does not provide
-much feedback on the activity of the program.  You can later inspect the
-results in more detail by using
+You can later inspect the results of the test run in more detail by using
 .Xr kyua-report 1
 or you can execute a single test case with debugging functionality by using
 .Xr kyua-debug 1 .

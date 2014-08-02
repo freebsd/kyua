@@ -26,20 +26,19 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "store/backend.hpp"
-
 #include <fstream>
 #include <map>
 
 #include <atf-c++.hpp>
 
-#include "engine/action.hpp"
 #include "engine/context.hpp"
 #include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
 #include "engine/test_result.hpp"
-#include "store/backend.hpp"
-#include "store/transaction.hpp"
+#include "store/migrate.hpp"
+#include "store/read_backend.hpp"
+#include "store/read_transaction.hpp"
+#include "store/write_backend.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/logging/operations.hpp"
@@ -70,38 +69,40 @@ exec_db_file(sqlite::database& db, const fs::path& path)
 
 /// Validates the contents of the action with identifier 1.
 ///
-/// \param transaction An open read transaction in the backend.
+/// \param dbpath Path to the database in which to check the action contents.
 static void
-check_action_1(store::transaction& transaction)
+check_action_1(const fs::path& dbpath)
 {
+    store::read_backend backend = store::read_backend::open_ro(dbpath);
+    store::read_transaction transaction = backend.start_read();
+
     const fs::path root("/some/root");
     std::map< std::string, std::string > environment;
-    const engine::context context_1(root, environment);
+    const engine::context context(root, environment);
 
-    const engine::action action_1(context_1);
+    ATF_REQUIRE_EQ(context, transaction.get_context());
 
-    ATF_REQUIRE_EQ(action_1, transaction.get_action(1));
-
-    store::results_iterator iter = transaction.get_action_results(1);
+    store::results_iterator iter = transaction.get_results();
     ATF_REQUIRE(!iter);
 }
 
 
 /// Validates the contents of the action with identifier 2.
 ///
-/// \param transaction An open read transaction in the backend.
+/// \param dbpath Path to the database in which to check the action contents.
 static void
-check_action_2(store::transaction& transaction)
+check_action_2(const fs::path& dbpath)
 {
+    store::read_backend backend = store::read_backend::open_ro(dbpath);
+    store::read_transaction transaction = backend.start_read();
+
     const fs::path root("/test/suite/root");
     std::map< std::string, std::string > environment;
     environment["HOME"] = "/home/test";
     environment["PATH"] = "/bin:/usr/bin";
-    const engine::context context_2(root, environment);
+    const engine::context context(root, environment);
 
-    const engine::action action_2(context_2);
-
-    ATF_REQUIRE_EQ(action_2, transaction.get_action(2));
+    ATF_REQUIRE_EQ(context, transaction.get_context());
 
     engine::test_program test_program_1(
         "plain", fs::path("foo_test"), fs::path("/test/suite/root"),
@@ -173,7 +174,7 @@ check_action_2(store::transaction& transaction)
     const engine::test_result result_5(engine::test_result::skipped,
                                        "Does not apply");
 
-    store::results_iterator iter = transaction.get_action_results(2);
+    store::results_iterator iter = transaction.get_results();
     ATF_REQUIRE(iter);
     ATF_REQUIRE_EQ(test_program_1, *iter.test_program());
     ATF_REQUIRE_EQ("main", iter.test_case_name());
@@ -225,18 +226,19 @@ check_action_2(store::transaction& transaction)
 
 /// Validates the contents of the action with identifier 3.
 ///
-/// \param transaction An open read transaction in the backend.
+/// \param dbpath Path to the database in which to check the action contents.
 static void
-check_action_3(store::transaction& transaction)
+check_action_3(const fs::path& dbpath)
 {
+    store::read_backend backend = store::read_backend::open_ro(dbpath);
+    store::read_transaction transaction = backend.start_read();
+
     const fs::path root("/usr/tests");
     std::map< std::string, std::string > environment;
     environment["PATH"] = "/bin:/usr/bin";
-    const engine::context context_3(root, environment);
+    const engine::context context(root, environment);
 
-    const engine::action action_3(context_3);
-
-    ATF_REQUIRE_EQ(action_3, transaction.get_action(3));
+    ATF_REQUIRE_EQ(context, transaction.get_context());
 
     engine::test_program test_program_6(
         "atf", fs::path("complex_test"), fs::path("/usr/tests"),
@@ -301,7 +303,7 @@ check_action_3(store::transaction& transaction)
     const engine::test_result result_9(engine::test_result::failed,
                                        "Exited with code 1");
 
-    store::results_iterator iter = transaction.get_action_results(3);
+    store::results_iterator iter = transaction.get_results();
     ATF_REQUIRE(iter);
     ATF_REQUIRE_EQ(test_program_6, *iter.test_program());
     ATF_REQUIRE_EQ("this_fails", iter.test_case_name());
@@ -344,20 +346,21 @@ check_action_3(store::transaction& transaction)
 
 /// Validates the contents of the action with identifier 4.
 ///
-/// \param transaction An open read transaction in the backend.
+/// \param dbpath Path to the database in which to check the action contents.
 static void
-check_action_4(store::transaction& transaction)
+check_action_4(const fs::path& dbpath)
 {
+    store::read_backend backend = store::read_backend::open_ro(dbpath);
+    store::read_transaction transaction = backend.start_read();
+
     const fs::path root("/usr/tests");
     std::map< std::string, std::string > environment;
     environment["LANG"] = "C";
     environment["PATH"] = "/bin:/usr/bin";
     environment["TERM"] = "xterm";
-    const engine::context context_4(root, environment);
+    const engine::context context(root, environment);
 
-    const engine::action action_4(context_4);
-
-    ATF_REQUIRE_EQ(action_4, transaction.get_action(4));
+    ATF_REQUIRE_EQ(context, transaction.get_context());
 
     engine::test_program test_program_8(
         "plain", fs::path("subdir/another_test"), fs::path("/usr/tests"),
@@ -397,7 +400,7 @@ check_action_4(store::transaction& transaction)
     const engine::test_result result_12(engine::test_result::failed,
                                         "Some reason");
 
-    store::results_iterator iter = transaction.get_action_results(4);
+    store::results_iterator iter = transaction.get_results();
     ATF_REQUIRE(iter);
     ATF_REQUIRE_EQ(test_program_9, *iter.test_program());
     ATF_REQUIRE_EQ("this_fails", iter.test_case_name());
@@ -429,74 +432,88 @@ check_action_4(store::transaction& transaction)
 }
 
 
-/// Validates the contents of an open database agains good known values.
-///
-/// \param transaction An open read-only backend.
-static void
-check_data(store::backend& backend)
-{
-    store::transaction transaction = backend.start();
-    check_action_1(transaction);
-    check_action_2(transaction);
-    check_action_3(transaction);
-    check_action_4(transaction);
-}
+#define CURRENT_SCHEMA_TEST(dataset) \
+    ATF_TEST_CASE(current_schema_ ##dataset); \
+    ATF_TEST_CASE_HEAD(current_schema_ ##dataset) \
+    { \
+        logging::set_inmemory(); \
+        const std::string required_files = \
+            store::detail::schema_file().str() \
+            + " " + (fs::path(get_config_var("srcdir")) \
+                     / "testdata_v3_" #dataset ".sql").str(); \
+        set_md_var("require.files", required_files); \
+    } \
+    ATF_TEST_CASE_BODY(current_schema_ ##dataset) \
+    { \
+        const fs::path testpath("test.db"); \
+        \
+        sqlite::database db = sqlite::database::open( \
+            testpath, sqlite::open_readwrite | sqlite::open_create); \
+        exec_db_file(db, store::detail::schema_file()); \
+        exec_db_file(db, fs::path(get_config_var("srcdir")) \
+                     / "testdata_v3_" #dataset ".sql"); \
+        db.close(); \
+        \
+        check_action_ ## dataset (testpath); \
+    }
+CURRENT_SCHEMA_TEST(1);
+CURRENT_SCHEMA_TEST(2);
+CURRENT_SCHEMA_TEST(3);
+CURRENT_SCHEMA_TEST(4);
 
 
-ATF_TEST_CASE(current_schema);
-ATF_TEST_CASE_HEAD(current_schema)
-{
-    logging::set_inmemory();
-    const std::string required_files =
-        store::detail::schema_file().str()
-        + " " + (fs::path(get_config_var("srcdir")) / "testdata_v2.sql").str();
-    set_md_var("require.files", required_files);
-}
-ATF_TEST_CASE_BODY(current_schema)
-{
-    const fs::path testpath("test.db");
-
-    sqlite::database db = sqlite::database::open(
-        testpath, sqlite::open_readwrite | sqlite::open_create);
-    exec_db_file(db, store::detail::schema_file());
-    exec_db_file(db, fs::path(get_config_var("srcdir")) / "testdata_v2.sql");
-    db.close();
-
-    store::backend backend = store::backend::open_ro(testpath);
-    check_data(backend);
-}
-
-
-ATF_TEST_CASE(migrate_schema__v1_to_v2);
-ATF_TEST_CASE_HEAD(migrate_schema__v1_to_v2)
-{
-    logging::set_inmemory();
-    const std::string required_files =
-        store::detail::migration_file(1, 2).str()
-        + " " + (fs::path(get_config_var("srcdir")) / "schema_v1.sql").str()
-        + " " + (fs::path(get_config_var("srcdir")) / "testdata_v1.sql").str();
-    set_md_var("require.files", required_files);
-}
-ATF_TEST_CASE_BODY(migrate_schema__v1_to_v2)
-{
-    const fs::path testpath("test.db");
-
-    sqlite::database db = sqlite::database::open(
-        testpath, sqlite::open_readwrite | sqlite::open_create);
-    exec_db_file(db, fs::path(get_config_var("srcdir")) / "schema_v1.sql");
-    exec_db_file(db, fs::path(get_config_var("srcdir")) / "testdata_v1.sql");
-    db.close();
-
-    store::migrate_schema(fs::path("test.db"));
-
-    store::backend backend = store::backend::open_ro(testpath);
-    check_data(backend);
-}
+#define MIGRATE_SCHEMA_TEST(from_version) \
+    ATF_TEST_CASE(migrate_schema__from_v ##from_version); \
+    ATF_TEST_CASE_HEAD(migrate_schema__from_v ##from_version) \
+    { \
+        logging::set_inmemory(); \
+        \
+        const char* schema = "schema_v" #from_version ".sql"; \
+        const char* testdata = "testdata_v" #from_version ".sql"; \
+        \
+        std::string required_files = \
+            (fs::path(get_config_var("srcdir")) / schema).str() \
+            + " " + (fs::path(get_config_var("srcdir")) / testdata).str(); \
+        for (int i = from_version; i < store::detail::current_schema_version; \
+             ++i) \
+            required_files += " " + store::detail::migration_file( \
+                i, i + 1).str(); \
+        \
+        set_md_var("require.files", required_files); \
+    } \
+    ATF_TEST_CASE_BODY(migrate_schema__from_v ##from_version) \
+    { \
+        const char* schema = "schema_v" #from_version ".sql"; \
+        const char* testdata = "testdata_v" #from_version ".sql"; \
+        \
+        const fs::path testpath("test.db"); \
+        \
+        sqlite::database db = sqlite::database::open( \
+            testpath, sqlite::open_readwrite | sqlite::open_create); \
+        exec_db_file(db, fs::path(get_config_var("srcdir")) / schema); \
+        exec_db_file(db, fs::path(get_config_var("srcdir")) / testdata); \
+        db.close(); \
+        \
+        store::migrate_schema(fs::path("test.db")); \
+        \
+        check_action_2(fs::path(".kyua/store/" \
+            "results.test_suite_root.20130108-111331-000000.db")); \
+        check_action_3(fs::path(".kyua/store/" \
+            "results.usr_tests.20130108-123832-000000.db")); \
+        check_action_4(fs::path(".kyua/store/" \
+            "results.usr_tests.20130108-112635-000000.db")); \
+    }
+MIGRATE_SCHEMA_TEST(1);
+MIGRATE_SCHEMA_TEST(2);
 
 
 ATF_INIT_TEST_CASES(tcs)
 {
-    ATF_ADD_TEST_CASE(tcs, current_schema);
+    ATF_ADD_TEST_CASE(tcs, current_schema_1);
+    ATF_ADD_TEST_CASE(tcs, current_schema_2);
+    ATF_ADD_TEST_CASE(tcs, current_schema_3);
+    ATF_ADD_TEST_CASE(tcs, current_schema_4);
 
-    ATF_ADD_TEST_CASE(tcs, migrate_schema__v1_to_v2);
+    ATF_ADD_TEST_CASE(tcs, migrate_schema__from_v1);
+    ATF_ADD_TEST_CASE(tcs, migrate_schema__from_v2);
 }

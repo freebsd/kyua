@@ -37,6 +37,7 @@
 #include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
 #include "engine/test_result.hpp"
+#include "store/layout.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/datetime.hpp"
@@ -52,6 +53,7 @@
 namespace cmdline = utils::cmdline;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
+namespace layout = store::layout;
 
 using utils::none;
 using utils::optional;
@@ -78,11 +80,27 @@ const cmdline::list_option cli::results_filter_option(
     "the report", "types", "skipped,xfail,broken,failed");
 
 
-/// Standard definition of the option to specify the store.
-const cmdline::path_option cli::store_option(
-    's', "store",
-    "Path to the store database",
-    "file", "~/.kyua/store.db");
+/// Standard definition of the option to specify the results file.
+///
+/// TODO(jmmv): Should support a git-like syntax to go back in time, like
+/// --results-file=LATEST^N where N indicates how many runs to go back to.
+const cmdline::string_option cli::results_file_create_option(
+    'r', "results-file",
+    "Path to the results file to create; if left to the default value, the "
+    "name of the file is automatically computed for the current test suite",
+    "file", layout::results_auto_create_name);
+
+
+/// Standard definition of the option to specify the results file.
+///
+/// TODO(jmmv): Should support a git-like syntax to go back in time, like
+/// --results-file=LATEST^N where N indicates how many runs to go back to.
+const cmdline::string_option cli::results_file_open_option(
+    'r', "results-file",
+    "Path to the results file to open or the identifier of the current test "
+    "suite or a previous results file for automatic lookup; if left to the "
+    "default value, uses the current directory as the test suite name",
+    "file", layout::results_auto_open_name);
 
 
 namespace {
@@ -92,6 +110,33 @@ namespace {
 static const fs::path stdout_path("/dev/stdout");
 /// Constant that represents the path to stderr.
 static const fs::path stderr_path("/dev/stderr");
+
+
+/// Gets the path to the historical database if it exists.
+///
+/// TODO(jmmv): This function should go away.  It only exists as a temporary
+/// transitional path to force the use of the stale ~/.kyua/store.db if it
+/// exists.
+///
+/// \return A path if the file is found; none otherwise.
+static optional< fs::path >
+get_historical_db(void)
+{
+    optional< fs::path > home = utils::get_home();
+    if (home) {
+        const fs::path old_db = home.get() / ".kyua/store.db";
+        if (fs::exists(old_db)) {
+            if (old_db.is_absolute())
+                return utils::make_optional(old_db);
+            else
+                return utils::make_optional(old_db.to_absolute());
+        } else {
+            return none;
+        }
+    } else {
+        return none;
+    }
+}
 
 
 /// Converts a set of result type names to identifiers.
@@ -185,27 +230,6 @@ cli::build_root_path(const cmdline::parsed_cmdline& cmdline)
 }
 
 
-/// Gets the value of the HOME environment variable with path validation.
-///
-/// \return The value of the HOME environment variable if it is a valid path;
-///     none if it is not defined or if it contains an invalid path.
-optional< fs::path >
-cli::get_home(void)
-{
-    const optional< std::string > home = utils::getenv("HOME");
-    if (home) {
-        try {
-            return utils::make_optional(fs::path(home.get()));
-        } catch (const fs::error& e) {
-            LW(F("Invalid value '%s' in HOME environment variable: %s") %
-               home.get() % e.what());
-            return none;
-        }
-    } else
-        return none;
-}
-
-
 /// Gets the path to the Kyuafile to be loaded.
 ///
 /// This is just syntactic sugar to simplify quierying the 'kyuafile_option'.
@@ -218,6 +242,64 @@ cli::kyuafile_path(const cmdline::parsed_cmdline& cmdline)
 {
     return cmdline.get_option< cmdline::path_option >(
         kyuafile_option.long_name());
+}
+
+
+/// Gets the value of the results-file flag for the creation of a new file.
+///
+/// \param cmdline The parsed command line from which to extract any possible
+///     override for the location of the database via the --results-file flag.
+///
+/// \return The path to the database to be used.
+///
+/// \throw cmdline::error If the value passed to the flag is invalid.
+std::string
+cli::results_file_create(const cmdline::parsed_cmdline& cmdline)
+{
+    std::string results_file = cmdline.get_option< cmdline::string_option >(
+        results_file_create_option.long_name());
+    if (results_file == results_file_create_option.default_value()) {
+        const optional< fs::path > historical_db = get_historical_db();
+        if (historical_db)
+            results_file = historical_db.get().str();
+    } else {
+        try {
+            (void)fs::path(results_file);
+        } catch (const fs::error& e) {
+            throw cmdline::usage_error(F("Invalid value passed to --%s") %
+                                       results_file_create_option.long_name());
+        }
+    }
+    return results_file;
+}
+
+
+/// Gets the value of the results-file flag for the lookup of the file.
+///
+/// \param cmdline The parsed command line from which to extract any possible
+///     override for the location of the database via the --results-file flag.
+///
+/// \return The path to the database to be used.
+///
+/// \throw cmdline::error If the value passed to the flag is invalid.
+std::string
+cli::results_file_open(const cmdline::parsed_cmdline& cmdline)
+{
+    std::string results_file = cmdline.get_option< cmdline::string_option >(
+        results_file_open_option.long_name());
+    if (results_file == results_file_open_option.default_value()) {
+        const optional< fs::path > historical_db = get_historical_db();
+        if (historical_db)
+            results_file = historical_db.get().str();
+    } else {
+        try {
+            (void)fs::path(results_file);
+        } catch (const fs::error& e) {
+            throw cmdline::usage_error(F("Invalid value passed to --%s") %
+                                       results_file_open_option.long_name());
+        }
+    }
+    return results_file;
 }
 
 
@@ -241,41 +323,6 @@ cli::get_result_types(const utils::cmdline::parsed_cmdline& cmdline)
         types.push_back(engine::test_result::failed);
     }
     return types;
-}
-
-
-/// Gets the path to the store to be used.
-///
-/// This has the side-effect of creating the directory in which to store the
-/// database if and only if the path to the database matches the default value.
-/// When the user does not specify an override for the location of the database,
-/// he should not care about the directory existing.  Any of this is not a big
-/// deal though, because logs are also stored within ~/.kyua and thus we will
-/// most likely end up creating the directory anyway.
-///
-/// \param cmdline The parsed command line.
-///
-/// \return The path to the store to be used.
-///
-/// \throw fs::error If the creation of the directory fails.
-fs::path
-cli::store_path(const cmdline::parsed_cmdline& cmdline)
-{
-    fs::path store = cmdline.get_option< cmdline::path_option >(
-        store_option.long_name());
-    if (store == fs::path(store_option.default_value())) {
-        const optional< fs::path > home = cli::get_home();
-        if (home) {
-            store = home.get() / ".kyua/store.db";
-            fs::mkdir_p(store.branch_path(), 0777);
-        } else {
-            store = fs::path("kyua-store.db");
-            LW("HOME not defined; creating store database in current "
-               "directory");
-        }
-    }
-    LI(F("Store database set to: %s") % store);
-    return store;
 }
 
 

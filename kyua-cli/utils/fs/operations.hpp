@@ -46,9 +46,11 @@ namespace fs {
 class path;
 
 
+void copy(const fs::path&, const fs::path&);
 path current_path(void);
 bool exists(const fs::path&);
 utils::optional< path > find_in_path(const char*);
+bool is_directory(const fs::path&);
 void mkdir(const path&, const int);
 void mkdir_p(const path&, const int);
 fs::path mkdtemp(const std::string&);

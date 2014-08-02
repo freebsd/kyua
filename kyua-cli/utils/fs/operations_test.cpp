@@ -92,6 +92,48 @@ lookup(const char* dir, const char* name, const int expected_type)
 }  // anonymous namespace
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(copy__ok);
+ATF_TEST_CASE_BODY(copy__ok)
+{
+    const fs::path source("f1.txt");
+    const fs::path target("f2.txt");
+
+    atf::utils::create_file(source.str(), "This is the input");
+    fs::copy(source, target);
+    ATF_REQUIRE(atf::utils::compare_file(target.str(), "This is the input"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(copy__fail_open);
+ATF_TEST_CASE_BODY(copy__fail_open)
+{
+    const fs::path source("f1.txt");
+    const fs::path target("f2.txt");
+
+    ATF_REQUIRE_THROW_RE(fs::error, "Cannot open copy source f1.txt",
+                         fs::copy(source, target));
+}
+
+
+ATF_TEST_CASE(copy__fail_create);
+ATF_TEST_CASE_HEAD(copy__fail_create)
+{
+    set_md_var("require.user", "unprivileged");
+}
+ATF_TEST_CASE_BODY(copy__fail_create)
+{
+    const fs::path source("f1.txt");
+    const fs::path target("f2.txt");
+
+    atf::utils::create_file(target.str(), "Do not override");
+    ATF_REQUIRE(::chmod(target.c_str(), 0444) != -1);
+
+    atf::utils::create_file(source.str(), "This is the input");
+    ATF_REQUIRE_THROW_RE(fs::error, "Cannot create copy target f2.txt",
+                         fs::copy(source, target));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(current_path__ok);
 ATF_TEST_CASE_BODY(current_path__ok)
 {
@@ -202,6 +244,31 @@ ATF_TEST_CASE_BODY(find_in_path__always_absolute)
     atf::utils::create_file("my-bin/abcd", "");
     ATF_REQUIRE_EQ(fs::path("my-bin/abcd").to_absolute(),
                    fs::find_in_path("abcd").get());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(is_directory__ok);
+ATF_TEST_CASE_BODY(is_directory__ok)
+{
+    const fs::path file("file");
+    atf::utils::create_file(file.str(), "");
+    ATF_REQUIRE(!fs::is_directory(file));
+
+    const fs::path dir("dir");
+    fs::mkdir(dir, 0755);
+    ATF_REQUIRE(fs::is_directory(dir));
+}
+
+
+ATF_TEST_CASE(is_directory__fail);
+ATF_TEST_CASE_HEAD(is_directory__fail)
+{
+    set_md_var("require.user", "unprivileged");
+}
+ATF_TEST_CASE_BODY(is_directory__fail)
+{
+    fs::mkdir(fs::path("dir"), 0000);
+    ATF_REQUIRE_THROW(fs::error, fs::is_directory(fs::path("dir/foo")));
 }
 
 
@@ -375,6 +442,10 @@ ATF_TEST_CASE_BODY(unlink__fail)
 
 ATF_INIT_TEST_CASES(tcs)
 {
+    ATF_ADD_TEST_CASE(tcs, copy__ok);
+    ATF_ADD_TEST_CASE(tcs, copy__fail_open);
+    ATF_ADD_TEST_CASE(tcs, copy__fail_create);
+
     ATF_ADD_TEST_CASE(tcs, current_path__ok);
     ATF_ADD_TEST_CASE(tcs, current_path__enoent);
 
@@ -386,6 +457,9 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, find_in_path__many_components);
     ATF_ADD_TEST_CASE(tcs, find_in_path__current_directory);
     ATF_ADD_TEST_CASE(tcs, find_in_path__always_absolute);
+
+    ATF_ADD_TEST_CASE(tcs, is_directory__ok);
+    ATF_ADD_TEST_CASE(tcs, is_directory__fail);
 
     ATF_ADD_TEST_CASE(tcs, mkdir__ok);
     ATF_ADD_TEST_CASE(tcs, mkdir__enoent);

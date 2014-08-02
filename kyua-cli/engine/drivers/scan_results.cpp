@@ -26,73 +26,65 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file store/backend.hpp
-/// Interface to the backend database.
+#include "engine/drivers/scan_results.hpp"
 
-#if !defined(STORE_BACKEND_HPP)
-#define STORE_BACKEND_HPP
+#include "engine/context.hpp"
+#include "engine/test_result.hpp"
+#include "store/read_backend.hpp"
+#include "store/read_transaction.hpp"
+#include "utils/defs.hpp"
 
-#include "utils/shared_ptr.hpp"
-
-namespace utils {
-namespace fs {
-class path;
-}  // namespace fs
-namespace sqlite {
-class database;
-}  // namespace sqlite
-}  // namespace utils
-
-namespace store {
+namespace fs = utils::fs;
+namespace scan_results = engine::drivers::scan_results;
 
 
-class metadata;
+/// Pure abstract destructor.
+scan_results::base_hooks::~base_hooks(void)
+{
+}
 
 
-namespace detail {
+/// Callback executed before any operation is performed.
+void
+scan_results::base_hooks::begin(void)
+{
+}
 
 
-extern int current_schema_version;
+/// Callback executed after all operations are performed.
+///
+/// \param unused_r A structure with all results computed by this driver.  Note
+///     that this is also returned by the drive operation.
+void
+scan_results::base_hooks::end(const result& UTILS_UNUSED_PARAM(r))
+{
+}
 
 
-utils::fs::path migration_file(const int, const int);
-utils::fs::path schema_file(void);
-metadata initialize(utils::sqlite::database&);
-void backup_database(const utils::fs::path&, const int);
+/// Executes the operation.
+///
+/// \param store_path The path to the database store.
+/// \param hooks The hooks for this execution.
+///
+/// \returns A structure with all results computed by this driver.
+scan_results::result
+scan_results::drive(const fs::path& store_path, base_hooks& hooks)
+{
+    store::read_backend db = store::read_backend::open_ro(store_path);
+    store::read_transaction tx = db.start_read();
 
+    hooks.begin();
 
-}  // anonymous namespace
+    const engine::context context = tx.get_context();
+    hooks.got_context(context);
 
+    store::results_iterator iter = tx.get_results();
+    while (iter) {
+        hooks.got_result(iter);
+        ++iter;
+    }
 
-class transaction;
-
-
-/// Public interface to the database store.
-class backend {
-    struct impl;
-
-    /// Pointer to the shared internal implementation.
-    std::shared_ptr< impl > _pimpl;
-
-    friend class metadata;
-
-    backend(impl*);
-
-public:
-    ~backend(void);
-
-    static backend open_ro(const utils::fs::path&);
-    static backend open_rw(const utils::fs::path&);
-    void close(void);
-
-    utils::sqlite::database& database(void);
-    transaction start(void);
-};
-
-
-void migrate_schema(const utils::fs::path&);
-
-
-}  // namespace store
-
-#endif  // !defined(STORE_BACKEND_HPP)
+    result r;
+    hooks.end(r);
+    return r;
+}

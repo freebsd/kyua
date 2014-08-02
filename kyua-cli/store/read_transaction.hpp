@@ -26,27 +26,23 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file store/transaction.hpp
-/// Implementation of transactions on the backend.
+/// \file store/read_transaction.hpp
+/// Implementation of read-only transactions on the backend.
 
-#if !defined(STORE_TRANSACTION_HPP)
-#define STORE_TRANSACTION_HPP
+#if !defined(STORE_READ_TRANSACTION_HPP)
+#define STORE_READ_TRANSACTION_HPP
 
 extern "C" {
 #include <stdint.h>
 }
 
 #include <string>
-#include <utility>
 
 #include "engine/test_program.hpp"
 #include "utils/datetime.hpp"
-#include "utils/fs/path.hpp"
-#include "utils/optional.hpp"
 #include "utils/shared_ptr.hpp"
 
 namespace engine {
-class action;
 class context;
 class test_result;
 }  // namespace engine
@@ -54,14 +50,14 @@ class test_result;
 namespace store {
 
 
-class backend;
-class transaction;
+class read_backend;
+class read_transaction;
 
 
 namespace detail {
 
 
-engine::test_program_ptr get_test_program(backend&, const int64_t);
+engine::test_program_ptr get_test_program(read_backend&, const int64_t);
 
 
 }  // namespace detail
@@ -79,7 +75,7 @@ class results_iterator {
     /// Pointer to the shared internal implementation.
     std::shared_ptr< impl > _pimpl;
 
-    friend class transaction;
+    friend class read_transaction;
     results_iterator(std::shared_ptr< impl >);
 
 public:
@@ -98,43 +94,29 @@ public:
 };
 
 
-/// Representation of a transaction.
+/// Representation of a read-only transaction.
 ///
 /// Transactions are the entry place for high-level calls that access the
 /// database.
-class transaction {
+class read_transaction {
     struct impl;
 
     /// Pointer to the shared internal implementation.
     std::shared_ptr< impl > _pimpl;
 
-    friend class backend;
-    transaction(backend&);
+    friend class read_backend;
+    read_transaction(read_backend&);
 
 public:
-    ~transaction(void);
+    ~read_transaction(void);
 
-    void commit(void);
-    void rollback(void);
+    void finish(void);
 
-    engine::action get_action(const int64_t);
-    results_iterator get_action_results(const int64_t);
-    std::pair< int64_t, engine::action > get_latest_action(void);
-    engine::context get_context(const int64_t);
-
-    int64_t put_action(const engine::action&, const int64_t);
-    int64_t put_context(const engine::context&);
-    int64_t put_test_program(const engine::test_program&, const int64_t);
-    int64_t put_test_case(const engine::test_case&, const int64_t);
-    utils::optional< int64_t > put_test_case_file(const std::string&,
-                                                  const utils::fs::path&,
-                                                  const int64_t);
-    int64_t put_result(const engine::test_result&, const int64_t,
-                       const utils::datetime::timestamp&,
-                       const utils::datetime::timestamp&);
+    engine::context get_context(void);
+    results_iterator get_results(void);
 };
 
 
 }  // namespace store
 
-#endif  // !defined(STORE_TRANSACTION_HPP)
+#endif  // !defined(STORE_READ_TRANSACTION_HPP)

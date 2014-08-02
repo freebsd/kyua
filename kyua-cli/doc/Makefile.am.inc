@@ -106,6 +106,12 @@ EXTRA_DIST += doc/kyua-report.1.in
 doc/kyua-report.1: $(srcdir)/doc/kyua-report.1.in
 	name=kyua-report.1; $(BUILD_MANPAGE)
 
+man_MANS += doc/kyua-results-files.7
+CLEANFILES += doc/kyua-results-files.7
+EXTRA_DIST += doc/kyua-results-files.7.in
+doc/kyua-results-files.7: $(srcdir)/doc/kyua-results-files.7.in
+	name=kyua-results-files.7; $(BUILD_MANPAGE)
+
 man_MANS += doc/kyua-test.1
 CLEANFILES += doc/kyua-test.1
 EXTRA_DIST += doc/kyua-test.1.in

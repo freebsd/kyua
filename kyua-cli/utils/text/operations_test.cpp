@@ -299,6 +299,40 @@ ATF_TEST_CASE_BODY(split__several__delimiters)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(replace_all__empty);
+ATF_TEST_CASE_BODY(replace_all__empty)
+{
+    ATF_REQUIRE_EQ("", text::replace_all("", "search", "replacement"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(replace_all__none);
+ATF_TEST_CASE_BODY(replace_all__none)
+{
+    ATF_REQUIRE_EQ("string without matches",
+                   text::replace_all("string without matches",
+                                     "WITHOUT", "replacement"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(replace_all__one);
+ATF_TEST_CASE_BODY(replace_all__one)
+{
+    ATF_REQUIRE_EQ("string replacement matches",
+                   text::replace_all("string without matches",
+                                     "without", "replacement"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(replace_all__several);
+ATF_TEST_CASE_BODY(replace_all__several)
+{
+    ATF_REQUIRE_EQ("OO fOO bar OOf baz OO",
+                   text::replace_all("oo foo bar oof baz oo",
+                                     "oo", "OO"));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(to_type__ok__bool);
 ATF_TEST_CASE_BODY(to_type__ok__bool)
 {
@@ -383,6 +417,11 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, split__one);
     ATF_ADD_TEST_CASE(tcs, split__several__simple);
     ATF_ADD_TEST_CASE(tcs, split__several__delimiters);
+
+    ATF_ADD_TEST_CASE(tcs, replace_all__empty);
+    ATF_ADD_TEST_CASE(tcs, replace_all__none);
+    ATF_ADD_TEST_CASE(tcs, replace_all__one);
+    ATF_ADD_TEST_CASE(tcs, replace_all__several);
 
     ATF_ADD_TEST_CASE(tcs, to_type__ok__bool);
     ATF_ADD_TEST_CASE(tcs, to_type__ok__numerical);

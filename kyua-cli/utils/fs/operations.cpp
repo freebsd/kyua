@@ -42,6 +42,7 @@ extern "C" {
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
+#include <fstream>
 #include <sstream>
 #include <string>
 
@@ -84,6 +85,35 @@ safe_stat(const fs::path& path)
 
 
 }  // anonymous namespace
+
+
+/// Copies a file.
+///
+/// \param source The file to copy.
+/// \param target The destination of the new copy; must be a file name, not a
+///     directory.
+///
+/// \throw error If there is a problem copying the file.
+void
+fs::copy(const fs::path& source, const fs::path& target)
+{
+    std::ifstream input(source.c_str());
+    if (!input)
+        throw error(F("Cannot open copy source %s") % source);
+
+    std::ofstream output(target.c_str());
+    if (!output)
+        throw error(F("Cannot create copy target %s") % target);
+
+    char buffer[1024];
+    while (input.good()) {
+        input.read(buffer, sizeof(buffer));
+        if (input.good() || input.eof())
+            output.write(buffer, input.gcount());
+    }
+    if (!input.good() && !input.eof())
+        throw error(F("Error while reading input file %s") % source);
+}
 
 
 /// Queries the path to the current directory.
@@ -157,6 +187,17 @@ fs::find_in_path(const char* name)
         }
     }
     return none;
+}
+
+
+/// Checks if the given path is a directory or not.
+///
+/// \return True if the path is a directory; false otherwise.
+bool
+fs::is_directory(const fs::path& path)
+{
+    const struct ::stat sb = safe_stat(path);
+    return S_ISDIR(sb.st_mode);
 }
 
 
@@ -291,8 +332,7 @@ fs::rm_r(const fs::path& directory)
 
             const fs::path entry = directory / dp->d_name;
 
-            const struct ::stat sb = safe_stat(entry);
-            if (S_ISDIR(sb.st_mode)) {
+            if (fs::is_directory(entry)) {
                 LD(F("Descending into %s") % entry);
                 fs::rm_r(entry);
             } else {

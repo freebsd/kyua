@@ -35,7 +35,7 @@
 #include <ostream>
 #include <string>
 
-#include "engine/drivers/scan_action.hpp"
+#include "engine/drivers/scan_results.hpp"
 
 namespace utils {
 namespace datetime {
@@ -57,18 +57,18 @@ extern const char* const junit_metadata_suffix;
 std::string junit_metadata(const engine::metadata&);
 
 
-/// Hooks for the scan_action driver to generate a JUnit report.
-class report_junit_hooks : public engine::drivers::scan_action::base_hooks {
+/// Hooks for the scan_results driver to generate a JUnit report.
+class report_junit_hooks : public engine::drivers::scan_results::base_hooks {
     /// Stream to which to write the report.
     std::ostream& _output;
 
 public:
     report_junit_hooks(std::ostream&);
 
-    void got_action(const int64_t, const engine::action&);
+    void got_context(const engine::context&);
     void got_result(store::results_iterator&);
 
-    void end(const engine::drivers::scan_action::result&);
+    void end(const engine::drivers::scan_results::result&);
 };
 
 

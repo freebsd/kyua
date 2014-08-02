@@ -35,9 +35,12 @@
 #include <string>
 
 #include "cli/common.ipp"
-#include "store/backend.hpp"
+#include "store/exceptions.hpp"
+#include "store/layout.hpp"
+#include "store/read_backend.hpp"
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/fs/path.hpp"
 #include "utils/sanity.hpp"
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/exceptions.hpp"
@@ -45,6 +48,8 @@
 
 namespace cmdline = utils::cmdline;
 namespace config = utils::config;
+namespace fs = utils::fs;
+namespace layout = store::layout;
 namespace sqlite = utils::sqlite;
 
 using cli::cmd_db_exec;
@@ -143,10 +148,10 @@ cli::format_row(sqlite::statement& stmt)
 /// Default constructor for cmd_db_exec.
 cmd_db_exec::cmd_db_exec(void) : cli_command(
     "db-exec", "sql_statement", 1, -1,
-    "Executes an arbitrary SQL statement in the store database and prints "
+    "Executes an arbitrary SQL statement in a results file and prints "
     "the resulting table")
 {
-    add_option(store_option);
+    add_option(results_file_open_option);
     add_option(cmdline::bool_option("no-headers", "Do not show headers in the "
                                     "output table"));
 }
@@ -165,9 +170,13 @@ cmd_db_exec::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
                  const config::tree& UTILS_UNUSED_PARAM(user_config))
 {
     try {
-        store::backend backend = store::backend::open_rw(
-            cli::store_path(cmdline));
-        sqlite::statement stmt = backend.database().create_statement(
+        const fs::path results_file = layout::find_results(
+            results_file_open(cmdline));
+
+        // TODO(jmmv): Shouldn't be using store::detail here...
+        sqlite::database db = store::detail::open_and_setup(
+            results_file, sqlite::open_readwrite);
+        sqlite::statement stmt = db.create_statement(
             flatten_args(cmdline.arguments()));
 
         if (stmt.step()) {
@@ -181,6 +190,9 @@ cmd_db_exec::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
         return EXIT_SUCCESS;
     } catch (const sqlite::error& e) {
         cmdline::print_error(ui, F("SQLite error: %s") % e.what());
+        return EXIT_FAILURE;
+    } catch (const store::error& e) {
+        cmdline::print_error(ui, e.what());
         return EXIT_FAILURE;
     }
 }

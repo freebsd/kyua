@@ -26,34 +26,36 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/drivers/scan_action.hpp
-/// Driver to scan the contents of an action.
+/// \file engine/drivers/scan_results.hpp
+/// Driver to scan the contents of a results file.
 ///
-/// This driver module implements the logic to scan the contents of an stored
-/// action and to notify the presentation layer as soon as data becomes
-/// available.  This is to prevent reading all the data from the action at once,
+/// This driver module implements the logic to scan the contents of a results
+/// file and to notify the presentation layer as soon as data becomes
+/// available.  This is to prevent reading all the data from the file at once,
 /// which could take too much memory.
 
-#if !defined(ENGINE_DRIVERS_SCAN_ACTION_HPP)
-#define ENGINE_DRIVERS_SCAN_ACTION_HPP
+#if !defined(ENGINE_DRIVERS_SCAN_RESULTS_HPP)
+#define ENGINE_DRIVERS_SCAN_RESULTS_HPP
 
 extern "C" {
 #include <stdint.h>
 }
 
 #include "engine/test_program.hpp"
-#include "store/transaction.hpp"
 #include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
-#include "utils/optional.hpp"
+
+namespace store {
+class results_iterator;
+}  // namespace store
 
 namespace engine {
 
-class action;
+class context;
 class test_result;
 
 namespace drivers {
-namespace scan_action {
+namespace scan_results {
 
 
 /// Tuple containing the results of this driver.
@@ -73,12 +75,10 @@ public:
 
     virtual void begin(void);
 
-    /// Callback executed when an action is found.
+    /// Callback executed when the context is loaded.
     ///
-    /// \param action_id The identifier of the loaded action.
-    /// \param action The action loaded from the database.
-    virtual void got_action(const int64_t action_id,
-                            const engine::action& action) = 0;
+    /// \param context The context loaded from the database.
+    virtual void got_context(const engine::context& context) = 0;
 
     /// Callback executed when a test results is found.
     ///
@@ -91,12 +91,11 @@ public:
 };
 
 
-result drive(const utils::fs::path&, utils::optional< int64_t >,
-             base_hooks&);
+result drive(const utils::fs::path&, base_hooks&);
 
 
-}  // namespace scan_action
+}  // namespace scan_results
 }  // namespace drivers
 }  // namespace engine
 
-#endif  // !defined(ENGINE_DRIVERS_SCAN_ACTION_HPP)
+#endif  // !defined(ENGINE_DRIVERS_SCAN_RESULTS_HPP)
