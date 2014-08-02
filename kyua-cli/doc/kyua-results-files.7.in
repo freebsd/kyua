@@ -25,7 +25,7 @@
 .\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 .\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-.Dd July 31, 2014
+.Dd August 1, 2014
 .Dt KYUA-RESULTS-FILES 7
 .Os
 .Sh NAME
@@ -100,10 +100,10 @@ by underscores and
 is a timestamp with microsecond resolution.
 .Pp
 When using the default naming scheme, results files are stored in the
-.Pa ~/.kyua/results/
+.Pa ~/.kyua/store/
 subdirectory and each file holds a name of the form:
 .Bd -literal -offset indent
-~/.kyua/results/kyua.\*(Ltidentifier\*(Gt.db
+~/.kyua/store/results.\*(Ltidentifier\*(Gt.db
 .Ed
 .Pp
 .Ss Internals
@@ -113,7 +113,7 @@ files.  For details on the schema, please refer to the heavily commented SQL
 file.
 .Sh FILES
 .Bl -tag -width XXXX
-.It Pa ~/.kyua/results/
+.It Pa ~/.kyua/store/
 Default location for the results files.
 .It Pa __STOREDIR__/schema_v?.sql
 SQL schema to apply to new results files.
@@ -127,8 +127,8 @@ kyua test -k /usr/tests/Kyuafile
 .Pp
 The two executions will generate two files with names like these:
 .Bd -literal -offset indent
-~/.kyua/results/kyua.usr_tests.20140731-150500-196784.db
-~/.kyua/results/kyua.usr_tests.20140731-151730-997451.db
+~/.kyua/store/results.usr_tests.20140731-150500-196784.db
+~/.kyua/store/results.usr_tests.20140731-151730-997451.db
 .Ed
 .Pp
 Taking advantage of the default naming scheme, the following commands would all
@@ -148,7 +148,7 @@ explicitly-named files:
 .Bd -literal -offset indent
 kyua report --results-file=usr_tests.20140731-150500-196784
 kyua report \\
-    --results-file=~/.kyua/results/kyua.usr_tests.20140731-150500-196784.db
+    --results-file=~/.kyua/store/results.usr_tests.20140731-150500-196784.db
 .Ed
 .Sh SEE ALSO
 .Xr kyua 1

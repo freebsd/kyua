@@ -80,8 +80,8 @@ find_latest(const std::string& test_suite)
     }
     const utils::releaser< ::DIR, int > dir_releaser(dir, ::closedir);
 
-    const std::string pattern = F("^kyua.%s.[0-9]{8}-[0-9]{6}-[0-9]{6}.db$") %
-        test_suite;
+    const std::string pattern =
+        F("^results.%s.[0-9]{8}-[0-9]{6}-[0-9]{6}.db$") % test_suite;
     ::regex_t preg;
     if (::regcomp(&preg, pattern.c_str(), REG_EXTENDED) != 0)
         throw store::error("Failed to compile regular expression");
@@ -168,7 +168,7 @@ layout::find_results(const std::string& id)
                 return id_as_path.to_absolute();
         } else if (id.find('/') == std::string::npos) {
             const fs::path candidate =
-                query_store_dir() / (F("kyua.%s.db") % id);
+                query_store_dir() / (F("results.%s.db") % id);
             if (fs::exists(candidate)) {
                 return candidate;
             } else {
@@ -199,7 +199,7 @@ layout::new_db(const std::string& id, const fs::path& root)
     if (id == results_auto_create_name) {
         generated_id = new_id(test_suite_for_path(root),
                               datetime::timestamp::now());
-        path = query_store_dir() / (F("kyua.%s.db") % generated_id);
+        path = query_store_dir() / (F("results.%s.db") % generated_id);
         fs::mkdir_p(path.get().branch_path(), 0755);
     } else {
         path = fs::path(id);
@@ -222,7 +222,8 @@ layout::new_db_for_migration(const fs::path& root,
                              const datetime::timestamp& when)
 {
     const std::string generated_id = new_id(test_suite_for_path(root), when);
-    const fs::path path = query_store_dir() / (F("kyua.%s.db") % generated_id);
+    const fs::path path = query_store_dir() / (
+        F("results.%s.db") % generated_id);
     fs::mkdir_p(path.branch_path(), 0755);
     return path;
 }
@@ -241,9 +242,9 @@ layout::query_store_dir(void)
     if (home) {
         const fs::path& home_path = home.get();
         if (home_path.is_absolute())
-            return home_path / ".kyua/results";
+            return home_path / ".kyua/store";
         else
-            return home_path.to_absolute() / ".kyua/results";
+            return home_path.to_absolute() / ".kyua/store";
     } else {
         LW("HOME not defined; creating store database in current "
            "directory");

@@ -9,7 +9,7 @@ The internal architecture of Kyua to record the results of test suite
 runs has completely changed in this release.  Kyua no longer stores all
 the different test suite run results as different "actions" within the
 single store.db database.  Instead, Kyua now generates a separate
-results file inside ~/.kyua/results/ for every test suite run.
+results file inside ~/.kyua/store/ for every test suite run.
 
 Due to the complexity involved in the migration process and the little
 need for it, this is probably going to be the only release where the
@@ -23,7 +23,7 @@ Changes in more detail:
 
 * Switched to results files specific to their corresponding test suite
   run.  The unified store.db file is now gone: 'kyua test' creates a
-  new results file for every invocation under ~/.kyua/results/ and the
+  new results file for every invocation under ~/.kyua/store/ and the
   'kyua report*' commands are able to locate the latest file for a
   corresponding test suite automatically.
 

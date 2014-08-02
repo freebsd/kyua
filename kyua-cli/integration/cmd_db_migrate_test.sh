@@ -44,9 +44,9 @@ create_historical_db() {
 #
 # \param ... Files that contain SQL commands to be run.
 create_results_file() {
-    mkdir -p "${HOME}/.kyua/results"
-    local dbname="kyua.$(utils_test_suite_id)-20140718-173200-123456.db"
-    cat "${@}" | sqlite3 "${HOME}/.kyua/results/${dbname}"
+    mkdir -p "${HOME}/.kyua/store"
+    local dbname="results.$(utils_test_suite_id)-20140718-173200-123456.db"
+    cat "${@}" | sqlite3 "${HOME}/.kyua/store/${dbname}"
 }
 
 
@@ -63,11 +63,11 @@ upgrade__from_v1_body() {
     create_historical_db "${data}/schema_v1.sql" "${data}/testdata_v1.sql"
     atf_check -s exit:0 -o empty -e empty kyua db-migrate
     for f in \
-        "kyua.test_suite_root.20130108-111331-000000.db" \
-        "kyua.usr_tests.20130108-123832-000000.db" \
-        "kyua.usr_tests.20130108-112635-000000.db"
+        "results.test_suite_root.20130108-111331-000000.db" \
+        "results.usr_tests.20130108-123832-000000.db" \
+        "results.usr_tests.20130108-112635-000000.db"
     do
-        [ -f "${HOME}/.kyua/results/${f}" ] || atf_fail "Expected file ${f}" \
+        [ -f "${HOME}/.kyua/store/${f}" ] || atf_fail "Expected file ${f}" \
             "was not created"
     done
     [ ! -f "${HOME}/.kyua/store.db" ] || atf_fail "Historical database not" \
@@ -88,11 +88,11 @@ upgrade__from_v2_body() {
     create_historical_db "${data}/schema_v2.sql" "${data}/testdata_v2.sql"
     atf_check -s exit:0 -o empty -e empty kyua db-migrate
     for f in \
-        "kyua.test_suite_root.20130108-111331-000000.db" \
-        "kyua.usr_tests.20130108-123832-000000.db" \
-        "kyua.usr_tests.20130108-112635-000000.db"
+        "results.test_suite_root.20130108-111331-000000.db" \
+        "results.usr_tests.20130108-123832-000000.db" \
+        "results.usr_tests.20130108-112635-000000.db"
     do
-        [ -f "${HOME}/.kyua/results/${f}" ] || atf_fail "Expected file ${f}" \
+        [ -f "${HOME}/.kyua/store/${f}" ] || atf_fail "Expected file ${f}" \
             "was not created"
     done
     [ ! -f "${HOME}/.kyua/store.db" ] || atf_fail "Historical database not" \

@@ -75,7 +75,7 @@ utils_results_id() {
 #
 # \param path Optional path to use; if not given, use the cwd.
 utils_results_file() {
-    echo "${HOME}/.kyua/results/kyua.$(utils_results_id "${@}").db"
+    echo "${HOME}/.kyua/store/results.$(utils_results_id "${@}").db"
 }
 
 
