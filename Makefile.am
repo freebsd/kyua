@@ -28,9 +28,6 @@
 
 ACLOCAL_AMFLAGS = -I m4
 
-# TODO(jmmv): Merge tester's build with this package instead of recursing.
-SUBDIRS = testers
-
 CHECK_BOOTSTRAP_DEPS =
 CHECK_KYUA_DEPS =
 CHECK_LOCAL =
@@ -61,6 +58,7 @@ include examples/Makefile.am.inc
 include integration/Makefile.am.inc
 include misc/Makefile.am.inc
 include store/Makefile.am.inc
+include testers/Makefile.am.inc
 include utils/Makefile.am.inc
 
 bin_PROGRAMS = kyua
@@ -74,6 +72,7 @@ CHECK_ENVIRONMENT = KYUA_CONFDIR="/non-existent" \
                     KYUA_MISCDIR="$(abs_top_srcdir)/misc" \
                     KYUA_STOREDIR="$(abs_top_srcdir)/store" \
                     KYUA_STORETESTDATADIR="$(abs_top_srcdir)/store" \
+                    KYUA_TESTERSDIR="$(abs_top_builddir)/testers" \
                     PATH="$(abs_top_builddir):$${PATH}"
 INSTALLCHECK_ENVIRONMENT = KYUA_CONFDIR="/non-existent" \
                            PATH="$(prefix)/bin:$${PATH}"

@@ -54,7 +54,7 @@
 
 
 /// Path to the installed testers.
-static const char* default_testersdir = TESTERSDIR;
+static const char* default_testersdir = KYUA_TESTERSDIR;
 
 
 /// Returns the name of the current tester.
@@ -97,7 +97,7 @@ require_coredump_ability(void)
 static char*
 tester_path(void)
 {
-    const char* testersdir = getenv("TESTERSDIR");
+    const char* testersdir = getenv("KYUA_TESTERSDIR");
     if (testersdir == NULL)
         testersdir = default_testersdir;
     const char* name = TESTER_BIN;

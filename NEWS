@@ -8,8 +8,8 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 * Dropped the 'kyua-atf-compat' package.
 
 
-Changes in version 0.9
-======================
+Changes in kyua-cli version 0.9
+===============================
 
 Experimental version released on August 8th, 2014.
 
@@ -52,8 +52,25 @@ Changes in more detail:
   files.
 
 
-Changes in version 0.8
-======================
+Changes in kyua-testers version 0.3
+===================================
+
+Experimental version released on August 8th, 2014.
+
+* Made the testers set a "sanitized" value for the HOME environment
+  variable where, for example, consecutive and trailing slashes have
+  been cleared.  Mac OS X has a tendency to append a trailing slash to
+  the value of TMPDIR, which can cause third-party tests to fail if they
+  compare ${HOME} with $(pwd).
+
+* Issues 85, 86, 90 and 92: Made the TAP parser more complete: mark test
+  cases reported as TODO or SKIP as passed; handle skip plans; ignore
+  lines that look like "ok" and "not ok" but aren't results; and handle
+  test programs that report a pass but exit with a non-zero code.
+
+
+Changes in kyua-cli version 0.8
+===============================
 
 Experimental version released on December 7th, 2013.
 
@@ -69,8 +86,24 @@ Experimental version released on December 7th, 2013.
   the addition of new testers or the selective installation of them.
 
 
-Changes in version 0.7
-======================
+Changes in kyua-testers version 0.2
+===================================
+
+Experimental version released on December 7th, 2013.
+
+* Issue 74: Added the kyua-tap-tester, a new backend to interact with
+  test programs that comply with the Test Anything Protocol.
+
+* Issue 69: Cope with the lack of AM_PROG_AR in configure.ac, which
+  first appeared in Automake 1.11.2.  Fixes a problem in Ubuntu 10.04
+  LTS, which appears stuck in 1.11.1.
+
+* Issue 24: Improve test case isolation by confining the tests to their
+  own session instead of just to their own process group.
+
+
+Changes in kyua-cli version 0.7
+===============================
 
 Experimental version released on October 18th, 2013.
 
@@ -90,8 +123,8 @@ Experimental version released on October 18th, 2013.
   LTS, which appears stuck in 1.11.1.
 
 
-Changes in version 0.6
-======================
+Changes in kyua-cli version 0.6
+===============================
 
 Experimental version released on February 22nd, 2013.
 
@@ -155,8 +188,26 @@ Experimental version released on February 22nd, 2013.
   executables.
 
 
-Changes in version 0.5
-======================
+Changes in kyua-testers version 0.1
+===================================
+
+Experimental version released on February 19th, 2013.
+
+This is the first public release of the kyua-testers package.
+
+The goal of this first release is to adopt all the test case execution
+code of kyua-cli 0.5 and ship it as a collection of independent tester
+binaries.  The kyua-cli package will rely on these binaries to run the
+tests, which provides better modularity and simplicity to the
+architecture of Kyua.
+
+The code in this package is all C as opposed to the current C++ codebase
+of kyua-cli, which means that the overall build times of Kyua are now
+reduced.
+
+
+Changes in kyua-cli version 0.5
+===============================
 
 Experimental version released on July 10th, 2012.
 
@@ -179,8 +230,8 @@ Experimental version released on July 10th, 2012.
   from the repository.
 
 
-Changes in version 0.4
-======================
+Changes in kyua-cli version 0.4
+===============================
 
 Experimental version released on June 6th, 2012.
 
@@ -222,8 +273,8 @@ Experimental version released on June 6th, 2012.
   such tree.
 
 
-Changes in version 0.3
-======================
+Changes in kyua-cli version 0.3
+===============================
 
 Experimental version released on February 24th, 2012.
 
@@ -258,8 +309,8 @@ Experimental version released on February 24th, 2012.
   failing test.
 
 
-Changes in version 0.2
-======================
+Changes in kyua-cli version 0.2
+===============================
 
 Experimental version released on August 24th, 2011.
 
@@ -324,8 +375,8 @@ Without further ado, here comes the itemized list of changes:
   and Ubuntu 10.04.1 LTS.  (Issues 20, 21, 26.)
 
 
-Changes in version 0.1
-======================
+Changes in kyua-cli version 0.1
+===============================
 
 Experimental version released on June 23rd, 2011.
 

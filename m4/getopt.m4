@@ -27,6 +27,57 @@ dnl (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 dnl OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+dnl Checks if getopt(3) supports a + sign to enforce POSIX correctness.
+dnl
+dnl In the GNU implementation of getopt(3), we need to pass a + sign at
+dnl the beginning of the options string to request POSIX behavior.
+dnl
+dnl Defines HAVE_GETOPT_GNU if a + sign is supported.
+AC_DEFUN([_KYUA_GETOPT_GNU], [
+    AC_CACHE_CHECK(
+        [whether getopt allows a + sign for POSIX behavior optreset],
+        [kyua_cv_getopt_gnu], [
+        AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>], [
+    int argc = 4;
+    char* argv@<:@5@:>@ = {
+        strdup("conftest"),
+        strdup("-+"),
+        strdup("-a"),
+        strdup("bar"),
+        NULL
+    };
+    int ch;
+    int seen_a = 0, seen_plus = 0;
+
+    while ((ch = getopt(argc, argv, "+a:")) != -1) {
+        switch (ch) {
+        case 'a':
+            seen_a = 1;
+            break;
+
+        case '+':
+            seen_plus = 1;
+            break;
+
+        case '?':
+        default:
+            ;
+        }
+    }
+
+    return (seen_a && !seen_plus) ? EXIT_SUCCESS : EXIT_FAILURE;
+])],
+        [kyua_cv_getopt_gnu=yes],
+        [kyua_cv_getopt_gnu=no])
+    ])
+    if test "${kyua_cv_getopt_gnu}" = yes; then
+        AC_DEFINE([HAVE_GETOPT_GNU], [1],
+                   [Define to 1 if getopt allows a + sign for POSIX behavior])
+    fi
+])
+
 dnl Checks if optreset exists to reset the processing of getopt(3) options.
 dnl
 dnl getopt(3) has an optreset global variable to reset internal state
@@ -156,6 +207,7 @@ main(void)
 
 dnl Wrapper macro to detect all getopt(3) necessary features.
 AC_DEFUN([KYUA_GETOPT], [
+    _KYUA_GETOPT_GNU
     _KYUA_GETOPT_OPTIND_RESET_VALUE
     _KYUA_GETOPT_WITH_OPTRESET
 ])

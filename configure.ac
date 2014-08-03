@@ -34,7 +34,7 @@ AC_PREREQ([2.65])
 
 AC_COPYRIGHT([Copyright 2010 Google Inc.])
 AC_CONFIG_AUX_DIR([admin])
-AC_CONFIG_FILES([Doxyfile Makefile utils/defs.hpp])
+AC_CONFIG_FILES([Doxyfile Makefile testers/defs.h utils/defs.hpp])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([main.cpp])
@@ -44,14 +44,18 @@ AC_CONFIG_TESTDIR([bootstrap])
 AM_INIT_AUTOMAKE([1.9 check-news foreign subdir-objects -Wall])
 
 
+AC_LANG([C])
+AC_PROG_CC
 AC_LANG([C++])
 AC_PROG_CXX
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 KYUA_REQUIRE_CXX
-KYUA_DEVELOPER_MODE([C++])
+KYUA_DEVELOPER_MODE([C,C++])
+KYUA_ATTRIBUTE_FORMAT_PRINTF
 KYUA_ATTRIBUTE_NORETURN
 KYUA_ATTRIBUTE_PURE
 KYUA_ATTRIBUTE_UNUSED
+KYUA_FS_MODULE
 KYUA_GETOPT
 KYUA_LAST_SIGNO
 KYUA_MEMORY
@@ -75,6 +79,9 @@ AC_PROG_RANLIB
 m4_ifndef([PKG_CHECK_MODULES],
     [m4_fatal([Cannot find pkg.m4; see the INSTALL document for help])])
 
+m4_ifndef([ATF_CHECK_C],
+    [m4_fatal([Cannot find atf-c.m4; see the INSTALL document for help])])
+ATF_CHECK_C([>= 0.17])
 m4_ifndef([ATF_CHECK_CXX],
     [m4_fatal([Cannot find atf-c++.m4; see the INSTALL document for help])])
 ATF_CHECK_CXX([>= 0.17])
@@ -85,11 +92,6 @@ m4_ifndef([ATF_ARG_WITH],
     [m4_fatal([Cannot find atf-common.m4; see the INSTALL document for help])])
 ATF_ARG_WITH
 
-PKG_PROG_PKG_CONFIG
-PKG_CHECK_EXISTS([kyua-testers],
-    [testersdir=$("${PKG_CONFIG}" --variable=testersdir kyua-testers)],
-    [AC_MSG_ERROR([kyua-testers >= 0.2 required])])
-
 PKG_CHECK_MODULES([LUTOK], [lutok >= 0.4],
                   [],
                   AC_MSG_ERROR([lutok (0.4 or newer) is required]))
@@ -97,6 +99,8 @@ PKG_CHECK_MODULES([SQLITE3], [sqlite3 >= 3.6.22],
                   [],
                   AC_MSG_ERROR([sqlite3 (3.6.22 or newer) is required]))
 KYUA_DOXYGEN
+AC_PATH_PROG([GDB], [gdb])
+test -n "${GDB}" || GDB=gdb
 AC_PATH_PROG([GIT], [git])
 
 
@@ -124,12 +128,26 @@ else
 fi
 
 
+AC_ARG_VAR([KYUA_TMPDIR],
+           [Path to the directory in which to place work directories])
+case "${KYUA_TMPDIR:-unset}" in
+    unset)
+        KYUA_TMPDIR=/tmp
+        ;;
+    /*)
+        ;;
+    *)
+        AC_MSG_ERROR([KYUA_TMPDIR must be an absolute path])
+        ;;
+esac
+
+
 AC_SUBST(examplesdir, \${pkgdatadir}/examples)
 AC_SUBST(luadir, \${pkgdatadir}/lua)
 AC_SUBST(miscdir, \${pkgdatadir}/misc)
 AC_SUBST(pkgtestsdir, \${testsdir}/kyua-cli)
 AC_SUBST(storedir, \${pkgdatadir}/store)
-AC_SUBST(testersdir)  dnl Defined above by the pkg-config check.
+AC_SUBST(testersdir, \${libexecdir})
 AC_SUBST(testsdir, \${exec_prefix}/tests)
 
 
@@ -143,10 +161,6 @@ else
 fi
 AM_CONDITIONAL(TARGET_SRCDIR_EMPTY, [test -z "${target_srcdir}"])
 AC_SUBST([target_srcdir])
-
-
-dnl TODO(jmmv): Merge tester's build with this package instead of recursing.
-AC_CONFIG_SUBDIRS([testers])
 
 
 AC_OUTPUT
