@@ -26,8 +26,6 @@ Formal releases for source files are available for download from GitHub.
   August 8th, 2014.  *Required*.
 * [kyua-cli 0.9](../../releases/tag/kyua-cli-0.9), released on August
   8th, 2014.  *Required*.
-* [kyua-atf-compat 0.2](../../releases/tag/kyua-atf-compat-0.2), released
-  on December 28th, 2013.  *Optional*.
 
 ## Installation
 
@@ -61,9 +59,6 @@ reverse-dependency order:
 
 * `kyua-cli`: Runtime and reporting engine, including the command-line
   interface to Kyua.
-
-* `kyua-atf-compat`: Utilities to ease the transition from ATF to Kyua.
-  This is an optional installation.
 
 ## Support
 

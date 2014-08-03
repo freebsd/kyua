@@ -25,8 +25,6 @@ sorted by reverse dependency order:
 * kyua-cli: Runtime and reporting engine, including the command-line
   interface to Kyua.
 
-* kyua-atf-compat: Utilities to ease the transition from ATF to Kyua.
-
 Each module is released and published separately and, for that reason,
 you will find self-contained configure and Makefile scripts within each
 of the subdirectories.
