@@ -28,6 +28,9 @@
 
 ACLOCAL_AMFLAGS = -I m4
 
+# TODO(jmmv): Merge tester's build with this package instead of recursing.
+SUBDIRS = testers
+
 CHECK_BOOTSTRAP_DEPS =
 CHECK_KYUA_DEPS =
 CHECK_LOCAL =

@@ -145,4 +145,8 @@ AM_CONDITIONAL(TARGET_SRCDIR_EMPTY, [test -z "${target_srcdir}"])
 AC_SUBST([target_srcdir])
 
 
+dnl TODO(jmmv): Merge tester's build with this package instead of recursing.
+AC_CONFIG_SUBDIRS([testers])
+
+
 AC_OUTPUT

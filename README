@@ -1,6 +1,3 @@
-Introduction
-============
-
 Kyua is a testing framework for both developers and users.  Kyua differs
 from other testing frameworks in that it implements a generic runtime
 and reporting engine that is able to execute test programs regardless of
@@ -9,22 +6,18 @@ they use.  Additionally, Kyua puts the user experience before anything
 else by allowing end users (not only developers) to run the tests
 themselves.
 
+This module, kyua-cli, provides the command-line interface to the Kyua
+runtime system.  The major purpose of this tool is to run test cases and
+generate unified reports for their results.
 
-Modules
-=======
+For further information on the contents of this distribution file,
+please refer to the following other documents:
 
-This directory contains the top-level source tree of the Kyua project
-and holds the collection of all modules that form Kyua.
+* AUTHORS: List of authors and contributors to this project.
+* COPYING: License information.
+* INSTALL: Compilation and installation instructions.
+* NEWS: List of major changes between formal releases.
 
-The following is a brief description of the modules you will find here
-sorted by reverse dependency order:
+For general project information, please visit:
 
-* kyua-testers: Scriptable interfaces to interact with test programs
-  of various kinds.
-
-* kyua-cli: Runtime and reporting engine, including the command-line
-  interface to Kyua.
-
-Each module is released and published separately and, for that reason,
-you will find self-contained configure and Makefile scripts within each
-of the subdirectories.
+    https://github.com/jmmv/kyua/

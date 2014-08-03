@@ -42,23 +42,11 @@ wherever available:
 
 Should you want to build and install Kyua from the source tree provided
 here, follow the instructions in the
-[INSTALL file](kyua-cli/INSTALL).
+[INSTALL file](INSTALL).
 
 You should also install the ATF libraries to assist in the development of
 test programs.  To that end, see the
 [ATF project page](https://github.com/jmmv/atf/).
-
-## Source tree
-
-This source tree contains all the modules that form the Kyua project.
-These modules match the list of downloads above, and are, in
-reverse-dependency order:
-
-* `kyua-testers`: Scriptable interfaces to interact with test programs
-  of various kinds.
-
-* `kyua-cli`: Runtime and reporting engine, including the command-line
-  interface to Kyua.
 
 ## Support
 

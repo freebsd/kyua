@@ -3,7 +3,9 @@ Changes in version 0.10
 
 STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 
-* No changes recorded.
+* Merged 'kyua-cli' and 'kyua-testers' into a single 'kyua' package.
+
+* Dropped the 'kyua-atf-compat' package.
 
 
 Changes in version 0.9

@@ -83,6 +83,8 @@ find . -name .gdb_history | xargs rm -rf
 find . -name .libs | xargs rm -rf
 find . -name .tmp | xargs rm -rf
 
+cd testers && ./admin/clean-all.sh
+
 # Show remaining files.
 if [ -n "${GIT}" ]; then
     echo ">>> untracked and ignored files"

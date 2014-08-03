@@ -29,33 +29,19 @@
 
 set -e -x
 
-for module in kyua-testers kyua-cli; do
-    cd "${module}"
+if [ -d /usr/local/share/aclocal ]; then
+    autoreconf -isv -I/usr/local/share/aclocal
+else
+    autoreconf -isv
+fi
+./configure
 
-    if [ -d /usr/local/share/aclocal ]; then
-        autoreconf -isv -I/usr/local/share/aclocal
-    else
-        autoreconf -isv
-    fi
-    ./configure
-
-    f=
-    f="${f} CPPFLAGS='-I/usr/local/include'"
-    f="${f} LDFLAGS='-L/usr/local/lib -Wl,-R/usr/local/lib'"
-    f="${f} PKG_CONFIG_PATH='/usr/local/lib/pkgconfig'"
-
-    # Because we are running the builds of various modules within the same
-    # environment, it's possible for the results of the kyua-testers build
-    # to interfere with the results of kyua-cli (e.g. when the database
-    # schema is updated and a manual db-migrate is required).
-    # For simplicity reasons, just nuke everything.
-    sudo rm -rf ~/.kyua /root/.kyua
-
-    if [ "${AS_ROOT:-no}" = yes ]; then
-        sudo make distcheck DISTCHECK_CONFIGURE_FLAGS="${f}"
-    else
-        make distcheck DISTCHECK_CONFIGURE_FLAGS="${f}"
-    fi
-
-    cd -
-done
+f=
+f="${f} CPPFLAGS='-I/usr/local/include'"
+f="${f} LDFLAGS='-L/usr/local/lib -Wl,-R/usr/local/lib'"
+f="${f} PKG_CONFIG_PATH='/usr/local/lib/pkgconfig'"
+if [ "${AS_ROOT:-no}" = yes ]; then
+    sudo make distcheck DISTCHECK_CONFIGURE_FLAGS="${f}"
+else
+    make distcheck DISTCHECK_CONFIGURE_FLAGS="${f}"
+fi
