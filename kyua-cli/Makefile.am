@@ -67,13 +67,12 @@ kyua_LDADD = $(CLI_LIBS) $(ENGINE_LIBS) $(UTILS_LIBS)
 
 CHECK_ENVIRONMENT = KYUA_CONFDIR="/non-existent" \
                     KYUA_DOCDIR="$(abs_top_srcdir)" \
+                    KYUA_EXAMPLESDIR="$(abs_top_srcdir)/examples" \
                     KYUA_MISCDIR="$(abs_top_srcdir)/misc" \
                     KYUA_STOREDIR="$(abs_top_srcdir)/store" \
                     PATH="$(abs_top_builddir):$${PATH}"
-CHECK_VARS = -v test_suites.kyua.examplesdir="$(abs_top_srcdir)/examples"
 INSTALLCHECK_ENVIRONMENT = KYUA_CONFDIR="/non-existent" \
                            PATH="$(prefix)/bin:$${PATH}"
-INSTALLCHECK_VARS =
 
 # Generate local-kyua, a wrapper shell script to run the just-built 'kyua'
 # binary by pointing it to the possibly not-yet-installed data files in the
@@ -83,7 +82,7 @@ CLEANFILES += local-kyua local-kyua.tmp
 local-kyua: Makefile
 	echo '#!/bin/sh' >local-kyua.tmp
 	echo 'env $(CHECK_ENVIRONMENT) $(TESTS_ENVIRONMENT)' \
-	    '"$(abs_top_builddir)/kyua" --config=none $(CHECK_VARS) "$${@}"' \
+	    '"$(abs_top_builddir)/kyua" --config=none "$${@}"' \
 	    >>local-kyua.tmp
 	chmod +x local-kyua.tmp
 	mv -f local-kyua.tmp local-kyua
@@ -99,7 +98,7 @@ installcheck-local: installcheck-kyua
 PHONY_TARGETS += installcheck-kyua
 installcheck-kyua:
 	cd $(pkgtestsdir) && $(INSTALLCHECK_ENVIRONMENT) $(TESTS_ENVIRONMENT) \
-	    kyua --config=none $(INSTALLCHECK_VARS) test
+	    kyua --config=none test
 else
 dist-hook: forbid-dist
 PHONY_TARGETS += forbid-dist

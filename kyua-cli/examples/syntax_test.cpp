@@ -35,8 +35,10 @@ extern "C" {
 #include "engine/config.hpp"
 #include "engine/kyuafile.hpp"
 #include "utils/config/tree.ipp"
+#include "utils/env.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/logging/operations.hpp"
 #include "utils/optional.ipp"
 #include "utils/passwd.hpp"
 
@@ -52,20 +54,16 @@ namespace {
 
 /// Gets the path to an example file.
 ///
-/// \param tc The caller test case.  Needed to obtain its 'examplesdir'
-///     property, if any.
 /// \param name The name of the example file.
 ///
 /// \return A path to the desired example file.  This can either be inside the
 /// source tree before installing Kyua or in the target installation directory
 /// after installation.
 static fs::path
-example_file(const atf::tests::tc* tc, const char* name)
+example_file(const char* name)
 {
-    const fs::path examplesdir =
-        tc->has_config_var("examplesdir") ?
-        fs::path(tc->get_config_var("examplesdir")) :
-        fs::path(KYUA_EXAMPLESDIR);
+    const fs::path examplesdir(utils::getenv_with_default(
+        "KYUA_EXAMPLESDIR", KYUA_EXAMPLESDIR));
     return examplesdir / name;
 }
 
@@ -76,7 +74,8 @@ example_file(const atf::tests::tc* tc, const char* name)
 ATF_TEST_CASE(kyua_conf);
 ATF_TEST_CASE_HEAD(kyua_conf)
 {
-    set_md_var("require.files", example_file(this, "kyua.conf").str());
+    utils::logging::set_inmemory();
+    set_md_var("require.files", example_file("kyua.conf").str());
 }
 ATF_TEST_CASE_BODY(kyua_conf)
 {
@@ -85,7 +84,7 @@ ATF_TEST_CASE_BODY(kyua_conf)
     passwd::set_mock_users_for_testing(users);
 
     const config::tree user_config = engine::load_config(
-        example_file(this, "kyua.conf"));
+        example_file("kyua.conf"));
 
     ATF_REQUIRE_EQ(
         "x86_64",
@@ -111,12 +110,13 @@ ATF_TEST_CASE_BODY(kyua_conf)
 ATF_TEST_CASE(kyuafile_top__no_matches);
 ATF_TEST_CASE_HEAD(kyuafile_top__no_matches)
 {
-    set_md_var("require.files", example_file(this, "Kyuafile.top").str());
+    utils::logging::set_inmemory();
+    set_md_var("require.files", example_file("Kyuafile.top").str());
 }
 ATF_TEST_CASE_BODY(kyuafile_top__no_matches)
 {
     fs::mkdir(fs::path("root"), 0755);
-    const fs::path source_path = example_file(this, "Kyuafile.top");
+    const fs::path source_path = example_file("Kyuafile.top");
     ATF_REQUIRE(::symlink(source_path.c_str(), "root/Kyuafile") != -1);
 
     atf::utils::create_file("root/file", "");
@@ -133,12 +133,13 @@ ATF_TEST_CASE_BODY(kyuafile_top__no_matches)
 ATF_TEST_CASE(kyuafile_top__some_matches);
 ATF_TEST_CASE_HEAD(kyuafile_top__some_matches)
 {
-    set_md_var("require.files", example_file(this, "Kyuafile.top").str());
+    utils::logging::set_inmemory();
+    set_md_var("require.files", example_file("Kyuafile.top").str());
 }
 ATF_TEST_CASE_BODY(kyuafile_top__some_matches)
 {
     fs::mkdir(fs::path("root"), 0755);
-    const fs::path source_path = example_file(this, "Kyuafile.top");
+    const fs::path source_path = example_file("Kyuafile.top");
     ATF_REQUIRE(::symlink(source_path.c_str(), "root/Kyuafile") != -1);
 
     atf::utils::create_file("root/file", "");
