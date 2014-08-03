@@ -13,3 +13,7 @@ env:
 
 script:
     - ./admin/travis-build.sh
+
+notifications:
+    email:
+        - kyua-log@googlegroups.com
