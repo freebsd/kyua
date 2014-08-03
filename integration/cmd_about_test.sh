@@ -38,7 +38,7 @@
 check_all() {
     local file="${1}"; shift
 
-    grep -E 'kyua-cli.*[0-9]+\.[0-9]+' "${file}" || \
+    grep -E 'kyua .*[0-9]+\.[0-9]+' "${file}" || \
         atf_fail 'No version reported'
     grep 'Copyright' "${file}" || atf_fail 'No license reported'
     grep '<.*@.*>' "${file}" || atf_fail 'No authors reported'
@@ -112,7 +112,7 @@ topic__version_body() {
     local lines="$(wc -l stdout | awk '{ print $1 }')"
     [ "${lines}" -eq 1 ] || atf_fail "Version query returned more than one line"
 
-    grep -E '^kyua-cli (.*) [0-9]+\.[0-9]+$' stdout || \
+    grep -E '^kyua (.*) [0-9]+\.[0-9]+$' stdout || \
         atf_fail "Invalid version message"
 }
 

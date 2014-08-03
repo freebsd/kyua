@@ -26,8 +26,7 @@ dnl THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 dnl (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 dnl OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-AC_INIT([Kyua - Command line interface], [0.10],
-        [kyua-discuss@googlegroups.com], [kyua-cli],
+AC_INIT([Kyua], [0.10], [kyua-discuss@googlegroups.com], [kyua],
         [https://github.com/jmmv/kyua/])
 AC_PREREQ([2.65])
 
@@ -145,7 +144,7 @@ esac
 AC_SUBST(examplesdir, \${pkgdatadir}/examples)
 AC_SUBST(luadir, \${pkgdatadir}/lua)
 AC_SUBST(miscdir, \${pkgdatadir}/misc)
-AC_SUBST(pkgtestsdir, \${testsdir}/kyua-cli)
+AC_SUBST(pkgtestsdir, \${testsdir}/kyua)
 AC_SUBST(storedir, \${pkgdatadir}/store)
 AC_SUBST(testersdir, \${libexecdir})
 AC_SUBST(testsdir, \${exec_prefix}/tests)

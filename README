@@ -6,10 +6,6 @@ they use.  Additionally, Kyua puts the user experience before anything
 else by allowing end users (not only developers) to run the tests
 themselves.
 
-This module, kyua-cli, provides the command-line interface to the Kyua
-runtime system.  The major purpose of this tool is to run test cases and
-generate unified reports for their results.
-
 For further information on the contents of this distribution file,
 please refer to the following other documents:
 

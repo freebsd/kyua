@@ -108,7 +108,7 @@ signal_handler(const int signo)
         // guarantee that they also terminate.  For that to happen, we'd need to
         // SIGKILL them.
         //
-        // *However*, because we use this code to invoke the kyua-testers only,
+        // *However*, because we use this code to invoke the testers only,
         // and because we assume that such processes are well-behaved and
         // terminate according to our expectations, we do it this way, which
         // allows the testers to know which specific signal made them terminate.

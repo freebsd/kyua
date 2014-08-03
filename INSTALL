@@ -223,7 +223,7 @@ Post-installation steps
 Copy the Kyuafile.top file installed in the examples directory to the
 root of your tests hierarchy and name it Kyuafile.  For example:
 
-    # cp /usr/local/share/kyua-cli/examples/Kyuafile.top \
+    # cp /usr/local/share/kyua/examples/Kyuafile.top \
          /usr/localtests/Kyuafile
 
 This will allow you to simply go into /usr/tests and run the tests from
@@ -237,7 +237,7 @@ Lastly, after a successful installation, you should periodically run the
 tests from the final location to ensure things remain stable.  Do so as
 follows:
 
-    $ cd /usr/local/kyua-cli && kyua test
+    $ cd /usr/local/kyua && kyua test
 
 And if you see any tests fail, do not hesitate to report them in:
 
