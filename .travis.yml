@@ -7,4 +7,9 @@ compiler:
 before_install:
     - ./admin/travis-install-deps.sh
 
-script: autoreconf -i -s && ./configure && make distcheck
+env:
+    - AS_ROOT=no
+    - AS_ROOT=yes
+
+script:
+    - ./admin/travis-build.sh
