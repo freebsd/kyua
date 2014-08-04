@@ -29,7 +29,7 @@
 
 # Location of installed documents.  Used to validate the output of the about
 # messages against the golden files.
-KYUA_DOCDIR='__KYUA_DOCDIR__'
+: "${KYUA_DOCDIR:=__KYUA_DOCDIR__}"
 
 
 # Common code to validate the output of all about information.

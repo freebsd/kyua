@@ -28,7 +28,7 @@
 
 
 # Location of installed schema files.
-KYUA_STOREDIR='__KYUA_STOREDIR__'
+: "${KYUA_STOREDIR:=__KYUA_STOREDIR__}"
 
 
 # Creates an empty old-style action database.
@@ -54,7 +54,11 @@ utils_test_case upgrade__from_v1
 upgrade__from_v1_head() {
     data=$(atf_get_srcdir)/../store
 
-    atf_set require.files "${data}/schema_v1.sql ${data}/testdata_v1.sql"
+    atf_set require.files \
+        "${data}/schema_v1.sql" \
+        "${data}/testdata_v1.sql" \
+        "${KYUA_STOREDIR}/migrate_v1_v2.sql" \
+        "${KYUA_STOREDIR}/migrate_v2_v3.sql"
     atf_set require.progs "sqlite3"
 }
 upgrade__from_v1_body() {
@@ -79,7 +83,10 @@ utils_test_case upgrade__from_v2
 upgrade__from_v2_head() {
     data=$(atf_get_srcdir)/../store
 
-    atf_set require.files "${data}/schema_v2.sql ${data}/testdata_v2.sql"
+    atf_set require.files \
+        "${data}/schema_v2.sql" \
+        "${data}/testdata_v2.sql" \
+        "${KYUA_STOREDIR}/migrate_v2_v3.sql"
     atf_set require.progs "sqlite3"
 }
 upgrade__from_v2_body() {
@@ -101,7 +108,7 @@ upgrade__from_v2_body() {
 
 
 utils_test_case already_up_to_date
-already_up_to_date_body() {
+already_up_to_date_head() {
     atf_set require.files "${KYUA_STOREDIR}/schema_v3.sql"
     atf_set require.progs "sqlite3"
 }
