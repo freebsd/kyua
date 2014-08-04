@@ -34,6 +34,8 @@ extern "C" {
 }
 
 #include <algorithm>
+#include <cerrno>
+#include <cstring>
 
 #include "store/exceptions.hpp"
 #include "utils/datetime.hpp"
@@ -73,7 +75,7 @@ find_latest(const std::string& test_suite)
     if (dir == NULL) {
         const int original_errno = errno;
         LW(F("Failed to open store dir %s: %s") % store_dir %
-           strerror(original_errno));
+           std::strerror(original_errno));
         throw store::error(
             F("No previous results file found for test suite %s")
             % test_suite);

@@ -49,6 +49,7 @@
 #include "utils/stream.hpp"
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/exceptions.hpp"
+#include "utils/sqlite/statement.ipp"
 #include "utils/text/operations.hpp"
 
 namespace datetime = utils::datetime;
