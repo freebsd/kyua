@@ -344,7 +344,7 @@ setup_child(const kyua_run_params_t* run_params)
             err(exit_setup_child, "setgid(%ld) failed; uid is %ld and gid "
                 "is %ld", (long int)run_params->unprivileged_group,
                 (long int)getuid(), (long int)getgid());
-	if (getuid() != 0) {
+        if (getuid() != 0) {
             gid_t groups[1];
             groups[0] = run_params->unprivileged_group;
             if (setgroups(1, groups) == -1) {
