@@ -30,7 +30,7 @@
 set -e -x
 
 sudo apt-get update -qq
-sudo apt-get install -y doxygen liblua5.2-0 liblua5.2-dev \
+sudo apt-get install -y doxygen gdb liblua5.2-0 liblua5.2-dev \
     libsqlite3-0 libsqlite3-dev pkg-config sqlite3
 
 install_from_github() {

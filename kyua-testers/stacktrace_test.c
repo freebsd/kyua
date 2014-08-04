@@ -218,7 +218,11 @@ ATF_TC_BODY(find_core__not_found, tc)
 }
 
 
-ATF_TC_WITHOUT_HEAD(dump__integration);
+ATF_TC(dump__integration);
+ATF_TC_HEAD(dump__integration, tc)
+{
+    atf_tc_set_md_var(tc, "require.progs", "%s", kyua_stacktrace_gdb);
+}
 ATF_TC_BODY(dump__integration, tc)
 {
     do_dump(tc, "dir", "short", "stacktrace", 10);
