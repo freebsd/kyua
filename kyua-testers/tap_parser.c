@@ -245,7 +245,9 @@ kyua_tap_try_parse_plan(const char* line, kyua_tap_summary_t* summary)
         goto end;
     }
 
-    const char* skip_start = strcasestr(line, "SKIP");
+    const char* skip_start = strstr(line, "SKIP");
+    if (skip_start == NULL)
+        skip_start = strstr(line, "skip");
     if (skip_start != NULL) {
         const char *reason = skip_start + strlen("SKIP");
         while (*reason != '\0' && isspace(*reason))
