@@ -231,10 +231,11 @@ ATF_TC_BODY(fprintf, tc)
     FILE* output = fopen("output", "w");
     const kyua_error_t error = kyua_usage_error_new("A usage error");
     kyua_error_fprintf(output, error, "The %s message", "1st");
+    fprintf(output, "Something else");
     kyua_error_free(error);
     fclose(output);
 
-    ATF_REQUIRE(atf_utils_grep_file("The 1st message: A usage error",
+    ATF_REQUIRE(atf_utils_grep_file("The 1st message: A usage error$",
                                     "output"));
 }
 

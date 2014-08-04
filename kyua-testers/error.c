@@ -337,7 +337,7 @@ kyua_error_fprintf(FILE* stream, const kyua_error_t error,
     (void)format_user_message(error, format, ap, buffer, sizeof(buffer));
     va_end(ap);
 
-    fprintf(stream, "%s", buffer);
+    fprintf(stream, "%s\n", buffer);
 }
 
 
