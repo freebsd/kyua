@@ -191,7 +191,7 @@ cli::open_output_file(const fs::path& path)
         out.reset(new std::ofstream());
         out->copyfmt(std::cout);
         out->clear(std::cout.rdstate());
-        out->basic_ios< char >::rdbuf(std::cout.rdbuf());
+        out->rdbuf(std::cout.rdbuf());
     } else if (path == stderr_path) {
         // We should use ui->err() somehow to funnel all output via the ui
         // object, but it's not worth the hassle.  This would be tricky because
@@ -200,7 +200,7 @@ cli::open_output_file(const fs::path& path)
         out.reset(new std::ofstream());
         out->copyfmt(std::cerr);
         out->clear(std::cerr.rdstate());
-        out->basic_ios< char >::rdbuf(std::cerr.rdbuf());
+        out->rdbuf(std::cerr.rdbuf());
     } else {
         out.reset(new std::ofstream(path.c_str()));
         if (!(*out)) {
