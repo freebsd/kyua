@@ -39,50 +39,9 @@ ATF_TC_WITHOUT_HEAD(write__passed);
 ATF_TC_BODY(write__passed, tc)
 {
     const kyua_error_t error = kyua_result_write(
-        "test.txt", KYUA_RESULT_PASSED, NULL);
+        "test.txt", KYUA_RESULT_PASSED);
     ATF_REQUIRE(!kyua_error_is_set(error));
     ATF_REQUIRE(atf_utils_compare_file("test.txt", "passed\n"));
-}
-
-
-ATF_TC_WITHOUT_HEAD(write__failed);
-ATF_TC_BODY(write__failed, tc)
-{
-    const kyua_error_t error = kyua_result_write(
-        "test.txt", KYUA_RESULT_FAILED, "Some message");
-    ATF_REQUIRE(!kyua_error_is_set(error));
-    ATF_REQUIRE(atf_utils_compare_file("test.txt", "failed: Some message\n"));
-}
-
-
-ATF_TC_WITHOUT_HEAD(write__broken);
-ATF_TC_BODY(write__broken, tc)
-{
-    const kyua_error_t error = kyua_result_write(
-        "test.txt", KYUA_RESULT_BROKEN, "Some message");
-    ATF_REQUIRE(!kyua_error_is_set(error));
-    ATF_REQUIRE(atf_utils_compare_file("test.txt", "broken: Some message\n"));
-}
-
-
-ATF_TC_WITHOUT_HEAD(write__skipped);
-ATF_TC_BODY(write__skipped, tc)
-{
-    const kyua_error_t error = kyua_result_write(
-        "test.txt", KYUA_RESULT_SKIPPED, "Some message");
-    ATF_REQUIRE(!kyua_error_is_set(error));
-    ATF_REQUIRE(atf_utils_compare_file("test.txt", "skipped: Some message\n"));
-}
-
-
-ATF_TC_WITHOUT_HEAD(write__expected_failure);
-ATF_TC_BODY(write__expected_failure, tc)
-{
-    const kyua_error_t error = kyua_result_write(
-        "test.txt", KYUA_RESULT_EXPECTED_FAILURE, "Some message");
-    ATF_REQUIRE(!kyua_error_is_set(error));
-    ATF_REQUIRE(atf_utils_compare_file("test.txt", "expected_failure: "
-                                       "Some message\n"));
 }
 
 
@@ -95,6 +54,67 @@ ATF_TC_BODY(write__open_error, tc)
 {
     ATF_REQUIRE(mkdir("readonly", 0555) != -1);
     const kyua_error_t error = kyua_result_write(
+        "readonly/test.txt", KYUA_RESULT_PASSED);
+    ATF_REQUIRE(kyua_error_is_set(error));
+    ATF_REQUIRE(kyua_error_is_type(error, "libc"));
+    char buffer[512];
+    kyua_error_format(error, buffer, sizeof(buffer));
+    ATF_REQUIRE(atf_utils_grep_string(
+        "Cannot create result file 'readonly/test.txt'", buffer));
+    kyua_error_free(error);
+}
+
+
+ATF_TC_WITHOUT_HEAD(write_with_reason__failed);
+ATF_TC_BODY(write_with_reason__failed, tc)
+{
+    const kyua_error_t error = kyua_result_write_with_reason(
+        "test.txt", KYUA_RESULT_FAILED, "Some message");
+    ATF_REQUIRE(!kyua_error_is_set(error));
+    ATF_REQUIRE(atf_utils_compare_file("test.txt", "failed: Some message\n"));
+}
+
+
+ATF_TC_WITHOUT_HEAD(write_with_reason__broken);
+ATF_TC_BODY(write_with_reason__broken, tc)
+{
+    const kyua_error_t error = kyua_result_write_with_reason(
+        "test.txt", KYUA_RESULT_BROKEN, "Some message");
+    ATF_REQUIRE(!kyua_error_is_set(error));
+    ATF_REQUIRE(atf_utils_compare_file("test.txt", "broken: Some message\n"));
+}
+
+
+ATF_TC_WITHOUT_HEAD(write_with_reason__skipped);
+ATF_TC_BODY(write_with_reason__skipped, tc)
+{
+    const kyua_error_t error = kyua_result_write_with_reason(
+        "test.txt", KYUA_RESULT_SKIPPED, "Some message");
+    ATF_REQUIRE(!kyua_error_is_set(error));
+    ATF_REQUIRE(atf_utils_compare_file("test.txt", "skipped: Some message\n"));
+}
+
+
+ATF_TC_WITHOUT_HEAD(write_with_reason__expected_failure);
+ATF_TC_BODY(write_with_reason__expected_failure, tc)
+{
+    const kyua_error_t error = kyua_result_write_with_reason(
+        "test.txt", KYUA_RESULT_EXPECTED_FAILURE, "Some message");
+    ATF_REQUIRE(!kyua_error_is_set(error));
+    ATF_REQUIRE(atf_utils_compare_file("test.txt", "expected_failure: "
+                                       "Some message\n"));
+}
+
+
+ATF_TC(write_with_reason__open_error);
+ATF_TC_HEAD(write_with_reason__open_error, tc)
+{
+    atf_tc_set_md_var(tc, "require.user", "unprivileged");
+}
+ATF_TC_BODY(write_with_reason__open_error, tc)
+{
+    ATF_REQUIRE(mkdir("readonly", 0555) != -1);
+    const kyua_error_t error = kyua_result_write_with_reason(
         "readonly/test.txt", KYUA_RESULT_FAILED, "Some message");
     ATF_REQUIRE(kyua_error_is_set(error));
     ATF_REQUIRE(kyua_error_is_type(error, "libc"));
@@ -109,11 +129,13 @@ ATF_TC_BODY(write__open_error, tc)
 ATF_TP_ADD_TCS(tp)
 {
     ATF_TP_ADD_TC(tp, write__passed);
-    ATF_TP_ADD_TC(tp, write__failed);
-    ATF_TP_ADD_TC(tp, write__skipped);
-    ATF_TP_ADD_TC(tp, write__broken);
-    ATF_TP_ADD_TC(tp, write__expected_failure);
     ATF_TP_ADD_TC(tp, write__open_error);
+
+    ATF_TP_ADD_TC(tp, write_with_reason__failed);
+    ATF_TP_ADD_TC(tp, write_with_reason__skipped);
+    ATF_TP_ADD_TC(tp, write_with_reason__broken);
+    ATF_TP_ADD_TC(tp, write_with_reason__expected_failure);
+    ATF_TP_ADD_TC(tp, write_with_reason__open_error);
 
     return atf_no_error();
 }

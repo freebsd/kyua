@@ -341,13 +341,13 @@ convert_broken(const char* reason, int status, const char* output,
 {
     if (WIFEXITED(status)) {
         *success = false;
-        return kyua_result_write(
+        return kyua_result_write_with_reason(
             output, KYUA_RESULT_BROKEN, "%s; test case exited with code %d",
             reason, WEXITSTATUS(status));
     } else {
         assert(WIFSIGNALED(status));
         *success = false;
-        return kyua_result_write(
+        return kyua_result_write_with_reason(
             output, KYUA_RESULT_BROKEN, "%s; test case received signal %d%s",
             reason, WTERMSIG(status),
             WCOREDUMP(status) ? " (core dumped)" : "");
@@ -370,12 +370,12 @@ convert_expected_death(const char* reason, int status, const char* output,
 {
     if (WIFEXITED(status) && WEXITSTATUS(status) == EXIT_SUCCESS) {
         *success = false;
-        return kyua_result_write(
+        return kyua_result_write_with_reason(
             output, KYUA_RESULT_FAILED, "Test case expected to die but exited "
             "successfully");
     } else {
         *success = true;
-        return kyua_result_write(
+        return kyua_result_write_with_reason(
             output, KYUA_RESULT_EXPECTED_FAILURE, "%s", reason);
     }
 }
@@ -398,18 +398,18 @@ convert_expected_exit(const int status_arg, const char* reason, int status,
     if (WIFEXITED(status)) {
         if (status_arg == NO_STATUS_ARG || status_arg == WEXITSTATUS(status)) {
             *success = true;
-            return kyua_result_write(
+            return kyua_result_write_with_reason(
                 output, KYUA_RESULT_EXPECTED_FAILURE, "%s", reason);
         } else {
             *success = false;
-            return kyua_result_write(
+            return kyua_result_write_with_reason(
                 output, KYUA_RESULT_FAILED, "Test case expected to exit with "
                 "code %d but got code %d", status_arg, WEXITSTATUS(status));
         }
     } else {
         assert(WIFSIGNALED(status));
         *success = false;
-        return kyua_result_write(
+        return kyua_result_write_with_reason(
             output, KYUA_RESULT_FAILED, "Test case expected to exit normally "
             "but received signal %d%s", WTERMSIG(status),
             WCOREDUMP(status) ? " (core dumped)" : "");
@@ -433,18 +433,18 @@ convert_expected_failure(const char* reason, int status, const char* output,
     if (WIFEXITED(status)) {
         if (WEXITSTATUS(status) == EXIT_SUCCESS) {
             *success = true;
-            return kyua_result_write(
+            return kyua_result_write_with_reason(
                 output, KYUA_RESULT_EXPECTED_FAILURE, "%s", reason);
         } else {
             *success = false;
-            return kyua_result_write(
+            return kyua_result_write_with_reason(
                 output, KYUA_RESULT_FAILED, "Test case expected a failure but "
                 "exited with error code %d", WEXITSTATUS(status));
         }
     } else {
         assert(WIFSIGNALED(status));
         *success = false;
-        return kyua_result_write(
+        return kyua_result_write_with_reason(
             output, KYUA_RESULT_FAILED, "Test case expected a failure but "
             "received signal %d%s", WTERMSIG(status),
             WCOREDUMP(status) ? " (core dumped)" : "");
@@ -469,18 +469,18 @@ convert_expected_signal(const int status_arg, const char* reason, int status,
     if (WIFSIGNALED(status)) {
         if (status_arg == NO_STATUS_ARG || status_arg == WTERMSIG(status)) {
             *success = true;
-            return kyua_result_write(
+            return kyua_result_write_with_reason(
                 output, KYUA_RESULT_EXPECTED_FAILURE, "%s", reason);
         } else {
             *success = false;
-            return kyua_result_write(
+            return kyua_result_write_with_reason(
                 output, KYUA_RESULT_FAILED, "Test case expected to receive "
                 "signal %d but got %d", status_arg, WTERMSIG(status));
         }
     } else {
         assert(WIFEXITED(status));
         *success = false;
-        return kyua_result_write(
+        return kyua_result_write_with_reason(
             output, KYUA_RESULT_FAILED, "Test case expected to receive a "
             "signal but exited with code %d", WEXITSTATUS(status));
     }
@@ -500,13 +500,13 @@ convert_expected_timeout(int status, const char* output, bool* success)
 {
     if (WIFEXITED(status)) {
         *success = false;
-        return kyua_result_write(
+        return kyua_result_write_with_reason(
             output, KYUA_RESULT_FAILED, "Test case expected to time out but "
             "exited with code %d", WEXITSTATUS(status));
     } else {
         assert(WIFSIGNALED(status));
         *success = false;
-        return kyua_result_write(
+        return kyua_result_write_with_reason(
             output, KYUA_RESULT_FAILED, "Test case expected to time out but "
             "received signal %d%s", WTERMSIG(status),
             WCOREDUMP(status) ? " (core dumped)" : "");
@@ -530,18 +530,18 @@ convert_failed(const char* reason, int status, const char* output,
     if (WIFEXITED(status)) {
         if (WEXITSTATUS(status) == EXIT_SUCCESS) {
             *success = false;
-            return kyua_result_write(
+            return kyua_result_write_with_reason(
                 output, KYUA_RESULT_BROKEN, "Test case reported a failed "
                 "result but exited with a successful exit code");
         } else {
             *success = false;
-            return kyua_result_write(
+            return kyua_result_write_with_reason(
                 output, KYUA_RESULT_FAILED, "%s", reason);
         }
     } else {
         assert(WIFSIGNALED(status));
         *success = false;
-        return kyua_result_write(
+        return kyua_result_write_with_reason(
             output, KYUA_RESULT_BROKEN, "Test case reported a failed result "
             "but received signal %d%s", WTERMSIG(status),
             WCOREDUMP(status) ? " (core dumped)" : "");
@@ -563,10 +563,10 @@ convert_passed(int status, const char* output, bool* success)
     if (WIFEXITED(status)) {
         if (WEXITSTATUS(status) == EXIT_SUCCESS) {
             *success = true;
-            return kyua_result_write(output, KYUA_RESULT_PASSED, NULL);
+            return kyua_result_write(output, KYUA_RESULT_PASSED);
         } else {
             *success = false;
-            return kyua_result_write(
+            return kyua_result_write_with_reason(
                 output, KYUA_RESULT_BROKEN, "Test case reported a passed "
                 "result but returned a non-zero exit code %d",
                 WEXITSTATUS(status));
@@ -574,7 +574,7 @@ convert_passed(int status, const char* output, bool* success)
     } else {
         assert(WIFSIGNALED(status));
         *success = false;
-        return kyua_result_write(
+        return kyua_result_write_with_reason(
             output, KYUA_RESULT_BROKEN, "Test case reported a passed result "
             "but received signal %d%s", WTERMSIG(status),
             WCOREDUMP(status) ? " (core dumped)" : "");
@@ -598,10 +598,11 @@ convert_skipped(const char* reason, int status, const char* output,
     if (WIFEXITED(status)) {
         if (WEXITSTATUS(status) == EXIT_SUCCESS) {
             *success = true;
-            return kyua_result_write(output, KYUA_RESULT_SKIPPED, "%s", reason);
+            return kyua_result_write_with_reason(
+                output, KYUA_RESULT_SKIPPED, "%s", reason);
         } else {
             *success = false;
-            return kyua_result_write(
+            return kyua_result_write_with_reason(
                 output, KYUA_RESULT_BROKEN, "Test case reported a skipped "
                 "result but returned a non-zero exit code %d",
                 WEXITSTATUS(status));
@@ -609,7 +610,7 @@ convert_skipped(const char* reason, int status, const char* output,
     } else {
         *success = false;
         assert(WIFSIGNALED(status));
-        return kyua_result_write(
+        return kyua_result_write_with_reason(
             output, KYUA_RESULT_BROKEN, "Test case reported a skipped result "
             "but received signal %d%s", WTERMSIG(status),
             WCOREDUMP(status) ? " (core dumped)" : "");
@@ -637,12 +638,12 @@ convert_result(const enum atf_status status, const int status_arg,
     if (timed_out) {
         if (status == ATF_STATUS_EXPECTED_TIMEOUT) {
             *success = true;
-            return kyua_result_write(
+            return kyua_result_write_with_reason(
                 output, KYUA_RESULT_EXPECTED_FAILURE, "%s", reason);
         } else {
             assert(status == ATF_STATUS_BROKEN);
             *success = false;
-            return kyua_result_write(
+            return kyua_result_write_with_reason(
                 output, KYUA_RESULT_BROKEN, "Test case body timed out");
         }
     }
@@ -737,7 +738,7 @@ kyua_atf_result_cleanup_rewrite(const char* output_name, int wait_status,
 {
     if (timed_out) {
         *success = false;
-        return kyua_result_write(
+        return kyua_result_write_with_reason(
             output_name, KYUA_RESULT_BROKEN, "Test case cleanup timed out");
     } else {
         if (WIFEXITED(wait_status)) {
@@ -748,13 +749,13 @@ kyua_atf_result_cleanup_rewrite(const char* output_name, int wait_status,
                 return kyua_error_ok();
             } else {
                 *success = false;
-                return kyua_result_write(
+                return kyua_result_write_with_reason(
                     output_name, KYUA_RESULT_BROKEN, "Test case cleanup exited "
                     "with code %d", WEXITSTATUS(wait_status));
             }
         } else {
             *success = false;
-            return kyua_result_write(
+            return kyua_result_write_with_reason(
                 output_name, KYUA_RESULT_BROKEN, "Test case cleanup received "
                 "signal %d%s", WTERMSIG(wait_status),
                 WCOREDUMP(wait_status) ? " (core dumped)" : "");

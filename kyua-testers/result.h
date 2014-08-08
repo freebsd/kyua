@@ -46,8 +46,11 @@ enum kyua_result_type_t {
 };
 
 
-kyua_error_t kyua_result_write(const char*, const enum kyua_result_type_t,
-                               const char*, ...) KYUA_DEFS_FORMAT_PRINTF(3, 4);
+kyua_error_t kyua_result_write(const char*, const enum kyua_result_type_t);
+kyua_error_t kyua_result_write_with_reason(const char*,
+                                           const enum kyua_result_type_t,
+                                           const char*, ...)
+    KYUA_DEFS_FORMAT_PRINTF(3, 4);
 
 
 #endif  // !defined(KYUA_RESULT_H)

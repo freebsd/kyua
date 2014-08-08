@@ -50,31 +50,54 @@ static const char* type_to_name[] = {
 ///
 /// \param path Path to the file to be created.
 /// \param type The type of the result.
-/// \param reason Textual explanation of the reason behind the result.  Must be
-///     NULL with KYUA_RESULT_PASSED, or else non-NULL.
 ///
 /// \return An error object.
 kyua_error_t
-kyua_result_write(const char* path, const enum kyua_result_type_t type,
-                  const char* reason, ...)
+kyua_result_write(const char* path, const enum kyua_result_type_t type)
 {
-    assert(type == KYUA_RESULT_PASSED || reason != NULL);
-    assert(reason == NULL || type != KYUA_RESULT_PASSED);
+    assert(type == KYUA_RESULT_PASSED);
 
     FILE* file = fopen(path, "w");
     if (file == NULL)
         return kyua_libc_error_new(errno, "Cannot create result file '%s'",
                                    path);
-    if (reason != NULL) {
-        char buffer[1024];
-        va_list ap;
-        va_start(ap, reason);
-        (void)vsnprintf(buffer, sizeof(buffer), reason, ap);
-        va_end(ap);
-        fprintf(file, "%s: %s\n", type_to_name[type], buffer);
-    } else {
-        fprintf(file, "%s\n", type_to_name[type]);
-    }
+
+    fprintf(file, "%s\n", type_to_name[type]);
+
+    fclose(file);
+
+    return kyua_error_ok();
+}
+
+
+/// Creates a file with the result of the test.
+///
+/// \param path Path to the file to be created.
+/// \param type The type of the result.
+/// \param reason Textual explanation of the reason behind the result.  Must be
+///     NULL with KYUA_RESULT_PASSED, or else non-NULL.
+///
+/// \return An error object.
+kyua_error_t
+kyua_result_write_with_reason(const char* path,
+                              const enum kyua_result_type_t type,
+                              const char* reason, ...)
+{
+    assert(type != KYUA_RESULT_PASSED);
+    assert(reason != NULL);
+
+    FILE* file = fopen(path, "w");
+    if (file == NULL)
+        return kyua_libc_error_new(errno, "Cannot create result file '%s'",
+                                   path);
+
+    char buffer[1024];
+    va_list ap;
+    va_start(ap, reason);
+    (void)vsnprintf(buffer, sizeof(buffer), reason, ap);
+    va_end(ap);
+    fprintf(file, "%s: %s\n", type_to_name[type], buffer);
+
     fclose(file);
 
     return kyua_error_ok();

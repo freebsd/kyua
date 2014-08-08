@@ -65,25 +65,27 @@ status_to_result(int status, const bool timed_out, const char* result_file,
 {
     if (timed_out) {
         *success = false;
-        return kyua_result_write(result_file, KYUA_RESULT_BROKEN,
-                                 "Test case timed out");
+        return kyua_result_write_with_reason(
+            result_file, KYUA_RESULT_BROKEN, "Test case timed out");
     }
 
     if (WIFEXITED(status)) {
         if (WEXITSTATUS(status) == EXIT_SUCCESS) {
             *success = true;
-            return kyua_result_write(result_file, KYUA_RESULT_PASSED, NULL);
+            return kyua_result_write(result_file, KYUA_RESULT_PASSED);
         } else {
             *success = false;
-            return kyua_result_write(result_file, KYUA_RESULT_FAILED,
-                                     "Returned non-success exit status %d",
-                                     WEXITSTATUS(status));
+            return kyua_result_write_with_reason(
+                result_file, KYUA_RESULT_FAILED,
+                "Returned non-success exit status %d",
+                WEXITSTATUS(status));
         }
     } else {
         assert(WIFSIGNALED(status));
         *success = false;
-        return kyua_result_write(result_file, KYUA_RESULT_BROKEN,
-                                 "Received signal %d", WTERMSIG(status));
+        return kyua_result_write_with_reason(
+            result_file, KYUA_RESULT_BROKEN,
+            "Received signal %d", WTERMSIG(status));
     }
 }
 

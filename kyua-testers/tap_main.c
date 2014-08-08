@@ -69,23 +69,24 @@ status_to_result(int status, const kyua_tap_summary_t* summary,
 {
     if (timed_out) {
         *success = false;
-        return kyua_result_write(result_file, KYUA_RESULT_BROKEN,
-                                 "Test case timed out");
+        return kyua_result_write_with_reason(
+            result_file, KYUA_RESULT_BROKEN, "Test case timed out");
     }
 
     if (WIFEXITED(status)) {
         if (summary->parse_error == NULL) {
             if (summary->bail_out) {
                 *success = false;
-                return kyua_result_write(result_file, KYUA_RESULT_FAILED,
-                                         "Bailed out");
+                return kyua_result_write_with_reason(
+                    result_file, KYUA_RESULT_FAILED, "Bailed out");
             } else if (summary->all_skipped_reason != NULL) {
                 *success = true;
-                return kyua_result_write(result_file, KYUA_RESULT_SKIPPED,
-                                         "%s", summary->all_skipped_reason);
+                return kyua_result_write_with_reason(
+                    result_file, KYUA_RESULT_SKIPPED,
+                    "%s", summary->all_skipped_reason);
             } else if (summary->not_ok_count != 0) {
                 *success = false;
-                return kyua_result_write(
+                return kyua_result_write_with_reason(
                     result_file, KYUA_RESULT_FAILED,
                     "%ld tests of %ld failed",
                     summary->not_ok_count,
@@ -93,31 +94,30 @@ status_to_result(int status, const kyua_tap_summary_t* summary,
             } else {
                 if (WEXITSTATUS(status) == EXIT_SUCCESS) {
                     *success = true;
-                    return kyua_result_write(result_file, KYUA_RESULT_PASSED,
-                                             NULL);
+                    return kyua_result_write(result_file, KYUA_RESULT_PASSED);
                 } else {
                     *success = false;
-                    return kyua_result_write(result_file, KYUA_RESULT_BROKEN,
-                                             "Dubious test program: reported "
-                                             "all tests as passed but returned "
-                                             "exit code %d",
-                                             WEXITSTATUS(status));
+                    return kyua_result_write_with_reason(
+                        result_file, KYUA_RESULT_BROKEN,
+                        "Dubious test program: reported all tests as passed "
+                        "but returned exit code %d", WEXITSTATUS(status));
                 }
             }
         } else {
-            return kyua_result_write(result_file, KYUA_RESULT_BROKEN,
-                                     "%s", summary->parse_error);
+            return kyua_result_write_with_reason(
+                result_file, KYUA_RESULT_BROKEN, "%s", summary->parse_error);
         }
     } else {
         assert(WIFSIGNALED(status));
         *success = false;
 
         if (summary->bail_out) {
-            return kyua_result_write(result_file, KYUA_RESULT_FAILED,
-                                     "Bailed out");
+            return kyua_result_write_with_reason(
+                result_file, KYUA_RESULT_FAILED, "Bailed out");
         } else {
-            return kyua_result_write(result_file, KYUA_RESULT_BROKEN,
-                                     "Received signal %d", WTERMSIG(status));
+            return kyua_result_write_with_reason(
+                result_file, KYUA_RESULT_BROKEN, "Received signal %d",
+                WTERMSIG(status));
         }
     }
 }
