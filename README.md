@@ -22,10 +22,10 @@ programs can also be executed through Kyua.
 
 Formal releases for source files are available for download from GitHub.
 
-* [kyua-testers 0.2](../../releases/tag/kyua-testers-0.2), released on
-  December 8th, 2013.  *Required*.
-* [kyua-cli 0.8](../../releases/tag/kyua-cli-0.8), released on December
-  *8th, 2013.  Required*.
+* [kyua-testers 0.3](../../releases/tag/kyua-testers-0.3), released on
+  August 8th, 2014.  *Required*.
+* [kyua-cli 0.9](../../releases/tag/kyua-cli-0.9), released on August
+  8th, 2014.  *Required*.
 * [kyua-atf-compat 0.2](../../releases/tag/kyua-atf-compat-0.2), released
   on December 28th, 2013.  *Optional*.
 
