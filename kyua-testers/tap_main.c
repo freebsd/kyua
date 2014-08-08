@@ -104,6 +104,7 @@ status_to_result(int status, const kyua_tap_summary_t* summary,
                 }
             }
         } else {
+            *success = false;
             return kyua_result_write_with_reason(
                 result_file, KYUA_RESULT_BROKEN, "%s", summary->parse_error);
         }
