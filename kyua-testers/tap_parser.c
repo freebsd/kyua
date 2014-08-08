@@ -250,7 +250,7 @@ kyua_tap_try_parse_plan(const char* line, kyua_tap_summary_t* summary)
         skip_start = strstr(line, "skip");
     if (skip_start != NULL) {
         const char *reason = skip_start + strlen("SKIP");
-        while (*reason != '\0' && isspace(*reason))
+        while (*reason != '\0' && isspace((int)*reason))
             ++reason;
         if (*reason == '\0') {
             summary->all_skipped_reason = strdup("No reason specified");
