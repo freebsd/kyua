@@ -26,7 +26,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "fs.h"
+#include "testers/fs.h"
 
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -44,7 +44,7 @@
 
 #include <atf-c.h>
 
-#include "error.h"
+#include "testers/error.h"
 
 
 static void run_mount_tmpfs(const char*) KYUA_DEFS_NORETURN;

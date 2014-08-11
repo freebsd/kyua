@@ -26,7 +26,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "atf_result.h"
+#include "testers/atf_result.h"
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -39,8 +39,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "error.h"
-#include "result.h"
+#include "testers/error.h"
+#include "testers/result.h"
 
 
 // Enumeration of the different result types returned by an ATF test case.

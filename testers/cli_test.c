@@ -26,7 +26,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "cli.h"
+#include "testers/cli.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -35,9 +35,9 @@
 
 #include <atf-c.h>
 
-#include "defs.h"
-#include "error.h"
-#include "run.h"
+#include "testers/defs.h"
+#include "testers/error.h"
+#include "testers/run.h"
 
 
 /// Dumps the contents of a run_params object to stdout.

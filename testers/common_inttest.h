@@ -49,8 +49,8 @@
 
 #include <atf-c.h>
 
-#include "cli.h"  // For the EXIT_* constants only.
-#include "defs.h"
+#include "testers/cli.h"  // For the EXIT_* constants only.
+#include "testers/defs.h"
 
 
 /// Path to the installed testers.

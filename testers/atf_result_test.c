@@ -26,7 +26,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "atf_result.h"
+#include "testers/atf_result.h"
 
 #include <sys/resource.h>
 #include <sys/wait.h>
@@ -37,7 +37,7 @@
 
 #include <atf-c.h>
 
-#include "error.h"
+#include "testers/error.h"
 
 
 /// Evalutes an expression and ensures it does not return an error.

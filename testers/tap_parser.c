@@ -26,7 +26,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "tap_parser.h"
+#include "testers/tap_parser.h"
 
 #include <assert.h>
 #include <ctype.h>
@@ -38,8 +38,8 @@
 #include <regex.h>
 #include <unistd.h>
 
-#include "error.h"
-#include "text.h"
+#include "testers/error.h"
+#include "testers/text.h"
 
 
 /// Name of a regex error type.

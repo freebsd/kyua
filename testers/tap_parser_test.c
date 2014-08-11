@@ -26,14 +26,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "tap_parser.h"
+#include "testers/tap_parser.h"
 
 #include <atf-c.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "error.h"
+#include "testers/error.h"
 
 
 /// Compares two kyua_tap_summary_t objects and fails the test if they differ.

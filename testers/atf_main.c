@@ -35,15 +35,15 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "atf_list.h"
-#include "atf_result.h"
-#include "cli.h"
-#include "defs.h"
-#include "error.h"
-#include "fs.h"
-#include "run.h"
-#include "stacktrace.h"
-#include "text.h"
+#include "testers/atf_list.h"
+#include "testers/atf_result.h"
+#include "testers/cli.h"
+#include "testers/defs.h"
+#include "testers/error.h"
+#include "testers/fs.h"
+#include "testers/run.h"
+#include "testers/stacktrace.h"
+#include "testers/text.h"
 
 
 /// Template for the creation of the temporary work directories.

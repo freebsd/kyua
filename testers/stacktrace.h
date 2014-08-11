@@ -35,7 +35,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "run_fwd.h"
+#include "testers/run_fwd.h"
 
 
 extern const char* kyua_stacktrace_gdb;

@@ -32,7 +32,7 @@
 #if !defined(KYUA_FS_H)
 #define KYUA_FS_H
 
-#include "error_fwd.h"
+#include "testers/error_fwd.h"
 
 
 kyua_error_t kyua_fs_cleanup(const char*);

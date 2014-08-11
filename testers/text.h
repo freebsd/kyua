@@ -35,8 +35,8 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-#include "defs.h"
-#include "error_fwd.h"
+#include "testers/defs.h"
+#include "testers/error_fwd.h"
 
 
 char* kyua_text_fgets_no_newline(char*, int, FILE*);

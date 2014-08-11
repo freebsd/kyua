@@ -39,13 +39,13 @@
 #if !defined(KYUA_ERROR_H)
 #define KYUA_ERROR_H
 
-#include "error_fwd.h"
+#include "testers/error_fwd.h"
 
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 
-#include "defs.h"
+#include "testers/defs.h"
 
 
 /// Type of the per-error formatting function.

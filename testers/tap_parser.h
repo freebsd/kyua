@@ -35,7 +35,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#include "error_fwd.h"
+#include "testers/error_fwd.h"
 
 
 /// Results of the parsing of a TAP test output.

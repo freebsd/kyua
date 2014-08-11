@@ -26,14 +26,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "result.h"
+#include "testers/result.h"
 
 #include <assert.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 
-#include "error.h"
+#include "testers/error.h"
 
 
 /// Mapping of kyua_result_type_t values to their textual representation.

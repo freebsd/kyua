@@ -26,13 +26,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "atf_list.h"
+#include "testers/atf_list.h"
 
 #include <fcntl.h>
 
 #include <atf-c.h>
 
-#include "error.h"
+#include "testers/error.h"
 
 
 /// Opens a file for reading and fails the test case if the open fails.

@@ -26,7 +26,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "stacktrace.h"
+#include "testers/stacktrace.h"
 
 #include <sys/param.h>
 #include <sys/wait.h>
@@ -39,12 +39,12 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "defs.h"
-#include "fs.h"
-#include "env.h"
-#include "error.h"
-#include "run.h"
-#include "text.h"
+#include "testers/defs.h"
+#include "testers/fs.h"
+#include "testers/env.h"
+#include "testers/error.h"
+#include "testers/run.h"
+#include "testers/text.h"
 
 
 /// Built-in path to GDB.

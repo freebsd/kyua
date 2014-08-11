@@ -40,9 +40,9 @@
 #include <stdbool.h>
 #include <unistd.h>
 
-#include "defs.h"
-#include "error_fwd.h"
-#include "run_fwd.h"
+#include "testers/defs.h"
+#include "testers/error_fwd.h"
+#include "testers/run_fwd.h"
 
 
 extern const char* kyua_run_tmpdir;

@@ -31,7 +31,7 @@
 #include <atf-c.h>
 
 #define INTERFACE "tap"
-#include "common_inttest.h"
+#include "testers/common_inttest.h"
 
 
 /// Sets up a particular helper.

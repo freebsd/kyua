@@ -31,7 +31,7 @@
 #include <atf-c.h>
 
 #define INTERFACE "atf"
-#include "common_inttest.h"
+#include "testers/common_inttest.h"
 
 
 ATF_TC(list__ok);

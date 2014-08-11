@@ -26,13 +26,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "result.h"
+#include "testers/result.h"
 
 #include <sys/stat.h>
 
 #include <atf-c.h>
 
-#include "error.h"
+#include "testers/error.h"
 
 
 ATF_TC_WITHOUT_HEAD(write__passed);

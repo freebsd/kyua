@@ -26,7 +26,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "stacktrace.h"
+#include "testers/stacktrace.h"
 
 #include <sys/resource.h>
 #include <sys/stat.h>
@@ -38,11 +38,11 @@
 
 #include <atf-c.h>
 
-#include "env.h"
-#include "error.h"
-#include "fs.h"
-#include "run.h"
-#include "text.h"
+#include "testers/env.h"
+#include "testers/error.h"
+#include "testers/fs.h"
+#include "testers/run.h"
+#include "testers/text.h"
 
 
 /// Ensures that the given expression does not return a kyua_error_t.

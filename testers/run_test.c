@@ -30,7 +30,7 @@
 #   include "config.h"
 #endif
 
-#include "run.h"
+#include "testers/run.h"
 
 #include <sys/resource.h>
 #include <sys/stat.h>
@@ -48,10 +48,10 @@
 
 #include <atf-c.h>
 
-#include "defs.h"
-#include "env.h"
-#include "error.h"
-#include "fs.h"
+#include "testers/defs.h"
+#include "testers/env.h"
+#include "testers/error.h"
+#include "testers/fs.h"
 
 
 /// Evalutes an expression and ensures it does not return an error.

@@ -48,6 +48,7 @@ testers_libtester_a_SOURCES += testers/stacktrace.c
 testers_libtester_a_SOURCES += testers/stacktrace.h
 testers_libtester_a_SOURCES += testers/text.c
 testers_libtester_a_SOURCES += testers/text.h
+nodist_testers_libtester_a_SOURCES = testers/defs.h
 
 noinst_LIBRARIES += testers/libatf_tester.a
 testers_libatf_tester_a_SOURCES  = testers/atf_list.c

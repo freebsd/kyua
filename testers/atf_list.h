@@ -34,7 +34,7 @@
 
 #include <stdio.h>
 
-#include "error_fwd.h"
+#include "testers/error_fwd.h"
 
 
 kyua_error_t atf_list_parse(const int, FILE*);

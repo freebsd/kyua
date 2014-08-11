@@ -32,8 +32,8 @@
 #if !defined(KYUA_RESULT_H)
 #define KYUA_RESULT_H
 
-#include "defs.h"
-#include "error_fwd.h"
+#include "testers/defs.h"
+#include "testers/error_fwd.h"
 
 
 /// Enumeration of the different result types.

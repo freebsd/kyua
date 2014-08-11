@@ -27,10 +27,10 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if defined(HAVE_CONFIG_H)
-#include "config.h"
+#   include "config.h"
 #endif
 
-#include "cli.h"
+#include "testers/cli.h"
 
 #include <assert.h>
 #include <err.h>
@@ -41,9 +41,9 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "defs.h"
-#include "error.h"
-#include "run.h"
+#include "testers/defs.h"
+#include "testers/error.h"
+#include "testers/run.h"
 
 #if !defined(GID_MAX)
 #   define GID_MAX INT_MAX

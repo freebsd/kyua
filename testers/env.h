@@ -32,7 +32,7 @@
 #if !defined(KYUA_ENV_H)
 #define KYUA_ENV_H
 
-#include "error_fwd.h"
+#include "testers/error_fwd.h"
 
 
 kyua_error_t kyua_env_set(const char*, const char*);

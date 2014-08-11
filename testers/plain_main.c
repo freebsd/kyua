@@ -34,12 +34,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "cli.h"
-#include "defs.h"
-#include "error.h"
-#include "result.h"
-#include "run.h"
-#include "stacktrace.h"
+#include "testers/cli.h"
+#include "testers/defs.h"
+#include "testers/error.h"
+#include "testers/result.h"
+#include "testers/run.h"
+#include "testers/stacktrace.h"
 
 
 /// Template for the creation of the temporary work directories.

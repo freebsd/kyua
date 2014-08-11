@@ -30,7 +30,7 @@
 #   include "config.h"
 #endif
 
-#include "env.h"
+#include "testers/env.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -38,7 +38,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "error.h"
+#include "testers/error.h"
 
 
 /// Sets an environment variable.

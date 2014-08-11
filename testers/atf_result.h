@@ -34,7 +34,7 @@
 
 #include <stdbool.h>
 
-#include "error_fwd.h"
+#include "testers/error_fwd.h"
 
 
 kyua_error_t kyua_atf_result_rewrite(const char*, const char*, const int,

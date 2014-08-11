@@ -32,7 +32,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "defs.h"
+#include "testers/defs.h"
 
 
 /// Exit code to report internal, unexpected errors.

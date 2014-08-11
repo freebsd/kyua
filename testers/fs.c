@@ -26,7 +26,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "fs.h"
+#include "testers/fs.h"
 
 #if defined(HAVE_CONFIG_H)
 #   include "config.h"
@@ -50,8 +50,8 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "defs.h"
-#include "error.h"
+#include "testers/defs.h"
+#include "testers/error.h"
 
 
 /// Specifies if a real unmount(2) is available.

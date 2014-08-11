@@ -37,12 +37,12 @@
 #if !defined(KYUA_CLI_H)
 #define KYUA_CLI_H
 
-#include "cli_fwd.h"
+#include "testers/cli_fwd.h"
 
 #include <stdbool.h>
 
-#include "error_fwd.h"
-#include "run_fwd.h"
+#include "testers/error_fwd.h"
+#include "testers/run_fwd.h"
 
 
 // Error codes returned by the CLI are as follows.  These match the rationale of
