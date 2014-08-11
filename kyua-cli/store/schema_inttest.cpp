@@ -39,6 +39,7 @@
 #include "store/read_backend.hpp"
 #include "store/read_transaction.hpp"
 #include "store/write_backend.hpp"
+#include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/logging/operations.hpp"
@@ -53,6 +54,9 @@ namespace sqlite = utils::sqlite;
 namespace units = utils::units;
 
 
+namespace {
+
+
 /// Executes an SQL script within a database.
 ///
 /// \param db Database in which to run the script.
@@ -64,6 +68,25 @@ exec_db_file(sqlite::database& db, const fs::path& path)
     if (!input)
         ATF_FAIL(F("Failed to open %s") % path);
     db.exec(utils::read_stream(input));
+}
+
+
+/// Gets a data file from the tests directory.
+///
+/// We cannot use the srcdir property because the required files are not there
+/// when building with an object directory.  In those cases, the data files
+/// remainin the source directory while the resulting test program is in the
+/// object directory, thus having the wrong value for its srcdir property.
+///
+/// \param name Basename of the test data file to query.
+///
+/// \return The actual path to the requested data file.
+static fs::path
+testdata_file(const std::string& name)
+{
+    const fs::path testdatadir(utils::getenv_with_default(
+        "KYUA_STORETESTDATADIR", KYUA_STORETESTDATADIR));
+    return testdatadir / name;
 }
 
 
@@ -432,15 +455,17 @@ check_action_4(const fs::path& dbpath)
 }
 
 
+}  // anonymous namespace
+
+
 #define CURRENT_SCHEMA_TEST(dataset) \
     ATF_TEST_CASE(current_schema_ ##dataset); \
     ATF_TEST_CASE_HEAD(current_schema_ ##dataset) \
     { \
         logging::set_inmemory(); \
         const std::string required_files = \
-            store::detail::schema_file().str() \
-            + " " + (fs::path(get_config_var("srcdir")) \
-                     / "testdata_v3_" #dataset ".sql").str(); \
+            store::detail::schema_file().str() + " " + \
+            testdata_file("testdata_v3_" #dataset ".sql").str(); \
         set_md_var("require.files", required_files); \
     } \
     ATF_TEST_CASE_BODY(current_schema_ ##dataset) \
@@ -450,8 +475,7 @@ check_action_4(const fs::path& dbpath)
         sqlite::database db = sqlite::database::open( \
             testpath, sqlite::open_readwrite | sqlite::open_create); \
         exec_db_file(db, store::detail::schema_file()); \
-        exec_db_file(db, fs::path(get_config_var("srcdir")) \
-                     / "testdata_v3_" #dataset ".sql"); \
+        exec_db_file(db, testdata_file("testdata_v3_" #dataset ".sql")); \
         db.close(); \
         \
         check_action_ ## dataset (testpath); \
@@ -472,8 +496,7 @@ CURRENT_SCHEMA_TEST(4);
         const char* testdata = "testdata_v" #from_version ".sql"; \
         \
         std::string required_files = \
-            (fs::path(get_config_var("srcdir")) / schema).str() \
-            + " " + (fs::path(get_config_var("srcdir")) / testdata).str(); \
+            testdata_file(schema).str() + " " + testdata_file(testdata).str(); \
         for (int i = from_version; i < store::detail::current_schema_version; \
              ++i) \
             required_files += " " + store::detail::migration_file( \
@@ -490,8 +513,8 @@ CURRENT_SCHEMA_TEST(4);
         \
         sqlite::database db = sqlite::database::open( \
             testpath, sqlite::open_readwrite | sqlite::open_create); \
-        exec_db_file(db, fs::path(get_config_var("srcdir")) / schema); \
-        exec_db_file(db, fs::path(get_config_var("srcdir")) / testdata); \
+        exec_db_file(db, testdata_file(schema)); \
+        exec_db_file(db, testdata_file(testdata)); \
         db.close(); \
         \
         store::migrate_schema(fs::path("test.db")); \

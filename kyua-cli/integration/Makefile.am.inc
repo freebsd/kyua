@@ -82,7 +82,9 @@ integration/cmd_db_migrate_test: $(srcdir)/integration/cmd_db_migrate_test.sh $(
 	test -d integration || mkdir -p integration
 	@src="$(srcdir)/integration/cmd_db_migrate_test.sh"; \
 	dst="integration/cmd_db_migrate_test"; \
-	substs='s,__KYUA_STOREDIR__,$(storedir),g'; $(ATF_SH_BUILD)
+	substs='s,__KYUA_STOREDIR__,$(storedir),g'; \
+	substs="$${substs};s,__KYUA_STORETESTDATADIR__,$(tests_storedir),g"; \
+	$(ATF_SH_BUILD)
 
 tests_integration_SCRIPTS += integration/cmd_debug_test
 CLEANFILES += integration/cmd_debug_test

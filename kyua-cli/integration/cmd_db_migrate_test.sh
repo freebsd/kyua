@@ -31,6 +31,10 @@
 : "${KYUA_STOREDIR:=__KYUA_STOREDIR__}"
 
 
+# Location of installed test data files.
+: "${KYUA_STORETESTDATADIR:=__KYUA_STORETESTDATADIR__}"
+
+
 # Creates an empty old-style action database.
 #
 # \param ... Files that contain SQL commands to be run.
@@ -52,19 +56,16 @@ create_results_file() {
 
 utils_test_case upgrade__from_v1
 upgrade__from_v1_head() {
-    data=$(atf_get_srcdir)/../store
-
     atf_set require.files \
-        "${data}/schema_v1.sql" \
-        "${data}/testdata_v1.sql" \
+        "${KYUA_STORETESTDATADIR}/schema_v1.sql" \
+        "${KYUA_STORETESTDATADIR}/testdata_v1.sql" \
         "${KYUA_STOREDIR}/migrate_v1_v2.sql" \
         "${KYUA_STOREDIR}/migrate_v2_v3.sql"
     atf_set require.progs "sqlite3"
 }
 upgrade__from_v1_body() {
-    data=$(atf_get_srcdir)/../store
-
-    create_historical_db "${data}/schema_v1.sql" "${data}/testdata_v1.sql"
+    create_historical_db "${KYUA_STORETESTDATADIR}/schema_v1.sql" \
+        "${KYUA_STORETESTDATADIR}/testdata_v1.sql"
     atf_check -s exit:0 -o empty -e empty kyua db-migrate
     for f in \
         "results.test_suite_root.20130108-111331-000000.db" \
@@ -81,18 +82,15 @@ upgrade__from_v1_body() {
 
 utils_test_case upgrade__from_v2
 upgrade__from_v2_head() {
-    data=$(atf_get_srcdir)/../store
-
     atf_set require.files \
-        "${data}/schema_v2.sql" \
-        "${data}/testdata_v2.sql" \
+        "${KYUA_STORETESTDATADIR}/schema_v2.sql" \
+        "${KYUA_STORETESTDATADIR}/testdata_v2.sql" \
         "${KYUA_STOREDIR}/migrate_v2_v3.sql"
     atf_set require.progs "sqlite3"
 }
 upgrade__from_v2_body() {
-    data=$(atf_get_srcdir)/../store
-
-    create_historical_db "${data}/schema_v2.sql" "${data}/testdata_v2.sql"
+    create_historical_db "${KYUA_STORETESTDATADIR}/schema_v2.sql" \
+        "${KYUA_STORETESTDATADIR}/testdata_v2.sql"
     atf_check -s exit:0 -o empty -e empty kyua db-migrate
     for f in \
         "results.test_suite_root.20130108-111331-000000.db" \
@@ -121,15 +119,11 @@ already_up_to_date_body() {
 
 utils_test_case need_upgrade
 need_upgrade_head() {
-    data=$(atf_get_srcdir)/../store
-
-    atf_set require.files "${data}/schema_v1.sql"
+    atf_set require.files "${KYUA_STORETESTDATADIR}/schema_v1.sql"
     atf_set require.progs "sqlite3"
 }
 need_upgrade_body() {
-    data=$(atf_get_srcdir)/../store
-
-    create_results_file "${data}/schema_v1.sql"
+    create_results_file "${KYUA_STORETESTDATADIR}/schema_v1.sql"
     atf_check -s exit:2 -o empty \
         -e match:"database has schema version 1.*use db-migrate" kyua report
 }

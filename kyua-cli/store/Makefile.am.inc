@@ -121,6 +121,7 @@ store_read_transaction_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) \
 
 tests_store_PROGRAMS += store/schema_inttest
 store_schema_inttest_SOURCES = store/schema_inttest.cpp
+store_schema_inttest_CPPFLAGS = -DKYUA_STORETESTDATADIR=\"$(tests_storedir)\"
 store_schema_inttest_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) \
                                 $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 store_schema_inttest_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) \
