@@ -1,6 +1,9 @@
 # Welcome to the Kyua project!
 
-Kyua is a **testing framework** for operating systems.
+Kyua is a **testing framework** for infrastructure software, originally
+designed to equip BSD-based operating systems with a test suite.  This
+means that Kyua is lightweight and simple, and that Kyua integrates well
+with various build systems and continuous integration frameworks.
 
 Kyua features an **expressive test suite definition language**, a **safe
 runtime engine** for test suites and a **powerful report generation
