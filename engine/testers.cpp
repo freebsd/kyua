@@ -198,8 +198,15 @@ engine::tester::tester(const std::string& interface,
     _interface(interface)
 {
     if (unprivileged_user) {
-        _common_args.push_back(F("-u%s") % unprivileged_user.get().uid);
-        _common_args.push_back(F("-g%s") % unprivileged_user.get().gid);
+        const passwd::user current_user = passwd::current_user();
+        if (current_user.is_root()) {
+            _common_args.push_back(F("-u%s") % unprivileged_user.get().uid);
+            _common_args.push_back(F("-g%s") % unprivileged_user.get().gid);
+        } else {
+            LW(F("Ignoring value of unprivileged_user=%s; already running as "
+                 "unprivileged user %s") %
+               unprivileged_user.get().name % current_user.name);
+        }
     }
     if (timeout) {
         PRE(timeout.get().useconds == 0);

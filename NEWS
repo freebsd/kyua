@@ -7,6 +7,11 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 
 * Dropped the 'kyua-atf-compat' package.
 
+* Issue 100: Do not try to drop privileges to unprivileged_user when we
+  are already running as an unprivileged user.  Doing so is not possible
+  and thus causes spurious test failures when the current user is not
+  root and the current user and unprivileged_user do not match.
+
 
 Changes in kyua-cli version 0.9
 ===============================

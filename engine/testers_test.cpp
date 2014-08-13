@@ -135,18 +135,60 @@ ATF_TEST_CASE_BODY(tester__list__defaults)
 ATF_TEST_CASE_WITHOUT_HEAD(tester__list__explicit_common_args);
 ATF_TEST_CASE_BODY(tester__list__explicit_common_args)
 {
-    const passwd::user user("fake", 123, 456);
     const datetime::delta timeout(15, 0);
 
     create_mock_tester_exit(EXIT_SUCCESS);
-    engine::tester tester("mock", utils::make_optional(user),
-                          utils::make_optional(timeout));
+    engine::tester tester("mock", none, utils::make_optional(timeout));
+    const std::string output = tester.list(fs::path("/another/program/1"));
+
+    const std::string exp_output =
+        "Arg: -t15\n"
+        "Arg: list\n"
+        "Arg: /another/program/1\n"
+        "tester output\n"
+        "tester error\n";
+    ATF_REQUIRE_EQ(exp_output, output);
+}
+
+
+ATF_TEST_CASE(tester__list__request_unprivileged);
+ATF_TEST_CASE_HEAD(tester__list__request_unprivileged)
+{
+    set_md_var("require.user", "root");
+}
+ATF_TEST_CASE_BODY(tester__list__request_unprivileged)
+{
+    const passwd::user user("fake", 123, 456);
+
+    create_mock_tester_exit(EXIT_SUCCESS);
+    engine::tester tester("mock", utils::make_optional(user), none);
     const std::string output = tester.list(fs::path("/another/program/1"));
 
     const std::string exp_output =
         "Arg: -u123\n"
         "Arg: -g456\n"
-        "Arg: -t15\n"
+        "Arg: list\n"
+        "Arg: /another/program/1\n"
+        "tester output\n"
+        "tester error\n";
+    ATF_REQUIRE_EQ(exp_output, output);
+}
+
+
+ATF_TEST_CASE(tester__list__already_unprivileged);
+ATF_TEST_CASE_HEAD(tester__list__already_unprivileged)
+{
+    set_md_var("require.user", "unprivileged");
+}
+ATF_TEST_CASE_BODY(tester__list__already_unprivileged)
+{
+    const passwd::user user("fake", 123, 456);
+
+    create_mock_tester_exit(EXIT_SUCCESS);
+    engine::tester tester("mock", utils::make_optional(user), none);
+    const std::string output = tester.list(fs::path("/another/program/1"));
+
+    const std::string exp_output =
         "Arg: list\n"
         "Arg: /another/program/1\n"
         "tester output\n"
@@ -215,7 +257,6 @@ ATF_TEST_CASE_BODY(tester__test__defaults)
 ATF_TEST_CASE_WITHOUT_HEAD(tester__test__explicit_common_args_and_vars);
 ATF_TEST_CASE_BODY(tester__test__explicit_common_args_and_vars)
 {
-    const passwd::user user("fake", 123, 456);
     const datetime::delta timeout(15, 0);
 
     std::map< std::string, std::string > vars;
@@ -223,18 +264,75 @@ ATF_TEST_CASE_BODY(tester__test__explicit_common_args_and_vars)
     vars["variable-2"] = "value with spaces";
 
     create_mock_tester_exit(EXIT_SUCCESS);
-    engine::tester tester("mock", utils::make_optional(user),
-                          utils::make_optional(timeout));
+    engine::tester tester("mock", none, utils::make_optional(timeout));
+    tester.test(fs::path("/foo/bar"), "test-case", fs::path("/the/result/file"),
+                fs::path("tester.out"), fs::path("tester.err"), vars);
+
+    const std::string exp_output =
+        "Arg: -t15\n"
+        "Arg: test\n"
+        "Arg: -vvar1=value1\n"
+        "Arg: -vvariable-2=value with spaces\n"
+        "Arg: /foo/bar\n"
+        "Arg: test-case\n"
+        "Arg: /the/result/file\n"
+        "tester output\n";
+    const std::string exp_error =
+        "tester error\n";
+    ATF_REQUIRE(atf::utils::compare_file("tester.out", exp_output));
+    ATF_REQUIRE(atf::utils::compare_file("tester.err", exp_error));
+}
+
+
+ATF_TEST_CASE(tester__test__request_unprivileged);
+ATF_TEST_CASE_HEAD(tester__test__request_unprivileged)
+{
+    set_md_var("require.user", "root");
+}
+ATF_TEST_CASE_BODY(tester__test__request_unprivileged)
+{
+    const passwd::user user("fake", 123, 456);
+
+    const std::map< std::string, std::string > vars;
+
+    create_mock_tester_exit(EXIT_SUCCESS);
+    engine::tester tester("mock", utils::make_optional(user), none);
     tester.test(fs::path("/foo/bar"), "test-case", fs::path("/the/result/file"),
                 fs::path("tester.out"), fs::path("tester.err"), vars);
 
     const std::string exp_output =
         "Arg: -u123\n"
         "Arg: -g456\n"
-        "Arg: -t15\n"
         "Arg: test\n"
-        "Arg: -vvar1=value1\n"
-        "Arg: -vvariable-2=value with spaces\n"
+        "Arg: /foo/bar\n"
+        "Arg: test-case\n"
+        "Arg: /the/result/file\n"
+        "tester output\n";
+    const std::string exp_error =
+        "tester error\n";
+    ATF_REQUIRE(atf::utils::compare_file("tester.out", exp_output));
+    ATF_REQUIRE(atf::utils::compare_file("tester.err", exp_error));
+}
+
+
+ATF_TEST_CASE(tester__test__already_unprivileged);
+ATF_TEST_CASE_HEAD(tester__test__already_unprivileged)
+{
+    set_md_var("require.user", "unprivileged");
+}
+ATF_TEST_CASE_BODY(tester__test__already_unprivileged)
+{
+    const passwd::user user("fake", 123, 456);
+
+    const std::map< std::string, std::string > vars;
+
+    create_mock_tester_exit(EXIT_SUCCESS);
+    engine::tester tester("mock", utils::make_optional(user), none);
+    tester.test(fs::path("/foo/bar"), "test-case", fs::path("/the/result/file"),
+                fs::path("tester.out"), fs::path("tester.err"), vars);
+
+    const std::string exp_output =
+        "Arg: test\n"
         "Arg: /foo/bar\n"
         "Arg: test-case\n"
         "Arg: /the/result/file\n"
@@ -386,12 +484,16 @@ ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, tester__list__defaults);
     ATF_ADD_TEST_CASE(tcs, tester__list__explicit_common_args);
+    ATF_ADD_TEST_CASE(tcs, tester__list__request_unprivileged);
+    ATF_ADD_TEST_CASE(tcs, tester__list__already_unprivileged);
     ATF_ADD_TEST_CASE(tcs, tester__list__unknown_interface);
     ATF_ADD_TEST_CASE(tcs, tester__list__tester_fails);
     ATF_ADD_TEST_CASE(tcs, tester__list__tester_crashes);
 
     ATF_ADD_TEST_CASE(tcs, tester__test__defaults);
     ATF_ADD_TEST_CASE(tcs, tester__test__explicit_common_args_and_vars);
+    ATF_ADD_TEST_CASE(tcs, tester__test__request_unprivileged);
+    ATF_ADD_TEST_CASE(tcs, tester__test__already_unprivileged);
     ATF_ADD_TEST_CASE(tcs, tester__test__unknown_interface);
     ATF_ADD_TEST_CASE(tcs, tester__test__tester_fails);
     ATF_ADD_TEST_CASE(tcs, tester__test__tester_crashes);
