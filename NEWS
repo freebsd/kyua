@@ -12,6 +12,8 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   and thus causes spurious test failures when the current user is not
   root and the current user and unprivileged_user do not match.
 
+* Issue 79: Mention kyua.conf(5) in the "see also" section of kyua(1).
+
 
 Changes in kyua-cli version 0.9
 ===============================
