@@ -1,0 +1,10 @@
+*.a
+*.o
+*_helper
+*_helpers
+*_inttest
+*_test
+*-tester
+*-tester.1
+
+defs.h

@@ -1,6 +1,9 @@
 # Welcome to the Kyua project!
 
-Kyua is a **testing framework** for operating systems.
+Kyua is a **testing framework** for infrastructure software, originally
+designed to equip BSD-based operating systems with a test suite.  This
+means that Kyua is lightweight and simple, and that Kyua integrates well
+with various build systems and continuous integration frameworks.
 
 Kyua features an **expressive test suite definition language**, a **safe
 runtime engine** for test suites and a **powerful report generation
@@ -26,8 +29,6 @@ Formal releases for source files are available for download from GitHub.
   August 8th, 2014.  *Required*.
 * [kyua-cli 0.9](../../releases/tag/kyua-cli-0.9), released on August
   8th, 2014.  *Required*.
-* [kyua-atf-compat 0.2](../../releases/tag/kyua-atf-compat-0.2), released
-  on December 28th, 2013.  *Optional*.
 
 ## Installation
 
@@ -44,26 +45,11 @@ wherever available:
 
 Should you want to build and install Kyua from the source tree provided
 here, follow the instructions in the
-[INSTALL file](kyua-cli/INSTALL).
+[INSTALL file](INSTALL).
 
 You should also install the ATF libraries to assist in the development of
 test programs.  To that end, see the
 [ATF project page](https://github.com/jmmv/atf/).
-
-## Source tree
-
-This source tree contains all the modules that form the Kyua project.
-These modules match the list of downloads above, and are, in
-reverse-dependency order:
-
-* `kyua-testers`: Scriptable interfaces to interact with test programs
-  of various kinds.
-
-* `kyua-cli`: Runtime and reporting engine, including the command-line
-  interface to Kyua.
-
-* `kyua-atf-compat`: Utilities to ease the transition from ATF to Kyua.
-  This is an optional installation.
 
 ## Support
 
