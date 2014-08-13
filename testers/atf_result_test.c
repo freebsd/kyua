@@ -248,9 +248,9 @@ CHECK(rewrite__expected_signal__no_reason,
       false);
 CHECK(rewrite__expected_signal__bad_arg,
       "expected_signal(abc): Some text\n",
-      generate_wait_termsig(25), false,
+      generate_wait_termsig(15), false,
       "broken: Invalid status argument (abc): not a number; test case received "
-      "signal 25\n",
+      "signal 15\n",
       false);
 
 

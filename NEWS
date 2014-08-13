@@ -14,6 +14,10 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 
 * Issue 79: Mention kyua.conf(5) in the "see also" section of kyua(1).
 
+* Issue 75: Change the rewrite__expected_signal__bad_arg test in
+  testers/atf_result_test to use a different signal value.  This is to
+  prevent triggering a core dump that made the test fail in some platforms.
+
 
 Changes in kyua-cli version 0.9
 ===============================
