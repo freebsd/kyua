@@ -1,7 +1,7 @@
 Changes in version 0.10
 =======================
 
-STILL UNDER DEVELOPMENT; NOT RELEASED YET.
+Experimental version released on August 14th, 2014.
 
 * Merged 'kyua-cli' and 'kyua-testers' into a single 'kyua' package.
 

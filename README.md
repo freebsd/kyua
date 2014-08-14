@@ -23,12 +23,9 @@ programs can also be executed through Kyua.
 
 ## Download
 
-Formal releases for source files are available for download from GitHub.
+The latest version of Kyua is 0.10 and was released on August 14th, 2014.
 
-* [kyua-testers 0.3](../../releases/tag/kyua-testers-0.3), released on
-  August 8th, 2014.  *Required*.
-* [kyua-cli 0.9](../../releases/tag/kyua-cli-0.9), released on August
-  8th, 2014.  *Required*.
+Download: [kyua-0.10](../../releases/tag/kyua-0.10).
 
 ## Installation
 
