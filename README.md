@@ -35,10 +35,9 @@ wherever available:
 * Fedora 20 and above: install the `kyua-cli` package with `yum install
   kyua-cli`.
 
-* FreeBSD 10.0 and above: install the `kyua-cli` package with `pkg install
-  kyua-cli`.
+* FreeBSD 10.0 and above: install the `kyua` package with `pkg install kyua`.
 
-* NetBSD with pkgsrc: install the `pkgsrc/devel/kyua-cli` package.
+* NetBSD with pkgsrc: install the `pkgsrc/devel/kyua` package.
 
 Should you want to build and install Kyua from the source tree provided
 here, follow the instructions in the
