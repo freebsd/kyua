@@ -263,6 +263,10 @@ prepare_environment(const char* work_directory)
     if (kyua_error_is_set(error))
         return error;
 
+    error = kyua_env_set("TMPDIR", work_directory);
+    if (kyua_error_is_set(error))
+        return error;
+
     error = kyua_env_set("TZ", "UTC");
     if (kyua_error_is_set(error))
         return error;

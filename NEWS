@@ -3,7 +3,11 @@ Changes in version 0.11
 
 STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 
-* No changes recorded.
+* Issue 102: Set TMPDIR to the test case's work directory when running
+  the test case.  If the test case happens to use the mktemp(3) family
+  of functions (due to misunderstandings on how Kyua works or due to
+  the reuse of legacy test code), we don't want it to easily escape the
+  automanaged work directory.
 
 
 Changes in version 0.10

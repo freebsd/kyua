@@ -89,6 +89,10 @@ check_env(const void* KYUA_DEFS_UNUSED_PARAM(cookie))
         failed = true;
         printf("HOME was not set to .\n");
     }
+    if (strcmp(getenv("TMPDIR"), ".") != 0) {
+        failed = true;
+        printf("TMPDIR was not set to .\n");
+    }
     if (strcmp(getenv("TZ"), "UTC") != 0) {
         failed = true;
         printf("TZ was not set to UTC\n");
@@ -448,6 +452,7 @@ ATF_TC_WITHOUT_HEAD(fork_wait__env);
 ATF_TC_BODY(fork_wait__env, tc)
 {
     kyua_env_set("HOME", "/non-existent/directory");
+    kyua_env_set("TMPDIR", "/non-existent/directory");
     kyua_env_set("LANG", "C");
     kyua_env_set("LC_ALL", "C");
     kyua_env_set("LC_COLLATE", "C");
