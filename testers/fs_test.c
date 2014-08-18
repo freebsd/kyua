@@ -116,9 +116,9 @@ run_mount_tmpfs(const char* mount_point)
     size_t last = 0;
     switch (current_os) {
     case os_freebsd:
-        mount_args[last++] = "mdmfs";
-        mount_args[last++] = "-s16m";
-        mount_args[last++] = "md";
+        mount_args[last++] = "mount";
+        mount_args[last++] = "-ttmpfs";
+        mount_args[last++] = "tmpfs";
         mount_args[last++] = mount_point;
         break;
 
