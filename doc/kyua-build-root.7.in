@@ -29,7 +29,7 @@
 .Dt KYUA-BUILD-ROOT 7
 .Os
 .Sh NAME
-.Nm build-root
+.Nm "kyua build-root"
 .Nd Mechanics of build directories
 .Sh DESCRIPTION
 .Em Build directories

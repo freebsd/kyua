@@ -29,7 +29,7 @@
 .Dt KYUA-LIST 1
 .Os
 .Sh NAME
-.Nm list
+.Nm "kyua list"
 .Nd Lists test cases and their metadata
 .Sh SYNOPSIS
 .Nm

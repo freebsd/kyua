@@ -29,7 +29,7 @@
 .Dt KYUA-ABOUT 1
 .Os
 .Sh NAME
-.Nm about
+.Nm "kyua about"
 .Nd Shows general program information
 .Sh SYNOPSIS
 .Nm

@@ -29,7 +29,7 @@
 .Dt KYUA-REPORT-HTML 1
 .Os
 .Sh NAME
-.Nm report-html
+.Nm "kyua report-html"
 .Nd Generates an HTML report with the results of a test suite run
 .Sh SYNOPSIS
 .Nm

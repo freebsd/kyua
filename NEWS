@@ -3,6 +3,10 @@ Changes in version 0.11
 
 STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 
+* Issue 83: Changed manual page headings to include a "kyua" prefix in
+  their name.  This prevents some possible confusion when displaying,
+  for example, the "kyua-test" manual page with a plain name of "test".
+
 * Issue 102: Set TMPDIR to the test case's work directory when running
   the test case.  If the test case happens to use the mktemp(3) family
   of functions (due to misunderstandings on how Kyua works or due to

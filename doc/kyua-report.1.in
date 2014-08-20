@@ -29,7 +29,7 @@
 .Dt KYUA-REPORT 1
 .Os
 .Sh NAME
-.Nm report
+.Nm "kyua report"
 .Nd Generates reports with the results of a test suite run
 .Sh SYNOPSIS
 .Nm

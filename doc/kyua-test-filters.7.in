@@ -29,7 +29,7 @@
 .Dt KYUA-TEST-FILTERS 7
 .Os
 .Sh NAME
-.Nm test-filters
+.Nm "kyua test-filters"
 .Nd Syntax of the command-line test filters
 .Sh DESCRIPTION
 A

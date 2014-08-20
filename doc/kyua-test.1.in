@@ -29,7 +29,7 @@
 .Dt KYUA-TEST 1
 .Os
 .Sh NAME
-.Nm test
+.Nm "kyua test"
 .Nd Runs tests
 .Sh SYNOPSIS
 .Nm

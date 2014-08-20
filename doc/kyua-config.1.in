@@ -29,7 +29,7 @@
 .Dt KYUA-CONFIG 1
 .Os
 .Sh NAME
-.Nm config
+.Nm "kyua config"
 .Nd Inspects the values of the loaded configuration
 .Sh SYNOPSIS
 .Nm

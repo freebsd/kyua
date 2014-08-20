@@ -29,7 +29,7 @@
 .Dt KYUA-DEBUG 1
 .Os
 .Sh NAME
-.Nm debug
+.Nm "kyua debug"
 .Nd Executes a single test case with facilities for debugging
 .Sh SYNOPSIS
 .Nm

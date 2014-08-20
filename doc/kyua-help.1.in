@@ -29,7 +29,7 @@
 .Dt KYUA-HELP 1
 .Os
 .Sh NAME
-.Nm help
+.Nm "kyua help"
 .Nd Shows usage information
 .Sh SYNOPSIS
 .Nm

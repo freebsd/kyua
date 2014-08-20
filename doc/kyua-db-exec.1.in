@@ -29,7 +29,7 @@
 .Dt KYUA-DB-EXEC 1
 .Os
 .Sh NAME
-.Nm db-exec
+.Nm "kyua db-exec"
 .Nd Executes a SQL statement in a results file
 .Sh SYNOPSIS
 .Nm

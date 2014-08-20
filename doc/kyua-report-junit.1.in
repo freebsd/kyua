@@ -29,7 +29,7 @@
 .Dt KYUA-REPORT-JUNIT 1
 .Os
 .Sh NAME
-.Nm report-junit
+.Nm "kyua report-junit"
 .Nd Generates a JUnit report with the results of a test suite run
 .Sh SYNOPSIS
 .Nm

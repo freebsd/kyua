@@ -29,7 +29,7 @@
 .Dt KYUA-DB-MIGRATE 1
 .Os
 .Sh NAME
-.Nm db-migrate
+.Nm "kyua db-migrate"
 .Nd Upgrades the schema of an existing results file
 .Sh SYNOPSIS
 .Nm

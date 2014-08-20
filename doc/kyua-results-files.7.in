@@ -29,7 +29,7 @@
 .Dt KYUA-RESULTS-FILES 7
 .Os
 .Sh NAME
-.Nm results-files
+.Nm "kyua results-files"
 .Nd Description of the results files naming scheme
 .Sh DESCRIPTION
 Results files contain, as their name implies, the results of the execution of a
