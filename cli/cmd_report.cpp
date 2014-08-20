@@ -38,7 +38,7 @@
 #include "cli/common.ipp"
 #include "engine/context.hpp"
 #include "engine/drivers/scan_results.hpp"
-#include "engine/test_result.hpp"
+#include "model/test_result.hpp"
 #include "store/layout.hpp"
 #include "store/read_transaction.hpp"
 #include "utils/cmdline/exceptions.hpp"
@@ -92,7 +92,7 @@ class report_console_hooks : public engine::drivers::scan_results::base_hooks {
         std::string test_case_name;
 
         /// The result of the test case.
-        engine::test_result result;
+        model::test_result result;
 
         /// The duration of the test case execution.
         utils::datetime::delta duration;
@@ -105,7 +105,7 @@ class report_console_hooks : public engine::drivers::scan_results::base_hooks {
         /// \param duration_ The duration of the test case execution.
         result_data(const utils::fs::path& binary_path_,
                     const std::string& test_case_name_,
-                    const engine::test_result& result_,
+                    const model::test_result& result_,
                     const utils::datetime::delta& duration_) :
             binary_path(binary_path_), test_case_name(test_case_name_),
             result(result_), duration(duration_)
@@ -117,7 +117,7 @@ class report_console_hooks : public engine::drivers::scan_results::base_hooks {
     ///
     /// Note that this may not include all results, as keeping the whole list in
     /// memory may be too much.
-    std::map< engine::test_result::result_type,
+    std::map< model::test_result::result_type,
               std::vector< result_data > > _results;
 
     /// Prints the execution context to the output.
@@ -143,9 +143,9 @@ class report_console_hooks : public engine::drivers::scan_results::base_hooks {
 
     /// Counts how many results of a given type have been received.
     std::size_t
-    count_results(const engine::test_result::result_type type)
+    count_results(const model::test_result::result_type type)
     {
-        const std::map< engine::test_result::result_type,
+        const std::map< model::test_result::result_type,
                         std::vector< result_data > >::const_iterator iter =
             _results.find(type);
         if (iter == _results.end())
@@ -156,10 +156,10 @@ class report_console_hooks : public engine::drivers::scan_results::base_hooks {
 
     /// Prints a set of results.
     void
-    print_results(const engine::test_result::result_type type,
+    print_results(const model::test_result::result_type type,
                   const char* title)
     {
-        const std::map< engine::test_result::result_type,
+        const std::map< model::test_result::result_type,
                         std::vector< result_data > >::const_iterator iter2 =
             _results.find(type);
         if (iter2 == _results.end())
@@ -213,7 +213,7 @@ public:
     got_result(store::results_iterator& iter)
     {
         _runtime += iter.duration();
-        const engine::test_result result = iter.result();
+        const model::test_result result = iter.result();
         _results[result.type()].push_back(
             result_data(iter.test_program()->relative_path(),
                         iter.test_case_name(), iter.result(), iter.duration()));
@@ -225,15 +225,15 @@ public:
     void
     end(const engine::drivers::scan_results::result& UTILS_UNUSED_PARAM(r))
     {
-        using engine::test_result;
+        using model::test_result;
         typedef std::map< test_result::result_type, const char* > types_map;
 
         types_map titles;
-        titles[engine::test_result::broken] = "Broken tests";
-        titles[engine::test_result::expected_failure] = "Expected failures";
-        titles[engine::test_result::failed] = "Failed tests";
-        titles[engine::test_result::passed] = "Passed tests";
-        titles[engine::test_result::skipped] = "Skipped tests";
+        titles[model::test_result::broken] = "Broken tests";
+        titles[model::test_result::expected_failure] = "Expected failures";
+        titles[model::test_result::failed] = "Failed tests";
+        titles[model::test_result::passed] = "Passed tests";
+        titles[model::test_result::skipped] = "Skipped tests";
 
         for (cli::result_types::const_iterator iter = _results_filters.begin();
              iter != _results_filters.end(); ++iter) {

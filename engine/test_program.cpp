@@ -37,8 +37,8 @@
 #include <lutok/state.ipp>
 
 #include "engine/exceptions.hpp"
-#include "engine/test_result.hpp"
 #include "engine/testers.hpp"
+#include "model/test_result.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/logging/operations.hpp"
@@ -392,7 +392,7 @@ engine::test_program::test_cases(void) const
             fake_test_cases.push_back(test_case_ptr(new test_case(
                 _pimpl->interface_name, *this, "__test_cases_list__",
                 "Represents the correct processing of the test cases list",
-                test_result(engine::test_result::broken, e.what()))));
+                model::test_result(model::test_result::broken, e.what()))));
             _pimpl->test_cases = fake_test_cases;
         }
     }

@@ -33,7 +33,7 @@
 #include "cli/common.ipp"
 #include "engine/drivers/run_tests.hpp"
 #include "engine/test_case.hpp"
-#include "engine/test_result.hpp"
+#include "model/test_result.hpp"
 #include "store/layout.hpp"
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.ipp"
@@ -92,7 +92,7 @@ public:
     /// \param duration The time it took to run the test.
     virtual void
     got_result(const engine::test_case_ptr& UTILS_UNUSED_PARAM(test_case),
-               const engine::test_result& result,
+               const model::test_result& result,
                const datetime::delta& duration)
     {
         _ui->out(F("%s  [%s]") % cli::format_result(result) %

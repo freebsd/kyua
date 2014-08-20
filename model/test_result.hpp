@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2014 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,17 +26,18 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/test_result.hpp
-/// Representation of test case results.
+/// \file model/test_result.hpp
+/// Definition of the "test result" concept.
 
-#if !defined(ENGINE_TEST_RESULT_HPP)
-#define ENGINE_TEST_RESULT_HPP
+#if !defined(MODEL_TEST_RESULT_HPP)
+#define MODEL_TEST_RESULT_HPP
 
-#include <istream>
+#include "model/test_result_fwd.hpp"
+
 #include <ostream>
 #include <string>
 
-namespace engine {
+namespace model {
 
 
 /// Representation of a single test result.
@@ -70,7 +71,6 @@ private:
 
 public:
     test_result(const result_type, const std::string& = "");
-    static test_result parse(std::istream&);
 
     result_type type(void) const;
     const std::string& reason(void) const;
@@ -85,7 +85,6 @@ public:
 std::ostream& operator<<(std::ostream&, const test_result&);
 
 
-}  // namespace engine
+}  // namespace model
 
-
-#endif  // !defined(ENGINE_TEST_RESULT_HPP)
+#endif  // !defined(MODEL_TEST_RESULT_HPP)

@@ -36,7 +36,7 @@ extern "C" {
 #include <map>
 
 #include "engine/context.hpp"
-#include "engine/test_result.hpp"
+#include "model/test_result.hpp"
 #include "store/dbtypes.hpp"
 #include "store/exceptions.hpp"
 #include "store/write_backend.hpp"
@@ -397,7 +397,7 @@ store::write_transaction::put_test_case_file(const std::string& name,
 ///
 /// \throw error If there is any problem when talking to the database.
 int64_t
-store::write_transaction::put_result(const engine::test_result& result,
+store::write_transaction::put_result(const model::test_result& result,
                                      const int64_t test_case_id,
                                      const datetime::timestamp& start_time,
                                      const datetime::timestamp& end_time)
@@ -412,23 +412,23 @@ store::write_transaction::put_result(const engine::test_result& result,
         stmt.bind(":test_case_id", test_case_id);
 
         switch (result.type()) {
-        case engine::test_result::broken:
+        case model::test_result::broken:
             stmt.bind(":result_type", "broken");
             break;
 
-        case engine::test_result::expected_failure:
+        case model::test_result::expected_failure:
             stmt.bind(":result_type", "expected_failure");
             break;
 
-        case engine::test_result::failed:
+        case model::test_result::failed:
             stmt.bind(":result_type", "failed");
             break;
 
-        case engine::test_result::passed:
+        case model::test_result::passed:
             stmt.bind(":result_type", "passed");
             break;
 
-        case engine::test_result::skipped:
+        case model::test_result::skipped:
             stmt.bind(":result_type", "skipped");
             break;
 

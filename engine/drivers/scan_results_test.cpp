@@ -33,7 +33,7 @@
 #include <atf-c++.hpp>
 
 #include "engine/context.hpp"
-#include "engine/test_result.hpp"
+#include "model/test_result.hpp"
 #include "store/exceptions.hpp"
 #include "store/read_transaction.hpp"
 #include "store/write_backend.hpp"
@@ -109,8 +109,8 @@ public:
     {
         const char* type;
         switch (iter.result().type()) {
-        case engine::test_result::passed: type = "passed"; break;
-        case engine::test_result::skipped: type = "skipped"; break;
+        case model::test_result::passed: type = "passed"; break;
+        case model::test_result::skipped: type = "skipped"; break;
         default:
             UNREACHABLE_MSG("Formatting unimplemented");
         }
@@ -155,8 +155,8 @@ populate_results_file(const char* db_name, const int count)
             const engine::test_case test_case(
                 "plain", test_program, "main",
                 engine::metadata_builder().build());
-            const engine::test_result result(engine::test_result::skipped,
-                                             F("Count %s") % j);
+            const model::test_result result(model::test_result::skipped,
+                                            F("Count %s") % j);
             const int64_t tc_id = tx.put_test_case(test_case, tp_id);
             const datetime::timestamp start =
                 datetime::timestamp::from_microseconds(1000010);

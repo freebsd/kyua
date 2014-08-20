@@ -1,4 +1,4 @@
-// Copyright 2011 Google Inc.
+// Copyright 2014 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,64 +26,18 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/drivers/scan_results.hpp"
+/// \file model/test_result_fwd.hpp
+/// Forward declarations for model/test_result.hpp
 
-#include "engine/context.hpp"
-#include "store/read_backend.hpp"
-#include "store/read_transaction.hpp"
-#include "utils/defs.hpp"
+#if !defined(MODEL_TEST_RESULT_FWD_HPP)
+#define MODEL_TEST_RESULT_FWD_HPP
 
-namespace fs = utils::fs;
-namespace scan_results = engine::drivers::scan_results;
+namespace model {
 
 
-/// Pure abstract destructor.
-scan_results::base_hooks::~base_hooks(void)
-{
-}
+class test_result;
 
 
-/// Callback executed before any operation is performed.
-void
-scan_results::base_hooks::begin(void)
-{
-}
+}  // namespace model
 
-
-/// Callback executed after all operations are performed.
-///
-/// \param unused_r A structure with all results computed by this driver.  Note
-///     that this is also returned by the drive operation.
-void
-scan_results::base_hooks::end(const result& UTILS_UNUSED_PARAM(r))
-{
-}
-
-
-/// Executes the operation.
-///
-/// \param store_path The path to the database store.
-/// \param hooks The hooks for this execution.
-///
-/// \returns A structure with all results computed by this driver.
-scan_results::result
-scan_results::drive(const fs::path& store_path, base_hooks& hooks)
-{
-    store::read_backend db = store::read_backend::open_ro(store_path);
-    store::read_transaction tx = db.start_read();
-
-    hooks.begin();
-
-    const engine::context context = tx.get_context();
-    hooks.got_context(context);
-
-    store::results_iterator iter = tx.get_results();
-    while (iter) {
-        hooks.got_result(iter);
-        ++iter;
-    }
-
-    result r;
-    hooks.end(r);
-    return r;
-}
+#endif  // !defined(MODEL_TEST_RESULT_FWD_HPP)

@@ -38,7 +38,7 @@
 
 #include "engine/filters.hpp"
 #include "engine/test_case.hpp"
-#include "engine/test_result.hpp"
+#include "model/test_result.hpp"
 #include "utils/config/tree.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"
@@ -55,14 +55,14 @@ public:
     test_filter test_case;
 
     /// The result of the test case.
-    engine::test_result test_result;
+    model::test_result test_result;
 
     /// Initializer for the tuple's fields.
     ///
     /// \param test_case_ The matched test case.
     /// \param test_result_ The result of the test case.
     result(const engine::test_filter& test_case_,
-           const engine::test_result& test_result_) :
+           const model::test_result& test_result_) :
         test_case(test_case_),
         test_result(test_result_)
     {

@@ -34,7 +34,7 @@
 #include "engine/kyuafile.hpp"
 #include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
-#include "engine/test_result.hpp"
+#include "model/test_result.hpp"
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/auto_cleaners.hpp"
@@ -133,7 +133,7 @@ debug_test::drive(const fs::path& kyuafile_path,
     const fs::auto_directory work_directory = fs::auto_directory::mkdtemp(
         "kyua.XXXXXX");
 
-    const engine::test_result test_result = debug_test_case(
+    const model::test_result test_result = debug_test_case(
         test_case.get(), user_config, dummy_hooks, work_directory.directory(),
         stdout_path, stderr_path);
 

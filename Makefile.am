@@ -57,6 +57,7 @@ include engine/Makefile.am.inc
 include examples/Makefile.am.inc
 include integration/Makefile.am.inc
 include misc/Makefile.am.inc
+include model/Makefile.am.inc
 include store/Makefile.am.inc
 include testers/Makefile.am.inc
 include utils/Makefile.am.inc

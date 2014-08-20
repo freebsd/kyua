@@ -32,7 +32,7 @@
 #include "engine/filters.hpp"
 #include "engine/kyuafile.hpp"
 #include "engine/test_program.hpp"
-#include "engine/test_result.hpp"
+#include "model/test_result.hpp"
 #include "store/write_backend.hpp"
 #include "store/write_transaction.hpp"
 #include "utils/datetime.hpp"
@@ -130,7 +130,7 @@ run_test_program(const engine::test_program& program,
         file_saver_hooks test_hooks(tx, test_case_id);
         hooks.got_test_case(test_case);
         const datetime::timestamp start_time = datetime::timestamp::now();
-        const engine::test_result result = run_test_case(
+        const model::test_result result = run_test_case(
             test_case.get(), user_config, test_hooks, work_directory);
         const datetime::timestamp end_time = datetime::timestamp::now();
         tx.put_result(result, test_case_id, start_time, end_time);

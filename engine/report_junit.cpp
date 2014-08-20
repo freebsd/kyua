@@ -32,7 +32,7 @@
 
 #include "engine/context.hpp"
 #include "engine/metadata.hpp"
-#include "engine/test_result.hpp"
+#include "model/test_result.hpp"
 #include "store/read_transaction.hpp"
 #include "utils/datetime.hpp"
 #include "utils/defs.hpp"
@@ -152,7 +152,7 @@ engine::report_junit_hooks::got_context(const engine::context& context)
 void
 engine::report_junit_hooks::got_result(store::results_iterator& iter)
 {
-    const engine::test_result result = iter.result();
+    const model::test_result result = iter.result();
 
     _output << F("<testcase classname=\"%s\" name=\"%s\" time=\"%s\">\n")
         % text::escape_xml(junit_classname(*iter.test_program()))
@@ -162,12 +162,12 @@ engine::report_junit_hooks::got_result(store::results_iterator& iter)
     std::string stderr_contents;
 
     switch (result.type()) {
-    case engine::test_result::failed:
+    case model::test_result::failed:
         _output << F("<failure message=\"%s\"/>\n")
             % text::escape_xml(result.reason());
         break;
 
-    case engine::test_result::expected_failure:
+    case model::test_result::expected_failure:
         stderr_contents += ("Expected failure result details\n"
                             "-------------------------------\n"
                             "\n"
@@ -175,11 +175,11 @@ engine::report_junit_hooks::got_result(store::results_iterator& iter)
                             "\n");
         break;
 
-    case engine::test_result::passed:
+    case model::test_result::passed:
         // Passed results have no status nodes.
         break;
 
-    case engine::test_result::skipped:
+    case model::test_result::skipped:
         _output << "<skipped/>\n";
         stderr_contents += ("Skipped result details\n"
                             "----------------------\n"

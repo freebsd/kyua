@@ -34,7 +34,7 @@
 #include <atf-c++.hpp>
 
 #include "engine/context.hpp"
-#include "engine/test_result.hpp"
+#include "model/test_result.hpp"
 #include "store/exceptions.hpp"
 #include "store/read_backend.hpp"
 #include "store/write_backend.hpp"
@@ -201,7 +201,7 @@ ATF_TEST_CASE_BODY(get_results__many)
     engine::test_cases_vector test_cases_1;
     test_cases_1.push_back(test_case_1);
     test_program_1.set_test_cases(test_cases_1);
-    const engine::test_result result_1(engine::test_result::passed);
+    const model::test_result result_1(model::test_result::passed);
     {
         const int64_t tp_id = tx.put_test_program(test_program_1);
         const int64_t tc_id = tx.put_test_case(*test_case_1, tp_id);
@@ -219,8 +219,8 @@ ATF_TEST_CASE_BODY(get_results__many)
     engine::test_cases_vector test_cases_2;
     test_cases_2.push_back(test_case_2);
     test_program_2.set_test_cases(test_cases_2);
-    const engine::test_result result_2(engine::test_result::failed,
-                                       "Some text");
+    const model::test_result result_2(model::test_result::failed,
+                                      "Some text");
     {
         const int64_t tp_id = tx.put_test_program(test_program_2);
         const int64_t tc_id = tx.put_test_case(*test_case_2, tp_id);

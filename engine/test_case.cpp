@@ -37,8 +37,8 @@ extern "C" {
 #include "engine/config.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/test_program.hpp"
-#include "engine/test_result.hpp"
 #include "engine/testers.hpp"
+#include "model/test_result.hpp"
 #include "utils/config/tree.ipp"
 #include "utils/datetime.hpp"
 #include "utils/defs.hpp"
@@ -174,7 +174,7 @@ struct engine::test_case::impl {
     metadata md;
 
     /// Fake result to return instead of running the test case.
-    optional< test_result > fake_result;
+    optional< model::test_result > fake_result;
 
     /// Constructor.
     ///
@@ -189,7 +189,7 @@ struct engine::test_case::impl {
          const test_program& test_program_,
          const std::string& name_,
          const metadata& md_,
-         const optional< test_result >& fake_result_) :
+         const optional< model::test_result >& fake_result_) :
         interface_name(interface_name_),
         _test_program(test_program_),
         name(name_),
@@ -262,7 +262,7 @@ engine::test_case::test_case(
     const test_program& test_program_,
     const std::string& name_,
     const std::string& description_,
-    const engine::test_result& test_result_) :
+    const model::test_result& test_result_) :
     _pimpl(new impl(interface_name_, test_program_, name_,
                     metadata_builder().set_description(description_).build(),
                     utils::make_optional(test_result_)))
@@ -322,7 +322,7 @@ engine::test_case::get_metadata(void) const
 /// Gets the fake result pre-stored for this test case.
 ///
 /// \return A fake result, or none if not defined.
-optional< engine::test_result >
+optional< model::test_result >
 engine::test_case::fake_result(void) const
 {
     return _pimpl->fake_result;
@@ -393,7 +393,7 @@ engine::operator<<(std::ostream& output, const test_case& object)
 ///     For interactive debugging, '/dev/stderr' is probably a reasonable value.
 ///
 /// \return The result of the execution of the test case.
-engine::test_result
+model::test_result
 engine::debug_test_case(const test_case* test_case,
                         const config::tree& user_config,
                         test_case_hooks& hooks,
@@ -408,10 +408,11 @@ engine::debug_test_case(const test_case* test_case,
         test_case->get_metadata(), user_config,
         test_case->container_test_program().test_suite_name());
     if (!skip_reason.empty())
-        return test_result(test_result::skipped, skip_reason);
+        return model::test_result(model::test_result::skipped, skip_reason);
 
     if (!fs::exists(test_case->container_test_program().absolute_path()))
-        return test_result(test_result::broken, "Test program does not exist");
+        return model::test_result(model::test_result::broken,
+                                  "Test program does not exist");
 
     const fs::auto_file result_file(work_directory / "result.txt");
 
@@ -432,7 +433,7 @@ engine::debug_test_case(const test_case* test_case,
         hooks.got_stderr(stderr_path);
 
         std::ifstream result_input(result_file.file().c_str());
-        return engine::test_result::parse(result_input);
+        return parse_test_result(result_input);
     } catch (const std::runtime_error& e) {
         // One of the possible explanation for us getting here is if the tester
         // crashes or doesn't behave as expected.  We must record any output
@@ -440,8 +441,8 @@ engine::debug_test_case(const test_case* test_case,
         hooks.got_stdout(stdout_path);
         hooks.got_stderr(stderr_path);
 
-        return engine::test_result(
-            engine::test_result::broken,
+        return model::test_result(
+            model::test_result::broken,
             F("Caught unexpected exception: %s") % e.what());
     }
 }
@@ -456,7 +457,7 @@ engine::debug_test_case(const test_case* test_case,
 /// \param work_directory A directory that can be used to place temporary files.
 ///
 /// \return The result of the execution of the test case.
-engine::test_result
+model::test_result
 engine::run_test_case(const test_case* test_case,
                       const config::tree& user_config,
                       test_case_hooks& hooks,
@@ -469,10 +470,11 @@ engine::run_test_case(const test_case* test_case,
         test_case->get_metadata(), user_config,
         test_case->container_test_program().test_suite_name());
     if (!skip_reason.empty())
-        return test_result(test_result::skipped, skip_reason);
+        return model::test_result(model::test_result::skipped, skip_reason);
 
     if (!fs::exists(test_case->container_test_program().absolute_path()))
-        return test_result(test_result::broken, "Test program does not exist");
+        return model::test_result(model::test_result::broken,
+                                  "Test program does not exist");
 
     const fs::auto_file stdout_file(work_directory / "stdout.txt");
     const fs::auto_file stderr_file(work_directory / "stderr.txt");
@@ -495,7 +497,7 @@ engine::run_test_case(const test_case* test_case,
         hooks.got_stderr(stderr_file.file());
 
         std::ifstream result_input(result_file.file().c_str());
-        return engine::test_result::parse(result_input);
+        return parse_test_result(result_input);
     } catch (const std::runtime_error& e) {
         // One of the possible explanation for us getting here is if the tester
         // crashes or doesn't behave as expected.  We must record any output
@@ -503,8 +505,8 @@ engine::run_test_case(const test_case* test_case,
         hooks.got_stdout(stdout_file.file());
         hooks.got_stderr(stderr_file.file());
 
-        return engine::test_result(
-            engine::test_result::broken,
+        return model::test_result(
+            model::test_result::broken,
             F("Caught unexpected exception: %s") % e.what());
     }
 }

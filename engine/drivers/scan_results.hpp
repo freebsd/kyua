@@ -52,7 +52,6 @@ class results_iterator;
 namespace engine {
 
 class context;
-class test_result;
 
 namespace drivers {
 namespace scan_results {

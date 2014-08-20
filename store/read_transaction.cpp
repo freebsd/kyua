@@ -36,7 +36,7 @@ extern "C" {
 #include <utility>
 
 #include "engine/context.hpp"
-#include "engine/test_result.hpp"
+#include "model/test_result.hpp"
 #include "store/dbtypes.hpp"
 #include "store/exceptions.hpp"
 #include "store/read_backend.hpp"
@@ -193,11 +193,11 @@ get_test_cases(sqlite::database& db, const int64_t test_program_id,
 /// \return The loaded result.
 ///
 /// \throw integrity_error If the data in the database is invalid.
-static engine::test_result
+static model::test_result
 parse_result(sqlite::statement& stmt, const char* type_column,
              const char* reason_column)
 {
-    using engine::test_result;
+    using model::test_result;
 
     try {
         const std::string type = stmt.safe_column_text(type_column);
@@ -375,7 +375,7 @@ store::results_iterator::test_case_name(void) const
 /// Gets the result of the test case pointed by the iterator.
 ///
 /// \return A test case result.
-engine::test_result
+model::test_result
 store::results_iterator::result(void) const
 {
     return parse_result(_pimpl->_stmt, "result_type", "result_reason");

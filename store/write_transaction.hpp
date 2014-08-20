@@ -39,6 +39,7 @@ extern "C" {
 #include <string>
 
 #include "engine/test_program.hpp"
+#include "model/test_result_fwd.hpp"
 #include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"
@@ -46,7 +47,6 @@ extern "C" {
 
 namespace engine {
 class context;
-class test_result;
 }  // namespace engine
 
 namespace store {
@@ -80,7 +80,7 @@ public:
     utils::optional< int64_t > put_test_case_file(const std::string&,
                                                   const utils::fs::path&,
                                                   const int64_t);
-    int64_t put_result(const engine::test_result&, const int64_t,
+    int64_t put_result(const model::test_result&, const int64_t,
                        const utils::datetime::timestamp&,
                        const utils::datetime::timestamp&);
 };

@@ -39,7 +39,7 @@ extern "C" {
 #include <atf-c++.hpp>
 
 #include "engine/exceptions.hpp"
-#include "engine/test_result.hpp"
+#include "model/test_result.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
@@ -165,8 +165,8 @@ ATF_TEST_CASE_BODY(test_cases__tester_fails)
     ATF_REQUIRE_EQ("__test_cases_list__", test_case->name());
 
     ATF_REQUIRE(test_case->fake_result());
-    const engine::test_result result = test_case->fake_result().get();
-    ATF_REQUIRE(engine::test_result::broken == result.type());
+    const model::test_result result = test_case->fake_result().get();
+    ATF_REQUIRE(model::test_result::broken == result.type());
     ATF_REQUIRE_MATCH("Tester did not exit cleanly", result.reason());
 }
 

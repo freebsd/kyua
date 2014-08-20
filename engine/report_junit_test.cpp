@@ -36,7 +36,7 @@
 #include "engine/context.hpp"
 #include "engine/drivers/scan_results.hpp"
 #include "engine/metadata.hpp"
-#include "engine/test_result.hpp"
+#include "model/test_result.hpp"
 #include "store/write_backend.hpp"
 #include "store/write_transaction.hpp"
 #include "utils/datetime.hpp"
@@ -111,7 +111,7 @@ add_context(store::write_transaction& tx, const std::size_t env_vars)
 static void
 add_tests(store::write_transaction& tx,
           const char* prog,
-          const std::vector< engine::test_result >& results,
+          const std::vector< model::test_result >& results,
           const bool with_metadata, const bool with_output)
 {
     const engine::test_program test_program(
@@ -244,7 +244,7 @@ ATF_TEST_CASE_BODY(report_junit_hooks__minimal)
 ATF_TEST_CASE_WITHOUT_HEAD(report_junit_hooks__some_tests);
 ATF_TEST_CASE_BODY(report_junit_hooks__some_tests)
 {
-    using engine::test_result;
+    using model::test_result;
 
     std::vector< test_result > results1;
     results1.push_back(test_result(test_result::broken, "Broken"));

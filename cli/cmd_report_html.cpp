@@ -36,7 +36,7 @@
 #include "cli/common.ipp"
 #include "engine/context.hpp"
 #include "engine/drivers/scan_results.hpp"
-#include "engine/test_result.hpp"
+#include "model/test_result.hpp"
 #include "store/layout.hpp"
 #include "store/read_transaction.hpp"
 #include "utils/cmdline/options.hpp"
@@ -149,7 +149,7 @@ class html_hooks : public scan_results::base_hooks {
     text::templates_def _summary_templates;
 
     /// Mapping of result types to the amount of tests with such result.
-    std::map< engine::test_result::result_type, std::size_t > _types_count;
+    std::map< model::test_result::result_type, std::size_t > _types_count;
 
     /// Generates a common set of templates for all of our files.
     ///
@@ -171,7 +171,7 @@ class html_hooks : public scan_results::base_hooks {
     ///     with all of its information.
     void
     add_to_summary(const engine::test_case& test_case,
-                   const engine::test_result& result,
+                   const model::test_result& result,
                    const bool has_detail)
     {
         ++_types_count[result.type()];
@@ -182,27 +182,27 @@ class html_hooks : public scan_results::base_hooks {
         std::string test_cases_vector;
         std::string test_cases_file_vector;
         switch (result.type()) {
-        case engine::test_result::broken:
+        case model::test_result::broken:
             test_cases_vector = "broken_test_cases";
             test_cases_file_vector = "broken_test_cases_file";
             break;
 
-        case engine::test_result::expected_failure:
+        case model::test_result::expected_failure:
             test_cases_vector = "xfail_test_cases";
             test_cases_file_vector = "xfail_test_cases_file";
             break;
 
-        case engine::test_result::failed:
+        case model::test_result::failed:
             test_cases_vector = "failed_test_cases";
             test_cases_file_vector = "failed_test_cases_file";
             break;
 
-        case engine::test_result::passed:
+        case model::test_result::passed:
             test_cases_vector = "passed_test_cases";
             test_cases_file_vector = "passed_test_cases_file";
             break;
 
-        case engine::test_result::skipped:
+        case model::test_result::skipped:
             test_cases_vector = "skipped_test_cases";
             test_cases_file_vector = "skipped_test_cases_file";
             break;
@@ -246,9 +246,9 @@ class html_hooks : public scan_results::base_hooks {
     /// \return The number of tests of the given type, or 0 if none have yet
     /// been registered by add_to_summary().
     std::size_t
-    get_count(const engine::test_result::result_type type) const
+    get_count(const model::test_result::result_type type) const
     {
-        const std::map< engine::test_result::result_type,
+        const std::map< model::test_result::result_type,
                         std::size_t >::const_iterator
             iter = _types_count.find(type);
         if (iter == _types_count.end())
@@ -305,7 +305,7 @@ public:
     got_result(store::results_iterator& iter)
     {
         const engine::test_program_ptr test_program = iter.test_program();
-        const engine::test_result result = iter.result();
+        const model::test_result result = iter.result();
 
         const engine::test_case& test_case = *test_program->find(
             iter.test_case_name());
@@ -350,12 +350,12 @@ public:
     void
     write_summary(void)
     {
-        const std::size_t n_passed = get_count(engine::test_result::passed);
-        const std::size_t n_failed = get_count(engine::test_result::failed);
-        const std::size_t n_skipped = get_count(engine::test_result::skipped);
+        const std::size_t n_passed = get_count(model::test_result::passed);
+        const std::size_t n_failed = get_count(model::test_result::failed);
+        const std::size_t n_skipped = get_count(model::test_result::skipped);
         const std::size_t n_xfail = get_count(
-            engine::test_result::expected_failure);
-        const std::size_t n_broken = get_count(engine::test_result::broken);
+            model::test_result::expected_failure);
+        const std::size_t n_broken = get_count(model::test_result::broken);
 
         const std::size_t n_bad = n_broken + n_failed;
 

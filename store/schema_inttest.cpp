@@ -34,7 +34,7 @@
 #include "engine/context.hpp"
 #include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
-#include "engine/test_result.hpp"
+#include "model/test_result.hpp"
 #include "store/migrate.hpp"
 #include "store/read_backend.hpp"
 #include "store/read_transaction.hpp"
@@ -138,7 +138,7 @@ check_action_2(const fs::path& dbpath)
         test_cases.push_back(test_case_1);
         test_program_1.set_test_cases(test_cases);
     }
-    const engine::test_result result_1(engine::test_result::passed);
+    const model::test_result result_1(model::test_result::passed);
 
     engine::test_program test_program_2(
         "plain", fs::path("subdir/another_test"), fs::path("/test/suite/root"),
@@ -152,8 +152,8 @@ check_action_2(const fs::path& dbpath)
         test_cases.push_back(test_case_2);
         test_program_2.set_test_cases(test_cases);
     }
-    const engine::test_result result_2(engine::test_result::failed,
-                                       "Exited with code 1");
+    const model::test_result result_2(model::test_result::failed,
+                                      "Exited with code 1");
 
     engine::test_program test_program_3(
         "plain", fs::path("subdir/bar_test"), fs::path("/test/suite/root"),
@@ -166,8 +166,8 @@ check_action_2(const fs::path& dbpath)
         test_cases.push_back(test_case_3);
         test_program_3.set_test_cases(test_cases);
     }
-    const engine::test_result result_3(engine::test_result::broken,
-                                       "Received signal 1");
+    const model::test_result result_3(model::test_result::broken,
+                                      "Received signal 1");
 
     engine::test_program test_program_4(
         "plain", fs::path("top_test"), fs::path("/test/suite/root"),
@@ -180,8 +180,8 @@ check_action_2(const fs::path& dbpath)
         test_cases.push_back(test_case_4);
         test_program_4.set_test_cases(test_cases);
     }
-    const engine::test_result result_4(engine::test_result::expected_failure,
-                                       "Known bug");
+    const model::test_result result_4(model::test_result::expected_failure,
+                                      "Known bug");
 
     engine::test_program test_program_5(
         "plain", fs::path("last_test"), fs::path("/test/suite/root"),
@@ -194,8 +194,8 @@ check_action_2(const fs::path& dbpath)
         test_cases.push_back(test_case_5);
         test_program_5.set_test_cases(test_cases);
     }
-    const engine::test_result result_5(engine::test_result::skipped,
-                                       "Does not apply");
+    const model::test_result result_5(model::test_result::skipped,
+                                      "Does not apply");
 
     store::results_iterator iter = transaction.get_results();
     ATF_REQUIRE(iter);
@@ -301,11 +301,11 @@ check_action_3(const fs::path& dbpath)
         test_cases.push_back(test_case_8);
         test_program_6.set_test_cases(test_cases);
     }
-    const engine::test_result result_6(engine::test_result::passed);
-    const engine::test_result result_7(engine::test_result::failed,
-                                       "Some reason");
-    const engine::test_result result_8(engine::test_result::skipped,
-                                       "Another reason");
+    const model::test_result result_6(model::test_result::passed);
+    const model::test_result result_7(model::test_result::failed,
+                                      "Some reason");
+    const model::test_result result_8(model::test_result::skipped,
+                                      "Another reason");
 
     engine::test_program test_program_7(
         "atf", fs::path("simple_test"), fs::path("/usr/tests"),
@@ -323,8 +323,8 @@ check_action_3(const fs::path& dbpath)
         test_cases.push_back(test_case_9);
         test_program_7.set_test_cases(test_cases);
     }
-    const engine::test_result result_9(engine::test_result::failed,
-                                       "Exited with code 1");
+    const model::test_result result_9(model::test_result::failed,
+                                      "Exited with code 1");
 
     store::results_iterator iter = transaction.get_results();
     ATF_REQUIRE(iter);
@@ -398,7 +398,7 @@ check_action_4(const fs::path& dbpath)
         test_cases.push_back(test_case_10);
         test_program_8.set_test_cases(test_cases);
     }
-    const engine::test_result result_10(engine::test_result::failed,
+    const model::test_result result_10(model::test_result::failed,
                                        "Exit failure");
 
     engine::test_program test_program_9(
@@ -419,9 +419,9 @@ check_action_4(const fs::path& dbpath)
         test_cases.push_back(test_case_12);
         test_program_9.set_test_cases(test_cases);
     }
-    const engine::test_result result_11(engine::test_result::passed);
-    const engine::test_result result_12(engine::test_result::failed,
-                                        "Some reason");
+    const model::test_result result_11(model::test_result::passed);
+    const model::test_result result_12(model::test_result::failed,
+                                       "Some reason");
 
     store::results_iterator iter = transaction.get_results();
     ATF_REQUIRE(iter);

@@ -40,13 +40,13 @@
 
 #include "engine/filters.hpp"
 #include "engine/test_case.hpp"
+#include "model/test_result_fwd.hpp"
 #include "utils/config/tree.hpp"
 #include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"
 
 namespace engine {
-class test_result;
 namespace drivers {
 namespace run_tests {
 
@@ -67,7 +67,7 @@ public:
     /// \param result The result of the execution of the test case.
     /// \param duration The time it took to run the test.
     virtual void got_result(const engine::test_case_ptr& test_case,
-                            const engine::test_result& result,
+                            const model::test_result& result,
                             const utils::datetime::delta& duration) = 0;
 };
 

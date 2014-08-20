@@ -36,6 +36,7 @@
 #include <string>
 
 #include "engine/metadata.hpp"
+#include "model/test_result_fwd.hpp"
 #include "utils/config/tree.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"
@@ -44,7 +45,6 @@
 namespace engine {
 
 
-class test_result;
 class test_program;
 
 
@@ -78,14 +78,14 @@ public:
               const std::string&, const metadata&);
     test_case(const std::string&, const test_program&,
               const std::string&, const std::string&,
-              const engine::test_result&);
+              const model::test_result&);
     ~test_case(void);
 
     const std::string& interface_name(void) const;
     const test_program& container_test_program(void) const;
     const std::string& name(void) const;
     const metadata& get_metadata(void) const;
-    utils::optional< test_result > fake_result(void) const;
+    utils::optional< model::test_result > fake_result(void) const;
 
     bool operator==(const test_case&) const;
     bool operator!=(const test_case&) const;
@@ -99,11 +99,13 @@ std::ostream& operator<<(std::ostream&, const test_case&);
 typedef std::shared_ptr< test_case > test_case_ptr;
 
 
-test_result debug_test_case(const test_case*, const utils::config::tree&,
-                            test_case_hooks&, const utils::fs::path&,
-                            const utils::fs::path&, const utils::fs::path&);
-test_result run_test_case(const test_case*, const utils::config::tree&,
-                          test_case_hooks&, const utils::fs::path&);
+model::test_result debug_test_case(
+    const test_case*, const utils::config::tree&,
+    test_case_hooks&, const utils::fs::path&,
+    const utils::fs::path&, const utils::fs::path&);
+model::test_result run_test_case(
+    const test_case*, const utils::config::tree&,
+    test_case_hooks&, const utils::fs::path&);
 
 
 }  // namespace engine

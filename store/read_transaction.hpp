@@ -39,12 +39,12 @@ extern "C" {
 #include <string>
 
 #include "engine/test_program.hpp"
+#include "model/test_result_fwd.hpp"
 #include "utils/datetime.hpp"
 #include "utils/shared_ptr.hpp"
 
 namespace engine {
 class context;
-class test_result;
 }  // namespace engine
 
 namespace store {
@@ -86,7 +86,7 @@ public:
 
     const engine::test_program_ptr test_program(void) const;
     std::string test_case_name(void) const;
-    engine::test_result result(void) const;
+    model::test_result result(void) const;
     utils::datetime::delta duration(void) const;
 
     std::string stdout_contents(void) const;
