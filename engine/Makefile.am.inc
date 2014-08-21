@@ -30,7 +30,7 @@ ENGINE_CFLAGS = $(STORE_CFLAGS) $(UTILS_CFLAGS)
 ENGINE_LIBS = libengine.a $(STORE_LIBS) $(UTILS_LIBS)
 
 noinst_LIBRARIES += libengine.a
-libengine_a_CPPFLAGS  = $(UTILS_CFLAGS)
+libengine_a_CPPFLAGS  = $(STORE_CFLAGS) $(UTILS_CFLAGS)
 libengine_a_CPPFLAGS += -DKYUA_TESTERSDIR="\"$(testersdir)\""
 libengine_a_SOURCES  = engine/config.cpp
 libengine_a_SOURCES += engine/config.hpp
@@ -63,47 +63,39 @@ EXTRA_DIST += $(tests_engine_DATA)
 
 tests_engine_PROGRAMS = engine/config_test
 engine_config_test_SOURCES = engine/config_test.cpp
-engine_config_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-engine_config_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) $(ATF_CXX_LIBS)
+engine_config_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
+engine_config_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 
 tests_engine_PROGRAMS += engine/context_test
 engine_context_test_SOURCES = engine/context_test.cpp
-engine_context_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
-                               $(ATF_CXX_CFLAGS)
-engine_context_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) $(ATF_CXX_LIBS)
+engine_context_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
+engine_context_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 
 tests_engine_PROGRAMS += engine/exceptions_test
 engine_exceptions_test_SOURCES = engine/exceptions_test.cpp
-engine_exceptions_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
-                                  $(ATF_CXX_CFLAGS)
-engine_exceptions_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
-                               $(ATF_CXX_LIBS)
+engine_exceptions_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
+engine_exceptions_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 
 tests_engine_PROGRAMS += engine/filters_test
 engine_filters_test_SOURCES = engine/filters_test.cpp
-engine_filters_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
-                               $(ATF_CXX_CFLAGS)
-engine_filters_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) $(ATF_CXX_LIBS)
+engine_filters_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
+engine_filters_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 
 tests_engine_PROGRAMS += engine/kyuafile_test
 engine_kyuafile_test_SOURCES = engine/kyuafile_test.cpp
-engine_kyuafile_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
-                                $(ATF_CXX_CFLAGS)
-engine_kyuafile_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) $(ATF_CXX_LIBS)
+engine_kyuafile_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
+engine_kyuafile_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 
 tests_engine_PROGRAMS += engine/metadata_test
 engine_metadata_test_SOURCES = engine/metadata_test.cpp
 engine_metadata_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_TEST_CFLAGS) \
-                                $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-engine_metadata_test_LDADD = $(ENGINE_LIBS) $(UTILS_TEST_LIBS) $(UTILS_LIBS) \
-                             $(ATF_CXX_LIBS)
+                                $(ATF_CXX_CFLAGS)
+engine_metadata_test_LDADD = $(ENGINE_LIBS) $(UTILS_TEST_LIBS) $(ATF_CXX_LIBS)
 
 tests_engine_PROGRAMS += engine/report_junit_test
 engine_report_junit_test_SOURCES = engine/report_junit_test.cpp
-engine_report_junit_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
-                                    $(ATF_CXX_CFLAGS)
-engine_report_junit_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
-                                 $(ATF_CXX_LIBS)
+engine_report_junit_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
+engine_report_junit_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 
 tests_engine_PROGRAMS += engine/test_case_atf_helpers
 engine_test_case_atf_helpers_SOURCES = engine/test_case_atf_helpers.cpp
@@ -117,30 +109,23 @@ engine_test_case_plain_helpers_LDADD = $(UTILS_LIBS)
 
 tests_engine_PROGRAMS += engine/test_case_test
 engine_test_case_test_SOURCES = engine/test_case_test.cpp
-engine_test_case_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
-                                 $(ATF_CXX_CFLAGS)
-engine_test_case_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
-                              $(ATF_CXX_LIBS)
+engine_test_case_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
+engine_test_case_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 
 tests_engine_PROGRAMS += engine/test_program_test
 engine_test_program_test_SOURCES = engine/test_program_test.cpp
-engine_test_program_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
-                                    $(ATF_CXX_CFLAGS)
-engine_test_program_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
-                                 $(ATF_CXX_LIBS)
+engine_test_program_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
+engine_test_program_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 
 tests_engine_PROGRAMS += engine/test_result_test
 engine_test_result_test_SOURCES = engine/test_result_test.cpp
-engine_test_result_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
-                                   $(ATF_CXX_CFLAGS)
-engine_test_result_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) \
-                                $(ATF_CXX_LIBS)
+engine_test_result_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
+engine_test_result_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 
 tests_engine_PROGRAMS += engine/testers_test
 engine_testers_test_SOURCES = engine/testers_test.cpp
-engine_testers_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_CFLAGS) \
-                               $(ATF_CXX_CFLAGS)
-engine_testers_test_LDADD = $(ENGINE_LIBS) $(UTILS_LIBS) $(ATF_CXX_LIBS)
+engine_testers_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
+engine_testers_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 endif
 
 include engine/drivers/Makefile.am.inc
