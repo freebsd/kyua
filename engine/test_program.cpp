@@ -38,6 +38,7 @@
 
 #include "engine/exceptions.hpp"
 #include "engine/testers.hpp"
+#include "model/metadata.hpp"
 #include "model/test_result.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
@@ -85,7 +86,7 @@ lua_test_case(lutok::state& state)
     const std::string name = state.to_string(-1);
     state.pop(1);
 
-    engine::metadata_builder mdbuilder(test_program->get_metadata());
+    model::metadata_builder mdbuilder(test_program->get_metadata());
 
     state.push_nil();
     while (state.next(-2)) {
@@ -216,7 +217,7 @@ struct engine::test_program::impl {
     std::string test_suite_name;
 
     /// Metadata of the test program.
-    metadata md;
+    model::metadata md;
 
     /// List of test cases in the test program; lazily initialized.
     optional< test_cases_vector > test_cases;
@@ -231,7 +232,7 @@ struct engine::test_program::impl {
     /// \param md_ Metadata of the test program.
     impl(const std::string& interface_name_, const fs::path& binary_,
          const fs::path& root_, const std::string& test_suite_name_,
-         const metadata& md_) :
+         const model::metadata& md_) :
         interface_name(interface_name_),
         binary(binary_),
         root(root_),
@@ -272,7 +273,7 @@ engine::test_program::test_program(const std::string& interface_name_,
                                    const fs::path& binary_,
                                    const fs::path& root_,
                                    const std::string& test_suite_name_,
-                                   const metadata& md_) :
+                                   const model::metadata& md_) :
     _pimpl(new impl(interface_name_, binary_, root_, test_suite_name_, md_))
 {
 }
@@ -338,7 +339,7 @@ engine::test_program::test_suite_name(void) const
 /// Gets the metadata of the test program.
 ///
 /// \return The metadata.
-const engine::metadata&
+const model::metadata&
 engine::test_program::get_metadata(void) const
 {
     return _pimpl->md;

@@ -39,6 +39,7 @@ extern "C" {
 #include <atf-c++.hpp>
 
 #include "engine/exceptions.hpp"
+#include "model/metadata.hpp"
 #include "model/test_result.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
@@ -78,7 +79,7 @@ create_mock_tester_signal(const int term_sig)
 ATF_TEST_CASE_WITHOUT_HEAD(ctor_and_getters);
 ATF_TEST_CASE_BODY(ctor_and_getters)
 {
-    const engine::metadata md = engine::metadata_builder()
+    const model::metadata md = model::metadata_builder()
         .add_custom("foo", "bar")
         .build();
     const engine::test_program test_program(
@@ -98,7 +99,7 @@ ATF_TEST_CASE_BODY(find__ok)
 {
     const engine::test_program test_program(
         "plain", fs::path("non-existent"), fs::path("."), "suite-name",
-        engine::metadata_builder().build());
+        model::metadata_builder().build());
     const engine::test_case_ptr test_case = test_program.find("main");
     ATF_REQUIRE_EQ(fs::path("non-existent"),
                    test_case->container_test_program().relative_path());
@@ -111,7 +112,7 @@ ATF_TEST_CASE_BODY(find__missing)
 {
     const engine::test_program test_program(
         "plain", fs::path("non-existent"), fs::path("."), "suite-name",
-        engine::metadata_builder().build());
+        model::metadata_builder().build());
     ATF_REQUIRE_THROW_RE(engine::not_found_error,
                          "case.*abc.*program.*non-existent",
                          test_program.find("abc"));
@@ -123,7 +124,7 @@ ATF_TEST_CASE_BODY(test_cases__get)
 {
     const engine::test_program test_program(
         "plain", fs::path("non-existent"), fs::path("."), "suite-name",
-        engine::metadata_builder().build());
+        model::metadata_builder().build());
     const engine::test_cases_vector& test_cases = test_program.test_cases();
     ATF_REQUIRE_EQ(1, test_cases.size());
     ATF_REQUIRE_EQ(fs::path("non-existent"),
@@ -137,11 +138,11 @@ ATF_TEST_CASE_BODY(test_cases__some)
 {
     engine::test_program test_program(
         "plain", fs::path("non-existent"), fs::path("."), "suite-name",
-        engine::metadata_builder().build());
+        model::metadata_builder().build());
 
     engine::test_cases_vector exp_test_cases;
     const engine::test_case test_case("plain", test_program, "main",
-                                      engine::metadata_builder().build());
+                                      model::metadata_builder().build());
     exp_test_cases.push_back(engine::test_case_ptr(
         new engine::test_case(test_case)));
     test_program.set_test_cases(exp_test_cases);
@@ -155,7 +156,7 @@ ATF_TEST_CASE_BODY(test_cases__tester_fails)
 {
     engine::test_program test_program(
         "mock", fs::path("non-existent"), fs::path("."), "suite-name",
-        engine::metadata_builder().build());
+        model::metadata_builder().build());
     create_mock_tester_signal(SIGSEGV);
 
     const engine::test_cases_vector& test_cases = test_program.test_cases();
@@ -176,7 +177,7 @@ ATF_TEST_CASE_BODY(operators_eq_and_ne__copy)
 {
     const engine::test_program tp1(
         "plain", fs::path("non-existent"), fs::path("."), "suite-name",
-        engine::metadata_builder().build());
+        model::metadata_builder().build());
     const engine::test_program tp2 = tp1;
     ATF_REQUIRE(  tp1 == tp2);
     ATF_REQUIRE(!(tp1 != tp2));
@@ -190,7 +191,7 @@ ATF_TEST_CASE_BODY(operators_eq_and_ne__not_copy)
     const fs::path base_relative_path("the/test/program");
     const fs::path base_root("/the/root");
     const std::string base_test_suite("suite-name");
-    const engine::metadata base_metadata = engine::metadata_builder()
+    const model::metadata base_metadata = model::metadata_builder()
         .add_custom("X-foo", "bar")
         .build();
 
@@ -201,7 +202,7 @@ ATF_TEST_CASE_BODY(operators_eq_and_ne__not_copy)
     engine::test_cases_vector base_tcs;
     {
         const engine::test_case tc1("plain", base_tp, "main",
-                                    engine::metadata_builder().build());
+                                    model::metadata_builder().build());
         base_tcs.push_back(engine::test_case_ptr(new engine::test_case(tc1)));
     }
     base_tp.set_test_cases(base_tcs);
@@ -215,7 +216,7 @@ ATF_TEST_CASE_BODY(operators_eq_and_ne__not_copy)
         engine::test_cases_vector other_tcs;
         {
             const engine::test_case tc1("plain", other_tp, "main",
-                                        engine::metadata_builder().build());
+                                        model::metadata_builder().build());
             other_tcs.push_back(engine::test_case_ptr(
                 new engine::test_case(tc1)));
         }
@@ -273,7 +274,7 @@ ATF_TEST_CASE_BODY(operators_eq_and_ne__not_copy)
     {
         engine::test_program other_tp(
             base_interface, base_relative_path, base_root, base_test_suite,
-            engine::metadata_builder().build());
+            model::metadata_builder().build());
         other_tp.set_test_cases(base_tcs);
 
         ATF_REQUIRE(!(base_tp == other_tp));
@@ -289,7 +290,7 @@ ATF_TEST_CASE_BODY(operators_eq_and_ne__not_copy)
         engine::test_cases_vector other_tcs;
         {
             const engine::test_case tc1("atf", base_tp, "foo",
-                                        engine::metadata_builder().build());
+                                        model::metadata_builder().build());
             other_tcs.push_back(engine::test_case_ptr(
                                     new engine::test_case(tc1)));
         }
@@ -306,7 +307,7 @@ ATF_TEST_CASE_BODY(output__no_test_cases)
 {
     engine::test_program tp(
         "plain", fs::path("binary/path"), fs::path("/the/root"), "suite-name",
-        engine::metadata_builder().add_allowed_architecture("a").build());
+        model::metadata_builder().add_allowed_architecture("a").build());
     tp.set_test_cases(engine::test_cases_vector());
 
     std::ostringstream str;
@@ -328,13 +329,13 @@ ATF_TEST_CASE_BODY(output__some_test_cases)
 {
     engine::test_program tp(
         "plain", fs::path("binary/path"), fs::path("/the/root"), "suite-name",
-        engine::metadata_builder().add_allowed_architecture("a").build());
+        model::metadata_builder().add_allowed_architecture("a").build());
 
     const engine::test_case_ptr tc1(new engine::test_case(
-        "plain", tp, "the-name", engine::metadata_builder()
+        "plain", tp, "the-name", model::metadata_builder()
         .add_allowed_platform("foo").add_custom("X-bar", "baz").build()));
     const engine::test_case_ptr tc2(new engine::test_case(
-        "plain", tp, "another-name", engine::metadata_builder().build()));
+        "plain", tp, "another-name", model::metadata_builder().build()));
     engine::test_cases_vector tcs;
     tcs.push_back(tc1);
     tcs.push_back(tc2);

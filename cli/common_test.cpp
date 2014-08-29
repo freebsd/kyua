@@ -36,6 +36,7 @@
 #include "engine/filters.hpp"
 #include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
+#include "model/metadata.hpp"
 #include "model/test_result.hpp"
 #include "store/layout.hpp"
 #include "utils/cmdline/exceptions.hpp"
@@ -412,9 +413,9 @@ ATF_TEST_CASE_BODY(format_test_case_id__test_case)
 {
     const engine::test_program test_program(
         "mock", fs::path("foo/bar/baz"), fs::path("unused-root"),
-        "unused-suite-name", engine::metadata_builder().build());
+        "unused-suite-name", model::metadata_builder().build());
     const engine::test_case test_case("mock", test_program, "abc",
-                                      engine::metadata_builder().build());
+                                      model::metadata_builder().build());
     ATF_REQUIRE_EQ("foo/bar/baz:abc", cli::format_test_case_id(test_case));
 }
 

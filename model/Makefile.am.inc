@@ -31,9 +31,15 @@ MODEL_LIBS = libmodel.a $(UTILS_LIBS)
 
 noinst_LIBRARIES += libmodel.a
 libmodel_a_CPPFLAGS = $(UTILS_CFLAGS)
-libmodel_a_SOURCES  = model/test_result.cpp
+libmodel_a_SOURCES  = model/exceptions.cpp
+libmodel_a_SOURCES += model/exceptions.hpp
+libmodel_a_SOURCES += model/metadata.cpp
+libmodel_a_SOURCES += model/metadata.hpp
+libmodel_a_SOURCES += model/metadata_fwd.hpp
+libmodel_a_SOURCES += model/test_result.cpp
 libmodel_a_SOURCES += model/test_result.hpp
 libmodel_a_SOURCES += model/test_result_fwd.hpp
+libmodel_a_SOURCES += model/types.hpp
 
 if WITH_ATF
 tests_modeldir = $(pkgtestsdir)/model
@@ -41,7 +47,17 @@ tests_modeldir = $(pkgtestsdir)/model
 tests_model_DATA = model/Kyuafile
 EXTRA_DIST += $(tests_model_DATA)
 
-tests_model_PROGRAMS = model/test_result_test
+tests_model_PROGRAMS = model/exceptions_test
+model_exceptions_test_SOURCES = model/exceptions_test.cpp
+model_exceptions_test_CXXFLAGS = $(MODEL_CFLAGS) $(ATF_CXX_CFLAGS)
+model_exceptions_test_LDADD = $(MODEL_LIBS) $(ATF_CXX_LIBS)
+
+tests_model_PROGRAMS += model/metadata_test
+model_metadata_test_SOURCES = model/metadata_test.cpp
+model_metadata_test_CXXFLAGS = $(MODEL_CFLAGS) $(ATF_CXX_CFLAGS)
+model_metadata_test_LDADD = $(MODEL_LIBS) $(ATF_CXX_LIBS)
+
+tests_model_PROGRAMS += model/test_result_test
 model_test_result_test_SOURCES = model/test_result_test.cpp
 model_test_result_test_CXXFLAGS = $(MODEL_CFLAGS) $(ATF_CXX_CFLAGS)
 model_test_result_test_LDADD = $(MODEL_LIBS) $(ATF_CXX_LIBS)

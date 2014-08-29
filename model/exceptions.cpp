@@ -26,50 +26,36 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/exceptions.hpp
-/// Exception types raised by the engine module.
+#include "model/exceptions.hpp"
 
-#if !defined(ENGINE_EXCEPTIONS_HPP)
-#define ENGINE_EXCEPTIONS_HPP
-
-#include <stdexcept>
-
-#include "utils/fs/path.hpp"
-
-namespace engine {
+#include "utils/format/macros.hpp"
 
 
-/// Base exception for engine errors.
-class error : public std::runtime_error {
-public:
-    explicit error(const std::string&);
-    virtual ~error(void) throw();
-};
+/// Constructs a new error with a plain-text message.
+///
+/// \param message The plain-text error message.
+model::error::error(const std::string& message) :
+    std::runtime_error(message)
+{
+}
 
 
-/// Error while parsing external data.
-class load_error : public error {
-public:
-    /// The path to the file that caused the load error.
-    utils::fs::path file;
-
-    /// The reason for the error; may not include the file name.
-    std::string reason;
-
-    explicit load_error(const utils::fs::path&, const std::string&);
-    virtual ~load_error(void) throw();
-};
+/// Destructor for the error.
+model::error::~error(void) throw()
+{
+}
 
 
-/// A requested element could not be found.
-class not_found_error : public error {
-public:
-    explicit not_found_error(const std::string&);
-    virtual ~not_found_error(void) throw();
-};
+/// Constructs a new format_error.
+///
+/// \param message The plain-text error message.
+model::format_error::format_error(const std::string& message) :
+    error(message)
+{
+}
 
 
-}  // namespace engine
-
-
-#endif  // !defined(ENGINE_EXCEPTIONS_HPP)
+/// Destructor for the error.
+model::format_error::~format_error(void) throw()
+{
+}

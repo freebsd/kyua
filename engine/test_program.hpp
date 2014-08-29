@@ -43,6 +43,7 @@
 #include <vector>
 
 #include "engine/test_case.hpp"
+#include "model/metadata_fwd.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/shared_ptr.hpp"
 
@@ -66,7 +67,7 @@ class test_program {
 public:
     test_program(const std::string&, const utils::fs::path&,
                  const utils::fs::path&, const std::string&,
-                 const metadata&);
+                 const model::metadata&);
     ~test_program(void);
 
     const std::string& interface_name(void) const;
@@ -74,7 +75,7 @@ public:
     const utils::fs::path& relative_path(void) const;
     const utils::fs::path absolute_path(void) const;
     const std::string& test_suite_name(void) const;
-    const metadata& get_metadata(void) const;
+    const model::metadata& get_metadata(void) const;
 
     const test_case_ptr& find(const std::string&) const;
     const test_cases_vector& test_cases(void) const;

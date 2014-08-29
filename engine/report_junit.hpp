@@ -36,6 +36,7 @@
 #include <string>
 
 #include "engine/drivers/scan_results.hpp"
+#include "model/metadata_fwd.hpp"
 
 namespace utils {
 namespace datetime {
@@ -46,7 +47,6 @@ class delta;
 namespace engine {
 
 
-class metadata;
 class test_program;
 
 
@@ -54,7 +54,7 @@ std::string junit_classname(const engine::test_program&);
 std::string junit_duration(const utils::datetime::delta&);
 extern const char* const junit_metadata_prefix;
 extern const char* const junit_metadata_suffix;
-std::string junit_metadata(const engine::metadata&);
+std::string junit_metadata(const model::metadata&);
 
 
 /// Hooks for the scan_results driver to generate a JUnit report.

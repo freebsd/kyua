@@ -26,50 +26,31 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/exceptions.hpp
-/// Exception types raised by the engine module.
+#include "model/exceptions.hpp"
 
-#if !defined(ENGINE_EXCEPTIONS_HPP)
-#define ENGINE_EXCEPTIONS_HPP
+#include <cstring>
 
-#include <stdexcept>
-
-#include "utils/fs/path.hpp"
-
-namespace engine {
+#include <atf-c++.hpp>
 
 
-/// Base exception for engine errors.
-class error : public std::runtime_error {
-public:
-    explicit error(const std::string&);
-    virtual ~error(void) throw();
-};
+ATF_TEST_CASE_WITHOUT_HEAD(error);
+ATF_TEST_CASE_BODY(error)
+{
+    const model::error e("Some text");
+    ATF_REQUIRE(std::strcmp("Some text", e.what()) == 0);
+}
 
 
-/// Error while parsing external data.
-class load_error : public error {
-public:
-    /// The path to the file that caused the load error.
-    utils::fs::path file;
-
-    /// The reason for the error; may not include the file name.
-    std::string reason;
-
-    explicit load_error(const utils::fs::path&, const std::string&);
-    virtual ~load_error(void) throw();
-};
+ATF_TEST_CASE_WITHOUT_HEAD(format_error);
+ATF_TEST_CASE_BODY(format_error)
+{
+    const model::format_error e("Some other text");
+    ATF_REQUIRE(std::strcmp("Some other text", e.what()) == 0);
+}
 
 
-/// A requested element could not be found.
-class not_found_error : public error {
-public:
-    explicit not_found_error(const std::string&);
-    virtual ~not_found_error(void) throw();
-};
-
-
-}  // namespace engine
-
-
-#endif  // !defined(ENGINE_EXCEPTIONS_HPP)
+ATF_INIT_TEST_CASES(tcs)
+{
+    ATF_ADD_TEST_CASE(tcs, error);
+    ATF_ADD_TEST_CASE(tcs, format_error);
+}

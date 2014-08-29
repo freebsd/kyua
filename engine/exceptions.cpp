@@ -47,21 +47,6 @@ engine::error::~error(void) throw()
 }
 
 
-/// Constructs a new format_error.
-///
-/// \param message The plain-text error message.
-engine::format_error::format_error(const std::string& message) :
-    error(message)
-{
-}
-
-
-/// Destructor for the error.
-engine::format_error::~format_error(void) throw()
-{
-}
-
-
 /// Constructs a new load_error.
 ///
 /// \param file_ The file in which the error was encountered.

@@ -32,6 +32,7 @@
 
 #include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
+#include "model/metadata.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.hpp"
 #include "utils/cmdline/ui_mock.hpp"
@@ -43,7 +44,7 @@ namespace fs = utils::fs;
 ATF_TEST_CASE_WITHOUT_HEAD(list_test_case__no_verbose);
 ATF_TEST_CASE_BODY(list_test_case__no_verbose)
 {
-    const engine::metadata md = engine::metadata_builder()
+    const model::metadata md = model::metadata_builder()
         .set_description("This should not be shown")
         .build();
     const engine::test_program test_program(
@@ -61,7 +62,7 @@ ATF_TEST_CASE_BODY(list_test_case__no_verbose)
 ATF_TEST_CASE_WITHOUT_HEAD(list_test_case__verbose__no_properties);
 ATF_TEST_CASE_BODY(list_test_case__verbose__no_properties)
 {
-    const engine::metadata md = engine::metadata_builder().build();
+    const model::metadata md = model::metadata_builder().build();
     const engine::test_program test_program("mock", fs::path("hello/world"),
                                             fs::path("root"), "the-suite", md);
     const engine::test_case test_case("mock", test_program, "my_name", md);
@@ -77,7 +78,7 @@ ATF_TEST_CASE_BODY(list_test_case__verbose__no_properties)
 ATF_TEST_CASE_WITHOUT_HEAD(list_test_case__verbose__some_properties);
 ATF_TEST_CASE_BODY(list_test_case__verbose__some_properties)
 {
-    const engine::metadata md = engine::metadata_builder()
+    const model::metadata md = model::metadata_builder()
         .add_custom("X-my-property", "value")
         .set_description("Some description")
         .set_has_cleanup(true)

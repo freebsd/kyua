@@ -50,6 +50,7 @@ extern "C" {
 #include "engine/exceptions.hpp"
 #include "engine/kyuafile.hpp"
 #include "engine/test_program.hpp"
+#include "model/metadata.hpp"
 #include "model/test_result.hpp"
 #include "utils/config/tree.ipp"
 #include "utils/datetime.hpp"
@@ -134,7 +135,7 @@ class atf_helper : utils::noncopyable {
     const std::string _name;
 
     /// Metadata of the test case.
-    engine::metadata_builder _mdbuilder;
+    model::metadata_builder _mdbuilder;
 
     /// Run-time configuration for the test case.
     config::tree _user_config;
@@ -234,7 +235,7 @@ public:
     {
         const engine::test_program test_program(
             "atf", _binary_path, _root, "the-suite",
-            engine::metadata_builder().build());
+            model::metadata_builder().build());
         const engine::test_case test_case("atf", test_program, _name,
                                           _mdbuilder.build());
 
@@ -350,7 +351,7 @@ public:
     model::test_result
     run(const config::tree& user_config = engine::default_config()) const
     {
-        engine::metadata_builder mdbuilder;
+        model::metadata_builder mdbuilder;
         if (_timeout)
             mdbuilder.set_timeout(_timeout.get());
         const engine::test_program test_program(
@@ -409,12 +410,12 @@ require_coredump_ability(const atf::tests::tc* tc)
 ATF_TEST_CASE_WITHOUT_HEAD(test_case__ctor_and_getters)
 ATF_TEST_CASE_BODY(test_case__ctor_and_getters)
 {
-    const engine::metadata md = engine::metadata_builder()
+    const model::metadata md = model::metadata_builder()
         .add_custom("first", "value")
         .build();
     const engine::test_program test_program(
         "mock", fs::path("abc"), fs::path("unused-root"),
-        "unused-suite-name", engine::metadata_builder().build());
+        "unused-suite-name", model::metadata_builder().build());
     const engine::test_case test_case("mock", test_program, "foo", md);
     ATF_REQUIRE_EQ(&test_program, &test_case.container_test_program());
     ATF_REQUIRE_EQ("foo", test_case.name());
@@ -429,7 +430,7 @@ ATF_TEST_CASE_BODY(test_case__fake_result)
                                      "Some reason");
     const engine::test_program test_program(
         "mock", fs::path("abc"), fs::path("unused-root"),
-        "unused-suite-name", engine::metadata_builder().build());
+        "unused-suite-name", model::metadata_builder().build());
     const engine::test_case test_case("mock", test_program, "__foo__",
                                       "Some description", result);
     ATF_REQUIRE_EQ(&test_program, &test_case.container_test_program());
@@ -443,10 +444,10 @@ ATF_TEST_CASE_BODY(test_case__operators_eq_and_ne__copy)
 {
     const engine::test_program tp(
         "plain", fs::path("non-existent"), fs::path("."), "suite-name",
-        engine::metadata_builder().build());
+        model::metadata_builder().build());
 
     const engine::test_case tc1("plain", tp, "name",
-                                engine::metadata_builder().build());
+                                model::metadata_builder().build());
     const engine::test_case tc2 = tc1;
     ATF_REQUIRE(  tc1 == tc2);
     ATF_REQUIRE(!(tc1 != tc2));
@@ -458,10 +459,10 @@ ATF_TEST_CASE_BODY(test_case__output)
 {
     const engine::test_program tp(
         "plain", fs::path("non-existent"), fs::path("."), "suite-name",
-        engine::metadata_builder().build());
+        model::metadata_builder().build());
 
     const engine::test_case tc1(
-        "plain", tp, "the-name", engine::metadata_builder()
+        "plain", tp, "the-name", model::metadata_builder()
         .add_allowed_platform("foo").add_custom("X-bar", "baz").build());
     std::ostringstream str;
     str << tc1;
@@ -481,9 +482,9 @@ ATF_TEST_CASE_BODY(test_case__operators_eq_and_ne__not_copy)
     const std::string base_interface("plain");
     const engine::test_program base_tp(
         "plain", fs::path("non-existent"), fs::path("."), "suite-name",
-        engine::metadata_builder().build());
+        model::metadata_builder().build());
     const std::string base_name("name");
-    const engine::metadata base_metadata = engine::metadata_builder()
+    const model::metadata base_metadata = model::metadata_builder()
         .add_custom("X-foo", "bar")
         .build();
 
@@ -512,7 +513,7 @@ ATF_TEST_CASE_BODY(test_case__operators_eq_and_ne__not_copy)
     {
         const engine::test_program other_tp(
             "plain", fs::path("another-name"), fs::path("."), "suite2-name",
-        engine::metadata_builder().build());
+        model::metadata_builder().build());
         const engine::test_case other_tc(base_interface, other_tp, base_name,
                                          base_metadata);
 
@@ -524,7 +525,7 @@ ATF_TEST_CASE_BODY(test_case__operators_eq_and_ne__not_copy)
     {
         const engine::test_program other_tp(
             "plain", fs::path("non-existent"), fs::path("."), "suite2-name",
-        engine::metadata_builder().build());
+        model::metadata_builder().build());
         const engine::test_case other_tc(base_interface, other_tp, base_name,
                                          base_metadata);
 
@@ -544,7 +545,7 @@ ATF_TEST_CASE_BODY(test_case__operators_eq_and_ne__not_copy)
     // Different metadata.
     {
         const engine::test_case other_tc(base_interface, base_tp, base_name,
-                                         engine::metadata_builder().build());
+                                         model::metadata_builder().build());
 
         ATF_REQUIRE(!(base_tc == other_tc));
         ATF_REQUIRE(  base_tc != other_tc);

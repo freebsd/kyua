@@ -35,7 +35,7 @@
 #include <ostream>
 #include <string>
 
-#include "engine/metadata.hpp"
+#include "model/metadata_fwd.hpp"
 #include "model/test_result_fwd.hpp"
 #include "utils/config/tree.hpp"
 #include "utils/fs/path.hpp"
@@ -75,7 +75,7 @@ class test_case {
 
 public:
     test_case(const std::string&, const test_program&,
-              const std::string&, const metadata&);
+              const std::string&, const model::metadata&);
     test_case(const std::string&, const test_program&,
               const std::string&, const std::string&,
               const model::test_result&);
@@ -84,7 +84,7 @@ public:
     const std::string& interface_name(void) const;
     const test_program& container_test_program(void) const;
     const std::string& name(void) const;
-    const metadata& get_metadata(void) const;
+    const model::metadata& get_metadata(void) const;
     utils::optional< model::test_result > fake_result(void) const;
 
     bool operator==(const test_case&) const;

@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2014 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,50 +26,36 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/exceptions.hpp
-/// Exception types raised by the engine module.
+/// \file model/types.hpp
+/// Definition of miscellaneous base types required by our classes.
+///
+/// We consider objects coming from the STL and from the utils module to be
+/// base types.
 
-#if !defined(ENGINE_EXCEPTIONS_HPP)
-#define ENGINE_EXCEPTIONS_HPP
+#if !defined(MODEL_TYPES_HPP)
+#define MODEL_TYPES_HPP
 
-#include <stdexcept>
+#include <map>
+#include <set>
+#include <string>
 
 #include "utils/fs/path.hpp"
 
-namespace engine {
+namespace model {
 
 
-/// Base exception for engine errors.
-class error : public std::runtime_error {
-public:
-    explicit error(const std::string&);
-    virtual ~error(void) throw();
-};
+/// Collection of paths.
+typedef std::set< utils::fs::path > paths_set;
 
 
-/// Error while parsing external data.
-class load_error : public error {
-public:
-    /// The path to the file that caused the load error.
-    utils::fs::path file;
-
-    /// The reason for the error; may not include the file name.
-    std::string reason;
-
-    explicit load_error(const utils::fs::path&, const std::string&);
-    virtual ~load_error(void) throw();
-};
+/// Collection of strings.
+typedef std::set< std::string > strings_set;
 
 
-/// A requested element could not be found.
-class not_found_error : public error {
-public:
-    explicit not_found_error(const std::string&);
-    virtual ~not_found_error(void) throw();
-};
+/// Collection of test properties in their textual form.
+typedef std::map< std::string, std::string > properties_map;
 
 
-}  // namespace engine
+}  // namespace model
 
-
-#endif  // !defined(ENGINE_EXCEPTIONS_HPP)
+#endif  // !defined(MODEL_TYPES_HPP)

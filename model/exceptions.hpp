@@ -26,20 +26,23 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/exceptions.hpp
-/// Exception types raised by the engine module.
+/// \file model/exceptions.hpp
+/// Exception types raised by the model module.
+///
+/// There is no model/exceptions_fwd.hpp counterpart because this file is
+/// inteded to be used only from within .cpp files to either raise or
+/// handle raised exceptions, neither of which are possible with just
+/// forward declarations.
 
-#if !defined(ENGINE_EXCEPTIONS_HPP)
-#define ENGINE_EXCEPTIONS_HPP
+#if !defined(MODEL_EXCEPTIONS_HPP)
+#define MODEL_EXCEPTIONS_HPP
 
 #include <stdexcept>
 
-#include "utils/fs/path.hpp"
-
-namespace engine {
+namespace model {
 
 
-/// Base exception for engine errors.
+/// Base exception for model errors.
 class error : public std::runtime_error {
 public:
     explicit error(const std::string&);
@@ -48,28 +51,13 @@ public:
 
 
 /// Error while parsing external data.
-class load_error : public error {
+class format_error : public error {
 public:
-    /// The path to the file that caused the load error.
-    utils::fs::path file;
-
-    /// The reason for the error; may not include the file name.
-    std::string reason;
-
-    explicit load_error(const utils::fs::path&, const std::string&);
-    virtual ~load_error(void) throw();
+    explicit format_error(const std::string&);
+    virtual ~format_error(void) throw();
 };
 
 
-/// A requested element could not be found.
-class not_found_error : public error {
-public:
-    explicit not_found_error(const std::string&);
-    virtual ~not_found_error(void) throw();
-};
+}  // namespace model
 
-
-}  // namespace engine
-
-
-#endif  // !defined(ENGINE_EXCEPTIONS_HPP)
+#endif  // !defined(MODEL_EXCEPTIONS_HPP)

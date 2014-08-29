@@ -26,18 +26,19 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/metadata.hpp
-/// Representation of the metadata of a test program or test case.
+/// \file model/metadata.hpp
+/// Definition of the "test metadata" concept.
 
-#if !defined(ENGINE_METADATA_HPP)
-#define ENGINE_METADATA_HPP
+#if !defined(MODEL_METADATA_HPP)
+#define MODEL_METADATA_HPP
 
-#include <map>
+#include "model/metadata_fwd.hpp"
+
 #include <memory>
 #include <ostream>
-#include <set>
 #include <string>
 
+#include "model/types.hpp"
 #include "utils/noncopyable.hpp"
 #include "utils/shared_ptr.hpp"
 
@@ -48,23 +49,7 @@ namespace fs { class path; }
 namespace units { class bytes; }
 }  // namespace utils
 
-namespace engine {
-
-
-// TODO(jmmv): All these types should probably be in individual header files so
-// that we could include them without pulling in additional dependencies.
-/// Collection of paths.
-typedef std::set< utils::fs::path > paths_set;
-/// Collection of strings.
-typedef std::set< std::string > strings_set;
-/// Collection of test properties in their textual form.
-typedef std::map< std::string, std::string > properties_map;
-
-
-extern utils::datetime::delta default_timeout;
-
-
-class metadata_builder;
+namespace model {
 
 
 /// Collection of metadata properties of a test.
@@ -82,7 +67,7 @@ public:
 
     const strings_set& allowed_architectures(void) const;
     const strings_set& allowed_platforms(void) const;
-    properties_map custom(void) const;
+    model::properties_map custom(void) const;
     const std::string& description(void) const;
     bool has_cleanup(void) const;
     const strings_set& required_configs(void) const;
@@ -92,7 +77,7 @@ public:
     const std::string& required_user(void) const;
     const utils::datetime::delta& timeout(void) const;
 
-    engine::properties_map to_properties(void) const;
+    model::properties_map to_properties(void) const;
 
     bool operator==(const metadata&) const;
     bool operator!=(const metadata&) const;
@@ -111,7 +96,7 @@ class metadata_builder : utils::noncopyable {
 
 public:
     metadata_builder(void);
-    explicit metadata_builder(const engine::metadata&);
+    explicit metadata_builder(const metadata&);
     ~metadata_builder(void);
 
     metadata_builder& add_allowed_architecture(const std::string&);
@@ -123,7 +108,7 @@ public:
 
     metadata_builder& set_allowed_architectures(const strings_set&);
     metadata_builder& set_allowed_platforms(const strings_set&);
-    metadata_builder& set_custom(const properties_map&);
+    metadata_builder& set_custom(const model::properties_map&);
     metadata_builder& set_description(const std::string&);
     metadata_builder& set_has_cleanup(const bool);
     metadata_builder& set_required_configs(const strings_set&);
@@ -138,11 +123,6 @@ public:
 };
 
 
-std::string check_reqs(const engine::metadata&, const utils::config::tree&,
-                       const std::string&);
+}  // namespace model
 
-
-}  // namespace engine
-
-
-#endif  // !defined(ENGINE_METADATA_HPP)
+#endif  // !defined(MODEL_METADATA_HPP)

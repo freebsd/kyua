@@ -40,6 +40,7 @@
 #include "engine/exceptions.hpp"
 #include "engine/test_program.hpp"
 #include "engine/testers.hpp"
+#include "model/metadata.hpp"
 #include "utils/datetime.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/lua_module.hpp"
@@ -288,7 +289,7 @@ public:
     callback_test_program(const std::string& interface,
                           const fs::path& raw_path,
                           const std::string& test_suite_override,
-                          const engine::metadata& metadata)
+                          const model::metadata& metadata)
     {
         if (raw_path.is_absolute())
             throw std::runtime_error(F("Got unexpected absolute path for test "
@@ -428,7 +429,7 @@ lua_generic_test_program(lutok::state& state)
     }
     state.pop(1);
 
-    engine::metadata_builder mdbuilder;
+    model::metadata_builder mdbuilder;
     state.push_nil();
     while (state.next(-2)) {
         if (!state.is_string(-2))

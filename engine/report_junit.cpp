@@ -31,8 +31,9 @@
 #include <algorithm>
 
 #include "engine/context.hpp"
-#include "engine/metadata.hpp"
+#include "model/metadata.hpp"
 #include "model/test_result.hpp"
+#include "model/types.hpp"
 #include "store/read_transaction.hpp"
 #include "utils/datetime.hpp"
 #include "utils/defs.hpp"
@@ -94,15 +95,15 @@ const char* const engine::junit_metadata_suffix =
 /// \return A string with the metadata contents that can be prefixed to the
 /// original test's stderr.
 std::string
-engine::junit_metadata(const engine::metadata& metadata)
+engine::junit_metadata(const model::metadata& metadata)
 {
-    const engine::properties_map props = metadata.to_properties();
+    const model::properties_map props = metadata.to_properties();
     if (props.empty())
         return "";
 
     std::ostringstream output;
     output << junit_metadata_prefix;
-    for (engine::properties_map::const_iterator iter = props.begin();
+    for (model::properties_map::const_iterator iter = props.begin();
          iter != props.end(); ++iter) {
         if ((*iter).second.empty()) {
             output << F("%s is empty\n") % (*iter).first;

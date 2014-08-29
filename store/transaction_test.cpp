@@ -32,6 +32,7 @@
 #include <atf-c++.hpp>
 
 #include "engine/context.hpp"
+#include "model/metadata.hpp"
 #include "store/read_backend.hpp"
 #include "store/read_transaction.hpp"
 #include "store/write_backend.hpp"
@@ -111,12 +112,12 @@ ATF_TEST_CASE_BODY(get_put_test_case__ok)
 {
     engine::test_program test_program(
         "atf", fs::path("the/binary"), fs::path("/some/root"), "the-suite",
-        engine::metadata_builder().build());
+        model::metadata_builder().build());
 
     const engine::test_case_ptr test_case1(new engine::test_case(
-        "atf", test_program, "tc1", engine::metadata_builder().build()));
+        "atf", test_program, "tc1", model::metadata_builder().build()));
 
-    const engine::metadata md2 = engine::metadata_builder()
+    const model::metadata md2 = model::metadata_builder()
         .add_allowed_architecture("powerpc")
         .add_allowed_architecture("x86_64")
         .add_allowed_platform("amd64")

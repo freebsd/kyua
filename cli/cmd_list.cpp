@@ -37,6 +37,8 @@
 #include "engine/filters.hpp"
 #include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
+#include "model/metadata.hpp"
+#include "model/types.hpp"
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/cmdline/ui.hpp"
@@ -104,15 +106,15 @@ cli::detail::list_test_case(cmdline::ui* ui, const bool verbose,
 
         // TODO(jmmv): Running these for every test case is probably not the
         // fastest thing to do.
-        const engine::metadata default_md = engine::metadata_builder().build();
-        const engine::properties_map default_props = default_md.to_properties();
+        const model::metadata default_md = model::metadata_builder().build();
+        const model::properties_map default_props = default_md.to_properties();
 
-        const engine::metadata& test_md = test_case.get_metadata();
-        const engine::properties_map test_props = test_md.to_properties();
+        const model::metadata& test_md = test_case.get_metadata();
+        const model::properties_map test_props = test_md.to_properties();
 
-        for (engine::properties_map::const_iterator iter = test_props.begin();
+        for (model::properties_map::const_iterator iter = test_props.begin();
              iter != test_props.end(); iter++) {
-            const engine::properties_map::const_iterator default_iter =
+            const model::properties_map::const_iterator default_iter =
                 default_props.find((*iter).first);
             if (default_iter == default_props.end() ||
                 (*iter).second != (*default_iter).second)

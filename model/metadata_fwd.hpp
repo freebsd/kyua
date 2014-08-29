@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2014 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,50 +26,28 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/exceptions.hpp
-/// Exception types raised by the engine module.
+/// \file model/metadata_fwd.hpp
+/// Forward declarations for model/metadata.hpp
 
-#if !defined(ENGINE_EXCEPTIONS_HPP)
-#define ENGINE_EXCEPTIONS_HPP
+#if !defined(MODEL_METADATA_FWD_HPP)
+#define MODEL_METADATA_FWD_HPP
 
-#include <stdexcept>
+namespace utils {
+namespace datetime {
+class delta;
+}  // namespace datetime
+}  // namespace utils
 
-#include "utils/fs/path.hpp"
-
-namespace engine {
-
-
-/// Base exception for engine errors.
-class error : public std::runtime_error {
-public:
-    explicit error(const std::string&);
-    virtual ~error(void) throw();
-};
+namespace model {
 
 
-/// Error while parsing external data.
-class load_error : public error {
-public:
-    /// The path to the file that caused the load error.
-    utils::fs::path file;
-
-    /// The reason for the error; may not include the file name.
-    std::string reason;
-
-    explicit load_error(const utils::fs::path&, const std::string&);
-    virtual ~load_error(void) throw();
-};
+extern utils::datetime::delta default_timeout;
 
 
-/// A requested element could not be found.
-class not_found_error : public error {
-public:
-    explicit not_found_error(const std::string&);
-    virtual ~not_found_error(void) throw();
-};
+class metadata;
+class metadata_builder;
 
 
-}  // namespace engine
+}  // namespace model
 
-
-#endif  // !defined(ENGINE_EXCEPTIONS_HPP)
+#endif  // !defined(MODEL_METADATA_FWD_HPP)

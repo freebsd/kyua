@@ -43,14 +43,6 @@ ATF_TEST_CASE_BODY(error)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(format_error);
-ATF_TEST_CASE_BODY(format_error)
-{
-    const engine::format_error e("Some other text");
-    ATF_REQUIRE(std::strcmp("Some other text", e.what()) == 0);
-}
-
-
 ATF_TEST_CASE_WITHOUT_HEAD(load_error);
 ATF_TEST_CASE_BODY(load_error)
 {
@@ -72,7 +64,6 @@ ATF_TEST_CASE_BODY(not_found_error)
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, error);
-    ATF_ADD_TEST_CASE(tcs, format_error);
     ATF_ADD_TEST_CASE(tcs, load_error);
     ATF_ADD_TEST_CASE(tcs, not_found_error);
 }

@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2012 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,50 +26,28 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/exceptions.hpp
-/// Exception types raised by the engine module.
+/// \file engine/requirements.hpp
+/// Handling of test case requirements.
 
-#if !defined(ENGINE_EXCEPTIONS_HPP)
-#define ENGINE_EXCEPTIONS_HPP
+#if !defined(ENGINE_REQUIREMENTS_HPP)
+#define ENGINE_REQUIREMENTS_HPP
 
-#include <stdexcept>
+#include <string>
 
-#include "utils/fs/path.hpp"
+#include "model/metadata_fwd.hpp"
+
+namespace utils {
+namespace config { class tree; }
+}  // namespace utils
 
 namespace engine {
 
 
-/// Base exception for engine errors.
-class error : public std::runtime_error {
-public:
-    explicit error(const std::string&);
-    virtual ~error(void) throw();
-};
-
-
-/// Error while parsing external data.
-class load_error : public error {
-public:
-    /// The path to the file that caused the load error.
-    utils::fs::path file;
-
-    /// The reason for the error; may not include the file name.
-    std::string reason;
-
-    explicit load_error(const utils::fs::path&, const std::string&);
-    virtual ~load_error(void) throw();
-};
-
-
-/// A requested element could not be found.
-class not_found_error : public error {
-public:
-    explicit not_found_error(const std::string&);
-    virtual ~not_found_error(void) throw();
-};
+std::string check_reqs(const model::metadata&, const utils::config::tree&,
+                       const std::string&);
 
 
 }  // namespace engine
 
 
-#endif  // !defined(ENGINE_EXCEPTIONS_HPP)
+#endif  // !defined(ENGINE_REQUIREMENTS_HPP)

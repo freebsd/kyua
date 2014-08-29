@@ -36,8 +36,10 @@ extern "C" {
 
 #include "engine/config.hpp"
 #include "engine/exceptions.hpp"
+#include "engine/requirements.hpp"
 #include "engine/test_program.hpp"
 #include "engine/testers.hpp"
+#include "model/metadata.hpp"
 #include "model/test_result.hpp"
 #include "utils/config/tree.ipp"
 #include "utils/datetime.hpp"
@@ -72,7 +74,7 @@ namespace {
 ///
 /// \return The mapping of configuration variables for the tester.
 static config::properties_map
-generate_tester_config(const engine::metadata& metadata,
+generate_tester_config(const model::metadata& metadata,
                        const config::tree& user_config,
                        const std::string& test_suite)
 {
@@ -112,7 +114,7 @@ generate_tester_config(const engine::metadata& metadata,
 /// \return The created tester, on which the test() method can be executed.
 static engine::tester
 create_tester(const std::string& interface_name,
-              const engine::metadata& metadata, const config::tree& user_config)
+              const model::metadata& metadata, const config::tree& user_config)
 {
     optional< passwd::user > user;
     if (user_config.is_set("unprivileged_user") &&
@@ -171,7 +173,7 @@ struct engine::test_case::impl {
     std::string name;
 
     /// Test case metadata.
-    metadata md;
+    model::metadata md;
 
     /// Fake result to return instead of running the test case.
     optional< model::test_result > fake_result;
@@ -188,7 +190,7 @@ struct engine::test_case::impl {
     impl(const std::string& interface_name_,
          const test_program& test_program_,
          const std::string& name_,
-         const metadata& md_,
+         const model::metadata& md_,
          const optional< model::test_result >& fake_result_) :
         interface_name(interface_name_),
         _test_program(test_program_),
@@ -229,7 +231,7 @@ struct engine::test_case::impl {
 engine::test_case::test_case(const std::string& interface_name_,
                              const test_program& test_program_,
                              const std::string& name_,
-                             const metadata& md_) :
+                             const model::metadata& md_) :
     _pimpl(new impl(interface_name_, test_program_, name_, md_, none))
 {
 }
@@ -263,9 +265,10 @@ engine::test_case::test_case(
     const std::string& name_,
     const std::string& description_,
     const model::test_result& test_result_) :
-    _pimpl(new impl(interface_name_, test_program_, name_,
-                    metadata_builder().set_description(description_).build(),
-                    utils::make_optional(test_result_)))
+    _pimpl(new impl(
+        interface_name_, test_program_, name_,
+        model::metadata_builder().set_description(description_).build(),
+        utils::make_optional(test_result_)))
 {
     PRE_MSG(name_.length() > 4 && name_.substr(0, 2) == "__" &&
             name_.substr(name_.length() - 2) == "__",
@@ -312,7 +315,7 @@ engine::test_case::name(void) const
 /// Gets the test case metadata.
 ///
 /// \return The test case metadata.
-const engine::metadata&
+const model::metadata&
 engine::test_case::get_metadata(void) const
 {
     return _pimpl->md;

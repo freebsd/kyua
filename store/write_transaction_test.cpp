@@ -35,6 +35,7 @@
 #include <atf-c++.hpp>
 
 #include "engine/context.hpp"
+#include "model/metadata.hpp"
 #include "model/test_result.hpp"
 #include "store/exceptions.hpp"
 #include "store/write_backend.hpp"
@@ -173,7 +174,7 @@ ATF_TEST_CASE_HEAD(put_test_program__ok)
 }
 ATF_TEST_CASE_BODY(put_test_program__ok)
 {
-    const engine::metadata md = engine::metadata_builder()
+    const model::metadata md = model::metadata_builder()
         .add_custom("var1", "value1")
         .add_custom("var2", "value2")
         .build();
@@ -216,9 +217,9 @@ ATF_TEST_CASE_BODY(put_test_case__fail)
     // TODO(jmmv): Use a mock test program and test case.
     const engine::test_program test_program(
         "plain", fs::path("the/binary"), fs::path("/some/root"), "the-suite",
-        engine::metadata_builder().build());
+        model::metadata_builder().build());
     const engine::test_case test_case("plain", test_program, "main",
-                                      engine::metadata_builder().build());
+                                      model::metadata_builder().build());
 
     store::write_backend backend = store::write_backend::open_rw(
         fs::path("test.db"));

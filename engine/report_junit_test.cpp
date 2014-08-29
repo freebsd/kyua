@@ -35,7 +35,7 @@
 
 #include "engine/context.hpp"
 #include "engine/drivers/scan_results.hpp"
-#include "engine/metadata.hpp"
+#include "model/metadata.hpp"
 #include "model/test_result.hpp"
 #include "store/write_backend.hpp"
 #include "store/write_transaction.hpp"
@@ -116,11 +116,11 @@ add_tests(store::write_transaction& tx,
 {
     const engine::test_program test_program(
         "plain", fs::path(prog), fs::path("/root"), "suite",
-        engine::metadata_builder().build());
+        model::metadata_builder().build());
     const int64_t tp_id = tx.put_test_program(test_program);
 
     for (std::size_t j = 0; j < results.size(); j++) {
-        engine::metadata_builder builder;
+        model::metadata_builder builder;
         if (with_metadata) {
             builder.set_description("Textual description");
             builder.set_timeout(datetime::delta(5678, 0));
@@ -152,7 +152,7 @@ ATF_TEST_CASE_BODY(junit_classname)
 {
     const engine::test_program test_program(
         "plain", fs::path("dir1/dir2/program"), fs::path("/root"), "suite",
-        engine::metadata_builder().build());
+        model::metadata_builder().build());
 
     ATF_REQUIRE_EQ("dir1.dir2.program", engine::junit_classname(test_program));
 }
@@ -170,7 +170,7 @@ ATF_TEST_CASE_BODY(junit_duration)
 ATF_TEST_CASE_WITHOUT_HEAD(junit_metadata__defaults);
 ATF_TEST_CASE_BODY(junit_metadata__defaults)
 {
-    const engine::metadata metadata = engine::metadata_builder().build();
+    const model::metadata metadata = model::metadata_builder().build();
 
     const std::string expected = std::string()
         + engine::junit_metadata_prefix
@@ -184,7 +184,7 @@ ATF_TEST_CASE_BODY(junit_metadata__defaults)
 ATF_TEST_CASE_WITHOUT_HEAD(junit_metadata__overrides);
 ATF_TEST_CASE_BODY(junit_metadata__overrides)
 {
-    const engine::metadata metadata = engine::metadata_builder()
+    const model::metadata metadata = model::metadata_builder()
         .add_allowed_architecture("arch1")
         .add_allowed_platform("platform1")
         .set_description("This is a test")

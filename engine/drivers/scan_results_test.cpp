@@ -33,6 +33,7 @@
 #include <atf-c++.hpp>
 
 #include "engine/context.hpp"
+#include "model/metadata.hpp"
 #include "model/test_result.hpp"
 #include "store/exceptions.hpp"
 #include "store/read_transaction.hpp"
@@ -148,13 +149,13 @@ populate_results_file(const char* db_name, const int count)
     for (int i = 0; i < count; i++) {
         const engine::test_program test_program(
             "plain", fs::path(F("dir/prog_%s") % i), fs::path("/root"),
-            F("suite_%s") % i, engine::metadata_builder().build());
+            F("suite_%s") % i, model::metadata_builder().build());
         const int64_t tp_id = tx.put_test_program(test_program);
 
         for (int j = 0; j < count; j++) {
             const engine::test_case test_case(
                 "plain", test_program, "main",
-                engine::metadata_builder().build());
+                model::metadata_builder().build());
             const model::test_result result(model::test_result::skipped,
                                             F("Count %s") % j);
             const int64_t tc_id = tx.put_test_case(test_case, tp_id);

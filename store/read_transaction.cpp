@@ -36,6 +36,7 @@ extern "C" {
 #include <utility>
 
 #include "engine/context.hpp"
+#include "model/metadata.hpp"
 #include "model/test_result.hpp"
 #include "store/dbtypes.hpp"
 #include "store/exceptions.hpp"
@@ -91,10 +92,10 @@ get_env_vars(sqlite::database& db)
 /// \param metadata_id The identifier of the metadata.
 ///
 /// \return A new metadata object.
-static engine::metadata
+static model::metadata
 get_metadata(sqlite::database& db, const int64_t metadata_id)
 {
-    engine::metadata_builder builder;
+    model::metadata_builder builder;
 
     sqlite::statement stmt = db.create_statement(
         "SELECT * FROM metadatas WHERE metadata_id == :metadata_id");
@@ -172,7 +173,7 @@ get_test_cases(sqlite::database& db, const int64_t test_program_id,
         const std::string name = stmt.safe_column_text("name");
         const int64_t metadata_id = stmt.safe_column_int64("metadata_id");
 
-        const engine::metadata metadata = get_metadata(db, metadata_id);
+        const model::metadata metadata = get_metadata(db, metadata_id);
         engine::test_case_ptr test_case(
             new engine::test_case(interface, test_program, name, metadata));
         LD(F("Loaded test case '%s'") % test_case->name());

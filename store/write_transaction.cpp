@@ -36,7 +36,9 @@ extern "C" {
 #include <map>
 
 #include "engine/context.hpp"
+#include "model/metadata.hpp"
 #include "model/test_result.hpp"
+#include "model/types.hpp"
 #include "store/dbtypes.hpp"
 #include "store/exceptions.hpp"
 #include "store/write_backend.hpp"
@@ -113,9 +115,9 @@ last_rowid(sqlite::database& db, const std::string& table)
 ///
 /// \return The identifier of the new metadata object.
 static int64_t
-put_metadata(sqlite::database& db, const engine::metadata& md)
+put_metadata(sqlite::database& db, const model::metadata& md)
 {
-    const engine::properties_map props = md.to_properties();
+    const model::properties_map props = md.to_properties();
 
     const int64_t metadata_id = last_rowid(db, "metadatas");
 
@@ -124,7 +126,7 @@ put_metadata(sqlite::database& db, const engine::metadata& md)
         "VALUES (:metadata_id, :property_name, :property_value)");
     stmt.bind(":metadata_id", metadata_id);
 
-    for (engine::properties_map::const_iterator iter = props.begin();
+    for (model::properties_map::const_iterator iter = props.begin();
          iter != props.end(); ++iter) {
         stmt.bind(":property_name", (*iter).first);
         stmt.bind(":property_value", (*iter).second);

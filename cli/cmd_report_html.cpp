@@ -36,6 +36,7 @@
 #include "cli/common.ipp"
 #include "engine/context.hpp"
 #include "engine/drivers/scan_results.hpp"
+#include "model/metadata.hpp"
 #include "model/test_result.hpp"
 #include "store/layout.hpp"
 #include "store/read_transaction.hpp"

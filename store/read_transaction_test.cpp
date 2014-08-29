@@ -34,6 +34,7 @@
 #include <atf-c++.hpp>
 
 #include "engine/context.hpp"
+#include "model/metadata.hpp"
 #include "model/test_result.hpp"
 #include "store/exceptions.hpp"
 #include "store/read_backend.hpp"
@@ -195,9 +196,9 @@ ATF_TEST_CASE_BODY(get_results__many)
 
     engine::test_program test_program_1(
         "plain", fs::path("a/prog1"), fs::path("/the/root"), "suite1",
-        engine::metadata_builder().build());
+        model::metadata_builder().build());
     engine::test_case_ptr test_case_1(new engine::test_case(
-        "plain", test_program_1, "main", engine::metadata_builder().build()));
+        "plain", test_program_1, "main", model::metadata_builder().build()));
     engine::test_cases_vector test_cases_1;
     test_cases_1.push_back(test_case_1);
     test_program_1.set_test_cases(test_cases_1);
@@ -213,9 +214,9 @@ ATF_TEST_CASE_BODY(get_results__many)
 
     engine::test_program test_program_2(
         "plain", fs::path("b/prog2"), fs::path("/the/root"), "suite2",
-        engine::metadata_builder().build());
+        model::metadata_builder().build());
     engine::test_case_ptr test_case_2(new engine::test_case(
-        "plain", test_program_2, "main", engine::metadata_builder().build()));
+        "plain", test_program_2, "main", model::metadata_builder().build()));
     engine::test_cases_vector test_cases_2;
     test_cases_2.push_back(test_case_2);
     test_program_2.set_test_cases(test_cases_2);
