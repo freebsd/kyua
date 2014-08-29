@@ -34,7 +34,7 @@
 #include <stdexcept>
 
 #include "cli/common.ipp"
-#include "engine/drivers/scan_results.hpp"
+#include "drivers/scan_results.hpp"
 #include "model/context.hpp"
 #include "model/metadata.hpp"
 #include "model/test_result.hpp"
@@ -56,7 +56,6 @@ namespace config = utils::config;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace layout = store::layout;
-namespace scan_results = engine::drivers::scan_results;
 namespace text = utils::text;
 
 using utils::optional;
@@ -136,7 +135,7 @@ add_map(text::templates_def& templates, const config::properties_map& props,
 
 
 /// Generates an HTML report.
-class html_hooks : public scan_results::base_hooks {
+class html_hooks : public drivers::scan_results::base_hooks {
     /// User interface object where to report progress.
     cmdline::ui* _ui;
 
@@ -421,7 +420,7 @@ cli::cmd_report_html::run(cmdline::ui* ui,
         cmdline.get_option< cmdline::path_option >("output");
     create_top_directory(directory, cmdline.has_option("force"));
     html_hooks hooks(ui, directory, types);
-    scan_results::drive(results_file, hooks);
+    drivers::scan_results::drive(results_file, hooks);
     hooks.write_summary();
 
     return EXIT_SUCCESS;

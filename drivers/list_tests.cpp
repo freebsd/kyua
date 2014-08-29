@@ -26,7 +26,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/drivers/list_tests.hpp"
+#include "drivers/list_tests.hpp"
 
 #include "engine/exceptions.hpp"
 #include "engine/filters.hpp"
@@ -35,7 +35,6 @@
 #include "utils/optional.ipp"
 
 namespace fs = utils::fs;
-namespace list_tests = engine::drivers::list_tests;
 
 using utils::none;
 using utils::optional;
@@ -54,7 +53,7 @@ namespace {
 static void
 list_test_program(const engine::test_program& program,
                   engine::filters_state& filters,
-                  list_tests::base_hooks& hooks)
+                  drivers::list_tests::base_hooks& hooks)
 {
     const engine::test_cases_vector test_cases = program.test_cases();
 
@@ -72,7 +71,7 @@ list_test_program(const engine::test_program& program,
 
 
 /// Pure abstract destructor.
-list_tests::base_hooks::~base_hooks(void)
+drivers::list_tests::base_hooks::~base_hooks(void)
 {
 }
 
@@ -85,20 +84,20 @@ list_tests::base_hooks::~base_hooks(void)
 /// \param hooks The hooks for this execution.
 ///
 /// \returns A structure with all results computed by this driver.
-list_tests::result
-list_tests::drive(const fs::path& kyuafile_path,
-                  const optional< fs::path > build_root,
-                  const std::set< engine::test_filter >& raw_filters,
-                  base_hooks& hooks)
+drivers::list_tests::result
+drivers::list_tests::drive(const fs::path& kyuafile_path,
+                           const optional< fs::path > build_root,
+                           const std::set< engine::test_filter >& raw_filters,
+                           base_hooks& hooks)
 {
     const engine::kyuafile kyuafile = engine::kyuafile::load(
         kyuafile_path, build_root);
-    filters_state filters(raw_filters);
+    engine::filters_state filters(raw_filters);
 
-    for (test_programs_vector::const_iterator iter =
+    for (engine::test_programs_vector::const_iterator iter =
          kyuafile.test_programs().begin();
          iter != kyuafile.test_programs().end(); iter++) {
-        const test_program_ptr& test_program = *iter;
+        const engine::test_program_ptr& test_program = *iter;
 
         if (!filters.match_test_program(test_program->relative_path()))
             continue;

@@ -42,7 +42,6 @@
 
 namespace config = utils::config;
 namespace datetime = utils::datetime;
-namespace scan_results = engine::drivers::scan_results;
 namespace text = utils::text;
 
 
@@ -225,7 +224,7 @@ engine::report_junit_hooks::got_result(store::results_iterator& iter)
 /// \param unused_r The result of the driver execution.
 void
 engine::report_junit_hooks::end(
-    const scan_results::result& UTILS_UNUSED_PARAM(r))
+    const drivers::scan_results::result& UTILS_UNUSED_PARAM(r))
 {
     _output << "</testsuite>\n";
 }

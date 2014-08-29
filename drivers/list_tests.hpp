@@ -26,57 +26,63 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/drivers/debug_test.hpp
-/// Driver to run a single test in a controlled manner.
+/// \file drivers/list_tests.hpp
+/// Driver to obtain a list of test cases out of a test suite.
 ///
-/// This driver module implements the logic to execute a particular test
-/// with hooks into the runtime procedure.  This is to permit debugging the
-/// behavior of the test.
+/// This driver module implements the logic to extract a list of test cases out
+/// of a particular test suite.
 
-#if !defined(ENGINE_DRIVERS_DEBUG_TEST_HPP)
-#define ENGINE_DRIVERS_DEBUG_TEST_HPP
+#if !defined(DRIVERS_LIST_TESTS_HPP)
+#define DRIVERS_LIST_TESTS_HPP
+
+#include <set>
 
 #include "engine/filters.hpp"
 #include "engine/test_case.hpp"
-#include "model/test_result.hpp"
-#include "utils/config/tree.hpp"
+#include "engine/test_program.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"
 
-namespace engine {
 namespace drivers {
-namespace debug_test {
+namespace list_tests {
+
+
+/// Abstract definition of the hooks for this driver.
+class base_hooks {
+public:
+    virtual ~base_hooks(void) = 0;
+
+    /// Called when a test case is identified in a test suite.
+    ///
+    /// \param test_case The data describing the test case.
+    virtual void got_test_case(const engine::test_case& test_case) = 0;
+};
 
 
 /// Tuple containing the results of this driver.
 class result {
 public:
-    /// A filter matching the executed test case only.
-    test_filter test_case;
-
-    /// The result of the test case.
-    model::test_result test_result;
+    /// Filters that did not match any available test case.
+    ///
+    /// The presence of any filters here probably indicates a usage error.  If a
+    /// test filter does not match any test case, it is probably a typo.
+    std::set< engine::test_filter > unused_filters;
 
     /// Initializer for the tuple's fields.
     ///
-    /// \param test_case_ The matched test case.
-    /// \param test_result_ The result of the test case.
-    result(const engine::test_filter& test_case_,
-           const model::test_result& test_result_) :
-        test_case(test_case_),
-        test_result(test_result_)
+    /// \param unused_filters_ The filters that did not match any test case.
+    result(const std::set< engine::test_filter >& unused_filters_) :
+        unused_filters(unused_filters_)
     {
     }
 };
 
 
 result drive(const utils::fs::path&, const utils::optional< utils::fs::path >,
-             const test_filter&, const utils::config::tree&,
-             const utils::fs::path&, const utils::fs::path&);
+             const std::set< engine::test_filter >&, base_hooks&);
 
 
-}  // namespace debug_test
+}  // namespace list_tests
 }  // namespace drivers
-}  // namespace engine
 
-#endif  // !defined(ENGINE_DRIVERS_DEBUG_TEST_HPP)
+#endif  // !defined(DRIVERS_LIST_TESTS_HPP)

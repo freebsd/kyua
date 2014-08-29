@@ -26,7 +26,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/drivers/run_tests.hpp"
+#include "drivers/run_tests.hpp"
 
 #include "engine/filters.hpp"
 #include "engine/kyuafile.hpp"
@@ -48,7 +48,6 @@
 namespace config = utils::config;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
-namespace run_tests = engine::drivers::run_tests;
 namespace signals = utils::signals;
 
 using utils::optional;
@@ -111,7 +110,7 @@ void
 run_test_program(const engine::test_program& program,
                  const config::tree& user_config,
                  engine::filters_state& filters,
-                 run_tests::base_hooks& hooks,
+                 drivers::run_tests::base_hooks& hooks,
                  const fs::path& work_directory,
                  store::write_transaction& tx)
 {
@@ -147,7 +146,7 @@ run_test_program(const engine::test_program& program,
 
 
 /// Pure abstract destructor.
-run_tests::base_hooks::~base_hooks(void)
+drivers::run_tests::base_hooks::~base_hooks(void)
 {
 }
 
@@ -162,17 +161,17 @@ run_tests::base_hooks::~base_hooks(void)
 /// \param hooks The hooks for this execution.
 ///
 /// \returns A structure with all results computed by this driver.
-run_tests::result
-run_tests::drive(const fs::path& kyuafile_path,
-                 const optional< fs::path > build_root,
-                 const fs::path& store_path,
-                 const std::set< engine::test_filter >& raw_filters,
-                 const config::tree& user_config,
-                 base_hooks& hooks)
+drivers::run_tests::result
+drivers::run_tests::drive(const fs::path& kyuafile_path,
+                          const optional< fs::path > build_root,
+                          const fs::path& store_path,
+                          const std::set< engine::test_filter >& raw_filters,
+                          const config::tree& user_config,
+                          base_hooks& hooks)
 {
     const engine::kyuafile kyuafile = engine::kyuafile::load(
         kyuafile_path, build_root);
-    filters_state filters(raw_filters);
+    engine::filters_state filters(raw_filters);
     store::write_backend db = store::write_backend::open_rw(store_path);
     store::write_transaction tx = db.start_write();
 
@@ -184,10 +183,10 @@ run_tests::drive(const fs::path& kyuafile_path,
     const fs::auto_directory work_directory = fs::auto_directory::mkdtemp(
         "kyua.XXXXXX");
 
-    for (test_programs_vector::const_iterator iter =
+    for (engine::test_programs_vector::const_iterator iter =
          kyuafile.test_programs().begin();
          iter != kyuafile.test_programs().end(); iter++) {
-        const test_program_ptr& test_program = *iter;
+        const engine::test_program_ptr& test_program = *iter;
 
         if (!filters.match_test_program(test_program->relative_path()))
             continue;

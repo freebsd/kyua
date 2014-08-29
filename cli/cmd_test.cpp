@@ -31,7 +31,7 @@
 #include <cstdlib>
 
 #include "cli/common.ipp"
-#include "engine/drivers/run_tests.hpp"
+#include "drivers/run_tests.hpp"
 #include "engine/test_case.hpp"
 #include "model/test_result.hpp"
 #include "store/layout.hpp"
@@ -46,7 +46,6 @@ namespace config = utils::config;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace layout = store::layout;
-namespace run_tests = engine::drivers::run_tests;
 
 using cli::cmd_test;
 
@@ -55,7 +54,7 @@ namespace {
 
 
 /// Hooks to print a progress report of the execution of the tests.
-class print_hooks : public run_tests::base_hooks {
+class print_hooks : public drivers::run_tests::base_hooks {
     /// Object to interact with the I/O of the program.
     cmdline::ui* _ui;
 
@@ -133,7 +132,7 @@ cmd_test::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
         results_file_create(cmdline), kyuafile_path(cmdline).branch_path());
 
     print_hooks hooks(ui);
-    const run_tests::result result = run_tests::drive(
+    const drivers::run_tests::result result = drivers::run_tests::drive(
         kyuafile_path(cmdline), build_root_path(cmdline), results.second,
         parse_filters(cmdline.arguments()), user_config, hooks);
 

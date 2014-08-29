@@ -26,7 +26,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/drivers/scan_results.hpp"
+#include "drivers/scan_results.hpp"
 
 #include <set>
 
@@ -46,7 +46,6 @@
 
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
-namespace scan_results = engine::drivers::scan_results;
 
 using utils::none;
 using utils::optional;
@@ -56,13 +55,13 @@ namespace {
 
 
 /// Records the callback values for futher investigation.
-class capture_hooks : public scan_results::base_hooks {
+class capture_hooks : public drivers::scan_results::base_hooks {
 public:
     /// Whether begin() was called or not.
     bool _begin_called;
 
     /// The captured driver result, if any.
-    optional< scan_results::result > _end_result;
+    optional< drivers::scan_results::result > _end_result;
 
     /// The captured context, if any.
     optional< model::context > _context;
@@ -88,7 +87,7 @@ public:
     /// \param r A structure with all results computed by this driver.  Note
     ///     that this is also returned by the drive operation.
     void
-    end(const scan_results::result& r)
+    end(const drivers::scan_results::result& r)
     {
         PRE(!_end_result);
         _end_result = r;
@@ -180,7 +179,7 @@ ATF_TEST_CASE_BODY(ok)
     populate_results_file("test.db", 2);
 
     capture_hooks hooks;
-    scan_results::drive(fs::path("test.db"), hooks);
+    drivers::scan_results::drive(fs::path("test.db"), hooks);
     ATF_REQUIRE(hooks._begin_called);
     ATF_REQUIRE(hooks._end_result);
 
@@ -203,8 +202,9 @@ ATF_TEST_CASE_WITHOUT_HEAD(missing_db);
 ATF_TEST_CASE_BODY(missing_db)
 {
     capture_hooks hooks;
-    ATF_REQUIRE_THROW(store::error,
-                      scan_results::drive(fs::path("test.db"), hooks));
+    ATF_REQUIRE_THROW(
+        store::error,
+        drivers::scan_results::drive(fs::path("test.db"), hooks));
 }
 
 

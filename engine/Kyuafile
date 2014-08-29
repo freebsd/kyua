@@ -11,5 +11,3 @@ atf_test_program{name="requirements_test"}
 atf_test_program{name="test_case_test"}
 atf_test_program{name="test_program_test"}
 atf_test_program{name="testers_test"}
-
-include("drivers/Kyuafile")

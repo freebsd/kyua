@@ -1,4 +1,4 @@
-// Copyright 2014 Google Inc.
+// Copyright 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,52 +26,63 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/report_junit.hpp
-/// Generates a JUnit report out of a test suite execution.
-
-#if !defined(ENGINE_REPORT_JUNIT_HPP)
-#define ENGINE_REPORT_JUNIT_HPP
-
-#include <ostream>
-#include <string>
-
 #include "drivers/scan_results.hpp"
-#include "model/metadata_fwd.hpp"
 
-namespace utils {
-namespace datetime {
-class delta;
-}  // namespace datetime
-}  // namespace utils
+#include "model/context.hpp"
+#include "store/read_backend.hpp"
+#include "store/read_transaction.hpp"
+#include "utils/defs.hpp"
 
-namespace engine {
+namespace fs = utils::fs;
 
 
-class test_program;
+/// Pure abstract destructor.
+drivers::scan_results::base_hooks::~base_hooks(void)
+{
+}
 
 
-std::string junit_classname(const engine::test_program&);
-std::string junit_duration(const utils::datetime::delta&);
-extern const char* const junit_metadata_prefix;
-extern const char* const junit_metadata_suffix;
-std::string junit_metadata(const model::metadata&);
+/// Callback executed before any operation is performed.
+void
+drivers::scan_results::base_hooks::begin(void)
+{
+}
 
 
-/// Hooks for the scan_results driver to generate a JUnit report.
-class report_junit_hooks : public drivers::scan_results::base_hooks {
-    /// Stream to which to write the report.
-    std::ostream& _output;
-
-public:
-    report_junit_hooks(std::ostream&);
-
-    void got_context(const model::context&);
-    void got_result(store::results_iterator&);
-
-    void end(const drivers::scan_results::result&);
-};
+/// Callback executed after all operations are performed.
+///
+/// \param unused_r A structure with all results computed by this driver.  Note
+///     that this is also returned by the drive operation.
+void
+drivers::scan_results::base_hooks::end(const result& UTILS_UNUSED_PARAM(r))
+{
+}
 
 
-}  // namespace engine
+/// Executes the operation.
+///
+/// \param store_path The path to the database store.
+/// \param hooks The hooks for this execution.
+///
+/// \returns A structure with all results computed by this driver.
+drivers::scan_results::result
+drivers::scan_results::drive(const fs::path& store_path, base_hooks& hooks)
+{
+    store::read_backend db = store::read_backend::open_ro(store_path);
+    store::read_transaction tx = db.start_read();
 
-#endif  // !defined(ENGINE_REPORT_JUNIT_HPP)
+    hooks.begin();
+
+    const model::context context = tx.get_context();
+    hooks.got_context(context);
+
+    store::results_iterator iter = tx.get_results();
+    while (iter) {
+        hooks.got_result(iter);
+        ++iter;
+    }
+
+    result r;
+    hooks.end(r);
+    return r;
+}

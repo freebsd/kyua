@@ -26,7 +26,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/drivers/debug_test.hpp"
+#include "drivers/debug_test.hpp"
 
 #include <stdexcept>
 
@@ -43,7 +43,6 @@
 
 namespace config = utils::config;
 namespace fs = utils::fs;
-namespace debug_test = engine::drivers::debug_test;
 namespace signals = utils::signals;
 
 using utils::none;
@@ -115,13 +114,13 @@ find_test_case(const engine::test_filter& filter,
 ///     stderr.
 ///
 /// \returns A structure with all results computed by this driver.
-debug_test::result
-debug_test::drive(const fs::path& kyuafile_path,
-                  const optional< fs::path > build_root,
-                  const test_filter& filter,
-                  const config::tree& user_config,
-                  const fs::path& stdout_path,
-                  const fs::path& stderr_path)
+drivers::debug_test::result
+drivers::debug_test::drive(const fs::path& kyuafile_path,
+                           const optional< fs::path > build_root,
+                           const engine::test_filter& filter,
+                           const config::tree& user_config,
+                           const fs::path& stdout_path,
+                           const fs::path& stderr_path)
 {
     const engine::kyuafile kyuafile = engine::kyuafile::load(
         kyuafile_path, build_root);
@@ -138,7 +137,7 @@ debug_test::drive(const fs::path& kyuafile_path,
         stdout_path, stderr_path);
 
     signals::check_interrupt();
-    return result(test_filter(
-                      test_case->container_test_program().relative_path(),
-                      test_case->name()), test_result);
+    return result(engine::test_filter(
+        test_case->container_test_program().relative_path(),
+        test_case->name()), test_result);
 }

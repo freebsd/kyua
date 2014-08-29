@@ -26,26 +26,42 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/drivers/list_tests.hpp
-/// Driver to obtain a list of test cases out of a test suite.
+/// \file drivers/scan_results.hpp
+/// Driver to scan the contents of a results file.
 ///
-/// This driver module implements the logic to extract a list of test cases out
-/// of a particular test suite.
+/// This driver module implements the logic to scan the contents of a results
+/// file and to notify the presentation layer as soon as data becomes
+/// available.  This is to prevent reading all the data from the file at once,
+/// which could take too much memory.
 
-#if !defined(ENGINE_DRIVERS_LIST_TESTS_HPP)
-#define ENGINE_DRIVERS_LIST_TESTS_HPP
+#if !defined(DRIVERS_SCAN_RESULTS_HPP)
+#define DRIVERS_SCAN_RESULTS_HPP
 
-#include <set>
+extern "C" {
+#include <stdint.h>
+}
 
-#include "engine/filters.hpp"
-#include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
+#include "model/context_fwd.hpp"
+#include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
-#include "utils/optional.hpp"
 
-namespace engine {
+namespace store {
+class results_iterator;
+}  // namespace store
+
 namespace drivers {
-namespace list_tests {
+namespace scan_results {
+
+
+/// Tuple containing the results of this driver.
+class result {
+public:
+    /// Initializer for the tuple's fields.
+    result(void)
+    {
+    }
+};
 
 
 /// Abstract definition of the hooks for this driver.
@@ -53,38 +69,28 @@ class base_hooks {
 public:
     virtual ~base_hooks(void) = 0;
 
-    /// Called when a test case is identified in a test suite.
+    virtual void begin(void);
+
+    /// Callback executed when the context is loaded.
     ///
-    /// \param test_case The data describing the test case.
-    virtual void got_test_case(const engine::test_case& test_case) = 0;
+    /// \param context The context loaded from the database.
+    virtual void got_context(const model::context& context) = 0;
+
+    /// Callback executed when a test results is found.
+    ///
+    /// \param iter Container for the test result's data.  Some of the data are
+    ///     lazily fetched, hence why we receive the object instead of the
+    ///     individual elements.
+    virtual void got_result(store::results_iterator& iter) = 0;
+
+    virtual void end(const result& r);
 };
 
 
-/// Tuple containing the results of this driver.
-class result {
-public:
-    /// Filters that did not match any available test case.
-    ///
-    /// The presence of any filters here probably indicates a usage error.  If a
-    /// test filter does not match any test case, it is probably a typo.
-    std::set< test_filter > unused_filters;
-
-    /// Initializer for the tuple's fields.
-    ///
-    /// \param unused_filters_ The filters that did not match any test case.
-    result(const std::set< test_filter >& unused_filters_) :
-        unused_filters(unused_filters_)
-    {
-    }
-};
+result drive(const utils::fs::path&, base_hooks&);
 
 
-result drive(const utils::fs::path&, const utils::optional< utils::fs::path >,
-             const std::set< test_filter >&, base_hooks&);
-
-
-}  // namespace list_tests
+}  // namespace scan_results
 }  // namespace drivers
-}  // namespace engine
 
-#endif  // !defined(ENGINE_DRIVERS_LIST_TESTS_HPP)
+#endif  // !defined(DRIVERS_SCAN_RESULTS_HPP)

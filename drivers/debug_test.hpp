@@ -26,64 +26,55 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/drivers/scan_results.hpp"
-
-#include "model/context.hpp"
-#include "store/read_backend.hpp"
-#include "store/read_transaction.hpp"
-#include "utils/defs.hpp"
-
-namespace fs = utils::fs;
-namespace scan_results = engine::drivers::scan_results;
-
-
-/// Pure abstract destructor.
-scan_results::base_hooks::~base_hooks(void)
-{
-}
-
-
-/// Callback executed before any operation is performed.
-void
-scan_results::base_hooks::begin(void)
-{
-}
-
-
-/// Callback executed after all operations are performed.
+/// \file drivers/debug_test.hpp
+/// Driver to run a single test in a controlled manner.
 ///
-/// \param unused_r A structure with all results computed by this driver.  Note
-///     that this is also returned by the drive operation.
-void
-scan_results::base_hooks::end(const result& UTILS_UNUSED_PARAM(r))
-{
-}
+/// This driver module implements the logic to execute a particular test
+/// with hooks into the runtime procedure.  This is to permit debugging the
+/// behavior of the test.
+
+#if !defined(DRIVERS_DEBUG_TEST_HPP)
+#define DRIVERS_DEBUG_TEST_HPP
+
+#include "engine/filters.hpp"
+#include "engine/test_case.hpp"
+#include "model/test_result.hpp"
+#include "utils/config/tree.hpp"
+#include "utils/fs/path.hpp"
+#include "utils/optional.hpp"
+
+namespace drivers {
+namespace debug_test {
 
 
-/// Executes the operation.
-///
-/// \param store_path The path to the database store.
-/// \param hooks The hooks for this execution.
-///
-/// \returns A structure with all results computed by this driver.
-scan_results::result
-scan_results::drive(const fs::path& store_path, base_hooks& hooks)
-{
-    store::read_backend db = store::read_backend::open_ro(store_path);
-    store::read_transaction tx = db.start_read();
+/// Tuple containing the results of this driver.
+class result {
+public:
+    /// A filter matching the executed test case only.
+    engine::test_filter test_case;
 
-    hooks.begin();
+    /// The result of the test case.
+    model::test_result test_result;
 
-    const model::context context = tx.get_context();
-    hooks.got_context(context);
-
-    store::results_iterator iter = tx.get_results();
-    while (iter) {
-        hooks.got_result(iter);
-        ++iter;
+    /// Initializer for the tuple's fields.
+    ///
+    /// \param test_case_ The matched test case.
+    /// \param test_result_ The result of the test case.
+    result(const engine::test_filter& test_case_,
+           const model::test_result& test_result_) :
+        test_case(test_case_),
+        test_result(test_result_)
+    {
     }
+};
 
-    result r;
-    hooks.end(r);
-    return r;
-}
+
+result drive(const utils::fs::path&, const utils::optional< utils::fs::path >,
+             const engine::test_filter&, const utils::config::tree&,
+             const utils::fs::path&, const utils::fs::path&);
+
+
+}  // namespace debug_test
+}  // namespace drivers
+
+#endif  // !defined(DRIVERS_DEBUG_TEST_HPP)

@@ -33,7 +33,7 @@
 #include <vector>
 
 #include "cli/common.ipp"
-#include "engine/drivers/list_tests.hpp"
+#include "drivers/list_tests.hpp"
 #include "engine/filters.hpp"
 #include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
@@ -49,14 +49,13 @@
 namespace cmdline = utils::cmdline;
 namespace config = utils::config;
 namespace fs = utils::fs;
-namespace list_tests = engine::drivers::list_tests;
 
 
 namespace {
 
 
 /// Hooks for list_tests to print test cases as they come.
-class progress_hooks : public list_tests::base_hooks {
+class progress_hooks : public drivers::list_tests::base_hooks {
     /// The ui object to which to print the test cases.
     cmdline::ui* _ui;
 
@@ -147,7 +146,7 @@ cli::cmd_list::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
                    const config::tree& UTILS_UNUSED_PARAM(user_config))
 {
     progress_hooks hooks(ui, cmdline.has_option("verbose"));
-    const list_tests::result result = list_tests::drive(
+    const drivers::list_tests::result result = drivers::list_tests::drive(
         kyuafile_path(cmdline), build_root_path(cmdline),
         parse_filters(cmdline.arguments()), hooks);
 

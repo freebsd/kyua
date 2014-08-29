@@ -31,7 +31,7 @@
 #include <cstdlib>
 
 #include "cli/common.ipp"
-#include "engine/drivers/debug_test.hpp"
+#include "drivers/debug_test.hpp"
 #include "engine/filters.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.ipp"
@@ -39,7 +39,6 @@
 
 namespace cmdline = utils::cmdline;
 namespace config = utils::config;
-namespace debug_test = engine::drivers::debug_test;
 
 using cli::cmd_debug;
 
@@ -81,7 +80,7 @@ cmd_debug::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
     const engine::test_filter filter = engine::test_filter::parse(
         test_case_name);
 
-    const debug_test::result result = debug_test::drive(
+    const drivers::debug_test::result result = drivers::debug_test::drive(
         kyuafile_path(cmdline), build_root_path(cmdline), filter, user_config,
         cmdline.get_option< cmdline::path_option >("stdout"),
         cmdline.get_option< cmdline::path_option >("stderr"));

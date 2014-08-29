@@ -26,15 +26,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/drivers/run_tests.hpp
+/// \file drivers/run_tests.hpp
 /// Driver to run a collection of tests.
 ///
 /// This driver module implements the logic to execute a collection of tests.
 /// The presentation layer is able to monitor progress by hooking into
 /// particular points of the driver.
 
-#if !defined(ENGINE_DRIVERS_RUN_TESTS_HPP)
-#define ENGINE_DRIVERS_RUN_TESTS_HPP
+#if !defined(DRIVERS_RUN_TESTS_HPP)
+#define DRIVERS_RUN_TESTS_HPP
 
 #include <set>
 
@@ -46,7 +46,6 @@
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"
 
-namespace engine {
 namespace drivers {
 namespace run_tests {
 
@@ -79,12 +78,12 @@ public:
     ///
     /// The presence of any filters here probably indicates a usage error.  If a
     /// test filter does not match any test case, it is probably a typo.
-    std::set< test_filter > unused_filters;
+    std::set< engine::test_filter > unused_filters;
 
     /// Initializer for the tuple's fields.
     ///
     /// \param unused_filters_ The filters that did not match any test case.
-    result(const std::set< test_filter >& unused_filters_) :
+    result(const std::set< engine::test_filter >& unused_filters_) :
         unused_filters(unused_filters_)
     {
     }
@@ -92,12 +91,11 @@ public:
 
 
 result drive(const utils::fs::path&, const utils::optional< utils::fs::path >,
-             const utils::fs::path&, const std::set< test_filter >&,
+             const utils::fs::path&, const std::set< engine::test_filter >&,
              const utils::config::tree&, base_hooks&);
 
 
 }  // namespace run_tests
 }  // namespace drivers
-}  // namespace engine
 
-#endif  // !defined(ENGINE_DRIVERS_RUN_TESTS_HPP)
+#endif  // !defined(DRIVERS_RUN_TESTS_HPP)

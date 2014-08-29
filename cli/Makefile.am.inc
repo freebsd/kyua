@@ -26,8 +26,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-CLI_CFLAGS = $(ENGINE_CFLAGS) $(STORE_CFLAGS) $(UTILS_CFLAGS)
-CLI_LIBS = libcli.a $(ENGINE_LIBS) $(STORE_LIBS) $(UTILS_LIBS)
+CLI_CFLAGS = $(DRIVERS_CFLAGS)
+CLI_LIBS = libcli.a $(DRIVERS_LIBS)
 
 noinst_LIBRARIES += libcli.a
 libcli_a_SOURCES  = cli/cmd_about.cpp
@@ -62,7 +62,7 @@ libcli_a_SOURCES += cli/main.hpp
 libcli_a_CPPFLAGS  = -DKYUA_CONFDIR="\"$(kyua_confdir)\""
 libcli_a_CPPFLAGS += -DKYUA_DOCDIR="\"$(docdir)\""
 libcli_a_CPPFLAGS += -DKYUA_MISCDIR="\"$(miscdir)\""
-libcli_a_CPPFLAGS += $(ENGINE_CFLAGS) $(STORE_CFLAGS) $(UTILS_CFLAGS)
+libcli_a_CPPFLAGS += $(DRIVERS_CFLAGS)
 libcli_a_LIBADD = libutils.a
 
 if WITH_ATF

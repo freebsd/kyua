@@ -36,7 +36,7 @@
 #include <vector>
 
 #include "cli/common.ipp"
-#include "engine/drivers/scan_results.hpp"
+#include "drivers/scan_results.hpp"
 #include "model/context.hpp"
 #include "model/test_result.hpp"
 #include "store/layout.hpp"
@@ -57,7 +57,6 @@ namespace config = utils::config;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace layout = store::layout;
-namespace scan_results = engine::drivers::scan_results;
 
 using cli::cmd_report;
 using utils::optional;
@@ -67,7 +66,7 @@ namespace {
 
 
 /// Generates a plain-text report intended to be printed to the console.
-class report_console_hooks : public engine::drivers::scan_results::base_hooks {
+class report_console_hooks : public drivers::scan_results::base_hooks {
     /// Stream to which to write the report.
     std::ostream& _output;
 
@@ -223,7 +222,7 @@ public:
     ///
     /// \param unused_r Result of the scan_results driver execution.
     void
-    end(const engine::drivers::scan_results::result& UTILS_UNUSED_PARAM(r))
+    end(const drivers::scan_results::result& UTILS_UNUSED_PARAM(r))
     {
         using model::test_result;
         typedef std::map< test_result::result_type, const char* > types_map;
@@ -300,7 +299,7 @@ cmd_report::run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
     report_console_hooks hooks(*output.get(),
                                cmdline.has_option("show-context"), types,
                                results_file);
-    scan_results::drive(results_file, hooks);
+    drivers::scan_results::drive(results_file, hooks);
 
     return EXIT_SUCCESS;
 }

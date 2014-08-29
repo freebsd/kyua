@@ -32,7 +32,7 @@
 #include <cstdlib>
 
 #include "cli/common.ipp"
-#include "engine/drivers/scan_results.hpp"
+#include "drivers/scan_results.hpp"
 #include "engine/report_junit.hpp"
 #include "store/layout.hpp"
 #include "utils/cmdline/parser.ipp"
@@ -44,7 +44,6 @@ namespace cmdline = utils::cmdline;
 namespace config = utils::config;
 namespace fs = utils::fs;
 namespace layout = store::layout;
-namespace scan_results = engine::drivers::scan_results;
 
 using cli::cmd_report_junit;
 using utils::optional;
@@ -81,7 +80,7 @@ cmd_report_junit::run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
         cmdline.get_option< cmdline::path_option >("output"));
 
     engine::report_junit_hooks hooks(*output.get());
-    scan_results::drive(results_file, hooks);
+    drivers::scan_results::drive(results_file, hooks);
 
     return EXIT_SUCCESS;
 }

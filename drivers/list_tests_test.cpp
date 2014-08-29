@@ -26,7 +26,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/drivers/list_tests.hpp"
+#include "drivers/list_tests.hpp"
 
 extern "C" {
 #include <sys/stat.h>
@@ -47,7 +47,6 @@ extern "C" {
 #include "utils/format/macros.hpp"
 #include "utils/optional.ipp"
 
-namespace list_tests = engine::drivers::list_tests;
 namespace fs = utils::fs;
 
 using utils::none;
@@ -71,7 +70,7 @@ helpers(const atf::tests::tc* test_case)
 
 
 /// Hooks to capture the incremental listing of test cases.
-class capture_hooks : public list_tests::base_hooks {
+class capture_hooks : public drivers::list_tests::base_hooks {
 public:
     /// Set of the listed test cases in a program:test_case form.
     std::set< std::string > test_cases;
@@ -132,10 +131,10 @@ create_helpers(const atf::tests::tc* tc, const fs::path& source_root,
 /// \param filter_test_case If not null, the filter on the test case name.
 ///
 /// \return The result data of the driver.
-static list_tests::result
+static drivers::list_tests::result
 run_helpers(const fs::path& source_root,
             const optional< fs::path > build_root,
-            list_tests::base_hooks& hooks,
+            drivers::list_tests::base_hooks& hooks,
             const char* filter_program = NULL,
             const char* filter_test_case = NULL)
 {
@@ -144,8 +143,8 @@ run_helpers(const fs::path& source_root,
         filters.insert(engine::test_filter(fs::path(filter_program),
                                            filter_test_case));
 
-    return list_tests::drive(source_root / "Kyuafile", build_root, filters,
-                             hooks);
+    return drivers::list_tests::drive(source_root / "Kyuafile", build_root,
+                                      filters, hooks);
 }
 
 

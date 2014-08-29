@@ -79,8 +79,8 @@ engine_kyuafile_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 
 tests_engine_PROGRAMS += engine/report_junit_test
 engine_report_junit_test_SOURCES = engine/report_junit_test.cpp
-engine_report_junit_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
-engine_report_junit_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
+engine_report_junit_test_CXXFLAGS = $(DRIVERS_CFLAGS) $(ATF_CXX_CFLAGS)
+engine_report_junit_test_LDADD = $(DRIVERS_LIBS) $(ATF_CXX_LIBS)
 
 tests_engine_PROGRAMS += engine/requirements_test
 engine_requirements_test_SOURCES = engine/requirements_test.cpp
@@ -114,5 +114,3 @@ engine_testers_test_SOURCES = engine/testers_test.cpp
 engine_testers_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
 engine_testers_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 endif
-
-include engine/drivers/Makefile.am.inc

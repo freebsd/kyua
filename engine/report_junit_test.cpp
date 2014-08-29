@@ -33,7 +33,7 @@
 
 #include <atf-c++.hpp>
 
-#include "engine/drivers/scan_results.hpp"
+#include "drivers/scan_results.hpp"
 #include "model/context.hpp"
 #include "model/metadata.hpp"
 #include "model/test_result.hpp"
@@ -47,7 +47,6 @@
 
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
-namespace scan_results = engine::drivers::scan_results;
 namespace units = utils::units;
 
 using utils::none;
@@ -228,7 +227,7 @@ ATF_TEST_CASE_BODY(report_junit_hooks__minimal)
     std::ostringstream output;
 
     engine::report_junit_hooks hooks(output);
-    scan_results::drive(fs::path("test.db"), hooks);
+    drivers::scan_results::drive(fs::path("test.db"), hooks);
 
     const char* expected =
         "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n"
@@ -266,7 +265,7 @@ ATF_TEST_CASE_BODY(report_junit_hooks__some_tests)
     std::ostringstream output;
 
     engine::report_junit_hooks hooks(output);
-    scan_results::drive(fs::path("test.db"), hooks);
+    drivers::scan_results::drive(fs::path("test.db"), hooks);
 
     const std::string expected = std::string() +
         "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n"
