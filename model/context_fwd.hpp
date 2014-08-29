@@ -1,4 +1,4 @@
-// Copyright 2011 Google Inc.
+// Copyright 2014 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,50 +26,18 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/context.hpp
-/// Representation of runtime contexts.
+/// \file model/context_fwd.hpp
+/// Forward declarations for model/context.hpp
 
-#if !defined(ENGINE_CONTEXT_HPP)
-#define ENGINE_CONTEXT_HPP
+#if !defined(MODEL_CONTEXT_FWD_HPP)
+#define MODEL_CONTEXT_FWD_HPP
 
-#include <map>
-#include <ostream>
-#include <string>
-
-#include "utils/fs/path.hpp"
-#include "utils/shared_ptr.hpp"
-
-namespace engine {
+namespace model {
 
 
-/// Representation of a runtime context.
-///
-/// The instances of this class are unique (i.e. copying the objects only yields
-/// a shallow copy that shares the same internal implementation).  This is a
-/// requirement for the 'store' API model.
-class context {
-    struct impl;
-
-    /// Pointer to the shared internal implementation.
-    std::shared_ptr< impl > _pimpl;
-
-public:
-    context(const utils::fs::path&,
-            const std::map< std::string, std::string >&);
-    ~context(void);
-    static context current(void);
-
-    const utils::fs::path& cwd(void) const;
-    const std::map< std::string, std::string >& env(void) const;
-
-    bool operator==(const context&) const;
-    bool operator!=(const context&) const;
-};
+class context;
 
 
-std::ostream& operator<<(std::ostream&, const context&);
+}  // namespace model
 
-
-}  // namespace engine
-
-#endif  // !defined(ENGINE_CONTEXT_HPP)
+#endif  // !defined(MODEL_CONTEXT_FWD_HPP)

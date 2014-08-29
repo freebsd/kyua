@@ -35,7 +35,7 @@ extern "C" {
 #include <fstream>
 #include <map>
 
-#include "engine/context.hpp"
+#include "model/context.hpp"
 #include "model/metadata.hpp"
 #include "model/test_result.hpp"
 #include "model/types.hpp"
@@ -256,7 +256,7 @@ store::write_transaction::rollback(void)
 ///
 /// \throw error If there is any problem when talking to the database.
 void
-store::write_transaction::put_context(const engine::context& context)
+store::write_transaction::put_context(const model::context& context)
 {
     try {
         sqlite::statement stmt = _pimpl->_db.create_statement(

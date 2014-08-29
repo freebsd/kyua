@@ -32,7 +32,7 @@
 
 #include <atf-c++.hpp>
 
-#include "engine/context.hpp"
+#include "model/context.hpp"
 #include "model/metadata.hpp"
 #include "model/test_result.hpp"
 #include "store/exceptions.hpp"
@@ -65,7 +65,7 @@ public:
     optional< scan_results::result > _end_result;
 
     /// The captured context, if any.
-    optional< engine::context > _context;
+    optional< model::context > _context;
 
     /// The captured results, flattened as "program:test_case:result".
     std::set< std::string > _results;
@@ -97,7 +97,7 @@ public:
     /// Callback executed when the context is loaded.
     ///
     /// \param context The context loaded from the database.
-    void got_context(const engine::context& context)
+    void got_context(const model::context& context)
     {
         PRE(!_context);
         _context = context;
@@ -143,7 +143,7 @@ populate_results_file(const char* db_name, const int count)
     std::map< std::string, std::string > env;
     for (int i = 0; i < count; i++)
         env[F("VAR%s") % i] = F("Value %s") % i;
-    const engine::context context(fs::path("/root"), env);
+    const model::context context(fs::path("/root"), env);
     tx.put_context(context);
 
     for (int i = 0; i < count; i++) {
@@ -187,7 +187,7 @@ ATF_TEST_CASE_BODY(ok)
     std::map< std::string, std::string > env;
     env["VAR0"] = "Value 0";
     env["VAR1"] = "Value 1";
-    const engine::context context(fs::path("/root"), env);
+    const model::context context(fs::path("/root"), env);
     ATF_REQUIRE(context == hooks._context.get());
 
     std::set< std::string > results;

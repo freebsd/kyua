@@ -34,8 +34,8 @@
 #include <stdexcept>
 
 #include "cli/common.ipp"
-#include "engine/context.hpp"
 #include "engine/drivers/scan_results.hpp"
+#include "model/context.hpp"
 #include "model/metadata.hpp"
 #include "model/test_result.hpp"
 #include "store/layout.hpp"
@@ -291,7 +291,7 @@ public:
     ///
     /// \param context The context loaded from the database.
     void
-    got_context(const engine::context& context)
+    got_context(const model::context& context)
     {
         text::templates_def templates = common_templates();
         templates.add_variable("cwd", context.cwd().str());

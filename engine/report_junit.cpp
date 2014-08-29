@@ -30,7 +30,7 @@
 
 #include <algorithm>
 
-#include "engine/context.hpp"
+#include "model/context.hpp"
 #include "model/metadata.hpp"
 #include "model/test_result.hpp"
 #include "model/types.hpp"
@@ -129,7 +129,7 @@ engine::report_junit_hooks::report_junit_hooks(std::ostream& output_) :
 ///
 /// \param context The context loaded from the database.
 void
-engine::report_junit_hooks::got_context(const engine::context& context)
+engine::report_junit_hooks::got_context(const model::context& context)
 {
     _output << "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n";
     _output << "<testsuite>\n";

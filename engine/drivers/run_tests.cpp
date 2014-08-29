@@ -28,17 +28,19 @@
 
 #include "engine/drivers/run_tests.hpp"
 
-#include "engine/context.hpp"
 #include "engine/filters.hpp"
 #include "engine/kyuafile.hpp"
 #include "engine/test_program.hpp"
+#include "model/context.hpp"
 #include "model/test_result.hpp"
 #include "store/write_backend.hpp"
 #include "store/write_transaction.hpp"
 #include "utils/datetime.hpp"
 #include "utils/defs.hpp"
+#include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/auto_cleaners.hpp"
+#include "utils/fs/operations.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/signals/interrupts.hpp"
@@ -174,7 +176,7 @@ run_tests::drive(const fs::path& kyuafile_path,
     store::write_backend db = store::write_backend::open_rw(store_path);
     store::write_transaction tx = db.start_write();
 
-    engine::context context = engine::context::current();
+    model::context context(fs::current_path(), utils::getallenv());
     (void)tx.put_context(context);
 
     signals::interrupts_handler interrupts;

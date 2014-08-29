@@ -34,8 +34,6 @@ libengine_a_CPPFLAGS  = $(STORE_CFLAGS) $(UTILS_CFLAGS)
 libengine_a_CPPFLAGS += -DKYUA_TESTERSDIR="\"$(testersdir)\""
 libengine_a_SOURCES  = engine/config.cpp
 libengine_a_SOURCES += engine/config.hpp
-libengine_a_SOURCES += engine/context.cpp
-libengine_a_SOURCES += engine/context.hpp
 libengine_a_SOURCES += engine/exceptions.cpp
 libengine_a_SOURCES += engine/exceptions.hpp
 libengine_a_SOURCES += engine/filters.cpp
@@ -63,11 +61,6 @@ tests_engine_PROGRAMS = engine/config_test
 engine_config_test_SOURCES = engine/config_test.cpp
 engine_config_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
 engine_config_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
-
-tests_engine_PROGRAMS += engine/context_test
-engine_context_test_SOURCES = engine/context_test.cpp
-engine_context_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
-engine_context_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 
 tests_engine_PROGRAMS += engine/exceptions_test
 engine_exceptions_test_SOURCES = engine/exceptions_test.cpp

@@ -39,13 +39,10 @@ extern "C" {
 #include <string>
 
 #include "engine/test_program.hpp"
+#include "model/context_fwd.hpp"
 #include "model/test_result_fwd.hpp"
 #include "utils/datetime.hpp"
 #include "utils/shared_ptr.hpp"
-
-namespace engine {
-class context;
-}  // namespace engine
 
 namespace store {
 
@@ -112,7 +109,7 @@ public:
 
     void finish(void);
 
-    engine::context get_context(void);
+    model::context get_context(void);
     results_iterator get_results(void);
 };
 

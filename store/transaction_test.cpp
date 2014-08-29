@@ -31,7 +31,7 @@
 
 #include <atf-c++.hpp>
 
-#include "engine/context.hpp"
+#include "model/context.hpp"
 #include "model/metadata.hpp"
 #include "store/read_backend.hpp"
 #include "store/read_transaction.hpp"
@@ -57,7 +57,7 @@ namespace {
 ///
 /// \param exp_context The context to save and restore.
 static void
-check_get_put_context(const engine::context& exp_context)
+check_get_put_context(const model::context& exp_context)
 {
     const fs::path test_db("test.db");
 
@@ -73,7 +73,7 @@ check_get_put_context(const engine::context& exp_context)
     {
         store::read_backend backend = store::read_backend::open_ro(test_db);
         store::read_transaction tx = backend.start_read();
-        engine::context context = tx.get_context();
+        model::context context = tx.get_context();
         tx.finish();
 
         ATF_REQUIRE(exp_context == context);
@@ -96,9 +96,9 @@ ATF_TEST_CASE_BODY(get_put_context__ok)
     env1["A1"] = "foo";
     env1["A2"] = "bar";
     std::map< std::string, std::string > env2;
-    check_get_put_context(engine::context(fs::path("/foo/bar"), env1));
-    check_get_put_context(engine::context(fs::path("/foo/bar"), env1));
-    check_get_put_context(engine::context(fs::path("/foo/baz"), env2));
+    check_get_put_context(model::context(fs::path("/foo/bar"), env1));
+    check_get_put_context(model::context(fs::path("/foo/bar"), env1));
+    check_get_put_context(model::context(fs::path("/foo/baz"), env2));
 }
 
 

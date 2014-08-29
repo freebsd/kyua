@@ -28,7 +28,7 @@
 
 #include "engine/drivers/scan_results.hpp"
 
-#include "engine/context.hpp"
+#include "model/context.hpp"
 #include "store/read_backend.hpp"
 #include "store/read_transaction.hpp"
 #include "utils/defs.hpp"
@@ -74,7 +74,7 @@ scan_results::drive(const fs::path& store_path, base_hooks& hooks)
 
     hooks.begin();
 
-    const engine::context context = tx.get_context();
+    const model::context context = tx.get_context();
     hooks.got_context(context);
 
     store::results_iterator iter = tx.get_results();

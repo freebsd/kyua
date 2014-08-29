@@ -36,8 +36,8 @@
 #include <vector>
 
 #include "cli/common.ipp"
-#include "engine/context.hpp"
 #include "engine/drivers/scan_results.hpp"
+#include "model/context.hpp"
 #include "model/test_result.hpp"
 #include "store/layout.hpp"
 #include "store/read_transaction.hpp"
@@ -124,7 +124,7 @@ class report_console_hooks : public engine::drivers::scan_results::base_hooks {
     ///
     /// \param context The context to dump.
     void
-    print_context(const engine::context& context)
+    print_context(const model::context& context)
     {
         _output << "===> Execution context\n";
 
@@ -200,7 +200,7 @@ public:
     ///
     /// \param context The context loaded from the database.
     void
-    got_context(const engine::context& context)
+    got_context(const model::context& context)
     {
         if (_show_context)
             print_context(context);

@@ -1,4 +1,4 @@
-// Copyright 2014 Google Inc.
+// Copyright 2011 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,52 +26,56 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/report_junit.hpp
-/// Generates a JUnit report out of a test suite execution.
+/// \file model/context.hpp
+/// Representation of runtime contexts.
 
-#if !defined(ENGINE_REPORT_JUNIT_HPP)
-#define ENGINE_REPORT_JUNIT_HPP
+#if !defined(MODEL_CONTEXT_HPP)
+#define MODEL_CONTEXT_HPP
 
+#include "model/context_fwd.hpp"
+
+#include <map>
 #include <ostream>
 #include <string>
 
-#include "engine/drivers/scan_results.hpp"
-#include "model/metadata_fwd.hpp"
+#include "utils/shared_ptr.hpp"
 
 namespace utils {
-namespace datetime {
-class delta;
-}  // namespace datetime
+namespace fs {
+class path;
+}  // namespace fs
 }  // namespace utils
 
-namespace engine {
+namespace model {
 
 
-class test_program;
+/// Representation of a runtime context.
+///
+/// The instances of this class are unique (i.e. copying the objects only yields
+/// a shallow copy that shares the same internal implementation).  This is a
+/// requirement for the 'store' API model.
+class context {
+    struct impl;
 
-
-std::string junit_classname(const engine::test_program&);
-std::string junit_duration(const utils::datetime::delta&);
-extern const char* const junit_metadata_prefix;
-extern const char* const junit_metadata_suffix;
-std::string junit_metadata(const model::metadata&);
-
-
-/// Hooks for the scan_results driver to generate a JUnit report.
-class report_junit_hooks : public engine::drivers::scan_results::base_hooks {
-    /// Stream to which to write the report.
-    std::ostream& _output;
+    /// Pointer to the shared internal implementation.
+    std::shared_ptr< impl > _pimpl;
 
 public:
-    report_junit_hooks(std::ostream&);
+    context(const utils::fs::path&,
+            const std::map< std::string, std::string >&);
+    ~context(void);
 
-    void got_context(const model::context&);
-    void got_result(store::results_iterator&);
+    const utils::fs::path& cwd(void) const;
+    const std::map< std::string, std::string >& env(void) const;
 
-    void end(const engine::drivers::scan_results::result&);
+    bool operator==(const context&) const;
+    bool operator!=(const context&) const;
 };
 
 
-}  // namespace engine
+std::ostream& operator<<(std::ostream&, const context&);
 
-#endif  // !defined(ENGINE_REPORT_JUNIT_HPP)
+
+}  // namespace model
+
+#endif  // !defined(MODEL_CONTEXT_HPP)

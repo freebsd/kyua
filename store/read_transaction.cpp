@@ -35,7 +35,7 @@ extern "C" {
 #include <map>
 #include <utility>
 
-#include "engine/context.hpp"
+#include "model/context.hpp"
 #include "model/metadata.hpp"
 #include "model/test_result.hpp"
 #include "store/dbtypes.hpp"
@@ -510,7 +510,7 @@ store::read_transaction::finish(void)
 /// \return The retrieved context.
 ///
 /// \throw error If there is a problem loading the context.
-engine::context
+model::context
 store::read_transaction::get_context(void)
 {
     try {
@@ -519,8 +519,8 @@ store::read_transaction::get_context(void)
         if (!stmt.step())
             throw error("Error loading context: no data");
 
-        return engine::context(fs::path(stmt.safe_column_text("cwd")),
-                               get_env_vars(_pimpl->_db));
+        return model::context(fs::path(stmt.safe_column_text("cwd")),
+                              get_env_vars(_pimpl->_db));
     } catch (const sqlite::error& e) {
         throw error(F("Error loading context: %s") % e.what());
     }

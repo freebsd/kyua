@@ -31,7 +31,10 @@ MODEL_LIBS = libmodel.a $(UTILS_LIBS)
 
 noinst_LIBRARIES += libmodel.a
 libmodel_a_CPPFLAGS = $(UTILS_CFLAGS)
-libmodel_a_SOURCES  = model/exceptions.cpp
+libmodel_a_SOURCES  = model/context.cpp
+libmodel_a_SOURCES += model/context.hpp
+libmodel_a_SOURCES += model/context_fwd.hpp
+libmodel_a_SOURCES += model/exceptions.cpp
 libmodel_a_SOURCES += model/exceptions.hpp
 libmodel_a_SOURCES += model/metadata.cpp
 libmodel_a_SOURCES += model/metadata.hpp
@@ -47,7 +50,12 @@ tests_modeldir = $(pkgtestsdir)/model
 tests_model_DATA = model/Kyuafile
 EXTRA_DIST += $(tests_model_DATA)
 
-tests_model_PROGRAMS = model/exceptions_test
+tests_model_PROGRAMS = model/context_test
+model_context_test_SOURCES = model/context_test.cpp
+model_context_test_CXXFLAGS = $(MODEL_CFLAGS) $(ATF_CXX_CFLAGS)
+model_context_test_LDADD = $(MODEL_LIBS) $(ATF_CXX_LIBS)
+
+tests_model_PROGRAMS += model/exceptions_test
 model_exceptions_test_SOURCES = model/exceptions_test.cpp
 model_exceptions_test_CXXFLAGS = $(MODEL_CFLAGS) $(ATF_CXX_CFLAGS)
 model_exceptions_test_LDADD = $(MODEL_LIBS) $(ATF_CXX_LIBS)

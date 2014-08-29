@@ -34,7 +34,7 @@
 
 #include <atf-c++.hpp>
 
-#include "engine/context.hpp"
+#include "model/context.hpp"
 #include "model/metadata.hpp"
 #include "model/test_result.hpp"
 #include "store/exceptions.hpp"
@@ -127,8 +127,8 @@ ATF_TEST_CASE_BODY(commit__fail)
 {
     store::write_backend backend = store::write_backend::open_rw(
         fs::path("test.db"));
-    const engine::context context(fs::path("/foo/bar"),
-                                  std::map< std::string, std::string >());
+    const model::context context(fs::path("/foo/bar"),
+                                 std::map< std::string, std::string >());
     {
         store::write_transaction tx = backend.start_write();
         tx.put_context(context);

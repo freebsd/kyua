@@ -33,7 +33,7 @@
 
 #include <atf-c++.hpp>
 
-#include "engine/context.hpp"
+#include "model/context.hpp"
 #include "model/metadata.hpp"
 #include "model/test_result.hpp"
 #include "store/exceptions.hpp"
@@ -179,8 +179,8 @@ ATF_TEST_CASE_BODY(get_results__many)
 
     store::write_transaction tx = backend.start_write();
 
-    const engine::context context(fs::path("/foo/bar"),
-                                  std::map< std::string, std::string >());
+    const model::context context(fs::path("/foo/bar"),
+                                 std::map< std::string, std::string >());
     tx.put_context(context);
 
     const datetime::timestamp start_time1 = datetime::timestamp::from_values(

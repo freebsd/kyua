@@ -42,6 +42,7 @@ extern "C" {
 }
 
 #include "engine/test_program.hpp"
+#include "model/context_fwd.hpp"
 #include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
 
@@ -50,9 +51,6 @@ class results_iterator;
 }  // namespace store
 
 namespace engine {
-
-class context;
-
 namespace drivers {
 namespace scan_results {
 
@@ -77,7 +75,7 @@ public:
     /// Callback executed when the context is loaded.
     ///
     /// \param context The context loaded from the database.
-    virtual void got_context(const engine::context& context) = 0;
+    virtual void got_context(const model::context& context) = 0;
 
     /// Callback executed when a test results is found.
     ///

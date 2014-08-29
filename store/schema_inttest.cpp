@@ -31,9 +31,9 @@
 
 #include <atf-c++.hpp>
 
-#include "engine/context.hpp"
 #include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
+#include "model/context.hpp"
 #include "model/metadata.hpp"
 #include "model/test_result.hpp"
 #include "store/migrate.hpp"
@@ -102,7 +102,7 @@ check_action_1(const fs::path& dbpath)
 
     const fs::path root("/some/root");
     std::map< std::string, std::string > environment;
-    const engine::context context(root, environment);
+    const model::context context(root, environment);
 
     ATF_REQUIRE_EQ(context, transaction.get_context());
 
@@ -124,7 +124,7 @@ check_action_2(const fs::path& dbpath)
     std::map< std::string, std::string > environment;
     environment["HOME"] = "/home/test";
     environment["PATH"] = "/bin:/usr/bin";
-    const engine::context context(root, environment);
+    const model::context context(root, environment);
 
     ATF_REQUIRE_EQ(context, transaction.get_context());
 
@@ -260,7 +260,7 @@ check_action_3(const fs::path& dbpath)
     const fs::path root("/usr/tests");
     std::map< std::string, std::string > environment;
     environment["PATH"] = "/bin:/usr/bin";
-    const engine::context context(root, environment);
+    const model::context context(root, environment);
 
     ATF_REQUIRE_EQ(context, transaction.get_context());
 
@@ -382,7 +382,7 @@ check_action_4(const fs::path& dbpath)
     environment["LANG"] = "C";
     environment["PATH"] = "/bin:/usr/bin";
     environment["TERM"] = "xterm";
-    const engine::context context(root, environment);
+    const model::context context(root, environment);
 
     ATF_REQUIRE_EQ(context, transaction.get_context());
 

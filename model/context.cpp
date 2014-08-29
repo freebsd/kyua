@@ -26,11 +26,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/context.hpp"
+#include "model/context.hpp"
 
-#include "utils/env.hpp"
 #include "utils/format/macros.hpp"
-#include "utils/fs/operations.hpp"
+#include "utils/fs/path.hpp"
 #include "utils/text/operations.ipp"
 
 namespace fs = utils::fs;
@@ -38,7 +37,7 @@ namespace text = utils::text;
 
 
 /// Internal implementation of a context.
-struct engine::context::impl {
+struct model::context::impl {
     /// The current working directory.
     fs::path _cwd;
 
@@ -73,7 +72,7 @@ struct engine::context::impl {
 ///
 /// \param cwd_ The current working directory.
 /// \param env_ The environment variables.
-engine::context::context(const fs::path& cwd_,
+model::context::context(const fs::path& cwd_,
                          const std::map< std::string, std::string >& env_) :
     _pimpl(new impl(cwd_, env_))
 {
@@ -81,16 +80,8 @@ engine::context::context(const fs::path& cwd_,
 
 
 /// Destructor.
-engine::context::~context(void)
+model::context::~context(void)
 {
-}
-
-
-/// Constructs a new context based on the current environment.
-engine::context
-engine::context::current(void)
-{
-    return context(fs::current_path(), utils::getallenv());
 }
 
 
@@ -98,7 +89,7 @@ engine::context::current(void)
 ///
 /// \return A path.
 const fs::path&
-engine::context::cwd(void) const
+model::context::cwd(void) const
 {
     return _pimpl->_cwd;
 }
@@ -108,7 +99,7 @@ engine::context::cwd(void) const
 ///
 /// \return A variable name to variable value mapping.
 const std::map< std::string, std::string >&
-engine::context::env(void) const
+model::context::env(void) const
 {
     return _pimpl->_env;
 }
@@ -120,7 +111,7 @@ engine::context::env(void) const
 ///
 /// \return True if this object and other are equal; false otherwise.
 bool
-engine::context::operator==(const context& other) const
+model::context::operator==(const context& other) const
 {
     return *_pimpl == *other._pimpl;
 }
@@ -132,7 +123,7 @@ engine::context::operator==(const context& other) const
 ///
 /// \return True if this object and other are different; false otherwise.
 bool
-engine::context::operator!=(const context& other) const
+model::context::operator!=(const context& other) const
 {
     return !(*this == other);
 }
@@ -145,7 +136,7 @@ engine::context::operator!=(const context& other) const
 ///
 /// \return The output stream.
 std::ostream&
-engine::operator<<(std::ostream& output, const context& object)
+model::operator<<(std::ostream& output, const context& object)
 {
     output << F("context{cwd=%s, env=[")
         % text::quote(object.cwd().str(), '\'');

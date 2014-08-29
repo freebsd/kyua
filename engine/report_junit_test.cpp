@@ -33,8 +33,8 @@
 
 #include <atf-c++.hpp>
 
-#include "engine/context.hpp"
 #include "engine/drivers/scan_results.hpp"
+#include "model/context.hpp"
 #include "model/metadata.hpp"
 #include "model/test_result.hpp"
 #include "store/write_backend.hpp"
@@ -95,7 +95,7 @@ add_context(store::write_transaction& tx, const std::size_t env_vars)
     std::map< std::string, std::string > env;
     for (std::size_t i = 0; i < env_vars; i++)
         env[F("VAR%s") % i] = F("Value %s") % i;
-    const engine::context context(fs::path("/root"), env);
+    const model::context context(fs::path("/root"), env);
     (void)tx.put_context(context);
 }
 
