@@ -26,7 +26,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/report_junit.hpp
+/// \file drivers/report_junit.hpp
 /// Generates a JUnit report out of a test suite execution.
 
 #if !defined(ENGINE_REPORT_JUNIT_HPP)
@@ -44,7 +44,7 @@ class delta;
 }  // namespace datetime
 }  // namespace utils
 
-namespace engine {
+namespace drivers {
 
 
 class test_program;
@@ -72,6 +72,6 @@ public:
 };
 
 
-}  // namespace engine
+}  // namespace drivers
 
 #endif  // !defined(ENGINE_REPORT_JUNIT_HPP)

@@ -26,7 +26,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/report_junit.hpp"
+#include "drivers/report_junit.hpp"
 
 #include <sstream>
 #include <vector>
@@ -153,16 +153,16 @@ ATF_TEST_CASE_BODY(junit_classname)
         "plain", fs::path("dir1/dir2/program"), fs::path("/root"), "suite",
         model::metadata_builder().build());
 
-    ATF_REQUIRE_EQ("dir1.dir2.program", engine::junit_classname(test_program));
+    ATF_REQUIRE_EQ("dir1.dir2.program", drivers::junit_classname(test_program));
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(junit_duration);
 ATF_TEST_CASE_BODY(junit_duration)
 {
-    ATF_REQUIRE_EQ("0.457", engine::junit_duration(datetime::delta(0, 456700)));
-    ATF_REQUIRE_EQ("3.120", engine::junit_duration(datetime::delta(3, 120000)));
-    ATF_REQUIRE_EQ("5.000", engine::junit_duration(datetime::delta(5, 0)));
+    ATF_REQUIRE_EQ("0.457", drivers::junit_duration(datetime::delta(0, 456700)));
+    ATF_REQUIRE_EQ("3.120", drivers::junit_duration(datetime::delta(3, 120000)));
+    ATF_REQUIRE_EQ("5.000", drivers::junit_duration(datetime::delta(5, 0)));
 }
 
 
@@ -172,11 +172,11 @@ ATF_TEST_CASE_BODY(junit_metadata__defaults)
     const model::metadata metadata = model::metadata_builder().build();
 
     const std::string expected = std::string()
-        + engine::junit_metadata_prefix
+        + drivers::junit_metadata_prefix
         + default_metadata
-        + engine::junit_metadata_suffix;
+        + drivers::junit_metadata_suffix;
 
-    ATF_REQUIRE_EQ(expected, engine::junit_metadata(metadata));
+    ATF_REQUIRE_EQ(expected, drivers::junit_metadata(metadata));
 }
 
 
@@ -197,7 +197,7 @@ ATF_TEST_CASE_BODY(junit_metadata__overrides)
         .build();
 
     const std::string expected = std::string()
-        + engine::junit_metadata_prefix
+        + drivers::junit_metadata_prefix
         + "allowed_architectures = arch1\n"
         + "allowed_platforms = platform1\n"
         + "description = This is a test\n"
@@ -208,9 +208,9 @@ ATF_TEST_CASE_BODY(junit_metadata__overrides)
         + "required_programs = prog1\n"
         + "required_user = root\n"
         + "timeout = 10\n"
-        + engine::junit_metadata_suffix;
+        + drivers::junit_metadata_suffix;
 
-    ATF_REQUIRE_EQ(expected, engine::junit_metadata(metadata));
+    ATF_REQUIRE_EQ(expected, drivers::junit_metadata(metadata));
 }
 
 
@@ -226,7 +226,7 @@ ATF_TEST_CASE_BODY(report_junit_hooks__minimal)
 
     std::ostringstream output;
 
-    engine::report_junit_hooks hooks(output);
+    drivers::report_junit_hooks hooks(output);
     drivers::scan_results::drive(fs::path("test.db"), hooks);
 
     const char* expected =
@@ -264,7 +264,7 @@ ATF_TEST_CASE_BODY(report_junit_hooks__some_tests)
 
     std::ostringstream output;
 
-    engine::report_junit_hooks hooks(output);
+    drivers::report_junit_hooks hooks(output);
     drivers::scan_results::drive(fs::path("test.db"), hooks);
 
     const std::string expected = std::string() +
@@ -279,9 +279,9 @@ ATF_TEST_CASE_BODY(report_junit_hooks__some_tests)
         "<testcase classname=\"dir.prog-1\" name=\"t0\" time=\"0.500\">\n"
         "<error message=\"Broken\"/>\n"
         "<system-err>"
-        + engine::junit_metadata_prefix +
+        + drivers::junit_metadata_prefix +
         default_metadata
-        + engine::junit_metadata_suffix +
+        + drivers::junit_metadata_suffix +
         "&lt;EMPTY&gt;\n"
         "</system-err>\n"
         "</testcase>\n"
@@ -293,9 +293,9 @@ ATF_TEST_CASE_BODY(report_junit_hooks__some_tests)
         "\n"
         "XFail\n"
         "\n"
-        + engine::junit_metadata_prefix +
+        + drivers::junit_metadata_prefix +
         default_metadata
-        + engine::junit_metadata_suffix +
+        + drivers::junit_metadata_suffix +
         "&lt;EMPTY&gt;\n"
         "</system-err>\n"
         "</testcase>\n"
@@ -303,9 +303,9 @@ ATF_TEST_CASE_BODY(report_junit_hooks__some_tests)
         "<testcase classname=\"dir.prog-1\" name=\"t2\" time=\"2.500\">\n"
         "<failure message=\"Failed\"/>\n"
         "<system-err>"
-        + engine::junit_metadata_prefix +
+        + drivers::junit_metadata_prefix +
         default_metadata
-        +  engine::junit_metadata_suffix +
+        +  drivers::junit_metadata_suffix +
         "&lt;EMPTY&gt;\n"
         "</system-err>\n"
         "</testcase>\n"
@@ -313,9 +313,9 @@ ATF_TEST_CASE_BODY(report_junit_hooks__some_tests)
         "<testcase classname=\"dir.sub.prog-2\" name=\"t0\" time=\"0.500\">\n"
         "<system-out>stdout file 0</system-out>\n"
         "<system-err>"
-        + engine::junit_metadata_prefix +
+        + drivers::junit_metadata_prefix +
         overriden_metadata
-        + engine::junit_metadata_suffix +
+        + drivers::junit_metadata_suffix +
         "stderr file 0</system-err>\n"
         "</testcase>\n"
 
@@ -328,9 +328,9 @@ ATF_TEST_CASE_BODY(report_junit_hooks__some_tests)
         "\n"
         "Skipped\n"
         "\n"
-        + engine::junit_metadata_prefix +
+        + drivers::junit_metadata_prefix +
         overriden_metadata
-        + engine::junit_metadata_suffix +
+        + drivers::junit_metadata_suffix +
         "stderr file 1</system-err>\n"
         "</testcase>\n"
 

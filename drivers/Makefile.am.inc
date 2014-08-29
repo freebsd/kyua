@@ -37,6 +37,8 @@ libdrivers_a_SOURCES  = drivers/debug_test.cpp
 libdrivers_a_SOURCES += drivers/debug_test.hpp
 libdrivers_a_SOURCES += drivers/list_tests.cpp
 libdrivers_a_SOURCES += drivers/list_tests.hpp
+libdrivers_a_SOURCES += drivers/report_junit.cpp
+libdrivers_a_SOURCES += drivers/report_junit.hpp
 libdrivers_a_SOURCES += drivers/run_tests.cpp
 libdrivers_a_SOURCES += drivers/run_tests.hpp
 libdrivers_a_SOURCES += drivers/scan_results.cpp
@@ -57,6 +59,11 @@ tests_drivers_PROGRAMS += drivers/list_tests_test
 drivers_list_tests_test_SOURCES = drivers/list_tests_test.cpp
 drivers_list_tests_test_CXXFLAGS = $(DRIVERS_CFLAGS) $(ATF_CXX_CFLAGS)
 drivers_list_tests_test_LDADD = $(DRIVERS_LIBS) $(ATF_CXX_LIBS)
+
+tests_drivers_PROGRAMS += drivers/report_junit_test
+drivers_report_junit_test_SOURCES = drivers/report_junit_test.cpp
+drivers_report_junit_test_CXXFLAGS = $(DRIVERS_CFLAGS) $(ATF_CXX_CFLAGS)
+drivers_report_junit_test_LDADD = $(DRIVERS_LIBS) $(ATF_CXX_LIBS)
 
 tests_drivers_PROGRAMS += drivers/scan_results_test
 drivers_scan_results_test_SOURCES = drivers/scan_results_test.cpp

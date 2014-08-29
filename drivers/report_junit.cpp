@@ -26,7 +26,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/report_junit.hpp"
+#include "drivers/report_junit.hpp"
 
 #include <algorithm>
 
@@ -51,7 +51,7 @@ namespace text = utils::text;
 ///
 /// \return A class-like representation of the test program's identifier.
 std::string
-engine::junit_classname(const engine::test_program& test_program)
+drivers::junit_classname(const engine::test_program& test_program)
 {
     std::string classname = test_program.relative_path().str();
     std::replace(classname.begin(), classname.end(), '/', '.');
@@ -66,21 +66,21 @@ engine::junit_classname(const engine::test_program& test_program)
 /// \return A second-based with millisecond-precision representation of the
 /// input duration.
 std::string
-engine::junit_duration(const datetime::delta& delta)
+drivers::junit_duration(const datetime::delta& delta)
 {
     return F("%.3s") % (delta.seconds + (delta.useconds / 1000000.0));
 }
 
 
 /// String to prepend to the formatted test case metadata.
-const char* const engine::junit_metadata_prefix =
+const char* const drivers::junit_metadata_prefix =
     "Test case metadata\n"
     "------------------\n"
     "\n";
 
 
 /// String to append to the formatted test case metadata.
-const char* const engine::junit_metadata_suffix =
+const char* const drivers::junit_metadata_suffix =
     "\n"
     "Original stderr\n"
     "---------------\n"
@@ -94,7 +94,7 @@ const char* const engine::junit_metadata_suffix =
 /// \return A string with the metadata contents that can be prefixed to the
 /// original test's stderr.
 std::string
-engine::junit_metadata(const model::metadata& metadata)
+drivers::junit_metadata(const model::metadata& metadata)
 {
     const model::properties_map props = metadata.to_properties();
     if (props.empty())
@@ -118,7 +118,7 @@ engine::junit_metadata(const model::metadata& metadata)
 /// Constructor for the hooks.
 ///
 /// \param [out] output_ Stream to which to write the report.
-engine::report_junit_hooks::report_junit_hooks(std::ostream& output_) :
+drivers::report_junit_hooks::report_junit_hooks(std::ostream& output_) :
     _output(output_)
 {
 }
@@ -128,7 +128,7 @@ engine::report_junit_hooks::report_junit_hooks(std::ostream& output_) :
 ///
 /// \param context The context loaded from the database.
 void
-engine::report_junit_hooks::got_context(const model::context& context)
+drivers::report_junit_hooks::got_context(const model::context& context)
 {
     _output << "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n";
     _output << "<testsuite>\n";
@@ -150,7 +150,7 @@ engine::report_junit_hooks::got_context(const model::context& context)
 ///
 /// \param iter Container for the test result's data.
 void
-engine::report_junit_hooks::got_result(store::results_iterator& iter)
+drivers::report_junit_hooks::got_result(store::results_iterator& iter)
 {
     const model::test_result result = iter.result();
 
@@ -223,7 +223,7 @@ engine::report_junit_hooks::got_result(store::results_iterator& iter)
 ///
 /// \param unused_r The result of the driver execution.
 void
-engine::report_junit_hooks::end(
+drivers::report_junit_hooks::end(
     const drivers::scan_results::result& UTILS_UNUSED_PARAM(r))
 {
     _output << "</testsuite>\n";
