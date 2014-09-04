@@ -36,6 +36,7 @@
 
 #include "model/context.hpp"
 #include "model/metadata.hpp"
+#include "model/test_case.hpp"
 #include "model/test_result.hpp"
 #include "store/exceptions.hpp"
 #include "store/write_backend.hpp"
@@ -218,8 +219,8 @@ ATF_TEST_CASE_BODY(put_test_case__fail)
     const engine::test_program test_program(
         "plain", fs::path("the/binary"), fs::path("/some/root"), "the-suite",
         model::metadata_builder().build());
-    const engine::test_case test_case("plain", test_program, "main",
-                                      model::metadata_builder().build());
+    const model::test_case test_case("plain", test_program, "main",
+                                     model::metadata_builder().build());
 
     store::write_backend backend = store::write_backend::open_rw(
         fs::path("test.db"));

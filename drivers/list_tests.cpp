@@ -32,6 +32,7 @@
 #include "engine/filters.hpp"
 #include "engine/kyuafile.hpp"
 #include "engine/test_program.hpp"
+#include "model/test_case.hpp"
 #include "utils/optional.ipp"
 
 namespace fs = utils::fs;
@@ -55,11 +56,11 @@ list_test_program(const engine::test_program& program,
                   engine::filters_state& filters,
                   drivers::list_tests::base_hooks& hooks)
 {
-    const engine::test_cases_vector test_cases = program.test_cases();
+    const model::test_cases_vector test_cases = program.test_cases();
 
-    for (engine::test_cases_vector::const_iterator iter = test_cases.begin();
+    for (model::test_cases_vector::const_iterator iter = test_cases.begin();
          iter != test_cases.end(); iter++) {
-        const engine::test_case_ptr tc = *iter;
+        const model::test_case_ptr tc = *iter;
 
         if (filters.match_test_case(program.relative_path(), tc->name()))
             hooks.got_test_case(*tc);

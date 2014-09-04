@@ -37,7 +37,7 @@
 #define DRIVERS_DEBUG_TEST_HPP
 
 #include "engine/filters.hpp"
-#include "engine/test_case.hpp"
+#include "model/test_case_fwd.hpp"
 #include "model/test_result.hpp"
 #include "utils/config/tree.hpp"
 #include "utils/fs/path.hpp"

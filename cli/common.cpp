@@ -34,8 +34,8 @@
 #include <stdexcept>
 
 #include "engine/filters.hpp"
-#include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
+#include "model/test_case.hpp"
 #include "model/test_result.hpp"
 #include "store/layout.hpp"
 #include "utils/cmdline/exceptions.hpp"
@@ -380,7 +380,7 @@ cli::format_result(const model::test_result& result)
 ///
 /// \return A string representing the test case uniquely within a test suite.
 std::string
-cli::format_test_case_id(const engine::test_case& test_case)
+cli::format_test_case_id(const model::test_case& test_case)
 {
     return F("%s:%s") % test_case.container_test_program().relative_path() %
         test_case.name();

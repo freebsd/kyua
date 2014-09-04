@@ -73,7 +73,7 @@ public:
 
     void put_context(const model::context&);
     int64_t put_test_program(const engine::test_program&);
-    int64_t put_test_case(const engine::test_case&, const int64_t);
+    int64_t put_test_case(const model::test_case&, const int64_t);
     utils::optional< int64_t > put_test_case_file(const std::string&,
                                                   const utils::fs::path&,
                                                   const int64_t);

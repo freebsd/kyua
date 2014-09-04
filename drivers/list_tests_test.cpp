@@ -43,6 +43,7 @@ extern "C" {
 #include "cli/common.ipp"
 #include "engine/exceptions.hpp"
 #include "engine/filters.hpp"
+#include "model/test_case.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/optional.ipp"
@@ -79,7 +80,7 @@ public:
     ///
     /// \param test_case The data describing the test case.
     virtual void
-    got_test_case(const engine::test_case& test_case)
+    got_test_case(const model::test_case& test_case)
     {
         test_cases.insert(F("%s:%s") %
                           test_case.container_test_program().relative_path() %

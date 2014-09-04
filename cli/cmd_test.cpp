@@ -32,7 +32,7 @@
 
 #include "cli/common.ipp"
 #include "drivers/run_tests.hpp"
-#include "engine/test_case.hpp"
+#include "model/test_case.hpp"
 #include "model/test_result.hpp"
 #include "store/layout.hpp"
 #include "utils/cmdline/options.hpp"
@@ -79,7 +79,7 @@ public:
     ///
     /// \param test_case The test case.
     virtual void
-    got_test_case(const engine::test_case_ptr& test_case)
+    got_test_case(const model::test_case_ptr& test_case)
     {
         _ui->out(F("%s  ->  ") % cli::format_test_case_id(*test_case), false);
     }
@@ -90,7 +90,7 @@ public:
     /// \param result The result of the execution of the test case.
     /// \param duration The time it took to run the test.
     virtual void
-    got_result(const engine::test_case_ptr& UTILS_UNUSED_PARAM(test_case),
+    got_result(const model::test_case_ptr& UTILS_UNUSED_PARAM(test_case),
                const model::test_result& result,
                const datetime::delta& duration)
     {

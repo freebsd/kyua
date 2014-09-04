@@ -39,7 +39,7 @@
 #include <set>
 
 #include "engine/filters.hpp"
-#include "engine/test_case.hpp"
+#include "model/test_case_fwd.hpp"
 #include "model/test_result_fwd.hpp"
 #include "utils/config/tree.hpp"
 #include "utils/datetime.hpp"
@@ -58,14 +58,14 @@ public:
     /// Called when the processing of a test case begins.
     ///
     /// \param test_case The test case.
-    virtual void got_test_case(const engine::test_case_ptr& test_case) = 0;
+    virtual void got_test_case(const model::test_case_ptr& test_case) = 0;
 
     /// Called when a result of a test case becomes available.
     ///
     /// \param test_case The test case.
     /// \param result The result of the execution of the test case.
     /// \param duration The time it took to run the test.
-    virtual void got_result(const engine::test_case_ptr& test_case,
+    virtual void got_result(const model::test_case_ptr& test_case,
                             const model::test_result& result,
                             const utils::datetime::delta& duration) = 0;
 };

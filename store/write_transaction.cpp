@@ -37,6 +37,7 @@ extern "C" {
 
 #include "model/context.hpp"
 #include "model/metadata.hpp"
+#include "model/test_case.hpp"
 #include "model/test_result.hpp"
 #include "model/types.hpp"
 #include "store/dbtypes.hpp"
@@ -324,7 +325,7 @@ store::write_transaction::put_test_program(
 ///
 /// \throw error If there is any problem when talking to the database.
 int64_t
-store::write_transaction::put_test_case(const engine::test_case& test_case,
+store::write_transaction::put_test_case(const model::test_case& test_case,
                                         const int64_t test_program_id)
 {
     try {

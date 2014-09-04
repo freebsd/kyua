@@ -31,7 +31,6 @@
 #include <algorithm>
 #include <stdexcept>
 
-#include "engine/test_case.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/logging/macros.hpp"

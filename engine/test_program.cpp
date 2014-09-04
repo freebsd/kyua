@@ -39,6 +39,7 @@
 #include "engine/exceptions.hpp"
 #include "engine/testers.hpp"
 #include "model/metadata.hpp"
+#include "model/test_case.hpp"
 #include "model/test_result.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
@@ -72,8 +73,8 @@ lua_test_case(lutok::state& state)
         throw std::runtime_error("Oh noes"); // XXX
 
     state.get_global("_test_cases");
-    engine::test_cases_vector* test_cases =
-        *state.to_userdata< engine::test_cases_vector* >(-1);
+    model::test_cases_vector* test_cases =
+        *state.to_userdata< model::test_cases_vector* >(-1);
     state.pop(1);
 
     state.get_global("_test_program");
@@ -105,9 +106,9 @@ lua_test_case(lutok::state& state)
     }
     state.pop(1);
 
-    engine::test_case_ptr test_case(
-        new engine::test_case(test_program->interface_name(), *test_program,
-                              name, mdbuilder.build()));
+    model::test_case_ptr test_case(
+        new model::test_case(test_program->interface_name(), *test_program,
+                             name, mdbuilder.build()));
     test_cases->push_back(test_case);
 
     return 0;
@@ -121,9 +122,9 @@ lua_test_case(lutok::state& state)
 /// \param [out] test_cases Vector that will contain the list of test cases.
 static void
 setup_lua_state(lutok::state& state, const engine::test_program* test_program,
-                engine::test_cases_vector* test_cases)
+                model::test_cases_vector* test_cases)
 {
-    *state.new_userdata< engine::test_cases_vector* >() = test_cases;
+    *state.new_userdata< model::test_cases_vector* >() = test_cases;
     state.set_global("_test_cases");
 
     *state.new_userdata< const engine::test_program* >() = test_program;
@@ -139,13 +140,13 @@ setup_lua_state(lutok::state& state, const engine::test_program* test_program,
 /// \param test_program Representation of the test program to load.
 ///
 /// \return A list of test cases.
-static engine::test_cases_vector
+static model::test_cases_vector
 load_test_cases(const engine::test_program& test_program)
 {
     const engine::tester tester(test_program.interface_name(), none, none);
     const std::string output = tester.list(test_program.absolute_path());
 
-    engine::test_cases_vector test_cases;
+    model::test_cases_vector test_cases;
     lutok::state state;
     setup_lua_state(state, &test_program, &test_cases);
     lutok::do_string(state, output, 0, 0, 0);
@@ -161,8 +162,8 @@ load_test_cases(const engine::test_program& test_program)
 /// \return True if the test case in tc1 is the same as in tc2.  Note that the
 /// container test programs are NOT compared.
 static bool
-compare_test_case(const std::pair< std::string, engine::test_case_ptr >& tc1,
-                  const std::pair< std::string, engine::test_case_ptr >& tc2)
+compare_test_case(const std::pair< std::string, model::test_case_ptr >& tc1,
+                  const std::pair< std::string, model::test_case_ptr >& tc2)
 {
     return tc1.first == tc2.first && *tc1.second == *tc2.second;
 }
@@ -176,8 +177,8 @@ compare_test_case(const std::pair< std::string, engine::test_case_ptr >& tc1,
 /// \return True if both collections hold the same test cases (value-wise, not
 /// pointer-wise); false otherwise.
 static bool
-compare_test_cases(const optional< engine::test_cases_vector >& tests1,
-                   const optional< engine::test_cases_vector >& tests2)
+compare_test_cases(const optional< model::test_cases_vector >& tests1,
+                   const optional< model::test_cases_vector >& tests2)
 {
     if (!tests1 && !tests2)
         return true;
@@ -187,11 +188,11 @@ compare_test_cases(const optional< engine::test_cases_vector >& tests1,
 
     // This is very inefficient, but because it should only be used in our own
     // tests, it doesn't matter.
-    std::map< std::string, engine::test_case_ptr > map1, map2;
-    for (engine::test_cases_vector::const_iterator iter = tests1.get().begin();
+    std::map< std::string, model::test_case_ptr > map1, map2;
+    for (model::test_cases_vector::const_iterator iter = tests1.get().begin();
          iter != tests1.get().end(); ++iter)
         map1.insert(make_pair((*iter)->name(), *iter));
-    for (engine::test_cases_vector::const_iterator iter = tests2.get().begin();
+    for (model::test_cases_vector::const_iterator iter = tests2.get().begin();
          iter != tests2.get().end(); ++iter)
         map2.insert(make_pair((*iter)->name(), *iter));
     return std::equal(map1.begin(), map1.end(), map2.begin(),
@@ -220,7 +221,7 @@ struct engine::test_program::impl {
     model::metadata md;
 
     /// List of test cases in the test program; lazily initialized.
-    optional< test_cases_vector > test_cases;
+    optional< model::test_cases_vector > test_cases;
 
     /// Constructor.
     ///
@@ -354,13 +355,13 @@ engine::test_program::get_metadata(void) const
 ///
 /// \throw not_found_error If the specified test case is not in the test
 ///     program.
-const engine::test_case_ptr&
+const model::test_case_ptr&
 engine::test_program::find(const std::string& name) const
 {
     // TODO(jmmv): Should use a test_cases_map instead of a vector to optimize
     // lookups.
-    const test_cases_vector& tcs = test_cases();
-    for (test_cases_vector::const_iterator iter = tcs.begin();
+    const model::test_cases_vector& tcs = test_cases();
+    for (model::test_cases_vector::const_iterator iter = tcs.begin();
          iter != tcs.end(); iter++) {
         if ((*iter)->name() == name)
             return *iter;
@@ -377,7 +378,7 @@ engine::test_program::find(const std::string& name) const
 /// test case list are represented as a single test case describing the failure.
 ///
 /// \return The list of test cases provided by the test program.
-const engine::test_cases_vector&
+const model::test_cases_vector&
 engine::test_program::test_cases(void) const
 {
     if (!_pimpl->test_cases) {
@@ -389,8 +390,8 @@ engine::test_program::test_cases(void) const
             // either address this, or move this reporting to the testers
             // themselves.
             LW(F("Failed to load test cases list: %s") % e.what());
-            engine::test_cases_vector fake_test_cases;
-            fake_test_cases.push_back(test_case_ptr(new test_case(
+            model::test_cases_vector fake_test_cases;
+            fake_test_cases.push_back(model::test_case_ptr(new model::test_case(
                 _pimpl->interface_name, *this, "__test_cases_list__",
                 "Represents the correct processing of the test cases list",
                 model::test_result(model::test_result::broken, e.what()))));
@@ -415,7 +416,8 @@ engine::test_program::test_cases(void) const
 ///
 /// \param test_cases_ The test cases to add to this test program.
 void
-engine::test_program::set_test_cases(const test_cases_vector& test_cases_)
+engine::test_program::set_test_cases(
+    const model::test_cases_vector& test_cases_)
 {
     PRE(!_pimpl->test_cases);
     _pimpl->test_cases = test_cases_;
@@ -443,26 +445,6 @@ bool
 engine::test_program::operator!=(const test_program& other) const
 {
     return !(*this == other);
-}
-
-
-/// Injects the object into a stream.
-///
-/// \param output The stream into which to inject the object.
-/// \param object The object to format.
-///
-/// \return The output stream.
-std::ostream&
-engine::operator<<(std::ostream& output, const test_cases_vector& object)
-{
-    output << "[";
-    for (test_cases_vector::size_type i = 0; i < object.size(); ++i) {
-        if (i != 0)
-            output << ", ";
-        output << *object[i];
-    }
-    output << "]";
-    return output;
 }
 
 

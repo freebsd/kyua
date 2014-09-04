@@ -34,6 +34,7 @@
 
 #include "model/context.hpp"
 #include "model/metadata.hpp"
+#include "model/test_case.hpp"
 #include "model/test_result.hpp"
 #include "store/exceptions.hpp"
 #include "store/read_transaction.hpp"
@@ -152,7 +153,7 @@ populate_results_file(const char* db_name, const int count)
         const int64_t tp_id = tx.put_test_program(test_program);
 
         for (int j = 0; j < count; j++) {
-            const engine::test_case test_case(
+            const model::test_case test_case(
                 "plain", test_program, "main",
                 model::metadata_builder().build());
             const model::test_result result(model::test_result::skipped,

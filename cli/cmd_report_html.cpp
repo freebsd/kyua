@@ -37,6 +37,7 @@
 #include "drivers/scan_results.hpp"
 #include "model/context.hpp"
 #include "model/metadata.hpp"
+#include "model/test_case.hpp"
 #include "model/test_result.hpp"
 #include "store/layout.hpp"
 #include "store/read_transaction.hpp"
@@ -99,7 +100,7 @@ create_top_directory(const fs::path& directory, const bool force)
 ///
 /// \return A filename unique within a directory with a trailing HTML extension.
 static std::string
-test_case_filename(const engine::test_case& test_case)
+test_case_filename(const model::test_case& test_case)
 {
     static const char* special_characters = "/:";
 
@@ -170,7 +171,7 @@ class html_hooks : public drivers::scan_results::base_hooks {
     ///     filtered and therefore there exists a separate file for the test
     ///     with all of its information.
     void
-    add_to_summary(const engine::test_case& test_case,
+    add_to_summary(const model::test_case& test_case,
                    const model::test_result& result,
                    const bool has_detail)
     {
@@ -307,7 +308,7 @@ public:
         const engine::test_program_ptr test_program = iter.test_program();
         const model::test_result result = iter.result();
 
-        const engine::test_case& test_case = *test_program->find(
+        const model::test_case& test_case = *test_program->find(
             iter.test_case_name());
 
         if (std::find(_results_filters.begin(), _results_filters.end(),

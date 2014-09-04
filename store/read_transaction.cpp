@@ -37,6 +37,7 @@ extern "C" {
 
 #include "model/context.hpp"
 #include "model/metadata.hpp"
+#include "model/test_case.hpp"
 #include "model/test_result.hpp"
 #include "store/dbtypes.hpp"
 #include "store/exceptions.hpp"
@@ -158,12 +159,12 @@ get_file(sqlite::database& db, const int64_t file_id)
 /// \return The collection of loaded test cases.
 ///
 /// \throw integrity_error If there is any problem in the loaded data.
-static engine::test_cases_vector
+static model::test_cases_vector
 get_test_cases(sqlite::database& db, const int64_t test_program_id,
                const engine::test_program& test_program,
                const std::string& interface)
 {
-    engine::test_cases_vector test_cases;
+    model::test_cases_vector test_cases;
 
     sqlite::statement stmt = db.create_statement(
         "SELECT name, metadata_id "
@@ -174,8 +175,8 @@ get_test_cases(sqlite::database& db, const int64_t test_program_id,
         const int64_t metadata_id = stmt.safe_column_int64("metadata_id");
 
         const model::metadata metadata = get_metadata(db, metadata_id);
-        engine::test_case_ptr test_case(
-            new engine::test_case(interface, test_program, name, metadata));
+        model::test_case_ptr test_case(
+            new model::test_case(interface, test_program, name, metadata));
         LD(F("Loaded test case '%s'") % test_case->name());
         test_cases.push_back(test_case);
     }

@@ -42,19 +42,12 @@
 #include <string>
 #include <vector>
 
-#include "engine/test_case.hpp"
 #include "model/metadata_fwd.hpp"
+#include "model/test_case_fwd.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/shared_ptr.hpp"
 
 namespace engine {
-
-
-/// Collection of test cases.
-typedef std::vector< test_case_ptr > test_cases_vector;
-
-
-std::ostream& operator<<(std::ostream&, const test_cases_vector&);
 
 
 /// Representation of a test program.
@@ -77,9 +70,9 @@ public:
     const std::string& test_suite_name(void) const;
     const model::metadata& get_metadata(void) const;
 
-    const test_case_ptr& find(const std::string&) const;
-    const test_cases_vector& test_cases(void) const;
-    void set_test_cases(const test_cases_vector&);
+    const model::test_case_ptr& find(const std::string&) const;
+    const model::test_cases_vector& test_cases(void) const;
+    void set_test_cases(const model::test_cases_vector&);
 
     bool operator==(const test_program&) const;
     bool operator!=(const test_program&) const;

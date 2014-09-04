@@ -32,6 +32,7 @@
 
 #include "model/context.hpp"
 #include "model/metadata.hpp"
+#include "model/test_case.hpp"
 #include "model/test_result.hpp"
 #include "model/types.hpp"
 #include "store/read_transaction.hpp"
@@ -136,7 +137,7 @@ drivers::report_junit_hooks::got_context(const model::context& context)
     _output << "<properties>\n";
     _output << F("<property name=\"cwd\" value=\"%s\"/>\n")
         % text::escape_xml(context.cwd().str());
-    for (config::properties_map::const_iterator iter =
+    for (model::properties_map::const_iterator iter =
              context.env().begin(); iter != context.env().end(); ++iter) {
         _output << F("<property name=\"env.%s\" value=\"%s\"/>\n")
             % text::escape_xml((*iter).first)
@@ -200,7 +201,7 @@ drivers::report_junit_hooks::got_result(store::results_iterator& iter)
     }
 
     {
-        const engine::test_case_ptr test_case = iter.test_program()->find(
+        const model::test_case_ptr test_case = iter.test_program()->find(
             iter.test_case_name());
         stderr_contents += junit_metadata(test_case->get_metadata());
     }

@@ -32,8 +32,6 @@
 
 #include <atf-c++.hpp>
 
-#include "engine/test_case.hpp"
-
 namespace fs = utils::fs;
 
 

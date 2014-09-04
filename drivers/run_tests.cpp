@@ -30,8 +30,10 @@
 
 #include "engine/filters.hpp"
 #include "engine/kyuafile.hpp"
+#include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
 #include "model/context.hpp"
+#include "model/test_case.hpp"
 #include "model/test_result.hpp"
 #include "store/write_backend.hpp"
 #include "store/write_transaction.hpp"
@@ -117,10 +119,10 @@ run_test_program(const engine::test_program& program,
     LI(F("Processing test program '%s'") % program.relative_path());
     const int64_t test_program_id = tx.put_test_program(program);
 
-    const engine::test_cases_vector& test_cases = program.test_cases();
-    for (engine::test_cases_vector::const_iterator iter = test_cases.begin();
+    const model::test_cases_vector& test_cases = program.test_cases();
+    for (model::test_cases_vector::const_iterator iter = test_cases.begin();
          iter != test_cases.end(); iter++) {
-        const engine::test_case_ptr test_case = *iter;
+        const model::test_case_ptr test_case = *iter;
 
         if (!filters.match_test_case(program.relative_path(),
                                      test_case->name()))

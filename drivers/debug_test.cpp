@@ -34,6 +34,7 @@
 #include "engine/kyuafile.hpp"
 #include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
+#include "model/test_case.hpp"
 #include "model/test_result.hpp"
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
@@ -61,11 +62,11 @@ namespace {
 ///
 /// \throw std::runtime_error If the provided filter matches more than one test
 ///     case or if the test case cannot be found.
-static const engine::test_case_ptr
+static const model::test_case_ptr
 find_test_case(const engine::test_filter& filter,
                const engine::kyuafile& kyuafile)
 {
-    engine::test_case_ptr found;;
+    model::test_case_ptr found;;
 
     for (engine::test_programs_vector::const_iterator p =
          kyuafile.test_programs().begin(); p != kyuafile.test_programs().end();
@@ -75,11 +76,11 @@ find_test_case(const engine::test_filter& filter,
         if (!filter.matches_test_program(test_program->relative_path()))
             continue;
 
-        const engine::test_cases_vector test_cases = test_program->test_cases();
+        const model::test_cases_vector test_cases = test_program->test_cases();
 
-        for (engine::test_cases_vector::const_iterator
+        for (model::test_cases_vector::const_iterator
              iter = test_cases.begin(); iter != test_cases.end(); iter++) {
-            const engine::test_case_ptr tc = *iter;
+            const model::test_case_ptr tc = *iter;
 
             if (filter.matches_test_case(test_program->relative_path(),
                                          tc->name())) {
@@ -124,7 +125,7 @@ drivers::debug_test::drive(const fs::path& kyuafile_path,
 {
     const engine::kyuafile kyuafile = engine::kyuafile::load(
         kyuafile_path, build_root);
-    const engine::test_case_ptr test_case = find_test_case(filter, kyuafile);
+    const model::test_case_ptr test_case = find_test_case(filter, kyuafile);
     engine::test_case_hooks dummy_hooks;
 
     signals::interrupts_handler interrupts;

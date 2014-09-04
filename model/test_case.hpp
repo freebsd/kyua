@@ -26,51 +26,63 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/test_case.hpp
-/// Interface to interact with test cases.
+/// \file model/test_case.hpp
+/// Definition of the "test case" concept.
 
-#if !defined(ENGINE_TEST_CASE_HPP)
-#define ENGINE_TEST_CASE_HPP
+#if !defined(MODEL_TEST_CASE_HPP)
+#define MODEL_TEST_CASE_HPP
 
 #include "model/test_case_fwd.hpp"
+
+#include <ostream>
+#include <string>
+
+#include "model/metadata_fwd.hpp"
 #include "model/test_result_fwd.hpp"
-#include "utils/config/tree.hpp"
-#include "utils/fs/path.hpp"
+#include "utils/optional.hpp"
+#include "utils/shared_ptr.hpp"
 
 namespace engine {
-
-
 class test_program;
+}  // namespace engine
+
+namespace model {
 
 
-/// Hooks to introspect the execution of a test case.
-///
-/// There is no guarantee that these hooks will be called during the execution
-/// of the test case.  There are conditions in which they don't make sense.
-///
-/// Note that this class is not abstract.  All hooks have default, empty
-/// implementations.  The purpose of this is to simplify some tests that need to
-/// pass hooks but that are not interested in the results.  We might want to
-/// rethink this and provide an "empty subclass" of a base abstract template.
-class test_case_hooks {
+/// Representation of a test case.
+class test_case {
+    struct impl;
+
+    /// Pointer to the shared internal implementation.
+    std::shared_ptr< impl > _pimpl;
+
 public:
-    virtual ~test_case_hooks(void);
+    test_case(const std::string&, const engine::test_program&,
+              const std::string&, const metadata&);
+    test_case(const std::string&, const engine::test_program&,
+              const std::string&, const std::string&,
+              const test_result&);
+    ~test_case(void);
 
-    virtual void got_stdout(const utils::fs::path&);
-    virtual void got_stderr(const utils::fs::path&);
+    const std::string& interface_name(void) const;
+    const engine::test_program& container_test_program(void) const;
+    const std::string& name(void) const;
+    const metadata& get_metadata(void) const;
+    utils::optional< test_result > fake_result(void) const;
+
+    bool operator==(const test_case&) const;
+    bool operator!=(const test_case&) const;
 };
 
 
-model::test_result debug_test_case(
-    const model::test_case*, const utils::config::tree&,
-    test_case_hooks&, const utils::fs::path&,
-    const utils::fs::path&, const utils::fs::path&);
-model::test_result run_test_case(
-    const model::test_case*, const utils::config::tree&,
-    test_case_hooks&, const utils::fs::path&);
+std::ostream& operator<<(std::ostream&, const test_case&);
 
 
-}  // namespace engine
+// TODO(jmmv): This would better be expressed as an operator<< overload on
+// test_case_ptr and a separate, global operator<< overload for std::vector.
+std::ostream& operator<<(std::ostream&, const test_cases_vector&);
 
 
-#endif  // !defined(ENGINE_TEST_CASE_HPP)
+}  // namespace model
+
+#endif  // !defined(MODEL_TEST_CASE_HPP)

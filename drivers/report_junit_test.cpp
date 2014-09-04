@@ -36,6 +36,7 @@
 #include "drivers/scan_results.hpp"
 #include "model/context.hpp"
 #include "model/metadata.hpp"
+#include "model/test_case.hpp"
 #include "model/test_result.hpp"
 #include "store/write_backend.hpp"
 #include "store/write_transaction.hpp"
@@ -124,8 +125,8 @@ add_tests(store::write_transaction& tx,
             builder.set_description("Textual description");
             builder.set_timeout(datetime::delta(5678, 0));
         }
-        const engine::test_case test_case("plain", test_program, F("t%s") % j,
-                                          builder.build());
+        const model::test_case test_case("plain", test_program, F("t%s") % j,
+                                         builder.build());
         const int64_t tc_id = tx.put_test_case(test_case, tp_id);
         const datetime::timestamp start =
             datetime::timestamp::from_microseconds(0);

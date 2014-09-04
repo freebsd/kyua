@@ -35,10 +35,10 @@
 #include <string>
 
 #include "cli/common.hpp"
+#include "model/test_case_fwd.hpp"
 
 namespace engine {
 class filters_state;
-class test_case;
 class test_program;
 }  // namespace engine
 
@@ -53,7 +53,7 @@ namespace cli {
 
 namespace detail {
 
-void list_test_case(utils::cmdline::ui*, const bool, const engine::test_case&);
+void list_test_case(utils::cmdline::ui*, const bool, const model::test_case&);
 
 }  // namespace detail
 

@@ -38,8 +38,8 @@
 #include <set>
 
 #include "engine/filters.hpp"
-#include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
+#include "model/test_case_fwd.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"
 
@@ -55,7 +55,7 @@ public:
     /// Called when a test case is identified in a test suite.
     ///
     /// \param test_case The data describing the test case.
-    virtual void got_test_case(const engine::test_case& test_case) = 0;
+    virtual void got_test_case(const model::test_case& test_case) = 0;
 };
 
 

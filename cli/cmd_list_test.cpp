@@ -30,9 +30,9 @@
 
 #include <atf-c++.hpp>
 
-#include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
 #include "model/metadata.hpp"
+#include "model/test_case.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.hpp"
 #include "utils/cmdline/ui_mock.hpp"
@@ -49,7 +49,7 @@ ATF_TEST_CASE_BODY(list_test_case__no_verbose)
         .build();
     const engine::test_program test_program(
         "mock", fs::path("the/test-program"), fs::path("root"), "suite", md);
-    const engine::test_case test_case("mock", test_program, "abc", md);
+    const model::test_case test_case("mock", test_program, "abc", md);
 
     cmdline::ui_mock ui;
     cli::detail::list_test_case(&ui, false, test_case);
@@ -65,7 +65,7 @@ ATF_TEST_CASE_BODY(list_test_case__verbose__no_properties)
     const model::metadata md = model::metadata_builder().build();
     const engine::test_program test_program("mock", fs::path("hello/world"),
                                             fs::path("root"), "the-suite", md);
-    const engine::test_case test_case("mock", test_program, "my_name", md);
+    const model::test_case test_case("mock", test_program, "my_name", md);
 
     cmdline::ui_mock ui;
     cli::detail::list_test_case(&ui, true, test_case);
@@ -85,7 +85,7 @@ ATF_TEST_CASE_BODY(list_test_case__verbose__some_properties)
         .build();
     const engine::test_program test_program("mock", fs::path("hello/world"),
                                             fs::path("root"), "the-suite", md);
-    const engine::test_case test_case("mock", test_program, "my_name", md);
+    const model::test_case test_case("mock", test_program, "my_name", md);
 
     cmdline::ui_mock ui;
     cli::detail::list_test_case(&ui, true, test_case);
