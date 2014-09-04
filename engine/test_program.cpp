@@ -41,6 +41,7 @@
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
 #include "model/test_result.hpp"
+#include "utils/format/containers.ipp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/logging/operations.hpp"

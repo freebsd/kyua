@@ -187,50 +187,6 @@ ATF_TEST_CASE_BODY(test_case__output)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(test_cases_vector__output__empty);
-ATF_TEST_CASE_BODY(test_cases_vector__output__empty)
-{
-    const model::test_cases_vector tcs;
-
-    std::ostringstream str;
-    str << tcs;
-    ATF_REQUIRE_EQ("[]", str.str());
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(test_cases_vector__output__some);
-ATF_TEST_CASE_BODY(test_cases_vector__output__some)
-{
-    engine::test_program tp(
-        "plain", fs::path("binary/path"), fs::path("/the/root"), "suite-name",
-        model::metadata_builder().add_allowed_architecture("a").build());
-
-    const model::test_case_ptr tc1(new model::test_case(
-        "plain", tp, "the-name", model::metadata_builder()
-        .add_allowed_platform("foo").add_custom("X-bar", "baz").build()));
-    const model::test_case_ptr tc2(new model::test_case(
-        "plain", tp, "another-name", model::metadata_builder().build()));
-    model::test_cases_vector tcs;
-    tcs.push_back(tc1);
-    tcs.push_back(tc2);
-
-    std::ostringstream str;
-    str << tcs;
-    ATF_REQUIRE_EQ(
-        "[test_case{interface='plain', name='the-name', "
-        "metadata=metadata{allowed_architectures='', allowed_platforms='foo', "
-        "custom.X-bar='baz', description='', has_cleanup='false', "
-        "required_configs='', required_files='', required_memory='0', "
-        "required_programs='', required_user='', timeout='300'}}, "
-        "test_case{interface='plain', name='another-name', "
-        "metadata=metadata{allowed_architectures='', allowed_platforms='', "
-        "description='', has_cleanup='false', "
-        "required_configs='', required_files='', required_memory='0', "
-        "required_programs='', required_user='', timeout='300'}}]",
-        str.str());
-}
-
-
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, test_case__ctor_and_getters);
@@ -240,7 +196,4 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, test_case__operators_eq_and_ne__not_copy);
 
     ATF_ADD_TEST_CASE(tcs, test_case__output);
-
-    ATF_ADD_TEST_CASE(tcs, test_cases_vector__output__empty);
-    ATF_ADD_TEST_CASE(tcs, test_cases_vector__output__some);
 }

@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2014 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,58 +26,81 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file model/test_case.hpp
-/// Definition of the "test case" concept.
-
-#if !defined(MODEL_TEST_CASE_HPP)
-#define MODEL_TEST_CASE_HPP
-
-#include "model/test_case_fwd.hpp"
+#include "utils/format/containers.ipp"
 
 #include <ostream>
-#include <string>
+#include <vector>
 
-#include "model/metadata_fwd.hpp"
-#include "model/test_result_fwd.hpp"
-#include "utils/optional.hpp"
+#include <atf-c++.hpp>
+
 #include "utils/shared_ptr.hpp"
 
-namespace engine {
-class test_program;
-}  // namespace engine
 
-namespace model {
+namespace {
 
 
-/// Representation of a test case.
-class test_case {
-    struct impl;
-
-    /// Pointer to the shared internal implementation.
-    std::shared_ptr< impl > _pimpl;
-
-public:
-    test_case(const std::string&, const engine::test_program&,
-              const std::string&, const metadata&);
-    test_case(const std::string&, const engine::test_program&,
-              const std::string&, const std::string&,
-              const test_result&);
-    ~test_case(void);
-
-    const std::string& interface_name(void) const;
-    const engine::test_program& container_test_program(void) const;
-    const std::string& name(void) const;
-    const metadata& get_metadata(void) const;
-    utils::optional< test_result > fake_result(void) const;
-
-    bool operator==(const test_case&) const;
-    bool operator!=(const test_case&) const;
-};
+template< typename T >
+static void
+do_check(const char* expected, const T& actual)
+{
+    std::ostringstream str;
+    str << actual;
+    ATF_REQUIRE_EQ(expected, str.str());
+}
 
 
-std::ostream& operator<<(std::ostream&, const test_case&);
+}  // anonymous namespace
 
 
-}  // namespace model
+ATF_TEST_CASE_WITHOUT_HEAD(std_shared_ptr__null);
+ATF_TEST_CASE_BODY(std_shared_ptr__null)
+{
+    do_check("<NULL>", std::shared_ptr< char >());
+    do_check("<NULL>", std::shared_ptr< int >());
+}
 
-#endif  // !defined(MODEL_TEST_CASE_HPP)
+
+ATF_TEST_CASE_WITHOUT_HEAD(std_shared_ptr__not_null);
+ATF_TEST_CASE_BODY(std_shared_ptr__not_null)
+{
+    do_check("f", std::shared_ptr< char >(new char('f')));
+    do_check("8", std::shared_ptr< int >(new int(8)));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(std_vector__empty);
+ATF_TEST_CASE_BODY(std_vector__empty)
+{
+    do_check("[]", std::vector< char >());
+    do_check("[]", std::vector< int >());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(std_vector__some);
+ATF_TEST_CASE_BODY(std_vector__some)
+{
+    {
+        std::vector< char > v;
+        v.push_back('b');
+        v.push_back('z');
+        do_check("[b, z]", v);
+    }
+
+    {
+        std::vector< int > v;
+        v.push_back(5);
+        v.push_back(2);
+        v.push_back(8);
+        do_check("[5, 2, 8]", v);
+    }
+}
+
+
+ATF_INIT_TEST_CASES(tcs)
+{
+    ATF_ADD_TEST_CASE(tcs, std_shared_ptr__null);
+    ATF_ADD_TEST_CASE(tcs, std_shared_ptr__not_null);
+
+    ATF_ADD_TEST_CASE(tcs, std_vector__empty);
+    ATF_ADD_TEST_CASE(tcs, std_vector__some);
+}

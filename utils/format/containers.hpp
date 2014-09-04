@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2014 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,58 +26,29 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file model/test_case.hpp
-/// Definition of the "test case" concept.
+/// \file utils/format/containers.hpp
+/// Overloads to support formatting various base container types.
 
-#if !defined(MODEL_TEST_CASE_HPP)
-#define MODEL_TEST_CASE_HPP
-
-#include "model/test_case_fwd.hpp"
+#if !defined(UTILS_FORMAT_CONTAINERS_HPP)
+#define UTILS_FORMAT_CONTAINERS_HPP
 
 #include <ostream>
-#include <string>
+#include <vector>
 
-#include "model/metadata_fwd.hpp"
-#include "model/test_result_fwd.hpp"
-#include "utils/optional.hpp"
 #include "utils/shared_ptr.hpp"
 
-namespace engine {
-class test_program;
-}  // namespace engine
-
-namespace model {
+// This is ugly but necessary for C++ name resolution.  Unsure if we'd do it
+// differently...
+namespace std {
 
 
-/// Representation of a test case.
-class test_case {
-    struct impl;
+template< typename T >
+std::ostream& operator<<(std::ostream&, const std::shared_ptr< T >&);
 
-    /// Pointer to the shared internal implementation.
-    std::shared_ptr< impl > _pimpl;
-
-public:
-    test_case(const std::string&, const engine::test_program&,
-              const std::string&, const metadata&);
-    test_case(const std::string&, const engine::test_program&,
-              const std::string&, const std::string&,
-              const test_result&);
-    ~test_case(void);
-
-    const std::string& interface_name(void) const;
-    const engine::test_program& container_test_program(void) const;
-    const std::string& name(void) const;
-    const metadata& get_metadata(void) const;
-    utils::optional< test_result > fake_result(void) const;
-
-    bool operator==(const test_case&) const;
-    bool operator!=(const test_case&) const;
-};
+template< typename T >
+std::ostream& operator<<(std::ostream&, const std::vector< T >&);
 
 
-std::ostream& operator<<(std::ostream&, const test_case&);
+}  // namespace std
 
-
-}  // namespace model
-
-#endif  // !defined(MODEL_TEST_CASE_HPP)
+#endif  // !defined(UTILS_FORMAT_CONTAINERS_HPP)

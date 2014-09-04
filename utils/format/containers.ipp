@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2014 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,58 +26,52 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file model/test_case.hpp
-/// Definition of the "test case" concept.
+#if !defined(UTILS_FORMAT_CONTAINERS_IPP)
+#define UTILS_FORMAT_CONTAINERS_IPP
 
-#if !defined(MODEL_TEST_CASE_HPP)
-#define MODEL_TEST_CASE_HPP
-
-#include "model/test_case_fwd.hpp"
+#include "utils/format/containers.hpp"
 
 #include <ostream>
-#include <string>
-
-#include "model/metadata_fwd.hpp"
-#include "model/test_result_fwd.hpp"
-#include "utils/optional.hpp"
-#include "utils/shared_ptr.hpp"
-
-namespace engine {
-class test_program;
-}  // namespace engine
-
-namespace model {
 
 
-/// Representation of a test case.
-class test_case {
-    struct impl;
-
-    /// Pointer to the shared internal implementation.
-    std::shared_ptr< impl > _pimpl;
-
-public:
-    test_case(const std::string&, const engine::test_program&,
-              const std::string&, const metadata&);
-    test_case(const std::string&, const engine::test_program&,
-              const std::string&, const std::string&,
-              const test_result&);
-    ~test_case(void);
-
-    const std::string& interface_name(void) const;
-    const engine::test_program& container_test_program(void) const;
-    const std::string& name(void) const;
-    const metadata& get_metadata(void) const;
-    utils::optional< test_result > fake_result(void) const;
-
-    bool operator==(const test_case&) const;
-    bool operator!=(const test_case&) const;
-};
+/// Injects the object into a stream.
+///
+/// \param output The stream into which to inject the object.
+/// \param object The object to format.
+///
+/// \return The output stream.
+template< typename T >
+std::ostream&
+std::operator<<(std::ostream& output, const std::shared_ptr< T >& object)
+{
+    if (object.get() == NULL) {
+        output << "<NULL>";
+    } else {
+        output << *object;
+    }
+    return output;
+}
 
 
-std::ostream& operator<<(std::ostream&, const test_case&);
+/// Injects the object into a stream.
+///
+/// \param output The stream into which to inject the object.
+/// \param object The object to format.
+///
+/// \return The output stream.
+template< typename T >
+std::ostream&
+std::operator<<(std::ostream& output, const std::vector< T >& object)
+{
+    output << "[";
+    for (typename std::vector< T >::size_type i = 0; i < object.size(); ++i) {
+        if (i != 0)
+            output << ", ";
+        output << object[i];
+    }
+    output << "]";
+    return output;
+}
 
 
-}  // namespace model
-
-#endif  // !defined(MODEL_TEST_CASE_HPP)
+#endif  // !defined(UTILS_FORMAT_CONTAINERS_IPP)

@@ -258,23 +258,3 @@ model::operator<<(std::ostream& output, const test_case& object)
         % object.get_metadata();
     return output;
 }
-
-
-/// Injects the object into a stream.
-///
-/// \param output The stream into which to inject the object.
-/// \param object The object to format.
-///
-/// \return The output stream.
-std::ostream&
-model::operator<<(std::ostream& output, const test_cases_vector& object)
-{
-    output << "[";
-    for (test_cases_vector::size_type i = 0; i < object.size(); ++i) {
-        if (i != 0)
-            output << ", ";
-        output << *object[i];
-    }
-    output << "]";
-    return output;
-}

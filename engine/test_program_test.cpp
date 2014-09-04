@@ -43,6 +43,7 @@ extern "C" {
 #include "model/test_case.hpp"
 #include "model/test_result.hpp"
 #include "utils/env.hpp"
+#include "utils/format/containers.ipp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
