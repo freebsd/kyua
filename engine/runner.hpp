@@ -26,18 +26,21 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/test_case.hpp
-/// Interface to interact with test cases.
+/// \file engine/runner.hpp
+/// Interface to interact with test programs and test cases on disk.
 
-#if !defined(ENGINE_TEST_CASE_HPP)
-#define ENGINE_TEST_CASE_HPP
+#if !defined(ENGINE_RUNNER_HPP)
+#define ENGINE_RUNNER_HPP
 
+#include "model/context_fwd.hpp"
 #include "model/test_case_fwd.hpp"
+#include "model/test_program_fwd.hpp"
 #include "model/test_result_fwd.hpp"
 #include "utils/config/tree.hpp"
 #include "utils/fs/path.hpp"
 
 namespace engine {
+namespace runner {
 
 
 /// Hooks to introspect the execution of a test case.
@@ -58,6 +61,12 @@ public:
 };
 
 
+model::context current_context(void);
+
+
+void load_test_cases(model::test_program&);
+
+
 model::test_result debug_test_case(
     const model::test_case*, const utils::config::tree&,
     test_case_hooks&, const utils::fs::path&,
@@ -67,7 +76,8 @@ model::test_result run_test_case(
     test_case_hooks&, const utils::fs::path&);
 
 
+}  // namespace runner
 }  // namespace engine
 
 
-#endif  // !defined(ENGINE_TEST_CASE_HPP)
+#endif  // !defined(ENGINE_RUNNER_HPP)

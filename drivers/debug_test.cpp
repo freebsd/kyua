@@ -32,8 +32,7 @@
 
 #include "engine/filters.hpp"
 #include "engine/kyuafile.hpp"
-#include "engine/test_case.hpp"
-#include "engine/test_program.hpp"
+#include "engine/runner.hpp"
 #include "model/test_case.hpp"
 #include "model/test_program.hpp"
 #include "model/test_result.hpp"
@@ -45,6 +44,7 @@
 
 namespace config = utils::config;
 namespace fs = utils::fs;
+namespace runner = engine::runner;
 namespace signals = utils::signals;
 
 using utils::none;
@@ -77,7 +77,7 @@ find_test_case(const engine::test_filter& filter,
         if (!filter.matches_test_program(test_program->relative_path()))
             continue;
 
-        engine::load_test_cases(*test_program);
+        runner::load_test_cases(*test_program);
         const model::test_cases_vector test_cases = test_program->test_cases();
 
         for (model::test_cases_vector::const_iterator
@@ -133,14 +133,14 @@ drivers::debug_test::drive(const fs::path& kyuafile_path,
     model::test_programs_vector test_programs = kyuafile.test_programs();
     const model::test_case_ptr test_case = find_test_case(
         filter, test_programs);
-    engine::test_case_hooks dummy_hooks;
+    runner::test_case_hooks dummy_hooks;
 
     signals::interrupts_handler interrupts;
 
     const fs::auto_directory work_directory = fs::auto_directory::mkdtemp(
         "kyua.XXXXXX");
 
-    const model::test_result test_result = debug_test_case(
+    const model::test_result test_result = runner::debug_test_case(
         test_case.get(), user_config, dummy_hooks, work_directory.directory(),
         stdout_path, stderr_path);
 

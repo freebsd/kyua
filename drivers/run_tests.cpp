@@ -30,8 +30,7 @@
 
 #include "engine/filters.hpp"
 #include "engine/kyuafile.hpp"
-#include "engine/test_case.hpp"
-#include "engine/test_program.hpp"
+#include "engine/runner.hpp"
 #include "model/context.hpp"
 #include "model/test_case.hpp"
 #include "model/test_program.hpp"
@@ -40,10 +39,8 @@
 #include "store/write_transaction.hpp"
 #include "utils/datetime.hpp"
 #include "utils/defs.hpp"
-#include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/auto_cleaners.hpp"
-#include "utils/fs/operations.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/signals/interrupts.hpp"
@@ -52,6 +49,7 @@ namespace config = utils::config;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace signals = utils::signals;
+namespace runner = engine::runner;
 
 using utils::optional;
 
@@ -60,7 +58,7 @@ namespace {
 
 
 /// Test case hooks to save the output into the database.
-class file_saver_hooks : public engine::test_case_hooks {
+class file_saver_hooks : public runner::test_case_hooks {
     /// Open write transaction for the test case's data.
     store::write_transaction& _tx;
 
@@ -120,7 +118,7 @@ run_test_program(model::test_program& program,
     LI(F("Processing test program '%s'") % program.relative_path());
     const int64_t test_program_id = tx.put_test_program(program);
 
-    engine::load_test_cases(program);
+    runner::load_test_cases(program);
     const model::test_cases_vector& test_cases = program.test_cases();
     for (model::test_cases_vector::const_iterator iter = test_cases.begin();
          iter != test_cases.end(); iter++) {
@@ -135,7 +133,7 @@ run_test_program(model::test_program& program,
         file_saver_hooks test_hooks(tx, test_case_id);
         hooks.got_test_case(test_case);
         const datetime::timestamp start_time = datetime::timestamp::now();
-        const model::test_result result = run_test_case(
+        const model::test_result result = runner::run_test_case(
             test_case.get(), user_config, test_hooks, work_directory);
         const datetime::timestamp end_time = datetime::timestamp::now();
         tx.put_result(result, test_case_id, start_time, end_time);
@@ -179,7 +177,7 @@ drivers::run_tests::drive(const fs::path& kyuafile_path,
     store::write_backend db = store::write_backend::open_rw(store_path);
     store::write_transaction tx = db.start_write();
 
-    model::context context(fs::current_path(), utils::getallenv());
+    const model::context context = runner::current_context();
     (void)tx.put_context(context);
 
     signals::interrupts_handler interrupts;

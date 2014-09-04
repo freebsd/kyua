@@ -26,7 +26,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/test_case.hpp"
+#include "engine/runner.hpp"
 
 extern "C" {
 #include <sys/stat.h>
@@ -49,7 +49,7 @@ extern "C" {
 #include "engine/config.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/kyuafile.hpp"
-#include "engine/test_program.hpp"
+#include "model/context.hpp"
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
 #include "model/test_program.hpp"
@@ -57,8 +57,10 @@ extern "C" {
 #include "utils/config/tree.ipp"
 #include "utils/datetime.hpp"
 #include "utils/env.hpp"
+#include "utils/format/containers.ipp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
+#include "utils/fs/path.hpp"
 #include "utils/noncopyable.hpp"
 #include "utils/optional.ipp"
 #include "utils/passwd.hpp"
@@ -71,6 +73,7 @@ namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace passwd = utils::passwd;
 namespace process = utils::process;
+namespace runner = engine::runner;
 
 using utils::none;
 using utils::optional;
@@ -79,8 +82,28 @@ using utils::optional;
 namespace {
 
 
+/// Creates a mock tester that receives a signal.
+///
+/// \param term_sig Signal to deliver to the tester.  If the tester does not
+///     exit due to this reason, it exits with an arbitrary non-zero code.
+static void
+create_mock_tester_signal(const int term_sig)
+{
+    const std::string tester_name = "kyua-mock-tester";
+
+    atf::utils::create_file(
+        tester_name,
+        F("#! /bin/sh\n"
+          "kill -%s $$\n"
+          "exit 0\n") % term_sig);
+    ATF_REQUIRE(::chmod(tester_name.c_str(), 0755) != -1);
+
+    utils::setenv("KYUA_TESTERSDIR", fs::current_path().str());
+}
+
+
 /// Test case hooks to capture stdout and stderr in memory.
-class capture_hooks : public engine::test_case_hooks {
+class capture_hooks : public runner::test_case_hooks {
 public:
     /// Contents of the stdout of the test case.
     std::string stdout_contents;
@@ -223,7 +246,7 @@ public:
     model::test_result
     run(void) const
     {
-        engine::test_case_hooks dummy_hooks;
+        runner::test_case_hooks dummy_hooks;
         return run(dummy_hooks);
     }
 
@@ -233,7 +256,7 @@ public:
     ///
     /// \return The result of the execution.
     model::test_result
-    run(engine::test_case_hooks& hooks) const
+    run(runner::test_case_hooks& hooks) const
     {
         const model::test_program test_program(
             "atf", _binary_path, _root, "the-suite",
@@ -244,7 +267,7 @@ public:
         const fs::path workdir("work");
         fs::mkdir(workdir, 0755);
 
-        const model::test_result result = engine::run_test_case(
+        const model::test_result result = runner::run_test_case(
             &test_case, _user_config, hooks, workdir);
         ATF_REQUIRE(::rmdir(workdir.c_str()) != -1);
         return result;
@@ -253,7 +276,7 @@ public:
 
 
 /// Hooks to retrieve stdout and stderr.
-class fetch_output_hooks : public engine::test_case_hooks {
+class fetch_output_hooks : public runner::test_case_hooks {
 public:
     /// Copies the stdout of the test case outside of its work directory.
     ///
@@ -358,10 +381,10 @@ public:
             mdbuilder.set_timeout(_timeout.get());
         model::test_program test_program(
             "plain", _binary_path, _root, "unit-tests", mdbuilder.build());
-        engine::load_test_cases(test_program);
+        runner::load_test_cases(test_program);
         const model::test_cases_vector& tcs = test_program.test_cases();
         fetch_output_hooks fetcher;
-        const model::test_result result = engine::run_test_case(
+        const model::test_result result = runner::run_test_case(
             tcs[0].get(), user_config, fetcher, fs::path("."));
         std::cerr << "Result is: " << result << '\n';
         return result;
@@ -408,6 +431,71 @@ require_coredump_ability(const atf::tests::tc* tc)
 
 
 }  // anonymous namespace
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(current_context);
+ATF_TEST_CASE_BODY(current_context)
+{
+    const model::context context = runner::current_context();
+    ATF_REQUIRE_EQ(fs::current_path(), context.cwd());
+    ATF_REQUIRE(utils::getallenv() == context.env());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(load_test_cases__get);
+ATF_TEST_CASE_BODY(load_test_cases__get)
+{
+    model::test_program test_program(
+        "plain", fs::path("non-existent"), fs::path("."), "suite-name",
+        model::metadata_builder().build());
+    runner::load_test_cases(test_program);
+    const model::test_cases_vector& test_cases = test_program.test_cases();
+    ATF_REQUIRE_EQ(1, test_cases.size());
+    ATF_REQUIRE_EQ(fs::path("non-existent"),
+                   test_cases[0]->container_test_program().relative_path());
+    ATF_REQUIRE_EQ("main", test_cases[0]->name());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(load_test_cases__some);
+ATF_TEST_CASE_BODY(load_test_cases__some)
+{
+    model::test_program test_program(
+        "plain", fs::path("non-existent"), fs::path("."), "suite-name",
+        model::metadata_builder().build());
+
+    model::test_cases_vector exp_test_cases;
+    const model::test_case test_case("plain", test_program, "main",
+                                     model::metadata_builder().build());
+    exp_test_cases.push_back(model::test_case_ptr(
+        new model::test_case(test_case)));
+    test_program.set_test_cases(exp_test_cases);
+
+    runner::load_test_cases(test_program);
+    ATF_REQUIRE_EQ(exp_test_cases, test_program.test_cases());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(load_test_cases__tester_fails);
+ATF_TEST_CASE_BODY(load_test_cases__tester_fails)
+{
+    model::test_program test_program(
+        "mock", fs::path("non-existent"), fs::path("."), "suite-name",
+        model::metadata_builder().build());
+    create_mock_tester_signal(SIGSEGV);
+
+    runner::load_test_cases(test_program);
+    const model::test_cases_vector& test_cases = test_program.test_cases();
+    ATF_REQUIRE_EQ(1, test_cases.size());
+
+    const model::test_case_ptr& test_case = test_cases[0];
+    ATF_REQUIRE_EQ("__test_cases_list__", test_case->name());
+
+    ATF_REQUIRE(test_case->fake_result());
+    const model::test_result result = test_case->fake_result().get();
+    ATF_REQUIRE(model::test_result::broken == result.type());
+    ATF_REQUIRE_MATCH("Tester did not exit cleanly", result.reason());
+}
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__tester_crashes);
@@ -993,6 +1081,12 @@ ATF_TEST_CASE_BODY(run_test_case__plain__missing_test_program)
 
 ATF_INIT_TEST_CASES(tcs)
 {
+    ATF_ADD_TEST_CASE(tcs, current_context);
+
+    ATF_ADD_TEST_CASE(tcs, load_test_cases__get);
+    ATF_ADD_TEST_CASE(tcs, load_test_cases__some);
+    ATF_ADD_TEST_CASE(tcs, load_test_cases__tester_fails);
+
     ATF_ADD_TEST_CASE(tcs, run_test_case__tester_crashes);
 
     ATF_ADD_TEST_CASE(tcs, run_test_case__atf__current_directory);

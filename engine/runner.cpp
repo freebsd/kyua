@@ -26,18 +26,23 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/test_case.hpp"
+#include "engine/runner.hpp"
 
 extern "C" {
 #include <signal.h>
 }
 
 #include <fstream>
+#include <stdexcept>
+
+#include <lutok/operations.hpp>
+#include <lutok/state.ipp>
 
 #include "engine/config.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/requirements.hpp"
 #include "engine/testers.hpp"
+#include "model/context.hpp"
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
 #include "model/test_program.hpp"
@@ -45,11 +50,13 @@ extern "C" {
 #include "utils/config/tree.ipp"
 #include "utils/datetime.hpp"
 #include "utils/defs.hpp"
+#include "utils/env.hpp"
 #include "utils/format/macros.hpp"
-#include "utils/logging/operations.hpp"
 #include "utils/fs/auto_cleaners.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/logging/macros.hpp"
+#include "utils/logging/operations.hpp"
 #include "utils/optional.ipp"
 #include "utils/passwd.hpp"
 #include "utils/text/operations.ipp"
@@ -58,6 +65,7 @@ namespace config = utils::config;
 namespace fs = utils::fs;
 namespace logging = utils::logging;
 namespace passwd = utils::passwd;
+namespace runner = engine::runner;
 namespace text = utils::text;
 
 using utils::none;
@@ -65,6 +73,102 @@ using utils::optional;
 
 
 namespace {
+
+
+/// Lua hook for the test_case function.
+///
+/// \pre state(-1) contains the arguments to the function.
+///
+/// \param state The Lua state in which we are running.
+///
+/// \return The number of return values, which is always 0.
+static int
+lua_test_case(lutok::state& state)
+{
+    if (!state.is_table(-1))
+        throw std::runtime_error("Oh noes"); // XXX
+
+    state.get_global("_test_cases");
+    model::test_cases_vector* test_cases =
+        *state.to_userdata< model::test_cases_vector* >(-1);
+    state.pop(1);
+
+    state.get_global("_test_program");
+    const model::test_program* test_program =
+        *state.to_userdata< model::test_program* >(-1);
+    state.pop(1);
+
+    state.push_string("name");
+    state.get_table(-2);
+    const std::string name = state.to_string(-1);
+    state.pop(1);
+
+    model::metadata_builder mdbuilder(test_program->get_metadata());
+
+    state.push_nil();
+    while (state.next(-2)) {
+        if (!state.is_string(-2))
+            throw std::runtime_error("Oh oh");  // XXX
+        const std::string property = state.to_string(-2);
+
+        if (!state.is_string(-1))
+            throw std::runtime_error("Oh oh");  // XXX
+        const std::string value = state.to_string(-1);
+
+        if (property != "name")
+            mdbuilder.set_string(property, value);
+
+        state.pop(1);
+    }
+    state.pop(1);
+
+    model::test_case_ptr test_case(
+        new model::test_case(test_program->interface_name(), *test_program,
+                             name, mdbuilder.build()));
+    test_cases->push_back(test_case);
+
+    return 0;
+}
+
+
+/// Sets up the Lua state to process the output of a test case list.
+///
+/// \param [in,out] state The Lua state to configure.
+/// \param test_program Pointer to the test program being loaded.
+/// \param [out] test_cases Vector that will contain the list of test cases.
+static void
+setup_lua_state(lutok::state& state,
+                const model::test_program* test_program,
+                model::test_cases_vector* test_cases)
+{
+    *state.new_userdata< model::test_cases_vector* >() = test_cases;
+    state.set_global("_test_cases");
+
+    *state.new_userdata< const model::test_program* >() = test_program;
+    state.set_global("_test_program");
+
+    state.push_cxx_function(lua_test_case);
+    state.set_global("test_case");
+}
+
+
+/// Loads the list of test cases from a test program.
+///
+/// \param test_program Representation of the test program to load.
+///
+/// \return A list of test cases.
+static model::test_cases_vector
+load_test_cases(const model::test_program& test_program)
+{
+    const engine::tester tester(test_program.interface_name(), none, none);
+    const std::string output = tester.list(test_program.absolute_path());
+
+    model::test_cases_vector test_cases;
+    lutok::state state;
+    setup_lua_state(state, &test_program, &test_cases);
+    lutok::do_string(state, output, 0, 0, 0);
+    return test_cases;
+}
 
 
 /// Generates the set of configuration variables for the tester.
@@ -131,7 +235,7 @@ create_tester(const std::string& interface_name,
 
 
 /// Destructor.
-engine::test_case_hooks::~test_case_hooks(void)
+runner::test_case_hooks::~test_case_hooks(void)
 {
 }
 
@@ -144,7 +248,7 @@ engine::test_case_hooks::~test_case_hooks(void)
 ///
 /// \param unused_file The path to the file containing the stdout.
 void
-engine::test_case_hooks::got_stdout(const fs::path& UTILS_UNUSED_PARAM(file))
+runner::test_case_hooks::got_stdout(const fs::path& UTILS_UNUSED_PARAM(file))
 {
 }
 
@@ -157,8 +261,47 @@ engine::test_case_hooks::got_stdout(const fs::path& UTILS_UNUSED_PARAM(file))
 ///
 /// \param unused_file The path to the file containing the stderr.
 void
-engine::test_case_hooks::got_stderr(const fs::path& UTILS_UNUSED_PARAM(file))
+runner::test_case_hooks::got_stderr(const fs::path& UTILS_UNUSED_PARAM(file))
 {
+}
+
+
+/// Queries the current execution context.
+///
+/// \return The queried context.
+model::context
+runner::current_context(void)
+{
+    return model::context(fs::current_path(), utils::getallenv());
+}
+
+
+/// Gets the list of test cases from the test program.
+///
+/// \param [in,out] program The test program to update with the loaded list of
+///     test cases.
+void
+runner::load_test_cases(model::test_program& program)
+{
+    if (!program.has_test_cases()) {
+        model::test_cases_vector test_cases;
+        try {
+            test_cases = ::load_test_cases(program);
+        } catch (const std::runtime_error& e) {
+            // TODO(jmmv): This is a very ugly workaround for the fact that we
+            // cannot report failures at the test-program level.  We should
+            // either address this, or move this reporting to the testers
+            // themselves.
+            LW(F("Failed to load test cases list: %s") % e.what());
+            model::test_cases_vector fake_test_cases;
+            fake_test_cases.push_back(model::test_case_ptr(new model::test_case(
+                program.interface_name(), program, "__test_cases_list__",
+                "Represents the correct processing of the test cases list",
+                model::test_result(model::test_result::broken, e.what()))));
+            test_cases = fake_test_cases;
+        }
+        program.set_test_cases(test_cases);
+    }
 }
 
 
@@ -179,7 +322,7 @@ engine::test_case_hooks::got_stderr(const fs::path& UTILS_UNUSED_PARAM(file))
 ///
 /// \return The result of the execution of the test case.
 model::test_result
-engine::debug_test_case(const model::test_case* test_case,
+runner::debug_test_case(const model::test_case* test_case,
                         const config::tree& user_config,
                         test_case_hooks& hooks,
                         const fs::path& work_directory,
@@ -243,7 +386,7 @@ engine::debug_test_case(const model::test_case* test_case,
 ///
 /// \return The result of the execution of the test case.
 model::test_result
-engine::run_test_case(const model::test_case* test_case,
+runner::run_test_case(const model::test_case* test_case,
                       const config::tree& user_config,
                       test_case_hooks& hooks,
                       const fs::path& work_directory)

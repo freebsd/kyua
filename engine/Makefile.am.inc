@@ -42,10 +42,8 @@ libengine_a_SOURCES += engine/kyuafile.cpp
 libengine_a_SOURCES += engine/kyuafile.hpp
 libengine_a_SOURCES += engine/requirements.cpp
 libengine_a_SOURCES += engine/requirements.hpp
-libengine_a_SOURCES += engine/test_case.cpp
-libengine_a_SOURCES += engine/test_case.hpp
-libengine_a_SOURCES += engine/test_program.cpp
-libengine_a_SOURCES += engine/test_program.hpp
+libengine_a_SOURCES += engine/runner.cpp
+libengine_a_SOURCES += engine/runner.hpp
 libengine_a_SOURCES += engine/testers.cpp
 libengine_a_SOURCES += engine/testers.hpp
 
@@ -92,15 +90,10 @@ engine_test_case_plain_helpers_SOURCES = engine/test_case_plain_helpers.cpp
 engine_test_case_plain_helpers_CXXFLAGS = $(UTILS_CFLAGS)
 engine_test_case_plain_helpers_LDADD = $(UTILS_LIBS)
 
-tests_engine_PROGRAMS += engine/test_case_test
-engine_test_case_test_SOURCES = engine/test_case_test.cpp
-engine_test_case_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
-engine_test_case_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
-
-tests_engine_PROGRAMS += engine/test_program_test
-engine_test_program_test_SOURCES = engine/test_program_test.cpp
-engine_test_program_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
-engine_test_program_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
+tests_engine_PROGRAMS += engine/runner_test
+engine_runner_test_SOURCES = engine/runner_test.cpp
+engine_runner_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
+engine_runner_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 
 tests_engine_PROGRAMS += engine/testers_test
 engine_testers_test_SOURCES = engine/testers_test.cpp
