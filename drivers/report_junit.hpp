@@ -37,6 +37,7 @@
 
 #include "drivers/scan_results.hpp"
 #include "model/metadata_fwd.hpp"
+#include "model/test_program_fwd.hpp"
 
 namespace utils {
 namespace datetime {
@@ -47,10 +48,7 @@ class delta;
 namespace drivers {
 
 
-class test_program;
-
-
-std::string junit_classname(const engine::test_program&);
+std::string junit_classname(const model::test_program&);
 std::string junit_duration(const utils::datetime::delta&);
 extern const char* const junit_metadata_prefix;
 extern const char* const junit_metadata_suffix;

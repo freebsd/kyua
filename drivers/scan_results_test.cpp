@@ -35,6 +35,7 @@
 #include "model/context.hpp"
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
+#include "model/test_program.hpp"
 #include "model/test_result.hpp"
 #include "store/exceptions.hpp"
 #include "store/read_transaction.hpp"
@@ -147,7 +148,7 @@ populate_results_file(const char* db_name, const int count)
     tx.put_context(context);
 
     for (int i = 0; i < count; i++) {
-        const engine::test_program test_program(
+        const model::test_program test_program(
             "plain", fs::path(F("dir/prog_%s") % i), fs::path("/root"),
             F("suite_%s") % i, model::metadata_builder().build());
         const int64_t tp_id = tx.put_test_program(test_program);

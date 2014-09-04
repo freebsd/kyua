@@ -37,10 +37,10 @@ extern "C" {
 #include "engine/config.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/requirements.hpp"
-#include "engine/test_program.hpp"
 #include "engine/testers.hpp"
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
+#include "model/test_program.hpp"
 #include "model/test_result.hpp"
 #include "utils/config/tree.ipp"
 #include "utils/datetime.hpp"
@@ -201,7 +201,7 @@ engine::debug_test_case(const model::test_case* test_case,
 
     const fs::auto_file result_file(work_directory / "result.txt");
 
-    const engine::test_program& test_program =
+    const model::test_program& test_program =
         test_case->container_test_program();
 
     try {
@@ -265,7 +265,7 @@ engine::run_test_case(const model::test_case* test_case,
     const fs::auto_file stderr_file(work_directory / "stderr.txt");
     const fs::auto_file result_file(work_directory / "result.txt");
 
-    const engine::test_program& test_program =
+    const model::test_program& test_program =
         test_case->container_test_program();
 
     try {

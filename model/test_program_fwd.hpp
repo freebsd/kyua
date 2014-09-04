@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2014 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,49 +26,30 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file cli/cmd_list.hpp
-/// Provides the cmd_list class.
+/// \file model/test_program_fwd.hpp
+/// Forward declarations for model/test_program.hpp
 
-#if !defined(CLI_CMD_LIST_HPP)
-#define CLI_CMD_LIST_HPP
+#if !defined(MODEL_TEST_PROGRAM_FWD_HPP)
+#define MODEL_TEST_PROGRAM_FWD_HPP
 
-#include <string>
+#include <vector>
 
-#include "cli/common.hpp"
-#include "model/test_case_fwd.hpp"
+#include "utils/shared_ptr.hpp"
 
-namespace engine {
-class filters_state;
-}  // namespace engine
-
-namespace utils {
-namespace fs {
-class path;
-}  // namespace fs
-}  // namespace utils
-
-namespace cli {
+namespace model {
 
 
-namespace detail {
-
-void list_test_case(utils::cmdline::ui*, const bool, const model::test_case&);
-
-}  // namespace detail
+class test_program;
 
 
-/// Implementation of the "list" subcommand.
-class cmd_list : public cli_command
-{
-public:
-    cmd_list(void);
-
-    int run(utils::cmdline::ui*, const utils::cmdline::parsed_cmdline&,
-            const utils::config::tree&);
-};
+/// Pointer to a test program.
+typedef std::shared_ptr< test_program > test_program_ptr;
 
 
-}  // namespace cli
+/// Collection of test programs.
+typedef std::vector< test_program_ptr > test_programs_vector;
 
 
-#endif  // !defined(CLI_CMD_LIST_HPP)
+}  // namespace model
+
+#endif  // !defined(MODEL_TEST_PROGRAM_FWD_HPP)

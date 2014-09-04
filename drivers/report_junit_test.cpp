@@ -37,6 +37,7 @@
 #include "model/context.hpp"
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
+#include "model/test_program.hpp"
 #include "model/test_result.hpp"
 #include "store/write_backend.hpp"
 #include "store/write_transaction.hpp"
@@ -114,7 +115,7 @@ add_tests(store::write_transaction& tx,
           const std::vector< model::test_result >& results,
           const bool with_metadata, const bool with_output)
 {
-    const engine::test_program test_program(
+    const model::test_program test_program(
         "plain", fs::path(prog), fs::path("/root"), "suite",
         model::metadata_builder().build());
     const int64_t tp_id = tx.put_test_program(test_program);
@@ -150,7 +151,7 @@ add_tests(store::write_transaction& tx,
 ATF_TEST_CASE_WITHOUT_HEAD(junit_classname);
 ATF_TEST_CASE_BODY(junit_classname)
 {
-    const engine::test_program test_program(
+    const model::test_program test_program(
         "plain", fs::path("dir1/dir2/program"), fs::path("/root"), "suite",
         model::metadata_builder().build());
 

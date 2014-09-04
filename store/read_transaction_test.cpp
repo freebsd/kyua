@@ -36,6 +36,7 @@
 #include "model/context.hpp"
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
+#include "model/test_program.hpp"
 #include "model/test_result.hpp"
 #include "store/exceptions.hpp"
 #include "store/read_backend.hpp"
@@ -195,7 +196,7 @@ ATF_TEST_CASE_BODY(get_results__many)
 
     atf::utils::create_file("unused.txt", "unused file\n");
 
-    engine::test_program test_program_1(
+    model::test_program test_program_1(
         "plain", fs::path("a/prog1"), fs::path("/the/root"), "suite1",
         model::metadata_builder().build());
     model::test_case_ptr test_case_1(new model::test_case(
@@ -213,7 +214,7 @@ ATF_TEST_CASE_BODY(get_results__many)
         tx.put_result(result_1, tc_id, start_time1, end_time1);
     }
 
-    engine::test_program test_program_2(
+    model::test_program test_program_2(
         "plain", fs::path("b/prog2"), fs::path("/the/root"), "suite2",
         model::metadata_builder().build());
     model::test_case_ptr test_case_2(new model::test_case(

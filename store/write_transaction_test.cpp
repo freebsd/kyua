@@ -37,6 +37,7 @@
 #include "model/context.hpp"
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
+#include "model/test_program.hpp"
 #include "model/test_result.hpp"
 #include "store/exceptions.hpp"
 #include "store/write_backend.hpp"
@@ -179,7 +180,7 @@ ATF_TEST_CASE_BODY(put_test_program__ok)
         .add_custom("var1", "value1")
         .add_custom("var2", "value2")
         .build();
-    const engine::test_program test_program(
+    const model::test_program test_program(
         "mock", fs::path("the/binary"), fs::path("/some//root"),
         "the-suite", md);
 
@@ -216,7 +217,7 @@ ATF_TEST_CASE_HEAD(put_test_case__fail)
 ATF_TEST_CASE_BODY(put_test_case__fail)
 {
     // TODO(jmmv): Use a mock test program and test case.
-    const engine::test_program test_program(
+    const model::test_program test_program(
         "plain", fs::path("the/binary"), fs::path("/some/root"), "the-suite",
         model::metadata_builder().build());
     const model::test_case test_case("plain", test_program, "main",

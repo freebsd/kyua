@@ -59,3 +59,18 @@ model::format_error::format_error(const std::string& message) :
 model::format_error::~format_error(void) throw()
 {
 }
+
+
+/// Constructs a new not_found_error.
+///
+/// \param message The plain-text error message.
+model::not_found_error::not_found_error(const std::string& message) :
+    error(message)
+{
+}
+
+
+/// Destructor for the error.
+model::not_found_error::~not_found_error(void) throw()
+{
+}

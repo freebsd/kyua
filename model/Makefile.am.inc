@@ -27,8 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 MODEL_CFLAGS = $(UTILS_CFLAGS)
-# TODO(jmmv): Remove libengine.a once test_program is moved here.
-MODEL_LIBS = libmodel.a libengine.a $(UTILS_LIBS)
+MODEL_LIBS = libmodel.a $(UTILS_LIBS)
 
 noinst_LIBRARIES += libmodel.a
 libmodel_a_CPPFLAGS = $(UTILS_CFLAGS)
@@ -43,6 +42,9 @@ libmodel_a_SOURCES += model/metadata_fwd.hpp
 libmodel_a_SOURCES += model/test_case.cpp
 libmodel_a_SOURCES += model/test_case.hpp
 libmodel_a_SOURCES += model/test_case_fwd.hpp
+libmodel_a_SOURCES += model/test_program.cpp
+libmodel_a_SOURCES += model/test_program.hpp
+libmodel_a_SOURCES += model/test_program_fwd.hpp
 libmodel_a_SOURCES += model/test_result.cpp
 libmodel_a_SOURCES += model/test_result.hpp
 libmodel_a_SOURCES += model/test_result_fwd.hpp
@@ -73,6 +75,11 @@ tests_model_PROGRAMS += model/test_case_test
 model_test_case_test_SOURCES = model/test_case_test.cpp
 model_test_case_test_CXXFLAGS = $(MODEL_CFLAGS) $(ATF_CXX_CFLAGS)
 model_test_case_test_LDADD = $(MODEL_LIBS) $(ATF_CXX_LIBS)
+
+tests_model_PROGRAMS += model/test_program_test
+model_test_program_test_SOURCES = model/test_program_test.cpp
+model_test_program_test_CXXFLAGS = $(MODEL_CFLAGS) $(ATF_CXX_CFLAGS)
+model_test_program_test_LDADD = $(MODEL_LIBS) $(ATF_CXX_LIBS)
 
 tests_model_PROGRAMS += model/test_result_test
 model_test_result_test_SOURCES = model/test_result_test.cpp

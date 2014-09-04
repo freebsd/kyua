@@ -31,10 +31,10 @@
 
 #include <atf-c++.hpp>
 
-#include "engine/test_program.hpp"
 #include "model/context.hpp"
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
+#include "model/test_program.hpp"
 #include "model/test_result.hpp"
 #include "store/migrate.hpp"
 #include "store/read_backend.hpp"
@@ -128,7 +128,7 @@ check_action_2(const fs::path& dbpath)
 
     ATF_REQUIRE_EQ(context, transaction.get_context());
 
-    engine::test_program test_program_1(
+    model::test_program test_program_1(
         "plain", fs::path("foo_test"), fs::path("/test/suite/root"),
         "suite-name", model::metadata_builder().build());
     {
@@ -141,7 +141,7 @@ check_action_2(const fs::path& dbpath)
     }
     const model::test_result result_1(model::test_result::passed);
 
-    engine::test_program test_program_2(
+    model::test_program test_program_2(
         "plain", fs::path("subdir/another_test"), fs::path("/test/suite/root"),
         "subsuite-name", model::metadata_builder()
         .set_timeout(datetime::delta(10, 0)).build());
@@ -156,7 +156,7 @@ check_action_2(const fs::path& dbpath)
     const model::test_result result_2(model::test_result::failed,
                                       "Exited with code 1");
 
-    engine::test_program test_program_3(
+    model::test_program test_program_3(
         "plain", fs::path("subdir/bar_test"), fs::path("/test/suite/root"),
         "subsuite-name", model::metadata_builder().build());
     {
@@ -170,7 +170,7 @@ check_action_2(const fs::path& dbpath)
     const model::test_result result_3(model::test_result::broken,
                                       "Received signal 1");
 
-    engine::test_program test_program_4(
+    model::test_program test_program_4(
         "plain", fs::path("top_test"), fs::path("/test/suite/root"),
         "suite-name", model::metadata_builder().build());
     {
@@ -184,7 +184,7 @@ check_action_2(const fs::path& dbpath)
     const model::test_result result_4(model::test_result::expected_failure,
                                       "Known bug");
 
-    engine::test_program test_program_5(
+    model::test_program test_program_5(
         "plain", fs::path("last_test"), fs::path("/test/suite/root"),
         "suite-name", model::metadata_builder().build());
     {
@@ -264,7 +264,7 @@ check_action_3(const fs::path& dbpath)
 
     ATF_REQUIRE_EQ(context, transaction.get_context());
 
-    engine::test_program test_program_6(
+    model::test_program test_program_6(
         "atf", fs::path("complex_test"), fs::path("/usr/tests"),
         "suite-name", model::metadata_builder().build());
     {
@@ -308,7 +308,7 @@ check_action_3(const fs::path& dbpath)
     const model::test_result result_8(model::test_result::skipped,
                                       "Another reason");
 
-    engine::test_program test_program_7(
+    model::test_program test_program_7(
         "atf", fs::path("simple_test"), fs::path("/usr/tests"),
         "subsuite-name", model::metadata_builder().build());
     {
@@ -386,7 +386,7 @@ check_action_4(const fs::path& dbpath)
 
     ATF_REQUIRE_EQ(context, transaction.get_context());
 
-    engine::test_program test_program_8(
+    model::test_program test_program_8(
         "plain", fs::path("subdir/another_test"), fs::path("/usr/tests"),
         "subsuite-name", model::metadata_builder()
         .set_timeout(datetime::delta(10, 0)).build());
@@ -402,7 +402,7 @@ check_action_4(const fs::path& dbpath)
     const model::test_result result_10(model::test_result::failed,
                                        "Exit failure");
 
-    engine::test_program test_program_9(
+    model::test_program test_program_9(
         "atf", fs::path("complex_test"), fs::path("/usr/tests"),
         "suite-name", model::metadata_builder().build());
     {

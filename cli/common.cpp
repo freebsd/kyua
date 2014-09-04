@@ -34,8 +34,8 @@
 #include <stdexcept>
 
 #include "engine/filters.hpp"
-#include "engine/test_program.hpp"
 #include "model/test_case.hpp"
+#include "model/test_program.hpp"
 #include "model/test_result.hpp"
 #include "store/layout.hpp"
 #include "utils/cmdline/exceptions.hpp"

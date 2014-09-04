@@ -35,6 +35,7 @@
 #include "engine/test_case.hpp"
 #include "engine/test_program.hpp"
 #include "model/test_case.hpp"
+#include "model/test_program.hpp"
 #include "model/test_result.hpp"
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
@@ -56,7 +57,8 @@ namespace {
 /// Looks for a single test case in the Kyuafile.
 ///
 /// \param filter A filter to match the desired test case.
-/// \param kyuafile The test suite in which to look for the test case.
+/// \param [in,out] test_programs The test programs in the test suite.
+///     Updated with the list of loaded test cases.
 ///
 /// \return A pointer to the test case if found.
 ///
@@ -64,18 +66,18 @@ namespace {
 ///     case or if the test case cannot be found.
 static const model::test_case_ptr
 find_test_case(const engine::test_filter& filter,
-               const engine::kyuafile& kyuafile)
+               model::test_programs_vector& test_programs)
 {
     model::test_case_ptr found;;
 
-    for (engine::test_programs_vector::const_iterator p =
-         kyuafile.test_programs().begin(); p != kyuafile.test_programs().end();
-         p++) {
-        const engine::test_program_ptr& test_program = *p;
+    for (model::test_programs_vector::iterator p = test_programs.begin();
+         p != test_programs.end(); p++) {
+        model::test_program_ptr& test_program = *p;
 
         if (!filter.matches_test_program(test_program->relative_path()))
             continue;
 
+        engine::load_test_cases(*test_program);
         const model::test_cases_vector test_cases = test_program->test_cases();
 
         for (model::test_cases_vector::const_iterator
@@ -125,7 +127,12 @@ drivers::debug_test::drive(const fs::path& kyuafile_path,
 {
     const engine::kyuafile kyuafile = engine::kyuafile::load(
         kyuafile_path, build_root);
-    const model::test_case_ptr test_case = find_test_case(filter, kyuafile);
+    // TODO(jmmv): Copy the test programs so that we can lazily load their test
+    // cases into them.  This is a hack and should be removed once we have a
+    // nicer interface to running test cases.
+    model::test_programs_vector test_programs = kyuafile.test_programs();
+    const model::test_case_ptr test_case = find_test_case(
+        filter, test_programs);
     engine::test_case_hooks dummy_hooks;
 
     signals::interrupts_handler interrupts;

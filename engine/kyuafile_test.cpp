@@ -37,8 +37,8 @@
 #include <lutok/test_utils.hpp>
 
 #include "engine/exceptions.hpp"
-#include "engine/test_program.hpp"
 #include "model/metadata.hpp"
+#include "model/test_program.hpp"
 #include "utils/datetime.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"

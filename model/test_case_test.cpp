@@ -32,8 +32,8 @@
 
 #include <atf-c++.hpp>
 
-#include "engine/test_program.hpp"
 #include "model/metadata.hpp"
+#include "model/test_program.hpp"
 #include "model/test_result.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
@@ -47,7 +47,7 @@ ATF_TEST_CASE_BODY(test_case__ctor_and_getters)
     const model::metadata md = model::metadata_builder()
         .add_custom("first", "value")
         .build();
-    const engine::test_program test_program(
+    const model::test_program test_program(
         "mock", fs::path("abc"), fs::path("unused-root"),
         "unused-suite-name", model::metadata_builder().build());
     const model::test_case test_case("mock", test_program, "foo", md);
@@ -62,7 +62,7 @@ ATF_TEST_CASE_BODY(test_case__fake_result)
 {
     const model::test_result result(model::test_result::skipped,
                                      "Some reason");
-    const engine::test_program test_program(
+    const model::test_program test_program(
         "mock", fs::path("abc"), fs::path("unused-root"),
         "unused-suite-name", model::metadata_builder().build());
     const model::test_case test_case("mock", test_program, "__foo__",
@@ -76,7 +76,7 @@ ATF_TEST_CASE_BODY(test_case__fake_result)
 ATF_TEST_CASE_WITHOUT_HEAD(test_case__operators_eq_and_ne__copy);
 ATF_TEST_CASE_BODY(test_case__operators_eq_and_ne__copy)
 {
-    const engine::test_program tp(
+    const model::test_program tp(
         "plain", fs::path("non-existent"), fs::path("."), "suite-name",
         model::metadata_builder().build());
 
@@ -92,7 +92,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(test_case__operators_eq_and_ne__not_copy);
 ATF_TEST_CASE_BODY(test_case__operators_eq_and_ne__not_copy)
 {
     const std::string base_interface("plain");
-    const engine::test_program base_tp(
+    const model::test_program base_tp(
         "plain", fs::path("non-existent"), fs::path("."), "suite-name",
         model::metadata_builder().build());
     const std::string base_name("name");
@@ -123,7 +123,7 @@ ATF_TEST_CASE_BODY(test_case__operators_eq_and_ne__not_copy)
 
     // Different test program, different identifier.
     {
-        const engine::test_program other_tp(
+        const model::test_program other_tp(
             "plain", fs::path("another-name"), fs::path("."), "suite2-name",
         model::metadata_builder().build());
         const model::test_case other_tc(base_interface, other_tp, base_name,
@@ -135,7 +135,7 @@ ATF_TEST_CASE_BODY(test_case__operators_eq_and_ne__not_copy)
 
     // Different test program, same identifier.  Cannot be detected!
     {
-        const engine::test_program other_tp(
+        const model::test_program other_tp(
             "plain", fs::path("non-existent"), fs::path("."), "suite2-name",
         model::metadata_builder().build());
         const model::test_case other_tc(base_interface, other_tp, base_name,
@@ -168,7 +168,7 @@ ATF_TEST_CASE_BODY(test_case__operators_eq_and_ne__not_copy)
 ATF_TEST_CASE_WITHOUT_HEAD(test_case__output);
 ATF_TEST_CASE_BODY(test_case__output)
 {
-    const engine::test_program tp(
+    const model::test_program tp(
         "plain", fs::path("non-existent"), fs::path("."), "suite-name",
         model::metadata_builder().build());
 

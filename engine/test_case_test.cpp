@@ -52,6 +52,7 @@ extern "C" {
 #include "engine/test_program.hpp"
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
+#include "model/test_program.hpp"
 #include "model/test_result.hpp"
 #include "utils/config/tree.ipp"
 #include "utils/datetime.hpp"
@@ -234,7 +235,7 @@ public:
     model::test_result
     run(engine::test_case_hooks& hooks) const
     {
-        const engine::test_program test_program(
+        const model::test_program test_program(
             "atf", _binary_path, _root, "the-suite",
             model::metadata_builder().build());
         const model::test_case test_case("atf", test_program, _name,
@@ -355,8 +356,9 @@ public:
         model::metadata_builder mdbuilder;
         if (_timeout)
             mdbuilder.set_timeout(_timeout.get());
-        const engine::test_program test_program(
+        model::test_program test_program(
             "plain", _binary_path, _root, "unit-tests", mdbuilder.build());
+        engine::load_test_cases(test_program);
         const model::test_cases_vector& tcs = test_program.test_cases();
         fetch_output_hooks fetcher;
         const model::test_result result = engine::run_test_case(

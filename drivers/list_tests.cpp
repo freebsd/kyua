@@ -33,6 +33,7 @@
 #include "engine/kyuafile.hpp"
 #include "engine/test_program.hpp"
 #include "model/test_case.hpp"
+#include "model/test_program.hpp"
 #include "utils/optional.ipp"
 
 namespace fs = utils::fs;
@@ -52,10 +53,11 @@ namespace {
 ///     actually matched a test case.
 /// \param hooks The runtime hooks.
 static void
-list_test_program(const engine::test_program& program,
+list_test_program(model::test_program& program,
                   engine::filters_state& filters,
                   drivers::list_tests::base_hooks& hooks)
 {
+    engine::load_test_cases(program);
     const model::test_cases_vector test_cases = program.test_cases();
 
     for (model::test_cases_vector::const_iterator iter = test_cases.begin();
@@ -95,10 +97,10 @@ drivers::list_tests::drive(const fs::path& kyuafile_path,
         kyuafile_path, build_root);
     engine::filters_state filters(raw_filters);
 
-    for (engine::test_programs_vector::const_iterator iter =
+    for (model::test_programs_vector::const_iterator iter =
          kyuafile.test_programs().begin();
          iter != kyuafile.test_programs().end(); iter++) {
-        const engine::test_program_ptr& test_program = *iter;
+        const model::test_program_ptr& test_program = *iter;
 
         if (!filters.match_test_program(test_program->relative_path()))
             continue;

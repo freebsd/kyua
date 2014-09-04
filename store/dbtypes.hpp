@@ -41,10 +41,6 @@
 #include "utils/datetime.hpp"
 #include "utils/sqlite/statement.hpp"
 
-namespace engine {
-class test_program;
-}  // namespace engine
-
 namespace store {
 
 

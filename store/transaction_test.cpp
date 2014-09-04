@@ -34,6 +34,7 @@
 #include "model/context.hpp"
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
+#include "model/test_program.hpp"
 #include "store/read_backend.hpp"
 #include "store/read_transaction.hpp"
 #include "store/write_backend.hpp"
@@ -111,7 +112,7 @@ ATF_TEST_CASE_HEAD(get_put_test_case__ok)
 }
 ATF_TEST_CASE_BODY(get_put_test_case__ok)
 {
-    engine::test_program test_program(
+    model::test_program test_program(
         "atf", fs::path("the/binary"), fs::path("/some/root"), "the-suite",
         model::metadata_builder().build());
 
@@ -166,7 +167,7 @@ ATF_TEST_CASE_BODY(get_put_test_case__ok)
     backend.database().exec("PRAGMA foreign_keys = OFF");
 
     store::read_transaction tx = backend.start_read();
-    const engine::test_program_ptr loaded_test_program =
+    const model::test_program_ptr loaded_test_program =
         store::detail::get_test_program(backend, test_program_id);
     ATF_REQUIRE(test_program == *loaded_test_program);
 }

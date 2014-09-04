@@ -40,9 +40,6 @@
 namespace engine {
 
 
-class test_program;
-
-
 /// Hooks to introspect the execution of a test case.
 ///
 /// There is no guarantee that these hooks will be called during the execution

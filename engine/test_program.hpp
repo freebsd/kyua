@@ -28,66 +28,16 @@
 
 /// \file engine/test_program.hpp
 /// Interface to interact with test programs.
-///
-/// A test program is purely a collection of test cases.  The test program has
-/// no identity by itself: it only exists to provide a consistent entry point
-/// for all the test cases it contains and to group such test cases
-/// semantically.  Therefore, this module provides no data type to represent the
-/// test program.
 
 #if !defined(ENGINE_TEST_PROGRAM_HPP)
 #define ENGINE_TEST_PROGRAM_HPP
 
-#include <ostream>
-#include <string>
-#include <vector>
-
-#include "model/metadata_fwd.hpp"
-#include "model/test_case_fwd.hpp"
-#include "utils/fs/path.hpp"
-#include "utils/shared_ptr.hpp"
+#include "model/test_program_fwd.hpp"
 
 namespace engine {
 
 
-/// Representation of a test program.
-class test_program {
-    struct impl;
-
-    /// Pointer to the shared internal implementation.
-    std::shared_ptr< impl > _pimpl;
-
-public:
-    test_program(const std::string&, const utils::fs::path&,
-                 const utils::fs::path&, const std::string&,
-                 const model::metadata&);
-    ~test_program(void);
-
-    const std::string& interface_name(void) const;
-    const utils::fs::path& root(void) const;
-    const utils::fs::path& relative_path(void) const;
-    const utils::fs::path absolute_path(void) const;
-    const std::string& test_suite_name(void) const;
-    const model::metadata& get_metadata(void) const;
-
-    const model::test_case_ptr& find(const std::string&) const;
-    const model::test_cases_vector& test_cases(void) const;
-    void set_test_cases(const model::test_cases_vector&);
-
-    bool operator==(const test_program&) const;
-    bool operator!=(const test_program&) const;
-};
-
-
-std::ostream& operator<<(std::ostream&, const test_program&);
-
-
-/// Pointer to a test program.
-typedef std::shared_ptr< test_program > test_program_ptr;
-
-
-/// Collection of test programs.
-typedef std::vector< test_program_ptr > test_programs_vector;
+void load_test_cases(model::test_program&);
 
 
 }  // namespace engine

@@ -44,6 +44,7 @@ extern "C" {
 #include "engine/exceptions.hpp"
 #include "engine/filters.hpp"
 #include "model/test_case.hpp"
+#include "model/test_program.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/optional.ipp"

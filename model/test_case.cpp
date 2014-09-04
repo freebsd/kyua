@@ -28,8 +28,8 @@
 
 #include "model/test_case.hpp"
 
-#include "engine/test_program.hpp"
 #include "model/metadata.hpp"
+#include "model/test_program.hpp"
 #include "model/test_result.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/optional.ipp"
@@ -47,7 +47,7 @@ struct model::test_case::impl {
     const std::string interface_name;
 
     /// Test program this test case belongs to.
-    const engine::test_program& _test_program;
+    const model::test_program& _test_program;
 
     /// Name of the test case; must be unique within the test program.
     std::string name;
@@ -68,7 +68,7 @@ struct model::test_case::impl {
     /// \param fake_result_ Fake result to return instead of running the test
     ///     case.
     impl(const std::string& interface_name_,
-         const engine::test_program& test_program_,
+         const model::test_program& test_program_,
          const std::string& name_,
          const model::metadata& md_,
          const optional< model::test_result >& fake_result_) :
@@ -109,7 +109,7 @@ struct model::test_case::impl {
 ///     unique.
 /// \param md_ Metadata of the test case.
 model::test_case::test_case(const std::string& interface_name_,
-                             const engine::test_program& test_program_,
+                             const model::test_program& test_program_,
                              const std::string& name_,
                              const model::metadata& md_) :
     _pimpl(new impl(interface_name_, test_program_, name_, md_, none))
@@ -141,7 +141,7 @@ model::test_case::test_case(const std::string& interface_name_,
 /// \param test_result_ The fake result to return when this test case is run.
 model::test_case::test_case(
     const std::string& interface_name_,
-    const engine::test_program& test_program_,
+    const model::test_program& test_program_,
     const std::string& name_,
     const std::string& description_,
     const model::test_result& test_result_) :
@@ -175,7 +175,7 @@ model::test_case::interface_name(void) const
 /// Gets the test program this test case belongs to.
 ///
 /// \return A reference to the container test program.
-const engine::test_program&
+const model::test_program&
 model::test_case::container_test_program(void) const
 {
     return _pimpl->_test_program;

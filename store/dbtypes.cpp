@@ -28,7 +28,7 @@
 
 #include "store/dbtypes.hpp"
 
-#include "engine/test_program.hpp"
+#include "model/test_program.hpp"
 #include "store/exceptions.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/sanity.hpp"

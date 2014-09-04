@@ -38,6 +38,7 @@ extern "C" {
 #include "model/context.hpp"
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
+#include "model/test_program.hpp"
 #include "model/test_result.hpp"
 #include "model/types.hpp"
 #include "store/dbtypes.hpp"
@@ -284,7 +285,7 @@ store::write_transaction::put_context(const model::context& context)
 /// \throw error If there is any problem when talking to the database.
 int64_t
 store::write_transaction::put_test_program(
-    const engine::test_program& test_program)
+    const model::test_program& test_program)
 {
     try {
         const int64_t metadata_id = put_metadata(

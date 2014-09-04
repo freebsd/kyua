@@ -38,6 +38,7 @@
 #include "model/context.hpp"
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
+#include "model/test_program.hpp"
 #include "model/test_result.hpp"
 #include "store/layout.hpp"
 #include "store/read_transaction.hpp"
@@ -305,7 +306,7 @@ public:
     void
     got_result(store::results_iterator& iter)
     {
-        const engine::test_program_ptr test_program = iter.test_program();
+        const model::test_program_ptr test_program = iter.test_program();
         const model::test_result result = iter.result();
 
         const model::test_case& test_case = *test_program->find(

@@ -26,49 +26,61 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file cli/cmd_list.hpp
-/// Provides the cmd_list class.
+/// \file model/test_program.hpp
+/// Definition of the "test program" concept.
 
-#if !defined(CLI_CMD_LIST_HPP)
-#define CLI_CMD_LIST_HPP
+#if !defined(MODEL_TEST_PROGRAM_HPP)
+#define MODEL_TEST_PROGRAM_HPP
 
+#include "model/test_program_fwd.hpp"
+
+#include <ostream>
 #include <string>
+#include <vector>
 
-#include "cli/common.hpp"
+#include "model/metadata_fwd.hpp"
 #include "model/test_case_fwd.hpp"
+#include "utils/fs/path.hpp"
+#include "utils/shared_ptr.hpp"
 
-namespace engine {
-class filters_state;
-}  // namespace engine
-
-namespace utils {
-namespace fs {
-class path;
-}  // namespace fs
-}  // namespace utils
-
-namespace cli {
+namespace model {
 
 
-namespace detail {
+/// Representation of a test program.
+class test_program {
+    struct impl;
 
-void list_test_case(utils::cmdline::ui*, const bool, const model::test_case&);
+    /// Pointer to the shared internal implementation.
+    std::shared_ptr< impl > _pimpl;
 
-}  // namespace detail
-
-
-/// Implementation of the "list" subcommand.
-class cmd_list : public cli_command
-{
 public:
-    cmd_list(void);
+    test_program(const std::string&, const utils::fs::path&,
+                 const utils::fs::path&, const std::string&,
+                 const model::metadata&);
+    ~test_program(void);
 
-    int run(utils::cmdline::ui*, const utils::cmdline::parsed_cmdline&,
-            const utils::config::tree&);
+    const std::string& interface_name(void) const;
+    const utils::fs::path& root(void) const;
+    const utils::fs::path& relative_path(void) const;
+    const utils::fs::path absolute_path(void) const;
+    const std::string& test_suite_name(void) const;
+    const model::metadata& get_metadata(void) const;
+
+    const model::test_case_ptr& find(const std::string&) const;
+    const model::test_cases_vector& test_cases(void) const;
+    // TODO(jmmv): These are artifacts of the way this class used to work; see
+    // engine::test_program.  Need to remove these.
+    bool has_test_cases(void) const;
+    void set_test_cases(const model::test_cases_vector&);
+
+    bool operator==(const test_program&) const;
+    bool operator!=(const test_program&) const;
 };
 
 
-}  // namespace cli
+std::ostream& operator<<(std::ostream&, const test_program&);
 
 
-#endif  // !defined(CLI_CMD_LIST_HPP)
+}  // namespace model
+
+#endif  // !defined(MODEL_TEST_PROGRAM_HPP)

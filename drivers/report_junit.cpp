@@ -33,6 +33,7 @@
 #include "model/context.hpp"
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
+#include "model/test_program.hpp"
 #include "model/test_result.hpp"
 #include "model/types.hpp"
 #include "store/read_transaction.hpp"
@@ -52,7 +53,7 @@ namespace text = utils::text;
 ///
 /// \return A class-like representation of the test program's identifier.
 std::string
-drivers::junit_classname(const engine::test_program& test_program)
+drivers::junit_classname(const model::test_program& test_program)
 {
     std::string classname = test_program.relative_path().str();
     std::replace(classname.begin(), classname.end(), '/', '.');

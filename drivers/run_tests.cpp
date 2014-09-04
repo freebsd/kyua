@@ -34,6 +34,7 @@
 #include "engine/test_program.hpp"
 #include "model/context.hpp"
 #include "model/test_case.hpp"
+#include "model/test_program.hpp"
 #include "model/test_result.hpp"
 #include "store/write_backend.hpp"
 #include "store/write_transaction.hpp"
@@ -109,7 +110,7 @@ public:
 /// \param work_directory Temporary directory to use.
 /// \param tx The store transaction into which to put the results.
 void
-run_test_program(const engine::test_program& program,
+run_test_program(model::test_program& program,
                  const config::tree& user_config,
                  engine::filters_state& filters,
                  drivers::run_tests::base_hooks& hooks,
@@ -119,6 +120,7 @@ run_test_program(const engine::test_program& program,
     LI(F("Processing test program '%s'") % program.relative_path());
     const int64_t test_program_id = tx.put_test_program(program);
 
+    engine::load_test_cases(program);
     const model::test_cases_vector& test_cases = program.test_cases();
     for (model::test_cases_vector::const_iterator iter = test_cases.begin();
          iter != test_cases.end(); iter++) {
@@ -185,10 +187,10 @@ drivers::run_tests::drive(const fs::path& kyuafile_path,
     const fs::auto_directory work_directory = fs::auto_directory::mkdtemp(
         "kyua.XXXXXX");
 
-    for (engine::test_programs_vector::const_iterator iter =
+    for (model::test_programs_vector::const_iterator iter =
          kyuafile.test_programs().begin();
          iter != kyuafile.test_programs().end(); iter++) {
-        const engine::test_program_ptr& test_program = *iter;
+        const model::test_program_ptr& test_program = *iter;
 
         if (!filters.match_test_program(test_program->relative_path()))
             continue;

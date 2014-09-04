@@ -64,18 +64,3 @@ engine::load_error::load_error(const fs::path& file_,
 engine::load_error::~load_error(void) throw()
 {
 }
-
-
-/// Constructs a new not_found_error.
-///
-/// \param message The plain-text error message.
-engine::not_found_error::not_found_error(const std::string& message) :
-    error(message)
-{
-}
-
-
-/// Destructor for the error.
-engine::not_found_error::~not_found_error(void) throw()
-{
-}

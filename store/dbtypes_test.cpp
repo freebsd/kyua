@@ -30,7 +30,7 @@
 
 #include <atf-c++.hpp>
 
-#include "engine/test_program.hpp"
+#include "model/test_program.hpp"
 #include "store/exceptions.hpp"
 #include "utils/datetime.hpp"
 #include "utils/optional.ipp"

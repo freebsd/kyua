@@ -41,7 +41,6 @@ extern "C" {
 #include <stdint.h>
 }
 
-#include "engine/test_program.hpp"
 #include "model/context_fwd.hpp"
 #include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"

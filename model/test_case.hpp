@@ -38,13 +38,10 @@
 #include <string>
 
 #include "model/metadata_fwd.hpp"
+#include "model/test_program_fwd.hpp"
 #include "model/test_result_fwd.hpp"
 #include "utils/optional.hpp"
 #include "utils/shared_ptr.hpp"
-
-namespace engine {
-class test_program;
-}  // namespace engine
 
 namespace model {
 
@@ -57,15 +54,15 @@ class test_case {
     std::shared_ptr< impl > _pimpl;
 
 public:
-    test_case(const std::string&, const engine::test_program&,
+    test_case(const std::string&, const model::test_program&,
               const std::string&, const metadata&);
-    test_case(const std::string&, const engine::test_program&,
+    test_case(const std::string&, const model::test_program&,
               const std::string&, const std::string&,
               const test_result&);
     ~test_case(void);
 
     const std::string& interface_name(void) const;
-    const engine::test_program& container_test_program(void) const;
+    const model::test_program& container_test_program(void) const;
     const std::string& name(void) const;
     const metadata& get_metadata(void) const;
     utils::optional< test_result > fake_result(void) const;
