@@ -399,6 +399,21 @@ ATF_TEST_CASE_BODY(kyuafile__load__syntax__bad_version)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__test_suite__missing);
+ATF_TEST_CASE_BODY(kyuafile__load__test_suite__missing)
+{
+    atf::utils::create_file(
+        "config",
+        "syntax(2)\n"
+        "plain_test_program{name='one'}");
+
+    atf::utils::create_file("one", "");
+
+    ATF_REQUIRE_THROW_RE(engine::load_error, "No test suite defined",
+                         engine::kyuafile::load(fs::path("config"), none));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__test_suite__twice);
 ATF_TEST_CASE_BODY(kyuafile__load__test_suite__twice)
 {
@@ -452,6 +467,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__syntax__deprecated_format);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__syntax__twice);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__syntax__bad_version);
+    ATF_ADD_TEST_CASE(tcs, kyuafile__load__test_suite__missing);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__test_suite__twice);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__missing_file);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__missing_test_program);

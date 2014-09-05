@@ -127,6 +127,34 @@ class parser : utils::noncopyable {
     /// the Kyuafile.
     engine::test_programs_vector _test_programs;
 
+    /// Safely gets _test_suite and respects any test program overrides.
+    ///
+    /// \param program_override The test program-specific test suite name.  May
+    ///     be empty to indicate no override.
+    ///
+    /// \return The name of the test suite.
+    ///
+    /// \throw std::runtime_error If program_override is empty and the Kyuafile
+    /// did not yet define the global name of the test suite.
+    std::string
+    get_test_suite(const std::string& program_override)
+    {
+        std::string test_suite;
+
+        if (program_override.empty()) {
+            if (!_test_suite) {
+                throw std::runtime_error("No test suite defined in the "
+                                         "Kyuafile and no override provided in "
+                                         "the test_program definition");
+            }
+            test_suite = _test_suite.get();
+        } else {
+            test_suite = program_override;
+        }
+
+        return test_suite;
+    }
+
 public:
     /// Initializes the parser and the Lua state.
     ///
@@ -276,10 +304,9 @@ public:
             throw std::runtime_error(F("Non-existent test program '%s'") %
                                      path);
 
-        const std::string test_suite = test_suite_override.empty()
-            ? _test_suite.get() : test_suite_override;
         _test_programs.push_back(engine::test_program_ptr(
-            new engine::test_program(interface, path, _build_root, test_suite,
+            new engine::test_program(interface, path, _build_root,
+                                     get_test_suite(test_suite_override),
                                      metadata)));
     }
 

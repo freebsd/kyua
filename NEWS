@@ -13,6 +13,9 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   the reuse of legacy test code), we don't want it to easily escape the
   automanaged work directory.
 
+* Issue 111: Fixed crash when defining a test program in a Kyuafile that
+  has not yet specified the test suite name.
+
 
 Changes in version 0.10
 =======================
