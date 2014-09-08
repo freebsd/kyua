@@ -41,7 +41,18 @@ f="${f} CPPFLAGS='-I/usr/local/include'"
 f="${f} LDFLAGS='-L/usr/local/lib -Wl,-R/usr/local/lib'"
 f="${f} PKG_CONFIG_PATH='/usr/local/lib/pkgconfig'"
 if [ "${AS_ROOT:-no}" = yes ]; then
-    sudo make distcheck DISTCHECK_CONFIGURE_FLAGS="${f}"
+    config_file=
+    if [ "${UNPRIVILEGED_USER:-no}" = yes ]; then
+        cat >root-kyua.conf <<EOF
+syntax(2)
+unprivileged_user = 'nobody'
+EOF
+        config_file="$(pwd)/root-kyua.conf"
+    else
+        config_file=none
+    fi
+    sudo -H make distcheck DISTCHECK_CONFIGURE_FLAGS="${f}" \
+        KYUA_TEST_CONFIG_FILE="${config_file}"
 else
     make distcheck DISTCHECK_CONFIGURE_FLAGS="${f}"
 fi
