@@ -32,7 +32,6 @@ extern "C" {
 #include <unistd.h>
 }
 
-#include <fstream>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -42,6 +41,7 @@ extern "C" {
 #include "utils/format/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
+#include "utils/stream.hpp"
 
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
@@ -96,7 +96,7 @@ static std::vector< std::pair< logging::level, std::string > > backlog;
 
 
 /// Stream to the currently open log file.
-static std::auto_ptr< std::ofstream > logfile;
+static std::auto_ptr< std::ostream > logfile;
 
 
 /// Constant string to strftime to format timestamps.
@@ -229,9 +229,11 @@ logging::set_persistency(const std::string& new_level, const fs::path& path)
     else
         throw std::range_error(F("Unrecognized log level '%s'") % new_level);
 
-    logfile.reset(new std::ofstream(path.c_str()));
-    if (!(*logfile))
+    try {
+        logfile = utils::open_ostream(path);
+    } catch (const std::runtime_error& unused_error) {
         throw std::runtime_error(F("Failed to create log file %s") % path);
+    }
 
     for (std::vector< std::pair< logging::level, std::string > >::const_iterator
          iter = backlog.begin(); iter != backlog.end(); iter++) {

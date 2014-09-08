@@ -50,6 +50,7 @@
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
+#include "utils/stream.hpp"
 
 namespace cmdline = utils::cmdline;
 namespace config = utils::config;
@@ -289,7 +290,7 @@ cmd_report::run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
                 const cmdline::parsed_cmdline& cmdline,
                 const config::tree& UTILS_UNUSED_PARAM(user_config))
 {
-    std::auto_ptr< std::ostream > output = open_output_file(
+    std::auto_ptr< std::ostream > output = utils::open_ostream(
         cmdline.get_option< cmdline::path_option >("output"));
 
     const fs::path results_file = layout::find_results(

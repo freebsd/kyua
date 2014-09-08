@@ -106,12 +106,6 @@ const cmdline::string_option cli::results_file_open_option(
 namespace {
 
 
-/// Constant that represents the path to stdout.
-static const fs::path stdout_path("/dev/stdout");
-/// Constant that represents the path to stderr.
-static const fs::path stderr_path("/dev/stderr");
-
-
 /// Gets the path to the historical database if it exists.
 ///
 /// TODO(jmmv): This function should go away.  It only exists as a temporary
@@ -172,44 +166,6 @@ parse_types(const std::vector< std::string >& names)
 
 
 }  // anonymous namespace
-
-
-/// Opens a new file for output, respecting the stdout and stderr streams.
-///
-/// \param path The path to the output file to be created.
-///
-/// \return A pointer to a new output stream.
-std::auto_ptr< std::ostream >
-cli::open_output_file(const fs::path& path)
-{
-    std::auto_ptr< std::ostream > out;
-    if (path == stdout_path) {
-        // We should use ui->out() somehow to funnel all output via the ui
-        // object, but it's not worth the hassle.  This would be tricky because
-        // the ui object does not provide a stream-like interface, which is
-        // arguably a shortcoming.
-        out.reset(new std::ofstream());
-        out->copyfmt(std::cout);
-        out->clear(std::cout.rdstate());
-        out->rdbuf(std::cout.rdbuf());
-    } else if (path == stderr_path) {
-        // We should use ui->err() somehow to funnel all output via the ui
-        // object, but it's not worth the hassle.  This would be tricky because
-        // the ui object does not provide a stream-like interface, which is
-        // arguably a shortcoming.
-        out.reset(new std::ofstream());
-        out->copyfmt(std::cerr);
-        out->clear(std::cerr.rdstate());
-        out->rdbuf(std::cerr.rdbuf());
-    } else {
-        out.reset(new std::ofstream(path.c_str()));
-        if (!(*out)) {
-            throw std::runtime_error(F("Cannot open output file %s") % path);
-        }
-    }
-    INV(out.get() != NULL);
-    return out;
-}
 
 
 /// Gets the path to the build root, if any.

@@ -38,6 +38,7 @@
 #include "utils/cmdline/parser.ipp"
 #include "utils/defs.hpp"
 #include "utils/optional.ipp"
+#include "utils/stream.hpp"
 
 namespace cmdline = utils::cmdline;
 namespace config = utils::config;
@@ -76,7 +77,7 @@ cmd_report_junit::run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
     const fs::path results_file = layout::find_results(
         results_file_open(cmdline));
 
-    std::auto_ptr< std::ostream > output = open_output_file(
+    std::auto_ptr< std::ostream > output = utils::open_ostream(
         cmdline.get_option< cmdline::path_option >("output"));
 
     engine::report_junit_hooks hooks(*output.get());
