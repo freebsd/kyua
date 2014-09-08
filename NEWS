@@ -16,6 +16,9 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 * Issue 105: Use tmpfs instead of md as a temporary file system for
   tests in FreeBSD so that we do not leak md(4) devices.
 
+* Issue 109: Properly drop group privileges when unprivileged_user is
+  set.  Also fixes testers/run_test:fork_wait__unprivileged_group.
+
 * Issue 111: Fixed crash when defining a test program in a Kyuafile that
   has not yet specified the test suite name.
 
