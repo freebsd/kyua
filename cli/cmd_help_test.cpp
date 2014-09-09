@@ -45,6 +45,10 @@
 #include "utils/defs.hpp"
 #include "utils/sanity.hpp"
 
+#if defined(HAVE_CONFIG_H)
+#   include "config.h"
+#endif
+
 namespace cmdline = utils::cmdline;
 namespace config = utils::config;
 
@@ -163,6 +167,8 @@ global_test(const cmdline::options_vector& general_options,
 
     std::vector< std::string > expected;
 
+    expected.push_back(PACKAGE " (" PACKAGE_NAME ") " PACKAGE_VERSION);
+    expected.push_back("");
     expected.push_back("Usage: progname [general_options] command "
                        "[command_options] [args]");
     if (!general_options.empty()) {
@@ -238,11 +244,14 @@ ATF_TEST_CASE_BODY(subcommand__simple)
     cmd_help cmd(&general_options, &mock_commands);
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(EXIT_SUCCESS, cmd.main(&ui, args, engine::default_config()));
-    ATF_REQUIRE(atf::utils::grep_collection("^Usage: progname \\[general_options\\] "
-                                   "mock_simple$", ui.out_log()));
-    ATF_REQUIRE(!atf::utils::grep_collection("Available.*options", ui.out_log()));
-    ATF_REQUIRE(atf::utils::grep_collection("^See kyua-mock_simple\\(1\\) for more "
-                                   "details.", ui.out_log()));
+    ATF_REQUIRE(atf::utils::grep_collection(
+        "^kyua.*" PACKAGE_VERSION, ui.out_log()));
+    ATF_REQUIRE(atf::utils::grep_collection(
+        "^Usage: progname \\[general_options\\] mock_simple$", ui.out_log()));
+    ATF_REQUIRE(!atf::utils::grep_collection(
+        "Available.*options", ui.out_log()));
+    ATF_REQUIRE(atf::utils::grep_collection(
+        "^See kyua-mock_simple\\(1\\) for more details.", ui.out_log()));
     ATF_REQUIRE(ui.err_log().empty());
 }
 
@@ -267,6 +276,8 @@ ATF_TEST_CASE_BODY(subcommand__complex)
     cmd_help cmd(&general_options, &mock_commands);
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(EXIT_SUCCESS, cmd.main(&ui, args, engine::default_config()));
+    ATF_REQUIRE(atf::utils::grep_collection(
+        "^kyua.*" PACKAGE_VERSION, ui.out_log()));
     ATF_REQUIRE(atf::utils::grep_collection(
         "^Usage: progname \\[general_options\\] mock_complex "
         "\\[command_options\\] \\[arg1 .. argN\\]$", ui.out_log()));

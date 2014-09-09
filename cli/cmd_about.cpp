@@ -131,7 +131,7 @@ cmd_about::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
         } else if (topic == "license") {
             success &= cat_file(ui, docdir / "COPYING");
         } else if (topic == "version") {
-            ui->out(PACKAGE " (" PACKAGE_NAME ") " PACKAGE_VERSION);
+            write_version_header(ui);
         } else {
             throw cmdline::usage_error(F("Invalid about topic '%s'") % topic);
         }

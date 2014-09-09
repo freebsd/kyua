@@ -105,6 +105,9 @@ std::string format_test_case_id(const engine::test_case&);
 std::string format_test_case_id(const engine::test_filter&);
 
 
+void write_version_header(utils::cmdline::ui*);
+
+
 }  // namespace cli
 
 #endif  // !defined(CLI_COMMON_HPP)
