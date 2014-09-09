@@ -89,7 +89,7 @@ cat_file(cmdline::ui* ui, const fs::path& file)
 /// Default constructor for cmd_about.
 cmd_about::cmd_about(void) : cli_command(
     "about", "[authors|license|version]", 0, 1,
-    "Shows general program information")
+    "Shows detailed authors, license, and version information")
 {
 }
 
