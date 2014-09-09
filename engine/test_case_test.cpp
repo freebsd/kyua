@@ -846,6 +846,23 @@ ATF_TEST_CASE_HEAD(run_test_case__atf__required_user__atf__unprivileged__atf__dr
 }
 ATF_TEST_CASE_BODY(run_test_case__atf__required_user__atf__unprivileged__atf__drop)
 {
+    // The temporary work directory created to run an ATF test case in is given
+    // 0700 permissions by mkdtemp(3) and is created within TMPDIR.  This is by
+    // design.
+    //
+    // However, because TMPDIR is set to the work directory, a second invocation
+    // of a different test case (like we do here) causes two work directories to
+    // be nested.  If the second invocation is for an unprivileged test case,
+    // absolute paths to the nested work directory cannot be resolved and thus
+    // the test fails.
+    //
+    // We workaround this by weakening the permissions of our own work directory
+    // so that name resolution works.  Alternatively, we could change the ATF
+    // tester to avoid using absolute paths (i.e. by using relative paths or by
+    // using the openat(2) family of functions).  It's unclear if any of this is
+    // worth the effort so go with this hack for the test for now.
+    ATF_REQUIRE(::chmod(".", 0755) != -1);
+
     atf_helper helper(this, "check_unprivileged");
     helper.set_metadata("required_user", "unprivileged");
     helper.config().set< engine::user_node >(

@@ -77,6 +77,10 @@ CHECK_ENVIRONMENT = KYUA_CONFDIR="/non-existent" \
 INSTALLCHECK_ENVIRONMENT = KYUA_CONFDIR="/non-existent" \
                            PATH="$(prefix)/bin:$${PATH}"
 
+# Allow the caller to override the configuration file to passed to our
+# test runs below.
+KYUA_TEST_CONFIG_FILE = none
+
 # Generate local-kyua, a wrapper shell script to run the just-built 'kyua'
 # binary by pointing it to the possibly not-yet-installed data files in the
 # build tree.
@@ -85,8 +89,8 @@ CLEANFILES += local-kyua local-kyua.tmp
 local-kyua: Makefile
 	echo '#!/bin/sh' >local-kyua.tmp
 	echo 'env $(CHECK_ENVIRONMENT) $(TESTS_ENVIRONMENT)' \
-	    '"$(abs_top_builddir)/kyua" --config=none "$${@}"' \
-	    >>local-kyua.tmp
+	    '"$(abs_top_builddir)/kyua" --config='$(KYUA_TEST_CONFIG_FILE)' \
+	    "$${@}"' >>local-kyua.tmp
 	chmod +x local-kyua.tmp
 	mv -f local-kyua.tmp local-kyua
 
@@ -101,7 +105,7 @@ installcheck-local: installcheck-kyua
 PHONY_TARGETS += installcheck-kyua
 installcheck-kyua:
 	cd $(pkgtestsdir) && $(INSTALLCHECK_ENVIRONMENT) $(TESTS_ENVIRONMENT) \
-	    kyua --config=none test
+	    kyua --config='$(KYUA_TEST_CONFIG_FILE)' test
 else
 dist-hook: forbid-dist
 PHONY_TARGETS += forbid-dist

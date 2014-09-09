@@ -9,7 +9,8 @@ before_install:
 
 env:
     - AS_ROOT=no
-    - AS_ROOT=yes
+    - AS_ROOT=yes UNPRIVILEGED_USER=no
+    - AS_ROOT=yes UNPRIVILEGED_USER=yes
 
 script:
     - ./admin/travis-build.sh

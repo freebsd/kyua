@@ -28,9 +28,60 @@
 
 #include "utils/stream.hpp"
 
+#include <cstdlib>
 #include <sstream>
 
 #include <atf-c++.hpp>
+
+#include "utils/fs/path.hpp"
+
+namespace fs = utils::fs;
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(open_ostream__stdout);
+ATF_TEST_CASE_BODY(open_ostream__stdout)
+{
+    const pid_t pid = atf::utils::fork();
+    if (pid == 0) {
+        std::auto_ptr< std::ostream > output = utils::open_ostream(
+            fs::path("/dev/stdout"));
+        (*output) << "Message to stdout\n";
+        output.reset();
+        std::exit(EXIT_SUCCESS);
+    }
+    atf::utils::wait(pid, EXIT_SUCCESS, "Message to stdout\n", "");
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(open_ostream__stderr);
+ATF_TEST_CASE_BODY(open_ostream__stderr)
+{
+    const pid_t pid = atf::utils::fork();
+    if (pid == 0) {
+        std::auto_ptr< std::ostream > output = utils::open_ostream(
+            fs::path("/dev/stderr"));
+        (*output) << "Message to stderr\n";
+        output.reset();
+        std::exit(EXIT_SUCCESS);
+    }
+    atf::utils::wait(pid, EXIT_SUCCESS, "", "Message to stderr\n");
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(open_ostream__other);
+ATF_TEST_CASE_BODY(open_ostream__other)
+{
+    const pid_t pid = atf::utils::fork();
+    if (pid == 0) {
+        std::auto_ptr< std::ostream > output = utils::open_ostream(
+            fs::path("some-file.txt"));
+        (*output) << "Message to other file\n";
+        output.reset();
+        std::exit(EXIT_SUCCESS);
+    }
+    atf::utils::wait(pid, EXIT_SUCCESS, "", "");
+    atf::utils::compare_file("some-file.txt", "Message to other file\n");
+}
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(stream_length__empty);
@@ -73,6 +124,10 @@ ATF_TEST_CASE_BODY(read_stream__some)
 
 ATF_INIT_TEST_CASES(tcs)
 {
+    ATF_ADD_TEST_CASE(tcs, open_ostream__stdout);
+    ATF_ADD_TEST_CASE(tcs, open_ostream__stderr);
+    ATF_ADD_TEST_CASE(tcs, open_ostream__other);
+
     ATF_ADD_TEST_CASE(tcs, stream_length__empty);
     ATF_ADD_TEST_CASE(tcs, stream_length__some);
 

@@ -33,7 +33,6 @@
 #define CLI_COMMON_HPP
 
 #include <memory>
-#include <ostream>
 #include <set>
 #include <vector>
 
@@ -87,8 +86,6 @@ typedef std::auto_ptr< cli_command > cli_command_ptr;
 /// which the user provided the types.
 typedef std::vector< engine::test_result::result_type > result_types;
 
-
-std::auto_ptr< std::ostream > open_output_file(const utils::fs::path& path);
 
 utils::optional< utils::fs::path > build_root_path(
     const utils::cmdline::parsed_cmdline&);

@@ -28,11 +28,60 @@
 
 #include "utils/stream.hpp"
 
-#include <istream>
+#include <fstream>
+#include <iostream>
 #include <sstream>
+#include <stdexcept>
 
 #include "utils/format/macros.hpp"
+#include "utils/fs/path.hpp"
 #include "utils/sanity.hpp"
+
+namespace fs = utils::fs;
+
+
+namespace {
+
+
+/// Constant that represents the path to stdout.
+static const fs::path stdout_path("/dev/stdout");
+
+
+/// Constant that represents the path to stderr.
+static const fs::path stderr_path("/dev/stderr");
+
+
+}  // anonymous namespace
+
+
+/// Opens a new file for output, respecting the stdout and stderr streams.
+///
+/// \param path The path to the output file to be created.
+///
+/// \return A pointer to a new output stream.
+std::auto_ptr< std::ostream >
+utils::open_ostream(const fs::path& path)
+{
+    std::auto_ptr< std::ostream > out;
+    if (path == stdout_path) {
+        out.reset(new std::ofstream());
+        out->copyfmt(std::cout);
+        out->clear(std::cout.rdstate());
+        out->rdbuf(std::cout.rdbuf());
+    } else if (path == stderr_path) {
+        out.reset(new std::ofstream());
+        out->copyfmt(std::cerr);
+        out->clear(std::cerr.rdstate());
+        out->rdbuf(std::cerr.rdbuf());
+    } else {
+        out.reset(new std::ofstream(path.c_str()));
+        if (!(*out)) {
+            throw std::runtime_error(F("Cannot open output file %s") % path);
+        }
+    }
+    INV(out.get() != NULL);
+    return out;
+}
 
 
 /// Gets the length of a stream.
