@@ -19,6 +19,9 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 * Issue 109: Properly drop group privileges when unprivileged_user is
   set.  Also fixes testers/run_test:fork_wait__unprivileged_group.
 
+* Issue 110: Changed 'help' to display version information and clarified
+  the purpose of the 'about' command in its documentation.
+
 * Issue 111: Fixed crash when defining a test program in a Kyuafile that
   has not yet specified the test suite name.
 

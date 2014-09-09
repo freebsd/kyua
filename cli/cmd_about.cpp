@@ -89,7 +89,7 @@ cat_file(cmdline::ui* ui, const fs::path& file)
 /// Default constructor for cmd_about.
 cmd_about::cmd_about(void) : cli_command(
     "about", "[authors|license|version]", 0, 1,
-    "Shows general program information")
+    "Shows detailed authors, license, and version information")
 {
 }
 
@@ -131,7 +131,7 @@ cmd_about::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
         } else if (topic == "license") {
             success &= cat_file(ui, docdir / "COPYING");
         } else if (topic == "version") {
-            ui->out(PACKAGE " (" PACKAGE_NAME ") " PACKAGE_VERSION);
+            write_version_header(ui);
         } else {
             throw cmdline::usage_error(F("Invalid about topic '%s'") % topic);
         }

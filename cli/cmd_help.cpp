@@ -98,6 +98,8 @@ general_help(cmdline::ui* ui, const cmdline::options_vector* options,
 {
     PRE(!commands->empty());
 
+    cli::write_version_header(ui);
+    ui->out("");
     ui->out_tag_wrap(
         "Usage: ",
         F("%s [general_options] command [command_options] [args]") %
@@ -167,6 +169,8 @@ subcommand_help(cmdline::ui* ui,
                 const utils::cmdline::options_vector* general_options,
                 const cli::cli_command* command)
 {
+    cli::write_version_header(ui);
+    ui->out("");
     ui->out_tag_wrap(
         "Usage: ", F("%s [general_options] %s%s%s") %
         cmdline::progname() % command->name() %

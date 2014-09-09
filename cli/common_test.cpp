@@ -427,6 +427,17 @@ ATF_TEST_CASE_BODY(format_test_case_id__test_filter)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(write_version_header);
+ATF_TEST_CASE_BODY(write_version_header)
+{
+    cmdline::ui_mock ui;
+    cli::write_version_header(&ui);
+    ATF_REQUIRE_EQ(1, ui.out_log().size());
+    ATF_REQUIRE_MATCH("^kyua .*[0-9]+\\.[0-9]+$", ui.out_log()[0]);
+    ATF_REQUIRE(ui.err_log().empty());
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, build_root_path__default);
@@ -464,4 +475,6 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, format_test_case_id__test_case);
     ATF_ADD_TEST_CASE(tcs, format_test_case_id__test_filter);
+
+    ATF_ADD_TEST_CASE(tcs, write_version_header);
 }

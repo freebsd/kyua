@@ -50,6 +50,10 @@
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 
+#if defined(HAVE_CONFIG_H)
+#   include "config.h"
+#endif
+
 namespace cmdline = utils::cmdline;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
@@ -392,4 +396,14 @@ std::string
 cli::format_test_case_id(const engine::test_filter& test_filter)
 {
     return F("%s:%s") % test_filter.test_program % test_filter.test_case;
+}
+
+
+/// Prints the version header information to the interface output.
+///
+/// \param ui Interface to which to write the version details.
+void
+cli::write_version_header(utils::cmdline::ui* ui)
+{
+    ui->out(PACKAGE " (" PACKAGE_NAME ") " PACKAGE_VERSION);
 }

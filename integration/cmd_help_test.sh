@@ -30,23 +30,25 @@
 utils_test_case global
 global_body() {
     atf_check -s exit:0 -o save:stdout -e empty kyua help
+    grep -E 'kyua .*[0-9]+\.[0-9]+' stdout || atf_fail 'No version reported'
     grep '^Usage: kyua' stdout || atf_fail 'No usage line printed'
     grep -- '--loglevel' stdout || atf_fail 'Generic options not printed'
     if grep -- '--show' stdout; then
         atf_fail 'One option of the about subcommand appeared in the output'
     fi
-    grep 'about  *Shows general' stdout || atf_fail 'Commands not printed'
+    grep 'about  *Shows detailed' stdout || atf_fail 'Commands not printed'
 }
 
 
 utils_test_case one_command
 one_command_body() {
     atf_check -s exit:0 -o save:stdout -e empty kyua help test
+    grep -E 'kyua .*[0-9]+\.[0-9]+' stdout || atf_fail 'No version reported'
     grep '^Usage: kyua' stdout || atf_fail 'No usage line printed'
     grep '^Run tests' stdout || atf_fail 'No description printed'
     grep -- '--loglevel' stdout || atf_fail 'Generic options not printed'
     grep -- '--kyuafile' stdout || atf_fail 'Command options not printed'
-    if grep 'about: Shows general' stdout; then
+    if grep 'about: Shows detailed' stdout; then
         atf_fail 'Printed table of commands, but should not have done so'
     fi
 }
