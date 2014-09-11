@@ -34,6 +34,23 @@ dnl module.  The global KYUA_FS_MODULE macro will call all checks required
 dnl for the library.
 
 
+dnl KYUA_FS_GETCWD_DYN
+dnl
+dnl Checks whether getcwd(NULL, 0) works; i.e. if getcwd(3) can dynamically
+dnl allocate the output buffer to fit the whole current path.
+AC_DEFUN([KYUA_FS_GETCWD_DYN], [
+    AC_MSG_CHECKING([whether getcwd(NULL, 0) works])
+    AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <stdlib.h>
+#include <unistd.h>],
+        [char *cwd = getcwd(NULL, 0);
+         return (cwd != NULL) ? EXIT_SUCCESS : EXIT_FAILURE;])],
+        [AC_MSG_RESULT(yes)
+         AC_DEFINE([HAVE_GETCWD_DYN], [1],
+                   [Define to 1 if getcwd(NULL, 0) works])],
+        [AC_MSG_RESULT(no)])
+])
+
+
 dnl KYUA_FS_LCHMOD
 dnl
 dnl Checks whether lchmod(3) exists and if it works.  Some systems, such as
@@ -93,6 +110,7 @@ dnl KYUA_FS_MODULE
 dnl
 dnl Performs all checks needed by the utils/fs library.
 AC_DEFUN([KYUA_FS_MODULE], [
+    KYUA_FS_GETCWD_DYN
     KYUA_FS_LCHMOD
     KYUA_FS_UNMOUNT
 ])

@@ -61,17 +61,6 @@ KYUA_MEMORY
 AC_CHECK_FUNCS([putenv setenv unsetenv])
 
 
-AC_MSG_CHECKING([whether getcwd(NULL, 0) works])
-AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <stdlib.h>
-#include <unistd.h>],
-    [char *cwd = getcwd(NULL, 0);
-     return (cwd != NULL) ? EXIT_SUCCESS : EXIT_FAILURE;])],
-    [AC_MSG_RESULT(yes)
-     AC_DEFINE([HAVE_GETCWD_DYN], [1],
-               [Define to 1 if getcwd(NULL, 0) works])],
-    [AC_MSG_RESULT(no)])
-
-
 AC_PROG_RANLIB
 
 
