@@ -3,6 +3,9 @@ Changes in version 0.11
 
 STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 
+* Issue 72: Add caching support to the getcwd(3) test in configure so
+  that the result can be overriden for cross-compilation purposes.
+
 * Issue 83: Changed manual page headings to include a "kyua" prefix in
   their name.  This prevents some possible confusion when displaying,
   for example, the "kyua-test" manual page with a plain name of "test".
