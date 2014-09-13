@@ -34,9 +34,10 @@
 
 #include "engine/exceptions.hpp"
 #include "engine/filters.hpp"
-#include "engine/test_case.hpp"
-#include "engine/test_program.hpp"
-#include "engine/test_result.hpp"
+#include "model/metadata.hpp"
+#include "model/test_case.hpp"
+#include "model/test_program.hpp"
+#include "model/test_result.hpp"
 #include "store/layout.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/globals.hpp"
@@ -128,10 +129,10 @@ ATF_TEST_CASE_BODY(result_types__default)
     const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
 
     cli::result_types exp_types;
-    exp_types.push_back(engine::test_result::skipped);
-    exp_types.push_back(engine::test_result::expected_failure);
-    exp_types.push_back(engine::test_result::broken);
-    exp_types.push_back(engine::test_result::failed);
+    exp_types.push_back(model::test_result::skipped);
+    exp_types.push_back(model::test_result::expected_failure);
+    exp_types.push_back(model::test_result::broken);
+    exp_types.push_back(model::test_result::failed);
     ATF_REQUIRE(exp_types == cli::get_result_types(mock_cmdline));
 }
 
@@ -144,11 +145,11 @@ ATF_TEST_CASE_BODY(result_types__empty)
     const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
 
     cli::result_types exp_types;
-    exp_types.push_back(engine::test_result::passed);
-    exp_types.push_back(engine::test_result::skipped);
-    exp_types.push_back(engine::test_result::expected_failure);
-    exp_types.push_back(engine::test_result::broken);
-    exp_types.push_back(engine::test_result::failed);
+    exp_types.push_back(model::test_result::passed);
+    exp_types.push_back(model::test_result::skipped);
+    exp_types.push_back(model::test_result::expected_failure);
+    exp_types.push_back(model::test_result::broken);
+    exp_types.push_back(model::test_result::failed);
     ATF_REQUIRE(exp_types == cli::get_result_types(mock_cmdline));
 }
 
@@ -161,11 +162,11 @@ ATF_TEST_CASE_BODY(result_types__explicit__all)
     const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
 
     cli::result_types exp_types;
-    exp_types.push_back(engine::test_result::passed);
-    exp_types.push_back(engine::test_result::skipped);
-    exp_types.push_back(engine::test_result::expected_failure);
-    exp_types.push_back(engine::test_result::broken);
-    exp_types.push_back(engine::test_result::failed);
+    exp_types.push_back(model::test_result::passed);
+    exp_types.push_back(model::test_result::skipped);
+    exp_types.push_back(model::test_result::expected_failure);
+    exp_types.push_back(model::test_result::broken);
+    exp_types.push_back(model::test_result::failed);
     ATF_REQUIRE(exp_types == cli::get_result_types(mock_cmdline));
 }
 
@@ -178,8 +179,8 @@ ATF_TEST_CASE_BODY(result_types__explicit__some)
     const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
 
     cli::result_types exp_types;
-    exp_types.push_back(engine::test_result::skipped);
-    exp_types.push_back(engine::test_result::broken);
+    exp_types.push_back(model::test_result::skipped);
+    exp_types.push_back(model::test_result::broken);
     ATF_REQUIRE(exp_types == cli::get_result_types(mock_cmdline));
 }
 
@@ -387,9 +388,9 @@ ATF_TEST_CASE_WITHOUT_HEAD(format_result__no_reason);
 ATF_TEST_CASE_BODY(format_result__no_reason)
 {
     ATF_REQUIRE_EQ("passed", cli::format_result(
-        engine::test_result(engine::test_result::passed)));
+        model::test_result(model::test_result::passed)));
     ATF_REQUIRE_EQ("failed", cli::format_result(
-        engine::test_result(engine::test_result::failed)));
+        model::test_result(model::test_result::failed)));
 }
 
 
@@ -397,24 +398,24 @@ ATF_TEST_CASE_WITHOUT_HEAD(format_result__with_reason);
 ATF_TEST_CASE_BODY(format_result__with_reason)
 {
     ATF_REQUIRE_EQ("broken: Something", cli::format_result(
-        engine::test_result(engine::test_result::broken, "Something")));
+        model::test_result(model::test_result::broken, "Something")));
     ATF_REQUIRE_EQ("expected_failure: A B C", cli::format_result(
-        engine::test_result(engine::test_result::expected_failure, "A B C")));
+        model::test_result(model::test_result::expected_failure, "A B C")));
     ATF_REQUIRE_EQ("failed: More text", cli::format_result(
-        engine::test_result(engine::test_result::failed, "More text")));
+        model::test_result(model::test_result::failed, "More text")));
     ATF_REQUIRE_EQ("skipped: Bye", cli::format_result(
-        engine::test_result(engine::test_result::skipped, "Bye")));
+        model::test_result(model::test_result::skipped, "Bye")));
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(format_test_case_id__test_case);
 ATF_TEST_CASE_BODY(format_test_case_id__test_case)
 {
-    const engine::test_program test_program(
+    const model::test_program test_program(
         "mock", fs::path("foo/bar/baz"), fs::path("unused-root"),
-        "unused-suite-name", engine::metadata_builder().build());
-    const engine::test_case test_case("mock", test_program, "abc",
-                                      engine::metadata_builder().build());
+        "unused-suite-name", model::metadata_builder().build());
+    const model::test_case test_case("mock", test_program, "abc",
+                                     model::metadata_builder().build());
     ATF_REQUIRE_EQ("foo/bar/baz:abc", cli::format_test_case_id(test_case));
 }
 

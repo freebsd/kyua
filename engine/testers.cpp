@@ -40,6 +40,7 @@ extern "C" {
 #include <string>
 
 #include "engine/exceptions.hpp"
+#include "model/test_result.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
@@ -296,5 +297,68 @@ engine::tester::test(const fs::path& program, const std::string& test_case_name,
         INV(status.signaled());
         throw engine::error(F("Tester received signal %s; this is a bug") %
                             status.termsig());
+    }
+}
+
+
+/// Parses a result from an input stream.
+///
+/// The parsing of a results file is quite permissive in terms of file syntax
+/// validation.  We accept result files with or without trailing new lines, and
+/// with descriptions that may span multiple lines.  This is to avoid getting in
+/// trouble when the result is generated from user code, in which case it is
+/// hard to predict how newlines look like.  Just swallow them; it's better for
+/// the consumer.
+///
+/// \param input The stream from which to read the result.
+///
+/// \return The parsed result.  If there is any problem during parsing, the
+/// failure is encoded as a broken result.
+model::test_result
+engine::parse_test_result(std::istream& input)
+{
+    std::string line;
+    if (!std::getline(input, line).good() && line.empty())
+        return model::test_result(model::test_result::broken,
+                                  "Empty result file");
+
+    // Fast-path for the most common case.
+    if (line == "passed")
+        return model::test_result(model::test_result::passed);
+
+    std::string type, reason;
+    const std::string::size_type pos = line.find(": ");
+    if (pos == std::string::npos) {
+        type = line;
+        reason = "";
+    } else {
+        type = line.substr(0, pos);
+        reason = line.substr(pos + 2);
+    }
+
+    if (input.good()) {
+        line.clear();
+        while (std::getline(input, line).good() && !line.empty()) {
+            reason += "<<NEWLINE>>" + line;
+            line.clear();
+        }
+        if (!line.empty())
+            reason += "<<NEWLINE>>" + line;
+    }
+
+    if (type == "broken") {
+        return model::test_result(model::test_result::broken, reason);
+    } else if (type == "expected_failure") {
+        return model::test_result(model::test_result::expected_failure,
+                                  reason);
+    } else if (type == "failed") {
+        return model::test_result(model::test_result::failed, reason);
+    } else if (type == "passed") {
+        return model::test_result(model::test_result::passed, reason);
+    } else if (type == "skipped") {
+        return model::test_result(model::test_result::skipped, reason);
+    } else {
+        return model::test_result(model::test_result::broken,
+                                  F("Unknown result type '%s'") % type);
     }
 }

@@ -33,8 +33,11 @@
 
 #include <atf-c++.hpp>
 
-#include "engine/context.hpp"
-#include "engine/test_result.hpp"
+#include "model/context.hpp"
+#include "model/metadata.hpp"
+#include "model/test_case.hpp"
+#include "model/test_program.hpp"
+#include "model/test_result.hpp"
 #include "store/exceptions.hpp"
 #include "store/read_backend.hpp"
 #include "store/write_backend.hpp"
@@ -178,8 +181,8 @@ ATF_TEST_CASE_BODY(get_results__many)
 
     store::write_transaction tx = backend.start_write();
 
-    const engine::context context(fs::path("/foo/bar"),
-                                  std::map< std::string, std::string >());
+    const model::context context(fs::path("/foo/bar"),
+                                 std::map< std::string, std::string >());
     tx.put_context(context);
 
     const datetime::timestamp start_time1 = datetime::timestamp::from_values(
@@ -193,15 +196,15 @@ ATF_TEST_CASE_BODY(get_results__many)
 
     atf::utils::create_file("unused.txt", "unused file\n");
 
-    engine::test_program test_program_1(
+    model::test_program test_program_1(
         "plain", fs::path("a/prog1"), fs::path("/the/root"), "suite1",
-        engine::metadata_builder().build());
-    engine::test_case_ptr test_case_1(new engine::test_case(
-        "plain", test_program_1, "main", engine::metadata_builder().build()));
-    engine::test_cases_vector test_cases_1;
+        model::metadata_builder().build());
+    model::test_case_ptr test_case_1(new model::test_case(
+        "plain", test_program_1, "main", model::metadata_builder().build()));
+    model::test_cases_vector test_cases_1;
     test_cases_1.push_back(test_case_1);
     test_program_1.set_test_cases(test_cases_1);
-    const engine::test_result result_1(engine::test_result::passed);
+    const model::test_result result_1(model::test_result::passed);
     {
         const int64_t tp_id = tx.put_test_program(test_program_1);
         const int64_t tc_id = tx.put_test_case(*test_case_1, tp_id);
@@ -211,16 +214,16 @@ ATF_TEST_CASE_BODY(get_results__many)
         tx.put_result(result_1, tc_id, start_time1, end_time1);
     }
 
-    engine::test_program test_program_2(
+    model::test_program test_program_2(
         "plain", fs::path("b/prog2"), fs::path("/the/root"), "suite2",
-        engine::metadata_builder().build());
-    engine::test_case_ptr test_case_2(new engine::test_case(
-        "plain", test_program_2, "main", engine::metadata_builder().build()));
-    engine::test_cases_vector test_cases_2;
+        model::metadata_builder().build());
+    model::test_case_ptr test_case_2(new model::test_case(
+        "plain", test_program_2, "main", model::metadata_builder().build()));
+    model::test_cases_vector test_cases_2;
     test_cases_2.push_back(test_case_2);
     test_program_2.set_test_cases(test_cases_2);
-    const engine::test_result result_2(engine::test_result::failed,
-                                       "Some text");
+    const model::test_result result_2(model::test_result::failed,
+                                      "Some text");
     {
         const int64_t tp_id = tx.put_test_program(test_program_2);
         const int64_t tc_id = tx.put_test_case(*test_case_2, tp_id);

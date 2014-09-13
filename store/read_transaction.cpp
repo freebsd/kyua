@@ -35,8 +35,11 @@ extern "C" {
 #include <map>
 #include <utility>
 
-#include "engine/context.hpp"
-#include "engine/test_result.hpp"
+#include "model/context.hpp"
+#include "model/metadata.hpp"
+#include "model/test_case.hpp"
+#include "model/test_program.hpp"
+#include "model/test_result.hpp"
 #include "store/dbtypes.hpp"
 #include "store/exceptions.hpp"
 #include "store/read_backend.hpp"
@@ -91,10 +94,10 @@ get_env_vars(sqlite::database& db)
 /// \param metadata_id The identifier of the metadata.
 ///
 /// \return A new metadata object.
-static engine::metadata
+static model::metadata
 get_metadata(sqlite::database& db, const int64_t metadata_id)
 {
-    engine::metadata_builder builder;
+    model::metadata_builder builder;
 
     sqlite::statement stmt = db.create_statement(
         "SELECT * FROM metadatas WHERE metadata_id == :metadata_id");
@@ -157,12 +160,12 @@ get_file(sqlite::database& db, const int64_t file_id)
 /// \return The collection of loaded test cases.
 ///
 /// \throw integrity_error If there is any problem in the loaded data.
-static engine::test_cases_vector
+static model::test_cases_vector
 get_test_cases(sqlite::database& db, const int64_t test_program_id,
-               const engine::test_program& test_program,
+               const model::test_program& test_program,
                const std::string& interface)
 {
-    engine::test_cases_vector test_cases;
+    model::test_cases_vector test_cases;
 
     sqlite::statement stmt = db.create_statement(
         "SELECT name, metadata_id "
@@ -172,9 +175,9 @@ get_test_cases(sqlite::database& db, const int64_t test_program_id,
         const std::string name = stmt.safe_column_text("name");
         const int64_t metadata_id = stmt.safe_column_int64("metadata_id");
 
-        const engine::metadata metadata = get_metadata(db, metadata_id);
-        engine::test_case_ptr test_case(
-            new engine::test_case(interface, test_program, name, metadata));
+        const model::metadata metadata = get_metadata(db, metadata_id);
+        model::test_case_ptr test_case(
+            new model::test_case(interface, test_program, name, metadata));
         LD(F("Loaded test case '%s'") % test_case->name());
         test_cases.push_back(test_case);
     }
@@ -193,11 +196,11 @@ get_test_cases(sqlite::database& db, const int64_t test_program_id,
 /// \return The loaded result.
 ///
 /// \throw integrity_error If the data in the database is invalid.
-static engine::test_result
+static model::test_result
 parse_result(sqlite::statement& stmt, const char* type_column,
              const char* reason_column)
 {
-    using engine::test_result;
+    using model::test_result;
 
     try {
         const std::string type = stmt.safe_column_text(type_column);
@@ -241,18 +244,18 @@ parse_result(sqlite::statement& stmt, const char* type_column,
 ///
 /// \throw integrity_error If the data read from the database cannot be properly
 ///     interpreted.
-engine::test_program_ptr
+model::test_program_ptr
 store::detail::get_test_program(read_backend& backend_, const int64_t id)
 {
     sqlite::database& db = backend_.database();
 
-    engine::test_program_ptr test_program;
+    model::test_program_ptr test_program;
     sqlite::statement stmt = db.create_statement(
         "SELECT * FROM test_programs WHERE test_program_id == :id");
     stmt.bind(":id", id);
     stmt.step();
     const std::string interface = stmt.safe_column_text("interface");
-    test_program.reset(new engine::test_program(
+    test_program.reset(new model::test_program(
         interface,
         fs::path(stmt.safe_column_text("relative_path")),
         fs::path(stmt.safe_column_text("root")),
@@ -278,7 +281,7 @@ struct store::results_iterator::impl {
     sqlite::statement _stmt;
 
     /// A cache for the last loaded test program.
-    optional< std::pair< int64_t, engine::test_program_ptr > >
+    optional< std::pair< int64_t, model::test_program_ptr > >
         _last_test_program;
 
     /// Whether the iterator is still valid or not.
@@ -344,14 +347,14 @@ store::results_iterator::operator bool(void) const
 /// Gets the test program this result belongs to.
 ///
 /// \return The representation of a test program.
-const engine::test_program_ptr
+const model::test_program_ptr
 store::results_iterator::test_program(void) const
 {
     const int64_t id = _pimpl->_stmt.safe_column_int64("test_program_id");
     if (!_pimpl->_last_test_program ||
         _pimpl->_last_test_program.get().first != id)
     {
-        const engine::test_program_ptr tp = detail::get_test_program(
+        const model::test_program_ptr tp = detail::get_test_program(
             _pimpl->_backend, id);
         _pimpl->_last_test_program = std::make_pair(id, tp);
     }
@@ -375,7 +378,7 @@ store::results_iterator::test_case_name(void) const
 /// Gets the result of the test case pointed by the iterator.
 ///
 /// \return A test case result.
-engine::test_result
+model::test_result
 store::results_iterator::result(void) const
 {
     return parse_result(_pimpl->_stmt, "result_type", "result_reason");
@@ -509,7 +512,7 @@ store::read_transaction::finish(void)
 /// \return The retrieved context.
 ///
 /// \throw error If there is a problem loading the context.
-engine::context
+model::context
 store::read_transaction::get_context(void)
 {
     try {
@@ -518,8 +521,8 @@ store::read_transaction::get_context(void)
         if (!stmt.step())
             throw error("Error loading context: no data");
 
-        return engine::context(fs::path(stmt.safe_column_text("cwd")),
-                               get_env_vars(_pimpl->_db));
+        return model::context(fs::path(stmt.safe_column_text("cwd")),
+                              get_env_vars(_pimpl->_db));
     } catch (const sqlite::error& e) {
         throw error(F("Error loading context: %s") % e.what());
     }

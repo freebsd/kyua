@@ -31,10 +31,11 @@
 
 #include <atf-c++.hpp>
 
-#include "engine/context.hpp"
-#include "engine/test_case.hpp"
-#include "engine/test_program.hpp"
-#include "engine/test_result.hpp"
+#include "model/context.hpp"
+#include "model/metadata.hpp"
+#include "model/test_case.hpp"
+#include "model/test_program.hpp"
+#include "model/test_result.hpp"
 #include "store/migrate.hpp"
 #include "store/read_backend.hpp"
 #include "store/read_transaction.hpp"
@@ -101,7 +102,7 @@ check_action_1(const fs::path& dbpath)
 
     const fs::path root("/some/root");
     std::map< std::string, std::string > environment;
-    const engine::context context(root, environment);
+    const model::context context(root, environment);
 
     ATF_REQUIRE_EQ(context, transaction.get_context());
 
@@ -123,79 +124,79 @@ check_action_2(const fs::path& dbpath)
     std::map< std::string, std::string > environment;
     environment["HOME"] = "/home/test";
     environment["PATH"] = "/bin:/usr/bin";
-    const engine::context context(root, environment);
+    const model::context context(root, environment);
 
     ATF_REQUIRE_EQ(context, transaction.get_context());
 
-    engine::test_program test_program_1(
+    model::test_program test_program_1(
         "plain", fs::path("foo_test"), fs::path("/test/suite/root"),
-        "suite-name", engine::metadata_builder().build());
+        "suite-name", model::metadata_builder().build());
     {
-        const engine::test_case_ptr test_case_1(new engine::test_case(
+        const model::test_case_ptr test_case_1(new model::test_case(
             "plain", test_program_1, "main",
-            engine::metadata_builder().build()));
-        engine::test_cases_vector test_cases;
+            model::metadata_builder().build()));
+        model::test_cases_vector test_cases;
         test_cases.push_back(test_case_1);
         test_program_1.set_test_cases(test_cases);
     }
-    const engine::test_result result_1(engine::test_result::passed);
+    const model::test_result result_1(model::test_result::passed);
 
-    engine::test_program test_program_2(
+    model::test_program test_program_2(
         "plain", fs::path("subdir/another_test"), fs::path("/test/suite/root"),
-        "subsuite-name", engine::metadata_builder()
+        "subsuite-name", model::metadata_builder()
         .set_timeout(datetime::delta(10, 0)).build());
     {
-        const engine::test_case_ptr test_case_2(new engine::test_case(
-            "plain", test_program_2, "main", engine::metadata_builder()
+        const model::test_case_ptr test_case_2(new model::test_case(
+            "plain", test_program_2, "main", model::metadata_builder()
             .set_timeout(datetime::delta(10, 0)).build()));
-        engine::test_cases_vector test_cases;
+        model::test_cases_vector test_cases;
         test_cases.push_back(test_case_2);
         test_program_2.set_test_cases(test_cases);
     }
-    const engine::test_result result_2(engine::test_result::failed,
-                                       "Exited with code 1");
+    const model::test_result result_2(model::test_result::failed,
+                                      "Exited with code 1");
 
-    engine::test_program test_program_3(
+    model::test_program test_program_3(
         "plain", fs::path("subdir/bar_test"), fs::path("/test/suite/root"),
-        "subsuite-name", engine::metadata_builder().build());
+        "subsuite-name", model::metadata_builder().build());
     {
-        const engine::test_case_ptr test_case_3(new engine::test_case(
+        const model::test_case_ptr test_case_3(new model::test_case(
             "plain", test_program_3, "main",
-            engine::metadata_builder().build()));
-        engine::test_cases_vector test_cases;
+            model::metadata_builder().build()));
+        model::test_cases_vector test_cases;
         test_cases.push_back(test_case_3);
         test_program_3.set_test_cases(test_cases);
     }
-    const engine::test_result result_3(engine::test_result::broken,
-                                       "Received signal 1");
+    const model::test_result result_3(model::test_result::broken,
+                                      "Received signal 1");
 
-    engine::test_program test_program_4(
+    model::test_program test_program_4(
         "plain", fs::path("top_test"), fs::path("/test/suite/root"),
-        "suite-name", engine::metadata_builder().build());
+        "suite-name", model::metadata_builder().build());
     {
-        const engine::test_case_ptr test_case_4(new engine::test_case(
+        const model::test_case_ptr test_case_4(new model::test_case(
             "plain", test_program_4, "main",
-            engine::metadata_builder().build()));
-        engine::test_cases_vector test_cases;
+            model::metadata_builder().build()));
+        model::test_cases_vector test_cases;
         test_cases.push_back(test_case_4);
         test_program_4.set_test_cases(test_cases);
     }
-    const engine::test_result result_4(engine::test_result::expected_failure,
-                                       "Known bug");
+    const model::test_result result_4(model::test_result::expected_failure,
+                                      "Known bug");
 
-    engine::test_program test_program_5(
+    model::test_program test_program_5(
         "plain", fs::path("last_test"), fs::path("/test/suite/root"),
-        "suite-name", engine::metadata_builder().build());
+        "suite-name", model::metadata_builder().build());
     {
-        const engine::test_case_ptr test_case_5(new engine::test_case(
+        const model::test_case_ptr test_case_5(new model::test_case(
             "plain", test_program_5, "main",
-            engine::metadata_builder().build()));
-        engine::test_cases_vector test_cases;
+            model::metadata_builder().build()));
+        model::test_cases_vector test_cases;
         test_cases.push_back(test_case_5);
         test_program_5.set_test_cases(test_cases);
     }
-    const engine::test_result result_5(engine::test_result::skipped,
-                                       "Does not apply");
+    const model::test_result result_5(model::test_result::skipped,
+                                      "Does not apply");
 
     store::results_iterator iter = transaction.get_results();
     ATF_REQUIRE(iter);
@@ -259,27 +260,27 @@ check_action_3(const fs::path& dbpath)
     const fs::path root("/usr/tests");
     std::map< std::string, std::string > environment;
     environment["PATH"] = "/bin:/usr/bin";
-    const engine::context context(root, environment);
+    const model::context context(root, environment);
 
     ATF_REQUIRE_EQ(context, transaction.get_context());
 
-    engine::test_program test_program_6(
+    model::test_program test_program_6(
         "atf", fs::path("complex_test"), fs::path("/usr/tests"),
-        "suite-name", engine::metadata_builder().build());
+        "suite-name", model::metadata_builder().build());
     {
-        const engine::test_case_ptr test_case_6(new engine::test_case(
+        const model::test_case_ptr test_case_6(new model::test_case(
             "atf", test_program_6, "this_passes",
-            engine::metadata_builder().build()));
-        const engine::test_case_ptr test_case_7(new engine::test_case(
+            model::metadata_builder().build()));
+        const model::test_case_ptr test_case_7(new model::test_case(
             "atf", test_program_6, "this_fails",
-            engine::metadata_builder()
+            model::metadata_builder()
             .set_description("Test description")
             .set_has_cleanup(true)
             .set_required_memory(units::bytes(128))
             .set_required_user("root").build()));
-        const engine::test_case_ptr test_case_8(new engine::test_case(
+        const model::test_case_ptr test_case_8(new model::test_case(
             "atf", test_program_6, "this_skips",
-            engine::metadata_builder()
+            model::metadata_builder()
             .add_allowed_architecture("powerpc")
             .add_allowed_architecture("x86_64")
             .add_allowed_platform("amd64")
@@ -295,36 +296,36 @@ check_action_3(const fs::path& dbpath)
             .set_required_user("unprivileged")
             .set_timeout(datetime::delta(600, 0))
             .build()));
-        engine::test_cases_vector test_cases;
+        model::test_cases_vector test_cases;
         test_cases.push_back(test_case_6);
         test_cases.push_back(test_case_7);
         test_cases.push_back(test_case_8);
         test_program_6.set_test_cases(test_cases);
     }
-    const engine::test_result result_6(engine::test_result::passed);
-    const engine::test_result result_7(engine::test_result::failed,
-                                       "Some reason");
-    const engine::test_result result_8(engine::test_result::skipped,
-                                       "Another reason");
+    const model::test_result result_6(model::test_result::passed);
+    const model::test_result result_7(model::test_result::failed,
+                                      "Some reason");
+    const model::test_result result_8(model::test_result::skipped,
+                                      "Another reason");
 
-    engine::test_program test_program_7(
+    model::test_program test_program_7(
         "atf", fs::path("simple_test"), fs::path("/usr/tests"),
-        "subsuite-name", engine::metadata_builder().build());
+        "subsuite-name", model::metadata_builder().build());
     {
-        const engine::test_case_ptr test_case_9(new engine::test_case(
+        const model::test_case_ptr test_case_9(new model::test_case(
             "atf", test_program_7, "main",
-            engine::metadata_builder()
+            model::metadata_builder()
             .set_description("More text")
             .set_has_cleanup(true)
             .set_required_memory(units::bytes(128))
             .set_required_user("unprivileged")
             .build()));
-        engine::test_cases_vector test_cases;
+        model::test_cases_vector test_cases;
         test_cases.push_back(test_case_9);
         test_program_7.set_test_cases(test_cases);
     }
-    const engine::test_result result_9(engine::test_result::failed,
-                                       "Exited with code 1");
+    const model::test_result result_9(model::test_result::failed,
+                                      "Exited with code 1");
 
     store::results_iterator iter = transaction.get_results();
     ATF_REQUIRE(iter);
@@ -381,47 +382,47 @@ check_action_4(const fs::path& dbpath)
     environment["LANG"] = "C";
     environment["PATH"] = "/bin:/usr/bin";
     environment["TERM"] = "xterm";
-    const engine::context context(root, environment);
+    const model::context context(root, environment);
 
     ATF_REQUIRE_EQ(context, transaction.get_context());
 
-    engine::test_program test_program_8(
+    model::test_program test_program_8(
         "plain", fs::path("subdir/another_test"), fs::path("/usr/tests"),
-        "subsuite-name", engine::metadata_builder()
+        "subsuite-name", model::metadata_builder()
         .set_timeout(datetime::delta(10, 0)).build());
     {
-        const engine::test_case_ptr test_case_10(new engine::test_case(
+        const model::test_case_ptr test_case_10(new model::test_case(
             "plain", test_program_8, "main",
-            engine::metadata_builder()
+            model::metadata_builder()
             .set_timeout(datetime::delta(10, 0)).build()));
-        engine::test_cases_vector test_cases;
+        model::test_cases_vector test_cases;
         test_cases.push_back(test_case_10);
         test_program_8.set_test_cases(test_cases);
     }
-    const engine::test_result result_10(engine::test_result::failed,
+    const model::test_result result_10(model::test_result::failed,
                                        "Exit failure");
 
-    engine::test_program test_program_9(
+    model::test_program test_program_9(
         "atf", fs::path("complex_test"), fs::path("/usr/tests"),
-        "suite-name", engine::metadata_builder().build());
+        "suite-name", model::metadata_builder().build());
     {
-        const engine::test_case_ptr test_case_11(new engine::test_case(
+        const model::test_case_ptr test_case_11(new model::test_case(
             "atf", test_program_9, "this_passes",
-            engine::metadata_builder().build()));
-        const engine::test_case_ptr test_case_12(new engine::test_case(
+            model::metadata_builder().build()));
+        const model::test_case_ptr test_case_12(new model::test_case(
             "atf", test_program_9, "this_fails",
-            engine::metadata_builder()
+            model::metadata_builder()
             .set_description("Test description")
             .set_required_user("root")
             .build()));
-        engine::test_cases_vector test_cases;
+        model::test_cases_vector test_cases;
         test_cases.push_back(test_case_11);
         test_cases.push_back(test_case_12);
         test_program_9.set_test_cases(test_cases);
     }
-    const engine::test_result result_11(engine::test_result::passed);
-    const engine::test_result result_12(engine::test_result::failed,
-                                        "Some reason");
+    const model::test_result result_11(model::test_result::passed);
+    const model::test_result result_12(model::test_result::failed,
+                                       "Some reason");
 
     store::results_iterator iter = transaction.get_results();
     ATF_REQUIRE(iter);

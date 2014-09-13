@@ -38,16 +38,14 @@ extern "C" {
 
 #include <string>
 
-#include "engine/test_program.hpp"
+#include "model/context_fwd.hpp"
+#include "model/test_case_fwd.hpp"
+#include "model/test_program_fwd.hpp"
+#include "model/test_result_fwd.hpp"
 #include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"
 #include "utils/shared_ptr.hpp"
-
-namespace engine {
-class context;
-class test_result;
-}  // namespace engine
 
 namespace store {
 
@@ -74,13 +72,13 @@ public:
     void commit(void);
     void rollback(void);
 
-    void put_context(const engine::context&);
-    int64_t put_test_program(const engine::test_program&);
-    int64_t put_test_case(const engine::test_case&, const int64_t);
+    void put_context(const model::context&);
+    int64_t put_test_program(const model::test_program&);
+    int64_t put_test_case(const model::test_case&, const int64_t);
     utils::optional< int64_t > put_test_case_file(const std::string&,
                                                   const utils::fs::path&,
                                                   const int64_t);
-    int64_t put_result(const engine::test_result&, const int64_t,
+    int64_t put_result(const model::test_result&, const int64_t,
                        const utils::datetime::timestamp&,
                        const utils::datetime::timestamp&);
 };

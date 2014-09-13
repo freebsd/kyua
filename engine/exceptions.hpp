@@ -48,14 +48,6 @@ public:
 
 
 /// Error while parsing external data.
-class format_error : public error {
-public:
-    explicit format_error(const std::string&);
-    virtual ~format_error(void) throw();
-};
-
-
-/// Error while parsing external data.
 class load_error : public error {
 public:
     /// The path to the file that caused the load error.
@@ -66,14 +58,6 @@ public:
 
     explicit load_error(const utils::fs::path&, const std::string&);
     virtual ~load_error(void) throw();
-};
-
-
-/// A requested element could not be found.
-class not_found_error : public error {
-public:
-    explicit not_found_error(const std::string&);
-    virtual ~not_found_error(void) throw();
 };
 
 

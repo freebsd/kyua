@@ -35,8 +35,12 @@ extern "C" {
 #include <fstream>
 #include <map>
 
-#include "engine/context.hpp"
-#include "engine/test_result.hpp"
+#include "model/context.hpp"
+#include "model/metadata.hpp"
+#include "model/test_case.hpp"
+#include "model/test_program.hpp"
+#include "model/test_result.hpp"
+#include "model/types.hpp"
 #include "store/dbtypes.hpp"
 #include "store/exceptions.hpp"
 #include "store/write_backend.hpp"
@@ -113,9 +117,9 @@ last_rowid(sqlite::database& db, const std::string& table)
 ///
 /// \return The identifier of the new metadata object.
 static int64_t
-put_metadata(sqlite::database& db, const engine::metadata& md)
+put_metadata(sqlite::database& db, const model::metadata& md)
 {
-    const engine::properties_map props = md.to_properties();
+    const model::properties_map props = md.to_properties();
 
     const int64_t metadata_id = last_rowid(db, "metadatas");
 
@@ -124,7 +128,7 @@ put_metadata(sqlite::database& db, const engine::metadata& md)
         "VALUES (:metadata_id, :property_name, :property_value)");
     stmt.bind(":metadata_id", metadata_id);
 
-    for (engine::properties_map::const_iterator iter = props.begin();
+    for (model::properties_map::const_iterator iter = props.begin();
          iter != props.end(); ++iter) {
         stmt.bind(":property_name", (*iter).first);
         stmt.bind(":property_value", (*iter).second);
@@ -254,7 +258,7 @@ store::write_transaction::rollback(void)
 ///
 /// \throw error If there is any problem when talking to the database.
 void
-store::write_transaction::put_context(const engine::context& context)
+store::write_transaction::put_context(const model::context& context)
 {
     try {
         sqlite::statement stmt = _pimpl->_db.create_statement(
@@ -281,7 +285,7 @@ store::write_transaction::put_context(const engine::context& context)
 /// \throw error If there is any problem when talking to the database.
 int64_t
 store::write_transaction::put_test_program(
-    const engine::test_program& test_program)
+    const model::test_program& test_program)
 {
     try {
         const int64_t metadata_id = put_metadata(
@@ -322,7 +326,7 @@ store::write_transaction::put_test_program(
 ///
 /// \throw error If there is any problem when talking to the database.
 int64_t
-store::write_transaction::put_test_case(const engine::test_case& test_case,
+store::write_transaction::put_test_case(const model::test_case& test_case,
                                         const int64_t test_program_id)
 {
     try {
@@ -397,7 +401,7 @@ store::write_transaction::put_test_case_file(const std::string& name,
 ///
 /// \throw error If there is any problem when talking to the database.
 int64_t
-store::write_transaction::put_result(const engine::test_result& result,
+store::write_transaction::put_result(const model::test_result& result,
                                      const int64_t test_case_id,
                                      const datetime::timestamp& start_time,
                                      const datetime::timestamp& end_time)
@@ -412,23 +416,23 @@ store::write_transaction::put_result(const engine::test_result& result,
         stmt.bind(":test_case_id", test_case_id);
 
         switch (result.type()) {
-        case engine::test_result::broken:
+        case model::test_result::broken:
             stmt.bind(":result_type", "broken");
             break;
 
-        case engine::test_result::expected_failure:
+        case model::test_result::expected_failure:
             stmt.bind(":result_type", "expected_failure");
             break;
 
-        case engine::test_result::failed:
+        case model::test_result::failed:
             stmt.bind(":result_type", "failed");
             break;
 
-        case engine::test_result::passed:
+        case model::test_result::passed:
             stmt.bind(":result_type", "passed");
             break;
 
-        case engine::test_result::skipped:
+        case model::test_result::skipped:
             stmt.bind(":result_type", "skipped");
             break;
 

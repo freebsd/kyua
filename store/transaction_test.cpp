@@ -31,7 +31,10 @@
 
 #include <atf-c++.hpp>
 
-#include "engine/context.hpp"
+#include "model/context.hpp"
+#include "model/metadata.hpp"
+#include "model/test_case.hpp"
+#include "model/test_program.hpp"
 #include "store/read_backend.hpp"
 #include "store/read_transaction.hpp"
 #include "store/write_backend.hpp"
@@ -56,7 +59,7 @@ namespace {
 ///
 /// \param exp_context The context to save and restore.
 static void
-check_get_put_context(const engine::context& exp_context)
+check_get_put_context(const model::context& exp_context)
 {
     const fs::path test_db("test.db");
 
@@ -72,7 +75,7 @@ check_get_put_context(const engine::context& exp_context)
     {
         store::read_backend backend = store::read_backend::open_ro(test_db);
         store::read_transaction tx = backend.start_read();
-        engine::context context = tx.get_context();
+        model::context context = tx.get_context();
         tx.finish();
 
         ATF_REQUIRE(exp_context == context);
@@ -95,9 +98,9 @@ ATF_TEST_CASE_BODY(get_put_context__ok)
     env1["A1"] = "foo";
     env1["A2"] = "bar";
     std::map< std::string, std::string > env2;
-    check_get_put_context(engine::context(fs::path("/foo/bar"), env1));
-    check_get_put_context(engine::context(fs::path("/foo/bar"), env1));
-    check_get_put_context(engine::context(fs::path("/foo/baz"), env2));
+    check_get_put_context(model::context(fs::path("/foo/bar"), env1));
+    check_get_put_context(model::context(fs::path("/foo/bar"), env1));
+    check_get_put_context(model::context(fs::path("/foo/baz"), env2));
 }
 
 
@@ -109,14 +112,14 @@ ATF_TEST_CASE_HEAD(get_put_test_case__ok)
 }
 ATF_TEST_CASE_BODY(get_put_test_case__ok)
 {
-    engine::test_program test_program(
+    model::test_program test_program(
         "atf", fs::path("the/binary"), fs::path("/some/root"), "the-suite",
-        engine::metadata_builder().build());
+        model::metadata_builder().build());
 
-    const engine::test_case_ptr test_case1(new engine::test_case(
-        "atf", test_program, "tc1", engine::metadata_builder().build()));
+    const model::test_case_ptr test_case1(new model::test_case(
+        "atf", test_program, "tc1", model::metadata_builder().build()));
 
-    const engine::metadata md2 = engine::metadata_builder()
+    const model::metadata md2 = model::metadata_builder()
         .add_allowed_architecture("powerpc")
         .add_allowed_architecture("x86_64")
         .add_allowed_platform("amd64")
@@ -136,11 +139,11 @@ ATF_TEST_CASE_BODY(get_put_test_case__ok)
         .set_required_user("root")
         .set_timeout(datetime::delta(520, 0))
         .build();
-    const engine::test_case_ptr test_case2(new engine::test_case(
+    const model::test_case_ptr test_case2(new model::test_case(
         "atf", test_program, "tc2", md2));
 
     {
-        engine::test_cases_vector test_cases;
+        model::test_cases_vector test_cases;
         test_cases.push_back(test_case1);
         test_cases.push_back(test_case2);
         test_program.set_test_cases(test_cases);
@@ -164,7 +167,7 @@ ATF_TEST_CASE_BODY(get_put_test_case__ok)
     backend.database().exec("PRAGMA foreign_keys = OFF");
 
     store::read_transaction tx = backend.start_read();
-    const engine::test_program_ptr loaded_test_program =
+    const model::test_program_ptr loaded_test_program =
         store::detail::get_test_program(backend, test_program_id);
     ATF_REQUIRE(test_program == *loaded_test_program);
 }

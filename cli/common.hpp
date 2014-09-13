@@ -36,7 +36,8 @@
 #include <set>
 #include <vector>
 
-#include "engine/test_result.hpp"
+#include "model/test_case_fwd.hpp"
+#include "model/test_result.hpp"
 #include "utils/cmdline/base_command.hpp"
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.hpp"
@@ -53,7 +54,6 @@ class path;
 }  // namespace utils
 
 namespace engine {
-class test_case;
 class test_filter;
 }  // namespace engine
 
@@ -84,7 +84,7 @@ typedef std::auto_ptr< cli_command > cli_command_ptr;
 ///
 /// This is a vector rather than a set because we want to respect the order in
 /// which the user provided the types.
-typedef std::vector< engine::test_result::result_type > result_types;
+typedef std::vector< model::test_result::result_type > result_types;
 
 
 utils::optional< utils::fs::path > build_root_path(
@@ -100,8 +100,8 @@ bool report_unused_filters(const std::set< engine::test_filter >&,
                            utils::cmdline::ui*);
 
 std::string format_delta(const utils::datetime::delta&);
-std::string format_result(const engine::test_result&);
-std::string format_test_case_id(const engine::test_case&);
+std::string format_result(const model::test_result&);
+std::string format_test_case_id(const model::test_case&);
 std::string format_test_case_id(const engine::test_filter&);
 
 

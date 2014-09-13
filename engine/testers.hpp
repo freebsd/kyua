@@ -27,7 +27,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /// \file engine/testers.hpp
-/// Invocation of external tester binaries.
+/// Utilities to invoke external tester binaries and parse their output.
 
 #if !defined(ENGINE_TESTERS_HPP)
 #define ENGINE_TESTERS_HPP
@@ -37,6 +37,7 @@
 #include <string>
 #include <vector>
 
+#include "model/test_result_fwd.hpp"
 #include "utils/datetime.hpp"
 #include "utils/optional.hpp"
 #include "utils/passwd.hpp"
@@ -80,6 +81,9 @@ public:
 
 std::set< std::string > all_test_interfaces(void);
 utils::fs::path tester_path(const std::string&);
+
+
+model::test_result parse_test_result(std::istream&);
 
 
 }  // namespace engine

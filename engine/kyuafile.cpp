@@ -38,8 +38,9 @@
 #include <lutok/state.ipp>
 
 #include "engine/exceptions.hpp"
-#include "engine/test_program.hpp"
 #include "engine/testers.hpp"
+#include "model/metadata.hpp"
+#include "model/test_program.hpp"
 #include "utils/datetime.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/lua_module.hpp"
@@ -125,7 +126,7 @@ class parser : utils::noncopyable {
     ///
     /// This acts as an accumulator for all the *_test_program() calls within
     /// the Kyuafile.
-    engine::test_programs_vector _test_programs;
+    model::test_programs_vector _test_programs;
 
     /// Safely gets _test_suite and respects any test program overrides.
     ///
@@ -241,7 +242,7 @@ public:
     {
         const fs::path file = relativize(_relative_filename.branch_path(),
                                          raw_file);
-        const engine::test_programs_vector subtps =
+        const model::test_programs_vector subtps =
             parser(_source_root, _build_root, file).parse();
 
         std::copy(subtps.begin(), subtps.end(),
@@ -288,7 +289,7 @@ public:
     callback_test_program(const std::string& interface,
                           const fs::path& raw_path,
                           const std::string& test_suite_override,
-                          const engine::metadata& metadata)
+                          const model::metadata& metadata)
     {
         if (raw_path.is_absolute())
             throw std::runtime_error(F("Got unexpected absolute path for test "
@@ -304,10 +305,10 @@ public:
             throw std::runtime_error(F("Non-existent test program '%s'") %
                                      path);
 
-        _test_programs.push_back(engine::test_program_ptr(
-            new engine::test_program(interface, path, _build_root,
-                                     get_test_suite(test_suite_override),
-                                     metadata)));
+        _test_programs.push_back(model::test_program_ptr(
+            new model::test_program(interface, path, _build_root,
+                                    get_test_suite(test_suite_override),
+                                    metadata)));
     }
 
     /// Callback for the Kyuafile test_suite() function.
@@ -332,7 +333,7 @@ public:
     /// \return The collection of test programs defined by the Kyuafile.
     ///
     /// \throw load_error If there is any problem parsing the file.
-    const engine::test_programs_vector&
+    const model::test_programs_vector&
     parse(void)
     {
         PRE(_test_programs.empty());
@@ -428,7 +429,7 @@ lua_generic_test_program(lutok::state& state)
     }
     state.pop(1);
 
-    engine::metadata_builder mdbuilder;
+    model::metadata_builder mdbuilder;
     state.push_nil();
     while (state.next(-2)) {
         if (!state.is_string(-2))
@@ -546,7 +547,7 @@ lua_test_suite(lutok::state& state)
 /// \param tps_ Collection of test programs that belong to this test suite.
 engine::kyuafile::kyuafile(const fs::path& source_root_,
                            const fs::path& build_root_,
-                           const test_programs_vector& tps_) :
+                           const model::test_programs_vector& tps_) :
     _source_root(source_root_),
     _build_root(build_root_),
     _test_programs(tps_)
@@ -609,7 +610,7 @@ engine::kyuafile::build_root(void) const
 /// Gets the collection of test programs that belong to this test suite.
 ///
 /// \return Collection of test program executable names.
-const engine::test_programs_vector&
+const model::test_programs_vector&
 engine::kyuafile::test_programs(void) const
 {
     return _test_programs;

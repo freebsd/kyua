@@ -26,8 +26,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-STORE_CFLAGS = $(UTILS_CFLAGS)
-STORE_LIBS = libstore.a libengine.a $(UTILS_LIBS)
+STORE_CFLAGS = $(MODEL_CFLAGS) $(UTILS_CFLAGS)
+STORE_LIBS = libstore.a $(MODEL_LIBS) $(UTILS_LIBS)
 
 noinst_LIBRARIES += libstore.a
 libstore_a_CPPFLAGS  = -DKYUA_STOREDIR=\"$(storedir)\"
@@ -72,80 +72,68 @@ EXTRA_DIST += $(tests_store_DATA)
 tests_store_PROGRAMS = store/dbtypes_test
 store_dbtypes_test_SOURCES = store/dbtypes_test.cpp
 store_dbtypes_test_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) \
-                              $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-store_dbtypes_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) \
-                           $(UTILS_LIBS) $(ATF_CXX_LIBS)
+                              $(ATF_CXX_CFLAGS)
+store_dbtypes_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 
 tests_store_PROGRAMS += store/exceptions_test
 store_exceptions_test_SOURCES = store/exceptions_test.cpp
 store_exceptions_test_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) \
-                                 $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-store_exceptions_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) \
-                              $(UTILS_LIBS) $(ATF_CXX_LIBS)
+                                 $(ATF_CXX_CFLAGS)
+store_exceptions_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 
 tests_store_PROGRAMS += store/layout_test
 store_layout_test_SOURCES = store/layout_test.cpp
-store_layout_test_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) \
-                             $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-store_layout_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) \
-                          $(UTILS_LIBS) $(ATF_CXX_LIBS)
+store_layout_test_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
+store_layout_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 
 tests_store_PROGRAMS += store/metadata_test
 store_metadata_test_SOURCES = store/metadata_test.cpp
 store_metadata_test_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) \
-                               $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-store_metadata_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) \
-                            $(UTILS_LIBS) $(ATF_CXX_LIBS)
+                               $(ATF_CXX_CFLAGS)
+store_metadata_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 
 tests_store_PROGRAMS += store/migrate_test
 store_migrate_test_SOURCES = store/migrate_test.cpp
 store_migrate_test_CPPFLAGS = -DKYUA_STOREDIR=\"$(storedir)\"
-store_migrate_test_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) \
-                              $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-store_migrate_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) \
-                           $(UTILS_LIBS) $(ATF_CXX_LIBS)
+store_migrate_test_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
+store_migrate_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 
 tests_store_PROGRAMS += store/read_backend_test
 store_read_backend_test_SOURCES = store/read_backend_test.cpp
 store_read_backend_test_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) \
-                                   $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-store_read_backend_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) \
-                                $(UTILS_LIBS) $(ATF_CXX_LIBS)
+                                   $(ATF_CXX_CFLAGS)
+store_read_backend_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 
 tests_store_PROGRAMS += store/read_transaction_test
 store_read_transaction_test_SOURCES = store/read_transaction_test.cpp
 store_read_transaction_test_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) \
-                                       $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-store_read_transaction_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) \
-                                    $(UTILS_LIBS) $(ATF_CXX_LIBS)
+                                       $(ATF_CXX_CFLAGS)
+store_read_transaction_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 
 tests_store_PROGRAMS += store/schema_inttest
 store_schema_inttest_SOURCES = store/schema_inttest.cpp
 store_schema_inttest_CPPFLAGS = -DKYUA_STORETESTDATADIR=\"$(tests_storedir)\"
 store_schema_inttest_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) \
-                                $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-store_schema_inttest_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) \
-                             $(UTILS_LIBS) $(ATF_CXX_LIBS)
+                                $(ATF_CXX_CFLAGS)
+store_schema_inttest_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 
 tests_store_PROGRAMS += store/transaction_test
 store_transaction_test_SOURCES = store/transaction_test.cpp
 store_transaction_test_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) \
-                                  $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-store_transaction_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) \
-                               $(UTILS_LIBS) $(ATF_CXX_LIBS)
+                                  $(ATF_CXX_CFLAGS)
+store_transaction_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 
 tests_store_PROGRAMS += store/write_backend_test
 store_write_backend_test_SOURCES = store/write_backend_test.cpp
 store_write_backend_test_CPPFLAGS = -DKYUA_STOREDIR=\"$(storedir)\"
 store_write_backend_test_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) \
-                                    $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-store_write_backend_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) \
-                                 $(UTILS_LIBS) $(ATF_CXX_LIBS)
+                                    $(ATF_CXX_CFLAGS)
+store_write_backend_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 
 tests_store_PROGRAMS += store/write_transaction_test
 store_write_transaction_test_SOURCES = store/write_transaction_test.cpp
 store_write_transaction_test_CXXFLAGS = $(STORE_CFLAGS) $(ENGINE_CFLAGS) \
-                                        $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+                                        $(ATF_CXX_CFLAGS)
 store_write_transaction_test_LDADD = $(STORE_LIBS) $(ENGINE_LIBS) \
-                                     $(UTILS_LIBS) $(ATF_CXX_LIBS)
+                                     $(ATF_CXX_LIBS)
 endif

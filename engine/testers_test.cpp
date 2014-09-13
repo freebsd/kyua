@@ -35,10 +35,12 @@ extern "C" {
 }
 
 #include <cstdlib>
+#include <sstream>
 
 #include <atf-c++.hpp>
 
 #include "engine/exceptions.hpp"
+#include "model/test_result.hpp"
 #include "utils/datetime.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
@@ -110,6 +112,41 @@ create_mock_tester_signal(const int term_sig)
     ATF_REQUIRE(::chmod("kyua-mock-tester", 0755) != -1);
 
     utils::setenv("KYUA_TESTERSDIR", fs::current_path().str());
+}
+
+
+/// Validates the parse() method on a particular test result type.
+///
+/// \param result_name Textual representation of the type, to be written to the
+///     input data.
+/// \param result_type Expected result type.
+static void
+parse_test_result_test(const std::string& result_name,
+                  const model::test_result::result_type result_type)
+{
+    std::istringstream input(result_name);
+    ATF_REQUIRE_EQ(model::test_result(result_type),
+                   engine::parse_test_result(input));
+
+    input.clear();
+    input.str(result_name + ": Some message");
+    ATF_REQUIRE_EQ(model::test_result(result_type, "Some message"),
+                   engine::parse_test_result(input));
+
+    input.clear();
+    input.str(result_name + ": Some message\n");
+    ATF_REQUIRE_EQ(model::test_result(result_type, "Some message"),
+                   engine::parse_test_result(input));
+
+    input.clear();
+    input.str(result_name + ": foo\nbar");
+    ATF_REQUIRE_EQ(model::test_result(result_type, "foo<<NEWLINE>>bar"),
+                   engine::parse_test_result(input));
+
+    input.clear();
+    input.str(result_name + ": foo\nbar\n");
+    ATF_REQUIRE_EQ(model::test_result(result_type, "foo<<NEWLINE>>bar"),
+                   engine::parse_test_result(input));
 }
 
 
@@ -480,6 +517,59 @@ ATF_TEST_CASE_BODY(tester_path__missing)
 }
 
 
+/// Creates a test case to validate the parse() method for a given type.
+///
+/// \param name The name of the test case; "parse__" will be prepended.
+#define PARSE_TEST_RESULT_TEST(name) \
+    ATF_TEST_CASE_WITHOUT_HEAD(parse_test_result__ ## name); \
+    ATF_TEST_CASE_BODY(parse_test_result__ ## name) \
+    { \
+        parse_test_result_test(#name, model::test_result:: name); \
+    }
+
+
+PARSE_TEST_RESULT_TEST(broken);
+PARSE_TEST_RESULT_TEST(expected_failure);
+PARSE_TEST_RESULT_TEST(failed);
+PARSE_TEST_RESULT_TEST(passed);
+PARSE_TEST_RESULT_TEST(skipped);
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(parse_test_result__empty);
+ATF_TEST_CASE_BODY(parse_test_result__empty)
+{
+    std::istringstream input("");
+    ATF_REQUIRE(model::test_result(model::test_result::broken,
+                                   "Empty result file") ==
+                engine::parse_test_result(input));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(parse_test_result__unknown_type);
+ATF_TEST_CASE_BODY(parse_test_result__unknown_type)
+{
+    std::istringstream input("passed ");
+    ATF_REQUIRE(
+        model::test_result(model::test_result::broken,
+                           "Unknown result type 'passed '") ==
+        engine::parse_test_result(input));
+
+    input.clear();
+    input.str("fail");
+    ATF_REQUIRE(
+        model::test_result(model::test_result::broken,
+                           "Unknown result type 'fail'") ==
+        engine::parse_test_result(input));
+
+    input.clear();
+    input.str("a b");
+    ATF_REQUIRE(
+        model::test_result(model::test_result::broken,
+                           "Unknown result type 'a b'") ==
+        engine::parse_test_result(input));
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, tester__list__defaults);
@@ -506,4 +596,12 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, tester_path__cached);
     ATF_ADD_TEST_CASE(tcs, tester_path__empty);
     ATF_ADD_TEST_CASE(tcs, tester_path__missing);
+
+    ATF_ADD_TEST_CASE(tcs, parse_test_result__broken);
+    ATF_ADD_TEST_CASE(tcs, parse_test_result__expected_failure);
+    ATF_ADD_TEST_CASE(tcs, parse_test_result__failed);
+    ATF_ADD_TEST_CASE(tcs, parse_test_result__passed);
+    ATF_ADD_TEST_CASE(tcs, parse_test_result__skipped);
+    ATF_ADD_TEST_CASE(tcs, parse_test_result__empty);
+    ATF_ADD_TEST_CASE(tcs, parse_test_result__unknown_type);
 }

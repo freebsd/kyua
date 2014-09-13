@@ -47,21 +47,6 @@ engine::error::~error(void) throw()
 }
 
 
-/// Constructs a new format_error.
-///
-/// \param message The plain-text error message.
-engine::format_error::format_error(const std::string& message) :
-    error(message)
-{
-}
-
-
-/// Destructor for the error.
-engine::format_error::~format_error(void) throw()
-{
-}
-
-
 /// Constructs a new load_error.
 ///
 /// \param file_ The file in which the error was encountered.
@@ -77,20 +62,5 @@ engine::load_error::load_error(const fs::path& file_,
 
 /// Destructor for the error.
 engine::load_error::~load_error(void) throw()
-{
-}
-
-
-/// Constructs a new not_found_error.
-///
-/// \param message The plain-text error message.
-engine::not_found_error::not_found_error(const std::string& message) :
-    error(message)
-{
-}
-
-
-/// Destructor for the error.
-engine::not_found_error::~not_found_error(void) throw()
 {
 }

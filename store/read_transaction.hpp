@@ -38,14 +38,11 @@ extern "C" {
 
 #include <string>
 
-#include "engine/test_program.hpp"
+#include "model/context_fwd.hpp"
+#include "model/test_program_fwd.hpp"
+#include "model/test_result_fwd.hpp"
 #include "utils/datetime.hpp"
 #include "utils/shared_ptr.hpp"
-
-namespace engine {
-class context;
-class test_result;
-}  // namespace engine
 
 namespace store {
 
@@ -57,7 +54,7 @@ class read_transaction;
 namespace detail {
 
 
-engine::test_program_ptr get_test_program(read_backend&, const int64_t);
+model::test_program_ptr get_test_program(read_backend&, const int64_t);
 
 
 }  // namespace detail
@@ -84,9 +81,9 @@ public:
     results_iterator& operator++(void);
     operator bool(void) const;
 
-    const engine::test_program_ptr test_program(void) const;
+    const model::test_program_ptr test_program(void) const;
     std::string test_case_name(void) const;
-    engine::test_result result(void) const;
+    model::test_result result(void) const;
     utils::datetime::delta duration(void) const;
 
     std::string stdout_contents(void) const;
@@ -112,7 +109,7 @@ public:
 
     void finish(void);
 
-    engine::context get_context(void);
+    model::context get_context(void);
     results_iterator get_results(void);
 };
 

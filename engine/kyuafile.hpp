@@ -37,7 +37,7 @@
 
 #include <lutok/state.hpp>
 
-#include "engine/test_program.hpp"
+#include "model/test_program_fwd.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"
 
@@ -69,11 +69,11 @@ class kyuafile {
     utils::fs::path _build_root;
 
     /// Collection of the test programs defined in the Kyuafile.
-    test_programs_vector _test_programs;
+    model::test_programs_vector _test_programs;
 
 public:
     explicit kyuafile(const utils::fs::path&, const utils::fs::path&,
-                      const test_programs_vector&);
+                      const model::test_programs_vector&);
     ~kyuafile(void);
 
     static kyuafile load(const utils::fs::path&,
@@ -81,7 +81,7 @@ public:
 
     const utils::fs::path& source_root(void) const;
     const utils::fs::path& build_root(void) const;
-    const test_programs_vector& test_programs(void) const;
+    const model::test_programs_vector& test_programs(void) const;
 };
 
 

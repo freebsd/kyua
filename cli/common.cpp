@@ -34,9 +34,9 @@
 #include <stdexcept>
 
 #include "engine/filters.hpp"
-#include "engine/test_case.hpp"
-#include "engine/test_program.hpp"
-#include "engine/test_result.hpp"
+#include "model/test_case.hpp"
+#include "model/test_program.hpp"
+#include "model/test_result.hpp"
 #include "store/layout.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.ipp"
@@ -147,7 +147,7 @@ get_historical_db(void)
 static cli::result_types
 parse_types(const std::vector< std::string >& names)
 {
-    using engine::test_result;
+    using model::test_result;
     typedef std::map< std::string, test_result::result_type > types_map;
     types_map valid_types;
     valid_types["broken"] = test_result::broken;
@@ -276,11 +276,11 @@ cli::get_result_types(const utils::cmdline::parsed_cmdline& cmdline)
     result_types types = parse_types(
         cmdline.get_option< cmdline::list_option >("results-filter"));
     if (types.empty()) {
-        types.push_back(engine::test_result::passed);
-        types.push_back(engine::test_result::skipped);
-        types.push_back(engine::test_result::expected_failure);
-        types.push_back(engine::test_result::broken);
-        types.push_back(engine::test_result::failed);
+        types.push_back(model::test_result::passed);
+        types.push_back(model::test_result::skipped);
+        types.push_back(model::test_result::expected_failure);
+        types.push_back(model::test_result::broken);
+        types.push_back(model::test_result::failed);
     }
     return types;
 }
@@ -353,11 +353,11 @@ cli::format_delta(const datetime::delta& delta)
 ///
 /// \return A user-friendly representation of the result.
 std::string
-cli::format_result(const engine::test_result& result)
+cli::format_result(const model::test_result& result)
 {
     std::string text;
 
-    using engine::test_result;
+    using model::test_result;
     switch (result.type()) {
     case test_result::broken: text = "broken"; break;
     case test_result::expected_failure: text = "expected_failure"; break;
@@ -380,7 +380,7 @@ cli::format_result(const engine::test_result& result)
 ///
 /// \return A string representing the test case uniquely within a test suite.
 std::string
-cli::format_test_case_id(const engine::test_case& test_case)
+cli::format_test_case_id(const model::test_case& test_case)
 {
     return F("%s:%s") % test_case.container_test_program().relative_path() %
         test_case.name();

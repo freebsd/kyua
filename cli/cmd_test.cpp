@@ -31,9 +31,9 @@
 #include <cstdlib>
 
 #include "cli/common.ipp"
-#include "engine/drivers/run_tests.hpp"
-#include "engine/test_case.hpp"
-#include "engine/test_result.hpp"
+#include "drivers/run_tests.hpp"
+#include "model/test_case.hpp"
+#include "model/test_result.hpp"
 #include "store/layout.hpp"
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.ipp"
@@ -46,7 +46,6 @@ namespace config = utils::config;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace layout = store::layout;
-namespace run_tests = engine::drivers::run_tests;
 
 using cli::cmd_test;
 
@@ -55,7 +54,7 @@ namespace {
 
 
 /// Hooks to print a progress report of the execution of the tests.
-class print_hooks : public run_tests::base_hooks {
+class print_hooks : public drivers::run_tests::base_hooks {
     /// Object to interact with the I/O of the program.
     cmdline::ui* _ui;
 
@@ -80,7 +79,7 @@ public:
     ///
     /// \param test_case The test case.
     virtual void
-    got_test_case(const engine::test_case_ptr& test_case)
+    got_test_case(const model::test_case_ptr& test_case)
     {
         _ui->out(F("%s  ->  ") % cli::format_test_case_id(*test_case), false);
     }
@@ -91,8 +90,8 @@ public:
     /// \param result The result of the execution of the test case.
     /// \param duration The time it took to run the test.
     virtual void
-    got_result(const engine::test_case_ptr& UTILS_UNUSED_PARAM(test_case),
-               const engine::test_result& result,
+    got_result(const model::test_case_ptr& UTILS_UNUSED_PARAM(test_case),
+               const model::test_result& result,
                const datetime::delta& duration)
     {
         _ui->out(F("%s  [%s]") % cli::format_result(result) %
@@ -133,7 +132,7 @@ cmd_test::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
         results_file_create(cmdline), kyuafile_path(cmdline).branch_path());
 
     print_hooks hooks(ui);
-    const run_tests::result result = run_tests::drive(
+    const drivers::run_tests::result result = drivers::run_tests::drive(
         kyuafile_path(cmdline), build_root_path(cmdline), results.second,
         parse_filters(cmdline.arguments()), user_config, hooks);
 

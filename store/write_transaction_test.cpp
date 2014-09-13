@@ -34,8 +34,11 @@
 
 #include <atf-c++.hpp>
 
-#include "engine/context.hpp"
-#include "engine/test_result.hpp"
+#include "model/context.hpp"
+#include "model/metadata.hpp"
+#include "model/test_case.hpp"
+#include "model/test_program.hpp"
+#include "model/test_result.hpp"
 #include "store/exceptions.hpp"
 #include "store/write_backend.hpp"
 #include "utils/datetime.hpp"
@@ -66,7 +69,7 @@ namespace {
 ///     from the result parameter so that we can handle passed() here as well.
 ///     Just provide NULL in this case.
 static void
-do_put_result_ok_test(const engine::test_result& result,
+do_put_result_ok_test(const model::test_result& result,
                       const char* result_type, const char* exp_reason)
 {
     store::write_backend backend = store::write_backend::open_rw(
@@ -126,8 +129,8 @@ ATF_TEST_CASE_BODY(commit__fail)
 {
     store::write_backend backend = store::write_backend::open_rw(
         fs::path("test.db"));
-    const engine::context context(fs::path("/foo/bar"),
-                                  std::map< std::string, std::string >());
+    const model::context context(fs::path("/foo/bar"),
+                                 std::map< std::string, std::string >());
     {
         store::write_transaction tx = backend.start_write();
         tx.put_context(context);
@@ -173,11 +176,11 @@ ATF_TEST_CASE_HEAD(put_test_program__ok)
 }
 ATF_TEST_CASE_BODY(put_test_program__ok)
 {
-    const engine::metadata md = engine::metadata_builder()
+    const model::metadata md = model::metadata_builder()
         .add_custom("var1", "value1")
         .add_custom("var2", "value2")
         .build();
-    const engine::test_program test_program(
+    const model::test_program test_program(
         "mock", fs::path("the/binary"), fs::path("/some//root"),
         "the-suite", md);
 
@@ -214,11 +217,11 @@ ATF_TEST_CASE_HEAD(put_test_case__fail)
 ATF_TEST_CASE_BODY(put_test_case__fail)
 {
     // TODO(jmmv): Use a mock test program and test case.
-    const engine::test_program test_program(
+    const model::test_program test_program(
         "plain", fs::path("the/binary"), fs::path("/some/root"), "the-suite",
-        engine::metadata_builder().build());
-    const engine::test_case test_case("plain", test_program, "main",
-                                      engine::metadata_builder().build());
+        model::metadata_builder().build());
+    const model::test_case test_case("plain", test_program, "main",
+                                     model::metadata_builder().build());
 
     store::write_backend backend = store::write_backend::open_rw(
         fs::path("test.db"));
@@ -317,7 +320,7 @@ ATF_TEST_CASE_HEAD(put_result__ok__broken)
 }
 ATF_TEST_CASE_BODY(put_result__ok__broken)
 {
-    const engine::test_result result(engine::test_result::broken, "a b cd");
+    const model::test_result result(model::test_result::broken, "a b cd");
     do_put_result_ok_test(result, "broken", "a b cd");
 }
 
@@ -330,8 +333,8 @@ ATF_TEST_CASE_HEAD(put_result__ok__expected_failure)
 }
 ATF_TEST_CASE_BODY(put_result__ok__expected_failure)
 {
-    const engine::test_result result(engine::test_result::expected_failure,
-                                     "a b cd");
+    const model::test_result result(model::test_result::expected_failure,
+                                    "a b cd");
     do_put_result_ok_test(result, "expected_failure", "a b cd");
 }
 
@@ -344,7 +347,7 @@ ATF_TEST_CASE_HEAD(put_result__ok__failed)
 }
 ATF_TEST_CASE_BODY(put_result__ok__failed)
 {
-    const engine::test_result result(engine::test_result::failed, "a b cd");
+    const model::test_result result(model::test_result::failed, "a b cd");
     do_put_result_ok_test(result, "failed", "a b cd");
 }
 
@@ -357,7 +360,7 @@ ATF_TEST_CASE_HEAD(put_result__ok__passed)
 }
 ATF_TEST_CASE_BODY(put_result__ok__passed)
 {
-    const engine::test_result result(engine::test_result::passed);
+    const model::test_result result(model::test_result::passed);
     do_put_result_ok_test(result, "passed", NULL);
 }
 
@@ -370,7 +373,7 @@ ATF_TEST_CASE_HEAD(put_result__ok__skipped)
 }
 ATF_TEST_CASE_BODY(put_result__ok__skipped)
 {
-    const engine::test_result result(engine::test_result::skipped, "a b cd");
+    const model::test_result result(model::test_result::skipped, "a b cd");
     do_put_result_ok_test(result, "skipped", "a b cd");
 }
 
@@ -383,7 +386,7 @@ ATF_TEST_CASE_HEAD(put_result__fail)
 }
 ATF_TEST_CASE_BODY(put_result__fail)
 {
-    const engine::test_result result(engine::test_result::broken, "foo");
+    const model::test_result result(model::test_result::broken, "foo");
 
     store::write_backend backend = store::write_backend::open_rw(
         fs::path("test.db"));

@@ -33,10 +33,12 @@
 #include <vector>
 
 #include "cli/common.ipp"
-#include "engine/drivers/list_tests.hpp"
+#include "drivers/list_tests.hpp"
 #include "engine/filters.hpp"
-#include "engine/test_case.hpp"
-#include "engine/test_program.hpp"
+#include "model/metadata.hpp"
+#include "model/test_case.hpp"
+#include "model/test_program.hpp"
+#include "model/types.hpp"
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/cmdline/ui.hpp"
@@ -47,14 +49,13 @@
 namespace cmdline = utils::cmdline;
 namespace config = utils::config;
 namespace fs = utils::fs;
-namespace list_tests = engine::drivers::list_tests;
 
 
 namespace {
 
 
 /// Hooks for list_tests to print test cases as they come.
-class progress_hooks : public list_tests::base_hooks {
+class progress_hooks : public drivers::list_tests::base_hooks {
     /// The ui object to which to print the test cases.
     cmdline::ui* _ui;
 
@@ -76,7 +77,7 @@ public:
     ///
     /// \param test_case The test case to report.
     void
-    got_test_case(const engine::test_case& test_case)
+    got_test_case(const model::test_case& test_case)
     {
         cli::detail::list_test_case(_ui, _verbose, test_case);
     }
@@ -93,7 +94,7 @@ public:
 /// \param test_case The test case to print.
 void
 cli::detail::list_test_case(cmdline::ui* ui, const bool verbose,
-                            const engine::test_case& test_case)
+                            const model::test_case& test_case)
 {
     const std::string id = format_test_case_id(test_case);
     if (!verbose) {
@@ -104,15 +105,15 @@ cli::detail::list_test_case(cmdline::ui* ui, const bool verbose,
 
         // TODO(jmmv): Running these for every test case is probably not the
         // fastest thing to do.
-        const engine::metadata default_md = engine::metadata_builder().build();
-        const engine::properties_map default_props = default_md.to_properties();
+        const model::metadata default_md = model::metadata_builder().build();
+        const model::properties_map default_props = default_md.to_properties();
 
-        const engine::metadata& test_md = test_case.get_metadata();
-        const engine::properties_map test_props = test_md.to_properties();
+        const model::metadata& test_md = test_case.get_metadata();
+        const model::properties_map test_props = test_md.to_properties();
 
-        for (engine::properties_map::const_iterator iter = test_props.begin();
+        for (model::properties_map::const_iterator iter = test_props.begin();
              iter != test_props.end(); iter++) {
-            const engine::properties_map::const_iterator default_iter =
+            const model::properties_map::const_iterator default_iter =
                 default_props.find((*iter).first);
             if (default_iter == default_props.end() ||
                 (*iter).second != (*default_iter).second)
@@ -145,7 +146,7 @@ cli::cmd_list::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
                    const config::tree& UTILS_UNUSED_PARAM(user_config))
 {
     progress_hooks hooks(ui, cmdline.has_option("verbose"));
-    const list_tests::result result = list_tests::drive(
+    const drivers::list_tests::result result = drivers::list_tests::drive(
         kyuafile_path(cmdline), build_root_path(cmdline),
         parse_filters(cmdline.arguments()), hooks);
 

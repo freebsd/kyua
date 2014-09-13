@@ -34,6 +34,8 @@ extern "C" {
 
 #include "engine/config.hpp"
 #include "engine/kyuafile.hpp"
+#include "model/metadata.hpp"
+#include "model/test_program.hpp"
 #include "utils/config/tree.ipp"
 #include "utils/env.hpp"
 #include "utils/fs/operations.hpp"
@@ -162,12 +164,12 @@ ATF_TEST_CASE_BODY(kyuafile_top__some_matches)
     ATF_REQUIRE_EQ(fs::path("root"), kyuafile.source_root());
     ATF_REQUIRE_EQ(fs::path("root"), kyuafile.build_root());
 
-    engine::test_program exp_test_program_a(
+    model::test_program exp_test_program_a(
         "atf", fs::path("subdir1/a"), fs::path("root"), "b",
-        engine::metadata_builder().build());
-    engine::test_program exp_test_program_c(
+        model::metadata_builder().build());
+    model::test_program exp_test_program_c(
         "atf", fs::path("subdir2/c"), fs::path("root"), "d",
-        engine::metadata_builder().build());
+        model::metadata_builder().build());
 
     ATF_REQUIRE_EQ(2, kyuafile.test_programs().size());
     ATF_REQUIRE((exp_test_program_a == *kyuafile.test_programs()[0] &&

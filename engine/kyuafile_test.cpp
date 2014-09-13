@@ -37,7 +37,8 @@
 #include <lutok/test_utils.hpp>
 
 #include "engine/exceptions.hpp"
-#include "engine/test_program.hpp"
+#include "model/metadata.hpp"
+#include "model/test_program.hpp"
 #include "utils/datetime.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
@@ -188,7 +189,7 @@ ATF_TEST_CASE_BODY(kyuafile__load__metadata)
     ATF_REQUIRE_EQ("atf", suite.test_programs()[0]->interface_name());
     ATF_REQUIRE_EQ(fs::path("1st"), suite.test_programs()[0]->relative_path());
     ATF_REQUIRE_EQ("first", suite.test_programs()[0]->test_suite_name());
-    const engine::metadata md1 = engine::metadata_builder()
+    const model::metadata md1 = model::metadata_builder()
         .add_allowed_architecture("amd64")
         .add_allowed_architecture("i386")
         .set_timeout(datetime::delta(15, 0))
@@ -198,7 +199,7 @@ ATF_TEST_CASE_BODY(kyuafile__load__metadata)
     ATF_REQUIRE_EQ("plain", suite.test_programs()[1]->interface_name());
     ATF_REQUIRE_EQ(fs::path("2nd"), suite.test_programs()[1]->relative_path());
     ATF_REQUIRE_EQ("second", suite.test_programs()[1]->test_suite_name());
-    const engine::metadata md2 = engine::metadata_builder()
+    const model::metadata md2 = model::metadata_builder()
         .add_required_file(fs::path("foo"))
         .add_required_file(fs::path("/bar/baz"))
         .set_required_user("root")
