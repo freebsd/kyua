@@ -36,6 +36,7 @@
 
 #include "testers/cli.h"
 #include "testers/defs.h"
+#include "testers/env.h"
 #include "testers/error.h"
 #include "testers/result.h"
 #include "testers/run.h"
@@ -129,14 +130,13 @@ run_test_case(const char* test_program, const char* test_case,
 {
     kyua_error_t error;
 
+    error = kyua_env_check_configuration(user_variables);
+    if (kyua_error_is_set(error))
+        goto out;
+
     if (strcmp(test_case, fake_test_case_name) != 0) {
         error = kyua_generic_error_new("Unknown test case '%s'", test_case);
         goto out;
-    }
-
-    const char* const* iter;
-    for (iter = user_variables; *iter != NULL; ++iter) {
-        warnx("Configuration variables not supported; ignoring '%s'", *iter);
     }
 
     char *work_directory;
@@ -152,6 +152,11 @@ run_test_case(const char* test_program, const char* test_case,
     pid_t pid;
     error = kyua_run_fork(&real_run_params, &pid);
     if (!kyua_error_is_set(error) && pid == 0) {
+        error = kyua_env_set_configuration(user_variables);
+        if (kyua_error_is_set(error))
+            kyua_error_err(EXIT_FAILURE, error, "Failed to set configuration "
+                           "variables in the environment");
+
         const char* const program_args[] = { test_program, NULL };
         kyua_run_exec(test_program, program_args);
     }
