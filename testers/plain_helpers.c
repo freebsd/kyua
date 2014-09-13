@@ -34,6 +34,8 @@
 
 #include "testers/defs.h"
 
+extern char** environ;
+
 
 /// Exit code to report internal, unexpected errors.
 static const int EXIT_BOGUS = 123;
@@ -57,6 +59,20 @@ pass_helper(void)
     fprintf(stdout, "Second line to stdout\n");
     fprintf(stderr, "First line to stderr\n");
     fprintf(stderr, "Second line to stderr\n");
+    return EXIT_SUCCESS;
+}
+
+
+/// Test case that prints existing configuration variables.
+static int
+print_config_helper(void)
+{
+    char** iter;
+    for (iter = environ; *iter != NULL; ++iter) {
+        if (strstr(*iter, "TEST_ENV_") == *iter) {
+            fprintf(stdout, "%s\n", *iter);
+        }
+    }
     return EXIT_SUCCESS;
 }
 
@@ -100,6 +116,8 @@ main(const int argc, char* const* const KYUA_DEFS_UNUSED_PARAM(argv))
         return fail_helper();
     } else if (strcmp(helper_name, "pass") == 0) {
         return pass_helper();
+    } else if (strcmp(helper_name, "print_config") == 0) {
+        return print_config_helper();
     } else if (strcmp(helper_name, "signal") == 0) {
         return signal_helper();
     } else if (strcmp(helper_name, "sleep") == 0) {

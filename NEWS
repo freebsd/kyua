@@ -10,6 +10,13 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   their name.  This prevents some possible confusion when displaying,
   for example, the "kyua-test" manual page with a plain name of "test".
 
+* Issue 84: Pass test-suite configuration variables to plain and TAP
+  test programs via the environment.  The name of the environment
+  variables set this way is prefixed by TEST_ENV_, so a configuration
+  variable of the form 'test_suites.some_name.allow_unsafe_ops=yes'
+  in kyua.conf becomes 'TEST_ENV_allow_unsafe_ops=YES' in the
+  environment.
+
 * Issue 102: Set TMPDIR to the test case's work directory when running
   the test case.  If the test case happens to use the mktemp(3) family
   of functions (due to misunderstandings on how Kyua works or due to

@@ -39,6 +39,7 @@
 #include <string.h>
 
 #include "testers/error.h"
+#include "testers/text.h"
 
 
 /// Sets an environment variable.
@@ -102,4 +103,70 @@ kyua_env_unset(const char* name)
 #else
 #   error "Don't know how to unset an environment variable."
 #endif
+}
+
+
+/// Validates that the configuration variables can be set in the environment.
+///
+/// \param user_variables Set of configuration variables to pass to the test.
+///     This is an array of strings of the form var=value.
+///
+/// \return An error if there is a syntax error in the variables.
+kyua_error_t
+kyua_env_check_configuration(const char* const user_variables[])
+{
+    const char* const* iter;
+    for (iter = user_variables; *iter != NULL; ++iter) {
+        const char* var_value = *iter;
+        if (strlen(var_value) == 0 ||
+            (var_value)[0] == '=' ||
+            strchr(var_value, '=') == NULL) {
+            return kyua_generic_error_new("Invalid variable '%s'; must be of "
+                                          "the form var=value", var_value);
+        }
+    }
+    return kyua_error_ok();
+}
+
+
+/// Sets a collection of configuration variables in the environment.
+///
+/// \param user_variables Set of configuration variables to pass to the test.
+///     This is an array of strings of the form var=value and must have been
+///     previously sanity-checked with kyua_env_check_configuration.
+///
+/// \return An error if there is a problem allocating memory.
+///
+/// \post The environment contains a new collection of TEST_ENV_* variables that
+/// matches the input user_variables.
+kyua_error_t
+kyua_env_set_configuration(const char* const user_variables[])
+{
+    const char* const* iter;
+    for (iter = user_variables; *iter != NULL; ++iter) {
+        kyua_error_t error;
+
+        char* var_value = strdup(*iter);
+        if (var_value == NULL)
+            return kyua_oom_error_new();
+
+        char* value = strchr(var_value, '=');
+        assert(value != NULL);  // Must have been validated.
+        *value = '\0';
+        value += 1;
+
+        char* var;
+        error = kyua_text_printf(&var, "TEST_ENV_%s", var_value);
+        if (kyua_error_is_set(error)) {
+            free(var_value);
+            return error;
+        }
+
+        error = kyua_env_set(var, value);
+        if (kyua_error_is_set(error)) {
+            free(var_value);
+            return error;
+        }
+    }
+    return kyua_error_ok();
 }

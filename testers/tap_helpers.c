@@ -34,6 +34,8 @@
 
 #include "testers/defs.h"
 
+extern char** environ;
+
 
 /// Exit code to report internal, unexpected errors.
 static const int EXIT_BOGUS = 123;
@@ -129,6 +131,22 @@ skip_helper(void)
 }
 
 
+/// Test case that prints existing configuration variables.
+static int
+print_config_helper(void)
+{
+    fprintf(stdout, "1..1\n");
+    char** iter;
+    for (iter = environ; *iter != NULL; ++iter) {
+        if (strstr(*iter, "TEST_ENV_") == *iter) {
+            fprintf(stdout, "%s\n", *iter);
+        }
+    }
+    fprintf(stdout, "ok - 1\n");
+    return EXIT_SUCCESS;
+}
+
+
 /// Test case that always dies due to a signal and dumps core.
 static int
 signal_helper(void)
@@ -176,6 +194,8 @@ main(const int argc, char* const* const KYUA_DEFS_UNUSED_PARAM(argv))
         return pass_helper();
     } else if (strcmp(helper_name, "pass_but_return_failure") == 0) {
         return pass_but_return_failure_helper();
+    } else if (strcmp(helper_name, "print_config") == 0) {
+        return print_config_helper();
     } else if (strcmp(helper_name, "signal") == 0) {
         return signal_helper();
     } else if (strcmp(helper_name, "skip") == 0) {

@@ -27,7 +27,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /// \file env.h
-/// Portable environment manipulation functions.
+/// Utilities to manipulate the environment.
 
 #if !defined(KYUA_ENV_H)
 #define KYUA_ENV_H
@@ -37,6 +37,9 @@
 
 kyua_error_t kyua_env_set(const char*, const char*);
 kyua_error_t kyua_env_unset(const char*);
+
+kyua_error_t kyua_env_check_configuration(const char* const[]);
+kyua_error_t kyua_env_set_configuration(const char* const[]);
 
 
 #endif  // !defined(KYUA_ENV_H)

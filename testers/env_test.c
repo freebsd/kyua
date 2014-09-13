@@ -33,6 +33,8 @@
 
 #include <atf-c.h>
 
+#include "testers/error.h"
+
 
 ATF_TC_WITHOUT_HEAD(set);
 ATF_TC_BODY(set, tc)
@@ -52,10 +54,94 @@ ATF_TC_BODY(unset, tc)
 }
 
 
+ATF_TC_WITHOUT_HEAD(check_configuration__ok__empty);
+ATF_TC_BODY(check_configuration__ok__empty, tc)
+{
+    const char* const config[] = { NULL };
+    const kyua_error_t error = kyua_env_check_configuration(config);
+    ATF_REQUIRE(!kyua_error_is_set(error));
+}
+
+
+ATF_TC_WITHOUT_HEAD(check_configuration__ok__some);
+ATF_TC_BODY(check_configuration__ok__some, tc)
+{
+    const char* const config[] = { "first=second", "bar=baz", NULL };
+    const kyua_error_t error = kyua_env_check_configuration(config);
+    ATF_REQUIRE(!kyua_error_is_set(error));
+}
+
+
+/// Executes a single check_configuration__fail test.
+///
+/// \param var_value The invalid var_value pair to validate.
+/// \param exp_error Regexp to use to validate the error message.
+static void
+do_check_configuration_fail(const char* var_value, const char* exp_error)
+{
+    const char* const config[] = { "first=second", var_value, "bar=baz", NULL };
+    const kyua_error_t error = kyua_env_check_configuration(config);
+    ATF_REQUIRE(kyua_error_is_set(error));
+
+    char buffer[1024];
+    kyua_error_format(error, buffer, sizeof(buffer));
+    ATF_REQUIRE_MATCH(exp_error, buffer);
+
+    kyua_error_free(error);
+}
+
+
+ATF_TC_WITHOUT_HEAD(check_configuration__fail);
+ATF_TC_BODY(check_configuration__fail, tc)
+{
+    do_check_configuration_fail("no-equal", "Invalid variable 'no-equal'");
+    do_check_configuration_fail("", "Invalid variable ''");
+    do_check_configuration_fail("=foo", "Invalid variable '=foo'");
+}
+
+
+ATF_TC_WITHOUT_HEAD(set_configuration__empty);
+ATF_TC_BODY(set_configuration__empty, tc)
+{
+    const char* const config[] = { NULL };
+    const kyua_error_t error = kyua_env_set_configuration(config);
+    ATF_REQUIRE(!kyua_error_is_set(error));
+}
+
+
+ATF_TC_WITHOUT_HEAD(set_configuration__some);
+ATF_TC_BODY(set_configuration__some, tc)
+{
+    const char* const config[] = { "first=second", "bar=baz", NULL };
+    const kyua_error_t error = kyua_env_set_configuration(config);
+    ATF_REQUIRE(!kyua_error_is_set(error));
+
+    const char* first_value = getenv("TEST_ENV_first");
+    ATF_REQUIRE(first_value != NULL);
+    ATF_REQUIRE_STREQ("second", first_value);
+
+    const char* bar_value = getenv("TEST_ENV_bar");
+    ATF_REQUIRE(bar_value != NULL);
+    ATF_REQUIRE_STREQ("baz", bar_value);
+
+    ATF_REQUIRE(getenv("first") == NULL);
+    ATF_REQUIRE(getenv("second") == NULL);
+    ATF_REQUIRE(getenv("bar") == NULL);
+    ATF_REQUIRE(getenv("baz") == NULL);
+}
+
+
 ATF_TP_ADD_TCS(tp)
 {
     ATF_TP_ADD_TC(tp, set);
     ATF_TP_ADD_TC(tp, unset);
+
+    ATF_TP_ADD_TC(tp, check_configuration__ok__empty);
+    ATF_TP_ADD_TC(tp, check_configuration__ok__some);
+    ATF_TP_ADD_TC(tp, check_configuration__fail);
+
+    ATF_TP_ADD_TC(tp, set_configuration__empty);
+    ATF_TP_ADD_TC(tp, set_configuration__some);
 
     return atf_no_error();
 }
