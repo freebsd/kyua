@@ -78,10 +78,13 @@ lookup(const char* dir, const char* name, const int expected_type)
 
     bool found = false;
     struct dirent* dp;
+    struct stat s;
     while (!found && (dp = readdir(dirp)) != NULL) {
-        if (std::strcmp(dp->d_name, name) == 0 &&
-            dp->d_type == expected_type) {
-            found = true;
+        if (std::strcmp(dp->d_name, name) == 0) {
+            stat(dp->d_name, &s);
+            if(s.st_mode & expected_type) {
+                found = true;
+            }
         }
     }
     ::closedir(dirp);
@@ -276,7 +279,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(mkdir__ok);
 ATF_TEST_CASE_BODY(mkdir__ok)
 {
     fs::mkdir(fs::path("dir"), 0755);
-    ATF_REQUIRE(lookup(".", "dir", DT_DIR));
+    ATF_REQUIRE(lookup(".", "dir", S_IFDIR));
 }
 
 
@@ -289,28 +292,28 @@ ATF_TEST_CASE_BODY(mkdir__enoent)
     } catch (const fs::system_error& e) {
         ATF_REQUIRE_EQ(ENOENT, e.original_errno());
     }
-    ATF_REQUIRE(!lookup(".", "dir1", DT_DIR));
-    ATF_REQUIRE(!lookup(".", "dir2", DT_DIR));
+    ATF_REQUIRE(!lookup(".", "dir1", S_IFDIR));
+    ATF_REQUIRE(!lookup(".", "dir2", S_IFDIR));
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(mkdir_p__one_component);
 ATF_TEST_CASE_BODY(mkdir_p__one_component)
 {
-    ATF_REQUIRE(!lookup(".", "new-dir", DT_DIR));
+    ATF_REQUIRE(!lookup(".", "new-dir", S_IFDIR));
     fs::mkdir_p(fs::path("new-dir"), 0755);
-    ATF_REQUIRE(lookup(".", "new-dir", DT_DIR));
+    ATF_REQUIRE(lookup(".", "new-dir", S_IFDIR));
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(mkdir_p__many_components);
 ATF_TEST_CASE_BODY(mkdir_p__many_components)
 {
-    ATF_REQUIRE(!lookup(".", "a", DT_DIR));
+    ATF_REQUIRE(!lookup(".", "a", S_IFDIR));
     fs::mkdir_p(fs::path("a/b/c"), 0755);
-    ATF_REQUIRE(lookup(".", "a", DT_DIR));
-    ATF_REQUIRE(lookup("a", "b", DT_DIR));
-    ATF_REQUIRE(lookup("a/b", "c", DT_DIR));
+    ATF_REQUIRE(lookup(".", "a", S_IFDIR));
+    ATF_REQUIRE(lookup("a", "b", S_IFDIR));
+    ATF_REQUIRE(lookup("a/b", "c", S_IFDIR));
 }
 
 
@@ -339,11 +342,11 @@ ATF_TEST_CASE_BODY(mkdir_p__eacces)
     } catch (const fs::system_error& e) {
         ATF_REQUIRE_EQ(EACCES, e.original_errno());
     }
-    ATF_REQUIRE(lookup(".", "a", DT_DIR));
-    ATF_REQUIRE(lookup("a", "b", DT_DIR));
-    ATF_REQUIRE(!lookup(".", "c", DT_DIR));
-    ATF_REQUIRE(!lookup("a", "c", DT_DIR));
-    ATF_REQUIRE(!lookup("a/b", "c", DT_DIR));
+    ATF_REQUIRE(lookup(".", "a", S_IFDIR));
+    ATF_REQUIRE(lookup("a", "b", S_IFDIR));
+    ATF_REQUIRE(!lookup(".", "c", S_IFDIR));
+    ATF_REQUIRE(!lookup("a", "c", S_IFDIR));
+    ATF_REQUIRE(!lookup("a/b", "c", S_IFDIR));
 }
 
 
@@ -356,8 +359,8 @@ ATF_TEST_CASE_BODY(mkdtemp)
 
     const std::string dir_template("tempdir.XXXXXX");
     const fs::path tempdir = fs::mkdtemp(dir_template);
-    ATF_REQUIRE(!lookup("tmp", dir_template.c_str(), DT_DIR));
-    ATF_REQUIRE(lookup("tmp", tempdir.leaf_name().c_str(), DT_DIR));
+    ATF_REQUIRE(!lookup("tmp", dir_template.c_str(), S_IFDIR));
+    ATF_REQUIRE(lookup("tmp", tempdir.leaf_name().c_str(), S_IFDIR));
 }
 
 
@@ -370,8 +373,8 @@ ATF_TEST_CASE_BODY(mkstemp)
 
     const std::string file_template("tempfile.XXXXXX");
     const fs::path tempfile = fs::mkstemp(file_template);
-    ATF_REQUIRE(!lookup("tmp", file_template.c_str(), DT_REG));
-    ATF_REQUIRE(lookup("tmp", tempfile.leaf_name().c_str(), DT_REG));
+    ATF_REQUIRE(!lookup("tmp", file_template.c_str(), S_IFREG));
+    ATF_REQUIRE(lookup("tmp", tempfile.leaf_name().c_str(), S_IFREG));
 }
 
 
@@ -379,9 +382,9 @@ ATF_TEST_CASE_WITHOUT_HEAD(rm_r__empty);
 ATF_TEST_CASE_BODY(rm_r__empty)
 {
     fs::mkdir(fs::path("root"), 0755);
-    ATF_REQUIRE(lookup(".", "root", DT_DIR));
+    ATF_REQUIRE(lookup(".", "root", S_IFDIR));
     fs::rm_r(fs::path("root"));
-    ATF_REQUIRE(!lookup(".", "root", DT_DIR));
+    ATF_REQUIRE(!lookup(".", "root", S_IFDIR));
 }
 
 
@@ -398,9 +401,9 @@ ATF_TEST_CASE_BODY(rm_r__files_and_directories)
     fs::mkdir(fs::path("root/dir1/dir2"), 0755);
     atf::utils::create_file("root/dir1/dir2/file", "");
     fs::mkdir(fs::path("root/dir1/dir3"), 0755);
-    ATF_REQUIRE(lookup(".", "root", DT_DIR));
+    ATF_REQUIRE(lookup(".", "root", S_IFDIR));
     fs::rm_r(fs::path("root"));
-    ATF_REQUIRE(!lookup(".", "root", DT_DIR));
+    ATF_REQUIRE(!lookup(".", "root", S_IFDIR));
 }
 
 
