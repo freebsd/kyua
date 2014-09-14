@@ -680,6 +680,8 @@ convert_result(const enum atf_status status, const int status_arg,
     }
 
     assert(false);
+    // Should never reach here
+    return kyua_error_ok();
 }
 
 
