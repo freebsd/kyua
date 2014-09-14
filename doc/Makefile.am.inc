@@ -44,100 +44,100 @@ man_MANS = doc/kyua-about.1
 CLEANFILES += doc/kyua-about.1
 EXTRA_DIST += doc/kyua-about.1.in
 doc/kyua-about.1: $(srcdir)/doc/kyua-about.1.in
-	name=kyua-about.1; $(BUILD_MANPAGE)
+	$(AM_V_GEN)name=kyua-about.1; $(BUILD_MANPAGE)
 
 man_MANS += doc/kyua-build-root.7
 CLEANFILES += doc/kyua-build-root.7
 EXTRA_DIST += doc/kyua-build-root.7.in
 doc/kyua-build-root.7: $(srcdir)/doc/kyua-build-root.7.in
-	name=kyua-build-root.7; $(BUILD_MANPAGE)
+	$(AM_V_GEN)name=kyua-build-root.7; $(BUILD_MANPAGE)
 
 man_MANS += doc/kyua-config.1
 CLEANFILES += doc/kyua-config.1
 EXTRA_DIST += doc/kyua-config.1.in
 doc/kyua-config.1: $(srcdir)/doc/kyua-config.1.in
-	name=kyua-config.1; $(BUILD_MANPAGE)
+	$(AM_V_GEN)name=kyua-config.1; $(BUILD_MANPAGE)
 
 man_MANS += doc/kyua-db-exec.1
 CLEANFILES += doc/kyua-db-exec.1
 EXTRA_DIST += doc/kyua-db-exec.1.in
 doc/kyua-db-exec.1: $(srcdir)/doc/kyua-db-exec.1.in
-	name=kyua-db-exec.1; $(BUILD_MANPAGE)
+	$(AM_V_GEN)name=kyua-db-exec.1; $(BUILD_MANPAGE)
 
 man_MANS += doc/kyua-db-migrate.1
 CLEANFILES += doc/kyua-db-migrate.1
 EXTRA_DIST += doc/kyua-db-migrate.1.in
 doc/kyua-db-migrate.1: $(srcdir)/doc/kyua-db-migrate.1.in
-	name=kyua-db-migrate.1; $(BUILD_MANPAGE)
+	$(AM_V_GEN)name=kyua-db-migrate.1; $(BUILD_MANPAGE)
 
 man_MANS += doc/kyua-debug.1
 CLEANFILES += doc/kyua-debug.1
 EXTRA_DIST += doc/kyua-debug.1.in
 doc/kyua-debug.1: $(srcdir)/doc/kyua-debug.1.in
-	name=kyua-debug.1; $(BUILD_MANPAGE)
+	$(AM_V_GEN)name=kyua-debug.1; $(BUILD_MANPAGE)
 
 man_MANS += doc/kyua-help.1
 CLEANFILES += doc/kyua-help.1
 EXTRA_DIST += doc/kyua-help.1.in
 doc/kyua-help.1: $(srcdir)/doc/kyua-help.1.in
-	name=kyua-help.1; $(BUILD_MANPAGE)
+	$(AM_V_GEN)name=kyua-help.1; $(BUILD_MANPAGE)
 
 man_MANS += doc/kyua-list.1
 CLEANFILES += doc/kyua-list.1
 EXTRA_DIST += doc/kyua-list.1.in
 doc/kyua-list.1: $(srcdir)/doc/kyua-list.1.in
-	name=kyua-list.1; $(BUILD_MANPAGE)
+	$(AM_V_GEN)name=kyua-list.1; $(BUILD_MANPAGE)
 
 man_MANS += doc/kyua-report-html.1
 CLEANFILES += doc/kyua-report-html.1
 EXTRA_DIST += doc/kyua-report-html.1.in
 doc/kyua-report-html.1: $(srcdir)/doc/kyua-report-html.1.in
-	name=kyua-report-html.1; $(BUILD_MANPAGE)
+	$(AM_V_GEN)name=kyua-report-html.1; $(BUILD_MANPAGE)
 
 man_MANS += doc/kyua-report-junit.1
 CLEANFILES += doc/kyua-report-junit.1
 EXTRA_DIST += doc/kyua-report-junit.1.in
 doc/kyua-report-junit.1: $(srcdir)/doc/kyua-report-junit.1.in
-	name=kyua-report-junit.1; $(BUILD_MANPAGE)
+	$(AM_V_GEN)name=kyua-report-junit.1; $(BUILD_MANPAGE)
 
 man_MANS += doc/kyua-report.1
 CLEANFILES += doc/kyua-report.1
 EXTRA_DIST += doc/kyua-report.1.in
 doc/kyua-report.1: $(srcdir)/doc/kyua-report.1.in
-	name=kyua-report.1; $(BUILD_MANPAGE)
+	$(AM_V_GEN)name=kyua-report.1; $(BUILD_MANPAGE)
 
 man_MANS += doc/kyua-results-files.7
 CLEANFILES += doc/kyua-results-files.7
 EXTRA_DIST += doc/kyua-results-files.7.in
 doc/kyua-results-files.7: $(srcdir)/doc/kyua-results-files.7.in
-	name=kyua-results-files.7; $(BUILD_MANPAGE)
+	$(AM_V_GEN)name=kyua-results-files.7; $(BUILD_MANPAGE)
 
 man_MANS += doc/kyua-test.1
 CLEANFILES += doc/kyua-test.1
 EXTRA_DIST += doc/kyua-test.1.in
 doc/kyua-test.1: $(srcdir)/doc/kyua-test.1.in
-	name=kyua-test.1; $(BUILD_MANPAGE)
+	$(AM_V_GEN)name=kyua-test.1; $(BUILD_MANPAGE)
 
 man_MANS += doc/kyua-test-filters.7
 CLEANFILES += doc/kyua-test-filters.7
 EXTRA_DIST += doc/kyua-test-filters.7.in
 doc/kyua-test-filters.7: $(srcdir)/doc/kyua-test-filters.7.in
-	name=kyua-test-filters.7; $(BUILD_MANPAGE)
+	$(AM_V_GEN)name=kyua-test-filters.7; $(BUILD_MANPAGE)
 
 man_MANS += doc/kyua.1
 CLEANFILES += doc/kyua.1
 EXTRA_DIST += doc/kyua.1.in
 doc/kyua.1: $(srcdir)/doc/kyua.1.in
-	name=kyua.1; $(BUILD_MANPAGE)
+	$(AM_V_GEN)name=kyua.1; $(BUILD_MANPAGE)
 
 man_MANS += doc/kyua.conf.5
 CLEANFILES += doc/kyua.conf.5
 EXTRA_DIST += doc/kyua.conf.5.in
 doc/kyua.conf.5: $(srcdir)/doc/kyua.conf.5.in
-	name=kyua.conf.5; $(BUILD_MANPAGE)
+	$(AM_V_GEN)name=kyua.conf.5; $(BUILD_MANPAGE)
 
 man_MANS += doc/kyuafile.5
 CLEANFILES += doc/kyuafile.5
 EXTRA_DIST += doc/kyuafile.5.in
 doc/kyuafile.5: $(srcdir)/doc/kyuafile.5.in
-	name=kyuafile.5; $(BUILD_MANPAGE)
+	$(AM_V_GEN)name=kyuafile.5; $(BUILD_MANPAGE)

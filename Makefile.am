@@ -89,11 +89,11 @@ KYUA_TEST_CONFIG_FILE = none
 noinst_SCRIPTS = local-kyua
 CLEANFILES += local-kyua local-kyua.tmp
 local-kyua: Makefile
-	echo '#!/bin/sh' >local-kyua.tmp
+	$(AM_V_GEN)echo '#!/bin/sh' >local-kyua.tmp; \
 	echo 'env $(CHECK_ENVIRONMENT) $(TESTS_ENVIRONMENT)' \
 	    '"$(abs_top_builddir)/kyua" --config='$(KYUA_TEST_CONFIG_FILE)' \
-	    "$${@}"' >>local-kyua.tmp
-	chmod +x local-kyua.tmp
+	    "$${@}"' >>local-kyua.tmp; \
+	chmod +x local-kyua.tmp; \
 	mv -f local-kyua.tmp local-kyua
 
 if WITH_ATF
@@ -125,8 +125,8 @@ if WITH_DOXYGEN
 all-local: api-docs/api-docs.tag
 
 api-docs/api-docs.tag: $(builddir)/Doxyfile $(SOURCES)
-	mkdir -p api-docs
-	${DOXYGEN} $(builddir)/Doxyfile 2>&1 | tee api-docs/warnings
+	@mkdir -p api-docs
+	$(AM_V_GEN)$(DOXYGEN) $(builddir)/Doxyfile 2>&1 | tee api-docs/warnings
 
 CLEAN_TARGETS += clean-api-docs
 clean-api-docs:
