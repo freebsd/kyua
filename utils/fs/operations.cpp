@@ -33,6 +33,10 @@
 #endif
 
 extern "C" {
+#if defined(HAVE_SYS_PARAM_H)
+#   include <sys/param.h>
+#endif
+
 #include <sys/stat.h>
 
 #include <dirent.h>
