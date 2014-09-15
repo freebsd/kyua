@@ -45,6 +45,7 @@
 #include <atf-c.h>
 
 #include "testers/error.h"
+#include "testers/text.h"
 
 
 static void run_mount_tmpfs(const char*) KYUA_DEFS_NORETURN;
@@ -93,12 +94,16 @@ lookup(const char* dir, const char* name, const int expected_type)
     bool found = false;
     struct dirent* dp;
     struct stat s;
+    char *path = NULL; 
     while (!found && (dp = readdir(dirp)) != NULL) {
         if (strcmp(dp->d_name, name) == 0) {
-            stat(dp->d_name, &s);
-            if (s.st_mode & expected_type) {
-                found = true;
+            kyua_text_printf(&path, "%s/%s", dir, name); 
+            if (stat(path, &s) == 0) {
+                if ((s.st_mode & S_IFMT) == expected_type) {
+                    found = true;
+                }
             }
+            free(path);
         }
     }
     closedir(dirp);

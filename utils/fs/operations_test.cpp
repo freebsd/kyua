@@ -81,9 +81,11 @@ lookup(const char* dir, const char* name, const int expected_type)
     struct stat s;
     while (!found && (dp = readdir(dirp)) != NULL) {
         if (std::strcmp(dp->d_name, name) == 0) {
-            stat(dp->d_name, &s);
-            if(s.st_mode & expected_type) {
-                found = true;
+            fs::path lookup_path = fs::path(F("%s/%s") % dir % name);
+            if (stat(lookup_path.c_str(), &s) == 0) {
+                if ((s.st_mode & S_IFMT) == expected_type) {
+                    found = true;
+                }
             }
         }
     }
