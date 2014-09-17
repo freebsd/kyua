@@ -25,7 +25,7 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   in kyua.conf becomes 'TEST_ENV_allow_unsafe_ops=YES' in the
   environment.
 
-* Issue 97: Fixed the build on Illumos.
+* Issue 97 and 116: Fixed the build on Illumos.
 
 * Issue 102: Set TMPDIR to the test case's work directory when running
   the test case.  If the test case happens to use the mktemp(3) family
