@@ -49,6 +49,7 @@
 #include <atf-c.h>
 
 #include "testers/error.h"
+#include "testers/text.h"
 
 
 static void run_mount_tmpfs(const char*) KYUA_DEFS_NORETURN;
@@ -84,12 +85,12 @@ static enum os_type current_os =
 ///
 /// \param dir The directory in which to look for the entry.
 /// \param name The name of the entry to look up.
-/// \param expected_type The expected type of the file as given by dir(5).
+/// \param expected_type The expected type of the file as given by stat(2).
 ///
 /// \return True if the entry exists and matches the given type; false
 /// otherwise.
 static bool
-lookup(const char* dir, const char* name, const int expected_type)
+lookup(const char* dir, const char* name, const unsigned int expected_type)
 {
     DIR* dirp = opendir(dir);
     ATF_REQUIRE(dirp != NULL);
@@ -97,9 +98,16 @@ lookup(const char* dir, const char* name, const int expected_type)
     bool found = false;
     struct dirent* dp;
     while (!found && (dp = readdir(dirp)) != NULL) {
-        if (strcmp(dp->d_name, name) == 0 &&
-            dp->d_type == expected_type) {
-            found = true;
+        if (strcmp(dp->d_name, name) == 0) {
+            struct stat s;
+            char* path = NULL;
+            ATF_REQUIRE(!kyua_error_is_set(kyua_text_printf(
+                &path, "%s/%s", dir, name)));
+            ATF_REQUIRE(stat(path, &s) != -1);
+            if ((s.st_mode & S_IFMT) == expected_type) {
+                found = true;
+            }
+            free(path);
         }
     }
     closedir(dirp);
@@ -201,9 +209,9 @@ ATF_TC_WITHOUT_HEAD(cleanup__file);
 ATF_TC_BODY(cleanup__file, tc)
 {
     atf_utils_create_file("root", "%s", "");
-    ATF_REQUIRE(lookup(".", "root", DT_REG));
+    ATF_REQUIRE(lookup(".", "root", S_IFREG));
     ATF_REQUIRE(!kyua_error_is_set(kyua_fs_cleanup("root")));
-    ATF_REQUIRE(!lookup(".", "root", DT_REG));
+    ATF_REQUIRE(!lookup(".", "root", S_IFREG));
 }
 
 
@@ -211,9 +219,9 @@ ATF_TC_WITHOUT_HEAD(cleanup__subdir__empty);
 ATF_TC_BODY(cleanup__subdir__empty, tc)
 {
     ATF_REQUIRE(mkdir("root", 0755) != -1);
-    ATF_REQUIRE(lookup(".", "root", DT_DIR));
+    ATF_REQUIRE(lookup(".", "root", S_IFDIR));
     ATF_REQUIRE(!kyua_error_is_set(kyua_fs_cleanup("root")));
-    ATF_REQUIRE(!lookup(".", "root", DT_DIR));
+    ATF_REQUIRE(!lookup(".", "root", S_IFDIR));
 }
 
 
@@ -230,9 +238,9 @@ ATF_TC_BODY(cleanup__subdir__files_and_directories, tc)
     ATF_REQUIRE(mkdir("root/dir1/dir2", 0755) != -1);
     atf_utils_create_file("root/dir1/dir2/file", "%s", "");
     ATF_REQUIRE(mkdir("root/dir1/dir3", 0755) != -1);
-    ATF_REQUIRE(lookup(".", "root", DT_DIR));
+    ATF_REQUIRE(lookup(".", "root", S_IFDIR));
     ATF_REQUIRE(!kyua_error_is_set(kyua_fs_cleanup("root")));
-    ATF_REQUIRE(!lookup(".", "root", DT_DIR));
+    ATF_REQUIRE(!lookup(".", "root", S_IFDIR));
 }
 
 
@@ -247,7 +255,7 @@ ATF_TC_BODY(cleanup__subdir__unprotect_regular, tc)
     ATF_REQUIRE(chmod("root/dir1/dir2", 0000) != -1);
     ATF_REQUIRE(chmod("root/dir1", 0000) != -1);
     ATF_REQUIRE(!kyua_error_is_set(kyua_fs_cleanup("root")));
-    ATF_REQUIRE(!lookup(".", "root", DT_DIR));
+    ATF_REQUIRE(!lookup(".", "root", S_IFDIR));
 }
 
 
@@ -267,7 +275,7 @@ ATF_TC_BODY(cleanup__subdir__unprotect_symlink, tc)
     ATF_REQUIRE(symlink("/bin/ls", "root/dir1/ls") != -1);
     ATF_REQUIRE(chmod("root/dir1", 0555) != -1);
     ATF_REQUIRE(!kyua_error_is_set(kyua_fs_cleanup("root")));
-    ATF_REQUIRE(!lookup(".", "root", DT_DIR));
+    ATF_REQUIRE(!lookup(".", "root", S_IFDIR));
 }
 
 
@@ -278,7 +286,7 @@ ATF_TC_BODY(cleanup__subdir__links, tc)
     ATF_REQUIRE(mkdir("root/dir1", 0755) != -1);
     ATF_REQUIRE(symlink("../../root", "root/dir1/loop") != -1);
     ATF_REQUIRE(symlink("non-existent", "root/missing") != -1);
-    ATF_REQUIRE(lookup(".", "root", DT_DIR));
+    ATF_REQUIRE(lookup(".", "root", S_IFDIR));
     kyua_error_t error = kyua_fs_cleanup("root");
     if (kyua_error_is_set(error)) {
         kyua_error_free(error);
@@ -288,7 +296,7 @@ ATF_TC_BODY(cleanup__subdir__links, tc)
         atf_tc_expect_fail("lchmod(2) is not implemented in your system");
 #endif
     }
-    ATF_REQUIRE(!lookup(".", "root", DT_DIR));
+    ATF_REQUIRE(!lookup(".", "root", S_IFDIR));
 }
 
 
@@ -304,7 +312,7 @@ ATF_TC_BODY(cleanup__mount_point__simple, tc)
     atf_utils_create_file("root/zz", "%s", "");
     mount_tmpfs("root/dir1");
     ATF_REQUIRE(!kyua_error_is_set(kyua_fs_cleanup("root")));
-    ATF_REQUIRE(!lookup(".", "root", DT_DIR));
+    ATF_REQUIRE(!lookup(".", "root", S_IFDIR));
 }
 
 
@@ -321,7 +329,7 @@ ATF_TC_BODY(cleanup__mount_point__overlayed, tc)
     mount_tmpfs("root/dir1");
     mount_tmpfs("root/dir1");
     ATF_REQUIRE(!kyua_error_is_set(kyua_fs_cleanup("root")));
-    ATF_REQUIRE(!lookup(".", "root", DT_DIR));
+    ATF_REQUIRE(!lookup(".", "root", S_IFDIR));
 }
 
 
@@ -342,7 +350,7 @@ ATF_TC_BODY(cleanup__mount_point__nested, tc)
     mount_tmpfs("root/dir1/dir2/dir4");
     ATF_REQUIRE(mkdir("root/dir1/dir2/not-mount-point", 0755) != -1);
     ATF_REQUIRE(!kyua_error_is_set(kyua_fs_cleanup("root")));
-    ATF_REQUIRE(!lookup(".", "root", DT_DIR));
+    ATF_REQUIRE(!lookup(".", "root", S_IFDIR));
 }
 
 
@@ -359,7 +367,7 @@ ATF_TC_BODY(cleanup__mount_point__links, tc)
     mount_tmpfs("root/dir1");
     ATF_REQUIRE(symlink("../dir3", "root/dir1/link") != -1);
     ATF_REQUIRE(!kyua_error_is_set(kyua_fs_cleanup("root")));
-    ATF_REQUIRE(!lookup(".", "root", DT_DIR));
+    ATF_REQUIRE(!lookup(".", "root", S_IFDIR));
 }
 
 
@@ -399,7 +407,7 @@ ATF_TC_BODY(cleanup__mount_point__busy, tc)
         ATF_REQUIRE(waitpid(pid, &status, 0) != -1);
 
         ATF_REQUIRE(!kyua_error_is_set(kyua_fs_cleanup("root")));
-        ATF_REQUIRE(!lookup(".", "root", DT_DIR));
+        ATF_REQUIRE(!lookup(".", "root", S_IFDIR));
     }
 }
 
