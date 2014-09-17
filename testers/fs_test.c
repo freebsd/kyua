@@ -197,7 +197,11 @@ static bool
 lchmod_fails(void)
 {
     ATF_REQUIRE(mkdir("test", 0755) != -1);
+#if defined(HAVE_WORKING_LCHMOD)
     return lchmod("test", 0700) == -1 && chmod("test", 0700) != -1;
+#else
+    return true;
+#endif
 }
 
 
