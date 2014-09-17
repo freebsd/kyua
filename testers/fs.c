@@ -485,7 +485,7 @@ kyua_fs_current_path(char** out_cwd)
     cwd = getcwd(NULL, 0);
 #else
     {
-        const char* static_cwd = ::getcwd(NULL, MAXPATHLEN);
+        const char* static_cwd = getcwd(NULL, MAXPATHLEN);
         const kyua_error_t error = kyua_fs_concat(&cwd, static_cwd, NULL);
         if (kyua_error_is_set(error))
             return error;
