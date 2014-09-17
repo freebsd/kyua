@@ -60,6 +60,7 @@ KYUA_LAST_SIGNO
 KYUA_MEMORY
 AC_CHECK_FUNCS([putenv setenv unsetenv])
 
+AC_CHECK_HEADERS([termios.h])
 
 AC_PROG_RANLIB
 
