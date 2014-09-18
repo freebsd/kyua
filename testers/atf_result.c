@@ -679,7 +679,7 @@ convert_result(const enum atf_status status, const int status_arg,
         return convert_skipped(reason, wait_status, output, success);
     }
 
-    assert(false);
+    abort();
 }
 
 
