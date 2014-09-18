@@ -28,6 +28,10 @@
 
 #include "testers/fs.h"
 
+#if defined(HAVE_CONFIG_H)
+#   include "config.h"
+#endif
+
 #include <sys/stat.h>
 #include <sys/wait.h>
 
@@ -193,14 +197,6 @@ mount_tmpfs(const char* mount_point)
 }
 
 
-static bool
-lchmod_fails(void)
-{
-    ATF_REQUIRE(mkdir("test", 0755) != -1);
-    return lchmod("test", 0700) == -1 && chmod("test", 0700) != -1;
-}
-
-
 ATF_TC_WITHOUT_HEAD(cleanup__file);
 ATF_TC_BODY(cleanup__file, tc)
 {
@@ -285,10 +281,12 @@ ATF_TC_BODY(cleanup__subdir__links, tc)
     ATF_REQUIRE(lookup(".", "root", DT_DIR));
     kyua_error_t error = kyua_fs_cleanup("root");
     if (kyua_error_is_set(error)) {
-        if (lchmod_fails())
-            atf_tc_expect_fail("lchmod(2) is not implemented in your system");
         kyua_error_free(error);
+#if defined(HAVE_WORKING_LCHMOD)
         atf_tc_fail("kyua_fs_cleanup returned an error");
+#else
+        atf_tc_expect_fail("lchmod(2) is not implemented in your system");
+#endif
     }
     ATF_REQUIRE(!lookup(".", "root", DT_DIR));
 }

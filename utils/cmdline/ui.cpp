@@ -28,9 +28,17 @@
 
 #include "utils/cmdline/ui.hpp"
 
+#if defined(HAVE_CONFIG_H)
+#   include "config.h"
+#endif
+
 extern "C" {
+#include <sys/param.h>
 #include <sys/ioctl.h>
 
+#if defined(HAVE_TERMIOS_H)
+#   include <termios.h>
+#endif
 #include <unistd.h>
 }
 
