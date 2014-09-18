@@ -32,8 +32,8 @@
 #   include "config.h"
 #endif
 
+#include <sys/param.h>
 #if defined(HAVE_UNMOUNT)
-#   include <sys/param.h>
 #   include <sys/mount.h>
 #endif
 #include <sys/stat.h>
