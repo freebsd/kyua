@@ -3,6 +3,10 @@ Changes in version 0.11
 
 STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 
+* Added support to print the details of all test cases (metadata and
+  their output) to 'report'.  This is via a new '--verbose' flag which
+  replaces the previous '--show-context'.
+
 * Issue 72: Add caching support to the getcwd(3) test in configure so
   that the result can be overriden for cross-compilation purposes.
 

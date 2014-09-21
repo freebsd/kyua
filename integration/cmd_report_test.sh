@@ -122,10 +122,10 @@ results_file__explicit_body() {
 
     atf_check -s exit:0 -o match:"MOCK=mock1" -o not-match:"MOCK=mock2" \
         -e empty kyua report --results-file="$(cat dbfile_name1)" \
-        --show-context
+        --verbose
     atf_check -s exit:0 -o not-match:"MOCK=mock1" -o match:"MOCK=mock2" \
         -e empty kyua report --results-file="$(cat dbfile_name2)" \
-        --show-context
+        --verbose
 }
 
 
@@ -163,8 +163,8 @@ EOF
 }
 
 
-utils_test_case show_context
-show_context_body() {
+utils_test_case verbose
+verbose_body() {
     run_tests "mock1
 has multiple lines
 and terminates here" dbfile_name
@@ -179,6 +179,27 @@ has multiple lines
 and terminates here" env | sort | grep '^[_a-zA-Z0-9]*=' | sed -e 's,^,    ,' \
         | grep -v '^    _.*=.*' >>expout
     cat >>expout <<EOF
+===> simple_all_pass:skip
+Result: skipped: The reason for skipping is this
+Duration: S.UUUs
+
+Metadata:
+    allowed_architectures is empty
+    allowed_platforms is empty
+    description is empty
+    has_cleanup = false
+    required_configs is empty
+    required_files is empty
+    required_memory = 0
+    required_programs is empty
+    required_user is empty
+    timeout = 300
+
+Standard output:
+This is the stdout of skip
+
+Standard error:
+This is the stderr of skip
 ===> Skipped tests
 simple_all_pass:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 ===> Summary
@@ -186,7 +207,7 @@ Results read from $(cat dbfile_name)
 Test cases: 2 total, 1 skipped, 0 expected failures, 0 broken, 0 failed
 Total time: S.UUUs
 EOF
-    atf_check -s exit:0 -o file:expout -e empty -x kyua report --show-context \
+    atf_check -s exit:0 -o file:expout -e empty -x kyua report --verbose \
         "| ${utils_strip_durations} | ${strip_environment}"
 }
 
@@ -277,7 +298,7 @@ atf_init_test_cases() {
     atf_add_test_case results_file__explicit
     atf_add_test_case results_file__not_found
 
-    atf_add_test_case show_context
+    atf_add_test_case verbose
 
     atf_add_test_case output__explicit
 
