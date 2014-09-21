@@ -296,6 +296,26 @@ ATF_TEST_CASE_BODY(test_filter__operator_ne)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(test_filter__output);
+ATF_TEST_CASE_BODY(test_filter__output)
+{
+    {
+        std::ostringstream str;
+        str << engine::test_filter(fs::path("d1/d2"), "");
+        ATF_REQUIRE_EQ(
+            "test_filter{test_program=d1/d2}",
+            str.str());
+    }
+    {
+        std::ostringstream str;
+        str << engine::test_filter(fs::path("d1/d2"), "bar");
+        ATF_REQUIRE_EQ(
+            "test_filter{test_program=d1/d2, test_case=bar}",
+            str.str());
+    }
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(test_filters__match_test_case__no_filters)
 ATF_TEST_CASE_BODY(test_filters__match_test_case__no_filters)
 {
@@ -549,6 +569,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, test_filter__operator_lt);
     ATF_ADD_TEST_CASE(tcs, test_filter__operator_eq);
     ATF_ADD_TEST_CASE(tcs, test_filter__operator_ne);
+    ATF_ADD_TEST_CASE(tcs, test_filter__output);
 
     ATF_ADD_TEST_CASE(tcs, test_filters__match_test_case__no_filters);
     ATF_ADD_TEST_CASE(tcs, test_filters__match_test_case__some_filters);
