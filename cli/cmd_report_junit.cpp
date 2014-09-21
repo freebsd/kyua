@@ -30,10 +30,12 @@
 
 #include <cstddef>
 #include <cstdlib>
+#include <set>
 
 #include "cli/common.ipp"
 #include "drivers/report_junit.hpp"
 #include "drivers/scan_results.hpp"
+#include "engine/filters.hpp"
 #include "store/layout.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/defs.hpp"
@@ -80,7 +82,9 @@ cmd_report_junit::run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
         cmdline.get_option< cmdline::path_option >("output"));
 
     drivers::report_junit_hooks hooks(*output.get());
-    drivers::scan_results::drive(results_file, hooks);
+    drivers::scan_results::drive(results_file,
+                                 std::set< engine::test_filter >(),
+                                 hooks);
 
     return EXIT_SUCCESS;
 }

@@ -52,27 +52,16 @@ namespace model {
 /// result in an extremely-complex to maintain code base that provided no
 /// benefits.  As a result, we allow any test type to carry a reason.
 class test_result {
-public:
-    /// Type definitions for all possible test case results.
-    enum result_type {
-        broken,
-        expected_failure,
-        failed,
-        passed,
-        skipped,
-    };
-
-private:
     /// The type of the result.
-    result_type _type;
+    test_result_type _type;
 
     /// A description of the result; may be empty.
     std::string _reason;
 
 public:
-    test_result(const result_type, const std::string& = "");
+    test_result(const test_result_type, const std::string& = "");
 
-    result_type type(void) const;
+    test_result_type type(void) const;
     const std::string& reason(void) const;
 
     bool good(void) const;

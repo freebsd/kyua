@@ -129,10 +129,10 @@ ATF_TEST_CASE_BODY(result_types__default)
     const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
 
     cli::result_types exp_types;
-    exp_types.push_back(model::test_result::skipped);
-    exp_types.push_back(model::test_result::expected_failure);
-    exp_types.push_back(model::test_result::broken);
-    exp_types.push_back(model::test_result::failed);
+    exp_types.push_back(model::test_result_skipped);
+    exp_types.push_back(model::test_result_expected_failure);
+    exp_types.push_back(model::test_result_broken);
+    exp_types.push_back(model::test_result_failed);
     ATF_REQUIRE(exp_types == cli::get_result_types(mock_cmdline));
 }
 
@@ -145,11 +145,11 @@ ATF_TEST_CASE_BODY(result_types__empty)
     const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
 
     cli::result_types exp_types;
-    exp_types.push_back(model::test_result::passed);
-    exp_types.push_back(model::test_result::skipped);
-    exp_types.push_back(model::test_result::expected_failure);
-    exp_types.push_back(model::test_result::broken);
-    exp_types.push_back(model::test_result::failed);
+    exp_types.push_back(model::test_result_passed);
+    exp_types.push_back(model::test_result_skipped);
+    exp_types.push_back(model::test_result_expected_failure);
+    exp_types.push_back(model::test_result_broken);
+    exp_types.push_back(model::test_result_failed);
     ATF_REQUIRE(exp_types == cli::get_result_types(mock_cmdline));
 }
 
@@ -162,11 +162,11 @@ ATF_TEST_CASE_BODY(result_types__explicit__all)
     const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
 
     cli::result_types exp_types;
-    exp_types.push_back(model::test_result::passed);
-    exp_types.push_back(model::test_result::skipped);
-    exp_types.push_back(model::test_result::expected_failure);
-    exp_types.push_back(model::test_result::broken);
-    exp_types.push_back(model::test_result::failed);
+    exp_types.push_back(model::test_result_passed);
+    exp_types.push_back(model::test_result_skipped);
+    exp_types.push_back(model::test_result_expected_failure);
+    exp_types.push_back(model::test_result_broken);
+    exp_types.push_back(model::test_result_failed);
     ATF_REQUIRE(exp_types == cli::get_result_types(mock_cmdline));
 }
 
@@ -179,8 +179,8 @@ ATF_TEST_CASE_BODY(result_types__explicit__some)
     const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
 
     cli::result_types exp_types;
-    exp_types.push_back(model::test_result::skipped);
-    exp_types.push_back(model::test_result::broken);
+    exp_types.push_back(model::test_result_skipped);
+    exp_types.push_back(model::test_result_broken);
     ATF_REQUIRE(exp_types == cli::get_result_types(mock_cmdline));
 }
 
@@ -388,9 +388,9 @@ ATF_TEST_CASE_WITHOUT_HEAD(format_result__no_reason);
 ATF_TEST_CASE_BODY(format_result__no_reason)
 {
     ATF_REQUIRE_EQ("passed", cli::format_result(
-        model::test_result(model::test_result::passed)));
+        model::test_result(model::test_result_passed)));
     ATF_REQUIRE_EQ("failed", cli::format_result(
-        model::test_result(model::test_result::failed)));
+        model::test_result(model::test_result_failed)));
 }
 
 
@@ -398,13 +398,13 @@ ATF_TEST_CASE_WITHOUT_HEAD(format_result__with_reason);
 ATF_TEST_CASE_BODY(format_result__with_reason)
 {
     ATF_REQUIRE_EQ("broken: Something", cli::format_result(
-        model::test_result(model::test_result::broken, "Something")));
+        model::test_result(model::test_result_broken, "Something")));
     ATF_REQUIRE_EQ("expected_failure: A B C", cli::format_result(
-        model::test_result(model::test_result::expected_failure, "A B C")));
+        model::test_result(model::test_result_expected_failure, "A B C")));
     ATF_REQUIRE_EQ("failed: More text", cli::format_result(
-        model::test_result(model::test_result::failed, "More text")));
+        model::test_result(model::test_result_failed, "More text")));
     ATF_REQUIRE_EQ("skipped: Bye", cli::format_result(
-        model::test_result(model::test_result::skipped, "Bye")));
+        model::test_result(model::test_result_skipped, "Bye")));
 }
 
 

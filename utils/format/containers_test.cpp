@@ -29,6 +29,7 @@
 #include "utils/format/containers.ipp"
 
 #include <ostream>
+#include <set>
 #include <vector>
 
 #include <atf-c++.hpp>
@@ -68,6 +69,34 @@ ATF_TEST_CASE_BODY(std_shared_ptr__not_null)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(std_set__empty);
+ATF_TEST_CASE_BODY(std_set__empty)
+{
+    do_check("set()", std::set< char >());
+    do_check("set()", std::set< int >());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(std_set__some);
+ATF_TEST_CASE_BODY(std_set__some)
+{
+    {
+        std::set< char > v;
+        v.insert('b');
+        v.insert('z');
+        do_check("set(b, z)", v);
+    }
+
+    {
+        std::set< int > v;
+        v.insert(5);
+        v.insert(2);
+        v.insert(8);
+        do_check("set(2, 5, 8)", v);
+    }
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(std_vector__empty);
 ATF_TEST_CASE_BODY(std_vector__empty)
 {
@@ -100,6 +129,9 @@ ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, std_shared_ptr__null);
     ATF_ADD_TEST_CASE(tcs, std_shared_ptr__not_null);
+
+    ATF_ADD_TEST_CASE(tcs, std_set__empty);
+    ATF_ADD_TEST_CASE(tcs, std_set__some);
 
     ATF_ADD_TEST_CASE(tcs, std_vector__empty);
     ATF_ADD_TEST_CASE(tcs, std_vector__some);

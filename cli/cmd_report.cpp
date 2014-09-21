@@ -28,6 +28,7 @@
 
 #include "cli/cmd_report.hpp"
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdlib>
 #include <map>
@@ -38,8 +39,11 @@
 #include "cli/common.ipp"
 #include "drivers/scan_results.hpp"
 #include "model/context.hpp"
+#include "model/metadata.hpp"
+#include "model/test_case.hpp"
 #include "model/test_program.hpp"
 #include "model/test_result.hpp"
+#include "model/types.hpp"
 #include "store/layout.hpp"
 #include "store/read_transaction.hpp"
 #include "utils/cmdline/exceptions.hpp"
@@ -71,8 +75,8 @@ class report_console_hooks : public drivers::scan_results::base_hooks {
     /// Stream to which to write the report.
     std::ostream& _output;
 
-    /// Whether to include the runtime context in the output or not.
-    const bool _show_context;
+    /// Whether to include details in the report or not.
+    const bool _verbose;
 
     /// Collection of result types to include in the report.
     const cli::result_types& _results_filters;
@@ -117,8 +121,7 @@ class report_console_hooks : public drivers::scan_results::base_hooks {
     ///
     /// Note that this may not include all results, as keeping the whole list in
     /// memory may be too much.
-    std::map< model::test_result::result_type,
-              std::vector< result_data > > _results;
+    std::map< model::test_result_type, std::vector< result_data > > _results;
 
     /// Prints the execution context to the output.
     ///
@@ -141,11 +144,57 @@ class report_console_hooks : public drivers::scan_results::base_hooks {
         }
     }
 
+    /// Dumps a detailed view of the test case.
+    ///
+    /// \param result_iter Results iterator pointing at the test case to be
+    ///     dumped.
+    void
+    print_test_case_and_result(const store::results_iterator& result_iter)
+    {
+        const model::test_case_ptr& test_case =
+            result_iter.test_program()->find(result_iter.test_case_name());
+        const model::properties_map props =
+            test_case->get_metadata().to_properties();
+
+        _output << F("===> %s:%s\n") %
+            result_iter.test_program()->relative_path() %
+            result_iter.test_case_name();
+        _output << F("Result: %s\n") %
+            cli::format_result(result_iter.result());
+        _output << F("Duration: %s\n") %
+            cli::format_delta(result_iter.duration());
+
+        _output << "\n";
+        _output << "Metadata:\n";
+        for (model::properties_map::const_iterator iter = props.begin();
+             iter != props.end(); ++iter) {
+            if ((*iter).second.empty()) {
+                _output << F("    %s is empty\n") % (*iter).first;
+            } else {
+                _output << F("    %s = %s\n") % (*iter).first % (*iter).second;
+            }
+        }
+
+        const std::string stdout_contents = result_iter.stdout_contents();
+        if (!stdout_contents.empty()) {
+            _output << "\n"
+                    << "Standard output:\n"
+                    << stdout_contents;
+        }
+
+        const std::string stderr_contents = result_iter.stderr_contents();
+        if (!stderr_contents.empty()) {
+            _output << "\n"
+                    << "Standard error:\n"
+                    << stderr_contents;
+        }
+    }
+
     /// Counts how many results of a given type have been received.
     std::size_t
-    count_results(const model::test_result::result_type type)
+    count_results(const model::test_result_type type)
     {
-        const std::map< model::test_result::result_type,
+        const std::map< model::test_result_type,
                         std::vector< result_data > >::const_iterator iter =
             _results.find(type);
         if (iter == _results.end())
@@ -156,10 +205,10 @@ class report_console_hooks : public drivers::scan_results::base_hooks {
 
     /// Prints a set of results.
     void
-    print_results(const model::test_result::result_type type,
+    print_results(const model::test_result_type type,
                   const char* title)
     {
-        const std::map< model::test_result::result_type,
+        const std::map< model::test_result_type,
                         std::vector< result_data > >::const_iterator iter2 =
             _results.find(type);
         if (iter2 == _results.end())
@@ -180,16 +229,15 @@ public:
     /// Constructor for the hooks.
     ///
     /// \param [out] output_ Stream to which to write the report.
-    /// \param show_context_ Whether to include the runtime context in
-    ///     the output or not.
+    /// \param verbose_ Whether to include details in the output or not.
     /// \param results_filters_ The result types to include in the report.
     ///     Cannot be empty.
     /// \param results_file_ Path to the results file being read.
-    report_console_hooks(std::ostream& output_, const bool show_context_,
+    report_console_hooks(std::ostream& output_, const bool verbose_,
                          const cli::result_types& results_filters_,
                          const fs::path& results_file_) :
         _output(output_),
-        _show_context(show_context_),
+        _verbose(verbose_),
         _results_filters(results_filters_),
         _results_file(results_file_)
     {
@@ -202,7 +250,7 @@ public:
     void
     got_context(const model::context& context)
     {
-        if (_show_context)
+        if (_verbose)
             print_context(context);
     }
 
@@ -217,6 +265,16 @@ public:
         _results[result.type()].push_back(
             result_data(iter.test_program()->relative_path(),
                         iter.test_case_name(), iter.result(), iter.duration()));
+
+        if (_verbose) {
+            // TODO(jmmv): _results_filters is a list and is small enough for
+            // std::find to not be an expensive operation here (probably).  But
+            // we should be using a std::set instead.
+            if (std::find(_results_filters.begin(), _results_filters.end(),
+                          iter.result().type()) != _results_filters.end()) {
+                print_test_case_and_result(iter);
+            }
+        }
     }
 
     /// Prints the tests summary.
@@ -225,15 +283,14 @@ public:
     void
     end(const drivers::scan_results::result& UTILS_UNUSED_PARAM(r))
     {
-        using model::test_result;
-        typedef std::map< test_result::result_type, const char* > types_map;
+        typedef std::map< model::test_result_type, const char* > types_map;
 
         types_map titles;
-        titles[model::test_result::broken] = "Broken tests";
-        titles[model::test_result::expected_failure] = "Expected failures";
-        titles[model::test_result::failed] = "Failed tests";
-        titles[model::test_result::passed] = "Passed tests";
-        titles[model::test_result::skipped] = "Skipped tests";
+        titles[model::test_result_broken] = "Broken tests";
+        titles[model::test_result_expected_failure] = "Expected failures";
+        titles[model::test_result_failed] = "Failed tests";
+        titles[model::test_result_passed] = "Passed tests";
+        titles[model::test_result_skipped] = "Skipped tests";
 
         for (cli::result_types::const_iterator iter = _results_filters.begin();
              iter != _results_filters.end(); ++iter) {
@@ -243,11 +300,12 @@ public:
             print_results((*match).first, (*match).second);
         }
 
-        const std::size_t broken = count_results(test_result::broken);
-        const std::size_t failed = count_results(test_result::failed);
-        const std::size_t passed = count_results(test_result::passed);
-        const std::size_t skipped = count_results(test_result::skipped);
-        const std::size_t xfail = count_results(test_result::expected_failure);
+        const std::size_t broken = count_results(model::test_result_broken);
+        const std::size_t failed = count_results(model::test_result_failed);
+        const std::size_t passed = count_results(model::test_result_passed);
+        const std::size_t skipped = count_results(model::test_result_skipped);
+        const std::size_t xfail = count_results(
+            model::test_result_expected_failure);
         const std::size_t total = broken + failed + passed + skipped + xfail;
 
         _output << "===> Summary\n";
@@ -265,12 +323,13 @@ public:
 
 /// Default constructor for cmd_report.
 cmd_report::cmd_report(void) : cli_command(
-    "report", "", 0, 0,
-    "Generates a report with the result of a test suite run")
+    "report", "", 0, -1,
+    "Generates a report with the results of a test suite run")
 {
     add_option(results_file_open_option);
     add_option(cmdline::bool_option(
-        "show-context", "Include the execution context in the report"));
+        "verbose", "Include the execution context and the details of each test "
+        "case in the report"));
     add_option(cmdline::path_option("output", "Path to the output file", "path",
                                     "/dev/stdout"));
     add_option(results_filter_option);
@@ -279,14 +338,14 @@ cmd_report::cmd_report(void) : cli_command(
 
 /// Entry point for the "report" subcommand.
 ///
-/// \param unused_ui Object to interact with the I/O of the program.
+/// \param ui Object to interact with the I/O of the program.
 /// \param cmdline Representation of the command line to the subcommand.
 /// \param unused_user_config The runtime configuration of the program.
 ///
 /// \return 0 if everything is OK, 1 if the statement is invalid or if there is
 /// any other problem.
 int
-cmd_report::run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
+cmd_report::run(cmdline::ui* ui,
                 const cmdline::parsed_cmdline& cmdline,
                 const config::tree& UTILS_UNUSED_PARAM(user_config))
 {
@@ -297,10 +356,11 @@ cmd_report::run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
         results_file_open(cmdline));
 
     const result_types types = get_result_types(cmdline);
-    report_console_hooks hooks(*output.get(),
-                               cmdline.has_option("show-context"), types,
-                               results_file);
-    drivers::scan_results::drive(results_file, hooks);
+    report_console_hooks hooks(*output.get(), cmdline.has_option("verbose"),
+                               types, results_file);
+    const drivers::scan_results::result result = drivers::scan_results::drive(
+        results_file, parse_filters(cmdline.arguments()), hooks);
 
-    return EXIT_SUCCESS;
+    return report_unused_filters(result.unused_filters, ui) ?
+        EXIT_FAILURE : EXIT_SUCCESS;
 }

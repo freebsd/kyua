@@ -36,6 +36,7 @@
 #if !defined(ENGINE_FILTERS_HPP)
 #define ENGINE_FILTERS_HPP
 
+#include <ostream>
 #include <string>
 #include <set>
 #include <utility>
@@ -73,6 +74,9 @@ public:
     bool operator==(const test_filter&) const;
     bool operator!=(const test_filter&) const;
 };
+
+
+std::ostream& operator<<(std::ostream&, const test_filter&);
 
 
 /// Collection of user-provided filters to select test cases.

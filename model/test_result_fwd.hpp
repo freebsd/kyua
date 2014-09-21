@@ -35,6 +35,16 @@
 namespace model {
 
 
+/// Definitions for all possible test case results.
+enum test_result_type {
+    test_result_broken,
+    test_result_expected_failure,
+    test_result_failed,
+    test_result_passed,
+    test_result_skipped,
+};
+
+
 class test_result;
 
 

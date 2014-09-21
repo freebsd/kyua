@@ -200,31 +200,18 @@ static model::test_result
 parse_result(sqlite::statement& stmt, const char* type_column,
              const char* reason_column)
 {
-    using model::test_result;
-
     try {
-        const std::string type = stmt.safe_column_text(type_column);
-        if (type == "passed") {
+        const model::test_result_type type =
+            store::column_test_result_type(stmt, type_column);
+        if (type == model::test_result_passed) {
             if (stmt.column_type(stmt.column_id(reason_column)) !=
                 sqlite::type_null)
                 throw store::integrity_error("Result of type 'passed' has a "
                                              "non-NULL reason");
-            return test_result(test_result::passed);
-        } else if (type == "broken") {
-            return test_result(test_result::broken,
-                               stmt.safe_column_text(reason_column));
-        } else if (type == "expected_failure") {
-            return test_result(test_result::expected_failure,
-                               stmt.safe_column_text(reason_column));
-        } else if (type == "failed") {
-            return test_result(test_result::failed,
-                               stmt.safe_column_text(reason_column));
-        } else if (type == "skipped") {
-            return test_result(test_result::skipped,
-                               stmt.safe_column_text(reason_column));
+            return model::test_result(type);
         } else {
-            throw store::integrity_error(F("Unknown test result type %s") %
-                                         type);
+            return model::test_result(type,
+                                      stmt.safe_column_text(reason_column));
         }
     } catch (const sqlite::error& e) {
         throw store::integrity_error(e.what());

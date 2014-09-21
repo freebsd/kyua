@@ -31,6 +31,7 @@
 #include <atf-c++.hpp>
 
 #include "model/test_program.hpp"
+#include "model/test_result.hpp"
 #include "store/exceptions.hpp"
 #include "utils/datetime.hpp"
 #include "utils/optional.ipp"
@@ -154,6 +155,30 @@ ATF_TEST_CASE_BODY(optional_string__get_invalid_type)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(test_result_type__ok);
+ATF_TEST_CASE_BODY(test_result_type__ok)
+{
+    do_ok_test(store::bind_test_result_type,
+               model::test_result_passed,
+               store::column_test_result_type);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(test_result_type__get_invalid_type);
+ATF_TEST_CASE_BODY(test_result_type__get_invalid_type)
+{
+    do_invalid_test(12, store::column_test_result_type, "not a string");
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(test_result_type__get_invalid_value);
+ATF_TEST_CASE_BODY(test_result_type__get_invalid_value)
+{
+    do_invalid_test("foo", store::column_test_result_type,
+                    "Unknown test result type foo");
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(timestamp__ok);
 ATF_TEST_CASE_BODY(timestamp__ok)
 {
@@ -198,6 +223,10 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, optional_string__ok);
     ATF_ADD_TEST_CASE(tcs, optional_string__get_invalid_type);
+
+    ATF_ADD_TEST_CASE(tcs, test_result_type__ok);
+    ATF_ADD_TEST_CASE(tcs, test_result_type__get_invalid_type);
+    ATF_ADD_TEST_CASE(tcs, test_result_type__get_invalid_value);
 
     ATF_ADD_TEST_CASE(tcs, timestamp__ok);
     ATF_ADD_TEST_CASE(tcs, timestamp__get_invalid_type);

@@ -100,14 +100,30 @@ if WITH_ATF
 CHECK_LOCAL += check-kyua
 PHONY_TARGETS += check-kyua
 check-kyua: $(CHECK_KYUA_DEPS)
+	@failed=no; \
 	./local-kyua test \
-            --kyuafile='$(top_srcdir)/Kyuafile' --build-root='$(top_builddir)'
+	    --kyuafile='$(top_srcdir)/Kyuafile' --build-root='$(top_builddir)' \
+	    || failed=yes; \
+	if [ "$${failed}" = yes ]; then \
+	    ./local-kyua report --results-file='$(abs_top_srcdir)' \
+	        --verbose --results-filter=broken,failed; \
+	    exit 1; \
+	fi
 
 installcheck-local: installcheck-kyua
 PHONY_TARGETS += installcheck-kyua
 installcheck-kyua:
+	@failed=no; \
 	cd $(pkgtestsdir) && $(INSTALLCHECK_ENVIRONMENT) $(TESTS_ENVIRONMENT) \
-	    kyua --config='$(KYUA_TEST_CONFIG_FILE)' test
+	    kyua --config='$(KYUA_TEST_CONFIG_FILE)' test \
+	    || failed=yes; \
+	if [ "$${failed}" = yes ]; then \
+	    cd $(pkgtestsdir) && $(INSTALLCHECK_ENVIRONMENT) \
+	        $(TESTS_ENVIRONMENT) \
+	        kyua --config='$(KYUA_TEST_CONFIG_FILE)' report \
+	        --verbose --results-filter=broken,failed; \
+	    exit 1; \
+	fi
 else
 dist-hook: forbid-dist
 PHONY_TARGETS += forbid-dist

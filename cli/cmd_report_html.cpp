@@ -31,10 +31,12 @@
 #include <algorithm>
 #include <cerrno>
 #include <cstdlib>
+#include <set>
 #include <stdexcept>
 
 #include "cli/common.ipp"
 #include "drivers/scan_results.hpp"
+#include "engine/filters.hpp"
 #include "model/context.hpp"
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
@@ -151,7 +153,7 @@ class html_hooks : public drivers::scan_results::base_hooks {
     text::templates_def _summary_templates;
 
     /// Mapping of result types to the amount of tests with such result.
-    std::map< model::test_result::result_type, std::size_t > _types_count;
+    std::map< model::test_result_type, std::size_t > _types_count;
 
     /// Generates a common set of templates for all of our files.
     ///
@@ -184,27 +186,27 @@ class html_hooks : public drivers::scan_results::base_hooks {
         std::string test_cases_vector;
         std::string test_cases_file_vector;
         switch (result.type()) {
-        case model::test_result::broken:
+        case model::test_result_broken:
             test_cases_vector = "broken_test_cases";
             test_cases_file_vector = "broken_test_cases_file";
             break;
 
-        case model::test_result::expected_failure:
+        case model::test_result_expected_failure:
             test_cases_vector = "xfail_test_cases";
             test_cases_file_vector = "xfail_test_cases_file";
             break;
 
-        case model::test_result::failed:
+        case model::test_result_failed:
             test_cases_vector = "failed_test_cases";
             test_cases_file_vector = "failed_test_cases_file";
             break;
 
-        case model::test_result::passed:
+        case model::test_result_passed:
             test_cases_vector = "passed_test_cases";
             test_cases_file_vector = "passed_test_cases_file";
             break;
 
-        case model::test_result::skipped:
+        case model::test_result_skipped:
             test_cases_vector = "skipped_test_cases";
             test_cases_file_vector = "skipped_test_cases_file";
             break;
@@ -248,10 +250,9 @@ class html_hooks : public drivers::scan_results::base_hooks {
     /// \return The number of tests of the given type, or 0 if none have yet
     /// been registered by add_to_summary().
     std::size_t
-    get_count(const model::test_result::result_type type) const
+    get_count(const model::test_result_type type) const
     {
-        const std::map< model::test_result::result_type,
-                        std::size_t >::const_iterator
+        const std::map< model::test_result_type, std::size_t >::const_iterator
             iter = _types_count.find(type);
         if (iter == _types_count.end())
             return 0;
@@ -352,12 +353,12 @@ public:
     void
     write_summary(void)
     {
-        const std::size_t n_passed = get_count(model::test_result::passed);
-        const std::size_t n_failed = get_count(model::test_result::failed);
-        const std::size_t n_skipped = get_count(model::test_result::skipped);
+        const std::size_t n_passed = get_count(model::test_result_passed);
+        const std::size_t n_failed = get_count(model::test_result_failed);
+        const std::size_t n_skipped = get_count(model::test_result_skipped);
         const std::size_t n_xfail = get_count(
-            model::test_result::expected_failure);
-        const std::size_t n_broken = get_count(model::test_result::broken);
+            model::test_result_expected_failure);
+        const std::size_t n_broken = get_count(model::test_result_broken);
 
         const std::size_t n_bad = n_broken + n_failed;
 
@@ -422,7 +423,9 @@ cli::cmd_report_html::run(cmdline::ui* ui,
         cmdline.get_option< cmdline::path_option >("output");
     create_top_directory(directory, cmdline.has_option("force"));
     html_hooks hooks(ui, directory, types);
-    drivers::scan_results::drive(results_file, hooks);
+    drivers::scan_results::drive(results_file,
+                                 std::set< engine::test_filter >(),
+                                 hooks);
     hooks.write_summary();
 
     return EXIT_SUCCESS;

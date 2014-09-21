@@ -40,7 +40,7 @@ namespace text = utils::text;
 /// \param type_ The type of the result.
 /// \param reason_ The reason explaining the result, if any.  It is OK for this
 ///     to be empty, which is actually the default.
-model::test_result::test_result(const result_type type_,
+model::test_result::test_result(const test_result_type type_,
                                 const std::string& reason_) :
     _type(type_),
     _reason(reason_)
@@ -51,7 +51,7 @@ model::test_result::test_result(const result_type type_,
 /// Returns the type of the result.
 ///
 /// \return A result type.
-model::test_result::result_type
+model::test_result_type
 model::test_result::type(void) const
 {
     return _type;
@@ -75,13 +75,13 @@ bool
 model::test_result::good(void) const
 {
     switch (_type) {
-    case expected_failure:
-    case passed:
-    case skipped:
+    case test_result_expected_failure:
+    case test_result_passed:
+    case test_result_skipped:
         return true;
 
-    case broken:
-    case failed:
+    case test_result_broken:
+    case test_result_failed:
         return false;
     }
     UNREACHABLE;
@@ -124,11 +124,11 @@ model::operator<<(std::ostream& output, const test_result& object)
 {
     std::string result_name;
     switch (object.type()) {
-    case test_result::broken: result_name = "broken"; break;
-    case test_result::expected_failure: result_name = "expected_failure"; break;
-    case test_result::failed: result_name = "failed"; break;
-    case test_result::passed: result_name = "passed"; break;
-    case test_result::skipped: result_name = "skipped"; break;
+    case test_result_broken: result_name = "broken"; break;
+    case test_result_expected_failure: result_name = "expected_failure"; break;
+    case test_result_failed: result_name = "failed"; break;
+    case test_result_passed: result_name = "passed"; break;
+    case test_result_skipped: result_name = "skipped"; break;
     }
     const std::string& reason = object.reason();
     if (reason.empty()) {

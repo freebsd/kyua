@@ -319,12 +319,12 @@ engine::parse_test_result(std::istream& input)
 {
     std::string line;
     if (!std::getline(input, line).good() && line.empty())
-        return model::test_result(model::test_result::broken,
+        return model::test_result(model::test_result_broken,
                                   "Empty result file");
 
     // Fast-path for the most common case.
     if (line == "passed")
-        return model::test_result(model::test_result::passed);
+        return model::test_result(model::test_result_passed);
 
     std::string type, reason;
     const std::string::size_type pos = line.find(": ");
@@ -347,18 +347,18 @@ engine::parse_test_result(std::istream& input)
     }
 
     if (type == "broken") {
-        return model::test_result(model::test_result::broken, reason);
+        return model::test_result(model::test_result_broken, reason);
     } else if (type == "expected_failure") {
-        return model::test_result(model::test_result::expected_failure,
+        return model::test_result(model::test_result_expected_failure,
                                   reason);
     } else if (type == "failed") {
-        return model::test_result(model::test_result::failed, reason);
+        return model::test_result(model::test_result_failed, reason);
     } else if (type == "passed") {
-        return model::test_result(model::test_result::passed, reason);
+        return model::test_result(model::test_result_passed, reason);
     } else if (type == "skipped") {
-        return model::test_result(model::test_result::skipped, reason);
+        return model::test_result(model::test_result_skipped, reason);
     } else {
-        return model::test_result(model::test_result::broken,
+        return model::test_result(model::test_result_broken,
                                   F("Unknown result type '%s'") % type);
     }
 }

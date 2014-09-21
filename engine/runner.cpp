@@ -297,7 +297,7 @@ runner::load_test_cases(model::test_program& program)
             fake_test_cases.push_back(model::test_case_ptr(new model::test_case(
                 program.interface_name(), program, "__test_cases_list__",
                 "Represents the correct processing of the test cases list",
-                model::test_result(model::test_result::broken, e.what()))));
+                model::test_result(model::test_result_broken, e.what()))));
             test_cases = fake_test_cases;
         }
         program.set_test_cases(test_cases);
@@ -336,10 +336,10 @@ runner::debug_test_case(const model::test_case* test_case,
         test_case->get_metadata(), user_config,
         test_case->container_test_program().test_suite_name());
     if (!skip_reason.empty())
-        return model::test_result(model::test_result::skipped, skip_reason);
+        return model::test_result(model::test_result_skipped, skip_reason);
 
     if (!fs::exists(test_case->container_test_program().absolute_path()))
-        return model::test_result(model::test_result::broken,
+        return model::test_result(model::test_result_broken,
                                   "Test program does not exist");
 
     const fs::auto_file result_file(work_directory / "result.txt");
@@ -370,7 +370,7 @@ runner::debug_test_case(const model::test_case* test_case,
         hooks.got_stderr(stderr_path);
 
         return model::test_result(
-            model::test_result::broken,
+            model::test_result_broken,
             F("Caught unexpected exception: %s") % e.what());
     }
 }
@@ -398,10 +398,10 @@ runner::run_test_case(const model::test_case* test_case,
         test_case->get_metadata(), user_config,
         test_case->container_test_program().test_suite_name());
     if (!skip_reason.empty())
-        return model::test_result(model::test_result::skipped, skip_reason);
+        return model::test_result(model::test_result_skipped, skip_reason);
 
     if (!fs::exists(test_case->container_test_program().absolute_path()))
-        return model::test_result(model::test_result::broken,
+        return model::test_result(model::test_result_broken,
                                   "Test program does not exist");
 
     const fs::auto_file stdout_file(work_directory / "stdout.txt");
@@ -434,7 +434,7 @@ runner::run_test_case(const model::test_case* test_case,
         hooks.got_stderr(stderr_file.file());
 
         return model::test_result(
-            model::test_result::broken,
+            model::test_result_broken,
             F("Caught unexpected exception: %s") % e.what());
     }
 }

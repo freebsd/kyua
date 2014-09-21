@@ -33,6 +33,7 @@
 #define UTILS_FORMAT_CONTAINERS_HPP
 
 #include <ostream>
+#include <set>
 #include <vector>
 
 #include "utils/shared_ptr.hpp"
@@ -44,6 +45,9 @@ namespace std {
 
 template< typename T >
 std::ostream& operator<<(std::ostream&, const std::shared_ptr< T >&);
+
+template< typename T >
+std::ostream& operator<<(std::ostream&, const std::set< T >&);
 
 template< typename T >
 std::ostream& operator<<(std::ostream&, const std::vector< T >&);

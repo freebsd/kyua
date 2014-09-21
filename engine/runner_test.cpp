@@ -493,7 +493,7 @@ ATF_TEST_CASE_BODY(load_test_cases__tester_fails)
 
     ATF_REQUIRE(test_case->fake_result());
     const model::test_result result = test_case->fake_result().get();
-    ATF_REQUIRE(model::test_result::broken == result.type());
+    ATF_REQUIRE(model::test_result_broken == result.type());
     ATF_REQUIRE_MATCH("Tester did not exit cleanly", result.reason());
 }
 
@@ -507,7 +507,7 @@ ATF_TEST_CASE_BODY(run_test_case__tester_crashes)
     capture_hooks hooks;
     const model::test_result result = helper.run(hooks);
 
-    ATF_REQUIRE(model::test_result::broken == result.type());
+    ATF_REQUIRE(model::test_result_broken == result.type());
     ATF_REQUIRE_MATCH("Tester received signal.*bug", result.reason());
 
     ATF_REQUIRE_EQ("stdout stuff\n", hooks.stdout_contents);
@@ -520,7 +520,7 @@ ATF_TEST_CASE_BODY(run_test_case__atf__current_directory)
 {
     atf_helper helper(this, "pass");
     helper.move("program", ".");
-    ATF_REQUIRE_EQ(model::test_result(model::test_result::passed),
+    ATF_REQUIRE_EQ(model::test_result(model::test_result_passed),
                    helper.run());
 }
 
@@ -532,7 +532,7 @@ ATF_TEST_CASE_BODY(run_test_case__atf__subdirectory)
     ATF_REQUIRE(::mkdir("dir1", 0755) != -1);
     ATF_REQUIRE(::mkdir("dir1/dir2", 0755) != -1);
     helper.move("dir2/program", "dir1");
-    ATF_REQUIRE_EQ(model::test_result(model::test_result::passed),
+    ATF_REQUIRE_EQ(model::test_result(model::test_result_passed),
                    helper.run());
 }
 
@@ -542,7 +542,7 @@ ATF_TEST_CASE_BODY(run_test_case__atf__config_variables)
 {
     atf_helper helper(this, "create_cookie_in_control_dir");
     helper.set_config("control_dir", fs::current_path());
-    ATF_REQUIRE_EQ(model::test_result(model::test_result::passed),
+    ATF_REQUIRE_EQ(model::test_result(model::test_result_passed),
                    helper.run());
 
     if (!fs::exists(fs::path("cookie")))
@@ -557,7 +557,7 @@ ATF_TEST_CASE_BODY(run_test_case__atf__cleanup_shares_workdir)
     atf_helper helper(this, "check_cleanup_workdir");
     helper.set_metadata("has_cleanup", "true");
     helper.set_config("control_dir", fs::current_path());
-    ATF_REQUIRE_EQ(model::test_result(model::test_result::skipped,
+    ATF_REQUIRE_EQ(model::test_result(model::test_result_skipped,
                                        "cookie created"), helper.run());
 
     if (fs::exists(fs::path("missing_cookie")))
@@ -576,7 +576,7 @@ ATF_TEST_CASE_BODY(run_test_case__atf__has_cleanup__atf__false)
     atf_helper helper(this, "create_cookie_from_cleanup");
     helper.set_metadata("has_cleanup", "false");
     helper.set_config("control_dir", fs::current_path());
-    ATF_REQUIRE_EQ(model::test_result(model::test_result::passed),
+    ATF_REQUIRE_EQ(model::test_result(model::test_result_passed),
                    helper.run());
 
     if (fs::exists(fs::path("cookie")))
@@ -591,7 +591,7 @@ ATF_TEST_CASE_BODY(run_test_case__atf__has_cleanup__atf__true)
     atf_helper helper(this, "create_cookie_from_cleanup");
     helper.set_metadata("has_cleanup", "true");
     helper.set_config("control_dir", fs::current_path());
-    ATF_REQUIRE_EQ(model::test_result(model::test_result::passed),
+    ATF_REQUIRE_EQ(model::test_result(model::test_result_passed),
                    helper.run());
 
     if (!fs::exists(fs::path("cookie")))
@@ -605,7 +605,7 @@ ATF_TEST_CASE_BODY(run_test_case__atf__kill_children)
 {
     atf_helper helper(this, "spawn_blocking_child");
     helper.set_config("control_dir", fs::current_path());
-    ATF_REQUIRE_EQ(model::test_result(model::test_result::passed),
+    ATF_REQUIRE_EQ(model::test_result(model::test_result_passed),
                    helper.run());
 
     if (!fs::exists(fs::path("pid")))
@@ -647,7 +647,7 @@ ATF_TEST_CASE_BODY(run_test_case__atf__isolation)
     // Simple checks to make sure that the test case has been isolated.
     utils::setenv("HOME", "fake-value");
     utils::setenv("LANG", "C");
-    ATF_REQUIRE_EQ(model::test_result(model::test_result::passed),
+    ATF_REQUIRE_EQ(model::test_result(model::test_result_passed),
                    helper.run());
 }
 
@@ -659,7 +659,7 @@ ATF_TEST_CASE_BODY(run_test_case__atf__allowed_architectures)
     helper.set_metadata("allowed_architectures", "i386 x86_64");
     helper.config().set_string("architecture", "powerpc");
     helper.config().set_string("platform", "");
-    ATF_REQUIRE_EQ(model::test_result(model::test_result::skipped, "Current "
+    ATF_REQUIRE_EQ(model::test_result(model::test_result_skipped, "Current "
                                        "architecture 'powerpc' not supported"),
                    helper.run());
 
@@ -676,7 +676,7 @@ ATF_TEST_CASE_BODY(run_test_case__atf__allowed_platforms)
     helper.set_metadata("allowed_platforms", "i386 amd64");
     helper.config().set_string("architecture", "");
     helper.config().set_string("platform", "macppc");
-    ATF_REQUIRE_EQ(model::test_result(model::test_result::skipped, "Current "
+    ATF_REQUIRE_EQ(model::test_result(model::test_result_skipped, "Current "
                                        "platform 'macppc' not supported"),
                    helper.run());
 
@@ -693,7 +693,7 @@ ATF_TEST_CASE_BODY(run_test_case__atf__required_configs)
     helper.set_metadata("required_configs", "used-var");
     helper.set_config("control_dir", fs::current_path());
     helper.set_config("unused-var", "value");
-    ATF_REQUIRE_EQ(model::test_result(model::test_result::skipped, "Required "
+    ATF_REQUIRE_EQ(model::test_result(model::test_result_skipped, "Required "
                                        "configuration property 'used-var' not "
                                        "defined"),
                    helper.run());
@@ -709,7 +709,7 @@ ATF_TEST_CASE_BODY(run_test_case__atf__required_programs)
 {
     atf_helper helper(this, "create_cookie_in_control_dir");
     helper.set_metadata("required_programs", "/non-existent/program");
-    ATF_REQUIRE_EQ(model::test_result(model::test_result::skipped, "Required "
+    ATF_REQUIRE_EQ(model::test_result(model::test_result_skipped, "Required "
                                        "program '/non-existent/program' not "
                                        "found"),
                    helper.run());
@@ -730,7 +730,7 @@ ATF_TEST_CASE_BODY(run_test_case__atf__required_user__atf__root__atf__ok)
     atf_helper helper(this, "create_cookie_in_workdir");
     helper.set_metadata("required_user", "root");
     ATF_REQUIRE(passwd::current_user().is_root());
-    ATF_REQUIRE_EQ(model::test_result(model::test_result::passed),
+    ATF_REQUIRE_EQ(model::test_result(model::test_result_passed),
                    helper.run());
 }
 
@@ -745,7 +745,7 @@ ATF_TEST_CASE_BODY(run_test_case__atf__required_user__atf__root__atf__skip)
     atf_helper helper(this, "create_cookie_in_workdir");
     helper.set_metadata("required_user", "root");
     ATF_REQUIRE(!passwd::current_user().is_root());
-    ATF_REQUIRE_EQ(model::test_result(model::test_result::skipped, "Requires "
+    ATF_REQUIRE_EQ(model::test_result(model::test_result_skipped, "Requires "
                                        "root privileges"),
                    helper.run());
 }
@@ -761,7 +761,7 @@ ATF_TEST_CASE_BODY(run_test_case__atf__required_user__atf__unprivileged__atf__ok
     atf_helper helper(this, "create_cookie_in_workdir");
     helper.set_metadata("required_user", "unprivileged");
     ATF_REQUIRE(!helper.config().is_set("unprivileged_user"));
-    ATF_REQUIRE_EQ(model::test_result(model::test_result::passed),
+    ATF_REQUIRE_EQ(model::test_result(model::test_result_passed),
                    helper.run());
 }
 
@@ -776,7 +776,7 @@ ATF_TEST_CASE_BODY(run_test_case__atf__required_user__atf__unprivileged__atf__sk
     atf_helper helper(this, "create_cookie_in_workdir");
     helper.set_metadata("required_user", "unprivileged");
     ATF_REQUIRE(!helper.config().is_set("unprivileged_user"));
-    ATF_REQUIRE_EQ(model::test_result(model::test_result::skipped, "Requires "
+    ATF_REQUIRE_EQ(model::test_result(model::test_result_skipped, "Requires "
                                        "an unprivileged user but the "
                                        "unprivileged-user configuration "
                                        "variable is not defined"),
@@ -814,7 +814,7 @@ ATF_TEST_CASE_BODY(run_test_case__atf__required_user__atf__unprivileged__atf__dr
     helper.config().set< engine::user_node >(
         "unprivileged_user",
         passwd::find_user_by_name(get_config_var("unprivileged-user")));
-    ATF_REQUIRE_EQ(model::test_result(model::test_result::passed),
+    ATF_REQUIRE_EQ(model::test_result(model::test_result_passed),
                    helper.run());
 }
 
@@ -825,7 +825,7 @@ ATF_TEST_CASE_BODY(run_test_case__atf__timeout_body)
     atf_helper helper(this, "timeout_body");
     helper.set_metadata("timeout", "1");
     helper.set_config("control_dir", fs::current_path());
-    ATF_REQUIRE_EQ(model::test_result(model::test_result::broken,
+    ATF_REQUIRE_EQ(model::test_result(model::test_result_broken,
                                        "Test case body timed out"),
                    helper.run());
 
@@ -841,7 +841,7 @@ ATF_TEST_CASE_BODY(run_test_case__atf__timeout_cleanup)
     helper.set_metadata("has_cleanup", "true");
     helper.set_metadata("timeout", "1");
     helper.set_config("control_dir", fs::current_path());
-    ATF_REQUIRE_EQ(model::test_result(model::test_result::broken,
+    ATF_REQUIRE_EQ(model::test_result(model::test_result_broken,
                                        "Test case cleanup timed out"),
                    helper.run());
 
@@ -858,7 +858,7 @@ ATF_TEST_CASE_BODY(run_test_case__atf__stacktrace__atf__body)
     atf_helper helper(this, "crash");
     capture_hooks hooks;
     const model::test_result result = helper.run(hooks);
-    ATF_REQUIRE(model::test_result::broken == result.type());
+    ATF_REQUIRE(model::test_result_broken == result.type());
     ATF_REQUIRE_MATCH("received signal.*core dumped", result.reason());
 
     ATF_REQUIRE(!atf::utils::grep_string("attempting to gather stack trace",
@@ -877,7 +877,7 @@ ATF_TEST_CASE_BODY(run_test_case__atf__stacktrace__atf__cleanup)
     helper.set_metadata("has_cleanup", "true");
     capture_hooks hooks;
     const model::test_result result = helper.run(hooks);
-    ATF_REQUIRE(model::test_result::broken == result.type());
+    ATF_REQUIRE(model::test_result_broken == result.type());
     ATF_REQUIRE_MATCH(F("cleanup received signal %s") % SIGABRT,
                       result.reason());
 
@@ -893,7 +893,7 @@ ATF_TEST_CASE_BODY(run_test_case__atf__missing_results_file)
 {
     atf_helper helper(this, "crash");
     const model::test_result result = helper.run();
-    ATF_REQUIRE(model::test_result::broken == result.type());
+    ATF_REQUIRE(model::test_result_broken == result.type());
     // Need to match instead of doing an explicit comparison because the string
     // may include the "core dumped" substring.
     ATF_REQUIRE_MATCH(F("test case received signal %s") % SIGABRT,
@@ -909,7 +909,7 @@ ATF_TEST_CASE_BODY(run_test_case__atf__missing_test_program)
     helper.move("test_case_atf_helpers", "dir");
     ATF_REQUIRE(::unlink("dir/test_case_atf_helpers") != -1);
     const model::test_result result = helper.run();
-    ATF_REQUIRE(model::test_result::broken == result.type());
+    ATF_REQUIRE(model::test_result_broken == result.type());
     ATF_REQUIRE_MATCH("Test program does not exist", result.reason());
 }
 
@@ -921,7 +921,7 @@ ATF_TEST_CASE_BODY(run_test_case__atf__output)
     helper.set_metadata("has_cleanup", "true");
 
     capture_hooks hooks;
-    ATF_REQUIRE_EQ(model::test_result(model::test_result::passed),
+    ATF_REQUIRE_EQ(model::test_result(model::test_result_passed),
                    helper.run(hooks));
 
     ATF_REQUIRE_EQ("Body message to stdout\nCleanup message to stdout\n",
@@ -934,7 +934,7 @@ ATF_TEST_CASE_BODY(run_test_case__atf__output)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__plain__result_pass);
 ATF_TEST_CASE_BODY(run_test_case__plain__result_pass)
 {
-    ATF_REQUIRE_EQ(model::test_result(model::test_result::passed),
+    ATF_REQUIRE_EQ(model::test_result(model::test_result_passed),
                    plain_helper(this, "pass").run());
 }
 
@@ -942,7 +942,7 @@ ATF_TEST_CASE_BODY(run_test_case__plain__result_pass)
 ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__plain__result_fail);
 ATF_TEST_CASE_BODY(run_test_case__plain__result_fail)
 {
-    ATF_REQUIRE_EQ(model::test_result(model::test_result::failed,
+    ATF_REQUIRE_EQ(model::test_result(model::test_result_failed,
                                        "Returned non-success exit status 8"),
                    plain_helper(this, "fail").run());
 }
@@ -952,7 +952,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__plain__result_crash);
 ATF_TEST_CASE_BODY(run_test_case__plain__result_crash)
 {
     const model::test_result result = plain_helper(this, "crash").run();
-    ATF_REQUIRE(model::test_result::broken == result.type());
+    ATF_REQUIRE(model::test_result_broken == result.type());
     ATF_REQUIRE_MATCH(F("Received signal %s") % SIGABRT, result.reason());
 }
 
@@ -962,7 +962,7 @@ ATF_TEST_CASE_BODY(run_test_case__plain__current_directory)
 {
     plain_helper helper(this, "pass");
     helper.move("program", ".");
-    ATF_REQUIRE_EQ(model::test_result(model::test_result::passed),
+    ATF_REQUIRE_EQ(model::test_result(model::test_result_passed),
                    helper.run());
 }
 
@@ -974,7 +974,7 @@ ATF_TEST_CASE_BODY(run_test_case__plain__subdirectory)
     ATF_REQUIRE(::mkdir("dir1", 0755) != -1);
     ATF_REQUIRE(::mkdir("dir1/dir2", 0755) != -1);
     helper.move("dir2/program", "dir1");
-    ATF_REQUIRE_EQ(model::test_result(model::test_result::passed),
+    ATF_REQUIRE_EQ(model::test_result(model::test_result_passed),
                    helper.run());
 }
 
@@ -984,7 +984,7 @@ ATF_TEST_CASE_BODY(run_test_case__plain__kill_children)
 {
     plain_helper helper(this, "spawn_blocking_child");
     helper.set("CONTROL_DIR", fs::current_path());
-    ATF_REQUIRE_EQ(model::test_result(model::test_result::passed),
+    ATF_REQUIRE_EQ(model::test_result(model::test_result_passed),
                    helper.run());
 
     if (!fs::exists(fs::path("pid")))
@@ -1027,7 +1027,7 @@ ATF_TEST_CASE_BODY(run_test_case__plain__isolation)
     // Simple checks to make sure that the test case has been isolated.
     utils::setenv("HOME", "fake-value");
     utils::setenv("LANG", "C");
-    ATF_REQUIRE_EQ(model::test_result(model::test_result::passed),
+    ATF_REQUIRE_EQ(model::test_result(model::test_result_passed),
                    helper.run());
 }
 
@@ -1038,7 +1038,7 @@ ATF_TEST_CASE_BODY(run_test_case__plain__timeout)
     plain_helper helper(this, "timeout",
                         utils::make_optional(datetime::delta(1, 0)));
     helper.set("CONTROL_DIR", fs::current_path());
-    ATF_REQUIRE_EQ(model::test_result(model::test_result::broken,
+    ATF_REQUIRE_EQ(model::test_result(model::test_result_broken,
                                        "Test case timed out"),
                    helper.run());
 
@@ -1056,7 +1056,7 @@ ATF_TEST_CASE_BODY(run_test_case__plain__stacktrace)
     helper.set("CONTROL_DIR", fs::current_path());
 
     const model::test_result result = plain_helper(this, "crash").run();
-    ATF_REQUIRE(model::test_result::broken == result.type());
+    ATF_REQUIRE(model::test_result_broken == result.type());
     ATF_REQUIRE_MATCH(F("Received signal %s") % SIGABRT, result.reason());
 
     ATF_REQUIRE(!atf::utils::grep_file("attempting to gather stack trace",
@@ -1074,7 +1074,7 @@ ATF_TEST_CASE_BODY(run_test_case__plain__missing_test_program)
     helper.move("test_case_helpers", "dir");
     ATF_REQUIRE(::unlink("dir/test_case_helpers") != -1);
     const model::test_result result = helper.run();
-    ATF_REQUIRE(model::test_result::broken == result.type());
+    ATF_REQUIRE(model::test_result_broken == result.type());
     ATF_REQUIRE_MATCH("Test program does not exist", result.reason());
 }
 

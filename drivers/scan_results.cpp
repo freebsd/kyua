@@ -28,7 +28,10 @@
 
 #include "drivers/scan_results.hpp"
 
+#include "engine/filters.hpp"
 #include "model/context.hpp"
+#include "model/test_case.hpp"
+#include "model/test_program.hpp"
 #include "store/read_backend.hpp"
 #include "store/read_transaction.hpp"
 #include "utils/defs.hpp"
@@ -62,12 +65,17 @@ drivers::scan_results::base_hooks::end(const result& UTILS_UNUSED_PARAM(r))
 /// Executes the operation.
 ///
 /// \param store_path The path to the database store.
+/// \param raw_filters The test case filters as provided by the user.
 /// \param hooks The hooks for this execution.
 ///
 /// \returns A structure with all results computed by this driver.
 drivers::scan_results::result
-drivers::scan_results::drive(const fs::path& store_path, base_hooks& hooks)
+drivers::scan_results::drive(const fs::path& store_path,
+                             const std::set< engine::test_filter >& raw_filters,
+                             base_hooks& hooks)
 {
+    engine::filters_state filters(raw_filters);
+
     store::read_backend db = store::read_backend::open_ro(store_path);
     store::read_transaction tx = db.start_read();
 
@@ -78,11 +86,25 @@ drivers::scan_results::drive(const fs::path& store_path, base_hooks& hooks)
 
     store::results_iterator iter = tx.get_results();
     while (iter) {
-        hooks.got_result(iter);
+        // TODO(jmmv): We should be filtering at the test case level for
+        // efficiency, but that means we would need to execute more than one
+        // query on the database and our current interfaces don't support that.
+        //
+        // Reuse engine::filters_state for the time being because it is simpler
+        // and we get tracking of unmatched filters "for free".
+        const model::test_program_ptr test_program = iter.test_program();
+        if (filters.match_test_program(test_program->relative_path())) {
+            const model::test_case_ptr test_case = test_program->find(
+                iter.test_case_name());
+            if (filters.match_test_case(test_program->relative_path(),
+                                        test_case->name())) {
+                hooks.got_result(iter);
+            }
+        }
         ++iter;
     }
 
-    result r;
+    result r(filters.unused());
     hooks.end(r);
     return r;
 }

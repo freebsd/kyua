@@ -34,6 +34,7 @@
 #include <atf-c++.hpp>
 
 #include "drivers/scan_results.hpp"
+#include "engine/filters.hpp"
 #include "model/context.hpp"
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
@@ -229,7 +230,9 @@ ATF_TEST_CASE_BODY(report_junit_hooks__minimal)
     std::ostringstream output;
 
     drivers::report_junit_hooks hooks(output);
-    drivers::scan_results::drive(fs::path("test.db"), hooks);
+    drivers::scan_results::drive(fs::path("test.db"),
+                                 std::set< engine::test_filter >(),
+                                 hooks);
 
     const char* expected =
         "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n"
@@ -245,15 +248,18 @@ ATF_TEST_CASE_BODY(report_junit_hooks__minimal)
 ATF_TEST_CASE_WITHOUT_HEAD(report_junit_hooks__some_tests);
 ATF_TEST_CASE_BODY(report_junit_hooks__some_tests)
 {
-    using model::test_result;
-
-    std::vector< test_result > results1;
-    results1.push_back(test_result(test_result::broken, "Broken"));
-    results1.push_back(test_result(test_result::expected_failure, "XFail"));
-    results1.push_back(test_result(test_result::failed, "Failed"));
-    std::vector< test_result > results2;
-    results2.push_back(test_result(test_result::passed));
-    results2.push_back(test_result(test_result::skipped, "Skipped"));
+    std::vector< model::test_result > results1;
+    results1.push_back(model::test_result(
+        model::test_result_broken, "Broken"));
+    results1.push_back(model::test_result(
+        model::test_result_expected_failure, "XFail"));
+    results1.push_back(model::test_result(
+        model::test_result_failed, "Failed"));
+    std::vector< model::test_result > results2;
+    results2.push_back(model::test_result(
+        model::test_result_passed));
+    results2.push_back(model::test_result(
+        model::test_result_skipped, "Skipped"));
 
     store::write_backend backend = store::write_backend::open_rw(
         fs::path("test.db"));
@@ -267,7 +273,9 @@ ATF_TEST_CASE_BODY(report_junit_hooks__some_tests)
     std::ostringstream output;
 
     drivers::report_junit_hooks hooks(output);
-    drivers::scan_results::drive(fs::path("test.db"), hooks);
+    drivers::scan_results::drive(fs::path("test.db"),
+                                 std::set< engine::test_filter >(),
+                                 hooks);
 
     const std::string expected = std::string() +
         "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n"

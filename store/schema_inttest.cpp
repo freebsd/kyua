@@ -139,7 +139,7 @@ check_action_2(const fs::path& dbpath)
         test_cases.push_back(test_case_1);
         test_program_1.set_test_cases(test_cases);
     }
-    const model::test_result result_1(model::test_result::passed);
+    const model::test_result result_1(model::test_result_passed);
 
     model::test_program test_program_2(
         "plain", fs::path("subdir/another_test"), fs::path("/test/suite/root"),
@@ -153,7 +153,7 @@ check_action_2(const fs::path& dbpath)
         test_cases.push_back(test_case_2);
         test_program_2.set_test_cases(test_cases);
     }
-    const model::test_result result_2(model::test_result::failed,
+    const model::test_result result_2(model::test_result_failed,
                                       "Exited with code 1");
 
     model::test_program test_program_3(
@@ -167,7 +167,7 @@ check_action_2(const fs::path& dbpath)
         test_cases.push_back(test_case_3);
         test_program_3.set_test_cases(test_cases);
     }
-    const model::test_result result_3(model::test_result::broken,
+    const model::test_result result_3(model::test_result_broken,
                                       "Received signal 1");
 
     model::test_program test_program_4(
@@ -181,7 +181,7 @@ check_action_2(const fs::path& dbpath)
         test_cases.push_back(test_case_4);
         test_program_4.set_test_cases(test_cases);
     }
-    const model::test_result result_4(model::test_result::expected_failure,
+    const model::test_result result_4(model::test_result_expected_failure,
                                       "Known bug");
 
     model::test_program test_program_5(
@@ -195,7 +195,7 @@ check_action_2(const fs::path& dbpath)
         test_cases.push_back(test_case_5);
         test_program_5.set_test_cases(test_cases);
     }
-    const model::test_result result_5(model::test_result::skipped,
+    const model::test_result result_5(model::test_result_skipped,
                                       "Does not apply");
 
     store::results_iterator iter = transaction.get_results();
@@ -302,10 +302,10 @@ check_action_3(const fs::path& dbpath)
         test_cases.push_back(test_case_8);
         test_program_6.set_test_cases(test_cases);
     }
-    const model::test_result result_6(model::test_result::passed);
-    const model::test_result result_7(model::test_result::failed,
+    const model::test_result result_6(model::test_result_passed);
+    const model::test_result result_7(model::test_result_failed,
                                       "Some reason");
-    const model::test_result result_8(model::test_result::skipped,
+    const model::test_result result_8(model::test_result_skipped,
                                       "Another reason");
 
     model::test_program test_program_7(
@@ -324,7 +324,7 @@ check_action_3(const fs::path& dbpath)
         test_cases.push_back(test_case_9);
         test_program_7.set_test_cases(test_cases);
     }
-    const model::test_result result_9(model::test_result::failed,
+    const model::test_result result_9(model::test_result_failed,
                                       "Exited with code 1");
 
     store::results_iterator iter = transaction.get_results();
@@ -399,7 +399,7 @@ check_action_4(const fs::path& dbpath)
         test_cases.push_back(test_case_10);
         test_program_8.set_test_cases(test_cases);
     }
-    const model::test_result result_10(model::test_result::failed,
+    const model::test_result result_10(model::test_result_failed,
                                        "Exit failure");
 
     model::test_program test_program_9(
@@ -420,8 +420,8 @@ check_action_4(const fs::path& dbpath)
         test_cases.push_back(test_case_12);
         test_program_9.set_test_cases(test_cases);
     }
-    const model::test_result result_11(model::test_result::passed);
-    const model::test_result result_12(model::test_result::failed,
+    const model::test_result result_11(model::test_result_passed);
+    const model::test_result result_12(model::test_result_failed,
                                        "Some reason");
 
     store::results_iterator iter = transaction.get_results();

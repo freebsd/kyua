@@ -61,6 +61,29 @@ std::operator<<(std::ostream& output, const std::shared_ptr< T >& object)
 /// \return The output stream.
 template< typename T >
 std::ostream&
+std::operator<<(std::ostream& output, const std::set< T >& object)
+{
+    output << "set(";
+    typename std::set< T >::size_type counter = 0;
+    for (typename std::set< T >::const_iterator iter = object.begin();
+         iter != object.end(); ++iter, ++counter) {
+        if (counter != 0)
+            output << ", ";
+        output << (*iter);
+    }
+    output << ")";
+    return output;
+}
+
+
+/// Injects the object into a stream.
+///
+/// \param output The stream into which to inject the object.
+/// \param object The object to format.
+///
+/// \return The output stream.
+template< typename T >
+std::ostream&
 std::operator<<(std::ostream& output, const std::vector< T >& object)
 {
     output << "[";

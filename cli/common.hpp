@@ -84,7 +84,7 @@ typedef std::auto_ptr< cli_command > cli_command_ptr;
 ///
 /// This is a vector rather than a set because we want to respect the order in
 /// which the user provided the types.
-typedef std::vector< model::test_result::result_type > result_types;
+typedef std::vector< model::test_result_type > result_types;
 
 
 utils::optional< utils::fs::path > build_root_path(

@@ -164,12 +164,12 @@ drivers::report_junit_hooks::got_result(store::results_iterator& iter)
     std::string stderr_contents;
 
     switch (result.type()) {
-    case model::test_result::failed:
+    case model::test_result_failed:
         _output << F("<failure message=\"%s\"/>\n")
             % text::escape_xml(result.reason());
         break;
 
-    case model::test_result::expected_failure:
+    case model::test_result_expected_failure:
         stderr_contents += ("Expected failure result details\n"
                             "-------------------------------\n"
                             "\n"
@@ -177,11 +177,11 @@ drivers::report_junit_hooks::got_result(store::results_iterator& iter)
                             "\n");
         break;
 
-    case model::test_result::passed:
+    case model::test_result_passed:
         // Passed results have no status nodes.
         break;
 
-    case model::test_result::skipped:
+    case model::test_result_skipped:
         _output << "<skipped/>\n";
         stderr_contents += ("Skipped result details\n"
                             "----------------------\n"

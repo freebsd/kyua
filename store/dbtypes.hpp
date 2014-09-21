@@ -38,6 +38,7 @@
 #endif  // !defined(STORE_DBTYPES_HPP)
 #define STORE_DBTYPES_HPP
 
+#include "model/test_result_fwd.hpp"
 #include "utils/datetime.hpp"
 #include "utils/sqlite/statement.hpp"
 
@@ -49,11 +50,15 @@ void bind_delta(utils::sqlite::statement&, const char*,
                 const utils::datetime::delta&);
 void bind_optional_string(utils::sqlite::statement&, const char*,
                           const std::string&);
+void bind_test_result_type(utils::sqlite::statement&, const char*,
+                           const model::test_result_type&);
 void bind_timestamp(utils::sqlite::statement&, const char*,
                     const utils::datetime::timestamp&);
 bool column_bool(utils::sqlite::statement&, const char*);
 utils::datetime::delta column_delta(utils::sqlite::statement&, const char*);
 std::string column_optional_string(utils::sqlite::statement&, const char*);
+model::test_result_type column_test_result_type(
+    utils::sqlite::statement&, const char*);
 utils::datetime::timestamp column_timestamp(utils::sqlite::statement&,
                                             const char*);
 

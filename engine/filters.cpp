@@ -207,6 +207,25 @@ engine::test_filter::operator!=(const test_filter& other) const
 }
 
 
+/// Injects the object into a stream.
+///
+/// \param output The stream into which to inject the object.
+/// \param object The object to format.
+///
+/// \return The output stream.
+std::ostream&
+engine::operator<<(std::ostream& output, const test_filter& object)
+{
+    if (object.test_case.empty()) {
+        output << F("test_filter{test_program=%s}") % object.test_program;
+    } else {
+        output << F("test_filter{test_program=%s, test_case=%s}")
+            % object.test_program % object.test_case;
+    }
+    return output;
+}
+
+
 /// Constructs a new set of filters.
 ///
 /// \param filters_ The filters themselves; if empty, no filters are applied.

@@ -79,67 +79,67 @@
 
 GETTERS_TEST(
     broken,
-    model::test_result::broken,
+    model::test_result_broken,
     "The reason",
-    model::test_result(model::test_result::broken, "The reason"));
+    model::test_result(model::test_result_broken, "The reason"));
 GETTERS_TEST(
     expected_failure,
-    model::test_result::expected_failure,
+    model::test_result_expected_failure,
     "The reason",
-    model::test_result(model::test_result::expected_failure, "The reason"));
+    model::test_result(model::test_result_expected_failure, "The reason"));
 GETTERS_TEST(
     failed,
-    model::test_result::failed,
+    model::test_result_failed,
     "The reason",
-    model::test_result(model::test_result::failed, "The reason"));
+    model::test_result(model::test_result_failed, "The reason"));
 GETTERS_TEST(
     passed,
-    model::test_result::passed,
+    model::test_result_passed,
     "",
-    model::test_result(model::test_result::passed));
+    model::test_result(model::test_result_passed));
 GETTERS_TEST(
     skipped,
-    model::test_result::skipped,
+    model::test_result_skipped,
     "The reason",
-    model::test_result(model::test_result::skipped, "The reason"));
+    model::test_result(model::test_result_skipped, "The reason"));
 
 
-GOOD_TEST(broken, false, model::test_result::broken);
-GOOD_TEST(expected_failure, true, model::test_result::expected_failure);
-GOOD_TEST(failed, false, model::test_result::failed);
-GOOD_TEST(passed, true, model::test_result::passed);
-GOOD_TEST(skipped, true, model::test_result::skipped);
+GOOD_TEST(broken, false, model::test_result_broken);
+GOOD_TEST(expected_failure, true, model::test_result_expected_failure);
+GOOD_TEST(failed, false, model::test_result_failed);
+GOOD_TEST(passed, true, model::test_result_passed);
+GOOD_TEST(skipped, true, model::test_result_skipped);
 
 
 OUTPUT_TEST(
     broken,
     "model::test_result{type='broken', reason='foo'}",
-    model::test_result(model::test_result::broken, "foo"));
+    model::test_result(model::test_result_broken, "foo"));
 OUTPUT_TEST(
     expected_failure,
     "model::test_result{type='expected_failure', reason='abc def'}",
-    model::test_result(model::test_result::expected_failure, "abc def"));
+    model::test_result(model::test_result_expected_failure, "abc def"));
 OUTPUT_TEST(
     failed,
     "model::test_result{type='failed', reason='some \\'string'}",
-    model::test_result(model::test_result::failed, "some 'string"));
+    model::test_result(model::test_result_failed, "some 'string"));
 OUTPUT_TEST(
     passed,
     "model::test_result{type='passed'}",
-    model::test_result(model::test_result::passed, ""));
+    model::test_result(model::test_result_passed, ""));
 OUTPUT_TEST(
     skipped,
     "model::test_result{type='skipped', reason='last message'}",
-    model::test_result(model::test_result::skipped, "last message"));
+    model::test_result(model::test_result_skipped, "last message"));
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(operator_eq);
 ATF_TEST_CASE_BODY(operator_eq)
 {
-    const model::test_result result1(model::test_result::broken, "Foo");
-    const model::test_result result2(model::test_result::broken, "Foo");
-    const model::test_result result3(model::test_result::broken, "Bar");
-    const model::test_result result4(model::test_result::failed, "Foo");
+    const model::test_result result1(model::test_result_broken, "Foo");
+    const model::test_result result2(model::test_result_broken, "Foo");
+    const model::test_result result3(model::test_result_broken, "Bar");
+    const model::test_result result4(model::test_result_failed, "Foo");
 
     ATF_REQUIRE(  result1 == result1);
     ATF_REQUIRE(  result1 == result2);
@@ -151,10 +151,10 @@ ATF_TEST_CASE_BODY(operator_eq)
 ATF_TEST_CASE_WITHOUT_HEAD(operator_ne);
 ATF_TEST_CASE_BODY(operator_ne)
 {
-    const model::test_result result1(model::test_result::broken, "Foo");
-    const model::test_result result2(model::test_result::broken, "Foo");
-    const model::test_result result3(model::test_result::broken, "Bar");
-    const model::test_result result4(model::test_result::failed, "Foo");
+    const model::test_result result1(model::test_result_broken, "Foo");
+    const model::test_result result2(model::test_result_broken, "Foo");
+    const model::test_result result3(model::test_result_broken, "Bar");
+    const model::test_result result4(model::test_result_failed, "Foo");
 
     ATF_REQUIRE(!(result1 != result1));
     ATF_REQUIRE(!(result1 != result2));

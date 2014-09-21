@@ -60,8 +60,8 @@ ATF_TEST_CASE_BODY(test_case__ctor_and_getters)
 ATF_TEST_CASE_WITHOUT_HEAD(test_case__fake_result)
 ATF_TEST_CASE_BODY(test_case__fake_result)
 {
-    const model::test_result result(model::test_result::skipped,
-                                     "Some reason");
+    const model::test_result result(model::test_result_skipped,
+                                    "Some reason");
     const model::test_program test_program(
         "mock", fs::path("abc"), fs::path("unused-root"),
         "unused-suite-name", model::metadata_builder().build());
