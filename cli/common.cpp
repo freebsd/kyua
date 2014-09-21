@@ -147,14 +147,13 @@ get_historical_db(void)
 static cli::result_types
 parse_types(const std::vector< std::string >& names)
 {
-    using model::test_result;
-    typedef std::map< std::string, test_result::result_type > types_map;
+    typedef std::map< std::string, model::test_result_type > types_map;
     types_map valid_types;
-    valid_types["broken"] = test_result::broken;
-    valid_types["failed"] = test_result::failed;
-    valid_types["passed"] = test_result::passed;
-    valid_types["skipped"] = test_result::skipped;
-    valid_types["xfail"] = test_result::expected_failure;
+    valid_types["broken"] = model::test_result_broken;
+    valid_types["failed"] = model::test_result_failed;
+    valid_types["passed"] = model::test_result_passed;
+    valid_types["skipped"] = model::test_result_skipped;
+    valid_types["xfail"] = model::test_result_expected_failure;
 
     cli::result_types types;
     for (std::vector< std::string >::const_iterator iter = names.begin();
@@ -276,11 +275,11 @@ cli::get_result_types(const utils::cmdline::parsed_cmdline& cmdline)
     result_types types = parse_types(
         cmdline.get_option< cmdline::list_option >("results-filter"));
     if (types.empty()) {
-        types.push_back(model::test_result::passed);
-        types.push_back(model::test_result::skipped);
-        types.push_back(model::test_result::expected_failure);
-        types.push_back(model::test_result::broken);
-        types.push_back(model::test_result::failed);
+        types.push_back(model::test_result_passed);
+        types.push_back(model::test_result_skipped);
+        types.push_back(model::test_result_expected_failure);
+        types.push_back(model::test_result_broken);
+        types.push_back(model::test_result_failed);
     }
     return types;
 }
@@ -357,13 +356,12 @@ cli::format_result(const model::test_result& result)
 {
     std::string text;
 
-    using model::test_result;
     switch (result.type()) {
-    case test_result::broken: text = "broken"; break;
-    case test_result::expected_failure: text = "expected_failure"; break;
-    case test_result::failed: text = "failed"; break;
-    case test_result::passed: text = "passed"; break;
-    case test_result::skipped: text = "skipped"; break;
+    case model::test_result_broken: text = "broken"; break;
+    case model::test_result_expected_failure: text = "expected_failure"; break;
+    case model::test_result_failed: text = "failed"; break;
+    case model::test_result_passed: text = "passed"; break;
+    case model::test_result_skipped: text = "skipped"; break;
     }
     INV(!text.empty());
 

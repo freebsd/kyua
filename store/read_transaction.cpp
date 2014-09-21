@@ -200,8 +200,6 @@ static model::test_result
 parse_result(sqlite::statement& stmt, const char* type_column,
              const char* reason_column)
 {
-    using model::test_result;
-
     try {
         const std::string type = stmt.safe_column_text(type_column);
         if (type == "passed") {
@@ -209,19 +207,19 @@ parse_result(sqlite::statement& stmt, const char* type_column,
                 sqlite::type_null)
                 throw store::integrity_error("Result of type 'passed' has a "
                                              "non-NULL reason");
-            return test_result(test_result::passed);
+            return model::test_result(model::test_result_passed);
         } else if (type == "broken") {
-            return test_result(test_result::broken,
-                               stmt.safe_column_text(reason_column));
+            return model::test_result(model::test_result_broken,
+                                      stmt.safe_column_text(reason_column));
         } else if (type == "expected_failure") {
-            return test_result(test_result::expected_failure,
-                               stmt.safe_column_text(reason_column));
+            return model::test_result(model::test_result_expected_failure,
+                                      stmt.safe_column_text(reason_column));
         } else if (type == "failed") {
-            return test_result(test_result::failed,
-                               stmt.safe_column_text(reason_column));
+            return model::test_result(model::test_result_failed,
+                                      stmt.safe_column_text(reason_column));
         } else if (type == "skipped") {
-            return test_result(test_result::skipped,
-                               stmt.safe_column_text(reason_column));
+            return model::test_result(model::test_result_skipped,
+                                      stmt.safe_column_text(reason_column));
         } else {
             throw store::integrity_error(F("Unknown test result type %s") %
                                          type);

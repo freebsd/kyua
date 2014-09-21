@@ -204,7 +204,7 @@ ATF_TEST_CASE_BODY(get_results__many)
     model::test_cases_vector test_cases_1;
     test_cases_1.push_back(test_case_1);
     test_program_1.set_test_cases(test_cases_1);
-    const model::test_result result_1(model::test_result::passed);
+    const model::test_result result_1(model::test_result_passed);
     {
         const int64_t tp_id = tx.put_test_program(test_program_1);
         const int64_t tc_id = tx.put_test_case(*test_case_1, tp_id);
@@ -222,7 +222,7 @@ ATF_TEST_CASE_BODY(get_results__many)
     model::test_cases_vector test_cases_2;
     test_cases_2.push_back(test_case_2);
     test_program_2.set_test_cases(test_cases_2);
-    const model::test_result result_2(model::test_result::failed,
+    const model::test_result result_2(model::test_result_failed,
                                       "Some text");
     {
         const int64_t tp_id = tx.put_test_program(test_program_2);

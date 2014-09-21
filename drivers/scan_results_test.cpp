@@ -111,8 +111,8 @@ public:
     {
         const char* type;
         switch (iter.result().type()) {
-        case model::test_result::passed: type = "passed"; break;
-        case model::test_result::skipped: type = "skipped"; break;
+        case model::test_result_passed: type = "passed"; break;
+        case model::test_result_skipped: type = "skipped"; break;
         default:
             UNREACHABLE_MSG("Formatting unimplemented");
         }
@@ -157,7 +157,7 @@ populate_results_file(const char* db_name, const int count)
             const model::test_case test_case(
                 "plain", test_program, "main",
                 model::metadata_builder().build());
-            const model::test_result result(model::test_result::skipped,
+            const model::test_result result(model::test_result_skipped,
                                             F("Count %s") % j);
             const int64_t tc_id = tx.put_test_case(test_case, tp_id);
             const datetime::timestamp start =

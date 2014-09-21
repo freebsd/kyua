@@ -117,8 +117,7 @@ class report_console_hooks : public drivers::scan_results::base_hooks {
     ///
     /// Note that this may not include all results, as keeping the whole list in
     /// memory may be too much.
-    std::map< model::test_result::result_type,
-              std::vector< result_data > > _results;
+    std::map< model::test_result_type, std::vector< result_data > > _results;
 
     /// Prints the execution context to the output.
     ///
@@ -143,9 +142,9 @@ class report_console_hooks : public drivers::scan_results::base_hooks {
 
     /// Counts how many results of a given type have been received.
     std::size_t
-    count_results(const model::test_result::result_type type)
+    count_results(const model::test_result_type type)
     {
-        const std::map< model::test_result::result_type,
+        const std::map< model::test_result_type,
                         std::vector< result_data > >::const_iterator iter =
             _results.find(type);
         if (iter == _results.end())
@@ -156,10 +155,10 @@ class report_console_hooks : public drivers::scan_results::base_hooks {
 
     /// Prints a set of results.
     void
-    print_results(const model::test_result::result_type type,
+    print_results(const model::test_result_type type,
                   const char* title)
     {
-        const std::map< model::test_result::result_type,
+        const std::map< model::test_result_type,
                         std::vector< result_data > >::const_iterator iter2 =
             _results.find(type);
         if (iter2 == _results.end())
@@ -225,15 +224,14 @@ public:
     void
     end(const drivers::scan_results::result& UTILS_UNUSED_PARAM(r))
     {
-        using model::test_result;
-        typedef std::map< test_result::result_type, const char* > types_map;
+        typedef std::map< model::test_result_type, const char* > types_map;
 
         types_map titles;
-        titles[model::test_result::broken] = "Broken tests";
-        titles[model::test_result::expected_failure] = "Expected failures";
-        titles[model::test_result::failed] = "Failed tests";
-        titles[model::test_result::passed] = "Passed tests";
-        titles[model::test_result::skipped] = "Skipped tests";
+        titles[model::test_result_broken] = "Broken tests";
+        titles[model::test_result_expected_failure] = "Expected failures";
+        titles[model::test_result_failed] = "Failed tests";
+        titles[model::test_result_passed] = "Passed tests";
+        titles[model::test_result_skipped] = "Skipped tests";
 
         for (cli::result_types::const_iterator iter = _results_filters.begin();
              iter != _results_filters.end(); ++iter) {
@@ -243,11 +241,12 @@ public:
             print_results((*match).first, (*match).second);
         }
 
-        const std::size_t broken = count_results(test_result::broken);
-        const std::size_t failed = count_results(test_result::failed);
-        const std::size_t passed = count_results(test_result::passed);
-        const std::size_t skipped = count_results(test_result::skipped);
-        const std::size_t xfail = count_results(test_result::expected_failure);
+        const std::size_t broken = count_results(model::test_result_broken);
+        const std::size_t failed = count_results(model::test_result_failed);
+        const std::size_t passed = count_results(model::test_result_passed);
+        const std::size_t skipped = count_results(model::test_result_skipped);
+        const std::size_t xfail = count_results(
+            model::test_result_expected_failure);
         const std::size_t total = broken + failed + passed + skipped + xfail;
 
         _output << "===> Summary\n";

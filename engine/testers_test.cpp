@@ -122,7 +122,7 @@ create_mock_tester_signal(const int term_sig)
 /// \param result_type Expected result type.
 static void
 parse_test_result_test(const std::string& result_name,
-                  const model::test_result::result_type result_type)
+                  const model::test_result_type result_type)
 {
     std::istringstream input(result_name);
     ATF_REQUIRE_EQ(model::test_result(result_type),
@@ -524,7 +524,7 @@ ATF_TEST_CASE_BODY(tester_path__missing)
     ATF_TEST_CASE_WITHOUT_HEAD(parse_test_result__ ## name); \
     ATF_TEST_CASE_BODY(parse_test_result__ ## name) \
     { \
-        parse_test_result_test(#name, model::test_result:: name); \
+        parse_test_result_test(#name, model::test_result_ ## name); \
     }
 
 
@@ -539,7 +539,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(parse_test_result__empty);
 ATF_TEST_CASE_BODY(parse_test_result__empty)
 {
     std::istringstream input("");
-    ATF_REQUIRE(model::test_result(model::test_result::broken,
+    ATF_REQUIRE(model::test_result(model::test_result_broken,
                                    "Empty result file") ==
                 engine::parse_test_result(input));
 }
@@ -550,21 +550,21 @@ ATF_TEST_CASE_BODY(parse_test_result__unknown_type)
 {
     std::istringstream input("passed ");
     ATF_REQUIRE(
-        model::test_result(model::test_result::broken,
+        model::test_result(model::test_result_broken,
                            "Unknown result type 'passed '") ==
         engine::parse_test_result(input));
 
     input.clear();
     input.str("fail");
     ATF_REQUIRE(
-        model::test_result(model::test_result::broken,
+        model::test_result(model::test_result_broken,
                            "Unknown result type 'fail'") ==
         engine::parse_test_result(input));
 
     input.clear();
     input.str("a b");
     ATF_REQUIRE(
-        model::test_result(model::test_result::broken,
+        model::test_result(model::test_result_broken,
                            "Unknown result type 'a b'") ==
         engine::parse_test_result(input));
 }

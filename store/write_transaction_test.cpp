@@ -320,7 +320,7 @@ ATF_TEST_CASE_HEAD(put_result__ok__broken)
 }
 ATF_TEST_CASE_BODY(put_result__ok__broken)
 {
-    const model::test_result result(model::test_result::broken, "a b cd");
+    const model::test_result result(model::test_result_broken, "a b cd");
     do_put_result_ok_test(result, "broken", "a b cd");
 }
 
@@ -333,7 +333,7 @@ ATF_TEST_CASE_HEAD(put_result__ok__expected_failure)
 }
 ATF_TEST_CASE_BODY(put_result__ok__expected_failure)
 {
-    const model::test_result result(model::test_result::expected_failure,
+    const model::test_result result(model::test_result_expected_failure,
                                     "a b cd");
     do_put_result_ok_test(result, "expected_failure", "a b cd");
 }
@@ -347,7 +347,7 @@ ATF_TEST_CASE_HEAD(put_result__ok__failed)
 }
 ATF_TEST_CASE_BODY(put_result__ok__failed)
 {
-    const model::test_result result(model::test_result::failed, "a b cd");
+    const model::test_result result(model::test_result_failed, "a b cd");
     do_put_result_ok_test(result, "failed", "a b cd");
 }
 
@@ -360,7 +360,7 @@ ATF_TEST_CASE_HEAD(put_result__ok__passed)
 }
 ATF_TEST_CASE_BODY(put_result__ok__passed)
 {
-    const model::test_result result(model::test_result::passed);
+    const model::test_result result(model::test_result_passed);
     do_put_result_ok_test(result, "passed", NULL);
 }
 
@@ -373,7 +373,7 @@ ATF_TEST_CASE_HEAD(put_result__ok__skipped)
 }
 ATF_TEST_CASE_BODY(put_result__ok__skipped)
 {
-    const model::test_result result(model::test_result::skipped, "a b cd");
+    const model::test_result result(model::test_result_skipped, "a b cd");
     do_put_result_ok_test(result, "skipped", "a b cd");
 }
 
@@ -386,7 +386,7 @@ ATF_TEST_CASE_HEAD(put_result__fail)
 }
 ATF_TEST_CASE_BODY(put_result__fail)
 {
-    const model::test_result result(model::test_result::broken, "foo");
+    const model::test_result result(model::test_result_broken, "foo");
 
     store::write_backend backend = store::write_backend::open_rw(
         fs::path("test.db"));

@@ -416,23 +416,23 @@ store::write_transaction::put_result(const model::test_result& result,
         stmt.bind(":test_case_id", test_case_id);
 
         switch (result.type()) {
-        case model::test_result::broken:
+        case model::test_result_broken:
             stmt.bind(":result_type", "broken");
             break;
 
-        case model::test_result::expected_failure:
+        case model::test_result_expected_failure:
             stmt.bind(":result_type", "expected_failure");
             break;
 
-        case model::test_result::failed:
+        case model::test_result_failed:
             stmt.bind(":result_type", "failed");
             break;
 
-        case model::test_result::passed:
+        case model::test_result_passed:
             stmt.bind(":result_type", "passed");
             break;
 
-        case model::test_result::skipped:
+        case model::test_result_skipped:
             stmt.bind(":result_type", "skipped");
             break;
 
