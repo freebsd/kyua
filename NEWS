@@ -7,6 +7,10 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   their output) to 'report'.  This is via a new '--verbose' flag which
   replaces the previous '--show-context'.
 
+* Issue 49: Extended 'report' to support test case filters as
+  command-line arguments.  Combined with '--verbose', this allows
+  inspecting the details of a test case failure after execution.
+
 * Issue 72: Add caching support to the getcwd(3) test in configure so
   that the result can be overriden for cross-compilation purposes.
 

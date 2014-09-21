@@ -31,10 +31,12 @@
 #include <algorithm>
 #include <cerrno>
 #include <cstdlib>
+#include <set>
 #include <stdexcept>
 
 #include "cli/common.ipp"
 #include "drivers/scan_results.hpp"
+#include "engine/filters.hpp"
 #include "model/context.hpp"
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
@@ -421,7 +423,9 @@ cli::cmd_report_html::run(cmdline::ui* ui,
         cmdline.get_option< cmdline::path_option >("output");
     create_top_directory(directory, cmdline.has_option("force"));
     html_hooks hooks(ui, directory, types);
-    drivers::scan_results::drive(results_file, hooks);
+    drivers::scan_results::drive(results_file,
+                                 std::set< engine::test_filter >(),
+                                 hooks);
     hooks.write_summary();
 
     return EXIT_SUCCESS;

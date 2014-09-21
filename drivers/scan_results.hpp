@@ -41,6 +41,9 @@ extern "C" {
 #include <stdint.h>
 }
 
+#include <set>
+
+#include "engine/filters.hpp"
 #include "model/context_fwd.hpp"
 #include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
@@ -56,8 +59,17 @@ namespace scan_results {
 /// Tuple containing the results of this driver.
 class result {
 public:
+    /// Filters that did not match any available test case.
+    ///
+    /// The presence of any filters here probably indicates a usage error.  If a
+    /// test filter does not match any test case, it is probably a typo.
+    std::set< engine::test_filter > unused_filters;
+
     /// Initializer for the tuple's fields.
-    result(void)
+    ///
+    /// \param unused_filters_ The filters that did not match any test case.
+    result(const std::set< engine::test_filter >& unused_filters_) :
+        unused_filters(unused_filters_)
     {
     }
 };
@@ -86,7 +98,8 @@ public:
 };
 
 
-result drive(const utils::fs::path&, base_hooks&);
+result drive(const utils::fs::path&, const std::set< engine::test_filter >&,
+             base_hooks&);
 
 
 }  // namespace scan_results

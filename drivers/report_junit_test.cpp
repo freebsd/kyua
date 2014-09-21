@@ -34,6 +34,7 @@
 #include <atf-c++.hpp>
 
 #include "drivers/scan_results.hpp"
+#include "engine/filters.hpp"
 #include "model/context.hpp"
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
@@ -229,7 +230,9 @@ ATF_TEST_CASE_BODY(report_junit_hooks__minimal)
     std::ostringstream output;
 
     drivers::report_junit_hooks hooks(output);
-    drivers::scan_results::drive(fs::path("test.db"), hooks);
+    drivers::scan_results::drive(fs::path("test.db"),
+                                 std::set< engine::test_filter >(),
+                                 hooks);
 
     const char* expected =
         "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n"
@@ -270,7 +273,9 @@ ATF_TEST_CASE_BODY(report_junit_hooks__some_tests)
     std::ostringstream output;
 
     drivers::report_junit_hooks hooks(output);
-    drivers::scan_results::drive(fs::path("test.db"), hooks);
+    drivers::scan_results::drive(fs::path("test.db"),
+                                 std::set< engine::test_filter >(),
+                                 hooks);
 
     const std::string expected = std::string() +
         "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n"

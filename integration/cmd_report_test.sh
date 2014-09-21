@@ -163,6 +163,77 @@ EOF
 }
 
 
+utils_test_case filter__ok
+filter__ok_body() {
+    utils_install_durations_wrapper
+
+    run_tests "mock1" dbfile_name1
+
+    cat >expout <<EOF
+===> Skipped tests
+simple_all_pass:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
+===> Summary
+Results read from $(cat dbfile_name1)
+Test cases: 1 total, 1 skipped, 0 expected failures, 0 broken, 0 failed
+Total time: S.UUUs
+EOF
+    atf_check -s exit:0 -o file:expout -e empty kyua report \
+        simple_all_pass:skip
+}
+
+
+utils_test_case filter__ok_passed_excluded_by_default
+filter__ok_passed_excluded_by_default_body() {
+    utils_install_durations_wrapper
+
+    run_tests "mock1" dbfile_name1
+
+    # Passed results are excluded by default so they are not displayed even if
+    # requested with a test case filter.  This might be somewhat confusing...
+    cat >expout <<EOF
+===> Summary
+Results read from $(cat dbfile_name1)
+Test cases: 1 total, 0 skipped, 0 expected failures, 0 broken, 0 failed
+Total time: S.UUUs
+EOF
+    atf_check -s exit:0 -o file:expout -e empty kyua report \
+        simple_all_pass:pass
+    cat >expout <<EOF
+===> Passed tests
+simple_all_pass:pass  ->  passed  [S.UUUs]
+===> Summary
+Results read from $(cat dbfile_name1)
+Test cases: 1 total, 0 skipped, 0 expected failures, 0 broken, 0 failed
+Total time: S.UUUs
+EOF
+    atf_check -s exit:0 -o file:expout -e empty kyua report \
+        --results-filter= simple_all_pass:pass
+}
+
+
+utils_test_case filter__no_match
+filter__no_match_body() {
+    utils_install_durations_wrapper
+
+    run_tests "mock1" dbfile_name1
+
+    cat >expout <<EOF
+===> Skipped tests
+simple_all_pass:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
+===> Summary
+Results read from $(cat dbfile_name1)
+Test cases: 1 total, 1 skipped, 0 expected failures, 0 broken, 0 failed
+Total time: S.UUUs
+EOF
+    cat >experr <<EOF
+kyua: W: No test cases matched by the filter 'first'.
+kyua: W: No test cases matched by the filter 'simple_all_pass:second'.
+EOF
+    atf_check -s exit:1 -o file:expout -e file:experr kyua report \
+        first simple_all_pass:skip simple_all_pass:second
+}
+
+
 utils_test_case verbose
 verbose_body() {
     run_tests "mock1
@@ -297,6 +368,10 @@ atf_init_test_cases() {
 
     atf_add_test_case results_file__explicit
     atf_add_test_case results_file__not_found
+
+    atf_add_test_case filter__ok
+    atf_add_test_case filter__ok_passed_excluded_by_default
+    atf_add_test_case filter__no_match
 
     atf_add_test_case verbose
 

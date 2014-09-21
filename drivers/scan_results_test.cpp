@@ -32,6 +32,7 @@
 
 #include <atf-c++.hpp>
 
+#include "engine/filters.hpp"
 #include "model/context.hpp"
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
@@ -42,6 +43,7 @@
 #include "store/write_backend.hpp"
 #include "store/write_transaction.hpp"
 #include "utils/datetime.hpp"
+#include "utils/format/containers.ipp"
 #include "utils/format/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
@@ -149,13 +151,13 @@ populate_results_file(const char* db_name, const int count)
 
     for (int i = 0; i < count; i++) {
         const model::test_program test_program(
-            "plain", fs::path(F("dir/prog_%s") % i), fs::path("/root"),
+            "fake", fs::path(F("dir/prog_%s") % i), fs::path("/root"),
             F("suite_%s") % i, model::metadata_builder().build());
         const int64_t tp_id = tx.put_test_program(test_program);
 
         for (int j = 0; j < count; j++) {
             const model::test_case test_case(
-                "plain", test_program, "main",
+                "fake", test_program, F("case_%s") % j,
                 model::metadata_builder().build());
             const model::test_result result(model::test_result_skipped,
                                             F("Count %s") % j);
@@ -175,13 +177,15 @@ populate_results_file(const char* db_name, const int count)
 }  // anonymous namespace
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(ok);
-ATF_TEST_CASE_BODY(ok)
+ATF_TEST_CASE_WITHOUT_HEAD(ok__all);
+ATF_TEST_CASE_BODY(ok__all)
 {
     populate_results_file("test.db", 2);
 
     capture_hooks hooks;
-    drivers::scan_results::drive(fs::path("test.db"), hooks);
+    const drivers::scan_results::result result = drivers::scan_results::drive(
+        fs::path("test.db"), std::set< engine::test_filter >(), hooks);
+    ATF_REQUIRE(result.unused_filters.empty());
     ATF_REQUIRE(hooks._begin_called);
     ATF_REQUIRE(hooks._end_result);
 
@@ -192,11 +196,42 @@ ATF_TEST_CASE_BODY(ok)
     ATF_REQUIRE(context == hooks._context.get());
 
     std::set< std::string > results;
-    results.insert("/root/dir/prog_0:main:skipped:Count 0:4:10");
-    results.insert("/root/dir/prog_0:main:skipped:Count 1:4:11");
-    results.insert("/root/dir/prog_1:main:skipped:Count 0:4:11");
-    results.insert("/root/dir/prog_1:main:skipped:Count 1:4:12");
-    ATF_REQUIRE(results == hooks._results);
+    results.insert("/root/dir/prog_0:case_0:skipped:Count 0:4:10");
+    results.insert("/root/dir/prog_0:case_1:skipped:Count 1:4:11");
+    results.insert("/root/dir/prog_1:case_0:skipped:Count 0:4:11");
+    results.insert("/root/dir/prog_1:case_1:skipped:Count 1:4:12");
+    ATF_REQUIRE_EQ(results, hooks._results);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(ok__filters);
+ATF_TEST_CASE_BODY(ok__filters)
+{
+    populate_results_file("test.db", 3);
+
+    std::set< engine::test_filter > filters;
+    filters.insert(engine::test_filter(fs::path("dir/prog_1"), ""));
+    filters.insert(engine::test_filter(fs::path("dir/prog_1"), "no"));
+    filters.insert(engine::test_filter(fs::path("dir/prog_2"), "case_1"));
+    filters.insert(engine::test_filter(fs::path("dir/prog_3"), ""));
+
+    capture_hooks hooks;
+    const drivers::scan_results::result result = drivers::scan_results::drive(
+        fs::path("test.db"), filters, hooks);
+    ATF_REQUIRE(hooks._begin_called);
+    ATF_REQUIRE(hooks._end_result);
+
+    std::set< engine::test_filter > unused_filters;
+    unused_filters.insert(engine::test_filter(fs::path("dir/prog_1"), "no"));
+    unused_filters.insert(engine::test_filter(fs::path("dir/prog_3"), ""));
+    ATF_REQUIRE_EQ(unused_filters, result.unused_filters);
+
+    std::set< std::string > results;
+    results.insert("/root/dir/prog_1:case_0:skipped:Count 0:4:11");
+    results.insert("/root/dir/prog_1:case_1:skipped:Count 1:4:12");
+    results.insert("/root/dir/prog_1:case_2:skipped:Count 2:4:13");
+    results.insert("/root/dir/prog_2:case_1:skipped:Count 1:4:13");
+    ATF_REQUIRE_EQ(results, hooks._results);
 }
 
 
@@ -206,12 +241,15 @@ ATF_TEST_CASE_BODY(missing_db)
     capture_hooks hooks;
     ATF_REQUIRE_THROW(
         store::error,
-        drivers::scan_results::drive(fs::path("test.db"), hooks));
+        drivers::scan_results::drive(fs::path("test.db"),
+                                     std::set< engine::test_filter >(),
+                                     hooks));
 }
 
 
 ATF_INIT_TEST_CASES(tcs)
 {
-    ATF_ADD_TEST_CASE(tcs, ok);
+    ATF_ADD_TEST_CASE(tcs, ok__all);
+    ATF_ADD_TEST_CASE(tcs, ok__filters);
     ATF_ADD_TEST_CASE(tcs, missing_db);
 }

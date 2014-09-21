@@ -323,8 +323,8 @@ public:
 
 /// Default constructor for cmd_report.
 cmd_report::cmd_report(void) : cli_command(
-    "report", "", 0, 0,
-    "Generates a report with the result of a test suite run")
+    "report", "", 0, -1,
+    "Generates a report with the results of a test suite run")
 {
     add_option(results_file_open_option);
     add_option(cmdline::bool_option(
@@ -338,14 +338,14 @@ cmd_report::cmd_report(void) : cli_command(
 
 /// Entry point for the "report" subcommand.
 ///
-/// \param unused_ui Object to interact with the I/O of the program.
+/// \param ui Object to interact with the I/O of the program.
 /// \param cmdline Representation of the command line to the subcommand.
 /// \param unused_user_config The runtime configuration of the program.
 ///
 /// \return 0 if everything is OK, 1 if the statement is invalid or if there is
 /// any other problem.
 int
-cmd_report::run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
+cmd_report::run(cmdline::ui* ui,
                 const cmdline::parsed_cmdline& cmdline,
                 const config::tree& UTILS_UNUSED_PARAM(user_config))
 {
@@ -358,7 +358,9 @@ cmd_report::run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
     const result_types types = get_result_types(cmdline);
     report_console_hooks hooks(*output.get(), cmdline.has_option("verbose"),
                                types, results_file);
-    drivers::scan_results::drive(results_file, hooks);
+    const drivers::scan_results::result result = drivers::scan_results::drive(
+        results_file, parse_filters(cmdline.arguments()), hooks);
 
-    return EXIT_SUCCESS;
+    return report_unused_filters(result.unused_filters, ui) ?
+        EXIT_FAILURE : EXIT_SUCCESS;
 }
