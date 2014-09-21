@@ -54,6 +54,29 @@ EOF
 }
 
 
+# Removes continuation lines from environment variables.
+#
+# In the report, if any environment variable has newlines in it, we confuse our
+# tests.  Just strip out any of the continuation lines.
+strip_environment='awk "
+BEGIN { skip = 0; }
+
+/===>/ {
+    print;
+    skip = 0;
+    next;
+}
+
+/^Environment variables:/ {
+    print;
+    skip = 1;
+    next;
+}
+
+/^    [^_]/ { print; next; }
+{ if (!skip) print; }"'
+
+
 utils_test_case default_behavior__ok
 default_behavior__ok_body() {
     utils_install_durations_wrapper
@@ -142,14 +165,18 @@ EOF
 
 utils_test_case show_context
 show_context_body() {
-    run_tests "mock1" dbfile_name
+    run_tests "mock1
+has multiple lines
+and terminates here" dbfile_name
 
     cat >expout <<EOF
 ===> Execution context
 Current directory: $(pwd)
 Environment variables:
 EOF
-    HOME=$(pwd) MOCK=mock1 env | sort | sed -e 's,^,    ,' \
+    HOME="$(pwd)" MOCK="mock1
+has multiple lines
+and terminates here" env | sort | grep '^[_a-zA-Z0-9]*=' | sed -e 's,^,    ,' \
         | grep -v '^    _.*=.*' >>expout
     cat >>expout <<EOF
 ===> Skipped tests
@@ -160,7 +187,7 @@ Test cases: 2 total, 1 skipped, 0 expected failures, 0 broken, 0 failed
 Total time: S.UUUs
 EOF
     atf_check -s exit:0 -o file:expout -e empty -x kyua report --show-context \
-        "| ${utils_strip_durations} | grep -v '^    _.*=.*'"
+        "| ${utils_strip_durations} | ${strip_environment}"
 }
 
 

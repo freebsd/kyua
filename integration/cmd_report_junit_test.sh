@@ -54,16 +54,39 @@ EOF
 }
 
 
+# Removes the contents of a properties tag from stdout.
+strip_properties='awk "
+BEGIN { skip = 0; }
+
+/<\/properties>/ {
+    print \"</properties>\";
+    skip = 0;
+    next;
+}
+
+/<properties>/ {
+    print \"<properties>\";
+    print \"CONTENTS STRIPPED BY TEST\";
+    skip = 1;
+    next;
+}
+
+{ if (!skip) print; }"'
+
+
 utils_test_case default_behavior__ok
 default_behavior__ok_body() {
     utils_install_durations_wrapper
 
-    run_tests "mock1" unused_dbfile_name
+    run_tests "mock1
+this should not be seen
+mock1 new line" unused_dbfile_name
 
     cat >expout <<EOF
 <?xml version="1.0" encoding="iso-8859-1"?>
 <testsuite>
 <properties>
+CONTENTS STRIPPED BY TEST
 </properties>
 <testcase classname="simple_all_pass" name="pass" time="S.UUU">
 <system-out>This is the stdout of pass
@@ -120,7 +143,7 @@ This is the stderr of skip
 </testsuite>
 EOF
     atf_check -s exit:0 -o file:expout -e empty -x "kyua report-junit" \
-        "| grep -v '<property'"
+        "| ${strip_properties}"
 }
 
 
@@ -159,6 +182,7 @@ output__explicit_body() {
 <?xml version="1.0" encoding="iso-8859-1"?>
 <testsuite>
 <properties>
+CONTENTS STRIPPED BY TEST
 </properties>
 <testcase classname="simple_all_pass" name="pass" time="S.UUU">
 <system-out>This is the stdout of pass
@@ -216,16 +240,16 @@ This is the stderr of skip
 EOF
 
     atf_check -s exit:0 -o file:report -e empty -x kyua report-junit \
-        --output=/dev/stdout "| grep -v '<property' | ${utils_strip_durations}"
+        --output=/dev/stdout "| ${strip_properties} | ${utils_strip_durations}"
     atf_check -s exit:0 -o empty -e save:stderr kyua report-junit \
         --output=/dev/stderr
     atf_check -s exit:0 -o file:report -x cat stderr \
-        "| grep -v '<property' | ${utils_strip_durations}"
+        "| ${strip_properties} | ${utils_strip_durations}"
 
     atf_check -s exit:0 -o empty -e empty kyua report-junit \
         --output=my-file
     atf_check -s exit:0 -o file:report -x cat my-file \
-        "| grep -v '<property' | ${utils_strip_durations}"
+        "| ${strip_properties} | ${utils_strip_durations}"
 }
 
 
