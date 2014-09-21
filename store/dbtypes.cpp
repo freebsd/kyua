@@ -29,6 +29,7 @@
 #include "store/dbtypes.hpp"
 
 #include "model/test_program.hpp"
+#include "model/test_result.hpp"
 #include "store/exceptions.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/sanity.hpp"
@@ -80,6 +81,42 @@ store::bind_optional_string(sqlite::statement& stmt, const char* field,
         stmt.bind(field, sqlite::null());
     else
         stmt.bind(field, str);
+}
+
+
+/// Binds a test result type to a statement parameter.
+///
+/// \param stmt The statement to which to bind the parameter.
+/// \param field The name of the parameter; must exist.
+/// \param type The result type to bind.
+void
+store::bind_test_result_type(sqlite::statement& stmt, const char* field,
+                             const model::test_result_type& type)
+{
+    switch (type) {
+    case model::test_result_broken:
+        stmt.bind(field, "broken");
+        break;
+
+    case model::test_result_expected_failure:
+        stmt.bind(field, "expected_failure");
+        break;
+
+    case model::test_result_failed:
+        stmt.bind(field, "failed");
+        break;
+
+    case model::test_result_passed:
+        stmt.bind(field, "passed");
+        break;
+
+    case model::test_result_skipped:
+        stmt.bind(field, "skipped");
+        break;
+
+    default:
+        UNREACHABLE;
+    }
 }
 
 
@@ -159,6 +196,38 @@ store::column_optional_string(sqlite::statement& stmt, const char* column)
         return "";
     default:
         throw integrity_error(F("Invalid string type in column %s") % column);
+    }
+}
+
+
+/// Queries a test result type from a statement.
+///
+/// \param stmt The statement from which to get the column.
+/// \param column The name of the column holding the value.
+///
+/// \return The parsed value if all goes well.
+///
+/// \throw integrity_error If the value in the specified column is invalid.
+model::test_result_type
+store::column_test_result_type(sqlite::statement& stmt, const char* column)
+{
+    const int id = stmt.column_id(column);
+    if (stmt.column_type(id) != sqlite::type_text)
+        throw store::integrity_error(F("Result type in column %s is not a "
+                                       "string") % column);
+    const std::string type = stmt.column_text(id);
+    if (type == "passed") {
+        return model::test_result_passed;
+    } else if (type == "broken") {
+        return model::test_result_broken;
+    } else if (type == "expected_failure") {
+        return model::test_result_expected_failure;
+    } else if (type == "failed") {
+        return model::test_result_failed;
+    } else if (type == "skipped") {
+        return model::test_result_skipped;
+    } else {
+        throw store::integrity_error(F("Unknown test result type %s") % type);
     }
 }
 

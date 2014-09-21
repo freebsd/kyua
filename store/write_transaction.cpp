@@ -415,31 +415,7 @@ store::write_transaction::put_result(const model::test_result& result,
             "        :start_time, :end_time)");
         stmt.bind(":test_case_id", test_case_id);
 
-        switch (result.type()) {
-        case model::test_result_broken:
-            stmt.bind(":result_type", "broken");
-            break;
-
-        case model::test_result_expected_failure:
-            stmt.bind(":result_type", "expected_failure");
-            break;
-
-        case model::test_result_failed:
-            stmt.bind(":result_type", "failed");
-            break;
-
-        case model::test_result_passed:
-            stmt.bind(":result_type", "passed");
-            break;
-
-        case model::test_result_skipped:
-            stmt.bind(":result_type", "skipped");
-            break;
-
-        default:
-            UNREACHABLE;
-        }
-
+        store::bind_test_result_type(stmt, ":result_type", result.type());
         if (result.reason().empty())
             stmt.bind(":result_reason", sqlite::null());
         else
