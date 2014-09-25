@@ -302,7 +302,7 @@ kyua_tap_parse(const int fd, FILE* output, kyua_tap_summary_t* summary)
     }
 
     regex_t preg;
-    int code = regcomp(&preg, "^(not )?ok[ \t-]+[0-9]+", REG_EXTENDED);
+    int code = regcomp(&preg, "^(not )?ok[ \t-]+[0-9]*", REG_EXTENDED);
     if (code != 0) {
         error = regex_error_new(code, &preg, "regcomp failed");
         goto out_input;

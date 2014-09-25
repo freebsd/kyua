@@ -33,6 +33,9 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   the reuse of legacy test code), we don't want it to easily escape the
   automanaged work directory.
 
+* Issue 103: Be more liberal in the parsing of TAP test results by
+  treating the number in 'ok' and 'not ok' lines as optional.
+
 * Issue 105: Use tmpfs instead of md as a temporary file system for
   tests in FreeBSD so that we do not leak md(4) devices.
 

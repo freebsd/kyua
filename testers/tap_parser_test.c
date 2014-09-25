@@ -166,7 +166,7 @@ ATF_TC_WITHOUT_HEAD(parse__ok__pass);
 ATF_TC_BODY(parse__ok__pass, tc)
 {
     const char* contents =
-        "1..7\n"
+        "1..8\n"
         "ok - 1\n"
         "    Some diagnostic message\n"
         "ok - 2 This test also passed\n"
@@ -175,13 +175,14 @@ ATF_TC_BODY(parse__ok__pass, tc)
         "not ok 4 # SKIP Some reason\n"
         "not ok 5 # TODO Another reason\n"
         "ok - 6 Doesn't make a difference SKIP\n"
-        "ok - 7 Doesn't make a difference either TODO\n";
+        "ok - 7 Doesn't make a difference either TODO\n"
+        "ok # Also works without a number\n";
 
     kyua_tap_summary_t summary;
     kyua_tap_summary_init(&summary);
     summary.first_index = 1;
-    summary.last_index = 7;
-    summary.ok_count = 7;
+    summary.last_index = 8;
+    summary.ok_count = 8;
     summary.not_ok_count = 0;
 
     ok_test(contents, &summary);
@@ -197,16 +198,17 @@ ATF_TC_BODY(parse__ok__fail, tc)
         "not ok - 1 This test failed\n"
         "ok - 2 This test passed\n"
         "not ok - 3 This test failed\n"
-        "1..5\n"
+        "1..6\n"
         "not ok - 4 This test failed\n"
-        "ok - 5 This test passed\n";
+        "ok - 5 This test passed\n"
+        "not ok # Fails as well without a number\n";
 
     kyua_tap_summary_t summary;
     kyua_tap_summary_init(&summary);
     summary.first_index = 1;
-    summary.last_index = 5;
+    summary.last_index = 6;
     summary.ok_count = 2;
-    summary.not_ok_count = 3;
+    summary.not_ok_count = 4;
 
     ok_test(contents, &summary);
     kyua_tap_summary_fini(&summary);
