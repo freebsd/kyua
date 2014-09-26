@@ -51,7 +51,6 @@ extern "C" {
 #include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/text/operations.ipp"
-#include "utils/sanity.hpp"
 #include "utils/text/table.hpp"
 
 namespace cmdline = utils::cmdline;
@@ -67,17 +66,18 @@ cmdline::ui::~ui(void)
 }
 
 
-/// Writes a line to stderr.
+/// Writes a single line to stderr.
 ///
 /// The written line is printed as is, without being wrapped to fit within the
-/// screen width.
+/// screen width.  If the caller wants to print more than one line, it shall
+/// invoke this function once per line.
 ///
-/// \param message The line to print, without the trailing newline character.
+/// \param message The line to print.  Should not include a trailing newline
+///     character.
 /// \param newline Whether to append a newline to the message or not.
 void
 cmdline::ui::err(const std::string& message, const bool newline)
 {
-    PRE(message.empty() || message[message.length() - 1] != '\n');
     LI(F("stderr: %s") % message);
     if (newline)
         std::cerr << message << "\n";
@@ -88,17 +88,18 @@ cmdline::ui::err(const std::string& message, const bool newline)
 }
 
 
-/// Writes a line to stdout.
+/// Writes a single line to stdout.
 ///
 /// The written line is printed as is, without being wrapped to fit within the
-/// screen width.
+/// screen width.  If the caller wants to print more than one line, it shall
+/// invoke this function once per line.
 ///
-/// \param message The line to print, without the trailing newline character.
+/// \param message The line to print.  Should not include a trailing newline
+///     character.
 /// \param newline Whether to append a newline to the message or not.
 void
 cmdline::ui::out(const std::string& message, const bool newline)
 {
-    PRE(message.empty() || message[message.length() - 1] != '\n');
     LI(F("stdout: %s") % message);
     if (newline)
         std::cout << message << "\n";
@@ -239,40 +240,37 @@ cmdline::ui::out_table(const text::table& table,
 /// Formats and prints an error message.
 ///
 /// \param ui_ The user interface object used to print the message.
-/// \param message The message to print.  Must not end with a dot nor with a
-///     newline character.
+/// \param message The message to print.  Should not end with a newline
+///     character.
 void
 cmdline::print_error(ui* ui_, const std::string& message)
 {
-    PRE(!message.empty() && message[message.length() - 1] != '.');
     LE(message);
-    ui_->err(F("%s: E: %s.") % cmdline::progname() % message);
+    ui_->err(F("%s: E: %s") % cmdline::progname() % message);
 }
 
 
 /// Formats and prints an informational message.
 ///
 /// \param ui_ The user interface object used to print the message.
-/// \param message The message to print.  Must not end with a dot nor with a
-///     newline character.
+/// \param message The message to print.  Should not end with a newline
+///     character.
 void
 cmdline::print_info(ui* ui_, const std::string& message)
 {
-    PRE(!message.empty() && message[message.length() - 1] != '.');
     LI(message);
-    ui_->err(F("%s: I: %s.") % cmdline::progname() % message);
+    ui_->err(F("%s: I: %s") % cmdline::progname() % message);
 }
 
 
 /// Formats and prints a warning message.
 ///
 /// \param ui_ The user interface object used to print the message.
-/// \param message The message to print.  Must not end with a dot nor with a
-///     newline character.
+/// \param message The message to print.  Should not end with a newline
+///     character.
 void
 cmdline::print_warning(ui* ui_, const std::string& message)
 {
-    PRE(!message.empty() && message[message.length() - 1] != '.');
     LW(message);
-    ui_->err(F("%s: W: %s.") % cmdline::progname() % message);
+    ui_->err(F("%s: W: %s") % cmdline::progname() % message);
 }

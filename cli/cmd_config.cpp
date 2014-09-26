@@ -79,7 +79,7 @@ print_some(cmdline::ui* ui, const config::properties_map& properties,
         const config::properties_map::const_iterator match =
             properties.find(*iter);
         if (match == properties.end()) {
-            cmdline::print_warning(ui, F("'%s' is not defined") % *iter);
+            cmdline::print_warning(ui, F("'%s' is not defined.") % *iter);
             ok = false;
         } else
             ui->out(F("%s = %s") % (*match).first % (*match).second);

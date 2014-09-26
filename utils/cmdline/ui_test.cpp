@@ -201,6 +201,17 @@ ATF_TEST_CASE_BODY(ui__err)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(ui__err__tolerates_newline);
+ATF_TEST_CASE_BODY(ui__err__tolerates_newline)
+{
+    cmdline::ui_mock ui(10);  // Keep shorter than message.
+    ui.err("This is a short message\n");
+    ATF_REQUIRE_EQ(1, ui.err_log().size());
+    ATF_REQUIRE_EQ("This is a short message\n", ui.err_log()[0]);
+    ATF_REQUIRE(ui.out_log().empty());
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(ui__out);
 ATF_TEST_CASE_BODY(ui__out)
 {
@@ -209,6 +220,17 @@ ATF_TEST_CASE_BODY(ui__out)
     ATF_REQUIRE(ui.err_log().empty());
     ATF_REQUIRE_EQ(1, ui.out_log().size());
     ATF_REQUIRE_EQ("This is a short message", ui.out_log()[0]);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(ui__out__tolerates_newline);
+ATF_TEST_CASE_BODY(ui__out__tolerates_newline)
+{
+    cmdline::ui_mock ui(10);  // Keep shorter than message.
+    ui.out("This is a short message\n");
+    ATF_REQUIRE(ui.err_log().empty());
+    ATF_REQUIRE_EQ(1, ui.out_log().size());
+    ATF_REQUIRE_EQ("This is a short message\n", ui.out_log()[0]);
 }
 
 
@@ -340,7 +362,7 @@ ATF_TEST_CASE_BODY(print_error)
 {
     cmdline::init("error-program");
     cmdline::ui_mock ui;
-    cmdline::print_error(&ui, "The error");
+    cmdline::print_error(&ui, "The error.");
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE_EQ(1, ui.err_log().size());
     ATF_REQUIRE_EQ("error-program: E: The error.", ui.err_log()[0]);
@@ -352,7 +374,7 @@ ATF_TEST_CASE_BODY(print_info)
 {
     cmdline::init("info-program");
     cmdline::ui_mock ui;
-    cmdline::print_info(&ui, "The info");
+    cmdline::print_info(&ui, "The info.");
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE_EQ(1, ui.err_log().size());
     ATF_REQUIRE_EQ("info-program: I: The info.", ui.err_log()[0]);
@@ -364,7 +386,7 @@ ATF_TEST_CASE_BODY(print_warning)
 {
     cmdline::init("warning-program");
     cmdline::ui_mock ui;
-    cmdline::print_warning(&ui, "The warning");
+    cmdline::print_warning(&ui, "The warning.");
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE_EQ(1, ui.err_log().size());
     ATF_REQUIRE_EQ("warning-program: W: The warning.", ui.err_log()[0]);
@@ -383,7 +405,9 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, ui__screen_width__cached);
 
     ATF_ADD_TEST_CASE(tcs, ui__err);
+    ATF_ADD_TEST_CASE(tcs, ui__err__tolerates_newline);
     ATF_ADD_TEST_CASE(tcs, ui__out);
+    ATF_ADD_TEST_CASE(tcs, ui__out__tolerates_newline);
 
     ATF_ADD_TEST_CASE(tcs, ui__out_wrap__no_refill);
     ATF_ADD_TEST_CASE(tcs, ui__out_wrap__refill);

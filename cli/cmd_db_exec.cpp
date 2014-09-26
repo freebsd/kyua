@@ -189,10 +189,10 @@ cmd_db_exec::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
 
         return EXIT_SUCCESS;
     } catch (const sqlite::error& e) {
-        cmdline::print_error(ui, F("SQLite error: %s") % e.what());
+        cmdline::print_error(ui, F("SQLite error: %s.") % e.what());
         return EXIT_FAILURE;
     } catch (const store::error& e) {
-        cmdline::print_error(ui, e.what());
+        cmdline::print_error(ui, F("%s.") % e.what());
         return EXIT_FAILURE;
     }
 }
