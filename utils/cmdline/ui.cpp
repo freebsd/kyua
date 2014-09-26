@@ -239,40 +239,37 @@ cmdline::ui::out_table(const text::table& table,
 /// Formats and prints an error message.
 ///
 /// \param ui_ The user interface object used to print the message.
-/// \param message The message to print.  Must not end with a dot nor with a
-///     newline character.
+/// \param message The message to print.  Should not end with a newline
+///     character.
 void
 cmdline::print_error(ui* ui_, const std::string& message)
 {
-    PRE(!message.empty() && message[message.length() - 1] != '.');
     LE(message);
-    ui_->err(F("%s: E: %s.") % cmdline::progname() % message);
+    ui_->err(F("%s: E: %s") % cmdline::progname() % message);
 }
 
 
 /// Formats and prints an informational message.
 ///
 /// \param ui_ The user interface object used to print the message.
-/// \param message The message to print.  Must not end with a dot nor with a
-///     newline character.
+/// \param message The message to print.  Should not end with a newline
+///     character.
 void
 cmdline::print_info(ui* ui_, const std::string& message)
 {
-    PRE(!message.empty() && message[message.length() - 1] != '.');
     LI(message);
-    ui_->err(F("%s: I: %s.") % cmdline::progname() % message);
+    ui_->err(F("%s: I: %s") % cmdline::progname() % message);
 }
 
 
 /// Formats and prints a warning message.
 ///
 /// \param ui_ The user interface object used to print the message.
-/// \param message The message to print.  Must not end with a dot nor with a
-///     newline character.
+/// \param message The message to print.  Should not end with a newline
+///     character.
 void
 cmdline::print_warning(ui* ui_, const std::string& message)
 {
-    PRE(!message.empty() && message[message.length() - 1] != '.');
     LW(message);
-    ui_->err(F("%s: W: %s.") % cmdline::progname() % message);
+    ui_->err(F("%s: W: %s") % cmdline::progname() % message);
 }

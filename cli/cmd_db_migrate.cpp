@@ -75,7 +75,7 @@ cmd_db_migrate::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
         store::migrate_schema(results_file);
         return EXIT_SUCCESS;
     } catch (const store::error& e) {
-        cmdline::print_error(ui, F("Migration failed: %s") % e.what());
+        cmdline::print_error(ui, F("Migration failed: %s.") % e.what());
         return EXIT_FAILURE;
     }
 }

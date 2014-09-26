@@ -340,7 +340,7 @@ ATF_TEST_CASE_BODY(print_error)
 {
     cmdline::init("error-program");
     cmdline::ui_mock ui;
-    cmdline::print_error(&ui, "The error");
+    cmdline::print_error(&ui, "The error.");
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE_EQ(1, ui.err_log().size());
     ATF_REQUIRE_EQ("error-program: E: The error.", ui.err_log()[0]);
@@ -352,7 +352,7 @@ ATF_TEST_CASE_BODY(print_info)
 {
     cmdline::init("info-program");
     cmdline::ui_mock ui;
-    cmdline::print_info(&ui, "The info");
+    cmdline::print_info(&ui, "The info.");
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE_EQ(1, ui.err_log().size());
     ATF_REQUIRE_EQ("info-program: I: The info.", ui.err_log()[0]);
@@ -364,7 +364,7 @@ ATF_TEST_CASE_BODY(print_warning)
 {
     cmdline::init("warning-program");
     cmdline::ui_mock ui;
-    cmdline::print_warning(&ui, "The warning");
+    cmdline::print_warning(&ui, "The warning.");
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE_EQ(1, ui.err_log().size());
     ATF_REQUIRE_EQ("warning-program: W: The warning.", ui.err_log()[0]);

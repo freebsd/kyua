@@ -326,8 +326,8 @@ cli::report_unused_filters(const std::set< engine::test_filter >& unused,
 {
     for (std::set< engine::test_filter >::const_iterator iter = unused.begin();
          iter != unused.end(); iter++) {
-        cmdline::print_warning(ui, F("No test cases matched by the filter '%s'")
-                               % (*iter).str());
+        cmdline::print_warning(ui, F("No test cases matched by the filter "
+                                     "'%s'.") % (*iter).str());
     }
 
     return !unused.empty();

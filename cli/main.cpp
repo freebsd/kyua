@@ -259,7 +259,7 @@ cli::main(cmdline::ui* ui, const int argc, const char* const* const argv,
 
         return exit_code;
     } catch (const signals::interrupted_error& e) {
-        cmdline::print_error(ui, e.what());
+        cmdline::print_error(ui, F("%s.") % e.what());
         // Re-deliver the interruption signal to self so that we terminate with
         // the right status.  At this point we should NOT have any custom signal
         // handlers in place.
@@ -288,11 +288,11 @@ cli::main(cmdline::ui* ui, const int argc, const char* const* const argv,
     } catch (const store::old_schema_error& e) {
         const std::string message = F("The database has schema version %s, "
                                       "which is too old; please use db-migrate "
-                                      "to upgrade it") % e.old_version();
+                                      "to upgrade it.") % e.old_version();
         cmdline::print_error(ui, message);
         return 2;
     } catch (const std::runtime_error& e) {
-        cmdline::print_error(ui, e.what());
+        cmdline::print_error(ui, F("%s.") % e.what());
         return 2;
     }
 }
