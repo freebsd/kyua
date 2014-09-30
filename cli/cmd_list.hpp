@@ -35,7 +35,7 @@
 #include <string>
 
 #include "cli/common.hpp"
-#include "model/test_case_fwd.hpp"
+#include "model/test_program_fwd.hpp"
 
 namespace engine {
 class filters_state;
@@ -52,7 +52,8 @@ namespace cli {
 
 namespace detail {
 
-void list_test_case(utils::cmdline::ui*, const bool, const model::test_case&);
+void list_test_case(utils::cmdline::ui*, const bool, const model::test_program&,
+                    const std::string&);
 
 }  // namespace detail
 

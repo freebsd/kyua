@@ -118,20 +118,27 @@ add_tests(store::write_transaction& tx,
           const std::vector< model::test_result >& results,
           const bool with_metadata, const bool with_output)
 {
-    const model::test_program test_program(
+    model::test_program test_program(
         "plain", fs::path(prog), fs::path("/root"), "suite",
         model::metadata_builder().build());
     const int64_t tp_id = tx.put_test_program(test_program);
 
+    model::test_cases_map test_cases;
     for (std::size_t j = 0; j < results.size(); j++) {
         model::metadata_builder builder;
         if (with_metadata) {
             builder.set_description("Textual description");
             builder.set_timeout(datetime::delta(5678, 0));
         }
-        const model::test_case test_case("plain", test_program, F("t%s") % j,
-                                         builder.build());
-        const int64_t tc_id = tx.put_test_case(test_case, tp_id);
+        const model::test_case test_case(F("t%s") % j, builder.build());
+        test_cases.insert(model::test_cases_map::value_type(
+            test_case.name(), test_case));
+    }
+    test_program.set_test_cases(test_cases);
+
+    for (std::size_t j = 0; j < results.size(); j++) {
+        const int64_t tc_id = tx.put_test_case(test_program, F("t%s") % j,
+                                               tp_id);
         const datetime::timestamp start =
             datetime::timestamp::from_microseconds(0);
         const datetime::timestamp end =

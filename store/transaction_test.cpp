@@ -116,8 +116,7 @@ ATF_TEST_CASE_BODY(get_put_test_case__ok)
         "atf", fs::path("the/binary"), fs::path("/some/root"), "the-suite",
         model::metadata_builder().build());
 
-    const model::test_case_ptr test_case1(new model::test_case(
-        "atf", test_program, "tc1", model::metadata_builder().build()));
+    const model::test_case test_case1("tc1", model::metadata_builder().build());
 
     const model::metadata md2 = model::metadata_builder()
         .add_allowed_architecture("powerpc")
@@ -139,13 +138,14 @@ ATF_TEST_CASE_BODY(get_put_test_case__ok)
         .set_required_user("root")
         .set_timeout(datetime::delta(520, 0))
         .build();
-    const model::test_case_ptr test_case2(new model::test_case(
-        "atf", test_program, "tc2", md2));
+    const model::test_case test_case2("tc2", md2);
 
     {
-        model::test_cases_vector test_cases;
-        test_cases.push_back(test_case1);
-        test_cases.push_back(test_case2);
+        model::test_cases_map test_cases;
+        test_cases.insert(model::test_cases_map::value_type(
+             test_case1.name(), test_case1));
+        test_cases.insert(model::test_cases_map::value_type(
+             test_case2.name(), test_case2));
         test_program.set_test_cases(test_cases);
     }
 
@@ -157,8 +157,8 @@ ATF_TEST_CASE_BODY(get_put_test_case__ok)
 
         store::write_transaction tx = backend.start_write();
         test_program_id = tx.put_test_program(test_program);
-        tx.put_test_case(*test_case1, test_program_id);
-        tx.put_test_case(*test_case2, test_program_id);
+        tx.put_test_case(test_program, test_case1.name(), test_program_id);
+        tx.put_test_case(test_program, test_case2.name(), test_program_id);
         tx.commit();
     }
 

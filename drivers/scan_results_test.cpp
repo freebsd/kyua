@@ -150,18 +150,25 @@ populate_results_file(const char* db_name, const int count)
     tx.put_context(context);
 
     for (int i = 0; i < count; i++) {
-        const model::test_program test_program(
+        model::test_program test_program(
             "fake", fs::path(F("dir/prog_%s") % i), fs::path("/root"),
             F("suite_%s") % i, model::metadata_builder().build());
         const int64_t tp_id = tx.put_test_program(test_program);
 
+        model::test_cases_map test_cases;
         for (int j = 0; j < count; j++) {
             const model::test_case test_case(
-                "fake", test_program, F("case_%s") % j,
-                model::metadata_builder().build());
+                F("case_%s") % j, model::metadata_builder().build());
+            test_cases.insert(model::test_cases_map::value_type(
+                test_case.name(), test_case));
+        }
+        test_program.set_test_cases(test_cases);
+
+        for (int j = 0; j < count; j++) {
             const model::test_result result(model::test_result_skipped,
                                             F("Count %s") % j);
-            const int64_t tc_id = tx.put_test_case(test_case, tp_id);
+            const int64_t tc_id = tx.put_test_case(test_program,
+                                                   F("case_%s") % j, tp_id);
             const datetime::timestamp start =
                 datetime::timestamp::from_microseconds(1000010);
             const datetime::timestamp end =

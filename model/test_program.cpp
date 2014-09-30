@@ -28,7 +28,6 @@
 
 #include "model/test_program.hpp"
 
-#include <algorithm>
 #include <map>
 #include <sstream>
 
@@ -49,58 +48,6 @@ using utils::none;
 using utils::optional;
 
 
-namespace {
-
-
-/// Predicate to compare two test cases via pointers to them.
-///
-/// \param tc1 Entry in a map of test case names to test case pointers.
-/// \param tc2 Entry in a map of test case names to test case pointers.
-///
-/// \return True if the test case in tc1 is the same as in tc2.  Note that the
-/// container test programs are NOT compared.
-static bool
-compare_test_case(const std::pair< std::string, model::test_case_ptr >& tc1,
-                  const std::pair< std::string, model::test_case_ptr >& tc2)
-{
-    return tc1.first == tc2.first && *tc1.second == *tc2.second;
-}
-
-
-/// Compares if two sets of test cases hold the same values.
-///
-/// \param tests1 First collection of test cases.
-/// \param tests2 Second collection of test cases.
-///
-/// \return True if both collections hold the same test cases (value-wise, not
-/// pointer-wise); false otherwise.
-static bool
-compare_test_cases(const optional< model::test_cases_vector >& tests1,
-                   const optional< model::test_cases_vector >& tests2)
-{
-    if (!tests1 && !tests2)
-        return true;
-    else if ((tests1 && !tests2) || (!tests1 && tests2))
-        return false;
-    INV(tests1 && tests2);
-
-    // This is very inefficient, but because it should only be used in our own
-    // tests, it doesn't matter.
-    std::map< std::string, model::test_case_ptr > map1, map2;
-    for (model::test_cases_vector::const_iterator iter = tests1.get().begin();
-         iter != tests1.get().end(); ++iter)
-        map1.insert(make_pair((*iter)->name(), *iter));
-    for (model::test_cases_vector::const_iterator iter = tests2.get().begin();
-         iter != tests2.get().end(); ++iter)
-        map2.insert(make_pair((*iter)->name(), *iter));
-    return std::equal(map1.begin(), map1.end(), map2.begin(),
-                      compare_test_case);
-}
-
-
-}  // anonymous namespace
-
-
 /// Internal implementation of a test_program.
 struct model::test_program::impl {
     /// Name of the test program interface.
@@ -119,7 +66,7 @@ struct model::test_program::impl {
     model::metadata md;
 
     /// List of test cases in the test program; lazily initialized.
-    optional< model::test_cases_vector > test_cases;
+    optional< model::test_cases_map > test_cases;
 
     /// Constructor.
     ///
@@ -156,7 +103,7 @@ struct model::test_program::impl {
                 root == other.root &&
                 test_suite_name == other.test_suite_name &&
                 md == other.md &&
-                compare_test_cases(test_cases, other.test_cases));
+                test_cases == other.test_cases);
     }
 };
 
@@ -253,21 +200,20 @@ model::test_program::get_metadata(void) const
 ///
 /// \throw not_found_error If the specified test case is not in the test
 ///     program.
-const model::test_case_ptr&
+const model::test_case&
 model::test_program::find(const std::string& name) const
 {
-    // TODO(jmmv): Should use a test_cases_map instead of a vector to optimize
-    // lookups.
     if (has_test_cases()) {
-        const model::test_cases_vector& tcs = test_cases();
-        for (model::test_cases_vector::const_iterator iter = tcs.begin();
-             iter != tcs.end(); iter++) {
-            if ((*iter)->name() == name)
-                return *iter;
-        }
+        const test_cases_map& tcs = test_cases();
+        const test_cases_map::const_iterator iter = tcs.find(name);
+        if (iter == tcs.end())
+            throw not_found_error(F("Unknown test case %s in test program %s") %
+                                  name % relative_path());
+        return (*iter).second;
+    } else {
+        throw not_found_error(F("Unknown test case %s in test program %s") %
+                              name % relative_path());
     }
-    throw not_found_error(F("Unknown test case %s in test program %s") % name %
-                          relative_path());
 }
 
 
@@ -276,7 +222,7 @@ model::test_program::find(const std::string& name) const
 /// \pre The list must have been set before with set_test_cases().
 ///
 /// \return The list of test cases provided by the test program.
-const model::test_cases_vector&
+const model::test_cases_map&
 model::test_program::test_cases(void) const
 {
     PRE(_pimpl->test_cases);
@@ -308,8 +254,7 @@ model::test_program::has_test_cases(void) const
 ///
 /// \param test_cases_ The test cases to add to this test program.
 void
-model::test_program::set_test_cases(
-    const model::test_cases_vector& test_cases_)
+model::test_program::set_test_cases(const model::test_cases_map& test_cases_)
 {
     PRE(!_pimpl->test_cases);
     _pimpl->test_cases = test_cases_;

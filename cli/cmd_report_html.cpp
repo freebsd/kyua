@@ -99,15 +99,17 @@ create_top_directory(const fs::path& directory, const bool force)
 
 /// Generates a flat unique filename for a given test case.
 ///
-/// \param test_case The test case for which to genereate the name.
+/// \param test_program The test program for which to genereate the name.
+/// \param test_case_name The test case name.
 ///
 /// \return A filename unique within a directory with a trailing HTML extension.
 static std::string
-test_case_filename(const model::test_case& test_case)
+test_case_filename(const model::test_program& test_program,
+                   const std::string& test_case_name)
 {
     static const char* special_characters = "/:";
 
-    std::string name = cli::format_test_case_id(test_case);
+    std::string name = cli::format_test_case_id(test_program, test_case_name);
     std::string::size_type pos = name.find_first_of(special_characters);
     while (pos != std::string::npos) {
         name.replace(pos, 1, "_");
@@ -168,13 +170,15 @@ class html_hooks : public drivers::scan_results::base_hooks {
 
     /// Adds a test case result to the summary.
     ///
-    /// \param test_case The test case to be added.
+    /// \param test_program The test program with the test case to be added.
+    /// \param test_case_name Name of the test case.
     /// \param result The result of the test case.
     /// \param has_detail If true, the result of the test case has not been
     ///     filtered and therefore there exists a separate file for the test
     ///     with all of its information.
     void
-    add_to_summary(const model::test_case& test_case,
+    add_to_summary(const model::test_program& test_program,
+                   const std::string& test_case_name,
                    const model::test_result& result,
                    const bool has_detail)
     {
@@ -214,10 +218,12 @@ class html_hooks : public drivers::scan_results::base_hooks {
         INV(!test_cases_vector.empty());
         INV(!test_cases_file_vector.empty());
 
-        _summary_templates.add_to_vector(test_cases_vector,
-                                         cli::format_test_case_id(test_case));
-        _summary_templates.add_to_vector(test_cases_file_vector,
-                                         test_case_filename(test_case));
+        _summary_templates.add_to_vector(
+            test_cases_vector,
+            cli::format_test_case_id(test_program, test_case_name));
+        _summary_templates.add_to_vector(
+            test_cases_file_vector,
+            test_case_filename(test_program, test_case_name));
     }
 
     /// Instantiate a template to generate an HTML file in the output directory.
@@ -308,27 +314,27 @@ public:
     got_result(store::results_iterator& iter)
     {
         const model::test_program_ptr test_program = iter.test_program();
+        const std::string& test_case_name = iter.test_case_name();
         const model::test_result result = iter.result();
-
-        const model::test_case& test_case = *test_program->find(
-            iter.test_case_name());
 
         if (std::find(_results_filters.begin(), _results_filters.end(),
                       result.type()) == _results_filters.end()) {
-            add_to_summary(test_case, result, false);
+            add_to_summary(*test_program, test_case_name, result, false);
             return;
         }
 
-        add_to_summary(test_case, result, true);
+        add_to_summary(*test_program, test_case_name, result, true);
 
         text::templates_def templates = common_templates();
         templates.add_variable("test_case",
-                               cli::format_test_case_id(test_case));
+                               cli::format_test_case_id(*test_program,
+                                                        test_case_name));
         templates.add_variable("test_program",
                                test_program->absolute_path().str());
         templates.add_variable("result", cli::format_result(result));
         templates.add_variable("duration", cli::format_delta(iter.duration()));
 
+        const model::test_case& test_case = test_program->find(test_case_name);
         add_map(templates, test_case.get_metadata().to_properties(),
                 "metadata_var", "metadata_value");
 
@@ -343,7 +349,8 @@ public:
                 templates.add_variable("stderr", stderr_text);
         }
 
-        generate(templates, "test_result.html", test_case_filename(test_case));
+        generate(templates, "test_result.html",
+                 test_case_filename(*test_program, test_case_name));
     }
 
     /// Writes the index.html file in the output directory.

@@ -39,7 +39,6 @@ extern "C" {
 #include <string>
 
 #include "model/context_fwd.hpp"
-#include "model/test_case_fwd.hpp"
 #include "model/test_program_fwd.hpp"
 #include "model/test_result_fwd.hpp"
 #include "utils/datetime.hpp"
@@ -74,7 +73,8 @@ public:
 
     void put_context(const model::context&);
     int64_t put_test_program(const model::test_program&);
-    int64_t put_test_case(const model::test_case&, const int64_t);
+    int64_t put_test_case(const model::test_program&, const std::string&,
+                          const int64_t);
     utils::optional< int64_t > put_test_case_file(const std::string&,
                                                   const utils::fs::path&,
                                                   const int64_t);

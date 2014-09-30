@@ -32,9 +32,8 @@
 #if !defined(MODEL_TEST_CASE_FWD_HPP)
 #define MODEL_TEST_CASE_FWD_HPP
 
-#include <vector>
-
-#include "utils/shared_ptr.hpp"
+#include <map>
+#include <string>
 
 namespace model {
 
@@ -42,12 +41,8 @@ namespace model {
 class test_case;
 
 
-/// Pointer to a test case.
-typedef std::shared_ptr< test_case > test_case_ptr;
-
-
-/// Collection of test cases.
-typedef std::vector< model::test_case_ptr > test_cases_vector;
+/// Collection of test cases keyed by their name.
+typedef std::map< std::string, model::test_case > test_cases_map;
 
 
 }  // namespace model

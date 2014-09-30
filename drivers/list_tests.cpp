@@ -59,14 +59,14 @@ list_test_program(model::test_program& program,
                   drivers::list_tests::base_hooks& hooks)
 {
     runner::load_test_cases(program);
-    const model::test_cases_vector test_cases = program.test_cases();
+    const model::test_cases_map test_cases = program.test_cases();
 
-    for (model::test_cases_vector::const_iterator iter = test_cases.begin();
+    for (model::test_cases_map::const_iterator iter = test_cases.begin();
          iter != test_cases.end(); iter++) {
-        const model::test_case_ptr tc = *iter;
+        const std::string& test_case_name = (*iter).first;
 
-        if (filters.match_test_case(program.relative_path(), tc->name()))
-            hooks.got_test_case(*tc);
+        if (filters.match_test_case(program.relative_path(), test_case_name))
+            hooks.got_test_case(program, test_case_name);
     }
 }
 

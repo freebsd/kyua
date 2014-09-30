@@ -217,16 +217,20 @@ ATF_TEST_CASE_HEAD(put_test_case__fail)
 ATF_TEST_CASE_BODY(put_test_case__fail)
 {
     // TODO(jmmv): Use a mock test program and test case.
-    const model::test_program test_program(
+    model::test_program test_program(
         "plain", fs::path("the/binary"), fs::path("/some/root"), "the-suite",
         model::metadata_builder().build());
-    const model::test_case test_case("plain", test_program, "main",
+    const model::test_case test_case("main",
                                      model::metadata_builder().build());
+    model::test_cases_map test_cases;
+    test_cases.insert(model::test_cases_map::value_type(
+        test_case.name(), test_case));
+    test_program.set_test_cases(test_cases);
 
     store::write_backend backend = store::write_backend::open_rw(
         fs::path("test.db"));
     store::write_transaction tx = backend.start_write();
-    ATF_REQUIRE_THROW(store::error, tx.put_test_case(test_case, -1));
+    ATF_REQUIRE_THROW(store::error, tx.put_test_case(test_program, "main", -1));
     tx.commit();
 }
 

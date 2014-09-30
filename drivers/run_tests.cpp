@@ -101,43 +101,46 @@ public:
 /// If the test program fails to provide a list of test cases, a fake test case
 /// named '__test_program__' is created and it is reported as broken.
 ///
-/// \param program The test program to execute.
+/// \param test_program The test program to execute.
 /// \param user_config The configuration variables provided by the user.
 /// \param filters The matching state of the filters.
 /// \param hooks The user hooks to receive asynchronous notifications.
 /// \param work_directory Temporary directory to use.
 /// \param tx The store transaction into which to put the results.
 void
-run_test_program(model::test_program& program,
+run_test_program(model::test_program& test_program,
                  const config::tree& user_config,
                  engine::filters_state& filters,
                  drivers::run_tests::base_hooks& hooks,
                  const fs::path& work_directory,
                  store::write_transaction& tx)
 {
-    LI(F("Processing test program '%s'") % program.relative_path());
-    const int64_t test_program_id = tx.put_test_program(program);
+    LI(F("Processing test program '%s'") % test_program.relative_path());
+    const int64_t test_program_id = tx.put_test_program(test_program);
 
-    runner::load_test_cases(program);
-    const model::test_cases_vector& test_cases = program.test_cases();
-    for (model::test_cases_vector::const_iterator iter = test_cases.begin();
+    runner::load_test_cases(test_program);
+    const model::test_cases_map& test_cases = test_program.test_cases();
+    for (model::test_cases_map::const_iterator iter = test_cases.begin();
          iter != test_cases.end(); iter++) {
-        const model::test_case_ptr test_case = *iter;
+        const std::string& test_case_name = (*iter).first;
 
-        if (!filters.match_test_case(program.relative_path(),
-                                     test_case->name()))
+        if (!filters.match_test_case(test_program.relative_path(),
+                                     test_case_name))
             continue;
 
-        const int64_t test_case_id = tx.put_test_case(*test_case,
+        const int64_t test_case_id = tx.put_test_case(test_program,
+                                                      test_case_name,
                                                       test_program_id);
         file_saver_hooks test_hooks(tx, test_case_id);
-        hooks.got_test_case(test_case);
+        hooks.got_test_case(test_program, test_case_name);
         const datetime::timestamp start_time = datetime::timestamp::now();
         const model::test_result result = runner::run_test_case(
-            test_case.get(), user_config, test_hooks, work_directory);
+            &test_program, test_case_name, user_config, test_hooks,
+            work_directory);
         const datetime::timestamp end_time = datetime::timestamp::now();
         tx.put_result(result, test_case_id, start_time, end_time);
-        hooks.got_result(test_case, result, end_time - start_time);
+        hooks.got_result(test_program, test_case_name, result,
+                         end_time - start_time);
 
         signals::check_interrupt();
     }

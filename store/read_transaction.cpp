@@ -151,21 +151,14 @@ get_file(sqlite::database& db, const int64_t file_id)
 /// \param db The database to query the information from.
 /// \param test_program_id The identifier of the test program whose test cases
 ///     to query.
-/// \param test_program The test program itself, needed to establish a binding
-///     between the loaded test cases and the test program.
-/// \param interface The interface type of the test cases to be loaded.  This
-///     assumes that all test cases within a test program share the same
-///     interface, which is a pretty reasonable assumption.
 ///
 /// \return The collection of loaded test cases.
 ///
 /// \throw integrity_error If there is any problem in the loaded data.
-static model::test_cases_vector
-get_test_cases(sqlite::database& db, const int64_t test_program_id,
-               const model::test_program& test_program,
-               const std::string& interface)
+static model::test_cases_map
+get_test_cases(sqlite::database& db, const int64_t test_program_id)
 {
-    model::test_cases_vector test_cases;
+    model::test_cases_map test_cases;
 
     sqlite::statement stmt = db.create_statement(
         "SELECT name, metadata_id "
@@ -176,10 +169,9 @@ get_test_cases(sqlite::database& db, const int64_t test_program_id,
         const int64_t metadata_id = stmt.safe_column_int64("metadata_id");
 
         const model::metadata metadata = get_metadata(db, metadata_id);
-        model::test_case_ptr test_case(
-            new model::test_case(interface, test_program, name, metadata));
-        LD(F("Loaded test case '%s'") % test_case->name());
-        test_cases.push_back(test_case);
+        LD(F("Loaded test case '%s'") % name);
+        test_cases.insert(model::test_cases_map::value_type(
+            name, model::test_case(name, metadata)));
     }
 
     return test_cases;
@@ -253,8 +245,7 @@ store::detail::get_test_program(read_backend& backend_, const int64_t id)
 
     LD(F("Loaded test program '%s'; getting test cases") %
        test_program->relative_path());
-    test_program->set_test_cases(get_test_cases(db, id, *test_program,
-                                                interface));
+    test_program->set_test_cases(get_test_cases(db, id));
     return test_program;
 }
 

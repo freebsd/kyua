@@ -319,16 +319,20 @@ store::write_transaction::put_test_program(
 /// \pre The test case has not been put yet.
 /// \post The test case is stored into the database with a new identifier.
 ///
-/// \param test_case The test case to put.
+/// \param test_program The program containing the test case to be stored.
+/// \param test_case_name The name of the test case to put.
 /// \param test_program_id The test program this test case belongs to.
 ///
 /// \return The identifier of the inserted test case.
 ///
 /// \throw error If there is any problem when talking to the database.
 int64_t
-store::write_transaction::put_test_case(const model::test_case& test_case,
+store::write_transaction::put_test_case(const model::test_program& test_program,
+                                        const std::string& test_case_name,
                                         const int64_t test_program_id)
 {
+    const model::test_case& test_case = test_program.find(test_case_name);
+
     try {
         const int64_t metadata_id = put_metadata(
             _pimpl->_db, test_case.get_metadata());

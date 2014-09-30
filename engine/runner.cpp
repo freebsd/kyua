@@ -89,8 +89,8 @@ lua_test_case(lutok::state& state)
         throw std::runtime_error("Oh noes"); // XXX
 
     state.get_global("_test_cases");
-    model::test_cases_vector* test_cases =
-        *state.to_userdata< model::test_cases_vector* >(-1);
+    model::test_cases_map* test_cases =
+        *state.to_userdata< model::test_cases_map* >(-1);
     state.pop(1);
 
     state.get_global("_test_program");
@@ -122,10 +122,8 @@ lua_test_case(lutok::state& state)
     }
     state.pop(1);
 
-    model::test_case_ptr test_case(
-        new model::test_case(test_program->interface_name(), *test_program,
-                             name, mdbuilder.build()));
-    test_cases->push_back(test_case);
+    test_cases->insert(model::test_cases_map::value_type(
+        name, model::test_case(name, mdbuilder.build())));
 
     return 0;
 }
@@ -135,13 +133,13 @@ lua_test_case(lutok::state& state)
 ///
 /// \param [in,out] state The Lua state to configure.
 /// \param test_program Pointer to the test program being loaded.
-/// \param [out] test_cases Vector that will contain the list of test cases.
+/// \param [out] test_cases Collection to be updated with the loaded test cases.
 static void
 setup_lua_state(lutok::state& state,
                 const model::test_program* test_program,
-                model::test_cases_vector* test_cases)
+                model::test_cases_map* test_cases)
 {
-    *state.new_userdata< model::test_cases_vector* >() = test_cases;
+    *state.new_userdata< model::test_cases_map* >() = test_cases;
     state.set_global("_test_cases");
 
     *state.new_userdata< const model::test_program* >() = test_program;
@@ -157,13 +155,13 @@ setup_lua_state(lutok::state& state,
 /// \param test_program Representation of the test program to load.
 ///
 /// \return A list of test cases.
-static model::test_cases_vector
+static model::test_cases_map
 load_test_cases(const model::test_program& test_program)
 {
     const engine::tester tester(test_program.interface_name(), none, none);
     const std::string output = tester.list(test_program.absolute_path());
 
-    model::test_cases_vector test_cases;
+    model::test_cases_map test_cases;
     lutok::state state;
     setup_lua_state(state, &test_program, &test_cases);
     lutok::do_string(state, output, 0, 0, 0);
@@ -284,7 +282,7 @@ void
 runner::load_test_cases(model::test_program& program)
 {
     if (!program.has_test_cases()) {
-        model::test_cases_vector test_cases;
+        model::test_cases_map test_cases;
         try {
             test_cases = ::load_test_cases(program);
         } catch (const std::runtime_error& e) {
@@ -293,11 +291,13 @@ runner::load_test_cases(model::test_program& program)
             // either address this, or move this reporting to the testers
             // themselves.
             LW(F("Failed to load test cases list: %s") % e.what());
-            model::test_cases_vector fake_test_cases;
-            fake_test_cases.push_back(model::test_case_ptr(new model::test_case(
-                program.interface_name(), program, "__test_cases_list__",
-                "Represents the correct processing of the test cases list",
-                model::test_result(model::test_result_broken, e.what()))));
+            model::test_cases_map fake_test_cases;
+            fake_test_cases.insert(model::test_cases_map::value_type(
+                "__test_cases_list__",
+                model::test_case(
+                    "__test_cases_list__",
+                    "Represents the correct processing of the test cases list",
+                    model::test_result(model::test_result_broken, e.what()))));
             test_cases = fake_test_cases;
         }
         program.set_test_cases(test_cases);
@@ -310,7 +310,8 @@ runner::load_test_cases(model::test_program& program)
 /// Debug mode gives the caller more control on the execution of the test.  It
 /// should not be used for normal execution of tests; instead, call run().
 ///
-/// \param test_case The test case to debug.
+/// \param test_program The test program to debug.
+/// \param test_case_name The name of the test case to debug.
 /// \param user_config The user configuration that defines the execution of this
 ///     test case.
 /// \param hooks Hooks to introspect the execution of the test case.
@@ -322,41 +323,40 @@ runner::load_test_cases(model::test_program& program)
 ///
 /// \return The result of the execution of the test case.
 model::test_result
-runner::debug_test_case(const model::test_case* test_case,
+runner::debug_test_case(const model::test_program* test_program,
+                        const std::string& test_case_name,
                         const config::tree& user_config,
                         test_case_hooks& hooks,
                         const fs::path& work_directory,
                         const fs::path& stdout_path,
                         const fs::path& stderr_path)
 {
-    if (test_case->fake_result())
-        return test_case->fake_result().get();
+    const model::test_case& test_case = test_program->find(test_case_name);
+
+    if (test_case.fake_result())
+        return test_case.fake_result().get();
 
     const std::string skip_reason = check_reqs(
-        test_case->get_metadata(), user_config,
-        test_case->container_test_program().test_suite_name(),
+        test_case.get_metadata(), user_config, test_program->test_suite_name(),
         work_directory);
     if (!skip_reason.empty())
         return model::test_result(model::test_result_skipped, skip_reason);
 
-    if (!fs::exists(test_case->container_test_program().absolute_path()))
+    if (!fs::exists(test_program->absolute_path()))
         return model::test_result(model::test_result_broken,
                                   "Test program does not exist");
 
     const fs::auto_file result_file(work_directory / "result.txt");
 
-    const model::test_program& test_program =
-        test_case->container_test_program();
-
     try {
         const engine::tester tester = create_tester(
-            test_program.interface_name(), test_case->get_metadata(),
+            test_program->interface_name(), test_case.get_metadata(),
             user_config);
-        tester.test(test_program.absolute_path(), test_case->name(),
+        tester.test(test_program->absolute_path(), test_case.name(),
                     result_file.file(), stdout_path, stderr_path,
-                    generate_tester_config(test_case->get_metadata(),
+                    generate_tester_config(test_case.get_metadata(),
                                            user_config,
-                                           test_program.test_suite_name()));
+                                           test_program->test_suite_name()));
 
         hooks.got_stdout(stdout_path);
         hooks.got_stderr(stderr_path);
@@ -379,7 +379,8 @@ runner::debug_test_case(const model::test_case* test_case,
 
 /// Runs the test case.
 ///
-/// \param test_case The test case to run.
+/// \param test_program The test program to run.
+/// \param test_case_name The name of the test case to run.
 /// \param user_config The user configuration that defines the execution of this
 ///     test case.
 /// \param hooks Hooks to introspect the execution of the test case.
@@ -387,22 +388,24 @@ runner::debug_test_case(const model::test_case* test_case,
 ///
 /// \return The result of the execution of the test case.
 model::test_result
-runner::run_test_case(const model::test_case* test_case,
+runner::run_test_case(const model::test_program* test_program,
+                      const std::string& test_case_name,
                       const config::tree& user_config,
                       test_case_hooks& hooks,
                       const fs::path& work_directory)
 {
-    if (test_case->fake_result())
-        return test_case->fake_result().get();
+    const model::test_case& test_case = test_program->find(test_case_name);
+
+    if (test_case.fake_result())
+        return test_case.fake_result().get();
 
     const std::string skip_reason = check_reqs(
-        test_case->get_metadata(), user_config,
-        test_case->container_test_program().test_suite_name(),
+        test_case.get_metadata(), user_config, test_program->test_suite_name(),
         work_directory);
     if (!skip_reason.empty())
         return model::test_result(model::test_result_skipped, skip_reason);
 
-    if (!fs::exists(test_case->container_test_program().absolute_path()))
+    if (!fs::exists(test_program->absolute_path()))
         return model::test_result(model::test_result_broken,
                                   "Test program does not exist");
 
@@ -410,18 +413,15 @@ runner::run_test_case(const model::test_case* test_case,
     const fs::auto_file stderr_file(work_directory / "stderr.txt");
     const fs::auto_file result_file(work_directory / "result.txt");
 
-    const model::test_program& test_program =
-        test_case->container_test_program();
-
     try {
         const engine::tester tester = create_tester(
-            test_program.interface_name(), test_case->get_metadata(),
+            test_program->interface_name(), test_case.get_metadata(),
             user_config);
-        tester.test(test_program.absolute_path(), test_case->name(),
+        tester.test(test_program->absolute_path(), test_case.name(),
                     result_file.file(), stdout_file.file(), stderr_file.file(),
-                    generate_tester_config(test_case->get_metadata(),
+                    generate_tester_config(test_case.get_metadata(),
                                            user_config,
-                                           test_program.test_suite_name()));
+                                           test_program->test_suite_name()));
 
         hooks.got_stdout(stdout_file.file());
         hooks.got_stderr(stderr_file.file());

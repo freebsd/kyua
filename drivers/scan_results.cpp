@@ -94,10 +94,10 @@ drivers::scan_results::drive(const fs::path& store_path,
         // and we get tracking of unmatched filters "for free".
         const model::test_program_ptr test_program = iter.test_program();
         if (filters.match_test_program(test_program->relative_path())) {
-            const model::test_case_ptr test_case = test_program->find(
+            const model::test_case& test_case = test_program->find(
                 iter.test_case_name());
             if (filters.match_test_case(test_program->relative_path(),
-                                        test_case->name())) {
+                                        test_case.name())) {
                 hooks.got_result(iter);
             }
         }

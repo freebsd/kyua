@@ -33,7 +33,6 @@
 #define ENGINE_RUNNER_HPP
 
 #include "model/context_fwd.hpp"
-#include "model/test_case_fwd.hpp"
 #include "model/test_program_fwd.hpp"
 #include "model/test_result_fwd.hpp"
 #include "utils/config/tree.hpp"
@@ -68,11 +67,11 @@ void load_test_cases(model::test_program&);
 
 
 model::test_result debug_test_case(
-    const model::test_case*, const utils::config::tree&,
+    const model::test_program*, const std::string&, const utils::config::tree&,
     test_case_hooks&, const utils::fs::path&,
     const utils::fs::path&, const utils::fs::path&);
 model::test_result run_test_case(
-    const model::test_case*, const utils::config::tree&,
+    const model::test_program*, const std::string&, const utils::config::tree&,
     test_case_hooks&, const utils::fs::path&);
 
 

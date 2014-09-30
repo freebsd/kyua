@@ -29,7 +29,6 @@
 #include "model/test_case.hpp"
 
 #include "model/metadata.hpp"
-#include "model/test_program.hpp"
 #include "model/test_result.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/optional.ipp"
@@ -43,12 +42,6 @@ using utils::optional;
 
 /// Internal implementation for a test_case.
 struct model::test_case::impl {
-    /// Name of the interface implemented by the test program.
-    const std::string interface_name;
-
-    /// Test program this test case belongs to.
-    const model::test_program& _test_program;
-
     /// Name of the test case; must be unique within the test program.
     std::string name;
 
@@ -60,20 +53,13 @@ struct model::test_case::impl {
 
     /// Constructor.
     ///
-    /// \param interface_name_ Name of the interface implemented by the test
-    ///     program.
-    /// \param test_program_ The test program this test case belongs to.
     /// \param name_ The name of the test case within the test program.
     /// \param md_ Metadata of the test case.
     /// \param fake_result_ Fake result to return instead of running the test
     ///     case.
-    impl(const std::string& interface_name_,
-         const model::test_program& test_program_,
-         const std::string& name_,
+    impl(const std::string& name_,
          const model::metadata& md_,
          const optional< model::test_result >& fake_result_) :
-        interface_name(interface_name_),
-        _test_program(test_program_),
         name(name_),
         md(md_),
         fake_result(fake_result_)
@@ -88,10 +74,7 @@ struct model::test_case::impl {
     bool
     operator==(const impl& other) const
     {
-        return (interface_name == other.interface_name &&
-                (_test_program.absolute_path() ==
-                 other._test_program.absolute_path()) &&
-                name == other.name &&
+        return (name == other.name &&
                 md == other.md &&
                 fake_result == other.fake_result);
     }
@@ -100,19 +83,11 @@ struct model::test_case::impl {
 
 /// Constructs a new test case.
 ///
-/// \param interface_name_ Name of the interface implemented by the test
-///     program.
-/// \param test_program_ The test program this test case belongs to.  This is a
-///     static reference (instead of a test_program_ptr) because the test
-///     program must exist in order for the test case to exist.
-/// \param name_ The name of the test case within the test program.  Must be
-///     unique.
+/// \param name_ The name of the test case within the test program.
 /// \param md_ Metadata of the test case.
-model::test_case::test_case(const std::string& interface_name_,
-                             const model::test_program& test_program_,
-                             const std::string& name_,
-                             const model::metadata& md_) :
-    _pimpl(new impl(interface_name_, test_program_, name_, md_, none))
+model::test_case::test_case(const std::string& name_,
+                            const model::metadata& md_) :
+    _pimpl(new impl(name_, md_, none))
 {
 }
 
@@ -132,21 +107,16 @@ model::test_case::test_case(const std::string& interface_name_,
 /// status of test programs independently of test cases, as some interfaces
 /// don't know about the latter at all.
 ///
-/// \param interface_name_ Name of the interface implemented by the test
-///     program.
-/// \param test_program_ The test program this test case belongs to.
 /// \param name_ The name to give to this fake test case.  This name has to be
 ///     prefixed and suffixed by '__' to clearly denote that this is internal.
 /// \param description_ The description of the test case, if any.
 /// \param test_result_ The fake result to return when this test case is run.
 model::test_case::test_case(
-    const std::string& interface_name_,
-    const model::test_program& test_program_,
     const std::string& name_,
     const std::string& description_,
     const model::test_result& test_result_) :
     _pimpl(new impl(
-        interface_name_, test_program_, name_,
+        name_,
         model::metadata_builder().set_description(description_).build(),
         utils::make_optional(test_result_)))
 {
@@ -159,26 +129,6 @@ model::test_case::test_case(
 /// Destroys a test case.
 model::test_case::~test_case(void)
 {
-}
-
-
-/// Gets the name of the interface implemented by the test program.
-///
-/// \return An interface name.
-const std::string&
-model::test_case::interface_name(void) const
-{
-    return _pimpl->interface_name;
-}
-
-
-/// Gets the test program this test case belongs to.
-///
-/// \return A reference to the container test program.
-const model::test_program&
-model::test_case::container_test_program(void) const
-{
-    return _pimpl->_test_program;
 }
 
 
@@ -251,9 +201,7 @@ model::test_case::operator!=(const test_case& other) const
 std::ostream&
 model::operator<<(std::ostream& output, const test_case& object)
 {
-    // We skip injecting container_test_program() on purpose to avoid a loop.
-    output << F("test_case{interface=%s, name=%s, metadata=%s}")
-        % text::quote(object.interface_name(), '\'')
+    output << F("test_case{name=%s, metadata=%s}")
         % text::quote(object.name(), '\'')
         % object.get_metadata();
     return output;

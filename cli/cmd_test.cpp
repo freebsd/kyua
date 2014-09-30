@@ -32,7 +32,7 @@
 
 #include "cli/common.ipp"
 #include "drivers/run_tests.hpp"
-#include "model/test_case.hpp"
+#include "model/test_program.hpp"
 #include "model/test_result.hpp"
 #include "store/layout.hpp"
 #include "utils/cmdline/options.hpp"
@@ -77,20 +77,25 @@ public:
 
     /// Called when the processing of a test case begins.
     ///
-    /// \param test_case The test case.
+    /// \param test_program The test program containing the test case.
+    /// \param test_case_name The name of the test case being executed.
     virtual void
-    got_test_case(const model::test_case_ptr& test_case)
+    got_test_case(const model::test_program& test_program,
+                  const std::string& test_case_name)
     {
-        _ui->out(F("%s  ->  ") % cli::format_test_case_id(*test_case), false);
+        _ui->out(F("%s  ->  ") %
+                 cli::format_test_case_id(test_program, test_case_name), false);
     }
 
     /// Called when a result of a test case becomes available.
     ///
-    /// \param unused_test_case The test case.
+    /// \param unused_test_program The test program containing the test case.
+    /// \param unused_test_case_name The name of the test case being executed.
     /// \param result The result of the execution of the test case.
     /// \param duration The time it took to run the test.
     virtual void
-    got_result(const model::test_case_ptr& UTILS_UNUSED_PARAM(test_case),
+    got_result(const model::test_program& UTILS_UNUSED_PARAM(test_program),
+               const std::string& UTILS_UNUSED_PARAM(test_case_name),
                const model::test_result& result,
                const datetime::delta& duration)
     {

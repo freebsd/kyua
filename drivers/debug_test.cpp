@@ -29,6 +29,7 @@
 #include "drivers/debug_test.hpp"
 
 #include <stdexcept>
+#include <utility>
 
 #include "engine/filters.hpp"
 #include "engine/kyuafile.hpp"
@@ -64,11 +65,11 @@ namespace {
 ///
 /// \throw std::runtime_error If the provided filter matches more than one test
 ///     case or if the test case cannot be found.
-static const model::test_case_ptr
+static std::pair< model::test_program_ptr, std::string >
 find_test_case(const engine::test_filter& filter,
                model::test_programs_vector& test_programs)
 {
-    model::test_case_ptr found;;
+    std::pair< model::test_program_ptr, std::string > found;
 
     for (model::test_programs_vector::iterator p = test_programs.begin();
          p != test_programs.end(); p++) {
@@ -78,24 +79,24 @@ find_test_case(const engine::test_filter& filter,
             continue;
 
         runner::load_test_cases(*test_program);
-        const model::test_cases_vector test_cases = test_program->test_cases();
+        const model::test_cases_map test_cases = test_program->test_cases();
 
-        for (model::test_cases_vector::const_iterator
+        for (model::test_cases_map::const_iterator
              iter = test_cases.begin(); iter != test_cases.end(); iter++) {
-            const model::test_case_ptr tc = *iter;
+            const model::test_case& test_case = (*iter).second;
 
             if (filter.matches_test_case(test_program->relative_path(),
-                                         tc->name())) {
-                if (found.get() != NULL)
+                                         test_case.name())) {
+                if (found.first.get() != NULL)
                     throw std::runtime_error(F("The filter '%s' matches more "
                                                "than one test case") %
                                              filter.str());
-                found = tc;
+                found = std::make_pair(test_program, test_case.name());;
             }
         }
     }
 
-    if (found.get() == NULL)
+    if (found.first.get() == NULL)
         throw std::runtime_error(F("Unknown test case '%s'") % filter.str());
 
     return found;
@@ -131,8 +132,10 @@ drivers::debug_test::drive(const fs::path& kyuafile_path,
     // cases into them.  This is a hack and should be removed once we have a
     // nicer interface to running test cases.
     model::test_programs_vector test_programs = kyuafile.test_programs();
-    const model::test_case_ptr test_case = find_test_case(
-        filter, test_programs);
+    const std::pair< model::test_program_ptr, std::string > found =
+        find_test_case(filter, test_programs);
+    const model::test_program_ptr test_program = found.first;
+    const std::string& test_case_name = found.second;
     runner::test_case_hooks dummy_hooks;
 
     signals::interrupts_handler interrupts;
@@ -141,11 +144,10 @@ drivers::debug_test::drive(const fs::path& kyuafile_path,
         "kyua.XXXXXX");
 
     const model::test_result test_result = runner::debug_test_case(
-        test_case.get(), user_config, dummy_hooks, work_directory.directory(),
-        stdout_path, stderr_path);
+        test_program.get(), test_case_name, user_config, dummy_hooks,
+        work_directory.directory(), stdout_path, stderr_path);
 
     signals::check_interrupt();
     return result(engine::test_filter(
-        test_case->container_test_program().relative_path(),
-        test_case->name()), test_result);
+        test_program->relative_path(), test_case_name), test_result);
 }

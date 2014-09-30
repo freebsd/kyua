@@ -43,7 +43,6 @@ extern "C" {
 #include "cli/common.ipp"
 #include "engine/exceptions.hpp"
 #include "engine/filters.hpp"
-#include "model/test_case.hpp"
 #include "model/test_program.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
@@ -79,13 +78,14 @@ public:
 
     /// Called when a test case is identified in a test suite.
     ///
-    /// \param test_case The data describing the test case.
+    /// \param test_program The test program containing the test case.
+    /// \param test_case_name The name of the located test case.
     virtual void
-    got_test_case(const model::test_case& test_case)
+    got_test_case(const model::test_program& test_program,
+                  const std::string& test_case_name)
     {
         test_cases.insert(F("%s:%s") %
-                          test_case.container_test_program().relative_path() %
-                          test_case.name());
+                          test_program.relative_path() % test_case_name);
     }
 };
 

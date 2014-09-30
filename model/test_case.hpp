@@ -38,7 +38,6 @@
 #include <string>
 
 #include "model/metadata_fwd.hpp"
-#include "model/test_program_fwd.hpp"
 #include "model/test_result_fwd.hpp"
 #include "utils/optional.hpp"
 #include "utils/shared_ptr.hpp"
@@ -47,6 +46,10 @@ namespace model {
 
 
 /// Representation of a test case.
+///
+/// Test cases, on their own, are useless.  They only make sense in the context
+/// of the container test program and as such this class should not be used
+/// directly.
 class test_case {
     struct impl;
 
@@ -54,15 +57,10 @@ class test_case {
     std::shared_ptr< impl > _pimpl;
 
 public:
-    test_case(const std::string&, const model::test_program&,
-              const std::string&, const metadata&);
-    test_case(const std::string&, const model::test_program&,
-              const std::string&, const std::string&,
-              const test_result&);
+    test_case(const std::string&, const metadata&);
+    test_case(const std::string&, const std::string&, const test_result&);
     ~test_case(void);
 
-    const std::string& interface_name(void) const;
-    const model::test_program& container_test_program(void) const;
     const std::string& name(void) const;
     const metadata& get_metadata(void) const;
     utils::optional< test_result > fake_result(void) const;

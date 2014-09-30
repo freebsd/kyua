@@ -75,11 +75,14 @@ public:
 
     /// Reports a test case as soon as it is found.
     ///
-    /// \param test_case The test case to report.
+    /// \param test_program The test program containing the test case.
+    /// \param test_case_name The name of the located test case.
     void
-    got_test_case(const model::test_case& test_case)
+    got_test_case(const model::test_program& test_program,
+                  const std::string& test_case_name)
     {
-        cli::detail::list_test_case(_ui, _verbose, test_case);
+        cli::detail::list_test_case(_ui, _verbose, test_program,
+                                    test_case_name);
     }
 };
 
@@ -91,17 +94,20 @@ public:
 ///
 /// \param [out] ui Object to interact with the I/O of the program.
 /// \param verbose Whether to be verbose or not.
-/// \param test_case The test case to print.
+/// \param test_program The test program containing the test case to print.
+/// \param test_case_name The name of the test case to print.
 void
 cli::detail::list_test_case(cmdline::ui* ui, const bool verbose,
-                            const model::test_case& test_case)
+                            const model::test_program& test_program,
+                            const std::string& test_case_name)
 {
-    const std::string id = format_test_case_id(test_case);
+    const model::test_case& test_case = test_program.find(test_case_name);
+
+    const std::string id = format_test_case_id(test_program, test_case_name);
     if (!verbose) {
         ui->out(id);
     } else {
-        ui->out(F("%s (%s)") % id %
-                test_case.container_test_program().test_suite_name());
+        ui->out(F("%s (%s)") % id % test_program.test_suite_name());
 
         // TODO(jmmv): Running these for every test case is probably not the
         // fastest thing to do.

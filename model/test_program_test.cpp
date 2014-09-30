@@ -77,16 +77,15 @@ ATF_TEST_CASE_BODY(find__ok)
         "mock", fs::path("non-existent"), fs::path("."), "suite-name",
         model::metadata_builder().build());
 
-    model::test_cases_vector tcs;
     const model::test_case exp_test_case(
-        "mock", test_program, "main", model::metadata_builder().build());
-    tcs.push_back(model::test_case_ptr(new model::test_case(exp_test_case)));
+        "main", model::metadata_builder().build());
+    model::test_cases_map tcs;
+    tcs.insert(model::test_cases_map::value_type(exp_test_case.name(),
+                                                 exp_test_case));
     test_program.set_test_cases(tcs);
 
-    const model::test_case_ptr test_case = test_program.find("main");
-    ATF_REQUIRE_EQ(fs::path("non-existent"),
-                   test_case->container_test_program().relative_path());
-    ATF_REQUIRE_EQ(exp_test_case, *test_case);
+    const model::test_case& test_case = test_program.find("main");
+    ATF_REQUIRE_EQ(exp_test_case, test_case);
 }
 
 
@@ -97,10 +96,11 @@ ATF_TEST_CASE_BODY(find__missing)
         "mock", fs::path("non-existent"), fs::path("."), "suite-name",
         model::metadata_builder().build());
 
-    model::test_cases_vector tcs;
+    model::test_cases_map tcs;
     const model::test_case exp_test_case(
-        "mock", test_program, "main", model::metadata_builder().build());
-    tcs.push_back(model::test_case_ptr(new model::test_case(exp_test_case)));
+        "main", model::metadata_builder().build());
+    tcs.insert(model::test_cases_map::value_type(exp_test_case.name(),
+                                                 exp_test_case));
     test_program.set_test_cases(tcs);
 
     ATF_REQUIRE_THROW_RE(model::not_found_error,
@@ -136,11 +136,10 @@ ATF_TEST_CASE_BODY(operators_eq_and_ne__not_copy)
         base_interface, base_relative_path, base_root, base_test_suite,
         base_metadata);
 
-    model::test_cases_vector base_tcs;
+    model::test_cases_map base_tcs;
     {
-        const model::test_case tc1("plain", base_tp, "main",
-                                   model::metadata_builder().build());
-        base_tcs.push_back(model::test_case_ptr(new model::test_case(tc1)));
+        const model::test_case tc1("main", model::metadata_builder().build());
+        base_tcs.insert(model::test_cases_map::value_type(tc1.name(), tc1));
     }
     base_tp.set_test_cases(base_tcs);
 
@@ -150,12 +149,12 @@ ATF_TEST_CASE_BODY(operators_eq_and_ne__not_copy)
             base_interface, base_relative_path, base_root, base_test_suite,
             base_metadata);
 
-        model::test_cases_vector other_tcs;
+        model::test_cases_map other_tcs;
         {
-            const model::test_case tc1("plain", other_tp, "main",
+            const model::test_case tc1("main",
                                        model::metadata_builder().build());
-            other_tcs.push_back(model::test_case_ptr(
-                new model::test_case(tc1)));
+            other_tcs.insert(model::test_cases_map::value_type(tc1.name(),
+                                                               tc1));
         }
         other_tp.set_test_cases(other_tcs);
 
@@ -224,12 +223,12 @@ ATF_TEST_CASE_BODY(operators_eq_and_ne__not_copy)
             base_interface, base_relative_path, base_root, base_test_suite,
             base_metadata);
 
-        model::test_cases_vector other_tcs;
+        model::test_cases_map other_tcs;
         {
-            const model::test_case tc1("atf", base_tp, "foo",
+            const model::test_case tc1("foo",
                                        model::metadata_builder().build());
-            other_tcs.push_back(model::test_case_ptr(
-                                    new model::test_case(tc1)));
+            other_tcs.insert(model::test_cases_map::value_type(tc1.name(),
+                                                               tc1));
         }
         other_tp.set_test_cases(other_tcs);
 
@@ -245,7 +244,7 @@ ATF_TEST_CASE_BODY(output__no_test_cases)
     model::test_program tp(
         "plain", fs::path("binary/path"), fs::path("/the/root"), "suite-name",
         model::metadata_builder().add_allowed_architecture("a").build());
-    tp.set_test_cases(model::test_cases_vector());
+    tp.set_test_cases(model::test_cases_map());
 
     std::ostringstream str;
     str << tp;
@@ -257,7 +256,7 @@ ATF_TEST_CASE_BODY(output__no_test_cases)
         "required_configs='', required_disk_space='0', required_files='', "
         "required_memory='0', "
         "required_programs='', required_user='', timeout='300'}, "
-        "test_cases=[]}",
+        "test_cases=map()}",
         str.str());
 }
 
@@ -269,14 +268,14 @@ ATF_TEST_CASE_BODY(output__some_test_cases)
         "plain", fs::path("binary/path"), fs::path("/the/root"), "suite-name",
         model::metadata_builder().add_allowed_architecture("a").build());
 
-    const model::test_case_ptr tc1(new model::test_case(
-        "plain", tp, "the-name", model::metadata_builder()
-        .add_allowed_platform("foo").add_custom("X-bar", "baz").build()));
-    const model::test_case_ptr tc2(new model::test_case(
-        "plain", tp, "another-name", model::metadata_builder().build()));
-    model::test_cases_vector tcs;
-    tcs.push_back(tc1);
-    tcs.push_back(tc2);
+    const model::test_case tc1(
+        "the-name", model::metadata_builder()
+        .add_allowed_platform("foo").add_custom("X-bar", "baz").build());
+    const model::test_case tc2(
+        "another-name", model::metadata_builder().build());
+    model::test_cases_map tcs;
+    tcs.insert(model::test_cases_map::value_type(tc1.name(), tc1));
+    tcs.insert(model::test_cases_map::value_type(tc2.name(), tc2));
     tp.set_test_cases(tcs);
 
     std::ostringstream str;
@@ -289,19 +288,19 @@ ATF_TEST_CASE_BODY(output__some_test_cases)
         "required_configs='', required_disk_space='0', required_files='', "
         "required_memory='0', "
         "required_programs='', required_user='', timeout='300'}, "
-        "test_cases=["
-        "test_case{interface='plain', name='the-name', "
-        "metadata=metadata{allowed_architectures='', allowed_platforms='foo', "
-        "custom.X-bar='baz', description='', has_cleanup='false', "
-        "required_configs='', required_disk_space='0', required_files='', "
-        "required_memory='0', "
-        "required_programs='', required_user='', timeout='300'}}, "
-        "test_case{interface='plain', name='another-name', "
+        "test_cases=map("
+        "another-name=test_case{name='another-name', "
         "metadata=metadata{allowed_architectures='', allowed_platforms='', "
         "description='', has_cleanup='false', "
         "required_configs='', required_disk_space='0', required_files='', "
         "required_memory='0', "
-        "required_programs='', required_user='', timeout='300'}}]}",
+        "required_programs='', required_user='', timeout='300'}}, "
+        "the-name=test_case{name='the-name', "
+        "metadata=metadata{allowed_architectures='', allowed_platforms='foo', "
+        "custom.X-bar='baz', description='', has_cleanup='false', "
+        "required_configs='', required_disk_space='0', required_files='', "
+        "required_memory='0', "
+        "required_programs='', required_user='', timeout='300'}})}",
         str.str());
 }
 

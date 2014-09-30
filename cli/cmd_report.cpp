@@ -151,10 +151,10 @@ class report_console_hooks : public drivers::scan_results::base_hooks {
     void
     print_test_case_and_result(const store::results_iterator& result_iter)
     {
-        const model::test_case_ptr& test_case =
+        const model::test_case& test_case =
             result_iter.test_program()->find(result_iter.test_case_name());
         const model::properties_map props =
-            test_case->get_metadata().to_properties();
+            test_case.get_metadata().to_properties();
 
         _output << F("===> %s:%s\n") %
             result_iter.test_program()->relative_path() %

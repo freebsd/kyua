@@ -48,9 +48,9 @@ EOF
     utils_cp_helper simple_some_fail subdir
 
     cat >expout <<EOF
+metadata:many_properties
 metadata:no_properties
 metadata:one_property
-metadata:many_properties
 metadata:with_cleanup
 simple_all_pass:pass
 simple_all_pass:skip
@@ -384,9 +384,6 @@ simple_all_pass:pass (integration-suite-1)
 simple_all_pass:skip (integration-suite-1)
 i_am_plain:main (integration-suite-1)
     timeout = 654
-subdir/metadata:no_properties (integration-suite-2)
-subdir/metadata:one_property (integration-suite-2)
-    description = Does nothing but has one metadata property
 subdir/metadata:many_properties (integration-suite-2)
     allowed_architectures = some-architecture
     allowed_platforms = some-platform
@@ -396,6 +393,9 @@ subdir/metadata:many_properties (integration-suite-2)
     required_files = /my/file1 /some/other/file
     required_programs = /nonexistent/bin3 bin1 bin2
     required_user = root
+subdir/metadata:no_properties (integration-suite-2)
+subdir/metadata:one_property (integration-suite-2)
+    description = Does nothing but has one metadata property
 subdir/metadata:with_cleanup (integration-suite-2)
     has_cleanup = true
     timeout = 250

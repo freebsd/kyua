@@ -66,12 +66,12 @@ public:
     const std::string& test_suite_name(void) const;
     const model::metadata& get_metadata(void) const;
 
-    const model::test_case_ptr& find(const std::string&) const;
-    const model::test_cases_vector& test_cases(void) const;
+    const model::test_case& find(const std::string&) const;
+    const model::test_cases_map& test_cases(void) const;
     // TODO(jmmv): These are artifacts of the way this class used to work; see
     // engine::test_program.  Need to remove these.
     bool has_test_cases(void) const;
-    void set_test_cases(const model::test_cases_vector&);
+    void set_test_cases(const model::test_cases_map&);
 
     bool operator==(const test_program&) const;
     bool operator!=(const test_program&) const;

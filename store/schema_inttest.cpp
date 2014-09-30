@@ -132,11 +132,16 @@ check_action_2(const fs::path& dbpath)
         "plain", fs::path("foo_test"), fs::path("/test/suite/root"),
         "suite-name", model::metadata_builder().build());
     {
-        const model::test_case_ptr test_case_1(new model::test_case(
-            "plain", test_program_1, "main",
-            model::metadata_builder().build()));
-        model::test_cases_vector test_cases;
-        test_cases.push_back(test_case_1);
+        const model::test_case test_case_1(
+            "main",
+            model::metadata_builder().build());
+        model::test_cases_map test_cases;
+        test_cases.insert(model::test_cases_map::value_type(
+            "main",
+            model::test_case(
+                "main", model::metadata_builder().build())));
+        test_cases.insert(model::test_cases_map::value_type(test_case_1.name(),
+                                                            test_case_1));
         test_program_1.set_test_cases(test_cases);
     }
     const model::test_result result_1(model::test_result_passed);
@@ -146,11 +151,12 @@ check_action_2(const fs::path& dbpath)
         "subsuite-name", model::metadata_builder()
         .set_timeout(datetime::delta(10, 0)).build());
     {
-        const model::test_case_ptr test_case_2(new model::test_case(
-            "plain", test_program_2, "main", model::metadata_builder()
-            .set_timeout(datetime::delta(10, 0)).build()));
-        model::test_cases_vector test_cases;
-        test_cases.push_back(test_case_2);
+        const model::test_case test_case_2(
+            "main", model::metadata_builder()
+            .set_timeout(datetime::delta(10, 0)).build());
+        model::test_cases_map test_cases;
+        test_cases.insert(model::test_cases_map::value_type(test_case_2.name(),
+                                                            test_case_2));
         test_program_2.set_test_cases(test_cases);
     }
     const model::test_result result_2(model::test_result_failed,
@@ -160,11 +166,12 @@ check_action_2(const fs::path& dbpath)
         "plain", fs::path("subdir/bar_test"), fs::path("/test/suite/root"),
         "subsuite-name", model::metadata_builder().build());
     {
-        const model::test_case_ptr test_case_3(new model::test_case(
-            "plain", test_program_3, "main",
-            model::metadata_builder().build()));
-        model::test_cases_vector test_cases;
-        test_cases.push_back(test_case_3);
+        const model::test_case test_case_3(
+            "main",
+            model::metadata_builder().build());
+        model::test_cases_map test_cases;
+        test_cases.insert(model::test_cases_map::value_type(test_case_3.name(),
+                                                            test_case_3));
         test_program_3.set_test_cases(test_cases);
     }
     const model::test_result result_3(model::test_result_broken,
@@ -174,11 +181,12 @@ check_action_2(const fs::path& dbpath)
         "plain", fs::path("top_test"), fs::path("/test/suite/root"),
         "suite-name", model::metadata_builder().build());
     {
-        const model::test_case_ptr test_case_4(new model::test_case(
-            "plain", test_program_4, "main",
-            model::metadata_builder().build()));
-        model::test_cases_vector test_cases;
-        test_cases.push_back(test_case_4);
+        const model::test_case test_case_4(
+            "main",
+            model::metadata_builder().build());
+        model::test_cases_map test_cases;
+        test_cases.insert(model::test_cases_map::value_type(test_case_4.name(),
+                                                            test_case_4));
         test_program_4.set_test_cases(test_cases);
     }
     const model::test_result result_4(model::test_result_expected_failure,
@@ -188,11 +196,12 @@ check_action_2(const fs::path& dbpath)
         "plain", fs::path("last_test"), fs::path("/test/suite/root"),
         "suite-name", model::metadata_builder().build());
     {
-        const model::test_case_ptr test_case_5(new model::test_case(
-            "plain", test_program_5, "main",
-            model::metadata_builder().build()));
-        model::test_cases_vector test_cases;
-        test_cases.push_back(test_case_5);
+        const model::test_case test_case_5(
+            "main",
+            model::metadata_builder().build());
+        model::test_cases_map test_cases;
+        test_cases.insert(model::test_cases_map::value_type(test_case_5.name(),
+                                                            test_case_5));
         test_program_5.set_test_cases(test_cases);
     }
     const model::test_result result_5(model::test_result_skipped,
@@ -268,18 +277,18 @@ check_action_3(const fs::path& dbpath)
         "atf", fs::path("complex_test"), fs::path("/usr/tests"),
         "suite-name", model::metadata_builder().build());
     {
-        const model::test_case_ptr test_case_6(new model::test_case(
-            "atf", test_program_6, "this_passes",
-            model::metadata_builder().build()));
-        const model::test_case_ptr test_case_7(new model::test_case(
-            "atf", test_program_6, "this_fails",
+        const model::test_case test_case_6(
+            "this_passes",
+            model::metadata_builder().build());
+        const model::test_case test_case_7(
+            "this_fails",
             model::metadata_builder()
             .set_description("Test description")
             .set_has_cleanup(true)
             .set_required_memory(units::bytes(128))
-            .set_required_user("root").build()));
-        const model::test_case_ptr test_case_8(new model::test_case(
-            "atf", test_program_6, "this_skips",
+            .set_required_user("root").build());
+        const model::test_case test_case_8(
+            "this_skips",
             model::metadata_builder()
             .add_allowed_architecture("powerpc")
             .add_allowed_architecture("x86_64")
@@ -295,11 +304,14 @@ check_action_3(const fs::path& dbpath)
             .set_required_memory(units::bytes(512))
             .set_required_user("unprivileged")
             .set_timeout(datetime::delta(600, 0))
-            .build()));
-        model::test_cases_vector test_cases;
-        test_cases.push_back(test_case_6);
-        test_cases.push_back(test_case_7);
-        test_cases.push_back(test_case_8);
+            .build());
+        model::test_cases_map test_cases;
+        test_cases.insert(model::test_cases_map::value_type(test_case_6.name(),
+                                                            test_case_6));
+        test_cases.insert(model::test_cases_map::value_type(test_case_7.name(),
+                                                            test_case_7));
+        test_cases.insert(model::test_cases_map::value_type(test_case_8.name(),
+                                                            test_case_8));
         test_program_6.set_test_cases(test_cases);
     }
     const model::test_result result_6(model::test_result_passed);
@@ -312,16 +324,17 @@ check_action_3(const fs::path& dbpath)
         "atf", fs::path("simple_test"), fs::path("/usr/tests"),
         "subsuite-name", model::metadata_builder().build());
     {
-        const model::test_case_ptr test_case_9(new model::test_case(
-            "atf", test_program_7, "main",
+        const model::test_case test_case_9(
+            "main",
             model::metadata_builder()
             .set_description("More text")
             .set_has_cleanup(true)
             .set_required_memory(units::bytes(128))
             .set_required_user("unprivileged")
-            .build()));
-        model::test_cases_vector test_cases;
-        test_cases.push_back(test_case_9);
+            .build());
+        model::test_cases_map test_cases;
+        test_cases.insert(model::test_cases_map::value_type(test_case_9.name(),
+                                                            test_case_9));
         test_program_7.set_test_cases(test_cases);
     }
     const model::test_result result_9(model::test_result_failed,
@@ -391,12 +404,13 @@ check_action_4(const fs::path& dbpath)
         "subsuite-name", model::metadata_builder()
         .set_timeout(datetime::delta(10, 0)).build());
     {
-        const model::test_case_ptr test_case_10(new model::test_case(
-            "plain", test_program_8, "main",
+        const model::test_case test_case_10(
+            "main",
             model::metadata_builder()
-            .set_timeout(datetime::delta(10, 0)).build()));
-        model::test_cases_vector test_cases;
-        test_cases.push_back(test_case_10);
+            .set_timeout(datetime::delta(10, 0)).build());
+        model::test_cases_map test_cases;
+        test_cases.insert(model::test_cases_map::value_type(test_case_10.name(),
+                                                            test_case_10));
         test_program_8.set_test_cases(test_cases);
     }
     const model::test_result result_10(model::test_result_failed,
@@ -406,18 +420,20 @@ check_action_4(const fs::path& dbpath)
         "atf", fs::path("complex_test"), fs::path("/usr/tests"),
         "suite-name", model::metadata_builder().build());
     {
-        const model::test_case_ptr test_case_11(new model::test_case(
-            "atf", test_program_9, "this_passes",
-            model::metadata_builder().build()));
-        const model::test_case_ptr test_case_12(new model::test_case(
-            "atf", test_program_9, "this_fails",
+        const model::test_case test_case_11(
+            "this_passes",
+            model::metadata_builder().build());
+        const model::test_case test_case_12(
+            "this_fails",
             model::metadata_builder()
             .set_description("Test description")
             .set_required_user("root")
-            .build()));
-        model::test_cases_vector test_cases;
-        test_cases.push_back(test_case_11);
-        test_cases.push_back(test_case_12);
+            .build());
+        model::test_cases_map test_cases;
+        test_cases.insert(model::test_cases_map::value_type(test_case_11.name(),
+                                                            test_case_11));
+        test_cases.insert(model::test_cases_map::value_type(test_case_12.name(),
+                                                            test_case_12));
         test_program_9.set_test_cases(test_cases);
     }
     const model::test_result result_11(model::test_result_passed);

@@ -36,9 +36,10 @@
 #define DRIVERS_LIST_TESTS_HPP
 
 #include <set>
+#include <string>
 
 #include "engine/filters.hpp"
-#include "model/test_case_fwd.hpp"
+#include "model/test_program_fwd.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"
 
@@ -53,8 +54,10 @@ public:
 
     /// Called when a test case is identified in a test suite.
     ///
-    /// \param test_case The data describing the test case.
-    virtual void got_test_case(const model::test_case& test_case) = 0;
+    /// \param test_program The test program containing the test case.
+    /// \param test_case_name The name of the located test case.
+    virtual void got_test_case(const model::test_program& test_program,
+                               const std::string& test_case_name) = 0;
 };
 
 

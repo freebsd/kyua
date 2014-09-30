@@ -37,9 +37,10 @@
 #define DRIVERS_RUN_TESTS_HPP
 
 #include <set>
+#include <string>
 
 #include "engine/filters.hpp"
-#include "model/test_case_fwd.hpp"
+#include "model/test_program.hpp"
 #include "model/test_result_fwd.hpp"
 #include "utils/config/tree.hpp"
 #include "utils/datetime.hpp"
@@ -57,15 +58,19 @@ public:
 
     /// Called when the processing of a test case begins.
     ///
-    /// \param test_case The test case.
-    virtual void got_test_case(const model::test_case_ptr& test_case) = 0;
+    /// \param test_program The test program containing the test case.
+    /// \param test_case_name The name of the test case being executed.
+    virtual void got_test_case(const model::test_program& test_program,
+                               const std::string& test_case_name) = 0;
 
     /// Called when a result of a test case becomes available.
     ///
-    /// \param test_case The test case.
+    /// \param test_program The test program containing the test case.
+    /// \param test_case_name The name of the executed test case.
     /// \param result The result of the execution of the test case.
     /// \param duration The time it took to run the test.
-    virtual void got_result(const model::test_case_ptr& test_case,
+    virtual void got_result(const model::test_program& test_program,
+                            const std::string& test_case_name,
                             const model::test_result& result,
                             const utils::datetime::delta& duration) = 0;
 };

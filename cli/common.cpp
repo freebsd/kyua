@@ -34,7 +34,6 @@
 #include <stdexcept>
 
 #include "engine/filters.hpp"
-#include "model/test_case.hpp"
 #include "model/test_program.hpp"
 #include "model/test_result.hpp"
 #include "store/layout.hpp"
@@ -374,14 +373,15 @@ cli::format_result(const model::test_result& result)
 
 /// Formats the identifier of a test case for user presentation.
 ///
-/// \param test_case The test case whose identifier to format.
+/// \param test_program The test program containing the test case.
+/// \param test_case_name The name of the test case.
 ///
 /// \return A string representing the test case uniquely within a test suite.
 std::string
-cli::format_test_case_id(const model::test_case& test_case)
+cli::format_test_case_id(const model::test_program& test_program,
+                         const std::string& test_case_name)
 {
-    return F("%s:%s") % test_case.container_test_program().relative_path() %
-        test_case.name();
+    return F("%s:%s") % test_program.relative_path() % test_case_name;
 }
 
 

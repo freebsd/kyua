@@ -258,17 +258,20 @@ public:
     model::test_result
     run(runner::test_case_hooks& hooks) const
     {
-        const model::test_program test_program(
+        model::test_program test_program(
             "atf", _binary_path, _root, "the-suite",
             model::metadata_builder().build());
-        const model::test_case test_case("atf", test_program, _name,
-                                         _mdbuilder.build());
+        const model::test_case test_case(_name, _mdbuilder.build());
+        model::test_cases_map test_cases;
+        test_cases.insert(model::test_cases_map::value_type(
+            test_case.name(), test_case));
+        test_program.set_test_cases(test_cases);
 
         const fs::path workdir("work");
         fs::mkdir(workdir, 0755);
 
         const model::test_result result = runner::run_test_case(
-            &test_case, _user_config, hooks, workdir);
+            &test_program, _name, _user_config, hooks, workdir);
         ATF_REQUIRE(::rmdir(workdir.c_str()) != -1);
         return result;
     }
@@ -382,10 +385,11 @@ public:
         model::test_program test_program(
             "plain", _binary_path, _root, "unit-tests", mdbuilder.build());
         runner::load_test_cases(test_program);
-        const model::test_cases_vector& tcs = test_program.test_cases();
+        const model::test_cases_map& tcs = test_program.test_cases();
         fetch_output_hooks fetcher;
         const model::test_result result = runner::run_test_case(
-            tcs[0].get(), user_config, fetcher, fs::path("."));
+            &test_program, tcs.begin()->first,
+            user_config, fetcher, fs::path("."));
         std::cerr << "Result is: " << result << '\n';
         return result;
     }
@@ -449,11 +453,9 @@ ATF_TEST_CASE_BODY(load_test_cases__get)
         "plain", fs::path("non-existent"), fs::path("."), "suite-name",
         model::metadata_builder().build());
     runner::load_test_cases(test_program);
-    const model::test_cases_vector& test_cases = test_program.test_cases();
+    const model::test_cases_map& test_cases = test_program.test_cases();
     ATF_REQUIRE_EQ(1, test_cases.size());
-    ATF_REQUIRE_EQ(fs::path("non-existent"),
-                   test_cases[0]->container_test_program().relative_path());
-    ATF_REQUIRE_EQ("main", test_cases[0]->name());
+    ATF_REQUIRE_EQ("main", test_cases.begin()->first);
 }
 
 
@@ -464,11 +466,9 @@ ATF_TEST_CASE_BODY(load_test_cases__some)
         "plain", fs::path("non-existent"), fs::path("."), "suite-name",
         model::metadata_builder().build());
 
-    model::test_cases_vector exp_test_cases;
-    const model::test_case test_case("plain", test_program, "main",
-                                     model::metadata_builder().build());
-    exp_test_cases.push_back(model::test_case_ptr(
-        new model::test_case(test_case)));
+    model::test_cases_map exp_test_cases;
+    const model::test_case test_case("main", model::metadata_builder().build());
+    exp_test_cases.insert(model::test_cases_map::value_type("main", test_case));
     test_program.set_test_cases(exp_test_cases);
 
     runner::load_test_cases(test_program);
@@ -485,14 +485,14 @@ ATF_TEST_CASE_BODY(load_test_cases__tester_fails)
     create_mock_tester_signal(SIGSEGV);
 
     runner::load_test_cases(test_program);
-    const model::test_cases_vector& test_cases = test_program.test_cases();
+    const model::test_cases_map& test_cases = test_program.test_cases();
     ATF_REQUIRE_EQ(1, test_cases.size());
 
-    const model::test_case_ptr& test_case = test_cases[0];
-    ATF_REQUIRE_EQ("__test_cases_list__", test_case->name());
+    const model::test_case& test_case = test_cases.begin()->second;
+    ATF_REQUIRE_EQ("__test_cases_list__", test_case.name());
 
-    ATF_REQUIRE(test_case->fake_result());
-    const model::test_result result = test_case->fake_result().get();
+    ATF_REQUIRE(test_case.fake_result());
+    const model::test_result result = test_case.fake_result().get();
     ATF_REQUIRE(model::test_result_broken == result.type());
     ATF_REQUIRE_MATCH("Tester did not exit cleanly", result.reason());
 }

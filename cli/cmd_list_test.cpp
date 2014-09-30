@@ -47,12 +47,16 @@ ATF_TEST_CASE_BODY(list_test_case__no_verbose)
     const model::metadata md = model::metadata_builder()
         .set_description("This should not be shown")
         .build();
-    const model::test_program test_program(
+    model::test_program test_program(
         "mock", fs::path("the/test-program"), fs::path("root"), "suite", md);
-    const model::test_case test_case("mock", test_program, "abc", md);
+    const model::test_case test_case("abc", md);
+    model::test_cases_map test_cases;
+    test_cases.insert(model::test_cases_map::value_type(
+        test_case.name(), test_case));
+    test_program.set_test_cases(test_cases);
 
     cmdline::ui_mock ui;
-    cli::detail::list_test_case(&ui, false, test_case);
+    cli::detail::list_test_case(&ui, false, test_program, "abc");
     ATF_REQUIRE_EQ(1, ui.out_log().size());
     ATF_REQUIRE_EQ("the/test-program:abc", ui.out_log()[0]);
     ATF_REQUIRE(ui.err_log().empty());
@@ -63,12 +67,16 @@ ATF_TEST_CASE_WITHOUT_HEAD(list_test_case__verbose__no_properties);
 ATF_TEST_CASE_BODY(list_test_case__verbose__no_properties)
 {
     const model::metadata md = model::metadata_builder().build();
-    const model::test_program test_program("mock", fs::path("hello/world"),
-                                           fs::path("root"), "the-suite", md);
-    const model::test_case test_case("mock", test_program, "my_name", md);
+    model::test_program test_program("mock", fs::path("hello/world"),
+                                     fs::path("root"), "the-suite", md);
+    const model::test_case test_case("my_name", md);
+    model::test_cases_map test_cases;
+    test_cases.insert(model::test_cases_map::value_type(
+        test_case.name(), test_case));
+    test_program.set_test_cases(test_cases);
 
     cmdline::ui_mock ui;
-    cli::detail::list_test_case(&ui, true, test_case);
+    cli::detail::list_test_case(&ui, true, test_program, "my_name");
     ATF_REQUIRE_EQ(1, ui.out_log().size());
     ATF_REQUIRE_EQ("hello/world:my_name (the-suite)", ui.out_log()[0]);
     ATF_REQUIRE(ui.err_log().empty());
@@ -83,12 +91,16 @@ ATF_TEST_CASE_BODY(list_test_case__verbose__some_properties)
         .set_description("Some description")
         .set_has_cleanup(true)
         .build();
-    const model::test_program test_program("mock", fs::path("hello/world"),
-                                           fs::path("root"), "the-suite", md);
-    const model::test_case test_case("mock", test_program, "my_name", md);
+    model::test_program test_program("mock", fs::path("hello/world"),
+                                     fs::path("root"), "the-suite", md);
+    const model::test_case test_case("my_name", md);
+    model::test_cases_map test_cases;
+    test_cases.insert(model::test_cases_map::value_type(
+        test_case.name(), test_case));
+    test_program.set_test_cases(test_cases);
 
     cmdline::ui_mock ui;
-    cli::detail::list_test_case(&ui, true, test_case);
+    cli::detail::list_test_case(&ui, true, test_program, "my_name");
     ATF_REQUIRE_EQ(4, ui.out_log().size());
     ATF_REQUIRE_EQ("hello/world:my_name (the-suite)", ui.out_log()[0]);
     ATF_REQUIRE_EQ("    custom.X-my-property = value", ui.out_log()[1]);

@@ -36,7 +36,7 @@
 #include <set>
 #include <vector>
 
-#include "model/test_case_fwd.hpp"
+#include "model/test_program_fwd.hpp"
 #include "model/test_result.hpp"
 #include "utils/cmdline/base_command.hpp"
 #include "utils/cmdline/options.hpp"
@@ -101,7 +101,7 @@ bool report_unused_filters(const std::set< engine::test_filter >&,
 
 std::string format_delta(const utils::datetime::delta&);
 std::string format_result(const model::test_result&);
-std::string format_test_case_id(const model::test_case&);
+std::string format_test_case_id(const model::test_program&, const std::string&);
 std::string format_test_case_id(const engine::test_filter&);
 
 

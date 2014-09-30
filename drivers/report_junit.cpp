@@ -202,9 +202,9 @@ drivers::report_junit_hooks::got_result(store::results_iterator& iter)
     }
 
     {
-        const model::test_case_ptr test_case = iter.test_program()->find(
+        const model::test_case& test_case = iter.test_program()->find(
             iter.test_case_name());
-        stderr_contents += junit_metadata(test_case->get_metadata());
+        stderr_contents += junit_metadata(test_case.get_metadata());
     }
     {
         const std::string real_stderr_contents = iter.stderr_contents();
