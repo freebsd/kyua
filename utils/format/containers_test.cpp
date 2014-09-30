@@ -30,6 +30,7 @@
 
 #include <ostream>
 #include <set>
+#include <string>
 #include <vector>
 
 #include <atf-c++.hpp>
@@ -51,6 +52,34 @@ do_check(const char* expected, const T& actual)
 
 
 }  // anonymous namespace
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(std_map__empty);
+ATF_TEST_CASE_BODY(std_map__empty)
+{
+    do_check("map()", std::map< char, char >());
+    do_check("map()", std::map< int, long >());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(std_map__some);
+ATF_TEST_CASE_BODY(std_map__some)
+{
+    {
+        std::map< char, int > v;
+        v['b'] = 123;
+        v['z'] = 321;
+        do_check("map(b=123, z=321)", v);
+    }
+
+    {
+        std::map< int, std::string > v;
+        v[5] = "first";
+        v[2] = "second";
+        v[8] = "third";
+        do_check("map(2=second, 5=first, 8=third)", v);
+    }
+}
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(std_shared_ptr__null);
@@ -127,6 +156,9 @@ ATF_TEST_CASE_BODY(std_vector__some)
 
 ATF_INIT_TEST_CASES(tcs)
 {
+    ATF_ADD_TEST_CASE(tcs, std_map__empty);
+    ATF_ADD_TEST_CASE(tcs, std_map__some);
+
     ATF_ADD_TEST_CASE(tcs, std_shared_ptr__null);
     ATF_ADD_TEST_CASE(tcs, std_shared_ptr__not_null);
 

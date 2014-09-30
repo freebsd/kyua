@@ -40,6 +40,29 @@
 /// \param object The object to format.
 ///
 /// \return The output stream.
+template< typename K, typename V >
+std::ostream&
+std::operator<<(std::ostream& output, const std::map< K, V >& object)
+{
+    output << "map(";
+    typename std::map< K, V >::size_type counter = 0;
+    for (typename std::map< K, V >::const_iterator iter = object.begin();
+         iter != object.end(); ++iter, ++counter) {
+        if (counter != 0)
+            output << ", ";
+        output << (*iter).first << "=" << (*iter).second;
+    }
+    output << ")";
+    return output;
+}
+
+
+/// Injects the object into a stream.
+///
+/// \param output The stream into which to inject the object.
+/// \param object The object to format.
+///
+/// \return The output stream.
 template< typename T >
 std::ostream&
 std::operator<<(std::ostream& output, const std::shared_ptr< T >& object)

@@ -32,6 +32,7 @@
 #if !defined(UTILS_FORMAT_CONTAINERS_HPP)
 #define UTILS_FORMAT_CONTAINERS_HPP
 
+#include <map>
 #include <ostream>
 #include <set>
 #include <vector>
@@ -42,6 +43,9 @@
 // differently...
 namespace std {
 
+
+template< typename K, typename V >
+std::ostream& operator<<(std::ostream&, const std::map< K, V >&);
 
 template< typename T >
 std::ostream& operator<<(std::ostream&, const std::shared_ptr< T >&);
