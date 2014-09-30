@@ -149,13 +149,13 @@ ATF_TEST_CASE_BODY(kyuafile_top__some_matches)
     fs::mkdir(fs::path("root/subdir1"), 0755);
     atf::utils::create_file("root/subdir1/Kyuafile",
                             "syntax(2)\n"
-                            "atf_test_program{name='a', test_suite='b'}\n");
+                            "plain_test_program{name='a', test_suite='b'}\n");
     atf::utils::create_file("root/subdir1/a", "");
 
     fs::mkdir(fs::path("root/subdir2"), 0755);
     atf::utils::create_file("root/subdir2/Kyuafile",
                             "syntax(2)\n"
-                            "atf_test_program{name='c', test_suite='d'}\n");
+                            "plain_test_program{name='c', test_suite='d'}\n");
     atf::utils::create_file("root/subdir2/c", "");
     atf::utils::create_file("root/subdir2/Kyuafile.etc", "invalid");
 
@@ -164,12 +164,14 @@ ATF_TEST_CASE_BODY(kyuafile_top__some_matches)
     ATF_REQUIRE_EQ(fs::path("root"), kyuafile.source_root());
     ATF_REQUIRE_EQ(fs::path("root"), kyuafile.build_root());
 
-    model::test_program exp_test_program_a(
-        "atf", fs::path("subdir1/a"), fs::path("root"), "b",
-        model::metadata_builder().build());
-    model::test_program exp_test_program_c(
-        "atf", fs::path("subdir2/c"), fs::path("root"), "d",
-        model::metadata_builder().build());
+    const model::test_program exp_test_program_a = model::test_program_builder(
+        "plain", fs::path("subdir1/a"), fs::path("root"), "b")
+        .add_test_case("main")
+        .build();
+    const model::test_program exp_test_program_c = model::test_program_builder(
+        "plain", fs::path("subdir2/c"), fs::path("root"), "d")
+        .add_test_case("main")
+        .build();
 
     ATF_REQUIRE_EQ(2, kyuafile.test_programs().size());
     ATF_REQUIRE((exp_test_program_a == *kyuafile.test_programs()[0] &&

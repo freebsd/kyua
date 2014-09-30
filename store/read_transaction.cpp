@@ -239,13 +239,12 @@ store::detail::get_test_program(read_backend& backend_, const int64_t id)
         fs::path(stmt.safe_column_text("relative_path")),
         fs::path(stmt.safe_column_text("root")),
         stmt.safe_column_text("test_suite_name"),
-        get_metadata(db, stmt.safe_column_int64("metadata_id"))));
+        get_metadata(db, stmt.safe_column_int64("metadata_id")),
+        get_test_cases(db, id)));
     const bool more = stmt.step();
     INV(!more);
 
-    LD(F("Loaded test program '%s'; getting test cases") %
-       test_program->relative_path());
-    test_program->set_test_cases(get_test_cases(db, id));
+    LD(F("Loaded test program '%s'") % test_program->relative_path());
     return test_program;
 }
 

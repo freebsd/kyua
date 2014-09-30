@@ -232,6 +232,71 @@ create_tester(const std::string& interface_name,
 }  // anonymous namespace
 
 
+/// Internal implementation of a lazy_test_program.
+struct engine::runner::lazy_test_program::impl {
+    /// Collection of test cases; lazy loaded.
+    optional< model::test_cases_map > _test_cases;
+
+    /// Constructor.
+    impl(void)
+    {
+    }
+};
+
+
+/// Constructs a new test program.
+///
+/// \param interface_name_ Name of the test program interface.
+/// \param binary_ The name of the test program binary relative to root_.
+/// \param root_ The root of the test suite containing the test program.
+/// \param test_suite_name_ The name of the test suite this program belongs to.
+/// \param md_ Metadata of the test program.
+runner::lazy_test_program::lazy_test_program(
+    const std::string& interface_name_,
+    const fs::path& binary_,
+    const fs::path& root_,
+    const std::string& test_suite_name_,
+    const model::metadata& md_) :
+    test_program(interface_name_, binary_, root_, test_suite_name_, md_,
+                 model::test_cases_map()),
+    _pimpl(new impl())
+{
+}
+
+
+/// Gets or loads the list of test cases from the test program.
+///
+/// \return The list of test cases provided by the test program.
+const model::test_cases_map&
+runner::lazy_test_program::test_cases(void) const
+{
+    if (!_pimpl->_test_cases) {
+        model::test_cases_map tcs;
+        try {
+            tcs = ::load_test_cases(*this);
+        } catch (const std::runtime_error& e) {
+            // TODO(jmmv): This is a very ugly workaround for the fact that we
+            // cannot report failures at the test-program level.  We should
+            // either address this, or move this reporting to the testers
+            // themselves.
+            LW(F("Failed to load test cases list: %s") % e.what());
+            model::test_cases_map fake_test_cases;
+            fake_test_cases.insert(model::test_cases_map::value_type(
+                "__test_cases_list__",
+                model::test_case(
+                    "__test_cases_list__",
+                    "Represents the correct processing of the test cases list",
+                    model::test_result(model::test_result_broken, e.what()))));
+            tcs = fake_test_cases;
+        }
+        _pimpl->_test_cases = utils::make_optional(tcs);
+    }
+
+    INV(_pimpl->_test_cases);
+    return _pimpl->_test_cases.get();
+}
+
+
 /// Destructor.
 runner::test_case_hooks::~test_case_hooks(void)
 {
@@ -271,37 +336,6 @@ model::context
 runner::current_context(void)
 {
     return model::context(fs::current_path(), utils::getallenv());
-}
-
-
-/// Gets the list of test cases from the test program.
-///
-/// \param [in,out] program The test program to update with the loaded list of
-///     test cases.
-void
-runner::load_test_cases(model::test_program& program)
-{
-    if (!program.has_test_cases()) {
-        model::test_cases_map test_cases;
-        try {
-            test_cases = ::load_test_cases(program);
-        } catch (const std::runtime_error& e) {
-            // TODO(jmmv): This is a very ugly workaround for the fact that we
-            // cannot report failures at the test-program level.  We should
-            // either address this, or move this reporting to the testers
-            // themselves.
-            LW(F("Failed to load test cases list: %s") % e.what());
-            model::test_cases_map fake_test_cases;
-            fake_test_cases.insert(model::test_cases_map::value_type(
-                "__test_cases_list__",
-                model::test_case(
-                    "__test_cases_list__",
-                    "Represents the correct processing of the test cases list",
-                    model::test_result(model::test_result_broken, e.what()))));
-            test_cases = fake_test_cases;
-        }
-        program.set_test_cases(test_cases);
-    }
 }
 
 

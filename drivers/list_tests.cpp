@@ -31,13 +31,11 @@
 #include "engine/exceptions.hpp"
 #include "engine/filters.hpp"
 #include "engine/kyuafile.hpp"
-#include "engine/runner.hpp"
 #include "model/test_case.hpp"
 #include "model/test_program.hpp"
 #include "utils/optional.ipp"
 
 namespace fs = utils::fs;
-namespace runner = engine::runner;
 
 using utils::none;
 using utils::optional;
@@ -58,7 +56,6 @@ list_test_program(model::test_program& program,
                   engine::filters_state& filters,
                   drivers::list_tests::base_hooks& hooks)
 {
-    runner::load_test_cases(program);
     const model::test_cases_map test_cases = program.test_cases();
 
     for (model::test_cases_map::const_iterator iter = test_cases.begin();

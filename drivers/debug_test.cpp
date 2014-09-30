@@ -78,7 +78,6 @@ find_test_case(const engine::test_filter& filter,
         if (!filter.matches_test_program(test_program->relative_path()))
             continue;
 
-        runner::load_test_cases(*test_program);
         const model::test_cases_map test_cases = test_program->test_cases();
 
         for (model::test_cases_map::const_iterator

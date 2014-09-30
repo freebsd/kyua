@@ -182,7 +182,7 @@ ATF_TEST_CASE_BODY(put_test_program__ok)
         .build();
     const model::test_program test_program(
         "mock", fs::path("the/binary"), fs::path("/some//root"),
-        "the-suite", md);
+        "the-suite", md, model::test_cases_map());
 
     store::write_backend backend = store::write_backend::open_rw(
         fs::path("test.db"));
@@ -216,16 +216,10 @@ ATF_TEST_CASE_HEAD(put_test_case__fail)
 }
 ATF_TEST_CASE_BODY(put_test_case__fail)
 {
-    // TODO(jmmv): Use a mock test program and test case.
-    model::test_program test_program(
-        "plain", fs::path("the/binary"), fs::path("/some/root"), "the-suite",
-        model::metadata_builder().build());
-    const model::test_case test_case("main",
-                                     model::metadata_builder().build());
-    model::test_cases_map test_cases;
-    test_cases.insert(model::test_cases_map::value_type(
-        test_case.name(), test_case));
-    test_program.set_test_cases(test_cases);
+    const model::test_program test_program = model::test_program_builder(
+        "plain", fs::path("the/binary"), fs::path("/some/root"), "the-suite")
+        .add_test_case("main")
+        .build();
 
     store::write_backend backend = store::write_backend::open_rw(
         fs::path("test.db"));

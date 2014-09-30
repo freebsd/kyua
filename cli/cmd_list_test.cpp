@@ -31,7 +31,6 @@
 #include <atf-c++.hpp>
 
 #include "model/metadata.hpp"
-#include "model/test_case.hpp"
 #include "model/test_program.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.hpp"
@@ -47,13 +46,11 @@ ATF_TEST_CASE_BODY(list_test_case__no_verbose)
     const model::metadata md = model::metadata_builder()
         .set_description("This should not be shown")
         .build();
-    model::test_program test_program(
-        "mock", fs::path("the/test-program"), fs::path("root"), "suite", md);
-    const model::test_case test_case("abc", md);
-    model::test_cases_map test_cases;
-    test_cases.insert(model::test_cases_map::value_type(
-        test_case.name(), test_case));
-    test_program.set_test_cases(test_cases);
+    const model::test_program test_program = model::test_program_builder(
+        "mock", fs::path("the/test-program"), fs::path("root"), "suite")
+        .add_test_case("abc", md)
+        .set_metadata(md)
+        .build();
 
     cmdline::ui_mock ui;
     cli::detail::list_test_case(&ui, false, test_program, "abc");
@@ -66,14 +63,10 @@ ATF_TEST_CASE_BODY(list_test_case__no_verbose)
 ATF_TEST_CASE_WITHOUT_HEAD(list_test_case__verbose__no_properties);
 ATF_TEST_CASE_BODY(list_test_case__verbose__no_properties)
 {
-    const model::metadata md = model::metadata_builder().build();
-    model::test_program test_program("mock", fs::path("hello/world"),
-                                     fs::path("root"), "the-suite", md);
-    const model::test_case test_case("my_name", md);
-    model::test_cases_map test_cases;
-    test_cases.insert(model::test_cases_map::value_type(
-        test_case.name(), test_case));
-    test_program.set_test_cases(test_cases);
+    const model::test_program test_program = model::test_program_builder(
+        "mock", fs::path("hello/world"), fs::path("root"), "the-suite")
+        .add_test_case("my_name")
+        .build();
 
     cmdline::ui_mock ui;
     cli::detail::list_test_case(&ui, true, test_program, "my_name");
@@ -91,13 +84,11 @@ ATF_TEST_CASE_BODY(list_test_case__verbose__some_properties)
         .set_description("Some description")
         .set_has_cleanup(true)
         .build();
-    model::test_program test_program("mock", fs::path("hello/world"),
-                                     fs::path("root"), "the-suite", md);
-    const model::test_case test_case("my_name", md);
-    model::test_cases_map test_cases;
-    test_cases.insert(model::test_cases_map::value_type(
-        test_case.name(), test_case));
-    test_program.set_test_cases(test_cases);
+    const model::test_program test_program = model::test_program_builder(
+        "mock", fs::path("hello/world"), fs::path("root"), "the-suite")
+        .add_test_case("my_name", md)
+        .set_metadata(md)
+        .build();
 
     cmdline::ui_mock ui;
     cli::detail::list_test_case(&ui, true, test_program, "my_name");

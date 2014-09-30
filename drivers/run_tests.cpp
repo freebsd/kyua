@@ -118,7 +118,6 @@ run_test_program(model::test_program& test_program,
     LI(F("Processing test program '%s'") % test_program.relative_path());
     const int64_t test_program_id = tx.put_test_program(test_program);
 
-    runner::load_test_cases(test_program);
     const model::test_cases_map& test_cases = test_program.test_cases();
     for (model::test_cases_map::const_iterator iter = test_cases.begin();
          iter != test_cases.end(); iter++) {

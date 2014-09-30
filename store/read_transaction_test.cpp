@@ -35,7 +35,6 @@
 
 #include "model/context.hpp"
 #include "model/metadata.hpp"
-#include "model/test_case.hpp"
 #include "model/test_program.hpp"
 #include "model/test_result.hpp"
 #include "store/exceptions.hpp"
@@ -196,40 +195,29 @@ ATF_TEST_CASE_BODY(get_results__many)
 
     atf::utils::create_file("unused.txt", "unused file\n");
 
-    model::test_program test_program_1(
-        "plain", fs::path("a/prog1"), fs::path("/the/root"), "suite1",
-        model::metadata_builder().build());
-    model::test_case test_case_1("main", model::metadata_builder().build());
-    model::test_cases_map test_cases_1;
-    test_cases_1.insert(model::test_cases_map::value_type(
-        test_case_1.name(), test_case_1));
-    test_program_1.set_test_cases(test_cases_1);
+    const model::test_program test_program_1 = model::test_program_builder(
+        "plain", fs::path("a/prog1"), fs::path("/the/root"), "suite1")
+        .add_test_case("main")
+        .build();
     const model::test_result result_1(model::test_result_passed);
     {
         const int64_t tp_id = tx.put_test_program(test_program_1);
-        const int64_t tc_id = tx.put_test_case(test_program_1,
-                                               test_case_1.name(), tp_id);
+        const int64_t tc_id = tx.put_test_case(test_program_1, "main", tp_id);
         atf::utils::create_file("prog1.out", "stdout of prog1\n");
         tx.put_test_case_file("__STDOUT__", fs::path("prog1.out"), tc_id);
         tx.put_test_case_file("unused.txt", fs::path("unused.txt"), tc_id);
         tx.put_result(result_1, tc_id, start_time1, end_time1);
     }
 
-    model::test_program test_program_2(
-        "plain", fs::path("b/prog2"), fs::path("/the/root"), "suite2",
-        model::metadata_builder().build());
-    model::test_case test_case_2(
-        "main", model::metadata_builder().build());
-    model::test_cases_map test_cases_2;
-    test_cases_2.insert(model::test_cases_map::value_type(
-        test_case_2.name(), test_case_2));
-    test_program_2.set_test_cases(test_cases_2);
+    const model::test_program test_program_2 = model::test_program_builder(
+        "plain", fs::path("b/prog2"), fs::path("/the/root"), "suite2")
+        .add_test_case("main")
+        .build();
     const model::test_result result_2(model::test_result_failed,
                                       "Some text");
     {
         const int64_t tp_id = tx.put_test_program(test_program_2);
-        const int64_t tc_id = tx.put_test_case(test_program_2,
-                                               test_case_2.name(), tp_id);
+        const int64_t tc_id = tx.put_test_case(test_program_2, "main", tp_id);
         atf::utils::create_file("prog2.err", "stderr of prog2\n");
         tx.put_test_case_file("__STDERR__", fs::path("prog2.err"), tc_id);
         tx.put_test_case_file("unused.txt", fs::path("unused.txt"), tc_id);

@@ -258,14 +258,10 @@ public:
     model::test_result
     run(runner::test_case_hooks& hooks) const
     {
-        model::test_program test_program(
-            "atf", _binary_path, _root, "the-suite",
-            model::metadata_builder().build());
-        const model::test_case test_case(_name, _mdbuilder.build());
-        model::test_cases_map test_cases;
-        test_cases.insert(model::test_cases_map::value_type(
-            test_case.name(), test_case));
-        test_program.set_test_cases(test_cases);
+        const model::test_program test_program = model::test_program_builder(
+            "atf", _binary_path, _root, "the-suite")
+            .add_test_case(_name, _mdbuilder.build())
+            .build();
 
         const fs::path workdir("work");
         fs::mkdir(workdir, 0755);
@@ -382,14 +378,11 @@ public:
         model::metadata_builder mdbuilder;
         if (_timeout)
             mdbuilder.set_timeout(_timeout.get());
-        model::test_program test_program(
+        runner::lazy_test_program test_program(
             "plain", _binary_path, _root, "unit-tests", mdbuilder.build());
-        runner::load_test_cases(test_program);
-        const model::test_cases_map& tcs = test_program.test_cases();
         fetch_output_hooks fetcher;
         const model::test_result result = runner::run_test_case(
-            &test_program, tcs.begin()->first,
-            user_config, fetcher, fs::path("."));
+            &test_program, "main", user_config, fetcher, fs::path("."));
         std::cerr << "Result is: " << result << '\n';
         return result;
     }
@@ -449,10 +442,9 @@ ATF_TEST_CASE_BODY(current_context)
 ATF_TEST_CASE_WITHOUT_HEAD(load_test_cases__get);
 ATF_TEST_CASE_BODY(load_test_cases__get)
 {
-    model::test_program test_program(
+    const runner::lazy_test_program test_program(
         "plain", fs::path("non-existent"), fs::path("."), "suite-name",
         model::metadata_builder().build());
-    runner::load_test_cases(test_program);
     const model::test_cases_map& test_cases = test_program.test_cases();
     ATF_REQUIRE_EQ(1, test_cases.size());
     ATF_REQUIRE_EQ("main", test_cases.begin()->first);
@@ -462,16 +454,14 @@ ATF_TEST_CASE_BODY(load_test_cases__get)
 ATF_TEST_CASE_WITHOUT_HEAD(load_test_cases__some);
 ATF_TEST_CASE_BODY(load_test_cases__some)
 {
-    model::test_program test_program(
+    runner::lazy_test_program test_program(
         "plain", fs::path("non-existent"), fs::path("."), "suite-name",
         model::metadata_builder().build());
 
-    model::test_cases_map exp_test_cases;
     const model::test_case test_case("main", model::metadata_builder().build());
+    model::test_cases_map exp_test_cases;
     exp_test_cases.insert(model::test_cases_map::value_type("main", test_case));
-    test_program.set_test_cases(exp_test_cases);
 
-    runner::load_test_cases(test_program);
     ATF_REQUIRE_EQ(exp_test_cases, test_program.test_cases());
 }
 
@@ -479,12 +469,11 @@ ATF_TEST_CASE_BODY(load_test_cases__some)
 ATF_TEST_CASE_WITHOUT_HEAD(load_test_cases__tester_fails);
 ATF_TEST_CASE_BODY(load_test_cases__tester_fails)
 {
-    model::test_program test_program(
+    runner::lazy_test_program test_program(
         "mock", fs::path("non-existent"), fs::path("."), "suite-name",
         model::metadata_builder().build());
     create_mock_tester_signal(SIGSEGV);
 
-    runner::load_test_cases(test_program);
     const model::test_cases_map& test_cases = test_program.test_cases();
     ATF_REQUIRE_EQ(1, test_cases.size());
 

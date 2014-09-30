@@ -33,7 +33,6 @@
 
 #include "model/context.hpp"
 #include "model/metadata.hpp"
-#include "model/test_case.hpp"
 #include "model/test_program.hpp"
 #include "model/test_result.hpp"
 #include "store/migrate.hpp"
@@ -128,82 +127,48 @@ check_action_2(const fs::path& dbpath)
 
     ATF_REQUIRE_EQ(context, transaction.get_context());
 
-    model::test_program test_program_1(
+    const model::test_program test_program_1 = model::test_program_builder(
         "plain", fs::path("foo_test"), fs::path("/test/suite/root"),
-        "suite-name", model::metadata_builder().build());
-    {
-        const model::test_case test_case_1(
-            "main",
-            model::metadata_builder().build());
-        model::test_cases_map test_cases;
-        test_cases.insert(model::test_cases_map::value_type(
-            "main",
-            model::test_case(
-                "main", model::metadata_builder().build())));
-        test_cases.insert(model::test_cases_map::value_type(test_case_1.name(),
-                                                            test_case_1));
-        test_program_1.set_test_cases(test_cases);
-    }
+        "suite-name")
+        .add_test_case("main")
+        .build();
     const model::test_result result_1(model::test_result_passed);
 
-    model::test_program test_program_2(
+    const model::test_program test_program_2 = model::test_program_builder(
         "plain", fs::path("subdir/another_test"), fs::path("/test/suite/root"),
-        "subsuite-name", model::metadata_builder()
-        .set_timeout(datetime::delta(10, 0)).build());
-    {
-        const model::test_case test_case_2(
-            "main", model::metadata_builder()
-            .set_timeout(datetime::delta(10, 0)).build());
-        model::test_cases_map test_cases;
-        test_cases.insert(model::test_cases_map::value_type(test_case_2.name(),
-                                                            test_case_2));
-        test_program_2.set_test_cases(test_cases);
-    }
+        "subsuite-name")
+        .add_test_case("main",
+                       model::metadata_builder()
+                       .set_timeout(datetime::delta(10, 0))
+                       .build())
+        .set_metadata(model::metadata_builder()
+                      .set_timeout(datetime::delta(10, 0))
+                      .build())
+        .build();
     const model::test_result result_2(model::test_result_failed,
                                       "Exited with code 1");
 
-    model::test_program test_program_3(
+    const model::test_program test_program_3 = model::test_program_builder(
         "plain", fs::path("subdir/bar_test"), fs::path("/test/suite/root"),
-        "subsuite-name", model::metadata_builder().build());
-    {
-        const model::test_case test_case_3(
-            "main",
-            model::metadata_builder().build());
-        model::test_cases_map test_cases;
-        test_cases.insert(model::test_cases_map::value_type(test_case_3.name(),
-                                                            test_case_3));
-        test_program_3.set_test_cases(test_cases);
-    }
+        "subsuite-name")
+        .add_test_case("main")
+        .build();
     const model::test_result result_3(model::test_result_broken,
                                       "Received signal 1");
 
-    model::test_program test_program_4(
+    const model::test_program test_program_4 = model::test_program_builder(
         "plain", fs::path("top_test"), fs::path("/test/suite/root"),
-        "suite-name", model::metadata_builder().build());
-    {
-        const model::test_case test_case_4(
-            "main",
-            model::metadata_builder().build());
-        model::test_cases_map test_cases;
-        test_cases.insert(model::test_cases_map::value_type(test_case_4.name(),
-                                                            test_case_4));
-        test_program_4.set_test_cases(test_cases);
-    }
+        "suite-name")
+        .add_test_case("main")
+        .build();
     const model::test_result result_4(model::test_result_expected_failure,
                                       "Known bug");
 
-    model::test_program test_program_5(
+    const model::test_program test_program_5 = model::test_program_builder(
         "plain", fs::path("last_test"), fs::path("/test/suite/root"),
-        "suite-name", model::metadata_builder().build());
-    {
-        const model::test_case test_case_5(
-            "main",
-            model::metadata_builder().build());
-        model::test_cases_map test_cases;
-        test_cases.insert(model::test_cases_map::value_type(test_case_5.name(),
-                                                            test_case_5));
-        test_program_5.set_test_cases(test_cases);
-    }
+        "suite-name")
+        .add_test_case("main")
+        .build();
     const model::test_result result_5(model::test_result_skipped,
                                       "Does not apply");
 
@@ -273,70 +238,52 @@ check_action_3(const fs::path& dbpath)
 
     ATF_REQUIRE_EQ(context, transaction.get_context());
 
-    model::test_program test_program_6(
+    const model::test_program test_program_6 = model::test_program_builder(
         "atf", fs::path("complex_test"), fs::path("/usr/tests"),
-        "suite-name", model::metadata_builder().build());
-    {
-        const model::test_case test_case_6(
-            "this_passes",
-            model::metadata_builder().build());
-        const model::test_case test_case_7(
-            "this_fails",
-            model::metadata_builder()
-            .set_description("Test description")
-            .set_has_cleanup(true)
-            .set_required_memory(units::bytes(128))
-            .set_required_user("root").build());
-        const model::test_case test_case_8(
-            "this_skips",
-            model::metadata_builder()
-            .add_allowed_architecture("powerpc")
-            .add_allowed_architecture("x86_64")
-            .add_allowed_platform("amd64")
-            .add_allowed_platform("macppc")
-            .add_required_config("X-foo")
-            .add_required_config("unprivileged_user")
-            .add_required_file(fs::path("/the/data/file"))
-            .add_required_program(fs::path("/bin/ls"))
-            .add_required_program(fs::path("cp"))
-            .set_description("Test explanation")
-            .set_has_cleanup(true)
-            .set_required_memory(units::bytes(512))
-            .set_required_user("unprivileged")
-            .set_timeout(datetime::delta(600, 0))
-            .build());
-        model::test_cases_map test_cases;
-        test_cases.insert(model::test_cases_map::value_type(test_case_6.name(),
-                                                            test_case_6));
-        test_cases.insert(model::test_cases_map::value_type(test_case_7.name(),
-                                                            test_case_7));
-        test_cases.insert(model::test_cases_map::value_type(test_case_8.name(),
-                                                            test_case_8));
-        test_program_6.set_test_cases(test_cases);
-    }
+        "suite-name")
+        .add_test_case("this_passes")
+        .add_test_case("this_fails",
+                       model::metadata_builder()
+                       .set_description("Test description")
+                       .set_has_cleanup(true)
+                       .set_required_memory(units::bytes(128))
+                       .set_required_user("root")
+                       .build())
+        .add_test_case("this_skips",
+                       model::metadata_builder()
+                       .add_allowed_architecture("powerpc")
+                       .add_allowed_architecture("x86_64")
+                       .add_allowed_platform("amd64")
+                       .add_allowed_platform("macppc")
+                       .add_required_config("X-foo")
+                       .add_required_config("unprivileged_user")
+                       .add_required_file(fs::path("/the/data/file"))
+                       .add_required_program(fs::path("/bin/ls"))
+                       .add_required_program(fs::path("cp"))
+                       .set_description("Test explanation")
+                       .set_has_cleanup(true)
+                       .set_required_memory(units::bytes(512))
+                       .set_required_user("unprivileged")
+                       .set_timeout(datetime::delta(600, 0))
+                       .build())
+        .build();
     const model::test_result result_6(model::test_result_passed);
     const model::test_result result_7(model::test_result_failed,
                                       "Some reason");
     const model::test_result result_8(model::test_result_skipped,
                                       "Another reason");
 
-    model::test_program test_program_7(
+    const model::test_program test_program_7 = model::test_program_builder(
         "atf", fs::path("simple_test"), fs::path("/usr/tests"),
-        "subsuite-name", model::metadata_builder().build());
-    {
-        const model::test_case test_case_9(
-            "main",
-            model::metadata_builder()
-            .set_description("More text")
-            .set_has_cleanup(true)
-            .set_required_memory(units::bytes(128))
-            .set_required_user("unprivileged")
-            .build());
-        model::test_cases_map test_cases;
-        test_cases.insert(model::test_cases_map::value_type(test_case_9.name(),
-                                                            test_case_9));
-        test_program_7.set_test_cases(test_cases);
-    }
+        "subsuite-name")
+        .add_test_case("main",
+                       model::metadata_builder()
+                       .set_description("More text")
+                       .set_has_cleanup(true)
+                       .set_required_memory(units::bytes(128))
+                       .set_required_user("unprivileged")
+                       .build())
+        .build();
     const model::test_result result_9(model::test_result_failed,
                                       "Exited with code 1");
 
@@ -399,43 +346,30 @@ check_action_4(const fs::path& dbpath)
 
     ATF_REQUIRE_EQ(context, transaction.get_context());
 
-    model::test_program test_program_8(
+    const model::test_program test_program_8 = model::test_program_builder(
         "plain", fs::path("subdir/another_test"), fs::path("/usr/tests"),
-        "subsuite-name", model::metadata_builder()
-        .set_timeout(datetime::delta(10, 0)).build());
-    {
-        const model::test_case test_case_10(
-            "main",
-            model::metadata_builder()
-            .set_timeout(datetime::delta(10, 0)).build());
-        model::test_cases_map test_cases;
-        test_cases.insert(model::test_cases_map::value_type(test_case_10.name(),
-                                                            test_case_10));
-        test_program_8.set_test_cases(test_cases);
-    }
+        "subsuite-name")
+        .add_test_case("main",
+                       model::metadata_builder()
+                       .set_timeout(datetime::delta(10, 0))
+                       .build())
+        .set_metadata(model::metadata_builder()
+                      .set_timeout(datetime::delta(10, 0))
+                      .build())
+        .build();
     const model::test_result result_10(model::test_result_failed,
                                        "Exit failure");
 
-    model::test_program test_program_9(
+    const model::test_program test_program_9 = model::test_program_builder(
         "atf", fs::path("complex_test"), fs::path("/usr/tests"),
-        "suite-name", model::metadata_builder().build());
-    {
-        const model::test_case test_case_11(
-            "this_passes",
-            model::metadata_builder().build());
-        const model::test_case test_case_12(
-            "this_fails",
-            model::metadata_builder()
-            .set_description("Test description")
-            .set_required_user("root")
-            .build());
-        model::test_cases_map test_cases;
-        test_cases.insert(model::test_cases_map::value_type(test_case_11.name(),
-                                                            test_case_11));
-        test_cases.insert(model::test_cases_map::value_type(test_case_12.name(),
-                                                            test_case_12));
-        test_program_9.set_test_cases(test_cases);
-    }
+        "suite-name")
+        .add_test_case("this_passes")
+        .add_test_case("this_fails",
+                       model::metadata_builder()
+                       .set_description("Test description")
+                       .set_required_user("root")
+                       .build())
+        .build();
     const model::test_result result_11(model::test_result_passed);
     const model::test_result result_12(model::test_result_failed,
                                        "Some reason");

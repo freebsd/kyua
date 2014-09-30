@@ -37,7 +37,6 @@
 #include "model/test_result.hpp"
 #include "utils/format/containers.ipp"
 #include "utils/format/macros.hpp"
-#include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 #include "utils/text/operations.ipp"
 
@@ -45,7 +44,6 @@ namespace fs = utils::fs;
 namespace text = utils::text;
 
 using utils::none;
-using utils::optional;
 
 
 /// Internal implementation of a test_program.
@@ -65,8 +63,10 @@ struct model::test_program::impl {
     /// Metadata of the test program.
     model::metadata md;
 
-    /// List of test cases in the test program; lazily initialized.
-    optional< model::test_cases_map > test_cases;
+    /// List of test cases in the test program.
+    ///
+    /// Must be queried via the test_program::test_cases() method.
+    model::test_cases_map test_cases;
 
     /// Constructor.
     ///
@@ -76,34 +76,28 @@ struct model::test_program::impl {
     /// \param test_suite_name_ The name of the test suite this program
     ///     belongs to.
     /// \param md_ Metadata of the test program.
+    /// \param test_cases_ The collection of test cases in the test program.
     impl(const std::string& interface_name_, const fs::path& binary_,
          const fs::path& root_, const std::string& test_suite_name_,
-         const model::metadata& md_) :
+         const model::metadata& md_, const model::test_cases_map& test_cases_) :
         interface_name(interface_name_),
         binary(binary_),
         root(root_),
         test_suite_name(test_suite_name_),
-        md(md_)
+        md(md_),
+        test_cases(test_cases_)
     {
         PRE_MSG(!binary.is_absolute(),
                 F("The program '%s' must be relative to the root of the test "
                   "suite '%s'") % binary % root);
-    }
 
-    /// Equality comparator.
-    ///
-    /// \param other The other object to compare this one to.
-    ///
-    /// \return True if this object and other are equal; false otherwise.
-    bool
-    operator==(const impl& other) const
-    {
-        return (interface_name == other.interface_name &&
-                binary == other.binary &&
-                root == other.root &&
-                test_suite_name == other.test_suite_name &&
-                md == other.md &&
-                test_cases == other.test_cases);
+        for (model::test_cases_map::const_iterator iter = test_cases.begin();
+             iter != test_cases.end(); ++iter) {
+            PRE_MSG((*iter).first == (*iter).second.name(),
+                    F("The test case '%s' has been registered with the "
+                      "non-matching name '%s'") %
+                    (*iter).first % (*iter).second.name());
+        }
     }
 };
 
@@ -115,12 +109,15 @@ struct model::test_program::impl {
 /// \param root_ The root of the test suite containing the test program.
 /// \param test_suite_name_ The name of the test suite this program belongs to.
 /// \param md_ Metadata of the test program.
+/// \param test_cases_ The collection of test cases in the test program.
 model::test_program::test_program(const std::string& interface_name_,
-                                   const fs::path& binary_,
-                                   const fs::path& root_,
-                                   const std::string& test_suite_name_,
-                                   const model::metadata& md_) :
-    _pimpl(new impl(interface_name_, binary_, root_, test_suite_name_, md_))
+                                  const fs::path& binary_,
+                                  const fs::path& root_,
+                                  const std::string& test_suite_name_,
+                                  const model::metadata& md_,
+                                  const model::test_cases_map& test_cases_) :
+    _pimpl(new impl(interface_name_, binary_, root_, test_suite_name_, md_,
+                    test_cases_))
 {
 }
 
@@ -203,61 +200,23 @@ model::test_program::get_metadata(void) const
 const model::test_case&
 model::test_program::find(const std::string& name) const
 {
-    if (has_test_cases()) {
-        const test_cases_map& tcs = test_cases();
-        const test_cases_map::const_iterator iter = tcs.find(name);
-        if (iter == tcs.end())
-            throw not_found_error(F("Unknown test case %s in test program %s") %
-                                  name % relative_path());
-        return (*iter).second;
-    } else {
+    const test_cases_map& tcs = test_cases();
+
+    const test_cases_map::const_iterator iter = tcs.find(name);
+    if (iter == tcs.end())
         throw not_found_error(F("Unknown test case %s in test program %s") %
                               name % relative_path());
-    }
+    return (*iter).second;
 }
 
 
 /// Gets the list of test cases from the test program.
 ///
-/// \pre The list must have been set before with set_test_cases().
-///
 /// \return The list of test cases provided by the test program.
 const model::test_cases_map&
 model::test_program::test_cases(void) const
 {
-    PRE(_pimpl->test_cases);
-    return _pimpl->test_cases.get();
-}
-
-
-/// Checks to see if the test cases have been yet set.
-///
-/// \return True if set_test_cases() has been invoked.
-bool
-model::test_program::has_test_cases(void) const
-{
     return _pimpl->test_cases;
-}
-
-
-/// Sets the collection of test cases included in this test program.
-///
-/// This function is provided so that when we load test programs from the
-/// database we can populate them with the test cases they include.  We don't
-/// want such test programs to be executed to gather this information.
-///
-/// We cannot provide this collection of tests in the constructor of the test
-/// program because the test cases have to point to their test programs.
-///
-/// \pre The test program must not have attempted to load its test cases yet.
-///     I.e. test_cases() has not been called.
-///
-/// \param test_cases_ The test cases to add to this test program.
-void
-model::test_program::set_test_cases(const model::test_cases_map& test_cases_)
-{
-    PRE(!_pimpl->test_cases);
-    _pimpl->test_cases = test_cases_;
 }
 
 
@@ -269,7 +228,13 @@ model::test_program::set_test_cases(const model::test_cases_map& test_cases_)
 bool
 model::test_program::operator==(const test_program& other) const
 {
-    return _pimpl == other._pimpl || *_pimpl == *other._pimpl;
+    return _pimpl == other._pimpl || (
+        _pimpl->interface_name == other._pimpl->interface_name &&
+        _pimpl->binary == other._pimpl->binary &&
+        _pimpl->root == other._pimpl->root &&
+        _pimpl->test_suite_name == other._pimpl->test_suite_name &&
+        _pimpl->md == other._pimpl->md &&
+        test_cases() == other.test_cases());
 }
 
 
@@ -303,4 +268,116 @@ model::operator<<(std::ostream& output, const test_program& object)
         % object.get_metadata()
         % object.test_cases();
     return output;
+}
+
+
+/// Internal implementation of the test_program_builder class.
+struct model::test_program_builder::impl {
+    /// Partially-constructed program with only the required properties.
+    model::test_program prototype;
+
+    /// Optional metadata for the test program.
+    model::metadata metadata;
+
+    /// Collection of test cases.
+    model::test_cases_map test_cases;
+
+    /// Whether we have created a test_program object or not.
+    bool built;
+
+    /// Constructor.
+    impl(const model::test_program& prototype_) :
+        prototype(prototype_),
+        metadata(model::metadata_builder().build()),
+        built(false)
+    {
+    }
+};
+
+
+/// Constructs a new builder with non-optional values.
+///
+/// \param interface_name_ Name of the test program interface.
+/// \param binary_ The name of the test program binary relative to root_.
+/// \param root_ The root of the test suite containing the test program.
+/// \param test_suite_name_ The name of the test suite this program belongs to.
+model::test_program_builder::test_program_builder(
+    const std::string& interface_name_, const fs::path& binary_,
+    const fs::path& root_, const std::string& test_suite_name_) :
+    _pimpl(new impl(model::test_program(interface_name_, binary_, root_,
+                                        test_suite_name_,
+                                        model::metadata_builder().build(),
+                                        model::test_cases_map())))
+{
+}
+
+
+/// Destructor.
+model::test_program_builder::~test_program_builder(void)
+{
+}
+
+
+/// Accumulates an additional test case with default metadata.
+///
+/// \param test_case_name The name of the test case.
+///
+/// \return A reference to this builder.
+model::test_program_builder&
+model::test_program_builder::add_test_case(const std::string& test_case_name)
+{
+    return add_test_case(test_case_name, model::metadata_builder().build());
+}
+
+
+/// Accumulates an additional test case.
+///
+/// \param test_case_name The name of the test case.
+/// \param metadata The test case metadata.
+///
+/// \return A reference to this builder.
+model::test_program_builder&
+model::test_program_builder::add_test_case(const std::string& test_case_name,
+                                           const model::metadata& metadata)
+{
+    const model::test_case test_case(test_case_name, metadata);
+    PRE_MSG(_pimpl->test_cases.find(test_case_name) == _pimpl->test_cases.end(),
+            F("Attempted to re-register test case '%s'") % test_case_name);
+    _pimpl->test_cases.insert(model::test_cases_map::value_type(
+        test_case_name, test_case));
+    return *this;
+}
+
+
+/// Sets the test program metadata.
+///
+/// \return metadata The metadata for the test program.
+///
+/// \return A reference to this builder.
+model::test_program_builder&
+model::test_program_builder::set_metadata(const model::metadata& metadata)
+{
+    _pimpl->metadata = metadata;
+    return *this;
+}
+
+
+/// Creates a new test_program object.
+///
+/// \pre This has not yet been called.  We only support calling this function
+/// once.
+///
+/// \return The constructed test_program object.
+model::test_program
+model::test_program_builder::build(void) const
+{
+    PRE(!_pimpl->built);
+    _pimpl->built = true;
+
+    return test_program(_pimpl->prototype.interface_name(),
+                        _pimpl->prototype.relative_path(),
+                        _pimpl->prototype.root(),
+                        _pimpl->prototype.test_suite_name(),
+                        _pimpl->metadata,
+                        _pimpl->test_cases);
 }

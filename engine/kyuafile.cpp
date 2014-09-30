@@ -38,6 +38,7 @@
 #include <lutok/state.ipp>
 
 #include "engine/exceptions.hpp"
+#include "engine/runner.hpp"
 #include "engine/testers.hpp"
 #include "model/metadata.hpp"
 #include "model/test_program.hpp"
@@ -52,6 +53,7 @@
 
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
+namespace runner = engine::runner;
 
 using utils::none;
 using utils::optional;
@@ -314,9 +316,9 @@ public:
                                      path);
 
         _test_programs.push_back(model::test_program_ptr(
-            new model::test_program(interface, path, _build_root,
-                                    get_test_suite(test_suite_override),
-                                    metadata)));
+            new runner::lazy_test_program(interface, path, _build_root,
+                                          get_test_suite(test_suite_override),
+                                          metadata)));
     }
 
     /// Callback for the Kyuafile test_suite() function.

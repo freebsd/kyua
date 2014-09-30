@@ -33,7 +33,6 @@
 
 #include "model/context.hpp"
 #include "model/metadata.hpp"
-#include "model/test_case.hpp"
 #include "model/test_program.hpp"
 #include "store/read_backend.hpp"
 #include "store/read_transaction.hpp"
@@ -112,12 +111,6 @@ ATF_TEST_CASE_HEAD(get_put_test_case__ok)
 }
 ATF_TEST_CASE_BODY(get_put_test_case__ok)
 {
-    model::test_program test_program(
-        "atf", fs::path("the/binary"), fs::path("/some/root"), "the-suite",
-        model::metadata_builder().build());
-
-    const model::test_case test_case1("tc1", model::metadata_builder().build());
-
     const model::metadata md2 = model::metadata_builder()
         .add_allowed_architecture("powerpc")
         .add_allowed_architecture("x86_64")
@@ -138,16 +131,12 @@ ATF_TEST_CASE_BODY(get_put_test_case__ok)
         .set_required_user("root")
         .set_timeout(datetime::delta(520, 0))
         .build();
-    const model::test_case test_case2("tc2", md2);
 
-    {
-        model::test_cases_map test_cases;
-        test_cases.insert(model::test_cases_map::value_type(
-             test_case1.name(), test_case1));
-        test_cases.insert(model::test_cases_map::value_type(
-             test_case2.name(), test_case2));
-        test_program.set_test_cases(test_cases);
-    }
+    const model::test_program test_program = model::test_program_builder(
+        "atf", fs::path("the/binary"), fs::path("/some/root"), "the-suite")
+        .add_test_case("tc1")
+        .add_test_case("tc2", md2)
+        .build();
 
     int64_t test_program_id;
     {
@@ -157,8 +146,8 @@ ATF_TEST_CASE_BODY(get_put_test_case__ok)
 
         store::write_transaction tx = backend.start_write();
         test_program_id = tx.put_test_program(test_program);
-        tx.put_test_case(test_program, test_case1.name(), test_program_id);
-        tx.put_test_case(test_program, test_case2.name(), test_program_id);
+        tx.put_test_case(test_program, "tc1", test_program_id);
+        tx.put_test_case(test_program, "tc2", test_program_id);
         tx.commit();
     }
 

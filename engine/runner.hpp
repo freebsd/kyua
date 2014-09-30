@@ -33,13 +33,30 @@
 #define ENGINE_RUNNER_HPP
 
 #include "model/context_fwd.hpp"
-#include "model/test_program_fwd.hpp"
+#include "model/test_program.hpp"
 #include "model/test_result_fwd.hpp"
 #include "utils/config/tree.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/shared_ptr.hpp"
 
 namespace engine {
 namespace runner {
+
+
+/// Implementation of a test program with lazy loading of test cases.
+class lazy_test_program : public model::test_program {
+    struct impl;
+
+    /// Pointer to the shared internal implementation.
+    std::shared_ptr< impl > _pimpl;
+
+public:
+    lazy_test_program(const std::string&, const utils::fs::path&,
+                      const utils::fs::path&, const std::string&,
+                      const model::metadata&);
+
+    const model::test_cases_map& test_cases(void) const;
+};
 
 
 /// Hooks to introspect the execution of a test case.

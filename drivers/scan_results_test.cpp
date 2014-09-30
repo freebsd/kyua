@@ -150,19 +150,14 @@ populate_results_file(const char* db_name, const int count)
     tx.put_context(context);
 
     for (int i = 0; i < count; i++) {
-        model::test_program test_program(
+        model::test_program_builder test_program_builder(
             "fake", fs::path(F("dir/prog_%s") % i), fs::path("/root"),
-            F("suite_%s") % i, model::metadata_builder().build());
-        const int64_t tp_id = tx.put_test_program(test_program);
-
-        model::test_cases_map test_cases;
+            F("suite_%s") % i);
         for (int j = 0; j < count; j++) {
-            const model::test_case test_case(
-                F("case_%s") % j, model::metadata_builder().build());
-            test_cases.insert(model::test_cases_map::value_type(
-                test_case.name(), test_case));
+            test_program_builder.add_test_case(F("case_%s") % j);
         }
-        test_program.set_test_cases(test_cases);
+        const model::test_program test_program = test_program_builder.build();
+        const int64_t tp_id = tx.put_test_program(test_program);
 
         for (int j = 0; j < count; j++) {
             const model::test_result result(model::test_result_skipped,

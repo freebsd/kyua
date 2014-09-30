@@ -118,23 +118,20 @@ add_tests(store::write_transaction& tx,
           const std::vector< model::test_result >& results,
           const bool with_metadata, const bool with_output)
 {
-    model::test_program test_program(
-        "plain", fs::path(prog), fs::path("/root"), "suite",
-        model::metadata_builder().build());
-    const int64_t tp_id = tx.put_test_program(test_program);
+    model::test_program_builder test_program_builder(
+        "plain", fs::path(prog), fs::path("/root"), "suite");
 
-    model::test_cases_map test_cases;
     for (std::size_t j = 0; j < results.size(); j++) {
         model::metadata_builder builder;
         if (with_metadata) {
             builder.set_description("Textual description");
             builder.set_timeout(datetime::delta(5678, 0));
         }
-        const model::test_case test_case(F("t%s") % j, builder.build());
-        test_cases.insert(model::test_cases_map::value_type(
-            test_case.name(), test_case));
+        test_program_builder.add_test_case(F("t%s") % j, builder.build());
     }
-    test_program.set_test_cases(test_cases);
+
+    const model::test_program test_program = test_program_builder.build();
+    const int64_t tp_id = tx.put_test_program(test_program);
 
     for (std::size_t j = 0; j < results.size(); j++) {
         const int64_t tc_id = tx.put_test_case(test_program, F("t%s") % j,
@@ -161,9 +158,9 @@ add_tests(store::write_transaction& tx,
 ATF_TEST_CASE_WITHOUT_HEAD(junit_classname);
 ATF_TEST_CASE_BODY(junit_classname)
 {
-    const model::test_program test_program(
-        "plain", fs::path("dir1/dir2/program"), fs::path("/root"), "suite",
-        model::metadata_builder().build());
+    const model::test_program test_program = model::test_program_builder(
+        "plain", fs::path("dir1/dir2/program"), fs::path("/root"), "suite")
+        .build();
 
     ATF_REQUIRE_EQ("dir1.dir2.program", drivers::junit_classname(test_program));
 }

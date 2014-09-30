@@ -41,6 +41,7 @@
 #include "model/metadata_fwd.hpp"
 #include "model/test_case_fwd.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/noncopyable.hpp"
 #include "utils/shared_ptr.hpp"
 
 namespace model {
@@ -56,8 +57,8 @@ class test_program {
 public:
     test_program(const std::string&, const utils::fs::path&,
                  const utils::fs::path&, const std::string&,
-                 const model::metadata&);
-    ~test_program(void);
+                 const model::metadata&, const model::test_cases_map&);
+    virtual ~test_program(void);
 
     const std::string& interface_name(void) const;
     const utils::fs::path& root(void) const;
@@ -67,11 +68,7 @@ public:
     const model::metadata& get_metadata(void) const;
 
     const model::test_case& find(const std::string&) const;
-    const model::test_cases_map& test_cases(void) const;
-    // TODO(jmmv): These are artifacts of the way this class used to work; see
-    // engine::test_program.  Need to remove these.
-    bool has_test_cases(void) const;
-    void set_test_cases(const model::test_cases_map&);
+    virtual const model::test_cases_map& test_cases(void) const;
 
     bool operator==(const test_program&) const;
     bool operator!=(const test_program&) const;
@@ -79,6 +76,28 @@ public:
 
 
 std::ostream& operator<<(std::ostream&, const test_program&);
+
+
+/// Builder for a test_program object.
+class test_program_builder : utils::noncopyable {
+    struct impl;
+
+    /// Pointer to the shared internal implementation.
+    std::auto_ptr< impl > _pimpl;
+
+public:
+    test_program_builder(const std::string&, const utils::fs::path&,
+                         const utils::fs::path&, const std::string&);
+    ~test_program_builder(void);
+
+    test_program_builder& add_test_case(const std::string&);
+    test_program_builder& add_test_case(const std::string&,
+                                        const model::metadata&);
+
+    test_program_builder& set_metadata(const model::metadata&);
+
+    test_program build(void) const;
+};
 
 
 }  // namespace model
