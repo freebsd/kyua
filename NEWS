@@ -7,6 +7,11 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   their output) to 'report'.  This is via a new '--verbose' flag which
   replaces the previous '--show-context'.
 
+* Added support to specify the amount of physical disk space required
+  by a test case.  This is in the form of a new "required_disk_space"
+  metadata property, which can also be provided by ATF test cases as
+  "require.diskspace".
+
 * Issue 49: Extended 'report' to support test case filters as
   command-line arguments.  Combined with '--verbose', this allows
   inspecting the details of a test case failure after execution.

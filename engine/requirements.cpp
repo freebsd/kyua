@@ -32,7 +32,6 @@
 #include "model/types.hpp"
 #include "utils/config/nodes.ipp"
 #include "utils/config/tree.ipp"
-#include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/memory.hpp"
@@ -212,6 +211,30 @@ check_required_memory(const units::bytes& required_memory)
 }
 
 
+/// Checks if the work directory's file system has enough free disk space.
+///
+/// \param required_disk_space Amount of required free disk space, or zero if
+///     not applicable.
+/// \param work_directory Path to where the test case will be run.
+///
+/// \return Empty if the file system where the work directory is hosted has
+/// enough free disk space or an error message otherwise.
+static std::string
+check_required_disk_space(const units::bytes& required_disk_space,
+                          const fs::path& work_directory)
+{
+    if (required_disk_space > 0) {
+        const units::bytes free_disk_space = fs::free_disk_space(
+            work_directory);
+        if (free_disk_space < required_disk_space)
+            return F("Requires %s bytes of free disk space but only %s "
+                     "available") %
+                required_disk_space.format() % free_disk_space.format();
+    }
+    return "";
+}
+
+
 }  // anonymous namespace
 
 
@@ -220,14 +243,14 @@ check_required_memory(const units::bytes& required_memory)
 /// \param md The test metadata.
 /// \param cfg The engine configuration.
 /// \param test_suite Name of the test suite the test belongs to.
-/// \param unused_work_directory Path to where the test case will be run.
+/// \param work_directory Path to where the test case will be run.
 ///
 /// \return A string describing the reason for skipping the test, or empty if
 /// the test should be executed.
 std::string
 engine::check_reqs(const model::metadata& md, const config::tree& cfg,
                    const std::string& test_suite,
-                   const fs::path& UTILS_UNUSED_PARAM(work_directory))
+                   const fs::path& work_directory)
 {
     std::string reason;
 
@@ -256,6 +279,11 @@ engine::check_reqs(const model::metadata& md, const config::tree& cfg,
         return reason;
 
     reason = check_required_memory(md.required_memory());
+    if (!reason.empty())
+        return reason;
+
+    reason = check_required_disk_space(md.required_disk_space(),
+                                       work_directory);
     if (!reason.empty())
         return reason;
 

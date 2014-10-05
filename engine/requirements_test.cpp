@@ -346,6 +346,31 @@ ATF_TEST_CASE_BODY(check_reqs__required_user__unprivileged__fail)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(check_reqs__required_disk_space__ok);
+ATF_TEST_CASE_BODY(check_reqs__required_disk_space__ok)
+{
+    const model::metadata md = model::metadata_builder()
+        .set_required_disk_space(units::bytes::parse("1m"))
+        .build();
+
+    ATF_REQUIRE(engine::check_reqs(md, engine::empty_config(), "",
+                                   fs::path(".")).empty());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(check_reqs__required_disk_space__fail);
+ATF_TEST_CASE_BODY(check_reqs__required_disk_space__fail)
+{
+    const model::metadata md = model::metadata_builder()
+        .set_required_disk_space(units::bytes::parse("1000t"))
+        .build();
+
+    ATF_REQUIRE_MATCH("Requires 1000.00T .*disk space",
+                      engine::check_reqs(md, engine::empty_config(), "",
+                                         fs::path(".")));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(check_reqs__required_files__ok);
 ATF_TEST_CASE_BODY(check_reqs__required_files__ok)
 {
@@ -474,6 +499,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, check_reqs__required_user__unprivileged__same);
     ATF_ADD_TEST_CASE(tcs, check_reqs__required_user__unprivileged__ok);
     ATF_ADD_TEST_CASE(tcs, check_reqs__required_user__unprivileged__fail);
+    ATF_ADD_TEST_CASE(tcs, check_reqs__required_disk_space__ok);
+    ATF_ADD_TEST_CASE(tcs, check_reqs__required_disk_space__fail);
     ATF_ADD_TEST_CASE(tcs, check_reqs__required_files__ok);
     ATF_ADD_TEST_CASE(tcs, check_reqs__required_files__fail);
     ATF_ADD_TEST_CASE(tcs, check_reqs__required_memory__ok);
