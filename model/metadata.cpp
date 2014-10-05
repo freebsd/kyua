@@ -269,6 +269,9 @@ init_tree(config::tree& tree)
     tree.set< config::strings_set_node >("required_configs",
                                          model::strings_set());
 
+    tree.define< bytes_node >("required_disk_space");
+    tree.set< bytes_node >("required_disk_space", units::bytes(0));
+
     tree.define< paths_set_node >("required_files");
     tree.set< paths_set_node >("required_files", model::paths_set());
 
@@ -436,6 +439,16 @@ const model::strings_set&
 model::metadata::required_configs(void) const
 {
     return _pimpl->props.lookup< config::strings_set_node >("required_configs");
+}
+
+
+/// Returns the amount of free disk space required by the test.
+///
+/// \return Number of bytes, or 0 if this does not apply.
+const units::bytes&
+model::metadata::required_disk_space(void) const
+{
+    return _pimpl->props.lookup< bytes_node >("required_disk_space");
 }
 
 
@@ -781,6 +794,21 @@ model::metadata_builder&
 model::metadata_builder::set_required_configs(const model::strings_set& vars)
 {
     set< config::strings_set_node >(_pimpl->props, "required_configs", vars);
+    return *this;
+}
+
+
+/// Sets the amount of free disk space required by the test.
+///
+/// \param bytes Number of bytes.
+///
+/// \return A reference to this builder.
+///
+/// \throw model::error If the value is invalid.
+model::metadata_builder&
+model::metadata_builder::set_required_disk_space(const units::bytes& bytes)
+{
+    set< bytes_node >(_pimpl->props, "required_disk_space", bytes);
     return *this;
 }
 

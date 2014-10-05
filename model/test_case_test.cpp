@@ -181,7 +181,8 @@ ATF_TEST_CASE_BODY(test_case__output)
         "test_case{interface='plain', name='the-name', "
         "metadata=metadata{allowed_architectures='', allowed_platforms='foo', "
         "custom.X-bar='baz', description='', has_cleanup='false', "
-        "required_configs='', required_files='', required_memory='0', "
+        "required_configs='', required_disk_space='0', required_files='', "
+        "required_memory='0', "
         "required_programs='', required_user='', timeout='300'}}",
         str.str());
 }

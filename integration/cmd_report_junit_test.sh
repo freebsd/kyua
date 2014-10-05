@@ -99,6 +99,7 @@ allowed_platforms is empty
 description is empty
 has_cleanup = false
 required_configs is empty
+required_disk_space = 0
 required_files is empty
 required_memory = 0
 required_programs is empty
@@ -128,6 +129,7 @@ allowed_platforms is empty
 description is empty
 has_cleanup = false
 required_configs is empty
+required_disk_space = 0
 required_files is empty
 required_memory = 0
 required_programs is empty
@@ -195,6 +197,7 @@ allowed_platforms is empty
 description is empty
 has_cleanup = false
 required_configs is empty
+required_disk_space = 0
 required_files is empty
 required_memory = 0
 required_programs is empty
@@ -224,6 +227,7 @@ allowed_platforms is empty
 description is empty
 has_cleanup = false
 required_configs is empty
+required_disk_space = 0
 required_files is empty
 required_memory = 0
 required_programs is empty

@@ -65,6 +65,7 @@ static const char* const default_metadata =
     "description is empty\n"
     "has_cleanup = false\n"
     "required_configs is empty\n"
+    "required_disk_space = 0\n"
     "required_files is empty\n"
     "required_memory = 0\n"
     "required_programs is empty\n"
@@ -80,6 +81,7 @@ static const char* const overriden_metadata =
     "description = Textual description\n"
     "has_cleanup = false\n"
     "required_configs is empty\n"
+    "required_disk_space = 0\n"
     "required_files is empty\n"
     "required_memory = 0\n"
     "required_programs is empty\n"
@@ -192,6 +194,7 @@ ATF_TEST_CASE_BODY(junit_metadata__overrides)
         .set_description("This is a test")
         .set_has_cleanup(true)
         .add_required_config("config1")
+        .set_required_disk_space(units::bytes(456))
         .add_required_file(fs::path("file1"))
         .set_required_memory(units::bytes(123))
         .add_required_program(fs::path("prog1"))
@@ -206,6 +209,7 @@ ATF_TEST_CASE_BODY(junit_metadata__overrides)
         + "description = This is a test\n"
         + "has_cleanup = true\n"
         + "required_configs = config1\n"
+        + "required_disk_space = 456\n"
         + "required_files = file1\n"
         + "required_memory = 123\n"
         + "required_programs = prog1\n"

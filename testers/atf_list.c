@@ -153,6 +153,8 @@ rewrite_property(const char* name)
         return "allowed_architectures";
     else if (strcmp(name, "require.config") == 0)
         return "required_configs";
+    else if (strcmp(name, "require.diskspace") == 0)
+        return "required_disk_space";
     else if (strcmp(name, "require.files") == 0)
         return "required_files";
     else if (strcmp(name, "require.machine") == 0)
