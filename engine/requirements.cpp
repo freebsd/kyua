@@ -32,6 +32,7 @@
 #include "model/types.hpp"
 #include "utils/config/nodes.ipp"
 #include "utils/config/tree.ipp"
+#include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/memory.hpp"
@@ -219,12 +220,14 @@ check_required_memory(const units::bytes& required_memory)
 /// \param md The test metadata.
 /// \param cfg The engine configuration.
 /// \param test_suite Name of the test suite the test belongs to.
+/// \param unused_work_directory Path to where the test case will be run.
 ///
 /// \return A string describing the reason for skipping the test, or empty if
 /// the test should be executed.
 std::string
 engine::check_reqs(const model::metadata& md, const config::tree& cfg,
-                   const std::string& test_suite)
+                   const std::string& test_suite,
+                   const fs::path& UTILS_UNUSED_PARAM(work_directory))
 {
     std::string reason;
 
