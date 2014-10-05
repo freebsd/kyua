@@ -253,6 +253,43 @@ ATF_TEST_CASE_BODY(find_in_path__always_absolute)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(free_disk_space__ok__smoke);
+ATF_TEST_CASE_BODY(free_disk_space__ok__smoke)
+{
+    const units::bytes space = fs::free_disk_space(fs::path("."));
+    ATF_REQUIRE(space > units::MB);  // Simple test that should always pass.
+}
+
+
+ATF_TEST_CASE(free_disk_space__ok__real);
+ATF_TEST_CASE_HEAD(free_disk_space__ok__real)
+{
+    set_md_var("require.user", "root");
+}
+ATF_TEST_CASE_BODY(free_disk_space__ok__real)
+{
+    try {
+        const fs::path mount_point("mount_point");
+        fs::mkdir(mount_point, 0755);
+        fs::mount_tmpfs(mount_point, units::bytes(32 * units::MB));
+        const units::bytes space = fs::free_disk_space(fs::path(mount_point));
+        fs::unmount(mount_point);
+        ATF_REQUIRE(space < 35 * units::MB);
+        ATF_REQUIRE(space > 28 * units::MB);
+    } catch (const fs::unsupported_operation_error& e) {
+        ATF_SKIP(e.what());
+    }
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(free_disk_space__fail);
+ATF_TEST_CASE_BODY(free_disk_space__fail)
+{
+    ATF_REQUIRE_THROW_RE(fs::error, "Failed to stat file system for missing",
+                         fs::free_disk_space(fs::path("missing")));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(is_directory__ok);
 ATF_TEST_CASE_BODY(is_directory__ok)
 {
@@ -561,6 +598,10 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, find_in_path__many_components);
     ATF_ADD_TEST_CASE(tcs, find_in_path__current_directory);
     ATF_ADD_TEST_CASE(tcs, find_in_path__always_absolute);
+
+    ATF_ADD_TEST_CASE(tcs, free_disk_space__ok__smoke);
+    ATF_ADD_TEST_CASE(tcs, free_disk_space__ok__real);
+    ATF_ADD_TEST_CASE(tcs, free_disk_space__fail);
 
     ATF_ADD_TEST_CASE(tcs, is_directory__ok);
     ATF_ADD_TEST_CASE(tcs, is_directory__fail);

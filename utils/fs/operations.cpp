@@ -38,6 +38,12 @@ extern "C" {
 #   include <sys/mount.h>
 #endif
 #include <sys/stat.h>
+#if defined(HAVE_SYS_STATVFS_H) && defined(HAVE_STATVFS)
+#   include <sys/statvfs.h>
+#endif
+#if defined(HAVE_SYS_VFS_H)
+#   include <sys/vfs.h>
+#endif
 #include <sys/wait.h>
 
 #include <dirent.h>
@@ -416,6 +422,39 @@ fs::find_in_path(const char* name)
         }
     }
     return none;
+}
+
+
+/// Calculates the free space in a given file system.
+///
+/// \param path Path to a file in the file system for which to check the free
+///     disk space.
+///
+/// \return The amount of free space usable by a non-root user.
+///
+/// \throw system_error If the call to statfs(2) fails.
+utils::units::bytes
+fs::free_disk_space(const fs::path& path)
+{
+#if defined(HAVE_STATVFS)
+    struct ::statvfs buf;
+    if (::statvfs(path.c_str(), &buf) == -1) {
+        const int original_errno = errno;
+        throw fs::system_error(F("Failed to stat file system for %s") % path,
+                               original_errno);
+    }
+    return units::bytes(uint64_t(buf.f_bsize) * buf.f_bavail);
+#elif defined(HAVE_STATFS)
+    struct ::statfs buf;
+    if (::statfs(path.c_str(), &buf) == -1) {
+        const int original_errno = errno;
+        throw fs::system_error(F("Failed to stat file system for %s") % path,
+                               original_errno);
+    }
+    return units::bytes(uint64_t(buf.f_bsize) * buf.f_bavail);
+#else
+#   error "Don't know how to query free disk space"
+#endif
 }
 
 
