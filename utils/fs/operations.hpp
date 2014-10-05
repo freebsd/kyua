@@ -38,6 +38,7 @@
 #include <string>
 
 #include "utils/optional.hpp"
+#include "utils/units.hpp"
 
 namespace utils {
 namespace fs {
@@ -55,6 +56,7 @@ void mkdir(const path&, const int);
 void mkdir_p(const path&, const int);
 fs::path mkdtemp(const std::string&);
 fs::path mkstemp(const std::string&);
+void mount_tmpfs(const path&, const units::bytes& = units::bytes());
 void rm_r(const path&);
 void rmdir(const path&);
 void unlink(const path&);

@@ -53,8 +53,10 @@ extern "C" {
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
+#include "utils/units.hpp"
 
 namespace fs = utils::fs;
+namespace units = utils::units;
 
 using utils::optional;
 
@@ -379,6 +381,66 @@ ATF_TEST_CASE_BODY(mkstemp)
 }
 
 
+static void
+test_mount_tmpfs_ok(const units::bytes& size)
+{
+    const fs::path mount_point("mount_point");
+    fs::mkdir(mount_point, 0755);
+
+    try {
+        atf::utils::create_file("outside", "");
+        fs::mount_tmpfs(mount_point, size);
+        atf::utils::create_file((mount_point / "inside").str(), "");
+
+        struct ::stat outside, inside;
+        ATF_REQUIRE(::stat("outside", &outside) != -1);
+        ATF_REQUIRE(::stat((mount_point / "inside").c_str(), &inside) != -1);
+        ATF_REQUIRE(outside.st_dev != inside.st_dev);
+    } catch (const fs::unsupported_operation_error& e) {
+        ATF_SKIP(e.what());
+    }
+}
+
+
+ATF_TEST_CASE(mount_tmpfs__ok__default_size)
+ATF_TEST_CASE_HEAD(mount_tmpfs__ok__default_size)
+{
+    set_md_var("require.user", "root");
+}
+ATF_TEST_CASE_BODY(mount_tmpfs__ok__default_size)
+{
+    test_mount_tmpfs_ok(units::bytes());
+}
+
+
+ATF_TEST_CASE(mount_tmpfs__ok__explicit_size)
+ATF_TEST_CASE_HEAD(mount_tmpfs__ok__explicit_size)
+{
+    set_md_var("require.user", "root");
+}
+ATF_TEST_CASE_BODY(mount_tmpfs__ok__explicit_size)
+{
+    test_mount_tmpfs_ok(units::bytes(10 * units::MB));
+}
+
+
+ATF_TEST_CASE(mount_tmpfs__fail)
+ATF_TEST_CASE_HEAD(mount_tmpfs__fail)
+{
+    set_md_var("require.user", "root");
+}
+ATF_TEST_CASE_BODY(mount_tmpfs__fail)
+{
+    try {
+        fs::mount_tmpfs(fs::path("non-existent"));
+    } catch (const fs::unsupported_operation_error& e) {
+        ATF_SKIP(e.what());
+    } catch (const fs::error& e) {
+        // Expected.
+    }
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(rm_r__empty);
 ATF_TEST_CASE_BODY(rm_r__empty)
 {
@@ -476,6 +538,10 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, mkdtemp);
 
     ATF_ADD_TEST_CASE(tcs, mkstemp);
+
+    ATF_ADD_TEST_CASE(tcs, mount_tmpfs__ok__default_size);
+    ATF_ADD_TEST_CASE(tcs, mount_tmpfs__ok__explicit_size);
+    ATF_ADD_TEST_CASE(tcs, mount_tmpfs__fail);
 
     ATF_ADD_TEST_CASE(tcs, rm_r__empty);
     ATF_ADD_TEST_CASE(tcs, rm_r__files_and_directories);

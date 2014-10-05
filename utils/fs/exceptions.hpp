@@ -95,6 +95,14 @@ public:
 };
 
 
+/// Exception to denote an unsupported operation.
+class unsupported_operation_error : public error {
+public:
+    explicit unsupported_operation_error(const std::string&);
+    virtual ~unsupported_operation_error(void) throw();
+};
+
+
 }  // namespace fs
 }  // namespace utils
 
