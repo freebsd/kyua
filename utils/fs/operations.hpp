@@ -60,6 +60,7 @@ void mount_tmpfs(const path&, const units::bytes& = units::bytes());
 void rm_r(const path&);
 void rmdir(const path&);
 void unlink(const path&);
+void unmount(const path&);
 
 
 }  // namespace fs

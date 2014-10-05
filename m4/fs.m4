@@ -117,6 +117,7 @@ dnl KYUA_FS_MODULE
 dnl
 dnl Performs all checks needed by the utils/fs library.
 AC_DEFUN([KYUA_FS_MODULE], [
+    AC_CHECK_HEADERS([sys/mount.h])
     KYUA_FS_GETCWD_DYN
     KYUA_FS_LCHMOD
     KYUA_FS_UNMOUNT

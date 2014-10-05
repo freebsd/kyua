@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/param.h>
-#if defined(HAVE_UNMOUNT)
+#if defined(HAVE_SYS_MOUNT_H)
 #   include <sys/mount.h>
 #endif
 #include <sys/stat.h>

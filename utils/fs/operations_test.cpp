@@ -506,6 +506,44 @@ ATF_TEST_CASE_BODY(unlink__fail)
 }
 
 
+ATF_TEST_CASE(unmount__ok)
+ATF_TEST_CASE_HEAD(unmount__ok)
+{
+    set_md_var("require.user", "root");
+}
+ATF_TEST_CASE_BODY(unmount__ok)
+{
+    const fs::path mount_point("mount_point");
+    fs::mkdir(mount_point, 0755);
+
+    atf::utils::create_file((mount_point / "test1").str(), "");
+    try {
+        fs::mount_tmpfs(mount_point);
+    } catch (const fs::unsupported_operation_error& e) {
+        ATF_SKIP(e.what());
+    }
+
+    atf::utils::create_file((mount_point / "test2").str(), "");
+
+    ATF_REQUIRE(!fs::exists(mount_point / "test1"));
+    ATF_REQUIRE( fs::exists(mount_point / "test2"));
+    fs::unmount(mount_point);
+    ATF_REQUIRE( fs::exists(mount_point / "test1"));
+    ATF_REQUIRE(!fs::exists(mount_point / "test2"));
+}
+
+
+ATF_TEST_CASE(unmount__fail)
+ATF_TEST_CASE_HEAD(unmount__fail)
+{
+    set_md_var("require.user", "root");
+}
+ATF_TEST_CASE_BODY(unmount__fail)
+{
+    ATF_REQUIRE_THROW(fs::error, fs::unmount(fs::path("non-existent")));
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, copy__ok);
@@ -551,4 +589,7 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, unlink__ok);
     ATF_ADD_TEST_CASE(tcs, unlink__fail);
+
+    ATF_ADD_TEST_CASE(tcs, unmount__ok);
+    ATF_ADD_TEST_CASE(tcs, unmount__fail);
 }
