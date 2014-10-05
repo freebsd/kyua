@@ -208,6 +208,10 @@ UPDATE tmp_metadatas
         AND interface = 'plain';
 
 
+CREATE INDEX index_tmp_atf_test_cases_multivalues_by_test_case_id
+    ON atf_test_cases_multivalues (test_case_id);
+
+
 -- Populate metadata overrides from ATF test cases.
 UPDATE atf_test_cases SET description = '' WHERE description IS NULL;
 UPDATE atf_test_cases SET required_user = '' WHERE required_user IS NULL;
@@ -328,6 +332,7 @@ INSERT INTO metadatas (metadata_id, property_name, property_value)
 
 
 -- Drop temporary entities used during the migration.
+DROP INDEX index_tmp_atf_test_cases_multivalues_by_test_case_id;
 DROP INDEX index_tmp_metadatas_by_test_program_id;
 DROP INDEX index_tmp_metadatas_by_test_case_id;
 DROP TABLE tmp_metadatas;
