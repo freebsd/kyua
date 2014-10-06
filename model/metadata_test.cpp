@@ -53,6 +53,7 @@ ATF_TEST_CASE_BODY(defaults)
     ATF_REQUIRE(md.description().empty());
     ATF_REQUIRE(!md.has_cleanup());
     ATF_REQUIRE(md.required_configs().empty());
+    ATF_REQUIRE_EQ(units::bytes(0), md.required_disk_space());
     ATF_REQUIRE(md.required_files().empty());
     ATF_REQUIRE_EQ(units::bytes(0), md.required_memory());
     ATF_REQUIRE(md.required_programs().empty());
@@ -152,6 +153,8 @@ ATF_TEST_CASE_BODY(override_all_with_setters)
     model::paths_set files;
     files.insert(fs::path("the-files"));
 
+    const units::bytes disk_space(6789);
+
     const units::bytes memory(12345);
 
     model::paths_set programs;
@@ -168,6 +171,7 @@ ATF_TEST_CASE_BODY(override_all_with_setters)
         .set_description(description)
         .set_has_cleanup(true)
         .set_required_configs(configs)
+        .set_required_disk_space(disk_space)
         .set_required_files(files)
         .set_required_memory(memory)
         .set_required_programs(programs)
@@ -181,6 +185,7 @@ ATF_TEST_CASE_BODY(override_all_with_setters)
     ATF_REQUIRE_EQ(description, md.description());
     ATF_REQUIRE(md.has_cleanup());
     ATF_REQUIRE(configs == md.required_configs());
+    ATF_REQUIRE_EQ(disk_space, md.required_disk_space());
     ATF_REQUIRE(files == md.required_files());
     ATF_REQUIRE_EQ(memory, md.required_memory());
     ATF_REQUIRE(programs == md.required_programs());
@@ -212,6 +217,8 @@ ATF_TEST_CASE_BODY(override_all_with_set_string)
     files.insert(fs::path("plain"));
     files.insert(fs::path("/absolute/path"));
 
+    const units::bytes disk_space(2L * 1024 * 1024 * 1024);
+
     const units::bytes memory(1024 * 1024);
 
     model::paths_set programs;
@@ -229,6 +236,7 @@ ATF_TEST_CASE_BODY(override_all_with_set_string)
         .set_string("description", "Another long text")
         .set_string("has_cleanup", "true")
         .set_string("required_configs", "config-var")
+        .set_string("required_disk_space", "2G")
         .set_string("required_files", "plain /absolute/path")
         .set_string("required_memory", "1M")
         .set_string("required_programs", "program /absolute/prog")
@@ -242,6 +250,7 @@ ATF_TEST_CASE_BODY(override_all_with_set_string)
     ATF_REQUIRE_EQ(description, md.description());
     ATF_REQUIRE(md.has_cleanup());
     ATF_REQUIRE(configs == md.required_configs());
+    ATF_REQUIRE_EQ(disk_space, md.required_disk_space());
     ATF_REQUIRE(files == md.required_files());
     ATF_REQUIRE_EQ(memory, md.required_memory());
     ATF_REQUIRE(programs == md.required_programs());
@@ -312,7 +321,8 @@ ATF_TEST_CASE_BODY(output__defaults)
     str << model::metadata_builder().build();
     ATF_REQUIRE_EQ("metadata{allowed_architectures='', allowed_platforms='', "
                    "description='', has_cleanup='false', required_configs='', "
-                   "required_files='', required_memory='0', "
+                   "required_disk_space='0', required_files='', "
+                   "required_memory='0', "
                    "required_programs='', required_user='', timeout='300'}",
                    str.str());
 }
@@ -331,7 +341,8 @@ ATF_TEST_CASE_BODY(output__some_values)
     ATF_REQUIRE_EQ(
         "metadata{allowed_architectures='abc', allowed_platforms='', "
         "description='', has_cleanup='false', required_configs='', "
-        "required_files='bar foo', required_memory='1.00K', "
+        "required_disk_space='0', required_files='bar foo', "
+        "required_memory='1.00K', "
         "required_programs='', required_user='', timeout='300'}",
         str.str());
 }

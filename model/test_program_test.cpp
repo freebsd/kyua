@@ -254,7 +254,8 @@ ATF_TEST_CASE_BODY(output__no_test_cases)
         "root='/the/root', test_suite='suite-name', "
         "metadata=metadata{allowed_architectures='a', allowed_platforms='', "
         "description='', has_cleanup='false', "
-        "required_configs='', required_files='', required_memory='0', "
+        "required_configs='', required_disk_space='0', required_files='', "
+        "required_memory='0', "
         "required_programs='', required_user='', timeout='300'}, "
         "test_cases=[]}",
         str.str());
@@ -285,18 +286,21 @@ ATF_TEST_CASE_BODY(output__some_test_cases)
         "root='/the/root', test_suite='suite-name', "
         "metadata=metadata{allowed_architectures='a', allowed_platforms='', "
         "description='', has_cleanup='false', "
-        "required_configs='', required_files='', required_memory='0', "
+        "required_configs='', required_disk_space='0', required_files='', "
+        "required_memory='0', "
         "required_programs='', required_user='', timeout='300'}, "
         "test_cases=["
         "test_case{interface='plain', name='the-name', "
         "metadata=metadata{allowed_architectures='', allowed_platforms='foo', "
         "custom.X-bar='baz', description='', has_cleanup='false', "
-        "required_configs='', required_files='', required_memory='0', "
+        "required_configs='', required_disk_space='0', required_files='', "
+        "required_memory='0', "
         "required_programs='', required_user='', timeout='300'}}, "
         "test_case{interface='plain', name='another-name', "
         "metadata=metadata{allowed_architectures='', allowed_platforms='', "
         "description='', has_cleanup='false', "
-        "required_configs='', required_files='', required_memory='0', "
+        "required_configs='', required_disk_space='0', required_files='', "
+        "required_memory='0', "
         "required_programs='', required_user='', timeout='300'}}]}",
         str.str());
 }

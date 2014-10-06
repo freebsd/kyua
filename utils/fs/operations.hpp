@@ -38,6 +38,7 @@
 #include <string>
 
 #include "utils/optional.hpp"
+#include "utils/units.hpp"
 
 namespace utils {
 namespace fs {
@@ -50,14 +51,17 @@ void copy(const fs::path&, const fs::path&);
 path current_path(void);
 bool exists(const fs::path&);
 utils::optional< path > find_in_path(const char*);
+utils::units::bytes free_disk_space(const fs::path&);
 bool is_directory(const fs::path&);
 void mkdir(const path&, const int);
 void mkdir_p(const path&, const int);
 fs::path mkdtemp(const std::string&);
 fs::path mkstemp(const std::string&);
+void mount_tmpfs(const path&, const units::bytes& = units::bytes());
 void rm_r(const path&);
 void rmdir(const path&);
 void unlink(const path&);
+void unmount(const path&);
 
 
 }  // namespace fs

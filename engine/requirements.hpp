@@ -38,13 +38,14 @@
 
 namespace utils {
 namespace config { class tree; }
+namespace fs { class path; }
 }  // namespace utils
 
 namespace engine {
 
 
 std::string check_reqs(const model::metadata&, const utils::config::tree&,
-                       const std::string&);
+                       const std::string&, const utils::fs::path&);
 
 
 }  // namespace engine

@@ -53,8 +53,10 @@ extern "C" {
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
+#include "utils/units.hpp"
 
 namespace fs = utils::fs;
+namespace units = utils::units;
 
 using utils::optional;
 
@@ -251,6 +253,43 @@ ATF_TEST_CASE_BODY(find_in_path__always_absolute)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(free_disk_space__ok__smoke);
+ATF_TEST_CASE_BODY(free_disk_space__ok__smoke)
+{
+    const units::bytes space = fs::free_disk_space(fs::path("."));
+    ATF_REQUIRE(space > units::MB);  // Simple test that should always pass.
+}
+
+
+ATF_TEST_CASE(free_disk_space__ok__real);
+ATF_TEST_CASE_HEAD(free_disk_space__ok__real)
+{
+    set_md_var("require.user", "root");
+}
+ATF_TEST_CASE_BODY(free_disk_space__ok__real)
+{
+    try {
+        const fs::path mount_point("mount_point");
+        fs::mkdir(mount_point, 0755);
+        fs::mount_tmpfs(mount_point, units::bytes(32 * units::MB));
+        const units::bytes space = fs::free_disk_space(fs::path(mount_point));
+        fs::unmount(mount_point);
+        ATF_REQUIRE(space < 35 * units::MB);
+        ATF_REQUIRE(space > 28 * units::MB);
+    } catch (const fs::unsupported_operation_error& e) {
+        ATF_SKIP(e.what());
+    }
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(free_disk_space__fail);
+ATF_TEST_CASE_BODY(free_disk_space__fail)
+{
+    ATF_REQUIRE_THROW_RE(fs::error, "Failed to stat file system for missing",
+                         fs::free_disk_space(fs::path("missing")));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(is_directory__ok);
 ATF_TEST_CASE_BODY(is_directory__ok)
 {
@@ -379,6 +418,66 @@ ATF_TEST_CASE_BODY(mkstemp)
 }
 
 
+static void
+test_mount_tmpfs_ok(const units::bytes& size)
+{
+    const fs::path mount_point("mount_point");
+    fs::mkdir(mount_point, 0755);
+
+    try {
+        atf::utils::create_file("outside", "");
+        fs::mount_tmpfs(mount_point, size);
+        atf::utils::create_file((mount_point / "inside").str(), "");
+
+        struct ::stat outside, inside;
+        ATF_REQUIRE(::stat("outside", &outside) != -1);
+        ATF_REQUIRE(::stat((mount_point / "inside").c_str(), &inside) != -1);
+        ATF_REQUIRE(outside.st_dev != inside.st_dev);
+    } catch (const fs::unsupported_operation_error& e) {
+        ATF_SKIP(e.what());
+    }
+}
+
+
+ATF_TEST_CASE(mount_tmpfs__ok__default_size)
+ATF_TEST_CASE_HEAD(mount_tmpfs__ok__default_size)
+{
+    set_md_var("require.user", "root");
+}
+ATF_TEST_CASE_BODY(mount_tmpfs__ok__default_size)
+{
+    test_mount_tmpfs_ok(units::bytes());
+}
+
+
+ATF_TEST_CASE(mount_tmpfs__ok__explicit_size)
+ATF_TEST_CASE_HEAD(mount_tmpfs__ok__explicit_size)
+{
+    set_md_var("require.user", "root");
+}
+ATF_TEST_CASE_BODY(mount_tmpfs__ok__explicit_size)
+{
+    test_mount_tmpfs_ok(units::bytes(10 * units::MB));
+}
+
+
+ATF_TEST_CASE(mount_tmpfs__fail)
+ATF_TEST_CASE_HEAD(mount_tmpfs__fail)
+{
+    set_md_var("require.user", "root");
+}
+ATF_TEST_CASE_BODY(mount_tmpfs__fail)
+{
+    try {
+        fs::mount_tmpfs(fs::path("non-existent"));
+    } catch (const fs::unsupported_operation_error& e) {
+        ATF_SKIP(e.what());
+    } catch (const fs::error& e) {
+        // Expected.
+    }
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(rm_r__empty);
 ATF_TEST_CASE_BODY(rm_r__empty)
 {
@@ -444,6 +543,44 @@ ATF_TEST_CASE_BODY(unlink__fail)
 }
 
 
+ATF_TEST_CASE(unmount__ok)
+ATF_TEST_CASE_HEAD(unmount__ok)
+{
+    set_md_var("require.user", "root");
+}
+ATF_TEST_CASE_BODY(unmount__ok)
+{
+    const fs::path mount_point("mount_point");
+    fs::mkdir(mount_point, 0755);
+
+    atf::utils::create_file((mount_point / "test1").str(), "");
+    try {
+        fs::mount_tmpfs(mount_point);
+    } catch (const fs::unsupported_operation_error& e) {
+        ATF_SKIP(e.what());
+    }
+
+    atf::utils::create_file((mount_point / "test2").str(), "");
+
+    ATF_REQUIRE(!fs::exists(mount_point / "test1"));
+    ATF_REQUIRE( fs::exists(mount_point / "test2"));
+    fs::unmount(mount_point);
+    ATF_REQUIRE( fs::exists(mount_point / "test1"));
+    ATF_REQUIRE(!fs::exists(mount_point / "test2"));
+}
+
+
+ATF_TEST_CASE(unmount__fail)
+ATF_TEST_CASE_HEAD(unmount__fail)
+{
+    set_md_var("require.user", "root");
+}
+ATF_TEST_CASE_BODY(unmount__fail)
+{
+    ATF_REQUIRE_THROW(fs::error, fs::unmount(fs::path("non-existent")));
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, copy__ok);
@@ -462,6 +599,10 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, find_in_path__current_directory);
     ATF_ADD_TEST_CASE(tcs, find_in_path__always_absolute);
 
+    ATF_ADD_TEST_CASE(tcs, free_disk_space__ok__smoke);
+    ATF_ADD_TEST_CASE(tcs, free_disk_space__ok__real);
+    ATF_ADD_TEST_CASE(tcs, free_disk_space__fail);
+
     ATF_ADD_TEST_CASE(tcs, is_directory__ok);
     ATF_ADD_TEST_CASE(tcs, is_directory__fail);
 
@@ -477,6 +618,10 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, mkstemp);
 
+    ATF_ADD_TEST_CASE(tcs, mount_tmpfs__ok__default_size);
+    ATF_ADD_TEST_CASE(tcs, mount_tmpfs__ok__explicit_size);
+    ATF_ADD_TEST_CASE(tcs, mount_tmpfs__fail);
+
     ATF_ADD_TEST_CASE(tcs, rm_r__empty);
     ATF_ADD_TEST_CASE(tcs, rm_r__files_and_directories);
 
@@ -485,4 +630,7 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, unlink__ok);
     ATF_ADD_TEST_CASE(tcs, unlink__fail);
+
+    ATF_ADD_TEST_CASE(tcs, unmount__ok);
+    ATF_ADD_TEST_CASE(tcs, unmount__fail);
 }

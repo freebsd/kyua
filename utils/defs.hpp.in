@@ -47,6 +47,13 @@
 #define UTILS_UNUSED @ATTRIBUTE_UNUSED@
 
 
+/// Unconstifies a pointer.
+///
+/// \param type The target type of the conversion.
+/// \param ptr The pointer to be unconstified.
+#define UTILS_UNCONST(type, ptr) ((type*)(unsigned long)(const void*)(ptr))
+
+
 /// Macro to mark a parameter as unused.
 ///
 /// This macro has to be called on the name of a parameter during the

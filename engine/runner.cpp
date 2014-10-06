@@ -334,7 +334,8 @@ runner::debug_test_case(const model::test_case* test_case,
 
     const std::string skip_reason = check_reqs(
         test_case->get_metadata(), user_config,
-        test_case->container_test_program().test_suite_name());
+        test_case->container_test_program().test_suite_name(),
+        work_directory);
     if (!skip_reason.empty())
         return model::test_result(model::test_result_skipped, skip_reason);
 
@@ -396,7 +397,8 @@ runner::run_test_case(const model::test_case* test_case,
 
     const std::string skip_reason = check_reqs(
         test_case->get_metadata(), user_config,
-        test_case->container_test_program().test_suite_name());
+        test_case->container_test_program().test_suite_name(),
+        work_directory);
     if (!skip_reason.empty())
         return model::test_result(model::test_result_skipped, skip_reason);
 

@@ -144,3 +144,19 @@ fs::system_error::original_errno(void) const throw()
 {
     return _original_errno;
 }
+
+
+/// Constructs a new error with a plain-text message.
+///
+/// \param message The plain-text error message.
+fs::unsupported_operation_error::unsupported_operation_error(
+    const std::string& message) :
+    error(message)
+{
+}
+
+
+/// Destructor for the error.
+fs::unsupported_operation_error::~unsupported_operation_error(void) throw()
+{
+}
