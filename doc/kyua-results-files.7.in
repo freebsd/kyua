@@ -50,7 +50,7 @@ flag to indicate which file to be used.
 For commands that
 .Em create a results file
 (only
-.Xr 1 kyua-test
+.Xr kyua-test 1
 at the moment), the following values are accepted:
 .Bl -tag -width XX
 .It Sq NEW
