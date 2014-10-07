@@ -25,7 +25,7 @@
 .\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 .\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-.Dd July 28, 2014
+.Dd October 7, 2014
 .Dt KYUA-TEST 1
 .Os
 .Sh NAME
@@ -41,13 +41,16 @@
 The
 .Nm
 command runs the tests of a test suite and records the results into a new
-results file.
-.Pp
-The optional arguments to
+results file.  The optional arguments to
 .Nm
 are used to select which test programs or test cases to run.  These are
 filters and are explained in more detail in
 .Xr kyua-test-filters 7 .
+.Pp
+Every test executed by
+.Nm
+is run under a controlled environment as described in
+.Xr kyua-test-isolation 7 .
 .Pp
 The following subcommand options are recognized:
 .Bl -tag -width XX
@@ -86,4 +89,5 @@ Additional exit codes may be returned as described in
 .Xr kyua 1 .
 .Sh SEE ALSO
 .Xr kyua 1 ,
-.Xr kyua-report 1
+.Xr kyua-report 1 ,
+.Xr kyua-test-isolation 7

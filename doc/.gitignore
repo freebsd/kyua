@@ -15,6 +15,7 @@ kyua-report.1
 kyua-results-files.7
 kyua-test.1
 kyua-test-filters.7
+kyua-test-isolation.7
 kyua.1
 kyua.conf.5
 kyuafile.5
