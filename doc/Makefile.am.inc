@@ -124,6 +124,12 @@ EXTRA_DIST += doc/kyua-test-filters.7.in
 doc/kyua-test-filters.7: $(srcdir)/doc/kyua-test-filters.7.in
 	$(AM_V_GEN)name=kyua-test-filters.7; $(BUILD_MANPAGE)
 
+man_MANS += doc/kyua-test-isolation.7
+CLEANFILES += doc/kyua-test-isolation.7
+EXTRA_DIST += doc/kyua-test-isolation.7.in
+doc/kyua-test-isolation.7: $(srcdir)/doc/kyua-test-isolation.7.in
+	$(AM_V_GEN)name=kyua-test-isolation.7; $(BUILD_MANPAGE)
+
 man_MANS += doc/kyua.1
 CLEANFILES += doc/kyua.1
 EXTRA_DIST += doc/kyua.1.in

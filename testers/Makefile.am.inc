@@ -72,42 +72,6 @@ libexec_PROGRAMS += testers/kyua-tap-tester
 testers_kyua_tap_tester_SOURCES = testers/tap_main.c
 testers_kyua_tap_tester_LDADD = testers/libtap_tester.a testers/libtester.a
 
-BUILD_TESTERS_MANPAGE = \
-	sed -e 's,__PACKAGE__,$(PACKAGE_TARNAME),g' \
-	    -e 's,__TMPDIR__,$(KYUA_TMPDIR),g' \
-	    <$(srcdir)/$${name}.in >$${name}.tmp; \
-	mv $${name}.tmp $${name}
-
-dist_man_MANS  = testers/kyua-atf-interface.7
-dist_man_MANS += testers/kyua-plain-interface.7
-dist_man_MANS += testers/kyua-tap-interface.7
-dist_man_MANS += testers/kyua-tester-list.5
-dist_man_MANS += testers/kyua-tester-result.5
-
-man_MANS += testers/kyua-atf-tester.1
-CLEANFILES += testers/kyua-atf-tester.1
-EXTRA_DIST += testers/kyua-atf-tester.1.in
-testers/kyua-atf-tester.1: $(srcdir)/testers/kyua-atf-tester.1.in
-	$(AM_V_GEN)name=testers/kyua-atf-tester.1; $(BUILD_TESTERS_MANPAGE)
-
-man_MANS += testers/kyua-plain-tester.1
-CLEANFILES += testers/kyua-plain-tester.1
-EXTRA_DIST += testers/kyua-plain-tester.1.in
-testers/kyua-plain-tester.1: $(srcdir)/testers/kyua-plain-tester.1.in
-	$(AM_V_GEN)name=testers/kyua-plain-tester.1; $(BUILD_TESTERS_MANPAGE)
-
-man_MANS += testers/kyua-tap-tester.1
-CLEANFILES += testers/kyua-tap-tester.1
-EXTRA_DIST += testers/kyua-tap-tester.1.in
-testers/kyua-tap-tester.1: $(srcdir)/testers/kyua-tap-tester.1.in
-	$(AM_V_GEN)name=testers/kyua-tap-tester.1; $(BUILD_TESTERS_MANPAGE)
-
-man_MANS += testers/kyua-tester.1
-CLEANFILES += testers/kyua-tester.1
-EXTRA_DIST += testers/kyua-tester.1.in
-testers/kyua-tester.1: $(srcdir)/testers/kyua-tester.1.in
-	$(AM_V_GEN)name=testers/kyua-tester.1; $(BUILD_TESTERS_MANPAGE)
-
 if WITH_ATF
 tests_testersdir = $(pkgtestsdir)/testers
 

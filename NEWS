@@ -12,6 +12,12 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   metadata property, which can also be provided by ATF test cases as
   "require.diskspace".
 
+* Assimilated the contents of all the kyua-*-tester(1) and
+  kyua-*-interface(7) manual pages into more relevant places.  In
+  particular, added more details on test program registration and their
+  metadata to kyuafile(5), and added kyua-test-isolation(7) describing
+  the isolation features of the test execution.
+
 * Issue 49: Extended 'report' to support test case filters as
   command-line arguments.  Combined with '--verbose', this allows
   inspecting the details of a test case failure after execution.
