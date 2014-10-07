@@ -40,10 +40,13 @@
 .Sh DESCRIPTION
 The
 .Nm
-command runs the tests of a test suite and records the results into a new
-results file.  The optional arguments to
+command loads a test suite definition from a
+.Xr kyuafile 5 ,
+runs the tests defined in it, and records the results into a new results
+file.  By default, all tests in the test suite are executed but the
+optional arguments to
 .Nm
-are used to select which test programs or test cases to run.  These are
+can be used to select which test programs or test cases to run.  These are
 filters and are explained in more detail in
 .Xr kyua-test-filters 7 .
 .Pp
@@ -90,4 +93,5 @@ Additional exit codes may be returned as described in
 .Sh SEE ALSO
 .Xr kyua 1 ,
 .Xr kyua-report 1 ,
+.Xr kyuafile 5 ,
 .Xr kyua-test-isolation 7

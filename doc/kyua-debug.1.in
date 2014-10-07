@@ -129,5 +129,6 @@ Additional exit codes may be returned as described in
 .Sh SEE ALSO
 .Xr kyua 1 ,
 .Xr kyua-build-root 7 ,
+.Xr kyuafile 5 ,
 .Xr kyua-test-filters 7 ,
 .Xr kyua-test-isolation 7
