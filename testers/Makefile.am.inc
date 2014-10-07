@@ -72,10 +72,6 @@ libexec_PROGRAMS += testers/kyua-tap-tester
 testers_kyua_tap_tester_SOURCES = testers/tap_main.c
 testers_kyua_tap_tester_LDADD = testers/libtap_tester.a testers/libtester.a
 
-dist_man_MANS  = testers/kyua-atf-interface.7
-dist_man_MANS += testers/kyua-plain-interface.7
-dist_man_MANS += testers/kyua-tap-interface.7
-
 if WITH_ATF
 tests_testersdir = $(pkgtestsdir)/testers
 

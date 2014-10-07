@@ -39,14 +39,10 @@ environment serves to make the test execution as reproducible as possible
 and also to prevent clashes between tests that may, for example, create
 auxiliary files with overlapping names.
 .Pp
-For plain test programs (see
-.Xr kyua-plain-interface 7 )
-and for TAP test programs (see
-.Xr kyua-tap-interface 7 ) ,
-the whole test program is run under a single instance of the environment
-described in this page.
+For plain test programs and for TAP test programs, the whole test program
+is run under a single instance of the environment described in this page.
 For ATF test programs (see
-.Xr kyua-atf-interface 7 ) ,
+.Xr atf 7 ) ,
 each individual test case
 .Em and
 test cleanup routine are executed in separate environments.
