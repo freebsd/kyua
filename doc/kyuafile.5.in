@@ -25,7 +25,7 @@
 .\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 .\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-.Dd October 7, 2014
+.Dd October 9, 2014
 .Dt KYUAFILE 5
 .Os
 .Sh NAME
@@ -52,26 +52,6 @@ is a Lua script whose purpose is to describe the structure of the test
 suite it belongs to.  To do so, the script has access to a collection of
 special functions provided by
 .Xr kyua 1 .
-.Pp
-A typical
-.Nm
-will look similar to this:
-.Bd -literal -offset indent
-syntax(2)
-
-test_suite('first')
-
--- Declare the test programs that are in this directory.
-atf_test_program{name='foo_test'}
-atf_test_program{name='bar_test', test_suite='second'}
-plain_test_program{name='legacy_test'}
-plain_test_program{name='legacy2_test', allowed_architectures='amd64 i386',
-                   required_files='/bin/ls', timeout=30}
-
--- Recurse into any subdirectories that may have other tests.
-include('dir1/Kyuafile')
-include('dir2/Kyuafile')
-.Ed
 .Ss File versioning
 Every
 .Nm
@@ -203,6 +183,29 @@ by means of the
 .Fn include
 function.
 .Pp
+.Fn include
+may only be called with a relative path and with at most one directory
+component.  This is by design: Kyua uses the file system structure as the
+layout of the test suite definition.  Therefore, each subdirectory in a
+test suite must include its own
+.Nm
+and each
+.Nm
+can only descend into the
+.Nm Ns s
+of immediate subdirectories.
+.Pp
+If you need to source a
+.Nm
+located in disjoint parts of your file system namespace, you will have to
+create a
+.Sq shadow tree
+using symbolic links and possibly helper
+.Nm Ns s
+to plug the various subdirectories together.  See the
+.Sx EXAMPLES
+section below for details.
+.Pp
 Note that each file is processed in its own Lua environment: there is no
 mechanism to pass state from one file to the other.  The reason for this is
 that there is no such thing as a
@@ -237,5 +240,80 @@ for the current system.
 Sample file to serve as a top-level
 .Nm .
 .El
+.Sh EXAMPLES
+The following
+.Nm
+is the simplest you can define.  It provides a test suite definition and
+registers a couple of different test programs using different interfaces:
+.Bd -literal -offset indent
+syntax(2)
+
+test_suite('first')
+
+atf_test_program{name='integration_test'}
+plain_test_program{name='legacy_test'}
+.Ed
+.Pp
+The following example is a bit more elaborate.  It introduces some metadata
+properties to the test program definitions and recurses into a couple of
+subdirectories:
+.Bd -literal -offset indent
+syntax(2)
+
+test_suite('second')
+
+plain_test_program{name='legacy_test',
+                   allowed_architectures='amd64 i386',
+                   required_files='/bin/ls',
+                   timeout=30}
+
+tap_test_program{name='privileged_test',
+                 required_user='root'}
+
+include('module-1/Kyuafile')
+include('module-2/Kyuafile')
+.Ed
+.Ss Connecting disjoint test suites
+Now suppose you had various test suites on your file system and you would
+like to connect them together so that they could be executed and treated as
+a single unit.  The test suites we would like to connect live under
+.Pa /usr/tests ,
+.Pa /usr/local/tests
+and
+.Pa ~/local/tests .
+.Pp
+We cannot create a
+.Nm
+that references these because the
+.Fn include
+directive does not support absolute paths.  Instead, what we can do is
+create a shadow tree using symbolic links:
+.Bd -literal -offset indent
+$ mkdir ~/everything
+$ ln -s /usr/tests ~/everything/system-tests
+$ ln -s /usr/local/tests ~/everything/local-tests
+$ ln -s ~/local/tests ~/everything/home-tests
+.Ed
+.Pp
+And then we create an
+.Pa ~/everything/Kyuafile
+file to drive the execution of the integrated test suite:
+.Bd -literal -offset indent
+syntax(2)
+
+test_suite('test-all-the-things')
+
+include('system-tests/Kyuafile')
+include('local-tests/Kyuafile')
+include('home-tests/Kyuafile')
+.Ed
+.Pp
+Or, simply, you could reuse the sample top-level
+.Nm
+to avoid having to manually craft the list of directories into which to
+recurse:
+.Bd -literal -offset indent
+$ cp __EGDIR__/Kyuafile.top ~/everything/Kyuafile
+.Ed
 .Sh SEE ALSO
 .Xr kyua 1

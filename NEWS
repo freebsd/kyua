@@ -59,6 +59,10 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 * Issue 111: Fixed crash when defining a test program in a Kyuafile that
   has not yet specified the test suite name.
 
+* Issue 114: Improved the kyuafile(5) manual page by clarifying the
+  restrictions of the include() directive and by adding abundant
+  examples.
+
 
 Changes in version 0.10
 =======================
