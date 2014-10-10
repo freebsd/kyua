@@ -38,6 +38,7 @@
 #include <lutok/state.hpp>
 
 #include "model/test_program_fwd.hpp"
+#include "utils/config/tree.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"
 
@@ -77,7 +78,8 @@ public:
     ~kyuafile(void);
 
     static kyuafile load(const utils::fs::path&,
-                         const utils::optional< utils::fs::path >);
+                         const utils::optional< utils::fs::path >,
+                         const utils::config::tree&);
 
     const utils::fs::path& source_root(void) const;
     const utils::fs::path& build_root(void) const;

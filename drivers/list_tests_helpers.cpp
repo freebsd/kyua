@@ -31,6 +31,20 @@
 #include <atf-c++.hpp>
 
 
+ATF_TEST_CASE(config_in_head);
+ATF_TEST_CASE_HEAD(config_in_head)
+{
+    if (has_config_var("the-variable")) {
+        set_md_var("descr", "the-variable is " +
+                   get_config_var("the-variable"));
+    }
+}
+ATF_TEST_CASE_BODY(config_in_head)
+{
+    std::abort();
+}
+
+
 ATF_TEST_CASE(crash_list);
 ATF_TEST_CASE_HEAD(crash_list)
 {
@@ -67,10 +81,12 @@ ATF_INIT_TEST_CASES(tcs)
 
     const char* tests = std::getenv("TESTS");
     if (tests == NULL)
-        enabled = "crash_list no_properties some_properties";
+        enabled = "config_in_head crash_list no_properties some_properties";
     else
         enabled = tests;
 
+    if (enabled.find("config_in_head") != std::string::npos)
+        ATF_ADD_TEST_CASE(tcs, config_in_head);
     if (enabled.find("crash_list") != std::string::npos)
         ATF_ADD_TEST_CASE(tcs, crash_list);
     if (enabled.find("no_properties") != std::string::npos)

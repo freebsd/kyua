@@ -36,18 +36,24 @@ extern "C" {
 
 #include <map>
 #include <set>
+#include <string>
 
 #include <atf-c++.hpp>
 
 #include "cli/cmd_list.hpp"
 #include "cli/common.ipp"
+#include "engine/config.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/filters.hpp"
+#include "model/metadata.hpp"
+#include "model/test_case.hpp"
 #include "model/test_program.hpp"
+#include "utils/config/tree.ipp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/optional.ipp"
 
+namespace config = utils::config;
 namespace fs = utils::fs;
 
 using utils::none;
@@ -76,6 +82,9 @@ public:
     /// Set of the listed test cases in a program:test_case form.
     std::set< std::string > test_cases;
 
+    /// Set of the listed test cases in a program:test_case form.
+    std::map< std::string, model::metadata > metadatas;
+
     /// Called when a test case is identified in a test suite.
     ///
     /// \param test_program The test program containing the test case.
@@ -84,8 +93,12 @@ public:
     got_test_case(const model::test_program& test_program,
                   const std::string& test_case_name)
     {
-        test_cases.insert(F("%s:%s") %
-                          test_program.relative_path() % test_case_name);
+        const std::string ident = F("%s:%s") %
+            test_program.relative_path() % test_case_name;
+        test_cases.insert(ident);
+
+        metadatas.insert(std::map< std::string, model::metadata >::value_type(
+            ident, test_program.find(test_case_name).get_metadata()));
     }
 };
 
@@ -131,6 +144,8 @@ create_helpers(const atf::tests::tc* tc, const fs::path& source_root,
 /// \param hooks The hooks to use during the listing.
 /// \param filter_program If not null, the filter on the test program name.
 /// \param filter_test_case If not null, the filter on the test case name.
+/// \param the_variable If not null, the value to pass to the test program as
+///     its "the-variable" configuration property.
 ///
 /// \return The result data of the driver.
 static drivers::list_tests::result
@@ -138,15 +153,22 @@ run_helpers(const fs::path& source_root,
             const optional< fs::path > build_root,
             drivers::list_tests::base_hooks& hooks,
             const char* filter_program = NULL,
-            const char* filter_test_case = NULL)
+            const char* filter_test_case = NULL,
+            const char* the_variable = NULL)
 {
     std::set< engine::test_filter > filters;
     if (filter_program != NULL && filter_test_case != NULL)
         filters.insert(engine::test_filter(fs::path(filter_program),
                                            filter_test_case));
 
+    config::tree user_config = engine::empty_config();
+    if (the_variable != NULL) {
+        user_config.set_string("test_suites.suite-name.the-variable",
+                               the_variable);
+    }
+
     return drivers::list_tests::drive(source_root / "Kyuafile", build_root,
-                                      filters, hooks);
+                                      filters, user_config, hooks);
 }
 
 
@@ -213,6 +235,25 @@ ATF_TEST_CASE_BODY(build_root)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(config_in_head);
+ATF_TEST_CASE_BODY(config_in_head)
+{
+    utils::setenv("TESTS", "config_in_head");
+    capture_hooks hooks;
+    create_helpers(this, fs::path("source"), fs::path("build"));
+    run_helpers(fs::path("source"), utils::make_optional(fs::path("build")),
+                hooks, NULL, NULL, "magic value");
+
+    std::set< std::string > exp_test_cases;
+    exp_test_cases.insert("dir/program:config_in_head");
+    ATF_REQUIRE(exp_test_cases == hooks.test_cases);
+
+    const model::metadata& metadata = hooks.metadatas.find(
+        "dir/program:config_in_head")->second;
+    ATF_REQUIRE_EQ("the-variable is magic value", metadata.description());
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(crash);
 ATF_TEST_CASE_BODY(crash)
 {
@@ -233,5 +274,6 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, many_test_cases);
     ATF_ADD_TEST_CASE(tcs, filter_match);
     ATF_ADD_TEST_CASE(tcs, build_root);
+    ATF_ADD_TEST_CASE(tcs, config_in_head);
     ATF_ADD_TEST_CASE(tcs, crash);
 }

@@ -193,9 +193,11 @@ engine::tester_path(const std::string& interface)
 /// \param unprivileged_user If not none, the user to switch to when running
 ///     the tester.
 /// \param timeout If not none, the timeout to pass to the tester.
+/// \param vars Collection of configuration variables.
 engine::tester::tester(const std::string& interface,
                        const optional< passwd::user >& unprivileged_user,
-                       const optional< datetime::delta >& timeout) :
+                       const optional< datetime::delta >& timeout,
+                       const std::map< std::string, std::string >& vars) :
     _interface(interface)
 {
     if (unprivileged_user) {
@@ -212,6 +214,10 @@ engine::tester::tester(const std::string& interface,
     if (timeout) {
         PRE(timeout.get().useconds == 0);
         _common_args.push_back(F("-t%s") % timeout.get().seconds);
+    }
+    for (std::map< std::string, std::string >::const_iterator i = vars.begin();
+         i != vars.end(); ++i) {
+        _common_args.push_back(F("-v%s=%s") % (*i).first % (*i).second);
     }
 }
 
@@ -259,20 +265,14 @@ engine::tester::list(const fs::path& program) const
 ///     tester invocation.
 /// \param stdout_file Path to the file in which to store the stdout.
 /// \param stderr_file Path to the file in which to store the stderr.
-/// \param vars Collection of configuration variables.
 ///
 /// \throw error If the tester returns with an unsuccessful exit code.
 void
 engine::tester::test(const fs::path& program, const std::string& test_case_name,
                      const fs::path& result_file, const fs::path& stdout_file,
-                     const fs::path& stderr_file,
-                     const std::map< std::string, std::string >& vars) const
+                     const fs::path& stderr_file) const
 {
     std::vector< std::string > args = _common_args;
-    for (std::map< std::string, std::string >::const_iterator i = vars.begin();
-         i != vars.end(); ++i) {
-        args.push_back(F("-v%s=%s") % (*i).first % (*i).second);
-    }
     args.push_back("test");
     args.push_back(program.str());
     args.push_back(test_case_name);

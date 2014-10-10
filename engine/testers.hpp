@@ -68,14 +68,14 @@ class tester {
 
 public:
     tester(const std::string&, const utils::optional< utils::passwd::user >&,
-           const utils::optional< utils::datetime::delta >&);
+           const utils::optional< utils::datetime::delta >&,
+           const std::map< std::string, std::string >&);
     ~tester(void);
 
     std::string list(const utils::fs::path&) const;
     void test(const utils::fs::path&, const std::string&,
               const utils::fs::path&, const utils::fs::path&,
-              const utils::fs::path&,
-              const std::map< std::string, std::string >&) const;
+              const utils::fs::path&) const;
 };
 
 

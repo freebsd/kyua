@@ -144,17 +144,17 @@ cli::cmd_list::cmd_list(void) :
 ///
 /// \param ui Object to interact with the I/O of the program.
 /// \param cmdline Representation of the command line to the subcommand.
-/// \param unused_user_config The runtime configuration of the program.
+/// \param user_config The runtime configuration of the program.
 ///
 /// \return 0 to indicate success.
 int
 cli::cmd_list::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
-                   const config::tree& UTILS_UNUSED_PARAM(user_config))
+                   const config::tree& user_config)
 {
     progress_hooks hooks(ui, cmdline.has_option("verbose"));
     const drivers::list_tests::result result = drivers::list_tests::drive(
         kyuafile_path(cmdline), build_root_path(cmdline),
-        parse_filters(cmdline.arguments()), hooks);
+        parse_filters(cmdline.arguments()), user_config, hooks);
 
     return report_unused_filters(result.unused_filters, ui) ?
         EXIT_FAILURE : EXIT_SUCCESS;
