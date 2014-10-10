@@ -25,18 +25,18 @@
 .\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 .\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-.Dd October 9, 2014
+.Dd October 10, 2014
 .Dt KYUAFILE 5
 .Os
 .Sh NAME
 .Nm Kyuafile
 .Nd Test suite description files
 .Sh SYNOPSIS
-.Fn atf_test_program "string name" "[string test_suite]" "[string metadata]"
+.Fn atf_test_program "string name" "[string metadata]"
 .Fn include "string path"
-.Fn plain_test_program "string name" "[string test_suite]" "[string metadata]"
+.Fn plain_test_program "string name" "[string metadata]"
 .Fn syntax "int version"
-.Fn tap_test_program "string name" "[string test_suite]" "[string metadata]"
+.Fn tap_test_program "string name" "[string metadata]"
 .Fn test_suite "string name"
 .Sh DESCRIPTION
 A test suite is a collection of test programs and is represented by a
@@ -67,19 +67,22 @@ file should set
 to
 .Sq 2 .
 .Ss Test suite definition
-Every
+If the
 .Nm
-should define the name of the test suite it belongs to by calling the
+registers any test programs,
+the
+.Nm
+must define the name of the test suite the test programs belong to by using the
 .Fn test_suite
-function at the very beginning.
-Individual test programs can override this value in their definition, but
-the most common style is to list a single test suite name for the whole
-file.
+function at the very beginning of the file.
 .Pp
-The purpose of the test suite name definition is to tell
+The test suite name provided in the
+.Fn test_suite
+call tells
 .Xr kyua 1
-scoping for the run-time configuration variables that these programs
-accept.
+which set of configuration variables from
+.Xr kyua.conf 5
+to pass to the test programs at run time.
 .Ss Test program registration
 A
 .Nm
@@ -103,12 +106,9 @@ libraries.  They can be registered with the
 .Fn atf_test_program
 table constructor.  This function takes the
 .Fa name
-of the test program, an optional
-.Fa test_suite
-name that overrides the global test suite name, and a collection of optional
-metadata settings for all the test cases in the test program.  Any metadata
-properties defined by the test cases themselves override the metadata values
-defined here.
+of the test program and a collection of optional metadata settings for all
+the test cases in the test program.  Any metadata properties defined by the
+test cases themselves override the metadata values defined here.
 .Pp
 .Em Plain test programs
 are those that return 0 on success and non-0 on failure; in general, most test
@@ -129,10 +129,8 @@ They can be registered with the
 .Fn tap_test_program
 table constructor.  This function takes the
 .Fa name
-of the test program, an optional
-.Fa test_suite
-name that overrides the global test suite name, and a collection of optional
-metadata settings for the test program.
+of the test program and a collection of optional metadata settings for the
+test program.
 .Pp
 The following metadata properties can be passed to any test program definition:
 .Bl -tag -width allowedXarchitecturesXX -offset indent

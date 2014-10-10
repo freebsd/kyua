@@ -59,6 +59,14 @@ using utils::optional;
 
 // History of Kyuafile file versions:
 //
+// 3 - DOES NOT YET EXIST.  Pending changes for when this is introduced:
+//
+//     * Revisit what to do about the test_suite definition.  Support for
+//       per-test program overrides is deprecated and should be removed.
+//       But, maybe, the whole test_suite definition idea is wrong and we
+//       should instead be explicitly telling which configuration variables
+//       to "inject" into each test program.
+//
 // 2 - Changed the syntax() call to take only a version number, instead of the
 //     word 'config' as the first argument and the version as the second one.
 //     Files now start with syntax(2) instead of syntax('kyuafile', 1).

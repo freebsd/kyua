@@ -22,6 +22,10 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   command-line arguments.  Combined with '--verbose', this allows
   inspecting the details of a test case failure after execution.
 
+* Issue 55: Deprecated support for specifying test_suite overrides on
+  a test program basis.  This idiom should not be used but support for
+  it remains in place.
+
 * Issue 72: Add caching support to the getcwd(3) test in configure so
   that the result can be overriden for cross-compilation purposes.
 
