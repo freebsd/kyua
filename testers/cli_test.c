@@ -300,6 +300,23 @@ ATF_TC_BODY(main__uflag__out_of_range, tc)
 }
 
 
+ATF_TC_WITHOUT_HEAD(main__vflag__invalid);
+ATF_TC_BODY(main__vflag__invalid, tc)
+{
+    const pid_t pid = atf_utils_fork();
+    if (pid == 0) {
+        char arg0[] = "unused-progname";
+        char arg1[] = "-va=b";
+        char arg2[] = "-vmalformed";
+        char* const argv[] = {arg0, arg1, arg2, NULL};
+        exit(kyua_cli_main(count_argv(argv), argv, &unused_tester));
+    }
+    atf_utils_wait(pid, EXIT_USAGE_ERROR, "",
+                   "cli_test: Invalid argument to -v: Invalid variable "
+                   "'malformed'; must be of the form var=value\n");
+}
+
+
 ATF_TC_WITHOUT_HEAD(list__ok);
 ATF_TC_BODY(list__ok, tc)
 {
@@ -473,9 +490,9 @@ ATF_TC_BODY(test__config_variables, tc)
     const pid_t pid = atf_utils_fork();
     if (pid == 0) {
         char arg0[] = "unused-progname";
-        char arg1[] = "test";
-        char arg2[] = "-vfoo=bar";
-        char arg3[] = "-va=c";
+        char arg1[] = "-vfoo=bar";
+        char arg2[] = "-va=c";
+        char arg3[] = "test";
         char arg4[] = "the-program";
         char arg5[] = "the-test-case";
         char arg6[] = "pass";
@@ -543,38 +560,6 @@ ATF_TC_BODY(test__invalid_arguments, tc)
 }
 
 
-ATF_TC_WITHOUT_HEAD(test__unknown_option);
-ATF_TC_BODY(test__unknown_option, tc)
-{
-    const pid_t pid = atf_utils_fork();
-    if (pid == 0) {
-        char arg0[] = "unused-progname";
-        char arg1[] = "test";
-        char arg2[] = "-Z";
-        char* const argv[] = {arg0, arg1, arg2, NULL};
-        exit(kyua_cli_main(count_argv(argv), argv, &unused_tester));
-    }
-    atf_utils_wait(pid, EXIT_USAGE_ERROR, "", "cli_test: Unknown test option "
-                   "-Z\n");
-}
-
-
-ATF_TC_WITHOUT_HEAD(test__missing_option_argument);
-ATF_TC_BODY(test__missing_option_argument, tc)
-{
-    const pid_t pid = atf_utils_fork();
-    if (pid == 0) {
-        char arg0[] = "unused-progname";
-        char arg1[] = "test";
-        char arg2[] = "-v";
-        char* const argv[] = {arg0, arg1, arg2, NULL};
-        exit(kyua_cli_main(count_argv(argv), argv, &unused_tester));
-    }
-    atf_utils_wait(pid, EXIT_USAGE_ERROR, "", "cli_test: test's -v requires an "
-                   "argument\n");
-}
-
-
 ATF_TP_ADD_TCS(tp)
 {
     ATF_TP_ADD_TC(tp, main__unknown_option);
@@ -587,6 +572,7 @@ ATF_TP_ADD_TCS(tp)
     ATF_TP_ADD_TC(tp, main__tflag__out_of_range);
     ATF_TP_ADD_TC(tp, main__uflag__not_a_number);
     ATF_TP_ADD_TC(tp, main__uflag__out_of_range);
+    ATF_TP_ADD_TC(tp, main__vflag__invalid);
 
     ATF_TP_ADD_TC(tp, list__ok);
     ATF_TP_ADD_TC(tp, list__custom_run_params);
@@ -600,8 +586,6 @@ ATF_TP_ADD_TCS(tp)
     ATF_TP_ADD_TC(tp, test__config_variables);
     ATF_TP_ADD_TC(tp, test__error);
     ATF_TP_ADD_TC(tp, test__invalid_arguments);
-    ATF_TP_ADD_TC(tp, test__unknown_option);
-    ATF_TP_ADD_TC(tp, test__missing_option_argument);
 
     return atf_no_error();
 }

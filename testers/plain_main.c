@@ -130,10 +130,6 @@ run_test_case(const char* test_program, const char* test_case,
 {
     kyua_error_t error;
 
-    error = kyua_env_check_configuration(user_variables);
-    if (kyua_error_is_set(error))
-        goto out;
-
     if (strcmp(test_case, fake_test_case_name) != 0) {
         error = kyua_generic_error_new("Unknown test case '%s'", test_case);
         goto out;

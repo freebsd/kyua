@@ -228,15 +228,15 @@ ATF_TC_BODY(test__timeout, tc)
 }
 
 
-ATF_TC(test__config_ok);
-ATF_TC_HEAD(test__config_ok, tc) { setup(tc, true); }
-ATF_TC_BODY(test__config_ok, tc)
+ATF_TC(test__config);
+ATF_TC_HEAD(test__config, tc) { setup(tc, true); }
+ATF_TC_BODY(test__config, tc)
 {
     char* helpers = select_helper(tc, "print_config");
     check(EXIT_SUCCESS,
           "save:stdout.txt",
           "",
-          "test", "-va=b", "-vfoo=a b c", helpers, "main", "test-result", NULL);
+          "-va=b", "-vfoo=a b c", "test", helpers, "main", "test-result", NULL);
     free(helpers);
 
     ATF_REQUIRE(atf_utils_compare_file("test-result", "passed\n"));
@@ -247,20 +247,6 @@ ATF_TC_BODY(test__config_ok, tc)
     const char* exp2 = "1..1\nTEST_ENV_foo=a b c\nTEST_ENV_a=b\nok - 1\n";
     ATF_REQUIRE(atf_utils_compare_file("stdout.txt", exp1) ||
                 atf_utils_compare_file("stdout.txt", exp2));
-}
-
-
-ATF_TC(test__config_invalid);
-ATF_TC_HEAD(test__config_invalid, tc) { setup(tc, false); }
-ATF_TC_BODY(test__config_invalid, tc)
-{
-    check(EXIT_INTERNAL_ERROR, "",
-          "kyua-tap-tester: Invalid variable 'malformed'; must be of "
-          "the form var=value\n",
-          "test", "-va=b", "-vmalformed",
-          "./non-existent", "foo", "test-result", NULL);
-
-    ATF_REQUIRE(!atf_utils_file_exists("test-result"));
 }
 
 
@@ -304,8 +290,7 @@ ATF_TP_ADD_TCS(tp)
     ATF_TP_ADD_TC(tp, test__bail_out);
     ATF_TP_ADD_TC(tp, test__crash);
     ATF_TP_ADD_TC(tp, test__timeout);
-    ATF_TP_ADD_TC(tp, test__config_ok);
-    ATF_TP_ADD_TC(tp, test__config_invalid);
+    ATF_TP_ADD_TC(tp, test__config);
     ATF_TP_ADD_TC(tp, test__missing_test_program);
     ATF_TP_ADD_TC(tp, test__invalid_test_case_name);
 

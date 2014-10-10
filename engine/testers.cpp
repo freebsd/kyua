@@ -269,11 +269,11 @@ engine::tester::test(const fs::path& program, const std::string& test_case_name,
                      const std::map< std::string, std::string >& vars) const
 {
     std::vector< std::string > args = _common_args;
-    args.push_back("test");
     for (std::map< std::string, std::string >::const_iterator i = vars.begin();
          i != vars.end(); ++i) {
         args.push_back(F("-v%s=%s") % (*i).first % (*i).second);
     }
+    args.push_back("test");
     args.push_back(program.str());
     args.push_back(test_case_name);
     args.push_back(result_file.str());

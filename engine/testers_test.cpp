@@ -307,9 +307,9 @@ ATF_TEST_CASE_BODY(tester__test__explicit_common_args_and_vars)
 
     const std::string exp_output =
         "Arg: -t15\n"
-        "Arg: test\n"
         "Arg: -vvar1=value1\n"
         "Arg: -vvariable-2=value with spaces\n"
+        "Arg: test\n"
         "Arg: /foo/bar\n"
         "Arg: test-case\n"
         "Arg: /the/result/file\n"
