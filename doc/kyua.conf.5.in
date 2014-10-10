@@ -25,7 +25,7 @@
 .\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 .\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-.Dd February 9, 2013
+.Dd October 10, 2014
 .Dt KYUA.CONF 5
 .Os
 .Sh NAME
@@ -51,18 +51,6 @@ Configuration files are Lua scripts.
 In their most basic form, their whole purpose is to assign values to
 variables, but the user has the freedom to implement any logic he desires
 to compute such values.
-The general structure of a configuration file is:
-.Bd -literal -offset indent
-syntax(2)
-
--- Assign internal variables.
-architecture = 'foo'
-platform = 'bar'
-
--- Assign test-suite variables.  All of these must be strings.
-test_suites.NetBSD.file_systems = 'ffs ext2fs'
-test_suites.X11.graphics_driver = 'vesa'
-.Ed
 .Ss File versioning
 Every
 .Nm
@@ -80,7 +68,7 @@ to
 .Ss Runtime configuration variables
 The following variables are internally recognized by
 .Xr kyua 1 :
-.Bl -tag -width XX
+.Bl -tag -width XX -offset indent
 .It Va architecture
 Name of the system architecture (aka processor type).
 .It Va platform
@@ -121,5 +109,30 @@ The value can be a string, an integer or a boolean.
 .It __EGDIR__/kyua.conf
 Sample configuration file.
 .El
+.Sh EXAMPLES
+The following
+.Nm
+shows a simple configuration file that overrides a bunch of the built-in
+.Xr kyua 1
+configuration variables:
+.Bd -literal -offset indent
+syntax(2)
+
+architecture = 'x86_64'
+platform = 'amd64'
+.Ed
+.Pp
+The following is a more complex example that introduces the definition of
+per-test suite configuration variables:
+.Bd -literal -offset indent
+syntax(2)
+
+-- Assign built-in variables.
+unprivileged_user = '_tests'
+
+-- Assign test-suite variables.  All of these must be strings.
+test_suites.NetBSD.file_systems = 'ffs ext2fs'
+test_suites.X11.graphics_driver = 'vesa'
+.Ed
 .Sh SEE ALSO
 .Xr kyua 1
