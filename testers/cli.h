@@ -67,10 +67,13 @@ struct kyua_cli_tester {
     ///
     /// \param test_program Path to the test program for which to list the test
     ///     cases.  Should be absolute.
+    /// \param user_variables Array of name=value pairs that describe the user
+    ///     configuration variables for the test case.
     /// \param run_params Execution parameters to configure the test process.
     ///
     /// \return An error if the listing fails; OK otherwise.
     kyua_error_t (*list_test_cases)(const char* test_program,
+                                    const char* const user_variables[],
                                     const kyua_run_params_t* run_params);
 
     /// Runs a single test cases of a test program.

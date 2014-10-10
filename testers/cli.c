@@ -125,8 +125,8 @@ reset_getopt(void)
 /// \param argv Arguments to the command, including the command name.
 /// \param tester Description of the tester implemented by this binary.
 /// \param run_params Execution parameters to configure the test process.
-/// \param unused_user_variables Array of name=value pairs that describe the
-///     user configuration variables for the test case.
+/// \param user_variables Array of name=value pairs that describe the user
+///     configuration variables for the test case.
 ///
 /// \return An exit status to indicate the success or failure of the listing.
 ///
@@ -135,7 +135,7 @@ static int
 list_command(const int argc, char* const* const argv,
              const kyua_cli_tester_t* tester,
              const kyua_run_params_t* run_params,
-             const char* const KYUA_DEFS_UNUSED_PARAM(user_variables[]))
+             const char* const user_variables[])
 {
     if (argc < 2)
         errx(EXIT_USAGE_ERROR, "No test program provided");
@@ -143,7 +143,8 @@ list_command(const int argc, char* const* const argv,
         errx(EXIT_USAGE_ERROR, "Only one test program allowed");
     const char* test_program = argv[1];
 
-    check_error(tester->list_test_cases(test_program, run_params));
+    check_error(tester->list_test_cases(test_program, user_variables,
+                                        run_params));
     return EXIT_SUCCESS;
 }
 

@@ -99,7 +99,7 @@ tests_testers_PROGRAMS += testers/atf_inttest
 testers_atf_inttest_SOURCES = testers/atf_inttest.c testers/common_inttest.h
 testers_atf_inttest_CPPFLAGS = -DKYUA_TESTERSDIR=\"$(libexecdir)\" \
                                $(ATF_C_CFLAGS)
-testers_atf_inttest_LDADD = $(ATF_C_LIBS)
+testers_atf_inttest_LDADD = testers/libtester.a $(ATF_C_LIBS)
 
 tests_testers_PROGRAMS += testers/cli_test
 testers_cli_test_SOURCES = testers/cli_test.c

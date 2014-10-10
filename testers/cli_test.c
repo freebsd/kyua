@@ -69,17 +69,22 @@ dump_run_params(const kyua_run_params_t* run_params)
 /// compare the printed output to the expected values.
 ///
 /// \param test_program Test program path.
+/// \param user_variables User configuration variables.
 /// \param run_params Execution parameters to configure the test process.
 ///
 /// \return An error if the test_program is set to the magic keyword 'error'; OK
 /// otherwise.
 static kyua_error_t
-list_test_cases(const char* test_program, const kyua_run_params_t* run_params)
+list_test_cases(const char* test_program, const char* const user_variables[],
+                const kyua_run_params_t* run_params)
 {
     if (strcmp(test_program, "error") == 0)
         return kyua_oom_error_new();
     else {
         printf("test_program: %s\n", test_program);
+        const char* const* iter;
+        for (iter = user_variables; *iter != NULL; ++iter)
+            printf("variable: %s\n", *iter);
         dump_run_params(run_params);
         return kyua_error_ok();
     }
@@ -360,6 +365,30 @@ ATF_TC_BODY(list__custom_run_params, tc)
 }
 
 
+ATF_TC_WITHOUT_HEAD(list__config_variables);
+ATF_TC_BODY(list__config_variables, tc)
+{
+    const pid_t pid = atf_utils_fork();
+    if (pid == 0) {
+        char arg0[] = "unused-progname";
+        char arg1[] = "-vfoo=bar";
+        char arg2[] = "-va=c";
+        char arg3[] = "list";
+        char arg4[] = "the-program";
+        char* const argv[] = {arg0, arg1, arg2, arg3, arg4, NULL};
+        exit(kyua_cli_main(count_argv(argv), argv, &mock_tester));
+    }
+    atf_utils_wait(pid, EXIT_SUCCESS,
+                   "test_program: the-program\n"
+                   "variable: foo=bar\n"
+                   "variable: a=c\n"
+                   "timeout_seconds: 60\n"
+                   "unprivileged_user: self\n"
+                   "unprivileged_group: self\n",
+                   "");
+}
+
+
 ATF_TC_WITHOUT_HEAD(list__error);
 ATF_TC_BODY(list__error, tc)
 {
@@ -576,6 +605,7 @@ ATF_TP_ADD_TCS(tp)
 
     ATF_TP_ADD_TC(tp, list__ok);
     ATF_TP_ADD_TC(tp, list__custom_run_params);
+    ATF_TP_ADD_TC(tp, list__config_variables);
     ATF_TP_ADD_TC(tp, list__error);
     ATF_TP_ADD_TC(tp, list__missing_arguments);
     ATF_TP_ADD_TC(tp, list__too_many_arguments);

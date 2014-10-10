@@ -32,6 +32,22 @@
 
 #define INTERFACE "atf"
 #include "testers/common_inttest.h"
+#include "testers/error.h"
+#include "testers/fs.h"
+#include "testers/text.h"
+
+
+static const char* test_cases_list =
+    "test_case{name='fail'}\n"
+    "test_case{name='pass'}\n"
+    "test_case{name='signal'}\n"
+    "test_case{name='sleep'}\n"
+    "test_case{name='cleanup_check_work_directory', has_cleanup='true'}\n"
+    "test_case{name='cleanup_fail', has_cleanup='true'}\n"
+    "test_case{name='cleanup_signal', has_cleanup='true'}\n"
+    "test_case{name='cleanup_sleep', has_cleanup='true'}\n"
+    "test_case{name='body_and_cleanup_fail', has_cleanup='true'}\n"
+    "test_case{name='print_config', has_cleanup='true'}\n";
 
 
 ATF_TC(list__ok);
@@ -39,20 +55,29 @@ ATF_TC_HEAD(list__ok, tc) { setup(tc, true); }
 ATF_TC_BODY(list__ok, tc)
 {
     char* helpers = helpers_path(tc);
-    check(EXIT_SUCCESS,
-          "test_case{name='fail'}\n"
-          "test_case{name='pass'}\n"
-          "test_case{name='signal'}\n"
-          "test_case{name='sleep'}\n"
-          "test_case{name='cleanup_check_work_directory', has_cleanup='true'}\n"
-          "test_case{name='cleanup_fail', has_cleanup='true'}\n"
-          "test_case{name='cleanup_signal', has_cleanup='true'}\n"
-          "test_case{name='cleanup_sleep', has_cleanup='true'}\n"
-          "test_case{name='body_and_cleanup_fail', has_cleanup='true'}\n"
-          "test_case{name='print_config', has_cleanup='true'}\n",
-          "",
-          "list", helpers, NULL);
+    check(EXIT_SUCCESS, test_cases_list, "", "list", helpers, NULL);
     free(helpers);
+}
+
+
+ATF_TC(list__config);
+ATF_TC_HEAD(list__config, tc) { setup(tc, true); }
+ATF_TC_BODY(list__config, tc)
+{
+    char* current_dir;
+    ATF_REQUIRE(!kyua_error_is_set(kyua_fs_current_path(&current_dir)));
+    char* vflag;
+    ATF_REQUIRE(!kyua_error_is_set(kyua_text_printf(
+        &vflag, "-vconfig_in_list_cookie=%s/cookie.txt", current_dir)));
+    free(current_dir);
+
+    char* helpers = helpers_path(tc);
+    ATF_REQUIRE(!atf_utils_file_exists("cookie.txt"));
+    check(EXIT_SUCCESS, test_cases_list, "", vflag, "list", helpers, NULL);
+    ATF_REQUIRE( atf_utils_file_exists("cookie.txt"));
+    free(helpers);
+
+    free(vflag);
 }
 
 
@@ -269,6 +294,7 @@ ATF_TP_ADD_TCS(tp)
     ATF_TP_ADD_TC(tp, top__unknown_command);
 
     ATF_TP_ADD_TC(tp, list__ok);
+    ATF_TP_ADD_TC(tp, list__config);
 
     ATF_TP_ADD_TC(tp, test__pass);
     ATF_TP_ADD_TC(tp, test__fail);
