@@ -38,6 +38,7 @@ CLEANFILES =
 EXTRA_DIST =
 noinst_DATA =
 noinst_LIBRARIES =
+noinst_SCRIPTS =
 
 doc_DATA = AUTHORS COPYING NEWS README
 noinst_DATA += INSTALL README
@@ -86,7 +87,7 @@ KYUA_TEST_CONFIG_FILE = none
 # Generate local-kyua, a wrapper shell script to run the just-built 'kyua'
 # binary by pointing it to the possibly not-yet-installed data files in the
 # build tree.
-noinst_SCRIPTS = local-kyua
+noinst_SCRIPTS += local-kyua
 CLEANFILES += local-kyua local-kyua.tmp
 local-kyua: Makefile
 	$(AM_V_GEN)echo '#!/bin/sh' >local-kyua.tmp; \
