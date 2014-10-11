@@ -18,6 +18,11 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   metadata to kyuafile(5), and added kyua-test-isolation(7) describing
   the isolation features of the test execution.
 
+* Issue 30: Plumbed through support to query configuration variables
+  from ATF's test case heads.  This resolves the confusing situation
+  where test cases could only do this from their body and cleanup
+  routines.
+
 * Issue 49: Extended 'report' to support test case filters as
   command-line arguments.  Combined with '--verbose', this allows
   inspecting the details of a test case failure after execution.

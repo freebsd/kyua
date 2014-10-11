@@ -95,11 +95,14 @@ status_to_result(int status, const bool timed_out, const char* result_file,
 ///
 /// \param unused_test_program Path to the test program for which to list the
 ///     test cases.  Should be absolute.
+/// \param unused_user_variables Array of name=value pairs that describe the
+///     user configuration variables for the test case.
 /// \param unused_run_params Execution parameters to configure the test process.
 ///
 /// \return An error if the listing fails; OK otherwise.
 static kyua_error_t
 list_test_cases(const char* KYUA_DEFS_UNUSED_PARAM(test_program),
+                const char* const KYUA_DEFS_UNUSED_PARAM(user_variables[]),
                 const kyua_run_params_t* KYUA_DEFS_UNUSED_PARAM(run_params))
 {
     printf("test_case{name='%s'}\n", fake_test_case_name);
@@ -129,10 +132,6 @@ run_test_case(const char* test_program, const char* test_case,
               bool* success)
 {
     kyua_error_t error;
-
-    error = kyua_env_check_configuration(user_variables);
-    if (kyua_error_is_set(error))
-        goto out;
 
     if (strcmp(test_case, fake_test_case_name) != 0) {
         error = kyua_generic_error_new("Unknown test case '%s'", test_case);

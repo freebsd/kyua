@@ -125,7 +125,7 @@ ATF_TEST_CASE_BODY(kyuafile_top__no_matches)
     fs::mkdir(fs::path("root/subdir"), 0755);
 
     const engine::kyuafile kyuafile = engine::kyuafile::load(
-        fs::path("root/Kyuafile"), none);
+        fs::path("root/Kyuafile"), none, engine::default_config());
     ATF_REQUIRE_EQ(fs::path("root"), kyuafile.source_root());
     ATF_REQUIRE_EQ(fs::path("root"), kyuafile.build_root());
     ATF_REQUIRE(kyuafile.test_programs().empty());
@@ -160,7 +160,7 @@ ATF_TEST_CASE_BODY(kyuafile_top__some_matches)
     atf::utils::create_file("root/subdir2/Kyuafile.etc", "invalid");
 
     const engine::kyuafile kyuafile = engine::kyuafile::load(
-        fs::path("root/Kyuafile"), none);
+        fs::path("root/Kyuafile"), none, engine::default_config());
     ATF_REQUIRE_EQ(fs::path("root"), kyuafile.source_root());
     ATF_REQUIRE_EQ(fs::path("root"), kyuafile.build_root());
 

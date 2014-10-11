@@ -41,6 +41,7 @@ extern "C" {
 
 #include "engine/exceptions.hpp"
 #include "model/test_result.hpp"
+#include "utils/config/tree.ipp"
 #include "utils/datetime.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
@@ -49,6 +50,7 @@ extern "C" {
 #include "utils/optional.ipp"
 #include "utils/passwd.hpp"
 
+namespace config = utils::config;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace passwd = utils::passwd;
@@ -157,7 +159,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(tester__list__defaults);
 ATF_TEST_CASE_BODY(tester__list__defaults)
 {
     create_mock_tester_exit(EXIT_SUCCESS);
-    engine::tester tester("mock", none, none);
+    engine::tester tester("mock", none, none, config::properties_map());
     const std::string output = tester.list(fs::path("/foo/bar"));
 
     const std::string exp_output =
@@ -169,17 +171,23 @@ ATF_TEST_CASE_BODY(tester__list__defaults)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(tester__list__explicit_common_args);
-ATF_TEST_CASE_BODY(tester__list__explicit_common_args)
+ATF_TEST_CASE_WITHOUT_HEAD(tester__list__explicit_common_args_and_vars);
+ATF_TEST_CASE_BODY(tester__list__explicit_common_args_and_vars)
 {
     const datetime::delta timeout(15, 0);
 
+    std::map< std::string, std::string > vars;
+    vars["var1"] = "value1";
+    vars["variable-2"] = "value with spaces";
+
     create_mock_tester_exit(EXIT_SUCCESS);
-    engine::tester tester("mock", none, utils::make_optional(timeout));
+    engine::tester tester("mock", none, utils::make_optional(timeout), vars);
     const std::string output = tester.list(fs::path("/another/program/1"));
 
     const std::string exp_output =
         "Arg: -t15\n"
+        "Arg: -vvar1=value1\n"
+        "Arg: -vvariable-2=value with spaces\n"
         "Arg: list\n"
         "Arg: /another/program/1\n"
         "tester output\n"
@@ -198,7 +206,8 @@ ATF_TEST_CASE_BODY(tester__list__request_unprivileged)
     const passwd::user user("fake", 123, 456);
 
     create_mock_tester_exit(EXIT_SUCCESS);
-    engine::tester tester("mock", utils::make_optional(user), none);
+    engine::tester tester("mock", utils::make_optional(user), none,
+                          config::properties_map());
     const std::string output = tester.list(fs::path("/another/program/1"));
 
     const std::string exp_output =
@@ -222,7 +231,8 @@ ATF_TEST_CASE_BODY(tester__list__already_unprivileged)
     const passwd::user user("fake", 123, 456);
 
     create_mock_tester_exit(EXIT_SUCCESS);
-    engine::tester tester("mock", utils::make_optional(user), none);
+    engine::tester tester("mock", utils::make_optional(user), none,
+                          config::properties_map());
     const std::string output = tester.list(fs::path("/another/program/1"));
 
     const std::string exp_output =
@@ -238,7 +248,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(tester__list__unknown_interface);
 ATF_TEST_CASE_BODY(tester__list__unknown_interface)
 {
     utils::setenv("KYUA_TESTERSDIR", ".");
-    engine::tester tester("non-existent", none, none);
+    engine::tester tester("non-existent", none, none, config::properties_map());
     ATF_REQUIRE_THROW_RE(engine::error, "Unknown interface non-existent",
                          tester.list(fs::path("does-not-matter")));
 }
@@ -248,7 +258,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(tester__list__tester_fails);
 ATF_TEST_CASE_BODY(tester__list__tester_fails)
 {
     create_mock_tester_exit(EXIT_FAILURE);
-    engine::tester tester("mock", none, none);
+    engine::tester tester("mock", none, none, config::properties_map());
     ATF_REQUIRE_THROW_RE(
         engine::error,
         "Tester did not exit cleanly:.*tester output.*tester error",
@@ -260,7 +270,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(tester__list__tester_crashes);
 ATF_TEST_CASE_BODY(tester__list__tester_crashes)
 {
     create_mock_tester_signal(SIGKILL);
-    engine::tester tester("mock", none, none);
+    engine::tester tester("mock", none, none, config::properties_map());
     ATF_REQUIRE_THROW_RE(
         engine::error,
         "Tester did not exit cleanly:.*tester output.*tester error",
@@ -271,12 +281,12 @@ ATF_TEST_CASE_BODY(tester__list__tester_crashes)
 ATF_TEST_CASE_WITHOUT_HEAD(tester__test__defaults);
 ATF_TEST_CASE_BODY(tester__test__defaults)
 {
-    std::map< std::string, std::string > vars;
+    const std::map< std::string, std::string > vars;
 
     create_mock_tester_exit(EXIT_FAILURE);
-    engine::tester tester("mock", none, none);
+    engine::tester tester("mock", none, none, vars);
     tester.test(fs::path("/foo/bar"), "test-case", fs::path("/the/result/file"),
-                fs::path("tester.out"), fs::path("tester.err"), vars);
+                fs::path("tester.out"), fs::path("tester.err"));
 
     const std::string exp_output =
         "Arg: test\n"
@@ -301,15 +311,15 @@ ATF_TEST_CASE_BODY(tester__test__explicit_common_args_and_vars)
     vars["variable-2"] = "value with spaces";
 
     create_mock_tester_exit(EXIT_SUCCESS);
-    engine::tester tester("mock", none, utils::make_optional(timeout));
+    engine::tester tester("mock", none, utils::make_optional(timeout), vars);
     tester.test(fs::path("/foo/bar"), "test-case", fs::path("/the/result/file"),
-                fs::path("tester.out"), fs::path("tester.err"), vars);
+                fs::path("tester.out"), fs::path("tester.err"));
 
     const std::string exp_output =
         "Arg: -t15\n"
-        "Arg: test\n"
         "Arg: -vvar1=value1\n"
         "Arg: -vvariable-2=value with spaces\n"
+        "Arg: test\n"
         "Arg: /foo/bar\n"
         "Arg: test-case\n"
         "Arg: /the/result/file\n"
@@ -333,9 +343,9 @@ ATF_TEST_CASE_BODY(tester__test__request_unprivileged)
     const std::map< std::string, std::string > vars;
 
     create_mock_tester_exit(EXIT_SUCCESS);
-    engine::tester tester("mock", utils::make_optional(user), none);
+    engine::tester tester("mock", utils::make_optional(user), none, vars);
     tester.test(fs::path("/foo/bar"), "test-case", fs::path("/the/result/file"),
-                fs::path("tester.out"), fs::path("tester.err"), vars);
+                fs::path("tester.out"), fs::path("tester.err"));
 
     const std::string exp_output =
         "Arg: -u123\n"
@@ -364,9 +374,9 @@ ATF_TEST_CASE_BODY(tester__test__already_unprivileged)
     const std::map< std::string, std::string > vars;
 
     create_mock_tester_exit(EXIT_SUCCESS);
-    engine::tester tester("mock", utils::make_optional(user), none);
+    engine::tester tester("mock", utils::make_optional(user), none, vars);
     tester.test(fs::path("/foo/bar"), "test-case", fs::path("/the/result/file"),
-                fs::path("tester.out"), fs::path("tester.err"), vars);
+                fs::path("tester.out"), fs::path("tester.err"));
 
     const std::string exp_output =
         "Arg: test\n"
@@ -387,10 +397,10 @@ ATF_TEST_CASE_BODY(tester__test__unknown_interface)
     const std::map< std::string, std::string > vars;
 
     utils::setenv("KYUA_TESTERSDIR", ".");
-    engine::tester tester("non-existent", none, none);
+    engine::tester tester("non-existent", none, none, vars);
     ATF_REQUIRE_THROW_RE(engine::error, "Unknown interface non-existent",
                          tester.test(fs::path("foo"), "bar", fs::path("baz"),
-                                     fs::path("out"), fs::path("err"), vars));
+                                     fs::path("out"), fs::path("err")));
 }
 
 
@@ -400,12 +410,12 @@ ATF_TEST_CASE_BODY(tester__test__tester_fails)
     const std::map< std::string, std::string > vars;
 
     create_mock_tester_exit(2);
-    engine::tester tester("mock", none, none);
+    engine::tester tester("mock", none, none, vars);
     ATF_REQUIRE_THROW_RE(
         engine::error,
         "Tester failed with code 2; this is a bug",
         tester.test(fs::path("foo"), "bar", fs::path("baz"),
-                    fs::path("out"), fs::path("err"), vars));
+                    fs::path("out"), fs::path("err")));
 }
 
 
@@ -415,12 +425,12 @@ ATF_TEST_CASE_BODY(tester__test__tester_crashes)
     const std::map< std::string, std::string > vars;
 
     create_mock_tester_signal(SIGKILL);
-    engine::tester tester("mock", none, none);
+    engine::tester tester("mock", none, none, vars);
     ATF_REQUIRE_THROW_RE(
         engine::error,
         F("Tester received signal %s; this is a bug") % SIGKILL,
         tester.test(fs::path("foo"), "bar", fs::path("baz"),
-                    fs::path("out"), fs::path("err"), vars));
+                    fs::path("out"), fs::path("err")));
 }
 
 
@@ -573,7 +583,7 @@ ATF_TEST_CASE_BODY(parse_test_result__unknown_type)
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, tester__list__defaults);
-    ATF_ADD_TEST_CASE(tcs, tester__list__explicit_common_args);
+    ATF_ADD_TEST_CASE(tcs, tester__list__explicit_common_args_and_vars);
     ATF_ADD_TEST_CASE(tcs, tester__list__request_unprivileged);
     ATF_ADD_TEST_CASE(tcs, tester__list__already_unprivileged);
     ATF_ADD_TEST_CASE(tcs, tester__list__unknown_interface);

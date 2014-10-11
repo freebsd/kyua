@@ -379,7 +379,8 @@ public:
         if (_timeout)
             mdbuilder.set_timeout(_timeout.get());
         runner::lazy_test_program test_program(
-            "plain", _binary_path, _root, "unit-tests", mdbuilder.build());
+            "plain", _binary_path, _root, "unit-tests", mdbuilder.build(),
+            config::properties_map());
         fetch_output_hooks fetcher;
         const model::test_result result = runner::run_test_case(
             &test_program, "main", user_config, fetcher, fs::path("."));
@@ -439,12 +440,60 @@ ATF_TEST_CASE_BODY(current_context)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(generate_tester_config__empty);
+ATF_TEST_CASE_BODY(generate_tester_config__empty)
+{
+    const config::tree user_config = engine::empty_config();
+
+    const config::properties_map exp_props;
+
+    ATF_REQUIRE_EQ(exp_props,
+                   runner::generate_tester_config(user_config, "missing"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(generate_tester_config__no_matches);
+ATF_TEST_CASE_BODY(generate_tester_config__no_matches)
+{
+    config::tree user_config = engine::empty_config();
+    user_config.set_string("architecture", "foo");
+    user_config.set_string("test_suites.one.var1", "value 1");
+
+    const config::properties_map exp_props;
+
+    ATF_REQUIRE_EQ(exp_props,
+                   runner::generate_tester_config(user_config, "two"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(generate_tester_config__some_matches);
+ATF_TEST_CASE_BODY(generate_tester_config__some_matches)
+{
+    std::vector< passwd::user > mock_users;
+    mock_users.push_back(passwd::user("nobody", 1234, 5678));
+    passwd::set_mock_users_for_testing(mock_users);
+
+    config::tree user_config = engine::empty_config();
+    user_config.set_string("architecture", "foo");
+    user_config.set_string("unprivileged_user", "nobody");
+    user_config.set_string("test_suites.one.var1", "value 1");
+    user_config.set_string("test_suites.two.var2", "value 2");
+
+    config::properties_map exp_props;
+    exp_props["unprivileged-user"] = "nobody";
+    exp_props["var1"] = "value 1";
+
+    ATF_REQUIRE_EQ(exp_props,
+                   runner::generate_tester_config(user_config, "one"));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(load_test_cases__get);
 ATF_TEST_CASE_BODY(load_test_cases__get)
 {
     const runner::lazy_test_program test_program(
         "plain", fs::path("non-existent"), fs::path("."), "suite-name",
-        model::metadata_builder().build());
+        model::metadata_builder().build(), config::properties_map());
     const model::test_cases_map& test_cases = test_program.test_cases();
     ATF_REQUIRE_EQ(1, test_cases.size());
     ATF_REQUIRE_EQ("main", test_cases.begin()->first);
@@ -456,7 +505,7 @@ ATF_TEST_CASE_BODY(load_test_cases__some)
 {
     runner::lazy_test_program test_program(
         "plain", fs::path("non-existent"), fs::path("."), "suite-name",
-        model::metadata_builder().build());
+        model::metadata_builder().build(), config::properties_map());
 
     const model::test_case test_case("main", model::metadata_builder().build());
     model::test_cases_map exp_test_cases;
@@ -471,7 +520,7 @@ ATF_TEST_CASE_BODY(load_test_cases__tester_fails)
 {
     runner::lazy_test_program test_program(
         "mock", fs::path("non-existent"), fs::path("."), "suite-name",
-        model::metadata_builder().build());
+        model::metadata_builder().build(), config::properties_map());
     create_mock_tester_signal(SIGSEGV);
 
     const model::test_cases_map& test_cases = test_program.test_cases();
@@ -1071,6 +1120,10 @@ ATF_TEST_CASE_BODY(run_test_case__plain__missing_test_program)
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, current_context);
+
+    ATF_ADD_TEST_CASE(tcs, generate_tester_config__empty);
+    ATF_ADD_TEST_CASE(tcs, generate_tester_config__no_matches);
+    ATF_ADD_TEST_CASE(tcs, generate_tester_config__some_matches);
 
     ATF_ADD_TEST_CASE(tcs, load_test_cases__get);
     ATF_ADD_TEST_CASE(tcs, load_test_cases__some);

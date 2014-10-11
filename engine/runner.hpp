@@ -53,7 +53,8 @@ class lazy_test_program : public model::test_program {
 public:
     lazy_test_program(const std::string&, const utils::fs::path&,
                       const utils::fs::path&, const std::string&,
-                      const model::metadata&);
+                      const model::metadata&,
+                      const utils::config::properties_map&);
 
     const model::test_cases_map& test_cases(void) const;
 };
@@ -80,7 +81,8 @@ public:
 model::context current_context(void);
 
 
-void load_test_cases(model::test_program&);
+utils::config::properties_map generate_tester_config(
+    const utils::config::tree&, const std::string&);
 
 
 model::test_result debug_test_case(

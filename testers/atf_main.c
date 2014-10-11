@@ -50,15 +50,34 @@
 #define WORKDIR_TEMPLATE "kyua.atf-tester.XXXXXX"
 
 
-static void run_list(const char*, const int[2]) KYUA_DEFS_NORETURN;
+/// Counts the length of a user variables array.
+///
+/// \param user_variables The array of elements to be counted.
+///
+/// \return The length of the array.
+static size_t
+count_variables(const char* const user_variables[])
+{
+    size_t count = 0;
+    const char* const* iter;
+    for (iter = user_variables; *iter != NULL; ++iter)
+        count++;
+    return count;
+}
+
+
+static void run_list(const char*, const char* const user_variables[],
+                     const int[2]) KYUA_DEFS_NORETURN;
 
 
 /// Executes the test program in list mode.
 ///
 /// \param test_program Path to the test program to execute; should be absolute.
+/// \param user_variables Set of configuration variables to pass to the test.
 /// \param stdout_fds Pipe to write the output of the test program to.
 static void
-run_list(const char* test_program, const int stdout_fds[2])
+run_list(const char* test_program, const char* const user_variables[],
+         const int stdout_fds[2])
 {
     (void)close(stdout_fds[0]);
 
@@ -71,8 +90,29 @@ run_list(const char* test_program, const int stdout_fds[2])
     if (dup2(STDOUT_FILENO, STDERR_FILENO) == -1)
         err(EXIT_FAILURE, "dup2 failed");
 
-    const char* const program_args[] = { test_program, "-l", NULL };
-    kyua_run_exec(test_program, program_args);
+    const size_t nargs =
+        1 /* test_program */
+        + 1 /* -l */
+        + 2 * count_variables(user_variables) /* -v name=value */
+        + 1 /* NULL */;
+
+    const char** args = malloc(sizeof(const char*) * nargs);
+    if (args == NULL)
+        kyua_error_err(EXIT_FAILURE, kyua_oom_error_new(),
+                       "Failed to construct arguments list");
+
+    size_t i = 0;
+    args[i++] = test_program;
+    args[i++] = "-l";
+    const char* const* iter;
+    for (iter = user_variables; *iter != NULL; ++iter) {
+        args[i++] = "-v";
+        args[i++] = *iter;
+    }
+    args[i++] = NULL;
+    assert(i == nargs);
+
+    kyua_run_exec(test_program, args);
 }
 
 
@@ -137,11 +177,13 @@ out:
 ///
 /// \param test_program Path to the test program for which to list the test
 ///     cases.  Should be absolute.
+/// \param user_variables Set of configuration variables to pass to the test.
 /// \param run_params Execution parameters to configure the test process.
 ///
 /// \return An error if the listing fails; OK otherwise.
 static kyua_error_t
-list_test_cases(const char* test_program, const kyua_run_params_t* run_params)
+list_test_cases(const char* test_program, const char* const user_variables[],
+                const kyua_run_params_t* run_params)
 {
     kyua_error_t error;
 
@@ -164,7 +206,7 @@ list_test_cases(const char* test_program, const kyua_run_params_t* run_params)
     pid_t pid;
     error = kyua_run_fork(&real_run_params, &pid);
     if (!kyua_error_is_set(error) && pid == 0) {
-        run_list(test_program, stdout_fds);
+        run_list(test_program, user_variables, stdout_fds);
     }
     assert(pid != -1 && pid != 0);
     if (kyua_error_is_set(error))
@@ -212,22 +254,6 @@ out_work_directory:
         kyua_run_work_directory_leave(&work_directory));
 out:
     return error;
-}
-
-
-/// Counts the length of a user variables array.
-///
-/// \param user_variables The array of elements to be counted.
-///
-/// \return The length of the array.
-static size_t
-count_variables(const char* const user_variables[])
-{
-    size_t count = 0;
-    const char* const* iter;
-    for (iter = user_variables; *iter != NULL; ++iter)
-        count++;
-    return count;
 }
 
 

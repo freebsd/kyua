@@ -35,6 +35,7 @@
 #include "model/test_program.hpp"
 #include "utils/optional.ipp"
 
+namespace config = utils::config;
 namespace fs = utils::fs;
 
 using utils::none;
@@ -82,6 +83,7 @@ drivers::list_tests::base_hooks::~base_hooks(void)
 /// \param kyuafile_path The path to the Kyuafile to be loaded.
 /// \param build_root If not none, path to the built test programs.
 /// \param raw_filters The test case filters as provided by the user.
+/// \param user_config The end-user configuration properties.
 /// \param hooks The hooks for this execution.
 ///
 /// \returns A structure with all results computed by this driver.
@@ -89,10 +91,11 @@ drivers::list_tests::result
 drivers::list_tests::drive(const fs::path& kyuafile_path,
                            const optional< fs::path > build_root,
                            const std::set< engine::test_filter >& raw_filters,
+                           const config::tree& user_config,
                            base_hooks& hooks)
 {
     const engine::kyuafile kyuafile = engine::kyuafile::load(
-        kyuafile_path, build_root);
+        kyuafile_path, build_root, user_config);
     engine::filters_state filters(raw_filters);
 
     for (model::test_programs_vector::const_iterator iter =

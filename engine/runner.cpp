@@ -153,12 +153,15 @@ setup_lua_state(lutok::state& state,
 /// Loads the list of test cases from a test program.
 ///
 /// \param test_program Representation of the test program to load.
+/// \param props Configuration variables to pass to the test program.
 ///
 /// \return A list of test cases.
 static model::test_cases_map
-load_test_cases(const model::test_program& test_program)
+load_test_cases(const model::test_program& test_program,
+                const config::properties_map& props)
 {
-    const engine::tester tester(test_program.interface_name(), none, none);
+    const engine::tester tester(test_program.interface_name(), none, none,
+                                props);
     const std::string output = tester.list(test_program.absolute_path());
 
     model::test_cases_map test_cases;
@@ -169,33 +172,27 @@ load_test_cases(const model::test_program& test_program)
 }
 
 
-/// Generates the set of configuration variables for the tester.
+/// Creates a tester.
 ///
-/// \param metadata The metadata of the test.
-/// \param user_config The configuration variables provided by the user.
-/// \param test_suite The name of the test suite.
+/// \param interface_name The name of the tester interface to use.
+/// \param metadata Metadata of the test case.
+/// \param user_config User-provided configuration variables.
+/// \param test_suite Name of the test suite, used to extract the relevant
+///     configuration variables from user_config.
 ///
-/// \return The mapping of configuration variables for the tester.
-static config::properties_map
-generate_tester_config(const model::metadata& metadata,
-                       const config::tree& user_config,
-                       const std::string& test_suite)
+/// \return The created tester, on which the test() method can be executed.
+static engine::tester
+create_tester(const std::string& interface_name,
+              const model::metadata& metadata, const config::tree& user_config,
+              const std::string& test_suite)
 {
-    config::properties_map props;
+    optional< passwd::user > user;
+    if (user_config.is_set("unprivileged_user") &&
+        metadata.required_user() == "unprivileged")
+        user = user_config.lookup< engine::user_node >("unprivileged_user");
 
-    try {
-        props = user_config.all_properties(F("test_suites.%s") % test_suite,
-                                           true);
-    } catch (const config::unknown_key_error& unused_error) {
-        // Ignore: not all test suites have entries in the configuration.
-    }
-
-    if (user_config.is_set("unprivileged_user")) {
-        const passwd::user& user =
-            user_config.lookup< engine::user_node >("unprivileged_user");
-        props["unprivileged-user"] = user.name;
-    }
-
+    config::properties_map props = runner::generate_tester_config(user_config,
+                                                                  test_suite);
     // TODO(jmmv): This is an ugly hack to cope with an atf-specific
     // property.  We should not be doing this at all, so just consider this
     // a temporary optimization...
@@ -204,28 +201,8 @@ generate_tester_config(const model::metadata& metadata,
     else
         props["has.cleanup"] = "false";
 
-    return props;
-}
-
-
-/// Creates a tester.
-///
-/// \param interface_name The name of the tester interface to use.
-/// \param metadata Metadata of the test case.
-/// \param user_config User-provided configuration variables.
-///
-/// \return The created tester, on which the test() method can be executed.
-static engine::tester
-create_tester(const std::string& interface_name,
-              const model::metadata& metadata, const config::tree& user_config)
-{
-    optional< passwd::user > user;
-    if (user_config.is_set("unprivileged_user") &&
-        metadata.required_user() == "unprivileged")
-        user = user_config.lookup< engine::user_node >("unprivileged_user");
-
     return engine::tester(interface_name, user,
-                          utils::make_optional(metadata.timeout()));
+                          utils::make_optional(metadata.timeout()), props);
 }
 
 
@@ -234,11 +211,15 @@ create_tester(const std::string& interface_name,
 
 /// Internal implementation of a lazy_test_program.
 struct engine::runner::lazy_test_program::impl {
+    /// User configuration to pass to the test program list operation.
+    config::properties_map _props;
+
     /// Collection of test cases; lazy loaded.
     optional< model::test_cases_map > _test_cases;
 
     /// Constructor.
-    impl(void)
+    impl(const config::properties_map& props_) :
+        _props(props_)
     {
     }
 };
@@ -251,15 +232,17 @@ struct engine::runner::lazy_test_program::impl {
 /// \param root_ The root of the test suite containing the test program.
 /// \param test_suite_name_ The name of the test suite this program belongs to.
 /// \param md_ Metadata of the test program.
+/// \param props_ User configuration to pass to the tester.
 runner::lazy_test_program::lazy_test_program(
     const std::string& interface_name_,
     const fs::path& binary_,
     const fs::path& root_,
     const std::string& test_suite_name_,
-    const model::metadata& md_) :
+    const model::metadata& md_,
+    const config::properties_map& props_) :
     test_program(interface_name_, binary_, root_, test_suite_name_, md_,
                  model::test_cases_map()),
-    _pimpl(new impl())
+    _pimpl(new impl(props_))
 {
 }
 
@@ -273,7 +256,7 @@ runner::lazy_test_program::test_cases(void) const
     if (!_pimpl->_test_cases) {
         model::test_cases_map tcs;
         try {
-            tcs = ::load_test_cases(*this);
+            tcs = ::load_test_cases(*this, _pimpl->_props);
         } catch (const std::runtime_error& e) {
             // TODO(jmmv): This is a very ugly workaround for the fact that we
             // cannot report failures at the test-program level.  We should
@@ -385,12 +368,9 @@ runner::debug_test_case(const model::test_program* test_program,
     try {
         const engine::tester tester = create_tester(
             test_program->interface_name(), test_case.get_metadata(),
-            user_config);
+            user_config, test_program->test_suite_name());
         tester.test(test_program->absolute_path(), test_case.name(),
-                    result_file.file(), stdout_path, stderr_path,
-                    generate_tester_config(test_case.get_metadata(),
-                                           user_config,
-                                           test_program->test_suite_name()));
+                    result_file.file(), stdout_path, stderr_path);
 
         hooks.got_stdout(stdout_path);
         hooks.got_stderr(stderr_path);
@@ -408,6 +388,35 @@ runner::debug_test_case(const model::test_program* test_program,
             model::test_result_broken,
             F("Caught unexpected exception: %s") % e.what());
     }
+}
+
+
+/// Generates the set of configuration variables for the tester.
+///
+/// \param user_config The configuration variables provided by the user.
+/// \param test_suite The name of the test suite.
+///
+/// \return The mapping of configuration variables for the tester.
+config::properties_map
+runner::generate_tester_config(const config::tree& user_config,
+                               const std::string& test_suite)
+{
+    config::properties_map props;
+
+    try {
+        props = user_config.all_properties(F("test_suites.%s") % test_suite,
+                                           true);
+    } catch (const config::unknown_key_error& unused_error) {
+        // Ignore: not all test suites have entries in the configuration.
+    }
+
+    if (user_config.is_set("unprivileged_user")) {
+        const passwd::user& user =
+            user_config.lookup< engine::user_node >("unprivileged_user");
+        props["unprivileged-user"] = user.name;
+    }
+
+    return props;
 }
 
 
@@ -450,12 +459,9 @@ runner::run_test_case(const model::test_program* test_program,
     try {
         const engine::tester tester = create_tester(
             test_program->interface_name(), test_case.get_metadata(),
-            user_config);
+            user_config, test_program->test_suite_name());
         tester.test(test_program->absolute_path(), test_case.name(),
-                    result_file.file(), stdout_file.file(), stderr_file.file(),
-                    generate_tester_config(test_case.get_metadata(),
-                                           user_config,
-                                           test_program->test_suite_name()));
+                    result_file.file(), stdout_file.file(), stderr_file.file());
 
         hooks.got_stdout(stdout_file.file());
         hooks.got_stderr(stderr_file.file());

@@ -571,6 +571,20 @@ EOF
         grep 'config2:get_variable.*passed' stdout
     atf_check -s exit:0 -o ignore -e empty \
         grep 'config3:get_variable.*skipped' stdout
+
+    CONFIG_VAR_FILE="$(pwd)/cookie"; export CONFIG_VAR_FILE
+    if [ -f "${CONFIG_VAR_FILE}" ]; then
+        atf_fail "Cookie file already created; test case list may have gotten" \
+            "a bad configuration"
+    fi
+    atf_check -s exit:1 -o ignore -e empty kyua -c my-config test config1
+    [ -f "${CONFIG_VAR_FILE}" ] || \
+        atf_fail "Cookie file not created; test case list did not get" \
+            "configuration variables"
+    value="$(cat "${CONFIG_VAR_FILE}")"
+    [ "${value}" = "value1" ] || \
+        atf_fail "Invalid value (${value}) in cookie file; test case list did" \
+            "not get the correct configuration variables"
 }
 
 

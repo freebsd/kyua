@@ -42,6 +42,7 @@
 #include <unistd.h>
 
 #include "testers/defs.h"
+#include "testers/env.h"
 #include "testers/error.h"
 #include "testers/run.h"
 
@@ -124,6 +125,8 @@ reset_getopt(void)
 /// \param argv Arguments to the command, including the command name.
 /// \param tester Description of the tester implemented by this binary.
 /// \param run_params Execution parameters to configure the test process.
+/// \param user_variables Array of name=value pairs that describe the user
+///     configuration variables for the test case.
 ///
 /// \return An exit status to indicate the success or failure of the listing.
 ///
@@ -131,7 +134,8 @@ reset_getopt(void)
 static int
 list_command(const int argc, char* const* const argv,
              const kyua_cli_tester_t* tester,
-             const kyua_run_params_t* run_params)
+             const kyua_run_params_t* run_params,
+             const char* const user_variables[])
 {
     if (argc < 2)
         errx(EXIT_USAGE_ERROR, "No test program provided");
@@ -139,7 +143,8 @@ list_command(const int argc, char* const* const argv,
         errx(EXIT_USAGE_ERROR, "Only one test program allowed");
     const char* test_program = argv[1];
 
-    check_error(tester->list_test_cases(test_program, run_params));
+    check_error(tester->list_test_cases(test_program, user_variables,
+                                        run_params));
     return EXIT_SUCCESS;
 }
 
@@ -150,6 +155,8 @@ list_command(const int argc, char* const* const argv,
 /// \param argv Arguments to the command, including the command name.
 /// \param tester Description of the tester implemented by this binary.
 /// \param run_params Execution parameters to configure the test process.
+/// \param user_variables Array of name=value pairs that describe the user
+///     configuration variables for the test case.
 ///
 /// \return An exit status to indicate the success or failure of the test case
 /// execution.
@@ -157,40 +164,15 @@ list_command(const int argc, char* const* const argv,
 /// \post Usage errors terminate the execution of the program right away.
 static int
 test_command(int argc, char* const* argv, const kyua_cli_tester_t* tester,
-             const kyua_run_params_t* run_params)
+             const kyua_run_params_t* run_params,
+             const char* const user_variables[])
 {
-#   define MAX_USER_VARIABLES 256
-    const char* user_variables[MAX_USER_VARIABLES];
-
-    const char** last_variable = user_variables;
-    int ch;
-    while ((ch = getopt(argc, argv, GETOPT_PLUS":v:")) != -1) {
-        switch (ch) {
-        case 'v':
-            *last_variable++ = optarg;
-            break;
-
-        case ':':
-            errx(EXIT_USAGE_ERROR, "%s's -%c requires an argument", argv[0],
-                 optopt);
-
-        case '?':
-            errx(EXIT_USAGE_ERROR, "Unknown %s option -%c", argv[0], optopt);
-
-        default:
-            assert(false);
-        }
-    }
-    argc -= optind;
-    argv += optind;
-    *last_variable = NULL;
-
-    if (argc != 3)
+    if (argc != 4)
         errx(EXIT_USAGE_ERROR, "Must provide a test program, a test case name "
              "and a result file");
-    const char* test_program = argv[0];
-    const char* test_case = argv[1];
-    const char* result_file = argv[2];
+    const char* test_program = argv[1];
+    const char* test_case = argv[2];
+    const char* result_file = argv[3];
 
     bool success;
     check_error(tester->run_test_case(test_program, test_case, result_file,
@@ -214,8 +196,12 @@ kyua_cli_main(int argc, char* const* argv, const kyua_cli_tester_t* tester)
     kyua_run_params_t run_params;
     kyua_run_params_init(&run_params);
 
+#   define MAX_USER_VARIABLES 256
+    const char* user_variables[MAX_USER_VARIABLES];
+
+    const char** last_variable = user_variables;
     int ch;
-    while ((ch = getopt(argc, argv, GETOPT_PLUS":g:t:u:")) != -1) {
+    while ((ch = getopt(argc, argv, GETOPT_PLUS":g:t:u:v:")) != -1) {
         switch (ch) {
         case 'g':
             run_params.unprivileged_group = (uid_t)parse_ulong(
@@ -232,6 +218,10 @@ kyua_cli_main(int argc, char* const* argv, const kyua_cli_tester_t* tester)
                 optarg, "Invalid UID", UID_MAX);
             break;
 
+        case 'v':
+            *last_variable++ = optarg;
+            break;
+
         case ':':
             errx(EXIT_USAGE_ERROR, "-%c requires an argument", optopt);
 
@@ -244,7 +234,12 @@ kyua_cli_main(int argc, char* const* argv, const kyua_cli_tester_t* tester)
     }
     argc -= optind;
     argv += optind;
+    *last_variable = NULL;
     reset_getopt();
+
+    const kyua_error_t error = kyua_env_check_configuration(user_variables);
+    if (kyua_error_is_set(error))
+        kyua_error_err(EXIT_USAGE_ERROR, error, "Invalid argument to -v");
 
     if (argc == 0)
         errx(EXIT_USAGE_ERROR, "Must provide a command");
@@ -252,9 +247,9 @@ kyua_cli_main(int argc, char* const* argv, const kyua_cli_tester_t* tester)
 
     // Keep sorted by order of likelyhood (yeah, micro-optimization).
     if (strcmp(command, "test") == 0)
-        return test_command(argc, argv, tester, &run_params);
+        return test_command(argc, argv, tester, &run_params, user_variables);
     else if (strcmp(command, "list") == 0)
-        return list_command(argc, argv, tester, &run_params);
+        return list_command(argc, argv, tester, &run_params, user_variables);
     else
         errx(EXIT_USAGE_ERROR, "Unknown command '%s'", command);
 }

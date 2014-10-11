@@ -174,7 +174,7 @@ drivers::run_tests::drive(const fs::path& kyuafile_path,
                           base_hooks& hooks)
 {
     const engine::kyuafile kyuafile = engine::kyuafile::load(
-        kyuafile_path, build_root);
+        kyuafile_path, build_root, user_config);
     engine::filters_state filters(raw_filters);
     store::write_backend db = store::write_backend::open_rw(store_path);
     store::write_transaction tx = db.start_write();

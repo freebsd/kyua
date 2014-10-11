@@ -281,6 +281,35 @@ EOF
 }
 
 
+utils_test_case config_behavior
+config_behavior_body() {
+    cat >"my-config" <<EOF
+syntax(2)
+test_suites.suite1["X-the-variable"] = "value1"
+EOF
+
+    cat >Kyuafile <<EOF
+syntax(2)
+atf_test_program{name="config1", test_suite="suite1"}
+EOF
+    utils_cp_helper config config1
+
+    CONFIG_VAR_FILE="$(pwd)/cookie"; export CONFIG_VAR_FILE
+    if [ -f "${CONFIG_VAR_FILE}" ]; then
+        atf_fail "Cookie file already created; test case list may have gotten" \
+            "a bad configuration"
+    fi
+    atf_check -s exit:0 -o ignore -e empty kyua -c my-config list
+    [ -f "${CONFIG_VAR_FILE}" ] || \
+        atf_fail "Cookie file not created; test case list did not get" \
+            "configuration variables"
+    value="$(cat "${CONFIG_VAR_FILE}")"
+    [ "${value}" = "value1" ] || \
+        atf_fail "Invalid value (${value}) in cookie file; test case list did" \
+            "not get the correct configuration variables"
+}
+
+
 utils_test_case build_root_flag
 build_root_flag_body() {
     mkdir subdir
@@ -546,6 +575,8 @@ atf_init_test_cases() {
     atf_add_test_case args_are_relative
 
     atf_add_test_case only_load_used_test_programs
+
+    atf_add_test_case config_behavior
 
     atf_add_test_case build_root_flag
 

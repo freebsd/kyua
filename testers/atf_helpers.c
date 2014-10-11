@@ -162,7 +162,13 @@ print_config_vars(const atf_tc_t* tc, const char* part)
 
 
 ATF_TC_WITH_CLEANUP(print_config);
-ATF_TC_HEAD(print_config, tc) {}
+ATF_TC_HEAD(print_config, tc)
+{
+    if (atf_tc_has_config_var(tc, "config_in_list_cookie")) {
+        const char* name = atf_tc_get_config_var(tc, "config_in_list_cookie");
+        atf_utils_create_file(name, "");
+    }
+}
 ATF_TC_BODY(print_config, tc)
 {
     print_config_vars(tc, "body");

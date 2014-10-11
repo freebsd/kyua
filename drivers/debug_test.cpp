@@ -126,7 +126,7 @@ drivers::debug_test::drive(const fs::path& kyuafile_path,
                            const fs::path& stderr_path)
 {
     const engine::kyuafile kyuafile = engine::kyuafile::load(
-        kyuafile_path, build_root);
+        kyuafile_path, build_root, user_config);
     // TODO(jmmv): Copy the test programs so that we can lazily load their test
     // cases into them.  This is a hack and should be removed once we have a
     // nicer interface to running test cases.

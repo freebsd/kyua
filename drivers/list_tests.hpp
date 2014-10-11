@@ -40,6 +40,7 @@
 
 #include "engine/filters.hpp"
 #include "model/test_program_fwd.hpp"
+#include "utils/config/tree.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"
 
@@ -81,7 +82,8 @@ public:
 
 
 result drive(const utils::fs::path&, const utils::optional< utils::fs::path >,
-             const std::set< engine::test_filter >&, base_hooks&);
+             const std::set< engine::test_filter >&,
+             const utils::config::tree&, base_hooks&);
 
 
 }  // namespace list_tests
