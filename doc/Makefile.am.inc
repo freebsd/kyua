@@ -42,6 +42,8 @@ BUILD_MANPAGE = \
 
 DIST_MAN_DEPS = doc/manbuild.sh \
                 doc/build-root.mdoc \
+                doc/results-file-flag-read.mdoc \
+                doc/results-file-flag-write.mdoc \
                 doc/test-filters.mdoc
 MAN_DEPS = $(DIST_MAN_DEPS) Makefile
 EXTRA_DIST += $(DIST_MAN_DEPS)
