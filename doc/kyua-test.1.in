@@ -76,6 +76,8 @@ or you can execute a single test case with debugging functionality by using
 .Xr kyua-debug 1 .
 .Ss Build directories
 __include__ build-root.mdoc COMMAND=test
+.Ss Results files
+__include__ results-files.mdoc
 .Ss Test filters
 __include__ test-filters.mdoc
 .Ss Test isolation
@@ -89,6 +91,8 @@ match any test case.
 .Pp
 Additional exit codes may be returned as described in
 .Xr kyua 1 .
+.Sh EXAMPLES
+__include__ results-files-report-example.mdoc REPORT_COMMAND=report
 .Sh SEE ALSO
 .Xr kyua 1 ,
 .Xr kyua-report 1 ,

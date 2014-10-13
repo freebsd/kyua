@@ -95,6 +95,8 @@ information printed by default, verbose reports include the runtime context
 of the test suite run, the metadata of each test case, and the verbatim
 output of the test cases.
 .El
+.Ss Results files
+__include__ results-files.mdoc
 .Ss Test filters
 __include__ test-filters.mdoc
 .Sh EXIT STATUS
@@ -106,6 +108,8 @@ command returns 1.
 .Pp
 Additional exit codes may be returned as described in
 .Xr kyua 1 .
+.Sh EXAMPLES
+__include__ results-files-report-example.mdoc REPORT_COMMAND=report
 .Sh SEE ALSO
 .Xr kyua 1 ,
 .Xr kyua-report-html 1 ,

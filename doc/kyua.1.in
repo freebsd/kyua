@@ -360,9 +360,7 @@ Defaults to
 .Sh FILES
 .Bl -tag -width XXXX
 .It Pa ~/.kyua/store/
-Default location for the results files.  See
-.Xr kyua-results-files 7
-for details.
+Default location for the results files.
 .It Pa ~/.kyua/kyua.conf
 User-specific configuration file.
 .It Pa ~/.kyua/logs/

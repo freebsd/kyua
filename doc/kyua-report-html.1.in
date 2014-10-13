@@ -82,6 +82,8 @@ The default value for this flag includes all the test results except the
 passed tests.  Showing the passed tests by default clutters the report with
 too much information, so only abnormal conditions are included.
 .El
+.Ss Results files
+__include__ results-files.mdoc
 .Sh EXIT STATUS
 The
 .Nm
@@ -89,6 +91,8 @@ command always returns 0.
 .Pp
 Additional exit codes may be returned as described in
 .Xr kyua 1 .
+.Sh EXAMPLES
+__include__ results-files-report-example.mdoc REPORT_COMMAND=report-html
 .Sh SEE ALSO
 .Xr kyua 1 ,
 .Xr kyua-report 1 ,

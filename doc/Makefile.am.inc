@@ -44,6 +44,8 @@ DIST_MAN_DEPS = doc/manbuild.sh \
                 doc/build-root.mdoc \
                 doc/results-file-flag-read.mdoc \
                 doc/results-file-flag-write.mdoc \
+                doc/results-files.mdoc \
+                doc/results-files-report-example.mdoc \
                 doc/test-filters.mdoc \
                 doc/test-isolation.mdoc
 MAN_DEPS = $(DIST_MAN_DEPS) Makefile
@@ -108,12 +110,6 @@ CLEANFILES += doc/kyua-report.1
 EXTRA_DIST += doc/kyua-report.1.in
 doc/kyua-report.1: $(srcdir)/doc/kyua-report.1.in $(MAN_DEPS)
 	$(AM_V_GEN)name=kyua-report.1; $(BUILD_MANPAGE)
-
-man_MANS += doc/kyua-results-files.7
-CLEANFILES += doc/kyua-results-files.7
-EXTRA_DIST += doc/kyua-results-files.7.in
-doc/kyua-results-files.7: $(srcdir)/doc/kyua-results-files.7.in $(MAN_DEPS)
-	$(AM_V_GEN)name=kyua-results-files.7; $(BUILD_MANPAGE)
 
 man_MANS += doc/kyua-test.1
 CLEANFILES += doc/kyua-test.1

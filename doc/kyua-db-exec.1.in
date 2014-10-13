@@ -62,6 +62,8 @@ Avoids printing the headers of the table in the output of the command.
 .It Fl -results-file Ar path , Fl s Ar path
 __include__ results-file-flag-read.mdoc
 .El
+.Ss Results files
+__include__ results-files.mdoc
 .Sh EXIT STATUS
 The
 .Nm

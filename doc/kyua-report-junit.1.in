@@ -67,6 +67,8 @@ Test cases that report expected failures as their results are recorded as
 passed.  The fact that they failed as expected is recorded in the test case's
 standard error output along with the corresponding reason.
 .El
+.Ss Results files
+__include__ results-files.mdoc
 .Sh EXIT STATUS
 The
 .Nm
@@ -74,6 +76,8 @@ command always returns 0.
 .Pp
 Additional exit codes may be returned as described in
 .Xr kyua 1 .
+.Sh EXAMPLES
+__include__ results-files-report-example.mdoc REPORT_COMMAND=report-junit
 .Sh SEE ALSO
 .Xr kyua 1 ,
 .Xr kyua-report 1 ,
