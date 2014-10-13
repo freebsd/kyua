@@ -18,6 +18,12 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   metadata to kyuafile(5), and added kyua-test-isolation(7) describing
   the isolation features of the test execution.
 
+* Assimilated the contents of all auxiliary manual pages, including
+  kyua-build-root(7), kyua-results-files(7), kyua-test-filters(7) and
+  kyua-test-isolation(7), into the relevant command-specific manual
+  pages.  This is for easier discoverability of relevant information
+  when reading how specific Kyua commands work.
+
 * Issue 30: Plumbed through support to query configuration variables
   from ATF's test case heads.  This resolves the confusing situation
   where test cases could only do this from their body and cleanup

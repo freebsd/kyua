@@ -25,13 +25,6 @@
 .\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 .\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-.Dd September 9, 2012
-.Dt KYUA-BUILD-ROOT 7
-.Os
-.Sh NAME
-.Nm "kyua build-root"
-.Nd Mechanics of build directories
-.Sh DESCRIPTION
 .Em Build directories
 (or object directories, target directories, product directories, etc.) is
 the concept that allows a developer to keep the source tree clean from
@@ -57,9 +50,9 @@ intact.
 .Pp
 Because build directories are an integral part of most build systems, and
 because they are a tool that developers use frequently,
-.Xr kyua 1
+.Nm
 supports build directories too.  This manifests in the form of
-.Xr kyua 1
+.Nm
 being able to run tests from build directories while reading the (often
 immutable) test suite definition from the source tree.
 .Pp
@@ -101,14 +94,9 @@ All commands that deal with the workspace support the
 option.  When this option is provided, the directory specified by the
 option is considered to be the root of the build directory.  For example,
 considering our previous fake tree layout, we could invoke
-.Xr kyua-test 1
+.Nm
 as any of the following:
 .Bd -literal -offset indent
-$ kyua test --kyuafile=src/Kyuafile --build-root=obj
-$ cd src && kyua test --build-root=../obj
+$ kyua __COMMAND__ --kyuafile=src/Kyuafile --build-root=obj
+$ cd src && kyua __COMMAND__ --build-root=../obj
 .Ed
-.Sh SEE ALSO
-.Xr kyua 1 ,
-.Xr kyua-debug 1 ,
-.Xr kyua-list 1 ,
-.Xr kyua-test 1

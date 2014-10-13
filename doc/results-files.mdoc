@@ -25,13 +25,6 @@
 .\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 .\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-.Dd August 1, 2014
-.Dt KYUA-RESULTS-FILES 7
-.Os
-.Sh NAME
-.Nm "kyua results-files"
-.Nd Description of the results files naming scheme
-.Sh DESCRIPTION
 Results files contain, as their name implies, the results of the execution of a
 test suite.  Each test suite executed by
 .Xr kyua-test 1
@@ -42,45 +35,7 @@ to analyze their contents.
 .Pp
 Results files support identifier-based lookups and also path name lookups.  The
 differences between the two are described below.
-.Ss Values accepted by --results-file
-Every command in Kyua that creates or reads from a results file accepts a
-.Fl -results-file
-flag to indicate which file to be used.
 .Pp
-For commands that
-.Em create a results file
-(only
-.Xr kyua-test 1
-at the moment), the following values are accepted:
-.Bl -tag -width XX
-.It Sq NEW
-Requests the automatic generation of a new results file name based on the test
-suite being run and the current time.
-.It Explicit file name (aka everything else)
-Store the results file where indicated.
-.El
-.Pp
-For commands that
-.Em read from an existing results file
-(notably
-.Xr kyua-report 1 ) ,
-the following values are accepted:
-.Bl -tag -width XX
-.It Sq LATEST
-Requests the load of the latest results file available for the test suite rooted
-at the current directory.
-.It Directory
-Requests the load of the latest results file available for the test suite rooted
-at the given directory.
-.It Test suite name
-Requests the load of the latest results file available for the given test suite.
-.It Results identifier
-Requests the load of a specific results file.
-.It Explicit file name (aka everything else)
-Load the specified results file.
-.El
-.Pp
-.Ss Naming scheme
 The default naming scheme for the results files provides simple support for
 identifier-based lookups and historical recording of test suite runs.  Each
 results file is given an identifier derived from the test suite that generated
@@ -106,49 +61,7 @@ subdirectory and each file holds a name of the form:
 ~/.kyua/store/results.\*(Ltidentifier\*(Gt.db
 .Ed
 .Pp
-.Ss Internals
 Results files are simple SQLite databases with the schema described in the
 .Pa __STOREDIR__/schema_v?.sql
 files.  For details on the schema, please refer to the heavily commented SQL
 file.
-.Sh FILES
-.Bl -tag -width XXXX
-.It Pa ~/.kyua/store/
-Default location for the results files.
-.It Pa __STOREDIR__/schema_v?.sql
-SQL schema to apply to new results files.
-.El
-.Pp
-.Sh EXAMPLES
-Let's say you run the following command twice in a row:
-.Bd -literal -offset indent
-kyua test -k /usr/tests/Kyuafile
-.Ed
-.Pp
-The two executions will generate two files with names like these:
-.Bd -literal -offset indent
-~/.kyua/store/results.usr_tests.20140731-150500-196784.db
-~/.kyua/store/results.usr_tests.20140731-151730-997451.db
-.Ed
-.Pp
-Taking advantage of the default naming scheme, the following commands would all
-generate a report for the results of the
-.Em latest
-execution of the test suite:
-.Bd -literal -offset indent
-cd /usr/tests && kyua report
-cd /usr/tests && kyua report --results-file=LATEST
-kyua report --results-file=/usr/tests
-kyua report --results-file=usr_tests
-kyua report --results-file=usr_tests.20140731-151730-997451
-.Ed
-.Pp
-But it is also possible to explicitly load data for older runs or from
-explicitly-named files:
-.Bd -literal -offset indent
-kyua report --results-file=usr_tests.20140731-150500-196784
-kyua report \\
-    --results-file=~/.kyua/store/results.usr_tests.20140731-150500-196784.db
-.Ed
-.Sh SEE ALSO
-.Xr kyua 1

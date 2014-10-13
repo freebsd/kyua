@@ -25,7 +25,7 @@
 .\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 .\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-.Dd July 28, 2014
+.Dd October 13, 2014
 .Dt KYUA-DB-MIGRATE 1
 .Os
 .Sh NAME
@@ -47,15 +47,10 @@ created in the same directory where the database lives.
 The following subcommand options are recognized:
 .Bl -tag -width XX
 .It Fl -results-file Ar path , Fl s Ar path
-Specifies the results file to operate on.  Defaults to
-.Sq LATEST ,
-which causes
-.Nm
-to automatically load the latest results file for the current test suite.
-See
-.Xr kyua-results-files 7
-for more information.
+__include__ results-file-flag-read.mdoc
 .El
+.Ss Results files
+__include__ results-files.mdoc
 .Sh EXIT STATUS
 The
 .Nm
