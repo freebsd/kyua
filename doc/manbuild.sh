@@ -85,7 +85,14 @@ sed_with_vars() {
 generate() {
     local include_dir="${1}"; shift
 
-    while read line; do
+    while :; do
+        local read_ok=yes
+        local oldifs="${IFS}"
+        IFS=
+        read -r line || read_ok=no
+        IFS="${oldifs}"
+        [ "${read_ok}" = yes ] || break
+
         case "${line}" in
             __include__*)
                 local file="$(echo "${line}" | cut -d ' ' -f 2)"

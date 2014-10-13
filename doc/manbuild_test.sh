@@ -68,6 +68,29 @@ EOF
 }
 
 
+atf_test_case preserve_tricky_lines
+preserve_tricky_lines_body() {
+    cat >input <<EOF
+Begin
+    This line is intended.
+This other \\
+    continues later.
+\*(LtAnd this has strange characters\*(Gt
+End
+EOF
+    atf_check "${MANBUILD}" input output
+    cat >expout <<EOF
+Begin
+    This line is intended.
+This other \\
+    continues later.
+\*(LtAnd this has strange characters\*(Gt
+End
+EOF
+    atf_check -o file:expout cat output
+}
+
+
 atf_test_case includes_ok
 includes_ok_body() {
     mkdir doc doc/subdir
@@ -183,6 +206,7 @@ atf_init_test_cases() {
     atf_add_test_case empty
     atf_add_test_case no_replacements
     atf_add_test_case some_replacements
+    atf_add_test_case preserve_tricky_lines
     atf_add_test_case includes_ok
     atf_add_test_case includes_parameterized
     atf_add_test_case includes_fail
