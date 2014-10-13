@@ -49,12 +49,31 @@ err() {
 # Generates the manual page reading from stdin and dumping to stdout.
 #
 # Args:
+#   include_dir: Path to the directory containing the include files.
 #   ...: Arguments to pass to sed.
 #
 # Returns:
 #   True if the generation succeeds; false otherwise.
 generate() {
-    sed "${@}"
+    local include_dir="${1}"; shift
+
+    while read line; do
+        case "${line}" in
+            __include__*)
+                local file="$(echo "${line}" | cut -d ' ' -f 2)"
+                local extra_sed="$(echo "${line}" | cut -d ' ' -f 3-)"
+                # If we fail to output the included file, just leave the line as
+                # is.  validate_file() will later error out.
+                [ -f "${include_dir}/${file}" ] || echo "${line}"
+                generate <"${include_dir}/${file}" "${include_dir}" \
+                    "${@}" ${extra_sed} || echo "${line}"
+                ;;
+
+            *)
+                echo "${line}"
+                ;;
+        esac
+    done | sed "${@}"
 }
 
 
@@ -98,7 +117,8 @@ main() {
     local output="${1}"; shift
 
     trap "rm -f '${output}.tmp'" EXIT HUP INT TERM
-    generate ${sed_expressions} <"${input}" >"${output}.tmp" \
+    generate "$(dirname "${input}")" ${sed_expressions} \
+        <"${input}" >"${output}.tmp" \
         || err "Failed to generate ${output}"
     if validate_file "${output}.tmp"; then
         :

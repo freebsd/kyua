@@ -68,6 +68,68 @@ EOF
 }
 
 
+atf_test_case includes_ok
+includes_ok_body() {
+    mkdir doc doc/subdir
+    cat >doc/input <<EOF
+This is a manpage.
+__include__ subdir/chunk
+There is more...
+__include__ chunk
+And done!
+EOF
+    cat >doc/subdir/chunk <<EOF
+This is the first inclusion
+and worked __OK__.
+EOF
+    cat >doc/chunk <<EOF
+This is the second inclusion.
+EOF
+    atf_check "${MANBUILD}" -e 's,__OK__,ok,g' doc/input output
+    cat >expout <<EOF
+This is a manpage.
+This is the first inclusion
+and worked ok.
+There is more...
+This is the second inclusion.
+And done!
+EOF
+    atf_check -o file:expout cat output
+}
+
+
+atf_test_case includes_parameterized
+includes_parameterized_body() {
+    cat >input <<EOF
+__include__ chunk -e s,__value__,first,g
+__include__ chunk -e s,__value__,second,g
+EOF
+    cat >chunk <<EOF
+This is a chunk with value: __value__.
+EOF
+    atf_check "${MANBUILD}" input output
+    cat >expout <<EOF
+This is a chunk with value: first.
+This is a chunk with value: second.
+EOF
+    atf_check -o file:expout cat output
+}
+
+
+atf_test_case includes_fail
+includes_fail_body() {
+    cat >input <<EOF
+This is a manpage.
+__include__ missing
+EOF
+    atf_check -s exit:1 -o ignore \
+        -e match:"manbuild.sh: Failed to generate output.*left unreplaced" \
+        "${MANBUILD}" input output
+    [ ! -f output ] || atf_fail "Output file was generated but it should" \
+        "not have been"
+}
+
+
 atf_test_case generate_fail
 generate_fail_body() {
     touch input
@@ -121,6 +183,9 @@ atf_init_test_cases() {
     atf_add_test_case empty
     atf_add_test_case no_replacements
     atf_add_test_case some_replacements
+    atf_add_test_case includes_ok
+    atf_add_test_case includes_parameterized
+    atf_add_test_case includes_fail
     atf_add_test_case generate_fail
     atf_add_test_case validate_fail
     atf_add_test_case bad_args
