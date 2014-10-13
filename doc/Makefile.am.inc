@@ -29,16 +29,16 @@
 BUILD_MANPAGE = \
 	test -d doc || mkdir -p doc; \
 	$(SHELL) $(srcdir)/doc/manbuild.sh \
-	    -e 's,__CONFDIR__,$(kyua_confdir),g' \
-	    -e 's,__DOCDIR__,$(docdir),g' \
-	    -e 's,__EGDIR__,$(examplesdir),g' \
-	    -e 's,__MISCDIR__,$(miscdir),g' \
-	    -e 's,__PACKAGE__,$(PACKAGE_TARNAME),g' \
-	    -e 's,__STOREDIR__,$(storedir),g' \
-	    -e 's,__TESTSDIR__,$(testsdir),g' \
-	    -e 's,__TESTERSDIR__,$(testersdir),g' \
-	    -e 's,__VERSION__,$(PACKAGE_VERSION),g' \
-	    $(srcdir)/doc/$${name}.in doc/$${name}
+	    -v "CONFDIR=$(kyua_confdir)" \
+	    -v "DOCDIR=$(docdir)" \
+	    -v "EGDIR=$(examplesdir)" \
+	    -v "MISCDIR=$(miscdir)" \
+	    -v "PACKAGE=$(PACKAGE_TARNAME)" \
+	    -v "STOREDIR=$(storedir)" \
+	    -v "TESTSDIR=$(testsdir)" \
+	    -v "TESTERSDIR=$(testersdir)" \
+	    -v "VERSION=$(PACKAGE_VERSION)" \
+	    "$(srcdir)/doc/$${name}.in" "doc/$${name}"
 
 DIST_MAN_DEPS = doc/manbuild.sh
 MAN_DEPS = $(DIST_MAN_DEPS) Makefile

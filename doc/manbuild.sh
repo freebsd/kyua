@@ -29,6 +29,13 @@
 
 # \file doc/manbuild.sh
 # Generates a manual page from a source file.
+#
+# Input files can have __VAR__-style patterns in them that are replaced
+# with the values provided by the caller via the -v VAR=VALUE flag.
+#
+# Input files can also include other files using the __include__ directive,
+# which takes a relative path to the file to include plus an optional
+# collection of additional variables to replace in the included file.
 
 
 # Name of the running program for error reporting purposes.
@@ -46,11 +53,32 @@ err() {
 }
 
 
+# Invokes sed(1) translating input variables to expressions.
+#
+# Args:
+#   ...: List of var=value pairs to replace.
+#
+# Returns:
+#   True if the operation succeeds; false otherwise.
+sed_with_vars() {
+    local vars="${*}"
+
+    set --
+    for pair in ${vars}; do
+        local var="$(echo "${pair}" | cut -d = -f 1)"
+        local value="$(echo "${pair}" | cut -d = -f 2-)"
+        set -- "${@}" -e "s&__${var}__&${value}&g"
+    done
+
+    sed "${@}"
+}
+
+
 # Generates the manual page reading from stdin and dumping to stdout.
 #
 # Args:
 #   include_dir: Path to the directory containing the include files.
-#   ...: Arguments to pass to sed.
+#   ...: List of var=value pairs to replace in the manpage.
 #
 # Returns:
 #   True if the generation succeeds; false otherwise.
@@ -61,19 +89,19 @@ generate() {
         case "${line}" in
             __include__*)
                 local file="$(echo "${line}" | cut -d ' ' -f 2)"
-                local extra_sed="$(echo "${line}" | cut -d ' ' -f 3-)"
+                local extra_vars="$(echo "${line}" | cut -d ' ' -f 3-)"
                 # If we fail to output the included file, just leave the line as
                 # is.  validate_file() will later error out.
                 [ -f "${include_dir}/${file}" ] || echo "${line}"
                 generate <"${include_dir}/${file}" "${include_dir}" \
-                    "${@}" ${extra_sed} || echo "${line}"
+                    "${@}" ${extra_vars} || echo "${line}"
                 ;;
 
             *)
                 echo "${line}"
                 ;;
         esac
-    done | sed "${@}"
+    done | sed_with_vars "${@}"
 }
 
 
@@ -97,12 +125,12 @@ validate_file() {
 
 # Program entry point.
 main() {
-    local sed_expressions=
+    local vars=
 
-    while getopts :e: arg; do
+    while getopts :v: arg; do
         case "${arg}" in
-            e)
-                sed_expressions="${sed_expressions} -e${OPTARG}"
+            v)
+                vars="${vars} ${OPTARG}"
                 ;;
 
             \?)
@@ -117,7 +145,7 @@ main() {
     local output="${1}"; shift
 
     trap "rm -f '${output}.tmp'" EXIT HUP INT TERM
-    generate "$(dirname "${input}")" ${sed_expressions} \
+    generate "$(dirname "${input}")" ${vars} \
         <"${input}" >"${output}.tmp" \
         || err "Failed to generate ${output}"
     if validate_file "${output}.tmp"; then

@@ -58,7 +58,7 @@ This is a manpage.
 Where __FOO__ gets replaced.
 And nothing more.
 EOF
-    atf_check "${MANBUILD}" -e 's,__FOO__,this,g' input output
+    atf_check "${MANBUILD}" -v FOO=this input output
     cat >expout <<EOF
 This is a manpage.
 Where this gets replaced.
@@ -85,7 +85,7 @@ EOF
     cat >doc/chunk <<EOF
 This is the second inclusion.
 EOF
-    atf_check "${MANBUILD}" -e 's,__OK__,ok,g' doc/input output
+    atf_check "${MANBUILD}" -v OK=ok doc/input output
     cat >expout <<EOF
 This is a manpage.
 This is the first inclusion
@@ -101,8 +101,8 @@ EOF
 atf_test_case includes_parameterized
 includes_parameterized_body() {
     cat >input <<EOF
-__include__ chunk -e s,__value__,first,g
-__include__ chunk -e s,__value__,second,g
+__include__ chunk value=first
+__include__ chunk value=second
 EOF
     cat >chunk <<EOF
 This is a chunk with value: __value__.
@@ -135,7 +135,7 @@ generate_fail_body() {
     touch input
     atf_check -s exit:1 -o ignore \
         -e match:"manbuild.sh: Failed to generate output" \
-        "${MANBUILD}" -e 's,malformed expression' input output
+        "${MANBUILD}" -v 'malformed&name=value' input output
     [ ! -f output ] || atf_fail "Output file was generated but it should" \
         "not have been"
 }
@@ -150,7 +150,7 @@ But where __BAR__ doesn't.
 EOF
     atf_check -s exit:1 -o ignore \
         -e match:"manbuild.sh: Failed to generate output.*left unreplaced" \
-        "${MANBUILD}" -e 's,__FOO__,this,g' input output
+        "${MANBUILD}" -v FOO=this input output
     [ ! -f output ] || atf_fail "Output file was generated but it should" \
         "not have been"
 }
