@@ -54,7 +54,7 @@ output of the tool.
 The test executed by
 .Nm
 is run under a controlled environment as described in
-.Xr kyua-test-isolation 7 .
+.Sx Test isolation .
 .Pp
 At the moment, the
 .Nm
@@ -123,6 +123,8 @@ the failure message to the problem.
 __include__ build-root.mdoc COMMAND=debug
 .Ss Test filters
 __include__ test-filters.mdoc
+.Ss Test isolation
+__include__ test-isolation.mdoc
 .Sh EXIT STATUS
 The
 .Nm
@@ -132,5 +134,4 @@ Additional exit codes may be returned as described in
 .Xr kyua 1 .
 .Sh SEE ALSO
 .Xr kyua 1 ,
-.Xr kyuafile 5 ,
-.Xr kyua-test-isolation 7
+.Xr kyuafile 5

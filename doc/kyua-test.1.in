@@ -53,7 +53,7 @@ filters and are described below in
 Every test executed by
 .Nm
 is run under a controlled environment as described in
-.Xr kyua-test-isolation 7 .
+.Sx Test isolation .
 .Pp
 The following subcommand options are recognized:
 .Bl -tag -width XX
@@ -78,6 +78,8 @@ or you can execute a single test case with debugging functionality by using
 __include__ build-root.mdoc COMMAND=test
 .Ss Test filters
 __include__ test-filters.mdoc
+.Ss Test isolation
+__include__ test-isolation.mdoc
 .Sh EXIT STATUS
 The
 .Nm
@@ -90,5 +92,4 @@ Additional exit codes may be returned as described in
 .Sh SEE ALSO
 .Xr kyua 1 ,
 .Xr kyua-report 1 ,
-.Xr kyuafile 5 ,
-.Xr kyua-test-isolation 7
+.Xr kyuafile 5
