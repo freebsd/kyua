@@ -60,8 +60,8 @@ The following subcommand options are recognized:
 .It Fl -build-root Ar path
 Specifies the build root in which to find the test programs referenced by
 the Kyuafile, if different from the Kyuafile's directory.  See
-.Xr kyua-build-root 7
-for more information.
+.Sx Build directories
+below for more information.
 .It Fl -kyuafile Ar path , Fl k Ar path
 Specifies the Kyuafile to process.  Defaults to a
 .Pa Kyuafile
@@ -81,6 +81,8 @@ You can later inspect the results of the test run in more detail by using
 .Xr kyua-report 1
 or you can execute a single test case with debugging functionality by using
 .Xr kyua-debug 1 .
+.Ss Build directories
+__include__ build-root.mdoc COMMAND=test
 .Ss Test filters
 __include__ test-filters.mdoc
 .Sh EXIT STATUS

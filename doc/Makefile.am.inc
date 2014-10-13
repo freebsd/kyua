@@ -41,6 +41,7 @@ BUILD_MANPAGE = \
 	    "$(srcdir)/doc/$${name}.in" "doc/$${name}"
 
 DIST_MAN_DEPS = doc/manbuild.sh \
+                doc/build-root.mdoc \
                 doc/test-filters.mdoc
 MAN_DEPS = $(DIST_MAN_DEPS) Makefile
 EXTRA_DIST += $(DIST_MAN_DEPS)
@@ -50,12 +51,6 @@ CLEANFILES += doc/kyua-about.1
 EXTRA_DIST += doc/kyua-about.1.in
 doc/kyua-about.1: $(srcdir)/doc/kyua-about.1.in $(MAN_DEPS)
 	$(AM_V_GEN)name=kyua-about.1; $(BUILD_MANPAGE)
-
-man_MANS += doc/kyua-build-root.7
-CLEANFILES += doc/kyua-build-root.7
-EXTRA_DIST += doc/kyua-build-root.7.in
-doc/kyua-build-root.7: $(srcdir)/doc/kyua-build-root.7.in $(MAN_DEPS)
-	$(AM_V_GEN)name=kyua-build-root.7; $(BUILD_MANPAGE)
 
 man_MANS += doc/kyua-config.1
 CLEANFILES += doc/kyua-config.1

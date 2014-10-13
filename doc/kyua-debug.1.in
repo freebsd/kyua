@@ -75,8 +75,8 @@ The following subcommand options are recognized:
 .It Fl -build-root Ar path
 Specifies the build root in which to find the test programs referenced
 by the Kyuafile, if different from the Kyuafile's directory.  See
-.Xr kyua-build-root 7
-for more information.
+.Sx Build directories
+below for more information.
 .It Fl -kyuafile Ar file , Fl k Ar file
 Specifies the Kyuafile to process.  Defaults to
 .Pa Kyuafile
@@ -119,6 +119,8 @@ kernel/fs:rmdir  ->  failed: Invalid argument
 Luckily, the offending test case was printing status lines as it
 progressed, so we could see the last attempted call and we can know match
 the failure message to the problem.
+.Ss Build directories
+__include__ build-root.mdoc COMMAND=debug
 .Ss Test filters
 __include__ test-filters.mdoc
 .Sh EXIT STATUS
@@ -130,6 +132,5 @@ Additional exit codes may be returned as described in
 .Xr kyua 1 .
 .Sh SEE ALSO
 .Xr kyua 1 ,
-.Xr kyua-build-root 7 ,
 .Xr kyuafile 5 ,
 .Xr kyua-test-isolation 7
