@@ -39,6 +39,8 @@ wherever available:
 
 * NetBSD with pkgsrc: install the `pkgsrc/devel/kyua` package.
 
+* OS X (with Homebrew): install the `kyua` package with `brew install kyua`.
+
 Should you want to build and install Kyua from the source tree provided
 here, follow the instructions in the
 [INSTALL file](INSTALL).
