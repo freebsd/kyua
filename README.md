@@ -39,6 +39,8 @@ wherever available:
 
 * NetBSD with pkgsrc: install the `pkgsrc/devel/kyua` package.
 
+* OpenBSD with packages: install the `kyua` package with `pkg_add kyua`.
+
 Should you want to build and install Kyua from the source tree provided
 here, follow the instructions in the
 [INSTALL file](INSTALL).
