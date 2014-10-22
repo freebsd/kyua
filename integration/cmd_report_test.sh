@@ -247,7 +247,7 @@ Environment variables:
 EOF
     HOME="$(pwd)" MOCK="mock1
 has multiple lines
-and terminates here" env | sort | grep '^[_a-zA-Z0-9]*=' | sed -e 's,^,    ,' \
+and terminates here" env | sort | grep '^[._a-zA-Z0-9]*=' | sed -e 's,^,    ,' \
         | grep -v '^    _.*=.*' >>expout
     cat >>expout <<EOF
 ===> simple_all_pass:skip
