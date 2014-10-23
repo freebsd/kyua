@@ -1,7 +1,7 @@
 Changes in version 0.11
 =======================
 
-STILL UNDER DEVELOPMENT; NOT RELEASED YET.
+Released on October 23rd, 2014.
 
 * Added support to print the details of all test cases (metadata and
   their output) to 'report'.  This is via a new '--verbose' flag which
@@ -37,19 +37,19 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   a test program basis.  This idiom should not be used but support for
   it remains in place.
 
-* Issue 72: Add caching support to the getcwd(3) test in configure so
+* Issue 72: Added caching support to the getcwd(3) test in configure so
   that the result can be overriden for cross-compilation purposes.
 
 * Issue 83: Changed manual page headings to include a "kyua" prefix in
   their name.  This prevents some possible confusion when displaying,
   for example, the "kyua-test" manual page with a plain name of "test".
 
-* Issue 84: Pass test-suite configuration variables to plain and TAP
-  test programs via the environment.  The name of the environment
-  variables set this way is prefixed by TEST_ENV_, so a configuration
-  variable of the form 'test_suites.some_name.allow_unsafe_ops=yes'
-  in kyua.conf becomes 'TEST_ENV_allow_unsafe_ops=YES' in the
-  environment.
+* Issue 84: Started passing test-suite configuration variables to plain
+  and TAP test programs via the environment.  The name of the
+  environment variables set this way is prefixed by TEST_ENV_, so a
+  configuration variable of the form
+  'test_suites.some_name.allow_unsafe_ops=yes' in kyua.conf becomes
+  'TEST_ENV_allow_unsafe_ops=YES' in the environment.
 
 * Issue 97 and 116: Fixed the build on Illumos.
 
@@ -59,14 +59,15 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   the reuse of legacy test code), we don't want it to easily escape the
   automanaged work directory.
 
-* Issue 103: Be more liberal in the parsing of TAP test results by
-  treating the number in 'ok' and 'not ok' lines as optional.
+* Issue 103: Started being more liberal in the parsing of TAP test
+  results by treating the number in 'ok' and 'not ok' lines as optional.
 
-* Issue 105: Use tmpfs instead of md as a temporary file system for
-  tests in FreeBSD so that we do not leak md(4) devices.
+* Issue 105: Started using tmpfs instead of md as a temporary file
+  system for tests in FreeBSD so that we do not leak md(4) devices.
 
-* Issue 109: Properly drop group privileges when unprivileged_user is
-  set.  Also fixes testers/run_test:fork_wait__unprivileged_group.
+* Issue 109: Changed the privilege dropping code to start properly
+  dropping group privileges when unprivileged_user is set.  Also fixes
+  testers/run_test:fork_wait__unprivileged_group.
 
 * Issue 110: Changed 'help' to display version information and clarified
   the purpose of the 'about' command in its documentation.
