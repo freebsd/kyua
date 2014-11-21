@@ -23,9 +23,9 @@ programs can also be executed through Kyua.
 
 ## Download
 
-The latest version of Kyua is 0.10 and was released on August 14th, 2014.
+The latest version of Kyua is 0.11 and was released on October 23rd, 2014.
 
-Download: [kyua-0.10](../../releases/tag/kyua-0.10).
+Download: [kyua-0.11](../../releases/tag/kyua-0.11).
 
 ## Installation
 
