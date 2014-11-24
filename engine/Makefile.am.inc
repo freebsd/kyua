@@ -36,6 +36,8 @@ libengine_a_SOURCES  = engine/config.cpp
 libengine_a_SOURCES += engine/config.hpp
 libengine_a_SOURCES += engine/exceptions.cpp
 libengine_a_SOURCES += engine/exceptions.hpp
+libengine_a_SOURCES += engine/executor.cpp
+libengine_a_SOURCES += engine/executor.hpp
 libengine_a_SOURCES += engine/filters.cpp
 libengine_a_SOURCES += engine/filters.hpp
 libengine_a_SOURCES += engine/isolation.cpp
@@ -66,6 +68,11 @@ tests_engine_PROGRAMS += engine/exceptions_test
 engine_exceptions_test_SOURCES = engine/exceptions_test.cpp
 engine_exceptions_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
 engine_exceptions_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
+
+tests_engine_PROGRAMS += engine/executor_test
+engine_executor_test_SOURCES = engine/executor_test.cpp
+engine_executor_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
+engine_executor_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 
 tests_engine_PROGRAMS += engine/filters_test
 engine_filters_test_SOURCES = engine/filters_test.cpp
