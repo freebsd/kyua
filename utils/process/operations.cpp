@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2014 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,34 +26,63 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/process/system.hpp"
+#include "utils/process/operations.hpp"
 
 extern "C" {
 #include <sys/types.h>
 #include <sys/wait.h>
-
-#include <fcntl.h>
-#include <unistd.h>
 }
 
-namespace detail = utils::process::detail;
+#include <cerrno>
+
+#include "utils/logging/macros.hpp"
+#include "utils/process/exceptions.hpp"
+#include "utils/process/system.hpp"
+#include "utils/process/status.hpp"
+#include "utils/signals/interrupts.hpp"
+
+namespace process = utils::process;
+namespace signals = utils::signals;
 
 
-/// Indirection to execute the dup2(2) system call.
-int (*detail::syscall_dup2)(const int, const int) = ::dup2;
+namespace {
 
 
-/// Indirection to execute the fork(2) system call.
-pid_t (*detail::syscall_fork)(void) = ::fork;
+/// Exception-based, type-improved version of wait(2).
+///
+/// \return The PID of the terminated process and its termination status.
+///
+/// \throw process::system_error If the call to wait(2) fails.
+static process::status
+safe_wait(void)
+{
+    LD("Waiting for any child process");
+    int stat_loc;
+    const pid_t pid = ::wait(&stat_loc);
+    if (pid == -1) {
+        const int original_errno = errno;
+        throw process::system_error("Failed to wait for any child process",
+                                    original_errno);
+    }
+    return process::status(pid, stat_loc);
+}
 
 
-/// Indirection to execute the open(2) system call.
-int (*detail::syscall_open)(const char*, const int, ...) = ::open;
+}  // anonymous namespace
 
 
-/// Indirection to execute the pipe(2) system call.
-int (*detail::syscall_pipe)(int[2]) = ::pipe;
-
-
-/// Indirection to execute the waitpid(2) system call.
-pid_t (*detail::syscall_waitpid)(const pid_t, int*, const int) = ::waitpid;
+/// Blocks to wait for completion of any subprocess.
+///
+/// \return The termination status of the child process that terminated.
+///
+/// \throw process::system_error If the call to wait(2) fails.
+process::status
+process::wait_any(void)
+{
+    const process::status status = safe_wait();
+    {
+        signals::interrupts_inhibiter inhibiter;
+        signals::remove_pid_to_kill(status.dead_pid());
+    }
+    return status;
+}

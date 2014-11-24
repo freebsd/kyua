@@ -128,11 +128,7 @@ open_for_append(const fs::path& filename)
 }
 
 
-/// Exception-based, type-improved version of wait(2).
-///
-/// Because we are waiting for the termination of a process, and because this is
-/// the canonical way to call wait(2) for this module, we ensure from here that
-/// any subprocess of the process we are killing is terminated.
+/// Exception-based, type-improved version of waitpid(2).
 ///
 /// \param pid The identifier of the process to wait for.
 ///
@@ -140,7 +136,7 @@ open_for_append(const fs::path& filename)
 ///
 /// \throw process::system_error If the call to waitpid(2) fails.
 static process::status
-safe_wait(const pid_t pid)
+safe_waitpid(const pid_t pid)
 {
     LD(F("Waiting for pid=%s") % pid);
     int stat_loc;
@@ -441,7 +437,7 @@ process::child::output(void)
 process::status
 process::child::wait(void)
 {
-    const process::status status = safe_wait(_pimpl->_pid);
+    const process::status status = safe_waitpid(_pimpl->_pid);
     {
         signals::interrupts_inhibiter inhibiter;
         signals::remove_pid_to_kill(_pimpl->_pid);
