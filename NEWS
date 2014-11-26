@@ -3,7 +3,9 @@ Changes in version 0.12
 
 STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 
-* No changes recorded.
+* Fixed stacktrace gathering with FreeBSD's ancient version of GDB.
+  GDB 6.1.1 (circa 2004) does not have the -ex flag so we need to
+  generate a temporary GDB script and feed it to GDB with -x instead.
 
 
 Changes in version 0.11

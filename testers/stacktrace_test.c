@@ -229,8 +229,9 @@ ATF_TC_BODY(dump__integration, tc)
 
     // It is hard to validate the execution of an arbitrary GDB of which we know
     // nothing anything.  Just assume that the backtrace, at the very least,
-    // prints a frame identifier.
+    // prints a couple of frame identifiers.
     ATF_REQUIRE(atf_utils_grep_file("#0", "stacktrace"));
+    ATF_REQUIRE(atf_utils_grep_file("#1", "stacktrace"));
 }
 
 

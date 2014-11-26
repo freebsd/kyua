@@ -32,6 +32,7 @@
 #include <sys/wait.h>
 
 #include <assert.h>
+#include <err.h>
 #include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -125,6 +126,13 @@ run_gdb(const char* program, const char* core_name, FILE* output)
         free(error);
     }
 
+    FILE* gdb_script = fopen("gdb.script", "w");
+    if (gdb_script == NULL) {
+        err(EXIT_FAILURE, "Cannot create GDB script");
+    }
+    (void)fprintf(gdb_script, "backtrace\n");
+    fclose(gdb_script);
+
     (void)close(STDIN_FILENO);
     const int input_fd = open("/dev/null", O_RDONLY);
     assert(input_fd == STDIN_FILENO);
@@ -143,7 +151,7 @@ run_gdb(const char* program, const char* core_name, FILE* output)
         fclose(output);
 
     const char* const gdb_args[] = {
-        "gdb", "-batch", "-q", "-ex", "bt", program, core_name, NULL };
+        "gdb", "-batch", "-q", "-x", "gdb.script", program, core_name, NULL };
     kyua_run_exec(kyua_stacktrace_gdb, gdb_args);
 }
 
