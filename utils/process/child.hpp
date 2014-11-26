@@ -48,19 +48,14 @@
 
 #include <istream>
 #include <memory>
-#include <string>
-#include <vector>
 
 #include "utils/fs/path.hpp"
 #include "utils/noncopyable.hpp"
+#include "utils/process/operations.hpp"  // TODO(jmmv): This is wrong.
 #include "utils/process/status.hpp"
 
 namespace utils {
 namespace process {
-
-
-/// Arguments to a program, without the program name.
-typedef std::vector< std::string > args_vector;
 
 
 /// Child process spawner and controller.

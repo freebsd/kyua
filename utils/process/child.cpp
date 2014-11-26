@@ -39,8 +39,6 @@ extern "C" {
 
 #include <cassert>
 #include <cerrno>
-#include <cstdlib>
-#include <cstring>
 #include <iostream>
 #include <memory>
 
@@ -49,6 +47,7 @@ extern "C" {
 #include "utils/logging/macros.hpp"
 #include "utils/process/exceptions.hpp"
 #include "utils/process/fdstream.hpp"
+#include "utils/process/operations.hpp"
 #include "utils/process/system.hpp"
 #include "utils/process/status.hpp"
 #include "utils/sanity.hpp"
@@ -161,61 +160,6 @@ log_exec(const fs::path& program, const process::args_vector& args)
          iter != args.end(); ++iter)
         plain_command += F(" %s") % *iter;
     LD(F("Executing %s") % plain_command);
-}
-
-
-/// Maximum number of arguments supported by cxx_exec.
-///
-/// We need this limit to avoid having to allocate dynamic memory in the child
-/// process to construct the arguments list, which would have side-effects in
-/// the parent's memory if we use vfork().
-#define MAX_ARGS 128
-
-
-static void cxx_exec(const fs::path& program, const process::args_vector& args)
-    throw() UTILS_NORETURN;
-
-
-/// Executes an external binary and replaces the current process.
-///
-/// This function must not use any of the logging features, so that the output
-/// of the subprocess is not "polluted" by our own messages.
-///
-/// This function must also not affect the global state of the current process
-/// as otherwise we would not be able to use vfork().  Only state stored in the
-/// stack can be touched.
-///
-/// \param program The binary to execute.
-/// \param args The arguments to pass to the binary, without the program name.
-static void
-cxx_exec(const fs::path& program, const process::args_vector& args) throw()
-{
-    assert(args.size() < MAX_ARGS);
-    try {
-        const char* argv[MAX_ARGS + 1];
-
-        argv[0] = program.c_str();
-        for (process::args_vector::size_type i = 0; i < args.size(); i++)
-            argv[1 + i] = args[i].c_str();
-        argv[1 + args.size()] = NULL;
-
-        const int ret = ::execv(program.c_str(),
-                                (char* const*)(unsigned long)(const void*)argv);
-        const int original_errno = errno;
-        assert(ret == -1);
-
-        std::cerr << "Failed to execute " << program << ": "
-                  << std::strerror(original_errno) << "\n";
-        std::abort();
-    } catch (const std::runtime_error& error) {
-        std::cerr << "Failed to execute " << program << ": "
-                  << error.what() << "\n";
-        std::abort();
-    } catch (...) {
-        std::cerr << "Failed to execute " << program << "; got unexpected "
-            "exception during exec\n";
-        std::abort();
-    }
 }
 
 
@@ -370,7 +314,7 @@ process::child::spawn_capture(const fs::path& program, const args_vector& args)
 {
     std::auto_ptr< child > child = fork_capture_aux();
     if (child.get() == NULL)
-        cxx_exec(program, args);
+        exec(program, args);
     log_exec(program, args);
     return child;
 }
@@ -399,7 +343,7 @@ process::child::spawn_files(const fs::path& program,
 {
     std::auto_ptr< child > child = fork_files_aux(stdout_file, stderr_file);
     if (child.get() == NULL)
-        cxx_exec(program, args);
+        exec(program, args);
     log_exec(program, args);
     return child;
 }

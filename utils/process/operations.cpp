@@ -31,18 +31,34 @@
 extern "C" {
 #include <sys/types.h>
 #include <sys/wait.h>
+
+#include <unistd.h>
 }
 
+#include <cassert>
 #include <cerrno>
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
 
+#include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/process/exceptions.hpp"
 #include "utils/process/system.hpp"
 #include "utils/process/status.hpp"
 #include "utils/signals/interrupts.hpp"
 
+namespace fs = utils::fs;
 namespace process = utils::process;
 namespace signals = utils::signals;
+
+
+/// Maximum number of arguments supported by exec.
+///
+/// We need this limit to avoid having to allocate dynamic memory in the child
+/// process to construct the arguments list, which would have side-effects in
+/// the parent's memory if we use vfork().
+#define MAX_ARGS 128
 
 
 namespace {
@@ -69,6 +85,49 @@ safe_wait(void)
 
 
 }  // anonymous namespace
+
+
+/// Executes an external binary and replaces the current process.
+///
+/// This function must not use any of the logging features so that the output
+/// of the subprocess is not "polluted" by our own messages.
+///
+/// This function must also not affect the global state of the current process
+/// as otherwise we would not be able to use vfork().  Only state stored in the
+/// stack can be touched.
+///
+/// \param program The binary to execute.
+/// \param args The arguments to pass to the binary, without the program name.
+void
+process::exec(const fs::path& program, const args_vector& args) throw()
+{
+    assert(args.size() < MAX_ARGS);
+    try {
+        const char* argv[MAX_ARGS + 1];
+
+        argv[0] = program.c_str();
+        for (args_vector::size_type i = 0; i < args.size(); i++)
+            argv[1 + i] = args[i].c_str();
+        argv[1 + args.size()] = NULL;
+
+        const int ret = ::execv(program.c_str(),
+                                (char* const*)(unsigned long)(const void*)argv);
+        const int original_errno = errno;
+        assert(ret == -1);
+
+        std::cerr << "Failed to execute " << program << ": "
+                  << std::strerror(original_errno) << "\n";
+        std::abort();
+    } catch (const std::runtime_error& error) {
+        std::cerr << "Failed to execute " << program << ": "
+                  << error.what() << "\n";
+        std::abort();
+    } catch (...) {
+        std::cerr << "Failed to execute " << program << "; got unexpected "
+            "exception during exec\n";
+        std::abort();
+    }
+}
 
 
 /// Blocks to wait for completion of any subprocess.
