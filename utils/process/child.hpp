@@ -37,7 +37,7 @@
 ///
 /// Be aware that the semantics of the fork and wait methods exposed by this
 /// module are slightly different from that of the native calls.  Any process
-/// spawned by fork here will be isolated in its own process group; once any of
+/// spawned by fork here will be isolated in its own session; once any of
 /// such children processes is awaited for, its whole process group will be
 /// terminated.  This is the semantics we want in the above layers to ensure
 /// that test programs (and, for that matter, external utilities) do not leak

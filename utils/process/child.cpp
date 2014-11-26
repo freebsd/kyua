@@ -212,7 +212,7 @@ process::child::fork_capture_aux(void)
         throw process::system_error("fork(2) failed", errno);
     } else if (pid == 0) {
         inhibiter.reset(NULL);  // Unblock signals.
-        ::setpgid(::getpid(), ::getpid());
+        ::setsid();
 
         try {
             ::close(fds[0]);
@@ -267,7 +267,7 @@ process::child::fork_files_aux(const fs::path& stdout_file,
         throw process::system_error("fork(2) failed", errno);
     } else if (pid == 0) {
         inhibiter.reset(NULL);  // Unblock signals.
-        ::setpgid(::getpid(), ::getpid());
+        ::setsid();
 
         try {
             if (stdout_file != fs::path("/dev/stdout")) {
