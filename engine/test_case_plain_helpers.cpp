@@ -37,7 +37,6 @@ extern "C" {
 #include <iostream>
 #include <sstream>
 
-#include "utils/defs.hpp"
 #include "utils/env.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
@@ -49,6 +48,26 @@ using utils::optional;
 
 
 namespace {
+
+
+/// Gets the name of the test case to run.
+///
+/// We use the value of the TEST_CASE environment variable if present, or
+/// else the basename of the test program.
+///
+/// \param arg0 Value of argv[0] as passed to main().
+///
+/// \return A test case name.  The name may not be valid.
+static std::string
+guess_test_case_name(const char* arg0)
+{
+    const optional< std::string > test_case_env = utils::getenv("TEST_CASE");
+    if (test_case_env) {
+        return test_case_env.get();
+    } else {
+        return fs::path(arg0).leaf_name();
+    }
+}
 
 
 /// Logs an error message and exits the test with an error code.
@@ -156,10 +175,10 @@ test_validate_isolation(void)
 /// binary could simplify many other things.
 ///
 /// \param argc The number of CLI arguments.
-/// \param unused_argv The CLI arguments themselves.  These are not used because
+/// \param argv The CLI arguments themselves.  These are not used because
 ///     Kyua will not pass any arguments to the plain test program.
 int
-main(int argc, char** UTILS_UNUSED_PARAM(argv))
+main(int argc, char** argv)
 {
     if (argc != 1) {
         std::cerr << "No arguments allowed; select the test case with the "
@@ -167,12 +186,7 @@ main(int argc, char** UTILS_UNUSED_PARAM(argv))
         return EXIT_FAILURE;
     }
 
-    const optional< std::string > test_case_env = utils::getenv("TEST_CASE");
-    if (!test_case_env) {
-        std::cerr << "TEST_CASE not defined";
-        return EXIT_FAILURE;
-    }
-    const std::string& test_case = test_case_env.get();
+    const std::string& test_case = guess_test_case_name(argv[0]);
 
     if (test_case == "crash")
         test_crash();
