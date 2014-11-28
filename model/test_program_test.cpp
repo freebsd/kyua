@@ -34,6 +34,7 @@ extern "C" {
 #include <signal.h>
 }
 
+#include <set>
 #include <sstream>
 
 #include <atf-c++.hpp>
@@ -227,6 +228,39 @@ ATF_TEST_CASE_BODY(operators_eq_and_ne__not_copy)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(operator_lt);
+ATF_TEST_CASE_BODY(operator_lt)
+{
+    const model::test_program tp1(
+        "plain", fs::path("a/b/c"), fs::path("/foo/bar"), "suite-name",
+        model::metadata_builder().build(),
+        model::test_cases_map());
+    const model::test_program tp2(
+        "atf", fs::path("c"), fs::path("/foo/bar"), "suite-name",
+        model::metadata_builder().build(),
+        model::test_cases_map());
+    const model::test_program tp3(
+        "plain", fs::path("a/b/c"), fs::path("/abc"), "suite-name",
+        model::metadata_builder().build(),
+        model::test_cases_map());
+
+    ATF_REQUIRE(!(tp1 < tp1));
+
+    ATF_REQUIRE(  tp1 < tp2);
+    ATF_REQUIRE(!(tp2 < tp1));
+
+    ATF_REQUIRE(!(tp1 < tp3));
+    ATF_REQUIRE(  tp3 < tp1);
+
+    // And now, test the actual reason why we want to have an < overload by
+    // attempting to put the various programs in a set.
+    std::set< model::test_program > programs;
+    programs.insert(tp1);
+    programs.insert(tp2);
+    programs.insert(tp3);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(output__no_test_cases);
 ATF_TEST_CASE_BODY(output__no_test_cases)
 {
@@ -356,6 +390,7 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, operators_eq_and_ne__copy);
     ATF_ADD_TEST_CASE(tcs, operators_eq_and_ne__not_copy);
+    ATF_ADD_TEST_CASE(tcs, operator_lt);
 
     ATF_ADD_TEST_CASE(tcs, output__no_test_cases);
     ATF_ADD_TEST_CASE(tcs, output__some_test_cases);

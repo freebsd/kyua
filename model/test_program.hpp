@@ -72,6 +72,7 @@ public:
 
     bool operator==(const test_program&) const;
     bool operator!=(const test_program&) const;
+    bool operator<(const test_program&) const;
 };
 
 
