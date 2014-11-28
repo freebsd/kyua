@@ -97,6 +97,7 @@ public:
     test_program_builder& set_metadata(const model::metadata&);
 
     test_program build(void) const;
+    test_program_ptr build_ptr(void) const;
 };
 
 

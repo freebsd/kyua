@@ -333,6 +333,21 @@ ATF_TEST_CASE_BODY(builder__overrides)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(builder__ptr);
+ATF_TEST_CASE_BODY(builder__ptr)
+{
+    const model::test_program expected(
+        "mock", fs::path("non-existent"), fs::path("."), "suite-name",
+        model::metadata_builder().build(), model::test_cases_map());
+
+    const model::test_program_ptr built = model::test_program_builder(
+        "mock", fs::path("non-existent"), fs::path("."), "suite-name")
+        .build_ptr();
+
+    ATF_REQUIRE_EQ(*built, expected);
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, ctor_and_getters);
@@ -347,4 +362,5 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, builder__defaults);
     ATF_ADD_TEST_CASE(tcs, builder__overrides);
+    ATF_ADD_TEST_CASE(tcs, builder__ptr);
 }

@@ -381,3 +381,17 @@ model::test_program_builder::build(void) const
                         _pimpl->metadata,
                         _pimpl->test_cases);
 }
+
+
+/// Creates a new dynamically-allocated test_program object.
+///
+/// \pre This has not yet been called.  We only support calling this function
+/// once.
+///
+/// \return The constructed test_program object.
+model::test_program_ptr
+model::test_program_builder::build_ptr(void) const
+{
+    const test_program result = build();
+    return test_program_ptr(new test_program(result));
+}
