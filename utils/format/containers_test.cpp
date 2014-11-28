@@ -31,6 +31,7 @@
 #include <ostream>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <atf-c++.hpp>
@@ -79,6 +80,15 @@ ATF_TEST_CASE_BODY(std_map__some)
         v[8] = "third";
         do_check("map(2=second, 5=first, 8=third)", v);
     }
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(std_pair);
+ATF_TEST_CASE_BODY(std_pair)
+{
+    do_check("pair(5, b)", std::pair< int, char >(5, 'b'));
+    do_check("pair(foo bar, baz)",
+             std::pair< std::string, std::string >("foo bar", "baz"));
 }
 
 
@@ -158,6 +168,8 @@ ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, std_map__empty);
     ATF_ADD_TEST_CASE(tcs, std_map__some);
+
+    ATF_ADD_TEST_CASE(tcs, std_pair);
 
     ATF_ADD_TEST_CASE(tcs, std_shared_ptr__null);
     ATF_ADD_TEST_CASE(tcs, std_shared_ptr__not_null);
