@@ -335,10 +335,6 @@ ATF_TEST_CASE_BODY(builder__overrides)
 
 ATF_INIT_TEST_CASES(tcs)
 {
-    // TODO(jmmv): These tests have ceased to be realistic with the move to
-    // TestersDesign.  We probably should have some (few!) integration tests for
-    // the various known testers... or, alternatively, provide a mock tester to
-    // run our tests with.
     ATF_ADD_TEST_CASE(tcs, ctor_and_getters);
     ATF_ADD_TEST_CASE(tcs, find__ok);
     ATF_ADD_TEST_CASE(tcs, find__missing);
