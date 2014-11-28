@@ -31,45 +31,14 @@
 #include "engine/exceptions.hpp"
 #include "engine/filters.hpp"
 #include "engine/kyuafile.hpp"
-#include "model/test_case.hpp"
+#include "engine/scanner.hpp"
 #include "model/test_program.hpp"
 #include "utils/optional.ipp"
 
 namespace config = utils::config;
 namespace fs = utils::fs;
 
-using utils::none;
 using utils::optional;
-
-
-namespace {
-
-
-/// Lists a single test program.
-///
-/// \param program The test program to print.
-/// \param filters [in,out] The filters used to select which test cases to
-///     print.  These filters are updated on output to mark which of them
-///     actually matched a test case.
-/// \param hooks The runtime hooks.
-static void
-list_test_program(model::test_program& program,
-                  engine::filters_state& filters,
-                  drivers::list_tests::base_hooks& hooks)
-{
-    const model::test_cases_map test_cases = program.test_cases();
-
-    for (model::test_cases_map::const_iterator iter = test_cases.begin();
-         iter != test_cases.end(); iter++) {
-        const std::string& test_case_name = (*iter).first;
-
-        if (filters.match_test_case(program.relative_path(), test_case_name))
-            hooks.got_test_case(program, test_case_name);
-    }
-}
-
-
-}  // anonymous namespace
 
 
 /// Pure abstract destructor.
@@ -82,7 +51,7 @@ drivers::list_tests::base_hooks::~base_hooks(void)
 ///
 /// \param kyuafile_path The path to the Kyuafile to be loaded.
 /// \param build_root If not none, path to the built test programs.
-/// \param raw_filters The test case filters as provided by the user.
+/// \param filters The test case filters as provided by the user.
 /// \param user_config The end-user configuration properties.
 /// \param hooks The hooks for this execution.
 ///
@@ -90,24 +59,20 @@ drivers::list_tests::base_hooks::~base_hooks(void)
 drivers::list_tests::result
 drivers::list_tests::drive(const fs::path& kyuafile_path,
                            const optional< fs::path > build_root,
-                           const std::set< engine::test_filter >& raw_filters,
+                           const std::set< engine::test_filter >& filters,
                            const config::tree& user_config,
                            base_hooks& hooks)
 {
     const engine::kyuafile kyuafile = engine::kyuafile::load(
         kyuafile_path, build_root, user_config);
-    engine::filters_state filters(raw_filters);
 
-    for (model::test_programs_vector::const_iterator iter =
-         kyuafile.test_programs().begin();
-         iter != kyuafile.test_programs().end(); iter++) {
-        const model::test_program_ptr& test_program = *iter;
+    engine::scanner scanner(kyuafile.test_programs(), filters);
 
-        if (!filters.match_test_program(test_program->relative_path()))
-            continue;
-
-        list_test_program(*test_program, filters, hooks);
+    while (!scanner.done()) {
+        const optional< engine::scan_result > result = scanner.yield();
+        INV(result);
+        hooks.got_test_case(*result.get().first, result.get().second);
     }
 
-    return result(filters.unused());
+    return result(scanner.unused_filters());
 }
