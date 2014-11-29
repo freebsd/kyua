@@ -42,6 +42,14 @@
 namespace {
 
 
+/// Formats a value and compares it to an expected string.
+///
+/// \tparam T The type of the value to format.
+/// \param expected Expected formatted text.
+/// \param actual The value to format.
+///
+/// \post Fails the test case if the formatted actual value does not match
+/// the provided expected string.
 template< typename T >
 static void
 do_check(const char* expected, const T& actual)
