@@ -37,10 +37,6 @@
 #include "cli/common.hpp"
 #include "model/test_program_fwd.hpp"
 
-namespace engine {
-class filters_state;
-}  // namespace engine
-
 namespace utils {
 namespace fs {
 class path;

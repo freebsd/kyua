@@ -250,6 +250,26 @@ model::test_program::operator!=(const test_program& other) const
 }
 
 
+/// Less-than comparator.
+///
+/// A test program is considered to be less than another if and only if the
+/// former's absolute path is less than the absolute path of the latter.  In
+/// other words, the absolute path is used here as the test program's
+/// identifier.
+///
+/// This simplistic less-than operator overload is provided so that test
+/// programs can be held in sets and other containers.
+///
+/// \param other The other object to compare this one to.
+///
+/// \return True if this object sorts before the other object; false otherwise.
+bool
+model::test_program::operator<(const test_program& other) const
+{
+    return absolute_path() < other.absolute_path();
+}
+
+
 /// Injects the object into a stream.
 ///
 /// \param output The stream into which to inject the object.
@@ -380,4 +400,18 @@ model::test_program_builder::build(void) const
                         _pimpl->prototype.test_suite_name(),
                         _pimpl->metadata,
                         _pimpl->test_cases);
+}
+
+
+/// Creates a new dynamically-allocated test_program object.
+///
+/// \pre This has not yet been called.  We only support calling this function
+/// once.
+///
+/// \return The constructed test_program object.
+model::test_program_ptr
+model::test_program_builder::build_ptr(void) const
+{
+    const test_program result = build();
+    return test_program_ptr(new test_program(result));
 }

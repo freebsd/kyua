@@ -63,6 +63,21 @@ std::operator<<(std::ostream& output, const std::map< K, V >& object)
 /// \param object The object to format.
 ///
 /// \return The output stream.
+template< typename T1, typename T2 >
+std::ostream&
+std::operator<<(std::ostream& output, const std::pair< T1, T2 >& object)
+{
+    output << "pair(" << object.first << ", " << object.second << ")";
+    return output;
+}
+
+
+/// Injects the object into a stream.
+///
+/// \param output The stream into which to inject the object.
+/// \param object The object to format.
+///
+/// \return The output stream.
 template< typename T >
 std::ostream&
 std::operator<<(std::ostream& output, const std::shared_ptr< T >& object)

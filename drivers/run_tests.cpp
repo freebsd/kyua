@@ -31,6 +31,7 @@
 #include "engine/filters.hpp"
 #include "engine/kyuafile.hpp"
 #include "engine/runner.hpp"
+#include "engine/scanner.hpp"
 #include "model/context.hpp"
 #include "model/test_case.hpp"
 #include "model/test_program.hpp"
@@ -96,52 +97,32 @@ public:
 };
 
 
-/// Runs a test program in a controlled manner.
+/// Puts a test program in the store and returns its identifier.
 ///
-/// If the test program fails to provide a list of test cases, a fake test case
-/// named '__test_program__' is created and it is reported as broken.
+/// This function is idempotent: we maintain a side cache of already-put test
+/// programs so that we can return their identifiers without having to put them
+/// again.
+/// TODO(jmmv): It's possible that the store module should offer this
+/// functionality and not have to do this ourselves here.
 ///
-/// \param test_program The test program to execute.
-/// \param user_config The configuration variables provided by the user.
-/// \param filters The matching state of the filters.
-/// \param hooks The user hooks to receive asynchronous notifications.
-/// \param work_directory Temporary directory to use.
-/// \param tx The store transaction into which to put the results.
-void
-run_test_program(model::test_program& test_program,
-                 const config::tree& user_config,
-                 engine::filters_state& filters,
-                 drivers::run_tests::base_hooks& hooks,
-                 const fs::path& work_directory,
-                 store::write_transaction& tx)
+/// \param test_program The test program being put.
+/// \param [in,out] tx Writable transaction on the store.
+/// \param [in,out] ids_cache Cache of already-put test programs.
+///
+/// \return A test program identifier.
+int64_t
+find_test_program_id(const model::test_program_ptr test_program,
+                     store::write_transaction& tx,
+                     std::map< fs::path, int64_t > ids_cache)
 {
-    LI(F("Processing test program '%s'") % test_program.relative_path());
-    const int64_t test_program_id = tx.put_test_program(test_program);
-
-    const model::test_cases_map& test_cases = test_program.test_cases();
-    for (model::test_cases_map::const_iterator iter = test_cases.begin();
-         iter != test_cases.end(); iter++) {
-        const std::string& test_case_name = (*iter).first;
-
-        if (!filters.match_test_case(test_program.relative_path(),
-                                     test_case_name))
-            continue;
-
-        const int64_t test_case_id = tx.put_test_case(test_program,
-                                                      test_case_name,
-                                                      test_program_id);
-        file_saver_hooks test_hooks(tx, test_case_id);
-        hooks.got_test_case(test_program, test_case_name);
-        const datetime::timestamp start_time = datetime::timestamp::now();
-        const model::test_result result = runner::run_test_case(
-            &test_program, test_case_name, user_config, test_hooks,
-            work_directory);
-        const datetime::timestamp end_time = datetime::timestamp::now();
-        tx.put_result(result, test_case_id, start_time, end_time);
-        hooks.got_result(test_program, test_case_name, result,
-                         end_time - start_time);
-
-        signals::check_interrupt();
+    const fs::path& key = test_program->relative_path();
+    std::map< fs::path, int64_t >::const_iterator iter = ids_cache.find(key);
+    if (iter == ids_cache.end()) {
+        const int64_t id = tx.put_test_program(*test_program);
+        ids_cache.insert(std::make_pair(key, id));
+        return id;
+    } else {
+        return (*iter).second;
     }
 }
 
@@ -160,7 +141,7 @@ drivers::run_tests::base_hooks::~base_hooks(void)
 /// \param kyuafile_path The path to the Kyuafile to be loaded.
 /// \param build_root If not none, path to the built test programs.
 /// \param store_path The path to the store to be used.
-/// \param raw_filters The test case filters as provided by the user.
+/// \param filters The test case filters as provided by the user.
 /// \param user_config The end-user configuration properties.
 /// \param hooks The hooks for this execution.
 ///
@@ -169,13 +150,12 @@ drivers::run_tests::result
 drivers::run_tests::drive(const fs::path& kyuafile_path,
                           const optional< fs::path > build_root,
                           const fs::path& store_path,
-                          const std::set< engine::test_filter >& raw_filters,
+                          const std::set< engine::test_filter >& filters,
                           const config::tree& user_config,
                           base_hooks& hooks)
 {
     const engine::kyuafile kyuafile = engine::kyuafile::load(
         kyuafile_path, build_root, user_config);
-    engine::filters_state filters(raw_filters);
     store::write_backend db = store::write_backend::open_rw(store_path);
     store::write_transaction tx = db.start_write();
 
@@ -187,21 +167,38 @@ drivers::run_tests::drive(const fs::path& kyuafile_path,
     const fs::auto_directory work_directory = fs::auto_directory::mkdtemp(
         "kyua.XXXXXX");
 
-    for (model::test_programs_vector::const_iterator iter =
-         kyuafile.test_programs().begin();
-         iter != kyuafile.test_programs().end(); iter++) {
-        const model::test_program_ptr& test_program = *iter;
+    engine::scanner scanner(kyuafile.test_programs(), filters);
 
-        if (!filters.match_test_program(test_program->relative_path()))
-            continue;
+    std::map< fs::path, int64_t > ids_cache;
+    while (!scanner.done()) {
+        optional< engine::scan_result > match = scanner.yield();
+        INV(match);
+        const model::test_program_ptr test_program = match.get().first;
+        const std::string& test_case_name = match.get().second;
 
-        run_test_program(*test_program, user_config, filters, hooks,
-                         work_directory.directory(), tx);
+        const int64_t test_program_id = find_test_program_id(test_program, tx,
+                                                             ids_cache);
+        const int64_t test_case_id = tx.put_test_case(*test_program,
+                                                      test_case_name,
+                                                      test_program_id);
+
+        signals::check_interrupt();
+
+        file_saver_hooks test_hooks(tx, test_case_id);
+        hooks.got_test_case(*test_program, test_case_name);
+        const datetime::timestamp start_time = datetime::timestamp::now();
+        const model::test_result result = runner::run_test_case(
+            test_program.get(), test_case_name, user_config, test_hooks,
+            work_directory.directory());
+        const datetime::timestamp end_time = datetime::timestamp::now();
+        tx.put_result(result, test_case_id, start_time, end_time);
+        hooks.got_result(*test_program, test_case_name, result,
+                         end_time - start_time);
 
         signals::check_interrupt();
     }
 
     tx.commit();
 
-    return result(filters.unused());
+    return result(scanner.unused_filters());
 }
