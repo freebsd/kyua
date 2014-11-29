@@ -34,6 +34,7 @@
 #include "engine/filters.hpp"
 #include "engine/kyuafile.hpp"
 #include "engine/runner.hpp"
+#include "engine/scanner.hpp"
 #include "model/test_case.hpp"
 #include "model/test_program.hpp"
 #include "model/test_result.hpp"
@@ -48,61 +49,7 @@ namespace fs = utils::fs;
 namespace runner = engine::runner;
 namespace signals = utils::signals;
 
-using utils::none;
 using utils::optional;
-
-
-namespace {
-
-
-/// Looks for a single test case in the Kyuafile.
-///
-/// \param filter A filter to match the desired test case.
-/// \param [in,out] test_programs The test programs in the test suite.
-///     Updated with the list of loaded test cases.
-///
-/// \return A pointer to the test case if found.
-///
-/// \throw std::runtime_error If the provided filter matches more than one test
-///     case or if the test case cannot be found.
-static std::pair< model::test_program_ptr, std::string >
-find_test_case(const engine::test_filter& filter,
-               model::test_programs_vector& test_programs)
-{
-    std::pair< model::test_program_ptr, std::string > found;
-
-    for (model::test_programs_vector::iterator p = test_programs.begin();
-         p != test_programs.end(); p++) {
-        model::test_program_ptr& test_program = *p;
-
-        if (!filter.matches_test_program(test_program->relative_path()))
-            continue;
-
-        const model::test_cases_map test_cases = test_program->test_cases();
-
-        for (model::test_cases_map::const_iterator
-             iter = test_cases.begin(); iter != test_cases.end(); iter++) {
-            const model::test_case& test_case = (*iter).second;
-
-            if (filter.matches_test_case(test_program->relative_path(),
-                                         test_case.name())) {
-                if (found.first.get() != NULL)
-                    throw std::runtime_error(F("The filter '%s' matches more "
-                                               "than one test case") %
-                                             filter.str());
-                found = std::make_pair(test_program, test_case.name());;
-            }
-        }
-    }
-
-    if (found.first.get() == NULL)
-        throw std::runtime_error(F("Unknown test case '%s'") % filter.str());
-
-    return found;
-}
-
-
-}  // anonymous namespace
 
 
 /// Executes the operation.
@@ -127,14 +74,24 @@ drivers::debug_test::drive(const fs::path& kyuafile_path,
 {
     const engine::kyuafile kyuafile = engine::kyuafile::load(
         kyuafile_path, build_root, user_config);
-    // TODO(jmmv): Copy the test programs so that we can lazily load their test
-    // cases into them.  This is a hack and should be removed once we have a
-    // nicer interface to running test cases.
-    model::test_programs_vector test_programs = kyuafile.test_programs();
-    const std::pair< model::test_program_ptr, std::string > found =
-        find_test_case(filter, test_programs);
-    const model::test_program_ptr test_program = found.first;
-    const std::string& test_case_name = found.second;
+    std::set< engine::test_filter > filters;
+    filters.insert(filter);
+
+    engine::scanner scanner(kyuafile.test_programs(), filters);
+    optional< engine::scan_result > match;
+    while (!match && !scanner.done()) {
+        match = scanner.yield();
+    }
+    if (!match) {
+        throw std::runtime_error(F("Unknown test case '%s'") % filter.str());
+    } else if (!scanner.done()) {
+        throw std::runtime_error(F("The filter '%s' matches more than one test "
+                                 "case") % filter.str());
+    }
+    INV(match && scanner.done());
+    const model::test_program_ptr test_program = match.get().first;
+    const std::string& test_case_name = match.get().second;
+
     runner::test_case_hooks dummy_hooks;
 
     signals::interrupts_handler interrupts;
