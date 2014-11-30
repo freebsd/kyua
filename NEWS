@@ -3,6 +3,14 @@ Changes in version 0.12
 
 STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 
+* Issue 2: Switched 'kyua test' to the new executor backend described
+  below, which in turn means that test cases are now run in parallel if
+  the 'parallelism' configuration variable is set to a value greater
+  than 1.
+
+* Known regression: The new executor is unable to execute the cleanup
+  routine of an ATF test case when the ATF test case's body times out.
+
 * Issue 2: Added the executor, a new implementation of the test
   execution engine purely in C++ that supports parallel execution of
   test cases.  The goal is to eventually replace all the C testers with
