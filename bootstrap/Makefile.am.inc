@@ -56,7 +56,7 @@ bootstrap_plain_helpers_CXXFLAGS = $(UTILS_CFLAGS)
 
 tests_bootstrap_SCRIPTS = bootstrap/testsuite
 @target_srcdir@bootstrap/package.m4: $(top_srcdir)/configure.ac
-	{ \
+	$(AM_V_GEN){ \
 	echo '# Signature of the current package.'; \
 	echo 'm4_define(AT_PACKAGE_NAME,      @PACKAGE_NAME@)'; \
 	echo 'm4_define(AT_PACKAGE_TARNAME,   @PACKAGE_TARNAME@)'; \
@@ -67,9 +67,9 @@ tests_bootstrap_SCRIPTS = bootstrap/testsuite
 
 @target_srcdir@bootstrap/testsuite: $(srcdir)/bootstrap/testsuite.at \
                                     @target_srcdir@bootstrap/package.m4
-	autom4te --language=Autotest -I $(srcdir) \
+	$(AM_V_GEN)autom4te --language=Autotest -I $(srcdir) \
 	    -I $(srcdir)/bootstrap \
-	    $(srcdir)/bootstrap/testsuite.at -o $@.tmp
+	    $(srcdir)/bootstrap/testsuite.at -o $@.tmp; \
 	mv $@.tmp $@
 
 CHECK_LOCAL += check-bootstrap
