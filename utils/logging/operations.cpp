@@ -71,6 +71,12 @@ using utils::optional;
 /// messages that are of the provided log level (or below) and is configured to
 /// directly send messages to disk.
 ///
+/// 6. The user may choose to call set_inmemory() again at a later stage, which
+/// will cause the log to be flushed and messages to be recorded in memory
+/// again.  This is useful in case the logs are being sent to either stdout or
+/// stderr and the process forks and wants to keep those child channels
+/// unpolluted.
+///
 /// The call to set_inmemory() should only be performed by the user-facing
 /// application.  Tests should skip this call so that the logging messages go to
 /// stderr by default, thus generating a useful log to debug the tests.
@@ -188,10 +194,19 @@ logging::log(const level message_level, const char* file, const int line,
 
 
 /// Sets the logging to record messages in memory for later flushing.
+///
+/// Can be called after set_persistency to flush logs and set recording to be
+/// in-memory again.
 void
 logging::set_inmemory(void)
 {
     auto_set_persistency = false;
+
+    if (logfile.get() != NULL) {
+        INV(backlog.empty());
+        (*logfile).flush();
+        logfile.reset(NULL);
+    }
 }
 
 
