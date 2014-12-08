@@ -85,28 +85,58 @@ using utils::optional;
 namespace {
 
 
-/// Current log level.
-static logging::level log_level = logging::level_debug;
-
-
-/// Indicates whether set_persistency() will be called automatically or not.
-static bool auto_set_persistency = true;
-
-
-/// First time recorded by the logging module.
-static optional< datetime::timestamp > first_timestamp = none;
-
-
-/// In-memory record of log entries before persistency is enabled.
-static std::vector< std::pair< logging::level, std::string > > backlog;
-
-
-/// Stream to the currently open log file.
-static std::auto_ptr< std::ostream > logfile;
-
-
 /// Constant string to strftime to format timestamps.
 static const char* timestamp_format = "%Y%m%d-%H%M%S";
+
+
+/// Mutable global state.
+struct global_state {
+    /// Current log level.
+    logging::level log_level;
+
+    /// Indicates whether set_persistency() will be called automatically or not.
+    bool auto_set_persistency;
+
+    /// First time recorded by the logging module.
+    optional< datetime::timestamp > first_timestamp;
+
+    /// In-memory record of log entries before persistency is enabled.
+    std::vector< std::pair< logging::level, std::string > > backlog;
+
+    /// Stream to the currently open log file.
+    std::auto_ptr< std::ostream > logfile;
+
+    global_state() :
+        log_level(logging::level_debug),
+        auto_set_persistency(true)
+    {
+    }
+};
+
+
+/// Single instance of the mutable global state.
+///
+/// Note that this is a raw pointer that we intentionally leak.  We must do
+/// this, instead of making all of the singleton's members static values,
+/// because we want other destructors in the program to be able to log critical
+/// conditions.  If we use complex types in this translation unit, they may be
+/// destroyed before the logging methods in the destructors get a chance to run
+/// thus resulting in a premature crash.  By using a plain pointer, we ensure
+/// this state never gets cleaned up.
+static struct global_state* globals_singleton = NULL;
+
+
+/// Gets the singleton instance of global_state.
+///
+/// \return A pointer to the unique global_state instance.
+static struct global_state*
+get_globals(void)
+{
+    if (globals_singleton == NULL) {
+        globals_singleton = new global_state();
+    }
+    return globals_singleton;
+}
 
 
 /// Converts a level to a printable character.
@@ -142,11 +172,13 @@ level_to_char(const logging::level level)
 fs::path
 logging::generate_log_name(const fs::path& logdir, const std::string& progname)
 {
-    if (!first_timestamp)
-        first_timestamp = datetime::timestamp::now();
-    // Update doc/troubleshooting.texi if you change the name format.
+    struct global_state* globals = get_globals();
+
+    if (!globals->first_timestamp)
+        globals->first_timestamp = datetime::timestamp::now();
+    // Update kyua(1) if you change the name format.
     return logdir / (F("%s.%s.log") % progname %
-                     first_timestamp.get().strftime(timestamp_format));
+                     globals->first_timestamp.get().strftime(timestamp_format));
 }
 
 
@@ -163,32 +195,34 @@ void
 logging::log(const level message_level, const char* file, const int line,
              const std::string& user_message)
 {
-    const datetime::timestamp now = datetime::timestamp::now();
-    if (!first_timestamp)
-        first_timestamp = now;
+    struct global_state* globals = get_globals();
 
-    if (auto_set_persistency) {
+    const datetime::timestamp now = datetime::timestamp::now();
+    if (!globals->first_timestamp)
+        globals->first_timestamp = now;
+
+    if (globals->auto_set_persistency) {
         // These values are hardcoded here for testing purposes.  The
         // application should call set_inmemory() by itself during
         // initialization to avoid this, so that it has explicit control on how
         // the call to set_persistency() happens.
         set_persistency("debug", fs::path("/dev/stderr"));
-        auto_set_persistency = false;
+        globals->auto_set_persistency = false;
     }
 
-    if (message_level > log_level)
+    if (message_level > globals->log_level)
         return;
 
     // Update doc/troubleshooting.texi if you change the log format.
     const std::string message = F("%s %s %s %s:%s: %s") %
         now.strftime(timestamp_format) % level_to_char(message_level) %
         ::getpid() % file % line % user_message;
-    if (logfile.get() == NULL)
-        backlog.push_back(std::make_pair(message_level, message));
+    if (globals->logfile.get() == NULL)
+        globals->backlog.push_back(std::make_pair(message_level, message));
     else {
-        INV(backlog.empty());
-        (*logfile) << message << '\n';
-        (*logfile).flush();
+        INV(globals->backlog.empty());
+        (*globals->logfile) << message << '\n';
+        globals->logfile->flush();
     }
 }
 
@@ -200,12 +234,14 @@ logging::log(const level message_level, const char* file, const int line,
 void
 logging::set_inmemory(void)
 {
-    auto_set_persistency = false;
+    struct global_state* globals = get_globals();
 
-    if (logfile.get() != NULL) {
-        INV(backlog.empty());
-        (*logfile).flush();
-        logfile.reset(NULL);
+    globals->auto_set_persistency = false;
+
+    if (globals->logfile.get() != NULL) {
+        INV(globals->backlog.empty());
+        globals->logfile->flush();
+        globals->logfile.reset(NULL);
     }
 }
 
@@ -228,33 +264,36 @@ logging::set_inmemory(void)
 void
 logging::set_persistency(const std::string& new_level, const fs::path& path)
 {
-    auto_set_persistency = false;
+    struct global_state* globals = get_globals();
 
-    PRE(logfile.get() == NULL);
+    globals->auto_set_persistency = false;
+
+    PRE(globals->logfile.get() == NULL);
 
     // Update doc/troubleshooting.info if you change the log levels.
     if (new_level == "debug")
-        log_level = level_debug;
+        globals->log_level = level_debug;
     else if (new_level == "error")
-        log_level = level_error;
+        globals->log_level = level_error;
     else if (new_level == "info")
-        log_level = level_info;
+        globals->log_level = level_info;
     else if (new_level == "warning")
-        log_level = level_warning;
+        globals->log_level = level_warning;
     else
         throw std::range_error(F("Unrecognized log level '%s'") % new_level);
 
     try {
-        logfile = utils::open_ostream(path);
+        globals->logfile = utils::open_ostream(path);
     } catch (const std::runtime_error& unused_error) {
         throw std::runtime_error(F("Failed to create log file %s") % path);
     }
 
     for (std::vector< std::pair< logging::level, std::string > >::const_iterator
-         iter = backlog.begin(); iter != backlog.end(); iter++) {
-        if ((*iter).first <= log_level)
-            (*logfile) << (*iter).second << '\n';
+         iter = globals->backlog.begin(); iter != globals->backlog.end();
+         ++iter) {
+        if ((*iter).first <= globals->log_level)
+            (*globals->logfile) << (*iter).second << '\n';
     }
-    (*logfile).flush();
-    backlog.clear();
+    globals->logfile->flush();
+    globals->backlog.clear();
 }
