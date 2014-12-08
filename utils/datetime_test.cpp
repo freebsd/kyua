@@ -217,7 +217,8 @@ ATF_TEST_CASE_BODY(timestamp__now__mock)
     ATF_REQUIRE_EQ("2011-02-21 18:05:10",
                    datetime::timestamp::now().strftime("%Y-%m-%d %H:%M:%S"));
 
-    datetime::set_mock_now(2012, 3, 22, 19, 6, 11, 54321);
+    datetime::set_mock_now(datetime::timestamp::from_values(
+                               2012, 3, 22, 19, 6, 11, 54321));
     ATF_REQUIRE_EQ("2012-03-22 19:06:11",
                    datetime::timestamp::now().strftime("%Y-%m-%d %H:%M:%S"));
     ATF_REQUIRE_EQ("2012-03-22 19:06:11",

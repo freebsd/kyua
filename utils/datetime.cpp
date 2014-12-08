@@ -337,6 +337,16 @@ datetime::set_mock_now(const int year, const int month,
 }
 
 
+/// Sets the current time for testing purposes.
+///
+/// \param mock_now_ The mock timestamp to set the time to.
+void
+datetime::set_mock_now(const timestamp& mock_now_)
+{
+    mock_now = mock_now_;
+}
+
+
 /// Checks if two timestamps are equal.
 ///
 /// \param other The object to compare to.

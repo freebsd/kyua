@@ -109,6 +109,7 @@ std::ostream& operator<<(std::ostream&, const timestamp&);
 
 void set_mock_now(const int, const int, const int, const int, const int,
                   const int, const int);
+void set_mock_now(const timestamp&);
 
 
 }  // namespace datetime
