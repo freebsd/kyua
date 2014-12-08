@@ -34,15 +34,18 @@ extern "C" {
 }
 
 #include <cstdlib>
+#include <iostream>
 
 #include <atf-c++.hpp>
 
 #include "utils/format/macros.hpp"
+#include "utils/fs/path.hpp"
 #include "utils/process/child.ipp"
 #include "utils/process/status.hpp"
 #include "utils/signals/exceptions.hpp"
 #include "utils/signals/programmer.hpp"
 
+namespace fs = utils::fs;
 namespace process = utils::process;
 namespace signals = utils::signals;
 
@@ -73,13 +76,12 @@ pause_child(void)
 {
     sigset_t mask;
     sigemptyset(&mask);
-    if (sigsuspend(&mask) == -1)
-        ::exit(EXIT_FAILURE);
-    else {
-        // If this happens, it is because we received a non-deadly signal and
-        // the execution resumed.  This is not what we expect, so exit with an
-        // arbitrary code.
-        ::exit(45);
+    // We loop waiting for signals because we want the parent process to send us
+    // a SIGKILL that we cannot handle, not just any non-deadly signal.
+    for (;;) {
+        std::cerr << F("Waiting for any signal; pid=%s\n") % ::getpid();
+        ::sigsuspend(&mask);
+        std::cerr << F("Signal received; pid=%s\n") % ::getpid();
     }
 }
 
@@ -178,13 +180,17 @@ ATF_TEST_CASE_BODY(interrupts_handler__sigterm)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(interrupts_handler__kill_children);
+ATF_TEST_CASE(interrupts_handler__kill_children);
+ATF_TEST_CASE_HEAD(interrupts_handler__kill_children)
+{
+    set_md_var("timeout", "10");
+}
 ATF_TEST_CASE_BODY(interrupts_handler__kill_children)
 {
-    std::auto_ptr< process::child > child1(process::child::fork_capture(
-         pause_child));
-    std::auto_ptr< process::child > child2(process::child::fork_capture(
-         pause_child));
+    std::auto_ptr< process::child > child1(process::child::fork_files(
+         pause_child, fs::path("/dev/stdout"), fs::path("/dev/stderr")));
+    std::auto_ptr< process::child > child2(process::child::fork_files(
+         pause_child, fs::path("/dev/stdout"), fs::path("/dev/stderr")));
 
     signals::interrupts_handler interrupts;
 
@@ -196,10 +202,10 @@ ATF_TEST_CASE_BODY(interrupts_handler__kill_children)
 
     const process::status status1 = child1->wait();
     ATF_REQUIRE(status1.signaled());
-    ATF_REQUIRE_EQ(SIGHUP, status1.termsig());
+    ATF_REQUIRE_EQ(SIGKILL, status1.termsig());
     const process::status status2 = child2->wait();
     ATF_REQUIRE(status2.signaled());
-    ATF_REQUIRE_EQ(SIGHUP, status2.termsig());
+    ATF_REQUIRE_EQ(SIGKILL, status2.termsig());
 }
 
 

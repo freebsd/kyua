@@ -29,6 +29,8 @@
 #include "utils/signals/interrupts.hpp"
 
 extern "C" {
+#include <sys/types.h>
+
 #include <signal.h>
 #include <unistd.h>
 }
@@ -105,15 +107,13 @@ signal_handler(const int signo)
 
     for (pids_set::const_iterator iter = pids_to_kill.begin();
         iter != pids_to_kill.end(); ++iter) {
-        // Redirecting the interrupt signal to our child processes does NOT
-        // guarantee that they also terminate.  For that to happen, we'd need to
-        // SIGKILL them.
-        //
-        // *However*, because we use this code to invoke the testers only,
-        // and because we assume that such processes are well-behaved and
-        // terminate according to our expectations, we do it this way, which
-        // allows the testers to know which specific signal made them terminate.
-        (void)::kill(*iter, signo);
+        (void)::killpg(*iter, SIGKILL);
+        // The killpg above may have missed our subprocess if we happen to be
+        // killing it too early: that is, before the subprocess has had a chance
+        // to set its process group.  To catch this case, send another signal to
+        // that PID alone.  This is safe because our wait(2) call will not run
+        // until we return, so we are not killing a process we do not own.
+        (void)::kill(*iter, SIGKILL);
     }
 }
 
