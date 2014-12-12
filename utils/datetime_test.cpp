@@ -34,6 +34,7 @@ extern "C" {
 }
 
 #include <sstream>
+#include <stdexcept>
 
 #include <atf-c++.hpp>
 
@@ -55,6 +56,10 @@ ATF_TEST_CASE_BODY(delta__overrides)
     const datetime::delta delta(1, 2);
     ATF_REQUIRE_EQ(1, delta.seconds);
     ATF_REQUIRE_EQ(2, delta.useconds);
+
+    ATF_REQUIRE_THROW_RE(
+        std::runtime_error, "Negative.*not supported.*-4999997us",
+        datetime::delta(-5, 3));
 }
 
 
@@ -90,6 +95,10 @@ ATF_TEST_CASE_BODY(delta__from_microseconds)
         ATF_REQUIRE_EQ(123456789, delta.seconds);
         ATF_REQUIRE_EQ(123456, delta.useconds);
     }
+
+    ATF_REQUIRE_THROW_RE(
+        std::runtime_error, "Negative.*not supported.*-12345us",
+        datetime::delta::from_microseconds(-12345));
 }
 
 
@@ -130,17 +139,52 @@ ATF_TEST_CASE_BODY(delta__differs)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(delta__sorting);
+ATF_TEST_CASE_BODY(delta__sorting)
+{
+    ATF_REQUIRE(!(datetime::delta() <  datetime::delta()));
+    ATF_REQUIRE(  datetime::delta() <= datetime::delta());
+    ATF_REQUIRE(!(datetime::delta() >  datetime::delta()));
+    ATF_REQUIRE(  datetime::delta() >= datetime::delta());
+
+    ATF_REQUIRE(!(datetime::delta(9, 8) <  datetime::delta(9, 8)));
+    ATF_REQUIRE(  datetime::delta(9, 8) <= datetime::delta(9, 8));
+    ATF_REQUIRE(!(datetime::delta(9, 8) >  datetime::delta(9, 8)));
+    ATF_REQUIRE(  datetime::delta(9, 8) >= datetime::delta(9, 8));
+
+    ATF_REQUIRE(  datetime::delta(2, 5) <  datetime::delta(4, 8));
+    ATF_REQUIRE(  datetime::delta(2, 5) <= datetime::delta(4, 8));
+    ATF_REQUIRE(!(datetime::delta(2, 5) >  datetime::delta(4, 8)));
+    ATF_REQUIRE(!(datetime::delta(2, 5) >= datetime::delta(4, 8)));
+
+    ATF_REQUIRE(  datetime::delta(2, 5) <  datetime::delta(2, 8));
+    ATF_REQUIRE(  datetime::delta(2, 5) <= datetime::delta(2, 8));
+    ATF_REQUIRE(!(datetime::delta(2, 5) >  datetime::delta(2, 8)));
+    ATF_REQUIRE(!(datetime::delta(2, 5) >= datetime::delta(2, 8)));
+
+    ATF_REQUIRE(!(datetime::delta(4, 8) <  datetime::delta(2, 5)));
+    ATF_REQUIRE(!(datetime::delta(4, 8) <= datetime::delta(2, 5)));
+    ATF_REQUIRE(  datetime::delta(4, 8) >  datetime::delta(2, 5));
+    ATF_REQUIRE(  datetime::delta(4, 8) >= datetime::delta(2, 5));
+
+    ATF_REQUIRE(!(datetime::delta(2, 8) <  datetime::delta(2, 5)));
+    ATF_REQUIRE(!(datetime::delta(2, 8) <= datetime::delta(2, 5)));
+    ATF_REQUIRE(  datetime::delta(2, 8) >  datetime::delta(2, 5));
+    ATF_REQUIRE(  datetime::delta(2, 8) >= datetime::delta(2, 5));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(delta__addition);
 ATF_TEST_CASE_BODY(delta__addition)
 {
     using datetime::delta;
 
-    ATF_REQUIRE(delta() == delta() + delta());
-    ATF_REQUIRE(delta(0, 10) == delta() + delta(0, 10));
-    ATF_REQUIRE(delta(10, 0) == delta(10, 0) + delta());
+    ATF_REQUIRE_EQ(delta(), delta() + delta());
+    ATF_REQUIRE_EQ(delta(0, 10), delta() + delta(0, 10));
+    ATF_REQUIRE_EQ(delta(10, 0), delta(10, 0) + delta());
 
-    ATF_REQUIRE(delta(1, 234567) == delta(0, 1234567) + delta());
-    ATF_REQUIRE(delta(12, 34) == delta(10, 20) + delta(2, 14));
+    ATF_REQUIRE_EQ(delta(1, 234567), delta(0, 1234567) + delta());
+    ATF_REQUIRE_EQ(delta(12, 34), delta(10, 20) + delta(2, 14));
 }
 
 
@@ -152,16 +196,51 @@ ATF_TEST_CASE_BODY(delta__addition_and_set)
     {
         delta d;
         d += delta(3, 5);
-        ATF_REQUIRE(delta(3, 5) == d);
+        ATF_REQUIRE_EQ(delta(3, 5), d);
     }
     {
         delta d(1, 2);
         d += delta(3, 5);
-        ATF_REQUIRE(delta(4, 7) == d);
+        ATF_REQUIRE_EQ(delta(4, 7), d);
     }
     {
         delta d(1, 2);
-        ATF_REQUIRE(delta(4, 7) == (d += delta(3, 5)));
+        ATF_REQUIRE_EQ(delta(4, 7), (d += delta(3, 5)));
+    }
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(delta__scale);
+ATF_TEST_CASE_BODY(delta__scale)
+{
+    using datetime::delta;
+
+    ATF_REQUIRE_EQ(delta(), delta() * 0);
+    ATF_REQUIRE_EQ(delta(), delta() * 5);
+
+    ATF_REQUIRE_EQ(delta(0, 30), delta(0, 10) * 3);
+    ATF_REQUIRE_EQ(delta(17, 500000), delta(3, 500000) * 5);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(delta__scale_and_set);
+ATF_TEST_CASE_BODY(delta__scale_and_set)
+{
+    using datetime::delta;
+
+    {
+        delta d(3, 5);
+        d *= 2;
+        ATF_REQUIRE_EQ(delta(6, 10), d);
+    }
+    {
+        delta d(8, 0);
+        d *= 8;
+        ATF_REQUIRE_EQ(delta(64, 0), d);
+    }
+    {
+        delta d(3, 5);
+        ATF_REQUIRE_EQ(delta(9, 15), (d *= 3));
     }
 }
 
@@ -316,6 +395,115 @@ ATF_TEST_CASE_BODY(timestamp__differs)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(timestamp__sorting);
+ATF_TEST_CASE_BODY(timestamp__sorting)
+{
+    {
+        const datetime::timestamp ts1 = datetime::timestamp::from_microseconds(
+            1291970750123455LL);
+        const datetime::timestamp ts2 = datetime::timestamp::from_microseconds(
+            1291970750123455LL);
+
+        ATF_REQUIRE(!(ts1 < ts2));
+        ATF_REQUIRE(  ts1 <= ts2);
+        ATF_REQUIRE(!(ts1 > ts2));
+        ATF_REQUIRE(  ts1 >= ts2);
+    }
+    {
+        const datetime::timestamp ts1 = datetime::timestamp::from_microseconds(
+            1291970750123455LL);
+        const datetime::timestamp ts2 = datetime::timestamp::from_microseconds(
+            1291970759123455LL);
+
+        ATF_REQUIRE( ts1 < ts2);
+        ATF_REQUIRE( ts1 <= ts2);
+        ATF_REQUIRE(!(ts1 > ts2));
+        ATF_REQUIRE(!(ts1 >= ts2));
+    }
+    {
+        const datetime::timestamp ts1 = datetime::timestamp::from_microseconds(
+            1291970759123455LL);
+        const datetime::timestamp ts2 = datetime::timestamp::from_microseconds(
+            1291970750123455LL);
+
+        ATF_REQUIRE(!(ts1 < ts2));
+        ATF_REQUIRE(!(ts1 <= ts2));
+        ATF_REQUIRE(  ts1 > ts2);
+        ATF_REQUIRE(  ts1 >= ts2);
+    }
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(timestamp__add_delta);
+ATF_TEST_CASE_BODY(timestamp__add_delta)
+{
+    using datetime::delta;
+    using datetime::timestamp;
+
+    ATF_REQUIRE_EQ(timestamp::from_values(2014, 12, 11, 21, 43, 30, 1234),
+                   timestamp::from_values(2014, 12, 11, 21, 43, 0, 0) +
+                   delta(30, 1234));
+    ATF_REQUIRE_EQ(timestamp::from_values(2014, 12, 11, 22, 43, 7, 100),
+                   timestamp::from_values(2014, 12, 11, 21, 43, 0, 0) +
+                   delta(3602, 5000100));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(timestamp__add_delta_and_set);
+ATF_TEST_CASE_BODY(timestamp__add_delta_and_set)
+{
+    using datetime::delta;
+    using datetime::timestamp;
+
+    {
+        timestamp ts = timestamp::from_values(2014, 12, 11, 21, 43, 0, 0);
+        ts += delta(30, 1234);
+        ATF_REQUIRE_EQ(timestamp::from_values(2014, 12, 11, 21, 43, 30, 1234),
+                       ts);
+    }
+    {
+        timestamp ts = timestamp::from_values(2014, 12, 11, 21, 43, 0, 0);
+        ATF_REQUIRE_EQ(timestamp::from_values(2014, 12, 11, 22, 43, 7, 100),
+                       ts += delta(3602, 5000100));
+    }
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(timestamp__subtract_delta);
+ATF_TEST_CASE_BODY(timestamp__subtract_delta)
+{
+    using datetime::delta;
+    using datetime::timestamp;
+
+    ATF_REQUIRE_EQ(timestamp::from_values(2014, 12, 11, 21, 43, 10, 4321),
+                   timestamp::from_values(2014, 12, 11, 21, 43, 40, 5555) -
+                   delta(30, 1234));
+    ATF_REQUIRE_EQ(timestamp::from_values(2014, 12, 11, 20, 43, 1, 300),
+                   timestamp::from_values(2014, 12, 11, 21, 43, 8, 400) -
+                   delta(3602, 5000100));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(timestamp__subtract_delta_and_set);
+ATF_TEST_CASE_BODY(timestamp__subtract_delta_and_set)
+{
+    using datetime::delta;
+    using datetime::timestamp;
+
+    {
+        timestamp ts = timestamp::from_values(2014, 12, 11, 21, 43, 40, 5555);
+        ts -= delta(30, 1234);
+        ATF_REQUIRE_EQ(timestamp::from_values(2014, 12, 11, 21, 43, 10, 4321),
+                       ts);
+    }
+    {
+        timestamp ts = timestamp::from_values(2014, 12, 11, 21, 43, 8, 400);
+        ATF_REQUIRE_EQ(timestamp::from_values(2014, 12, 11, 20, 43, 1, 300),
+                       ts -= delta(3602, 5000100));
+    }
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(timestamp__subtraction);
 ATF_TEST_CASE_BODY(timestamp__subtraction)
 {
@@ -326,10 +514,15 @@ ATF_TEST_CASE_BODY(timestamp__subtraction)
     const datetime::timestamp ts3 = datetime::timestamp::from_microseconds(
         1291970850123456LL);
 
-    ATF_REQUIRE(datetime::delta(0, 0) == ts1 - ts1);
-    ATF_REQUIRE(datetime::delta(0, 12) == ts2 - ts1);
-    ATF_REQUIRE(datetime::delta(100, 0) == ts3 - ts1);
-    ATF_REQUIRE(datetime::delta(99, 999988) == ts3 - ts2);
+    ATF_REQUIRE_EQ(datetime::delta(0, 0), ts1 - ts1);
+    ATF_REQUIRE_EQ(datetime::delta(0, 12), ts2 - ts1);
+    ATF_REQUIRE_EQ(datetime::delta(100, 0), ts3 - ts1);
+    ATF_REQUIRE_EQ(datetime::delta(99, 999988), ts3 - ts2);
+
+    ATF_REQUIRE_THROW_RE(
+        std::runtime_error,
+        "Cannot subtract.*negative datetime::delta.*not supported",
+        ts2 - ts3);
 }
 
 
@@ -357,8 +550,11 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, delta__to_microseconds);
     ATF_ADD_TEST_CASE(tcs, delta__equals);
     ATF_ADD_TEST_CASE(tcs, delta__differs);
+    ATF_ADD_TEST_CASE(tcs, delta__sorting);
     ATF_ADD_TEST_CASE(tcs, delta__addition);
     ATF_ADD_TEST_CASE(tcs, delta__addition_and_set);
+    ATF_ADD_TEST_CASE(tcs, delta__scale);
+    ATF_ADD_TEST_CASE(tcs, delta__scale_and_set);
     ATF_ADD_TEST_CASE(tcs, delta__output);
 
     ATF_ADD_TEST_CASE(tcs, timestamp__copy);
@@ -372,6 +568,11 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, timestamp__leap_second);
     ATF_ADD_TEST_CASE(tcs, timestamp__equals);
     ATF_ADD_TEST_CASE(tcs, timestamp__differs);
+    ATF_ADD_TEST_CASE(tcs, timestamp__sorting);
+    ATF_ADD_TEST_CASE(tcs, timestamp__add_delta);
+    ATF_ADD_TEST_CASE(tcs, timestamp__add_delta_and_set);
+    ATF_ADD_TEST_CASE(tcs, timestamp__subtract_delta);
+    ATF_ADD_TEST_CASE(tcs, timestamp__subtract_delta_and_set);
     ATF_ADD_TEST_CASE(tcs, timestamp__subtraction);
     ATF_ADD_TEST_CASE(tcs, timestamp__output);
 }
