@@ -48,6 +48,7 @@ BEGIN {
 /utils\/config\/nodes\.hpp.*Member set_string\(const std::string &\)/ {next}
 /utils\/config\/nodes\.hpp.*Member to_string\(void\)/ {next}
 /utils\/config\/nodes\.hpp.*Member is_set\(void\)/ {next}
+/utils\/signals\/timer\.hpp.*Member detail::invoke_do_fired.*friend/ {next}
 
 # Dump any other problems and account for the failure.
 {

@@ -6,3 +6,4 @@ atf_test_program{name="exceptions_test"}
 atf_test_program{name="interrupts_test"}
 atf_test_program{name="misc_test"}
 atf_test_program{name="programmer_test"}
+atf_test_program{name="timer_test"}
