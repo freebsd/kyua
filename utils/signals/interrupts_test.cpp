@@ -62,6 +62,7 @@ static volatile int fired_signal = -1;
 static void
 signal_handler(const int signo)
 {
+    PRE(fired_signal == -1 || fired_signal == signo);
     fired_signal = signo;
 }
 
@@ -122,6 +123,11 @@ check_interrupts_inhibiter(const int signo)
 
     {
         signals::interrupts_inhibiter inhibiter;
+        {
+            signals::interrupts_inhibiter nested_inhibiter;
+            ::kill(::getpid(), signo);
+            ATF_REQUIRE_EQ(-1, fired_signal);
+        }
         ::kill(::getpid(), signo);
         ATF_REQUIRE_EQ(-1, fired_signal);
     }
