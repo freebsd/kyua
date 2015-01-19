@@ -45,6 +45,7 @@ AM_INIT_AUTOMAKE([1.9 check-news foreign subdir-objects -Wall])
 
 AC_LANG([C])
 AC_PROG_CC
+AM_PROG_CC_C_O
 AC_LANG([C++])
 AC_PROG_CXX
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
