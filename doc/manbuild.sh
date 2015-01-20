@@ -67,10 +67,14 @@ sed_with_vars() {
     for pair in ${vars}; do
         local var="$(echo "${pair}" | cut -d = -f 1)"
         local value="$(echo "${pair}" | cut -d = -f 2-)"
-        set -- "${@}" -e "s&__${var}__&${value}&g"
+        set -- "${@}" -e"s&__${var}__&${value}&g"
     done
 
-    sed "${@}"
+    if [ "${#}" -gt 0 ]; then
+        sed "${@}"
+    else
+        cat
+    fi
 }
 
 

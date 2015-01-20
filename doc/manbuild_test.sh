@@ -51,14 +51,31 @@ EOF
 }
 
 
-atf_test_case some_replacements
-some_replacements_body() {
+atf_test_case one_replacement
+one_replacement_body() {
     cat >input <<EOF
 This is a manpage.
 Where __FOO__ gets replaced.
 And nothing more.
 EOF
     atf_check "${MANBUILD}" -v FOO=this input output
+    cat >expout <<EOF
+This is a manpage.
+Where this gets replaced.
+And nothing more.
+EOF
+    atf_check -o file:expout cat output
+}
+
+
+atf_test_case some_replacements
+some_replacements_body() {
+    cat >input <<EOF
+This is a manpage.
+Where __FOO__ gets __BAR__.
+And nothing more.
+EOF
+    atf_check "${MANBUILD}" -v FOO=this -v BAR=replaced input output
     cat >expout <<EOF
 This is a manpage.
 Where this gets replaced.
@@ -205,6 +222,7 @@ bad_option_body() {
 atf_init_test_cases() {
     atf_add_test_case empty
     atf_add_test_case no_replacements
+    atf_add_test_case one_replacement
     atf_add_test_case some_replacements
     atf_add_test_case preserve_tricky_lines
     atf_add_test_case includes_ok
