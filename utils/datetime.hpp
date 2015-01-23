@@ -47,6 +47,9 @@ namespace datetime {
 
 
 /// Represents a time delta to describe deadlines.
+///
+/// Because we use this class to handle deadlines, we currently do not support
+/// negative deltas.
 class delta {
 public:
     /// The amount of seconds in the time delta.
@@ -63,9 +66,17 @@ public:
 
     bool operator==(const delta&) const;
     bool operator!=(const delta&) const;
+    bool operator<(const delta&) const;
+    bool operator<=(const delta&) const;
+    bool operator>(const delta&) const;
+    bool operator>=(const delta&) const;
 
     delta operator+(const delta&) const;
-    delta operator+=(const delta&);
+    delta& operator+=(const delta&);
+    // operator- and operator-= do not exist because we do not support negative
+    // deltas.  See class docstring.
+    delta operator*(const std::size_t) const;
+    delta& operator*=(const std::size_t);
 };
 
 
@@ -99,7 +110,15 @@ public:
 
     bool operator==(const timestamp&) const;
     bool operator!=(const timestamp&) const;
+    bool operator<(const timestamp&) const;
+    bool operator<=(const timestamp&) const;
+    bool operator>(const timestamp&) const;
+    bool operator>=(const timestamp&) const;
 
+    timestamp operator+(const delta&) const;
+    timestamp& operator+=(const delta&);
+    timestamp operator-(const delta&) const;
+    timestamp& operator-=(const delta&);
     delta operator-(const timestamp&) const;
 };
 
@@ -109,6 +128,7 @@ std::ostream& operator<<(std::ostream&, const timestamp&);
 
 void set_mock_now(const int, const int, const int, const int, const int,
                   const int, const int);
+void set_mock_now(const timestamp&);
 
 
 }  // namespace datetime

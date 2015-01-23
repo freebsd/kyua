@@ -33,6 +33,8 @@ libutils_a_SOURCES += utils/process/exceptions.cpp
 libutils_a_SOURCES += utils/process/exceptions.hpp
 libutils_a_SOURCES += utils/process/fdstream.cpp
 libutils_a_SOURCES += utils/process/fdstream.hpp
+libutils_a_SOURCES += utils/process/operations.cpp
+libutils_a_SOURCES += utils/process/operations.hpp
 libutils_a_SOURCES += utils/process/status.cpp
 libutils_a_SOURCES += utils/process/status.hpp
 libutils_a_SOURCES += utils/process/system.cpp
@@ -63,6 +65,11 @@ utils_process_fdstream_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_process_PROGRAMS += utils/process/helpers
 utils_process_helpers_SOURCES = utils/process/helpers.cpp
+
+tests_utils_process_PROGRAMS += utils/process/operations_test
+utils_process_operations_test_SOURCES = utils/process/operations_test.cpp
+utils_process_operations_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_process_operations_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_process_PROGRAMS += utils/process/status_test
 utils_process_status_test_SOURCES = utils/process/status_test.cpp

@@ -68,15 +68,15 @@ static std::auto_ptr< signals::programmer > sigterm_handler;
 
 
 /// Signal mask to restore after exiting a signal inhibited section.
-static sigset_t old_sigmask;
+static sigset_t global_old_sigmask;
 
 
 /// Whether there is an interrupts_handler object in existence or not.
-bool interrupts_handler_active = false;
+static bool interrupts_handler_active = false;
 
 
 /// Whether there is an interrupts_inhibiter object in existence or not.
-bool interrupts_inhibiter_active = false;
+static std::size_t interrupts_inhibiter_active = 0;
 
 
 /// Generic handler to capture interrupt signals.
@@ -157,23 +157,23 @@ cleanup_handlers(void)
 
 /// Masks the signals installed by setup_handlers().
 static void
-mask_signals(void)
+mask_signals(sigset_t* old_sigmask)
 {
     sigset_t mask;
     sigemptyset(&mask);
     sigaddset(&mask, SIGHUP);
     sigaddset(&mask, SIGINT);
     sigaddset(&mask, SIGTERM);
-    const int ret = ::sigprocmask(SIG_BLOCK, &mask, &old_sigmask);
+    const int ret = ::sigprocmask(SIG_BLOCK, &mask, old_sigmask);
     INV(ret != -1);
 }
 
 
 /// Resets the signal masking put in place by mask_signals().
 static void
-unmask_signals(void)
+unmask_signals(sigset_t* old_sigmask)
 {
-    const int ret = ::sigprocmask(SIG_SETMASK, &old_sigmask, NULL);
+    const int ret = ::sigprocmask(SIG_SETMASK, old_sigmask, NULL);
     INV(ret != -1);
 }
 
@@ -201,17 +201,24 @@ signals::interrupts_handler::~interrupts_handler(void)
 /// Constructor that sets up signal masking.
 signals::interrupts_inhibiter::interrupts_inhibiter(void)
 {
-    PRE(!interrupts_inhibiter_active);
-    mask_signals();
-    interrupts_inhibiter_active = true;
+    sigset_t old_sigmask;
+    mask_signals(&old_sigmask);
+    if (interrupts_inhibiter_active == 0) {
+        global_old_sigmask = old_sigmask;
+    }
+    ++interrupts_inhibiter_active;
 }
 
 
 /// Destructor that removes signal masking.
 signals::interrupts_inhibiter::~interrupts_inhibiter(void)
 {
-    unmask_signals();
-    interrupts_inhibiter_active = false;
+    if (interrupts_inhibiter_active > 1) {
+        --interrupts_inhibiter_active;
+    } else {
+        interrupts_inhibiter_active = false;
+        unmask_signals(&global_old_sigmask);
+    }
 }
 
 

@@ -63,6 +63,15 @@ namespace process = utils::process;
 namespace {
 
 
+/// Checks if the current subprocess is in its own session.
+static void
+child_check_own_session(void)
+{
+    std::exit((::getsid(::getpid()) == ::getpid()) ?
+              EXIT_SUCCESS : EXIT_FAILURE);
+}
+
+
 /// Body for a process that prints a simple message and exits.
 ///
 /// \tparam ExitStatus The exit status for the subprocess.
@@ -342,6 +351,17 @@ ATF_TEST_CASE_BODY(child__fork_capture__ok_functor)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(child__fork_capture__new_session);
+ATF_TEST_CASE_BODY(child__fork_capture__new_session)
+{
+    std::auto_ptr< process::child > child = process::child::fork_capture(
+        child_check_own_session);
+    const process::status status = child->wait();
+    ATF_REQUIRE(status.exited());
+    ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(child__fork_capture__pipe_fail);
 ATF_TEST_CASE_BODY(child__fork_capture__pipe_fail)
 {
@@ -458,6 +478,18 @@ ATF_TEST_CASE_BODY(child__fork_files__ok_functor)
 
     ATF_REQUIRE( atf::utils::grep_file("^To stderr: a functor$", fileb.str()));
     ATF_REQUIRE(!atf::utils::grep_file("^To stderr: a functor$", filea.str()));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(child__fork_files__new_session);
+ATF_TEST_CASE_BODY(child__fork_files__new_session)
+{
+    std::auto_ptr< process::child > child = process::child::fork_files(
+        child_check_own_session,
+        fs::path("unused.out"), fs::path("unused.err"));
+    const process::status status = child->wait();
+    ATF_REQUIRE(status.exited());
+    ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
 }
 
 
@@ -737,6 +769,7 @@ ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, child__fork_capture__ok_function);
     ATF_ADD_TEST_CASE(tcs, child__fork_capture__ok_functor);
+    ATF_ADD_TEST_CASE(tcs, child__fork_capture__new_session);
     ATF_ADD_TEST_CASE(tcs, child__fork_capture__pipe_fail);
     ATF_ADD_TEST_CASE(tcs, child__fork_capture__fork_cannot_exit);
     ATF_ADD_TEST_CASE(tcs, child__fork_capture__fork_cannot_unwind);
@@ -744,6 +777,7 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, child__fork_files__ok_function);
     ATF_ADD_TEST_CASE(tcs, child__fork_files__ok_functor);
+    ATF_ADD_TEST_CASE(tcs, child__fork_files__new_session);
     ATF_ADD_TEST_CASE(tcs, child__fork_files__inherit_stdout);
     ATF_ADD_TEST_CASE(tcs, child__fork_files__inherit_stderr);
     ATF_ADD_TEST_CASE(tcs, child__fork_files__fork_cannot_exit);

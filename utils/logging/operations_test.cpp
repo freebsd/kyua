@@ -124,6 +124,28 @@ ATF_TEST_CASE_BODY(log)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(set_inmemory__reset);
+ATF_TEST_CASE_BODY(set_inmemory__reset)
+{
+    logging::set_persistency("debug", fs::path("test.log"));
+
+    datetime::set_mock_now(2011, 2, 21, 18, 20, 0, 654321);
+    logging::log(logging::level_debug, "file", 123, "Debug message");
+    logging::set_inmemory();
+    logging::log(logging::level_debug, "file", 123, "Debug message 2");
+
+    std::ifstream input("test.log");
+    ATF_REQUIRE(input);
+
+    const pid_t pid = ::getpid();
+
+    std::string line;
+    ATF_REQUIRE(std::getline(input, line).good());
+    ATF_REQUIRE_EQ(
+        (F("20110221-182000 D %s file:123: Debug message") % pid).str(), line);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(set_persistency__no_backlog);
 ATF_TEST_CASE_BODY(set_persistency__no_backlog)
 {
@@ -320,6 +342,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, generate_log_name__after_log);
 
     ATF_ADD_TEST_CASE(tcs, log);
+
+    ATF_ADD_TEST_CASE(tcs, set_inmemory__reset);
 
     ATF_ADD_TEST_CASE(tcs, set_persistency__no_backlog);
     ATF_ADD_TEST_CASE(tcs, set_persistency__some_backlog__debug);

@@ -34,6 +34,9 @@ extern "C" {
 #include <time.h>
 }
 
+#include <stdexcept>
+
+#include "utils/format/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 
@@ -65,11 +68,17 @@ datetime::delta::delta(void) :
 ///
 /// \param seconds_ The seconds in the delta.
 /// \param useconds_ The microseconds in the delta.
+///
+/// \throw std::runtime_error If the input delta is negative.
 datetime::delta::delta(const int64_t seconds_,
                        const unsigned long useconds_) :
     seconds(seconds_),
     useconds(useconds_)
 {
+    if (seconds_ < 0) {
+        throw std::runtime_error(F("Negative deltas are not supported by the "
+                                   "datetime::delta class; got: %s") % (*this));
+    }
 }
 
 
@@ -78,9 +87,17 @@ datetime::delta::delta(const int64_t seconds_,
 /// \param useconds The amount of microseconds representing the delta.
 ///
 /// \return A new delta object.
+///
+/// \throw std::runtime_error If the input delta is negative.
 datetime::delta
 datetime::delta::from_microseconds(const int64_t useconds)
 {
+    if (useconds < 0) {
+        throw std::runtime_error(F("Negative deltas are not supported by the "
+                                   "datetime::delta class; got: %sus") %
+                                 useconds);
+    }
+
     return delta(useconds / 1000000, useconds % 1000000);
 }
 
@@ -119,6 +136,58 @@ datetime::delta::operator!=(const datetime::delta& other) const
 }
 
 
+/// Checks if this time delta is shorter than another one.
+///
+/// \param other The object to compare to.
+///
+/// \return True if this time delta is shorter than other; false otherwise.
+bool
+datetime::delta::operator<(const datetime::delta& other) const
+{
+    return seconds < other.seconds ||
+        (seconds == other.seconds && useconds < other.useconds);
+}
+
+
+/// Checks if this time delta is shorter than or equal to another one.
+///
+/// \param other The object to compare to.
+///
+/// \return True if this time delta is shorter than or equal to; false
+/// otherwise.
+bool
+datetime::delta::operator<=(const datetime::delta& other) const
+{
+    return (*this) < other || (*this) == other;
+}
+
+
+/// Checks if this time delta is larger than another one.
+///
+/// \param other The object to compare to.
+///
+/// \return True if this time delta is larger than other; false otherwise.
+bool
+datetime::delta::operator>(const datetime::delta& other) const
+{
+    return seconds > other.seconds ||
+        (seconds == other.seconds && useconds > other.useconds);
+}
+
+
+/// Checks if this time delta is larger than or equal to another one.
+///
+/// \param other The object to compare to.
+///
+/// \return True if this time delta is larger than or equal to; false
+/// otherwise.
+bool
+datetime::delta::operator>=(const datetime::delta& other) const
+{
+    return (*this) > other || (*this) == other;
+}
+
+
 /// Adds a time delta to this one.
 ///
 /// \param other The time delta to add.
@@ -137,10 +206,35 @@ datetime::delta::operator+(const datetime::delta& other) const
 /// \param other The time delta to add.
 ///
 /// \return The addition of this time delta with the other time delta.
-datetime::delta
+datetime::delta&
 datetime::delta::operator+=(const datetime::delta& other)
 {
     *this = *this + other;
+    return *this;
+}
+
+
+/// Scales this delta by a positive integral factor.
+///
+/// \param factor The scaling factor.
+///
+/// \return The scaled delta.
+datetime::delta
+datetime::delta::operator*(const std::size_t factor) const
+{
+    return delta::from_microseconds(to_microseconds() * factor);
+}
+
+
+/// Scales this delta by and updates this delta with the result.
+///
+/// \param factor The scaling factor.
+///
+/// \return The scaled delta as a reference to the input object.
+datetime::delta&
+datetime::delta::operator*=(const std::size_t factor)
+{
+    *this = *this * factor;
     return *this;
 }
 
@@ -337,6 +431,16 @@ datetime::set_mock_now(const int year, const int month,
 }
 
 
+/// Sets the current time for testing purposes.
+///
+/// \param mock_now_ The mock timestamp to set the time to.
+void
+datetime::set_mock_now(const timestamp& mock_now_)
+{
+    mock_now = mock_now_;
+}
+
+
 /// Checks if two timestamps are equal.
 ///
 /// \param other The object to compare to.
@@ -362,14 +466,124 @@ datetime::timestamp::operator!=(const datetime::timestamp& other) const
 }
 
 
+/// Checks if a timestamp is before another.
+///
+/// \param other The object to compare to.
+///
+/// \return True if this timestamp comes before other; false otherwise.
+bool
+datetime::timestamp::operator<(const datetime::timestamp& other) const
+{
+    return to_microseconds() < other.to_microseconds();
+}
+
+
+/// Checks if a timestamp is before or equal to another.
+///
+/// \param other The object to compare to.
+///
+/// \return True if this timestamp comes before other or is equal to it;
+/// false otherwise.
+bool
+datetime::timestamp::operator<=(const datetime::timestamp& other) const
+{
+    return to_microseconds() <= other.to_microseconds();
+}
+
+
+/// Checks if a timestamp is after another.
+///
+/// \param other The object to compare to.
+///
+/// \return True if this timestamp comes after other; false otherwise;
+bool
+datetime::timestamp::operator>(const datetime::timestamp& other) const
+{
+    return to_microseconds() > other.to_microseconds();
+}
+
+
+/// Checks if a timestamp is after or equal to another.
+///
+/// \param other The object to compare to.
+///
+/// \return True if this timestamp comes after other or is equal to it;
+/// false otherwise.
+bool
+datetime::timestamp::operator>=(const datetime::timestamp& other) const
+{
+    return to_microseconds() >= other.to_microseconds();
+}
+
+
+/// Calculates the addition of a delta to a timestamp.
+///
+/// \param other The delta to add.
+///
+/// \return A new timestamp in the future.
+datetime::timestamp
+datetime::timestamp::operator+(const datetime::delta& other) const
+{
+    return datetime::timestamp::from_microseconds(to_microseconds() +
+                                                  other.to_microseconds());
+}
+
+
+/// Calculates the addition of a delta to this timestamp.
+///
+/// \param other The delta to add.
+///
+/// \return A reference to the modified timestamp.
+datetime::timestamp&
+datetime::timestamp::operator+=(const datetime::delta& other)
+{
+    *this = *this + other;
+    return *this;
+}
+
+
+/// Calculates the subtraction of a delta from a timestamp.
+///
+/// \param other The delta to subtract.
+///
+/// \return A new timestamp in the past.
+datetime::timestamp
+datetime::timestamp::operator-(const datetime::delta& other) const
+{
+    return datetime::timestamp::from_microseconds(to_microseconds() -
+                                                  other.to_microseconds());
+}
+
+
+/// Calculates the subtraction of a delta from this timestamp.
+///
+/// \param other The delta to subtract.
+///
+/// \return A reference to the modified timestamp.
+datetime::timestamp&
+datetime::timestamp::operator-=(const datetime::delta& other)
+{
+    *this = *this - other;
+    return *this;
+}
+
+
 /// Calculates the delta between two timestamps.
 ///
 /// \param other The subtrahend.
 ///
 /// \return The difference between this object and the other object.
+///
+/// \throw std::runtime_error If the subtraction would result in a negative time
+///     delta, which are currently not supported.
 datetime::delta
 datetime::timestamp::operator-(const datetime::timestamp& other) const
 {
+    if ((*this) < other) {
+        throw std::runtime_error(
+            F("Cannot subtract %s from %s as it would result in a negative "
+              "datetime::delta, which are not supported") % (*this) % other);
+    }
     return datetime::delta::from_microseconds(to_microseconds() -
                                               other.to_microseconds());
 }

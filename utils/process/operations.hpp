@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2014 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,34 +26,34 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/process/system.hpp"
+/// \file utils/process/operations.hpp
+/// Collection of utilities for process management.
 
-extern "C" {
-#include <sys/types.h>
-#include <sys/wait.h>
+#if !defined(UTILS_PROCESS_OPERATIONS_HPP)
+#define UTILS_PROCESS_OPERATIONS_HPP
 
-#include <fcntl.h>
-#include <unistd.h>
-}
+#include <string>
+#include <vector>
 
-namespace detail = utils::process::detail;
+#include "utils/defs.hpp"
+#include "utils/fs/path.hpp"
+#include "utils/process/status.hpp"
 
-
-/// Indirection to execute the dup2(2) system call.
-int (*detail::syscall_dup2)(const int, const int) = ::dup2;
-
-
-/// Indirection to execute the fork(2) system call.
-pid_t (*detail::syscall_fork)(void) = ::fork;
+namespace utils {
+namespace process {
 
 
-/// Indirection to execute the open(2) system call.
-int (*detail::syscall_open)(const char*, const int, ...) = ::open;
+/// Arguments to a program, without the program name.
+typedef std::vector< std::string > args_vector;
 
 
-/// Indirection to execute the pipe(2) system call.
-int (*detail::syscall_pipe)(int[2]) = ::pipe;
+void exec(const utils::fs::path&, const args_vector&) throw() UTILS_NORETURN;
 
 
-/// Indirection to execute the waitpid(2) system call.
-pid_t (*detail::syscall_waitpid)(const pid_t, int*, const int) = ::waitpid;
+status wait_any(void);
+
+
+}  // namespace process
+}  // namespace utils
+
+#endif  // !defined(UTILS_PROCESS_OPERATIONS_HPP)
