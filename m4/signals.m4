@@ -41,22 +41,24 @@ AC_DEFUN([KYUA_LAST_SIGNO], [
 #include <stdio.h>
 #include <stdio.h>
 #include <stdlib.h>], [
+    static const int max_signals = 256;
     int i;
     FILE *f;
 
     i = 0;
-    while (i < 1024) {
+    while (i < max_signals) {
         i++;
         if (i != SIGKILL && i != SIGSTOP) {
             struct sigaction sa;
             int ret;
 
-            sa.sa_handler = SIG_IGN;
+            sa.sa_handler = SIG_DFL;
             sigemptyset(&sa.sa_mask);
             sa.sa_flags = 0;
 
             ret = sigaction(i, &sa, NULL);
             if (ret == -1) {
+                warn("sigaction(%d) failed", i);
                 if (errno == EINVAL) {
                     i--;
                     break;
@@ -65,7 +67,7 @@ AC_DEFUN([KYUA_LAST_SIGNO], [
             }
         }
     }
-    if (i == 100)
+    if (i == max_signals)
         errx(EXIT_FAILURE, "too many signals");
 
     f = fopen("conftest.cnt", "w");

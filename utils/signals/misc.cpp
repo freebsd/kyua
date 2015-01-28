@@ -40,6 +40,7 @@ extern "C" {
 #include <cstddef>
 
 #include "utils/format/macros.hpp"
+#include "utils/logging/macros.hpp"
 #include "utils/signals/exceptions.hpp"
 
 namespace signals = utils::signals;
@@ -68,4 +69,38 @@ signals::reset(const int signo)
         throw system_error(F("Failed to reset signal %s") % signo,
                            original_errno);
     }
+}
+
+
+/// Resets all signals to their default handlers.
+///
+/// \return True if all signals could be reset properly; false otherwise.
+bool
+signals::reset_all(void)
+{
+    bool ok = true;
+
+    for (int signo = 1; signo <= signals::last_signo; ++signo) {
+        if (signo == SIGKILL || signo == SIGSTOP) {
+            // Don't attempt to reset immutable signals.
+        } else {
+            try {
+                signals::reset(signo);
+            } catch (const signals::error& e) {
+#if defined(SIGTHR)
+                if (signo == SIGTHR) {
+                    // If FreeBSD's libthr is loaded, it prevents us from
+                    // modifying SIGTHR (at least in 11.0-CURRENT as of
+                    // 2015-01-28).  Skip failures for this signal if they
+                    // happen to avoid this corner case.
+                    continue;
+                }
+#endif
+                LW(e.what());
+                ok = false;
+            }
+        }
+    }
+
+    return ok;
 }

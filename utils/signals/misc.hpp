@@ -40,6 +40,7 @@ extern const int last_signo;
 
 
 void reset(const int);
+bool reset_all(void);
 
 
 }  // namespace signals

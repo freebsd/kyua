@@ -53,7 +53,7 @@ namespace {
 static void program_reset_raise(void) UTILS_NORETURN;
 
 
-/// Body of a subprocess that tests the signal::reset function.
+/// Body of a subprocess that tests the signals::reset function.
 ///
 /// This function programs a signal to be ignored, then uses signal::reset to
 /// bring it back to its default handler and then delivers the signal to self.
@@ -80,16 +80,26 @@ program_reset_raise(void)
 }
 
 
+/// Body of a subprocess that executes the signals::reset_all function.
+///
+/// The process exits with success if the function worked, or with a failure if
+/// an error is reported.  No signals are tested.
+static void
+run_reset_all(void)
+{
+    const bool ok = signals::reset_all();
+    std::exit(ok ? EXIT_SUCCESS : EXIT_FAILURE);
+}
+
+
 }  // anonymous namespace
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(reset__ok);
 ATF_TEST_CASE_BODY(reset__ok)
 {
-    // TODO(jmmv): We should have a child type that inherits both stdout and
-    // stderr so that we do not have to specify files.
     std::auto_ptr< process::child > child = process::child::fork_files(
-        program_reset_raise, fs::path("stdout.txt"), fs::path("stderr.txt"));
+        program_reset_raise, fs::path("/dev/stdout"), fs::path("/dev/stderr"));
     process::status status = child->wait();
     ATF_REQUIRE(status.signaled());
     ATF_REQUIRE_EQ(SIGUSR1, status.termsig());
@@ -103,8 +113,20 @@ ATF_TEST_CASE_BODY(reset__invalid)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(reset_all);
+ATF_TEST_CASE_BODY(reset_all)
+{
+    std::auto_ptr< process::child > child = process::child::fork_files(
+        run_reset_all, fs::path("/dev/stdout"), fs::path("/dev/stderr"));
+    process::status status = child->wait();
+    ATF_REQUIRE(status.exited());
+    ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, reset__ok);
     ATF_ADD_TEST_CASE(tcs, reset__invalid);
+    ATF_ADD_TEST_CASE(tcs, reset_all);
 }
