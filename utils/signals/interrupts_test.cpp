@@ -90,9 +90,13 @@ pause_child(void)
 /// the class but is tightly related.
 ///
 /// \param signo The signal to check.
+/// \param explicit_unprogram Whether to call interrupts_handler::unprogram()
+///     explicitly before letting the object go out of scope.
 static void
-check_interrupts_handler(const int signo)
+check_interrupts_handler(const int signo, const bool explicit_unprogram)
 {
+    fired_signal = -1;
+
     signals::programmer test_handler(signo, signal_handler);
 
     {
@@ -103,6 +107,10 @@ check_interrupts_handler(const int signo)
         ATF_REQUIRE_THROW_RE(signals::interrupted_error,
                              F("Interrupted by signal %s") % signo,
                              signals::check_interrupt());
+
+        if (explicit_unprogram) {
+            interrupts.unprogram();
+        }
     }
 
     ATF_REQUIRE_EQ(-1, fired_signal);
@@ -143,21 +151,30 @@ check_interrupts_inhibiter(const int signo)
 ATF_TEST_CASE_WITHOUT_HEAD(interrupts_handler__sighup);
 ATF_TEST_CASE_BODY(interrupts_handler__sighup)
 {
-    check_interrupts_handler(SIGHUP);
+    // We run this twice in sequence to ensure that we can actually program two
+    // interrupts handlers in a row.
+    check_interrupts_handler(SIGHUP, true);
+    check_interrupts_handler(SIGHUP, false);
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(interrupts_handler__sigint);
 ATF_TEST_CASE_BODY(interrupts_handler__sigint)
 {
-    check_interrupts_handler(SIGINT);
+    // We run this twice in sequence to ensure that we can actually program two
+    // interrupts handlers in a row.
+    check_interrupts_handler(SIGINT, true);
+    check_interrupts_handler(SIGINT, false);
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(interrupts_handler__sigterm);
 ATF_TEST_CASE_BODY(interrupts_handler__sigterm)
 {
-    check_interrupts_handler(SIGTERM);
+    // We run this twice in sequence to ensure that we can actually program two
+    // interrupts handlers in a row.
+    check_interrupts_handler(SIGTERM, true);
+    check_interrupts_handler(SIGTERM, false);
 }
 
 

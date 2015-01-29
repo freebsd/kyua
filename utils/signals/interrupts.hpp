@@ -47,9 +47,17 @@ namespace signals {
 /// check_interrupt() free function can be used to determine if an interrupt has
 /// happened.
 class interrupts_handler : noncopyable {
+    /// Whether the interrupts are still programmed or not.
+    ///
+    /// Used by the destructor to prevent double-unprogramming when unprogram()
+    /// is explicitly called by the user.
+    bool _programmed;
+
 public:
     interrupts_handler(void);
     ~interrupts_handler(void);
+
+    void unprogram(void);
 };
 
 
