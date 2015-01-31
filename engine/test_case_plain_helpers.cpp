@@ -30,14 +30,19 @@ extern "C" {
 #include <sys/stat.h>
 
 #include <unistd.h>
+
+extern char** environ;
 }
 
 #include <cstdlib>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 
 #include "utils/env.hpp"
+#include "utils/format/containers.ipp"
+#include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
@@ -74,10 +79,31 @@ guess_test_case_name(const char* arg0)
 ///
 /// \param str The error message to log.
 static void
-fail(const char* str)
+fail(const std::string& str)
 {
     std::cerr << str << '\n';
     std::exit(EXIT_FAILURE);
+}
+
+
+/// A test case that validates the TEST_ENV_* variables.
+static void
+test_check_configuration_variables(void)
+{
+    std::set< std::string > vars;
+    char** iter;
+    for (iter = environ; *iter != NULL; ++iter) {
+        if (std::strstr(*iter, "TEST_ENV_") == *iter) {
+            vars.insert(*iter);
+        }
+    }
+
+    std::set< std::string > exp_vars;
+    exp_vars.insert("TEST_ENV_first=some value");
+    exp_vars.insert("TEST_ENV_second=some other value");
+    if (vars != exp_vars) {
+        fail(F("Expected: %s\nFound: %s\n") % exp_vars % vars);
+    }
 }
 
 
@@ -188,7 +214,9 @@ main(int argc, char** argv)
 
     const std::string& test_case = guess_test_case_name(argv[0]);
 
-    if (test_case == "crash")
+    if (test_case == "check_configuration_variables")
+        test_check_configuration_variables();
+    else if (test_case == "crash")
         test_crash();
     else if (test_case == "fail")
         test_fail();
