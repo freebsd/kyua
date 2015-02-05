@@ -2,6 +2,7 @@ syntax(2)
 
 test_suite("kyua")
 
+atf_test_program{name="atf_result_test"}
 atf_test_program{name="config_test"}
 atf_test_program{name="exceptions_test"}
 atf_test_program{name="executor_test"}
