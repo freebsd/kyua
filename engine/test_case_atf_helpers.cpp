@@ -109,6 +109,17 @@ ATF_TEST_CASE_CLEANUP(check_cleanup_workdir)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(check_configuration_variables);
+ATF_TEST_CASE_BODY(check_configuration_variables)
+{
+    ATF_REQUIRE(has_config_var("first"));
+    ATF_REQUIRE_EQ("some value", get_config_var("first"));
+
+    ATF_REQUIRE(has_config_var("second"));
+    ATF_REQUIRE_EQ("some other value", get_config_var("second"));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(check_unprivileged);
 ATF_TEST_CASE_BODY(check_unprivileged)
 {
@@ -173,6 +184,24 @@ ATF_TEST_CASE_CLEANUP(create_cookie_from_cleanup)
 }
 
 
+ATF_TEST_CASE_WITH_CLEANUP(expect_timeout);
+ATF_TEST_CASE_HEAD(expect_timeout)
+{
+    if (has_config_var("timeout"))
+        set_md_var("timeout", get_config_var("timeout"));
+}
+ATF_TEST_CASE_BODY(expect_timeout)
+{
+    expect_timeout("Times out on purpose");
+    ::sleep(10);
+    create_cookie(this, "control_dir", "cookie");
+}
+ATF_TEST_CASE_CLEANUP(expect_timeout)
+{
+    create_cookie(this, "control_dir", "cookie.cleanup");
+}
+
+
 ATF_TEST_CASE_WITH_CLEANUP(output);
 ATF_TEST_CASE_HEAD(output)
 {
@@ -192,6 +221,21 @@ ATF_TEST_CASE_CLEANUP(output)
 ATF_TEST_CASE_WITHOUT_HEAD(pass);
 ATF_TEST_CASE_BODY(pass)
 {
+}
+
+
+ATF_TEST_CASE_WITH_CLEANUP(shared_workdir);
+ATF_TEST_CASE_HEAD(shared_workdir)
+{
+}
+ATF_TEST_CASE_BODY(shared_workdir)
+{
+    atf::utils::create_file("shared_cookie", "");
+}
+ATF_TEST_CASE_CLEANUP(shared_workdir)
+{
+    if (!atf::utils::file_exists("shared_cookie"))
+        std::abort();
 }
 
 
@@ -218,7 +262,7 @@ ATF_TEST_CASE_BODY(spawn_blocking_child)
 }
 
 
-ATF_TEST_CASE(timeout_body);
+ATF_TEST_CASE_WITH_CLEANUP(timeout_body);
 ATF_TEST_CASE_HEAD(timeout_body)
 {
     if (has_config_var("timeout"))
@@ -228,6 +272,10 @@ ATF_TEST_CASE_BODY(timeout_body)
 {
     ::sleep(10);
     create_cookie(this, "control_dir", "cookie");
+}
+ATF_TEST_CASE_CLEANUP(timeout_body)
+{
+    create_cookie(this, "control_dir", "cookie.cleanup");
 }
 
 
@@ -258,14 +306,17 @@ ATF_TEST_CASE_BODY(validate_isolation)
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, check_cleanup_workdir);
+    ATF_ADD_TEST_CASE(tcs, check_configuration_variables);
     ATF_ADD_TEST_CASE(tcs, check_unprivileged);
     ATF_ADD_TEST_CASE(tcs, crash);
     ATF_ADD_TEST_CASE(tcs, crash_cleanup);
     ATF_ADD_TEST_CASE(tcs, create_cookie_in_control_dir);
     ATF_ADD_TEST_CASE(tcs, create_cookie_in_workdir);
     ATF_ADD_TEST_CASE(tcs, create_cookie_from_cleanup);
+    ATF_ADD_TEST_CASE(tcs, expect_timeout);
     ATF_ADD_TEST_CASE(tcs, output);
     ATF_ADD_TEST_CASE(tcs, pass);
+    ATF_ADD_TEST_CASE(tcs, shared_workdir);
     ATF_ADD_TEST_CASE(tcs, spawn_blocking_child);
     ATF_ADD_TEST_CASE(tcs, timeout_body);
     ATF_ADD_TEST_CASE(tcs, timeout_cleanup);
