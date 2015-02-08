@@ -38,6 +38,7 @@
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/cmdline/ui.hpp"
+#include "utils/config/tree.ipp"
 #include "utils/datetime.hpp"
 #include "utils/format/macros.hpp"
 
@@ -58,6 +59,9 @@ class print_hooks : public drivers::run_tests::base_hooks {
     /// Object to interact with the I/O of the program.
     cmdline::ui* _ui;
 
+    /// Whether the tests are executed in parallel or not.
+    bool _parallel;
+
 public:
     /// The amount of positive test results found so far.
     unsigned long good_count;
@@ -68,8 +72,10 @@ public:
     /// Constructor for the hooks.
     ///
     /// \param ui_ Object to interact with the I/O of the program.
-    print_hooks(cmdline::ui* ui_) :
+    /// \param parallel_ True if we are executing more than one test at once.
+    print_hooks(cmdline::ui* ui_, const bool parallel_) :
         _ui(ui_),
+        _parallel(parallel_),
         good_count(0),
         bad_count(0)
     {
@@ -83,22 +89,30 @@ public:
     got_test_case(const model::test_program& test_program,
                   const std::string& test_case_name)
     {
-        _ui->out(F("%s  ->  ") %
-                 cli::format_test_case_id(test_program, test_case_name), false);
+        if (!_parallel) {
+            _ui->out(F("%s  ->  ") %
+                     cli::format_test_case_id(test_program, test_case_name),
+                     false);
+        }
     }
 
     /// Called when a result of a test case becomes available.
     ///
-    /// \param unused_test_program The test program containing the test case.
-    /// \param unused_test_case_name The name of the test case being executed.
+    /// \param test_program The test program containing the test case.
+    /// \param test_case_name The name of the test case being executed.
     /// \param result The result of the execution of the test case.
     /// \param duration The time it took to run the test.
     virtual void
-    got_result(const model::test_program& UTILS_UNUSED_PARAM(test_program),
-               const std::string& UTILS_UNUSED_PARAM(test_case_name),
+    got_result(const model::test_program& test_program,
+               const std::string& test_case_name,
                const model::test_result& result,
                const datetime::delta& duration)
     {
+        if (_parallel) {
+            _ui->out(F("%s  ->  ") %
+                     cli::format_test_case_id(test_program, test_case_name),
+                     false);
+        }
         _ui->out(F("%s  [%s]") % cli::format_result(result) %
             cli::format_delta(duration));
         if (result.good())
@@ -136,7 +150,10 @@ cmd_test::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
     const layout::results_id_file_pair results = layout::new_db(
         results_file_create(cmdline), kyuafile_path(cmdline).branch_path());
 
-    print_hooks hooks(ui);
+    const bool parallel = (user_config.lookup< config::positive_int_node >(
+                               "parallelism") > 1);
+
+    print_hooks hooks(ui, parallel);
     const drivers::run_tests::result result = drivers::run_tests::drive(
         kyuafile_path(cmdline), build_root_path(cmdline), results.second,
         parse_filters(cmdline.arguments()), user_config, hooks);
