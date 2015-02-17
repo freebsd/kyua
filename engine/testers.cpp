@@ -30,7 +30,6 @@
 
 extern "C" {
 #include <dirent.h>
-#include <regex.h>
 }
 
 #include <cerrno>
@@ -52,12 +51,15 @@ extern "C" {
 #include "utils/process/status.hpp"
 #include "utils/releaser.hpp"
 #include "utils/stream.hpp"
+#include "utils/text/exceptions.hpp"
+#include "utils/text/regex.hpp"
 
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace logging = utils::logging;
 namespace passwd = utils::passwd;
 namespace process = utils::process;
+namespace text = utils::text;
 
 using utils::none;
 using utils::optional;
@@ -101,6 +103,8 @@ replace_newlines(const std::string input)
 /// Finds all available testers and caches their data.
 ///
 /// \param [out] testers Map into which to store the list of available testers.
+///
+/// \throw engine::error If there is a problem loading the testers list.
 static void
 load_testers(testers_map& testers)
 {
@@ -120,27 +124,24 @@ load_testers(testers_map& testers)
     }
     const utils::releaser< ::DIR, int > dir_releaser(dir, ::closedir);
 
-    ::regex_t preg;
-    if (::regcomp(&preg, "^kyua-(.+)-tester$", REG_EXTENDED) != 0)
-        throw engine::error("Failed to compile regular expression");
-    const utils::releaser< ::regex_t, void > preg_releaser(&preg, ::regfree);
+    try {
+        const text::regex preg = text::regex::compile("^kyua-(.+)-tester$", 1);
 
-    ::dirent* de;
-    while ((de = readdir(dir)) != NULL) {
-        ::regmatch_t matches[2];
-        const int ret = ::regexec(&preg, de->d_name, 2, matches, 0);
-        if (ret == 0) {
-            const std::string interface(de->d_name + matches[1].rm_so,
-                                        matches[1].rm_eo - matches[1].rm_so);
-            const fs::path path = testersdir / de->d_name;
-            LI(F("Found tester for interface %s in %s") % interface % path);
-            INV(path.is_absolute());
-            testers[interface] = path.str();
-        } else if (ret == REG_NOMATCH) {
-            // Not a tester; skip.
-        } else {
-            throw engine::error("Failed to match regular expression");
+        ::dirent* de;
+        while ((de = readdir(dir)) != NULL) {
+            const text::regex_matches matches = preg.match(de->d_name);
+            if (matches) {
+                const std::string interface = matches.get(1);
+                const fs::path path = testersdir / de->d_name;
+                LI(F("Found tester for interface %s in %s") % interface % path);
+                INV(path.is_absolute());
+                testers[interface] = path.str();
+            } else {
+                // Not a tester; skip.
+            }
         }
+    } catch (const text::regex_error& e) {
+        throw engine::error(e.what());
     }
 }
 
