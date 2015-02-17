@@ -1,4 +1,4 @@
-// Copyright 2012 Google Inc.
+// Copyright 2014 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,51 +26,64 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/text/exceptions.hpp"
+/// \file utils/text/regex.hpp
+/// Utilities to build and match regular expressions.
 
-#include <cstring>
+#if !defined(UTILS_TEXT_REGEX_HPP)
+#define UTILS_TEXT_REGEX_HPP
 
-#include <atf-c++.hpp>
+#include <cstddef>
 
-namespace text = utils::text;
+#include "utils/shared_ptr.hpp"
 
-
-ATF_TEST_CASE_WITHOUT_HEAD(error);
-ATF_TEST_CASE_BODY(error)
-{
-    const text::error e("Some text");
-    ATF_REQUIRE(std::strcmp("Some text", e.what()) == 0);
-}
+namespace utils {
+namespace text {
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(regex_error);
-ATF_TEST_CASE_BODY(regex_error)
-{
-    const text::regex_error e("Some text");
-    ATF_REQUIRE(std::strcmp("Some text", e.what()) == 0);
-}
+/// Container for regex match results.
+class regex_matches {
+    struct impl;
+
+    /// Pointer to shared implementation.
+    std::shared_ptr< impl > _pimpl;
+
+    friend class regex;
+    regex_matches(std::shared_ptr< impl >);
+
+public:
+    ~regex_matches(void);
+
+    std::size_t count(void) const;
+    std::string get(const std::size_t) const;
+
+    operator bool(void) const;
+};
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(syntax_error);
-ATF_TEST_CASE_BODY(syntax_error)
-{
-    const text::syntax_error e("Some text");
-    ATF_REQUIRE(std::strcmp("Some text", e.what()) == 0);
-}
+/// Regular expression compiler and executor.
+///
+/// All regular expressions handled by this class are "extended".
+class regex {
+    struct impl;
+
+    /// Pointer to shared implementation.
+    std::shared_ptr< impl > _pimpl;
+
+    regex(std::shared_ptr< impl >);
+
+public:
+    ~regex(void);
+
+    static regex compile(const std::string&, const std::size_t);
+    regex_matches match(const std::string&) const;
+};
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(value_error);
-ATF_TEST_CASE_BODY(value_error)
-{
-    const text::value_error e("Some text");
-    ATF_REQUIRE(std::strcmp("Some text", e.what()) == 0);
-}
+regex_matches match_regex(const std::string&, const std::string&,
+                          const std::size_t);
 
 
-ATF_INIT_TEST_CASES(tcs)
-{
-    ATF_ADD_TEST_CASE(tcs, error);
-    ATF_ADD_TEST_CASE(tcs, regex_error);
-    ATF_ADD_TEST_CASE(tcs, syntax_error);
-    ATF_ADD_TEST_CASE(tcs, value_error);
-}
+}  // namespace text
+}  // namespace utils
+
+#endif  // !defined(UTILS_TEXT_REGEX_HPP)

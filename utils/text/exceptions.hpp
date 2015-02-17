@@ -46,6 +46,14 @@ public:
 };
 
 
+/// Exception denoting an error in a regular expression.
+class regex_error : public error {
+public:
+    explicit regex_error(const std::string&);
+    ~regex_error(void) throw();
+};
+
+
 /// Exception denoting an error while parsing templates.
 class syntax_error : public error {
 public:
