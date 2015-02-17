@@ -30,7 +30,6 @@
 
 extern "C" {
 #include <dirent.h>
-#include <regex.h>
 }
 
 #include <algorithm>
@@ -47,10 +46,13 @@ extern "C" {
 #include "utils/optional.ipp"
 #include "utils/releaser.hpp"
 #include "utils/sanity.hpp"
+#include "utils/text/exceptions.hpp"
+#include "utils/text/regex.hpp"
 
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace layout = store::layout;
+namespace text = utils::text;
 
 using utils::optional;
 
@@ -82,36 +84,33 @@ find_latest(const std::string& test_suite)
     }
     const utils::releaser< ::DIR, int > dir_releaser(dir, ::closedir);
 
-    const std::string pattern =
-        F("^results.%s.[0-9]{8}-[0-9]{6}-[0-9]{6}.db$") % test_suite;
-    ::regex_t preg;
-    if (::regcomp(&preg, pattern.c_str(), REG_EXTENDED) != 0)
-        throw store::error("Failed to compile regular expression");
-    const utils::releaser< ::regex_t, void > preg_releaser(&preg, ::regfree);
+    try {
+        const text::regex preg = text::regex::compile(
+            F("^results.%s.[0-9]{8}-[0-9]{6}-[0-9]{6}.db$") % test_suite, 0);
 
-    std::string latest;
+        std::string latest;
 
-    ::dirent* de;
-    while ((de = ::readdir(dir)) != NULL) {
-        ::regmatch_t matches[2];
-        const int ret = ::regexec(&preg, de->d_name, 2, matches, 0);
-        if (ret == 0) {
-            if (latest.empty() || de->d_name > latest) {
-                latest = de->d_name;
+        ::dirent* de;
+        while ((de = ::readdir(dir)) != NULL) {
+            const text::regex_matches matches = preg.match(de->d_name);
+            if (matches) {
+                if (latest.empty() || de->d_name > latest) {
+                    latest = de->d_name;
+                }
+            } else {
+                // Not a database file; skip.
             }
-        } else if (ret == REG_NOMATCH) {
-            // Not a database file; skip.
-        } else {
-            throw store::error("Failed to match regular expression");
         }
+
+        if (latest.empty())
+            throw store::error(
+                F("No previous results file found for test suite %s")
+                % test_suite);
+
+        return store_dir / latest;
+    } catch (const text::regex_error& e) {
+        throw store::error(e.what());
     }
-
-    if (latest.empty())
-        throw store::error(
-            F("No previous results file found for test suite %s")
-            % test_suite);
-
-    return store_dir / latest;
 }
 
 
