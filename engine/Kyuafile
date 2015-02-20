@@ -14,4 +14,5 @@ atf_test_program{name="plain_test"}
 atf_test_program{name="requirements_test"}
 atf_test_program{name="runner_test"}
 atf_test_program{name="scanner_test"}
+atf_test_program{name="tap_parser_test"}
 atf_test_program{name="testers_test"}
