@@ -42,6 +42,7 @@ all_body() {
     cat >"${HOME}/.kyua/kyua.conf" <<EOF
 syntax(2)
 architecture = "my-architecture"
+parallelism = 256
 platform = "my-platform"
 unprivileged_user = "$(id -u -n)"
 test_suites.suite1["X-the-variable"] = "value1"
@@ -50,6 +51,7 @@ EOF
 
     cat >expout <<EOF
 architecture = my-architecture
+parallelism = 256
 platform = my-platform
 test_suites.suite1.X-the-variable = value1
 test_suites.suite2.X-the-variable = value2
@@ -307,14 +309,24 @@ EOF
 }
 
 
-utils_test_case variable_flag__invalid
-variable_flag__invalid_body() {
+utils_test_case variable_flag__invalid_key
+variable_flag__invalid_key_body() {
     cat >experr <<EOF
 Usage error: Invalid argument '' for option --variable: Argument does not have the form 'K=V'.
 Type 'kyua help' for usage information.
 EOF
     atf_check -s exit:3 -o empty -e file:experr kyua \
         -v "test_suites.a.b=c" -v "" config
+}
+
+
+utils_test_case variable_flag__invalid_value
+variable_flag__invalid_value_body() {
+    cat >experr <<EOF
+kyua: E: Invalid value for property 'parallelism': Must be a positive integer.
+EOF
+    atf_check -s exit:2 -o empty -e file:experr kyua \
+        -v "parallelism=0" config
 }
 
 
@@ -336,5 +348,6 @@ atf_init_test_cases() {
     atf_add_test_case variable_flag__no_config
     atf_add_test_case variable_flag__override_default_config
     atf_add_test_case variable_flag__override_custom_config
-    atf_add_test_case variable_flag__invalid
+    atf_add_test_case variable_flag__invalid_key
+    atf_add_test_case variable_flag__invalid_value
 }

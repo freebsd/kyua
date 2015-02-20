@@ -92,6 +92,9 @@ ATF_TEST_CASE_BODY(kyua_conf)
         "x86_64",
         user_config.lookup< config::string_node >("architecture"));
     ATF_REQUIRE_EQ(
+        16,
+        user_config.lookup< config::positive_int_node >("parallelism"));
+    ATF_REQUIRE_EQ(
         "amd64",
         user_config.lookup< config::string_node >("platform"));
 
