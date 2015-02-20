@@ -3,6 +3,11 @@ Changes in version 0.12
 
 STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 
+* Issue 2: Added the executor, a new implementation of the test
+  execution engine purely in C++ that supports parallel execution of
+  test cases.  The goal is to eventually replace all the C testers with
+  this new code.
+
 * Changed temporary directory creation to always grant search
   permissions on temporary directories.  This is to prevent potential
   problems when running Kyua as root and executing test cases that
