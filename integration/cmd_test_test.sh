@@ -93,11 +93,11 @@ EOF
     cat >expout <<EOF
 first:pass  ->  passed  [S.UUUs]
 first:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
+fourth:main  ->  skipped: Required file '/non-existent/foo' not found  [S.UUUs]
 second:pass  ->  passed  [S.UUUs]
 second:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 third:pass  ->  passed  [S.UUUs]
 third:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
-fourth:main  ->  skipped: Required file '/non-existent/foo' not found  [S.UUUs]
 
 Results file id is $(utils_results_id)
 Results saved to $(utils_results_file)
@@ -129,11 +129,11 @@ EOF
     cat >expout <<EOF
 first:fail  ->  failed: This fails on purpose  [S.UUUs]
 first:pass  ->  passed  [S.UUUs]
+fourth:main  ->  failed: Returned non-success exit status 76  [S.UUUs]
 second:fail  ->  failed: This fails on purpose  [S.UUUs]
 second:pass  ->  passed  [S.UUUs]
 third:pass  ->  passed  [S.UUUs]
 third:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
-fourth:main  ->  failed: Returned non-success exit status 76  [S.UUUs]
 
 Results file id is $(utils_results_id)
 Results saved to $(utils_results_file)
@@ -387,9 +387,9 @@ EOF
     utils_cp_helper simple_some_fail subdir/second
 
     cat >expout <<EOF
+first:pass  ->  passed  [S.UUUs]
 subdir/second:fail  ->  failed: This fails on purpose  [S.UUUs]
 subdir/second:pass  ->  passed  [S.UUUs]
-first:pass  ->  passed  [S.UUUs]
 
 Results file id is $(utils_results_id)
 Results saved to $(utils_results_file)
