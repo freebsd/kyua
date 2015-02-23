@@ -165,11 +165,11 @@ ATF_TEST_CASE_BODY(kyuafile_top__some_matches)
     ATF_REQUIRE_EQ(fs::path("root"), kyuafile.build_root());
 
     const model::test_program exp_test_program_a = model::test_program_builder(
-        "plain", fs::path("subdir1/a"), fs::path("root"), "b")
+        "plain", fs::path("subdir1/a"), fs::path("root").to_absolute(), "b")
         .add_test_case("main")
         .build();
     const model::test_program exp_test_program_c = model::test_program_builder(
-        "plain", fs::path("subdir2/c"), fs::path("root"), "d")
+        "plain", fs::path("subdir2/c"), fs::path("root").to_absolute(), "d")
         .add_test_case("main")
         .build();
 

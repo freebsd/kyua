@@ -630,8 +630,16 @@ engine::kyuafile::load(const fs::path& file,
     const fs::path build_root_ = user_build_root ?
         user_build_root.get() : source_root_;
 
+    // test_program.absolute_path() uses the current work directory and that
+    // fails to resolve the correct path once we have used chdir to enter the
+    // test work directory.  To prevent this causing issues down the road,
+    // force the build root to be absolute so that absolute_path() does not
+    // need to rely on the current work directory.
+    const fs::path abs_build_root = build_root_.is_absolute() ?
+        build_root_ : build_root_.to_absolute();
+
     return kyuafile(source_root_, build_root_,
-                    parser(source_root_, build_root_,
+                    parser(source_root_, abs_build_root,
                            fs::path(file.leaf_name()), user_config).parse());
 }
 
