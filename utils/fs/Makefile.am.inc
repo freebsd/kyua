@@ -32,6 +32,8 @@ UTILS_LIBS += $(LUTOK_LIBS)
 libutils_a_CPPFLAGS += $(LUTOK_CFLAGS)
 libutils_a_SOURCES += utils/fs/auto_cleaners.cpp
 libutils_a_SOURCES += utils/fs/auto_cleaners.hpp
+libutils_a_SOURCES += utils/fs/directory.cpp
+libutils_a_SOURCES += utils/fs/directory.hpp
 libutils_a_SOURCES += utils/fs/exceptions.cpp
 libutils_a_SOURCES += utils/fs/exceptions.hpp
 libutils_a_SOURCES += utils/fs/lua_module.cpp
@@ -51,6 +53,11 @@ tests_utils_fs_PROGRAMS = utils/fs/auto_cleaners_test
 utils_fs_auto_cleaners_test_SOURCES = utils/fs/auto_cleaners_test.cpp
 utils_fs_auto_cleaners_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 utils_fs_auto_cleaners_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
+
+tests_utils_fs_PROGRAMS += utils/fs/directory_test
+utils_fs_directory_test_SOURCES = utils/fs/directory_test.cpp
+utils_fs_directory_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_fs_directory_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_fs_PROGRAMS += utils/fs/exceptions_test
 utils_fs_exceptions_test_SOURCES = utils/fs/exceptions_test.cpp

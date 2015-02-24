@@ -28,11 +28,6 @@
 
 #include "engine/testers.hpp"
 
-extern "C" {
-#include <dirent.h>
-}
-
-#include <cerrno>
 #include <cstring>
 #include <iostream>
 #include <map>
@@ -42,6 +37,8 @@ extern "C" {
 #include "model/test_result.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/fs/directory.hpp"
+#include "utils/fs/exceptions.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
@@ -49,7 +46,6 @@ extern "C" {
 #include "utils/passwd.hpp"
 #include "utils/process/child.ipp"
 #include "utils/process/status.hpp"
-#include "utils/releaser.hpp"
 #include "utils/stream.hpp"
 #include "utils/text/exceptions.hpp"
 #include "utils/text/regex.hpp"
@@ -115,24 +111,15 @@ load_testers(testers_map& testers)
     const fs::path testersdir = raw_testersdir.is_absolute() ?
         raw_testersdir : raw_testersdir.to_absolute();
 
-    ::DIR* dir = ::opendir(testersdir.c_str());
-    if (dir == NULL) {
-        const int original_errno = errno;
-        LW(F("Failed to open testers dir %s: %s") % testersdir %
-           strerror(original_errno));
-        return;  // No testers available in the given location.
-    }
-    const utils::releaser< ::DIR, int > dir_releaser(dir, ::closedir);
-
     try {
+        const fs::directory dir(testersdir);
         const text::regex preg = text::regex::compile("^kyua-(.+)-tester$", 1);
-
-        ::dirent* de;
-        while ((de = readdir(dir)) != NULL) {
-            const text::regex_matches matches = preg.match(de->d_name);
+        for (fs::directory::const_iterator iter = dir.begin();
+             iter != dir.end(); ++iter) {
+            const text::regex_matches matches = preg.match(iter->name);
             if (matches) {
                 const std::string interface = matches.get(1);
-                const fs::path path = testersdir / de->d_name;
+                const fs::path path = testersdir / iter->name;
                 LI(F("Found tester for interface %s in %s") % interface % path);
                 INV(path.is_absolute());
                 testers[interface] = path.str();
@@ -140,6 +127,10 @@ load_testers(testers_map& testers)
                 // Not a tester; skip.
             }
         }
+    } catch (const fs::system_error& e) {
+        LW(F("Failed to load testers from dir %s: %s") % testersdir %
+           e.what());
+        return;
     } catch (const text::regex_error& e) {
         throw engine::error(e.what());
     }

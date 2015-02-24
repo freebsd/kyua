@@ -46,7 +46,6 @@ extern "C" {
 #endif
 #include <sys/wait.h>
 
-#include <dirent.h>
 #include <unistd.h>
 }
 
@@ -62,6 +61,7 @@ extern "C" {
 #include "utils/defs.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/fs/directory.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
@@ -636,34 +636,23 @@ retry:
 void
 fs::rm_r(const fs::path& directory)
 {
-    DIR* dirp = ::opendir(directory.c_str());
-    if (dirp == NULL) {
-        const int original_errno = errno;
-        throw fs::system_error(F("Failed to open directory %s") %
-                               directory.str(), original_errno);
-    }
-    try {
-        ::dirent* dp;
-        while ((dp = ::readdir(dirp)) != NULL) {
-            const std::string name = dp->d_name;
-            if (name == "." || name == "..")
-                continue;
+    const fs::directory dir(directory);
 
-            const fs::path entry = directory / dp->d_name;
+    for (fs::directory::const_iterator iter = dir.begin(); iter != dir.end();
+         ++iter) {
+        if (iter->name == "." || iter->name == "..")
+            continue;
 
-            if (fs::is_directory(entry)) {
-                LD(F("Descending into %s") % entry);
-                fs::rm_r(entry);
-            } else {
-                LD(F("Removing file %s") % entry);
-                fs::unlink(entry);
-            }
+        const fs::path entry = directory / iter->name;
+
+        if (fs::is_directory(entry)) {
+            LD(F("Descending into %s") % entry);
+            fs::rm_r(entry);
+        } else {
+            LD(F("Removing file %s") % entry);
+            fs::unlink(entry);
         }
-    } catch (...) {
-        ::closedir(dirp);
-        throw;
     }
-    ::closedir(dirp);
 
     LD(F("Removing empty directory %s") % directory);
     fs::rmdir(directory);
@@ -683,6 +672,28 @@ fs::rmdir(const path& file)
         throw fs::system_error(F("Removal of %s failed") % file,
                                original_errno);
     }
+}
+
+
+/// Obtains all the entries in a directory.
+///
+/// \param path The directory to scan.
+///
+/// \return The set of all directory entries in the given directory.
+///
+/// \throw fs::system_error If reading the directory fails for any reason.
+std::set< fs::directory_entry >
+fs::scan_directory(const fs::path& path)
+{
+    std::set< fs::directory_entry > contents;
+
+    fs::directory dir(path);
+    for (fs::directory::const_iterator iter = dir.begin(); iter != dir.end();
+         ++iter) {
+        contents.insert(*iter);
+    }
+
+    return contents;
 }
 
 
