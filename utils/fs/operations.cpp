@@ -62,6 +62,7 @@ extern "C" {
 #include "utils/defs.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/fs/directory.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
@@ -683,6 +684,28 @@ fs::rmdir(const path& file)
         throw fs::system_error(F("Removal of %s failed") % file,
                                original_errno);
     }
+}
+
+
+/// Obtains all the entries in a directory.
+///
+/// \param path The directory to scan.
+///
+/// \return The set of all directory entries in the given directory.
+///
+/// \throw fs::system_error If reading the directory fails for any reason.
+std::set< fs::directory_entry >
+fs::scan_directory(const fs::path& path)
+{
+    std::set< fs::directory_entry > contents;
+
+    fs::directory dir(path);
+    for (fs::directory::const_iterator iter = dir.begin(); iter != dir.end();
+         ++iter) {
+        contents.insert(*iter);
+    }
+
+    return contents;
 }
 
 

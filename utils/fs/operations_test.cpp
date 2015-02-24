@@ -49,7 +49,9 @@ extern "C" {
 #include <atf-c++.hpp>
 
 #include "utils/env.hpp"
+#include "utils/format/containers.ipp"
 #include "utils/format/macros.hpp"
+#include "utils/fs/directory.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
@@ -525,6 +527,34 @@ ATF_TEST_CASE_BODY(rmdir__fail)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(scan_directory__ok)
+ATF_TEST_CASE_BODY(scan_directory__ok)
+{
+    fs::mkdir(fs::path("dir"), 0755);
+    atf::utils::create_file("dir/foo", "");
+    atf::utils::create_file("dir/.hidden", "");
+
+    const std::set< fs::directory_entry > contents = fs::scan_directory(
+        fs::path("dir"));
+
+    std::set< fs::directory_entry > exp_contents;
+    exp_contents.insert(fs::directory_entry("."));
+    exp_contents.insert(fs::directory_entry(".."));
+    exp_contents.insert(fs::directory_entry(".hidden"));
+    exp_contents.insert(fs::directory_entry("foo"));
+
+    ATF_REQUIRE_EQ(exp_contents, contents);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(scan_directory__fail)
+ATF_TEST_CASE_BODY(scan_directory__fail)
+{
+    ATF_REQUIRE_THROW_RE(fs::system_error, "opendir(.*missing.*) failed",
+                         fs::scan_directory(fs::path("missing")));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(unlink__ok)
 ATF_TEST_CASE_BODY(unlink__ok)
 {
@@ -627,6 +657,9 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, rmdir__ok);
     ATF_ADD_TEST_CASE(tcs, rmdir__fail);
+
+    ATF_ADD_TEST_CASE(tcs, scan_directory__ok);
+    ATF_ADD_TEST_CASE(tcs, scan_directory__fail);
 
     ATF_ADD_TEST_CASE(tcs, unlink__ok);
     ATF_ADD_TEST_CASE(tcs, unlink__fail);

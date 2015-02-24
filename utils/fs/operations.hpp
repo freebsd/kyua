@@ -35,6 +35,7 @@
 #if !defined(UTILS_FS_OPERATIONS_HPP)
 #define UTILS_FS_OPERATIONS_HPP
 
+#include <set>
 #include <string>
 
 #include "utils/optional.hpp"
@@ -44,6 +45,7 @@ namespace utils {
 namespace fs {
 
 
+struct directory_entry;
 class path;
 
 
@@ -60,6 +62,7 @@ fs::path mkstemp(const std::string&);
 void mount_tmpfs(const path&, const units::bytes& = units::bytes());
 void rm_r(const path&);
 void rmdir(const path&);
+std::set< directory_entry > scan_directory(const path&);
 void unlink(const path&);
 void unmount(const path&);
 
