@@ -28,23 +28,19 @@
 
 #include "store/layout.hpp"
 
-extern "C" {
-#include <dirent.h>
-}
-
 #include <algorithm>
-#include <cerrno>
 #include <cstring>
 
 #include "store/exceptions.hpp"
 #include "utils/datetime.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/fs/directory.hpp"
+#include "utils/fs/exceptions.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/env.hpp"
 #include "utils/optional.ipp"
-#include "utils/releaser.hpp"
 #include "utils/sanity.hpp"
 #include "utils/text/exceptions.hpp"
 #include "utils/text/regex.hpp"
@@ -72,30 +68,19 @@ static fs::path
 find_latest(const std::string& test_suite)
 {
     const fs::path store_dir = layout::query_store_dir();
-
-    ::DIR* dir = ::opendir(store_dir.c_str());
-    if (dir == NULL) {
-        const int original_errno = errno;
-        LW(F("Failed to open store dir %s: %s") % store_dir %
-           std::strerror(original_errno));
-        throw store::error(
-            F("No previous results file found for test suite %s")
-            % test_suite);
-    }
-    const utils::releaser< ::DIR, int > dir_releaser(dir, ::closedir);
-
     try {
         const text::regex preg = text::regex::compile(
             F("^results.%s.[0-9]{8}-[0-9]{6}-[0-9]{6}.db$") % test_suite, 0);
 
         std::string latest;
 
-        ::dirent* de;
-        while ((de = ::readdir(dir)) != NULL) {
-            const text::regex_matches matches = preg.match(de->d_name);
+        const fs::directory dir(store_dir);
+        for (fs::directory::const_iterator iter = dir.begin();
+             iter != dir.end(); ++iter) {
+            const text::regex_matches matches = preg.match(iter->name);
             if (matches) {
-                if (latest.empty() || de->d_name > latest) {
-                    latest = de->d_name;
+                if (latest.empty() || iter->name > latest) {
+                    latest = iter->name;
                 }
             } else {
                 // Not a database file; skip.
@@ -108,6 +93,10 @@ find_latest(const std::string& test_suite)
                 % test_suite);
 
         return store_dir / latest;
+    } catch (const fs::system_error& e) {
+        LW(F("Failed to open store dir %s: %s") % store_dir % e.what());
+        throw store::error(F("No previous results file found for test suite %s")
+                           % test_suite);
     } catch (const text::regex_error& e) {
         throw store::error(e.what());
     }
