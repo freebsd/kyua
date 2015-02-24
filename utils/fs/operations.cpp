@@ -46,7 +46,6 @@ extern "C" {
 #endif
 #include <sys/wait.h>
 
-#include <dirent.h>
 #include <unistd.h>
 }
 
@@ -637,34 +636,23 @@ retry:
 void
 fs::rm_r(const fs::path& directory)
 {
-    DIR* dirp = ::opendir(directory.c_str());
-    if (dirp == NULL) {
-        const int original_errno = errno;
-        throw fs::system_error(F("Failed to open directory %s") %
-                               directory.str(), original_errno);
-    }
-    try {
-        ::dirent* dp;
-        while ((dp = ::readdir(dirp)) != NULL) {
-            const std::string name = dp->d_name;
-            if (name == "." || name == "..")
-                continue;
+    const fs::directory dir(directory);
 
-            const fs::path entry = directory / dp->d_name;
+    for (fs::directory::const_iterator iter = dir.begin(); iter != dir.end();
+         ++iter) {
+        if (iter->name == "." || iter->name == "..")
+            continue;
 
-            if (fs::is_directory(entry)) {
-                LD(F("Descending into %s") % entry);
-                fs::rm_r(entry);
-            } else {
-                LD(F("Removing file %s") % entry);
-                fs::unlink(entry);
-            }
+        const fs::path entry = directory / iter->name;
+
+        if (fs::is_directory(entry)) {
+            LD(F("Descending into %s") % entry);
+            fs::rm_r(entry);
+        } else {
+            LD(F("Removing file %s") % entry);
+            fs::unlink(entry);
         }
-    } catch (...) {
-        ::closedir(dirp);
-        throw;
     }
-    ::closedir(dirp);
 
     LD(F("Removing empty directory %s") % directory);
     fs::rmdir(directory);
