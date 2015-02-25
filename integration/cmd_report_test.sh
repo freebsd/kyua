@@ -45,36 +45,14 @@ atf_test_program{name="simple_all_pass"}
 EOF
 
     utils_cp_helper simple_all_pass .
-    atf_check -s exit:0 -o save:stdout -e empty env MOCK="${mock_env}" kyua test
+    atf_check -s exit:0 -o save:stdout -e empty env \
+        MOCK="${mock_env}" _='fake-value' kyua test
     grep '^Results saved to ' stdout | cut -d ' ' -f 4 >"${dbfile_name}"
     rm stdout
 
     # Ensure the results of 'report' come from the database.
     rm Kyuafile simple_all_pass
 }
-
-
-# Removes continuation lines from environment variables.
-#
-# In the report, if any environment variable has newlines in it, we confuse our
-# tests.  Just strip out any of the continuation lines.
-strip_environment='awk "
-BEGIN { skip = 0; }
-
-/===>/ {
-    print;
-    skip = 0;
-    next;
-}
-
-/^Environment variables:/ {
-    print;
-    skip = 1;
-    next;
-}
-
-/^    [^_]/ { print; next; }
-{ if (!skip) print; }"'
 
 
 utils_test_case default_behavior__ok
@@ -245,10 +223,15 @@ and terminates here" dbfile_name
 Current directory: $(pwd)
 Environment variables:
 EOF
-    HOME="$(pwd)" MOCK="mock1
+    # $_ is a bash variable.  To keep our tests stable, we override its value
+    # below to match the hardcoded value in run_tests.
+    env \
+        HOME="$(pwd)" \
+        MOCK="mock1
 has multiple lines
-and terminates here" env | sort | grep '^[._a-zA-Z0-9]*=' | sed -e 's,^,    ,' \
-        | grep -v '^    _.*=.*' >>expout
+and terminates here" \
+        _='fake-value' \
+        "$(atf_get_srcdir)/helpers/dump_env" '    ' '        ' >>expout
     cat >>expout <<EOF
 ===> simple_all_pass:skip
 Result: skipped: The reason for skipping is this
@@ -280,7 +263,7 @@ Test cases: 2 total, 1 skipped, 0 expected failures, 0 broken, 0 failed
 Total time: S.UUUs
 EOF
     atf_check -s exit:0 -o file:expout -e empty -x kyua report --verbose \
-        "| ${utils_strip_durations} | ${strip_environment}"
+        "| ${utils_strip_durations}"
 }
 
 

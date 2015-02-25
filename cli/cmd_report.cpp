@@ -56,12 +56,14 @@
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 #include "utils/stream.hpp"
+#include "utils/text/operations.ipp"
 
 namespace cmdline = utils::cmdline;
 namespace config = utils::config;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace layout = store::layout;
+namespace text = utils::text;
 
 using cli::cmd_report;
 using utils::optional;
@@ -123,6 +125,28 @@ class report_console_hooks : public drivers::scan_results::base_hooks {
     /// memory may be too much.
     std::map< model::test_result_type, std::vector< result_data > > _results;
 
+    /// Pretty-prints the value of an environment variable.
+    ///
+    /// \param indent Prefix for the lines to print.  Continuation lines
+    ///     use this indentation twice.
+    /// \param name Name of the variable.
+    /// \param value Value of the variable.  Can have newlines.
+    void
+    print_env_var(const char* indent, const std::string& name,
+                  const std::string& value)
+    {
+        const std::vector< std::string > lines = text::split(value, '\n');
+        if (lines.size() == 0) {
+            _output << F("%s%s=\n") % indent % name;;
+        } else {
+            _output << F("%s%s=%s\n") % indent % name % lines[0];
+            for (std::vector< std::string >::size_type i = 1;
+                 i < lines.size(); ++i) {
+                _output << F("%s%s%s\n") % indent % indent % lines[i];
+            }
+        }
+    }
+
     /// Prints the execution context to the output.
     ///
     /// \param context The context to dump.
@@ -139,7 +163,7 @@ class report_console_hooks : public drivers::scan_results::base_hooks {
             _output << "Environment variables:\n";
             for (std::map< std::string, std::string >::const_iterator
                      iter = env.begin(); iter != env.end(); iter++) {
-                _output << F("    %s=%s\n") % (*iter).first % (*iter).second;
+                print_env_var("    ", (*iter).first, (*iter).second);
             }
         }
     }

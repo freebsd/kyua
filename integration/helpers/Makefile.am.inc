@@ -44,6 +44,11 @@ integration_helpers_config_SOURCES = integration/helpers/config.cpp
 integration_helpers_config_CXXFLAGS = $(ATF_CXX_CFLAGS)
 integration_helpers_config_LDADD = $(ATF_CXX_LIBS)
 
+tests_integration_helpers_PROGRAMS += integration/helpers/dump_env
+integration_helpers_dump_env_SOURCES = integration/helpers/dump_env.cpp
+integration_helpers_dump_env_CXXFLAGS = $(UTILS_CFLAGS)
+integration_helpers_dump_env_LDADD = $(UTILS_LIBS)
+
 tests_integration_helpers_PROGRAMS += integration/helpers/expect_all_pass
 integration_helpers_expect_all_pass_SOURCES = \
     integration/helpers/expect_all_pass.cpp

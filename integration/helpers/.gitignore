@@ -1,6 +1,7 @@
 bad_test_program
 bogus_test_cases
 config
+dump_env
 expect_all_pass
 expect_some_fail
 interrupts
