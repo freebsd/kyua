@@ -3,6 +3,12 @@ Changes in version 0.12
 
 STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 
+* Changed temporary directory creation to always grant search
+  permissions on temporary directories.  This is to prevent potential
+  problems when running Kyua as root and executing test cases that
+  require dropping privileges (as they may later be unable to use
+  absolute paths that point inside their work directory).
+
 * Improved 'kyua report --verbose' to properly handle environment
   variables with continuation lines in them, and fixed the integration
   tests for this command to avoid false negatives.
