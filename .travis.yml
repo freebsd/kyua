@@ -1,8 +1,8 @@
 language: cpp
 
 compiler:
-    - gcc
     - clang
+    - gcc
 
 before_install:
     - ./admin/travis-install-deps.sh
@@ -11,6 +11,16 @@ env:
     - AS_ROOT=no
     - AS_ROOT=yes UNPRIVILEGED_USER=no
     - AS_ROOT=yes UNPRIVILEGED_USER=yes
+
+matrix:
+    exclude:
+        # Treat clang as the main compiler.  For gcc, just run the AS_ROOT=no
+        # env above to see if we can actually build, but do not really worry
+        # about the run-time aspects of the tests.
+        - compiler: gcc
+          env: AS_ROOT=yes UNPRIVILEGED_USER=no
+        - compiler: gcc
+          env: AS_ROOT=yes UNPRIVILEGED_USER=yes
 
 script:
     - ./admin/travis-build.sh
