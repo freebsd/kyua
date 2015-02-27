@@ -1,5 +1,5 @@
 #! /bin/sh
-# Copyright 2014 Google Inc.
+# Copyright 2015 Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,55 +27,39 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-set -e -x
-
-run_configure() {
-    if [ -d /usr/local/share/aclocal ]; then
-        autoreconf -isv -I/usr/local/share/aclocal
-    else
-        autoreconf -isv
-    fi
-    ./configure "${@}"
+BEGIN {
+    failed = 0
 }
 
-do_apidocs() {
-    run_configure --enable-doxygen || return 1
-    make check-api-docs
+# Skip empty lines.
+/^$/ {next}
+
+# Skip lines that do not directly reference a file.
+/^[^/]/ {next}
+
+# Ignore known problems.  As far as I can tell, all the cases listed here are
+# well-documented in the code but Doxygen fails, for some reason or another, to
+# properly locate the docstrings.
+/engine\/kyuafile\.cpp.*no matching class member/ {next}
+/utils\/optional\.ipp.*no matching file member/ {next}
+/utils\/optional\.hpp.*Member make_optional\(const T &\)/ {next}
+/utils\/config\/nodes\.hpp.*Member set_lua\(lutok::state &, const int\)/ {next}
+/utils\/config\/nodes\.hpp.*Member push_lua\(lutok::state &\)/ {next}
+/utils\/config\/nodes\.hpp.*Member set_string\(const std::string &\)/ {next}
+/utils\/config\/nodes\.hpp.*Member to_string\(void\)/ {next}
+/utils\/config\/nodes\.hpp.*Member is_set\(void\)/ {next}
+
+# Dump any other problems and account for the failure.
+{
+    failed = 1
+    print
 }
 
-do_distcheck() {
-    run_configure || return 1
-
-    local f=
-    f="${f} CPPFLAGS='-I/usr/local/include'"
-    f="${f} LDFLAGS='-L/usr/local/lib -Wl,-R/usr/local/lib'"
-    f="${f} PKG_CONFIG_PATH='/usr/local/lib/pkgconfig'"
-    if [ "${AS_ROOT:-no}" = yes ]; then
-        local config_file=
-        if [ "${UNPRIVILEGED_USER:-no}" = yes ]; then
-            cat >root-kyua.conf <<EOF
-syntax(2)
-unprivileged_user = 'nobody'
-EOF
-            config_file="$(pwd)/root-kyua.conf"
-        else
-            config_file=none
-        fi
-        sudo -H make distcheck DISTCHECK_CONFIGURE_FLAGS="${f}" \
-            KYUA_TEST_CONFIG_FILE="${config_file}"
-    else
-        make distcheck DISTCHECK_CONFIGURE_FLAGS="${f}"
-    fi
-}
-
-main() {
-    if [ -z "${DO}" ]; then
-        echo "DO must be defined" 1>&2
+END {
+    if (failed) {
+        print "ERROR: Unexpected docstring problems encountered"
         exit 1
-    fi
-    for step in ${DO}; do
-        "do_${DO}" || exit 1
-    done
+    } else {
+        exit 0
+    }
 }
-
-main "${@}"

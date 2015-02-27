@@ -8,9 +8,10 @@ before_install:
     - ./admin/travis-install-deps.sh
 
 env:
-    - AS_ROOT=no
-    - AS_ROOT=yes UNPRIVILEGED_USER=no
-    - AS_ROOT=yes UNPRIVILEGED_USER=yes
+    - DO=apidocs
+    - DO=distcheck AS_ROOT=no
+    - DO=distcheck AS_ROOT=yes UNPRIVILEGED_USER=no
+    - DO=distcheck AS_ROOT=yes UNPRIVILEGED_USER=yes
 
 matrix:
     exclude:
@@ -18,9 +19,11 @@ matrix:
         # env above to see if we can actually build, but do not really worry
         # about the run-time aspects of the tests.
         - compiler: gcc
-          env: AS_ROOT=yes UNPRIVILEGED_USER=no
+          env: DO=apidocs
         - compiler: gcc
-          env: AS_ROOT=yes UNPRIVILEGED_USER=yes
+          env: DO=distcheck AS_ROOT=yes UNPRIVILEGED_USER=no
+        - compiler: gcc
+          env: DO=distcheck AS_ROOT=yes UNPRIVILEGED_USER=yes
 
 script:
     - ./admin/travis-build.sh
