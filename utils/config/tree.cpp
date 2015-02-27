@@ -150,8 +150,8 @@ config::tree::push_lua(const std::string& dotted_key, lutok::state& state) const
 /// \param value_index The position in the Lua stack holding the value.
 ///
 /// \throw invalid_key_error If the provided key has an invalid format.
+/// \throw invalid_key_value If the value mismatches the node type.
 /// \throw unknown_key_error If the provided key is unknown.
-/// \throw value_error If the value mismatches the node type.
 void
 config::tree::set_lua(const std::string& dotted_key, lutok::state& state,
                       const int value_index)
@@ -162,9 +162,10 @@ config::tree::set_lua(const std::string& dotted_key, lutok::state& state,
     try {
         leaf_node& child = dynamic_cast< leaf_node& >(*raw_node);
         child.set_lua(state, value_index);
+    } catch (const value_error& e) {
+        throw invalid_key_value(key, e.what());
     } catch (const std::bad_cast& unused_error) {
-        throw value_error(F("Invalid value for key '%s'") %
-                          detail::flatten_key(key));
+        throw invalid_key_value(key, "Type mismatch");
     }
 }
 
@@ -201,8 +202,8 @@ config::tree::lookup_string(const std::string& dotted_key) const
 /// \param raw_value The string representation of the value to set the node to.
 ///
 /// \throw invalid_key_error If the provided key has an invalid format.
+/// \throw invalid_key_value If the value mismatches the node type.
 /// \throw unknown_key_error If the provided key is unknown.
-/// \throw value_error If the value mismatches the node type.
 void
 config::tree::set_string(const std::string& dotted_key,
                          const std::string& raw_value)
@@ -213,9 +214,10 @@ config::tree::set_string(const std::string& dotted_key,
     try {
         leaf_node& child = dynamic_cast< leaf_node& >(*raw_node);
         child.set_string(raw_value);
+    } catch (const value_error& e) {
+        throw invalid_key_value(key, e.what());
     } catch (const std::bad_cast& unused_error) {
-        throw value_error(F("Invalid value for key '%s'") %
-                          detail::flatten_key(key));
+        throw invalid_key_value(key, "Type mismatch");
     }
 }
 

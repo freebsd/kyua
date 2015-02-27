@@ -126,8 +126,8 @@ config::tree::lookup_rw(const std::string& dotted_key)
 /// \param value The value to set into the node.
 ///
 /// \throw invalid_key_error If the provided key has an invalid format.
+/// \throw invalid_key_value If the value mismatches the node type.
 /// \throw unknown_key_error If the provided key is unknown.
-/// \throw value_error If the value mismatches the node type.
 template< class LeafType >
 void
 config::tree::set(const std::string& dotted_key,
@@ -139,9 +139,10 @@ config::tree::set(const std::string& dotted_key,
     try {
         LeafType& child = dynamic_cast< LeafType& >(*raw_node);
         child.set(value);
+    } catch (const value_error& e) {
+        throw invalid_key_value(key, e.what());
     } catch (const std::bad_cast& unused_error) {
-        throw value_error(F("Invalid value for key '%s'") %
-                          detail::flatten_key(key));
+        throw invalid_key_value(key, "Type mismatch");
     }
 }
 

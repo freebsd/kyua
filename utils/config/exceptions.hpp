@@ -56,6 +56,14 @@ public:
 };
 
 
+/// Exception denoting that a key was given an invalid value.
+class invalid_key_value : public error {
+public:
+    explicit invalid_key_value(const detail::tree_key&, const std::string&);
+    ~invalid_key_value(void) throw();
+};
+
+
 /// Exception denoting that a configuration file is invalid.
 class syntax_error : public error {
 public:

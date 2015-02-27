@@ -327,6 +327,21 @@ ATF_TEST_CASE_BODY(set__invalid_key)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(set__invalid_key_value);
+ATF_TEST_CASE_BODY(set__invalid_key_value)
+{
+    config::tree tree;
+
+    tree.define< config::int_node >("foo.bar");
+    tree.define_dynamic("a.d");
+
+    ATF_REQUIRE_THROW(config::invalid_key_value,
+                      tree.set< config::int_node >("foo", 3));
+    ATF_REQUIRE_THROW(config::invalid_key_value,
+                      tree.set< config::int_node >("a", -10));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(set__unknown_key);
 ATF_TEST_CASE_BODY(set__unknown_key)
 {
@@ -355,21 +370,6 @@ ATF_TEST_CASE_BODY(set__unknown_key)
     ATF_REQUIRE_THROW(config::unknown_key_error,
                       tree.set< config::int_node >("a.d.4.5", 82));
     tree.set< config::int_node >("a.d.5.6", 82);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(set__value_error);
-ATF_TEST_CASE_BODY(set__value_error)
-{
-    config::tree tree;
-
-    tree.define< config::int_node >("foo.bar");
-    tree.define_dynamic("a.d");
-
-    ATF_REQUIRE_THROW(config::value_error,
-                      tree.set< config::int_node >("foo", 3));
-    ATF_REQUIRE_THROW(config::value_error,
-                      tree.set< config::int_node >("a", -10));
 }
 
 
@@ -512,6 +512,22 @@ ATF_TEST_CASE_BODY(set_string__invalid_key)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(set_string__invalid_key_value);
+ATF_TEST_CASE_BODY(set_string__invalid_key_value)
+{
+    config::tree tree;
+
+    tree.define< config::int_node >("foo.bar");
+
+    ATF_REQUIRE_THROW(config::invalid_key_value,
+                      tree.set_string("foo", "abc"));
+    ATF_REQUIRE_THROW(config::invalid_key_value,
+                      tree.set_string("foo.bar", " -3"));
+    ATF_REQUIRE_THROW(config::invalid_key_value,
+                      tree.set_string("foo.bar", "3 "));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(set_string__unknown_key);
 ATF_TEST_CASE_BODY(set_string__unknown_key)
 {
@@ -539,22 +555,6 @@ ATF_TEST_CASE_BODY(set_string__unknown_key)
     ATF_REQUIRE_THROW(config::unknown_key_error,
                       tree.set_string("a.d.4.5", "82"));
     tree.set_string("a.d.5.6", "82");
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(set_string__value_error);
-ATF_TEST_CASE_BODY(set_string__value_error)
-{
-    config::tree tree;
-
-    tree.define< config::int_node >("foo.bar");
-
-    ATF_REQUIRE_THROW(config::value_error,
-                      tree.set_string("foo", "abc"));
-    ATF_REQUIRE_THROW(config::value_error,
-                      tree.set_string("foo.bar", " -3"));
-    ATF_REQUIRE_THROW(config::value_error,
-                      tree.set_string("foo.bar", "3 "));
 }
 
 
@@ -811,8 +811,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, is_set__invalid_key);
 
     ATF_ADD_TEST_CASE(tcs, set__invalid_key);
+    ATF_ADD_TEST_CASE(tcs, set__invalid_key_value);
     ATF_ADD_TEST_CASE(tcs, set__unknown_key);
-    ATF_ADD_TEST_CASE(tcs, set__value_error);
 
     ATF_ADD_TEST_CASE(tcs, push_lua__ok);
     ATF_ADD_TEST_CASE(tcs, set_lua__ok);
@@ -825,8 +825,8 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, set_string__ok);
     ATF_ADD_TEST_CASE(tcs, set_string__invalid_key);
+    ATF_ADD_TEST_CASE(tcs, set_string__invalid_key_value);
     ATF_ADD_TEST_CASE(tcs, set_string__unknown_key);
-    ATF_ADD_TEST_CASE(tcs, set_string__value_error);
 
     ATF_ADD_TEST_CASE(tcs, all_properties__none);
     ATF_ADD_TEST_CASE(tcs, all_properties__all_set);

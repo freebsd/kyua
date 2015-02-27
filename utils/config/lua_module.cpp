@@ -32,9 +32,11 @@
 #include <lutok/state.ipp>
 
 #include "utils/config/exceptions.hpp"
+#include "utils/config/keys.hpp"
 #include "utils/config/tree.ipp"
 
 namespace config = utils::config;
+namespace detail = utils::config::detail;
 
 
 namespace {
@@ -161,8 +163,8 @@ redirect_newindex(lutok::state& state)
         config::tree& tree = get_global_tree(state);
         tree.set_lua(dotted_key, state, -1);
     } catch (const config::value_error& e) {
-        throw config::value_error(F("Invalid value for key '%s' (%s)") %
-                                  dotted_key % e.what());
+        throw config::invalid_key_value(detail::parse_key(dotted_key),
+                                        e.what());
     }
 
     // Now really set the key in the Lua table, but prevent direct accesses from
