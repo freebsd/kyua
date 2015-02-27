@@ -135,15 +135,20 @@ endif
 check-local: $(CHECK_LOCAL)
 
 if WITH_DOXYGEN
-# This should probably be html-local, but it seems better to generate the
-# documentation in all cases to get warnings about missing documentation every
-# time the code is modified.  (And, after all, the documentation is not
-# installed so generating it unconditionally is not a big problem.)
-all-local: api-docs/api-docs.tag
+# Runs doxygen on the source tree and validates the contents of the docstrings.
+# We do not do this by default, even if doxygen has been enabled, because this
+# step takes a long time.  Instead, we just rely on a Travis CI build to catch
+# inconsistencies.
+PHONY_TARGETS += check-api-docs
+check-api-docs: api-docs/api-docs.tag
+	@$(AWK) -f $(srcdir)/admin/check-api-docs.awk api-docs/doxygen.out
 
 api-docs/api-docs.tag: $(builddir)/Doxyfile $(SOURCES)
 	@mkdir -p api-docs
-	$(AM_V_GEN)$(DOXYGEN) $(builddir)/Doxyfile 2>&1 | tee api-docs/warnings
+	@rm -f api-docs/doxygen.out api-docs/doxygen.out.tmp
+	$(AM_V_GEN)$(DOXYGEN) $(builddir)/Doxyfile \
+	    >api-docs/doxygen.out.tmp 2>&1 && \
+	    mv api-docs/doxygen.out.tmp api-docs/doxygen.out
 
 CLEAN_TARGETS += clean-api-docs
 clean-api-docs:
