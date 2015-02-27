@@ -29,30 +29,53 @@
 
 set -e -x
 
-if [ -d /usr/local/share/aclocal ]; then
-    autoreconf -isv -I/usr/local/share/aclocal
-else
-    autoreconf -isv
-fi
-./configure
+run_configure() {
+    if [ -d /usr/local/share/aclocal ]; then
+        autoreconf -isv -I/usr/local/share/aclocal
+    else
+        autoreconf -isv
+    fi
+    ./configure "${@}"
+}
 
-f=
-f="${f} CPPFLAGS='-I/usr/local/include'"
-f="${f} LDFLAGS='-L/usr/local/lib -Wl,-R/usr/local/lib'"
-f="${f} PKG_CONFIG_PATH='/usr/local/lib/pkgconfig'"
-if [ "${AS_ROOT:-no}" = yes ]; then
-    config_file=
-    if [ "${UNPRIVILEGED_USER:-no}" = yes ]; then
-        cat >root-kyua.conf <<EOF
+do_apidocs() {
+    run_configure --enable-doxygen || return 1
+    make check-api-docs
+}
+
+do_distcheck() {
+    run_configure || return 1
+
+    local f=
+    f="${f} CPPFLAGS='-I/usr/local/include'"
+    f="${f} LDFLAGS='-L/usr/local/lib -Wl,-R/usr/local/lib'"
+    f="${f} PKG_CONFIG_PATH='/usr/local/lib/pkgconfig'"
+    if [ "${AS_ROOT:-no}" = yes ]; then
+        local config_file=
+        if [ "${UNPRIVILEGED_USER:-no}" = yes ]; then
+            cat >root-kyua.conf <<EOF
 syntax(2)
 unprivileged_user = 'nobody'
 EOF
-        config_file="$(pwd)/root-kyua.conf"
+            config_file="$(pwd)/root-kyua.conf"
+        else
+            config_file=none
+        fi
+        sudo -H make distcheck DISTCHECK_CONFIGURE_FLAGS="${f}" \
+            KYUA_TEST_CONFIG_FILE="${config_file}"
     else
-        config_file=none
+        make distcheck DISTCHECK_CONFIGURE_FLAGS="${f}"
     fi
-    sudo -H make distcheck DISTCHECK_CONFIGURE_FLAGS="${f}" \
-        KYUA_TEST_CONFIG_FILE="${config_file}"
-else
-    make distcheck DISTCHECK_CONFIGURE_FLAGS="${f}"
-fi
+}
+
+main() {
+    if [ -z "${DO}" ]; then
+        echo "DO must be defined" 1>&2
+        exit 1
+    fi
+    for step in ${DO}; do
+        "do_${DO}" || exit 1
+    done
+}
+
+main "${@}"

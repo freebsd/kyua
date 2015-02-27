@@ -67,9 +67,32 @@ install_from_bintray() {
     rm -f "${name}"
 }
 
-if ! install_from_bintray; then
-    install_from_github atf atf 0.20
-    install_from_github lutok lutok 0.4
-    install_from_github kyua kyua-testers 0.2
-    install_from_github kyua kyua-cli 0.8
-fi
+install_configure_deps() {
+    if ! install_from_bintray; then
+        install_from_github atf atf 0.20
+        install_from_github lutok lutok 0.4
+        install_from_github kyua kyua-testers 0.2
+        install_from_github kyua kyua-cli 0.8
+    fi
+}
+
+do_apidocs() {
+    sudo apt-get install -y doxygen
+    install_configure_deps
+}
+
+do_distcheck() {
+    install_configure_deps
+}
+
+main() {
+    if [ -z "${DO}" ]; then
+        echo "DO must be defined" 1>&2
+        exit 1
+    fi
+    for step in ${DO}; do
+        "do_${DO}" || exit 1
+    done
+}
+
+main "${@}"
