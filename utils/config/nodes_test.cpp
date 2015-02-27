@@ -296,6 +296,123 @@ ATF_TEST_CASE_BODY(int_node__to_string)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(positive_int_node__deep_copy);
+ATF_TEST_CASE_BODY(positive_int_node__deep_copy)
+{
+    config::positive_int_node node;
+    node.set(5);
+    config::detail::base_node* raw_copy = node.deep_copy();
+    config::positive_int_node* copy = static_cast< config::positive_int_node* >(
+        raw_copy);
+    ATF_REQUIRE_EQ(5, copy->value());
+    copy->set(10);
+    ATF_REQUIRE_EQ(5, node.value());
+    ATF_REQUIRE_EQ(10, copy->value());
+    delete copy;
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(positive_int_node__is_set_and_set);
+ATF_TEST_CASE_BODY(positive_int_node__is_set_and_set)
+{
+    config::positive_int_node node;
+    ATF_REQUIRE(!node.is_set());
+    node.set(20);
+    ATF_REQUIRE( node.is_set());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(positive_int_node__value_and_set);
+ATF_TEST_CASE_BODY(positive_int_node__value_and_set)
+{
+    config::positive_int_node node;
+    node.set(20);
+    ATF_REQUIRE_EQ(20, node.value());
+    node.set(1);
+    ATF_REQUIRE_EQ(1, node.value());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(positive_int_node__push_lua);
+ATF_TEST_CASE_BODY(positive_int_node__push_lua)
+{
+    lutok::state state;
+
+    config::positive_int_node node;
+    node.set(754);
+    node.push_lua(state);
+    ATF_REQUIRE(state.is_number(-1));
+    ATF_REQUIRE_EQ(754, state.to_integer(-1));
+    state.pop(1);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(positive_int_node__set_lua__ok);
+ATF_TEST_CASE_BODY(positive_int_node__set_lua__ok)
+{
+    lutok::state state;
+
+    config::positive_int_node node;
+    state.push_integer(123);
+    state.push_string("456");
+    node.set_lua(state, -2);
+    ATF_REQUIRE_EQ(123, node.value());
+    node.set_lua(state, -1);
+    ATF_REQUIRE_EQ(456, node.value());
+    state.pop(2);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(positive_int_node__set_lua__invalid_value);
+ATF_TEST_CASE_BODY(positive_int_node__set_lua__invalid_value)
+{
+    lutok::state state;
+
+    config::positive_int_node node;
+    state.push_boolean(true);
+    ATF_REQUIRE_THROW(config::value_error, node.set_lua(state, -1));
+    state.pop(1);
+    ATF_REQUIRE(!node.is_set());
+    state.push_integer(0);
+    ATF_REQUIRE_THROW(config::value_error, node.set_lua(state, -1));
+    state.pop(1);
+    ATF_REQUIRE(!node.is_set());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(positive_int_node__set_string__ok);
+ATF_TEST_CASE_BODY(positive_int_node__set_string__ok)
+{
+    config::positive_int_node node;
+    node.set_string("1");
+    ATF_REQUIRE_EQ(1, node.value());
+    node.set_string("178");
+    ATF_REQUIRE_EQ(178, node.value());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(positive_int_node__set_string__invalid_value);
+ATF_TEST_CASE_BODY(positive_int_node__set_string__invalid_value)
+{
+    config::positive_int_node node;
+    ATF_REQUIRE_THROW(config::value_error, node.set_string(" 23"));
+    ATF_REQUIRE(!node.is_set());
+    ATF_REQUIRE_THROW(config::value_error, node.set_string("0"));
+    ATF_REQUIRE(!node.is_set());
+    ATF_REQUIRE_THROW(config::value_error, node.set_string("-5"));
+    ATF_REQUIRE(!node.is_set());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(positive_int_node__to_string);
+ATF_TEST_CASE_BODY(positive_int_node__to_string)
+{
+    config::positive_int_node node;
+    node.set(89);
+    ATF_REQUIRE_EQ("89", node.to_string());
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(string_node__deep_copy);
 ATF_TEST_CASE_BODY(string_node__deep_copy)
 {
@@ -545,6 +662,16 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, int_node__set_string__ok);
     ATF_ADD_TEST_CASE(tcs, int_node__set_string__invalid_value);
     ATF_ADD_TEST_CASE(tcs, int_node__to_string);
+
+    ATF_ADD_TEST_CASE(tcs, positive_int_node__deep_copy);
+    ATF_ADD_TEST_CASE(tcs, positive_int_node__is_set_and_set);
+    ATF_ADD_TEST_CASE(tcs, positive_int_node__value_and_set);
+    ATF_ADD_TEST_CASE(tcs, positive_int_node__push_lua);
+    ATF_ADD_TEST_CASE(tcs, positive_int_node__set_lua__ok);
+    ATF_ADD_TEST_CASE(tcs, positive_int_node__set_lua__invalid_value);
+    ATF_ADD_TEST_CASE(tcs, positive_int_node__set_string__ok);
+    ATF_ADD_TEST_CASE(tcs, positive_int_node__set_string__invalid_value);
+    ATF_ADD_TEST_CASE(tcs, positive_int_node__to_string);
 
     ATF_ADD_TEST_CASE(tcs, string_node__deep_copy);
     ATF_ADD_TEST_CASE(tcs, string_node__is_set_and_set);

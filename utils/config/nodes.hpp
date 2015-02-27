@@ -218,6 +218,12 @@ public:
 };
 
 
+/// A leaf node that holds a positive non-zero integer value.
+class positive_int_node : public int_node {
+    virtual void validate(const value_type&) const;
+};
+
+
 /// A leaf node that holds a string value.
 class string_node : public native_leaf_node< std::string > {
 public:
