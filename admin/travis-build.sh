@@ -61,8 +61,8 @@ EOF
         else
             config_file=none
         fi
-        sudo -H make distcheck DISTCHECK_CONFIGURE_FLAGS="${f}" \
-            KYUA_TEST_CONFIG_FILE="${config_file}"
+        f="${f} KYUA_CONFIG_FILE_FOR_CHECK=${config_file}"
+        sudo -H make distcheck DISTCHECK_CONFIGURE_FLAGS="${f}"
     else
         make distcheck DISTCHECK_CONFIGURE_FLAGS="${f}"
     fi

@@ -154,6 +154,15 @@ script:
   the --sysconfdir argument) under which Kyua will search for its
   configuration files.
 
+* KYUA_CONFIG_FILE_FOR_CHECK
+  Possible values: none, an absolute path to an existing file.
+  Default: none.
+
+  Specifies the kyua.conf configuration file to use when running any of
+  the check, installcheck or distcheck targets on this source tree.
+  This setting is exclusively used to customize the test runs of Kyua
+  itself and has no effect whatsoever on the built product.
+
 * KYUA_MACHINE
   Possible values: name of a machine type (e.g. amd64, macppc).
   Default: autodetected; typically the output of uname -m.

@@ -139,9 +139,9 @@ config::detail::inner_node::lookup_ro(const tree_key& key,
 ///
 /// \return A reference to the located node, if successful.
 ///
+/// \throw invalid_key_value If the resulting node of the search would be an
+///     inner node.
 /// \throw unknown_key_error If the provided key is unknown.
-/// \throw value_error If the resulting node of the search would be an inner
-///     node.
 config::leaf_node*
 config::detail::inner_node::lookup_rw(const tree_key& key,
                                       const tree_key::size_type key_pos,
@@ -168,8 +168,7 @@ config::detail::inner_node::lookup_rw(const tree_key& key,
                 *(*child_iter).second);
             return &child;
         } catch (const std::bad_cast& unused_error) {
-            throw value_error(F("Invalid value for key '%s'") %
-                              flatten_key(key));
+            throw invalid_key_value(key, "Type mismatch");
         }
     } else {
         PRE(key_pos < key.size() - 1);

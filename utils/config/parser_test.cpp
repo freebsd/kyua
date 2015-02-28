@@ -130,6 +130,23 @@ ATF_TEST_CASE_BODY(some_keys__ok)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(some_keys__not_strict);
+ATF_TEST_CASE_BODY(some_keys__not_strict)
+{
+    atf::utils::create_file(
+        "output.lua",
+        "syntax(2)\n"
+        "top_string = 'foo'\n"
+        "unknown_string = 'bar'\n"
+        "top_string = 'baz'\n");
+
+    config::tree tree(false);
+    mock_parser(tree).parse(fs::path("output.lua"));
+    ATF_REQUIRE_EQ("baz", tree.lookup< config::string_node >("top_string"));
+    ATF_REQUIRE(!tree.is_set("unknown_string"));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(some_keys__unknown_key);
 ATF_TEST_CASE_BODY(some_keys__unknown_key)
 {
@@ -223,6 +240,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, no_keys__unknown_key);
 
     ATF_ADD_TEST_CASE(tcs, some_keys__ok);
+    ATF_ADD_TEST_CASE(tcs, some_keys__not_strict);
     ATF_ADD_TEST_CASE(tcs, some_keys__unknown_key);
 
     ATF_ADD_TEST_CASE(tcs, invalid_syntax);

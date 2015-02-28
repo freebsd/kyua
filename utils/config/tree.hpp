@@ -81,13 +81,16 @@ typedef std::map< std::string, std::string > properties_map;
 /// Note that trees are shallow-copied unless a deep copy is requested with
 /// deep_copy().
 class tree {
+    /// Whether keys must be validated at "set" time.
+    bool _strict;
+
     /// The root of the tree.
     std::shared_ptr< detail::static_inner_node > _root;
 
-    explicit tree(detail::static_inner_node*);
+    tree(const bool, detail::static_inner_node*);
 
 public:
-    tree(void);
+    tree(const bool = true);
     ~tree(void);
 
     tree deep_copy(void) const;

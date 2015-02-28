@@ -54,6 +54,19 @@ ATF_TEST_CASE_BODY(invalid_key_error)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(invalid_key_value);
+ATF_TEST_CASE_BODY(invalid_key_value)
+{
+    detail::tree_key key;
+    key.push_back("1");
+    key.push_back("two");
+
+    const config::invalid_key_value e(key, "foo bar");
+    ATF_REQUIRE(std::strcmp("Invalid value for property '1.two': foo bar",
+                            e.what()) == 0);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(syntax_error);
 ATF_TEST_CASE_BODY(syntax_error)
 {
@@ -99,6 +112,7 @@ ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, error);
     ATF_ADD_TEST_CASE(tcs, invalid_key_error);
+    ATF_ADD_TEST_CASE(tcs, invalid_key_value);
     ATF_ADD_TEST_CASE(tcs, syntax_error);
     ATF_ADD_TEST_CASE(tcs, unknown_key_error__default_message);
     ATF_ADD_TEST_CASE(tcs, unknown_key_error__custom_message);

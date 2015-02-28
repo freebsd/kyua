@@ -66,6 +66,24 @@ config::invalid_key_error::~invalid_key_error(void) throw()
 
 /// Constructs a new error with a plain-text message.
 ///
+/// \param key The unknown key.
+/// \param message The plain-text error message.
+config::invalid_key_value::invalid_key_value(const detail::tree_key& key,
+                                             const std::string& message) :
+    error(F("Invalid value for property '%s': %s")
+          % detail::flatten_key(key) % message)
+{
+}
+
+
+/// Destructor for the error.
+config::invalid_key_value::~invalid_key_value(void) throw()
+{
+}
+
+
+/// Constructs a new error with a plain-text message.
+///
 /// \param message The plain-text error message.
 config::syntax_error::syntax_error(const std::string& message) :
     error(message)

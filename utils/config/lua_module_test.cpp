@@ -145,6 +145,31 @@ ATF_TEST_CASE_BODY(top__valid_types)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(top__invalid_types);
+ATF_TEST_CASE_BODY(top__invalid_types)
+{
+    config::tree tree;
+    tree.define< config::bool_node >("top_boolean");
+    tree.define< config::int_node >("top_integer");
+
+    {
+        lutok::state state;
+        config::redirect(state, tree);
+        ATF_REQUIRE_THROW_RE(
+            lutok::error,
+            "Invalid value for property 'top_boolean': Not a boolean",
+            lutok::do_string(state,
+                             "top_boolean = true\n"
+                             "top_integer = 8\n"
+                             "top_boolean = 'foo'\n",
+                             0, 0, 0));
+    }
+
+    ATF_REQUIRE_EQ(true, tree.lookup< config::bool_node >("top_boolean"));
+    ATF_REQUIRE_EQ(8, tree.lookup< config::int_node >("top_integer"));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(top__reuse);
 ATF_TEST_CASE_BODY(top__reuse)
 {
@@ -282,7 +307,7 @@ ATF_TEST_CASE_BODY(subtree__override_inner)
         lutok::state state;
         config::redirect(state, tree);
         lutok::do_string(state, "root.test = 'a'", 0, 0, 0);
-        ATF_REQUIRE_THROW_RE(lutok::error, "Invalid value for key 'root'",
+        ATF_REQUIRE_THROW_RE(lutok::error, "Invalid value for property 'root'",
                              lutok::do_string(state, "root = 'b'", 0, 0, 0));
         // Ensure that the previous assignment to 'root' did not cause any
         // inconsistencies in the environment that would prevent a new
@@ -323,13 +348,13 @@ ATF_TEST_CASE_BODY(dynamic_subtree__invalid_types)
     lutok::state state;
     config::redirect(state, tree);
     ATF_REQUIRE_THROW_RE(lutok::error,
-                         "Invalid value for key 'root.boolean' "
-                         "\\(Not a string\\)",
+                         "Invalid value for property 'root.boolean': "
+                         "Not a string",
                          lutok::do_string(state, "root.boolean = true",
                                           0, 0, 0));
     ATF_REQUIRE_THROW_RE(lutok::error,
-                         "Invalid value for key 'root.table' "
-                         "\\(Not a string\\)",
+                         "Invalid value for property 'root.table': "
+                         "Not a string",
                          lutok::do_string(state, "root.table = {}",
                                           0, 0, 0));
     ATF_REQUIRE(!tree.is_set("root.boolean"));
@@ -417,10 +442,10 @@ ATF_TEST_CASE_BODY(value_error)
     lutok::state state;
     config::redirect(state, tree);
     ATF_REQUIRE_THROW_RE(lutok::error,
-                         "Invalid value for key 'a.b' \\(Not a boolean\\)",
+                         "Invalid value for property 'a.b': Not a boolean",
                          lutok::do_string(state, "a.b = 12345\n", 0, 0, 0));
     ATF_REQUIRE_THROW_RE(lutok::error,
-                         "Invalid value for key 'a'",
+                         "Invalid value for property 'a': ",
                          lutok::do_string(state, "a = 1\n", 0, 0, 0));
 }
 
@@ -428,6 +453,7 @@ ATF_TEST_CASE_BODY(value_error)
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, top__valid_types);
+    ATF_ADD_TEST_CASE(tcs, top__invalid_types);
     ATF_ADD_TEST_CASE(tcs, top__reuse);
     ATF_ADD_TEST_CASE(tcs, top__reset);
     ATF_ADD_TEST_CASE(tcs, top__already_set_on_entry);

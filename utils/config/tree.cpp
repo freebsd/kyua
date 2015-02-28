@@ -37,17 +37,20 @@ namespace config = utils::config;
 
 
 /// Constructor.
-config::tree::tree(void) :
-    _root(new detail::static_inner_node())
+///
+/// \param strict Whether keys must be validated at "set" time.
+config::tree::tree(const bool strict) :
+    _strict(strict), _root(new detail::static_inner_node())
 {
 }
 
 
 /// Constructor with a non-empty root.
 ///
+/// \param strict Whether keys must be validated at "set" time.
 /// \param root The root to the tree to be owned by this instance.
-config::tree::tree(detail::static_inner_node* root) :
-    _root(root)
+config::tree::tree(const bool strict, detail::static_inner_node* root) :
+    _strict(strict), _root(root)
 {
 }
 
@@ -66,7 +69,7 @@ config::tree::deep_copy(void) const
 {
     detail::static_inner_node* new_root =
         dynamic_cast< detail::static_inner_node* >(_root->deep_copy());
-    return config::tree(new_root);
+    return config::tree(_strict, new_root);
 }
 
 
@@ -150,21 +153,25 @@ config::tree::push_lua(const std::string& dotted_key, lutok::state& state) const
 /// \param value_index The position in the Lua stack holding the value.
 ///
 /// \throw invalid_key_error If the provided key has an invalid format.
+/// \throw invalid_key_value If the value mismatches the node type.
 /// \throw unknown_key_error If the provided key is unknown.
-/// \throw value_error If the value mismatches the node type.
 void
 config::tree::set_lua(const std::string& dotted_key, lutok::state& state,
                       const int value_index)
 {
     const detail::tree_key key = detail::parse_key(dotted_key);
-    detail::base_node* raw_node = _root->lookup_rw(
-        key, 0, detail::new_node< string_node >);
     try {
+        detail::base_node* raw_node = _root->lookup_rw(
+            key, 0, detail::new_node< string_node >);
         leaf_node& child = dynamic_cast< leaf_node& >(*raw_node);
         child.set_lua(state, value_index);
+    } catch (const unknown_key_error& e) {
+        if (_strict)
+            throw e;
+    } catch (const value_error& e) {
+        throw invalid_key_value(key, e.what());
     } catch (const std::bad_cast& unused_error) {
-        throw value_error(F("Invalid value for key '%s'") %
-                          detail::flatten_key(key));
+        throw invalid_key_value(key, "Type mismatch");
     }
 }
 
@@ -201,21 +208,25 @@ config::tree::lookup_string(const std::string& dotted_key) const
 /// \param raw_value The string representation of the value to set the node to.
 ///
 /// \throw invalid_key_error If the provided key has an invalid format.
+/// \throw invalid_key_value If the value mismatches the node type.
 /// \throw unknown_key_error If the provided key is unknown.
-/// \throw value_error If the value mismatches the node type.
 void
 config::tree::set_string(const std::string& dotted_key,
                          const std::string& raw_value)
 {
     const detail::tree_key key = detail::parse_key(dotted_key);
-    detail::base_node* raw_node = _root->lookup_rw(
-        key, 0, detail::new_node< string_node >);
     try {
+        detail::base_node* raw_node = _root->lookup_rw(
+            key, 0, detail::new_node< string_node >);
         leaf_node& child = dynamic_cast< leaf_node& >(*raw_node);
         child.set_string(raw_value);
+    } catch (const unknown_key_error& e) {
+        if (_strict)
+            throw e;
+    } catch (const value_error& e) {
+        throw invalid_key_value(key, e.what());
     } catch (const std::bad_cast& unused_error) {
-        throw value_error(F("Invalid value for key '%s'") %
-                          detail::flatten_key(key));
+        throw invalid_key_value(key, "Type mismatch");
     }
 }
 

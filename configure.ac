@@ -118,6 +118,31 @@ else
 fi
 
 
+dnl Allow the caller of 'make check', 'make installcheck' and 'make distcheck'
+dnl on the Kyua source tree to override the configuration file passed to our
+dnl own test runs.  This is for the development of Kyua only and the value of
+dnl this setting has no effect on the built product in any way.  If we go
+dnl through great extents in validating the value of this setting, it is to
+dnl minimize the chance of false test run negatives later on.
+AC_ARG_VAR([KYUA_CONFIG_FILE_FOR_CHECK],
+           [kyua.conf file to use at 'make (|dist|install)check' time])
+case "${KYUA_CONFIG_FILE_FOR_CHECK-none}" in
+none)
+    KYUA_CONFIG_FILE_FOR_CHECK=none
+    ;;
+/*)
+    if test -f "${KYUA_CONFIG_FILE_FOR_CHECK}"; then
+        : # All good!
+    else
+        AC_MSG_ERROR([KYUA_CONFIG_FILE_FOR_CHECK file does not exist])
+    fi
+    ;;
+*)
+    AC_MSG_ERROR([KYUA_CONFIG_FILE_FOR_CHECK must hold an absolute path])
+    ;;
+esac
+
+
 AC_ARG_VAR([KYUA_TMPDIR],
            [Path to the directory in which to place work directories])
 case "${KYUA_TMPDIR:-unset}" in

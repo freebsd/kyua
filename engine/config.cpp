@@ -197,7 +197,7 @@ engine::user_node::to_string(void) const
 config::tree
 engine::default_config(void)
 {
-    config::tree tree;
+    config::tree tree(false);
     init_tree(tree);
     set_defaults(tree);
     return tree;
@@ -208,7 +208,7 @@ engine::default_config(void)
 config::tree
 engine::empty_config(void)
 {
-    config::tree tree;
+    config::tree tree(false);
     init_tree(tree);
     return tree;
 }
@@ -225,7 +225,7 @@ engine::empty_config(void)
 config::tree
 engine::load_config(const utils::fs::path& file)
 {
-    config::tree tree;
+    config::tree tree(false);
     try {
         config_parser(tree).parse(file);
     } catch (const config::error& e) {
