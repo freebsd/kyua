@@ -101,18 +101,24 @@ many__ok_body() {
     mkdir "${HOME}/.kyua"
     cat >"${HOME}/.kyua/kyua.conf" <<EOF
 syntax(2)
+architecture = "overriden"
+unknown_setting = "foo"
 test_suites.first["X-one"] = 1
 test_suites.first["X-two"] = 2
 EOF
 
     cat >expout <<EOF
+architecture = overriden
 test_suites.first.X-two = 2
 test_suites.first.X-one = 1
 EOF
 
     atf_check -s exit:0 -o file:expout -e empty kyua config \
+        architecture \
         test_suites.first.X-two \
         test_suites.first.X-one  # Inverse order on purpose.
+    atf_check -s exit:0 -o match:architecture -o not-match:unknown_setting \
+        -e empty kyua config
 }
 
 
@@ -309,12 +315,6 @@ Type 'kyua help' for usage information.
 EOF
     atf_check -s exit:3 -o empty -e file:experr kyua \
         -v "test_suites.a.b=c" -v "" config
-
-    cat >experr <<EOF
-kyua: E: Unknown configuration property 'foo'.
-EOF
-    atf_check -s exit:2 -o empty -e file:experr kyua \
-        -v "test_suites.a.b=c" -v "foo=bar" config
 }
 
 

@@ -7,6 +7,12 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   variables with continuation lines in them, and fixed the integration
   tests for this command to avoid false negatives.
 
+* Changed the configuration file format to accept the definition of
+  unknown variables without declaring them local.  The syntax version
+  number remains at 2.  This is to allow configuration files for newer
+  Kyua versions to work on older Kyua versions, as there is no reason
+  to forbid this.
+
 * Fixed stacktrace gathering with FreeBSD's ancient version of GDB.
   GDB 6.1.1 (circa 2004) does not have the -ex flag so we need to
   generate a temporary GDB script and feed it to GDB with -x instead.
