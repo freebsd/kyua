@@ -118,7 +118,7 @@ installcheck-kyua:
 	if [ "$${failed}" = yes ]; then \
 	    cd $(pkgtestsdir) && $(INSTALLCHECK_ENVIRONMENT) \
 	        $(TESTS_ENVIRONMENT) \
-	        kyua --config='$(KYUA_TEST_CONFIG_FILE)' report \
+	        kyua --config='$(KYUA_CONFIG_FILE_FOR_CHECK)' report \
 	        --verbose --results-filter=broken,failed; \
 	    exit 1; \
 	fi
