@@ -373,6 +373,29 @@ ATF_TEST_CASE_BODY(set__unknown_key)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(set__unknown_key_not_strict);
+ATF_TEST_CASE_BODY(set__unknown_key_not_strict)
+{
+    config::tree tree(false);
+
+    tree.define< config::int_node >("foo.bar");
+    tree.define< config::int_node >("a.b.c");
+    tree.define_dynamic("a.d");
+    tree.set< config::int_node >("a.b.c", 123);
+    tree.set< config::string_node >("a.d.3", "foo");
+
+    tree.set< config::int_node >("abc", 2);
+    ATF_REQUIRE(!tree.is_set("abc"));
+
+    tree.set< config::int_node >("foo.bar", 15);
+    tree.set< config::int_node >("foo.bar.baz", 0);
+    ATF_REQUIRE(!tree.is_set("foo.bar.baz"));
+
+    tree.set< config::int_node >("a.c", 100);
+    ATF_REQUIRE(!tree.is_set("a.c"));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(push_lua__ok);
 ATF_TEST_CASE_BODY(push_lua__ok)
 {
@@ -555,6 +578,29 @@ ATF_TEST_CASE_BODY(set_string__unknown_key)
     ATF_REQUIRE_THROW(config::unknown_key_error,
                       tree.set_string("a.d.4.5", "82"));
     tree.set_string("a.d.5.6", "82");
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(set_string__unknown_key_not_strict);
+ATF_TEST_CASE_BODY(set_string__unknown_key_not_strict)
+{
+    config::tree tree(false);
+
+    tree.define< config::int_node >("foo.bar");
+    tree.define< config::int_node >("a.b.c");
+    tree.define_dynamic("a.d");
+    tree.set_string("a.b.c", "123");
+    tree.set_string("a.d.3", "foo");
+
+    tree.set_string("abc", "2");
+    ATF_REQUIRE(!tree.is_set("abc"));
+
+    tree.set_string("foo.bar", "15");
+    tree.set_string("foo.bar.baz", "0");
+    ATF_REQUIRE(!tree.is_set("foo.bar.baz"));
+
+    tree.set_string("a.c", "100");
+    ATF_REQUIRE(!tree.is_set("a.c"));
 }
 
 
@@ -813,6 +859,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, set__invalid_key);
     ATF_ADD_TEST_CASE(tcs, set__invalid_key_value);
     ATF_ADD_TEST_CASE(tcs, set__unknown_key);
+    ATF_ADD_TEST_CASE(tcs, set__unknown_key_not_strict);
 
     ATF_ADD_TEST_CASE(tcs, push_lua__ok);
     ATF_ADD_TEST_CASE(tcs, set_lua__ok);
@@ -827,6 +874,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, set_string__invalid_key);
     ATF_ADD_TEST_CASE(tcs, set_string__invalid_key_value);
     ATF_ADD_TEST_CASE(tcs, set_string__unknown_key);
+    ATF_ADD_TEST_CASE(tcs, set_string__unknown_key_not_strict);
 
     ATF_ADD_TEST_CASE(tcs, all_properties__none);
     ATF_ADD_TEST_CASE(tcs, all_properties__all_set);

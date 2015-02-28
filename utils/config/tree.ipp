@@ -134,11 +134,14 @@ config::tree::set(const std::string& dotted_key,
                   const typename LeafType::value_type& value)
 {
     const detail::tree_key key = detail::parse_key(dotted_key);
-    leaf_node* raw_node = _root->lookup_rw(key, 0,
-                                           detail::new_node< LeafType >);
     try {
+        leaf_node* raw_node = _root->lookup_rw(key, 0,
+                                               detail::new_node< LeafType >);
         LeafType& child = dynamic_cast< LeafType& >(*raw_node);
         child.set(value);
+    } catch (const unknown_key_error& e) {
+        if (_strict)
+            throw e;
     } catch (const value_error& e) {
         throw invalid_key_value(key, e.what());
     } catch (const std::bad_cast& unused_error) {
