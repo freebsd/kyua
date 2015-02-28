@@ -51,17 +51,18 @@ do_distcheck() {
     f="${f} LDFLAGS='-L/usr/local/lib -Wl,-R/usr/local/lib'"
     f="${f} PKG_CONFIG_PATH='/usr/local/lib/pkgconfig'"
     if [ "${AS_ROOT:-no}" = yes ]; then
-        local config_file=
-        if [ "${UNPRIVILEGED_USER:-no}" = yes ]; then
-            cat >root-kyua.conf <<EOF
+        cat >kyua.conf <<EOF
 syntax(2)
-unprivileged_user = 'nobody'
+
+-- We do not know how many CPUs the test machine has.  However, parallelizing
+-- the execution of our tests to _any_ degree speeds up the time it takes to
+-- complete a test run because many of our tests are blocking.
+parallelism = 4
 EOF
-            config_file="$(pwd)/root-kyua.conf"
-        else
-            config_file=none
-        fi
-        f="${f} KYUA_CONFIG_FILE_FOR_CHECK=${config_file}"
+        [ "${UNPRIVILEGED_USER:-no}" = no ] || \
+            echo "unprivileged_user = 'nobody'" >>kyua.conf
+
+        f="${f} KYUA_CONFIG_FILE_FOR_CHECK=$(pwd)/kyua.conf"
         sudo -H make distcheck DISTCHECK_CONFIGURE_FLAGS="${f}"
     else
         make distcheck DISTCHECK_CONFIGURE_FLAGS="${f}"

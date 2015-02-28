@@ -3,6 +3,32 @@ Changes in version 0.12
 
 STILL UNDER DEVELOPMENT; NOT RELEASED YET.
 
+* Issue 2: Switched 'kyua test' to the new executor backend described
+  below, which in turn means that test cases are now run in parallel if
+  the 'parallelism' configuration variable is set to a value greater
+  than 1.
+
+* Known regression: The new executor is unable to execute the cleanup
+  routine of an ATF test case when the ATF test case's body times out.
+
+* Issue 2: Added the executor, a new implementation of the test
+  execution engine purely in C++ that supports parallel execution of
+  test cases.  The goal is to eventually replace all the C testers with
+  this new code.
+
+* Issue 2: Added the new 'parallelism' configuration property to
+  kyua.conf.  This setting indicates the degree of parallelism to use
+  when running test cases using the new executor.  Currently defaults
+  to 1 to preserve sequential behavior, but this will eventually be
+  bumped to a greater value once the new implementation gets some
+  mileage.
+
+* Changed temporary directory creation to always grant search
+  permissions on temporary directories.  This is to prevent potential
+  problems when running Kyua as root and executing test cases that
+  require dropping privileges (as they may later be unable to use
+  absolute paths that point inside their work directory).
+
 * Improved 'kyua report --verbose' to properly handle environment
   variables with continuation lines in them, and fixed the integration
   tests for this command to avoid false negatives.

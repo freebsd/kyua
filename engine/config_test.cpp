@@ -79,6 +79,10 @@ validate_defaults(const config::tree& config)
         config.lookup< config::string_node >("architecture"));
 
     ATF_REQUIRE_EQ(
+        1,
+        config.lookup< config::positive_int_node >("parallelism"));
+
+    ATF_REQUIRE_EQ(
         KYUA_PLATFORM,
         config.lookup< config::string_node >("platform"));
 
@@ -96,6 +100,20 @@ ATF_TEST_CASE_BODY(config__defaults)
 {
     const config::tree user_config = engine::default_config();
     validate_defaults(user_config);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(config__set__parallelism);
+ATF_TEST_CASE_BODY(config__set__parallelism)
+{
+    config::tree user_config = engine::default_config();
+    user_config.set_string("parallelism", "8");
+    ATF_REQUIRE_THROW_RE(
+        config::error, "parallelism.*Must be a positive integer",
+        user_config.set_string("parallelism", "0"));
+    ATF_REQUIRE_THROW_RE(
+        config::error, "parallelism.*Must be a positive integer",
+        user_config.set_string("parallelism", "-1"));
 }
 
 
@@ -118,6 +136,7 @@ ATF_TEST_CASE_BODY(config__load__overrides)
         "config",
         "syntax(2)\n"
         "architecture = 'test-architecture'\n"
+        "parallelism = 16\n"
         "platform = 'test-platform'\n"
         "unprivileged_user = 'user2'\n"
         "test_suites.mysuite.myvar = 'myvalue'\n");
@@ -126,6 +145,8 @@ ATF_TEST_CASE_BODY(config__load__overrides)
 
     ATF_REQUIRE_EQ("test-architecture",
                    user_config.lookup_string("architecture"));
+    ATF_REQUIRE_EQ("16",
+                   user_config.lookup_string("parallelism"));
     ATF_REQUIRE_EQ("test-platform",
                    user_config.lookup_string("platform"));
 
@@ -173,6 +194,7 @@ ATF_TEST_CASE_BODY(config__load__missing_file)
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, config__defaults);
+    ATF_ADD_TEST_CASE(tcs, config__set__parallelism);
     ATF_ADD_TEST_CASE(tcs, config__load__defaults);
     ATF_ADD_TEST_CASE(tcs, config__load__overrides);
     ATF_ADD_TEST_CASE(tcs, config__load__lua_error);

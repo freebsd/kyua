@@ -55,9 +55,12 @@ extern "C" {
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
+#include "utils/passwd.hpp"
+#include "utils/stream.hpp"
 #include "utils/units.hpp"
 
 namespace fs = utils::fs;
+namespace passwd = utils::passwd;
 namespace units = utils::units;
 
 using utils::optional;
@@ -406,6 +409,62 @@ ATF_TEST_CASE_BODY(mkdtemp)
 }
 
 
+ATF_TEST_CASE(mkdtemp__search_permissions_as_non_root)
+ATF_TEST_CASE_HEAD(mkdtemp__search_permissions_as_non_root)
+{
+    set_md_var("require.config", "unprivileged-user");
+    set_md_var("require.user", "root");
+}
+ATF_TEST_CASE_BODY(mkdtemp__search_permissions_as_non_root)
+{
+    const std::string dir_template("dir.XXXXXX");
+    const fs::path dir = fs::mkdtemp(dir_template);
+    const fs::path cookie = dir / "not-secret";
+    atf::utils::create_file(cookie.str(), "this is readable");
+
+    // We are running as root so there is no reason to assume that our current
+    // work directory is accessible by non-root.  Weaken the permissions so that
+    // our code below works.
+    ATF_REQUIRE(::chmod(".", 0711) != -1);
+
+    const uid_t old_euid = ::geteuid();
+    const gid_t old_egid = ::getegid();
+
+    const passwd::user unprivileged_user = passwd::find_user_by_name(
+        get_config_var("unprivileged-user"));
+    ATF_REQUIRE(::setegid(unprivileged_user.gid) != -1);
+    ATF_REQUIRE(::seteuid(unprivileged_user.uid) != -1);
+
+    // The next code block runs as non-root.  We cannot use any ATF macros nor
+    // functions in it because a failure would cause the test to attempt to
+    // write to the ATF result file which may not be writable as non-root.
+    bool failed = false;
+    {
+        std::ifstream input(cookie.c_str());
+        if (!input) {
+            failed |= true;
+            std::cerr << "Failed to open " << cookie << '\n';
+        } else {
+            const std::string contents = utils::read_stream(input);
+            std::cerr << "Read contents: " << contents << '\n';
+            failed |= (contents != "this is readable");
+        }
+
+        if (::seteuid(old_euid) == -1) {
+            std::cerr << "Failed to restore euid; cannot continue\n";
+            std::abort();
+        }
+        if (::setegid(old_egid) == -1) {
+            std::cerr << "Failed to restore egid; cannot continue\n";
+            std::abort();
+        }
+    }
+
+    if (failed)
+        fail("Test failed; see stdout for details");
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(mkstemp)
 ATF_TEST_CASE_BODY(mkstemp)
 {
@@ -645,6 +704,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, mkdir_p__eacces);
 
     ATF_ADD_TEST_CASE(tcs, mkdtemp);
+    ATF_ADD_TEST_CASE(tcs, mkdtemp__search_permissions_as_non_root);
 
     ATF_ADD_TEST_CASE(tcs, mkstemp);
 

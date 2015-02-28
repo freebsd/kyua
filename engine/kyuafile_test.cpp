@@ -28,6 +28,10 @@
 
 #include "engine/kyuafile.hpp"
 
+extern "C" {
+#include <unistd.h>
+}
+
 #include <stdexcept>
 #include <typeinfo>
 
@@ -328,6 +332,34 @@ ATF_TEST_CASE_BODY(kyuafile__load__build_directory)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__absolute_paths_are_stable);
+ATF_TEST_CASE_BODY(kyuafile__load__absolute_paths_are_stable)
+{
+    atf::utils::create_file(
+        "config",
+        "syntax(2)\n"
+        "atf_test_program{name='one', test_suite='first'}\n");
+    atf::utils::create_file("one", "");
+
+    const engine::kyuafile suite = engine::kyuafile::load(
+        fs::path("config"), none, config::tree());
+
+    const fs::path previous_dir = fs::current_path();
+    fs::mkdir(fs::path("other"), 0755);
+    // Change the directory.  We want later calls to absolute_path() on the test
+    // programs to return references to previous_dir instead.
+    ATF_REQUIRE(::chdir("other") != -1);
+
+    ATF_REQUIRE_EQ(fs::path("."), suite.source_root());
+    ATF_REQUIRE_EQ(fs::path("."), suite.build_root());
+    ATF_REQUIRE_EQ(1, suite.test_programs().size());
+    ATF_REQUIRE_EQ(previous_dir / "one",
+                   suite.test_programs()[0]->absolute_path());
+    ATF_REQUIRE_EQ(fs::path("one"), suite.test_programs()[0]->relative_path());
+    ATF_REQUIRE_EQ("first", suite.test_programs()[0]->test_suite_name());
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__test_program_not_basename);
 ATF_TEST_CASE_BODY(kyuafile__load__test_program_not_basename)
 {
@@ -475,6 +507,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__current_directory);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__other_directory);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__build_directory);
+    ATF_ADD_TEST_CASE(tcs, kyuafile__load__absolute_paths_are_stable);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__test_program_not_basename);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__lua_error);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__syntax__not_called);

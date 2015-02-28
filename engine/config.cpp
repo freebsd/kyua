@@ -59,6 +59,7 @@ static void
 init_tree(config::tree& tree)
 {
     tree.define< config::string_node >("architecture");
+    tree.define< config::positive_int_node >("parallelism");
     tree.define< config::string_node >("platform");
     tree.define< engine::user_node >("unprivileged_user");
     tree.define_dynamic("test_suites");
@@ -73,6 +74,10 @@ static void
 set_defaults(config::tree& tree)
 {
     tree.set< config::string_node >("architecture", KYUA_ARCHITECTURE);
+    // TODO(jmmv): Automatically derive this from the number of CPUs in the
+    // machine and forcibly set to a value greater than 1.  Still testing
+    // the new parallel implementation as of 2015-02-27 though.
+    tree.set< config::positive_int_node >("parallelism", 1);
     tree.set< config::string_node >("platform", KYUA_PLATFORM);
 }
 

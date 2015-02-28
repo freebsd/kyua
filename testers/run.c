@@ -553,6 +553,19 @@ kyua_run_work_directory_enter(const char* template, const uid_t uid,
     }
 
     if (uid != getuid() || gid != getgid()) {
+        // Allow search permissions on the work directory.  When we invoke test
+        // cases that require an unprivileged user, we must make sure that
+        // absolute paths pointing to files inside the work directory can be
+        // resolved.  Otherwise, we can fail to create files: for example, we
+        // point the ATF test programs to write the result file inside the work
+        // directory using an absolute path, and that absolute path must be
+        // accessible.
+        if (chmod(work_directory, 0711) == -1) {
+            error = kyua_libc_error_new(errno,
+                "chmod(%s, 0711) failed", work_directory);
+            goto err_work_directory_file;
+        }
+
         if (chown(work_directory, uid, gid) == -1) {
             error = kyua_libc_error_new(errno,
                 "chown(%s, %ld, %ld) failed; uid is %ld and gid is %ld",

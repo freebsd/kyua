@@ -47,6 +47,21 @@ engine::error::~error(void) throw()
 }
 
 
+/// Constructs a new format_error.
+///
+/// \param reason_ Description of the format problem.
+engine::format_error::format_error(const std::string& reason_) :
+    error(reason_)
+{
+}
+
+
+/// Destructor for the error.
+engine::format_error::~format_error(void) throw()
+{
+}
+
+
 /// Constructs a new load_error.
 ///
 /// \param file_ The file in which the error was encountered.

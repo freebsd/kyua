@@ -28,73 +28,42 @@
 
 #include "drivers/run_tests.hpp"
 
+#include <deque>
+
+#include "engine/config.hpp"
+#include "engine/executor.hpp"
 #include "engine/filters.hpp"
 #include "engine/kyuafile.hpp"
 #include "engine/runner.hpp"
 #include "engine/scanner.hpp"
 #include "model/context.hpp"
+#include "model/metadata.hpp"
 #include "model/test_case.hpp"
 #include "model/test_program.hpp"
 #include "model/test_result.hpp"
 #include "store/write_backend.hpp"
 #include "store/write_transaction.hpp"
+#include "utils/config/tree.ipp"
 #include "utils/datetime.hpp"
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
-#include "utils/fs/auto_cleaners.hpp"
 #include "utils/logging/macros.hpp"
+#include "utils/noncopyable.hpp"
 #include "utils/optional.ipp"
-#include "utils/signals/interrupts.hpp"
+#include "utils/passwd.hpp"
 
 namespace config = utils::config;
 namespace datetime = utils::datetime;
+namespace executor = engine::executor;
 namespace fs = utils::fs;
-namespace signals = utils::signals;
+namespace passwd = utils::passwd;
 namespace runner = engine::runner;
 
+using utils::none;
 using utils::optional;
 
 
 namespace {
-
-
-/// Test case hooks to save the output into the database.
-class file_saver_hooks : public runner::test_case_hooks {
-    /// Open write transaction for the test case's data.
-    store::write_transaction& _tx;
-
-    /// Identifier of the test case being stored.
-    const int64_t _test_case_id;
-
-public:
-    /// Constructs a new set of hooks.
-    ///
-    /// \param tx_ Open write transaction for the test case's data.
-    /// \param test_case_id_ Identifier of the test case being stored.
-    file_saver_hooks(store::write_transaction& tx_,
-                     const int64_t test_case_id_) :
-        _tx(tx_), _test_case_id(test_case_id_)
-    {
-    }
-
-    /// Stores the stdout of the test case into the database.
-    ///
-    /// \param file Path to the stdout of the test case.
-    void
-    got_stdout(const fs::path& file)
-    {
-        _tx.put_test_case_file("__STDOUT__", file, _test_case_id);
-    }
-
-    /// Stores the stderr of the test case into the database.
-    ///
-    /// \param file Path to the stderr of the test case.
-    void
-    got_stderr(const fs::path& file)
-    {
-        _tx.put_test_case_file("__STDERR__", file, _test_case_id);
-    }
-};
 
 
 /// Puts a test program in the store and returns its identifier.
@@ -110,7 +79,7 @@ public:
 /// \param [in,out] ids_cache Cache of already-put test programs.
 ///
 /// \return A test program identifier.
-int64_t
+static int64_t
 find_test_program_id(const model::test_program_ptr test_program,
                      store::write_transaction& tx,
                      std::map< fs::path, int64_t > ids_cache)
@@ -123,6 +92,45 @@ find_test_program_id(const model::test_program_ptr test_program,
         return id;
     } else {
         return (*iter).second;
+    }
+}
+
+
+/// Stores the result of an execution in the database.
+///
+/// \param test_case_id Identifier of the test case in the database.
+/// \param result The result of the execution.
+/// \param [in,out] tx Writable transaction where to store the result data.
+static void
+put_test_result(const int64_t test_case_id,
+                const executor::result_handle& result,
+                store::write_transaction& tx)
+{
+    tx.put_result(result.test_result(), test_case_id,
+                  result.start_time(), result.end_time());
+    tx.put_test_case_file("__STDOUT__", result.stdout_file(), test_case_id);
+    tx.put_test_case_file("__STDERR__", result.stderr_file(), test_case_id);
+
+}
+
+
+/// Cleans up a test case and folds any errors into the test result.
+///
+/// \param handle The result handle for the test.
+///
+/// \return The test result if the cleanup succeeds; a broken test result
+/// otherwise.
+model::test_result
+safe_cleanup(executor::result_handle handle) throw()
+{
+    try {
+        handle.cleanup();
+        return handle.test_result();
+    } catch (const std::exception& e) {
+        return model::test_result(
+            model::test_result_broken,
+            F("Failed to clean up test case's work directory %s: %s") %
+            handle.work_directory() % e.what());
     }
 }
 
@@ -159,46 +167,77 @@ drivers::run_tests::drive(const fs::path& kyuafile_path,
     store::write_backend db = store::write_backend::open_rw(store_path);
     store::write_transaction tx = db.start_write();
 
-    const model::context context = runner::current_context();
-    (void)tx.put_context(context);
-
-    signals::interrupts_handler interrupts;
-
-    const fs::auto_directory work_directory = fs::auto_directory::mkdtemp(
-        "kyua.XXXXXX");
-
-    engine::scanner scanner(kyuafile.test_programs(), filters);
-
-    std::map< fs::path, int64_t > ids_cache;
-    while (!scanner.done()) {
-        optional< engine::scan_result > match = scanner.yield();
-        INV(match);
-        const model::test_program_ptr test_program = match.get().first;
-        const std::string& test_case_name = match.get().second;
-
-        const int64_t test_program_id = find_test_program_id(test_program, tx,
-                                                             ids_cache);
-        const int64_t test_case_id = tx.put_test_case(*test_program,
-                                                      test_case_name,
-                                                      test_program_id);
-
-        signals::check_interrupt();
-
-        file_saver_hooks test_hooks(tx, test_case_id);
-        hooks.got_test_case(*test_program, test_case_name);
-        const datetime::timestamp start_time = datetime::timestamp::now();
-        const model::test_result result = runner::run_test_case(
-            test_program.get(), test_case_name, user_config, test_hooks,
-            work_directory.directory());
-        const datetime::timestamp end_time = datetime::timestamp::now();
-        tx.put_result(result, test_case_id, start_time, end_time);
-        hooks.got_result(*test_program, test_case_name, result,
-                         end_time - start_time);
-
-        signals::check_interrupt();
+    {
+        const model::context context = runner::current_context();
+        (void)tx.put_context(context);
     }
 
+    // TODO(jmmv): The scanner currently does not handle interrupts, so if we
+    // abort we probably do not clean up the directory in which test programs
+    // are executed in list mode.  Should share interrupts handling between both
+    // the executor and the scanner, or funnel the scanner operations via the
+    // executor.
+    executor::executor_handle handle = executor::setup();
+    engine::scanner scanner(kyuafile.test_programs(), filters);
+
+    // Map of test program identifiers (relative paths) to their identifiers in
+    // the database.  We need to keep this in memory because test programs can
+    // be returned by the scanner in any order, and we only want to put each
+    // test program once.
+    std::map< fs::path, int64_t > ids_cache;
+
+    // Map of in-flight test cases to their identifiers in the database.
+    std::map< executor::exec_handle, int64_t > in_flight;
+
+    const std::size_t slots = user_config.lookup< config::positive_int_node >(
+        "parallelism");
+    INV(slots >= 1);
+    do {
+        INV(in_flight.size() <= slots);
+
+        // Spawn as many jobs as needed to fill our execution slots.  We do this
+        // first with the assumption that the spawning is faster than any single
+        // job, so we want to keep as many jobs in the background as possible.
+        while (in_flight.size() < slots) {
+            optional< engine::scan_result > match = scanner.yield();
+            if (!match)
+                break;
+
+            hooks.got_test_case(*match.get().first, match.get().second);
+
+            const int64_t test_program_id = find_test_program_id(
+                match.get().first, tx, ids_cache);
+            const int64_t test_case_id = tx.put_test_case(
+                *match.get().first, match.get().second, test_program_id);
+
+            const executor::exec_handle exec_handle = handle.spawn_test(
+                match.get().first, match.get().second, user_config);
+            in_flight.insert(std::make_pair(exec_handle, test_case_id));
+        }
+
+        // If there are any used slots, consume any at random and return the
+        // result.  We consume slots one at a time to give preference to the
+        // spawning of new tests as detailed above.
+        if (!in_flight.empty()) {
+            executor::result_handle result = handle.wait_any_test();
+
+            const std::map< executor::exec_handle, int64_t >::iterator
+                iter = in_flight.find(result.original_exec_handle());
+            const int64_t test_case_id = (*iter).second;
+            in_flight.erase(iter);
+
+            put_test_result(test_case_id, result, tx);
+
+            const model::test_result test_result = safe_cleanup(result);
+            hooks.got_result(*result.test_program(), result.test_case_name(),
+                             result.test_result(),
+                             result.end_time() - result.start_time());
+        }
+    } while (!in_flight.empty() || !scanner.done());
+
     tx.commit();
+
+    handle.cleanup();
 
     return result(scanner.unused_filters());
 }

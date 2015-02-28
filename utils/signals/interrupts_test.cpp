@@ -34,15 +34,18 @@ extern "C" {
 }
 
 #include <cstdlib>
+#include <iostream>
 
 #include <atf-c++.hpp>
 
 #include "utils/format/macros.hpp"
+#include "utils/fs/path.hpp"
 #include "utils/process/child.ipp"
 #include "utils/process/status.hpp"
 #include "utils/signals/exceptions.hpp"
 #include "utils/signals/programmer.hpp"
 
+namespace fs = utils::fs;
 namespace process = utils::process;
 namespace signals = utils::signals;
 
@@ -73,13 +76,12 @@ pause_child(void)
 {
     sigset_t mask;
     sigemptyset(&mask);
-    if (sigsuspend(&mask) == -1)
-        ::exit(EXIT_FAILURE);
-    else {
-        // If this happens, it is because we received a non-deadly signal and
-        // the execution resumed.  This is not what we expect, so exit with an
-        // arbitrary code.
-        ::exit(45);
+    // We loop waiting for signals because we want the parent process to send us
+    // a SIGKILL that we cannot handle, not just any non-deadly signal.
+    for (;;) {
+        std::cerr << F("Waiting for any signal; pid=%s\n") % ::getpid();
+        ::sigsuspend(&mask);
+        std::cerr << F("Signal received; pid=%s\n") % ::getpid();
     }
 }
 
@@ -90,9 +92,13 @@ pause_child(void)
 /// the class but is tightly related.
 ///
 /// \param signo The signal to check.
+/// \param explicit_unprogram Whether to call interrupts_handler::unprogram()
+///     explicitly before letting the object go out of scope.
 static void
-check_interrupts_handler(const int signo)
+check_interrupts_handler(const int signo, const bool explicit_unprogram)
 {
+    fired_signal = -1;
+
     signals::programmer test_handler(signo, signal_handler);
 
     {
@@ -103,6 +109,10 @@ check_interrupts_handler(const int signo)
         ATF_REQUIRE_THROW_RE(signals::interrupted_error,
                              F("Interrupted by signal %s") % signo,
                              signals::check_interrupt());
+
+        if (explicit_unprogram) {
+            interrupts.unprogram();
+        }
     }
 
     ATF_REQUIRE_EQ(-1, fired_signal);
@@ -143,31 +153,44 @@ check_interrupts_inhibiter(const int signo)
 ATF_TEST_CASE_WITHOUT_HEAD(interrupts_handler__sighup);
 ATF_TEST_CASE_BODY(interrupts_handler__sighup)
 {
-    check_interrupts_handler(SIGHUP);
+    // We run this twice in sequence to ensure that we can actually program two
+    // interrupts handlers in a row.
+    check_interrupts_handler(SIGHUP, true);
+    check_interrupts_handler(SIGHUP, false);
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(interrupts_handler__sigint);
 ATF_TEST_CASE_BODY(interrupts_handler__sigint)
 {
-    check_interrupts_handler(SIGINT);
+    // We run this twice in sequence to ensure that we can actually program two
+    // interrupts handlers in a row.
+    check_interrupts_handler(SIGINT, true);
+    check_interrupts_handler(SIGINT, false);
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(interrupts_handler__sigterm);
 ATF_TEST_CASE_BODY(interrupts_handler__sigterm)
 {
-    check_interrupts_handler(SIGTERM);
+    // We run this twice in sequence to ensure that we can actually program two
+    // interrupts handlers in a row.
+    check_interrupts_handler(SIGTERM, true);
+    check_interrupts_handler(SIGTERM, false);
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(interrupts_handler__kill_children);
+ATF_TEST_CASE(interrupts_handler__kill_children);
+ATF_TEST_CASE_HEAD(interrupts_handler__kill_children)
+{
+    set_md_var("timeout", "10");
+}
 ATF_TEST_CASE_BODY(interrupts_handler__kill_children)
 {
-    std::auto_ptr< process::child > child1(process::child::fork_capture(
-         pause_child));
-    std::auto_ptr< process::child > child2(process::child::fork_capture(
-         pause_child));
+    std::auto_ptr< process::child > child1(process::child::fork_files(
+         pause_child, fs::path("/dev/stdout"), fs::path("/dev/stderr")));
+    std::auto_ptr< process::child > child2(process::child::fork_files(
+         pause_child, fs::path("/dev/stdout"), fs::path("/dev/stderr")));
 
     signals::interrupts_handler interrupts;
 
@@ -179,10 +202,17 @@ ATF_TEST_CASE_BODY(interrupts_handler__kill_children)
 
     const process::status status1 = child1->wait();
     ATF_REQUIRE(status1.signaled());
-    ATF_REQUIRE_EQ(SIGHUP, status1.termsig());
+    ATF_REQUIRE_EQ(SIGKILL, status1.termsig());
     const process::status status2 = child2->wait();
     ATF_REQUIRE(status2.signaled());
-    ATF_REQUIRE_EQ(SIGHUP, status2.termsig());
+    ATF_REQUIRE_EQ(SIGKILL, status2.termsig());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(interrupts_inhibiter__sigalrm);
+ATF_TEST_CASE_BODY(interrupts_inhibiter__sigalrm)
+{
+    check_interrupts_inhibiter(SIGALRM);
 }
 
 
@@ -214,6 +244,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, interrupts_handler__sigterm);
     ATF_ADD_TEST_CASE(tcs, interrupts_handler__kill_children);
 
+    ATF_ADD_TEST_CASE(tcs, interrupts_inhibiter__sigalrm);
     ATF_ADD_TEST_CASE(tcs, interrupts_inhibiter__sighup);
     ATF_ADD_TEST_CASE(tcs, interrupts_inhibiter__sigint);
     ATF_ADD_TEST_CASE(tcs, interrupts_inhibiter__sigterm);

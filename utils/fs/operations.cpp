@@ -516,6 +516,12 @@ fs::mkdir_p(const fs::path& dir, const int mode)
 /// template.  This should be most likely used in conjunction with
 /// fs::auto_directory.
 ///
+/// The temporary directory is given search permissions for everyone.  This goes
+/// together with the assumption that this function is used to create temporary
+/// directories for test cases only, and because test cases may be executed as
+/// an unprivileged user, we need them to be able to resolve absolute paths
+/// pointing inside the temporary directory.
+///
 /// \param path_template The template for the temporary path, which is a
 ///     basename that is created within the TMPDIR.  Must contain the XXXXXX
 ///     pattern, which is atomically replaced by a random unique string.
@@ -539,7 +545,34 @@ fs::mkdtemp(const std::string& path_template)
                                  "template %s") % full_template,
                                original_errno);
     }
-    return fs::path(buf.get());
+    const fs::path path(buf.get());
+
+    // Allow search permissions on the work directory.  When we invoke test
+    // cases that require an unprivileged user, we must make sure that
+    // absolute paths pointing to files inside the work directory can be
+    // resolved.  Otherwise, we can fail to create files: for example, we
+    // point the ATF test programs to write the result file inside the work
+    // directory using an absolute path, and that absolute path must be
+    // accessible.
+    if (::chmod(path.c_str(), 0711) == -1) {
+        const int original_errno = errno;
+
+        try {
+            rmdir(path);
+        } catch (const fs::system_error& e) {
+            // This really should not fail.  We just created the directory and
+            // have not written anything to it so there is no reason for this to
+            // fail.  But better handle the failure just in case.
+            LW(F("Failed to delete just-created temporary directory %s")
+               % path);
+        }
+
+        throw fs::system_error(F("Failed to grant search permissions on "
+                                 "temporary directory %s") % path,
+                               original_errno);
+    }
+
+    return path;
 }
 
 

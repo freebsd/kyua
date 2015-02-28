@@ -118,8 +118,11 @@ EOF
 # Creates a 'kyua' binary in the path that strips timestamps off the output.
 #
 # Call this on test cases that wish to replace durations and timestamps with a
-# deterministic string.  This is to be used by tests that validate the 'test'
-# subcommand, but also by a few specific tests for the 'report' subcommand.
+# deterministic string.  The wrapper also makes sure the test result lines in
+# the output are sorted lexicographically so that the indeterminism caused by
+# parallel execution of test cases can be dealt with.  For these reasons, this
+# is to be used exclusively by tests that validate the 'test' subcommand.
+#
 utils_install_timestamp_wrapper() {
     [ ! -x kyua ] || return
     cat >kyua <<EOF
@@ -129,7 +132,13 @@ PATH=${PATH}
 
 kyua "\${@}" >kyua.tmpout
 result=\${?}
-cat kyua.tmpout | ${utils_strip_timestamps}
+cat kyua.tmpout | ${utils_strip_timestamps} >kyua.tmpout2
+
+# Sort the test result lines but keep the rest intact.
+grep '[^ ]*:[^ ]*' kyua.tmpout2 | sort >kyua.tmpout3
+grep -v '[^ ]*:[^ ]*' kyua.tmpout2 >kyua.tmpout4
+cat kyua.tmpout3 kyua.tmpout4
+
 exit \${result}
 EOF
     chmod +x kyua

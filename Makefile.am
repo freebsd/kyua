@@ -95,7 +95,7 @@ local-kyua: Makefile
 	mv -f local-kyua.tmp local-kyua
 
 if WITH_ATF
-CHECK_LOCAL += check-kyua
+CHECK_LOCAL += dump-ulimits check-kyua
 PHONY_TARGETS += check-kyua
 check-kyua: $(CHECK_KYUA_DEPS)
 	@failed=no; \
@@ -108,7 +108,7 @@ check-kyua: $(CHECK_KYUA_DEPS)
 	    exit 1; \
 	fi
 
-installcheck-local: installcheck-kyua
+installcheck-local: dump-ulimits installcheck-kyua
 PHONY_TARGETS += installcheck-kyua
 installcheck-kyua:
 	@failed=no; \
@@ -122,6 +122,17 @@ installcheck-kyua:
 	        --verbose --results-filter=broken,failed; \
 	    exit 1; \
 	fi
+
+# TODO(jmmv): kyua should probably be recording this information itself as part
+# of the execution context, just as we record environment variables.
+PHONY_TARGETS += dump-ulimits
+dump-ulimits:
+	@echo "Resource limits:"
+	@{ \
+	    ulimit -a | sed -e 's,$$, (soft),'; \
+	    ulimit -a -H | sed -e 's,$$, (hard),'; \
+	} | sort | sed -e 's,^,    ,'
+	@echo
 else
 dist-hook: forbid-dist
 PHONY_TARGETS += forbid-dist

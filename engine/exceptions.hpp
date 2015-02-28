@@ -47,6 +47,14 @@ public:
 };
 
 
+/// Error while processing data.
+class format_error : public error {
+public:
+    explicit format_error(const std::string&);
+    virtual ~format_error(void) throw();
+};
+
+
 /// Error while parsing external data.
 class load_error : public error {
 public:

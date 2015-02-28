@@ -375,6 +375,19 @@ config::int_node::set_lua(lutok::state& state, const int value_index)
 }
 
 
+/// Checks a given value for validity.
+///
+/// \param new_value The value to validate.
+///
+/// \throw value_error If the value is not valid.
+void
+config::positive_int_node::validate(const value_type& new_value) const
+{
+    if (new_value <= 0)
+        throw value_error("Must be a positive integer");
+}
+
+
 /// Copies the node.
 ///
 /// \return A dynamically-allocated node.

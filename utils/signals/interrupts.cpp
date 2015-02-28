@@ -29,6 +29,8 @@
 #include "utils/signals/interrupts.hpp"
 
 extern "C" {
+#include <sys/types.h>
+
 #include <signal.h>
 #include <unistd.h>
 }
@@ -37,6 +39,7 @@ extern "C" {
 #include <cstring>
 #include <set>
 
+#include "utils/logging/macros.hpp"
 #include "utils/sanity.hpp"
 #include "utils/signals/exceptions.hpp"
 #include "utils/signals/programmer.hpp"
@@ -104,15 +107,13 @@ signal_handler(const int signo)
 
     for (pids_set::const_iterator iter = pids_to_kill.begin();
         iter != pids_to_kill.end(); ++iter) {
-        // Redirecting the interrupt signal to our child processes does NOT
-        // guarantee that they also terminate.  For that to happen, we'd need to
-        // SIGKILL them.
-        //
-        // *However*, because we use this code to invoke the testers only,
-        // and because we assume that such processes are well-behaved and
-        // terminate according to our expectations, we do it this way, which
-        // allows the testers to know which specific signal made them terminate.
-        (void)::kill(*iter, signo);
+        (void)::killpg(*iter, SIGKILL);
+        // The killpg above may have missed our subprocess if we happen to be
+        // killing it too early: that is, before the subprocess has had a chance
+        // to set its process group.  To catch this case, send another signal to
+        // that PID alone.  This is safe because our wait(2) call will not run
+        // until we return, so we are not killing a process we do not own.
+        (void)::kill(*iter, SIGKILL);
     }
 }
 
@@ -161,6 +162,7 @@ mask_signals(sigset_t* old_sigmask)
 {
     sigset_t mask;
     sigemptyset(&mask);
+    sigaddset(&mask, SIGALRM);
     sigaddset(&mask, SIGHUP);
     sigaddset(&mask, SIGINT);
     sigaddset(&mask, SIGTERM);
@@ -182,19 +184,49 @@ unmask_signals(sigset_t* old_sigmask)
 
 
 /// Constructor that sets up the signal handlers.
-signals::interrupts_handler::interrupts_handler(void)
+signals::interrupts_handler::interrupts_handler(void) :
+    _programmed(false)
 {
     PRE(!interrupts_handler_active);
     setup_handlers();
+    _programmed = true;
     interrupts_handler_active = true;
 }
 
 
 /// Destructor that removes the signal handlers.
+///
+/// Given that this is a destructor and it can't report errors back to the
+/// caller, the caller must attempt to call unprogram() on its own.
 signals::interrupts_handler::~interrupts_handler(void)
 {
-    cleanup_handlers();
+    if (_programmed) {
+        LW("Destroying still-programmed signals::interrupts_handler object");
+        try {
+            unprogram();
+        } catch (const error& e) {
+            UNREACHABLE;
+        }
+    }
+}
+
+
+/// Unprograms all signals captured by the interrupts handler.
+///
+/// \throw system_error If the unprogramming of any signal fails.
+void
+signals::interrupts_handler::unprogram(void)
+{
+    PRE(_programmed);
+
+    // Modify the control variables first before unprogramming the handlers.  If
+    // we fail to do the latter, we do not want to try again because we will not
+    // succeed (and we'll cause a crash due to failed preconditions).
+    _programmed = false;
     interrupts_handler_active = false;
+
+    cleanup_handlers();
+    fired_signal = -1;
 }
 
 
