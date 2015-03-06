@@ -32,7 +32,7 @@
 #if !defined(UTILS_MEMORY_HPP)
 #define UTILS_MEMORY_HPP
 
-#include "utils/units.hpp"
+#include "utils/units_fwd.hpp"
 
 namespace utils {
 

@@ -607,6 +607,20 @@ fs::mkstemp(const std::string& path_template)
 }
 
 
+/// Mounts a temporary file system with unlimited size.
+///
+/// \param in_mount_point The path on which the file system will be mounted.
+///
+/// \throw fs::system_error If the attempt to mount process fails.
+/// \throw fs::unsupported_operation_error If the code does not know how to
+///     mount a temporary file system in the current operating system.
+void
+fs::mount_tmpfs(const fs::path& in_mount_point)
+{
+    mount_tmpfs(in_mount_point, units::bytes());
+}
+
+
 /// Mounts a temporary file system.
 ///
 /// \param in_mount_point The path on which the file system will be mounted.

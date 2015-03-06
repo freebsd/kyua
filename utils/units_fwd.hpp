@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2015 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,49 +26,20 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file utils/fs/operations.hpp
-/// File system algorithms and access functions.
-///
-/// The functions in this module are exception-based, type-improved wrappers
-/// over the functions provided by libc.
+/// \file utils/units_fwd.hpp
+/// Forward declarations for utils/units.hpp
 
-#if !defined(UTILS_FS_OPERATIONS_HPP)
-#define UTILS_FS_OPERATIONS_HPP
-
-#include <set>
-#include <string>
-
-#include "utils/optional_fwd.hpp"
-#include "utils/units_fwd.hpp"
+#if !defined(UTILS_UNITS_FWD_HPP)
+#define UTILS_UNITS_FWD_HPP
 
 namespace utils {
-namespace fs {
+namespace units {
 
 
-struct directory_entry;
-class path;
+class bytes;
 
 
-void copy(const fs::path&, const fs::path&);
-path current_path(void);
-bool exists(const fs::path&);
-utils::optional< path > find_in_path(const char*);
-utils::units::bytes free_disk_space(const fs::path&);
-bool is_directory(const fs::path&);
-void mkdir(const path&, const int);
-void mkdir_p(const path&, const int);
-fs::path mkdtemp(const std::string&);
-fs::path mkstemp(const std::string&);
-void mount_tmpfs(const path&);
-void mount_tmpfs(const path&, const units::bytes&);
-void rm_r(const path&);
-void rmdir(const path&);
-std::set< directory_entry > scan_directory(const path&);
-void unlink(const path&);
-void unmount(const path&);
-
-
-}  // namespace fs
+}  // namespace units
 }  // namespace utils
 
-#endif  // !defined(UTILS_FS_OPERATIONS_HPP)
+#endif  // !defined(UTILS_UNITS_FWD_HPP)

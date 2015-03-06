@@ -58,6 +58,7 @@ libutils_a_SOURCES += utils/stream.cpp
 libutils_a_SOURCES += utils/stream.hpp
 libutils_a_SOURCES += utils/units.cpp
 libutils_a_SOURCES += utils/units.hpp
+libutils_a_SOURCES += utils/units_fwd.hpp
 nodist_libutils_a_SOURCES = utils/defs.hpp
 
 if WITH_ATF
