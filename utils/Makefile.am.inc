@@ -43,6 +43,7 @@ libutils_a_SOURCES += utils/memory.hpp
 libutils_a_SOURCES += utils/memory.cpp
 libutils_a_SOURCES += utils/noncopyable.hpp
 libutils_a_SOURCES += utils/optional.hpp
+libutils_a_SOURCES += utils/optional_fwd.hpp
 libutils_a_SOURCES += utils/optional.ipp
 libutils_a_SOURCES += utils/passwd.cpp
 libutils_a_SOURCES += utils/passwd.hpp

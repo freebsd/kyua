@@ -33,7 +33,7 @@
 #define ENGINE_ISOLATION_HPP
 
 #include "utils/fs/path_fwd.hpp"
-#include "utils/optional.hpp"
+#include "utils/optional_fwd.hpp"
 #include "utils/passwd.hpp"
 
 namespace engine {

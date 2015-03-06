@@ -37,7 +37,7 @@
 #include <cstddef>
 #include <string>
 
-#include "utils/optional.hpp"
+#include "utils/optional_fwd.hpp"
 
 namespace utils {
 

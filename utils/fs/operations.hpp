@@ -38,7 +38,7 @@
 #include <set>
 #include <string>
 
-#include "utils/optional.hpp"
+#include "utils/optional_fwd.hpp"
 #include "utils/units.hpp"
 
 namespace utils {

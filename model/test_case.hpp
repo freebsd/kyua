@@ -39,7 +39,7 @@
 
 #include "model/metadata_fwd.hpp"
 #include "model/test_result_fwd.hpp"
-#include "utils/optional.hpp"
+#include "utils/optional_fwd.hpp"
 #include "utils/shared_ptr.hpp"
 
 namespace model {

@@ -42,7 +42,7 @@
 #include "model/test_program_fwd.hpp"
 #include "utils/config/tree_fwd.hpp"
 #include "utils/fs/path_fwd.hpp"
-#include "utils/optional.hpp"
+#include "utils/optional_fwd.hpp"
 
 namespace drivers {
 namespace list_tests {

@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2015 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,65 +26,36 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file utils/optional.hpp
-/// Provides the utils::optional class.
-///
-/// The class is provided as a separate module on its own to minimize
-/// header-inclusion side-effects.
+/// \file utils/optional_fwd.hpp
+/// Forward declarations for utils/optional.hpp
 
-#if !defined(UTILS_OPTIONAL_HPP)
-#define UTILS_OPTIONAL_HPP
-
-#include "utils/optional_fwd.hpp"
-
-#include <ostream>
+#if !defined(UTILS_OPTIONAL_FWD_HPP)
+#define UTILS_OPTIONAL_FWD_HPP
 
 namespace utils {
 
 
-/// Holds a data value or none.
+namespace detail {
+
+
+/// Internal type-safe representation for the none type.
+struct none_t {};
+
+
+}  // namespace detail
+
+
+/// The none value.
 ///
-/// This class allows users to represent values that may be uninitialized.
-/// Instead of having to keep separate variables to track whether a variable is
-/// supposed to have a value or not, this class allows multiplexing the
-/// behaviors.
-///
-/// This class is a simplified version of Boost.Optional.
-template< class T >
-class optional {
-    /// Internal representation of the optional data value.
-    T* _data;
-
-public:
-    optional(void);
-    optional(utils::detail::none_t);
-    optional(const optional< T >&);
-    explicit optional(const T&);
-    ~optional(void);
-
-    optional& operator=(utils::detail::none_t);
-    optional& operator=(const T&);
-    optional& operator=(const optional< T >&);
-
-    bool operator==(const optional< T >&) const;
-    bool operator!=(const optional< T >&) const;
-
-    operator bool(void) const;
-
-    const T& get(void) const;
-    const T& get_default(const T&) const;
-    T& get(void);
-};
+/// This has internal linkage so it is OK to define it in the header file.
+/// However, pointers to none from different translation units will be
+/// different.  Just don't do that.
+const detail::none_t none = {};
 
 
-template< class T >
-std::ostream& operator<<(std::ostream&, const optional< T >&);
-
-
-template< class T >
-optional< T > make_optional(const T&);
+template< class > class optional;
 
 
 }  // namespace utils
 
-#endif  // !defined(UTILS_OPTIONAL_HPP)
+#endif  // !defined(UTILS_OPTIONAL_FWD_HPP)
