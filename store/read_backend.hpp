@@ -34,16 +34,10 @@
 
 #include "store/read_backend_fwd.hpp"
 
+#include "store/read_transaction_fwd.hpp"
+#include "utils/fs/path_fwd.hpp"
 #include "utils/shared_ptr.hpp"
-
-namespace utils {
-namespace fs {
-class path;
-}  // namespace fs
-namespace sqlite {
-class database;
-}  // namespace sqlite
-}  // namespace utils
+#include "utils/sqlite/database_fwd.hpp"
 
 namespace store {
 
@@ -55,9 +49,6 @@ utils::sqlite::database open_and_setup(const utils::fs::path&, const int);
 
 
 }  // anonymous namespace
-
-
-class read_transaction;
 
 
 /// Public interface to the database store for read-only operations.

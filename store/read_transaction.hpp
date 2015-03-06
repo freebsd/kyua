@@ -43,14 +43,12 @@ extern "C" {
 #include "model/context_fwd.hpp"
 #include "model/test_program_fwd.hpp"
 #include "model/test_result_fwd.hpp"
+#include "store/read_backend_fwd.hpp"
+#include "store/read_transaction_fwd.hpp"
 #include "utils/datetime_fwd.hpp"
 #include "utils/shared_ptr.hpp"
 
 namespace store {
-
-
-class read_backend;
-class read_transaction;
 
 
 namespace detail {

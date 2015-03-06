@@ -40,18 +40,11 @@
 #include <vector>
 
 #include "model/test_result_fwd.hpp"
+#include "utils/config/tree_fwd.hpp"
 #include "utils/datetime_fwd.hpp"
+#include "utils/fs/path_fwd.hpp"
 #include "utils/optional_fwd.hpp"
 #include "utils/passwd_fwd.hpp"
-
-namespace utils {
-namespace config {
-class tree;
-}  // namespace config
-namespace fs {
-class path;
-}  // namespace fs
-}  // namespace utils
 
 namespace engine {
 

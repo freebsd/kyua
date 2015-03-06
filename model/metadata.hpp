@@ -39,15 +39,12 @@
 #include <string>
 
 #include "model/types.hpp"
+#include "utils/config/tree_fwd.hpp"
+#include "utils/datetime_fwd.hpp"
+#include "utils/fs/path_fwd.hpp"
 #include "utils/noncopyable.hpp"
 #include "utils/shared_ptr.hpp"
-
-namespace utils {
-namespace config { class tree; }
-namespace datetime { class delta; }
-namespace fs { class path; }
-namespace units { class bytes; }
-}  // namespace utils
+#include "utils/units_fwd.hpp"
 
 namespace model {
 

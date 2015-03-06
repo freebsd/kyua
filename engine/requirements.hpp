@@ -35,11 +35,8 @@
 #include <string>
 
 #include "model/metadata_fwd.hpp"
-
-namespace utils {
-namespace config { class tree; }
-namespace fs { class path; }
-}  // namespace utils
+#include "utils/config/tree_fwd.hpp"
+#include "utils/fs/path_fwd.hpp"
 
 namespace engine {
 

@@ -43,13 +43,11 @@ extern "C" {
 
 #include <string>
 
+#include "utils/sqlite/database_fwd.hpp"
 #include "utils/shared_ptr.hpp"
 
 namespace utils {
 namespace sqlite {
-
-
-class database;
 
 
 /// Representation of a BLOB.

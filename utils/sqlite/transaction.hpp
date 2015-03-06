@@ -35,12 +35,10 @@
 #include "utils/sqlite/transaction_fwd.hpp"
 
 #include "utils/shared_ptr.hpp"
+#include "utils/sqlite/database_fwd.hpp"
 
 namespace utils {
 namespace sqlite {
-
-
-class database;
 
 
 /// A RAII model for an SQLite 3 statement.

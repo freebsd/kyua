@@ -45,12 +45,9 @@ extern "C" {
 
 #include "engine/filters.hpp"
 #include "model/context_fwd.hpp"
+#include "store/read_transaction_fwd.hpp"
 #include "utils/datetime_fwd.hpp"
 #include "utils/fs/path_fwd.hpp"
-
-namespace store {
-class results_iterator;
-}  // namespace store
 
 namespace drivers {
 namespace scan_results {

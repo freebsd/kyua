@@ -40,6 +40,7 @@
 #include <lutok/state.hpp>
 
 #include "utils/config/keys_fwd.hpp"
+#include "utils/config/nodes_fwd.hpp"
 #include "utils/noncopyable.hpp"
 #include "utils/optional.hpp"
 
@@ -64,9 +65,6 @@ public:
     /// \return A dynamically-allocated node.
     virtual base_node* deep_copy(void) const = 0;
 };
-
-
-class static_inner_node;
 
 
 }  // namespace detail

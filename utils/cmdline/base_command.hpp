@@ -38,13 +38,11 @@
 
 #include "utils/cmdline/options_fwd.hpp"
 #include "utils/cmdline/parser_fwd.hpp"
+#include "utils/cmdline/ui_fwd.hpp"
 #include "utils/noncopyable.hpp"
 
 namespace utils {
 namespace cmdline {
-
-
-class ui;
 
 
 /// Prototype class for the implementation of subcommands of a program.

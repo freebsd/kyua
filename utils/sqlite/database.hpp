@@ -45,14 +45,12 @@ extern "C" {
 
 #include "utils/fs/path_fwd.hpp"
 #include "utils/shared_ptr.hpp"
+#include "utils/sqlite/c_gate_fwd.hpp"
+#include "utils/sqlite/statement_fwd.hpp"
+#include "utils/sqlite/transaction_fwd.hpp"
 
 namespace utils {
 namespace sqlite {
-
-
-class database_c_gate;
-class statement;
-class transaction;
 
 
 /// Constant for the database::open flags: open in read-only mode.

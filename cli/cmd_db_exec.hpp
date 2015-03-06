@@ -35,12 +35,7 @@
 #include <string>
 
 #include "cli/common.hpp"
-
-namespace utils {
-namespace sqlite {
-class statement;
-}  // namespace sqlite
-}  // namespace utils
+#include "utils/sqlite/statement_fwd.hpp"
 
 namespace cli {
 
@@ -62,6 +57,5 @@ public:
 
 
 }  // namespace cli
-
 
 #endif  // !defined(CLI_CMD_DB_EXEC_HPP)

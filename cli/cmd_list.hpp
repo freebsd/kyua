@@ -36,12 +36,7 @@
 
 #include "cli/common.hpp"
 #include "model/test_program_fwd.hpp"
-
-namespace utils {
-namespace fs {
-class path;
-}  // namespace fs
-}  // namespace utils
+#include "utils/fs/path_fwd.hpp"
 
 namespace cli {
 
@@ -66,6 +61,5 @@ public:
 
 
 }  // namespace cli
-
 
 #endif  // !defined(CLI_CMD_LIST_HPP)

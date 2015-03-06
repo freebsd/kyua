@@ -35,11 +35,10 @@
 #include <stdexcept>
 #include <string>
 
+#include "utils/sqlite/database_fwd.hpp"
+
 namespace utils {
 namespace sqlite {
-
-
-class database;
 
 
 /// Base exception for sqlite errors.

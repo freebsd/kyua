@@ -39,14 +39,10 @@
 #include <map>
 #include <string>
 
+#include "utils/fs/path_fwd.hpp"
 #include "utils/optional_fwd.hpp"
 
 namespace utils {
-
-
-namespace fs {
-class path;
-}  // namespace fs
 
 
 std::map< std::string, std::string > getallenv(void);

@@ -38,11 +38,10 @@ extern "C" {
 #include <sqlite3.h>
 }
 
+#include "utils/sqlite/database_fwd.hpp"
+
 namespace utils {
 namespace sqlite {
-
-
-class database;
 
 
 /// Gateway to the raw C database of SQLite 3.

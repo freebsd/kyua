@@ -38,13 +38,8 @@
 #include <ostream>
 #include <string>
 
+#include "utils/fs/path_fwd.hpp"
 #include "utils/shared_ptr.hpp"
-
-namespace utils {
-namespace fs {
-class path;
-}  // namespace fs
-}  // namespace utils
 
 namespace model {
 

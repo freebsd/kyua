@@ -40,16 +40,10 @@
 
 #include <memory>
 
+#include "utils/datetime_fwd.hpp"
 #include "utils/noncopyable.hpp"
 
 namespace utils {
-
-namespace datetime {
-class delta;
-class timestamp;
-}  // namespace datetime
-
-
 namespace signals {
 
 

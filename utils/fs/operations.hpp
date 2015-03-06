@@ -38,15 +38,13 @@
 #include <set>
 #include <string>
 
+#include "utils/fs/directory_fwd.hpp"
+#include "utils/fs/path_fwd.hpp"
 #include "utils/optional_fwd.hpp"
 #include "utils/units_fwd.hpp"
 
 namespace utils {
 namespace fs {
-
-
-struct directory_entry;
-class path;
 
 
 void copy(const fs::path&, const fs::path&);

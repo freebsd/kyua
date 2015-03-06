@@ -39,15 +39,8 @@
 
 #include "model/test_result_fwd.hpp"
 #include "utils/optional.hpp"
-
-namespace utils {
-namespace fs {
-class path;
-}  // namespace fs
-namespace process {
-class status;
-}  // namespace process
-}  // namespace utils
+#include "utils/fs/path_fwd.hpp"
+#include "utils/process/status_fwd.hpp"
 
 namespace engine {
 
@@ -118,6 +111,5 @@ model::test_result calculate_atf_result(
 
 
 }  // namespace engine
-
 
 #endif  // !defined(ENGINE_ATF_IFACE_RESULTS_HPP)

@@ -36,14 +36,12 @@
 
 #include <memory>
 
+#include "utils/config/tree_fwd.hpp"
 #include "utils/fs/path_fwd.hpp"
 #include "utils/noncopyable.hpp"
 
 namespace utils {
 namespace config {
-
-
-class tree;
 
 
 /// A configuration parser.

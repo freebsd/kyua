@@ -34,21 +34,13 @@
 
 #include "store/write_backend_fwd.hpp"
 
+#include "store/metadata_fwd.hpp"
+#include "store/write_transaction_fwd.hpp"
+#include "utils/fs/path_fwd.hpp"
 #include "utils/shared_ptr.hpp"
-
-namespace utils {
-namespace fs {
-class path;
-}  // namespace fs
-namespace sqlite {
-class database;
-}  // namespace sqlite
-}  // namespace utils
+#include "utils/sqlite/database_fwd.hpp"
 
 namespace store {
-
-
-class metadata;
 
 
 namespace detail {
@@ -59,9 +51,6 @@ metadata initialize(utils::sqlite::database&);
 
 
 }  // anonymous namespace
-
-
-class write_transaction;
 
 
 /// Public interface to the database store for write-only operations.

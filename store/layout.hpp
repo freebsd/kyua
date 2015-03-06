@@ -60,17 +60,12 @@
 
 #include <string>
 
-namespace utils {
-namespace datetime {
-class timestamp;
-}  // namespace datetime
-namespace fs {
-class path;
-}  // namespace fs
-}  // namespace utils
+#include "utils/datetime_fwd.hpp"
+#include "utils/fs/path_fwd.hpp"
 
 namespace store {
 namespace layout {
+
 
 extern const char* results_auto_create_name;
 extern const char* results_auto_open_name;

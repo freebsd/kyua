@@ -32,11 +32,7 @@
 #if !defined(STORE_MIGRATE_HPP)
 #define STORE_MIGRATE_HPP
 
-namespace utils {
-namespace fs {
-class path;
-}  // namespace fs
-}  // namespace utils
+#include "utils/fs/path_fwd.hpp"
 
 namespace store {
 

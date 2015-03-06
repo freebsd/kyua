@@ -43,15 +43,13 @@ extern "C" {
 #include "model/context_fwd.hpp"
 #include "model/test_program_fwd.hpp"
 #include "model/test_result_fwd.hpp"
+#include "store/write_backend_fwd.hpp"
 #include "utils/datetime_fwd.hpp"
 #include "utils/fs/path_fwd.hpp"
 #include "utils/optional_fwd.hpp"
 #include "utils/shared_ptr.hpp"
 
 namespace store {
-
-
-class write_backend;
 
 
 /// Representation of a write-only transaction.

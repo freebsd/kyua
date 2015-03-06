@@ -36,6 +36,7 @@
 #include <set>
 #include <vector>
 
+#include "engine/filters_fwd.hpp"
 #include "model/test_program_fwd.hpp"
 #include "model/test_result.hpp"
 #include "utils/cmdline/base_command.hpp"
@@ -46,16 +47,6 @@
 #include "utils/datetime_fwd.hpp"
 #include "utils/fs/path_fwd.hpp"
 #include "utils/optional_fwd.hpp"
-
-namespace utils {
-namespace fs {
-class path;
-}  // namespace fs
-}  // namespace utils
-
-namespace engine {
-class test_filter;
-}  // namespace engine
 
 namespace cli {
 
