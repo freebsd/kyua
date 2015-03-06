@@ -1,4 +1,4 @@
-// Copyright 2011 Google Inc.
+// Copyright 2015 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,29 +26,29 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file utils/logging/operations.hpp
-/// Stateless logging facilities.
+/// \file utils/logging/operations_fwd.hpp
+/// Forward declarations for utils/logging/operations.hpp
 
-#if !defined(UTILS_LOGGING_OPERATIONS_HPP)
-#define UTILS_LOGGING_OPERATIONS_HPP
-
-#include "utils/logging/operations_fwd.hpp"
-
-#include <string>
-
-#include "utils/fs/path_fwd.hpp"
+#if !defined(UTILS_LOGGING_OPERATIONS_FWD_HPP)
+#define UTILS_LOGGING_OPERATIONS_FWD_HPP
 
 namespace utils {
 namespace logging {
 
 
-fs::path generate_log_name(const fs::path&, const std::string&);
-void log(const level, const char*, const int, const std::string&);
-void set_inmemory(void);
-void set_persistency(const std::string&, const fs::path&);
+/// Severity levels for log messages.
+///
+/// This enumeration must be sorted from the most severe message to the least
+/// severe.
+enum level {
+    level_error = 0,
+    level_warning,
+    level_info,
+    level_debug,
+};
 
 
 }  // namespace logging
 }  // namespace utils
 
-#endif  // !defined(UTILS_LOGGING_OPERATIONS_HPP)
+#endif  // !defined(UTILS_LOGGING_OPERATIONS_FWD_HPP)
