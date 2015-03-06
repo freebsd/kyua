@@ -34,7 +34,7 @@
 
 #include "utils/fs/path_fwd.hpp"
 #include "utils/optional_fwd.hpp"
-#include "utils/passwd.hpp"
+#include "utils/passwd_fwd.hpp"
 
 namespace engine {
 

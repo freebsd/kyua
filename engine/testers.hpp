@@ -40,7 +40,7 @@
 #include "model/test_result_fwd.hpp"
 #include "utils/datetime_fwd.hpp"
 #include "utils/optional_fwd.hpp"
-#include "utils/passwd.hpp"
+#include "utils/passwd_fwd.hpp"
 
 namespace utils {
 namespace config {
