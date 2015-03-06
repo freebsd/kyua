@@ -42,7 +42,7 @@ extern "C" {
 #include "model/test_program_fwd.hpp"
 #include "model/test_result_fwd.hpp"
 #include "utils/datetime_fwd.hpp"
-#include "utils/fs/path.hpp"
+#include "utils/fs/path_fwd.hpp"
 #include "utils/optional.hpp"
 #include "utils/shared_ptr.hpp"
 

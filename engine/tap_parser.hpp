@@ -37,7 +37,7 @@
 #include <string>
 #include <utility>
 
-#include "utils/fs/path.hpp"
+#include "utils/fs/path_fwd.hpp"
 
 namespace engine {
 

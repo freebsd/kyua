@@ -60,7 +60,7 @@
 #include <string>
 #include <vector>
 
-#include "utils/fs/path.hpp"
+#include "utils/fs/path_fwd.hpp"
 
 namespace utils {
 namespace text {

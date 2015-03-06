@@ -39,6 +39,7 @@ extern "C" {
 
 #include "utils/datetime.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 #include "utils/stream.hpp"

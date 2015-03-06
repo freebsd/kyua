@@ -48,6 +48,7 @@ extern "C" {
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
+#include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/process/operations.hpp"

@@ -31,6 +31,7 @@
 #include "utils/format/macros.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/operations.hpp"
+#include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/sanity.hpp"
 #include "utils/signals/interrupts.hpp"

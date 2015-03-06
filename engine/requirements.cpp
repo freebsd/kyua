@@ -34,6 +34,7 @@
 #include "utils/config/tree.ipp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
+#include "utils/fs/path.hpp"
 #include "utils/memory.hpp"
 #include "utils/passwd.hpp"
 #include "utils/sanity.hpp"

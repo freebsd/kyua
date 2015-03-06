@@ -44,7 +44,7 @@
 #include "utils/cmdline/ui_fwd.hpp"
 #include "utils/config/tree_fwd.hpp"
 #include "utils/datetime_fwd.hpp"
-#include "utils/fs/path.hpp"
+#include "utils/fs/path_fwd.hpp"
 #include "utils/optional.hpp"
 
 namespace utils {

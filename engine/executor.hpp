@@ -57,7 +57,7 @@
 #include "utils/config/tree_fwd.hpp"
 #include "utils/datetime_fwd.hpp"
 #include "utils/defs.hpp"
-#include "utils/fs/path.hpp"
+#include "utils/fs/path_fwd.hpp"
 #include "utils/optional.hpp"
 #include "utils/passwd.hpp"
 #include "utils/process/status.hpp"

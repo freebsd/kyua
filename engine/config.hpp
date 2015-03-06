@@ -34,7 +34,7 @@
 
 #include "utils/config/nodes.hpp"
 #include "utils/config/tree_fwd.hpp"
-#include "utils/fs/path.hpp"
+#include "utils/fs/path_fwd.hpp"
 #include "utils/passwd.hpp"
 
 namespace engine {

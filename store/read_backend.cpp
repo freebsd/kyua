@@ -33,6 +33,7 @@
 #include "store/read_transaction.hpp"
 #include "store/write_backend.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/fs/path.hpp"
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/exceptions.hpp"
 

@@ -46,6 +46,7 @@ extern "C" {
 #include "store/write_backend.hpp"
 #include "utils/datetime.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"

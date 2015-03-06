@@ -41,7 +41,7 @@ extern "C" {
 
 #include <cstddef>
 
-#include "utils/fs/path.hpp"
+#include "utils/fs/path_fwd.hpp"
 #include "utils/shared_ptr.hpp"
 
 namespace utils {

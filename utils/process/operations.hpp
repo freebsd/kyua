@@ -36,7 +36,7 @@
 #include <vector>
 
 #include "utils/defs.hpp"
-#include "utils/fs/path.hpp"
+#include "utils/fs/path_fwd.hpp"
 #include "utils/process/status.hpp"
 
 namespace utils {

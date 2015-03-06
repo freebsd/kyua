@@ -49,7 +49,7 @@
 #include <istream>
 #include <memory>
 
-#include "utils/fs/path.hpp"
+#include "utils/fs/path_fwd.hpp"
 #include "utils/noncopyable.hpp"
 #include "utils/process/operations.hpp"  // TODO(jmmv): This is wrong.
 #include "utils/process/status.hpp"

@@ -32,6 +32,8 @@
 #if !defined(UTILS_FS_DIRECTORY_HPP)
 #define UTILS_FS_DIRECTORY_HPP
 
+#include "utils/fs/directory_fwd.hpp"
+
 #include <ostream>
 #include <string>
 

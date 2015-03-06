@@ -36,7 +36,7 @@
 
 #include <memory>
 
-#include "utils/fs/path.hpp"
+#include "utils/fs/path_fwd.hpp"
 #include "utils/noncopyable.hpp"
 
 namespace utils {

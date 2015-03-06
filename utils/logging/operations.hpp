@@ -34,7 +34,7 @@
 
 #include <string>
 
-#include "utils/fs/path.hpp"
+#include "utils/fs/path_fwd.hpp"
 
 namespace utils {
 namespace logging {

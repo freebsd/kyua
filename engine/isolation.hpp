@@ -32,7 +32,7 @@
 #if !defined(ENGINE_ISOLATION_HPP)
 #define ENGINE_ISOLATION_HPP
 
-#include "utils/fs/path.hpp"
+#include "utils/fs/path_fwd.hpp"
 #include "utils/optional.hpp"
 #include "utils/passwd.hpp"
 
