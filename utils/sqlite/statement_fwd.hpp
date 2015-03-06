@@ -1,4 +1,4 @@
-// Copyright 2011 Google Inc.
+// Copyright 2015 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,41 +26,32 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file store/metadata.hpp
-/// Representation of the database metadata.
+/// \file utils/sqlite/statement_fwd.hpp
+/// Forward declarations for utils/sqlite/statement.hpp
 
-#if !defined(STORE_METADATA_HPP)
-#define STORE_METADATA_HPP
+#if !defined(UTILS_SQLITE_STATEMENT_FWD_HPP)
+#define UTILS_SQLITE_STATEMENT_FWD_HPP
 
-extern "C" {
-#include <stdint.h>
-}
-
-#include <cstddef>
-
-#include "utils/sqlite/database_fwd.hpp"
-
-namespace store {
+namespace utils {
+namespace sqlite {
 
 
-/// Representation of the database metadata.
-class metadata {
-    /// Current version of the database schema.
-    int _schema_version;
-
-    /// Timestamp of the last metadata entry in the database.
-    int64_t _timestamp;
-
-    metadata(const int, const int64_t);
-
-public:
-    int64_t timestamp(void) const;
-    int schema_version(void) const;
-
-    static metadata fetch_latest(utils::sqlite::database&);
+/// Representation of the SQLite data types.
+enum type {
+    type_blob,
+    type_float,
+    type_integer,
+    type_null,
+    type_text,
 };
 
 
-}  // namespace store
+class blob;
+class null;
+class statement;
 
-#endif  // !defined(STORE_METADATA_HPP)
+
+}  // namespace sqlite
+}  // namespace utils
+
+#endif  // !defined(UTILS_SQLITE_STATEMENT_FWD_HPP)

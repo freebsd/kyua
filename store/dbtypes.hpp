@@ -38,9 +38,11 @@
 #endif  // !defined(STORE_DBTYPES_HPP)
 #define STORE_DBTYPES_HPP
 
+#include <string>
+
 #include "model/test_result_fwd.hpp"
 #include "utils/datetime_fwd.hpp"
-#include "utils/sqlite/statement.hpp"
+#include "utils/sqlite/statement_fwd.hpp"
 
 namespace store {
 

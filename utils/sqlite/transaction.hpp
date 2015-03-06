@@ -32,6 +32,8 @@
 #if !defined(UTILS_SQLITE_TRANSACTION_HPP)
 #define UTILS_SQLITE_TRANSACTION_HPP
 
+#include "utils/sqlite/transaction_fwd.hpp"
+
 #include "utils/shared_ptr.hpp"
 
 namespace utils {

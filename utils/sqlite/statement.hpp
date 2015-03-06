@@ -35,6 +35,8 @@
 #if !defined(UTILS_SQLITE_STATEMENT_HPP)
 #define UTILS_SQLITE_STATEMENT_HPP
 
+#include "utils/sqlite/statement_fwd.hpp"
+
 extern "C" {
 #include <stdint.h>
 }
@@ -48,16 +50,6 @@ namespace sqlite {
 
 
 class database;
-
-
-/// Representation of the SQLite data types.
-enum type {
-    type_blob,
-    type_float,
-    type_integer,
-    type_null,
-    type_text,
-};
 
 
 /// Representation of a BLOB.

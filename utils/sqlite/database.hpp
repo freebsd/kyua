@@ -35,6 +35,8 @@
 #if !defined(UTILS_SQLITE_DATABASE_HPP)
 #define UTILS_SQLITE_DATABASE_HPP
 
+#include "utils/sqlite/database_fwd.hpp"
+
 extern "C" {
 #include <stdint.h>
 }

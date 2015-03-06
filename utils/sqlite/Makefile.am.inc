@@ -32,15 +32,19 @@ UTILS_LIBS += $(SQLITE3_LIBS)
 libutils_a_CPPFLAGS += $(SQLITE3_CFLAGS)
 libutils_a_SOURCES += utils/sqlite/c_gate.cpp
 libutils_a_SOURCES += utils/sqlite/c_gate.hpp
+libutils_a_SOURCES += utils/sqlite/c_gate_fwd.hpp
 libutils_a_SOURCES += utils/sqlite/database.cpp
 libutils_a_SOURCES += utils/sqlite/database.hpp
+libutils_a_SOURCES += utils/sqlite/database_fwd.hpp
 libutils_a_SOURCES += utils/sqlite/exceptions.cpp
 libutils_a_SOURCES += utils/sqlite/exceptions.hpp
 libutils_a_SOURCES += utils/sqlite/statement.cpp
 libutils_a_SOURCES += utils/sqlite/statement.hpp
+libutils_a_SOURCES += utils/sqlite/statement_fwd.hpp
 libutils_a_SOURCES += utils/sqlite/statement.ipp
 libutils_a_SOURCES += utils/sqlite/transaction.cpp
 libutils_a_SOURCES += utils/sqlite/transaction.hpp
+libutils_a_SOURCES += utils/sqlite/transaction_fwd.hpp
 
 if WITH_ATF
 tests_utils_sqlitedir = $(pkgtestsdir)/utils/sqlite
