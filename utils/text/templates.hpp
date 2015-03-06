@@ -54,6 +54,8 @@
 #if !defined(UTILS_TEXT_TEMPLATES_HPP)
 #define UTILS_TEXT_TEMPLATES_HPP
 
+#include "utils/text/templates_fwd.hpp"
+
 #include <istream>
 #include <map>
 #include <ostream>

@@ -1,4 +1,4 @@
-// Copyright 2014 Google Inc.
+// Copyright 2015 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,66 +26,21 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file utils/text/regex.hpp
-/// Utilities to build and match regular expressions.
+/// \file utils/text/regex_fwd.hpp
+/// Forward declarations for utils/text/regex.hpp
 
-#if !defined(UTILS_TEXT_REGEX_HPP)
-#define UTILS_TEXT_REGEX_HPP
-
-#include "utils/text/regex_fwd.hpp"
-
-#include <cstddef>
-
-#include "utils/shared_ptr.hpp"
+#if !defined(UTILS_TEXT_REGEX_FWD_HPP)
+#define UTILS_TEXT_REGEX_FWD_HPP
 
 namespace utils {
 namespace text {
 
 
-/// Container for regex match results.
-class regex_matches {
-    struct impl;
-
-    /// Pointer to shared implementation.
-    std::shared_ptr< impl > _pimpl;
-
-    friend class regex;
-    regex_matches(std::shared_ptr< impl >);
-
-public:
-    ~regex_matches(void);
-
-    std::size_t count(void) const;
-    std::string get(const std::size_t) const;
-
-    operator bool(void) const;
-};
-
-
-/// Regular expression compiler and executor.
-///
-/// All regular expressions handled by this class are "extended".
-class regex {
-    struct impl;
-
-    /// Pointer to shared implementation.
-    std::shared_ptr< impl > _pimpl;
-
-    regex(std::shared_ptr< impl >);
-
-public:
-    ~regex(void);
-
-    static regex compile(const std::string&, const std::size_t);
-    regex_matches match(const std::string&) const;
-};
-
-
-regex_matches match_regex(const std::string&, const std::string&,
-                          const std::size_t);
+class regex_matches;
+class regex;
 
 
 }  // namespace text
 }  // namespace utils
 
-#endif  // !defined(UTILS_TEXT_REGEX_HPP)
+#endif  // !defined(UTILS_TEXT_REGEX_FWD_HPP)
