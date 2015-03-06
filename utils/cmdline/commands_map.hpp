@@ -38,6 +38,8 @@
 #if !defined(UTILS_CMDLINE_COMMANDS_MAP_HPP)
 #define UTILS_CMDLINE_COMMANDS_MAP_HPP
 
+#include "utils/cmdline/commands_map_fwd.hpp"
+
 #include <map>
 #include <memory>
 #include <set>

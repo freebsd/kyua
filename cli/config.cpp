@@ -31,6 +31,7 @@
 #include "cli/common.hpp"
 #include "engine/config.hpp"
 #include "engine/exceptions.hpp"
+#include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/config/tree.ipp"
 #include "utils/format/macros.hpp"

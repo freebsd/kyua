@@ -46,6 +46,7 @@
 #include "store/read_transaction.hpp"
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.ipp"
+#include "utils/cmdline/ui.hpp"
 #include "utils/datetime.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"

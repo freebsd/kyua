@@ -47,6 +47,7 @@
 #include "store/layout.hpp"
 #include "store/read_transaction.hpp"
 #include "utils/cmdline/exceptions.hpp"
+#include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/cmdline/ui.hpp"
 #include "utils/datetime.hpp"

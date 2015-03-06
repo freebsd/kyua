@@ -36,7 +36,7 @@
 #define CLI_MAIN_HPP
 
 #include "cli/common.hpp"
-#include "utils/cmdline/ui.hpp"
+#include "utils/cmdline/ui_fwd.hpp"
 
 namespace utils {
 namespace fs {

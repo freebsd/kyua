@@ -33,7 +33,7 @@
 #define CLI_CMD_HELP_HPP
 
 #include "cli/common.hpp"
-#include "utils/cmdline/commands_map.hpp"
+#include "utils/cmdline/commands_map_fwd.hpp"
 
 namespace cli {
 

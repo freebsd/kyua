@@ -31,6 +31,8 @@
 #include <cstdlib>
 
 #include "cli/common.ipp"
+#include "utils/cmdline/parser.ipp"
+#include "utils/cmdline/ui.hpp"
 #include "utils/config/tree.ipp"
 #include "utils/format/macros.hpp"
 

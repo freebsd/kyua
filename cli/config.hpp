@@ -35,8 +35,8 @@
 #if !defined(CLI_CONFIG_HPP)
 #define CLI_CONFIG_HPP
 
-#include "utils/cmdline/options.hpp"
-#include "utils/cmdline/parser.hpp"
+#include "utils/cmdline/options_fwd.hpp"
+#include "utils/cmdline/parser_fwd.hpp"
 #include "utils/config/tree.hpp"
 
 namespace cli {

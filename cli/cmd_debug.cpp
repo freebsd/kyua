@@ -34,7 +34,9 @@
 #include "drivers/debug_test.hpp"
 #include "engine/filters.hpp"
 #include "utils/cmdline/exceptions.hpp"
+#include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.ipp"
+#include "utils/cmdline/ui.hpp"
 #include "utils/format/macros.hpp"
 
 namespace cmdline = utils::cmdline;

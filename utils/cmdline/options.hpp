@@ -32,6 +32,8 @@
 #if !defined(UTILS_CMDLINE_OPTIONS_HPP)
 #define UTILS_CMDLINE_OPTIONS_HPP
 
+#include "utils/cmdline/options_fwd.hpp"
+
 #include <string>
 #include <utility>
 #include <vector>

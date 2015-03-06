@@ -37,6 +37,7 @@
 #include "drivers/scan_results.hpp"
 #include "engine/filters.hpp"
 #include "store/layout.hpp"
+#include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/defs.hpp"
 #include "utils/optional.ipp"

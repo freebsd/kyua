@@ -34,6 +34,8 @@
 #include "store/exceptions.hpp"
 #include "store/layout.hpp"
 #include "store/migrate.hpp"
+#include "utils/cmdline/options.hpp"
+#include "utils/cmdline/ui.hpp"
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
