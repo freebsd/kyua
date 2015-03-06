@@ -33,6 +33,7 @@ noinst_LIBRARIES += libutils.a
 libutils_a_CPPFLAGS = -DGDB=\"$(GDB)\"
 libutils_a_SOURCES  = utils/auto_array.hpp
 libutils_a_SOURCES += utils/auto_array.ipp
+libutils_a_SOURCES += utils/auto_array_fwd.hpp
 libutils_a_SOURCES += utils/datetime.cpp
 libutils_a_SOURCES += utils/datetime.hpp
 libutils_a_SOURCES += utils/env.hpp
