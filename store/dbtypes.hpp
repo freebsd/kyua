@@ -39,7 +39,7 @@
 #define STORE_DBTYPES_HPP
 
 #include "model/test_result_fwd.hpp"
-#include "utils/datetime.hpp"
+#include "utils/datetime_fwd.hpp"
 #include "utils/sqlite/statement.hpp"
 
 namespace store {

@@ -45,7 +45,7 @@ extern "C" {
 
 #include "engine/filters.hpp"
 #include "model/context_fwd.hpp"
-#include "utils/datetime.hpp"
+#include "utils/datetime_fwd.hpp"
 #include "utils/fs/path.hpp"
 
 namespace store {

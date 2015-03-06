@@ -35,6 +35,7 @@
 
 #include "engine/exceptions.hpp"
 #include "model/test_result.hpp"
+#include "utils/datetime.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/directory.hpp"

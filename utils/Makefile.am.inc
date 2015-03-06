@@ -36,6 +36,7 @@ libutils_a_SOURCES += utils/auto_array.ipp
 libutils_a_SOURCES += utils/auto_array_fwd.hpp
 libutils_a_SOURCES += utils/datetime.cpp
 libutils_a_SOURCES += utils/datetime.hpp
+libutils_a_SOURCES += utils/datetime_fwd.hpp
 libutils_a_SOURCES += utils/env.hpp
 libutils_a_SOURCES += utils/env.cpp
 libutils_a_SOURCES += utils/memory.hpp

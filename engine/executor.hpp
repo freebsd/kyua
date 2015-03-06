@@ -55,7 +55,7 @@
 #include "model/test_program_fwd.hpp"
 #include "model/test_result_fwd.hpp"
 #include "utils/config/tree_fwd.hpp"
-#include "utils/datetime.hpp"
+#include "utils/datetime_fwd.hpp"
 #include "utils/defs.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"

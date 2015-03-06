@@ -39,6 +39,7 @@
 #include "store/read_backend.hpp"
 #include "store/read_transaction.hpp"
 #include "store/write_backend.hpp"
+#include "utils/datetime.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
