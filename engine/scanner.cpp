@@ -31,6 +31,7 @@
 #include <deque>
 #include <string>
 
+#include "engine/filters.hpp"
 #include "model/test_case.hpp"
 #include "model/test_program.hpp"
 #include "utils/optional.ipp"

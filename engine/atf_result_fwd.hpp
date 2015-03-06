@@ -1,4 +1,4 @@
-// Copyright 2014 Google Inc.
+// Copyright 2015 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,52 +26,18 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/scanner.hpp
-/// Utilities to scan through list of tests in a test suite.
+/// \file engine/atf_result_fwd.hpp
+/// Forward declarations for engine/atf_result.hpp
 
-#if !defined(ENGINE_SCANNER_HPP)
-#define ENGINE_SCANNER_HPP
-
-#include "engine/scanner_fwd.hpp"
-
-#include <memory>
-#include <set>
-
-#include "engine/filters_fwd.hpp"
-#include "model/test_program_fwd.hpp"
-#include "utils/optional_fwd.hpp"
-#include "utils/shared_ptr.hpp"
+#if !defined(ENGINE_ATF_RESULT_FWD_HPP)
+#define ENGINE_ATF_RESULT_FWD_HPP
 
 namespace engine {
 
 
-/// Scans a list of test programs, yielding one test case at a time.
-///
-/// This class contains the state necessary to process a collection of test
-/// programs (possibly as provided by the Kyuafile) and to extract an arbitrary
-/// (test program, test_case) pair out of them one at a time.
-///
-/// The scanning algorithm guarantees that test programs are initialized
-/// dynamically, should they need to load their list of test cases from disk.
-///
-/// The order of the extraction is not guaranteed.
-class scanner {
-    struct impl;
-    /// Pointer to the internal implementation data.
-    std::shared_ptr< impl > _pimpl;
-
-public:
-    scanner(const model::test_programs_vector&, const std::set< test_filter >&);
-    ~scanner(void);
-
-    bool done(void);
-    utils::optional< scan_result > yield(void);
-
-    std::set< test_filter > unused_filters(void) const;
-};
+class atf_result;
 
 
 }  // namespace engine
 
-
-#endif  // !defined(ENGINE_SCANNER_HPP)
+#endif  // !defined(ENGINE_ATF_RESULT_FWD_HPP)

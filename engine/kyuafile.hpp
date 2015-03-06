@@ -32,6 +32,8 @@
 #if !defined(ENGINE_KYUAFILE_HPP)
 #define ENGINE_KYUAFILE_HPP
 
+#include "engine/kyuafile_fwd.hpp"
+
 #include <string>
 #include <vector>
 

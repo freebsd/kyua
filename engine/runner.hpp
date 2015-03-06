@@ -32,6 +32,8 @@
 #if !defined(ENGINE_RUNNER_HPP)
 #define ENGINE_RUNNER_HPP
 
+#include "engine/runner_fwd.hpp"
+
 #include "model/context_fwd.hpp"
 #include "model/test_program.hpp"
 #include "model/test_result_fwd.hpp"

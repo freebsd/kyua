@@ -49,6 +49,8 @@
 #if !defined(ENGINE_EXECUTOR_HPP)
 #define ENGINE_EXECUTOR_HPP
 
+#include "engine/executor_fwd.hpp"
+
 #include <map>
 #include <string>
 
@@ -110,10 +112,6 @@ public:
         const utils::fs::path& stdout_path,
         const utils::fs::path& stderr_path) const = 0;
 };
-
-
-/// Unique identifier for in-flight execution operations.
-typedef int exec_handle;
 
 
 /// Container for all test termination data and accessor to cleanup operations.

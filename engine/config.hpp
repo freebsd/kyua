@@ -32,6 +32,8 @@
 #if !defined(ENGINE_CONFIG_HPP)
 #define ENGINE_CONFIG_HPP
 
+#include "engine/config_fwd.hpp"
+
 #include "utils/config/nodes.hpp"
 #include "utils/config/tree_fwd.hpp"
 #include "utils/fs/path_fwd.hpp"

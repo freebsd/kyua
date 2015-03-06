@@ -38,7 +38,7 @@
 #include <set>
 #include <string>
 
-#include "engine/filters.hpp"
+#include "engine/filters_fwd.hpp"
 #include "model/test_program_fwd.hpp"
 #include "utils/config/tree_fwd.hpp"
 #include "utils/fs/path_fwd.hpp"

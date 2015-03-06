@@ -32,6 +32,8 @@
 #if !defined(ENGINE_TESTERS_HPP)
 #define ENGINE_TESTERS_HPP
 
+#include "engine/testers_fwd.hpp"
+
 #include <map>
 #include <set>
 #include <string>

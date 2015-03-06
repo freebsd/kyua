@@ -32,6 +32,8 @@
 #if !defined(ENGINE_ATF_RESULT_HPP)
 #define ENGINE_ATF_RESULT_HPP
 
+#include "engine/atf_result_fwd.hpp"
+
 #include <istream>
 #include <ostream>
 

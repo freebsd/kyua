@@ -41,6 +41,7 @@
 #include "utils/config/tree.ipp"
 #include "utils/datetime.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/fs/path.hpp"
 
 namespace cmdline = utils::cmdline;
 namespace config = utils::config;
