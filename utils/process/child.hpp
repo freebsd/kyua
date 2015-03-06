@@ -46,13 +46,15 @@
 #if !defined(UTILS_PROCESS_CHILD_HPP)
 #define UTILS_PROCESS_CHILD_HPP
 
+#include "utils/process/child_fwd.hpp"
+
 #include <istream>
 #include <memory>
 
 #include "utils/fs/path_fwd.hpp"
 #include "utils/noncopyable.hpp"
-#include "utils/process/operations.hpp"  // TODO(jmmv): This is wrong.
-#include "utils/process/status.hpp"
+#include "utils/process/operations_fwd.hpp"
+#include "utils/process/status_fwd.hpp"
 
 namespace utils {
 namespace process {

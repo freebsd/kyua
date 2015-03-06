@@ -40,6 +40,7 @@ extern "C" {
 #include "utils/fs/path.hpp"
 #include "utils/process/child.ipp"
 #include "utils/process/exceptions.hpp"
+#include "utils/process/status.hpp"
 
 namespace fs = utils::fs;
 namespace process = utils::process;

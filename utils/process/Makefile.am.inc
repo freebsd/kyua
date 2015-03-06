@@ -29,18 +29,23 @@
 libutils_a_SOURCES += utils/process/child.cpp
 libutils_a_SOURCES += utils/process/child.hpp
 libutils_a_SOURCES += utils/process/child.ipp
+libutils_a_SOURCES += utils/process/child_fwd.hpp
 libutils_a_SOURCES += utils/process/exceptions.cpp
 libutils_a_SOURCES += utils/process/exceptions.hpp
 libutils_a_SOURCES += utils/process/fdstream.cpp
 libutils_a_SOURCES += utils/process/fdstream.hpp
+libutils_a_SOURCES += utils/process/fdstream_fwd.hpp
 libutils_a_SOURCES += utils/process/operations.cpp
 libutils_a_SOURCES += utils/process/operations.hpp
+libutils_a_SOURCES += utils/process/operations_fwd.hpp
 libutils_a_SOURCES += utils/process/status.cpp
 libutils_a_SOURCES += utils/process/status.hpp
+libutils_a_SOURCES += utils/process/status_fwd.hpp
 libutils_a_SOURCES += utils/process/system.cpp
 libutils_a_SOURCES += utils/process/system.hpp
 libutils_a_SOURCES += utils/process/systembuf.cpp
 libutils_a_SOURCES += utils/process/systembuf.hpp
+libutils_a_SOURCES += utils/process/systembuf_fwd.hpp
 
 if WITH_ATF
 tests_utils_processdir = $(pkgtestsdir)/utils/process

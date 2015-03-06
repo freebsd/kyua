@@ -36,7 +36,7 @@
 
 #include "utils/fs/path_fwd.hpp"
 #include "utils/optional_fwd.hpp"
-#include "utils/process/status.hpp"
+#include "utils/process/status_fwd.hpp"
 
 namespace utils {
 

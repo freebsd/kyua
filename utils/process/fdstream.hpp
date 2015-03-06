@@ -32,6 +32,8 @@
 #if !defined(UTILS_PROCESS_FDSTREAM_HPP)
 #define UTILS_PROCESS_FDSTREAM_HPP
 
+#include "utils/process/fdstream_fwd.hpp"
+
 #include <istream>
 #include <memory>
 

@@ -52,6 +52,7 @@ extern "C" {
 #include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/process/child.ipp"
+#include "utils/process/operations.hpp"
 #include "utils/process/status.hpp"
 #include "utils/sanity.hpp"
 
