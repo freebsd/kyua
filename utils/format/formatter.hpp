@@ -46,6 +46,8 @@
 #if !defined(UTILS_FORMAT_FORMATTER_HPP)
 #define UTILS_FORMAT_FORMATTER_HPP
 
+#include "utils/format/formatter_fwd.hpp"
+
 #include <sstream>
 #include <string>
 
