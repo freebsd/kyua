@@ -34,6 +34,7 @@
 #include "engine/exceptions.hpp"
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.ipp"
+#include "utils/config/tree.ipp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"

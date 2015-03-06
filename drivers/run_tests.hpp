@@ -42,7 +42,7 @@
 #include "engine/filters.hpp"
 #include "model/test_program.hpp"
 #include "model/test_result_fwd.hpp"
-#include "utils/config/tree.hpp"
+#include "utils/config/tree_fwd.hpp"
 #include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"

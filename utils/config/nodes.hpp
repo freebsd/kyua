@@ -32,22 +32,19 @@
 #if !defined(UTILS_CONFIG_NODES_HPP)
 #define UTILS_CONFIG_NODES_HPP
 
-#include <map>
+#include "utils/config/nodes_fwd.hpp"
+
 #include <set>
 #include <string>
 
 #include <lutok/state.hpp>
 
-#include "utils/config/keys.hpp"
+#include "utils/config/keys_fwd.hpp"
 #include "utils/noncopyable.hpp"
 #include "utils/optional.hpp"
 
 namespace utils {
 namespace config {
-
-
-/// Flat representation of all properties as strings.
-typedef std::map< std::string, std::string > properties_map;
 
 
 namespace detail {

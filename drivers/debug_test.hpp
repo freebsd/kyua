@@ -38,7 +38,7 @@
 
 #include "engine/filters.hpp"
 #include "model/test_result.hpp"
-#include "utils/config/tree.hpp"
+#include "utils/config/tree_fwd.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"
 

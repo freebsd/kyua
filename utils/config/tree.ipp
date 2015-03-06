@@ -34,6 +34,7 @@
 #include <typeinfo>
 
 #include "utils/config/exceptions.hpp"
+#include "utils/config/keys.hpp"
 #include "utils/config/nodes.ipp"
 #include "utils/format/macros.hpp"
 #include "utils/sanity.hpp"

@@ -35,6 +35,7 @@
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.hpp"
 #include "utils/cmdline/ui_mock.hpp"
+#include "utils/config/tree.ipp"
 
 namespace cmdline = utils::cmdline;
 

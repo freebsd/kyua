@@ -1,4 +1,4 @@
-// Copyright 2012 Google Inc.
+// Copyright 2015 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,72 +26,20 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file utils/config/exceptions.hpp
-/// Exception types raised by the config module.
+/// \file utils/config/parser_fwd.hpp
+/// Forward declarations for utils/config/parser.hpp
 
-#if !defined(UTILS_CONFIG_EXCEPTIONS_HPP)
-#define UTILS_CONFIG_EXCEPTIONS_HPP
-
-#include <stdexcept>
-
-#include "utils/config/keys_fwd.hpp"
-#include "utils/config/tree_fwd.hpp"
+#if !defined(UTILS_CONFIG_PARSER_FWD_HPP)
+#define UTILS_CONFIG_PARSER_FWD_HPP
 
 namespace utils {
 namespace config {
 
 
-/// Base exceptions for config errors.
-class error : public std::runtime_error {
-public:
-    explicit error(const std::string&);
-    ~error(void) throw();
-};
-
-
-/// Exception denoting that a key was not found within a tree.
-class invalid_key_error : public error {
-public:
-    explicit invalid_key_error(const std::string&);
-    ~invalid_key_error(void) throw();
-};
-
-
-/// Exception denoting that a key was given an invalid value.
-class invalid_key_value : public error {
-public:
-    explicit invalid_key_value(const detail::tree_key&, const std::string&);
-    ~invalid_key_value(void) throw();
-};
-
-
-/// Exception denoting that a configuration file is invalid.
-class syntax_error : public error {
-public:
-    explicit syntax_error(const std::string&);
-    ~syntax_error(void) throw();
-};
-
-
-/// Exception denoting that a key was not found within a tree.
-class unknown_key_error : public error {
-public:
-    explicit unknown_key_error(const detail::tree_key&,
-                               const std::string& = "");
-    ~unknown_key_error(void) throw();
-};
-
-
-/// Exception denoting that a value was invalid.
-class value_error : public error {
-public:
-    explicit value_error(const std::string&);
-    ~value_error(void) throw();
-};
+class parser;
 
 
 }  // namespace config
 }  // namespace utils
 
-
-#endif  // !defined(UTILS_CONFIG_EXCEPTIONS_HPP)
+#endif  // !defined(UTILS_CONFIG_PARSER_FWD_HPP)

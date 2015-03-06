@@ -42,7 +42,7 @@
 #include "utils/cmdline/options_fwd.hpp"
 #include "utils/cmdline/parser_fwd.hpp"
 #include "utils/cmdline/ui_fwd.hpp"
-#include "utils/config/tree.hpp"
+#include "utils/config/tree_fwd.hpp"
 #include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"

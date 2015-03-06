@@ -32,6 +32,8 @@
 #if !defined(UTILS_CONFIG_PARSER_HPP)
 #define UTILS_CONFIG_PARSER_HPP
 
+#include "utils/config/parser_fwd.hpp"
+
 #include <memory>
 
 #include "utils/fs/path.hpp"

@@ -32,21 +32,18 @@
 #if !defined(UTILS_CONFIG_TREE_HPP)
 #define UTILS_CONFIG_TREE_HPP
 
-#include <map>
+#include "utils/config/tree_fwd.hpp"
+
 #include <string>
 
 #include <lutok/state.hpp>
 
-#include "utils/config/keys.hpp"
-#include "utils/config/nodes.hpp"
+#include "utils/config/keys_fwd.hpp"
+#include "utils/config/nodes_fwd.hpp"
 #include "utils/shared_ptr.hpp"
 
 namespace utils {
 namespace config {
-
-
-/// Flat representation of all properties as strings.
-typedef std::map< std::string, std::string > properties_map;
 
 
 /// Representation of a tree.

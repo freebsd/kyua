@@ -1,4 +1,4 @@
-// Copyright 2012 Google Inc.
+// Copyright 2015 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,72 +26,45 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file utils/config/exceptions.hpp
-/// Exception types raised by the config module.
+/// \file utils/config/nodes_fwd.hpp
+/// Forward declarations for utils/config/nodes.hpp
 
-#if !defined(UTILS_CONFIG_EXCEPTIONS_HPP)
-#define UTILS_CONFIG_EXCEPTIONS_HPP
+#if !defined(UTILS_CONFIG_NODES_FWD_HPP)
+#define UTILS_CONFIG_NODES_FWD_HPP
 
-#include <stdexcept>
-
-#include "utils/config/keys_fwd.hpp"
-#include "utils/config/tree_fwd.hpp"
+#include <map>
+#include <string>
 
 namespace utils {
 namespace config {
 
 
-/// Base exceptions for config errors.
-class error : public std::runtime_error {
-public:
-    explicit error(const std::string&);
-    ~error(void) throw();
-};
+/// Flat representation of all properties as strings.
+typedef std::map< std::string, std::string > properties_map;
 
 
-/// Exception denoting that a key was not found within a tree.
-class invalid_key_error : public error {
-public:
-    explicit invalid_key_error(const std::string&);
-    ~invalid_key_error(void) throw();
-};
+namespace detail {
 
 
-/// Exception denoting that a key was given an invalid value.
-class invalid_key_value : public error {
-public:
-    explicit invalid_key_value(const detail::tree_key&, const std::string&);
-    ~invalid_key_value(void) throw();
-};
+class base_node;
+class static_inner_node;
 
 
-/// Exception denoting that a configuration file is invalid.
-class syntax_error : public error {
-public:
-    explicit syntax_error(const std::string&);
-    ~syntax_error(void) throw();
-};
+}  // namespace detail
 
 
-/// Exception denoting that a key was not found within a tree.
-class unknown_key_error : public error {
-public:
-    explicit unknown_key_error(const detail::tree_key&,
-                               const std::string& = "");
-    ~unknown_key_error(void) throw();
-};
-
-
-/// Exception denoting that a value was invalid.
-class value_error : public error {
-public:
-    explicit value_error(const std::string&);
-    ~value_error(void) throw();
-};
+class leaf_node;
+template< typename > class typed_leaf_node;
+template< typename > class native_leaf_node;
+class bool_node;
+class int_node;
+class positive_int_node;
+class string_node;
+template< typename > class base_set_node;
+class strings_set_node;
 
 
 }  // namespace config
 }  // namespace utils
 
-
-#endif  // !defined(UTILS_CONFIG_EXCEPTIONS_HPP)
+#endif  // !defined(UTILS_CONFIG_NODES_FWD_HPP)

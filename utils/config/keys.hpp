@@ -32,16 +32,13 @@
 #if !defined(UTILS_CONFIG_KEYS_HPP)
 #define UTILS_CONFIG_KEYS_HPP
 
+#include "utils/config/keys_fwd.hpp"
+
 #include <string>
-#include <vector>
 
 namespace utils {
 namespace config {
 namespace detail {
-
-
-/// Representation of a valid, tokenized key.
-typedef std::vector< std::string > tree_key;
 
 
 std::string flatten_key(const tree_key&);

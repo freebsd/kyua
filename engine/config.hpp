@@ -32,7 +32,8 @@
 #if !defined(ENGINE_CONFIG_HPP)
 #define ENGINE_CONFIG_HPP
 
-#include "utils/config/tree.hpp"
+#include "utils/config/nodes.hpp"
+#include "utils/config/tree_fwd.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/passwd.hpp"
 

@@ -42,6 +42,7 @@
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.hpp"
 #include "utils/cmdline/ui_mock.hpp"
+#include "utils/config/tree.ipp"
 #include "utils/defs.hpp"
 #include "utils/sanity.hpp"
 
