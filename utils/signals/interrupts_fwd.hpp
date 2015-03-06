@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2015 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,38 +26,21 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file utils/signals/programmer.hpp
-/// Provides the signals::programmer class.
+/// \file utils/signals/interrupts_fwd.hpp
+/// Forward declarations for utils/signals/interrupts.hpp
 
-#if !defined(UTILS_SIGNALS_PROGRAMMER_HPP)
-#define UTILS_SIGNALS_PROGRAMMER_HPP
-
-#include "utils/signals/programmer_fwd.hpp"
-
-#include <memory>
-
-#include "utils/noncopyable.hpp"
+#if !defined(UTILS_SIGNALS_INTERRUPTS_FWD_HPP)
+#define UTILS_SIGNALS_INTERRUPTS_FWD_HPP
 
 namespace utils {
 namespace signals {
 
 
-/// A RAII class to program signal handlers.
-class programmer : noncopyable {
-    struct impl;
-
-    /// Pointer to the shared internal implementation.
-    std::auto_ptr< impl > _pimpl;
-
-public:
-    programmer(const int, const handler_type);
-    ~programmer(void);
-
-    void unprogram(void);
-};
+class interrupts_handler;
+class interrupts_inhibiter;
 
 
-} // namespace signals
-} // namespace utils
+}  // namespace signals
+}  // namespace utils
 
-#endif // !defined(UTILS_SIGNALS_PROGRAMMER_HPP)
+#endif  // !defined(UTILS_SIGNALS_INTERRUPTS_FWD_HPP)

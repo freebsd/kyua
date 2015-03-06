@@ -32,6 +32,8 @@
 #if !defined(UTILS_SIGNALS_INTERRUPTS_HPP)
 #define UTILS_SIGNALS_INTERRUPTS_HPP
 
+#include "utils/signals/interrupts_fwd.hpp"
+
 #include <unistd.h>
 
 #include "utils/noncopyable.hpp"

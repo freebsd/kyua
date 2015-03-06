@@ -36,6 +36,8 @@
 #if !defined(UTILS_SIGNALS_TIMER_HPP)
 #define UTILS_SIGNALS_TIMER_HPP
 
+#include "utils/signals/timer_fwd.hpp"
+
 #include <memory>
 
 #include "utils/noncopyable.hpp"
@@ -51,7 +53,6 @@ class timestamp;
 namespace signals {
 
 
-class timer;
 namespace detail {
 void invoke_do_fired(timer*);
 }  // namespace detail
