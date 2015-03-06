@@ -50,6 +50,7 @@ libutils_a_SOURCES += utils/passwd.hpp
 libutils_a_SOURCES += utils/passwd_fwd.hpp
 libutils_a_SOURCES += utils/sanity.cpp
 libutils_a_SOURCES += utils/sanity.hpp
+libutils_a_SOURCES += utils/sanity_fwd.hpp
 libutils_a_SOURCES += utils/shared_ptr.hpp
 libutils_a_SOURCES += utils/stacktrace.cpp
 libutils_a_SOURCES += utils/stacktrace.hpp
