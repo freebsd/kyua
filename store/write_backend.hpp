@@ -32,6 +32,8 @@
 #if !defined(STORE_WRITE_BACKEND_HPP)
 #define STORE_WRITE_BACKEND_HPP
 
+#include "store/write_backend_fwd.hpp"
+
 #include "utils/shared_ptr.hpp"
 
 namespace utils {
@@ -50,9 +52,6 @@ class metadata;
 
 
 namespace detail {
-
-
-extern int current_schema_version;
 
 
 utils::fs::path schema_file(void);

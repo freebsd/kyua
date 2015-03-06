@@ -32,6 +32,8 @@
 #if !defined(STORE_READ_TRANSACTION_HPP)
 #define STORE_READ_TRANSACTION_HPP
 
+#include "store/read_transaction_fwd.hpp"
+
 extern "C" {
 #include <stdint.h>
 }

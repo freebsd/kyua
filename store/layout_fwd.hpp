@@ -1,4 +1,4 @@
-// Copyright 2011 Google Inc.
+// Copyright 2015 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,43 +26,29 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file store/metadata.hpp
-/// Representation of the database metadata.
+/// \file store/layout_fwd.hpp
+/// Forward declarations for store/layout.hpp
 
-#if !defined(STORE_METADATA_HPP)
-#define STORE_METADATA_HPP
+#if !defined(STORE_LAYOUT_FWD_HPP)
+#define STORE_LAYOUT_FWD_HPP
 
-#include "store/metadata_fwd.hpp"
+#include <string>
+#include <utility>
 
-extern "C" {
-#include <stdint.h>
-}
-
-#include <cstddef>
-
-#include "utils/sqlite/database_fwd.hpp"
+#include "utils/fs/path_fwd.hpp"
 
 namespace store {
+namespace layout {
 
 
-/// Representation of the database metadata.
-class metadata {
-    /// Current version of the database schema.
-    int _schema_version;
-
-    /// Timestamp of the last metadata entry in the database.
-    int64_t _timestamp;
-
-    metadata(const int, const int64_t);
-
-public:
-    int64_t timestamp(void) const;
-    int schema_version(void) const;
-
-    static metadata fetch_latest(utils::sqlite::database&);
-};
+/// A pair with the user-visible ID of the results file and its path.
+///
+/// It is possible for the ID (first component) to be empty in the cases where
+/// the user explicitly requested to create the database in a specific path.
+typedef std::pair< std::string, utils::fs::path > results_id_file_pair;
 
 
+}  // namespace layout
 }  // namespace store
 
-#endif  // !defined(STORE_METADATA_HPP)
+#endif  // !defined(STORE_LAYOUT_FWD_HPP)

@@ -1,4 +1,4 @@
-// Copyright 2011 Google Inc.
+// Copyright 2015 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,43 +26,19 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file store/metadata.hpp
-/// Representation of the database metadata.
+/// \file store/read_transaction_fwd.hpp
+/// Forward declarations for store/read_transaction.hpp
 
-#if !defined(STORE_METADATA_HPP)
-#define STORE_METADATA_HPP
-
-#include "store/metadata_fwd.hpp"
-
-extern "C" {
-#include <stdint.h>
-}
-
-#include <cstddef>
-
-#include "utils/sqlite/database_fwd.hpp"
+#if !defined(STORE_READ_TRANSACTION_FWD_HPP)
+#define STORE_READ_TRANSACTION_FWD_HPP
 
 namespace store {
 
 
-/// Representation of the database metadata.
-class metadata {
-    /// Current version of the database schema.
-    int _schema_version;
-
-    /// Timestamp of the last metadata entry in the database.
-    int64_t _timestamp;
-
-    metadata(const int, const int64_t);
-
-public:
-    int64_t timestamp(void) const;
-    int schema_version(void) const;
-
-    static metadata fetch_latest(utils::sqlite::database&);
-};
+class read_transaction;
+class results_iterator;
 
 
 }  // namespace store
 
-#endif  // !defined(STORE_METADATA_HPP)
+#endif  // !defined(STORE_READ_TRANSACTION_FWD_HPP)

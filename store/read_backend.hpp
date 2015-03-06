@@ -32,6 +32,8 @@
 #if !defined(STORE_READ_BACKEND_HPP)
 #define STORE_READ_BACKEND_HPP
 
+#include "store/read_backend_fwd.hpp"
+
 #include "utils/shared_ptr.hpp"
 
 namespace utils {

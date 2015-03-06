@@ -56,8 +56,9 @@
 #if !defined(STORE_LAYOUT_HPP)
 #define STORE_LAYOUT_HPP
 
+#include "store/layout_fwd.hpp"
+
 #include <string>
-#include <utility>
 
 namespace utils {
 namespace datetime {
@@ -73,12 +74,6 @@ namespace layout {
 
 extern const char* results_auto_create_name;
 extern const char* results_auto_open_name;
-
-/// A pair with the user-visible ID of the results file and its path.
-///
-/// It is possible for the ID (first component) to be empty in the cases where
-/// the user explicitly requested to create the database in a specific path.
-typedef std::pair< std::string, utils::fs::path > results_id_file_pair;
 
 utils::fs::path find_results(const std::string&);
 results_id_file_pair new_db(const std::string&, const utils::fs::path&);
