@@ -47,7 +47,6 @@ extern "C" {
 
 #include "engine/config.hpp"
 #include "engine/exceptions.hpp"
-#include "engine/isolation.hpp"
 #include "engine/requirements.hpp"
 #include "engine/runner.hpp"
 #include "model/metadata.hpp"
@@ -68,6 +67,7 @@ extern "C" {
 #include "utils/optional.ipp"
 #include "utils/passwd.hpp"
 #include "utils/process/child.ipp"
+#include "utils/process/isolation.hpp"
 #include "utils/process/operations.hpp"
 #include "utils/process/status.hpp"
 #include "utils/sanity.hpp"
@@ -299,7 +299,7 @@ class run_test_program {
     /// User-provided configuration variables.
     const config::tree& _user_config;
 
-    /// Calls with engine::isolate_child after guessing the unprivileged_user.
+    /// Calls process::isolate_child after guessing the unprivileged_user.
     void
     do_isolate_child(void)
     {
@@ -313,8 +313,8 @@ class run_test_program {
                 "unprivileged_user");
         }
 
-        engine::isolate_path(unprivileged_user, _control_directory);
-        engine::isolate_child(unprivileged_user, _work_directory);
+        process::isolate_path(unprivileged_user, _control_directory);
+        process::isolate_child(unprivileged_user, _work_directory);
     }
 
     /// Verifies if the test case needs to be skipped or not.

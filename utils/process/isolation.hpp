@@ -26,17 +26,21 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/isolation.hpp
+/// \file utils/process/isolation.hpp
 /// Utilities to isolate a process.
+///
+/// By "isolation" in this context we mean forcing a process to run in a
+/// more-or-less deterministic environment.
 
-#if !defined(ENGINE_ISOLATION_HPP)
-#define ENGINE_ISOLATION_HPP
+#if !defined(UTILS_PROCESS_ISOLATION_HPP)
+#define UTILS_PROCESS_ISOLATION_HPP
 
 #include "utils/fs/path_fwd.hpp"
 #include "utils/optional_fwd.hpp"
 #include "utils/passwd_fwd.hpp"
 
-namespace engine {
+namespace utils {
+namespace process {
 
 
 extern const int exit_isolation_failure;
@@ -49,7 +53,8 @@ void isolate_path(const utils::optional< utils::passwd::user >&,
                   const utils::fs::path&);
 
 
-}  // namespace engine
+}  // namespace process
+}  // namespace utils
 
 
-#endif  // !defined(ENGINE_ISOLATION_HPP)
+#endif  // !defined(UTILS_PROCESS_ISOLATION_HPP)

@@ -26,7 +26,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/isolation.hpp"
+#include "utils/process/isolation.hpp"
 
 extern "C" {
 #include <sys/stat.h>
@@ -54,13 +54,14 @@ extern "C" {
 
 namespace fs = utils::fs;
 namespace passwd = utils::passwd;
+namespace process = utils::process;
 namespace signals = utils::signals;
 
 using utils::optional;
 
 
 /// Magic exit code to denote an error while preparing the subprocess.
-const int engine::exit_isolation_failure = 124;
+const int process::exit_isolation_failure = 124;
 
 
 namespace {
@@ -78,7 +79,7 @@ static void
 fail(const std::string& message, const int original_errno)
 {
     std::cerr << message << ": " << std::strerror(original_errno) << '\n';
-    std::exit(engine::exit_isolation_failure);
+    std::exit(process::exit_isolation_failure);
 }
 
 
@@ -133,8 +134,8 @@ prepare_environment(const fs::path& work_directory)
 /// \param unprivileged_user Unprivileged user to run the test case as.
 /// \param work_directory Path to the test case-specific work directory.
 void
-engine::isolate_child(const optional< passwd::user >& unprivileged_user,
-                      const fs::path& work_directory)
+process::isolate_child(const optional< passwd::user >& unprivileged_user,
+                       const fs::path& work_directory)
 {
     isolate_path(unprivileged_user, work_directory);
     if (::chdir(work_directory.c_str()) == -1)
@@ -183,8 +184,8 @@ engine::isolate_child(const optional< passwd::user >& unprivileged_user,
 /// \param unprivileged_user Unprivileged user to run the test case as.
 /// \param file Path to the file to modify.
 void
-engine::isolate_path(const optional< passwd::user >& unprivileged_user,
-                     const fs::path& file)
+process::isolate_path(const optional< passwd::user >& unprivileged_user,
+                      const fs::path& file)
 {
     if (!unprivileged_user)
         return;

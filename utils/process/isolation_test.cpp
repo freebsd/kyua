@@ -26,7 +26,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/isolation.hpp"
+#include "utils/process/isolation.hpp"
 
 extern "C" {
 #include <sys/types.h>
@@ -95,7 +95,7 @@ static void
 check_clean_environment(void)
 {
     fs::mkdir(fs::path("some-directory"), 0755);
-    engine::isolate_child(none, fs::path("some-directory"));
+    process::isolate_child(none, fs::path("some-directory"));
 
     bool failed = false;
 
@@ -157,8 +157,8 @@ public:
     operator()(void) const
     {
         fs::mkdir(fs::path("subdir"), 0755);
-        engine::isolate_child(utils::make_optional(_unprivileged_user),
-                              fs::path("subdir"));
+        process::isolate_child(utils::make_optional(_unprivileged_user),
+                               fs::path("subdir"));
 
         if (::getuid() == 0) {
             std::cout << "UID is still 0\n";
@@ -199,7 +199,7 @@ public:
 static void
 check_enable_core_dumps(void)
 {
-    engine::isolate_child(none, fs::path("."));
+    process::isolate_child(none, fs::path("."));
     std::abort();
 }
 
@@ -226,7 +226,7 @@ public:
     operator()(void) const
     {
         const fs::path exp_subdir = fs::current_path() / _directory;
-        engine::isolate_child(none, _directory);
+        process::isolate_child(none, _directory);
         std::exit(fs::current_path() == exp_subdir ?
                   EXIT_SUCCESS : EXIT_FAILURE);
     }
@@ -240,7 +240,7 @@ public:
 static void
 check_new_session(void)
 {
-    engine::isolate_child(none, fs::path("."));
+    process::isolate_child(none, fs::path("."));
     std::exit(::getsid(::getpid()) == ::getpid() ? EXIT_SUCCESS : EXIT_FAILURE);
 }
 
@@ -251,7 +251,7 @@ check_new_session(void)
 static void
 check_no_terminal(void)
 {
-    engine::isolate_child(none, fs::path("."));
+    process::isolate_child(none, fs::path("."));
 
     const char* const args[] = {
         "/bin/sh",
@@ -272,7 +272,7 @@ check_no_terminal(void)
 static void
 check_process_group(void)
 {
-    engine::isolate_child(none, fs::path("."));
+    process::isolate_child(none, fs::path("."));
     std::exit(::getpgid(::getpid()) == ::getpid() ?
               EXIT_SUCCESS : EXIT_FAILURE);
 }
@@ -285,7 +285,7 @@ check_process_group(void)
 static void
 check_umask(void)
 {
-    engine::isolate_child(none, fs::path("."));
+    process::isolate_child(none, fs::path("."));
     std::exit(::umask(0) == 0022 ? EXIT_SUCCESS : EXIT_FAILURE);
 }
 
@@ -346,7 +346,7 @@ ATF_TEST_CASE_BODY(isolate_child__drop_privileges_fail_uid)
     const process::status status = fork_and_run(check_drop_privileges(
         unprivileged_user));
     ATF_REQUIRE(status.exited());
-    ATF_REQUIRE_EQ(engine::exit_isolation_failure, status.exitstatus());
+    ATF_REQUIRE_EQ(process::exit_isolation_failure, status.exitstatus());
     ATF_REQUIRE(atf::utils::grep_file("(chown|setuid).*failed",
                                       "subprocess.stderr"));
 }
@@ -365,7 +365,7 @@ ATF_TEST_CASE_BODY(isolate_child__drop_privileges_fail_gid)
     const process::status status = fork_and_run(check_drop_privileges(
         unprivileged_user));
     ATF_REQUIRE(status.exited());
-    ATF_REQUIRE_EQ(engine::exit_isolation_failure, status.exitstatus());
+    ATF_REQUIRE_EQ(process::exit_isolation_failure, status.exitstatus());
     ATF_REQUIRE(atf::utils::grep_file("(chown|setgid).*failed",
                                       "subprocess.stderr"));
 }
@@ -408,7 +408,7 @@ ATF_TEST_CASE_BODY(isolate_child__enter_work_directory_failure)
     const process::status status = fork_and_run(
         check_enter_work_directory(directory));
     ATF_REQUIRE(status.exited());
-    ATF_REQUIRE_EQ(engine::exit_isolation_failure, status.exitstatus());
+    ATF_REQUIRE_EQ(process::exit_isolation_failure, status.exitstatus());
     ATF_REQUIRE(atf::utils::grep_file("chdir\\(some/sub/directory\\) failed",
                                       "subprocess.stderr"));
 }
@@ -465,7 +465,7 @@ do_isolate_path_test(const optional< passwd::user >& unprivileged_user,
     struct ::stat old_sb;
     ATF_REQUIRE(::stat(dir.c_str(), &old_sb) != -1);
 
-    engine::isolate_path(unprivileged_user, dir);
+    process::isolate_path(unprivileged_user, dir);
 
     struct ::stat new_sb;
     ATF_REQUIRE(::stat(dir.c_str(), &new_sb) != -1);

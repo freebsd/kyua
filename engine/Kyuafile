@@ -8,7 +8,6 @@ atf_test_program{name="config_test"}
 atf_test_program{name="exceptions_test"}
 atf_test_program{name="executor_test"}
 atf_test_program{name="filters_test"}
-atf_test_program{name="isolation_test"}
 atf_test_program{name="kyuafile_test"}
 atf_test_program{name="plain_test"}
 atf_test_program{name="requirements_test"}
