@@ -40,6 +40,7 @@
 #include "store/layout.hpp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/globals.hpp"
+#include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/cmdline/ui_mock.hpp"
 #include "utils/datetime.hpp"

@@ -35,12 +35,11 @@
 #if !defined(UTILS_AUTO_ARRAY_HPP)
 #define UTILS_AUTO_ARRAY_HPP
 
+#include "utils/auto_array_fwd.hpp"
+
 #include <cstddef>
 
 namespace utils {
-
-
-template< class > class auto_array;
 
 
 namespace detail {

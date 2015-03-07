@@ -36,13 +36,8 @@
 #define CLI_MAIN_HPP
 
 #include "cli/common.hpp"
-#include "utils/cmdline/ui.hpp"
-
-namespace utils {
-namespace fs {
-class path;
-}  // namespace fs
-}  // namespace utils
+#include "utils/cmdline/ui_fwd.hpp"
+#include "utils/fs/path_fwd.hpp"
 
 namespace cli {
 
@@ -62,6 +57,5 @@ int main(const int, const char* const* const);
 
 
 }  // namespace cli
-
 
 #endif  // !defined(CLI_MAIN_HPP)

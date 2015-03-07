@@ -32,17 +32,16 @@
 #if !defined(UTILS_FS_DIRECTORY_HPP)
 #define UTILS_FS_DIRECTORY_HPP
 
+#include "utils/fs/directory_fwd.hpp"
+
 #include <ostream>
 #include <string>
 
+#include "utils/fs/path_fwd.hpp"
 #include "utils/shared_ptr.hpp"
 
 namespace utils {
 namespace fs {
-
-
-class directory;
-class path;
 
 
 /// Representation of a single directory entry.

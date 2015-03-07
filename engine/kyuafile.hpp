@@ -32,15 +32,17 @@
 #if !defined(ENGINE_KYUAFILE_HPP)
 #define ENGINE_KYUAFILE_HPP
 
+#include "engine/kyuafile_fwd.hpp"
+
 #include <string>
 #include <vector>
 
 #include <lutok/state.hpp>
 
 #include "model/test_program_fwd.hpp"
-#include "utils/config/tree.hpp"
+#include "utils/config/tree_fwd.hpp"
 #include "utils/fs/path.hpp"
-#include "utils/optional.hpp"
+#include "utils/optional_fwd.hpp"
 
 namespace engine {
 

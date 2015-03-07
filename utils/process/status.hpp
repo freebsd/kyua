@@ -32,6 +32,8 @@
 #if !defined(UTILS_PROCESS_STATUS_HPP)
 #define UTILS_PROCESS_STATUS_HPP
 
+#include "utils/process/status_fwd.hpp"
+
 #include <utility>
 
 #include "utils/optional.ipp"

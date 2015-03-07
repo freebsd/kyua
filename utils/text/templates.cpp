@@ -34,6 +34,7 @@
 #include <stack>
 
 #include "utils/format/macros.hpp"
+#include "utils/fs/path.hpp"
 #include "utils/noncopyable.hpp"
 #include "utils/sanity.hpp"
 #include "utils/text/exceptions.hpp"

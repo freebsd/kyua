@@ -32,8 +32,10 @@ UTILS_LIBS += $(LUTOK_LIBS)
 libutils_a_CPPFLAGS += $(LUTOK_CFLAGS)
 libutils_a_SOURCES += utils/fs/auto_cleaners.cpp
 libutils_a_SOURCES += utils/fs/auto_cleaners.hpp
+libutils_a_SOURCES += utils/fs/auto_cleaners_fwd.hpp
 libutils_a_SOURCES += utils/fs/directory.cpp
 libutils_a_SOURCES += utils/fs/directory.hpp
+libutils_a_SOURCES += utils/fs/directory_fwd.hpp
 libutils_a_SOURCES += utils/fs/exceptions.cpp
 libutils_a_SOURCES += utils/fs/exceptions.hpp
 libutils_a_SOURCES += utils/fs/lua_module.cpp
@@ -42,6 +44,7 @@ libutils_a_SOURCES += utils/fs/operations.cpp
 libutils_a_SOURCES += utils/fs/operations.hpp
 libutils_a_SOURCES += utils/fs/path.cpp
 libutils_a_SOURCES += utils/fs/path.hpp
+libutils_a_SOURCES += utils/fs/path_fwd.hpp
 
 if WITH_ATF
 tests_utils_fsdir = $(pkgtestsdir)/utils/fs

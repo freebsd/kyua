@@ -36,6 +36,7 @@ extern "C" {
 
 #include "utils/env.hpp"
 #include "utils/fs/operations.hpp"
+#include "utils/fs/path.hpp"
 
 namespace fs = utils::fs;
 

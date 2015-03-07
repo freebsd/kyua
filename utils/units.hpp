@@ -32,6 +32,8 @@
 #if !defined(UTILS_UNITS_HPP)
 #define UTILS_UNITS_HPP
 
+#include "utils/units_fwd.hpp"
+
 extern "C" {
 #include <stdint.h>
 }

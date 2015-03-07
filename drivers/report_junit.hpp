@@ -38,12 +38,7 @@
 #include "drivers/scan_results.hpp"
 #include "model/metadata_fwd.hpp"
 #include "model/test_program_fwd.hpp"
-
-namespace utils {
-namespace datetime {
-class delta;
-}  // namespace datetime
-}  // namespace utils
+#include "utils/datetime_fwd.hpp"
 
 namespace drivers {
 

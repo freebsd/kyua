@@ -32,22 +32,20 @@
 #if !defined(UTILS_CONFIG_NODES_HPP)
 #define UTILS_CONFIG_NODES_HPP
 
-#include <map>
+#include "utils/config/nodes_fwd.hpp"
+
 #include <set>
 #include <string>
 
 #include <lutok/state.hpp>
 
-#include "utils/config/keys.hpp"
+#include "utils/config/keys_fwd.hpp"
+#include "utils/config/nodes_fwd.hpp"
 #include "utils/noncopyable.hpp"
 #include "utils/optional.hpp"
 
 namespace utils {
 namespace config {
-
-
-/// Flat representation of all properties as strings.
-typedef std::map< std::string, std::string > properties_map;
 
 
 namespace detail {
@@ -67,9 +65,6 @@ public:
     /// \return A dynamically-allocated node.
     virtual base_node* deep_copy(void) const = 0;
 };
-
-
-class static_inner_node;
 
 
 }  // namespace detail

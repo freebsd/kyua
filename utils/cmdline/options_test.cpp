@@ -32,6 +32,7 @@
 
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/defs.hpp"
+#include "utils/fs/path.hpp"
 
 namespace cmdline = utils::cmdline;
 

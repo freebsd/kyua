@@ -35,6 +35,7 @@
 #include "utils/defs.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
 #include "utils/process/operations.hpp"
 #include "utils/process/status.hpp"

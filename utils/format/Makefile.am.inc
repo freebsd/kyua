@@ -32,6 +32,7 @@ libutils_a_SOURCES += utils/format/exceptions.cpp
 libutils_a_SOURCES += utils/format/exceptions.hpp
 libutils_a_SOURCES += utils/format/formatter.cpp
 libutils_a_SOURCES += utils/format/formatter.hpp
+libutils_a_SOURCES += utils/format/formatter_fwd.hpp
 libutils_a_SOURCES += utils/format/formatter.ipp
 libutils_a_SOURCES += utils/format/macros.hpp
 

@@ -32,9 +32,11 @@
 #if !defined(UTILS_FS_AUTO_CLEANERS_HPP)
 #define UTILS_FS_AUTO_CLEANERS_HPP
 
+#include "utils/fs/auto_cleaners_fwd.hpp"
+
 #include <string>
 
-#include "utils/fs/path.hpp"
+#include "utils/fs/path_fwd.hpp"
 #include "utils/shared_ptr.hpp"
 
 namespace utils {

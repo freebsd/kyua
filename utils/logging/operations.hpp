@@ -32,24 +32,14 @@
 #if !defined(UTILS_LOGGING_OPERATIONS_HPP)
 #define UTILS_LOGGING_OPERATIONS_HPP
 
+#include "utils/logging/operations_fwd.hpp"
+
 #include <string>
 
-#include "utils/fs/path.hpp"
+#include "utils/fs/path_fwd.hpp"
 
 namespace utils {
 namespace logging {
-
-
-/// Severity levels for log messages.
-///
-/// This enumeration must be sorted from the most severe message to the least
-/// severe.
-enum level {
-    level_error = 0,
-    level_warning,
-    level_info,
-    level_debug,
-};
 
 
 fs::path generate_log_name(const fs::path&, const std::string&);

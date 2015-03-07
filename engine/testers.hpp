@@ -32,24 +32,19 @@
 #if !defined(ENGINE_TESTERS_HPP)
 #define ENGINE_TESTERS_HPP
 
+#include "engine/testers_fwd.hpp"
+
 #include <map>
 #include <set>
 #include <string>
 #include <vector>
 
 #include "model/test_result_fwd.hpp"
-#include "utils/datetime.hpp"
-#include "utils/optional.hpp"
-#include "utils/passwd.hpp"
-
-namespace utils {
-namespace config {
-class tree;
-}  // namespace config
-namespace fs {
-class path;
-}  // namespace fs
-}  // namespace utils
+#include "utils/config/tree_fwd.hpp"
+#include "utils/datetime_fwd.hpp"
+#include "utils/fs/path_fwd.hpp"
+#include "utils/optional_fwd.hpp"
+#include "utils/passwd_fwd.hpp"
 
 namespace engine {
 

@@ -32,18 +32,15 @@
 #if !defined(ENGINE_TAP_PARSER_HPP)
 #define ENGINE_TAP_PARSER_HPP
 
+#include "engine/tap_parser_fwd.hpp"
+
 #include <cstddef>
 #include <ostream>
 #include <string>
-#include <utility>
 
-#include "utils/fs/path.hpp"
+#include "utils/fs/path_fwd.hpp"
 
 namespace engine {
-
-
-/// Representation of the TAP plan line.
-typedef std::pair< std::size_t, std::size_t > tap_plan;
 
 
 /// TAP plan representing all tests being skipped.

@@ -32,6 +32,8 @@
 #if !defined(UTILS_PASSWD_HPP)
 #define UTILS_PASSWD_HPP
 
+#include "utils/passwd_fwd.hpp"
+
 #include <string>
 #include <vector>
 

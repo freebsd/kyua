@@ -44,6 +44,7 @@ extern "C" {
 
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/process/exceptions.hpp"
 #include "utils/process/fdstream.hpp"

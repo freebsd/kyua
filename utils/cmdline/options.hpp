@@ -32,11 +32,13 @@
 #if !defined(UTILS_CMDLINE_OPTIONS_HPP)
 #define UTILS_CMDLINE_OPTIONS_HPP
 
+#include "utils/cmdline/options_fwd.hpp"
+
 #include <string>
 #include <utility>
 #include <vector>
 
-#include "utils/fs/path.hpp"
+#include "utils/fs/path_fwd.hpp"
 
 namespace utils {
 namespace cmdline {

@@ -32,16 +32,14 @@
 #if !defined(UTILS_SIGNALS_PROGRAMMER_HPP)
 #define UTILS_SIGNALS_PROGRAMMER_HPP
 
+#include "utils/signals/programmer_fwd.hpp"
+
 #include <memory>
 
 #include "utils/noncopyable.hpp"
 
 namespace utils {
 namespace signals {
-
-
-/// Function type for signal handlers.
-typedef void (*handler_type)(const int);
 
 
 /// A RAII class to program signal handlers.

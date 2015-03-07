@@ -36,6 +36,8 @@
 #if !defined(ENGINE_FILTERS_HPP)
 #define ENGINE_FILTERS_HPP
 
+#include "engine/filters_fwd.hpp"
+
 #include <ostream>
 #include <string>
 #include <set>

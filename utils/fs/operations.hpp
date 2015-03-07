@@ -38,15 +38,13 @@
 #include <set>
 #include <string>
 
-#include "utils/optional.hpp"
-#include "utils/units.hpp"
+#include "utils/fs/directory_fwd.hpp"
+#include "utils/fs/path_fwd.hpp"
+#include "utils/optional_fwd.hpp"
+#include "utils/units_fwd.hpp"
 
 namespace utils {
 namespace fs {
-
-
-struct directory_entry;
-class path;
 
 
 void copy(const fs::path&, const fs::path&);
@@ -59,7 +57,8 @@ void mkdir(const path&, const int);
 void mkdir_p(const path&, const int);
 fs::path mkdtemp(const std::string&);
 fs::path mkstemp(const std::string&);
-void mount_tmpfs(const path&, const units::bytes& = units::bytes());
+void mount_tmpfs(const path&);
+void mount_tmpfs(const path&, const units::bytes&);
 void rm_r(const path&);
 void rmdir(const path&);
 std::set< directory_entry > scan_directory(const path&);

@@ -35,28 +35,11 @@
 #if !defined(UTILS_OPTIONAL_HPP)
 #define UTILS_OPTIONAL_HPP
 
+#include "utils/optional_fwd.hpp"
+
 #include <ostream>
 
-
 namespace utils {
-
-
-namespace detail {
-
-
-/// Internal type-safe representation for the none type.
-struct none_t {};
-
-
-}  // namespace detail
-
-
-/// The none value.
-///
-/// This has internal linkage so it is OK to define it in the header file.
-/// However, pointers to none from different translation units will be
-/// different.  Just don't do that.
-const detail::none_t none = {};
 
 
 /// Holds a data value or none.
@@ -103,6 +86,5 @@ optional< T > make_optional(const T&);
 
 
 }  // namespace utils
-
 
 #endif  // !defined(UTILS_OPTIONAL_HPP)

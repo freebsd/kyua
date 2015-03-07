@@ -32,19 +32,14 @@
 #if !defined(UTILS_PROCESS_OPERATIONS_HPP)
 #define UTILS_PROCESS_OPERATIONS_HPP
 
-#include <string>
-#include <vector>
+#include "utils/process/operations_fwd.hpp"
 
 #include "utils/defs.hpp"
-#include "utils/fs/path.hpp"
-#include "utils/process/status.hpp"
+#include "utils/fs/path_fwd.hpp"
+#include "utils/process/status_fwd.hpp"
 
 namespace utils {
 namespace process {
-
-
-/// Arguments to a program, without the program name.
-typedef std::vector< std::string > args_vector;
 
 
 void exec(const utils::fs::path&, const args_vector&) throw() UTILS_NORETURN;

@@ -32,15 +32,16 @@
 #if !defined(UTILS_SQLITE_C_GATE_HPP)
 #define UTILS_SQLITE_C_GATE_HPP
 
+#include "utils/sqlite/c_gate_fwd.hpp"
+
 extern "C" {
 #include <sqlite3.h>
 }
 
+#include "utils/sqlite/database_fwd.hpp"
+
 namespace utils {
 namespace sqlite {
-
-
-class database;
 
 
 /// Gateway to the raw C database of SQLite 3.

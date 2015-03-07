@@ -32,29 +32,14 @@
 #if !defined(UTILS_CMDLINE_PARSER_HPP)
 #define UTILS_CMDLINE_PARSER_HPP
 
+#include "utils/cmdline/parser_fwd.hpp"
+
 #include <map>
 #include <string>
 #include <vector>
 
 namespace utils {
 namespace cmdline {
-
-
-class base_option;
-
-
-/// Replacement for argc and argv to represent a command line.
-///
-/// TODO(jmmv): This type should be somewhere else.  base_command.hpp should not
-/// be including this file to just get this type.
-typedef std::vector< std::string > args_vector;
-
-
-/// Collection of options to be used during parsing.
-///
-/// TODO(jmmv): This type should be somewhere else.  base_command.hpp should not
-/// be including this file to just get this type.
-typedef std::vector< const base_option* > options_vector;
 
 
 /// Representation of a parsed command line.

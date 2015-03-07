@@ -36,6 +36,7 @@
 #include "utils/config/exceptions.hpp"
 #include "utils/config/lua_module.hpp"
 #include "utils/config/tree.ipp"
+#include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/noncopyable.hpp"
 

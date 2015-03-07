@@ -32,6 +32,8 @@
 #if !defined(STORE_WRITE_TRANSACTION_HPP)
 #define STORE_WRITE_TRANSACTION_HPP
 
+#include "store/write_transaction_fwd.hpp"
+
 extern "C" {
 #include <stdint.h>
 }
@@ -41,15 +43,13 @@ extern "C" {
 #include "model/context_fwd.hpp"
 #include "model/test_program_fwd.hpp"
 #include "model/test_result_fwd.hpp"
-#include "utils/datetime.hpp"
-#include "utils/fs/path.hpp"
-#include "utils/optional.hpp"
+#include "store/write_backend_fwd.hpp"
+#include "utils/datetime_fwd.hpp"
+#include "utils/fs/path_fwd.hpp"
+#include "utils/optional_fwd.hpp"
 #include "utils/shared_ptr.hpp"
 
 namespace store {
-
-
-class write_backend;
 
 
 /// Representation of a write-only transaction.

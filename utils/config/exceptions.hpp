@@ -34,7 +34,8 @@
 
 #include <stdexcept>
 
-#include "utils/config/tree.hpp"
+#include "utils/config/keys_fwd.hpp"
+#include "utils/config/tree_fwd.hpp"
 
 namespace utils {
 namespace config {

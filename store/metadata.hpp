@@ -32,9 +32,15 @@
 #if !defined(STORE_METADATA_HPP)
 #define STORE_METADATA_HPP
 
+#include "store/metadata_fwd.hpp"
+
+extern "C" {
+#include <stdint.h>
+}
+
 #include <cstddef>
 
-#include "utils/sqlite/database.hpp"
+#include "utils/sqlite/database_fwd.hpp"
 
 namespace store {
 

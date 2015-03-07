@@ -32,6 +32,8 @@
 #if !defined(UTILS_PROCESS_SYSTEMBUF_HPP)
 #define UTILS_PROCESS_SYSTEMBUF_HPP
 
+#include "utils/process/systembuf_fwd.hpp"
+
 #include <cstddef>
 #include <memory>
 #include <streambuf>

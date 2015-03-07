@@ -32,20 +32,14 @@
 #if !defined(UTILS_TEXT_TABLE_HPP)
 #define UTILS_TEXT_TABLE_HPP
 
+#include "utils/text/table_fwd.hpp"
+
 #include <cstddef>
 #include <string>
 #include <vector>
 
 namespace utils {
 namespace text {
-
-
-/// Values of the cells of a particular table row.
-typedef std::vector< std::string > table_row;
-
-
-/// Vector of column widths.
-typedef std::vector< std::size_t > widths_vector;
 
 
 /// Representation of a table.

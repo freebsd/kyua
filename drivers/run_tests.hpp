@@ -42,10 +42,10 @@
 #include "engine/filters.hpp"
 #include "model/test_program.hpp"
 #include "model/test_result_fwd.hpp"
-#include "utils/config/tree.hpp"
-#include "utils/datetime.hpp"
-#include "utils/fs/path.hpp"
-#include "utils/optional.hpp"
+#include "utils/config/tree_fwd.hpp"
+#include "utils/datetime_fwd.hpp"
+#include "utils/fs/path_fwd.hpp"
+#include "utils/optional_fwd.hpp"
 
 namespace drivers {
 namespace run_tests {

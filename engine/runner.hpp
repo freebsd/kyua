@@ -32,11 +32,13 @@
 #if !defined(ENGINE_RUNNER_HPP)
 #define ENGINE_RUNNER_HPP
 
+#include "engine/runner_fwd.hpp"
+
 #include "model/context_fwd.hpp"
 #include "model/test_program.hpp"
 #include "model/test_result_fwd.hpp"
-#include "utils/config/tree.hpp"
-#include "utils/fs/path.hpp"
+#include "utils/config/tree_fwd.hpp"
+#include "utils/fs/path_fwd.hpp"
 #include "utils/shared_ptr.hpp"
 
 namespace engine {

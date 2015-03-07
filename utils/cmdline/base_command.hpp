@@ -32,17 +32,17 @@
 #if !defined(UTILS_CMDLINE_BASE_COMMAND_HPP)
 #define UTILS_CMDLINE_BASE_COMMAND_HPP
 
+#include "utils/cmdline/base_command_fwd.hpp"
+
 #include <string>
 
-#include "utils/cmdline/options.hpp"
-#include "utils/cmdline/parser.hpp"
+#include "utils/cmdline/options_fwd.hpp"
+#include "utils/cmdline/parser_fwd.hpp"
+#include "utils/cmdline/ui_fwd.hpp"
 #include "utils/noncopyable.hpp"
 
 namespace utils {
 namespace cmdline {
-
-
-class ui;
 
 
 /// Prototype class for the implementation of subcommands of a program.

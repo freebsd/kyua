@@ -32,18 +32,15 @@
 #if !defined(UTILS_CMDLINE_UI_HPP)
 #define UTILS_CMDLINE_UI_HPP
 
+#include "utils/cmdline/ui_fwd.hpp"
+
 #include <cstddef>
 #include <string>
 
-#include "utils/optional.hpp"
+#include "utils/optional_fwd.hpp"
+#include "utils/text/table_fwd.hpp"
 
 namespace utils {
-
-namespace text {
-class table;
-class table_formatter;
-}  // namespace text
-
 namespace cmdline {
 
 
@@ -78,6 +75,5 @@ void print_warning(ui*, const std::string&);
 
 }  // namespace cmdline
 }  // namespace utils
-
 
 #endif  // !defined(UTILS_CMDLINE_UI_HPP)

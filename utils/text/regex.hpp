@@ -32,6 +32,8 @@
 #if !defined(UTILS_TEXT_REGEX_HPP)
 #define UTILS_TEXT_REGEX_HPP
 
+#include "utils/text/regex_fwd.hpp"
+
 #include <cstddef>
 
 #include "utils/shared_ptr.hpp"

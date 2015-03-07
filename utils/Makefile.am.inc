@@ -33,19 +33,24 @@ noinst_LIBRARIES += libutils.a
 libutils_a_CPPFLAGS = -DGDB=\"$(GDB)\"
 libutils_a_SOURCES  = utils/auto_array.hpp
 libutils_a_SOURCES += utils/auto_array.ipp
+libutils_a_SOURCES += utils/auto_array_fwd.hpp
 libutils_a_SOURCES += utils/datetime.cpp
 libutils_a_SOURCES += utils/datetime.hpp
+libutils_a_SOURCES += utils/datetime_fwd.hpp
 libutils_a_SOURCES += utils/env.hpp
 libutils_a_SOURCES += utils/env.cpp
 libutils_a_SOURCES += utils/memory.hpp
 libutils_a_SOURCES += utils/memory.cpp
 libutils_a_SOURCES += utils/noncopyable.hpp
 libutils_a_SOURCES += utils/optional.hpp
+libutils_a_SOURCES += utils/optional_fwd.hpp
 libutils_a_SOURCES += utils/optional.ipp
 libutils_a_SOURCES += utils/passwd.cpp
 libutils_a_SOURCES += utils/passwd.hpp
+libutils_a_SOURCES += utils/passwd_fwd.hpp
 libutils_a_SOURCES += utils/sanity.cpp
 libutils_a_SOURCES += utils/sanity.hpp
+libutils_a_SOURCES += utils/sanity_fwd.hpp
 libutils_a_SOURCES += utils/shared_ptr.hpp
 libutils_a_SOURCES += utils/stacktrace.cpp
 libutils_a_SOURCES += utils/stacktrace.hpp
@@ -53,6 +58,7 @@ libutils_a_SOURCES += utils/stream.cpp
 libutils_a_SOURCES += utils/stream.hpp
 libutils_a_SOURCES += utils/units.cpp
 libutils_a_SOURCES += utils/units.hpp
+libutils_a_SOURCES += utils/units_fwd.hpp
 nodist_libutils_a_SOURCES = utils/defs.hpp
 
 if WITH_ATF

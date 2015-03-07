@@ -49,18 +49,20 @@
 #if !defined(ENGINE_EXECUTOR_HPP)
 #define ENGINE_EXECUTOR_HPP
 
+#include "engine/executor_fwd.hpp"
+
 #include <map>
 #include <string>
 
 #include "model/test_program_fwd.hpp"
 #include "model/test_result_fwd.hpp"
-#include "utils/config/tree.hpp"
-#include "utils/datetime.hpp"
+#include "utils/config/tree_fwd.hpp"
+#include "utils/datetime_fwd.hpp"
 #include "utils/defs.hpp"
-#include "utils/fs/path.hpp"
-#include "utils/optional.hpp"
-#include "utils/passwd.hpp"
-#include "utils/process/status.hpp"
+#include "utils/fs/path_fwd.hpp"
+#include "utils/optional_fwd.hpp"
+#include "utils/passwd_fwd.hpp"
+#include "utils/process/status_fwd.hpp"
 #include "utils/shared_ptr.hpp"
 
 namespace engine {
@@ -110,10 +112,6 @@ public:
         const utils::fs::path& stdout_path,
         const utils::fs::path& stderr_path) const = 0;
 };
-
-
-/// Unique identifier for in-flight execution operations.
-typedef int exec_handle;
 
 
 /// Container for all test termination data and accessor to cleanup operations.

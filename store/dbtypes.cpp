@@ -31,6 +31,7 @@
 #include "model/test_program.hpp"
 #include "model/test_result.hpp"
 #include "store/exceptions.hpp"
+#include "utils/datetime.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/sanity.hpp"
 #include "utils/sqlite/statement.ipp"

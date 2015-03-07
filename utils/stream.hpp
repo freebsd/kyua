@@ -41,12 +41,9 @@
 #include <ostream>
 #include <string>
 
+#include "utils/fs/path_fwd.hpp"
+
 namespace utils {
-
-
-namespace fs {
-class path;
-} // namespace fs
 
 
 std::auto_ptr< std::ostream > open_ostream(const utils::fs::path&);

@@ -33,10 +33,13 @@ libutils_a_SOURCES += utils/text/operations.hpp
 libutils_a_SOURCES += utils/text/operations.ipp
 libutils_a_SOURCES += utils/text/regex.cpp
 libutils_a_SOURCES += utils/text/regex.hpp
+libutils_a_SOURCES += utils/text/regex_fwd.hpp
 libutils_a_SOURCES += utils/text/table.cpp
 libutils_a_SOURCES += utils/text/table.hpp
+libutils_a_SOURCES += utils/text/table_fwd.hpp
 libutils_a_SOURCES += utils/text/templates.cpp
 libutils_a_SOURCES += utils/text/templates.hpp
+libutils_a_SOURCES += utils/text/templates_fwd.hpp
 
 if WITH_ATF
 tests_utils_textdir = $(pkgtestsdir)/utils/text

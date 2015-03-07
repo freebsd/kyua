@@ -32,6 +32,7 @@
 
 #include "store/exceptions.hpp"
 #include "store/write_backend.hpp"
+#include "utils/fs/path.hpp"
 #include "utils/logging/operations.hpp"
 #include "utils/sqlite/database.hpp"
 

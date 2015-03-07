@@ -33,7 +33,7 @@
 #define CLI_CMD_REPORT_HTML_HPP
 
 #include "cli/common.hpp"
-#include "utils/cmdline/ui.hpp"
+#include "utils/cmdline/ui_fwd.hpp"
 
 namespace cli {
 

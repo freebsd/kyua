@@ -32,6 +32,8 @@
 #if !defined(UTILS_DATETIME_HPP)
 #define UTILS_DATETIME_HPP
 
+#include "utils/datetime_fwd.hpp"
+
 extern "C" {
 #include <stdint.h>
 }

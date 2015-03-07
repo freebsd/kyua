@@ -40,7 +40,7 @@
 
 #include "model/metadata_fwd.hpp"
 #include "model/test_case_fwd.hpp"
-#include "utils/fs/path.hpp"
+#include "utils/fs/path_fwd.hpp"
 #include "utils/noncopyable.hpp"
 #include "utils/shared_ptr.hpp"
 

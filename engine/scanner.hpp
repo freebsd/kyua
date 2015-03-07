@@ -32,26 +32,17 @@
 #if !defined(ENGINE_SCANNER_HPP)
 #define ENGINE_SCANNER_HPP
 
+#include "engine/scanner_fwd.hpp"
+
 #include <memory>
 #include <set>
 
-#include "engine/filters.hpp"
+#include "engine/filters_fwd.hpp"
 #include "model/test_program_fwd.hpp"
-#include "utils/optional.hpp"
+#include "utils/optional_fwd.hpp"
 #include "utils/shared_ptr.hpp"
 
 namespace engine {
-
-
-/// Result type yielded by the scanner: a (test program, test case name) pair.
-///
-/// We must use model::test_program_ptr here instead of model::test_program
-/// because we must keep the polimorphic properties of the test program.  In
-/// particular, if the test program comes from the Kyuafile and is of the type
-/// model::lazy_test_program, we must keep access to the loaded list of test
-/// cases (which, for obscure reasons, is kept in the subclass).
-/// TODO(jmmv): This is ugly, very ugly.  There has to be a better way.
-typedef std::pair< model::test_program_ptr, std::string > scan_result;
 
 
 /// Scans a list of test programs, yielding one test case at a time.

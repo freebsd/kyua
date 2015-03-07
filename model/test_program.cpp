@@ -37,6 +37,7 @@
 #include "model/test_result.hpp"
 #include "utils/format/containers.ipp"
 #include "utils/format/macros.hpp"
+#include "utils/fs/path.hpp"
 #include "utils/sanity.hpp"
 #include "utils/text/operations.ipp"
 

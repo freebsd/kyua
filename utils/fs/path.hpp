@@ -36,6 +36,8 @@
 #if !defined(UTILS_FS_PATH_HPP)
 #define UTILS_FS_PATH_HPP
 
+#include "utils/fs/path_fwd.hpp"
+
 #include <string>
 #include <ostream>
 

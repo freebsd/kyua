@@ -35,6 +35,7 @@
 #include "cli/common.ipp"
 #include "engine/config.hpp"
 #include "utils/cmdline/globals.hpp"
+#include "utils/cmdline/parser.hpp"
 #include "utils/cmdline/ui_mock.hpp"
 #include "utils/config/tree.ipp"
 #include "utils/optional.ipp"

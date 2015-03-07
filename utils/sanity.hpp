@@ -39,24 +39,14 @@
 #if !defined(UTILS_SANITY_HPP)
 #define UTILS_SANITY_HPP
 
+#include "utils/sanity_fwd.hpp"
+
 #include <cstddef>
 #include <string>
 
 #include "utils/defs.hpp"
 
 namespace utils {
-
-
-/// Enumeration to define the assertion type.
-///
-/// The assertion type is used by the module to format the assertion messages
-/// appropriately.
-enum assert_type {
-    invariant,
-    postcondition,
-    precondition,
-    unreachable,
-};
 
 
 void sanity_failure(const assert_type, const char*, const size_t,

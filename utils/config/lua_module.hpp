@@ -35,12 +35,10 @@
 #include <string>
 
 #include "lutok/state.hpp"
+#include "utils/config/tree_fwd.hpp"
 
 namespace utils {
 namespace config {
-
-
-class tree;
 
 
 void redirect(lutok::state&, tree&);

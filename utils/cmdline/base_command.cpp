@@ -30,6 +30,7 @@
 
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/options.hpp"
+#include "utils/cmdline/parser.ipp"
 #include "utils/sanity.hpp"
 
 namespace cmdline = utils::cmdline;

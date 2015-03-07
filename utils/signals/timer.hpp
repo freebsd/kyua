@@ -36,22 +36,17 @@
 #if !defined(UTILS_SIGNALS_TIMER_HPP)
 #define UTILS_SIGNALS_TIMER_HPP
 
+#include "utils/signals/timer_fwd.hpp"
+
 #include <memory>
 
+#include "utils/datetime_fwd.hpp"
 #include "utils/noncopyable.hpp"
 
 namespace utils {
-
-namespace datetime {
-class delta;
-class timestamp;
-}  // namespace datetime
-
-
 namespace signals {
 
 
-class timer;
 namespace detail {
 void invoke_do_fired(timer*);
 }  // namespace detail
