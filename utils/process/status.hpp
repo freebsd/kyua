@@ -34,6 +34,7 @@
 
 #include "utils/process/status_fwd.hpp"
 
+#include <ostream>
 #include <utility>
 
 #include "utils/optional.ipp"
@@ -72,6 +73,9 @@ public:
     int termsig(void) const;
     bool coredump(void) const;
 };
+
+
+std::ostream& operator<<(std::ostream&, const status&);
 
 
 }  // namespace process
