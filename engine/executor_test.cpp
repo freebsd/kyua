@@ -397,6 +397,41 @@ public:
 };
 
 
+/// Ensures that a killed process is gone.
+///
+/// The way we do this is by sending an idempotent signal to the given PID
+/// and checking if the signal was delivered.  If it was, the process is
+/// still alive; if it was not, then it is gone.
+///
+/// Note that this might be inaccurate for two reasons:
+///
+/// 1) The system may have spawned a new process with the same pid as
+///    our subchild... but in practice, this does not happen because
+///    most systems do not immediately reuse pid numbers.  If that
+///    happens... well, we get a false test failure.
+///
+/// 2) We ran so fast that even if the process was sent a signal to
+///    die, it has not had enough time to process it yet.  This is why
+///    we retry this a few times.
+///
+/// \param pid PID of the process to check.
+static void
+ensure_dead(const pid_t pid)
+{
+    int attempts = 30;
+retry:
+    if (::kill(pid, SIGCONT) != -1 || errno != ESRCH) {
+        if (attempts > 0) {
+            std::cout << "Subprocess not dead yet; retrying wait\n";
+            --attempts;
+            ::usleep(100000);
+            goto retry;
+        }
+        ATF_FAIL(F("The subprocess %s of our child was not killed") % pid);
+    }
+}
+
+
 }  // anonymous namespace
 
 
@@ -800,20 +835,18 @@ ATF_TEST_CASE_BODY(integration__auto_cleanup)
 
     const config::tree user_config = engine::empty_config();
 
+    std::vector< executor::exec_handle > pids;
     std::vector< fs::path > paths;
     {
         executor::executor_handle handle = executor::setup();
 
-        (void)handle.spawn_test(program, "exit 10", user_config);
-        (void)handle.spawn_test(program, "exit 20", user_config);
+        pids.push_back(handle.spawn_test(program, "exit 10", user_config));
+        pids.push_back(handle.spawn_test(program, "exit 20", user_config));
 
         // This invocation is never waited for below.  This is intentional: we
         // want the destructor to clean the "leaked" test automatically so that
         // the clean up of the parent work directory also happens correctly.
-        //
-        // TODO(jmmv): I think this is broken.  We do not send a signal on
-        // destruction so this will cause the destructor to block.  Should we?
-        (void)handle.spawn_test(program, "pause", user_config);
+        pids.push_back(handle.spawn_test(program, "pause", user_config));
 
         executor::result_handle result_handle1 = handle.wait_any_test();
         paths.push_back(result_handle1.stdout_file());
@@ -824,6 +857,14 @@ ATF_TEST_CASE_BODY(integration__auto_cleanup)
         paths.push_back(result_handle2.stdout_file());
         paths.push_back(result_handle2.stderr_file());
         paths.push_back(result_handle2.work_directory());
+    }
+    for (std::vector< executor::exec_handle >::const_iterator
+             iter = pids.begin(); iter != pids.end(); ++iter) {
+        // We know that the executor handles are PIDs because we are
+        // unit-testing the code... but this is not a valid assumption that
+        // outside code can make.
+        const pid_t pid = *iter;
+        ensure_dead(pid);
     }
     for (std::vector< fs::path >::const_iterator iter = paths.begin();
          iter != paths.end(); ++iter) {
@@ -1048,27 +1089,7 @@ ATF_TEST_CASE_BODY(integration__process_group_is_terminated)
     pidfile >> pid;
     pidfile.close();
 
-    int attempts = 30;
-retry:
-    if (::kill(pid, SIGCONT) != -1 || errno != ESRCH) {
-        // Looks like the subchild did not die.
-        //
-        // Note that this might be inaccurate for two reasons:
-        // 1) The system may have spawned a new process with the same pid as
-        //    our subchild... but in practice, this does not happen because
-        //    most systems do not immediately reuse pid numbers.  If that
-        //    happens... well, we get a false test failure.
-        // 2) We ran so fast that even if the process was sent a signal to
-        //    die, it has not had enough time to process it yet.  This is why
-        //    we retry this a few times.
-        if (attempts > 0) {
-            std::cout << "Subprocess not dead yet; retrying wait\n";
-            --attempts;
-            ::usleep(100000);
-            goto retry;
-        }
-        fail(F("The subprocess %s of our child was not killed") % pid);
-    }
+    ensure_dead(pid);
 }
 
 
