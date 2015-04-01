@@ -179,8 +179,7 @@ class deadline_killer : public signals::timer {
     void
     callback(void)
     {
-        ::killpg(_pid, SIGKILL);
-        ::kill(_pid, SIGKILL);
+        process::terminate_group(_pid);
     }
 
 public:
@@ -720,23 +719,7 @@ struct engine::executor::executor_handle::impl {
             const exec_handle& pid = (*iter).first;
             const exec_data& data = (*iter).second;
 
-            LW(F("Killing subprocess (and group) %s") % pid);
-            // Yes, killing both the process and the process groups is the
-            // correct thing to do here.  We need to deal with the case where
-            // the subprocess has been created but has not yet had a chance to
-            // execute setpgrp(2) or setsid(2), in which case there is no
-            // process group with this identifier yet.
-            //
-            // One would think that checking for killpg(2)'s error code and
-            // running kill(2) only when the former has failed would be nicer,
-            // but that's not the case because this would be racy.  Consider the
-            // scenario where we fail to invoke killpg(2), the subprocess
-            // finishes its setup and spawns other subsubprocesses, and then we
-            // execute kill(2): we would miss out some processes.  Killing the
-            // top-level process explicitly first ensures that it cannot make
-            // forward progress in any case.
-            (void)::kill(pid, SIGKILL);
-            (void)::killpg(pid, SIGKILL);
+            process::terminate_group(pid);
             int status;
             if (::waitpid(pid, &status, 0) == -1) {
                 // Should not happen.
@@ -896,7 +879,7 @@ executor::executor_handle::wait_any_test(void)
     const executor::exec_handle handle = status.dead_pid();
     LI(F("Waited for test with exec_handle %s") % handle);
 
-    (void)::killpg(status.dead_pid(), SIGKILL);
+    process::terminate_group(status.dead_pid());
 
     const exec_data_map::iterator iter = _pimpl->all_exec_data.find(handle);
     exec_data& data = (*iter).second;

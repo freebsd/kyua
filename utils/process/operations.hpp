@@ -43,8 +43,7 @@ namespace process {
 
 
 void exec(const utils::fs::path&, const args_vector&) throw() UTILS_NORETURN;
-
-
+void terminate_group(const int);
 status wait_any(void);
 
 

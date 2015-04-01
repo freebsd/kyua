@@ -29,13 +29,19 @@
 #include "utils/process/operations.hpp"
 
 extern "C" {
+#include <sys/types.h>
+#include <sys/wait.h>
+
 #include <signal.h>
+#include <unistd.h>
 }
 
 #include <cerrno>
+#include <iostream>
 
 #include <atf-c++.hpp>
 
+#include "utils/defs.hpp"
 #include "utils/format/containers.ipp"
 #include "utils/fs/path.hpp"
 #include "utils/process/child.ipp"
@@ -100,6 +106,40 @@ child_exit(void)
 }
 
 
+static void suspend(void) UTILS_NORETURN;
+
+
+/// Blocks a subprocess from running indefinitely.
+static void
+suspend(void)
+{
+    sigset_t mask;
+    sigemptyset(&mask);
+    for (;;) {
+        ::sigsuspend(&mask);
+    }
+}
+
+
+static void write_loop(const int) UTILS_NORETURN;
+
+
+/// Provides an infinite stream of data in a subprocess.
+///
+/// \param fd Descriptor into which to write.
+static void
+write_loop(const int fd)
+{
+    const int cookie = 0x12345678;
+    for (;;) {
+        std::cerr << "Still alive in PID " << ::getpid() << '\n';
+        if (::write(fd, &cookie, sizeof(cookie)) != sizeof(cookie))
+            std::exit(EXIT_FAILURE);
+        ::sleep(1);
+    }
+}
+
+
 }  // anonymous namespace
 
 
@@ -147,6 +187,77 @@ ATF_TEST_CASE_BODY(exec__fail)
     ATF_REQUIRE_EQ(SIGABRT, status.termsig());
     ATF_REQUIRE(atf::utils::grep_file("Failed to execute non-existent",
                                       "stderr"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(terminate_group__setpgrp_executed);
+ATF_TEST_CASE_BODY(terminate_group__setpgrp_executed)
+{
+    int first_fds[2], second_fds[2];
+    ATF_REQUIRE(::pipe(first_fds) != -1);
+    ATF_REQUIRE(::pipe(second_fds) != -1);
+
+    const pid_t pid = ::fork();
+    ATF_REQUIRE(pid != -1);
+    if (pid == 0) {
+        ::setpgid(::getpid(), ::getpid());
+        const pid_t pid2 = ::fork();
+        if (pid2 == -1) {
+            std::exit(EXIT_FAILURE);
+        } else if (pid2 == 0) {
+            ::close(first_fds[0]);
+            ::close(first_fds[1]);
+            ::close(second_fds[0]);
+            write_loop(second_fds[1]);
+        }
+        ::close(first_fds[0]);
+        ::close(second_fds[0]);
+        ::close(second_fds[1]);
+        write_loop(first_fds[1]);
+    }
+    ::close(first_fds[1]);
+    ::close(second_fds[1]);
+
+    int dummy;
+    std::cerr << "Waiting for children to start\n";
+    while (::read(first_fds[0], &dummy, sizeof(dummy)) <= 0 ||
+           ::read(second_fds[0], &dummy, sizeof(dummy)) <= 0) {
+        // Wait for children to come up.
+    }
+
+    process::terminate_group(pid);
+    std::cerr << "Waiting for children to die\n";
+    while (::read(first_fds[0], &dummy, sizeof(dummy)) > 0 ||
+           ::read(second_fds[0], &dummy, sizeof(dummy)) > 0) {
+        // Wait for children to terminate.  If they don't, then the test case
+        // will time out.
+    }
+
+    int status;
+    ATF_REQUIRE(::wait(&status) != -1);
+    ATF_REQUIRE(WIFSIGNALED(status));
+    ATF_REQUIRE(WTERMSIG(status) == SIGKILL);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(terminate_group__setpgrp_not_executed);
+ATF_TEST_CASE_BODY(terminate_group__setpgrp_not_executed)
+{
+    const pid_t pid = ::fork();
+    ATF_REQUIRE(pid != -1);
+    if (pid == 0) {
+        // We do not call setgprp() here to simulate the race that happens when
+        // we invoke terminate_group on a process that has not yet had a chance
+        // to run the setpgrp() call.
+        suspend();
+    }
+
+    process::terminate_group(pid);
+
+    int status;
+    ATF_REQUIRE(::wait(&status) != -1);
+    ATF_REQUIRE(WIFSIGNALED(status));
+    ATF_REQUIRE(WTERMSIG(status) == SIGKILL);
 }
 
 
@@ -201,6 +312,9 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, exec__no_args);
     ATF_ADD_TEST_CASE(tcs, exec__some_args);
     ATF_ADD_TEST_CASE(tcs, exec__fail);
+
+    ATF_ADD_TEST_CASE(tcs, terminate_group__setpgrp_executed);
+    ATF_ADD_TEST_CASE(tcs, terminate_group__setpgrp_not_executed);
 
     ATF_ADD_TEST_CASE(tcs, wait_any__one);
     ATF_ADD_TEST_CASE(tcs, wait_any__many);
