@@ -35,7 +35,7 @@ BEGIN {
 /^$/ {next}
 
 # Skip lines that do not directly reference a file.
-/^[^/]/ {next}
+/^[^\/]/ {next}
 
 # Ignore known problems.  As far as I can tell, all the cases listed here are
 # well-documented in the code but Doxygen fails, for some reason or another, to
