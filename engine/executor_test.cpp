@@ -30,18 +30,14 @@
 
 extern "C" {
 #include <sys/types.h>
-#include <sys/time.h>
-#include <sys/wait.h>
 
 #include <signal.h>
 #include <unistd.h>
 }
 
-#include <cerrno>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
-#include <vector>
 
 #include <atf-c++.hpp>
 
@@ -53,16 +49,12 @@ extern "C" {
 #include "utils/config/tree.ipp"
 #include "utils/datetime.hpp"
 #include "utils/defs.hpp"
-#include "utils/env.hpp"
-#include "utils/format/containers.ipp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
-#include "utils/passwd.hpp"
 #include "utils/process/status.hpp"
 #include "utils/sanity.hpp"
-#include "utils/signals/exceptions.hpp"
 #include "utils/stacktrace.hpp"
 #include "utils/text/exceptions.hpp"
 #include "utils/text/operations.ipp"
@@ -71,9 +63,7 @@ namespace config = utils::config;
 namespace datetime = utils::datetime;
 namespace executor = engine::executor;
 namespace fs = utils::fs;
-namespace passwd = utils::passwd;
 namespace process = utils::process;
-namespace signals = utils::signals;
 namespace text = utils::text;
 
 using utils::none;
@@ -139,16 +129,6 @@ class mock_interface : public executor::interface {
         ::_exit(exit_code);
     }
 
-    /// Executes a test case that creates a file in its work directory.
-    ///
-    /// \param id Number to suffix to the cookie file.
-    void
-    exec_cookie(const int id) const UTILS_NORETURN
-    {
-        atf::utils::create_file(F("cookie.%s") % id, "");
-        do_exit(EXIT_SUCCESS);
-    }
-
     /// Executes a test case that creates various files and then fails.
     void
     exec_create_files_and_fail(void) const UTILS_NORETURN
@@ -176,15 +156,6 @@ class mock_interface : public executor::interface {
         do_exit(exit_code);
     }
 
-    /// Executes a test case that dumps user configuration.
-    void
-    exec_dump_unprivileged_user(void) const UTILS_NORETURN
-    {
-        const passwd::user current_user = passwd::current_user();
-        std::cout << F("UID = %s\n") % current_user.uid;
-        do_exit(EXIT_SUCCESS);
-    }
-
     /// Executes a test case that returns a specific exit code.
     ///
     /// \param exit_code Exit status to terminate the program with.
@@ -192,18 +163,6 @@ class mock_interface : public executor::interface {
     exec_exit(const int exit_code) const UTILS_NORETURN
     {
         do_exit(exit_code);
-    }
-
-    /// Executes a test case that just blocks.
-    void
-    exec_pause(void) const UTILS_NORETURN
-    {
-        sigset_t mask;
-        sigemptyset(&mask);
-        for (;;) {
-            ::sigsuspend(&mask);
-        }
-        std::abort();
     }
 
     /// Executes a test case that prints all input parameters to the functor.
@@ -227,59 +186,6 @@ class mock_interface : public executor::interface {
 
         std::cerr << F("stderr: %s\n") % test_case_name;
 
-        do_exit(EXIT_SUCCESS);
-    }
-
-    /// Executes a test that sleeps for a period of time before exiting.
-    ///
-    /// \param seconds Number of seconds to sleep for.
-    void
-    exec_sleep(const int seconds) const UTILS_NORETURN
-    {
-        ::sleep(seconds);
-        do_exit(EXIT_SUCCESS);
-    }
-
-    /// Executes a test that spawns a subchild that gets stuck.
-    ///
-    /// This test case is used by the caller to validate that the whole process
-    /// tree is terminated when the test case is killed.
-    void
-    exec_spawn_blocking_child(void) const UTILS_NORETURN
-    {
-        pid_t pid = ::fork();
-        if (pid == -1) {
-            std::cerr << "Cannot fork subprocess\n";
-            do_exit(EXIT_FAILURE);
-        } else if (pid == 0) {
-            for (;;)
-                ::pause();
-        } else {
-            const fs::path name = fs::path(utils::getenv("CONTROL_DIR").get()) /
-                "pid";
-            std::ofstream pidfile(name.c_str());
-            if (!pidfile) {
-                std::cerr << "Failed to create the pidfile\n";
-                do_exit(EXIT_FAILURE);
-            }
-            pidfile << pid;
-            pidfile.close();
-            do_exit(EXIT_SUCCESS);
-        }
-    }
-
-    /// Executes a test that checks if isolate_child() has been called.
-    void
-    exec_validate_isolation(void) const UTILS_NORETURN
-    {
-        if (utils::getenv("HOME").get() == "fake-value") {
-            std::cerr << "HOME not reset\n";
-            do_exit(EXIT_FAILURE);
-        }
-        if (utils::getenv("LANG")) {
-            std::cerr << "LANG not unset\n";
-            do_exit(EXIT_FAILURE);
-        }
         do_exit(EXIT_SUCCESS);
     }
 
@@ -308,26 +214,14 @@ public:
             std::abort();
         }
 
-        if (starts_with(test_case_name, "cookie ")) {
-            exec_cookie(suffix_to_int(test_case_name, "cookie "));
-        } else if (starts_with(test_case_name, "create_files_and_fail")) {
+        if (starts_with(test_case_name, "create_files_and_fail")) {
             exec_create_files_and_fail();
         } else if (test_case_name == "delete_all") {
             exec_delete_all();
-        } else if (test_case_name == "dump_unprivileged_user") {
-            exec_dump_unprivileged_user();
         } else if (starts_with(test_case_name, "exit ")) {
             exec_exit(suffix_to_int(test_case_name, "exit "));
-        } else if (test_case_name == "pause") {
-            exec_pause();
         } else if (starts_with(test_case_name, "print_params")) {
             exec_print_params(test_program, test_case_name, vars);
-        } else if (starts_with(test_case_name, "sleep ")) {
-            exec_sleep(suffix_to_int(test_case_name, "sleep "));
-        } else if (test_case_name == "spawn_blocking_child") {
-            exec_spawn_blocking_child();
-        } else if (test_case_name == "validate_isolation") {
-            exec_validate_isolation();
         } else {
             std::cerr << "Unknown test case " << test_case_name << '\n';
             std::abort();
@@ -395,41 +289,6 @@ public:
         }
     }
 };
-
-
-/// Ensures that a killed process is gone.
-///
-/// The way we do this is by sending an idempotent signal to the given PID
-/// and checking if the signal was delivered.  If it was, the process is
-/// still alive; if it was not, then it is gone.
-///
-/// Note that this might be inaccurate for two reasons:
-///
-/// 1) The system may have spawned a new process with the same pid as
-///    our subchild... but in practice, this does not happen because
-///    most systems do not immediately reuse pid numbers.  If that
-///    happens... well, we get a false test failure.
-///
-/// 2) We ran so fast that even if the process was sent a signal to
-///    die, it has not had enough time to process it yet.  This is why
-///    we retry this a few times.
-///
-/// \param pid PID of the process to check.
-static void
-ensure_dead(const pid_t pid)
-{
-    int attempts = 30;
-retry:
-    if (::kill(pid, SIGCONT) != -1 || errno != ESRCH) {
-        if (attempts > 0) {
-            std::cout << "Subprocess not dead yet; retrying wait\n";
-            --attempts;
-            ::usleep(100000);
-            goto retry;
-        }
-        ATF_FAIL(F("The subprocess %s of our child was not killed") % pid);
-    }
-}
 
 
 }  // anonymous namespace
@@ -601,65 +460,6 @@ ATF_TEST_CASE_BODY(integration__parameters_and_output)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(integration__timestamps);
-ATF_TEST_CASE_BODY(integration__timestamps)
-{
-    const model::test_program_ptr program = model::test_program_builder(
-        "mock", fs::path("the-program"), fs::current_path(), "the-suite")
-        .add_test_case("exit 70").build_ptr();
-
-    const config::tree user_config = engine::empty_config();
-
-    executor::executor_handle handle = executor::setup();
-
-    const datetime::timestamp start_time = datetime::timestamp::from_values(
-        2014, 12, 8, 9, 35, 10, 1000);
-    const datetime::timestamp end_time = datetime::timestamp::from_values(
-        2014, 12, 8, 9, 35, 20, 2000);
-
-    datetime::set_mock_now(start_time);
-    (void)handle.spawn_test(program, "exit 70", user_config);
-
-    datetime::set_mock_now(end_time);
-    executor::result_handle result_handle = handle.wait_any_test();
-    ATF_REQUIRE_EQ(model::test_result(model::test_result_passed, "Exit 70"),
-                   result_handle.test_result());
-    ATF_REQUIRE_EQ(start_time, result_handle.start_time());
-    ATF_REQUIRE_EQ(end_time, result_handle.end_time());
-    result_handle.cleanup();
-
-    handle.cleanup();
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(integration__files);
-ATF_TEST_CASE_BODY(integration__files)
-{
-    const model::test_program_ptr program = model::test_program_builder(
-        "mock", fs::path("the-program"), fs::current_path(), "the-suite")
-        .add_test_case("cookie 12345").build_ptr();
-
-    const config::tree user_config = engine::empty_config();
-
-    executor::executor_handle handle = executor::setup();
-
-    (void)handle.spawn_test(program, "cookie 12345", user_config);
-
-    executor::result_handle result_handle = handle.wait_any_test();
-
-    ATF_REQUIRE(atf::utils::file_exists(
-                    (result_handle.work_directory() / "cookie.12345").str()));
-
-    result_handle.cleanup();
-
-    ATF_REQUIRE(!atf::utils::file_exists(result_handle.stdout_file().str()));
-    ATF_REQUIRE(!atf::utils::file_exists(result_handle.stderr_file().str()));
-    ATF_REQUIRE(!atf::utils::file_exists(result_handle.work_directory().str()));
-
-    handle.cleanup();
-}
-
-
 ATF_TEST_CASE_WITHOUT_HEAD(integration__fake_result);
 ATF_TEST_CASE_BODY(integration__fake_result)
 {
@@ -715,257 +515,6 @@ ATF_TEST_CASE_BODY(integration__check_requirements)
     result_handle.cleanup();
 
     handle.cleanup();
-}
-
-
-ATF_TEST_CASE(integration__timeouts);
-ATF_TEST_CASE_HEAD(integration__timeouts)
-{
-    set_md_var("timeout", "60");
-}
-ATF_TEST_CASE_BODY(integration__timeouts)
-{
-    const model::metadata metadata_timeout_2 = model::metadata_builder()
-        .set_timeout(datetime::delta(2, 0)).build();
-    const model::metadata metadata_timeout_5 = model::metadata_builder()
-        .set_timeout(datetime::delta(5, 0)).build();
-
-    const model::test_program_ptr program = model::test_program_builder(
-        "mock", fs::path("the-program"), fs::current_path(), "the-suite")
-        .add_test_case("sleep 30", metadata_timeout_2)
-        .add_test_case("sleep 40", metadata_timeout_5)
-        .add_test_case("exit 15", metadata_timeout_2)
-        .build_ptr();
-
-    const config::tree user_config = engine::empty_config();
-
-    executor::executor_handle handle = executor::setup();
-
-    const executor::exec_handle exec_handle1 = handle.spawn_test(
-        program, "sleep 30", user_config);
-    const executor::exec_handle exec_handle2 = handle.spawn_test(
-        program, "sleep 40", user_config);
-    const executor::exec_handle exec_handle3 = handle.spawn_test(
-        program, "exit 15", user_config);
-
-    {
-        executor::result_handle result_handle = handle.wait_any_test();
-        ATF_REQUIRE_EQ(exec_handle3, result_handle.original_exec_handle());
-        ATF_REQUIRE_EQ(model::test_result(model::test_result_passed,
-                                          "Exit 15"),
-                       result_handle.test_result());
-        result_handle.cleanup();
-    }
-
-    {
-        executor::result_handle result_handle = handle.wait_any_test();
-        ATF_REQUIRE_EQ(exec_handle1, result_handle.original_exec_handle());
-        const datetime::delta duration =
-            result_handle.end_time() - result_handle.start_time();
-        ATF_REQUIRE(duration < datetime::delta(10, 0));
-        ATF_REQUIRE(duration >= datetime::delta(2, 0));
-        ATF_REQUIRE_EQ(model::test_result(model::test_result_broken,
-                                          "Timed out"),
-                       result_handle.test_result());
-        result_handle.cleanup();
-    }
-
-    {
-        executor::result_handle result_handle = handle.wait_any_test();
-        ATF_REQUIRE_EQ(exec_handle2, result_handle.original_exec_handle());
-        const datetime::delta duration =
-            result_handle.end_time() - result_handle.start_time();
-        ATF_REQUIRE(duration < datetime::delta(10, 0));
-        ATF_REQUIRE(duration >= datetime::delta(4, 0));
-        ATF_REQUIRE_EQ(model::test_result(model::test_result_broken,
-                                          "Timed out"),
-                       result_handle.test_result());
-        result_handle.cleanup();
-    }
-
-    handle.cleanup();
-}
-
-
-ATF_TEST_CASE(integration__unprivileged_user);
-ATF_TEST_CASE_HEAD(integration__unprivileged_user)
-{
-    set_md_var("require.config", "unprivileged-user");
-    set_md_var("require.user", "root");
-}
-ATF_TEST_CASE_BODY(integration__unprivileged_user)
-{
-    const model::metadata unprivileged_metadata = model::metadata_builder()
-        .set_required_user("unprivileged").build();
-
-    const model::test_program_ptr program = model::test_program_builder(
-        "mock", fs::path("the-program"), fs::current_path(), "the-suite")
-        .add_test_case("dump_unprivileged_user", unprivileged_metadata)
-        .build_ptr();
-
-    config::tree user_config = engine::empty_config();
-    user_config.set_string("unprivileged_user",
-                           get_config_var("unprivileged-user"));
-
-    executor::executor_handle handle = executor::setup();
-
-    (void)handle.spawn_test(program, "dump_unprivileged_user", user_config);
-
-    executor::result_handle result_handle = handle.wait_any_test();
-    const passwd::user unprivileged_user = passwd::find_user_by_name(
-        get_config_var("unprivileged-user"));
-    ATF_REQUIRE(atf::utils::compare_file(
-        result_handle.stdout_file().str(),
-        F("UID = %s\n") % unprivileged_user.uid));
-    result_handle.cleanup();
-
-    handle.cleanup();
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(integration__auto_cleanup);
-ATF_TEST_CASE_BODY(integration__auto_cleanup)
-{
-    const model::test_program_ptr program = model::test_program_builder(
-        "mock", fs::path("the-program"), fs::current_path(), "the-suite")
-        .add_test_case("exit 10")
-        .add_test_case("exit 20")
-        .add_test_case("pause")
-        .build_ptr();
-
-    const config::tree user_config = engine::empty_config();
-
-    std::vector< executor::exec_handle > pids;
-    std::vector< fs::path > paths;
-    {
-        executor::executor_handle handle = executor::setup();
-
-        pids.push_back(handle.spawn_test(program, "exit 10", user_config));
-        pids.push_back(handle.spawn_test(program, "exit 20", user_config));
-
-        // This invocation is never waited for below.  This is intentional: we
-        // want the destructor to clean the "leaked" test automatically so that
-        // the clean up of the parent work directory also happens correctly.
-        pids.push_back(handle.spawn_test(program, "pause", user_config));
-
-        executor::result_handle result_handle1 = handle.wait_any_test();
-        paths.push_back(result_handle1.stdout_file());
-        paths.push_back(result_handle1.stderr_file());
-        paths.push_back(result_handle1.work_directory());
-
-        executor::result_handle result_handle2 = handle.wait_any_test();
-        paths.push_back(result_handle2.stdout_file());
-        paths.push_back(result_handle2.stderr_file());
-        paths.push_back(result_handle2.work_directory());
-    }
-    for (std::vector< executor::exec_handle >::const_iterator
-             iter = pids.begin(); iter != pids.end(); ++iter) {
-        // We know that the executor handles are PIDs because we are
-        // unit-testing the code... but this is not a valid assumption that
-        // outside code can make.
-        const pid_t pid = *iter;
-        ensure_dead(pid);
-    }
-    for (std::vector< fs::path >::const_iterator iter = paths.begin();
-         iter != paths.end(); ++iter) {
-        ATF_REQUIRE(!atf::utils::file_exists((*iter).str()));
-    }
-}
-
-
-/// Ensures that interrupting an executor cleans things up correctly.
-///
-/// This test scenario is tricky.  We spawn a master child process that runs the
-/// executor code and we send a signal to it externally.  The child process
-/// spawns a bunch of tests that block indefinitely and tries to wait for their
-/// results.  When the signal is received, we expect an interrupt_error to be
-/// raised, which in turn should clean up all test resources and exit the master
-/// child process successfully.
-///
-/// \param signo Signal to deliver to the executor.
-static void
-do_signal_handling_test(const int signo)
-{
-    const model::test_program_ptr program = model::test_program_builder(
-        "mock", fs::path("the-program"), fs::current_path(), "the-suite")
-        .add_test_case("pause")
-        .build_ptr();
-
-    const config::tree user_config = engine::empty_config();
-
-    const pid_t pid = ::fork();
-    ATF_REQUIRE(pid != -1);
-    if (pid == 0) {
-        static const std::size_t num_children = 3;
-
-        optional< fs::path > root_work_directory;
-        try {
-            executor::executor_handle handle = executor::setup();
-            root_work_directory = handle.root_work_directory();
-
-            for (std::size_t i = 0; i < num_children; ++i) {
-                (void)handle.spawn_test(program, "pause", user_config);
-            }
-
-            atf::utils::create_file("spawned.txt", "");
-
-            for (std::size_t i = 0; i < num_children; ++i) {
-                executor::result_handle result_handle = handle.wait_any_test();
-                // We may never reach this point in the test, but if we do let's
-                // make sure the subprocess was terminated as expected.
-                if (result_handle.test_result() == model::test_result(
-                        model::test_result_failed, F("Signal %s") % SIGKILL)) {
-                    // OK.
-                } else {
-                    std::cerr << "Child exited with unexpected code: "
-                              << result_handle.test_result() << '\n';
-                    std::exit(EXIT_FAILURE);
-                }
-                result_handle.cleanup();
-            }
-            std::cerr << "Terminating without reception of signal\n";
-            std::exit(EXIT_FAILURE);
-        } catch (const signals::interrupted_error& unused_error) {
-            std::cerr << "Terminating due to interrupted_error\n";
-            // We never kill ourselves until spawned.txt is created, so it is
-            // guaranteed that the optional root_work_directory has been
-            // initialized at this point.
-            if (atf::utils::file_exists(root_work_directory.get().str())) {
-                // Some cleanup did not happen; error out.
-                std::exit(EXIT_FAILURE);
-            } else {
-                std::exit(EXIT_SUCCESS);
-            }
-        }
-        std::abort();
-    }
-
-    while (!atf::utils::file_exists("spawned.txt")) {
-        // Wait for processes.
-    }
-    ATF_REQUIRE(::unlink("spawned.txt") != -1);
-    ATF_REQUIRE(::kill(pid, signo) != -1);
-
-    int status;
-    ATF_REQUIRE(::waitpid(pid, &status, 0) != -1);
-    ATF_REQUIRE(WIFEXITED(status));
-    ATF_REQUIRE_EQ(EXIT_SUCCESS, WEXITSTATUS(status));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(integration__signal_handling);
-ATF_TEST_CASE_BODY(integration__signal_handling)
-{
-    // This test scenario is racy so run it multiple times to have higher
-    // chances of exposing problems.
-    const std::size_t rounds = 20;
-
-    for (std::size_t i = 0; i < rounds; ++i) {
-        std::cout << F("Testing round %s\n") % i;
-        do_signal_handling_test(SIGHUP);
-        do_signal_handling_test(SIGINT);
-        do_signal_handling_test(SIGTERM);
-    }
 }
 
 
@@ -1035,64 +584,6 @@ ATF_TEST_CASE_BODY(integration__list_files_on_failure)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(integration__isolate_child_is_called);
-ATF_TEST_CASE_BODY(integration__isolate_child_is_called)
-{
-    const model::test_program_ptr program = model::test_program_builder(
-        "mock", fs::path("the-program"), fs::current_path(), "the-suite")
-        .add_test_case("validate_isolation").build_ptr();
-
-    const config::tree user_config = engine::empty_config();
-
-    executor::executor_handle handle = executor::setup();
-
-    utils::setenv("HOME", "fake-value");
-    utils::setenv("LANG", "es_ES");
-    (void)handle.spawn_test(program, "validate_isolation", user_config);
-
-    executor::result_handle result_handle = handle.wait_any_test();
-    ATF_REQUIRE_EQ(model::test_result(model::test_result_passed, "Exit 0"),
-                   result_handle.test_result());
-    result_handle.cleanup();
-
-    handle.cleanup();
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(integration__process_group_is_terminated);
-ATF_TEST_CASE_BODY(integration__process_group_is_terminated)
-{
-    utils::setenv("CONTROL_DIR", fs::current_path().str());
-
-    const model::test_program_ptr program = model::test_program_builder(
-        "mock", fs::path("the-program"), fs::current_path(), "the-suite")
-        .add_test_case("spawn_blocking_child").build_ptr();
-
-    const config::tree user_config = engine::empty_config();
-
-    executor::executor_handle handle = executor::setup();
-    (void)handle.spawn_test(program, "spawn_blocking_child", user_config);
-
-    executor::result_handle result_handle = handle.wait_any_test();
-    ATF_REQUIRE_EQ(model::test_result(model::test_result_passed, "Exit 0"),
-                   result_handle.test_result());
-    result_handle.cleanup();
-
-    handle.cleanup();
-
-    if (!fs::exists(fs::path("pid")))
-        fail("The pid file was not created");
-
-    std::ifstream pidfile("pid");
-    ATF_REQUIRE(pidfile);
-    pid_t pid;
-    pidfile >> pid;
-    pidfile.close();
-
-    ensure_dead(pid);
-}
-
-
 ATF_TEST_CASE_WITHOUT_HEAD(integration__prevent_clobbering_control_files);
 ATF_TEST_CASE_BODY(integration__prevent_clobbering_control_files)
 {
@@ -1124,18 +615,10 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, integration__run_many);
 
     ATF_ADD_TEST_CASE(tcs, integration__parameters_and_output);
-    ATF_ADD_TEST_CASE(tcs, integration__timestamps);
-    ATF_ADD_TEST_CASE(tcs, integration__files);
 
     ATF_ADD_TEST_CASE(tcs, integration__fake_result);
     ATF_ADD_TEST_CASE(tcs, integration__check_requirements);
-    ATF_ADD_TEST_CASE(tcs, integration__timeouts);
-    ATF_ADD_TEST_CASE(tcs, integration__unprivileged_user);
-    ATF_ADD_TEST_CASE(tcs, integration__auto_cleanup);
-    ATF_ADD_TEST_CASE(tcs, integration__signal_handling);
     ATF_ADD_TEST_CASE(tcs, integration__stacktrace);
     ATF_ADD_TEST_CASE(tcs, integration__list_files_on_failure);
-    ATF_ADD_TEST_CASE(tcs, integration__isolate_child_is_called);
-    ATF_ADD_TEST_CASE(tcs, integration__process_group_is_terminated);
     ATF_ADD_TEST_CASE(tcs, integration__prevent_clobbering_control_files);
 }
