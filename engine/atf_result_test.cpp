@@ -68,7 +68,7 @@ parse_ok_test(const engine::atf_result::types& exp_type,
 {
     std::istringstream input(text);
     const engine::atf_result actual = engine::atf_result::parse(input);
-    ATF_REQUIRE_EQ(exp_type, actual.type());
+    ATF_REQUIRE(exp_type == actual.type());
     ATF_REQUIRE_EQ(exp_argument, actual.argument());
     if (exp_reason != NULL) {
         ATF_REQUIRE(actual.reason());
@@ -247,7 +247,7 @@ ATF_TEST_CASE_BODY(atf_result__load__ok)
 
     const engine::atf_result result = engine::atf_result::load(
         utils::fs::path("result.txt"));
-    ATF_REQUIRE_EQ(engine::atf_result::skipped, result.type());
+    ATF_REQUIRE(engine::atf_result::skipped == result.type());
     ATF_REQUIRE(!result.argument());
     ATF_REQUIRE(result.reason());
     ATF_REQUIRE_EQ("a b c", result.reason().get());
