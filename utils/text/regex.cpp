@@ -271,9 +271,9 @@ text::regex::compile(const std::string& regex_, const std::size_t ngroups)
 text::regex_matches
 text::regex::match(const std::string& str) const
 {
-    std::shared_ptr< regex_matches::impl > impl(new regex_matches::impl(
+    std::shared_ptr< regex_matches::impl > pimpl(new regex_matches::impl(
         &_pimpl->_preg, str, _pimpl->_ngroups));
-    return regex_matches(impl);
+    return regex_matches(pimpl);
 }
 
 
