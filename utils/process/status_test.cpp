@@ -129,6 +129,36 @@ ATF_TEST_CASE_BODY(fake_signaled)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(output__exitstatus);
+ATF_TEST_CASE_BODY(output__exitstatus)
+{
+    const status fake = status::fake_exited(123);
+    std::ostringstream str;
+    str << fake;
+    ATF_REQUIRE_EQ("status{exitstatus=123}", str.str());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(output__signaled_without_core);
+ATF_TEST_CASE_BODY(output__signaled_without_core)
+{
+    const status fake = status::fake_signaled(8, false);
+    std::ostringstream str;
+    str << fake;
+    ATF_REQUIRE_EQ("status{termsig=8, coredump=false}", str.str());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(output__signaled_with_core);
+ATF_TEST_CASE_BODY(output__signaled_with_core)
+{
+    const status fake = status::fake_signaled(9, true);
+    std::ostringstream str;
+    str << fake;
+    ATF_REQUIRE_EQ("status{termsig=9, coredump=true}", str.str());
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(integration__exited);
 ATF_TEST_CASE_BODY(integration__exited)
 {
@@ -181,6 +211,10 @@ ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, fake_exited);
     ATF_ADD_TEST_CASE(tcs, fake_signaled);
+
+    ATF_ADD_TEST_CASE(tcs, output__exitstatus);
+    ATF_ADD_TEST_CASE(tcs, output__signaled_without_core);
+    ATF_ADD_TEST_CASE(tcs, output__signaled_with_core);
 
     ATF_ADD_TEST_CASE(tcs, integration__exited);
     ATF_ADD_TEST_CASE(tcs, integration__signaled);

@@ -29,22 +29,8 @@
 /// \file engine/executor.hpp
 /// Multiprogrammed test case executor.
 ///
-/// The intended workflow for using this module is the following:
-///
-/// 1) Initialize the executor using setup().  Keep the returned object
-///    around through the lifetime of the next operations.
-/// 2) Spawn one or more test cases with spawn_test().  On the caller side,
-///    keep track of any per-test case data you may need using the returned
-///    exec_handle, which is unique among the set of active test cases.
-/// 3) Call wait_any_test() to wait for completion of any test started in
-///    the previous step.  Repeat as desired.
-/// 4) Use the returned result_handle object by wait_any_test() to query
-///    the result of the test and/or to access any of its data files.
-/// 5) Invoke cleanup() on the result_handle to wipe any stale data.
-/// 6) Invoke cleanup() on the object returned by setup().
-///
-/// It is the responsibility of the caller to ensure that calls to
-/// spawn_test and wait_any_test are balanced.
+/// See the documentation in utils/process/executor.hpp for details on
+/// the expected workflow of these classes.
 
 #if !defined(ENGINE_EXECUTOR_HPP)
 #define ENGINE_EXECUTOR_HPP
@@ -61,7 +47,6 @@
 #include "utils/defs.hpp"
 #include "utils/fs/path_fwd.hpp"
 #include "utils/optional_fwd.hpp"
-#include "utils/passwd_fwd.hpp"
 #include "utils/process/status_fwd.hpp"
 #include "utils/shared_ptr.hpp"
 
@@ -140,10 +125,7 @@ public:
 };
 
 
-/// Handler for the livelihood of the executor.
-///
-/// This object can be copied around but note that its implementation is
-/// shared.  Only one instance of the executor can exist at any point in time.
+/// Stateful interface to the multiprogrammed execution of tests.
 class executor_handle {
     struct impl;
     /// Pointer to internal implementation.

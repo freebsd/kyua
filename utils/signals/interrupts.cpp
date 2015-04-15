@@ -40,11 +40,13 @@ extern "C" {
 #include <set>
 
 #include "utils/logging/macros.hpp"
+#include "utils/process/operations.hpp"
 #include "utils/sanity.hpp"
 #include "utils/signals/exceptions.hpp"
 #include "utils/signals/programmer.hpp"
 
 namespace signals = utils::signals;
+namespace process = utils::process;
 
 
 namespace {
@@ -107,13 +109,7 @@ signal_handler(const int signo)
 
     for (pids_set::const_iterator iter = pids_to_kill.begin();
         iter != pids_to_kill.end(); ++iter) {
-        (void)::killpg(*iter, SIGKILL);
-        // The killpg above may have missed our subprocess if we happen to be
-        // killing it too early: that is, before the subprocess has had a chance
-        // to set its process group.  To catch this case, send another signal to
-        // that PID alone.  This is safe because our wait(2) call will not run
-        // until we return, so we are not killing a process we do not own.
-        (void)::kill(*iter, SIGKILL);
+        process::terminate_group(*iter);
     }
 }
 

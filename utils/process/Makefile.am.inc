@@ -32,9 +32,15 @@ libutils_a_SOURCES += utils/process/child.ipp
 libutils_a_SOURCES += utils/process/child_fwd.hpp
 libutils_a_SOURCES += utils/process/exceptions.cpp
 libutils_a_SOURCES += utils/process/exceptions.hpp
+libutils_a_SOURCES += utils/process/executor.cpp
+libutils_a_SOURCES += utils/process/executor.hpp
+libutils_a_SOURCES += utils/process/executor.ipp
+libutils_a_SOURCES += utils/process/executor_fwd.hpp
 libutils_a_SOURCES += utils/process/fdstream.cpp
 libutils_a_SOURCES += utils/process/fdstream.hpp
 libutils_a_SOURCES += utils/process/fdstream_fwd.hpp
+libutils_a_SOURCES += utils/process/isolation.cpp
+libutils_a_SOURCES += utils/process/isolation.hpp
 libutils_a_SOURCES += utils/process/operations.cpp
 libutils_a_SOURCES += utils/process/operations.hpp
 libutils_a_SOURCES += utils/process/operations_fwd.hpp
@@ -63,10 +69,20 @@ utils_process_exceptions_test_SOURCES = utils/process/exceptions_test.cpp
 utils_process_exceptions_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 utils_process_exceptions_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
+tests_utils_process_PROGRAMS += utils/process/executor_test
+utils_process_executor_test_SOURCES = utils/process/executor_test.cpp
+utils_process_executor_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_process_executor_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
+
 tests_utils_process_PROGRAMS += utils/process/fdstream_test
 utils_process_fdstream_test_SOURCES = utils/process/fdstream_test.cpp
 utils_process_fdstream_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 utils_process_fdstream_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
+
+tests_utils_process_PROGRAMS += utils/process/isolation_test
+utils_process_isolation_test_SOURCES = utils/process/isolation_test.cpp
+utils_process_isolation_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_process_isolation_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_process_PROGRAMS += utils/process/helpers
 utils_process_helpers_SOURCES = utils/process/helpers.cpp

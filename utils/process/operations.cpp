@@ -32,6 +32,7 @@ extern "C" {
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#include <signal.h>
 #include <unistd.h>
 }
 
@@ -41,6 +42,7 @@ extern "C" {
 #include <cstring>
 #include <iostream>
 
+#include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/process/exceptions.hpp"
@@ -127,6 +129,37 @@ process::exec(const fs::path& program, const args_vector& args) throw()
             "exception during exec\n";
         std::abort();
     }
+}
+
+
+/// Forcibly kills a process group started by us.
+///
+/// This function is safe to call from an signal handler context.
+///
+/// Pretty much all of our subprocesses run in their own process group so that
+/// we can terminate them and thier children should we need to.  Because of
+/// this, the very first thing our subprocesses do is create a new process group
+/// for themselves.
+///
+/// The implication of the above is that simply issuing a killpg() call on the
+/// process group is racy: if the subprocess has not yet had a chance to prepare
+/// its own process group, then we will not be killing anything.  To solve this,
+/// we must also kill() the process group leader itself, and we must do so after
+/// the call to killpg().  Doing this is safe because: 1) the process group must
+/// have the same ID as the PID of the process that created it; and 2) we have
+/// not yet issued a wait() call so we still own the PID.
+///
+/// The sideffect of doing what we do here is that the process group leader may
+/// receive a signal twice.  But we don't care because we are forcibly
+/// terminating the process group and none of the processes can controlledly
+/// react to SIGKILL.
+///
+/// \param pgid PID or process group ID to terminate.
+void
+process::terminate_group(const int pgid)
+{
+    (void)::killpg(pgid, SIGKILL);
+    (void)::kill(pgid, SIGKILL);
 }
 
 

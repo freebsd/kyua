@@ -32,6 +32,7 @@ extern "C" {
 #include <sys/wait.h>
 }
 
+#include "utils/format/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 
@@ -176,4 +177,24 @@ process::status::coredump(void) const
 {
     PRE(signaled());
     return _signaled.get().second;
+}
+
+
+/// Injects the object into a stream.
+///
+/// \param output The stream into which to inject the object.
+/// \param status The object to format.
+///
+/// \return The output stream.
+std::ostream&
+process::operator<<(std::ostream& output, const status& status)
+{
+    if (status.exited()) {
+        output << F("status{exitstatus=%s}") % status.exitstatus();
+    } else {
+        INV(status.signaled());
+        output << F("status{termsig=%s, coredump=%s}") % status.termsig() %
+            status.coredump();
+    }
+    return output;
 }

@@ -48,8 +48,6 @@ libengine_a_SOURCES += engine/executor_fwd.hpp
 libengine_a_SOURCES += engine/filters.cpp
 libengine_a_SOURCES += engine/filters.hpp
 libengine_a_SOURCES += engine/filters_fwd.hpp
-libengine_a_SOURCES += engine/isolation.cpp
-libengine_a_SOURCES += engine/isolation.hpp
 libengine_a_SOURCES += engine/kyuafile.cpp
 libengine_a_SOURCES += engine/kyuafile.hpp
 libengine_a_SOURCES += engine/kyuafile_fwd.hpp
@@ -107,11 +105,6 @@ tests_engine_PROGRAMS += engine/filters_test
 engine_filters_test_SOURCES = engine/filters_test.cpp
 engine_filters_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
 engine_filters_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
-
-tests_engine_PROGRAMS += engine/isolation_test
-engine_isolation_test_SOURCES = engine/isolation_test.cpp
-engine_isolation_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
-engine_isolation_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 
 tests_engine_PROGRAMS += engine/kyuafile_test
 engine_kyuafile_test_SOURCES = engine/kyuafile_test.cpp
