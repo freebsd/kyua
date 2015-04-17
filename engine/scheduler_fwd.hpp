@@ -45,6 +45,7 @@ typedef int exec_handle;
 class scheduler_handle;
 class interface;
 class result_handle;
+class test_result_handle;
 
 
 /// Pointer to a dynamically-allocated result_handle.

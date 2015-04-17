@@ -279,18 +279,9 @@ find_interface(const std::string& name)
 
 
 /// Internal implementation for the result_handle class.
-struct engine::scheduler::result_handle::impl {
+struct engine::scheduler::result_handle::bimpl {
     /// Generic executor exit handle for this result handle.
     executor::exit_handle generic;
-
-    /// Test program data for this test case.
-    model::test_program_ptr test_program;
-
-    /// Name of the test case.
-    std::string test_case_name;
-
-    /// The actual result of the test execution.
-    const model::test_result test_result;
 
     /// Mutable pointer to the corresponding scheduler state.
     ///
@@ -302,25 +293,16 @@ struct engine::scheduler::result_handle::impl {
     /// Constructor.
     ///
     /// \param generic_ Generic executor exit handle for this result handle.
-    /// \param test_program_ Test program data for this test case.
-    /// \param test_case_name_ Name of the test case.
-    /// \param test_result_ The actual result of the test execution.
     /// \param [in,out] all_exec_data_ Global object keeping track of all active
     ///     executions for an scheduler.  This is a pointer to a member of the
     ///     scheduler_handle object.
-    impl(const executor::exit_handle generic_,
-         const model::test_program_ptr test_program_,
-         const std::string& test_case_name_,
-         const model::test_result& test_result_,
-         exec_data_map& all_exec_data_) :
-        generic(generic_), test_program(test_program_),
-        test_case_name(test_case_name_), test_result(test_result_),
-        all_exec_data(all_exec_data_)
+    bimpl(const executor::exit_handle generic_, exec_data_map& all_exec_data_) :
+        generic(generic_), all_exec_data(all_exec_data_)
     {
     }
 
     /// Destructor.
-    ~impl(void)
+    ~bimpl(void)
     {
         all_exec_data.erase(generic.original_exec_handle());
     }
@@ -329,9 +311,9 @@ struct engine::scheduler::result_handle::impl {
 
 /// Constructor.
 ///
-/// \param pimpl Constructed internal implementation.
-scheduler::result_handle::result_handle(std::shared_ptr< impl > pimpl) :
-    _pimpl(pimpl)
+/// \param pbimpl Constructed internal implementation.
+scheduler::result_handle::result_handle(std::shared_ptr< bimpl > pbimpl) :
+    _pbimpl(pbimpl)
 {
 }
 
@@ -353,7 +335,7 @@ scheduler::result_handle::~result_handle(void)
 void
 scheduler::result_handle::cleanup(void)
 {
-    _pimpl->generic.cleanup();
+    _pbimpl->generic.cleanup();
 }
 
 
@@ -363,37 +345,7 @@ scheduler::result_handle::cleanup(void)
 scheduler::exec_handle
 scheduler::result_handle::original_exec_handle(void) const
 {
-    return _pimpl->generic.original_exec_handle();
-}
-
-
-/// Returns the test program that yielded this result.
-///
-/// \return A test program.
-const model::test_program_ptr
-scheduler::result_handle::test_program(void) const
-{
-    return _pimpl->test_program;
-}
-
-
-/// Returns the name of the test case that yielded this result.
-///
-/// \return A test case name
-const std::string&
-scheduler::result_handle::test_case_name(void) const
-{
-    return _pimpl->test_case_name;
-}
-
-
-/// Returns the actual result of the test execution.
-///
-/// \return A test result.
-const model::test_result&
-scheduler::result_handle::test_result(void) const
-{
-    return _pimpl->test_result;
+    return _pbimpl->generic.original_exec_handle();
 }
 
 
@@ -403,7 +355,7 @@ scheduler::result_handle::test_result(void) const
 const datetime::timestamp&
 scheduler::result_handle::start_time(void) const
 {
-    return _pimpl->generic.start_time();
+    return _pbimpl->generic.start_time();
 }
 
 
@@ -413,7 +365,7 @@ scheduler::result_handle::start_time(void) const
 const datetime::timestamp&
 scheduler::result_handle::end_time(void) const
 {
-    return _pimpl->generic.end_time();
+    return _pbimpl->generic.end_time();
 }
 
 
@@ -425,7 +377,7 @@ scheduler::result_handle::end_time(void) const
 fs::path
 scheduler::result_handle::work_directory(void) const
 {
-    return _pimpl->generic.work_directory();
+    return _pbimpl->generic.work_directory();
 }
 
 
@@ -435,7 +387,7 @@ scheduler::result_handle::work_directory(void) const
 const fs::path&
 scheduler::result_handle::stdout_file(void) const
 {
-    return _pimpl->generic.stdout_file();
+    return _pbimpl->generic.stdout_file();
 }
 
 
@@ -445,7 +397,81 @@ scheduler::result_handle::stdout_file(void) const
 const fs::path&
 scheduler::result_handle::stderr_file(void) const
 {
-    return _pimpl->generic.stderr_file();
+    return _pbimpl->generic.stderr_file();
+}
+
+
+/// Internal implementation for the test_result_handle class.
+struct engine::scheduler::test_result_handle::impl {
+    /// Test program data for this test case.
+    model::test_program_ptr test_program;
+
+    /// Name of the test case.
+    std::string test_case_name;
+
+    /// The actual result of the test execution.
+    const model::test_result test_result;
+
+    /// Constructor.
+    ///
+    /// \param test_program_ Test program data for this test case.
+    /// \param test_case_name_ Name of the test case.
+    /// \param test_result_ The actual result of the test execution.
+    impl(const model::test_program_ptr test_program_,
+         const std::string& test_case_name_,
+         const model::test_result& test_result_) :
+        test_program(test_program_),
+        test_case_name(test_case_name_),
+        test_result(test_result_)
+    {
+    }
+};
+
+
+/// Constructor.
+///
+/// \param pbimpl Constructed internal implementation for the base object.
+/// \param pimpl Constructed internal implementation.
+scheduler::test_result_handle::test_result_handle(
+    std::shared_ptr< bimpl > pbimpl, std::shared_ptr< impl > pimpl) :
+    result_handle(pbimpl), _pimpl(pimpl)
+{
+}
+
+
+/// Destructor.
+scheduler::test_result_handle::~test_result_handle(void)
+{
+}
+
+
+/// Returns the test program that yielded this result.
+///
+/// \return A test program.
+const model::test_program_ptr
+scheduler::test_result_handle::test_program(void) const
+{
+    return _pimpl->test_program;
+}
+
+
+/// Returns the name of the test case that yielded this result.
+///
+/// \return A test case name
+const std::string&
+scheduler::test_result_handle::test_case_name(void) const
+{
+    return _pimpl->test_case_name;
+}
+
+
+/// Returns the actual result of the test execution.
+///
+/// \return A test result.
+const model::test_result&
+scheduler::test_result_handle::test_result(void) const
+{
+    return _pimpl->test_result;
 }
 
 
@@ -538,7 +564,7 @@ scheduler::setup(void)
 /// \param user_config User-provided configuration variables.
 ///
 /// \return A handle for the background operation.  Used to match the result of
-/// the execution returned by wait_any_test() with this invocation.
+/// the execution returned by wait_any() with this invocation.
 scheduler::exec_handle
 scheduler::scheduler_handle::spawn_test(
     const model::test_program_ptr test_program,
@@ -578,9 +604,11 @@ scheduler::scheduler_handle::spawn_test(
 
 /// Waits for completion of any forked test case.
 ///
-/// \return A (handle, test result) pair.
+/// \return The result of the execution of a subprocess.  This is a dynamically
+/// allocated object because the scheduler can spawn subprocesses of various
+/// types and, at wait time, we don't know upfront what we are going to get.
 scheduler::result_handle_ptr
-scheduler::scheduler_handle::wait_any_test(void)
+scheduler::scheduler_handle::wait_any(void)
 {
     _pimpl->generic.check_interrupt();
 
@@ -631,12 +659,13 @@ scheduler::scheduler_handle::wait_any_test(void)
                              handle.stderr_file());
     }
 
-    std::shared_ptr< result_handle::impl > result_handle_impl(
-        new result_handle::impl(
-            handle,
-            data.test_program, data.test_case_name, result.get(),
-            _pimpl->all_exec_data));
-    return result_handle_ptr(new result_handle(result_handle_impl));
+    std::shared_ptr< result_handle::bimpl > result_handle_bimpl(
+        new result_handle::bimpl(handle, _pimpl->all_exec_data));
+    std::shared_ptr< test_result_handle::impl > test_result_handle_impl(
+        new test_result_handle::impl(
+            data.test_program, data.test_case_name, result.get()));
+    return result_handle_ptr(new test_result_handle(result_handle_bimpl,
+                                                    test_result_handle_impl));
 }
 
 

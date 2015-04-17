@@ -103,7 +103,7 @@ find_test_program_id(const model::test_program_ptr test_program,
 /// \param [in,out] tx Writable transaction where to store the result data.
 static void
 put_test_result(const int64_t test_case_id,
-                const scheduler::result_handle& result,
+                const scheduler::test_result_handle& result,
                 store::write_transaction& tx)
 {
     tx.put_result(result.test_result(), test_case_id,
@@ -121,7 +121,7 @@ put_test_result(const int64_t test_case_id,
 /// \return The test result if the cleanup succeeds; a broken test result
 /// otherwise.
 model::test_result
-safe_cleanup(scheduler::result_handle handle) throw()
+safe_cleanup(scheduler::test_result_handle handle) throw()
 {
     try {
         handle.cleanup();
@@ -219,19 +219,25 @@ drivers::run_tests::drive(const fs::path& kyuafile_path,
         // result.  We consume slots one at a time to give preference to the
         // spawning of new tests as detailed above.
         if (!in_flight.empty()) {
-            scheduler::result_handle_ptr result = handle.wait_any_test();
+            scheduler::result_handle_ptr result_handle = handle.wait_any();
+            const scheduler::test_result_handle* test_result_handle =
+                dynamic_cast< const scheduler::test_result_handle* >(
+                    result_handle.get());
 
             const std::map< scheduler::exec_handle, int64_t >::iterator
-                iter = in_flight.find(result->original_exec_handle());
+                iter = in_flight.find(result_handle->original_exec_handle());
             const int64_t test_case_id = (*iter).second;
             in_flight.erase(iter);
 
-            put_test_result(test_case_id, *result, tx);
+            put_test_result(test_case_id, *test_result_handle, tx);
 
-            const model::test_result test_result = safe_cleanup(*result);
-            hooks.got_result(*result->test_program(), result->test_case_name(),
-                             result->test_result(),
-                             result->end_time() - result->start_time());
+            const model::test_result test_result = safe_cleanup(
+                *test_result_handle);
+            hooks.got_result(
+                *test_result_handle->test_program(),
+                test_result_handle->test_case_name(),
+                test_result_handle->test_result(),
+                result_handle->end_time() - result_handle->start_time());
         }
     } while (!in_flight.empty() || !scanner.done());
 

@@ -42,6 +42,7 @@ BEGIN {
 # properly locate the docstrings.
 /engine\/kyuafile\.cpp.*no matching class member/ {next}
 /engine\/scheduler\.hpp.*Member setup\(void\).*friend/ {next}
+/engine\/scheduler\.hpp.*Member wait_any\(void\)/ {next}
 /utils\/optional\.ipp.*no matching file member/ {next}
 /utils\/optional\.hpp.*Member make_optional\(const T &\)/ {next}
 /utils\/config\/nodes\.hpp.*Member set_lua\(lutok::state &, const int\)/ {next}
