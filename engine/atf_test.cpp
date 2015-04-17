@@ -35,8 +35,8 @@ extern "C" {
 #include <atf-c++.hpp>
 
 #include "engine/config.hpp"
-#include "engine/executor.hpp"
 #include "engine/runner.hpp"
+#include "engine/scheduler.hpp"
 #include "model/metadata.hpp"
 #include "model/test_program_fwd.hpp"
 #include "model/test_result.hpp"
@@ -47,9 +47,9 @@ extern "C" {
 #include "utils/stacktrace.hpp"
 
 namespace config = utils::config;
-namespace executor = engine::executor;
 namespace fs = utils::fs;
 namespace runner = engine::runner;
+namespace scheduler = engine::scheduler;
 
 using utils::none;
 
@@ -82,10 +82,10 @@ run_one(const atf::tests::tc* tc, const char* test_case_name,
         "the-suite", model::metadata_builder().build(),
         tester_vars));
 
-    executor::executor_handle handle = executor::setup();
+    scheduler::scheduler_handle handle = scheduler::setup();
     (void)handle.spawn_test(program, test_case_name, user_config);
 
-    executor::result_handle result_handle = handle.wait_any_test();
+    scheduler::result_handle result_handle = handle.wait_any_test();
     atf::utils::cat_file(result_handle.stdout_file().str(), "stdout: ");
     atf::utils::cat_file(result_handle.stderr_file().str(), "stderr: ");
     ATF_REQUIRE_EQ(exp_result, result_handle.test_result());
@@ -232,8 +232,8 @@ ATF_TEST_CASE_BODY(integration__body_and_cleanup__shared_workdir)
 
 ATF_INIT_TEST_CASES(tcs)
 {
-    executor::register_interface(
-        "atf", std::shared_ptr< executor::interface >(
+    scheduler::register_interface(
+        "atf", std::shared_ptr< scheduler::interface >(
             new engine::atf_interface()));
 
     ATF_ADD_TEST_CASE(tcs, integration__body_only__passes);

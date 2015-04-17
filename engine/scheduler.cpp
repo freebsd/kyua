@@ -26,7 +26,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/executor.hpp"
+#include "engine/scheduler.hpp"
 
 extern "C" {
 #include <unistd.h>
@@ -62,12 +62,13 @@ extern "C" {
 
 namespace config = utils::config;
 namespace datetime = utils::datetime;
-namespace executor = engine::executor;
+namespace executor = utils::process::executor;
 namespace fs = utils::fs;
 namespace logging = utils::logging;
 namespace passwd = utils::passwd;
 namespace process = utils::process;
 namespace runner = engine::runner;
+namespace scheduler = engine::scheduler;
 
 using utils::none;
 using utils::optional;
@@ -93,7 +94,7 @@ static const char* skipped_cookie = "skipped.txt";
 
 
 /// Mapping of interface names to interface definitions.
-typedef std::map< std::string, std::shared_ptr< executor::interface > >
+typedef std::map< std::string, std::shared_ptr< scheduler::interface > >
     interfaces_map;
 
 
@@ -135,11 +136,11 @@ append_files_listing(const fs::path& dir_path, const fs::path& output_file)
 /// Maintenance data held while a test is being executed.
 ///
 /// This data structure exists from the moment when a test is executed via
-/// executor::spawn_test() to when it is cleaned up with
+/// scheduler::spawn_test() to when it is cleaned up with
 /// result_handle::cleanup().
 struct exec_data {
     /// Test program-specific execution interface.
-    std::shared_ptr< executor::interface > interface;
+    std::shared_ptr< scheduler::interface > interface;
 
     /// Test program data for this test case.
     model::test_program_ptr test_program;
@@ -152,7 +153,7 @@ struct exec_data {
     /// \param interface_ Test program-specific execution interface.
     /// \param test_program_ Test program data for this test case.
     /// \param test_case_name_ Name of the test case.
-    exec_data(const std::shared_ptr< executor::interface >& interface_,
+    exec_data(const std::shared_ptr< scheduler::interface >& interface_,
               const model::test_program_ptr test_program_,
               const std::string& test_case_name_) :
         interface(interface_), test_program(test_program_),
@@ -163,13 +164,13 @@ struct exec_data {
 
 
 /// Mapping of active test case handles to their maintenance data.
-typedef std::map< executor::exec_handle, exec_data > exec_data_map;
+typedef std::map< scheduler::exec_handle, exec_data > exec_data_map;
 
 
 /// Functor to execute a test program in a child process.
 class run_test_program {
     /// Interface of the test program to execute.
-    std::shared_ptr< executor::interface > _interface;
+    std::shared_ptr< scheduler::interface > _interface;
 
     /// Test program to execute.
     const model::test_program_ptr _test_program;
@@ -182,10 +183,10 @@ class run_test_program {
 
     /// Verifies if the test case needs to be skipped or not.
     ///
-    /// We could very well run this on the executor parent process before
+    /// We could very well run this on the scheduler parent process before
     /// issuing the fork.  However, doing this here in the child process is
     /// better for two reasons: first, it allows us to continue using the simple
-    /// spawn/wait abstraction of the executor; and, second, we parallelize the
+    /// spawn/wait abstraction of the scheduler; and, second, we parallelize the
     /// requirements checks among tests.
     ///
     /// \post If the test's preconditions are not met, the caller process is
@@ -230,7 +231,7 @@ public:
     /// \param test_case_name Name of the test case to execute.
     /// \param user_config User-provided configuration variables.
     run_test_program(
-        const std::shared_ptr< executor::interface > interface,
+        const std::shared_ptr< scheduler::interface > interface,
         const model::test_program_ptr test_program,
         const std::string& test_case_name,
         const config::tree& user_config) :
@@ -260,12 +261,12 @@ public:
 };
 
 
-/// Obtains the right executor interface for a given test program.
+/// Obtains the right scheduler interface for a given test program.
 ///
 /// \param name The name of the interface of the test program.
 ///
-/// \return An executor interface.
-std::shared_ptr< executor::interface >
+/// \return An scheduler interface.
+std::shared_ptr< scheduler::interface >
 find_interface(const std::string& name)
 {
     const interfaces_map::const_iterator iter = interfaces.find(name);
@@ -278,9 +279,9 @@ find_interface(const std::string& name)
 
 
 /// Internal implementation for the result_handle class.
-struct engine::executor::result_handle::impl {
+struct engine::scheduler::result_handle::impl {
     /// Generic executor exit handle for this result handle.
-    process::executor::exit_handle generic;
+    executor::exit_handle generic;
 
     /// Test program data for this test case.
     model::test_program_ptr test_program;
@@ -291,11 +292,11 @@ struct engine::executor::result_handle::impl {
     /// The actual result of the test execution.
     const model::test_result test_result;
 
-    /// Mutable pointer to the corresponding executor state.
+    /// Mutable pointer to the corresponding scheduler state.
     ///
-    /// This object references a member of the executor_handle that yielded this
-    /// result_handle instance.  We need this direct access to clean up after
-    /// ourselves when the result is destroyed.
+    /// This object references a member of the scheduler_handle that yielded
+    /// this result_handle instance.  We need this direct access to clean up
+    /// after ourselves when the result is destroyed.
     exec_data_map& all_exec_data;
 
     /// Constructor.
@@ -305,9 +306,9 @@ struct engine::executor::result_handle::impl {
     /// \param test_case_name_ Name of the test case.
     /// \param test_result_ The actual result of the test execution.
     /// \param [in,out] all_exec_data_ Global object keeping track of all active
-    ///     executions for an executor.  This is a pointer to a member of the
-    ///     executor_handle object.
-    impl(const process::executor::exit_handle generic_,
+    ///     executions for an scheduler.  This is a pointer to a member of the
+    ///     scheduler_handle object.
+    impl(const executor::exit_handle generic_,
          const model::test_program_ptr test_program_,
          const std::string& test_case_name_,
          const model::test_result& test_result_,
@@ -329,14 +330,14 @@ struct engine::executor::result_handle::impl {
 /// Constructor.
 ///
 /// \param pimpl Constructed internal implementation.
-executor::result_handle::result_handle(std::shared_ptr< impl > pimpl) :
+scheduler::result_handle::result_handle(std::shared_ptr< impl > pimpl) :
     _pimpl(pimpl)
 {
 }
 
 
 /// Destructor.
-executor::result_handle::~result_handle(void)
+scheduler::result_handle::~result_handle(void)
 {
 }
 
@@ -350,7 +351,7 @@ executor::result_handle::~result_handle(void)
 /// \throw engine::error If the cleanup fails, especially due to the inability
 ///     to remove the work directory.
 void
-executor::result_handle::cleanup(void)
+scheduler::result_handle::cleanup(void)
 {
     _pimpl->generic.cleanup();
 }
@@ -359,8 +360,8 @@ executor::result_handle::cleanup(void)
 /// Returns the original exec_handle corresponding to this result.
 ///
 /// \return An exec_handle.
-executor::exec_handle
-executor::result_handle::original_exec_handle(void) const
+scheduler::exec_handle
+scheduler::result_handle::original_exec_handle(void) const
 {
     return _pimpl->generic.original_exec_handle();
 }
@@ -370,7 +371,7 @@ executor::result_handle::original_exec_handle(void) const
 ///
 /// \return A test program.
 const model::test_program_ptr
-executor::result_handle::test_program(void) const
+scheduler::result_handle::test_program(void) const
 {
     return _pimpl->test_program;
 }
@@ -380,7 +381,7 @@ executor::result_handle::test_program(void) const
 ///
 /// \return A test case name
 const std::string&
-executor::result_handle::test_case_name(void) const
+scheduler::result_handle::test_case_name(void) const
 {
     return _pimpl->test_case_name;
 }
@@ -390,7 +391,7 @@ executor::result_handle::test_case_name(void) const
 ///
 /// \return A test result.
 const model::test_result&
-executor::result_handle::test_result(void) const
+scheduler::result_handle::test_result(void) const
 {
     return _pimpl->test_result;
 }
@@ -400,7 +401,7 @@ executor::result_handle::test_result(void) const
 ///
 /// \return A timestamp.
 const datetime::timestamp&
-executor::result_handle::start_time(void) const
+scheduler::result_handle::start_time(void) const
 {
     return _pimpl->generic.start_time();
 }
@@ -410,7 +411,7 @@ executor::result_handle::start_time(void) const
 ///
 /// \return A timestamp.
 const datetime::timestamp&
-executor::result_handle::end_time(void) const
+scheduler::result_handle::end_time(void) const
 {
     return _pimpl->generic.end_time();
 }
@@ -418,11 +419,11 @@ executor::result_handle::end_time(void) const
 
 /// Returns the path to the test-specific work directory.
 ///
-/// This is guaranteed to be clear of files created by the executor.
+/// This is guaranteed to be clear of files created by the scheduler.
 ///
 /// \return The path to a directory that exists until cleanup() is called.
 fs::path
-executor::result_handle::work_directory(void) const
+scheduler::result_handle::work_directory(void) const
 {
     return _pimpl->generic.work_directory();
 }
@@ -432,7 +433,7 @@ executor::result_handle::work_directory(void) const
 ///
 /// \return The path to a file that exists until cleanup() is called.
 const fs::path&
-executor::result_handle::stdout_file(void) const
+scheduler::result_handle::stdout_file(void) const
 {
     return _pimpl->generic.stdout_file();
 }
@@ -442,23 +443,22 @@ executor::result_handle::stdout_file(void) const
 ///
 /// \return The path to a file that exists until cleanup() is called.
 const fs::path&
-executor::result_handle::stderr_file(void) const
+scheduler::result_handle::stderr_file(void) const
 {
     return _pimpl->generic.stderr_file();
 }
 
 
-/// Internal implementation for the executor_handle.
-struct engine::executor::executor_handle::impl {
+/// Internal implementation for the scheduler_handle.
+struct engine::scheduler::scheduler_handle::impl {
     /// Generic executor instance encapsulated by this one.
-    process::executor::executor_handle generic;
+    executor::executor_handle generic;
 
     /// Mapping of exec handles to the data required at run time.
     exec_data_map all_exec_data;
 
     /// Constructor.
-    impl(void) :
-        generic(process::executor::setup())
+    impl(void) : generic(executor::setup())
     {
     }
 
@@ -470,13 +470,13 @@ struct engine::executor::executor_handle::impl {
 
 
 /// Constructor.
-executor::executor_handle::executor_handle(void) throw() : _pimpl(new impl())
+scheduler::scheduler_handle::scheduler_handle(void) throw() : _pimpl(new impl())
 {
 }
 
 
 /// Destructor.
-executor::executor_handle::~executor_handle(void)
+scheduler::scheduler_handle::~scheduler_handle(void)
 {
 }
 
@@ -485,21 +485,21 @@ executor::executor_handle::~executor_handle(void)
 ///
 /// \return A path.
 const fs::path&
-engine::executor::executor_handle::root_work_directory(void) const
+scheduler::scheduler_handle::root_work_directory(void) const
 {
     return _pimpl->generic.root_work_directory();
 }
 
 
-/// Cleans up the executor state.
+/// Cleans up the scheduler state.
 ///
 /// This function should be called explicitly as it provides the means to
 /// control any exceptions raised during cleanup.  Do not rely on the destructor
 /// to clean things up.
 ///
-/// \throw engine::error If there are problems cleaning up the executor.
+/// \throw engine::error If there are problems cleaning up the scheduler.
 void
-engine::executor::executor_handle::cleanup(void)
+scheduler::scheduler_handle::cleanup(void)
 {
     _pimpl->generic.cleanup();
 }
@@ -510,24 +510,24 @@ engine::executor::executor_handle::cleanup(void)
 /// \param name The name of the interface.  Must not have yet been registered.
 /// \param spec Interface specification.
 void
-engine::executor::register_interface(const std::string& name,
-                                     const std::shared_ptr< interface > spec)
+scheduler::register_interface(const std::string& name,
+                              const std::shared_ptr< interface > spec)
 {
     PRE(interfaces.find(name) == interfaces.end());
     interfaces.insert(interfaces_map::value_type(name, spec));
 }
 
 
-/// Initializes the executor.
+/// Initializes the scheduler.
 ///
-/// \pre This function can only be called if there is no other executor_handle
+/// \pre This function can only be called if there is no other scheduler_handle
 /// object alive.
 ///
-/// \return A handle to the operations of the executor.
-engine::executor::executor_handle
-engine::executor::setup(void)
+/// \return A handle to the operations of the scheduler.
+scheduler::scheduler_handle
+scheduler::setup(void)
 {
-    return executor_handle();
+    return scheduler_handle();
 }
 
 
@@ -539,15 +539,15 @@ engine::executor::setup(void)
 ///
 /// \return A handle for the background operation.  Used to match the result of
 /// the execution returned by wait_any_test() with this invocation.
-executor::exec_handle
-executor::executor_handle::spawn_test(
+scheduler::exec_handle
+scheduler::scheduler_handle::spawn_test(
     const model::test_program_ptr test_program,
     const std::string& test_case_name,
     const config::tree& user_config)
 {
     _pimpl->generic.check_interrupt();
 
-    const std::shared_ptr< executor::interface > interface = find_interface(
+    const std::shared_ptr< scheduler::interface > interface = find_interface(
         test_program->interface_name());
 
     LI(F("Spawning %s:%s") % test_program->absolute_path() % test_case_name);
@@ -563,7 +563,7 @@ executor::executor_handle::spawn_test(
 
     const datetime::delta timeout = test_case.get_metadata().timeout();
 
-    const process::executor::exec_handle handle = _pimpl->generic.spawn(
+    const executor::exec_handle handle = _pimpl->generic.spawn(
         run_test_program(interface, test_program, test_case_name,
                          user_config),
         timeout, unprivileged_user);
@@ -579,13 +579,12 @@ executor::executor_handle::spawn_test(
 /// Waits for completion of any forked test case.
 ///
 /// \return A (handle, test result) pair.
-executor::result_handle
-executor::executor_handle::wait_any_test(void)
+scheduler::result_handle
+scheduler::scheduler_handle::wait_any_test(void)
 {
     _pimpl->generic.check_interrupt();
 
-    const process::executor::exit_handle handle =
-        _pimpl->generic.wait_any();
+    const executor::exit_handle handle = _pimpl->generic.wait_any();
 
     const exec_data_map::iterator iter = _pimpl->all_exec_data.find(
         handle.original_exec_handle());
@@ -651,7 +650,7 @@ executor::executor_handle::wait_any_test(void)
 ///
 /// \throw signals::interrupted_error If there has been an interrupt.
 void
-engine::executor::executor_handle::check_interrupt(void) const
+scheduler::scheduler_handle::check_interrupt(void) const
 {
     _pimpl->generic.check_interrupt();
 }

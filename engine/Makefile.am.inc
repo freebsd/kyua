@@ -42,9 +42,6 @@ libengine_a_SOURCES += engine/config.hpp
 libengine_a_SOURCES += engine/config_fwd.hpp
 libengine_a_SOURCES += engine/exceptions.cpp
 libengine_a_SOURCES += engine/exceptions.hpp
-libengine_a_SOURCES += engine/executor.cpp
-libengine_a_SOURCES += engine/executor.hpp
-libengine_a_SOURCES += engine/executor_fwd.hpp
 libengine_a_SOURCES += engine/filters.cpp
 libengine_a_SOURCES += engine/filters.hpp
 libengine_a_SOURCES += engine/filters_fwd.hpp
@@ -69,6 +66,9 @@ libengine_a_SOURCES += engine/tap_parser_fwd.hpp
 libengine_a_SOURCES += engine/testers.cpp
 libengine_a_SOURCES += engine/testers.hpp
 libengine_a_SOURCES += engine/testers_fwd.hpp
+libengine_a_SOURCES += engine/scheduler.cpp
+libengine_a_SOURCES += engine/scheduler.hpp
+libengine_a_SOURCES += engine/scheduler_fwd.hpp
 
 if WITH_ATF
 tests_enginedir = $(pkgtestsdir)/engine
@@ -95,11 +95,6 @@ tests_engine_PROGRAMS += engine/exceptions_test
 engine_exceptions_test_SOURCES = engine/exceptions_test.cpp
 engine_exceptions_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
 engine_exceptions_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
-
-tests_engine_PROGRAMS += engine/executor_test
-engine_executor_test_SOURCES = engine/executor_test.cpp
-engine_executor_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
-engine_executor_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 
 tests_engine_PROGRAMS += engine/filters_test
 engine_filters_test_SOURCES = engine/filters_test.cpp
@@ -162,4 +157,9 @@ tests_engine_PROGRAMS += engine/testers_test
 engine_testers_test_SOURCES = engine/testers_test.cpp
 engine_testers_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
 engine_testers_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
+
+tests_engine_PROGRAMS += engine/scheduler_test
+engine_scheduler_test_SOURCES = engine/scheduler_test.cpp
+engine_scheduler_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
+engine_scheduler_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 endif

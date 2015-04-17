@@ -32,13 +32,13 @@
 #if !defined(ENGINE_ATF_HPP)
 #define ENGINE_ATF_HPP
 
-#include "engine/executor.hpp"
+#include "engine/scheduler.hpp"
 
 namespace engine {
 
 
-/// Implementation of the executor interface for atf test programs.
-class atf_interface : public engine::executor::interface {
+/// Implementation of the scheduler interface for atf test programs.
+class atf_interface : public engine::scheduler::interface {
 public:
     void exec_test(const model::test_program&, const std::string&,
                    const std::map< std::string, std::string >&,

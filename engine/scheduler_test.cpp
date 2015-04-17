@@ -26,7 +26,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/executor.hpp"
+#include "engine/scheduler.hpp"
 
 extern "C" {
 #include <sys/types.h>
@@ -61,9 +61,9 @@ extern "C" {
 
 namespace config = utils::config;
 namespace datetime = utils::datetime;
-namespace executor = engine::executor;
 namespace fs = utils::fs;
 namespace process = utils::process;
+namespace scheduler = engine::scheduler;
 namespace text = utils::text;
 
 using utils::none;
@@ -108,15 +108,15 @@ suffix_to_int(const std::string& str, const std::string& prefix)
 
 /// Mock interface definition for testing.
 ///
-/// This executor interface does not execute external binaries.  It is designed
-/// to simulate the executor of various programs with different exit statuses.
-class mock_interface : public executor::interface {
+/// This scheduler interface does not execute external binaries.  It is designed
+/// to simulate the scheduler of various programs with different exit statuses.
+class mock_interface : public scheduler::interface {
     /// Executes the subprocess simulating an exec.
     ///
     /// This is just a simple wrapper over _exit(2) because we cannot use
     /// std::exit on exit from this mock interface.  The reason is that we do
     /// not want to invoke any destructors as otherwise we'd clear up the global
-    /// executor state by mistake.  This wouldn't be a major problem if it
+    /// scheduler state by mistake.  This wouldn't be a major problem if it
     /// wasn't because doing so deletes on-disk files and we want to leave them
     /// in place so that the parent process can test for them!
     ///
@@ -143,7 +143,7 @@ class mock_interface : public executor::interface {
     /// Executes a test case that deletes all files in the current directory.
     ///
     /// This is intended to validate that the test runs in an empty directory,
-    /// separate from any control files that the executor may have created.
+    /// separate from any control files that the scheduler may have created.
     void
     exec_delete_all(void) const UTILS_NORETURN
     {
@@ -303,12 +303,12 @@ ATF_TEST_CASE_BODY(integration__run_one)
 
     const config::tree user_config = engine::empty_config();
 
-    executor::executor_handle handle = executor::setup();
+    scheduler::scheduler_handle handle = scheduler::setup();
 
-    const executor::exec_handle exec_handle = handle.spawn_test(
+    const scheduler::exec_handle exec_handle = handle.spawn_test(
         program, "exit 41", user_config);
 
-    executor::result_handle result_handle = handle.wait_any_test();
+    scheduler::result_handle result_handle = handle.wait_any_test();
     ATF_REQUIRE_EQ(exec_handle, result_handle.original_exec_handle());
     ATF_REQUIRE_EQ(model::test_result(model::test_result_passed, "Exit 41"),
                    result_handle.test_result());
@@ -325,7 +325,7 @@ ATF_TEST_CASE_BODY(integration__run_many)
 
     const config::tree user_config = engine::empty_config();
 
-    executor::executor_handle handle = executor::setup();
+    scheduler::scheduler_handle handle = scheduler::setup();
 
     // We mess around with the "current time" below, so make sure the tests do
     // not spuriously exceed their deadline by bumping it to a large number.
@@ -333,11 +333,11 @@ ATF_TEST_CASE_BODY(integration__run_many)
         .set_timeout(datetime::delta(1000000L, 0)).build();
 
     std::size_t total_tests = 0;
-    std::map< executor::exec_handle, model::test_program_ptr >
+    std::map< scheduler::exec_handle, model::test_program_ptr >
         exp_test_programs;
-    std::map< executor::exec_handle, std::string > exp_test_case_names;
-    std::map< executor::exec_handle, datetime::timestamp > exp_start_times;
-    std::map< executor::exec_handle, int > exp_exit_statuses;
+    std::map< scheduler::exec_handle, std::string > exp_test_case_names;
+    std::map< scheduler::exec_handle, datetime::timestamp > exp_start_times;
+    std::map< scheduler::exec_handle, int > exp_exit_statuses;
     for (std::size_t i = 0; i < num_test_programs; ++i) {
         const std::string test_case_0 = F("exit %s") % (i * 3 + 0);
         const std::string test_case_1 = F("exit %s") % (i * 3 + 1);
@@ -355,7 +355,7 @@ ATF_TEST_CASE_BODY(integration__run_many)
         const datetime::timestamp start_time = datetime::timestamp::from_values(
             2014, 12, 8, 9, 40, 0, i);
 
-        executor::exec_handle exec_handle;
+        scheduler::exec_handle exec_handle;
 
         datetime::set_mock_now(start_time);
         exec_handle = handle.spawn_test(program, test_case_0, user_config);
@@ -386,8 +386,8 @@ ATF_TEST_CASE_BODY(integration__run_many)
         const datetime::timestamp end_time = datetime::timestamp::from_values(
             2014, 12, 8, 9, 50, 10, i);
         datetime::set_mock_now(end_time);
-        executor::result_handle result_handle = handle.wait_any_test();
-        const executor::exec_handle exec_handle =
+        scheduler::result_handle result_handle = handle.wait_any_test();
+        const scheduler::exec_handle exec_handle =
             result_handle.original_exec_handle();
 
         const model::test_program_ptr test_program = exp_test_programs.find(
@@ -433,12 +433,12 @@ ATF_TEST_CASE_BODY(integration__parameters_and_output)
     user_config.set_string("test_suites.the-suite.one", "first variable");
     user_config.set_string("test_suites.the-suite.two", "second variable");
 
-    executor::executor_handle handle = executor::setup();
+    scheduler::scheduler_handle handle = scheduler::setup();
 
-    const executor::exec_handle exec_handle = handle.spawn_test(
+    const scheduler::exec_handle exec_handle = handle.spawn_test(
         program, "print_params", user_config);
 
-    executor::result_handle result_handle = handle.wait_any_test();
+    scheduler::result_handle result_handle = handle.wait_any_test();
 
     ATF_REQUIRE_EQ(exec_handle, result_handle.original_exec_handle());
     ATF_REQUIRE_EQ(program, result_handle.test_program());
@@ -477,11 +477,11 @@ ATF_TEST_CASE_BODY(integration__fake_result)
 
     const config::tree user_config = engine::empty_config();
 
-    executor::executor_handle handle = executor::setup();
+    scheduler::scheduler_handle handle = scheduler::setup();
 
     (void)handle.spawn_test(program, "__fake__", user_config);
 
-    executor::result_handle result_handle = handle.wait_any_test();
+    scheduler::result_handle result_handle = handle.wait_any_test();
     ATF_REQUIRE_EQ(fake_result, result_handle.test_result());
     result_handle.cleanup();
 
@@ -501,11 +501,11 @@ ATF_TEST_CASE_BODY(integration__check_requirements)
 
     const config::tree user_config = engine::empty_config();
 
-    executor::executor_handle handle = executor::setup();
+    scheduler::scheduler_handle handle = scheduler::setup();
 
     (void)handle.spawn_test(program, "exit 12", user_config);
 
-    executor::result_handle result_handle = handle.wait_any_test();
+    scheduler::result_handle result_handle = handle.wait_any_test();
     ATF_REQUIRE_EQ(model::test_result(
                        model::test_result_skipped,
                        "Required configuration property 'abcde' not defined"),
@@ -528,11 +528,11 @@ ATF_TEST_CASE_BODY(integration__stacktrace)
 
     const config::tree user_config = engine::empty_config();
 
-    executor::executor_handle handle = executor::setup();
+    scheduler::scheduler_handle handle = scheduler::setup();
 
     (void)handle.spawn_test(program, "unknown-dumps-core", user_config);
 
-    executor::result_handle result_handle = handle.wait_any_test();
+    scheduler::result_handle result_handle = handle.wait_any_test();
     ATF_REQUIRE_EQ(model::test_result(model::test_result_failed,
                                       F("Signal %s") % SIGABRT),
                    result_handle.test_result());
@@ -555,11 +555,11 @@ ATF_TEST_CASE_BODY(integration__list_files_on_failure)
 
     const config::tree user_config = engine::empty_config();
 
-    executor::executor_handle handle = executor::setup();
+    scheduler::scheduler_handle handle = scheduler::setup();
 
     (void)handle.spawn_test(program, "create_files_and_fail", user_config);
 
-    executor::result_handle result_handle = handle.wait_any_test();
+    scheduler::result_handle result_handle = handle.wait_any_test();
     ATF_REQUIRE(!atf::utils::grep_file("Files left in work directory",
                                        result_handle.stdout_file().str()));
     ATF_REQUIRE( atf::utils::grep_file("Files left in work directory",
@@ -591,11 +591,11 @@ ATF_TEST_CASE_BODY(integration__prevent_clobbering_control_files)
 
     const config::tree user_config = engine::empty_config();
 
-    executor::executor_handle handle = executor::setup();
+    scheduler::scheduler_handle handle = scheduler::setup();
 
     (void)handle.spawn_test(program, "delete_all", user_config);
 
-    executor::result_handle result_handle = handle.wait_any_test();
+    scheduler::result_handle result_handle = handle.wait_any_test();
     ATF_REQUIRE_EQ(model::test_result(model::test_result_passed, "Exit 0"),
                    result_handle.test_result());
     result_handle.cleanup();
@@ -606,8 +606,8 @@ ATF_TEST_CASE_BODY(integration__prevent_clobbering_control_files)
 
 ATF_INIT_TEST_CASES(tcs)
 {
-    executor::register_interface(
-        "mock", std::shared_ptr< executor::interface >(new mock_interface()));
+    scheduler::register_interface(
+        "mock", std::shared_ptr< scheduler::interface >(new mock_interface()));
 
     ATF_ADD_TEST_CASE(tcs, integration__run_one);
     ATF_ADD_TEST_CASE(tcs, integration__run_many);

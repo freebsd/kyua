@@ -57,6 +57,7 @@ extern "C" {
 #include "cli/config.hpp"
 #include "engine/atf.hpp"
 #include "engine/plain.hpp"
+#include "engine/scheduler.hpp"
 #include "engine/tap.hpp"
 #include "store/exceptions.hpp"
 #include "utils/cmdline/commands_map.ipp"
@@ -81,6 +82,7 @@ namespace config = utils::config;
 namespace fs = utils::fs;
 namespace logging = utils::logging;
 namespace signals = utils::signals;
+namespace scheduler = engine::scheduler;
 
 using utils::none;
 using utils::optional;
@@ -89,22 +91,22 @@ using utils::optional;
 namespace {
 
 
-/// Registers all valid executor interfaces.
+/// Registers all valid scheduler interfaces.
 ///
 /// This is part of Kyua's setup but it is a bit strange to find it here.  I am
 /// not sure what a better location would be though, so for now this is good
 /// enough.
 static void
-register_executor_interfaces(void)
+register_scheduler_interfaces(void)
 {
-    engine::executor::register_interface(
-        "atf", std::shared_ptr< engine::executor::interface >(
+    scheduler::register_interface(
+        "atf", std::shared_ptr< scheduler::interface >(
             new engine::atf_interface()));
-    engine::executor::register_interface(
-        "plain", std::shared_ptr< engine::executor::interface >(
+    scheduler::register_interface(
+        "plain", std::shared_ptr< scheduler::interface >(
             new engine::plain_interface()));
-    engine::executor::register_interface(
-        "tap", std::shared_ptr< engine::executor::interface >(
+    scheduler::register_interface(
+        "tap", std::shared_ptr< scheduler::interface >(
             new engine::tap_interface()));
 }
 
@@ -222,7 +224,7 @@ safe_main(cmdline::ui* ui, int argc, const char* const argv[],
     cli::cli_command* command = commands.find(cmdname);
     if (command == NULL)
         throw cmdline::usage_error(F("Unknown command '%s'") % cmdname);
-    register_executor_interfaces();
+    register_scheduler_interfaces();
     return run_subcommand(ui, command, cmdline.arguments(), user_config);
 }
 

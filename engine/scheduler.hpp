@@ -26,8 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/executor.hpp
-/// Multiprogrammed test case executor.
+/// \file engine/scheduler.hpp
+/// Multiprogrammed executor of test related operations.
 ///
 /// See the documentation in utils/process/executor.hpp for details on
 /// the expected workflow of these classes.
@@ -35,7 +35,7 @@
 #if !defined(ENGINE_EXECUTOR_HPP)
 #define ENGINE_EXECUTOR_HPP
 
-#include "engine/executor_fwd.hpp"
+#include "engine/scheduler_fwd.hpp"
 
 #include <map>
 #include <string>
@@ -51,14 +51,14 @@
 #include "utils/shared_ptr.hpp"
 
 namespace engine {
-namespace executor {
+namespace scheduler {
 
 
-/// Abstract interface of a test program executor interface.
+/// Abstract interface of a test program scheduler interface.
 ///
 /// This interface defines the test program-specific operations that need to be
 /// invoked at different points during the execution of a given test case.  The
-/// executor internally instantiates one of these for every test case.
+/// scheduler internally instantiates one of these for every test case.
 class interface {
 public:
     /// Destructor.
@@ -105,7 +105,7 @@ class result_handle {
     /// Pointer to internal implementation.
     std::shared_ptr< impl > _pimpl;
 
-    friend class executor_handle;
+    friend class scheduler_handle;
     result_handle(std::shared_ptr< impl >);
 
 public:
@@ -126,16 +126,16 @@ public:
 
 
 /// Stateful interface to the multiprogrammed execution of tests.
-class executor_handle {
+class scheduler_handle {
     struct impl;
     /// Pointer to internal implementation.
     std::shared_ptr< impl > _pimpl;
 
-    friend executor_handle setup(void);
-    executor_handle(void) throw();
+    friend scheduler_handle setup(void);
+    scheduler_handle(void) throw();
 
 public:
-    ~executor_handle(void);
+    ~scheduler_handle(void);
 
     const utils::fs::path& root_work_directory(void) const;
 
@@ -150,10 +150,10 @@ public:
 
 
 void register_interface(const std::string&, const std::shared_ptr< interface >);
-executor_handle setup(void);
+scheduler_handle setup(void);
 
 
-}  // namespace executor
+}  // namespace scheduler
 }  // namespace engine
 
 

@@ -32,13 +32,13 @@
 #if !defined(ENGINE_TAP_HPP)
 #define ENGINE_TAP_HPP
 
-#include "engine/executor.hpp"
+#include "engine/scheduler.hpp"
 
 namespace engine {
 
 
-/// Implementation of the executor interface for tap test programs.
-class tap_interface : public engine::executor::interface {
+/// Implementation of the scheduler interface for tap test programs.
+class tap_interface : public engine::scheduler::interface {
 public:
     void exec_test(const model::test_program&, const std::string&,
                    const std::map< std::string, std::string >&,

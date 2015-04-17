@@ -32,13 +32,13 @@
 #if !defined(ENGINE_PLAIN_HPP)
 #define ENGINE_PLAIN_HPP
 
-#include "engine/executor.hpp"
+#include "engine/scheduler.hpp"
 
 namespace engine {
 
 
-/// Implementation of the executor interface for plain test programs.
-class plain_interface : public engine::executor::interface {
+/// Implementation of the scheduler interface for plain test programs.
+class plain_interface : public engine::scheduler::interface {
 public:
     void exec_test(const model::test_program&, const std::string&,
                    const std::map< std::string, std::string >&,

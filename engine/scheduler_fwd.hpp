@@ -26,26 +26,26 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/executor_fwd.hpp
-/// Forward declarations for engine/executor.hpp
+/// \file engine/scheduler_fwd.hpp
+/// Forward declarations for engine/scheduler.hpp
 
-#if !defined(ENGINE_EXECUTOR_FWD_HPP)
-#define ENGINE_EXECUTOR_FWD_HPP
+#if !defined(ENGINE_SCHEDULER_FWD_HPP)
+#define ENGINE_SCHEDULER_FWD_HPP
 
 namespace engine {
-namespace executor {
+namespace scheduler {
 
 
 /// Unique identifier for in-flight execution operations.
 typedef int exec_handle;
 
 
-class executor_handle;
+class scheduler_handle;
 class interface;
 class result_handle;
 
 
-}  // namespace executor
+}  // namespace scheduler
 }  // namespace engine
 
-#endif  // !defined(ENGINE_EXECUTOR_FWD_HPP)
+#endif  // !defined(ENGINE_SCHEDULER_FWD_HPP)

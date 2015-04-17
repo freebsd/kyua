@@ -31,11 +31,11 @@
 #include <deque>
 
 #include "engine/config.hpp"
-#include "engine/executor.hpp"
 #include "engine/filters.hpp"
 #include "engine/kyuafile.hpp"
 #include "engine/runner.hpp"
 #include "engine/scanner.hpp"
+#include "engine/scheduler.hpp"
 #include "model/context.hpp"
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
@@ -54,10 +54,10 @@
 
 namespace config = utils::config;
 namespace datetime = utils::datetime;
-namespace executor = engine::executor;
 namespace fs = utils::fs;
 namespace passwd = utils::passwd;
 namespace runner = engine::runner;
+namespace scheduler = engine::scheduler;
 
 using utils::none;
 using utils::optional;
@@ -103,7 +103,7 @@ find_test_program_id(const model::test_program_ptr test_program,
 /// \param [in,out] tx Writable transaction where to store the result data.
 static void
 put_test_result(const int64_t test_case_id,
-                const executor::result_handle& result,
+                const scheduler::result_handle& result,
                 store::write_transaction& tx)
 {
     tx.put_result(result.test_result(), test_case_id,
@@ -121,7 +121,7 @@ put_test_result(const int64_t test_case_id,
 /// \return The test result if the cleanup succeeds; a broken test result
 /// otherwise.
 model::test_result
-safe_cleanup(executor::result_handle handle) throw()
+safe_cleanup(scheduler::result_handle handle) throw()
 {
     try {
         handle.cleanup();
@@ -177,7 +177,7 @@ drivers::run_tests::drive(const fs::path& kyuafile_path,
     // are executed in list mode.  Should share interrupts handling between both
     // the executor and the scanner, or funnel the scanner operations via the
     // executor.
-    executor::executor_handle handle = executor::setup();
+    scheduler::scheduler_handle handle = scheduler::setup();
     engine::scanner scanner(kyuafile.test_programs(), filters);
 
     // Map of test program identifiers (relative paths) to their identifiers in
@@ -187,7 +187,7 @@ drivers::run_tests::drive(const fs::path& kyuafile_path,
     std::map< fs::path, int64_t > ids_cache;
 
     // Map of in-flight test cases to their identifiers in the database.
-    std::map< executor::exec_handle, int64_t > in_flight;
+    std::map< scheduler::exec_handle, int64_t > in_flight;
 
     const std::size_t slots = user_config.lookup< config::positive_int_node >(
         "parallelism");
@@ -210,7 +210,7 @@ drivers::run_tests::drive(const fs::path& kyuafile_path,
             const int64_t test_case_id = tx.put_test_case(
                 *match.get().first, match.get().second, test_program_id);
 
-            const executor::exec_handle exec_handle = handle.spawn_test(
+            const scheduler::exec_handle exec_handle = handle.spawn_test(
                 match.get().first, match.get().second, user_config);
             in_flight.insert(std::make_pair(exec_handle, test_case_id));
         }
@@ -219,9 +219,9 @@ drivers::run_tests::drive(const fs::path& kyuafile_path,
         // result.  We consume slots one at a time to give preference to the
         // spawning of new tests as detailed above.
         if (!in_flight.empty()) {
-            executor::result_handle result = handle.wait_any_test();
+            scheduler::result_handle result = handle.wait_any_test();
 
-            const std::map< executor::exec_handle, int64_t >::iterator
+            const std::map< scheduler::exec_handle, int64_t >::iterator
                 iter = in_flight.find(result.original_exec_handle());
             const int64_t test_case_id = (*iter).second;
             in_flight.erase(iter);

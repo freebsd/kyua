@@ -238,7 +238,7 @@ engine::atf_interface::compute_result(
                     status.get().exitstatus() == exit_with_cleanup)) {
         // This is the slow and uncommon case.  The test case either timed out
         // or had a standalone cleanup routine and we had to run it; we do not
-        // know which it is, but it does not matter much.  Because the executor
+        // know which it is, but it does not matter much.  Because the scheduler
         // interface only wants to see a single subprocess (for good reason), we
         // handle here our internal spawning of two processes by loading their
         // results from disk.
