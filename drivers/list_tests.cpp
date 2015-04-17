@@ -32,11 +32,13 @@
 #include "engine/filters.hpp"
 #include "engine/kyuafile.hpp"
 #include "engine/scanner.hpp"
+#include "engine/scheduler.hpp"
 #include "model/test_program.hpp"
 #include "utils/optional.ipp"
 
 namespace config = utils::config;
 namespace fs = utils::fs;
+namespace scheduler = engine::scheduler;
 
 using utils::optional;
 
@@ -63,8 +65,10 @@ drivers::list_tests::drive(const fs::path& kyuafile_path,
                            const config::tree& user_config,
                            base_hooks& hooks)
 {
+    scheduler::scheduler_handle handle = scheduler::setup();
+
     const engine::kyuafile kyuafile = engine::kyuafile::load(
-        kyuafile_path, build_root, user_config);
+        kyuafile_path, build_root, user_config, handle);
 
     engine::scanner scanner(kyuafile.test_programs(), filters);
 
@@ -73,6 +77,8 @@ drivers::list_tests::drive(const fs::path& kyuafile_path,
         INV(result);
         hooks.got_test_case(*result.get().first, result.get().second);
     }
+
+    handle.cleanup();
 
     return result(scanner.unused_filters());
 }

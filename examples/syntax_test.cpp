@@ -34,6 +34,7 @@ extern "C" {
 
 #include "engine/config.hpp"
 #include "engine/kyuafile.hpp"
+#include "engine/scheduler.hpp"
 #include "model/metadata.hpp"
 #include "model/test_program.hpp"
 #include "utils/config/tree.ipp"
@@ -47,6 +48,7 @@ extern "C" {
 namespace config = utils::config;
 namespace fs = utils::fs;
 namespace passwd = utils::passwd;
+namespace scheduler = engine::scheduler;
 
 using utils::none;
 
@@ -120,6 +122,8 @@ ATF_TEST_CASE_HEAD(kyuafile_top__no_matches)
 }
 ATF_TEST_CASE_BODY(kyuafile_top__no_matches)
 {
+    scheduler::scheduler_handle handle = scheduler::setup();
+
     fs::mkdir(fs::path("root"), 0755);
     const fs::path source_path = example_file("Kyuafile.top");
     ATF_REQUIRE(::symlink(source_path.c_str(), "root/Kyuafile") != -1);
@@ -128,10 +132,12 @@ ATF_TEST_CASE_BODY(kyuafile_top__no_matches)
     fs::mkdir(fs::path("root/subdir"), 0755);
 
     const engine::kyuafile kyuafile = engine::kyuafile::load(
-        fs::path("root/Kyuafile"), none, engine::default_config());
+        fs::path("root/Kyuafile"), none, engine::default_config(), handle);
     ATF_REQUIRE_EQ(fs::path("root"), kyuafile.source_root());
     ATF_REQUIRE_EQ(fs::path("root"), kyuafile.build_root());
     ATF_REQUIRE(kyuafile.test_programs().empty());
+
+    handle.cleanup();
 }
 
 
@@ -143,6 +149,8 @@ ATF_TEST_CASE_HEAD(kyuafile_top__some_matches)
 }
 ATF_TEST_CASE_BODY(kyuafile_top__some_matches)
 {
+    scheduler::scheduler_handle handle = scheduler::setup();
+
     fs::mkdir(fs::path("root"), 0755);
     const fs::path source_path = example_file("Kyuafile.top");
     ATF_REQUIRE(::symlink(source_path.c_str(), "root/Kyuafile") != -1);
@@ -163,7 +171,7 @@ ATF_TEST_CASE_BODY(kyuafile_top__some_matches)
     atf::utils::create_file("root/subdir2/Kyuafile.etc", "invalid");
 
     const engine::kyuafile kyuafile = engine::kyuafile::load(
-        fs::path("root/Kyuafile"), none, engine::default_config());
+        fs::path("root/Kyuafile"), none, engine::default_config(), handle);
     ATF_REQUIRE_EQ(fs::path("root"), kyuafile.source_root());
     ATF_REQUIRE_EQ(fs::path("root"), kyuafile.build_root());
 
@@ -182,6 +190,8 @@ ATF_TEST_CASE_BODY(kyuafile_top__some_matches)
                 ||
                 (exp_test_program_a == *kyuafile.test_programs()[1] &&
                  exp_test_program_c == *kyuafile.test_programs()[0]));
+
+    handle.cleanup();
 }
 
 

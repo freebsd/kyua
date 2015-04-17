@@ -41,6 +41,7 @@ extern "C" {
 #include "engine/config.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/requirements.hpp"
+#include "engine/scheduler.hpp"
 #include "engine/testers.hpp"
 #include "model/context.hpp"
 #include "model/metadata.hpp"
@@ -208,9 +209,13 @@ struct engine::runner::lazy_test_program::impl {
     /// User configuration to pass to the test program list operation.
     config::properties_map _props;
 
+    /// Scheduler context to use to load test cases.
+    scheduler::scheduler_handle _scheduler_handle;
+
     /// Constructor.
-    impl(const config::properties_map& props_) :
-        _loaded(false), _props(props_)
+    impl(const config::properties_map& props_,
+         scheduler::scheduler_handle& scheduler_handle_) :
+        _loaded(false), _props(props_), _scheduler_handle(scheduler_handle_)
     {
     }
 };
@@ -224,16 +229,18 @@ struct engine::runner::lazy_test_program::impl {
 /// \param test_suite_name_ The name of the test suite this program belongs to.
 /// \param md_ Metadata of the test program.
 /// \param props_ User configuration to pass to the tester.
+/// \param scheduler_handle_ Scheduler context to use to load test cases.
 runner::lazy_test_program::lazy_test_program(
     const std::string& interface_name_,
     const fs::path& binary_,
     const fs::path& root_,
     const std::string& test_suite_name_,
     const model::metadata& md_,
-    const config::properties_map& props_) :
+    const config::properties_map& props_,
+    scheduler::scheduler_handle& scheduler_handle_) :
     test_program(interface_name_, binary_, root_, test_suite_name_, md_,
                  model::test_cases_map()),
-    _pimpl(new impl(props_))
+    _pimpl(new impl(props_, scheduler_handle_))
 {
 }
 
@@ -244,6 +251,8 @@ runner::lazy_test_program::lazy_test_program(
 const model::test_cases_map&
 runner::lazy_test_program::test_cases(void) const
 {
+    _pimpl->_scheduler_handle.check_interrupt();
+
     if (!_pimpl->_loaded) {
         model::test_cases_map tcs;
         try {
@@ -271,6 +280,8 @@ runner::lazy_test_program::test_cases(void) const
         const_cast< runner::lazy_test_program* >(this)->set_test_cases(tcs);
 
         _pimpl->_loaded = true;
+
+        _pimpl->_scheduler_handle.check_interrupt();
     }
 
     INV(_pimpl->_loaded);

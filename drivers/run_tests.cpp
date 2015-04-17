@@ -162,8 +162,10 @@ drivers::run_tests::drive(const fs::path& kyuafile_path,
                           const config::tree& user_config,
                           base_hooks& hooks)
 {
+    scheduler::scheduler_handle handle = scheduler::setup();
+
     const engine::kyuafile kyuafile = engine::kyuafile::load(
-        kyuafile_path, build_root, user_config);
+        kyuafile_path, build_root, user_config, handle);
     store::write_backend db = store::write_backend::open_rw(store_path);
     store::write_transaction tx = db.start_write();
 
@@ -177,7 +179,6 @@ drivers::run_tests::drive(const fs::path& kyuafile_path,
     // are executed in list mode.  Should share interrupts handling between both
     // the executor and the scanner, or funnel the scanner operations via the
     // executor.
-    scheduler::scheduler_handle handle = scheduler::setup();
     engine::scanner scanner(kyuafile.test_programs(), filters);
 
     // Map of test program identifiers (relative paths) to their identifiers in

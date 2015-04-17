@@ -34,6 +34,7 @@
 
 #include "engine/runner_fwd.hpp"
 
+#include "engine/scheduler_fwd.hpp"
 #include "model/context_fwd.hpp"
 #include "model/test_program.hpp"
 #include "model/test_result_fwd.hpp"
@@ -56,7 +57,8 @@ public:
     lazy_test_program(const std::string&, const utils::fs::path&,
                       const utils::fs::path&, const std::string&,
                       const model::metadata&,
-                      const utils::config::properties_map&);
+                      const utils::config::properties_map&,
+                      engine::scheduler::scheduler_handle&);
 
     const model::test_cases_map& test_cases(void) const;
 };

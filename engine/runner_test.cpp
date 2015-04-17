@@ -49,6 +49,7 @@ extern "C" {
 #include "engine/config.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/kyuafile.hpp"
+#include "engine/scheduler.hpp"
 #include "model/context.hpp"
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
@@ -74,6 +75,7 @@ namespace fs = utils::fs;
 namespace passwd = utils::passwd;
 namespace process = utils::process;
 namespace runner = engine::runner;
+namespace scheduler = engine::scheduler;
 
 using utils::none;
 using utils::optional;
@@ -375,16 +377,20 @@ public:
     model::test_result
     run(const config::tree& user_config = engine::default_config()) const
     {
+        scheduler::scheduler_handle handle = scheduler::setup();
+
         model::metadata_builder mdbuilder;
         if (_timeout)
             mdbuilder.set_timeout(_timeout.get());
         runner::lazy_test_program test_program(
             "plain", _binary_path, _root, "unit-tests", mdbuilder.build(),
-            config::properties_map());
+            config::properties_map(), handle);
         fetch_output_hooks fetcher;
         const model::test_result result = runner::run_test_case(
             &test_program, "main", user_config, fetcher, fs::path("."));
         std::cerr << "Result is: " << result << '\n';
+
+        handle.cleanup();
         return result;
     }
 };
@@ -491,36 +497,46 @@ ATF_TEST_CASE_BODY(generate_tester_config__some_matches)
 ATF_TEST_CASE_WITHOUT_HEAD(load_test_cases__get);
 ATF_TEST_CASE_BODY(load_test_cases__get)
 {
+    scheduler::scheduler_handle handle = scheduler::setup();
+
     const runner::lazy_test_program test_program(
         "plain", fs::path("non-existent"), fs::path("."), "suite-name",
-        model::metadata_builder().build(), config::properties_map());
+        model::metadata_builder().build(), config::properties_map(), handle);
     const model::test_cases_map& test_cases = test_program.test_cases();
     ATF_REQUIRE_EQ(1, test_cases.size());
     ATF_REQUIRE_EQ("main", test_cases.begin()->first);
+
+    handle.cleanup();
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(load_test_cases__some);
 ATF_TEST_CASE_BODY(load_test_cases__some)
 {
+    scheduler::scheduler_handle handle = scheduler::setup();
+
     runner::lazy_test_program test_program(
         "plain", fs::path("non-existent"), fs::path("."), "suite-name",
-        model::metadata_builder().build(), config::properties_map());
+        model::metadata_builder().build(), config::properties_map(), handle);
 
     const model::test_case test_case("main", model::metadata_builder().build());
     model::test_cases_map exp_test_cases;
     exp_test_cases.insert(model::test_cases_map::value_type("main", test_case));
 
     ATF_REQUIRE_EQ(exp_test_cases, test_program.test_cases());
+
+    handle.cleanup();
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(load_test_cases__tester_fails);
 ATF_TEST_CASE_BODY(load_test_cases__tester_fails)
 {
+    scheduler::scheduler_handle handle = scheduler::setup();
+
     runner::lazy_test_program test_program(
         "mock", fs::path("non-existent"), fs::path("."), "suite-name",
-        model::metadata_builder().build(), config::properties_map());
+        model::metadata_builder().build(), config::properties_map(), handle);
     create_mock_tester_signal(SIGSEGV);
 
     const model::test_cases_map& test_cases = test_program.test_cases();
@@ -533,6 +549,8 @@ ATF_TEST_CASE_BODY(load_test_cases__tester_fails)
     const model::test_result result = test_case.fake_result().get();
     ATF_REQUIRE(model::test_result_broken == result.type());
     ATF_REQUIRE_MATCH("Tester did not exit cleanly", result.reason());
+
+    handle.cleanup();
 }
 
 

@@ -39,6 +39,7 @@
 
 #include "engine/exceptions.hpp"
 #include "engine/runner.hpp"
+#include "engine/scheduler_fwd.hpp"
 #include "engine/testers.hpp"
 #include "model/metadata.hpp"
 #include "model/test_program.hpp"
@@ -57,6 +58,7 @@ namespace config = utils::config;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace runner = engine::runner;
+namespace scheduler = engine::scheduler;
 
 using utils::none;
 using utils::optional;
@@ -179,9 +181,12 @@ public:
     ///     source_root_.
     /// \param user_config User configuration holding any test suite properties
     ///     to be passed to the list operation.
+    /// \param scheduler_handle The scheduler context to use for loading the
+    ///     test case lists.
     parser(const fs::path& source_root_, const fs::path& build_root_,
            const fs::path& relative_filename_,
-           const config::tree& user_config) :
+           const config::tree& user_config,
+           scheduler::scheduler_handle& scheduler_handle) :
         _source_root(source_root_), _build_root(build_root_),
         _relative_filename(relative_filename_)
     {
@@ -197,7 +202,9 @@ public:
         _state.set_global("current_kyuafile");
 
         *_state.new_userdata< const config::tree* >() = &user_config;
-        _state.push_cxx_closure(lua_include, 1);
+        *_state.new_userdata< scheduler::scheduler_handle* >() =
+            &scheduler_handle;
+        _state.push_cxx_closure(lua_include, 2);
         _state.set_global("include");
 
         _state.push_cxx_function(lua_test_suite);
@@ -211,7 +218,9 @@ public:
 
             _state.push_string(interface);
             *_state.new_userdata< const config::tree* >() = &user_config;
-            _state.push_cxx_closure(lua_generic_test_program, 2);
+            *_state.new_userdata< scheduler::scheduler_handle* >() =
+                &scheduler_handle;
+            _state.push_cxx_closure(lua_generic_test_program, 3);
             _state.set_global(interface + "_test_program");
         }
 
@@ -260,14 +269,17 @@ public:
     /// \param raw_file Path to the file to include.
     /// \param user_config User configuration holding any test suite properties
     ///     to be passed to the list operation.
+    /// \param scheduler_handle Scheduler context to run test programs in.
     void
     callback_include(const fs::path& raw_file,
-                     const config::tree& user_config)
+                     const config::tree& user_config,
+                     scheduler::scheduler_handle& scheduler_handle)
     {
         const fs::path file = relativize(_relative_filename.branch_path(),
                                          raw_file);
         const model::test_programs_vector subtps =
-            parser(_source_root, _build_root, file, user_config).parse();
+            parser(_source_root, _build_root, file, user_config,
+                   scheduler_handle).parse();
 
         std::copy(subtps.begin(), subtps.end(),
                   std::back_inserter(_test_programs));
@@ -308,6 +320,7 @@ public:
     /// \param metadata Metadata variables passed to the test program.
     /// \param user_config User configuration holding any test suite properties
     ///     to be passed to the list operation.
+    /// \param scheduler_handle Scheduler context to run test programs in.
     ///
     /// \throw std::runtime_error If the test program definition is invalid or
     ///     if the test program does not exist.
@@ -316,7 +329,8 @@ public:
                           const fs::path& raw_path,
                           const std::string& test_suite_override,
                           const model::metadata& metadata,
-                          const config::tree& user_config)
+                          const config::tree& user_config,
+                          scheduler::scheduler_handle& scheduler_handle)
     {
         if (raw_path.is_absolute())
             throw std::runtime_error(F("Got unexpected absolute path for test "
@@ -339,7 +353,8 @@ public:
 
         _test_programs.push_back(model::test_program_ptr(
             new runner::lazy_test_program(interface, path, _build_root,
-                                          test_suite, metadata, props)));
+                                          test_suite, metadata, props,
+                                          scheduler_handle)));
     }
 
     /// Callback for the Kyuafile test_suite() function.
@@ -417,6 +432,7 @@ ensure_valid_interface(const std::string& interface)
 /// name.  The rest of the arguments are part of the test program metadata.
 /// \pre state(upvalue 1) String with the name of the interface.
 /// \pre state(upvalue 2) User configuration with the per-test suite settings.
+/// \pre state(upvalue 3) Scheduler context to run test programs in.
 ///
 /// \param state The Lua state that executed the function.
 ///
@@ -436,6 +452,13 @@ lua_generic_test_program(lutok::state& state)
                                  "function");
     const config::tree* user_config = *state.to_userdata< const config::tree* >(
         state.upvalue_index(2));
+
+    if (!state.is_userdata(state.upvalue_index(3)))
+        throw std::runtime_error("Found corrupt state for test_program "
+                                 "function");
+    scheduler::scheduler_handle* scheduler_handle =
+        *state.to_userdata< scheduler::scheduler_handle* >(
+            state.upvalue_index(3));
 
     if (!state.is_table(-1))
         throw std::runtime_error(
@@ -490,7 +513,8 @@ lua_generic_test_program(lutok::state& state)
     }
 
     parser::get_from_state(state)->callback_test_program(
-        interface, path, test_suite, mdbuilder.build(), *user_config);
+        interface, path, test_suite, mdbuilder.build(), *user_config,
+        *scheduler_handle);
     return 0;
 }
 
@@ -514,6 +538,7 @@ lua_current_kyuafile(lutok::state& state)
 /// \param state The Lua state that executed the function.
 ///
 /// \pre state(upvalue 1) User configuration with the per-test suite settings.
+/// \pre state(upvalue 2) Scheduler context to run test programs in.
 ///
 /// \return Number of return values left on the Lua stack.
 static int
@@ -525,8 +550,15 @@ lua_include(lutok::state& state)
     const config::tree* user_config = *state.to_userdata< const config::tree* >(
         state.upvalue_index(1));
 
+    if (!state.is_userdata(state.upvalue_index(2)))
+        throw std::runtime_error("Found corrupt state for test_program "
+                                 "function");
+    scheduler::scheduler_handle* scheduler_handle =
+        *state.to_userdata< scheduler::scheduler_handle* >(
+            state.upvalue_index(2));
+
     parser::get_from_state(state)->callback_include(
-        fs::path(state.to_string(-1)), *user_config);
+        fs::path(state.to_string(-1)), *user_config, *scheduler_handle);
     return 0;
 }
 
@@ -616,6 +648,8 @@ engine::kyuafile::~kyuafile(void)
 ///     from which the Kyuafile is being read).
 /// \param user_config User configuration holding any test suite properties
 ///     to be passed to the list operation.
+/// \param scheduler_handle The scheduler context to use for loading the test
+///     case lists.
 ///
 /// \return High-level representation of the configuration file.
 ///
@@ -624,7 +658,8 @@ engine::kyuafile::~kyuafile(void)
 engine::kyuafile
 engine::kyuafile::load(const fs::path& file,
                        const optional< fs::path > user_build_root,
-                       const config::tree& user_config)
+                       const config::tree& user_config,
+                       scheduler::scheduler_handle& scheduler_handle)
 {
     const fs::path source_root_ = file.branch_path();
     const fs::path build_root_ = user_build_root ?
@@ -640,7 +675,8 @@ engine::kyuafile::load(const fs::path& file,
 
     return kyuafile(source_root_, build_root_,
                     parser(source_root_, abs_build_root,
-                           fs::path(file.leaf_name()), user_config).parse());
+                           fs::path(file.leaf_name()), user_config,
+                           scheduler_handle).parse());
 }
 
 

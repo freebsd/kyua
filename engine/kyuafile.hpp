@@ -39,6 +39,7 @@
 
 #include <lutok/state.hpp>
 
+#include "engine/scheduler_fwd.hpp"
 #include "model/test_program_fwd.hpp"
 #include "utils/config/tree_fwd.hpp"
 #include "utils/fs/path.hpp"
@@ -81,7 +82,8 @@ public:
 
     static kyuafile load(const utils::fs::path&,
                          const utils::optional< utils::fs::path >,
-                         const utils::config::tree&);
+                         const utils::config::tree&,
+                         scheduler::scheduler_handle&);
 
     const utils::fs::path& source_root(void) const;
     const utils::fs::path& build_root(void) const;

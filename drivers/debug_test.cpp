@@ -35,6 +35,7 @@
 #include "engine/kyuafile.hpp"
 #include "engine/runner.hpp"
 #include "engine/scanner.hpp"
+#include "engine/scheduler.hpp"
 #include "model/test_case.hpp"
 #include "model/test_program.hpp"
 #include "model/test_result.hpp"
@@ -42,12 +43,11 @@
 #include "utils/format/macros.hpp"
 #include "utils/fs/auto_cleaners.hpp"
 #include "utils/optional.ipp"
-#include "utils/signals/interrupts.hpp"
 
 namespace config = utils::config;
 namespace fs = utils::fs;
 namespace runner = engine::runner;
-namespace signals = utils::signals;
+namespace scheduler = engine::scheduler;
 
 using utils::optional;
 
@@ -72,8 +72,10 @@ drivers::debug_test::drive(const fs::path& kyuafile_path,
                            const fs::path& stdout_path,
                            const fs::path& stderr_path)
 {
+    scheduler::scheduler_handle handle = scheduler::setup();
+
     const engine::kyuafile kyuafile = engine::kyuafile::load(
-        kyuafile_path, build_root, user_config);
+        kyuafile_path, build_root, user_config, handle);
     std::set< engine::test_filter > filters;
     filters.insert(filter);
 
@@ -94,8 +96,6 @@ drivers::debug_test::drive(const fs::path& kyuafile_path,
 
     runner::test_case_hooks dummy_hooks;
 
-    signals::interrupts_handler interrupts;
-
     const fs::auto_directory work_directory = fs::auto_directory::mkdtemp(
         "kyua.XXXXXX");
 
@@ -103,7 +103,9 @@ drivers::debug_test::drive(const fs::path& kyuafile_path,
         test_program.get(), test_case_name, user_config, dummy_hooks,
         work_directory.directory(), stdout_path, stderr_path);
 
-    signals::check_interrupt();
+    handle.check_interrupt();
+    handle.cleanup();
+
     return result(engine::test_filter(
         test_program->relative_path(), test_case_name), test_result);
 }

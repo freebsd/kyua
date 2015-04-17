@@ -73,6 +73,8 @@ run_one(const atf::tests::tc* tc, const char* test_case_name,
         config::tree user_config = engine::empty_config(),
         const bool check_empty_output = false)
 {
+    scheduler::scheduler_handle handle = scheduler::setup();
+
     const config::properties_map tester_vars = runner::generate_tester_config(
         user_config, "the-suite");
 
@@ -80,9 +82,8 @@ run_one(const atf::tests::tc* tc, const char* test_case_name,
         "atf", fs::path("test_case_atf_helpers"),
         fs::path(tc->get_config_var("srcdir")),
         "the-suite", model::metadata_builder().build(),
-        tester_vars));
+        tester_vars, handle));
 
-    scheduler::scheduler_handle handle = scheduler::setup();
     (void)handle.spawn_test(program, test_case_name, user_config);
 
     scheduler::result_handle_ptr result_handle = handle.wait_any();
