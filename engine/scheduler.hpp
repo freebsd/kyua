@@ -143,7 +143,7 @@ public:
 
     exec_handle spawn_test(const model::test_program_ptr, const std::string&,
                            const utils::config::tree&);
-    result_handle wait_any_test(void);
+    result_handle_ptr wait_any_test(void);
 
     void check_interrupt(void) const;
 };

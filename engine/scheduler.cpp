@@ -579,7 +579,7 @@ scheduler::scheduler_handle::spawn_test(
 /// Waits for completion of any forked test case.
 ///
 /// \return A (handle, test result) pair.
-scheduler::result_handle
+scheduler::result_handle_ptr
 scheduler::scheduler_handle::wait_any_test(void)
 {
     _pimpl->generic.check_interrupt();
@@ -636,7 +636,7 @@ scheduler::scheduler_handle::wait_any_test(void)
             handle,
             data.test_program, data.test_case_name, result.get(),
             _pimpl->all_exec_data));
-    return result_handle(result_handle_impl);
+    return result_handle_ptr(new result_handle(result_handle_impl));
 }
 
 

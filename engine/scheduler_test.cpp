@@ -308,11 +308,12 @@ ATF_TEST_CASE_BODY(integration__run_one)
     const scheduler::exec_handle exec_handle = handle.spawn_test(
         program, "exit 41", user_config);
 
-    scheduler::result_handle result_handle = handle.wait_any_test();
-    ATF_REQUIRE_EQ(exec_handle, result_handle.original_exec_handle());
+    scheduler::result_handle_ptr result_handle = handle.wait_any_test();
+    ATF_REQUIRE_EQ(exec_handle, result_handle->original_exec_handle());
     ATF_REQUIRE_EQ(model::test_result(model::test_result_passed, "Exit 41"),
-                   result_handle.test_result());
-    result_handle.cleanup();
+                   result_handle->test_result());
+    result_handle->cleanup();
+    result_handle.reset();
 
     handle.cleanup();
 }
@@ -386,9 +387,9 @@ ATF_TEST_CASE_BODY(integration__run_many)
         const datetime::timestamp end_time = datetime::timestamp::from_values(
             2014, 12, 8, 9, 50, 10, i);
         datetime::set_mock_now(end_time);
-        scheduler::result_handle result_handle = handle.wait_any_test();
+        scheduler::result_handle_ptr result_handle = handle.wait_any_test();
         const scheduler::exec_handle exec_handle =
-            result_handle.original_exec_handle();
+            result_handle->original_exec_handle();
 
         const model::test_program_ptr test_program = exp_test_programs.find(
             exec_handle)->second;
@@ -400,22 +401,24 @@ ATF_TEST_CASE_BODY(integration__run_many)
 
         ATF_REQUIRE_EQ(model::test_result(model::test_result_passed,
                                           F("Exit %s") % exit_status),
-                       result_handle.test_result());
+                       result_handle->test_result());
 
-        ATF_REQUIRE_EQ(test_program, result_handle.test_program());
-        ATF_REQUIRE_EQ(test_case_name, result_handle.test_case_name());
+        ATF_REQUIRE_EQ(test_program, result_handle->test_program());
+        ATF_REQUIRE_EQ(test_case_name, result_handle->test_case_name());
 
-        ATF_REQUIRE_EQ(start_time, result_handle.start_time());
-        ATF_REQUIRE_EQ(end_time, result_handle.end_time());
+        ATF_REQUIRE_EQ(start_time, result_handle->start_time());
+        ATF_REQUIRE_EQ(end_time, result_handle->end_time());
 
-        result_handle.cleanup();
+        result_handle->cleanup();
 
         ATF_REQUIRE(!atf::utils::file_exists(
-                        result_handle.stdout_file().str()));
+                        result_handle->stdout_file().str()));
         ATF_REQUIRE(!atf::utils::file_exists(
-                        result_handle.stderr_file().str()));
+                        result_handle->stderr_file().str()));
         ATF_REQUIRE(!atf::utils::file_exists(
-                        result_handle.work_directory().str()));
+                        result_handle->work_directory().str()));
+
+        result_handle.reset();
     }
 
     handle.cleanup();
@@ -438,24 +441,25 @@ ATF_TEST_CASE_BODY(integration__parameters_and_output)
     const scheduler::exec_handle exec_handle = handle.spawn_test(
         program, "print_params", user_config);
 
-    scheduler::result_handle result_handle = handle.wait_any_test();
+    scheduler::result_handle_ptr result_handle = handle.wait_any_test();
 
-    ATF_REQUIRE_EQ(exec_handle, result_handle.original_exec_handle());
-    ATF_REQUIRE_EQ(program, result_handle.test_program());
-    ATF_REQUIRE_EQ("print_params", result_handle.test_case_name());
+    ATF_REQUIRE_EQ(exec_handle, result_handle->original_exec_handle());
+    ATF_REQUIRE_EQ(program, result_handle->test_program());
+    ATF_REQUIRE_EQ("print_params", result_handle->test_case_name());
     ATF_REQUIRE_EQ(model::test_result(model::test_result_passed, "Exit 0"),
-                   result_handle.test_result());
+                   result_handle->test_result());
 
     ATF_REQUIRE(atf::utils::compare_file(
-        result_handle.stdout_file().str(),
+        result_handle->stdout_file().str(),
         "Test program: the-program\n"
         "Test case: print_params\n"
         "one=first variable\n"
         "two=second variable\n"));
     ATF_REQUIRE(atf::utils::compare_file(
-        result_handle.stderr_file().str(), "stderr: print_params\n"));
+        result_handle->stderr_file().str(), "stderr: print_params\n"));
 
-    result_handle.cleanup();
+    result_handle->cleanup();
+    result_handle.reset();
 
     handle.cleanup();
 }
@@ -481,9 +485,10 @@ ATF_TEST_CASE_BODY(integration__fake_result)
 
     (void)handle.spawn_test(program, "__fake__", user_config);
 
-    scheduler::result_handle result_handle = handle.wait_any_test();
-    ATF_REQUIRE_EQ(fake_result, result_handle.test_result());
-    result_handle.cleanup();
+    scheduler::result_handle_ptr result_handle = handle.wait_any_test();
+    ATF_REQUIRE_EQ(fake_result, result_handle->test_result());
+    result_handle->cleanup();
+    result_handle.reset();
 
     handle.cleanup();
 }
@@ -505,12 +510,13 @@ ATF_TEST_CASE_BODY(integration__check_requirements)
 
     (void)handle.spawn_test(program, "exit 12", user_config);
 
-    scheduler::result_handle result_handle = handle.wait_any_test();
+    scheduler::result_handle_ptr result_handle = handle.wait_any_test();
     ATF_REQUIRE_EQ(model::test_result(
                        model::test_result_skipped,
                        "Required configuration property 'abcde' not defined"),
-                   result_handle.test_result());
-    result_handle.cleanup();
+                   result_handle->test_result());
+    result_handle->cleanup();
+    result_handle.reset();
 
     handle.cleanup();
 }
@@ -532,15 +538,16 @@ ATF_TEST_CASE_BODY(integration__stacktrace)
 
     (void)handle.spawn_test(program, "unknown-dumps-core", user_config);
 
-    scheduler::result_handle result_handle = handle.wait_any_test();
+    scheduler::result_handle_ptr result_handle = handle.wait_any_test();
     ATF_REQUIRE_EQ(model::test_result(model::test_result_failed,
                                       F("Signal %s") % SIGABRT),
-                   result_handle.test_result());
+                   result_handle->test_result());
     ATF_REQUIRE(!atf::utils::grep_file("attempting to gather stack trace",
-                                       result_handle.stdout_file().str()));
+                                       result_handle->stdout_file().str()));
     ATF_REQUIRE( atf::utils::grep_file("attempting to gather stack trace",
-                                       result_handle.stderr_file().str()));
-    result_handle.cleanup();
+                                       result_handle->stderr_file().str()));
+    result_handle->cleanup();
+    result_handle.reset();
 
     handle.cleanup();
 }
@@ -559,24 +566,25 @@ ATF_TEST_CASE_BODY(integration__list_files_on_failure)
 
     (void)handle.spawn_test(program, "create_files_and_fail", user_config);
 
-    scheduler::result_handle result_handle = handle.wait_any_test();
+    scheduler::result_handle_ptr result_handle = handle.wait_any_test();
     ATF_REQUIRE(!atf::utils::grep_file("Files left in work directory",
-                                       result_handle.stdout_file().str()));
+                                       result_handle->stdout_file().str()));
     ATF_REQUIRE( atf::utils::grep_file("Files left in work directory",
-                                       result_handle.stderr_file().str()));
+                                       result_handle->stderr_file().str()));
     ATF_REQUIRE(!atf::utils::grep_file("^\\.$",
-                                       result_handle.stderr_file().str()));
+                                       result_handle->stderr_file().str()));
     ATF_REQUIRE(!atf::utils::grep_file("^\\..$",
-                                       result_handle.stderr_file().str()));
+                                       result_handle->stderr_file().str()));
     ATF_REQUIRE( atf::utils::grep_file("^first file$",
-                                       result_handle.stderr_file().str()));
+                                       result_handle->stderr_file().str()));
     ATF_REQUIRE( atf::utils::grep_file("^second-file$",
-                                       result_handle.stderr_file().str()));
+                                       result_handle->stderr_file().str()));
     ATF_REQUIRE( atf::utils::grep_file("^dir1$",
-                                       result_handle.stderr_file().str()));
+                                       result_handle->stderr_file().str()));
     ATF_REQUIRE(!atf::utils::grep_file("dir2",
-                                       result_handle.stderr_file().str()));
-    result_handle.cleanup();
+                                       result_handle->stderr_file().str()));
+    result_handle->cleanup();
+    result_handle.reset();
 
     handle.cleanup();
 }
@@ -595,10 +603,11 @@ ATF_TEST_CASE_BODY(integration__prevent_clobbering_control_files)
 
     (void)handle.spawn_test(program, "delete_all", user_config);
 
-    scheduler::result_handle result_handle = handle.wait_any_test();
+    scheduler::result_handle_ptr result_handle = handle.wait_any_test();
     ATF_REQUIRE_EQ(model::test_result(model::test_result_passed, "Exit 0"),
-                   result_handle.test_result());
-    result_handle.cleanup();
+                   result_handle->test_result());
+    result_handle->cleanup();
+    result_handle.reset();
 
     handle.cleanup();
 }

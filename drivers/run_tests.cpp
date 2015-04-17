@@ -219,19 +219,19 @@ drivers::run_tests::drive(const fs::path& kyuafile_path,
         // result.  We consume slots one at a time to give preference to the
         // spawning of new tests as detailed above.
         if (!in_flight.empty()) {
-            scheduler::result_handle result = handle.wait_any_test();
+            scheduler::result_handle_ptr result = handle.wait_any_test();
 
             const std::map< scheduler::exec_handle, int64_t >::iterator
-                iter = in_flight.find(result.original_exec_handle());
+                iter = in_flight.find(result->original_exec_handle());
             const int64_t test_case_id = (*iter).second;
             in_flight.erase(iter);
 
-            put_test_result(test_case_id, result, tx);
+            put_test_result(test_case_id, *result, tx);
 
-            const model::test_result test_result = safe_cleanup(result);
-            hooks.got_result(*result.test_program(), result.test_case_name(),
-                             result.test_result(),
-                             result.end_time() - result.start_time());
+            const model::test_result test_result = safe_cleanup(*result);
+            hooks.got_result(*result->test_program(), result->test_case_name(),
+                             result->test_result(),
+                             result->end_time() - result->start_time());
         }
     } while (!in_flight.empty() || !scanner.done());
 

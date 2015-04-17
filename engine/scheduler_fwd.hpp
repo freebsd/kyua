@@ -32,6 +32,8 @@
 #if !defined(ENGINE_SCHEDULER_FWD_HPP)
 #define ENGINE_SCHEDULER_FWD_HPP
 
+#include "utils/shared_ptr.hpp"
+
 namespace engine {
 namespace scheduler {
 
@@ -43,6 +45,10 @@ typedef int exec_handle;
 class scheduler_handle;
 class interface;
 class result_handle;
+
+
+/// Pointer to a dynamically-allocated result_handle.
+typedef std::shared_ptr< result_handle > result_handle_ptr;
 
 
 }  // namespace scheduler
