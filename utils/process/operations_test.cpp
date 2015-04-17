@@ -261,6 +261,27 @@ ATF_TEST_CASE_BODY(terminate_group__setpgrp_not_executed)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(wait__ok);
+ATF_TEST_CASE_BODY(wait__ok)
+{
+    std::auto_ptr< process::child > child = process::child::fork_capture(
+        child_exit< 15 >);
+    const pid_t pid = child->pid();
+    child.reset();  // Ensure there is no conflict between destructor and wait.
+
+    const process::status status = process::wait(pid);
+    ATF_REQUIRE(status.exited());
+    ATF_REQUIRE_EQ(15, status.exitstatus());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(wait__fail);
+ATF_TEST_CASE_BODY(wait__fail)
+{
+    ATF_REQUIRE_THROW(process::system_error, process::wait(1));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(wait_any__one);
 ATF_TEST_CASE_BODY(wait_any__one)
 {
@@ -315,6 +336,9 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, terminate_group__setpgrp_executed);
     ATF_ADD_TEST_CASE(tcs, terminate_group__setpgrp_not_executed);
+
+    ATF_ADD_TEST_CASE(tcs, wait__ok);
+    ATF_ADD_TEST_CASE(tcs, wait__fail);
 
     ATF_ADD_TEST_CASE(tcs, wait_any__one);
     ATF_ADD_TEST_CASE(tcs, wait_any__many);

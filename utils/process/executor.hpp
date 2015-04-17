@@ -42,16 +42,16 @@
 /// 2) Spawn one or more processes with spawn().  On the caller side, keep
 ///    track of any per-process data you may need using the returned
 ///    exec_handle, which is unique among the set of active processes.
-/// 3) Call wait_any() to wait for completion of any process started in
-///    the previous step.  Repeat as desired.
-/// 4) Use the returned exit_handle object by wait_any() to query
+/// 3) Call wait() or wait_any() to wait for completion of a process started
+///    in the previous step.  Repeat as desired.
+/// 4) Use the returned exit_handle object by wait() or wait_any() to query
 ///    the status of the terminated process and/or to access any of its
 ///    data files.
 /// 5) Invoke cleanup() on the exit_handle to wipe any stale data.
 /// 6) Invoke cleanup() on the object returned by setup().
 ///
 /// It is the responsibility of the caller to ensure that calls to
-/// spawn and spawn_followup are balanced with wait_any calls.
+/// spawn() and spawn_followup() are balanced with wait() and wait_any() calls.
 ///
 /// Processes executed in this manner have access to two different "unique"
 /// directories: the first is the "work directory", which is an empty directory
@@ -168,6 +168,7 @@ public:
                                const exit_handle&,
                                const datetime::delta&);
 
+    exit_handle wait(const exec_handle);
     exit_handle wait_any(void);
 
     void check_interrupt(void) const;

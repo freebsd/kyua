@@ -86,6 +86,27 @@ safe_wait(void)
 }
 
 
+/// Exception-based, type-improved version of waitpid(2).
+///
+/// \param pid The identifier of the process to wait for.
+///
+/// \return The termination status of the process.
+///
+/// \throw process::system_error If the call to waitpid(2) fails.
+static process::status
+safe_waitpid(const pid_t pid)
+{
+    LD(F("Waiting for pid=%s") % pid);
+    int stat_loc;
+    if (process::detail::syscall_waitpid(pid, &stat_loc, 0) == -1) {
+        const int original_errno = errno;
+        throw process::system_error(F("Failed to wait for PID %s") % pid,
+                                    original_errno);
+    }
+    return process::status(pid, stat_loc);
+}
+
+
 }  // anonymous namespace
 
 
@@ -160,6 +181,25 @@ process::terminate_group(const int pgid)
 {
     (void)::killpg(pgid, SIGKILL);
     (void)::kill(pgid, SIGKILL);
+}
+
+
+/// Blocks to wait for completion of a subprocess.
+///
+/// \param pid Identifier of the process to wait for.
+///
+/// \return The termination status of the child process that terminated.
+///
+/// \throw process::system_error If the call to wait(2) fails.
+process::status
+process::wait(const int pid)
+{
+    const process::status status = safe_waitpid(pid);
+    {
+        signals::interrupts_inhibiter inhibiter;
+        signals::remove_pid_to_kill(pid);
+    }
+    return status;
 }
 
 
