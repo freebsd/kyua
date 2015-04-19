@@ -34,6 +34,7 @@
 
 #include "model/types.hpp"
 #include "utils/datetime.hpp"
+#include "utils/format/containers.ipp"
 #include "utils/fs/path.hpp"
 #include "utils/units.hpp"
 
@@ -58,7 +59,7 @@ ATF_TEST_CASE_BODY(defaults)
     ATF_REQUIRE_EQ(units::bytes(0), md.required_memory());
     ATF_REQUIRE(md.required_programs().empty());
     ATF_REQUIRE(md.required_user().empty());
-    ATF_REQUIRE(model::default_timeout == md.timeout());
+    ATF_REQUIRE(datetime::delta(300, 0) == md.timeout());
 }
 
 
@@ -129,6 +130,39 @@ ATF_TEST_CASE_BODY(copy)
     ATF_REQUIRE_EQ(2, md2.allowed_architectures().size());
     ATF_REQUIRE_EQ(1, md1.allowed_platforms().size());
     ATF_REQUIRE_EQ(1, md2.allowed_platforms().size());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(apply_overrides);
+ATF_TEST_CASE_BODY(apply_overrides)
+{
+    const model::metadata md1 = model::metadata_builder()
+        .add_allowed_architecture("1-architecture")
+        .add_allowed_platform("1-platform")
+        .set_description("Explicit description")
+        .build();
+
+    const model::metadata md2 = model::metadata_builder()
+        .add_allowed_architecture("2-architecture")
+        .set_description("")
+        .set_timeout(datetime::delta(500, 0))
+        .build();
+
+    const model::metadata merge_1_2 = model::metadata_builder()
+        .add_allowed_architecture("2-architecture")
+        .add_allowed_platform("1-platform")
+        .set_description("")
+        .set_timeout(datetime::delta(500, 0))
+        .build();
+    ATF_REQUIRE_EQ(merge_1_2, md1.apply_overrides(md2));
+
+    const model::metadata merge_2_1 = model::metadata_builder()
+        .add_allowed_architecture("1-architecture")
+        .add_allowed_platform("1-platform")
+        .set_description("Explicit description")
+        .set_timeout(datetime::delta(500, 0))
+        .build();
+    ATF_REQUIRE_EQ(merge_2_1, md2.apply_overrides(md1));
 }
 
 
@@ -259,6 +293,34 @@ ATF_TEST_CASE_BODY(override_all_with_set_string)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(to_properties);
+ATF_TEST_CASE_BODY(to_properties)
+{
+    const model::metadata md = model::metadata_builder()
+        .add_allowed_architecture("abc")
+        .add_required_file(fs::path("foo"))
+        .add_required_file(fs::path("bar"))
+        .set_required_memory(units::bytes(1024))
+        .add_custom("X-foo", "bar")
+        .build();
+
+    model::properties_map props;
+    props["allowed_architectures"] = "abc";
+    props["allowed_platforms"] = "";
+    props["custom.X-foo"] = "bar";
+    props["description"] = "";
+    props["has_cleanup"] = "false";
+    props["required_configs"] = "";
+    props["required_disk_space"] = "0";
+    props["required_files"] = "bar foo";
+    props["required_memory"] = "1.00K";
+    props["required_programs"] = "";
+    props["required_user"] = "";
+    props["timeout"] = "300";
+    ATF_REQUIRE_EQ(props, md.to_properties());
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(operators_eq_and_ne__empty);
 ATF_TEST_CASE_BODY(operators_eq_and_ne__empty)
 {
@@ -293,6 +355,23 @@ ATF_TEST_CASE_BODY(operators_eq_and_ne__equal)
         .add_allowed_architecture("b")
         .add_allowed_architecture("a")
         .add_custom("X-foo", "bar")
+        .build();
+    ATF_REQUIRE(  md1 == md2);
+    ATF_REQUIRE(!(md1 != md2));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(operators_eq_and_ne__equal_overriden_defaults);
+ATF_TEST_CASE_BODY(operators_eq_and_ne__equal_overriden_defaults)
+{
+    const model::metadata defaults = model::metadata_builder().build();
+
+    const model::metadata md1 = model::metadata_builder()
+        .add_allowed_architecture("a")
+        .build();
+    const model::metadata md2 = model::metadata_builder()
+        .add_allowed_architecture("a")
+        .set_timeout(defaults.timeout())
         .build();
     ATF_REQUIRE(  md1 == md2);
     ATF_REQUIRE(!(md1 != md2));
@@ -353,12 +432,15 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, defaults);
     ATF_ADD_TEST_CASE(tcs, add);
     ATF_ADD_TEST_CASE(tcs, copy);
+    ATF_ADD_TEST_CASE(tcs, apply_overrides);
     ATF_ADD_TEST_CASE(tcs, override_all_with_setters);
     ATF_ADD_TEST_CASE(tcs, override_all_with_set_string);
+    ATF_ADD_TEST_CASE(tcs, to_properties);
 
     ATF_ADD_TEST_CASE(tcs, operators_eq_and_ne__empty);
     ATF_ADD_TEST_CASE(tcs, operators_eq_and_ne__copy);
     ATF_ADD_TEST_CASE(tcs, operators_eq_and_ne__equal);
+    ATF_ADD_TEST_CASE(tcs, operators_eq_and_ne__equal_overriden_defaults);
     ATF_ADD_TEST_CASE(tcs, operators_eq_and_ne__different);
 
     ATF_ADD_TEST_CASE(tcs, output__defaults);

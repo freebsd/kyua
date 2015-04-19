@@ -32,16 +32,7 @@
 #if !defined(MODEL_METADATA_FWD_HPP)
 #define MODEL_METADATA_FWD_HPP
 
-namespace utils {
-namespace datetime {
-class delta;
-}  // namespace datetime
-}  // namespace utils
-
 namespace model {
-
-
-extern utils::datetime::delta default_timeout;
 
 
 class metadata;

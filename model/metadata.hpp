@@ -62,6 +62,8 @@ public:
     metadata(const utils::config::tree&);
     ~metadata(void);
 
+    metadata apply_overrides(const metadata&) const;
+
     const strings_set& allowed_architectures(void) const;
     const strings_set& allowed_platforms(void) const;
     model::properties_map custom(void) const;
