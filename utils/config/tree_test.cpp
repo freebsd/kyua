@@ -210,6 +210,190 @@ ATF_TEST_CASE_BODY(deep_copy__some)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(combine__empty);
+ATF_TEST_CASE_BODY(combine__empty)
+{
+    const config::tree t1, t2;
+    const config::tree combined = t1.combine(t2);
+
+    const config::tree expected;
+    ATF_REQUIRE(expected == combined);
+}
+
+
+static void
+init_tree_for_combine_test(config::tree& tree)
+{
+    tree.define< config::int_node >("int-node");
+    tree.define< config::string_node >("string-node");
+    tree.define< config::int_node >("unused.node");
+    tree.define< config::int_node >("deeper.int.node");
+    tree.define_dynamic("deeper.dynamic");
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(combine__same_layout__no_overrides);
+ATF_TEST_CASE_BODY(combine__same_layout__no_overrides)
+{
+    config::tree t1, t2;
+    init_tree_for_combine_test(t1);
+    init_tree_for_combine_test(t2);
+    t1.set< config::int_node >("int-node", 3);
+    t1.set< config::string_node >("string-node", "foo");
+    t1.set< config::int_node >("deeper.int.node", 15);
+    t1.set_string("deeper.dynamic.first", "value1");
+    t1.set_string("deeper.dynamic.second", "value2");
+    const config::tree combined = t1.combine(t2);
+
+    ATF_REQUIRE(t1 == combined);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(combine__same_layout__no_base);
+ATF_TEST_CASE_BODY(combine__same_layout__no_base)
+{
+    config::tree t1, t2;
+    init_tree_for_combine_test(t1);
+    init_tree_for_combine_test(t2);
+    t2.set< config::int_node >("int-node", 3);
+    t2.set< config::string_node >("string-node", "foo");
+    t2.set< config::int_node >("deeper.int.node", 15);
+    t2.set_string("deeper.dynamic.first", "value1");
+    t2.set_string("deeper.dynamic.second", "value2");
+    const config::tree combined = t1.combine(t2);
+
+    ATF_REQUIRE(t2 == combined);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(combine__same_layout__mix);
+ATF_TEST_CASE_BODY(combine__same_layout__mix)
+{
+    config::tree t1, t2;
+    init_tree_for_combine_test(t1);
+    init_tree_for_combine_test(t2);
+    t1.set< config::int_node >("int-node", 3);
+    t2.set< config::int_node >("int-node", 5);
+    t1.set< config::string_node >("string-node", "foo");
+    t2.set< config::int_node >("deeper.int.node", 15);
+    t1.set_string("deeper.dynamic.first", "value1");
+    t1.set_string("deeper.dynamic.second", "value2.1");
+    t2.set_string("deeper.dynamic.second", "value2.2");
+    t2.set_string("deeper.dynamic.third", "value3");
+    const config::tree combined = t1.combine(t2);
+
+    config::tree expected;
+    init_tree_for_combine_test(expected);
+    expected.set< config::int_node >("int-node", 5);
+    expected.set< config::string_node >("string-node", "foo");
+    expected.set< config::int_node >("deeper.int.node", 15);
+    expected.set_string("deeper.dynamic.first", "value1");
+    expected.set_string("deeper.dynamic.second", "value2.2");
+    expected.set_string("deeper.dynamic.third", "value3");
+    ATF_REQUIRE(expected == combined);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(combine__different_layout);
+ATF_TEST_CASE_BODY(combine__different_layout)
+{
+    config::tree t1;
+    t1.define< config::int_node >("common.base1");
+    t1.define< config::int_node >("common.base2");
+    t1.define_dynamic("dynamic.base");
+    t1.define< config::int_node >("unset.base");
+
+    config::tree t2;
+    t2.define< config::int_node >("common.base2");
+    t2.define< config::int_node >("common.base3");
+    t2.define_dynamic("dynamic.other");
+    t2.define< config::int_node >("unset.other");
+
+    t1.set< config::int_node >("common.base1", 1);
+    t1.set< config::int_node >("common.base2", 2);
+    t1.set_string("dynamic.base.first", "foo");
+    t1.set_string("dynamic.base.second", "bar");
+
+    t2.set< config::int_node >("common.base2", 4);
+    t2.set< config::int_node >("common.base3", 3);
+    t2.set_string("dynamic.other.first", "FOO");
+    t2.set_string("dynamic.other.second", "BAR");
+
+    config::tree combined = t1.combine(t2);
+
+    config::tree expected;
+    expected.define< config::int_node >("common.base1");
+    expected.define< config::int_node >("common.base2");
+    expected.define< config::int_node >("common.base3");
+    expected.define_dynamic("dynamic.base");
+    expected.define_dynamic("dynamic.other");
+    expected.define< config::int_node >("unset.base");
+    expected.define< config::int_node >("unset.other");
+
+    expected.set< config::int_node >("common.base1", 1);
+    expected.set< config::int_node >("common.base2", 4);
+    expected.set< config::int_node >("common.base3", 3);
+    expected.set_string("dynamic.base.first", "foo");
+    expected.set_string("dynamic.base.second", "bar");
+    expected.set_string("dynamic.other.first", "FOO");
+    expected.set_string("dynamic.other.second", "BAR");
+
+    ATF_REQUIRE(expected == combined);
+
+    // The combined tree should have respected existing but unset nodes.  Check
+    // that these calls do not crash.
+    combined.set< config::int_node >("unset.base", 5);
+    combined.set< config::int_node >("unset.other", 5);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(combine__dynamic_wins);
+ATF_TEST_CASE_BODY(combine__dynamic_wins)
+{
+    config::tree t1;
+    t1.define< config::int_node >("inner.leaf1");
+    t1.set< config::int_node >("inner.leaf1", 3);
+
+    config::tree t2;
+    t2.define_dynamic("inner");
+    t2.set_string("inner.leaf2", "4");
+
+    config::tree combined = t1.combine(t2);
+
+    config::tree expected;
+    expected.define_dynamic("inner");
+    expected.set_string("inner.leaf1", "3");
+    expected.set_string("inner.leaf2", "4");
+
+    ATF_REQUIRE(expected == combined);
+
+    // The combined inner node should have become dynamic so this call should
+    // not fail.
+    combined.set_string("inner.leaf3", "5");
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(combine__inner_leaf_mismatch);
+ATF_TEST_CASE_BODY(combine__inner_leaf_mismatch)
+{
+    config::tree t1;
+    t1.define< config::int_node >("top.foo.bar");
+
+    config::tree t2;
+    t2.define< config::int_node >("top.foo");
+
+    ATF_REQUIRE_THROW_RE(config::bad_combination_error,
+                         "'top.foo' is an inner node in the base tree but a "
+                         "leaf node in the overrides tree",
+                         t1.combine(t2));
+
+    ATF_REQUIRE_THROW_RE(config::bad_combination_error,
+                         "'top.foo' is a leaf node in the base tree but an "
+                         "inner node in the overrides tree",
+                         t2.combine(t1));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(lookup__invalid_key);
 ATF_TEST_CASE_BODY(lookup__invalid_key)
 {
@@ -848,6 +1032,14 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, deep_copy__empty);
     ATF_ADD_TEST_CASE(tcs, deep_copy__some);
+
+    ATF_ADD_TEST_CASE(tcs, combine__empty);
+    ATF_ADD_TEST_CASE(tcs, combine__same_layout__no_overrides);
+    ATF_ADD_TEST_CASE(tcs, combine__same_layout__no_base);
+    ATF_ADD_TEST_CASE(tcs, combine__same_layout__mix);
+    ATF_ADD_TEST_CASE(tcs, combine__different_layout);
+    ATF_ADD_TEST_CASE(tcs, combine__dynamic_wins);
+    ATF_ADD_TEST_CASE(tcs, combine__inner_leaf_mismatch);
 
     ATF_ADD_TEST_CASE(tcs, lookup__invalid_key);
     ATF_ADD_TEST_CASE(tcs, lookup__unknown_key);

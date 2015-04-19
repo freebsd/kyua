@@ -87,7 +87,13 @@ protected:
     /// Mapping of keys to values that are descendants of this node.
     children_map _children;
 
-    void copy_into(inner_node* new_node) const;
+    void copy_into(inner_node*) const;
+    void combine_into(const tree_key&, const base_node*, inner_node*) const;
+
+private:
+    void combine_children_into(const tree_key&,
+                               const children_map&, const children_map&,
+                               inner_node*) const;
 
 public:
     inner_node(const bool);
@@ -112,6 +118,7 @@ public:
     static_inner_node(void);
 
     virtual base_node* deep_copy(void) const;
+    virtual base_node* combine(const tree_key&, const base_node*) const;
 
     void define(const tree_key&, const tree_key::size_type, new_node_hook);
 };
@@ -126,6 +133,7 @@ public:
 class dynamic_inner_node : public config::detail::inner_node {
 public:
     virtual base_node* deep_copy(void) const;
+    virtual base_node* combine(const tree_key&, const base_node*) const;
 
     dynamic_inner_node(void);
 };

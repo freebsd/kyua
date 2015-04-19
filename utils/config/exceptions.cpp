@@ -51,6 +51,24 @@ config::error::~error(void) throw()
 
 /// Constructs a new error with a plain-text message.
 ///
+/// \param key The key that caused the combination conflict.
+/// \param format The plain-text error message.
+config::bad_combination_error::bad_combination_error(
+    const detail::tree_key& key, const std::string& format) :
+    error(F(format.empty() ? "Combination conflict in key '%s'" : format) %
+          detail::flatten_key(key))
+{
+}
+
+
+/// Destructor for the error.
+config::bad_combination_error::~bad_combination_error(void) throw()
+{
+}
+
+
+/// Constructs a new error with a plain-text message.
+///
 /// \param message The plain-text error message.
 config::invalid_key_error::invalid_key_error(const std::string& message) :
     error(message)

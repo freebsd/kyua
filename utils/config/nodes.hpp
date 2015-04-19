@@ -64,6 +64,17 @@ public:
     ///
     /// \return A dynamically-allocated node.
     virtual base_node* deep_copy(void) const = 0;
+
+    /// Combines this node with another one.
+    ///
+    /// \param key Key to this node.
+    /// \param other The node to combine with.
+    ///
+    /// \return A new node representing the combination.
+    ///
+    /// \throw bad_combination_error If the two nodes cannot be combined.
+    virtual base_node* combine(const tree_key& key, const base_node* other)
+        const = 0;
 };
 
 
@@ -97,6 +108,8 @@ public:
     ///
     /// \return True if a value has been set in the node.
     virtual bool is_set(void) const = 0;
+
+    base_node* combine(const detail::tree_key&, const base_node*) const;
 
     /// Pushes the node's value onto the Lua stack.
     ///
