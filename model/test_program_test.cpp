@@ -56,14 +56,19 @@ namespace fs = utils::fs;
 ATF_TEST_CASE_WITHOUT_HEAD(ctor_and_getters);
 ATF_TEST_CASE_BODY(ctor_and_getters)
 {
-    const model::metadata md = model::metadata_builder()
-        .add_custom("foo", "bar")
+    const model::metadata tp_md = model::metadata_builder()
+        .add_custom("first", "foo")
+        .add_custom("second", "bar")
         .build();
+    const model::metadata tc_md = model::metadata_builder()
+        .add_custom("first", "baz")
+        .build();
+
     model::test_cases_map tcs;
     tcs.insert(model::test_cases_map::value_type(
-        "foo", model::test_case("foo", model::metadata_builder().build())));
+        "foo", model::test_case("foo", tc_md)));
     const model::test_program test_program(
-        "mock", fs::path("binary"), fs::path("root"), "suite-name", md, tcs);
+        "mock", fs::path("binary"), fs::path("root"), "suite-name", tp_md, tcs);
 
     ATF_REQUIRE_EQ("mock", test_program.interface_name());
     ATF_REQUIRE_EQ(fs::path("binary"), test_program.relative_path());
@@ -71,8 +76,16 @@ ATF_TEST_CASE_BODY(ctor_and_getters)
                    test_program.absolute_path());
     ATF_REQUIRE_EQ(fs::path("root"), test_program.root());
     ATF_REQUIRE_EQ("suite-name", test_program.test_suite_name());
-    ATF_REQUIRE_EQ(md, test_program.get_metadata());
-    ATF_REQUIRE_EQ(tcs, test_program.test_cases());
+    ATF_REQUIRE_EQ(tp_md, test_program.get_metadata());
+
+    const model::metadata exp_tc_md = model::metadata_builder()
+        .add_custom("first", "baz")
+        .add_custom("second", "bar")
+        .build();
+    model::test_cases_map exp_tcs;
+    exp_tcs.insert(model::test_cases_map::value_type(
+        "foo", model::test_case("foo", exp_tc_md)));
+    ATF_REQUIRE_EQ(exp_tcs, test_program.test_cases());
 }
 
 
@@ -106,6 +119,82 @@ ATF_TEST_CASE_BODY(find__missing)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(metadata_inheritance);
+ATF_TEST_CASE_BODY(metadata_inheritance)
+{
+    // Do not use the test_program_builder in this test to ensure the logic to
+    // merge metadata objects is in the test_program construction itself.  We
+    // want objects to always be consistent regardless of whether they are built
+    // via the builder or not.
+
+    model::test_cases_map test_cases;
+    {
+        const model::metadata metadata = model::metadata_builder()
+            .build();
+
+        const model::test_case test_case("inherit-all", metadata);
+        test_cases.insert(model::test_cases_map::value_type(test_case.name(),
+                                                            test_case));
+    }
+    {
+        const model::metadata metadata = model::metadata_builder()
+            .set_description("Overriden description")
+            .build();
+
+        const model::test_case test_case("inherit-some", metadata);
+        test_cases.insert(model::test_cases_map::value_type(test_case.name(),
+                                                            test_case));
+    }
+    {
+        const model::metadata metadata = model::metadata_builder()
+            .add_allowed_architecture("overriden-arch")
+            .add_allowed_platform("overriden-platform")
+            .set_description("Overriden description")
+            .build();
+
+        const model::test_case test_case("inherit-none", metadata);
+        test_cases.insert(model::test_cases_map::value_type(test_case.name(),
+                                                            test_case));
+    }
+
+    const model::metadata metadata = model::metadata_builder()
+        .add_allowed_architecture("base-arch")
+        .set_description("Base description")
+        .build();
+    const model::test_program test_program(
+        "plain", fs::path("non-existent"), fs::path("."), "suite-name",
+        metadata, test_cases);
+
+    {
+        const model::metadata exp_metadata = model::metadata_builder()
+            .add_allowed_architecture("base-arch")
+            .set_description("Base description")
+            .build();
+        ATF_REQUIRE_EQ(exp_metadata,
+                       test_program.find("inherit-all").get_metadata());
+    }
+
+    {
+        const model::metadata exp_metadata = model::metadata_builder()
+            .add_allowed_architecture("base-arch")
+            .set_description("Overriden description")
+            .build();
+        ATF_REQUIRE_EQ(exp_metadata,
+                       test_program.find("inherit-some").get_metadata());
+    }
+
+    {
+        const model::metadata exp_metadata = model::metadata_builder()
+            .add_allowed_architecture("overriden-arch")
+            .add_allowed_platform("overriden-platform")
+            .set_description("Overriden description")
+            .build();
+        ATF_REQUIRE_EQ(exp_metadata,
+                       test_program.find("inherit-none").get_metadata());
+    }
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(operators_eq_and_ne__copy);
 ATF_TEST_CASE_BODY(operators_eq_and_ne__copy)
 {
@@ -132,7 +221,10 @@ ATF_TEST_CASE_BODY(operators_eq_and_ne__not_copy)
 
     model::test_cases_map base_tcs;
     {
-        const model::test_case tc1("main", model::metadata_builder().build());
+        const model::metadata tc_metadata = model::metadata_builder()
+            .add_custom("X-second", "baz")
+            .build();
+        const model::test_case tc1("main", tc_metadata);
         base_tcs.insert(model::test_cases_map::value_type(tc1.name(), tc1));
     }
 
@@ -144,8 +236,34 @@ ATF_TEST_CASE_BODY(operators_eq_and_ne__not_copy)
     {
         model::test_cases_map other_tcs;
         {
-            const model::test_case tc1("main",
-                                       model::metadata_builder().build());
+            const model::metadata tc_metadata = model::metadata_builder()
+                .add_custom("X-second", "baz")
+                .build();
+            const model::test_case tc1("main", tc_metadata);
+            other_tcs.insert(model::test_cases_map::value_type(tc1.name(),
+                                                               tc1));
+        }
+
+        const model::test_program other_tp(
+            base_interface, base_relative_path, base_root, base_test_suite,
+            base_metadata, other_tcs);
+
+        ATF_REQUIRE(  base_tp == other_tp);
+        ATF_REQUIRE(!(base_tp != other_tp));
+    }
+
+    // Construct with same final metadata values but using a different
+    // intermediate representation.  The original test program has one property
+    // in the base test program definition and another in the test case; here,
+    // we put both definitions explicitly in the test case.
+    {
+        model::test_cases_map other_tcs;
+        {
+            const model::metadata tc_metadata = model::metadata_builder()
+                .add_custom("X-foo", "bar")
+                .add_custom("X-second", "baz")
+                .build();
+            const model::test_case tc1("main", tc_metadata);
             other_tcs.insert(model::test_cases_map::value_type(tc1.name(),
                                                                tc1));
         }
@@ -312,13 +430,13 @@ ATF_TEST_CASE_BODY(output__some_test_cases)
         "required_programs='', required_user='', timeout='300'}, "
         "test_cases=map("
         "another-name=test_case{name='another-name', "
-        "metadata=metadata{allowed_architectures='', allowed_platforms='', "
+        "metadata=metadata{allowed_architectures='a', allowed_platforms='', "
         "description='', has_cleanup='false', "
         "required_configs='', required_disk_space='0', required_files='', "
         "required_memory='0', "
         "required_programs='', required_user='', timeout='300'}}, "
         "the-name=test_case{name='the-name', "
-        "metadata=metadata{allowed_architectures='', allowed_platforms='foo', "
+        "metadata=metadata{allowed_architectures='a', allowed_platforms='foo', "
         "custom.X-bar='baz', description='', has_cleanup='false', "
         "required_configs='', required_disk_space='0', required_files='', "
         "required_memory='0', "
@@ -387,6 +505,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, ctor_and_getters);
     ATF_ADD_TEST_CASE(tcs, find__ok);
     ATF_ADD_TEST_CASE(tcs, find__missing);
+
+    ATF_ADD_TEST_CASE(tcs, metadata_inheritance);
 
     ATF_ADD_TEST_CASE(tcs, operators_eq_and_ne__copy);
     ATF_ADD_TEST_CASE(tcs, operators_eq_and_ne__not_copy);

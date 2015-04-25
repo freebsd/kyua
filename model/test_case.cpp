@@ -45,6 +45,14 @@ struct model::test_case::impl {
     /// Name of the test case; must be unique within the test program.
     std::string name;
 
+    /// Metadata of the container test program.
+    ///
+    /// Yes, this is a pointer.  Yes, we do not own the object pointed to.
+    /// However, because this is only intended to point to the metadata object
+    /// of test programs _containing_ this test case, we can assume that the
+    /// referenced object will be alive for the lifetime of this test case.
+    const model::metadata* md_defaults;
+
     /// Test case metadata.
     model::metadata md;
 
@@ -54,16 +62,35 @@ struct model::test_case::impl {
     /// Constructor.
     ///
     /// \param name_ The name of the test case within the test program.
+    /// \param md_defaults_ Metadata of the container test program.
     /// \param md_ Metadata of the test case.
     /// \param fake_result_ Fake result to return instead of running the test
     ///     case.
     impl(const std::string& name_,
+         const model::metadata* md_defaults_,
          const model::metadata& md_,
          const optional< model::test_result >& fake_result_) :
         name(name_),
+        md_defaults(md_defaults_),
         md(md_),
         fake_result(fake_result_)
     {
+    }
+
+    /// Gets the test case metadata.
+    ///
+    /// This combines the test case's metadata with any possible test program
+    /// metadata, using the latter as defaults.
+    ///
+    /// \return The test case metadata.
+    model::metadata
+    get_metadata(void) const
+    {
+        if (md_defaults != NULL) {
+            return md_defaults->apply_overrides(md);
+        } else {
+            return md;
+        }
     }
 
     /// Equality comparator.
@@ -75,10 +102,19 @@ struct model::test_case::impl {
     operator==(const impl& other) const
     {
         return (name == other.name &&
-                md == other.md &&
+                get_metadata() == other.get_metadata() &&
                 fake_result == other.fake_result);
     }
 };
+
+
+/// Constructs a new test case from an already-built impl oject.
+///
+/// \param pimpl_ The internal representation of the test case.
+model::test_case::test_case(std::shared_ptr< impl > pimpl_) :
+    _pimpl(pimpl_)
+{
+}
 
 
 /// Constructs a new test case.
@@ -87,7 +123,7 @@ struct model::test_case::impl {
 /// \param md_ Metadata of the test case.
 model::test_case::test_case(const std::string& name_,
                             const model::metadata& md_) :
-    _pimpl(new impl(name_, md_, none))
+    _pimpl(new impl(name_, NULL, md_, none))
 {
 }
 
@@ -117,6 +153,7 @@ model::test_case::test_case(
     const model::test_result& test_result_) :
     _pimpl(new impl(
         name_,
+        NULL,
         model::metadata_builder().set_description(description_).build(),
         utils::make_optional(test_result_)))
 {
@@ -132,6 +169,30 @@ model::test_case::~test_case(void)
 }
 
 
+/// Constructs a new test case applying metadata defaults.
+///
+/// This method is intended to be used by the container test program when
+/// ownership of the test is given to it.  At that point, the test case receives
+/// the default metadata properties of the test program, not the global
+/// defaults.
+///
+/// \param defaults The metadata properties to use as defaults.  The provided
+///     object's lifetime MUST extend the lifetime of the test case.  Because
+///     this is only intended to point at the metadata of the test program
+///     containing this test case, this assumption should hold.
+///
+/// \return A new test case.
+model::test_case
+model::test_case::apply_metadata_defaults(const metadata* defaults) const
+{
+    return test_case(std::shared_ptr< impl >(new impl(
+        _pimpl->name,
+        defaults,
+        _pimpl->md,
+        _pimpl->fake_result)));
+}
+
+
 /// Gets the test case name.
 ///
 /// \return The test case name, relative to the test program.
@@ -144,9 +205,28 @@ model::test_case::name(void) const
 
 /// Gets the test case metadata.
 ///
+/// This combines the test case's metadata with any possible test program
+/// metadata, using the latter as defaults.  You should use this method in
+/// generaland not get_raw_metadata().
+///
+/// \return The test case metadata.
+model::metadata
+model::test_case::get_metadata(void) const
+{
+    return _pimpl->get_metadata();
+}
+
+
+/// Gets the original test case metadata without test program overrides.
+///
+/// This method should be used for storage purposes as serialized test cases
+/// should record exactly whatever the test case reported and not what the test
+/// program may have provided.  The final values will be reconstructed at load
+/// time.
+///
 /// \return The test case metadata.
 const model::metadata&
-model::test_case::get_metadata(void) const
+model::test_case::get_raw_metadata(void) const
 {
     return _pimpl->md;
 }

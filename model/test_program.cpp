@@ -85,20 +85,25 @@ struct model::test_program::impl {
         binary(binary_),
         root(root_),
         test_suite_name(test_suite_name_),
-        md(md_),
-        test_cases(test_cases_)
+        md(md_)
     {
         PRE_MSG(!binary.is_absolute(),
                 F("The program '%s' must be relative to the root of the test "
                   "suite '%s'") % binary % root);
 
-        for (model::test_cases_map::const_iterator iter = test_cases.begin();
-             iter != test_cases.end(); ++iter) {
-            PRE_MSG((*iter).first == (*iter).second.name(),
+        for (model::test_cases_map::const_iterator iter = test_cases_.begin();
+             iter != test_cases_.end(); ++iter) {
+            const std::string& name = (*iter).first;
+            const model::test_case& test_case = (*iter).second;
+
+            PRE_MSG(name == test_case.name(),
                     F("The test case '%s' has been registered with the "
-                      "non-matching name '%s'") %
-                    (*iter).first % (*iter).second.name());
+                      "non-matching name '%s'") % name % test_case.name());
+
+            test_cases.insert(model::test_cases_map::value_type(
+                name, test_case.apply_metadata_defaults(&md)));
         }
+        INV(test_cases.size() == test_cases_.size());
     }
 };
 
