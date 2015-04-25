@@ -54,6 +54,9 @@ class test_program {
     /// Pointer to the shared internal implementation.
     std::shared_ptr< impl > _pimpl;
 
+protected:
+    void set_test_cases(const model::test_cases_map&);
+
 public:
     test_program(const std::string&, const utils::fs::path&,
                  const utils::fs::path&, const std::string&,
