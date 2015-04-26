@@ -37,7 +37,6 @@
 
 #include "engine/scheduler_fwd.hpp"
 
-#include <map>
 #include <string>
 
 #include "model/test_program_fwd.hpp"
@@ -77,7 +76,7 @@ public:
     ///     files.
     virtual void exec_test(const model::test_program& test_program,
                            const std::string& test_case_name,
-                           const std::map< std::string, std::string >& vars,
+                           const utils::config::properties_map& vars,
                            const utils::fs::path& control_directory)
         const UTILS_NORETURN = 0;
 

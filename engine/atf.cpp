@@ -54,6 +54,7 @@ extern "C" {
 #include "utils/process/operations.hpp"
 #include "utils/process/status.hpp"
 
+namespace config = utils::config;
 namespace fs = utils::fs;
 namespace process = utils::process;
 
@@ -177,11 +178,10 @@ run_part(const fs::path& test_program, const process::args_vector& args,
 /// \param control_directory Directory where the interface may place control
 ///     files.
 void
-engine::atf_interface::exec_test(
-    const model::test_program& test_program,
-    const std::string& test_case_name,
-    const std::map< std::string, std::string >& vars,
-    const fs::path& control_directory) const
+engine::atf_interface::exec_test(const model::test_program& test_program,
+                                 const std::string& test_case_name,
+                                 const config::properties_map& vars,
+                                 const fs::path& control_directory) const
 {
     utils::setenv("__RUNNING_INSIDE_ATF_RUN", "internal-yes-value");
 
@@ -189,8 +189,8 @@ engine::atf_interface::exec_test(
     const bool has_cleanup = test_case.get_metadata().has_cleanup();
 
     process::args_vector args;
-    for (std::map< std::string, std::string >::const_iterator iter =
-             vars.begin(); iter != vars.end(); ++iter) {
+    for (config::properties_map::const_iterator iter = vars.begin();
+         iter != vars.end(); ++iter) {
         args.push_back(F("-v%s=%s") % (*iter).first % (*iter).second);
     }
 

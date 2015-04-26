@@ -41,6 +41,7 @@
 #include "utils/process/status.hpp"
 #include "utils/sanity.hpp"
 
+namespace config = utils::config;
 namespace fs = utils::fs;
 namespace process = utils::process;
 
@@ -62,13 +63,13 @@ void
 engine::plain_interface::exec_test(
     const model::test_program& test_program,
     const std::string& test_case_name,
-    const std::map< std::string, std::string >& vars,
+    const config::properties_map& vars,
     const fs::path& UTILS_UNUSED_PARAM(control_directory)) const
 {
     PRE(test_case_name == "main");
 
-    for (std::map< std::string, std::string >::const_iterator
-             iter = vars.begin(); iter != vars.end(); ++iter) {
+    for (config::properties_map::const_iterator iter = vars.begin();
+         iter != vars.end(); ++iter) {
         utils::setenv(F("TEST_ENV_%s") % (*iter).first, (*iter).second);
     }
 

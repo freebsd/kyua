@@ -35,6 +35,7 @@ extern "C" {
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
+#include <map>
 
 #include "engine/config.hpp"
 #include "engine/exceptions.hpp"

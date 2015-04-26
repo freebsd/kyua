@@ -41,7 +41,7 @@ namespace engine {
 class plain_interface : public engine::scheduler::interface {
 public:
     void exec_test(const model::test_program&, const std::string&,
-                   const std::map< std::string, std::string >&,
+                   const utils::config::properties_map&,
                    const utils::fs::path&) const
         UTILS_NORETURN;
 

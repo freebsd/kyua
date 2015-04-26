@@ -174,13 +174,13 @@ class mock_interface : public scheduler::interface {
     void
     exec_print_params(const model::test_program& test_program,
                       const std::string& test_case_name,
-                      const std::map< std::string, std::string >& vars) const
+                      const config::properties_map& vars) const
         UTILS_NORETURN
     {
         std::cout << F("Test program: %s\n") % test_program.relative_path();
         std::cout << F("Test case: %s\n") % test_case_name;
-        for (std::map< std::string, std::string >::const_iterator iter =
-                 vars.begin(); iter != vars.end(); ++iter) {
+        for (config::properties_map::const_iterator iter = vars.begin();
+             iter != vars.end(); ++iter) {
             std::cout << F("%s=%s\n") % (*iter).first % (*iter).second;
         }
 
@@ -204,7 +204,7 @@ public:
     void
     exec_test(const model::test_program& test_program,
               const std::string& test_case_name,
-              const std::map< std::string, std::string >& vars,
+              const config::properties_map& vars,
               const fs::path& control_directory) const
     {
         const fs::path cookie = control_directory / "exec_test_was_called";
