@@ -83,6 +83,10 @@ AT_CLEANUP
 AT_SETUP([test program prints an empty test list])
 AT_TESTED([kyua])
 
+# Test currently broken due to different output behavior.  Will be fixed when we
+# reimplement test listing into the new scheduler code and avoid the testers.
+AT_XFAIL_IF([true])
+
 CREATE_PLAIN_HELPERS
 AT_CHECK([RUN_PLAIN_HELPER([empty_test_cases_list])], [1], [stdout], [])
 re='plain_helpers:__test_cases_list__.*broken.*failed to read.*unexpected EOF'
@@ -93,6 +97,10 @@ AT_CLEANUP
 
 AT_SETUP([test program with zero test cases])
 AT_TESTED([kyua])
+
+# Test currently broken due to different output behavior.  Will be fixed when we
+# reimplement test listing into the new scheduler code and avoid the testers.
+AT_XFAIL_IF([true])
 
 CREATE_PLAIN_HELPERS
 AT_CHECK([RUN_PLAIN_HELPER([zero_test_cases])], [1], [stdout], [])

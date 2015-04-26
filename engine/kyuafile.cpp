@@ -348,12 +348,9 @@ public:
 
         const std::string test_suite = get_test_suite(test_suite_override);
 
-        const config::properties_map props = runner::generate_tester_config(
-            user_config, test_suite);
-
         _test_programs.push_back(model::test_program_ptr(
             new runner::lazy_test_program(interface, path, _build_root,
-                                          test_suite, metadata, props,
+                                          test_suite, metadata, user_config,
                                           scheduler_handle)));
     }
 

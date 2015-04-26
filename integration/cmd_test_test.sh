@@ -937,8 +937,8 @@ EOF
     echo 'I am not executable' >non_executable
 
     cat >expout <<EOF
-crash_on_list:__test_cases_list__  ->  broken: Tester did not exit cleanly: kyua-atf-tester: Invalid test cases list header 'This is not a valid test program!'  [S.UUUs]
-non_executable:__test_cases_list__  ->  broken: Tester did not exit cleanly: kyua-atf-tester: execvp failed: Permission denied  [S.UUUs]
+crash_on_list:__test_cases_list__  ->  broken: Test program list did not return success  [S.UUUs]
+non_executable:__test_cases_list__  ->  broken: Test program list did not return success  [S.UUUs]
 
 Results file id is $(utils_results_id)
 Results saved to $(utils_results_file)

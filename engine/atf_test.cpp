@@ -75,14 +75,11 @@ run_one(const atf::tests::tc* tc, const char* test_case_name,
 {
     scheduler::scheduler_handle handle = scheduler::setup();
 
-    const config::properties_map tester_vars = runner::generate_tester_config(
-        user_config, "the-suite");
-
     const model::test_program_ptr program(new runner::lazy_test_program(
         "atf", fs::path("test_case_atf_helpers"),
         fs::path(tc->get_config_var("srcdir")),
         "the-suite", model::metadata_builder().build(),
-        tester_vars, handle));
+        user_config, handle));
 
     (void)handle.spawn_test(program, test_case_name, user_config);
 

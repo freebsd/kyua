@@ -35,12 +35,13 @@ extern "C" {
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
-#include <map>
+#include <iostream>  // TODO(jmmv): Remove when exec_list is deleted.
 
 #include "engine/config.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/requirements.hpp"
 #include "engine/runner.hpp"
+#include "engine/testers.hpp"
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
 #include "model/test_program.hpp"
@@ -73,6 +74,13 @@ namespace scheduler = engine::scheduler;
 
 using utils::none;
 using utils::optional;
+
+
+/// Timeout for the test case listing operation.
+///
+/// TODO(jmmv): This is here only for testing purposes.  Maybe we should expose
+/// this setting as part of the user_config.
+datetime::delta scheduler::list_timeout(300, 0);
 
 
 namespace {
@@ -166,6 +174,44 @@ struct exec_data {
 
 /// Mapping of active test case handles to their maintenance data.
 typedef std::map< scheduler::exec_handle, exec_data > exec_data_map;
+
+
+/// Functor to list the test cases of a test program.
+class list_test_cases {
+    /// Interface of the test program to execute.
+    std::shared_ptr< scheduler::interface > _interface;
+
+    /// Test program to execute.
+    const model::test_program* _test_program;
+
+    /// User-provided configuration variables.
+    const config::tree& _user_config;
+
+public:
+    /// Constructor.
+    ///
+    /// \param interface Interface of the test program to execute.
+    /// \param test_program Test program to execute.
+    /// \param user_config User-provided configuration variables.
+    list_test_cases(
+        const std::shared_ptr< scheduler::interface > interface,
+        const model::test_program* test_program,
+        const config::tree& user_config) :
+        _interface(interface),
+        _test_program(test_program),
+        _user_config(user_config)
+    {
+    }
+
+    /// Body of the subprocess.
+    void
+    operator()(const fs::path& UTILS_UNUSED_PARAM(control_directory))
+    {
+        const config::properties_map vars = runner::generate_tester_config(
+            _user_config, _test_program->test_suite_name());
+        _interface->exec_list(*_test_program, vars);
+    }
+};
 
 
 /// Functor to execute a test program in a child process.
@@ -277,6 +323,35 @@ find_interface(const std::string& name)
 
 
 }  // anonymous namespace
+
+
+// TODO(jmmv): Delete in favor of interface-specific hooks.  Make sure the
+// method in the base class is abstract and don't forget to clean up unused
+// header files.
+void
+scheduler::interface::exec_list(const model::test_program& test_program,
+                                const config::properties_map& vars) const
+{
+    const engine::tester tester(test_program.interface_name(), none, none,
+                                vars);
+    const std::string output = tester.list(test_program.absolute_path());
+    std::cout << output << '\n';
+    std::cout.flush();
+    ::_exit(EXIT_SUCCESS);
+}
+
+
+// TODO(jmmv): Delete in favor of interface-specific hooks.  Make sure the
+// method in the base class is abstract and don't forget to clean up unused
+// header files.
+model::test_cases_map
+scheduler::interface::parse_list(
+    const optional< process::status >& status,
+    const fs::path& stdout_path,
+    const fs::path& UTILS_UNUSED_PARAM(stderr_path)) const
+{
+    return runner::parse_test_cases(status, stdout_path);
+}
 
 
 /// Internal implementation for the result_handle class.
@@ -555,6 +630,62 @@ scheduler::scheduler_handle
 scheduler::setup(void)
 {
     return scheduler_handle();
+}
+
+
+/// Retrieves the list of test cases from a test program.
+///
+/// This operation is currently synchronous.
+///
+/// This operation should never throw.  Any errors during the processing of the
+/// test case list are subsumed into a single test case in the return value that
+/// represents the failed retrieval.
+///
+/// \param test_program The test program from which to obtain the list of test
+/// cases.
+/// \param user_config User-provided configuration variables.
+///
+/// \return The list of test cases.
+model::test_cases_map
+scheduler::scheduler_handle::list_tests(
+    const model::test_program* test_program,
+    const config::tree& user_config)
+{
+    _pimpl->generic.check_interrupt();
+
+    const std::shared_ptr< scheduler::interface > interface = find_interface(
+        test_program->interface_name());
+
+    try {
+        const executor::exec_handle exec_handle = _pimpl->generic.spawn(
+            list_test_cases(interface, test_program, user_config),
+            list_timeout, none);
+        executor::exit_handle exit_handle = _pimpl->generic.wait(exec_handle);
+
+        const model::test_cases_map test_cases = interface->parse_list(
+            exit_handle.status(),
+            exit_handle.stdout_file(),
+            exit_handle.stderr_file());
+
+        exit_handle.cleanup();
+
+        if (test_cases.empty())
+            throw std::runtime_error("Empty test cases list");
+
+        return test_cases;
+    } catch (const std::runtime_error& e) {
+        // TODO(jmmv): This is a very ugly workaround for the fact that we
+        // cannot report failures at the test-program level.
+        LW(F("Failed to load test cases list: %s") % e.what());
+        model::test_cases_map fake_test_cases;
+        fake_test_cases.insert(model::test_cases_map::value_type(
+            "__test_cases_list__",
+            model::test_case(
+                "__test_cases_list__",
+                "Represents the correct processing of the test cases list",
+                model::test_result(model::test_result_broken, e.what()))));
+        return fake_test_cases;
+    }
 }
 
 

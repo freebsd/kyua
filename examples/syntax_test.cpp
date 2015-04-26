@@ -34,6 +34,7 @@ extern "C" {
 
 #include "engine/config.hpp"
 #include "engine/kyuafile.hpp"
+#include "engine/plain.hpp"
 #include "engine/scheduler.hpp"
 #include "model/metadata.hpp"
 #include "model/test_program.hpp"
@@ -197,6 +198,10 @@ ATF_TEST_CASE_BODY(kyuafile_top__some_matches)
 
 ATF_INIT_TEST_CASES(tcs)
 {
+    scheduler::register_interface(
+        "plain", std::shared_ptr< scheduler::interface >(
+            new engine::plain_interface()));
+
     ATF_ADD_TEST_CASE(tcs, kyua_conf);
 
     ATF_ADD_TEST_CASE(tcs, kyuafile_top__no_matches);

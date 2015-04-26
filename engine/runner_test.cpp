@@ -46,9 +46,11 @@ extern "C" {
 
 #include <atf-c++.hpp>
 
+#include "engine/atf.hpp"
 #include "engine/config.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/kyuafile.hpp"
+#include "engine/plain.hpp"
 #include "engine/scheduler.hpp"
 #include "model/context.hpp"
 #include "model/metadata.hpp"
@@ -82,26 +84,6 @@ using utils::optional;
 
 
 namespace {
-
-
-/// Creates a mock tester that receives a signal.
-///
-/// \param term_sig Signal to deliver to the tester.  If the tester does not
-///     exit due to this reason, it exits with an arbitrary non-zero code.
-static void
-create_mock_tester_signal(const int term_sig)
-{
-    const std::string tester_name = "kyua-mock-tester";
-
-    atf::utils::create_file(
-        tester_name,
-        F("#! /bin/sh\n"
-          "kill -%s $$\n"
-          "exit 0\n") % term_sig);
-    ATF_REQUIRE(::chmod(tester_name.c_str(), 0755) != -1);
-
-    utils::setenv("KYUA_TESTERSDIR", fs::current_path().str());
-}
 
 
 /// Test case hooks to capture stdout and stderr in memory.
@@ -378,7 +360,7 @@ public:
             mdbuilder.set_timeout(_timeout.get());
         runner::lazy_test_program test_program(
             "plain", _binary_path, _root, "unit-tests", mdbuilder.build(),
-            config::properties_map(), handle);
+            config::tree(), handle);
         fetch_output_hooks fetcher;
         const model::test_result result = runner::run_test_case(
             &test_program, "main", user_config, fetcher, fs::path("."));
@@ -495,7 +477,7 @@ ATF_TEST_CASE_BODY(load_test_cases__get)
 
     const runner::lazy_test_program test_program(
         "plain", fs::path("non-existent"), fs::path("."), "suite-name",
-        model::metadata_builder().build(), config::properties_map(), handle);
+        model::metadata_builder().build(), config::tree(), handle);
     const model::test_cases_map& test_cases = test_program.test_cases();
     ATF_REQUIRE_EQ(1, test_cases.size());
     ATF_REQUIRE_EQ("main", test_cases.begin()->first);
@@ -511,38 +493,13 @@ ATF_TEST_CASE_BODY(load_test_cases__some)
 
     runner::lazy_test_program test_program(
         "plain", fs::path("non-existent"), fs::path("."), "suite-name",
-        model::metadata_builder().build(), config::properties_map(), handle);
+        model::metadata_builder().build(), config::tree(), handle);
 
     const model::test_case test_case("main", model::metadata_builder().build());
     model::test_cases_map exp_test_cases;
     exp_test_cases.insert(model::test_cases_map::value_type("main", test_case));
 
     ATF_REQUIRE_EQ(exp_test_cases, test_program.test_cases());
-
-    handle.cleanup();
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(load_test_cases__tester_fails);
-ATF_TEST_CASE_BODY(load_test_cases__tester_fails)
-{
-    scheduler::scheduler_handle handle = scheduler::setup();
-
-    runner::lazy_test_program test_program(
-        "mock", fs::path("non-existent"), fs::path("."), "suite-name",
-        model::metadata_builder().build(), config::properties_map(), handle);
-    create_mock_tester_signal(SIGSEGV);
-
-    const model::test_cases_map& test_cases = test_program.test_cases();
-    ATF_REQUIRE_EQ(1, test_cases.size());
-
-    const model::test_case& test_case = test_cases.begin()->second;
-    ATF_REQUIRE_EQ("__test_cases_list__", test_case.name());
-
-    ATF_REQUIRE(test_case.fake_result());
-    const model::test_result result = test_case.fake_result().get();
-    ATF_REQUIRE(model::test_result_broken == result.type());
-    ATF_REQUIRE_MATCH("Tester did not exit cleanly", result.reason());
 
     handle.cleanup();
 }
@@ -1141,6 +1098,13 @@ ATF_TEST_CASE_BODY(run_test_case__plain__missing_test_program)
 
 ATF_INIT_TEST_CASES(tcs)
 {
+    scheduler::register_interface(
+        "atf", std::shared_ptr< scheduler::interface >(
+            new engine::atf_interface()));
+    scheduler::register_interface(
+        "plain", std::shared_ptr< scheduler::interface >(
+            new engine::plain_interface()));
+
     ATF_ADD_TEST_CASE(tcs, current_context);
 
     ATF_ADD_TEST_CASE(tcs, generate_tester_config__empty);
@@ -1149,7 +1113,6 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, load_test_cases__get);
     ATF_ADD_TEST_CASE(tcs, load_test_cases__some);
-    ATF_ADD_TEST_CASE(tcs, load_test_cases__tester_fails);
 
     ATF_ADD_TEST_CASE(tcs, run_test_case__tester_crashes);
 

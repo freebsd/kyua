@@ -38,6 +38,7 @@ extern "C" {
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <string>
 
 #include <atf-c++.hpp>
 
@@ -49,6 +50,7 @@ extern "C" {
 #include "utils/config/tree.ipp"
 #include "utils/datetime.hpp"
 #include "utils/defs.hpp"
+#include "utils/format/containers.ipp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
@@ -56,6 +58,7 @@ extern "C" {
 #include "utils/process/status.hpp"
 #include "utils/sanity.hpp"
 #include "utils/stacktrace.hpp"
+#include "utils/stream.hpp"
 #include "utils/text/exceptions.hpp"
 #include "utils/text/operations.ipp"
 
@@ -190,6 +193,85 @@ class mock_interface : public scheduler::interface {
     }
 
 public:
+    /// Executes a test program's list operation.
+    ///
+    /// This method is intended to be called within a subprocess and is expected
+    /// to terminate execution either by exec(2)ing the test program or by
+    /// exiting with a failure.
+    ///
+    /// \param test_program The test program to execute.
+    /// \param vars User-provided variables to pass to the test program.
+    void
+    exec_list(const model::test_program& test_program,
+              const config::properties_map& vars)
+        const UTILS_NORETURN
+    {
+        const std::string name = test_program.absolute_path().leaf_name();
+
+        std::cerr << name;
+        std::cerr.flush();
+        if (name == "empty") {
+            do_exit(EXIT_SUCCESS);
+        } else if (name == "misbehave") {
+            std::abort();
+        } else if (name == "timeout") {
+            std::cout << "sleeping\n";
+            std::cout.flush();
+            ::sleep(100);
+            std::abort();
+        } else if (name == "vars") {
+            for (config::properties_map::const_iterator iter = vars.begin();
+                 iter != vars.end(); ++iter) {
+                std::cout << F("%s_%s\n") % (*iter).first % (*iter).second;
+            }
+            do_exit(15);
+        } else {
+            std::abort();
+        }
+    }
+
+    /// Computes the test cases list of a test program.
+    ///
+    /// \param status The termination status of the subprocess used to execute
+    ///     the exec_test() method or none if the test timed out.
+    /// \param stdout_path Path to the file containing the stdout of the test.
+    /// \param stderr_path Path to the file containing the stderr of the test.
+    ///
+    /// \return A list of test cases.
+    model::test_cases_map
+    parse_list(const optional< process::status >& status,
+               const fs::path& stdout_path,
+               const fs::path& stderr_path) const
+    {
+        const std::string name = utils::read_file(stderr_path);
+        if (name == "empty") {
+            ATF_REQUIRE(status.get().exited());
+            ATF_REQUIRE_EQ(EXIT_SUCCESS, status.get().exitstatus());
+        } else if (name == "misbehave") {
+            throw std::runtime_error("misbehaved in parse_list");
+        } else if (name == "timeout") {
+            ATF_REQUIRE(!status);
+        } else if (name == "vars") {
+            ATF_REQUIRE(status.get().exited());
+            ATF_REQUIRE_EQ(15, status.get().exitstatus());
+        } else {
+            ATF_FAIL("Invalid stderr contents; got " + name);
+        }
+
+        model::test_cases_map test_cases;
+
+        std::ifstream input(stdout_path.c_str());
+        ATF_REQUIRE(input);
+        std::string line;
+        while (std::getline(input, line).good()) {
+            model::test_case test_case(line, model::metadata_builder().build());
+            test_cases.insert(model::test_cases_map::value_type(
+                                  test_case.name(), test_case));
+        }
+
+        return test_cases;
+    }
+
     /// Executes a test case of the test program.
     ///
     /// This method is intended to be called within a subprocess and is expected
@@ -292,6 +374,100 @@ public:
 
 
 }  // anonymous namespace
+
+
+/// Runs list_tests on the scheduler and returns the results.
+///
+/// \param test_name The name of the test supported by our exec_list function.
+/// \param user_config Optional user settings for the test.
+///
+/// \return The loaded list of test cases.
+static model::test_cases_map
+check_integration_list(const char* test_name,
+                       const config::tree& user_config = engine::empty_config())
+{
+    const model::test_program program = model::test_program_builder(
+        "mock", fs::path(test_name), fs::current_path(), "the-suite")
+        .build();
+
+    scheduler::scheduler_handle handle = scheduler::setup();
+    const model::test_cases_map test_cases = handle.list_tests(&program,
+                                                               user_config);
+    handle.cleanup();
+
+    return test_cases;
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(integration__list_some);
+ATF_TEST_CASE_BODY(integration__list_some)
+{
+    config::tree user_config = engine::empty_config();
+    user_config.set_string("test_suites.the-suite.first", "test");
+    user_config.set_string("test_suites.the-suite.second", "TEST");
+    user_config.set_string("test_suites.abc.unused", "unused");
+
+    const model::test_cases_map test_cases = check_integration_list(
+        "vars", user_config);
+
+    model::test_cases_map exp_test_cases;
+    const model::test_case test_case_1("first_test",
+                                       model::metadata_builder().build());
+    exp_test_cases.insert(model::test_cases_map::value_type(
+                              test_case_1.name(), test_case_1));
+    const model::test_case test_case_2("second_TEST",
+                                       model::metadata_builder().build());
+    exp_test_cases.insert(model::test_cases_map::value_type(
+                              test_case_2.name(), test_case_2));
+    ATF_REQUIRE_EQ(exp_test_cases, test_cases);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(integration__list_timeout);
+ATF_TEST_CASE_BODY(integration__list_timeout)
+{
+    scheduler::list_timeout = datetime::delta(1, 0);
+    const model::test_cases_map test_cases = check_integration_list("timeout");
+
+    model::test_cases_map exp_test_cases;
+    const model::test_case test_case("sleeping",
+                                     model::metadata_builder().build());
+    exp_test_cases.insert(model::test_cases_map::value_type(
+                              test_case.name(), test_case));
+    ATF_REQUIRE_EQ(exp_test_cases, test_cases);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(integration__list_fail);
+ATF_TEST_CASE_BODY(integration__list_fail)
+{
+    const model::test_cases_map test_cases = check_integration_list(
+        "misbehave");
+
+    ATF_REQUIRE_EQ(1, test_cases.size());
+    const model::test_case& test_case = test_cases.begin()->second;
+    ATF_REQUIRE_EQ("__test_cases_list__", test_case.name());
+    ATF_REQUIRE(test_case.fake_result());
+    ATF_REQUIRE_EQ(model::test_result(model::test_result_broken,
+                                      "misbehaved in parse_list"),
+                   test_case.fake_result().get());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(integration__list_empty);
+ATF_TEST_CASE_BODY(integration__list_empty)
+{
+    const model::test_cases_map test_cases = check_integration_list(
+        "empty");
+
+    ATF_REQUIRE_EQ(1, test_cases.size());
+    const model::test_case& test_case = test_cases.begin()->second;
+    ATF_REQUIRE_EQ("__test_cases_list__", test_case.name());
+    ATF_REQUIRE(test_case.fake_result());
+    ATF_REQUIRE_EQ(model::test_result(model::test_result_broken,
+                                      "Empty test cases list"),
+                   test_case.fake_result().get());
+}
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(integration__run_one);
@@ -639,6 +815,11 @@ ATF_INIT_TEST_CASES(tcs)
 {
     scheduler::register_interface(
         "mock", std::shared_ptr< scheduler::interface >(new mock_interface()));
+
+    ATF_ADD_TEST_CASE(tcs, integration__list_some);
+    ATF_ADD_TEST_CASE(tcs, integration__list_timeout);
+    ATF_ADD_TEST_CASE(tcs, integration__list_fail);
+    ATF_ADD_TEST_CASE(tcs, integration__list_empty);
 
     ATF_ADD_TEST_CASE(tcs, integration__run_one);
     ATF_ADD_TEST_CASE(tcs, integration__run_many);

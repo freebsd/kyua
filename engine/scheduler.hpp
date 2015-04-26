@@ -39,6 +39,7 @@
 
 #include <string>
 
+#include "model/test_case_fwd.hpp"
 #include "model/test_program_fwd.hpp"
 #include "model/test_result_fwd.hpp"
 #include "utils/config/tree_fwd.hpp"
@@ -62,6 +63,31 @@ class interface {
 public:
     /// Destructor.
     virtual ~interface() {}
+
+    /// Executes a test program's list operation.
+    ///
+    /// This method is intended to be called within a subprocess and is expected
+    /// to terminate execution either by exec(2)ing the test program or by
+    /// exiting with a failure.
+    ///
+    /// \param test_program The test program to execute.
+    /// \param vars User-provided variables to pass to the test program.
+    virtual void exec_list(const model::test_program& test_program,
+                           const utils::config::properties_map& vars)
+        const UTILS_NORETURN;
+
+    /// Computes the test cases list of a test program.
+    ///
+    /// \param status The termination status of the subprocess used to execute
+    ///     the exec_test() method or none if the test timed out.
+    /// \param stdout_path Path to the file containing the stdout of the test.
+    /// \param stderr_path Path to the file containing the stderr of the test.
+    ///
+    /// \return A list of test cases.
+    virtual model::test_cases_map parse_list(
+        const utils::optional< utils::process::status >& status,
+        const utils::fs::path& stdout_path,
+        const utils::fs::path& stderr_path) const;
 
     /// Executes a test case of the test program.
     ///
@@ -159,12 +185,17 @@ public:
 
     void cleanup(void);
 
+    model::test_cases_map list_tests(const model::test_program*,
+                                     const utils::config::tree&);
     exec_handle spawn_test(const model::test_program_ptr, const std::string&,
                            const utils::config::tree&);
     result_handle_ptr wait_any(void);
 
     void check_interrupt(void) const;
 };
+
+
+extern utils::datetime::delta list_timeout;
 
 
 void register_interface(const std::string&, const std::shared_ptr< interface >);
