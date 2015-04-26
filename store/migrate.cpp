@@ -28,7 +28,7 @@
 
 #include "store/migrate.hpp"
 
-#include <fstream>
+#include <stdexcept>
 
 #include "store/dbtypes.hpp"
 #include "store/exceptions.hpp"
@@ -114,11 +114,12 @@ migrate_schema_step(const fs::path& file,
     const fs::path migration = store::detail::migration_file(version_from,
                                                              version_to);
 
-    std::ifstream input(migration.c_str());
-    if (!input)
-        throw store::error(F("Cannot open migration file '%s'") % migration);
-
-    std::string migration_string = utils::read_stream(input);
+    std::string migration_string;
+    try {
+        migration_string = utils::read_file(migration);
+    } catch (const std::runtime_error& unused_e) {
+        throw store::error(F("Cannot read migration file '%s'") % migration);
+    }
     if (action_id) {
         migration_string = text::replace_all(migration_string, "@ACTION_ID@",
                                              F("%s") % action_id.get());

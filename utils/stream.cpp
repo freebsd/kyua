@@ -110,6 +110,23 @@ utils::stream_length(std::istream& is)
 }
 
 
+/// Reads a whole file into memory.
+///
+/// \param path The file to read.
+///
+/// \return A plain string containing the raw contents of the file.
+///
+/// \throw std::runtime_error If the file cannot be opened.
+std::string
+utils::read_file(const fs::path& path)
+{
+    std::ifstream input(path.c_str());
+    if (!input)
+        throw std::runtime_error(F("Failed to open '%s' for read") % path);
+    return read_stream(input);
+}
+
+
 /// Reads the whole contents of a stream into memory.
 ///
 /// \param input The input stream from which to read.

@@ -121,10 +121,7 @@ public:
     {
         atf::utils::cat_file(file.str(), "helper stdout:");
         ATF_REQUIRE(stdout_contents.empty());
-
-        std::ifstream input(file.c_str());
-        ATF_REQUIRE(input);
-        stdout_contents = utils::read_stream(input);
+        stdout_contents = utils::read_file(file);
     }
 
     /// Stores the stderr of the test case into stderr_contents.
@@ -135,10 +132,7 @@ public:
     {
         atf::utils::cat_file(file.str(), "helper stderr:");
         ATF_REQUIRE(stderr_contents.empty());
-
-        std::ifstream input(file.c_str());
-        ATF_REQUIRE(input);
-        stderr_contents = utils::read_stream(input);
+        stderr_contents = utils::read_file(file);
     }
 };
 
