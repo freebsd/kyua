@@ -346,9 +346,10 @@ ATF_TEST_CASE_BODY(integration__run_many)
         const model::test_program_ptr program = model::test_program_builder(
             "mock", fs::path(F("program-%s") % i),
             fs::current_path(), "the-suite")
-            .add_test_case(test_case_0, infinite_timeout)
-            .add_test_case(test_case_1, infinite_timeout)
-            .add_test_case(test_case_2, infinite_timeout)
+            .set_metadata(infinite_timeout)
+            .add_test_case(test_case_0)
+            .add_test_case(test_case_1)
+            .add_test_case(test_case_2)
             .build_ptr();
 
         const datetime::timestamp start_time = datetime::timestamp::from_values(
@@ -491,14 +492,11 @@ ATF_TEST_CASE_BODY(integration__fake_result)
 ATF_TEST_CASE_WITHOUT_HEAD(integration__check_requirements);
 ATF_TEST_CASE_BODY(integration__check_requirements)
 {
-    const model::metadata metadata = model::metadata_builder()
-        .add_required_config("abcde")
-        .build();
-
     const model::test_program_ptr program = model::test_program_builder(
         "mock", fs::path("the-program"), fs::current_path(), "the-suite")
-        .add_test_case("exit 12", metadata)
-        .set_metadata(metadata)
+        .add_test_case("exit 12")
+        .set_metadata(model::metadata_builder()
+                      .add_required_config("abcde").build())
         .build_ptr();
 
     const config::tree user_config = engine::empty_config();

@@ -84,6 +84,80 @@ config::detail::inner_node::copy_into(inner_node* node) const
 }
 
 
+/// Combines two children sets, preferring the keys in the first set only.
+///
+/// This operation is not symmetrical on c1 and c2.  The caller is responsible
+/// for invoking this twice so that the two key sets are combined if they happen
+/// to differ.
+///
+/// \param key Key to this node.
+/// \param c1 First children set.
+/// \param c2 First children set.
+/// \param [in,out] node The node to combine into.
+///
+/// \throw bad_combination_error If the two nodes cannot be combined.
+void
+config::detail::inner_node::combine_children_into(
+    const tree_key& key,
+    const children_map& c1, const children_map& c2,
+    inner_node* node) const
+{
+    for (children_map::const_iterator iter1 = c1.begin();
+         iter1 != c1.end(); ++iter1) {
+        const std::string& name = (*iter1).first;
+
+        if (node->_children.find(name) != node->_children.end()) {
+            continue;
+        }
+
+        std::auto_ptr< base_node > new_node;
+
+        children_map::const_iterator iter2 = c2.find(name);
+        if (iter2 == c2.end()) {
+            new_node.reset((*iter1).second->deep_copy());
+        } else {
+            tree_key child_key = key;
+            child_key.push_back(name);
+            new_node.reset((*iter1).second->combine(child_key,
+                                                    (*iter2).second));
+        }
+
+        node->_children[name] = new_node.release();
+    }
+}
+
+
+/// Combines this inner node with another inner node onto a new node.
+///
+/// The "dynamic" property is inherited by the new node if either of the two
+/// nodes are dynamic.
+///
+/// \param key Key to this node.
+/// \param other_base The node to combine with.
+/// \param [in,out] node The node to combine into.
+///
+/// \throw bad_combination_error If the two nodes cannot be combined.
+void
+config::detail::inner_node::combine_into(const tree_key& key,
+                                         const base_node* other_base,
+                                         inner_node* node) const
+{
+    try {
+        const inner_node& other = dynamic_cast< const inner_node& >(
+            *other_base);
+
+        node->_dynamic = _dynamic || other._dynamic;
+
+        combine_children_into(key, _children, other._children, node);
+        combine_children_into(key, other._children, _children, node);
+    } catch (const std::bad_cast& unused_e) {
+        throw config::bad_combination_error(
+            key, "'%s' is an inner node in the base tree but a leaf node in "
+            "the overrides treee");
+    }
+}
+
+
 /// Finds a node without creating it if not found.
 ///
 /// This recursive algorithm traverses the tree searching for a particular key.
@@ -228,6 +302,24 @@ config::detail::static_inner_node::deep_copy(void) const
 }
 
 
+/// Combines this node with another one.
+///
+/// \param key Key to this node.
+/// \param other The node to combine with.
+///
+/// \return A new node representing the combination.
+///
+/// \throw bad_combination_error If the two nodes cannot be combined.
+config::detail::base_node*
+config::detail::static_inner_node::combine(const tree_key& key,
+                                           const base_node* other) const
+{
+    std::auto_ptr< inner_node > new_node(new static_inner_node());
+    combine_into(key, other, new_node.get());
+    return new_node.release();
+}
+
+
 /// Registers a key as valid and having a specific type.
 ///
 /// This method does not raise errors on invalid/unknown keys or other
@@ -291,9 +383,55 @@ config::detail::dynamic_inner_node::deep_copy(void) const
 }
 
 
+/// Combines this node with another one.
+///
+/// \param key Key to this node.
+/// \param other The node to combine with.
+///
+/// \return A new node representing the combination.
+///
+/// \throw bad_combination_error If the two nodes cannot be combined.
+config::detail::base_node*
+config::detail::dynamic_inner_node::combine(const tree_key& key,
+                                            const base_node* other) const
+{
+    std::auto_ptr< inner_node > new_node(new dynamic_inner_node());
+    combine_into(key, other, new_node.get());
+    return new_node.release();
+}
+
+
 /// Destructor.
 config::leaf_node::~leaf_node(void)
 {
+}
+
+
+/// Combines this node with another one.
+///
+/// \param key Key to this node.
+/// \param other_base The node to combine with.
+///
+/// \return A new node representing the combination.
+///
+/// \throw bad_combination_error If the two nodes cannot be combined.
+config::detail::base_node*
+config::leaf_node::combine(const detail::tree_key& key,
+                           const base_node* other_base) const
+{
+    try {
+        const leaf_node& other = dynamic_cast< const leaf_node& >(*other_base);
+
+        if (other.is_set()) {
+            return other.deep_copy();
+        } else {
+            return deep_copy();
+        }
+    } catch (const std::bad_cast& unused_e) {
+        throw config::bad_combination_error(
+            key, "'%s' is a leaf node in the base tree but an inner node in "
+            "the overrides treee");
+    }
 }
 
 

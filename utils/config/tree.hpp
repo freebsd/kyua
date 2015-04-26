@@ -91,6 +91,7 @@ public:
     ~tree(void);
 
     tree deep_copy(void) const;
+    tree combine(const tree&) const;
 
     template< class LeafType >
     void define(const std::string&);

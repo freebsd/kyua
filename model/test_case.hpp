@@ -56,13 +56,18 @@ class test_case {
     /// Pointer to the shared internal implementation.
     std::shared_ptr< impl > _pimpl;
 
+    test_case(std::shared_ptr< impl >);
+
 public:
     test_case(const std::string&, const metadata&);
     test_case(const std::string&, const std::string&, const test_result&);
     ~test_case(void);
 
+    test_case apply_metadata_defaults(const metadata*) const;
+
     const std::string& name(void) const;
-    const metadata& get_metadata(void) const;
+    metadata get_metadata(void) const;
+    const metadata& get_raw_metadata(void) const;
     utils::optional< test_result > fake_result(void) const;
 
     bool operator==(const test_case&) const;

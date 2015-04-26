@@ -561,14 +561,6 @@ executor::executor_handle::spawn_test(
             "unprivileged_user");
     }
 
-    /// TODO(jmmv): Due to how the metadata is represented, this happily ignores
-    /// any test program-level metadata.  We should change the model so that
-    /// test cases "inherit" their container metadata when they themselves do
-    /// not explicitly override properties.  Easy to do when we load test cases
-    /// externally... but not trivial internally with the current
-    /// representation.  Not a big problem because in the real world we always
-    /// load test programs externally, but the behavior is not obvious and has
-    /// some odd consequences on the tests.
     const datetime::delta timeout = test_case.get_metadata().timeout();
 
     const process::executor::exec_handle handle = _pimpl->generic.spawn(

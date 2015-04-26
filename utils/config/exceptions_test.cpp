@@ -46,6 +46,18 @@ ATF_TEST_CASE_BODY(error)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(bad_combination_error);
+ATF_TEST_CASE_BODY(bad_combination_error)
+{
+    detail::tree_key key;
+    key.push_back("first");
+    key.push_back("second");
+
+    const config::bad_combination_error e(key, "Failed to combine '%s'");
+    ATF_REQUIRE(std::strcmp("Failed to combine 'first.second'", e.what()) == 0);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(invalid_key_error);
 ATF_TEST_CASE_BODY(invalid_key_error)
 {
@@ -111,6 +123,7 @@ ATF_TEST_CASE_BODY(value_error)
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, error);
+    ATF_ADD_TEST_CASE(tcs, bad_combination_error);
     ATF_ADD_TEST_CASE(tcs, invalid_key_error);
     ATF_ADD_TEST_CASE(tcs, invalid_key_value);
     ATF_ADD_TEST_CASE(tcs, syntax_error);

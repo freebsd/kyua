@@ -93,17 +93,12 @@ lua_test_case(lutok::state& state)
         *state.to_userdata< model::test_cases_map* >(-1);
     state.pop(1);
 
-    state.get_global("_test_program");
-    const model::test_program* test_program =
-        *state.to_userdata< model::test_program* >(-1);
-    state.pop(1);
-
     state.push_string("name");
     state.get_table(-2);
     const std::string name = state.to_string(-1);
     state.pop(1);
 
-    model::metadata_builder mdbuilder(test_program->get_metadata());
+    model::metadata_builder mdbuilder;
 
     state.push_nil();
     while (state.next(-2)) {
@@ -132,18 +127,13 @@ lua_test_case(lutok::state& state)
 /// Sets up the Lua state to process the output of a test case list.
 ///
 /// \param [in,out] state The Lua state to configure.
-/// \param test_program Pointer to the test program being loaded.
 /// \param [out] test_cases Collection to be updated with the loaded test cases.
 static void
 setup_lua_state(lutok::state& state,
-                const model::test_program* test_program,
                 model::test_cases_map* test_cases)
 {
     *state.new_userdata< model::test_cases_map* >() = test_cases;
     state.set_global("_test_cases");
-
-    *state.new_userdata< const model::test_program* >() = test_program;
-    state.set_global("_test_program");
 
     state.push_cxx_function(lua_test_case);
     state.set_global("test_case");
@@ -152,21 +142,22 @@ setup_lua_state(lutok::state& state,
 
 /// Loads the list of test cases from a test program.
 ///
-/// \param test_program Representation of the test program to load.
+/// \param interface Name of the interface to use for loading.
+/// \param absolute_path Absolute path to the test program.
 /// \param props Configuration variables to pass to the test program.
 ///
 /// \return A list of test cases.
 static model::test_cases_map
-load_test_cases(const model::test_program& test_program,
+load_test_cases(const std::string& interface,
+                const fs::path& absolute_path,
                 const config::properties_map& props)
 {
-    const engine::tester tester(test_program.interface_name(), none, none,
-                                props);
-    const std::string output = tester.list(test_program.absolute_path());
+    const engine::tester tester(interface, none, none, props);
+    const std::string output = tester.list(absolute_path);
 
     model::test_cases_map test_cases;
     lutok::state state;
-    setup_lua_state(state, &test_program, &test_cases);
+    setup_lua_state(state, &test_cases);
     lutok::do_string(state, output, 0, 0, 0);
     return test_cases;
 }
@@ -211,15 +202,15 @@ create_tester(const std::string& interface_name,
 
 /// Internal implementation of a lazy_test_program.
 struct engine::runner::lazy_test_program::impl {
+    /// Whether the test cases list has been yet loaded or not.
+    bool _loaded;
+
     /// User configuration to pass to the test program list operation.
     config::properties_map _props;
 
-    /// Collection of test cases; lazy loaded.
-    optional< model::test_cases_map > _test_cases;
-
     /// Constructor.
     impl(const config::properties_map& props_) :
-        _props(props_)
+        _loaded(false), _props(props_)
     {
     }
 };
@@ -253,10 +244,11 @@ runner::lazy_test_program::lazy_test_program(
 const model::test_cases_map&
 runner::lazy_test_program::test_cases(void) const
 {
-    if (!_pimpl->_test_cases) {
+    if (!_pimpl->_loaded) {
         model::test_cases_map tcs;
         try {
-            tcs = ::load_test_cases(*this, _pimpl->_props);
+            tcs = ::load_test_cases(interface_name(), absolute_path(),
+                                    _pimpl->_props);
         } catch (const std::runtime_error& e) {
             // TODO(jmmv): This is a very ugly workaround for the fact that we
             // cannot report failures at the test-program level.  We should
@@ -272,11 +264,17 @@ runner::lazy_test_program::test_cases(void) const
                     model::test_result(model::test_result_broken, e.what()))));
             tcs = fake_test_cases;
         }
-        _pimpl->_test_cases = utils::make_optional(tcs);
+
+        // Due to the restrictions on when set_test_cases() may be called (as a
+        // way to lazily initialize the test cases list before it is ever
+        // returned), this cast is valid.
+        const_cast< runner::lazy_test_program* >(this)->set_test_cases(tcs);
+
+        _pimpl->_loaded = true;
     }
 
-    INV(_pimpl->_test_cases);
-    return _pimpl->_test_cases.get();
+    INV(_pimpl->_loaded);
+    return test_program::test_cases();
 }
 
 

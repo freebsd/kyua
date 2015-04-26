@@ -40,6 +40,7 @@
 #include "utils/format/macros.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 #include "utils/text/exceptions.hpp"
 #include "utils/text/operations.hpp"
@@ -51,13 +52,17 @@ namespace fs = utils::fs;
 namespace text = utils::text;
 namespace units = utils::units;
 
-
-/// The default timeout value for test cases that do not provide one.
-/// TODO(jmmv): We should not be doing this; see issue 5 for details.
-datetime::delta model::default_timeout(300, 0);
+using utils::optional;
 
 
 namespace {
+
+
+/// Global instance of defaults.
+///
+/// This exists so that the getters in metadata can return references instead
+/// of object copies.  Use get_defaults() to query.
+static optional< config::tree > defaults;
 
 
 /// A leaf node that holds a bytes quantity.
@@ -250,42 +255,59 @@ static void
 init_tree(config::tree& tree)
 {
     tree.define< config::strings_set_node >("allowed_architectures");
+    tree.define< config::strings_set_node >("allowed_platforms");
+    tree.define_dynamic("custom");
+    tree.define< config::string_node >("description");
+    tree.define< config::bool_node >("has_cleanup");
+    tree.define< config::strings_set_node >("required_configs");
+    tree.define< bytes_node >("required_disk_space");
+    tree.define< paths_set_node >("required_files");
+    tree.define< bytes_node >("required_memory");
+    tree.define< paths_set_node >("required_programs");
+    tree.define< user_node >("required_user");
+    tree.define< delta_node >("timeout");
+}
+
+
+/// Sets default values on a tree object.
+///
+/// \param [in,out] tree The tree to configure.
+static void
+set_defaults(config::tree& tree)
+{
     tree.set< config::strings_set_node >("allowed_architectures",
                                          model::strings_set());
-
-    tree.define< config::strings_set_node >("allowed_platforms");
     tree.set< config::strings_set_node >("allowed_platforms",
                                          model::strings_set());
-
-    tree.define_dynamic("custom");
-
-    tree.define< config::string_node >("description");
     tree.set< config::string_node >("description", "");
-
-    tree.define< config::bool_node >("has_cleanup");
     tree.set< config::bool_node >("has_cleanup", false);
-
-    tree.define< config::strings_set_node >("required_configs");
     tree.set< config::strings_set_node >("required_configs",
                                          model::strings_set());
-
-    tree.define< bytes_node >("required_disk_space");
     tree.set< bytes_node >("required_disk_space", units::bytes(0));
-
-    tree.define< paths_set_node >("required_files");
     tree.set< paths_set_node >("required_files", model::paths_set());
-
-    tree.define< bytes_node >("required_memory");
     tree.set< bytes_node >("required_memory", units::bytes(0));
-
-    tree.define< paths_set_node >("required_programs");
     tree.set< paths_set_node >("required_programs", model::paths_set());
-
-    tree.define< user_node >("required_user");
     tree.set< user_node >("required_user", "");
+    // TODO(jmmv): We shouldn't be setting a default timeout like this.  See
+    // Issue 5 for details.
+    tree.set< delta_node >("timeout", datetime::delta(300, 0));
+}
 
-    tree.define< delta_node >("timeout");
-    tree.set< delta_node >("timeout", model::default_timeout);
+
+/// Queries the global defaults tree object with lazy initialization.
+///
+/// \return A metadata tree.  This object is statically allocated so it is
+/// acceptable to obtain references to it and its members.
+const config::tree&
+get_defaults(void)
+{
+    if (!defaults) {
+        config::tree props;
+        init_tree(props);
+        set_defaults(props);
+        defaults = props;
+    }
+    return defaults.get();
 }
 
 
@@ -361,7 +383,8 @@ struct model::metadata::impl {
     bool
     operator==(const impl& other) const
     {
-        return props == other.props;
+        return (get_defaults().combine(props) ==
+                get_defaults().combine(other.props));
     }
 };
 
@@ -381,14 +404,32 @@ model::metadata::~metadata(void)
 }
 
 
+/// Applies a set of overrides to this metadata object.
+///
+/// \param overrides The overrides to apply.  Any values explicitly set in this
+///     other object will override any possible values set in this object.
+///
+/// \return A new metadata object with the combination.
+model::metadata
+model::metadata::apply_overrides(const metadata& overrides) const
+{
+    return metadata(_pimpl->props.combine(overrides._pimpl->props));
+}
+
+
 /// Returns the architectures allowed by the test.
 ///
 /// \return Set of architectures, or empty if this does not apply.
 const model::strings_set&
 model::metadata::allowed_architectures(void) const
 {
-    return _pimpl->props.lookup< config::strings_set_node >(
-        "allowed_architectures");
+    if (_pimpl->props.is_set("allowed_architectures")) {
+        return _pimpl->props.lookup< config::strings_set_node >(
+            "allowed_architectures");
+    } else {
+        return get_defaults().lookup< config::strings_set_node >(
+            "allowed_architectures");
+    }
 }
 
 
@@ -398,7 +439,13 @@ model::metadata::allowed_architectures(void) const
 const model::strings_set&
 model::metadata::allowed_platforms(void) const
 {
-    return _pimpl->props.lookup< config::strings_set_node >("allowed_platforms");
+    if (_pimpl->props.is_set("allowed_platforms")) {
+        return _pimpl->props.lookup< config::strings_set_node >(
+            "allowed_platforms");
+    } else {
+        return get_defaults().lookup< config::strings_set_node >(
+            "allowed_platforms");
+    }
 }
 
 
@@ -418,7 +465,11 @@ model::metadata::custom(void) const
 const std::string&
 model::metadata::description(void) const
 {
-    return _pimpl->props.lookup< config::string_node >("description");
+    if (_pimpl->props.is_set("description")) {
+        return _pimpl->props.lookup< config::string_node >("description");
+    } else {
+        return get_defaults().lookup< config::string_node >("description");
+    }
 }
 
 
@@ -428,7 +479,11 @@ model::metadata::description(void) const
 bool
 model::metadata::has_cleanup(void) const
 {
-    return _pimpl->props.lookup< config::bool_node >("has_cleanup");
+    if (_pimpl->props.is_set("has_cleanup")) {
+        return _pimpl->props.lookup< config::bool_node >("has_cleanup");
+    } else {
+        return get_defaults().lookup< config::bool_node >("has_cleanup");
+    }
 }
 
 
@@ -438,7 +493,13 @@ model::metadata::has_cleanup(void) const
 const model::strings_set&
 model::metadata::required_configs(void) const
 {
-    return _pimpl->props.lookup< config::strings_set_node >("required_configs");
+    if (_pimpl->props.is_set("required_configs")) {
+        return _pimpl->props.lookup< config::strings_set_node >(
+            "required_configs");
+    } else {
+        return get_defaults().lookup< config::strings_set_node >(
+            "required_configs");
+    }
 }
 
 
@@ -448,7 +509,11 @@ model::metadata::required_configs(void) const
 const units::bytes&
 model::metadata::required_disk_space(void) const
 {
-    return _pimpl->props.lookup< bytes_node >("required_disk_space");
+    if (_pimpl->props.is_set("required_disk_space")) {
+        return _pimpl->props.lookup< bytes_node >("required_disk_space");
+    } else {
+        return get_defaults().lookup< bytes_node >("required_disk_space");
+    }
 }
 
 
@@ -458,7 +523,11 @@ model::metadata::required_disk_space(void) const
 const model::paths_set&
 model::metadata::required_files(void) const
 {
-    return _pimpl->props.lookup< paths_set_node >("required_files");
+    if (_pimpl->props.is_set("required_files")) {
+        return _pimpl->props.lookup< paths_set_node >("required_files");
+    } else {
+        return get_defaults().lookup< paths_set_node >("required_files");
+    }
 }
 
 
@@ -468,7 +537,11 @@ model::metadata::required_files(void) const
 const units::bytes&
 model::metadata::required_memory(void) const
 {
-    return _pimpl->props.lookup< bytes_node >("required_memory");
+    if (_pimpl->props.is_set("required_memory")) {
+        return _pimpl->props.lookup< bytes_node >("required_memory");
+    } else {
+        return get_defaults().lookup< bytes_node >("required_memory");
+    }
 }
 
 
@@ -478,7 +551,11 @@ model::metadata::required_memory(void) const
 const model::paths_set&
 model::metadata::required_programs(void) const
 {
-    return _pimpl->props.lookup< paths_set_node >("required_programs");
+    if (_pimpl->props.is_set("required_programs")) {
+        return _pimpl->props.lookup< paths_set_node >("required_programs");
+    } else {
+        return get_defaults().lookup< paths_set_node >("required_programs");
+    }
 }
 
 
@@ -488,7 +565,11 @@ model::metadata::required_programs(void) const
 const std::string&
 model::metadata::required_user(void) const
 {
-    return _pimpl->props.lookup< user_node >("required_user");
+    if (_pimpl->props.is_set("required_user")) {
+        return _pimpl->props.lookup< user_node >("required_user");
+    } else {
+        return get_defaults().lookup< user_node >("required_user");
+    }
 }
 
 
@@ -499,7 +580,11 @@ model::metadata::required_user(void) const
 const datetime::delta&
 model::metadata::timeout(void) const
 {
-    return _pimpl->props.lookup< delta_node >("timeout");
+    if (_pimpl->props.is_set("timeout")) {
+        return _pimpl->props.lookup< delta_node >("timeout");
+    } else {
+        return get_defaults().lookup< delta_node >("timeout");
+    }
 }
 
 
@@ -509,7 +594,8 @@ model::metadata::timeout(void) const
 model::properties_map
 model::metadata::to_properties(void) const
 {
-    return _pimpl->props.all_properties();
+    const config::tree fully_specified = get_defaults().combine(_pimpl->props);
+    return fully_specified.all_properties();
 }
 
 
@@ -618,6 +704,12 @@ model::metadata_builder::~metadata_builder(void)
 model::metadata_builder&
 model::metadata_builder::add_allowed_architecture(const std::string& arch)
 {
+    if (!_pimpl->props.is_set("allowed_architectures")) {
+        _pimpl->props.set< config::strings_set_node >(
+            "allowed_architectures",
+            get_defaults().lookup< config::strings_set_node >(
+                "allowed_architectures"));
+    }
     lookup_rw< config::strings_set_node >(
         _pimpl->props, "allowed_architectures").insert(arch);
     return *this;
@@ -634,6 +726,12 @@ model::metadata_builder::add_allowed_architecture(const std::string& arch)
 model::metadata_builder&
 model::metadata_builder::add_allowed_platform(const std::string& platform)
 {
+    if (!_pimpl->props.is_set("allowed_platforms")) {
+        _pimpl->props.set< config::strings_set_node >(
+            "allowed_platforms",
+            get_defaults().lookup< config::strings_set_node >(
+                "allowed_platforms"));
+    }
     lookup_rw< config::strings_set_node >(
         _pimpl->props, "allowed_platforms").insert(platform);
     return *this;
@@ -667,6 +765,12 @@ model::metadata_builder::add_custom(const std::string& key,
 model::metadata_builder&
 model::metadata_builder::add_required_config(const std::string& var)
 {
+    if (!_pimpl->props.is_set("required_configs")) {
+        _pimpl->props.set< config::strings_set_node >(
+            "required_configs",
+            get_defaults().lookup< config::strings_set_node >(
+                "required_configs"));
+    }
     lookup_rw< config::strings_set_node >(
         _pimpl->props, "required_configs").insert(var);
     return *this;
@@ -683,6 +787,11 @@ model::metadata_builder::add_required_config(const std::string& var)
 model::metadata_builder&
 model::metadata_builder::add_required_file(const fs::path& path)
 {
+    if (!_pimpl->props.is_set("required_files")) {
+        _pimpl->props.set< paths_set_node >(
+            "required_files",
+            get_defaults().lookup< paths_set_node >("required_files"));
+    }
     lookup_rw< paths_set_node >(_pimpl->props, "required_files").insert(path);
     return *this;
 }
@@ -698,6 +807,11 @@ model::metadata_builder::add_required_file(const fs::path& path)
 model::metadata_builder&
 model::metadata_builder::add_required_program(const fs::path& path)
 {
+    if (!_pimpl->props.is_set("required_programs")) {
+        _pimpl->props.set< paths_set_node >(
+            "required_programs",
+            get_defaults().lookup< paths_set_node >("required_programs"));
+    }
     lookup_rw< paths_set_node >(_pimpl->props,
                                 "required_programs").insert(path);
     return *this;
@@ -883,7 +997,7 @@ model::metadata_builder::set_required_user(const std::string& user)
 /// \throw model::error If the value is invalid or the key does not exist.
 model::metadata_builder&
 model::metadata_builder::set_string(const std::string& key,
-                                     const std::string& value)
+                                    const std::string& value)
 {
     try {
         _pimpl->props.set_string(key, value);

@@ -85,20 +85,34 @@ struct model::test_program::impl {
         binary(binary_),
         root(root_),
         test_suite_name(test_suite_name_),
-        md(md_),
-        test_cases(test_cases_)
+        md(md_)
     {
         PRE_MSG(!binary.is_absolute(),
                 F("The program '%s' must be relative to the root of the test "
                   "suite '%s'") % binary % root);
 
-        for (model::test_cases_map::const_iterator iter = test_cases.begin();
-             iter != test_cases.end(); ++iter) {
-            PRE_MSG((*iter).first == (*iter).second.name(),
+        set_test_cases(test_cases_);
+    }
+
+    /// Sets the list of test cases of the test program.
+    ///
+    /// \param test_cases_ The new list of test cases.
+    void
+    set_test_cases(const model::test_cases_map& test_cases_)
+    {
+        for (model::test_cases_map::const_iterator iter = test_cases_.begin();
+             iter != test_cases_.end(); ++iter) {
+            const std::string& name = (*iter).first;
+            const model::test_case& test_case = (*iter).second;
+
+            PRE_MSG(name == test_case.name(),
                     F("The test case '%s' has been registered with the "
-                      "non-matching name '%s'") %
-                    (*iter).first % (*iter).second.name());
+                      "non-matching name '%s'") % name % test_case.name());
+
+            test_cases.insert(model::test_cases_map::value_type(
+                name, test_case.apply_metadata_defaults(&md)));
         }
+        INV(test_cases.size() == test_cases_.size());
     }
 };
 
@@ -218,6 +232,22 @@ const model::test_cases_map&
 model::test_program::test_cases(void) const
 {
     return _pimpl->test_cases;
+}
+
+
+/// Sets the list of test cases of the test program.
+///
+/// This can only be called once and it may only be called from within
+/// overridden test_cases() before that method ever returns a value for the
+/// first time.  Any other invocations will result in inconsistent program
+/// state.
+///
+/// \param test_cases_ The new list of test cases.
+void
+model::test_program::set_test_cases(const model::test_cases_map& test_cases_)
+{
+    PRE(_pimpl->test_cases.empty());
+    _pimpl->set_test_cases(test_cases_);
 }
 
 

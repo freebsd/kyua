@@ -73,6 +73,36 @@ config::tree::deep_copy(void) const
 }
 
 
+/// Combines two trees.
+///
+/// By combination we understand a new tree that contains the full key space of
+/// the two input trees and, for the keys that match, respects the value of the
+/// right-hand side (aka "other") tree.
+///
+/// Any nodes marked as dynamic "win" over non-dynamic nodes and the resulting
+/// tree will have the dynamic property set on those.
+///
+/// \param overrides The tree to use as value overrides.
+///
+/// \return The combined tree.
+///
+/// \throw bad_combination_error If the two trees cannot be combined; for
+///     example, if a single key represents an inner node in one tree but a leaf
+///     node in the other one.
+config::tree
+config::tree::combine(const tree& overrides) const
+{
+    const detail::static_inner_node* other_root =
+        dynamic_cast< const detail::static_inner_node * >(
+            overrides._root.get());
+
+    detail::static_inner_node* new_root =
+        dynamic_cast< detail::static_inner_node* >(
+            _root->combine(detail::tree_key(), other_root));
+    return config::tree(_strict, new_root);
+}
+
+
 /// Registers a node as being dynamic.
 ///
 /// This operation creates the given key as an inner node.  Further set

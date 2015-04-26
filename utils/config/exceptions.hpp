@@ -49,6 +49,15 @@ public:
 };
 
 
+/// Exception denoting that two trees cannot be combined.
+class bad_combination_error : public error {
+public:
+    explicit bad_combination_error(const detail::tree_key&,
+                                   const std::string&);
+    ~bad_combination_error(void) throw();
+};
+
+
 /// Exception denoting that a key was not found within a tree.
 class invalid_key_error : public error {
 public:

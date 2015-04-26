@@ -336,7 +336,7 @@ store::write_transaction::put_test_case(const model::test_program& test_program,
 
     try {
         const int64_t metadata_id = put_metadata(
-            _pimpl->_db, test_case.get_metadata());
+            _pimpl->_db, test_case.get_raw_metadata());
 
         sqlite::statement stmt = _pimpl->_db.create_statement(
             "INSERT INTO test_cases (test_program_id, name, metadata_id) "
