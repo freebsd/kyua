@@ -37,11 +37,13 @@ extern "C" {
 #include "engine/config.hpp"
 #include "engine/scheduler.hpp"
 #include "model/metadata.hpp"
+#include "model/test_case.hpp"
 #include "model/test_program.hpp"
 #include "model/test_result.hpp"
 #include "utils/config/tree.ipp"
 #include "utils/datetime.hpp"
 #include "utils/env.hpp"
+#include "utils/format/containers.ipp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
@@ -110,16 +112,34 @@ run_one(const atf::tests::tc* tc, const char* test_case_name,
 }  // anonymous namespace
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(integration__exit_success_is_pass);
-ATF_TEST_CASE_BODY(integration__exit_success_is_pass)
+ATF_TEST_CASE_WITHOUT_HEAD(list);
+ATF_TEST_CASE_BODY(list)
+{
+    const model::test_program program = model::test_program_builder(
+        "plain", fs::path("non-existent"), fs::path("."), "unused-suite")
+        .build();
+
+    scheduler::scheduler_handle handle = scheduler::setup();
+    const model::test_cases_map test_cases = handle.list_tests(
+        &program, engine::empty_config());
+    handle.cleanup();
+
+    const model::test_cases_map exp_test_cases = model::test_cases_map_builder()
+        .add("main").build();
+    ATF_REQUIRE_EQ(exp_test_cases, test_cases);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(test__exit_success_is_pass);
+ATF_TEST_CASE_BODY(test__exit_success_is_pass)
 {
     const model::test_result exp_result(model::test_result_passed);
     run_one(this, "pass", exp_result);
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(integration__exit_non_zero_is_fail);
-ATF_TEST_CASE_BODY(integration__exit_non_zero_is_fail)
+ATF_TEST_CASE_WITHOUT_HEAD(test__exit_non_zero_is_fail);
+ATF_TEST_CASE_BODY(test__exit_non_zero_is_fail)
 {
     const model::test_result exp_result(
         model::test_result_failed,
@@ -128,8 +148,8 @@ ATF_TEST_CASE_BODY(integration__exit_non_zero_is_fail)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(integration__signal_is_broken);
-ATF_TEST_CASE_BODY(integration__signal_is_broken)
+ATF_TEST_CASE_WITHOUT_HEAD(test__signal_is_broken);
+ATF_TEST_CASE_BODY(test__signal_is_broken)
 {
     const model::test_result exp_result(model::test_result_broken,
                                         F("Received signal %s") % SIGABRT);
@@ -137,12 +157,12 @@ ATF_TEST_CASE_BODY(integration__signal_is_broken)
 }
 
 
-ATF_TEST_CASE(integration__timeout_is_broken);
-ATF_TEST_CASE_HEAD(integration__timeout_is_broken)
+ATF_TEST_CASE(test__timeout_is_broken);
+ATF_TEST_CASE_HEAD(test__timeout_is_broken)
 {
     set_md_var("timeout", "60");
 }
-ATF_TEST_CASE_BODY(integration__timeout_is_broken)
+ATF_TEST_CASE_BODY(test__timeout_is_broken)
 {
     utils::setenv("CONTROL_DIR", fs::current_path().str());
 
@@ -156,8 +176,8 @@ ATF_TEST_CASE_BODY(integration__timeout_is_broken)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(integration__configuration_variables);
-ATF_TEST_CASE_BODY(integration__configuration_variables)
+ATF_TEST_CASE_WITHOUT_HEAD(test__configuration_variables);
+ATF_TEST_CASE_BODY(test__configuration_variables)
 {
     config::tree user_config = engine::empty_config();
     user_config.set_string("test_suites.a-suite.first", "unused");
@@ -177,9 +197,11 @@ ATF_INIT_TEST_CASES(tcs)
         "plain", std::shared_ptr< scheduler::interface >(
             new engine::plain_interface()));
 
-    ATF_ADD_TEST_CASE(tcs, integration__exit_success_is_pass);
-    ATF_ADD_TEST_CASE(tcs, integration__exit_non_zero_is_fail);
-    ATF_ADD_TEST_CASE(tcs, integration__signal_is_broken);
-    ATF_ADD_TEST_CASE(tcs, integration__timeout_is_broken);
-    ATF_ADD_TEST_CASE(tcs, integration__configuration_variables);
+    ATF_ADD_TEST_CASE(tcs, list);
+
+    ATF_ADD_TEST_CASE(tcs, test__exit_success_is_pass);
+    ATF_ADD_TEST_CASE(tcs, test__exit_non_zero_is_fail);
+    ATF_ADD_TEST_CASE(tcs, test__signal_is_broken);
+    ATF_ADD_TEST_CASE(tcs, test__timeout_is_broken);
+    ATF_ADD_TEST_CASE(tcs, test__configuration_variables);
 }
