@@ -29,6 +29,8 @@
 #include "engine/atf.hpp"
 
 extern "C" {
+#include <sys/stat.h>
+
 #include <signal.h>
 }
 
@@ -38,10 +40,14 @@ extern "C" {
 #include "engine/runner.hpp"
 #include "engine/scheduler.hpp"
 #include "model/metadata.hpp"
+#include "model/test_case.hpp"
 #include "model/test_program_fwd.hpp"
 #include "model/test_result.hpp"
 #include "utils/config/tree.ipp"
+#include "utils/env.hpp"
+#include "utils/format/containers.ipp"
 #include "utils/format/macros.hpp"
+#include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
 #include "utils/stacktrace.hpp"
@@ -55,6 +61,63 @@ using utils::none;
 
 
 namespace {
+
+
+/// Runs one plain test program and checks its result.
+///
+/// \param program_name Basename of the test program to run.
+/// \param root Path to the base of the test suite.
+/// \param names_filter Whitespace-separated list of test cases that the helper
+///     test program is allowed to expose.
+/// \param user_config User-provided configuration.
+///
+/// \return The list of loaded test cases.
+static model::test_cases_map
+list_one(const char* program_name,
+         const fs::path& root,
+         const char* names_filter = NULL,
+         config::tree user_config = engine::empty_config())
+{
+    scheduler::scheduler_handle handle = scheduler::setup();
+
+    const runner::lazy_test_program program(
+        "atf", fs::path(program_name), root, "the-suite",
+        model::metadata_builder().build(), user_config, handle);
+
+    if (names_filter != NULL)
+        utils::setenv("TEST_CASES", names_filter);
+    const model::test_cases_map test_cases = handle.list_tests(
+        &program, user_config);
+
+    handle.cleanup();
+
+    return test_cases;
+}
+
+
+/// Runs a bogus test program and checks the error result.
+///
+/// \param exp_error Expected error string to find.
+/// \param program_name Basename of the test program to run.
+/// \param root Path to the base of the test suite.
+/// \param names_filter Whitespace-separated list of test cases that the helper
+///     test program is allowed to expose.
+static void
+check_list_one_fail(const char* exp_error,
+                    const char* program_name,
+                    const fs::path& root,
+                    const char* names_filter = NULL)
+{
+    const model::test_cases_map test_cases = list_one(
+        program_name, root, names_filter);
+
+    ATF_REQUIRE_EQ(1, test_cases.size());
+    const model::test_case& test_case = test_cases.begin()->second;
+    ATF_REQUIRE_EQ("__test_cases_list__", test_case.name());
+    ATF_REQUIRE(test_case.fake_result());
+    ATF_REQUIRE_MATCH(exp_error,
+                      test_case.fake_result().get().reason());
+}
 
 
 /// Runs one plain test program and checks its result.
@@ -106,16 +169,148 @@ run_one(const atf::tests::tc* tc, const char* test_case_name,
 }  // anonymous namespace
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(integration__body_only__passes);
-ATF_TEST_CASE_BODY(integration__body_only__passes)
+ATF_TEST_CASE_WITHOUT_HEAD(list__ok);
+ATF_TEST_CASE_BODY(list__ok)
+{
+    const model::test_cases_map test_cases = list_one(
+        "test_case_atf_helpers", fs::path(get_config_var("srcdir")),
+        "pass crash");
+
+    const model::test_cases_map exp_test_cases = model::test_cases_map_builder()
+        .add("crash")
+        .add("pass", model::metadata_builder()
+             .set_description("Always-passing test case")
+             .build())
+        .build();
+    ATF_REQUIRE_EQ(exp_test_cases, test_cases);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(list__configuration_variables);
+ATF_TEST_CASE_BODY(list__configuration_variables)
+{
+    config::tree user_config = engine::empty_config();
+    user_config.set_string("test_suites.the-suite.var1", "value1");
+    user_config.set_string("test_suites.the-suite.var2", "value2");
+
+    const model::test_cases_map test_cases = list_one(
+        "test_case_atf_helpers", fs::path(get_config_var("srcdir")),
+        "check_list_config", user_config);
+
+    const model::test_cases_map exp_test_cases = model::test_cases_map_builder()
+        .add("check_list_config", model::metadata_builder()
+             .set_description("Found: var1=value1 var2=value2")
+             .build())
+        .build();
+    ATF_REQUIRE_EQ(exp_test_cases, test_cases);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(list__current_directory);
+ATF_TEST_CASE_BODY(list__current_directory)
+{
+    const fs::path helpers = fs::path(get_config_var("srcdir")) /
+        "test_case_atf_helpers";
+    ATF_REQUIRE(::symlink(helpers.c_str(), "atf_helpers") != -1);
+    const model::test_cases_map test_cases = list_one(
+        "atf_helpers", fs::path("."), "pass");
+
+    const model::test_cases_map exp_test_cases = model::test_cases_map_builder()
+        .add("pass", model::metadata_builder()
+             .set_description("Always-passing test case")
+             .build())
+        .build();
+    ATF_REQUIRE_EQ(exp_test_cases, test_cases);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(list__relative_path);
+ATF_TEST_CASE_BODY(list__relative_path)
+{
+    const fs::path helpers = fs::path(get_config_var("srcdir")) /
+        "test_case_atf_helpers";
+    ATF_REQUIRE(::mkdir("dir1", 0755) != -1);
+    ATF_REQUIRE(::mkdir("dir1/dir2", 0755) != -1);
+    ATF_REQUIRE(::symlink(helpers.c_str(), "dir1/dir2/atf_helpers") != -1);
+    const model::test_cases_map test_cases = list_one(
+        "dir2/atf_helpers", fs::path("dir1"), "pass");
+
+    const model::test_cases_map exp_test_cases = model::test_cases_map_builder()
+        .add("pass", model::metadata_builder()
+             .set_description("Always-passing test case")
+             .build())
+        .build();
+    ATF_REQUIRE_EQ(exp_test_cases, test_cases);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(list__missing_test_program);
+ATF_TEST_CASE_BODY(list__missing_test_program)
+{
+    check_list_one_fail("Cannot find test program", "non-existent",
+                        fs::current_path());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(list__not_a_test_program);
+ATF_TEST_CASE_BODY(list__not_a_test_program)
+{
+    atf::utils::create_file("not-valid", "garbage\n");
+    ATF_REQUIRE(::chmod("not-valid", 0755) != -1);
+    check_list_one_fail("Invalid test program format", "not-valid",
+                        fs::current_path());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(list__no_permissions);
+ATF_TEST_CASE_BODY(list__no_permissions)
+{
+    atf::utils::create_file("not-executable", "garbage\n");
+    check_list_one_fail("Permission denied to run test program",
+                        "not-executable", fs::current_path());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(list__abort);
+ATF_TEST_CASE_BODY(list__abort)
+{
+    check_list_one_fail("Test program received signal",
+                        "test_case_atf_helpers",
+                        fs::path(get_config_var("srcdir")),
+                        "crash_head");
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(list__empty);
+ATF_TEST_CASE_BODY(list__empty)
+{
+    check_list_one_fail("No test cases",
+                        "test_case_atf_helpers",
+                        fs::path(get_config_var("srcdir")),
+                        "");
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(list__stderr_not_quiet);
+ATF_TEST_CASE_BODY(list__stderr_not_quiet)
+{
+    check_list_one_fail("Test case list wrote to stderr",
+                        "test_case_atf_helpers",
+                        fs::path(get_config_var("srcdir")),
+                        "output_in_list");
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(test__body_only__passes);
+ATF_TEST_CASE_BODY(test__body_only__passes)
 {
     const model::test_result exp_result(model::test_result_passed);
     run_one(this, "pass", exp_result);
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(integration__body_only__crashes);
-ATF_TEST_CASE_BODY(integration__body_only__crashes)
+ATF_TEST_CASE_WITHOUT_HEAD(test__body_only__crashes);
+ATF_TEST_CASE_BODY(test__body_only__crashes)
 {
     if (!utils::unlimit_core_size())
         skip("Cannot unlimit the core file size; check limits manually");
@@ -128,8 +323,8 @@ ATF_TEST_CASE_BODY(integration__body_only__crashes)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(integration__body_only__times_out);
-ATF_TEST_CASE_BODY(integration__body_only__times_out)
+ATF_TEST_CASE_WITHOUT_HEAD(test__body_only__times_out);
+ATF_TEST_CASE_BODY(test__body_only__times_out)
 {
     config::tree user_config = engine::empty_config();
     user_config.set_string("test_suites.the-suite.control_dir", ".");
@@ -143,8 +338,8 @@ ATF_TEST_CASE_BODY(integration__body_only__times_out)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(integration__body_only__configuration_variables);
-ATF_TEST_CASE_BODY(integration__body_only__configuration_variables)
+ATF_TEST_CASE_WITHOUT_HEAD(test__body_only__configuration_variables);
+ATF_TEST_CASE_BODY(test__body_only__configuration_variables)
 {
     config::tree user_config = engine::empty_config();
     user_config.set_string("test_suites.the-suite.first", "some value");
@@ -155,16 +350,16 @@ ATF_TEST_CASE_BODY(integration__body_only__configuration_variables)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(integration__body_only__no_atf_run_warning);
-ATF_TEST_CASE_BODY(integration__body_only__no_atf_run_warning)
+ATF_TEST_CASE_WITHOUT_HEAD(test__body_only__no_atf_run_warning);
+ATF_TEST_CASE_BODY(test__body_only__no_atf_run_warning)
 {
     const model::test_result exp_result(model::test_result_passed);
     run_one(this, "pass", exp_result, engine::empty_config(), true);
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(integration__body_and_cleanup__body_times_out);
-ATF_TEST_CASE_BODY(integration__body_and_cleanup__body_times_out)
+ATF_TEST_CASE_WITHOUT_HEAD(test__body_and_cleanup__body_times_out);
+ATF_TEST_CASE_BODY(test__body_and_cleanup__body_times_out)
 {
     config::tree user_config = engine::empty_config();
     user_config.set_string("test_suites.the-suite.control_dir", ".");
@@ -181,8 +376,8 @@ ATF_TEST_CASE_BODY(integration__body_and_cleanup__body_times_out)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(integration__body_and_cleanup__cleanup_crashes);
-ATF_TEST_CASE_BODY(integration__body_and_cleanup__cleanup_crashes)
+ATF_TEST_CASE_WITHOUT_HEAD(test__body_and_cleanup__cleanup_crashes);
+ATF_TEST_CASE_BODY(test__body_and_cleanup__cleanup_crashes)
 {
     const model::test_result exp_result(
         model::test_result_broken,
@@ -191,8 +386,8 @@ ATF_TEST_CASE_BODY(integration__body_and_cleanup__cleanup_crashes)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(integration__body_and_cleanup__cleanup_times_out);
-ATF_TEST_CASE_BODY(integration__body_and_cleanup__cleanup_times_out)
+ATF_TEST_CASE_WITHOUT_HEAD(test__body_and_cleanup__cleanup_times_out);
+ATF_TEST_CASE_BODY(test__body_and_cleanup__cleanup_times_out)
 {
     config::tree user_config = engine::empty_config();
     user_config.set_string("test_suites.the-suite.control_dir", ".");
@@ -206,8 +401,8 @@ ATF_TEST_CASE_BODY(integration__body_and_cleanup__cleanup_times_out)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(integration__body_and_cleanup__expect_timeout);
-ATF_TEST_CASE_BODY(integration__body_and_cleanup__expect_timeout)
+ATF_TEST_CASE_WITHOUT_HEAD(test__body_and_cleanup__expect_timeout);
+ATF_TEST_CASE_BODY(test__body_and_cleanup__expect_timeout)
 {
     config::tree user_config = engine::empty_config();
     user_config.set_string("test_suites.the-suite.control_dir", ".");
@@ -224,8 +419,8 @@ ATF_TEST_CASE_BODY(integration__body_and_cleanup__expect_timeout)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(integration__body_and_cleanup__shared_workdir);
-ATF_TEST_CASE_BODY(integration__body_and_cleanup__shared_workdir)
+ATF_TEST_CASE_WITHOUT_HEAD(test__body_and_cleanup__shared_workdir);
+ATF_TEST_CASE_BODY(test__body_and_cleanup__shared_workdir)
 {
     const model::test_result exp_result(model::test_result_passed);
     run_one(this, "shared_workdir", exp_result);
@@ -238,14 +433,25 @@ ATF_INIT_TEST_CASES(tcs)
         "atf", std::shared_ptr< scheduler::interface >(
             new engine::atf_interface()));
 
-    ATF_ADD_TEST_CASE(tcs, integration__body_only__passes);
-    ATF_ADD_TEST_CASE(tcs, integration__body_only__crashes);
-    ATF_ADD_TEST_CASE(tcs, integration__body_only__times_out);
-    ATF_ADD_TEST_CASE(tcs, integration__body_only__configuration_variables);
-    ATF_ADD_TEST_CASE(tcs, integration__body_only__no_atf_run_warning);
-    ATF_ADD_TEST_CASE(tcs, integration__body_and_cleanup__body_times_out);
-    ATF_ADD_TEST_CASE(tcs, integration__body_and_cleanup__cleanup_crashes);
-    ATF_ADD_TEST_CASE(tcs, integration__body_and_cleanup__cleanup_times_out);
-    ATF_ADD_TEST_CASE(tcs, integration__body_and_cleanup__expect_timeout);
-    ATF_ADD_TEST_CASE(tcs, integration__body_and_cleanup__shared_workdir);
+    ATF_ADD_TEST_CASE(tcs, list__ok);
+    ATF_ADD_TEST_CASE(tcs, list__configuration_variables);
+    ATF_ADD_TEST_CASE(tcs, list__current_directory);
+    ATF_ADD_TEST_CASE(tcs, list__relative_path);
+    ATF_ADD_TEST_CASE(tcs, list__missing_test_program);
+    ATF_ADD_TEST_CASE(tcs, list__not_a_test_program);
+    ATF_ADD_TEST_CASE(tcs, list__no_permissions);
+    ATF_ADD_TEST_CASE(tcs, list__abort);
+    ATF_ADD_TEST_CASE(tcs, list__empty);
+    ATF_ADD_TEST_CASE(tcs, list__stderr_not_quiet);
+
+    ATF_ADD_TEST_CASE(tcs, test__body_only__passes);
+    ATF_ADD_TEST_CASE(tcs, test__body_only__crashes);
+    ATF_ADD_TEST_CASE(tcs, test__body_only__times_out);
+    ATF_ADD_TEST_CASE(tcs, test__body_only__configuration_variables);
+    ATF_ADD_TEST_CASE(tcs, test__body_only__no_atf_run_warning);
+    ATF_ADD_TEST_CASE(tcs, test__body_and_cleanup__body_times_out);
+    ATF_ADD_TEST_CASE(tcs, test__body_and_cleanup__cleanup_crashes);
+    ATF_ADD_TEST_CASE(tcs, test__body_and_cleanup__cleanup_times_out);
+    ATF_ADD_TEST_CASE(tcs, test__body_and_cleanup__expect_timeout);
+    ATF_ADD_TEST_CASE(tcs, test__body_and_cleanup__shared_workdir);
 }

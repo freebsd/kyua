@@ -34,6 +34,8 @@ libengine_a_CPPFLAGS  = $(STORE_CFLAGS) $(UTILS_CFLAGS)
 libengine_a_CPPFLAGS += -DKYUA_TESTERSDIR="\"$(testersdir)\""
 libengine_a_SOURCES  = engine/atf.cpp
 libengine_a_SOURCES += engine/atf.hpp
+libengine_a_SOURCES += engine/atf_list.cpp
+libengine_a_SOURCES += engine/atf_list.hpp
 libengine_a_SOURCES += engine/atf_result.cpp
 libengine_a_SOURCES += engine/atf_result.hpp
 libengine_a_SOURCES += engine/atf_result_fwd.hpp
@@ -80,6 +82,11 @@ tests_engine_PROGRAMS = engine/atf_test
 engine_atf_test_SOURCES = engine/atf_test.cpp
 engine_atf_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
 engine_atf_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
+
+tests_engine_PROGRAMS += engine/atf_list_test
+engine_atf_list_test_SOURCES = engine/atf_list_test.cpp
+engine_atf_list_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
+engine_atf_list_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 
 tests_engine_PROGRAMS += engine/atf_result_test
 engine_atf_result_test_SOURCES = engine/atf_result_test.cpp

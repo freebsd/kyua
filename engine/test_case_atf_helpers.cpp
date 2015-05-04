@@ -33,19 +33,29 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include <algorithm>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <set>
 #include <sstream>
+#include <string>
+#include <vector>
 
 #include <atf-c++.hpp>
 
 #include "utils/env.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/logging/operations.hpp"
 #include "utils/optional.ipp"
+#include "utils/text/operations.ipp"
 
 namespace fs = utils::fs;
+namespace logging = utils::logging;
+namespace text = utils::text;
+
+using utils::optional;
 
 
 namespace {
@@ -120,6 +130,23 @@ ATF_TEST_CASE_BODY(check_configuration_variables)
 }
 
 
+ATF_TEST_CASE(check_list_config);
+ATF_TEST_CASE_HEAD(check_list_config)
+{
+    std::string description = "Found:";
+
+    if (has_config_var("var1"))
+        description += " var1=" + get_config_var("var1");
+    if (has_config_var("var2"))
+        description += " var2=" + get_config_var("var2");
+
+    set_md_var("descr", description);
+}
+ATF_TEST_CASE_BODY(check_list_config)
+{
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(check_unprivileged);
 ATF_TEST_CASE_BODY(check_unprivileged)
 {
@@ -138,6 +165,16 @@ ATF_TEST_CASE_WITHOUT_HEAD(crash);
 ATF_TEST_CASE_BODY(crash)
 {
     std::abort();
+}
+
+
+ATF_TEST_CASE(crash_head);
+ATF_TEST_CASE_HEAD(crash_head)
+{
+    std::abort();
+}
+ATF_TEST_CASE_BODY(crash_head)
+{
 }
 
 
@@ -218,7 +255,21 @@ ATF_TEST_CASE_CLEANUP(output)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(pass);
+ATF_TEST_CASE(output_in_list);
+ATF_TEST_CASE_HEAD(output_in_list)
+{
+    std::cerr << "Should not write anything!\n";
+}
+ATF_TEST_CASE_BODY(output_in_list)
+{
+}
+
+
+ATF_TEST_CASE(pass);
+ATF_TEST_CASE_HEAD(pass)
+{
+    set_md_var("descr", "Always-passing test case");
+}
 ATF_TEST_CASE_BODY(pass)
 {
 }
@@ -303,22 +354,62 @@ ATF_TEST_CASE_BODY(validate_isolation)
 }
 
 
+/// Wrapper around ATF_ADD_TEST_CASE to only add a test when requested.
+///
+/// The caller can set the TEST_CASES environment variable to a
+/// whitespace-separated list of test case names to enable.  If not empty, the
+/// list acts as a filter for the tests to add.
+///
+/// \param tcs List of test cases into which to register the test.
+/// \param filters List of filters to determine whether the test applies or not.
+/// \param name Name of the test case being added.
+#define ADD_TEST_CASE(tcs, filters, name) \
+    do { \
+        if (filters.empty() || filters.find(#name) != filters.end()) \
+            ATF_ADD_TEST_CASE(tcs, name); \
+    } while (false)
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
-    ATF_ADD_TEST_CASE(tcs, check_cleanup_workdir);
-    ATF_ADD_TEST_CASE(tcs, check_configuration_variables);
-    ATF_ADD_TEST_CASE(tcs, check_unprivileged);
-    ATF_ADD_TEST_CASE(tcs, crash);
-    ATF_ADD_TEST_CASE(tcs, crash_cleanup);
-    ATF_ADD_TEST_CASE(tcs, create_cookie_in_control_dir);
-    ATF_ADD_TEST_CASE(tcs, create_cookie_in_workdir);
-    ATF_ADD_TEST_CASE(tcs, create_cookie_from_cleanup);
-    ATF_ADD_TEST_CASE(tcs, expect_timeout);
-    ATF_ADD_TEST_CASE(tcs, output);
-    ATF_ADD_TEST_CASE(tcs, pass);
-    ATF_ADD_TEST_CASE(tcs, shared_workdir);
-    ATF_ADD_TEST_CASE(tcs, spawn_blocking_child);
-    ATF_ADD_TEST_CASE(tcs, timeout_body);
-    ATF_ADD_TEST_CASE(tcs, timeout_cleanup);
-    ATF_ADD_TEST_CASE(tcs, validate_isolation);
+    logging::set_inmemory();
+
+    // TODO(jmmv): Instead of using "filters", we should make TEST_CASES
+    // explicitly list all the test cases to enable.  This would let us get rid
+    // of some of the hacks below...
+    std::set< std::string > filters;
+
+    const optional< std::string > names_raw = utils::getenv("TEST_CASES");
+    if (names_raw) {
+        if (names_raw.get().empty())
+            return;  // See TODO above.
+
+        const std::vector< std::string > names = text::split(
+            names_raw.get(), ' ');
+        std::copy(names.begin(), names.end(),
+                  std::inserter(filters, filters.begin()));
+    }
+
+    if (filters.find("crash_head") != filters.end())  // See TODO above.
+        ATF_ADD_TEST_CASE(tcs, crash_head);
+    if (filters.find("output_in_list") != filters.end())  // See TODO above.
+        ATF_ADD_TEST_CASE(tcs, output_in_list);
+
+    ADD_TEST_CASE(tcs, filters, check_cleanup_workdir);
+    ADD_TEST_CASE(tcs, filters, check_configuration_variables);
+    ADD_TEST_CASE(tcs, filters, check_list_config);
+    ADD_TEST_CASE(tcs, filters, check_unprivileged);
+    ADD_TEST_CASE(tcs, filters, crash);
+    ADD_TEST_CASE(tcs, filters, crash_cleanup);
+    ADD_TEST_CASE(tcs, filters, create_cookie_in_control_dir);
+    ADD_TEST_CASE(tcs, filters, create_cookie_in_workdir);
+    ADD_TEST_CASE(tcs, filters, create_cookie_from_cleanup);
+    ADD_TEST_CASE(tcs, filters, expect_timeout);
+    ADD_TEST_CASE(tcs, filters, output);
+    ADD_TEST_CASE(tcs, filters, pass);
+    ADD_TEST_CASE(tcs, filters, shared_workdir);
+    ADD_TEST_CASE(tcs, filters, spawn_blocking_child);
+    ADD_TEST_CASE(tcs, filters, timeout_body);
+    ADD_TEST_CASE(tcs, filters, timeout_cleanup);
+    ADD_TEST_CASE(tcs, filters, validate_isolation);
 }

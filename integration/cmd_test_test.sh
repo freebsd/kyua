@@ -937,8 +937,8 @@ EOF
     echo 'I am not executable' >non_executable
 
     cat >expout <<EOF
-crash_on_list:__test_cases_list__  ->  broken: Test program list did not return success  [S.UUUs]
-non_executable:__test_cases_list__  ->  broken: Test program list did not return success  [S.UUUs]
+crash_on_list:__test_cases_list__  ->  broken: Invalid header for test case list; expecting Content-Type for application/X-atf-tp version 1, got ''  [S.UUUs]
+non_executable:__test_cases_list__  ->  broken: Permission denied to run test program  [S.UUUs]
 
 Results file id is $(utils_results_id)
 Results saved to $(utils_results_file)

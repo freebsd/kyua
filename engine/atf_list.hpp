@@ -1,4 +1,4 @@
-// Copyright 2014 Google Inc.
+// Copyright 2015 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,42 +26,26 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/atf.hpp
-/// Execution engine for test programs that implement the atf interface.
+/// \file engine/atf_list.hpp
+/// Parser of ATF test case lists.
 
-#if !defined(ENGINE_ATF_HPP)
-#define ENGINE_ATF_HPP
+#if !defined(ENGINE_ATF_LIST_HPP)
+#define ENGINE_ATF_LIST_HPP
 
-#include "engine/scheduler.hpp"
+#include <istream>
+
+#include "model/metadata_fwd.hpp"
+#include "model/test_case_fwd.hpp"
+#include "model/types.hpp"
+#include "utils/fs/path_fwd.hpp"
 
 namespace engine {
 
 
-/// Implementation of the scheduler interface for atf test programs.
-class atf_interface : public engine::scheduler::interface {
-public:
-    void exec_list(const model::test_program&,
-                   const utils::config::properties_map&) const UTILS_NORETURN;
-
-    model::test_cases_map parse_list(
-        const utils::optional< utils::process::status >&,
-        const utils::fs::path&,
-        const utils::fs::path&) const;
-
-    void exec_test(const model::test_program&, const std::string&,
-                   const utils::config::properties_map&,
-                   const utils::fs::path&) const
-        UTILS_NORETURN;
-
-    model::test_result compute_result(
-        const utils::optional< utils::process::status >&,
-        const utils::fs::path&,
-        const utils::fs::path&,
-        const utils::fs::path&) const;
-};
+model::metadata parse_atf_metadata(const model::properties_map&);
+model::test_cases_map parse_atf_list(std::istream&);
 
 
 }  // namespace engine
 
-
-#endif  // !defined(ENGINE_ATF_HPP)
+#endif  // !defined(ENGINE_ATF_LIST_HPP)

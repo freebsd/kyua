@@ -35,11 +35,14 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include <cerrno>
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
 
+#include "engine/atf_list.hpp"
 #include "engine/atf_result.hpp"
+#include "engine/exceptions.hpp"
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
 #include "model/test_program.hpp"
@@ -51,8 +54,10 @@ extern "C" {
 #include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
+#include "utils/process/exceptions.hpp"
 #include "utils/process/operations.hpp"
 #include "utils/process/status.hpp"
+#include "utils/stream.hpp"
 
 namespace config = utils::config;
 namespace fs = utils::fs;
@@ -67,6 +72,14 @@ namespace {
 
 /// Basename of the file containing the result written by the ATF test case.
 static const char* result_name = "result.body";
+
+
+/// Magic numbers returned by exec_list when exec(2) fails.
+enum list_exit_code {
+    exit_eacces = 90,
+    exit_enoent,
+    exit_enoexec,
+};
 
 
 /// Magic number returned by exec_test when the test case had a cleanup routine.
@@ -164,6 +177,91 @@ run_part(const fs::path& test_program, const process::args_vector& args,
 
 
 }  // anonymous namespace
+
+
+/// Executes a test program's list operation.
+///
+/// This method is intended to be called within a subprocess and is expected
+/// to terminate execution either by exec(2)ing the test program or by
+/// exiting with a failure.
+///
+/// \param test_program The test program to execute.
+/// \param vars User-provided variables to pass to the test program.
+void
+engine::atf_interface::exec_list(const model::test_program& test_program,
+                                 const config::properties_map& vars) const
+{
+    utils::setenv("__RUNNING_INSIDE_ATF_RUN", "internal-yes-value");
+
+    process::args_vector args;
+    for (config::properties_map::const_iterator iter = vars.begin();
+         iter != vars.end(); ++iter) {
+        args.push_back(F("-v%s=%s") % (*iter).first % (*iter).second);
+    }
+
+    args.push_back("-l");
+    try {
+        process::exec_unsafe(test_program.absolute_path(), args);
+    } catch (const process::system_error& e) {
+        if (e.original_errno() == EACCES)
+            ::_exit(exit_eacces);
+        else if (e.original_errno() == ENOENT)
+            ::_exit(exit_enoent);
+        else if (e.original_errno() == ENOEXEC)
+            ::_exit(exit_enoexec);
+        throw;
+    }
+}
+
+
+/// Computes the test cases list of a test program.
+///
+/// \param status The termination status of the subprocess used to execute
+///     the exec_test() method or none if the test timed out.
+/// \param stdout_path Path to the file containing the stdout of the test.
+/// \param stderr_path Path to the file containing the stderr of the test.
+///
+/// \return A list of test cases.
+///
+/// \throw error If there is a problem parsing the test case list.
+model::test_cases_map
+engine::atf_interface::parse_list(const optional< process::status >& status,
+                                  const fs::path& stdout_path,
+                                  const fs::path& stderr_path) const
+{
+    const std::string stderr_contents = utils::read_file(stderr_path);
+    if (!stderr_contents.empty())
+        LW("Test case list wrote to stderr: " + stderr_contents);
+
+    if (!status)
+        throw engine::error("Test case list timed out");
+    if (status.get().exited()) {
+        const int exitstatus = status.get().exitstatus();
+        if (exitstatus == EXIT_SUCCESS) {
+            // Nothing to do; fall through.
+        } else if (exitstatus == exit_eacces) {
+            throw engine::error("Permission denied to run test program");
+        } else if (exitstatus == exit_enoent) {
+            throw engine::error("Cannot find test program");
+        } else if (exitstatus == exit_enoexec) {
+            throw engine::error("Invalid test program format");
+        } else {
+            throw engine::error("Test program did not exit cleanly");
+        }
+    } else {
+        throw engine::error("Test program received signal");
+    }
+
+    std::ifstream input(stdout_path.c_str());
+    if (!input)
+        throw engine::load_error(stdout_path, "Cannot open file for read");
+    const model::test_cases_map test_cases = parse_atf_list(input);
+
+    if (!stderr_contents.empty())
+        throw engine::error("Test case list wrote to stderr");
+
+    return test_cases;
+}
 
 
 /// Executes a test case of the test program.
