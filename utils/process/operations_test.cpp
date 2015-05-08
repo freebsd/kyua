@@ -55,6 +55,10 @@ namespace process = utils::process;
 namespace {
 
 
+/// Type of the process::exec() and process::exec_unsafe() functions.
+typedef void (*exec_function)(const fs::path&, const process::args_vector&);
+
+
 /// Calculates the path to the test helpers binary.
 ///
 /// \param tc A pointer to the caller test case, needed to extract the value of
@@ -70,6 +74,9 @@ get_helpers(const atf::tests::tc* tc)
 
 /// Body for a subprocess that runs exec().
 class child_exec {
+    /// Function to do the exec.
+    const exec_function _do_exec;
+
     /// Path to the binary to exec.
     const fs::path& _program;
 
@@ -79,10 +86,12 @@ class child_exec {
 public:
     /// Constructor.
     ///
+    /// \param do_exec Function to do the exec.
     /// \param program Path to the binary to exec.
     /// \param args Arguments to the binary, not including argv[0].
-    child_exec(const fs::path& program, const process::args_vector& args) :
-        _program(program), _args(args)
+    child_exec(const exec_function do_exec, const fs::path& program,
+               const process::args_vector& args) :
+        _do_exec(do_exec), _program(program), _args(args)
     {
     }
 
@@ -90,7 +99,7 @@ public:
     void
     operator()(void)
     {
-        process::exec(_program, _args);
+        _do_exec(_program, _args);
     }
 };
 
@@ -143,11 +152,15 @@ write_loop(const int fd)
 }  // anonymous namespace
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(exec__no_args);
-ATF_TEST_CASE_BODY(exec__no_args)
+/// Tests an exec function with no arguments.
+///
+/// \param tc The calling test case.
+/// \param do_exec The exec function to test.
+static void
+check_exec_no_args(const atf::tests::tc* tc, const exec_function do_exec)
 {
     std::auto_ptr< process::child > child = process::child::fork_files(
-        child_exec(get_helpers(this), process::args_vector()),
+        child_exec(do_exec, get_helpers(tc), process::args_vector()),
         fs::path("stdout"), fs::path("stderr"));
     const process::status status = child->wait();
     ATF_REQUIRE(status.exited());
@@ -156,8 +169,12 @@ ATF_TEST_CASE_BODY(exec__no_args)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(exec__some_args);
-ATF_TEST_CASE_BODY(exec__some_args)
+/// Tests an exec function with some arguments.
+///
+/// \param tc The calling test case.
+/// \param do_exec The exec function to test.
+static void
+check_exec_some_args(const atf::tests::tc* tc, const exec_function do_exec)
 {
     process::args_vector args;
     args.push_back("print-args");
@@ -165,7 +182,7 @@ ATF_TEST_CASE_BODY(exec__some_args)
     args.push_back("bar");
 
     std::auto_ptr< process::child > child = process::child::fork_files(
-        child_exec(get_helpers(this), args),
+        child_exec(do_exec, get_helpers(tc), args),
         fs::path("stdout"), fs::path("stderr"));
     const process::status status = child->wait();
     ATF_REQUIRE(status.exited());
@@ -176,17 +193,56 @@ ATF_TEST_CASE_BODY(exec__some_args)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(exec__no_args);
+ATF_TEST_CASE_BODY(exec__no_args)
+{
+    check_exec_no_args(this, process::exec);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(exec__some_args);
+ATF_TEST_CASE_BODY(exec__some_args)
+{
+    check_exec_some_args(this, process::exec);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(exec__fail);
 ATF_TEST_CASE_BODY(exec__fail)
 {
     std::auto_ptr< process::child > child = process::child::fork_files(
-        child_exec(fs::path("non-existent"), process::args_vector()),
+        child_exec(process::exec, fs::path("non-existent"),
+                   process::args_vector()),
         fs::path("stdout"), fs::path("stderr"));
     const process::status status = child->wait();
     ATF_REQUIRE(status.signaled());
     ATF_REQUIRE_EQ(SIGABRT, status.termsig());
     ATF_REQUIRE(atf::utils::grep_file("Failed to execute non-existent",
                                       "stderr"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(exec_unsafe__no_args);
+ATF_TEST_CASE_BODY(exec_unsafe__no_args)
+{
+    check_exec_no_args(this, process::exec_unsafe);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(exec_unsafe__some_args);
+ATF_TEST_CASE_BODY(exec_unsafe__some_args)
+{
+    check_exec_some_args(this, process::exec_unsafe);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(exec_unsafe__fail);
+ATF_TEST_CASE_BODY(exec_unsafe__fail)
+{
+    ATF_REQUIRE_THROW_RE(
+        process::system_error, "Failed to execute missing-program",
+        process::exec_unsafe(fs::path("missing-program"),
+                             process::args_vector()));
 }
 
 
@@ -333,6 +389,10 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, exec__no_args);
     ATF_ADD_TEST_CASE(tcs, exec__some_args);
     ATF_ADD_TEST_CASE(tcs, exec__fail);
+
+    ATF_ADD_TEST_CASE(tcs, exec_unsafe__no_args);
+    ATF_ADD_TEST_CASE(tcs, exec_unsafe__some_args);
+    ATF_ADD_TEST_CASE(tcs, exec_unsafe__fail);
 
     ATF_ADD_TEST_CASE(tcs, terminate_group__setpgrp_executed);
     ATF_ADD_TEST_CASE(tcs, terminate_group__setpgrp_not_executed);
