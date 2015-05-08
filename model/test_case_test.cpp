@@ -35,6 +35,7 @@
 #include "model/metadata.hpp"
 #include "model/test_result.hpp"
 #include "utils/datetime.hpp"
+#include "utils/format/containers.ipp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
 
@@ -207,6 +208,41 @@ ATF_TEST_CASE_BODY(test_case__output)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(test_cases_map__builder);
+ATF_TEST_CASE_BODY(test_cases_map__builder)
+{
+    model::test_cases_map_builder builder;
+    model::test_cases_map exp_test_cases;
+
+    ATF_REQUIRE_EQ(exp_test_cases, builder.build());
+
+    builder.add("default-metadata");
+    {
+        const model::test_case tc("default-metadata",
+                                  model::metadata_builder().build());
+        exp_test_cases.insert(model::test_cases_map::value_type(tc.name(), tc));
+    }
+    ATF_REQUIRE_EQ(exp_test_cases, builder.build());
+
+    builder.add("with-metadata",
+                model::metadata_builder().set_description("text").build());
+    {
+        const model::test_case tc("with-metadata",
+                                  model::metadata_builder()
+                                  .set_description("text").build());
+        exp_test_cases.insert(model::test_cases_map::value_type(tc.name(), tc));
+    }
+    ATF_REQUIRE_EQ(exp_test_cases, builder.build());
+
+    const model::test_case tc("fully_built",
+                              model::metadata_builder()
+                              .set_description("something else").build());
+    builder.add(tc);
+    exp_test_cases.insert(model::test_cases_map::value_type(tc.name(), tc));
+    ATF_REQUIRE_EQ(exp_test_cases, builder.build());
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, test_case__ctor_and_getters);
@@ -219,4 +255,6 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, test_case__operators_eq_and_ne__not_copy);
 
     ATF_ADD_TEST_CASE(tcs, test_case__output);
+
+    ATF_ADD_TEST_CASE(tcs, test_cases_map__builder);
 }

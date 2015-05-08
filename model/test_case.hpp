@@ -39,6 +39,7 @@
 
 #include "model/metadata_fwd.hpp"
 #include "model/test_result_fwd.hpp"
+#include "utils/noncopyable.hpp"
 #include "utils/optional_fwd.hpp"
 #include "utils/shared_ptr.hpp"
 
@@ -72,6 +73,20 @@ public:
 
     bool operator==(const test_case&) const;
     bool operator!=(const test_case&) const;
+};
+
+
+/// Builder for a test_cases_map object.
+class test_cases_map_builder : utils::noncopyable {
+    /// Accumulator for the map being built.
+    test_cases_map _test_cases;
+
+public:
+    test_cases_map_builder& add(const test_case&);
+    test_cases_map_builder& add(const std::string&);
+    test_cases_map_builder& add(const std::string&, const metadata&);
+
+    test_cases_map build(void) const;
 };
 
 

@@ -269,18 +269,16 @@ public:
             ATF_FAIL("Invalid stderr contents; got " + name);
         }
 
-        model::test_cases_map test_cases;
+        model::test_cases_map_builder test_cases_builder;
 
         std::ifstream input(stdout_path.c_str());
         ATF_REQUIRE(input);
         std::string line;
         while (std::getline(input, line).good()) {
-            model::test_case test_case(line, model::metadata_builder().build());
-            test_cases.insert(model::test_cases_map::value_type(
-                                  test_case.name(), test_case));
+            test_cases_builder.add(line);
         }
 
-        return test_cases;
+        return test_cases_builder.build();
     }
 
     /// Executes a test case of the test program.
@@ -423,15 +421,8 @@ ATF_TEST_CASE_BODY(integration__list_some)
     const model::test_cases_map test_cases = check_integration_list(
         "vars", fs::path("."), user_config);
 
-    model::test_cases_map exp_test_cases;
-    const model::test_case test_case_1("first_test",
-                                       model::metadata_builder().build());
-    exp_test_cases.insert(model::test_cases_map::value_type(
-                              test_case_1.name(), test_case_1));
-    const model::test_case test_case_2("second_TEST",
-                                       model::metadata_builder().build());
-    exp_test_cases.insert(model::test_cases_map::value_type(
-                              test_case_2.name(), test_case_2));
+    const model::test_cases_map exp_test_cases = model::test_cases_map_builder()
+        .add("first_test").add("second_TEST").build();
     ATF_REQUIRE_EQ(exp_test_cases, test_cases);
 }
 
@@ -458,11 +449,8 @@ ATF_TEST_CASE_BODY(integration__list_timeout)
     const model::test_cases_map test_cases = check_integration_list(
         "timeout", fs::path("."));
 
-    model::test_cases_map exp_test_cases;
-    const model::test_case test_case("sleeping",
-                                     model::metadata_builder().build());
-    exp_test_cases.insert(model::test_cases_map::value_type(
-                              test_case.name(), test_case));
+    const model::test_cases_map exp_test_cases = model::test_cases_map_builder()
+        .add("sleeping").build();
     ATF_REQUIRE_EQ(exp_test_cases, test_cases);
 }
 
