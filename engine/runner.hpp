@@ -91,11 +91,6 @@ utils::config::properties_map generate_tester_config(
     const utils::config::tree&, const std::string&);
 
 
-model::test_cases_map parse_test_cases(
-    const utils::optional< utils::process::status >&,
-    const utils::fs::path&);
-
-
 model::test_result debug_test_case(
     const model::test_program*, const std::string&, const utils::config::tree&,
     test_case_hooks&, const utils::fs::path&,

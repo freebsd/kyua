@@ -74,7 +74,7 @@ public:
     /// \param vars User-provided variables to pass to the test program.
     virtual void exec_list(const model::test_program& test_program,
                            const utils::config::properties_map& vars)
-        const UTILS_NORETURN;
+        const UTILS_NORETURN = 0;
 
     /// Computes the test cases list of a test program.
     ///
@@ -87,7 +87,7 @@ public:
     virtual model::test_cases_map parse_list(
         const utils::optional< utils::process::status >& status,
         const utils::fs::path& stdout_path,
-        const utils::fs::path& stderr_path) const;
+        const utils::fs::path& stderr_path) const = 0;
 
     /// Executes a test case of the test program.
     ///

@@ -35,13 +35,11 @@ extern "C" {
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
-#include <iostream>  // TODO(jmmv): Remove when exec_list is deleted.
 
 #include "engine/config.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/requirements.hpp"
 #include "engine/runner.hpp"
-#include "engine/testers.hpp"
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
 #include "model/test_program.hpp"
@@ -362,35 +360,6 @@ find_interface(const std::string& name)
 
 
 }  // anonymous namespace
-
-
-// TODO(jmmv): Delete in favor of interface-specific hooks.  Make sure the
-// method in the base class is abstract and don't forget to clean up unused
-// header files.
-void
-scheduler::interface::exec_list(const model::test_program& test_program,
-                                const config::properties_map& vars) const
-{
-    const engine::tester tester(test_program.interface_name(), none, none,
-                                vars);
-    const std::string output = tester.list(test_program.absolute_path());
-    std::cout << output << '\n';
-    std::cout.flush();
-    ::_exit(EXIT_SUCCESS);
-}
-
-
-// TODO(jmmv): Delete in favor of interface-specific hooks.  Make sure the
-// method in the base class is abstract and don't forget to clean up unused
-// header files.
-model::test_cases_map
-scheduler::interface::parse_list(
-    const optional< process::status >& status,
-    const fs::path& stdout_path,
-    const fs::path& UTILS_UNUSED_PARAM(stderr_path)) const
-{
-    return runner::parse_test_cases(status, stdout_path);
-}
 
 
 /// Internal implementation for the result_handle class.
