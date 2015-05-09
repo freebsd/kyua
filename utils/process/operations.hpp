@@ -43,7 +43,9 @@ namespace process {
 
 
 void exec(const utils::fs::path&, const args_vector&) throw() UTILS_NORETURN;
+void exec_unsafe(const utils::fs::path&, const args_vector&) UTILS_NORETURN;
 void terminate_group(const int);
+status wait(const int);
 status wait_any(void);
 
 

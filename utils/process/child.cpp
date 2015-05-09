@@ -128,27 +128,6 @@ open_for_append(const fs::path& filename)
 }
 
 
-/// Exception-based, type-improved version of waitpid(2).
-///
-/// \param pid The identifier of the process to wait for.
-///
-/// \return The termination status of the process.
-///
-/// \throw process::system_error If the call to waitpid(2) fails.
-static process::status
-safe_waitpid(const pid_t pid)
-{
-    LD(F("Waiting for pid=%s") % pid);
-    int stat_loc;
-    if (process::detail::syscall_waitpid(pid, &stat_loc, 0) == -1) {
-        const int original_errno = errno;
-        throw process::system_error(F("Failed to wait for PID %s") % pid,
-                                    original_errno);
-    }
-    return process::status(pid, stat_loc);
-}
-
-
 /// Logs the execution of another program.
 ///
 /// \param program The binary to execute.
@@ -382,10 +361,5 @@ process::child::output(void)
 process::status
 process::child::wait(void)
 {
-    const process::status status = safe_waitpid(_pimpl->_pid);
-    {
-        signals::interrupts_inhibiter inhibiter;
-        signals::remove_pid_to_kill(_pimpl->_pid);
-    }
-    return status;
+    return process::wait(_pimpl->_pid);
 }

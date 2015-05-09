@@ -212,7 +212,7 @@ struct utils::process::executor::exit_handle::impl {
     /// Timestamp of when the subprocess was spawned.
     const datetime::timestamp start_time;
 
-    /// Timestamp of when wait_any returned this object.
+    /// Timestamp of when wait() or wait_any() returned this object.
     const datetime::timestamp end_time;
 
     /// Whether this process was executed in the context of another one or not.
@@ -251,7 +251,8 @@ struct utils::process::executor::exit_handle::impl {
     /// \param unprivileged_user_ The user the process ran as, if different than
     ///     the current one.
     /// \param start_time_ Timestamp of when the subprocess was spawned.
-    /// \param end_time_ Timestamp of when wait_any returned this object.
+    /// \param end_time_ Timestamp of when wait() or wait_any() returned this
+    ///     object.
     /// \param is_followup_ Whether this process was executed in the
     ///     context of another one or not.
     /// \param control_directory_ Path to the subprocess-specific work
@@ -386,7 +387,7 @@ executor::exit_handle::start_time(void) const
 }
 
 
-/// Returns the timestamp of when wait_any returned this object.
+/// Returns the timestamp of when wait() or wait_any() returned this object.
 ///
 /// \return A timestamp.
 const datetime::timestamp&
@@ -533,6 +534,44 @@ struct utils::process::executor::executor_handle::impl {
         interrupts_handler->unprogram();
         interrupts_handler.reset(NULL);
     }
+
+    /// Common code to run after any of the wait calls.
+    ///
+    /// \param handle The exec_handle of the terminated subprocess.
+    /// \param status The exit status of the terminated subprocess.
+    ///
+    /// \return A pointer to an object describing the waited-for subprocess.
+    executor::exit_handle
+    post_wait(const executor::exec_handle handle, const process::status& status)
+    {
+        PRE(handle == status.dead_pid());
+        LI(F("Waited for subprocess with exec_handle %s") % handle);
+
+        process::terminate_group(status.dead_pid());
+
+        const exec_data_map::iterator iter = all_exec_data.find(handle);
+        exec_data& data = (*iter).second;
+        data.timer->unprogram();
+
+        INV(!data.timer->fired() ||
+            (status.signaled() && status.termsig() == SIGKILL));
+
+        const fs::path stdout_path = data.control_directory /
+            detail::stdout_name;
+        const fs::path stderr_path = data.control_directory /
+            detail::stderr_name;
+
+        return exit_handle(std::shared_ptr< exit_handle::impl >(
+            new exit_handle::impl(
+                handle,
+                data.timer->fired() ? none : utils::make_optional(status),
+                data.unprivileged_user,
+                data.start_time, datetime::timestamp::now(),
+                data.is_followup,
+                data.control_directory,
+                stdout_path, stderr_path,
+                all_exec_data)));
+    }
 };
 
 
@@ -674,38 +713,27 @@ executor::executor_handle::spawn_followup_post(
 
 /// Waits for completion of any forked process.
 ///
+/// \param exec_handle The handle of the process to wait for.
+///
+/// \return A pointer to an object describing the waited-for subprocess.
+executor::exit_handle
+executor::executor_handle::wait(const exec_handle exec_handle)
+{
+    signals::check_interrupt();
+    const process::status status = process::wait(exec_handle);
+    return _pimpl->post_wait(exec_handle, status);
+}
+
+
+/// Waits for completion of any forked process.
+///
 /// \return A pointer to an object describing the waited-for subprocess.
 executor::exit_handle
 executor::executor_handle::wait_any(void)
 {
     signals::check_interrupt();
-
     const process::status status = process::wait_any();
-    const executor::exec_handle handle = status.dead_pid();
-    LI(F("Waited for subprocess with exec_handle %s") % handle);
-
-    process::terminate_group(status.dead_pid());
-
-    const exec_data_map::iterator iter = _pimpl->all_exec_data.find(handle);
-    exec_data& data = (*iter).second;
-    data.timer->unprogram();
-
-    INV(!data.timer->fired() ||
-        (status.signaled() && status.termsig() == SIGKILL));
-
-    const fs::path stdout_path = data.control_directory / detail::stdout_name;
-    const fs::path stderr_path = data.control_directory / detail::stderr_name;
-
-    return exit_handle(std::shared_ptr< exit_handle::impl >(
-        new exit_handle::impl(
-            handle,
-            data.timer->fired() ? none : utils::make_optional(status),
-            data.unprivileged_user,
-            data.start_time, datetime::timestamp::now(),
-            data.is_followup,
-            data.control_directory,
-            stdout_path, stderr_path,
-            _pimpl->all_exec_data)));
+    return _pimpl->post_wait(status.dead_pid(), status);
 }
 
 

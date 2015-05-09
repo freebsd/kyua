@@ -40,9 +40,9 @@ BEGIN {
 # Ignore known problems.  As far as I can tell, all the cases listed here are
 # well-documented in the code but Doxygen fails, for some reason or another, to
 # properly locate the docstrings.
-/engine\/executor\.hpp.*Member register_interface/ {next}
-/engine\/executor\.hpp.*Member setup\(void\).*friend/ {next}
 /engine\/kyuafile\.cpp.*no matching class member/ {next}
+/engine\/scheduler\.hpp.*Member setup\(void\).*friend/ {next}
+/engine\/scheduler\.hpp.*Member wait_any\(void\)/ {next}
 /utils\/optional\.ipp.*no matching file member/ {next}
 /utils\/optional\.hpp.*Member make_optional\(const T &\)/ {next}
 /utils\/config\/nodes\.hpp.*Member set_lua\(lutok::state &, const int\)/ {next}

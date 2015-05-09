@@ -286,3 +286,53 @@ model::operator<<(std::ostream& output, const test_case& object)
         % object.get_metadata();
     return output;
 }
+
+
+/// Adds an already-constructed test case.
+///
+/// \param test_case The test case to add.
+///
+/// \return A reference to this builder.
+model::test_cases_map_builder&
+model::test_cases_map_builder::add(const test_case& test_case)
+{
+    _test_cases.insert(
+        test_cases_map::value_type(test_case.name(), test_case));
+    return *this;
+}
+
+
+/// Constructs and adds a new test case with default metadata.
+///
+/// \param test_case_name The name of the test case to add.
+///
+/// \return A reference to this builder.
+model::test_cases_map_builder&
+model::test_cases_map_builder::add(const std::string& test_case_name)
+{
+    return add(test_case(test_case_name, metadata_builder().build()));
+}
+
+
+/// Constructs and adds a new test case with explicit metadata.
+///
+/// \param test_case_name The name of the test case to add.
+/// \param metadata The metadata of the test case.
+///
+/// \return A reference to this builder.
+model::test_cases_map_builder&
+model::test_cases_map_builder::add(const std::string& test_case_name,
+                                   const metadata& metadata)
+{
+    return add(test_case(test_case_name, metadata));
+}
+
+
+/// Creates a new test_cases_map.
+///
+/// \return The constructed test_cases_map.
+model::test_cases_map
+model::test_cases_map_builder::build(void) const
+{
+    return _test_cases;
+}

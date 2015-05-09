@@ -375,12 +375,12 @@ EOF
     atf_check -s exit:2 -o empty -e file:experr kyua debug non_executable:a
 
     cat >expout <<EOF
-crash_on_list:__test_cases_list__  ->  broken: Tester did not exit cleanly: kyua-atf-tester: Invalid test cases list header 'This is not a valid test program!'
+crash_on_list:__test_cases_list__  ->  broken: Invalid header for test case list; expecting Content-Type for application/X-atf-tp version 1, got ''
 EOF
     atf_check -s exit:1 -o file:expout -e empty kyua debug crash_on_list:__test_cases_list__
 
     cat >expout <<EOF
-non_executable:__test_cases_list__  ->  broken: Tester did not exit cleanly: kyua-atf-tester: execvp failed: Permission denied
+non_executable:__test_cases_list__  ->  broken: Permission denied to run test program
 EOF
     atf_check -s exit:1 -o file:expout -e empty kyua debug non_executable:__test_cases_list__
 }

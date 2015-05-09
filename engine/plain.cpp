@@ -28,8 +28,13 @@
 
 #include "engine/plain.hpp"
 
+extern "C" {
+#include <unistd.h>
+}
+
 #include <cstdlib>
 
+#include "model/test_case.hpp"
 #include "model/test_program.hpp"
 #include "model/test_result.hpp"
 #include "utils/defs.hpp"
@@ -41,10 +46,48 @@
 #include "utils/process/status.hpp"
 #include "utils/sanity.hpp"
 
+namespace config = utils::config;
 namespace fs = utils::fs;
 namespace process = utils::process;
 
 using utils::optional;
+
+
+/// Executes a test program's list operation.
+///
+/// This method is intended to be called within a subprocess and is expected
+/// to terminate execution either by exec(2)ing the test program or by
+/// exiting with a failure.
+///
+/// \param unused_test_program The test program to execute.
+/// \param unused_vars User-provided variables to pass to the test program.
+void
+engine::plain_interface::exec_list(
+    const model::test_program& UTILS_UNUSED_PARAM(test_program),
+    const config::properties_map& UTILS_UNUSED_PARAM(vars)) const
+{
+    ::_exit(EXIT_SUCCESS);
+}
+
+
+/// Computes the test cases list of a test program.
+///
+/// \param unused_status The termination status of the subprocess used to
+///     execute the exec_test() method or none if the test timed out.
+/// \param unused_stdout_path Path to the file containing the stdout of the
+///     test.
+/// \param unused_stderr_path Path to the file containing the stderr of the
+///     test.
+///
+/// \return A list of test cases.
+model::test_cases_map
+engine::plain_interface::parse_list(
+    const optional< process::status >& UTILS_UNUSED_PARAM(status),
+    const fs::path& UTILS_UNUSED_PARAM(stdout_path),
+    const fs::path& UTILS_UNUSED_PARAM(stderr_path)) const
+{
+    return model::test_cases_map_builder().add("main").build();
+}
 
 
 /// Executes a test case of the test program.
@@ -62,13 +105,13 @@ void
 engine::plain_interface::exec_test(
     const model::test_program& test_program,
     const std::string& test_case_name,
-    const std::map< std::string, std::string >& vars,
+    const config::properties_map& vars,
     const fs::path& UTILS_UNUSED_PARAM(control_directory)) const
 {
     PRE(test_case_name == "main");
 
-    for (std::map< std::string, std::string >::const_iterator
-             iter = vars.begin(); iter != vars.end(); ++iter) {
+    for (config::properties_map::const_iterator iter = vars.begin();
+         iter != vars.end(); ++iter) {
         utils::setenv(F("TEST_ENV_%s") % (*iter).first, (*iter).second);
     }
 

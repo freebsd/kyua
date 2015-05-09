@@ -159,7 +159,7 @@ get_file(sqlite::database& db, const int64_t file_id)
 static model::test_cases_map
 get_test_cases(sqlite::database& db, const int64_t test_program_id)
 {
-    model::test_cases_map test_cases;
+    model::test_cases_map_builder test_cases;
 
     sqlite::statement stmt = db.create_statement(
         "SELECT name, metadata_id "
@@ -171,11 +171,10 @@ get_test_cases(sqlite::database& db, const int64_t test_program_id)
 
         const model::metadata metadata = get_metadata(db, metadata_id);
         LD(F("Loaded test case '%s'") % name);
-        test_cases.insert(model::test_cases_map::value_type(
-            name, model::test_case(name, metadata)));
+        test_cases.add(name, metadata);
     }
 
-    return test_cases;
+    return test_cases.build();
 }
 
 

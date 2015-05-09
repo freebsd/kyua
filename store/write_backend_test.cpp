@@ -83,7 +83,7 @@ ATF_TEST_CASE_BODY(detail__initialize__missing_schema)
 
     sqlite::database db = sqlite::database::in_memory();
     ATF_REQUIRE_THROW_RE(store::error,
-                         "Cannot open.*'/non-existent/schema_v712.sql'",
+                         "Cannot read.*'/non-existent/schema_v712.sql'",
                          store::detail::initialize(db));
 }
 

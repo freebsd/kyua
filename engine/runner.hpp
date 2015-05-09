@@ -34,11 +34,14 @@
 
 #include "engine/runner_fwd.hpp"
 
+#include "engine/scheduler_fwd.hpp"
 #include "model/context_fwd.hpp"
 #include "model/test_program.hpp"
 #include "model/test_result_fwd.hpp"
 #include "utils/config/tree_fwd.hpp"
 #include "utils/fs/path_fwd.hpp"
+#include "utils/optional_fwd.hpp"
+#include "utils/process/status_fwd.hpp"
 #include "utils/shared_ptr.hpp"
 
 namespace engine {
@@ -56,7 +59,8 @@ public:
     lazy_test_program(const std::string&, const utils::fs::path&,
                       const utils::fs::path&, const std::string&,
                       const model::metadata&,
-                      const utils::config::properties_map&);
+                      const utils::config::tree&,
+                      engine::scheduler::scheduler_handle&);
 
     const model::test_cases_map& test_cases(void) const;
 };
@@ -85,6 +89,11 @@ model::context current_context(void);
 
 utils::config::properties_map generate_tester_config(
     const utils::config::tree&, const std::string&);
+
+
+model::test_cases_map parse_test_cases(
+    const utils::optional< utils::process::status >&,
+    const utils::fs::path&);
 
 
 model::test_result debug_test_case(

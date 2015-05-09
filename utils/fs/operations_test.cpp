@@ -41,8 +41,8 @@ extern "C" {
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
-#include <fstream>
 #include <iostream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -440,14 +440,13 @@ ATF_TEST_CASE_BODY(mkdtemp__search_permissions_as_non_root)
     // write to the ATF result file which may not be writable as non-root.
     bool failed = false;
     {
-        std::ifstream input(cookie.c_str());
-        if (!input) {
-            failed |= true;
-            std::cerr << "Failed to open " << cookie << '\n';
-        } else {
-            const std::string contents = utils::read_stream(input);
+        try {
+            const std::string contents = utils::read_file(cookie);
             std::cerr << "Read contents: " << contents << '\n';
             failed |= (contents != "this is readable");
+        } catch (const std::runtime_error& e) {
+            failed |= true;
+            std::cerr << "Failed to read " << cookie << '\n';
         }
 
         if (::seteuid(old_euid) == -1) {

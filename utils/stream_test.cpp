@@ -103,6 +103,24 @@ ATF_TEST_CASE_BODY(stream_length__some)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(read_file__ok);
+ATF_TEST_CASE_BODY(read_file__ok)
+{
+    const char* contents = "These are\nsome file contents";
+    atf::utils::create_file("input.txt", contents);
+    ATF_REQUIRE_EQ(contents, utils::read_file(fs::path("input.txt")));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(read_file__missing_file);
+ATF_TEST_CASE_BODY(read_file__missing_file)
+{
+    ATF_REQUIRE_THROW_RE(std::runtime_error,
+                         "Failed to open 'foo.txt' for read",
+                         utils::read_file(fs::path("foo.txt")));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(read_stream__empty);
 ATF_TEST_CASE_BODY(read_stream__empty)
 {
@@ -130,6 +148,9 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, stream_length__empty);
     ATF_ADD_TEST_CASE(tcs, stream_length__some);
+
+    ATF_ADD_TEST_CASE(tcs, read_file__ok);
+    ATF_ADD_TEST_CASE(tcs, read_file__missing_file);
 
     ATF_ADD_TEST_CASE(tcs, read_stream__empty);
     ATF_ADD_TEST_CASE(tcs, read_stream__some);

@@ -86,6 +86,27 @@ safe_wait(void)
 }
 
 
+/// Exception-based, type-improved version of waitpid(2).
+///
+/// \param pid The identifier of the process to wait for.
+///
+/// \return The termination status of the process.
+///
+/// \throw process::system_error If the call to waitpid(2) fails.
+static process::status
+safe_waitpid(const pid_t pid)
+{
+    LD(F("Waiting for pid=%s") % pid);
+    int stat_loc;
+    if (process::detail::syscall_waitpid(pid, &stat_loc, 0) == -1) {
+        const int original_errno = errno;
+        throw process::system_error(F("Failed to wait for PID %s") % pid,
+                                    original_errno);
+    }
+    return process::status(pid, stat_loc);
+}
+
+
 }  // anonymous namespace
 
 
@@ -103,7 +124,37 @@ safe_wait(void)
 void
 process::exec(const fs::path& program, const args_vector& args) throw()
 {
+    try {
+        exec_unsafe(program, args);
+    } catch (const system_error& error) {
+        // Error message already printed by exec_unsafe.
+        std::abort();
+    }
+}
+
+
+/// Executes an external binary and replaces the current process.
+///
+/// This differs from process::exec() in that this function reports errors
+/// caused by the exec(2) system call to let the caller decide how to handle
+/// them.
+///
+/// This function must not use any of the logging features so that the output
+/// of the subprocess is not "polluted" by our own messages.
+///
+/// This function must also not affect the global state of the current process
+/// as otherwise we would not be able to use vfork().  Only state stored in the
+/// stack can be touched.
+///
+/// \param program The binary to execute.
+/// \param args The arguments to pass to the binary, without the program name.
+///
+/// \throw system_error If the exec(2) call fails.
+void
+process::exec_unsafe(const fs::path& program, const args_vector& args)
+{
     assert(args.size() < MAX_ARGS);
+    int original_errno = 0;
     try {
         const char* argv[MAX_ARGS + 1];
 
@@ -114,12 +165,10 @@ process::exec(const fs::path& program, const args_vector& args) throw()
 
         const int ret = ::execv(program.c_str(),
                                 (char* const*)(unsigned long)(const void*)argv);
-        const int original_errno = errno;
+        original_errno = errno;
         assert(ret == -1);
-
         std::cerr << "Failed to execute " << program << ": "
                   << std::strerror(original_errno) << "\n";
-        std::abort();
     } catch (const std::runtime_error& error) {
         std::cerr << "Failed to execute " << program << ": "
                   << error.what() << "\n";
@@ -129,6 +178,11 @@ process::exec(const fs::path& program, const args_vector& args) throw()
             "exception during exec\n";
         std::abort();
     }
+
+    // We must do this here to prevent our exception from being caught by the
+    // generic handlers above.
+    assert(original_errno != 0);
+    throw system_error("Failed to execute " + program.str(), original_errno);
 }
 
 
@@ -160,6 +214,25 @@ process::terminate_group(const int pgid)
 {
     (void)::killpg(pgid, SIGKILL);
     (void)::kill(pgid, SIGKILL);
+}
+
+
+/// Blocks to wait for completion of a subprocess.
+///
+/// \param pid Identifier of the process to wait for.
+///
+/// \return The termination status of the child process that terminated.
+///
+/// \throw process::system_error If the call to wait(2) fails.
+process::status
+process::wait(const int pid)
+{
+    const process::status status = safe_waitpid(pid);
+    {
+        signals::interrupts_inhibiter inhibiter;
+        signals::remove_pid_to_kill(pid);
+    }
+    return status;
 }
 
 

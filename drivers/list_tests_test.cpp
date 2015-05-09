@@ -42,9 +42,11 @@ extern "C" {
 
 #include "cli/cmd_list.hpp"
 #include "cli/common.ipp"
+#include "engine/atf.hpp"
 #include "engine/config.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/filters.hpp"
+#include "engine/scheduler.hpp"
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
 #include "model/test_program.hpp"
@@ -55,6 +57,7 @@ extern "C" {
 
 namespace config = utils::config;
 namespace fs = utils::fs;
+namespace scheduler = engine::scheduler;
 
 using utils::none;
 using utils::optional;
@@ -270,6 +273,10 @@ ATF_TEST_CASE_BODY(crash)
 
 ATF_INIT_TEST_CASES(tcs)
 {
+    scheduler::register_interface(
+        "atf", std::shared_ptr< scheduler::interface >(
+            new engine::atf_interface()));
+
     ATF_ADD_TEST_CASE(tcs, one_test_case);
     ATF_ADD_TEST_CASE(tcs, many_test_cases);
     ATF_ADD_TEST_CASE(tcs, filter_match);

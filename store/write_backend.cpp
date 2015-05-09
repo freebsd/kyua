@@ -28,7 +28,7 @@
 
 #include "store/write_backend.hpp"
 
-#include <fstream>
+#include <stdexcept>
 
 #include "store/exceptions.hpp"
 #include "store/metadata.hpp"
@@ -107,14 +107,9 @@ store::detail::initialize(sqlite::database& db)
 
     const fs::path schema = schema_file();
 
-    std::ifstream input(schema.c_str());
-    if (!input)
-        throw error(F("Cannot open database schema '%s'") % schema);
-
     LI(F("Populating new database with schema from %s") % schema);
-    const std::string schema_string = utils::read_stream(input);
     try {
-        db.exec(schema_string);
+        db.exec(utils::read_file(schema));
 
         const metadata metadata = metadata::fetch_latest(db);
         LI(F("New metadata entry %s") % metadata.timestamp());
@@ -128,6 +123,8 @@ store::detail::initialize(sqlite::database& db)
         UNREACHABLE_MSG("Inconsistent code while creating a database");
     } catch (const sqlite::error& e) {
         throw error(F("Failed to initialize database: %s") % e.what());
+    } catch (const std::runtime_error& e) {
+        throw error(F("Cannot read database schema '%s'") % schema);
     }
 }
 

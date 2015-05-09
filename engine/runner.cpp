@@ -32,6 +32,7 @@ extern "C" {
 #include <signal.h>
 }
 
+#include <cstdlib>
 #include <fstream>
 #include <stdexcept>
 
@@ -41,6 +42,7 @@ extern "C" {
 #include "engine/config.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/requirements.hpp"
+#include "engine/scheduler.hpp"
 #include "engine/testers.hpp"
 #include "model/context.hpp"
 #include "model/metadata.hpp"
@@ -59,12 +61,15 @@ extern "C" {
 #include "utils/logging/operations.hpp"
 #include "utils/optional.ipp"
 #include "utils/passwd.hpp"
+#include "utils/process/status.hpp"
+#include "utils/stream.hpp"
 #include "utils/text/operations.ipp"
 
 namespace config = utils::config;
 namespace fs = utils::fs;
 namespace logging = utils::logging;
 namespace passwd = utils::passwd;
+namespace process = utils::process;
 namespace runner = engine::runner;
 namespace text = utils::text;
 
@@ -140,29 +145,6 @@ setup_lua_state(lutok::state& state,
 }
 
 
-/// Loads the list of test cases from a test program.
-///
-/// \param interface Name of the interface to use for loading.
-/// \param absolute_path Absolute path to the test program.
-/// \param props Configuration variables to pass to the test program.
-///
-/// \return A list of test cases.
-static model::test_cases_map
-load_test_cases(const std::string& interface,
-                const fs::path& absolute_path,
-                const config::properties_map& props)
-{
-    const engine::tester tester(interface, none, none, props);
-    const std::string output = tester.list(absolute_path);
-
-    model::test_cases_map test_cases;
-    lutok::state state;
-    setup_lua_state(state, &test_cases);
-    lutok::do_string(state, output, 0, 0, 0);
-    return test_cases;
-}
-
-
 /// Creates a tester.
 ///
 /// \param interface_name The name of the tester interface to use.
@@ -206,11 +188,16 @@ struct engine::runner::lazy_test_program::impl {
     bool _loaded;
 
     /// User configuration to pass to the test program list operation.
-    config::properties_map _props;
+    config::tree _user_config;
+
+    /// Scheduler context to use to load test cases.
+    scheduler::scheduler_handle _scheduler_handle;
 
     /// Constructor.
-    impl(const config::properties_map& props_) :
-        _loaded(false), _props(props_)
+    impl(const config::tree& user_config_,
+         scheduler::scheduler_handle& scheduler_handle_) :
+        _loaded(false), _user_config(user_config_),
+        _scheduler_handle(scheduler_handle_)
     {
     }
 };
@@ -223,17 +210,19 @@ struct engine::runner::lazy_test_program::impl {
 /// \param root_ The root of the test suite containing the test program.
 /// \param test_suite_name_ The name of the test suite this program belongs to.
 /// \param md_ Metadata of the test program.
-/// \param props_ User configuration to pass to the tester.
+/// \param user_config_ User configuration to pass to the scheduler.
+/// \param scheduler_handle_ Scheduler context to use to load test cases.
 runner::lazy_test_program::lazy_test_program(
     const std::string& interface_name_,
     const fs::path& binary_,
     const fs::path& root_,
     const std::string& test_suite_name_,
     const model::metadata& md_,
-    const config::properties_map& props_) :
+    const config::tree& user_config_,
+    scheduler::scheduler_handle& scheduler_handle_) :
     test_program(interface_name_, binary_, root_, test_suite_name_, md_,
                  model::test_cases_map()),
-    _pimpl(new impl(props_))
+    _pimpl(new impl(user_config_, scheduler_handle_))
 {
 }
 
@@ -244,26 +233,11 @@ runner::lazy_test_program::lazy_test_program(
 const model::test_cases_map&
 runner::lazy_test_program::test_cases(void) const
 {
+    _pimpl->_scheduler_handle.check_interrupt();
+
     if (!_pimpl->_loaded) {
-        model::test_cases_map tcs;
-        try {
-            tcs = ::load_test_cases(interface_name(), absolute_path(),
-                                    _pimpl->_props);
-        } catch (const std::runtime_error& e) {
-            // TODO(jmmv): This is a very ugly workaround for the fact that we
-            // cannot report failures at the test-program level.  We should
-            // either address this, or move this reporting to the testers
-            // themselves.
-            LW(F("Failed to load test cases list: %s") % e.what());
-            model::test_cases_map fake_test_cases;
-            fake_test_cases.insert(model::test_cases_map::value_type(
-                "__test_cases_list__",
-                model::test_case(
-                    "__test_cases_list__",
-                    "Represents the correct processing of the test cases list",
-                    model::test_result(model::test_result_broken, e.what()))));
-            tcs = fake_test_cases;
-        }
+        const model::test_cases_map tcs = _pimpl->_scheduler_handle.list_tests(
+            this, _pimpl->_user_config);
 
         // Due to the restrictions on when set_test_cases() may be called (as a
         // way to lazily initialize the test cases list before it is ever
@@ -271,6 +245,8 @@ runner::lazy_test_program::test_cases(void) const
         const_cast< runner::lazy_test_program* >(this)->set_test_cases(tcs);
 
         _pimpl->_loaded = true;
+
+        _pimpl->_scheduler_handle.check_interrupt();
     }
 
     INV(_pimpl->_loaded);
@@ -317,6 +293,37 @@ model::context
 runner::current_context(void)
 {
     return model::context(fs::current_path(), utils::getallenv());
+}
+
+
+/// Parses the list of test cases generated by an external tester.
+///
+/// TODO(jmmv): This function exists only temporarily until we implement native
+/// test case list parsing in the scheduler.
+///
+/// \param status The exit status of the tester.
+/// \param stdout_path Path to the file written by the tester.
+///
+/// \return The list of test cases.
+model::test_cases_map
+runner::parse_test_cases(const optional< process::status >& status,
+                         const fs::path& stdout_path)
+{
+    if (!status)
+        throw std::runtime_error("Test program list timed out");
+    if (!status.get().exited() || status.get().exitstatus() != EXIT_SUCCESS)
+        throw std::runtime_error("Test program list did not return success");
+
+    std::ifstream input(stdout_path.c_str());
+    if (!input)
+        throw std::runtime_error("Failed to open " + stdout_path.str());
+    const std::string contents = utils::read_stream(input);
+
+    model::test_cases_map test_cases;
+    lutok::state state;
+    setup_lua_state(state, &test_cases);
+    lutok::do_string(state, contents, 0, 0, 0);
+    return test_cases;
 }
 
 

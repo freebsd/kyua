@@ -26,26 +26,26 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/executor_fwd.hpp
-/// Forward declarations for engine/executor.hpp
+/// \file engine/atf_list.hpp
+/// Parser of ATF test case lists.
 
-#if !defined(ENGINE_EXECUTOR_FWD_HPP)
-#define ENGINE_EXECUTOR_FWD_HPP
+#if !defined(ENGINE_ATF_LIST_HPP)
+#define ENGINE_ATF_LIST_HPP
+
+#include <istream>
+
+#include "model/metadata_fwd.hpp"
+#include "model/test_case_fwd.hpp"
+#include "model/types.hpp"
+#include "utils/fs/path_fwd.hpp"
 
 namespace engine {
-namespace executor {
 
 
-/// Unique identifier for in-flight execution operations.
-typedef int exec_handle;
+model::metadata parse_atf_metadata(const model::properties_map&);
+model::test_cases_map parse_atf_list(std::istream&);
 
 
-class executor_handle;
-class interface;
-class result_handle;
-
-
-}  // namespace executor
 }  // namespace engine
 
-#endif  // !defined(ENGINE_EXECUTOR_FWD_HPP)
+#endif  // !defined(ENGINE_ATF_LIST_HPP)

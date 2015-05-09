@@ -35,13 +35,15 @@ extern "C" {
 #include <atf-c++.hpp>
 
 #include "engine/config.hpp"
-#include "engine/executor.hpp"
+#include "engine/scheduler.hpp"
 #include "model/metadata.hpp"
+#include "model/test_case.hpp"
 #include "model/test_program.hpp"
 #include "model/test_result.hpp"
 #include "utils/config/tree.ipp"
 #include "utils/datetime.hpp"
 #include "utils/env.hpp"
+#include "utils/format/containers.ipp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
@@ -49,8 +51,8 @@ extern "C" {
 
 namespace config = utils::config;
 namespace datetime = utils::datetime;
-namespace executor = engine::executor;
 namespace fs = utils::fs;
+namespace scheduler = engine::scheduler;
 
 using utils::none;
 
@@ -90,14 +92,18 @@ run_one(const atf::tests::tc* tc, const char* test_case_name,
         "tap", fs::path(test_case_name), fs::current_path(), "the-suite")
         .add_test_case("main", metadata).build_ptr();
 
-    executor::executor_handle handle = executor::setup();
+    scheduler::scheduler_handle handle = scheduler::setup();
     (void)handle.spawn_test(program, "main", user_config);
 
-    executor::result_handle result_handle = handle.wait_any_test();
-    atf::utils::cat_file(result_handle.stdout_file().str(), "stdout: ");
-    atf::utils::cat_file(result_handle.stderr_file().str(), "stderr: ");
-    ATF_REQUIRE_EQ(exp_result, result_handle.test_result());
-    result_handle.cleanup();
+    scheduler::result_handle_ptr result_handle = handle.wait_any();
+    const scheduler::test_result_handle* test_result_handle =
+        dynamic_cast< const scheduler::test_result_handle* >(
+            result_handle.get());
+    atf::utils::cat_file(result_handle->stdout_file().str(), "stdout: ");
+    atf::utils::cat_file(result_handle->stderr_file().str(), "stderr: ");
+    ATF_REQUIRE_EQ(exp_result, test_result_handle->test_result());
+    result_handle->cleanup();
+    result_handle.reset();
 
     handle.cleanup();
 }
@@ -106,16 +112,34 @@ run_one(const atf::tests::tc* tc, const char* test_case_name,
 }  // anonymous namespace
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(integration__all_tests_pass);
-ATF_TEST_CASE_BODY(integration__all_tests_pass)
+ATF_TEST_CASE_WITHOUT_HEAD(list);
+ATF_TEST_CASE_BODY(list)
+{
+    const model::test_program program = model::test_program_builder(
+        "tap", fs::path("non-existent"), fs::path("."), "unused-suite")
+        .build();
+
+    scheduler::scheduler_handle handle = scheduler::setup();
+    const model::test_cases_map test_cases = handle.list_tests(
+        &program, engine::empty_config());
+    handle.cleanup();
+
+    const model::test_cases_map exp_test_cases = model::test_cases_map_builder()
+        .add("main").build();
+    ATF_REQUIRE_EQ(exp_test_cases, test_cases);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(test__all_tests_pass);
+ATF_TEST_CASE_BODY(test__all_tests_pass)
 {
     const model::test_result exp_result(model::test_result_passed);
     run_one(this, "pass", exp_result);
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(integration__some_tests_fail);
-ATF_TEST_CASE_BODY(integration__some_tests_fail)
+ATF_TEST_CASE_WITHOUT_HEAD(test__some_tests_fail);
+ATF_TEST_CASE_BODY(test__some_tests_fail)
 {
     const model::test_result exp_result(model::test_result_failed,
                                         "2 of 5 tests failed");
@@ -123,8 +147,8 @@ ATF_TEST_CASE_BODY(integration__some_tests_fail)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(integration__all_tests_pass_but_exit_failure);
-ATF_TEST_CASE_BODY(integration__all_tests_pass_but_exit_failure)
+ATF_TEST_CASE_WITHOUT_HEAD(test__all_tests_pass_but_exit_failure);
+ATF_TEST_CASE_BODY(test__all_tests_pass_but_exit_failure)
 {
     const model::test_result exp_result(
         model::test_result_broken,
@@ -134,8 +158,8 @@ ATF_TEST_CASE_BODY(integration__all_tests_pass_but_exit_failure)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(integration__signal_is_broken);
-ATF_TEST_CASE_BODY(integration__signal_is_broken)
+ATF_TEST_CASE_WITHOUT_HEAD(test__signal_is_broken);
+ATF_TEST_CASE_BODY(test__signal_is_broken)
 {
     const model::test_result exp_result(model::test_result_broken,
                                         F("Received signal %s") % SIGABRT);
@@ -143,12 +167,12 @@ ATF_TEST_CASE_BODY(integration__signal_is_broken)
 }
 
 
-ATF_TEST_CASE(integration__timeout_is_broken);
-ATF_TEST_CASE_HEAD(integration__timeout_is_broken)
+ATF_TEST_CASE(test__timeout_is_broken);
+ATF_TEST_CASE_HEAD(test__timeout_is_broken)
 {
     set_md_var("timeout", "60");
 }
-ATF_TEST_CASE_BODY(integration__timeout_is_broken)
+ATF_TEST_CASE_BODY(test__timeout_is_broken)
 {
     utils::setenv("CONTROL_DIR", fs::current_path().str());
 
@@ -162,8 +186,8 @@ ATF_TEST_CASE_BODY(integration__timeout_is_broken)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(integration__configuration_variables);
-ATF_TEST_CASE_BODY(integration__configuration_variables)
+ATF_TEST_CASE_WITHOUT_HEAD(test__configuration_variables);
+ATF_TEST_CASE_BODY(test__configuration_variables)
 {
     config::tree user_config = engine::empty_config();
     user_config.set_string("test_suites.a-suite.first", "unused");
@@ -179,14 +203,16 @@ ATF_TEST_CASE_BODY(integration__configuration_variables)
 
 ATF_INIT_TEST_CASES(tcs)
 {
-    executor::register_interface(
-        "tap", std::shared_ptr< executor::interface >(
+    scheduler::register_interface(
+        "tap", std::shared_ptr< scheduler::interface >(
             new engine::tap_interface()));
 
-    ATF_ADD_TEST_CASE(tcs, integration__all_tests_pass);
-    ATF_ADD_TEST_CASE(tcs, integration__all_tests_pass_but_exit_failure);
-    ATF_ADD_TEST_CASE(tcs, integration__some_tests_fail);
-    ATF_ADD_TEST_CASE(tcs, integration__signal_is_broken);
-    ATF_ADD_TEST_CASE(tcs, integration__timeout_is_broken);
-    ATF_ADD_TEST_CASE(tcs, integration__configuration_variables);
+    ATF_ADD_TEST_CASE(tcs, list);
+
+    ATF_ADD_TEST_CASE(tcs, test__all_tests_pass);
+    ATF_ADD_TEST_CASE(tcs, test__all_tests_pass_but_exit_failure);
+    ATF_ADD_TEST_CASE(tcs, test__some_tests_fail);
+    ATF_ADD_TEST_CASE(tcs, test__signal_is_broken);
+    ATF_ADD_TEST_CASE(tcs, test__timeout_is_broken);
+    ATF_ADD_TEST_CASE(tcs, test__configuration_variables);
 }

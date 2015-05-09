@@ -128,11 +128,10 @@ check_ctor_and_getters(void)
         .add_custom("first", "baz")
         .build();
 
-    model::test_cases_map tcs;
-    tcs.insert(model::test_cases_map::value_type(
-        "foo", model::test_case("foo", tc_md)));
     const TestProgram test_program(
-        "mock", fs::path("binary"), fs::path("root"), "suite-name", tp_md, tcs);
+        "mock", fs::path("binary"), fs::path("root"), "suite-name", tp_md,
+        model::test_cases_map_builder().add("foo", tc_md).build());
+
 
     ATF_REQUIRE_EQ("mock", test_program.interface_name());
     ATF_REQUIRE_EQ(fs::path("binary"), test_program.relative_path());
@@ -146,9 +145,9 @@ check_ctor_and_getters(void)
         .add_custom("first", "baz")
         .add_custom("second", "bar")
         .build();
-    model::test_cases_map exp_tcs;
-    exp_tcs.insert(model::test_cases_map::value_type(
-        "foo", model::test_case("foo", exp_tc_md)));
+    const model::test_cases_map exp_tcs = model::test_cases_map_builder()
+        .add("foo", exp_tc_md)
+        .build();
     ATF_REQUIRE_EQ(exp_tcs, test_program.test_cases());
 }
 
@@ -174,15 +173,12 @@ template< class TestProgram >
 static void
 check_find_ok(void)
 {
-    model::test_cases_map test_cases;
-    const model::test_case test_case(
-        "main", model::metadata_builder().build());
-    test_cases.insert(model::test_cases_map::value_type(test_case.name(),
-                                                        test_case));
+    const model::test_case test_case("main", model::metadata_builder().build());
 
     const TestProgram test_program(
         "mock", fs::path("non-existent"), fs::path("."), "suite-name",
-        model::metadata_builder().build(), test_cases);
+        model::metadata_builder().build(),
+        model::test_cases_map_builder().add(test_case).build());
 
     const model::test_case& found_test_case = test_program.find("main");
     ATF_REQUIRE_EQ(test_case, found_test_case);
@@ -210,15 +206,10 @@ template< class TestProgram >
 static void
 check_find_missing(void)
 {
-    model::test_cases_map test_cases;
-    const model::test_case test_case(
-        "main", model::metadata_builder().build());
-    test_cases.insert(model::test_cases_map::value_type(test_case.name(),
-                                                        test_case));
-
     const TestProgram test_program(
         "mock", fs::path("non-existent"), fs::path("."), "suite-name",
-        model::metadata_builder().build(), test_cases);
+        model::metadata_builder().build(),
+        model::test_cases_map_builder().add("main").build());
 
     ATF_REQUIRE_THROW_RE(model::not_found_error,
                          "case.*abc.*program.*non-existent",
@@ -247,35 +238,19 @@ template< class TestProgram >
 static void
 check_metadata_inheritance(void)
 {
-    model::test_cases_map test_cases;
-    {
-        const model::metadata metadata = model::metadata_builder()
-            .build();
-
-        const model::test_case test_case("inherit-all", metadata);
-        test_cases.insert(model::test_cases_map::value_type(test_case.name(),
-                                                            test_case));
-    }
-    {
-        const model::metadata metadata = model::metadata_builder()
-            .set_description("Overriden description")
-            .build();
-
-        const model::test_case test_case("inherit-some", metadata);
-        test_cases.insert(model::test_cases_map::value_type(test_case.name(),
-                                                            test_case));
-    }
-    {
-        const model::metadata metadata = model::metadata_builder()
-            .add_allowed_architecture("overriden-arch")
-            .add_allowed_platform("overriden-platform")
-            .set_description("Overriden description")
-            .build();
-
-        const model::test_case test_case("inherit-none", metadata);
-        test_cases.insert(model::test_cases_map::value_type(test_case.name(),
-                                                            test_case));
-    }
+    const model::test_cases_map test_cases = model::test_cases_map_builder()
+        .add("inherit-all")
+        .add("inherit-some",
+             model::metadata_builder()
+             .set_description("Overriden description")
+             .build())
+        .add("inherit-none",
+             model::metadata_builder()
+             .add_allowed_architecture("overriden-arch")
+             .add_allowed_platform("overriden-platform")
+             .set_description("Overriden description")
+             .build())
+        .build();
 
     const model::metadata metadata = model::metadata_builder()
         .add_allowed_architecture("base-arch")
@@ -375,14 +350,11 @@ check_operators_eq_and_ne__not_copy(void)
         .add_custom("X-foo", "bar")
         .build();
 
-    model::test_cases_map base_tcs;
-    {
-        const model::metadata tc_metadata = model::metadata_builder()
-            .add_custom("X-second", "baz")
-            .build();
-        const model::test_case tc1("main", tc_metadata);
-        base_tcs.insert(model::test_cases_map::value_type(tc1.name(), tc1));
-    }
+    const model::test_cases_map base_tcs = model::test_cases_map_builder()
+        .add("main", model::metadata_builder()
+             .add_custom("X-second", "baz")
+             .build())
+        .build();
 
     const TestProgram base_tp(
         base_interface, base_relative_path, base_root, base_test_suite,
@@ -390,15 +362,11 @@ check_operators_eq_and_ne__not_copy(void)
 
     // Construct with all same values.
     {
-        model::test_cases_map other_tcs;
-        {
-            const model::metadata tc_metadata = model::metadata_builder()
-                .add_custom("X-second", "baz")
-                .build();
-            const model::test_case tc1("main", tc_metadata);
-            other_tcs.insert(model::test_cases_map::value_type(tc1.name(),
-                                                               tc1));
-        }
+        const model::test_cases_map other_tcs = model::test_cases_map_builder()
+            .add("main", model::metadata_builder()
+                 .add_custom("X-second", "baz")
+                 .build())
+            .build();
 
         const TestProgram other_tp(
             base_interface, base_relative_path, base_root, base_test_suite,
@@ -413,16 +381,12 @@ check_operators_eq_and_ne__not_copy(void)
     // in the base test program definition and another in the test case; here,
     // we put both definitions explicitly in the test case.
     {
-        model::test_cases_map other_tcs;
-        {
-            const model::metadata tc_metadata = model::metadata_builder()
-                .add_custom("X-foo", "bar")
-                .add_custom("X-second", "baz")
-                .build();
-            const model::test_case tc1("main", tc_metadata);
-            other_tcs.insert(model::test_cases_map::value_type(tc1.name(),
-                                                               tc1));
-        }
+        const model::test_cases_map other_tcs = model::test_cases_map_builder()
+            .add("main", model::metadata_builder()
+                 .add_custom("X-foo", "bar")
+                 .add_custom("X-second", "baz")
+                 .build())
+            .build();
 
         const TestProgram other_tp(
             base_interface, base_relative_path, base_root, base_test_suite,
@@ -484,13 +448,8 @@ check_operators_eq_and_ne__not_copy(void)
 
     // Different test cases.
     {
-        model::test_cases_map other_tcs;
-        {
-            const model::test_case tc1("foo",
-                                       model::metadata_builder().build());
-            other_tcs.insert(model::test_cases_map::value_type(tc1.name(),
-                                                               tc1));
-        }
+        const model::test_cases_map other_tcs = model::test_cases_map_builder()
+            .add("foo").build();
 
         const TestProgram other_tp(
             base_interface, base_relative_path, base_root, base_test_suite,
@@ -615,19 +574,13 @@ template< class TestProgram >
 static void
 check_output__some_test_cases(void)
 {
-    model::test_cases_map test_cases;
-    model::test_case test_case_1 = model::test_case(
-        "the-name",
-        model::metadata_builder()
-        .add_allowed_platform("foo")
-        .add_custom("X-bar", "baz")
-        .build());
-    test_cases.insert(model::test_cases_map::value_type(test_case_1.name(),
-                                                        test_case_1));
-    model::test_case test_case_2 = model::test_case(
-        "another-name", model::metadata_builder().build());
-    test_cases.insert(model::test_cases_map::value_type(test_case_2.name(),
-                                                        test_case_2));
+    const model::test_cases_map test_cases = model::test_cases_map_builder()
+        .add("the-name", model::metadata_builder()
+             .add_allowed_platform("foo")
+             .add_custom("X-bar", "baz")
+             .build())
+        .add("another-name")
+        .build();
 
     const TestProgram tp = TestProgram(
         "plain", fs::path("binary/path"), fs::path("/the/root"), "suite-name",
@@ -696,11 +649,10 @@ ATF_TEST_CASE_BODY(builder__overrides)
     const model::metadata md = model::metadata_builder()
         .add_custom("foo", "bar")
         .build();
-    model::test_cases_map tcs;
-    tcs.insert(model::test_cases_map::value_type(
-        "first", model::test_case("first", model::metadata_builder().build())));
-    tcs.insert(model::test_cases_map::value_type(
-        "second", model::test_case("second", md)));
+    const model::test_cases_map tcs = model::test_cases_map_builder()
+        .add("first")
+        .add("second", md)
+        .build();
     const model::test_program expected(
         "mock", fs::path("binary"), fs::path("root"), "suite-name", md, tcs);
 

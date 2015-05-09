@@ -26,7 +26,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <fstream>
 #include <map>
 
 #include <atf-c++.hpp>
@@ -56,20 +55,6 @@ namespace units = utils::units;
 
 
 namespace {
-
-
-/// Executes an SQL script within a database.
-///
-/// \param db Database in which to run the script.
-/// \param path Path to the data file.
-static void
-exec_db_file(sqlite::database& db, const fs::path& path)
-{
-    std::ifstream input(path.c_str());
-    if (!input)
-        ATF_FAIL(F("Failed to open %s") % path);
-    db.exec(utils::read_stream(input));
-}
 
 
 /// Gets a data file from the tests directory.
@@ -426,8 +411,9 @@ check_action_4(const fs::path& dbpath)
         \
         sqlite::database db = sqlite::database::open( \
             testpath, sqlite::open_readwrite | sqlite::open_create); \
-        exec_db_file(db, store::detail::schema_file()); \
-        exec_db_file(db, testdata_file("testdata_v3_" #dataset ".sql")); \
+        db.exec(utils::read_file(store::detail::schema_file())); \
+        db.exec(utils::read_file(testdata_file(\
+            "testdata_v3_" #dataset ".sql"))); \
         db.close(); \
         \
         check_action_ ## dataset (testpath); \
@@ -465,8 +451,8 @@ CURRENT_SCHEMA_TEST(4);
         \
         sqlite::database db = sqlite::database::open( \
             testpath, sqlite::open_readwrite | sqlite::open_create); \
-        exec_db_file(db, testdata_file(schema)); \
-        exec_db_file(db, testdata_file(testdata)); \
+        db.exec(utils::read_file(testdata_file(schema))); \
+        db.exec(utils::read_file(testdata_file(testdata))); \
         db.close(); \
         \
         store::migrate_schema(fs::path("test.db")); \

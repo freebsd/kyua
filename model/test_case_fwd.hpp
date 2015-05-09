@@ -39,6 +39,7 @@ namespace model {
 
 
 class test_case;
+class test_cases_map_builder;
 
 
 /// Collection of test cases keyed by their name.
