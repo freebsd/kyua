@@ -176,13 +176,45 @@ struct exec_data {
 typedef std::map< scheduler::exec_handle, exec_data > exec_data_map;
 
 
+/// Enforces a test program to hold an absolute path.
+///
+/// TODO(jmmv): This function (which is a pretty ugly hack) exists because we
+/// want the interface hooks to receive a test_program as their argument.
+/// However, those hooks run after the test program has been isolated, which
+/// means that the current directory has changed since when the test_program
+/// objects were created.  This causes the absolute_path() method of
+/// test_program to return bogus values if the internal representation of their
+/// path is relative.  We should fix somehow: maybe making the fs module grab
+/// its "current_path" view at program startup time; or maybe by grabbing the
+/// current path at test_program creation time; or maybe something else.
+///
+/// \param program The test program to modify.
+///
+/// \return A new test program whose internal paths are absolute.
+static model::test_program
+force_absolute_paths(const model::test_program program)
+{
+    const std::string& relative = program.relative_path().str();
+    const std::string absolute = program.absolute_path().str();
+
+    const std::string root = absolute.substr(
+        0, absolute.length() - relative.length());
+
+    return model::test_program(
+        program.interface_name(),
+        program.relative_path(), fs::path(root),
+        program.test_suite_name(),
+        program.get_metadata(), program.test_cases());
+}
+
+
 /// Functor to list the test cases of a test program.
 class list_test_cases {
     /// Interface of the test program to execute.
     std::shared_ptr< scheduler::interface > _interface;
 
     /// Test program to execute.
-    const model::test_program* _test_program;
+    const model::test_program _test_program;
 
     /// User-provided configuration variables.
     const config::tree& _user_config;
@@ -198,7 +230,7 @@ public:
         const model::test_program* test_program,
         const config::tree& user_config) :
         _interface(interface),
-        _test_program(test_program),
+        _test_program(force_absolute_paths(*test_program)),
         _user_config(user_config)
     {
     }
@@ -208,8 +240,8 @@ public:
     operator()(const fs::path& UTILS_UNUSED_PARAM(control_directory))
     {
         const config::properties_map vars = runner::generate_tester_config(
-            _user_config, _test_program->test_suite_name());
-        _interface->exec_list(*_test_program, vars);
+            _user_config, _test_program.test_suite_name());
+        _interface->exec_list(_test_program, vars);
     }
 };
 
@@ -220,7 +252,7 @@ class run_test_program {
     std::shared_ptr< scheduler::interface > _interface;
 
     /// Test program to execute.
-    const model::test_program_ptr _test_program;
+    const model::test_program _test_program;
 
     /// Name of the test case to execute.
     const std::string& _test_case_name;
@@ -245,12 +277,12 @@ class run_test_program {
     void
     do_requirements_check(const fs::path& skipped_cookie_path)
     {
-        const model::test_case& test_case = _test_program->find(
+        const model::test_case& test_case = _test_program.find(
             _test_case_name);
 
         const std::string skip_reason = engine::check_reqs(
             test_case.get_metadata(), _user_config,
-            _test_program->test_suite_name(),
+            _test_program.test_suite_name(),
             fs::current_path());
         if (skip_reason.empty())
             return;
@@ -283,7 +315,7 @@ public:
         const std::string& test_case_name,
         const config::tree& user_config) :
         _interface(interface),
-        _test_program(test_program),
+        _test_program(force_absolute_paths(*test_program)),
         _test_case_name(test_case_name),
         _user_config(user_config)
     {
@@ -293,7 +325,7 @@ public:
     void
     operator()(const fs::path& control_directory)
     {
-        const model::test_case& test_case = _test_program->find(
+        const model::test_case& test_case = _test_program.find(
             _test_case_name);
         if (test_case.fake_result())
             ::_exit(EXIT_SUCCESS);
@@ -301,8 +333,8 @@ public:
         do_requirements_check(control_directory / skipped_cookie);
 
         const config::properties_map vars = runner::generate_tester_config(
-            _user_config, _test_program->test_suite_name());
-        _interface->exec_test(*_test_program, _test_case_name, vars,
+            _user_config, _test_program.test_suite_name());
+        _interface->exec_test(_test_program, _test_case_name, vars,
                               control_directory);
     }
 };

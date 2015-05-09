@@ -210,7 +210,15 @@ public:
 
         std::cerr << name;
         std::cerr.flush();
-        if (name == "empty") {
+        if (name == "check_i_exist") {
+            if (fs::exists(test_program.absolute_path())) {
+                std::cout << "found\n";
+                do_exit(EXIT_SUCCESS);
+            } else {
+                std::cout << "not_found\n";
+                do_exit(EXIT_FAILURE);
+            }
+        } else if (name == "empty") {
             do_exit(EXIT_SUCCESS);
         } else if (name == "misbehave") {
             std::abort();
@@ -244,7 +252,10 @@ public:
                const fs::path& stderr_path) const
     {
         const std::string name = utils::read_file(stderr_path);
-        if (name == "empty") {
+        if (name == "check_i_exist") {
+            ATF_REQUIRE(status.get().exited());
+            ATF_REQUIRE_EQ(EXIT_SUCCESS, status.get().exitstatus());
+        } else if (name == "empty") {
             ATF_REQUIRE(status.get().exited());
             ATF_REQUIRE_EQ(EXIT_SUCCESS, status.get().exitstatus());
         } else if (name == "misbehave") {
@@ -296,7 +307,9 @@ public:
             std::abort();
         }
 
-        if (starts_with(test_case_name, "create_files_and_fail")) {
+        if (test_case_name == "check_i_exist") {
+            do_exit(fs::exists(test_program.absolute_path()) ? 0 : 1);
+        } else if (starts_with(test_case_name, "create_files_and_fail")) {
             exec_create_files_and_fail();
         } else if (test_case_name == "delete_all") {
             exec_delete_all();
@@ -383,11 +396,11 @@ public:
 ///
 /// \return The loaded list of test cases.
 static model::test_cases_map
-check_integration_list(const char* test_name,
+check_integration_list(const char* test_name, const fs::path root,
                        const config::tree& user_config = engine::empty_config())
 {
     const model::test_program program = model::test_program_builder(
-        "mock", fs::path(test_name), fs::current_path(), "the-suite")
+        "mock", fs::path(test_name), root, "the-suite")
         .build();
 
     scheduler::scheduler_handle handle = scheduler::setup();
@@ -408,7 +421,7 @@ ATF_TEST_CASE_BODY(integration__list_some)
     user_config.set_string("test_suites.abc.unused", "unused");
 
     const model::test_cases_map test_cases = check_integration_list(
-        "vars", user_config);
+        "vars", fs::path("."), user_config);
 
     model::test_cases_map exp_test_cases;
     const model::test_case test_case_1("first_test",
@@ -423,11 +436,27 @@ ATF_TEST_CASE_BODY(integration__list_some)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(integration__list_check_paths);
+ATF_TEST_CASE_BODY(integration__list_check_paths)
+{
+    fs::mkdir_p(fs::path("dir1/dir2/dir3"), 0755);
+    atf::utils::create_file("dir1/dir2/dir3/check_i_exist", "");
+
+    const model::test_cases_map test_cases = check_integration_list(
+        "dir2/dir3/check_i_exist", fs::path("dir1"));
+
+    const model::test_cases_map exp_test_cases = model::test_cases_map_builder()
+        .add("found").build();
+    ATF_REQUIRE_EQ(exp_test_cases, test_cases);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(integration__list_timeout);
 ATF_TEST_CASE_BODY(integration__list_timeout)
 {
     scheduler::list_timeout = datetime::delta(1, 0);
-    const model::test_cases_map test_cases = check_integration_list("timeout");
+    const model::test_cases_map test_cases = check_integration_list(
+        "timeout", fs::path("."));
 
     model::test_cases_map exp_test_cases;
     const model::test_case test_case("sleeping",
@@ -442,7 +471,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(integration__list_fail);
 ATF_TEST_CASE_BODY(integration__list_fail)
 {
     const model::test_cases_map test_cases = check_integration_list(
-        "misbehave");
+        "misbehave", fs::path("."));
 
     ATF_REQUIRE_EQ(1, test_cases.size());
     const model::test_case& test_case = test_cases.begin()->second;
@@ -458,7 +487,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(integration__list_empty);
 ATF_TEST_CASE_BODY(integration__list_empty)
 {
     const model::test_cases_map test_cases = check_integration_list(
-        "empty");
+        "empty", fs::path("."));
 
     ATF_REQUIRE_EQ(1, test_cases.size());
     const model::test_case& test_case = test_cases.begin()->second;
@@ -603,6 +632,34 @@ ATF_TEST_CASE_BODY(integration__run_many)
 
         result_handle.reset();
     }
+
+    handle.cleanup();
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(integration__run_check_paths);
+ATF_TEST_CASE_BODY(integration__run_check_paths)
+{
+    fs::mkdir_p(fs::path("dir1/dir2/dir3"), 0755);
+    atf::utils::create_file("dir1/dir2/dir3/program", "");
+
+    const model::test_program_ptr program = model::test_program_builder(
+        "mock", fs::path("dir2/dir3/program"), fs::path("dir1"), "the-suite")
+        .add_test_case("check_i_exist").build_ptr();
+
+    scheduler::scheduler_handle handle = scheduler::setup();
+
+    (void)handle.spawn_test(program, "check_i_exist", engine::default_config());
+    scheduler::result_handle_ptr result_handle = handle.wait_any();
+    const scheduler::test_result_handle* test_result_handle =
+        dynamic_cast< const scheduler::test_result_handle* >(
+            result_handle.get());
+
+    ATF_REQUIRE_EQ(model::test_result(model::test_result_passed, "Exit 0"),
+                   test_result_handle->test_result());
+
+    result_handle->cleanup();
+    result_handle.reset();
 
     handle.cleanup();
 }
@@ -817,6 +874,7 @@ ATF_INIT_TEST_CASES(tcs)
         "mock", std::shared_ptr< scheduler::interface >(new mock_interface()));
 
     ATF_ADD_TEST_CASE(tcs, integration__list_some);
+    ATF_ADD_TEST_CASE(tcs, integration__list_check_paths);
     ATF_ADD_TEST_CASE(tcs, integration__list_timeout);
     ATF_ADD_TEST_CASE(tcs, integration__list_fail);
     ATF_ADD_TEST_CASE(tcs, integration__list_empty);
@@ -824,6 +882,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, integration__run_one);
     ATF_ADD_TEST_CASE(tcs, integration__run_many);
 
+    ATF_ADD_TEST_CASE(tcs, integration__run_check_paths);
     ATF_ADD_TEST_CASE(tcs, integration__parameters_and_output);
 
     ATF_ADD_TEST_CASE(tcs, integration__fake_result);
