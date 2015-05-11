@@ -46,7 +46,7 @@
 #include "utils/datetime_fwd.hpp"
 #include "utils/defs.hpp"
 #include "utils/fs/path_fwd.hpp"
-#include "utils/optional_fwd.hpp"
+#include "utils/optional.hpp"
 #include "utils/process/status_fwd.hpp"
 #include "utils/shared_ptr.hpp"
 
@@ -187,8 +187,12 @@ public:
 
     model::test_cases_map list_tests(const model::test_program*,
                                      const utils::config::tree&);
-    exec_handle spawn_test(const model::test_program_ptr, const std::string&,
-                           const utils::config::tree&);
+    exec_handle spawn_test(
+        const model::test_program_ptr,
+        const std::string&,
+        const utils::config::tree&,
+        const utils::optional< utils::fs::path > = utils::none,
+        const utils::optional< utils::fs::path > = utils::none);
     result_handle_ptr wait_any(void);
 
     void check_interrupt(void) const;

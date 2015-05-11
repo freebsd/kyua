@@ -726,6 +726,10 @@ scheduler::scheduler_handle::list_tests(
 /// \param test_program The container test program.
 /// \param test_case_name The name of the test case to run.
 /// \param user_config User-provided configuration variables.
+/// \param stdout_target If not none, file to which to write the stdout of the
+///     test case.
+/// \param stderr_target If not none, file to which to write the stderr of the
+///     test case.
 ///
 /// \return A handle for the background operation.  Used to match the result of
 /// the execution returned by wait_any() with this invocation.
@@ -733,7 +737,9 @@ scheduler::exec_handle
 scheduler::scheduler_handle::spawn_test(
     const model::test_program_ptr test_program,
     const std::string& test_case_name,
-    const config::tree& user_config)
+    const config::tree& user_config,
+    const optional< fs::path > stdout_target,
+    const optional< fs::path > stderr_target)
 {
     _pimpl->generic.check_interrupt();
 
@@ -756,7 +762,7 @@ scheduler::scheduler_handle::spawn_test(
     const executor::exec_handle handle = _pimpl->generic.spawn(
         run_test_program(interface, test_program, test_case_name,
                          user_config),
-        timeout, unprivileged_user);
+        timeout, unprivileged_user, stdout_target, stderr_target);
 
     const exec_data data(interface, test_program, test_case_name);
     _pimpl->all_exec_data.insert(exec_data_map::value_type(
