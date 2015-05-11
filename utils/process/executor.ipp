@@ -105,6 +105,10 @@ public:
 /// \param hook Function or functor to run in the subprocess.
 /// \param timeout Maximum amount of time the subprocess can run for.
 /// \param unprivileged_user If not none, user to switch to before execution.
+/// \param stdout_target If not none, file to which to write the stdout of the
+///     test case.
+/// \param stderr_target If not none, file to which to write the stderr of the
+///     test case.
 ///
 /// \return A handle for the background operation.  Used to match the result of
 /// the execution returned by wait_any() with this invocation.
@@ -113,19 +117,26 @@ executor::exec_handle
 executor::executor_handle::spawn(
     Hook hook,
     const datetime::delta& timeout,
-    const optional< passwd::user > unprivileged_user)
+    const optional< passwd::user > unprivileged_user,
+    const optional< fs::path > stdout_target,
+    const optional< fs::path > stderr_target)
 {
     const fs::path unique_work_directory = spawn_pre();
+
+    const fs::path stdout_path = stdout_target ?
+        stdout_target.get() : (unique_work_directory / detail::stdout_name);
+    const fs::path stderr_path = stderr_target ?
+        stderr_target.get() : (unique_work_directory / detail::stderr_name);
 
     std::auto_ptr< process::child > child = process::child::fork_files(
         detail::run_child< Hook >(hook,
                                   unique_work_directory,
                                   unique_work_directory / detail::work_subdir,
                                   unprivileged_user),
-        unique_work_directory / detail::stdout_name,
-        unique_work_directory / detail::stderr_name);
+        stdout_path, stderr_path);
 
-    return spawn_post(unique_work_directory, timeout, unprivileged_user, child);
+    return spawn_post(unique_work_directory, stdout_path, stderr_path,
+                      timeout, unprivileged_user, child);
 }
 
 

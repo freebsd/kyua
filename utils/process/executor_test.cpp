@@ -329,16 +329,22 @@ child_validate_isolation(const fs::path& UTILS_UNUSED_PARAM(control_directory))
 /// \param timeout Maximum time the program can run for.
 /// \param unprivileged_user If set, user to switch to when running the child
 ///     program.
+/// \param stdout_target If not none, file to which to write the stdout of the
+///     test case.
+/// \param stderr_target If not none, file to which to write the stderr of the
+///     test case.
 ///
 /// \return The exec handle for the spawned binary.
 template< class Hook >
 static executor::exec_handle
 do_spawn(executor::executor_handle& handle, Hook hook,
          const datetime::delta& timeout = infinite_timeout,
-         const optional< passwd::user > unprivileged_user = none)
+         const optional< passwd::user > unprivileged_user = none,
+         const optional< fs::path > stdout_target = none,
+         const optional< fs::path > stderr_target = none)
 {
     const executor::exec_handle exec_handle = handle.spawn< Hook >(
-        hook, timeout, unprivileged_user);
+        hook, timeout, unprivileged_user, stdout_target, stderr_target);
     return exec_handle;
 }
 
@@ -481,14 +487,52 @@ ATF_TEST_CASE_BODY(integration__parameters_and_output)
 
     require_exit(EXIT_SUCCESS, exit_handle.status());
 
+    const fs::path stdout_file = exit_handle.stdout_file();
     ATF_REQUIRE(atf::utils::compare_file(
-        exit_handle.stdout_file().str(), "stdout: some text\n"));
+        stdout_file.str(), "stdout: some text\n"));
+    const fs::path stderr_file = exit_handle.stderr_file();
     ATF_REQUIRE(atf::utils::compare_file(
-        exit_handle.stderr_file().str(), "stderr: some other text\n"));
+        stderr_file.str(), "stderr: some other text\n"));
+
+    exit_handle.cleanup();
+    ATF_REQUIRE(!fs::exists(stdout_file));
+    ATF_REQUIRE(!fs::exists(stderr_file));
+
+    handle.cleanup();
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(integration__custom_output_files);
+ATF_TEST_CASE_BODY(integration__custom_output_files)
+{
+    executor::executor_handle handle = executor::setup();
+
+    const fs::path stdout_file("custom-stdout.txt");
+    const fs::path stderr_file("custom-stderr.txt");
+
+    const executor::exec_handle exec_handle = do_spawn(
+        handle, child_print, infinite_timeout, none,
+        utils::make_optional(stdout_file),
+        utils::make_optional(stderr_file));
+
+    executor::exit_handle exit_handle = handle.wait_any();
+
+    ATF_REQUIRE_EQ(exec_handle, exit_handle.original_exec_handle());
+
+    require_exit(EXIT_SUCCESS, exit_handle.status());
+
+    ATF_REQUIRE_EQ(stdout_file, exit_handle.stdout_file());
+    ATF_REQUIRE_EQ(stderr_file, exit_handle.stderr_file());
 
     exit_handle.cleanup();
 
     handle.cleanup();
+
+    // Must compare after cleanup to ensure the files did not get deleted.
+    ATF_REQUIRE(atf::utils::compare_file(
+        stdout_file.str(), "stdout: some text\n"));
+    ATF_REQUIRE(atf::utils::compare_file(
+        stderr_file.str(), "stderr: some other text\n"));
 }
 
 
@@ -892,6 +936,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, integration__run_many);
 
     ATF_ADD_TEST_CASE(tcs, integration__parameters_and_output);
+    ATF_ADD_TEST_CASE(tcs, integration__custom_output_files);
     ATF_ADD_TEST_CASE(tcs, integration__timestamps);
     ATF_ADD_TEST_CASE(tcs, integration__files);
 
