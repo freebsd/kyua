@@ -136,6 +136,7 @@ class mock_interface : public scheduler::interface {
     void
     exec_create_files_and_fail(void) const UTILS_NORETURN
     {
+        std::cerr << "This should not be clobbered\n";
         atf::utils::create_file("first file", "");
         atf::utils::create_file("second-file", "");
         fs::mkdir_p(fs::path("dir1/dir2"), 0755);
@@ -166,6 +167,15 @@ class mock_interface : public scheduler::interface {
     exec_exit(const int exit_code) const UTILS_NORETURN
     {
         do_exit(exit_code);
+    }
+
+    /// Executes a test case that just fails.
+    void
+    exec_fail(void) const UTILS_NORETURN
+    {
+        std::cerr << "This should not be clobbered\n";
+        ::kill(::getpid(), SIGTERM);
+        std::abort();
     }
 
     /// Executes a test case that prints all input parameters to the functor.
@@ -313,6 +323,8 @@ public:
             exec_delete_all();
         } else if (starts_with(test_case_name, "exit ")) {
             exec_exit(suffix_to_int(test_case_name, "exit "));
+        } else if (starts_with(test_case_name, "fail")) {
+            exec_fail();
         } else if (starts_with(test_case_name, "print_params")) {
             exec_print_params(test_program, test_case_name, vars);
         } else {
@@ -848,40 +860,52 @@ ATF_TEST_CASE_BODY(integration__stacktrace)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(integration__list_files_on_failure);
-ATF_TEST_CASE_BODY(integration__list_files_on_failure)
+/// Runs a test to verify the dumping of the list of existing files on failure.
+///
+/// \param test_case The name of the test case to invoke.
+/// \param exp_stderr Expected contents of stderr.
+static void
+do_check_list_files_on_failure(const char* test_case, const char* exp_stderr)
 {
     const model::test_program_ptr program = model::test_program_builder(
         "mock", fs::path("the-program"), fs::current_path(), "the-suite")
-        .add_test_case("create_files_and_fail").build_ptr();
+        .add_test_case(test_case).build_ptr();
 
     const config::tree user_config = engine::empty_config();
 
     scheduler::scheduler_handle handle = scheduler::setup();
 
-    (void)handle.spawn_test(program, "create_files_and_fail", user_config);
+    (void)handle.spawn_test(program, test_case, user_config);
 
     scheduler::result_handle_ptr result_handle = handle.wait_any();
-    ATF_REQUIRE(!atf::utils::grep_file("Files left in work directory",
-                                       result_handle->stdout_file().str()));
-    ATF_REQUIRE( atf::utils::grep_file("Files left in work directory",
-                                       result_handle->stderr_file().str()));
-    ATF_REQUIRE(!atf::utils::grep_file("^\\.$",
-                                       result_handle->stderr_file().str()));
-    ATF_REQUIRE(!atf::utils::grep_file("^\\..$",
-                                       result_handle->stderr_file().str()));
-    ATF_REQUIRE( atf::utils::grep_file("^first file$",
-                                       result_handle->stderr_file().str()));
-    ATF_REQUIRE( atf::utils::grep_file("^second-file$",
-                                       result_handle->stderr_file().str()));
-    ATF_REQUIRE( atf::utils::grep_file("^dir1$",
-                                       result_handle->stderr_file().str()));
-    ATF_REQUIRE(!atf::utils::grep_file("dir2",
-                                       result_handle->stderr_file().str()));
+    atf::utils::cat_file(result_handle->stdout_file().str(), "child stdout: ");
+    ATF_REQUIRE(atf::utils::compare_file(result_handle->stdout_file().str(),
+                                         ""));
+    atf::utils::cat_file(result_handle->stderr_file().str(), "child stderr: ");
+    ATF_REQUIRE(atf::utils::compare_file(result_handle->stderr_file().str(),
+                                         exp_stderr));
     result_handle->cleanup();
     result_handle.reset();
 
     handle.cleanup();
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(integration__list_files_on_failure__none);
+ATF_TEST_CASE_BODY(integration__list_files_on_failure__none)
+{
+    do_check_list_files_on_failure("fail", "This should not be clobbered\n");
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(integration__list_files_on_failure__some);
+ATF_TEST_CASE_BODY(integration__list_files_on_failure__some)
+{
+    do_check_list_files_on_failure(
+        "create_files_and_fail",
+        "This should not be clobbered\n"
+        "Files left in work directory after failure: "
+        "dir1, first file, second-file\n");
 }
 
 
@@ -932,6 +956,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, integration__fake_result);
     ATF_ADD_TEST_CASE(tcs, integration__check_requirements);
     ATF_ADD_TEST_CASE(tcs, integration__stacktrace);
-    ATF_ADD_TEST_CASE(tcs, integration__list_files_on_failure);
+    ATF_ADD_TEST_CASE(tcs, integration__list_files_on_failure__none);
+    ATF_ADD_TEST_CASE(tcs, integration__list_files_on_failure__some);
     ATF_ADD_TEST_CASE(tcs, integration__prevent_clobbering_control_files);
 }

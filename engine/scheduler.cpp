@@ -61,6 +61,7 @@ extern "C" {
 #include "utils/shared_ptr.hpp"
 #include "utils/stacktrace.hpp"
 #include "utils/stream.hpp"
+#include "utils/text/operations.ipp"
 
 namespace config = utils::config;
 namespace datetime = utils::datetime;
@@ -71,6 +72,7 @@ namespace passwd = utils::passwd;
 namespace process = utils::process;
 namespace runner = engine::runner;
 namespace scheduler = engine::scheduler;
+namespace text = utils::text;
 
 using utils::none;
 using utils::optional;
@@ -127,13 +129,18 @@ append_files_listing(const fs::path& dir_path, const fs::path& output_file)
         throw engine::error(F("Failed to open output file %s for append")
                             % output_file);
     try {
-        output << "Files left in work directory after failure:\n";
+        std::set < std::string > names;
 
         const fs::directory dir(dir_path);
         for (fs::directory::const_iterator iter = dir.begin();
              iter != dir.end(); ++iter) {
             if (iter->name != "." && iter->name != "..")
-                output << iter->name << '\n';
+                names.insert(iter->name);
+        }
+
+        if (!names.empty()) {
+            output << "Files left in work directory after failure: "
+                   << text::join(names, ", ") << '\n';
         }
     } catch (const fs::error& e) {
         throw engine::error(F("Cannot append files listing to %s: %s")
