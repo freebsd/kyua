@@ -53,9 +53,6 @@ libengine_a_SOURCES += engine/plain.cpp
 libengine_a_SOURCES += engine/plain.hpp
 libengine_a_SOURCES += engine/requirements.cpp
 libengine_a_SOURCES += engine/requirements.hpp
-libengine_a_SOURCES += engine/runner.cpp
-libengine_a_SOURCES += engine/runner.hpp
-libengine_a_SOURCES += engine/runner_fwd.hpp
 libengine_a_SOURCES += engine/scanner.cpp
 libengine_a_SOURCES += engine/scanner.hpp
 libengine_a_SOURCES += engine/scanner_fwd.hpp
@@ -135,11 +132,6 @@ tests_engine_PROGRAMS += engine/test_case_tap_helpers
 engine_test_case_tap_helpers_SOURCES = engine/test_case_tap_helpers.cpp
 engine_test_case_tap_helpers_CXXFLAGS = $(UTILS_CFLAGS)
 engine_test_case_tap_helpers_LDADD = $(UTILS_LIBS)
-
-tests_engine_PROGRAMS += engine/runner_test
-engine_runner_test_SOURCES = engine/runner_test.cpp
-engine_runner_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
-engine_runner_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 
 tests_engine_PROGRAMS += engine/scanner_test
 engine_scanner_test_SOURCES = engine/scanner_test.cpp

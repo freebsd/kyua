@@ -37,7 +37,6 @@ extern "C" {
 #include <atf-c++.hpp>
 
 #include "engine/config.hpp"
-#include "engine/runner.hpp"
 #include "engine/scheduler.hpp"
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
@@ -54,7 +53,6 @@ extern "C" {
 
 namespace config = utils::config;
 namespace fs = utils::fs;
-namespace runner = engine::runner;
 namespace scheduler = engine::scheduler;
 
 using utils::none;
@@ -80,7 +78,7 @@ list_one(const char* program_name,
 {
     scheduler::scheduler_handle handle = scheduler::setup();
 
-    const runner::lazy_test_program program(
+    const scheduler::lazy_test_program program(
         "atf", fs::path(program_name), root, "the-suite",
         model::metadata_builder().build(), user_config, handle);
 
@@ -138,7 +136,7 @@ run_one(const atf::tests::tc* tc, const char* test_case_name,
 {
     scheduler::scheduler_handle handle = scheduler::setup();
 
-    const model::test_program_ptr program(new runner::lazy_test_program(
+    const model::test_program_ptr program(new scheduler::lazy_test_program(
         "atf", fs::path("test_case_atf_helpers"),
         fs::path(tc->get_config_var("srcdir")),
         "the-suite", model::metadata_builder().build(),

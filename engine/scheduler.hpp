@@ -40,8 +40,10 @@
 #include <set>
 #include <string>
 
+#include "model/context_fwd.hpp"
+#include "model/metadata_fwd.hpp"
 #include "model/test_case_fwd.hpp"
-#include "model/test_program_fwd.hpp"
+#include "model/test_program.hpp"
 #include "model/test_result_fwd.hpp"
 #include "utils/config/tree_fwd.hpp"
 #include "utils/datetime_fwd.hpp"
@@ -122,6 +124,24 @@ public:
         const utils::fs::path& control_directory,
         const utils::fs::path& stdout_path,
         const utils::fs::path& stderr_path) const = 0;
+};
+
+
+/// Implementation of a test program with lazy loading of test cases.
+class lazy_test_program : public model::test_program {
+    struct impl;
+
+    /// Pointer to the shared internal implementation.
+    std::shared_ptr< impl > _pimpl;
+
+public:
+    lazy_test_program(const std::string&, const utils::fs::path&,
+                      const utils::fs::path&, const std::string&,
+                      const model::metadata&,
+                      const utils::config::tree&,
+                      scheduler_handle&);
+
+    const model::test_cases_map& test_cases(void) const;
 };
 
 
@@ -207,6 +227,10 @@ void ensure_valid_interface(const std::string&);
 void register_interface(const std::string&, const std::shared_ptr< interface >);
 std::set< std::string > registered_interface_names(void);
 scheduler_handle setup(void);
+
+model::context current_context(void);
+utils::config::properties_map generate_config(const utils::config::tree&,
+                                              const std::string&);
 
 
 }  // namespace scheduler

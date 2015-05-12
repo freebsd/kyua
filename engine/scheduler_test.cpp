@@ -44,6 +44,7 @@ extern "C" {
 
 #include "engine/config.hpp"
 #include "engine/exceptions.hpp"
+#include "model/context.hpp"
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
 #include "model/test_program.hpp"
@@ -51,11 +52,13 @@ extern "C" {
 #include "utils/config/tree.ipp"
 #include "utils/datetime.hpp"
 #include "utils/defs.hpp"
+#include "utils/env.hpp"
 #include "utils/format/containers.ipp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
+#include "utils/passwd.hpp"
 #include "utils/process/status.hpp"
 #include "utils/sanity.hpp"
 #include "utils/stacktrace.hpp"
@@ -66,6 +69,7 @@ extern "C" {
 namespace config = utils::config;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
+namespace passwd = utils::passwd;
 namespace process = utils::process;
 namespace scheduler = engine::scheduler;
 namespace text = utils::text;
@@ -968,6 +972,63 @@ ATF_TEST_CASE_BODY(registered_interface_names)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(current_context);
+ATF_TEST_CASE_BODY(current_context)
+{
+    const model::context context = scheduler::current_context();
+    ATF_REQUIRE_EQ(fs::current_path(), context.cwd());
+    ATF_REQUIRE(utils::getallenv() == context.env());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(generate_config__empty);
+ATF_TEST_CASE_BODY(generate_config__empty)
+{
+    const config::tree user_config = engine::empty_config();
+
+    const config::properties_map exp_props;
+
+    ATF_REQUIRE_EQ(exp_props,
+                   scheduler::generate_config(user_config, "missing"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(generate_config__no_matches);
+ATF_TEST_CASE_BODY(generate_config__no_matches)
+{
+    config::tree user_config = engine::empty_config();
+    user_config.set_string("architecture", "foo");
+    user_config.set_string("test_suites.one.var1", "value 1");
+
+    const config::properties_map exp_props;
+
+    ATF_REQUIRE_EQ(exp_props,
+                   scheduler::generate_config(user_config, "two"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(generate_config__some_matches);
+ATF_TEST_CASE_BODY(generate_config__some_matches)
+{
+    std::vector< passwd::user > mock_users;
+    mock_users.push_back(passwd::user("nobody", 1234, 5678));
+    passwd::set_mock_users_for_testing(mock_users);
+
+    config::tree user_config = engine::empty_config();
+    user_config.set_string("architecture", "foo");
+    user_config.set_string("unprivileged_user", "nobody");
+    user_config.set_string("test_suites.one.var1", "value 1");
+    user_config.set_string("test_suites.two.var2", "value 2");
+
+    config::properties_map exp_props;
+    exp_props["unprivileged-user"] = "nobody";
+    exp_props["var1"] = "value 1";
+
+    ATF_REQUIRE_EQ(exp_props,
+                   scheduler::generate_config(user_config, "one"));
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     scheduler::register_interface(
@@ -995,4 +1056,10 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, ensure_valid_interface);
     ATF_ADD_TEST_CASE(tcs, registered_interface_names);
+
+    ATF_ADD_TEST_CASE(tcs, current_context);
+
+    ATF_ADD_TEST_CASE(tcs, generate_config__empty);
+    ATF_ADD_TEST_CASE(tcs, generate_config__no_matches);
+    ATF_ADD_TEST_CASE(tcs, generate_config__some_matches);
 }

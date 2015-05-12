@@ -33,7 +33,6 @@
 #include "engine/config.hpp"
 #include "engine/filters.hpp"
 #include "engine/kyuafile.hpp"
-#include "engine/runner.hpp"
 #include "engine/scanner.hpp"
 #include "engine/scheduler.hpp"
 #include "model/context.hpp"
@@ -56,7 +55,6 @@ namespace config = utils::config;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace passwd = utils::passwd;
-namespace runner = engine::runner;
 namespace scheduler = engine::scheduler;
 
 using utils::none;
@@ -170,7 +168,7 @@ drivers::run_tests::drive(const fs::path& kyuafile_path,
     store::write_transaction tx = db.start_write();
 
     {
-        const model::context context = runner::current_context();
+        const model::context context = scheduler::current_context();
         (void)tx.put_context(context);
     }
 

@@ -39,17 +39,20 @@ extern "C" {
 #include "engine/config.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/requirements.hpp"
-#include "engine/runner.hpp"
+#include "model/context.hpp"
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
 #include "model/test_program.hpp"
 #include "model/test_result.hpp"
 #include "utils/config/tree.ipp"
 #include "utils/datetime.hpp"
+#include "utils/defs.hpp"
+#include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/directory.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/operations.hpp"
+#include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/passwd.hpp"
@@ -68,7 +71,6 @@ namespace fs = utils::fs;
 namespace logging = utils::logging;
 namespace passwd = utils::passwd;
 namespace process = utils::process;
-namespace runner = engine::runner;
 namespace scheduler = engine::scheduler;
 namespace text = utils::text;
 
@@ -244,7 +246,7 @@ public:
     void
     operator()(const fs::path& UTILS_UNUSED_PARAM(control_directory))
     {
-        const config::properties_map vars = runner::generate_tester_config(
+        const config::properties_map vars = scheduler::generate_config(
             _user_config, _test_program.test_suite_name());
         _interface->exec_list(_test_program, vars);
     }
@@ -337,7 +339,7 @@ public:
 
         do_requirements_check(control_directory / skipped_cookie);
 
-        const config::properties_map vars = runner::generate_tester_config(
+        const config::properties_map vars = scheduler::generate_config(
             _user_config, _test_program.test_suite_name());
         _interface->exec_test(_test_program, _test_case_name, vars,
                               control_directory);
@@ -360,6 +362,78 @@ find_interface(const std::string& name)
 
 
 }  // anonymous namespace
+
+
+/// Internal implementation of a lazy_test_program.
+struct engine::scheduler::lazy_test_program::impl {
+    /// Whether the test cases list has been yet loaded or not.
+    bool _loaded;
+
+    /// User configuration to pass to the test program list operation.
+    config::tree _user_config;
+
+    /// Scheduler context to use to load test cases.
+    scheduler::scheduler_handle _scheduler_handle;
+
+    /// Constructor.
+    impl(const config::tree& user_config_,
+         scheduler::scheduler_handle& scheduler_handle_) :
+        _loaded(false), _user_config(user_config_),
+        _scheduler_handle(scheduler_handle_)
+    {
+    }
+};
+
+
+/// Constructs a new test program.
+///
+/// \param interface_name_ Name of the test program interface.
+/// \param binary_ The name of the test program binary relative to root_.
+/// \param root_ The root of the test suite containing the test program.
+/// \param test_suite_name_ The name of the test suite this program belongs to.
+/// \param md_ Metadata of the test program.
+/// \param user_config_ User configuration to pass to the scheduler.
+/// \param scheduler_handle_ Scheduler context to use to load test cases.
+scheduler::lazy_test_program::lazy_test_program(
+    const std::string& interface_name_,
+    const fs::path& binary_,
+    const fs::path& root_,
+    const std::string& test_suite_name_,
+    const model::metadata& md_,
+    const config::tree& user_config_,
+    scheduler::scheduler_handle& scheduler_handle_) :
+    test_program(interface_name_, binary_, root_, test_suite_name_, md_,
+                 model::test_cases_map()),
+    _pimpl(new impl(user_config_, scheduler_handle_))
+{
+}
+
+
+/// Gets or loads the list of test cases from the test program.
+///
+/// \return The list of test cases provided by the test program.
+const model::test_cases_map&
+scheduler::lazy_test_program::test_cases(void) const
+{
+    _pimpl->_scheduler_handle.check_interrupt();
+
+    if (!_pimpl->_loaded) {
+        const model::test_cases_map tcs = _pimpl->_scheduler_handle.list_tests(
+            this, _pimpl->_user_config);
+
+        // Due to the restrictions on when set_test_cases() may be called (as a
+        // way to lazily initialize the test cases list before it is ever
+        // returned), this cast is valid.
+        const_cast< scheduler::lazy_test_program* >(this)->set_test_cases(tcs);
+
+        _pimpl->_loaded = true;
+
+        _pimpl->_scheduler_handle.check_interrupt();
+    }
+
+    INV(_pimpl->_loaded);
+    return test_program::test_cases();
+}
 
 
 /// Internal implementation for the result_handle class.
@@ -856,4 +930,45 @@ void
 scheduler::scheduler_handle::check_interrupt(void) const
 {
     _pimpl->generic.check_interrupt();
+}
+
+
+/// Queries the current execution context.
+///
+/// \return The queried context.
+model::context
+scheduler::current_context(void)
+{
+    return model::context(fs::current_path(), utils::getallenv());
+}
+
+
+/// Generates the set of configuration variables for a test program.
+///
+/// \param user_config The configuration variables provided by the user.
+/// \param test_suite The name of the test suite.
+///
+/// \return The mapping of configuration variables for the test program.
+config::properties_map
+scheduler::generate_config(const config::tree& user_config,
+                           const std::string& test_suite)
+{
+    config::properties_map props;
+
+    try {
+        props = user_config.all_properties(F("test_suites.%s") % test_suite,
+                                           true);
+    } catch (const config::unknown_key_error& unused_error) {
+        // Ignore: not all test suites have entries in the configuration.
+    }
+
+    // TODO(jmmv): This is a hack that exists for the ATF interface only, so it
+    // should be moved there.
+    if (user_config.is_set("unprivileged_user")) {
+        const passwd::user& user =
+            user_config.lookup< engine::user_node >("unprivileged_user");
+        props["unprivileged-user"] = user.name;
+    }
+
+    return props;
 }
