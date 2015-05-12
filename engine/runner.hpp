@@ -37,11 +37,8 @@
 #include "engine/scheduler_fwd.hpp"
 #include "model/context_fwd.hpp"
 #include "model/test_program.hpp"
-#include "model/test_result_fwd.hpp"
 #include "utils/config/tree_fwd.hpp"
 #include "utils/fs/path_fwd.hpp"
-#include "utils/optional_fwd.hpp"
-#include "utils/process/status_fwd.hpp"
 #include "utils/shared_ptr.hpp"
 
 namespace engine {
@@ -66,38 +63,11 @@ public:
 };
 
 
-/// Hooks to introspect the execution of a test case.
-///
-/// There is no guarantee that these hooks will be called during the execution
-/// of the test case.  There are conditions in which they don't make sense.
-///
-/// Note that this class is not abstract.  All hooks have default, empty
-/// implementations.  The purpose of this is to simplify some tests that need to
-/// pass hooks but that are not interested in the results.  We might want to
-/// rethink this and provide an "empty subclass" of a base abstract template.
-class test_case_hooks {
-public:
-    virtual ~test_case_hooks(void);
-
-    virtual void got_stdout(const utils::fs::path&);
-    virtual void got_stderr(const utils::fs::path&);
-};
-
-
 model::context current_context(void);
 
 
 utils::config::properties_map generate_tester_config(
     const utils::config::tree&, const std::string&);
-
-
-model::test_result debug_test_case(
-    const model::test_program*, const std::string&, const utils::config::tree&,
-    test_case_hooks&, const utils::fs::path&,
-    const utils::fs::path&, const utils::fs::path&);
-model::test_result run_test_case(
-    const model::test_program*, const std::string&, const utils::config::tree&,
-    test_case_hooks&, const utils::fs::path&);
 
 
 }  // namespace runner
