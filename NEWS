@@ -23,6 +23,10 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   bumped to a greater value once the new implementation gets some
   mileage.
 
+* Removed the external testers code in favor of the new built-in
+  implementations.  The new approach feels significantly faster than
+  the previous one.
+
 * Changed temporary directory creation to always grant search
   permissions on temporary directories.  This is to prevent potential
   problems when running Kyua as root and executing test cases that

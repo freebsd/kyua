@@ -48,44 +48,6 @@ AC_DEFUN([KYUA_REQUIRE_CXX], [
 
 
 dnl
-dnl KYUA_ATTRIBUTE_FORMAT_PRINTF
-dnl
-dnl Checks if the current compiler has a way to mark functions as printf-like
-dnl and defines ATTRIBUTE_PRINTF to the appropriate string.
-dnl
-AC_DEFUN([KYUA_ATTRIBUTE_FORMAT_PRINTF], [
-    AC_MSG_CHECKING(
-        [whether __attribute__((__format__(__printf__, a, b))) is supported])
-    AC_COMPILE_IFELSE(
-        [AC_LANG_PROGRAM([
-#include <stdarg.h>
-#include <stdio.h>
-
-static void test_printf(const char *, ...)
-    __attribute__((__format__(__printf__, 1, 2)));
-
-static void
-test_printf(const char *format, ...)
-{
-    va_list ap;
-
-    va_start(ap, format);
-    vprintf(format, ap);
-    va_end(ap);
-}], [
-    test_printf("foo %s", "bar");
-    return 0;
-])],
-        [AC_MSG_RESULT(yes)
-         value="__attribute__((__format__(__printf__, a, b)))"],
-        [AC_MSG_RESULT(no)
-         value=""]
-    )
-    AC_SUBST([ATTRIBUTE_FORMAT_PRINTF], [${value}])
-])
-
-
-dnl
 dnl KYUA_ATTRIBUTE_NORETURN
 dnl
 dnl Checks if the current compiler has a way to mark functions that do not

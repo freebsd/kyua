@@ -39,8 +39,7 @@
 
 #include "engine/exceptions.hpp"
 #include "engine/runner.hpp"
-#include "engine/scheduler_fwd.hpp"
-#include "engine/testers.hpp"
+#include "engine/scheduler.hpp"
 #include "model/metadata.hpp"
 #include "model/test_program.hpp"
 #include "utils/config/exceptions.hpp"
@@ -211,7 +210,7 @@ public:
         _state.set_global("test_suite");
 
         const std::set< std::string > interfaces =
-            engine::all_test_interfaces();
+            scheduler::registered_interface_names();
         for (std::set< std::string >::const_iterator iter = interfaces.begin();
              iter != interfaces.end(); ++iter) {
             const std::string& interface = *iter;
@@ -402,23 +401,6 @@ public:
 };
 
 
-/// Checks if the given interface name is valid.
-///
-/// \param interface The name of the interface to validate.
-///
-/// \throw std::runtime_error If the given interface is not supported.
-static void
-ensure_valid_interface(const std::string& interface)
-{
-    try {
-        (void)engine::tester_path(interface);
-    } catch (const engine::error& e) {
-        throw std::runtime_error(F("Unsupported test interface '%s'") %
-                                 interface);
-    }
-}
-
-
 /// Glue to invoke parser::callback_test_program() from Lua.
 ///
 /// This is a helper function for the various *_test_program() calls, as they
@@ -462,7 +444,7 @@ lua_generic_test_program(lutok::state& state)
             F("%s_test_program expects a table of properties as its single "
               "argument") % interface);
 
-    ensure_valid_interface(interface);
+    scheduler::ensure_valid_interface(interface);
 
     lutok::stack_cleaner cleaner(state);
 

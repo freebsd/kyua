@@ -175,8 +175,8 @@ script:
   Possible values: an absolute path to a temporary directory.
   Default: /tmp.
 
-  Specifies the path that the testers will use to create temporary
-  directories in.
+  Specifies the path that Kyua will use to create temporary directories
+  in by default.
 
 The following flags are specific to Kyua's 'configure' script:
 

@@ -31,7 +31,6 @@ ENGINE_LIBS = libengine.a $(STORE_LIBS) $(MODEL_LIBS) $(UTILS_LIBS)
 
 noinst_LIBRARIES += libengine.a
 libengine_a_CPPFLAGS  = $(STORE_CFLAGS) $(UTILS_CFLAGS)
-libengine_a_CPPFLAGS += -DKYUA_TESTERSDIR="\"$(testersdir)\""
 libengine_a_SOURCES  = engine/atf.cpp
 libengine_a_SOURCES += engine/atf.hpp
 libengine_a_SOURCES += engine/atf_list.cpp
@@ -65,9 +64,6 @@ libengine_a_SOURCES += engine/tap.hpp
 libengine_a_SOURCES += engine/tap_parser.cpp
 libengine_a_SOURCES += engine/tap_parser.hpp
 libengine_a_SOURCES += engine/tap_parser_fwd.hpp
-libengine_a_SOURCES += engine/testers.cpp
-libengine_a_SOURCES += engine/testers.hpp
-libengine_a_SOURCES += engine/testers_fwd.hpp
 libengine_a_SOURCES += engine/scheduler.cpp
 libengine_a_SOURCES += engine/scheduler.hpp
 libengine_a_SOURCES += engine/scheduler_fwd.hpp
@@ -159,11 +155,6 @@ tests_engine_PROGRAMS += engine/tap_parser_test
 engine_tap_parser_test_SOURCES = engine/tap_parser_test.cpp
 engine_tap_parser_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
 engine_tap_parser_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
-
-tests_engine_PROGRAMS += engine/testers_test
-engine_testers_test_SOURCES = engine/testers_test.cpp
-engine_testers_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
-engine_testers_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 
 tests_engine_PROGRAMS += engine/scheduler_test
 engine_scheduler_test_SOURCES = engine/scheduler_test.cpp

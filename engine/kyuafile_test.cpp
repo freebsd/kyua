@@ -40,8 +40,11 @@ extern "C" {
 #include <lutok/state.ipp>
 #include <lutok/test_utils.hpp>
 
+#include "engine/atf.hpp"
 #include "engine/exceptions.hpp"
+#include "engine/plain.hpp"
 #include "engine/scheduler.hpp"
+#include "engine/tap.hpp"
 #include "model/metadata.hpp"
 #include "model/test_program.hpp"
 #include "utils/config/tree.ipp"
@@ -88,7 +91,7 @@ ATF_TEST_CASE_BODY(kyuafile__load__real_interfaces)
         "atf_test_program{name='1st'}\n"
         "atf_test_program{name='2nd', test_suite='first'}\n"
         "plain_test_program{name='3rd'}\n"
-        "plain_test_program{name='4th', test_suite='second'}\n"
+        "tap_test_program{name='4th', test_suite='second'}\n"
         "include('dir/config')\n");
 
     fs::mkdir(fs::path("dir"), 0755);
@@ -129,7 +132,7 @@ ATF_TEST_CASE_BODY(kyuafile__load__real_interfaces)
     ATF_REQUIRE_EQ(fs::path("3rd"), suite.test_programs()[2]->relative_path());
     ATF_REQUIRE_EQ("one-suite", suite.test_programs()[2]->test_suite_name());
 
-    ATF_REQUIRE_EQ("plain", suite.test_programs()[3]->interface_name());
+    ATF_REQUIRE_EQ("tap", suite.test_programs()[3]->interface_name());
     ATF_REQUIRE_EQ(fs::path("4th"), suite.test_programs()[3]->relative_path());
     ATF_REQUIRE_EQ("second", suite.test_programs()[3]->test_suite_name());
 
@@ -152,11 +155,12 @@ ATF_TEST_CASE_BODY(kyuafile__load__mock_interfaces)
 {
     scheduler::scheduler_handle handle = scheduler::setup();
 
-    fs::mkdir(fs::path("testers"), 0755);
-    atf::utils::create_file("testers/kyua-some-tester", "Not a binary");
-    atf::utils::create_file("testers/kyua-random-tester", "Not a binary");
-    atf::utils::create_file("testers/kyua-names-tester", "Not a binary");
-    utils::setenv("KYUA_TESTERSDIR", (fs::current_path() / "testers").str());
+    std::shared_ptr< scheduler::interface > mock_interface(
+        new engine::plain_interface());
+
+    scheduler::register_interface("some", mock_interface);
+    scheduler::register_interface("random", mock_interface);
+    scheduler::register_interface("names", mock_interface);
 
     atf::utils::create_file(
         "config",
@@ -526,6 +530,16 @@ ATF_TEST_CASE_BODY(kyuafile__load__missing_test_program)
 
 ATF_INIT_TEST_CASES(tcs)
 {
+    scheduler::register_interface(
+        "atf", std::shared_ptr< scheduler::interface >(
+            new engine::atf_interface()));
+    scheduler::register_interface(
+        "plain", std::shared_ptr< scheduler::interface >(
+            new engine::plain_interface()));
+    scheduler::register_interface(
+        "tap", std::shared_ptr< scheduler::interface >(
+            new engine::tap_interface()));
+
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__empty);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__real_interfaces);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__mock_interfaces);
