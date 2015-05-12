@@ -36,7 +36,6 @@ BUILD_MANPAGE = \
 	    -v "PACKAGE=$(PACKAGE_TARNAME)" \
 	    -v "STOREDIR=$(storedir)" \
 	    -v "TESTSDIR=$(testsdir)" \
-	    -v "TESTERSDIR=$(testersdir)" \
 	    -v "VERSION=$(PACKAGE_VERSION)" \
 	    "$(srcdir)/doc/$${name}.in" "doc/$${name}"
 
