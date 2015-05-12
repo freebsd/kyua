@@ -33,7 +33,7 @@ AC_PREREQ([2.65])
 
 AC_COPYRIGHT([Copyright 2010 Google Inc.])
 AC_CONFIG_AUX_DIR([admin])
-AC_CONFIG_FILES([Doxyfile Makefile testers/defs.h utils/defs.hpp])
+AC_CONFIG_FILES([Doxyfile Makefile utils/defs.hpp])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([main.cpp])
@@ -43,15 +43,11 @@ AC_CONFIG_TESTDIR([bootstrap])
 AM_INIT_AUTOMAKE([1.9 check-news foreign subdir-objects -Wall])
 
 
-AC_LANG([C])
-AC_PROG_CC
-AM_PROG_CC_C_O
 AC_LANG([C++])
 AC_PROG_CXX
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 KYUA_REQUIRE_CXX
-KYUA_DEVELOPER_MODE([C,C++])
-KYUA_ATTRIBUTE_FORMAT_PRINTF
+KYUA_DEVELOPER_MODE([C++])
 KYUA_ATTRIBUTE_NORETURN
 KYUA_ATTRIBUTE_PURE
 KYUA_ATTRIBUTE_UNUSED
@@ -69,9 +65,6 @@ AC_PROG_RANLIB
 m4_ifndef([PKG_CHECK_MODULES],
     [m4_fatal([Cannot find pkg.m4; see the INSTALL document for help])])
 
-m4_ifndef([ATF_CHECK_C],
-    [m4_fatal([Cannot find atf-c.m4; see the INSTALL document for help])])
-ATF_CHECK_C([>= 0.17])
 m4_ifndef([ATF_CHECK_CXX],
     [m4_fatal([Cannot find atf-c++.m4; see the INSTALL document for help])])
 ATF_CHECK_CXX([>= 0.17])
@@ -162,7 +155,6 @@ AC_SUBST(luadir, \${pkgdatadir}/lua)
 AC_SUBST(miscdir, \${pkgdatadir}/misc)
 AC_SUBST(pkgtestsdir, \${testsdir}/kyua)
 AC_SUBST(storedir, \${pkgdatadir}/store)
-AC_SUBST(testersdir, \${libexecdir})
 AC_SUBST(testsdir, \${exec_prefix}/tests)
 
 
