@@ -112,6 +112,12 @@ struct exec_data {
     /// Path to the subprocess-specific work directory.
     fs::path control_directory;
 
+    /// Path to the subprocess's stdout file.
+    const fs::path stdout_file;
+
+    /// Path to the subprocess's stderr file.
+    const fs::path stderr_file;
+
     /// Start time.
     datetime::timestamp start_time;
 
@@ -132,6 +138,8 @@ struct exec_data {
     ///
     /// \param control_directory_ Path to the subprocess-specific work
     ///     directory.
+    /// \param stdout_file_ Path to the subprocess's stdout file.
+    /// \param stderr_file_ Path to the subprocess's stderr file.
     /// \param start_time_ Timestamp of when this object was constructed.
     /// \param timeout Maximum amount of time the subprocess can run for.
     /// \param unprivileged_user_ User the subprocess is running as if
@@ -140,12 +148,16 @@ struct exec_data {
     /// \param is_followup_ If true, this subprocess was started in the
     ///     context of another subprocess.
     exec_data(const fs::path& control_directory_,
+              const fs::path& stdout_file_,
+              const fs::path& stderr_file_,
               const datetime::timestamp& start_time_,
               const datetime::delta& timeout,
               const optional< passwd::user > unprivileged_user_,
               const pid_t pid,
               const bool is_followup_) :
         control_directory(control_directory_),
+        stdout_file(stdout_file_),
+        stderr_file(stderr_file_),
         start_time(start_time_),
         unprivileged_user(unprivileged_user_),
         timer(new deadline_killer(timeout, pid)),
@@ -556,11 +568,6 @@ struct utils::process::executor::executor_handle::impl {
         INV(!data.timer->fired() ||
             (status.signaled() && status.termsig() == SIGKILL));
 
-        const fs::path stdout_path = data.control_directory /
-            detail::stdout_name;
-        const fs::path stderr_path = data.control_directory /
-            detail::stderr_name;
-
         return exit_handle(std::shared_ptr< exit_handle::impl >(
             new exit_handle::impl(
                 handle,
@@ -569,7 +576,8 @@ struct utils::process::executor::executor_handle::impl {
                 data.start_time, datetime::timestamp::now(),
                 data.is_followup,
                 data.control_directory,
-                stdout_path, stderr_path,
+                data.stdout_file,
+                data.stderr_file,
                 all_exec_data)));
     }
 };
@@ -648,6 +656,8 @@ executor::executor_handle::spawn_pre(void)
 /// Post-helper for the spawn() method.
 ///
 /// \param control_directory Control directory as returned by spawn_pre().
+/// \param stdout_file Path to the subprocess' stdout.
+/// \param stderr_file Path to the subprocess' stderr.
 /// \param timeout Maximum amount of time the subprocess can run for.
 /// \param unprivileged_user If not none, user to switch to before execution.
 /// \param child The process created by spawn().
@@ -656,6 +666,8 @@ executor::executor_handle::spawn_pre(void)
 executor::exec_handle
 executor::executor_handle::spawn_post(
     const fs::path& control_directory,
+    const fs::path& stdout_file,
+    const fs::path& stderr_file,
     const datetime::delta& timeout,
     const optional< passwd::user > unprivileged_user,
     std::auto_ptr< process::child > child)
@@ -663,6 +675,8 @@ executor::executor_handle::spawn_post(
     const executor::exec_handle handle = child->pid();
 
     const exec_data data(control_directory,
+                         stdout_file,
+                         stderr_file,
                          datetime::timestamp::now(),
                          timeout,
                          unprivileged_user,
@@ -699,6 +713,8 @@ executor::executor_handle::spawn_followup_post(
     const executor::exec_handle handle = child->pid();
 
     const exec_data data(base.control_directory(),
+                         base.stdout_file(),
+                         base.stderr_file(),
                          datetime::timestamp::now(),
                          timeout,
                          base.unprivileged_user(),

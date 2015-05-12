@@ -66,7 +66,7 @@
 
 #include "utils/datetime_fwd.hpp"
 #include "utils/fs/path_fwd.hpp"
-#include "utils/optional_fwd.hpp"
+#include "utils/optional.hpp"
 #include "utils/passwd_fwd.hpp"
 #include "utils/process/child_fwd.hpp"
 #include "utils/process/status_fwd.hpp"
@@ -142,6 +142,8 @@ class executor_handle {
 
     utils::fs::path spawn_pre(void);
     exec_handle spawn_post(const utils::fs::path&,
+                           const utils::fs::path&,
+                           const utils::fs::path&,
                            const utils::datetime::delta&,
                            const utils::optional< utils::passwd::user >,
                            std::auto_ptr< utils::process::child >);
@@ -161,7 +163,9 @@ public:
     template< class Hook >
     exec_handle spawn(Hook,
                       const datetime::delta&,
-                      const utils::optional< utils::passwd::user >);
+                      const utils::optional< utils::passwd::user >,
+                      const utils::optional< utils::fs::path > = utils::none,
+                      const utils::optional< utils::fs::path > = utils::none);
 
     template< class Hook >
     exec_handle spawn_followup(Hook,

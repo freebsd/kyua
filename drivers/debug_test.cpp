@@ -33,7 +33,6 @@
 
 #include "engine/filters.hpp"
 #include "engine/kyuafile.hpp"
-#include "engine/runner.hpp"
 #include "engine/scanner.hpp"
 #include "engine/scheduler.hpp"
 #include "model/test_case.hpp"
@@ -46,7 +45,6 @@
 
 namespace config = utils::config;
 namespace fs = utils::fs;
-namespace runner = engine::runner;
 namespace scheduler = engine::scheduler;
 
 using utils::optional;
@@ -94,14 +92,15 @@ drivers::debug_test::drive(const fs::path& kyuafile_path,
     const model::test_program_ptr test_program = match.get().first;
     const std::string& test_case_name = match.get().second;
 
-    runner::test_case_hooks dummy_hooks;
-
-    const fs::auto_directory work_directory = fs::auto_directory::mkdtemp(
-        "kyua.XXXXXX");
-
-    const model::test_result test_result = runner::debug_test_case(
-        test_program.get(), test_case_name, user_config, dummy_hooks,
-        work_directory.directory(), stdout_path, stderr_path);
+    (void)handle.spawn_test(test_program, test_case_name, user_config,
+                            utils::make_optional(stdout_path),
+                            utils::make_optional(stderr_path));
+    scheduler::result_handle_ptr result_handle = handle.wait_any();
+    const scheduler::test_result_handle* test_result_handle =
+        dynamic_cast< const scheduler::test_result_handle* >(
+            result_handle.get());
+    const model::test_result test_result = test_result_handle->test_result();
+    result_handle->cleanup();
 
     handle.check_interrupt();
     handle.cleanup();
