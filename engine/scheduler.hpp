@@ -37,6 +37,7 @@
 
 #include "engine/scheduler_fwd.hpp"
 
+#include <set>
 #include <string>
 
 #include "model/test_case_fwd.hpp"
@@ -202,7 +203,9 @@ public:
 extern utils::datetime::delta list_timeout;
 
 
+void ensure_valid_interface(const std::string&);
 void register_interface(const std::string&, const std::shared_ptr< interface >);
+std::set< std::string > registered_interface_names(void);
 scheduler_handle setup(void);
 
 

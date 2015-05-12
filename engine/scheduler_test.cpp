@@ -43,6 +43,7 @@ extern "C" {
 #include <atf-c++.hpp>
 
 #include "engine/config.hpp"
+#include "engine/exceptions.hpp"
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
 #include "model/test_program.hpp"
@@ -935,6 +936,38 @@ ATF_TEST_CASE_BODY(integration__prevent_clobbering_control_files)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(ensure_valid_interface);
+ATF_TEST_CASE_BODY(ensure_valid_interface)
+{
+    scheduler::ensure_valid_interface("mock");
+
+    ATF_REQUIRE_THROW_RE(engine::error, "Unsupported test interface 'mock2'",
+                         scheduler::ensure_valid_interface("mock2"));
+    scheduler::register_interface(
+        "mock2", std::shared_ptr< scheduler::interface >(new mock_interface()));
+    scheduler::ensure_valid_interface("mock2");
+
+    // Standard interfaces should not be present unless registered.
+    ATF_REQUIRE_THROW_RE(engine::error, "Unsupported test interface 'plain'",
+                         scheduler::ensure_valid_interface("plain"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(registered_interface_names);
+ATF_TEST_CASE_BODY(registered_interface_names)
+{
+    std::set< std::string > exp_names;
+
+    exp_names.insert("mock");
+    ATF_REQUIRE_EQ(exp_names, scheduler::registered_interface_names());
+
+    scheduler::register_interface(
+        "mock2", std::shared_ptr< scheduler::interface >(new mock_interface()));
+    exp_names.insert("mock2");
+    ATF_REQUIRE_EQ(exp_names, scheduler::registered_interface_names());
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     scheduler::register_interface(
@@ -959,4 +992,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, integration__list_files_on_failure__none);
     ATF_ADD_TEST_CASE(tcs, integration__list_files_on_failure__some);
     ATF_ADD_TEST_CASE(tcs, integration__prevent_clobbering_control_files);
+
+    ATF_ADD_TEST_CASE(tcs, ensure_valid_interface);
+    ATF_ADD_TEST_CASE(tcs, registered_interface_names);
 }

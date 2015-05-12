@@ -615,6 +615,19 @@ scheduler::scheduler_handle::cleanup(void)
 }
 
 
+/// Checks if the given interface name is valid.
+///
+/// \param interface The name of the interface to validate.
+///
+/// \throw engine::error If the given interface is not supported.
+void
+scheduler::ensure_valid_interface(const std::string& name)
+{
+    if (interfaces.find(name) == interfaces.end())
+        throw engine::error(F("Unsupported test interface '%s'") % name);
+}
+
+
 /// Registers a new interface.
 ///
 /// \param name The name of the interface.  Must not have yet been registered.
@@ -625,6 +638,21 @@ scheduler::register_interface(const std::string& name,
 {
     PRE(interfaces.find(name) == interfaces.end());
     interfaces.insert(interfaces_map::value_type(name, spec));
+}
+
+
+/// Returns the names of all registered interfaces.
+///
+/// \return A collection of interface names.
+std::set< std::string >
+scheduler::registered_interface_names(void)
+{
+    std::set< std::string > names;
+    for (interfaces_map::const_iterator iter = interfaces.begin();
+         iter != interfaces.end(); ++iter) {
+        names.insert((*iter).first);
+    }
+    return names;
 }
 
 
