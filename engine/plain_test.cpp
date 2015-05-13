@@ -69,7 +69,7 @@ static void
 copy_plain_helper(const atf::tests::tc* tc, const char* name)
 {
     const fs::path srcdir(tc->get_config_var("srcdir"));
-    atf::utils::copy_file((srcdir / "test_case_plain_helpers").str(), name);
+    atf::utils::copy_file((srcdir / "plain_helpers").str(), name);
 }
 
 

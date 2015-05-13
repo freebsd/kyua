@@ -71,7 +71,12 @@ tests_enginedir = $(pkgtestsdir)/engine
 tests_engine_DATA = engine/Kyuafile
 EXTRA_DIST += $(tests_engine_DATA)
 
-tests_engine_PROGRAMS = engine/atf_test
+tests_engine_PROGRAMS = engine/atf_helpers
+engine_atf_helpers_SOURCES = engine/atf_helpers.cpp
+engine_atf_helpers_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+engine_atf_helpers_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
+
+tests_engine_PROGRAMS += engine/atf_test
 engine_atf_test_SOURCES = engine/atf_test.cpp
 engine_atf_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
 engine_atf_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
@@ -106,6 +111,11 @@ engine_kyuafile_test_SOURCES = engine/kyuafile_test.cpp
 engine_kyuafile_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
 engine_kyuafile_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 
+tests_engine_PROGRAMS += engine/plain_helpers
+engine_plain_helpers_SOURCES = engine/plain_helpers.cpp
+engine_plain_helpers_CXXFLAGS = $(UTILS_CFLAGS)
+engine_plain_helpers_LDADD = $(UTILS_LIBS)
+
 tests_engine_PROGRAMS += engine/plain_test
 engine_plain_test_SOURCES = engine/plain_test.cpp
 engine_plain_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
@@ -118,25 +128,15 @@ engine_requirements_test_CXXFLAGS = $(ENGINE_CFLAGS) $(UTILS_TEST_CFLAGS) \
 engine_requirements_test_LDADD = $(ENGINE_LIBS) $(UTILS_TEST_LIBS) \
                                  $(ATF_CXX_LIBS)
 
-tests_engine_PROGRAMS += engine/test_case_atf_helpers
-engine_test_case_atf_helpers_SOURCES = engine/test_case_atf_helpers.cpp
-engine_test_case_atf_helpers_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-engine_test_case_atf_helpers_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
-
-tests_engine_PROGRAMS += engine/test_case_plain_helpers
-engine_test_case_plain_helpers_SOURCES = engine/test_case_plain_helpers.cpp
-engine_test_case_plain_helpers_CXXFLAGS = $(UTILS_CFLAGS)
-engine_test_case_plain_helpers_LDADD = $(UTILS_LIBS)
-
-tests_engine_PROGRAMS += engine/test_case_tap_helpers
-engine_test_case_tap_helpers_SOURCES = engine/test_case_tap_helpers.cpp
-engine_test_case_tap_helpers_CXXFLAGS = $(UTILS_CFLAGS)
-engine_test_case_tap_helpers_LDADD = $(UTILS_LIBS)
-
 tests_engine_PROGRAMS += engine/scanner_test
 engine_scanner_test_SOURCES = engine/scanner_test.cpp
 engine_scanner_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
 engine_scanner_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
+
+tests_engine_PROGRAMS += engine/tap_helpers
+engine_tap_helpers_SOURCES = engine/tap_helpers.cpp
+engine_tap_helpers_CXXFLAGS = $(UTILS_CFLAGS)
+engine_tap_helpers_LDADD = $(UTILS_LIBS)
 
 tests_engine_PROGRAMS += engine/tap_test
 engine_tap_test_SOURCES = engine/tap_test.cpp

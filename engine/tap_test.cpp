@@ -69,7 +69,7 @@ static void
 copy_tap_helper(const atf::tests::tc* tc, const char* name)
 {
     const fs::path srcdir(tc->get_config_var("srcdir"));
-    atf::utils::copy_file((srcdir / "test_case_tap_helpers").str(), name);
+    atf::utils::copy_file((srcdir / "tap_helpers").str(), name);
 }
 
 

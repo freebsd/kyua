@@ -137,8 +137,7 @@ run_one(const atf::tests::tc* tc, const char* test_case_name,
     scheduler::scheduler_handle handle = scheduler::setup();
 
     const model::test_program_ptr program(new scheduler::lazy_test_program(
-        "atf", fs::path("test_case_atf_helpers"),
-        fs::path(tc->get_config_var("srcdir")),
+        "atf", fs::path("atf_helpers"), fs::path(tc->get_config_var("srcdir")),
         "the-suite", model::metadata_builder().build(),
         user_config, handle));
 
@@ -171,8 +170,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(list__ok);
 ATF_TEST_CASE_BODY(list__ok)
 {
     const model::test_cases_map test_cases = list_one(
-        "test_case_atf_helpers", fs::path(get_config_var("srcdir")),
-        "pass crash");
+        "atf_helpers", fs::path(get_config_var("srcdir")), "pass crash");
 
     const model::test_cases_map exp_test_cases = model::test_cases_map_builder()
         .add("crash")
@@ -192,8 +190,8 @@ ATF_TEST_CASE_BODY(list__configuration_variables)
     user_config.set_string("test_suites.the-suite.var2", "value2");
 
     const model::test_cases_map test_cases = list_one(
-        "test_case_atf_helpers", fs::path(get_config_var("srcdir")),
-        "check_list_config", user_config);
+        "atf_helpers", fs::path(get_config_var("srcdir")), "check_list_config",
+        user_config);
 
     const model::test_cases_map exp_test_cases = model::test_cases_map_builder()
         .add("check_list_config", model::metadata_builder()
@@ -207,8 +205,7 @@ ATF_TEST_CASE_BODY(list__configuration_variables)
 ATF_TEST_CASE_WITHOUT_HEAD(list__current_directory);
 ATF_TEST_CASE_BODY(list__current_directory)
 {
-    const fs::path helpers = fs::path(get_config_var("srcdir")) /
-        "test_case_atf_helpers";
+    const fs::path helpers = fs::path(get_config_var("srcdir")) / "atf_helpers";
     ATF_REQUIRE(::symlink(helpers.c_str(), "atf_helpers") != -1);
     const model::test_cases_map test_cases = list_one(
         "atf_helpers", fs::path("."), "pass");
@@ -225,8 +222,7 @@ ATF_TEST_CASE_BODY(list__current_directory)
 ATF_TEST_CASE_WITHOUT_HEAD(list__relative_path);
 ATF_TEST_CASE_BODY(list__relative_path)
 {
-    const fs::path helpers = fs::path(get_config_var("srcdir")) /
-        "test_case_atf_helpers";
+    const fs::path helpers = fs::path(get_config_var("srcdir")) / "atf_helpers";
     ATF_REQUIRE(::mkdir("dir1", 0755) != -1);
     ATF_REQUIRE(::mkdir("dir1/dir2", 0755) != -1);
     ATF_REQUIRE(::symlink(helpers.c_str(), "dir1/dir2/atf_helpers") != -1);
@@ -272,8 +268,7 @@ ATF_TEST_CASE_BODY(list__no_permissions)
 ATF_TEST_CASE_WITHOUT_HEAD(list__abort);
 ATF_TEST_CASE_BODY(list__abort)
 {
-    check_list_one_fail("Test program received signal",
-                        "test_case_atf_helpers",
+    check_list_one_fail("Test program received signal", "atf_helpers",
                         fs::path(get_config_var("srcdir")),
                         "crash_head");
 }
@@ -282,8 +277,7 @@ ATF_TEST_CASE_BODY(list__abort)
 ATF_TEST_CASE_WITHOUT_HEAD(list__empty);
 ATF_TEST_CASE_BODY(list__empty)
 {
-    check_list_one_fail("No test cases",
-                        "test_case_atf_helpers",
+    check_list_one_fail("No test cases", "atf_helpers",
                         fs::path(get_config_var("srcdir")),
                         "");
 }
@@ -292,8 +286,7 @@ ATF_TEST_CASE_BODY(list__empty)
 ATF_TEST_CASE_WITHOUT_HEAD(list__stderr_not_quiet);
 ATF_TEST_CASE_BODY(list__stderr_not_quiet)
 {
-    check_list_one_fail("Test case list wrote to stderr",
-                        "test_case_atf_helpers",
+    check_list_one_fail("Test case list wrote to stderr", "atf_helpers",
                         fs::path(get_config_var("srcdir")),
                         "output_in_list");
 }
