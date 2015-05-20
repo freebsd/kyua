@@ -50,7 +50,7 @@ check_all() {
 utils_test_case all_topics__installed
 all_topics__installed_head() {
     atf_set "require.files" "${KYUA_DOCDIR}/AUTHORS" \
-            "${KYUA_DOCDIR}/CONTRIBUTORS" "${KYUA_DOCDIR}/COPYING"
+            "${KYUA_DOCDIR}/CONTRIBUTORS" "${KYUA_DOCDIR}/LICENSE"
 }
 all_topics__installed_body() {
     atf_check -s exit:0 -o save:stdout -e empty kyua about
@@ -63,7 +63,7 @@ all_topics__override_body() {
     mkdir docs
     echo "* Author (no email)" >docs/AUTHORS
     echo "* Contributor <contributor@example.net>" >docs/CONTRIBUTORS
-    echo "Copyright text" >docs/COPYING
+    echo "Copyright text" >docs/LICENSE
     export KYUA_DOCDIR=docs
     atf_check -s exit:0 -o save:stdout -e empty kyua about
     check_all stdout
@@ -95,10 +95,10 @@ topic__authors__override_body() {
 
 utils_test_case topic__license__installed
 topic__license__installed_head() {
-    atf_set "require.files" "${KYUA_DOCDIR}/COPYING"
+    atf_set "require.files" "${KYUA_DOCDIR}/LICENSE"
 }
 topic__license__installed_body() {
-    atf_check -s exit:0 -o file:"${KYUA_DOCDIR}/COPYING" -e empty \
+    atf_check -s exit:0 -o file:"${KYUA_DOCDIR}/LICENSE" -e empty \
         kyua about license
 }
 
@@ -106,9 +106,9 @@ topic__license__installed_body() {
 utils_test_case topic__license__override
 topic__license__override_body() {
     mkdir docs
-    echo "Copyright text" >docs/COPYING
+    echo "Copyright text" >docs/LICENSE
     export KYUA_DOCDIR=docs
-    atf_check -s exit:0 -o file:docs/COPYING -e empty kyua about license
+    atf_check -s exit:0 -o file:docs/LICENSE -e empty kyua about license
 }
 
 

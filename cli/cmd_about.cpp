@@ -133,7 +133,7 @@ cmd_about::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
         ui->out("");
         ui->out("License terms:");
         ui->out("");
-        success &= cat_file(ui, docdir / "COPYING");
+        success &= cat_file(ui, docdir / "LICENSE");
         ui->out("");
         ui->out("Brought to you by:");
         ui->out("");
@@ -149,7 +149,7 @@ cmd_about::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
             success &= cat_file(ui, docdir / "AUTHORS", list_re);
             success &= cat_file(ui, docdir / "CONTRIBUTORS", list_re);
         } else if (topic == "license") {
-            success &= cat_file(ui, docdir / "COPYING");
+            success &= cat_file(ui, docdir / "LICENSE");
         } else if (topic == "version") {
             write_version_header(ui);
         } else {

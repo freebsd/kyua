@@ -81,7 +81,7 @@ command:
 List of authors (aka copyright holders).
 .It Pa __DOCDIR__/CONTRIBUTORS
 List of contributors (aka individuals that have contributed to the project).
-.It Pa __DOCDIR__/COPYING
+.It Pa __DOCDIR__/LICENSE
 License information.
 .El
 .Sh EXIT STATUS

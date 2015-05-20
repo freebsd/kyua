@@ -69,7 +69,7 @@ ATF_TEST_CASE_BODY(all_topics__ok)
                             "* First contributor\n"
                             " * garbage\n"
                             "* Second contributor\n");
-    atf::utils::create_file("fake-docs/COPYING", "Content of COPYING\n");
+    atf::utils::create_file("fake-docs/LICENSE", "Content of LICENSE\n");
 
     utils::setenv("KYUA_DOCDIR", "fake-docs");
     cmd_about cmd;
@@ -93,7 +93,7 @@ ATF_TEST_CASE_BODY(all_topics__ok)
     ATF_REQUIRE(atf::utils::grep_collection("\\* Second contributor",
                                             ui.out_log()));
 
-    ATF_REQUIRE(atf::utils::grep_collection("Content of COPYING",
+    ATF_REQUIRE(atf::utils::grep_collection("Content of LICENSE",
                                             ui.out_log()));
 
     ATF_REQUIRE(atf::utils::grep_collection("Homepage", ui.out_log()));
@@ -121,7 +121,7 @@ ATF_TEST_CASE_BODY(all_topics__missing_docs)
                                             ui.err_log()));
     ATF_REQUIRE(atf::utils::grep_collection("Failed to open.*CONTRIBUTORS",
                                             ui.err_log()));
-    ATF_REQUIRE(atf::utils::grep_collection("Failed to open.*COPYING",
+    ATF_REQUIRE(atf::utils::grep_collection("Failed to open.*LICENSE",
                                             ui.err_log()));
 }
 
@@ -165,7 +165,7 @@ ATF_TEST_CASE_BODY(topic_authors__ok)
     ATF_REQUIRE(atf::utils::grep_collection("\\* Second contributor",
                                             ui.out_log()));
 
-    ATF_REQUIRE(!atf::utils::grep_collection("COPYING", ui.out_log()));
+    ATF_REQUIRE(!atf::utils::grep_collection("LICENSE", ui.out_log()));
     ATF_REQUIRE(!atf::utils::grep_collection("Homepage", ui.out_log()));
     ATF_REQUIRE(ui.err_log().empty());
 }
@@ -189,7 +189,7 @@ ATF_TEST_CASE_BODY(topic_authors__missing_doc)
                                             ui.err_log()));
     ATF_REQUIRE(atf::utils::grep_collection("Failed to open.*CONTRIBUTORS",
                                             ui.err_log()));
-    ATF_REQUIRE(!atf::utils::grep_collection("Failed to open.*COPYING",
+    ATF_REQUIRE(!atf::utils::grep_collection("Failed to open.*LICENSE",
                                              ui.err_log()));
 }
 
@@ -202,7 +202,7 @@ ATF_TEST_CASE_BODY(topic_license__ok)
     args.push_back("license");
 
     fs::mkdir(fs::path("fake-docs"), 0755);
-    atf::utils::create_file("fake-docs/COPYING", "Content of COPYING\n");
+    atf::utils::create_file("fake-docs/LICENSE", "Content of LICENSE\n");
 
     utils::setenv("KYUA_DOCDIR", "fake-docs");
     cmd_about cmd;
@@ -211,7 +211,7 @@ ATF_TEST_CASE_BODY(topic_license__ok)
     ATF_REQUIRE(!atf::utils::grep_string(PACKAGE_NAME, ui.out_log()[0]));
     ATF_REQUIRE(!atf::utils::grep_collection("AUTHORS", ui.out_log()));
     ATF_REQUIRE(!atf::utils::grep_collection("CONTRIBUTORS", ui.out_log()));
-    ATF_REQUIRE(atf::utils::grep_collection("Content of COPYING",
+    ATF_REQUIRE(atf::utils::grep_collection("Content of LICENSE",
                                             ui.out_log()));
     ATF_REQUIRE(!atf::utils::grep_collection("Homepage", ui.out_log()));
     ATF_REQUIRE(ui.err_log().empty());
@@ -236,7 +236,7 @@ ATF_TEST_CASE_BODY(topic_license__missing_doc)
                                              ui.err_log()));
     ATF_REQUIRE(!atf::utils::grep_collection("Failed to open.*CONTRIBUTORS",
                                              ui.err_log()));
-    ATF_REQUIRE(atf::utils::grep_collection("Failed to open.*COPYING",
+    ATF_REQUIRE(atf::utils::grep_collection("Failed to open.*LICENSE",
                                             ui.err_log()));
 }
 

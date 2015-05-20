@@ -25,7 +25,7 @@ to get your changes incorporated.
 
 * Unless you have a strong reason not to, please assign copyright of your
   changes to Google Inc. and use the 3-clause BSD license text included
-  throughout the codebase (see [COPYING](COPYING)).  Keeping the whole project
+  throughout the codebase (see [LICENSE](LICENSE)).  Keeping the whole project
   owned by a single entity is important, particularly to avoid the problem of
   having to replicate potentially hundreds of different copyright notes in
   documentation materials, etc.
