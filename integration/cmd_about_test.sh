@@ -41,14 +41,16 @@ check_all() {
     grep -E 'kyua .*[0-9]+\.[0-9]+' "${file}" || \
         atf_fail 'No version reported'
     grep 'Copyright' "${file}" || atf_fail 'No license reported'
-    grep '<.*@.*>' "${file}" || atf_fail 'No authors reported'
+    grep '^\*[^<>]*$' "${file}" || atf_fail 'No authors reported'
+    grep '^\*.*<.*@.*>$' "${file}" || atf_fail 'No contributors reported'
     grep 'Homepage' "${file}" || atf_fail 'No homepage reported'
 }
 
 
 utils_test_case all_topics__installed
 all_topics__installed_head() {
-    atf_set "require.files" "${KYUA_DOCDIR}/AUTHORS ${KYUA_DOCDIR}/COPYING"
+    atf_set "require.files" "${KYUA_DOCDIR}/AUTHORS" \
+            "${KYUA_DOCDIR}/CONTRIBUTORS" "${KYUA_DOCDIR}/COPYING"
 }
 all_topics__installed_body() {
     atf_check -s exit:0 -o save:stdout -e empty kyua about
@@ -59,7 +61,8 @@ all_topics__installed_body() {
 utils_test_case all_topics__override
 all_topics__override_body() {
     mkdir docs
-    echo "Author <author@example.net>" >docs/AUTHORS
+    echo "* Author (no email)" >docs/AUTHORS
+    echo "* Contributor <contributor@example.net>" >docs/CONTRIBUTORS
     echo "Copyright text" >docs/COPYING
     export KYUA_DOCDIR=docs
     atf_check -s exit:0 -o save:stdout -e empty kyua about
@@ -69,20 +72,24 @@ all_topics__override_body() {
 
 utils_test_case topic__authors__installed
 topic__authors__installed_head() {
-    atf_set "require.files" "${KYUA_DOCDIR}/AUTHORS"
+    atf_set "require.files" "${KYUA_DOCDIR}/AUTHORS" \
+            "${KYUA_DOCDIR}/CONTRIBUTORS"
 }
 topic__authors__installed_body() {
-    atf_check -s exit:0 -o file:"${KYUA_DOCDIR}/AUTHORS" -e empty \
-        kyua about authors
+    grep -h '^\* ' "${KYUA_DOCDIR}/AUTHORS" "${KYUA_DOCDIR}/CONTRIBUTORS" \
+         >expout
+    atf_check -s exit:0 -o file:expout -e empty kyua about authors
 }
 
 
 utils_test_case topic__authors__override
 topic__authors__override_body() {
     mkdir docs
-    echo "Author <author@example.net>" >docs/AUTHORS
+    echo "* Author (no email)" >docs/AUTHORS
+    echo "* Contributor <contributor@example.net>" >docs/CONTRIBUTORS
     export KYUA_DOCDIR=docs
-    atf_check -s exit:0 -o file:docs/AUTHORS -e empty kyua about authors
+    cat docs/AUTHORS docs/CONTRIBUTORS >expout
+    atf_check -s exit:0 -o file:expout -e empty kyua about authors
 }
 
 

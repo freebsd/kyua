@@ -42,6 +42,7 @@
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/sanity.hpp"
+#include "utils/text/regex.hpp"
 
 #if defined(HAVE_CONFIG_H)
 #   include "config.h"
@@ -50,6 +51,7 @@
 namespace cmdline = utils::cmdline;
 namespace config = utils::config;
 namespace fs = utils::fs;
+namespace text = utils::text;
 
 using cli::cmd_about;
 
@@ -64,10 +66,13 @@ namespace {
 ///
 /// \param ui Object to interact with the I/O of the program.
 /// \param file The file to print.
+/// \param filter_re Regular expression to match the lines to print.  If empty,
+///     no filtering is applied.
 ///
 /// \return True if the file was printed, false otherwise.
 static bool
-cat_file(cmdline::ui* ui, const fs::path& file)
+cat_file(cmdline::ui* ui, const fs::path& file,
+         const std::string& filter_re = "")
 {
     std::ifstream input(file.c_str());
     if (!input) {
@@ -76,8 +81,18 @@ cat_file(cmdline::ui* ui, const fs::path& file)
     }
 
     std::string line;
-    while (std::getline(input, line).good())
-        ui->out(line);
+    if (filter_re.empty()) {
+        while (std::getline(input, line).good()) {
+            ui->out(line);
+        }
+    } else {
+        const text::regex filter = text::regex::compile(filter_re, 0);
+        while (std::getline(input, line).good()) {
+            if (filter.match(line)) {
+                ui->out(line);
+            }
+        }
+    }
     input.close();
     return true;
 }
@@ -89,7 +104,7 @@ cat_file(cmdline::ui* ui, const fs::path& file)
 /// Default constructor for cmd_about.
 cmd_about::cmd_about(void) : cli_command(
     "about", "[authors|license|version]", 0, 1,
-    "Shows detailed authors, license, and version information")
+    "Shows detailed authors and contributors; license; and version information")
 {
 }
 
@@ -111,6 +126,8 @@ cmd_about::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
 
     bool success = true;
 
+    static const char* list_re = "^\\* ";
+
     if (cmdline.arguments().empty()) {
         ui->out(PACKAGE " (" PACKAGE_NAME ") " PACKAGE_VERSION);
         ui->out("");
@@ -120,14 +137,17 @@ cmd_about::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
         ui->out("");
         ui->out("Brought to you by:");
         ui->out("");
-        success &= cat_file(ui, docdir / "AUTHORS");
+        success &= cat_file(ui, docdir / "AUTHORS", list_re);
+        ui->out("");
+        success &= cat_file(ui, docdir / "CONTRIBUTORS", list_re);
         ui->out("");
         ui->out(F("Homepage: %s") % PACKAGE_URL);
     } else {
         const std::string& topic = cmdline.arguments()[0];
 
         if (topic == "authors") {
-            success &= cat_file(ui, docdir / "AUTHORS");
+            success &= cat_file(ui, docdir / "AUTHORS", list_re);
+            success &= cat_file(ui, docdir / "CONTRIBUTORS", list_re);
         } else if (topic == "license") {
             success &= cat_file(ui, docdir / "COPYING");
         } else if (topic == "version") {
