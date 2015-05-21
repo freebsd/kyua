@@ -1,4 +1,4 @@
-# Copyright 2010 Google Inc.
+# Copyright 2010 The Kyua Authors.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,7 @@ noinst_DATA =
 noinst_LIBRARIES =
 noinst_SCRIPTS =
 
-doc_DATA = AUTHORS COPYING NEWS README
+doc_DATA = AUTHORS CONTRIBUTING.md CONTRIBUTORS LICENSE NEWS README
 noinst_DATA += INSTALL README
 EXTRA_DIST += $(doc_DATA) INSTALL README
 

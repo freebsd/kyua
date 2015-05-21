@@ -1,5 +1,5 @@
 #! /bin/sh
-# Copyright 2015 Google Inc.
+# Copyright 2015 The Kyua Authors.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without

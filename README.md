@@ -51,6 +51,11 @@ You should also install the ATF libraries to assist in the development of
 test programs.  To that end, see the
 [ATF project page](https://github.com/jmmv/atf/).
 
+## Contributing
+
+Want to contribute?  Great!  But please first read the guidelines provided
+in [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Support
 
 Please use the

@@ -1,4 +1,4 @@
-# Copyright 2011 Google Inc.
+# Copyright 2011 The Kyua Authors.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -41,14 +41,16 @@ check_all() {
     grep -E 'kyua .*[0-9]+\.[0-9]+' "${file}" || \
         atf_fail 'No version reported'
     grep 'Copyright' "${file}" || atf_fail 'No license reported'
-    grep '<.*@.*>' "${file}" || atf_fail 'No authors reported'
+    grep '^\*[^<>]*$' "${file}" || atf_fail 'No authors reported'
+    grep '^\*.*<.*@.*>$' "${file}" || atf_fail 'No contributors reported'
     grep 'Homepage' "${file}" || atf_fail 'No homepage reported'
 }
 
 
 utils_test_case all_topics__installed
 all_topics__installed_head() {
-    atf_set "require.files" "${KYUA_DOCDIR}/AUTHORS ${KYUA_DOCDIR}/COPYING"
+    atf_set "require.files" "${KYUA_DOCDIR}/AUTHORS" \
+            "${KYUA_DOCDIR}/CONTRIBUTORS" "${KYUA_DOCDIR}/LICENSE"
 }
 all_topics__installed_body() {
     atf_check -s exit:0 -o save:stdout -e empty kyua about
@@ -59,8 +61,9 @@ all_topics__installed_body() {
 utils_test_case all_topics__override
 all_topics__override_body() {
     mkdir docs
-    echo "Author <author@example.net>" >docs/AUTHORS
-    echo "Copyright text" >docs/COPYING
+    echo "* Author (no email)" >docs/AUTHORS
+    echo "* Contributor <contributor@example.net>" >docs/CONTRIBUTORS
+    echo "Copyright text" >docs/LICENSE
     export KYUA_DOCDIR=docs
     atf_check -s exit:0 -o save:stdout -e empty kyua about
     check_all stdout
@@ -69,29 +72,33 @@ all_topics__override_body() {
 
 utils_test_case topic__authors__installed
 topic__authors__installed_head() {
-    atf_set "require.files" "${KYUA_DOCDIR}/AUTHORS"
+    atf_set "require.files" "${KYUA_DOCDIR}/AUTHORS" \
+            "${KYUA_DOCDIR}/CONTRIBUTORS"
 }
 topic__authors__installed_body() {
-    atf_check -s exit:0 -o file:"${KYUA_DOCDIR}/AUTHORS" -e empty \
-        kyua about authors
+    grep -h '^\* ' "${KYUA_DOCDIR}/AUTHORS" "${KYUA_DOCDIR}/CONTRIBUTORS" \
+         >expout
+    atf_check -s exit:0 -o file:expout -e empty kyua about authors
 }
 
 
 utils_test_case topic__authors__override
 topic__authors__override_body() {
     mkdir docs
-    echo "Author <author@example.net>" >docs/AUTHORS
+    echo "* Author (no email)" >docs/AUTHORS
+    echo "* Contributor <contributor@example.net>" >docs/CONTRIBUTORS
     export KYUA_DOCDIR=docs
-    atf_check -s exit:0 -o file:docs/AUTHORS -e empty kyua about authors
+    cat docs/AUTHORS docs/CONTRIBUTORS >expout
+    atf_check -s exit:0 -o file:expout -e empty kyua about authors
 }
 
 
 utils_test_case topic__license__installed
 topic__license__installed_head() {
-    atf_set "require.files" "${KYUA_DOCDIR}/COPYING"
+    atf_set "require.files" "${KYUA_DOCDIR}/LICENSE"
 }
 topic__license__installed_body() {
-    atf_check -s exit:0 -o file:"${KYUA_DOCDIR}/COPYING" -e empty \
+    atf_check -s exit:0 -o file:"${KYUA_DOCDIR}/LICENSE" -e empty \
         kyua about license
 }
 
@@ -99,9 +106,9 @@ topic__license__installed_body() {
 utils_test_case topic__license__override
 topic__license__override_body() {
     mkdir docs
-    echo "Copyright text" >docs/COPYING
+    echo "Copyright text" >docs/LICENSE
     export KYUA_DOCDIR=docs
-    atf_check -s exit:0 -o file:docs/COPYING -e empty kyua about license
+    atf_check -s exit:0 -o file:docs/LICENSE -e empty kyua about license
 }
 
 

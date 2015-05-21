@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010 The Kyua Authors.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -59,19 +59,43 @@ ATF_TEST_CASE_BODY(all_topics__ok)
     args.push_back("about");
 
     fs::mkdir(fs::path("fake-docs"), 0755);
-    atf::utils::create_file("fake-docs/AUTHORS", "Content of AUTHORS\n");
-    atf::utils::create_file("fake-docs/COPYING", "Content of COPYING\n");
+    atf::utils::create_file("fake-docs/AUTHORS",
+                            "Content of AUTHORS\n"
+                            "* First author\n"
+                            " * garbage\n"
+                            "* Second author\n");
+    atf::utils::create_file("fake-docs/CONTRIBUTORS",
+                            "Content of CONTRIBUTORS\n"
+                            "* First contributor\n"
+                            " * garbage\n"
+                            "* Second contributor\n");
+    atf::utils::create_file("fake-docs/LICENSE", "Content of LICENSE\n");
 
     utils::setenv("KYUA_DOCDIR", "fake-docs");
     cmd_about cmd;
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(EXIT_SUCCESS, cmd.main(&ui, args, engine::default_config()));
+
     ATF_REQUIRE(atf::utils::grep_string(PACKAGE_NAME, ui.out_log()[0]));
     ATF_REQUIRE(atf::utils::grep_string(PACKAGE_VERSION, ui.out_log()[0]));
-    ATF_REQUIRE(atf::utils::grep_collection("Content of AUTHORS",
+
+    ATF_REQUIRE(!atf::utils::grep_collection("Content of AUTHORS",
+                                             ui.out_log()));
+    ATF_REQUIRE(atf::utils::grep_collection("\\* First author", ui.out_log()));
+    ATF_REQUIRE(!atf::utils::grep_collection("garbage", ui.out_log()));
+    ATF_REQUIRE(atf::utils::grep_collection("\\* Second author", ui.out_log()));
+
+    ATF_REQUIRE(!atf::utils::grep_collection("Content of CONTRIBUTORS",
+                                             ui.out_log()));
+    ATF_REQUIRE(atf::utils::grep_collection("\\* First contributor",
                                             ui.out_log()));
-    ATF_REQUIRE(atf::utils::grep_collection("Content of COPYING",
+    ATF_REQUIRE(!atf::utils::grep_collection("garbage", ui.out_log()));
+    ATF_REQUIRE(atf::utils::grep_collection("\\* Second contributor",
                                             ui.out_log()));
+
+    ATF_REQUIRE(atf::utils::grep_collection("Content of LICENSE",
+                                            ui.out_log()));
+
     ATF_REQUIRE(atf::utils::grep_collection("Homepage", ui.out_log()));
     ATF_REQUIRE(ui.err_log().empty());
 }
@@ -95,7 +119,9 @@ ATF_TEST_CASE_BODY(all_topics__missing_docs)
 
     ATF_REQUIRE(atf::utils::grep_collection("Failed to open.*AUTHORS",
                                             ui.err_log()));
-    ATF_REQUIRE(atf::utils::grep_collection("Failed to open.*COPYING",
+    ATF_REQUIRE(atf::utils::grep_collection("Failed to open.*CONTRIBUTORS",
+                                            ui.err_log()));
+    ATF_REQUIRE(atf::utils::grep_collection("Failed to open.*LICENSE",
                                             ui.err_log()));
 }
 
@@ -108,16 +134,38 @@ ATF_TEST_CASE_BODY(topic_authors__ok)
     args.push_back("authors");
 
     fs::mkdir(fs::path("fake-docs"), 0755);
-    atf::utils::create_file("fake-docs/AUTHORS", "Content of AUTHORS\n");
+    atf::utils::create_file("fake-docs/AUTHORS",
+                            "Content of AUTHORS\n"
+                            "* First author\n"
+                            " * garbage\n"
+                            "* Second author\n");
+    atf::utils::create_file("fake-docs/CONTRIBUTORS",
+                            "Content of CONTRIBUTORS\n"
+                            "* First contributor\n"
+                            " * garbage\n"
+                            "* Second contributor\n");
 
     utils::setenv("KYUA_DOCDIR", "fake-docs");
     cmd_about cmd;
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(EXIT_SUCCESS, cmd.main(&ui, args, engine::default_config()));
     ATF_REQUIRE(!atf::utils::grep_string(PACKAGE_NAME, ui.out_log()[0]));
-    ATF_REQUIRE(atf::utils::grep_collection("Content of AUTHORS",
+
+    ATF_REQUIRE(!atf::utils::grep_collection("Content of AUTHORS",
+                                             ui.out_log()));
+    ATF_REQUIRE(atf::utils::grep_collection("\\* First author", ui.out_log()));
+    ATF_REQUIRE(!atf::utils::grep_collection("garbage", ui.out_log()));
+    ATF_REQUIRE(atf::utils::grep_collection("\\* Second author", ui.out_log()));
+
+    ATF_REQUIRE(!atf::utils::grep_collection("Content of CONTRIBUTORS",
+                                             ui.out_log()));
+    ATF_REQUIRE(atf::utils::grep_collection("\\* First contributor",
                                             ui.out_log()));
-    ATF_REQUIRE(!atf::utils::grep_collection("COPYING", ui.out_log()));
+    ATF_REQUIRE(!atf::utils::grep_collection("garbage", ui.out_log()));
+    ATF_REQUIRE(atf::utils::grep_collection("\\* Second contributor",
+                                            ui.out_log()));
+
+    ATF_REQUIRE(!atf::utils::grep_collection("LICENSE", ui.out_log()));
     ATF_REQUIRE(!atf::utils::grep_collection("Homepage", ui.out_log()));
     ATF_REQUIRE(ui.err_log().empty());
 }
@@ -139,7 +187,9 @@ ATF_TEST_CASE_BODY(topic_authors__missing_doc)
 
     ATF_REQUIRE(atf::utils::grep_collection("Failed to open.*AUTHORS",
                                             ui.err_log()));
-    ATF_REQUIRE(!atf::utils::grep_collection("Failed to open.*COPYING",
+    ATF_REQUIRE(atf::utils::grep_collection("Failed to open.*CONTRIBUTORS",
+                                            ui.err_log()));
+    ATF_REQUIRE(!atf::utils::grep_collection("Failed to open.*LICENSE",
                                              ui.err_log()));
 }
 
@@ -152,7 +202,7 @@ ATF_TEST_CASE_BODY(topic_license__ok)
     args.push_back("license");
 
     fs::mkdir(fs::path("fake-docs"), 0755);
-    atf::utils::create_file("fake-docs/COPYING", "Content of COPYING\n");
+    atf::utils::create_file("fake-docs/LICENSE", "Content of LICENSE\n");
 
     utils::setenv("KYUA_DOCDIR", "fake-docs");
     cmd_about cmd;
@@ -160,7 +210,8 @@ ATF_TEST_CASE_BODY(topic_license__ok)
     ATF_REQUIRE_EQ(EXIT_SUCCESS, cmd.main(&ui, args, engine::default_config()));
     ATF_REQUIRE(!atf::utils::grep_string(PACKAGE_NAME, ui.out_log()[0]));
     ATF_REQUIRE(!atf::utils::grep_collection("AUTHORS", ui.out_log()));
-    ATF_REQUIRE(atf::utils::grep_collection("Content of COPYING",
+    ATF_REQUIRE(!atf::utils::grep_collection("CONTRIBUTORS", ui.out_log()));
+    ATF_REQUIRE(atf::utils::grep_collection("Content of LICENSE",
                                             ui.out_log()));
     ATF_REQUIRE(!atf::utils::grep_collection("Homepage", ui.out_log()));
     ATF_REQUIRE(ui.err_log().empty());
@@ -183,7 +234,9 @@ ATF_TEST_CASE_BODY(topic_license__missing_doc)
 
     ATF_REQUIRE(!atf::utils::grep_collection("Failed to open.*AUTHORS",
                                              ui.err_log()));
-    ATF_REQUIRE(atf::utils::grep_collection("Failed to open.*COPYING",
+    ATF_REQUIRE(!atf::utils::grep_collection("Failed to open.*CONTRIBUTORS",
+                                             ui.err_log()));
+    ATF_REQUIRE(atf::utils::grep_collection("Failed to open.*LICENSE",
                                             ui.err_log()));
 }
 

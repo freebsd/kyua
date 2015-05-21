@@ -1,4 +1,4 @@
-dnl Copyright 2010 Google Inc.
+dnl Copyright 2010 The Kyua Authors.
 dnl All rights reserved.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@ AC_INIT([Kyua], [0.12], [kyua-discuss@googlegroups.com], [kyua],
 AC_PREREQ([2.65])
 
 
-AC_COPYRIGHT([Copyright 2010 Google Inc.])
+AC_COPYRIGHT([Copyright 2010 The Kyua Authors.])
 AC_CONFIG_AUX_DIR([admin])
 AC_CONFIG_FILES([Doxyfile Makefile utils/defs.hpp])
 AC_CONFIG_HEADERS([config.h])
