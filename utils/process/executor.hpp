@@ -116,8 +116,8 @@ public:
     void cleanup(void);
 
     exec_handle original_exec_handle(void) const;
-    const utils::optional< utils::process::status > status(void) const;
-    const utils::optional< utils::passwd::user > unprivileged_user(void) const;
+    const utils::optional< utils::process::status >& status(void) const;
+    const utils::optional< utils::passwd::user >& unprivileged_user(void) const;
     const utils::datetime::timestamp& start_time() const;
     const utils::datetime::timestamp& end_time() const;
     utils::fs::path control_directory(void) const;
