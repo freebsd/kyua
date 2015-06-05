@@ -39,6 +39,7 @@ extern "C" {
 #include <signal.h>
 }
 
+#include <fstream>
 #include <map>
 #include <memory>
 #include <stdexcept>
@@ -371,7 +372,7 @@ executor::exit_handle::original_exec_handle(void) const
 /// Returns the process termination status of the subprocess.
 ///
 /// \return A process termination status, or none if the subprocess timed out.
-const optional< process::status >
+const optional< process::status >&
 executor::exit_handle::status(void) const
 {
     return _pimpl->status;
@@ -382,7 +383,7 @@ executor::exit_handle::status(void) const
 ///
 /// \return None if the credentials of the process were the same as the current
 /// one, or else a user.
-const optional< passwd::user >
+const optional< passwd::user >&
 executor::exit_handle::unprivileged_user(void) const
 {
     return _pimpl->unprivileged_user;
@@ -565,8 +566,23 @@ struct utils::process::executor::executor_handle::impl {
         exec_data& data = (*iter).second;
         data.timer->unprogram();
 
-        INV(!data.timer->fired() ||
-            (status.signaled() && status.termsig() == SIGKILL));
+        // It is tempting to assert here (and old code did) that, if the timer
+        // has fired, the process has been forcibly killed by us.  This is not
+        // always the case though: for short-lived processes and with very short
+        // timeouts (think 1ms), it is possible for scheduling decisions to
+        // allow the subprocess to finish while at the same time cause the timer
+        // to fire.  So we do not assert this any longer and just rely on the
+        // timer expiration to check if the process timed out or not.  If the
+        // process did finish but the timer expired... oh well, we do not detect
+        // this correctly but we don't care because this should not really
+        // happen.
+
+        if (!fs::exists(data.stdout_file)) {
+            std::ofstream new_stdout(data.stdout_file.c_str());
+        }
+        if (!fs::exists(data.stderr_file)) {
+            std::ofstream new_stderr(data.stderr_file.c_str());
+        }
 
         return exit_handle(std::shared_ptr< exit_handle::impl >(
             new exit_handle::impl(

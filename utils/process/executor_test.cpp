@@ -649,6 +649,29 @@ ATF_TEST_CASE_BODY(integration__followup)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(integration__output_files_always_exist);
+ATF_TEST_CASE_BODY(integration__output_files_always_exist)
+{
+    executor::executor_handle handle = executor::setup();
+
+    // This test is racy: we specify a very short timeout for the subprocess so
+    // that we cause the subprocess to exit before it has had time to set up the
+    // output files.  However, for scheduling reasons, the subprocess may
+    // actually run to completion before the timer triggers.  Retry this a few
+    // times to attempt to catch a "good test".
+    for (int i = 0; i < 50; i++) {
+        const executor::exec_handle exec_handle =
+            do_spawn(handle, child_exit(0), datetime::delta(0, 100000));
+        executor::exit_handle exit_handle = handle.wait(exec_handle);
+        ATF_REQUIRE(fs::exists(exit_handle.stdout_file()));
+        ATF_REQUIRE(fs::exists(exit_handle.stderr_file()));
+        exit_handle.cleanup();
+    }
+
+    handle.cleanup();
+}
+
+
 ATF_TEST_CASE(integration__timeouts);
 ATF_TEST_CASE_HEAD(integration__timeouts)
 {
@@ -942,6 +965,7 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, integration__followup);
 
+    ATF_ADD_TEST_CASE(tcs, integration__output_files_always_exist);
     ATF_ADD_TEST_CASE(tcs, integration__timeouts);
     ATF_ADD_TEST_CASE(tcs, integration__unprivileged_user);
     ATF_ADD_TEST_CASE(tcs, integration__auto_cleanup);

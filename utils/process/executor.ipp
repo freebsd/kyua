@@ -33,6 +33,7 @@
 
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
+#include "utils/passwd.hpp"
 #include "utils/process/child.ipp"
 
 namespace utils {

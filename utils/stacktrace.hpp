@@ -34,14 +34,17 @@
 
 #include <ostream>
 
+#include "utils/datetime_fwd.hpp"
 #include "utils/fs/path_fwd.hpp"
 #include "utils/optional_fwd.hpp"
+#include "utils/process/executor_fwd.hpp"
 #include "utils/process/status_fwd.hpp"
 
 namespace utils {
 
 
 extern const char* builtin_gdb;
+extern utils::datetime::delta gdb_timeout;
 
 utils::optional< utils::fs::path > find_gdb(void);
 
@@ -51,12 +54,13 @@ utils::optional< utils::fs::path > find_core(const utils::fs::path&,
 
 bool unlimit_core_size(void);
 
-void dump_stacktrace(const utils::fs::path&, const utils::process::status&,
-                     const utils::fs::path&, std::ostream&);
+void dump_stacktrace(const utils::fs::path&,
+                     utils::process::executor::executor_handle&,
+                     const utils::process::executor::exit_handle&);
 
-void dump_stacktrace_if_available(
-    const utils::fs::path&, const utils::optional< utils::process::status >&,
-    const utils::fs::path&, const utils::fs::path&);
+void dump_stacktrace_if_available(const utils::fs::path&,
+                                  utils::process::executor::executor_handle&,
+                                  const utils::process::executor::exit_handle&);
 
 
 }  // namespace utils
