@@ -372,7 +372,7 @@ executor::exit_handle::original_exec_handle(void) const
 /// Returns the process termination status of the subprocess.
 ///
 /// \return A process termination status, or none if the subprocess timed out.
-const optional< process::status >
+const optional< process::status >&
 executor::exit_handle::status(void) const
 {
     return _pimpl->status;
@@ -383,7 +383,7 @@ executor::exit_handle::status(void) const
 ///
 /// \return None if the credentials of the process were the same as the current
 /// one, or else a user.
-const optional< passwd::user >
+const optional< passwd::user >&
 executor::exit_handle::unprivileged_user(void) const
 {
     return _pimpl->unprivileged_user;
