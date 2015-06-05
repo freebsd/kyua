@@ -51,12 +51,13 @@ extern "C" {
 #include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
-#include "utils/process/child.ipp"
+#include "utils/process/executor.ipp"
 #include "utils/process/operations.hpp"
 #include "utils/process/status.hpp"
 #include "utils/sanity.hpp"
 
 namespace datetime = utils::datetime;
+namespace executor = utils::process::executor;
 namespace fs = utils::fs;
 namespace process = utils::process;
 
@@ -73,6 +74,10 @@ using utils::optional;
 /// Test cases can override the value of this built-in constant to unit-test the
 /// behavior of the functions below.
 const char* utils::builtin_gdb = GDB;
+
+
+/// Maximum time the external GDB process is allowed to run for.
+datetime::delta utils::gdb_timeout(60, 0);
 
 
 namespace {
@@ -104,9 +109,6 @@ class run_gdb {
     /// Path to the dumped core.
     const fs::path& _core_name;
 
-    /// Directory from where to run GDB.
-    const fs::path& _work_directory;
-
 public:
     /// Constructs the functor.
     ///
@@ -115,30 +117,26 @@ public:
     ///     the given work directory.
     /// \param core_name_ Path to the dumped core.  Use find_core() to deduce
     ///     a valid candidate.  Can be relative to the given work directory.
-    /// \param work_directory_ Directory from where to run GDB.
     run_gdb(const fs::path& gdb_, const fs::path& program_,
-            const fs::path& core_name_, const fs::path& work_directory_) :
-        _gdb(gdb_), _program(program_), _core_name(core_name_),
-        _work_directory(work_directory_)
+            const fs::path& core_name_) :
+        _gdb(gdb_), _program(program_), _core_name(core_name_)
     {
     }
 
     /// Executes GDB.
+    ///
+    /// \param control_directory Directory where we can store control files to
+    ///     not clobber any files created by the program being debugged.
     void
-    operator()(void)
+    operator()(const fs::path& control_directory)
     {
-        if (::chdir(_work_directory.c_str()) == 1) {
-            const int original_errno = errno;
-            std::cerr << F("Failed to chdir to %s: %s") % _work_directory
-                % std::strerror(original_errno);
-            std::exit(EXIT_FAILURE);
-        }
+        const fs::path gdb_script_path = control_directory / "gdb.script";
 
         // Old versions of GDB, such as the one shipped by FreeBSD as of
         // 11.0-CURRENT on 2014-11-26, do not support scripts on the command
         // line via the '-ex' flag.  Instead, we have to create a script file
         // and use that instead.
-        std::ofstream gdb_script("gdb.script");
+        std::ofstream gdb_script(gdb_script_path.c_str());
         if (!gdb_script) {
             std::cerr << "Cannot create GDB script\n";
             ::_exit(EXIT_FAILURE);
@@ -152,35 +150,21 @@ public:
         args.push_back("-batch");
         args.push_back("-q");
         args.push_back("-x");
-        args.push_back("gdb.script");
+        args.push_back(gdb_script_path.str());
         args.push_back(_program.str());
         args.push_back(_core_name.str());
+
+        // Force all GDB output to go to stderr.  We print messages to stderr
+        // when grabbing the stacktrace and we do not want GDB's output to end
+        // up split in two different files.
+        if (::dup2(STDERR_FILENO, STDOUT_FILENO) == -1) {
+            std::cerr << "Cannot redirect stdout to stderr\n";
+            ::_exit(EXIT_FAILURE);
+        }
 
         process::exec(_gdb, args);
     }
 };
-
-
-/// Reads a file and appends it to a stream.
-///
-/// \param file The file to be read.
-/// \param output The stream into which to write the file.
-/// \param line_prefix A string to be prepended to all the written lines.
-///
-/// \post If the reading of the file fails, an error is written to the output.
-static void
-dump_file_into_stream(const fs::path& file, std::ostream& output,
-                      const char* line_prefix)
-{
-    std::ifstream input(file.c_str());
-    if (!input)
-        output << F("Failed to open %s\n") % file;
-    else {
-        std::string line;
-        while (std::getline(input, line).good())
-            output << F("%s%s\n") % line_prefix % line;
-    }
-}
 
 
 }  // anonymous namespace
@@ -299,44 +283,58 @@ utils::unlimit_core_size(void)
 /// \post If anything goes wrong, the diagnostic messages are written to the
 /// output.  This function should not throw.
 void
-utils::dump_stacktrace(const fs::path& program, const process::status& status,
-                       const fs::path& work_directory, std::ostream& output)
+utils::dump_stacktrace(const fs::path& program,
+                       executor::executor_handle& executor_handle,
+                       const executor::exit_handle& exit_handle)
 {
+    PRE(exit_handle.status());
+    const process::status& status = exit_handle.status().get();
     PRE(status.signaled() && status.coredump());
 
-    output << F("Process with PID %s exited with signal %s and dumped core; "
-                "attempting to gather stack trace\n") %
+    std::ofstream gdb_err(exit_handle.stderr_file().c_str(), std::ios::app);
+    if (!gdb_err) {
+        LW(F("Failed to open %s to append GDB's output") %
+           exit_handle.stderr_file());
+        return;
+    }
+
+    gdb_err << F("Process with PID %s exited with signal %s and dumped core; "
+                 "attempting to gather stack trace\n") %
         status.dead_pid() % status.termsig();
 
     const optional< fs::path > gdb = utils::find_gdb();
     if (!gdb) {
-        output << F("Cannot find GDB binary; builtin was '%s'\n") % builtin_gdb;
+        gdb_err << F("Cannot find GDB binary; builtin was '%s'\n") %
+            builtin_gdb;
         return;
     }
 
-    const optional< fs::path > core_file = find_core(program, status,
-                                                     work_directory);
+    const optional< fs::path > core_file = find_core(
+        program, status, exit_handle.work_directory());
     if (!core_file) {
-        output << F("Cannot find any core file\n");
+        gdb_err << F("Cannot find any core file\n");
         return;
     }
 
-    const fs::path gdb_out = work_directory / "gdb.out";
-    const fs::path gdb_err = work_directory / "gdb.err";
+    gdb_err.flush();
+    const executor::exec_handle exec_handle =
+        executor_handle.spawn_followup(
+            run_gdb(gdb.get(), program, core_file.get()),
+            exit_handle, gdb_timeout);
+    const executor::exit_handle gdb_exit_handle =
+        executor_handle.wait(exec_handle);
 
-    std::auto_ptr< process::child > gdb_child =
-        process::child::fork_files(
-            run_gdb(gdb.get(), program, core_file.get(), work_directory),
-            gdb_out, gdb_err);
-    // TODO(jmmv): Enforce a timeout on the GDB subprocess?
-    const process::status gdb_status = gdb_child->wait();
-
-    dump_file_into_stream(gdb_out, output, "gdb stdout: ");
-    dump_file_into_stream(gdb_err, output, "gdb stderr: ");
-    if (gdb_status.exited() && gdb_status.exitstatus() == EXIT_SUCCESS)
-        output << "GDB exited successfully\n";
-    else
-        output << "GDB failed; see output above for details\n";
+    const optional< process::status >& gdb_status = gdb_exit_handle.status();
+    if (!gdb_status) {
+        gdb_err << "GDB timed out\n";
+    } else {
+        if (gdb_status.get().exited() &&
+            gdb_status.get().exitstatus() == EXIT_SUCCESS) {
+            gdb_err << "GDB exited successfully\n";
+        } else {
+            gdb_err << "GDB failed; see output above for details\n";
+        }
+    }
 }
 
 
@@ -360,17 +358,12 @@ utils::dump_stacktrace(const fs::path& program, const process::status& status,
 /// messages are written to the output.
 void
 utils::dump_stacktrace_if_available(const fs::path& program,
-                                    const optional< process::status >& status,
-                                    const fs::path& work_directory,
-                                    const fs::path& output_file)
+                                    executor::executor_handle& executor_handle,
+                                    const executor::exit_handle& exit_handle)
 {
+    const optional< process::status >& status = exit_handle.status();
     if (!status || !status.get().signaled() || !status.get().coredump())
         return;
 
-    std::ofstream output(output_file.c_str(), std::ios_base::app);
-    if (!output)
-        throw std::runtime_error(F("Cannot append stacktrace to file %s") %
-                                 output_file);
-
-    dump_stacktrace(program, status.get(), work_directory, output);
+    dump_stacktrace(program, executor_handle, exit_handle);
 }

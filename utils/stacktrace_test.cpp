@@ -42,15 +42,19 @@ extern "C" {
 
 #include <atf-c++.hpp>
 
+#include "utils/datetime.hpp"
 #include "utils/env.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
+#include "utils/process/executor.ipp"
 #include "utils/process/child.ipp"
 #include "utils/process/operations.hpp"
 #include "utils/process/status.hpp"
 #include "utils/sanity.hpp"
 
+namespace datetime = utils::datetime;
+namespace executor = utils::process::executor;
 namespace fs = utils::fs;
 namespace process = utils::process;
 
@@ -62,26 +66,87 @@ namespace {
 
 
 /// Functor to execute a binary in a subprocess.
+///
+/// The provided binary is copied to the current work directory before being
+/// executed and the copy is given the name chosen by the user.  The copy is
+/// necessary so that we have a deterministic location for where core files may
+/// be dumped (if they happen to be dumped in the current directory).
 class crash_me {
     /// Path to the binary to execute.
     const fs::path _binary;
+
+    /// Name of the binary after being copied.
+    const fs::path _copy_name;
 
 public:
     /// Constructor.
     ///
     /// \param binary_ Path to binary to execute.
-    explicit crash_me(const char* binary_) : _binary(binary_)
+    /// \param copy_name_ Name of the binary after being copied.  If empty,
+    ///     use the leaf name of binary_.
+    explicit crash_me(const fs::path& binary_,
+                      const std::string& copy_name_ = "") :
+        _binary(binary_),
+        _copy_name(copy_name_.empty() ? binary_.leaf_name() : copy_name_)
     {
     }
 
     /// Runs the binary.
     void
-    operator()(void)
+    operator()(void) const UTILS_NORETURN
     {
+        atf::utils::copy_file(_binary.str(), _copy_name.str());
+
         const std::vector< std::string > args;
-        process::exec(_binary, args);
+        process::exec(_copy_name, args);
+    }
+
+    /// Runs the binary.
+    ///
+    /// This interface is exposed to support passing crash_me to the executor.
+    ///
+    /// \param unused_control_directory Directory in which we can store control
+    ///     files outside of the current work directory.
+    void
+    operator()(const fs::path& UTILS_UNUSED_PARAM(control_directory)) const
+        UTILS_NORETURN
+    {
+        (*this)();  // Delegate to ensure the two entry points remain in sync.
     }
 };
+
+
+static void child_exit(const fs::path&) UTILS_NORETURN;
+
+
+/// Subprocess that exits cleanly.
+///
+/// \param unused_control_directory Directory where control files separate from
+///     the work directory can be placed.
+static void
+child_exit(const fs::path& UTILS_UNUSED_PARAM(control_directory))
+{
+    ::_exit(EXIT_SUCCESS);
+}
+
+
+static void child_pause(const fs::path&) UTILS_NORETURN;
+
+
+/// Subprocess that just blocks.
+///
+/// \param unused_control_directory Directory where control files separate from
+///     the work directory can be placed.
+static void
+child_pause(const fs::path& UTILS_UNUSED_PARAM(control_directory))
+{
+    sigset_t mask;
+    sigemptyset(&mask);
+    for (;;) {
+        ::sigsuspend(&mask);
+    }
+    std::abort();
+}
 
 
 /// Generates a core dump, if possible.
@@ -104,15 +169,53 @@ generate_core(const atf::tests::tc* test_case, const char* base_name)
 
     const fs::path helper = fs::path(test_case->get_config_var("srcdir")) /
         "stacktrace_helper";
-    atf::utils::copy_file(helper.str(), base_name);
 
     const process::status status = process::child::fork_files(
-        crash_me(base_name),
+        crash_me(helper, base_name),
         fs::path("unused.out"), fs::path("unused.err"))->wait();
     ATF_REQUIRE(status.signaled());
     if (!status.coredump())
         ATF_SKIP("Test failed to generate core dump");
     return status;
+}
+
+
+/// Generates a core dump, if possible.
+///
+/// \post If this fails to generate a core file, the test case is marked as
+/// skipped.  The caller can rely on this when attempting further checks on the
+/// core dump by assuming that the core dump exists somewhere.
+///
+/// \param test_case Pointer to the caller test case, needed to obtain the path
+///     to the source directory.
+/// \param base_name Name of the binary to execute, which will be a copy of a
+///     helper binary that always crashes.  This name should later be part of
+///     the core filename.
+/// \param executor_handle Executor to use to generate the core dump.
+///
+/// \return The exit handle of the subprocess so that a stacktrace can be
+/// executed reusing this context later on.
+static executor::exit_handle
+generate_core(const atf::tests::tc* test_case, const char* base_name,
+              executor::executor_handle& executor_handle)
+{
+    utils::unlimit_core_size();
+
+    const fs::path helper = fs::path(test_case->get_config_var("srcdir")) /
+        "stacktrace_helper";
+
+    const executor::exec_handle exec_handle = executor_handle.spawn(
+        crash_me(helper, base_name), datetime::delta(60, 0), none, none, none);
+    const executor::exit_handle exit_handle = executor_handle.wait(exec_handle);
+
+    if (!exit_handle.status())
+        ATF_SKIP("Test failed to generate core dump (timed out)");
+    const process::status& status = exit_handle.status().get();
+    ATF_REQUIRE(status.signaled());
+    if (!status.coredump())
+        ATF_SKIP("Test failed to generate core dump");
+
+    return exit_handle;
 }
 
 
@@ -145,7 +248,7 @@ ATF_TEST_CASE_BODY(unlimit_core_size)
     const fs::path helper = fs::path(get_config_var("srcdir")) /
         "stacktrace_helper";
     const process::status status = process::child::fork_files(
-        crash_me(helper.c_str()),
+        crash_me(helper),
         fs::path("unused.out"), fs::path("unused.err"))->wait();
     ATF_REQUIRE(status.signaled());
     if (!status.coredump())
@@ -167,7 +270,7 @@ ATF_TEST_CASE_BODY(unlimit_core_size__hard_is_zero)
     const fs::path helper = fs::path(get_config_var("srcdir")) /
         "stacktrace_helper";
     const process::status status = process::child::fork_files(
-        crash_me(helper.c_str()),
+        crash_me(helper),
         fs::path("unused.out"), fs::path("unused.err"))->wait();
     ATF_REQUIRE(status.signaled());
     ATF_REQUIRE(!status.coredump());
@@ -267,18 +370,25 @@ ATF_TEST_CASE_HEAD(dump_stacktrace__integration)
 }
 ATF_TEST_CASE_BODY(dump_stacktrace__integration)
 {
-    const process::status status = generate_core(this, "short");
-    INV(status.coredump());
+    executor::executor_handle handle = executor::setup();
+
+    executor::exit_handle exit_handle = generate_core(this, "short", handle);
+    INV(exit_handle.status());
+    INV(exit_handle.status().get().coredump());
 
     std::ostringstream output;
-    utils::dump_stacktrace(fs::path("short"), status, fs::path("."), output);
-    std::cout << output.str();
+    utils::dump_stacktrace(fs::path("short"), handle, exit_handle);
 
     // It is hard to validate the execution of an arbitrary GDB of which we do
     // not know anything.  Just assume that the backtrace, at the very least,
     // prints a couple of frame identifiers.
-    ATF_REQUIRE_MATCH("#0", output.str());
-    ATF_REQUIRE_MATCH("#1", output.str());
+    ATF_REQUIRE(!atf::utils::grep_file("#0", exit_handle.stdout_file().str()));
+    ATF_REQUIRE( atf::utils::grep_file("#0", exit_handle.stderr_file().str()));
+    ATF_REQUIRE(!atf::utils::grep_file("#1", exit_handle.stdout_file().str()));
+    ATF_REQUIRE( atf::utils::grep_file("#1", exit_handle.stderr_file().str()));
+
+    exit_handle.cleanup();
+    handle.cleanup();
 }
 
 
@@ -290,32 +400,56 @@ ATF_TEST_CASE_BODY(dump_stacktrace__ok)
                   "echo 'some warning' 1>&2; exit 0");
     utils::builtin_gdb = "fake-gdb";
 
-    const process::status status = generate_core(this, "short");
-    INV(status.coredump());
+    executor::executor_handle handle = executor::setup();
+    executor::exit_handle exit_handle = generate_core(this, "short", handle);
+    INV(exit_handle.status());
+    INV(exit_handle.status().get().coredump());
 
-    std::ostringstream output;
-    utils::dump_stacktrace(fs::path("short"), status, fs::path("."), output);
-    std::cout << output.str();
+    utils::dump_stacktrace(fs::path("short"), handle, exit_handle);
 
-    ATF_REQUIRE_MATCH("exited with signal [0-9]* and dumped core",
-                      output.str());
-    ATF_REQUIRE_MATCH("gdb stdout: frame 1", output.str());
-    ATF_REQUIRE_MATCH("gdb stdout: frame 2", output.str());
-    ATF_REQUIRE_MATCH("gdb stderr: some warning", output.str());
-    ATF_REQUIRE_MATCH("GDB exited successfully", output.str());
+    // Note how all output is expected on stderr even for the messages that the
+    // script decided to send to stdout.
+    ATF_REQUIRE(atf::utils::grep_file("exited with signal [0-9]* and dumped",
+                                      exit_handle.stderr_file().str()));
+    ATF_REQUIRE(atf::utils::grep_file("^frame 1$",
+                                      exit_handle.stderr_file().str()));
+    ATF_REQUIRE(atf::utils::grep_file("^frame 2$",
+                                      exit_handle.stderr_file().str()));
+    ATF_REQUIRE(atf::utils::grep_file("^some warning$",
+                                      exit_handle.stderr_file().str()));
+    ATF_REQUIRE(atf::utils::grep_file("GDB exited successfully",
+                                      exit_handle.stderr_file().str()));
+
+    exit_handle.cleanup();
+    handle.cleanup();
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(dump_stacktrace__cannot_find_core);
 ATF_TEST_CASE_BODY(dump_stacktrace__cannot_find_core)
 {
-    const process::status status = process::status::fake_signaled(SIGILL, true);
+    executor::executor_handle handle = executor::setup();
+    executor::exit_handle exit_handle = generate_core(this, "short", handle);
 
-    std::ostringstream output;
-    utils::dump_stacktrace(fs::path("fake"), status, fs::path("."), output);
-    std::cout << output.str();
+    const optional< fs::path > core_name = utils::find_core(
+        fs::path("short"),
+        exit_handle.status().get(),
+        exit_handle.work_directory());
+    if (core_name) {
+        // This is needed even if we provide a different basename to
+        // dump_stacktrace below because the system policies may be generating
+        // core dumps by PID, not binary name.
+        std::cout << "Removing core dump: " << core_name << '\n';
+        fs::unlink(core_name.get());
+    }
 
-    ATF_REQUIRE_MATCH("Cannot find any core file", output.str());
+    utils::dump_stacktrace(fs::path("fake"), handle, exit_handle);
+
+    ATF_REQUIRE(atf::utils::grep_file("Cannot find any core file",
+                                      exit_handle.stderr_file().str()));
+
+    exit_handle.cleanup();
+    handle.cleanup();
 }
 
 
@@ -325,14 +459,17 @@ ATF_TEST_CASE_BODY(dump_stacktrace__cannot_find_gdb)
     utils::setenv("PATH", ".");
     utils::builtin_gdb = "missing-gdb";
 
-    const process::status status = process::status::fake_signaled(SIGILL, true);
+    executor::executor_handle handle = executor::setup();
+    executor::exit_handle exit_handle = generate_core(this, "short", handle);
 
-    std::ostringstream output;
-    utils::dump_stacktrace(fs::path("fake"), status, fs::path("."), output);
-    std::cout << output.str();
+    utils::dump_stacktrace(fs::path("fake"), handle, exit_handle);
 
-    ATF_REQUIRE_MATCH("Cannot find GDB binary; builtin was 'missing-gdb'",
-                      output.str());
+    ATF_REQUIRE(atf::utils::grep_file(
+                    "Cannot find GDB binary; builtin was 'missing-gdb'",
+                    exit_handle.stderr_file().str()));
+
+    exit_handle.cleanup();
+    handle.cleanup();
 }
 
 
@@ -341,18 +478,49 @@ ATF_TEST_CASE_BODY(dump_stacktrace__gdb_fail)
 {
     utils::setenv("PATH", ".");
     create_script("fake-gdb", "echo 'foo'; echo 'bar' 1>&2; exit 1");
-    utils::builtin_gdb = "fake-gdb";
+    const std::string gdb = (fs::current_path() / "fake-gdb").str();
+    utils::builtin_gdb = gdb.c_str();
 
-    const process::status status = process::status::fake_signaled(SIGILL, true);
-    atf::utils::create_file("fake.core", "");
+    executor::executor_handle handle = executor::setup();
+    executor::exit_handle exit_handle = generate_core(this, "short", handle);
 
-    std::ostringstream output;
-    utils::dump_stacktrace(fs::path("fake"), status, fs::path("."), output);
-    std::cout << output.str();
+    atf::utils::create_file((exit_handle.work_directory() / "fake.core").str(),
+                            "Invalid core file, but not read");
+    utils::dump_stacktrace(fs::path("fake"), handle, exit_handle);
 
-    ATF_REQUIRE_MATCH("gdb stdout: foo", output.str());
-    ATF_REQUIRE_MATCH("gdb stderr: bar", output.str());
-    ATF_REQUIRE_MATCH("GDB failed; see output above for details", output.str());
+    ATF_REQUIRE(atf::utils::grep_file("^foo$",
+                                      exit_handle.stderr_file().str()));
+    ATF_REQUIRE(atf::utils::grep_file("^bar$",
+                                      exit_handle.stderr_file().str()));
+    ATF_REQUIRE(atf::utils::grep_file("GDB failed; see output above",
+                                      exit_handle.stderr_file().str()));
+
+    exit_handle.cleanup();
+    handle.cleanup();
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(dump_stacktrace__gdb_timeout);
+ATF_TEST_CASE_BODY(dump_stacktrace__gdb_timeout)
+{
+    utils::setenv("PATH", ".");
+    create_script("fake-gdb", "while :; do sleep 1; done");
+    const std::string gdb = (fs::current_path() / "fake-gdb").str();
+    utils::builtin_gdb = gdb.c_str();
+    utils::gdb_timeout = datetime::delta(1, 0);
+
+    executor::executor_handle handle = executor::setup();
+    executor::exit_handle exit_handle = generate_core(this, "short", handle);
+
+    atf::utils::create_file((exit_handle.work_directory() / "fake.core").str(),
+                            "Invalid core file, but not read");
+    utils::dump_stacktrace(fs::path("fake"), handle, exit_handle);
+
+    ATF_REQUIRE(atf::utils::grep_file("GDB timed out",
+                                      exit_handle.stderr_file().str()));
+
+    exit_handle.cleanup();
+    handle.cleanup();
 }
 
 
@@ -363,56 +531,61 @@ ATF_TEST_CASE_BODY(dump_stacktrace_if_available__append)
     create_script("fake-gdb", "echo 'frame 1'; exit 0");
     utils::builtin_gdb = "fake-gdb";
 
-    atf::utils::create_file("output.txt", "Pre-contents");
-    const process::status status = generate_core(this, "short");
-    utils::dump_stacktrace_if_available(
-        fs::path("short"), utils::make_optional(status), fs::path("."),
-        fs::path("output.txt"));
+    executor::executor_handle handle = executor::setup();
+    executor::exit_handle exit_handle = generate_core(this, "short", handle);
 
-    ATF_REQUIRE(atf::utils::grep_file("Pre-contents", "output.txt"));
-    ATF_REQUIRE(atf::utils::grep_file("frame 1", "output.txt"));
-}
+    atf::utils::create_file(exit_handle.stdout_file().str(), "Pre-stdout");
+    atf::utils::create_file(exit_handle.stderr_file().str(), "Pre-stderr");
 
+    utils::dump_stacktrace_if_available(fs::path("short"), handle, exit_handle);
 
-ATF_TEST_CASE_WITHOUT_HEAD(dump_stacktrace_if_available__create);
-ATF_TEST_CASE_BODY(dump_stacktrace_if_available__create)
-{
-    utils::setenv("PATH", ".");
-    create_script("fake-gdb", "echo 'frame 1'; exit 0");
-    utils::builtin_gdb = "fake-gdb";
+    ATF_REQUIRE(atf::utils::grep_file("Pre-stdout",
+                                      exit_handle.stdout_file().str()));
+    ATF_REQUIRE(atf::utils::grep_file("Pre-stderr",
+                                      exit_handle.stderr_file().str()));
+    ATF_REQUIRE(atf::utils::grep_file("frame 1",
+                                      exit_handle.stderr_file().str()));
 
-    const process::status status = generate_core(this, "short");
-    utils::dump_stacktrace_if_available(
-        fs::path("short"), utils::make_optional(status), fs::path("."),
-        fs::path("output.txt"));
-
-    ATF_REQUIRE(atf::utils::grep_file("frame 1", "output.txt"));
+    exit_handle.cleanup();
+    handle.cleanup();
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(dump_stacktrace_if_available__no_status);
 ATF_TEST_CASE_BODY(dump_stacktrace_if_available__no_status)
 {
-    utils::dump_stacktrace_if_available(fs::path("short"), none,
-                                        fs::path("."), fs::path("output.txt"));
-    ATF_REQUIRE(!fs::exists(fs::path("output.txt")));
+    executor::executor_handle handle = executor::setup();
+    const executor::exec_handle exec_handle = handle.spawn(
+        child_pause, datetime::delta(0, 100000), none, none, none);
+    executor::exit_handle exit_handle = handle.wait(exec_handle);
+    INV(!exit_handle.status());
+
+    utils::dump_stacktrace_if_available(fs::path("short"), handle, exit_handle);
+    ATF_REQUIRE(atf::utils::compare_file(exit_handle.stdout_file().str(), ""));
+    ATF_REQUIRE(atf::utils::compare_file(exit_handle.stderr_file().str(), ""));
+
+    exit_handle.cleanup();
+    handle.cleanup();
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(dump_stacktrace_if_available__no_coredump);
 ATF_TEST_CASE_BODY(dump_stacktrace_if_available__no_coredump)
 {
-    const process::status not_signaled = process::status::fake_exited(123);
-    utils::dump_stacktrace_if_available(
-        fs::path("short"), utils::make_optional(not_signaled), fs::path("."),
-        fs::path("output.txt"));
-    ATF_REQUIRE(!fs::exists(fs::path("output.txt")));
+    executor::executor_handle handle = executor::setup();
+    const executor::exec_handle exec_handle = handle.spawn(
+        child_exit, datetime::delta(60, 0), none, none, none);
+    executor::exit_handle exit_handle = handle.wait(exec_handle);
+    INV(exit_handle.status());
+    INV(exit_handle.status().get().exited());
+    INV(exit_handle.status().get().exitstatus() == EXIT_SUCCESS);
 
-    const process::status no_core = process::status::fake_signaled(1, false);
-    utils::dump_stacktrace_if_available(
-        fs::path("short"), utils::make_optional(no_core), fs::path("."),
-        fs::path("output.txt"));
-    ATF_REQUIRE(!fs::exists(fs::path("output.txt")));
+    utils::dump_stacktrace_if_available(fs::path("short"), handle, exit_handle);
+    ATF_REQUIRE(atf::utils::compare_file(exit_handle.stdout_file().str(), ""));
+    ATF_REQUIRE(atf::utils::compare_file(exit_handle.stderr_file().str(), ""));
+
+    exit_handle.cleanup();
+    handle.cleanup();
 }
 
 
@@ -435,9 +608,9 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, dump_stacktrace__cannot_find_core);
     ATF_ADD_TEST_CASE(tcs, dump_stacktrace__cannot_find_gdb);
     ATF_ADD_TEST_CASE(tcs, dump_stacktrace__gdb_fail);
+    ATF_ADD_TEST_CASE(tcs, dump_stacktrace__gdb_timeout);
 
     ATF_ADD_TEST_CASE(tcs, dump_stacktrace_if_available__append);
-    ATF_ADD_TEST_CASE(tcs, dump_stacktrace_if_available__create);
     ATF_ADD_TEST_CASE(tcs, dump_stacktrace_if_available__no_status);
     ATF_ADD_TEST_CASE(tcs, dump_stacktrace_if_available__no_coredump);
 }

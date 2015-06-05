@@ -867,9 +867,7 @@ scheduler::scheduler_handle::wait_any(void)
     exec_data& data = (*iter).second;
 
     utils::dump_stacktrace_if_available(data.test_program->absolute_path(),
-                                        handle.status(),
-                                        handle.work_directory(),
-                                        handle.stderr_file());
+                                        _pimpl->generic, handle);
 
     const model::test_case& test_case = data.test_program->find(
         data.test_case_name);
