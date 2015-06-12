@@ -39,6 +39,7 @@ extern "C" {
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
+#include <iostream>
 
 #include "engine/atf_list.hpp"
 #include "engine/atf_result.hpp"
@@ -47,6 +48,7 @@ extern "C" {
 #include "model/test_case.hpp"
 #include "model/test_program.hpp"
 #include "model/test_result.hpp"
+#include "utils/datetime.hpp"
 #include "utils/defs.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
@@ -54,12 +56,14 @@ extern "C" {
 #include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
+#include "utils/process/deadline_killer.hpp"
 #include "utils/process/exceptions.hpp"
 #include "utils/process/operations.hpp"
 #include "utils/process/status.hpp"
 #include "utils/stream.hpp"
 
 namespace config = utils::config;
+namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace process = utils::process;
 
@@ -157,7 +161,7 @@ write_exit_cookie(const int status, const fs::path& file)
 /// \param exit_cookie The file to write to.
 static void
 run_part(const fs::path& test_program, const process::args_vector& args,
-         const fs::path& exit_cookie)
+         const fs::path& exit_cookie, const datetime::delta& timeout)
 {
     const pid_t pid = ::fork();
     if (pid == -1) {
@@ -167,12 +171,17 @@ run_part(const fs::path& test_program, const process::args_vector& args,
         process::exec(test_program, args);
     }
 
+    process::deadline_killer killer(timeout, pid);
+
     int status;
     if (::waitpid(pid, &status, 0) == -1) {
         std::perror("waitpid(2) failed to wait for test case part");
         std::abort();
     }
-    write_exit_cookie(status, exit_cookie);
+    killer.unprogram();
+    if (!killer.fired()) {
+        write_exit_cookie(status, exit_cookie);
+    }
 }
 
 
@@ -284,7 +293,8 @@ engine::atf_interface::exec_test(const model::test_program& test_program,
     utils::setenv("__RUNNING_INSIDE_ATF_RUN", "internal-yes-value");
 
     const model::test_case& test_case = test_program.find(test_case_name);
-    const bool has_cleanup = test_case.get_metadata().has_cleanup();
+    const model::metadata& metadata = test_case.get_metadata();
+    const bool has_cleanup = metadata.has_cleanup();
 
     process::args_vector args;
     for (config::properties_map::const_iterator iter = vars.begin();
@@ -301,12 +311,14 @@ engine::atf_interface::exec_test(const model::test_program& test_program,
         body_args.push_back(F("-r%s") % (control_directory / result_name));
         body_args.push_back(F("%s:body") % test_case_name);
         run_part(test_program.absolute_path(), body_args,
-                 control_directory / body_exit_cookie);
+                 control_directory / body_exit_cookie,
+                 metadata.timeout());
 
         process::args_vector cleanup_args = args;
         cleanup_args.push_back(F("%s:cleanup") % test_case_name);
         run_part(test_program.absolute_path(), cleanup_args,
-                 control_directory / cleanup_exit_cookie);
+                 control_directory / cleanup_exit_cookie,
+                 scheduler::cleanup_timeout);
 
         std::exit(exit_with_cleanup);
     }

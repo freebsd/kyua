@@ -79,6 +79,13 @@ using utils::none;
 using utils::optional;
 
 
+/// Timeout for the test case cleanup operation.
+///
+/// TODO(jmmv): This is here only for testing purposes.  Maybe we should expose
+/// this setting as part of the user_config.
+datetime::delta scheduler::cleanup_timeout(60, 0);
+
+
 /// Timeout for the test case listing operation.
 ///
 /// TODO(jmmv): This is here only for testing purposes.  Maybe we should expose
@@ -843,7 +850,10 @@ scheduler::scheduler_handle::spawn_test(
             "unprivileged_user");
     }
 
-    const datetime::delta timeout = test_case.get_metadata().timeout();
+    const model::metadata& metadata = test_case.get_metadata();
+    datetime::delta timeout = metadata.timeout();
+    if (metadata.has_cleanup())
+        timeout += cleanup_timeout;
 
     const executor::exec_handle handle = _pimpl->generic.spawn(
         run_test_program(interface, test_program, test_case_name,
