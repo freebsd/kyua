@@ -55,6 +55,7 @@ extern "C" {
 #include "utils/optional.ipp"
 #include "utils/passwd.hpp"
 #include "utils/process/child.ipp"
+#include "utils/process/deadline_killer.hpp"
 #include "utils/process/isolation.hpp"
 #include "utils/process/operations.hpp"
 #include "utils/process/status.hpp"
@@ -81,30 +82,6 @@ namespace {
 static const char* work_directory_template = PACKAGE_TARNAME ".XXXXXX";
 
 
-/// A timer that forcibly kills a subprocess on activation.
-class deadline_killer : public signals::timer {
-    /// PID of the process (and process group) to kill.
-    const pid_t _pid;
-
-    /// Timer activation callback.
-    void
-    callback(void)
-    {
-        process::terminate_group(_pid);
-    }
-
-public:
-    /// Constructor.
-    ///
-    /// \param delta Time to the timer activation.
-    /// \param pid PID of the process (and process group) to kill.
-    deadline_killer(const datetime::delta& delta, const pid_t pid) :
-        signals::timer(delta), _pid(pid)
-    {
-    }
-};
-
-
 /// Maintenance data held while a subprocess is being executed.
 ///
 /// This data structure exists from the moment a subprocess is executed via
@@ -126,7 +103,7 @@ struct exec_data {
     const optional< passwd::user > unprivileged_user;
 
     /// Timer to kill the subprocess on activation.
-    std::shared_ptr< deadline_killer > timer;
+    std::shared_ptr< process::deadline_killer > timer;
 
     /// Whether this subprocess owns the control files or not.
     ///
@@ -161,7 +138,7 @@ struct exec_data {
         stderr_file(stderr_file_),
         start_time(start_time_),
         unprivileged_user(unprivileged_user_),
-        timer(new deadline_killer(timeout, pid)),
+        timer(new process::deadline_killer(timeout, pid)),
         is_followup(is_followup_)
     {
     }

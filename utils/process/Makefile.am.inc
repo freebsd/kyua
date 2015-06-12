@@ -30,6 +30,9 @@ libutils_a_SOURCES += utils/process/child.cpp
 libutils_a_SOURCES += utils/process/child.hpp
 libutils_a_SOURCES += utils/process/child.ipp
 libutils_a_SOURCES += utils/process/child_fwd.hpp
+libutils_a_SOURCES += utils/process/deadline_killer.cpp
+libutils_a_SOURCES += utils/process/deadline_killer.hpp
+libutils_a_SOURCES += utils/process/deadline_killer_fwd.hpp
 libutils_a_SOURCES += utils/process/exceptions.cpp
 libutils_a_SOURCES += utils/process/exceptions.hpp
 libutils_a_SOURCES += utils/process/executor.cpp
@@ -63,6 +66,12 @@ tests_utils_process_PROGRAMS = utils/process/child_test
 utils_process_child_test_SOURCES = utils/process/child_test.cpp
 utils_process_child_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 utils_process_child_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
+
+tests_utils_process_PROGRAMS += utils/process/deadline_killer_test
+utils_process_deadline_killer_test_SOURCES = \
+    utils/process/deadline_killer_test.cpp
+utils_process_deadline_killer_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_process_deadline_killer_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_process_PROGRAMS += utils/process/exceptions_test
 utils_process_exceptions_test_SOURCES = utils/process/exceptions_test.cpp
