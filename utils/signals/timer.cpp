@@ -384,7 +384,7 @@ utils::signals::detail::invoke_do_fired(timer* timer)
 /// objects.  If this assumption breaks, then the rest of the code in this
 /// module breaks as well because we use pointers to the parent timer as the
 /// identifier of the timer.
-struct utils::signals::timer::impl {
+struct utils::signals::timer::impl : utils::noncopyable {
     /// Timestamp when this timer is expected to fire.
     ///
     /// Note that the timer might be processed after this timestamp, so users of

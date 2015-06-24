@@ -52,6 +52,7 @@ extern "C" {
 #include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/logging/operations.hpp"
+#include "utils/noncopyable.hpp"
 #include "utils/optional.ipp"
 #include "utils/passwd.hpp"
 #include "utils/process/child.ipp"
@@ -86,7 +87,7 @@ static const char* work_directory_template = PACKAGE_TARNAME ".XXXXXX";
 ///
 /// This data structure exists from the moment a subprocess is executed via
 /// executor::spawn() to when its cleanup with exit_handle::cleanup().
-struct exec_data {
+struct exec_data : utils::noncopyable {
     /// Path to the subprocess-specific work directory.
     fs::path control_directory;
 
@@ -103,7 +104,7 @@ struct exec_data {
     const optional< passwd::user > unprivileged_user;
 
     /// Timer to kill the subprocess on activation.
-    std::shared_ptr< process::deadline_killer > timer;
+    process::deadline_killer timer;
 
     /// Whether this subprocess owns the control files or not.
     ///
@@ -138,15 +139,22 @@ struct exec_data {
         stderr_file(stderr_file_),
         start_time(start_time_),
         unprivileged_user(unprivileged_user_),
-        timer(new process::deadline_killer(timeout, pid)),
+        timer(timeout, pid),
         is_followup(is_followup_)
     {
     }
 };
 
 
+/// Shared pointer to exec_data.
+///
+/// We require this because we want exec_data to not be copyable, and thus we
+/// cannot just store it in the map without move constructors.
+typedef std::shared_ptr< exec_data > exec_data_ptr;
+
+
 /// Mapping of active subprocess handles to their maintenance data.
-typedef std::map< executor::exec_handle, exec_data > exec_data_map;
+typedef std::map< executor::exec_handle, exec_data_ptr > exec_data_map;
 
 
 }  // anonymous namespace
@@ -186,7 +194,7 @@ utils::process::executor::detail::setup_child(
 
 
 /// Internal implementation for the exit_handle class.
-struct utils::process::executor::exit_handle::impl {
+struct utils::process::executor::exit_handle::impl : utils::noncopyable {
     /// Original exec_handle corresponding to the terminated subprocess.
     ///
     /// Note that this exec_handle (which internally corresponds to a PID)
@@ -435,7 +443,7 @@ executor::exit_handle::stderr_file(void) const
 ///
 /// Because the executor is a singleton, these essentially is a container for
 /// global variables.
-struct utils::process::executor::executor_handle::impl {
+struct utils::process::executor::executor_handle::impl : utils::noncopyable {
     /// Numeric counter of executed subprocesses.
     ///
     /// This is used to generate a unique identifier for each subprocess as an
@@ -489,7 +497,7 @@ struct utils::process::executor::executor_handle::impl {
         for (exec_data_map::const_iterator iter = all_exec_data.begin();
              iter != all_exec_data.end(); ++iter) {
             const exec_handle& pid = (*iter).first;
-            const exec_data& data = (*iter).second;
+            const exec_data_ptr& data = (*iter).second;
 
             process::terminate_group(pid);
             int status;
@@ -499,10 +507,10 @@ struct utils::process::executor::executor_handle::impl {
             }
 
             try {
-                fs::rm_r(data.control_directory);
+                fs::rm_r(data->control_directory);
             } catch (const fs::error& e) {
                 LE(F("Failed to clean up subprocess work directory %s: %s") %
-                   data.control_directory % e.what());
+                   data->control_directory % e.what());
             }
         }
         all_exec_data.clear();
@@ -540,8 +548,8 @@ struct utils::process::executor::executor_handle::impl {
         process::terminate_group(status.dead_pid());
 
         const exec_data_map::iterator iter = all_exec_data.find(handle);
-        exec_data& data = (*iter).second;
-        data.timer->unprogram();
+        exec_data_ptr& data = (*iter).second;
+        data->timer.unprogram();
 
         // It is tempting to assert here (and old code did) that, if the timer
         // has fired, the process has been forcibly killed by us.  This is not
@@ -554,23 +562,23 @@ struct utils::process::executor::executor_handle::impl {
         // this correctly but we don't care because this should not really
         // happen.
 
-        if (!fs::exists(data.stdout_file)) {
-            std::ofstream new_stdout(data.stdout_file.c_str());
+        if (!fs::exists(data->stdout_file)) {
+            std::ofstream new_stdout(data->stdout_file.c_str());
         }
-        if (!fs::exists(data.stderr_file)) {
-            std::ofstream new_stderr(data.stderr_file.c_str());
+        if (!fs::exists(data->stderr_file)) {
+            std::ofstream new_stderr(data->stderr_file.c_str());
         }
 
         return exit_handle(std::shared_ptr< exit_handle::impl >(
             new exit_handle::impl(
                 handle,
-                data.timer->fired() ? none : utils::make_optional(status),
-                data.unprivileged_user,
-                data.start_time, datetime::timestamp::now(),
-                data.is_followup,
-                data.control_directory,
-                data.stdout_file,
-                data.stderr_file,
+                data->timer.fired() ? none : utils::make_optional(status),
+                data->unprivileged_user,
+                data->start_time, datetime::timestamp::now(),
+                data->is_followup,
+                data->control_directory,
+                data->stdout_file,
+                data->stderr_file,
                 all_exec_data)));
     }
 };
@@ -667,14 +675,15 @@ executor::executor_handle::spawn_post(
 {
     const executor::exec_handle handle = child->pid();
 
-    const exec_data data(control_directory,
-                         stdout_file,
-                         stderr_file,
-                         datetime::timestamp::now(),
-                         timeout,
-                         unprivileged_user,
-                         child->pid(),
-                         false);  // is_followup
+    const exec_data_ptr data(new exec_data(
+        control_directory,
+        stdout_file,
+        stderr_file,
+        datetime::timestamp::now(),
+        timeout,
+        unprivileged_user,
+        child->pid(),
+        false));  // is_followup
     _pimpl->all_exec_data.insert(exec_data_map::value_type(
         child->pid(), data));
     LI(F("Spawned subprocess with exec_handle %s") % handle);
@@ -705,14 +714,15 @@ executor::executor_handle::spawn_followup_post(
 {
     const executor::exec_handle handle = child->pid();
 
-    const exec_data data(base.control_directory(),
-                         base.stdout_file(),
-                         base.stderr_file(),
-                         datetime::timestamp::now(),
-                         timeout,
-                         base.unprivileged_user(),
-                         child->pid(),
-                         true);  // is_followup
+    const exec_data_ptr data(new exec_data(
+        base.control_directory(),
+        base.stdout_file(),
+        base.stderr_file(),
+        datetime::timestamp::now(),
+        timeout,
+        base.unprivileged_user(),
+        child->pid(),
+        true));  // is_followup
     _pimpl->all_exec_data.insert(exec_data_map::value_type(
         child->pid(), data));
     LI(F("Spawned subprocess with exec_handle %s") % handle);

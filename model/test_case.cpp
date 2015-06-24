@@ -31,6 +31,7 @@
 #include "model/metadata.hpp"
 #include "model/test_result.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/noncopyable.hpp"
 #include "utils/optional.ipp"
 #include "utils/text/operations.ipp"
 
@@ -41,7 +42,7 @@ using utils::optional;
 
 
 /// Internal implementation for a test_case.
-struct model::test_case::impl {
+struct model::test_case::impl : utils::noncopyable {
     /// Name of the test case; must be unique within the test program.
     std::string name;
 

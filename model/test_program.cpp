@@ -38,6 +38,7 @@
 #include "utils/format/containers.ipp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/noncopyable.hpp"
 #include "utils/sanity.hpp"
 #include "utils/text/operations.ipp"
 
@@ -48,7 +49,7 @@ using utils::none;
 
 
 /// Internal implementation of a test_program.
-struct model::test_program::impl {
+struct model::test_program::impl : utils::noncopyable {
     /// Name of the test program interface.
     std::string interface_name;
 
@@ -323,7 +324,7 @@ model::operator<<(std::ostream& output, const test_program& object)
 
 
 /// Internal implementation of the test_program_builder class.
-struct model::test_program_builder::impl {
+struct model::test_program_builder::impl : utils::noncopyable {
     /// Partially-constructed program with only the required properties.
     model::test_program prototype;
 

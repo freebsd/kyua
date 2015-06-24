@@ -37,6 +37,7 @@ extern "C" {
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
+#include "utils/noncopyable.hpp"
 #include "utils/sanity.hpp"
 #include "utils/sqlite/exceptions.hpp"
 #include "utils/sqlite/statement.ipp"
@@ -46,7 +47,7 @@ namespace sqlite = utils::sqlite;
 
 
 /// Internal implementation for sqlite::database.
-struct utils::sqlite::database::impl {
+struct utils::sqlite::database::impl : utils::noncopyable {
     /// The SQLite 3 internal database.
     ::sqlite3* db;
 

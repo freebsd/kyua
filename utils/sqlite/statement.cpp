@@ -37,6 +37,7 @@ extern "C" {
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
+#include "utils/noncopyable.hpp"
 #include "utils/sanity.hpp"
 #include "utils/sqlite/c_gate.hpp"
 #include "utils/sqlite/exceptions.hpp"
@@ -99,7 +100,7 @@ handle_bind_error(sqlite::database& db, const char* api_function,
 
 
 /// Internal implementation for sqlite::statement.
-struct utils::sqlite::statement::impl {
+struct utils::sqlite::statement::impl : utils::noncopyable {
     /// The database this statement belongs to.
     sqlite::database& db;
 

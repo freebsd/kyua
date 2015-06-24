@@ -48,6 +48,7 @@ extern "C" {
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
+#include "utils/noncopyable.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 #include "utils/stream.hpp"
@@ -185,7 +186,7 @@ put_file(sqlite::database& db, const fs::path& path)
 
 
 /// Internal implementation for a store write-only transaction.
-struct store::write_transaction::impl {
+struct store::write_transaction::impl : utils::noncopyable {
     /// The backend instance.
     store::write_backend& _backend;
 

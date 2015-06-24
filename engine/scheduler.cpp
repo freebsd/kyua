@@ -54,6 +54,7 @@ extern "C" {
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
+#include "utils/noncopyable.hpp"
 #include "utils/optional.ipp"
 #include "utils/passwd.hpp"
 #include "utils/process/executor.ipp"
@@ -154,7 +155,7 @@ append_files_listing(const fs::path& dir_path, const fs::path& output_file)
 /// This data structure exists from the moment when a test is executed via
 /// scheduler::spawn_test() to when it is cleaned up with
 /// result_handle::cleanup().
-struct exec_data {
+struct exec_data : utils::noncopyable {
     /// Test program-specific execution interface.
     std::shared_ptr< scheduler::interface > interface;
 
@@ -179,8 +180,15 @@ struct exec_data {
 };
 
 
+/// Shared pointer to exec_data.
+///
+/// We require this because we want exec_data to not be copyable, and thus we
+/// cannot just store it in the map without move constructors.
+typedef std::shared_ptr< exec_data > exec_data_ptr;
+
+
 /// Mapping of active test case handles to their maintenance data.
-typedef std::map< scheduler::exec_handle, exec_data > exec_data_map;
+typedef std::map< scheduler::exec_handle, exec_data_ptr > exec_data_map;
 
 
 /// Enforces a test program to hold an absolute path.
@@ -365,7 +373,7 @@ find_interface(const std::string& name)
 
 
 /// Internal implementation of a lazy_test_program.
-struct engine::scheduler::lazy_test_program::impl {
+struct engine::scheduler::lazy_test_program::impl : utils::noncopyable {
     /// Whether the test cases list has been yet loaded or not.
     bool _loaded;
 
@@ -437,7 +445,7 @@ scheduler::lazy_test_program::test_cases(void) const
 
 
 /// Internal implementation for the result_handle class.
-struct engine::scheduler::result_handle::bimpl {
+struct engine::scheduler::result_handle::bimpl : utils::noncopyable {
     /// Generic executor exit handle for this result handle.
     executor::exit_handle generic;
 
@@ -560,7 +568,7 @@ scheduler::result_handle::stderr_file(void) const
 
 
 /// Internal implementation for the test_result_handle class.
-struct engine::scheduler::test_result_handle::impl {
+struct engine::scheduler::test_result_handle::impl : utils::noncopyable {
     /// Test program data for this test case.
     model::test_program_ptr test_program;
 
@@ -634,7 +642,7 @@ scheduler::test_result_handle::test_result(void) const
 
 
 /// Internal implementation for the scheduler_handle.
-struct engine::scheduler::scheduler_handle::impl {
+struct engine::scheduler::scheduler_handle::impl : utils::noncopyable {
     /// Generic executor instance encapsulated by this one.
     executor::executor_handle generic;
 
@@ -842,9 +850,9 @@ scheduler::scheduler_handle::spawn_test(
                          user_config),
         timeout, unprivileged_user, stdout_target, stderr_target);
 
-    const exec_data data(interface, test_program, test_case_name);
-    _pimpl->all_exec_data.insert(exec_data_map::value_type(
-        handle, data));
+    const exec_data_ptr data(new exec_data(
+        interface, test_program, test_case_name));
+    _pimpl->all_exec_data.insert(exec_data_map::value_type(handle, data));
 
     return handle;
 }
@@ -864,13 +872,13 @@ scheduler::scheduler_handle::wait_any(void)
 
     const exec_data_map::iterator iter = _pimpl->all_exec_data.find(
         handle.original_exec_handle());
-    exec_data& data = (*iter).second;
+    exec_data_ptr& data = (*iter).second;
 
-    utils::dump_stacktrace_if_available(data.test_program->absolute_path(),
+    utils::dump_stacktrace_if_available(data->test_program->absolute_path(),
                                         _pimpl->generic, handle);
 
-    const model::test_case& test_case = data.test_program->find(
-        data.test_case_name);
+    const model::test_case& test_case = data->test_program->find(
+        data->test_case_name);
 
     optional< model::test_result > result = test_case.fake_result();
     if (!result && handle.status() && handle.status().get().exited() &&
@@ -892,7 +900,7 @@ scheduler::scheduler_handle::wait_any(void)
         }
     }
     if (!result) {
-        result = data.interface->compute_result(
+        result = data->interface->compute_result(
             handle.status(),
             handle.control_directory(),
             handle.stdout_file(),
@@ -909,7 +917,7 @@ scheduler::scheduler_handle::wait_any(void)
         new result_handle::bimpl(handle, _pimpl->all_exec_data));
     std::shared_ptr< test_result_handle::impl > test_result_handle_impl(
         new test_result_handle::impl(
-            data.test_program, data.test_case_name, result.get()));
+            data->test_program, data->test_case_name, result.get()));
     return result_handle_ptr(new test_result_handle(result_handle_bimpl,
                                                     test_result_handle_impl));
 }

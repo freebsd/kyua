@@ -40,6 +40,7 @@ extern "C" {
 #include "utils/format/macros.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/noncopyable.hpp"
 #include "utils/sanity.hpp"
 #include "utils/text/operations.ipp"
 
@@ -116,7 +117,7 @@ fs::operator<<(std::ostream& output, const directory_entry& entry)
 /// Note that iterators implemented by this class do not rely on the container
 /// directory class at all.  This should not be relied on for object lifecycle
 /// purposes.
-struct utils::fs::detail::directory_iterator::impl {
+struct utils::fs::detail::directory_iterator::impl : utils::noncopyable {
     /// Path of the directory accessed by this iterator.
     const fs::path _path;
 
@@ -315,7 +316,7 @@ detail::directory_iterator::operator->(void) const
 
 
 /// Internal implementation details for the directory.
-struct utils::fs::directory::impl {
+struct utils::fs::directory::impl : utils::noncopyable {
     /// Path to the directory to scan.
     fs::path _path;
 

@@ -28,6 +28,7 @@
 
 #include "utils/process/fdstream.hpp"
 
+#include "utils/noncopyable.hpp"
 #include "utils/process/systembuf.hpp"
 
 
@@ -36,7 +37,7 @@ namespace process {
 
 
 /// Private implementation fields for ifdstream.
-struct ifdstream::impl {
+struct ifdstream::impl : utils::noncopyable {
     /// The systembuf backing this file descriptor.
     systembuf _systembuf;
 
