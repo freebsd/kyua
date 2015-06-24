@@ -74,7 +74,7 @@ ATF_TEST_CASE_BODY(detail__backup_database__fail_open)
 }
 
 
-ATF_TEST_CASE(detail__backup_database__fail_create);
+ATF_TEST_CASE_WITH_CLEANUP(detail__backup_database__fail_create);
 ATF_TEST_CASE_HEAD(detail__backup_database__fail_create)
 {
     set_md_var("require.user", "unprivileged");
@@ -87,6 +87,14 @@ ATF_TEST_CASE_BODY(detail__backup_database__fail_create)
     ATF_REQUIRE_THROW_RE(
         store::error, "Cannot create.*dir/test.db.v13.backup",
         store::detail::backup_database(fs::path("dir/test.db"), 13));
+}
+ATF_TEST_CASE_CLEANUP(detail__backup_database__fail_create)
+{
+    if (::chmod("dir", 0755) == -1) {
+        // If we cannot restore the original permissions, we cannot do much
+        // more.  However, leaving an unwritable directory behind will cause the
+        // runtime engine to report us as broken.
+    }
 }
 
 
