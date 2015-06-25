@@ -50,6 +50,7 @@
 #include "utils/defs.hpp"
 #include "utils/fs/path_fwd.hpp"
 #include "utils/optional.hpp"
+#include "utils/process/executor_fwd.hpp"
 #include "utils/process/status_fwd.hpp"
 #include "utils/shared_ptr.hpp"
 
@@ -108,6 +109,23 @@ public:
                            const utils::config::properties_map& vars,
                            const utils::fs::path& control_directory)
         const UTILS_NORETURN = 0;
+
+    /// Executes a test cleanup routine of the test program.
+    ///
+    /// This method is intended to be called within a subprocess and is expected
+    /// to terminate execution either by exec(2)ing the test program or by
+    /// exiting with a failure.
+    ///
+    /// \param test_program The test program to execute.
+    /// \param test_case_name Name of the test case to invoke.
+    /// \param vars User-provided variables to pass to the test program.
+    /// \param control_directory Directory where the interface may place control
+    ///     files.
+    virtual void exec_cleanup(const model::test_program& test_program,
+                              const std::string& test_case_name,
+                              const utils::config::properties_map& vars,
+                              const utils::fs::path& control_directory)
+        const UTILS_NORETURN;
 
     /// Computes the result of a test case based on its termination status.
     ///
@@ -198,6 +216,12 @@ class scheduler_handle {
 
     friend scheduler_handle setup(void);
     scheduler_handle(void) throw();
+
+    exec_handle spawn_cleanup(const model::test_program_ptr,
+                              const std::string&,
+                              const utils::config::tree&,
+                              const utils::process::executor::exit_handle&,
+                              const model::test_result&);
 
 public:
     ~scheduler_handle(void);
