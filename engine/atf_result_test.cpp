@@ -662,13 +662,11 @@ ATF_TEST_CASE_BODY(calculate_atf_result__missing_file)
     using process::status;
 
     const status body_status = status::fake_exited(EXIT_SUCCESS);
-    const status cleanup_status = status::fake_exited(EXIT_FAILURE);
     const model::test_result expected(
         model::test_result_broken,
         "Premature exit; test case exited with code 0");
     ATF_REQUIRE_EQ(expected, engine::calculate_atf_result(
-        utils::make_optional(body_status), utils::make_optional(cleanup_status),
-        fs::path("foo")));
+        utils::make_optional(body_status), fs::path("foo")));
 }
 
 
@@ -682,90 +680,36 @@ ATF_TEST_CASE_BODY(calculate_atf_result__bad_file)
     const model::test_result expected(model::test_result_broken,
                                       "Unknown test result 'invalid'");
     ATF_REQUIRE_EQ(expected, engine::calculate_atf_result(
-        utils::make_optional(body_status), none, fs::path("foo")));
+        utils::make_optional(body_status), fs::path("foo")));
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(calculate_atf_result__body_ok__cleanup_ok);
-ATF_TEST_CASE_BODY(calculate_atf_result__body_ok__cleanup_ok)
+ATF_TEST_CASE_WITHOUT_HEAD(calculate_atf_result__body_ok);
+ATF_TEST_CASE_BODY(calculate_atf_result__body_ok)
 {
     using process::status;
 
     atf::utils::create_file("result.txt", "skipped: Something\n");
     const status body_status = status::fake_exited(EXIT_SUCCESS);
-    const status cleanup_status = status::fake_exited(EXIT_SUCCESS);
     ATF_REQUIRE_EQ(
         model::test_result(model::test_result_skipped, "Something"),
         engine::calculate_atf_result(utils::make_optional(body_status),
-                                     utils::make_optional(cleanup_status),
                                      fs::path("result.txt")));
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(calculate_atf_result__body_ok__cleanup_bad);
-ATF_TEST_CASE_BODY(calculate_atf_result__body_ok__cleanup_bad)
-{
-    using process::status;
-
-    atf::utils::create_file("result.txt", "skipped: Something\n");
-    const status body_status = status::fake_exited(EXIT_SUCCESS);
-    const status cleanup_status = status::fake_exited(EXIT_FAILURE);
-    ATF_REQUIRE_EQ(
-        model::test_result(model::test_result_broken, "Test case "
-                           "cleanup did not terminate successfully"),
-        engine::calculate_atf_result(utils::make_optional(body_status),
-                                     utils::make_optional(cleanup_status),
-                                     fs::path("result.txt")));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(calculate_atf_result__body_ok__cleanup_timeout);
-ATF_TEST_CASE_BODY(calculate_atf_result__body_ok__cleanup_timeout)
-{
-    using process::status;
-
-    atf::utils::create_file("result.txt", "skipped: Something\n");
-    const status body_status = status::fake_exited(EXIT_SUCCESS);
-    ATF_REQUIRE_EQ(
-        model::test_result(model::test_result_broken, "Test case "
-                           "cleanup timed out"),
-        engine::calculate_atf_result(utils::make_optional(body_status),
-                                     none, fs::path("result.txt")));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(calculate_atf_result__body_bad__cleanup_ok);
-ATF_TEST_CASE_BODY(calculate_atf_result__body_bad__cleanup_ok)
+ATF_TEST_CASE_WITHOUT_HEAD(calculate_atf_result__body_bad);
+ATF_TEST_CASE_BODY(calculate_atf_result__body_bad)
 {
     using process::status;
 
     atf::utils::create_file("result.txt", "skipped: Something\n");
     const status body_status = status::fake_exited(EXIT_FAILURE);
-    const status cleanup_status = status::fake_exited(EXIT_SUCCESS);
     ATF_REQUIRE_EQ(
         model::test_result(model::test_result_broken, "Skipped test case "
                            "should have reported success but exited with "
                            "code 1"),
         engine::calculate_atf_result(utils::make_optional(body_status),
-                                     utils::make_optional(cleanup_status),
-                                     fs::path("result.txt")));
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(calculate_atf_result__body_bad__cleanup_bad);
-ATF_TEST_CASE_BODY(calculate_atf_result__body_bad__cleanup_bad)
-{
-    using process::status;
-
-    atf::utils::create_file("result.txt", "passed\n");
-    const status body_status = status::fake_signaled(3, false);
-    const status cleanup_status = status::fake_exited(EXIT_FAILURE);
-    ATF_REQUIRE_EQ(
-        model::test_result(model::test_result_broken, "Passed test case "
-                           "should have reported success but received "
-                           "signal 3"),
-        engine::calculate_atf_result(utils::make_optional(body_status),
-                                     utils::make_optional(cleanup_status),
                                      fs::path("result.txt")));
 }
 
@@ -839,9 +783,6 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, calculate_atf_result__missing_file);
     ATF_ADD_TEST_CASE(tcs, calculate_atf_result__bad_file);
-    ATF_ADD_TEST_CASE(tcs, calculate_atf_result__body_ok__cleanup_ok);
-    ATF_ADD_TEST_CASE(tcs, calculate_atf_result__body_ok__cleanup_bad);
-    ATF_ADD_TEST_CASE(tcs, calculate_atf_result__body_ok__cleanup_timeout);
-    ATF_ADD_TEST_CASE(tcs, calculate_atf_result__body_bad__cleanup_ok);
-    ATF_ADD_TEST_CASE(tcs, calculate_atf_result__body_bad__cleanup_bad);
+    ATF_ADD_TEST_CASE(tcs, calculate_atf_result__body_ok);
+    ATF_ADD_TEST_CASE(tcs, calculate_atf_result__body_bad);
 }

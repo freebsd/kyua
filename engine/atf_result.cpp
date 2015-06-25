@@ -611,15 +611,12 @@ engine::operator<<(std::ostream& output, const atf_result& object)
 ///
 /// \param body_status The termination status of the process that executed
 ///     the body of the test.  None if the body timed out.
-/// \param cleanup_status The termination status of the process that executed
-///     the body of the test.  None if the cleanup timed out.
 /// \param results_file The path to the results file that the test case body is
 ///     supposed to have created.
 ///
 /// \return The calculated test case result.
 model::test_result
 engine::calculate_atf_result(const optional< process::status >& body_status,
-                             const optional< process::status >& cleanup_status,
                              const fs::path& results_file)
 {
     using engine::atf_result;
@@ -640,19 +637,6 @@ engine::calculate_atf_result(const optional< process::status >& body_status,
     }
 
     result = result.apply(body_status);
-
-    if (result.good()) {
-        if (cleanup_status) {
-            if (!cleanup_status.get().exited() ||
-                cleanup_status.get().exitstatus() != EXIT_SUCCESS) {
-                result = atf_result(atf_result::broken, "Test case cleanup "
-                                    "did not terminate successfully");
-            }
-        } else {  // Test case cleanup timed out.
-            result = atf_result(atf_result::broken, "Test case cleanup timed "
-                                "out");
-        }
-    }
 
     return result.externalize();
 }

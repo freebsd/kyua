@@ -244,9 +244,5 @@ engine::atf_interface::compute_result(
     const fs::path& UTILS_UNUSED_PARAM(stdout_path),
     const fs::path& UTILS_UNUSED_PARAM(stderr_path)) const
 {
-    const process::status cleanup_status =
-        utils::process::status::fake_exited(EXIT_SUCCESS);
-    return calculate_atf_result(status,
-                                utils::make_optional(cleanup_status),
-                                control_directory / result_name);
+    return calculate_atf_result(status, control_directory / result_name);
 }
