@@ -53,6 +53,11 @@ public:
                    const utils::fs::path&) const
         UTILS_NORETURN;
 
+    void exec_cleanup(const model::test_program&, const std::string&,
+                      const utils::config::properties_map&,
+                      const utils::fs::path&) const
+        UTILS_NORETURN;
+
     model::test_result compute_result(
         const utils::optional< utils::process::status >&,
         const utils::fs::path&,

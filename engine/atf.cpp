@@ -29,45 +29,34 @@
 #include "engine/atf.hpp"
 
 extern "C" {
-#include <sys/types.h>
-#include <sys/wait.h>
-
 #include <unistd.h>
 }
 
 #include <cerrno>
-#include <cstdio>
 #include <cstdlib>
 #include <fstream>
-#include <iostream>
 
 #include "engine/atf_list.hpp"
 #include "engine/atf_result.hpp"
 #include "engine/exceptions.hpp"
-#include "model/metadata.hpp"
 #include "model/test_case.hpp"
 #include "model/test_program.hpp"
 #include "model/test_result.hpp"
-#include "utils/datetime.hpp"
 #include "utils/defs.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
-#include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
-#include "utils/process/deadline_killer.hpp"
 #include "utils/process/exceptions.hpp"
 #include "utils/process/operations.hpp"
 #include "utils/process/status.hpp"
 #include "utils/stream.hpp"
 
 namespace config = utils::config;
-namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace process = utils::process;
 
-using utils::none;
 using utils::optional;
 
 
@@ -75,7 +64,7 @@ namespace {
 
 
 /// Basename of the file containing the result written by the ATF test case.
-static const char* result_name = "result.body";
+static const char* result_name = "result.atf";
 
 
 /// Magic numbers returned by exec_list when exec(2) fails.
@@ -84,105 +73,6 @@ enum list_exit_code {
     exit_enoent,
     exit_enoexec,
 };
-
-
-/// Magic number returned by exec_test when the test case had a cleanup routine.
-///
-/// This is used by compute_result to know where to find the actual result of
-/// the test case's body and cleanup routines because, in those rare cases when
-/// the ATF test case has a cleanup routine, we have to do an extra dance here
-/// to run it.  Note that this magic code prevents the ATF test case from ever
-/// returning this number successfully -- but doing so would not be part of the
-/// ATF interface and the test would be considered broken anyway.
-static const int exit_with_cleanup = 108;
-
-
-/// Basename of the file with the body exit status when the test has cleanup.
-static const char* body_exit_cookie = "exit.body";
-
-
-/// Basename of the file with the cleanup exit status when the test has cleanup.
-static const char* cleanup_exit_cookie = "exit.cleanup";
-
-
-/// Reads the exit status of a process from a file.
-///
-/// \param file The file to read from.  Must have been written by
-///     write_exit_cookie().
-///
-/// \return The read status code if successful, or none otherwise.  The none
-/// case most likely represents that the test case timed out halfway through and
-/// was killed.
-static optional< process::status >
-read_exit_cookie(const fs::path& file)
-{
-    std::ifstream input(file.c_str());
-    if (!input) {
-        LD(F("No exit cookie %s: assuming timeout") % file);
-        return none;
-    }
-
-    int status;
-    input >> status;
-    input.close();
-
-    LD(F("Loaded exit cookie %s") % file);
-    return utils::make_optional(utils::process::status(-1, status));
-}
-
-
-/// Writes the exit status of a process into a file.
-///
-/// This function is intended to be called from exec_test exclusively, as it
-/// abruptly terminates the process when an error occurs.
-///
-/// \param status The exit status to write.
-/// \param file The file to write to.
-static void
-write_exit_cookie(const int status, const fs::path& file)
-{
-    std::ofstream output(file.c_str());
-    if (!output) {
-        std::perror((F("Failed to open %s for write") % file).str().c_str());
-        std::abort();
-    }
-    output << status;
-    output.close();
-}
-
-
-/// Executes a test case part and records its exit status.
-///
-/// This function is intended to be called from exec_test exclusively, as it
-/// abruptly terminates the process when an error occurs.
-///
-/// \param test_program Path to the test program to run.
-/// \param args Arguments to pass to the test program.
-/// \param exit_cookie The file to write to.
-static void
-run_part(const fs::path& test_program, const process::args_vector& args,
-         const fs::path& exit_cookie, const datetime::delta& timeout)
-{
-    const pid_t pid = ::fork();
-    if (pid == -1) {
-        std::perror("fork(2) failed to run test case part");
-        std::abort();
-    } else if (pid == 0) {
-        process::exec(test_program, args);
-    }
-
-    process::deadline_killer killer(timeout, pid);
-
-    int status;
-    if (::waitpid(pid, &status, 0) == -1) {
-        std::perror("waitpid(2) failed to wait for test case part");
-        std::abort();
-    }
-    killer.unprogram();
-    if (!killer.fired()) {
-        write_exit_cookie(status, exit_cookie);
-    }
-}
 
 
 }  // anonymous namespace
@@ -292,9 +182,37 @@ engine::atf_interface::exec_test(const model::test_program& test_program,
 {
     utils::setenv("__RUNNING_INSIDE_ATF_RUN", "internal-yes-value");
 
-    const model::test_case& test_case = test_program.find(test_case_name);
-    const model::metadata& metadata = test_case.get_metadata();
-    const bool has_cleanup = metadata.has_cleanup();
+    process::args_vector args;
+    for (config::properties_map::const_iterator iter = vars.begin();
+         iter != vars.end(); ++iter) {
+        args.push_back(F("-v%s=%s") % (*iter).first % (*iter).second);
+    }
+
+    args.push_back(F("-r%s") % (control_directory / result_name));
+    args.push_back(test_case_name);
+    process::exec(test_program.absolute_path(), args);
+}
+
+
+/// Executes a test cleanup routine of the test program.
+///
+/// This method is intended to be called within a subprocess and is expected
+/// to terminate execution either by exec(2)ing the test program or by
+/// exiting with a failure.
+///
+/// \param test_program The test program to execute.
+/// \param test_case_name Name of the test case to invoke.
+/// \param vars User-provided variables to pass to the test program.
+/// \param unused_control_directory Directory where the interface may place
+///     control files.
+void
+engine::atf_interface::exec_cleanup(
+    const model::test_program& test_program,
+    const std::string& test_case_name,
+    const config::properties_map& vars,
+    const fs::path& UTILS_UNUSED_PARAM(control_directory)) const
+{
+    utils::setenv("__RUNNING_INSIDE_ATF_RUN", "internal-yes-value");
 
     process::args_vector args;
     for (config::properties_map::const_iterator iter = vars.begin();
@@ -302,26 +220,8 @@ engine::atf_interface::exec_test(const model::test_program& test_program,
         args.push_back(F("-v%s=%s") % (*iter).first % (*iter).second);
     }
 
-    if (!has_cleanup) {
-        args.push_back(F("-r%s") % (control_directory / result_name));
-        args.push_back(test_case_name);
-        process::exec(test_program.absolute_path(), args);
-    } else {
-        process::args_vector body_args = args;
-        body_args.push_back(F("-r%s") % (control_directory / result_name));
-        body_args.push_back(F("%s:body") % test_case_name);
-        run_part(test_program.absolute_path(), body_args,
-                 control_directory / body_exit_cookie,
-                 metadata.timeout());
-
-        process::args_vector cleanup_args = args;
-        cleanup_args.push_back(F("%s:cleanup") % test_case_name);
-        run_part(test_program.absolute_path(), cleanup_args,
-                 control_directory / cleanup_exit_cookie,
-                 scheduler::cleanup_timeout);
-
-        std::exit(exit_with_cleanup);
-    }
+    args.push_back(F("%s:cleanup") % test_case_name);
+    process::exec(test_program.absolute_path(), args);
 }
 
 
@@ -344,43 +244,9 @@ engine::atf_interface::compute_result(
     const fs::path& UTILS_UNUSED_PARAM(stdout_path),
     const fs::path& UTILS_UNUSED_PARAM(stderr_path)) const
 {
-    if (!status || (status.get().exited() &&
-                    status.get().exitstatus() == exit_with_cleanup)) {
-        // This is the slow and uncommon case.  The test case either timed out
-        // or had a standalone cleanup routine and we had to run it; we do not
-        // know which it is, but it does not matter much.  Because the scheduler
-        // interface only wants to see a single subprocess (for good reason), we
-        // handle here our internal spawning of two processes by loading their
-        // results from disk.
-        LD("Loading ATF test case result from on-disk exit cookies");
-
-        const optional< process::status > body_status =
-            read_exit_cookie(control_directory / body_exit_cookie);
-
-        optional< process::status > cleanup_status =
-            read_exit_cookie(control_directory / cleanup_exit_cookie);
-        if (!body_status && !cleanup_status) {
-            // Currently, this implementation of the ATF interface is unable to
-            // execute the cleanup routine after the body of a test has timed
-            // out.  If we detect that the body timed out, then we fake the exit
-            // status of the cleanup routine to not confuse
-            // calculate_atf_result(); otherwise, expected timeouts would not
-            // work.
-            // TODO(jmmv): This is obviously a hack to cope with our incomplete
-            // implementation of the ATF interface and we need to fix that.
-            cleanup_status = utils::process::status::fake_exited(EXIT_SUCCESS);
-        }
-
-        return calculate_atf_result(body_status, cleanup_status,
-                                    control_directory / result_name);
-    } else {
-        // This is the fast and common case.  The test case had no standalone
-        // cleanup routine so we just fake its exit code when computing the
-        // result.
-        const process::status cleanup_status =
-            utils::process::status::fake_exited(EXIT_SUCCESS);
-        return calculate_atf_result(status,
-                                    utils::make_optional(cleanup_status),
-                                    control_directory / result_name);
-    }
+    const process::status cleanup_status =
+        utils::process::status::fake_exited(EXIT_SUCCESS);
+    return calculate_atf_result(status,
+                                utils::make_optional(cleanup_status),
+                                control_directory / result_name);
 }
