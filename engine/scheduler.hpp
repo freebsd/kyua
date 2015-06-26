@@ -29,6 +29,26 @@
 /// \file engine/scheduler.hpp
 /// Multiprogrammed executor of test related operations.
 ///
+/// The scheduler's public interface exposes test cases as "black boxes".  The
+/// handling of cleanup routines is completely hidden from the caller and
+/// happens in two cases: first, once a test case completes; and, second, in the
+/// case of abrupt termination due to the reception of a signal.
+///
+/// Hiding cleanup routines from the caller is an attempt to keep the logic of
+/// execution and results handling in a single place.  Otherwise, the various
+/// drivers (say run_tests and debug_test) would need to replicate the handling
+/// of this logic, which is tricky in itself (particularly due to signal
+/// handling) and would lead to inconsistencies.
+///
+/// Handling cleanup routines in the manner described above is *incredibly
+/// complicated* (insane, actually) as you will see from the code.  The
+/// complexity will bite us in the future (today is 2015-06-26).  Switching to a
+/// threads-based implementation would probably simplify the code flow
+/// significantly and allow parallelization of the test case listings in a
+/// reasonable manner, though it depends on whether we can get clean handling of
+/// signals and on whether we could use C++11's std::thread.  (Is this a to-do?
+/// Maybe.  Maybe not.)
+///
 /// See the documentation in utils/process/executor.hpp for details on
 /// the expected workflow of these classes.
 
@@ -215,13 +235,7 @@ class scheduler_handle {
     std::shared_ptr< impl > _pimpl;
 
     friend scheduler_handle setup(void);
-    scheduler_handle(void) throw();
-
-    exec_handle spawn_cleanup(const model::test_program_ptr,
-                              const std::string&,
-                              const utils::config::tree&,
-                              const utils::process::executor::exit_handle&,
-                              const model::test_result&);
+    scheduler_handle(void);
 
 public:
     ~scheduler_handle(void);

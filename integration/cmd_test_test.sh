@@ -800,8 +800,6 @@ EOF
     echo "Process ${pid} exited"
     [ ${ret} -ne 0 ] || atf_fail 'No error code reported'
 
-    atf_expect_fail "Current atf interface implementation is unable to" \
-        "execute the cleanup of a test after its body fails"
     [ -f cleanup ] || atf_fail 'Cleanup part not executed after signal'
     atf_expect_pass
 
