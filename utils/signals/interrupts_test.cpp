@@ -104,11 +104,26 @@ check_interrupts_handler(const int signo, const bool explicit_unprogram)
     {
         signals::interrupts_handler interrupts;
 
+        // No pending interrupts at first.
         signals::check_interrupt();
+
+        // Send us an interrupt and check for it.
         ::kill(getpid(), signo);
         ATF_REQUIRE_THROW_RE(signals::interrupted_error,
                              F("Interrupted by signal %s") % signo,
                              signals::check_interrupt());
+
+        // Interrupts should have been cleared now, so this should not throw.
+        signals::check_interrupt();
+
+        // Check to see if a second interrupt is detected.
+        ::kill(getpid(), signo);
+        ATF_REQUIRE_THROW_RE(signals::interrupted_error,
+                             F("Interrupted by signal %s") % signo,
+                             signals::check_interrupt());
+
+        // And ensure the interrupt was cleared again.
+        signals::check_interrupt();
 
         if (explicit_unprogram) {
             interrupts.unprogram();

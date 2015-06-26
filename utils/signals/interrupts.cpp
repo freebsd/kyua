@@ -255,12 +255,19 @@ signals::interrupts_inhibiter::~interrupts_inhibiter(void)
 /// Calls to this function should be sprinkled in strategic places through the
 /// code protected by an interrupts_handler object.
 ///
+/// Only one call to this function will raise an exception per signal received.
+/// This is to allow executing cleanup actions without reraising interrupt
+/// exceptions unless the user has fired another interrupt.
+///
 /// \throw interrupted_error If there has been an interrupt.
 void
 signals::check_interrupt(void)
 {
-    if (fired_signal != -1)
-        throw interrupted_error(fired_signal);
+    if (fired_signal != -1) {
+        const int original_fired_signal = fired_signal;
+        fired_signal = -1;
+        throw interrupted_error(original_fired_signal);
+    }
 }
 
 
