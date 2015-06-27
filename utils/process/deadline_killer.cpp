@@ -1,4 +1,4 @@
-// Copyright 2014 The Kyua Authors.
+// Copyright 2015 The Kyua Authors.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,47 +26,29 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/atf.hpp
-/// Execution engine for test programs that implement the atf interface.
+#include "utils/process/deadline_killer.hpp"
 
-#if !defined(ENGINE_ATF_HPP)
-#define ENGINE_ATF_HPP
+#include "utils/datetime.hpp"
+#include "utils/process/operations.hpp"
 
-#include "engine/scheduler.hpp"
-
-namespace engine {
+namespace datetime = utils::datetime;
+namespace process = utils::process;
 
 
-/// Implementation of the scheduler interface for atf test programs.
-class atf_interface : public engine::scheduler::interface {
-public:
-    void exec_list(const model::test_program&,
-                   const utils::config::properties_map&) const UTILS_NORETURN;
-
-    model::test_cases_map parse_list(
-        const utils::optional< utils::process::status >&,
-        const utils::fs::path&,
-        const utils::fs::path&) const;
-
-    void exec_test(const model::test_program&, const std::string&,
-                   const utils::config::properties_map&,
-                   const utils::fs::path&) const
-        UTILS_NORETURN;
-
-    void exec_cleanup(const model::test_program&, const std::string&,
-                      const utils::config::properties_map&,
-                      const utils::fs::path&) const
-        UTILS_NORETURN;
-
-    model::test_result compute_result(
-        const utils::optional< utils::process::status >&,
-        const utils::fs::path&,
-        const utils::fs::path&,
-        const utils::fs::path&) const;
-};
+/// Constructor.
+///
+/// \param delta Time to the timer activation.
+/// \param pid PID of the process (and process group) to kill.
+process::deadline_killer::deadline_killer(const datetime::delta& delta,
+                                          const int pid) :
+    signals::timer(delta), _pid(pid)
+{
+}
 
 
-}  // namespace engine
-
-
-#endif  // !defined(ENGINE_ATF_HPP)
+/// Timer activation callback.
+void
+process::deadline_killer::callback(void)
+{
+    process::terminate_group(_pid);
+}

@@ -30,6 +30,7 @@
 
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
+#include "utils/noncopyable.hpp"
 #include "utils/sanity.hpp"
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/exceptions.hpp"
@@ -39,7 +40,7 @@ namespace sqlite = utils::sqlite;
 
 
 /// Internal implementation for the transaction.
-struct utils::sqlite::transaction::impl {
+struct utils::sqlite::transaction::impl : utils::noncopyable {
     /// The database this transaction belongs to.
     database& db;
 

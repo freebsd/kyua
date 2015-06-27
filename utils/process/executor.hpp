@@ -64,6 +64,8 @@
 
 #include "utils/process/executor_fwd.hpp"
 
+#include <cstddef>
+
 #include "utils/datetime_fwd.hpp"
 #include "utils/fs/path_fwd.hpp"
 #include "utils/optional.hpp"
@@ -83,6 +85,10 @@ namespace detail {
 extern const char* stdout_name;
 extern const char* stderr_name;
 extern const char* work_subdir;
+
+
+/// Shared reference counter.
+typedef std::shared_ptr< std::size_t > refcnt_t;
 
 
 void setup_child(const utils::optional< utils::passwd::user >,
@@ -109,6 +115,8 @@ class exit_handle {
 
     friend class executor_handle;
     exit_handle(std::shared_ptr< impl >);
+
+    detail::refcnt_t state_owners(void) const;
 
 public:
     ~exit_handle(void);

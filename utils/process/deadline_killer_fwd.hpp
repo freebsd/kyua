@@ -1,4 +1,4 @@
-// Copyright 2014 The Kyua Authors.
+// Copyright 2015 The Kyua Authors.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,47 +26,20 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/atf.hpp
-/// Execution engine for test programs that implement the atf interface.
+/// \file utils/process/deadline_killer_fwd.hpp
+/// Forward declarations for utils/process/deadline_killer.hpp
 
-#if !defined(ENGINE_ATF_HPP)
-#define ENGINE_ATF_HPP
+#if !defined(UTILS_PROCESS_DEADLINE_KILLER_FWD_HPP)
+#define UTILS_PROCESS_DEADLINE_KILLER_FWD_HPP
 
-#include "engine/scheduler.hpp"
-
-namespace engine {
-
-
-/// Implementation of the scheduler interface for atf test programs.
-class atf_interface : public engine::scheduler::interface {
-public:
-    void exec_list(const model::test_program&,
-                   const utils::config::properties_map&) const UTILS_NORETURN;
-
-    model::test_cases_map parse_list(
-        const utils::optional< utils::process::status >&,
-        const utils::fs::path&,
-        const utils::fs::path&) const;
-
-    void exec_test(const model::test_program&, const std::string&,
-                   const utils::config::properties_map&,
-                   const utils::fs::path&) const
-        UTILS_NORETURN;
-
-    void exec_cleanup(const model::test_program&, const std::string&,
-                      const utils::config::properties_map&,
-                      const utils::fs::path&) const
-        UTILS_NORETURN;
-
-    model::test_result compute_result(
-        const utils::optional< utils::process::status >&,
-        const utils::fs::path&,
-        const utils::fs::path&,
-        const utils::fs::path&) const;
-};
+namespace utils {
+namespace process {
 
 
-}  // namespace engine
+class deadline_killer;
 
 
-#endif  // !defined(ENGINE_ATF_HPP)
+}  // namespace process
+}  // namespace utils
+
+#endif  // !defined(UTILS_PROCESS_DEADLINE_KILLER_FWD_HPP)

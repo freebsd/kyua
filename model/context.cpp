@@ -30,6 +30,7 @@
 
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/noncopyable.hpp"
 #include "utils/text/operations.ipp"
 
 namespace fs = utils::fs;
@@ -37,7 +38,7 @@ namespace text = utils::text;
 
 
 /// Internal implementation of a context.
-struct model::context::impl {
+struct model::context::impl : utils::noncopyable {
     /// The current working directory.
     fs::path _cwd;
 

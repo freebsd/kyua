@@ -1,4 +1,4 @@
-// Copyright 2014 The Kyua Authors.
+// Copyright 2015 The Kyua Authors.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,47 +26,33 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file engine/atf.hpp
-/// Execution engine for test programs that implement the atf interface.
+/// \file utils/process/deadline_killer.hpp
+/// Timer to kill a process on activation.
 
-#if !defined(ENGINE_ATF_HPP)
-#define ENGINE_ATF_HPP
+#if !defined(UTILS_PROCESS_DEADLINE_KILLER_HPP)
+#define UTILS_PROCESS_DEADLINE_KILLER_HPP
 
-#include "engine/scheduler.hpp"
+#include "utils/process/deadline_killer_fwd.hpp"
 
-namespace engine {
+#include "utils/signals/timer.hpp"
+
+namespace utils {
+namespace process {
 
 
-/// Implementation of the scheduler interface for atf test programs.
-class atf_interface : public engine::scheduler::interface {
+/// Timer that forcibly kills a process group on activation.
+class deadline_killer : public utils::signals::timer {
+    /// PID of the process (and process group) to kill.
+    const int _pid;
+
+    void callback(void);
+
 public:
-    void exec_list(const model::test_program&,
-                   const utils::config::properties_map&) const UTILS_NORETURN;
-
-    model::test_cases_map parse_list(
-        const utils::optional< utils::process::status >&,
-        const utils::fs::path&,
-        const utils::fs::path&) const;
-
-    void exec_test(const model::test_program&, const std::string&,
-                   const utils::config::properties_map&,
-                   const utils::fs::path&) const
-        UTILS_NORETURN;
-
-    void exec_cleanup(const model::test_program&, const std::string&,
-                      const utils::config::properties_map&,
-                      const utils::fs::path&) const
-        UTILS_NORETURN;
-
-    model::test_result compute_result(
-        const utils::optional< utils::process::status >&,
-        const utils::fs::path&,
-        const utils::fs::path&,
-        const utils::fs::path&) const;
+    deadline_killer(const datetime::delta&, const int);
 };
 
 
-}  // namespace engine
+} // namespace process
+} // namespace utils
 
-
-#endif  // !defined(ENGINE_ATF_HPP)
+#endif // !defined(UTILS_PROCESS_DEADLINE_KILLER_HPP)

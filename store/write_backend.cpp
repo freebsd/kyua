@@ -38,6 +38,7 @@
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
+#include "utils/noncopyable.hpp"
 #include "utils/sanity.hpp"
 #include "utils/stream.hpp"
 #include "utils/sqlite/database.hpp"
@@ -130,7 +131,7 @@ store::detail::initialize(sqlite::database& db)
 
 
 /// Internal implementation for the backend.
-struct store::write_backend::impl {
+struct store::write_backend::impl : utils::noncopyable {
     /// The SQLite database this backend talks to.
     sqlite::database database;
 

@@ -33,13 +33,14 @@ extern "C" {
 }
 
 #include "utils/auto_array.ipp"
+#include "utils/noncopyable.hpp"
 #include "utils/sanity.hpp"
 
 using utils::process::systembuf;
 
 
 /// Private implementation fields for systembuf.
-struct systembuf::impl {
+struct systembuf::impl : utils::noncopyable {
     /// File descriptor attached to the systembuf.
     int _fd;
 

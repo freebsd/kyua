@@ -34,6 +34,7 @@
 #include "store/write_backend.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/noncopyable.hpp"
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/exceptions.hpp"
 
@@ -66,7 +67,7 @@ store::detail::open_and_setup(const fs::path& file, const int flags)
 
 
 /// Internal implementation for the backend.
-struct store::read_backend::impl {
+struct store::read_backend::impl : utils::noncopyable {
     /// The SQLite database this backend talks to.
     sqlite::database database;
 

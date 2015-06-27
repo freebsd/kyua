@@ -34,6 +34,7 @@
 #include "engine/filters.hpp"
 #include "model/test_case.hpp"
 #include "model/test_program.hpp"
+#include "utils/noncopyable.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 
@@ -68,7 +69,7 @@ map_keys(const std::map< KeyType, ValueType >& map)
 
 
 /// Internal implementation for the scanner class.
-struct engine::scanner::impl {
+struct engine::scanner::impl : utils::noncopyable {
     /// Collection of test programs not yet scanned.
     ///
     /// The first element in this deque is the "active" test program when

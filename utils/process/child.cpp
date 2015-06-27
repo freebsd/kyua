@@ -46,6 +46,7 @@ extern "C" {
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
+#include "utils/noncopyable.hpp"
 #include "utils/process/exceptions.hpp"
 #include "utils/process/fdstream.hpp"
 #include "utils/process/operations.hpp"
@@ -60,7 +61,7 @@ namespace process {
 
 
 /// Private implementation fields for child objects.
-struct child::impl {
+struct child::impl : utils::noncopyable {
     /// The process identifier.
     pid_t _pid;
 

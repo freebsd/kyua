@@ -322,6 +322,8 @@ public:
 
         if (test_case_name == "check_i_exist") {
             do_exit(fs::exists(test_program.absolute_path()) ? 0 : 1);
+        } else if (starts_with(test_case_name, "cleanup_timeout")) {
+            exec_exit(EXIT_SUCCESS);
         } else if (starts_with(test_case_name, "create_files_and_fail")) {
             exec_create_files_and_fail();
         } else if (test_case_name == "delete_all") {
@@ -330,10 +332,52 @@ public:
             exec_exit(suffix_to_int(test_case_name, "exit "));
         } else if (starts_with(test_case_name, "fail")) {
             exec_fail();
+        } else if (starts_with(test_case_name, "fail_body_fail_cleanup")) {
+            exec_fail();
+        } else if (starts_with(test_case_name, "fail_body_pass_cleanup")) {
+            exec_fail();
+        } else if (starts_with(test_case_name, "pass_body_fail_cleanup")) {
+            exec_exit(EXIT_SUCCESS);
         } else if (starts_with(test_case_name, "print_params")) {
             exec_print_params(test_program, test_case_name, vars);
         } else {
             std::cerr << "Unknown test case " << test_case_name << '\n';
+            std::abort();
+        }
+    }
+
+    /// Executes a test cleanup routine of the test program.
+    ///
+    /// This method is intended to be called within a subprocess and is expected
+    /// to terminate execution either by exec(2)ing the test program or by
+    /// exiting with a failure.
+    ///
+    /// \param unused_test_program The test program to execute.
+    /// \param test_case_name Name of the test case to invoke.
+    /// \param unused_vars User-provided variables to pass to the test program.
+    /// \param unused_control_directory Directory where the interface may place
+    ///     control files.
+    void
+    exec_cleanup(const model::test_program& UTILS_UNUSED_PARAM(test_program),
+                 const std::string& test_case_name,
+                 const config::properties_map& UTILS_UNUSED_PARAM(vars),
+                 const fs::path& UTILS_UNUSED_PARAM(control_directory)) const
+    {
+        std::cout << "exec_cleanup was called\n";
+        std::cout.flush();
+
+        if (starts_with(test_case_name, "cleanup_timeout")) {
+            ::sleep(100);
+            std::abort();
+        } else if (starts_with(test_case_name, "fail_body_fail_cleanup")) {
+            exec_fail();
+        } else if (starts_with(test_case_name, "fail_body_pass_cleanup")) {
+            exec_exit(EXIT_SUCCESS);
+        } else if (starts_with(test_case_name, "pass_body_fail_cleanup")) {
+            exec_fail();
+        } else {
+            std::cerr << "Should not have been called for a test without "
+                "a cleanup routine" << '\n';
             std::abort();
         }
     }
@@ -800,6 +844,80 @@ ATF_TEST_CASE_BODY(integration__fake_result)
 }
 
 
+/// Runs a test to verify the behavior of cleanup routines.
+///
+/// \param test_case The name of the test case to invoke.
+/// \param exp_result The expected test result of the execution.
+static void
+do_cleanup_test(const char* test_case,
+                const model::test_result& exp_result)
+{
+    const model::test_program_ptr program = model::test_program_builder(
+        "mock", fs::path("the-program"), fs::current_path(), "the-suite")
+        .add_test_case(test_case)
+        .set_metadata(model::metadata_builder().set_has_cleanup(true).build())
+        .build_ptr();
+
+    const config::tree user_config = engine::empty_config();
+
+    scheduler::scheduler_handle handle = scheduler::setup();
+
+    (void)handle.spawn_test(program, test_case, user_config);
+
+    scheduler::result_handle_ptr result_handle = handle.wait_any();
+    const scheduler::test_result_handle* test_result_handle =
+        dynamic_cast< const scheduler::test_result_handle* >(
+            result_handle.get());
+    ATF_REQUIRE_EQ(exp_result, test_result_handle->test_result());
+    ATF_REQUIRE(atf::utils::compare_file(
+        result_handle->stdout_file().str(),
+        "exec_cleanup was called\n"));
+    result_handle->cleanup();
+    result_handle.reset();
+
+    handle.cleanup();
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(integration__cleanup__body_bad__cleanup_ok);
+ATF_TEST_CASE_BODY(integration__cleanup__body_bad__cleanup_ok)
+{
+    do_cleanup_test(
+        "fail_body_pass_cleanup",
+        model::test_result(model::test_result_failed, "Signal 15"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(integration__cleanup__body_ok__cleanup_bad);
+ATF_TEST_CASE_BODY(integration__cleanup__body_ok__cleanup_bad)
+{
+    do_cleanup_test(
+        "pass_body_fail_cleanup",
+        model::test_result(model::test_result_broken, "Test case cleanup "
+                           "did not terminate successfully"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(integration__cleanup__body_bad__cleanup_bad);
+ATF_TEST_CASE_BODY(integration__cleanup__body_bad__cleanup_bad)
+{
+    do_cleanup_test(
+        "fail_body_fail_cleanup",
+        model::test_result(model::test_result_failed, "Signal 15"));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(integration__cleanup__timeout);
+ATF_TEST_CASE_BODY(integration__cleanup__timeout)
+{
+    scheduler::cleanup_timeout = datetime::delta(1, 0);
+    do_cleanup_test(
+        "cleanup_timeout",
+        model::test_result(model::test_result_broken, "Test case cleanup "
+                           "timed out"));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(integration__check_requirements);
 ATF_TEST_CASE_BODY(integration__check_requirements)
 {
@@ -1048,6 +1166,10 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, integration__custom_output_files);
 
     ATF_ADD_TEST_CASE(tcs, integration__fake_result);
+    ATF_ADD_TEST_CASE(tcs, integration__cleanup__body_ok__cleanup_bad);
+    ATF_ADD_TEST_CASE(tcs, integration__cleanup__body_bad__cleanup_ok);
+    ATF_ADD_TEST_CASE(tcs, integration__cleanup__body_bad__cleanup_bad);
+    ATF_ADD_TEST_CASE(tcs, integration__cleanup__timeout);
     ATF_ADD_TEST_CASE(tcs, integration__check_requirements);
     ATF_ADD_TEST_CASE(tcs, integration__stacktrace);
     ATF_ADD_TEST_CASE(tcs, integration__list_files_on_failure__none);

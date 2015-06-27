@@ -47,6 +47,7 @@ extern "C" {
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
+#include "utils/noncopyable.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 #include "utils/sqlite/database.hpp"
@@ -250,7 +251,7 @@ store::detail::get_test_program(read_backend& backend_, const int64_t id)
 
 
 /// Internal implementation for a results iterator.
-struct store::results_iterator::impl {
+struct store::results_iterator::impl : utils::noncopyable {
     /// The store backend we are dealing with.
     store::read_backend _backend;
 
@@ -429,7 +430,7 @@ store::results_iterator::stderr_contents(void) const
 
 
 /// Internal implementation for a store read-only transaction.
-struct store::read_transaction::impl {
+struct store::read_transaction::impl : utils::noncopyable {
     /// The backend instance.
     store::read_backend& _backend;
 

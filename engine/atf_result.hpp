@@ -106,7 +106,6 @@ std::ostream& operator<<(std::ostream&, const atf_result&);
 
 model::test_result calculate_atf_result(
     const utils::optional< utils::process::status >&,
-    const utils::optional< utils::process::status >&,
     const utils::fs::path&);
 
 

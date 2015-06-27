@@ -52,9 +52,11 @@ extern "C" {
 #include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/logging/operations.hpp"
+#include "utils/noncopyable.hpp"
 #include "utils/optional.ipp"
 #include "utils/passwd.hpp"
 #include "utils/process/child.ipp"
+#include "utils/process/deadline_killer.hpp"
 #include "utils/process/isolation.hpp"
 #include "utils/process/operations.hpp"
 #include "utils/process/status.hpp"
@@ -81,35 +83,11 @@ namespace {
 static const char* work_directory_template = PACKAGE_TARNAME ".XXXXXX";
 
 
-/// A timer that forcibly kills a subprocess on activation.
-class deadline_killer : public signals::timer {
-    /// PID of the process (and process group) to kill.
-    const pid_t _pid;
-
-    /// Timer activation callback.
-    void
-    callback(void)
-    {
-        process::terminate_group(_pid);
-    }
-
-public:
-    /// Constructor.
-    ///
-    /// \param delta Time to the timer activation.
-    /// \param pid PID of the process (and process group) to kill.
-    deadline_killer(const datetime::delta& delta, const pid_t pid) :
-        signals::timer(delta), _pid(pid)
-    {
-    }
-};
-
-
 /// Maintenance data held while a subprocess is being executed.
 ///
 /// This data structure exists from the moment a subprocess is executed via
 /// executor::spawn() to when its cleanup with exit_handle::cleanup().
-struct exec_data {
+struct exec_data : utils::noncopyable {
     /// Path to the subprocess-specific work directory.
     fs::path control_directory;
 
@@ -126,14 +104,10 @@ struct exec_data {
     const optional< passwd::user > unprivileged_user;
 
     /// Timer to kill the subprocess on activation.
-    std::shared_ptr< deadline_killer > timer;
+    process::deadline_killer timer;
 
-    /// Whether this subprocess owns the control files or not.
-    ///
-    /// If true, this subprocess was executed in the context of another
-    /// previously-executed subprocess.  Therefore, this object does not
-    /// own the work directory nor the output files.
-    const bool is_followup;
+    /// Number of owners of the on-disk state.
+    executor::detail::refcnt_t state_owners;
 
     /// Constructor.
     ///
@@ -146,8 +120,10 @@ struct exec_data {
     /// \param unprivileged_user_ User the subprocess is running as if
     ///     different than the current one.
     /// \param pid PID of the forked subprocess.
-    /// \param is_followup_ If true, this subprocess was started in the
-    ///     context of another subprocess.
+    /// \param [in,out] state_owners_ Number of owners of the on-disk state.
+    ///     For first-time processes, this should be a new counter set to 0;
+    ///     for followup processes, this should point to the same counter used
+    ///     by the preceding process.
     exec_data(const fs::path& control_directory_,
               const fs::path& stdout_file_,
               const fs::path& stderr_file_,
@@ -155,21 +131,30 @@ struct exec_data {
               const datetime::delta& timeout,
               const optional< passwd::user > unprivileged_user_,
               const pid_t pid,
-              const bool is_followup_) :
+              executor::detail::refcnt_t state_owners_) :
         control_directory(control_directory_),
         stdout_file(stdout_file_),
         stderr_file(stderr_file_),
         start_time(start_time_),
         unprivileged_user(unprivileged_user_),
-        timer(new deadline_killer(timeout, pid)),
-        is_followup(is_followup_)
+        timer(timeout, pid),
+        state_owners(state_owners_)
     {
+        (*state_owners)++;
+        POST(*state_owners > 0);
     }
 };
 
 
+/// Shared pointer to exec_data.
+///
+/// We require this because we want exec_data to not be copyable, and thus we
+/// cannot just store it in the map without move constructors.
+typedef std::shared_ptr< exec_data > exec_data_ptr;
+
+
 /// Mapping of active subprocess handles to their maintenance data.
-typedef std::map< executor::exec_handle, exec_data > exec_data_map;
+typedef std::map< executor::exec_handle, exec_data_ptr > exec_data_map;
 
 
 }  // anonymous namespace
@@ -209,7 +194,7 @@ utils::process::executor::detail::setup_child(
 
 
 /// Internal implementation for the exit_handle class.
-struct utils::process::executor::exit_handle::impl {
+struct utils::process::executor::exit_handle::impl : utils::noncopyable {
     /// Original exec_handle corresponding to the terminated subprocess.
     ///
     /// Note that this exec_handle (which internally corresponds to a PID)
@@ -228,12 +213,6 @@ struct utils::process::executor::exit_handle::impl {
     /// Timestamp of when wait() or wait_any() returned this object.
     const datetime::timestamp end_time;
 
-    /// Whether this process was executed in the context of another one or not.
-    ///
-    /// If true, then cleanup() does not do anything because this
-    /// subprocess does not own the on-disk contents.
-    const bool is_followup;
-
     /// Path to the subprocess-specific work directory.
     const fs::path control_directory;
 
@@ -242,6 +221,13 @@ struct utils::process::executor::exit_handle::impl {
 
     /// Path to the subprocess's stderr file.
     const fs::path stderr_file;
+
+    /// Number of owners of the on-disk state.
+    ///
+    /// This will be 1 if this exit_handle is the last holder of the on-disk
+    /// state, in which case cleanup() invocations will wipe the disk state.
+    /// For all other cases, this will hold a higher value.
+    detail::refcnt_t state_owners;
 
     /// Mutable pointer to the corresponding executor state.
     ///
@@ -266,12 +252,11 @@ struct utils::process::executor::exit_handle::impl {
     /// \param start_time_ Timestamp of when the subprocess was spawned.
     /// \param end_time_ Timestamp of when wait() or wait_any() returned this
     ///     object.
-    /// \param is_followup_ Whether this process was executed in the
-    ///     context of another one or not.
     /// \param control_directory_ Path to the subprocess-specific work
     ///     directory.
     /// \param stdout_file_ Path to the subprocess's stdout file.
     /// \param stderr_file_ Path to the subprocess's stderr file.
+    /// \param [in,out] state_owners_ Number of owners of the on-disk state.
     /// \param [in,out] all_exec_data_ Global object keeping track of all active
     ///     executions for an executor.  This is a pointer to a member of the
     ///     executor_handle object.
@@ -280,17 +265,17 @@ struct utils::process::executor::exit_handle::impl {
          const optional< passwd::user > unprivileged_user_,
          const datetime::timestamp& start_time_,
          const datetime::timestamp& end_time_,
-         const bool is_followup_,
          const fs::path& control_directory_,
          const fs::path& stdout_file_,
          const fs::path& stderr_file_,
+         detail::refcnt_t state_owners_,
          exec_data_map& all_exec_data_) :
         exec_handle(exec_handle_), status(status_),
         unprivileged_user(unprivileged_user_),
         start_time(start_time_), end_time(end_time_),
-        is_followup(is_followup_),
         control_directory(control_directory_),
         stdout_file(stdout_file_), stderr_file(stderr_file_),
+        state_owners(state_owners_),
         all_exec_data(all_exec_data_), cleaned(false)
     {
     }
@@ -316,12 +301,21 @@ struct utils::process::executor::exit_handle::impl {
     void
     cleanup(void)
     {
-        if (!is_followup) {
+        PRE(*state_owners > 0);
+        if (*state_owners == 1) {
             LI(F("Cleaning up exit_handle for exec_handle %s") % exec_handle);
-
             fs::rm_r(control_directory);
-            all_exec_data.erase(exec_handle);
+        } else {
+            LI(F("Not cleaning up exit_handle for exec_handle %s; "
+                 "%s owners left") % exec_handle % (*state_owners - 1));
         }
+        // We must decrease our reference only after we have successfully
+        // cleaned up the control directory.  Otherwise, the rm_r call would
+        // throw an exception, which would in turn invoke the implicit cleanup
+        // from the destructor, which would make us crash due to an invalid
+        // reference count.
+        (*state_owners)--;
+        all_exec_data.erase(exec_handle);
         cleaned = true;
     }
 };
@@ -356,6 +350,19 @@ executor::exit_handle::cleanup(void)
     PRE(!_pimpl->cleaned);
     _pimpl->cleanup();
     POST(_pimpl->cleaned);
+}
+
+
+/// Gets the current number of owners of the on-disk data.
+///
+/// \return A shared reference counter.  Even though this function is marked as
+/// const, the return value is intentionally mutable because we need to update
+/// reference counts from different but related processes.  This is why this
+/// method is not public.
+std::shared_ptr< std::size_t >
+executor::exit_handle::state_owners(void) const
+{
+    return _pimpl->state_owners;
 }
 
 
@@ -458,7 +465,7 @@ executor::exit_handle::stderr_file(void) const
 ///
 /// Because the executor is a singleton, these essentially is a container for
 /// global variables.
-struct utils::process::executor::executor_handle::impl {
+struct utils::process::executor::executor_handle::impl : utils::noncopyable {
     /// Numeric counter of executed subprocesses.
     ///
     /// This is used to generate a unique identifier for each subprocess as an
@@ -512,7 +519,7 @@ struct utils::process::executor::executor_handle::impl {
         for (exec_data_map::const_iterator iter = all_exec_data.begin();
              iter != all_exec_data.end(); ++iter) {
             const exec_handle& pid = (*iter).first;
-            const exec_data& data = (*iter).second;
+            const exec_data_ptr& data = (*iter).second;
 
             process::terminate_group(pid);
             int status;
@@ -522,10 +529,10 @@ struct utils::process::executor::executor_handle::impl {
             }
 
             try {
-                fs::rm_r(data.control_directory);
+                fs::rm_r(data->control_directory);
             } catch (const fs::error& e) {
                 LE(F("Failed to clean up subprocess work directory %s: %s") %
-                   data.control_directory % e.what());
+                   data->control_directory % e.what());
             }
         }
         all_exec_data.clear();
@@ -563,8 +570,8 @@ struct utils::process::executor::executor_handle::impl {
         process::terminate_group(status.dead_pid());
 
         const exec_data_map::iterator iter = all_exec_data.find(handle);
-        exec_data& data = (*iter).second;
-        data.timer->unprogram();
+        exec_data_ptr& data = (*iter).second;
+        data->timer.unprogram();
 
         // It is tempting to assert here (and old code did) that, if the timer
         // has fired, the process has been forcibly killed by us.  This is not
@@ -577,23 +584,23 @@ struct utils::process::executor::executor_handle::impl {
         // this correctly but we don't care because this should not really
         // happen.
 
-        if (!fs::exists(data.stdout_file)) {
-            std::ofstream new_stdout(data.stdout_file.c_str());
+        if (!fs::exists(data->stdout_file)) {
+            std::ofstream new_stdout(data->stdout_file.c_str());
         }
-        if (!fs::exists(data.stderr_file)) {
-            std::ofstream new_stderr(data.stderr_file.c_str());
+        if (!fs::exists(data->stderr_file)) {
+            std::ofstream new_stderr(data->stderr_file.c_str());
         }
 
         return exit_handle(std::shared_ptr< exit_handle::impl >(
             new exit_handle::impl(
                 handle,
-                data.timer->fired() ? none : utils::make_optional(status),
-                data.unprivileged_user,
-                data.start_time, datetime::timestamp::now(),
-                data.is_followup,
-                data.control_directory,
-                data.stdout_file,
-                data.stderr_file,
+                data->timer.fired() ? none : utils::make_optional(status),
+                data->unprivileged_user,
+                data->start_time, datetime::timestamp::now(),
+                data->control_directory,
+                data->stdout_file,
+                data->stderr_file,
+                data->state_owners,
                 all_exec_data)));
     }
 };
@@ -690,14 +697,15 @@ executor::executor_handle::spawn_post(
 {
     const executor::exec_handle handle = child->pid();
 
-    const exec_data data(control_directory,
-                         stdout_file,
-                         stderr_file,
-                         datetime::timestamp::now(),
-                         timeout,
-                         unprivileged_user,
-                         child->pid(),
-                         false);  // is_followup
+    const exec_data_ptr data(new exec_data(
+        control_directory,
+        stdout_file,
+        stderr_file,
+        datetime::timestamp::now(),
+        timeout,
+        unprivileged_user,
+        child->pid(),
+        detail::refcnt_t(new detail::refcnt_t::element_type(0))));
     _pimpl->all_exec_data.insert(exec_data_map::value_type(
         child->pid(), data));
     LI(F("Spawned subprocess with exec_handle %s") % handle);
@@ -728,14 +736,16 @@ executor::executor_handle::spawn_followup_post(
 {
     const executor::exec_handle handle = child->pid();
 
-    const exec_data data(base.control_directory(),
-                         base.stdout_file(),
-                         base.stderr_file(),
-                         datetime::timestamp::now(),
-                         timeout,
-                         base.unprivileged_user(),
-                         child->pid(),
-                         true);  // is_followup
+    INV(*base.state_owners() > 0);
+    const exec_data_ptr data(new exec_data(
+        base.control_directory(),
+        base.stdout_file(),
+        base.stderr_file(),
+        datetime::timestamp::now(),
+        timeout,
+        base.unprivileged_user(),
+        child->pid(),
+        base.state_owners()));
     _pimpl->all_exec_data.insert(exec_data_map::value_type(
         child->pid(), data));
     LI(F("Spawned subprocess with exec_handle %s") % handle);

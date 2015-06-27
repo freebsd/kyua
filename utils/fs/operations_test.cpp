@@ -308,7 +308,7 @@ ATF_TEST_CASE_BODY(is_directory__ok)
 }
 
 
-ATF_TEST_CASE(is_directory__fail);
+ATF_TEST_CASE_WITH_CLEANUP(is_directory__fail);
 ATF_TEST_CASE_HEAD(is_directory__fail)
 {
     set_md_var("require.user", "unprivileged");
@@ -317,6 +317,14 @@ ATF_TEST_CASE_BODY(is_directory__fail)
 {
     fs::mkdir(fs::path("dir"), 0000);
     ATF_REQUIRE_THROW(fs::error, fs::is_directory(fs::path("dir/foo")));
+}
+ATF_TEST_CASE_CLEANUP(is_directory__fail)
+{
+    if (::chmod("dir", 0755) == -1) {
+        // If we cannot restore the original permissions, we cannot do much
+        // more.  However, leaving an unwritable directory behind will cause the
+        // runtime engine to report us as broken.
+    }
 }
 
 

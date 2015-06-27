@@ -605,6 +605,8 @@ ATF_TEST_CASE_BODY(integration__followup)
 
     (void)handle.spawn_followup(child_create_cookie("cookie.3"), exit_2_handle,
                                 infinite_timeout);
+    exit_2_handle.cleanup();
+    exit_1_handle.cleanup();
     executor::exit_handle exit_3_handle = handle.wait_any();
 
     ATF_REQUIRE_EQ(exit_1_handle.stdout_file(), exit_3_handle.stdout_file());
@@ -633,13 +635,7 @@ ATF_TEST_CASE_BODY(integration__followup)
                     "Creating cookie: cookie.2 (stderr)\n"
                     "Creating cookie: cookie.3 (stderr)\n"));
 
-    // This is not in the right order intentionally, and we expect this to be
-    // just fine.  Only the "master" handle is supposed to do the actual disk
-    // cleanup.  We issue the cleanup of the master handle in between of the two
-    // followups to test both cases.
     exit_3_handle.cleanup();
-    exit_1_handle.cleanup();
-    exit_2_handle.cleanup();
 
     ATF_REQUIRE(!atf::utils::file_exists(exit_1_handle.stdout_file().str()));
     ATF_REQUIRE(!atf::utils::file_exists(exit_1_handle.stderr_file().str()));

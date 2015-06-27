@@ -333,8 +333,6 @@ ATF_TEST_CASE_CLEANUP(timeout_body)
 ATF_TEST_CASE_WITH_CLEANUP(timeout_cleanup);
 ATF_TEST_CASE_HEAD(timeout_cleanup)
 {
-    if (has_config_var("timeout"))
-        set_md_var("timeout", get_config_var("timeout"));
 }
 ATF_TEST_CASE_BODY(timeout_cleanup)
 {

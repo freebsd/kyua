@@ -43,6 +43,7 @@ extern "C" {
 #include "model/test_program_fwd.hpp"
 #include "model/test_result.hpp"
 #include "utils/config/tree.ipp"
+#include "utils/datetime.hpp"
 #include "utils/env.hpp"
 #include "utils/format/containers.ipp"
 #include "utils/format/macros.hpp"
@@ -52,6 +53,7 @@ extern "C" {
 #include "utils/stacktrace.hpp"
 
 namespace config = utils::config;
+namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace scheduler = engine::scheduler;
 
@@ -318,7 +320,8 @@ ATF_TEST_CASE_WITHOUT_HEAD(test__body_only__times_out);
 ATF_TEST_CASE_BODY(test__body_only__times_out)
 {
     config::tree user_config = engine::empty_config();
-    user_config.set_string("test_suites.the-suite.control_dir", ".");
+    user_config.set_string("test_suites.the-suite.control_dir",
+                           fs::current_path().str());
     user_config.set_string("test_suites.the-suite.timeout", "1");
 
     const model::test_result exp_result(
@@ -353,7 +356,8 @@ ATF_TEST_CASE_WITHOUT_HEAD(test__body_and_cleanup__body_times_out);
 ATF_TEST_CASE_BODY(test__body_and_cleanup__body_times_out)
 {
     config::tree user_config = engine::empty_config();
-    user_config.set_string("test_suites.the-suite.control_dir", ".");
+    user_config.set_string("test_suites.the-suite.control_dir",
+                           fs::current_path().str());
     user_config.set_string("test_suites.the-suite.timeout", "1");
 
     const model::test_result exp_result(
@@ -361,8 +365,6 @@ ATF_TEST_CASE_BODY(test__body_and_cleanup__body_times_out)
     run_one(this, "timeout_body", exp_result, user_config);
 
     ATF_REQUIRE(!atf::utils::file_exists("cookie"));
-    expect_fail("Current atf interface implementation is unable to execute "
-                "the cleanup of a test after its body fails");
     ATF_REQUIRE(atf::utils::file_exists("cookie.cleanup"));
 }
 
@@ -381,9 +383,10 @@ ATF_TEST_CASE_WITHOUT_HEAD(test__body_and_cleanup__cleanup_times_out);
 ATF_TEST_CASE_BODY(test__body_and_cleanup__cleanup_times_out)
 {
     config::tree user_config = engine::empty_config();
-    user_config.set_string("test_suites.the-suite.control_dir", ".");
-    user_config.set_string("test_suites.the-suite.timeout", "1");
+    user_config.set_string("test_suites.the-suite.control_dir",
+                           fs::current_path().str());
 
+    scheduler::cleanup_timeout = datetime::delta(1, 0);
     const model::test_result exp_result(
         model::test_result_broken, "Test case cleanup timed out");
     run_one(this, "timeout_cleanup", exp_result, user_config);
@@ -396,7 +399,8 @@ ATF_TEST_CASE_WITHOUT_HEAD(test__body_and_cleanup__expect_timeout);
 ATF_TEST_CASE_BODY(test__body_and_cleanup__expect_timeout)
 {
     config::tree user_config = engine::empty_config();
-    user_config.set_string("test_suites.the-suite.control_dir", ".");
+    user_config.set_string("test_suites.the-suite.control_dir",
+                           fs::current_path().str());
     user_config.set_string("test_suites.the-suite.timeout", "1");
 
     const model::test_result exp_result(
@@ -404,8 +408,6 @@ ATF_TEST_CASE_BODY(test__body_and_cleanup__expect_timeout)
     run_one(this, "expect_timeout", exp_result, user_config);
 
     ATF_REQUIRE(!atf::utils::file_exists("cookie"));
-    expect_fail("Current atf interface implementation is unable to execute "
-                "the cleanup of a test after its body fails");
     ATF_REQUIRE(atf::utils::file_exists("cookie.cleanup"));
 }
 

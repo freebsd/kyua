@@ -36,6 +36,7 @@ extern "C" {
 
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
+#include "utils/noncopyable.hpp"
 #include "utils/sanity.hpp"
 #include "utils/signals/exceptions.hpp"
 
@@ -45,7 +46,7 @@ namespace signals {
 
 
 /// Internal implementation for the signals::programmer class.
-struct programmer::impl {
+struct programmer::impl : utils::noncopyable {
     /// The number of the signal managed by this programmer.
     int signo;
 
