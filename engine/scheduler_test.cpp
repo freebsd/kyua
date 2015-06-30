@@ -319,6 +319,8 @@ public:
             std::cerr << "Failed to create " << cookie << '\n';
             std::abort();
         }
+        control_file << test_case_name;
+        control_file.close();
 
         if (test_case_name == "check_i_exist") {
             do_exit(fs::exists(test_program.absolute_path()) ? 0 : 1);
@@ -340,6 +342,8 @@ public:
             exec_exit(EXIT_SUCCESS);
         } else if (starts_with(test_case_name, "print_params")) {
             exec_print_params(test_program, test_case_name, vars);
+        } else if (starts_with(test_case_name, "skip_body_pass_cleanup")) {
+            exec_exit(EXIT_SUCCESS);
         } else {
             std::cerr << "Unknown test case " << test_case_name << '\n';
             std::abort();
@@ -375,6 +379,8 @@ public:
             exec_exit(EXIT_SUCCESS);
         } else if (starts_with(test_case_name, "pass_body_fail_cleanup")) {
             exec_fail();
+        } else if (starts_with(test_case_name, "skip_body_pass_cleanup")) {
+            exec_exit(EXIT_SUCCESS);
         } else {
             std::cerr << "Should not have been called for a test without "
                 "a cleanup routine" << '\n';
@@ -415,13 +421,15 @@ public:
             // Only sanity-check the work directory-related parameters in case
             // of a clean exit.  In all other cases, there is no guarantee that
             // these were ever created.
-            if (!atf::utils::file_exists(
-                    (control_directory / "exec_test_was_called").str())) {
+            const fs::path cookie = control_directory / "exec_test_was_called";
+            if (!atf::utils::file_exists(cookie.str())) {
                 return model::test_result(
                     model::test_result_broken,
                     "compute_result's control_directory does not seem to point "
                     "to the right location");
             }
+            const std::string test_case_name = utils::read_file(cookie);
+
             if (!atf::utils::file_exists(stdout_path.str())) {
                 return model::test_result(
                     model::test_result_broken,
@@ -433,9 +441,15 @@ public:
                     "compute_result's stderr_path does not exist");
             }
 
-            return model::test_result(
-                model::test_result_passed,
-                F("Exit %s") % status.get().exitstatus());
+            if (test_case_name == "skip_body_pass_cleanup") {
+                return model::test_result(
+                    model::test_result_skipped,
+                    F("Exit %s") % status.get().exitstatus());
+            } else {
+                return model::test_result(
+                    model::test_result_passed,
+                    F("Exit %s") % status.get().exitstatus());
+            }
         } else {
             return model::test_result(
                 model::test_result_failed,
@@ -844,6 +858,42 @@ ATF_TEST_CASE_BODY(integration__fake_result)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(integration__cleanup__head_skips);
+ATF_TEST_CASE_BODY(integration__cleanup__head_skips)
+{
+    const model::test_program_ptr program = model::test_program_builder(
+        "mock", fs::path("the-program"), fs::current_path(), "the-suite")
+        .add_test_case("skip_me",
+                       model::metadata_builder()
+                       .add_required_config("variable-that-does-not-exist")
+                       .set_has_cleanup(true)
+                       .build())
+        .build_ptr();
+
+    const config::tree user_config = engine::empty_config();
+
+    scheduler::scheduler_handle handle = scheduler::setup();
+
+    (void)handle.spawn_test(program, "skip_me", user_config);
+
+    scheduler::result_handle_ptr result_handle = handle.wait_any();
+    const scheduler::test_result_handle* test_result_handle =
+        dynamic_cast< const scheduler::test_result_handle* >(
+            result_handle.get());
+    ATF_REQUIRE_EQ(model::test_result(
+                       model::test_result_skipped,
+                       "Required configuration property "
+                       "'variable-that-does-not-exist' not defined"),
+                   test_result_handle->test_result());
+    ATF_REQUIRE(!atf::utils::grep_file("exec_cleanup was called",
+                                       result_handle->stdout_file().str()));
+    result_handle->cleanup();
+    result_handle.reset();
+
+    handle.cleanup();
+}
+
+
 /// Runs a test to verify the behavior of cleanup routines.
 ///
 /// \param test_case The name of the test case to invoke.
@@ -876,6 +926,15 @@ do_cleanup_test(const char* test_case,
     result_handle.reset();
 
     handle.cleanup();
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(integration__cleanup__body_skips);
+ATF_TEST_CASE_BODY(integration__cleanup__body_skips)
+{
+    do_cleanup_test(
+        "skip_body_pass_cleanup",
+        model::test_result(model::test_result_skipped, "Exit 0"));
 }
 
 
@@ -1166,6 +1225,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, integration__custom_output_files);
 
     ATF_ADD_TEST_CASE(tcs, integration__fake_result);
+    ATF_ADD_TEST_CASE(tcs, integration__cleanup__head_skips);
+    ATF_ADD_TEST_CASE(tcs, integration__cleanup__body_skips);
     ATF_ADD_TEST_CASE(tcs, integration__cleanup__body_ok__cleanup_bad);
     ATF_ADD_TEST_CASE(tcs, integration__cleanup__body_bad__cleanup_ok);
     ATF_ADD_TEST_CASE(tcs, integration__cleanup__body_bad__cleanup_bad);

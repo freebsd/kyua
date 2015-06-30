@@ -1162,6 +1162,13 @@ scheduler::scheduler_handle::wait_any(void)
                 result = model::test_result(model::test_result_skipped,
                                             utils::read_stream(input));
                 input.close();
+
+                // If we determined that the test needs to be skipped, we do not
+                // want to run the cleanup routine because doing so could result
+                // in errors.  However, we still want to run the cleanup routine
+                // if the test's body reports a skip (because actions could have
+                // already been taken).
+                test_data->needs_cleanup = false;
             }
         }
         if (!result) {
