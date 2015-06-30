@@ -242,6 +242,7 @@ Metadata:
     allowed_platforms is empty
     description is empty
     has_cleanup = false
+    is_exclusive = false
     required_configs is empty
     required_disk_space = 0
     required_files is empty

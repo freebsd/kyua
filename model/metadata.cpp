@@ -260,6 +260,7 @@ init_tree(config::tree& tree)
     tree.define_dynamic("custom");
     tree.define< config::string_node >("description");
     tree.define< config::bool_node >("has_cleanup");
+    tree.define< config::bool_node >("is_exclusive");
     tree.define< config::strings_set_node >("required_configs");
     tree.define< bytes_node >("required_disk_space");
     tree.define< paths_set_node >("required_files");
@@ -282,6 +283,7 @@ set_defaults(config::tree& tree)
                                          model::strings_set());
     tree.set< config::string_node >("description", "");
     tree.set< config::bool_node >("has_cleanup", false);
+    tree.set< config::bool_node >("is_exclusive", false);
     tree.set< config::strings_set_node >("required_configs",
                                          model::strings_set());
     tree.set< bytes_node >("required_disk_space", units::bytes(0));
@@ -484,6 +486,21 @@ model::metadata::has_cleanup(void) const
         return _pimpl->props.lookup< config::bool_node >("has_cleanup");
     } else {
         return get_defaults().lookup< config::bool_node >("has_cleanup");
+    }
+}
+
+
+/// Returns whether the test is exclusive or not.
+///
+/// \return True if the test has to be run on its own, not concurrently with any
+/// other tests; false otherwise.
+bool
+model::metadata::is_exclusive(void) const
+{
+    if (_pimpl->props.is_set("is_exclusive")) {
+        return _pimpl->props.lookup< config::bool_node >("is_exclusive");
+    } else {
+        return get_defaults().lookup< config::bool_node >("is_exclusive");
     }
 }
 
@@ -894,6 +911,21 @@ model::metadata_builder&
 model::metadata_builder::set_has_cleanup(const bool cleanup)
 {
     set< config::bool_node >(_pimpl->props, "has_cleanup", cleanup);
+    return *this;
+}
+
+
+/// Sets whether the test is exclusive or not.
+///
+/// \param exclusive True if the test is exclusive; false otherwise.
+///
+/// \return A reference to this builder.
+///
+/// \throw model::error If the value is invalid.
+model::metadata_builder&
+model::metadata_builder::set_is_exclusive(const bool exclusive)
+{
+    set< config::bool_node >(_pimpl->props, "is_exclusive", exclusive);
     return *this;
 }
 
