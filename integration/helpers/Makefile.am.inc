@@ -71,6 +71,11 @@ integration_helpers_metadata_SOURCES = integration/helpers/metadata.cpp
 integration_helpers_metadata_CXXFLAGS = $(ATF_CXX_CFLAGS)
 integration_helpers_metadata_LDADD = $(ATF_CXX_LIBS)
 
+tests_integration_helpers_PROGRAMS += integration/helpers/race
+integration_helpers_race_SOURCES = integration/helpers/race.cpp
+integration_helpers_race_CXXFLAGS = $(UTILS_CFLAGS)
+integration_helpers_race_LDADD = $(UTILS_LIBS)
+
 tests_integration_helpers_PROGRAMS += integration/helpers/simple_all_pass
 integration_helpers_simple_all_pass_SOURCES = \
     integration/helpers/simple_all_pass.cpp
