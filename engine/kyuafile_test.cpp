@@ -204,7 +204,8 @@ ATF_TEST_CASE_BODY(kyuafile__load__metadata)
         "atf_test_program{name='1st', test_suite='first',"
         " allowed_architectures='amd64 i386', timeout=15}\n"
         "plain_test_program{name='2nd', test_suite='second',"
-        " required_files='foo /bar//baz', required_user='root'}\n");
+        " required_files='foo /bar//baz', required_user='root',"
+        " ['custom.X-a-number']=123, ['custom.X-a-bool']=true}\n");
     atf::utils::create_file("1st", "");
     atf::utils::create_file("2nd", "");
 
@@ -228,6 +229,8 @@ ATF_TEST_CASE_BODY(kyuafile__load__metadata)
     const model::metadata md2 = model::metadata_builder()
         .add_required_file(fs::path("foo"))
         .add_required_file(fs::path("/bar/baz"))
+        .add_custom("X-a-bool", "true")
+        .add_custom("X-a-number", "123")
         .set_required_user("root")
         .build();
     ATF_REQUIRE_EQ(md2, suite.test_programs()[1]->get_metadata());
