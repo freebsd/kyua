@@ -20,6 +20,9 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   bumped to a greater value once the new implementation gets some
   mileage.
 
+* Issue 2: Added support for a new 'is_exclusive' metadata property that
+  tests can set to indicate that they do not support parallel execution.
+
 * Removed the external testers code in favor of the new built-in
   implementations.  The new approach feels significantly faster than
   the previous one.
