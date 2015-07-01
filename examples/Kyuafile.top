@@ -40,15 +40,13 @@
 
 syntax(2)
 
-local directory = fs.dirname(current_kyuafile())
-for file in fs.files(directory) do
+for file in fs.files(".") do
     if file == "." or file == ".." then
         -- Skip these special entries.
     else
-        local kyuafile_relative = fs.join(file, "Kyuafile")
-        local kyuafile_absolute = fs.join(directory, kyuafile_relative)
-        if fs.exists(kyuafile_absolute) then
-            include(kyuafile_relative)
+        local kyuafile = fs.join(file, "Kyuafile")
+        if fs.exists(kyuafile) then
+            include(kyuafile)
         end
     end
 end
