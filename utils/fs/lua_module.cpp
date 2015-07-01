@@ -64,6 +64,8 @@ namespace {
 static fs::path
 qualify_path(lutok::state& state, const fs::path& path)
 {
+    lutok::stack_cleaner cleaner(state);
+
     if (path.is_absolute()) {
         return path;
     } else {
@@ -106,8 +108,11 @@ to_path(lutok::state& state, const int index)
 static int
 lua_fs_basename(lutok::state& state)
 {
+    lutok::stack_cleaner cleaner(state);
+
     const fs::path path = to_path(state, -1);
     state.push_string(path.leaf_name().c_str());
+    cleaner.forget();
     return 1;
 }
 
@@ -123,8 +128,11 @@ lua_fs_basename(lutok::state& state)
 static int
 lua_fs_dirname(lutok::state& state)
 {
+    lutok::stack_cleaner cleaner(state);
+
     const fs::path path = to_path(state, -1);
     state.push_string(path.branch_path().c_str());
+    cleaner.forget();
     return 1;
 }
 
@@ -140,8 +148,11 @@ lua_fs_dirname(lutok::state& state)
 static int
 lua_fs_exists(lutok::state& state)
 {
+    lutok::stack_cleaner cleaner(state);
+
     const fs::path path = qualify_path(state, to_path(state, -1));
     state.push_boolean(fs::exists(path));
+    cleaner.forget();
     return 1;
 }
 
@@ -161,12 +172,15 @@ lua_fs_exists(lutok::state& state)
 static int
 files_iterator(lutok::state& state)
 {
+    lutok::stack_cleaner cleaner(state);
+
     DIR** dirp = state.to_userdata< DIR* >(state.upvalue_index(1));
     const struct dirent* entry = ::readdir(*dirp);
     if (entry == NULL)
         return 0;
     else {
         state.push_string(entry->d_name);
+        cleaner.forget();
         return 1;
     }
 }
@@ -186,6 +200,8 @@ files_iterator(lutok::state& state)
 static int
 files_gc(lutok::state& state)
 {
+    lutok::stack_cleaner cleaner(state);
+
     PRE(state.is_userdata(-1));
 
     DIR** dirp = state.to_userdata< DIR* >(-1);
@@ -211,6 +227,8 @@ files_gc(lutok::state& state)
 static int
 lua_fs_files(lutok::state& state)
 {
+    lutok::stack_cleaner cleaner(state);
+
     const fs::path path = qualify_path(state, to_path(state, -1));
 
     DIR** dirp = state.new_userdata< DIR* >();
@@ -231,6 +249,7 @@ lua_fs_files(lutok::state& state)
 
     state.push_cxx_closure(files_iterator, 1);
 
+    cleaner.forget();
     return 1;
 }
 
@@ -246,9 +265,12 @@ lua_fs_files(lutok::state& state)
 static int
 lua_fs_is_absolute(lutok::state& state)
 {
+    lutok::stack_cleaner cleaner(state);
+
     const fs::path path = to_path(state, -1);
 
     state.push_boolean(path.is_absolute());
+    cleaner.forget();
     return 1;
 }
 
@@ -265,9 +287,12 @@ lua_fs_is_absolute(lutok::state& state)
 static int
 lua_fs_join(lutok::state& state)
 {
+    lutok::stack_cleaner cleaner(state);
+
     const fs::path path1 = to_path(state, -2);
     const fs::path path2 = to_path(state, -1);
     state.push_string((path1 / path2).c_str());
+    cleaner.forget();
     return 1;
 }
 
