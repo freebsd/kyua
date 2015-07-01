@@ -39,7 +39,7 @@ run_configure() {
 }
 
 do_apidocs() {
-    run_configure --enable-doxygen || return 1
+    run_configure --with-doxygen || return 1
     make check-api-docs
 }
 
