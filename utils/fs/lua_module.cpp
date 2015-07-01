@@ -38,6 +38,7 @@ extern "C" {
 #include <string>
 
 #include <lutok/operations.hpp>
+#include <lutok/stack_cleaner.hpp>
 #include <lutok/state.ipp>
 
 #include "utils/format/macros.hpp"
@@ -51,6 +52,49 @@ namespace fs = utils::fs;
 namespace {
 
 
+/// Given a path, qualifies it with the module's start directory if necessary.
+///
+/// \param state The Lua state.
+/// \param path The path to qualify.
+///
+/// \return The original path if it was absolute; otherwise the original path
+/// appended to the module's start directory.
+///
+/// \throw std::runtime_error If the module's state has been corrupted.
+static fs::path
+qualify_path(lutok::state& state, const fs::path& path)
+{
+    if (path.is_absolute()) {
+        return path;
+    } else {
+        state.get_global("_fs_start_dir");
+        if (!state.is_string(-1))
+            throw std::runtime_error("Missing _fs_start_dir global variable; "
+                                     "state corrupted?");
+        return fs::path(state.to_string(-1)) / path;
+    }
+}
+
+
+/// Safely gets a path from the Lua state.
+///
+/// \param state The Lua state.
+/// \param index The position in the Lua stack that contains the path to query.
+///
+/// \return The queried path.
+///
+/// \throw fs::error If the value is not a valid path.
+/// \throw std::runtime_error If the value on the Lua stack is not convertible
+///     to a path.
+static fs::path
+to_path(lutok::state& state, const int index)
+{
+    if (!state.is_string(index))
+        throw std::runtime_error("Need a string parameter");
+    return fs::path(state.to_string(index));
+}
+
+
 /// Lua binding for fs::path::basename.
 ///
 /// \pre stack(-1) The input path.
@@ -62,10 +106,7 @@ namespace {
 static int
 lua_fs_basename(lutok::state& state)
 {
-    if (!state.is_string(-1))
-        throw std::runtime_error("Need a string parameter");
-    const fs::path path(state.to_string(-1));
-
+    const fs::path path = to_path(state, -1);
     state.push_string(path.leaf_name().c_str());
     return 1;
 }
@@ -82,10 +123,7 @@ lua_fs_basename(lutok::state& state)
 static int
 lua_fs_dirname(lutok::state& state)
 {
-    if (!state.is_string(-1))
-        throw std::runtime_error("Need a string parameter");
-    const fs::path path(state.to_string(-1));
-
+    const fs::path path = to_path(state, -1);
     state.push_string(path.branch_path().c_str());
     return 1;
 }
@@ -102,10 +140,7 @@ lua_fs_dirname(lutok::state& state)
 static int
 lua_fs_exists(lutok::state& state)
 {
-    if (!state.is_string(-1))
-        throw std::runtime_error("Need a string parameter");
-    const fs::path path(state.to_string(-1));
-
+    const fs::path path = qualify_path(state, to_path(state, -1));
     state.push_boolean(fs::exists(path));
     return 1;
 }
@@ -176,9 +211,7 @@ files_gc(lutok::state& state)
 static int
 lua_fs_files(lutok::state& state)
 {
-    if (!state.is_string(-1))
-        throw std::runtime_error("Need a string parameter");
-    const fs::path path(state.to_string(-1));
+    const fs::path path = qualify_path(state, to_path(state, -1));
 
     DIR** dirp = state.new_userdata< DIR* >();
 
@@ -213,9 +246,7 @@ lua_fs_files(lutok::state& state)
 static int
 lua_fs_is_absolute(lutok::state& state)
 {
-    if (!state.is_string(-1))
-        throw std::runtime_error("Need a string parameter");
-    const fs::path path(state.to_string(-1));
+    const fs::path path = to_path(state, -1);
 
     state.push_boolean(path.is_absolute());
     return 1;
@@ -234,14 +265,8 @@ lua_fs_is_absolute(lutok::state& state)
 static int
 lua_fs_join(lutok::state& state)
 {
-    if (!state.is_string(-2))
-        throw std::runtime_error("Need a string parameter");
-    const fs::path path1(state.to_string(-2));
-
-    if (!state.is_string(-1))
-        throw std::runtime_error("Need a string parameter");
-    const fs::path path2(state.to_string(-1));
-
+    const fs::path path1 = to_path(state, -2);
+    const fs::path path2 = to_path(state, -1);
     state.push_string((path1 / path2).c_str());
     return 1;
 }
@@ -250,7 +275,7 @@ lua_fs_join(lutok::state& state)
 }  // anonymous namespace
 
 
-/// Creates a Lua 'fs' module.
+/// Creates a Lua 'fs' module with a default start directory of ".".
 ///
 /// \post The global 'fs' symbol is set to a table that contains functions to a
 /// variety of utilites from the fs C++ module.
@@ -259,6 +284,26 @@ lua_fs_join(lutok::state& state)
 void
 fs::open_fs(lutok::state& s)
 {
+    open_fs(s, fs::current_path());
+}
+
+
+/// Creates a Lua 'fs' module with an explicit start directory.
+///
+/// \post The global 'fs' symbol is set to a table that contains functions to a
+/// variety of utilites from the fs C++ module.
+///
+/// \param s The Lua state.
+/// \param start_dir The start directory to use in all operations that reference
+///     the underlying file sytem.
+void
+fs::open_fs(lutok::state& s, const fs::path& start_dir)
+{
+    lutok::stack_cleaner cleaner(s);
+
+    s.push_string(start_dir.str());
+    s.set_global("_fs_start_dir");
+
     std::map< std::string, lutok::cxx_function > members;
     members["basename"] = lua_fs_basename;
     members["dirname"] = lua_fs_dirname;
