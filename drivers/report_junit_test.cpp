@@ -64,6 +64,7 @@ static const char* const default_metadata =
     "allowed_platforms is empty\n"
     "description is empty\n"
     "has_cleanup = false\n"
+    "is_exclusive = false\n"
     "required_configs is empty\n"
     "required_disk_space = 0\n"
     "required_files is empty\n"
@@ -80,6 +81,7 @@ static const char* const overriden_metadata =
     "allowed_platforms is empty\n"
     "description = Textual description\n"
     "has_cleanup = false\n"
+    "is_exclusive = false\n"
     "required_configs is empty\n"
     "required_disk_space = 0\n"
     "required_files is empty\n"
@@ -197,6 +199,7 @@ ATF_TEST_CASE_BODY(junit_metadata__overrides)
         .add_allowed_platform("platform1")
         .set_description("This is a test")
         .set_has_cleanup(true)
+        .set_is_exclusive(true)
         .add_required_config("config1")
         .set_required_disk_space(units::bytes(456))
         .add_required_file(fs::path("file1"))
@@ -212,6 +215,7 @@ ATF_TEST_CASE_BODY(junit_metadata__overrides)
         + "allowed_platforms = platform1\n"
         + "description = This is a test\n"
         + "has_cleanup = true\n"
+        + "is_exclusive = true\n"
         + "required_configs = config1\n"
         + "required_disk_space = 456\n"
         + "required_files = file1\n"

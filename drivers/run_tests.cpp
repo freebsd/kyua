@@ -28,7 +28,7 @@
 
 #include "drivers/run_tests.hpp"
 
-#include <deque>
+#include <utility>
 
 #include "engine/config.hpp"
 #include "engine/filters.hpp"
@@ -64,6 +64,21 @@ using utils::optional;
 namespace {
 
 
+/// Map of test program identifiers (relative paths) to their identifiers in the
+/// database.  We need to keep this in memory because test programs can be
+/// returned by the scanner in any order, and we only want to put each test
+/// program once.
+typedef std::map< fs::path, int64_t > path_to_id_map;
+
+
+/// Map of in-flight exec_handles to their corresponding test case IDs.
+typedef std::map< scheduler::exec_handle, int64_t > exec_handle_to_id_map;
+
+
+/// Pair of exec_handle to a test case ID.
+typedef exec_handle_to_id_map::value_type exec_handle_and_id_pair;
+
+
 /// Puts a test program in the store and returns its identifier.
 ///
 /// This function is idempotent: we maintain a side cache of already-put test
@@ -80,7 +95,7 @@ namespace {
 static int64_t
 find_test_program_id(const model::test_program_ptr test_program,
                      store::write_transaction& tx,
-                     std::map< fs::path, int64_t > ids_cache)
+                     path_to_id_map& ids_cache)
 {
     const fs::path& key = test_program->relative_path();
     std::map< fs::path, int64_t >::const_iterator iter = ids_cache.find(key);
@@ -133,6 +148,70 @@ safe_cleanup(scheduler::test_result_handle handle) throw()
 }
 
 
+/// Starts a test asynchronously.
+///
+/// \param handle Scheduler handle.
+/// \param match Test program and test case to start.
+/// \param [in,out] tx Writable transaction to obtain test IDs.
+/// \param [in,out] ids_cache Cache of already-put test cases.
+/// \param user_config The end-user configuration properties.
+/// \param hooks The hooks for this execution.
+///
+/// \returns The exec_handle for the started test and the test case's identifier
+/// in the store.
+exec_handle_and_id_pair
+start_test(scheduler::scheduler_handle& handle,
+           const engine::scan_result& match,
+           store::write_transaction& tx,
+           path_to_id_map& ids_cache,
+           const config::tree& user_config,
+           drivers::run_tests::base_hooks& hooks)
+{
+    const model::test_program_ptr& test_program = match.first;
+    const std::string& test_case_name = match.second;
+
+    hooks.got_test_case(*test_program, test_case_name);
+
+    const int64_t test_program_id = find_test_program_id(
+        test_program, tx, ids_cache);
+    const int64_t test_case_id = tx.put_test_case(
+        *test_program, test_case_name, test_program_id);
+
+    const scheduler::exec_handle exec_handle = handle.spawn_test(
+        test_program, test_case_name, user_config);
+    return std::make_pair(exec_handle, test_case_id);
+}
+
+
+/// Processes the completion of a test.
+///
+/// \param [in,out] result_handle The completion handle of the test subprocess.
+/// \param test_case_id Identifier of the test case as returned by start_test().
+/// \param [in,out] tx Writable transaction to put the test results.
+/// \param hooks The hooks for this execution.
+///
+/// \post result_handle is cleaned up.  The caller cannot clean it up again.
+void
+finish_test(scheduler::result_handle_ptr result_handle,
+            const int64_t test_case_id,
+            store::write_transaction& tx,
+            drivers::run_tests::base_hooks& hooks)
+{
+    const scheduler::test_result_handle* test_result_handle =
+        dynamic_cast< const scheduler::test_result_handle* >(
+            result_handle.get());
+
+    put_test_result(test_case_id, *test_result_handle, tx);
+
+    const model::test_result test_result = safe_cleanup(*test_result_handle);
+    hooks.got_result(
+        *test_result_handle->test_program(),
+        test_result_handle->test_case_name(),
+        test_result_handle->test_result(),
+        result_handle->end_time() - result_handle->start_time());
+}
+
+
 }  // anonymous namespace
 
 
@@ -172,21 +251,11 @@ drivers::run_tests::drive(const fs::path& kyuafile_path,
         (void)tx.put_context(context);
     }
 
-    // TODO(jmmv): The scanner currently does not handle interrupts, so if we
-    // abort we probably do not clean up the directory in which test programs
-    // are executed in list mode.  Should share interrupts handling between both
-    // the executor and the scanner, or funnel the scanner operations via the
-    // executor.
     engine::scanner scanner(kyuafile.test_programs(), filters);
 
-    // Map of test program identifiers (relative paths) to their identifiers in
-    // the database.  We need to keep this in memory because test programs can
-    // be returned by the scanner in any order, and we only want to put each
-    // test program once.
-    std::map< fs::path, int64_t > ids_cache;
-
-    // Map of in-flight test cases to their identifiers in the database.
-    std::map< scheduler::exec_handle, int64_t > in_flight;
+    path_to_id_map ids_cache;
+    exec_handle_to_id_map in_flight;
+    std::vector< engine::scan_result > exclusive_tests;
 
     const std::size_t slots = user_config.lookup< config::positive_int_node >(
         "parallelism");
@@ -201,17 +270,19 @@ drivers::run_tests::drive(const fs::path& kyuafile_path,
             optional< engine::scan_result > match = scanner.yield();
             if (!match)
                 break;
+            const model::test_program_ptr& test_program = match.get().first;
+            const std::string& test_case_name = match.get().second;
 
-            hooks.got_test_case(*match.get().first, match.get().second);
+            const model::test_case& test_case = test_program->find(
+                test_case_name);
+            if (test_case.get_metadata().is_exclusive()) {
+                // Exclusive tests get processed later, separately.
+                exclusive_tests.push_back(match.get());
+                continue;
+            }
 
-            const int64_t test_program_id = find_test_program_id(
-                match.get().first, tx, ids_cache);
-            const int64_t test_case_id = tx.put_test_case(
-                *match.get().first, match.get().second, test_program_id);
-
-            const scheduler::exec_handle exec_handle = handle.spawn_test(
-                match.get().first, match.get().second, user_config);
-            in_flight.insert(std::make_pair(exec_handle, test_case_id));
+            in_flight.insert(start_test(handle, match.get(), tx, ids_cache,
+                                        user_config, hooks));
         }
 
         // If there are any used slots, consume any at random and return the
@@ -219,26 +290,25 @@ drivers::run_tests::drive(const fs::path& kyuafile_path,
         // spawning of new tests as detailed above.
         if (!in_flight.empty()) {
             scheduler::result_handle_ptr result_handle = handle.wait_any();
-            const scheduler::test_result_handle* test_result_handle =
-                dynamic_cast< const scheduler::test_result_handle* >(
-                    result_handle.get());
 
             const std::map< scheduler::exec_handle, int64_t >::iterator
                 iter = in_flight.find(result_handle->original_exec_handle());
             const int64_t test_case_id = (*iter).second;
             in_flight.erase(iter);
 
-            put_test_result(test_case_id, *test_result_handle, tx);
-
-            const model::test_result test_result = safe_cleanup(
-                *test_result_handle);
-            hooks.got_result(
-                *test_result_handle->test_program(),
-                test_result_handle->test_case_name(),
-                test_result_handle->test_result(),
-                result_handle->end_time() - result_handle->start_time());
+            finish_test(result_handle, test_case_id, tx, hooks);
         }
     } while (!in_flight.empty() || !scanner.done());
+
+    // Run any exclusive tests that we spotted earlier sequentially.
+    for (std::vector< engine::scan_result >::const_iterator
+             iter = exclusive_tests.begin(); iter != exclusive_tests.end();
+             ++iter) {
+        const exec_handle_and_id_pair data = start_test(
+            handle, *iter, tx, ids_cache, user_config, hooks);
+        scheduler::result_handle_ptr result_handle = handle.wait_any();
+        finish_test(result_handle, data.second, tx, hooks);
+    }
 
     tx.commit();
 

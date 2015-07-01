@@ -477,11 +477,18 @@ lua_generic_test_program(lutok::state& state)
         const std::string property = state.to_string(-2);
 
         if (property != "name" && property != "test_suite") {
-            if (!state.is_number(-1) && !state.is_string(-1))
+            std::string value;
+            if (state.is_boolean(-1)) {
+                value = F("%s") % state.to_boolean(-1);
+            } else if (state.is_number(-1)) {
+                value = F("%s") % state.to_integer(-1);
+            } else if (state.is_string(-1)) {
+                value = state.to_string(-1);
+            } else {
                 throw std::runtime_error(
                     F("Metadata property '%s' in test program '%s' cannot be "
                       "converted to a string") % property % path);
-            const std::string value = state.to_string(-1);
+            }
 
             mdbuilder.set_string(property, value);
         }

@@ -809,6 +809,27 @@ EOF
 }
 
 
+utils_test_case exclusive_tests
+exclusive_tests_body() {
+    cat >Kyuafile <<EOF
+syntax(2)
+test_suite("integration")
+EOF
+    for i in $(seq 100); do
+        echo 'plain_test_program{name="race", is_exclusive=true}' >>Kyuafile
+    done
+    utils_cp_helper race .
+
+    atf_check \
+        -s exit:0 \
+        -o match:"100/100 passed" \
+        kyua \
+        -v parallelism=20 \
+        -v test_suites.integration.shared_file="$(pwd)/shared_file" \
+        test
+}
+
+
 utils_test_case no_test_program_match
 no_test_program_match_body() {
     utils_install_timestamp_wrapper
@@ -1004,6 +1025,8 @@ atf_init_test_cases() {
     atf_add_test_case kyuafile_flag__some_args
 
     atf_add_test_case interrupt
+
+    atf_add_test_case exclusive_tests
 
     atf_add_test_case no_test_program_match
     atf_add_test_case no_test_case_match
