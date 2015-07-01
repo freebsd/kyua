@@ -224,7 +224,7 @@ public:
         _state.open_base();
         _state.open_string();
         _state.open_table();
-        fs::open_fs(_state);
+        fs::open_fs(_state, callback_current_kyuafile().branch_path());
     }
 
     /// Destructor.

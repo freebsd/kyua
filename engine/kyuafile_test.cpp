@@ -401,6 +401,47 @@ ATF_TEST_CASE_BODY(kyuafile__load__absolute_paths_are_stable)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__fs_calls_are_relative);
+ATF_TEST_CASE_BODY(kyuafile__load__fs_calls_are_relative)
+{
+    scheduler::scheduler_handle handle = scheduler::setup();
+
+    atf::utils::create_file(
+        "Kyuafile",
+        "syntax(2)\n"
+        "if fs.exists('one') then\n"
+        "    plain_test_program{name='one', test_suite='first'}\n"
+        "end\n"
+        "if fs.exists('two') then\n"
+        "    plain_test_program{name='two', test_suite='first'}\n"
+        "end\n"
+        "include('dir/Kyuafile')\n");
+    atf::utils::create_file("one", "");
+    fs::mkdir(fs::path("dir"), 0755);
+    atf::utils::create_file(
+        "dir/Kyuafile",
+        "syntax(2)\n"
+        "if fs.exists('one') then\n"
+        "    plain_test_program{name='one', test_suite='first'}\n"
+        "end\n"
+        "if fs.exists('two') then\n"
+        "    plain_test_program{name='two', test_suite='first'}\n"
+        "end\n");
+    atf::utils::create_file("dir/two", "");
+
+    const engine::kyuafile suite = engine::kyuafile::load(
+        fs::path("Kyuafile"), none, config::tree(), handle);
+
+    ATF_REQUIRE_EQ(2, suite.test_programs().size());
+    ATF_REQUIRE_EQ(fs::current_path() / "one",
+                   suite.test_programs()[0]->absolute_path());
+    ATF_REQUIRE_EQ(fs::current_path() / "dir/two",
+                   suite.test_programs()[1]->absolute_path());
+
+    handle.cleanup();
+}
+
+
 /// Verifies that load raises a load_error on a given input.
 ///
 /// \param file Name of the file to load.
@@ -551,6 +592,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__other_directory);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__build_directory);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__absolute_paths_are_stable);
+    ATF_ADD_TEST_CASE(tcs, kyuafile__load__fs_calls_are_relative);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__test_program_not_basename);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__lua_error);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__syntax__not_called);
