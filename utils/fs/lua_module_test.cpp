@@ -33,6 +33,7 @@
 #include <lutok/state.hpp>
 #include <lutok/test_utils.hpp>
 
+#include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 
@@ -126,6 +127,11 @@ ATF_TEST_CASE_BODY(exists__ok)
     lutok::do_string(state, "return fs.exists('bar')", 0, 1, 0);
     ATF_REQUIRE(!state.to_boolean(-1));
     state.pop(1);
+
+    lutok::do_string(state,
+                     F("return fs.exists('%s')") % fs::current_path(), 0, 1, 0);
+    ATF_REQUIRE(state.to_boolean(-1));
+    state.pop(1);
 }
 
 
@@ -141,6 +147,40 @@ ATF_TEST_CASE_BODY(exists__fail)
     ATF_REQUIRE_THROW_RE(lutok::error, "Invalid path",
                          lutok::do_string(state, "return fs.exists('')",
                                           0, 1, 0));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(exists__custom_start_dir);
+ATF_TEST_CASE_BODY(exists__custom_start_dir)
+{
+    lutok::state state;
+    fs::open_fs(state, fs::path("subdir"));
+
+    fs::mkdir(fs::path("subdir"), 0755);
+    atf::utils::create_file("subdir/foo", "");
+    atf::utils::create_file("bar", "");
+
+    lutok::do_string(state, "return fs.exists('foo')", 0, 1, 0);
+    ATF_REQUIRE(state.to_boolean(-1));
+    state.pop(1);
+
+    lutok::do_string(state, "return fs.exists('subdir/foo')", 0, 1, 0);
+    ATF_REQUIRE(!state.to_boolean(-1));
+    state.pop(1);
+
+    lutok::do_string(state, "return fs.exists('bar')", 0, 1, 0);
+    ATF_REQUIRE(!state.to_boolean(-1));
+    state.pop(1);
+
+    lutok::do_string(state, "return fs.exists('../bar')", 0, 1, 0);
+    ATF_REQUIRE(state.to_boolean(-1));
+    state.pop(1);
+
+    lutok::do_string(state,
+                     F("return fs.exists('%s')") % (fs::current_path() / "bar"),
+                     0, 1, 0);
+    ATF_REQUIRE(state.to_boolean(-1));
+    state.pop(1);
 }
 
 
@@ -180,6 +220,31 @@ ATF_TEST_CASE_BODY(files__some)
     lutok::do_string(state,
                      "names = {}\n"
                      "for file in fs.files('root') do\n"
+                     "    table.insert(names, file)\n"
+                     "end\n"
+                     "table.sort(names)\n"
+                     "return table.concat(names, ' ')",
+                     0, 1, 0);
+    ATF_REQUIRE_EQ(". .. file1 file2", state.to_string(-1));
+    state.pop(1);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(files__some_with_custom_start_dir);
+ATF_TEST_CASE_BODY(files__some_with_custom_start_dir)
+{
+    lutok::state state;
+    state.open_table();
+    fs::open_fs(state, fs::current_path() / "root");
+
+    fs::mkdir(fs::path("root"), 0755);
+    atf::utils::create_file("root/file1", "");
+    atf::utils::create_file("root/file2", "");
+    atf::utils::create_file("file3", "");
+
+    lutok::do_string(state,
+                     "names = {}\n"
+                     "for file in fs.files('.') do\n"
                      "    table.insert(names, file)\n"
                      "end\n"
                      "table.sort(names)\n"
@@ -295,9 +360,11 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, exists__ok);
     ATF_ADD_TEST_CASE(tcs, exists__fail);
+    ATF_ADD_TEST_CASE(tcs, exists__custom_start_dir);
 
     ATF_ADD_TEST_CASE(tcs, files__none);
     ATF_ADD_TEST_CASE(tcs, files__some);
+    ATF_ADD_TEST_CASE(tcs, files__some_with_custom_start_dir);
     ATF_ADD_TEST_CASE(tcs, files__fail_arg);
     ATF_ADD_TEST_CASE(tcs, files__fail_opendir);
 

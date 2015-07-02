@@ -27,6 +27,11 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   implementations.  The new approach feels significantly faster than
   the previous one.
 
+* Fixed the handling of relative paths in the fs.* functions available
+  in Kyuafiles.  All paths are now resolved relative to the location of
+  the caller Kyuafile.  Kyuafile.top has been updated with these changes
+  and you should update custom copies of this file with the new version.
+
 * Changed temporary directory creation to always grant search
   permissions on temporary directories.  This is to prevent potential
   problems when running Kyua as root and executing test cases that

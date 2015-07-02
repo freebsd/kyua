@@ -145,7 +145,7 @@ doc/manbuild_test: $(srcdir)/doc/manbuild_test.sh Makefile
 	echo "#! $(ATF_SH)" >doc/manbuild_test.tmp; \
 	echo "# AUTOMATICALLY GENERATED FROM Makefile" \
 	    >>doc/manbuild_test.tmp; \
-	sed -e 's,__MANBUILD__,$(abs_builddir)/doc/manbuild.sh,g' \
+	sed -e 's,__MANBUILD__,$(abs_srcdir)/doc/manbuild.sh,g' \
 	    <$(srcdir)/doc/manbuild_test.sh >>doc/manbuild_test.tmp; \
 	mv doc/manbuild_test.tmp doc/manbuild_test; \
 	chmod +x doc/manbuild_test

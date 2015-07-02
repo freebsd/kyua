@@ -28,17 +28,24 @@
 
 /// \file utils/fs/lua_module.hpp
 /// Lua bindings for the utils::fs module.
+///
+/// When the fs module is bound to Lua, the module has the concept of a "start
+/// directory".  The start directory is the directory used to qualify all
+/// relative paths, and is provided at module binding time.
 
 #if !defined(UTILS_FS_LUA_MODULE_HPP)
 #define UTILS_FS_LUA_MODULE_HPP
 
 #include <lutok/state.hpp>
 
+#include "utils/fs/path.hpp"
+
 namespace utils {
 namespace fs {
 
 
 void open_fs(lutok::state&);
+void open_fs(lutok::state&, const fs::path&);
 
 
 }  // namespace fs
