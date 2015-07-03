@@ -36,10 +36,10 @@ ATF_TEST_CASE_HEAD(get_variable)
 {
     const char* output = ::getenv("CONFIG_VAR_FILE");
     if (output == NULL) {
-        set_md_var("require.config", "X-the-variable");
+        set_md_var("require.config", "the-variable");
     } else {
-        if (has_config_var("X-the-variable")) {
-            atf::utils::create_file(output, get_config_var("X-the-variable") +
+        if (has_config_var("the-variable")) {
+            atf::utils::create_file(output, get_config_var("the-variable") +
                                     std::string("\n"));
         } else {
             atf::utils::create_file(output, "NOT DEFINED\n");
@@ -48,7 +48,7 @@ ATF_TEST_CASE_HEAD(get_variable)
 }
 ATF_TEST_CASE_BODY(get_variable)
 {
-    ATF_REQUIRE_EQ("value2", get_config_var("X-the-variable"));
+    ATF_REQUIRE_EQ("value2", get_config_var("the-variable"));
 }
 
 

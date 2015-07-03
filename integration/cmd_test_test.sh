@@ -549,8 +549,8 @@ utils_test_case config_behavior
 config_behavior_body() {
     cat >"my-config" <<EOF
 syntax(2)
-test_suites.suite1["X-the-variable"] = "value1"
-test_suites.suite2["X-the-variable"] = "override me"
+test_suites.suite1["the-variable"] = "value1"
+test_suites.suite2["the-variable"] = "override me"
 EOF
 
     cat >Kyuafile <<EOF
@@ -564,7 +564,7 @@ EOF
     utils_cp_helper config config3
 
     atf_check -s exit:1 -o save:stdout -e empty \
-        kyua -c my-config -v test_suites.suite2.X-the-variable=value2 test
+        kyua -c my-config -v test_suites.suite2.the-variable=value2 test
     atf_check -s exit:0 -o ignore -e empty \
         grep 'config1:get_variable.*failed' stdout
     atf_check -s exit:0 -o ignore -e empty \
@@ -777,8 +777,8 @@ EOF
     utils_cp_helper interrupts .
 
     kyua \
-        -v test_suites.integration.X-body-cookie="$(pwd)/body" \
-        -v test_suites.integration.X-cleanup-cookie="$(pwd)/cleanup" \
+        -v test_suites.integration.body-cookie="$(pwd)/body" \
+        -v test_suites.integration.cleanup-cookie="$(pwd)/cleanup" \
         test >stdout 2>stderr &
     pid=${!}
     echo "Kyua subprocess is PID ${pid}"

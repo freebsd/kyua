@@ -45,16 +45,16 @@ architecture = "my-architecture"
 parallelism = 256
 platform = "my-platform"
 unprivileged_user = "$(id -u -n)"
-test_suites.suite1["X-the-variable"] = "value1"
-test_suites.suite2["X-the-variable"] = "value2"
+test_suites.suite1.the_variable = "value1"
+test_suites.suite2.the_variable = "value2"
 EOF
 
     cat >expout <<EOF
 architecture = my-architecture
 parallelism = 256
 platform = my-platform
-test_suites.suite1.X-the-variable = value1
-test_suites.suite2.X-the-variable = value2
+test_suites.suite1.the_variable = value1
+test_suites.suite2.the_variable = value2
 unprivileged_user = $(id -u -n)
 EOF
 
@@ -67,16 +67,16 @@ one__ok_body() {
     mkdir "${HOME}/.kyua"
     cat >"${HOME}/.kyua/kyua.conf" <<EOF
 syntax(2)
-test_suites.first["X-one"] = 1
-test_suites.first["X-two"] = 2
+test_suites.first.one = 1
+test_suites.first.two = 2
 EOF
 
     cat >expout <<EOF
-test_suites.first.X-two = 2
+test_suites.first.two = 2
 EOF
 
     atf_check -s exit:0 -o file:expout -e empty kyua config \
-        test_suites.first.X-two
+        test_suites.first.two
 }
 
 
@@ -85,16 +85,16 @@ one__fail_body() {
     mkdir "${HOME}/.kyua"
     cat >"${HOME}/.kyua/kyua.conf" <<EOF
 syntax(2)
-test_suites.first["X-one"] = 1
-test_suites.first["X-three"] = 3
+test_suites.first.one = 1
+test_suites.first.three = 3
 EOF
 
     cat >experr <<EOF
-kyua: W: 'test_suites.first.X-two' is not defined.
+kyua: W: 'test_suites.first.two' is not defined.
 EOF
 
     atf_check -s exit:1 -o empty -e file:experr kyua config \
-        test_suites.first.X-two
+        test_suites.first.two
 }
 
 
@@ -105,20 +105,20 @@ many__ok_body() {
 syntax(2)
 architecture = "overriden"
 unknown_setting = "foo"
-test_suites.first["X-one"] = 1
-test_suites.first["X-two"] = 2
+test_suites.first.one = 1
+test_suites.first.two = 2
 EOF
 
     cat >expout <<EOF
 architecture = overriden
-test_suites.first.X-two = 2
-test_suites.first.X-one = 1
+test_suites.first.two = 2
+test_suites.first.one = 1
 EOF
 
     atf_check -s exit:0 -o file:expout -e empty kyua config \
         architecture \
-        test_suites.first.X-two \
-        test_suites.first.X-one  # Inverse order on purpose.
+        test_suites.first.two \
+        test_suites.first.one  # Inverse order on purpose.
     atf_check -s exit:0 -o match:architecture -o not-match:unknown_setting \
         -e empty kyua config
 }
@@ -129,23 +129,23 @@ many__fail_body() {
     mkdir "${HOME}/.kyua"
     cat >"${HOME}/.kyua/kyua.conf" <<EOF
 syntax(2)
-test_suites.first["X-one"] = 1
-test_suites.first["X-three"] = 3
+test_suites.first.one = 1
+test_suites.first.three = 3
 EOF
 
     cat >expout <<EOF
-test_suites.first.X-one = 1
-test_suites.first.X-three = 3
+test_suites.first.one = 1
+test_suites.first.three = 3
 EOF
 
     cat >experr <<EOF
-kyua: W: 'test_suites.first.X-two' is not defined.
-kyua: W: 'test_suites.first.X-fourth' is not defined.
+kyua: W: 'test_suites.first.two' is not defined.
+kyua: W: 'test_suites.first.fourth' is not defined.
 EOF
 
     atf_check -s exit:1 -o file:expout -e file:experr kyua config \
-        test_suites.first.X-one test_suites.first.X-two \
-        test_suites.first.X-three test_suites.first.X-fourth
+        test_suites.first.one test_suites.first.two \
+        test_suites.first.three test_suites.first.fourth
 }
 
 
@@ -153,15 +153,15 @@ utils_test_case config_flag__default_system
 config_flag__default_system_body() {
     cat >kyua.conf <<EOF
 syntax(2)
-test_suites.foo["X-var"] = "baz"
+test_suites.foo.var = "baz"
 EOF
 
     atf_check -s exit:1 -o empty \
-        -e match:"kyua: W: 'test_suites.foo.X-var'.*not defined" \
-        kyua config test_suites.foo.X-var
+        -e match:"kyua: W: 'test_suites.foo.var'.*not defined" \
+        kyua config test_suites.foo.var
     export KYUA_CONFDIR="$(pwd)"
-    atf_check -s exit:0 -o match:"foo.X-var = baz" -e empty \
-        kyua config test_suites.foo.X-var
+    atf_check -s exit:0 -o match:"foo.var = baz" -e empty \
+        kyua config test_suites.foo.var
 }
 
 
@@ -169,20 +169,20 @@ utils_test_case config_flag__default_home
 config_flag__default_home_body() {
     cat >kyua.conf <<EOF
 syntax(2)
-test_suites.foo["X-var"] = "bar"
+test_suites.foo.var = "bar"
 EOF
     export KYUA_CONFDIR="$(pwd)"
-    atf_check -s exit:0 -o match:"test_suites.foo.X-var = bar" -e empty \
-        kyua config test_suites.foo.X-var
+    atf_check -s exit:0 -o match:"test_suites.foo.var = bar" -e empty \
+        kyua config test_suites.foo.var
 
     # The previously-created "system-wide" file has to be ignored.
     mkdir .kyua
     cat >.kyua/kyua.conf <<EOF
 syntax(2)
-test_suites.foo["X-var"] = "baz"
+test_suites.foo.var = "baz"
 EOF
-    atf_check -s exit:0 -o match:"test_suites.foo.X-var = baz" -e empty \
-        kyua config test_suites.foo.X-var
+    atf_check -s exit:0 -o match:"test_suites.foo.var = baz" -e empty \
+        kyua config test_suites.foo.var
 }
 
 
@@ -190,16 +190,16 @@ utils_test_case config_flag__explicit__ok
 config_flag__explicit__ok_body() {
     cat >kyua.conf <<EOF
 syntax(2)
-test_suites.foo["X-var"] = "baz"
+test_suites.foo.var = "baz"
 EOF
 
     atf_check -s exit:1 -o empty \
-        -e match:"kyua: W: 'test_suites.foo.X-var'.*not defined" \
-        kyua config test_suites.foo.X-var
-    atf_check -s exit:0 -o match:"test_suites.foo.X-var = baz" -e empty \
-        kyua -c kyua.conf config test_suites.foo.X-var
-    atf_check -s exit:0 -o match:"test_suites.foo.X-var = baz" -e empty \
-        kyua --config=kyua.conf config test_suites.foo.X-var
+        -e match:"kyua: W: 'test_suites.foo.var'.*not defined" \
+        kyua config test_suites.foo.var
+    atf_check -s exit:0 -o match:"test_suites.foo.var = baz" -e empty \
+        kyua -c kyua.conf config test_suites.foo.var
+    atf_check -s exit:0 -o match:"test_suites.foo.var = baz" -e empty \
+        kyua --config=kyua.conf config test_suites.foo.var
 }
 
 
@@ -207,17 +207,17 @@ utils_test_case config_flag__explicit__disable
 config_flag__explicit__disable_body() {
     cat >kyua.conf <<EOF
 syntax(2)
-test_suites.foo["X-var"] = "baz"
+test_suites.foo.var = "baz"
 EOF
     mkdir .kyua
     cp kyua.conf .kyua/kyua.conf
     export KYUA_CONFDIR="$(pwd)"
 
-    atf_check -s exit:0 -o match:"test_suites.foo.X-var = baz" -e empty \
-        kyua config test_suites.foo.X-var
+    atf_check -s exit:0 -o match:"test_suites.foo.var = baz" -e empty \
+        kyua config test_suites.foo.var
     atf_check -s exit:1 -o empty \
-        -e match:"kyua: W: 'test_suites.foo.X-var'.*not defined" \
-        kyua --config=none config test_suites.foo.X-var
+        -e match:"kyua: W: 'test_suites.foo.var'.*not defined" \
+        kyua --config=none config test_suites.foo.var
 }
 
 
@@ -241,21 +241,21 @@ config_flag__explicit__bad_file_body() {
 utils_test_case variable_flag__no_config
 variable_flag__no_config_body() {
     atf_check -s exit:0 \
-        -o match:'test_suites.suite1.X-the-variable = value1' \
-        -o match:'test_suites.suite2.X-the-variable = value2' \
+        -o match:'test_suites.suite1.the_variable = value1' \
+        -o match:'test_suites.suite2.the_variable = value2' \
         -e empty \
         kyua \
-        -v "test_suites.suite1.X-the-variable=value1" \
-        -v "test_suites.suite2.X-the-variable=value2" \
+        -v "test_suites.suite1.the_variable=value1" \
+        -v "test_suites.suite2.the_variable=value2" \
         config
 
     atf_check -s exit:0 \
-        -o match:'test_suites.suite1.X-the-variable = value1' \
-        -o match:'test_suites.suite2.X-the-variable = value2' \
+        -o match:'test_suites.suite1.the_variable = value1' \
+        -o match:'test_suites.suite2.the_variable = value2' \
         -e empty \
         kyua \
-        --variable="test_suites.suite1.X-the-variable=value1" \
-        --variable="test_suites.suite2.X-the-variable=value2" \
+        --variable="test_suites.suite1.the_variable=value1" \
+        --variable="test_suites.suite2.the_variable=value2" \
         config
 }
 
@@ -265,26 +265,26 @@ variable_flag__override_default_config_body() {
     mkdir "${HOME}/.kyua"
     cat >"${HOME}/.kyua/kyua.conf" <<EOF
 syntax(2)
-test_suites.suite1["X-the-variable"] = "value1"
-test_suites.suite2["X-the-variable"] = "should not be used"
+test_suites.suite1.the_variable = "value1"
+test_suites.suite2.the_variable = "should not be used"
 EOF
 
     atf_check -s exit:0 \
-        -o match:'test_suites.suite1.X-the-variable = value1' \
-        -o match:'test_suites.suite2.X-the-variable = overriden' \
-        -o match:'test_suites.suite3.X-the-variable = new' \
+        -o match:'test_suites.suite1.the_variable = value1' \
+        -o match:'test_suites.suite2.the_variable = overriden' \
+        -o match:'test_suites.suite3.the_variable = new' \
         -e empty kyua \
-        -v "test_suites.suite2.X-the-variable=overriden" \
-        -v "test_suites.suite3.X-the-variable=new" \
+        -v "test_suites.suite2.the_variable=overriden" \
+        -v "test_suites.suite3.the_variable=new" \
         config
 
     atf_check -s exit:0 \
-        -o match:'test_suites.suite1.X-the-variable = value1' \
-        -o match:'test_suites.suite2.X-the-variable = overriden' \
-        -o match:'test_suites.suite3.X-the-variable = new' \
+        -o match:'test_suites.suite1.the_variable = value1' \
+        -o match:'test_suites.suite2.the_variable = overriden' \
+        -o match:'test_suites.suite3.the_variable = new' \
         -e empty kyua \
-        --variable="test_suites.suite2.X-the-variable=overriden" \
-        --variable="test_suites.suite3.X-the-variable=new" \
+        --variable="test_suites.suite2.the_variable=overriden" \
+        --variable="test_suites.suite3.the_variable=new" \
         config
 }
 
@@ -293,19 +293,19 @@ utils_test_case variable_flag__override_custom_config
 variable_flag__override_custom_config_body() {
     cat >config <<EOF
 syntax(2)
-test_suites.suite1["X-the-variable"] = "value1"
-test_suites.suite2["X-the-variable"] = "should not be used"
+test_suites.suite1.the_variable = "value1"
+test_suites.suite2.the_variable = "should not be used"
 EOF
 
     atf_check -s exit:0 \
-        -o match:'test_suites.suite2.X-the-variable = overriden' \
+        -o match:'test_suites.suite2.the_variable = overriden' \
         -e empty kyua -c config \
-        -v "test_suites.suite2.X-the-variable=overriden" config
+        -v "test_suites.suite2.the_variable=overriden" config
 
     atf_check -s exit:0 \
-        -o match:'test_suites.suite2.X-the-variable = overriden' \
+        -o match:'test_suites.suite2.the_variable = overriden' \
         -e empty kyua -c config \
-        --variable="test_suites.suite2.X-the-variable=overriden" config
+        --variable="test_suites.suite2.the_variable=overriden" config
 }
 
 

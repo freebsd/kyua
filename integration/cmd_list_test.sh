@@ -285,7 +285,7 @@ utils_test_case config_behavior
 config_behavior_body() {
     cat >"my-config" <<EOF
 syntax(2)
-test_suites.suite1["X-the-variable"] = "value1"
+test_suites.suite1["the-variable"] = "value1"
 EOF
 
     cat >Kyuafile <<EOF

@@ -38,11 +38,11 @@ extern "C" {
 ATF_TEST_CASE_WITH_CLEANUP(block_body);
 ATF_TEST_CASE_HEAD(block_body)
 {
-    set_md_var("require.config", "X-body-cookie X-cleanup-cookie");
+    set_md_var("require.config", "body-cookie cleanup-cookie");
 }
 ATF_TEST_CASE_BODY(block_body)
 {
-    const std::string cookie(get_config_var("X-body-cookie"));
+    const std::string cookie(get_config_var("body-cookie"));
     std::ofstream output(cookie.c_str());
     output.close();
     for (;;)
@@ -50,7 +50,7 @@ ATF_TEST_CASE_BODY(block_body)
 }
 ATF_TEST_CASE_CLEANUP(block_body)
 {
-    const std::string cookie(get_config_var("X-cleanup-cookie"));
+    const std::string cookie(get_config_var("cleanup-cookie"));
     std::ofstream output(cookie.c_str());
     output.close();
 }
