@@ -136,7 +136,7 @@ engine::parse_atf_metadata(const model::properties_map& props)
             } else if (name == "timeout") {
                 mdbuilder.set_string("timeout", value);
             } else if (name.length() > 2 && name.substr(0, 2) == "X-") {
-                mdbuilder.add_custom(name, value);
+                mdbuilder.add_custom(name.substr(2), value);
             } else {
                 throw engine::format_error(F("Unknown test case metadata "
                                              "property '%s'") % name);

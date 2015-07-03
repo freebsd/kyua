@@ -416,7 +416,7 @@ i_am_plain:main (integration-suite-1)
 subdir/metadata:many_properties (integration-suite-2)
     allowed_architectures = some-architecture
     allowed_platforms = some-platform
-    custom.X-no-meaning = I am a custom variable
+    custom.no-meaning = I am a custom variable
     description =     A description with some padding
     required_configs = var1 var2 var3
     required_files = /my/file1 /some/other/file

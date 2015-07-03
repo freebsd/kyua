@@ -52,6 +52,9 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   GDB 6.1.1 (circa 2004) does not have the -ex flag so we need to
   generate a temporary GDB script and feed it to GDB with -x instead.
 
+* Issue 144: Improved documentation on the support for custom properties
+  in the test metadata.
+
 
 Changes in version 0.11
 =======================

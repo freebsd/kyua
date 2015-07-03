@@ -81,7 +81,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(list_test_case__verbose__some_properties);
 ATF_TEST_CASE_BODY(list_test_case__verbose__some_properties)
 {
     const model::metadata md = model::metadata_builder()
-        .add_custom("X-my-property", "value")
+        .add_custom("my-property", "value")
         .set_description("Some description")
         .set_has_cleanup(true)
         .build();
@@ -95,7 +95,7 @@ ATF_TEST_CASE_BODY(list_test_case__verbose__some_properties)
     cli::detail::list_test_case(&ui, true, test_program, "my_name");
     ATF_REQUIRE_EQ(4, ui.out_log().size());
     ATF_REQUIRE_EQ("hello/world:my_name (the-suite)", ui.out_log()[0]);
-    ATF_REQUIRE_EQ("    custom.X-my-property = value", ui.out_log()[1]);
+    ATF_REQUIRE_EQ("    custom.my-property = value", ui.out_log()[1]);
     ATF_REQUIRE_EQ("    description = Some description", ui.out_log()[2]);
     ATF_REQUIRE_EQ("    has_cleanup = true", ui.out_log()[3]);
     ATF_REQUIRE(ui.err_log().empty());

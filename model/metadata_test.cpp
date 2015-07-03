@@ -306,13 +306,13 @@ ATF_TEST_CASE_BODY(to_properties)
         .add_required_file(fs::path("foo"))
         .add_required_file(fs::path("bar"))
         .set_required_memory(units::bytes(1024))
-        .add_custom("X-foo", "bar")
+        .add_custom("foo", "bar")
         .build();
 
     model::properties_map props;
     props["allowed_architectures"] = "abc";
     props["allowed_platforms"] = "";
-    props["custom.X-foo"] = "bar";
+    props["custom.foo"] = "bar";
     props["description"] = "";
     props["has_cleanup"] = "false";
     props["is_exclusive"] = "false";
@@ -341,7 +341,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(operators_eq_and_ne__copy);
 ATF_TEST_CASE_BODY(operators_eq_and_ne__copy)
 {
     const model::metadata md1 = model::metadata_builder()
-        .add_custom("X-foo", "bar")
+        .add_custom("foo", "bar")
         .build();
     const model::metadata md2 = md1;
     ATF_REQUIRE(  md1 == md2);
@@ -355,12 +355,12 @@ ATF_TEST_CASE_BODY(operators_eq_and_ne__equal)
     const model::metadata md1 = model::metadata_builder()
         .add_allowed_architecture("a")
         .add_allowed_architecture("b")
-        .add_custom("X-foo", "bar")
+        .add_custom("foo", "bar")
         .build();
     const model::metadata md2 = model::metadata_builder()
         .add_allowed_architecture("b")
         .add_allowed_architecture("a")
-        .add_custom("X-foo", "bar")
+        .add_custom("foo", "bar")
         .build();
     ATF_REQUIRE(  md1 == md2);
     ATF_REQUIRE(!(md1 != md2));
@@ -388,11 +388,11 @@ ATF_TEST_CASE_WITHOUT_HEAD(operators_eq_and_ne__different);
 ATF_TEST_CASE_BODY(operators_eq_and_ne__different)
 {
     const model::metadata md1 = model::metadata_builder()
-        .add_custom("X-foo", "bar")
+        .add_custom("foo", "bar")
         .build();
     const model::metadata md2 = model::metadata_builder()
-        .add_custom("X-foo", "bar")
-        .add_custom("X-baz", "foo bar")
+        .add_custom("foo", "bar")
+        .add_custom("baz", "foo bar")
         .build();
     ATF_REQUIRE(!(md1 == md2));
     ATF_REQUIRE(  md1 != md2);
