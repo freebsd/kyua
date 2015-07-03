@@ -142,7 +142,7 @@ of the test program and a collection of optional metadata settings for the
 test program.
 .Pp
 The following metadata properties can be passed to any test program definition:
-.Bl -tag -width allowedXarchitecturesXX -offset indent
+.Bl -tag -width XX -offset indent
 .It Va allowed_architectures
 Whitespace-separated list of machine architecture names allowed by the
 test.  If empty or not defined, the test is allowed to run on any machine
@@ -265,7 +265,7 @@ Lua modules are fully available in the context of a
 .Nm .
 .Pp
 The following extra functions are provided by Kyua:
-.Bl -tag -width XX
+.Bl -tag -width XX -offset indent
 .It Ft string Fn current_kyuafile
 Returns the absolute path to the current
 .Nm .
