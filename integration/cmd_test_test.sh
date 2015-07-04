@@ -656,6 +656,22 @@ EOF
 }
 
 
+utils_test_case results_file__reuse
+results_file__reuse_body() {
+    utils_install_timestamp_wrapper
+
+    cat >Kyuafile <<EOF
+syntax(2)
+atf_test_program{name="simple_all_pass", test_suite="integration"}
+EOF
+    utils_cp_helper simple_all_pass .
+    atf_check -s exit:0 -o ignore -e empty kyua test -r results.db
+
+    atf_check -s exit:2 -o empty -e match:"results.db already exists" \
+        kyua test --results-file="results.db"
+}
+
+
 utils_test_case build_root_flag
 build_root_flag_body() {
     utils_install_timestamp_wrapper
@@ -1018,6 +1034,7 @@ atf_init_test_cases() {
     atf_add_test_case store_contents
     atf_add_test_case results_file__ok
     atf_add_test_case results_file__fail
+    atf_add_test_case results_file__reuse
 
     atf_add_test_case build_root_flag
 
