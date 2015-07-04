@@ -265,8 +265,8 @@ utils_test_case config_behavior
 config_behavior_body() {
     cat >"my-config" <<EOF
 syntax(2)
-test_suites.suite1["X-the-variable"] = "value1"
-test_suites.suite2["X-the-variable"] = "override me"
+test_suites.suite1["the-variable"] = "value1"
+test_suites.suite2["the-variable"] = "override me"
 EOF
 
     cat >Kyuafile <<EOF
@@ -280,13 +280,13 @@ EOF
     utils_cp_helper config config3
 
     atf_check -s exit:1 -o match:'failed' -e empty \
-        kyua -c my-config -v test_suites.suite2.X-the-variable=value2 \
+        kyua -c my-config -v test_suites.suite2.the-variable=value2 \
         debug config1:get_variable
     atf_check -s exit:0 -o match:'passed' -e empty \
-        kyua -c my-config -v test_suites.suite2.X-the-variable=value2 \
+        kyua -c my-config -v test_suites.suite2.the-variable=value2 \
         debug config2:get_variable
     atf_check -s exit:0 -o match:'skipped' -e empty \
-        kyua -c my-config -v test_suites.suite2.X-the-variable=value2 \
+        kyua -c my-config -v test_suites.suite2.the-variable=value2 \
         debug config3:get_variable
 }
 

@@ -347,12 +347,12 @@ check_operators_eq_and_ne__not_copy(void)
     const fs::path base_root("/the/root");
     const std::string base_test_suite("suite-name");
     const model::metadata base_metadata = model::metadata_builder()
-        .add_custom("X-foo", "bar")
+        .add_custom("foo", "bar")
         .build();
 
     const model::test_cases_map base_tcs = model::test_cases_map_builder()
         .add("main", model::metadata_builder()
-             .add_custom("X-second", "baz")
+             .add_custom("second", "baz")
              .build())
         .build();
 
@@ -364,7 +364,7 @@ check_operators_eq_and_ne__not_copy(void)
     {
         const model::test_cases_map other_tcs = model::test_cases_map_builder()
             .add("main", model::metadata_builder()
-                 .add_custom("X-second", "baz")
+                 .add_custom("second", "baz")
                  .build())
             .build();
 
@@ -383,8 +383,8 @@ check_operators_eq_and_ne__not_copy(void)
     {
         const model::test_cases_map other_tcs = model::test_cases_map_builder()
             .add("main", model::metadata_builder()
-                 .add_custom("X-foo", "bar")
-                 .add_custom("X-second", "baz")
+                 .add_custom("foo", "bar")
+                 .add_custom("second", "baz")
                  .build())
             .build();
 
@@ -577,7 +577,7 @@ check_output__some_test_cases(void)
     const model::test_cases_map test_cases = model::test_cases_map_builder()
         .add("the-name", model::metadata_builder()
              .add_allowed_platform("foo")
-             .add_custom("X-bar", "baz")
+             .add_custom("bar", "baz")
              .build())
         .add("another-name")
         .build();
@@ -606,7 +606,7 @@ check_output__some_test_cases(void)
         "required_programs='', required_user='', timeout='300'}}, "
         "the-name=test_case{name='the-name', "
         "metadata=metadata{allowed_architectures='a', allowed_platforms='foo', "
-        "custom.X-bar='baz', description='', has_cleanup='false', "
+        "custom.bar='baz', description='', has_cleanup='false', "
         "is_exclusive='false', "
         "required_configs='', required_disk_space='0', required_files='', "
         "required_memory='0', "

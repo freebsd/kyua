@@ -285,7 +285,7 @@ utils_test_case config_behavior
 config_behavior_body() {
     cat >"my-config" <<EOF
 syntax(2)
-test_suites.suite1["X-the-variable"] = "value1"
+test_suites.suite1["the-variable"] = "value1"
 EOF
 
     cat >Kyuafile <<EOF
@@ -416,7 +416,7 @@ i_am_plain:main (integration-suite-1)
 subdir/metadata:many_properties (integration-suite-2)
     allowed_architectures = some-architecture
     allowed_platforms = some-platform
-    custom.X-no-meaning = I am a custom variable
+    custom.no-meaning = I am a custom variable
     description =     A description with some padding
     required_configs = var1 var2 var3
     required_files = /my/file1 /some/other/file

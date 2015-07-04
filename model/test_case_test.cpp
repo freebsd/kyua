@@ -145,7 +145,7 @@ ATF_TEST_CASE_BODY(test_case__operators_eq_and_ne__not_copy)
 {
     const std::string base_name("name");
     const model::metadata base_metadata = model::metadata_builder()
-        .add_custom("X-foo", "bar")
+        .add_custom("foo", "bar")
         .build();
 
     const model::test_case base_tc(base_name, base_metadata);
@@ -161,7 +161,7 @@ ATF_TEST_CASE_BODY(test_case__operators_eq_and_ne__not_copy)
     // Construct with all same values but different metadata objects.
     {
         const model::metadata other_metadata = model::metadata_builder()
-            .add_custom("X-foo", "bar")
+            .add_custom("foo", "bar")
             .set_timeout(base_metadata.timeout())
             .build();
         const model::test_case other_tc(base_name, other_metadata);
@@ -194,13 +194,13 @@ ATF_TEST_CASE_BODY(test_case__output)
 {
     const model::test_case tc1(
         "the-name", model::metadata_builder()
-        .add_allowed_platform("foo").add_custom("X-bar", "baz").build());
+        .add_allowed_platform("foo").add_custom("bar", "baz").build());
     std::ostringstream str;
     str << tc1;
     ATF_REQUIRE_EQ(
         "test_case{name='the-name', "
         "metadata=metadata{allowed_architectures='', allowed_platforms='foo', "
-        "custom.X-bar='baz', description='', has_cleanup='false', "
+        "custom.bar='baz', description='', has_cleanup='false', "
         "is_exclusive='false', "
         "required_configs='', required_disk_space='0', required_files='', "
         "required_memory='0', "
