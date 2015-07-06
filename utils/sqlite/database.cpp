@@ -32,22 +32,36 @@ extern "C" {
 #include <sqlite3.h>
 }
 
+#include <cstring>
 #include <stdexcept>
 
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/noncopyable.hpp"
+#include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 #include "utils/sqlite/exceptions.hpp"
 #include "utils/sqlite/statement.ipp"
 #include "utils/sqlite/transaction.hpp"
 
+namespace fs = utils::fs;
 namespace sqlite = utils::sqlite;
+
+using utils::none;
+using utils::optional;
 
 
 /// Internal implementation for sqlite::database.
 struct utils::sqlite::database::impl : utils::noncopyable {
+    /// Path to the database as seen by sqlite3_db_filename after construction.
+    ///
+    /// We need to hold a copy of this value ourselves because we want to be
+    /// able to identify the database connection even after close() has been
+    /// called, but sqlite3_db_filename returns NULL after the connection is
+    /// closed.
+    optional< fs::path > db_filename;
+
     /// The SQLite 3 internal database.
     ::sqlite3* db;
 
@@ -63,6 +77,11 @@ struct utils::sqlite::database::impl : utils::noncopyable {
         db(db_),
         owned(owned_)
     {
+        const char* raw_db_filename = ::sqlite3_db_filename(db, "main");
+        if (raw_db_filename == NULL || std::strlen(raw_db_filename) == 0)
+            db_filename = none;
+        else
+            db_filename = utils::make_optional(fs::path(raw_db_filename));
     }
 
     /// Destructor.
@@ -231,6 +250,20 @@ void
 sqlite::database::close(void)
 {
     _pimpl->close();
+}
+
+
+/// Returns the path to the connected database.
+///
+/// It is OK to call this function on a live database object, even after close()
+/// has been called.  The returned value is consistent at all times.
+///
+/// \return The path to the file that matches the connected database or none if
+/// the connection points to a transient database.
+const optional< fs::path >&
+sqlite::database::db_filename(void) const
+{
+    return _pimpl->db_filename;
 }
 
 

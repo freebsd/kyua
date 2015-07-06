@@ -32,12 +32,15 @@
 
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/optional.ipp"
 #include "utils/sqlite/statement.ipp"
 #include "utils/sqlite/test_utils.hpp"
 #include "utils/sqlite/transaction.hpp"
 
 namespace fs = utils::fs;
 namespace sqlite = utils::sqlite;
+
+using utils::optional;
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(in_memory);
@@ -151,6 +154,36 @@ ATF_TEST_CASE_BODY(copy)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(db_filename__in_memory);
+ATF_TEST_CASE_BODY(db_filename__in_memory)
+{
+    const sqlite::database db = sqlite::database::in_memory();
+    ATF_REQUIRE(!db.db_filename());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(db_filename__file);
+ATF_TEST_CASE_BODY(db_filename__file)
+{
+    const sqlite::database db = sqlite::database::open(fs::path("test.db"),
+        sqlite::open_readwrite | sqlite::open_create);
+    ATF_REQUIRE(db.db_filename());
+    ATF_REQUIRE_EQ(fs::path("test.db").to_absolute(), db.db_filename().get());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(db_filename__ok_after_close);
+ATF_TEST_CASE_BODY(db_filename__ok_after_close)
+{
+    sqlite::database db = sqlite::database::open(fs::path("test.db"),
+        sqlite::open_readwrite | sqlite::open_create);
+    const optional< fs::path > db_filename = db.db_filename();
+    ATF_REQUIRE(db_filename);
+    db.close();
+    ATF_REQUIRE_EQ(db_filename, db.db_filename());
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(exec__ok);
 ATF_TEST_CASE_BODY(exec__ok)
 {
@@ -228,6 +261,10 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, close);
 
     ATF_ADD_TEST_CASE(tcs, copy);
+
+    ATF_ADD_TEST_CASE(tcs, db_filename__in_memory);
+    ATF_ADD_TEST_CASE(tcs, db_filename__file);
+    ATF_ADD_TEST_CASE(tcs, db_filename__ok_after_close);
 
     ATF_ADD_TEST_CASE(tcs, exec__ok);
     ATF_ADD_TEST_CASE(tcs, exec__fail);
