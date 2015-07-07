@@ -32,17 +32,51 @@ extern "C" {
 #include <sqlite3.h>
 }
 
-#include "utils/format/macros.hpp"
-#include "utils/sqlite/c_gate.hpp"
+#include <string>
 
+#include "utils/format/macros.hpp"
+#include "utils/fs/path.hpp"
+#include "utils/optional.ipp"
+#include "utils/sqlite/c_gate.hpp"
+#include "utils/sqlite/database.hpp"
+
+namespace fs = utils::fs;
 namespace sqlite = utils::sqlite;
+
+using utils::optional;
+
+
+namespace {
+
+
+/// Formats the database filename returned by sqlite for user consumption.
+///
+/// \param db_filename An optional database filename.
+///
+/// \return A string describing the filename.
+static std::string
+format_db_filename(const optional< fs::path >& db_filename)
+{
+    if (db_filename)
+        return db_filename.get().str();
+    else
+        return "in-memory";
+}
+
+
+}  // anonymous namespace
 
 
 /// Constructs a new error with a plain-text message.
 ///
+/// \param db_filename_ Database filename as returned by database::db_filename()
+///     for error reporting purposes.
 /// \param message The plain-text error message.
-sqlite::error::error(const std::string& message) :
-    std::runtime_error(message)
+sqlite::error::error(const optional< fs::path >& db_filename_,
+                     const std::string& message) :
+    std::runtime_error(F("%s (sqlite db: %s)") % message %
+                       format_db_filename(db_filename_)),
+    _db_filename(db_filename_)
 {
 }
 
@@ -53,13 +87,26 @@ sqlite::error::~error(void) throw()
 }
 
 
+/// Returns the path to the database that raised this error.
+///
+/// \return A database filename as returned by database::db_filename().
+const optional< fs::path >&
+sqlite::error::db_filename(void) const
+{
+    return _db_filename;
+}
+
+
 /// Constructs a new error.
 ///
+/// \param db_filename_ Database filename as returned by database::db_filename()
+///     for error reporting purposes.
 /// \param api_function_ The name of the API function that caused the error.
 /// \param message_ The plain-text error message provided by SQLite.
-sqlite::api_error::api_error(const std::string& api_function_,
+sqlite::api_error::api_error(const optional< fs::path >& db_filename_,
+                             const std::string& api_function_,
                              const std::string& message_) :
-    error(message_),
+    error(db_filename_, message_),
     _api_function(api_function_)
 {
 }
@@ -83,7 +130,8 @@ sqlite::api_error::from_database(database& database_,
                                  const std::string& api_function_)
 {
     ::sqlite3* c_db = database_c_gate(database_).c_database();
-    return api_error(api_function_, ::sqlite3_errmsg(c_db));
+    return api_error(database_.db_filename(), api_function_,
+                     ::sqlite3_errmsg(c_db));
 }
 
 
@@ -99,9 +147,13 @@ sqlite::api_error::api_function(void) const
 
 /// Constructs a new error.
 ///
+/// \param db_filename_ Database filename as returned by database::db_filename()
+///     for error reporting purposes.
 /// \param name_ The name of the unknown column.
-sqlite::invalid_column_error::invalid_column_error(const std::string& name_) :
-    error(F("Unknown column '%s'") % name_),
+sqlite::invalid_column_error::invalid_column_error(
+    const optional< fs::path >& db_filename_,
+    const std::string& name_) :
+    error(db_filename_, F("Unknown column '%s'") % name_),
     _column_name(name_)
 {
 }
