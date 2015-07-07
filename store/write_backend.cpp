@@ -138,30 +138,8 @@ struct store::write_backend::impl : utils::noncopyable {
     /// Constructor.
     ///
     /// \param database_ The SQLite database instance.
-    /// \param metadata_ The metadata for the loaded database.  This must match
-    ///     the schema version we implement in this module; otherwise, a
-    ///     migration is necessary.
-    ///
-    /// \throw integrity_error If the schema in the database is too modern,
-    ///     which might indicate some form of corruption or an old binary.
-    /// \throw old_schema_error If the schema in the database is older than our
-    ///     currently-implemented version and needs an upgrade.  The caller can
-    ///     use migrate_schema() to fix this problem.
-    impl(sqlite::database& database_, const metadata& metadata_) :
-        database(database_)
+    impl(sqlite::database& database_) : database(database_)
     {
-        const int database_version = metadata_.schema_version();
-
-        if (database_version == detail::current_schema_version) {
-            // OK.
-        } else if (database_version < detail::current_schema_version) {
-            throw old_schema_error(database_version);
-        } else if (database_version > detail::current_schema_version) {
-            throw integrity_error(
-                F("Database at schema version %s, which is newer than the "
-                  "supported version %s")
-                % database_version % detail::current_schema_version);
-        }
     }
 };
 
@@ -194,10 +172,11 @@ store::write_backend::open_rw(const fs::path& file)
 {
     sqlite::database db = detail::open_and_setup(
         file, sqlite::open_readwrite | sqlite::open_create);
-    if (empty_database(db))
-        return write_backend(new impl(db, detail::initialize(db)));
-    else
-        return write_backend(new impl(db, metadata::fetch_latest(db)));
+    if (!empty_database(db))
+        throw error(F("%s already exists and is not empty; cannot open "
+                      "for write") % file);
+    detail::initialize(db);
+    return write_backend(new impl(db));
 }
 
 

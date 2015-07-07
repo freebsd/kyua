@@ -121,22 +121,39 @@ ATF_TEST_CASE_BODY(detail__schema_file__overriden)
 }
 
 
-ATF_TEST_CASE(write_backend__open_rw__ok);
-ATF_TEST_CASE_HEAD(write_backend__open_rw__ok)
+ATF_TEST_CASE(write_backend__open_rw__ok_if_empty);
+ATF_TEST_CASE_HEAD(write_backend__open_rw__ok_if_empty)
 {
     logging::set_inmemory();
     set_md_var("require.files", store::detail::schema_file().c_str());
 }
-ATF_TEST_CASE_BODY(write_backend__open_rw__ok)
+ATF_TEST_CASE_BODY(write_backend__open_rw__ok_if_empty)
+{
+    {
+        sqlite::database db = sqlite::database::open(
+            fs::path("test.db"), sqlite::open_readwrite | sqlite::open_create);
+    }
+    store::write_backend backend = store::write_backend::open_rw(
+        fs::path("test.db"));
+    backend.database().exec("SELECT * FROM metadata");
+}
+
+
+ATF_TEST_CASE(write_backend__open_rw__error_if_not_empty);
+ATF_TEST_CASE_HEAD(write_backend__open_rw__error_if_not_empty)
+{
+    logging::set_inmemory();
+    set_md_var("require.files", store::detail::schema_file().c_str());
+}
+ATF_TEST_CASE_BODY(write_backend__open_rw__error_if_not_empty)
 {
     {
         sqlite::database db = sqlite::database::open(
             fs::path("test.db"), sqlite::open_readwrite | sqlite::open_create);
         store::detail::initialize(db);
     }
-    store::write_backend backend = store::write_backend::open_rw(
-        fs::path("test.db"));
-    backend.database().exec("SELECT * FROM metadata");
+    ATF_REQUIRE_THROW_RE(store::error, "test.db already exists",
+                         store::write_backend::open_rw(fs::path("test.db")));
 }
 
 
@@ -151,25 +168,6 @@ ATF_TEST_CASE_BODY(write_backend__open_rw__create_missing)
     store::write_backend backend = store::write_backend::open_rw(
         fs::path("test.db"));
     backend.database().exec("SELECT * FROM metadata");
-}
-
-
-ATF_TEST_CASE(write_backend__open_rw__integrity_error);
-ATF_TEST_CASE_HEAD(write_backend__open_rw__integrity_error)
-{
-    logging::set_inmemory();
-    set_md_var("require.files", store::detail::schema_file().c_str());
-}
-ATF_TEST_CASE_BODY(write_backend__open_rw__integrity_error)
-{
-    {
-        sqlite::database db = sqlite::database::open(
-            fs::path("test.db"), sqlite::open_readwrite | sqlite::open_create);
-        store::detail::initialize(db);
-        db.exec("DELETE FROM metadata");
-    }
-    ATF_REQUIRE_THROW_RE(store::integrity_error, "metadata.*empty",
-                         store::write_backend::open_rw(fs::path("test.db")));
 }
 
 
@@ -199,8 +197,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, detail__schema_file__builtin);
     ATF_ADD_TEST_CASE(tcs, detail__schema_file__overriden);
 
-    ATF_ADD_TEST_CASE(tcs, write_backend__open_rw__ok);
+    ATF_ADD_TEST_CASE(tcs, write_backend__open_rw__ok_if_empty);
+    ATF_ADD_TEST_CASE(tcs, write_backend__open_rw__error_if_not_empty);
     ATF_ADD_TEST_CASE(tcs, write_backend__open_rw__create_missing);
-    ATF_ADD_TEST_CASE(tcs, write_backend__open_rw__integrity_error);
     ATF_ADD_TEST_CASE(tcs, write_backend__close);
 }

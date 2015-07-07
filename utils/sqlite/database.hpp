@@ -44,6 +44,7 @@ extern "C" {
 #include <cstddef>
 
 #include "utils/fs/path_fwd.hpp"
+#include "utils/optional_fwd.hpp"
 #include "utils/shared_ptr.hpp"
 #include "utils/sqlite/c_gate_fwd.hpp"
 #include "utils/sqlite/statement_fwd.hpp"
@@ -82,7 +83,7 @@ class database {
     std::shared_ptr< impl > _pimpl;
 
     friend class database_c_gate;
-    database(void*, const bool);
+    database(const utils::optional< utils::fs::path >&, void*, const bool);
     void* raw_database(void);
 
 public:
@@ -92,6 +93,8 @@ public:
     static database open(const fs::path&, int);
     static database temporary(void);
     void close(void);
+
+    const utils::optional< utils::fs::path >& db_filename(void) const;
 
     void exec(const std::string&);
 

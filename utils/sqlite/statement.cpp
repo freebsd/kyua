@@ -40,6 +40,7 @@ extern "C" {
 #include "utils/noncopyable.hpp"
 #include "utils/sanity.hpp"
 #include "utils/sqlite/c_gate.hpp"
+#include "utils/sqlite/database.hpp"
 #include "utils/sqlite/exceptions.hpp"
 
 namespace sqlite = utils::sqlite;
@@ -261,7 +262,7 @@ sqlite::statement::column_id(const char* name)
 
     const std::map< std::string, int >::const_iterator iter = cache.find(name);
     if (iter == cache.end())
-        throw invalid_column_error(name);
+        throw invalid_column_error(_pimpl->db.db_filename(), name);
     else
         return (*iter).second;
 }
@@ -371,7 +372,8 @@ sqlite::statement::safe_column_blob(const char* name)
 {
     const int column = column_id(name);
     if (column_type(column) != sqlite::type_blob)
-        throw sqlite::error(F("Column '%s' is not a blob") % name);
+        throw sqlite::error(_pimpl->db.db_filename(),
+                            F("Column '%s' is not a blob") % name);
     return column_blob(column);
 }
 
@@ -389,7 +391,8 @@ sqlite::statement::safe_column_double(const char* name)
 {
     const int column = column_id(name);
     if (column_type(column) != sqlite::type_float)
-        throw sqlite::error(F("Column '%s' is not a float") % name);
+        throw sqlite::error(_pimpl->db.db_filename(),
+                            F("Column '%s' is not a float") % name);
     return column_double(column);
 }
 
@@ -407,7 +410,8 @@ sqlite::statement::safe_column_int(const char* name)
 {
     const int column = column_id(name);
     if (column_type(column) != sqlite::type_integer)
-        throw sqlite::error(F("Column '%s' is not an integer") % name);
+        throw sqlite::error(_pimpl->db.db_filename(),
+                            F("Column '%s' is not an integer") % name);
     return column_int(column);
 }
 
@@ -425,7 +429,8 @@ sqlite::statement::safe_column_int64(const char* name)
 {
     const int column = column_id(name);
     if (column_type(column) != sqlite::type_integer)
-        throw sqlite::error(F("Column '%s' is not an integer") % name);
+        throw sqlite::error(_pimpl->db.db_filename(),
+                            F("Column '%s' is not an integer") % name);
     return column_int64(column);
 }
 
@@ -443,7 +448,8 @@ sqlite::statement::safe_column_text(const char* name)
 {
     const int column = column_id(name);
     if (column_type(column) != sqlite::type_text)
-        throw sqlite::error(F("Column '%s' is not a string") % name);
+        throw sqlite::error(_pimpl->db.db_filename(),
+                            F("Column '%s' is not a string") % name);
     return column_text(column);
 }
 
@@ -462,7 +468,8 @@ sqlite::statement::safe_column_bytes(const char* name)
     const int column = column_id(name);
     if (column_type(column) != sqlite::type_blob &&
         column_type(column) != sqlite::type_text)
-        throw sqlite::error(F("Column '%s' is not a blob or a string") % name);
+        throw sqlite::error(_pimpl->db.db_filename(),
+                            F("Column '%s' is not a blob or a string") % name);
     return column_bytes(column);
 }
 

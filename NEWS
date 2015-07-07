@@ -52,6 +52,11 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   GDB 6.1.1 (circa 2004) does not have the -ex flag so we need to
   generate a temporary GDB script and feed it to GDB with -x instead.
 
+* Issue 141: Improved reporting of errors triggered by sqlite3.  In
+  particular, all error messages are now tagged with their corresponding
+  database filename and, if they are API-level errors, the name of the
+  sqlite3 function that caused them.
+
 * Issue 144: Improved documentation on the support for custom properties
   in the test metadata.
 

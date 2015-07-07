@@ -32,22 +32,31 @@ extern "C" {
 #include <sqlite3.h>
 }
 
+#include <cstring>
 #include <stdexcept>
 
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/noncopyable.hpp"
+#include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 #include "utils/sqlite/exceptions.hpp"
 #include "utils/sqlite/statement.ipp"
 #include "utils/sqlite/transaction.hpp"
 
+namespace fs = utils::fs;
 namespace sqlite = utils::sqlite;
+
+using utils::none;
+using utils::optional;
 
 
 /// Internal implementation for sqlite::database.
 struct utils::sqlite::database::impl : utils::noncopyable {
+    /// Path to the database as seen at construction time.
+    optional< fs::path > db_filename;
+
     /// The SQLite 3 internal database.
     ::sqlite3* db;
 
@@ -56,12 +65,16 @@ struct utils::sqlite::database::impl : utils::noncopyable {
 
     /// Constructor.
     ///
+    /// \param db_filename_ The path to the database as seen at construction
+    ///     time, if any, or none for in-memory databases.  We should use
+    ///     sqlite3_db_filename instead, but this function appeared in 3.7.10
+    ///     and Ubuntu 12.04 LTS (which we support for Travis CI builds as of
+    ///     2015-07-07) ships with 3.7.9.
     /// \param db_ The SQLite internal database.
     /// \param owned_ Whether this object owns the db_ object or not.  If it
     ///     does, the internal db_ will be released during destruction.
-    impl(::sqlite3* db_, const bool owned_) :
-        db(db_),
-        owned(owned_)
+    impl(optional< fs::path > db_filename_, ::sqlite3* db_, const bool owned_) :
+        db_filename(db_filename_), db(db_), owned(owned_)
     {
     }
 
@@ -98,7 +111,8 @@ struct utils::sqlite::database::impl : utils::noncopyable {
             if (db == NULL)
                 throw std::bad_alloc();
             else {
-                sqlite::database error_db(db, true);
+                sqlite::database error_db(utils::make_optional(fs::path(file)),
+                                          db, true);
                 throw sqlite::api_error::from_database(error_db,
                                                        "sqlite3_open_v2");
             }
@@ -128,10 +142,14 @@ struct utils::sqlite::database::impl : utils::noncopyable {
 /// SQLite session.  As soon as the object is destroyed, the session is
 /// terminated.
 ///
+/// \param db_filename_ The path to the database as seen at construction
+///     time, if any, or none for in-memory databases.
 /// \param db_ Raw pointer to the C SQLite 3 object.
 /// \param owned_ Whether this instance will own the pointer or not.
-sqlite::database::database(void* db_, const bool owned_) :
-    _pimpl(new impl(static_cast< ::sqlite3* >(db_), owned_))
+sqlite::database::database(
+    const utils::optional< utils::fs::path >& db_filename_, void* db_,
+    const bool owned_) :
+    _pimpl(new impl(db_filename_, static_cast< ::sqlite3* >(db_), owned_))
 {
 }
 
@@ -155,7 +173,8 @@ sqlite::database::~database(void)
 sqlite::database
 sqlite::database::in_memory(void)
 {
-    return database(impl::safe_open(":memory:", SQLITE_OPEN_READWRITE), true);
+    return database(none, impl::safe_open(":memory:", SQLITE_OPEN_READWRITE),
+                    true);
 }
 
 
@@ -191,7 +210,8 @@ sqlite::database::open(const fs::path& file, int open_flags)
     }
     PRE(open_flags == 0);
 
-    return database(impl::safe_open(file.c_str(), flags), true);
+    return database(utils::make_optional(file),
+                    impl::safe_open(file.c_str(), flags), true);
 }
 
 
@@ -204,7 +224,7 @@ sqlite::database::open(const fs::path& file, int open_flags)
 sqlite::database
 sqlite::database::temporary(void)
 {
-    return database(impl::safe_open("", SQLITE_OPEN_READWRITE), true);
+    return database(none, impl::safe_open("", SQLITE_OPEN_READWRITE), true);
 }
 
 
@@ -231,6 +251,20 @@ void
 sqlite::database::close(void)
 {
     _pimpl->close();
+}
+
+
+/// Returns the path to the connected database.
+///
+/// It is OK to call this function on a live database object, even after close()
+/// has been called.  The returned value is consistent at all times.
+///
+/// \return The path to the file that matches the connected database or none if
+/// the connection points to a transient database.
+const optional< fs::path >&
+sqlite::database::db_filename(void) const
+{
+    return _pimpl->db_filename;
 }
 
 

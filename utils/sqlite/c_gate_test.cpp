@@ -31,6 +31,7 @@
 #include <atf-c++.hpp>
 
 #include "utils/fs/path.hpp"
+#include "utils/optional.ipp"
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/test_utils.hpp"
 
@@ -68,8 +69,28 @@ ATF_TEST_CASE_BODY(c_database)
 }
 
 
+ATF_TEST_CASE(database__db_filename);
+ATF_TEST_CASE_HEAD(database__db_filename)
+{
+    set_md_var("descr", "The current implementation of db_filename() has no "
+               "means to access the filename of a database connected to a raw "
+               "sqlite3 object");
+}
+ATF_TEST_CASE_BODY(database__db_filename)
+{
+    ::sqlite3* raw_db;
+    ATF_REQUIRE_EQ(SQLITE_OK, ::sqlite3_open_v2(
+        "test.db", &raw_db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL));
+
+    sqlite::database database = sqlite::database_c_gate::connect(raw_db);
+    ATF_REQUIRE(!database.db_filename());
+    ::sqlite3_close(raw_db);
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, c_database);
     ATF_ADD_TEST_CASE(tcs, connect);
+    ATF_ADD_TEST_CASE(tcs, database__db_filename);
 }

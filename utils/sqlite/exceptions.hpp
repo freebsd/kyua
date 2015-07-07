@@ -35,6 +35,8 @@
 #include <stdexcept>
 #include <string>
 
+#include "utils/fs/path_fwd.hpp"
+#include "utils/optional.hpp"
 #include "utils/sqlite/database_fwd.hpp"
 
 namespace utils {
@@ -43,9 +45,15 @@ namespace sqlite {
 
 /// Base exception for sqlite errors.
 class error : public std::runtime_error {
+    /// Path to the database that raised this error.
+    utils::optional< utils::fs::path > _db_filename;
+
 public:
-    explicit error(const std::string&);
+    explicit error(const utils::optional< utils::fs::path >&,
+                   const std::string&);
     virtual ~error(void) throw();
+
+    const utils::optional< utils::fs::path >& db_filename(void) const;
 };
 
 
@@ -55,7 +63,8 @@ class api_error : public error {
     std::string _api_function;
 
 public:
-    explicit api_error(const std::string&, const std::string&);
+    explicit api_error(const utils::optional< utils::fs::path >&,
+                       const std::string&, const std::string&);
     virtual ~api_error(void) throw();
 
     static api_error from_database(database&, const std::string&);
@@ -70,7 +79,8 @@ class invalid_column_error : public error {
     std::string _column_name;
 
 public:
-    explicit invalid_column_error(const std::string&);
+    explicit invalid_column_error(const utils::optional< utils::fs::path >&,
+                                  const std::string&);
     virtual ~invalid_column_error(void) throw();
 
     const std::string& column_name(void) const;
