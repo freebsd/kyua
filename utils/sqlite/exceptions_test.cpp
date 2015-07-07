@@ -74,7 +74,9 @@ ATF_TEST_CASE_WITHOUT_HEAD(api_error__explicit);
 ATF_TEST_CASE_BODY(api_error__explicit)
 {
     const sqlite::api_error e(none, "some_function", "Some text");
-    ATF_REQUIRE_EQ("Some text (sqlite db: in-memory)", std::string(e.what()));
+    ATF_REQUIRE_EQ(
+        "Some text (sqlite op: some_function) (sqlite db: in-memory)",
+        std::string(e.what()));
     ATF_REQUIRE_EQ("some_function", e.api_function());
 }
 
@@ -96,8 +98,9 @@ ATF_TEST_CASE_BODY(api_error__from_database)
 
     const sqlite::api_error e = sqlite::api_error::from_database(
         db, "real_function");
-    ATF_REQUIRE_MATCH(".*ABCDE.*\\(sqlite db: .*/test.db\\)",
-                      std::string(e.what()));
+    ATF_REQUIRE_MATCH(
+        ".*ABCDE.*\\(sqlite op: real_function\\) \\(sqlite db: .*/test.db\\)",
+        std::string(e.what()));
     ATF_REQUIRE_EQ("real_function", e.api_function());
 }
 

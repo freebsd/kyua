@@ -106,7 +106,7 @@ sqlite::error::db_filename(void) const
 sqlite::api_error::api_error(const optional< fs::path >& db_filename_,
                              const std::string& api_function_,
                              const std::string& message_) :
-    error(db_filename_, message_),
+    error(db_filename_, F("%s (sqlite op: %s)") % message_ % api_function_),
     _api_function(api_function_)
 {
 }
