@@ -168,7 +168,15 @@ ATF_TEST_CASE_BODY(db_filename__file)
     const sqlite::database db = sqlite::database::open(fs::path("test.db"),
         sqlite::open_readwrite | sqlite::open_create);
     ATF_REQUIRE(db.db_filename());
-    ATF_REQUIRE_EQ(fs::path("test.db").to_absolute(), db.db_filename().get());
+    ATF_REQUIRE_EQ(fs::path("test.db"), db.db_filename().get());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(db_filename__temporary);
+ATF_TEST_CASE_BODY(db_filename__temporary)
+{
+    const sqlite::database db = sqlite::database::temporary();
+    ATF_REQUIRE(!db.db_filename());
 }
 
 
@@ -264,6 +272,7 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, db_filename__in_memory);
     ATF_ADD_TEST_CASE(tcs, db_filename__file);
+    ATF_ADD_TEST_CASE(tcs, db_filename__temporary);
     ATF_ADD_TEST_CASE(tcs, db_filename__ok_after_close);
 
     ATF_ADD_TEST_CASE(tcs, exec__ok);

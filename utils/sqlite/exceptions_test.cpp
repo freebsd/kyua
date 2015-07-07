@@ -53,7 +53,8 @@ ATF_TEST_CASE_BODY(error__no_filename)
 {
     const sqlite::database db = sqlite::database::in_memory();
     const sqlite::error e(db.db_filename(), "Some text");
-    ATF_REQUIRE_EQ("Some text (sqlite db: in-memory)", std::string(e.what()));
+    ATF_REQUIRE_EQ("Some text (sqlite db: in-memory or temporary)",
+                   std::string(e.what()));
     ATF_REQUIRE_EQ(db.db_filename(), e.db_filename());
 }
 
@@ -64,8 +65,7 @@ ATF_TEST_CASE_BODY(error__with_filename)
     const sqlite::database db = sqlite::database::open(
         fs::path("test.db"), sqlite::open_readwrite | sqlite::open_create);
     const sqlite::error e(db.db_filename(), "Some text");
-    ATF_REQUIRE_MATCH("Some text \\(sqlite db: .*/test.db\\)",
-                      std::string(e.what()));
+    ATF_REQUIRE_EQ("Some text (sqlite db: test.db)", std::string(e.what()));
     ATF_REQUIRE_EQ(db.db_filename(), e.db_filename());
 }
 
@@ -75,7 +75,8 @@ ATF_TEST_CASE_BODY(api_error__explicit)
 {
     const sqlite::api_error e(none, "some_function", "Some text");
     ATF_REQUIRE_EQ(
-        "Some text (sqlite op: some_function) (sqlite db: in-memory)",
+        "Some text (sqlite op: some_function) "
+        "(sqlite db: in-memory or temporary)",
         std::string(e.what()));
     ATF_REQUIRE_EQ("some_function", e.api_function());
 }
@@ -99,7 +100,7 @@ ATF_TEST_CASE_BODY(api_error__from_database)
     const sqlite::api_error e = sqlite::api_error::from_database(
         db, "real_function");
     ATF_REQUIRE_MATCH(
-        ".*ABCDE.*\\(sqlite op: real_function\\) \\(sqlite db: .*/test.db\\)",
+        ".*ABCDE.*\\(sqlite op: real_function\\) \\(sqlite db: test.db\\)",
         std::string(e.what()));
     ATF_REQUIRE_EQ("real_function", e.api_function());
 }
@@ -109,7 +110,8 @@ ATF_TEST_CASE_WITHOUT_HEAD(invalid_column_error);
 ATF_TEST_CASE_BODY(invalid_column_error)
 {
     const sqlite::invalid_column_error e(none, "some_name");
-    ATF_REQUIRE_EQ("Unknown column 'some_name' (sqlite db: in-memory)",
+    ATF_REQUIRE_EQ("Unknown column 'some_name' "
+                   "(sqlite db: in-memory or temporary)",
                    std::string(e.what()));
     ATF_REQUIRE_EQ("some_name", e.column_name());
 }

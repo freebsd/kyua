@@ -54,12 +54,7 @@ using utils::optional;
 
 /// Internal implementation for sqlite::database.
 struct utils::sqlite::database::impl : utils::noncopyable {
-    /// Path to the database as seen by sqlite3_db_filename after construction.
-    ///
-    /// We need to hold a copy of this value ourselves because we want to be
-    /// able to identify the database connection even after close() has been
-    /// called, but sqlite3_db_filename returns NULL after the connection is
-    /// closed.
+    /// Path to the database as seen at construction time.
     optional< fs::path > db_filename;
 
     /// The SQLite 3 internal database.
@@ -70,18 +65,17 @@ struct utils::sqlite::database::impl : utils::noncopyable {
 
     /// Constructor.
     ///
+    /// \param db_filename_ The path to the database as seen at construction
+    ///     time, if any, or none for in-memory databases.  We should use
+    ///     sqlite3_db_filename instead, but this function appeared in 3.7.10
+    ///     and Ubuntu 12.04 LTS (which we support for Travis CI builds as of
+    ///     2015-07-07) ships with 3.7.9.
     /// \param db_ The SQLite internal database.
     /// \param owned_ Whether this object owns the db_ object or not.  If it
     ///     does, the internal db_ will be released during destruction.
-    impl(::sqlite3* db_, const bool owned_) :
-        db(db_),
-        owned(owned_)
+    impl(optional< fs::path > db_filename_, ::sqlite3* db_, const bool owned_) :
+        db_filename(db_filename_), db(db_), owned(owned_)
     {
-        const char* raw_db_filename = ::sqlite3_db_filename(db, "main");
-        if (raw_db_filename == NULL || std::strlen(raw_db_filename) == 0)
-            db_filename = none;
-        else
-            db_filename = utils::make_optional(fs::path(raw_db_filename));
     }
 
     /// Destructor.
@@ -117,7 +111,8 @@ struct utils::sqlite::database::impl : utils::noncopyable {
             if (db == NULL)
                 throw std::bad_alloc();
             else {
-                sqlite::database error_db(db, true);
+                sqlite::database error_db(utils::make_optional(fs::path(file)),
+                                          db, true);
                 throw sqlite::api_error::from_database(error_db,
                                                        "sqlite3_open_v2");
             }
@@ -147,10 +142,14 @@ struct utils::sqlite::database::impl : utils::noncopyable {
 /// SQLite session.  As soon as the object is destroyed, the session is
 /// terminated.
 ///
+/// \param db_filename_ The path to the database as seen at construction
+///     time, if any, or none for in-memory databases.
 /// \param db_ Raw pointer to the C SQLite 3 object.
 /// \param owned_ Whether this instance will own the pointer or not.
-sqlite::database::database(void* db_, const bool owned_) :
-    _pimpl(new impl(static_cast< ::sqlite3* >(db_), owned_))
+sqlite::database::database(
+    const utils::optional< utils::fs::path >& db_filename_, void* db_,
+    const bool owned_) :
+    _pimpl(new impl(db_filename_, static_cast< ::sqlite3* >(db_), owned_))
 {
 }
 
@@ -174,7 +173,8 @@ sqlite::database::~database(void)
 sqlite::database
 sqlite::database::in_memory(void)
 {
-    return database(impl::safe_open(":memory:", SQLITE_OPEN_READWRITE), true);
+    return database(none, impl::safe_open(":memory:", SQLITE_OPEN_READWRITE),
+                    true);
 }
 
 
@@ -210,7 +210,8 @@ sqlite::database::open(const fs::path& file, int open_flags)
     }
     PRE(open_flags == 0);
 
-    return database(impl::safe_open(file.c_str(), flags), true);
+    return database(utils::make_optional(file),
+                    impl::safe_open(file.c_str(), flags), true);
 }
 
 
@@ -223,7 +224,7 @@ sqlite::database::open(const fs::path& file, int open_flags)
 sqlite::database
 sqlite::database::temporary(void)
 {
-    return database(impl::safe_open("", SQLITE_OPEN_READWRITE), true);
+    return database(none, impl::safe_open("", SQLITE_OPEN_READWRITE), true);
 }
 
 

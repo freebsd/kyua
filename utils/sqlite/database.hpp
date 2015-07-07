@@ -83,7 +83,7 @@ class database {
     std::shared_ptr< impl > _pimpl;
 
     friend class database_c_gate;
-    database(void*, const bool);
+    database(const utils::optional< utils::fs::path >&, void*, const bool);
     void* raw_database(void);
 
 public:

@@ -60,7 +60,7 @@ format_db_filename(const optional< fs::path >& db_filename)
     if (db_filename)
         return db_filename.get().str();
     else
-        return "in-memory";
+        return "in-memory or temporary";
 }
 
 

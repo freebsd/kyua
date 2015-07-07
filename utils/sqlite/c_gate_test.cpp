@@ -72,8 +72,9 @@ ATF_TEST_CASE_BODY(c_database)
 ATF_TEST_CASE(database__db_filename);
 ATF_TEST_CASE_HEAD(database__db_filename)
 {
-    set_md_var("descr", "Ensure that the value of db_filename cached by the "
-               "sqlite::database class works after a connect() call");
+    set_md_var("descr", "The current implementation of db_filename() has no "
+               "means to access the filename of a database connected to a raw "
+               "sqlite3 object");
 }
 ATF_TEST_CASE_BODY(database__db_filename)
 {
@@ -82,8 +83,7 @@ ATF_TEST_CASE_BODY(database__db_filename)
         "test.db", &raw_db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL));
 
     sqlite::database database = sqlite::database_c_gate::connect(raw_db);
-    ATF_REQUIRE_EQ(utils::make_optional(fs::path("test.db").to_absolute()),
-                   database.db_filename());
+    ATF_REQUIRE(!database.db_filename());
     ::sqlite3_close(raw_db);
 }
 

@@ -28,9 +28,13 @@
 
 #include "utils/sqlite/c_gate.hpp"
 
+#include "utils/fs/path.hpp"
+#include "utils/optional.ipp"
 #include "utils/sqlite/database.hpp"
 
 namespace sqlite = utils::sqlite;
+
+using utils::none;
 
 
 /// Creates a new gateway to an existing C++ SQLite database.
@@ -65,7 +69,7 @@ sqlite::database_c_gate::~database_c_gate(void)
 sqlite::database
 sqlite::database_c_gate::connect(::sqlite3* raw_database)
 {
-    return database(static_cast< void* >(raw_database), false);
+    return database(none, static_cast< void* >(raw_database), false);
 }
 
 
