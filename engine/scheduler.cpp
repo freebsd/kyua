@@ -1172,6 +1172,13 @@ scheduler::scheduler_handle::wait_any(void)
             }
         }
         if (!result) {
+            // TOOD(jmmv): Passing stdout_file and stderr_file to compute_result
+            // is wrong.  The user might have redirected those to the console
+            // (say, with "kyua debug") so we do not have a chance to "re-read"
+            // them here.  The TAP interface is particularly affected by this
+            // shortcoming and it has to work around it with some ugly hacks.
+            // Fixing this would require major changes and, at this point,
+            // 2015-07-07, we need to ship a new release.
             result = test_data->interface->compute_result(
                 handle.status(),
                 handle.control_directory(),
