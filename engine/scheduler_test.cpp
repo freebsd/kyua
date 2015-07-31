@@ -775,57 +775,6 @@ ATF_TEST_CASE_BODY(integration__parameters_and_output)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(integration__custom_output_files);
-ATF_TEST_CASE_BODY(integration__custom_output_files)
-{
-    const model::test_program_ptr program = model::test_program_builder(
-        "mock", fs::path("the-program"), fs::current_path(), "the-suite")
-        .add_test_case("print_params").build_ptr();
-
-    config::tree user_config = engine::empty_config();
-    user_config.set_string("test_suites.the-suite.one", "first variable");
-    user_config.set_string("test_suites.the-suite.two", "second variable");
-
-    scheduler::scheduler_handle handle = scheduler::setup();
-
-    const fs::path stdout_file("custom-stdout.txt");
-    const fs::path stderr_file("custom-stderr.txt");
-
-    const scheduler::exec_handle exec_handle = handle.spawn_test(
-        program, "print_params", user_config,
-        utils::make_optional(stdout_file),
-        utils::make_optional(stderr_file));
-
-    scheduler::result_handle_ptr result_handle = handle.wait_any();
-    const scheduler::test_result_handle* test_result_handle =
-        dynamic_cast< const scheduler::test_result_handle* >(
-            result_handle.get());
-
-    ATF_REQUIRE_EQ(exec_handle, result_handle->original_exec_handle());
-    ATF_REQUIRE_EQ(program, test_result_handle->test_program());
-    ATF_REQUIRE_EQ("print_params", test_result_handle->test_case_name());
-    ATF_REQUIRE_EQ(model::test_result(model::test_result_passed, "Exit 0"),
-                   test_result_handle->test_result());
-
-    ATF_REQUIRE_EQ(stdout_file, result_handle->stdout_file());
-    ATF_REQUIRE_EQ(stderr_file, result_handle->stderr_file());
-
-    result_handle->cleanup();
-    result_handle.reset();
-
-    handle.cleanup();
-
-    ATF_REQUIRE(atf::utils::compare_file(
-        stdout_file.str(),
-        "Test program: the-program\n"
-        "Test case: print_params\n"
-        "one=first variable\n"
-        "two=second variable\n"));
-    ATF_REQUIRE(atf::utils::compare_file(
-        stderr_file.str(), "stderr: print_params\n"));
-}
-
-
 ATF_TEST_CASE_WITHOUT_HEAD(integration__fake_result);
 ATF_TEST_CASE_BODY(integration__fake_result)
 {
@@ -1144,8 +1093,10 @@ ATF_TEST_CASE_BODY(debug_test)
     ATF_REQUIRE_EQ(model::test_result(model::test_result_passed, "Exit 0"),
                    test_result_handle->test_result());
 
-    ATF_REQUIRE_EQ(stdout_file, result_handle->stdout_file());
-    ATF_REQUIRE_EQ(stderr_file, result_handle->stderr_file());
+    // The original output went to a file.  It's only an artifact of
+    // debug_test() that we later get a copy in our own files.
+    ATF_REQUIRE(stdout_file != result_handle->stdout_file());
+    ATF_REQUIRE(stderr_file != result_handle->stderr_file());
 
     result_handle->cleanup();
     result_handle.reset();
@@ -1268,7 +1219,6 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, integration__run_check_paths);
     ATF_ADD_TEST_CASE(tcs, integration__parameters_and_output);
-    ATF_ADD_TEST_CASE(tcs, integration__custom_output_files);
 
     ATF_ADD_TEST_CASE(tcs, integration__fake_result);
     ATF_ADD_TEST_CASE(tcs, integration__cleanup__head_skips);

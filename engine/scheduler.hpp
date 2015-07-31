@@ -246,12 +246,9 @@ public:
 
     model::test_cases_map list_tests(const model::test_program*,
                                      const utils::config::tree&);
-    exec_handle spawn_test(
-        const model::test_program_ptr,
-        const std::string&,
-        const utils::config::tree&,
-        const utils::optional< utils::fs::path > = utils::none,
-        const utils::optional< utils::fs::path > = utils::none);
+    exec_handle spawn_test(const model::test_program_ptr,
+                           const std::string&,
+                           const utils::config::tree&);
     result_handle_ptr wait_any(void);
 
     result_handle_ptr debug_test(const model::test_program_ptr,

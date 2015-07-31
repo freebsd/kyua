@@ -1067,10 +1067,6 @@ scheduler::scheduler_handle::list_tests(
 /// \param test_program The container test program.
 /// \param test_case_name The name of the test case to run.
 /// \param user_config User-provided configuration variables.
-/// \param stdout_target If not none, file to which to write the stdout of the
-///     test case.
-/// \param stderr_target If not none, file to which to write the stderr of the
-///     test case.
 ///
 /// \return A handle for the background operation.  Used to match the result of
 /// the execution returned by wait_any() with this invocation.
@@ -1078,9 +1074,7 @@ scheduler::exec_handle
 scheduler::scheduler_handle::spawn_test(
     const model::test_program_ptr test_program,
     const std::string& test_case_name,
-    const config::tree& user_config,
-    const optional< fs::path > stdout_target,
-    const optional< fs::path > stderr_target)
+    const config::tree& user_config)
 {
     _pimpl->generic.check_interrupt();
 
@@ -1102,7 +1096,7 @@ scheduler::scheduler_handle::spawn_test(
         run_test_program(interface, test_program, test_case_name,
                          user_config),
         test_case.get_metadata().timeout(),
-        unprivileged_user, stdout_target, stderr_target);
+        unprivileged_user);
 
     const exec_data_ptr data(new test_exec_data(
         test_program, test_case_name, interface, user_config));
@@ -1272,10 +1266,23 @@ scheduler::scheduler_handle::debug_test(
     const fs::path& stderr_target)
 {
     const exec_handle exec_handle = spawn_test(
-        test_program, test_case_name, user_config,
-        utils::make_optional(stdout_target),
-        utils::make_optional(stderr_target));
+        test_program, test_case_name, user_config);
     result_handle_ptr result_handle = wait_any();
+
+    // TODO(jmmv): We need to do this while the subprocess is alive.  This is
+    // important for debugging purposes, as we should see the contents of stdout
+    // or stderr as they come in.
+    {
+        std::auto_ptr< std::ostream > output = utils::open_ostream(
+            stdout_target);
+        *output << utils::read_file(result_handle->stdout_file());
+    }
+    {
+        std::auto_ptr< std::ostream > output = utils::open_ostream(
+            stderr_target);
+        *output << utils::read_file(result_handle->stderr_file());
+    }
+
     INV(result_handle->original_exec_handle() == exec_handle);
     return result_handle;
 }
