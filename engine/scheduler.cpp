@@ -1252,6 +1252,35 @@ scheduler::scheduler_handle::wait_any(void)
 }
 
 
+/// Forks and executes a test case synchronously for debugging.
+///
+/// \pre No other processes should be in execution by the scheduler.
+///
+/// \param test_program The container test program.
+/// \param test_case_name The name of the test case to run.
+/// \param user_config User-provided configuration variables.
+/// \param stdout_target File to which to write the stdout of the test case.
+/// \param stderr_target File to which to write the stderr of the test case.
+///
+/// \return The result of the execution of the test.
+scheduler::result_handle_ptr
+scheduler::scheduler_handle::debug_test(
+    const model::test_program_ptr test_program,
+    const std::string& test_case_name,
+    const config::tree& user_config,
+    const fs::path& stdout_target,
+    const fs::path& stderr_target)
+{
+    const exec_handle exec_handle = spawn_test(
+        test_program, test_case_name, user_config,
+        utils::make_optional(stdout_target),
+        utils::make_optional(stderr_target));
+    result_handle_ptr result_handle = wait_any();
+    INV(result_handle->original_exec_handle() == exec_handle);
+    return result_handle;
+}
+
+
 /// Checks if an interrupt has fired.
 ///
 /// Calls to this function should be sprinkled in strategic places through the

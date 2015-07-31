@@ -254,6 +254,12 @@ public:
         const utils::optional< utils::fs::path > = utils::none);
     result_handle_ptr wait_any(void);
 
+    result_handle_ptr debug_test(const model::test_program_ptr,
+                                 const std::string&,
+                                 const utils::config::tree&,
+                                 const utils::fs::path&,
+                                 const utils::fs::path&);
+
     void check_interrupt(void) const;
 };
 

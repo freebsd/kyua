@@ -1117,6 +1117,52 @@ ATF_TEST_CASE_BODY(integration__prevent_clobbering_control_files)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(debug_test);
+ATF_TEST_CASE_BODY(debug_test)
+{
+    const model::test_program_ptr program = model::test_program_builder(
+        "mock", fs::path("the-program"), fs::current_path(), "the-suite")
+        .add_test_case("print_params").build_ptr();
+
+    config::tree user_config = engine::empty_config();
+    user_config.set_string("test_suites.the-suite.one", "first variable");
+    user_config.set_string("test_suites.the-suite.two", "second variable");
+
+    scheduler::scheduler_handle handle = scheduler::setup();
+
+    const fs::path stdout_file("custom-stdout.txt");
+    const fs::path stderr_file("custom-stderr.txt");
+
+    scheduler::result_handle_ptr result_handle = handle.debug_test(
+        program, "print_params", user_config, stdout_file, stderr_file);
+    const scheduler::test_result_handle* test_result_handle =
+        dynamic_cast< const scheduler::test_result_handle* >(
+            result_handle.get());
+
+    ATF_REQUIRE_EQ(program, test_result_handle->test_program());
+    ATF_REQUIRE_EQ("print_params", test_result_handle->test_case_name());
+    ATF_REQUIRE_EQ(model::test_result(model::test_result_passed, "Exit 0"),
+                   test_result_handle->test_result());
+
+    ATF_REQUIRE_EQ(stdout_file, result_handle->stdout_file());
+    ATF_REQUIRE_EQ(stderr_file, result_handle->stderr_file());
+
+    result_handle->cleanup();
+    result_handle.reset();
+
+    handle.cleanup();
+
+    ATF_REQUIRE(atf::utils::compare_file(
+        stdout_file.str(),
+        "Test program: the-program\n"
+        "Test case: print_params\n"
+        "one=first variable\n"
+        "two=second variable\n"));
+    ATF_REQUIRE(atf::utils::compare_file(
+        stderr_file.str(), "stderr: print_params\n"));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(ensure_valid_interface);
 ATF_TEST_CASE_BODY(ensure_valid_interface)
 {
@@ -1236,6 +1282,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, integration__list_files_on_failure__none);
     ATF_ADD_TEST_CASE(tcs, integration__list_files_on_failure__some);
     ATF_ADD_TEST_CASE(tcs, integration__prevent_clobbering_control_files);
+
+    ATF_ADD_TEST_CASE(tcs, debug_test);
 
     ATF_ADD_TEST_CASE(tcs, ensure_valid_interface);
     ATF_ADD_TEST_CASE(tcs, registered_interface_names);
