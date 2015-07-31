@@ -29,14 +29,10 @@
 #include "engine/tap.hpp"
 
 extern "C" {
-#include <sys/types.h>
-
 #include <unistd.h>
 }
 
 #include <cstdlib>
-#include <cstring>
-#include <fstream>
 
 #include "engine/exceptions.hpp"
 #include "engine/tap_parser.hpp"
@@ -47,7 +43,6 @@ extern "C" {
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/optional.ipp"
-#include "utils/process/child.ipp"
 #include "utils/process/operations.hpp"
 #include "utils/process/status.hpp"
 #include "utils/sanity.hpp"
@@ -60,40 +55,6 @@ using utils::optional;
 
 
 namespace {
-
-
-/// Name of the file used to capture the tap output.
-static const char* tap_output_name = "tap-output.txt";
-
-
-/// Warning to display on the stderr of each TAP test program.
-static const char* tap_stderr_warning =
-    "(Due to a known shortcoming in the Kyua TAP interface, the stderr "
-    "output of the TAP test program was merged into the stdout output.)\n";
-
-
-/// Functor to execute a program in a subprocess.
-class run_child {
-    /// The binary to execute.
-    fs::path _absolute_path;
-
-public:
-    /// Constructor.
-    ///
-    /// \param absolute_path The binary to execute.
-    run_child(const fs::path& absolute_path) :
-        _absolute_path(absolute_path)
-    {
-    }
-
-    /// Executes the binary.
-    void
-    operator()(void) const UTILS_NORETURN
-    {
-        process::args_vector args;
-        process::exec(_absolute_path, args);
-    }
-};
 
 
 /// Computes the result of a TAP test program termination.
@@ -132,20 +93,6 @@ tap_to_result(const engine::tap_summary& summary,
         return model::test_result(model::test_result_failed,
                                   F("%s of %s tests failed") %
                                   summary.not_ok_count() % total);
-    }
-}
-
-
-/// Executes write(2) in a safe manner.
-///
-/// \param fd The descriptor to write to.
-/// \param line The message to write.
-static void
-safe_write(const int fd, const std::string& line)
-{
-    const ssize_t ret = ::write(fd, line.c_str(), line.length());
-    if (ret == -1 || static_cast< std::size_t >(ret) < line.length()) {
-        UNREACHABLE_MSG("Failed to write to output file");
     }
 }
 
@@ -199,13 +146,14 @@ engine::tap_interface::parse_list(
 /// \param test_program The test program to execute.
 /// \param test_case_name Name of the test case to invoke.
 /// \param vars User-provided variables to pass to the test program.
-/// \param control_directory Directory where the interface may place control
-///     files.
+/// \param unused_control_directory Directory where the interface may place
+///     control files.
 void
-engine::tap_interface::exec_test(const model::test_program& test_program,
-                                 const std::string& test_case_name,
-                                 const utils::config::properties_map& vars,
-                                 const fs::path& control_directory) const
+engine::tap_interface::exec_test(
+    const model::test_program& test_program,
+    const std::string& test_case_name,
+    const utils::config::properties_map& vars,
+    const fs::path& UTILS_UNUSED_PARAM(control_directory)) const
 {
     PRE(test_case_name == "main");
 
@@ -214,28 +162,8 @@ engine::tap_interface::exec_test(const model::test_program& test_program,
         utils::setenv(F("TEST_ENV_%s") % (*iter).first, (*iter).second);
     }
 
-    // Because TAP test programs output their "results" to stdout, and because
-    // the user may have told Kyua to send the output to the real stdout, we
-    // have to "recapture" it here so that we can process it later.  This is
-    // unfortunate.  See the notes in scheduler.cpp for more details.
-    const fs::path tap_output_path = control_directory / tap_output_name;
-    std::ofstream tap_output(tap_output_path.c_str());
-    if (!tap_output)
-        UNREACHABLE_MSG("Failed to create output file in control directory");
-
-    std::auto_ptr< process::child > real_child(process::child::fork_capture(
-        run_child(test_program.absolute_path())));
-    std::istream& input = real_child->output();
-    std::string line;
-    while (getline(input, line).good()) {
-        line += '\n';
-        tap_output << line;
-        safe_write(STDOUT_FILENO, line);
-    }
-    tap_output.close();
-
-    safe_write(STDERR_FILENO, tap_stderr_warning);
-    process::terminate_self_with(real_child->wait());
+    process::args_vector args;
+    process::exec(test_program.absolute_path(), args);
 }
 
 
@@ -243,10 +171,9 @@ engine::tap_interface::exec_test(const model::test_program& test_program,
 ///
 /// \param status The termination status of the subprocess used to execute
 ///     the exec_test() method or none if the test timed out.
-/// \param control_directory Directory where the interface may have placed
-///     control files.
-/// \param unused_stdout_path Path to the file containing the stdout of the
-///     test.
+/// \param unused_control_directory Directory where the interface may have
+///     placed control files.
+/// \param stdout_path Path to the file containing the stdout of the test.
 /// \param unused_stderr_path Path to the file containing the stderr of the
 ///     test.
 ///
@@ -254,8 +181,8 @@ engine::tap_interface::exec_test(const model::test_program& test_program,
 model::test_result
 engine::tap_interface::compute_result(
     const optional< process::status >& status,
-    const fs::path& control_directory,
-    const fs::path& UTILS_UNUSED_PARAM(stdout_path),
+    const fs::path& UTILS_UNUSED_PARAM(control_directory),
+    const fs::path& stdout_path,
     const fs::path& UTILS_UNUSED_PARAM(stderr_path)) const
 {
     if (!status) {
@@ -268,8 +195,7 @@ engine::tap_interface::compute_result(
                 F("Received signal %s") % status.get().termsig());
         } else {
             try {
-                const tap_summary summary = parse_tap_output(control_directory /
-                                                             tap_output_name);
+                const tap_summary summary = parse_tap_output(stdout_path);
                 return tap_to_result(summary, status.get());
             } catch (const load_error& e) {
                 return model::test_result(
