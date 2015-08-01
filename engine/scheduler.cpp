@@ -273,8 +273,8 @@ struct cleanup_exec_data : public exec_data {
 typedef std::shared_ptr< exec_data > exec_data_ptr;
 
 
-/// Mapping of active test case handles to their maintenance data.
-typedef std::map< scheduler::exec_handle, exec_data_ptr > exec_data_map;
+/// Mapping of active PIDs to their maintenance data.
+typedef std::map< int, exec_data_ptr > exec_data_map;
 
 
 /// Enforces a test program to hold an absolute path.
@@ -615,7 +615,7 @@ struct engine::scheduler::result_handle::bimpl : utils::noncopyable {
     /// Destructor.
     ~bimpl(void)
     {
-        all_exec_data.erase(generic.original_exec_handle());
+        all_exec_data.erase(generic.original_pid());
     }
 };
 
@@ -650,13 +650,13 @@ scheduler::result_handle::cleanup(void)
 }
 
 
-/// Returns the original exec_handle corresponding to this result.
+/// Returns the original PID corresponding to this result.
 ///
 /// \return An exec_handle.
-scheduler::exec_handle
-scheduler::result_handle::original_exec_handle(void) const
+int
+scheduler::result_handle::original_pid(void) const
 {
-    return _pbimpl->generic.original_exec_handle();
+    return _pbimpl->generic.original_pid();
 }
 
 
@@ -884,7 +884,7 @@ struct engine::scheduler::scheduler_handle::impl : utils::noncopyable {
     ///
     /// \return A handle for the background operation.  Used to match the result
     /// of the execution returned by wait_any() with this invocation.
-    exec_handle
+    executor::exec_handle
     spawn_cleanup(const model::test_program_ptr test_program,
                   const std::string& test_case_name,
                   const config::tree& user_config,
@@ -906,7 +906,7 @@ struct engine::scheduler::scheduler_handle::impl : utils::noncopyable {
 
         const exec_data_ptr data(new cleanup_exec_data(
             test_program, test_case_name, body_handle, body_result));
-        all_exec_data.insert(exec_data_map::value_type(handle, data));
+        all_exec_data.insert(exec_data_map::value_type(handle.pid(), data));
 
         return handle;
     }
@@ -1100,9 +1100,9 @@ scheduler::scheduler_handle::spawn_test(
 
     const exec_data_ptr data(new test_exec_data(
         test_program, test_case_name, interface, user_config));
-    _pimpl->all_exec_data.insert(exec_data_map::value_type(handle, data));
+    _pimpl->all_exec_data.insert(exec_data_map::value_type(handle.pid(), data));
 
-    return handle;
+    return handle.pid();
 }
 
 
@@ -1122,7 +1122,7 @@ scheduler::scheduler_handle::wait_any(void)
     executor::exit_handle handle = _pimpl->generic.wait_any();
 
     const exec_data_map::iterator iter = _pimpl->all_exec_data.find(
-        handle.original_exec_handle());
+        handle.original_pid());
     exec_data_ptr& data = (*iter).second;
 
     utils::dump_stacktrace_if_available(data->test_program->absolute_path(),
@@ -1265,6 +1265,10 @@ scheduler::scheduler_handle::debug_test(
     // TODO(jmmv): We need to do this while the subprocess is alive.  This is
     // important for debugging purposes, as we should see the contents of stdout
     // or stderr as they come in.
+    //
+    // Unfortunately, we cannot do so.  We cannot just read and block from a
+    // file, waiting for further output to appear... as this only works on pipes
+    // or sockets.  We need a better interface for this whole thing.
     {
         std::auto_ptr< std::ostream > output = utils::open_ostream(
             stdout_target);
@@ -1276,7 +1280,7 @@ scheduler::scheduler_handle::debug_test(
         *output << utils::read_file(result_handle->stderr_file());
     }
 
-    INV(result_handle->original_exec_handle() == exec_handle);
+    INV(result_handle->original_pid() == exec_handle);
     return result_handle;
 }
 

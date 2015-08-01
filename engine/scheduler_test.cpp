@@ -580,7 +580,7 @@ ATF_TEST_CASE_BODY(integration__run_one)
     const scheduler::test_result_handle* test_result_handle =
         dynamic_cast< const scheduler::test_result_handle* >(
             result_handle.get());
-    ATF_REQUIRE_EQ(exec_handle, result_handle->original_exec_handle());
+    ATF_REQUIRE_EQ(exec_handle, result_handle->original_pid());
     ATF_REQUIRE_EQ(model::test_result(model::test_result_passed, "Exit 41"),
                    test_result_handle->test_result());
     result_handle->cleanup();
@@ -664,7 +664,7 @@ ATF_TEST_CASE_BODY(integration__run_many)
                 result_handle.get());
 
         const scheduler::exec_handle exec_handle =
-            result_handle->original_exec_handle();
+            result_handle->original_pid();
 
         const model::test_program_ptr test_program = exp_test_programs.find(
             exec_handle)->second;
@@ -749,7 +749,7 @@ ATF_TEST_CASE_BODY(integration__parameters_and_output)
         dynamic_cast< const scheduler::test_result_handle* >(
             result_handle.get());
 
-    ATF_REQUIRE_EQ(exec_handle, result_handle->original_exec_handle());
+    ATF_REQUIRE_EQ(exec_handle, result_handle->original_pid());
     ATF_REQUIRE_EQ(program, test_result_handle->test_program());
     ATF_REQUIRE_EQ("print_params", test_result_handle->test_case_name());
     ATF_REQUIRE_EQ(model::test_result(model::test_result_passed, "Exit 0"),

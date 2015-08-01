@@ -71,12 +71,12 @@ namespace {
 typedef std::map< fs::path, int64_t > path_to_id_map;
 
 
-/// Map of in-flight exec_handles to their corresponding test case IDs.
-typedef std::map< scheduler::exec_handle, int64_t > exec_handle_to_id_map;
+/// Map of in-flight PIDs to their corresponding test case IDs.
+typedef std::map< int, int64_t > pid_to_id_map;
 
 
-/// Pair of exec_handle to a test case ID.
-typedef exec_handle_to_id_map::value_type exec_handle_and_id_pair;
+/// Pair of PID to a test case ID.
+typedef pid_to_id_map::value_type pid_and_id_pair;
 
 
 /// Puts a test program in the store and returns its identifier.
@@ -157,9 +157,9 @@ safe_cleanup(scheduler::test_result_handle handle) throw()
 /// \param user_config The end-user configuration properties.
 /// \param hooks The hooks for this execution.
 ///
-/// \returns The exec_handle for the started test and the test case's identifier
-/// in the store.
-exec_handle_and_id_pair
+/// \returns The PID for the started test and the test case's identifier in the
+/// store.
+pid_and_id_pair
 start_test(scheduler::scheduler_handle& handle,
            const engine::scan_result& match,
            store::write_transaction& tx,
@@ -254,7 +254,7 @@ drivers::run_tests::drive(const fs::path& kyuafile_path,
     engine::scanner scanner(kyuafile.test_programs(), filters);
 
     path_to_id_map ids_cache;
-    exec_handle_to_id_map in_flight;
+    pid_to_id_map in_flight;
     std::vector< engine::scan_result > exclusive_tests;
 
     const std::size_t slots = user_config.lookup< config::positive_int_node >(
@@ -291,8 +291,8 @@ drivers::run_tests::drive(const fs::path& kyuafile_path,
         if (!in_flight.empty()) {
             scheduler::result_handle_ptr result_handle = handle.wait_any();
 
-            const std::map< scheduler::exec_handle, int64_t >::iterator
-                iter = in_flight.find(result_handle->original_exec_handle());
+            const pid_to_id_map::iterator iter = in_flight.find(
+                result_handle->original_pid());
             const int64_t test_case_id = (*iter).second;
             in_flight.erase(iter);
 
@@ -304,7 +304,7 @@ drivers::run_tests::drive(const fs::path& kyuafile_path,
     for (std::vector< engine::scan_result >::const_iterator
              iter = exclusive_tests.begin(); iter != exclusive_tests.end();
              ++iter) {
-        const exec_handle_and_id_pair data = start_test(
+        const pid_and_id_pair data = start_test(
             handle, *iter, tx, ids_cache, user_config, hooks);
         scheduler::result_handle_ptr result_handle = handle.wait_any();
         finish_test(result_handle, data.second, tx, hooks);

@@ -52,8 +52,8 @@
 /// See the documentation in utils/process/executor.hpp for details on
 /// the expected workflow of these classes.
 
-#if !defined(ENGINE_EXECUTOR_HPP)
-#define ENGINE_EXECUTOR_HPP
+#if !defined(ENGINE_SCHEDULER_HPP)
+#define ENGINE_SCHEDULER_HPP
 
 #include "engine/scheduler_fwd.hpp"
 
@@ -201,7 +201,7 @@ public:
 
     void cleanup(void);
 
-    exec_handle original_exec_handle(void) const;
+    int original_pid(void) const;
     const utils::datetime::timestamp& start_time() const;
     const utils::datetime::timestamp& end_time() const;
     utils::fs::path work_directory(void) const;
@@ -279,4 +279,4 @@ utils::config::properties_map generate_config(const utils::config::tree&,
 }  // namespace engine
 
 
-#endif  // !defined(ENGINE_EXECUTOR_HPP)
+#endif  // !defined(ENGINE_SCHEDULER_HPP)
