@@ -77,6 +77,7 @@ ATF_TEST_CASE_BODY(escape_xml__no_escaping)
 {
     ATF_REQUIRE_EQ("a", text::escape_xml("a"));
     ATF_REQUIRE_EQ("Some text!", text::escape_xml("Some text!"));
+    ATF_REQUIRE_EQ("\n\t\r", text::escape_xml("\n\t\r"));
 }
 
 
@@ -90,6 +91,8 @@ ATF_TEST_CASE_BODY(escape_xml__some_escaping)
 
     ATF_REQUIRE_EQ("&quot;&amp;&lt;&gt;&apos;", text::escape_xml("\"&<>'"));
     ATF_REQUIRE_EQ("&amp;&amp;&amp;", text::escape_xml("&&&"));
+    ATF_REQUIRE_EQ("&amp;#8;&amp;#11;", text::escape_xml("\b\v"));
+    ATF_REQUIRE_EQ("\t&amp;#127;BAR&amp;", text::escape_xml("\t\x7f""BAR&"));
 }
 
 

@@ -57,6 +57,10 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   GDB 6.1.1 (circa 2004) does not have the -ex flag so we need to
   generate a temporary GDB script and feed it to GDB with -x instead.
 
+* Issue 136: Fixed the XML escaping in the JUnit output so that
+  non-printable characters are properly handled when they appear in the
+  process's stdout or stderr.
+
 * Issue 141: Improved reporting of errors triggered by sqlite3.  In
   particular, all error messages are now tagged with their corresponding
   database filename and, if they are API-level errors, the name of the
