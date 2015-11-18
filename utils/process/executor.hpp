@@ -98,6 +98,39 @@ void setup_child(const utils::optional< utils::passwd::user >,
 }   // namespace detail
 
 
+/// Maintenance data held while a subprocess is being executed.
+///
+/// This data structure exists from the moment a subprocess is executed via
+/// executor::spawn() to when it is cleaned up with exit_handle::cleanup().
+///
+/// The caller NEED NOT maintain this object alive for the execution of the
+/// subprocess.  However, the PID contained in here can be used to match
+/// exec_handle objects with corresponding exit_handle objects via their
+/// original_pid() method.
+///
+/// Objects of this type can be copied around but their implementation is
+/// shared.  The implication of this is that only the last copy of a given exit
+/// handle will execute the automatic cleanup() on destruction.
+class exec_handle {
+    struct impl;
+
+    /// Pointer to internal implementation.
+    std::shared_ptr< impl > _pimpl;
+
+    friend class executor_handle;
+    exec_handle(std::shared_ptr< impl >);
+
+public:
+    ~exec_handle(void);
+
+    int pid(void) const;
+    utils::fs::path control_directory(void) const;
+    utils::fs::path work_directory(void) const;
+    const utils::fs::path& stdout_file(void) const;
+    const utils::fs::path& stderr_file(void) const;
+};
+
+
 /// Container for the data of a process termination.
 ///
 /// This handle provides access to the details of the process that terminated
@@ -123,7 +156,7 @@ public:
 
     void cleanup(void);
 
-    exec_handle original_exec_handle(void) const;
+    int original_pid(void) const;
     const utils::optional< utils::process::status >& status(void) const;
     const utils::optional< utils::passwd::user >& unprivileged_user(void) const;
     const utils::datetime::timestamp& start_time() const;

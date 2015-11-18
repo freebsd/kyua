@@ -83,78 +83,8 @@ namespace {
 static const char* work_directory_template = PACKAGE_TARNAME ".XXXXXX";
 
 
-/// Maintenance data held while a subprocess is being executed.
-///
-/// This data structure exists from the moment a subprocess is executed via
-/// executor::spawn() to when its cleanup with exit_handle::cleanup().
-struct exec_data : utils::noncopyable {
-    /// Path to the subprocess-specific work directory.
-    fs::path control_directory;
-
-    /// Path to the subprocess's stdout file.
-    const fs::path stdout_file;
-
-    /// Path to the subprocess's stderr file.
-    const fs::path stderr_file;
-
-    /// Start time.
-    datetime::timestamp start_time;
-
-    /// User the subprocess is running as if different than the current one.
-    const optional< passwd::user > unprivileged_user;
-
-    /// Timer to kill the subprocess on activation.
-    process::deadline_killer timer;
-
-    /// Number of owners of the on-disk state.
-    executor::detail::refcnt_t state_owners;
-
-    /// Constructor.
-    ///
-    /// \param control_directory_ Path to the subprocess-specific work
-    ///     directory.
-    /// \param stdout_file_ Path to the subprocess's stdout file.
-    /// \param stderr_file_ Path to the subprocess's stderr file.
-    /// \param start_time_ Timestamp of when this object was constructed.
-    /// \param timeout Maximum amount of time the subprocess can run for.
-    /// \param unprivileged_user_ User the subprocess is running as if
-    ///     different than the current one.
-    /// \param pid PID of the forked subprocess.
-    /// \param [in,out] state_owners_ Number of owners of the on-disk state.
-    ///     For first-time processes, this should be a new counter set to 0;
-    ///     for followup processes, this should point to the same counter used
-    ///     by the preceding process.
-    exec_data(const fs::path& control_directory_,
-              const fs::path& stdout_file_,
-              const fs::path& stderr_file_,
-              const datetime::timestamp& start_time_,
-              const datetime::delta& timeout,
-              const optional< passwd::user > unprivileged_user_,
-              const pid_t pid,
-              executor::detail::refcnt_t state_owners_) :
-        control_directory(control_directory_),
-        stdout_file(stdout_file_),
-        stderr_file(stderr_file_),
-        start_time(start_time_),
-        unprivileged_user(unprivileged_user_),
-        timer(timeout, pid),
-        state_owners(state_owners_)
-    {
-        (*state_owners)++;
-        POST(*state_owners > 0);
-    }
-};
-
-
-/// Shared pointer to exec_data.
-///
-/// We require this because we want exec_data to not be copyable, and thus we
-/// cannot just store it in the map without move constructors.
-typedef std::shared_ptr< exec_data > exec_data_ptr;
-
-
-/// Mapping of active subprocess handles to their maintenance data.
-typedef std::map< executor::exec_handle, exec_data_ptr > exec_data_map;
+/// Mapping of active subprocess PIDs to their execution data.
+typedef std::map< int, executor::exec_handle > exec_handles_map;
 
 
 }  // anonymous namespace
@@ -194,12 +124,145 @@ utils::process::executor::detail::setup_child(
 
 
 /// Internal implementation for the exit_handle class.
-struct utils::process::executor::exit_handle::impl : utils::noncopyable {
-    /// Original exec_handle corresponding to the terminated subprocess.
+struct utils::process::executor::exec_handle::impl : utils::noncopyable {
+    /// PID of the process being run.
+    int pid;
+
+    /// Path to the subprocess-specific work directory.
+    fs::path control_directory;
+
+    /// Path to the subprocess's stdout file.
+    const fs::path stdout_file;
+
+    /// Path to the subprocess's stderr file.
+    const fs::path stderr_file;
+
+    /// Start time.
+    datetime::timestamp start_time;
+
+    /// User the subprocess is running as if different than the current one.
+    const optional< passwd::user > unprivileged_user;
+
+    /// Timer to kill the subprocess on activation.
+    process::deadline_killer timer;
+
+    /// Number of owners of the on-disk state.
+    executor::detail::refcnt_t state_owners;
+
+    /// Constructor.
     ///
-    /// Note that this exec_handle (which internally corresponds to a PID)
-    /// is no longer valid and cannot be used on system tables!
-    const executor::exec_handle exec_handle;
+    /// \param pid_ PID of the forked process.
+    /// \param control_directory_ Path to the subprocess-specific work
+    ///     directory.
+    /// \param stdout_file_ Path to the subprocess's stdout file.
+    /// \param stderr_file_ Path to the subprocess's stderr file.
+    /// \param start_time_ Timestamp of when this object was constructed.
+    /// \param timeout Maximum amount of time the subprocess can run for.
+    /// \param unprivileged_user_ User the subprocess is running as if
+    ///     different than the current one.
+    /// \param [in,out] state_owners_ Number of owners of the on-disk state.
+    ///     For first-time processes, this should be a new counter set to 0;
+    ///     for followup processes, this should point to the same counter used
+    ///     by the preceding process.
+    impl(const int pid_,
+         const fs::path& control_directory_,
+         const fs::path& stdout_file_,
+         const fs::path& stderr_file_,
+         const datetime::timestamp& start_time_,
+         const datetime::delta& timeout,
+         const optional< passwd::user > unprivileged_user_,
+         executor::detail::refcnt_t state_owners_) :
+        pid(pid_),
+        control_directory(control_directory_),
+        stdout_file(stdout_file_),
+        stderr_file(stderr_file_),
+        start_time(start_time_),
+        unprivileged_user(unprivileged_user_),
+        timer(timeout, pid_),
+        state_owners(state_owners_)
+    {
+        (*state_owners)++;
+        POST(*state_owners > 0);
+    }
+};
+
+
+/// Constructor.
+///
+/// \param pimpl Constructed internal implementation.
+executor::exec_handle::exec_handle(std::shared_ptr< impl > pimpl) :
+    _pimpl(pimpl)
+{
+}
+
+
+/// Destructor.
+executor::exec_handle::~exec_handle(void)
+{
+}
+
+
+/// Returns the PID of the process being run.
+///
+/// \return A PID.
+int
+executor::exec_handle::pid(void) const
+{
+    return _pimpl->pid;
+}
+
+
+/// Returns the path to the subprocess-specific control directory.
+///
+/// This is where the executor may store control files.
+///
+/// \return The path to a directory that exists until cleanup() is called.
+fs::path
+executor::exec_handle::control_directory(void) const
+{
+    return _pimpl->control_directory;
+}
+
+
+/// Returns the path to the subprocess-specific work directory.
+///
+/// This is guaranteed to be clear of files created by the executor.
+///
+/// \return The path to a directory that exists until cleanup() is called.
+fs::path
+executor::exec_handle::work_directory(void) const
+{
+    return _pimpl->control_directory / detail::work_subdir;
+}
+
+
+/// Returns the path to the subprocess's stdout file.
+///
+/// \return The path to a file that exists until cleanup() is called.
+const fs::path&
+executor::exec_handle::stdout_file(void) const
+{
+    return _pimpl->stdout_file;
+}
+
+
+/// Returns the path to the subprocess's stderr file.
+///
+/// \return The path to a file that exists until cleanup() is called.
+const fs::path&
+executor::exec_handle::stderr_file(void) const
+{
+    return _pimpl->stderr_file;
+}
+
+
+/// Internal implementation for the exit_handle class.
+struct utils::process::executor::exit_handle::impl : utils::noncopyable {
+    /// Original PID of the terminated subprocess.
+    ///
+    /// Note that this PID is no longer valid and cannot be used on system
+    /// tables!
+    const int original_pid;
 
     /// Termination status of the subprocess, or none if it timed out.
     const optional< process::status > status;
@@ -234,7 +297,7 @@ struct utils::process::executor::exit_handle::impl : utils::noncopyable {
     /// This object references a member of the executor_handle that yielded this
     /// exit_handle instance.  We need this direct access to clean up after
     /// ourselves when the handle is destroyed.
-    exec_data_map& all_exec_data;
+    exec_handles_map& all_exec_handles;
 
     /// Whether the subprocess state has been cleaned yet or not.
     ///
@@ -243,8 +306,7 @@ struct utils::process::executor::exit_handle::impl : utils::noncopyable {
 
     /// Constructor.
     ///
-    /// \param exec_handle_ Original exec_handle corresponding to the
-    ///     terminated subprocess.
+    /// \param original_pid_ Original PID of the terminated subprocess.
     /// \param status_ Termination status of the subprocess, or none if
     ///     timed out.
     /// \param unprivileged_user_ The user the process ran as, if different than
@@ -257,10 +319,10 @@ struct utils::process::executor::exit_handle::impl : utils::noncopyable {
     /// \param stdout_file_ Path to the subprocess's stdout file.
     /// \param stderr_file_ Path to the subprocess's stderr file.
     /// \param [in,out] state_owners_ Number of owners of the on-disk state.
-    /// \param [in,out] all_exec_data_ Global object keeping track of all active
-    ///     executions for an executor.  This is a pointer to a member of the
-    ///     executor_handle object.
-    impl(const executor::exec_handle exec_handle_,
+    /// \param [in,out] all_exec_handles_ Global object keeping track of all
+    ///     active executions for an executor.  This is a pointer to a member of
+    ///     the executor_handle object.
+    impl(const int original_pid_,
          const optional< process::status > status_,
          const optional< passwd::user > unprivileged_user_,
          const datetime::timestamp& start_time_,
@@ -269,14 +331,14 @@ struct utils::process::executor::exit_handle::impl : utils::noncopyable {
          const fs::path& stdout_file_,
          const fs::path& stderr_file_,
          detail::refcnt_t state_owners_,
-         exec_data_map& all_exec_data_) :
-        exec_handle(exec_handle_), status(status_),
+         exec_handles_map& all_exec_handles_) :
+        original_pid(original_pid_), status(status_),
         unprivileged_user(unprivileged_user_),
         start_time(start_time_), end_time(end_time_),
         control_directory(control_directory_),
         stdout_file(stdout_file_), stderr_file(stderr_file_),
         state_owners(state_owners_),
-        all_exec_data(all_exec_data_), cleaned(false)
+        all_exec_handles(all_exec_handles_), cleaned(false)
     {
     }
 
@@ -285,7 +347,7 @@ struct utils::process::executor::exit_handle::impl : utils::noncopyable {
     {
         if (!cleaned) {
             LW(F("Implicitly cleaning up exit_handle for exec_handle %s; "
-                 "ignoring errors!") % exec_handle);
+                 "ignoring errors!") % original_pid);
             try {
                 cleanup();
             } catch (const std::runtime_error& error) {
@@ -303,11 +365,11 @@ struct utils::process::executor::exit_handle::impl : utils::noncopyable {
     {
         PRE(*state_owners > 0);
         if (*state_owners == 1) {
-            LI(F("Cleaning up exit_handle for exec_handle %s") % exec_handle);
+            LI(F("Cleaning up exit_handle for exec_handle %s") % original_pid);
             fs::rm_r(control_directory);
         } else {
             LI(F("Not cleaning up exit_handle for exec_handle %s; "
-                 "%s owners left") % exec_handle % (*state_owners - 1));
+                 "%s owners left") % original_pid % (*state_owners - 1));
         }
         // We must decrease our reference only after we have successfully
         // cleaned up the control directory.  Otherwise, the rm_r call would
@@ -315,7 +377,7 @@ struct utils::process::executor::exit_handle::impl : utils::noncopyable {
         // from the destructor, which would make us crash due to an invalid
         // reference count.
         (*state_owners)--;
-        all_exec_data.erase(exec_handle);
+        all_exec_handles.erase(original_pid);
         cleaned = true;
     }
 };
@@ -366,13 +428,13 @@ executor::exit_handle::state_owners(void) const
 }
 
 
-/// Returns the original exec_handle corresponding to the terminated subprocess.
+/// Returns the original PID corresponding to the terminated subprocess.
 ///
 /// \return An exec_handle.
-executor::exec_handle
-executor::exit_handle::original_exec_handle(void) const
+int
+executor::exit_handle::original_pid(void) const
 {
-    return _pimpl->exec_handle;
+    return _pimpl->original_pid;
 }
 
 
@@ -478,8 +540,8 @@ struct utils::process::executor::executor_handle::impl : utils::noncopyable {
     /// Root work directory for all executed subprocesses.
     std::auto_ptr< fs::auto_directory > root_work_directory;
 
-    /// Mapping of exec handles to the data required at run time.
-    exec_data_map all_exec_data;
+    /// Mapping of PIDs to the data required at run time.
+    exec_handles_map all_exec_handles;
 
     /// Whether the executor state has been cleaned yet or not.
     ///
@@ -516,10 +578,10 @@ struct utils::process::executor::executor_handle::impl : utils::noncopyable {
     {
         PRE(!cleaned);
 
-        for (exec_data_map::const_iterator iter = all_exec_data.begin();
-             iter != all_exec_data.end(); ++iter) {
-            const exec_handle& pid = (*iter).first;
-            const exec_data_ptr& data = (*iter).second;
+        for (exec_handles_map::const_iterator iter = all_exec_handles.begin();
+             iter != all_exec_handles.end(); ++iter) {
+            const int& pid = (*iter).first;
+            const exec_handle& data = (*iter).second;
 
             process::terminate_group(pid);
             int status;
@@ -529,13 +591,13 @@ struct utils::process::executor::executor_handle::impl : utils::noncopyable {
             }
 
             try {
-                fs::rm_r(data->control_directory);
+                fs::rm_r(data.control_directory());
             } catch (const fs::error& e) {
                 LE(F("Failed to clean up subprocess work directory %s: %s") %
-                   data->control_directory % e.what());
+                   data.control_directory() % e.what());
             }
         }
-        all_exec_data.clear();
+        all_exec_handles.clear();
 
         try {
             // The following only causes the work directory to be deleted, not
@@ -557,21 +619,22 @@ struct utils::process::executor::executor_handle::impl : utils::noncopyable {
 
     /// Common code to run after any of the wait calls.
     ///
-    /// \param handle The exec_handle of the terminated subprocess.
+    /// \param original_pid The PID of the terminated subprocess.
     /// \param status The exit status of the terminated subprocess.
     ///
     /// \return A pointer to an object describing the waited-for subprocess.
     executor::exit_handle
-    post_wait(const executor::exec_handle handle, const process::status& status)
+    post_wait(const int original_pid, const process::status& status)
     {
-        PRE(handle == status.dead_pid());
-        LI(F("Waited for subprocess with exec_handle %s") % handle);
+        PRE(original_pid == status.dead_pid());
+        LI(F("Waited for subprocess with exec_handle %s") % original_pid);
 
         process::terminate_group(status.dead_pid());
 
-        const exec_data_map::iterator iter = all_exec_data.find(handle);
-        exec_data_ptr& data = (*iter).second;
-        data->timer.unprogram();
+        const exec_handles_map::iterator iter = all_exec_handles.find(
+            original_pid);
+        exec_handle& data = (*iter).second;
+        data._pimpl->timer.unprogram();
 
         // It is tempting to assert here (and old code did) that, if the timer
         // has fired, the process has been forcibly killed by us.  This is not
@@ -584,24 +647,24 @@ struct utils::process::executor::executor_handle::impl : utils::noncopyable {
         // this correctly but we don't care because this should not really
         // happen.
 
-        if (!fs::exists(data->stdout_file)) {
-            std::ofstream new_stdout(data->stdout_file.c_str());
+        if (!fs::exists(data.stdout_file())) {
+            std::ofstream new_stdout(data.stdout_file().c_str());
         }
-        if (!fs::exists(data->stderr_file)) {
-            std::ofstream new_stderr(data->stderr_file.c_str());
+        if (!fs::exists(data.stderr_file())) {
+            std::ofstream new_stderr(data.stderr_file().c_str());
         }
 
         return exit_handle(std::shared_ptr< exit_handle::impl >(
             new exit_handle::impl(
-                handle,
-                data->timer.fired() ? none : utils::make_optional(status),
-                data->unprivileged_user,
-                data->start_time, datetime::timestamp::now(),
-                data->control_directory,
-                data->stdout_file,
-                data->stderr_file,
-                data->state_owners,
-                all_exec_data)));
+                data.pid(),
+                data._pimpl->timer.fired() ? none : utils::make_optional(status),
+                data._pimpl->unprivileged_user,
+                data._pimpl->start_time, datetime::timestamp::now(),
+                data.control_directory(),
+                data.stdout_file(),
+                data.stderr_file(),
+                data._pimpl->state_owners,
+                all_exec_handles)));
     }
 };
 
@@ -695,20 +758,19 @@ executor::executor_handle::spawn_post(
     const optional< passwd::user > unprivileged_user,
     std::auto_ptr< process::child > child)
 {
-    const executor::exec_handle handle = child->pid();
-
-    const exec_data_ptr data(new exec_data(
-        control_directory,
-        stdout_file,
-        stderr_file,
-        datetime::timestamp::now(),
-        timeout,
-        unprivileged_user,
-        child->pid(),
-        detail::refcnt_t(new detail::refcnt_t::element_type(0))));
-    _pimpl->all_exec_data.insert(exec_data_map::value_type(
-        child->pid(), data));
-    LI(F("Spawned subprocess with exec_handle %s") % handle);
+    const exec_handle handle(std::shared_ptr< exec_handle::impl >(
+        new exec_handle::impl(
+            child->pid(),
+            control_directory,
+            stdout_file,
+            stderr_file,
+            datetime::timestamp::now(),
+            timeout,
+            unprivileged_user,
+            detail::refcnt_t(new detail::refcnt_t::element_type(0)))));
+    _pimpl->all_exec_handles.insert(exec_handles_map::value_type(
+        handle.pid(), handle));
+    LI(F("Spawned subprocess with exec_handle %s") % handle.pid());
     return handle;
 }
 
@@ -734,21 +796,20 @@ executor::executor_handle::spawn_followup_post(
     const datetime::delta& timeout,
     std::auto_ptr< process::child > child)
 {
-    const executor::exec_handle handle = child->pid();
-
     INV(*base.state_owners() > 0);
-    const exec_data_ptr data(new exec_data(
-        base.control_directory(),
-        base.stdout_file(),
-        base.stderr_file(),
-        datetime::timestamp::now(),
-        timeout,
-        base.unprivileged_user(),
-        child->pid(),
-        base.state_owners()));
-    _pimpl->all_exec_data.insert(exec_data_map::value_type(
-        child->pid(), data));
-    LI(F("Spawned subprocess with exec_handle %s") % handle);
+    const exec_handle handle(std::shared_ptr< exec_handle::impl >(
+        new exec_handle::impl(
+            child->pid(),
+            base.control_directory(),
+            base.stdout_file(),
+            base.stderr_file(),
+            datetime::timestamp::now(),
+            timeout,
+            base.unprivileged_user(),
+            base.state_owners())));
+    _pimpl->all_exec_handles.insert(exec_handles_map::value_type(
+        handle.pid(), handle));
+    LI(F("Spawned subprocess with exec_handle %s") % handle.pid());
     return handle;
 }
 
@@ -762,8 +823,8 @@ executor::exit_handle
 executor::executor_handle::wait(const exec_handle exec_handle)
 {
     signals::check_interrupt();
-    const process::status status = process::wait(exec_handle);
-    return _pimpl->post_wait(exec_handle, status);
+    const process::status status = process::wait(exec_handle.pid());
+    return _pimpl->post_wait(exec_handle.pid(), status);
 }
 
 

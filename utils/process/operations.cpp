@@ -217,6 +217,26 @@ process::terminate_group(const int pgid)
 }
 
 
+/// Terminates the current process reproducing the given status.
+///
+/// The caller process is abruptly terminated.  In particular, no output streams
+/// are flushed, no destructors are called, and no atexit(2) handlers are run.
+///
+/// \param status The status to "re-deliver" to the caller process.
+void
+process::terminate_self_with(const status& status)
+{
+    if (status.exited()) {
+        ::_exit(status.exitstatus());
+    } else {
+        INV(status.signaled());
+        (void)::kill(::getpid(), status.termsig());
+        UNREACHABLE_MSG(F("Signal %s terminated %s but did not terminate "
+                          "ourselves") % status.termsig() % status.dead_pid());
+    }
+}
+
+
 /// Blocks to wait for completion of a subprocess.
 ///
 /// \param pid Identifier of the process to wait for.

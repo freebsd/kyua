@@ -92,10 +92,9 @@ drivers::debug_test::drive(const fs::path& kyuafile_path,
     const model::test_program_ptr test_program = match.get().first;
     const std::string& test_case_name = match.get().second;
 
-    (void)handle.spawn_test(test_program, test_case_name, user_config,
-                            utils::make_optional(stdout_path),
-                            utils::make_optional(stderr_path));
-    scheduler::result_handle_ptr result_handle = handle.wait_any();
+    scheduler::result_handle_ptr result_handle = handle.debug_test(
+        test_program, test_case_name, user_config,
+        stdout_path, stderr_path);
     const scheduler::test_result_handle* test_result_handle =
         dynamic_cast< const scheduler::test_result_handle* >(
             result_handle.get());

@@ -47,6 +47,7 @@ extern "C" {
 #include "utils/process/child.ipp"
 #include "utils/process/exceptions.hpp"
 #include "utils/process/status.hpp"
+#include "utils/stacktrace.hpp"
 
 namespace fs = utils::fs;
 namespace process = utils::process;
@@ -317,6 +318,64 @@ ATF_TEST_CASE_BODY(terminate_group__setpgrp_not_executed)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(terminate_self_with__exitstatus);
+ATF_TEST_CASE_BODY(terminate_self_with__exitstatus)
+{
+    const pid_t pid = ::fork();
+    ATF_REQUIRE(pid != -1);
+    if (pid == 0) {
+        const process::status status = process::status::fake_exited(123);
+        process::terminate_self_with(status);
+    }
+
+    int status;
+    ATF_REQUIRE(::wait(&status) != -1);
+    ATF_REQUIRE(WIFEXITED(status));
+    ATF_REQUIRE(WEXITSTATUS(status) == 123);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(terminate_self_with__termsig);
+ATF_TEST_CASE_BODY(terminate_self_with__termsig)
+{
+    const pid_t pid = ::fork();
+    ATF_REQUIRE(pid != -1);
+    if (pid == 0) {
+        const process::status status = process::status::fake_signaled(
+            SIGKILL, false);
+        process::terminate_self_with(status);
+    }
+
+    int status;
+    ATF_REQUIRE(::wait(&status) != -1);
+    ATF_REQUIRE(WIFSIGNALED(status));
+    ATF_REQUIRE(WTERMSIG(status) == SIGKILL);
+    ATF_REQUIRE(!WCOREDUMP(status));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(terminate_self_with__termsig_and_core);
+ATF_TEST_CASE_BODY(terminate_self_with__termsig_and_core)
+{
+    if (!utils::unlimit_core_size())
+        ATF_SKIP("Cannot enable core dumps");
+
+    const pid_t pid = ::fork();
+    ATF_REQUIRE(pid != -1);
+    if (pid == 0) {
+        const process::status status = process::status::fake_signaled(
+            SIGABRT, true);
+        process::terminate_self_with(status);
+    }
+
+    int status;
+    ATF_REQUIRE(::wait(&status) != -1);
+    ATF_REQUIRE(WIFSIGNALED(status));
+    ATF_REQUIRE(WTERMSIG(status) == SIGABRT);
+    ATF_REQUIRE(WCOREDUMP(status));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(wait__ok);
 ATF_TEST_CASE_BODY(wait__ok)
 {
@@ -396,6 +455,10 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, terminate_group__setpgrp_executed);
     ATF_ADD_TEST_CASE(tcs, terminate_group__setpgrp_not_executed);
+
+    ATF_ADD_TEST_CASE(tcs, terminate_self_with__exitstatus);
+    ATF_ADD_TEST_CASE(tcs, terminate_self_with__termsig);
+    ATF_ADD_TEST_CASE(tcs, terminate_self_with__termsig_and_core);
 
     ATF_ADD_TEST_CASE(tcs, wait__ok);
     ATF_ADD_TEST_CASE(tcs, wait__fail);

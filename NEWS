@@ -27,6 +27,11 @@ STILL UNDER DEVELOPMENT; NOT RELEASED YET.
   implementations.  The new approach feels significantly faster than
   the previous one.
 
+* Known regression: Running "kyua debug" on a TAP-based test program does
+  not currently report the output in real time.  The output will only be
+  displayed once the test program completes.  This is a shortcoming of
+  the new parallel execution engine that should be resolved.
+
 * Fixed the handling of relative paths in the fs.* functions available
   in Kyuafiles.  All paths are now resolved relative to the location of
   the caller Kyuafile.  Kyuafile.top has been updated with these changes

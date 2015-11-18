@@ -408,7 +408,7 @@ ATF_TEST_CASE_BODY(integration__run_one)
     const executor::exec_handle exec_handle = do_spawn(handle, child_exit(41));
 
     executor::exit_handle exit_handle = handle.wait_any();
-    ATF_REQUIRE_EQ(exec_handle, exit_handle.original_exec_handle());
+    ATF_REQUIRE_EQ(exec_handle.pid(), exit_handle.original_pid());
     require_exit(41, exit_handle.status());
     exit_handle.cleanup();
 
@@ -424,21 +424,19 @@ ATF_TEST_CASE_BODY(integration__run_many)
     executor::executor_handle handle = executor::setup();
 
     std::size_t total_children = 0;
-    std::map< executor::exec_handle, int > exp_exit_statuses;
-    std::map< executor::exec_handle, datetime::timestamp > exp_start_times;
+    std::map< int, int > exp_exit_statuses;
+    std::map< int, datetime::timestamp > exp_start_times;
     for (std::size_t i = 0; i < num_children; ++i) {
         const datetime::timestamp start_time = datetime::timestamp::from_values(
             2014, 12, 8, 9, 40, 0, i);
-
-        executor::exec_handle exec_handle;
 
         for (std::size_t j = 0; j < 3; j++) {
             const std::size_t id = i * 3 + j;
 
             datetime::set_mock_now(start_time);
-            exec_handle = do_spawn(handle, child_exit(id));
-            exp_exit_statuses.insert(std::make_pair(exec_handle, id));
-            exp_start_times.insert(std::make_pair(exec_handle, start_time));
+            const int pid = do_spawn(handle, child_exit(id)).pid();
+            exp_exit_statuses.insert(std::make_pair(pid, id));
+            exp_start_times.insert(std::make_pair(pid, start_time));
             ++total_children;
         }
     }
@@ -448,12 +446,11 @@ ATF_TEST_CASE_BODY(integration__run_many)
             2014, 12, 8, 9, 50, 10, i);
         datetime::set_mock_now(end_time);
         executor::exit_handle exit_handle = handle.wait_any();
-        const executor::exec_handle exec_handle =
-            exit_handle.original_exec_handle();
+        const int original_pid = exit_handle.original_pid();
 
-        const int exit_status = exp_exit_statuses.find(exec_handle)->second;
+        const int exit_status = exp_exit_statuses.find(original_pid)->second;
         const datetime::timestamp& start_time = exp_start_times.find(
-            exec_handle)->second;
+            original_pid)->second;
 
         require_exit(exit_status, exit_handle.status());
 
@@ -483,7 +480,7 @@ ATF_TEST_CASE_BODY(integration__parameters_and_output)
 
     executor::exit_handle exit_handle = handle.wait_any();
 
-    ATF_REQUIRE_EQ(exec_handle, exit_handle.original_exec_handle());
+    ATF_REQUIRE_EQ(exec_handle.pid(), exit_handle.original_pid());
 
     require_exit(EXIT_SUCCESS, exit_handle.status());
 
@@ -517,7 +514,7 @@ ATF_TEST_CASE_BODY(integration__custom_output_files)
 
     executor::exit_handle exit_handle = handle.wait_any();
 
-    ATF_REQUIRE_EQ(exec_handle, exit_handle.original_exec_handle());
+    ATF_REQUIRE_EQ(exec_handle.pid(), exit_handle.original_pid());
 
     require_exit(EXIT_SUCCESS, exit_handle.status());
 
@@ -686,14 +683,14 @@ ATF_TEST_CASE_BODY(integration__timeouts)
 
     {
         executor::exit_handle exit_handle = handle.wait_any();
-        ATF_REQUIRE_EQ(exec_handle3, exit_handle.original_exec_handle());
+        ATF_REQUIRE_EQ(exec_handle3.pid(), exit_handle.original_pid());
         require_exit(15, exit_handle.status());
         exit_handle.cleanup();
     }
 
     {
         executor::exit_handle exit_handle = handle.wait_any();
-        ATF_REQUIRE_EQ(exec_handle1, exit_handle.original_exec_handle());
+        ATF_REQUIRE_EQ(exec_handle1.pid(), exit_handle.original_pid());
         ATF_REQUIRE(!exit_handle.status());
         const datetime::delta duration =
             exit_handle.end_time() - exit_handle.start_time();
@@ -704,7 +701,7 @@ ATF_TEST_CASE_BODY(integration__timeouts)
 
     {
         executor::exit_handle exit_handle = handle.wait_any();
-        ATF_REQUIRE_EQ(exec_handle2, exit_handle.original_exec_handle());
+        ATF_REQUIRE_EQ(exec_handle2.pid(), exit_handle.original_pid());
         ATF_REQUIRE(!exit_handle.status());
         const datetime::delta duration =
             exit_handle.end_time() - exit_handle.start_time();
@@ -746,18 +743,18 @@ ATF_TEST_CASE_BODY(integration__unprivileged_user)
 ATF_TEST_CASE_WITHOUT_HEAD(integration__auto_cleanup);
 ATF_TEST_CASE_BODY(integration__auto_cleanup)
 {
-    std::vector< executor::exec_handle > pids;
+    std::vector< int > pids;
     std::vector< fs::path > paths;
     {
         executor::executor_handle handle = executor::setup();
 
-        pids.push_back(do_spawn(handle, child_exit(10)));
-        pids.push_back(do_spawn(handle, child_exit(20)));
+        pids.push_back(do_spawn(handle, child_exit(10)).pid());
+        pids.push_back(do_spawn(handle, child_exit(20)).pid());
 
         // This invocation is never waited for below.  This is intentional: we
         // want the destructor to clean the "leaked" test automatically so that
         // the clean up of the parent work directory also happens correctly.
-        pids.push_back(do_spawn(handle, child_pause));
+        pids.push_back(do_spawn(handle, child_pause).pid());
 
         executor::exit_handle exit_handle1 = handle.wait_any();
         paths.push_back(exit_handle1.stdout_file());
@@ -769,13 +766,9 @@ ATF_TEST_CASE_BODY(integration__auto_cleanup)
         paths.push_back(exit_handle2.stderr_file());
         paths.push_back(exit_handle2.work_directory());
     }
-    for (std::vector< executor::exec_handle >::const_iterator
-             iter = pids.begin(); iter != pids.end(); ++iter) {
-        // We know that the executor handles are PIDs because we are
-        // unit-testing the code... but this is not a valid assumption that
-        // outside code can make.
-        const pid_t pid = *iter;
-        ensure_dead(pid);
+    for (std::vector< int >::const_iterator iter = pids.begin();
+         iter != pids.end(); ++iter) {
+        ensure_dead(*iter);
     }
     for (std::vector< fs::path >::const_iterator iter = paths.begin();
          iter != paths.end(); ++iter) {

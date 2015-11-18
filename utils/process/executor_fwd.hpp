@@ -37,10 +37,7 @@ namespace process {
 namespace executor {
 
 
-/// Unique identifier for in-flight execution operations.
-typedef int exec_handle;
-
-
+class exec_handle;
 class executor_handle;
 class exit_handle;
 

@@ -39,6 +39,9 @@ namespace scheduler {
 
 
 /// Unique identifier for in-flight execution operations.
+///
+/// TODO(jmmv): Might be worth to drop altogether and just use "int".  The type
+/// difference with executor::exec_handle is confusing.
 typedef int exec_handle;
 
 
