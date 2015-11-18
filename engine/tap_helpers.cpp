@@ -174,7 +174,7 @@ main(int argc, char** argv)
 {
     if (argc != 1) {
         std::cerr << "No arguments allowed; select the test scenario with the "
-            "program's basename";
+            "program's basename\n";
         return EXIT_FAILURE;
     }
 
@@ -193,7 +193,7 @@ main(int argc, char** argv)
     else if (test_scenario == "timeout")
         test_timeout();
     else {
-        std::cerr << "Unknown test scenario";
+        std::cerr << "Unknown test scenario\n";
         return EXIT_FAILURE;
     }
 
