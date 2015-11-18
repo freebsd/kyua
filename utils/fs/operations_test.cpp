@@ -266,7 +266,27 @@ ATF_TEST_CASE_BODY(free_disk_space__ok__smoke)
 }
 
 
-ATF_TEST_CASE(free_disk_space__ok__real);
+/// Unmounts a directory without raising errors.
+///
+/// \param cookie Name of a file that exists while the mount point is still
+///     mounted.  Used to prevent a double-unmount, which would print a
+///     misleading error message.
+/// \param mount_point Path to the mount point to unmount.
+static void
+cleanup_mount_point(const fs::path& cookie, const fs::path& mount_point)
+{
+    try {
+        if (fs::exists(cookie)) {
+            fs::unmount(mount_point);
+        }
+    } catch (const std::runtime_error& e) {
+        std::cerr << "Failed trying to unmount " + mount_point.str() +
+            " during cleanup: " << e.what() << '\n';
+    }
+}
+
+
+ATF_TEST_CASE_WITH_CLEANUP(free_disk_space__ok__real);
 ATF_TEST_CASE_HEAD(free_disk_space__ok__real)
 {
     set_md_var("require.user", "root");
@@ -277,13 +297,19 @@ ATF_TEST_CASE_BODY(free_disk_space__ok__real)
         const fs::path mount_point("mount_point");
         fs::mkdir(mount_point, 0755);
         fs::mount_tmpfs(mount_point, units::bytes(32 * units::MB));
+        atf::utils::create_file("mounted", "");
         const units::bytes space = fs::free_disk_space(fs::path(mount_point));
         fs::unmount(mount_point);
+        fs::unlink(fs::path("mounted"));
         ATF_REQUIRE(space < 35 * units::MB);
         ATF_REQUIRE(space > 28 * units::MB);
     } catch (const fs::unsupported_operation_error& e) {
         ATF_SKIP(e.what());
     }
+}
+ATF_TEST_CASE_CLEANUP(free_disk_space__ok__real)
+{
+    cleanup_mount_point(fs::path("mounted"), fs::path("mount_point"));
 }
 
 
@@ -495,19 +521,21 @@ test_mount_tmpfs_ok(const units::bytes& size)
     try {
         atf::utils::create_file("outside", "");
         fs::mount_tmpfs(mount_point, size);
+        atf::utils::create_file("mounted", "");
         atf::utils::create_file((mount_point / "inside").str(), "");
 
         struct ::stat outside, inside;
         ATF_REQUIRE(::stat("outside", &outside) != -1);
         ATF_REQUIRE(::stat((mount_point / "inside").c_str(), &inside) != -1);
         ATF_REQUIRE(outside.st_dev != inside.st_dev);
+        fs::unmount(mount_point);
     } catch (const fs::unsupported_operation_error& e) {
         ATF_SKIP(e.what());
     }
 }
 
 
-ATF_TEST_CASE(mount_tmpfs__ok__default_size)
+ATF_TEST_CASE_WITH_CLEANUP(mount_tmpfs__ok__default_size)
 ATF_TEST_CASE_HEAD(mount_tmpfs__ok__default_size)
 {
     set_md_var("require.user", "root");
@@ -516,9 +544,13 @@ ATF_TEST_CASE_BODY(mount_tmpfs__ok__default_size)
 {
     test_mount_tmpfs_ok(units::bytes());
 }
+ATF_TEST_CASE_CLEANUP(mount_tmpfs__ok__default_size)
+{
+    cleanup_mount_point(fs::path("mounted"), fs::path("mount_point"));
+}
 
 
-ATF_TEST_CASE(mount_tmpfs__ok__explicit_size)
+ATF_TEST_CASE_WITH_CLEANUP(mount_tmpfs__ok__explicit_size)
 ATF_TEST_CASE_HEAD(mount_tmpfs__ok__explicit_size)
 {
     set_md_var("require.user", "root");
@@ -526,6 +558,10 @@ ATF_TEST_CASE_HEAD(mount_tmpfs__ok__explicit_size)
 ATF_TEST_CASE_BODY(mount_tmpfs__ok__explicit_size)
 {
     test_mount_tmpfs_ok(units::bytes(10 * units::MB));
+}
+ATF_TEST_CASE_CLEANUP(mount_tmpfs__ok__explicit_size)
+{
+    cleanup_mount_point(fs::path("mounted"), fs::path("mount_point"));
 }
 
 
