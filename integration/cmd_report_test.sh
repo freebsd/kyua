@@ -214,19 +214,27 @@ EOF
 
 utils_test_case verbose
 verbose_body() {
+    # Switch to the current directory using its physical location and update
+    # HOME accordingly.  Otherwise, the test below where we compare the value
+    # of HOME in the output might fail if the path to HOME contains a symlink
+    # (as is the case in OS X when HOME points to the temporary directory.)
+    local real_cwd="$(pwd -P)"
+    cd "${real_cwd}"
+    HOME="${real_cwd}"
+
     run_tests "mock1
 has multiple lines
 and terminates here" dbfile_name
 
     cat >expout <<EOF
 ===> Execution context
-Current directory: $(pwd)
+Current directory: ${real_cwd}
 Environment variables:
 EOF
     # $_ is a bash variable.  To keep our tests stable, we override its value
     # below to match the hardcoded value in run_tests.
     env \
-        HOME="$(pwd)" \
+        HOME="${real_cwd}" \
         MOCK="mock1
 has multiple lines
 and terminates here" \
