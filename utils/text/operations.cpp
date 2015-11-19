@@ -38,6 +38,9 @@ namespace text = utils::text;
 
 /// Replaces XML special characters from an input string.
 ///
+/// The list of XML special characters is specified here:
+///     http://www.w3.org/TR/xml11/#charsets
+///
 /// \param in The input to quote.
 ///
 /// \return A quoted string without any XML special characters.
@@ -46,25 +49,34 @@ text::escape_xml(const std::string& in)
 {
     std::ostringstream quoted;
 
-    const char* delims = "\"&<>'";  // Keep in sync with 'switch' below.
-    std::string::size_type start_pos = 0;
-    std::string::size_type last_pos = in.find_first_of(delims);
-    while (last_pos != std::string::npos) {
-        quoted << in.substr(start_pos, last_pos - start_pos);
-        switch (in[last_pos]) {
-        case '"':  quoted << "&quot;"; break;
-        case '&':  quoted << "&amp;"; break;
-        case '<':  quoted << "&lt;"; break;
-        case '>':  quoted << "&gt;"; break;
-        case '\'': quoted << "&apos;"; break;
-        default:   UNREACHABLE;
+    for (std::string::const_iterator it = in.begin();
+         it != in.end(); ++it) {
+        unsigned char c = (unsigned char)*it;
+        if (c == '"') { 
+            quoted << "&quot;";
+        } else if (c == '&') { 
+            quoted << "&amp;";
+        } else if (c == '<') { 
+            quoted << "&lt;";
+        } else if (c == '>') { 
+            quoted << "&gt;";
+        } else if (c == '\'') { 
+            quoted << "&apos;";
+        } else if ((c >= 0x01 && c <= 0x08) ||
+                   (c >= 0x0B && c <= 0x0C) ||
+                   (c >= 0x0E && c <= 0x1F) ||
+                   (c >= 0x7F && c <= 0x84) ||
+                   (c >= 0x86 && c <= 0x9F)) {
+            // for RestrictedChar characters, escape them
+            // as '&amp;#[decimal ASCII value];'
+            // so that in the XML file we will see the escaped
+            // character.
+            quoted << "&amp;#" << static_cast< std::string::size_type >(*it)
+                   << ";";
+        } else {
+            quoted << *it;
         }
-        start_pos = last_pos + 1;
-        last_pos = in.find_first_of(delims, start_pos);
     }
-    if (start_pos < in.length())
-        quoted << in.substr(start_pos);
-
     return quoted.str();
 }
 
