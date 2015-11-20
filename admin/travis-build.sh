@@ -29,22 +29,23 @@
 
 set -e -x
 
-run_configure() {
+run_autoreconf() {
     if [ -d /usr/local/share/aclocal ]; then
         autoreconf -isv -I/usr/local/share/aclocal
     else
         autoreconf -isv
     fi
-    ./configure "${@}"
 }
 
 do_apidocs() {
-    run_configure --with-doxygen || return 1
+    run_autoreconf || return 1
+    ./configure --with-doxygen || return 1
     make check-api-docs
 }
 
 do_distcheck() {
-    run_configure || return 1
+    run_autoreconf || return 1
+    ./configure || return 1
 
     local f=
     f="${f} CPPFLAGS='-I/usr/local/include'"
@@ -67,6 +68,14 @@ EOF
     else
         make distcheck DISTCHECK_CONFIGURE_FLAGS="${f}"
     fi
+}
+
+do_style() {
+    run_autoreconf || return 1
+    mkdir build
+    cd build
+    ../configure || return 1
+    make check-style
 }
 
 main() {

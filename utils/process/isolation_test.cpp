@@ -36,7 +36,6 @@ extern "C" {
 #include <unistd.h>
 }
 
-#include <cassert>
 #include <cerrno>
 #include <cstdlib>
 #include <fstream>
@@ -53,6 +52,7 @@ extern "C" {
 #include "utils/passwd.hpp"
 #include "utils/process/child.ipp"
 #include "utils/process/status.hpp"
+#include "utils/sanity.hpp"
 
 namespace fs = utils::fs;
 namespace passwd = utils::passwd;
@@ -175,7 +175,7 @@ public:
             // Should only fail if we get more than one group notifying about
             // not enough space in the groups variable to store the whole
             // result.
-            assert(errno == EINVAL);
+            INV(errno == EINVAL);
             std::exit(EXIT_FAILURE);
         }
         if (groups[0] == 0) {

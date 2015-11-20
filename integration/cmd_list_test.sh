@@ -274,7 +274,7 @@ first:skip
 EOF
     CREATE_COOKIE="$(pwd)/cookie"; export CREATE_COOKIE
     atf_check -s exit:0 -o file:expout -e empty kyua list first
-    if test -f "${CREATE_COOKIE}"; then
+    if [ -f "${CREATE_COOKIE}" ]; then
         atf_fail "An unmatched test case has been executed, which harms" \
             "performance"
     fi
@@ -554,9 +554,11 @@ atf_test_program{name="i-am-missing"}
 EOF
     echo 'I should not be touched because the Kyuafile is bogus' >subdir/ok
 
+# CHECK_STYLE_DISABLE
     cat >experr <<EOF
 kyua: E: Load of 'Kyuafile' failed: .*Non-existent test program 'subdir/i-am-missing'.
 EOF
+# CHECK_STYLE_ENABLE
     atf_check -s exit:2 -o empty -e "match:$(cat experr)" kyua list
 }
 

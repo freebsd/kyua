@@ -28,8 +28,8 @@
 
 /// \file utils/sanity.hpp
 ///
-/// Set of macros that replace the standard assert(3) macro with more semantical
-/// expressivity and meaningful diagnostics.  Code should never use assert(3)
+/// Set of macros that replace the standard assert macro with more semantical
+/// expressivity and meaningful diagnostics.  Code should never use assert
 /// directly.
 ///
 /// In general, the checks performed by the macros in this code are only

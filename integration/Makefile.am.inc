@@ -54,7 +54,8 @@ EXTRA_DIST += integration/utils.sh
 tests_integration_SCRIPTS = integration/cmd_about_test
 CLEANFILES += integration/cmd_about_test
 EXTRA_DIST += integration/cmd_about_test.sh
-integration/cmd_about_test: $(srcdir)/integration/cmd_about_test.sh $(ATF_SH_DEPS)
+integration/cmd_about_test: $(srcdir)/integration/cmd_about_test.sh \
+                            $(ATF_SH_DEPS)
 	$(AM_V_GEN)name="cmd_about_test"; \
 	substs='s,__KYUA_DOCDIR__,$(docdir),g'; \
 	$(ATF_SH_BUILD)
@@ -62,21 +63,24 @@ integration/cmd_about_test: $(srcdir)/integration/cmd_about_test.sh $(ATF_SH_DEP
 tests_integration_SCRIPTS += integration/cmd_config_test
 CLEANFILES += integration/cmd_config_test
 EXTRA_DIST += integration/cmd_config_test.sh
-integration/cmd_config_test: $(srcdir)/integration/cmd_config_test.sh $(ATF_SH_DEPS)
+integration/cmd_config_test: $(srcdir)/integration/cmd_config_test.sh \
+                             $(ATF_SH_DEPS)
 	$(AM_V_GEN)name="cmd_config_test"; \
 	$(ATF_SH_BUILD)
 
 tests_integration_SCRIPTS += integration/cmd_db_exec_test
 CLEANFILES += integration/cmd_db_exec_test
 EXTRA_DIST += integration/cmd_db_exec_test.sh
-integration/cmd_db_exec_test: $(srcdir)/integration/cmd_db_exec_test.sh $(ATF_SH_DEPS)
+integration/cmd_db_exec_test: $(srcdir)/integration/cmd_db_exec_test.sh \
+                              $(ATF_SH_DEPS)
 	$(AM_V_GEN)name="cmd_db_exec_test"; \
 	$(ATF_SH_BUILD)
 
 tests_integration_SCRIPTS += integration/cmd_db_migrate_test
 CLEANFILES += integration/cmd_db_migrate_test
 EXTRA_DIST += integration/cmd_db_migrate_test.sh
-integration/cmd_db_migrate_test: $(srcdir)/integration/cmd_db_migrate_test.sh $(ATF_SH_DEPS)
+integration/cmd_db_migrate_test: $(srcdir)/integration/cmd_db_migrate_test.sh \
+                                 $(ATF_SH_DEPS)
 	$(AM_V_GEN)name="cmd_db_migrate_test"; \
 	substs='s,__KYUA_STOREDIR__,$(storedir),g'; \
 	substs="$${substs};s,__KYUA_STORETESTDATADIR__,$(tests_storedir),g"; \
@@ -85,7 +89,8 @@ integration/cmd_db_migrate_test: $(srcdir)/integration/cmd_db_migrate_test.sh $(
 tests_integration_SCRIPTS += integration/cmd_debug_test
 CLEANFILES += integration/cmd_debug_test
 EXTRA_DIST += integration/cmd_debug_test.sh
-integration/cmd_debug_test: $(srcdir)/integration/cmd_debug_test.sh $(ATF_SH_DEPS)
+integration/cmd_debug_test: $(srcdir)/integration/cmd_debug_test.sh \
+                            $(ATF_SH_DEPS)
 	$(AM_V_GEN)name="cmd_debug_test"; \
 	$(ATF_SH_BUILD)
 
@@ -106,7 +111,8 @@ integration/cmd_list_test: $(srcdir)/integration/cmd_list_test.sh $(ATF_SH_DEPS)
 tests_integration_SCRIPTS += integration/cmd_report_test
 CLEANFILES += integration/cmd_report_test
 EXTRA_DIST += integration/cmd_report_test.sh
-integration/cmd_report_test: $(srcdir)/integration/cmd_report_test.sh $(ATF_SH_DEPS)
+integration/cmd_report_test: $(srcdir)/integration/cmd_report_test.sh \
+                             $(ATF_SH_DEPS)
 	$(AM_V_GEN)name="cmd_report_test"; \
 	$(ATF_SH_BUILD)
 

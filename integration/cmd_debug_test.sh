@@ -126,10 +126,12 @@ EOF
 
 utils_test_case one_arg__no_test_case
 one_arg__no_test_case_body() {
+    # CHECK_STYLE_DISABLE
     cat >experr <<EOF
 Usage error for command debug: 'foo' is not a test case identifier (missing ':'?).
 Type 'kyua help debug' for usage information.
 EOF
+    # CHECK_STYLE_ENABLE
     atf_check -s exit:3 -o empty -e file:experr kyua debug foo
 }
 
@@ -254,7 +256,7 @@ This is the stderr of pass
 EOF
     CREATE_COOKIE="$(pwd)/cookie"; export CREATE_COOKIE
     atf_check -s exit:0 -o file:expout -e file:experr kyua debug first:pass
-    if test -f "${CREATE_COOKIE}"; then
+    if [ -f "${CREATE_COOKIE}" ]; then
         atf_fail "An unmatched test case has been executed, which harms" \
             "performance"
     fi
@@ -374,15 +376,21 @@ kyua: E: Unknown test case 'non_executable:a'.
 EOF
     atf_check -s exit:2 -o empty -e file:experr kyua debug non_executable:a
 
+    # CHECK_STYLE_DISABLE
     cat >expout <<EOF
 crash_on_list:__test_cases_list__  ->  broken: Invalid header for test case list; expecting Content-Type for application/X-atf-tp version 1, got ''
 EOF
-    atf_check -s exit:1 -o file:expout -e empty kyua debug crash_on_list:__test_cases_list__
+    # CHECK_STYLE_ENABLE
+    atf_check -s exit:1 -o file:expout -e empty kyua debug \
+        crash_on_list:__test_cases_list__
 
+    # CHECK_STYLE_DISABLE
     cat >expout <<EOF
 non_executable:__test_cases_list__  ->  broken: Permission denied to run test program
 EOF
-    atf_check -s exit:1 -o file:expout -e empty kyua debug non_executable:__test_cases_list__
+    # CHECK_STYLE_ENABLE
+    atf_check -s exit:1 -o file:expout -e empty kyua debug \
+        non_executable:__test_cases_list__
 }
 
 

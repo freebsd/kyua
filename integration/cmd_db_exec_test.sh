@@ -81,7 +81,7 @@ utils_test_case no_create_store
 no_create_store_body() {
     atf_check -s exit:1 -o empty -e match:"No previous results.*not-here" \
         kyua db-exec --results-file=not-here "SELECT * FROM metadata"
-    if test -f not-here; then
+    if [ -f not-here ]; then
         atf_fail "Database created but it should not have been"
     fi
 }

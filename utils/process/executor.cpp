@@ -657,7 +657,8 @@ struct utils::process::executor::executor_handle::impl : utils::noncopyable {
         return exit_handle(std::shared_ptr< exit_handle::impl >(
             new exit_handle::impl(
                 data.pid(),
-                data._pimpl->timer.fired() ? none : utils::make_optional(status),
+                data._pimpl->timer.fired() ?
+                    none : utils::make_optional(status),
                 data._pimpl->unprivileged_user,
                 data._pimpl->start_time, datetime::timestamp::now(),
                 data.control_directory(),

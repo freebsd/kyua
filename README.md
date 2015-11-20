@@ -58,6 +58,6 @@ in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Support
 
-Please use the
-[kyua-discuss mailing list](https://groups.google.com/forum/#!forum/kyua-discuss)
-for any support inquiries.
+Please use the [kyua-discuss mailing
+list](https://groups.google.com/forum/#!forum/kyua-discuss) for any support
+inquiries.
