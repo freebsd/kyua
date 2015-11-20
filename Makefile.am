@@ -51,6 +51,7 @@ tests_top_DATA = Kyuafile
 EXTRA_DIST += $(tests_top_DATA)
 endif
 
+include admin/Makefile.am.inc
 include bootstrap/Makefile.am.inc
 include cli/Makefile.am.inc
 include doc/Makefile.am.inc
