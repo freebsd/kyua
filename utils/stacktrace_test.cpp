@@ -428,6 +428,12 @@ ATF_TEST_CASE_BODY(dump_stacktrace__ok)
 ATF_TEST_CASE_WITHOUT_HEAD(dump_stacktrace__cannot_find_core);
 ATF_TEST_CASE_BODY(dump_stacktrace__cannot_find_core)
 {
+    // Make sure we can find a GDB binary so that we don't fail the test for
+    // the wrong reason.
+    utils::setenv("PATH", ".");
+    utils::builtin_gdb = "fake-gdb";
+    atf::utils::create_file("fake-gdb", "unused");
+
     executor::executor_handle handle = executor::setup();
     executor::exit_handle exit_handle = generate_core(this, "short", handle);
 
@@ -445,6 +451,8 @@ ATF_TEST_CASE_BODY(dump_stacktrace__cannot_find_core)
 
     utils::dump_stacktrace(fs::path("fake"), handle, exit_handle);
 
+    atf::utils::cat_file(exit_handle.stdout_file().str(), "stdout: ");
+    atf::utils::cat_file(exit_handle.stderr_file().str(), "stderr: ");
     ATF_REQUIRE(atf::utils::grep_file("Cannot find any core file",
                                       exit_handle.stderr_file().str()));
 
