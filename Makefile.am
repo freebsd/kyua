@@ -32,6 +32,7 @@ CHECK_BOOTSTRAP_DEPS =
 CHECK_KYUA_DEPS =
 CHECK_LOCAL =
 CLEAN_TARGETS =
+DIST_HOOKS =
 PHONY_TARGETS =
 CLEANFILES =
 
@@ -40,9 +41,9 @@ noinst_DATA =
 noinst_LIBRARIES =
 noinst_SCRIPTS =
 
-doc_DATA = AUTHORS CONTRIBUTING.md CONTRIBUTORS LICENSE NEWS README
-noinst_DATA += INSTALL README
-EXTRA_DIST += $(doc_DATA) INSTALL README
+doc_DATA = AUTHORS CONTRIBUTING.md CONTRIBUTORS LICENSE NEWS.md
+noinst_DATA += INSTALL.md README.md
+EXTRA_DIST += $(doc_DATA) INSTALL.md README.md
 
 if WITH_ATF
 tests_topdir = $(pkgtestsdir)
@@ -133,7 +134,7 @@ dump-ulimits:
 	} | sort | sed -e 's,^,    ,'
 	@echo
 else
-dist-hook: forbid-dist
+DIST_HOOKS += forbid-dist
 PHONY_TARGETS += forbid-dist
 forbid-dist:
 	@echo "Sorry; cannot make dist without atf."
@@ -162,7 +163,21 @@ clean-api-docs:
 	rm -rf api-docs
 endif
 
+# Replace Automake's builtin check-news functionality so that we can validate
+# the NEWS.md file instead of NEWS.
+DIST_HOOKS += check-news
+PHONY_TARGETS += check-news
+check-news:
+	@case "$$(sed 15q "$(srcdir)/NEWS.md")" in \
+	*"$(VERSION)"*) : ;; \
+	*) \
+	    echo "NEWS.md not updated; not releasing" 1>&2; \
+	    exit 1 \
+	    ;; \
+	esac
+
 clean-local: $(CLEAN_TARGETS)
+dist-hook: $(DIST_HOOKS)
 
 PHONY_TARGETS += clean-all
 clean-all:

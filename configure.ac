@@ -40,7 +40,7 @@ AC_CONFIG_SRCDIR([main.cpp])
 AC_CONFIG_TESTDIR([bootstrap])
 
 
-AM_INIT_AUTOMAKE([1.9 check-news foreign subdir-objects -Wall])
+AM_INIT_AUTOMAKE([1.9 foreign subdir-objects -Wall])
 
 
 AC_LANG([C++])
