@@ -19,6 +19,9 @@ libraries and languages**.  The library of choice is
 designed, but simple, framework-less test programs and TAP-compliant test
 programs can also be executed through Kyua.
 
+Kyua is licensed under a **[liberal BSD 3-clause license](LICENSE)**.
+This is not an official Google product.
+
 [Read more about Kyua in the About wiki page.](../../wiki/About)
 
 ## Download
@@ -26,6 +29,9 @@ programs can also be executed through Kyua.
 The latest version of Kyua is 0.11 and was released on October 23rd, 2014.
 
 Download: [kyua-0.11](../../releases/tag/kyua-0.11).
+
+See the [release notes](NEWS) for information about the changes in this
+and all previous releases.
 
 ## Installation
 
@@ -56,8 +62,14 @@ test programs.  To that end, see the
 Want to contribute?  Great!  But please first read the guidelines provided
 in [CONTRIBUTING.md](CONTRIBUTING.md).
 
+If you are curious about who made this project possible, you can check out
+the [list of copyright holders](AUTHORS) and the [list of
+individuals](CONTRIBUTORS).
+
 ## Support
 
 Please use the [kyua-discuss mailing
 list](https://groups.google.com/forum/#!forum/kyua-discuss) for any support
 inquiries.
+
+*Homepage:* https://github.com/jmmv/kyua/
