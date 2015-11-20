@@ -80,7 +80,7 @@ Changes in version 0.12
 Changes in version 0.11
 -----------------------
 
-Released on October 23rd, 2014.
+**Released on October 23rd, 2014.**
 
 * Added support to print the details of all test cases (metadata and
   their output) to `report`.  This is via a new `--verbose` flag which
