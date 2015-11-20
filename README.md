@@ -45,7 +45,7 @@ wherever available:
 
 Should you want to build and install Kyua from the source tree provided
 here, follow the instructions in the
-[INSTALL file](INSTALL).
+[INSTALL.md file](INSTALL.md).
 
 You should also install the ATF libraries to assist in the development of
 test programs.  To that end, see the
