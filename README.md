@@ -30,7 +30,7 @@ The latest version of Kyua is 0.11 and was released on October 23rd, 2014.
 
 Download: [kyua-0.11](../../releases/tag/kyua-0.11).
 
-See the [release notes](NEWS) for information about the changes in this
+See the [release notes](NEWS.md) for information about the changes in this
 and all previous releases.
 
 ## Installation
