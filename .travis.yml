@@ -9,6 +9,7 @@ before_install:
 
 env:
     - DO=apidocs
+    - DO=style
     - DO=distcheck AS_ROOT=no
     - DO=distcheck AS_ROOT=yes UNPRIVILEGED_USER=no
     - DO=distcheck AS_ROOT=yes UNPRIVILEGED_USER=yes
@@ -20,6 +21,8 @@ matrix:
         # about the run-time aspects of the tests.
         - compiler: gcc
           env: DO=apidocs
+        - compiler: gcc
+          env: DO=style
         - compiler: gcc
           env: DO=distcheck AS_ROOT=yes UNPRIVILEGED_USER=no
         - compiler: gcc

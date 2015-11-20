@@ -85,6 +85,10 @@ do_distcheck() {
     install_configure_deps
 }
 
+do_style() {
+    install_configure_deps
+}
+
 main() {
     if [ -z "${DO}" ]; then
         echo "DO must be defined" 1>&2
