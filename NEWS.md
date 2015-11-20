@@ -1,4 +1,9 @@
-# Changes in version 0.12
+Major changes between releases
+==============================
+
+
+Changes in version 0.12
+-----------------------
 
 **STILL UNDER DEVELOPMENT; NOT RELEASED YET.**
 
@@ -68,7 +73,9 @@
 * Issue #144: Improved documentation on the support for custom properties
   in the test metadata.
 
-# Changes in version 0.11
+
+Changes in version 0.11
+-----------------------
 
 Released on October 23rd, 2014.
 
@@ -148,7 +155,9 @@ Released on October 23rd, 2014.
   restrictions of the `include()` directive and by adding abundant
   examples.
 
-# Changes in version 0.10
+
+Changes in version 0.10
+-----------------------
 
 **Experimental version released on August 14th, 2014.**
 
@@ -167,7 +176,9 @@ Released on October 23rd, 2014.
   testers/atf_result_test to use a different signal value.  This is to
   prevent triggering a core dump that made the test fail in some platforms.
 
-# Changes in kyua-cli version 0.9
+
+Changes in kyua-cli version 0.9
+-------------------------------
 
 **Experimental version released on August 8th, 2014.**
 
@@ -209,7 +220,9 @@ Changes in more detail:
   is found.  This command is now intended to run only over existing
   files.
 
-# Changes in kyua-testers version 0.3
+
+Changes in kyua-testers version 0.3
+-----------------------------------
 
 **Experimental version released on August 8th, 2014.**
 
@@ -224,7 +237,9 @@ Changes in more detail:
   ignore lines that look like `ok` and `not ok` but aren't results; and
   handle test programs that report a pass but exit with a non-zero code.
 
-# Changes in kyua-cli version 0.8
+
+Changes in kyua-cli version 0.8
+-------------------------------
 
 **Experimental version released on December 7th, 2013.**
 
@@ -239,7 +254,9 @@ Changes in more detail:
   will now exist (or not) based on tester availability, which simplifies
   the addition of new testers or the selective installation of them.
 
-# Changes in kyua-testers version 0.2
+
+Changes in kyua-testers version 0.2
+-----------------------------------
 
 **Experimental version released on December 7th, 2013.**
 
@@ -253,7 +270,9 @@ Changes in more detail:
 * Issue #24: Improve test case isolation by confining the tests to their
   own session instead of just to their own process group.
 
-# Changes in kyua-cli version 0.7
+
+Changes in kyua-cli version 0.7
+-------------------------------
 
 **Experimental version released on October 18th, 2013.**
 
@@ -272,7 +291,9 @@ Changes in more detail:
   first appeared in Automake 1.11.2.  Fixes a problem in Ubuntu 10.04
   LTS, which appears stuck in 1.11.1.
 
-# Changes in kyua-cli version 0.6
+
+Changes in kyua-cli version 0.6
+-------------------------------
 
 **Experimental version released on February 22nd, 2013.**
 
@@ -335,7 +356,9 @@ Changes in more detail:
   predefine the results of the tests without having to run the
   executables.
 
-# Changes in kyua-testers version 0.1
+
+Changes in kyua-testers version 0.1
+-----------------------------------
 
 **Experimental version released on February 19th, 2013.**
 
@@ -351,7 +374,9 @@ The code in this package is all C as opposed to the current C++ codebase
 of kyua-cli, which means that the overall build times of Kyua are now
 reduced.
 
-# Changes in kyua-cli version 0.5
+
+Changes in kyua-cli version 0.5
+-------------------------------
 
 **Experimental version released on July 10th, 2012.**
 
@@ -373,7 +398,9 @@ reduced.
 * Fixed the build when using a "build directory" and a clean source tree
   from the repository.
 
-# Changes in kyua-cli version 0.4
+
+Changes in kyua-cli version 0.4
+-------------------------------
 
 **Experimental version released on June 6th, 2012.**
 
@@ -414,7 +441,9 @@ reduced.
   now carry a `test_suites.` prefix when referencing any variables under
   such tree.
 
-# Changes in kyua-cli version 0.3
+
+Changes in kyua-cli version 0.3
+-------------------------------
 
 **Experimental version released on February 24th, 2012.**
 
@@ -448,7 +477,9 @@ reduced.
   slightly easier to debug problems in our own code when we get a
   failing test.
 
-# Changes in kyua-cli version 0.2
+
+Changes in kyua-cli version 0.2
+-------------------------------
 
 **Experimental version released on August 24th, 2011.**
 
@@ -512,7 +543,9 @@ Without further ado, here comes the itemized list of changes:
 * Fixed many build and portability problems to Debian sid with GCC 4.6.3
   and Ubuntu 10.04.1 LTS.  (Issues #20, #21, #26.)
 
-# Changes in kyua-cli version 0.1
+
+Changes in kyua-cli version 0.1
+-------------------------------
 
 **Experimental version released on June 23rd, 2011.**
 

@@ -1,10 +1,13 @@
-# Contributing code to Kyua
+Contributing code to Kyua
+=========================
 
 Want to contribute?  Great!  But first, please take a few minutes to read this
 document in full.  Doing so upfront will minimize the turnaround time required
 to get your changes incorporated.
 
-## Legal notes
+
+Legal notes
+-----------
 
 * Before we can use your code, you must sign the
   [Google Individual Contributor License
@@ -32,7 +35,9 @@ to get your changes incorporated.
   having to replicate potentially hundreds of different copyright notes in
   documentation materials, etc.
 
-## Communication
+
+Communication
+-------------
 
 * Before you start working on a larger contribution, you should get in touch
   with us first through the
@@ -45,7 +50,9 @@ to get your changes incorporated.
   [kyua-log mailing list](https://groups.google.com/forum/#!forum/kyua-log) to
   get notifications on new commits, Travis CI results, or changes to bugs.
 
-## Git workflow
+
+Git workflow
+------------
 
 * Always work on a non-master branch.
 
@@ -69,7 +76,9 @@ to get your changes incorporated.
   change being submitted belongs in a different pull request, which is trivial
   to achieve if you use one branch per change as requested in this workflow.
 
-## Code reviews
+
+Code reviews
+------------
 
 * All changes will be subject to code reviews pre-merge time.  In other words:
   all pull requests will be carefully inspected before being accepted and they
@@ -87,7 +96,9 @@ to get your changes incorporated.
   appears when you click the button to file a pull request, or you can see the
   diff by typing `git diff <your-branch> master`.
 
-## Commit messages
+
+Commit messages
+---------------
 
 * Follow standard Git commit message guidelines.  The first line has a maximum
   length of 50 characters, does not terminate in a period, and has to summarize
@@ -99,7 +110,9 @@ to get your changes incorporated.
 * Use the imperative tense.  Say `Add foo-bar` or `Fix baz` instead of `Adding
   blah`, `Adds bleh`, or `Added bloh`.
 
-## Handling bug tracker issues
+
+Handling bug tracker issues
+---------------------------
 
 * All changes pushed to `master` should cross-reference one or more issues in
   the bug tracker.  This is particularly important for bug fixes, but also
@@ -121,7 +134,9 @@ to get your changes incorporated.
   --no-commit your-branch`, followed by an edit of `NEWS`, and terminated with a
   `git commit -a` with the proper note on the bug being fixed.
 
-## Style guide
+
+Style guide
+-----------
 
 These notes are generic and certainly *non-exhaustive*:
 
