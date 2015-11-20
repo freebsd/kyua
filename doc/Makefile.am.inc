@@ -27,7 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 BUILD_MANPAGE = \
-	test -d doc || mkdir -p doc; \
+	$(MKDIR_P) doc; \
 	$(SHELL) $(srcdir)/doc/manbuild.sh \
 	    -v "CONFDIR=$(kyua_confdir)" \
 	    -v "DOCDIR=$(docdir)" \
@@ -141,7 +141,7 @@ noinst_SCRIPTS += doc/manbuild_test
 CLEANFILES += doc/manbuild_test
 EXTRA_DIST += doc/manbuild_test.sh
 doc/manbuild_test: $(srcdir)/doc/manbuild_test.sh Makefile
-	$(AM_V_GEN)test -d doc || mkdir -p doc; \
+	$(AM_V_GEN)$(MKDIR_P) doc; \
 	echo "#! $(ATF_SH)" >doc/manbuild_test.tmp; \
 	echo "# AUTOMATICALLY GENERATED FROM Makefile" \
 	    >>doc/manbuild_test.tmp; \

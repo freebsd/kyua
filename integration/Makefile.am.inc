@@ -33,7 +33,7 @@ tests_integration_DATA = integration/Kyuafile
 EXTRA_DIST += $(tests_integration_DATA)
 
 ATF_SH_BUILD = \
-    test -d integration || mkdir -p integration; \
+    $(MKDIR_P) integration; \
     echo "\#! $(ATF_SH)" >integration/$${name}; \
     echo "\# AUTOMATICALLY GENERATED FROM Makefile" >>integration/$${name}; \
     if [ -n "$${substs}" ]; then \

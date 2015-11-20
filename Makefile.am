@@ -151,7 +151,7 @@ check-api-docs: api-docs/api-docs.tag
 	@$(AWK) -f $(srcdir)/admin/check-api-docs.awk api-docs/doxygen.out
 
 api-docs/api-docs.tag: $(builddir)/Doxyfile $(SOURCES)
-	@mkdir -p api-docs
+	@$(MKDIR_P) api-docs
 	@rm -f api-docs/doxygen.out api-docs/doxygen.out.tmp
 	$(AM_V_GEN)$(DOXYGEN) $(builddir)/Doxyfile \
 	    >api-docs/doxygen.out.tmp 2>&1 && \

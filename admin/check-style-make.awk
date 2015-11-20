@@ -59,6 +59,10 @@ BEGIN {
     warn("Continuation lines must use a single tab");
 }
 
+/mkdir.*-p/ {
+    warn("Use $(MKDIR_P) instead of mkdir -p");
+}
+
 END {
     if (skip)
         warn("Missing CHECK_STYLE_ENABLE");
