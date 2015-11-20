@@ -1,9 +1,0 @@
-*.a
-*.o
-*_helper
-*_helpers
-*_inttest
-*_test
-*-tester
-
-defs.h
