@@ -36,7 +36,6 @@ extern "C" {
 #include <unistd.h>
 }
 
-#include <cassert>
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
@@ -48,6 +47,7 @@ extern "C" {
 #include "utils/process/exceptions.hpp"
 #include "utils/process/system.hpp"
 #include "utils/process/status.hpp"
+#include "utils/sanity.hpp"
 #include "utils/signals/interrupts.hpp"
 
 namespace fs = utils::fs;
@@ -153,7 +153,7 @@ process::exec(const fs::path& program, const args_vector& args) throw()
 void
 process::exec_unsafe(const fs::path& program, const args_vector& args)
 {
-    assert(args.size() < MAX_ARGS);
+    PRE(args.size() < MAX_ARGS);
     int original_errno = 0;
     try {
         const char* argv[MAX_ARGS + 1];
@@ -166,7 +166,7 @@ process::exec_unsafe(const fs::path& program, const args_vector& args)
         const int ret = ::execv(program.c_str(),
                                 (char* const*)(unsigned long)(const void*)argv);
         original_errno = errno;
-        assert(ret == -1);
+        INV(ret == -1);
         std::cerr << "Failed to execute " << program << ": "
                   << std::strerror(original_errno) << "\n";
     } catch (const std::runtime_error& error) {
@@ -181,7 +181,7 @@ process::exec_unsafe(const fs::path& program, const args_vector& args)
 
     // We must do this here to prevent our exception from being caught by the
     // generic handlers above.
-    assert(original_errno != 0);
+    INV(original_errno != 0);
     throw system_error("Failed to execute " + program.str(), original_errno);
 }
 

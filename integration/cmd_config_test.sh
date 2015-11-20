@@ -311,10 +311,12 @@ EOF
 
 utils_test_case variable_flag__invalid_key
 variable_flag__invalid_key_body() {
+    # CHECK_STYLE_DISABLE
     cat >experr <<EOF
 Usage error: Invalid argument '' for option --variable: Argument does not have the form 'K=V'.
 Type 'kyua help' for usage information.
 EOF
+    # CHECK_STYLE_ENABLE
     atf_check -s exit:3 -o empty -e file:experr kyua \
         -v "test_suites.a.b=c" -v "" config
 }

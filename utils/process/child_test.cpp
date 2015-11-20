@@ -315,8 +315,8 @@ child__fork_capture__ok(Hook hook)
     std::cout << "This unflushed message should not propagate to the child";
     std::cerr << "This unflushed message should not propagate to the child";
     std::auto_ptr< process::child > child = process::child::fork_capture(hook);
-    std::cout << std::endl;
-    std::cerr << std::endl;
+    std::cout.flush();
+    std::cerr.flush();
 
     std::istream& output = child->output();
     for (std::size_t i = 0; i < 100; i++) {

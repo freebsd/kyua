@@ -7,7 +7,8 @@ to get your changes incorporated.
 ## Legal notes
 
 * Before we can use your code, you must sign the
-  [Google Individual Contributor License Agreement](https://developers.google.com/open-source/cla/individual),
+  [Google Individual Contributor License
+  Agreement](https://developers.google.com/open-source/cla/individual),
   also known as the CLA, which you can easily do online.  The CLA is necessary
   mainly because you own the copyright to your changes, even after your
   contribution becomes part of our codebase, so we need your permission to use
@@ -19,7 +20,8 @@ to get your changes incorporated.
 
 * Contributions made by corporations are covered by a different agreement than
   the one above: the
-  [Google Software Grant and Corporate Contributor License Agreement](https://developers.google.com/open-source/cla/corporate).
+  [Google Software Grant and Corporate Contributor License
+  Agreement](https://developers.google.com/open-source/cla/corporate).
   Please get your company to sign this agreement instead if your contribution is
   on their behalf.
 
@@ -34,7 +36,8 @@ to get your changes incorporated.
 
 * Before you start working on a larger contribution, you should get in touch
   with us first through the
-  [kyua-discuss mailing list](https://groups.google.com/forum/#!forum/kyua-discuss)
+  [kyua-discuss mailing
+  list](https://groups.google.com/forum/#!forum/kyua-discuss)
   with your idea so that we can help out and possibly guide you.  Coordinating
   upfront makes it much easier to avoid frustration later on.
 
@@ -130,7 +133,8 @@ These notes are generic and certainly *non-exhaustive*:
   `Makefile`s, where any continuation line within a target must be prefixed by a
   *single tab*.
 
-* [Be mindful of spelling and grammar.](http://julipedia.meroh.net/2013/06/readability-mind-your-typos-and-grammar.html)
+* [Be mindful of spelling and
+  grammar.](http://julipedia.meroh.net/2013/06/readability-mind-your-typos-and-grammar.html)
   Mistakes of this kind are enough of a reason to return a pull request.
 
 * Use proper punctuation for all sentences.  Always start with a capital letter

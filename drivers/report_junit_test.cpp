@@ -171,8 +171,10 @@ ATF_TEST_CASE_BODY(junit_classname)
 ATF_TEST_CASE_WITHOUT_HEAD(junit_duration);
 ATF_TEST_CASE_BODY(junit_duration)
 {
-    ATF_REQUIRE_EQ("0.457", drivers::junit_duration(datetime::delta(0, 456700)));
-    ATF_REQUIRE_EQ("3.120", drivers::junit_duration(datetime::delta(3, 120000)));
+    ATF_REQUIRE_EQ("0.457",
+                   drivers::junit_duration(datetime::delta(0, 456700)));
+    ATF_REQUIRE_EQ("3.120",
+                   drivers::junit_duration(datetime::delta(3, 120000)));
     ATF_REQUIRE_EQ("5.000", drivers::junit_duration(datetime::delta(5, 0)));
 }
 

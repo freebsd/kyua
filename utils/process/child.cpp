@@ -37,7 +37,6 @@ extern "C" {
 #include <unistd.h>
 }
 
-#include <cassert>
 #include <cerrno>
 #include <iostream>
 #include <memory>
