@@ -148,7 +148,7 @@ process::isolate_child(const optional< passwd::user >& unprivileged_user,
     prepare_environment(work_directory);
     (void)::umask(0022);
 
-    if (unprivileged_user) {
+    if (unprivileged_user && passwd::current_user().is_root()) {
         const passwd::user& user = unprivileged_user.get();
 
         if (user.gid != ::getgid()) {
@@ -187,7 +187,7 @@ void
 process::isolate_path(const optional< passwd::user >& unprivileged_user,
                       const fs::path& file)
 {
-    if (!unprivileged_user)
+    if (!unprivileged_user || !passwd::current_user().is_root())
         return;
     const passwd::user& user = unprivileged_user.get();
 

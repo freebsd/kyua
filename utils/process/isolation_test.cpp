@@ -315,6 +315,25 @@ ATF_TEST_CASE_BODY(isolate_child__clean_environment)
 }
 
 
+ATF_TEST_CASE(isolate_child__other_user_when_unprivileged);
+ATF_TEST_CASE_HEAD(isolate_child__other_user_when_unprivileged)
+{
+    set_md_var("require.user", "unprivileged");
+}
+ATF_TEST_CASE_BODY(isolate_child__other_user_when_unprivileged)
+{
+    const passwd::user user = passwd::current_user();
+
+    passwd::user other_user = user;
+    other_user.uid += 1;
+    other_user.gid += 1;
+    process::isolate_child(utils::make_optional(other_user), fs::path("."));
+
+    ATF_REQUIRE_EQ(user.uid, ::getuid());
+    ATF_REQUIRE_EQ(user.gid, ::getgid());
+}
+
+
 ATF_TEST_CASE(isolate_child__drop_privileges);
 ATF_TEST_CASE_HEAD(isolate_child__drop_privileges)
 {
@@ -340,6 +359,13 @@ ATF_TEST_CASE_HEAD(isolate_child__drop_privileges_fail_uid)
 }
 ATF_TEST_CASE_BODY(isolate_child__drop_privileges_fail_uid)
 {
+    // Fake the current user as root so that we bypass the protections in
+    // isolate_child that prevent us from attempting a user switch when we are
+    // not root.  We do this so we can trigger the setuid failure.
+    passwd::user root = passwd::user("root", 0, 0);
+    ATF_REQUIRE(root.is_root());
+    passwd::set_current_user_for_testing(root);
+
     passwd::user unprivileged_user = passwd::current_user();
     unprivileged_user.uid += 1;
 
@@ -359,6 +385,13 @@ ATF_TEST_CASE_HEAD(isolate_child__drop_privileges_fail_gid)
 }
 ATF_TEST_CASE_BODY(isolate_child__drop_privileges_fail_gid)
 {
+    // Fake the current user as root so that we bypass the protections in
+    // isolate_child that prevent us from attempting a user switch when we are
+    // not root.  We do this so we can trigger the setgid failure.
+    passwd::user root = passwd::user("root", 0, 0);
+    ATF_REQUIRE(root.is_root());
+    passwd::set_current_user_for_testing(root);
+
     passwd::user unprivileged_user = passwd::current_user();
     unprivileged_user.gid += 1;
 
@@ -497,6 +530,21 @@ ATF_TEST_CASE_BODY(isolate_path__same_user)
 }
 
 
+ATF_TEST_CASE(isolate_path__other_user_when_unprivileged);
+ATF_TEST_CASE_HEAD(isolate_path__other_user_when_unprivileged)
+{
+    set_md_var("require.user", "unprivileged");
+}
+ATF_TEST_CASE_BODY(isolate_path__other_user_when_unprivileged)
+{
+    passwd::user user = passwd::current_user();
+    user.uid += 1;
+    user.gid += 1;
+
+    do_isolate_path_test(utils::make_optional(user), none, none);
+}
+
+
 ATF_TEST_CASE(isolate_path__drop_privileges);
 ATF_TEST_CASE_HEAD(isolate_path__drop_privileges)
 {
@@ -550,6 +598,7 @@ ATF_TEST_CASE_BODY(isolate_path__drop_privileges_only_gid)
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, isolate_child__clean_environment);
+    ATF_ADD_TEST_CASE(tcs, isolate_child__other_user_when_unprivileged);
     ATF_ADD_TEST_CASE(tcs, isolate_child__drop_privileges);
     ATF_ADD_TEST_CASE(tcs, isolate_child__drop_privileges_fail_uid);
     ATF_ADD_TEST_CASE(tcs, isolate_child__drop_privileges_fail_gid);
@@ -563,6 +612,7 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, isolate_path__no_user);
     ATF_ADD_TEST_CASE(tcs, isolate_path__same_user);
+    ATF_ADD_TEST_CASE(tcs, isolate_path__other_user_when_unprivileged);
     ATF_ADD_TEST_CASE(tcs, isolate_path__drop_privileges);
     ATF_ADD_TEST_CASE(tcs, isolate_path__drop_privileges_only_uid);
     ATF_ADD_TEST_CASE(tcs, isolate_path__drop_privileges_only_gid);
