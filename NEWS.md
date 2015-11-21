@@ -18,7 +18,7 @@ Changes in version 0.12
   this new code.
 
 * Issue #2: Added the new `parallelism` configuration property to
-  kyua.conf.  This setting indicates the degree of parallelism to use
+  `kyua.conf`.  This setting indicates the degree of parallelism to use
   when running test cases using the new executor.  Currently defaults
   to 1 to preserve sequential behavior, but this will eventually be
   bumped to a greater value once the new implementation gets some
@@ -36,10 +36,11 @@ Changes in version 0.12
   displayed once the test program completes.  This is a shortcoming of
   the new parallel execution engine that should be resolved.
 
-* Fixed the handling of relative paths in the fs.* functions available
-  in Kyuafiles.  All paths are now resolved relative to the location of
-  the caller Kyuafile.  Kyuafile.top has been updated with these changes
-  and you should update custom copies of this file with the new version.
+* Fixed the handling of relative paths in the `fs.*` functions available
+  in `Kyuafile`s.  All paths are now resolved relative to the location of
+  the caller `Kyuafile`.  `Kyuafile.top` has been updated with these
+  changes and you should update custom copies of this file with the new
+  version.
 
 * Changed temporary directory creation to always grant search
   permissions on temporary directories.  This is to prevent potential
@@ -58,8 +59,8 @@ Changes in version 0.12
   to forbid this.
 
 * Fixed stacktrace gathering with FreeBSD's ancient version of GDB.
-  GDB 6.1.1 (circa 2004) does not have the -ex flag so we need to
-  generate a temporary GDB script and feed it to GDB with -x instead.
+  GDB 6.1.1 (circa 2004) does not have the `-ex` flag so we need to
+  generate a temporary GDB script and feed it to GDB with `-x` instead.
 
 * Issue #136: Fixed the XML escaping in the JUnit output so that
   non-printable characters are properly handled when they appear in the
@@ -73,7 +74,7 @@ Changes in version 0.12
 * Issue #144: Improved documentation on the support for custom properties
   in the test metadata.
 
-* Converted the INSTALL, NEWS, and README distribution documents to
+* Converted the `INSTALL`, `NEWS`, and `README` distribution documents to
   Markdown for better formatting online.
 
 
@@ -112,7 +113,7 @@ Changes in version 0.11
   command-line arguments.  Combined with `--verbose`, this allows
   inspecting the details of a test case failure after execution.
 
-* Issue #55: Deprecated support for specifying test_suite overrides on
+* Issue #55: Deprecated support for specifying `test_suite` overrides on
   a test program basis.  This idiom should not be used but support for
   it remains in place.
 
@@ -125,14 +126,14 @@ Changes in version 0.11
 
 * Issue #84: Started passing test-suite configuration variables to plain
   and TAP test programs via the environment.  The name of the
-  environment variables set this way is prefixed by TEST_ENV_, so a
+  environment variables set this way is prefixed by `TEST_ENV_`, so a
   configuration variable of the form
   `test_suites.some_name.allow_unsafe_ops=yes` in `kyua.conf` becomes
   `TEST_ENV_allow_unsafe_ops=YES` in the environment.
 
 * Issues #97 and #116: Fixed the build on Illumos.
 
-* Issue #102: Set TMPDIR to the test case's work directory when running
+* Issue #102: Set `TMPDIR` to the test case's work directory when running
   the test case.  If the test case happens to use the `mktemp(3)` family
   of functions (due to misunderstandings on how Kyua works or due to
   the reuse of legacy test code), we don't want it to easily escape the
@@ -145,14 +146,14 @@ Changes in version 0.11
   system for tests in FreeBSD so that we do not leak `md(4)` devices.
 
 * Issue #109: Changed the privilege dropping code to start properly
-  dropping group privileges when unprivileged_user is set.  Also fixes
-  testers/run_test:fork_wait__unprivileged_group.
+  dropping group privileges when `unprivileged_user` is set.  Also fixes
+  `testers/run_test:fork_wait__unprivileged_group`.
 
 * Issue #110: Changed `help` to display version information and clarified
   the purpose of the `about` command in its documentation.
 
-* Issue #111: Fixed crash when defining a test program in a Kyuafile that
-  has not yet specified the test suite name.
+* Issue #111: Fixed crash when defining a test program in a `Kyuafile`
+  that has not yet specified the test suite name.
 
 * Issue #114: Improved the `kyuafile(5)` manual page by clarifying the
   restrictions of the `include()` directive and by adding abundant
@@ -168,15 +169,15 @@ Changes in version 0.10
 
 * Dropped the `kyua-atf-compat` package.
 
-* Issue #100: Do not try to drop privileges to unprivileged_user when we
+* Issue #100: Do not try to drop privileges to `unprivileged_user` when we
   are already running as an unprivileged user.  Doing so is not possible
   and thus causes spurious test failures when the current user is not
-  root and the current user and unprivileged_user do not match.
+  root and the current user and `unprivileged_user` do not match.
 
 * Issue #79: Mention `kyua.conf(5)` in the *See also* section of `kyua(1)`.
 
 * Issue #75: Change the `rewrite__expected_signal__bad_arg` test in
-  testers/atf_result_test to use a different signal value.  This is to
+  `testers/atf_result_test` to use a different signal value.  This is to
   prevent triggering a core dump that made the test fail in some platforms.
 
 
@@ -229,11 +230,11 @@ Changes in kyua-testers version 0.3
 
 **Experimental version released on August 8th, 2014.**
 
-* Made the testers set a "sanitized" value for the HOME environment
+* Made the testers set a "sanitized" value for the `HOME` environment
   variable where, for example, consecutive and trailing slashes have
   been cleared.  Mac OS X has a tendency to append a trailing slash to
-  the value of TMPDIR, which can cause third-party tests to fail if they
-  compare ${HOME} with $(pwd).
+  the value of `TMPDIR`, which can cause third-party tests to fail if
+  they compare `${HOME}` with `$(pwd)`.
 
 * Issues #85, #86, #90 and #92: Made the TAP parser more complete: mark
   test cases reported as `TODO` or `SKIP` as passed; handle skip plans;
@@ -249,7 +250,7 @@ Changes in kyua-cli version 0.8
 * Added support for Lutok 0.4.
 
 * Issue #24: Plug the bootstrap tests back into the test suite.  Fixes
-  in kyua-testers-0.2 to isolate test cases into their own sessions
+  in `kyua-testers` 0.2 to isolate test cases into their own sessions
   should allow these to run fine.
 
 * Issue #74: Changed the `kyuafile(5)` parser to automatically discover
@@ -263,10 +264,10 @@ Changes in kyua-testers version 0.2
 
 **Experimental version released on December 7th, 2013.**
 
-* Issue #74: Added the kyua-tap-tester, a new backend to interact with
+* Issue #74: Added the `kyua-tap-tester`, a new backend to interact with
   test programs that comply with the Test Anything Protocol.
 
-* Issue #69: Cope with the lack of AM_PROG_AR in configure.ac, which
+* Issue #69: Cope with the lack of `AM_PROG_AR` in `configure.ac`, which
   first appeared in Automake 1.11.2.  Fixes a problem in Ubuntu 10.04
   LTS, which appears stuck in 1.11.1.
 
@@ -290,7 +291,7 @@ Changes in kyua-cli version 0.7
 
 * Switched to use Lutok 0.3 to gain compatibility with Lua 5.2.
 
-* Issue #69: Cope with the lack of AM_PROG_AR in configure.ac, which
+* Issue #69: Cope with the lack of `AM_PROG_AR` in `configure.ac`, which
   first appeared in Automake 1.11.2.  Fixes a problem in Ubuntu 10.04
   LTS, which appears stuck in 1.11.1.
 
@@ -303,24 +304,24 @@ Changes in kyua-cli version 0.6
 * Issue #36: Changed `kyua help` to not fail when the configuration file
   is bogus.  Help should always work.
 
-* Issue #37: Simplified the `syntax()` calls in configuration and Kyuafile
-  files to only specify the requested version instead of also the format
-  name.  The format name is implied by the file being loaded, so there
-  is no use in the caller having to specify it.  The version number of
-  these file formats has been bumped to 2.
+* Issue #37: Simplified the `syntax()` calls in configuration and
+  `Kyuafile` files to only specify the requested version instead of also
+  the format name.  The format name is implied by the file being loaded, so
+  there is no use in the caller having to specify it.  The version number
+  of these file formats has been bumped to 2.
 
 * Issue #39: Added per-test-case metadata values to the HTML reports.
 
 * Issue #40: Rewrote the documentation as manual pages and removed the
   previous GNU Info document.
 
-* Issue #47: Started using the independent testers in the kyua-testers
+* Issue #47: Started using the independent testers in the `kyua-testers`
   package to run the test cases.  Kyua does not implement the logic to
   invoke test cases any more, which provides for better modularity,
   extensibility and robustness.
 
 * Issue #57: Added support to specify arbitrary metadata properties for
-  test programs right from the Kyuafile.  This is to make plain test
+  test programs right from the `Kyuafile`.  This is to make plain test
   programs more versatile, by allowing them to specify any of the
   requirements (allowed architectures, required files, etc.) supported
   by Kyua.
@@ -347,9 +348,9 @@ Changes in kyua-cli version 0.6
   database with an old schema to the current schema.
 
 * Removed the GDB build-time configuration variable.  This is now part
-  of the kyua-testers package.
+  of the `kyua-testers` package.
 
-* Issue #31: Rewrote the Kyuafile parsing code in C++, which results in
+* Issue #31: Rewrote the `Kyuafile` parsing code in C++, which results in
   a much simpler implementation.  As a side-effect, this gets rid of the
   external Lua files required by `kyua`, which in turn make the tool
   self-contained.
@@ -365,16 +366,16 @@ Changes in kyua-testers version 0.1
 
 **Experimental version released on February 19th, 2013.**
 
-This is the first public release of the kyua-testers package.
+This is the first public release of the `kyua-testers` package.
 
 The goal of this first release is to adopt all the test case execution
-code of kyua-cli 0.5 and ship it as a collection of independent tester
-binaries.  The kyua-cli package will rely on these binaries to run the
+code of `kyua-cli` 0.5 and ship it as a collection of independent tester
+binaries.  The `kyua-cli` package will rely on these binaries to run the
 tests, which provides better modularity and simplicity to the
 architecture of Kyua.
 
 The code in this package is all C as opposed to the current C++ codebase
-of kyua-cli, which means that the overall build times of Kyua are now
+of `kyua-cli`, which means that the overall build times of Kyua are now
 reduced.
 
 
@@ -388,11 +389,11 @@ Changes in kyua-cli version 0.5
 
 * Issue #32: Added the `--build-root` option to the debug, list and test
   commands.  This allows executing test programs from a different
-  directory than where the Kyuafile scripts live.  See the *Build roots*
+  directory than where the `Kyuafile` scripts live.  See the *Build roots*
   section in the manual for more details.
 
 * Issue #33: Removed the `kyuaify.sh` script.  This has been renamed to
-  atf2kyua and moved to the kyua-atf-compat module, where it ships as a
+  atf2kyua and moved to the `kyua-atf-compat` module, where it ships as a
   first-class utility (with a manual page and tests).
 
 * Issue #34: Changed the HTML reports to include the stdout and stderr of
@@ -524,7 +525,7 @@ Without further ado, here comes the itemized list of changes:
   inspect the current configuration variables after evaluation, without
   having to read through configuration files.  (Issue #11.)
 
-* Removed the test_suites_var function from configuration files.  This
+* Removed the `test_suites_var` function from configuration files.  This
   was used to set the value of test-suite-sepecific variables, but it
   was ugly-looking.  It is now possible to use the more natural syntax
   `test_suites.<test-suite-name>.<variable> = <value>`.  (Issue #11.)
@@ -552,7 +553,7 @@ Changes in kyua-cli version 0.1
 
 **Experimental version released on June 23rd, 2011.**
 
-This is the first public release of the kyua-cli package.
+This is the first public release of the `kyua-cli` package.
 
 The scope of this release is to provide functional replacement for the
 `atf-run` utility included in the atf package.  At this point, `kyua`
@@ -566,5 +567,5 @@ features will mark future milestones and therefore be part of other
 releases.
 
 Be aware that this release has suffered very limited field testing.
-The test suite for kyua-cli is quite comprehensive, but some bugs may
+The test suite for `kyua-cli` is quite comprehensive, but some bugs may
 be left in any place.
