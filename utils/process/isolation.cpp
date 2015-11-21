@@ -187,7 +187,7 @@ void
 process::isolate_path(const optional< passwd::user >& unprivileged_user,
                       const fs::path& file)
 {
-    if (!unprivileged_user)
+    if (!unprivileged_user || !passwd::current_user().is_root())
         return;
     const passwd::user& user = unprivileged_user.get();
 

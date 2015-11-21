@@ -497,6 +497,21 @@ ATF_TEST_CASE_BODY(isolate_path__same_user)
 }
 
 
+ATF_TEST_CASE(isolate_path__other_user_when_unprivileged);
+ATF_TEST_CASE_HEAD(isolate_path__other_user_when_unprivileged)
+{
+    set_md_var("require.user", "unprivileged");
+}
+ATF_TEST_CASE_BODY(isolate_path__other_user_when_unprivileged)
+{
+    passwd::user user = passwd::current_user();
+    user.uid += 1;
+    user.gid += 1;
+
+    do_isolate_path_test(utils::make_optional(user), none, none);
+}
+
+
 ATF_TEST_CASE(isolate_path__drop_privileges);
 ATF_TEST_CASE_HEAD(isolate_path__drop_privileges)
 {
@@ -563,6 +578,7 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, isolate_path__no_user);
     ATF_ADD_TEST_CASE(tcs, isolate_path__same_user);
+    ATF_ADD_TEST_CASE(tcs, isolate_path__other_user_when_unprivileged);
     ATF_ADD_TEST_CASE(tcs, isolate_path__drop_privileges);
     ATF_ADD_TEST_CASE(tcs, isolate_path__drop_privileges_only_uid);
     ATF_ADD_TEST_CASE(tcs, isolate_path__drop_privileges_only_gid);
