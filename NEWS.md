@@ -5,36 +5,44 @@ Major changes between releases
 Changes in version 0.12
 -----------------------
 
-**STILL UNDER DEVELOPMENT; NOT RELEASED YET.**
+**Released on November 22nd, 2015.**
 
-* Issue #2: Switched `kyua test` to the new executor backend described
-  below, which in turn means that test cases are now run in parallel if
-  the `parallelism` configuration variable is set to a value greater
-  than 1.
+This is a huge release and marks a major milestone for Kyua as it finally
+implements a long-standing feature request: the ability to execute test
+cases in parallel.  This is a big deal because test cases are rarely
+CPU-bound: running them in parallel yields much faster execution times for
+large test suites, allowing faster iteration of changes during development.
 
-* Issue #2: Added the executor, a new implementation of the test
-  execution engine purely in C++ that supports parallel execution of
-  test cases.  The goal is to eventually replace all the C testers with
-  this new code.
+As an example: the FreeBSD test suite as of this date contains 3285 test
+cases.  With sequential execution, a full test suite run takes around 12
+minutes to complete, whereas on a 4-core machine with a high level of
+parallelism it takes a little over 1 minute.
 
-* Issue #2: Added the new `parallelism` configuration property to
-  `kyua.conf`.  This setting indicates the degree of parallelism to use
-  when running test cases using the new executor.  Currently defaults
-  to 1 to preserve sequential behavior, but this will eventually be
-  bumped to a greater value once the new implementation gets some
-  mileage.
+Implementing parallel execution required rewriting most of Kyua's core and
+partly explains explains why there has not been a new release for over a
+year.  The current implementation is purely subprocess-based, which works
+but has some limitations and has resulted in a core that is really complex
+and difficult to understand.  Future versions will investigate the use of
+threads instead for a simplified programming model and additional
+parallelization possibilities.
 
-* Issue #2: Added support for a new `is_exclusive` metadata property that
-  tests can set to indicate that they do not support parallel execution.
-
-* Removed the external testers code in favor of the new built-in
-  implementations.  The new approach feels significantly faster than
-  the previous one.
+* Issue #2: Implemented support to execute test cases in parallel when
+  invoking `kyua test`.  Parallel execution is *only* enabled when the new
+  `parallelism` configuration variable is set to a value greater than `1`.
+  The default behavior is still to run tests sequentially because some test
+  suites contain test cases with side-effects that might fail when run in
+  parallel.  To resolve this, the new metadata property `is_exclusive` can
+  be set to `true` on a test basis to indicate that the test must be run on
+  its own.
 
 * Known regression: Running `kyua debug` on a TAP-based test program does
   not currently report the output in real time.  The output will only be
   displayed once the test program completes.  This is a shortcoming of
-  the new parallel execution engine that should be resolved.
+  the new parallel execution engine and will be resolved.
+
+* Removed the external C-based testers code in favor of the new built-in
+  implementations.  The new approach feels significantly faster than the
+  previous one.
 
 * Fixed the handling of relative paths in the `fs.*` functions available
   in `Kyuafile`s.  All paths are now resolved relative to the location of
@@ -44,9 +52,18 @@ Changes in version 0.12
 
 * Changed temporary directory creation to always grant search
   permissions on temporary directories.  This is to prevent potential
-  problems when running Kyua as root and executing test cases that
-  require dropping privileges (as they may later be unable to use
-  absolute paths that point inside their work directory).
+  problems when running Kyua as root and executing test cases that require
+  dropping privileges (as they may later be unable to use absolute paths
+  that point inside their work directory).
+
+* The cleanup of work directories does not longer attempt to deal with
+  mount points.  If a test case mounts a file system and forgets to unmount
+  it, the mount point will be left behind.  It is now the responsibility of
+  the test case to clean after itself.  The reasons for this change are
+  simplicity and clarity: there are many more things that a test case can
+  do that have side-effects on the system and Kyua cannot protect against
+  them all, so it is better to just have the test undo anything it might
+  have done.
 
 * Improved `kyua report --verbose` to properly handle environment
   variables with continuation lines in them, and fixed the integration
@@ -54,9 +71,9 @@ Changes in version 0.12
 
 * Changed the configuration file format to accept the definition of
   unknown variables without declaring them local.  The syntax version
-  number remains at 2.  This is to allow configuration files for newer
-  Kyua versions to work on older Kyua versions, as there is no reason
-  to forbid this.
+  number remains at 2.  This is to allow configuration files for newer Kyua
+  versions to work on older Kyua versions, as there is no reason to forbid
+  this.
 
 * Fixed stacktrace gathering with FreeBSD's ancient version of GDB.
   GDB 6.1.1 (circa 2004) does not have the `-ex` flag so we need to
