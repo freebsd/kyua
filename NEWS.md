@@ -2,6 +2,14 @@ Major changes between releases
 ==============================
 
 
+Changes in version 0.13
+-----------------------
+
+**NOT RELEASED YET.  STILL UNDER DEVELOPMENT.**
+
+* No changes recorded.
+
+
 Changes in version 0.12
 -----------------------
 
