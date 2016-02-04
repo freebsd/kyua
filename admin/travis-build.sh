@@ -47,6 +47,8 @@ do_distcheck() {
     run_autoreconf || return 1
     ./configure || return 1
 
+    sudo sysctl -w "kernel.core_pattern=core.%p"
+
     local f=
     f="${f} CPPFLAGS='-I/usr/local/include'"
     f="${f} LDFLAGS='-L/usr/local/lib -Wl,-R/usr/local/lib'"
