@@ -34,13 +34,12 @@ sudo apt-get install -y gdb liblua5.2-0 liblua5.2-dev \
     libsqlite3-0 libsqlite3-dev pkg-config sqlite3
 
 install_from_github() {
-    local project="${1}"; shift
     local name="${1}"; shift
     local release="${1}"; shift
 
     local distname="${name}-${release}"
 
-    local baseurl="https://github.com/jmmv/${project}"
+    local baseurl="https://github.com/jmmv/${name}"
     wget --no-check-certificate \
         "${baseurl}/releases/download/${distname}/${distname}.tar.gz"
     tar -xzvf "${distname}.tar.gz"
@@ -61,7 +60,7 @@ install_from_github() {
 }
 
 install_from_bintray() {
-    local name="20140803-usr-local-kyua-ubuntu-12-04-amd64-${CC:-gcc}.tar.gz"
+    local name="20160204-usr-local-kyua-ubuntu-12-04-amd64-${CC:-gcc}.tar.gz"
     wget "http://dl.bintray.com/jmmv/kyua/${name}" || return 1
     sudo tar -xzvp -C / -f "${name}"
     rm -f "${name}"
@@ -69,10 +68,9 @@ install_from_bintray() {
 
 install_configure_deps() {
     if ! install_from_bintray; then
-        install_from_github atf atf 0.20
-        install_from_github lutok lutok 0.4
-        install_from_github kyua kyua-testers 0.2
-        install_from_github kyua kyua-cli 0.8
+        install_from_github atf 0.21
+        install_from_github lutok 0.4
+        install_from_github kyua 0.12
     fi
 }
 
