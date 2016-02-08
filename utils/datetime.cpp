@@ -583,7 +583,7 @@ datetime::timestamp::operator-(const datetime::timestamp& other) const
     if ((*this) < other) {
         throw std::runtime_error(
             F("Cannot subtract %s from %s as it would result in a negative "
-              "datetime::delta, which are not supported") % (*this) % other);
+              "datetime::delta, which are not supported") % other % (*this));
     }
     return datetime::delta::from_microseconds(to_microseconds() -
                                               other.to_microseconds());

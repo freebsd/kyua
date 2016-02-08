@@ -521,7 +521,8 @@ ATF_TEST_CASE_BODY(timestamp__subtraction)
 
     ATF_REQUIRE_THROW_RE(
         std::runtime_error,
-        "Cannot subtract.*negative datetime::delta.*not supported",
+        "Cannot subtract 1291970850123456us from 1291970750123468us "
+        ".*negative datetime::delta.*not supported",
         ts2 - ts3);
 }
 
