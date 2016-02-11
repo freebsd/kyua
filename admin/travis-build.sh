@@ -66,7 +66,7 @@ EOF
             echo "unprivileged_user = 'nobody'" >>kyua.conf
 
         f="${f} KYUA_CONFIG_FILE_FOR_CHECK=$(pwd)/kyua.conf"
-        sudo -H make distcheck DISTCHECK_CONFIGURE_FLAGS="${f}"
+        sudo -H PATH="${PATH}" make distcheck DISTCHECK_CONFIGURE_FLAGS="${f}"
     else
         make distcheck DISTCHECK_CONFIGURE_FLAGS="${f}"
     fi
