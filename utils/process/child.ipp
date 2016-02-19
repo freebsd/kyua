@@ -61,8 +61,10 @@ child::fork_files(Hook hook, const fs::path& stdout_file,
         try {
             hook();
             std::abort();
+        } catch (const std::runtime_error& e) {
+            detail::report_error_and_abort(e);
         } catch (...) {
-            std::abort();
+            detail::report_error_and_abort();
         }
     }
 
@@ -91,8 +93,10 @@ child::fork_capture(Hook hook)
         try {
             hook();
             std::abort();
+        } catch (const std::runtime_error& e) {
+            detail::report_error_and_abort(e);
         } catch (...) {
-            std::abort();
+            detail::report_error_and_abort();
         }
     }
 

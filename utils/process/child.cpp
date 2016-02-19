@@ -146,6 +146,26 @@ log_exec(const fs::path& program, const process::args_vector& args)
 }  // anonymous namespace
 
 
+/// Prints out a fatal error and aborts.
+void
+utils::process::detail::report_error_and_abort(void)
+{
+    std::cerr << "Caught unknown exception\n";
+    std::abort();
+}
+
+
+/// Prints out a fatal error and aborts.
+///
+/// \param error The error to display.
+void
+utils::process::detail::report_error_and_abort(const std::runtime_error& error)
+{
+    std::cerr << "Caught runtime_error: " << error.what() << '\n';
+    std::abort();
+}
+
+
 /// Creates a new child.
 ///
 /// \param implptr A dynamically-allocated impl object with the contents of the

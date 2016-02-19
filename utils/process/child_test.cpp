@@ -43,6 +43,7 @@ extern "C" {
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <stdexcept>
 
 #include <atf-c++.hpp>
 
@@ -145,6 +146,14 @@ public:
         child_printer_function();
     }
 };
+
+
+/// Body for a child process that throws an exception.
+static void
+child_throw_exception(void)
+{
+    throw std::runtime_error("A loose exception");
+}
 
 
 /// Body for a child process that creates a pidfile.
@@ -353,6 +362,24 @@ ATF_TEST_CASE_BODY(child__fork_capture__ok_functor)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(child__fork_capture__catch_exceptions);
+ATF_TEST_CASE_BODY(child__fork_capture__catch_exceptions)
+{
+    std::auto_ptr< process::child > child = process::child::fork_capture(
+        child_throw_exception);
+
+    std::string message;
+    std::istream& output = child->output();
+    ATF_REQUIRE(std::getline(output, message).good());
+
+    const process::status status = child->wait();
+    ATF_REQUIRE(status.signaled());
+    ATF_REQUIRE_EQ(SIGABRT, status.termsig());
+
+    ATF_REQUIRE_MATCH("Caught.*A loose exception", message);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(child__fork_capture__new_session);
 ATF_TEST_CASE_BODY(child__fork_capture__new_session)
 {
@@ -480,6 +507,21 @@ ATF_TEST_CASE_BODY(child__fork_files__ok_functor)
 
     ATF_REQUIRE( atf::utils::grep_file("^To stderr: a functor$", fileb.str()));
     ATF_REQUIRE(!atf::utils::grep_file("^To stderr: a functor$", filea.str()));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(child__fork_files__catch_exceptions);
+ATF_TEST_CASE_BODY(child__fork_files__catch_exceptions)
+{
+    std::auto_ptr< process::child > child = process::child::fork_files(
+        child_throw_exception,
+        fs::path("unused.out"), fs::path("stderr"));
+
+    const process::status status = child->wait();
+    ATF_REQUIRE(status.signaled());
+    ATF_REQUIRE_EQ(SIGABRT, status.termsig());
+
+    ATF_REQUIRE(atf::utils::grep_file("Caught.*A loose exception", "stderr"));
 }
 
 
@@ -771,6 +813,7 @@ ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, child__fork_capture__ok_function);
     ATF_ADD_TEST_CASE(tcs, child__fork_capture__ok_functor);
+    ATF_ADD_TEST_CASE(tcs, child__fork_capture__catch_exceptions);
     ATF_ADD_TEST_CASE(tcs, child__fork_capture__new_session);
     ATF_ADD_TEST_CASE(tcs, child__fork_capture__pipe_fail);
     ATF_ADD_TEST_CASE(tcs, child__fork_capture__fork_cannot_exit);
@@ -779,6 +822,7 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, child__fork_files__ok_function);
     ATF_ADD_TEST_CASE(tcs, child__fork_files__ok_functor);
+    ATF_ADD_TEST_CASE(tcs, child__fork_files__catch_exceptions);
     ATF_ADD_TEST_CASE(tcs, child__fork_files__new_session);
     ATF_ADD_TEST_CASE(tcs, child__fork_files__inherit_stdout);
     ATF_ADD_TEST_CASE(tcs, child__fork_files__inherit_stderr);

@@ -50,7 +50,9 @@
 
 #include <istream>
 #include <memory>
+#include <stdexcept>
 
+#include "utils/defs.hpp"
 #include "utils/fs/path_fwd.hpp"
 #include "utils/noncopyable.hpp"
 #include "utils/process/operations_fwd.hpp"
@@ -58,6 +60,15 @@
 
 namespace utils {
 namespace process {
+
+
+namespace detail {
+
+void report_error_and_abort(void) UTILS_NORETURN;
+void report_error_and_abort(const std::runtime_error&) UTILS_NORETURN;
+
+
+}  // namespace detail
 
 
 /// Child process spawner and controller.
