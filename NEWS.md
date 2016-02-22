@@ -7,7 +7,11 @@ Changes in version 0.13
 
 **NOT RELEASED YET.  STILL UNDER DEVELOPMENT.**
 
-* No changes recorded.
+* Fixed execution of test cases as an unprivileged user, at least under
+  NetBSD 7.0.  Kyua-level failures were probably a regression introduced
+  in Kyua 0.12, but the underlying may have existed for much longer:
+  test cases might have previously failed for mysterious reasons when
+  running under an unprivileged user.
 
 
 Changes in version 0.12

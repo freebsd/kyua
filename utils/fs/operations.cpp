@@ -510,17 +510,34 @@ fs::mkdir_p(const fs::path& dir, const int mode)
 }
 
 
-/// Creates a temporary directory.
+/// Creates a temporary directory that is world readable/accessible.
 ///
 /// The temporary directory is created using mkdtemp(3) using the provided
 /// template.  This should be most likely used in conjunction with
 /// fs::auto_directory.
 ///
-/// The temporary directory is given search permissions for everyone.  This goes
-/// together with the assumption that this function is used to create temporary
-/// directories for test cases only, and because test cases may be executed as
-/// an unprivileged user, we need them to be able to resolve absolute paths
-/// pointing inside the temporary directory.
+/// The temporary directory is given read and execute permissions to everyone
+/// and thus should not be used to protect data that may be subject to snooping.
+/// This goes together with the assumption that this function is used to create
+/// temporary directories for test cases, and that those test cases may
+/// sometimes be executed as an unprivileged user.  In those cases, we need to
+/// support two different things:
+///
+/// - Allow the unprivileged code to write to files in the work directory by
+///   name (e.g. to write the results file, whose name is provided by the
+///   monitor code running as root).  This requires us to grant search
+///   permissions.
+///
+/// - Allow the test cases themselves to call getcwd(3) at any point.  At least
+///   on NetBSD 7.x, getcwd(3) requires both read and search permissions on all
+///   path components leading to the current directory.  This requires us to
+///   grant both read and search permissions.
+///
+/// TODO(jmmv): A cleaner way to support this would be for the test executor to
+/// create two work directory hierarchies directly rooted under TMPDIR: one for
+/// root and one for the unprivileged user.  However, that requires more
+/// bookkeeping for no real gain, because we are not really trying to protect
+/// the data within our temporary directories against attacks.
 ///
 /// \param path_template The template for the temporary path, which is a
 ///     basename that is created within the TMPDIR.  Must contain the XXXXXX
@@ -530,7 +547,7 @@ fs::mkdir_p(const fs::path& dir, const int mode)
 ///
 /// \throw fs::system_error If the call to mkdtemp(3) fails.
 fs::path
-fs::mkdtemp(const std::string& path_template)
+fs::mkdtemp_public(const std::string& path_template)
 {
     PRE(path_template.find("XXXXXX") != std::string::npos);
 
@@ -547,14 +564,7 @@ fs::mkdtemp(const std::string& path_template)
     }
     const fs::path path(buf.get());
 
-    // Allow search permissions on the work directory.  When we invoke test
-    // cases that require an unprivileged user, we must make sure that
-    // absolute paths pointing to files inside the work directory can be
-    // resolved.  Otherwise, we can fail to create files: for example, we
-    // point the ATF test programs to write the result file inside the work
-    // directory using an absolute path, and that absolute path must be
-    // accessible.
-    if (::chmod(path.c_str(), 0711) == -1) {
+    if (::chmod(path.c_str(), 0755) == -1) {
         const int original_errno = errno;
 
         try {

@@ -106,6 +106,10 @@ fs::auto_directory::~auto_directory(void)
 
 /// Creates a self-destructing temporary directory.
 ///
+/// See the notes for fs::mkdtemp_public() for details on the permissions
+/// given to the temporary directory, which are looser than what the standard
+/// mkdtemp would grant.
+///
 /// \param path_template The template for the temporary path, which is a
 ///     basename that is created within the TMPDIR.  Must contain the XXXXXX
 ///     pattern, which is atomically replaced by a random unique string.
@@ -114,10 +118,10 @@ fs::auto_directory::~auto_directory(void)
 ///
 /// \throw fs::error If the creation fails.
 fs::auto_directory
-fs::auto_directory::mkdtemp(const std::string& path_template)
+fs::auto_directory::mkdtemp_public(const std::string& path_template)
 {
     signals::interrupts_inhibiter inhibiter;
-    const fs::path directory_ = fs::mkdtemp(path_template);
+    const fs::path directory_ = fs::mkdtemp_public(path_template);
     try {
         return auto_directory(directory_);
     } catch (...) {

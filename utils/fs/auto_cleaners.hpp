@@ -56,7 +56,7 @@ public:
     explicit auto_directory(const path&);
     ~auto_directory(void);
 
-    static auto_directory mkdtemp(const std::string&);
+    static auto_directory mkdtemp_public(const std::string&);
 
     const path& directory(void) const;
     void cleanup(void);

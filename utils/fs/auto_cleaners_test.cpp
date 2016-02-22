@@ -79,15 +79,15 @@ ATF_TEST_CASE_BODY(auto_directory__explicit)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(auto_directory__mkdtemp);
-ATF_TEST_CASE_BODY(auto_directory__mkdtemp)
+ATF_TEST_CASE_WITHOUT_HEAD(auto_directory__mkdtemp_public);
+ATF_TEST_CASE_BODY(auto_directory__mkdtemp_public)
 {
     utils::setenv("TMPDIR", (fs::current_path() / "tmp").str());
     fs::mkdir(fs::path("tmp"), 0755);
 
     const std::string path_template("test.XXXXXX");
     {
-        fs::auto_directory auto_directory = fs::auto_directory::mkdtemp(
+        fs::auto_directory auto_directory = fs::auto_directory::mkdtemp_public(
             path_template);
         ATF_REQUIRE(::access((fs::path("tmp") / path_template).c_str(),
                              X_OK) == -1);
@@ -159,7 +159,7 @@ ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, auto_directory__automatic);
     ATF_ADD_TEST_CASE(tcs, auto_directory__explicit);
-    ATF_ADD_TEST_CASE(tcs, auto_directory__mkdtemp);
+    ATF_ADD_TEST_CASE(tcs, auto_directory__mkdtemp_public);
 
     ATF_ADD_TEST_CASE(tcs, auto_file__automatic);
     ATF_ADD_TEST_CASE(tcs, auto_file__explicit);

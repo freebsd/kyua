@@ -553,7 +553,7 @@ struct utils::process::executor::executor_handle::impl : utils::noncopyable {
         last_subprocess(0),
         interrupts_handler(new signals::interrupts_handler()),
         root_work_directory(new fs::auto_directory(
-            fs::auto_directory::mkdtemp(work_directory_template))),
+            fs::auto_directory::mkdtemp_public(work_directory_template))),
         cleaned(false)
     {
     }
