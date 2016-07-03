@@ -173,8 +173,9 @@ public:
     /// Sets up the TAP parser state.
     tap_parser(void) :
         _plan_regex(text::regex::compile("^([0-9]+)\\.\\.([0-9]+)", 2)),
-        _todo_regex(text::regex::compile("TODO[ \t]*(.*)$", 2)),
-        _skip_regex(text::regex::compile("(SKIP|skip)[ \t]*(.*)$", 2)),
+        _todo_regex(text::regex::compile("TODO[ \t]*(.*)$", 2, true)),
+        _skip_regex(text::regex::compile("(SKIP|Skipped:?)[ \t]*(.*)$", 2,
+                                         true)),
         _result_regex(text::regex::compile("^(not ok|ok)[ \t-]+[0-9]*", 1))
     {
     }

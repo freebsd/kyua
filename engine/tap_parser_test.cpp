@@ -232,6 +232,26 @@ ATF_TEST_CASE_BODY(parse_tap_output__some_fail)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(parse_tap_output__skip_and_todo_variants);
+ATF_TEST_CASE_BODY(parse_tap_output__skip_and_todo_variants)
+{
+    const engine::tap_summary summary = do_parse(
+        "1..8\n"
+        "not ok - 1 # SKIP Some reason\n"
+        "not ok - 2 # skip Some reason\n"
+        "not ok - 3 # Skipped Some reason\n"
+        "not ok - 4 # skipped Some reason\n"
+        "not ok - 5 # Skipped: Some reason\n"
+        "not ok - 6 # skipped: Some reason\n"
+        "not ok - 7 # TODO Some reason\n"
+        "not ok - 8 # todo Some reason\n");
+
+    const engine::tap_summary exp_summary =
+        engine::tap_summary::new_results(engine::tap_plan(1, 8), 8, 0);
+    ATF_REQUIRE_EQ(exp_summary, summary);
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(parse_tap_output__skip_all_with_reason);
 ATF_TEST_CASE_BODY(parse_tap_output__skip_all_with_reason)
 {
@@ -427,6 +447,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, parse_tap_output__only_one_result);
     ATF_ADD_TEST_CASE(tcs, parse_tap_output__all_pass);
     ATF_ADD_TEST_CASE(tcs, parse_tap_output__some_fail);
+    ATF_ADD_TEST_CASE(tcs, parse_tap_output__skip_and_todo_variants);
     ATF_ADD_TEST_CASE(tcs, parse_tap_output__skip_all_without_reason);
     ATF_ADD_TEST_CASE(tcs, parse_tap_output__skip_all_with_reason);
     ATF_ADD_TEST_CASE(tcs, parse_tap_output__skip_all_invalid);

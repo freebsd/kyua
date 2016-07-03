@@ -13,6 +13,9 @@ Changes in version 0.13
   test cases might have previously failed for mysterious reasons when
   running under an unprivileged user.
 
+* Issue #159: Fixed TAP parser to ignore case while matching `TODO` and
+  `SKIP` directives, and to also recognize `Skipped`.
+
 
 Changes in version 0.12
 -----------------------
