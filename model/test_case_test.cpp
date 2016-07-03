@@ -219,27 +219,29 @@ ATF_TEST_CASE_BODY(test_cases_map__builder)
 
     builder.add("default-metadata");
     {
-        const model::test_case tc("default-metadata",
-                                  model::metadata_builder().build());
-        exp_test_cases.insert(model::test_cases_map::value_type(tc.name(), tc));
+        const model::test_case tc1("default-metadata",
+                                   model::metadata_builder().build());
+        exp_test_cases.insert(
+            model::test_cases_map::value_type(tc1.name(), tc1));
     }
     ATF_REQUIRE_EQ(exp_test_cases, builder.build());
 
     builder.add("with-metadata",
                 model::metadata_builder().set_description("text").build());
     {
-        const model::test_case tc("with-metadata",
-                                  model::metadata_builder()
-                                  .set_description("text").build());
-        exp_test_cases.insert(model::test_cases_map::value_type(tc.name(), tc));
+        const model::test_case tc1("with-metadata",
+                                   model::metadata_builder()
+                                   .set_description("text").build());
+        exp_test_cases.insert(
+            model::test_cases_map::value_type(tc1.name(), tc1));
     }
     ATF_REQUIRE_EQ(exp_test_cases, builder.build());
 
-    const model::test_case tc("fully_built",
-                              model::metadata_builder()
-                              .set_description("something else").build());
-    builder.add(tc);
-    exp_test_cases.insert(model::test_cases_map::value_type(tc.name(), tc));
+    const model::test_case tc1("fully_built",
+                               model::metadata_builder()
+                               .set_description("something else").build());
+    builder.add(tc1);
+    exp_test_cases.insert(model::test_cases_map::value_type(tc1.name(), tc1));
     ATF_REQUIRE_EQ(exp_test_cases, builder.build());
 }
 
