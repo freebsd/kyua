@@ -129,6 +129,30 @@ ATF_TEST_CASE_BODY(integration__reuse_regex_in_multiple_matches)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(integration__ignore_case);
+ATF_TEST_CASE_BODY(integration__ignore_case)
+{
+    const text::regex regex1 = text::regex::compile("foo", 0, false);
+    ATF_REQUIRE(!regex1.match("bar Foo bar"));
+    ATF_REQUIRE(!regex1.match("bar foO bar"));
+    ATF_REQUIRE(!regex1.match("bar FOO bar"));
+
+    ATF_REQUIRE(!text::match_regex("foo", "bar Foo bar", 0, false));
+    ATF_REQUIRE(!text::match_regex("foo", "bar foO bar", 0, false));
+    ATF_REQUIRE(!text::match_regex("foo", "bar FOO bar", 0, false));
+
+    const text::regex regex2 = text::regex::compile("foo", 0, true);
+    ATF_REQUIRE( regex2.match("bar foo bar"));
+    ATF_REQUIRE( regex2.match("bar Foo bar"));
+    ATF_REQUIRE( regex2.match("bar foO bar"));
+    ATF_REQUIRE( regex2.match("bar FOO bar"));
+
+    ATF_REQUIRE( text::match_regex("foo", "bar foo bar", 0, true));
+    ATF_REQUIRE( text::match_regex("foo", "bar Foo bar", 0, true));
+    ATF_REQUIRE( text::match_regex("foo", "bar foO bar", 0, true));
+    ATF_REQUIRE( text::match_regex("foo", "bar FOO bar", 0, true));
+}
+
 ATF_TEST_CASE_WITHOUT_HEAD(integration__invalid_regex);
 ATF_TEST_CASE_BODY(integration__invalid_regex)
 {
@@ -148,5 +172,6 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, integration__capture_groups_underspecified);
     ATF_ADD_TEST_CASE(tcs, integration__capture_groups_overspecified);
     ATF_ADD_TEST_CASE(tcs, integration__reuse_regex_in_multiple_matches);
+    ATF_ADD_TEST_CASE(tcs, integration__ignore_case);
     ATF_ADD_TEST_CASE(tcs, integration__invalid_regex);
 }

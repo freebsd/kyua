@@ -213,12 +213,15 @@ struct utils::text::regex::impl : utils::noncopyable {
     /// \param ngroups Number of capture groups in the regular expression.  This
     ///     is an upper bound and does NOT include the default full string
     ///     match.
+    /// \param ignore_case Whether to ignore case during matching.
     ///
     /// \throw regex_error If the call to regcomp(3) fails.
-    impl(const std::string& regex_, const std::size_t ngroups) :
+    impl(const std::string& regex_, const std::size_t ngroups,
+         const bool ignore_case) :
         _ngroups(ngroups)
     {
-        const int error = ::regcomp(&_preg, regex_.c_str(), REG_EXTENDED);
+        const int flags = REG_EXTENDED | (ignore_case ? REG_ICASE : 0);
+        const int error = ::regcomp(&_preg, regex_.c_str(), flags);
         if (error != 0)
             throw_regex_error(error, &_preg, F("regcomp on '%s' failed")
                               % regex_);
@@ -251,15 +254,18 @@ text::regex::~regex(void)
 /// \param regex_ The regular expression to compile.
 /// \param ngroups Number of capture groups in the regular expression.  This is
 ///     an upper bound and does NOT include the default full string match.
+/// \param ignore_case Whether to ignore case during matching.
 ///
 /// \return A new regular expression, ready to match strings.
 ///
 /// \throw regex_error If the regular expression is invalid and cannot be
 ///     compiled.
 text::regex
-text::regex::compile(const std::string& regex_, const std::size_t ngroups)
+text::regex::compile(const std::string& regex_, const std::size_t ngroups,
+                     const bool ignore_case)
 {
-    return regex(std::shared_ptr< impl >(new impl(regex_, ngroups)));
+    return regex(std::shared_ptr< impl >(new impl(regex_, ngroups,
+                                                  ignore_case)));
 }
 
 
@@ -285,11 +291,12 @@ text::regex::match(const std::string& str) const
 /// \param regex_ The regular expression to compile and match.
 /// \param str String to match the regular expression against.
 /// \param ngroups Number of capture groups in the regular expression.
+/// \param ignore_case Whether to ignore case during matching.
 ///
 /// \return A new regex_matches object with the results of the match.
 text::regex_matches
 text::match_regex(const std::string& regex_, const std::string& str,
-                  const std::size_t ngroups)
+                  const std::size_t ngroups, const bool ignore_case)
 {
-    return regex::compile(regex_, ngroups).match(str);
+    return regex::compile(regex_, ngroups, ignore_case).match(str);
 }

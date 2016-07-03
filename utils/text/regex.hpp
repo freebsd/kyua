@@ -76,13 +76,14 @@ class regex {
 public:
     ~regex(void);
 
-    static regex compile(const std::string&, const std::size_t);
+    static regex compile(const std::string&, const std::size_t,
+                         const bool = false);
     regex_matches match(const std::string&) const;
 };
 
 
 regex_matches match_regex(const std::string&, const std::string&,
-                          const std::size_t);
+                          const std::size_t, const bool = false);
 
 
 }  // namespace text
