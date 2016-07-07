@@ -51,6 +51,7 @@ extern "C" {
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
 #include "utils/stacktrace.hpp"
+#include "utils/test_utils.ipp"
 
 namespace config = utils::config;
 namespace datetime = utils::datetime;
@@ -305,8 +306,7 @@ ATF_TEST_CASE_BODY(test__body_only__passes)
 ATF_TEST_CASE_WITHOUT_HEAD(test__body_only__crashes);
 ATF_TEST_CASE_BODY(test__body_only__crashes)
 {
-    if (!utils::unlimit_core_size())
-        skip("Cannot unlimit the core file size; check limits manually");
+    utils::prepare_coredump_test(this);
 
     const model::test_result exp_result(
         model::test_result_broken,

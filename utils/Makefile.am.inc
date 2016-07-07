@@ -61,6 +61,8 @@ libutils_a_SOURCES += utils/units.hpp
 libutils_a_SOURCES += utils/units_fwd.hpp
 nodist_libutils_a_SOURCES = utils/defs.hpp
 
+EXTRA_DIST += utils/test_utils.ipp
+
 if WITH_ATF
 tests_utilsdir = $(pkgtestsdir)/utils
 

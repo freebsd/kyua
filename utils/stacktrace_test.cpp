@@ -52,6 +52,7 @@ extern "C" {
 #include "utils/process/operations.hpp"
 #include "utils/process/status.hpp"
 #include "utils/sanity.hpp"
+#include "utils/test_utils.ipp"
 
 namespace datetime = utils::datetime;
 namespace executor = utils::process::executor;
@@ -165,7 +166,7 @@ child_pause(const fs::path& UTILS_UNUSED_PARAM(control_directory))
 static process::status
 generate_core(const atf::tests::tc* test_case, const char* base_name)
 {
-    utils::unlimit_core_size();
+    utils::prepare_coredump_test(test_case);
 
     const fs::path helper = fs::path(test_case->get_config_var("srcdir")) /
         "stacktrace_helper";
@@ -199,7 +200,7 @@ static executor::exit_handle
 generate_core(const atf::tests::tc* test_case, const char* base_name,
               executor::executor_handle& executor_handle)
 {
-    utils::unlimit_core_size();
+    utils::prepare_coredump_test(test_case);
 
     const fs::path helper = fs::path(test_case->get_config_var("srcdir")) /
         "stacktrace_helper";
