@@ -238,6 +238,8 @@ create_script(const char* script, const std::string& contents)
 ATF_TEST_CASE_WITHOUT_HEAD(unlimit_core_size);
 ATF_TEST_CASE_BODY(unlimit_core_size)
 {
+    utils::require_run_coredump_tests(this);
+
     struct rlimit rl;
     rl.rlim_cur = 0;
     rl.rlim_max = RLIM_INFINITY;
@@ -260,6 +262,8 @@ ATF_TEST_CASE_BODY(unlimit_core_size)
 ATF_TEST_CASE_WITHOUT_HEAD(unlimit_core_size__hard_is_zero);
 ATF_TEST_CASE_BODY(unlimit_core_size__hard_is_zero)
 {
+    utils::require_run_coredump_tests(this);
+
     struct rlimit rl;
     rl.rlim_cur = 0;
     rl.rlim_max = 0;

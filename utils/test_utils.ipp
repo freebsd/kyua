@@ -37,8 +37,22 @@
 #include <atf-c++.hpp>
 
 #include "utils/stacktrace.hpp"
+#include "utils/text/operations.ipp"
 
 namespace utils {
+
+
+/// Skips the test if coredump tests have been disabled by the user.
+///
+/// \param tc The calling test.
+inline void
+require_run_coredump_tests(const atf::tests::tc* tc)
+{
+    if (tc->has_config_var("run_coredump_tests") &&
+        !text::to_type< bool >(tc->get_config_var("run_coredump_tests"))) {
+        tc->skip("run_coredump_tests=false; not running test");
+    }
+}
 
 
 /// Prepares the test so that it can dump core, or skips it otherwise.
@@ -47,6 +61,8 @@ namespace utils {
 inline void
 prepare_coredump_test(const atf::tests::tc* tc)
 {
+    require_run_coredump_tests(tc);
+
     if (!unlimit_core_size()) {
         tc->skip("Cannot unlimit the core file size; check limits manually");
     }
