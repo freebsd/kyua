@@ -51,6 +51,7 @@ extern "C" {
 #include "utils/logging/operations.hpp"
 #include "utils/process/child.ipp"
 #include "utils/process/status.hpp"
+#include "utils/test_utils.ipp"
 
 namespace cmdline = utils::cmdline;
 namespace config = utils::config;
@@ -87,7 +88,7 @@ public:
         const cmdline::parsed_cmdline& UTILS_UNUSED_PARAM(cmdline),
         const config::tree& UTILS_UNUSED_PARAM(user_config))
     {
-        std::abort();
+        utils::abort_without_coredump();
     }
 };
 

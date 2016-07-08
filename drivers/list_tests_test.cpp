@@ -54,6 +54,7 @@ extern "C" {
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/optional.ipp"
+#include "utils/test_utils.ipp"
 
 namespace config = utils::config;
 namespace fs = utils::fs;

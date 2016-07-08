@@ -31,6 +31,8 @@
 
 #include <atf-c++.hpp>
 
+#include "utils/test_utils.ipp"
+
 
 ATF_TEST_CASE_WITHOUT_HEAD(no_properties);
 ATF_TEST_CASE_BODY(no_properties)
@@ -45,7 +47,7 @@ ATF_TEST_CASE_HEAD(one_property)
 }
 ATF_TEST_CASE_BODY(one_property)
 {
-    std::abort();
+    utils::abort_without_coredump();
 }
 
 
@@ -63,7 +65,7 @@ ATF_TEST_CASE_HEAD(many_properties)
 }
 ATF_TEST_CASE_BODY(many_properties)
 {
-    std::abort();
+    utils::abort_without_coredump();
 }
 
 

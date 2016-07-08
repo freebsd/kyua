@@ -106,6 +106,7 @@ ATF_TEST_CASE_BODY(kyua_conf)
         user_config.lookup< engine::user_node >("unprivileged_user").name);
 
     config::properties_map exp_test_suites;
+    exp_test_suites["test_suites.kyua.run_coredump_tests"] = "false";
     exp_test_suites["test_suites.FreeBSD.iterations"] = "1000";
     exp_test_suites["test_suites.FreeBSD.run_old_tests"] = "false";
     exp_test_suites["test_suites.NetBSD.file_systems"] = "ffs lfs ext2fs";

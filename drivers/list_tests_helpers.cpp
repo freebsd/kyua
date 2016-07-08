@@ -30,6 +30,8 @@
 
 #include <atf-c++.hpp>
 
+#include "utils/test_utils.ipp"
+
 
 ATF_TEST_CASE(config_in_head);
 ATF_TEST_CASE_HEAD(config_in_head)
@@ -41,25 +43,25 @@ ATF_TEST_CASE_HEAD(config_in_head)
 }
 ATF_TEST_CASE_BODY(config_in_head)
 {
-    std::abort();
+    utils::abort_without_coredump();
 }
 
 
 ATF_TEST_CASE(crash_list);
 ATF_TEST_CASE_HEAD(crash_list)
 {
-    std::abort();
+    utils::abort_without_coredump();
 }
 ATF_TEST_CASE_BODY(crash_list)
 {
-    std::abort();
+    utils::abort_without_coredump();
 }
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(no_properties);
 ATF_TEST_CASE_BODY(no_properties)
 {
-    std::abort();
+    utils::abort_without_coredump();
 }
 
 
@@ -71,7 +73,7 @@ ATF_TEST_CASE_HEAD(some_properties)
 }
 ATF_TEST_CASE_BODY(some_properties)
 {
-    std::abort();
+    utils::abort_without_coredump();
 }
 
 

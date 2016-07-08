@@ -42,6 +42,7 @@ extern "C" {
 #include "utils/fs/path.hpp"
 #include "utils/process/child.ipp"
 #include "utils/process/status.hpp"
+#include "utils/test_utils.ipp"
 
 namespace fs = utils::fs;
 namespace process = utils::process;
@@ -65,6 +66,8 @@ template< typename Function >
 static process::status
 run_test(Function function)
 {
+    utils::avoid_coredump_on_crash();
+
     const process::status status = process::child::fork_files(
         function, Stdout_File, Stderr_File)->wait();
     atf::utils::cat_file(Stdout_File.str(), "Helper stdout: ");
@@ -265,6 +268,8 @@ template< int Signo >
 static void
 crash_handler_test(void)
 {
+    utils::avoid_coredump_on_crash();
+
     const process::status status = run_test(do_crash_handler_test< Signo >);
     ATF_REQUIRE(status.signaled());
     ATF_REQUIRE_EQ(Signo, status.termsig());

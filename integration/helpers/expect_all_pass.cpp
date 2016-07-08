@@ -35,12 +35,14 @@ extern "C" {
 
 #include <atf-c++.hpp>
 
+#include "utils/test_utils.ipp"
+
 
 ATF_TEST_CASE_WITHOUT_HEAD(die);
 ATF_TEST_CASE_BODY(die)
 {
     expect_death("This is the reason for death");
-    std::abort();
+    utils::abort_without_coredump();
 }
 
 

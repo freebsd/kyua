@@ -48,6 +48,7 @@ extern "C" {
 #include "utils/process/exceptions.hpp"
 #include "utils/process/status.hpp"
 #include "utils/stacktrace.hpp"
+#include "utils/test_utils.ipp"
 
 namespace fs = utils::fs;
 namespace process = utils::process;
@@ -211,6 +212,8 @@ ATF_TEST_CASE_BODY(exec__some_args)
 ATF_TEST_CASE_WITHOUT_HEAD(exec__fail);
 ATF_TEST_CASE_BODY(exec__fail)
 {
+    utils::avoid_coredump_on_crash();
+
     std::auto_ptr< process::child > child = process::child::fork_files(
         child_exec(process::exec, fs::path("non-existent"),
                    process::args_vector()),
@@ -357,8 +360,7 @@ ATF_TEST_CASE_BODY(terminate_self_with__termsig)
 ATF_TEST_CASE_WITHOUT_HEAD(terminate_self_with__termsig_and_core);
 ATF_TEST_CASE_BODY(terminate_self_with__termsig_and_core)
 {
-    if (!utils::unlimit_core_size())
-        ATF_SKIP("Cannot enable core dumps");
+    utils::prepare_coredump_test(this);
 
     const pid_t pid = ::fork();
     ATF_REQUIRE(pid != -1);

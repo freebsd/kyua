@@ -63,6 +63,7 @@ extern "C" {
 #include "utils/sanity.hpp"
 #include "utils/stacktrace.hpp"
 #include "utils/stream.hpp"
+#include "utils/test_utils.ipp"
 #include "utils/text/exceptions.hpp"
 #include "utils/text/operations.ipp"
 
@@ -236,12 +237,12 @@ public:
         } else if (name == "empty") {
             do_exit(EXIT_SUCCESS);
         } else if (name == "misbehave") {
-            std::abort();
+            utils::abort_without_coredump();
         } else if (name == "timeout") {
             std::cout << "sleeping\n";
             std::cout.flush();
             ::sleep(100);
-            std::abort();
+            utils::abort_without_coredump();
         } else if (name == "vars") {
             for (config::properties_map::const_iterator iter = vars.begin();
                  iter != vars.end(); ++iter) {
@@ -960,8 +961,7 @@ ATF_TEST_CASE_BODY(integration__check_requirements)
 ATF_TEST_CASE_WITHOUT_HEAD(integration__stacktrace);
 ATF_TEST_CASE_BODY(integration__stacktrace)
 {
-    if (!utils::unlimit_core_size())
-        skip("Cannot unlimit the core file size; check limits manually");
+    utils::prepare_coredump_test(this);
 
     const model::test_program_ptr program = model::test_program_builder(
         "mock", fs::path("the-program"), fs::current_path(), "the-suite")

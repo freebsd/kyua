@@ -52,6 +52,7 @@ extern "C" {
 #include "utils/process/operations.hpp"
 #include "utils/process/status.hpp"
 #include "utils/sanity.hpp"
+#include "utils/test_utils.ipp"
 
 namespace datetime = utils::datetime;
 namespace executor = utils::process::executor;
@@ -165,7 +166,7 @@ child_pause(const fs::path& UTILS_UNUSED_PARAM(control_directory))
 static process::status
 generate_core(const atf::tests::tc* test_case, const char* base_name)
 {
-    utils::unlimit_core_size();
+    utils::prepare_coredump_test(test_case);
 
     const fs::path helper = fs::path(test_case->get_config_var("srcdir")) /
         "stacktrace_helper";
@@ -199,7 +200,7 @@ static executor::exit_handle
 generate_core(const atf::tests::tc* test_case, const char* base_name,
               executor::executor_handle& executor_handle)
 {
-    utils::unlimit_core_size();
+    utils::prepare_coredump_test(test_case);
 
     const fs::path helper = fs::path(test_case->get_config_var("srcdir")) /
         "stacktrace_helper";
@@ -237,6 +238,8 @@ create_script(const char* script, const std::string& contents)
 ATF_TEST_CASE_WITHOUT_HEAD(unlimit_core_size);
 ATF_TEST_CASE_BODY(unlimit_core_size)
 {
+    utils::require_run_coredump_tests(this);
+
     struct rlimit rl;
     rl.rlim_cur = 0;
     rl.rlim_max = RLIM_INFINITY;
@@ -259,6 +262,8 @@ ATF_TEST_CASE_BODY(unlimit_core_size)
 ATF_TEST_CASE_WITHOUT_HEAD(unlimit_core_size__hard_is_zero);
 ATF_TEST_CASE_BODY(unlimit_core_size__hard_is_zero)
 {
+    utils::require_run_coredump_tests(this);
+
     struct rlimit rl;
     rl.rlim_cur = 0;
     rl.rlim_max = 0;

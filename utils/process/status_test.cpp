@@ -29,7 +29,6 @@
 #include "utils/process/status.hpp"
 
 extern "C" {
-#include <sys/resource.h>
 #include <sys/wait.h>
 
 #include <signal.h>
@@ -39,6 +38,8 @@ extern "C" {
 #include <cstdlib>
 
 #include <atf-c++.hpp>
+
+#include "utils/test_utils.ipp"
 
 using utils::process::status;
 
@@ -86,20 +87,6 @@ fork_and_wait(void (*hook)(void))
         ATF_REQUIRE_EQ(pid, s.dead_pid());
         return s;
     }
-}
-
-
-/// Ensures we can dump core and marks the test as skipped otherwise.
-///
-/// \param tc The calling test case.
-static void
-require_coredump_ability(const atf::tests::tc* tc)
-{
-    struct rlimit rl;
-    rl.rlim_cur = RLIM_INFINITY;
-    rl.rlim_max = RLIM_INFINITY;
-    if (::setrlimit(RLIMIT_CORE, &rl) == -1)
-        tc->skip("Cannot unlimit the core file size; check limits manually");
 }
 
 
@@ -194,7 +181,7 @@ ATF_TEST_CASE_BODY(integration__signaled)
 ATF_TEST_CASE_WITHOUT_HEAD(integration__coredump);
 ATF_TEST_CASE_BODY(integration__coredump)
 {
-    require_coredump_ability(this);
+    utils::prepare_coredump_test(this);
 
     const status coredump = fork_and_wait(child_signal< SIGQUIT >);
     ATF_REQUIRE(!coredump.exited());
