@@ -57,6 +57,7 @@ extern "C" {
 #include "utils/process/status.hpp"
 #include "utils/process/system.hpp"
 #include "utils/sanity.hpp"
+#include "utils/test_utils.ipp"
 
 namespace fs = utils::fs;
 namespace logging = utils::logging;
@@ -811,6 +812,8 @@ ATF_TEST_CASE_BODY(child__pid)
 
 ATF_INIT_TEST_CASES(tcs)
 {
+    utils::avoid_coredump_on_crash();
+
     ATF_ADD_TEST_CASE(tcs, child__fork_capture__ok_function);
     ATF_ADD_TEST_CASE(tcs, child__fork_capture__ok_functor);
     ATF_ADD_TEST_CASE(tcs, child__fork_capture__catch_exceptions);

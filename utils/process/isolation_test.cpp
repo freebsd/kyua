@@ -53,6 +53,7 @@ extern "C" {
 #include "utils/process/child.ipp"
 #include "utils/process/status.hpp"
 #include "utils/sanity.hpp"
+#include "utils/test_utils.ipp"
 
 namespace fs = utils::fs;
 namespace passwd = utils::passwd;
@@ -407,6 +408,8 @@ ATF_TEST_CASE_BODY(isolate_child__drop_privileges_fail_gid)
 ATF_TEST_CASE_WITHOUT_HEAD(isolate_child__enable_core_dumps);
 ATF_TEST_CASE_BODY(isolate_child__enable_core_dumps)
 {
+    utils::require_run_coredump_tests(this);
+
     struct ::rlimit rl;
     if (::getrlimit(RLIMIT_CORE, &rl) == -1)
         fail("Failed to query the core size limit");

@@ -44,6 +44,7 @@ extern char** environ;
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
+#include "utils/test_utils.ipp"
 
 namespace fs = utils::fs;
 
@@ -92,7 +93,7 @@ test_check_configuration_variables(void)
 static void
 test_crash(void)
 {
-    std::abort();
+    utils::abort_without_coredump();
 }
 
 

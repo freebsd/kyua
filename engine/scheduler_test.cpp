@@ -237,12 +237,12 @@ public:
         } else if (name == "empty") {
             do_exit(EXIT_SUCCESS);
         } else if (name == "misbehave") {
-            std::abort();
+            utils::abort_without_coredump();
         } else if (name == "timeout") {
             std::cout << "sleeping\n";
             std::cout.flush();
             ::sleep(100);
-            std::abort();
+            utils::abort_without_coredump();
         } else if (name == "vars") {
             for (config::properties_map::const_iterator iter = vars.begin();
                  iter != vars.end(); ++iter) {

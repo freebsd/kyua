@@ -31,6 +31,7 @@
 #include <iostream>
 
 #include "utils/defs.hpp"
+#include "utils/test_utils.ipp"
 
 
 namespace {
@@ -52,7 +53,7 @@ helper_abort_test_cases_list(int UTILS_UNUSED_PARAM(argc), char** argv)
             std::cout << "ident: foo\n";
         }
     }
-    std::abort();
+    utils::abort_without_coredump();
 }
 
 

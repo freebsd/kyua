@@ -49,6 +49,7 @@ extern "C" {
 #include "utils/fs/path.hpp"
 #include "utils/logging/operations.hpp"
 #include "utils/optional.ipp"
+#include "utils/test_utils.ipp"
 #include "utils/text/operations.ipp"
 
 namespace fs = utils::fs;
@@ -171,7 +172,7 @@ ATF_TEST_CASE_BODY(crash)
 ATF_TEST_CASE(crash_head);
 ATF_TEST_CASE_HEAD(crash_head)
 {
-    std::abort();
+    utils::abort_without_coredump();
 }
 ATF_TEST_CASE_BODY(crash_head)
 {
@@ -187,7 +188,7 @@ ATF_TEST_CASE_BODY(crash_cleanup)
 }
 ATF_TEST_CASE_CLEANUP(crash_cleanup)
 {
-    std::abort();
+    utils::abort_without_coredump();
 }
 
 
@@ -286,7 +287,7 @@ ATF_TEST_CASE_BODY(shared_workdir)
 ATF_TEST_CASE_CLEANUP(shared_workdir)
 {
     if (!atf::utils::file_exists("shared_cookie"))
-        std::abort();
+        utils::abort_without_coredump();
 }
 
 

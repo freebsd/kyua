@@ -212,6 +212,8 @@ ATF_TEST_CASE_BODY(exec__some_args)
 ATF_TEST_CASE_WITHOUT_HEAD(exec__fail);
 ATF_TEST_CASE_BODY(exec__fail)
 {
+    utils::avoid_coredump_on_crash();
+
     std::auto_ptr< process::child > child = process::child::fork_files(
         child_exec(process::exec, fs::path("non-existent"),
                    process::args_vector()),

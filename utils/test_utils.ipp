@@ -34,12 +34,53 @@
 #endif
 #define UTILS_TEST_UTILS_IPP
 
+extern "C" {
+#include <sys/resource.h>
+}
+
+#include <cstdlib>
+#include <iostream>
+
 #include <atf-c++.hpp>
 
+#include "utils/defs.hpp"
 #include "utils/stacktrace.hpp"
 #include "utils/text/operations.ipp"
 
 namespace utils {
+
+
+/// Tries to prevent dumping core if we do not need one on a crash.
+///
+/// This is a best-effort operation provided so that tests that will cause
+/// a crash do not collect an unnecessary core dump, which can be slow on
+/// some systems (e.g. on macOS).
+inline void
+avoid_coredump_on_crash(void)
+{
+    struct ::rlimit rl;
+    rl.rlim_cur = 0;
+    rl.rlim_max = 0;
+    if (::setrlimit(RLIMIT_CORE, &rl) == -1) {
+        std::cerr << "Failed to zero core size limit; may dump core\n";
+    }
+}
+
+
+inline void abort_without_coredump(void) UTILS_NORETURN;
+
+
+/// Aborts execution and tries to not dump core.
+///
+/// The coredump avoidance is a best-effort operation provided so that tests
+/// that will cause a crash do not collect an unnecessary core dump, which can
+/// be slow on some systems (e.g. on macOS).
+inline void
+abort_without_coredump(void)
+{
+    avoid_coredump_on_crash();
+    std::abort();
+}
 
 
 /// Skips the test if coredump tests have been disabled by the user.
