@@ -249,7 +249,19 @@ follows:
 
     $ cd /usr/local/kyua && kyua test
 
-And if you see any tests fail, do not hesitate to report them in:
+The following configuration variables are specific to the 'kyua' test
+suite and can be given to Kyua with arguments of the form
+`-v test_suites.kyua.<variable_name>=<value>`:
+
+* `run_coredump_tests`:
+  **Possible values:** `true` or `false`.
+  **Default:** `true`.
+
+  Avoids running tests that crash subprocesses on purpose to make them
+  dump core.  Such tests are particularly slow on macOS, and it is
+  sometimes handy to disable them for quicker development iteration.
+
+If you see any tests fail, do not hesitate to report them in:
 
     https://github.com/jmmv/kyua/issues/
 
