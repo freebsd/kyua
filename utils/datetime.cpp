@@ -399,6 +399,16 @@ datetime::timestamp::strftime(const std::string& format) const
 }
 
 
+/// Formats a timestamp with the ISO 8601 standard and in UTC.
+///
+/// \return A string with the formatted timestamp.
+std::string
+datetime::timestamp::to_iso8601_in_utc(void) const
+{
+    return F("%s.%06sZ") % strftime("%Y-%m-%dT%H:%M:%S") % _pimpl->data.tv_usec;
+}
+
+
 /// Returns the number of microseconds since the epoch in UTC.
 ///
 /// \return A number of microseconds.

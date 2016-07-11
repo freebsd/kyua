@@ -350,6 +350,19 @@ ATF_TEST_CASE_BODY(timestamp__strftime)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(timestamp__to_iso8601_in_utc);
+ATF_TEST_CASE_BODY(timestamp__to_iso8601_in_utc)
+{
+    const datetime::timestamp ts1 = datetime::timestamp::from_values(
+        2010, 12, 10, 8, 45, 50, 0);
+    ATF_REQUIRE_EQ("2010-12-10T08:45:50.000000Z", ts1.to_iso8601_in_utc());
+
+    const datetime::timestamp ts2= datetime::timestamp::from_values(
+        2016, 7, 11, 17, 51, 28, 123456);
+    ATF_REQUIRE_EQ("2016-07-11T17:51:28.123456Z", ts2.to_iso8601_in_utc());
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(timestamp__to_microseconds);
 ATF_TEST_CASE_BODY(timestamp__to_microseconds)
 {
@@ -564,6 +577,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, timestamp__now__real);
     ATF_ADD_TEST_CASE(tcs, timestamp__now__granularity);
     ATF_ADD_TEST_CASE(tcs, timestamp__strftime);
+    ATF_ADD_TEST_CASE(tcs, timestamp__to_iso8601_in_utc);
     ATF_ADD_TEST_CASE(tcs, timestamp__to_microseconds);
     ATF_ADD_TEST_CASE(tcs, timestamp__to_seconds);
     ATF_ADD_TEST_CASE(tcs, timestamp__leap_second);
