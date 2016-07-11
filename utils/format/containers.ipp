@@ -80,7 +80,7 @@ std::operator<<(std::ostream& output, const std::pair< T1, T2 >& object)
 /// \return The output stream.
 template< typename T >
 std::ostream&
-std::operator<<(std::ostream& output, const std::shared_ptr< T >& object)
+std::operator<<(std::ostream& output, const std::shared_ptr< T > object)
 {
     if (object.get() == NULL) {
         output << "<NULL>";

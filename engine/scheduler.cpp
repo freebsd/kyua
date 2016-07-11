@@ -221,7 +221,7 @@ struct test_exec_data : public exec_data {
     /// \param user_config_ User configuration passed to the test.
     test_exec_data(const model::test_program_ptr test_program_,
                    const std::string& test_case_name_,
-                   const std::shared_ptr< scheduler::interface >& interface_,
+                   const std::shared_ptr< scheduler::interface > interface_,
                    const config::tree& user_config_) :
         exec_data(test_program_, test_case_name_),
         interface(interface_), user_config(user_config_)

@@ -169,7 +169,7 @@ start_test(scheduler::scheduler_handle& handle,
            const config::tree& user_config,
            drivers::run_tests::base_hooks& hooks)
 {
-    const model::test_program_ptr& test_program = match.first;
+    const model::test_program_ptr test_program = match.first;
     const std::string& test_case_name = match.second;
 
     hooks.got_test_case(*test_program, test_case_name);
@@ -289,7 +289,7 @@ drivers::run_tests::drive(const fs::path& kyuafile_path,
             optional< engine::scan_result > match = scanner.yield();
             if (!match)
                 break;
-            const model::test_program_ptr& test_program = match.get().first;
+            const model::test_program_ptr test_program = match.get().first;
             const std::string& test_case_name = match.get().second;
 
             const model::test_case& test_case = test_program->find(

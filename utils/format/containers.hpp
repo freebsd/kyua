@@ -52,7 +52,7 @@ template< typename T1, typename T2 >
 std::ostream& operator<<(std::ostream&, const std::pair< T1, T2 >&);
 
 template< typename T >
-std::ostream& operator<<(std::ostream&, const std::shared_ptr< T >&);
+std::ostream& operator<<(std::ostream&, const std::shared_ptr< T >);
 
 template< typename T >
 std::ostream& operator<<(std::ostream&, const std::set< T >&);
