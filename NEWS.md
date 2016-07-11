@@ -13,6 +13,10 @@ Changes in version 0.13
   test cases might have previously failed for mysterious reasons when
   running under an unprivileged user.
 
+* Issue #156: Fixed crashes due to the invalid handling of cleanup
+  routine data and triggered by the reuse of PIDs in long-running Kyua
+  instances.
+
 * Issue #159: Fixed TAP parser to ignore case while matching `TODO` and
   `SKIP` directives, and to also recognize `Skipped`.
 

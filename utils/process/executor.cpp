@@ -377,6 +377,10 @@ struct utils::process::executor::exit_handle::impl : utils::noncopyable {
         // from the destructor, which would make us crash due to an invalid
         // reference count.
         (*state_owners)--;
+        // Marking this object as clean here, even if we did not do actually the
+        // cleaning above, is fine (albeit a bit confusing).  Note that "another
+        // owner" refers to a handle for a different PID, so that handle will be
+        // the one issuing the cleanup.
         all_exec_handles.erase(original_pid);
         cleaned = true;
     }
@@ -769,6 +773,10 @@ executor::executor_handle::spawn_post(
             timeout,
             unprivileged_user,
             detail::refcnt_t(new detail::refcnt_t::element_type(0)))));
+    INV_MSG(_pimpl->all_exec_handles.find(handle.pid()) ==
+            _pimpl->all_exec_handles.end(),
+            F("PID %s already in all_exec_handles; not properly cleaned "
+              "up or reused too fast") % handle.pid());;
     _pimpl->all_exec_handles.insert(exec_handles_map::value_type(
         handle.pid(), handle));
     LI(F("Spawned subprocess with exec_handle %s") % handle.pid());
@@ -808,6 +816,10 @@ executor::executor_handle::spawn_followup_post(
             timeout,
             base.unprivileged_user(),
             base.state_owners())));
+    INV_MSG(_pimpl->all_exec_handles.find(handle.pid()) ==
+            _pimpl->all_exec_handles.end(),
+            F("PID %s already in all_exec_handles; not properly cleaned "
+              "up or reused too fast") % handle.pid());;
     _pimpl->all_exec_handles.insert(exec_handles_map::value_type(
         handle.pid(), handle));
     LI(F("Spawned subprocess with exec_handle %s") % handle.pid());

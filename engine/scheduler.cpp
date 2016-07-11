@@ -615,6 +615,7 @@ struct engine::scheduler::result_handle::bimpl : utils::noncopyable {
     /// Destructor.
     ~bimpl(void)
     {
+        LD(F("Removing %s from all_exec_data") % generic.original_pid());
         all_exec_data.erase(generic.original_pid());
     }
 };
@@ -906,6 +907,10 @@ struct engine::scheduler::scheduler_handle::impl : utils::noncopyable {
 
         const exec_data_ptr data(new cleanup_exec_data(
             test_program, test_case_name, body_handle, body_result));
+        LD(F("Inserting %s into all_exec_data (cleanup)") % handle.pid());
+        INV_MSG(all_exec_data.find(handle.pid()) == all_exec_data.end(),
+                F("PID %s already in all_exec_data; not properly cleaned "
+                  "up or reused too fast") % handle.pid());;
         all_exec_data.insert(exec_data_map::value_type(handle.pid(), data));
 
         return handle;
@@ -1100,6 +1105,11 @@ scheduler::scheduler_handle::spawn_test(
 
     const exec_data_ptr data(new test_exec_data(
         test_program, test_case_name, interface, user_config));
+    LD(F("Inserting %s into all_exec_data") % handle.pid());
+    INV_MSG(
+        _pimpl->all_exec_data.find(handle.pid()) == _pimpl->all_exec_data.end(),
+        F("PID %s already in all_exec_data; not cleaned up or reused too fast")
+        % handle.pid());;
     _pimpl->all_exec_data.insert(exec_data_map::value_type(handle.pid(), data));
 
     return handle.pid();
@@ -1123,7 +1133,7 @@ scheduler::scheduler_handle::wait_any(void)
 
     const exec_data_map::iterator iter = _pimpl->all_exec_data.find(
         handle.original_pid());
-    exec_data_ptr& data = (*iter).second;
+    exec_data_ptr data = (*iter).second;
 
     utils::dump_stacktrace_if_available(data->test_program->absolute_path(),
                                         _pimpl->generic, handle);
@@ -1132,6 +1142,7 @@ scheduler::scheduler_handle::wait_any(void)
     try {
         test_exec_data* test_data = &dynamic_cast< test_exec_data& >(
             *data.get());
+        LD(F("Got %s from all_exec_data") % handle.original_pid());
 
         test_data->exit_handle = handle;
 
@@ -1199,6 +1210,7 @@ scheduler::scheduler_handle::wait_any(void)
     } catch (const std::bad_cast& e) {
         const cleanup_exec_data* cleanup_data =
             &dynamic_cast< const cleanup_exec_data& >(*data.get());
+        LD(F("Got %s from all_exec_data (cleanup)") % handle.original_pid());
 
         // Handle the completion of cleanup subprocesses internally: the caller
         // is not aware that these exist so, when we return, we must return the
@@ -1224,6 +1236,14 @@ scheduler::scheduler_handle::wait_any(void)
         } else {
             result = body_result;
         }
+
+        // Untrack the cleanup process.  This must be done explicitly because we
+        // do not create a result_handle object for the cleanup, and that is the
+        // one in charge of doing so in the regular (non-cleanup) case.
+        LD(F("Removing %s from all_exec_data (cleanup) in favor of %s")
+           % handle.original_pid()
+           % cleanup_data->body_exit_handle.original_pid());
+        _pimpl->all_exec_data.erase(handle.original_pid());
 
         handle = cleanup_data->body_exit_handle;
     }

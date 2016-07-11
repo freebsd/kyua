@@ -50,12 +50,14 @@
 #include "utils/noncopyable.hpp"
 #include "utils/optional.ipp"
 #include "utils/passwd.hpp"
+#include "utils/text/operations.ipp"
 
 namespace config = utils::config;
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace passwd = utils::passwd;
 namespace scheduler = engine::scheduler;
+namespace text = utils::text;
 
 using utils::none;
 using utils::optional;
@@ -212,6 +214,23 @@ finish_test(scheduler::result_handle_ptr result_handle,
 }
 
 
+/// Extracts the keys of a pid_to_id_map and returns them as a string.
+///
+/// \param map The PID to test ID map from which to get the PIDs.
+///
+/// \return A user-facing string with the collection of PIDs.
+static std::string
+format_pids(const pid_to_id_map& map)
+{
+    std::set< pid_to_id_map::key_type > pids;
+    for (pid_to_id_map::const_iterator iter = map.begin(); iter != map.end();
+         ++iter) {
+        pids.insert(iter->first);
+    }
+    return text::join(pids, ",");
+}
+
+
 }  // anonymous namespace
 
 
@@ -281,8 +300,12 @@ drivers::run_tests::drive(const fs::path& kyuafile_path,
                 continue;
             }
 
-            in_flight.insert(start_test(handle, match.get(), tx, ids_cache,
-                                        user_config, hooks));
+            const pid_and_id_pair pid_id = start_test(
+                handle, match.get(), tx, ids_cache, user_config, hooks);
+            INV_MSG(in_flight.find(pid_id.first) == in_flight.end(),
+                    F("Spawned test has PID of still-tracked process %s") %
+                    pid_id.first);
+            in_flight.insert(pid_id);
         }
 
         // If there are any used slots, consume any at random and return the
@@ -293,6 +316,9 @@ drivers::run_tests::drive(const fs::path& kyuafile_path,
 
             const pid_to_id_map::iterator iter = in_flight.find(
                 result_handle->original_pid());
+            INV_MSG(iter != in_flight.end(),
+                    F("Lost track of in-flight PID %s; tracking %s") %
+                    result_handle->original_pid() % format_pids(in_flight));
             const int64_t test_case_id = (*iter).second;
             in_flight.erase(iter);
 
