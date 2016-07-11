@@ -443,6 +443,8 @@ signals::timer::timer(const datetime::delta& delta)
 /// extremely important because, otherwise, expired timers will never run!
 signals::timer::~timer(void)
 {
+    signals::interrupts_inhibiter inhibiter;
+
     if (_pimpl->programmed) {
         LW("Auto-destroying still-programmed signals::timer object");
         try {
@@ -520,12 +522,19 @@ signals::timer::fired(void) const
 void
 signals::timer::unprogram(void)
 {
-    PRE(_pimpl->programmed);
-    {
-        signals::interrupts_inhibiter inhibiter;
-        if (!globals->unprogram(this)) {
-            globals.reset(NULL);
-        }
+    signals::interrupts_inhibiter inhibiter;
+
+    if (!_pimpl->programmed) {
+        // We cannot assert that the timer is not programmed because it might
+        // have been unprogrammed asynchronously between the time we called
+        // unprogram() and the time we reach this.  Simply return in this case.
+        LD("Called unprogram on already-unprogrammed timer; possibly just "
+           "a race");
+        return;
+    }
+
+    if (!globals->unprogram(this)) {
+        globals.reset(NULL);
     }
     _pimpl->programmed = false;
 

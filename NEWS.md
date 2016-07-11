@@ -20,6 +20,9 @@ Changes in version 0.13
 * Issue #159: Fixed TAP parser to ignore case while matching `TODO` and
   `SKIP` directives, and to also recognize `Skipped`.
 
+* Fixed potential crash due to a race condition in the unprogramming of
+  timers to control test deadlines.
+
 
 Changes in version 0.12
 -----------------------
