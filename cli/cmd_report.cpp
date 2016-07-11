@@ -187,7 +187,8 @@ class report_console_hooks : public drivers::scan_results::base_hooks {
         _output << F("Result: %s\n") %
             cli::format_result(result_iter.result());
         _output << F("Duration: %s\n") %
-            cli::format_delta(result_iter.duration());
+            cli::format_delta(result_iter.end_time() -
+                              result_iter.start_time());
 
         _output << "\n";
         _output << "Metadata:\n";
@@ -285,11 +286,13 @@ public:
     void
     got_result(store::results_iterator& iter)
     {
-        _runtime += iter.duration();
+        const datetime::delta duration = iter.end_time() - iter.start_time();
+
+        _runtime += duration;
         const model::test_result result = iter.result();
         _results[result.type()].push_back(
             result_data(iter.test_program()->relative_path(),
-                        iter.test_case_name(), iter.result(), iter.duration()));
+                        iter.test_case_name(), iter.result(), duration));
 
         if (_verbose) {
             // TODO(jmmv): _results_filters is a list and is small enough for

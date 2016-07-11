@@ -333,7 +333,8 @@ public:
         templates.add_variable("test_program",
                                test_program->absolute_path().str());
         templates.add_variable("result", cli::format_result(result));
-        templates.add_variable("duration", cli::format_delta(iter.duration()));
+        templates.add_variable("duration", cli::format_delta(
+                                   iter.end_time() - iter.start_time()));
 
         const model::test_case& test_case = test_program->find(test_case_name);
         add_map(templates, test_case.get_metadata().to_properties(),

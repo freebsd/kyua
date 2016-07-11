@@ -165,7 +165,8 @@ check_action_2(const fs::path& dbpath)
     ATF_REQUIRE_EQ(result_1, iter.result());
     ATF_REQUIRE(iter.stdout_contents().empty());
     ATF_REQUIRE(iter.stderr_contents().empty());
-    ATF_REQUIRE_EQ(datetime::delta(10, 500), iter.duration());
+    ATF_REQUIRE_EQ(1357643611000000LL, iter.start_time().to_microseconds());
+    ATF_REQUIRE_EQ(1357643621000500LL, iter.end_time().to_microseconds());
 
     ++iter;
     ATF_REQUIRE(iter);
@@ -174,7 +175,8 @@ check_action_2(const fs::path& dbpath)
     ATF_REQUIRE_EQ(result_5, iter.result());
     ATF_REQUIRE(iter.stdout_contents().empty());
     ATF_REQUIRE(iter.stderr_contents().empty());
-    ATF_REQUIRE_EQ(datetime::delta(6, 0), iter.duration());
+    ATF_REQUIRE_EQ(1357643632000000LL, iter.start_time().to_microseconds());
+    ATF_REQUIRE_EQ(1357643638000000LL, iter.end_time().to_microseconds());
 
     ++iter;
     ATF_REQUIRE(iter);
@@ -183,7 +185,8 @@ check_action_2(const fs::path& dbpath)
     ATF_REQUIRE_EQ(result_2, iter.result());
     ATF_REQUIRE_EQ("Test stdout", iter.stdout_contents());
     ATF_REQUIRE_EQ("Test stderr", iter.stderr_contents());
-    ATF_REQUIRE_EQ(datetime::delta(0, 898821), iter.duration());
+    ATF_REQUIRE_EQ(1357643622001200LL, iter.start_time().to_microseconds());
+    ATF_REQUIRE_EQ(1357643622900021LL, iter.end_time().to_microseconds());
 
     ++iter;
     ATF_REQUIRE(iter);
@@ -192,7 +195,8 @@ check_action_2(const fs::path& dbpath)
     ATF_REQUIRE_EQ(result_3, iter.result());
     ATF_REQUIRE(iter.stdout_contents().empty());
     ATF_REQUIRE(iter.stderr_contents().empty());
-    ATF_REQUIRE_EQ(datetime::delta(7, 481932), iter.duration());
+    ATF_REQUIRE_EQ(1357643623500000LL, iter.start_time().to_microseconds());
+    ATF_REQUIRE_EQ(1357643630981932LL, iter.end_time().to_microseconds());
 
     ++iter;
     ATF_REQUIRE(iter);
@@ -201,7 +205,8 @@ check_action_2(const fs::path& dbpath)
     ATF_REQUIRE_EQ(result_4, iter.result());
     ATF_REQUIRE(iter.stdout_contents().empty());
     ATF_REQUIRE(iter.stderr_contents().empty());
-    ATF_REQUIRE_EQ(datetime::delta(0, 20000), iter.duration());
+    ATF_REQUIRE_EQ(1357643631000000LL, iter.start_time().to_microseconds());
+    ATF_REQUIRE_EQ(1357643631020000LL, iter.end_time().to_microseconds());
 
     ++iter;
     ATF_REQUIRE(!iter);
@@ -280,7 +285,8 @@ check_action_3(const fs::path& dbpath)
     ATF_REQUIRE_EQ(result_7, iter.result());
     ATF_REQUIRE(iter.stdout_contents().empty());
     ATF_REQUIRE(iter.stderr_contents().empty());
-    ATF_REQUIRE_EQ(datetime::delta(1, 897182), iter.duration());
+    ATF_REQUIRE_EQ(1357648719000000LL, iter.start_time().to_microseconds());
+    ATF_REQUIRE_EQ(1357648720897182LL, iter.end_time().to_microseconds());
 
     ++iter;
     ATF_REQUIRE(iter);
@@ -289,7 +295,8 @@ check_action_3(const fs::path& dbpath)
     ATF_REQUIRE_EQ(result_6, iter.result());
     ATF_REQUIRE(iter.stdout_contents().empty());
     ATF_REQUIRE(iter.stderr_contents().empty());
-    ATF_REQUIRE_EQ(datetime::delta(6, 0), iter.duration());
+    ATF_REQUIRE_EQ(1357648712000000LL, iter.start_time().to_microseconds());
+    ATF_REQUIRE_EQ(1357648718000000LL, iter.end_time().to_microseconds());
 
     ++iter;
     ATF_REQUIRE(iter);
@@ -298,7 +305,8 @@ check_action_3(const fs::path& dbpath)
     ATF_REQUIRE_EQ(result_8, iter.result());
     ATF_REQUIRE_EQ("Another stdout", iter.stdout_contents());
     ATF_REQUIRE(iter.stderr_contents().empty());
-    ATF_REQUIRE_EQ(datetime::delta(0, 817987), iter.duration());
+    ATF_REQUIRE_EQ(1357648729182013LL, iter.start_time().to_microseconds());
+    ATF_REQUIRE_EQ(1357648730000000LL, iter.end_time().to_microseconds());
 
     ++iter;
     ATF_REQUIRE(iter);
@@ -307,7 +315,8 @@ check_action_3(const fs::path& dbpath)
     ATF_REQUIRE_EQ(result_9, iter.result());
     ATF_REQUIRE(iter.stdout_contents().empty());
     ATF_REQUIRE_EQ("Another stderr", iter.stderr_contents());
-    ATF_REQUIRE_EQ(datetime::delta(9, 961700), iter.duration());
+    ATF_REQUIRE_EQ(1357648740120000LL, iter.start_time().to_microseconds());
+    ATF_REQUIRE_EQ(1357648750081700LL, iter.end_time().to_microseconds());
 
     ++iter;
     ATF_REQUIRE(!iter);
@@ -367,7 +376,8 @@ check_action_4(const fs::path& dbpath)
     ATF_REQUIRE_EQ(result_12, iter.result());
     ATF_REQUIRE(iter.stdout_contents().empty());
     ATF_REQUIRE(iter.stderr_contents().empty());
-    ATF_REQUIRE_EQ(datetime::delta(1, 905000), iter.duration());
+    ATF_REQUIRE_EQ(1357644397100000LL, iter.start_time().to_microseconds());
+    ATF_REQUIRE_EQ(1357644399005000LL, iter.end_time().to_microseconds());
 
     ++iter;
     ATF_REQUIRE(iter);
@@ -376,7 +386,8 @@ check_action_4(const fs::path& dbpath)
     ATF_REQUIRE_EQ(result_11, iter.result());
     ATF_REQUIRE(iter.stdout_contents().empty());
     ATF_REQUIRE(iter.stderr_contents().empty());
-    ATF_REQUIRE_EQ(datetime::delta(0, 500000), iter.duration());
+    ATF_REQUIRE_EQ(1357644396500000LL, iter.start_time().to_microseconds());
+    ATF_REQUIRE_EQ(1357644397000000LL, iter.end_time().to_microseconds());
 
     ++iter;
     ATF_REQUIRE(iter);
@@ -385,7 +396,8 @@ check_action_4(const fs::path& dbpath)
     ATF_REQUIRE_EQ(result_10, iter.result());
     ATF_REQUIRE_EQ("Test stdout", iter.stdout_contents());
     ATF_REQUIRE_EQ("Test stderr", iter.stderr_contents());
-    ATF_REQUIRE_EQ(datetime::delta(1, 0), iter.duration());
+    ATF_REQUIRE_EQ(1357644395000000LL, iter.start_time().to_microseconds());
+    ATF_REQUIRE_EQ(1357644396000000LL, iter.end_time().to_microseconds());
 
     ++iter;
     ATF_REQUIRE(!iter);

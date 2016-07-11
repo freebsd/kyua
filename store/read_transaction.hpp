@@ -84,7 +84,8 @@ public:
     const model::test_program_ptr test_program(void) const;
     std::string test_case_name(void) const;
     model::test_result result(void) const;
-    utils::datetime::delta duration(void) const;
+    utils::datetime::timestamp start_time(void) const;
+    utils::datetime::timestamp end_time(void) const;
 
     std::string stdout_contents(void) const;
     std::string stderr_contents(void) const;

@@ -159,7 +159,7 @@ drivers::report_junit_hooks::got_result(store::results_iterator& iter)
     _output << F("<testcase classname=\"%s\" name=\"%s\" time=\"%s\">\n")
         % text::escape_xml(junit_classname(*iter.test_program()))
         % text::escape_xml(iter.test_case_name())
-        % junit_duration(iter.duration());
+        % junit_duration(iter.end_time() - iter.start_time());
 
     std::string stderr_contents;
 

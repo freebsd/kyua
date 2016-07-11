@@ -237,14 +237,16 @@ ATF_TEST_CASE_BODY(get_results__many)
     ATF_REQUIRE_EQ("stdout of prog1\n", iter.stdout_contents());
     ATF_REQUIRE(iter.stderr_contents().empty());
     ATF_REQUIRE_EQ(result_1, iter.result());
-    ATF_REQUIRE_EQ(end_time1 - start_time1, iter.duration());
+    ATF_REQUIRE_EQ(start_time1, iter.start_time());
+    ATF_REQUIRE_EQ(end_time1, iter.end_time());
     ATF_REQUIRE(++iter);
     ATF_REQUIRE_EQ(test_program_2, *iter.test_program());
     ATF_REQUIRE_EQ("main", iter.test_case_name());
     ATF_REQUIRE(iter.stdout_contents().empty());
     ATF_REQUIRE_EQ("stderr of prog2\n", iter.stderr_contents());
     ATF_REQUIRE_EQ(result_2, iter.result());
-    ATF_REQUIRE_EQ(end_time2 - start_time2, iter.duration());
+    ATF_REQUIRE_EQ(start_time2, iter.start_time());
+    ATF_REQUIRE_EQ(end_time2, iter.end_time());
     ATF_REQUIRE(!++iter);
 }
 

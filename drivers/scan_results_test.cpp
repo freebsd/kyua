@@ -118,10 +118,11 @@ public:
         default:
             UNREACHABLE_MSG("Formatting unimplemented");
         }
+        const datetime::delta duration = iter.end_time() - iter.start_time();
         _results.insert(F("%s:%s:%s:%s:%s:%s") %
                         iter.test_program()->absolute_path() %
                         iter.test_case_name() % type % iter.result().reason() %
-                        iter.duration().seconds % iter.duration().useconds);
+                        duration.seconds % duration.useconds);
     }
 };
 
