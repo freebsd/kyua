@@ -27,14 +27,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-# Subcommand to strip out the durations in a report.
-#
-# This is a subset of utils_strip_timestamps; see the documentation of that
-# variable for details.
-utils_strip_durations='sed -E \
-    -e "s,( |\[|\")[0-9][0-9]*.[0-9][0-9][0-9](s]|s|\"),\1S.UUU\2,g"'
-
-
 # Subcommand to strip out the durations and timestamps in a report.
 #
 # This is to make the reports deterministic and thus easily testable.  The
@@ -43,20 +35,28 @@ utils_strip_durations='sed -E \
 #
 # This variable should be used as shown here:
 #
-#     atf_check ... -x kyua report "| ${utils_strip_timestamp}"
+#     atf_check ... -x kyua report "| ${utils_strip_times}"
 #
-# Use the utils_install_timestamp_wrapper function to create a 'kyua' wrapper
+# Use the utils_install_times_wrapper function to create a 'kyua' wrapper
 # script that automatically does this.
-utils_strip_timestamps='sed -E \
+utils_strip_times='sed -E \
     -e "s,( |\[|\")[0-9][0-9]*.[0-9][0-9][0-9](s]|s|\"),\1S.UUU\2,g" \
     -e "s,[0-9]{8}-[0-9]{6}-[0-9]{6},YYYYMMDD-HHMMSS-ssssss,g"'
+
+
+# Same as utils_strip_times but avoids stripping timestamp-based report IDs.
+#
+# This is to make the reports deterministic and thus easily testable.  The
+# time deltas are replaced by the fixed string S.UUU.
+utils_strip_times_but_not_ids='sed -E \
+    -e "s,( |\[|\")[0-9][0-9]*.[0-9][0-9][0-9](s]|s|\"),\1S.UUU\2,g"'
 
 
 # Computes the results id for a test suite run.
 #
 # The computed path is "generic" in the sense that it does not include a
 # real timestamp: it only includes a placeholder.  This function should be
-# used along the utils_strip_timestamps function so that the timestampts of
+# used along the utils_strip_times function so that the timestamps of
 # the real results files are stripped out.
 #
 # \param path Optional path to use; if not given, use the cwd.
@@ -70,8 +70,8 @@ utils_results_id() {
 #
 # The computed path is "generic" in the sense that it does not include a
 # real timestamp: it only includes a placeholder.  This function should be
-# used along the utils_strip_timestamps function so that the timestampts of
-# the real results files are stripped out.
+# used along the utils_strip_times function so that the timestampts of the
+# real results files are stripped out.
 #
 # \param path Optional path to use; if not given, use the cwd.
 utils_results_file() {
@@ -92,13 +92,12 @@ utils_cp_helper() {
 }
 
 
-# Creates a 'kyua' binary in the path that strips durations off the output.
+# Creates a 'kyua' binary in the path that strips timing data off the output.
 #
-# Call this on test cases that wish to replace timestamps in the *stdout* of
-# Kyua with the S.UUUs deterministic string.  This is to be used by tests that
-# validate the 'test' subcommand, but also by a few specific tests for the
-# 'report' subcommand.
-utils_install_durations_wrapper() {
+# Call this on test cases that wish to replace timing data in the *stdout* of
+# Kyua with the deterministic strings.  This is to be used by tests that
+# validate the 'test' and 'report' subcommands.
+utils_install_times_wrapper() {
     [ ! -x kyua ] || return
     cat >kyua <<EOF
 #! /bin/sh
@@ -107,7 +106,7 @@ PATH=${PATH}
 
 kyua "\${@}" >kyua.tmpout
 result=\${?}
-cat kyua.tmpout | ${utils_strip_durations}
+cat kyua.tmpout | ${utils_strip_times}
 exit \${result}
 EOF
     chmod +x kyua
@@ -115,15 +114,14 @@ EOF
 }
 
 
-# Creates a 'kyua' binary in the path that strips timestamps off the output.
+# Creates a 'kyua' binary in the path that makes the output of 'test' stable.
 #
-# Call this on test cases that wish to replace durations and timestamps with a
-# deterministic string.  The wrapper also makes sure the test result lines in
-# the output are sorted lexicographically so that the indeterminism caused by
-# parallel execution of test cases can be dealt with.  For these reasons, this
-# is to be used exclusively by tests that validate the 'test' subcommand.
-#
-utils_install_timestamp_wrapper() {
+# Call this on test cases that wish to replace timing data with deterministic
+# strings and that need the result lines in the output to be sorted
+# lexicographically.  The latter hides the indeterminism caused by parallel
+# execution so that the output can be verified.  For these reasons, this is to
+# be used exclusively by tests that validate the 'test' subcommand.
+utils_install_stable_test_wrapper() {
     [ ! -x kyua ] || return
     cat >kyua <<EOF
 #! /bin/sh
@@ -132,7 +130,7 @@ PATH=${PATH}
 
 kyua "\${@}" >kyua.tmpout
 result=\${?}
-cat kyua.tmpout | ${utils_strip_timestamps} >kyua.tmpout2
+cat kyua.tmpout | ${utils_strip_times} >kyua.tmpout2
 
 # Sort the test result lines but keep the rest intact.
 grep '[^ ]*:[^ ]*' kyua.tmpout2 | sort >kyua.tmpout3

@@ -29,7 +29,7 @@
 
 utils_test_case one_test_program__all_pass
 one_test_program__all_pass_body() {
-    utils_install_timestamp_wrapper
+    utils_install_stable_test_wrapper
 
     cat >Kyuafile <<EOF
 syntax(2)
@@ -54,7 +54,7 @@ EOF
 
 utils_test_case one_test_program__some_fail
 one_test_program__some_fail_body() {
-    utils_install_timestamp_wrapper
+    utils_install_stable_test_wrapper
 
     cat >Kyuafile <<EOF
 syntax(2)
@@ -79,7 +79,7 @@ EOF
 
 utils_test_case many_test_programs__all_pass
 many_test_programs__all_pass_body() {
-    utils_install_timestamp_wrapper
+    utils_install_stable_test_wrapper
 
     cat >Kyuafile <<EOF
 syntax(2)
@@ -115,7 +115,7 @@ EOF
 
 utils_test_case many_test_programs__some_fail
 many_test_programs__some_fail_body() {
-    utils_install_timestamp_wrapper
+    utils_install_stable_test_wrapper
 
     cat >Kyuafile <<EOF
 syntax(2)
@@ -153,7 +153,7 @@ EOF
 
 utils_test_case expect__all_pass
 expect__all_pass_body() {
-    utils_install_timestamp_wrapper
+    utils_install_stable_test_wrapper
 
     cat >Kyuafile <<EOF
 syntax(2)
@@ -183,7 +183,7 @@ EOF
 
 utils_test_case expect__some_fail
 expect__some_fail_body() {
-    utils_install_timestamp_wrapper
+    utils_install_stable_test_wrapper
 
     cat >Kyuafile <<EOF
 syntax(2)
@@ -214,7 +214,7 @@ EOF
 
 utils_test_case premature_exit
 premature_exit_body() {
-    utils_install_timestamp_wrapper
+    utils_install_stable_test_wrapper
 
     cat >Kyuafile <<EOF
 syntax(2)
@@ -242,7 +242,7 @@ EOF
 
 utils_test_case no_args
 no_args_body() {
-    utils_install_timestamp_wrapper
+    utils_install_stable_test_wrapper
 
     cat >Kyuafile <<EOF
 syntax(2)
@@ -278,7 +278,7 @@ EOF
 
 utils_test_case one_arg__subdir
 one_arg__subdir_body() {
-    utils_install_timestamp_wrapper
+    utils_install_stable_test_wrapper
 
     cat >Kyuafile <<EOF
 syntax(2)
@@ -311,7 +311,7 @@ EOF
 
 utils_test_case one_arg__test_case
 one_arg__test_case_body() {
-    utils_install_timestamp_wrapper
+    utils_install_stable_test_wrapper
 
     cat >Kyuafile <<EOF
 syntax(2)
@@ -336,7 +336,7 @@ EOF
 
 utils_test_case one_arg__test_program
 one_arg__test_program_body() {
-    utils_install_timestamp_wrapper
+    utils_install_stable_test_wrapper
 
     cat >Kyuafile <<EOF
 syntax(2)
@@ -376,7 +376,7 @@ EOF
 
 utils_test_case many_args__ok
 many_args__ok_body() {
-    utils_install_timestamp_wrapper
+    utils_install_stable_test_wrapper
 
     cat >Kyuafile <<EOF
 syntax(2)
@@ -424,7 +424,7 @@ EOF
 
 utils_test_case many_args__no_match__all
 many_args__no_match__all_body() {
-    utils_install_timestamp_wrapper
+    utils_install_stable_test_wrapper
 
     cat >Kyuafile <<EOF
 syntax(2)
@@ -448,7 +448,7 @@ EOF
 
 utils_test_case many_args__no_match__some
 many_args__no_match__some_body() {
-    utils_install_timestamp_wrapper
+    utils_install_stable_test_wrapper
 
     cat >Kyuafile <<EOF
 syntax(2)
@@ -484,7 +484,7 @@ EOF
 
 utils_test_case args_are_relative
 args_are_relative_body() {
-    utils_install_timestamp_wrapper
+    utils_install_stable_test_wrapper
 
     mkdir root
     cat >root/Kyuafile <<EOF
@@ -524,7 +524,7 @@ EOF
 
 utils_test_case only_load_used_test_programs
 only_load_used_test_programs_body() {
-    utils_install_timestamp_wrapper
+    utils_install_stable_test_wrapper
 
     cat >Kyuafile <<EOF
 syntax(2)
@@ -598,7 +598,7 @@ EOF
 
 utils_test_case store_contents
 store_contents_body() {
-    utils_install_timestamp_wrapper
+    utils_install_stable_test_wrapper
 
     cat >Kyuafile <<EOF
 syntax(2)
@@ -666,7 +666,7 @@ EOF
 
 utils_test_case results_file__reuse
 results_file__reuse_body() {
-    utils_install_timestamp_wrapper
+    utils_install_stable_test_wrapper
 
     cat >Kyuafile <<EOF
 syntax(2)
@@ -682,7 +682,7 @@ EOF
 
 utils_test_case build_root_flag
 build_root_flag_body() {
-    utils_install_timestamp_wrapper
+    utils_install_stable_test_wrapper
 
     cat >Kyuafile <<EOF
 syntax(2)
@@ -725,7 +725,7 @@ EOF
 
 utils_test_case kyuafile_flag__no_args
 kyuafile_flag__no_args_body() {
-    utils_install_timestamp_wrapper
+    utils_install_stable_test_wrapper
 
     cat >Kyuafile <<EOF
 This file is bogus but it is not loaded.
@@ -754,7 +754,7 @@ EOF
 
 utils_test_case kyuafile_flag__some_args
 kyuafile_flag__some_args_body() {
-    utils_install_timestamp_wrapper
+    utils_install_stable_test_wrapper
 
     cat >Kyuafile <<EOF
 This file is bogus but it is not loaded.
@@ -856,7 +856,7 @@ EOF
 
 utils_test_case no_test_program_match
 no_test_program_match_body() {
-    utils_install_timestamp_wrapper
+    utils_install_stable_test_wrapper
 
     cat >Kyuafile <<EOF
 syntax(2)
@@ -879,7 +879,7 @@ EOF
 
 utils_test_case no_test_case_match
 no_test_case_match_body() {
-    utils_install_timestamp_wrapper
+    utils_install_stable_test_wrapper
 
     cat >Kyuafile <<EOF
 syntax(2)
@@ -968,7 +968,7 @@ EOF
 
 utils_test_case bogus_test_program
 bogus_test_program_body() {
-    utils_install_timestamp_wrapper
+    utils_install_stable_test_wrapper
 
     cat >Kyuafile <<EOF
 syntax(2)
