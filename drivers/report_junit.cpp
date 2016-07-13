@@ -75,14 +75,22 @@ drivers::junit_duration(const datetime::delta& delta)
 
 
 /// String to prepend to the formatted test case metadata.
-const char* const drivers::junit_metadata_prefix =
+const char* const drivers::junit_metadata_header =
     "Test case metadata\n"
     "------------------\n"
     "\n";
 
 
+/// String to prepend to the formatted test case timing details.
+const char* const drivers::junit_timing_header =
+    "\n"
+    "Timing information\n"
+    "------------------\n"
+    "\n";
+
+
 /// String to append to the formatted test case metadata.
-const char* const drivers::junit_metadata_suffix =
+const char* const drivers::junit_stderr_header =
     "\n"
     "Original stderr\n"
     "---------------\n"
@@ -93,7 +101,7 @@ const char* const drivers::junit_metadata_suffix =
 ///
 /// \param metadata The metadata to format.
 ///
-/// \return A string with the metadata contents that can be prefixed to the
+/// \return A string with the metadata contents that can be prepended to the
 /// original test's stderr.
 std::string
 drivers::junit_metadata(const model::metadata& metadata)
@@ -103,7 +111,7 @@ drivers::junit_metadata(const model::metadata& metadata)
         return "";
 
     std::ostringstream output;
-    output << junit_metadata_prefix;
+    output << junit_metadata_header;
     for (model::properties_map::const_iterator iter = props.begin();
          iter != props.end(); ++iter) {
         if ((*iter).second.empty()) {
@@ -112,7 +120,26 @@ drivers::junit_metadata(const model::metadata& metadata)
             output << F("%s = %s\n") % (*iter).first % (*iter).second;
         }
     }
-    output << junit_metadata_suffix;
+    return output.str();
+}
+
+
+/// Formats a test's timing information for recording in stderr.
+///
+/// \param start_time The start time of the test.
+/// \param end_time The end time of the test.
+///
+/// \return A string with the timing information that can be prepended to the
+/// original test's stderr.
+std::string
+drivers::junit_timing(const datetime::timestamp& start_time,
+                      const datetime::timestamp& end_time)
+{
+    std::ostringstream output;
+    output << junit_timing_header;
+    output << F("Start time: %s\n") % start_time.to_iso8601_in_utc();
+    output << F("End time:   %s\n") % end_time.to_iso8601_in_utc();
+    output << F("Duration:   %ss\n") % junit_duration(end_time - start_time);
     return output.str();
 }
 
@@ -206,7 +233,9 @@ drivers::report_junit_hooks::got_result(store::results_iterator& iter)
             iter.test_case_name());
         stderr_contents += junit_metadata(test_case.get_metadata());
     }
+    stderr_contents += junit_timing(iter.start_time(), iter.end_time());
     {
+        stderr_contents += junit_stderr_header;
         const std::string real_stderr_contents = iter.stderr_contents();
         if (real_stderr_contents.empty()) {
             stderr_contents += "<EMPTY>\n";

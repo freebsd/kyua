@@ -185,9 +185,8 @@ ATF_TEST_CASE_BODY(junit_metadata__defaults)
     const model::metadata metadata = model::metadata_builder().build();
 
     const std::string expected = std::string()
-        + drivers::junit_metadata_prefix
-        + default_metadata
-        + drivers::junit_metadata_suffix;
+        + drivers::junit_metadata_header
+        + default_metadata;
 
     ATF_REQUIRE_EQ(expected, drivers::junit_metadata(metadata));
 }
@@ -212,7 +211,7 @@ ATF_TEST_CASE_BODY(junit_metadata__overrides)
         .build();
 
     const std::string expected = std::string()
-        + drivers::junit_metadata_prefix
+        + drivers::junit_metadata_header
         + "allowed_architectures = arch1\n"
         + "allowed_platforms = platform1\n"
         + "description = This is a test\n"
@@ -224,10 +223,27 @@ ATF_TEST_CASE_BODY(junit_metadata__overrides)
         + "required_memory = 123\n"
         + "required_programs = prog1\n"
         + "required_user = root\n"
-        + "timeout = 10\n"
-        + drivers::junit_metadata_suffix;
+        + "timeout = 10\n";
 
     ATF_REQUIRE_EQ(expected, drivers::junit_metadata(metadata));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(junit_timing);
+ATF_TEST_CASE_BODY(junit_timing)
+{
+    const std::string expected = std::string()
+        + drivers::junit_timing_header +
+        "Start time: 2015-06-12T01:02:35.123456Z\n"
+        "End time:   2016-07-13T18:47:10.000001Z\n"
+        "Duration:   34364674.877s\n";
+
+    const datetime::timestamp start_time =
+        datetime::timestamp::from_values(2015, 6, 12, 1, 2, 35, 123456);
+    const datetime::timestamp end_time =
+        datetime::timestamp::from_values(2016, 7, 13, 18, 47, 10, 1);
+
+    ATF_REQUIRE_EQ(expected, drivers::junit_timing(start_time, end_time));
 }
 
 
@@ -303,9 +319,13 @@ ATF_TEST_CASE_BODY(report_junit_hooks__some_tests)
         "<testcase classname=\"dir.prog-1\" name=\"t0\" time=\"0.500\">\n"
         "<error message=\"Broken\"/>\n"
         "<system-err>"
-        + drivers::junit_metadata_prefix +
+        + drivers::junit_metadata_header +
         default_metadata
-        + drivers::junit_metadata_suffix +
+        + drivers::junit_timing_header +
+        "Start time: 1970-01-01T00:00:00.000000Z\n"
+        "End time:   1970-01-01T00:00:00.500000Z\n"
+        "Duration:   0.500s\n"
+        + drivers::junit_stderr_header +
         "&lt;EMPTY&gt;\n"
         "</system-err>\n"
         "</testcase>\n"
@@ -317,9 +337,13 @@ ATF_TEST_CASE_BODY(report_junit_hooks__some_tests)
         "\n"
         "XFail\n"
         "\n"
-        + drivers::junit_metadata_prefix +
+        + drivers::junit_metadata_header +
         default_metadata
-        + drivers::junit_metadata_suffix +
+        + drivers::junit_timing_header +
+        "Start time: 1970-01-01T00:00:00.000000Z\n"
+        "End time:   1970-01-01T00:00:01.500000Z\n"
+        "Duration:   1.500s\n"
+        + drivers::junit_stderr_header +
         "&lt;EMPTY&gt;\n"
         "</system-err>\n"
         "</testcase>\n"
@@ -327,9 +351,13 @@ ATF_TEST_CASE_BODY(report_junit_hooks__some_tests)
         "<testcase classname=\"dir.prog-1\" name=\"t2\" time=\"2.500\">\n"
         "<failure message=\"Failed\"/>\n"
         "<system-err>"
-        + drivers::junit_metadata_prefix +
+        + drivers::junit_metadata_header +
         default_metadata
-        +  drivers::junit_metadata_suffix +
+        + drivers::junit_timing_header +
+        "Start time: 1970-01-01T00:00:00.000000Z\n"
+        "End time:   1970-01-01T00:00:02.500000Z\n"
+        "Duration:   2.500s\n"
+        +  drivers::junit_stderr_header +
         "&lt;EMPTY&gt;\n"
         "</system-err>\n"
         "</testcase>\n"
@@ -337,9 +365,13 @@ ATF_TEST_CASE_BODY(report_junit_hooks__some_tests)
         "<testcase classname=\"dir.sub.prog-2\" name=\"t0\" time=\"0.500\">\n"
         "<system-out>stdout file 0</system-out>\n"
         "<system-err>"
-        + drivers::junit_metadata_prefix +
+        + drivers::junit_metadata_header +
         overriden_metadata
-        + drivers::junit_metadata_suffix +
+        + drivers::junit_timing_header +
+        "Start time: 1970-01-01T00:00:00.000000Z\n"
+        "End time:   1970-01-01T00:00:00.500000Z\n"
+        "Duration:   0.500s\n"
+        + drivers::junit_stderr_header +
         "stderr file 0</system-err>\n"
         "</testcase>\n"
 
@@ -352,9 +384,13 @@ ATF_TEST_CASE_BODY(report_junit_hooks__some_tests)
         "\n"
         "Skipped\n"
         "\n"
-        + drivers::junit_metadata_prefix +
+        + drivers::junit_metadata_header +
         overriden_metadata
-        + drivers::junit_metadata_suffix +
+        + drivers::junit_timing_header +
+        "Start time: 1970-01-01T00:00:00.000000Z\n"
+        "End time:   1970-01-01T00:00:01.500000Z\n"
+        "Duration:   1.500s\n"
+        + drivers::junit_stderr_header +
         "stderr file 1</system-err>\n"
         "</testcase>\n"
 
@@ -371,6 +407,8 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, junit_metadata__defaults);
     ATF_ADD_TEST_CASE(tcs, junit_metadata__overrides);
+
+    ATF_ADD_TEST_CASE(tcs, junit_timing);
 
     ATF_ADD_TEST_CASE(tcs, report_junit_hooks__minimal);
     ATF_ADD_TEST_CASE(tcs, report_junit_hooks__some_tests);

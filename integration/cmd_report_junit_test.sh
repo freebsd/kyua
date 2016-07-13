@@ -107,6 +107,13 @@ required_programs is empty
 required_user is empty
 timeout = 300
 
+Timing information
+------------------
+
+Start time: YYYY-MM-DDTHH:MM:SS.ssssssZ
+End time:   YYYY-MM-DDTHH:MM:SS.ssssssZ
+Duration:   S.UUUs
+
 Original stderr
 ---------------
 
@@ -137,6 +144,13 @@ required_memory = 0
 required_programs is empty
 required_user is empty
 timeout = 300
+
+Timing information
+------------------
+
+Start time: YYYY-MM-DDTHH:MM:SS.ssssssZ
+End time:   YYYY-MM-DDTHH:MM:SS.ssssssZ
+Duration:   S.UUUs
 
 Original stderr
 ---------------
@@ -207,6 +221,13 @@ required_programs is empty
 required_user is empty
 timeout = 300
 
+Timing information
+------------------
+
+Start time: YYYY-MM-DDTHH:MM:SS.ssssssZ
+End time:   YYYY-MM-DDTHH:MM:SS.ssssssZ
+Duration:   S.UUUs
+
 Original stderr
 ---------------
 
@@ -237,6 +258,13 @@ required_memory = 0
 required_programs is empty
 required_user is empty
 timeout = 300
+
+Timing information
+------------------
+
+Start time: YYYY-MM-DDTHH:MM:SS.ssssssZ
+End time:   YYYY-MM-DDTHH:MM:SS.ssssssZ
+Duration:   S.UUUs
 
 Original stderr
 ---------------
