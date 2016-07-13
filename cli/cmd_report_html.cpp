@@ -152,6 +152,16 @@ class html_hooks : public drivers::scan_results::base_hooks {
     /// Collection of result types to include in the report.
     const cli::result_types& _results_filters;
 
+    /// The start time of the first test.
+    optional< utils::datetime::timestamp > _start_time;
+
+    /// The end time of the last test.
+    optional< utils::datetime::timestamp > _end_time;
+
+    /// The total run time of the tests.  Note that we cannot subtract _end_time
+    /// from _start_time to compute this due to parallel execution.
+    utils::datetime::delta _runtime;
+
     /// Templates accumulator to generate the index.html file.
     text::templates_def _summary_templates;
 
@@ -326,6 +336,15 @@ public:
 
         add_to_summary(*test_program, test_case_name, result, true);
 
+        if (!_start_time || _start_time.get() > iter.start_time())
+            _start_time = iter.start_time();
+        if (!_end_time || _end_time.get() < iter.end_time())
+            _end_time = iter.end_time();
+
+        const datetime::delta duration = iter.end_time() - iter.start_time();
+
+        _runtime += duration;
+
         text::templates_def templates = common_templates();
         templates.add_variable("test_case",
                                cli::format_test_case_id(*test_program,
@@ -333,8 +352,11 @@ public:
         templates.add_variable("test_program",
                                test_program->absolute_path().str());
         templates.add_variable("result", cli::format_result(result));
-        templates.add_variable("duration", cli::format_delta(
-                                   iter.end_time() - iter.start_time()));
+        templates.add_variable("start_time",
+                               iter.start_time().to_iso8601_in_utc());
+        templates.add_variable("end_time",
+                               iter.end_time().to_iso8601_in_utc());
+        templates.add_variable("duration", cli::format_delta(duration));
 
         const model::test_case& test_case = test_program->find(test_case_name);
         add_map(templates, test_case.get_metadata().to_properties(),
@@ -371,6 +393,18 @@ public:
 
         const std::size_t n_bad = n_broken + n_failed;
 
+        if (_start_time) {
+            INV(_end_time);
+            _summary_templates.add_variable(
+                "start_time", _start_time.get().to_iso8601_in_utc());
+            _summary_templates.add_variable(
+                "end_time", _end_time.get().to_iso8601_in_utc());
+        } else {
+            _summary_templates.add_variable("start_time", "No tests run");
+            _summary_templates.add_variable("end_time", "No tests run");
+        }
+        _summary_templates.add_variable("duration",
+                                        cli::format_delta(_runtime));
         _summary_templates.add_variable("passed_tests_count",
                                         F("%s") % n_passed);
         _summary_templates.add_variable("failed_tests_count",
