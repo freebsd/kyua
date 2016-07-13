@@ -242,8 +242,10 @@ and terminates here" \
         "$(atf_get_srcdir)/helpers/dump_env" '    ' '        ' >>expout
     cat >>expout <<EOF
 ===> simple_all_pass:skip
-Result: skipped: The reason for skipping is this
-Duration: S.UUUs
+Result:     skipped: The reason for skipping is this
+Start time: YYYY-MM-DDTHH:MM:SS.ssssssZ
+End time:   YYYY-MM-DDTHH:MM:SS.ssssssZ
+Duration:   S.UUUs
 
 Metadata:
     allowed_architectures is empty
@@ -269,6 +271,8 @@ simple_all_pass:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 ===> Summary
 Results read from $(cat dbfile_name)
 Test cases: 2 total, 1 skipped, 0 expected failures, 0 broken, 0 failed
+Start time: YYYY-MM-DDTHH:MM:SS.ssssssZ
+End time:   YYYY-MM-DDTHH:MM:SS.ssssssZ
 Total time: S.UUUs
 EOF
     atf_check -s exit:0 -o file:expout -e empty -x kyua report --verbose \
