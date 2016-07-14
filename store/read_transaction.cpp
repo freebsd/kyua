@@ -363,17 +363,23 @@ store::results_iterator::result(void) const
 }
 
 
-/// Gets the duration of the test case execution.
+/// Gets the start time of the test case execution.
 ///
-/// \return A time delta representing the run time of the test case.
-datetime::delta
-store::results_iterator::duration(void) const
+/// \return The time when the test started execution.
+datetime::timestamp
+store::results_iterator::start_time(void) const
 {
-    const datetime::timestamp start_time = column_timestamp(
-        _pimpl->_stmt, "start_time");
-    const datetime::timestamp end_time = column_timestamp(
-        _pimpl->_stmt, "end_time");
-    return end_time - start_time;
+    return column_timestamp(_pimpl->_stmt, "start_time");
+}
+
+
+/// Gets the end time of the test case execution.
+///
+/// \return The time when the test finished execution.
+datetime::timestamp
+store::results_iterator::end_time(void) const
+{
+    return column_timestamp(_pimpl->_stmt, "end_time");
 }
 
 

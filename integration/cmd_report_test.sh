@@ -57,7 +57,7 @@ EOF
 
 utils_test_case default_behavior__ok
 default_behavior__ok_body() {
-    utils_install_durations_wrapper
+    utils_install_times_wrapper
 
     run_tests "mock1" dbfile_name1
 
@@ -128,22 +128,22 @@ Total time: S.UUUs
 EOF
 
     atf_check -s exit:0 -o file:report -e empty -x kyua report \
-        --output=/dev/stdout "| ${utils_strip_durations}"
+        --output=/dev/stdout "| ${utils_strip_times_but_not_ids}"
     atf_check -s exit:0 -o empty -e save:stderr kyua report \
         --output=/dev/stderr
     atf_check -s exit:0 -o file:report -x cat stderr \
-        "| ${utils_strip_durations}"
+        "| ${utils_strip_times_but_not_ids}"
 
     atf_check -s exit:0 -o empty -e empty kyua report \
         --output=my-file
     atf_check -s exit:0 -o file:report -x cat my-file \
-        "| ${utils_strip_durations}"
+        "| ${utils_strip_times_but_not_ids}"
 }
 
 
 utils_test_case filter__ok
 filter__ok_body() {
-    utils_install_durations_wrapper
+    utils_install_times_wrapper
 
     run_tests "mock1" dbfile_name1
 
@@ -162,7 +162,7 @@ EOF
 
 utils_test_case filter__ok_passed_excluded_by_default
 filter__ok_passed_excluded_by_default_body() {
-    utils_install_durations_wrapper
+    utils_install_times_wrapper
 
     run_tests "mock1" dbfile_name1
 
@@ -191,7 +191,7 @@ EOF
 
 utils_test_case filter__no_match
 filter__no_match_body() {
-    utils_install_durations_wrapper
+    utils_install_times_wrapper
 
     run_tests "mock1" dbfile_name1
 
@@ -242,8 +242,10 @@ and terminates here" \
         "$(atf_get_srcdir)/helpers/dump_env" '    ' '        ' >>expout
     cat >>expout <<EOF
 ===> simple_all_pass:skip
-Result: skipped: The reason for skipping is this
-Duration: S.UUUs
+Result:     skipped: The reason for skipping is this
+Start time: YYYY-MM-DDTHH:MM:SS.ssssssZ
+End time:   YYYY-MM-DDTHH:MM:SS.ssssssZ
+Duration:   S.UUUs
 
 Metadata:
     allowed_architectures is empty
@@ -269,16 +271,18 @@ simple_all_pass:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
 ===> Summary
 Results read from $(cat dbfile_name)
 Test cases: 2 total, 1 skipped, 0 expected failures, 0 broken, 0 failed
+Start time: YYYY-MM-DDTHH:MM:SS.ssssssZ
+End time:   YYYY-MM-DDTHH:MM:SS.ssssssZ
 Total time: S.UUUs
 EOF
     atf_check -s exit:0 -o file:expout -e empty -x kyua report --verbose \
-        "| ${utils_strip_durations}"
+        "| ${utils_strip_times_but_not_ids}"
 }
 
 
 utils_test_case results_filter__empty
 results_filter__empty_body() {
-    utils_install_durations_wrapper
+    utils_install_times_wrapper
 
     run_tests "mock1" dbfile_name1
 
@@ -298,7 +302,7 @@ EOF
 
 utils_test_case results_filter__one
 results_filter__one_body() {
-    utils_install_durations_wrapper
+    utils_install_times_wrapper
 
     run_tests "mock1" dbfile_name1
 
@@ -317,7 +321,7 @@ EOF
 
 utils_test_case results_filter__multiple_all_match
 results_filter__multiple_all_match_body() {
-    utils_install_durations_wrapper
+    utils_install_times_wrapper
 
     run_tests "mock1" dbfile_name1
 
@@ -338,7 +342,7 @@ EOF
 
 utils_test_case results_filter__multiple_some_match
 results_filter__multiple_some_match_body() {
-    utils_install_durations_wrapper
+    utils_install_times_wrapper
 
     run_tests "mock1" dbfile_name1
 

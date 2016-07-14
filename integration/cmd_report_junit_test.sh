@@ -76,7 +76,7 @@ BEGIN { skip = 0; }
 
 utils_test_case default_behavior__ok
 default_behavior__ok_body() {
-    utils_install_durations_wrapper
+    utils_install_times_wrapper
 
     run_tests "mock1
 this should not be seen
@@ -106,6 +106,13 @@ required_memory = 0
 required_programs is empty
 required_user is empty
 timeout = 300
+
+Timing information
+------------------
+
+Start time: YYYY-MM-DDTHH:MM:SS.ssssssZ
+End time:   YYYY-MM-DDTHH:MM:SS.ssssssZ
+Duration:   S.UUUs
 
 Original stderr
 ---------------
@@ -137,6 +144,13 @@ required_memory = 0
 required_programs is empty
 required_user is empty
 timeout = 300
+
+Timing information
+------------------
+
+Start time: YYYY-MM-DDTHH:MM:SS.ssssssZ
+End time:   YYYY-MM-DDTHH:MM:SS.ssssssZ
+Duration:   S.UUUs
 
 Original stderr
 ---------------
@@ -207,6 +221,13 @@ required_programs is empty
 required_user is empty
 timeout = 300
 
+Timing information
+------------------
+
+Start time: YYYY-MM-DDTHH:MM:SS.ssssssZ
+End time:   YYYY-MM-DDTHH:MM:SS.ssssssZ
+Duration:   S.UUUs
+
 Original stderr
 ---------------
 
@@ -238,6 +259,13 @@ required_programs is empty
 required_user is empty
 timeout = 300
 
+Timing information
+------------------
+
+Start time: YYYY-MM-DDTHH:MM:SS.ssssssZ
+End time:   YYYY-MM-DDTHH:MM:SS.ssssssZ
+Duration:   S.UUUs
+
 Original stderr
 ---------------
 
@@ -248,16 +276,16 @@ This is the stderr of skip
 EOF
 
     atf_check -s exit:0 -o file:report -e empty -x kyua report-junit \
-        --output=/dev/stdout "| ${strip_properties} | ${utils_strip_durations}"
+        --output=/dev/stdout "| ${strip_properties} | ${utils_strip_times}"
     atf_check -s exit:0 -o empty -e save:stderr kyua report-junit \
         --output=/dev/stderr
     atf_check -s exit:0 -o file:report -x cat stderr \
-        "| ${strip_properties} | ${utils_strip_durations}"
+        "| ${strip_properties} | ${utils_strip_times}"
 
     atf_check -s exit:0 -o empty -e empty kyua report-junit \
         --output=my-file
     atf_check -s exit:0 -o file:report -x cat my-file \
-        "| ${strip_properties} | ${utils_strip_durations}"
+        "| ${strip_properties} | ${utils_strip_times}"
 }
 
 

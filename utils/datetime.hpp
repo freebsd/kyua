@@ -107,6 +107,7 @@ public:
     static timestamp now(void);
 
     std::string strftime(const std::string&) const;
+    std::string to_iso8601_in_utc(void) const;
     int64_t to_microseconds(void) const;
     int64_t to_seconds(void) const;
 

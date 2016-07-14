@@ -87,7 +87,14 @@ class report_console_hooks : public drivers::scan_results::base_hooks {
     /// Path to the results file being read.
     const fs::path& _results_file;
 
-    /// The total run time of the tests.
+    /// The start time of the first test.
+    optional< utils::datetime::timestamp > _start_time;
+
+    /// The end time of the last test.
+    optional< utils::datetime::timestamp > _end_time;
+
+    /// The total run time of the tests.  Note that we cannot subtract _end_time
+    /// from _start_time to compute this due to parallel execution.
     utils::datetime::delta _runtime;
 
     /// Representation of a single result.
@@ -184,10 +191,15 @@ class report_console_hooks : public drivers::scan_results::base_hooks {
         _output << F("===> %s:%s\n") %
             result_iter.test_program()->relative_path() %
             result_iter.test_case_name();
-        _output << F("Result: %s\n") %
+        _output << F("Result:     %s\n") %
             cli::format_result(result_iter.result());
-        _output << F("Duration: %s\n") %
-            cli::format_delta(result_iter.duration());
+        _output << F("Start time: %s\n") %
+            result_iter.start_time().to_iso8601_in_utc();
+        _output << F("End time:   %s\n") %
+            result_iter.end_time().to_iso8601_in_utc();
+        _output << F("Duration:   %s\n") %
+            cli::format_delta(result_iter.end_time() -
+                              result_iter.start_time());
 
         _output << "\n";
         _output << "Metadata:\n";
@@ -285,11 +297,18 @@ public:
     void
     got_result(store::results_iterator& iter)
     {
-        _runtime += iter.duration();
+        if (!_start_time || _start_time.get() > iter.start_time())
+            _start_time = iter.start_time();
+        if (!_end_time || _end_time.get() < iter.end_time())
+            _end_time = iter.end_time();
+
+        const datetime::delta duration = iter.end_time() - iter.start_time();
+
+        _runtime += duration;
         const model::test_result result = iter.result();
         _results[result.type()].push_back(
             result_data(iter.test_program()->relative_path(),
-                        iter.test_case_name(), iter.result(), iter.duration()));
+                        iter.test_case_name(), iter.result(), duration));
 
         if (_verbose) {
             // TODO(jmmv): _results_filters is a list and is small enough for
@@ -338,6 +357,13 @@ public:
         _output << F("Test cases: %s total, %s skipped, %s expected failures, "
                      "%s broken, %s failed\n") %
             total % skipped % xfail % broken % failed;
+        if (_verbose && _start_time) {
+            INV(_end_time);
+            _output << F("Start time: %s\n") %
+                    _start_time.get().to_iso8601_in_utc();
+            _output << F("End time:   %s\n") %
+                    _end_time.get().to_iso8601_in_utc();
+        }
         _output << F("Total time: %s\n") % cli::format_delta(_runtime);
     }
 };
