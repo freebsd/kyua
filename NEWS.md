@@ -13,6 +13,8 @@ Changes in version 0.13
   test cases might have previously failed for mysterious reasons when
   running under an unprivileged user.
 
+* Issue #134: Fixed metadata test broken on 32-bit platforms.
+
 * Issue #139: Added per-test case start/end timestamps to all reports.
 
 * Issue #156: Fixed crashes due to the invalid handling of cleanup

@@ -254,7 +254,8 @@ ATF_TEST_CASE_BODY(override_all_with_set_string)
     files.insert(fs::path("plain"));
     files.insert(fs::path("/absolute/path"));
 
-    const units::bytes disk_space(2L * 1024 * 1024 * 1024);
+    const units::bytes disk_space(
+        static_cast< uint64_t >(16) * 1024 * 1024 * 1024);
 
     const units::bytes memory(1024 * 1024);
 
@@ -274,7 +275,7 @@ ATF_TEST_CASE_BODY(override_all_with_set_string)
         .set_string("has_cleanup", "true")
         .set_string("is_exclusive", "true")
         .set_string("required_configs", "config-var")
-        .set_string("required_disk_space", "2G")
+        .set_string("required_disk_space", "16G")
         .set_string("required_files", "plain /absolute/path")
         .set_string("required_memory", "1M")
         .set_string("required_programs", "program /absolute/prog")
