@@ -49,8 +49,13 @@ do_distcheck() {
 
     sudo sysctl -w "kernel.core_pattern=core.%p"
 
+    local archflags=
+    [ "${ARCH?}" != i386 ] || archflags=-m32
+
     local f=
+    f="${f} CFLAGS='${archflags}'"
     f="${f} CPPFLAGS='-I/usr/local/include'"
+    f="${f} CXXFLAGS='${archflags}'"
     f="${f} LDFLAGS='-L/usr/local/lib -Wl,-R/usr/local/lib'"
     f="${f} PKG_CONFIG_PATH='/usr/local/lib/pkgconfig'"
     if [ "${AS_ROOT:-no}" = yes ]; then

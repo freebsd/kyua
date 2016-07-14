@@ -29,9 +29,25 @@
 
 set -e -x
 
-sudo apt-get update -qq
-sudo apt-get install -y gdb liblua5.2-0 liblua5.2-dev \
-    libsqlite3-0 libsqlite3-dev pkg-config sqlite3
+install_deps() {
+    sudo apt-get update -qq
+
+    local pkgsuffix=
+    local packages=
+    if [ "${ARCH?}" = i386 ]; then
+         pkgsuffix=:i386
+         packages="${packages} gcc-multilib"
+         packages="${packages} g++-multilib"
+    fi
+    packages="${packages} gdb"
+    packages="${packages} liblua5.2-0${pkgsuffix}"
+    packages="${packages} liblua5.2-dev${pkgsuffix}"
+    packages="${packages} libsqlite3-0${pkgsuffix}"
+    packages="${packages} libsqlite3-dev${pkgsuffix}"
+    packages="${packages} pkg-config${pkgsuffix}"
+    packages="${packages} sqlite3"
+    sudo apt-get install -y ${packages}
+}
 
 install_from_github() {
     local name="${1}"; shift
@@ -44,12 +60,17 @@ install_from_github() {
         "${baseurl}/releases/download/${distname}/${distname}.tar.gz"
     tar -xzvf "${distname}.tar.gz"
 
+    local archflags=
+    [ "${ARCH?}" != i386 ] || archflags=-m32
+
     cd "${distname}"
     ./configure \
         --disable-developer \
         --without-atf \
         --without-doxygen \
+        CFLAGS="${archflags}" \
         CPPFLAGS="-I/usr/local/include" \
+        CXXFLAGS="${archflags}" \
         LDFLAGS="-L/usr/local/lib -Wl,-R/usr/local/lib" \
         PKG_CONFIG_PATH="/usr/local/lib/pkgconfig"
     make
@@ -60,7 +81,18 @@ install_from_github() {
 }
 
 install_from_bintray() {
-    local name="20160204-usr-local-kyua-ubuntu-12-04-amd64-${CC:-gcc}.tar.gz"
+    case "${ARCH?}" in
+        amd64)
+            name="20160204-usr-local-kyua-ubuntu-12-04-amd64-${CC?}.tar.gz"
+            ;;
+        i386)
+            name="20160714-usr-local-kyua-ubuntu-12-04-i386-${CC?}.tar.gz"
+            ;;
+        *)
+            echo "ERROR: Unknown ARCH value ${ARCH}" 1>&2
+            exit 1
+            ;;
+    esac
     wget "http://dl.bintray.com/jmmv/kyua/${name}" || return 1
     sudo tar -xzvp -C / -f "${name}"
     rm -f "${name}"
@@ -92,6 +124,7 @@ main() {
         echo "DO must be defined" 1>&2
         exit 1
     fi
+    install_deps
     for step in ${DO}; do
         "do_${DO}" || exit 1
     done

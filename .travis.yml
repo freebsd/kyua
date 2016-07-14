@@ -8,11 +8,12 @@ before_install:
     - ./admin/travis-install-deps.sh
 
 env:
-    - DO=apidocs
-    - DO=style
-    - DO=distcheck AS_ROOT=no
-    - DO=distcheck AS_ROOT=yes UNPRIVILEGED_USER=no
-    - DO=distcheck AS_ROOT=yes UNPRIVILEGED_USER=yes
+    - ARCH=amd64 DO=apidocs
+    - ARCH=amd64 DO=style
+    - ARCH=amd64 DO=distcheck AS_ROOT=no
+    - ARCH=amd64 DO=distcheck AS_ROOT=yes UNPRIVILEGED_USER=no
+    - ARCH=amd64 DO=distcheck AS_ROOT=yes UNPRIVILEGED_USER=yes
+    - ARCH=i386 DO=distcheck AS_ROOT=no
 
 matrix:
     exclude:
@@ -20,13 +21,17 @@ matrix:
         # env above to see if we can actually build, but do not really worry
         # about the run-time aspects of the tests.
         - compiler: gcc
-          env: DO=apidocs
+          env: ARCH=amd64 DO=apidocs
         - compiler: gcc
-          env: DO=style
+          env: ARCH=amd64 DO=style
         - compiler: gcc
-          env: DO=distcheck AS_ROOT=yes UNPRIVILEGED_USER=no
+          env: ARCH=amd64 DO=distcheck AS_ROOT=yes UNPRIVILEGED_USER=no
         - compiler: gcc
-          env: DO=distcheck AS_ROOT=yes UNPRIVILEGED_USER=yes
+          env: ARCH=amd64 DO=distcheck AS_ROOT=yes UNPRIVILEGED_USER=yes
+        # For the i386 test, use gcc as that's the only prebuilt version of
+        # the tools we've got.
+        - compiler: clang
+          env: ARCH=i386 DO=distcheck AS_ROOT=no
 
 script:
     - ./admin/travis-build.sh
