@@ -5,7 +5,7 @@ Major changes between releases
 Changes in version 0.13
 -----------------------
 
-**NOT RELEASED YET.  STILL UNDER DEVELOPMENT.**
+**Released on August 26th, 2016.**
 
 * Fixed execution of test cases as an unprivileged user, at least under
   NetBSD 7.0.  Kyua-level failures were probably a regression introduced

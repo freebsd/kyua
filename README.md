@@ -29,9 +29,9 @@ This is not an official Google product.
 Download
 --------
 
-The latest version of Kyua is 0.12 and was released on November 22nd, 2015.
+The latest version of Kyua is 0.13 and was released on August 26th, 2016.
 
-Download: [kyua-0.12](../../releases/tag/kyua-0.12).
+Download: [kyua-0.13](../../releases/tag/kyua-0.13).
 
 See the [release notes](NEWS.md) for information about the changes in this
 and all previous releases.
