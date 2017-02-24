@@ -32,7 +32,7 @@
 #if !defined(ENGINE_SCHEDULER_FWD_HPP)
 #define ENGINE_SCHEDULER_FWD_HPP
 
-#include "utils/shared_ptr.hpp"
+#include <memory>
 
 namespace engine {
 namespace scheduler {

@@ -39,10 +39,9 @@ extern "C" {
 }
 
 #include <cstddef>
+#include <memory>
 #include <ostream>
 #include <string>
-
-#include "utils/shared_ptr.hpp"
 
 namespace utils {
 namespace datetime {

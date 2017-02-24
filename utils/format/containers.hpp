@@ -33,12 +33,11 @@
 #define UTILS_FORMAT_CONTAINERS_HPP
 
 #include <map>
+#include <memory>
 #include <ostream>
 #include <set>
 #include <utility>
 #include <vector>
-
-#include "utils/shared_ptr.hpp"
 
 // This is ugly but necessary for C++ name resolution.  Unsure if we'd do it
 // differently...

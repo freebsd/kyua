@@ -34,9 +34,10 @@
 
 #include "store/read_backend_fwd.hpp"
 
+#include <memory>
+
 #include "store/read_transaction_fwd.hpp"
 #include "utils/fs/path_fwd.hpp"
-#include "utils/shared_ptr.hpp"
 #include "utils/sqlite/database_fwd.hpp"
 
 namespace store {

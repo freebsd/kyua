@@ -35,11 +35,11 @@
 #include "model/context_fwd.hpp"
 
 #include <map>
+#include <memory>
 #include <ostream>
 #include <string>
 
 #include "utils/fs/path_fwd.hpp"
-#include "utils/shared_ptr.hpp"
 
 namespace model {
 

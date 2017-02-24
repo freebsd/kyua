@@ -34,10 +34,10 @@
 
 #include "utils/fs/auto_cleaners_fwd.hpp"
 
+#include <memory>
 #include <string>
 
 #include "utils/fs/path_fwd.hpp"
-#include "utils/shared_ptr.hpp"
 
 namespace utils {
 namespace fs {

@@ -27,22 +27,30 @@ dnl (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 dnl OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 dnl
-dnl KYUA_REQUIRE_CXX
+dnl KYUA_REQUIRE_CXX11
 dnl
-dnl Ensures the C++ compiler detected by AC_PROG_CXX is present and works.
-dnl The compiler check should be performed here, but it seems like Autoconf
-dnl does not allow it.
+dnl Ensures the C++ compiler detected by AC_PROG_CXX is present, configures
+dnl it to support the C++11 standard, and verifies that the compiler can
+dnl actually build C++11 code.
 dnl
-AC_DEFUN([KYUA_REQUIRE_CXX], [
-    AC_CACHE_CHECK([whether the C++ compiler works],
-                   [kyua_cv_prog_cxx_works],
-                   [AC_LANG_PUSH([C++])
-                    AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])],
-                                   [kyua_cv_prog_cxx_works=yes],
-                                   [kyua_cv_prog_cxx_works=no])
-                    AC_LANG_POP([C++])])
+AC_DEFUN([KYUA_REQUIRE_CXX11], [
+    KYUA_CXX_FLAGS([-std=c++11])
+
+    AC_CACHE_CHECK(
+        [whether the C++ compiler works],
+        [kyua_cv_prog_cxx_works], [
+        AC_LANG_PUSH([C++])
+        AC_LINK_IFELSE(
+            [AC_LANG_PROGRAM(
+                [#include <memory>],
+                [auto ptr = std::make_shared<int>(5);]
+            )],
+            [kyua_cv_prog_cxx_works=yes],
+            [kyua_cv_prog_cxx_works=no])
+        AC_LANG_POP([C++])
+    ])
     if test "${kyua_cv_prog_cxx_works}" = no; then
-        AC_MSG_ERROR([C++ compiler cannot create executables])
+        AC_MSG_ERROR([C++ compiler does not work or C++11 support missing])
     fi
 ])
 

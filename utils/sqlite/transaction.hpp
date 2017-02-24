@@ -34,7 +34,8 @@
 
 #include "utils/sqlite/transaction_fwd.hpp"
 
-#include "utils/shared_ptr.hpp"
+#include <memory>
+
 #include "utils/sqlite/database_fwd.hpp"
 
 namespace utils {

@@ -57,6 +57,7 @@
 
 #include "engine/scheduler_fwd.hpp"
 
+#include <memory>
 #include <set>
 #include <string>
 
@@ -72,7 +73,6 @@
 #include "utils/optional.hpp"
 #include "utils/process/executor_fwd.hpp"
 #include "utils/process/status_fwd.hpp"
-#include "utils/shared_ptr.hpp"
 
 namespace engine {
 namespace scheduler {

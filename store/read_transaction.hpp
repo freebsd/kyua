@@ -38,6 +38,7 @@ extern "C" {
 #include <stdint.h>
 }
 
+#include <memory>
 #include <string>
 
 #include "model/context_fwd.hpp"
@@ -46,7 +47,6 @@ extern "C" {
 #include "store/read_backend_fwd.hpp"
 #include "store/read_transaction_fwd.hpp"
 #include "utils/datetime_fwd.hpp"
-#include "utils/shared_ptr.hpp"
 
 namespace store {
 

@@ -28,6 +28,7 @@
 
 #include "utils/format/containers.ipp"
 
+#include <memory>
 #include <ostream>
 #include <set>
 #include <string>
@@ -35,8 +36,6 @@
 #include <vector>
 
 #include <atf-c++.hpp>
-
-#include "utils/shared_ptr.hpp"
 
 
 namespace {
