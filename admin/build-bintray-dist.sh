@@ -27,19 +27,38 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# \file admin/build-bintray-dist.sh
+# Builds a full Kyua installation under /usr/local for Ubuntu.
+#
+# This script is used to create the bintray distribution packages in lieu
+# of real Debian packages for Kyua.  The result of this script is a
+# tarball that provides the contents of /usr/local for Kyua.
+
 set -e -x
+
+err() {
+    echo "${@}" 1>&2
+    exit 1
+}
 
 install_deps() {
     sudo apt-get update -qq
 
     local pkgsuffix=
     local packages=
+    packages="${packages} autoconf"
+    packages="${packages} automake"
+    packages="${packages} clang"
+    packages="${packages} g++"
+    packages="${packages} gdb"
+    packages="${packages} git"
+    packages="${packages} libtool"
+    packages="${packages} make"
     if [ "${ARCH?}" = i386 ]; then
          pkgsuffix=:i386
          packages="${packages} gcc-multilib"
          packages="${packages} g++-multilib"
     fi
-    packages="${packages} gdb"
     packages="${packages} liblua5.2-0${pkgsuffix}"
     packages="${packages} liblua5.2-dev${pkgsuffix}"
     packages="${packages} libsqlite3-0${pkgsuffix}"
@@ -68,8 +87,10 @@ install_from_github() {
         --disable-developer \
         --without-atf \
         --without-doxygen \
+        CC="${CC?}" \
         CFLAGS="${archflags}" \
         CPPFLAGS="-I/usr/local/include" \
+        CXX="${CXX?}" \
         CXXFLAGS="${archflags}" \
         LDFLAGS="-L/usr/local/lib -Wl,-R/usr/local/lib" \
         PKG_CONFIG_PATH="/usr/local/lib/pkgconfig"
@@ -81,10 +102,30 @@ install_from_github() {
 }
 
 main() {
+    [ "${ARCH+set}" = set ] || err "ARCH must be set in the environment"
+    [ "${CC+set}" = set ] || err "CC must be set in the environment"
+    [ "${CXX+set}" = set ] || err "CXX must be set in the environment"
+
+    [ ! -f /root/local.tgz ] || err "/root/local.tgz already exists"
+    tar -czf /root/local.tgz /usr/local
+    restore() {
+        rm -rf /usr/local
+        tar -xz -C / -f /root/local.tgz
+        rm /root/local.tgz
+    }
+    trap restore EXIT
+    rm -rf /usr/local
+    mkdir /usr/local
+
     install_deps
     install_from_github atf 0.21
     install_from_github lutok 0.4
     install_from_github kyua 0.13
+
+    local version="$(lsb_release -rs | cut -d . -f 1-2 | tr . -)"
+    local name="$(date +%Y%m%d)-usr-local-kyua"
+    name="${name}-ubuntu-${version}-${ARCH?}-${CC?}.tar.gz"
+    tar -czf "${name}" /usr/local
 }
 
 main "${@}"
