@@ -1,5 +1,5 @@
 #! /bin/sh
-# Copyright 2014 The Kyua Authors.
+# Copyright 2017 The Kyua Authors.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -49,46 +49,42 @@ install_deps() {
     sudo apt-get install -y ${packages}
 }
 
-install_kyua() {
-    case "${ARCH?}" in
-        amd64)
-            name="20160204-usr-local-kyua-ubuntu-12-04-amd64-${CC?}.tar.gz"
-            ;;
-        i386)
-            name="20160714-usr-local-kyua-ubuntu-12-04-i386-${CC?}.tar.gz"
-            ;;
-        *)
-            echo "ERROR: Unknown ARCH value ${ARCH}" 1>&2
-            exit 1
-            ;;
-    esac
-    wget "http://dl.bintray.com/jmmv/kyua/${name}" || return 1
-    sudo tar -xzvp -C / -f "${name}"
-    rm -f "${name}"
-}
+install_from_github() {
+    local name="${1}"; shift
+    local release="${1}"; shift
 
-do_apidocs() {
-    sudo apt-get install -y doxygen
-}
+    local distname="${name}-${release}"
 
-do_distcheck() {
-    :
-}
+    local baseurl="https://github.com/jmmv/${name}"
+    wget --no-check-certificate \
+        "${baseurl}/releases/download/${distname}/${distname}.tar.gz"
+    tar -xzvf "${distname}.tar.gz"
 
-do_style() {
-    :
+    local archflags=
+    [ "${ARCH?}" != i386 ] || archflags=-m32
+
+    cd "${distname}"
+    ./configure \
+        --disable-developer \
+        --without-atf \
+        --without-doxygen \
+        CFLAGS="${archflags}" \
+        CPPFLAGS="-I/usr/local/include" \
+        CXXFLAGS="${archflags}" \
+        LDFLAGS="-L/usr/local/lib -Wl,-R/usr/local/lib" \
+        PKG_CONFIG_PATH="/usr/local/lib/pkgconfig"
+    make
+    sudo make install
+    cd -
+
+    rm -rf "${distname}" "${distname}.tar.gz"
 }
 
 main() {
-    if [ -z "${DO}" ]; then
-        echo "DO must be defined" 1>&2
-        exit 1
-    fi
     install_deps
-    install_kyua
-    for step in ${DO}; do
-        "do_${DO}" || exit 1
-    done
+    install_from_github atf 0.21
+    install_from_github lutok 0.4
+    install_from_github kyua 0.13
 }
 
 main "${@}"
