@@ -52,14 +52,7 @@ do_distcheck() {
     local archflags=
     [ "${ARCH?}" != i386 ] || archflags=-m32
 
-    local f=
-    f="${f} CFLAGS='${archflags}'"
-    f="${f} CPPFLAGS='-I/usr/local/include'"
-    f="${f} CXXFLAGS='${archflags}'"
-    f="${f} LDFLAGS='-L/usr/local/lib -Wl,-R/usr/local/lib'"
-    f="${f} PKG_CONFIG_PATH='/usr/local/lib/pkgconfig'"
-    if [ "${AS_ROOT:-no}" = yes ]; then
-        cat >kyua.conf <<EOF
+    cat >kyua.conf <<EOF
 syntax(2)
 
 -- We do not know how many CPUs the test machine has.  However, parallelizing
@@ -67,10 +60,17 @@ syntax(2)
 -- complete a test run because many of our tests are blocking.
 parallelism = 4
 EOF
-        [ "${UNPRIVILEGED_USER:-no}" = no ] || \
-            echo "unprivileged_user = 'nobody'" >>kyua.conf
+    [ "${UNPRIVILEGED_USER:-no}" = no ] || \
+        echo "unprivileged_user = 'nobody'" >>kyua.conf
 
-        f="${f} KYUA_CONFIG_FILE_FOR_CHECK=$(pwd)/kyua.conf"
+    local f=
+    f="${f} CFLAGS='${archflags}'"
+    f="${f} CPPFLAGS='-I/usr/local/include'"
+    f="${f} CXXFLAGS='${archflags}'"
+    f="${f} LDFLAGS='-L/usr/local/lib -Wl,-R/usr/local/lib'"
+    f="${f} PKG_CONFIG_PATH='/usr/local/lib/pkgconfig'"
+    f="${f} KYUA_CONFIG_FILE_FOR_CHECK=$(pwd)/kyua.conf"
+    if [ "${AS_ROOT:-no}" = yes ]; then
         sudo -H PATH="${PATH}" make distcheck DISTCHECK_CONFIGURE_FLAGS="${f}"
     else
         make distcheck DISTCHECK_CONFIGURE_FLAGS="${f}"
