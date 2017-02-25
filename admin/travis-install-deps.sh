@@ -30,14 +30,13 @@
 set -e -x
 
 install_deps() {
-    sudo apt-get update -qq
-
     local pkgsuffix=
     local packages=
     if [ "${ARCH?}" = i386 ]; then
          pkgsuffix=:i386
          packages="${packages} gcc-multilib"
          packages="${packages} g++-multilib"
+         sudo dpkg --add-architecture i386
     fi
     packages="${packages} gdb"
     packages="${packages} liblua5.2-0${pkgsuffix}"
@@ -46,22 +45,12 @@ install_deps() {
     packages="${packages} libsqlite3-dev${pkgsuffix}"
     packages="${packages} pkg-config${pkgsuffix}"
     packages="${packages} sqlite3"
+    sudo apt-get update -qq
     sudo apt-get install -y ${packages}
 }
 
 install_kyua() {
-    case "${ARCH?}" in
-        amd64)
-            name="20160204-usr-local-kyua-ubuntu-12-04-amd64-${CC?}.tar.gz"
-            ;;
-        i386)
-            name="20160714-usr-local-kyua-ubuntu-12-04-i386-${CC?}.tar.gz"
-            ;;
-        *)
-            echo "ERROR: Unknown ARCH value ${ARCH}" 1>&2
-            exit 1
-            ;;
-    esac
+    local name="20170225-usr-local-kyua-ubuntu-14-04-${ARCH?}-${CC?}.tar.gz"
     wget "http://dl.bintray.com/jmmv/kyua/${name}" || return 1
     sudo tar -xzvp -C / -f "${name}"
     rm -f "${name}"
