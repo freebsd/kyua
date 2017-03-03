@@ -30,14 +30,13 @@
 set -e -x
 
 install_deps() {
-    sudo apt-get update -qq
-
     local pkgsuffix=
     local packages=
     if [ "${ARCH?}" = i386 ]; then
          pkgsuffix=:i386
          packages="${packages} gcc-multilib"
          packages="${packages} g++-multilib"
+         sudo dpkg --add-architecture i386
     fi
     packages="${packages} gdb"
     packages="${packages} liblua5.2-0${pkgsuffix}"
@@ -46,77 +45,27 @@ install_deps() {
     packages="${packages} libsqlite3-dev${pkgsuffix}"
     packages="${packages} pkg-config${pkgsuffix}"
     packages="${packages} sqlite3"
+    sudo apt-get update -qq
     sudo apt-get install -y ${packages}
 }
 
-install_from_github() {
-    local name="${1}"; shift
-    local release="${1}"; shift
-
-    local distname="${name}-${release}"
-
-    local baseurl="https://github.com/jmmv/${name}"
-    wget --no-check-certificate \
-        "${baseurl}/releases/download/${distname}/${distname}.tar.gz"
-    tar -xzvf "${distname}.tar.gz"
-
-    local archflags=
-    [ "${ARCH?}" != i386 ] || archflags=-m32
-
-    cd "${distname}"
-    ./configure \
-        --disable-developer \
-        --without-atf \
-        --without-doxygen \
-        CFLAGS="${archflags}" \
-        CPPFLAGS="-I/usr/local/include" \
-        CXXFLAGS="${archflags}" \
-        LDFLAGS="-L/usr/local/lib -Wl,-R/usr/local/lib" \
-        PKG_CONFIG_PATH="/usr/local/lib/pkgconfig"
-    make
-    sudo make install
-    cd -
-
-    rm -rf "${distname}" "${distname}.tar.gz"
-}
-
-install_from_bintray() {
-    case "${ARCH?}" in
-        amd64)
-            name="20160204-usr-local-kyua-ubuntu-12-04-amd64-${CC?}.tar.gz"
-            ;;
-        i386)
-            name="20160714-usr-local-kyua-ubuntu-12-04-i386-${CC?}.tar.gz"
-            ;;
-        *)
-            echo "ERROR: Unknown ARCH value ${ARCH}" 1>&2
-            exit 1
-            ;;
-    esac
+install_kyua() {
+    local name="20170225-usr-local-kyua-ubuntu-14-04-${ARCH?}-${CC?}.tar.gz"
     wget "http://dl.bintray.com/jmmv/kyua/${name}" || return 1
     sudo tar -xzvp -C / -f "${name}"
     rm -f "${name}"
 }
 
-install_configure_deps() {
-    if ! install_from_bintray; then
-        install_from_github atf 0.21
-        install_from_github lutok 0.4
-        install_from_github kyua 0.12
-    fi
-}
-
 do_apidocs() {
     sudo apt-get install -y doxygen
-    install_configure_deps
 }
 
 do_distcheck() {
-    install_configure_deps
+    :
 }
 
 do_style() {
-    install_configure_deps
+    :
 }
 
 main() {
@@ -125,6 +74,7 @@ main() {
         exit 1
     fi
     install_deps
+    install_kyua
     for step in ${DO}; do
         "do_${DO}" || exit 1
     done
