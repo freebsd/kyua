@@ -62,7 +62,6 @@ extern "C" {
 #include "utils/process/status.hpp"
 #include "utils/sanity.hpp"
 #include "utils/signals/interrupts.hpp"
-#include "utils/signals/timer.hpp"
 
 namespace datetime = utils::datetime;
 namespace executor = utils::process::executor;
@@ -638,7 +637,7 @@ struct utils::process::executor::executor_handle::impl : utils::noncopyable {
         const exec_handles_map::iterator iter = all_exec_handles.find(
             original_pid);
         exec_handle& data = (*iter).second;
-        data._pimpl->timer.unprogram();
+        const bool killed = data._pimpl->timer.unschedule();
 
         // It is tempting to assert here (and old code did) that, if the timer
         // has fired, the process has been forcibly killed by us.  This is not
@@ -661,8 +660,7 @@ struct utils::process::executor::executor_handle::impl : utils::noncopyable {
         return exit_handle(std::shared_ptr< exit_handle::impl >(
             new exit_handle::impl(
                 data.pid(),
-                data._pimpl->timer.fired() ?
-                    none : utils::make_optional(status),
+                killed ? none : utils::make_optional(status),
                 data._pimpl->unprivileged_user,
                 data._pimpl->start_time, datetime::timestamp::now(),
                 data.control_directory(),

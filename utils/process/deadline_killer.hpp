@@ -34,21 +34,26 @@
 
 #include "utils/process/deadline_killer_fwd.hpp"
 
-#include "utils/signals/timer.hpp"
+#include "utils/datetime_fwd.hpp"
+#include "utils/noncopyable.hpp"
 
 namespace utils {
 namespace process {
 
 
-/// Timer that forcibly kills a process group on activation.
-class deadline_killer : public utils::signals::timer {
+/// Forcibly kills a process group after a certain period of time.
+class deadline_killer : noncopyable {
     /// PID of the process (and process group) to kill.
     const int _pid;
 
-    void callback(void);
+    /// True until unschedule() is called.
+    bool _scheduled;
 
 public:
     deadline_killer(const datetime::delta&, const int);
+    ~deadline_killer(void);
+
+    bool unschedule(void);
 };
 
 

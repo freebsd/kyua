@@ -36,9 +36,6 @@ libutils_a_SOURCES += utils/signals/misc.hpp
 libutils_a_SOURCES += utils/signals/programmer.cpp
 libutils_a_SOURCES += utils/signals/programmer.hpp
 libutils_a_SOURCES += utils/signals/programmer_fwd.hpp
-libutils_a_SOURCES += utils/signals/timer.cpp
-libutils_a_SOURCES += utils/signals/timer.hpp
-libutils_a_SOURCES += utils/signals/timer_fwd.hpp
 
 if WITH_ATF
 tests_utils_signalsdir = $(pkgtestsdir)/utils/signals
@@ -65,9 +62,4 @@ tests_utils_signals_PROGRAMS += utils/signals/programmer_test
 utils_signals_programmer_test_SOURCES = utils/signals/programmer_test.cpp
 utils_signals_programmer_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 utils_signals_programmer_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
-
-tests_utils_signals_PROGRAMS += utils/signals/timer_test
-utils_signals_timer_test_SOURCES = utils/signals/timer_test.cpp
-utils_signals_timer_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-utils_signals_timer_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 endif

@@ -39,6 +39,7 @@ extern "C" {
 
 #include "utils/datetime.hpp"
 #include "utils/process/child.ipp"
+#include "utils/process/operations.hpp"
 #include "utils/process/status.hpp"
 
 namespace datetime = utils::datetime;
@@ -72,10 +73,10 @@ ATF_TEST_CASE_BODY(activation)
     datetime::timestamp start = datetime::timestamp::now();
     process::deadline_killer killer(datetime::delta(1, 0), child->pid());
     const process::status status = child->wait();
-    killer.unprogram();
+    const bool killed = killer.unschedule();
     datetime::timestamp end = datetime::timestamp::now();
 
-    ATF_REQUIRE(killer.fired());
+    ATF_REQUIRE(killed);
     ATF_REQUIRE(end - start <= datetime::delta(10, 0));
     ATF_REQUIRE(status.signaled());
     ATF_REQUIRE_EQ(SIGKILL, status.termsig());
@@ -91,13 +92,90 @@ ATF_TEST_CASE_BODY(no_activation)
     datetime::timestamp start = datetime::timestamp::now();
     process::deadline_killer killer(datetime::delta(60, 0), child->pid());
     const process::status status = child->wait();
-    killer.unprogram();
+    const bool killed = killer.unschedule();
     datetime::timestamp end = datetime::timestamp::now();
 
-    ATF_REQUIRE(!killer.fired());
+    ATF_REQUIRE(!killed);
     ATF_REQUIRE(end - start <= datetime::delta(10, 0));
     ATF_REQUIRE(status.exited());
     ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(autounschedule);
+ATF_TEST_CASE_BODY(autounschedule)
+{
+    std::auto_ptr< process::child > child = process::child::fork_capture(
+        child_sleep< 5 >);
+
+    datetime::timestamp start = datetime::timestamp::now();
+    {
+        process::deadline_killer killer(datetime::delta(1, 0), child->pid());
+    }
+    const process::status status = child->wait();
+    datetime::timestamp end = datetime::timestamp::now();
+
+    ATF_REQUIRE(end - start >= datetime::delta(2, 0));
+    ATF_REQUIRE(status.exited());
+    ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(multiprogram);
+ATF_TEST_CASE_BODY(multiprogram)
+{
+    using process::deadline_killer;
+
+    std::auto_ptr< process::child > children[] = {
+        process::child::fork_capture(child_sleep< 5 >),
+        process::child::fork_capture(child_sleep< 5 >),
+        process::child::fork_capture(child_sleep< 5 >),
+    };
+    const size_t nchildren = 3;
+
+    datetime::timestamp start = datetime::timestamp::now();
+
+    process::deadline_killer* killers[] = {
+        new deadline_killer(datetime::delta(1, 0), children[0]->pid()),
+        new deadline_killer(datetime::delta(60, 0), children[1]->pid()),
+        new deadline_killer(datetime::delta(2, 0), children[2]->pid()),
+    };
+
+    process::status statuses[] = {
+        process::status::fake_exited(123),
+        process::status::fake_exited(123),
+        process::status::fake_exited(123),
+    };
+    for (std::size_t i = 0; i < nchildren; ++i) {
+        process::status status = process::wait_any();
+        std::size_t j = 0;
+        for (; j < nchildren; ++j) {
+            if (children[j]->pid() == status.dead_pid()) {
+                break;
+            }
+        }
+        INV(j < nchildren);
+        statuses[j] = status;
+    }
+
+    bool kills[nchildren];
+    for (std::size_t i = 0; i < nchildren; ++i) {
+        kills[i] = killers[i]->unschedule();
+        delete killers[i];
+    }
+
+    datetime::timestamp end = datetime::timestamp::now();
+
+    ATF_REQUIRE( kills[0]);
+    ATF_REQUIRE(!kills[1]);
+    ATF_REQUIRE( kills[2]);
+    ATF_REQUIRE(end - start <= datetime::delta(10, 0));
+    ATF_REQUIRE(statuses[0].signaled());
+    ATF_REQUIRE_EQ(SIGKILL, statuses[0].termsig());
+    ATF_REQUIRE(statuses[1].exited());
+    ATF_REQUIRE_EQ(EXIT_SUCCESS, statuses[1].exitstatus());
+    ATF_REQUIRE(statuses[2].signaled());
+    ATF_REQUIRE_EQ(SIGKILL, statuses[2].termsig());
 }
 
 
@@ -105,4 +183,7 @@ ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, activation);
     ATF_ADD_TEST_CASE(tcs, no_activation);
+
+    ATF_ADD_TEST_CASE(tcs, autounschedule);
+    ATF_ADD_TEST_CASE(tcs, multiprogram);
 }

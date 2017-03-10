@@ -158,7 +158,6 @@ mask_signals(sigset_t* old_sigmask)
 {
     sigset_t mask;
     sigemptyset(&mask);
-    sigaddset(&mask, SIGALRM);
     sigaddset(&mask, SIGHUP);
     sigaddset(&mask, SIGINT);
     sigaddset(&mask, SIGTERM);

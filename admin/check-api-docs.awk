@@ -53,7 +53,6 @@ BEGIN {
 /utils\/process\/executor\.hpp.*Member spawn\(Hook.*\)/ {next}
 /utils\/process\/executor\.hpp.*Member spawn_followup\(Hook.*\)/ {next}
 /utils\/process\/executor\.hpp.*Member setup\(void\).*friend/ {next}
-/utils\/signals\/timer\.hpp.*Member detail::invoke_do_fired.*friend/ {next}
 /utils\/stacktrace_test\.cpp.*no matching class member/ {next}
 
 # Dump any other problems and account for the failure.

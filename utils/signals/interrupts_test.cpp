@@ -224,13 +224,6 @@ ATF_TEST_CASE_BODY(interrupts_handler__kill_children)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(interrupts_inhibiter__sigalrm);
-ATF_TEST_CASE_BODY(interrupts_inhibiter__sigalrm)
-{
-    check_interrupts_inhibiter(SIGALRM);
-}
-
-
 ATF_TEST_CASE_WITHOUT_HEAD(interrupts_inhibiter__sighup);
 ATF_TEST_CASE_BODY(interrupts_inhibiter__sighup)
 {
@@ -259,7 +252,6 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, interrupts_handler__sigterm);
     ATF_ADD_TEST_CASE(tcs, interrupts_handler__kill_children);
 
-    ATF_ADD_TEST_CASE(tcs, interrupts_inhibiter__sigalrm);
     ATF_ADD_TEST_CASE(tcs, interrupts_inhibiter__sighup);
     ATF_ADD_TEST_CASE(tcs, interrupts_inhibiter__sigint);
     ATF_ADD_TEST_CASE(tcs, interrupts_inhibiter__sigterm);
