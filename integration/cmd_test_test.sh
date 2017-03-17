@@ -791,8 +791,8 @@ EOF
 }
 
 
-utils_test_case interrupt
-interrupt_body() {
+utils_test_case interrupt__once
+interrupt__once_body() {
     cat >Kyuafile <<EOF
 syntax(2)
 test_suite("integration")
@@ -800,7 +800,7 @@ atf_test_program{name="interrupts"}
 EOF
     utils_cp_helper interrupts .
 
-    kyua \
+    TEST_CASE=block_body kyua \
         -v test_suites.integration.body-cookie="$(pwd)/body" \
         -v test_suites.integration.cleanup-cookie="$(pwd)/cleanup" \
         test >stdout 2>stderr &
@@ -825,11 +825,66 @@ EOF
     [ ${ret} -ne 0 ] || atf_fail 'No error code reported'
 
     [ -f cleanup ] || atf_fail 'Cleanup part not executed after signal'
-    atf_expect_pass
 
-    atf_check -s exit:0 -o ignore -e empty grep 'Signal caught' stderr
-    atf_check -s exit:0 -o ignore -e empty \
-        grep 'kyua: E: Interrupted by signal' stderr
+    atf_check \
+        -o match:'Signal caught' \
+        -o not-match:'Double signal caught' \
+        -o match:'kyua: E: Interrupted by signal' \
+        cat stderr
+}
+
+
+utils_test_case interrupt__twice
+interrupt__twice_body() {
+    cat >Kyuafile <<EOF
+syntax(2)
+test_suite("integration")
+atf_test_program{name="interrupts"}
+EOF
+    utils_cp_helper interrupts .
+
+    TEST_CASE=block_cleanup kyua \
+        -v test_suites.integration.body-cookie="$(pwd)/body" \
+        -v test_suites.integration.cleanup-pre-cookie="$(pwd)/pre-cleanup" \
+        -v test_suites.integration.cleanup-post-cookie="$(pwd)/post-cleanup" \
+        test >stdout 2>stderr &
+    pid=${!}
+    echo "Kyua subprocess is PID ${pid}"
+
+    while [ ! -f body ]; do
+        echo "Waiting for body to start"
+        sleep 1
+    done
+    echo "Body started"
+    sleep 1
+
+    echo "Sending signal (INT) to ${pid}"
+    kill -INT ${pid}
+
+    while [ ! -f pre-cleanup ]; do
+        echo "Waiting for cleanup to start"
+        sleep 1
+    done
+    echo "Cleanup started"
+    sleep 1
+
+    echo "Sending second signal (HUP) to ${pid}"
+    kill -HUP ${pid}
+    echo "Waiting for process ${pid} to exit"
+    wait ${pid}
+    ret=${?}
+    sed -e 's,^,kyua stdout:,' stdout
+    sed -e 's,^,kyua stderr:,' stderr
+    echo "Process ${pid} exited"
+    [ ${ret} -ne 0 ] || atf_fail 'No error code reported'
+
+    [ ! -f post-cleanup ] || atf_fail 'Cleanup part completed executing'
+
+    atf_check \
+        -o match:'Signal caught' \
+        -o match:'Double signal caught' \
+        -o not-match:'kyua: E: Interrupted by signal' \
+        cat stderr
 }
 
 
@@ -1053,7 +1108,8 @@ atf_init_test_cases() {
     atf_add_test_case kyuafile_flag__no_args
     atf_add_test_case kyuafile_flag__some_args
 
-    atf_add_test_case interrupt
+    atf_add_test_case interrupt__once
+    atf_add_test_case interrupt__twice
 
     atf_add_test_case exclusive_tests
 

@@ -34,6 +34,25 @@ extern "C" {
 
 #include <fstream>
 
+#include "utils/env.hpp"
+#include "utils/optional.ipp"
+#include "utils/logging/operations.hpp"
+
+namespace logging = utils::logging;
+
+using utils::optional;
+
+
+/// Creates an empty file.
+///
+/// \param path The file to create.
+static void
+create_cookie(const std::string& path)
+{
+    std::ofstream output(path.c_str());
+    output.close();
+}
+
 
 ATF_TEST_CASE_WITH_CLEANUP(block_body);
 ATF_TEST_CASE_HEAD(block_body)
@@ -42,21 +61,48 @@ ATF_TEST_CASE_HEAD(block_body)
 }
 ATF_TEST_CASE_BODY(block_body)
 {
-    const std::string cookie(get_config_var("body-cookie"));
-    std::ofstream output(cookie.c_str());
-    output.close();
+    create_cookie(get_config_var("body-cookie"));
     for (;;)
         ::pause();
 }
 ATF_TEST_CASE_CLEANUP(block_body)
 {
-    const std::string cookie(get_config_var("cleanup-cookie"));
-    std::ofstream output(cookie.c_str());
-    output.close();
+    create_cookie(get_config_var("cleanup-cookie"));
+}
+
+
+ATF_TEST_CASE_WITH_CLEANUP(block_cleanup);
+ATF_TEST_CASE_HEAD(block_cleanup)
+{
+    set_md_var("require.config",
+               "body-cookie cleanup-pre-cookie cleanup-post-cookie");
+}
+ATF_TEST_CASE_BODY(block_cleanup)
+{
+    create_cookie(get_config_var("body-cookie"));
+    for (;;)
+        ::pause();
+}
+ATF_TEST_CASE_CLEANUP(block_cleanup)
+{
+    create_cookie(get_config_var("cleanup-pre-cookie"));
+    // Sleep instead of block.  If the signal handling code fails to kill the
+    // cleanup routine, we want the test to detect it later.
+    ::sleep(60);
+    create_cookie(get_config_var("cleanup-post-cookie"));
 }
 
 
 ATF_INIT_TEST_CASES(tcs)
 {
-    ATF_ADD_TEST_CASE(tcs, block_body);
+    logging::set_inmemory();
+    const optional< std::string > test_case = utils::getenv("TEST_CASE");
+    if (!test_case)
+        std::abort();
+    if (test_case.get() == "block_body") {
+        ATF_ADD_TEST_CASE(tcs, block_body);
+    } else if (test_case.get() == "block_cleanup") {
+        ATF_ADD_TEST_CASE(tcs, block_cleanup);
+    } else
+        create_cookie("/tmp/oh");
 }

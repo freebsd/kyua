@@ -537,9 +537,6 @@ struct utils::process::executor::executor_handle::impl : utils::noncopyable {
     /// easy mechanism to discern their unique work directories.
     size_t last_subprocess;
 
-    /// Interrupts handler.
-    std::auto_ptr< signals::interrupts_handler > interrupts_handler;
-
     /// Root work directory for all executed subprocesses.
     std::auto_ptr< fs::auto_directory > root_work_directory;
 
@@ -554,7 +551,6 @@ struct utils::process::executor::executor_handle::impl : utils::noncopyable {
     /// Constructor.
     impl(void) :
         last_subprocess(0),
-        interrupts_handler(new signals::interrupts_handler()),
         root_work_directory(new fs::auto_directory(
             fs::auto_directory::mkdtemp_public(work_directory_template))),
         cleaned(false)
@@ -615,9 +611,6 @@ struct utils::process::executor::executor_handle::impl : utils::noncopyable {
                % e.what());
         }
         root_work_directory.reset(NULL);
-
-        interrupts_handler->unprogram();
-        interrupts_handler.reset(NULL);
     }
 
     /// Common code to run after any of the wait calls.

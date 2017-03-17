@@ -248,10 +248,7 @@ process::status
 process::wait(const int pid)
 {
     const process::status status = safe_waitpid(pid);
-    {
-        signals::interrupts_inhibiter inhibiter;
-        signals::remove_pid_to_kill(pid);
-    }
+    signals::remove_pid_to_kill(pid);
     return status;
 }
 
@@ -265,9 +262,6 @@ process::status
 process::wait_any(void)
 {
     const process::status status = safe_wait();
-    {
-        signals::interrupts_inhibiter inhibiter;
-        signals::remove_pid_to_kill(status.dead_pid());
-    }
+    signals::remove_pid_to_kill(status.dead_pid());
     return status;
 }

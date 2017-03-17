@@ -29,6 +29,8 @@
 #include "utils/signals/interrupts.hpp"
 
 extern "C" {
+#include <sys/wait.h>
+
 #include <signal.h>
 #include <unistd.h>
 }
@@ -39,6 +41,7 @@ extern "C" {
 #include <atf-c++.hpp>
 
 #include "utils/format/macros.hpp"
+#include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/process/child.ipp"
 #include "utils/process/status.hpp"
@@ -51,23 +54,6 @@ namespace signals = utils::signals;
 
 
 namespace {
-
-
-/// Set to the signal that fired; -1 if none.
-static volatile int fired_signal = -1;
-
-
-/// Test handler for signals.
-///
-/// \post fired_signal is set to the signal that triggered the handler.
-///
-/// \param signo The signal that triggered the handler.
-static void
-signal_handler(const int signo)
-{
-    PRE(fired_signal == -1 || fired_signal == signo);
-    fired_signal = signo;
-}
 
 
 /// Child process that pauses waiting to be killed.
@@ -86,128 +72,114 @@ pause_child(void)
 }
 
 
-/// Checks that interrupts_handler() handles a particular signal.
-///
-/// This indirectly checks the check_interrupt() function, which is not part of
-/// the class but is tightly related.
-///
-/// \param signo The signal to check.
-/// \param explicit_unprogram Whether to call interrupts_handler::unprogram()
-///     explicitly before letting the object go out of scope.
-static void
-check_interrupts_handler(const int signo, const bool explicit_unprogram)
-{
-    fired_signal = -1;
-
-    signals::programmer test_handler(signo, signal_handler);
-
-    {
-        signals::interrupts_handler interrupts;
-
-        // No pending interrupts at first.
-        signals::check_interrupt();
-
-        // Send us an interrupt and check for it.
-        ::kill(getpid(), signo);
-        ATF_REQUIRE_THROW_RE(signals::interrupted_error,
-                             F("Interrupted by signal %s") % signo,
-                             signals::check_interrupt());
-
-        // Interrupts should have been cleared now, so this should not throw.
-        signals::check_interrupt();
-
-        // Check to see if a second interrupt is detected.
-        ::kill(getpid(), signo);
-        ATF_REQUIRE_THROW_RE(signals::interrupted_error,
-                             F("Interrupted by signal %s") % signo,
-                             signals::check_interrupt());
-
-        // And ensure the interrupt was cleared again.
-        signals::check_interrupt();
-
-        if (explicit_unprogram) {
-            interrupts.unprogram();
-        }
-    }
-
-    ATF_REQUIRE_EQ(-1, fired_signal);
-    ::kill(getpid(), signo);
-    ATF_REQUIRE_EQ(signo, fired_signal);
-
-    test_handler.unprogram();
-}
-
-
-/// Checks that interrupts_inhibiter() handles a particular signal.
+/// Checks that interrupts handling manages a particular signal.
 ///
 /// \param signo The signal to check.
 static void
-check_interrupts_inhibiter(const int signo)
+check_signal_handling(const int signo)
 {
-    signals::programmer test_handler(signo, signal_handler);
+    const pid_t pid = ::fork();
+    ATF_REQUIRE(pid != -1);
+    if (pid == 0) {
+        try {
+            signals::setup_interrupts();
 
-    {
-        signals::interrupts_inhibiter inhibiter;
-        {
-            signals::interrupts_inhibiter nested_inhibiter;
+            signals::check_interrupt();  // Should not throw.
+
+            std::cout << "Sending first interrupt; should not cause death\n";
             ::kill(::getpid(), signo);
-            ATF_REQUIRE_EQ(-1, fired_signal);
-        }
-        ::kill(::getpid(), signo);
-        ATF_REQUIRE_EQ(-1, fired_signal);
-    }
-    ATF_REQUIRE_EQ(signo, fired_signal);
+            std::cout << "OK, first interrupt didn't terminate us\n";
+            atf::utils::create_file("interrupted.txt", "");
 
-    test_handler.unprogram();
+            try {
+                // Signals are caught in a different thread that may not run
+                // immediately after we send the signal above.  Wait for a bit
+                // if that's the case.
+                int max_tries = 10;
+                while (max_tries > 0) {
+                    signals::check_interrupt();
+                    std::cerr << "Interrupt still not detected; waiting\n";
+                    ::sleep(1);
+                    --max_tries;
+                }
+                std::cerr << "Second check_interrupt didn't know about the "
+                    "interrupt; failing\n";
+                std::exit(EXIT_FAILURE);
+            } catch (signals::interrupted_error e) {
+                // Should still throw; OK.
+            }
+
+            try {
+                signals::check_interrupt();
+            } catch (signals::interrupted_error e) {
+                std::cerr << "Third check_interrupt still detected signal;"
+                    "cleanup logic cannot run this way\n";
+                throw e;
+            }
+
+            // Send us a second interrupt, which will cause an abrupt
+            // termination.
+            std::cout << "Sending second interrupt; should cause death\n";
+            ::kill(::getpid(), signo);
+            ::sleep(60);  // Long enough for the handler to run.
+            std::cout << "Oops, second interrupt didn't terminate us\n";
+
+            // Not reached.  Exit gracefully to let the parent process know.
+            std::exit(EXIT_SUCCESS);
+        } catch (...) {
+            std::cerr << "Caught unexpected exception in child\n";
+            std::exit(EXIT_FAILURE);
+        }
+    }
+
+    int status;
+    ATF_REQUIRE(::waitpid(pid, &status, 0) != -1);
+    ATF_REQUIRE(WIFSIGNALED(status));
+    ATF_REQUIRE_EQ(signo, WTERMSIG(status));
+
+    // If the cookie does not exist, the first signal delivery caused the
+    // process to incorrectly exit.
+    ATF_REQUIRE(fs::exists(fs::path("interrupted.txt")));
 }
 
 
 }  // anonymous namespace
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(interrupts_handler__sighup);
-ATF_TEST_CASE_BODY(interrupts_handler__sighup)
+ATF_TEST_CASE_WITHOUT_HEAD(sighup);
+ATF_TEST_CASE_BODY(sighup)
 {
-    // We run this twice in sequence to ensure that we can actually program two
-    // interrupts handlers in a row.
-    check_interrupts_handler(SIGHUP, true);
-    check_interrupts_handler(SIGHUP, false);
+    check_signal_handling(SIGHUP);
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(interrupts_handler__sigint);
-ATF_TEST_CASE_BODY(interrupts_handler__sigint)
+ATF_TEST_CASE_WITHOUT_HEAD(sigint);
+ATF_TEST_CASE_BODY(sigint)
 {
-    // We run this twice in sequence to ensure that we can actually program two
-    // interrupts handlers in a row.
-    check_interrupts_handler(SIGINT, true);
-    check_interrupts_handler(SIGINT, false);
+    check_signal_handling(SIGINT);
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(interrupts_handler__sigterm);
-ATF_TEST_CASE_BODY(interrupts_handler__sigterm)
+ATF_TEST_CASE_WITHOUT_HEAD(sigterm);
+ATF_TEST_CASE_BODY(sigterm)
 {
-    // We run this twice in sequence to ensure that we can actually program two
-    // interrupts handlers in a row.
-    check_interrupts_handler(SIGTERM, true);
-    check_interrupts_handler(SIGTERM, false);
+    check_signal_handling(SIGTERM);
 }
 
 
-ATF_TEST_CASE(interrupts_handler__kill_children);
-ATF_TEST_CASE_HEAD(interrupts_handler__kill_children)
+ATF_TEST_CASE(kill_children);
+ATF_TEST_CASE_HEAD(kill_children)
 {
     set_md_var("timeout", "10");
 }
-ATF_TEST_CASE_BODY(interrupts_handler__kill_children)
+ATF_TEST_CASE_BODY(kill_children)
 {
     std::auto_ptr< process::child > child1(process::child::fork_files(
          pause_child, fs::path("/dev/stdout"), fs::path("/dev/stderr")));
     std::auto_ptr< process::child > child2(process::child::fork_files(
          pause_child, fs::path("/dev/stdout"), fs::path("/dev/stderr")));
 
-    signals::interrupts_handler interrupts;
+    signals::setup_interrupts();
 
     // Our children pause until the reception of a signal.  Interrupting
     // ourselves will cause the signal to be re-delivered to our children due to
@@ -224,35 +196,10 @@ ATF_TEST_CASE_BODY(interrupts_handler__kill_children)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(interrupts_inhibiter__sighup);
-ATF_TEST_CASE_BODY(interrupts_inhibiter__sighup)
-{
-    check_interrupts_inhibiter(SIGHUP);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(interrupts_inhibiter__sigint);
-ATF_TEST_CASE_BODY(interrupts_inhibiter__sigint)
-{
-    check_interrupts_inhibiter(SIGINT);
-}
-
-
-ATF_TEST_CASE_WITHOUT_HEAD(interrupts_inhibiter__sigterm);
-ATF_TEST_CASE_BODY(interrupts_inhibiter__sigterm)
-{
-    check_interrupts_inhibiter(SIGTERM);
-}
-
-
 ATF_INIT_TEST_CASES(tcs)
 {
-    ATF_ADD_TEST_CASE(tcs, interrupts_handler__sighup);
-    ATF_ADD_TEST_CASE(tcs, interrupts_handler__sigint);
-    ATF_ADD_TEST_CASE(tcs, interrupts_handler__sigterm);
-    ATF_ADD_TEST_CASE(tcs, interrupts_handler__kill_children);
-
-    ATF_ADD_TEST_CASE(tcs, interrupts_inhibiter__sighup);
-    ATF_ADD_TEST_CASE(tcs, interrupts_inhibiter__sigint);
-    ATF_ADD_TEST_CASE(tcs, interrupts_inhibiter__sigterm);
+    ATF_ADD_TEST_CASE(tcs, sighup);
+    ATF_ADD_TEST_CASE(tcs, sigint);
+    ATF_ADD_TEST_CASE(tcs, sigterm);
+    ATF_ADD_TEST_CASE(tcs, kill_children);
 }

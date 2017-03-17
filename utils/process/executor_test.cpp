@@ -57,6 +57,7 @@ extern "C" {
 #include "utils/process/status.hpp"
 #include "utils/sanity.hpp"
 #include "utils/signals/exceptions.hpp"
+#include "utils/signals/interrupts.hpp"
 #include "utils/stacktrace.hpp"
 #include "utils/text/exceptions.hpp"
 #include "utils/text/operations.ipp"
@@ -795,6 +796,7 @@ do_signal_handling_test(const int signo)
     const pid_t pid = ::fork();
     ATF_REQUIRE(pid != -1);
     if (pid == 0) {
+        signals::setup_interrupts();
         static const std::size_t num_children = 3;
 
         optional< fs::path > root_work_directory;

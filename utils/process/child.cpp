@@ -202,16 +202,13 @@ process::child::fork_capture_aux(void)
     if (detail::syscall_pipe(fds) == -1)
         throw process::system_error("pipe(2) failed", errno);
 
-    std::auto_ptr< signals::interrupts_inhibiter > inhibiter(
-        new signals::interrupts_inhibiter);
     pid_t pid = detail::syscall_fork();
     if (pid == -1) {
-        inhibiter.reset(NULL);  // Unblock signals.
         ::close(fds[0]);
         ::close(fds[1]);
         throw process::system_error("fork(2) failed", errno);
     } else if (pid == 0) {
-        inhibiter.reset(NULL);  // Unblock signals.
+        signals::reset_interrupts_in_new_child();
         ::setsid();
 
         try {
@@ -228,7 +225,6 @@ process::child::fork_capture_aux(void)
         ::close(fds[1]);
         LD(F("Spawned process %s: stdout and stderr inherited") % pid);
         signals::add_pid_to_kill(pid);
-        inhibiter.reset(NULL);  // Unblock signals.
         return std::auto_ptr< process::child >(
             new process::child(new impl(pid, new process::ifdstream(fds[0]))));
     }
@@ -259,14 +255,11 @@ process::child::fork_files_aux(const fs::path& stdout_file,
     std::cout.flush();
     std::cerr.flush();
 
-    std::auto_ptr< signals::interrupts_inhibiter > inhibiter(
-        new signals::interrupts_inhibiter);
     pid_t pid = detail::syscall_fork();
     if (pid == -1) {
-        inhibiter.reset(NULL);  // Unblock signals.
         throw process::system_error("fork(2) failed", errno);
     } else if (pid == 0) {
-        inhibiter.reset(NULL);  // Unblock signals.
+        signals::reset_interrupts_in_new_child();
         ::setsid();
 
         try {
@@ -289,7 +282,6 @@ process::child::fork_files_aux(const fs::path& stdout_file,
         LD(F("Spawned process %s: stdout=%s, stderr=%s") % pid % stdout_file %
            stderr_file);
         signals::add_pid_to_kill(pid);
-        inhibiter.reset(NULL);  // Unblock signals.
         return std::auto_ptr< process::child >(
             new process::child(new impl(pid, NULL)));
     }

@@ -76,6 +76,7 @@ extern "C" {
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 #include "utils/signals/exceptions.hpp"
+#include "utils/signals/interrupts.hpp"
 
 namespace cmdline = utils::cmdline;
 namespace config = utils::config;
@@ -289,8 +290,7 @@ cli::main(cmdline::ui* ui, const int argc, const char* const* const argv,
         // Re-deliver the interruption signal to self so that we terminate with
         // the right status.  At this point we should NOT have any custom signal
         // handlers in place.
-        ::kill(getpid(), e.signo());
-        LD("Interrupt signal re-delivery did not terminate program");
+        signals::redeliver_to_exit(e.signo());
         // If we reach this, something went wrong because we did not exit as
         // intended.  Return an internal error instead.  (Would be nicer to
         // abort in principle, but it wouldn't be a nice experience if it ever
@@ -339,6 +339,7 @@ int
 cli::main(const int argc, const char* const* const argv)
 {
     logging::set_inmemory();
+    signals::setup_interrupts();
 
     LI(F("%s %s") % PACKAGE % VERSION);
 

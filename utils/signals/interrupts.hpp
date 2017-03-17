@@ -36,45 +36,19 @@
 
 #include <unistd.h>
 
-#include "utils/noncopyable.hpp"
-
 namespace utils {
 namespace signals {
-
-
-/// Provides a scope in which interrupts can be detected and handled.
-///
-/// This RAII-modeled object installs signal handler when instantiated and
-/// removes them upon destruction.  While this object is active, the
-/// check_interrupt() free function can be used to determine if an interrupt has
-/// happened.
-class interrupts_handler : noncopyable {
-    /// Whether the interrupts are still programmed or not.
-    ///
-    /// Used by the destructor to prevent double-unprogramming when unprogram()
-    /// is explicitly called by the user.
-    bool _programmed;
-
-public:
-    interrupts_handler(void);
-    ~interrupts_handler(void);
-
-    void unprogram(void);
-};
-
-
-/// Disables interrupts while the object is alive.
-class interrupts_inhibiter : noncopyable {
-public:
-    interrupts_inhibiter(void);
-    ~interrupts_inhibiter(void);
-};
 
 
 void check_interrupt(void);
 
 void add_pid_to_kill(const pid_t);
 void remove_pid_to_kill(const pid_t);
+
+void setup_interrupts(void);
+void reset_interrupts_in_new_child(void);
+
+void redeliver_to_exit(const int);
 
 
 } // namespace signals

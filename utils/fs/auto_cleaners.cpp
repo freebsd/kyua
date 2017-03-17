@@ -35,10 +35,8 @@
 #include "utils/logging/macros.hpp"
 #include "utils/noncopyable.hpp"
 #include "utils/sanity.hpp"
-#include "utils/signals/interrupts.hpp"
 
 namespace fs = utils::fs;
-namespace signals = utils::signals;
 
 
 /// Shared implementation of the auto_directory.
@@ -120,7 +118,6 @@ fs::auto_directory::~auto_directory(void)
 fs::auto_directory
 fs::auto_directory::mkdtemp_public(const std::string& path_template)
 {
-    signals::interrupts_inhibiter inhibiter;
     const fs::path directory_ = fs::mkdtemp_public(path_template);
     try {
         return auto_directory(directory_);
@@ -228,7 +225,6 @@ fs::auto_file::~auto_file(void)
 fs::auto_file
 fs::auto_file::mkstemp(const std::string& path_template)
 {
-    signals::interrupts_inhibiter inhibiter;
     const fs::path file_ = fs::mkstemp(path_template);
     try {
         return auto_file(file_);

@@ -7,7 +7,8 @@ Changes in version 0.14
 
 **NOT RELEASED YET; STILL UNDER DEVELOPMENT.**
 
-* No changes recorded.
+* Fixed signal handling so that delivering two signals in a row (like
+  by pressing Ctrl+C twice) causes Kyua to abruptly exit.
 
 
 Changes in version 0.13
