@@ -28,10 +28,6 @@
 
 #include "utils/process/deadline_killer.hpp"
 
-extern "C" {
-#include <signal.h>
-}
-
 #include <chrono>
 #include <map>
 #include <mutex>
@@ -94,14 +90,6 @@ extract_pids_to_kill(void)
 static void
 killer_thread(void)
 {
-    // TODO(jmmv): Remove (or generalize somehow) once the program
-    // initialization code is thread-aware and properly sets up a single thread
-    // to handle signals.
-    ::sigset_t mask;
-    sigfillset(&mask);
-    const int ret = ::pthread_sigmask(SIG_SETMASK, &mask, NULL);
-    INV(ret != -1);
-
     for (;;) {
         const std::set< int > pids_to_kill = extract_pids_to_kill();
         for (auto pid : pids_to_kill) {
