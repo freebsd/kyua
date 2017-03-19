@@ -578,12 +578,9 @@ ATF_TEST_CASE_BODY(integration__run_one)
         program, "exit 41", user_config);
 
     scheduler::result_handle_ptr result_handle = handle.wait_any();
-    const scheduler::test_result_handle* test_result_handle =
-        dynamic_cast< const scheduler::test_result_handle* >(
-            result_handle.get());
     ATF_REQUIRE_EQ(exec_handle, result_handle->original_pid());
     ATF_REQUIRE_EQ(model::test_result(model::test_result_passed, "Exit 41"),
-                   test_result_handle->test_result());
+                   result_handle->test_result());
     result_handle->cleanup();
     result_handle.reset();
 
@@ -660,9 +657,6 @@ ATF_TEST_CASE_BODY(integration__run_many)
             2014, 12, 8, 9, 50, 10, i);
         datetime::set_mock_now(end_time);
         scheduler::result_handle_ptr result_handle = handle.wait_any();
-        const scheduler::test_result_handle* test_result_handle =
-            dynamic_cast< const scheduler::test_result_handle* >(
-                result_handle.get());
 
         const scheduler::exec_handle exec_handle =
             result_handle->original_pid();
@@ -677,10 +671,10 @@ ATF_TEST_CASE_BODY(integration__run_many)
 
         ATF_REQUIRE_EQ(model::test_result(model::test_result_passed,
                                           F("Exit %s") % exit_status),
-                       test_result_handle->test_result());
+                       result_handle->test_result());
 
-        ATF_REQUIRE_EQ(test_program, test_result_handle->test_program());
-        ATF_REQUIRE_EQ(test_case_name, test_result_handle->test_case_name());
+        ATF_REQUIRE_EQ(test_program, result_handle->test_program());
+        ATF_REQUIRE_EQ(test_case_name, result_handle->test_case_name());
 
         ATF_REQUIRE_EQ(start_time, result_handle->start_time());
         ATF_REQUIRE_EQ(end_time, result_handle->end_time());
@@ -715,12 +709,9 @@ ATF_TEST_CASE_BODY(integration__run_check_paths)
 
     (void)handle.spawn_test(program, "check_i_exist", engine::default_config());
     scheduler::result_handle_ptr result_handle = handle.wait_any();
-    const scheduler::test_result_handle* test_result_handle =
-        dynamic_cast< const scheduler::test_result_handle* >(
-            result_handle.get());
 
     ATF_REQUIRE_EQ(model::test_result(model::test_result_passed, "Exit 0"),
-                   test_result_handle->test_result());
+                   result_handle->test_result());
 
     result_handle->cleanup();
     result_handle.reset();
@@ -746,15 +737,12 @@ ATF_TEST_CASE_BODY(integration__parameters_and_output)
         program, "print_params", user_config);
 
     scheduler::result_handle_ptr result_handle = handle.wait_any();
-    const scheduler::test_result_handle* test_result_handle =
-        dynamic_cast< const scheduler::test_result_handle* >(
-            result_handle.get());
 
     ATF_REQUIRE_EQ(exec_handle, result_handle->original_pid());
-    ATF_REQUIRE_EQ(program, test_result_handle->test_program());
-    ATF_REQUIRE_EQ("print_params", test_result_handle->test_case_name());
+    ATF_REQUIRE_EQ(program, result_handle->test_program());
+    ATF_REQUIRE_EQ("print_params", result_handle->test_case_name());
     ATF_REQUIRE_EQ(model::test_result(model::test_result_passed, "Exit 0"),
-                   test_result_handle->test_result());
+                   result_handle->test_result());
 
     const fs::path stdout_file = result_handle->stdout_file();
     ATF_REQUIRE(atf::utils::compare_file(
@@ -797,10 +785,7 @@ ATF_TEST_CASE_BODY(integration__fake_result)
     (void)handle.spawn_test(program, "__fake__", user_config);
 
     scheduler::result_handle_ptr result_handle = handle.wait_any();
-    const scheduler::test_result_handle* test_result_handle =
-        dynamic_cast< const scheduler::test_result_handle* >(
-            result_handle.get());
-    ATF_REQUIRE_EQ(fake_result, test_result_handle->test_result());
+    ATF_REQUIRE_EQ(fake_result, result_handle->test_result());
     result_handle->cleanup();
     result_handle.reset();
 
@@ -827,14 +812,11 @@ ATF_TEST_CASE_BODY(integration__cleanup__head_skips)
     (void)handle.spawn_test(program, "skip_me", user_config);
 
     scheduler::result_handle_ptr result_handle = handle.wait_any();
-    const scheduler::test_result_handle* test_result_handle =
-        dynamic_cast< const scheduler::test_result_handle* >(
-            result_handle.get());
     ATF_REQUIRE_EQ(model::test_result(
                        model::test_result_skipped,
                        "Required configuration property "
                        "'variable-that-does-not-exist' not defined"),
-                   test_result_handle->test_result());
+                   result_handle->test_result());
     ATF_REQUIRE(!atf::utils::grep_file("exec_cleanup was called",
                                        result_handle->stdout_file().str()));
     result_handle->cleanup();
@@ -865,10 +847,7 @@ do_cleanup_test(const char* test_case,
     (void)handle.spawn_test(program, test_case, user_config);
 
     scheduler::result_handle_ptr result_handle = handle.wait_any();
-    const scheduler::test_result_handle* test_result_handle =
-        dynamic_cast< const scheduler::test_result_handle* >(
-            result_handle.get());
-    ATF_REQUIRE_EQ(exp_result, test_result_handle->test_result());
+    ATF_REQUIRE_EQ(exp_result, result_handle->test_result());
     ATF_REQUIRE(atf::utils::compare_file(
         result_handle->stdout_file().str(),
         "exec_cleanup was called\n"));
@@ -944,13 +923,10 @@ ATF_TEST_CASE_BODY(integration__check_requirements)
     (void)handle.spawn_test(program, "exit 12", user_config);
 
     scheduler::result_handle_ptr result_handle = handle.wait_any();
-    const scheduler::test_result_handle* test_result_handle =
-        dynamic_cast< const scheduler::test_result_handle* >(
-            result_handle.get());
     ATF_REQUIRE_EQ(model::test_result(
                        model::test_result_skipped,
                        "Required configuration property 'abcde' not defined"),
-                   test_result_handle->test_result());
+                   result_handle->test_result());
     result_handle->cleanup();
     result_handle.reset();
 
@@ -974,12 +950,9 @@ ATF_TEST_CASE_BODY(integration__stacktrace)
     (void)handle.spawn_test(program, "unknown-dumps-core", user_config);
 
     scheduler::result_handle_ptr result_handle = handle.wait_any();
-    const scheduler::test_result_handle* test_result_handle =
-        dynamic_cast< const scheduler::test_result_handle* >(
-            result_handle.get());
     ATF_REQUIRE_EQ(model::test_result(model::test_result_failed,
                                       F("Signal %s") % SIGABRT),
-                   test_result_handle->test_result());
+                   result_handle->test_result());
     ATF_REQUIRE(!atf::utils::grep_file("attempting to gather stack trace",
                                        result_handle->stdout_file().str()));
     ATF_REQUIRE( atf::utils::grep_file("attempting to gather stack trace",
@@ -1054,11 +1027,8 @@ ATF_TEST_CASE_BODY(integration__prevent_clobbering_control_files)
     (void)handle.spawn_test(program, "delete_all", user_config);
 
     scheduler::result_handle_ptr result_handle = handle.wait_any();
-    const scheduler::test_result_handle* test_result_handle =
-        dynamic_cast< const scheduler::test_result_handle* >(
-            result_handle.get());
     ATF_REQUIRE_EQ(model::test_result(model::test_result_passed, "Exit 0"),
-                   test_result_handle->test_result());
+                   result_handle->test_result());
     result_handle->cleanup();
     result_handle.reset();
 
@@ -1084,14 +1054,11 @@ ATF_TEST_CASE_BODY(debug_test)
 
     scheduler::result_handle_ptr result_handle = handle.debug_test(
         program, "print_params", user_config, stdout_file, stderr_file);
-    const scheduler::test_result_handle* test_result_handle =
-        dynamic_cast< const scheduler::test_result_handle* >(
-            result_handle.get());
 
-    ATF_REQUIRE_EQ(program, test_result_handle->test_program());
-    ATF_REQUIRE_EQ("print_params", test_result_handle->test_case_name());
+    ATF_REQUIRE_EQ(program, result_handle->test_program());
+    ATF_REQUIRE_EQ("print_params", result_handle->test_case_name());
     ATF_REQUIRE_EQ(model::test_result(model::test_result_passed, "Exit 0"),
-                   test_result_handle->test_result());
+                   result_handle->test_result());
 
     // The original output went to a file.  It's only an artifact of
     // debug_test() that we later get a copy in our own files.

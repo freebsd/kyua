@@ -183,21 +183,21 @@ public:
 };
 
 
-/// Base type containing the results of the execution of a subprocess.
+/// Container for all test termination data and accessor to cleanup operations.
 class result_handle {
 protected:
-    struct bimpl;
+    struct impl;
 
 private:
-    /// Pointer to internal implementation of the base type.
-    std::shared_ptr< bimpl > _pbimpl;
+    /// Pointer to internal implementation.
+    std::shared_ptr< impl > _pimpl;
 
 protected:
     friend class scheduler_handle;
-    result_handle(std::shared_ptr< bimpl >);
+    result_handle(std::shared_ptr< impl >);
 
 public:
-    virtual ~result_handle(void) = 0;
+    ~result_handle(void);
 
     void cleanup(void);
 
@@ -207,20 +207,6 @@ public:
     utils::fs::path work_directory(void) const;
     const utils::fs::path& stdout_file(void) const;
     const utils::fs::path& stderr_file(void) const;
-};
-
-
-/// Container for all test termination data and accessor to cleanup operations.
-class test_result_handle : public result_handle {
-    struct impl;
-    /// Pointer to internal implementation.
-    std::shared_ptr< impl > _pimpl;
-
-    friend class scheduler_handle;
-    test_result_handle(std::shared_ptr< bimpl >, std::shared_ptr< impl >);
-
-public:
-    ~test_result_handle(void);
 
     const model::test_program_ptr test_program(void) const;
     const std::string& test_case_name(void) const;

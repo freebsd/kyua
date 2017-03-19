@@ -118,7 +118,7 @@ find_test_program_id(const model::test_program_ptr test_program,
 /// \param [in,out] tx Writable transaction where to store the result data.
 static void
 put_test_result(const int64_t test_case_id,
-                const scheduler::test_result_handle& result,
+                const scheduler::result_handle& result,
                 store::write_transaction& tx)
 {
     tx.put_result(result.test_result(), test_case_id,
@@ -136,7 +136,7 @@ put_test_result(const int64_t test_case_id,
 /// \return The test result if the cleanup succeeds; a broken test result
 /// otherwise.
 model::test_result
-safe_cleanup(scheduler::test_result_handle handle) throw()
+safe_cleanup(scheduler::result_handle& handle) throw()
 {
     try {
         handle.cleanup();
@@ -199,17 +199,13 @@ finish_test(scheduler::result_handle_ptr result_handle,
             store::write_transaction& tx,
             drivers::run_tests::base_hooks& hooks)
 {
-    const scheduler::test_result_handle* test_result_handle =
-        dynamic_cast< const scheduler::test_result_handle* >(
-            result_handle.get());
+    put_test_result(test_case_id, *result_handle, tx);
 
-    put_test_result(test_case_id, *test_result_handle, tx);
-
-    const model::test_result test_result = safe_cleanup(*test_result_handle);
+    const model::test_result test_result = safe_cleanup(*result_handle);
     hooks.got_result(
-        *test_result_handle->test_program(),
-        test_result_handle->test_case_name(),
-        test_result_handle->test_result(),
+        *result_handle->test_program(),
+        result_handle->test_case_name(),
+        result_handle->test_result(),
         result_handle->end_time() - result_handle->start_time());
 }
 

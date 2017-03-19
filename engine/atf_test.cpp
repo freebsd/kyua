@@ -147,12 +147,9 @@ run_one(const atf::tests::tc* tc, const char* test_case_name,
     (void)handle.spawn_test(program, test_case_name, user_config);
 
     scheduler::result_handle_ptr result_handle = handle.wait_any();
-    const scheduler::test_result_handle* test_result_handle =
-        dynamic_cast< const scheduler::test_result_handle* >(
-            result_handle.get());
     atf::utils::cat_file(result_handle->stdout_file().str(), "stdout: ");
     atf::utils::cat_file(result_handle->stderr_file().str(), "stderr: ");
-    ATF_REQUIRE_EQ(exp_result, test_result_handle->test_result());
+    ATF_REQUIRE_EQ(exp_result, result_handle->test_result());
     if (check_empty_output) {
         ATF_REQUIRE(atf::utils::compare_file(result_handle->stdout_file().str(),
                                              ""));

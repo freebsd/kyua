@@ -95,10 +95,7 @@ drivers::debug_test::drive(const fs::path& kyuafile_path,
     scheduler::result_handle_ptr result_handle = handle.debug_test(
         test_program, test_case_name, user_config,
         stdout_path, stderr_path);
-    const scheduler::test_result_handle* test_result_handle =
-        dynamic_cast< const scheduler::test_result_handle* >(
-            result_handle.get());
-    const model::test_result test_result = test_result_handle->test_result();
+    const model::test_result test_result = result_handle->test_result();
     result_handle->cleanup();
 
     handle.check_interrupt();
