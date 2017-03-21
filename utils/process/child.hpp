@@ -96,11 +96,6 @@ public:
     static std::auto_ptr< child > fork_files(Hook, const fs::path&,
                                              const fs::path&);
 
-    static std::auto_ptr< child > spawn_capture(
-        const fs::path&, const args_vector&);
-    static std::auto_ptr< child > spawn_files(
-        const fs::path&, const args_vector&, const fs::path&, const fs::path&);
-
     int pid(void) const;
 
     status wait(void);

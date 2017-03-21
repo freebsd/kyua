@@ -128,21 +128,6 @@ open_for_append(const fs::path& filename)
 }
 
 
-/// Logs the execution of another program.
-///
-/// \param program The binary to execute.
-/// \param args The arguments to pass to the binary, without the program name.
-static void
-log_exec(const fs::path& program, const process::args_vector& args)
-{
-    std::string plain_command = program.str();
-    for (process::args_vector::const_iterator iter = args.begin();
-         iter != args.end(); ++iter)
-        plain_command += F(" %s") % *iter;
-    LD(F("Executing %s") % plain_command);
-}
-
-
 }  // anonymous namespace
 
 
@@ -285,59 +270,6 @@ process::child::fork_files_aux(const fs::path& stdout_file,
         return std::auto_ptr< process::child >(
             new process::child(new impl(pid, NULL)));
     }
-}
-
-
-/// Spawns a new binary and multiplexes and captures its stdout and stderr.
-///
-/// If the subprocess cannot be completely set up for any reason, it attempts to
-/// dump an error message to its stderr channel and it then calls std::abort().
-///
-/// \param program The binary to execute.
-/// \param args The arguments to pass to the binary, without the program name.
-///
-/// \return A new child object, returned as a dynamically-allocated object
-/// because children classes are unique and thus noncopyable.
-///
-/// \throw process::system_error If the process cannot be spawned due to a
-///     system call error.
-std::auto_ptr< process::child >
-process::child::spawn_capture(const fs::path& program, const args_vector& args)
-{
-    std::auto_ptr< child > child = fork_capture_aux();
-    if (child.get() == NULL)
-        exec(program, args);
-    log_exec(program, args);
-    return child;
-}
-
-
-/// Spawns a new binary and redirects its stdout and stderr to files.
-///
-/// If the subprocess cannot be completely set up for any reason, it attempts to
-/// dump an error message to its stderr channel and it then calls std::abort().
-///
-/// \param program The binary to execute.
-/// \param args The arguments to pass to the binary, without the program name.
-/// \param stdout_file The name of the file in which to store the stdout.
-/// \param stderr_file The name of the file in which to store the stderr.
-///
-/// \return A new child object, returned as a dynamically-allocated object
-/// because children classes are unique and thus noncopyable.
-///
-/// \throw process::system_error If the process cannot be spawned due to a
-///     system call error.
-std::auto_ptr< process::child >
-process::child::spawn_files(const fs::path& program,
-                            const args_vector& args,
-                            const fs::path& stdout_file,
-                            const fs::path& stderr_file)
-{
-    std::auto_ptr< child > child = fork_files_aux(stdout_file, stderr_file);
-    if (child.get() == NULL)
-        exec(program, args);
-    log_exec(program, args);
-    return child;
 }
 
 
