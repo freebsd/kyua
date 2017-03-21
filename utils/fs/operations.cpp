@@ -57,6 +57,10 @@ extern "C" {
 #include <sstream>
 #include <string>
 
+extern "C" {
+#include "utils/fs/operations_children.h"
+}
+
 #include "utils/auto_array.ipp"
 #include "utils/defs.hpp"
 #include "utils/env.hpp"
@@ -147,92 +151,6 @@ unmount(const char* UTILS_UNUSED_PARAM(path),
 #endif
 
 
-/// Error code returned by subprocess to indicate a controlled failure.
-const int exit_known_error = 123;
-
-
-static void run_mount_tmpfs(const fs::path&, const uint64_t) UTILS_NORETURN;
-
-
-/// Executes 'mount -t tmpfs' (or a similar variant).
-///
-/// This function must be called from a subprocess as it never returns.
-///
-/// \param mount_point Location on which to mount a tmpfs.
-/// \param size The size of the tmpfs to mount.  If 0, use unlimited.
-static void
-run_mount_tmpfs(const fs::path& mount_point, const uint64_t size)
-{
-    const char* mount_args[16];
-    std::string size_arg;
-
-    std::size_t last = 0;
-    switch (current_os) {
-    case os_freebsd:
-        mount_args[last++] = "mount";
-        mount_args[last++] = "-ttmpfs";
-        if (size > 0) {
-            size_arg = F("-osize=%s") % size;
-            mount_args[last++] = size_arg.c_str();
-        }
-        mount_args[last++] = "tmpfs";
-        mount_args[last++] = mount_point.c_str();
-        break;
-
-    case os_linux:
-        mount_args[last++] = "mount";
-        mount_args[last++] = "-ttmpfs";
-        if (size > 0) {
-            size_arg = F("-osize=%s") % size;
-            mount_args[last++] = size_arg.c_str();
-        }
-        mount_args[last++] = "tmpfs";
-        mount_args[last++] = mount_point.c_str();
-        break;
-
-    case os_netbsd:
-        mount_args[last++] = "mount";
-        mount_args[last++] = "-ttmpfs";
-        if (size > 0) {
-            size_arg = F("-o-s%s") % size;
-            mount_args[last++] = size_arg.c_str();
-        }
-        mount_args[last++] = "tmpfs";
-        mount_args[last++] = mount_point.c_str();
-        break;
-
-    case os_sunos:
-        mount_args[last++] = "mount";
-        mount_args[last++] = "-Ftmpfs";
-        if (size > 0) {
-            size_arg = F("-o-s%s") % size;
-            mount_args[last++] = size_arg.c_str();
-        }
-        mount_args[last++] = "tmpfs";
-        mount_args[last++] = mount_point.c_str();
-        break;
-
-    default:
-        std::cerr << "Don't know how to mount a temporary file system in this "
-            "host operating system\n";
-        std::exit(exit_known_error);
-    }
-    mount_args[last] = NULL;
-
-    const char** arg;
-    std::cout << "Mounting tmpfs onto " << mount_point << " with:";
-    for (arg = &mount_args[0]; *arg != NULL; arg++)
-        std::cout << " " << *arg;
-    std::cout << "\n";
-
-    const int ret = ::execvp(mount_args[0],
-                             UTILS_UNCONST(char* const, mount_args));
-    INV(ret == -1);
-    std::cerr << "Failed to exec " << mount_args[0] << "\n";
-    std::exit(EXIT_FAILURE);
-}
-
-
 /// Unmounts a file system using unmount(2).
 ///
 /// \pre unmount(2) must be available; i.e. have_unmount2 must be true.
@@ -270,12 +188,8 @@ unmount_with_umount8(const fs::path& mount_point)
         const int original_errno = errno;
         throw fs::system_error("Cannot fork to execute unmount tool",
                                original_errno);
-    } else if (pid == 0) {
-        const int ret = ::execlp(UMOUNT, "umount", mount_point.c_str(), NULL);
-        INV(ret == -1);
-        std::cerr << "Failed to exec " UMOUNT "\n";
-        std::exit(EXIT_FAILURE);
-    }
+    } else if (pid == 0)
+        utils_fs_operations_run_unmount(UMOUNT, mount_point.c_str());
 
     int status;
 retry:
@@ -647,6 +561,62 @@ fs::mount_tmpfs(const fs::path& in_mount_point, const units::bytes& size)
     const fs::path mount_point = in_mount_point.is_absolute() ?
         in_mount_point : in_mount_point.to_absolute();
 
+    const char* mount_args[16];
+    std::string size_arg;
+
+    std::size_t last = 0;
+    switch (current_os) {
+    case os_freebsd:
+        mount_args[last++] = "mount";
+        mount_args[last++] = "-ttmpfs";
+        if (size > 0) {
+            size_arg = F("-osize=%s") % size;
+            mount_args[last++] = size_arg.c_str();
+        }
+        mount_args[last++] = "tmpfs";
+        mount_args[last++] = mount_point.c_str();
+        break;
+
+    case os_linux:
+        mount_args[last++] = "mount";
+        mount_args[last++] = "-ttmpfs";
+        if (size > 0) {
+            size_arg = F("-osize=%s") % size;
+            mount_args[last++] = size_arg.c_str();
+        }
+        mount_args[last++] = "tmpfs";
+        mount_args[last++] = mount_point.c_str();
+        break;
+
+    case os_netbsd:
+        mount_args[last++] = "mount";
+        mount_args[last++] = "-ttmpfs";
+        if (size > 0) {
+            size_arg = F("-o-s%s") % size;
+            mount_args[last++] = size_arg.c_str();
+        }
+        mount_args[last++] = "tmpfs";
+        mount_args[last++] = mount_point.c_str();
+        break;
+
+    case os_sunos:
+        mount_args[last++] = "mount";
+        mount_args[last++] = "-Ftmpfs";
+        if (size > 0) {
+            size_arg = F("-o-s%s") % size;
+            mount_args[last++] = size_arg.c_str();
+        }
+        mount_args[last++] = "tmpfs";
+        mount_args[last++] = mount_point.c_str();
+        break;
+
+    default:
+        throw fs::unsupported_operation_error(
+            "Don't know how to mount a temporary file system in this host "
+            "operating system");
+    }
+    mount_args[last] = NULL;
+
     const pid_t pid = ::fork();
     if (pid == -1) {
         const int original_errno = errno;
@@ -654,7 +624,7 @@ fs::mount_tmpfs(const fs::path& in_mount_point, const units::bytes& size)
                                original_errno);
     }
     if (pid == 0)
-        run_mount_tmpfs(mount_point, size);
+        utils_fs_operations_run_mount_tmpfs(mount_args, mount_point.c_str());
 
     int status;
 retry:
@@ -667,10 +637,7 @@ retry:
     }
 
     if (WIFEXITED(status)) {
-        if (WEXITSTATUS(status) == exit_known_error)
-            throw fs::unsupported_operation_error(
-                "Don't know how to mount a tmpfs on this operating system");
-        else if (WEXITSTATUS(status) == EXIT_SUCCESS)
+        if (WEXITSTATUS(status) == EXIT_SUCCESS)
             return;
         else
             throw fs::error(F("Failed to mount tmpfs on %s; returned exit "
