@@ -1,5 +1,5 @@
 Welcome to the Kyua project!
-[![Travis Build Status](https://travis-ci.org/jmmv/kyua.svg?branch=master)](//travis-ci.org/jmmv/kyua)
+[![Travis Build Status](//travis-ci.org/jmmv/kyua.svg?branch=master)](//travis-ci.org/jmmv/kyua)
 ============================
 
 Kyua is a **testing framework** for infrastructure software, originally
