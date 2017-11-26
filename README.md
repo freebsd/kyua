@@ -1,6 +1,6 @@
-[![Travis Build Status](https://travis-ci.org/jmmv/kyua.svg?branch=master)](//travis-ci.org/jmmv/kyua)
 Welcome to the Kyua project!
 ============================
+[![Travis Build Status](https://travis-ci.org/jmmv/kyua.svg?branch=master)](//travis-ci.org/jmmv/kyua)
 
 Kyua is a **testing framework** for infrastructure software, originally
 designed to equip BSD-based operating systems with a test suite.  This
