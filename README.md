@@ -1,5 +1,4 @@
 [![Travis Build Status](https://travis-ci.org/jmmv/kyua.svg?branch=master)](//travis-ci.org/jmmv/kyua)
-
 Welcome to the Kyua project!
 ============================
 
