@@ -43,8 +43,8 @@ Installation
 You are encouraged to install binary packages for your operating system
 wherever available:
 
-* Fedora 20 and above: install the `kyua-cli` package with `yum install
-  kyua-cli`.
+* Fedora 20 and above: install the `kyua` package with `dnf install
+  kyua`.
 
 * FreeBSD 10.0 and above: install the `kyua` package with `pkg install kyua`.
 
