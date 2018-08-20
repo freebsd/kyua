@@ -28,7 +28,8 @@
 
 libutils_a_SOURCES += utils/process/child.cpp
 libutils_a_SOURCES += utils/process/child.hpp
-libutils_a_SOURCES += utils/process/child.ipp
+libutils_a_SOURCES += utils/process/child_children.c
+libutils_a_SOURCES += utils/process/child_children.h
 libutils_a_SOURCES += utils/process/child_fwd.hpp
 libutils_a_SOURCES += utils/process/deadline_killer.cpp
 libutils_a_SOURCES += utils/process/deadline_killer.hpp

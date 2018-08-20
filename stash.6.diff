@@ -1,0 +1,518 @@
+commit 13092c37aaaac127eaec584ffc2af008fa4dcf7a
+Merge: 6918c95 2962ac4
+Author: Julio Merino <jmmv@google.com>
+Date:   Sun Feb 26 19:01:35 2017 -0500
+
+    WIP on threads: 6918c95 Enable C++11 support
+
+diff --cc engine/scheduler.cpp
+index 4e0e295,4e0e295..feabfac
+--- a/engine/scheduler.cpp
++++ b/engine/scheduler.cpp
+@@@ -80,6 -80,6 +80,19 @@@ using utils::none
+  using utils::optional;
+  
+  
+++// 1. Start test thread
+++// 2. Add thread to active threads
+++// 3. Wait for semaphore
+++// 4. Thread adds result to results set, signals semaphore
+++// 5. Acquire semaphore
+++// 6. Remove thread from active threads, return result
+++// 7. Consumer uses result, calls cleanup
+++// 8. Cleanup removes self from results set
+++//
+++// If signal after 2, kill active threads and run cleanups from scratch
+++// If signal after 6, 
+++
+++
+  /// Timeout for the test case cleanup operation.
+  ///
+  /// TODO(jmmv): This is here only for testing purposes.  Maybe we should expose
+@@@ -124,6 -124,6 +137,27 @@@ typedef std::map< std::string, std::sha
+  static interfaces_map interfaces;
+  
+  
+++struct test_id {
+++    std::string test_program_name;
+++    std::string test_case_name;
+++
+++    bool
+++    operator<(const test_id& other) const
+++    {
+++        return (test_program_name < other.test_program_name)
+++            || (test_program_name == other.test_program_name
+++                && test_case_name < other.test_case_name);
+++    }
+++
+++    bool
+++    operator==(const test_id& other) const
+++    {
+++        return test_program_name == other.test_program_name
+++            && test_case_name == other.test_case_name;
+++    }
+++};
+++
+++
+  /// Scans the contents of a directory and appends the file listing to a file.
+  ///
+  /// \param dir_path The directory to scan.
+@@@ -158,123 -158,123 +192,8 @@@ append_files_listing(const fs::path& di
+  }
+  
+  
+--/// Maintenance data held while a test is being executed.
+--///
+--/// This data structure exists from the moment when a test is executed via
+--/// scheduler::spawn_test() or scheduler::impl::spawn_cleanup() to when it is
+--/// cleaned up with result_handle::cleanup().
+--///
+--/// This is a base data type intended to be extended for the test and cleanup
+--/// cases so that each contains only the relevant data.
+--struct exec_data : utils::noncopyable {
+--    /// Test program data for this test case.
+--    const model::test_program_ptr test_program;
+--
+--    /// Name of the test case.
+--    const std::string test_case_name;
+--
+--    /// Constructor.
+--    ///
+--    /// \param test_program_ Test program data for this test case.
+--    /// \param test_case_name_ Name of the test case.
+--    exec_data(const model::test_program_ptr test_program_,
+--              const std::string& test_case_name_) :
+--        test_program(test_program_), test_case_name(test_case_name_)
+--    {
+--    }
+--
+--    /// Destructor.
+--    virtual ~exec_data(void)
+--    {
+--    }
+--};
+--
+--
+--/// Maintenance data held while a test is being executed.
+--struct test_exec_data : public exec_data {
+--    /// Test program-specific execution interface.
+--    const std::shared_ptr< scheduler::interface > interface;
+--
+--    /// User configuration passed to the execution of the test.  We need this
+--    /// here to recover it later when chaining the execution of a cleanup
+--    /// routine (if any).
+--    const config::tree user_config;
+--
+--    /// Whether this test case still needs to have its cleanup routine executed.
+--    ///
+--    /// This is set externally when the cleanup routine is actually invoked to
+--    /// denote that no further attempts shall be made at cleaning this up.
+--    bool needs_cleanup;
+--
+--    /// The exit_handle for this test once it has completed.
+--    ///
+--    /// This is set externally when the test case has finished, as we need this
+--    /// information to invoke the followup cleanup routine in the right context,
+--    /// as indicated by needs_cleanup.
+--    optional< executor::exit_handle > exit_handle;
+--
+--    /// Constructor.
+--    ///
+--    /// \param test_program_ Test program data for this test case.
+--    /// \param test_case_name_ Name of the test case.
+--    /// \param interface_ Test program-specific execution interface.
+--    /// \param user_config_ User configuration passed to the test.
+--    test_exec_data(const model::test_program_ptr test_program_,
+--                   const std::string& test_case_name_,
+--                   const std::shared_ptr< scheduler::interface > interface_,
+--                   const config::tree& user_config_) :
+--        exec_data(test_program_, test_case_name_),
+--        interface(interface_), user_config(user_config_)
+--    {
+--        const model::test_case& test_case = test_program->find(test_case_name);
+--        needs_cleanup = test_case.get_metadata().has_cleanup();
+--    }
+--};
+--
+--
+--/// Maintenance data held while a test cleanup routine is being executed.
+--///
+--/// Instances of this object are related to a previous test_exec_data, as
+--/// cleanup routines can only exist once the test has been run.
+--struct cleanup_exec_data : public exec_data {
+--    /// The exit handle of the test.  This is necessary so that we can return
+--    /// the correct exit_handle to the user of the scheduler.
+--    executor::exit_handle body_exit_handle;
+--
+--    /// The final result of the test's body.  This is necessary to compute the
+--    /// right return value for a test with a cleanup routine: the body result is
+--    /// respected if it is a "bad" result; else the result of the cleanup
+--    /// routine is used if it has failed.
+--    model::test_result body_result;
+--
+--    /// Constructor.
+--    ///
+--    /// \param test_program_ Test program data for this test case.
+--    /// \param test_case_name_ Name of the test case.
+--    /// \param body_exit_handle_ If not none, exit handle of the body
+--    ///     corresponding to the cleanup routine represented by this exec_data.
+--    /// \param body_result_ If not none, result of the body corresponding to the
+--    ///     cleanup routine represented by this exec_data.
+--    cleanup_exec_data(const model::test_program_ptr test_program_,
+--                      const std::string& test_case_name_,
+--                      const executor::exit_handle& body_exit_handle_,
+--                      const model::test_result& body_result_) :
+--        exec_data(test_program_, test_case_name_),
+--        body_exit_handle(body_exit_handle_), body_result(body_result_)
+--    {
+--    }
+--};
+--
+--
+--/// Shared pointer to exec_data.
+--///
+--/// We require this because we want exec_data to not be copyable, and thus we
+--/// cannot just store it in the map without move constructors.
+--typedef std::shared_ptr< exec_data > exec_data_ptr;
+--
+--
+--/// Mapping of active PIDs to their maintenance data.
+--typedef std::map< int, exec_data_ptr > exec_data_map;
+++/// Mapping of complete executions to their results.
+++typedef std::map< test_id, result_handle_ptr > results_map;
+  
+  
+  /// Enforces a test program to hold an absolute path.
+@@@ -792,12 -792,12 +711,6 @@@ struct engine::scheduler::scheduler_han
+      /// Generic executor instance encapsulated by this one.
+      executor::executor_handle generic;
+  
+--    /// Mapping of exec handles to the data required at run time.
+--    exec_data_map all_exec_data;
+--
+--    /// Collection of test_exec_data objects.
+--    typedef std::vector< const test_exec_data* > test_exec_data_vector;
+--
+      /// Constructor.
+      impl(void) : generic(executor::setup())
+      {
+@@@ -809,112 -809,112 +722,31 @@@
+      /// scheduler is abruptly terminated (aka if a signal is received).
+      ~impl(void)
+      {
+--        const test_exec_data_vector tests_data = tests_needing_cleanup();
+--
+--        for (test_exec_data_vector::const_iterator iter = tests_data.begin();
+--             iter != tests_data.end(); ++iter) {
+--            const test_exec_data* test_data = *iter;
+--
+--            try {
+--                sync_cleanup(test_data);
+--            } catch (const std::runtime_error& e) {
+--                LW(F("Failed to run cleanup routine for %s:%s on abrupt "
+--                     "termination")
+--                   % test_data->test_program->relative_path()
+--                   % test_data->test_case_name);
+--            }
+--        }
+      }
+  
+--    /// Finds any pending exec_datas that correspond to tests needing cleanup.
+--    ///
+--    /// \return The collection of test_exec_data objects that have their
+--    /// needs_cleanup property set to true.
+--    test_exec_data_vector
+--    tests_needing_cleanup(void)
+++    void
+++    add_test(std::thread::id id)
+      {
+--        test_exec_data_vector tests_data;
+--
+--        for (exec_data_map::const_iterator iter = all_exec_data.begin();
+--             iter != all_exec_data.end(); ++iter) {
+--            const exec_data_ptr data = (*iter).second;
+--
+--            try {
+--                test_exec_data* test_data = &dynamic_cast< test_exec_data& >(
+--                    *data.get());
+--                if (test_data->needs_cleanup) {
+--                    tests_data.push_back(test_data);
+--                    test_data->needs_cleanup = false;
+--                }
+--            } catch (const std::bad_cast& e) {
+--                // Do nothing for cleanup_exec_data objects.
+--            }
+--        }
+--
+--        return tests_data;
+++        std::lock_guard< std::mutex > guard(mutex);
+++        active_tests.insert(id);
+      }
+  
+--    /// Cleans up a single test case synchronously.
+--    ///
+--    /// \param test_data The data of the previously executed test case to be
+--    ///     cleaned up.
+      void
+--    sync_cleanup(const test_exec_data* test_data)
+++    remove_test(std::thread::id thread_id, const test_id& id,
+++                result_handle_ptr result)
+      {
+--        // The message in this result should never be seen by the user, but use
+--        // something reasonable just in case it leaks and we need to pinpoint
+--        // the call site.
+--        model::test_result result(model::test_result_broken,
+--                                  "Test case died abruptly");
+--
+--        const executor::exec_handle cleanup_handle = spawn_cleanup(
+--            test_data->test_program, test_data->test_case_name,
+--            test_data->user_config, test_data->exit_handle.get(),
+--            result);
+--        generic.wait(cleanup_handle);
+++        std::lock_guard< std::mutex > guard(mutex);
+++        active_tests.remove(thread_id);
+++        completed_tests[id] = result;
+      }
+  
+--    /// Forks and executes a test case cleanup routine asynchronously.
+--    ///
+--    /// \param test_program The container test program.
+--    /// \param test_case_name The name of the test case to run.
+--    /// \param user_config User-provided configuration variables.
+--    /// \param body_handle The exit handle of the test case's corresponding
+--    ///     body.  The cleanup will be executed in the same context.
+--    /// \param body_result The result of the test case's corresponding body.
+--    ///
+--    /// \return A handle for the background operation.  Used to match the result
+--    /// of the execution returned by wait_any() with this invocation.
+--    executor::exec_handle
+--    spawn_cleanup(const model::test_program_ptr test_program,
+--                  const std::string& test_case_name,
+--                  const config::tree& user_config,
+--                  const executor::exit_handle& body_handle,
+--                  const model::test_result& body_result)
+--    {
+--        generic.check_interrupt();
+++private:
+++    std::mutex mutex;
+  
+--        const std::shared_ptr< scheduler::interface > interface =
+--            find_interface(test_program->interface_name());
+--
+--        LI(F("Spawning %s:%s (cleanup)") % test_program->absolute_path() %
+--           test_case_name);
+--
+--        const executor::exec_handle handle = generic.spawn_followup(
+--            run_test_cleanup(interface, test_program, test_case_name,
+--                             user_config),
+--            body_handle, cleanup_timeout);
+--
+--        const exec_data_ptr data(new cleanup_exec_data(
+--            test_program, test_case_name, body_handle, body_result));
+--        LD(F("Inserting %s into all_exec_data (cleanup)") % handle.pid());
+--        INV_MSG(all_exec_data.find(handle.pid()) == all_exec_data.end(),
+--                F("PID %s already in all_exec_data; not properly cleaned "
+--                  "up or reused too fast") % handle.pid());;
+--        all_exec_data.insert(exec_data_map::value_type(handle.pid(), data));
+++    /// Mapping of exec handles to the data required at run time.
+++    results_map completed_tests;
+  
+--        return handle;
+--    }
+++    std::set< std::thread::id > active_tests;
+  };
+  
+  
+@@@ -1064,24 -1064,24 +896,12 @@@ scheduler::scheduler_handle::list_tests
+  }
+  
+  
+--/// Forks and executes a test case asynchronously.
+--///
+--/// Note that the caller needn't know if the test has a cleanup routine or not.
+--/// If there indeed is a cleanup routine, we trigger it at wait_any() time.
+--///
+--/// \param test_program The container test program.
+--/// \param test_case_name The name of the test case to run.
+--/// \param user_config User-provided configuration variables.
+--///
+--/// \return A handle for the background operation.  Used to match the result of
+--/// the execution returned by wait_any() with this invocation.
+--scheduler::exec_handle
+--scheduler::scheduler_handle::spawn_test(
+++void run_test(
+      const model::test_program_ptr test_program,
+      const std::string& test_case_name,
+--    const config::tree& user_config)
+++    const config::tree& user_config,
+++    exec_data_map results)
+  {
+--    _pimpl->generic.check_interrupt();
+  
+      const std::shared_ptr< scheduler::interface > interface = find_interface(
+          test_program->interface_name());
+@@@ -1097,22 -1097,22 +917,119 @@@
+              "unprivileged_user");
+      }
+  
+--    const executor::exec_handle handle = _pimpl->generic.spawn(
+++    const executor::exec_handle exec_handle = _pimpl->generic.spawn(
+          run_test_program(interface, test_program, test_case_name,
+                           user_config),
+          test_case.get_metadata().timeout(),
+          unprivileged_user);
+++    executor::exit_handle handle = _pimpl->generic.wait(exec_handle);
+++
+++    utils::dump_stacktrace_if_available(test_program->absolute_path(),
+++                                        _pimpl->generic, handle);
+  
+--    const exec_data_ptr data(new test_exec_data(
+--        test_program, test_case_name, interface, user_config));
+--    LD(F("Inserting %s into all_exec_data") % handle.pid());
+--    INV_MSG(
+--        _pimpl->all_exec_data.find(handle.pid()) == _pimpl->all_exec_data.end(),
+--        F("PID %s already in all_exec_data; not cleaned up or reused too fast")
+--        % handle.pid());;
+--    _pimpl->all_exec_data.insert(exec_data_map::value_type(handle.pid(), data));
+++    optional< model::test_result > result = test_case.fake_result();
+++    bool needs_cleanup = test_case.get_metadata().has_cleanup();
+++
+++    if (!result && handle.status() && handle.status().get().exited() &&
+++        handle.status().get().exitstatus() == exit_skipped) {
+++        // If the test's process terminated with our magic "exit_skipped"
+++        // status, there are two cases to handle.  The first is the case
+++        // where the "skipped cookie" exists, in which case we never got to
+++        // actually invoke the test program; if that's the case, handle it
+++        // here.  The second case is where the test case actually decided to
+++        // exit with the "exit_skipped" status; in that case, just fall back
+++        // to the regular status handling.
+++        const fs::path skipped_cookie_path = handle.control_directory() /
+++            skipped_cookie;
+++        std::ifstream input(skipped_cookie_path.c_str());
+++        if (input) {
+++            result = model::test_result(model::test_result_skipped,
+++                                        utils::read_stream(input));
+++            input.close();
+++
+++            // If we determined that the test needs to be skipped, we do not
+++            // want to run the cleanup routine because doing so could result
+++            // in errors.  However, we still want to run the cleanup routine
+++            // if the test's body reports a skip (because actions could have
+++            // already been taken).
+++            needs_cleanup = false;
+++        }
+++    }
+++    if (!result) {
+++        result = test_data->interface->compute_result(
+++            handle.status(),
+++            handle.control_directory(),
+++            handle.stdout_file(),
+++            handle.stderr_file());
+++    }
+++    INV(result);
+++
+++    if (!result.get().good()) {
+++        append_files_listing(handle.work_directory(),
+++                             handle.stderr_file());
+++    }
+++
+++    if (needs_cleanup) {
+++        INV(test_case.get_metadata().has_cleanup());
+++        // The test body has completed and we have processed it.  If there
+++        // is a cleanup routine, trigger it now and wait for any other test
+++        // completion.  The caller never knows about cleanup routines.
+++        const executor::exec_handle cleanup_exec_handle = generic.spawn_followup(
+++            run_test_cleanup(interface, test_program, test_case_name,
+++                             user_config),
+++            handle, cleanup_timeout);
+++        executor::exit_handle handle = _pimpl->generic.wait(cleanup_exec_handle);
+++
+++        const model::test_result& body_result = cleanup_data->body_result;
+++        if (result.good()) {
+++            if (!handle.status()) {
+++                result = model::test_result(model::test_result_broken,
+++                                            "Test case cleanup timed out");
+++            } else {
+++                if (!handle.status().get().exited() ||
+++                    handle.status().get().exitstatus() != EXIT_SUCCESS) {
+++                    result = model::test_result(
+++                        model::test_result_broken,
+++                        "Test case cleanup did not terminate successfully");
+++                } else {
+++                    //result = body_result;
+++                }
+++            }
+++        } else {
+++            //result = body_result;
+++        }
+++    }
+++
+++    std::shared_ptr< result_handle::bimpl > result_handle_bimpl(
+++        new result_handle::bimpl(handle, _pimpl->all_exec_data));
+++    std::shared_ptr< test_result_handle::impl > test_result_handle_impl(
+++        new test_result_handle::impl(
+++            data->test_program, data->test_case_name, result.get()));
+++    result_output = result_handle_ptr(new test_result_handle(result_handle_bimpl,
+++                                                             test_result_handle_impl));
+++}
+++
+++
+++/// Forks and executes a test case asynchronously.
+++///
+++/// Note that the caller needn't know if the test has a cleanup routine or not.
+++/// If there indeed is a cleanup routine, we trigger it at wait_any() time.
+++///
+++/// \param test_program The container test program.
+++/// \param test_case_name The name of the test case to run.
+++/// \param user_config User-provided configuration variables.
+++///
+++/// \return A handle for the background operation.  Used to match the result of
+++/// the execution returned by wait_any() with this invocation.
+++scheduler::exec_handle
+++scheduler::scheduler_handle::spawn_test(
+++    const model::test_program_ptr test_program,
+++    const std::string& test_case_name,
+++    const config::tree& user_config)
+++{
+++    _pimpl->generic.check_interrupt();
+  
+--    return handle.pid();
+++    std::thread thread(run_test, test_program, test_case_name, user_config);
+  }
+  
+  
+diff --cc engine/scheduler.hpp
+index 24ff0b5,24ff0b5..5aaf6dc
+--- a/engine/scheduler.hpp
++++ b/engine/scheduler.hpp
+@@@ -246,9 -246,9 +246,9 @@@ public
+  
+      model::test_cases_map list_tests(const model::test_program*,
+                                       const utils::config::tree&);
+--    exec_handle spawn_test(const model::test_program_ptr,
+--                           const std::string&,
+--                           const utils::config::tree&);
+++    std::thread::id spawn_test(const model::test_program_ptr,
+++                               const std::string&,
+++                               const utils::config::tree&);
+      result_handle_ptr wait_any(void);
+  
+      result_handle_ptr debug_test(const model::test_program_ptr,
+diff --cc engine/scheduler_fwd.hpp
+index f61b084,f61b084..c083ae5
+--- a/engine/scheduler_fwd.hpp
++++ b/engine/scheduler_fwd.hpp
+@@@ -38,13 -38,13 +38,6 @@@ namespace engine 
+  namespace scheduler {
+  
+  
+--/// Unique identifier for in-flight execution operations.
+--///
+--/// TODO(jmmv): Might be worth to drop altogether and just use "int".  The type
+--/// difference with executor::exec_handle is confusing.
+--typedef int exec_handle;
+--
+--
+  class scheduler_handle;
+  class interface;
+  class result_handle;

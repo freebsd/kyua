@@ -32,7 +32,6 @@ extern "C" {
 #include <sys/stat.h>
 #include <sys/wait.h>
 
-#include <fcntl.h>
 #include <signal.h>
 #include <unistd.h>
 }
@@ -41,7 +40,6 @@ extern "C" {
 #include <iostream>
 #include <memory>
 
-#include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
@@ -85,72 +83,6 @@ namespace process = utils::process;
 namespace signals = utils::signals;
 
 
-namespace {
-
-
-/// Exception-based version of dup(2).
-///
-/// \param old_fd The file descriptor to duplicate.
-/// \param new_fd The file descriptor to use as the duplicate.  This is
-///     closed if it was open before the copy happens.
-///
-/// \throw process::system_error If the call to dup2(2) fails.
-static void
-safe_dup(const int old_fd, const int new_fd)
-{
-    if (process::detail::syscall_dup2(old_fd, new_fd) == -1) {
-        const int original_errno = errno;
-        throw process::system_error(F("dup2(%s, %s) failed") % old_fd % new_fd,
-                                    original_errno);
-    }
-}
-
-
-/// Exception-based version of open(2) to open (or create) a file for append.
-///
-/// \param filename The file to open in append mode.
-///
-/// \return The file descriptor for the opened or created file.
-///
-/// \throw process::system_error If the call to open(2) fails.
-static int
-open_for_append(const fs::path& filename)
-{
-    const int fd = process::detail::syscall_open(
-        filename.c_str(), O_CREAT | O_WRONLY | O_APPEND,
-        S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-    if (fd == -1) {
-        const int original_errno = errno;
-        throw process::system_error(F("Failed to create %s because open(2) "
-                                      "failed") % filename, original_errno);
-    }
-    return fd;
-}
-
-
-}  // anonymous namespace
-
-
-/// Prints out a fatal error and aborts.
-void
-utils::process::detail::report_error_and_abort(void)
-{
-    std::cerr << "Caught unknown exception\n";
-    std::abort();
-}
-
-
-/// Prints out a fatal error and aborts.
-///
-/// \param error The error to display.
-void
-utils::process::detail::report_error_and_abort(const std::runtime_error& error)
-{
-    std::cerr << "Caught runtime_error: " << error.what() << '\n';
-    std::abort();
-}
-
-
 /// Creates a new child.
 ///
 /// \param implptr A dynamically-allocated impl object with the contents of the
@@ -167,18 +99,21 @@ process::child::~child(void)
 }
 
 
-/// Helper function for fork().
+/// Spawns a new subprocess and multiplexes and captures its stdout and stderr.
 ///
-/// Please note: if you update this function to change the return type or to
-/// raise different errors, do not forget to update fork() accordingly.
+/// If the subprocess cannot be completely set up for any reason, it attempts to
+/// dump an error message to its stderr channel and it then calls std::abort().
 ///
-/// \return In the case of the parent, a new child object returned as a
-/// dynamically-allocated object because children classes are unique and thus
-/// noncopyable.  In the case of the child, a NULL pointer.
+/// \param hook The function to execute in the subprocess.  Must not return.
+/// \param cookie Opaque data to pass to the hook.
 ///
-/// \throw process::system_error If the calls to pipe(2) or fork(2) fail.
-std::auto_ptr< process::child >
-process::child::fork_capture_aux(void)
+/// \return A new child object, returned as a dynamically-allocated object
+/// because children classes are unique and thus noncopyable.
+///
+/// \throw process::system_error If the process cannot be spawned due to a
+///     system call error.
+std::auto_ptr< child >
+child::fork_capture(const void (*hook)(const void*), const void* cookie)
 {
     std::cout.flush();
     std::cerr.flush();
@@ -193,19 +128,7 @@ process::child::fork_capture_aux(void)
         ::close(fds[1]);
         throw process::system_error("fork(2) failed", errno);
     } else if (pid == 0) {
-        signals::reset_interrupts_in_new_child();
-        ::setsid();
-
-        try {
-            ::close(fds[0]);
-            safe_dup(fds[1], STDOUT_FILENO);
-            safe_dup(fds[1], STDERR_FILENO);
-            ::close(fds[1]);
-        } catch (const system_error& e) {
-            std::cerr << F("Failed to set up subprocess: %s\n") % e.what();
-            std::abort();
-        }
-        return std::auto_ptr< process::child >(NULL);
+        utils_process_child_fork_capture(hook, cookie);
     } else {
         ::close(fds[1]);
         LD(F("Spawned process %s: stdout and stderr inherited") % pid);
@@ -213,56 +136,42 @@ process::child::fork_capture_aux(void)
         return std::auto_ptr< process::child >(
             new process::child(new impl(pid, new process::ifdstream(fds[0]))));
     }
+
+    return child;
 }
 
 
-/// Helper function for fork().
+/// Spawns a new subprocess and redirects its stdout and stderr to files.
 ///
-/// Please note: if you update this function to change the return type or to
-/// raise different errors, do not forget to update fork() accordingly.
+/// If the subprocess cannot be completely set up for any reason, it attempts to
+/// dump an error message to its stderr channel and it then calls std::abort().
 ///
+/// \param hook The function to execute in the subprocess.  Must not return.
+/// \param cookie Opaque data to pass to the hook.
 /// \param stdout_file The name of the file in which to store the stdout.
-///     If this has the magic value /dev/stdout, then the parent's stdout is
-///     reused without applying any redirection.
 /// \param stderr_file The name of the file in which to store the stderr.
-///     If this has the magic value /dev/stderr, then the parent's stderr is
-///     reused without applying any redirection.
 ///
-/// \return In the case of the parent, a new child object returned as a
-/// dynamically-allocated object because children classes are unique and thus
-/// noncopyable.  In the case of the child, a NULL pointer.
+/// \return A new child object, returned as a dynamically-allocated object
+/// because children classes are unique and thus noncopyable.
 ///
-/// \throw process::system_error If the call to fork(2) fails.
-std::auto_ptr< process::child >
-process::child::fork_files_aux(const fs::path& stdout_file,
-                               const fs::path& stderr_file)
+/// \throw process::system_error If the process cannot be spawned due to a
+///     system call error.
+std::auto_ptr< child >
+child::fork_files(const void (*hook)(const void*), const void* cookie,
+                  const fs::path& stdout_file, const fs::path& stderr_file)
 {
     std::cout.flush();
     std::cerr.flush();
+
+    const char* stdout_file_cstr = stdout_file.c_str();
+    const char* stderr_file_cstr = stderr_file.c_str();
 
     pid_t pid = detail::syscall_fork();
     if (pid == -1) {
         throw process::system_error("fork(2) failed", errno);
     } else if (pid == 0) {
-        signals::reset_interrupts_in_new_child();
-        ::setsid();
-
-        try {
-            if (stdout_file != fs::path("/dev/stdout")) {
-                const int stdout_fd = open_for_append(stdout_file);
-                safe_dup(stdout_fd, STDOUT_FILENO);
-                ::close(stdout_fd);
-            }
-            if (stderr_file != fs::path("/dev/stderr")) {
-                const int stderr_fd = open_for_append(stderr_file);
-                safe_dup(stderr_fd, STDERR_FILENO);
-                ::close(stderr_fd);
-            }
-        } catch (const system_error& e) {
-            std::cerr << F("Failed to set up subprocess: %s\n") % e.what();
-            std::abort();
-        }
-        return std::auto_ptr< process::child >(NULL);
+        utils_process_child_fork_files(hook, cookie,
+                                       stdout_file_cstr, stderr_file_cstr);
     } else {
         LD(F("Spawned process %s: stdout=%s, stderr=%s") % pid % stdout_file %
            stderr_file);
@@ -270,6 +179,8 @@ process::child::fork_files_aux(const fs::path& stdout_file,
         return std::auto_ptr< process::child >(
             new process::child(new impl(pid, NULL)));
     }
+
+    return child;
 }
 
 

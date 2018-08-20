@@ -52,7 +52,6 @@
 #include <memory>
 #include <stdexcept>
 
-#include "utils/defs.hpp"
 #include "utils/fs/path_fwd.hpp"
 #include "utils/noncopyable.hpp"
 #include "utils/process/operations_fwd.hpp"
@@ -62,15 +61,6 @@ namespace utils {
 namespace process {
 
 
-namespace detail {
-
-void report_error_and_abort(void) UTILS_NORETURN;
-void report_error_and_abort(const std::runtime_error&) UTILS_NORETURN;
-
-
-}  // namespace detail
-
-
 /// Child process spawner and controller.
 class child : noncopyable {
     struct impl;
@@ -78,23 +68,18 @@ class child : noncopyable {
     /// Pointer to the shared internal implementation.
     std::auto_ptr< impl > _pimpl;
 
-    static std::auto_ptr< child > fork_capture_aux(void);
-
-    static std::auto_ptr< child > fork_files_aux(const fs::path&,
-                                                 const fs::path&);
-
     explicit child(impl *);
 
 public:
     ~child(void);
 
-    template< typename Hook >
-    static std::auto_ptr< child > fork_capture(Hook);
+    static std::auto_ptr< child > fork_capture(
+        const void (*)(const void*), const void*);
     std::istream& output(void);
 
-    template< typename Hook >
-    static std::auto_ptr< child > fork_files(Hook, const fs::path&,
-                                             const fs::path&);
+    static std::auto_ptr< child > fork_files(
+        const void (*)(const void*), const void*,
+        const fs::path&, const fs::path&);
 
     int pid(void) const;
 
