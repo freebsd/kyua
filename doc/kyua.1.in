@@ -238,7 +238,7 @@ problems in the application, as they contain lots of internal details.
 .Pp
 The default log level is
 .Sq info
-unless expicitly overriden with
+unless explicitly overridden with
 .Fl -loglevel .
 .Pp
 The log file is a plain text file containing one line per log record.  The
