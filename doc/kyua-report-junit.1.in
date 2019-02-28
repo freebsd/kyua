@@ -39,8 +39,9 @@
 The
 .Nm
 command provides a simple mechanism to generate JUnit reports of the
-execution of a test suite.  The command processes a results file and then
-generates a single XML file that complies with the JUnit XSchema.
+execution of a test suite.
+The command processes a results file and then generates a single XML file
+that complies with the JUnit XSchema.
 .Pp
 The JUnit output is static and self-contained, so it can easily be plugged
 into any continuous integration system, like Jenkins.
@@ -54,18 +55,20 @@ __include__ results-file-flag-read.mdoc
 .El
 .Ss Caveats
 Because of limitations in the JUnit XML schema, not all the data collected by
-Kyua can be properly represented in JUnit reports.  However, because test data
-are extremely useful for debugging purposes, the
+Kyua can be properly represented in JUnit reports.
+However, because test data are extremely useful for debugging purposes, the
 .Nm
-command shovels these data into the JUnit output.  In particular:
+command shovels these data into the JUnit output.
+In particular:
 .Bl -bullet
 .It
 The test case metadata values are prepended to the test case's standard error
 output.
 .It
 Test cases that report expected failures as their results are recorded as
-passed.  The fact that they failed as expected is recorded in the test case's
-standard error output along with the corresponding reason.
+passed.
+The fact that they failed as expected is recorded in the test case's standard
+error output along with the corresponding reason.
 .El
 .Ss Results files
 __include__ results-files.mdoc

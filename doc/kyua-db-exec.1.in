@@ -40,18 +40,21 @@
 The
 .Nm
 command provides a way to execute an arbitrary SQL statement within the
-database.  This command is mostly intended to aid in debugging, but can
-also be used to extract information from the database when the current
-interfaces do not provide the desired functionality.
+database.
+This command is mostly intended to aid in debugging, but can also be used to
+extract information from the database when the current interfaces do not
+provide the desired functionality.
 .Pp
-The input database must exist.  It makes no sense to use
+The input database must exist.
+It makes no sense to use
 .Nm
-on an non-existent or empty database.
+on a nonexistent or empty database.
 .Pp
 The
 .Nm
 command takes one or more arguments, all of which are concatenated to form
-a single SQL statement.  Once the statement is executed,
+a single SQL statement.
+Once the statement is executed,
 .Nm
 prints the resulting table on the screen, if any.
 .Pp

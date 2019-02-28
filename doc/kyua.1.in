@@ -50,8 +50,8 @@
 .Em manual page that should be supplied by your system .
 .Pp
 Kyua is a testing framework for infrastructure software, originally
-designed to equip BSD-based operating systems with a test suite.  This
-means that Kyua is lightweight and simple, and that Kyua integrates well
+designed to equip BSD-based operating systems with a test suite.
+This means that Kyua is lightweight and simple, and that Kyua integrates well
 with various build systems and continuous integration frameworks.
 .Pp
 Kyua features an expressive test suite definition language, a safe
@@ -62,15 +62,19 @@ simple fix to a library to the system administrator deploying a new
 release on a production machine.
 .Pp
 Kyua is able to execute test programs written with a plethora of testing
-libraries and languages.  The library of choice is ATF, for which Kyua
-was originally designed, but simple, framework-less test programs and
-TAP-compliant test programs can also be executed through Kyua.
+libraries and languages.
+The test program library of choice is ATF, which
+.Nm Ns 's
+design originated from.
+However, framework-less test programs and TAP-compliant test programs can also
+be executed through
+.Nm
 .Ss Overview
 As can be observed in the synopsis, the interface of
 .Nm
-implements a common subcommand-based interface.  The arguments to the tool
-specify, in this order: a set of common options that all the commands
-accept, a required
+implements a common subcommand-based interface.
+The arguments to the tool specify, in this order: a set of common options
+that all the commands accept, a required
 .Ar command
 name that specifies what
 .Nm
@@ -124,7 +128,8 @@ The values set through this option have preference over the values set in the
 configuration file.
 .Pp
 The specified variable can either be a builtin variable or a test-suite
-specific variable.  See
+specific variable.
+See
 .Xr kyua.conf 5
 for more details.
 .El
@@ -155,7 +160,8 @@ The following commands are used to generate reports based on the data previously
 recorded in a results file:
 .Bl -tag -width reportXjunitXX -offset indent
 .It Ar report
-Generates a plain-text report.  Combined with its
+Generates a plaintext report.
+Combined with its
 .Fl -verbose
 flag and the ability to only display specific test cases, this command can also
 be used to debug test failures post-facto on the console.
@@ -199,8 +205,9 @@ The only way to disable logging is by sending the log to
 .Pp
 The location of the log file can be manually specified with the
 .Fl -logfile
-option, which applies to all commands.  If no file is explicitly specified, the
-location of the log files is chosen in this order:
+option, which applies to all commands.
+If no file is explicitly specified, the location of the log files is chosen in
+this order:
 .Bl -enum -offset indent
 .It
 .Pa ${HOME}/.kyua/logs/
@@ -220,20 +227,25 @@ And the default naming scheme of the log files is:
 .Sq <progname>.<timestamp>.log .
 .Pp
 The messages stored in the log file have a level (or severity) attached to
-them.  These are:
+them.
+These are:
 .Bl -tag -width warningXX -offset indent
 .It error
-Fatal error messages.  The program generally terminates after these, either
-in a clean manner or by crashing.
+Fatal error messages.
+The program generally terminates after these, either in a clean manner or by
+crashing.
 .It warning
-Non-fatal error messages.  These generally report a condition that must be
-addressed but the application can continue to run.
+Non-fatal error messages.
+These generally report a condition that must be addressed but the application
+can continue to run.
 .It info
-Informational messages.  These tell the user what the program was doing at
-a general level of operation.
+Informational messages.
+These tell the user what the program was doing at a general level of
+operation.
 .It debug
-Detailed informational messages.  These are often useful when debugging
-problems in the application, as they contain lots of internal details.
+Detailed informational messages.
+These are often useful when debugging problems in the application, as they
+contain lots of internal details.
 .El
 .Pp
 The default log level is
@@ -241,8 +253,8 @@ The default log level is
 unless explicitly overridden with
 .Fl -loglevel .
 .Pp
-The log file is a plain text file containing one line per log record.  The
-format of each line is as follows:
+The log file is a plain text file containing one line per log record.
+The format of each line is as follows:
 .Bd -literal -offset indent
 timestamp entry_type pid file:line: message
 .Ed
@@ -260,12 +272,13 @@ for a debug message.
 .Ss Bug reporting
 If you think you have encountered a bug in
 .Nm ,
-please take the time to let the developers know about it.  This will ensure
-that the bug is addressed and potentially fixed in the next Kyua release.
+please take the time to let the developers know about it.
+This will ensure that the bug is addressed and potentially fixed in the next
+Kyua release.
 .Pp
 The first step in reporting a bug is to check if there already is a similar
-bug in the database.  You can check what issues are currently in the
-database by going to:
+bug in the database.
+You can check what issues are currently in the database by going to:
 .Bd -literal -offset indent
 https://github.com/jmmv/kyua/issues/
 .Ed
@@ -276,20 +289,21 @@ one you are experiencing, you can open a new one by visiting:
 https://github.com/jmmv/kyua/issues/new/
 .Ed
 .Pp
-When doing so, please include as much detail as possible.  Among other
-things, explain what operating system and platform you are running
+When doing so, please include as much detail as possible.
+Among other things, explain what operating system and platform you are running
 .Nm
 on, what were you trying to do, what exact messages you saw on the screen,
 how did you expect the program to behave, and any other details that you
 may find relevant.
 .Pp
 Also, please include a copy of the log file corresponding to the problem
-you are experiencing.  Unless you have changed the location of the log
-files, you can most likely find them in
+you are experiencing.
+Unless you have changed the location of the log files, you can most likely
+find them in
 .Pa ~/.kyua/logs/ .
 If the problem is reproducible, it is good idea to regenerate the log file
-with an increased log level so as to provide more information.  For
-example:
+with an increased log level so as to provide more information.
+For example:
 .Bd -literal -offset indent
 $ kyua --logfile=problem.log --loglevel=debug \\
     [rest of the command line]
@@ -314,8 +328,8 @@ Path to the system-wide temporary directory.
 uses this location to place the work directory of test cases, among other
 things.
 .Pp
-The default value of this variable depends on the operating system.  In
-general, it is
+The default value of this variable depends on the operating system.
+In general, it is
 .Pa /tmp .
 .El
 .Pp
@@ -345,7 +359,7 @@ files provided by
 Defaults to
 .Pa __MISCDIR__ .
 .It Va KYUA_STOREDIR
-Path to the location of the installed store support files; e.g. the
+Path to the location of the installed store support files; e.g., the
 directory containing the SQL database schema.
 .Pp
 Defaults to
@@ -369,8 +383,9 @@ subcommand, 2 on a general unexpected error and 3 on a usage error.
 .Pp
 The documentation of the subcommands in the corresponding manual pages only
 details the difference between a successful exit (0) and the detection of a
-controlled error (1).  Even though when those manual pages do not describe
-any other exit statuses, codes above 1 can be returned.
+controlled error (1).
+Even though when those manual pages do not describe any other exit statuses,
+codes above 1 can be returned.
 .Sh SEE ALSO
 .Xr kyua.conf 5 ,
 .Xr kyuafile 5 ,

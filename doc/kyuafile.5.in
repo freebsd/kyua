@@ -47,17 +47,18 @@
 .Fn test_suite "string name"
 .Sh DESCRIPTION
 A test suite is a collection of test programs and is represented by a
-hierarchical layout of test binaries on the file system.  Any subtree of
-the file system can represent a test suite, provided that it includes one
-or more
+hierarchical layout of test binaries on the file system.
+Any subtree of the file system can represent a test suite, provided that it
+includes one or more
 .Nm Ns s ,
 which are the test suite definition files.
 .Pp
 A
 .Nm
 is a Lua script whose purpose is to describe the structure of the test
-suite it belongs to.  To do so, the script has access to a collection of
-special functions provided by
+suite it belongs to.
+To do so, the script has access to a collection of special functions provided
+by
 .Xr kyua 1
 as described in
 .Sx Helper functions .
@@ -111,13 +112,16 @@ files to be self-contained, and to simplify their internal representation.
 .Em ATF test programs
 are those that use the
 .Xr atf 7
-libraries.  They can be registered with the
+libraries.
+They can be registered with the
 .Fn atf_test_program
-table constructor.  This function takes the
+table constructor.
+This function takes the
 .Fa name
 of the test program and a collection of optional metadata settings for all
-the test cases in the test program.  Any metadata properties defined by the
-test cases themselves override the metadata values defined here.
+the test cases in the test program.
+Any metadata properties defined by the test cases themselves override the
+metadata values defined here.
 .Pp
 .Em Plain test programs
 are those that return 0 on success and non-0 on failure; in general, most test
@@ -125,7 +129,8 @@ programs (even those that use fancy unit-testing libraries) behave this way and
 thus also qualify as plain test programs.
 They can be registered with the
 .Fn plain_test_program
-table constructor.  This function takes the
+table constructor.
+This function takes the
 .Fa name
 of the test program, an optional
 .Fa test_suite
@@ -136,7 +141,8 @@ metadata settings for the test program.
 are those that implement the Test Anything Protocol.
 They can be registered with the
 .Fn tap_test_program
-table constructor.  This function takes the
+table constructor.
+This function takes the
 .Fa name
 of the test program and a collection of optional metadata settings for the
 test program.
@@ -144,8 +150,8 @@ test program.
 The following metadata properties can be passed to any test program definition:
 .Bl -tag -width XX -offset indent
 .It Va allowed_architectures
-Whitespace-separated list of machine architecture names allowed by the
-test.  If empty or not defined, the test is allowed to run on any machine
+Whitespace-separated list of machine architecture names allowed by the test.
+If empty or not defined, the test is allowed to run on any machine
 architecture.
 .It Va allowed_platforms
 Whitespace-separated list of machine platform names allowed by the test.
@@ -154,14 +160,15 @@ platform.
 .It Va custom.NAME
 Custom variable defined by the test where
 .Sq NAME
-denotes the name of the variable.  These variables are useful to tag your
-tests with information specific to your project.  The values of such
-variables are propagated all the way from the tests to the results files
-and later to any generated reports.
+denotes the name of the variable.
+These variables are useful to tag your tests with information specific to
+your project.
+The values of such variables are propagated all the way from the tests to the
+results files and later to any generated reports.
 .Pp
-Note that if the name happens to have dashes or any other special
-characters in it, you will have to use a special Lua syntax to define the
-property.  Refer to the
+Note that if the name happens to have dashes or any other special characters
+in it, you will have to use a special Lua syntax to define the property.
+Refer to the
 .Sx EXAMPLES
 section below for clarification.
 .It Va description
@@ -210,9 +217,10 @@ function.
 .Pp
 .Fn include
 may only be called with a relative path and with at most one directory
-component.  This is by design: Kyua uses the file system structure as the
-layout of the test suite definition.  Therefore, each subdirectory in a
-test suite must include its own
+component.
+This is by design: Kyua uses the file system structure as the layout of the
+test suite definition.
+Therefore, each subdirectory in a test suite must include its own
 .Nm
 and each
 .Nm
@@ -227,30 +235,33 @@ create a
 .Sq shadow tree
 using symbolic links and possibly helper
 .Nm Ns s
-to plug the various subdirectories together.  See the
+to plug the various subdirectories together.
+See the
 .Sx EXAMPLES
 section below for details.
 .Pp
 Note that each file is processed in its own Lua environment: there is no
-mechanism to pass state from one file to the other.  The reason for this is
-that there is no such thing as a
+mechanism to pass state from one file to the other.
+The reason for this is that there is no such thing as a
 .Dq top-level
 .Nm
 in a test suite: the user has to be able to run the test suite from any
 directory in a given hierarchy, and this execution must not depend on files
 that live in parent directories.
 .Ss Top-level Kyuafile
-Every system has a top directory into which test suites get installed.  The
-default is
+Every system has a top directory into which test suites get installed.
+The default is
 .Pa __TESTSDIR__ .
 Within this directory live test suites, each of which is in an independent
-subdirectory.  Each subdirectory can be provided separately by independent
-third-party packages.
+subdirectory.
+Each subdirectory can be provided separately by independent third-party
+packages.
 .Pp
 Kyua allows running all the installed test suites at once in order to
-provide comprehensive cross-component reports.  In order to do this, there
-is a special file in the top directory that knows how to inspect the
-subdirectories in search for other Kyuafiles and include them.
+provide comprehensive cross-component reports.
+In order to do this, there is a special file in the top directory that knows
+how to inspect the subdirectories in search for other Kyuafiles and include
+them.
 .Pp
 The
 .Sx FILES
@@ -275,20 +286,22 @@ Returns the last component of the given path.
 Returns the given path without its last component or a dot if the path has
 a single component.
 .It Ft bool Fn fs.exists "string path"
-Checks if the given path exists.  If the path is not absolute, it is
-relative to the directory containing the
+Checks if the given path exists.
+If the path is not absolute, it is relative to the directory containing the
 .Nm
 in which the call to this function occurs.
 .It Ft iterator Fn fs.files "string path"
-Opens a directory for scanning of its entries.  The returned iterator
-yields an entry on each call, and the entry is simply the file name.  If
-the path is not absolute, it is relative to the directory containing the
+Opens a directory for scanning of its entries.
+The returned iterator yields an entry on each call, and the entry is simply
+the filename.
+If the path is not absolute, it is relative to the directory containing the
 .Nm
 in which the call to this function occurs.
 .It Ft is_absolute Fn fs.is_absolute "string path"
 Returns true if the given path is absolute; false otherwise.
 .It Ft join Fn fs.join "string path" "string path"
-Concatenates the two paths.  The second path cannot be absolute.
+Concatenates the two paths.
+The second path cannot be absolute.
 .El
 .Sh FILES
 .Bl -tag -width XX
@@ -303,8 +316,9 @@ Sample file to serve as a top-level
 .Sh EXAMPLES
 The following
 .Nm
-is the simplest you can define.  It provides a test suite definition and
-registers a couple of different test programs using different interfaces:
+is the simplest you can define.
+It provides a test suite definition and registers a couple of different test
+programs using different interfaces:
 .Bd -literal -offset indent
 syntax(2)
 
@@ -314,9 +328,9 @@ atf_test_program{name='integration_test'}
 plain_test_program{name='legacy_test'}
 .Ed
 .Pp
-The following example is a bit more elaborate.  It introduces some metadata
-properties to the test program definitions and recurses into a couple of
-subdirectories:
+The following example is a bit more elaborate.
+It introduces some metadata properties to the test program definitions and
+recurses into a couple of subdirectories:
 .Bd -literal -offset indent
 syntax(2)
 
@@ -336,7 +350,8 @@ include('module-2/Kyuafile')
 .Pp
 The syntax to define custom properties may be not obvious if their names
 have any characters that make the property name not be a valid Lua identifier.
-Dashes are just one example.  To set such properties, do something like this:
+Dashes are just one example.
+To set such properties, do something like this:
 .Bd -literal -offset indent
 syntax(2)
 
@@ -348,7 +363,8 @@ plain_test_program{name='the_test',
 .Ss Connecting disjoint test suites
 Now suppose you had various test suites on your file system and you would
 like to connect them together so that they could be executed and treated as
-a single unit.  The test suites we would like to connect live under
+a single unit.
+The test suites we would like to connect live under
 .Pa /usr/tests ,
 .Pa /usr/local/tests
 and
@@ -358,8 +374,8 @@ We cannot create a
 .Nm
 that references these because the
 .Fn include
-directive does not support absolute paths.  Instead, what we can do is
-create a shadow tree using symbolic links:
+directive does not support absolute paths.
+Instead, what we can do is create a shadow tree using symbolic links:
 .Bd -literal -offset indent
 $ mkdir ~/everything
 $ ln -s /usr/tests ~/everything/system-tests

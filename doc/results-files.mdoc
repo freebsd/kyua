@@ -26,21 +26,22 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 .\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Results files contain, as their name implies, the results of the execution of a
-test suite.  Each test suite executed by
+test suite.
+Each test suite executed by
 .Xr kyua-test 1
 generates a new results file, and such results files can be loaded later on by
 inspection commands such as
 .Xr kyua-report 1
 to analyze their contents.
 .Pp
-Results files support identifier-based lookups and also path name lookups.  The
-differences between the two are described below.
+Results files support identifier-based lookups and also path name lookups.
+The differences between the two are described below.
 .Pp
 The default naming scheme for the results files provides simple support for
-identifier-based lookups and historical recording of test suite runs.  Each
-results file is given an identifier derived from the test suite that generated
-it and the time the test suite was run.  Kyua can later look up results files by
-these fileds.
+identifier-based lookups and historical recording of test suite runs.
+Each results file is given an identifier derived from the test suite that
+generated it and the time the test suite was run.
+Kyua can later look up results files by these fields.
 .Pp
 The identifier follows this pattern:
 .Bd -literal -offset indent
@@ -63,5 +64,5 @@ subdirectory and each file holds a name of the form:
 .Pp
 Results files are simple SQLite databases with the schema described in the
 .Pa __STOREDIR__/schema_v?.sql
-files.  For details on the schema, please refer to the heavily commented SQL
-file.
+files.
+For details on the schema, please refer to the heavily commented SQL file.

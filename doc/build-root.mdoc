@@ -31,9 +31,9 @@ the concept that allows a developer to keep the source tree clean from
 build products by asking the build system to place such build products
 under a separate subtree.
 .Pp
-Most build systems today support build directories.  For example, the GNU
-Automake/Autoconf build system exposes such concept when invoked as
-follows:
+Most build systems today support build directories.
+For example, the GNU Automake/Autoconf build system exposes such concept when
+invoked as follows:
 .Bd -literal -offset indent
 $ cd my-project-1.0
 $ mkdir build
@@ -51,14 +51,15 @@ intact.
 Because build directories are an integral part of most build systems, and
 because they are a tool that developers use frequently,
 .Nm
-supports build directories too.  This manifests in the form of
+supports build directories too.
+This manifests in the form of
 .Nm
 being able to run tests from build directories while reading the (often
 immutable) test suite definition from the source tree.
 .Pp
 One important property of build directories is that they follow (or need to
-follow) the exact same layout as the source tree.  For example, consider
-the following directory listings:
+follow) the exact same layout as the source tree.
+For example, consider the following directory listings:
 .Bd -literal -offset indent
 src/Kyuafile
 src/bin/ls/
@@ -91,9 +92,10 @@ directory contains only the binaries generated during a build.
 .Pp
 All commands that deal with the workspace support the
 .Fl -build-root Ar path
-option.  When this option is provided, the directory specified by the
-option is considered to be the root of the build directory.  For example,
-considering our previous fake tree layout, we could invoke
+option.
+When this option is provided, the directory specified by the
+option is considered to be the root of the build directory.
+For example, considering our previous fake tree layout, we could invoke
 .Nm
 as any of the following:
 .Bd -literal -offset indent

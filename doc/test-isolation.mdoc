@@ -27,10 +27,10 @@
 .\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 The test programs and test cases run by
 .Nm
-are all executed in a deterministic environment.  This known, clean
-environment serves to make the test execution as reproducible as possible
-and also to prevent clashes between tests that may, for example, create
-auxiliary files with overlapping names.
+are all executed in a deterministic environment.
+This known, clean environment serves to make the test execution as
+reproducible as possible and also to prevent clashes between tests that may,
+for example, create auxiliary files with overlapping names.
 .Pp
 For plain test programs and for TAP test programs, the whole test program
 is run under a single instance of the environment described in this page.
@@ -41,15 +41,16 @@ each individual test case
 test cleanup routine are executed in separate environments.
 .Bl -tag -width XX
 .It Process space
-Each test is executed in an independent processes.  Corollary: the test can
-do whatever it wants to the current process (such as modify global
-variables) without having to undo such changes.
+Each test is executed in an independent processes.
+Corollary: the test can do whatever it wants to the current process (such
+as modify global variables) without having to undo such changes.
 .It Session and process group
-The test is executed in its own session and its own process group.  There
-is no controlling terminal attached to the session.
+The test is executed in its own session and its own process group.
+There is no controlling terminal attached to the session.
 .Pp
 Should the test spawn any children, the children should maintain the same
-session and process group.  Modifying any of these settings prevents
+session and process group.
+Modifying any of these settings prevents
 .Nm
 from being able to kill any stray subprocess as part of the cleanup phase.
 If modifying these settings is necessary, or if any subprocess started by
@@ -58,11 +59,12 @@ responsibility of the test to ensure those subprocesses are forcibly
 terminated during cleanup.
 .It Work directory
 The test is executed in a temporary directory automatically created by the
-runtime engine.  Corollary: the test can write to its current directory
-without needing to clean any files and/or directories it creates.  The
-runtime engine takes care to recursively delete the temporary directories
-after the execution of a test case.  Any file systems mounted within the
-temporary directory are also unmounted.
+runtime engine.
+Corollary: the test can write to its current directory
+without needing to clean any files and/or directories it creates.
+The runtime engine takes care to recursively delete the temporary directories
+after the execution of a test case.
+Any file systems mounted within the temporary directory are also unmounted.
 .It Home directory
 The
 .Va HOME
@@ -89,9 +91,9 @@ variable is set to
 .Pp
 The
 .Va TMPDIR
-variable is set to the absolute path of the work directory.  This is to
-prevent the test from mistakenly using a temporary directory outside of
-the automatically-managed work directory, should the test use the
+variable is set to the absolute path of the work directory.
+This is to prevent the test from mistakenly using a temporary directory
+outside of the automatically-managed work directory, should the test use the
 .Xr mktemp 3
 familiy of functions.
 .It Process limits
@@ -100,7 +102,8 @@ This is a simple, best-effort attempt at allowing tests to dump core for
 further diagnostic purposes.
 .It Configuration varibles
 The test engine may pass run-time configuration variables to the test program
-via the environment.  The name of the configuration variable is prefixed with
+via the environment.
+The name of the configuration variable is prefixed with
 .Sq TEST_ENV_
 so that a configuration variable of the form
 .Sq foo=bar

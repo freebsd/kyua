@@ -48,8 +48,8 @@ properties they have.
 .Pp
 The optional arguments to
 .Nm
-are used to select which test programs or test cases to run.  These are
-filters and are described below in
+are used to select which test programs or test cases to run.
+These are filters and are described below in
 .Sx Test filters .
 .Pp
 This command must be run within a test suite or a test suite must be
@@ -61,11 +61,13 @@ The following subcommand options are recognized:
 .Bl -tag -width XX
 .It Fl -build-root Ar path
 Specifies the build root in which to find the test programs referenced
-by the Kyuafile, if different from the Kyuafile's directory.  See
+by the Kyuafile, if different from the Kyuafile's directory.
+See
 .Sx Build directories
 below for more information.
 .It Fl -kyuafile Ar path , Fl k Ar path
-Specifies the Kyuafile to process.  Defaults to a
+Specifies the Kyuafile to process.
+Defaults to a
 .Pa Kyuafile
 file in the current directory.
 .It Fl -verbose , Fl v
