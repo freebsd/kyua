@@ -63,7 +63,8 @@ tweaked:
 .Bl -bullet
 .It
 Redirection of the test case's stdout and stderr to the console (the
-default) or to arbitraty files.  See the
+default) or to arbitrary files.
+See the
 .Fl -stdout
 and
 .Fl -stderr
@@ -74,23 +75,29 @@ The following subcommand options are recognized:
 .Bl -tag -width XX
 .It Fl -build-root Ar path
 Specifies the build root in which to find the test programs referenced
-by the Kyuafile, if different from the Kyuafile's directory.  See
+by the Kyuafile, if different from the Kyuafile's directory.
+See
 .Sx Build directories
 below for more information.
 .It Fl -kyuafile Ar file , Fl k Ar file
-Specifies the Kyuafile to process.  Defaults to
+Specifies the Kyuafile to process.
+Defaults to
 .Pa Kyuafile
 file in the current directory.
 .It Fl -stderr Ar path
 Specifies the file to which to send the standard error of the test
-program's body.  The default is
+program's body.
+The default is
 .Pa /dev/stderr ,
-which is a special that redirects the output to the console.
+which is a special character device that redirects the output to
+standard error on the console.
 .It Fl -stdout Ar path
 Specifies the file to which to send the standard output of the test
-program's body.  The default is
+program's body.
+The default is
 .Pa /dev/stdout ,
-which is a special that redirects the output to the console.
+which is a special character device that redirects the output to
+standard output on the console.
 .El
 .Pp
 For example, consider the following Kyua session:
@@ -105,7 +112,8 @@ kernel/fs:rmdir  ->  failed: Invalid argument
 At this point, we do not have a lot of information regarding the
 failure of the
 .Sq kernel/fs:rmdir
-test.  We can run this test through the
+test.
+We can run this test through the
 .Nm
 command to inspect its output a bit closer, hoping that the test case is
 kind enough to log its progress:

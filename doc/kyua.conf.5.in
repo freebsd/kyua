@@ -41,8 +41,9 @@ Variables:
 .Va unprivileged_user .
 .Sh DESCRIPTION
 The configuration of Kyua is a simple collection of key/value pairs called
-configuration variables.  There are configuration variables that have a
-special meaning to the runtime engine implemented by
+configuration variables.
+There are configuration variables that have a special meaning to the runtime
+engine implemented by
 .Xr kyua 1 ,
 and there are variables that only have meaning in the context of particular
 test suites.
@@ -85,10 +86,10 @@ is executed as root.
 .El
 .Ss Test-suite configuration variables
 Each test suite is able to recognize arbitrary configuration variables, and
-their type and meaning is specific to the test suite.  Because the
-existence and naming of these variables depends on every test suite, this
-manual page cannot detail them; please refer to the documentation of the
-test suite you are working with for more details on this topic.
+their type and meaning is specific to the test suite.
+Because the existence and naming of these variables depends on every test
+suite, this manual page cannot detail them; please refer to the documentation
+of the test suite you are working with for more details on this topic.
 .Pp
 Test-suite specific configuration variables are defined inside the
 .Va test_suites

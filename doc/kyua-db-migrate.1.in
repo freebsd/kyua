@@ -41,8 +41,9 @@ command migrates the schema of an existing database to the latest
 version implemented in
 .Xr kyua 1 .
 .Pp
-This operation is not reversible.  However, a backup of the database is
-created in the same directory where the database lives.
+This operation is not reversible.
+However, a backup of the database is created in the same directory where the
+database lives.
 .Pp
 The following subcommand options are recognized:
 .Bl -tag -width XX

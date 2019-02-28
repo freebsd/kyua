@@ -41,25 +41,28 @@
 The
 .Nm
 command provides a simple mechanism to generate HTML reports of the
-execution of a test suite.  The command processes a results file and then
-populates a directory with multiple HTML and supporting
-files to describe the results recorded in that results file.
+execution of a test suite.
+The command processes a results file and then populates a directory with
+multiple HTML and supporting files to describe the results recorded in that
+results file.
 .Pp
 The HTML output is static and self-contained, so it can easily be served by
-any simple web server.  The command expects the target directory to not
-exist, because it would overwrite any contents if not careful.
+any simple web server.
+The command expects the target directory to not exist, because it would
+overwrite any contents if not careful.
 .Pp
 The following subcommand options are recognized:
 .Bl -tag -width XX
 .It Fl -force
-Forces the deletion of the output directory if it exists.  Use care, as
-this effectively means a
+Forces the deletion of the output directory if it exists.
+Use care, as this effectively means a
 .Sq rm -rf .
 .It Fl -output Ar directory
-Specifies the target directory into which to generate the HTML files.  The
-directory must not exist unless the
+Specifies the target directory into which to generate the HTML files.
+The directory must not exist unless the
 .Fl -force
-option is provided.  The default is
+option is provided.
+The default is
 .Pa ./html .
 .It Fl -results-file Ar path , Fl s Ar path
 __include__ results-file-flag-read.mdoc
@@ -79,8 +82,9 @@ If the parameter supplied to the option is empty, filtering is suppressed
 and all result types are shown in the report.
 .Pp
 The default value for this flag includes all the test results except the
-passed tests.  Showing the passed tests by default clutters the report with
-too much information, so only abnormal conditions are included.
+passed tests.
+Showing the passed tests by default clutters the report with too much
+information, so only abnormal conditions are included.
 .El
 .Ss Results files
 __include__ results-files.mdoc

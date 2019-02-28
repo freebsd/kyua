@@ -48,7 +48,8 @@ and the list of supported subcommands.
 If the
 .Ar command
 argument is provided to, this single argument is the name of a valid
-subcommand.  In that case,
+subcommand.
+In that case,
 .Nm
 prints a textual description of the command, the list of common options and
 the list of subcommand-specific options.
