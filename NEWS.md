@@ -7,7 +7,7 @@ Changes in version 0.14
 
 **NOT RELEASED YET; STILL UNDER DEVELOPMENT.**
 
-* No changes recorded.
+* Explicitly require C++11 language features when compiling Kyua.
 
 
 Changes in version 0.13
