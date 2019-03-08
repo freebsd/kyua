@@ -29,7 +29,7 @@
 
 set -e -x
 
-install_deps() {
+install_deps_ubuntu_linux() {
     local pkgsuffix=
     local packages=
     if [ "${ARCH?}" = i386 ]; then
@@ -73,7 +73,17 @@ main() {
         echo "DO must be defined" 1>&2
         exit 1
     fi
-    install_deps
+
+    case "${OS}" in
+    *ubuntu*)
+        install_deps_ubuntu_linux
+	;;
+    *)
+        echo "Unsupported operating system: $(uname -o)" 1>&2
+        exit 1
+	;;
+    esac
+
     install_kyua
     for step in ${DO}; do
         "do_${DO}" || exit 1

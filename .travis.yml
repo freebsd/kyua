@@ -1,4 +1,3 @@
-dist: trusty  # Needed for C++11 support.
 language: cpp
 sudo: required
 
@@ -18,6 +17,10 @@ env:
     - ARCH=i386 DO=distcheck AS_ROOT=no
 
 matrix:
+    include:
+        - os: linux
+          dist: xenial
+          env: OS=ubuntu:xenial
     exclude:
         # Treat clang as the main compiler.  For gcc, just run the AS_ROOT=no
         # env above to see if we can actually build, but do not really worry
