@@ -83,6 +83,7 @@ guess_rules() {
     local file="${1}"; shift
 
     case "${file}" in
+        */ax_cxx_compile_stdcxx.m4) ;;
         */ltmain.sh) ;;
         *Makefile*) echo common make ;;
         *.[0-9]) echo common man ;;
