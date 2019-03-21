@@ -1,35 +1,45 @@
-dist: trusty  # Needed for C++11 support.
 language: cpp
 sudo: required
-
-compiler:
-    - clang
-    - gcc
 
 before_install:
     - ./admin/travis-install-deps.sh
 
-env:
-    - ARCH=amd64 DO=apidocs
-    - ARCH=amd64 DO=style
-    - ARCH=amd64 DO=distcheck AS_ROOT=no
-    - ARCH=amd64 DO=distcheck AS_ROOT=yes UNPRIVILEGED_USER=no
-    - ARCH=amd64 DO=distcheck AS_ROOT=yes UNPRIVILEGED_USER=yes
-    - ARCH=i386 DO=distcheck AS_ROOT=no
-
 matrix:
-    exclude:
-        # Treat clang as the main compiler.  For gcc, just run the AS_ROOT=no
-        # env above to see if we can actually build, but do not really worry
-        # about the run-time aspects of the tests.
-        - compiler: gcc
+    include:
+        - os: linux
+          dist: xenial
+          compiler: clang
+          env: ARCH=amd64 DO=distcheck AS_ROOT=no
+        - os: linux
+          dist: xenial
+          compiler: gcc
+          env: ARCH=amd64 DO=distcheck AS_ROOT=no
+        - os: linux
+          dist: xenial
+          compiler: clang
           env: ARCH=amd64 DO=apidocs
-        - compiler: gcc
+        - os: linux
+          dist: xenial
+          compiler: clang
           env: ARCH=amd64 DO=style
-        - compiler: gcc
+        - os: linux
+          dist: xenial
+          compiler: clang
           env: ARCH=amd64 DO=distcheck AS_ROOT=yes UNPRIVILEGED_USER=no
-        - compiler: gcc
+        - os: linux
+          dist: xenial
+          compiler: clang
           env: ARCH=amd64 DO=distcheck AS_ROOT=yes UNPRIVILEGED_USER=yes
+        # TODO(ngie): reenable i386; the libraries were not available in the
+        #             Ubuntu Xenial x86_64 docker image.
+        #- os: linux
+        #  dist: xenial
+        #  compiler: clang
+        #  env: ARCH=i386 DO=distcheck AS_ROOT=no
+        #- os: linux
+        #  dist: xenial
+        #  compiler: gcc
+        #  env: ARCH=i386 DO=distcheck AS_ROOT=no
 
 script:
     - ./admin/travis-build.sh
