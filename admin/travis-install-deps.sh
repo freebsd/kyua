@@ -50,8 +50,8 @@ install_deps() {
 }
 
 install_kyua() {
-    local name="20170225-usr-local-kyua-ubuntu-14-04-${ARCH?}-${CC?}.tar.gz"
-    wget "http://dl.bintray.com/jmmv/kyua/${name}" || return 1
+    local name="20190321-usr-local-kyua-ubuntu-16-04-${ARCH?}-${CC?}.tar.gz"
+    wget -O "${name}" "http://dl.bintray.com/ngie-eign/kyua/${name}" || return 1
     sudo tar -xzvp -C / -f "${name}"
     rm -f "${name}"
 }
