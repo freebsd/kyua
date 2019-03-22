@@ -34,13 +34,13 @@
 
 #include "utils/config/tree_fwd.hpp"
 
+#include <memory>
 #include <string>
 
 #include <lutok/state.hpp>
 
 #include "utils/config/keys_fwd.hpp"
 #include "utils/config/nodes_fwd.hpp"
-#include "utils/shared_ptr.hpp"
 
 namespace utils {
 namespace config {

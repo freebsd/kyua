@@ -41,10 +41,10 @@ extern "C" {
 #include <stdint.h>
 }
 
+#include <memory>
 #include <string>
 
 #include "utils/sqlite/database_fwd.hpp"
-#include "utils/shared_ptr.hpp"
 
 namespace utils {
 namespace sqlite {

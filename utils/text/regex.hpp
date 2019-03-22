@@ -35,8 +35,8 @@
 #include "utils/text/regex_fwd.hpp"
 
 #include <cstddef>
+#include <memory>
 
-#include "utils/shared_ptr.hpp"
 
 namespace utils {
 namespace text {

@@ -65,6 +65,7 @@
 #include "utils/process/executor_fwd.hpp"
 
 #include <cstddef>
+#include <memory>
 
 #include "utils/datetime_fwd.hpp"
 #include "utils/fs/path_fwd.hpp"
@@ -72,7 +73,6 @@
 #include "utils/passwd_fwd.hpp"
 #include "utils/process/child_fwd.hpp"
 #include "utils/process/status_fwd.hpp"
-#include "utils/shared_ptr.hpp"
 
 namespace utils {
 namespace process {

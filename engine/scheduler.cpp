@@ -35,6 +35,7 @@ extern "C" {
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
+#include <memory>
 #include <stdexcept>
 
 #include "engine/config.hpp"
@@ -61,7 +62,6 @@ extern "C" {
 #include "utils/process/executor.ipp"
 #include "utils/process/status.hpp"
 #include "utils/sanity.hpp"
-#include "utils/shared_ptr.hpp"
 #include "utils/stacktrace.hpp"
 #include "utils/stream.hpp"
 #include "utils/text/operations.ipp"
