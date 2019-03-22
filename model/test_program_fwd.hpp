@@ -32,9 +32,9 @@
 #if !defined(MODEL_TEST_PROGRAM_FWD_HPP)
 #define MODEL_TEST_PROGRAM_FWD_HPP
 
+#include <memory>
 #include <vector>
 
-#include "utils/shared_ptr.hpp"
 
 namespace model {
 

@@ -34,11 +34,11 @@
 
 #include "utils/fs/directory_fwd.hpp"
 
+#include <memory>
 #include <ostream>
 #include <string>
 
 #include "utils/fs/path_fwd.hpp"
-#include "utils/shared_ptr.hpp"
 
 namespace utils {
 namespace fs {

@@ -43,7 +43,6 @@
 #include "utils/datetime_fwd.hpp"
 #include "utils/fs/path_fwd.hpp"
 #include "utils/noncopyable.hpp"
-#include "utils/shared_ptr.hpp"
 #include "utils/units_fwd.hpp"
 
 namespace model {

@@ -34,6 +34,7 @@
 
 #include "model/test_case_fwd.hpp"
 
+#include <memory>
 #include <ostream>
 #include <string>
 
@@ -41,7 +42,6 @@
 #include "model/test_result_fwd.hpp"
 #include "utils/noncopyable.hpp"
 #include "utils/optional_fwd.hpp"
-#include "utils/shared_ptr.hpp"
 
 namespace model {
 
