@@ -94,7 +94,7 @@ signals::system_error::~system_error(void) throw()
 }
 
 
-/// Gets the original errno code.
+/// \return The original errno value.
 int
 signals::system_error::original_errno(void) const throw()
 {

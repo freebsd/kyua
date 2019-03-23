@@ -201,8 +201,9 @@ layout::new_db(const std::string& id, const fs::path& root)
 
 /// Computes the path to a new database for the given test suite.
 ///
-/// \param id Identifier of the test suite to create.
-/// \param root Path to the root of the test suite being run, needed to properly
+/// \param root Path to the root of the test suite being run; needed to properly
+///     autogenerate the identifiers.
+/// \param when Timestamp for the test suite being run; needed to properly
 ///     autogenerate the identifiers.
 ///
 /// \return Identifier of the created results file, if applicable, and the path

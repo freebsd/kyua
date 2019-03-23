@@ -57,6 +57,8 @@ class noncopyable {
     noncopyable(const noncopyable&);
 
     /// Private assignment constructor to deny copying of subclasses.
+    ///
+    /// \return A reference to the object.
     noncopyable& operator=(const noncopyable&);
 
 protected:

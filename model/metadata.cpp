@@ -684,6 +684,8 @@ struct model::metadata_builder::impl : utils::noncopyable {
     }
 
     /// Constructor.
+    ///
+    /// \param base The base model to construct a copy from.
     impl(const model::metadata& base) :
         props(base._pimpl->props.deep_copy()),
         built(false)

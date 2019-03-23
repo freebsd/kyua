@@ -275,10 +275,11 @@ utils::unlimit_core_size(void)
 ///
 /// \param program The name of the binary that crashed and dumped a core file.
 ///     Can be either absolute or relative.
-/// \param status The exit status of the program.
-/// \param work_directory The directory from which the program was run.
-/// \param output Stream into which to dump the stack trace and any additional
-///     information.
+/// \param executor_handle The executor handler to get the status from and
+///     gdb handler from.
+/// \param exit_handle The exit handler to stream additional diagnostic
+///     information from (stderr) and for redirecting to additional
+///     information to gdb from.
 ///
 /// \post If anything goes wrong, the diagnostic messages are written to the
 /// output.  This function should not throw.
@@ -346,11 +347,11 @@ utils::dump_stacktrace(const fs::path& program,
 ///
 /// \param program The name of the binary that crashed and dumped a core file.
 ///     Can be either absolute or relative.
-/// \param status The exit status of the program if available; may be none when
-///     the program timed out.
-/// \param work_directory The directory from which the program was run.
-/// \param output_file File into which to dump the stack trace and any
-///     additional information.
+/// \param executor_handle The executor handler to get the status from and
+///     gdb handler from.
+/// \param exit_handle The exit handler to stream additional diagnostic
+///     information from (stderr) and for redirecting to additional
+///     information to gdb from.
 ///
 /// \throw std::runtime_error If the output file cannot be opened.
 ///

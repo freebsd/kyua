@@ -103,19 +103,6 @@ struct utils::config::parser::impl : utils::noncopyable {
 namespace {
 
 
-/// Implementation of the Lua syntax() function.
-///
-/// The syntax() function has to be called by configuration files as the very
-/// first thing they do.  Once called, this function populates the configuration
-/// tree based on the syntax version and then continues to process the rest of
-/// the file.
-///
-/// \pre state(-2) The syntax format name, if a v1 file.
-/// \pre state(-1) The syntax format version.
-///
-/// \param state The Lua state to operate in.
-///
-/// \return The number of results pushed onto the stack; always 0.
 static int
 lua_syntax(lutok::state& state)
 {

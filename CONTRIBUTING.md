@@ -168,3 +168,6 @@ These notes are generic and certainly *non-exhaustive*:
 
 * In C++ code, prefix all C identifiers (those coming from `extern "C"`
   includes) with `::`.
+
+* Getter functions/methods only need to be documented via `\return`. A
+  redundant summary is not necessary.

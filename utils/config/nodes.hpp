@@ -98,45 +98,14 @@ class leaf_node : public detail::base_node {
 public:
     virtual ~leaf_node(void);
 
-    /// Checks whether the node has been set by the user.
-    ///
-    /// Nodes of the tree are predefined by the caller to specify the valid
-    /// types of the leaves.  Such predefinition results in the creation of
-    /// nodes within the tree, but these nodes have not yet been set.
-    /// Traversing these nodes is invalid and should result in an "unknown key"
-    /// error.
-    ///
-    /// \return True if a value has been set in the node.
     virtual bool is_set(void) const = 0;
 
     base_node* combine(const detail::tree_key&, const base_node*) const;
 
-    /// Pushes the node's value onto the Lua stack.
-    ///
-    /// \param state The Lua state onto which to push the value.
-    virtual void push_lua(lutok::state& state) const = 0;
+    virtual void push_lua(lutok::state&) const = 0;
+    virtual void set_lua(lutok::state&, const int) = 0;
 
-    /// Sets the value of the node from an entry in the Lua stack.
-    ///
-    /// \param state The Lua state from which to get the value.
-    /// \param value_index The stack index in which the value resides.
-    ///
-    /// \throw value_error If the value in state(value_index) cannot be
-    ///     processed by this node.
-    virtual void set_lua(lutok::state& state, const int value_index) = 0;
-
-    /// Sets the value of the node from a raw string representation.
-    ///
-    /// \param raw_value The value to set the node to.
-    ///
-    /// \throw value_error If the value is invalid.
-    virtual void set_string(const std::string& raw_value) = 0;
-
-    /// Converts the contents of the node to a string.
-    ///
-    /// \pre The node must have a value.
-    ///
-    /// \return A string representation of the value held by the node.
+    virtual void set_string(const std::string&) = 0;
     virtual std::string to_string(void) const = 0;
 };
 
@@ -153,36 +122,19 @@ public:
     /// The type of the value held by this node.
     typedef ValueType value_type;
 
+    /// Constructs a new leaf node that contains no value.
     typed_leaf_node(void);
 
+    /// Checks whether the node has been set by the user.
     bool is_set(void) const;
 
     /// Gets the value stored in the node.
-    ///
-    /// \todo Figure out why Doxygen is unable to pick up the documentation for
-    /// this function from the nodes.ipp file.
-    ///
-    /// \pre The node must have a value.
-    ///
-    /// \return The value in the node.
     const value_type& value(void) const;
 
     /// Gets the read-write value stored in the node.
-    ///
-    /// \todo Figure out why Doxygen is unable to pick up the documentation for
-    /// this function from the nodes.ipp file.
-    ///
-    /// \pre The node must have a value.
-    ///
-    /// \return The value in the node.
     value_type& value(void);
 
     /// Sets the value of the node.
-    ///
-    /// \todo Figure out why Doxygen is unable to pick up the documentation for
-    /// this function from the nodes.ipp file.
-    ///
-    /// \param value_ The new value to set the node to.
     void set(const value_type&);
 
 protected:
@@ -254,12 +206,12 @@ public:
 
     base_set_node(void);
 
+    /// Checks whether the node has been set by the user.
+    ///
+    /// \return True if a value has been set in the node.
     bool is_set(void) const;
 
     /// Gets the value stored in the node.
-    ///
-    /// \todo Figure out why Doxygen is unable to pick up the documentation for
-    /// this function from the nodes.ipp file.
     ///
     /// \pre The node must have a value.
     ///
@@ -268,26 +220,24 @@ public:
 
     /// Gets the read-write value stored in the node.
     ///
-    /// \todo Figure out why Doxygen is unable to pick up the documentation for
-    /// this function from the nodes.ipp file.
-    ///
     /// \pre The node must have a value.
     ///
     /// \return The value in the node.
     value_type& value(void);
 
     /// Sets the value of the node.
-    ///
-    /// \todo Figure out why Doxygen is unable to pick up the documentation for
-    /// this function from the nodes.ipp file.
-    ///
-    /// \param value_ The new value to set the node to.
     void set(const value_type&);
 
+    /// Sets the value of the node from a raw string representation.
     void set_string(const std::string&);
+
+    /// Converts the contents of the node to a string.
     std::string to_string(void) const;
 
+    /// Pushes the node's value onto the Lua stack.
     void push_lua(lutok::state&) const;
+
+    /// Sets the value of the node from an entry in the Lua stack.
     void set_lua(lutok::state&, const int);
 
 protected:
@@ -297,12 +247,10 @@ protected:
 private:
     /// Converts a single word to the native type.
     ///
-    /// \param raw_value The value to parse.
-    ///
     /// \return The parsed value.
     ///
     /// \throw value_error If the value is invalid.
-    virtual ValueType parse_one(const std::string& raw_value) const = 0;
+    virtual ValueType parse_one(const std::string&) const = 0;
 
     virtual void validate(const value_type&) const;
 };

@@ -423,6 +423,9 @@ public:
     }
 
     /// Body of the subprocess.
+    ///
+    /// \param control_directory The testcase directory where files will be
+    ///     read from.
     void
     operator()(const fs::path& control_directory)
     {
@@ -475,6 +478,9 @@ public:
     }
 
     /// Body of the subprocess.
+    ///
+    /// \param control_directory The testcase directory where cleanup will be
+    ///     run from.
     void
     operator()(const fs::path& control_directory)
     {
@@ -529,6 +535,11 @@ struct engine::scheduler::lazy_test_program::impl : utils::noncopyable {
     scheduler::scheduler_handle& _scheduler_handle;
 
     /// Constructor.
+    ///
+    /// \param user_config_ User configuration to pass to the test program list
+    ///     operation.
+    /// \param scheduler_handle_ Scheduler context to use when loading test
+    ///     cases.
     impl(const config::tree& user_config_,
          scheduler::scheduler_handle& scheduler_handle_) :
         _loaded(false), _user_config(user_config_),
@@ -956,7 +967,7 @@ scheduler::scheduler_handle::cleanup(void)
 
 /// Checks if the given interface name is valid.
 ///
-/// \param interface The name of the interface to validate.
+/// \param name The name of the interface to validate.
 ///
 /// \throw engine::error If the given interface is not supported.
 void

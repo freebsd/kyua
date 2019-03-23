@@ -290,6 +290,8 @@ cli::get_result_types(const utils::cmdline::parsed_cmdline& cmdline)
 ///
 /// \param args The command-line arguments representing test filters.
 ///
+/// \return A set of test filters.
+///
 /// \throw cmdline:error If any of the arguments is invalid, or if they
 ///     represent a non-disjoint collection of filters.
 std::set< engine::test_filter >

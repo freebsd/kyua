@@ -167,6 +167,11 @@ engine::user_node::set_lua(lutok::state& state, const int value_index)
 }
 
 
+/// Sets the value of the node from a raw string representation.
+///
+/// \param raw_value The value to set the node to.
+///
+/// \throw value_error If the value is invalid.
 void
 engine::user_node::set_string(const std::string& raw_value)
 {
@@ -191,6 +196,11 @@ engine::user_node::set_string(const std::string& raw_value)
 }
 
 
+/// Converts the contents of the node to a string.
+///
+/// \pre The node must have a value.
+///
+/// \return A string representation of the value held by the node.
 std::string
 engine::user_node::to_string(void) const
 {
@@ -199,6 +209,8 @@ engine::user_node::to_string(void) const
 
 
 /// Constructs a config with the built-in settings.
+///
+/// \return A default test suite configuration.
 config::tree
 engine::default_config(void)
 {
@@ -210,6 +222,8 @@ engine::default_config(void)
 
 
 /// Constructs a config with the built-in settings.
+///
+/// \return An empty test suite configuration.
 config::tree
 engine::empty_config(void)
 {

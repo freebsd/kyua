@@ -338,6 +338,9 @@ struct model::test_program_builder::impl : utils::noncopyable {
     bool built;
 
     /// Constructor.
+    ///
+    /// \param prototype_ The partially constructed program with only the
+    ///     required properties.
     impl(const model::test_program& prototype_) :
         prototype(prototype_),
         metadata(model::metadata_builder().build()),

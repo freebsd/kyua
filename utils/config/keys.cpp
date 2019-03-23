@@ -39,6 +39,8 @@ namespace text = utils::text;
 /// Converts a key to its textual representation.
 ///
 /// \param key The key to convert.
+///
+/// \return a flattened representation of \p key, "."-joined.
 std::string
 utils::config::detail::flatten_key(const tree_key& key)
 {

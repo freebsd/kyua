@@ -58,7 +58,7 @@ public:
     {
     }
 
-    /// Gets the integer value stored in the object.
+    /// \return The integer value stored by the object.
     int
     value(void) const
     {

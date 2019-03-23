@@ -240,6 +240,8 @@ format::formatter::~formatter(void)
 
 
 /// Returns the formatted string.
+///
+/// \return A string representation of the formatted string.
 const std::string&
 format::formatter::str(void) const
 {

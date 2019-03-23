@@ -228,6 +228,10 @@ class report_console_hooks : public drivers::scan_results::base_hooks {
     }
 
     /// Counts how many results of a given type have been received.
+    ///
+    /// \param type Test result type to count results for.
+    ///
+    /// \return The number of test results with \p type.
     std::size_t
     count_results(const model::test_result_type type)
     {
@@ -241,6 +245,9 @@ class report_console_hooks : public drivers::scan_results::base_hooks {
     }
 
     /// Prints a set of results.
+    ///
+    /// \param type Test result type to print results for.
+    /// \param title Title used when printing results.
     void
     print_results(const model::test_result_type type,
                   const char* title)

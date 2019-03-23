@@ -68,7 +68,7 @@ process::system_error::~system_error(void) throw()
 }
 
 
-/// Gets the original errno code.
+/// \return The original errno value.
 int
 process::system_error::original_errno(void) const throw()
 {

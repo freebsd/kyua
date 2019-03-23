@@ -71,7 +71,6 @@ store::bind_delta(sqlite::statement& stmt, const char* field,
 /// binds a NULL value.
 ///
 /// \param stmt The statement to which to bind the parameter.
-/// \param stmt The statement to which to bind the field.
 /// \param field The name of the parameter; must exist.
 /// \param str The string to bind.
 void

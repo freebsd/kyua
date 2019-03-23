@@ -69,6 +69,8 @@ class mock_parser : public config::parser {
 
 public:
     /// Initializes a parser.
+    ///
+    /// \param tree The mock config tree to parse.
     mock_parser(config::tree& tree) :
         config::parser(tree)
     {
