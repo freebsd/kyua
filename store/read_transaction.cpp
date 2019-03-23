@@ -266,6 +266,8 @@ struct store::results_iterator::impl : utils::noncopyable {
     bool _valid;
 
     /// Constructor.
+    ///
+    /// \param backend_ The store backend implementation.
     impl(store::read_backend& backend_) :
         _backend(backend_),
         _stmt(backend_.database().create_statement(

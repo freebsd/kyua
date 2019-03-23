@@ -66,7 +66,7 @@ bad_format_error::~bad_format_error(void) throw()
 }
 
 
-/// Gets the invalid format string.
+/// \return The format string that caused the error.
 const std::string&
 bad_format_error::format(void) const
 {
@@ -94,7 +94,7 @@ extra_args_error::~extra_args_error(void) throw()
 }
 
 
-/// Gets the format string.
+/// \return The format string that was passed too many arguments.
 const std::string&
 extra_args_error::format(void) const
 {
@@ -102,7 +102,7 @@ extra_args_error::format(void) const
 }
 
 
-/// Gets the value of the first extra argument.
+/// \return The first argument that caused the error.
 const std::string&
 extra_args_error::arg(void) const
 {

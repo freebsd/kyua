@@ -170,6 +170,9 @@ level_to_char(const logging::level level)
 ///
 /// \param logdir The path to the directory in which to place the log.
 /// \param progname The name of the program that is generating the log.
+///
+/// \return A string representation of the log name based on \p logdir and
+///     \p progname.
 fs::path
 logging::generate_log_name(const fs::path& logdir, const std::string& progname)
 {

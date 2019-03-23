@@ -153,6 +153,9 @@ cleanup_handlers(void)
 
 
 /// Masks the signals installed by setup_handlers().
+///
+/// \param[out] old_sigmask The old signal mask to save via the
+///     \code oset \endcode argument with sigprocmask(2).
 static void
 mask_signals(sigset_t* old_sigmask)
 {
@@ -168,6 +171,9 @@ mask_signals(sigset_t* old_sigmask)
 
 
 /// Resets the signal masking put in place by mask_signals().
+///
+/// \param[in] old_sigmask The old signal mask to restore via the
+///     \code set \endcode argument with sigprocmask(2).
 static void
 unmask_signals(sigset_t* old_sigmask)
 {

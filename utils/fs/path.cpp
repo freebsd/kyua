@@ -94,6 +94,8 @@ fs::path::path(const std::string& text) :
 
 
 /// Gets a view of the path as an array of characters.
+///
+/// \return A \code const char* \endcode representation for the object.
 const char*
 fs::path::c_str(void) const
 {
@@ -102,6 +104,8 @@ fs::path::c_str(void) const
 
 
 /// Gets a view of the path as a std::string.
+///
+/// \return A \code std::string& \endcode representation for the object.
 const std::string&
 fs::path::str(void) const
 {
@@ -155,7 +159,7 @@ fs::path::to_absolute(void) const
 }
 
 
-/// Checks whether the path is absolute.
+/// \return True if the representation of the path is absolute.
 bool
 fs::path::is_absolute(void) const
 {

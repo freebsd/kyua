@@ -155,11 +155,13 @@ config::typed_leaf_node< ValueType >::typed_leaf_node(void) :
 }
 
 
-/// Checks whether the node has been set.
+/// Checks whether the node has been set by the user.
 ///
-/// Remember that a node can exist before holding a value (i.e. when the node
-/// has been defined as "known" but not yet set by the user).  This function
-/// checks whether the node laready holds a value.
+/// Nodes of the tree are predefined by the caller to specify the valid
+/// types of the leaves.  Such predefinition results in the creation of
+/// nodes within the tree, but these nodes have not yet been set.
+/// Traversing these nodes is invalid and should result in an "unknown key"
+/// error.
 ///
 /// \return True if a value has been set in the node.
 template< typename ValueType >

@@ -65,6 +65,12 @@ namespace {
 
 
 /// Syntactic sugar to instantiate engine::test_filter objects.
+///
+/// \param test_program Test program.
+/// \param test_case Test case.
+///
+/// \return A \code test_filter \endcode object, based on \p test_program and
+///     \p test_case.
 inline engine::test_filter
 mkfilter(const char* test_program, const char* test_case)
 {
