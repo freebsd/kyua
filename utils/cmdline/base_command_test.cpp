@@ -68,13 +68,12 @@ public:
 
     /// Executes the command.
     ///
-    /// \param unused_ui Object to interact with the I/O of the program.
     /// \param cmdline Representation of the command line to the subcommand.
     /// \param data Arbitrary data cookie passed to the command.
     ///
     /// \return A hardcoded number for testing purposes.
     int
-    run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
+    run(cmdline::ui* /* ui */,
         const cmdline::parsed_cmdline& cmdline, const Data& data)
     {
         if (cmdline.has_option("the_string"))
@@ -107,12 +106,11 @@ public:
 
     /// Executes the command.
     ///
-    /// \param unused_ui Object to interact with the I/O of the program.
     /// \param cmdline Representation of the command line to the subcommand.
     ///
     /// \return A hardcoded number for testing purposes.
     int
-    run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
+    run(cmdline::ui* /* ui */,
         const cmdline::parsed_cmdline& cmdline)
     {
         if (cmdline.has_option("the_string"))

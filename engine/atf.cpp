@@ -203,14 +203,12 @@ engine::atf_interface::exec_test(const model::test_program& test_program,
 /// \param test_program The test program to execute.
 /// \param test_case_name Name of the test case to invoke.
 /// \param vars User-provided variables to pass to the test program.
-/// \param unused_control_directory Directory where the interface may place
-///     control files.
 void
 engine::atf_interface::exec_cleanup(
     const model::test_program& test_program,
     const std::string& test_case_name,
     const config::properties_map& vars,
-    const fs::path& UTILS_UNUSED_PARAM(control_directory)) const
+    const fs::path& /* control_directory */) const
 {
     utils::setenv("__RUNNING_INSIDE_ATF_RUN", "internal-yes-value");
 
@@ -231,18 +229,14 @@ engine::atf_interface::exec_cleanup(
 ///     the exec_test() method or none if the test timed out.
 /// \param control_directory Directory where the interface may have placed
 ///     control files.
-/// \param unused_stdout_path Path to the file containing the stdout of the
-///     test.
-/// \param unused_stderr_path Path to the file containing the stderr of the
-///     test.
 ///
 /// \return A test result.
 model::test_result
 engine::atf_interface::compute_result(
     const optional< process::status >& status,
     const fs::path& control_directory,
-    const fs::path& UTILS_UNUSED_PARAM(stdout_path),
-    const fs::path& UTILS_UNUSED_PARAM(stderr_path)) const
+    const fs::path& /* stdout_path */,
+    const fs::path& /* stderr_path */) const
 {
     return calculate_atf_result(status, control_directory / result_name);
 }

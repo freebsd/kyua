@@ -55,11 +55,9 @@ public:
 
     /// Captures invalid calls to new on an array.
     ///
-    /// \param unused_size The amount of memory to allocate, in bytes.
-    ///
     /// \return Nothing; this always fails the test case.
     void*
-    operator new(const size_t UTILS_UNUSED_PARAM(size))
+    operator new(const size_t /* size */)
     {
         ATF_FAIL("New called but should have been new[]");
         return new int(5);
@@ -83,11 +81,9 @@ public:
 
     /// Captures invalid calls to delete on an array.
     ///
-    /// \param unused_mem The pointer to the memory to be deleted.
-    ///
     /// \return Nothing; this always fails the test case.
     void
-    operator delete(void* UTILS_UNUSED_PARAM(mem))
+    operator delete(void* /* mem */)
     {
         ATF_FAIL("Delete called but should have been delete[]");
     }

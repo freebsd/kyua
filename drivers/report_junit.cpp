@@ -251,11 +251,8 @@ drivers::report_junit_hooks::got_result(store::results_iterator& iter)
 
 
 /// Finalizes the report.
-///
-/// \param unused_r The result of the driver execution.
 void
-drivers::report_junit_hooks::end(
-    const drivers::scan_results::result& UTILS_UNUSED_PARAM(r))
+drivers::report_junit_hooks::end(const drivers::scan_results::result& /* r */)
 {
     _output << "</testsuite>\n";
 }

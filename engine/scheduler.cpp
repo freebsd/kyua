@@ -338,7 +338,7 @@ public:
 
     /// Body of the subprocess.
     void
-    operator()(const fs::path& UTILS_UNUSED_PARAM(control_directory))
+    operator()(const fs::path& /* control_directory */)
     {
         const config::properties_map vars = scheduler::generate_config(
             _user_config, _test_program.test_suite_name());
@@ -511,10 +511,10 @@ find_interface(const std::string& name)
 
 void
 scheduler::interface::exec_cleanup(
-    const model::test_program& UTILS_UNUSED_PARAM(test_program),
-    const std::string& UTILS_UNUSED_PARAM(test_case_name),
-    const utils::config::properties_map& UTILS_UNUSED_PARAM(vars),
-    const utils::fs::path& UTILS_UNUSED_PARAM(control_directory)) const
+    const model::test_program& /* test_program */,
+    const std::string& /* test_case_name */,
+    const utils::config::properties_map& /* vars */,
+    const utils::fs::path& /* control_directory */) const
 {
     // Most test interfaces do not support standalone cleanup routines so
     // provide a default implementation that does nothing.

@@ -105,13 +105,10 @@ tap_to_result(const engine::tap_summary& summary,
 /// This method is intended to be called within a subprocess and is expected
 /// to terminate execution either by exec(2)ing the test program or by
 /// exiting with a failure.
-///
-/// \param unused_test_program The test program to execute.
-/// \param unused_vars User-provided variables to pass to the test program.
 void
 engine::tap_interface::exec_list(
-    const model::test_program& UTILS_UNUSED_PARAM(test_program),
-    const config::properties_map& UTILS_UNUSED_PARAM(vars)) const
+    const model::test_program& /* test_program */,
+    const config::properties_map& /* vars */) const
 {
     ::_exit(EXIT_SUCCESS);
 }
@@ -119,19 +116,12 @@ engine::tap_interface::exec_list(
 
 /// Computes the test cases list of a test program.
 ///
-/// \param unused_status The termination status of the subprocess used to
-///     execute the exec_test() method or none if the test timed out.
-/// \param unused_stdout_path Path to the file containing the stdout of the
-///     test.
-/// \param unused_stderr_path Path to the file containing the stderr of the
-///     test.
-///
 /// \return A list of test cases.
 model::test_cases_map
 engine::tap_interface::parse_list(
-    const optional< process::status >& UTILS_UNUSED_PARAM(status),
-    const fs::path& UTILS_UNUSED_PARAM(stdout_path),
-    const fs::path& UTILS_UNUSED_PARAM(stderr_path)) const
+    const optional< process::status >& /* status */,
+    const fs::path& /* stdout_path */,
+    const fs::path& /* stderr_path */) const
 {
     return model::test_cases_map_builder().add("main").build();
 }
@@ -146,14 +136,12 @@ engine::tap_interface::parse_list(
 /// \param test_program The test program to execute.
 /// \param test_case_name Name of the test case to invoke.
 /// \param vars User-provided variables to pass to the test program.
-/// \param unused_control_directory Directory where the interface may place
-///     control files.
 void
 engine::tap_interface::exec_test(
     const model::test_program& test_program,
     const std::string& test_case_name,
     const utils::config::properties_map& vars,
-    const fs::path& UTILS_UNUSED_PARAM(control_directory)) const
+    const fs::path& /* control_directory */) const
 {
     PRE(test_case_name == "main");
 
@@ -171,19 +159,15 @@ engine::tap_interface::exec_test(
 ///
 /// \param status The termination status of the subprocess used to execute
 ///     the exec_test() method or none if the test timed out.
-/// \param unused_control_directory Directory where the interface may have
-///     placed control files.
 /// \param stdout_path Path to the file containing the stdout of the test.
-/// \param unused_stderr_path Path to the file containing the stderr of the
-///     test.
 ///
 /// \return A test result.
 model::test_result
 engine::tap_interface::compute_result(
     const optional< process::status >& status,
-    const fs::path& UTILS_UNUSED_PARAM(control_directory),
+    const fs::path& /* control_directory */,
     const fs::path& stdout_path,
-    const fs::path& UTILS_UNUSED_PARAM(stderr_path)) const
+    const fs::path& /* stderr_path */) const
 {
     if (!status) {
         return model::test_result(model::test_result_broken,

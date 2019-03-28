@@ -226,13 +226,10 @@ cmdline::base_option::format_long_name(void) const
 /// This must be reimplemented by subclasses that describe options with
 /// arguments.
 ///
-/// \param unused_str The argument to validate as provided by the user in the
-///     command line.
-///
 /// \throw cmdline::option_argument_value_error Subclasses must raise this
 ///     exception to indicate the cases in which str is invalid.
 void
-cmdline::base_option::validate(const std::string& UTILS_UNUSED_PARAM(str)) const
+cmdline::base_option::validate(const std::string& /* str */) const
 {
     UNREACHABLE_MSG("Option does not support an argument");
 }
@@ -376,12 +373,9 @@ cmdline::list_option::list_option(const char* long_name_,
 
 
 /// Ensures that a lisstring argument passed to the list_option is valid.
-///
-/// \param unused_raw_value The argument representing a list as provided by the
-///     user.
 void
 cmdline::list_option::validate(
-    const std::string& UTILS_UNUSED_PARAM(raw_value)) const
+    const std::string& /* raw_value */) const
 {
     // Any list is potentially valid; the caller must check for semantics.
 }
@@ -589,11 +583,9 @@ cmdline::string_option::string_option(const char* long_name_,
 
 
 /// Does nothing; all string values are valid arguments to a string_option.
-///
-/// \param unused_raw_value The argument provided by the user.
 void
 cmdline::string_option::validate(
-    const std::string& UTILS_UNUSED_PARAM(raw_value)) const
+    const std::string& /* raw_value */) const
 {
     // Nothing to do.
 }

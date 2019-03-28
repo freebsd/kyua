@@ -357,16 +357,12 @@ public:
     /// to terminate execution either by exec(2)ing the test program or by
     /// exiting with a failure.
     ///
-    /// \param unused_test_program The test program to execute.
     /// \param test_case_name Name of the test case to invoke.
-    /// \param unused_vars User-provided variables to pass to the test program.
-    /// \param unused_control_directory Directory where the interface may place
-    ///     control files.
     void
-    exec_cleanup(const model::test_program& UTILS_UNUSED_PARAM(test_program),
+    exec_cleanup(const model::test_program& /* test_program */,
                  const std::string& test_case_name,
-                 const config::properties_map& UTILS_UNUSED_PARAM(vars),
-                 const fs::path& UTILS_UNUSED_PARAM(control_directory)) const
+                 const config::properties_map& /* vars */,
+                 const fs::path& /* control_directory */) const
     {
         std::cout << "exec_cleanup was called\n";
         std::cout.flush();

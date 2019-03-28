@@ -54,17 +54,4 @@
 #define UTILS_UNCONST(type, ptr) ((type*)(unsigned long)(const void*)(ptr))
 
 
-/// Macro to mark a parameter as unused.
-///
-/// This macro has to be called on the name of a parameter during the
-/// definition (not declaration) of a function.  When doing so, it declares
-/// the parameter as unused to silence compiler warnings and also renames
-/// the parameter by prefixing "unused_" to it.  This is to ensure that the
-/// developer remembers to remove the call to this macro from the parameter
-/// when he actually starts using it.
-///
-/// \param name The name of the function parameter to mark as unused.
-#define UTILS_UNUSED_PARAM(name) unused_ ## name UTILS_UNUSED
-
-
 #endif  // !defined(UTILS_DEFS_HPP)

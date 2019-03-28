@@ -77,16 +77,11 @@ public:
 
     /// Runs the mock command.
     ///
-    /// \param unused_ui Object to interact with the I/O of the program.
-    /// \param unused_cmdline Representation of the command line to the
-    ///     subcommand.
-    /// \param unused_user_config The runtime configuration of the program.
-    ///
     /// \return Nothing because this function always aborts.
     int
-    run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
-        const cmdline::parsed_cmdline& UTILS_UNUSED_PARAM(cmdline),
-        const config::tree& UTILS_UNUSED_PARAM(user_config))
+    run(cmdline::ui* /* ui */,
+        const cmdline::parsed_cmdline& /* cmdline */,
+        const config::tree& /* user_config */)
     {
         utils::abort_without_coredump();
     }
@@ -117,19 +112,14 @@ public:
 
     /// Runs the mock command.
     ///
-    /// \param unused_ui Object to interact with the I/O of the program.
-    /// \param unused_cmdline Representation of the command line to the
-    ///     subcommand.
-    /// \param unused_user_config The runtime configuration of the program.
-    ///
     /// \return Nothing because this function always aborts.
     ///
     /// \throw std::logic_error If _unhandled is true.
     /// \throw std::runtime_error If _unhandled is false.
     int
-    run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
-        const cmdline::parsed_cmdline& UTILS_UNUSED_PARAM(cmdline),
-        const config::tree& UTILS_UNUSED_PARAM(user_config))
+    run(cmdline::ui* /* ui */,
+        const cmdline::parsed_cmdline& /* cmdline */,
+        const config::tree& /* user_config */)
     {
         if (_unhandled)
             throw std::logic_error("This is unhandled");
@@ -153,15 +143,12 @@ public:
     /// Runs the mock command.
     ///
     /// \param ui Object to interact with the I/O of the program.
-    /// \param unused_cmdline Representation of the command line to the
-    ///     subcommand.
-    /// \param unused_user_config The runtime configuration of the program.
     ///
     /// \return Nothing because this function always aborts.
     int
     run(cmdline::ui* ui,
-        const cmdline::parsed_cmdline& UTILS_UNUSED_PARAM(cmdline),
-        const config::tree& UTILS_UNUSED_PARAM(user_config))
+        const cmdline::parsed_cmdline& /* cmdline */,
+        const config::tree& /* user_config */)
     {
         ui->out("stdout message from subcommand");
         ui->err("stderr message from subcommand");

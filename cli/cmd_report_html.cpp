@@ -448,14 +448,13 @@ cli::cmd_report_html::cmd_report_html(void) : cli_command(
 ///
 /// \param ui Object to interact with the I/O of the program.
 /// \param cmdline Representation of the command line to the subcommand.
-/// \param unused_user_config The runtime configuration of the program.
 ///
 /// \return 0 if everything is OK, 1 if the statement is invalid or if there is
 /// any other problem.
 int
 cli::cmd_report_html::run(cmdline::ui* ui,
                           const cmdline::parsed_cmdline& cmdline,
-                          const config::tree& UTILS_UNUSED_PARAM(user_config))
+                          const config::tree& /* user_config */)
 {
     const result_types types = get_result_types(cmdline);
 
