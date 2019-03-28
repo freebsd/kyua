@@ -152,8 +152,6 @@ class global_state : utils::noncopyable {
     /// Calculates all timers to execute at this timestamp.
     ///
     /// \param now The current timestamp.
-    /// \param unused_inhibiter Reference to the active interrupts inhibiter, to
-    ///     ensure that this is called with interrupts inhibited.
     ///
     /// \post _all_timers is updated to contain only the timers that are
     /// strictly in the future.
@@ -164,7 +162,7 @@ class global_state : utils::noncopyable {
     timers_vector
     compute_timers_to_run_and_prune_old(
         const datetime::timestamp& now,
-        const signals::interrupts_inhibiter& UTILS_UNUSED_PARAM(inhibiter))
+        const signals::interrupts_inhibiter& /* inhibiter */)
     {
         timers_vector to_run;
 
@@ -187,14 +185,12 @@ class global_state : utils::noncopyable {
     /// Adjusts the global system timer to point to the next activation.
     ///
     /// \param now The current timestamp.
-    /// \param unused_inhibiter Reference to the active interrupts inhibiter, to
-    ///     ensure that this is called with interrupts inhibited.
     ///
     /// \throw system_error If the programming fails.
     void
     reprogram_system_timer(
         const datetime::timestamp& now,
-        const signals::interrupts_inhibiter& UTILS_UNUSED_PARAM(inhibiter))
+        const signals::interrupts_inhibiter& /* inhibiter */)
     {
         if (_all_timers.empty()) {
             // Nothing to do.  We can reach this case if all the existing timers

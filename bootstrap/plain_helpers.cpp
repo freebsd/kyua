@@ -39,12 +39,11 @@ namespace {
 
 /// Prints a fake but valid test case list and then aborts.
 ///
-/// \param unused_argc The original argument count of the program.
 /// \param argv The original arguments of the program.
 ///
 /// \return Nothing because this dies before returning.
 static int
-helper_abort_test_cases_list(int UTILS_UNUSED_PARAM(argc), char** argv)
+helper_abort_test_cases_list(int /* argc */, char** argv)
 {
     for (const char* const* arg = argv; *arg != NULL; arg++) {
         if (std::strcmp(*arg, "-l") == 0) {
@@ -59,13 +58,9 @@ helper_abort_test_cases_list(int UTILS_UNUSED_PARAM(argc), char** argv)
 
 /// Just returns without printing anything as the test case list.
 ///
-/// \param unused_argc The original argument count of the program.
-/// \param unused_argv The original arguments of the program.
-///
 /// \return Always 0, as required for test programs.
 static int
-helper_empty_test_cases_list(int UTILS_UNUSED_PARAM(argc),
-                             char** UTILS_UNUSED_PARAM(argv))
+helper_empty_test_cases_list(int /* argc */, char** /* argv */)
 {
     return EXIT_SUCCESS;
 }
@@ -73,12 +68,11 @@ helper_empty_test_cases_list(int UTILS_UNUSED_PARAM(argc),
 
 /// Prints a correctly-formatted test case list but empty.
 ///
-/// \param unused_argc The original argument count of the program.
 /// \param argv The original arguments of the program.
 ///
 /// \return Always 0, as required for test programs.
 static int
-helper_zero_test_cases(int UTILS_UNUSED_PARAM(argc), char** argv)
+helper_zero_test_cases(int /* argc */, char** argv)
 {
     for (const char* const* arg = argv; *arg != NULL; arg++) {
         if (std::strcmp(*arg, "-l") == 0)

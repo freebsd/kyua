@@ -84,10 +84,8 @@ public:
 
 
 /// Signal handler that does nothing.
-///
-/// \param unused_signo Number of the received signal.
 static void
-null_handler(const int UTILS_UNUSED_PARAM(signo))
+null_handler(const int /* signo */)
 {
 }
 

@@ -105,11 +105,8 @@ public:
     /// Runs the binary.
     ///
     /// This interface is exposed to support passing crash_me to the executor.
-    ///
-    /// \param unused_control_directory Directory in which we can store control
-    ///     files outside of the current work directory.
     void
-    operator()(const fs::path& UTILS_UNUSED_PARAM(control_directory)) const
+    operator()(const fs::path& /* control_directory */) const
         UTILS_NORETURN
     {
         (*this)();  // Delegate to ensure the two entry points remain in sync.
@@ -121,11 +118,8 @@ static void child_exit(const fs::path&) UTILS_NORETURN;
 
 
 /// Subprocess that exits cleanly.
-///
-/// \param unused_control_directory Directory where control files separate from
-///     the work directory can be placed.
 static void
-child_exit(const fs::path& UTILS_UNUSED_PARAM(control_directory))
+child_exit(const fs::path& /* control_directory */)
 {
     ::_exit(EXIT_SUCCESS);
 }
@@ -135,11 +129,8 @@ static void child_pause(const fs::path&) UTILS_NORETURN;
 
 
 /// Subprocess that just blocks.
-///
-/// \param unused_control_directory Directory where control files separate from
-///     the work directory can be placed.
 static void
-child_pause(const fs::path& UTILS_UNUSED_PARAM(control_directory))
+child_pause(const fs::path& /* control_directory */)
 {
     sigset_t mask;
     sigemptyset(&mask);

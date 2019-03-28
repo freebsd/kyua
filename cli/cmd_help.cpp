@@ -227,12 +227,11 @@ cmd_help::cmd_help(const cmdline::options_vector* options_,
 ///
 /// \param ui Object to interact with the I/O of the program.
 /// \param cmdline Representation of the command line to the subcommand.
-/// \param unused_user_config The runtime configuration of the program.
 ///
 /// \return 0 to indicate success.
 int
 cmd_help::run(utils::cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
-              const config::tree& UTILS_UNUSED_PARAM(user_config))
+              const config::tree& /* user_config */)
 {
     if (cmdline.arguments().empty()) {
         general_help(ui, _options, _commands);

@@ -117,11 +117,8 @@ public:
     }
 
     /// Runs the subprocess.
-    ///
-    /// \param unused_control_directory Directory where control files separate
-    ///     from the work directory can be placed.
     void
-    operator()(const fs::path& UTILS_UNUSED_PARAM(control_directory))
+    operator()(const fs::path& /* control_directory */)
         UTILS_NORETURN
     {
         std::cout << "Creating cookie: " << _cookie_name << " (stdout)\n";
@@ -162,12 +159,8 @@ static void child_dump_unprivileged_user(const fs::path&) UTILS_NORETURN;
 
 
 /// Subprocess that dumps user configuration.
-///
-/// \param unused_control_directory Directory where control files separate from
-///     the work directory can be placed.
 static void
-child_dump_unprivileged_user(
-    const fs::path& UTILS_UNUSED_PARAM(control_directory))
+child_dump_unprivileged_user(const fs::path& /* control_directory */)
 {
     const passwd::user current_user = passwd::current_user();
     std::cout << F("UID = %s\n") % current_user.uid;
@@ -189,11 +182,8 @@ public:
     }
 
     /// Runs the subprocess.
-    ///
-    /// \param unused_control_directory Directory where control files separate
-    ///     from the work directory can be placed.
     void
-    operator()(const fs::path& UTILS_UNUSED_PARAM(control_directory))
+    operator()(const fs::path& /* control_directory */)
         UTILS_NORETURN
     {
         do_exit(_exit_code);
@@ -205,11 +195,8 @@ static void child_pause(const fs::path&) UTILS_NORETURN;
 
 
 /// Subprocess that just blocks.
-///
-/// \param unused_control_directory Directory where control files separate from
-///     the work directory can be placed.
 static void
-child_pause(const fs::path& UTILS_UNUSED_PARAM(control_directory))
+child_pause(const fs::path& /* control_directory */)
 {
     sigset_t mask;
     sigemptyset(&mask);
@@ -224,11 +211,8 @@ static void child_print(const fs::path&) UTILS_NORETURN;
 
 
 /// Subprocess that writes to stdout and stderr.
-///
-/// \param unused_control_directory Directory where control files separate from
-///     the work directory can be placed.
 static void
-child_print(const fs::path& UTILS_UNUSED_PARAM(control_directory))
+child_print(const fs::path& /* control_directory */)
 {
     std::cout << "stdout: some text\n";
     std::cerr << "stderr: some other text\n";
@@ -251,11 +235,8 @@ public:
     }
 
     /// Runs the subprocess.
-    ///
-    /// \param unused_control_directory Directory where control files separate
-    ///     from the work directory can be placed.
     void
-    operator()(const fs::path& UTILS_UNUSED_PARAM(control_directory))
+    operator()(const fs::path& /* control_directory */)
         UTILS_NORETURN
     {
         ::sleep(_seconds);
@@ -271,12 +252,9 @@ static void child_spawn_blocking_child(const fs::path&) UTILS_NORETURN;
 ///
 /// Used by the caller to validate that the whole process tree is terminated
 /// when this subprocess is killed.
-///
-/// \param unused_control_directory Directory where control files separate from
-///     the work directory can be placed.
 static void
 child_spawn_blocking_child(
-    const fs::path& UTILS_UNUSED_PARAM(control_directory))
+    const fs::path& /* control_directory */)
 {
     pid_t pid = ::fork();
     if (pid == -1) {
@@ -304,11 +282,8 @@ static void child_validate_isolation(const fs::path&) UTILS_NORETURN;
 
 
 /// Subprocess that checks if isolate_child() has been called.
-///
-/// \param unused_control_directory Directory where control files separate from
-///     the work directory can be placed.
 static void
-child_validate_isolation(const fs::path& UTILS_UNUSED_PARAM(control_directory))
+child_validate_isolation(const fs::path& /* control_directory */)
 {
     if (utils::getenv("HOME").get() == "fake-value") {
         std::cerr << "HOME not reset\n";

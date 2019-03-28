@@ -96,10 +96,8 @@ public:
     ///
     /// \post The test case is marked as failed, as this function is not
     /// supposed to be invoked by the lua_module code.
-    ///
-    /// \param unused_raw_value The value to set the node to.
     void
-    set_string(const std::string& UTILS_UNUSED_PARAM(raw_value))
+    set_string(const std::string& /* raw_value */)
     {
         ATF_FAIL("Should not be used");
     }

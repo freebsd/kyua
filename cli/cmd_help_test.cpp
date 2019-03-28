@@ -75,16 +75,11 @@ public:
 
     /// Runs the mock command.
     ///
-    /// \param unused_ui Object to interact with the I/O of the program.
-    /// \param unused_cmdline Representation of the command line to the
-    ///     subcommand.
-    /// \param unused_user_config The runtime configuration of the program.
-    ///
     /// \return Nothing because this function is never called.
     int
-    run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
-        const cmdline::parsed_cmdline& UTILS_UNUSED_PARAM(cmdline),
-        const config::tree& UTILS_UNUSED_PARAM(user_config))
+    run(cmdline::ui* /* ui */,
+        const cmdline::parsed_cmdline& /* cmdline */,
+        const config::tree& /* user_config */)
     {
         UNREACHABLE;
     }
@@ -111,16 +106,11 @@ public:
 
     /// Runs the mock command.
     ///
-    /// \param unused_ui Object to interact with the I/O of the program.
-    /// \param unused_cmdline Representation of the command line to the
-    ///     subcommand.
-    /// \param unused_user_config The runtime configuration of the program.
-    ///
     /// \return Nothing because this function is never called.
     int
-    run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
-        const cmdline::parsed_cmdline& UTILS_UNUSED_PARAM(cmdline),
-        const config::tree& UTILS_UNUSED_PARAM(user_config))
+    run(cmdline::ui* /* ui */,
+        const cmdline::parsed_cmdline& /* cmdline */,
+        const config::tree& /* user_config */)
     {
         UNREACHABLE;
     }

@@ -75,8 +75,8 @@ BEGIN {
     warn("Use \\n instead of std::endl");
 }
 
-/\/\*/ {
-    warn("Do not use C-style comments");
+/\/\*/ && ! /\*\// {
+    warn("Do not use multi-line C-style comments");
 }
 
 END {

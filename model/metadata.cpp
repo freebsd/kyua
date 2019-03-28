@@ -81,21 +81,15 @@ public:
     }
 
     /// Pushes the node's value onto the Lua stack.
-    ///
-    /// \param unused_state The Lua state onto which to push the value.
     void
-    push_lua(lutok::state& UTILS_UNUSED_PARAM(state)) const
+    push_lua(lutok::state& /* state */) const
     {
         UNREACHABLE;
     }
 
     /// Sets the value of the node from an entry in the Lua stack.
-    ///
-    /// \param unused_state The Lua state from which to get the value.
-    /// \param unused_index The stack index in which the value resides.
     void
-    set_lua(lutok::state& UTILS_UNUSED_PARAM(state),
-            const int UTILS_UNUSED_PARAM(index))
+    set_lua(lutok::state& /* state */, const int /* index */)
     {
         UNREACHABLE;
     }
@@ -145,21 +139,15 @@ public:
     }
 
     /// Pushes the node's value onto the Lua stack.
-    ///
-    /// \param unused_state The Lua state onto which to push the value.
     void
-    push_lua(lutok::state& UTILS_UNUSED_PARAM(state)) const
+    push_lua(lutok::state& /* state */) const
     {
         UNREACHABLE;
     }
 
     /// Sets the value of the node from an entry in the Lua stack.
-    ///
-    /// \param unused_state The Lua state from which to get the value.
-    /// \param unused_index The stack index in which the value resides.
     void
-    set_lua(lutok::state& UTILS_UNUSED_PARAM(state),
-            const int UTILS_UNUSED_PARAM(index))
+    set_lua(lutok::state& /* state */, const int /* index */)
     {
         UNREACHABLE;
     }

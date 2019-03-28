@@ -329,10 +329,8 @@ public:
     }
 
     /// Prints the tests summary.
-    ///
-    /// \param unused_r Result of the scan_results driver execution.
     void
-    end(const drivers::scan_results::result& UTILS_UNUSED_PARAM(r))
+    end(const drivers::scan_results::result& /* r */)
     {
         typedef std::map< model::test_result_type, const char* > types_map;
 
@@ -398,14 +396,13 @@ cmd_report::cmd_report(void) : cli_command(
 ///
 /// \param ui Object to interact with the I/O of the program.
 /// \param cmdline Representation of the command line to the subcommand.
-/// \param unused_user_config The runtime configuration of the program.
 ///
 /// \return 0 if everything is OK, 1 if the statement is invalid or if there is
 /// any other problem.
 int
 cmd_report::run(cmdline::ui* ui,
                 const cmdline::parsed_cmdline& cmdline,
-                const config::tree& UTILS_UNUSED_PARAM(user_config))
+                const config::tree& /* user_config */)
 {
     std::auto_ptr< std::ostream > output = utils::open_ostream(
         cmdline.get_option< cmdline::path_option >("output"));

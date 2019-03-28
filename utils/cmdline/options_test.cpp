@@ -79,10 +79,8 @@ public:
     /// Ensures that the argument passed to the option is valid.
     ///
     /// In this particular mock option, this does not perform any validation.
-    ///
-    /// \param unused_str The user-provided argument to the option.
     void
-    validate(const std::string& UTILS_UNUSED_PARAM(str)) const
+    validate(const std::string& /* str */) const
     {
         // Do nothing.
     }

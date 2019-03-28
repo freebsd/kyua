@@ -59,14 +59,10 @@ public:
 
     /// Runs the mock command.
     ///
-    /// \param unused_ui Object to interact with the I/O of the program.
-    /// \param unused_cmdline Representation of the command line to the
-    ///     subcommand.
-    ///
     /// \return Nothing because this function is never called.
     int
-    run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
-        const cmdline::parsed_cmdline& UTILS_UNUSED_PARAM(cmdline))
+    run(cmdline::ui* /* ui */,
+        const cmdline::parsed_cmdline& /* cmdline */)
     {
         UNREACHABLE;
     }
