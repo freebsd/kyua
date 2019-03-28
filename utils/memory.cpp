@@ -88,19 +88,13 @@ static const char* query_sysctl_mib = MEMORY_QUERY_SYSCTL_MIB;
 /// this function.  It also prevents "unused variable" warnings in the caller
 /// code.
 ///
-/// \param unused_name Unused.
-/// \param unused_oldp Unused.
-/// \param unused_oldlenp Unused.
-/// \param unused_newp Unused.
-/// \param unused_newlen Unused.
-///
 /// \return Nothing; this always crashes.
 static int
-sysctlbyname(const char* UTILS_UNUSED_PARAM(name),
-             void* UTILS_UNUSED_PARAM(oldp),
-             std::size_t* UTILS_UNUSED_PARAM(oldlenp),
-             const void* UTILS_UNUSED_PARAM(newp),
-             std::size_t UTILS_UNUSED_PARAM(newlen))
+sysctlbyname(const char* /* name */,
+             void* /* oldp */,
+             std::size_t* /* oldlenp */,
+             const void* /* newp */,
+             std::size_t /* newlen */)
 {
     UNREACHABLE;
 }

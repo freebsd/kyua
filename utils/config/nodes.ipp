@@ -217,13 +217,11 @@ config::typed_leaf_node< ValueType >::set(const value_type& value_)
 /// This is called internally by the node right before updating the recorded
 /// value.  This method can be redefined by subclasses.
 ///
-/// \param unused_new_value The value to validate.
-///
 /// \throw value_error If the value is not valid.
 template< typename ValueType >
 void
 config::typed_leaf_node< ValueType >::validate(
-    const value_type& UTILS_UNUSED_PARAM(new_value)) const
+    const value_type& /* new_value */) const
 {
 }
 
@@ -367,12 +365,9 @@ config::base_set_node< ValueType >::to_string(void) const
 
 
 /// Pushes the node's value onto the Lua stack.
-///
-/// \param unused_state The Lua state onto which to push the value.
 template< typename ValueType >
 void
-config::base_set_node< ValueType >::push_lua(
-    lutok::state& UTILS_UNUSED_PARAM(state)) const
+config::base_set_node< ValueType >::push_lua(lutok::state& /* state */) const
 {
     UNREACHABLE;
 }
@@ -380,16 +375,13 @@ config::base_set_node< ValueType >::push_lua(
 
 /// Sets the value of the node from an entry in the Lua stack.
 ///
-/// \param unused_state The Lua state from which to get the value.
-/// \param unused_value_index The stack index in which the value resides.
-///
 /// \throw value_error If the value in state(value_index) cannot be
 ///     processed by this node.
 template< typename ValueType >
 void
 config::base_set_node< ValueType >::set_lua(
-    lutok::state& UTILS_UNUSED_PARAM(state),
-    const int UTILS_UNUSED_PARAM(value_index))
+    lutok::state& /* state */,
+    const int /* value_index */)
 {
     UNREACHABLE;
 }
@@ -400,13 +392,11 @@ config::base_set_node< ValueType >::set_lua(
 /// This is called internally by the node right before updating the recorded
 /// value.  This method can be redefined by subclasses.
 ///
-/// \param unused_new_value The value to validate.
-///
 /// \throw value_error If the value is not valid.
 template< typename ValueType >
 void
 config::base_set_node< ValueType >::validate(
-    const value_type& UTILS_UNUSED_PARAM(new_value)) const
+    const value_type& /* new_value */) const
 {
 }
 

@@ -53,11 +53,8 @@ drivers::scan_results::base_hooks::begin(void)
 
 
 /// Callback executed after all operations are performed.
-///
-/// \param unused_r A structure with all results computed by this driver.  Note
-///     that this is also returned by the drive operation.
 void
-drivers::scan_results::base_hooks::end(const result& UTILS_UNUSED_PARAM(r))
+drivers::scan_results::base_hooks::end(const result& /* r */)
 {
 }
 

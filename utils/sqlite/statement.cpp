@@ -543,12 +543,10 @@ sqlite::statement::bind(const int index, const int64_t value)
 /// Binds a NULL value to a prepared statement.
 ///
 /// \param index The index of the binding.
-/// \param unused_null An instance of the null class.
 ///
 /// \throw api_error If the binding fails.
 void
-sqlite::statement::bind(const int index,
-                             const null& UTILS_UNUSED_PARAM(null))
+sqlite::statement::bind(const int index, const null& /* null */)
 {
     const int error = ::sqlite3_bind_null(_pimpl->stmt, index);
     handle_bind_error(_pimpl->db, "sqlite3_bind_null", error);

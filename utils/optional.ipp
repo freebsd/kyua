@@ -45,11 +45,8 @@ utils::optional< T >::optional(void) :
 
 
 /// Explicitly initializes an optional object to the none value.
-///
-/// \param unused_none A copy of the utils::none instance.
 template< class T >
-utils::optional< T >::optional(
-    utils::detail::none_t UTILS_UNUSED_PARAM(none)) :
+utils::optional< T >::optional(utils::detail::none_t /* none */) :
     _data(NULL)
 {
 }
@@ -87,12 +84,10 @@ utils::optional< T >::~optional(void)
 
 /// Explicitly assigns an optional object to the none value.
 ///
-/// \param unused_none A copy of the utils::none instance.
-///
 /// \return A reference to this.
 template< class T >
 utils::optional< T >&
-utils::optional< T >::operator=(utils::detail::none_t UTILS_UNUSED_PARAM(none))
+utils::optional< T >::operator=(utils::detail::none_t /* none */)
 {
     if (_data != NULL)
         delete _data;

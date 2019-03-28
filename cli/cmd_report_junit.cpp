@@ -65,16 +65,14 @@ cmd_report_junit::cmd_report_junit(void) : cli_command(
 
 /// Entry point for the "report" subcommand.
 ///
-/// \param unused_ui Object to interact with the I/O of the program.
 /// \param cmdline Representation of the command line to the subcommand.
-/// \param unused_user_config The runtime configuration of the program.
 ///
 /// \return 0 if everything is OK, 1 if the statement is invalid or if there is
 /// any other problem.
 int
-cmd_report_junit::run(cmdline::ui* UTILS_UNUSED_PARAM(ui),
+cmd_report_junit::run(cmdline::ui* /* ui */,
                       const cmdline::parsed_cmdline& cmdline,
-                      const config::tree& UTILS_UNUSED_PARAM(user_config))
+                      const config::tree& /* user_config */)
 {
     const fs::path results_file = layout::find_results(
         results_file_open(cmdline));

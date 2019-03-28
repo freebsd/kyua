@@ -252,12 +252,11 @@ open_fail(const char* path, const int flags, ...) throw()
 /// Mock pipe(2) that just returns an error.
 ///
 /// \tparam Errno The value to set as the errno of the failed call.
-/// \param [out] unused_fildes A pointer to a 2-integer array.
 ///
 /// \return Always -1.
 template< int Errno >
 static pid_t
-pipe_fail(int* UTILS_UNUSED_PARAM(fildes)) throw()
+pipe_fail(int* /* fildes */) throw()
 {
     errno = Errno;
     return -1;
