@@ -64,7 +64,7 @@ using utils::none;
 namespace {
 
 
-/// Runs one plain test program and checks its result.
+/// Lists the test cases associated with an ATF test program.
 ///
 /// \param program_name Basename of the test program to run.
 /// \param root Path to the base of the test suite.
@@ -121,7 +121,7 @@ check_list_one_fail(const char* exp_error,
 }
 
 
-/// Runs one plain test program and checks its result.
+/// Runs one ATF test program and checks its result.
 ///
 /// \param tc Pointer to the calling test case, to obtain srcdir.
 /// \param test_case_name Name of the "test case" to select from the helper
