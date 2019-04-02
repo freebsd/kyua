@@ -140,12 +140,12 @@ void
 engine::tap_interface::exec_test(
     const model::test_program& test_program,
     const std::string& test_case_name,
-    const utils::config::properties_map& vars,
+    const config::properties_map& vars,
     const fs::path& /* control_directory */) const
 {
     PRE(test_case_name == "main");
 
-    for (utils::config::properties_map::const_iterator iter = vars.begin();
+    for (config::properties_map::const_iterator iter = vars.begin();
          iter != vars.end(); ++iter) {
         utils::setenv(F("TEST_ENV_%s") % (*iter).first, (*iter).second);
     }
