@@ -513,7 +513,7 @@ void
 scheduler::interface::exec_cleanup(
     const model::test_program& /* test_program */,
     const std::string& /* test_case_name */,
-    const utils::config::properties_map& /* vars */,
+    const config::properties_map& /* vars */,
     const utils::fs::path& /* control_directory */) const
 {
     // Most test interfaces do not support standalone cleanup routines so
