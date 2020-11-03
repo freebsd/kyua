@@ -4,12 +4,12 @@ env:
 
 task:
   matrix:
-    - name: 13-CURRENT
+    - name: 13.0-CURRENT
       freebsd_instance:
         image_family: freebsd-13-0-snap
-    - name: 12.1-STABLE
+    - name: 12.2-STABLE
       freebsd_instance:
-        image_family: freebsd-12-1-snap
+        image_family: freebsd-12-2-snap
     - name: 12.1-RELEASE
       freebsd_instance:
         image_family: freebsd-12-1
@@ -17,6 +17,7 @@ task:
     DO: distcheck
   install_script:
     - sed -i.bak -e 's,pkg+http://pkg.FreeBSD.org/\${ABI}/quarterly,pkg+http://pkg.FreeBSD.org/\${ABI}/latest,' /etc/pkg/FreeBSD.conf
+    - ASSUME_ALWAYS_YES=yes pkg bootstrap -f
     - pkg upgrade -y
     - pkg install -y autoconf automake atf lutok pkgconf sqlite3
   script:
