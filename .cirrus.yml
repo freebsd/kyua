@@ -18,7 +18,6 @@ task:
   install_script:
     - sed -i.bak -e 's,pkg+http://pkg.FreeBSD.org/\${ABI}/quarterly,pkg+http://pkg.FreeBSD.org/\${ABI}/latest,' /etc/pkg/FreeBSD.conf
     - ASSUME_ALWAYS_YES=yes pkg bootstrap -f
-    - pkg upgrade -y
     - pkg install -y autoconf automake atf lutok pkgconf sqlite3
   script:
     - ./admin/travis-build.sh
