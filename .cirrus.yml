@@ -1,5 +1,4 @@
 env:
-  CIRRUS_CLONE_DEPTH: 1
   ARCH: amd64
 
 task:
