@@ -32,6 +32,7 @@ extern "C" {
 #include <sys/types.h>
 
 #include <dirent.h>
+#include <limits.h>
 }
 
 #include <cerrno>
@@ -131,7 +132,13 @@ struct utils::fs::detail::directory_iterator::impl : utils::noncopyable {
     ///
     /// We need to keep this at the class level so that we can use the
     /// readdir_r(3) function.
-    ::dirent _dirent;
+    ///
+    /// Workaround for some systems (namely, illumos) requiring the readdir_r()
+    /// consumers to provide space for d_name.
+    union {
+        ::dirent _dirent;
+        char __dirent[sizeof(::dirent) + NAME_MAX];
+    };
 
     /// Custom representation of the directory entry.
     ///
