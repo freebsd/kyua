@@ -69,6 +69,7 @@ extern "C" {
 #include "utils/config/tree.ipp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/fs/exceptions.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
@@ -239,19 +240,21 @@ fs::path
 cli::detail::default_log_name(void)
 {
     // Update doc/troubleshooting.texi if you change this algorithm.
+    const optional< std::string > cache(utils::getenv("XDG_CACHE_HOME"));
     const optional< std::string > home(utils::getenv("HOME"));
-    if (home) {
-        return logging::generate_log_name(fs::path(home.get()) / ".kyua" /
+    const optional< std::string > tmpdir(utils::getenv("TMPDIR"));
+    if (cache) {
+        return logging::generate_log_name(fs::path(cache.get()) / "kyua" /
                                           "logs", cmdline::progname());
+    } else if (home) {
+        return logging::generate_log_name(fs::path(home.get()) / ".cache" /
+                                          "kyua" / "logs", cmdline::progname());
+    } else if (tmpdir) {
+        return logging::generate_log_name(fs::path(tmpdir.get()),
+                                          cmdline::progname());
     } else {
-        const optional< std::string > tmpdir(utils::getenv("TMPDIR"));
-        if (tmpdir) {
-            return logging::generate_log_name(fs::path(tmpdir.get()),
-                                              cmdline::progname());
-        } else {
-            return logging::generate_log_name(fs::path("/tmp"),
-                                              cmdline::progname());
-        }
+        return logging::generate_log_name(fs::path("/tmp"),
+                                          cmdline::progname());
     }
 }
 
