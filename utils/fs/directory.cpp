@@ -127,15 +127,9 @@ struct utils::fs::detail::directory_iterator::impl : utils::noncopyable {
     /// not.  A null pointer means an invalid iterator.
     ::DIR* _dirp;
 
-    /// Raw representation of the system directory entry.
-    ///
-    /// We need to keep this at the class level so that we can use the
-    /// readdir_r(3) function.
-    ::dirent _dirent;
-
     /// Custom representation of the directory entry.
     ///
-    /// This is separate from _dirent because this is the type we return to the
+    /// This is separate from readdir because this is the type we return to the
     /// user.  We must keep this as a pointer so that we can support the common
     /// operators (* and ->) over iterators.
     std::auto_ptr< directory_entry > _entry;
@@ -198,16 +192,12 @@ struct utils::fs::detail::directory_iterator::impl : utils::noncopyable {
     {
         ::dirent* result;
 
-        if (::readdir_r(_dirp, &_dirent, &result) == -1) {
-            const int original_errno = errno;
-            throw fs::system_error(F("readdir_r(%s) failed") % _path,
-                                   original_errno);
-        }
+        result = ::readdir(_dirp);
         if (result == NULL) {
             _entry.reset(NULL);
             close();
         } else {
-            _entry.reset(new directory_entry(_dirent.d_name));
+            _entry.reset(new directory_entry(result->d_name));
         }
     }
 };
