@@ -1,17 +1,13 @@
-Major changes between releases
-==============================
+# Major changes between releases
 
-
-Changes in version 0.14
------------------------
+## Changes in version 0.14
 
 **NOT RELEASED YET; STILL UNDER DEVELOPMENT.**
 
 * Explicitly require C++11 language features when compiling Kyua.
 
 
-Changes in version 0.13
------------------------
+## Changes in version 0.13
 
 **Released on August 26th, 2016.**
 
@@ -36,8 +32,7 @@ Changes in version 0.13
   timers to control test deadlines.
 
 
-Changes in version 0.12
------------------------
+## Changes in version 0.12
 
 **Released on November 22nd, 2015.**
 
@@ -129,8 +124,7 @@ parallelization possibilities.
   Markdown for better formatting online.
 
 
-Changes in version 0.11
------------------------
+## Changes in version 0.11
 
 **Released on October 23rd, 2014.**
 
@@ -211,8 +205,7 @@ Changes in version 0.11
   examples.
 
 
-Changes in version 0.10
------------------------
+## Changes in version 0.10
 
 **Experimental version released on August 14th, 2014.**
 
@@ -232,8 +225,7 @@ Changes in version 0.10
   prevent triggering a core dump that made the test fail in some platforms.
 
 
-Changes in kyua-cli version 0.9
--------------------------------
+## Changes in kyua-cli version 0.9
 
 **Experimental version released on August 8th, 2014.**
 
@@ -276,8 +268,7 @@ Changes in more detail:
   files.
 
 
-Changes in kyua-testers version 0.3
------------------------------------
+## Changes in kyua-testers version 0.3
 
 **Experimental version released on August 8th, 2014.**
 
@@ -293,8 +284,7 @@ Changes in kyua-testers version 0.3
   handle test programs that report a pass but exit with a non-zero code.
 
 
-Changes in kyua-cli version 0.8
--------------------------------
+## Changes in kyua-cli version 0.8
 
 **Experimental version released on December 7th, 2013.**
 
@@ -310,8 +300,7 @@ Changes in kyua-cli version 0.8
   the addition of new testers or the selective installation of them.
 
 
-Changes in kyua-testers version 0.2
------------------------------------
+## Changes in kyua-testers version 0.2
 
 **Experimental version released on December 7th, 2013.**
 
@@ -326,8 +315,7 @@ Changes in kyua-testers version 0.2
   own session instead of just to their own process group.
 
 
-Changes in kyua-cli version 0.7
--------------------------------
+## Changes in kyua-cli version 0.7
 
 **Experimental version released on October 18th, 2013.**
 
@@ -347,8 +335,7 @@ Changes in kyua-cli version 0.7
   LTS, which appears stuck in 1.11.1.
 
 
-Changes in kyua-cli version 0.6
--------------------------------
+## Changes in kyua-cli version 0.6
 
 **Experimental version released on February 22nd, 2013.**
 
@@ -412,8 +399,7 @@ Changes in kyua-cli version 0.6
   executables.
 
 
-Changes in kyua-testers version 0.1
------------------------------------
+## Changes in kyua-testers version 0.1
 
 **Experimental version released on February 19th, 2013.**
 
@@ -430,8 +416,7 @@ of `kyua-cli`, which means that the overall build times of Kyua are now
 reduced.
 
 
-Changes in kyua-cli version 0.5
--------------------------------
+## Changes in kyua-cli version 0.5
 
 **Experimental version released on July 10th, 2012.**
 
@@ -454,8 +439,7 @@ Changes in kyua-cli version 0.5
   from the repository.
 
 
-Changes in kyua-cli version 0.4
--------------------------------
+## Changes in kyua-cli version 0.4
 
 **Experimental version released on June 6th, 2012.**
 
@@ -497,8 +481,7 @@ Changes in kyua-cli version 0.4
   such tree.
 
 
-Changes in kyua-cli version 0.3
--------------------------------
+## Changes in kyua-cli version 0.3
 
 **Experimental version released on February 24th, 2012.**
 
@@ -533,8 +516,7 @@ Changes in kyua-cli version 0.3
   failing test.
 
 
-Changes in kyua-cli version 0.2
--------------------------------
+## Changes in kyua-cli version 0.2
 
 **Experimental version released on August 24th, 2011.**
 
@@ -599,8 +581,7 @@ Without further ado, here comes the itemized list of changes:
   and Ubuntu 10.04.1 LTS.  (Issues #20, #21, #26.)
 
 
-Changes in kyua-cli version 0.1
--------------------------------
+## Changes in kyua-cli version 0.1
 
 **Experimental version released on June 23rd, 2011.**
 

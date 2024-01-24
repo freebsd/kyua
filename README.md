@@ -1,5 +1,4 @@
-Welcome to the Kyua project!
-============================
+# Welcome to the Kyua project!
 
 Kyua is a **testing framework** for infrastructure software, originally
 designed to equip BSD-based operating systems with a test suite.  This
@@ -26,8 +25,7 @@ This is not an official Google product.
 [Read more about Kyua in the About wiki page.](../../wiki/About)
 
 
-Download
---------
+## Download
 
 The latest version of Kyua is 0.13 and was released on August 26th, 2016.
 
@@ -37,8 +35,7 @@ See the [release notes](NEWS.md) for information about the changes in this
 and all previous releases.
 
 
-Installation
-------------
+## Installation
 
 You are encouraged to install binary packages for your operating system
 wherever available:
@@ -63,8 +60,7 @@ test programs.  To that end, see the
 [ATF project page](https://github.com/freebsd/atf/).
 
 
-Contributing
-------------
+## Contributing
 
 Want to contribute?  Great!  But please first read the guidelines provided
 in [CONTRIBUTING.md](CONTRIBUTING.md).
@@ -74,8 +70,7 @@ the [list of copyright holders](AUTHORS) and the [list of
 individuals](CONTRIBUTORS).
 
 
-Support
--------
+## Support
 
 Please use the [kyua-discuss mailing
 list](https://groups.google.com/forum/#!forum/kyua-discuss) for any support
