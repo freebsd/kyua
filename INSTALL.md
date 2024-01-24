@@ -261,8 +261,7 @@ suite and can be given to Kyua with arguments of the form
   dump core.  Such tests are particularly slow on macOS, and it is
   sometimes handy to disable them for quicker development iteration.
 
-If you see any tests fail, do not hesitate to report them in:
-
-    https://github.com/jmmv/kyua/issues/
+If you see any tests fail, do not hesitate to report them on
+[GitHub issues](https://github.com/freebsd/kyua/issues/).
 
 Thank you!

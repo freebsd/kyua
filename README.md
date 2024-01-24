@@ -16,7 +16,7 @@ on a production machine.
 
 Kyua is **able to execute test programs written with a plethora of testing
 libraries and languages**.  The library of choice is
-[ATF](https://github.com/jmmv/atf/), for which Kyua was originally
+[ATF](https://github.com/freebsd/atf/), for which Kyua was originally
 designed, but simple, framework-less test programs and TAP-compliant test
 programs can also be executed through Kyua.
 
@@ -60,7 +60,7 @@ here, follow the instructions in the
 
 You should also install the ATF libraries to assist in the development of
 test programs.  To that end, see the
-[ATF project page](https://github.com/jmmv/atf/).
+[ATF project page](https://github.com/freebsd/atf/).
 
 
 Contributing
@@ -81,4 +81,4 @@ Please use the [kyua-discuss mailing
 list](https://groups.google.com/forum/#!forum/kyua-discuss) for any support
 inquiries.
 
-*Homepage:* https://github.com/jmmv/kyua/
+*Homepage:* https://github.com/freebsd/kyua/
