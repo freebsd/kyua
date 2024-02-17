@@ -7,6 +7,8 @@ Changes in version 0.14
 
 **NOT RELEASED YET; STILL UNDER DEVELOPMENT.**
 
+* Google Test test support was added.
+
 * Explicitly require C++11 language features when compiling Kyua.
 
 
