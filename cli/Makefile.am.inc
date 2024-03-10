@@ -27,43 +27,43 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 CLI_CFLAGS = $(DRIVERS_CFLAGS)
-CLI_LIBS = libcli.a $(DRIVERS_LIBS)
+CLI_LIBS = libcli.la $(DRIVERS_LIBS)
 
-noinst_LIBRARIES += libcli.a
-libcli_a_SOURCES  = cli/cmd_about.cpp
-libcli_a_SOURCES += cli/cmd_about.hpp
-libcli_a_SOURCES += cli/cmd_config.cpp
-libcli_a_SOURCES += cli/cmd_config.hpp
-libcli_a_SOURCES += cli/cmd_db_exec.cpp
-libcli_a_SOURCES += cli/cmd_db_exec.hpp
-libcli_a_SOURCES += cli/cmd_db_migrate.cpp
-libcli_a_SOURCES += cli/cmd_db_migrate.hpp
-libcli_a_SOURCES += cli/cmd_debug.cpp
-libcli_a_SOURCES += cli/cmd_debug.hpp
-libcli_a_SOURCES += cli/cmd_help.cpp
-libcli_a_SOURCES += cli/cmd_help.hpp
-libcli_a_SOURCES += cli/cmd_list.cpp
-libcli_a_SOURCES += cli/cmd_list.hpp
-libcli_a_SOURCES += cli/cmd_report.cpp
-libcli_a_SOURCES += cli/cmd_report.hpp
-libcli_a_SOURCES += cli/cmd_report_html.cpp
-libcli_a_SOURCES += cli/cmd_report_html.hpp
-libcli_a_SOURCES += cli/cmd_report_junit.cpp
-libcli_a_SOURCES += cli/cmd_report_junit.hpp
-libcli_a_SOURCES += cli/cmd_test.cpp
-libcli_a_SOURCES += cli/cmd_test.hpp
-libcli_a_SOURCES += cli/common.cpp
-libcli_a_SOURCES += cli/common.hpp
-libcli_a_SOURCES += cli/common.ipp
-libcli_a_SOURCES += cli/config.cpp
-libcli_a_SOURCES += cli/config.hpp
-libcli_a_SOURCES += cli/main.cpp
-libcli_a_SOURCES += cli/main.hpp
-libcli_a_CPPFLAGS  = -DKYUA_CONFDIR="\"$(kyua_confdir)\""
-libcli_a_CPPFLAGS += -DKYUA_DOCDIR="\"$(docdir)\""
-libcli_a_CPPFLAGS += -DKYUA_MISCDIR="\"$(miscdir)\""
-libcli_a_CPPFLAGS += $(DRIVERS_CFLAGS)
-libcli_a_LIBADD = libutils.a
+noinst_LTLIBRARIES += libcli.la
+libcli_la_SOURCES  = cli/cmd_about.cpp
+libcli_la_SOURCES += cli/cmd_about.hpp
+libcli_la_SOURCES += cli/cmd_config.cpp
+libcli_la_SOURCES += cli/cmd_config.hpp
+libcli_la_SOURCES += cli/cmd_db_exec.cpp
+libcli_la_SOURCES += cli/cmd_db_exec.hpp
+libcli_la_SOURCES += cli/cmd_db_migrate.cpp
+libcli_la_SOURCES += cli/cmd_db_migrate.hpp
+libcli_la_SOURCES += cli/cmd_debug.cpp
+libcli_la_SOURCES += cli/cmd_debug.hpp
+libcli_la_SOURCES += cli/cmd_help.cpp
+libcli_la_SOURCES += cli/cmd_help.hpp
+libcli_la_SOURCES += cli/cmd_list.cpp
+libcli_la_SOURCES += cli/cmd_list.hpp
+libcli_la_SOURCES += cli/cmd_report.cpp
+libcli_la_SOURCES += cli/cmd_report.hpp
+libcli_la_SOURCES += cli/cmd_report_html.cpp
+libcli_la_SOURCES += cli/cmd_report_html.hpp
+libcli_la_SOURCES += cli/cmd_report_junit.cpp
+libcli_la_SOURCES += cli/cmd_report_junit.hpp
+libcli_la_SOURCES += cli/cmd_test.cpp
+libcli_la_SOURCES += cli/cmd_test.hpp
+libcli_la_SOURCES += cli/common.cpp
+libcli_la_SOURCES += cli/common.hpp
+libcli_la_SOURCES += cli/common.ipp
+libcli_la_SOURCES += cli/config.cpp
+libcli_la_SOURCES += cli/config.hpp
+libcli_la_SOURCES += cli/main.cpp
+libcli_la_SOURCES += cli/main.hpp
+libcli_la_CPPFLAGS  = -DKYUA_CONFDIR="\"$(kyua_confdir)\""
+libcli_la_CPPFLAGS += -DKYUA_DOCDIR="\"$(docdir)\""
+libcli_la_CPPFLAGS += -DKYUA_MISCDIR="\"$(miscdir)\""
+libcli_la_CPPFLAGS += $(DRIVERS_CFLAGS)
+libcli_la_LIBADD = libutils.la
 
 if WITH_ATF
 tests_clidir = $(pkgtestsdir)/cli
