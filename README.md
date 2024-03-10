@@ -52,7 +52,7 @@ wherever available:
 
 * OpenBSD with packages: install the `kyua` package with `pkg_add kyua`.
 
-* OS X (with Homebrew): install the `kyua` package with `brew install kyua`.
+* macOS (with Homebrew): install the `kyua` package with `brew install kyua`.
 
 Should you want to build and install Kyua from the source tree provided
 here, follow the instructions in the
