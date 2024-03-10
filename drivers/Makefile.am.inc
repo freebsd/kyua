@@ -28,21 +28,21 @@
 
 DRIVERS_CFLAGS = $(ENGINE_CFLAGS) $(STORE_CFLAGS) $(MODEL_CFLAGS) \
                  $(UTILS_CFLAGS)
-DRIVERS_LIBS = libdrivers.a $(ENGINE_LIBS) $(STORE_LIBS) $(MODEL_LIBS) \
+DRIVERS_LIBS = libdrivers.la $(ENGINE_LIBS) $(STORE_LIBS) $(MODEL_LIBS) \
                $(UTILS_LIBS)
 
-noinst_LIBRARIES += libdrivers.a
-libdrivers_a_CPPFLAGS = $(DRIVERS_CFLAGS)
-libdrivers_a_SOURCES  = drivers/debug_test.cpp
-libdrivers_a_SOURCES += drivers/debug_test.hpp
-libdrivers_a_SOURCES += drivers/list_tests.cpp
-libdrivers_a_SOURCES += drivers/list_tests.hpp
-libdrivers_a_SOURCES += drivers/report_junit.cpp
-libdrivers_a_SOURCES += drivers/report_junit.hpp
-libdrivers_a_SOURCES += drivers/run_tests.cpp
-libdrivers_a_SOURCES += drivers/run_tests.hpp
-libdrivers_a_SOURCES += drivers/scan_results.cpp
-libdrivers_a_SOURCES += drivers/scan_results.hpp
+noinst_LTLIBRARIES += libdrivers.la
+libdrivers_la_CPPFLAGS = $(DRIVERS_CFLAGS)
+libdrivers_la_SOURCES  = drivers/debug_test.cpp
+libdrivers_la_SOURCES += drivers/debug_test.hpp
+libdrivers_la_SOURCES += drivers/list_tests.cpp
+libdrivers_la_SOURCES += drivers/list_tests.hpp
+libdrivers_la_SOURCES += drivers/report_junit.cpp
+libdrivers_la_SOURCES += drivers/report_junit.hpp
+libdrivers_la_SOURCES += drivers/run_tests.cpp
+libdrivers_la_SOURCES += drivers/run_tests.hpp
+libdrivers_la_SOURCES += drivers/scan_results.cpp
+libdrivers_la_SOURCES += drivers/scan_results.hpp
 
 if WITH_ATF
 tests_driversdir = $(pkgtestsdir)/drivers

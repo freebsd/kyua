@@ -27,28 +27,28 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 MODEL_CFLAGS = $(UTILS_CFLAGS)
-MODEL_LIBS = libmodel.a $(UTILS_LIBS)
+MODEL_LIBS = libmodel.la $(UTILS_LIBS)
 
-noinst_LIBRARIES += libmodel.a
-libmodel_a_CPPFLAGS = $(UTILS_CFLAGS)
-libmodel_a_SOURCES  = model/context.cpp
-libmodel_a_SOURCES += model/context.hpp
-libmodel_a_SOURCES += model/context_fwd.hpp
-libmodel_a_SOURCES += model/exceptions.cpp
-libmodel_a_SOURCES += model/exceptions.hpp
-libmodel_a_SOURCES += model/metadata.cpp
-libmodel_a_SOURCES += model/metadata.hpp
-libmodel_a_SOURCES += model/metadata_fwd.hpp
-libmodel_a_SOURCES += model/test_case.cpp
-libmodel_a_SOURCES += model/test_case.hpp
-libmodel_a_SOURCES += model/test_case_fwd.hpp
-libmodel_a_SOURCES += model/test_program.cpp
-libmodel_a_SOURCES += model/test_program.hpp
-libmodel_a_SOURCES += model/test_program_fwd.hpp
-libmodel_a_SOURCES += model/test_result.cpp
-libmodel_a_SOURCES += model/test_result.hpp
-libmodel_a_SOURCES += model/test_result_fwd.hpp
-libmodel_a_SOURCES += model/types.hpp
+noinst_LTLIBRARIES += libmodel.la
+libmodel_la_CPPFLAGS = $(UTILS_CFLAGS)
+libmodel_la_SOURCES  = model/context.cpp
+libmodel_la_SOURCES += model/context.hpp
+libmodel_la_SOURCES += model/context_fwd.hpp
+libmodel_la_SOURCES += model/exceptions.cpp
+libmodel_la_SOURCES += model/exceptions.hpp
+libmodel_la_SOURCES += model/metadata.cpp
+libmodel_la_SOURCES += model/metadata.hpp
+libmodel_la_SOURCES += model/metadata_fwd.hpp
+libmodel_la_SOURCES += model/test_case.cpp
+libmodel_la_SOURCES += model/test_case.hpp
+libmodel_la_SOURCES += model/test_case_fwd.hpp
+libmodel_la_SOURCES += model/test_program.cpp
+libmodel_la_SOURCES += model/test_program.hpp
+libmodel_la_SOURCES += model/test_program_fwd.hpp
+libmodel_la_SOURCES += model/test_result.cpp
+libmodel_la_SOURCES += model/test_result.hpp
+libmodel_la_SOURCES += model/test_result_fwd.hpp
+libmodel_la_SOURCES += model/types.hpp
 
 if WITH_ATF
 tests_modeldir = $(pkgtestsdir)/model

@@ -26,32 +26,32 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-libutils_a_SOURCES += utils/cmdline/base_command.cpp
-libutils_a_SOURCES += utils/cmdline/base_command.hpp
-libutils_a_SOURCES += utils/cmdline/base_command_fwd.hpp
-libutils_a_SOURCES += utils/cmdline/base_command.ipp
-libutils_a_SOURCES += utils/cmdline/commands_map.hpp
-libutils_a_SOURCES += utils/cmdline/commands_map_fwd.hpp
-libutils_a_SOURCES += utils/cmdline/commands_map.ipp
-libutils_a_SOURCES += utils/cmdline/exceptions.cpp
-libutils_a_SOURCES += utils/cmdline/exceptions.hpp
-libutils_a_SOURCES += utils/cmdline/globals.cpp
-libutils_a_SOURCES += utils/cmdline/globals.hpp
-libutils_a_SOURCES += utils/cmdline/options.cpp
-libutils_a_SOURCES += utils/cmdline/options.hpp
-libutils_a_SOURCES += utils/cmdline/options_fwd.hpp
-libutils_a_SOURCES += utils/cmdline/parser.cpp
-libutils_a_SOURCES += utils/cmdline/parser.hpp
-libutils_a_SOURCES += utils/cmdline/parser_fwd.hpp
-libutils_a_SOURCES += utils/cmdline/parser.ipp
-libutils_a_SOURCES += utils/cmdline/ui.cpp
-libutils_a_SOURCES += utils/cmdline/ui.hpp
-libutils_a_SOURCES += utils/cmdline/ui_fwd.hpp
+libutils_la_SOURCES += utils/cmdline/base_command.cpp
+libutils_la_SOURCES += utils/cmdline/base_command.hpp
+libutils_la_SOURCES += utils/cmdline/base_command_fwd.hpp
+libutils_la_SOURCES += utils/cmdline/base_command.ipp
+libutils_la_SOURCES += utils/cmdline/commands_map.hpp
+libutils_la_SOURCES += utils/cmdline/commands_map_fwd.hpp
+libutils_la_SOURCES += utils/cmdline/commands_map.ipp
+libutils_la_SOURCES += utils/cmdline/exceptions.cpp
+libutils_la_SOURCES += utils/cmdline/exceptions.hpp
+libutils_la_SOURCES += utils/cmdline/globals.cpp
+libutils_la_SOURCES += utils/cmdline/globals.hpp
+libutils_la_SOURCES += utils/cmdline/options.cpp
+libutils_la_SOURCES += utils/cmdline/options.hpp
+libutils_la_SOURCES += utils/cmdline/options_fwd.hpp
+libutils_la_SOURCES += utils/cmdline/parser.cpp
+libutils_la_SOURCES += utils/cmdline/parser.hpp
+libutils_la_SOURCES += utils/cmdline/parser_fwd.hpp
+libutils_la_SOURCES += utils/cmdline/parser.ipp
+libutils_la_SOURCES += utils/cmdline/ui.cpp
+libutils_la_SOURCES += utils/cmdline/ui.hpp
+libutils_la_SOURCES += utils/cmdline/ui_fwd.hpp
 # The following two files are only supposed to be used from test code.  They
-# should not be bundled into libutils.a, but doing so simplifies the build
+# should not be bundled into libutils.la, but doing so simplifies the build
 # significantly.
-libutils_a_SOURCES += utils/cmdline/ui_mock.hpp
-libutils_a_SOURCES += utils/cmdline/ui_mock.cpp
+libutils_la_SOURCES += utils/cmdline/ui_mock.hpp
+libutils_la_SOURCES += utils/cmdline/ui_mock.cpp
 
 if WITH_ATF
 tests_utils_cmdlinedir = $(pkgtestsdir)/utils/cmdline

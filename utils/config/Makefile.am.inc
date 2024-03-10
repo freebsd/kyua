@@ -29,25 +29,25 @@
 UTILS_CFLAGS += $(LUTOK_CFLAGS)
 UTILS_LIBS += $(LUTOK_LIBS)
 
-libutils_a_CPPFLAGS += $(LUTOK_CFLAGS)
-libutils_a_SOURCES += utils/config/exceptions.cpp
-libutils_a_SOURCES += utils/config/exceptions.hpp
-libutils_a_SOURCES += utils/config/keys.cpp
-libutils_a_SOURCES += utils/config/keys.hpp
-libutils_a_SOURCES += utils/config/keys_fwd.hpp
-libutils_a_SOURCES += utils/config/lua_module.cpp
-libutils_a_SOURCES += utils/config/lua_module.hpp
-libutils_a_SOURCES += utils/config/nodes.cpp
-libutils_a_SOURCES += utils/config/nodes.hpp
-libutils_a_SOURCES += utils/config/nodes.ipp
-libutils_a_SOURCES += utils/config/nodes_fwd.hpp
-libutils_a_SOURCES += utils/config/parser.cpp
-libutils_a_SOURCES += utils/config/parser.hpp
-libutils_a_SOURCES += utils/config/parser_fwd.hpp
-libutils_a_SOURCES += utils/config/tree.cpp
-libutils_a_SOURCES += utils/config/tree.hpp
-libutils_a_SOURCES += utils/config/tree.ipp
-libutils_a_SOURCES += utils/config/tree_fwd.hpp
+libutils_la_CPPFLAGS += $(LUTOK_CFLAGS)
+libutils_la_SOURCES += utils/config/exceptions.cpp
+libutils_la_SOURCES += utils/config/exceptions.hpp
+libutils_la_SOURCES += utils/config/keys.cpp
+libutils_la_SOURCES += utils/config/keys.hpp
+libutils_la_SOURCES += utils/config/keys_fwd.hpp
+libutils_la_SOURCES += utils/config/lua_module.cpp
+libutils_la_SOURCES += utils/config/lua_module.hpp
+libutils_la_SOURCES += utils/config/nodes.cpp
+libutils_la_SOURCES += utils/config/nodes.hpp
+libutils_la_SOURCES += utils/config/nodes.ipp
+libutils_la_SOURCES += utils/config/nodes_fwd.hpp
+libutils_la_SOURCES += utils/config/parser.cpp
+libutils_la_SOURCES += utils/config/parser.hpp
+libutils_la_SOURCES += utils/config/parser_fwd.hpp
+libutils_la_SOURCES += utils/config/tree.cpp
+libutils_la_SOURCES += utils/config/tree.hpp
+libutils_la_SOURCES += utils/config/tree.ipp
+libutils_la_SOURCES += utils/config/tree_fwd.hpp
 
 if WITH_ATF
 tests_utils_configdir = $(pkgtestsdir)/utils/config
