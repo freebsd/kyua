@@ -32,7 +32,7 @@ To build and use Kyua successfully you need:
 
 * A standards-compliant C and C++ complier.
 * Lutok 0.4.
-* pkg-config.
+* pkgconf or pkg-config.
 * SQLite 3.6.22.
 
 To build the Kyua tests, you optionally need:
