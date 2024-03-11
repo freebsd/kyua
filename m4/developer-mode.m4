@@ -67,7 +67,7 @@ AC_DEFUN([KYUA_DEVELOPER_MODE], [
     # Reasons given below.
     #
     # -Wold-style-cast: Raises errors when using TIOCGWINSZ, at least under
-    #                   Mac OS X.  This is due to the way _IOR is defined.
+    #                   macOS.  This is due to the way _IOR is defined.
     #
 
     try_c_cxx_flags="-D_FORTIFY_SOURCE=2 \
