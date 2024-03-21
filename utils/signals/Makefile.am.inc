@@ -26,19 +26,19 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-libutils_a_SOURCES += utils/signals/exceptions.cpp
-libutils_a_SOURCES += utils/signals/exceptions.hpp
-libutils_a_SOURCES += utils/signals/interrupts.cpp
-libutils_a_SOURCES += utils/signals/interrupts.hpp
-libutils_a_SOURCES += utils/signals/interrupts_fwd.hpp
-libutils_a_SOURCES += utils/signals/misc.cpp
-libutils_a_SOURCES += utils/signals/misc.hpp
-libutils_a_SOURCES += utils/signals/programmer.cpp
-libutils_a_SOURCES += utils/signals/programmer.hpp
-libutils_a_SOURCES += utils/signals/programmer_fwd.hpp
-libutils_a_SOURCES += utils/signals/timer.cpp
-libutils_a_SOURCES += utils/signals/timer.hpp
-libutils_a_SOURCES += utils/signals/timer_fwd.hpp
+libutils_la_SOURCES += utils/signals/exceptions.cpp
+libutils_la_SOURCES += utils/signals/exceptions.hpp
+libutils_la_SOURCES += utils/signals/interrupts.cpp
+libutils_la_SOURCES += utils/signals/interrupts.hpp
+libutils_la_SOURCES += utils/signals/interrupts_fwd.hpp
+libutils_la_SOURCES += utils/signals/misc.cpp
+libutils_la_SOURCES += utils/signals/misc.hpp
+libutils_la_SOURCES += utils/signals/programmer.cpp
+libutils_la_SOURCES += utils/signals/programmer.hpp
+libutils_la_SOURCES += utils/signals/programmer_fwd.hpp
+libutils_la_SOURCES += utils/signals/timer.cpp
+libutils_la_SOURCES += utils/signals/timer.hpp
+libutils_la_SOURCES += utils/signals/timer_fwd.hpp
 
 if WITH_ATF
 tests_utils_signalsdir = $(pkgtestsdir)/utils/signals

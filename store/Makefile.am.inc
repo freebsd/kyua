@@ -27,35 +27,35 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 STORE_CFLAGS = $(MODEL_CFLAGS) $(UTILS_CFLAGS)
-STORE_LIBS = libstore.a $(MODEL_LIBS) $(UTILS_LIBS)
+STORE_LIBS = libstore.la $(MODEL_LIBS) $(UTILS_LIBS)
 
-noinst_LIBRARIES += libstore.a
-libstore_a_CPPFLAGS  = -DKYUA_STOREDIR=\"$(storedir)\"
-libstore_a_CPPFLAGS += $(UTILS_CFLAGS)
-libstore_a_SOURCES  = store/dbtypes.cpp
-libstore_a_SOURCES += store/dbtypes.hpp
-libstore_a_SOURCES += store/exceptions.cpp
-libstore_a_SOURCES += store/exceptions.hpp
-libstore_a_SOURCES += store/layout.cpp
-libstore_a_SOURCES += store/layout.hpp
-libstore_a_SOURCES += store/layout_fwd.hpp
-libstore_a_SOURCES += store/metadata.cpp
-libstore_a_SOURCES += store/metadata.hpp
-libstore_a_SOURCES += store/metadata_fwd.hpp
-libstore_a_SOURCES += store/migrate.cpp
-libstore_a_SOURCES += store/migrate.hpp
-libstore_a_SOURCES += store/read_backend.cpp
-libstore_a_SOURCES += store/read_backend.hpp
-libstore_a_SOURCES += store/read_backend_fwd.hpp
-libstore_a_SOURCES += store/read_transaction.cpp
-libstore_a_SOURCES += store/read_transaction.hpp
-libstore_a_SOURCES += store/read_transaction_fwd.hpp
-libstore_a_SOURCES += store/write_backend.cpp
-libstore_a_SOURCES += store/write_backend.hpp
-libstore_a_SOURCES += store/write_backend_fwd.hpp
-libstore_a_SOURCES += store/write_transaction.cpp
-libstore_a_SOURCES += store/write_transaction.hpp
-libstore_a_SOURCES += store/write_transaction_fwd.hpp
+noinst_LTLIBRARIES += libstore.la
+libstore_la_CPPFLAGS  = -DKYUA_STOREDIR=\"$(storedir)\"
+libstore_la_CPPFLAGS += $(UTILS_CFLAGS)
+libstore_la_SOURCES  = store/dbtypes.cpp
+libstore_la_SOURCES += store/dbtypes.hpp
+libstore_la_SOURCES += store/exceptions.cpp
+libstore_la_SOURCES += store/exceptions.hpp
+libstore_la_SOURCES += store/layout.cpp
+libstore_la_SOURCES += store/layout.hpp
+libstore_la_SOURCES += store/layout_fwd.hpp
+libstore_la_SOURCES += store/metadata.cpp
+libstore_la_SOURCES += store/metadata.hpp
+libstore_la_SOURCES += store/metadata_fwd.hpp
+libstore_la_SOURCES += store/migrate.cpp
+libstore_la_SOURCES += store/migrate.hpp
+libstore_la_SOURCES += store/read_backend.cpp
+libstore_la_SOURCES += store/read_backend.hpp
+libstore_la_SOURCES += store/read_backend_fwd.hpp
+libstore_la_SOURCES += store/read_transaction.cpp
+libstore_la_SOURCES += store/read_transaction.hpp
+libstore_la_SOURCES += store/read_transaction_fwd.hpp
+libstore_la_SOURCES += store/write_backend.cpp
+libstore_la_SOURCES += store/write_backend.hpp
+libstore_la_SOURCES += store/write_backend_fwd.hpp
+libstore_la_SOURCES += store/write_transaction.cpp
+libstore_la_SOURCES += store/write_transaction.hpp
+libstore_la_SOURCES += store/write_transaction_fwd.hpp
 
 dist_store_DATA  = store/migrate_v1_v2.sql
 dist_store_DATA += store/migrate_v2_v3.sql

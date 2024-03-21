@@ -26,20 +26,20 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-libutils_a_SOURCES += utils/text/exceptions.cpp
-libutils_a_SOURCES += utils/text/exceptions.hpp
-libutils_a_SOURCES += utils/text/operations.cpp
-libutils_a_SOURCES += utils/text/operations.hpp
-libutils_a_SOURCES += utils/text/operations.ipp
-libutils_a_SOURCES += utils/text/regex.cpp
-libutils_a_SOURCES += utils/text/regex.hpp
-libutils_a_SOURCES += utils/text/regex_fwd.hpp
-libutils_a_SOURCES += utils/text/table.cpp
-libutils_a_SOURCES += utils/text/table.hpp
-libutils_a_SOURCES += utils/text/table_fwd.hpp
-libutils_a_SOURCES += utils/text/templates.cpp
-libutils_a_SOURCES += utils/text/templates.hpp
-libutils_a_SOURCES += utils/text/templates_fwd.hpp
+libutils_la_SOURCES += utils/text/exceptions.cpp
+libutils_la_SOURCES += utils/text/exceptions.hpp
+libutils_la_SOURCES += utils/text/operations.cpp
+libutils_la_SOURCES += utils/text/operations.hpp
+libutils_la_SOURCES += utils/text/operations.ipp
+libutils_la_SOURCES += utils/text/regex.cpp
+libutils_la_SOURCES += utils/text/regex.hpp
+libutils_la_SOURCES += utils/text/regex_fwd.hpp
+libutils_la_SOURCES += utils/text/table.cpp
+libutils_la_SOURCES += utils/text/table.hpp
+libutils_la_SOURCES += utils/text/table_fwd.hpp
+libutils_la_SOURCES += utils/text/templates.cpp
+libutils_la_SOURCES += utils/text/templates.hpp
+libutils_la_SOURCES += utils/text/templates_fwd.hpp
 
 if WITH_ATF
 tests_utils_textdir = $(pkgtestsdir)/utils/text

@@ -42,6 +42,7 @@ AC_CONFIG_TESTDIR([bootstrap])
 
 AM_INIT_AUTOMAKE([1.9 foreign subdir-objects -Wall])
 
+LT_INIT
 
 AC_LANG([C++])
 AC_PROG_CXX
