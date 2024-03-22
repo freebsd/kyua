@@ -215,6 +215,7 @@ public:
 
     exit_handle wait(const exec_handle);
     exit_handle wait_any(void);
+    exit_handle reap(const int);
 
     void check_interrupt(void) const;
 };

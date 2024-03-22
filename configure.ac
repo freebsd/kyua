@@ -169,5 +169,6 @@ fi
 AM_CONDITIONAL(TARGET_SRCDIR_EMPTY, [test -z "${target_srcdir}"])
 AC_SUBST([target_srcdir])
 
+AM_CONDITIONAL([FreeBSD], [test "$(uname -o)" = "FreeBSD"])
 
 AC_OUTPUT

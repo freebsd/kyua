@@ -153,3 +153,5 @@ engine_scheduler_test_SOURCES = engine/scheduler_test.cpp
 engine_scheduler_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
 engine_scheduler_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 endif
+
+include engine/execenv/Makefile.am.inc

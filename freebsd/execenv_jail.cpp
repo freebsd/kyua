@@ -1,5 +1,4 @@
-// Copyright 2010 The Kyua Authors.
-// All rights reserved.
+// Copyright (c) 2024 Igor Ostapenko <pm@igoro.pro>
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
@@ -26,28 +25,52 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "cli/main.hpp"
-#include "freebsd/main.hpp"
+#include "freebsd/execenv_jail.hpp"
+
+#include "freebsd/utils/jail.hpp"
+#include "model/metadata.hpp"
+#include "model/test_case.hpp"
+#include "utils/fs/path.hpp"
+
+using freebsd::utils::jail;
 
 
-/// Program entry point.
-///
-/// The whole purpose of this extremely-simple function is to delegate execution
-/// to an internal module that does not contain a proper ::main() function.
-/// This is to allow unit-testing of the internal code.
-///
-/// \param argc The number of arguments passed on the command line.
-/// \param argv NULL-terminated array containing the command line arguments.
-///
-/// \return 0 on success, some other integer on error.
-///
-/// \throw std::exception This throws any uncaught exception.  Such exceptions
-///     are bugs, but we let them propagate so that the runtime will abort and
-///     dump core.
-int
-main(const int argc, const char* const* const argv)
+namespace freebsd {
+
+
+bool execenv_jail_supported = true;
+
+
+void
+execenv_jail::init() const
 {
-    freebsd::main(argc, argv);
+    auto test_case = _test_program.find(_test_case_name);
 
-    return cli::main(argc, argv);
+    jail().create(
+        jail().make_name(_test_program.absolute_path(), _test_case_name),
+        test_case.get_metadata().execenv_jail()
+    );
 }
+
+
+void
+execenv_jail::cleanup() const
+{
+    jail().remove(
+        jail().make_name(_test_program.absolute_path(), _test_case_name)
+    );
+}
+
+
+void
+execenv_jail::exec(const args_vector& args) const
+{
+    jail().exec(
+        jail().make_name(_test_program.absolute_path(), _test_case_name),
+        _test_program.absolute_path(),
+        args
+    );
+}
+
+
+}  // namespace freebsd
