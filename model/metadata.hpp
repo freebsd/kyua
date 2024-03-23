@@ -69,6 +69,9 @@ public:
     const std::string& description(void) const;
     bool has_cleanup(void) const;
     bool is_exclusive(void) const;
+    const std::string& execenv(void) const;
+    bool has_execenv(void) const;
+    const std::string& execenv_jail(void) const;
     const strings_set& required_configs(void) const;
     const utils::units::bytes& required_disk_space(void) const;
     const paths_set& required_files(void) const;
@@ -112,6 +115,8 @@ public:
     metadata_builder& set_description(const std::string&);
     metadata_builder& set_has_cleanup(const bool);
     metadata_builder& set_is_exclusive(const bool);
+    metadata_builder& set_execenv(const std::string&);
+    metadata_builder& set_execenv_jail(const std::string&);
     metadata_builder& set_required_configs(const strings_set&);
     metadata_builder& set_required_disk_space(const utils::units::bytes&);
     metadata_builder& set_required_files(const paths_set&);
