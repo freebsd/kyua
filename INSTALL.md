@@ -1,5 +1,4 @@
-Installation instructions
-=========================
+# Installation instructions
 
 Kyua uses the GNU Automake, GNU Autoconf and GNU Libtool utilities as
 its build system.  These are used only when compiling the application
@@ -25,8 +24,7 @@ Or alternatively, install as a regular user into your home directory:
     $ make installcheck
 
 
-Dependencies
-------------
+## Dependencies
 
 To build and use Kyua successfully you need:
 
@@ -48,8 +46,7 @@ need the following tools:
 * GNU Libtool.
 
 
-Regenerating the build system
------------------------------
+## Regenerating the build system
 
 This is not necessary if you are building from a formal release
 distribution file.
@@ -72,8 +69,7 @@ the appropriate path:
     $ autoreconf -i -s -I <atf-prefix>/share/aclocal
 
 
-General build procedure
------------------------
+## General build procedure
 
 To build and install the source package, you must follow these steps:
 
@@ -102,8 +98,7 @@ To build and install the source package, you must follow these steps:
    not, some checks will be skipped.
 
 
-Configuration flags
--------------------
+## Configuration flags
 
 The most common, standard flags given to `configure` are:
 
@@ -227,8 +222,7 @@ The following flags are specific to Kyua's `configure` script:
   binary, which must exist.
 
 
-Post-installation steps
------------------------
+## Post-installation steps
 
 Copy the `Kyuafile.top` file installed in the examples directory to the
 root of your tests hierarchy and name it `Kyuafile`.  For example:
@@ -240,8 +234,7 @@ This will allow you to simply go into `/usr/tests` and run the tests
 from there.
 
 
-Run the tests!
---------------
+## Run the tests!
 
 Lastly, after a successful installation, you should periodically run the
 tests from the final location to ensure things remain stable.  Do so as
@@ -261,8 +254,7 @@ suite and can be given to Kyua with arguments of the form
   dump core.  Such tests are particularly slow on macOS, and it is
   sometimes handy to disable them for quicker development iteration.
 
-If you see any tests fail, do not hesitate to report them in:
-
-    https://github.com/jmmv/kyua/issues/
+If you see any tests fail, do not hesitate to report them on
+[GitHub issues](https://github.com/freebsd/kyua/issues/).
 
 Thank you!

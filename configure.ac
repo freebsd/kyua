@@ -63,16 +63,16 @@ AC_PROG_RANLIB
 
 
 m4_ifndef([PKG_CHECK_MODULES],
-    [m4_fatal([Cannot find pkg.m4; see the INSTALL document for help])])
+    [m4_fatal([Cannot find pkg.m4; see the INSTALL.md document for help])])
 
 m4_ifndef([ATF_CHECK_CXX],
-    [m4_fatal([Cannot find atf-c++.m4; see the INSTALL document for help])])
+    [m4_fatal([Cannot find atf-c++.m4; see the INSTALL.md document for help])])
 ATF_CHECK_CXX([>= 0.17])
 m4_ifndef([ATF_CHECK_SH],
-    [m4_fatal([Cannot find atf-sh.m4; see the INSTALL document for help])])
+    [m4_fatal([Cannot find atf-sh.m4; see the INSTALL.md document for help])])
 ATF_CHECK_SH([>= 0.15])
 m4_ifndef([ATF_ARG_WITH],
-    [m4_fatal([Cannot find atf-common.m4; see the INSTALL document for help])])
+    [m4_fatal([Cannot find atf-common.m4; see the INSTALL.md document for help])])
 ATF_ARG_WITH
 
 PKG_CHECK_MODULES([LUTOK], [lutok >= 0.4],
