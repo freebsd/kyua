@@ -1,5 +1,9 @@
 # Major changes between releases
 
+## Changes in version 0.15
+
+* Issue #203: add initial GoogleTest support.
+
 ## Changes in version 0.14.1
 
 **Released on March 29th, 2025.**
