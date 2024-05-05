@@ -74,7 +74,7 @@ install_from_github() {
 
     local distname="${name}-${release}"
 
-    local baseurl="https://github.com/jmmv/${name}"
+    local baseurl="https://github.com/freebsd/${name}"
     wget --no-check-certificate \
         "${baseurl}/releases/download/${distname}/${distname}.tar.gz"
     tar -xzvf "${distname}.tar.gz"
