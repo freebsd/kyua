@@ -42,8 +42,8 @@ AC_CONFIG_TESTDIR([bootstrap])
 
 AM_INIT_AUTOMAKE([1.9 foreign subdir-objects -Wall])
 
-
 AC_LANG([C++])
+AC_PROG_AR
 AC_PROG_CXX
 AX_CXX_COMPILE_STDCXX([11], [noext], [mandatory])
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
@@ -58,9 +58,7 @@ KYUA_MEMORY
 AC_CHECK_FUNCS([putenv setenv unsetenv])
 AC_CHECK_HEADERS([termios.h])
 
-
-AC_PROG_RANLIB
-
+LT_INIT
 
 m4_ifndef([PKG_CHECK_MODULES],
     [m4_fatal([Cannot find pkg.m4; see the INSTALL.md document for help])])

@@ -26,35 +26,35 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-libutils_a_SOURCES += utils/process/child.cpp
-libutils_a_SOURCES += utils/process/child.hpp
-libutils_a_SOURCES += utils/process/child.ipp
-libutils_a_SOURCES += utils/process/child_fwd.hpp
-libutils_a_SOURCES += utils/process/deadline_killer.cpp
-libutils_a_SOURCES += utils/process/deadline_killer.hpp
-libutils_a_SOURCES += utils/process/deadline_killer_fwd.hpp
-libutils_a_SOURCES += utils/process/exceptions.cpp
-libutils_a_SOURCES += utils/process/exceptions.hpp
-libutils_a_SOURCES += utils/process/executor.cpp
-libutils_a_SOURCES += utils/process/executor.hpp
-libutils_a_SOURCES += utils/process/executor.ipp
-libutils_a_SOURCES += utils/process/executor_fwd.hpp
-libutils_a_SOURCES += utils/process/fdstream.cpp
-libutils_a_SOURCES += utils/process/fdstream.hpp
-libutils_a_SOURCES += utils/process/fdstream_fwd.hpp
-libutils_a_SOURCES += utils/process/isolation.cpp
-libutils_a_SOURCES += utils/process/isolation.hpp
-libutils_a_SOURCES += utils/process/operations.cpp
-libutils_a_SOURCES += utils/process/operations.hpp
-libutils_a_SOURCES += utils/process/operations_fwd.hpp
-libutils_a_SOURCES += utils/process/status.cpp
-libutils_a_SOURCES += utils/process/status.hpp
-libutils_a_SOURCES += utils/process/status_fwd.hpp
-libutils_a_SOURCES += utils/process/system.cpp
-libutils_a_SOURCES += utils/process/system.hpp
-libutils_a_SOURCES += utils/process/systembuf.cpp
-libutils_a_SOURCES += utils/process/systembuf.hpp
-libutils_a_SOURCES += utils/process/systembuf_fwd.hpp
+libutils_la_SOURCES += utils/process/child.cpp
+libutils_la_SOURCES += utils/process/child.hpp
+libutils_la_SOURCES += utils/process/child.ipp
+libutils_la_SOURCES += utils/process/child_fwd.hpp
+libutils_la_SOURCES += utils/process/deadline_killer.cpp
+libutils_la_SOURCES += utils/process/deadline_killer.hpp
+libutils_la_SOURCES += utils/process/deadline_killer_fwd.hpp
+libutils_la_SOURCES += utils/process/exceptions.cpp
+libutils_la_SOURCES += utils/process/exceptions.hpp
+libutils_la_SOURCES += utils/process/executor.cpp
+libutils_la_SOURCES += utils/process/executor.hpp
+libutils_la_SOURCES += utils/process/executor.ipp
+libutils_la_SOURCES += utils/process/executor_fwd.hpp
+libutils_la_SOURCES += utils/process/fdstream.cpp
+libutils_la_SOURCES += utils/process/fdstream.hpp
+libutils_la_SOURCES += utils/process/fdstream_fwd.hpp
+libutils_la_SOURCES += utils/process/isolation.cpp
+libutils_la_SOURCES += utils/process/isolation.hpp
+libutils_la_SOURCES += utils/process/operations.cpp
+libutils_la_SOURCES += utils/process/operations.hpp
+libutils_la_SOURCES += utils/process/operations_fwd.hpp
+libutils_la_SOURCES += utils/process/status.cpp
+libutils_la_SOURCES += utils/process/status.hpp
+libutils_la_SOURCES += utils/process/status_fwd.hpp
+libutils_la_SOURCES += utils/process/system.cpp
+libutils_la_SOURCES += utils/process/system.hpp
+libutils_la_SOURCES += utils/process/systembuf.cpp
+libutils_la_SOURCES += utils/process/systembuf.hpp
+libutils_la_SOURCES += utils/process/systembuf_fwd.hpp
 
 if WITH_ATF
 tests_utils_processdir = $(pkgtestsdir)/utils/process

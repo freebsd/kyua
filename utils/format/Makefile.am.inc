@@ -26,15 +26,15 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-libutils_a_SOURCES += utils/format/containers.hpp
-libutils_a_SOURCES += utils/format/containers.ipp
-libutils_a_SOURCES += utils/format/exceptions.cpp
-libutils_a_SOURCES += utils/format/exceptions.hpp
-libutils_a_SOURCES += utils/format/formatter.cpp
-libutils_a_SOURCES += utils/format/formatter.hpp
-libutils_a_SOURCES += utils/format/formatter_fwd.hpp
-libutils_a_SOURCES += utils/format/formatter.ipp
-libutils_a_SOURCES += utils/format/macros.hpp
+libutils_la_SOURCES += utils/format/containers.hpp
+libutils_la_SOURCES += utils/format/containers.ipp
+libutils_la_SOURCES += utils/format/exceptions.cpp
+libutils_la_SOURCES += utils/format/exceptions.hpp
+libutils_la_SOURCES += utils/format/formatter.cpp
+libutils_la_SOURCES += utils/format/formatter.hpp
+libutils_la_SOURCES += utils/format/formatter_fwd.hpp
+libutils_la_SOURCES += utils/format/formatter.ipp
+libutils_la_SOURCES += utils/format/macros.hpp
 
 if WITH_ATF
 tests_utils_formatdir = $(pkgtestsdir)/utils/format
