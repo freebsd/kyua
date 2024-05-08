@@ -27,7 +27,7 @@ dnl (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 dnl OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 AC_INIT([Kyua], [0.14], [kyua-discuss@googlegroups.com], [kyua],
-        [https://github.com/jmmv/kyua/])
+        [https://github.com/freebsd/kyua/])
 AC_PREREQ([2.65])
 
 
