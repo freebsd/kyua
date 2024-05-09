@@ -196,13 +196,22 @@ parse_result(sqlite::statement& stmt, const char* type_column,
     try {
         const model::test_result_type type =
             store::column_test_result_type(stmt, type_column);
-        if (type == model::test_result_passed) {
+        switch (type) {
+        case model::test_result_passed:
             if (stmt.column_type(stmt.column_id(reason_column)) !=
                 sqlite::type_null)
                 throw store::integrity_error("Result of type 'passed' has a "
                                              "non-NULL reason");
             return model::test_result(type);
-        } else {
+        /// Some test interfaces don't have to provide a reason when skipping a
+        /// test, e.g., Google Test.
+        case model::test_result_skipped:
+            if (stmt.column_type(stmt.column_id(reason_column)) ==
+                sqlite::type_null) {
+                return model::test_result(type);
+            }
+            // FALLTHROUGH
+        default:
             return model::test_result(type,
                                       stmt.safe_column_text(reason_column));
         }
