@@ -26,11 +26,11 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-ENGINE_CFLAGS = $(STORE_CFLAGS) $(MODEL_CFLAGS) $(UTILS_CFLAGS)
-ENGINE_LIBS = libengine.la $(STORE_LIBS) $(MODEL_LIBS) $(UTILS_LIBS)
+ENGINE_CFLAGS = $(STORE_CFLAGS) $(MODEL_CFLAGS) $(UTILS_CFLAGS) $(ENGINE_EXECENV_CFLAGS)
+ENGINE_LIBS = libengine.la $(STORE_LIBS) $(MODEL_LIBS) $(UTILS_LIBS) $(ENGINE_EXECENV_LIBS)
 
 noinst_LTLIBRARIES += libengine.la
-libengine_la_CPPFLAGS  = $(STORE_CFLAGS) $(UTILS_CFLAGS)
+libengine_la_CPPFLAGS  = $(STORE_CFLAGS) $(UTILS_CFLAGS) $(ENGINE_EXECENV_CFLAGS)
 libengine_la_SOURCES  = engine/atf.cpp
 libengine_la_SOURCES += engine/atf.hpp
 libengine_la_SOURCES += engine/atf_list.cpp
@@ -153,3 +153,5 @@ engine_scheduler_test_SOURCES = engine/scheduler_test.cpp
 engine_scheduler_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
 engine_scheduler_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 endif
+
+include engine/execenv/Makefile.am.inc
