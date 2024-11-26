@@ -28,7 +28,7 @@ Or alternatively, install as a regular user into your home directory:
 
 To build and use Kyua successfully you need:
 
-* A standards-compliant C and C++ complier.
+* A standards-compliant C and C++ compiler.
 * Lutok 0.4.
 * `pkg-config` or an equivalent tool like `pkgconf`.
 * SQLite 3.6.22.
