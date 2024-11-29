@@ -69,28 +69,33 @@ Abort trap (core dumped)
 
 #include <sys/stat.h>
 
-#include <atf-c++.hpp>
+#include <atf-c.h>
 
+#include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
-#include <cerrno>
-#include <cstring>
-
 void
-leak_work_dir()
+leak_work_dir(void)
 {
 	int fd;
 
-	ATF_REQUIRE((fd = open("unforgettable", O_CREAT|O_EXCL|O_WRONLY, 0600))
-	    >= 0);
-	ATF_REQUIRE_EQ(0, fchflags(fd, UF_NOUNLINK));
+	fd = open("unforgettable", O_CREAT|O_EXCL|O_WRONLY, 0600);
+	ATF_REQUIRE_MSG(fd != -1,
+	    "open(..., O_CREAT|O_EXCL|O_WRONLY, 0600) failed unexpectedly: %s",
+	    strerror(errno));
+	ATF_REQUIRE_EQ_MSG(0, fchflags(fd, SF_NOUNLINK),
+	    "fchflags(..., UF_NOUNLINK): failed unexpectedly: %s",
+	    strerror(errno));
 	ATF_REQUIRE_EQ(0, close(fd));
 }
 
 void
-wrap_pids()
+wrap_pids(void)
 {
 	pid_t begin, current, target;
 	bool wrapped;
@@ -119,90 +124,87 @@ wrap_pids()
 }
 
 void
-test_work_dir_reuse()
+test_work_dir_reuse(void)
 {
 	// If kyua is built with debugging, it would abort here before the fix.
 }
 
 void
-clean_up()
+clean_up(void)
 {
-	(void)system("chflags -R nouunlink ../..");
+	(void)system("chflags -R nosunlink ../..");
 }
 
-ATF_TEST_CASE_WITHOUT_HEAD(leak_0);
-ATF_TEST_CASE_BODY(leak_0) { leak_work_dir(); }
-ATF_TEST_CASE_WITHOUT_HEAD(leak_1);
-ATF_TEST_CASE_BODY(leak_1) { leak_work_dir(); }
-ATF_TEST_CASE_WITHOUT_HEAD(leak_2);
-ATF_TEST_CASE_BODY(leak_2) { leak_work_dir(); }
-ATF_TEST_CASE_WITHOUT_HEAD(leak_3);
-ATF_TEST_CASE_BODY(leak_3) { leak_work_dir(); }
-ATF_TEST_CASE_WITHOUT_HEAD(leak_4);
-ATF_TEST_CASE_BODY(leak_4) { leak_work_dir(); }
-ATF_TEST_CASE_WITHOUT_HEAD(leak_5);
-ATF_TEST_CASE_BODY(leak_5) { leak_work_dir(); }
-ATF_TEST_CASE_WITHOUT_HEAD(leak_6);
-ATF_TEST_CASE_BODY(leak_6) { leak_work_dir(); }
-ATF_TEST_CASE_WITHOUT_HEAD(leak_7);
-ATF_TEST_CASE_BODY(leak_7) { leak_work_dir(); }
-ATF_TEST_CASE_WITHOUT_HEAD(leak_8);
-ATF_TEST_CASE_BODY(leak_8) { leak_work_dir(); }
-ATF_TEST_CASE_WITHOUT_HEAD(leak_9);
-ATF_TEST_CASE_BODY(leak_9) { leak_work_dir(); }
+#define	LEAK_WORKDIR_TC(name) 		\
+	ATF_TC_WITHOUT_HEAD(name);	\
+	ATF_TC_BODY(name, tc) { 	\
+		leak_work_dir(); 	\
+	}
 
-ATF_TEST_CASE_WITHOUT_HEAD(pid_wrap);
-ATF_TEST_CASE_BODY(pid_wrap) { wrap_pids(); }
+LEAK_WORKDIR_TC(leak_0)
+LEAK_WORKDIR_TC(leak_1)
+LEAK_WORKDIR_TC(leak_2)
+LEAK_WORKDIR_TC(leak_3)
+LEAK_WORKDIR_TC(leak_4)
+LEAK_WORKDIR_TC(leak_5)
+LEAK_WORKDIR_TC(leak_6)
+LEAK_WORKDIR_TC(leak_7)
+LEAK_WORKDIR_TC(leak_8)
+LEAK_WORKDIR_TC(leak_9)
 
-ATF_TEST_CASE_WITHOUT_HEAD(pid_wrap_0);
-ATF_TEST_CASE_BODY(pid_wrap_0) { test_work_dir_reuse(); }
-ATF_TEST_CASE_WITHOUT_HEAD(pid_wrap_1);
-ATF_TEST_CASE_BODY(pid_wrap_1) { test_work_dir_reuse(); }
-ATF_TEST_CASE_WITHOUT_HEAD(pid_wrap_2);
-ATF_TEST_CASE_BODY(pid_wrap_2) { test_work_dir_reuse(); }
-ATF_TEST_CASE_WITHOUT_HEAD(pid_wrap_3);
-ATF_TEST_CASE_BODY(pid_wrap_3) { test_work_dir_reuse(); }
-ATF_TEST_CASE_WITHOUT_HEAD(pid_wrap_4);
-ATF_TEST_CASE_BODY(pid_wrap_4) { test_work_dir_reuse(); }
-ATF_TEST_CASE_WITHOUT_HEAD(pid_wrap_5);
-ATF_TEST_CASE_BODY(pid_wrap_5) { test_work_dir_reuse(); }
-ATF_TEST_CASE_WITHOUT_HEAD(pid_wrap_6);
-ATF_TEST_CASE_BODY(pid_wrap_6) { test_work_dir_reuse(); }
-ATF_TEST_CASE_WITHOUT_HEAD(pid_wrap_7);
-ATF_TEST_CASE_BODY(pid_wrap_7) { test_work_dir_reuse(); }
-ATF_TEST_CASE_WITHOUT_HEAD(pid_wrap_8);
-ATF_TEST_CASE_BODY(pid_wrap_8) { test_work_dir_reuse(); }
-ATF_TEST_CASE_WITHOUT_HEAD(pid_wrap_9);
-ATF_TEST_CASE_BODY(pid_wrap_9) { test_work_dir_reuse(); }
+ATF_TC_WITHOUT_HEAD(pid_wrap);
+ATF_TC_BODY(pid_wrap, tc) { wrap_pids(); }
 
-ATF_TEST_CASE_WITHOUT_HEAD(really_clean_up);
-ATF_TEST_CASE_BODY(really_clean_up) { clean_up(); }
+#define	PID_WRAP_TC(name) 		\
+	ATF_TC_WITHOUT_HEAD(name);	\
+	ATF_TC_BODY(name, tc) {		\
+		test_work_dir_reuse();	\
+	}
 
-ATF_INIT_TEST_CASES(tcs)
+PID_WRAP_TC(pid_wrap_0)
+PID_WRAP_TC(pid_wrap_1)
+PID_WRAP_TC(pid_wrap_2)
+PID_WRAP_TC(pid_wrap_3)
+PID_WRAP_TC(pid_wrap_4)
+PID_WRAP_TC(pid_wrap_5)
+PID_WRAP_TC(pid_wrap_6)
+PID_WRAP_TC(pid_wrap_7)
+PID_WRAP_TC(pid_wrap_8)
+PID_WRAP_TC(pid_wrap_9)
+
+ATF_TC_WITHOUT_HEAD(really_clean_up);
+ATF_TC_BODY(really_clean_up, tc)
 {
-	ATF_ADD_TEST_CASE(tcs, leak_0);
-	ATF_ADD_TEST_CASE(tcs, leak_1);
-	ATF_ADD_TEST_CASE(tcs, leak_2);
-	ATF_ADD_TEST_CASE(tcs, leak_3);
-	ATF_ADD_TEST_CASE(tcs, leak_4);
-	ATF_ADD_TEST_CASE(tcs, leak_5);
-	ATF_ADD_TEST_CASE(tcs, leak_6);
-	ATF_ADD_TEST_CASE(tcs, leak_7);
-	ATF_ADD_TEST_CASE(tcs, leak_8);
-	ATF_ADD_TEST_CASE(tcs, leak_9);
+	clean_up();
+}
 
-	ATF_ADD_TEST_CASE(tcs, pid_wrap);
+ATF_TP_ADD_TCS(tcs)
+{
+	ATF_TP_ADD_TC(tcs, leak_0);
+	ATF_TP_ADD_TC(tcs, leak_1);
+	ATF_TP_ADD_TC(tcs, leak_2);
+	ATF_TP_ADD_TC(tcs, leak_3);
+	ATF_TP_ADD_TC(tcs, leak_4);
+	ATF_TP_ADD_TC(tcs, leak_5);
+	ATF_TP_ADD_TC(tcs, leak_6);
+	ATF_TP_ADD_TC(tcs, leak_7);
+	ATF_TP_ADD_TC(tcs, leak_8);
+	ATF_TP_ADD_TC(tcs, leak_9);
 
-	ATF_ADD_TEST_CASE(tcs, pid_wrap_0);
-	ATF_ADD_TEST_CASE(tcs, pid_wrap_1);
-	ATF_ADD_TEST_CASE(tcs, pid_wrap_2);
-	ATF_ADD_TEST_CASE(tcs, pid_wrap_3);
-	ATF_ADD_TEST_CASE(tcs, pid_wrap_4);
-	ATF_ADD_TEST_CASE(tcs, pid_wrap_5);
-	ATF_ADD_TEST_CASE(tcs, pid_wrap_6);
-	ATF_ADD_TEST_CASE(tcs, pid_wrap_7);
-	ATF_ADD_TEST_CASE(tcs, pid_wrap_8);
-	ATF_ADD_TEST_CASE(tcs, pid_wrap_9);
+	ATF_TP_ADD_TC(tcs, pid_wrap);
 
-	ATF_ADD_TEST_CASE(tcs, really_clean_up);
+	ATF_TP_ADD_TC(tcs, pid_wrap_0);
+	ATF_TP_ADD_TC(tcs, pid_wrap_1);
+	ATF_TP_ADD_TC(tcs, pid_wrap_2);
+	ATF_TP_ADD_TC(tcs, pid_wrap_3);
+	ATF_TP_ADD_TC(tcs, pid_wrap_4);
+	ATF_TP_ADD_TC(tcs, pid_wrap_5);
+	ATF_TP_ADD_TC(tcs, pid_wrap_6);
+	ATF_TP_ADD_TC(tcs, pid_wrap_7);
+	ATF_TP_ADD_TC(tcs, pid_wrap_8);
+	ATF_TP_ADD_TC(tcs, pid_wrap_9);
+
+	ATF_TP_ADD_TC(tcs, really_clean_up);
+
+	return atf_no_error();
 }
