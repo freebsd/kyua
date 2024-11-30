@@ -137,8 +137,19 @@ ATF_TEST_CASE_BODY(commit__fail)
         backend.database().exec(
             "CREATE TABLE foo ("
             "a REFERENCES env_vars(var_name) DEFERRABLE INITIALLY DEFERRED)");
-        backend.database().exec("INSERT INTO foo VALUES (\"WHAT\")");
+        // For whatever reason, multiple Linux distros seem to execute the
+        // sqlite statements differently from BSD-based OSes. The exception is
+        // raised on transaction commit in Linux, whereas it's executed
+        // immediately with BSD-based OSes. Linux's behavior seems more
+        // correct, because a deferred transaction was started, but not
+        // committed.
+        const char *bad_sql = "INSERT INTO foo VALUES ('WHAT')";
+#if defined(__linux__)
+        backend.database().exec(bad_sql);
         ATF_REQUIRE_THROW(store::error, tx.commit());
+#else
+        ATF_REQUIRE_THROW(sqlite::api_error, backend.database().exec(bad_sql);
+#endif
     }
     // If the code attempts to maintain any state regarding the already-put
     // objects and the commit does not clean up correctly, this would fail in
