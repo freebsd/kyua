@@ -1,4 +1,4 @@
-// Copyright 2023 The Kyua Authors.
+// Copyright 2024 The Kyua Authors.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,46 +26,19 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/execenv/execenv.hpp"
+/// \file engine/execenv/execenv_fwd.hpp
+/// Forward declarations for engine/execenv/execenv.hpp
 
-#include "engine/execenv/execenv_host.hpp"
+#if !defined(ENGINE_EXECENV_EXECENV_FWD_HPP)
+#define ENGINE_EXECENV_EXECENV_FWD_HPP
 
-namespace execenv = engine::execenv;
+#define	DEFAULT_EXECENV_NAME	"host"
 
-using utils::none;
-
-
-/// List of registered execution environments, except default host one.
-///
-/// Use register_execenv() to add an entry to this global list.
-static std::vector< std::shared_ptr< execenv::manager > >
-    execenv_managers;
+namespace engine {
+namespace execenv {
 
 
-void
-execenv::register_execenv(const std::shared_ptr< execenv::manager > manager)
-{
-    execenv_managers.push_back(manager);
-}
+}  // namespace execenv
+}  // namespace engine
 
-
-const std::vector< std::shared_ptr< execenv::manager> >
-execenv::execenvs()
-{
-    return execenv_managers;
-}
-
-
-std::unique_ptr< execenv::interface >
-execenv::get(const model::test_program& test_program,
-             const std::string& test_case_name)
-{
-    for (auto m : execenv_managers) {
-        auto e = m->probe(test_program, test_case_name);
-        if (e != nullptr)
-            return e;
-    }
-
-    return std::unique_ptr< execenv::interface >(
-        new execenv::execenv_host(test_program, test_case_name));
-}
+#endif  // !defined(ENGINE_EXECENV_EXECENV_FWD_HPP)

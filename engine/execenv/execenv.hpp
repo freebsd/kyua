@@ -32,6 +32,7 @@
 #if !defined(ENGINE_EXECENV_EXECENV_HPP)
 #define ENGINE_EXECENV_EXECENV_HPP
 
+#include "engine/execenv/execenv_fwd.hpp"
 #include "model/test_program.hpp"
 #include "utils/optional.ipp"
 #include "utils/process/operations_fwd.hpp"
@@ -41,9 +42,6 @@ using utils::optional;
 
 namespace engine {
 namespace execenv {
-
-
-extern const char* default_execenv_name;
 
 
 /// Abstract interface of an execution environment.

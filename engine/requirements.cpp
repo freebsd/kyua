@@ -112,7 +112,7 @@ check_execenv(const std::string& execenv, const config::tree& user_config)
 {
     std::string name = execenv;
     if (name.empty())
-        name = engine::execenv::default_execenv_name; // if test claims nothing
+        name = DEFAULT_EXECENV_NAME; // if test claims nothing
 
     std::set< std::string > execenvs;
     try {
