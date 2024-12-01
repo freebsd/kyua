@@ -148,7 +148,7 @@ ATF_TEST_CASE_BODY(commit__fail)
         backend.database().exec(bad_sql);
         ATF_REQUIRE_THROW(store::error, tx.commit());
 #else
-        ATF_REQUIRE_THROW(sqlite::api_error, backend.database().exec(bad_sql);
+        ATF_REQUIRE_THROW(sqlite::api_error, backend.database().exec(bad_sql));
 #endif
     }
     // If the code attempts to maintain any state regarding the already-put
