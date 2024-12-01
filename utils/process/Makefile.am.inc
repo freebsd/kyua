@@ -62,6 +62,15 @@ tests_utils_processdir = $(pkgtestsdir)/utils/process
 tests_utils_process_DATA = utils/process/Kyuafile
 EXTRA_DIST += $(tests_utils_process_DATA)
 
+CLEANFILES+=	utils/process/Kyuafile
+utils/process/Kyuafile: utils/process/Kyuafile.in
+	cp -f utils/process/Kyuafile.in utils/process/Kyuafile.tmp
+if FreeBSD
+	printf 'atf_test_program{name="executor_pid_test", required_user="root"}\n' >> \
+	    utils/process/Kyuafile.tmp
+endif
+	mv utils/process/Kyuafile.tmp utils/process/Kyuafile
+
 tests_utils_process_PROGRAMS = utils/process/child_test
 utils_process_child_test_SOURCES = utils/process/child_test.cpp
 utils_process_child_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
@@ -83,10 +92,13 @@ utils_process_executor_test_SOURCES = utils/process/executor_test.cpp
 utils_process_executor_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 utils_process_executor_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
+# XXX: this test technically works with all BSDs and MacOS.
+if FreeBSD
 tests_utils_process_PROGRAMS += utils/process/executor_pid_test
 utils_process_executor_pid_test_SOURCES = utils/process/executor_pid_test.c
 utils_process_executor_pid_test_CFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 utils_process_executor_pid_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
+endif
 
 tests_utils_process_PROGRAMS += utils/process/fdstream_test
 utils_process_fdstream_test_SOURCES = utils/process/fdstream_test.cpp
