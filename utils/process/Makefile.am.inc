@@ -84,8 +84,8 @@ utils_process_executor_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 utils_process_executor_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_process_PROGRAMS += utils/process/executor_pid_test
-utils_process_executor_pid_test_SOURCES = utils/process/executor_pid_test.cpp
-utils_process_executor_pid_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_process_executor_pid_test_SOURCES = utils/process/executor_pid_test.c
+utils_process_executor_pid_test_CFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
 utils_process_executor_pid_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_process_PROGRAMS += utils/process/fdstream_test
