@@ -63,8 +63,8 @@ tests_utils_process_DATA = utils/process/Kyuafile
 EXTRA_DIST += $(tests_utils_process_DATA)
 
 CLEANFILES+=	utils/process/Kyuafile
-utils/process/Kyuafile: utils/process/Kyuafile.in
-	cp -f utils/process/Kyuafile.in utils/process/Kyuafile.tmp
+utils/process/Kyuafile: $(top_srcdir)/utils/process/Kyuafile.in
+	cp -f $(top_srcdir)/utils/process/Kyuafile.in utils/process/Kyuafile.tmp
 if FreeBSD
 	printf 'atf_test_program{name="executor_pid_test", required_user="root"}\n' >> \
 	    utils/process/Kyuafile.tmp
