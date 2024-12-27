@@ -64,17 +64,17 @@ m4_ifndef([PKG_CHECK_MODULES],
 
 m4_ifndef([ATF_CHECK_CXX],
     [m4_fatal([Cannot find atf-c++.m4; see the INSTALL.md document for help])])
-ATF_CHECK_CXX([>= 0.17])
+ATF_CHECK_CXX([>= 0.22])
 m4_ifndef([ATF_CHECK_SH],
     [m4_fatal([Cannot find atf-sh.m4; see the INSTALL.md document for help])])
-ATF_CHECK_SH([>= 0.15])
+ATF_CHECK_SH([>= 0.22])
 m4_ifndef([ATF_ARG_WITH],
     [m4_fatal([Cannot find atf-common.m4; see the INSTALL.md document for help])])
 ATF_ARG_WITH
 
-PKG_CHECK_MODULES([LUTOK], [lutok >= 0.4],
+PKG_CHECK_MODULES([LUTOK], [lutok >= 0.5],
                   [],
-                  AC_MSG_ERROR([lutok (0.4 or newer) is required]))
+                  AC_MSG_ERROR([lutok (0.5 or newer) is required]))
 PKG_CHECK_MODULES([SQLITE3], [sqlite3 >= 3.6.22],
                   [],
                   AC_MSG_ERROR([sqlite3 (3.6.22 or newer) is required]))
