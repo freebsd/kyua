@@ -1,0 +1,225 @@
+---
+# GitHub action to compile and test kyua on supported platforms.
+#
+# Steps executed:
+# * Handle prerequisites
+#     * Install binary packages
+#     * Build packages from source (if needed).
+#     * Build
+#     * Install
+#     * Run tests
+#
+# On MacOS we build with:
+# * latest clang from brew (system provided clang lacks sanitizers).
+# * ld from system
+#
+env:
+    ATF_REPO: freebsd/atf
+    ATF_REF: atf-0.22
+    # LUTOK_REPO: freebsd/lutok
+    # LUTOK_REF: master
+    LUTOK_REPO: ngie-eign/lutok
+    LUTOK_REF: build-cleanup
+
+name: build
+on:
+    pull_request:
+        branches:
+            - master
+    push:
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+jobs:
+    build:
+        name: Build ${{ matrix.build-os }} ${{ matrix.compiler }} ${{ matrix.enable-atf }}
+        runs-on: "${{ matrix.build-os }}"
+        strategy:
+            fail-fast: false
+            matrix:
+                build-os:
+                    - ubuntu-24.04
+                    - macos-latest
+                #enable-atf: [--disable-atf, --enable-atf]
+                enable-atf: [--enable-atf]
+                include:
+                    - build-os: macos-latest
+                      compiler: clang-19
+                      pkgs:
+                          - llvm@19
+                          - autoconf
+                          - automake
+                          - libtool
+                          - pkgconf
+                          - lua@5.4
+                          - sqlite
+                      enable-atf-pkgs:
+                      # gdb is not built for ARM64 yet :(.
+                      #    - gdb
+                      llvm-bindir: /opt/homebrew/opt/llvm/bin
+                    - build-os: ubuntu-24.04
+                      compiler: clang-18
+                      pkgs:
+                          - clang-18
+                          - autoconf
+                          - automake
+                          - libtool
+                          - pkgconf
+                          - liblua5.4-dev
+                          - lua5.4
+                          - libsqlite3-dev
+                      enable-atf-pkgs:
+                          - gdb
+                      llvm-bindir: /usr/lib/llvm-18/bin
+        steps:
+            - name: Install base dependencies (macOS)
+              if: runner.os == 'macOS'
+              run: |
+                  brew update -q || true
+                  brew install -q ${{ join(matrix.pkgs, ' ') }} \
+            - name: Install ATF-related dependencies (macOS)
+              if: runner.os == 'macOS' && matrix.enable-atf == '--enable-atf' && matrix.enable-atf-pkgs
+              run: |
+                  brew install -q ${{ join(matrix.enable-atf-pkgs, ' ') }}
+            - name: Install base dependencies (Ubuntu)
+              if: runner.os == 'Linux'
+              run: |
+                  sudo apt -Uqy --no-install-suggests \
+                      --no-install-recommends install \
+                      ${{ join(matrix.pkgs, ' ') }} \
+            - name: Install ATF-related dependencies (Ubuntu)
+              if: runner.os == 'Linux' && matrix.enable-atf == '--enable-atf' && matrix.enable-atf-pkgs
+              run: |
+                  sudo apt -Uqy --no-install-suggests \
+                      --no-install-recommends install \
+                      ${{ join(matrix.enable-atf-pkgs, ' ') }}
+            - name: Checking out source (ATF)
+              uses: actions/checkout@v4
+              with:
+                  repository: "${{ env.ATF_REPO }}"
+                  ref: "${{ env.ATF_REF }}"
+                  # Same as `ATF_SRCDIR`.
+                  path: "${{ github.workspace }}/atf-src"
+            - name: Checking out source (Lutok)
+              uses: actions/checkout@v4
+              with:
+                  repository: "${{ env.LUTOK_REPO }}"
+                  ref: "${{ env.LUTOK_REF }}"
+                  # Same as `LUTOK_SRCDIR`.
+                  path: "${{ github.workspace }}/lutok-src"
+            - name: Clone Kyua source
+              if: matrix.enable-atf == '--enable-atf'
+              uses: actions/checkout@v4
+              with:
+                  # Same as `KYUA_SRCDIR`.
+                  path: "${{ github.workspace }}/kyua-src"
+            - name: Setup Environment
+              run: |
+                  echo "AR=${{ matrix.llvm-bindir }}/llvm-ar" >> "${GITHUB_ENV}"
+                  echo "CC=${{ matrix.llvm-bindir }}/clang" >> "${GITHUB_ENV}"
+                  echo "CPP=${{ matrix.llvm-bindir }}/clang-cpp" >> "${GITHUB_ENV}"
+                  echo "CXX=${{ matrix.llvm-bindir }}/clang++" >> "${GITHUB_ENV}"
+                  echo "NM=${{ matrix.llvm-bindir }}/llvm-nm" >> "${GITHUB_ENV}"
+                  echo "PKG_CONFIG_PATH='$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig'" >> "${GITHUB_ENV}"
+                  echo "RANLIB=${{ matrix.llvm-bindir }}/llvm-ranlib" >> "${GITHUB_ENV}"
+                  echo "OBJDUMP=${{ matrix.llvm-bindir }}/llvm-objdump" >> "${GITHUB_ENV}"
+                  echo "STRIP=${{ matrix.llvm-bindir }}/llvm-strip" >> "${GITHUB_ENV}"
+                  echo "ATF_SRCDIR=${GITHUB_WORKSPACE}/atf-src" >> "${GITHUB_ENV}"
+                  echo "ATF_OBJDIR=${GITHUB_WORKSPACE}/atf-obj" >> "${GITHUB_ENV}"
+                  echo "KYUA_HOME=${GITHUB_WORKSPACE}/kyua-obj/.kyua" >> "${GITHUB_ENV}"
+                  echo "KYUA_SRCDIR=${GITHUB_WORKSPACE}/kyua-src" >> "${GITHUB_ENV}"
+                  echo "KYUA_OBJDIR=${GITHUB_WORKSPACE}/kyua-obj" >> "${GITHUB_ENV}"
+                  echo "KYUA_PREFIX=/usr/local" >> "${GITHUB_ENV}"
+                  echo "LUTOK_SRCDIR=${GITHUB_WORKSPACE}/lutok-src" >> "${GITHUB_ENV}"
+                  echo "LUTOK_OBJDIR=${GITHUB_WORKSPACE}/lutok-obj" >> "${GITHUB_ENV}"
+                  echo "NPROC=`getconf _NPROCESSORS_ONLN 2>/dev/null || getconf NPROCESSORS_ONLN 2>/dev/null || echo 1`" >> "${GITHUB_ENV}"
+            - name: Build Environment Dump
+              run: |
+                  echo "ATF flag: ${{ matrix.enable-atf }}"
+                  echo "uname -a: $(uname -a)"
+                  echo "uname -m: $(uname -m)"
+                  echo "uname -p: $(uname -p)"
+                  echo "Build environment:"
+                  cat "${GITHUB_ENV}"
+            - name: Build and install ATF
+              if: matrix.enable-atf == '--enable-atf'
+              run: |
+                  set -x
+                  CFG_OPTS="--disable-dependency-tracking"
+                  CFG_OPTS="${CFG_OPTS} --prefix=${KYUA_PREFIX}"
+                  echo "Building lutok with ${CFG_OPTS}..."
+                  cd "${ATF_SRCDIR}"
+                  autoreconf -isv
+                  mkdir -p "${ATF_OBJDIR}"
+                  cd "${ATF_OBJDIR}"
+                  "${ATF_SRCDIR}/configure" ${CFG_OPTS}
+                  make -j${NPROC} all | tee atf-make-all.log
+                  sudo make install
+            - name: Build and Install Lutok
+              run: |
+                  CFG_OPTS="--disable-dependency-tracking"
+                  CFG_OPTS="${CFG_OPTS} --prefix=${KYUA_PREFIX}"
+                  echo "Building lutok with ${CFG_OPTS}..."
+                  cd "${LUTOK_SRCDIR}"
+                  autoreconf -isv -I/usr/local/share/aclocal
+                  mkdir -p "${LUTOK_OBJDIR}"
+                  cd "${LUTOK_OBJDIR}"
+                  "${LUTOK_SRCDIR}/configure" ${CFG_OPTS}
+                  make -j${NPROC} all | tee lutok-make-all.log
+                  cd "${LUTOK_OBJDIR}"
+                  sudo make install
+            - name: Build and Install Kyua
+              run: |
+                  # - Gather arguments.
+                  CFG_OPTS="--disable-dependency-tracking"
+                  CFG_OPTS="${CFG_OPTS} ${{ matrix.enable-atf }}"
+                  CFG_OPTS="${CFG_OPTS} --prefix=${KYUA_PREFIX}"
+                  if [ "x${{ matrix.enable-atf }}" = "x--enable-atf" ]; then
+                      CXXFLAGS="$CXXFLAGS $(pkgconf --cflags atf-c++)"
+                      LDFLAGS="$LDFLAGS $(pkgconf --libs-only-L atf-c++)"
+                  fi
+                  CXXFLAGS="${CXXFLAGS} $(pkgconf --cflags lutok)";
+                  LDFLAGS="${LDFLAGS} $(pkgconf --libs-only-L lutok)";
+                  # - Prep for running configure.
+                  mkdir -p "${KYUA_OBJDIR}" "${KYUA_HOME}"
+                  echo "syntax(2)" > "${KYUA_HOME}/kyua.conf"
+                  echo "unprivileged_user = 'nobody'" >> "${KYUA_HOME}/kyua.conf"
+                  # - Run autotools and configure.
+                  cd "${KYUA_SRCDIR}"
+                  autoreconf -isv -I/usr/local/share/aclocal
+                  cd "${KYUA_OBJDIR}"
+                  env CXXFLAGS="${CXXFLAGS}" \
+                      KYUA_CONFIG_FILE_FOR_CHECK="${KYUA_HOME}/kyua.conf" \
+                      LDFLAGS="${LDFLAGS}" \
+                      "${KYUA_SRCDIR}/configure" ${CFG_OPTS}
+                  # - Build
+                  make -j${NPROC} all | tee kyua-make-all.log
+                  # - Install
+                  sudo make install
+            - name: Test Kyua Setup (Ubuntu)
+              if: runner.os == 'Linux' && matrix.enable-atf == '--enable-atf'
+              run: |
+                  sudo mkdir -m 0755 -p /cores/
+                  sudo sysctl kernel.core_pattern="/cores/core.%e.%p"
+                  sudo ldconfig
+            - name: Test Kyua
+              if: matrix.enable-atf == '--enable-atf'
+              run: |
+                  set -x
+                  cd "${KYUA_OBJDIR}"
+                  # NB: the double quotes are intentional: `sudo -E` caused a ton of grief.
+                  sudo sh -c "export HOME=${KYUA_HOME} PATH=${PATH}; make installcheck"
+                  check_exit=$?
+                  sudo chmod -R a+rx "${KYUA_HOME}"
+                  if [ $check_exit -eq 0 ]; then
+                      echo "# ✅ All mandatory checks passed" >> $GITHUB_STEP_SUMMARY
+                  else
+                      echo "# ❌ Some checks failed" >> $GITHUB_STEP_SUMMARY
+                      echo "::error file=.github/workflows/build.yaml,line=173,endLine=173,title=Checks failed!::checks failed"
+                  fi
+                  #cd "${KYUA_PREFIX}/tests/kyua"
+                  #LOG_DB=$(find "${KYUA_HOME}" -name "*.db")
+                  #kyua report-html --results-file "${LOG_DB}" --output ${KYUA_OBJDIR}/html
+                  exit $check_exit
