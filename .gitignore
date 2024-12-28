@@ -13,6 +13,7 @@ config.h
 kyua
 libtool
 local-kyua
+releases
 
 # Imported from https://github.com/github/gitignore/blob/main/Autotools.gitignore
 # http://www.gnu.org/software/automake
