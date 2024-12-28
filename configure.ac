@@ -62,19 +62,25 @@ LT_INIT
 m4_ifndef([PKG_CHECK_MODULES],
     [m4_fatal([Cannot find pkg.m4; see the INSTALL.md document for help])])
 
+# Check for ATF and add --enable-atf flag
+AC_ARG_ENABLE([atf],
+    [AS_HELP_STRING([--enable-atf], [Enable ATF tests (default: no)])],
+    [enable_atf=$enableval],
+    [enable_atf=no])
+AM_CONDITIONAL([WITH_ATF], [test "x$enable_atf" = "xyes"])
+
+AS_IF([test "x$enable_atf" = "xyes"],[
 m4_ifndef([ATF_CHECK_CXX],
     [m4_fatal([Cannot find atf-c++.m4; see the INSTALL.md document for help])])
-ATF_CHECK_CXX([>= 0.17])
+ATF_CHECK_CXX([>= 0.22])
 m4_ifndef([ATF_CHECK_SH],
     [m4_fatal([Cannot find atf-sh.m4; see the INSTALL.md document for help])])
-ATF_CHECK_SH([>= 0.15])
-m4_ifndef([ATF_ARG_WITH],
-    [m4_fatal([Cannot find atf-common.m4; see the INSTALL.md document for help])])
-ATF_ARG_WITH
+ATF_CHECK_SH([>= 0.22])
+],[])
 
-PKG_CHECK_MODULES([LUTOK], [lutok >= 0.4],
+PKG_CHECK_MODULES([LUTOK], [lutok >= 0.5],
                   [],
-                  AC_MSG_ERROR([lutok (0.4 or newer) is required]))
+                  AC_MSG_ERROR([lutok (0.5 or newer) is required]))
 PKG_CHECK_MODULES([SQLITE3], [sqlite3 >= 3.6.22],
                   [],
                   AC_MSG_ERROR([sqlite3 (3.6.22 or newer) is required]))
