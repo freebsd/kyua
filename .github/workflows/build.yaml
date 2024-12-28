@@ -1,0 +1,242 @@
+---
+# GitHub action to compile and test kyua on supported platforms.
+#
+# Steps executed:
+# * Handle prerequisites
+#     * Install binary packages
+#     * Build packages from source (if needed).
+#     * Build
+#     * Install
+#     * Run tests
+#
+# On MacOS we build with:
+# * latest clang from brew (system provided clang lacks sanitizers).
+# * ld from system
+#
+env:
+    ATF_REPO: freebsd/atf
+    ATF_REF: atf-0.25
+    LUTOK_REPO: freebsd/lutok
+    LUTOK_REF: lutok-0.6.3
+
+name: build
+"on":
+    pull_request:
+        branches:
+            - master
+    push:
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+jobs:
+    build-and-test:
+        env:
+            AR: ${{ matrix.llvm-bindir }}/llvm-ar
+            CC: ${{ matrix.llvm-bindir }}/clang
+            CPP: ${{ matrix.llvm-bindir }}/clang-cpp
+            CXX: ${{ matrix.llvm-bindir }}/clang++
+            NM: ${{ matrix.llvm-bindir }}/llvm-nm
+            OBJDUMP: ${{ matrix.llvm-bindir }}/llvm-objdump
+            RANLIB: ${{ matrix.llvm-bindir }}/llvm-ranlib
+            STRIP: ${{ matrix.llvm-bindir }}/llvm-strip
+            ATF_SRCDIR: ${{ github.workspace }}/atf-src
+            ATF_OBJDIR: ${{ github.workspace }}/atf-obj
+            KYUA_PREFIX: ${{ github.workspace }}/root
+            KYUA_SRCDIR: ${{ github.workspace }}/kyua-src
+            KYUA_OBJDIR: ${{ github.workspace }}/kyua-obj
+            LUTOK_SRCDIR: ${{ github.workspace }}/lutok-src
+            LUTOK_OBJDIR: ${{ github.workspace }}/lutok-obj
+        name: Build ${{ matrix.build-os }} ${{ matrix.compiler }}
+        runs-on: "${{ matrix.build-os }}"
+        strategy:
+            fail-fast: false
+            matrix:
+                build-os:
+                    - macos-latest
+                    - ubuntu-latest
+                include:
+                    # The macOS runner uses a homebrew provided compiler as the
+                    # system compiler lacks ASAN/LSAN/UBSAN support.
+                    - build-os: macos-latest
+                      compiler: clang-20
+                      env:
+                          # The coredump tests cause the macOS runner to
+                          # frequently timeout/fail due to ENOSPC issues. Skip
+                          # the tests until all of the issues can be worked
+                          # out.
+                          #
+                          # See this issue for more details:
+                          # https://github.com/actions/runner-images/issues/14678
+                          - RUN_COREDUMP_TESTS: false
+                      pkgs:
+                          - atf
+                          - autoconf
+                          - automake
+                          - libtool
+                          - llvm@20
+                          # This is required when
+                          # `build-dependencies-from-source == yes`:
+                          # - lua
+                          - lutok
+                          - pkgconf
+                          - sqlite
+                      llvm-bindir: /opt/homebrew/opt/llvm@20/bin
+                      build-dependencies-from-source: false
+                    - build-os: ubuntu-latest
+                      compiler: clang-18
+                      env:
+                          - RUN_COREDUMP_TESTS: true
+                      pkgs:
+                          - autoconf
+                          - automake
+                          - clang-18
+                          - libtool
+                          - lua5.4
+                          - liblua5.4-dev
+                          - pkgconf
+                          - libsqlite3-dev
+                      llvm-bindir: /usr/lib/llvm-18/bin
+                      build-dependencies-from-source: true
+
+        steps:
+            - name: Install base dependencies (macOS)
+              if: runner.os == 'macOS'
+              run: |
+                  brew update --quiet || true
+                  brew install -q ${{ join(matrix.pkgs, ' ') }}
+                  brew cleanup --scrub
+                  brew list -1
+                  rm -Rf "$(brew --cache)"
+
+            - name: Install base dependencies (Ubuntu)
+              if: runner.os == 'Linux'
+              run: |
+                  sudo apt update --quiet
+                  sudo apt --quiet -y --no-install-suggests \
+                      --no-install-recommends install \
+                      ${{ join(matrix.pkgs, ' ') }} \
+            - name: Checking out source (ATF)
+              if: ${{ matrix.build-dependencies-from-source }}
+              uses: actions/checkout@v4
+              with:
+                  repository: "${{ env.ATF_REPO }}"
+                  ref: "${{ env.ATF_REF }}"
+                  # Same as `ATF_SRCDIR`.
+                  path: "${{ github.workspace }}/atf-src"
+            - name: Checking out source (Lutok)
+              if: ${{ matrix.build-dependencies-from-source }}
+              uses: actions/checkout@v4
+              with:
+                  repository: "${{ env.LUTOK_REPO }}"
+                  ref: "${{ env.LUTOK_REF }}"
+                  # Same as `LUTOK_SRCDIR`.
+                  path: "${{ github.workspace }}/lutok-src"
+            - name: Checking out source (Kyua)
+              uses: actions/checkout@v4
+              with:
+                  # Same as `KYUA_SRCDIR`.
+                  path: "${{ github.workspace }}/kyua-src"
+            - name: Build Environment Dump
+              run: |
+                  echo "uname -a: $(uname -a)"
+                  echo "uname -m: $(uname -m)"
+                  echo "uname -p: $(uname -p)"
+
+            - name: Distcheck Environment Setup (common)
+              run: |
+                  sudo mkdir -p /cores
+                  sudo chmod 1777 /cores
+
+            - name: Distcheck Environment Setup (Ubuntu)
+              if: runner.os == 'Linux'
+              run: |
+                  sudo sh -c \
+                      'echo "/cores/core.%p" > /proc/sys/kernel/core_pattern'
+                  sudo ldconfig
+
+            - name: Distcheck Environment Setup (macOS)
+              if: runner.os == 'macOS'
+              run: |
+                  if [ "$(sysctl -n kern.coredump)" != 0 ]; then
+                      echo "Coredumps enabled on runner"
+                      df -h "$(dirname "$(sysctl -n kern.corefile)")"
+                      # sudo sysctl -w kern.corefile="/cores/core.%P"
+                  fi
+
+            # yamllint disable rule:line-length
+            - name: Build and install ATF and Lutok
+              if: ${{ matrix.build-dependencies-from-source }}
+              run: |
+                  export PREFIX="${KYUA_PREFIX}"
+                  export PKG_CONFIG_PATH="${PREFIX}/lib/pkgconfig"
+
+                  cd "${ATF_SRCDIR}"
+                  "${KYUA_SRCDIR}/admin/ci-build/00_build_and_install_atf.sh"
+                  rm -Rf "${ATF_SRCDIR}"
+
+                  cd "${LUTOK_SRCDIR}"
+                  "${KYUA_SRCDIR}/admin/ci-build/00_build_and_install_lutok.sh"
+                  rm -Rf "${LUTOK_SRCDIR}"
+
+            # yamllint enable rule:line-length
+            - name: Configure
+              run: |
+                  export PREFIX="${KYUA_PREFIX}"
+                  export PKG_CONFIG_PATH="${PREFIX}/lib/pkgconfig"
+                  CFG_ARGS="--enable-atf --enable-developer"
+                  for i in ${{ join(matrix.sanitize, ' ') }}; do
+                      CFG_ARGS="${CFG_ARGS} --enable-${i}"
+                  done
+                  cd "${KYUA_SRCDIR}"
+                  admin/ci-build/01_configure.sh ${CFG_ARGS}
+
+            - name: Distcheck (builds and tests)
+              run: |
+                  export PREFIX="${KYUA_PREFIX}"
+                  export PKG_CONFIG_PATH="${PREFIX}/lib/pkgconfig"
+                  CFG_ARGS="--enable-atf --enable-developer"
+                  for i in ${{ join(matrix.sanitize, ' ') }}; do
+                      CFG_ARGS="${CFG_ARGS} --enable-${i}"
+                  done
+
+                  # export AS_ROOT=yes
+                  # export UNPRIVILEGED_USER=yes
+                  export RUN_COREDUMP_TESTS="${{ env.RUN_COREDUMP_TESTS }}"
+
+                  cd "${KYUA_SRCDIR}"
+                  env "EXTRA_DISTCHECK_CONFIGURE_ARGS=${CFG_ARGS}" \
+                      ./admin/ci-build/02_distcheck.sh
+
+            - name: Gather/Archive Logs and Reports
+              run: |
+                  REPORTS_DIR="${KYUA_OBJDIR}/reports"
+                  mkdir -p "${REPORTS_DIR}"
+                  (
+                    cd "${REPORTS_DIR}"
+                    mkdir -p build_logs
+                    # Gather the distcheck failure log if the target failed.
+                    # It's easier to ignore the failure than create yet another
+                    # conditional variable step.
+                    cp -a "${KYUA_SRCDIR}"/kyua-*/_build/sub/*.log build_logs/ \
+                        2>/dev/null || true
+                    # Include the raw kyua logs.
+                    cp -a ~/.kyua/logs kyua_logs
+                    # Include the raw kyua results DBs.
+                    cp -a ~/.kyua/store kyua_store
+                  )
+                  # Create an archive of the reports.
+                  job_name_encoded=$(echo "${JOB_NAME}" | tr ' ' '_')
+                  tar -cvf "kyua-test-reports-${job_name_encoded}.tar" \
+                      -C "${REPORTS_DIR}" .
+              if: ${{ ! cancelled() }}
+            - name: Archive Build Artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                  name: Test Report for ${{ env.JOB_NAME }}
+                  path: kyua-test-reports-*.tar
+                  compression-level: 0
+                  retention-days: 10
+                  overwrite: true
+              if: ${{ ! cancelled() }}

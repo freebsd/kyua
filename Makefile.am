@@ -116,11 +116,17 @@ installcheck-kyua:
 	cd $(pkgtestsdir) && $(INSTALLCHECK_ENVIRONMENT) $(TESTS_ENVIRONMENT) \
 	    kyua --config='$(KYUA_CONFIG_FILE_FOR_CHECK)' test \
 	    || failed=yes; \
+	cd $(pkgtestsdir) && $(INSTALLCHECK_ENVIRONMENT) $(TESTS_ENVIRONMENT) \
+	    kyua --config='$(KYUA_CONFIG_FILE_FOR_CHECK)' report \
+	    --verbose --results-filter=broken,failed; \
+	if [ -n "$$JUNIT_OUTPUT" ]; then \
+	    cd $(pkgtestsdir) && $(TESTS_ENVIRONMENT) \
+		    $(KYUA) --config='$(KYUA_CONFIG_FILE_FOR_CHECK)' \
+		    report-junit --output="$$JUNIT_OUTPUT"; \
+	    sed -i '.orig' 's/encoding="iso-8859-1"/encoding="utf-8"/' "$$JUNIT_OUTPUT"; \
+	    rm -f "$$JUNIT_OUTPUT.orig"; \
+	fi; \
 	if [ "$${failed}" = yes ]; then \
-	    cd $(pkgtestsdir) && $(INSTALLCHECK_ENVIRONMENT) \
-	        $(TESTS_ENVIRONMENT) \
-	        kyua --config='$(KYUA_CONFIG_FILE_FOR_CHECK)' report \
-	        --verbose --results-filter=broken,failed; \
 	    exit 1; \
 	fi
 
