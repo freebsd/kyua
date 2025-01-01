@@ -20,7 +20,8 @@
 
 * Fix the build on Ubuntu 24.04.
 
-* execenv support added.
+- execenv support added. This FreeBSD-specific feature allows tests to be
+  executed in jails.
 
 * Issue #: Remove deprecated `readdir_r` use.
 
