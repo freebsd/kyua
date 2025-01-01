@@ -1,11 +1,52 @@
 # Major changes between releases
 
+
 ## Changes in version 0.14
 
-**NOT RELEASED YET; STILL UNDER DEVELOPMENT.**
+**Released on December 31st, 2024.**
 
-* Explicitly require C++11 language features when compiling Kyua.
+* Replace `--with-atf` with `--enable-atf`. The latter must be specified
+  to enable ATF support and the Kyua tests by proxy.
 
+* Require newer versions of ATF (0.21) and Lutok (0.5). This is being done
+  as part of a multi-phase deprecation of pre-C++11 environments.
+
+* Vendor the ATF m4 files from the freebsd/atf repo.
+
+* Translate `is_exclusive` metadata to its ATF counterpart.
+
+* Issue #236: fix accidental test forkbomb in specific user environments
+  with `integration` tests by avoiding infinite recursion calling kyua.
+
+* Fix the build on Ubuntu 24.04.
+
+* execenv support added.
+
+* Issue #: Remove deprecated `readdir_r` use.
+
+* Fix build issue on more recent versions of MacOS.
+
+* Fix build issue on IllumOS.
+
+* Fix issues with PID reuse in testcases.
+
+* Escape characters captured from stderr and stdout in HTML output.
+
+* `integration/cmd_report_test:verbose`: fix regular expression used in
+  tests which would break in certain user environments.
+
+* Add Cirrus CI support for testing Kyua on FreeBSD.
+
+* Remove `UTILS_UNUSED_PARAM` macro.
+
+* Fix document rendering with newer versions of doxygen.
+
+* Issue #152: explicitly require C++11 language features when compiling Kyua.
+  Remove `std::shared_ptr` compatibility header, `utils/shared_ptr.hpp`.
+
+* Fix `igor` and `mandoc -Tlint` reported issues with generated manpages.
+
+* Issue #167: fix typos in kyua(1) manpage.
 
 ## Changes in version 0.13
 
