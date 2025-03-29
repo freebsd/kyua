@@ -60,7 +60,7 @@ if WITH_ATF
 tests_utils_processdir = $(pkgtestsdir)/utils/process
 
 tests_utils_process_DATA = utils/process/Kyuafile
-EXTRA_DIST += $(tests_utils_process_DATA)
+EXTRA_DIST += $(tests_utils_process_DATA) utils/process/Kyuafile.in
 
 CLEANFILES+=	utils/process/Kyuafile
 utils/process/Kyuafile: $(top_srcdir)/utils/process/Kyuafile.in
