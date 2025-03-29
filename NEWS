@@ -1,5 +1,20 @@
 # Major changes between releases
 
+## Changes in version 0.14.1
+
+**Released on March 29th, 2025.**
+
+* Issue #263: fix release tarball by relying on `make dist`.
+
+* Document ATF to Kyua mappings for metadata properties.
+
+* Support `require.diskspace` ATF metadata property.
+
+* Support backwards compatible `unprivileged_user` metadata property for ease
+  of use dealing with ATF vs Kyua.
+
+* Fix building from source by tracking `utils/process/Kyuafile.in` and
+  `engine/execenv/execenv_fwd.hpp` with automake.
 
 ## Changes in version 0.14
 
@@ -23,7 +38,7 @@
 - execenv support added. This FreeBSD-specific feature allows tests to be
   executed in jails.
 
-* Issue #: Remove deprecated `readdir_r` use.
+* Issue #169: Remove deprecated `readdir_r` use.
 
 * Fix build issue on more recent versions of MacOS.
 
