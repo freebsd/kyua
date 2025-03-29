@@ -21,11 +21,11 @@ rm -Rf "${release_dir}"
 mkdir -p "${release_dir}"
 git archive "${tag}" | tar xzvf - -C "${release_dir}"
 cd "${release_dir}"
-autoreconf -is
+autoreconf -isv
+./configure --enable-atf
+make dist
+mv *.tar.gz "${release_root}/${tag}.tar.gz"
 cd "${release_root}"
-bsdtar \
-    --exclude-from=${release_dir}/admin/make-release.exclude \
-    --uname "" --gname "" \
-    --uid 0 --gid 0 \
-    -cvpzf "${release_artifact}" "${tag}"
 sha256 "${release_artifact##*/}" > "${release_artifact}.sha256"
+
+# vim: syntax=sh
