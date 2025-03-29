@@ -32,5 +32,6 @@ ENGINE_EXECENV_LIBS = libengine_execenv.la $(MODEL_LIBS)
 noinst_LTLIBRARIES += libengine_execenv.la
 libengine_execenv_la_SOURCES  = engine/execenv/execenv.hpp
 libengine_execenv_la_SOURCES += engine/execenv/execenv.cpp
+libengine_execenv_la_SOURCES +=	engine/execenv/execenv_fwd.hpp
 libengine_execenv_la_SOURCES += engine/execenv/execenv_host.hpp
 libengine_execenv_la_SOURCES += engine/execenv/execenv_host.cpp
