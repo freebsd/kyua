@@ -41,7 +41,7 @@ noinst_DATA =
 noinst_LTLIBRARIES =
 noinst_SCRIPTS =
 
-doc_DATA = AUTHORS CONTRIBUTING.md CONTRIBUTORS LICENSE NEWS.md
+doc_DATA = AUTHORS CONTRIBUTING.md CONTRIBUTORS LICENSE NEWS
 noinst_DATA += INSTALL.md README.md
 EXTRA_DIST += $(doc_DATA) INSTALL.md README.md
 
@@ -165,14 +165,14 @@ clean-api-docs:
 endif
 
 # Replace Automake's builtin check-news functionality so that we can validate
-# the NEWS.md file instead of NEWS.
+# the NEWS file instead of NEWS.
 DIST_HOOKS += check-news
 PHONY_TARGETS += check-news
 check-news:
-	@case "$$(sed 15q "$(srcdir)/NEWS.md")" in \
+	@case "$$(sed 15q "$(srcdir)/NEWS")" in \
 	*"$(VERSION)"*) : ;; \
 	*) \
-	    echo "NEWS.md not updated; not releasing" 1>&2; \
+	    echo "NEWS not updated; not releasing" 1>&2; \
 	    exit 1 \
 	    ;; \
 	esac
