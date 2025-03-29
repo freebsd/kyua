@@ -1,5 +1,10 @@
 # Major changes between releases
 
+## Changes in version 0.14.1
+
+**Released on March 29th, 2025.**
+
+* Issue #263: fix release tarball by relying on `make dist`.
 
 ## Changes in version 0.14
 
@@ -23,7 +28,7 @@
 - execenv support added. This FreeBSD-specific feature allows tests to be
   executed in jails.
 
-* Issue #: Remove deprecated `readdir_r` use.
+* Issue #169: Remove deprecated `readdir_r` use.
 
 * Fix build issue on more recent versions of MacOS.
 

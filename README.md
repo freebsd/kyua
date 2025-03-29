@@ -27,9 +27,9 @@ This is not an official Google product.
 
 ## Download
 
-The latest version of Kyua is 0.14 and was released on March 29th, 2005.
+The latest version of Kyua is 0.14.1 and was released on March 29th, 2005.
 
-Download: [kyua-0.14](../../releases/tag/kyua-0.14).
+Download: [kyua-0.14.1](../../releases/tag/kyua-0.14.1).
 
 See the [release notes](NEWS) for information about the changes in this
 and all previous releases.
