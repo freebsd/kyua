@@ -129,7 +129,7 @@ struct utils::fs::detail::directory_iterator::impl : utils::noncopyable {
     ::DIR* _dirp;
 
     /// Custom representation of the directory entry.
-    std::auto_ptr< directory_entry > _entry;
+    std::unique_ptr< directory_entry > _entry;
 
     /// Constructs an iterator pointing to the "end" of the directory.
     impl(void) : _path("invalid-directory-entry"), _dirp(NULL)
