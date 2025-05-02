@@ -193,7 +193,7 @@ struct utils::fs::detail::directory_iterator::impl : utils::noncopyable {
         // minimum C++ standard is C++20.
         result = ::readdir(_dirp);
         if (result == NULL) {
-            _entry.reset(NULL);
+            _entry.reset();
             close();
         } else {
             _entry.reset(new directory_entry(result->d_name));
