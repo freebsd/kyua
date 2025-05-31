@@ -65,6 +65,10 @@ libengine_la_SOURCES += engine/scheduler.cpp
 libengine_la_SOURCES += engine/scheduler.hpp
 libengine_la_SOURCES += engine/scheduler_fwd.hpp
 
+if FreeBSD
+ENGINE_LIBS += -lutil
+endif
+
 if WITH_ATF
 tests_enginedir = $(pkgtestsdir)/engine
 
