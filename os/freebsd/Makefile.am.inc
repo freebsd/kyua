@@ -38,8 +38,10 @@ libfreebsd_la_SOURCES += os/freebsd/execenv_jail_manager.hpp
 libfreebsd_la_SOURCES += os/freebsd/execenv_jail_manager.cpp
 
 if FreeBSD
-FREEBSD_LIBS += -ljail
+FREEBSD_LIBS += -ljail -lutil
 libfreebsd_la_SOURCES += os/freebsd/execenv_jail.cpp
+libfreebsd_la_SOURCES += os/freebsd/reqs_checker_kmods.hpp
+libfreebsd_la_SOURCES += os/freebsd/reqs_checker_kmods.cpp
 include os/freebsd/utils/Makefile.am.inc
 else
 libfreebsd_la_SOURCES += os/freebsd/execenv_jail_stub.cpp
