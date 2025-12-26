@@ -46,6 +46,13 @@ libengine_la_SOURCES += engine/exceptions.hpp
 libengine_la_SOURCES += engine/filters.cpp
 libengine_la_SOURCES += engine/filters.hpp
 libengine_la_SOURCES += engine/filters_fwd.hpp
+libengine_la_SOURCES += engine/googletest.cpp
+libengine_la_SOURCES += engine/googletest.hpp
+libengine_la_SOURCES += engine/googletest_list.cpp
+libengine_la_SOURCES += engine/googletest_list.hpp
+libengine_la_SOURCES += engine/googletest_result.cpp
+libengine_la_SOURCES += engine/googletest_result.hpp
+libengine_la_SOURCES += engine/googletest_result_fwd.hpp
 libengine_la_SOURCES += engine/kyuafile.cpp
 libengine_la_SOURCES += engine/kyuafile.hpp
 libengine_la_SOURCES += engine/kyuafile_fwd.hpp
@@ -105,6 +112,26 @@ tests_engine_PROGRAMS += engine/filters_test
 engine_filters_test_SOURCES = engine/filters_test.cpp
 engine_filters_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
 engine_filters_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
+
+tests_engine_PROGRAMS += engine/googletest_helpers
+engine_googletest_helpers_SOURCES = engine/googletest_helpers.cpp
+engine_googletest_helpers_CXXFLAGS = $(UTILS_CFLAGS)
+engine_googletest_helpers_LDADD = $(UTILS_LIBS)
+
+tests_engine_PROGRAMS += engine/googletest_test
+engine_googletest_test_SOURCES = engine/googletest_test.cpp
+engine_googletest_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
+engine_googletest_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
+
+tests_engine_PROGRAMS += engine/googletest_list_test
+engine_googletest_list_test_SOURCES = engine/googletest_list_test.cpp
+engine_googletest_list_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
+engine_googletest_list_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
+
+tests_engine_PROGRAMS += engine/googletest_result_test
+engine_googletest_result_test_SOURCES = engine/googletest_result_test.cpp
+engine_googletest_result_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
+engine_googletest_result_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 
 tests_engine_PROGRAMS += engine/kyuafile_test
 engine_kyuafile_test_SOURCES = engine/kyuafile_test.cpp
