@@ -30,7 +30,7 @@
 .Os
 .Sh NAME
 .Nm "kyua debug"
-.Nd Executes a single test case with facilities for debugging
+.Nd execute a single test case with facilities for debugging
 .Sh SYNOPSIS
 .Nm
 .Op Fl -build-root Ar path

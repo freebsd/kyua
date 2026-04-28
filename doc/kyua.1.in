@@ -30,7 +30,7 @@
 .Os
 .Sh NAME
 .Nm kyua
-.Nd Testing framework for infrastructure software
+.Nd testing framework for infrastructure software
 .Sh SYNOPSIS
 .Nm
 .Op Fl -config Ar file
