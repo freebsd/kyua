@@ -30,7 +30,7 @@
 .Os
 .Sh NAME
 .Nm Kyuafile
-.Nd Test suite description files
+.Nd test suite description files
 .Sh SYNOPSIS
 .Fn atf_test_program "string name" "[string metadata]"
 .Fn current_kyuafile
