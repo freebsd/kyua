@@ -1,0 +1,57 @@
+# Build Kyua on FreeBSD, its primary target platform.
+#
+# FreeBSD is not offered by the GitHub-hosted runners, so this boots a FreeBSD
+# VM under QEMU/KVM on a normal ubuntu-latest runner.
+
+name: FreeBSD
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  freebsd:
+    name: FreeBSD
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build
+        uses: vmactions/freebsd-vm@77ed28d336d03fe19a3f4f7266c1d2c4714dd79d # v1.5.2
+        with:
+          usesh: true
+          cache-after-prepare: true
+          prepare: |
+            pkg install -y autoconf automake libtool atf lutok pkgconf sqlite3
+          run: |
+            set -e
+
+            echo "===== toolchain ====="
+            cc --version | head -2
+            autoconf --version | head -1
+            automake --version | head -1
+
+            echo "===== regenerate build system ====="
+            # ATF installs its m4 macros under /usr/local/share/aclocal, which
+            # is not autoconf's prefix on FreeBSD; see INSTALL.md.
+            autoreconf -i -s -I /usr/local/share/aclocal
+
+            echo "===== configure ====="
+            ./configure --enable-atf
+
+            echo "===== build ====="
+            make
+
+            echo "===== built binary ====="
+            ls -l ./kyua
+            ./kyua about version
