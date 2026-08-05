@@ -33,6 +33,9 @@
 #endif
 
 #include <stdexcept>
+#if defined(HAVE_UNISTD_H)
+#   include <unistd.h>
+#endif
 
 #include "engine/exceptions.hpp"
 #include "engine/execenv/execenv.hpp"
@@ -85,10 +88,13 @@ set_defaults(config::tree& tree)
     supported.insert(DEFAULT_EXECENV_NAME);
     tree.set< config::strings_set_node >("execenvs", supported);
 
-    // TODO(jmmv): Automatically derive this from the number of CPUs in the
-    // machine and forcibly set to a value greater than 1.  Still testing
-    // the new parallel implementation as of 2015-02-27 though.
-    tree.set< config::positive_int_node >("parallelism", 1);
+    long nproc = 1;
+#if defined(_SC_NPROCESSORS_ONLN)
+    /// Non-standard but works on BSD, Linux, Solaris
+    if ((nproc = sysconf(_SC_NPROCESSORS_ONLN)) < 1)
+	    nproc = 1;
+#endif
+    tree.set< config::positive_int_node >("parallelism", nproc);
     tree.set< config::string_node >("platform", KYUA_PLATFORM);
 }
 
