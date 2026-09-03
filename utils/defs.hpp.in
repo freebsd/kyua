@@ -34,6 +34,9 @@
 #if !defined(UTILS_DEFS_HPP)
 #define UTILS_DEFS_HPP
 
+extern "C" {
+#include <inttypes.h>
+}
 
 /// Attribute to mark a function as non-returning.
 #define UTILS_NORETURN @ATTRIBUTE_NORETURN@
