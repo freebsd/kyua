@@ -1,8 +1,12 @@
 # Major changes between releases
 
-## Changes in version 0.15
+## Changes in version 0.15.0
+
+**Released on 2026/XX/YY.**
 
 * Issue #203: add initial GoogleTest support.
+
+**Full Changelog**: https://github.com/freebsd/lutok/compare/lutok-0.14.1...kyua-0.15.0
 
 ## Changes in version 0.14.1
 
