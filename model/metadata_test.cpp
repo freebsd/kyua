@@ -62,6 +62,7 @@ ATF_TEST_CASE_BODY(defaults)
     ATF_REQUIRE(md.required_programs().empty());
     ATF_REQUIRE(md.required_user().empty());
     ATF_REQUIRE(datetime::delta(300, 0) == md.timeout());
+    ATF_REQUIRE(1 == md.timeout_scale());
 }
 
 
@@ -199,6 +200,7 @@ ATF_TEST_CASE_BODY(override_all_with_setters)
     const std::string user = "root";
 
     const datetime::delta timeout(123, 0);
+    const size_t timeout_scale = 456;
 
     const model::metadata md = model::metadata_builder()
         .set_allowed_architectures(architectures)
@@ -214,6 +216,7 @@ ATF_TEST_CASE_BODY(override_all_with_setters)
         .set_required_programs(programs)
         .set_required_user(user)
         .set_timeout(timeout)
+        .set_timeout_scale(timeout_scale)
         .build();
 
     ATF_REQUIRE(architectures == md.allowed_architectures());
@@ -229,6 +232,7 @@ ATF_TEST_CASE_BODY(override_all_with_setters)
     ATF_REQUIRE(programs == md.required_programs());
     ATF_REQUIRE_EQ(user, md.required_user());
     ATF_REQUIRE(timeout == md.timeout());
+    ATF_REQUIRE(timeout_scale == md.timeout_scale());
 }
 
 
@@ -267,6 +271,7 @@ ATF_TEST_CASE_BODY(override_all_with_set_string)
     const std::string user = "unprivileged";
 
     const datetime::delta timeout(45, 0);
+    const size_t timeout_scale = 90;
 
     const model::metadata md = model::metadata_builder()
         .set_string("allowed_architectures", "a1 a2")
@@ -282,6 +287,7 @@ ATF_TEST_CASE_BODY(override_all_with_set_string)
         .set_string("required_programs", "program /absolute/prog")
         .set_string("required_user", "unprivileged")
         .set_string("timeout", "45")
+        .set_string("timeout_scale", "90")
         .build();
 
     ATF_REQUIRE(architectures == md.allowed_architectures());
@@ -297,6 +303,7 @@ ATF_TEST_CASE_BODY(override_all_with_set_string)
     ATF_REQUIRE(programs == md.required_programs());
     ATF_REQUIRE_EQ(user, md.required_user());
     ATF_REQUIRE(timeout == md.timeout());
+    ATF_REQUIRE(timeout_scale == md.timeout_scale());
 }
 
 
@@ -328,6 +335,7 @@ ATF_TEST_CASE_BODY(to_properties)
     props["required_programs"] = "";
     props["required_user"] = "";
     props["timeout"] = "300";
+    props["timeout_scale"] = "1";
     ATF_REQUIRE_EQ(props, md.to_properties());
 }
 
@@ -415,7 +423,8 @@ ATF_TEST_CASE_BODY(output__defaults)
                    "required_configs='', "
                    "required_disk_space='0', required_files='', "
                    "required_kmods='', required_memory='0', "
-                   "required_programs='', required_user='', timeout='300'}",
+                   "required_programs='', required_user='', "
+                   "timeout='300', timeout_scale='1'}",
                    str.str());
 }
 
@@ -438,7 +447,8 @@ ATF_TEST_CASE_BODY(output__some_values)
         "required_configs='', "
         "required_disk_space='0', required_files='bar foo', "
         "required_kmods='', required_memory='1.00K', "
-        "required_programs='', required_user='', timeout='300'}",
+        "required_programs='', required_user='', "
+        "timeout='300', timeout_scale='1'}",
         str.str());
 }
 

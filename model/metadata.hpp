@@ -80,6 +80,7 @@ public:
     const paths_set& required_programs(void) const;
     const std::string& required_user(void) const;
     const utils::datetime::delta& timeout(void) const;
+    size_t timeout_scale(void) const;
 
     model::properties_map to_properties(void) const;
 
@@ -127,6 +128,7 @@ public:
     metadata_builder& set_required_user(const std::string&);
     metadata_builder& set_string(const std::string&, const std::string&);
     metadata_builder& set_timeout(const utils::datetime::delta&);
+    metadata_builder& set_timeout_scale(const size_t);
 
     metadata build(void) const;
 };

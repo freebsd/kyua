@@ -74,7 +74,8 @@ static const char* const default_metadata =
     "required_memory = 0\n"
     "required_programs is empty\n"
     "required_user is empty\n"
-    "timeout = 300\n";
+    "timeout = 300\n"
+    "timeout_scale = 1\n";
 
 
 /// Formatted metadata for a test case constructed with the "with_metadata" flag
@@ -94,7 +95,8 @@ static const char* const overriden_metadata =
     "required_memory = 0\n"
     "required_programs is empty\n"
     "required_user is empty\n"
-    "timeout = 5678\n";
+    "timeout = 5678\n"
+    "timeout_scale = 1\n";
 
 
 /// Populates the context of the given database.
@@ -216,6 +218,7 @@ ATF_TEST_CASE_BODY(junit_metadata__overrides)
         .add_required_program(fs::path("prog1"))
         .set_required_user("root")
         .set_timeout(datetime::delta(10, 0))
+        .set_timeout_scale(5)
         .build();
 
     const std::string expected = std::string()
@@ -234,7 +237,8 @@ ATF_TEST_CASE_BODY(junit_metadata__overrides)
         + "required_memory = 123\n"
         + "required_programs = prog1\n"
         + "required_user = root\n"
-        + "timeout = 10\n";
+        + "timeout = 10\n"
+        + "timeout_scale = 5\n";
 
     ATF_REQUIRE_EQ(expected, drivers::junit_metadata(metadata));
 }

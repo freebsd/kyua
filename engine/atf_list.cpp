@@ -145,6 +145,8 @@ engine::parse_atf_metadata(const model::properties_map& props)
                 mdbuilder.set_string("required_user", value);
             } else if (name == "timeout") {
                 mdbuilder.set_string("timeout", value);
+            } else if (name == "timeout.scale") {
+                mdbuilder.set_string("timeout_scale", value);
             } else if (name.length() > 2 && name.substr(0, 2) == "X-") {
                 mdbuilder.add_custom(name.substr(2), value);
             } else {
