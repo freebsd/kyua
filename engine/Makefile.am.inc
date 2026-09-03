@@ -41,6 +41,7 @@ libengine_la_SOURCES += engine/atf_result_fwd.hpp
 libengine_la_SOURCES += engine/config.cpp
 libengine_la_SOURCES += engine/config.hpp
 libengine_la_SOURCES += engine/config_fwd.hpp
+libengine_la_SOURCES += engine/debugger.hpp
 libengine_la_SOURCES += engine/exceptions.cpp
 libengine_la_SOURCES += engine/exceptions.hpp
 libengine_la_SOURCES += engine/filters.cpp
