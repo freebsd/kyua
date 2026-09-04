@@ -32,6 +32,8 @@ permissions:
 
 jobs:
     build-and-test:
+        # yamllint disable-line rule:line-length
+        name: ${{ matrix.build-os }} ${{ matrix.compiler }} ${{ join(matrix.sanitize, '+') }}
         env:
             AR: ${{ matrix.llvm-bindir }}/llvm-ar
             CC: ${{ matrix.llvm-bindir }}/clang
@@ -48,7 +50,8 @@ jobs:
             KYUA_OBJDIR: ${{ github.workspace }}/kyua-obj
             LUTOK_SRCDIR: ${{ github.workspace }}/lutok-src
             LUTOK_OBJDIR: ${{ github.workspace }}/lutok-obj
-        name: Build ${{ matrix.build-os }} ${{ matrix.compiler }}
+            # yamllint disable-line rule:line-length
+            JOB_NAME: ${{ matrix.build-os }} ${{ matrix.compiler }} ${{ join(matrix.sanitize, '+') }}
         runs-on: "${{ matrix.build-os }}"
         strategy:
             fail-fast: false
@@ -99,6 +102,12 @@ jobs:
                           - libsqlite3-dev
                       llvm-bindir: /usr/lib/llvm-18/bin
                       build-dependencies-from-source: true
+                sanitize:
+                    - ""
+                    # TODO(ngie,77): tests currently fail when these options
+                    #                are enabled.
+                    # - ["asan", "lsan"]
+                    - ubsan
 
         steps:
             - name: Install base dependencies (macOS)

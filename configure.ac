@@ -26,7 +26,7 @@ dnl THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 dnl (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 dnl OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-AC_INIT([Kyua], [0.15.0], [kyua-discuss@googlegroups.com], [kyua],
+AC_INIT([Kyua], [0.15.0], [freebsd-testing@FreeBSD.org], [kyua],
         [https://github.com/freebsd/kyua/])
 AC_PREREQ([2.65])
 
@@ -42,10 +42,76 @@ AC_CONFIG_TESTDIR([bootstrap])
 
 AM_INIT_AUTOMAKE([1.9 foreign subdir-objects -Wall])
 
-AC_LANG([C++])
+pc_cflags=
+pc_cxxflags=
+pc_ldflags=
+
+AC_ARG_ENABLE([asan],
+AS_HELP_STRING([--enable-asan], [Turn on AddressSanitizer]),,
+[enable_asan=no])
+
+if test ${enable_asan} = yes; then
+    AC_MSG_NOTICE([building with AddressSanitizer (ASAN)])
+    enable_developer=yes
+    CXXFLAGS="${CXXFLAGS} -fsanitize=address"
+    pc_cxxflags="${pc_cxxflags} -fsanitize=address"
+    LDFLAGS="${LDFLAGS} -fsanitize=address"
+    pc_ldflags="${pc_ldflags} -fsanitize=address"
+fi
+AM_CONDITIONAL([HAVE_ASAN], [test "${enable_asan}" = yes])
+
+AC_ARG_ENABLE([code-coverage],
+AS_HELP_STRING([--enable-code-coverage], [Turn on runtime code coverage]),,
+[enable_code_coverage=no])
+
+if test ${enable_code_coverage} = yes; then
+    AC_MSG_NOTICE([building with code coverage])
+    enable_developer=yes
+    CXXFLAGS="${CXXFLAGS} --coverage"
+    pc_cxxflags="${pc_cxxflags} --coverage"
+    LDFLAGS="${LDFLAGS} --coverage"
+    pc_ldflags="${pc_ldflags} --coverage"
+fi
+AM_CONDITIONAL([CODE_COVERAGE], [test "${enable_code_coverage}" = yes])
+
+AC_ARG_ENABLE([lsan],
+AS_HELP_STRING([--enable-lsan], [Turn on LeakSanitizer]),,
+[enable_lsan=no])
+
+if test ${enable_lsan} = yes; then
+    AC_MSG_NOTICE([building with LeakSanitizer (LSAN)])
+    enable_developer=yes
+    CXXFLAGS="${CXXFLAGS} -fsanitize=leak"
+    pc_cxxflags="${pc_cxxflags} -fsanitize=leak"
+    LDFLAGS="${LDFLAGS} -fsanitize=leak"
+    pc_ldflags="${pc_ldflags} -fsanitize=leak"
+fi
+AM_CONDITIONAL([HAVE_LSAN], [test "${enable_lsan}" = yes])
+
+AC_ARG_ENABLE([ubsan],
+AS_HELP_STRING([--enable-ubsan], [Turn on UndefinedBehaviourSanitizer]),,
+[enable_ubsan=no])
+
+if test ${enable_ubsan} = yes; then
+    AC_MSG_NOTICE([building with UndefinedBehaviourSanitizer (UBSAN)])
+    enable_developer=yes
+    CXXFLAGS="${CXXFLAGS} -fsanitize=undefined"
+    pc_cxxflags="${pc_cxxflags} -fsanitize=undefined"
+    LDFLAGS="${LDFLAGS} -fsanitize=undefined"
+    pc_ldflags="${pc_ldflags} -fsanitize=undefined"
+fi
+AM_CONDITIONAL([HAVE_UBSAN], [test "${enable_ubsan}" = yes])
+
+AC_SUBST([pc_cflags])
+AC_SUBST([pc_cxxflags])
+AC_SUBST([pc_ldflags])
+
+AC_PROG_CPP
+
+AC_LANG_COMPILER(C++)
 AC_PROG_CXX
 AM_PROG_AR
-AX_CXX_COMPILE_STDCXX([20], [noext], [mandatory])
+AX_CXX_COMPILE_STDCXX(20, noext, mandatory)
 KYUA_DEVELOPER_MODE([C++])
 KYUA_ATTRIBUTE_NORETURN
 KYUA_ATTRIBUTE_PURE
@@ -88,6 +154,14 @@ KYUA_DOXYGEN
 AC_PATH_PROG([GDB], [gdb])
 test -n "${GDB}" || GDB=gdb
 AC_PATH_PROG([GIT], [git])
+if test x"${enable_code_coverage}" = xyes; then
+    AC_MSG_NOTICE([Checking for lcov package])
+    AC_PATH_PROG([GENHTML], [genhtml])
+    AC_PATH_PROG([LCOV], [lcov])
+    if test -z "${GENHTML}" -a -z "${LCOV}"; then
+        AC_MSG_ERROR([Please install lcov to obtain code coverage])
+    fi
+fi
 
 
 KYUA_UNAME_ARCHITECTURE
