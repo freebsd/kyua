@@ -210,8 +210,15 @@ If no file is explicitly specified, the location of the log files is chosen in
 this order:
 .Bl -enum -offset indent
 .It
-.Pa ${HOME}/.kyua/logs/
+.Pa ${XDG_CACHE_HOME}/kyua/logs/
 if
+.Va XDG_CACHE_HOME
+is defined.
+.It
+.Pa ${HOME}/.cache/kyua/logs/
+if
+.Va XDG_CACHE_HOME
+is undefined and
 .Va HOME
 is defined.
 .It
@@ -300,7 +307,7 @@ Also, please include a copy of the log file corresponding to the problem
 you are experiencing.
 Unless you have changed the location of the log files, you can most likely
 find them in
-.Pa ~/.kyua/logs/ .
+.Pa ~/.cache/kyua/logs/ .
 If the problem is reproducible, it is good idea to regenerate the log file
 with an increased log level so as to provide more information.
 For example:
@@ -317,6 +324,10 @@ The width of the screen, in number of characters.
 uses this to wrap long lines.
 If not present, the width of the screen is determined from the terminal
 stdout is connected to, and, if the guessing fails, this defaults to infinity.
+.It Va XDG_CACHE_HOME
+Path to the user's cache directory.
+.Nm
+uses this location to determine paths to default log files.
 .It Va HOME
 Path to the user's home directory.
 .Nm
