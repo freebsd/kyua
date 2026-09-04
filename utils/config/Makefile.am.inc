@@ -26,9 +26,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-UTILS_CFLAGS += $(LUTOK_CFLAGS)
-UTILS_LIBS += $(LUTOK_LIBS)
-
 libutils_la_CPPFLAGS += $(LUTOK_CFLAGS)
 libutils_la_SOURCES += utils/config/exceptions.cpp
 libutils_la_SOURCES += utils/config/exceptions.hpp
@@ -48,6 +45,7 @@ libutils_la_SOURCES += utils/config/tree.cpp
 libutils_la_SOURCES += utils/config/tree.hpp
 libutils_la_SOURCES += utils/config/tree.ipp
 libutils_la_SOURCES += utils/config/tree_fwd.hpp
+libutils_la_LIBADD += $(LUTOK_LIBS)
 
 if WITH_ATF
 tests_utils_configdir = $(pkgtestsdir)/utils/config
