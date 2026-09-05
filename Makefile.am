@@ -26,6 +26,30 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+CODE_COVERAGE_DIRS =
+
+#
+# Supporting logic to run our custom testsuite.
+#
+
+TESTS_ENVIRONMENT = PKG_CONFIG_PATH=$(prefix)/lib/pkgconfig
+
+if HAVE_ASAN
+# NB: the trailing comma is intentional. I hate automake not allowing `:=` use on subsequent lines.
+if HAVE_LSAN
+LSAN_OPTIONS = detect_leaks=1,
+else
+LSAN_OPTIONS =
+endif
+# Some of the testcases trigger false positives as they pass
+# `SIZE_MAX - 1`, etc, to malloc(3).
+ASAN_OPTIONS = ${LSAN_OPTIONS}allocator_may_return_null=1
+TESTS_ENVIRONMENT+= ASAN_OPTIONS=${ASAN_OPTIONS}
+endif
+if HAVE_UBSAN
+TESTS_ENVIRONMENT+= UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1:report_error_type=1
+endif
+
 ACLOCAL_AMFLAGS = -I m4
 
 CHECK_BOOTSTRAP_DEPS =
@@ -109,16 +133,14 @@ check-kyua: $(CHECK_KYUA_DEPS)
 	    exit 1; \
 	fi
 
-installcheck-local: dump-ulimits installcheck-kyua
+INSTALLCHECK_TARGETS =
 PHONY_TARGETS += installcheck-kyua
+INSTALLCHECK_TARGETS += dump-ulimits installcheck-kyua
 installcheck-kyua:
-	@failed=no; \
 	cd $(pkgtestsdir) && $(INSTALLCHECK_ENVIRONMENT) $(TESTS_ENVIRONMENT) \
-	    kyua --config='$(KYUA_CONFIG_FILE_FOR_CHECK)' test \
-	    || failed=yes; \
-	cd $(pkgtestsdir) && $(INSTALLCHECK_ENVIRONMENT) $(TESTS_ENVIRONMENT) \
-	    kyua --config='$(KYUA_CONFIG_FILE_FOR_CHECK)' report \
-	    --verbose --results-filter=broken,failed; \
+	    kyua --config='$(KYUA_CONFIG_FILE_FOR_CHECK)' test; \
+	ret=$$?; \
+	echo $${ret}; \
 	if [ -n "$$JUNIT_OUTPUT" ]; then \
 	    cd $(pkgtestsdir) && $(TESTS_ENVIRONMENT) \
 		    $(KYUA) --config='$(KYUA_CONFIG_FILE_FOR_CHECK)' \
@@ -126,9 +148,27 @@ installcheck-kyua:
 	    sed -i '.orig' 's/encoding="iso-8859-1"/encoding="utf-8"/' "$$JUNIT_OUTPUT"; \
 	    rm -f "$$JUNIT_OUTPUT.orig"; \
 	fi; \
-	if [ "$${failed}" = yes ]; then \
-	    exit 1; \
-	fi
+	cd $(pkgtestsdir) && $(INSTALLCHECK_ENVIRONMENT) $(TESTS_ENVIRONMENT) \
+	    kyua --config='$(KYUA_CONFIG_FILE_FOR_CHECK)' report \
+	    --verbose --results-filter=broken,failed; \
+	exit $${ret}
+
+if CODE_COVERAGE
+CODE_COVERAGE_EXCLUDES = '/usr/include/*' '/usr/local/include/*'
+CODE_COVERAGE_OUTPUT_DIR ?= code_coverage
+EXTRA_GENHTML_ARGS ?=
+INSTALLCHECK_TARGETS+=	installcheck-kyua-lcov
+
+installcheck-kyua-lcov: installcheck-kyua
+	mkdir -p $(CODE_COVERAGE_OUTPUT_DIR)/html
+	$(LCOV) --capture --directory $(srcdir) \
+	    --output-file $(CODE_COVERAGE_OUTPUT_DIR)/lcov.info
+	$(LCOV) --remove $(CODE_COVERAGE_OUTPUT_DIR)/lcov.info \
+	    $(CODE_COVERAGE_EXCLUDES) \
+	    --output-file $(CODE_COVERAGE_OUTPUT_DIR)/lcov-filtered.info
+	$(GENHTML) -o $(CODE_COVERAGE_OUTPUT_DIR)/html $(EXTRA_GENHTML_ARGS) \
+	    $(CODE_COVERAGE_OUTPUT_DIR)/lcov-filtered.info
+endif
 
 # TODO(jmmv): kyua should probably be recording this information itself as part
 # of the execution context, just as we record environment variables.
@@ -141,14 +181,24 @@ dump-ulimits:
 	} | sort | sed -e 's,^,    ,'
 	@echo
 else
-DIST_HOOKS += forbid-dist
-PHONY_TARGETS += forbid-dist
-forbid-dist:
-	@echo "Sorry; cannot make dist without atf."
+DIST_HOOKS += dist-no-atf
+PHONY_TARGETS += dist-no-atf
+dist-no-atf:
+	@echo "Sorry; cannot build a distfile without atf"
 	@false
 endif
 check-local: $(CHECK_LOCAL)
 
+if CODE_COVERAGE
+PHONY_TARGETS += mostlyclean-code-coverage
+mostlyclean-local: mostlyclean-code-coverage
+mostlyclean-code-coverage:
+	-for dir in $(CODE_COVERAGE_DIRS); do \
+	    find $$dir \( -name \*.gcda -or -name \*.gcno \) -delete -print; \
+	done
+endif
+
+installcheck-local: $(INSTALLCHECK_TARGETS)
 if WITH_DOXYGEN
 # Runs doxygen on the source tree and validates the contents of the docstrings.
 # We do not do this by default, even if doxygen has been enabled, because this
@@ -184,10 +234,13 @@ check-news:
 	esac
 
 clean-local: $(CLEAN_TARGETS)
-dist-hook: $(DIST_HOOKS)
 
 PHONY_TARGETS += clean-all
 clean-all:
 	GIT="$(GIT)" $(SH) $(srcdir)/admin/clean-all.sh
 
+dist-hook: $(DIST_HOOKS)
+
 .PHONY: $(PHONY_TARGETS)
+
+# vim: syntax=make:noexpandtab:shiftwidth=8:softtabstop=8
