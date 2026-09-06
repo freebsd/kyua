@@ -191,6 +191,7 @@ engine::googletest_interface::exec_test(
         F("--gtest_filter=%s") % (test_case_name)
     };
     process::exec(test_program.absolute_path(), args);
+    __builtin_unreachable();
 }
 
 
