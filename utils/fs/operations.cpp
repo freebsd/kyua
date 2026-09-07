@@ -148,7 +148,7 @@ unmount(const char* /* path */,
 const int exit_known_error = 123;
 
 
-static void run_mount_tmpfs(const fs::path&, const uint64_t) UTILS_NORETURN;
+static void run_mount_tmpfs [[noreturn]] (const fs::path&, const uint64_t);
 
 
 /// Executes 'mount -t tmpfs' (or a similar variant).
