@@ -548,7 +548,8 @@ check_output__no_test_cases(void)
         "has_cleanup='false', is_exclusive='false', "
         "required_configs='', required_disk_space='0', required_files='', "
         "required_kmods='', required_memory='0', "
-        "required_programs='', required_user='', timeout='300'}, "
+        "required_programs='', required_user='', "
+        "timeout='300', timeout_scale='1'}, "
         "test_cases=map()}",
         str.str());
 }
@@ -598,7 +599,8 @@ check_output__some_test_cases(void)
         "has_cleanup='false', is_exclusive='false', "
         "required_configs='', required_disk_space='0', required_files='', "
         "required_kmods='', required_memory='0', "
-        "required_programs='', required_user='', timeout='300'}, "
+        "required_programs='', required_user='', "
+        "timeout='300', timeout_scale='1'}, "
         "test_cases=map("
         "another-name=test_case{name='another-name', "
         "metadata=metadata{allowed_architectures='a', allowed_platforms='', "
@@ -606,14 +608,16 @@ check_output__some_test_cases(void)
         "has_cleanup='false', is_exclusive='false', "
         "required_configs='', required_disk_space='0', required_files='', "
         "required_kmods='', required_memory='0', "
-        "required_programs='', required_user='', timeout='300'}}, "
+        "required_programs='', required_user='', "
+        "timeout='300', timeout_scale='1'}}, "
         "the-name=test_case{name='the-name', "
         "metadata=metadata{allowed_architectures='a', allowed_platforms='foo', "
         "custom.bar='baz', description='', execenv='', execenv_jail_params='', "
         "has_cleanup='false', is_exclusive='false', "
         "required_configs='', required_disk_space='0', required_files='', "
         "required_kmods='', required_memory='0', "
-        "required_programs='', required_user='', timeout='300'}})}",
+        "required_programs='', required_user='', "
+        "timeout='300', timeout_scale='1'}})}",
         str.str());
 }
 

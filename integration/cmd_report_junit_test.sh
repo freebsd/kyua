@@ -109,6 +109,7 @@ required_memory = 0
 required_programs is empty
 required_user is empty
 timeout = 300
+timeout_scale = 1
 
 Timing information
 ------------------
@@ -150,6 +151,7 @@ required_memory = 0
 required_programs is empty
 required_user is empty
 timeout = 300
+timeout_scale = 1
 
 Timing information
 ------------------
@@ -229,6 +231,7 @@ required_memory = 0
 required_programs is empty
 required_user is empty
 timeout = 300
+timeout_scale = 1
 
 Timing information
 ------------------
@@ -270,6 +273,7 @@ required_memory = 0
 required_programs is empty
 required_user is empty
 timeout = 300
+timeout_scale = 1
 
 Timing information
 ------------------

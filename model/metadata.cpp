@@ -260,6 +260,7 @@ init_tree(config::tree& tree)
     tree.define< paths_set_node >("required_programs");
     tree.define< user_node >("required_user");
     tree.define< delta_node >("timeout");
+    tree.define< config::positive_int_node >("timeout_scale");
 }
 
 
@@ -286,9 +287,8 @@ set_defaults(config::tree& tree)
     tree.set< config::strings_set_node >("required_kmods", model::strings_set());
     tree.set< paths_set_node >("required_programs", model::paths_set());
     tree.set< user_node >("required_user", "");
-    // TODO(jmmv): We shouldn't be setting a default timeout like this.  See
-    // Issue 5 for details.
     tree.set< delta_node >("timeout", datetime::delta(300, 0));
+    tree.set< config::positive_int_node >("timeout_scale", 1);
 }
 
 
@@ -654,6 +654,19 @@ model::metadata::timeout(void) const
         return _pimpl->props.lookup< delta_node >("timeout");
     } else {
         return get_defaults().lookup< delta_node >("timeout");
+    }
+}
+
+/// Returns the timeout scale factor of the test.
+///
+/// \return A positive scale factor
+size_t
+model::metadata::timeout_scale(void) const
+{
+    if (_pimpl->props.is_set("timeout_scale")) {
+        return _pimpl->props.lookup< config::positive_int_node >("timeout_scale");
+    } else {
+        return get_defaults().lookup< config::positive_int_node >("timeout_scale");
     }
 }
 
@@ -1139,6 +1152,20 @@ model::metadata_builder&
 model::metadata_builder::set_timeout(const datetime::delta& timeout)
 {
     set< delta_node >(_pimpl->props, "timeout", timeout);
+    return *this;
+}
+
+/// Sets the timeout scale factor of the test.
+///
+/// \param timeout The timeout scale factor to set.
+///
+/// \return A reference to this builder.
+///
+/// \throw model::error If the value is invalid.
+model::metadata_builder&
+model::metadata_builder::set_timeout_scale(const size_t scale)
+{
+    set< config::positive_int_node >(_pimpl->props, "timeout_scale", scale);
     return *this;
 }
 

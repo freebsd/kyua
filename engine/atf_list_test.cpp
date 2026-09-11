@@ -74,6 +74,7 @@ ATF_TEST_CASE_BODY(parse_atf_metadata__override_all)
     properties["require.progs"] = "/bin/ls svn";
     properties["require.user"] = "root";
     properties["timeout"] = "123";
+    properties["timeout.scale"] = "456";
     properties["X-foo"] = "value1";
     properties["X-bar"] = "value2";
     properties["X-baz-www"] = "value3";
@@ -100,6 +101,7 @@ ATF_TEST_CASE_BODY(parse_atf_metadata__override_all)
         .set_required_memory(units::bytes::parse("1m"))
         .set_required_user("root")
         .set_timeout(datetime::delta(123, 0))
+        .set_timeout_scale(456)
         .build();
     ATF_REQUIRE_EQ(exp_md, md);
 }
