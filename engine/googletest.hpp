@@ -50,7 +50,7 @@ public:
         const utils::fs::path&) const;
 
     void exec_test [[noreturn]] (
-    const model::test_program&, const std::string&,
+        const model::test_program&, const std::string&,
         const utils::config::properties_map&,
         const utils::fs::path&) const;
 

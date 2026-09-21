@@ -41,7 +41,7 @@ namespace engine {
 class tap_interface : public engine::scheduler::interface {
 public:
     void exec_list [[noreturn]] (
-    const model::test_program&,
+        const model::test_program&,
         const utils::config::properties_map&) const;
 
     model::test_cases_map parse_list(
@@ -50,7 +50,7 @@ public:
         const utils::fs::path&) const;
 
     void exec_test [[noreturn]] (
-    const model::test_program&, const std::string&,
+        const model::test_program&, const std::string&,
         const utils::config::properties_map&,
         const utils::fs::path&) const;
 

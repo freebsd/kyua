@@ -191,7 +191,7 @@ class mock_interface : public scheduler::interface {
     ///     number.
     /// \param vars User-provided variables to pass to the test program.
     void
-    exec_print_params [[noreturn]](
+    exec_print_params [[noreturn]] (
         const model::test_program& test_program,
         const std::string& test_case_name,
         const config::properties_map& vars) const
@@ -219,7 +219,7 @@ public:
     /// \param vars User-provided variables to pass to the test program.
     void
     exec_list [[noreturn]] (
-    const model::test_program& test_program,
+        const model::test_program& test_program,
         const config::properties_map& vars) const
     {
         const std::string name = test_program.absolute_path().leaf_name();
