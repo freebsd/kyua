@@ -127,7 +127,7 @@ public:
     /// \param control_directory Directory where the interface may place control
     ///     files.
     virtual void exec_test [[noreturn]] (
-    const model::test_program& test_program,
+        const model::test_program& test_program,
         const std::string& test_case_name,
         const utils::config::properties_map& vars,
         const utils::fs::path& control_directory) const = 0;
@@ -144,7 +144,7 @@ public:
     /// \param control_directory Directory where the interface may place control
     ///     files.
     virtual void exec_cleanup [[noreturn]](
-    const model::test_program& test_program,
+        const model::test_program& test_program,
         const std::string& test_case_name,
         const utils::config::properties_map& vars,
         const utils::fs::path& control_directory) const;
