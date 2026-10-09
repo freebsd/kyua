@@ -30,7 +30,7 @@ FREEBSD_CFLAGS =
 FREEBSD_LIBS = libfreebsd.la
 
 noinst_LTLIBRARIES += libfreebsd.la
-libfreebsd_la_CPPFLAGS = -DGDB=\"$(GDB)\"
+libfreebsd_la_CPPFLAGS = -DGDB=\"$(GDB)\" $(LUTOK_CFLAGS)
 libfreebsd_la_SOURCES  = os/freebsd/main.hpp
 libfreebsd_la_SOURCES += os/freebsd/main.cpp
 libfreebsd_la_SOURCES += os/freebsd/execenv_jail.hpp
@@ -40,6 +40,8 @@ libfreebsd_la_SOURCES += os/freebsd/execenv_jail_manager.cpp
 if FreeBSD
 FREEBSD_LIBS += -ljail -lutil
 libfreebsd_la_SOURCES += os/freebsd/execenv_jail.cpp
+libfreebsd_la_SOURCES += os/freebsd/prepare_kmods.hpp
+libfreebsd_la_SOURCES += os/freebsd/prepare_kmods.cpp
 libfreebsd_la_SOURCES += os/freebsd/reqs_checker_kmods.hpp
 libfreebsd_la_SOURCES += os/freebsd/reqs_checker_kmods.cpp
 include os/freebsd/utils/Makefile.am.inc

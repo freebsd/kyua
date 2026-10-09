@@ -1059,6 +1059,21 @@ model::metadata_builder::set_required_files(const model::paths_set& files)
 }
 
 
+/// Sets the list of required kernel modules.
+///
+/// \param vars Set of kernel module names.
+///
+/// \return A reference to this builder.
+///
+/// \throw model::error If the value is invalid.
+model::metadata_builder&
+model::metadata_builder::set_required_kmods(const model::strings_set& kmods)
+{
+    set< config::strings_set_node >(_pimpl->props, "required_kmods", kmods);
+    return *this;
+}
+
+
 /// Sets the amount of memory required by the test.
 ///
 /// \param bytes Number of bytes.
