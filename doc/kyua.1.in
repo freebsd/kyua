@@ -189,6 +189,10 @@ Lists test cases defined in a test suite by a
 and, optionally, displays their metadata.
 See
 .Xr kyua-list 1 .
+.It Ar prepare
+Prepares test environment by running a specific or all requirement preparation
+handlers.
+Lists available handlers if no parameters are provided.
 .It Ar test
 Runs tests defined in a test suite by a
 .Xr kyuafile 5 .
