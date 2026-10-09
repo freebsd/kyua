@@ -89,10 +89,13 @@ parse_without_reason(const std::string& status, const std::string& rest)
 
     if (status == "skipped")
         return engine::googletest_result(engine::googletest_result::skipped);
-    else {
-        INV(status == "successful");
+    else if (status == "successful")
         return engine::googletest_result(engine::googletest_result::successful);
-    }
+    else if (status == "failed")
+        return engine::googletest_result(engine::googletest_result::failed);
+    else
+        return engine::googletest_result(engine::googletest_result::broken,
+            F("bad status: '%s'; output was:\n%s") % status % rest);
 }
 
 
@@ -388,18 +391,21 @@ engine::googletest_result::apply(const optional< process::status >& status)
 model::test_result
 engine::googletest_result::externalize(void) const
 {
+
+    // FIXME(ngie,#323): some of these test result types may require a reason, and thus the
+    // `.get()` -> `.get_default("")` change might be a bug.
     switch (_type) {
     case googletest_result::broken:
-        return model::test_result(model::test_result_broken, _reason.get());
+        return model::test_result(model::test_result_broken, _reason.get_default(""));
 
     case googletest_result::disabled:
-        return model::test_result(model::test_result_skipped, _reason.get());
+        return model::test_result(model::test_result_skipped, _reason.get_default(""));
 
     case googletest_result::failed:
-        return model::test_result(model::test_result_failed, _reason.get());
+        return model::test_result(model::test_result_failed, _reason.get_default(""));
 
     case googletest_result::skipped:
-        return model::test_result(model::test_result_skipped, _reason.get());
+        return model::test_result(model::test_result_skipped, _reason.get_default(""));
 
     case googletest_result::successful:
         return model::test_result(model::test_result_passed);
