@@ -26,25 +26,12 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-FREEBSD_CFLAGS =
-FREEBSD_LIBS = libfreebsd.la
+ENGINE_PREPARE_CFLAGS = $(LUTOK_CFLAGS)
+ENGINE_PREPARE_LIBS = libengine_prepare.la $(LUTOK_LIBS)
 
-noinst_LTLIBRARIES += libfreebsd.la
-libfreebsd_la_CPPFLAGS = -DGDB=\"$(GDB)\" $(LUTOK_CFLAGS)
-libfreebsd_la_SOURCES  = os/freebsd/main.hpp
-libfreebsd_la_SOURCES += os/freebsd/main.cpp
-libfreebsd_la_SOURCES += os/freebsd/execenv_jail.hpp
-libfreebsd_la_SOURCES += os/freebsd/execenv_jail_manager.hpp
-libfreebsd_la_SOURCES += os/freebsd/execenv_jail_manager.cpp
-
-if FreeBSD
-FREEBSD_LIBS += -ljail -lutil
-libfreebsd_la_SOURCES += os/freebsd/execenv_jail.cpp
-libfreebsd_la_SOURCES += os/freebsd/prepare_kmods.hpp
-libfreebsd_la_SOURCES += os/freebsd/prepare_kmods.cpp
-libfreebsd_la_SOURCES += os/freebsd/reqs_checker_kmods.hpp
-libfreebsd_la_SOURCES += os/freebsd/reqs_checker_kmods.cpp
-include os/freebsd/utils/Makefile.am.inc
-else
-libfreebsd_la_SOURCES += os/freebsd/execenv_jail_stub.cpp
-endif
+noinst_LTLIBRARIES += libengine_prepare.la
+libengine_prepare_la_CPPFLAGS = $(LUTOK_CFLAGS)
+libengine_prepare_la_SOURCES  = engine/prepare/prepare.hpp
+libengine_prepare_la_SOURCES += engine/prepare/prepare.cpp
+libengine_prepare_la_SOURCES +=	engine/prepare/prepare_all.hpp
+libengine_prepare_la_SOURCES += engine/prepare/prepare_all.cpp
