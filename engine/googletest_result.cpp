@@ -486,13 +486,13 @@ engine::calculate_googletest_result(
     googletest_result result(googletest_result::broken, "Unknown result");
     try {
         result = googletest_result::load(results_file);
-        /// atf_result.cpp handles this by side-effect by setting a broken
-        /// result with "", which results in a std::runtime_error throw from
-        /// atf_result::parse(..). googletest_result::parse doesn't do that and
-        /// instead returns a broken result with a reason of
-        /// `invalid_output_message`, so that case needs to be tested for after
-        /// the fact to make sure the reason why `invalid_output_message` was
-        /// because of a program that crashed or failed.
+        // atf_result.cpp handles this by side-effect by setting a broken
+        // result with "", which results in a std::runtime_error throw from
+        // atf_result::parse(..). googletest_result::parse doesn't do that and
+        // instead returns a broken result with a reason of
+        // `googletest_invalid_output_message`, so that case needs to be
+        // tested for after the fact to confirm whether or not program crashed
+        // or failed.
         if (result.type() == googletest_result::broken && body_status) {
             const optional< std::string >& reason = result.reason();
             if (reason && reason.get() == invalid_output_message) {
@@ -506,11 +506,11 @@ engine::calculate_googletest_result(
         if (body_status)
             result = googletest_result(googletest_result::broken,
                 F("Error: %s. Test case %s") %
-		error.what() %
+                error.what() %
                 format_status(body_status.get()));
-	else {
+        else {
             // The test case timed out.  apply() handles this case later.
-	}
+        }
     } catch (const std::runtime_error& error) {
         if (body_status)
             result = googletest_result(
