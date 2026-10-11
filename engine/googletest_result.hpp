@@ -76,11 +76,13 @@ model::test_result calculate_googletest_result(
     const utils::optional< utils::process::status >&,
     const utils::fs::path&);
 
+/// Internal string for specifying invalid output.
+const std::string googletest_invalid_output_message = "invalid output";
 
 /// A bogus identifier for nul reasons provided by the test writer.
 ///
 /// TODO: Support nul messages with skipped results in the schema, etc.
-const std::string bogus_googletest_skipped_nul_message = "\n";
+const std::string googletest_bogus_skipped_nul_message = "\n";
 
 
 }  // namespace engine

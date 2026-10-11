@@ -73,7 +73,8 @@ parse_ok_test(const engine::googletest_result::types& exp_type,
 
 
 PARSE(broken,
-      engine::googletest_result::broken, "invalid output",
+      engine::googletest_result::broken,
+      engine::googletest_invalid_output_message.c_str(),
       "invalid input");
 
 const char disabled_context[] = (
@@ -145,7 +146,7 @@ const char skipped_message[] = (
 
 PARSE(skipped,
       engine::googletest_result::skipped,
-      engine::bogus_googletest_skipped_nul_message.c_str(),
+      engine::googletest_bogus_skipped_nul_message.c_str(),
       skipped_message
 );
 

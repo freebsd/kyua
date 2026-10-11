@@ -30,9 +30,6 @@ using utils::optional;
 
 namespace {
 
-/// Internal string for specifying invalid output.
-const std::string invalid_output_message = "invalid output";
-
 /// Regular expression for disabled tests line.
 const std::regex disabled_re(
     R"RE((YOU HAVE [[:digit:]]+ DISABLED TESTS?))RE"
@@ -213,11 +210,12 @@ engine::googletest_result::parse(std::istream& input)
         }
     }
     if (!valid_output) {
-        context = invalid_output_message;
+        context = googletest_invalid_output_message;
         status = "broken";
     }
     if (status == "skipped" && context.empty())
-        context = bogus_googletest_skipped_nul_message;
+        context = googletest_bogus_skipped_nul_message;
+
     if (context.empty())
         return parse_without_reason(status, context);
     else
@@ -478,7 +476,7 @@ engine::calculate_googletest_result(
         // or failed.
         if (result.type() == googletest_result::broken && body_status) {
             const optional< std::string >& reason = result.reason();
-            if (reason && reason.get() == invalid_output_message) {
+            if (reason && reason.get() == googletest_invalid_output_message) {
                 result = googletest_result(
                     googletest_result::broken,
                     F("Error: Premature exit. Test case %s") %
