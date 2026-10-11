@@ -1,30 +1,7 @@
-// Copyright 2024 The Kyua Authors.
+// Copyright 2026 The Kyua Authors.
 // All rights reserved.
 //
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-// * Redistributions of source code must retain the above copyright
-//   notice, this list of conditions and the following disclaimer.
-// * Redistributions in binary form must reproduce the above copyright
-//   notice, this list of conditions and the following disclaimer in the
-//   documentation and/or other materials provided with the distribution.
-// * Neither the name of Google Inc. nor the names of its contributors
-//   may be used to endorse or promote products derived from this software
-//   without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// SPDX-License-Identifier: BSD-2-Clause
 
 #include "engine/googletest_result.hpp"
 
@@ -492,13 +469,13 @@ engine::calculate_googletest_result(
     googletest_result result(googletest_result::broken, "Unknown result");
     try {
         result = googletest_result::load(results_file);
-        /// atf_result.cpp handles this by side-effect by setting a broken
-        /// result with "", which results in a std::runtime_error throw from
-        /// atf_result::parse(..). googletest_result::parse doesn't do that and
-        /// instead returns a broken result with a reason of
-        /// `invalid_output_message`, so that case needs to be tested for after
-        /// the fact to make sure the reason why `invalid_output_message` was
-        /// because of a program that crashed or failed.
+        // atf_result.cpp handles this by side-effect by setting a broken
+        // result with "", which results in a std::runtime_error throw from
+        // atf_result::parse(..). googletest_result::parse doesn't do that and
+        // instead returns a broken result with a reason of
+        // `googletest_invalid_output_message`, so that case needs to be
+        // tested for after the fact to confirm whether or not program crashed
+        // or failed.
         if (result.type() == googletest_result::broken && body_status) {
             const optional< std::string >& reason = result.reason();
             if (reason && reason.get() == invalid_output_message) {
@@ -512,11 +489,11 @@ engine::calculate_googletest_result(
         if (body_status)
             result = googletest_result(googletest_result::broken,
                 F("Error: %s. Test case %s") %
-		error.what() %
+                error.what() %
                 format_status(body_status.get()));
-	else {
+        else {
             // The test case timed out.  apply() handles this case later.
-	}
+        }
     } catch (const std::runtime_error& error) {
         if (body_status)
             result = googletest_result(
