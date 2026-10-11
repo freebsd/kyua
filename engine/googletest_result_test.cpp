@@ -229,7 +229,11 @@ PARSE(successful_parameterized,
       engine::googletest_result::successful, NULL,
       successful_parameterized_message);
 
-const char successful_message_with_reason[] = (
+const char successful_with_reason_context[] = (
+"This is a reason\n"
+);
+
+const char successful_with_reason_message[] = (
 "Note: Google Test filter = PassFailTest.PassesWithReason\n"
 "[==========] Running 1 test from 1 test suite.\n"
 "[----------] Global test environment set-up.\n"
@@ -245,8 +249,9 @@ const char successful_message_with_reason[] = (
 );
 
 PARSE(successful_with_reason,
-      engine::googletest_result::successful, NULL,
-      successful_message_with_reason);
+      engine::googletest_result::successful,
+      successful_with_reason_context,
+      successful_with_reason_message);
 
 ATF_TEST_CASE_WITHOUT_HEAD(googletest_result__load__ok);
 ATF_TEST_CASE_BODY(googletest_result__load__ok)

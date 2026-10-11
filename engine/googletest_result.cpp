@@ -98,8 +98,10 @@ parse_with_reason(const std::string& status, const std::string& rest)
         return googletest_result(googletest_result::failed, rest);
     else if (status == "skipped")
         return googletest_result(googletest_result::skipped, rest);
+    else if (status == "successful")
+        return googletest_result(googletest_result::successful, rest);
     else
-        PRE_MSG(false, "Unexpected status");
+        PRE_MSG(false, F("Unexpected status: %s") % status);
 }
 
 
@@ -193,13 +195,14 @@ engine::googletest_result::parse(std::istream& input)
         }
         if (regex_search(line, matches, ending_sentinel_re)) {
             std::string googletest_res = matches[1];
+
             if (googletest_res == "OK") {
-                context = "";
                 status = "successful";
             } else if (googletest_res == "FAILED") {
                 status = "failed";
             } else {
-                INV(googletest_res == "SKIPPED");
+                INV_MSG(googletest_res == "SKIPPED",
+                    F("expected SKIPPED; got %s") % googletest_res);
                 status = "skipped";
             }
             capture_context = false;
