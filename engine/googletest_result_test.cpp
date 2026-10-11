@@ -128,6 +128,71 @@ PARSE(failed,
       engine::googletest_result::failed, failed_context,
       failed_message);
 
+// CHECK_STYLE_DISABLE
+#if 0
+const char failed_parameterized_context[] = (
+"/usr/src/contrib/googletest/googletest/test/googletest-param-test-test.cc:882: Failure\n"
+"Expected: (global_count_) >= (2), actual: 1 vs 2\n"
+"If some (but not all) SeparateInstanceTest tests have been filtered out this test will fail. Make sure that all GeneratorEvaluationTest are selected or de-selected together by the test filter.\n"
+"\n"
+);
+#else
+const char failed_parameterized_context[] = (
+"kyua: could not 'summarize' failure context; see full process output for more details:\n"
+"\n"
+"Note: Google Test filter = FourElemSequence/SeparateInstanceTest.TestsRunInSeparateInstances/0\n"
+"[==========] Running 1 test from 1 test suite.\n"
+"[----------] Global test environment set-up.\n"
+"[----------] 1 test from FourElemSequence/SeparateInstanceTest\n"
+"[ RUN      ] FourElemSequence/SeparateInstanceTest.TestsRunInSeparateInstances/0\n"
+"[       OK ] FourElemSequence/SeparateInstanceTest.TestsRunInSeparateInstances/0 (0 ms)\n"
+"/usr/src/contrib/googletest/googletest/test/googletest-param-test-test.cc:882: Failure\n"
+"Expected: (global_count_) >= (2), actual: 1 vs 2\n"
+"If some (but not all) SeparateInstanceTest tests have been filtered out this test will fail. Make sure that all GeneratorEvaluationTest are selected or de-selected together by the test filter.\n"
+"\n"
+"[----------] 1 test from FourElemSequence/SeparateInstanceTest (0 ms total)\n"
+"\n"
+"[----------] Global test environment tear-down\n"
+"[==========] 1 test from 1 test suite ran. (0 ms total)\n"
+"[  PASSED  ] 1 test.\n"
+"[  FAILED  ] 0 tests, listed below:\n"
+"\n"
+" 0 FAILED TESTS\n"
+"[  FAILED  ] FourElemSequence/SeparateInstanceTest: SetUpTestSuite or TearDownTestSuite\n"
+"\n"
+" 1 FAILED TEST SUITE\n"
+);
+#endif
+
+const char failed_parameterized_message[] = (
+"Note: Google Test filter = FourElemSequence/SeparateInstanceTest.TestsRunInSeparateInstances/0\n"
+"[==========] Running 1 test from 1 test suite.\n"
+"[----------] Global test environment set-up.\n"
+"[----------] 1 test from FourElemSequence/SeparateInstanceTest\n"
+"[ RUN      ] FourElemSequence/SeparateInstanceTest.TestsRunInSeparateInstances/0\n"
+"[       OK ] FourElemSequence/SeparateInstanceTest.TestsRunInSeparateInstances/0 (0 ms)\n"
+"/usr/src/contrib/googletest/googletest/test/googletest-param-test-test.cc:882: Failure\n"
+"Expected: (global_count_) >= (2), actual: 1 vs 2\n"
+"If some (but not all) SeparateInstanceTest tests have been filtered out this test will fail. Make sure that all GeneratorEvaluationTest are selected or de-selected together by the test filter.\n"
+"\n"
+"[----------] 1 test from FourElemSequence/SeparateInstanceTest (0 ms total)\n"
+"\n"
+"[----------] Global test environment tear-down\n"
+"[==========] 1 test from 1 test suite ran. (0 ms total)\n"
+"[  PASSED  ] 1 test.\n"
+"[  FAILED  ] 0 tests, listed below:\n"
+"\n"
+" 0 FAILED TESTS\n"
+"[  FAILED  ] FourElemSequence/SeparateInstanceTest: SetUpTestSuite or TearDownTestSuite\n"
+"\n"
+" 1 FAILED TEST SUITE\n"
+);
+// CHECK_STYLE_ENABLE
+
+PARSE(failed_parameterized,
+      engine::googletest_result::failed, failed_parameterized_context,
+      failed_parameterized_message);
+
 const char skipped_message[] = (
 "Note: Google Test filter = SkipTest.DoesSkip\n"
 "[==========] Running 1 test from 1 test suite.\n"
@@ -174,6 +239,36 @@ const char skipped_with_reason_message[] = (
 PARSE(skipped_with_reason,
       engine::googletest_result::skipped, skipped_with_reason_context,
       skipped_with_reason_message);
+
+// Issue 326: test suites built against 0.18.0 which skip in
+// `Environment::SetUp` misreport tests passing instead of being skipped.
+//
+// https://github.com/google/googletest/issues/4653
+const char skipped_from_environment_with_buggy_output_context[] = (
+"current user is not allowed to mount\n"
+"\n"
+"current user is not allowed to mount\n"
+"\n"
+);
+
+const char skipped_from_environment_with_buggy_output_message[] = (
+"Note: Google Test filter = Setattr.eacces\n"
+"[==========] Running 1 test from 1 test suite.\n"
+"[----------] Global test environment set-up.\n"
+"/usr/src/tests/sys/fs/fusefs/utils.cc:95: Skipped\n"
+"current user is not allowed to mount\n"
+"\n"
+"current user is not allowed to mount\n"
+"\n"
+"[----------] Global test environment tear-down\n"
+"[==========] 1 test from 1 test suite ran. (0 ms total)\n"
+"[  PASSED  ] 1 test.\n"
+);
+
+PARSE(skipped_from_environment_with_buggy_output,
+      engine::googletest_result::skipped,
+      skipped_from_environment_with_buggy_output_context,
+      skipped_from_environment_with_buggy_output_message);
 
 const char successful_message[] = (
 "Note: Google Test filter = PassFailTest.Passes\n"
@@ -386,7 +481,10 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, googletest_result__parse__broken);
     ATF_ADD_TEST_CASE(tcs, googletest_result__parse__disabled);
     ATF_ADD_TEST_CASE(tcs, googletest_result__parse__failed);
+    ATF_ADD_TEST_CASE(tcs, googletest_result__parse__failed_parameterized);
     ATF_ADD_TEST_CASE(tcs, googletest_result__parse__skipped);
+    ATF_ADD_TEST_CASE(tcs,
+        googletest_result__parse__skipped_from_environment_with_buggy_output);
     ATF_ADD_TEST_CASE(tcs, googletest_result__parse__skipped_with_reason);
     ATF_ADD_TEST_CASE(tcs, googletest_result__parse__successful);
     ATF_ADD_TEST_CASE(tcs, googletest_result__parse__successful2);

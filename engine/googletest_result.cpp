@@ -35,13 +35,41 @@ const std::regex disabled_re(
     R"RE((YOU HAVE [[:digit:]]+ DISABLED TESTS?))RE"
 );
 
+/// Regular expression for buggy skipped message output. Should be resolved via
+/// google/googletest#5098 .
+const std::regex global_env_buggy_skip_prefix_re(
+    R"RE(.+: Skipped\n)RE"
+);
+
+/// Regular expression for starting sentinel for Global test environment.
+const std::regex global_env_context_start_re(
+    R"(\[\-+\][[:space:]]+Global test environment set-up)"
+);
+
+/// Regular expression for ending sentinel for Global test environment.
+const std::regex global_env_context_end_re(
+    R"(\[\-+\][[:space:]]+Global test environment tear-down)"
+);
+
+// CHECK_STYLE_DISABLE
+
+/// Regular expression for setup or teardown fixtures that fail for test
+/// suites.
+///
+/// This only applies to the failure result type, not the other ones.
+const std::regex suite_setup_or_teardown_failure_re(
+    R"RE(\[[[:space:]]+FAILED[[:space:]]+\][[:space:]]+[^:]+:[[:space:]]SetUpTestSuite or TearDownTestSuite)RE"
+);
+
+// CHECK_STYLE_ENABLE
+
 /// Regular expression for starting sentinel of results block.
-const std::regex starting_sentinel_re(
+const std::regex test_context_start_re(
     R"(\[[[:space:]]+RUN[[:space:]]+\][[:space:]]+[^[:space:]]+)"
 );
 
 /// Regular expression for ending sentinel of results block.
-const std::regex ending_sentinel_re(
+const std::regex test_context_end_re(
     R"RE(\[[[:space:]]+(FAILED|OK|SKIPPED)[[:space:]]+\])RE"
 );
 
@@ -157,6 +185,9 @@ engine::googletest_result::googletest_result(
 /// have a bug), and thus why they are reported as broken instead of just failed
 /// (which is a legitimate result for a test case).
 ///
+/// TODO(ngie): replace ad hoc output format parsing with a structured file
+///             format, e.g., JSON or XML.
+///
 /// \param input The stream to read from.
 ///
 /// \return A generic representation of the result of the test case.
@@ -166,6 +197,7 @@ engine::googletest_result
 engine::googletest_result::parse(std::istream& input)
 {
     std::vector<std::string> lines;
+    std::string all_context;
 
     do {
         std::string line;
@@ -173,27 +205,53 @@ engine::googletest_result::parse(std::istream& input)
         if (!input.eof())
             line.push_back('\n');
         lines.push_back(line);
+        all_context += line;
     } while (input.good());
 
-    bool capture_context = false;
-    bool valid_output = false;
     std::string context, status;
+    bool capture_immediate_context = false;
+    bool global_env_message_start_seen = false;
+    bool valid_output = false;
 
     for (auto& line: lines) {
+        // FIXME: drop the line-by-line parsing and just use multiline regular
+        // expressions with associated matching or just bite the bullet and
+        // switch to a structured format like JSON or XML.
         std::smatch matches;
 
-        if (regex_search(line, matches, disabled_re)) {
+        if (std::regex_search(line, global_env_context_start_re)) {
+            global_env_message_start_seen = true;
+            // Issue 326: it's a common pattern for folks to use GoogleTest
+            // Environments to run checks and skip entire test suites if
+            // preconditions aren't met. We need to start capturing the context
+            // in this block, just in case no testcases are run.
+            //
+            // In the event test output is found later on, the context will be
+            // reset by design.
+            capture_immediate_context = true;
+            context = "";
+            continue;
+        }
+
+        if (std::regex_search(line, matches, disabled_re)) {
             context = matches[1];
             status = "disabled";
             valid_output = true;
             break;
         }
-        if (regex_search(line, matches, starting_sentinel_re)) {
-            capture_context = true;
+
+        if (!global_env_message_start_seen) {
+            continue;
+        }
+
+        if (std::regex_search(line, test_context_start_re)) {
+            capture_immediate_context = true;
+            // (Re)set the context to ensure that the test result information
+            // doesn't show up in the context parsed by kyua.
             context = "";
             continue;
         }
-        if (regex_search(line, matches, ending_sentinel_re)) {
+        if (std::regex_search(line, matches, test_context_end_re)) {
             std::string googletest_res = matches[1];
 
             if (googletest_res == "OK") {
@@ -205,16 +263,45 @@ engine::googletest_result::parse(std::istream& input)
                     F("expected SKIPPED; got %s") % googletest_res);
                 status = "skipped";
             }
-            capture_context = false;
-            valid_output = true;
+            capture_immediate_context = false;
         }
-        if (capture_context) {
+        if (std::regex_search(line, global_env_context_end_re)) {
+            capture_immediate_context = false;
+            valid_output = true;
+            // Keep scanning in case, in case we run into
+            // `suite_setup_or_teardown_failure_re`.
+        }
+
+        if (std::regex_search(line, suite_setup_or_teardown_failure_re)) {
+            // Any failure context should get printed out earlier on, but in
+            // the event it isn't, just dump the whole test output for sanity's
+            // sake/debuggability.
+            if (context.empty()) {
+                context = \
+                    F("kyua: could not 'summarize' failure context; "
+                      "see full process output for more details:\n\n%s") %
+                    all_context;
+            }
+            status = "failed";
+        }
+
+        if (capture_immediate_context) {
             context += line;
         }
     }
+
     if (!valid_output) {
         context = googletest_invalid_output_message;
         status = "broken";
+    } else {
+        // See Issue 326 comments.
+        if (std::regex_search(context, global_env_buggy_skip_prefix_re)) {
+            // It is easier to replace the existing string instead of
+            // extracting the multiline match.
+            context = std::regex_replace(context,
+                global_env_buggy_skip_prefix_re, "");
+            status = "skipped";
+        }
     }
     if (status == "skipped" && context.empty())
         context = googletest_bogus_skipped_nul_message;
