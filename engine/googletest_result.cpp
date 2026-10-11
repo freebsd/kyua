@@ -37,7 +37,7 @@ const std::regex disabled_re(
 
 /// Regular expression for starting sentinel of results block.
 const std::regex starting_sentinel_re(
-    R"(\[[[:space:]]+RUN[[:space:]]+\][[:space:]]+[A-Za-z0-9]+\.[A-Za-z0-9]+)"
+    R"(\[[[:space:]]+RUN[[:space:]]+\][[:space:]]+[^[:space:]]+)"
 );
 
 /// Regular expression for ending sentinel of results block.
