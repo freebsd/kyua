@@ -26,6 +26,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+CODE_COVERAGE_DIRS+=	bootstrap
+
 if WITH_ATF
 tests_bootstrapdir = $(pkgtestsdir)/bootstrap
 
@@ -52,7 +54,8 @@ bootstrap_atf_helpers_LDADD = $(ATF_CXX_LIBS)
 
 tests_bootstrap_PROGRAMS += bootstrap/plain_helpers
 bootstrap_plain_helpers_SOURCES = bootstrap/plain_helpers.cpp
-bootstrap_plain_helpers_CXXFLAGS = $(UTILS_CFLAGS)
+bootstrap_plain_helpers_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
+bootstrap_plain_helpers_LDADD = $(UTILS_CFLAGS) $(ATF_CXX_LDADD)
 
 tests_bootstrap_SCRIPTS = bootstrap/testsuite
 @target_srcdir@bootstrap/package.m4: $(top_srcdir)/configure.ac

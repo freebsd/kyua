@@ -83,7 +83,7 @@ public:
     /// scheduler::interface::exec_test() or exec_cleanup().
     ///
     /// \param args The arguments to pass to the binary.
-    virtual void exec(const args_vector& args) const UTILS_NORETURN = 0;
+    virtual void exec [[noreturn]] (const args_vector& args) const = 0;
 };
 
 

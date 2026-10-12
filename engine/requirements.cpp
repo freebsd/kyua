@@ -274,7 +274,7 @@ static std::vector< std::shared_ptr< engine::reqs_checker > > _reqs_checkers;
 }  // anonymous namespace
 
 
-const std::vector< std::shared_ptr< engine::reqs_checker > >
+std::vector< std::shared_ptr< engine::reqs_checker > >
 engine::reqs_checkers()
 {
     return _reqs_checkers;

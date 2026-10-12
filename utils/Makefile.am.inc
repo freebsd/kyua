@@ -26,8 +26,18 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+CODE_COVERAGE_DIRS+=	utils
+
 UTILS_CFLAGS =
 UTILS_LIBS = libutils.la
+
+# Multiple subdirectories require lutok to build. Just do this once for this
+# component instead of spamming in each of the subdirs' Makefile.am's to reduce
+# overall build noise.
+#
+# TODO(ngie): this should be fixed when moving to an alternative build system.
+UTILS_CFLAGS += $(LUTOK_CFLAGS)
+UTILS_LIBS += $(LUTOK_LIBS)
 
 noinst_LTLIBRARIES += libutils.la
 libutils_la_CPPFLAGS = -DGDB=\"$(GDB)\"
@@ -58,6 +68,7 @@ libutils_la_SOURCES += utils/stream.hpp
 libutils_la_SOURCES += utils/units.cpp
 libutils_la_SOURCES += utils/units.hpp
 libutils_la_SOURCES += utils/units_fwd.hpp
+libutils_la_LIBADD =
 nodist_libutils_la_SOURCES = utils/defs.hpp
 
 EXTRA_DIST += utils/test_utils.ipp

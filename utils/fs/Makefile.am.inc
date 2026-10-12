@@ -26,9 +26,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-UTILS_CFLAGS += $(LUTOK_CFLAGS)
-UTILS_LIBS += $(LUTOK_LIBS)
-
 libutils_la_CPPFLAGS += $(LUTOK_CFLAGS)
 libutils_la_SOURCES += utils/fs/auto_cleaners.cpp
 libutils_la_SOURCES += utils/fs/auto_cleaners.hpp
@@ -45,6 +42,7 @@ libutils_la_SOURCES += utils/fs/operations.hpp
 libutils_la_SOURCES += utils/fs/path.cpp
 libutils_la_SOURCES += utils/fs/path.hpp
 libutils_la_SOURCES += utils/fs/path_fwd.hpp
+libutils_la_LIBADD += $(LUTOK_LIBS)
 
 if WITH_ATF
 tests_utils_fsdir = $(pkgtestsdir)/utils/fs
@@ -69,8 +67,8 @@ utils_fs_exceptions_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_fs_PROGRAMS += utils/fs/lua_module_test
 utils_fs_lua_module_test_SOURCES = utils/fs/lua_module_test.cpp
-utils_fs_lua_module_test_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
-utils_fs_lua_module_test_LDADD = $(UTILS_LIBS) $(ATF_CXX_LIBS)
+utils_fs_lua_module_test_CXXFLAGS = $(UTILS_CFLAGS) $(LUTOK_CFLAGS) $(ATF_CXX_CFLAGS)
+utils_fs_lua_module_test_LDADD = $(UTILS_LIBS) $(LUTOK_LIBS) $(ATF_CXX_LIBS)
 
 tests_utils_fs_PROGRAMS += utils/fs/operations_test
 utils_fs_operations_test_SOURCES = utils/fs/operations_test.cpp

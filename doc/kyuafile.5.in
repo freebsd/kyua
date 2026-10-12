@@ -30,7 +30,7 @@
 .Os
 .Sh NAME
 .Nm Kyuafile
-.Nd Test suite description files
+.Nd test suite description files
 .Sh SYNOPSIS
 .Fn atf_test_program "string name" "[string metadata]"
 .Fn current_kyuafile
@@ -499,7 +499,7 @@ plain_test_program{name='the_test',
 .Ss FreeBSD jail execution environment
 The following example configures the test to be run within a temporary jail
 with
-.Xr vnet 9
+.Xr VNET 9
 support and the permission to create raw sockets:
 .Bd -literal -offset indent
 syntax(2)
