@@ -35,6 +35,7 @@ extern "C" {
 
 #include <cstddef>
 #include <iostream>
+#include <memory>
 #include <vector>
 
 #include <atf-c++.hpp>
@@ -411,8 +412,52 @@ ATF_TEST_CASE_BODY(infinitesimal)
 }
 
 
+ATF_TEST_CASE(calendar_backward);
+ATF_TEST_CASE_HEAD(calendar_backward)
+{
+    set_md_var("timeout", "10");
+}
+ATF_TEST_CASE_BODY(calendar_backward)
+{
+    std::unique_ptr< signals::timer > timer;
+    {
+        // Ensure the calendar jump happens before any alarm is processed.
+        signals::interrupts_inhibiter inhibiter;
+        datetime::set_mock_now(
+            datetime::timestamp::from_microseconds(2000000000));
+        timer.reset(new signals::timer(datetime::delta(0, 100000)));
+        datetime::set_mock_now(
+            datetime::timestamp::from_microseconds(1000000000));
+    }
+
+    // Moving calendar time backwards must not prevent the alarm from firing.
+    while (!timer->fired())
+        ::usleep(1000);
+}
+
+
+ATF_TEST_CASE(calendar_forward);
+ATF_TEST_CASE_HEAD(calendar_forward)
+{
+    set_md_var("timeout", "10");
+}
+ATF_TEST_CASE_BODY(calendar_forward)
+{
+    datetime::set_mock_now(datetime::timestamp::from_microseconds(1000000000));
+    // The deadline is beyond the test's timeout, so it cannot expire normally.
+    signals::timer timer(datetime::delta(60, 0));
+    datetime::set_mock_now(datetime::timestamp::from_microseconds(9000000000));
+
+    // Processing an alarm must not treat the calendar jump as elapsed time.
+    ::raise(SIGALRM);
+    ATF_REQUIRE(!timer.fired());
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
+    ATF_ADD_TEST_CASE(tcs, calendar_backward);
+    ATF_ADD_TEST_CASE(tcs, calendar_forward);
     ATF_ADD_TEST_CASE(tcs, program_seconds);
     ATF_ADD_TEST_CASE(tcs, program_useconds);
     ATF_ADD_TEST_CASE(tcs, multiprogram_ordered);
