@@ -200,6 +200,7 @@ jobs:
                   admin/ci-build/01_configure.sh ${CFG_ARGS}
 
             - name: Distcheck (builds and tests)
+              timeout-minutes: 30
               run: |
                   export PREFIX="${KYUA_PREFIX}"
                   export PKG_CONFIG_PATH="${PREFIX}/lib/pkgconfig"
@@ -421,6 +422,7 @@ jobs:
                   admin/ci-build/01_configure.sh ${CFG_ARGS}
 
             - name: Distcheck (builds and tests)
+              timeout-minutes: 30
               shell: freebsd {0}
               run: |
                   export PREFIX="${KYUA_PREFIX}"
