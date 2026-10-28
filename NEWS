@@ -1,5 +1,17 @@
 # Major changes between releases
 
+## Changes in version 0.15.2
+
+**Released on 2026/11/XX.**
+
+### Bugfixes
+
+### Developer Workflow Changes
+
+### Miscellaneous
+
+**Full Changelog**: https://github.com/freebsd/lutok/compare/kyua-0.15.1...kyua-0.15.2
+
 ## Changes in version 0.15.1
 
 **Released on 2026/10/25.**
