@@ -72,7 +72,7 @@ public:
     timer(const utils::datetime::delta&);
     virtual ~timer(void);
 
-    const utils::datetime::timestamp& when(void) const;
+    const utils::datetime::monotonic_timestamp& when(void) const;
 
     bool fired(void) const;
 

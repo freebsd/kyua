@@ -118,6 +118,8 @@ KYUA_FS_MODULE
 KYUA_GETOPT
 KYUA_LAST_SIGNO
 KYUA_MEMORY
+AC_CHECK_FUNCS([clock_gettime], [],
+    [AC_MSG_ERROR([clock_gettime is required for monotonic timers])])
 AC_CHECK_FUNCS([putenv setenv unsetenv])
 AC_CHECK_HEADERS([termios.h])
 
