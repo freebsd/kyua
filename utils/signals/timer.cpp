@@ -427,7 +427,36 @@ signals::timer::timer(const datetime::delta& delta)
 
     const datetime::monotonic_timestamp now =
         datetime::monotonic_timestamp::now();
-    _pimpl.reset(new impl(now + delta));
+    start(now + delta, now);
+}
+
+
+/// Constructor; programs a run-once timer at an absolute monotonic deadline.
+///
+/// \pre If this is the first timer, the deadline must be in the future.
+///
+/// \param when The absolute deadline at which the timer should fire.
+signals::timer::timer(const datetime::monotonic_timestamp& when)
+{
+    signals::interrupts_inhibiter inhibiter;
+
+    const datetime::monotonic_timestamp now =
+        datetime::monotonic_timestamp::now();
+    start(when, now);
+}
+
+
+/// Initializes and registers a timer using the constructor's time sample.
+///
+/// \pre Signals must be inhibited.
+///
+/// \param when The absolute deadline at which the timer should fire.
+/// \param now The current timestamp sampled by the constructor.
+void
+signals::timer::start(const datetime::monotonic_timestamp& when,
+                      const datetime::monotonic_timestamp& now)
+{
+    _pimpl.reset(new impl(when));
     if (globals.get() == NULL) {
         globals.reset(new global_state(this, now));
     } else {
