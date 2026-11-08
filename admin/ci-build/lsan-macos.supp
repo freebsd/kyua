@@ -1,0 +1,2 @@
+# macOS libnotify allocations reported as leaks after fork()
+leak:libsystem_notify.dylib

@@ -67,8 +67,8 @@ jobs:
                     - macos-latest
                     - ubuntu-26.04
                 include:
-                    # The macOS runner uses a homebrew provided compiler as the
-                    # system compiler lacks ASAN/LSAN/UBSAN support.
+                    # Use Homebrew LLVM 22+ for the ASan initialization fix on macOS.
+                    # https://github.com/llvm/llvm-project/pull/192082
                     - build-os: macos-latest
                       compiler: clang-22
                       env:
@@ -102,7 +102,9 @@ jobs:
                           - autoconf
                           - automake
                           - clang-22
+                          - libclang-rt-22-dev  # sanitizer libs
                           - libtool
+                          - llvm-22
                           - lua5.4
                           - liblua5.4-dev
                           - pkgconf
@@ -110,11 +112,8 @@ jobs:
                       compiler-bindir: /usr/lib/llvm-22/bin
                       build-dependencies-from-source: true
                 sanitize:
-                    - ""
-                    # TODO(ngie,77): tests currently fail when these options
-                    #                are enabled.
-                    # - ["asan", "lsan"]
-                    - ubsan
+                    - []
+                    - ["asan", "lsan", "ubsan"]
 
         steps:
             - name: Install base dependencies (macOS)
@@ -342,8 +341,9 @@ jobs:
                     - 14.5
                     - 15.1
                 sanitize:
-                    - ""
-                    - ubsan
+                    - []
+                    # FreeBSD lacks LSAN support
+                    - ["asan", "ubsan"]
 
         steps:
             - name: Checking out source (ATF)
