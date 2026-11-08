@@ -39,7 +39,9 @@ if HAVE_ASAN
 if HAVE_LSAN
 LSAN_OPTIONS = detect_leaks=1,
 else
-LSAN_OPTIONS =
+# TODO(ngie,77): stop disabling ASan's default leak detection on Linux
+#                once ATF leaks are fixed.
+LSAN_OPTIONS = detect_leaks=0,
 endif
 # Some of the testcases trigger false positives as they pass
 # `SIZE_MAX - 1`, etc, to malloc(3).
