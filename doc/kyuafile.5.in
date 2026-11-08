@@ -334,10 +334,20 @@ the test must run as root.
 ATF:
 .Va require.user
 .It Va timeout
-Amount of seconds that the test is allowed to execute before being killed.
+Number of seconds that the test is allowed to execute before being killed.
 .Pp
 ATF:
 .Va timeout
+.It Va timeout_scale
+Positive integer scaling factor applied to
+.Va timeout
+to account for differences in
+performance characteristics between testing environments. For example, this can be
+used to describe slower test execution on emulated architectures using QEMU.
+Defaults (normalized) to the value 1.
+.Pp
+ATF:
+.Va timeout.scale
 .El
 .Ss Recursion
 To reference test programs in another subdirectory, a different
