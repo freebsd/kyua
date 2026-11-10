@@ -148,7 +148,7 @@ add_tests(store::write_transaction& tx,
             datetime::timestamp::from_microseconds(0);
         const datetime::timestamp end =
             datetime::timestamp::from_microseconds(j * 1000000 + 500000);
-        tx.put_result(results[j], tc_id, start, end);
+        tx.put_result(results[j], tc_id, start, end, end - start);
 
         if (with_output) {
             atf::utils::create_file("fake-out", F("stdout file %s") % j);
@@ -254,7 +254,8 @@ ATF_TEST_CASE_BODY(junit_timing)
     const datetime::timestamp end_time =
         datetime::timestamp::from_values(2016, 7, 13, 18, 47, 10, 1);
 
-    ATF_REQUIRE_EQ(expected, drivers::junit_timing(start_time, end_time));
+    ATF_REQUIRE_EQ(expected, drivers::junit_timing(
+        start_time, end_time, end_time - start_time));
 }
 
 

@@ -665,7 +665,7 @@ ATF_TEST_CASE_BODY(integration__timeouts)
         ATF_REQUIRE_EQ(exec_handle1.pid(), exit_handle.original_pid());
         ATF_REQUIRE(!exit_handle.status());
         const datetime::delta duration =
-            exit_handle.end_time() - exit_handle.start_time();
+            exit_handle.elapsed_time();
         ATF_REQUIRE(duration < datetime::delta(10, 0));
         ATF_REQUIRE(duration >= datetime::delta(2, 0));
         exit_handle.cleanup();
@@ -676,7 +676,7 @@ ATF_TEST_CASE_BODY(integration__timeouts)
         ATF_REQUIRE_EQ(exec_handle2.pid(), exit_handle.original_pid());
         ATF_REQUIRE(!exit_handle.status());
         const datetime::delta duration =
-            exit_handle.end_time() - exit_handle.start_time();
+            exit_handle.elapsed_time();
         ATF_REQUIRE(duration < datetime::delta(10, 0));
         ATF_REQUIRE(duration >= datetime::delta(4, 0));
         exit_handle.cleanup();
@@ -914,8 +914,90 @@ ATF_TEST_CASE_BODY(integration__prevent_clobbering_control_files)
 }
 
 
+/// Checks execution timing when the calendar clock changes.
+///
+/// \param wait Function that waits for the spawned child.
+/// \param start_time Calendar timestamp to report when the child starts.
+/// \param end_time Calendar timestamp to report when the child completes.
+template< class Wait >
+static void
+do_elapsed_time_test(Wait wait, const int64_t start_time, const int64_t end_time)
+{
+    executor::executor_handle handle = executor::setup();
+
+    const datetime::timestamp start =
+        datetime::timestamp::from_microseconds(start_time);
+    const datetime::timestamp end =
+        datetime::timestamp::from_microseconds(end_time);
+
+    datetime::set_mock_now(start);
+    const datetime::monotonic_timestamp before =
+        datetime::monotonic_timestamp::now();
+
+    const executor::exec_handle child = do_spawn(handle, child_exit(0));
+    datetime::set_mock_now(end);
+
+    executor::exit_handle result = wait(handle, child);
+
+    const datetime::monotonic_timestamp after =
+        datetime::monotonic_timestamp::now();
+
+    ATF_REQUIRE_EQ(child.pid(), result.original_pid());
+
+    require_exit(0, result.status());
+
+    ATF_REQUIRE_EQ(start, result.start_time());
+    ATF_REQUIRE_EQ(end, result.end_time());
+    ATF_REQUIRE(result.elapsed_time() <= after - before);
+
+    result.cleanup();
+    handle.cleanup();
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(elapsed_time__wait__calendar_backward);
+ATF_TEST_CASE_BODY(elapsed_time__wait__calendar_backward)
+{
+    do_elapsed_time_test([](auto& handle, const auto& child) {
+        return handle.wait(child);
+    }, 2000000000000LL, 1000000000000LL);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(elapsed_time__wait__calendar_forward);
+ATF_TEST_CASE_BODY(elapsed_time__wait__calendar_forward)
+{
+    do_elapsed_time_test([](auto& handle, const auto& child) {
+        return handle.wait(child);
+    }, 2000000000000LL, 3000000000000LL);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(elapsed_time__wait_any__calendar_backward);
+ATF_TEST_CASE_BODY(elapsed_time__wait_any__calendar_backward)
+{
+    do_elapsed_time_test([](auto& handle, const auto& /* child */) {
+        return handle.wait_any();
+    }, 2000000000000LL, 1000000000000LL);
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(elapsed_time__wait_any__calendar_forward);
+ATF_TEST_CASE_BODY(elapsed_time__wait_any__calendar_forward)
+{
+    do_elapsed_time_test([](auto& handle, const auto& /* child */) {
+        return handle.wait_any();
+    }, 2000000000000LL, 3000000000000LL);
+}
+
+
 ATF_INIT_TEST_CASES(tcs)
 {
+    ATF_ADD_TEST_CASE(tcs, elapsed_time__wait__calendar_backward);
+    ATF_ADD_TEST_CASE(tcs, elapsed_time__wait__calendar_forward);
+    ATF_ADD_TEST_CASE(tcs, elapsed_time__wait_any__calendar_backward);
+    ATF_ADD_TEST_CASE(tcs, elapsed_time__wait_any__calendar_forward);
+
     ATF_ADD_TEST_CASE(tcs, integration__run_one);
     ATF_ADD_TEST_CASE(tcs, integration__run_many);
 

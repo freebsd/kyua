@@ -61,7 +61,9 @@ libstore_la_SOURCES += store/write_transaction_fwd.hpp
 
 dist_store_DATA  = store/migrate_v1_v2.sql
 dist_store_DATA += store/migrate_v2_v3.sql
+dist_store_DATA += store/migrate_v3_v4.sql
 dist_store_DATA += store/schema_v3.sql
+dist_store_DATA += store/schema_v4.sql
 
 if WITH_ATF
 tests_storedir = $(pkgtestsdir)/store
@@ -75,6 +77,7 @@ tests_store_DATA += store/testdata_v3_1.sql
 tests_store_DATA += store/testdata_v3_2.sql
 tests_store_DATA += store/testdata_v3_3.sql
 tests_store_DATA += store/testdata_v3_4.sql
+tests_store_DATA += store/testdata_v4.sql
 EXTRA_DIST += $(tests_store_DATA)
 
 tests_store_PROGRAMS = store/dbtypes_test

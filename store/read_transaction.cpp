@@ -275,7 +275,8 @@ struct store::results_iterator::impl : utils::noncopyable {
             "    test_programs.interface, "
             "    test_cases.test_case_id, test_cases.name, "
             "    test_results.result_type, test_results.result_reason, "
-            "    test_results.start_time, test_results.end_time "
+            "    test_results.start_time, test_results.end_time, "
+            "    test_results.elapsed_time "
             "FROM test_programs "
             "    JOIN test_cases "
             "    ON test_programs.test_program_id = test_cases.test_program_id "
@@ -382,6 +383,14 @@ datetime::timestamp
 store::results_iterator::end_time(void) const
 {
     return column_timestamp(_pimpl->_stmt, "end_time");
+}
+
+
+/// \return The stored execution duration.
+datetime::delta
+store::results_iterator::elapsed_time(void) const
+{
+    return column_delta(_pimpl->_stmt, "elapsed_time");
 }
 
 
