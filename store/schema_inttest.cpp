@@ -33,6 +33,8 @@
 #include "model/metadata.hpp"
 #include "model/test_program.hpp"
 #include "model/test_result.hpp"
+#include "store/exceptions.hpp"
+#include "store/metadata.hpp"
 #include "store/migrate.hpp"
 #include "store/read_backend.hpp"
 #include "store/read_transaction.hpp"
@@ -40,9 +42,11 @@
 #include "utils/datetime.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/logging/operations.hpp"
 #include "utils/sqlite/database.hpp"
+#include "utils/sqlite/statement.hpp"
 #include "utils/stream.hpp"
 #include "utils/units.hpp"
 
@@ -164,6 +168,7 @@ check_action_2(const fs::path& dbpath)
     ATF_REQUIRE(iter.stderr_contents().empty());
     ATF_REQUIRE_EQ(1357643611000000LL, iter.start_time().to_microseconds());
     ATF_REQUIRE_EQ(1357643621000500LL, iter.end_time().to_microseconds());
+    ATF_REQUIRE_EQ(datetime::delta(10, 500), iter.elapsed_time());
 
     ++iter;
     ATF_REQUIRE(iter);
@@ -174,6 +179,7 @@ check_action_2(const fs::path& dbpath)
     ATF_REQUIRE(iter.stderr_contents().empty());
     ATF_REQUIRE_EQ(1357643632000000LL, iter.start_time().to_microseconds());
     ATF_REQUIRE_EQ(1357643638000000LL, iter.end_time().to_microseconds());
+    ATF_REQUIRE_EQ(datetime::delta(6, 0), iter.elapsed_time());
 
     ++iter;
     ATF_REQUIRE(iter);
@@ -184,6 +190,7 @@ check_action_2(const fs::path& dbpath)
     ATF_REQUIRE_EQ("Test stderr", iter.stderr_contents());
     ATF_REQUIRE_EQ(1357643622001200LL, iter.start_time().to_microseconds());
     ATF_REQUIRE_EQ(1357643622900021LL, iter.end_time().to_microseconds());
+    ATF_REQUIRE_EQ(datetime::delta(0, 898821), iter.elapsed_time());
 
     ++iter;
     ATF_REQUIRE(iter);
@@ -194,6 +201,7 @@ check_action_2(const fs::path& dbpath)
     ATF_REQUIRE(iter.stderr_contents().empty());
     ATF_REQUIRE_EQ(1357643623500000LL, iter.start_time().to_microseconds());
     ATF_REQUIRE_EQ(1357643630981932LL, iter.end_time().to_microseconds());
+    ATF_REQUIRE_EQ(datetime::delta(7, 481932), iter.elapsed_time());
 
     ++iter;
     ATF_REQUIRE(iter);
@@ -204,6 +212,7 @@ check_action_2(const fs::path& dbpath)
     ATF_REQUIRE(iter.stderr_contents().empty());
     ATF_REQUIRE_EQ(1357643631000000LL, iter.start_time().to_microseconds());
     ATF_REQUIRE_EQ(1357643631020000LL, iter.end_time().to_microseconds());
+    ATF_REQUIRE_EQ(datetime::delta(0, 20000), iter.elapsed_time());
 
     ++iter;
     ATF_REQUIRE(!iter);
@@ -282,6 +291,7 @@ check_action_3(const fs::path& dbpath)
     ATF_REQUIRE(iter.stderr_contents().empty());
     ATF_REQUIRE_EQ(1357648719000000LL, iter.start_time().to_microseconds());
     ATF_REQUIRE_EQ(1357648720897182LL, iter.end_time().to_microseconds());
+    ATF_REQUIRE_EQ(datetime::delta(1, 897182), iter.elapsed_time());
 
     ++iter;
     ATF_REQUIRE(iter);
@@ -292,6 +302,7 @@ check_action_3(const fs::path& dbpath)
     ATF_REQUIRE(iter.stderr_contents().empty());
     ATF_REQUIRE_EQ(1357648712000000LL, iter.start_time().to_microseconds());
     ATF_REQUIRE_EQ(1357648718000000LL, iter.end_time().to_microseconds());
+    ATF_REQUIRE_EQ(datetime::delta(6, 0), iter.elapsed_time());
 
     ++iter;
     ATF_REQUIRE(iter);
@@ -302,6 +313,7 @@ check_action_3(const fs::path& dbpath)
     ATF_REQUIRE(iter.stderr_contents().empty());
     ATF_REQUIRE_EQ(1357648729182013LL, iter.start_time().to_microseconds());
     ATF_REQUIRE_EQ(1357648730000000LL, iter.end_time().to_microseconds());
+    ATF_REQUIRE_EQ(datetime::delta(0, 817987), iter.elapsed_time());
 
     ++iter;
     ATF_REQUIRE(iter);
@@ -312,6 +324,7 @@ check_action_3(const fs::path& dbpath)
     ATF_REQUIRE_EQ("Another stderr", iter.stderr_contents());
     ATF_REQUIRE_EQ(1357648740120000LL, iter.start_time().to_microseconds());
     ATF_REQUIRE_EQ(1357648750081700LL, iter.end_time().to_microseconds());
+    ATF_REQUIRE_EQ(datetime::delta(9, 961700), iter.elapsed_time());
 
     ++iter;
     ATF_REQUIRE(!iter);
@@ -372,6 +385,7 @@ check_action_4(const fs::path& dbpath)
     ATF_REQUIRE(iter.stderr_contents().empty());
     ATF_REQUIRE_EQ(1357644397100000LL, iter.start_time().to_microseconds());
     ATF_REQUIRE_EQ(1357644399005000LL, iter.end_time().to_microseconds());
+    ATF_REQUIRE_EQ(datetime::delta(1, 905000), iter.elapsed_time());
 
     ++iter;
     ATF_REQUIRE(iter);
@@ -382,6 +396,7 @@ check_action_4(const fs::path& dbpath)
     ATF_REQUIRE(iter.stderr_contents().empty());
     ATF_REQUIRE_EQ(1357644396500000LL, iter.start_time().to_microseconds());
     ATF_REQUIRE_EQ(1357644397000000LL, iter.end_time().to_microseconds());
+    ATF_REQUIRE_EQ(datetime::delta(0, 500000), iter.elapsed_time());
 
     ++iter;
     ATF_REQUIRE(iter);
@@ -392,8 +407,63 @@ check_action_4(const fs::path& dbpath)
     ATF_REQUIRE_EQ("Test stderr", iter.stderr_contents());
     ATF_REQUIRE_EQ(1357644395000000LL, iter.start_time().to_microseconds());
     ATF_REQUIRE_EQ(1357644396000000LL, iter.end_time().to_microseconds());
+    ATF_REQUIRE_EQ(datetime::delta(1, 0), iter.elapsed_time());
 
     ++iter;
+    ATF_REQUIRE(!iter);
+}
+
+/// \return The files required by the version 3 duration migration tests.
+static std::string
+elapsed_time_migration_files(void)
+{
+    return (store::detail::schema_file().branch_path() / "schema_v3.sql")
+               .str() +
+        " " + testdata_file("testdata_v3_2.sql").str() + " " +
+        store::detail::migration_file(3, 4).str();
+}
+
+/// Checks the duration imported from a version 3 results file.
+///
+/// \param start_time Calendar start timestamp in microseconds.
+/// \param end_time Calendar end timestamp in microseconds.
+/// \param expected Expected migrated duration.
+static void
+check_migrated_elapsed_time(const int64_t start_time, const int64_t end_time,
+                            const datetime::delta& expected)
+{
+    const fs::path testpath("test.db");
+    sqlite::database db = sqlite::database::open(testpath,
+                                                 sqlite::open_readwrite |
+                                                     sqlite::open_create);
+    db.exec(utils::read_file(store::detail::schema_file().branch_path() /
+                             "schema_v3.sql"));
+    db.exec(utils::read_file(testdata_file("testdata_v3_2.sql")));
+    db.exec(F("UPDATE test_results SET start_time = %s, end_time = %s") %
+            start_time % end_time);
+
+    int64_t expected_results_count;
+    {
+        sqlite::statement stmt =
+            db.create_statement("SELECT COUNT(*) AS count FROM test_results");
+        ATF_REQUIRE(stmt.step());
+        expected_results_count = stmt.safe_column_int64("count");
+    }
+    ATF_REQUIRE(expected_results_count > 0);
+    db.close();
+
+    store::migrate_schema(testpath);
+    store::read_backend backend = store::read_backend::open_ro(testpath);
+    store::read_transaction tx = backend.start_read();
+    store::results_iterator iter = tx.get_results();
+
+    for (int64_t i = 0; i < expected_results_count; ++i, ++iter) {
+        ATF_REQUIRE(iter);
+        ATF_REQUIRE_EQ(start_time, iter.start_time().to_microseconds());
+        ATF_REQUIRE_EQ(end_time, iter.end_time().to_microseconds());
+        ATF_REQUIRE_EQ(expected, iter.elapsed_time());
+    }
+
     ATF_REQUIRE(!iter);
 }
 
@@ -406,7 +476,8 @@ check_action_4(const fs::path& dbpath)
         logging::set_inmemory();                                               \
         const std::string required_files =                                     \
             store::detail::schema_file().str() + " " +                         \
-            testdata_file("testdata_v3_" #dataset ".sql").str();               \
+            testdata_file("testdata_v3_" #dataset ".sql").str() + " " +        \
+            testdata_file("testdata_v4.sql").str();                            \
         set_md_var("require.files", required_files);                           \
     }                                                                          \
     ATF_TEST_CASE_BODY(current_schema_##dataset)                               \
@@ -419,6 +490,7 @@ check_action_4(const fs::path& dbpath)
         db.exec(utils::read_file(store::detail::schema_file()));               \
         db.exec(utils::read_file(testdata_file("testdata_v3_" #dataset         \
                                                ".sql")));                      \
+        db.exec(utils::read_file(testdata_file("testdata_v4.sql")));           \
         db.close();                                                            \
                                                                                \
         check_action_##dataset(testpath);                                      \
@@ -475,8 +547,80 @@ CURRENT_SCHEMA_TEST(4);
 MIGRATE_SCHEMA_TEST(1);
 MIGRATE_SCHEMA_TEST(2);
 
+ATF_TEST_CASE(migrate_schema__from_v3__positive);
+ATF_TEST_CASE_HEAD(migrate_schema__from_v3__positive)
+{
+    logging::set_inmemory();
+    set_md_var("require.files", elapsed_time_migration_files());
+}
+ATF_TEST_CASE_BODY(migrate_schema__from_v3__positive)
+{
+    check_migrated_elapsed_time(2000000, 3234567, datetime::delta(1, 234567));
+}
+
+ATF_TEST_CASE(migrate_schema__from_v3__zero);
+ATF_TEST_CASE_HEAD(migrate_schema__from_v3__zero)
+{
+    logging::set_inmemory();
+    set_md_var("require.files", elapsed_time_migration_files());
+}
+ATF_TEST_CASE_BODY(migrate_schema__from_v3__zero)
+{
+    check_migrated_elapsed_time(2000000, 2000000, datetime::delta(0, 0));
+}
+
+ATF_TEST_CASE(migrate_schema__from_v3__backward);
+ATF_TEST_CASE_HEAD(migrate_schema__from_v3__backward)
+{
+    logging::set_inmemory();
+    set_md_var("require.files", elapsed_time_migration_files());
+}
+ATF_TEST_CASE_BODY(migrate_schema__from_v3__backward)
+{
+    check_migrated_elapsed_time(2000000, 1999999, datetime::delta(0, 0));
+}
+
+ATF_TEST_CASE(migrate_schema__v4_rollback);
+ATF_TEST_CASE_HEAD(migrate_schema__v4_rollback)
+{
+    logging::set_inmemory();
+    set_md_var(
+        "require.files",
+        (store::detail::schema_file().branch_path() / "schema_v3.sql").str() +
+            " " + store::detail::migration_file(3, 4).str());
+}
+ATF_TEST_CASE_BODY(migrate_schema__v4_rollback)
+{
+    const fs::path testpath("test.db");
+    sqlite::database db = sqlite::database::open(testpath,
+                                                 sqlite::open_readwrite |
+                                                     sqlite::open_create);
+    db.exec(utils::read_file(store::detail::schema_file().branch_path() /
+                             "schema_v3.sql"));
+    db.exec("CREATE TRIGGER reject_upgrade BEFORE INSERT ON metadata "
+            "WHEN NEW.schema_version = 4 "
+            "BEGIN SELECT RAISE(ABORT, 'Rejected upgrade'); END");
+    db.close();
+
+    ATF_REQUIRE_THROW_RE(store::error, "Rejected upgrade",
+                         store::migrate_schema(testpath));
+    ATF_REQUIRE(fs::exists(fs::path("test.db.v3.backup")));
+    db = sqlite::database::open(testpath, sqlite::open_readonly);
+    ATF_REQUIRE_EQ(3, store::metadata::fetch_latest(db).schema_version());
+    sqlite::statement stmt =
+        db.create_statement("PRAGMA table_info(test_results)");
+    while (stmt.step())
+        ATF_REQUIRE(stmt.safe_column_text("name") != "elapsed_time");
+}
+
 ATF_INIT_TEST_CASES(tcs)
 {
+    ATF_ADD_TEST_CASE(tcs, migrate_schema__v4_rollback);
+
+    ATF_ADD_TEST_CASE(tcs, migrate_schema__from_v3__positive);
+    ATF_ADD_TEST_CASE(tcs, migrate_schema__from_v3__zero);
+    ATF_ADD_TEST_CASE(tcs, migrate_schema__from_v3__backward);
+
     ATF_ADD_TEST_CASE(tcs, current_schema_1);
     ATF_ADD_TEST_CASE(tcs, current_schema_2);
     ATF_ADD_TEST_CASE(tcs, current_schema_3);

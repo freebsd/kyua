@@ -77,6 +77,10 @@ using utils::optional;
 /// cases that use it so that children processes are not killed spuriously.
 static const datetime::delta infinite_timeout(1000000, 0);
 
+/// Initial calendar time and clock adjustment in microseconds for timing tests.
+static const int64_t calendar_start_us = 2000000000000LL;
+static const int64_t calendar_shift_us = 1000000000000LL;
+
 static void do_exit [[noreturn]] (const int);
 
 /// Terminates a subprocess without invoking destructors.
@@ -624,8 +628,7 @@ ATF_TEST_CASE_BODY(integration__timeouts)
         executor::exit_handle exit_handle = handle.wait_any();
         ATF_REQUIRE_EQ(exec_handle1.pid(), exit_handle.original_pid());
         ATF_REQUIRE(!exit_handle.status());
-        const datetime::delta duration = exit_handle.end_time() -
-            exit_handle.start_time();
+        const datetime::delta duration = exit_handle.elapsed_time();
         ATF_REQUIRE(duration < datetime::delta(10, 0));
         ATF_REQUIRE(duration >= datetime::delta(2, 0));
         exit_handle.cleanup();
@@ -635,8 +638,7 @@ ATF_TEST_CASE_BODY(integration__timeouts)
         executor::exit_handle exit_handle = handle.wait_any();
         ATF_REQUIRE_EQ(exec_handle2.pid(), exit_handle.original_pid());
         ATF_REQUIRE(!exit_handle.status());
-        const datetime::delta duration = exit_handle.end_time() -
-            exit_handle.start_time();
+        const datetime::delta duration = exit_handle.elapsed_time();
         ATF_REQUIRE(duration < datetime::delta(10, 0));
         ATF_REQUIRE(duration >= datetime::delta(4, 0));
         exit_handle.cleanup();
@@ -866,8 +868,101 @@ ATF_TEST_CASE_BODY(integration__prevent_clobbering_control_files)
     handle.cleanup();
 }
 
+/// Checks execution timing when the calendar clock changes.
+///
+/// \param wait Function that waits for the spawned child.
+/// \param start_time Calendar timestamp to report when the child starts.
+/// \param end_time Calendar timestamp to report when the child completes.
+template <class Wait>
+static void
+do_elapsed_time_test(Wait wait, const int64_t start_time,
+                     const int64_t end_time)
+{
+    executor::executor_handle handle = executor::setup();
+
+    const datetime::timestamp start =
+        datetime::timestamp::from_microseconds(start_time);
+    const datetime::timestamp end =
+        datetime::timestamp::from_microseconds(end_time);
+
+    datetime::set_mock_now(start);
+    const datetime::monotonic_timestamp before =
+        datetime::monotonic_timestamp::now();
+
+    const int delay_seconds = 1;
+    const executor::exec_handle child =
+        do_spawn(handle, [](const fs::path& control_directory) {
+            // Wait until the parent has recorded the execution start.
+            while (!fs::exists(control_directory / "start_sleep"))
+                ::usleep(1000);
+            unsigned int remaining = delay_seconds;
+            while (remaining > 0)
+                remaining = ::sleep(remaining);
+            do_exit(EXIT_SUCCESS);
+        });
+    datetime::set_mock_now(end);
+    atf::utils::create_file((child.control_directory() / "start_sleep").str(),
+                            "");
+
+    executor::exit_handle result = wait(handle, child);
+
+    const datetime::monotonic_timestamp after =
+        datetime::monotonic_timestamp::now();
+
+    ATF_REQUIRE_EQ(child.pid(), result.original_pid());
+
+    require_exit(0, result.status());
+
+    ATF_REQUIRE_EQ(start, result.start_time());
+    ATF_REQUIRE_EQ(end, result.end_time());
+    ATF_REQUIRE(result.elapsed_time() >= datetime::delta(delay_seconds, 0));
+    ATF_REQUIRE(result.elapsed_time() <= after - before);
+
+    result.cleanup();
+    handle.cleanup();
+}
+
+ATF_TEST_CASE_WITHOUT_HEAD(elapsed_time__wait__calendar_backward);
+ATF_TEST_CASE_BODY(elapsed_time__wait__calendar_backward)
+{
+    do_elapsed_time_test([](auto& handle,
+                            const auto& child) { return handle.wait(child); },
+                         calendar_start_us,
+                         calendar_start_us - calendar_shift_us);
+}
+
+ATF_TEST_CASE_WITHOUT_HEAD(elapsed_time__wait__calendar_forward);
+ATF_TEST_CASE_BODY(elapsed_time__wait__calendar_forward)
+{
+    do_elapsed_time_test([](auto& handle,
+                            const auto& child) { return handle.wait(child); },
+                         calendar_start_us,
+                         calendar_start_us + calendar_shift_us);
+}
+
+ATF_TEST_CASE_WITHOUT_HEAD(elapsed_time__wait_any__calendar_backward);
+ATF_TEST_CASE_BODY(elapsed_time__wait_any__calendar_backward)
+{
+    do_elapsed_time_test(
+        [](auto& handle, const auto& /* child */) { return handle.wait_any(); },
+        calendar_start_us, calendar_start_us - calendar_shift_us);
+}
+
+ATF_TEST_CASE_WITHOUT_HEAD(elapsed_time__wait_any__calendar_forward);
+ATF_TEST_CASE_BODY(elapsed_time__wait_any__calendar_forward)
+{
+    do_elapsed_time_test(
+        [](auto& handle, const auto& /* child */) { return handle.wait_any(); },
+        calendar_start_us, calendar_start_us + calendar_shift_us);
+}
+
 ATF_INIT_TEST_CASES(tcs)
 {
+    ATF_ADD_TEST_CASE(tcs, elapsed_time__wait__calendar_backward);
+    ATF_ADD_TEST_CASE(tcs, elapsed_time__wait__calendar_forward);
+    ATF_ADD_TEST_CASE(tcs, elapsed_time__wait_any__calendar_backward);
+    ATF_ADD_TEST_CASE(tcs, elapsed_time__wait_any__calendar_forward);
+
     ATF_ADD_TEST_CASE(tcs, integration__run_one);
     ATF_ADD_TEST_CASE(tcs, integration__run_many);
 
