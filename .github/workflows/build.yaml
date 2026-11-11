@@ -60,10 +60,10 @@ jobs:
                     - macos-latest
                     - ubuntu-latest
                 include:
-                    # The macOS runner uses a homebrew provided compiler as the
-                    # system compiler lacks ASAN/LSAN/UBSAN support.
+                    # Use Homebrew LLVM 22 for the ASan initialization fix on macOS.
+                    # https://github.com/llvm/llvm-project/pull/192082
                     - build-os: macos-latest
-                      compiler: clang-20
+                      compiler: clang-22
                       env:
                           # The coredump tests cause the macOS runner to
                           # frequently timeout/fail due to ENOSPC issues. Skip
@@ -78,14 +78,14 @@ jobs:
                           - autoconf
                           - automake
                           - libtool
-                          - llvm@20
+                          - llvm@22
                           # This is required when
                           # `build-dependencies-from-source == yes`:
                           # - lua
                           - lutok
                           - pkgconf
                           - sqlite
-                      llvm-bindir: /opt/homebrew/opt/llvm@20/bin
+                      llvm-bindir: /opt/homebrew/opt/llvm@22/bin
                       build-dependencies-from-source: false
                     - build-os: ubuntu-latest
                       compiler: clang-18
@@ -104,10 +104,8 @@ jobs:
                       build-dependencies-from-source: true
                 sanitize:
                     - ""
-                    # TODO(ngie,77): tests currently fail when these options
-                    #                are enabled.
-                    # - ["asan", "lsan"]
-                    - ubsan
+                    # TODO(ngie,77): enable lsan once ATF leaks are fixed
+                    - ["asan", "ubsan"]
 
         steps:
             - name: Install base dependencies (macOS)
@@ -189,6 +187,7 @@ jobs:
                   rm -Rf "${LUTOK_SRCDIR}"
 
             - name: Configure
+              timeout-minutes: 10
               run: |
                   export PREFIX="${KYUA_PREFIX}"
                   export PKG_CONFIG_PATH="${PREFIX}/lib/pkgconfig"
@@ -337,7 +336,7 @@ jobs:
                     - 15.1
                 sanitize:
                     - ""
-                    - ubsan
+                    - ["asan", "ubsan"]
 
         steps:
             - name: Checking out source (ATF)
@@ -410,6 +409,7 @@ jobs:
                   rm -Rf "${LUTOK_SRCDIR}"
 
             - name: Configure
+              timeout-minutes: 10
               shell: freebsd {0}
               run: |
                   export PREFIX="${KYUA_PREFIX}"
