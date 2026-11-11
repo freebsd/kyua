@@ -28,11 +28,11 @@
 
 CODE_COVERAGE_DIRS+=	engine
 
-ENGINE_CFLAGS = $(STORE_CFLAGS) $(MODEL_CFLAGS) $(UTILS_CFLAGS) $(ENGINE_EXECENV_CFLAGS)
-ENGINE_LIBS = libengine.la $(STORE_LIBS) $(MODEL_LIBS) $(UTILS_LIBS) $(ENGINE_EXECENV_LIBS)
+ENGINE_CFLAGS = $(STORE_CFLAGS) $(MODEL_CFLAGS) $(UTILS_CFLAGS) $(ENGINE_EXECENV_CFLAGS) $(ENGINE_PREPARE_CFLAGS)
+ENGINE_LIBS = libengine.la $(STORE_LIBS) $(MODEL_LIBS) $(UTILS_LIBS) $(ENGINE_EXECENV_LIBS) $(ENGINE_PREPARE_LIBS)
 
 noinst_LTLIBRARIES += libengine.la
-libengine_la_CPPFLAGS  = $(STORE_CFLAGS) $(UTILS_CFLAGS) $(ENGINE_EXECENV_CFLAGS)
+libengine_la_CPPFLAGS  = $(STORE_CFLAGS) $(UTILS_CFLAGS) $(ENGINE_EXECENV_CFLAGS) $(ENGINE_PREPARE_CFLAGS)
 libengine_la_SOURCES  = engine/atf.cpp
 libengine_la_SOURCES += engine/atf.hpp
 libengine_la_SOURCES += engine/atf_list.cpp
@@ -185,3 +185,4 @@ engine_scheduler_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 endif
 
 include engine/execenv/Makefile.am.inc
+include engine/prepare/Makefile.am.inc
