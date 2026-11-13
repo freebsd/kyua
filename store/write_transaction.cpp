@@ -402,6 +402,7 @@ store::write_transaction::put_test_case_file(const std::string& name,
 /// \param test_case_id The test case this result corresponds to.
 /// \param start_time The time when the test started to run.
 /// \param end_time The time when the test finished running.
+/// \param elapsed_time Monotonic duration of the test body.
 ///
 /// \return The identifier of the inserted result.
 ///
@@ -410,15 +411,16 @@ int64_t
 store::write_transaction::put_result(const model::test_result& result,
                                      const int64_t test_case_id,
                                      const datetime::timestamp& start_time,
-                                     const datetime::timestamp& end_time)
+                                     const datetime::timestamp& end_time,
+                                     const datetime::delta& elapsed_time)
 {
     try {
         sqlite::statement stmt = _pimpl->_db.create_statement(
             "INSERT INTO test_results (test_case_id, result_type, "
             "                          result_reason, start_time, "
-            "                          end_time) "
+            "                          end_time, elapsed_time) "
             "VALUES (:test_case_id, :result_type, :result_reason, "
-            "        :start_time, :end_time)");
+            "        :start_time, :end_time, :elapsed_time)");
         stmt.bind(":test_case_id", test_case_id);
 
         store::bind_test_result_type(stmt, ":result_type", result.type());
@@ -429,6 +431,7 @@ store::write_transaction::put_result(const model::test_result& result,
 
         store::bind_timestamp(stmt, ":start_time", start_time);
         store::bind_timestamp(stmt, ":end_time", end_time);
+        store::bind_delta(stmt, ":elapsed_time", elapsed_time);
 
         stmt.step_without_results();
         const int64_t result_id = _pimpl->_db.last_insert_rowid();

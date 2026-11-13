@@ -206,6 +206,7 @@ public:
     int original_pid(void) const;
     const utils::datetime::timestamp& start_time() const;
     const utils::datetime::timestamp& end_time() const;
+    const utils::datetime::delta& elapsed_time() const;
     utils::fs::path work_directory(void) const;
     const utils::fs::path& stdout_file(void) const;
     const utils::fs::path& stderr_file(void) const;

@@ -194,13 +194,22 @@ chunk_database(const fs::path& old_file)
             fs::mkdir_p(new_file.branch_path(), 0755);
             sqlite::database db = store::detail::open_and_setup(
                 new_file, sqlite::open_readwrite | sqlite::open_create);
-            store::detail::initialize(db);
+
+            // Import into v3 before applying v4 and newer steps.
+            db.exec(utils::read_file(store::detail::schema_file().branch_path()
+                                    / "schema_v3.sql"));
             db.close();
             migrate_schema_step(new_file,
                                 first_chunked_schema_version - 1,
                                 first_chunked_schema_version,
                                 utils::make_optional(action_id),
                                 utils::make_optional(old_file));
+
+            int version = first_chunked_schema_version;
+            while (version < store::detail::current_schema_version) {
+                migrate_schema_step(new_file, version, version + 1);
+                ++version;
+            }
         } catch (...) {
             // TODO(jmmv): Handle this better.
             fs::unlink(new_file);
@@ -278,10 +287,13 @@ store::migrate_schema(const utils::fs::path& file)
 
     detail::backup_database(file, version_from);
 
-    int i;
-    for (i = version_from; i < first_chunked_schema_version - 1; ++i) {
-        migrate_schema_step(file, i, i + 1);
+    int version = version_from;
+    while (version < version_to) {
+        if (version == first_chunked_schema_version - 1) {
+            chunk_database(file);
+            return;
+        }
+        migrate_schema_step(file, version, version + 1);
+        ++version;
     }
-    chunk_database(file);
-    INV(version_to == first_chunked_schema_version);
 }

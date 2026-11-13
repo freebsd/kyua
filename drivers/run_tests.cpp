@@ -123,7 +123,8 @@ put_test_result(const int64_t test_case_id,
                 store::write_transaction& tx)
 {
     tx.put_result(result.test_result(), test_case_id,
-                  result.start_time(), result.end_time());
+                  result.start_time(), result.end_time(),
+                  result.elapsed_time());
     tx.put_test_case_file("__STDOUT__", result.stdout_file(), test_case_id);
     tx.put_test_case_file("__STDERR__", result.stderr_file(), test_case_id);
 
@@ -213,7 +214,7 @@ finish_test(scheduler::result_handle_ptr result_handle,
         *test_result_handle->test_program(),
         test_result_handle->test_case_name(),
         test_result,
-        result_handle->end_time() - result_handle->start_time());
+        result_handle->elapsed_time());
 }
 
 

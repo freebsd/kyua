@@ -80,15 +80,17 @@ do_put_result_ok_test(const model::test_result& result,
         2012, 01, 30, 22, 10, 00, 0);
     const datetime::timestamp end_time = datetime::timestamp::from_values(
         2012, 01, 30, 22, 15, 30, 123456);
-    tx.put_result(result, 312, start_time, end_time);
+    tx.put_result(result, 312, start_time, end_time,
+                  datetime::delta(1, 234567));
     tx.commit();
 
     sqlite::statement stmt = backend.database().create_statement(
-        "SELECT test_case_id, result_type, result_reason "
+        "SELECT test_case_id, result_type, result_reason, elapsed_time "
         "FROM test_results");
 
     ATF_REQUIRE(stmt.step());
     ATF_REQUIRE_EQ(312, stmt.column_int64(0));
+    ATF_REQUIRE_EQ(1234567, stmt.column_int64(3));
     ATF_REQUIRE_EQ(result_type, stmt.column_text(1));
     if (exp_reason != NULL)
         ATF_REQUIRE_EQ(exp_reason, stmt.column_text(2));
@@ -390,7 +392,8 @@ ATF_TEST_CASE_BODY(put_result__fail)
         fs::path("test.db"));
     store::write_transaction tx = backend.start_write();
     const datetime::timestamp zero = datetime::timestamp::from_microseconds(0);
-    ATF_REQUIRE_THROW(store::error, tx.put_result(result, -1, zero, zero));
+    ATF_REQUIRE_THROW(store::error, tx.put_result(
+        result, -1, zero, zero, datetime::delta(0, 0)));
     tx.commit();
 }
 

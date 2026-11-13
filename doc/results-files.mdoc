@@ -66,3 +66,14 @@ Results files are simple SQLite databases with the schema described in the
 .Pa __STOREDIR__/schema_v?.sql
 files.
 For details on the schema, please refer to the heavily commented SQL file.
+.Pp
+Results files using schema version 4 also record the duration of each test case in
+the
+.Sq elapsed_time
+column.
+The duration is measured in microseconds using a monotonic clock, from the
+start of the test case body until its completion.
+.Pp
+When older results files are upgraded, the duration is calculated as the
+maximum between zero and the difference between the recorded end and start
+timestamps.
