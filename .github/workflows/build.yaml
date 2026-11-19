@@ -63,7 +63,7 @@ jobs:
                     # The macOS runner uses a homebrew provided compiler as the
                     # system compiler lacks ASAN/LSAN/UBSAN support.
                     - build-os: macos-latest
-                      compiler: clang-20
+                      compiler: clang-22
                       env:
                           # The coredump tests cause the macOS runner to
                           # frequently timeout/fail due to ENOSPC issues. Skip
@@ -78,29 +78,29 @@ jobs:
                           - autoconf
                           - automake
                           - libtool
-                          - llvm@20
+                          - llvm@22
                           # This is required when
                           # `build-dependencies-from-source == yes`:
                           # - lua
                           - lutok
                           - pkgconf
                           - sqlite
-                      llvm-bindir: /opt/homebrew/opt/llvm@20/bin
+                      llvm-bindir: /opt/homebrew/opt/llvm@22/bin
                       build-dependencies-from-source: false
                     - build-os: ubuntu-latest
-                      compiler: clang-18
+                      compiler: clang-22
                       env:
                           - RUN_COREDUMP_TESTS: true
                       pkgs:
                           - autoconf
                           - automake
-                          - clang-18
+                          - clang-22
                           - libtool
                           - lua5.4
                           - liblua5.4-dev
                           - pkgconf
                           - libsqlite3-dev
-                      llvm-bindir: /usr/lib/llvm-18/bin
+                      llvm-bindir: /usr/lib/llvm-22/bin
                       build-dependencies-from-source: true
                 sanitize:
                     - ""
