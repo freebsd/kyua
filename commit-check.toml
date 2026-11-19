@@ -1,0 +1,28 @@
+[branch]
+conventional_branch = false
+
+[commit]
+ai_attribution = "disclose"
+ai_disclosure_trailers = ["Assisted-by"]
+allow_empty_commits = false
+allow_fixup_commits = false
+allow_merge_commits = false
+allow_wip_commits = false
+# Reject commits authored by anonymous GitHub accounts.
+author_email_pattern = '(?i)^(?!.*@users\.noreply\.github\.com$).+@.+$'
+# This conflicts with the FreeBSD Committer's Guide.
+#conventional_commits = true
+conventional_commits = false
+require_body = true
+# This *sort of* conflicts with the FreeBSD Committer's Guide, but this setting
+# is an all-or-nothing thing.
+require_signed_off_by = true
+# This breaks the (optional, but encouraged) Conventional Commit format.
+#subject_capitalized = true
+subject_capitalized = false
+# NOLINTBEGIN
+# Ref: https://docs.freebsd.org/en/articles/committers-guide/#_use_the_present_tense_imperative_mood
+subject_imperative = true
+# Ref: https://docs.freebsd.org/en/articles/committers-guide/#_keep_subject_lines_short
+subject_max_length = 68
+# NOLINTEND
