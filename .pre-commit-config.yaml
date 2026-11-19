@@ -1,0 +1,27 @@
+---
+fail_fast: true
+repos:
+  - repo: https://github.com/commit-check/commit-check
+    rev: v2.19.5
+    hooks:
+      - id: check-author-name
+      - id: check-author-email
+      - id: check-message
+        args: [--config, commit-check.toml]
+  - repo: https://github.com/pocc/pre-commit-hooks
+    rev: v1.3.5
+    hooks:
+      - id: clang-format
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-merge-conflict
+      - id: trailing-whitespace
+  - repo: https://github.com/pre-commit/pre-commit
+    rev: v4.7.0
+    hooks:
+      - id: validate_manifest
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.38.0
+    hooks:
+      - id: yamllint
