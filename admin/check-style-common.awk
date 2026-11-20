@@ -36,17 +36,17 @@ BEGIN {
     error = 0
 }
 
-/CHECK_STYLE_DISABLE/ {
+/NOLINTBEGIN/ {
     skip = 1
     next
 }
 
-/CHECK_STYLE_ENABLE/ {
+/NOLINTEND/ {
     skip = 0
     next
 }
 
-/CHECK_STYLE_(ENABLE|DISABLE)/ {
+/NOLINT/ {
     next
 }
 
@@ -54,7 +54,7 @@ BEGIN {
     if (skip)
         next
 
-    if (length > 80 && NF > 1)
+    if (length > 80)
         warn("Line too long to fit on screen")
 }
 
@@ -73,7 +73,9 @@ BEGIN {
 
 END {
     if (skip)
-        warn("Missing CHECK_STYLE_ENABLE");
+        warn("Missing NOLINTEND");
     if (error)
         exit 1
 }
+
+# vim: syntax=awk:expandtab:shiftwidth=4:softtabstop=4

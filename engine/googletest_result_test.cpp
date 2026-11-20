@@ -128,7 +128,7 @@ PARSE(failed,
       engine::googletest_result::failed, failed_context,
       failed_message);
 
-// CHECK_STYLE_DISABLE
+// NOLINTBEGIN
 #if 0
 const char failed_parameterized_context[] = (
 "/usr/src/contrib/googletest/googletest/test/googletest-param-test-test.cc:882: Failure\n"
@@ -187,7 +187,7 @@ const char failed_parameterized_message[] = (
 "\n"
 " 1 FAILED TEST SUITE\n"
 );
-// CHECK_STYLE_ENABLE
+// NOLINTEND
 
 PARSE(failed_parameterized,
       engine::googletest_result::failed, failed_parameterized_context,

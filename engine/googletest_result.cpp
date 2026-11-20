@@ -51,7 +51,7 @@ const std::regex global_env_context_end_re(
     R"(\[\-+\][[:space:]]+Global test environment tear-down)"
 );
 
-// CHECK_STYLE_DISABLE
+// NOLINTBEGIN
 
 /// Regular expression for setup or teardown fixtures that fail for test
 /// suites.
@@ -61,7 +61,7 @@ const std::regex suite_setup_or_teardown_failure_re(
     R"RE(\[[[:space:]]+FAILED[[:space:]]+\][[:space:]]+[^:]+:[[:space:]]SetUpTestSuite or TearDownTestSuite)RE"
 );
 
-// CHECK_STYLE_ENABLE
+// NOLINTEND
 
 /// Regular expression for starting sentinel of results block.
 const std::regex test_context_start_re(

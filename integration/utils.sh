@@ -40,12 +40,12 @@
 #
 # Use the utils_install_times_wrapper function to create a 'kyua' wrapper
 # script that automatically does this.
-# CHECK_STYLE_DISABLE
+# NOLINTBEGIN
 utils_strip_times='sed -E \
     -e "s,( |\[|\")[0-9][0-9]*\.[0-9][0-9][0-9](s]|s|\"),\1S.UUU\2,g" \
     -e "s,[0-9]{8}-[0-9]{6}-[0-9]{6},YYYYMMDD-HHMMSS-ssssss,g" \
     -e "s,[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}Z,YYYY-MM-DDTHH:MM:SS.ssssssZ,g"'
-# CHECK_STYLE_ENABLE
+# NOLINTEND
 
 
 # Same as utils_strip_times but avoids stripping timestamp-based report IDs.
@@ -53,11 +53,11 @@ utils_strip_times='sed -E \
 # This is to make the reports deterministic and thus easily testable.  The
 # time deltas are replaced by the fixed string S.UUU and the timestamps are
 # replaced by the fixed string YYYY-MM-DDTHH:MM:SS.ssssssZ.
-# CHECK_STYLE_DISABLE
+# NOLINTBEGIN
 utils_strip_times_but_not_ids='sed -E \
     -e "s,( |\[|\")[0-9][0-9]*\.[0-9][0-9][0-9](s]|s|\"),\1S.UUU\2,g" \
     -e "s,[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}Z,YYYY-MM-DDTHH:MM:SS.ssssssZ,g"'
-# CHECK_STYLE_ENABLE
+# NOLINTEND
 
 
 # Computes the results id for a test suite run.
