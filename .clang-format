@@ -1,0 +1,96 @@
+BasedOnStyle: WebKit
+AlignAfterOpenBracket: true
+AlignConsecutiveMacros: AcrossEmptyLines
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+AlignEscapedNewlines: Left
+AlignOperands: false
+AlignTrailingComments: true
+AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortBlocksOnASingleLine: Never
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AlwaysBreakAfterReturnType: TopLevelDefinitions
+AlwaysBreakBeforeMultilineStrings: false
+BinPackArguments: true
+BinPackParameters: true
+BreakBeforeBinaryOperators: None
+BreakBeforeBraces: WebKit
+BreakBeforeTernaryOperators: false
+BreakConstructorInitializers: AfterColon
+# TODO: BreakStringLiterals can cause very strange formatting so turn it off?
+BreakStringLiterals: false
+PackConstructorInitializers: CurrentLine
+# Prefer:
+# some_var = function(arg1,
+#    arg2)
+# over:
+# some_var =
+#     function(arg1, arg2)
+PenaltyBreakAssignment: 100
+# Prefer:
+# some_long_function(arg1, arg2
+#     arg3)
+# over:
+# some_long_function(
+#     arg1, arg2, arg3)
+PenaltyBreakBeforeFirstCallParameter: 100
+PenaltyBreakOpenParenthesis: 100
+PenaltyBreakString: 100
+BreakTemplateDeclarations: MultiLine
+CompactNamespaces: false
+DerivePointerAlignment: false
+DisableFormat: false
+SpaceBeforeCpp11BracedList: false
+SpaceBeforeParens: ControlStatementsExceptForEachMacros
+IndentCaseLabels: false
+IndentPPDirectives: None
+Language: Cpp
+NamespaceIndentation: None
+PointerAlignment: Left
+ContinuationIndentWidth: 4
+IndentWidth: 4
+#TabWidth: 8
+ColumnLimit: 80
+UseTab: false
+SpaceAfterCStyleCast: false
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex: '^<sys/cdefs\.h>'
+    Priority: 2
+    SortPriority: 20
+  - Regex: '^<sys/types\.h>'
+    Priority: 2
+    SortPriority: 21
+  - Regex: '^<sys/param\.h>'
+    Priority: 2
+    SortPriority: 22
+  - Regex: '^<sys.*/'
+    Priority: 2
+    SortPriority: 24
+  - Regex: '^<net.*/'
+    Priority: 7
+    SortPriority: 70
+  - Regex: '^<protocols/'
+    Priority: 7
+    SortPriority: 71
+  - Regex: '^<(fs|nfs(|client|server)|ufs)/'
+    Priority: 8
+    SortPriority: 80
+  - Regex: '^<[^/].*'
+    Priority: 9
+    SortPriority: 90
+  - Regex: '^\".*\"'
+    Priority: 10
+    SortPriority: 100
+# LLVM's header include ordering style is almost the exact opposite of ours.
+# Unfortunately, they have hard-coded their preferences into clang-format.
+# Clobbering this regular expression to avoid matching prevents non-system
+# headers from being forcibly moved to the top of the include list.
+# http://llvm.org/docs/CodingStandards.html#include-style
+IncludeIsMainRegex: 'BLAH_DONT_MATCH_ANYTHING'
+SortIncludes: true
+KeepEmptyLinesAtTheStartOfBlocks: false
