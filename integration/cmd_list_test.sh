@@ -554,11 +554,11 @@ atf_test_program{name="i-am-missing"}
 EOF
     echo 'I should not be touched because the Kyuafile is bogus' >subdir/ok
 
-# CHECK_STYLE_DISABLE
+# NOLINTBEGIN
     cat >experr <<EOF
 kyua: E: Load of 'Kyuafile' failed: .*Non-existent test program 'subdir/i-am-missing'.
 EOF
-# CHECK_STYLE_ENABLE
+# NOLINTEND
     atf_check -s exit:2 -o empty -e "match:$(cat experr)" kyua list
 }
 
