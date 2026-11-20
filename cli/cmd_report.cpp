@@ -198,8 +198,7 @@ class report_console_hooks : public drivers::scan_results::base_hooks {
         _output << F("End time:   %s\n") %
             result_iter.end_time().to_iso8601_in_utc();
         _output << F("Duration:   %s\n") %
-            cli::format_delta(result_iter.end_time() -
-                              result_iter.start_time());
+            cli::format_delta(result_iter.elapsed_time());
 
         _output << "\n";
         _output << "Metadata:\n";
@@ -309,7 +308,7 @@ public:
         if (!_end_time || _end_time.get() < iter.end_time())
             _end_time = iter.end_time();
 
-        const datetime::delta duration = iter.end_time() - iter.start_time();
+        const datetime::delta duration = iter.elapsed_time();
 
         _runtime += duration;
         const model::test_result result = iter.result();

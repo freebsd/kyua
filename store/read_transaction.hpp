@@ -86,6 +86,7 @@ public:
     model::test_result result(void) const;
     utils::datetime::timestamp start_time(void) const;
     utils::datetime::timestamp end_time(void) const;
+    utils::datetime::delta elapsed_time(void) const;
 
     std::string stdout_contents(void) const;
     std::string stderr_contents(void) const;

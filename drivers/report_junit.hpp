@@ -52,7 +52,8 @@ std::string junit_classname(const model::test_program&);
 std::string junit_duration(const utils::datetime::delta&);
 std::string junit_metadata(const model::metadata&);
 std::string junit_timing(const utils::datetime::timestamp&,
-                         const utils::datetime::timestamp&);
+                         const utils::datetime::timestamp&,
+                         const utils::datetime::delta&);
 
 
 /// Hooks for the scan_results driver to generate a JUnit report.

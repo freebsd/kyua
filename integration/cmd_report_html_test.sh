@@ -250,7 +250,27 @@ results_filter__invalid_body() {
 }
 
 
+utils_test_case elapsed_time
+elapsed_time_body() {
+    run_tests unused_mock dbfile_name
+
+    # Calendar timestamps span 10 seconds, the stored duration is 1.1 seconds.
+    atf_check -s exit:0 -o ignore -e empty kyua db-exec \
+        --results-file="$(cat dbfile_name)" \
+        "UPDATE test_results SET end_time = start_time + 10000000,
+         elapsed_time = 1100000"
+
+    atf_check -s exit:0 -o ignore -e empty kyua report-html \
+        --results-filter=passed,skipped
+
+    check_in_file html/simple_all_pass_pass.html '1[.]100s'
+    check_in_file html/simple_all_pass_skip.html '1[.]100s'
+}
+
+
 atf_init_test_cases() {
+    atf_add_test_case elapsed_time
+
     atf_add_test_case default_behavior__ok
     atf_add_test_case default_behavior__no_store
 

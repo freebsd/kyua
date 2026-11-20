@@ -142,6 +142,9 @@ struct utils::process::executor::exec_handle::impl : utils::noncopyable {
     /// Start time.
     datetime::timestamp start_time;
 
+    /// Monotonic start of the subprocess execution.
+    const datetime::monotonic_timestamp monotonic_start;
+
     /// User the subprocess is running as if different than the current one.
     const optional< passwd::user > unprivileged_user;
 
@@ -179,6 +182,7 @@ struct utils::process::executor::exec_handle::impl : utils::noncopyable {
         stdout_file(stdout_file_),
         stderr_file(stderr_file_),
         start_time(start_time_),
+        monotonic_start(datetime::monotonic_timestamp::now()),
         unprivileged_user(unprivileged_user_),
         timer(timeout, pid_),
         state_owners(state_owners_)
@@ -278,6 +282,9 @@ struct utils::process::executor::exit_handle::impl : utils::noncopyable {
     /// Timestamp of when wait() or wait_any() returned this object.
     const datetime::timestamp end_time;
 
+    /// Elapsed monotonic time until completion was observed.
+    const datetime::delta elapsed_time;
+
     /// Path to the subprocess-specific work directory.
     const fs::path control_directory;
 
@@ -316,6 +323,7 @@ struct utils::process::executor::exit_handle::impl : utils::noncopyable {
     /// \param start_time_ Timestamp of when the subprocess was spawned.
     /// \param end_time_ Timestamp of when wait() or wait_any() returned this
     ///     object.
+    /// \param elapsed_time_ Monotonic execution duration.
     /// \param control_directory_ Path to the subprocess-specific work
     ///     directory.
     /// \param stdout_file_ Path to the subprocess's stdout file.
@@ -329,6 +337,7 @@ struct utils::process::executor::exit_handle::impl : utils::noncopyable {
          const optional< passwd::user > unprivileged_user_,
          const datetime::timestamp& start_time_,
          const datetime::timestamp& end_time_,
+         const datetime::delta& elapsed_time_,
          const fs::path& control_directory_,
          const fs::path& stdout_file_,
          const fs::path& stderr_file_,
@@ -337,6 +346,7 @@ struct utils::process::executor::exit_handle::impl : utils::noncopyable {
         original_pid(original_pid_), status(status_),
         unprivileged_user(unprivileged_user_),
         start_time(start_time_), end_time(end_time_),
+        elapsed_time(elapsed_time_),
         control_directory(control_directory_),
         stdout_file(stdout_file_), stderr_file(stderr_file_),
         state_owners(state_owners_),
@@ -482,6 +492,14 @@ const datetime::timestamp&
 executor::exit_handle::end_time(void) const
 {
     return _pimpl->end_time;
+}
+
+
+/// \return The monotonic duration of the process body, excluding cleanup.
+const datetime::delta&
+executor::exit_handle::elapsed_time(void) const
+{
+    return _pimpl->elapsed_time;
 }
 
 
@@ -683,6 +701,8 @@ struct utils::process::executor::executor_handle::impl : utils::noncopyable {
                     none : utils::make_optional(status),
                 data._pimpl->unprivileged_user,
                 data._pimpl->start_time, datetime::timestamp::now(),
+                datetime::monotonic_timestamp::now() -
+                    data._pimpl->monotonic_start,
                 data.control_directory(),
                 data.stdout_file(),
                 data.stderr_file(),
@@ -713,6 +733,8 @@ struct utils::process::executor::executor_handle::impl : utils::noncopyable {
                 none,
                 data._pimpl->unprivileged_user,
                 data._pimpl->start_time, datetime::timestamp::now(),
+                datetime::monotonic_timestamp::now() -
+                    data._pimpl->monotonic_start,
                 data.control_directory(),
                 data.stdout_file(),
                 data.stderr_file(),

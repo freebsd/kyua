@@ -128,18 +128,20 @@ drivers::junit_metadata(const model::metadata& metadata)
 ///
 /// \param start_time The start time of the test.
 /// \param end_time The end time of the test.
+/// \param elapsed_time The monotonic duration of the test.
 ///
 /// \return A string with the timing information that can be prepended to the
 /// original test's stderr.
 std::string
 drivers::junit_timing(const datetime::timestamp& start_time,
-                      const datetime::timestamp& end_time)
+                      const datetime::timestamp& end_time,
+                      const datetime::delta& elapsed_time)
 {
     std::ostringstream output;
     output << junit_timing_header;
     output << F("Start time: %s\n") % start_time.to_iso8601_in_utc();
     output << F("End time:   %s\n") % end_time.to_iso8601_in_utc();
-    output << F("Duration:   %ss\n") % junit_duration(end_time - start_time);
+    output << F("Duration:   %ss\n") % junit_duration(elapsed_time);
     return output.str();
 }
 
@@ -186,7 +188,7 @@ drivers::report_junit_hooks::got_result(store::results_iterator& iter)
     _output << F("<testcase classname=\"%s\" name=\"%s\" time=\"%s\">\n")
         % text::escape_xml(junit_classname(*iter.test_program()))
         % text::escape_xml(iter.test_case_name())
-        % junit_duration(iter.end_time() - iter.start_time());
+        % junit_duration(iter.elapsed_time());
 
     std::string stderr_contents;
 
@@ -233,7 +235,8 @@ drivers::report_junit_hooks::got_result(store::results_iterator& iter)
             iter.test_case_name());
         stderr_contents += junit_metadata(test_case.get_metadata());
     }
-    stderr_contents += junit_timing(iter.start_time(), iter.end_time());
+    stderr_contents += junit_timing(iter.start_time(), iter.end_time(),
+                                    iter.elapsed_time());
     {
         stderr_contents += junit_stderr_header;
         const std::string real_stderr_contents = iter.stderr_contents();

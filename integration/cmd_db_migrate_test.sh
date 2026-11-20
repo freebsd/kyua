@@ -107,11 +107,11 @@ upgrade__from_v2_body() {
 
 utils_test_case already_up_to_date
 already_up_to_date_head() {
-    atf_set require.files "${KYUA_STOREDIR}/schema_v3.sql"
+    atf_set require.files "${KYUA_STOREDIR}/schema_v4.sql"
     atf_set require.progs "sqlite3"
 }
 already_up_to_date_body() {
-    create_results_file "${KYUA_STOREDIR}/schema_v3.sql"
+    create_results_file "${KYUA_STOREDIR}/schema_v4.sql"
     atf_check -s exit:1 -o empty -e match:"already at schema version" \
         kyua db-migrate
 }

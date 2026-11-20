@@ -342,7 +342,7 @@ public:
         if (!_end_time || _end_time.get() < iter.end_time())
             _end_time = iter.end_time();
 
-        const datetime::delta duration = iter.end_time() - iter.start_time();
+        const datetime::delta duration = iter.elapsed_time();
 
         _runtime += duration;
 

@@ -118,7 +118,7 @@ public:
         default:
             UNREACHABLE_MSG("Formatting unimplemented");
         }
-        const datetime::delta duration = iter.end_time() - iter.start_time();
+        const datetime::delta duration = iter.elapsed_time();
         _results.insert(F("%s:%s:%s:%s:%s:%s") %
                         iter.test_program()->absolute_path() %
                         iter.test_case_name() % type % iter.result().reason() %
@@ -169,7 +169,7 @@ populate_results_file(const char* db_name, const int count)
                 datetime::timestamp::from_microseconds(1000010);
             const datetime::timestamp end =
                 datetime::timestamp::from_microseconds(5000020 + i + j);
-            tx.put_result(result, tc_id, start, end);
+            tx.put_result(result, tc_id, start, end, end - start);
         }
     }
 

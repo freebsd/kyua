@@ -161,6 +161,7 @@ public:
     const utils::optional< utils::passwd::user >& unprivileged_user(void) const;
     const utils::datetime::timestamp& start_time() const;
     const utils::datetime::timestamp& end_time() const;
+    const utils::datetime::delta& elapsed_time() const;
     utils::fs::path control_directory(void) const;
     utils::fs::path work_directory(void) const;
     const utils::fs::path& stdout_file(void) const;
