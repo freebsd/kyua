@@ -36,17 +36,17 @@ BEGIN {
     error = 0
 }
 
-/CHECK_STYLE_DISABLE/ {
+/NOLINTBEGIN/ {
     skip = 1
     next
 }
 
-/CHECK_STYLE_ENABLE/ {
+/NOLINTEND/ {
     skip = 0
     next
 }
 
-/CHECK_STYLE_(ENABLE|DISABLE)/ {
+/NOLINT/ {
     next
 }
 
@@ -65,7 +65,7 @@ BEGIN {
 
 END {
     if (skip)
-        warn("Missing CHECK_STYLE_ENABLE");
+        warn("Missing NOLINTEND");
     if (error)
         exit 1
 }
