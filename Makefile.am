@@ -52,6 +52,9 @@ endif
 
 ACLOCAL_AMFLAGS = -I m4
 
+AM_CXXFLAGS=	$(pc_cxxflags)
+AM_LDFLAGS=	$(pc_ldflags)
+
 CHECK_BOOTSTRAP_DEPS =
 CHECK_KYUA_DEPS =
 CHECK_LOCAL =

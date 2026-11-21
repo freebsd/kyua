@@ -42,7 +42,6 @@ AC_CONFIG_TESTDIR([bootstrap])
 
 AM_INIT_AUTOMAKE([1.9 foreign subdir-objects -Wall])
 
-pc_cflags=
 pc_cxxflags=
 pc_ldflags=
 
@@ -53,9 +52,7 @@ AS_HELP_STRING([--enable-asan], [Turn on AddressSanitizer]),,
 if test ${enable_asan} = yes; then
     AC_MSG_NOTICE([building with AddressSanitizer (ASAN)])
     enable_developer=yes
-    CXXFLAGS="${CXXFLAGS} -fsanitize=address"
     pc_cxxflags="${pc_cxxflags} -fsanitize=address"
-    LDFLAGS="${LDFLAGS} -fsanitize=address"
     pc_ldflags="${pc_ldflags} -fsanitize=address"
 fi
 AM_CONDITIONAL([HAVE_ASAN], [test "${enable_asan}" = yes])
@@ -67,9 +64,7 @@ AS_HELP_STRING([--enable-code-coverage], [Turn on runtime code coverage]),,
 if test ${enable_code_coverage} = yes; then
     AC_MSG_NOTICE([building with code coverage])
     enable_developer=yes
-    CXXFLAGS="${CXXFLAGS} --coverage"
     pc_cxxflags="${pc_cxxflags} --coverage"
-    LDFLAGS="${LDFLAGS} --coverage"
     pc_ldflags="${pc_ldflags} --coverage"
 fi
 AM_CONDITIONAL([CODE_COVERAGE], [test "${enable_code_coverage}" = yes])
@@ -81,9 +76,7 @@ AS_HELP_STRING([--enable-lsan], [Turn on LeakSanitizer]),,
 if test ${enable_lsan} = yes; then
     AC_MSG_NOTICE([building with LeakSanitizer (LSAN)])
     enable_developer=yes
-    CXXFLAGS="${CXXFLAGS} -fsanitize=leak"
     pc_cxxflags="${pc_cxxflags} -fsanitize=leak"
-    LDFLAGS="${LDFLAGS} -fsanitize=leak"
     pc_ldflags="${pc_ldflags} -fsanitize=leak"
 fi
 AM_CONDITIONAL([HAVE_LSAN], [test "${enable_lsan}" = yes])
@@ -95,14 +88,11 @@ AS_HELP_STRING([--enable-ubsan], [Turn on UndefinedBehaviourSanitizer]),,
 if test ${enable_ubsan} = yes; then
     AC_MSG_NOTICE([building with UndefinedBehaviourSanitizer (UBSAN)])
     enable_developer=yes
-    CXXFLAGS="${CXXFLAGS} -fsanitize=undefined"
     pc_cxxflags="${pc_cxxflags} -fsanitize=undefined"
-    LDFLAGS="${LDFLAGS} -fsanitize=undefined"
     pc_ldflags="${pc_ldflags} -fsanitize=undefined"
 fi
 AM_CONDITIONAL([HAVE_UBSAN], [test "${enable_ubsan}" = yes])
 
-AC_SUBST([pc_cflags])
 AC_SUBST([pc_cxxflags])
 AC_SUBST([pc_ldflags])
 
