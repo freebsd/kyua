@@ -263,6 +263,7 @@ Metadata:
     required_programs is empty
     required_user is empty
     timeout = 300
+    timeout_scale = 1
 
 Standard output:
 This is the stdout of skip

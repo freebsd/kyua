@@ -1306,7 +1306,7 @@ scheduler::scheduler_handle::spawn_test(
     const executor::exec_handle handle = _pimpl->generic.spawn(
         run_test_program(interface, test_program, test_case_name,
                          user_config),
-        test_case.get_metadata().timeout(),
+        test_case.get_metadata().timeout() * test_case.get_metadata().timeout_scale(),
         unprivileged_user, stdout_target, stderr_target);
 
     const exec_data_ptr data(new test_exec_data(
