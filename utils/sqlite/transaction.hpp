@@ -32,15 +32,13 @@
 #if !defined(UTILS_SQLITE_TRANSACTION_HPP)
 #define UTILS_SQLITE_TRANSACTION_HPP
 
-#include "utils/sqlite/transaction_fwd.hpp"
-
 #include <memory>
 
 #include "utils/sqlite/database_fwd.hpp"
+#include "utils/sqlite/transaction_fwd.hpp"
 
 namespace utils {
 namespace sqlite {
-
 
 /// A RAII model for an SQLite 3 statement.
 ///
@@ -50,7 +48,7 @@ class transaction {
     struct impl;
 
     /// Pointer to the shared internal implementation.
-    std::shared_ptr< impl > _pimpl;
+    std::shared_ptr<impl> _pimpl;
 
     explicit transaction(database&);
     friend class database;
@@ -62,8 +60,7 @@ public:
     void rollback(void);
 };
 
+} // namespace sqlite
+} // namespace utils
 
-}  // namespace sqlite
-}  // namespace utils
-
-#endif  // !defined(UTILS_SQLITE_TRANSACTION_HPP)
+#endif // !defined(UTILS_SQLITE_TRANSACTION_HPP)

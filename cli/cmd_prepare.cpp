@@ -4,7 +4,6 @@
 // SPDX-License-Identifier: BSD-2-Clause
 
 #include "cli/cmd_prepare.hpp"
-
 #include "cli/common.ipp"
 #include "engine/prepare/prepare.hpp"
 #include "utils/cmdline/options.hpp"
@@ -15,17 +14,15 @@ namespace prepare = engine::prepare;
 
 using cli::cmd_prepare;
 
-
 /// Default constructor for cmd_prepare.
-cmd_prepare::cmd_prepare(void) : cli_command(
-    "prepare", "[handler-name ...]", 0, -1,
-    "Prepares environment and declared requirements before testing")
+cmd_prepare::cmd_prepare(void) :
+    cli_command("prepare", "[handler-name ...]", 0, -1,
+                "Prepares environment and declared requirements before testing")
 {
     add_option(kyuafile_option);
     add_option(build_root_option);
     add_option(cmdline::bool_option('n', "dry-run", "Do not alter the system"));
 }
-
 
 /// Entry point for the "prepare" subcommand.
 ///
@@ -36,7 +33,7 @@ cmd_prepare::cmd_prepare(void) : cli_command(
 /// \return 0 if successful, 1 otherwise.
 int
 cmd_prepare::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
-            const config::tree& user_config)
+                 const config::tree& user_config)
 {
     // List available preparation handlers
     if (cmdline.arguments().empty()) {

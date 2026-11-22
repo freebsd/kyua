@@ -32,12 +32,11 @@ extern "C" {
 #include <signal.h>
 }
 
+#include <atf-c++.hpp>
 #include <cstdlib>
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
-
-#include <atf-c++.hpp>
 
 #include "engine/exceptions.hpp"
 #include "model/test_result.hpp"
@@ -51,9 +50,7 @@ namespace process = utils::process;
 using utils::none;
 using utils::optional;
 
-
 namespace {
-
 
 /// Performs a test for results::parse() that should succeed.
 ///
@@ -63,8 +60,8 @@ namespace {
 /// \param text The literal input to parse; can include multiple lines.
 static void
 parse_ok_test(const engine::atf_result::types& exp_type,
-              const optional< int >& exp_argument,
-              const char* exp_reason, const char* text)
+              const optional<int>& exp_argument, const char* exp_reason,
+              const char* text)
 {
     std::istringstream input(text);
     const engine::atf_result actual = engine::atf_result::parse(input);
@@ -78,7 +75,6 @@ parse_ok_test(const engine::atf_result::types& exp_type,
     }
 }
 
-
 /// Wrapper around parse_ok_test to define a test case.
 ///
 /// \param name The name of the test case; will be prefixed with
@@ -88,12 +84,11 @@ parse_ok_test(const engine::atf_result::types& exp_type,
 /// \param exp_reason The expected reason describing the result, if any.
 /// \param input The literal input to parse.
 #define PARSE_OK(name, exp_type, exp_argument, exp_reason, input) \
-    ATF_TEST_CASE_WITHOUT_HEAD(atf_result__parse__ ## name); \
-    ATF_TEST_CASE_BODY(atf_result__parse__ ## name) \
-    { \
+    ATF_TEST_CASE_WITHOUT_HEAD(atf_result__parse__##name);        \
+    ATF_TEST_CASE_BODY(atf_result__parse__##name)                 \
+    {                                                             \
         parse_ok_test(exp_type, exp_argument, exp_reason, input); \
     }
-
 
 /// Performs a test for results::parse() that should fail.
 ///
@@ -107,135 +102,86 @@ parse_broken_test(const char* reason_regexp, const char* text)
                          engine::atf_result::parse(input));
 }
 
-
 /// Wrapper around parse_broken_test to define a test case.
 ///
 /// \param name The name of the test case; will be prefixed with
 ///    "atf_result__parse__".
 /// \param reason_regexp The reason to match against the broken reason.
 /// \param input The literal input to parse.
-#define PARSE_BROKEN(name, reason_regexp, input) \
-    ATF_TEST_CASE_WITHOUT_HEAD(atf_result__parse__ ## name); \
-    ATF_TEST_CASE_BODY(atf_result__parse__ ## name) \
-    { \
-        parse_broken_test(reason_regexp, input); \
+#define PARSE_BROKEN(name, reason_regexp, input)           \
+    ATF_TEST_CASE_WITHOUT_HEAD(atf_result__parse__##name); \
+    ATF_TEST_CASE_BODY(atf_result__parse__##name)          \
+    {                                                      \
+        parse_broken_test(reason_regexp, input);           \
     }
 
+} // anonymous namespace
 
-}  // anonymous namespace
-
-
-PARSE_BROKEN(empty,
-             "Empty.*no new line",
-             "");
-PARSE_BROKEN(no_newline__unknown,
-             "Empty.*no new line",
-             "foo");
-PARSE_BROKEN(no_newline__known,
-             "Empty.*no new line",
-             "passed");
-PARSE_BROKEN(multiline__no_newline,
-             "multiple lines.*foo<<NEWLINE>>bar",
+PARSE_BROKEN(empty, "Empty.*no new line", "");
+PARSE_BROKEN(no_newline__unknown, "Empty.*no new line", "foo");
+PARSE_BROKEN(no_newline__known, "Empty.*no new line", "passed");
+PARSE_BROKEN(multiline__no_newline, "multiple lines.*foo<<NEWLINE>>bar",
              "failed: foo\nbar");
-PARSE_BROKEN(multiline__with_newline,
-             "multiple lines.*foo<<NEWLINE>>bar",
+PARSE_BROKEN(multiline__with_newline, "multiple lines.*foo<<NEWLINE>>bar",
              "failed: foo\nbar\n");
-PARSE_BROKEN(unknown_status__no_reason,
-             "Unknown.*result.*'cba'",
-             "cba\n");
-PARSE_BROKEN(unknown_status__with_reason,
-             "Unknown.*result.*'hgf'",
+PARSE_BROKEN(unknown_status__no_reason, "Unknown.*result.*'cba'", "cba\n");
+PARSE_BROKEN(unknown_status__with_reason, "Unknown.*result.*'hgf'",
              "hgf: foo\n");
-PARSE_BROKEN(missing_reason__no_delim,
-             "failed.*followed by.*reason",
+PARSE_BROKEN(missing_reason__no_delim, "failed.*followed by.*reason",
              "failed\n");
-PARSE_BROKEN(missing_reason__bad_delim,
-             "failed.*followed by.*reason",
+PARSE_BROKEN(missing_reason__bad_delim, "failed.*followed by.*reason",
              "failed:\n");
-PARSE_BROKEN(missing_reason__empty,
-             "failed.*followed by.*reason",
+PARSE_BROKEN(missing_reason__empty, "failed.*followed by.*reason",
              "failed: \n");
 
-
-PARSE_OK(broken__ok,
-         engine::atf_result::broken, none, "a b c",
+PARSE_OK(broken__ok, engine::atf_result::broken, none, "a b c",
          "broken: a b c\n");
-PARSE_OK(broken__blanks,
-         engine::atf_result::broken, none, "   ",
+PARSE_OK(broken__blanks, engine::atf_result::broken, none, "   ",
          "broken:    \n");
 
-
-PARSE_OK(expected_death__ok,
-         engine::atf_result::expected_death, none, "a b c",
+PARSE_OK(expected_death__ok, engine::atf_result::expected_death, none, "a b c",
          "expected_death: a b c\n");
-PARSE_OK(expected_death__blanks,
-         engine::atf_result::expected_death, none, "   ",
-         "expected_death:    \n");
+PARSE_OK(expected_death__blanks, engine::atf_result::expected_death, none,
+         "   ", "expected_death:    \n");
 
-
-PARSE_OK(expected_exit__ok__any,
-         engine::atf_result::expected_exit, none, "any exit code",
-         "expected_exit: any exit code\n");
-PARSE_OK(expected_exit__ok__specific,
-         engine::atf_result::expected_exit, optional< int >(712),
-         "some known exit code",
+PARSE_OK(expected_exit__ok__any, engine::atf_result::expected_exit, none,
+         "any exit code", "expected_exit: any exit code\n");
+PARSE_OK(expected_exit__ok__specific, engine::atf_result::expected_exit,
+         optional<int>(712), "some known exit code",
          "expected_exit(712): some known exit code\n");
-PARSE_BROKEN(expected_exit__bad_int,
-             "Invalid integer.*45a3",
+PARSE_BROKEN(expected_exit__bad_int, "Invalid integer.*45a3",
              "expected_exit(45a3): this is broken\n");
 
+PARSE_OK(expected_failure__ok, engine::atf_result::expected_failure, none,
+         "a b c", "expected_failure: a b c\n");
+PARSE_OK(expected_failure__blanks, engine::atf_result::expected_failure, none,
+         "   ", "expected_failure:    \n");
 
-PARSE_OK(expected_failure__ok,
-         engine::atf_result::expected_failure, none, "a b c",
-         "expected_failure: a b c\n");
-PARSE_OK(expected_failure__blanks,
-         engine::atf_result::expected_failure, none, "   ",
-         "expected_failure:    \n");
-
-
-PARSE_OK(expected_signal__ok__any,
-         engine::atf_result::expected_signal, none, "any signal code",
-         "expected_signal: any signal code\n");
-PARSE_OK(expected_signal__ok__specific,
-         engine::atf_result::expected_signal, optional< int >(712),
-         "some known signal code",
+PARSE_OK(expected_signal__ok__any, engine::atf_result::expected_signal, none,
+         "any signal code", "expected_signal: any signal code\n");
+PARSE_OK(expected_signal__ok__specific, engine::atf_result::expected_signal,
+         optional<int>(712), "some known signal code",
          "expected_signal(712): some known signal code\n");
-PARSE_BROKEN(expected_signal__bad_int,
-             "Invalid integer.*45a3",
+PARSE_BROKEN(expected_signal__bad_int, "Invalid integer.*45a3",
              "expected_signal(45a3): this is broken\n");
 
+PARSE_OK(expected_timeout__ok, engine::atf_result::expected_timeout, none,
+         "a b c", "expected_timeout: a b c\n");
+PARSE_OK(expected_timeout__blanks, engine::atf_result::expected_timeout, none,
+         "   ", "expected_timeout:    \n");
 
-PARSE_OK(expected_timeout__ok,
-         engine::atf_result::expected_timeout, none, "a b c",
-         "expected_timeout: a b c\n");
-PARSE_OK(expected_timeout__blanks,
-         engine::atf_result::expected_timeout, none, "   ",
-         "expected_timeout:    \n");
-
-
-PARSE_OK(failed__ok,
-         engine::atf_result::failed, none, "a b c",
+PARSE_OK(failed__ok, engine::atf_result::failed, none, "a b c",
          "failed: a b c\n");
-PARSE_OK(failed__blanks,
-         engine::atf_result::failed, none, "   ",
+PARSE_OK(failed__blanks, engine::atf_result::failed, none, "   ",
          "failed:    \n");
 
+PARSE_OK(passed__ok, engine::atf_result::passed, none, NULL, "passed\n");
+PARSE_BROKEN(passed__reason, "cannot have a reason", "passed a b c\n");
 
-PARSE_OK(passed__ok,
-         engine::atf_result::passed, none, NULL,
-         "passed\n");
-PARSE_BROKEN(passed__reason,
-             "cannot have a reason",
-             "passed a b c\n");
-
-
-PARSE_OK(skipped__ok,
-         engine::atf_result::skipped, none, "a b c",
+PARSE_OK(skipped__ok, engine::atf_result::skipped, none, "a b c",
          "skipped: a b c\n");
-PARSE_OK(skipped__blanks,
-         engine::atf_result::skipped, none, "   ",
+PARSE_OK(skipped__blanks, engine::atf_result::skipped, none, "   ",
          "skipped:    \n");
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(atf_result__load__ok);
 ATF_TEST_CASE_BODY(atf_result__load__ok)
@@ -245,14 +191,13 @@ ATF_TEST_CASE_BODY(atf_result__load__ok)
     output << "skipped: a b c\n";
     output.close();
 
-    const engine::atf_result result = engine::atf_result::load(
-        utils::fs::path("result.txt"));
+    const engine::atf_result result =
+        engine::atf_result::load(utils::fs::path("result.txt"));
     ATF_REQUIRE(engine::atf_result::skipped == result.type());
     ATF_REQUIRE(!result.argument());
     ATF_REQUIRE(result.reason());
     ATF_REQUIRE_EQ("a b c", result.reason().get());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(atf_result__load__missing_file);
 ATF_TEST_CASE_BODY(atf_result__load__missing_file)
@@ -261,7 +206,6 @@ ATF_TEST_CASE_BODY(atf_result__load__missing_file)
         std::runtime_error, "Cannot open",
         engine::atf_result::load(utils::fs::path("result.txt")));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(atf_result__load__format_error);
 ATF_TEST_CASE_BODY(atf_result__load__format_error)
@@ -275,7 +219,6 @@ ATF_TEST_CASE_BODY(atf_result__load__format_error)
                          engine::atf_result::load(utils::fs::path("abc.txt")));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(atf_result__apply__broken__ok);
 ATF_TEST_CASE_BODY(atf_result__apply__broken__ok)
 {
@@ -284,7 +227,6 @@ ATF_TEST_CASE_BODY(atf_result__apply__broken__ok)
     const process::status status = process::status::fake_exited(EXIT_SUCCESS);
     ATF_REQUIRE_EQ(in_result, in_result.apply(utils::make_optional(status)));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(atf_result__apply__timed_out);
 ATF_TEST_CASE_BODY(atf_result__apply__timed_out)
@@ -296,7 +238,6 @@ ATF_TEST_CASE_BODY(atf_result__apply__timed_out)
                    timed_out.apply(none));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(atf_result__apply__expected_death__ok);
 ATF_TEST_CASE_BODY(atf_result__apply__expected_death__ok)
 {
@@ -305,7 +246,6 @@ ATF_TEST_CASE_BODY(atf_result__apply__expected_death__ok)
     const process::status status = process::status::fake_signaled(SIGINT, true);
     ATF_REQUIRE_EQ(in_result, in_result.apply(utils::make_optional(status)));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(atf_result__apply__expected_exit__ok);
 ATF_TEST_CASE_BODY(atf_result__apply__expected_exit__ok)
@@ -319,10 +259,10 @@ ATF_TEST_CASE_BODY(atf_result__apply__expected_exit__ok)
     ATF_REQUIRE_EQ(any_code, any_code.apply(utils::make_optional(failure)));
 
     const engine::atf_result a_code(engine::atf_result::expected_exit,
-                            utils::make_optional(EXIT_FAILURE), "The reason");
+                                    utils::make_optional(EXIT_FAILURE),
+                                    "The reason");
     ATF_REQUIRE_EQ(a_code, a_code.apply(utils::make_optional(failure)));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(atf_result__apply__expected_exit__failed);
 ATF_TEST_CASE_BODY(atf_result__apply__expected_exit__failed)
@@ -330,14 +270,14 @@ ATF_TEST_CASE_BODY(atf_result__apply__expected_exit__failed)
     const process::status success = process::status::fake_exited(EXIT_SUCCESS);
 
     const engine::atf_result a_code(engine::atf_result::expected_exit,
-                            utils::make_optional(EXIT_FAILURE), "The reason");
+                                    utils::make_optional(EXIT_FAILURE),
+                                    "The reason");
     ATF_REQUIRE_EQ(
         engine::atf_result(engine::atf_result::failed,
                            "Test case expected to exit with code 1 but got "
                            "code 0"),
         a_code.apply(utils::make_optional(success)));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(atf_result__apply__expected_exit__broken);
 ATF_TEST_CASE_BODY(atf_result__apply__expected_exit__broken)
@@ -352,7 +292,6 @@ ATF_TEST_CASE_BODY(atf_result__apply__expected_exit__broken)
         any_code.apply(utils::make_optional(sig3)));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(atf_result__apply__expected_failure__ok);
 ATF_TEST_CASE_BODY(atf_result__apply__expected_failure__ok)
 {
@@ -361,7 +300,6 @@ ATF_TEST_CASE_BODY(atf_result__apply__expected_failure__ok)
                                       "The reason");
     ATF_REQUIRE_EQ(xfailure, xfailure.apply(utils::make_optional(status)));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(atf_result__apply__expected_failure__broken);
 ATF_TEST_CASE_BODY(atf_result__apply__expected_failure__broken)
@@ -389,7 +327,6 @@ ATF_TEST_CASE_BODY(atf_result__apply__expected_failure__broken)
         xfailure.apply(utils::make_optional(sig4)));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(atf_result__apply__expected_signal__ok);
 ATF_TEST_CASE_BODY(atf_result__apply__expected_signal__ok)
 {
@@ -402,10 +339,9 @@ ATF_TEST_CASE_BODY(atf_result__apply__expected_signal__ok)
     ATF_REQUIRE_EQ(any_sig, any_sig.apply(utils::make_optional(sig3)));
 
     const engine::atf_result a_sig(engine::atf_result::expected_signal,
-                           utils::make_optional(3), "The reason");
+                                   utils::make_optional(3), "The reason");
     ATF_REQUIRE_EQ(a_sig, a_sig.apply(utils::make_optional(sig3)));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(atf_result__apply__expected_signal__failed);
 ATF_TEST_CASE_BODY(atf_result__apply__expected_signal__failed)
@@ -413,13 +349,12 @@ ATF_TEST_CASE_BODY(atf_result__apply__expected_signal__failed)
     const process::status sig5 = process::status::fake_signaled(5, false);
 
     const engine::atf_result a_sig(engine::atf_result::expected_signal,
-                           utils::make_optional(4), "The reason");
+                                   utils::make_optional(4), "The reason");
     ATF_REQUIRE_EQ(
         engine::atf_result(engine::atf_result::failed,
                            "Test case expected to receive signal 4 but got 5"),
         a_sig.apply(utils::make_optional(sig5)));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(atf_result__apply__expected_signal__broken);
 ATF_TEST_CASE_BODY(atf_result__apply__expected_signal__broken)
@@ -428,12 +363,10 @@ ATF_TEST_CASE_BODY(atf_result__apply__expected_signal__broken)
 
     const engine::atf_result any_sig(engine::atf_result::expected_signal, none,
                                      "The reason");
-    ATF_REQUIRE_EQ(
-        engine::atf_result(engine::atf_result::broken,
-                           "Expected signal but exited with code 0"),
-        any_sig.apply(utils::make_optional(success)));
+    ATF_REQUIRE_EQ(engine::atf_result(engine::atf_result::broken,
+                                      "Expected signal but exited with code 0"),
+                   any_sig.apply(utils::make_optional(success)));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(atf_result__apply__expected_timeout__ok);
 ATF_TEST_CASE_BODY(atf_result__apply__expected_timeout__ok)
@@ -442,7 +375,6 @@ ATF_TEST_CASE_BODY(atf_result__apply__expected_timeout__ok)
                                      "The reason");
     ATF_REQUIRE_EQ(timeout, timeout.apply(none));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(atf_result__apply__expected_timeout__broken);
 ATF_TEST_CASE_BODY(atf_result__apply__expected_timeout__broken)
@@ -456,7 +388,6 @@ ATF_TEST_CASE_BODY(atf_result__apply__expected_timeout__broken)
         timeout.apply(utils::make_optional(status)));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(atf_result__apply__failed__ok);
 ATF_TEST_CASE_BODY(atf_result__apply__failed__ok)
 {
@@ -464,7 +395,6 @@ ATF_TEST_CASE_BODY(atf_result__apply__failed__ok)
     const engine::atf_result failed(engine::atf_result::failed, "The reason");
     ATF_REQUIRE_EQ(failed, failed.apply(utils::make_optional(status)));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(atf_result__apply__failed__broken);
 ATF_TEST_CASE_BODY(atf_result__apply__failed__broken)
@@ -491,7 +421,6 @@ ATF_TEST_CASE_BODY(atf_result__apply__failed__broken)
         failed.apply(utils::make_optional(sig4)));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(atf_result__apply__passed__ok);
 ATF_TEST_CASE_BODY(atf_result__apply__passed__ok)
 {
@@ -499,7 +428,6 @@ ATF_TEST_CASE_BODY(atf_result__apply__passed__ok)
     const engine::atf_result passed(engine::atf_result::passed);
     ATF_REQUIRE_EQ(passed, passed.apply(utils::make_optional(status)));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(atf_result__apply__passed__broken);
 ATF_TEST_CASE_BODY(atf_result__apply__passed__broken)
@@ -526,7 +454,6 @@ ATF_TEST_CASE_BODY(atf_result__apply__passed__broken)
         passed.apply(utils::make_optional(sig4)));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(atf_result__apply__skipped__ok);
 ATF_TEST_CASE_BODY(atf_result__apply__skipped__ok)
 {
@@ -534,7 +461,6 @@ ATF_TEST_CASE_BODY(atf_result__apply__skipped__ok)
     const engine::atf_result skipped(engine::atf_result::skipped, "The reason");
     ATF_REQUIRE_EQ(skipped, skipped.apply(utils::make_optional(status)));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(atf_result__apply__skipped__broken);
 ATF_TEST_CASE_BODY(atf_result__apply__skipped__broken)
@@ -561,16 +487,13 @@ ATF_TEST_CASE_BODY(atf_result__apply__skipped__broken)
         skipped.apply(utils::make_optional(sig4)));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(atf_result__externalize__broken);
 ATF_TEST_CASE_BODY(atf_result__externalize__broken)
 {
     const engine::atf_result raw(engine::atf_result::broken, "The reason");
-    const model::test_result expected(model::test_result_broken,
-                                      "The reason");
+    const model::test_result expected(model::test_result_broken, "The reason");
     ATF_REQUIRE_EQ(expected, raw.externalize());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(atf_result__externalize__expected_death);
 ATF_TEST_CASE_BODY(atf_result__externalize__expected_death)
@@ -582,7 +505,6 @@ ATF_TEST_CASE_BODY(atf_result__externalize__expected_death)
     ATF_REQUIRE_EQ(expected, raw.externalize());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(atf_result__externalize__expected_exit);
 ATF_TEST_CASE_BODY(atf_result__externalize__expected_exit)
 {
@@ -592,7 +514,6 @@ ATF_TEST_CASE_BODY(atf_result__externalize__expected_exit)
                                       "The reason");
     ATF_REQUIRE_EQ(expected, raw.externalize());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(atf_result__externalize__expected_failure);
 ATF_TEST_CASE_BODY(atf_result__externalize__expected_failure)
@@ -604,7 +525,6 @@ ATF_TEST_CASE_BODY(atf_result__externalize__expected_failure)
     ATF_REQUIRE_EQ(expected, raw.externalize());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(atf_result__externalize__expected_signal);
 ATF_TEST_CASE_BODY(atf_result__externalize__expected_signal)
 {
@@ -614,7 +534,6 @@ ATF_TEST_CASE_BODY(atf_result__externalize__expected_signal)
                                       "The reason");
     ATF_REQUIRE_EQ(expected, raw.externalize());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(atf_result__externalize__expected_timeout);
 ATF_TEST_CASE_BODY(atf_result__externalize__expected_timeout)
@@ -626,16 +545,13 @@ ATF_TEST_CASE_BODY(atf_result__externalize__expected_timeout)
     ATF_REQUIRE_EQ(expected, raw.externalize());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(atf_result__externalize__failed);
 ATF_TEST_CASE_BODY(atf_result__externalize__failed)
 {
     const engine::atf_result raw(engine::atf_result::failed, "The reason");
-    const model::test_result expected(model::test_result_failed,
-                                      "The reason");
+    const model::test_result expected(model::test_result_failed, "The reason");
     ATF_REQUIRE(expected == raw.externalize());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(atf_result__externalize__passed);
 ATF_TEST_CASE_BODY(atf_result__externalize__passed)
@@ -645,16 +561,13 @@ ATF_TEST_CASE_BODY(atf_result__externalize__passed)
     ATF_REQUIRE_EQ(expected, raw.externalize());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(atf_result__externalize__skipped);
 ATF_TEST_CASE_BODY(atf_result__externalize__skipped)
 {
     const engine::atf_result raw(engine::atf_result::skipped, "The reason");
-    const model::test_result expected(model::test_result_skipped,
-                                      "The reason");
+    const model::test_result expected(model::test_result_skipped, "The reason");
     ATF_REQUIRE_EQ(expected, raw.externalize());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(calculate_atf_result__missing_file);
 ATF_TEST_CASE_BODY(calculate_atf_result__missing_file)
@@ -665,10 +578,10 @@ ATF_TEST_CASE_BODY(calculate_atf_result__missing_file)
     const model::test_result expected(
         model::test_result_broken,
         "Error: Premature exit. Test case exited with code 0");
-    ATF_REQUIRE_EQ(expected, engine::calculate_atf_result(
-        utils::make_optional(body_status), fs::path("foo")));
+    ATF_REQUIRE_EQ(expected,
+                   engine::calculate_atf_result(
+                       utils::make_optional(body_status), fs::path("foo")));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(calculate_atf_result__bad_file);
 ATF_TEST_CASE_BODY(calculate_atf_result__bad_file)
@@ -678,12 +591,12 @@ ATF_TEST_CASE_BODY(calculate_atf_result__bad_file)
     const status body_status = status::fake_exited(EXIT_SUCCESS);
     atf::utils::create_file("foo", "invalid\n");
     const model::test_result expected(
-	model::test_result_broken,
+        model::test_result_broken,
         "Error: Unknown test result 'invalid'. Test case exited with code 0");
-    ATF_REQUIRE_EQ(expected, engine::calculate_atf_result(
-        utils::make_optional(body_status), fs::path("foo")));
+    ATF_REQUIRE_EQ(expected,
+                   engine::calculate_atf_result(
+                       utils::make_optional(body_status), fs::path("foo")));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(calculate_atf_result__body_ok);
 ATF_TEST_CASE_BODY(calculate_atf_result__body_ok)
@@ -698,7 +611,6 @@ ATF_TEST_CASE_BODY(calculate_atf_result__body_ok)
                                      fs::path("result.txt")));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(calculate_atf_result__body_bad);
 ATF_TEST_CASE_BODY(calculate_atf_result__body_bad)
 {
@@ -707,13 +619,13 @@ ATF_TEST_CASE_BODY(calculate_atf_result__body_bad)
     atf::utils::create_file("result.txt", "skipped: Something\n");
     const status body_status = status::fake_exited(EXIT_FAILURE);
     ATF_REQUIRE_EQ(
-        model::test_result(model::test_result_broken, "Skipped test case "
+        model::test_result(model::test_result_broken,
+                           "Skipped test case "
                            "should have reported success but exited with "
                            "code 1"),
         engine::calculate_atf_result(utils::make_optional(body_status),
                                      fs::path("result.txt")));
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

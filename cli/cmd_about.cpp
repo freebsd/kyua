@@ -26,13 +26,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "cli/cmd_about.hpp"
-
 #include <cstdlib>
 #include <fstream>
 #include <utility>
 #include <vector>
 
+#include "cli/cmd_about.hpp"
 #include "cli/common.ipp"
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/parser.ipp"
@@ -45,7 +44,7 @@
 #include "utils/text/regex.hpp"
 
 #if defined(HAVE_CONFIG_H)
-#   include "config.h"
+#include "config.h"
 #endif
 
 namespace cmdline = utils::cmdline;
@@ -55,9 +54,7 @@ namespace text = utils::text;
 
 using cli::cmd_about;
 
-
 namespace {
-
 
 /// Print the contents of a document.
 ///
@@ -97,17 +94,15 @@ cat_file(cmdline::ui* ui, const fs::path& file,
     return true;
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Default constructor for cmd_about.
-cmd_about::cmd_about(void) : cli_command(
-    "about", "[authors|license|version]", 0, 1,
-    "Shows detailed authors and contributors; license; and version information")
+cmd_about::cmd_about(void) :
+    cli_command(
+        "about", "[authors|license|version]", 0, 1,
+        "Shows detailed authors and contributors; license; and version information")
 {
 }
-
 
 /// Entry point for the "about" subcommand.
 ///
@@ -120,8 +115,8 @@ int
 cmd_about::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
                const config::tree& /* user_config */)
 {
-    const fs::path docdir(utils::getenv_with_default(
-        "KYUA_DOCDIR", KYUA_DOCDIR));
+    const fs::path docdir(utils::getenv_with_default("KYUA_DOCDIR",
+                                                     KYUA_DOCDIR));
 
     bool success = true;
 

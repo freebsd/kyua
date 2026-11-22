@@ -40,11 +40,9 @@
 namespace utils {
 namespace config {
 
-
 void redirect(lutok::state&, tree&);
 
+} // namespace config
+} // namespace utils
 
-}  // namespace config
-}  // namespace utils
-
-#endif  // !defined(UTILS_CONFIG_LUA_MODULE_HPP)
+#endif // !defined(UTILS_CONFIG_LUA_MODULE_HPP)

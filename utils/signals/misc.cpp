@@ -29,7 +29,7 @@
 #include "utils/signals/misc.hpp"
 
 #if defined(HAVE_CONFIG_H)
-#   include "config.h"
+#include "config.h"
 #endif
 
 extern "C" {
@@ -45,10 +45,8 @@ extern "C" {
 
 namespace signals = utils::signals;
 
-
 /// Number of the last valid signal.
 const int utils::signals::last_signo = LAST_SIGNO;
-
 
 /// Resets a signal handler to its default behavior.
 ///
@@ -70,7 +68,6 @@ signals::reset(const int signo)
                            original_errno);
     }
 }
-
 
 /// Resets all signals to their default handlers.
 ///

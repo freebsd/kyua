@@ -37,12 +37,11 @@
 #include "utils/optional.ipp"
 #include "utils/process/operations_fwd.hpp"
 
-using utils::process::args_vector;
 using utils::optional;
+using utils::process::args_vector;
 
 namespace engine {
 namespace execenv {
-
 
 /// Abstract interface of an execution environment.
 class interface {
@@ -59,10 +58,13 @@ public:
               const std::string& test_case_name) :
         _test_program(test_program),
         _test_case_name(test_case_name)
-    {}
+    {
+    }
 
     /// Destructor.
-    virtual ~interface() {}
+    virtual ~interface()
+    {
+    }
 
     /// Initializes execution environment.
     ///
@@ -86,12 +88,13 @@ public:
     virtual void exec [[noreturn]] (const args_vector& args) const = 0;
 };
 
-
 /// Abstract interface of an execution environment manager.
 class manager {
 public:
     /// Destructor.
-    virtual ~manager() {}
+    virtual ~manager()
+    {
+    }
 
     /// Returns name of an execution environment.
     virtual const std::string& name() const = 0;
@@ -109,26 +112,23 @@ public:
     /// \param test_case_name Name of the test case.
     ///
     /// \return An execenv object if the test conforms, or none.
-    virtual std::unique_ptr< interface > probe(
-        const model::test_program& test_program,
-        const std::string& test_case_name) const = 0;
+    virtual std::unique_ptr<interface>
+    probe(const model::test_program& test_program,
+          const std::string& test_case_name) const = 0;
 
     // TODO: execenv related extra metadata could be provided by a manager
     // not to know how exactly and where it should be added to the kyua
 };
 
-
 /// Registers an execution environment.
 ///
 /// \param manager Execution environment manager.
-void register_execenv(const std::shared_ptr< manager > manager);
-
+void register_execenv(const std::shared_ptr<manager> manager);
 
 /// Returns list of registered execenv managers, except default host one.
 ///
 /// \return A vector of pointers to execenv managers.
-const std::vector< std::shared_ptr< manager> > execenvs();
-
+const std::vector<std::shared_ptr<manager>> execenvs();
 
 /// Returns execution environment for a test case.
 ///
@@ -136,12 +136,10 @@ const std::vector< std::shared_ptr< manager> > execenvs();
 /// \param test_case_name Name of the test case.
 ///
 /// \return An execution environment of a test.
-std::unique_ptr< execenv::interface > get(
-    const model::test_program& test_program,
-    const std::string& test_case_name);
+std::unique_ptr<execenv::interface> get(const model::test_program& test_program,
+                                        const std::string& test_case_name);
 
+} // namespace execenv
+} // namespace engine
 
-}  // namespace execenv
-}  // namespace engine
-
-#endif  // !defined(ENGINE_EXECENV_EXECENV_HPP)
+#endif // !defined(ENGINE_EXECENV_EXECENV_HPP)

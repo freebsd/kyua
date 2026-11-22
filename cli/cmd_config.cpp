@@ -26,10 +26,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "cli/cmd_config.hpp"
-
 #include <cstdlib>
 
+#include "cli/cmd_config.hpp"
 #include "cli/common.ipp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/cmdline/ui.hpp"
@@ -41,9 +40,7 @@ namespace config = utils::config;
 
 using cli::cmd_config;
 
-
 namespace {
-
 
 /// Prints all configuration variables.
 ///
@@ -60,7 +57,6 @@ print_all(cmdline::ui* ui, const config::properties_map& properties)
         ui->out(F("%s = %s") % (*iter).first % (*iter).second);
     return EXIT_SUCCESS;
 }
-
 
 /// Prints the configuration variables that the user requests.
 ///
@@ -90,17 +86,14 @@ print_some(cmdline::ui* ui, const config::properties_map& properties,
     return ok ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Default constructor for cmd_config.
-cmd_config::cmd_config(void) : cli_command(
-    "config", "[variable1 .. variableN]", 0, -1,
-    "Inspects the values of configuration variables")
+cmd_config::cmd_config(void) :
+    cli_command("config", "[variable1 .. variableN]", 0, -1,
+                "Inspects the values of configuration variables")
 {
 }
-
 
 /// Entry point for the "config" subcommand.
 ///
@@ -112,7 +105,7 @@ cmd_config::cmd_config(void) : cli_command(
 /// opened.
 int
 cmd_config::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
-               const config::tree& user_config)
+                const config::tree& user_config)
 {
     const config::properties_map properties = user_config.all_properties();
     if (cmdline.arguments().empty())

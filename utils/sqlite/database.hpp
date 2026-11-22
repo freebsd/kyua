@@ -54,14 +54,12 @@ extern "C" {
 namespace utils {
 namespace sqlite {
 
-
 /// Constant for the database::open flags: open in read-only mode.
 static const int open_readonly = 1 << 0;
 /// Constant for the database::open flags: open in read-write mode.
 static const int open_readwrite = 1 << 1;
 /// Constant for the database::open flags: create on open.
 static const int open_create = 1 << 2;
-
 
 /// A RAII model for the SQLite 3 database.
 ///
@@ -81,10 +79,10 @@ class database {
     struct impl;
 
     /// Pointer to the shared internal implementation.
-    std::shared_ptr< impl > _pimpl;
+    std::shared_ptr<impl> _pimpl;
 
     friend class database_c_gate;
-    database(const utils::optional< utils::fs::path >&, void*, const bool);
+    database(const utils::optional<utils::fs::path>&, void*, const bool);
     void* raw_database(void);
 
 public:
@@ -95,7 +93,7 @@ public:
     static database temporary(void);
     void close(void);
 
-    const utils::optional< utils::fs::path >& db_filename(void) const;
+    const utils::optional<utils::fs::path>& db_filename(void) const;
 
     void exec(const std::string&);
 
@@ -105,8 +103,7 @@ public:
     int64_t last_insert_rowid(void);
 };
 
+} // namespace sqlite
+} // namespace utils
 
-}  // namespace sqlite
-}  // namespace utils
-
-#endif  // !defined(UTILS_SQLITE_DATABASE_HPP)
+#endif // !defined(UTILS_SQLITE_DATABASE_HPP)

@@ -32,13 +32,12 @@
 #if !defined(ENGINE_EXECENV_EXECENV_FWD_HPP)
 #define ENGINE_EXECENV_EXECENV_FWD_HPP
 
-#define	DEFAULT_EXECENV_NAME	"host"
+#define DEFAULT_EXECENV_NAME "host"
 
 namespace engine {
 namespace execenv {
 
+} // namespace execenv
+} // namespace engine
 
-}  // namespace execenv
-}  // namespace engine
-
-#endif  // !defined(ENGINE_EXECENV_EXECENV_FWD_HPP)
+#endif // !defined(ENGINE_EXECENV_EXECENV_FWD_HPP)

@@ -64,7 +64,6 @@ namespace process = utils::process;
 using utils::none;
 using utils::optional;
 
-
 /// Built-in path to GDB.
 ///
 /// This is the value that should be passed to the find_gdb() function.  If this
@@ -75,13 +74,10 @@ using utils::optional;
 /// behavior of the functions below.
 const char* utils::builtin_gdb = GDB;
 
-
 /// Maximum time the external GDB process is allowed to run for.
 datetime::delta utils::gdb_timeout(300, 0);
 
-
 namespace {
-
 
 /// Maximum length of the core file name, if known.
 ///
@@ -96,7 +92,6 @@ static const std::string::size_type max_core_name_length =
     std::string::npos
 #endif
     ;
-
 
 /// Functor to execute GDB in a subprocess.
 class run_gdb {
@@ -119,7 +114,9 @@ public:
     ///     a valid candidate.  Can be relative to the given work directory.
     run_gdb(const fs::path& gdb_, const fs::path& program_,
             const fs::path& core_name_) :
-        _gdb(gdb_), _program(program_), _core_name(core_name_)
+        _gdb(gdb_),
+        _program(program_),
+        _core_name(core_name_)
     {
     }
 
@@ -127,8 +124,7 @@ public:
     ///
     /// \param control_directory Directory where we can store control files to
     ///     not clobber any files created by the program being debugged.
-    void
-    operator()(const fs::path& control_directory)
+    void operator()(const fs::path& control_directory)
     {
         const fs::path gdb_script_path = control_directory / "gdb.script";
 
@@ -146,7 +142,7 @@ public:
 
         utils::unsetenv("TERM");
 
-        std::vector< std::string > args;
+        std::vector<std::string> args;
         args.push_back("-batch");
         args.push_back("-q");
         args.push_back("-x");
@@ -166,16 +162,14 @@ public:
     }
 };
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Looks for the path to the GDB binary.
 ///
 /// \return The absolute path to the GDB binary if any, otherwise none.  Note
 /// that the returned path may or may not be valid: there is no guarantee that
 /// the path exists and is executable.
-optional< fs::path >
+optional<fs::path>
 utils::find_gdb(void)
 {
     if (std::strlen(builtin_gdb) == 0) {
@@ -191,7 +185,6 @@ utils::find_gdb(void)
         return fs::find_in_path(gdb.c_str());
 }
 
-
 /// Looks for a core file for the given program.
 ///
 /// \param program The name of the binary that generated the core file.  Can be
@@ -201,23 +194,25 @@ utils::find_gdb(void)
 /// \param work_directory The directory from which the program was run.
 ///
 /// \return The path to the core file, if found; otherwise none.
-optional< fs::path >
+optional<fs::path>
 utils::find_core(const fs::path& program, const process::status& status,
                  const fs::path& work_directory)
 {
-    std::vector< fs::path > candidates;
+    std::vector<fs::path> candidates;
 
     candidates.push_back(work_directory /
-        (program.leaf_name().substr(0, max_core_name_length) + ".core"));
+                         (program.leaf_name().substr(0, max_core_name_length) +
+                          ".core"));
     if (program.is_absolute()) {
-        candidates.push_back(program.branch_path() /
+        candidates.push_back(
+            program.branch_path() /
             (program.leaf_name().substr(0, max_core_name_length) + ".core"));
     }
     candidates.push_back(work_directory / (F("core.%s") % status.dead_pid()));
     candidates.push_back(fs::path("/cores") /
                          (F("core.%s") % status.dead_pid()));
 
-    for (std::vector< fs::path >::const_iterator iter = candidates.begin();
+    for (std::vector<fs::path>::const_iterator iter = candidates.begin();
          iter != candidates.end(); ++iter) {
         if (fs::exists(*iter)) {
             LD(F("Attempting core file candidate %s: found") % *iter);
@@ -228,7 +223,6 @@ utils::find_core(const fs::path& program, const process::status& status,
     }
     return none;
 }
-
 
 /// Raises core size limit to its possible maximum.
 ///
@@ -270,7 +264,6 @@ utils::unlimit_core_size(void)
     return ok;
 }
 
-
 /// Gathers a stacktrace of a crashed program.
 ///
 /// \param program The name of the binary that crashed and dumped a core file.
@@ -301,31 +294,29 @@ utils::dump_stacktrace(const fs::path& program,
 
     gdb_err << F("Process with PID %s exited with signal %s and dumped core; "
                  "attempting to gather stack trace\n") %
-        status.dead_pid() % status.termsig();
+            status.dead_pid() % status.termsig();
 
-    const optional< fs::path > gdb = utils::find_gdb();
+    const optional<fs::path> gdb = utils::find_gdb();
     if (!gdb) {
         gdb_err << F("Cannot find GDB binary; builtin was '%s'\n") %
-            builtin_gdb;
+                builtin_gdb;
         return;
     }
 
-    const optional< fs::path > core_file = find_core(
-        program, status, exit_handle.work_directory());
+    const optional<fs::path> core_file =
+        find_core(program, status, exit_handle.work_directory());
     if (!core_file) {
         gdb_err << F("Cannot find any core file\n");
         return;
     }
 
     gdb_err.flush();
-    const executor::exec_handle exec_handle =
-        executor_handle.spawn_followup(
-            run_gdb(gdb.get(), program, core_file.get()),
-            exit_handle, gdb_timeout);
+    const executor::exec_handle exec_handle = executor_handle.spawn_followup(
+        run_gdb(gdb.get(), program, core_file.get()), exit_handle, gdb_timeout);
     const executor::exit_handle gdb_exit_handle =
         executor_handle.wait(exec_handle);
 
-    const optional< process::status >& gdb_status = gdb_exit_handle.status();
+    const optional<process::status>& gdb_status = gdb_exit_handle.status();
     if (!gdb_status) {
         gdb_err << "GDB timed out\n";
     } else {
@@ -337,7 +328,6 @@ utils::dump_stacktrace(const fs::path& program,
         }
     }
 }
-
 
 /// Gathers a stacktrace of a program if it crashed.
 ///
@@ -362,7 +352,7 @@ utils::dump_stacktrace_if_available(const fs::path& program,
                                     executor::executor_handle& executor_handle,
                                     const executor::exit_handle& exit_handle)
 {
-    const optional< process::status >& status = exit_handle.status();
+    const optional<process::status>& status = exit_handle.status();
     if (!status || !status.get().signaled() || !status.get().coredump())
         return;
 

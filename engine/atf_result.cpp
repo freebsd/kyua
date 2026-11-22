@@ -26,16 +26,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/atf_result.hpp"
-
 #include <cstdlib>
 #include <fstream>
 #include <utility>
 
+#include "engine/atf_result.hpp"
 #include "engine/exceptions.hpp"
 #include "model/test_result.hpp"
-#include "utils/fs/path.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
 #include "utils/process/status.hpp"
 #include "utils/sanity.hpp"
@@ -49,9 +48,7 @@ namespace text = utils::text;
 using utils::none;
 using utils::optional;
 
-
 namespace {
-
 
 /// Reads a file and flattens its lines.
 ///
@@ -66,10 +63,10 @@ namespace {
 /// character, the line count is 0.  If the file includes more than one line,
 /// the lines are merged together and separated by the magic string
 /// '&lt;&lt;NEWLINE&gt;&gt;'.
-static std::pair< size_t, std::string >
+static std::pair<size_t, std::string>
 read_lines(std::istream& input)
 {
-    std::pair< size_t, std::string > ret = std::make_pair(0, "");
+    std::pair<size_t, std::string> ret = std::make_pair(0, "");
 
     do {
         std::string line;
@@ -93,7 +90,6 @@ read_lines(std::istream& input)
     return ret;
 }
 
-
 /// Parses a test result that does not accept a reason.
 ///
 /// \param status The result status name.
@@ -112,7 +108,6 @@ parse_without_reason(const std::string& status, const std::string& rest)
     PRE(status == "passed");
     return engine::atf_result(engine::atf_result::passed);
 }
-
 
 /// Parses a test result that needs a reason.
 ///
@@ -152,22 +147,20 @@ parse_with_reason(const std::string& status, const std::string& rest)
         PRE_MSG(false, "Unexpected status");
 }
 
-
 /// Converts a string to an integer.
 ///
 /// \param str The string containing the integer to convert.
 ///
 /// \return The converted integer; none if the parsing fails.
-static optional< int >
+static optional<int>
 parse_int(const std::string& str)
 {
     try {
-        return utils::make_optional(text::to_type< int >(str));
+        return utils::make_optional(text::to_type<int>(str));
     } catch (const text::value_error& e) {
         return none;
     }
 }
-
 
 /// Parses a test result that needs a reason and accepts an optional integer.
 ///
@@ -190,7 +183,7 @@ parse_with_reason_and_arg(const std::string& status, const std::string& rest)
                                      "<reason>' but found '%s'") %
                                    status % rest);
 
-    optional< int > arg;
+    optional<int> arg;
     if (rest[delim] == '(') {
         const std::string::size_type delim2 = rest.find("):", delim);
         if (delim == std::string::npos)
@@ -215,7 +208,6 @@ parse_with_reason_and_arg(const std::string& status, const std::string& rest)
         PRE_MSG(false, "Unexpected status");
 }
 
-
 /// Formats the termination status of a process to be used with validate_result.
 ///
 /// \param status The status to format.
@@ -233,20 +225,16 @@ format_status(const process::status& status)
         return F("terminated in an unknown manner");
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Constructs a raw result with a type.
 ///
 /// The reason and the argument are left uninitialized.
 ///
 /// \param type_ The type of the result.
-engine::atf_result::atf_result(const types type_) :
-    _type(type_)
+engine::atf_result::atf_result(const types type_) : _type(type_)
 {
 }
-
 
 /// Constructs a raw result with a type and a reason.
 ///
@@ -255,10 +243,10 @@ engine::atf_result::atf_result(const types type_) :
 /// \param type_ The type of the result.
 /// \param reason_ The reason for the result.
 engine::atf_result::atf_result(const types type_, const std::string& reason_) :
-    _type(type_), _reason(reason_)
+    _type(type_),
+    _reason(reason_)
 {
 }
-
 
 /// Constructs a raw result with a type, an optional argument and a reason.
 ///
@@ -266,12 +254,13 @@ engine::atf_result::atf_result(const types type_, const std::string& reason_) :
 /// \param argument_ The optional argument for the result.
 /// \param reason_ The reason for the result.
 engine::atf_result::atf_result(const types type_,
-                               const utils::optional< int >& argument_,
+                               const utils::optional<int>& argument_,
                                const std::string& reason_) :
-    _type(type_), _argument(argument_), _reason(reason_)
+    _type(type_),
+    _argument(argument_),
+    _reason(reason_)
 {
 }
-
 
 /// Parses an input stream to extract a test result.
 ///
@@ -289,15 +278,15 @@ engine::atf_result::atf_result(const types type_,
 engine::atf_result
 engine::atf_result::parse(std::istream& input)
 {
-    const std::pair< size_t, std::string > data = read_lines(input);
+    const std::pair<size_t, std::string> data = read_lines(input);
     if (data.first == 0)
         throw format_error("Empty test result or no new line");
     else if (data.first > 1)
         throw format_error("Test result contains multiple lines: " +
                            data.second);
     else {
-        const std::string::size_type delim = data.second.find_first_not_of(
-            "abcdefghijklmnopqrstuvwxyz_");
+        const std::string::size_type delim =
+            data.second.find_first_not_of("abcdefghijklmnopqrstuvwxyz_");
         const std::string status = data.second.substr(0, delim);
         const std::string rest = data.second.substr(status.length());
 
@@ -324,7 +313,6 @@ engine::atf_result::parse(std::istream& input)
     }
 }
 
-
 /// Loads a test case result from a file.
 ///
 /// \param file The file to parse.
@@ -343,7 +331,6 @@ engine::atf_result::load(const fs::path& file)
         return parse(input);
 }
 
-
 /// Gets the type of the result.
 ///
 /// \return A result type.
@@ -353,26 +340,23 @@ engine::atf_result::type(void) const
     return _type;
 }
 
-
 /// Gets the optional argument of the result.
 ///
 /// \return The argument of the result if present; none otherwise.
-const optional< int >&
+const optional<int>&
 engine::atf_result::argument(void) const
 {
     return _argument;
 }
 
-
 /// Gets the optional reason of the result.
 ///
 /// \return The reason of the result if present; none otherwise.
-const optional< std::string >&
+const optional<std::string>&
 engine::atf_result::reason(void) const
 {
     return _reason;
 }
-
 
 /// Checks whether the result should be reported as good or not.
 ///
@@ -399,7 +383,6 @@ engine::atf_result::good(void) const
     }
 }
 
-
 /// Reinterprets a raw result based on the termination status of the test case.
 ///
 /// This reinterpretation ensures that the termination conditions of the program
@@ -416,8 +399,7 @@ engine::atf_result::good(void) const
 /// \result The adjusted result.  The original result is transformed into broken
 /// if the exit status of the program does not match our expectations.
 engine::atf_result
-engine::atf_result::apply(const optional< process::status >& status)
-    const
+engine::atf_result::apply(const optional<process::status>& status) const
 {
     if (!status) {
         if (_type != atf_result::expected_timeout)
@@ -444,20 +426,22 @@ engine::atf_result::apply(const optional< process::status >& status)
                         atf_result::failed,
                         F("Test case expected to exit with code %s but got "
                           "code %s") %
-                        _argument.get() % status.get().exitstatus());
+                            _argument.get() % status.get().exitstatus());
             } else
                 return *this;
         } else
-              return atf_result(atf_result::broken, "Expected clean exit but " +
-                                format_status(status.get()));
+            return atf_result(atf_result::broken,
+                              "Expected clean exit but " +
+                                  format_status(status.get()));
 
     case atf_result::expected_failure:
         if (status.get().exited() && status.get().exitstatus() == EXIT_SUCCESS)
             return *this;
         else
-            return atf_result(atf_result::broken, "Expected failure should "
+            return atf_result(atf_result::broken,
+                              "Expected failure should "
                               "have reported success but " +
-                              format_status(status.get()));
+                                  format_status(status.get()));
 
     case atf_result::expected_signal:
         if (status.get().signaled()) {
@@ -469,45 +453,49 @@ engine::atf_result::apply(const optional< process::status >& status)
                         atf_result::failed,
                         F("Test case expected to receive signal %s but "
                           "got %s") %
-                        _argument.get() % status.get().termsig());
+                            _argument.get() % status.get().termsig());
             } else
                 return *this;
         } else
-            return atf_result(atf_result::broken, "Expected signal but " +
-                              format_status(status.get()));
+            return atf_result(atf_result::broken,
+                              "Expected signal but " +
+                                  format_status(status.get()));
 
     case atf_result::expected_timeout:
-        return atf_result(atf_result::broken, "Expected timeout but " +
-                          format_status(status.get()));
+        return atf_result(atf_result::broken,
+                          "Expected timeout but " +
+                              format_status(status.get()));
 
     case atf_result::failed:
         if (status.get().exited() && status.get().exitstatus() == EXIT_FAILURE)
             return *this;
         else
-            return atf_result(atf_result::broken, "Failed test case should "
+            return atf_result(atf_result::broken,
+                              "Failed test case should "
                               "have reported failure but " +
-                              format_status(status.get()));
+                                  format_status(status.get()));
 
     case atf_result::passed:
         if (status.get().exited() && status.get().exitstatus() == EXIT_SUCCESS)
             return *this;
         else
-            return atf_result(atf_result::broken, "Passed test case should "
+            return atf_result(atf_result::broken,
+                              "Passed test case should "
                               "have reported success but " +
-                              format_status(status.get()));
+                                  format_status(status.get()));
 
     case atf_result::skipped:
         if (status.get().exited() && status.get().exitstatus() == EXIT_SUCCESS)
             return *this;
         else
-            return atf_result(atf_result::broken, "Skipped test case should "
+            return atf_result(atf_result::broken,
+                              "Skipped test case should "
                               "have reported success but " +
-                              format_status(status.get()));
+                                  format_status(status.get()));
     }
 
     UNREACHABLE;
 }
-
 
 /// Converts an internal result to the interface-agnostic representation.
 ///
@@ -541,7 +529,6 @@ engine::atf_result::externalize(void) const
     }
 }
 
-
 /// Compares two raw results for equality.
 ///
 /// \param other The result to compare to.
@@ -554,7 +541,6 @@ engine::atf_result::operator==(const atf_result& other) const
         _reason == other._reason;
 }
 
-
 /// Compares two raw results for inequality.
 ///
 /// \param other The result to compare to.
@@ -565,7 +551,6 @@ engine::atf_result::operator!=(const atf_result& other) const
 {
     return !(*this == other);
 }
-
 
 /// Injects the object into a stream.
 ///
@@ -578,29 +563,46 @@ engine::operator<<(std::ostream& output, const atf_result& object)
 {
     std::string result_name;
     switch (object.type()) {
-    case atf_result::broken: result_name = "broken"; break;
-    case atf_result::expected_death: result_name = "expected_death"; break;
-    case atf_result::expected_exit: result_name = "expected_exit"; break;
-    case atf_result::expected_failure: result_name = "expected_failure"; break;
-    case atf_result::expected_signal: result_name = "expected_signal"; break;
-    case atf_result::expected_timeout: result_name = "expected_timeout"; break;
-    case atf_result::failed: result_name = "failed"; break;
-    case atf_result::passed: result_name = "passed"; break;
-    case atf_result::skipped: result_name = "skipped"; break;
+    case atf_result::broken:
+        result_name = "broken";
+        break;
+    case atf_result::expected_death:
+        result_name = "expected_death";
+        break;
+    case atf_result::expected_exit:
+        result_name = "expected_exit";
+        break;
+    case atf_result::expected_failure:
+        result_name = "expected_failure";
+        break;
+    case atf_result::expected_signal:
+        result_name = "expected_signal";
+        break;
+    case atf_result::expected_timeout:
+        result_name = "expected_timeout";
+        break;
+    case atf_result::failed:
+        result_name = "failed";
+        break;
+    case atf_result::passed:
+        result_name = "passed";
+        break;
+    case atf_result::skipped:
+        result_name = "skipped";
+        break;
     }
 
-    const optional< int >& argument = object.argument();
+    const optional<int>& argument = object.argument();
 
-    const optional< std::string >& reason = object.reason();
+    const optional<std::string>& reason = object.reason();
 
-    output << F("model::test_result{type=%s, argument=%s, reason=%s}")
-        % text::quote(result_name, '\'')
-        % (argument ? (F("%s") % argument.get()).str() : "none")
-        % (reason ? text::quote(reason.get(), '\'') : "none");
+    output << F("model::test_result{type=%s, argument=%s, reason=%s}") %
+            text::quote(result_name, '\'') %
+            (argument ? (F("%s") % argument.get()).str() : "none") %
+            (reason ? text::quote(reason.get(), '\'') : "none");
 
     return output;
 }
-
 
 /// Calculates the user-visible result of a test case.
 ///
@@ -616,7 +618,7 @@ engine::operator<<(std::ostream& output, const atf_result& object)
 ///
 /// \return The calculated test case result.
 model::test_result
-engine::calculate_atf_result(const optional< process::status >& body_status,
+engine::calculate_atf_result(const optional<process::status>& body_status,
                              const fs::path& results_file)
 {
     using engine::atf_result;
@@ -627,18 +629,16 @@ engine::calculate_atf_result(const optional< process::status >& body_status,
     } catch (const engine::format_error& error) {
         if (body_status) {
             result = atf_result(atf_result::broken,
-                F("Error: %s. Test case %s") %
-                error.what() %
-                format_status(body_status.get()));
+                                F("Error: %s. Test case %s") % error.what() %
+                                    format_status(body_status.get()));
         } else {
             // The test case timed out.  apply() handles this case later.
         }
     } catch (const std::runtime_error& error) {
         if (body_status) {
-            result = atf_result(
-                atf_result::broken,
-                F("Error: Premature exit. Test case %s") %
-                format_status(body_status.get()));
+            result = atf_result(atf_result::broken,
+                                F("Error: Premature exit. Test case %s") %
+                                    format_status(body_status.get()));
         } else {
             // The test case timed out.  apply() handles this case later.
         }

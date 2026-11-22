@@ -13,9 +13,9 @@ extern "C" {
 #include <cstdlib>
 #include <fstream>
 
+#include "engine/exceptions.hpp"
 #include "engine/googletest_list.hpp"
 #include "engine/googletest_result.hpp"
-#include "engine/exceptions.hpp"
 #include "model/test_case.hpp"
 #include "model/test_program.hpp"
 #include "model/test_result.hpp"
@@ -36,9 +36,7 @@ namespace process = utils::process;
 
 using utils::optional;
 
-
 namespace {
-
 
 /// Basename of the file containing the result written by the googletest
 /// testcase.
@@ -55,7 +53,6 @@ namespace {
 /// to rely on third-party solutions for doing structured output via the
 /// listener interfaces.
 
-
 /// Magic numbers returned by exec_list when exec(2) fails.
 enum list_exit_code {
     exit_eacces = 90,
@@ -63,9 +60,7 @@ enum list_exit_code {
     exit_enoexec,
 };
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Executes a test program's list operation.
 ///
@@ -97,7 +92,6 @@ engine::googletest_interface::exec_list(
     }
 }
 
-
 /// Computes the test cases list of a test program.
 ///
 /// \param status The termination status of the subprocess used to execute
@@ -109,8 +103,7 @@ engine::googletest_interface::exec_list(
 /// \throw error If there is a problem parsing the test case list.
 model::test_cases_map
 engine::googletest_interface::parse_list(
-    const optional< process::status >& status,
-    const fs::path& stdout_path,
+    const optional<process::status>& status, const fs::path& stdout_path,
     const fs::path& /* stderr_path */) const
 {
     if (!status)
@@ -127,7 +120,8 @@ engine::googletest_interface::parse_list(
             throw engine::error("Invalid test program format");
         } else {
             throw engine::error("Test program did not exit cleanly; exited "
-                                "with status: " + std::to_string(exitstatus));
+                                "with status: " +
+                                std::to_string(exitstatus));
         }
     } else {
         throw engine::error("Test program received signal");
@@ -141,7 +135,6 @@ engine::googletest_interface::parse_list(
     return test_cases;
 }
 
-
 /// Executes a test case of the test program.
 ///
 /// This method is intended to be called within a subprocess and is expected
@@ -153,8 +146,7 @@ engine::googletest_interface::parse_list(
 /// \param vars User-provided variables to pass to the test program.
 void
 engine::googletest_interface::exec_test(
-    const model::test_program& test_program,
-    const std::string& test_case_name,
+    const model::test_program& test_program, const std::string& test_case_name,
     const config::properties_map& vars,
     const fs::path& /* control_directory */) const
 {
@@ -163,14 +155,11 @@ engine::googletest_interface::exec_test(
         utils::setenv(F("TEST_ENV_%s") % (*iter).first, (*iter).second);
     }
 
-    process::args_vector args{
-        "--gtest_color=no",
-        F("--gtest_filter=%s") % (test_case_name)
-    };
+    process::args_vector args{ "--gtest_color=no",
+                               F("--gtest_filter=%s") % (test_case_name) };
     process::exec(test_program.absolute_path(), args);
     __builtin_unreachable();
 }
-
 
 /// Computes the result of a test case based on its termination status.
 ///
@@ -182,9 +171,8 @@ engine::googletest_interface::exec_test(
 /// \return A test result.
 model::test_result
 engine::googletest_interface::compute_result(
-    const optional< process::status >& status,
-    const fs::path& /* control_directory */,
-    const fs::path& stdout_path,
+    const optional<process::status>& status,
+    const fs::path& /* control_directory */, const fs::path& stdout_path,
     const fs::path& /* stderr_path */) const
 {
     if (!status) {

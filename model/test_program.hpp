@@ -32,8 +32,6 @@
 #if !defined(MODEL_TEST_PROGRAM_HPP)
 #define MODEL_TEST_PROGRAM_HPP
 
-#include "model/test_program_fwd.hpp"
-
 #include <memory>
 #include <ostream>
 #include <string>
@@ -41,18 +39,18 @@
 
 #include "model/metadata_fwd.hpp"
 #include "model/test_case_fwd.hpp"
+#include "model/test_program_fwd.hpp"
 #include "utils/fs/path_fwd.hpp"
 #include "utils/noncopyable.hpp"
 
 namespace model {
-
 
 /// Representation of a test program.
 class test_program {
     struct impl;
 
     /// Pointer to the shared internal implementation.
-    std::shared_ptr< impl > _pimpl;
+    std::shared_ptr<impl> _pimpl;
 
 protected:
     void set_test_cases(const model::test_cases_map&);
@@ -78,16 +76,14 @@ public:
     bool operator<(const test_program&) const;
 };
 
-
 std::ostream& operator<<(std::ostream&, const test_program&);
-
 
 /// Builder for a test_program object.
 class test_program_builder : utils::noncopyable {
     struct impl;
 
     /// Pointer to the shared internal implementation.
-    std::unique_ptr< impl > _pimpl;
+    std::unique_ptr<impl> _pimpl;
 
 public:
     test_program_builder(const std::string&, const utils::fs::path&,
@@ -104,7 +100,6 @@ public:
     test_program_ptr build_ptr(void) const;
 };
 
+} // namespace model
 
-}  // namespace model
-
-#endif  // !defined(MODEL_TEST_PROGRAM_HPP)
+#endif // !defined(MODEL_TEST_PROGRAM_HPP)

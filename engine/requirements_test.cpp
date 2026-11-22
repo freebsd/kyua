@@ -26,12 +26,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "model/metadata.hpp"
-
 #include <atf-c++.hpp>
 
 #include "engine/config.hpp"
 #include "engine/requirements.hpp"
+#include "model/metadata.hpp"
 #include "utils/config/tree.ipp"
 #include "utils/env.hpp"
 #include "utils/fs/operations.hpp"
@@ -45,22 +44,20 @@ namespace fs = utils::fs;
 namespace passwd = utils::passwd;
 namespace units = utils::units;
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(check_reqs__none);
 ATF_TEST_CASE_BODY(check_reqs__none)
 {
     const model::metadata md = model::metadata_builder().build();
     ATF_REQUIRE(engine::check_reqs(md, engine::empty_config(), "",
-                                   fs::path(".")).empty());
+                                   fs::path("."))
+                    .empty());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(check_reqs__allowed_architectures__one_ok);
 ATF_TEST_CASE_BODY(check_reqs__allowed_architectures__one_ok)
 {
-    const model::metadata md = model::metadata_builder()
-        .add_allowed_architecture("x86_64")
-        .build();
+    const model::metadata md =
+        model::metadata_builder().add_allowed_architecture("x86_64").build();
 
     config::tree user_config = engine::default_config();
     user_config.set_string("architecture", "x86_64");
@@ -68,13 +65,11 @@ ATF_TEST_CASE_BODY(check_reqs__allowed_architectures__one_ok)
     ATF_REQUIRE(engine::check_reqs(md, user_config, "", fs::path(".")).empty());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(check_reqs__allowed_architectures__one_fail);
 ATF_TEST_CASE_BODY(check_reqs__allowed_architectures__one_fail)
 {
-    const model::metadata md = model::metadata_builder()
-        .add_allowed_architecture("x86_64")
-        .build();
+    const model::metadata md =
+        model::metadata_builder().add_allowed_architecture("x86_64").build();
 
     config::tree user_config = engine::default_config();
     user_config.set_string("architecture", "i386");
@@ -83,15 +78,14 @@ ATF_TEST_CASE_BODY(check_reqs__allowed_architectures__one_fail)
                       engine::check_reqs(md, user_config, "", fs::path(".")));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(check_reqs__allowed_architectures__many_ok);
 ATF_TEST_CASE_BODY(check_reqs__allowed_architectures__many_ok)
 {
     const model::metadata md = model::metadata_builder()
-        .add_allowed_architecture("x86_64")
-        .add_allowed_architecture("i386")
-        .add_allowed_architecture("powerpc")
-        .build();
+                                   .add_allowed_architecture("x86_64")
+                                   .add_allowed_architecture("i386")
+                                   .add_allowed_architecture("powerpc")
+                                   .build();
 
     config::tree user_config = engine::default_config();
     user_config.set_string("architecture", "i386");
@@ -99,15 +93,14 @@ ATF_TEST_CASE_BODY(check_reqs__allowed_architectures__many_ok)
     ATF_REQUIRE(engine::check_reqs(md, user_config, "", fs::path(".")).empty());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(check_reqs__allowed_architectures__many_fail);
 ATF_TEST_CASE_BODY(check_reqs__allowed_architectures__many_fail)
 {
     const model::metadata md = model::metadata_builder()
-        .add_allowed_architecture("x86_64")
-        .add_allowed_architecture("i386")
-        .add_allowed_architecture("powerpc")
-        .build();
+                                   .add_allowed_architecture("x86_64")
+                                   .add_allowed_architecture("i386")
+                                   .add_allowed_architecture("powerpc")
+                                   .build();
 
     config::tree user_config = engine::default_config();
     user_config.set_string("architecture", "arm");
@@ -116,13 +109,11 @@ ATF_TEST_CASE_BODY(check_reqs__allowed_architectures__many_fail)
                       engine::check_reqs(md, user_config, "", fs::path(".")));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(check_reqs__allowed_platforms__one_ok);
 ATF_TEST_CASE_BODY(check_reqs__allowed_platforms__one_ok)
 {
-    const model::metadata md = model::metadata_builder()
-        .add_allowed_platform("amd64")
-        .build();
+    const model::metadata md =
+        model::metadata_builder().add_allowed_platform("amd64").build();
 
     config::tree user_config = engine::default_config();
     user_config.set_string("architecture", "");
@@ -130,13 +121,11 @@ ATF_TEST_CASE_BODY(check_reqs__allowed_platforms__one_ok)
     ATF_REQUIRE(engine::check_reqs(md, user_config, "", fs::path(".")).empty());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(check_reqs__allowed_platforms__one_fail);
 ATF_TEST_CASE_BODY(check_reqs__allowed_platforms__one_fail)
 {
-    const model::metadata md = model::metadata_builder()
-        .add_allowed_platform("amd64")
-        .build();
+    const model::metadata md =
+        model::metadata_builder().add_allowed_platform("amd64").build();
 
     config::tree user_config = engine::default_config();
     user_config.set_string("architecture", "");
@@ -145,15 +134,14 @@ ATF_TEST_CASE_BODY(check_reqs__allowed_platforms__one_fail)
                       engine::check_reqs(md, user_config, "", fs::path(".")));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(check_reqs__allowed_platforms__many_ok);
 ATF_TEST_CASE_BODY(check_reqs__allowed_platforms__many_ok)
 {
     const model::metadata md = model::metadata_builder()
-        .add_allowed_platform("amd64")
-        .add_allowed_platform("i386")
-        .add_allowed_platform("macppc")
-        .build();
+                                   .add_allowed_platform("amd64")
+                                   .add_allowed_platform("i386")
+                                   .add_allowed_platform("macppc")
+                                   .build();
 
     config::tree user_config = engine::default_config();
     user_config.set_string("architecture", "");
@@ -161,15 +149,14 @@ ATF_TEST_CASE_BODY(check_reqs__allowed_platforms__many_ok)
     ATF_REQUIRE(engine::check_reqs(md, user_config, "", fs::path(".")).empty());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(check_reqs__allowed_platforms__many_fail);
 ATF_TEST_CASE_BODY(check_reqs__allowed_platforms__many_fail)
 {
     const model::metadata md = model::metadata_builder()
-        .add_allowed_platform("amd64")
-        .add_allowed_platform("i386")
-        .add_allowed_platform("macppc")
-        .build();
+                                   .add_allowed_platform("amd64")
+                                   .add_allowed_platform("i386")
+                                   .add_allowed_platform("macppc")
+                                   .build();
 
     config::tree user_config = engine::default_config();
     user_config.set_string("architecture", "");
@@ -178,29 +165,26 @@ ATF_TEST_CASE_BODY(check_reqs__allowed_platforms__many_fail)
                       engine::check_reqs(md, user_config, "", fs::path(".")));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(check_reqs__required_configs__one_ok);
 ATF_TEST_CASE_BODY(check_reqs__required_configs__one_ok)
 {
-    const model::metadata md = model::metadata_builder()
-        .add_required_config("my-var")
-        .build();
+    const model::metadata md =
+        model::metadata_builder().add_required_config("my-var").build();
 
     config::tree user_config = engine::default_config();
     user_config.set_string("test_suites.suite.aaa", "value1");
     user_config.set_string("test_suites.suite.my-var", "value2");
     user_config.set_string("test_suites.suite.zzz", "value3");
-    ATF_REQUIRE(engine::check_reqs(md, user_config, "suite",
-                                   fs::path(".")).empty());
+    ATF_REQUIRE(
+        engine::check_reqs(md, user_config, "suite", fs::path(".")).empty());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(check_reqs__required_configs__one_fail);
 ATF_TEST_CASE_BODY(check_reqs__required_configs__one_fail)
 {
     const model::metadata md = model::metadata_builder()
-        .add_required_config("unprivileged_user")
-        .build();
+                                   .add_required_config("unprivileged_user")
+                                   .build();
 
     config::tree user_config = engine::default_config();
     user_config.set_string("test_suites.suite.aaa", "value1");
@@ -212,15 +196,14 @@ ATF_TEST_CASE_BODY(check_reqs__required_configs__one_fail)
                                          fs::path(".")));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(check_reqs__required_configs__many_ok);
 ATF_TEST_CASE_BODY(check_reqs__required_configs__many_ok)
 {
     const model::metadata md = model::metadata_builder()
-        .add_required_config("foo")
-        .add_required_config("bar")
-        .add_required_config("baz")
-        .build();
+                                   .add_required_config("foo")
+                                   .add_required_config("bar")
+                                   .add_required_config("baz")
+                                   .build();
 
     config::tree user_config = engine::default_config();
     user_config.set_string("test_suites.suite.aaa", "value1");
@@ -228,19 +211,18 @@ ATF_TEST_CASE_BODY(check_reqs__required_configs__many_ok)
     user_config.set_string("test_suites.suite.bar", "value3");
     user_config.set_string("test_suites.suite.baz", "value4");
     user_config.set_string("test_suites.suite.zzz", "value5");
-    ATF_REQUIRE(engine::check_reqs(md, user_config, "suite",
-                                   fs::path(".")).empty());
+    ATF_REQUIRE(
+        engine::check_reqs(md, user_config, "suite", fs::path(".")).empty());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(check_reqs__required_configs__many_fail);
 ATF_TEST_CASE_BODY(check_reqs__required_configs__many_fail)
 {
     const model::metadata md = model::metadata_builder()
-        .add_required_config("foo")
-        .add_required_config("bar")
-        .add_required_config("baz")
-        .build();
+                                   .add_required_config("foo")
+                                   .add_required_config("bar")
+                                   .add_required_config("baz")
+                                   .build();
 
     config::tree user_config = engine::default_config();
     user_config.set_string("test_suites.suite.aaa", "value1");
@@ -251,31 +233,28 @@ ATF_TEST_CASE_BODY(check_reqs__required_configs__many_fail)
                                          fs::path(".")));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(check_reqs__required_configs__special);
 ATF_TEST_CASE_BODY(check_reqs__required_configs__special)
 {
     const model::metadata md = model::metadata_builder()
-        .add_required_config("unprivileged-user")
-        .build();
+                                   .add_required_config("unprivileged-user")
+                                   .build();
 
     config::tree user_config = engine::default_config();
     ATF_REQUIRE_MATCH("Required configuration property 'unprivileged-user' "
                       "not defined",
                       engine::check_reqs(md, user_config, "", fs::path(".")));
-    user_config.set< engine::user_node >(
-        "unprivileged_user", passwd::user("foo", 1, 2));
-    ATF_REQUIRE(engine::check_reqs(md, user_config, "foo",
-                                   fs::path(".")).empty());
+    user_config.set<engine::user_node>("unprivileged_user",
+                                       passwd::user("foo", 1, 2));
+    ATF_REQUIRE(
+        engine::check_reqs(md, user_config, "foo", fs::path(".")).empty());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(check_reqs__required_user__root__ok);
 ATF_TEST_CASE_BODY(check_reqs__required_user__root__ok)
 {
-    const model::metadata md = model::metadata_builder()
-        .set_required_user("root")
-        .build();
+    const model::metadata md =
+        model::metadata_builder().set_required_user("root").build();
 
     config::tree user_config = engine::default_config();
     ATF_REQUIRE(!user_config.is_set("unprivileged_user"));
@@ -284,13 +263,11 @@ ATF_TEST_CASE_BODY(check_reqs__required_user__root__ok)
     ATF_REQUIRE(engine::check_reqs(md, user_config, "", fs::path(".")).empty());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(check_reqs__required_user__root__fail);
 ATF_TEST_CASE_BODY(check_reqs__required_user__root__fail)
 {
-    const model::metadata md = model::metadata_builder()
-        .set_required_user("root")
-        .build();
+    const model::metadata md =
+        model::metadata_builder().set_required_user("root").build();
 
     passwd::set_current_user_for_testing(passwd::user("", 123, 1));
     ATF_REQUIRE_MATCH("Requires root privileges",
@@ -298,13 +275,11 @@ ATF_TEST_CASE_BODY(check_reqs__required_user__root__fail)
                                          fs::path(".")));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(check_reqs__required_user__unprivileged__same);
 ATF_TEST_CASE_BODY(check_reqs__required_user__unprivileged__same)
 {
-    const model::metadata md = model::metadata_builder()
-        .set_required_user("unprivileged")
-        .build();
+    const model::metadata md =
+        model::metadata_builder().set_required_user("unprivileged").build();
 
     config::tree user_config = engine::default_config();
     ATF_REQUIRE(!user_config.is_set("unprivileged_user"));
@@ -313,29 +288,25 @@ ATF_TEST_CASE_BODY(check_reqs__required_user__unprivileged__same)
     ATF_REQUIRE(engine::check_reqs(md, user_config, "", fs::path(".")).empty());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(check_reqs__required_user__unprivileged__ok);
 ATF_TEST_CASE_BODY(check_reqs__required_user__unprivileged__ok)
 {
-    const model::metadata md = model::metadata_builder()
-        .set_required_user("unprivileged")
-        .build();
+    const model::metadata md =
+        model::metadata_builder().set_required_user("unprivileged").build();
 
     config::tree user_config = engine::default_config();
-    user_config.set< engine::user_node >(
-        "unprivileged_user", passwd::user("", 123, 1));
+    user_config.set<engine::user_node>("unprivileged_user",
+                                       passwd::user("", 123, 1));
 
     passwd::set_current_user_for_testing(passwd::user("", 0, 1));
     ATF_REQUIRE(engine::check_reqs(md, user_config, "", fs::path(".")).empty());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(check_reqs__required_user__unprivileged__fail);
 ATF_TEST_CASE_BODY(check_reqs__required_user__unprivileged__fail)
 {
-    const model::metadata md = model::metadata_builder()
-        .set_required_user("unprivileged")
-        .build();
+    const model::metadata md =
+        model::metadata_builder().set_required_user("unprivileged").build();
 
     config::tree user_config = engine::default_config();
     ATF_REQUIRE(!user_config.is_set("unprivileged_user"));
@@ -345,77 +316,80 @@ ATF_TEST_CASE_BODY(check_reqs__required_user__unprivileged__fail)
                       engine::check_reqs(md, user_config, "", fs::path(".")));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(check_reqs__required_disk_space__ok);
 ATF_TEST_CASE_BODY(check_reqs__required_disk_space__ok)
 {
-    const model::metadata md = model::metadata_builder()
-        .set_required_disk_space(units::bytes::parse("1m"))
-        .build();
+    const model::metadata md =
+        model::metadata_builder()
+            .set_required_disk_space(units::bytes::parse("1m"))
+            .build();
 
     ATF_REQUIRE(engine::check_reqs(md, engine::empty_config(), "",
-                                   fs::path(".")).empty());
+                                   fs::path("."))
+                    .empty());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(check_reqs__required_disk_space__fail);
 ATF_TEST_CASE_BODY(check_reqs__required_disk_space__fail)
 {
-    const model::metadata md = model::metadata_builder()
-        .set_required_disk_space(units::bytes::parse("1000t"))
-        .build();
+    const model::metadata md =
+        model::metadata_builder()
+            .set_required_disk_space(units::bytes::parse("1000t"))
+            .build();
 
     ATF_REQUIRE_MATCH("Requires 1000.00T .*disk space",
                       engine::check_reqs(md, engine::empty_config(), "",
                                          fs::path(".")));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(check_reqs__required_files__ok);
 ATF_TEST_CASE_BODY(check_reqs__required_files__ok)
 {
     const model::metadata md = model::metadata_builder()
-        .add_required_file(fs::current_path() / "test-file")
-        .build();
+                                   .add_required_file(fs::current_path() /
+                                                      "test-file")
+                                   .build();
 
     atf::utils::create_file("test-file", "");
 
     ATF_REQUIRE(engine::check_reqs(md, engine::empty_config(), "",
-                                   fs::path(".")).empty());
+                                   fs::path("."))
+                    .empty());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(check_reqs__required_files__fail);
 ATF_TEST_CASE_BODY(check_reqs__required_files__fail)
 {
-    const model::metadata md = model::metadata_builder()
-        .add_required_file(fs::path("/non-existent/file"))
-        .build();
+    const model::metadata md =
+        model::metadata_builder()
+            .add_required_file(fs::path("/non-existent/file"))
+            .build();
 
     ATF_REQUIRE_MATCH("'/non-existent/file' not found$",
                       engine::check_reqs(md, engine::empty_config(), "",
                                          fs::path(".")));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(check_reqs__required_memory__ok);
 ATF_TEST_CASE_BODY(check_reqs__required_memory__ok)
 {
-    const model::metadata md = model::metadata_builder()
-        .set_required_memory(units::bytes::parse("1m"))
-        .build();
+    const model::metadata md =
+        model::metadata_builder()
+            .set_required_memory(units::bytes::parse("1m"))
+            .build();
 
     ATF_REQUIRE(engine::check_reqs(md, engine::empty_config(), "",
-                                   fs::path(".")).empty());
+                                   fs::path("."))
+                    .empty());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(check_reqs__required_memory__fail);
 ATF_TEST_CASE_BODY(check_reqs__required_memory__fail)
 {
-    const model::metadata md = model::metadata_builder()
-        .set_required_memory(units::bytes::parse("100t"))
-        .build();
+    const model::metadata md =
+        model::metadata_builder()
+            .set_required_memory(units::bytes::parse("100t"))
+            .build();
 
     if (utils::physical_memory() == 0)
         skip("Don't know how to query the amount of physical memory");
@@ -423,7 +397,6 @@ ATF_TEST_CASE_BODY(check_reqs__required_memory__fail)
                       engine::check_reqs(md, engine::empty_config(), "",
                                          fs::path(".")));
 }
-
 
 ATF_TEST_CASE(check_reqs__required_programs__ok);
 ATF_TEST_CASE_HEAD(check_reqs__required_programs__ok)
@@ -433,40 +406,40 @@ ATF_TEST_CASE_HEAD(check_reqs__required_programs__ok)
 ATF_TEST_CASE_BODY(check_reqs__required_programs__ok)
 {
     const model::metadata md = model::metadata_builder()
-        .add_required_program(fs::path("/bin/ls"))
-        .add_required_program(fs::path("foo"))
-        .add_required_program(fs::path("/bin/mv"))
-        .build();
+                                   .add_required_program(fs::path("/bin/ls"))
+                                   .add_required_program(fs::path("foo"))
+                                   .add_required_program(fs::path("/bin/mv"))
+                                   .build();
 
     fs::mkdir(fs::path("bin"), 0755);
     atf::utils::create_file("bin/foo", "");
     utils::setenv("PATH", (fs::current_path() / "bin").str());
 
     ATF_REQUIRE(engine::check_reqs(md, engine::empty_config(), "",
-                                   fs::path(".")).empty());
+                                   fs::path("."))
+                    .empty());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(check_reqs__required_programs__fail_absolute);
 ATF_TEST_CASE_BODY(check_reqs__required_programs__fail_absolute)
 {
-    const model::metadata md = model::metadata_builder()
-        .add_required_program(fs::path("/non-existent/program"))
-        .build();
+    const model::metadata md =
+        model::metadata_builder()
+            .add_required_program(fs::path("/non-existent/program"))
+            .build();
 
     ATF_REQUIRE_MATCH("'/non-existent/program' not found$",
                       engine::check_reqs(md, engine::empty_config(), "",
                                          fs::path(".")));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(check_reqs__required_programs__fail_relative);
 ATF_TEST_CASE_BODY(check_reqs__required_programs__fail_relative)
 {
     const model::metadata md = model::metadata_builder()
-        .add_required_program(fs::path("foo"))
-        .add_required_program(fs::path("bar"))
-        .build();
+                                   .add_required_program(fs::path("foo"))
+                                   .add_required_program(fs::path("bar"))
+                                   .build();
 
     fs::mkdir(fs::path("bin"), 0755);
     atf::utils::create_file("bin/foo", "");
@@ -476,7 +449,6 @@ ATF_TEST_CASE_BODY(check_reqs__required_programs__fail_relative)
                       engine::check_reqs(md, engine::empty_config(), "",
                                          fs::path(".")));
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

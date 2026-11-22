@@ -32,16 +32,14 @@
 #if !defined(UTILS_PROCESS_STATUS_HPP)
 #define UTILS_PROCESS_STATUS_HPP
 
-#include "utils/process/status_fwd.hpp"
-
 #include <ostream>
 #include <utility>
 
 #include "utils/optional.ipp"
+#include "utils/process/status_fwd.hpp"
 
 namespace utils {
 namespace process {
-
 
 /// Representation of the termination status of a process.
 class status {
@@ -52,12 +50,12 @@ class status {
     int _dead_pid;
 
     /// The exit status of the process, if it exited cleanly.
-    optional< int > _exited;
+    optional<int> _exited;
 
     /// The signal that terminated the program, if any, and if it dumped core.
-    optional< std::pair< int, bool > > _signaled;
+    optional<std::pair<int, bool>> _signaled;
 
-    status(const optional< int >&, const optional< std::pair< int, bool > >&);
+    status(const optional<int>&, const optional<std::pair<int, bool>>&);
 
 public:
     status(const int, int);
@@ -74,11 +72,9 @@ public:
     bool coredump(void) const;
 };
 
-
 std::ostream& operator<<(std::ostream&, const status&);
 
+} // namespace process
+} // namespace utils
 
-}  // namespace process
-}  // namespace utils
-
-#endif  // !defined(UTILS_PROCESS_STATUS_HPP)
+#endif // !defined(UTILS_PROCESS_STATUS_HPP)

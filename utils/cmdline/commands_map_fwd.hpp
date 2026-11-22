@@ -35,11 +35,9 @@
 namespace utils {
 namespace cmdline {
 
+template <typename> class commands_map;
 
-template< typename > class commands_map;
+} // namespace cmdline
+} // namespace utils
 
-
-}  // namespace cmdline
-}  // namespace utils
-
-#endif  // !defined(UTILS_CMDLINE_COMMANDS_MAP_FWD_HPP)
+#endif // !defined(UTILS_CMDLINE_COMMANDS_MAP_FWD_HPP)

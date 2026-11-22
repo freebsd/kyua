@@ -27,7 +27,6 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "drivers/list_tests.hpp"
-
 #include "engine/exceptions.hpp"
 #include "engine/filters.hpp"
 #include "engine/kyuafile.hpp"
@@ -42,12 +41,10 @@ namespace scheduler = engine::scheduler;
 
 using utils::optional;
 
-
 /// Pure abstract destructor.
 drivers::list_tests::base_hooks::~base_hooks(void)
 {
 }
-
 
 /// Executes the operation.
 ///
@@ -60,20 +57,19 @@ drivers::list_tests::base_hooks::~base_hooks(void)
 /// \returns A structure with all results computed by this driver.
 drivers::list_tests::result
 drivers::list_tests::drive(const fs::path& kyuafile_path,
-                           const optional< fs::path > build_root,
-                           const std::set< engine::test_filter >& filters,
-                           const config::tree& user_config,
-                           base_hooks& hooks)
+                           const optional<fs::path> build_root,
+                           const std::set<engine::test_filter>& filters,
+                           const config::tree& user_config, base_hooks& hooks)
 {
     scheduler::scheduler_handle handle = scheduler::setup();
 
-    const engine::kyuafile kyuafile = engine::kyuafile::load(
-        kyuafile_path, build_root, user_config, handle);
+    const engine::kyuafile kyuafile =
+        engine::kyuafile::load(kyuafile_path, build_root, user_config, handle);
 
     engine::scanner scanner(kyuafile.test_programs(), filters);
 
     while (!scanner.done()) {
-        const optional< engine::scan_result > result = scanner.yield();
+        const optional<engine::scan_result> result = scanner.yield();
         INV(result);
         hooks.got_test_case(*result.get().first, result.get().second);
     }

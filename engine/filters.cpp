@@ -26,11 +26,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/filters.hpp"
-
 #include <algorithm>
 #include <stdexcept>
 
+#include "engine/filters.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/logging/macros.hpp"
@@ -41,7 +40,6 @@ namespace fs = utils::fs;
 
 using utils::none;
 using utils::optional;
-
 
 /// Constructs a filter.
 ///
@@ -54,7 +52,6 @@ engine::test_filter::test_filter(const fs::path& test_program_,
     test_case(test_case_)
 {
 }
-
 
 /// Parses a user-provided test filter.
 ///
@@ -72,18 +69,18 @@ engine::test_filter::parse(const std::string& str)
 
     const std::string::size_type pos = str.find(':');
     if (pos == 0)
-        throw std::runtime_error(F("Program name component in '%s' is empty")
-                                 % str);
+        throw std::runtime_error(F("Program name component in '%s' is empty") %
+                                 str);
     if (pos == str.length() - 1)
-        throw std::runtime_error(F("Test case component in '%s' is empty")
-                                 % str);
+        throw std::runtime_error(F("Test case component in '%s' is empty") %
+                                 str);
 
     try {
         const fs::path test_program_(str.substr(0, pos));
         if (test_program_.is_absolute())
             throw std::runtime_error(F("Program name '%s' must be relative "
                                        "to the test suite, not absolute") %
-                                       test_program_.str());
+                                     test_program_.str());
         if (pos == std::string::npos) {
             LD(F("Parsed user filter '%s': test program '%s', no test case") %
                str % test_program_.str());
@@ -100,7 +97,6 @@ engine::test_filter::parse(const std::string& str)
     }
 }
 
-
 /// Formats a filter for user presentation.
 ///
 /// \return A user-friendly string representing the filter.  Note that this does
@@ -115,7 +111,6 @@ engine::test_filter::str(void) const
         return test_program.str();
 }
 
-
 /// Checks if this filter contains another.
 ///
 /// \param other The filter to compare to.
@@ -127,10 +122,9 @@ engine::test_filter::contains(const test_filter& other) const
     if (*this == other)
         return true;
     else
-        return test_case.empty() && test_program.is_parent_of(
-            other.test_program);
+        return test_case.empty() &&
+            test_program.is_parent_of(other.test_program);
 }
-
 
 /// Checks if this filter matches a given test program name or subdirectory.
 ///
@@ -151,7 +145,6 @@ engine::test_filter::matches_test_program(const fs::path& test_program_) const
     }
 }
 
-
 /// Checks if this filter matches a given test case identifier.
 ///
 /// \param test_program_ The test program to compare to.
@@ -168,7 +161,6 @@ engine::test_filter::matches_test_case(const fs::path& test_program_,
         return false;
 }
 
-
 /// Less-than comparison for sorting purposes.
 ///
 /// \param other The filter to compare to.
@@ -177,11 +169,10 @@ engine::test_filter::matches_test_case(const fs::path& test_program_,
 bool
 engine::test_filter::operator<(const test_filter& other) const
 {
-    return (
-        test_program < other.test_program ||
-        (test_program == other.test_program && test_case < other.test_case));
+    return (test_program < other.test_program ||
+            (test_program == other.test_program &&
+             test_case < other.test_case));
 }
-
 
 /// Equality comparison.
 ///
@@ -194,7 +185,6 @@ engine::test_filter::operator==(const test_filter& other) const
     return test_program == other.test_program && test_case == other.test_case;
 }
 
-
 /// Non-equality comparison.
 ///
 /// \param other The filter to compare to.
@@ -205,7 +195,6 @@ engine::test_filter::operator!=(const test_filter& other) const
 {
     return !(*this == other);
 }
-
 
 /// Injects the object into a stream.
 ///
@@ -219,21 +208,19 @@ engine::operator<<(std::ostream& output, const test_filter& object)
     if (object.test_case.empty()) {
         output << F("test_filter{test_program=%s}") % object.test_program;
     } else {
-        output << F("test_filter{test_program=%s, test_case=%s}")
-            % object.test_program % object.test_case;
+        output << F("test_filter{test_program=%s, test_case=%s}") %
+                object.test_program % object.test_case;
     }
     return output;
 }
 
-
 /// Constructs a new set of filters.
 ///
 /// \param filters_ The filters themselves; if empty, no filters are applied.
-engine::test_filters::test_filters(const std::set< test_filter >& filters_) :
+engine::test_filters::test_filters(const std::set<test_filter>& filters_) :
     _filters(filters_)
 {
 }
-
 
 /// Checks if a given test program matches the set of filters.
 ///
@@ -253,13 +240,12 @@ engine::test_filters::match_test_program(const fs::path& name) const
         return true;
 
     bool matches = false;
-    for (std::set< test_filter >::const_iterator iter = _filters.begin();
+    for (std::set<test_filter>::const_iterator iter = _filters.begin();
          !matches && iter != _filters.end(); iter++) {
         matches = (*iter).matches_test_program(name);
     }
     return matches;
 }
-
 
 /// Checks if a given test case identifier matches the set of filters.
 ///
@@ -278,16 +264,15 @@ engine::test_filters::match_test_case(const fs::path& test_program,
         return match(true, none);
     }
 
-    optional< test_filter > found = none;
-    for (std::set< test_filter >::const_iterator iter = _filters.begin();
+    optional<test_filter> found = none;
+    for (std::set<test_filter>::const_iterator iter = _filters.begin();
          !found && iter != _filters.end(); iter++) {
         if ((*iter).matches_test_case(test_program, test_case))
             found = *iter;
     }
     INV(!found || match_test_program(test_program));
-    return match(static_cast< bool >(found), found);
+    return match(static_cast<bool>(found), found);
 }
-
 
 /// Calculates the filters that have not matched any tests.
 ///
@@ -295,19 +280,17 @@ engine::test_filters::match_test_case(const fs::path& test_program,
 ///     of the filters held by this object.
 ///
 /// \return The set of filters that have not been used.
-std::set< engine::test_filter >
-engine::test_filters::difference(const std::set< test_filter >& matched) const
+std::set<engine::test_filter>
+engine::test_filters::difference(const std::set<test_filter>& matched) const
 {
-    PRE(std::includes(_filters.begin(), _filters.end(),
-                      matched.begin(), matched.end()));
+    PRE(std::includes(_filters.begin(), _filters.end(), matched.begin(),
+                      matched.end()));
 
-    std::set< test_filter > filters;
-    std::set_difference(_filters.begin(), _filters.end(),
-                        matched.begin(), matched.end(),
-                        std::inserter(filters, filters.begin()));
+    std::set<test_filter> filters;
+    std::set_difference(_filters.begin(), _filters.end(), matched.begin(),
+                        matched.end(), std::inserter(filters, filters.begin()));
     return filters;
 }
-
 
 /// Checks if a collection of filters is disjoint.
 ///
@@ -315,15 +298,15 @@ engine::test_filters::difference(const std::set< test_filter >& matched) const
 ///
 /// \throw std::runtime_error If the filters are not disjoint.
 void
-engine::check_disjoint_filters(const std::set< engine::test_filter >& filters)
+engine::check_disjoint_filters(const std::set<engine::test_filter>& filters)
 {
     // Yes, this is an O(n^2) algorithm.  However, we can assume that the number
     // of test filters (which are provided by the user on the command line) on a
     // particular run is in the order of tens, and thus this should not cause
     // any serious performance trouble.
-    for (std::set< test_filter >::const_iterator i1 = filters.begin();
+    for (std::set<test_filter>::const_iterator i1 = filters.begin();
          i1 != filters.end(); i1++) {
-        for (std::set< test_filter >::const_iterator i2 = filters.begin();
+        for (std::set<test_filter>::const_iterator i2 = filters.begin();
              i2 != filters.end(); i2++) {
             const test_filter& filter1 = *i1;
             const test_filter& filter2 = *i2;
@@ -337,16 +320,14 @@ engine::check_disjoint_filters(const std::set< engine::test_filter >& filters)
     }
 }
 
-
 /// Constructs a filters_state instance.
 ///
 /// \param filters_ The set of filters to track.
 engine::filters_state::filters_state(
-    const std::set< engine::test_filter >& filters_) :
+    const std::set<engine::test_filter>& filters_) :
     _filters(test_filters(filters_))
 {
 }
-
 
 /// Checks whether these filters match the given test program.
 ///
@@ -359,7 +340,6 @@ engine::filters_state::match_test_program(const fs::path& test_program) const
     return _filters.match_test_program(test_program);
 }
 
-
 /// Checks whether these filters match the given test case.
 ///
 /// \param test_program The test program to match against.
@@ -370,19 +350,18 @@ bool
 engine::filters_state::match_test_case(const fs::path& test_program,
                                        const std::string& test_case)
 {
-    engine::test_filters::match match = _filters.match_test_case(
-        test_program, test_case);
+    engine::test_filters::match match = _filters.match_test_case(test_program,
+                                                                 test_case);
     if (match.first && match.second)
         _used_filters.insert(match.second.get());
     return match.first;
 }
 
-
 /// Calculates the unused filters in this set.
 ///
 /// \return Returns the set of filters that have not matched any tests.  This
 /// information is useful to report usage errors to the user.
-std::set< engine::test_filter >
+std::set<engine::test_filter>
 engine::filters_state::unused(void) const
 {
     return _filters.difference(_used_filters);

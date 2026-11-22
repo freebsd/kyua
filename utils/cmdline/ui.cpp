@@ -29,7 +29,7 @@
 #include "utils/cmdline/ui.hpp"
 
 #if defined(HAVE_CONFIG_H)
-#   include "config.h"
+#include "config.h"
 #endif
 
 extern "C" {
@@ -37,7 +37,7 @@ extern "C" {
 #include <sys/ioctl.h>
 
 #if defined(HAVE_TERMIOS_H)
-#   include <termios.h>
+#include <termios.h>
 #endif
 #include <unistd.h>
 }
@@ -59,12 +59,10 @@ namespace text = utils::text;
 using utils::none;
 using utils::optional;
 
-
 /// Destructor for the class.
 cmdline::ui::~ui(void)
 {
 }
-
 
 /// Writes a single line to stderr.
 ///
@@ -87,7 +85,6 @@ cmdline::ui::err(const std::string& message, const bool newline)
     }
 }
 
-
 /// Writes a single line to stdout.
 ///
 /// The written line is printed as is, without being wrapped to fit within the
@@ -109,7 +106,6 @@ cmdline::ui::out(const std::string& message, const bool newline)
     }
 }
 
-
 /// Queries the width of the screen.
 ///
 /// This information comes first from the COLUMNS environment variable.  If not
@@ -126,19 +122,19 @@ cmdline::ui::out(const std::string& message, const bool newline)
 ///
 /// \return The width of the screen if it was possible to determine it, or none
 /// otherwise.
-optional< std::size_t >
+optional<std::size_t>
 cmdline::ui::screen_width(void) const
 {
     static bool done = false;
-    static optional< std::size_t > width = none;
+    static optional<std::size_t> width = none;
 
     if (!done) {
-        const optional< std::string > columns = utils::getenv("COLUMNS");
+        const optional<std::string> columns = utils::getenv("COLUMNS");
         if (columns) {
             if (columns.get().length() > 0) {
                 try {
                     width = utils::make_optional(
-                        utils::text::to_type< std::size_t >(columns.get()));
+                        utils::text::to_type<std::size_t>(columns.get()));
                 } catch (const utils::text::value_error& e) {
                     LD(F("Ignoring invalid value in COLUMNS variable: %s") %
                        e.what());
@@ -148,7 +144,7 @@ cmdline::ui::screen_width(void) const
         if (!width) {
             struct ::winsize ws;
             if (::ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) != -1)
-                width = optional< std::size_t >(ws.ws_col);
+                width = optional<std::size_t>(ws.ws_col);
         }
 
         if (width && width.get() >= 80)
@@ -160,7 +156,6 @@ cmdline::ui::screen_width(void) const
     return width;
 }
 
-
 /// Writes a line to stdout.
 ///
 /// The line is wrapped to fit on screen.
@@ -169,17 +164,16 @@ cmdline::ui::screen_width(void) const
 void
 cmdline::ui::out_wrap(const std::string& message)
 {
-    const optional< std::size_t > max_width = screen_width();
+    const optional<std::size_t> max_width = screen_width();
     if (max_width) {
-        const std::vector< std::string > lines = text::refill(
-            message, max_width.get());
-        for (std::vector< std::string >::const_iterator iter = lines.begin();
+        const std::vector<std::string> lines = text::refill(message,
+                                                            max_width.get());
+        for (std::vector<std::string>::const_iterator iter = lines.begin();
              iter != lines.end(); iter++)
             out(*iter);
     } else
         out(message);
 }
-
 
 /// Writes a line to stdout with a leading tag.
 ///
@@ -195,11 +189,12 @@ void
 cmdline::ui::out_tag_wrap(const std::string& tag, const std::string& message,
                           const bool repeat)
 {
-    const optional< std::size_t > max_width = screen_width();
+    const optional<std::size_t> max_width = screen_width();
     if (max_width && max_width.get() > tag.length()) {
-        const std::vector< std::string > lines = text::refill(
-            message, max_width.get() - tag.length());
-        for (std::vector< std::string >::const_iterator iter = lines.begin();
+        const std::vector<std::string> lines = text::refill(message,
+                                                            max_width.get() -
+                                                                tag.length());
+        for (std::vector<std::string>::const_iterator iter = lines.begin();
              iter != lines.end(); iter++) {
             if (repeat || iter == lines.begin())
                 out(F("%s%s") % tag % *iter);
@@ -210,7 +205,6 @@ cmdline::ui::out_tag_wrap(const std::string& tag, const std::string& message,
         out(F("%s%s") % tag % message);
     }
 }
-
 
 /// Writes a table to stdout.
 ///
@@ -226,16 +220,15 @@ cmdline::ui::out_table(const text::table& table,
     if (table.empty())
         return;
 
-    const optional< std::size_t > max_width = screen_width();
+    const optional<std::size_t> max_width = screen_width();
     if (max_width)
         formatter.set_table_width(max_width.get() - prefix.length());
 
-    const std::vector< std::string > lines = formatter.format(table);
-    for (std::vector< std::string >::const_iterator iter = lines.begin();
+    const std::vector<std::string> lines = formatter.format(table);
+    for (std::vector<std::string>::const_iterator iter = lines.begin();
          iter != lines.end(); ++iter)
         out(prefix + *iter);
 }
-
 
 /// Formats and prints an error message.
 ///
@@ -249,7 +242,6 @@ cmdline::print_error(ui* ui_, const std::string& message)
     ui_->err(F("%s: E: %s") % cmdline::progname() % message);
 }
 
-
 /// Formats and prints an informational message.
 ///
 /// \param ui_ The user interface object used to print the message.
@@ -261,7 +253,6 @@ cmdline::print_info(ui* ui_, const std::string& message)
     LI(message);
     ui_->err(F("%s: I: %s") % cmdline::progname() % message);
 }
-
 
 /// Formats and prints a warning message.
 ///

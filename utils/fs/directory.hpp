@@ -32,17 +32,15 @@
 #if !defined(UTILS_FS_DIRECTORY_HPP)
 #define UTILS_FS_DIRECTORY_HPP
 
-#include "utils/fs/directory_fwd.hpp"
-
 #include <memory>
 #include <ostream>
 #include <string>
 
+#include "utils/fs/directory_fwd.hpp"
 #include "utils/fs/path_fwd.hpp"
 
 namespace utils {
 namespace fs {
-
 
 /// Representation of a single directory entry.
 struct directory_entry {
@@ -56,21 +54,18 @@ struct directory_entry {
     bool operator<(const directory_entry&) const;
 };
 
-
 std::ostream& operator<<(std::ostream&, const directory_entry&);
 
-
 namespace detail {
-
 
 /// Forward directory iterator.
 class directory_iterator {
     struct impl;
 
     /// Internal implementation details.
-    std::shared_ptr< impl > _pimpl;
+    std::shared_ptr<impl> _pimpl;
 
-    directory_iterator(std::shared_ptr< impl >);
+    directory_iterator(std::shared_ptr<impl>);
 
     friend class fs::directory;
     static directory_iterator new_begin(const path&);
@@ -87,9 +82,7 @@ public:
     const directory_entry* operator->(void) const;
 };
 
-
-}  // namespace detail
-
+} // namespace detail
 
 /// Representation of a local filesystem directory.
 ///
@@ -104,7 +97,7 @@ private:
     struct impl;
 
     /// Internal implementation details.
-    std::shared_ptr< impl > _pimpl;
+    std::shared_ptr<impl> _pimpl;
 
 public:
     explicit directory(const path&);
@@ -113,8 +106,7 @@ public:
     const_iterator end(void) const;
 };
 
+} // namespace fs
+} // namespace utils
 
-}  // namespace fs
-}  // namespace utils
-
-#endif  // !defined(UTILS_FS_DIRECTORY_HPP)
+#endif // !defined(UTILS_FS_DIRECTORY_HPP)

@@ -26,12 +26,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "model/test_result.hpp"
-
+#include <atf-c++.hpp>
 #include <sstream>
 
-#include <atf-c++.hpp>
-
+#include "model/test_result.hpp"
 
 /// Creates a test case to validate the getters.
 ///
@@ -40,69 +38,52 @@
 /// \param expected_reason The expected reason for the result.
 /// \param result The result to query.
 #define GETTERS_TEST(name, expected_type, expected_reason, result) \
-    ATF_TEST_CASE_WITHOUT_HEAD(name ## __getters); \
-    ATF_TEST_CASE_BODY(name ## __getters) \
-    { \
-        ATF_REQUIRE(expected_type == result.type()); \
-        ATF_REQUIRE_EQ(expected_reason, result.reason());  \
+    ATF_TEST_CASE_WITHOUT_HEAD(name##__getters);                   \
+    ATF_TEST_CASE_BODY(name##__getters)                            \
+    {                                                              \
+        ATF_REQUIRE(expected_type == result.type());               \
+        ATF_REQUIRE_EQ(expected_reason, result.reason());          \
     }
-
 
 /// Creates a test case to validate the good() method.
 ///
 /// \param name The name of the test case; "__good" will be appended.
 /// \param expected The expected result of good().
 /// \param result_type The result type to check.
-#define GOOD_TEST(name, expected, result_type) \
-    ATF_TEST_CASE_WITHOUT_HEAD(name ## __good); \
-    ATF_TEST_CASE_BODY(name ## __good) \
-    { \
+#define GOOD_TEST(name, expected, result_type)                            \
+    ATF_TEST_CASE_WITHOUT_HEAD(name##__good);                             \
+    ATF_TEST_CASE_BODY(name##__good)                                      \
+    {                                                                     \
         ATF_REQUIRE_EQ(expected, model::test_result(result_type).good()); \
     }
-
 
 /// Creates a test case to validate the operator<< method.
 ///
 /// \param name The name of the test case; "__output" will be appended.
 /// \param expected The expected string in the output.
 /// \param result The result to format.
-#define OUTPUT_TEST(name, expected, result) \
-    ATF_TEST_CASE_WITHOUT_HEAD(name ## __output); \
-    ATF_TEST_CASE_BODY(name ## __output) \
-    { \
-        std::ostringstream output; \
-        output << "prefix" << result << "suffix"; \
+#define OUTPUT_TEST(name, expected, result)                         \
+    ATF_TEST_CASE_WITHOUT_HEAD(name##__output);                     \
+    ATF_TEST_CASE_BODY(name##__output)                              \
+    {                                                               \
+        std::ostringstream output;                                  \
+        output << "prefix" << result << "suffix";                   \
         ATF_REQUIRE_EQ("prefix" + std::string(expected) + "suffix", \
-                       output.str()); \
+                       output.str());                               \
     }
 
-
-GETTERS_TEST(
-    broken,
-    model::test_result_broken,
-    "The reason",
-    model::test_result(model::test_result_broken, "The reason"));
-GETTERS_TEST(
-    expected_failure,
-    model::test_result_expected_failure,
-    "The reason",
-    model::test_result(model::test_result_expected_failure, "The reason"));
-GETTERS_TEST(
-    failed,
-    model::test_result_failed,
-    "The reason",
-    model::test_result(model::test_result_failed, "The reason"));
-GETTERS_TEST(
-    passed,
-    model::test_result_passed,
-    "",
-    model::test_result(model::test_result_passed));
-GETTERS_TEST(
-    skipped,
-    model::test_result_skipped,
-    "The reason",
-    model::test_result(model::test_result_skipped, "The reason"));
-
+GETTERS_TEST(broken, model::test_result_broken, "The reason",
+             model::test_result(model::test_result_broken, "The reason"));
+GETTERS_TEST(expected_failure, model::test_result_expected_failure,
+             "The reason",
+             model::test_result(model::test_result_expected_failure,
+                                "The reason"));
+GETTERS_TEST(failed, model::test_result_failed, "The reason",
+             model::test_result(model::test_result_failed, "The reason"));
+GETTERS_TEST(passed, model::test_result_passed, "",
+             model::test_result(model::test_result_passed));
+GETTERS_TEST(skipped, model::test_result_skipped, "The reason",
+             model::test_result(model::test_result_skipped, "The reason"));
 
 GOOD_TEST(broken, false, model::test_result_broken);
 GOOD_TEST(expected_failure, true, model::test_result_expected_failure);
@@ -110,28 +91,19 @@ GOOD_TEST(failed, false, model::test_result_failed);
 GOOD_TEST(passed, true, model::test_result_passed);
 GOOD_TEST(skipped, true, model::test_result_skipped);
 
-
-OUTPUT_TEST(
-    broken,
-    "model::test_result{type='broken', reason='foo'}",
-    model::test_result(model::test_result_broken, "foo"));
-OUTPUT_TEST(
-    expected_failure,
-    "model::test_result{type='expected_failure', reason='abc def'}",
-    model::test_result(model::test_result_expected_failure, "abc def"));
-OUTPUT_TEST(
-    failed,
-    "model::test_result{type='failed', reason='some \\'string'}",
-    model::test_result(model::test_result_failed, "some 'string"));
-OUTPUT_TEST(
-    passed,
-    "model::test_result{type='passed'}",
-    model::test_result(model::test_result_passed, ""));
-OUTPUT_TEST(
-    skipped,
-    "model::test_result{type='skipped', reason='last message'}",
-    model::test_result(model::test_result_skipped, "last message"));
-
+OUTPUT_TEST(broken, "model::test_result{type='broken', reason='foo'}",
+            model::test_result(model::test_result_broken, "foo"));
+OUTPUT_TEST(expected_failure,
+            "model::test_result{type='expected_failure', reason='abc def'}",
+            model::test_result(model::test_result_expected_failure, "abc def"));
+OUTPUT_TEST(failed,
+            "model::test_result{type='failed', reason='some \\'string'}",
+            model::test_result(model::test_result_failed, "some 'string"));
+OUTPUT_TEST(passed, "model::test_result{type='passed'}",
+            model::test_result(model::test_result_passed, ""));
+OUTPUT_TEST(skipped,
+            "model::test_result{type='skipped', reason='last message'}",
+            model::test_result(model::test_result_skipped, "last message"));
 
 ATF_TEST_CASE_WITHOUT_HEAD(operator_eq);
 ATF_TEST_CASE_BODY(operator_eq)
@@ -141,12 +113,11 @@ ATF_TEST_CASE_BODY(operator_eq)
     const model::test_result result3(model::test_result_broken, "Bar");
     const model::test_result result4(model::test_result_failed, "Foo");
 
-    ATF_REQUIRE(  result1 == result1);
-    ATF_REQUIRE(  result1 == result2);
+    ATF_REQUIRE(result1 == result1);
+    ATF_REQUIRE(result1 == result2);
     ATF_REQUIRE(!(result1 == result3));
     ATF_REQUIRE(!(result1 == result4));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(operator_ne);
 ATF_TEST_CASE_BODY(operator_ne)
@@ -158,10 +129,9 @@ ATF_TEST_CASE_BODY(operator_ne)
 
     ATF_REQUIRE(!(result1 != result1));
     ATF_REQUIRE(!(result1 != result2));
-    ATF_REQUIRE(  result1 != result3);
-    ATF_REQUIRE(  result1 != result4);
+    ATF_REQUIRE(result1 != result3);
+    ATF_REQUIRE(result1 != result4);
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

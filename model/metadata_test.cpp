@@ -26,12 +26,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "model/metadata.hpp"
-
+#include <atf-c++.hpp>
 #include <sstream>
 
-#include <atf-c++.hpp>
-
+#include "model/metadata.hpp"
 #include "model/types.hpp"
 #include "utils/datetime.hpp"
 #include "utils/format/containers.ipp"
@@ -41,7 +39,6 @@
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace units = utils::units;
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(defaults);
 ATF_TEST_CASE_BODY(defaults)
@@ -63,7 +60,6 @@ ATF_TEST_CASE_BODY(defaults)
     ATF_REQUIRE(md.required_user().empty());
     ATF_REQUIRE(datetime::delta(300, 0) == md.timeout());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(add);
 ATF_TEST_CASE_BODY(add)
@@ -93,19 +89,19 @@ ATF_TEST_CASE_BODY(add)
     programs.insert(fs::path("2-program"));
 
     const model::metadata md = model::metadata_builder()
-        .add_allowed_architecture("1-architecture")
-        .add_allowed_platform("1-platform")
-        .add_custom("1-custom", "first")
-        .add_custom("2-custom", "second")
-        .add_required_config("1-config")
-        .add_required_file(fs::path("1-file"))
-        .add_required_program(fs::path("1-program"))
-        .add_allowed_architecture("2-architecture")
-        .add_allowed_platform("2-platform")
-        .add_required_config("2-config")
-        .add_required_file(fs::path("2-file"))
-        .add_required_program(fs::path("2-program"))
-        .build();
+                                   .add_allowed_architecture("1-architecture")
+                                   .add_allowed_platform("1-platform")
+                                   .add_custom("1-custom", "first")
+                                   .add_custom("2-custom", "second")
+                                   .add_required_config("1-config")
+                                   .add_required_file(fs::path("1-file"))
+                                   .add_required_program(fs::path("1-program"))
+                                   .add_allowed_architecture("2-architecture")
+                                   .add_allowed_platform("2-platform")
+                                   .add_required_config("2-config")
+                                   .add_required_file(fs::path("2-file"))
+                                   .add_required_program(fs::path("2-program"))
+                                   .build();
 
     ATF_REQUIRE(architectures == md.allowed_architectures());
     ATF_REQUIRE(platforms == md.allowed_platforms());
@@ -115,18 +111,17 @@ ATF_TEST_CASE_BODY(add)
     ATF_REQUIRE(programs == md.required_programs());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(copy);
 ATF_TEST_CASE_BODY(copy)
 {
     const model::metadata md1 = model::metadata_builder()
-        .add_allowed_architecture("1-architecture")
-        .add_allowed_platform("1-platform")
-        .build();
+                                    .add_allowed_architecture("1-architecture")
+                                    .add_allowed_platform("1-platform")
+                                    .build();
 
     const model::metadata md2 = model::metadata_builder(md1)
-        .add_allowed_architecture("2-architecture")
-        .build();
+                                    .add_allowed_architecture("2-architecture")
+                                    .build();
 
     ATF_REQUIRE_EQ(1, md1.allowed_architectures().size());
     ATF_REQUIRE_EQ(2, md2.allowed_architectures().size());
@@ -134,39 +129,39 @@ ATF_TEST_CASE_BODY(copy)
     ATF_REQUIRE_EQ(1, md2.allowed_platforms().size());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(apply_overrides);
 ATF_TEST_CASE_BODY(apply_overrides)
 {
     const model::metadata md1 = model::metadata_builder()
-        .add_allowed_architecture("1-architecture")
-        .add_allowed_platform("1-platform")
-        .set_description("Explicit description")
-        .build();
+                                    .add_allowed_architecture("1-architecture")
+                                    .add_allowed_platform("1-platform")
+                                    .set_description("Explicit description")
+                                    .build();
 
     const model::metadata md2 = model::metadata_builder()
-        .add_allowed_architecture("2-architecture")
-        .set_description("")
-        .set_timeout(datetime::delta(500, 0))
-        .build();
+                                    .add_allowed_architecture("2-architecture")
+                                    .set_description("")
+                                    .set_timeout(datetime::delta(500, 0))
+                                    .build();
 
-    const model::metadata merge_1_2 = model::metadata_builder()
-        .add_allowed_architecture("2-architecture")
-        .add_allowed_platform("1-platform")
-        .set_description("")
-        .set_timeout(datetime::delta(500, 0))
-        .build();
+    const model::metadata merge_1_2 =
+        model::metadata_builder()
+            .add_allowed_architecture("2-architecture")
+            .add_allowed_platform("1-platform")
+            .set_description("")
+            .set_timeout(datetime::delta(500, 0))
+            .build();
     ATF_REQUIRE_EQ(merge_1_2, md1.apply_overrides(md2));
 
-    const model::metadata merge_2_1 = model::metadata_builder()
-        .add_allowed_architecture("1-architecture")
-        .add_allowed_platform("1-platform")
-        .set_description("Explicit description")
-        .set_timeout(datetime::delta(500, 0))
-        .build();
+    const model::metadata merge_2_1 =
+        model::metadata_builder()
+            .add_allowed_architecture("1-architecture")
+            .add_allowed_platform("1-platform")
+            .set_description("Explicit description")
+            .set_timeout(datetime::delta(500, 0))
+            .build();
     ATF_REQUIRE_EQ(merge_2_1, md2.apply_overrides(md1));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(override_all_with_setters);
 ATF_TEST_CASE_BODY(override_all_with_setters)
@@ -201,20 +196,20 @@ ATF_TEST_CASE_BODY(override_all_with_setters)
     const datetime::delta timeout(123, 0);
 
     const model::metadata md = model::metadata_builder()
-        .set_allowed_architectures(architectures)
-        .set_allowed_platforms(platforms)
-        .set_custom(custom)
-        .set_description(description)
-        .set_has_cleanup(true)
-        .set_is_exclusive(true)
-        .set_required_configs(configs)
-        .set_required_disk_space(disk_space)
-        .set_required_files(files)
-        .set_required_memory(memory)
-        .set_required_programs(programs)
-        .set_required_user(user)
-        .set_timeout(timeout)
-        .build();
+                                   .set_allowed_architectures(architectures)
+                                   .set_allowed_platforms(platforms)
+                                   .set_custom(custom)
+                                   .set_description(description)
+                                   .set_has_cleanup(true)
+                                   .set_is_exclusive(true)
+                                   .set_required_configs(configs)
+                                   .set_required_disk_space(disk_space)
+                                   .set_required_files(files)
+                                   .set_required_memory(memory)
+                                   .set_required_programs(programs)
+                                   .set_required_user(user)
+                                   .set_timeout(timeout)
+                                   .build();
 
     ATF_REQUIRE(architectures == md.allowed_architectures());
     ATF_REQUIRE(platforms == md.allowed_platforms());
@@ -230,7 +225,6 @@ ATF_TEST_CASE_BODY(override_all_with_setters)
     ATF_REQUIRE_EQ(user, md.required_user());
     ATF_REQUIRE(timeout == md.timeout());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(override_all_with_set_string);
 ATF_TEST_CASE_BODY(override_all_with_set_string)
@@ -255,8 +249,8 @@ ATF_TEST_CASE_BODY(override_all_with_set_string)
     files.insert(fs::path("plain"));
     files.insert(fs::path("/absolute/path"));
 
-    const units::bytes disk_space(
-        static_cast< uint64_t >(16) * 1024 * 1024 * 1024);
+    const units::bytes disk_space(static_cast<uint64_t>(16) * 1024 * 1024 *
+                                  1024);
 
     const units::bytes memory(1024 * 1024);
 
@@ -268,21 +262,22 @@ ATF_TEST_CASE_BODY(override_all_with_set_string)
 
     const datetime::delta timeout(45, 0);
 
-    const model::metadata md = model::metadata_builder()
-        .set_string("allowed_architectures", "a1 a2")
-        .set_string("allowed_platforms", "p1 p2")
-        .set_string("custom.user-defined", "the-value")
-        .set_string("description", "Another long text")
-        .set_string("has_cleanup", "true")
-        .set_string("is_exclusive", "true")
-        .set_string("required_configs", "config-var")
-        .set_string("required_disk_space", "16G")
-        .set_string("required_files", "plain /absolute/path")
-        .set_string("required_memory", "1M")
-        .set_string("required_programs", "program /absolute/prog")
-        .set_string("required_user", "unprivileged")
-        .set_string("timeout", "45")
-        .build();
+    const model::metadata md =
+        model::metadata_builder()
+            .set_string("allowed_architectures", "a1 a2")
+            .set_string("allowed_platforms", "p1 p2")
+            .set_string("custom.user-defined", "the-value")
+            .set_string("description", "Another long text")
+            .set_string("has_cleanup", "true")
+            .set_string("is_exclusive", "true")
+            .set_string("required_configs", "config-var")
+            .set_string("required_disk_space", "16G")
+            .set_string("required_files", "plain /absolute/path")
+            .set_string("required_memory", "1M")
+            .set_string("required_programs", "program /absolute/prog")
+            .set_string("required_user", "unprivileged")
+            .set_string("timeout", "45")
+            .build();
 
     ATF_REQUIRE(architectures == md.allowed_architectures());
     ATF_REQUIRE(platforms == md.allowed_platforms());
@@ -299,17 +294,16 @@ ATF_TEST_CASE_BODY(override_all_with_set_string)
     ATF_REQUIRE(timeout == md.timeout());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(to_properties);
 ATF_TEST_CASE_BODY(to_properties)
 {
     const model::metadata md = model::metadata_builder()
-        .add_allowed_architecture("abc")
-        .add_required_file(fs::path("foo"))
-        .add_required_file(fs::path("bar"))
-        .set_required_memory(units::bytes(1024))
-        .add_custom("foo", "bar")
-        .build();
+                                   .add_allowed_architecture("abc")
+                                   .add_required_file(fs::path("foo"))
+                                   .add_required_file(fs::path("bar"))
+                                   .set_required_memory(units::bytes(1024))
+                                   .add_custom("foo", "bar")
+                                   .build();
 
     model::properties_map props;
     props["allowed_architectures"] = "abc";
@@ -331,78 +325,69 @@ ATF_TEST_CASE_BODY(to_properties)
     ATF_REQUIRE_EQ(props, md.to_properties());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(operators_eq_and_ne__empty);
 ATF_TEST_CASE_BODY(operators_eq_and_ne__empty)
 {
     const model::metadata md1 = model::metadata_builder().build();
     const model::metadata md2 = model::metadata_builder().build();
-    ATF_REQUIRE(  md1 == md2);
+    ATF_REQUIRE(md1 == md2);
     ATF_REQUIRE(!(md1 != md2));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(operators_eq_and_ne__copy);
 ATF_TEST_CASE_BODY(operators_eq_and_ne__copy)
 {
-    const model::metadata md1 = model::metadata_builder()
-        .add_custom("foo", "bar")
-        .build();
+    const model::metadata md1 =
+        model::metadata_builder().add_custom("foo", "bar").build();
     const model::metadata md2 = md1;
-    ATF_REQUIRE(  md1 == md2);
+    ATF_REQUIRE(md1 == md2);
     ATF_REQUIRE(!(md1 != md2));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(operators_eq_and_ne__equal);
 ATF_TEST_CASE_BODY(operators_eq_and_ne__equal)
 {
     const model::metadata md1 = model::metadata_builder()
-        .add_allowed_architecture("a")
-        .add_allowed_architecture("b")
-        .add_custom("foo", "bar")
-        .build();
+                                    .add_allowed_architecture("a")
+                                    .add_allowed_architecture("b")
+                                    .add_custom("foo", "bar")
+                                    .build();
     const model::metadata md2 = model::metadata_builder()
-        .add_allowed_architecture("b")
-        .add_allowed_architecture("a")
-        .add_custom("foo", "bar")
-        .build();
-    ATF_REQUIRE(  md1 == md2);
+                                    .add_allowed_architecture("b")
+                                    .add_allowed_architecture("a")
+                                    .add_custom("foo", "bar")
+                                    .build();
+    ATF_REQUIRE(md1 == md2);
     ATF_REQUIRE(!(md1 != md2));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(operators_eq_and_ne__equal_overriden_defaults);
 ATF_TEST_CASE_BODY(operators_eq_and_ne__equal_overriden_defaults)
 {
     const model::metadata defaults = model::metadata_builder().build();
 
-    const model::metadata md1 = model::metadata_builder()
-        .add_allowed_architecture("a")
-        .build();
+    const model::metadata md1 =
+        model::metadata_builder().add_allowed_architecture("a").build();
     const model::metadata md2 = model::metadata_builder()
-        .add_allowed_architecture("a")
-        .set_timeout(defaults.timeout())
-        .build();
-    ATF_REQUIRE(  md1 == md2);
+                                    .add_allowed_architecture("a")
+                                    .set_timeout(defaults.timeout())
+                                    .build();
+    ATF_REQUIRE(md1 == md2);
     ATF_REQUIRE(!(md1 != md2));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(operators_eq_and_ne__different);
 ATF_TEST_CASE_BODY(operators_eq_and_ne__different)
 {
-    const model::metadata md1 = model::metadata_builder()
-        .add_custom("foo", "bar")
-        .build();
+    const model::metadata md1 =
+        model::metadata_builder().add_custom("foo", "bar").build();
     const model::metadata md2 = model::metadata_builder()
-        .add_custom("foo", "bar")
-        .add_custom("baz", "foo bar")
-        .build();
+                                    .add_custom("foo", "bar")
+                                    .add_custom("baz", "foo bar")
+                                    .build();
     ATF_REQUIRE(!(md1 == md2));
-    ATF_REQUIRE(  md1 != md2);
+    ATF_REQUIRE(md1 != md2);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(output__defaults);
 ATF_TEST_CASE_BODY(output__defaults)
@@ -419,18 +404,17 @@ ATF_TEST_CASE_BODY(output__defaults)
                    str.str());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(output__some_values);
 ATF_TEST_CASE_BODY(output__some_values)
 {
     std::ostringstream str;
     str << model::metadata_builder()
-        .add_allowed_architecture("abc")
-        .add_required_file(fs::path("foo"))
-        .add_required_file(fs::path("bar"))
-        .set_is_exclusive(true)
-        .set_required_memory(units::bytes(1024))
-        .build();
+               .add_allowed_architecture("abc")
+               .add_required_file(fs::path("foo"))
+               .add_required_file(fs::path("bar"))
+               .set_is_exclusive(true)
+               .set_required_memory(units::bytes(1024))
+               .build();
     ATF_REQUIRE_EQ(
         "metadata{allowed_architectures='abc', allowed_platforms='', "
         "description='', execenv='', execenv_jail_params='', "
@@ -441,7 +425,6 @@ ATF_TEST_CASE_BODY(output__some_values)
         "required_programs='', required_user='', timeout='300'}",
         str.str());
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

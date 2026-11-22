@@ -27,7 +27,6 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "engine/execenv/execenv_host.hpp"
-
 #include "utils/fs/path.hpp"
 #include "utils/process/operations.hpp"
 
@@ -37,13 +36,11 @@ execenv::execenv_host::init() const
     // nothing to do
 }
 
-
 void
 execenv::execenv_host::cleanup() const
 {
     // nothing to do
 }
-
 
 void
 execenv::execenv_host::exec(const args_vector& args) const

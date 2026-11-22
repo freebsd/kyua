@@ -26,20 +26,16 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/format/formatter.hpp"
-
+#include <atf-c++.hpp>
 #include <ostream>
 
-#include <atf-c++.hpp>
-
 #include "utils/format/exceptions.hpp"
+#include "utils/format/formatter.hpp"
 #include "utils/format/macros.hpp"
 
 namespace format = utils::format;
 
-
 namespace {
-
 
 /// Wraps an integer in a C++ class.
 ///
@@ -60,13 +56,11 @@ public:
     /// Returns the wrapped value.
     ///
     /// \return An integer.
-    int
-    value(void) const
+    int value(void) const
     {
         return _value;
     }
 };
-
 
 /// Writes a wrapped integer into an output stream.
 ///
@@ -80,9 +74,7 @@ operator<<(std::ostream& output, const int_wrapper& wrapper)
     return (output << wrapper.value());
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Calls ATF_REQUIRE_EQ on an expected string and a formatter.
 ///
@@ -94,13 +86,11 @@ operator<<(std::ostream& output, const int_wrapper& wrapper)
 /// \param formatter The formatter to test.
 #define EQ(expected, formatter) ATF_REQUIRE_EQ(expected, (formatter).str())
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(no_fields);
 ATF_TEST_CASE_BODY(no_fields)
 {
     EQ("Plain string", F("Plain string"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(one_field);
 ATF_TEST_CASE_BODY(one_field)
@@ -113,7 +103,6 @@ ATF_TEST_CASE_BODY(one_field)
     EQ("foo %s %s", F("foo %s %s") % "%s" % "%s");
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(many_fields);
 ATF_TEST_CASE_BODY(many_fields)
 {
@@ -122,7 +111,6 @@ ATF_TEST_CASE_BODY(many_fields)
     EQ("some 5 text", F("%s %s %s") % "some" % 5 % "text");
     EQ("f%s 5 text", F("%s %s %s") % "f%s" % 5 % "text");
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(escape);
 ATF_TEST_CASE_BODY(escape)
@@ -141,7 +129,6 @@ ATF_TEST_CASE_BODY(escape)
 
     EQ("foo % bar %%", F("foo %% %s %%%%") % "bar");
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(extra_args_error);
 ATF_TEST_CASE_BODY(extra_args_error)
@@ -163,7 +150,6 @@ ATF_TEST_CASE_BODY(extra_args_error)
     }
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(format__class);
 ATF_TEST_CASE_BODY(format__class)
 {
@@ -171,14 +157,12 @@ ATF_TEST_CASE_BODY(format__class)
     EQ("3", F("%s") % int_wrapper(3));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(format__pointer);
 ATF_TEST_CASE_BODY(format__pointer)
 {
-    EQ("0xcafebabe", F("%s") % reinterpret_cast< void* >(0xcafebabe));
+    EQ("0xcafebabe", F("%s") % reinterpret_cast<void*>(0xcafebabe));
     EQ("foo bar", F("%s") % "foo bar");
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(format__bool);
 ATF_TEST_CASE_BODY(format__bool)
@@ -187,13 +171,11 @@ ATF_TEST_CASE_BODY(format__bool)
     EQ("false", F("%s") % false);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(format__char);
 ATF_TEST_CASE_BODY(format__char)
 {
     EQ("Z", F("%s") % 'Z');
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(format__float);
 ATF_TEST_CASE_BODY(format__float)
@@ -205,7 +187,6 @@ ATF_TEST_CASE_BODY(format__float)
     EQ("01.52", F("%05.2s") % 1.52);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(format__int);
 ATF_TEST_CASE_BODY(format__int)
 {
@@ -214,7 +195,6 @@ ATF_TEST_CASE_BODY(format__int)
     EQ(" -123", F("%5s") % -123);
     EQ("00078", F("%05s") % 78);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(format__error);
 ATF_TEST_CASE_BODY(format__error)
@@ -245,7 +225,6 @@ ATF_TEST_CASE_BODY(format__error)
         ATF_REQUIRE_EQ("foo %s%", e.format());
     }
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

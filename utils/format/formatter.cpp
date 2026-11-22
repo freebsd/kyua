@@ -26,13 +26,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/format/formatter.hpp"
-
 #include <memory>
 #include <string>
 #include <utility>
 
 #include "utils/format/exceptions.hpp"
+#include "utils/format/formatter.hpp"
 #include "utils/sanity.hpp"
 #include "utils/text/exceptions.hpp"
 #include "utils/text/operations.ipp"
@@ -40,9 +39,7 @@
 namespace format = utils::format;
 namespace text = utils::text;
 
-
 namespace {
-
 
 /// Finds the next placeholder in a string.
 ///
@@ -61,9 +58,8 @@ namespace {
 /// \throw bad_format_error If the input string contains a trailing formatting
 ///     character.  We cannot detect any other kind of invalid formatter because
 ///     we do not implement a full parser for them.
-static std::pair< std::string::size_type, std::string >
-find_next_placeholder(const std::string& format,
-                      const std::string& expansion,
+static std::pair<std::string::size_type, std::string>
+find_next_placeholder(const std::string& format, const std::string& expansion,
                       std::string::size_type begin)
 {
     begin = expansion.find('%', begin);
@@ -80,11 +76,11 @@ find_next_placeholder(const std::string& format,
     const std::string placeholder = expansion.substr(begin, end - begin + 1);
     if (end == expansion.length() ||
         placeholder.find('%', 1) != std::string::npos)
-        throw format::bad_format_error(format, "Unterminated placeholder '" +
-                                       placeholder + "'");
+        throw format::bad_format_error(format,
+                                       "Unterminated placeholder '" +
+                                           placeholder + "'");
     return std::make_pair(begin, placeholder);
 }
-
 
 /// Converts a string to an integer.
 ///
@@ -98,13 +94,13 @@ inline int
 to_int(const std::string& format, const std::string& str, const char* what)
 {
     try {
-        return text::to_type< int >(str);
+        return text::to_type<int>(str);
     } catch (const text::value_error& e) {
-        throw format::bad_format_error(format, "Invalid " + std::string(what) +
-                                       "specifier");
+        throw format::bad_format_error(format,
+                                       "Invalid " + std::string(what) +
+                                           "specifier");
     }
 }
-
 
 /// Constructs an std::ostringstream based on a formatting placeholder.
 ///
@@ -118,7 +114,7 @@ to_int(const std::string& format, const std::string& str, const char* what)
 static std::ostringstream*
 new_ostringstream(const std::string& format)
 {
-    std::unique_ptr< std::ostringstream > output(new std::ostringstream());
+    std::unique_ptr<std::ostringstream> output(new std::ostringstream());
 
     if (format.length() <= 2) {
         // If the format is empty, we create a new stream so that we don't have
@@ -149,7 +145,6 @@ new_ostringstream(const std::string& format)
     return output.release();
 }
 
-
 /// Replaces '%%' by '%' in a given string range.
 ///
 /// \param in The input string to be rewritten.
@@ -157,7 +152,7 @@ new_ostringstream(const std::string& format)
 /// \param end The position at which to end the replacement.
 ///
 /// \return The modified string and the amount of characters removed.
-static std::pair< std::string, int >
+static std::pair<std::string, int>
 strip_double_percent(const std::string& in, const std::string::size_type begin,
                      std::string::size_type end)
 {
@@ -174,9 +169,7 @@ strip_double_percent(const std::string& in, const std::string::size_type begin,
     return std::make_pair(in.substr(0, begin) + part + in.substr(end), removed);
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Performs internal initialization of the formatter.
 ///
@@ -185,9 +178,9 @@ strip_double_percent(const std::string& in, const std::string::size_type begin,
 void
 format::formatter::init(void)
 {
-    const std::pair< std::string::size_type, std::string > placeholder =
+    const std::pair<std::string::size_type, std::string> placeholder =
         find_next_placeholder(_format, _expansion, _last_pos);
-    const std::pair< std::string, int > no_percents =
+    const std::pair<std::string, int> no_percents =
         strip_double_percent(_expansion, _last_pos, placeholder.first);
 
     _oss = new_ostringstream(placeholder.second);
@@ -196,7 +189,6 @@ format::formatter::init(void)
     _placeholder_pos = placeholder.first - no_percents.second;
     _placeholder = placeholder.second;
 }
-
 
 /// Constructs a new formatter object (internal).
 ///
@@ -217,7 +209,6 @@ format::formatter::formatter(const std::string& format,
     init();
 }
 
-
 /// Constructs a new formatter object.
 ///
 /// \param format The format string.  The formatters in the string are not
@@ -232,12 +223,10 @@ format::formatter::formatter(const std::string& format) :
     init();
 }
 
-
 format::formatter::~formatter(void)
 {
     delete _oss;
 }
-
 
 /// Returns the formatted string.
 ///
@@ -248,7 +237,6 @@ format::formatter::str(void) const
     return _expansion;
 }
 
-
 /// Automatic conversion of formatter objects to strings.
 ///
 /// This is provided to allow painless injection of formatter objects into
@@ -257,7 +245,6 @@ format::formatter::operator const std::string&(void) const
 {
     return _expansion;
 }
-
 
 /// Specialization of operator% for booleans.
 ///
@@ -270,7 +257,6 @@ format::formatter::operator%(const bool& value) const
     (*_oss) << (value ? "true" : "false");
     return replace(_oss->str());
 }
-
 
 /// Replaces the first formatting placeholder with a value.
 ///
@@ -287,7 +273,7 @@ format::formatter::replace(const std::string& arg) const
     if (_placeholder_pos == _expansion.length())
         throw format::extra_args_error(_format, arg);
 
-    const std::string expansion = _expansion.substr(0, _placeholder_pos)
-        + arg + _expansion.substr(_placeholder_pos + _placeholder.length());
+    const std::string expansion = _expansion.substr(0, _placeholder_pos) + arg +
+        _expansion.substr(_placeholder_pos + _placeholder.length());
     return formatter(_format, expansion, _placeholder_pos + arg.length());
 }

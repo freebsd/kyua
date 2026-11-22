@@ -29,7 +29,7 @@
 #include "utils/cmdline/parser.hpp"
 
 #if defined(HAVE_CONFIG_H)
-#   include "config.h"
+#include "config.h"
 #endif
 
 extern "C" {
@@ -51,7 +51,6 @@ namespace cmdline = utils::cmdline;
 
 namespace {
 
-
 /// Auxiliary data to call getopt_long(3).
 struct getopt_data : utils::noncopyable {
     /// Plain-text representation of the short options.
@@ -61,12 +60,11 @@ struct getopt_data : utils::noncopyable {
     std::string short_options;
 
     /// Representation of the long options as expected by getopt_long(3).
-    std::vector< ::option > long_options;
+    std::vector<::option> long_options;
 
     /// Auto-generated identifiers to be able to parse long options.
-    std::map< int, const cmdline::base_option* > ids;
+    std::map<int, const cmdline::base_option*> ids;
 };
-
 
 /// Converts a cmdline::options_vector to a getopt_data.
 ///
@@ -116,7 +114,6 @@ options_to_getopt_data(const cmdline::options_vector& options,
     last_long_option.val = 0;
 }
 
-
 /// Converts an argc/argv pair to an args_vector.
 ///
 /// \param argc The value of argc as passed to main().
@@ -132,7 +129,6 @@ argv_to_vector(int argc, const char* const argv[])
         args.push_back(argv[i]);
     return args;
 }
-
 
 /// Creates a mutable version of argv.
 ///
@@ -151,7 +147,6 @@ make_mutable_argv(const int argc, const char* const* argv)
     return mutable_argv;
 }
 
-
 /// Releases the object returned by make_mutable_argv().
 ///
 /// \param argv A dynamically-allocated argv as returned by make_mutable_argv().
@@ -163,9 +158,8 @@ free_mutable_argv(char** argv)
         ::free(*ptr);
         ptr++;
     }
-    delete [] argv;
+    delete[] argv;
 }
-
 
 /// Finds the name of the offending option after a getopt_long error.
 ///
@@ -177,16 +171,16 @@ free_mutable_argv(char** argv)
 /// \return A fully-specified option name (i.e. an option name prefixed by
 ///     either '-' or '--').
 static std::string
-find_option_name(const getopt_data& data, const int getopt_optopt,
-                 char** argv, const int getopt_optind)
+find_option_name(const getopt_data& data, const int getopt_optopt, char** argv,
+                 const int getopt_optind)
 {
     PRE(getopt_optopt >= 0);
 
     if (getopt_optopt == 0) {
         return argv[getopt_optind - 1];
-    } else if (getopt_optopt < std::numeric_limits< char >::max()) {
+    } else if (getopt_optopt < std::numeric_limits<char>::max()) {
         INV(getopt_optopt > 0);
-        const char ch = static_cast< char >(getopt_optopt);
+        const char ch = static_cast<char>(getopt_optopt);
         return F("-%s") % ch;
     } else {
         for (const ::option* opt = data.long_options.data(); opt->name != NULL;
@@ -198,9 +192,7 @@ find_option_name(const getopt_data& data, const int getopt_optopt,
     }
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Constructs a new parsed_cmdline.
 ///
@@ -214,13 +206,12 @@ find_option_name(const getopt_data& data, const int getopt_optopt,
 ///     value is the empty string.
 /// \param arguments_ The list of non-option arguments in the command line.
 cmdline::parsed_cmdline::parsed_cmdline(
-    const std::map< std::string, std::vector< std::string > >& option_values_,
+    const std::map<std::string, std::vector<std::string>>& option_values_,
     const cmdline::args_vector& arguments_) :
     _option_values(option_values_),
     _arguments(arguments_)
 {
 }
-
 
 /// Checks if the given option has been given in the command line.
 ///
@@ -232,7 +223,6 @@ cmdline::parsed_cmdline::has_option(const std::string& name) const
 {
     return _option_values.find(name) != _option_values.end();
 }
-
 
 /// Gets the raw value of an option.
 ///
@@ -247,15 +237,14 @@ cmdline::parsed_cmdline::has_option(const std::string& name) const
 /// \param name The option to query.
 ///
 /// \return The value of the option as a plain string.
-const std::vector< std::string >&
+const std::vector<std::string>&
 cmdline::parsed_cmdline::get_option_raw(const std::string& name) const
 {
-    std::map< std::string, std::vector< std::string > >::const_iterator iter =
+    std::map<std::string, std::vector<std::string>>::const_iterator iter =
         _option_values.find(name);
     INV_MSG(iter != _option_values.end(), F("Undefined option --%s") % name);
     return (*iter).second;
 }
-
 
 /// Returns the non-option arguments found in the command line.
 ///
@@ -265,7 +254,6 @@ cmdline::parsed_cmdline::arguments(void) const
 {
     return _arguments;
 }
-
 
 /// Parses a command line.
 ///
@@ -284,13 +272,12 @@ cmdline::parse(const cmdline::args_vector& args,
 {
     PRE_MSG(args.size() >= 1, "No progname or command name found");
 
-    std::vector< const char* > argv(args.size() + 1);
+    std::vector<const char*> argv(args.size() + 1);
     for (args_vector::size_type i = 0; i < args.size(); i++)
         argv[i] = args[i].c_str();
     argv.back() = nullptr;
-    return parse(static_cast< int >(args.size()), argv.data(), options);
+    return parse(static_cast<int>(args.size()), argv.data(), options);
 }
-
 
 /// Parses a command line.
 ///
@@ -318,7 +305,7 @@ cmdline::parse(const int argc, const char* const* argv,
     getopt_data data;
     options_to_getopt_data(options, data);
 
-    std::map< std::string, std::vector< std::string > > option_values;
+    std::map<std::string, std::vector<std::string>> option_values;
 
     for (cmdline::options_vector::const_iterator iter = options.begin();
          iter != options.end(); iter++) {
@@ -343,17 +330,19 @@ cmdline::parse(const int argc, const char* const* argv,
         while ((ch = ::getopt_long(mutable_argc, mutable_argv,
                                    ("+:" + data.short_options).c_str(),
                                    data.long_options.data(), NULL)) != -1) {
-            if (ch == ':' ) {
-                const std::string name = find_option_name(
-                    data, ::optopt, mutable_argv, ::optind);
+            if (ch == ':') {
+                const std::string name = find_option_name(data, ::optopt,
+                                                          mutable_argv,
+                                                          ::optind);
                 throw cmdline::missing_option_argument_error(name);
             } else if (ch == '?') {
-                const std::string name = find_option_name(
-                    data, ::optopt, mutable_argv, ::optind);
+                const std::string name = find_option_name(data, ::optopt,
+                                                          mutable_argv,
+                                                          ::optind);
                 throw cmdline::unknown_option_error(name);
             }
 
-            const std::map< int, const cmdline::base_option* >::const_iterator
+            const std::map<int, const cmdline::base_option*>::const_iterator
                 id = data.ids.find(ch);
             INV(id != data.ids.end());
             const cmdline::base_option* option = (*id).second;

@@ -38,7 +38,6 @@
 
 namespace engine {
 
-
 /// Base exception for engine errors.
 class error : public std::runtime_error {
 public:
@@ -46,14 +45,12 @@ public:
     virtual ~error(void) throw();
 };
 
-
 /// Error while processing data.
 class format_error : public error {
 public:
     explicit format_error(const std::string&);
     virtual ~format_error(void) throw();
 };
-
 
 /// Error while parsing external data.
 class load_error : public error {
@@ -68,8 +65,6 @@ public:
     virtual ~load_error(void) throw();
 };
 
+} // namespace engine
 
-}  // namespace engine
-
-
-#endif  // !defined(ENGINE_EXCEPTIONS_HPP)
+#endif // !defined(ENGINE_EXCEPTIONS_HPP)

@@ -32,19 +32,16 @@
 #if !defined(UTILS_CONFIG_TREE_HPP)
 #define UTILS_CONFIG_TREE_HPP
 
-#include "utils/config/tree_fwd.hpp"
-
+#include <lutok/state.hpp>
 #include <memory>
 #include <string>
 
-#include <lutok/state.hpp>
-
 #include "utils/config/keys_fwd.hpp"
 #include "utils/config/nodes_fwd.hpp"
+#include "utils/config/tree_fwd.hpp"
 
 namespace utils {
 namespace config {
-
 
 /// Representation of a tree.
 ///
@@ -82,7 +79,7 @@ class tree {
     bool _strict;
 
     /// The root of the tree.
-    std::shared_ptr< detail::static_inner_node > _root;
+    std::shared_ptr<detail::static_inner_node> _root;
 
     tree(const bool, detail::static_inner_node*);
 
@@ -93,19 +90,18 @@ public:
     tree deep_copy(void) const;
     tree combine(const tree&) const;
 
-    template< class LeafType >
-    void define(const std::string&);
+    template <class LeafType> void define(const std::string&);
 
     void define_dynamic(const std::string&);
 
     bool is_set(const std::string&) const;
 
-    template< class LeafType >
+    template <class LeafType>
     const typename LeafType::value_type& lookup(const std::string&) const;
-    template< class LeafType >
+    template <class LeafType>
     typename LeafType::value_type& lookup_rw(const std::string&);
 
-    template< class LeafType >
+    template <class LeafType>
     void set(const std::string&, const typename LeafType::value_type&);
 
     void push_lua(const std::string&, lutok::state&) const;
@@ -121,8 +117,7 @@ public:
     bool operator!=(const tree&) const;
 };
 
+} // namespace config
+} // namespace utils
 
-}  // namespace config
-}  // namespace utils
-
-#endif  // !defined(UTILS_CONFIG_TREE_HPP)
+#endif // !defined(UTILS_CONFIG_TREE_HPP)

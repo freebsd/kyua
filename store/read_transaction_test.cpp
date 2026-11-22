@@ -26,12 +26,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "store/read_transaction.hpp"
-
+#include <atf-c++.hpp>
 #include <map>
 #include <string>
-
-#include <atf-c++.hpp>
 
 #include "model/context.hpp"
 #include "model/metadata.hpp"
@@ -39,6 +36,7 @@
 #include "model/test_result.hpp"
 #include "store/exceptions.hpp"
 #include "store/read_backend.hpp"
+#include "store/read_transaction.hpp"
 #include "store/write_backend.hpp"
 #include "store/write_transaction.hpp"
 #include "utils/datetime.hpp"
@@ -53,7 +51,6 @@ namespace fs = utils::fs;
 namespace logging = utils::logging;
 namespace sqlite = utils::sqlite;
 
-
 ATF_TEST_CASE(get_context__missing);
 ATF_TEST_CASE_HEAD(get_context__missing)
 {
@@ -62,14 +59,13 @@ ATF_TEST_CASE_HEAD(get_context__missing)
 }
 ATF_TEST_CASE_BODY(get_context__missing)
 {
-    store::write_backend::open_rw(fs::path("test.db"));  // Create database.
-    store::read_backend backend = store::read_backend::open_ro(
-        fs::path("test.db"));
+    store::write_backend::open_rw(fs::path("test.db")); // Create database.
+    store::read_backend backend =
+        store::read_backend::open_ro(fs::path("test.db"));
 
     store::read_transaction tx = backend.start_read();
     ATF_REQUIRE_THROW_RE(store::error, "context: no data", tx.get_context());
 }
-
 
 ATF_TEST_CASE(get_context__invalid_cwd);
 ATF_TEST_CASE_HEAD(get_context__invalid_cwd)
@@ -80,8 +76,8 @@ ATF_TEST_CASE_HEAD(get_context__invalid_cwd)
 ATF_TEST_CASE_BODY(get_context__invalid_cwd)
 {
     {
-        store::write_backend backend = store::write_backend::open_rw(
-            fs::path("test.db"));
+        store::write_backend backend =
+            store::write_backend::open_rw(fs::path("test.db"));
 
         sqlite::statement stmt = backend.database().create_statement(
             "INSERT INTO contexts (cwd) VALUES (:cwd)");
@@ -90,13 +86,12 @@ ATF_TEST_CASE_BODY(get_context__invalid_cwd)
         stmt.step_without_results();
     }
 
-    store::read_backend backend = store::read_backend::open_ro(
-        fs::path("test.db"));
+    store::read_backend backend =
+        store::read_backend::open_ro(fs::path("test.db"));
     store::read_transaction tx = backend.start_read();
     ATF_REQUIRE_THROW_RE(store::error, "context: .*cwd.*not a string",
                          tx.get_context());
 }
-
 
 ATF_TEST_CASE(get_context__invalid_env_vars);
 ATF_TEST_CASE_HEAD(get_context__invalid_env_vars)
@@ -107,8 +102,8 @@ ATF_TEST_CASE_HEAD(get_context__invalid_env_vars)
 ATF_TEST_CASE_BODY(get_context__invalid_env_vars)
 {
     {
-        store::write_backend backend = store::write_backend::open_rw(
-            fs::path("test-bad-name.db"));
+        store::write_backend backend =
+            store::write_backend::open_rw(fs::path("test-bad-name.db"));
         backend.database().exec("INSERT INTO contexts (cwd) "
                                 "VALUES ('/foo/bar')");
         const char buffer[10] = "foo bar";
@@ -120,16 +115,16 @@ ATF_TEST_CASE_BODY(get_context__invalid_env_vars)
         stmt.step_without_results();
     }
     {
-        store::read_backend backend = store::read_backend::open_ro(
-            fs::path("test-bad-name.db"));
+        store::read_backend backend =
+            store::read_backend::open_ro(fs::path("test-bad-name.db"));
         store::read_transaction tx = backend.start_read();
         ATF_REQUIRE_THROW_RE(store::error, "context: .*var_name.*not a string",
                              tx.get_context());
     }
 
     {
-        store::write_backend backend = store::write_backend::open_rw(
-            fs::path("test-bad-value.db"));
+        store::write_backend backend =
+            store::write_backend::open_rw(fs::path("test-bad-value.db"));
         backend.database().exec("INSERT INTO contexts (cwd) "
                                 "VALUES ('/foo/bar')");
         const char buffer[10] = "foo bar";
@@ -141,14 +136,13 @@ ATF_TEST_CASE_BODY(get_context__invalid_env_vars)
         stmt.step_without_results();
     }
     {
-        store::read_backend backend = store::read_backend::open_ro(
-            fs::path("test-bad-value.db"));
+        store::read_backend backend =
+            store::read_backend::open_ro(fs::path("test-bad-value.db"));
         store::read_transaction tx = backend.start_read();
         ATF_REQUIRE_THROW_RE(store::error, "context: .*var_value.*not a string",
                              tx.get_context());
     }
 }
-
 
 ATF_TEST_CASE(get_results__none);
 ATF_TEST_CASE_HEAD(get_results__none)
@@ -158,14 +152,13 @@ ATF_TEST_CASE_HEAD(get_results__none)
 }
 ATF_TEST_CASE_BODY(get_results__none)
 {
-    store::write_backend::open_rw(fs::path("test.db"));  // Create database.
-    store::read_backend backend = store::read_backend::open_ro(
-        fs::path("test.db"));
+    store::write_backend::open_rw(fs::path("test.db")); // Create database.
+    store::read_backend backend =
+        store::read_backend::open_ro(fs::path("test.db"));
     store::read_transaction tx = backend.start_read();
     store::results_iterator iter = tx.get_results();
     ATF_REQUIRE(!iter);
 }
-
 
 ATF_TEST_CASE(get_results__many);
 ATF_TEST_CASE_HEAD(get_results__many)
@@ -175,30 +168,31 @@ ATF_TEST_CASE_HEAD(get_results__many)
 }
 ATF_TEST_CASE_BODY(get_results__many)
 {
-    store::write_backend backend = store::write_backend::open_rw(
-        fs::path("test.db"));
+    store::write_backend backend =
+        store::write_backend::open_rw(fs::path("test.db"));
 
     store::write_transaction tx = backend.start_write();
 
     const model::context context(fs::path("/foo/bar"),
-                                 std::map< std::string, std::string >());
+                                 std::map<std::string, std::string>());
     tx.put_context(context);
 
-    const datetime::timestamp start_time1 = datetime::timestamp::from_values(
-        2012, 01, 30, 22, 10, 00, 0);
-    const datetime::timestamp end_time1 = datetime::timestamp::from_values(
-        2012, 01, 30, 22, 15, 30, 1234);
-    const datetime::timestamp start_time2 = datetime::timestamp::from_values(
-        2012, 01, 30, 22, 15, 40, 987);
-    const datetime::timestamp end_time2 = datetime::timestamp::from_values(
-        2012, 01, 30, 22, 16, 0, 0);
+    const datetime::timestamp start_time1 =
+        datetime::timestamp::from_values(2012, 01, 30, 22, 10, 00, 0);
+    const datetime::timestamp end_time1 =
+        datetime::timestamp::from_values(2012, 01, 30, 22, 15, 30, 1234);
+    const datetime::timestamp start_time2 =
+        datetime::timestamp::from_values(2012, 01, 30, 22, 15, 40, 987);
+    const datetime::timestamp end_time2 =
+        datetime::timestamp::from_values(2012, 01, 30, 22, 16, 0, 0);
 
     atf::utils::create_file("unused.txt", "unused file\n");
 
-    const model::test_program test_program_1 = model::test_program_builder(
-        "plain", fs::path("a/prog1"), fs::path("/the/root"), "suite1")
-        .add_test_case("main")
-        .build();
+    const model::test_program test_program_1 =
+        model::test_program_builder("plain", fs::path("a/prog1"),
+                                    fs::path("/the/root"), "suite1")
+            .add_test_case("main")
+            .build();
     const model::test_result result_1(model::test_result_passed);
     {
         const int64_t tp_id = tx.put_test_program(test_program_1);
@@ -209,12 +203,12 @@ ATF_TEST_CASE_BODY(get_results__many)
         tx.put_result(result_1, tc_id, start_time1, end_time1);
     }
 
-    const model::test_program test_program_2 = model::test_program_builder(
-        "plain", fs::path("b/prog2"), fs::path("/the/root"), "suite2")
-        .add_test_case("main")
-        .build();
-    const model::test_result result_2(model::test_result_failed,
-                                      "Some text");
+    const model::test_program test_program_2 =
+        model::test_program_builder("plain", fs::path("b/prog2"),
+                                    fs::path("/the/root"), "suite2")
+            .add_test_case("main")
+            .build();
+    const model::test_result result_2(model::test_result_failed, "Some text");
     {
         const int64_t tp_id = tx.put_test_program(test_program_2);
         const int64_t tc_id = tx.put_test_case(test_program_2, "main", tp_id);
@@ -227,8 +221,8 @@ ATF_TEST_CASE_BODY(get_results__many)
     tx.commit();
     backend.close();
 
-    store::read_backend backend2 = store::read_backend::open_ro(
-        fs::path("test.db"));
+    store::read_backend backend2 =
+        store::read_backend::open_ro(fs::path("test.db"));
     store::read_transaction tx2 = backend2.start_read();
     store::results_iterator iter = tx2.get_results();
     ATF_REQUIRE(iter);
@@ -249,7 +243,6 @@ ATF_TEST_CASE_BODY(get_results__many)
     ATF_REQUIRE_EQ(end_time2, iter.end_time());
     ATF_REQUIRE(!++iter);
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

@@ -27,36 +27,30 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "engine/execenv/execenv.hpp"
-
 #include "engine/execenv/execenv_host.hpp"
 
 namespace execenv = engine::execenv;
 
 using utils::none;
 
-
 /// List of registered execution environments, except default host one.
 ///
 /// Use register_execenv() to add an entry to this global list.
-static std::vector< std::shared_ptr< execenv::manager > >
-    execenv_managers;
-
+static std::vector<std::shared_ptr<execenv::manager>> execenv_managers;
 
 void
-execenv::register_execenv(const std::shared_ptr< execenv::manager > manager)
+execenv::register_execenv(const std::shared_ptr<execenv::manager> manager)
 {
     execenv_managers.push_back(manager);
 }
 
-
-const std::vector< std::shared_ptr< execenv::manager> >
+const std::vector<std::shared_ptr<execenv::manager>>
 execenv::execenvs()
 {
     return execenv_managers;
 }
 
-
-std::unique_ptr< execenv::interface >
+std::unique_ptr<execenv::interface>
 execenv::get(const model::test_program& test_program,
              const std::string& test_case_name)
 {
@@ -66,6 +60,6 @@ execenv::get(const model::test_program& test_program,
             return e;
     }
 
-    return std::unique_ptr< execenv::interface >(
+    return std::unique_ptr<execenv::interface>(
         new execenv::execenv_host(test_program, test_case_name));
 }

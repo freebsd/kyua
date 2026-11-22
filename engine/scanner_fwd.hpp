@@ -39,7 +39,6 @@
 
 namespace engine {
 
-
 /// Result type yielded by the scanner: a (test program, test case name) pair.
 ///
 /// We must use model::test_program_ptr here instead of model::test_program
@@ -48,12 +47,10 @@ namespace engine {
 /// model::lazy_test_program, we must keep access to the loaded list of test
 /// cases (which, for obscure reasons, is kept in the subclass).
 /// TODO(jmmv): This is ugly, very ugly.  There has to be a better way.
-typedef std::pair< model::test_program_ptr, std::string > scan_result;
-
+typedef std::pair<model::test_program_ptr, std::string> scan_result;
 
 class scanner;
 
+} // namespace engine
 
-}  // namespace engine
-
-#endif  // !defined(ENGINE_SCANNER_FWD_HPP)
+#endif // !defined(ENGINE_SCANNER_FWD_HPP)

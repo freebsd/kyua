@@ -34,19 +34,14 @@
 
 namespace store {
 
-
 namespace detail {
-
 
 extern int current_schema_version;
 
-
-}  // namespace detail
-
+} // namespace detail
 
 class write_backend;
 
+} // namespace store
 
-}  // namespace store
-
-#endif  // !defined(STORE_WRITE_BACKEND_FWD_HPP)
+#endif // !defined(STORE_WRITE_BACKEND_FWD_HPP)

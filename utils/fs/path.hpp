@@ -36,14 +36,13 @@
 #if !defined(UTILS_FS_PATH_HPP)
 #define UTILS_FS_PATH_HPP
 
-#include "utils/fs/path_fwd.hpp"
-
-#include <string>
 #include <ostream>
+#include <string>
+
+#include "utils/fs/path_fwd.hpp"
 
 namespace utils {
 namespace fs {
-
 
 /// Representation and manipulation of a file system path.
 ///
@@ -77,11 +76,9 @@ public:
     path operator/(const path&) const;
 };
 
-
 std::ostream& operator<<(std::ostream&, const path&);
 
+} // namespace fs
+} // namespace utils
 
-}  // namespace fs
-}  // namespace utils
-
-#endif  // !defined(UTILS_FS_PATH_HPP)
+#endif // !defined(UTILS_FS_PATH_HPP)

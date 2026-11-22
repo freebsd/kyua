@@ -38,33 +38,27 @@
 namespace utils {
 namespace config {
 
-
 /// Flat representation of all properties as strings.
-typedef std::map< std::string, std::string > properties_map;
-
+typedef std::map<std::string, std::string> properties_map;
 
 namespace detail {
-
 
 class base_node;
 class static_inner_node;
 
-
-}  // namespace detail
-
+} // namespace detail
 
 class leaf_node;
-template< typename > class typed_leaf_node;
-template< typename > class native_leaf_node;
+template <typename> class typed_leaf_node;
+template <typename> class native_leaf_node;
 class bool_node;
 class int_node;
 class positive_int_node;
 class string_node;
-template< typename > class base_set_node;
+template <typename> class base_set_node;
 class strings_set_node;
 
+} // namespace config
+} // namespace utils
 
-}  // namespace config
-}  // namespace utils
-
-#endif  // !defined(UTILS_CONFIG_NODES_FWD_HPP)
+#endif // !defined(UTILS_CONFIG_NODES_FWD_HPP)

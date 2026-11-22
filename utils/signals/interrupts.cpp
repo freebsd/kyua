@@ -48,41 +48,32 @@ extern "C" {
 namespace signals = utils::signals;
 namespace process = utils::process;
 
-
 namespace {
-
 
 /// The interrupt signal that fired, or -1 if none.
 static volatile int fired_signal = -1;
 
-
 /// Collection of PIDs.
-typedef std::set< pid_t > pids_set;
-
+typedef std::set<pid_t> pids_set;
 
 /// List of processes to kill upon reception of a signal.
 static pids_set pids_to_kill;
 
-
 /// Programmer status for the SIGHUP signal.
-static std::unique_ptr< signals::programmer > sighup_handler;
+static std::unique_ptr<signals::programmer> sighup_handler;
 /// Programmer status for the SIGINT signal.
-static std::unique_ptr< signals::programmer > sigint_handler;
+static std::unique_ptr<signals::programmer> sigint_handler;
 /// Programmer status for the SIGTERM signal.
-static std::unique_ptr< signals::programmer > sigterm_handler;
-
+static std::unique_ptr<signals::programmer> sigterm_handler;
 
 /// Signal mask to restore after exiting a signal inhibited section.
 static sigset_t global_old_sigmask;
 
-
 /// Whether there is an interrupts_handler object in existence or not.
 static bool interrupts_handler_active = false;
 
-
 /// Whether there is an interrupts_inhibiter object in existence or not.
 static std::size_t interrupts_inhibiter_active = 0;
-
 
 /// Generic handler to capture interrupt signals.
 ///
@@ -97,7 +88,7 @@ static void
 signal_handler(const int signo)
 {
     static const char* message = "[-- Signal caught; please wait for "
-        "cleanup --]\n";
+                                 "cleanup --]\n";
     if (::write(STDERR_FILENO, message, std::strlen(message)) == -1) {
         // We are exiting: the message printed here is only for informational
         // purposes.  If we fail to print it (which probably means something
@@ -108,11 +99,10 @@ signal_handler(const int signo)
     fired_signal = signo;
 
     for (pids_set::const_iterator iter = pids_to_kill.begin();
-        iter != pids_to_kill.end(); ++iter) {
+         iter != pids_to_kill.end(); ++iter) {
         process::terminate_group(*iter);
     }
 }
-
 
 /// Installs signal handlers for potential interrupts.
 ///
@@ -127,11 +117,11 @@ setup_handlers(void)
 
     // Create the handlers on the stack first so that, if any of them fails, the
     // stack unwinding cleans things up.
-    std::unique_ptr< signals::programmer > tmp_sighup_handler(
+    std::unique_ptr<signals::programmer> tmp_sighup_handler(
         new signals::programmer(SIGHUP, signal_handler));
-    std::unique_ptr< signals::programmer > tmp_sigint_handler(
+    std::unique_ptr<signals::programmer> tmp_sigint_handler(
         new signals::programmer(SIGINT, signal_handler));
-    std::unique_ptr< signals::programmer > tmp_sigterm_handler(
+    std::unique_ptr<signals::programmer> tmp_sigterm_handler(
         new signals::programmer(SIGTERM, signal_handler));
 
     // Now, update the global pointers, which is an operation that cannot fail.
@@ -140,17 +130,17 @@ setup_handlers(void)
     sigterm_handler = std::move(tmp_sigterm_handler);
 }
 
-
 /// Uninstalls the signal handlers installed by setup_handlers().
 static void
 cleanup_handlers(void)
 {
-    sighup_handler->unprogram(); sighup_handler.reset();
-    sigint_handler->unprogram(); sigint_handler.reset();
-    sigterm_handler->unprogram(); sigterm_handler.reset();
+    sighup_handler->unprogram();
+    sighup_handler.reset();
+    sigint_handler->unprogram();
+    sigint_handler.reset();
+    sigterm_handler->unprogram();
+    sigterm_handler.reset();
 }
-
-
 
 /// Masks the signals installed by setup_handlers().
 ///
@@ -169,7 +159,6 @@ mask_signals(sigset_t* old_sigmask)
     INV(ret != -1);
 }
 
-
 /// Resets the signal masking put in place by mask_signals().
 ///
 /// \param[in] old_sigmask The old signal mask to restore via the
@@ -181,20 +170,16 @@ unmask_signals(sigset_t* old_sigmask)
     INV(ret != -1);
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Constructor that sets up the signal handlers.
-signals::interrupts_handler::interrupts_handler(void) :
-    _programmed(false)
+signals::interrupts_handler::interrupts_handler(void) : _programmed(false)
 {
     PRE(!interrupts_handler_active);
     setup_handlers();
     _programmed = true;
     interrupts_handler_active = true;
 }
-
 
 /// Destructor that removes the signal handlers.
 ///
@@ -211,7 +196,6 @@ signals::interrupts_handler::~interrupts_handler(void)
         }
     }
 }
-
 
 /// Unprograms all signals captured by the interrupts handler.
 ///
@@ -231,7 +215,6 @@ signals::interrupts_handler::unprogram(void)
     fired_signal = -1;
 }
 
-
 /// Constructor that sets up signal masking.
 signals::interrupts_inhibiter::interrupts_inhibiter(void)
 {
@@ -243,7 +226,6 @@ signals::interrupts_inhibiter::interrupts_inhibiter(void)
     ++interrupts_inhibiter_active;
 }
 
-
 /// Destructor that removes signal masking.
 signals::interrupts_inhibiter::~interrupts_inhibiter(void)
 {
@@ -254,7 +236,6 @@ signals::interrupts_inhibiter::~interrupts_inhibiter(void)
         unmask_signals(&global_old_sigmask);
     }
 }
-
 
 /// Checks if an interrupt has fired.
 ///
@@ -276,7 +257,6 @@ signals::check_interrupt(void)
     }
 }
 
-
 /// Registers a child process to be killed upon reception of an interrupt.
 ///
 /// \pre Must be called with interrupts being inhibited.  The caller must ensure
@@ -290,7 +270,6 @@ signals::add_pid_to_kill(const pid_t pid)
     PRE(pids_to_kill.find(pid) == pids_to_kill.end());
     pids_to_kill.insert(pid);
 }
-
 
 /// Unregisters a child process previously registered via add_pid_to_kill().
 ///

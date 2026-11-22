@@ -26,9 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <map>
-
 #include <atf-c++.hpp>
+#include <map>
 
 #include "model/context.hpp"
 #include "model/metadata.hpp"
@@ -53,9 +52,7 @@ namespace logging = utils::logging;
 namespace sqlite = utils::sqlite;
 namespace units = utils::units;
 
-
 namespace {
-
 
 /// Gets a data file from the tests directory.
 ///
@@ -75,7 +72,6 @@ testdata_file(const std::string& name)
     return testdatadir / name;
 }
 
-
 /// Validates the contents of the action with identifier 1.
 ///
 /// \param dbpath Path to the database in which to check the action contents.
@@ -86,7 +82,7 @@ check_action_1(const fs::path& dbpath)
     store::read_transaction transaction = backend.start_read();
 
     const fs::path root("/some/root");
-    std::map< std::string, std::string > environment;
+    std::map<std::string, std::string> environment;
     const model::context context(root, environment);
 
     ATF_REQUIRE_EQ(context, transaction.get_context());
@@ -94,7 +90,6 @@ check_action_1(const fs::path& dbpath)
     store::results_iterator iter = transaction.get_results();
     ATF_REQUIRE(!iter);
 }
-
 
 /// Validates the contents of the action with identifier 2.
 ///
@@ -106,55 +101,57 @@ check_action_2(const fs::path& dbpath)
     store::read_transaction transaction = backend.start_read();
 
     const fs::path root("/test/suite/root");
-    std::map< std::string, std::string > environment;
+    std::map<std::string, std::string> environment;
     environment["HOME"] = "/home/test";
     environment["PATH"] = "/bin:/usr/bin";
     const model::context context(root, environment);
 
     ATF_REQUIRE_EQ(context, transaction.get_context());
 
-    const model::test_program test_program_1 = model::test_program_builder(
-        "plain", fs::path("foo_test"), fs::path("/test/suite/root"),
-        "suite-name")
-        .add_test_case("main")
-        .build();
+    const model::test_program test_program_1 =
+        model::test_program_builder("plain", fs::path("foo_test"),
+                                    fs::path("/test/suite/root"), "suite-name")
+            .add_test_case("main")
+            .build();
     const model::test_result result_1(model::test_result_passed);
 
-    const model::test_program test_program_2 = model::test_program_builder(
-        "plain", fs::path("subdir/another_test"), fs::path("/test/suite/root"),
-        "subsuite-name")
-        .add_test_case("main",
-                       model::metadata_builder()
-                       .set_timeout(datetime::delta(10, 0))
-                       .build())
-        .set_metadata(model::metadata_builder()
-                      .set_timeout(datetime::delta(10, 0))
-                      .build())
-        .build();
+    const model::test_program test_program_2 =
+        model::test_program_builder("plain", fs::path("subdir/another_test"),
+                                    fs::path("/test/suite/root"),
+                                    "subsuite-name")
+            .add_test_case("main",
+                           model::metadata_builder()
+                               .set_timeout(datetime::delta(10, 0))
+                               .build())
+            .set_metadata(model::metadata_builder()
+                              .set_timeout(datetime::delta(10, 0))
+                              .build())
+            .build();
     const model::test_result result_2(model::test_result_failed,
                                       "Exited with code 1");
 
-    const model::test_program test_program_3 = model::test_program_builder(
-        "plain", fs::path("subdir/bar_test"), fs::path("/test/suite/root"),
-        "subsuite-name")
-        .add_test_case("main")
-        .build();
+    const model::test_program test_program_3 =
+        model::test_program_builder("plain", fs::path("subdir/bar_test"),
+                                    fs::path("/test/suite/root"),
+                                    "subsuite-name")
+            .add_test_case("main")
+            .build();
     const model::test_result result_3(model::test_result_broken,
                                       "Received signal 1");
 
-    const model::test_program test_program_4 = model::test_program_builder(
-        "plain", fs::path("top_test"), fs::path("/test/suite/root"),
-        "suite-name")
-        .add_test_case("main")
-        .build();
+    const model::test_program test_program_4 =
+        model::test_program_builder("plain", fs::path("top_test"),
+                                    fs::path("/test/suite/root"), "suite-name")
+            .add_test_case("main")
+            .build();
     const model::test_result result_4(model::test_result_expected_failure,
                                       "Known bug");
 
-    const model::test_program test_program_5 = model::test_program_builder(
-        "plain", fs::path("last_test"), fs::path("/test/suite/root"),
-        "suite-name")
-        .add_test_case("main")
-        .build();
+    const model::test_program test_program_5 =
+        model::test_program_builder("plain", fs::path("last_test"),
+                                    fs::path("/test/suite/root"), "suite-name")
+            .add_test_case("main")
+            .build();
     const model::test_result result_5(model::test_result_skipped,
                                       "Does not apply");
 
@@ -212,7 +209,6 @@ check_action_2(const fs::path& dbpath)
     ATF_REQUIRE(!iter);
 }
 
-
 /// Validates the contents of the action with identifier 3.
 ///
 /// \param dbpath Path to the database in which to check the action contents.
@@ -223,58 +219,57 @@ check_action_3(const fs::path& dbpath)
     store::read_transaction transaction = backend.start_read();
 
     const fs::path root("/usr/tests");
-    std::map< std::string, std::string > environment;
+    std::map<std::string, std::string> environment;
     environment["PATH"] = "/bin:/usr/bin";
     const model::context context(root, environment);
 
     ATF_REQUIRE_EQ(context, transaction.get_context());
 
-    const model::test_program test_program_6 = model::test_program_builder(
-        "atf", fs::path("complex_test"), fs::path("/usr/tests"),
-        "suite-name")
-        .add_test_case("this_passes")
-        .add_test_case("this_fails",
-                       model::metadata_builder()
-                       .set_description("Test description")
-                       .set_has_cleanup(true)
-                       .set_required_memory(units::bytes(128))
-                       .set_required_user("root")
-                       .build())
-        .add_test_case("this_skips",
-                       model::metadata_builder()
-                       .add_allowed_architecture("powerpc")
-                       .add_allowed_architecture("x86_64")
-                       .add_allowed_platform("amd64")
-                       .add_allowed_platform("macppc")
-                       .add_required_config("X-foo")
-                       .add_required_config("unprivileged_user")
-                       .add_required_file(fs::path("/the/data/file"))
-                       .add_required_program(fs::path("/bin/ls"))
-                       .add_required_program(fs::path("cp"))
-                       .set_description("Test explanation")
-                       .set_has_cleanup(true)
-                       .set_required_memory(units::bytes(512))
-                       .set_required_user("unprivileged")
-                       .set_timeout(datetime::delta(600, 0))
-                       .build())
-        .build();
+    const model::test_program test_program_6 =
+        model::test_program_builder("atf", fs::path("complex_test"),
+                                    fs::path("/usr/tests"), "suite-name")
+            .add_test_case("this_passes")
+            .add_test_case("this_fails",
+                           model::metadata_builder()
+                               .set_description("Test description")
+                               .set_has_cleanup(true)
+                               .set_required_memory(units::bytes(128))
+                               .set_required_user("root")
+                               .build())
+            .add_test_case("this_skips",
+                           model::metadata_builder()
+                               .add_allowed_architecture("powerpc")
+                               .add_allowed_architecture("x86_64")
+                               .add_allowed_platform("amd64")
+                               .add_allowed_platform("macppc")
+                               .add_required_config("X-foo")
+                               .add_required_config("unprivileged_user")
+                               .add_required_file(fs::path("/the/data/file"))
+                               .add_required_program(fs::path("/bin/ls"))
+                               .add_required_program(fs::path("cp"))
+                               .set_description("Test explanation")
+                               .set_has_cleanup(true)
+                               .set_required_memory(units::bytes(512))
+                               .set_required_user("unprivileged")
+                               .set_timeout(datetime::delta(600, 0))
+                               .build())
+            .build();
     const model::test_result result_6(model::test_result_passed);
-    const model::test_result result_7(model::test_result_failed,
-                                      "Some reason");
+    const model::test_result result_7(model::test_result_failed, "Some reason");
     const model::test_result result_8(model::test_result_skipped,
                                       "Another reason");
 
-    const model::test_program test_program_7 = model::test_program_builder(
-        "atf", fs::path("simple_test"), fs::path("/usr/tests"),
-        "subsuite-name")
-        .add_test_case("main",
-                       model::metadata_builder()
-                       .set_description("More text")
-                       .set_has_cleanup(true)
-                       .set_required_memory(units::bytes(128))
-                       .set_required_user("unprivileged")
-                       .build())
-        .build();
+    const model::test_program test_program_7 =
+        model::test_program_builder("atf", fs::path("simple_test"),
+                                    fs::path("/usr/tests"), "subsuite-name")
+            .add_test_case("main",
+                           model::metadata_builder()
+                               .set_description("More text")
+                               .set_has_cleanup(true)
+                               .set_required_memory(units::bytes(128))
+                               .set_required_user("unprivileged")
+                               .build())
+            .build();
     const model::test_result result_9(model::test_result_failed,
                                       "Exited with code 1");
 
@@ -322,7 +317,6 @@ check_action_3(const fs::path& dbpath)
     ATF_REQUIRE(!iter);
 }
 
-
 /// Validates the contents of the action with identifier 4.
 ///
 /// \param dbpath Path to the database in which to check the action contents.
@@ -333,7 +327,7 @@ check_action_4(const fs::path& dbpath)
     store::read_transaction transaction = backend.start_read();
 
     const fs::path root("/usr/tests");
-    std::map< std::string, std::string > environment;
+    std::map<std::string, std::string> environment;
     environment["LANG"] = "C";
     environment["PATH"] = "/bin:/usr/bin";
     environment["TERM"] = "xterm";
@@ -341,30 +335,30 @@ check_action_4(const fs::path& dbpath)
 
     ATF_REQUIRE_EQ(context, transaction.get_context());
 
-    const model::test_program test_program_8 = model::test_program_builder(
-        "plain", fs::path("subdir/another_test"), fs::path("/usr/tests"),
-        "subsuite-name")
-        .add_test_case("main",
-                       model::metadata_builder()
-                       .set_timeout(datetime::delta(10, 0))
-                       .build())
-        .set_metadata(model::metadata_builder()
-                      .set_timeout(datetime::delta(10, 0))
-                      .build())
-        .build();
+    const model::test_program test_program_8 =
+        model::test_program_builder("plain", fs::path("subdir/another_test"),
+                                    fs::path("/usr/tests"), "subsuite-name")
+            .add_test_case("main",
+                           model::metadata_builder()
+                               .set_timeout(datetime::delta(10, 0))
+                               .build())
+            .set_metadata(model::metadata_builder()
+                              .set_timeout(datetime::delta(10, 0))
+                              .build())
+            .build();
     const model::test_result result_10(model::test_result_failed,
                                        "Exit failure");
 
-    const model::test_program test_program_9 = model::test_program_builder(
-        "atf", fs::path("complex_test"), fs::path("/usr/tests"),
-        "suite-name")
-        .add_test_case("this_passes")
-        .add_test_case("this_fails",
-                       model::metadata_builder()
-                       .set_description("Test description")
-                       .set_required_user("root")
-                       .build())
-        .build();
+    const model::test_program test_program_9 =
+        model::test_program_builder("atf", fs::path("complex_test"),
+                                    fs::path("/usr/tests"), "suite-name")
+            .add_test_case("this_passes")
+            .add_test_case("this_fails",
+                           model::metadata_builder()
+                               .set_description("Test description")
+                               .set_required_user("root")
+                               .build())
+            .build();
     const model::test_result result_11(model::test_result_passed);
     const model::test_result result_12(model::test_result_failed,
                                        "Some reason");
@@ -403,82 +397,83 @@ check_action_4(const fs::path& dbpath)
     ATF_REQUIRE(!iter);
 }
 
+} // anonymous namespace
 
-}  // anonymous namespace
-
-
-#define CURRENT_SCHEMA_TEST(dataset) \
-    ATF_TEST_CASE(current_schema_ ##dataset); \
-    ATF_TEST_CASE_HEAD(current_schema_ ##dataset) \
-    { \
-        logging::set_inmemory(); \
-        const std::string required_files = \
-            store::detail::schema_file().str() + " " + \
-            testdata_file("testdata_v3_" #dataset ".sql").str(); \
-        set_md_var("require.files", required_files); \
-    } \
-    ATF_TEST_CASE_BODY(current_schema_ ##dataset) \
-    { \
-        const fs::path testpath("test.db"); \
-        \
-        sqlite::database db = sqlite::database::open( \
-            testpath, sqlite::open_readwrite | sqlite::open_create); \
-        db.exec(utils::read_file(store::detail::schema_file())); \
-        db.exec(utils::read_file(testdata_file(\
-            "testdata_v3_" #dataset ".sql"))); \
-        db.close(); \
-        \
-        check_action_ ## dataset (testpath); \
+#define CURRENT_SCHEMA_TEST(dataset)                                           \
+    ATF_TEST_CASE(current_schema_##dataset);                                   \
+    ATF_TEST_CASE_HEAD(current_schema_##dataset)                               \
+    {                                                                          \
+        logging::set_inmemory();                                               \
+        const std::string required_files =                                     \
+            store::detail::schema_file().str() + " " +                         \
+            testdata_file("testdata_v3_" #dataset ".sql").str();               \
+        set_md_var("require.files", required_files);                           \
+    }                                                                          \
+    ATF_TEST_CASE_BODY(current_schema_##dataset)                               \
+    {                                                                          \
+        const fs::path testpath("test.db");                                    \
+                                                                               \
+        sqlite::database db = sqlite::database::open(testpath,                 \
+                                                     sqlite::open_readwrite |  \
+                                                         sqlite::open_create); \
+        db.exec(utils::read_file(store::detail::schema_file()));               \
+        db.exec(utils::read_file(testdata_file("testdata_v3_" #dataset         \
+                                               ".sql")));                      \
+        db.close();                                                            \
+                                                                               \
+        check_action_##dataset(testpath);                                      \
     }
 CURRENT_SCHEMA_TEST(1);
 CURRENT_SCHEMA_TEST(2);
 CURRENT_SCHEMA_TEST(3);
 CURRENT_SCHEMA_TEST(4);
 
-
-#define MIGRATE_SCHEMA_TEST(from_version) \
-    ATF_TEST_CASE(migrate_schema__from_v ##from_version); \
-    ATF_TEST_CASE_HEAD(migrate_schema__from_v ##from_version) \
-    { \
-        logging::set_inmemory(); \
-        \
-        const char* schema = "schema_v" #from_version ".sql"; \
-        const char* testdata = "testdata_v" #from_version ".sql"; \
-        \
-        std::string required_files = \
-            testdata_file(schema).str() + " " + testdata_file(testdata).str(); \
-        for (int i = from_version; i < store::detail::current_schema_version; \
-             ++i) \
-            required_files += " " + store::detail::migration_file( \
-                i, i + 1).str(); \
-        \
-        set_md_var("require.files", required_files); \
-    } \
-    ATF_TEST_CASE_BODY(migrate_schema__from_v ##from_version) \
-    { \
-        const char* schema = "schema_v" #from_version ".sql"; \
-        const char* testdata = "testdata_v" #from_version ".sql"; \
-        \
-        const fs::path testpath("test.db"); \
-        \
-        sqlite::database db = sqlite::database::open( \
-            testpath, sqlite::open_readwrite | sqlite::open_create); \
-        db.exec(utils::read_file(testdata_file(schema))); \
-        db.exec(utils::read_file(testdata_file(testdata))); \
-        db.close(); \
-        \
-        store::migrate_schema(fs::path("test.db")); \
-        \
-        check_action_2(fs::path(".kyua/store/" \
-            "results.test_suite_root.20130108-111331-000000.db")); \
-        check_action_3(fs::path(".kyua/store/" \
-            "results.usr_tests.20130108-123832-000000.db")); \
-        check_action_4(fs::path(".kyua/store/" \
-            "results.usr_tests.20130108-112635-000000.db")); \
+#define MIGRATE_SCHEMA_TEST(from_version)                                      \
+    ATF_TEST_CASE(migrate_schema__from_v##from_version);                       \
+    ATF_TEST_CASE_HEAD(migrate_schema__from_v##from_version)                   \
+    {                                                                          \
+        logging::set_inmemory();                                               \
+                                                                               \
+        const char* schema = "schema_v" #from_version ".sql";                  \
+        const char* testdata = "testdata_v" #from_version ".sql";              \
+                                                                               \
+        std::string required_files = testdata_file(schema).str() + " " +       \
+            testdata_file(testdata).str();                                     \
+        for (int i = from_version; i < store::detail::current_schema_version;  \
+             ++i)                                                              \
+            required_files += " " +                                            \
+                store::detail::migration_file(i, i + 1).str();                 \
+                                                                               \
+        set_md_var("require.files", required_files);                           \
+    }                                                                          \
+    ATF_TEST_CASE_BODY(migrate_schema__from_v##from_version)                   \
+    {                                                                          \
+        const char* schema = "schema_v" #from_version ".sql";                  \
+        const char* testdata = "testdata_v" #from_version ".sql";              \
+                                                                               \
+        const fs::path testpath("test.db");                                    \
+                                                                               \
+        sqlite::database db = sqlite::database::open(testpath,                 \
+                                                     sqlite::open_readwrite |  \
+                                                         sqlite::open_create); \
+        db.exec(utils::read_file(testdata_file(schema)));                      \
+        db.exec(utils::read_file(testdata_file(testdata)));                    \
+        db.close();                                                            \
+                                                                               \
+        store::migrate_schema(fs::path("test.db"));                            \
+                                                                               \
+        check_action_2(                                                        \
+            fs::path(".kyua/store/"                                            \
+                     "results.test_suite_root.20130108-111331-000000.db"));    \
+        check_action_3(                                                        \
+            fs::path(".kyua/store/"                                            \
+                     "results.usr_tests.20130108-123832-000000.db"));          \
+        check_action_4(                                                        \
+            fs::path(".kyua/store/"                                            \
+                     "results.usr_tests.20130108-112635-000000.db"));          \
     }
 MIGRATE_SCHEMA_TEST(1);
 MIGRATE_SCHEMA_TEST(2);
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

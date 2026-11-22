@@ -51,11 +51,11 @@ extern "C" {
 #include "utils/noncopyable.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
-#include "utils/stream.hpp"
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/exceptions.hpp"
 #include "utils/sqlite/statement.ipp"
 #include "utils/sqlite/transaction.hpp"
+#include "utils/stream.hpp"
 
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
@@ -64,9 +64,7 @@ namespace sqlite = utils::sqlite;
 using utils::none;
 using utils::optional;
 
-
 namespace {
-
 
 /// Stores the environment variables of a context.
 ///
@@ -76,20 +74,19 @@ namespace {
 /// \throw sqlite::error If there is a problem storing the variables.
 static void
 put_env_vars(sqlite::database& db,
-             const std::map< std::string, std::string >& env)
+             const std::map<std::string, std::string>& env)
 {
-    sqlite::statement stmt = db.create_statement(
-        "INSERT INTO env_vars (var_name, var_value) "
-        "VALUES (:var_name, :var_value)");
-    for (std::map< std::string, std::string >::const_iterator iter =
-             env.begin(); iter != env.end(); iter++) {
+    sqlite::statement stmt =
+        db.create_statement("INSERT INTO env_vars (var_name, var_value) "
+                            "VALUES (:var_name, :var_value)");
+    for (std::map<std::string, std::string>::const_iterator iter = env.begin();
+         iter != env.end(); iter++) {
         stmt.bind(":var_name", (*iter).first);
         stmt.bind(":var_value", (*iter).second);
         stmt.step_without_results();
         stmt.reset();
     }
 }
-
 
 /// Calculates the last rowid of a table.
 ///
@@ -110,7 +107,6 @@ last_rowid(sqlite::database& db, const std::string& table)
         return stmt.column_int64(0);
     }
 }
-
 
 /// Stores a metadata object.
 ///
@@ -141,7 +137,6 @@ put_metadata(sqlite::database& db, const model::metadata& md)
     return metadata_id;
 }
 
-
 /// Stores an arbitrary file into the database as a BLOB.
 ///
 /// \param db The database into which to store the file.
@@ -150,7 +145,7 @@ put_metadata(sqlite::database& db, const model::metadata& md)
 /// \return The identifier of the stored file, or none if the file was empty.
 ///
 /// \throw sqlite::error If there are problems writing to the database.
-static optional< int64_t >
+static optional<int64_t>
 put_file(sqlite::database& db, const fs::path& path)
 {
     std::ifstream input(path.c_str());
@@ -173,17 +168,15 @@ put_file(sqlite::database& db, const fs::path& path)
     // better way to feel blobs into SQLite.
     const std::string contents = utils::read_stream(input);
 
-    sqlite::statement stmt = db.create_statement(
-        "INSERT INTO files (contents) VALUES (:contents)");
+    sqlite::statement stmt =
+        db.create_statement("INSERT INTO files (contents) VALUES (:contents)");
     stmt.bind(":contents", sqlite::blob(contents.c_str(), contents.length()));
     stmt.step_without_results();
 
-    return optional< int64_t >(db.last_insert_rowid());
+    return optional<int64_t>(db.last_insert_rowid());
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Internal implementation for a store write-only transaction.
 struct store::write_transaction::impl : utils::noncopyable {
@@ -207,7 +200,6 @@ struct store::write_transaction::impl : utils::noncopyable {
     }
 };
 
-
 /// Creates a new write-only transaction.
 ///
 /// \param backend_ The backend this transaction belongs to.
@@ -216,12 +208,10 @@ store::write_transaction::write_transaction(write_backend& backend_) :
 {
 }
 
-
 /// Destructor.
 store::write_transaction::~write_transaction(void)
 {
 }
-
 
 /// Commits the transaction.
 ///
@@ -236,7 +226,6 @@ store::write_transaction::commit(void)
     }
 }
 
-
 /// Rolls the transaction back.
 ///
 /// \throw error If there is any problem when talking to the database.
@@ -249,7 +238,6 @@ store::write_transaction::rollback(void)
         throw error(e.what());
     }
 }
-
 
 /// Puts a context into the database.
 ///
@@ -274,7 +262,6 @@ store::write_transaction::put_context(const model::context& context)
     }
 }
 
-
 /// Puts a test program into the database.
 ///
 /// \pre The test program has not been put yet.
@@ -290,8 +277,8 @@ store::write_transaction::put_test_program(
     const model::test_program& test_program)
 {
     try {
-        const int64_t metadata_id = put_metadata(
-            _pimpl->_db, test_program.get_metadata());
+        const int64_t metadata_id = put_metadata(_pimpl->_db,
+                                                 test_program.get_metadata());
 
         sqlite::statement stmt = _pimpl->_db.create_statement(
             "INSERT INTO test_programs (absolute_path, "
@@ -315,7 +302,6 @@ store::write_transaction::put_test_program(
     }
 }
 
-
 /// Puts a test case into the database.
 ///
 /// \pre The test case has not been put yet.
@@ -336,8 +322,8 @@ store::write_transaction::put_test_case(const model::test_program& test_program,
     const model::test_case& test_case = test_program.find(test_case_name);
 
     try {
-        const int64_t metadata_id = put_metadata(
-            _pimpl->_db, test_case.get_raw_metadata());
+        const int64_t metadata_id = put_metadata(_pimpl->_db,
+                                                 test_case.get_raw_metadata());
 
         sqlite::statement stmt = _pimpl->_db.create_statement(
             "INSERT INTO test_cases (test_program_id, name, metadata_id) "
@@ -352,7 +338,6 @@ store::write_transaction::put_test_case(const model::test_program& test_program,
     }
 }
 
-
 /// Stores a file generated by a test case into the database as a BLOB.
 ///
 /// \param name The name of the file to store in the database.  This needs to be
@@ -365,14 +350,14 @@ store::write_transaction::put_test_case(const model::test_program& test_program,
 /// \return The identifier of the stored file, or none if the file was empty.
 ///
 /// \throw store::error If there are problems writing to the database.
-optional< int64_t >
+optional<int64_t>
 store::write_transaction::put_test_case_file(const std::string& name,
                                              const fs::path& path,
                                              const int64_t test_case_id)
 {
     LD(F("Storing %s (%s) of test case %s") % name % path % test_case_id);
     try {
-        const optional< int64_t > file_id = put_file(_pimpl->_db, path);
+        const optional<int64_t> file_id = put_file(_pimpl->_db, path);
         if (!file_id) {
             LD("Not storing empty file");
             return none;
@@ -386,12 +371,11 @@ store::write_transaction::put_test_case_file(const std::string& name,
         stmt.bind(":file_id", file_id.get());
         stmt.step_without_results();
 
-        return optional< int64_t >(_pimpl->_db.last_insert_rowid());
+        return optional<int64_t>(_pimpl->_db.last_insert_rowid());
     } catch (const sqlite::error& e) {
         throw error(e.what());
     }
 }
-
 
 /// Puts a result into the database.
 ///

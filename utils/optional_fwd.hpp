@@ -34,16 +34,12 @@
 
 namespace utils {
 
-
 namespace detail {
 
-
 /// Internal type-safe representation for the none type.
-struct none_t {};
+struct none_t { };
 
-
-}  // namespace detail
-
+} // namespace detail
 
 /// The none value.
 ///
@@ -52,10 +48,8 @@ struct none_t {};
 /// different.  Just don't do that.
 const detail::none_t none = {};
 
+template <class> class optional;
 
-template< class > class optional;
+} // namespace utils
 
-
-}  // namespace utils
-
-#endif  // !defined(UTILS_OPTIONAL_FWD_HPP)
+#endif // !defined(UTILS_OPTIONAL_FWD_HPP)

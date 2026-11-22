@@ -26,13 +26,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "cli/common.hpp"
-
 #include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
 
+#include "cli/common.hpp"
 #include "engine/filters.hpp"
 #include "model/test_program.hpp"
 #include "model/test_result.hpp"
@@ -44,15 +43,15 @@
 #include "utils/datetime.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
-#include "utils/logging/macros.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 
 #if defined(HAVE_CONFIG_H)
-#   include "config.h"
+#include "config.h"
 #endif
 
 namespace cmdline = utils::cmdline;
@@ -63,7 +62,6 @@ namespace layout = store::layout;
 using utils::none;
 using utils::optional;
 
-
 /// Standard definition of the option to specify the build root.
 const cmdline::path_option cli::build_root_option(
     "build-root",
@@ -71,19 +69,17 @@ const cmdline::path_option cli::build_root_option(
     "Kyuafile scripts",
     "path");
 
-
 /// Standard definition of the option to specify a Kyuafile.
-const cmdline::path_option cli::kyuafile_option(
-    'k', "kyuafile",
-    "Path to the test suite definition",
-    "file", "Kyuafile");
-
+const cmdline::path_option
+    cli::kyuafile_option('k', "kyuafile", "Path to the test suite definition",
+                         "file", "Kyuafile");
 
 /// Standard definition of the option to specify filters on test results.
 const cmdline::list_option cli::results_filter_option(
-    "results-filter", "Comma-separated list of result types to include in "
-    "the report", "types", "skipped,xfail,broken,failed");
-
+    "results-filter",
+    "Comma-separated list of result types to include in "
+    "the report",
+    "types", "skipped,xfail,broken,failed");
 
 /// Standard definition of the option to specify the results file.
 ///
@@ -94,7 +90,6 @@ const cmdline::string_option cli::results_file_create_option(
     "Path to the results file to create; if left to the default value, the "
     "name of the file is automatically computed for the current test suite",
     "file", layout::results_auto_create_name);
-
 
 /// Standard definition of the option to specify the results file.
 ///
@@ -107,9 +102,7 @@ const cmdline::string_option cli::results_file_open_option(
     "default value, uses the current directory as the test suite name",
     "file", layout::results_auto_open_name);
 
-
 namespace {
-
 
 /// Gets the path to the historical database if it exists.
 ///
@@ -118,10 +111,10 @@ namespace {
 /// exists.
 ///
 /// \return A path if the file is found; none otherwise.
-static optional< fs::path >
+static optional<fs::path>
 get_historical_db(void)
 {
-    optional< fs::path > home = utils::get_home();
+    optional<fs::path> home = utils::get_home();
     if (home) {
         const fs::path old_db = home.get() / ".kyua/store.db";
         if (fs::exists(old_db)) {
@@ -137,7 +130,6 @@ get_historical_db(void)
     }
 }
 
-
 /// Converts a set of result type names to identifiers.
 ///
 /// \param names The collection of names to process; may be empty.
@@ -146,9 +138,9 @@ get_historical_db(void)
 ///
 /// \throw std::runtime_error If any name in the input names is invalid.
 static cli::result_types
-parse_types(const std::vector< std::string >& names)
+parse_types(const std::vector<std::string>& names)
 {
-    typedef std::map< std::string, model::test_result_type > types_map;
+    typedef std::map<std::string, model::test_result_type> types_map;
     types_map valid_types;
     valid_types["broken"] = model::test_result_broken;
     valid_types["failed"] = model::test_result_failed;
@@ -157,7 +149,7 @@ parse_types(const std::vector< std::string >& names)
     valid_types["xfail"] = model::test_result_expected_failure;
 
     cli::result_types types;
-    for (std::vector< std::string >::const_iterator iter = names.begin();
+    for (std::vector<std::string>::const_iterator iter = names.begin();
          iter != names.end(); ++iter) {
         const types_map::const_iterator match = valid_types.find(*iter);
         if (match == valid_types.end())
@@ -168,9 +160,7 @@ parse_types(const std::vector< std::string >& names)
     return types;
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Gets the path to the build root, if any.
 ///
@@ -179,16 +169,15 @@ parse_types(const std::vector< std::string >& names)
 /// \param cmdline The parsed command line.
 ///
 /// \return The path to the build root, if specified; none otherwise.
-optional< fs::path >
+optional<fs::path>
 cli::build_root_path(const cmdline::parsed_cmdline& cmdline)
 {
-    optional< fs::path > build_root;
+    optional<fs::path> build_root;
     if (cmdline.has_option(build_root_option.long_name()))
-        build_root = cmdline.get_option< cmdline::path_option >(
+        build_root = cmdline.get_option<cmdline::path_option>(
             build_root_option.long_name());
     return build_root;
 }
-
 
 /// Gets the path to the Kyuafile to be loaded.
 ///
@@ -200,10 +189,9 @@ cli::build_root_path(const cmdline::parsed_cmdline& cmdline)
 fs::path
 cli::kyuafile_path(const cmdline::parsed_cmdline& cmdline)
 {
-    return cmdline.get_option< cmdline::path_option >(
+    return cmdline.get_option<cmdline::path_option>(
         kyuafile_option.long_name());
 }
-
 
 /// Gets the value of the results-file flag for the creation of a new file.
 ///
@@ -216,10 +204,10 @@ cli::kyuafile_path(const cmdline::parsed_cmdline& cmdline)
 std::string
 cli::results_file_create(const cmdline::parsed_cmdline& cmdline)
 {
-    std::string results_file = cmdline.get_option< cmdline::string_option >(
+    std::string results_file = cmdline.get_option<cmdline::string_option>(
         results_file_create_option.long_name());
     if (results_file == results_file_create_option.default_value()) {
-        const optional< fs::path > historical_db = get_historical_db();
+        const optional<fs::path> historical_db = get_historical_db();
         if (historical_db)
             results_file = historical_db.get().str();
     } else {
@@ -233,7 +221,6 @@ cli::results_file_create(const cmdline::parsed_cmdline& cmdline)
     return results_file;
 }
 
-
 /// Gets the value of the results-file flag for the lookup of the file.
 ///
 /// \param cmdline The parsed command line from which to extract any possible
@@ -245,10 +232,10 @@ cli::results_file_create(const cmdline::parsed_cmdline& cmdline)
 std::string
 cli::results_file_open(const cmdline::parsed_cmdline& cmdline)
 {
-    std::string results_file = cmdline.get_option< cmdline::string_option >(
+    std::string results_file = cmdline.get_option<cmdline::string_option>(
         results_file_open_option.long_name());
     if (results_file == results_file_open_option.default_value()) {
-        const optional< fs::path > historical_db = get_historical_db();
+        const optional<fs::path> historical_db = get_historical_db();
         if (historical_db)
             results_file = historical_db.get().str();
     } else {
@@ -262,7 +249,6 @@ cli::results_file_open(const cmdline::parsed_cmdline& cmdline)
     return results_file;
 }
 
-
 /// Gets the filters for the result types.
 ///
 /// \param cmdline The parsed command line.
@@ -273,8 +259,8 @@ cli::results_file_open(const cmdline::parsed_cmdline& cmdline)
 cli::result_types
 cli::get_result_types(const utils::cmdline::parsed_cmdline& cmdline)
 {
-    result_types types = parse_types(
-        cmdline.get_option< cmdline::list_option >("results-filter"));
+    result_types types =
+        parse_types(cmdline.get_option<cmdline::list_option>("results-filter"));
     if (types.empty()) {
         types.push_back(model::test_result_passed);
         types.push_back(model::test_result_skipped);
@@ -285,7 +271,6 @@ cli::get_result_types(const utils::cmdline::parsed_cmdline& cmdline)
     return types;
 }
 
-
 /// Parses a set of command-line arguments to construct test filters.
 ///
 /// \param args The command-line arguments representing test filters.
@@ -294,10 +279,10 @@ cli::get_result_types(const utils::cmdline::parsed_cmdline& cmdline)
 ///
 /// \throw cmdline:error If any of the arguments is invalid, or if they
 ///     represent a non-disjoint collection of filters.
-std::set< engine::test_filter >
+std::set<engine::test_filter>
 cli::parse_filters(const cmdline::args_vector& args)
 {
-    std::set< engine::test_filter > filters;
+    std::set<engine::test_filter> filters;
 
     try {
         for (cmdline::args_vector::const_iterator iter = args.begin();
@@ -315,7 +300,6 @@ cli::parse_filters(const cmdline::args_vector& args)
     return filters;
 }
 
-
 /// Reports the filters that have not matched any tests as errors.
 ///
 /// \param unused The collection of unused filters to report.
@@ -324,18 +308,19 @@ cli::parse_filters(const cmdline::args_vector& args)
 /// \return True if there are any unused filters.  The caller should report this
 /// as an error to the user by means of a non-successful exit code.
 bool
-cli::report_unused_filters(const std::set< engine::test_filter >& unused,
+cli::report_unused_filters(const std::set<engine::test_filter>& unused,
                            cmdline::ui* ui)
 {
-    for (std::set< engine::test_filter >::const_iterator iter = unused.begin();
+    for (std::set<engine::test_filter>::const_iterator iter = unused.begin();
          iter != unused.end(); iter++) {
-        cmdline::print_warning(ui, F("No test cases matched by the filter "
-                                     "'%s'.") % (*iter).str());
+        cmdline::print_warning(ui,
+                               F("No test cases matched by the filter "
+                                 "'%s'.") %
+                                   (*iter).str());
     }
 
     return !unused.empty();
 }
-
 
 /// Formats a time delta for user presentation.
 ///
@@ -348,7 +333,6 @@ cli::format_delta(const datetime::delta& delta)
     return F("%.3ss") % (delta.seconds + (delta.useconds / 1000000.0));
 }
 
-
 /// Formats a test case result for user presentation.
 ///
 /// \param result The result to format.
@@ -360,11 +344,21 @@ cli::format_result(const model::test_result& result)
     std::string text;
 
     switch (result.type()) {
-    case model::test_result_broken: text = "broken"; break;
-    case model::test_result_expected_failure: text = "expected_failure"; break;
-    case model::test_result_failed: text = "failed"; break;
-    case model::test_result_passed: text = "passed"; break;
-    case model::test_result_skipped: text = "skipped"; break;
+    case model::test_result_broken:
+        text = "broken";
+        break;
+    case model::test_result_expected_failure:
+        text = "expected_failure";
+        break;
+    case model::test_result_failed:
+        text = "failed";
+        break;
+    case model::test_result_passed:
+        text = "passed";
+        break;
+    case model::test_result_skipped:
+        text = "skipped";
+        break;
     }
     INV(!text.empty());
 
@@ -373,7 +367,6 @@ cli::format_result(const model::test_result& result)
 
     return text;
 }
-
 
 /// Formats the identifier of a test case for user presentation.
 ///
@@ -388,7 +381,6 @@ cli::format_test_case_id(const model::test_program& test_program,
     return F("%s:%s") % test_program.relative_path() % test_case_name;
 }
 
-
 /// Formats a filter using the same syntax of a test case.
 ///
 /// \param test_filter The filter to format.
@@ -399,7 +391,6 @@ cli::format_test_case_id(const engine::test_filter& test_filter)
 {
     return F("%s:%s") % test_filter.test_program % test_filter.test_case;
 }
-
 
 /// Prints the version header information to the interface output.
 ///

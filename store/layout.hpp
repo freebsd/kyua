@@ -56,16 +56,14 @@
 #if !defined(STORE_LAYOUT_HPP)
 #define STORE_LAYOUT_HPP
 
-#include "store/layout_fwd.hpp"
-
 #include <string>
 
+#include "store/layout_fwd.hpp"
 #include "utils/datetime_fwd.hpp"
 #include "utils/fs/path_fwd.hpp"
 
 namespace store {
 namespace layout {
-
 
 extern const char* results_auto_create_name;
 extern const char* results_auto_open_name;
@@ -77,8 +75,7 @@ utils::fs::path new_db_for_migration(const utils::fs::path&,
 utils::fs::path query_store_dir(void);
 std::string test_suite_for_path(const utils::fs::path&);
 
+} // namespace layout
+} // namespace store
 
-}  // namespace layout
-}  // namespace store
-
-#endif  // !defined(STORE_LAYOUT_HPP)
+#endif // !defined(STORE_LAYOUT_HPP)

@@ -26,8 +26,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/config/parser.hpp"
-
 #include <lutok/exceptions.hpp>
 #include <lutok/operations.hpp>
 #include <lutok/stack_cleaner.hpp>
@@ -35,13 +33,13 @@
 
 #include "utils/config/exceptions.hpp"
 #include "utils/config/lua_module.hpp"
+#include "utils/config/parser.hpp"
 #include "utils/config/tree.ipp"
 #include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/noncopyable.hpp"
 
 namespace config = utils::config;
-
 
 // History of configuration file versions:
 //
@@ -50,7 +48,6 @@ namespace config = utils::config;
 //     Files now start with syntax(2) instead of syntax('config', 1).
 //
 // 1 - Initial version.
-
 
 /// Internal implementation of the parser.
 struct utils::config::parser::impl : utils::noncopyable {
@@ -72,7 +69,9 @@ struct utils::config::parser::impl : utils::noncopyable {
     /// \param parent_ Pointer to the class being constructed.
     /// \param config_tree_ The configuration tree provided by the user.
     impl(parser* const parent_, tree& config_tree_) :
-        _parent(parent_), _tree(config_tree_), _syntax_called(false)
+        _parent(parent_),
+        _tree(config_tree_),
+        _syntax_called(false)
     {
     }
 
@@ -82,8 +81,7 @@ struct utils::config::parser::impl : utils::noncopyable {
     ///
     /// \param syntax_version The syntax format version as provided by the
     ///     configuration file in the call to syntax().
-    void
-    syntax_callback(const int syntax_version)
+    void syntax_callback(const int syntax_version)
     {
         if (_syntax_called)
             throw syntax_error("syntax() can only be called once");
@@ -99,9 +97,7 @@ struct utils::config::parser::impl : utils::noncopyable {
     }
 };
 
-
 namespace {
-
 
 static int
 lua_syntax(lutok::state& state)
@@ -123,8 +119,7 @@ lua_syntax(lutok::state& state)
     }
 
     state.get_global("_config_parser");
-    config::parser::impl* impl =
-        *state.to_userdata< config::parser::impl* >(-1);
+    config::parser::impl* impl = *state.to_userdata<config::parser::impl*>(-1);
     state.pop(1);
 
     impl->syntax_callback(syntax_version);
@@ -132,31 +127,26 @@ lua_syntax(lutok::state& state)
     return 0;
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Constructs a new parser.
 ///
 /// \param [in,out] config_tree The configuration tree into which the values set
 ///     in the configuration file will be stored.
-config::parser::parser(tree& config_tree) :
-    _pimpl(new impl(this, config_tree))
+config::parser::parser(tree& config_tree) : _pimpl(new impl(this, config_tree))
 {
     lutok::stack_cleaner cleaner(_pimpl->_state);
 
     _pimpl->_state.push_cxx_function(lua_syntax);
     _pimpl->_state.set_global("syntax");
-    *_pimpl->_state.new_userdata< config::parser::impl* >() = _pimpl.get();
+    *_pimpl->_state.new_userdata<config::parser::impl*>() = _pimpl.get();
     _pimpl->_state.set_global("_config_parser");
 }
-
 
 /// Destructor.
 config::parser::~parser(void)
 {
 }
-
 
 /// Parses a configuration file.
 ///

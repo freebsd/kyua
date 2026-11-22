@@ -29,7 +29,7 @@
 #include "utils/cmdline/ui.hpp"
 
 #if defined(HAVE_CONFIG_H)
-#   include "config.h"
+#include "config.h"
 #endif
 
 extern "C" {
@@ -38,15 +38,14 @@ extern "C" {
 
 #include <fcntl.h>
 #if defined(HAVE_TERMIOS_H)
-#   include <termios.h>
+#include <termios.h>
 #endif
 #include <unistd.h>
 }
 
+#include <atf-c++.hpp>
 #include <cerrno>
 #include <cstring>
-
-#include <atf-c++.hpp>
 
 #include "utils/cmdline/globals.hpp"
 #include "utils/cmdline/ui_mock.hpp"
@@ -61,9 +60,7 @@ namespace text = utils::text;
 using utils::none;
 using utils::optional;
 
-
 namespace {
-
 
 /// Reopens stdout as a tty and returns its width.
 ///
@@ -88,9 +85,7 @@ reopen_stdout(void)
     return ws.ws_col >= 80 ? ws.ws_col - 5 : ws.ws_col;
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 ATF_TEST_CASE_WITHOUT_HEAD(ui__screen_width__columns_set__no_tty);
 ATF_TEST_CASE_BODY(ui__screen_width__columns_set__no_tty)
@@ -102,7 +97,6 @@ ATF_TEST_CASE_BODY(ui__screen_width__columns_set__no_tty)
     ATF_REQUIRE_EQ(4321 - 5, ui.screen_width().get());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(ui__screen_width__columns_set__tty);
 ATF_TEST_CASE_BODY(ui__screen_width__columns_set__tty)
 {
@@ -112,7 +106,6 @@ ATF_TEST_CASE_BODY(ui__screen_width__columns_set__tty)
     cmdline::ui ui;
     ATF_REQUIRE_EQ(4321 - 5, ui.screen_width().get());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(ui__screen_width__columns_empty__no_tty);
 ATF_TEST_CASE_BODY(ui__screen_width__columns_empty__no_tty)
@@ -124,7 +117,6 @@ ATF_TEST_CASE_BODY(ui__screen_width__columns_empty__no_tty)
     ATF_REQUIRE(!ui.screen_width());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(ui__screen_width__columns_empty__tty);
 ATF_TEST_CASE_BODY(ui__screen_width__columns_empty__tty)
 {
@@ -134,7 +126,6 @@ ATF_TEST_CASE_BODY(ui__screen_width__columns_empty__tty)
     cmdline::ui ui;
     ATF_REQUIRE_EQ(columns, ui.screen_width().get());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(ui__screen_width__columns_invalid__no_tty);
 ATF_TEST_CASE_BODY(ui__screen_width__columns_invalid__no_tty)
@@ -146,7 +137,6 @@ ATF_TEST_CASE_BODY(ui__screen_width__columns_invalid__no_tty)
     ATF_REQUIRE(!ui.screen_width());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(ui__screen_width__columns_invalid__tty);
 ATF_TEST_CASE_BODY(ui__screen_width__columns_invalid__tty)
 {
@@ -156,7 +146,6 @@ ATF_TEST_CASE_BODY(ui__screen_width__columns_invalid__tty)
     cmdline::ui ui;
     ATF_REQUIRE_EQ(columns, ui.screen_width().get());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(ui__screen_width__tty_is_file);
 ATF_TEST_CASE_BODY(ui__screen_width__tty_is_file)
@@ -173,7 +162,6 @@ ATF_TEST_CASE_BODY(ui__screen_width__tty_is_file)
     ATF_REQUIRE(!ui.screen_width());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(ui__screen_width__cached);
 ATF_TEST_CASE_BODY(ui__screen_width__cached)
 {
@@ -189,50 +177,45 @@ ATF_TEST_CASE_BODY(ui__screen_width__cached)
     ATF_REQUIRE_EQ(100 - 5, ui.screen_width().get());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(ui__err);
 ATF_TEST_CASE_BODY(ui__err)
 {
-    cmdline::ui_mock ui(10);  // Keep shorter than message.
+    cmdline::ui_mock ui(10); // Keep shorter than message.
     ui.err("This is a short message");
     ATF_REQUIRE_EQ(1, ui.err_log().size());
     ATF_REQUIRE_EQ("This is a short message", ui.err_log()[0]);
     ATF_REQUIRE(ui.out_log().empty());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(ui__err__tolerates_newline);
 ATF_TEST_CASE_BODY(ui__err__tolerates_newline)
 {
-    cmdline::ui_mock ui(10);  // Keep shorter than message.
+    cmdline::ui_mock ui(10); // Keep shorter than message.
     ui.err("This is a short message\n");
     ATF_REQUIRE_EQ(1, ui.err_log().size());
     ATF_REQUIRE_EQ("This is a short message\n", ui.err_log()[0]);
     ATF_REQUIRE(ui.out_log().empty());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(ui__out);
 ATF_TEST_CASE_BODY(ui__out)
 {
-    cmdline::ui_mock ui(10);  // Keep shorter than message.
+    cmdline::ui_mock ui(10); // Keep shorter than message.
     ui.out("This is a short message");
     ATF_REQUIRE(ui.err_log().empty());
     ATF_REQUIRE_EQ(1, ui.out_log().size());
     ATF_REQUIRE_EQ("This is a short message", ui.out_log()[0]);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(ui__out__tolerates_newline);
 ATF_TEST_CASE_BODY(ui__out__tolerates_newline)
 {
-    cmdline::ui_mock ui(10);  // Keep shorter than message.
+    cmdline::ui_mock ui(10); // Keep shorter than message.
     ui.out("This is a short message\n");
     ATF_REQUIRE(ui.err_log().empty());
     ATF_REQUIRE_EQ(1, ui.out_log().size());
     ATF_REQUIRE_EQ("This is a short message\n", ui.out_log()[0]);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(ui__out_wrap__no_refill);
 ATF_TEST_CASE_BODY(ui__out_wrap__no_refill)
@@ -243,7 +226,6 @@ ATF_TEST_CASE_BODY(ui__out_wrap__no_refill)
     ATF_REQUIRE_EQ(1, ui.out_log().size());
     ATF_REQUIRE_EQ("This is a short message", ui.out_log()[0]);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(ui__out_wrap__refill);
 ATF_TEST_CASE_BODY(ui__out_wrap__refill)
@@ -256,7 +238,6 @@ ATF_TEST_CASE_BODY(ui__out_wrap__refill)
     ATF_REQUIRE_EQ("message", ui.out_log()[1]);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(ui__out_tag_wrap__no_refill);
 ATF_TEST_CASE_BODY(ui__out_tag_wrap__no_refill)
 {
@@ -266,7 +247,6 @@ ATF_TEST_CASE_BODY(ui__out_tag_wrap__no_refill)
     ATF_REQUIRE_EQ(1, ui.out_log().size());
     ATF_REQUIRE_EQ("Some long tag: This is a short message", ui.out_log()[0]);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(ui__out_tag_wrap__refill__repeat);
 ATF_TEST_CASE_BODY(ui__out_tag_wrap__refill__repeat)
@@ -279,7 +259,6 @@ ATF_TEST_CASE_BODY(ui__out_tag_wrap__refill__repeat)
     ATF_REQUIRE_EQ("Some long tag: message", ui.out_log()[1]);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(ui__out_tag_wrap__refill__no_repeat);
 ATF_TEST_CASE_BODY(ui__out_tag_wrap__refill__no_repeat)
 {
@@ -291,7 +270,6 @@ ATF_TEST_CASE_BODY(ui__out_tag_wrap__refill__no_repeat)
     ATF_REQUIRE_EQ("               message", ui.out_log()[1]);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(ui__out_tag_wrap__tag_too_long);
 ATF_TEST_CASE_BODY(ui__out_tag_wrap__tag_too_long)
 {
@@ -301,7 +279,6 @@ ATF_TEST_CASE_BODY(ui__out_tag_wrap__tag_too_long)
     ATF_REQUIRE_EQ(1, ui.out_log().size());
     ATF_REQUIRE_EQ("Some long tag: This is a short message", ui.out_log()[0]);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(ui__out_table__empty);
 ATF_TEST_CASE_BODY(ui__out_table__empty)
@@ -317,7 +294,6 @@ ATF_TEST_CASE_BODY(ui__out_table__empty)
     ui.out_table(table, formatter, "    ");
     ATF_REQUIRE(ui.out_log().empty());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(ui__out_table__not_empty);
 ATF_TEST_CASE_BODY(ui__out_table__not_empty)
@@ -356,7 +332,6 @@ ATF_TEST_CASE_BODY(ui__out_table__not_empty)
                    ui.out_log()[3]);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(print_error);
 ATF_TEST_CASE_BODY(print_error)
 {
@@ -367,7 +342,6 @@ ATF_TEST_CASE_BODY(print_error)
     ATF_REQUIRE_EQ(1, ui.err_log().size());
     ATF_REQUIRE_EQ("error-program: E: The error.", ui.err_log()[0]);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(print_info);
 ATF_TEST_CASE_BODY(print_info)
@@ -380,7 +354,6 @@ ATF_TEST_CASE_BODY(print_info)
     ATF_REQUIRE_EQ("info-program: I: The info.", ui.err_log()[0]);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(print_warning);
 ATF_TEST_CASE_BODY(print_warning)
 {
@@ -391,7 +364,6 @@ ATF_TEST_CASE_BODY(print_warning)
     ATF_REQUIRE_EQ(1, ui.err_log().size());
     ATF_REQUIRE_EQ("warning-program: W: The warning.", ui.err_log()[0]);
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

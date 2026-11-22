@@ -50,7 +50,6 @@
 
 namespace cli {
 
-
 extern const utils::cmdline::path_option build_root_option;
 extern const utils::cmdline::path_option kyuafile_option;
 extern const utils::cmdline::string_option results_file_create_option;
@@ -58,36 +57,31 @@ extern const utils::cmdline::string_option results_file_open_option;
 extern const utils::cmdline::list_option results_filter_option;
 extern const utils::cmdline::property_option variable_option;
 
-
 /// Base type for commands defined in the cli module.
 ///
 /// All commands in Kyua receive a configuration object as their runtime
 /// data parameter because the configuration file applies to all the
 /// commands.
-typedef utils::cmdline::base_command< utils::config::tree > cli_command;
-
+typedef utils::cmdline::base_command<utils::config::tree> cli_command;
 
 /// Scoped, strictly owned pointer to a cli_command.
-typedef std::unique_ptr< cli_command > cli_command_ptr;
-
+typedef std::unique_ptr<cli_command> cli_command_ptr;
 
 /// Collection of result types.
 ///
 /// This is a vector rather than a set because we want to respect the order in
 /// which the user provided the types.
-typedef std::vector< model::test_result_type > result_types;
+typedef std::vector<model::test_result_type> result_types;
 
-
-utils::optional< utils::fs::path > build_root_path(
-    const utils::cmdline::parsed_cmdline&);
+utils::optional<utils::fs::path>
+build_root_path(const utils::cmdline::parsed_cmdline&);
 utils::fs::path kyuafile_path(const utils::cmdline::parsed_cmdline&);
 std::string results_file_create(const utils::cmdline::parsed_cmdline&);
 std::string results_file_open(const utils::cmdline::parsed_cmdline&);
 result_types get_result_types(const utils::cmdline::parsed_cmdline&);
 
-std::set< engine::test_filter > parse_filters(
-    const utils::cmdline::args_vector&);
-bool report_unused_filters(const std::set< engine::test_filter >&,
+std::set<engine::test_filter> parse_filters(const utils::cmdline::args_vector&);
+bool report_unused_filters(const std::set<engine::test_filter>&,
                            utils::cmdline::ui*);
 
 std::string format_delta(const utils::datetime::delta&);
@@ -95,10 +89,8 @@ std::string format_result(const model::test_result&);
 std::string format_test_case_id(const model::test_program&, const std::string&);
 std::string format_test_case_id(const engine::test_filter&);
 
-
 void write_version_header(utils::cmdline::ui*);
 
+} // namespace cli
 
-}  // namespace cli
-
-#endif  // !defined(CLI_COMMON_HPP)
+#endif // !defined(CLI_COMMON_HPP)

@@ -34,8 +34,8 @@
 /// other header files.
 
 #if defined(STORE_DBTYPES_HPP)
-#   error "Do not include dbtypes.hpp multiple times"
-#endif  // !defined(STORE_DBTYPES_HPP)
+#error "Do not include dbtypes.hpp multiple times"
+#endif // !defined(STORE_DBTYPES_HPP)
 #define STORE_DBTYPES_HPP
 
 #include <string>
@@ -45,7 +45,6 @@
 #include "utils/sqlite/statement_fwd.hpp"
 
 namespace store {
-
 
 void bind_bool(utils::sqlite::statement&, const char*, const bool);
 void bind_delta(utils::sqlite::statement&, const char*,
@@ -59,10 +58,9 @@ void bind_timestamp(utils::sqlite::statement&, const char*,
 bool column_bool(utils::sqlite::statement&, const char*);
 utils::datetime::delta column_delta(utils::sqlite::statement&, const char*);
 std::string column_optional_string(utils::sqlite::statement&, const char*);
-model::test_result_type column_test_result_type(
-    utils::sqlite::statement&, const char*);
+model::test_result_type column_test_result_type(utils::sqlite::statement&,
+                                                const char*);
 utils::datetime::timestamp column_timestamp(utils::sqlite::statement&,
                                             const char*);
 
-
-}  // namespace store
+} // namespace store

@@ -38,14 +38,13 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include <atf-c++.hpp>
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
 #include <iostream>
 #include <string>
 #include <utility>
-
-#include <atf-c++.hpp>
 
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/options.hpp"
@@ -61,9 +60,7 @@ using cmdline::parse;
 using cmdline::parsed_cmdline;
 using cmdline::string_option;
 
-
 namespace {
-
 
 /// Mock option type to check the validate and convert methods sequence.
 ///
@@ -89,8 +86,7 @@ public:
     /// \param str The user argument; must be "zero" or "one".
     ///
     /// \throw cmdline::option_argument_value_error If str is not valid.
-    void
-    validate(const std::string& str) const
+    void validate(const std::string& str) const
     {
         if (str != "zero" && str != "one")
             throw cmdline::option_argument_value_error(F("--%s") % long_name(),
@@ -108,8 +104,7 @@ public:
     ///     the values passed to convert() are correct.  However, we raise an
     ///     exception here because we are actually validating that this code
     ///     sequence holds true.
-    static int
-    convert(const std::string& str)
+    static int convert(const std::string& str)
     {
         if (str == "zero")
             return 0;
@@ -124,7 +119,6 @@ public:
     }
 };
 
-
 /// Redirects stdout and stderr to a file.
 ///
 /// This fails the test case in case of any error.
@@ -132,7 +126,7 @@ public:
 /// \param file The name of the file to redirect stdout and stderr to.
 ///
 /// \return A copy of the old stdout and stderr file descriptors.
-static std::pair< int, int >
+static std::pair<int, int>
 mock_stdfds(const char* file)
 {
     std::cout.flush();
@@ -152,20 +146,18 @@ mock_stdfds(const char* file)
     return std::make_pair(oldout, olderr);
 }
 
-
 /// Restores stdout and stderr after a call to mock_stdfds.
 ///
 /// \param oldfds The copy of the previous stdout and stderr as returned by the
 ///     call to mock_fds().
 static void
-restore_stdfds(const std::pair< int, int >& oldfds)
+restore_stdfds(const std::pair<int, int>& oldfds)
 {
     ATF_REQUIRE(::dup2(oldfds.first, STDOUT_FILENO) != -1);
     ::close(oldfds.first);
     ATF_REQUIRE(::dup2(oldfds.second, STDERR_FILENO) != -1);
     ::close(oldfds.second);
 }
-
 
 /// Checks whether a '+:' prefix to the short options of getopt_long works.
 ///
@@ -187,11 +179,9 @@ restore_stdfds(const std::pair< int, int >& oldfds)
 static bool
 is_getopt_long_pluscolon_broken(void)
 {
-    struct ::option long_options[] = {
-        { "flag1", 1, NULL, '1' },
-        { "flag2", 1, NULL, '2' },
-        { NULL, 0, NULL, 0 }
-    };
+    struct ::option long_options[] = { { "flag1", 1, NULL, '1' },
+                                       { "flag2", 1, NULL, '2' },
+                                       { NULL, 0, NULL, 0 } };
 
     const int argc = 3;
     char* argv[4];
@@ -208,11 +198,18 @@ is_getopt_long_pluscolon_broken(void)
     int opt;
     while ((opt = ::getopt_long(argc, argv, "+:", long_options, NULL)) != -1) {
         switch (opt) {
-        case '1': break;
-        case '2': break;
-        case ':': got_colon = true; break;
-        case '?': break;
-        default:  UNREACHABLE; break;
+        case '1':
+            break;
+        case '2':
+            break;
+        case ':':
+            got_colon = true;
+            break;
+        case '?':
+            break;
+        default:
+            UNREACHABLE;
+            break;
         }
     }
 
@@ -228,50 +225,48 @@ is_getopt_long_pluscolon_broken(void)
     return !got_colon;
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 ATF_TEST_CASE_WITHOUT_HEAD(progname__no_options);
 ATF_TEST_CASE_BODY(progname__no_options)
 {
     const int argc = 1;
-    const char* const argv[] = {"progname", NULL};
-    std::vector< const base_option* > options;
+    const char* const argv[] = { "progname", NULL };
+    std::vector<const base_option*> options;
     const parsed_cmdline cmdline = parse(argc, argv, options);
 
     ATF_REQUIRE(cmdline.arguments().empty());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(progname__some_options);
 ATF_TEST_CASE_BODY(progname__some_options)
 {
     const int argc = 1;
-    const char* const argv[] = {"progname", NULL};
+    const char* const argv[] = { "progname", NULL };
     const string_option a('a', "a_option", "Foo", NULL);
     const string_option b('b', "b_option", "Bar", "arg", "foo");
     const string_option c("c_option", "Baz", NULL);
     const string_option d("d_option", "Wohoo", "arg", "bar");
-    std::vector< const base_option* > options;
+    std::vector<const base_option*> options;
     options.push_back(&a);
     options.push_back(&b);
     options.push_back(&c);
     options.push_back(&d);
     const parsed_cmdline cmdline = parse(argc, argv, options);
 
-    ATF_REQUIRE_EQ("foo", cmdline.get_option< string_option >("b_option"));
-    ATF_REQUIRE_EQ("bar", cmdline.get_option< string_option >("d_option"));
+    ATF_REQUIRE_EQ("foo", cmdline.get_option<string_option>("b_option"));
+    ATF_REQUIRE_EQ("bar", cmdline.get_option<string_option>("d_option"));
     ATF_REQUIRE(cmdline.arguments().empty());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(some_args__no_options);
 ATF_TEST_CASE_BODY(some_args__no_options)
 {
     const int argc = 5;
-    const char* const argv[] = {"progname", "foo", "-c", "--opt", "bar", NULL};
-    std::vector< const base_option* > options;
+    const char* const argv[] = {
+        "progname", "foo", "-c", "--opt", "bar", NULL
+    };
+    std::vector<const base_option*> options;
     const parsed_cmdline cmdline = parse(argc, argv, options);
 
     ATF_REQUIRE(!cmdline.has_option("c"));
@@ -283,14 +278,15 @@ ATF_TEST_CASE_BODY(some_args__no_options)
     ATF_REQUIRE_EQ("bar", cmdline.arguments()[3]);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(some_args__some_options);
 ATF_TEST_CASE_BODY(some_args__some_options)
 {
     const int argc = 5;
-    const char* const argv[] = {"progname", "foo", "-c", "--opt", "bar", NULL};
+    const char* const argv[] = {
+        "progname", "foo", "-c", "--opt", "bar", NULL
+    };
     const string_option c('c', "opt", "Description", NULL);
-    std::vector< const base_option* > options;
+    std::vector<const base_option*> options;
     options.push_back(&c);
     const parsed_cmdline cmdline = parse(argc, argv, options);
 
@@ -302,7 +298,6 @@ ATF_TEST_CASE_BODY(some_args__some_options)
     ATF_REQUIRE_EQ("--opt", cmdline.arguments()[2]);
     ATF_REQUIRE_EQ("bar", cmdline.arguments()[3]);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(some_options__all_known);
 ATF_TEST_CASE_BODY(some_options__all_known)
@@ -312,15 +307,20 @@ ATF_TEST_CASE_BODY(some_options__all_known)
         "progname",
         "-a",
         "-bvalue_b",
-        "-c", "value_c",
+        "-c",
+        "value_c",
         //"-d",  // Options with default optional values are unsupported.
-        "-evalue_e",  // Has default; overriden.
+        "-evalue_e", // Has default; overriden.
         "--f_long",
         "--g_long=value_g",
-        "--h_long", "value_h",
+        "--h_long",
+        "value_h",
         //"--i_long",  // Options with default optional values are unsupported.
-        "--j_long", "value_j",  // Has default; overriden as separate argument.
-        "arg1", "arg2", NULL,
+        "--j_long",
+        "value_j", // Has default; overriden as separate argument.
+        "arg1",
+        "arg2",
+        NULL,
     };
     const bool_option a('a', "a_long", "");
     const string_option b('b', "b_long", "Description", "arg");
@@ -332,7 +332,7 @@ ATF_TEST_CASE_BODY(some_options__all_known)
     const string_option h("h_long", "Description", "foo");
     const string_option i("i_long", "EFGH", "bar", "default_i");
     const string_option j("j_long", "Description", "baz", "default_j");
-    std::vector< const base_option* > options;
+    std::vector<const base_option*> options;
     options.push_back(&a);
     options.push_back(&b);
     options.push_back(&c);
@@ -346,46 +346,39 @@ ATF_TEST_CASE_BODY(some_options__all_known)
     const parsed_cmdline cmdline = parse(argc, argv, options);
 
     ATF_REQUIRE(cmdline.has_option("a_long"));
-    ATF_REQUIRE_EQ("value_b", cmdline.get_option< string_option >("b_long"));
-    ATF_REQUIRE_EQ("value_c", cmdline.get_option< string_option >("c_long"));
-    ATF_REQUIRE_EQ("default_d", cmdline.get_option< string_option >("d_long"));
-    ATF_REQUIRE_EQ("value_e", cmdline.get_option< string_option >("e_long"));
+    ATF_REQUIRE_EQ("value_b", cmdline.get_option<string_option>("b_long"));
+    ATF_REQUIRE_EQ("value_c", cmdline.get_option<string_option>("c_long"));
+    ATF_REQUIRE_EQ("default_d", cmdline.get_option<string_option>("d_long"));
+    ATF_REQUIRE_EQ("value_e", cmdline.get_option<string_option>("e_long"));
     ATF_REQUIRE(cmdline.has_option("f_long"));
-    ATF_REQUIRE_EQ("value_g", cmdline.get_option< string_option >("g_long"));
-    ATF_REQUIRE_EQ("value_h", cmdline.get_option< string_option >("h_long"));
-    ATF_REQUIRE_EQ("default_i", cmdline.get_option< string_option >("i_long"));
-    ATF_REQUIRE_EQ("value_j", cmdline.get_option< string_option >("j_long"));
+    ATF_REQUIRE_EQ("value_g", cmdline.get_option<string_option>("g_long"));
+    ATF_REQUIRE_EQ("value_h", cmdline.get_option<string_option>("h_long"));
+    ATF_REQUIRE_EQ("default_i", cmdline.get_option<string_option>("i_long"));
+    ATF_REQUIRE_EQ("value_j", cmdline.get_option<string_option>("j_long"));
     ATF_REQUIRE_EQ(2, cmdline.arguments().size());
     ATF_REQUIRE_EQ("arg1", cmdline.arguments()[0]);
     ATF_REQUIRE_EQ("arg2", cmdline.arguments()[1]);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(some_options__multi);
 ATF_TEST_CASE_BODY(some_options__multi)
 {
     const int argc = 9;
     const char* const argv[] = {
-        "progname",
-        "-a1",
-        "-bvalue1",
-        "-a2",
-        "--a_long=3",
-        "-bvalue2",
-        "--b_long=value3",
-        "arg1", "arg2", NULL,
+        "progname",        "-a1",  "-bvalue1", "-a2", "--a_long=3", "-bvalue2",
+        "--b_long=value3", "arg1", "arg2",     NULL,
     };
     const int_option a('a', "a_long", "Description", "arg");
     const string_option b('b', "b_long", "Description", "arg");
-    std::vector< const base_option* > options;
+    std::vector<const base_option*> options;
     options.push_back(&a);
     options.push_back(&b);
     const parsed_cmdline cmdline = parse(argc, argv, options);
 
     {
-        ATF_REQUIRE_EQ(3, cmdline.get_option< int_option >("a_long"));
-        const std::vector< int > multi =
-            cmdline.get_multi_option< int_option >("a_long");
+        ATF_REQUIRE_EQ(3, cmdline.get_option<int_option>("a_long"));
+        const std::vector<int> multi =
+            cmdline.get_multi_option<int_option>("a_long");
         ATF_REQUIRE_EQ(3, multi.size());
         ATF_REQUIRE_EQ(1, multi[0]);
         ATF_REQUIRE_EQ(2, multi[1]);
@@ -393,9 +386,9 @@ ATF_TEST_CASE_BODY(some_options__multi)
     }
 
     {
-        ATF_REQUIRE_EQ("value3", cmdline.get_option< string_option >("b_long"));
-        const std::vector< std::string > multi =
-            cmdline.get_multi_option< string_option >("b_long");
+        ATF_REQUIRE_EQ("value3", cmdline.get_option<string_option>("b_long"));
+        const std::vector<std::string> multi =
+            cmdline.get_multi_option<string_option>("b_long");
         ATF_REQUIRE_EQ(3, multi.size());
         ATF_REQUIRE_EQ("value1", multi[0]);
         ATF_REQUIRE_EQ("value2", multi[1]);
@@ -403,19 +396,18 @@ ATF_TEST_CASE_BODY(some_options__multi)
     }
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(subcommands);
 ATF_TEST_CASE_BODY(subcommands)
 {
     const int argc = 5;
-    const char* const argv[] = {"progname", "--flag1", "subcommand",
-                                "--flag2", "arg", NULL};
+    const char* const argv[] = { "progname", "--flag1", "subcommand",
+                                 "--flag2",  "arg",     NULL };
     const bool_option flag1("flag1", "");
-    std::vector< const base_option* > options;
+    std::vector<const base_option*> options;
     options.push_back(&flag1);
     const parsed_cmdline cmdline = parse(argc, argv, options);
 
-    ATF_REQUIRE( cmdline.has_option("flag1"));
+    ATF_REQUIRE(cmdline.has_option("flag1"));
     ATF_REQUIRE(!cmdline.has_option("flag2"));
     ATF_REQUIRE_EQ(3, cmdline.arguments().size());
     ATF_REQUIRE_EQ("subcommand", cmdline.arguments()[0]);
@@ -423,25 +415,24 @@ ATF_TEST_CASE_BODY(subcommands)
     ATF_REQUIRE_EQ("arg", cmdline.arguments()[2]);
 
     const bool_option flag2("flag2", "");
-    std::vector< const base_option* > options2;
+    std::vector<const base_option*> options2;
     options2.push_back(&flag2);
     const parsed_cmdline cmdline2 = parse(cmdline.arguments(), options2);
 
     ATF_REQUIRE(!cmdline2.has_option("flag1"));
-    ATF_REQUIRE( cmdline2.has_option("flag2"));
+    ATF_REQUIRE(cmdline2.has_option("flag2"));
     ATF_REQUIRE_EQ(1, cmdline2.arguments().size());
     ATF_REQUIRE_EQ("arg", cmdline2.arguments()[0]);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(missing_option_argument_error__short);
 ATF_TEST_CASE_BODY(missing_option_argument_error__short)
 {
     const int argc = 3;
-    const char* const argv[] = {"progname", "-a3", "-b", NULL};
+    const char* const argv[] = { "progname", "-a3", "-b", NULL };
     const string_option flag1('a', "flag1", "Description", "arg");
     const string_option flag2('b', "flag2", "Description", "arg");
-    std::vector< const base_option* > options;
+    std::vector<const base_option*> options;
     options.push_back(&flag1);
     options.push_back(&flag2);
 
@@ -458,16 +449,15 @@ ATF_TEST_CASE_BODY(missing_option_argument_error__short)
     }
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(missing_option_argument_error__shortblock);
 ATF_TEST_CASE_BODY(missing_option_argument_error__shortblock)
 {
     const int argc = 3;
-    const char* const argv[] = {"progname", "-ab3", "-ac", NULL};
+    const char* const argv[] = { "progname", "-ab3", "-ac", NULL };
     const bool_option flag1('a', "flag1", "Description");
     const string_option flag2('b', "flag2", "Description", "arg");
     const string_option flag3('c', "flag2", "Description", "arg");
-    std::vector< const base_option* > options;
+    std::vector<const base_option*> options;
     options.push_back(&flag1);
     options.push_back(&flag2);
     options.push_back(&flag3);
@@ -485,15 +475,14 @@ ATF_TEST_CASE_BODY(missing_option_argument_error__shortblock)
     }
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(missing_option_argument_error__long);
 ATF_TEST_CASE_BODY(missing_option_argument_error__long)
 {
     const int argc = 3;
-    const char* const argv[] = {"progname", "--flag1=a", "--flag2", NULL};
+    const char* const argv[] = { "progname", "--flag1=a", "--flag2", NULL };
     const string_option flag1("flag1", "Description", "arg");
     const string_option flag2("flag2", "Description", "arg");
-    std::vector< const base_option* > options;
+    std::vector<const base_option*> options;
     options.push_back(&flag1);
     options.push_back(&flag2);
 
@@ -510,14 +499,13 @@ ATF_TEST_CASE_BODY(missing_option_argument_error__long)
     }
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(unknown_option_error__short);
 ATF_TEST_CASE_BODY(unknown_option_error__short)
 {
     const int argc = 3;
-    const char* const argv[] = {"progname", "-a", "-b", NULL};
+    const char* const argv[] = { "progname", "-a", "-b", NULL };
     const bool_option flag1('a', "flag1", "Description");
-    std::vector< const base_option* > options;
+    std::vector<const base_option*> options;
     options.push_back(&flag1);
 
     try {
@@ -528,16 +516,15 @@ ATF_TEST_CASE_BODY(unknown_option_error__short)
     }
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(unknown_option_error__shortblock);
 ATF_TEST_CASE_BODY(unknown_option_error__shortblock)
 {
     const int argc = 3;
-    const char* const argv[] = {"progname", "-a", "-bdc", NULL};
+    const char* const argv[] = { "progname", "-a", "-bdc", NULL };
     const bool_option flag1('a', "flag1", "Description");
     const bool_option flag2('b', "flag2", "Description");
     const bool_option flag3('c', "flag3", "Description");
-    std::vector< const base_option* > options;
+    std::vector<const base_option*> options;
     options.push_back(&flag1);
     options.push_back(&flag2);
     options.push_back(&flag3);
@@ -550,14 +537,13 @@ ATF_TEST_CASE_BODY(unknown_option_error__shortblock)
     }
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(unknown_option_error__long);
 ATF_TEST_CASE_BODY(unknown_option_error__long)
 {
     const int argc = 3;
-    const char* const argv[] = {"progname", "--flag1=a", "--flag2", NULL};
+    const char* const argv[] = { "progname", "--flag1=a", "--flag2", NULL };
     const string_option flag1("flag1", "Description", "arg");
-    std::vector< const base_option* > options;
+    std::vector<const base_option*> options;
     options.push_back(&flag1);
 
     try {
@@ -568,12 +554,11 @@ ATF_TEST_CASE_BODY(unknown_option_error__long)
     }
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(unknown_plus_option_error);
 ATF_TEST_CASE_BODY(unknown_plus_option_error)
 {
     const int argc = 2;
-    const char* const argv[] = {"progname", "-+", NULL};
+    const char* const argv[] = { "progname", "-+", NULL };
     const cmdline::options_vector options;
 
     try {
@@ -587,15 +572,14 @@ ATF_TEST_CASE_BODY(unknown_plus_option_error)
     }
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(option_types);
 ATF_TEST_CASE_BODY(option_types)
 {
     const int argc = 3;
-    const char* const argv[] = {"progname", "--flag1=a", "--flag2=one", NULL};
+    const char* const argv[] = { "progname", "--flag1=a", "--flag2=one", NULL };
     const string_option flag1("flag1", "The flag1", "arg");
     const mock_option flag2("flag2");
-    std::vector< const base_option* > options;
+    std::vector<const base_option*> options;
     options.push_back(&flag1);
     options.push_back(&flag2);
 
@@ -603,20 +587,19 @@ ATF_TEST_CASE_BODY(option_types)
 
     ATF_REQUIRE(cmdline.has_option("flag1"));
     ATF_REQUIRE(cmdline.has_option("flag2"));
-    ATF_REQUIRE_EQ("a", cmdline.get_option< string_option >("flag1"));
-    ATF_REQUIRE_EQ(1, cmdline.get_option< mock_option >("flag2"));
+    ATF_REQUIRE_EQ("a", cmdline.get_option<string_option>("flag1"));
+    ATF_REQUIRE_EQ(1, cmdline.get_option<mock_option>("flag2"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(option_validation_error);
 ATF_TEST_CASE_BODY(option_validation_error)
 {
     const int argc = 3;
-    const char* const argv[] = {"progname", "--flag1=zero", "--flag2=foo",
-                                NULL};
+    const char* const argv[] = { "progname", "--flag1=zero", "--flag2=foo",
+                                 NULL };
     const mock_option flag1("flag1");
     const mock_option flag2("flag2");
-    std::vector< const base_option* > options;
+    std::vector<const base_option*> options;
     options.push_back(&flag1);
     options.push_back(&flag2);
 
@@ -629,16 +612,15 @@ ATF_TEST_CASE_BODY(option_validation_error)
     }
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(silent_errors);
 ATF_TEST_CASE_BODY(silent_errors)
 {
     const int argc = 2;
-    const char* const argv[] = {"progname", "-h", NULL};
+    const char* const argv[] = { "progname", "-h", NULL };
     cmdline::options_vector options;
 
     try {
-        std::pair< int, int > oldfds = mock_stdfds("output.txt");
+        std::pair<int, int> oldfds = mock_stdfds("output.txt");
         try {
             parse(argc, argv, options);
         } catch (...) {
@@ -664,7 +646,6 @@ ATF_TEST_CASE_BODY(silent_errors)
     if (has_output)
         fail("getopt_long printed messages on stdout/stderr by itself");
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

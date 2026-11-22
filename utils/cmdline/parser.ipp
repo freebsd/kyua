@@ -31,7 +31,6 @@
 
 #include "utils/cmdline/parser.hpp"
 
-
 /// Gets the value of an option.
 ///
 /// If the option has been specified multiple times on the command line, this
@@ -46,13 +45,13 @@
 /// \return The value of the option converted to the appropriate type.
 ///
 /// \pre has_option(name) must be true.
-template< typename Option > typename Option::option_type
+template <typename Option>
+typename Option::option_type
 utils::cmdline::parsed_cmdline::get_option(const std::string& name) const
 {
-    const std::vector< std::string >& raw_values = get_option_raw(name);
+    const std::vector<std::string>& raw_values = get_option_raw(name);
     return Option::convert(raw_values[raw_values.size() - 1]);
 }
-
 
 /// Gets the values of an option that supports repetition.
 ///
@@ -65,13 +64,14 @@ utils::cmdline::parsed_cmdline::get_option(const std::string& name) const
 /// \return The values of the option converted to the appropriate type.
 ///
 /// \pre has_option(name) must be true.
-template< typename Option > std::vector< typename Option::option_type >
+template <typename Option>
+std::vector<typename Option::option_type>
 utils::cmdline::parsed_cmdline::get_multi_option(const std::string& name) const
 {
-    std::vector< typename Option::option_type > values;
+    std::vector<typename Option::option_type> values;
 
-    const std::vector< std::string >& raw_values = get_option_raw(name);
-    for (std::vector< std::string >::const_iterator iter = raw_values.begin();
+    const std::vector<std::string>& raw_values = get_option_raw(name);
+    for (std::vector<std::string>::const_iterator iter = raw_values.begin();
          iter != raw_values.end(); iter++) {
         values.push_back(Option::convert(*iter));
     }
@@ -79,5 +79,4 @@ utils::cmdline::parsed_cmdline::get_multi_option(const std::string& name) const
     return values;
 }
 
-
-#endif  // !defined(UTILS_CMDLINE_PARSER_IPP)
+#endif // !defined(UTILS_CMDLINE_PARSER_IPP)

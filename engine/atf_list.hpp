@@ -41,11 +41,9 @@
 
 namespace engine {
 
-
 model::metadata parse_atf_metadata(const model::properties_map&);
 model::test_cases_map parse_atf_list(std::istream&);
 
+} // namespace engine
 
-}  // namespace engine
-
-#endif  // !defined(ENGINE_ATF_LIST_HPP)
+#endif // !defined(ENGINE_ATF_LIST_HPP)

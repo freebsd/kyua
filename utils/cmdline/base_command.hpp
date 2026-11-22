@@ -32,10 +32,9 @@
 #if !defined(UTILS_CMDLINE_BASE_COMMAND_HPP)
 #define UTILS_CMDLINE_BASE_COMMAND_HPP
 
-#include "utils/cmdline/base_command_fwd.hpp"
-
 #include <string>
 
+#include "utils/cmdline/base_command_fwd.hpp"
 #include "utils/cmdline/options_fwd.hpp"
 #include "utils/cmdline/parser_fwd.hpp"
 #include "utils/cmdline/ui_fwd.hpp"
@@ -43,7 +42,6 @@
 
 namespace utils {
 namespace cmdline {
-
 
 /// Prototype class for the implementation of subcommands of a program.
 ///
@@ -72,7 +70,7 @@ class command_proto : noncopyable {
     void add_option_ptr(const base_option*);
 
 protected:
-    template< typename Option > void add_option(const Option&);
+    template <typename Option> void add_option(const Option&);
     parsed_cmdline parse_cmdline(const args_vector&) const;
 
 public:
@@ -85,7 +83,6 @@ public:
     const std::string& short_description(void) const;
     const options_vector& options(void) const;
 };
-
 
 /// Unparametrized base subcommand for a program.
 ///
@@ -117,7 +114,6 @@ public:
     int main(ui*, const args_vector&);
 };
 
-
 /// Parametrized base subcommand for a program.
 ///
 /// Use this class to define subcommands for your program that need some kind of
@@ -126,8 +122,7 @@ public:
 /// \param Data The type of the object passed to the subcommand at runtime.
 /// This is useful, for example, to pass around the runtime configuration of the
 /// program.
-template< typename Data >
-class base_command : public command_proto {
+template <typename Data> class base_command : public command_proto {
     /// Main code of the command.
     ///
     /// This is called from main() after the command line has been processed and
@@ -154,9 +149,7 @@ public:
     int main(ui*, const args_vector&, const Data&);
 };
 
+} // namespace cmdline
+} // namespace utils
 
-}  // namespace cmdline
-}  // namespace utils
-
-
-#endif  // !defined(UTILS_CMDLINE_BASE_COMMAND_HPP)
+#endif // !defined(UTILS_CMDLINE_BASE_COMMAND_HPP)

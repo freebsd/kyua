@@ -45,20 +45,16 @@ extern "C" {
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
 
-
 namespace {
-
 
 /// List of fatal signals to be intercepted by the sanity code.
 ///
 /// The tests hardcode this list; update them whenever the list gets updated.
 static int fatal_signals[] = { SIGABRT, SIGBUS, SIGSEGV, 0 };
 
-
 /// The path to the log file to report on crashes.  Be aware that this is empty
 /// until install_crash_handlers() is called.
 static std::string logfile;
-
 
 /// Prints a message to stderr.
 ///
@@ -75,7 +71,6 @@ err_write(const std::string& message)
     }
 }
 
-
 /// The crash handler for fatal signals.
 ///
 /// The sole purpose of this is to print some informational data before
@@ -91,14 +86,14 @@ crash_handler(const int signo)
     err_write(F("*** Log file is %s\n") % logfile);
     err_write(F("*** Please report this problem to %s detailing what you were "
                 "doing before the crash happened; if possible, include the log "
-                "file mentioned above\n") % PACKAGE_BUGREPORT);
+                "file mentioned above\n") %
+              PACKAGE_BUGREPORT);
 
     /// The handler is installed with SA_RESETHAND, so this is safe to do.  We
     /// really want to call the default handler to generate any possible core
     /// dumps.
     ::kill(::getpid(), signo);
 }
-
 
 /// Installs a handler for a fatal signal representing a crash.
 ///
@@ -117,12 +112,11 @@ install_one_crash_handler(const int signo)
 
     if (::sigaction(signo, &sa, NULL) == -1) {
         const int original_errno = errno;
-        LW(F("Could not install crash handler for signal %s: %s") %
-           signo % std::strerror(original_errno));
+        LW(F("Could not install crash handler for signal %s: %s") % signo %
+           std::strerror(original_errno));
     } else
         LD(F("Installed crash handler for signal %s") % signo);
 }
-
 
 /// Returns a textual representation of an assertion type.
 ///
@@ -137,17 +131,20 @@ static std::string
 format_type(const utils::assert_type type)
 {
     switch (type) {
-    case utils::invariant: return "Invariant check failed";
-    case utils::postcondition: return "Postcondition check failed";
-    case utils::precondition: return "Precondition check failed";
-    case utils::unreachable: return "Unreachable point reached";
-    default: return "UNKNOWN ASSERTION TYPE";
+    case utils::invariant:
+        return "Invariant check failed";
+    case utils::postcondition:
+        return "Postcondition check failed";
+    case utils::precondition:
+        return "Precondition check failed";
+    case utils::unreachable:
+        return "Unreachable point reached";
+    default:
+        return "UNKNOWN ASSERTION TYPE";
     }
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Raises an assertion error.
 ///
@@ -170,7 +167,6 @@ utils::sanity_failure(const assert_type type, const char* file,
         std::cerr << "\n";
     std::abort();
 }
-
 
 /// Installs persistent handlers for crash signals.
 ///

@@ -38,14 +38,12 @@
 namespace utils {
 namespace fs {
 
-
 /// Base exception for fs errors.
 class error : public std::runtime_error {
 public:
     explicit error(const std::string&);
     virtual ~error(void) throw();
 };
-
 
 /// Error denoting an invalid path while constructing a fs::path object.
 class invalid_path_error : public error {
@@ -58,7 +56,6 @@ public:
 
     const std::string& invalid_path(void) const;
 };
-
 
 /// Paths cannot be joined.
 class join_error : public error {
@@ -77,7 +74,6 @@ public:
     const std::string& textual_path2(void) const;
 };
 
-
 /// Exceptions for errno-based errors.
 ///
 /// TODO(jmmv): This code is duplicated in, at least, utils::process.  Figure
@@ -94,7 +90,6 @@ public:
     int original_errno(void) const throw();
 };
 
-
 /// Exception to denote an unsupported operation.
 class unsupported_operation_error : public error {
 public:
@@ -102,9 +97,7 @@ public:
     virtual ~unsupported_operation_error(void) throw();
 };
 
+} // namespace fs
+} // namespace utils
 
-}  // namespace fs
-}  // namespace utils
-
-
-#endif  // !defined(UTILS_FS_EXCEPTIONS_HPP)
+#endif // !defined(UTILS_FS_EXCEPTIONS_HPP)

@@ -36,10 +36,8 @@
 
 namespace utils {
 
-
 units::bytes physical_memory(void);
 
+} // namespace utils
 
-}  // namespace utils
-
-#endif  // !defined(UTILS_MEMORY_HPP)
+#endif // !defined(UTILS_MEMORY_HPP)

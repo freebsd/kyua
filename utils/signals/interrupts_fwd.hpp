@@ -35,12 +35,10 @@
 namespace utils {
 namespace signals {
 
-
 class interrupts_handler;
 class interrupts_inhibiter;
 
+} // namespace signals
+} // namespace utils
 
-}  // namespace signals
-}  // namespace utils
-
-#endif  // !defined(UTILS_SIGNALS_INTERRUPTS_FWD_HPP)
+#endif // !defined(UTILS_SIGNALS_INTERRUPTS_FWD_HPP)

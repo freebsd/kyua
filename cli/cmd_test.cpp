@@ -26,10 +26,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "cli/cmd_test.hpp"
-
 #include <cstdlib>
 
+#include "cli/cmd_test.hpp"
 #include "cli/common.ipp"
 #include "drivers/run_tests.hpp"
 #include "model/test_program.hpp"
@@ -51,9 +50,7 @@ namespace layout = store::layout;
 
 using cli::cmd_test;
 
-
 namespace {
-
 
 /// Hooks to print a progress report of the execution of the tests.
 class print_hooks : public drivers::run_tests::base_hooks {
@@ -83,13 +80,12 @@ public:
     ///
     /// \param test_program The test program containing the test case.
     /// \param test_case_name The name of the test case being executed.
-    virtual void
-    got_test_case(const model::test_program& test_program,
-                  const std::string& test_case_name)
+    virtual void got_test_case(const model::test_program& test_program,
+                               const std::string& test_case_name)
     {
         if (!_parallel) {
             _ui->out(F("%s  ->  ") %
-                     cli::format_test_case_id(test_program, test_case_name),
+                         cli::format_test_case_id(test_program, test_case_name),
                      false);
         }
     }
@@ -100,37 +96,33 @@ public:
     /// \param test_case_name The name of the test case being executed.
     /// \param result The result of the execution of the test case.
     /// \param duration The time it took to run the test.
-    virtual void
-    got_result(const model::test_program& test_program,
-               const std::string& test_case_name,
-               const model::test_result& result,
-               const datetime::delta& duration)
+    virtual void got_result(const model::test_program& test_program,
+                            const std::string& test_case_name,
+                            const model::test_result& result,
+                            const datetime::delta& duration)
     {
         if (_parallel) {
             _ui->out(F("%s  ->  ") %
-                     cli::format_test_case_id(test_program, test_case_name),
+                         cli::format_test_case_id(test_program, test_case_name),
                      false);
         }
         _ui->out(F("%s  [%s]") % cli::format_result(result) %
-            cli::format_delta(duration));
+                 cli::format_delta(duration));
 
         type_count[result.type()]++;
     }
 };
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Default constructor for cmd_test.
-cmd_test::cmd_test(void) : cli_command(
-    "test", "[test-program ...]", 0, -1, "Run tests")
+cmd_test::cmd_test(void) :
+    cli_command("test", "[test-program ...]", 0, -1, "Run tests")
 {
     add_option(build_root_option);
     add_option(kyuafile_option);
     add_option(results_file_create_option);
 }
-
 
 /// Entry point for the "test" subcommand.
 ///
@@ -146,8 +138,8 @@ cmd_test::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
     const layout::results_id_file_pair results = layout::new_db(
         results_file_create(cmdline), kyuafile_path(cmdline).branch_path());
 
-    const bool parallel = (user_config.lookup< config::positive_int_node >(
-                               "parallelism") > 1);
+    const bool parallel =
+        (user_config.lookup<config::positive_int_node>("parallelism") > 1);
 
     print_hooks hooks(ui, parallel);
     const drivers::run_tests::result result = drivers::run_tests::drive(
@@ -184,7 +176,7 @@ cmd_test::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
                 if (it != types.begin())
                     ui->out(", ", false);
                 ui->out(F("%s %s") % hooks.type_count[type.id] % type.name,
-                    false);
+                        false);
             }
         }
         ui->out(")");
@@ -199,6 +191,6 @@ cmd_test::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
         exit_code = EXIT_SUCCESS;
     }
 
-    return report_unused_filters(result.unused_filters, ui) ?
-        EXIT_FAILURE : exit_code;
+    return report_unused_filters(result.unused_filters, ui) ? EXIT_FAILURE :
+                                                              exit_code;
 }

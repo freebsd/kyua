@@ -36,33 +36,26 @@
 
 namespace engine {
 
-
 /// Implementation of the scheduler interface for tap test programs.
 class tap_interface : public engine::scheduler::interface {
 public:
-    void exec_list [[noreturn]] (
-        const model::test_program&,
-        const utils::config::properties_map&) const;
+    void exec_list [[noreturn]] (const model::test_program&,
+                                 const utils::config::properties_map&) const;
 
-    model::test_cases_map parse_list(
-        const utils::optional< utils::process::status >&,
-        const utils::fs::path&,
-        const utils::fs::path&) const;
+    model::test_cases_map
+    parse_list(const utils::optional<utils::process::status>&,
+               const utils::fs::path&, const utils::fs::path&) const;
 
-    void exec_test [[noreturn]] (
-        const model::test_program&, const std::string&,
-        const utils::config::properties_map&,
-        const utils::fs::path&) const;
+    void exec_test [[noreturn]] (const model::test_program&, const std::string&,
+                                 const utils::config::properties_map&,
+                                 const utils::fs::path&) const;
 
-    model::test_result compute_result(
-        const utils::optional< utils::process::status >&,
-        const utils::fs::path&,
-        const utils::fs::path&,
-        const utils::fs::path&) const;
+    model::test_result
+    compute_result(const utils::optional<utils::process::status>&,
+                   const utils::fs::path&, const utils::fs::path&,
+                   const utils::fs::path&) const;
 };
 
+} // namespace engine
 
-}  // namespace engine
-
-
-#endif  // !defined(ENGINE_TAP_HPP)
+#endif // !defined(ENGINE_TAP_HPP)

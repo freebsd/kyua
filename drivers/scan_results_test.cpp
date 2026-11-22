@@ -26,12 +26,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "drivers/scan_results.hpp"
-
+#include <atf-c++.hpp>
 #include <set>
 
-#include <atf-c++.hpp>
-
+#include "drivers/scan_results.hpp"
 #include "engine/filters.hpp"
 #include "model/context.hpp"
 #include "model/metadata.hpp"
@@ -54,9 +52,7 @@ namespace fs = utils::fs;
 using utils::none;
 using utils::optional;
 
-
 namespace {
-
 
 /// Records the callback values for futher investigation.
 class capture_hooks : public drivers::scan_results::base_hooks {
@@ -65,23 +61,21 @@ public:
     bool _begin_called;
 
     /// The captured driver result, if any.
-    optional< drivers::scan_results::result > _end_result;
+    optional<drivers::scan_results::result> _end_result;
 
     /// The captured context, if any.
-    optional< model::context > _context;
+    optional<model::context> _context;
 
     /// The captured results, flattened as "program:test_case:result".
-    std::set< std::string > _results;
+    std::set<std::string> _results;
 
     /// Constructor.
-    capture_hooks(void) :
-        _begin_called(false)
+    capture_hooks(void) : _begin_called(false)
     {
     }
 
     /// Callback executed before any operation is performed.
-    void
-    begin(void)
+    void begin(void)
     {
         _begin_called = true;
     }
@@ -90,8 +84,7 @@ public:
     ///
     /// \param r A structure with all results computed by this driver.  Note
     ///     that this is also returned by the drive operation.
-    void
-    end(const drivers::scan_results::result& r)
+    void end(const drivers::scan_results::result& r)
     {
         PRE(!_end_result);
         _end_result = r;
@@ -113,8 +106,12 @@ public:
     {
         const char* type;
         switch (iter.result().type()) {
-        case model::test_result_passed: type = "passed"; break;
-        case model::test_result_skipped: type = "skipped"; break;
+        case model::test_result_passed:
+            type = "passed";
+            break;
+        case model::test_result_skipped:
+            type = "skipped";
+            break;
         default:
             UNREACHABLE_MSG("Formatting unimplemented");
         }
@@ -125,7 +122,6 @@ public:
                         duration.seconds % duration.useconds);
     }
 };
-
 
 /// Populates a results file.
 ///
@@ -139,12 +135,12 @@ public:
 static void
 populate_results_file(const char* db_name, const int count)
 {
-    store::write_backend backend = store::write_backend::open_rw(
-        fs::path(db_name));
+    store::write_backend backend =
+        store::write_backend::open_rw(fs::path(db_name));
 
     store::write_transaction tx = backend.start_write();
 
-    std::map< std::string, std::string > env;
+    std::map<std::string, std::string> env;
     for (int i = 0; i < count; i++)
         env[F("VAR%s") % i] = F("Value %s") % i;
     const model::context context(fs::path("/root"), env);
@@ -176,9 +172,7 @@ populate_results_file(const char* db_name, const int count)
     tx.commit();
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 ATF_TEST_CASE_WITHOUT_HEAD(ok__all);
 ATF_TEST_CASE_BODY(ok__all)
@@ -187,18 +181,18 @@ ATF_TEST_CASE_BODY(ok__all)
 
     capture_hooks hooks;
     const drivers::scan_results::result result = drivers::scan_results::drive(
-        fs::path("test.db"), std::set< engine::test_filter >(), hooks);
+        fs::path("test.db"), std::set<engine::test_filter>(), hooks);
     ATF_REQUIRE(result.unused_filters.empty());
     ATF_REQUIRE(hooks._begin_called);
     ATF_REQUIRE(hooks._end_result);
 
-    std::map< std::string, std::string > env;
+    std::map<std::string, std::string> env;
     env["VAR0"] = "Value 0";
     env["VAR1"] = "Value 1";
     const model::context context(fs::path("/root"), env);
     ATF_REQUIRE(context == hooks._context.get());
 
-    std::set< std::string > results;
+    std::set<std::string> results;
     results.insert("/root/dir/prog_0:case_0:skipped:Count 0:4:10");
     results.insert("/root/dir/prog_0:case_1:skipped:Count 1:4:11");
     results.insert("/root/dir/prog_1:case_0:skipped:Count 0:4:11");
@@ -206,37 +200,35 @@ ATF_TEST_CASE_BODY(ok__all)
     ATF_REQUIRE_EQ(results, hooks._results);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(ok__filters);
 ATF_TEST_CASE_BODY(ok__filters)
 {
     populate_results_file("test.db", 3);
 
-    std::set< engine::test_filter > filters;
+    std::set<engine::test_filter> filters;
     filters.insert(engine::test_filter(fs::path("dir/prog_1"), ""));
     filters.insert(engine::test_filter(fs::path("dir/prog_1"), "no"));
     filters.insert(engine::test_filter(fs::path("dir/prog_2"), "case_1"));
     filters.insert(engine::test_filter(fs::path("dir/prog_3"), ""));
 
     capture_hooks hooks;
-    const drivers::scan_results::result result = drivers::scan_results::drive(
-        fs::path("test.db"), filters, hooks);
+    const drivers::scan_results::result result =
+        drivers::scan_results::drive(fs::path("test.db"), filters, hooks);
     ATF_REQUIRE(hooks._begin_called);
     ATF_REQUIRE(hooks._end_result);
 
-    std::set< engine::test_filter > unused_filters;
+    std::set<engine::test_filter> unused_filters;
     unused_filters.insert(engine::test_filter(fs::path("dir/prog_1"), "no"));
     unused_filters.insert(engine::test_filter(fs::path("dir/prog_3"), ""));
     ATF_REQUIRE_EQ(unused_filters, result.unused_filters);
 
-    std::set< std::string > results;
+    std::set<std::string> results;
     results.insert("/root/dir/prog_1:case_0:skipped:Count 0:4:11");
     results.insert("/root/dir/prog_1:case_1:skipped:Count 1:4:12");
     results.insert("/root/dir/prog_1:case_2:skipped:Count 2:4:13");
     results.insert("/root/dir/prog_2:case_1:skipped:Count 1:4:13");
     ATF_REQUIRE_EQ(results, hooks._results);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(missing_db);
 ATF_TEST_CASE_BODY(missing_db)
@@ -245,10 +237,8 @@ ATF_TEST_CASE_BODY(missing_db)
     ATF_REQUIRE_THROW(
         store::error,
         drivers::scan_results::drive(fs::path("test.db"),
-                                     std::set< engine::test_filter >(),
-                                     hooks));
+                                     std::set<engine::test_filter>(), hooks));
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

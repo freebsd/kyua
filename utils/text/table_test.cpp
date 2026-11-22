@@ -26,16 +26,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/text/table.hpp"
-
 #include <algorithm>
-
 #include <atf-c++.hpp>
 
 #include "utils/text/operations.ipp"
+#include "utils/text/table.hpp"
 
 namespace text = utils::text;
-
 
 /// Performs a check on text::table_formatter.
 ///
@@ -60,15 +57,12 @@ table_formatter_check(const std::string& expected,
     ATF_REQUIRE_EQ(expected, text::join(formatter.format(table), "\n") + "\n");
 }
 
-
-
 ATF_TEST_CASE_WITHOUT_HEAD(table__ncolumns);
 ATF_TEST_CASE_BODY(table__ncolumns)
 {
     ATF_REQUIRE_EQ(5, text::table(5).ncolumns());
     ATF_REQUIRE_EQ(10, text::table(10).ncolumns());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(table__column_width);
 ATF_TEST_CASE_BODY(table__column_width)
@@ -88,7 +82,6 @@ ATF_TEST_CASE_BODY(table__column_width)
     ATF_REQUIRE_EQ(8, table.column_width(1));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(table__column_widths);
 ATF_TEST_CASE_BODY(table__column_widths)
 {
@@ -107,7 +100,6 @@ ATF_TEST_CASE_BODY(table__column_widths)
     ATF_REQUIRE_EQ(8, table.column_widths()[1]);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(table__empty);
 ATF_TEST_CASE_BODY(table__empty)
 {
@@ -116,7 +108,6 @@ ATF_TEST_CASE_BODY(table__empty)
     table.add_row(text::table_row(2));
     ATF_REQUIRE(!table.empty());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(table__iterate);
 ATF_TEST_CASE_BODY(table__iterate)
@@ -140,16 +131,18 @@ ATF_TEST_CASE_BODY(table__iterate)
     ATF_REQUIRE(iter == table.end());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(table_formatter__empty);
 ATF_TEST_CASE_BODY(table_formatter__empty)
 {
-    ATF_REQUIRE(text::table_formatter().set_separator(" ")
-                .format(text::table(1)).empty());
-    ATF_REQUIRE(text::table_formatter().set_separator(" ")
-                .format(text::table(10)).empty());
+    ATF_REQUIRE(text::table_formatter()
+                    .set_separator(" ")
+                    .format(text::table(1))
+                    .empty());
+    ATF_REQUIRE(text::table_formatter()
+                    .set_separator(" ")
+                    .format(text::table(10))
+                    .empty());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(table_formatter__defaults);
 ATF_TEST_CASE_BODY(table_formatter__defaults)
@@ -176,7 +169,6 @@ ATF_TEST_CASE_BODY(table_formatter__defaults)
         text::table_formatter(), table);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(table_formatter__one_column__no_max_width);
 ATF_TEST_CASE_BODY(table_formatter__one_column__no_max_width)
 {
@@ -192,12 +184,10 @@ ATF_TEST_CASE_BODY(table_formatter__one_column__no_max_width)
         table.add_row(row);
     }
 
-    table_formatter_check(
-        "First row with some words\n"
-        "Second row with some words\n",
-        text::table_formatter().set_separator(" | "), table);
+    table_formatter_check("First row with some words\n"
+                          "Second row with some words\n",
+                          text::table_formatter().set_separator(" | "), table);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(table_formatter__one_column__explicit_width);
 ATF_TEST_CASE_BODY(table_formatter__one_column__explicit_width)
@@ -221,7 +211,6 @@ ATF_TEST_CASE_BODY(table_formatter__one_column__explicit_width)
         table);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(table_formatter__one_column__max_width);
 ATF_TEST_CASE_BODY(table_formatter__one_column__max_width)
 {
@@ -243,7 +232,6 @@ ATF_TEST_CASE_BODY(table_formatter__one_column__max_width)
         text::table_formatter().set_separator(" | ").set_table_width(11),
         table);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(table_formatter__many_columns__no_max_width);
 ATF_TEST_CASE_BODY(table_formatter__many_columns__no_max_width)
@@ -270,7 +258,6 @@ ATF_TEST_CASE_BODY(table_formatter__many_columns__no_max_width)
         text::table_formatter().set_separator(" | "), table);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(table_formatter__many_columns__explicit_width);
 ATF_TEST_CASE_BODY(table_formatter__many_columns__explicit_width)
 {
@@ -293,10 +280,12 @@ ATF_TEST_CASE_BODY(table_formatter__many_columns__explicit_width)
     table_formatter_check(
         "First                   | Second                       | Third\n"
         "Fourth with some text   | Fifth with some more text    | Sixth foo\n",
-        text::table_formatter().set_separator(" | ").set_column_width(0, 23)
-        .set_column_width(1, 28), table);
+        text::table_formatter()
+            .set_separator(" | ")
+            .set_column_width(0, 23)
+            .set_column_width(1, 28),
+        table);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(table_formatter__many_columns__max_width);
 ATF_TEST_CASE_BODY(table_formatter__many_columns__max_width)
@@ -322,20 +311,25 @@ ATF_TEST_CASE_BODY(table_formatter__many_columns__max_width)
         "Fourth with some text | Fifth with | Sixth foo\n"
         "                      | some more  | \n"
         "                      | text       | \n",
-        text::table_formatter().set_separator(" | ").set_table_width(46)
-        .set_column_width(1, text::table_formatter::width_refill)
-        .set_column_width(0, text::table_formatter::width_auto), table);
+        text::table_formatter()
+            .set_separator(" | ")
+            .set_table_width(46)
+            .set_column_width(1, text::table_formatter::width_refill)
+            .set_column_width(0, text::table_formatter::width_auto),
+        table);
 
     table_formatter_check(
         "First                   | Second     | Third\n"
         "Fourth with some text   | Fifth with | Sixth foo\n"
         "                        | some more  | \n"
         "                        | text       | \n",
-        text::table_formatter().set_separator(" | ").set_table_width(48)
-        .set_column_width(1, text::table_formatter::width_refill)
-        .set_column_width(0, 23), table);
+        text::table_formatter()
+            .set_separator(" | ")
+            .set_table_width(48)
+            .set_column_width(1, text::table_formatter::width_refill)
+            .set_column_width(0, 23),
+        table);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(table_formatter__use_case__cli_help);
 ATF_TEST_CASE_BODY(table_formatter__use_case__cli_help)
@@ -376,9 +370,11 @@ ATF_TEST_CASE_BODY(table_formatter__use_case__cli_help)
         "            of the first flag\n"
         "-b          And this is the text for\n"
         "            the second flag\n",
-        text::table_formatter().set_separator("  ").set_table_width(36)
-        .set_column_width(0, first_width)
-        .set_column_width(1, text::table_formatter::width_refill),
+        text::table_formatter()
+            .set_separator("  ")
+            .set_table_width(36)
+            .set_column_width(0, first_width)
+            .set_column_width(1, text::table_formatter::width_refill),
         options_table);
 
     table_formatter_check(
@@ -386,12 +382,13 @@ ATF_TEST_CASE_BODY(table_formatter__use_case__cli_help)
         "            command\n"
         "second      And this is the second\n"
         "            command\n",
-        text::table_formatter().set_separator("  ").set_table_width(36)
-        .set_column_width(0, first_width)
-        .set_column_width(1, text::table_formatter::width_refill),
+        text::table_formatter()
+            .set_separator("  ")
+            .set_table_width(36)
+            .set_column_width(0, first_width)
+            .set_column_width(1, text::table_formatter::width_refill),
         commands_table);
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

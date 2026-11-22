@@ -32,12 +32,11 @@
 #if !defined(MODEL_METADATA_HPP)
 #define MODEL_METADATA_HPP
 
-#include "model/metadata_fwd.hpp"
-
 #include <memory>
 #include <ostream>
 #include <string>
 
+#include "model/metadata_fwd.hpp"
 #include "model/types.hpp"
 #include "utils/config/tree_fwd.hpp"
 #include "utils/datetime_fwd.hpp"
@@ -47,13 +46,12 @@
 
 namespace model {
 
-
 /// Collection of metadata properties of a test.
 class metadata {
     struct impl;
 
     /// Pointer to the shared internal implementation.
-    std::shared_ptr< impl > _pimpl;
+    std::shared_ptr<impl> _pimpl;
 
     friend class metadata_builder;
 
@@ -87,16 +85,14 @@ public:
     bool operator!=(const metadata&) const;
 };
 
-
 std::ostream& operator<<(std::ostream&, const metadata&);
-
 
 /// Builder for a metadata object.
 class metadata_builder : utils::noncopyable {
     struct impl;
 
     /// Pointer to the shared internal implementation.
-    std::unique_ptr< impl > _pimpl;
+    std::unique_ptr<impl> _pimpl;
 
 public:
     metadata_builder(void);
@@ -131,7 +127,6 @@ public:
     metadata build(void) const;
 };
 
+} // namespace model
 
-}  // namespace model
-
-#endif  // !defined(MODEL_METADATA_HPP)
+#endif // !defined(MODEL_METADATA_HPP)

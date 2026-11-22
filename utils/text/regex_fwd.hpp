@@ -35,12 +35,10 @@
 namespace utils {
 namespace text {
 
-
 class regex_matches;
 class regex;
 
+} // namespace text
+} // namespace utils
 
-}  // namespace text
-}  // namespace utils
-
-#endif  // !defined(UTILS_TEXT_REGEX_FWD_HPP)
+#endif // !defined(UTILS_TEXT_REGEX_FWD_HPP)

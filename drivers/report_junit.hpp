@@ -42,18 +42,15 @@
 
 namespace drivers {
 
-
 extern const char* const junit_metadata_header;
 extern const char* const junit_timing_header;
 extern const char* const junit_stderr_header;
-
 
 std::string junit_classname(const model::test_program&);
 std::string junit_duration(const utils::datetime::delta&);
 std::string junit_metadata(const model::metadata&);
 std::string junit_timing(const utils::datetime::timestamp&,
                          const utils::datetime::timestamp&);
-
 
 /// Hooks for the scan_results driver to generate a JUnit report.
 class report_junit_hooks : public drivers::scan_results::base_hooks {
@@ -69,7 +66,6 @@ public:
     void end(const drivers::scan_results::result&);
 };
 
+} // namespace drivers
 
-}  // namespace drivers
-
-#endif  // !defined(ENGINE_REPORT_JUNIT_HPP)
+#endif // !defined(ENGINE_REPORT_JUNIT_HPP)

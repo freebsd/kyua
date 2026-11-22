@@ -54,7 +54,6 @@ namespace process = utils::process;
 
 using utils::optional;
 
-
 /// Executes a test program's list operation.
 ///
 /// This method is intended to be called within a subprocess and is expected
@@ -68,19 +67,16 @@ engine::plain_interface::exec_list(
     ::_exit(EXIT_SUCCESS);
 }
 
-
 /// Computes the test cases list of a test program.
 ///
 /// \return A list of test cases.
 model::test_cases_map
 engine::plain_interface::parse_list(
-    const optional< process::status >& /* status */,
-    const fs::path& /* stdout_path */,
-    const fs::path& /* stderr_path */) const
+    const optional<process::status>& /* status */,
+    const fs::path& /* stdout_path */, const fs::path& /* stderr_path */) const
 {
     return model::test_cases_map_builder().add("main").build();
 }
-
 
 /// Executes a test case of the test program.
 ///
@@ -93,8 +89,7 @@ engine::plain_interface::parse_list(
 /// \param vars User-provided variables to pass to the test program.
 void
 engine::plain_interface::exec_test(
-    const model::test_program& test_program,
-    const std::string& test_case_name,
+    const model::test_program& test_program, const std::string& test_case_name,
     const config::properties_map& vars,
     const fs::path& /* control_directory */) const
 {
@@ -113,7 +108,6 @@ engine::plain_interface::exec_test(
     __builtin_unreachable();
 }
 
-
 /// Computes the result of a test case based on its termination status.
 ///
 /// \param status The termination status of the subprocess used to execute
@@ -121,11 +115,10 @@ engine::plain_interface::exec_test(
 ///
 /// \return A test result.
 model::test_result
-engine::plain_interface::compute_result(
-    const optional< process::status >& status,
-    const fs::path& /* control_directory */,
-    const fs::path& /* stdout_path */,
-    const fs::path& /* stderr_path */) const
+engine::plain_interface::compute_result(const optional<process::status>& status,
+                                        const fs::path& /* control_directory */,
+                                        const fs::path& /* stdout_path */,
+                                        const fs::path& /* stderr_path */) const
 {
     if (!status) {
         return model::test_result(model::test_result_broken,
@@ -137,13 +130,13 @@ engine::plain_interface::compute_result(
         if (exitstatus == EXIT_SUCCESS) {
             return model::test_result(model::test_result_passed);
         } else {
-            return model::test_result(
-                model::test_result_failed,
-                F("Returned non-success exit status %s") % exitstatus);
+            return model::test_result(model::test_result_failed,
+                                      F("Returned non-success exit status %s") %
+                                          exitstatus);
         }
     } else {
-        return model::test_result(
-            model::test_result_broken,
-            F("Received signal %s") % status.get().termsig());
+        return model::test_result(model::test_result_broken,
+                                  F("Received signal %s") %
+                                      status.get().termsig());
     }
 }

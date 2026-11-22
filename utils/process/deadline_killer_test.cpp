@@ -33,9 +33,8 @@ extern "C" {
 #include <unistd.h>
 }
 
-#include <cstdlib>
-
 #include <atf-c++.hpp>
+#include <cstdlib>
 
 #include "utils/datetime.hpp"
 #include "utils/process/child.ipp"
@@ -44,14 +43,12 @@ extern "C" {
 namespace datetime = utils::datetime;
 namespace process = utils::process;
 
-
 namespace {
-
 
 /// Body of a child process that sleeps and then exits.
 ///
 /// \tparam Seconds The delay the subprocess has to sleep for.
-template< int Seconds >
+template <int Seconds>
 static void
 child_sleep(void)
 {
@@ -59,15 +56,13 @@ child_sleep(void)
     std::exit(EXIT_SUCCESS);
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 ATF_TEST_CASE_WITHOUT_HEAD(activation);
 ATF_TEST_CASE_BODY(activation)
 {
-    std::unique_ptr< process::child > child = process::child::fork_capture(
-        child_sleep< 60 >);
+    std::unique_ptr<process::child> child =
+        process::child::fork_capture(child_sleep<60>);
 
     datetime::timestamp start = datetime::timestamp::now();
     process::deadline_killer killer(datetime::delta(1, 0), child->pid());
@@ -81,12 +76,11 @@ ATF_TEST_CASE_BODY(activation)
     ATF_REQUIRE_EQ(SIGKILL, status.termsig());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(no_activation);
 ATF_TEST_CASE_BODY(no_activation)
 {
-    std::unique_ptr< process::child > child = process::child::fork_capture(
-        child_sleep< 1 >);
+    std::unique_ptr<process::child> child =
+        process::child::fork_capture(child_sleep<1>);
 
     datetime::timestamp start = datetime::timestamp::now();
     process::deadline_killer killer(datetime::delta(60, 0), child->pid());
@@ -99,7 +93,6 @@ ATF_TEST_CASE_BODY(no_activation)
     ATF_REQUIRE(status.exited());
     ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

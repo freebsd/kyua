@@ -36,10 +36,8 @@
 
 namespace cli {
 
-
 /// Implementation of the "about" subcommand.
-class cmd_about : public cli_command
-{
+class cmd_about : public cli_command {
     /// Path to the directory containing the distribution documents.
     const std::string _docdir;
 
@@ -50,8 +48,6 @@ public:
             const utils::config::tree&);
 };
 
+} // namespace cli
 
-}  // namespace cli
-
-
-#endif  // !defined(CLI_CMD_ABOUT_HPP)
+#endif // !defined(CLI_CMD_ABOUT_HPP)

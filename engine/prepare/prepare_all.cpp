@@ -10,20 +10,17 @@ static const std::string _description = "Run all preparations";
 
 namespace prepare = engine::prepare;
 
-
 const std::string&
 prepare::prepare_all::name() const
 {
     return _name;
 }
 
-
 const std::string&
 prepare::prepare_all::description() const
 {
     return _description;
 }
-
 
 int
 prepare::prepare_all::exec(cmdline::ui* ui,

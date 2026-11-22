@@ -41,15 +41,12 @@
 
 namespace cli {
 
-
 extern const utils::cmdline::path_option config_option;
 extern const utils::cmdline::property_option variable_option;
-
 
 utils::config::tree load_config(const utils::cmdline::parsed_cmdline&,
                                 const bool);
 
+} // namespace cli
 
-}  // namespace cli
-
-#endif  // !defined(CLI_CONFIG_HPP)
+#endif // !defined(CLI_CONFIG_HPP)

@@ -37,10 +37,8 @@
 
 namespace cli {
 
-
 /// Implementation of the "report-html" subcommand.
-class cmd_report_html : public cli_command
-{
+class cmd_report_html : public cli_command {
 public:
     cmd_report_html(void);
 
@@ -48,8 +46,6 @@ public:
             const utils::config::tree&);
 };
 
+} // namespace cli
 
-}  // namespace cli
-
-
-#endif  // !defined(CLI_CMD_REPORT_HTML_HPP)
+#endif // !defined(CLI_CMD_REPORT_HTML_HPP)

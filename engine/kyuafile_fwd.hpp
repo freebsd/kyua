@@ -34,10 +34,8 @@
 
 namespace engine {
 
-
 class kyuafile;
 
+} // namespace engine
 
-}  // namespace engine
-
-#endif  // !defined(ENGINE_KYUAFILE_FWD_HPP)
+#endif // !defined(ENGINE_KYUAFILE_FWD_HPP)

@@ -35,11 +35,9 @@
 namespace utils {
 namespace process {
 
-
 class child;
 
+} // namespace process
+} // namespace utils
 
-}  // namespace process
-}  // namespace utils
-
-#endif  // !defined(UTILS_PROCESS_CHILD_FWD_HPP)
+#endif // !defined(UTILS_PROCESS_CHILD_FWD_HPP)

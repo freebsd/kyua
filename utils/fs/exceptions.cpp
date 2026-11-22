@@ -26,29 +26,24 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/fs/exceptions.hpp"
-
 #include <cstring>
 
 #include "utils/format/macros.hpp"
+#include "utils/fs/exceptions.hpp"
 
 namespace fs = utils::fs;
-
 
 /// Constructs a new error with a plain-text message.
 ///
 /// \param message The plain-text error message.
-fs::error::error(const std::string& message) :
-    std::runtime_error(message)
+fs::error::error(const std::string& message) : std::runtime_error(message)
 {
 }
-
 
 /// Destructor for the error.
 fs::error::~error(void) throw()
 {
 }
-
 
 /// Constructs a new invalid_path_error.
 ///
@@ -61,12 +56,10 @@ fs::invalid_path_error::invalid_path_error(const std::string& textual_path,
 {
 }
 
-
 /// Destructor for the error.
 fs::invalid_path_error::~invalid_path_error(void) throw()
 {
 }
-
 
 /// Returns the invalid path related to the exception.
 ///
@@ -76,7 +69,6 @@ fs::invalid_path_error::invalid_path(void) const
 {
     return _textual_path;
 }
-
 
 /// Constructs a new join_error.
 ///
@@ -93,12 +85,10 @@ fs::join_error::join_error(const std::string& textual_path1_,
 {
 }
 
-
 /// Destructor for the error.
 fs::join_error::~join_error(void) throw()
 {
 }
-
 
 /// Gets the first path that caused the error in a join operation.
 ///
@@ -109,7 +99,6 @@ fs::join_error::textual_path1(void) const
     return _textual_path1;
 }
 
-
 /// Gets the second path that caused the error in a join operation.
 ///
 /// \return The textual representation of the path.
@@ -118,7 +107,6 @@ fs::join_error::textual_path2(void) const
 {
     return _textual_path2;
 }
-
 
 /// Constructs a new error based on an errno code.
 ///
@@ -130,13 +118,10 @@ fs::system_error::system_error(const std::string& message_, const int errno_) :
 {
 }
 
-
 /// Destructor for the error.
 fs::system_error::~system_error(void) throw()
 {
 }
-
-
 
 /// \return The original errno code.
 int
@@ -144,7 +129,6 @@ fs::system_error::original_errno(void) const throw()
 {
     return _original_errno;
 }
-
 
 /// Constructs a new error with a plain-text message.
 ///
@@ -154,7 +138,6 @@ fs::unsupported_operation_error::unsupported_operation_error(
     error(message)
 {
 }
-
 
 /// Destructor for the error.
 fs::unsupported_operation_error::~unsupported_operation_error(void) throw()

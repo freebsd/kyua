@@ -27,14 +27,12 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "utils/cmdline/base_command.hpp"
-
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/sanity.hpp"
 
 namespace cmdline = utils::cmdline;
-
 
 /// Creates a new command.
 ///
@@ -48,8 +46,7 @@ namespace cmdline = utils::cmdline;
 /// \param short_description_ A description of the purpose of the command.
 cmdline::command_proto::command_proto(const std::string& name_,
                                       const std::string& arg_list_,
-                                      const int min_args_,
-                                      const int max_args_,
+                                      const int min_args_, const int max_args_,
                                       const std::string& short_description_) :
     _name(name_),
     _arg_list(arg_list_),
@@ -61,7 +58,6 @@ cmdline::command_proto::command_proto(const std::string& name_,
     PRE(max_args_ == -1 || min_args_ <= max_args_);
 }
 
-
 /// Destructor for a command.
 cmdline::command_proto::~command_proto(void)
 {
@@ -69,7 +65,6 @@ cmdline::command_proto::~command_proto(void)
          iter != _options.end(); iter++)
         delete *iter;
 }
-
 
 /// Internal method to register a dynamically-allocated option.
 ///
@@ -88,7 +83,6 @@ cmdline::command_proto::add_option_ptr(const cmdline::base_option* option_)
         throw;
     }
 }
-
 
 /// Processes the command line based on the command description.
 ///
@@ -114,7 +108,6 @@ cmdline::command_proto::parse_cmdline(const cmdline::args_vector& args) const
     return cmdline;
 }
 
-
 /// Gets the name of the command.
 ///
 /// \return The command name.
@@ -123,7 +116,6 @@ cmdline::command_proto::name(void) const
 {
     return _name;
 }
-
 
 /// Gets the textual representation of the arguments list.
 ///
@@ -134,7 +126,6 @@ cmdline::command_proto::arg_list(void) const
     return _arg_list;
 }
 
-
 /// Gets the description of the purpose of the command.
 ///
 /// \return The description of the command.
@@ -144,7 +135,6 @@ cmdline::command_proto::short_description(void) const
     return _short_description;
 }
 
-
 /// Gets the definition of the options accepted by the command.
 ///
 /// \return The list of options.
@@ -153,7 +143,6 @@ cmdline::command_proto::options(void) const
 {
     return _options;
 }
-
 
 /// Creates a new command.
 ///
@@ -166,15 +155,11 @@ cmdline::command_proto::options(void) const
 ///     -1 means infinity.
 /// \param short_description_ A description of the purpose of the command.
 cmdline::base_command_no_data::base_command_no_data(
-    const std::string& name_,
-    const std::string& arg_list_,
-    const int min_args_,
-    const int max_args_,
-    const std::string& short_description_) :
+    const std::string& name_, const std::string& arg_list_, const int min_args_,
+    const int max_args_, const std::string& short_description_) :
     command_proto(name_, arg_list_, min_args_, max_args_, short_description_)
 {
 }
-
 
 /// Entry point for the command.
 ///

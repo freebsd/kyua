@@ -32,21 +32,17 @@ using utils::format::bad_format_error;
 using utils::format::error;
 using utils::format::extra_args_error;
 
-
 /// Constructs a new error with a plain-text message.
 ///
 /// \param message The plain-text error message.
-error::error(const std::string& message) :
-    std::runtime_error(message)
+error::error(const std::string& message) : std::runtime_error(message)
 {
 }
-
 
 /// Destructor for the error.
 error::~error(void) throw()
 {
 }
-
 
 /// Constructs a new bad_format_error.
 ///
@@ -59,12 +55,10 @@ bad_format_error::bad_format_error(const std::string& format_,
 {
 }
 
-
 /// Destructor for the error.
 bad_format_error::~bad_format_error(void) throw()
 {
 }
-
 
 /// \return The format string that caused the error.
 const std::string&
@@ -73,26 +67,25 @@ bad_format_error::format(void) const
     return _format;
 }
 
-
 /// Constructs a new extra_args_error.
 ///
 /// \param format_ The format string.
 /// \param arg_ The first extra argument passed to the format string.
 extra_args_error::extra_args_error(const std::string& format_,
                                    const std::string& arg_) :
-    error("Not enough fields in formatting string '" + format_ + "' to place "
-          "argument '" + arg_ + "'"),
+    error("Not enough fields in formatting string '" + format_ +
+          "' to place "
+          "argument '" +
+          arg_ + "'"),
     _format(format_),
     _arg(arg_)
 {
 }
 
-
 /// Destructor for the error.
 extra_args_error::~extra_args_error(void) throw()
 {
 }
-
 
 /// \return The format string that was passed too many arguments.
 const std::string&
@@ -100,7 +93,6 @@ extra_args_error::format(void) const
 {
     return _format;
 }
-
 
 /// \return The first argument that caused the error.
 const std::string&

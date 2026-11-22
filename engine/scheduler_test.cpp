@@ -35,12 +35,11 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include <atf-c++.hpp>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <string>
-
-#include <atf-c++.hpp>
 
 #include "engine/config.hpp"
 #include "engine/exceptions.hpp"
@@ -78,9 +77,7 @@ namespace text = utils::text;
 using utils::none;
 using utils::optional;
 
-
 namespace {
-
 
 /// Checks if a string starts with a prefix.
 ///
@@ -95,7 +92,6 @@ starts_with(const std::string& str, const std::string& prefix)
             str.substr(0, prefix.length()) == prefix);
 }
 
-
 /// Strips a prefix from a string and converts the rest to an integer.
 ///
 /// \param str The string to be tested.
@@ -107,13 +103,12 @@ suffix_to_int(const std::string& str, const std::string& prefix)
 {
     PRE(starts_with(str, prefix));
     try {
-        return text::to_type< int >(str.substr(prefix.length()));
+        return text::to_type<int>(str.substr(prefix.length()));
     } catch (const text::value_error& error) {
         std::cerr << F("Failed: %s\n") % error.what();
         std::abort();
     }
 }
-
 
 /// Mock interface definition for testing.
 ///
@@ -130,8 +125,7 @@ class mock_interface : public scheduler::interface {
     /// in place so that the parent process can test for them!
     ///
     /// \param exit_code Exit code.
-    void
-    do_exit [[noreturn]] (const int exit_code) const
+    void do_exit [[noreturn]] (const int exit_code) const
     {
         std::cout.flush();
         std::cerr.flush();
@@ -139,8 +133,7 @@ class mock_interface : public scheduler::interface {
     }
 
     /// Executes a test case that creates various files and then fails.
-    void
-    exec_create_files_and_fail [[noreturn]] (void) const
+    void exec_create_files_and_fail [[noreturn]] (void) const
     {
         std::cerr << "This should not be clobbered\n";
         atf::utils::create_file("first file", "");
@@ -154,11 +147,10 @@ class mock_interface : public scheduler::interface {
     ///
     /// This is intended to validate that the test runs in an empty directory,
     /// separate from any control files that the scheduler may have created.
-    void
-    exec_delete_all [[noreturn]] (void) const
+    void exec_delete_all [[noreturn]] (void) const
     {
-        const int exit_code = ::system("rm *") == -1
-            ? EXIT_FAILURE : EXIT_SUCCESS;
+        const int exit_code = ::system("rm *") == -1 ? EXIT_FAILURE :
+                                                       EXIT_SUCCESS;
 
         // Recreate our own cookie.
         atf::utils::create_file("exec_test_was_called", "");
@@ -169,15 +161,13 @@ class mock_interface : public scheduler::interface {
     /// Executes a test case that returns a specific exit code.
     ///
     /// \param exit_code Exit status to terminate the program with.
-    void
-    exec_exit [[noreturn]] (const int exit_code) const
+    void exec_exit [[noreturn]] (const int exit_code) const
     {
         do_exit(exit_code);
     }
 
     /// Executes a test case that just fails.
-    void
-    exec_fail [[noreturn]] (void) const
+    void exec_fail [[noreturn]] (void) const
     {
         std::cerr << "This should not be clobbered\n";
         ::kill(::getpid(), SIGTERM);
@@ -190,11 +180,10 @@ class mock_interface : public scheduler::interface {
     /// \param test_case_name Name of the test case to invoke, which must be a
     ///     number.
     /// \param vars User-provided variables to pass to the test program.
-    void
-    exec_print_params [[noreturn]] (
-        const model::test_program& test_program,
-        const std::string& test_case_name,
-        const config::properties_map& vars) const
+    void exec_print_params
+        [[noreturn]] (const model::test_program& test_program,
+                      const std::string& test_case_name,
+                      const config::properties_map& vars) const
     {
         std::cout << F("Test program: %s\n") % test_program.relative_path();
         std::cout << F("Test case: %s\n") % test_case_name;
@@ -217,10 +206,8 @@ public:
     ///
     /// \param test_program The test program to execute.
     /// \param vars User-provided variables to pass to the test program.
-    void
-    exec_list [[noreturn]] (
-        const model::test_program& test_program,
-        const config::properties_map& vars) const
+    void exec_list [[noreturn]] (const model::test_program& test_program,
+                                 const config::properties_map& vars) const
     {
         const std::string name = test_program.absolute_path().leaf_name();
 
@@ -262,10 +249,9 @@ public:
     /// \param stderr_path Path to the file containing the stderr of the test.
     ///
     /// \return A list of test cases.
-    model::test_cases_map
-    parse_list(const optional< process::status >& status,
-               const fs::path& stdout_path,
-               const fs::path& stderr_path) const
+    model::test_cases_map parse_list(const optional<process::status>& status,
+                                     const fs::path& stdout_path,
+                                     const fs::path& stderr_path) const
     {
         const std::string name = utils::read_file(stderr_path);
         if (name == "check_i_exist") {
@@ -308,11 +294,10 @@ public:
     /// \param vars User-provided variables to pass to the test program.
     /// \param control_directory Directory where the interface may place control
     ///     files.
-    void
-    exec_test(const model::test_program& test_program,
-              const std::string& test_case_name,
-              const config::properties_map& vars,
-              const fs::path& control_directory) const
+    void exec_test(const model::test_program& test_program,
+                   const std::string& test_case_name,
+                   const config::properties_map& vars,
+                   const fs::path& control_directory) const
     {
         const fs::path cookie = control_directory / "exec_test_was_called";
         std::ofstream control_file(cookie.c_str());
@@ -358,11 +343,10 @@ public:
     /// exiting with a failure.
     ///
     /// \param test_case_name Name of the test case to invoke.
-    void
-    exec_cleanup(const model::test_program& /* test_program */,
-                 const std::string& test_case_name,
-                 const config::properties_map& /* vars */,
-                 const fs::path& /* control_directory */) const
+    void exec_cleanup(const model::test_program& /* test_program */,
+                      const std::string& test_case_name,
+                      const config::properties_map& /* vars */,
+                      const fs::path& /* control_directory */) const
     {
         std::cout << "exec_cleanup was called\n";
         std::cout.flush();
@@ -380,7 +364,8 @@ public:
             exec_exit(EXIT_SUCCESS);
         } else {
             std::cerr << "Should not have been called for a test without "
-                "a cleanup routine" << '\n';
+                         "a cleanup routine"
+                      << '\n';
             std::abort();
         }
     }
@@ -395,11 +380,10 @@ public:
     /// \param stderr_path Path to the file containing the stderr of the test.
     ///
     /// \return A test result.
-    model::test_result
-    compute_result(const optional< process::status >& status,
-                   const fs::path& control_directory,
-                   const fs::path& stdout_path,
-                   const fs::path& stderr_path) const
+    model::test_result compute_result(const optional<process::status>& status,
+                                      const fs::path& control_directory,
+                                      const fs::path& stdout_path,
+                                      const fs::path& stderr_path) const
     {
         // Do not use any ATF_* macros here.  Some of the tests below invoke
         // this code in a subprocess, and terminating such subprocess due to a
@@ -410,8 +394,7 @@ public:
         // file is not there.)
 
         if (!status) {
-            return model::test_result(model::test_result_broken,
-                                      "Timed out");
+            return model::test_result(model::test_result_broken, "Timed out");
         }
 
         if (status.get().exited()) {
@@ -439,25 +422,22 @@ public:
             }
 
             if (test_case_name == "skip_body_pass_cleanup") {
-                return model::test_result(
-                    model::test_result_skipped,
-                    F("Exit %s") % status.get().exitstatus());
+                return model::test_result(model::test_result_skipped,
+                                          F("Exit %s") %
+                                              status.get().exitstatus());
             } else {
-                return model::test_result(
-                    model::test_result_passed,
-                    F("Exit %s") % status.get().exitstatus());
+                return model::test_result(model::test_result_passed,
+                                          F("Exit %s") %
+                                              status.get().exitstatus());
             }
         } else {
-            return model::test_result(
-                model::test_result_failed,
-                F("Signal %s") % status.get().termsig());
+            return model::test_result(model::test_result_failed,
+                                      F("Signal %s") % status.get().termsig());
         }
     }
 };
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Runs list_tests on the scheduler and returns the results.
 ///
@@ -469,9 +449,10 @@ static model::test_cases_map
 check_integration_list(const char* test_name, const fs::path root,
                        const config::tree& user_config = engine::empty_config())
 {
-    const model::test_program program = model::test_program_builder(
-        "mock", fs::path(test_name), root, "the-suite")
-        .build();
+    const model::test_program program =
+        model::test_program_builder("mock", fs::path(test_name), root,
+                                    "the-suite")
+            .build();
 
     scheduler::scheduler_handle handle = scheduler::setup();
     const model::test_cases_map test_cases = handle.list_tests(&program,
@@ -481,7 +462,6 @@ check_integration_list(const char* test_name, const fs::path root,
     return test_cases;
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(integration__list_some);
 ATF_TEST_CASE_BODY(integration__list_some)
 {
@@ -490,14 +470,15 @@ ATF_TEST_CASE_BODY(integration__list_some)
     user_config.set_string("test_suites.the-suite.second", "TEST");
     user_config.set_string("test_suites.abc.unused", "unused");
 
-    const model::test_cases_map test_cases = check_integration_list(
-        "vars", fs::path("."), user_config);
+    const model::test_cases_map test_cases =
+        check_integration_list("vars", fs::path("."), user_config);
 
     const model::test_cases_map exp_test_cases = model::test_cases_map_builder()
-        .add("first_test").add("second_TEST").build();
+                                                     .add("first_test")
+                                                     .add("second_TEST")
+                                                     .build();
     ATF_REQUIRE_EQ(exp_test_cases, test_cases);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(integration__list_check_paths);
 ATF_TEST_CASE_BODY(integration__list_check_paths)
@@ -505,33 +486,31 @@ ATF_TEST_CASE_BODY(integration__list_check_paths)
     fs::mkdir_p(fs::path("dir1/dir2/dir3"), 0755);
     atf::utils::create_file("dir1/dir2/dir3/check_i_exist", "");
 
-    const model::test_cases_map test_cases = check_integration_list(
-        "dir2/dir3/check_i_exist", fs::path("dir1"));
+    const model::test_cases_map test_cases =
+        check_integration_list("dir2/dir3/check_i_exist", fs::path("dir1"));
 
-    const model::test_cases_map exp_test_cases = model::test_cases_map_builder()
-        .add("found").build();
+    const model::test_cases_map exp_test_cases =
+        model::test_cases_map_builder().add("found").build();
     ATF_REQUIRE_EQ(exp_test_cases, test_cases);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(integration__list_timeout);
 ATF_TEST_CASE_BODY(integration__list_timeout)
 {
     scheduler::list_timeout = datetime::delta(1, 0);
-    const model::test_cases_map test_cases = check_integration_list(
-        "timeout", fs::path("."));
+    const model::test_cases_map test_cases =
+        check_integration_list("timeout", fs::path("."));
 
-    const model::test_cases_map exp_test_cases = model::test_cases_map_builder()
-        .add("sleeping").build();
+    const model::test_cases_map exp_test_cases =
+        model::test_cases_map_builder().add("sleeping").build();
     ATF_REQUIRE_EQ(exp_test_cases, test_cases);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(integration__list_fail);
 ATF_TEST_CASE_BODY(integration__list_fail)
 {
-    const model::test_cases_map test_cases = check_integration_list(
-        "misbehave", fs::path("."));
+    const model::test_cases_map test_cases =
+        check_integration_list("misbehave", fs::path("."));
 
     ATF_REQUIRE_EQ(1, test_cases.size());
     const model::test_case& test_case = test_cases.begin()->second;
@@ -542,12 +521,11 @@ ATF_TEST_CASE_BODY(integration__list_fail)
                    test_case.fake_result().get());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(integration__list_empty);
 ATF_TEST_CASE_BODY(integration__list_empty)
 {
-    const model::test_cases_map test_cases = check_integration_list(
-        "empty", fs::path("."));
+    const model::test_cases_map test_cases =
+        check_integration_list("empty", fs::path("."));
 
     ATF_REQUIRE_EQ(1, test_cases.size());
     const model::test_case& test_case = test_cases.begin()->second;
@@ -558,25 +536,26 @@ ATF_TEST_CASE_BODY(integration__list_empty)
                    test_case.fake_result().get());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(integration__run_one);
 ATF_TEST_CASE_BODY(integration__run_one)
 {
-    const model::test_program_ptr program = model::test_program_builder(
-        "mock", fs::path("the-program"), fs::current_path(), "the-suite")
-        .add_test_case("exit 41").build_ptr();
+    const model::test_program_ptr program =
+        model::test_program_builder("mock", fs::path("the-program"),
+                                    fs::current_path(), "the-suite")
+            .add_test_case("exit 41")
+            .build_ptr();
 
     const config::tree user_config = engine::empty_config();
 
     scheduler::scheduler_handle handle = scheduler::setup();
 
-    const scheduler::exec_handle exec_handle = handle.spawn_test(
-        program, "exit 41", user_config);
+    const scheduler::exec_handle exec_handle = handle.spawn_test(program,
+                                                                 "exit 41",
+                                                                 user_config);
 
     scheduler::result_handle_ptr result_handle = handle.wait_any();
     const scheduler::test_result_handle* test_result_handle =
-        dynamic_cast< const scheduler::test_result_handle* >(
-            result_handle.get());
+        dynamic_cast<const scheduler::test_result_handle*>(result_handle.get());
     ATF_REQUIRE(test_result_handle != nullptr);
     ATF_REQUIRE_EQ(exec_handle, result_handle->original_pid());
     ATF_REQUIRE_EQ(model::test_result(model::test_result_passed, "Exit 41"),
@@ -586,7 +565,6 @@ ATF_TEST_CASE_BODY(integration__run_one)
 
     handle.cleanup();
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(integration__run_many);
 ATF_TEST_CASE_BODY(integration__run_many)
@@ -599,31 +577,32 @@ ATF_TEST_CASE_BODY(integration__run_many)
 
     // We mess around with the "current time" below, so make sure the tests do
     // not spuriously exceed their deadline by bumping it to a large number.
-    const model::metadata infinite_timeout = model::metadata_builder()
-        .set_timeout(datetime::delta(1000000L, 0)).build();
+    const model::metadata infinite_timeout =
+        model::metadata_builder()
+            .set_timeout(datetime::delta(1000000L, 0))
+            .build();
 
     std::size_t total_tests = 0;
-    std::map< scheduler::exec_handle, model::test_program_ptr >
-        exp_test_programs;
-    std::map< scheduler::exec_handle, std::string > exp_test_case_names;
-    std::map< scheduler::exec_handle, datetime::timestamp > exp_start_times;
-    std::map< scheduler::exec_handle, int > exp_exit_statuses;
+    std::map<scheduler::exec_handle, model::test_program_ptr> exp_test_programs;
+    std::map<scheduler::exec_handle, std::string> exp_test_case_names;
+    std::map<scheduler::exec_handle, datetime::timestamp> exp_start_times;
+    std::map<scheduler::exec_handle, int> exp_exit_statuses;
     for (std::size_t i = 0; i < num_test_programs; ++i) {
         const std::string test_case_0 = F("exit %s") % (i * 3 + 0);
         const std::string test_case_1 = F("exit %s") % (i * 3 + 1);
         const std::string test_case_2 = F("exit %s") % (i * 3 + 2);
 
-        const model::test_program_ptr program = model::test_program_builder(
-            "mock", fs::path(F("program-%s") % i),
-            fs::current_path(), "the-suite")
-            .set_metadata(infinite_timeout)
-            .add_test_case(test_case_0)
-            .add_test_case(test_case_1)
-            .add_test_case(test_case_2)
-            .build_ptr();
+        const model::test_program_ptr program =
+            model::test_program_builder("mock", fs::path(F("program-%s") % i),
+                                        fs::current_path(), "the-suite")
+                .set_metadata(infinite_timeout)
+                .add_test_case(test_case_0)
+                .add_test_case(test_case_1)
+                .add_test_case(test_case_2)
+                .build_ptr();
 
-        const datetime::timestamp start_time = datetime::timestamp::from_values(
-            2014, 12, 8, 9, 40, 0, i);
+        const datetime::timestamp start_time =
+            datetime::timestamp::from_values(2014, 12, 8, 9, 40, 0, i);
 
         scheduler::exec_handle exec_handle;
 
@@ -653,24 +632,24 @@ ATF_TEST_CASE_BODY(integration__run_many)
     }
 
     for (std::size_t i = 0; i < total_tests; ++i) {
-        const datetime::timestamp end_time = datetime::timestamp::from_values(
-            2014, 12, 8, 9, 50, 10, i);
+        const datetime::timestamp end_time =
+            datetime::timestamp::from_values(2014, 12, 8, 9, 50, 10, i);
         datetime::set_mock_now(end_time);
         scheduler::result_handle_ptr result_handle = handle.wait_any();
         const scheduler::test_result_handle* test_result_handle =
-            dynamic_cast< const scheduler::test_result_handle* >(
+            dynamic_cast<const scheduler::test_result_handle*>(
                 result_handle.get());
         ATF_REQUIRE(test_result_handle != nullptr);
 
         const scheduler::exec_handle exec_handle =
             result_handle->original_pid();
 
-        const model::test_program_ptr test_program = exp_test_programs.find(
-            exec_handle)->second;
-        const std::string& test_case_name = exp_test_case_names.find(
-            exec_handle)->second;
-        const datetime::timestamp& start_time = exp_start_times.find(
-            exec_handle)->second;
+        const model::test_program_ptr test_program =
+            exp_test_programs.find(exec_handle)->second;
+        const std::string& test_case_name =
+            exp_test_case_names.find(exec_handle)->second;
+        const datetime::timestamp& start_time =
+            exp_start_times.find(exec_handle)->second;
         const int exit_status = exp_exit_statuses.find(exec_handle)->second;
 
         ATF_REQUIRE_EQ(model::test_result(model::test_result_passed,
@@ -685,12 +664,12 @@ ATF_TEST_CASE_BODY(integration__run_many)
 
         result_handle->cleanup();
 
-        ATF_REQUIRE(!atf::utils::file_exists(
-                        result_handle->stdout_file().str()));
-        ATF_REQUIRE(!atf::utils::file_exists(
-                        result_handle->stderr_file().str()));
-        ATF_REQUIRE(!atf::utils::file_exists(
-                        result_handle->work_directory().str()));
+        ATF_REQUIRE(
+            !atf::utils::file_exists(result_handle->stdout_file().str()));
+        ATF_REQUIRE(
+            !atf::utils::file_exists(result_handle->stderr_file().str()));
+        ATF_REQUIRE(
+            !atf::utils::file_exists(result_handle->work_directory().str()));
 
         result_handle.reset();
     }
@@ -698,24 +677,24 @@ ATF_TEST_CASE_BODY(integration__run_many)
     handle.cleanup();
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(integration__run_check_paths);
 ATF_TEST_CASE_BODY(integration__run_check_paths)
 {
     fs::mkdir_p(fs::path("dir1/dir2/dir3"), 0755);
     atf::utils::create_file("dir1/dir2/dir3/program", "");
 
-    const model::test_program_ptr program = model::test_program_builder(
-        "mock", fs::path("dir2/dir3/program"), fs::path("dir1"), "the-suite")
-        .add_test_case("check_i_exist").build_ptr();
+    const model::test_program_ptr program =
+        model::test_program_builder("mock", fs::path("dir2/dir3/program"),
+                                    fs::path("dir1"), "the-suite")
+            .add_test_case("check_i_exist")
+            .build_ptr();
 
     scheduler::scheduler_handle handle = scheduler::setup();
 
     (void)handle.spawn_test(program, "check_i_exist", engine::default_config());
     scheduler::result_handle_ptr result_handle = handle.wait_any();
     const scheduler::test_result_handle* test_result_handle =
-        dynamic_cast< const scheduler::test_result_handle* >(
-            result_handle.get());
+        dynamic_cast<const scheduler::test_result_handle*>(result_handle.get());
     ATF_REQUIRE(test_result_handle != nullptr);
 
     ATF_REQUIRE_EQ(model::test_result(model::test_result_passed, "Exit 0"),
@@ -727,13 +706,14 @@ ATF_TEST_CASE_BODY(integration__run_check_paths)
     handle.cleanup();
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(integration__parameters_and_output);
 ATF_TEST_CASE_BODY(integration__parameters_and_output)
 {
-    const model::test_program_ptr program = model::test_program_builder(
-        "mock", fs::path("the-program"), fs::current_path(), "the-suite")
-        .add_test_case("print_params").build_ptr();
+    const model::test_program_ptr program =
+        model::test_program_builder("mock", fs::path("the-program"),
+                                    fs::current_path(), "the-suite")
+            .add_test_case("print_params")
+            .build_ptr();
 
     config::tree user_config = engine::empty_config();
     user_config.set_string("test_suites.the-suite.one", "first variable");
@@ -741,13 +721,13 @@ ATF_TEST_CASE_BODY(integration__parameters_and_output)
 
     scheduler::scheduler_handle handle = scheduler::setup();
 
-    const scheduler::exec_handle exec_handle = handle.spawn_test(
-        program, "print_params", user_config);
+    const scheduler::exec_handle exec_handle = handle.spawn_test(program,
+                                                                 "print_params",
+                                                                 user_config);
 
     scheduler::result_handle_ptr result_handle = handle.wait_any();
     const scheduler::test_result_handle* test_result_handle =
-        dynamic_cast< const scheduler::test_result_handle* >(
-            result_handle.get());
+        dynamic_cast<const scheduler::test_result_handle*>(result_handle.get());
     ATF_REQUIRE(test_result_handle != nullptr);
 
     ATF_REQUIRE_EQ(exec_handle, result_handle->original_pid());
@@ -757,15 +737,14 @@ ATF_TEST_CASE_BODY(integration__parameters_and_output)
                    test_result_handle->test_result());
 
     const fs::path stdout_file = result_handle->stdout_file();
-    ATF_REQUIRE(atf::utils::compare_file(
-        stdout_file.str(),
-        "Test program: the-program\n"
-        "Test case: print_params\n"
-        "one=first variable\n"
-        "two=second variable\n"));
+    ATF_REQUIRE(atf::utils::compare_file(stdout_file.str(),
+                                         "Test program: the-program\n"
+                                         "Test case: print_params\n"
+                                         "one=first variable\n"
+                                         "two=second variable\n"));
     const fs::path stderr_file = result_handle->stderr_file();
-    ATF_REQUIRE(atf::utils::compare_file(
-        stderr_file.str(), "stderr: print_params\n"));
+    ATF_REQUIRE(atf::utils::compare_file(stderr_file.str(),
+                                         "stderr: print_params\n"));
 
     result_handle->cleanup();
     ATF_REQUIRE(!fs::exists(stdout_file));
@@ -774,7 +753,6 @@ ATF_TEST_CASE_BODY(integration__parameters_and_output)
 
     handle.cleanup();
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(integration__fake_result);
 ATF_TEST_CASE_BODY(integration__fake_result)
@@ -798,8 +776,7 @@ ATF_TEST_CASE_BODY(integration__fake_result)
 
     scheduler::result_handle_ptr result_handle = handle.wait_any();
     const scheduler::test_result_handle* test_result_handle =
-        dynamic_cast< const scheduler::test_result_handle* >(
-            result_handle.get());
+        dynamic_cast<const scheduler::test_result_handle*>(result_handle.get());
     ATF_REQUIRE(test_result_handle != nullptr);
     ATF_REQUIRE_EQ(fake_result, test_result_handle->test_result());
     result_handle->cleanup();
@@ -808,18 +785,19 @@ ATF_TEST_CASE_BODY(integration__fake_result)
     handle.cleanup();
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(integration__cleanup__head_skips);
 ATF_TEST_CASE_BODY(integration__cleanup__head_skips)
 {
-    const model::test_program_ptr program = model::test_program_builder(
-        "mock", fs::path("the-program"), fs::current_path(), "the-suite")
-        .add_test_case("skip_me",
-                       model::metadata_builder()
-                       .add_required_config("variable-that-does-not-exist")
-                       .set_has_cleanup(true)
-                       .build())
-        .build_ptr();
+    const model::test_program_ptr program =
+        model::test_program_builder("mock", fs::path("the-program"),
+                                    fs::current_path(), "the-suite")
+            .add_test_case(
+                "skip_me",
+                model::metadata_builder()
+                    .add_required_config("variable-that-does-not-exist")
+                    .set_has_cleanup(true)
+                    .build())
+            .build_ptr();
 
     const config::tree user_config = engine::empty_config();
 
@@ -829,14 +807,13 @@ ATF_TEST_CASE_BODY(integration__cleanup__head_skips)
 
     scheduler::result_handle_ptr result_handle = handle.wait_any();
     const scheduler::test_result_handle* test_result_handle =
-        dynamic_cast< const scheduler::test_result_handle* >(
-            result_handle.get());
+        dynamic_cast<const scheduler::test_result_handle*>(result_handle.get());
     ATF_REQUIRE(test_result_handle != nullptr);
-    ATF_REQUIRE_EQ(model::test_result(
-                       model::test_result_skipped,
-                       "Required configuration property "
-                       "'variable-that-does-not-exist' not defined"),
-                   test_result_handle->test_result());
+    ATF_REQUIRE_EQ(
+        model::test_result(model::test_result_skipped,
+                           "Required configuration property "
+                           "'variable-that-does-not-exist' not defined"),
+        test_result_handle->test_result());
     ATF_REQUIRE(!atf::utils::grep_file("exec_cleanup was called",
                                        result_handle->stdout_file().str()));
     result_handle->cleanup();
@@ -845,20 +822,20 @@ ATF_TEST_CASE_BODY(integration__cleanup__head_skips)
     handle.cleanup();
 }
 
-
 /// Runs a test to verify the behavior of cleanup routines.
 ///
 /// \param test_case The name of the test case to invoke.
 /// \param exp_result The expected test result of the execution.
 static void
-do_cleanup_test(const char* test_case,
-                const model::test_result& exp_result)
+do_cleanup_test(const char* test_case, const model::test_result& exp_result)
 {
-    const model::test_program_ptr program = model::test_program_builder(
-        "mock", fs::path("the-program"), fs::current_path(), "the-suite")
-        .add_test_case(test_case)
-        .set_metadata(model::metadata_builder().set_has_cleanup(true).build())
-        .build_ptr();
+    const model::test_program_ptr program =
+        model::test_program_builder("mock", fs::path("the-program"),
+                                    fs::current_path(), "the-suite")
+            .add_test_case(test_case)
+            .set_metadata(
+                model::metadata_builder().set_has_cleanup(true).build())
+            .build_ptr();
 
     const config::tree user_config = engine::empty_config();
 
@@ -868,77 +845,67 @@ do_cleanup_test(const char* test_case,
 
     scheduler::result_handle_ptr result_handle = handle.wait_any();
     const scheduler::test_result_handle* test_result_handle =
-        dynamic_cast< const scheduler::test_result_handle* >(
-            result_handle.get());
+        dynamic_cast<const scheduler::test_result_handle*>(result_handle.get());
     ATF_REQUIRE(test_result_handle != nullptr);
     ATF_REQUIRE_EQ(exp_result, test_result_handle->test_result());
-    ATF_REQUIRE(atf::utils::compare_file(
-        result_handle->stdout_file().str(),
-        "exec_cleanup was called\n"));
+    ATF_REQUIRE(atf::utils::compare_file(result_handle->stdout_file().str(),
+                                         "exec_cleanup was called\n"));
     result_handle->cleanup();
     result_handle.reset();
 
     handle.cleanup();
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(integration__cleanup__body_skips);
 ATF_TEST_CASE_BODY(integration__cleanup__body_skips)
 {
-    do_cleanup_test(
-        "skip_body_pass_cleanup",
-        model::test_result(model::test_result_skipped, "Exit 0"));
+    do_cleanup_test("skip_body_pass_cleanup",
+                    model::test_result(model::test_result_skipped, "Exit 0"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(integration__cleanup__body_bad__cleanup_ok);
 ATF_TEST_CASE_BODY(integration__cleanup__body_bad__cleanup_ok)
 {
-    do_cleanup_test(
-        "fail_body_pass_cleanup",
-        model::test_result(model::test_result_failed, "Signal 15"));
+    do_cleanup_test("fail_body_pass_cleanup",
+                    model::test_result(model::test_result_failed, "Signal 15"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(integration__cleanup__body_ok__cleanup_bad);
 ATF_TEST_CASE_BODY(integration__cleanup__body_ok__cleanup_bad)
 {
-    do_cleanup_test(
-        "pass_body_fail_cleanup",
-        model::test_result(model::test_result_broken, "Test case cleanup "
-                           "did not terminate successfully"));
+    do_cleanup_test("pass_body_fail_cleanup",
+                    model::test_result(model::test_result_broken,
+                                       "Test case cleanup "
+                                       "did not terminate successfully"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(integration__cleanup__body_bad__cleanup_bad);
 ATF_TEST_CASE_BODY(integration__cleanup__body_bad__cleanup_bad)
 {
-    do_cleanup_test(
-        "fail_body_fail_cleanup",
-        model::test_result(model::test_result_failed, "Signal 15"));
+    do_cleanup_test("fail_body_fail_cleanup",
+                    model::test_result(model::test_result_failed, "Signal 15"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(integration__cleanup__timeout);
 ATF_TEST_CASE_BODY(integration__cleanup__timeout)
 {
     scheduler::cleanup_timeout = datetime::delta(1, 0);
-    do_cleanup_test(
-        "cleanup_timeout",
-        model::test_result(model::test_result_broken, "Test case cleanup "
-                           "timed out"));
+    do_cleanup_test("cleanup_timeout",
+                    model::test_result(model::test_result_broken,
+                                       "Test case cleanup "
+                                       "timed out"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(integration__check_requirements);
 ATF_TEST_CASE_BODY(integration__check_requirements)
 {
-    const model::test_program_ptr program = model::test_program_builder(
-        "mock", fs::path("the-program"), fs::current_path(), "the-suite")
-        .add_test_case("exit 12")
-        .set_metadata(model::metadata_builder()
-                      .add_required_config("abcde").build())
-        .build_ptr();
+    const model::test_program_ptr program =
+        model::test_program_builder("mock", fs::path("the-program"),
+                                    fs::current_path(), "the-suite")
+            .add_test_case("exit 12")
+            .set_metadata(
+                model::metadata_builder().add_required_config("abcde").build())
+            .build_ptr();
 
     const config::tree user_config = engine::empty_config();
 
@@ -948,8 +915,7 @@ ATF_TEST_CASE_BODY(integration__check_requirements)
 
     scheduler::result_handle_ptr result_handle = handle.wait_any();
     const scheduler::test_result_handle* test_result_handle =
-        dynamic_cast< const scheduler::test_result_handle* >(
-            result_handle.get());
+        dynamic_cast<const scheduler::test_result_handle*>(result_handle.get());
     ATF_REQUIRE(test_result_handle != nullptr);
     ATF_REQUIRE_EQ(model::test_result(
                        model::test_result_skipped,
@@ -961,15 +927,16 @@ ATF_TEST_CASE_BODY(integration__check_requirements)
     handle.cleanup();
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(integration__stacktrace);
 ATF_TEST_CASE_BODY(integration__stacktrace)
 {
     utils::prepare_coredump_test(this);
 
-    const model::test_program_ptr program = model::test_program_builder(
-        "mock", fs::path("the-program"), fs::current_path(), "the-suite")
-        .add_test_case("unknown-dumps-core").build_ptr();
+    const model::test_program_ptr program =
+        model::test_program_builder("mock", fs::path("the-program"),
+                                    fs::current_path(), "the-suite")
+            .add_test_case("unknown-dumps-core")
+            .build_ptr();
 
     const config::tree user_config = engine::empty_config();
 
@@ -979,22 +946,20 @@ ATF_TEST_CASE_BODY(integration__stacktrace)
 
     scheduler::result_handle_ptr result_handle = handle.wait_any();
     const scheduler::test_result_handle* test_result_handle =
-        dynamic_cast< const scheduler::test_result_handle* >(
-            result_handle.get());
+        dynamic_cast<const scheduler::test_result_handle*>(result_handle.get());
     ATF_REQUIRE(test_result_handle != nullptr);
     ATF_REQUIRE_EQ(model::test_result(model::test_result_failed,
                                       F("Signal %s") % SIGABRT),
                    test_result_handle->test_result());
     ATF_REQUIRE(!atf::utils::grep_file("attempting to gather stack trace",
                                        result_handle->stdout_file().str()));
-    ATF_REQUIRE( atf::utils::grep_file("attempting to gather stack trace",
-                                       result_handle->stderr_file().str()));
+    ATF_REQUIRE(atf::utils::grep_file("attempting to gather stack trace",
+                                      result_handle->stderr_file().str()));
     result_handle->cleanup();
     result_handle.reset();
 
     handle.cleanup();
 }
-
 
 /// Runs a test to verify the dumping of the list of existing files on failure.
 ///
@@ -1003,9 +968,11 @@ ATF_TEST_CASE_BODY(integration__stacktrace)
 static void
 do_check_list_files_on_failure(const char* test_case, const char* exp_stderr)
 {
-    const model::test_program_ptr program = model::test_program_builder(
-        "mock", fs::path("the-program"), fs::current_path(), "the-suite")
-        .add_test_case(test_case).build_ptr();
+    const model::test_program_ptr program =
+        model::test_program_builder("mock", fs::path("the-program"),
+                                    fs::current_path(), "the-suite")
+            .add_test_case(test_case)
+            .build_ptr();
 
     const config::tree user_config = engine::empty_config();
 
@@ -1026,13 +993,11 @@ do_check_list_files_on_failure(const char* test_case, const char* exp_stderr)
     handle.cleanup();
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(integration__list_files_on_failure__none);
 ATF_TEST_CASE_BODY(integration__list_files_on_failure__none)
 {
     do_check_list_files_on_failure("fail", "This should not be clobbered\n");
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(integration__list_files_on_failure__some);
 ATF_TEST_CASE_BODY(integration__list_files_on_failure__some)
@@ -1044,13 +1009,14 @@ ATF_TEST_CASE_BODY(integration__list_files_on_failure__some)
         "dir1, first file, second-file\n");
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(integration__prevent_clobbering_control_files);
 ATF_TEST_CASE_BODY(integration__prevent_clobbering_control_files)
 {
-    const model::test_program_ptr program = model::test_program_builder(
-        "mock", fs::path("the-program"), fs::current_path(), "the-suite")
-        .add_test_case("delete_all").build_ptr();
+    const model::test_program_ptr program =
+        model::test_program_builder("mock", fs::path("the-program"),
+                                    fs::current_path(), "the-suite")
+            .add_test_case("delete_all")
+            .build_ptr();
 
     const config::tree user_config = engine::empty_config();
 
@@ -1060,8 +1026,7 @@ ATF_TEST_CASE_BODY(integration__prevent_clobbering_control_files)
 
     scheduler::result_handle_ptr result_handle = handle.wait_any();
     const scheduler::test_result_handle* test_result_handle =
-        dynamic_cast< const scheduler::test_result_handle* >(
-            result_handle.get());
+        dynamic_cast<const scheduler::test_result_handle*>(result_handle.get());
     ATF_REQUIRE(test_result_handle != nullptr);
     ATF_REQUIRE_EQ(model::test_result(model::test_result_passed, "Exit 0"),
                    test_result_handle->test_result());
@@ -1071,13 +1036,14 @@ ATF_TEST_CASE_BODY(integration__prevent_clobbering_control_files)
     handle.cleanup();
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(debug_test);
 ATF_TEST_CASE_BODY(debug_test)
 {
-    const model::test_program_ptr program = model::test_program_builder(
-        "mock", fs::path("the-program"), fs::current_path(), "the-suite")
-        .add_test_case("print_params").build_ptr();
+    const model::test_program_ptr program =
+        model::test_program_builder("mock", fs::path("the-program"),
+                                    fs::current_path(), "the-suite")
+            .add_test_case("print_params")
+            .build_ptr();
 
     config::tree user_config = engine::empty_config();
     user_config.set_string("test_suites.the-suite.one", "first variable");
@@ -1091,8 +1057,7 @@ ATF_TEST_CASE_BODY(debug_test)
     scheduler::result_handle_ptr result_handle = handle.debug_test(
         program, "print_params", user_config, stdout_file, stderr_file);
     const scheduler::test_result_handle* test_result_handle =
-        dynamic_cast< const scheduler::test_result_handle* >(
-            result_handle.get());
+        dynamic_cast<const scheduler::test_result_handle*>(result_handle.get());
     ATF_REQUIRE(test_result_handle != nullptr);
 
     ATF_REQUIRE_EQ(program, test_result_handle->test_program());
@@ -1110,16 +1075,14 @@ ATF_TEST_CASE_BODY(debug_test)
 
     handle.cleanup();
 
-    ATF_REQUIRE(atf::utils::compare_file(
-        stdout_file.str(),
-        "Test program: the-program\n"
-        "Test case: print_params\n"
-        "one=first variable\n"
-        "two=second variable\n"));
-    ATF_REQUIRE(atf::utils::compare_file(
-        stderr_file.str(), "stderr: print_params\n"));
+    ATF_REQUIRE(atf::utils::compare_file(stdout_file.str(),
+                                         "Test program: the-program\n"
+                                         "Test case: print_params\n"
+                                         "one=first variable\n"
+                                         "two=second variable\n"));
+    ATF_REQUIRE(atf::utils::compare_file(stderr_file.str(),
+                                         "stderr: print_params\n"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(ensure_valid_interface);
 ATF_TEST_CASE_BODY(ensure_valid_interface)
@@ -1129,7 +1092,7 @@ ATF_TEST_CASE_BODY(ensure_valid_interface)
     ATF_REQUIRE_THROW_RE(engine::error, "Unsupported test interface 'mock2'",
                          scheduler::ensure_valid_interface("mock2"));
     scheduler::register_interface(
-        "mock2", std::shared_ptr< scheduler::interface >(new mock_interface()));
+        "mock2", std::shared_ptr<scheduler::interface>(new mock_interface()));
     scheduler::ensure_valid_interface("mock2");
 
     // Standard interfaces should not be present unless registered.
@@ -1137,21 +1100,19 @@ ATF_TEST_CASE_BODY(ensure_valid_interface)
                          scheduler::ensure_valid_interface("plain"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(registered_interface_names);
 ATF_TEST_CASE_BODY(registered_interface_names)
 {
-    std::set< std::string > exp_names;
+    std::set<std::string> exp_names;
 
     exp_names.insert("mock");
     ATF_REQUIRE_EQ(exp_names, scheduler::registered_interface_names());
 
     scheduler::register_interface(
-        "mock2", std::shared_ptr< scheduler::interface >(new mock_interface()));
+        "mock2", std::shared_ptr<scheduler::interface>(new mock_interface()));
     exp_names.insert("mock2");
     ATF_REQUIRE_EQ(exp_names, scheduler::registered_interface_names());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(current_context);
 ATF_TEST_CASE_BODY(current_context)
@@ -1160,7 +1121,6 @@ ATF_TEST_CASE_BODY(current_context)
     ATF_REQUIRE_EQ(fs::current_path(), context.cwd());
     ATF_REQUIRE(utils::getallenv() == context.env());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(generate_config__empty);
 ATF_TEST_CASE_BODY(generate_config__empty)
@@ -1173,7 +1133,6 @@ ATF_TEST_CASE_BODY(generate_config__empty)
                    scheduler::generate_config(user_config, "missing"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(generate_config__no_matches);
 ATF_TEST_CASE_BODY(generate_config__no_matches)
 {
@@ -1183,15 +1142,13 @@ ATF_TEST_CASE_BODY(generate_config__no_matches)
 
     const config::properties_map exp_props;
 
-    ATF_REQUIRE_EQ(exp_props,
-                   scheduler::generate_config(user_config, "two"));
+    ATF_REQUIRE_EQ(exp_props, scheduler::generate_config(user_config, "two"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(generate_config__some_matches);
 ATF_TEST_CASE_BODY(generate_config__some_matches)
 {
-    std::vector< passwd::user > mock_users;
+    std::vector<passwd::user> mock_users;
     mock_users.push_back(passwd::user("nobody", 1234, 5678));
     passwd::set_mock_users_for_testing(mock_users);
 
@@ -1206,15 +1163,13 @@ ATF_TEST_CASE_BODY(generate_config__some_matches)
     exp_props["unprivileged_user"] = "nobody";
     exp_props["var1"] = "value 1";
 
-    ATF_REQUIRE_EQ(exp_props,
-                   scheduler::generate_config(user_config, "one"));
+    ATF_REQUIRE_EQ(exp_props, scheduler::generate_config(user_config, "one"));
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {
     scheduler::register_interface(
-        "mock", std::shared_ptr< scheduler::interface >(new mock_interface()));
+        "mock", std::shared_ptr<scheduler::interface>(new mock_interface()));
 
     ATF_ADD_TEST_CASE(tcs, integration__list_some);
     ATF_ADD_TEST_CASE(tcs, integration__list_check_paths);

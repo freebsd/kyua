@@ -26,14 +26,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/cmdline/exceptions.hpp"
-
+#include <atf-c++.hpp>
 #include <cstring>
 
-#include <atf-c++.hpp>
+#include "utils/cmdline/exceptions.hpp"
 
 namespace cmdline = utils::cmdline;
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(error);
 ATF_TEST_CASE_BODY(error)
@@ -41,7 +39,6 @@ ATF_TEST_CASE_BODY(error)
     const cmdline::error e("Some text");
     ATF_REQUIRE(std::strcmp("Some text", e.what()) == 0);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(missing_option_argument_error);
 ATF_TEST_CASE_BODY(missing_option_argument_error)
@@ -52,18 +49,17 @@ ATF_TEST_CASE_BODY(missing_option_argument_error)
     ATF_REQUIRE_EQ("-o", e.option());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(option_argument_value_error);
 ATF_TEST_CASE_BODY(option_argument_value_error)
 {
     const cmdline::option_argument_value_error e("--the_option", "the value",
                                                  "the reason");
     ATF_REQUIRE(std::strcmp("Invalid argument 'the value' for option "
-                            "--the_option: the reason", e.what()) == 0);
+                            "--the_option: the reason",
+                            e.what()) == 0);
     ATF_REQUIRE_EQ("--the_option", e.option());
     ATF_REQUIRE_EQ("the value", e.argument());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(unknown_option_error);
 ATF_TEST_CASE_BODY(unknown_option_error)
@@ -72,7 +68,6 @@ ATF_TEST_CASE_BODY(unknown_option_error)
     ATF_REQUIRE(std::strcmp("Unknown option --foo", e.what()) == 0);
     ATF_REQUIRE_EQ("--foo", e.option());
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

@@ -35,21 +35,16 @@
 #include <memory>
 #include <vector>
 
-
 namespace model {
-
 
 class test_program;
 
-
 /// Pointer to a test program.
-typedef std::shared_ptr< test_program > test_program_ptr;
-
+typedef std::shared_ptr<test_program> test_program_ptr;
 
 /// Collection of test programs.
-typedef std::vector< test_program_ptr > test_programs_vector;
+typedef std::vector<test_program_ptr> test_programs_vector;
 
+} // namespace model
 
-}  // namespace model
-
-#endif  // !defined(MODEL_TEST_PROGRAM_FWD_HPP)
+#endif // !defined(MODEL_TEST_PROGRAM_FWD_HPP)

@@ -26,10 +26,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "store/read_backend.hpp"
-
 #include "store/exceptions.hpp"
 #include "store/metadata.hpp"
+#include "store/read_backend.hpp"
 #include "store/read_transaction.hpp"
 #include "store/write_backend.hpp"
 #include "utils/format/macros.hpp"
@@ -40,7 +39,6 @@
 
 namespace fs = utils::fs;
 namespace sqlite = utils::sqlite;
-
 
 /// Opens a database and defines session pragmas.
 ///
@@ -64,7 +62,6 @@ store::detail::open_and_setup(const fs::path& file, const int flags)
         throw store::error(F("Cannot open '%s': %s") % file % e.what());
     }
 }
-
 
 /// Internal implementation for the backend.
 struct store::read_backend::impl : utils::noncopyable {
@@ -95,27 +92,23 @@ struct store::read_backend::impl : utils::noncopyable {
         } else if (database_version > detail::current_schema_version) {
             throw integrity_error(
                 F("Database at schema version %s, which is newer than the "
-                  "supported version %s")
-                % database_version % detail::current_schema_version);
+                  "supported version %s") %
+                database_version % detail::current_schema_version);
         }
     }
 };
 
-
 /// Constructs a new backend.
 ///
 /// \param pimpl_ The internal data.
-store::read_backend::read_backend(impl* pimpl_) :
-    _pimpl(pimpl_)
+store::read_backend::read_backend(impl* pimpl_) : _pimpl(pimpl_)
 {
 }
-
 
 /// Destructor.
 store::read_backend::~read_backend(void)
 {
 }
-
 
 /// Opens a database in read-only mode.
 ///
@@ -131,14 +124,12 @@ store::read_backend::open_ro(const fs::path& file)
     return read_backend(new impl(db, metadata::fetch_latest(db)));
 }
 
-
 /// Closes the SQLite database.
 void
 store::read_backend::close(void)
 {
     _pimpl->database.close();
 }
-
 
 /// Gets the connection to the SQLite database.
 ///
@@ -148,7 +139,6 @@ store::read_backend::database(void)
 {
     return _pimpl->database;
 }
-
 
 /// Opens a read-only transaction.
 ///

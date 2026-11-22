@@ -34,12 +34,10 @@
 
 namespace engine {
 
-
 class filters_state;
 class test_filter;
 class test_filters;
 
+} // namespace engine
 
-}  // namespace engine
-
-#endif  // !defined(ENGINE_FILTERS_FWD_HPP)
+#endif // !defined(ENGINE_FILTERS_FWD_HPP)

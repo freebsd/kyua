@@ -35,11 +35,9 @@
 namespace utils {
 namespace units {
 
-
 class bytes;
 
+} // namespace units
+} // namespace utils
 
-}  // namespace units
-}  // namespace utils
-
-#endif  // !defined(UTILS_UNITS_FWD_HPP)
+#endif // !defined(UTILS_UNITS_FWD_HPP)

@@ -51,7 +51,6 @@ namespace logging = utils::logging;
 using utils::none;
 using utils::optional;
 
-
 /// The general idea for the application-wide logging goes like this:
 ///
 /// 1. The application starts.  Logging is initialized to capture _all_ log
@@ -82,13 +81,10 @@ using utils::optional;
 /// application.  Tests should skip this call so that the logging messages go to
 /// stderr by default, thus generating a useful log to debug the tests.
 
-
 namespace {
-
 
 /// Constant string to strftime to format timestamps.
 static const char* timestamp_format = "%Y%m%d-%H%M%S";
-
 
 /// Mutable global state.
 struct global_state {
@@ -99,21 +95,18 @@ struct global_state {
     bool auto_set_persistency;
 
     /// First time recorded by the logging module.
-    optional< datetime::timestamp > first_timestamp;
+    optional<datetime::timestamp> first_timestamp;
 
     /// In-memory record of log entries before persistency is enabled.
-    std::vector< std::pair< logging::level, std::string > > backlog;
+    std::vector<std::pair<logging::level, std::string>> backlog;
 
     /// Stream to the currently open log file.
-    std::unique_ptr< std::ostream > logfile;
+    std::unique_ptr<std::ostream> logfile;
 
-    global_state() :
-        log_level(logging::level_debug),
-        auto_set_persistency(true)
+    global_state() : log_level(logging::level_debug), auto_set_persistency(true)
     {
     }
 };
-
 
 /// Single instance of the mutable global state.
 ///
@@ -125,7 +118,6 @@ struct global_state {
 /// thus resulting in a premature crash.  By using a plain pointer, we ensure
 /// this state never gets cleaned up.
 static struct global_state* globals_singleton = NULL;
-
 
 /// Gets the singleton instance of global_state.
 ///
@@ -139,7 +131,6 @@ get_globals(void)
     return globals_singleton;
 }
 
-
 /// Converts a level to a printable character.
 ///
 /// \param level The level to convert.
@@ -149,17 +140,20 @@ static char
 level_to_char(const logging::level level)
 {
     switch (level) {
-    case logging::level_error: return 'E';
-    case logging::level_warning: return 'W';
-    case logging::level_info: return 'I';
-    case logging::level_debug: return 'D';
-    default: UNREACHABLE;
+    case logging::level_error:
+        return 'E';
+    case logging::level_warning:
+        return 'W';
+    case logging::level_info:
+        return 'I';
+    case logging::level_debug:
+        return 'D';
+    default:
+        UNREACHABLE;
     }
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Generates a standard log name.
 ///
@@ -181,10 +175,10 @@ logging::generate_log_name(const fs::path& logdir, const std::string& progname)
     if (!globals->first_timestamp)
         globals->first_timestamp = datetime::timestamp::now();
     // Update kyua(1) if you change the name format.
-    return logdir / (F("%s.%s.log") % progname %
-                     globals->first_timestamp.get().strftime(timestamp_format));
+    return logdir /
+        (F("%s.%s.log") % progname %
+         globals->first_timestamp.get().strftime(timestamp_format));
 }
-
 
 /// Logs an entry to the log file.
 ///
@@ -230,7 +224,6 @@ logging::log(const level message_level, const char* file, const int line,
     }
 }
 
-
 /// Sets the logging to record messages in memory for later flushing.
 ///
 /// Can be called after set_persistency to flush logs and set recording to be
@@ -248,7 +241,6 @@ logging::set_inmemory(void)
         globals->logfile.reset();
     }
 }
-
 
 /// Makes the log persistent.
 ///
@@ -292,9 +284,9 @@ logging::set_persistency(const std::string& new_level, const fs::path& path)
         throw std::runtime_error(F("Failed to create log file %s") % path);
     }
 
-    for (std::vector< std::pair< logging::level, std::string > >::const_iterator
-         iter = globals->backlog.begin(); iter != globals->backlog.end();
-         ++iter) {
+    for (std::vector<std::pair<logging::level, std::string>>::const_iterator
+             iter = globals->backlog.begin();
+         iter != globals->backlog.end(); ++iter) {
         if ((*iter).first <= globals->log_level)
             (*globals->logfile) << (*iter).second << '\n';
     }

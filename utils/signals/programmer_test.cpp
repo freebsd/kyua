@@ -39,34 +39,30 @@ extern "C" {
 
 namespace signals = utils::signals;
 
-
 namespace {
 
-
 namespace sigchld {
-
 
 static bool happened_1;
 static bool happened_2;
 
-
-void handler_1(const int signo) {
+void
+handler_1(const int signo)
+{
     PRE(signo == SIGCHLD);
     happened_1 = true;
 }
 
-
-void handler_2(const int signo) {
+void
+handler_2(const int signo)
+{
     PRE(signo == SIGCHLD);
     happened_2 = true;
 }
 
+} // namespace sigchld
 
-}  // namespace sigchld
-
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 ATF_TEST_CASE_WITHOUT_HEAD(program_unprogram);
 ATF_TEST_CASE_BODY(program_unprogram)
@@ -82,7 +78,6 @@ ATF_TEST_CASE_BODY(program_unprogram)
     ATF_REQUIRE(!sigchld::happened_1);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(scope);
 ATF_TEST_CASE_BODY(scope)
 {
@@ -97,7 +92,6 @@ ATF_TEST_CASE_BODY(scope)
     ::kill(::getpid(), SIGCHLD);
     ATF_REQUIRE(!sigchld::happened_1);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(nested);
 ATF_TEST_CASE_BODY(nested)
@@ -130,7 +124,6 @@ ATF_TEST_CASE_BODY(nested)
     ATF_REQUIRE(!sigchld::happened_1);
     ATF_REQUIRE(!sigchld::happened_2);
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

@@ -29,7 +29,7 @@
 #include "utils/env.hpp"
 
 #if defined(HAVE_CONFIG_H)
-#  include "config.h"
+#include "config.h"
 #endif
 
 #include <cerrno>
@@ -48,20 +48,18 @@ namespace fs = utils::fs;
 using utils::none;
 using utils::optional;
 
-
 extern "C" {
-    extern char** environ;
+extern char** environ;
 }
-
 
 /// Gets all environment variables.
 ///
 /// \return A mapping of (name, value) pairs describing the environment
 /// variables.
-std::map< std::string, std::string >
+std::map<std::string, std::string>
 utils::getallenv(void)
 {
-    std::map< std::string, std::string > allenv;
+    std::map<std::string, std::string> allenv;
     for (char** envp = environ; *envp != NULL; envp++) {
         const std::string oneenv = *envp;
         const std::string::size_type pos = oneenv.find('=');
@@ -74,14 +72,13 @@ utils::getallenv(void)
     return allenv;
 }
 
-
 /// Gets the value of an environment variable.
 ///
 /// \param name The name of the environment variable to query.
 ///
 /// \return The value of the environment variable if it is defined, or none
 /// otherwise.
-optional< std::string >
+optional<std::string>
 utils::getenv(const std::string& name)
 {
     const char* value = std::getenv(name.c_str());
@@ -93,7 +90,6 @@ utils::getenv(const std::string& name)
         return utils::make_optional(std::string(value));
     }
 }
-
 
 /// Gets the value of an environment variable with a default fallback.
 ///
@@ -116,15 +112,14 @@ utils::getenv_with_default(const std::string& name,
     }
 }
 
-
 /// Gets the value of the HOME environment variable with path validation.
 ///
 /// \return The value of the HOME environment variable if it is a valid path;
 ///     none if it is not defined or if it contains an invalid path.
-optional< fs::path >
+optional<fs::path>
 utils::get_home(void)
 {
-    const optional< std::string > home = utils::getenv("HOME");
+    const optional<std::string> home = utils::getenv("HOME");
     if (home) {
         try {
             return utils::make_optional(fs::path(home.get()));
@@ -137,7 +132,6 @@ utils::get_home(void)
         return none;
     }
 }
-
 
 /// Sets the value of an environment variable.
 ///
@@ -165,10 +159,9 @@ utils::setenv(const std::string& name, const std::string& val)
                                  name % val % std::strerror(original_errno));
     }
 #else
-#   error "Don't know how to set an environment variable."
+#error "Don't know how to set an environment variable."
 #endif
 }
-
 
 /// Unsets an environment variable.
 ///
@@ -195,6 +188,6 @@ utils::unsetenv(const std::string& name)
                                  name % std::strerror(original_errno));
     }
 #else
-#   error "Don't know how to unset an environment variable."
+#error "Don't know how to unset an environment variable."
 #endif
 }

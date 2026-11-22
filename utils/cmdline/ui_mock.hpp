@@ -44,7 +44,6 @@
 namespace utils {
 namespace cmdline {
 
-
 /// Testable interface to interact with the CLI.
 ///
 /// This class records all writes to stdout and stderr to allow further
@@ -54,25 +53,23 @@ class ui_mock : public ui {
     std::size_t _screen_width;
 
     /// Messages sent to stderr.
-    std::vector< std::string > _err_log;
+    std::vector<std::string> _err_log;
 
     /// Messages sent to stdout.
-    std::vector< std::string > _out_log;
+    std::vector<std::string> _out_log;
 
 public:
     ui_mock(const std::size_t = 0);
 
     void err(const std::string&, const bool = true);
     void out(const std::string&, const bool = true);
-    optional< std::size_t > screen_width(void) const;
+    optional<std::size_t> screen_width(void) const;
 
-    const std::vector< std::string >& err_log(void) const;
-    const std::vector< std::string >& out_log(void) const;
+    const std::vector<std::string>& err_log(void) const;
+    const std::vector<std::string>& out_log(void) const;
 };
 
+} // namespace cmdline
+} // namespace utils
 
-}  // namespace cmdline
-}  // namespace utils
-
-
-#endif  // !defined(UTILS_CMDLINE_UI_MOCK_HPP)
+#endif // !defined(UTILS_CMDLINE_UI_MOCK_HPP)

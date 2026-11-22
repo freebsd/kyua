@@ -35,11 +35,9 @@
 namespace utils {
 namespace process {
 
-
 class ifdstream;
 
+} // namespace process
+} // namespace utils
 
-}  // namespace process
-}  // namespace utils
-
-#endif  // !defined(UTILS_PROCESS_FDSTREAM_FWD_HPP)
+#endif // !defined(UTILS_PROCESS_FDSTREAM_FWD_HPP)

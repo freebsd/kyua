@@ -32,17 +32,15 @@
 #if !defined(UTILS_CONFIG_PARSER_HPP)
 #define UTILS_CONFIG_PARSER_HPP
 
-#include "utils/config/parser_fwd.hpp"
-
 #include <memory>
 
+#include "utils/config/parser_fwd.hpp"
 #include "utils/config/tree_fwd.hpp"
 #include "utils/fs/path_fwd.hpp"
 #include "utils/noncopyable.hpp"
 
 namespace utils {
 namespace config {
-
 
 /// A configuration parser.
 ///
@@ -66,7 +64,7 @@ public:
 
 private:
     /// Pointer to the internal implementation.
-    std::unique_ptr< impl > _pimpl;
+    std::unique_ptr<impl> _pimpl;
 
     /// Hook to initialize the tree keys before reading the file.
     ///
@@ -88,8 +86,7 @@ public:
     void parse(const fs::path&);
 };
 
+} // namespace config
+} // namespace utils
 
-}  // namespace config
-}  // namespace utils
-
-#endif  // !defined(UTILS_CONFIG_PARSER_HPP)
+#endif // !defined(UTILS_CONFIG_PARSER_HPP)

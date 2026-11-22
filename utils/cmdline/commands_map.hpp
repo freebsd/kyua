@@ -38,28 +38,24 @@
 #if !defined(UTILS_CMDLINE_COMMANDS_MAP_HPP)
 #define UTILS_CMDLINE_COMMANDS_MAP_HPP
 
-#include "utils/cmdline/commands_map_fwd.hpp"
-
 #include <map>
 #include <memory>
 #include <set>
 #include <string>
 
+#include "utils/cmdline/commands_map_fwd.hpp"
 #include "utils/noncopyable.hpp"
-
 
 namespace utils {
 namespace cmdline {
 
-
 /// Collection of dynamically-instantiated commands.
-template< typename BaseCommand >
-class commands_map : noncopyable {
+template <typename BaseCommand> class commands_map : noncopyable {
     /// Map of command names to their implementations.
-    typedef std::map< std::string, BaseCommand* > impl_map;
+    typedef std::map<std::string, BaseCommand*> impl_map;
 
     /// Map of category names to the command names they contain.
-    typedef std::map< std::string, std::set< std::string > > categories_map;
+    typedef std::map<std::string, std::set<std::string>> categories_map;
 
     /// Collection of all available commands.
     impl_map _commands;
@@ -72,7 +68,7 @@ public:
     ~commands_map(void);
 
     /// Scoped, strictly-owned pointer to a command from this map.
-    typedef typename std::unique_ptr< BaseCommand > command_ptr;
+    typedef typename std::unique_ptr<BaseCommand> command_ptr;
     void insert(command_ptr, const std::string& = "");
     void insert(BaseCommand*, const std::string& = "");
 
@@ -88,9 +84,7 @@ public:
     const BaseCommand* find(const std::string&) const;
 };
 
+} // namespace cmdline
+} // namespace utils
 
-}  // namespace cmdline
-}  // namespace utils
-
-
-#endif  // !defined(UTILS_CMDLINE_BASE_COMMAND_HPP)
+#endif // !defined(UTILS_CMDLINE_BASE_COMMAND_HPP)

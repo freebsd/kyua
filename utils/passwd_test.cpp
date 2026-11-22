@@ -35,13 +35,11 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include <atf-c++.hpp>
 #include <cstdlib>
 #include <stdexcept>
 
-#include <atf-c++.hpp>
-
 namespace passwd_ns = utils::passwd;
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(user__public_fields);
 ATF_TEST_CASE_BODY(user__public_fields)
@@ -52,14 +50,12 @@ ATF_TEST_CASE_BODY(user__public_fields)
     ATF_REQUIRE_EQ(2, user.gid);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(user__is_root__true);
 ATF_TEST_CASE_BODY(user__is_root__true)
 {
     const passwd_ns::user user("i-am-root", 0, 10);
     ATF_REQUIRE(user.is_root());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(user__is_root__false);
 ATF_TEST_CASE_BODY(user__is_root__false)
@@ -68,7 +64,6 @@ ATF_TEST_CASE_BODY(user__is_root__false)
     ATF_REQUIRE(!user.is_root());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(current_user);
 ATF_TEST_CASE_BODY(current_user)
 {
@@ -76,7 +71,6 @@ ATF_TEST_CASE_BODY(current_user)
     ATF_REQUIRE_EQ(::getuid(), user.uid);
     ATF_REQUIRE_EQ(::getgid(), user.gid);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(current_user__fake);
 ATF_TEST_CASE_BODY(current_user__fake)
@@ -88,7 +82,6 @@ ATF_TEST_CASE_BODY(current_user__fake)
     ATF_REQUIRE(::getuid() != user.uid);
     ATF_REQUIRE_EQ(new_user.uid, user.uid);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(find_user_by_name__ok);
 ATF_TEST_CASE_BODY(find_user_by_name__ok)
@@ -102,7 +95,6 @@ ATF_TEST_CASE_BODY(find_user_by_name__ok)
     ATF_REQUIRE_EQ(pw->pw_name, user.name);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(find_user_by_name__fail);
 ATF_TEST_CASE_BODY(find_user_by_name__fail)
 {
@@ -110,11 +102,10 @@ ATF_TEST_CASE_BODY(find_user_by_name__fail)
                          passwd_ns::find_user_by_name("i-do-not-exist"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(find_user_by_name__fake);
 ATF_TEST_CASE_BODY(find_user_by_name__fake)
 {
-    std::vector< passwd_ns::user > users;
+    std::vector<passwd_ns::user> users;
     users.push_back(passwd_ns::user("myself2", 20, 40));
     users.push_back(passwd_ns::user("myself1", 10, 15));
     users.push_back(passwd_ns::user("myself3", 30, 60));
@@ -129,7 +120,6 @@ ATF_TEST_CASE_BODY(find_user_by_name__fake)
                          passwd_ns::find_user_by_name("root"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(find_user_by_uid__ok);
 ATF_TEST_CASE_BODY(find_user_by_uid__ok)
 {
@@ -142,11 +132,10 @@ ATF_TEST_CASE_BODY(find_user_by_uid__ok)
     ATF_REQUIRE_EQ(pw->pw_name, user.name);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(find_user_by_uid__fake);
 ATF_TEST_CASE_BODY(find_user_by_uid__fake)
 {
-    std::vector< passwd_ns::user > users;
+    std::vector<passwd_ns::user> users;
     users.push_back(passwd_ns::user("myself2", 20, 40));
     users.push_back(passwd_ns::user("myself1", 10, 15));
     users.push_back(passwd_ns::user("myself3", 30, 60));
@@ -160,7 +149,6 @@ ATF_TEST_CASE_BODY(find_user_by_uid__fake)
     ATF_REQUIRE_THROW_RE(std::runtime_error, "Failed.*user.*UID 0",
                          passwd_ns::find_user_by_uid(0));
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

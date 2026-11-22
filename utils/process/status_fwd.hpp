@@ -35,11 +35,9 @@
 namespace utils {
 namespace process {
 
-
 class status;
 
+} // namespace process
+} // namespace utils
 
-}  // namespace process
-}  // namespace utils
-
-#endif  // !defined(UTILS_PROCESS_STATUS_FWD_HPP)
+#endif // !defined(UTILS_PROCESS_STATUS_FWD_HPP)

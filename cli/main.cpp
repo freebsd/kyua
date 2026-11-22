@@ -29,7 +29,7 @@
 #include "cli/main.hpp"
 
 #if defined(HAVE_CONFIG_H)
-#   include "config.h"
+#include "config.h"
 #endif
 
 extern "C" {
@@ -89,9 +89,7 @@ namespace scheduler = engine::scheduler;
 using utils::none;
 using utils::optional;
 
-
 namespace {
-
 
 /// Registers all valid scheduler interfaces.
 ///
@@ -102,19 +100,18 @@ static void
 register_scheduler_interfaces(void)
 {
     scheduler::register_interface(
-        "atf", std::shared_ptr< scheduler::interface >(
-            new engine::atf_interface()));
+        "atf",
+        std::shared_ptr<scheduler::interface>(new engine::atf_interface()));
+    scheduler::register_interface("googletest",
+                                  std::shared_ptr<scheduler::interface>(
+                                      new engine::googletest_interface()));
     scheduler::register_interface(
-        "googletest", std::shared_ptr< scheduler::interface >(
-            new engine::googletest_interface()));
+        "plain",
+        std::shared_ptr<scheduler::interface>(new engine::plain_interface()));
     scheduler::register_interface(
-        "plain", std::shared_ptr< scheduler::interface >(
-            new engine::plain_interface()));
-    scheduler::register_interface(
-        "tap", std::shared_ptr< scheduler::interface >(
-            new engine::tap_interface()));
+        "tap",
+        std::shared_ptr<scheduler::interface>(new engine::tap_interface()));
 }
-
 
 /// Executes the given subcommand with proper usage_error reporting.
 ///
@@ -143,11 +140,9 @@ run_subcommand(cmdline::ui* ui, cli::cli_command* command,
         PRE(command->name() == args[0]);
         return command->main(ui, args, user_config);
     } catch (const cmdline::usage_error& e) {
-        throw std::pair< std::string, cmdline::usage_error >(
-            command->name(), e);
+        throw std::pair<std::string, cmdline::usage_error>(command->name(), e);
     }
 }
-
 
 /// Exception-safe version of main.
 ///
@@ -178,15 +173,16 @@ safe_main(cmdline::ui* ui, int argc, const char* const argv[],
     cmdline::options_vector options;
     options.push_back(&cli::config_option);
     options.push_back(&cli::variable_option);
-    const cmdline::string_option loglevel_option(
-        "loglevel", "Level of the messages to log", "level", "info");
+    const cmdline::string_option loglevel_option("loglevel",
+                                                 "Level of the messages to log",
+                                                 "level", "info");
     options.push_back(&loglevel_option);
     const cmdline::path_option logfile_option(
         "logfile", "Path to the log file", "file",
         cli::detail::default_log_name().c_str());
     options.push_back(&logfile_option);
 
-    cmdline::commands_map< cli::cli_command > commands;
+    cmdline::commands_map<cli::cli_command> commands;
 
     commands.insert(new cli::cmd_about());
     commands.insert(new cli::cmd_config());
@@ -208,14 +204,13 @@ safe_main(cmdline::ui* ui, int argc, const char* const argv[],
 
     const cmdline::parsed_cmdline cmdline = cmdline::parse(argc, argv, options);
 
-    const fs::path logfile(cmdline.get_option< cmdline::path_option >(
-        "logfile"));
+    const fs::path logfile(cmdline.get_option<cmdline::path_option>("logfile"));
     fs::mkdir_p(logfile.branch_path(), 0755);
     LD(F("Log file is %s") % logfile);
     utils::install_crash_handlers(logfile.str());
     try {
-        logging::set_persistency(cmdline.get_option< cmdline::string_option >(
-            "loglevel"), logfile);
+        logging::set_persistency(
+            cmdline.get_option<cmdline::string_option>("loglevel"), logfile);
     } catch (const std::range_error& e) {
         throw cmdline::usage_error(e.what());
     }
@@ -234,9 +229,7 @@ safe_main(cmdline::ui* ui, int argc, const char* const argv[],
     return run_subcommand(ui, command, cmdline.arguments(), user_config);
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Gets the name of the default log file.
 ///
@@ -245,12 +238,13 @@ fs::path
 cli::detail::default_log_name(void)
 {
     // Update doc/troubleshooting.texi if you change this algorithm.
-    const optional< std::string > home(utils::getenv("HOME"));
+    const optional<std::string> home(utils::getenv("HOME"));
     if (home) {
         return logging::generate_log_name(fs::path(home.get()) / ".kyua" /
-                                          "logs", cmdline::progname());
+                                              "logs",
+                                          cmdline::progname());
     } else {
-        const optional< std::string > tmpdir(utils::getenv("TMPDIR"));
+        const optional<std::string> tmpdir(utils::getenv("TMPDIR"));
         if (tmpdir) {
             return logging::generate_log_name(fs::path(tmpdir.get()),
                                               cmdline::progname());
@@ -260,7 +254,6 @@ cli::detail::default_log_name(void)
         }
     }
 }
-
 
 /// Testable entry point, with catch-all exception handlers.
 ///
@@ -283,7 +276,8 @@ cli::main(cmdline::ui* ui, const int argc, const char* const* const argv,
           cli_command_ptr mock_command)
 {
     try {
-        const int exit_code = safe_main(ui, argc, argv, std::move(mock_command));
+        const int exit_code = safe_main(ui, argc, argv,
+                                        std::move(mock_command));
 
         // Codes above 1 are reserved to report conditions captured as
         // exceptions below.
@@ -302,7 +296,7 @@ cli::main(cmdline::ui* ui, const int argc, const char* const* const argv,
         // abort in principle, but it wouldn't be a nice experience if it ever
         // happened.)
         return 2;
-    } catch (const std::pair< std::string, cmdline::usage_error >& e) {
+    } catch (const std::pair<std::string, cmdline::usage_error>& e) {
         const std::string message = F("Usage error for command %s: %s.") %
             e.first % e.second.what();
         LE(message);
@@ -320,7 +314,8 @@ cli::main(cmdline::ui* ui, const int argc, const char* const* const argv,
     } catch (const store::old_schema_error& e) {
         const std::string message = F("The database has schema version %s, "
                                       "which is too old; please use db-migrate "
-                                      "to upgrade it.") % e.old_version();
+                                      "to upgrade it.") %
+            e.old_version();
         cmdline::print_error(ui, message);
         return 2;
     } catch (const std::runtime_error& e) {
@@ -328,7 +323,6 @@ cli::main(cmdline::ui* ui, const int argc, const char* const* const argv,
         return 2;
     }
 }
-
 
 /// Delegate for ::main().
 ///

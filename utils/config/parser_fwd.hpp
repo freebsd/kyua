@@ -35,11 +35,9 @@
 namespace utils {
 namespace config {
 
-
 class parser;
 
+} // namespace config
+} // namespace utils
 
-}  // namespace config
-}  // namespace utils
-
-#endif  // !defined(UTILS_CONFIG_PARSER_FWD_HPP)
+#endif // !defined(UTILS_CONFIG_PARSER_FWD_HPP)

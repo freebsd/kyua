@@ -34,6 +34,7 @@ extern "C" {
 }
 
 #include <algorithm>
+#include <atf-c++.hpp>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -41,8 +42,6 @@ extern "C" {
 #include <sstream>
 #include <string>
 #include <vector>
-
-#include <atf-c++.hpp>
 
 #include "utils/env.hpp"
 #include "utils/fs/operations.hpp"
@@ -58,9 +57,7 @@ namespace text = utils::text;
 
 using utils::optional;
 
-
 namespace {
-
 
 /// Creates an empty file in the given directory.
 ///
@@ -82,9 +79,7 @@ create_cookie(const atf::tests::tc* test_case, const char* directory,
     file.close();
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 ATF_TEST_CASE_WITH_CLEANUP(check_cleanup_workdir);
 ATF_TEST_CASE_HEAD(check_cleanup_workdir)
@@ -119,7 +114,6 @@ ATF_TEST_CASE_CLEANUP(check_cleanup_workdir)
     std::exit(EXIT_SUCCESS);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(check_configuration_variables);
 ATF_TEST_CASE_BODY(check_configuration_variables)
 {
@@ -129,7 +123,6 @@ ATF_TEST_CASE_BODY(check_configuration_variables)
     ATF_REQUIRE(has_config_var("second"));
     ATF_REQUIRE_EQ("some other value", get_config_var("second"));
 }
-
 
 ATF_TEST_CASE(check_list_config);
 ATF_TEST_CASE_HEAD(check_list_config)
@@ -147,7 +140,6 @@ ATF_TEST_CASE_BODY(check_list_config)
 {
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(check_unprivileged);
 ATF_TEST_CASE_BODY(check_unprivileged)
 {
@@ -161,13 +153,11 @@ ATF_TEST_CASE_BODY(check_unprivileged)
     file.close();
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(crash);
 ATF_TEST_CASE_BODY(crash)
 {
     std::abort();
 }
-
 
 ATF_TEST_CASE(crash_head);
 ATF_TEST_CASE_HEAD(crash_head)
@@ -177,7 +167,6 @@ ATF_TEST_CASE_HEAD(crash_head)
 ATF_TEST_CASE_BODY(crash_head)
 {
 }
-
 
 ATF_TEST_CASE_WITH_CLEANUP(crash_cleanup);
 ATF_TEST_CASE_HEAD(crash_cleanup)
@@ -191,13 +180,11 @@ ATF_TEST_CASE_CLEANUP(crash_cleanup)
     utils::abort_without_coredump();
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(create_cookie_in_control_dir);
 ATF_TEST_CASE_BODY(create_cookie_in_control_dir)
 {
     create_cookie(this, "control_dir", "cookie");
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(create_cookie_in_workdir);
 ATF_TEST_CASE_BODY(create_cookie_in_workdir)
@@ -207,7 +194,6 @@ ATF_TEST_CASE_BODY(create_cookie_in_workdir)
         fail("Failed to create the cookie");
     file.close();
 }
-
 
 ATF_TEST_CASE_WITH_CLEANUP(create_cookie_from_cleanup);
 ATF_TEST_CASE_HEAD(create_cookie_from_cleanup)
@@ -220,7 +206,6 @@ ATF_TEST_CASE_CLEANUP(create_cookie_from_cleanup)
 {
     create_cookie(this, "control_dir", "cookie");
 }
-
 
 ATF_TEST_CASE_WITH_CLEANUP(expect_timeout);
 ATF_TEST_CASE_HEAD(expect_timeout)
@@ -239,7 +224,6 @@ ATF_TEST_CASE_CLEANUP(expect_timeout)
     create_cookie(this, "control_dir", "cookie.cleanup");
 }
 
-
 ATF_TEST_CASE_WITH_CLEANUP(output);
 ATF_TEST_CASE_HEAD(output)
 {
@@ -255,7 +239,6 @@ ATF_TEST_CASE_CLEANUP(output)
     std::cerr << "Cleanup message to stderr\n";
 }
 
-
 ATF_TEST_CASE(output_in_list);
 ATF_TEST_CASE_HEAD(output_in_list)
 {
@@ -265,7 +248,6 @@ ATF_TEST_CASE_BODY(output_in_list)
 {
 }
 
-
 ATF_TEST_CASE(pass);
 ATF_TEST_CASE_HEAD(pass)
 {
@@ -274,7 +256,6 @@ ATF_TEST_CASE_HEAD(pass)
 ATF_TEST_CASE_BODY(pass)
 {
 }
-
 
 ATF_TEST_CASE_WITH_CLEANUP(shared_workdir);
 ATF_TEST_CASE_HEAD(shared_workdir)
@@ -289,7 +270,6 @@ ATF_TEST_CASE_CLEANUP(shared_workdir)
     if (!atf::utils::file_exists("shared_cookie"))
         utils::abort_without_coredump();
 }
-
 
 ATF_TEST_CASE(spawn_blocking_child);
 ATF_TEST_CASE_HEAD(spawn_blocking_child)
@@ -313,7 +293,6 @@ ATF_TEST_CASE_BODY(spawn_blocking_child)
     }
 }
 
-
 ATF_TEST_CASE_WITH_CLEANUP(timeout_body);
 ATF_TEST_CASE_HEAD(timeout_body)
 {
@@ -330,7 +309,6 @@ ATF_TEST_CASE_CLEANUP(timeout_body)
     create_cookie(this, "control_dir", "cookie.cleanup");
 }
 
-
 ATF_TEST_CASE_WITH_CLEANUP(timeout_cleanup);
 ATF_TEST_CASE_HEAD(timeout_cleanup)
 {
@@ -344,14 +322,12 @@ ATF_TEST_CASE_CLEANUP(timeout_cleanup)
     create_cookie(this, "control_dir", "cookie");
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(validate_isolation);
 ATF_TEST_CASE_BODY(validate_isolation)
 {
     ATF_REQUIRE(utils::getenv("HOME").get() != "fake-value");
     ATF_REQUIRE(!utils::getenv("LANG"));
 }
-
 
 /// Wrapper around ATF_ADD_TEST_CASE to only add a test when requested.
 ///
@@ -362,12 +338,11 @@ ATF_TEST_CASE_BODY(validate_isolation)
 /// \param tcs List of test cases into which to register the test.
 /// \param filters List of filters to determine whether the test applies or not.
 /// \param name Name of the test case being added.
-#define ADD_TEST_CASE(tcs, filters, name) \
-    do { \
+#define ADD_TEST_CASE(tcs, filters, name)                            \
+    do {                                                             \
         if (filters.empty() || filters.find(#name) != filters.end()) \
-            ATF_ADD_TEST_CASE(tcs, name); \
+            ATF_ADD_TEST_CASE(tcs, name);                            \
     } while (false)
-
 
 ATF_INIT_TEST_CASES(tcs)
 {
@@ -376,22 +351,22 @@ ATF_INIT_TEST_CASES(tcs)
     // TODO(jmmv): Instead of using "filters", we should make TEST_CASES
     // explicitly list all the test cases to enable.  This would let us get rid
     // of some of the hacks below...
-    std::set< std::string > filters;
+    std::set<std::string> filters;
 
-    const optional< std::string > names_raw = utils::getenv("TEST_CASES");
+    const optional<std::string> names_raw = utils::getenv("TEST_CASES");
     if (names_raw) {
         if (names_raw.get().empty())
-            return;  // See TODO above.
+            return; // See TODO above.
 
-        const std::vector< std::string > names = text::split(
-            names_raw.get(), ' ');
+        const std::vector<std::string> names = text::split(names_raw.get(),
+                                                           ' ');
         std::copy(names.begin(), names.end(),
                   std::inserter(filters, filters.begin()));
     }
 
-    if (filters.find("crash_head") != filters.end())  // See TODO above.
+    if (filters.find("crash_head") != filters.end()) // See TODO above.
         ATF_ADD_TEST_CASE(tcs, crash_head);
-    if (filters.find("output_in_list") != filters.end())  // See TODO above.
+    if (filters.find("output_in_list") != filters.end()) // See TODO above.
         ATF_ADD_TEST_CASE(tcs, output_in_list);
 
     ADD_TEST_CASE(tcs, filters, check_cleanup_workdir);

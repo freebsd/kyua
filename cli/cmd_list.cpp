@@ -26,12 +26,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "cli/cmd_list.hpp"
-
 #include <cstdlib>
 #include <utility>
 #include <vector>
 
+#include "cli/cmd_list.hpp"
 #include "cli/common.ipp"
 #include "drivers/list_tests.hpp"
 #include "engine/filters.hpp"
@@ -50,9 +49,7 @@ namespace cmdline = utils::cmdline;
 namespace config = utils::config;
 namespace fs = utils::fs;
 
-
 namespace {
-
 
 /// Hooks for list_tests to print test cases as they come.
 class progress_hooks : public drivers::list_tests::base_hooks {
@@ -77,18 +74,15 @@ public:
     ///
     /// \param test_program The test program containing the test case.
     /// \param test_case_name The name of the located test case.
-    void
-    got_test_case(const model::test_program& test_program,
-                  const std::string& test_case_name)
+    void got_test_case(const model::test_program& test_program,
+                       const std::string& test_case_name)
     {
         cli::detail::list_test_case(_ui, _verbose, test_program,
                                     test_case_name);
     }
 };
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Lists a single test case.
 ///
@@ -128,7 +122,6 @@ cli::detail::list_test_case(cmdline::ui* ui, const bool verbose,
     }
 }
 
-
 /// Default constructor for cmd_list.
 cli::cmd_list::cmd_list(void) :
     cli_command("list", "[test-program ...]", 0, -1,
@@ -138,7 +131,6 @@ cli::cmd_list::cmd_list(void) :
     add_option(kyuafile_option);
     add_option(cmdline::bool_option('v', "verbose", "Show properties"));
 }
-
 
 /// Entry point for the "list" subcommand.
 ///
@@ -156,6 +148,6 @@ cli::cmd_list::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
         kyuafile_path(cmdline), build_root_path(cmdline),
         parse_filters(cmdline.arguments()), user_config, hooks);
 
-    return report_unused_filters(result.unused_filters, ui) ?
-        EXIT_FAILURE : EXIT_SUCCESS;
+    return report_unused_filters(result.unused_filters, ui) ? EXIT_FAILURE :
+                                                              EXIT_SUCCESS;
 }

@@ -27,7 +27,6 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "model/context.hpp"
-
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/noncopyable.hpp"
@@ -36,21 +35,19 @@
 namespace fs = utils::fs;
 namespace text = utils::text;
 
-
 /// Internal implementation of a context.
 struct model::context::impl : utils::noncopyable {
     /// The current working directory.
     fs::path _cwd;
 
     /// The environment variables.
-    std::map< std::string, std::string > _env;
+    std::map<std::string, std::string> _env;
 
     /// Constructor.
     ///
     /// \param cwd_ The current working directory.
     /// \param env_ The environment variables.
-    impl(const fs::path& cwd_,
-         const std::map< std::string, std::string >& env_) :
+    impl(const fs::path& cwd_, const std::map<std::string, std::string>& env_) :
         _cwd(cwd_),
         _env(env_)
     {
@@ -61,30 +58,26 @@ struct model::context::impl : utils::noncopyable {
     /// \param other The object to compare to.
     ///
     /// \return True if the two objects are equal; false otherwise.
-    bool
-    operator==(const impl& other) const
+    bool operator==(const impl& other) const
     {
         return _cwd == other._cwd && _env == other._env;
     }
 };
-
 
 /// Constructs a new context.
 ///
 /// \param cwd_ The current working directory.
 /// \param env_ The environment variables.
 model::context::context(const fs::path& cwd_,
-                         const std::map< std::string, std::string >& env_) :
+                        const std::map<std::string, std::string>& env_) :
     _pimpl(new impl(cwd_, env_))
 {
 }
-
 
 /// Destructor.
 model::context::~context(void)
 {
 }
-
 
 /// Returns the current working directory of the context.
 ///
@@ -95,16 +88,14 @@ model::context::cwd(void) const
     return _pimpl->_cwd;
 }
 
-
 /// Returns the environment variables of the context.
 ///
 /// \return A variable name to variable value mapping.
-const std::map< std::string, std::string >&
+const std::map<std::string, std::string>&
 model::context::env(void) const
 {
     return _pimpl->_env;
 }
-
 
 /// Equality comparator.
 ///
@@ -117,7 +108,6 @@ model::context::operator==(const context& other) const
     return *_pimpl == *other._pimpl;
 }
 
-
 /// Inequality comparator.
 ///
 /// \param other The other object to compare this one to.
@@ -129,7 +119,6 @@ model::context::operator!=(const context& other) const
     return !(*this == other);
 }
 
-
 /// Injects the object into a stream.
 ///
 /// \param output The stream into which to inject the object.
@@ -139,19 +128,19 @@ model::context::operator!=(const context& other) const
 std::ostream&
 model::operator<<(std::ostream& output, const context& object)
 {
-    output << F("context{cwd=%s, env=[")
-        % text::quote(object.cwd().str(), '\'');
+    output << F("context{cwd=%s, env=[") %
+            text::quote(object.cwd().str(), '\'');
 
-    const std::map< std::string, std::string >& env = object.env();
+    const std::map<std::string, std::string>& env = object.env();
     bool first = true;
-    for (std::map< std::string, std::string >::const_iterator
-             iter = env.begin(); iter != env.end(); ++iter) {
+    for (std::map<std::string, std::string>::const_iterator iter = env.begin();
+         iter != env.end(); ++iter) {
         if (!first)
             output << ", ";
         first = false;
 
-        output << F("%s=%s") % (*iter).first
-            % text::quote((*iter).second, '\'');
+        output << F("%s=%s") % (*iter).first %
+                text::quote((*iter).second, '\'');
     }
 
     output << "]}";

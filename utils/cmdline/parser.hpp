@@ -32,15 +32,14 @@
 #if !defined(UTILS_CMDLINE_PARSER_HPP)
 #define UTILS_CMDLINE_PARSER_HPP
 
-#include "utils/cmdline/parser_fwd.hpp"
-
 #include <map>
 #include <string>
 #include <vector>
 
+#include "utils/cmdline/parser_fwd.hpp"
+
 namespace utils {
 namespace cmdline {
-
 
 /// Representation of a parsed command line.
 ///
@@ -51,35 +50,33 @@ namespace cmdline {
 /// validation happens during parsing (before this class is instantiated).
 class parsed_cmdline {
     /// Mapping of option names to all the values provided.
-    std::map< std::string, std::vector< std::string > > _option_values;
+    std::map<std::string, std::vector<std::string>> _option_values;
 
     /// Collection of arguments with all options removed.
     args_vector _arguments;
 
-    const std::vector< std::string >& get_option_raw(const std::string&) const;
+    const std::vector<std::string>& get_option_raw(const std::string&) const;
 
 public:
-    parsed_cmdline(const std::map< std::string, std::vector< std::string > >&,
+    parsed_cmdline(const std::map<std::string, std::vector<std::string>>&,
                    const args_vector&);
 
     bool has_option(const std::string&) const;
 
-    template< typename Option >
+    template <typename Option>
     typename Option::option_type get_option(const std::string&) const;
 
-    template< typename Option >
-    std::vector< typename Option::option_type > get_multi_option(
-        const std::string&) const;
+    template <typename Option>
+    std::vector<typename Option::option_type>
+    get_multi_option(const std::string&) const;
 
     const args_vector& arguments(void) const;
 };
 
-
 parsed_cmdline parse(const args_vector&, const options_vector&);
 parsed_cmdline parse(const int, const char* const*, const options_vector&);
 
+} // namespace cmdline
+} // namespace utils
 
-}  // namespace cmdline
-}  // namespace utils
-
-#endif  // !defined(UTILS_CMDLINE_PARSER_HPP)
+#endif // !defined(UTILS_CMDLINE_PARSER_HPP)

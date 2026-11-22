@@ -37,8 +37,8 @@ extern "C" {
 #include <stdexcept>
 
 #include "utils/format/macros.hpp"
-#include "utils/optional.ipp"
 #include "utils/noncopyable.hpp"
+#include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 
 namespace datetime = utils::datetime;
@@ -46,24 +46,17 @@ namespace datetime = utils::datetime;
 using utils::none;
 using utils::optional;
 
-
 namespace {
 
-
 /// Fake value for the current time.
-static optional< datetime::timestamp > mock_now = none;
+static optional<datetime::timestamp> mock_now = none;
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Creates a zero time delta.
-datetime::delta::delta(void) :
-    seconds(0),
-    useconds(0)
+datetime::delta::delta(void) : seconds(0), useconds(0)
 {
 }
-
 
 /// Creates a time delta.
 ///
@@ -71,17 +64,16 @@ datetime::delta::delta(void) :
 /// \param useconds_ The microseconds in the delta.
 ///
 /// \throw std::runtime_error If the input delta is negative.
-datetime::delta::delta(const int64_t seconds_,
-                       const unsigned long useconds_) :
+datetime::delta::delta(const int64_t seconds_, const unsigned long useconds_) :
     seconds(seconds_),
     useconds(useconds_)
 {
     if (seconds_ < 0) {
         throw std::runtime_error(F("Negative deltas are not supported by the "
-                                   "datetime::delta class; got: %s") % (*this));
+                                   "datetime::delta class; got: %s") %
+                                 (*this));
     }
 }
-
 
 /// Converts a time expressed in microseconds to a delta.
 ///
@@ -102,7 +94,6 @@ datetime::delta::from_microseconds(const int64_t useconds)
     return delta(useconds / 1000000, useconds % 1000000);
 }
 
-
 /// Convers the delta to a flat representation expressed in microseconds.
 ///
 /// \return The amount of microseconds that corresponds to this delta.
@@ -111,7 +102,6 @@ datetime::delta::to_microseconds(void) const
 {
     return seconds * 1000000 + useconds;
 }
-
 
 /// Checks if two time deltas are equal.
 ///
@@ -124,7 +114,6 @@ datetime::delta::operator==(const datetime::delta& other) const
     return seconds == other.seconds && useconds == other.useconds;
 }
 
-
 /// Checks if two time deltas are different.
 ///
 /// \param other The object to compare to.
@@ -135,7 +124,6 @@ datetime::delta::operator!=(const datetime::delta& other) const
 {
     return !(*this == other);
 }
-
 
 /// Checks if this time delta is shorter than another one.
 ///
@@ -149,7 +137,6 @@ datetime::delta::operator<(const datetime::delta& other) const
         (seconds == other.seconds && useconds < other.useconds);
 }
 
-
 /// Checks if this time delta is shorter than or equal to another one.
 ///
 /// \param other The object to compare to.
@@ -161,7 +148,6 @@ datetime::delta::operator<=(const datetime::delta& other) const
 {
     return (*this) < other || (*this) == other;
 }
-
 
 /// Checks if this time delta is larger than another one.
 ///
@@ -175,7 +161,6 @@ datetime::delta::operator>(const datetime::delta& other) const
         (seconds == other.seconds && useconds > other.useconds);
 }
 
-
 /// Checks if this time delta is larger than or equal to another one.
 ///
 /// \param other The object to compare to.
@@ -187,7 +172,6 @@ datetime::delta::operator>=(const datetime::delta& other) const
 {
     return (*this) > other || (*this) == other;
 }
-
 
 /// Adds a time delta to this one.
 ///
@@ -201,7 +185,6 @@ datetime::delta::operator+(const datetime::delta& other) const
                                     other.to_microseconds());
 }
 
-
 /// Adds a time delta to this one and updates this with the result.
 ///
 /// \param other The time delta to add.
@@ -214,7 +197,6 @@ datetime::delta::operator+=(const datetime::delta& other)
     return *this;
 }
 
-
 /// Scales this delta by a positive integral factor.
 ///
 /// \param factor The scaling factor.
@@ -225,7 +207,6 @@ datetime::delta::operator*(const std::size_t factor) const
 {
     return delta::from_microseconds(to_microseconds() * factor);
 }
-
 
 /// Scales this delta by and updates this delta with the result.
 ///
@@ -239,7 +220,6 @@ datetime::delta::operator*=(const std::size_t factor)
     return *this;
 }
 
-
 /// Injects the object into a stream.
 ///
 /// \param output The stream into which to inject the object.
@@ -252,10 +232,8 @@ datetime::operator<<(std::ostream& output, const delta& object)
     return (output << object.to_microseconds() << "us");
 }
 
-
 namespace utils {
 namespace datetime {
-
 
 /// Internal representation for datetime::timestamp.
 struct timestamp::impl : utils::noncopyable {
@@ -270,19 +248,15 @@ struct timestamp::impl : utils::noncopyable {
     }
 };
 
-
-}  // namespace datetime
-}  // namespace utils
-
+} // namespace datetime
+} // namespace utils
 
 /// Constructs a new timestamp.
 ///
 /// \param pimpl_ An existing impl representation.
-datetime::timestamp::timestamp(std::shared_ptr< impl > pimpl_) :
-    _pimpl(pimpl_)
+datetime::timestamp::timestamp(std::shared_ptr<impl> pimpl_) : _pimpl(pimpl_)
 {
 }
-
 
 /// Constructs a timestamp from the amount of microseconds since the epoch.
 ///
@@ -294,11 +268,10 @@ datetime::timestamp::from_microseconds(const int64_t value)
 {
     PRE(value >= 0);
     ::timeval data;
-    data.tv_sec = static_cast< time_t >(value / 1000000);
-    data.tv_usec = static_cast< suseconds_t >(value % 1000000);
-    return timestamp(std::shared_ptr< impl >(new impl(data)));
+    data.tv_sec = static_cast<time_t>(value / 1000000);
+    data.tv_usec = static_cast<suseconds_t>(value % 1000000);
+    return timestamp(std::shared_ptr<impl>(new impl(data)));
 }
-
 
 /// Constructs a timestamp based on user-friendly values.
 ///
@@ -313,10 +286,9 @@ datetime::timestamp::from_microseconds(const int64_t value)
 ///
 /// \return A new timestamp.
 datetime::timestamp
-datetime::timestamp::from_values(const int year, const int month,
-                                 const int day, const int hour,
-                                 const int minute, const int second,
-                                 const int microsecond)
+datetime::timestamp::from_values(const int year, const int month, const int day,
+                                 const int hour, const int minute,
+                                 const int second, const int microsecond)
 {
     PRE(year >= 1900);
     PRE(month >= 1 && month <= 12);
@@ -351,10 +323,9 @@ datetime::timestamp::from_values(const int year, const int month,
 
     ::timeval data;
     data.tv_sec = ::mktime(&timedata);
-    data.tv_usec = static_cast< suseconds_t >(microsecond);
-    return timestamp(std::shared_ptr< impl >(new impl(data)));
+    data.tv_usec = static_cast<suseconds_t>(microsecond);
+    return timestamp(std::shared_ptr<impl>(new impl(data)));
 }
-
 
 /// Constructs a new timestamp representing the current time in UTC.
 ///
@@ -371,9 +342,8 @@ datetime::timestamp::now(void)
         INV(ret != -1);
     }
 
-    return timestamp(std::shared_ptr< impl >(new impl(data)));
+    return timestamp(std::shared_ptr<impl>(new impl(data)));
 }
-
 
 /// Formats a timestamp.
 ///
@@ -398,7 +368,6 @@ datetime::timestamp::strftime(const std::string& format) const
     return buf;
 }
 
-
 /// Formats a timestamp with the ISO 8601 standard and in UTC.
 ///
 /// \return A string with the formatted timestamp.
@@ -408,17 +377,15 @@ datetime::timestamp::to_iso8601_in_utc(void) const
     return F("%s.%06sZ") % strftime("%Y-%m-%dT%H:%M:%S") % _pimpl->data.tv_usec;
 }
 
-
 /// Returns the number of microseconds since the epoch in UTC.
 ///
 /// \return A number of microseconds.
 int64_t
 datetime::timestamp::to_microseconds(void) const
 {
-    return static_cast< int64_t >(_pimpl->data.tv_sec) * 1000000 +
+    return static_cast<int64_t>(_pimpl->data.tv_sec) * 1000000 +
         _pimpl->data.tv_usec;
 }
-
 
 /// Returns the number of seconds since the epoch in UTC.
 ///
@@ -426,21 +393,18 @@ datetime::timestamp::to_microseconds(void) const
 int64_t
 datetime::timestamp::to_seconds(void) const
 {
-    return static_cast< int64_t >(_pimpl->data.tv_sec);
+    return static_cast<int64_t>(_pimpl->data.tv_sec);
 }
-
 
 /// Sets the current time for testing purposes.
 void
-datetime::set_mock_now(const int year, const int month,
-                       const int day, const int hour,
-                       const int minute, const int second,
+datetime::set_mock_now(const int year, const int month, const int day,
+                       const int hour, const int minute, const int second,
                        const int microsecond)
 {
     mock_now = timestamp::from_values(year, month, day, hour, minute, second,
                                       microsecond);
 }
-
 
 /// Sets the current time for testing purposes.
 ///
@@ -450,7 +414,6 @@ datetime::set_mock_now(const timestamp& mock_now_)
 {
     mock_now = mock_now_;
 }
-
 
 /// Checks if two timestamps are equal.
 ///
@@ -464,7 +427,6 @@ datetime::timestamp::operator==(const datetime::timestamp& other) const
         _pimpl->data.tv_usec == other._pimpl->data.tv_usec;
 }
 
-
 /// Checks if two timestamps are different.
 ///
 /// \param other The object to compare to.
@@ -476,7 +438,6 @@ datetime::timestamp::operator!=(const datetime::timestamp& other) const
     return !(*this == other);
 }
 
-
 /// Checks if a timestamp is before another.
 ///
 /// \param other The object to compare to.
@@ -487,7 +448,6 @@ datetime::timestamp::operator<(const datetime::timestamp& other) const
 {
     return to_microseconds() < other.to_microseconds();
 }
-
 
 /// Checks if a timestamp is before or equal to another.
 ///
@@ -501,7 +461,6 @@ datetime::timestamp::operator<=(const datetime::timestamp& other) const
     return to_microseconds() <= other.to_microseconds();
 }
 
-
 /// Checks if a timestamp is after another.
 ///
 /// \param other The object to compare to.
@@ -512,7 +471,6 @@ datetime::timestamp::operator>(const datetime::timestamp& other) const
 {
     return to_microseconds() > other.to_microseconds();
 }
-
 
 /// Checks if a timestamp is after or equal to another.
 ///
@@ -526,7 +484,6 @@ datetime::timestamp::operator>=(const datetime::timestamp& other) const
     return to_microseconds() >= other.to_microseconds();
 }
 
-
 /// Calculates the addition of a delta to a timestamp.
 ///
 /// \param other The delta to add.
@@ -538,7 +495,6 @@ datetime::timestamp::operator+(const datetime::delta& other) const
     return datetime::timestamp::from_microseconds(to_microseconds() +
                                                   other.to_microseconds());
 }
-
 
 /// Calculates the addition of a delta to this timestamp.
 ///
@@ -552,7 +508,6 @@ datetime::timestamp::operator+=(const datetime::delta& other)
     return *this;
 }
 
-
 /// Calculates the subtraction of a delta from a timestamp.
 ///
 /// \param other The delta to subtract.
@@ -565,7 +520,6 @@ datetime::timestamp::operator-(const datetime::delta& other) const
                                                   other.to_microseconds());
 }
 
-
 /// Calculates the subtraction of a delta from this timestamp.
 ///
 /// \param other The delta to subtract.
@@ -577,7 +531,6 @@ datetime::timestamp::operator-=(const datetime::delta& other)
     *this = *this - other;
     return *this;
 }
-
 
 /// Calculates the delta between two timestamps.
 ///
@@ -600,7 +553,6 @@ datetime::timestamp::operator-(const datetime::timestamp& other) const
                                               other.to_microseconds());
 }
 
-
 /// Injects the object into a stream.
 ///
 /// \param output The stream into which to inject the object.
@@ -613,7 +565,6 @@ datetime::operator<<(std::ostream& output, const timestamp& object)
     return (output << object.to_microseconds() << "us");
 }
 
-
 /// Constructs a monotonic time point measured in microseconds.
 ///
 /// \param useconds Microseconds since the monotonic clock's origin.
@@ -621,7 +572,6 @@ datetime::monotonic_timestamp::monotonic_timestamp(const int64_t useconds) :
     _useconds(useconds)
 {
 }
-
 
 /// Constructs a monotonic time point from a count of microseconds.
 ///
@@ -634,7 +584,6 @@ datetime::monotonic_timestamp::from_microseconds(const int64_t useconds)
     return monotonic_timestamp(useconds);
 }
 
-
 /// Constructs a time point representing the current monotonic time.
 ///
 /// The monotonic clock is independent of calendar clock adjustments.
@@ -646,10 +595,9 @@ datetime::monotonic_timestamp::now(void)
     ::timespec data;
     if (::clock_gettime(CLOCK_MONOTONIC, &data) == -1)
         UNREACHABLE_MSG("clock_gettime(CLOCK_MONOTONIC) failed");
-    return monotonic_timestamp(static_cast< int64_t >(data.tv_sec) * 1000000 +
+    return monotonic_timestamp(static_cast<int64_t>(data.tv_sec) * 1000000 +
                                data.tv_nsec / 1000);
 }
-
 
 /// Returns the number of microseconds since the monotonic clock's origin.
 ///
@@ -659,7 +607,6 @@ datetime::monotonic_timestamp::to_microseconds(void) const
 {
     return _useconds;
 }
-
 
 /// Calculates the addition of a delta to a monotonic time point.
 ///
@@ -672,7 +619,6 @@ datetime::monotonic_timestamp::operator+(const datetime::delta& other) const
     return monotonic_timestamp(_useconds + other.to_microseconds());
 }
 
-
 /// Calculates the delta between two monotonic time points.
 ///
 /// \param other The subtrahend.
@@ -682,12 +628,10 @@ datetime::monotonic_timestamp::operator+(const datetime::delta& other) const
 /// \throw std::runtime_error If the subtraction would result in a negative time
 ///     delta, which is not supported.
 datetime::delta
-datetime::monotonic_timestamp::operator-(
-    const monotonic_timestamp& other) const
+datetime::monotonic_timestamp::operator-(const monotonic_timestamp& other) const
 {
     return delta::from_microseconds(_useconds - other._useconds);
 }
-
 
 /// Injects the object into a stream.
 ///

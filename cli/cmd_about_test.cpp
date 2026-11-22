@@ -29,12 +29,11 @@
 #include "cli/cmd_about.hpp"
 
 #if defined(HAVE_CONFIG_H)
-#   include "config.h"
+#include "config.h"
 #endif
 
-#include <cstdlib>
-
 #include <atf-c++.hpp>
+#include <cstdlib>
 
 #include "cli/common.ipp"
 #include "engine/config.hpp"
@@ -50,7 +49,6 @@ namespace cmdline = utils::cmdline;
 namespace fs = utils::fs;
 
 using cli::cmd_about;
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(all_topics__ok);
 ATF_TEST_CASE_BODY(all_topics__ok)
@@ -100,7 +98,6 @@ ATF_TEST_CASE_BODY(all_topics__ok)
     ATF_REQUIRE(ui.err_log().empty());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(all_topics__missing_docs);
 ATF_TEST_CASE_BODY(all_topics__missing_docs)
 {
@@ -124,7 +121,6 @@ ATF_TEST_CASE_BODY(all_topics__missing_docs)
     ATF_REQUIRE(atf::utils::grep_collection("Failed to open.*LICENSE",
                                             ui.err_log()));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(topic_authors__ok);
 ATF_TEST_CASE_BODY(topic_authors__ok)
@@ -170,7 +166,6 @@ ATF_TEST_CASE_BODY(topic_authors__ok)
     ATF_REQUIRE(ui.err_log().empty());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(topic_authors__missing_doc);
 ATF_TEST_CASE_BODY(topic_authors__missing_doc)
 {
@@ -192,7 +187,6 @@ ATF_TEST_CASE_BODY(topic_authors__missing_doc)
     ATF_REQUIRE(!atf::utils::grep_collection("Failed to open.*LICENSE",
                                              ui.err_log()));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(topic_license__ok);
 ATF_TEST_CASE_BODY(topic_license__ok)
@@ -217,7 +211,6 @@ ATF_TEST_CASE_BODY(topic_license__ok)
     ATF_REQUIRE(ui.err_log().empty());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(topic_license__missing_doc);
 ATF_TEST_CASE_BODY(topic_license__missing_doc)
 {
@@ -240,7 +233,6 @@ ATF_TEST_CASE_BODY(topic_license__missing_doc)
                                             ui.err_log()));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(topic_version__ok);
 ATF_TEST_CASE_BODY(topic_version__ok)
 {
@@ -258,7 +250,6 @@ ATF_TEST_CASE_BODY(topic_version__ok)
     ATF_REQUIRE(ui.err_log().empty());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(invalid_args);
 ATF_TEST_CASE_BODY(invalid_args)
 {
@@ -275,7 +266,6 @@ ATF_TEST_CASE_BODY(invalid_args)
     ATF_REQUIRE(ui.err_log().empty());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(invalid_topic);
 ATF_TEST_CASE_BODY(invalid_topic)
 {
@@ -290,7 +280,6 @@ ATF_TEST_CASE_BODY(invalid_topic)
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE(ui.err_log().empty());
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

@@ -26,21 +26,18 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/config/lua_module.hpp"
-
 #include <lutok/stack_cleaner.hpp>
 #include <lutok/state.ipp>
 
 #include "utils/config/exceptions.hpp"
 #include "utils/config/keys.hpp"
+#include "utils/config/lua_module.hpp"
 #include "utils/config/tree.ipp"
 
 namespace config = utils::config;
 namespace detail = utils::config::detail;
 
-
 namespace {
-
 
 /// Gets the tree singleton stored in the Lua state.
 ///
@@ -61,11 +58,10 @@ get_global_tree(lutok::state& state)
     if (state.is_nil(-1))
         throw config::syntax_error("Cannot find tree singleton; global state "
                                    "corrupted?");
-    config::tree& tree = **state.to_userdata< config::tree* >(-1);
+    config::tree& tree = **state.to_userdata<config::tree*>(-1);
     state.pop(1);
     return tree;
 }
-
 
 /// Gets a fully-qualified tree key from the state.
 ///
@@ -87,7 +83,8 @@ get_tree_key(lutok::state& state, const int table_index, const int field_index)
     if (!field.empty() && field[0] == '_')
         throw config::invalid_key_error(
             F("Configuration key cannot have an underscore as a prefix; "
-              "found %s") % field);
+              "found %s") %
+            field);
 
     std::string tree_key;
     if (state.get_metafield(table_index, "tree_key")) {
@@ -98,10 +95,8 @@ get_tree_key(lutok::state& state, const int table_index, const int field_index)
     return tree_key;
 }
 
-
 static int redirect_newindex(lutok::state&);
 static int redirect_index(lutok::state&);
-
 
 /// Creates a table for a new configuration inner node.
 ///
@@ -131,7 +126,6 @@ new_table_for_key(lutok::state& state, const std::string& tree_key)
         state.set_metatable(-2);
     }
 }
-
 
 /// Sets the value of an configuration node.
 ///
@@ -177,7 +171,6 @@ redirect_newindex(lutok::state& state)
     return 0;
 }
 
-
 /// Indexes a configuration node.
 ///
 /// \pre state(-3) The table to index.  If this is not _G, then the table
@@ -206,8 +199,8 @@ redirect_index(lutok::state& state)
         return 1;
     state.pop(1);
 
-    state.push_value(-1);  // Duplicate the field name.
-    state.raw_get(-3);  // Get table[field] to see if it's defined.
+    state.push_value(-1); // Duplicate the field name.
+    state.raw_get(-3);    // Get table[field] to see if it's defined.
     if (state.is_nil(-1)) {
         state.pop(1);
 
@@ -243,9 +236,7 @@ redirect_index(lutok::state& state)
     return 1;
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Install wrappers for globals to set values in the configuration tree.
 ///
@@ -275,7 +266,7 @@ config::redirect(lutok::state& state, tree& out_tree)
 
     state.push_value(lutok::registry_index);
     state.push_string("tree");
-    config::tree** tree = state.new_userdata< config::tree* >();
+    config::tree** tree = state.new_userdata<config::tree*>();
     *tree = &out_tree;
     state.set_table(-3);
     state.pop(1);

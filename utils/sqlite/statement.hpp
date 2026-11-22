@@ -49,7 +49,6 @@ extern "C" {
 namespace utils {
 namespace sqlite {
 
-
 /// Representation of a BLOB.
 class blob {
 public:
@@ -66,24 +65,20 @@ public:
     ///
     /// \param memory_ Pointer to the contents of the blob.
     /// \param size_ The size of memory_.
-    blob(const void* memory_, const int size_) :
-        memory(memory_), size(size_)
+    blob(const void* memory_, const int size_) : memory(memory_), size(size_)
     {
     }
 };
 
-
 /// Representation of a SQL NULL value.
-class null {
-};
-
+class null { };
 
 /// A RAII model for an SQLite 3 statement.
 class statement {
     struct impl;
 
     /// Pointer to the shared internal implementation.
-    std::shared_ptr< impl > _pimpl;
+    std::shared_ptr<impl> _pimpl;
 
     statement(database&, void*);
     friend class database;
@@ -121,7 +116,7 @@ public:
     void bind(const int, const int64_t);
     void bind(const int, const null&);
     void bind(const int, const std::string&);
-    template< class T > void bind(const char*, const T&);
+    template <class T> void bind(const char*, const T&);
 
     int bind_parameter_count(void);
     int bind_parameter_index(const std::string&);
@@ -130,8 +125,7 @@ public:
     void clear_bindings(void);
 };
 
+} // namespace sqlite
+} // namespace utils
 
-}  // namespace sqlite
-}  // namespace utils
-
-#endif  // !defined(UTILS_SQLITE_STATEMENT_HPP)
+#endif // !defined(UTILS_SQLITE_STATEMENT_HPP)

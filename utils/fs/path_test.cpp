@@ -32,9 +32,8 @@ extern "C" {
 #include <unistd.h>
 }
 
-#include <set>
-
 #include <atf-c++.hpp>
+#include <set>
 
 #include "utils/fs/exceptions.hpp"
 
@@ -42,16 +41,14 @@ using utils::fs::invalid_path_error;
 using utils::fs::join_error;
 using utils::fs::path;
 
-
-#define REQUIRE_JOIN_ERROR(path1, path2, expr) \
-    try { \
-        expr; \
+#define REQUIRE_JOIN_ERROR(path1, path2, expr)                \
+    try {                                                     \
+        expr;                                                 \
         ATF_FAIL("Expecting join_error but no error raised"); \
-    } catch (const join_error& e) { \
-        ATF_REQUIRE_EQ(path1, e.textual_path1()); \
-        ATF_REQUIRE_EQ(path2, e.textual_path2()); \
+    } catch (const join_error& e) {                           \
+        ATF_REQUIRE_EQ(path1, e.textual_path1());             \
+        ATF_REQUIRE_EQ(path2, e.textual_path2());             \
     }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(normalize__ok);
 ATF_TEST_CASE_BODY(normalize__ok)
@@ -79,7 +76,6 @@ ATF_TEST_CASE_BODY(normalize__ok)
     ATF_REQUIRE_EQ("foo/bar", path("foo/././bar").str());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(normalize__invalid);
 ATF_TEST_CASE_BODY(normalize__invalid)
 {
@@ -91,36 +87,34 @@ ATF_TEST_CASE_BODY(normalize__invalid)
     }
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(is_absolute);
 ATF_TEST_CASE_BODY(is_absolute)
 {
-    ATF_REQUIRE( path("/").is_absolute());
-    ATF_REQUIRE( path("////").is_absolute());
-    ATF_REQUIRE( path("////a").is_absolute());
-    ATF_REQUIRE( path("//a//").is_absolute());
+    ATF_REQUIRE(path("/").is_absolute());
+    ATF_REQUIRE(path("////").is_absolute());
+    ATF_REQUIRE(path("////a").is_absolute());
+    ATF_REQUIRE(path("//a//").is_absolute());
     ATF_REQUIRE(!path("a////").is_absolute());
     ATF_REQUIRE(!path("../foo").is_absolute());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(is_parent_of);
 ATF_TEST_CASE_BODY(is_parent_of)
 {
-    ATF_REQUIRE( path("/").is_parent_of(path("/")));
-    ATF_REQUIRE( path(".").is_parent_of(path(".")));
-    ATF_REQUIRE( path("/a").is_parent_of(path("/a")));
-    ATF_REQUIRE( path("/a/b/c").is_parent_of(path("/a/b/c")));
-    ATF_REQUIRE( path("a").is_parent_of(path("a")));
-    ATF_REQUIRE( path("a/b/c").is_parent_of(path("a/b/c")));
+    ATF_REQUIRE(path("/").is_parent_of(path("/")));
+    ATF_REQUIRE(path(".").is_parent_of(path(".")));
+    ATF_REQUIRE(path("/a").is_parent_of(path("/a")));
+    ATF_REQUIRE(path("/a/b/c").is_parent_of(path("/a/b/c")));
+    ATF_REQUIRE(path("a").is_parent_of(path("a")));
+    ATF_REQUIRE(path("a/b/c").is_parent_of(path("a/b/c")));
 
-    ATF_REQUIRE( path("/a/b/c").is_parent_of(path("/a/b/c/d")));
-    ATF_REQUIRE( path("/a/b/c").is_parent_of(path("/a/b/c/d/e")));
+    ATF_REQUIRE(path("/a/b/c").is_parent_of(path("/a/b/c/d")));
+    ATF_REQUIRE(path("/a/b/c").is_parent_of(path("/a/b/c/d/e")));
     ATF_REQUIRE(!path("/a/b/c").is_parent_of(path("a/b/c")));
     ATF_REQUIRE(!path("/a/b/c").is_parent_of(path("a/b/c/d/e")));
 
-    ATF_REQUIRE( path("a/b/c").is_parent_of(path("a/b/c/d")));
-    ATF_REQUIRE( path("a/b/c").is_parent_of(path("a/b/c/d/e")));
+    ATF_REQUIRE(path("a/b/c").is_parent_of(path("a/b/c/d")));
+    ATF_REQUIRE(path("a/b/c").is_parent_of(path("a/b/c/d/e")));
     ATF_REQUIRE(!path("a/b/c").is_parent_of(path("/a/b/c")));
     ATF_REQUIRE(!path("a/b/c").is_parent_of(path("/a/b/c/d/e")));
 
@@ -129,7 +123,6 @@ ATF_TEST_CASE_BODY(is_parent_of)
     ATF_REQUIRE(!path("a/b/c/d/e").is_parent_of(path("/a/b/c")));
     ATF_REQUIRE(!path("a/b/c/d/e").is_parent_of(path("a/b/c")));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(ncomponents);
 ATF_TEST_CASE_BODY(ncomponents)
@@ -146,7 +139,6 @@ ATF_TEST_CASE_BODY(ncomponents)
     ATF_REQUIRE_EQ(2, path("abc/def").ncomponents());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(branch_path);
 ATF_TEST_CASE_BODY(branch_path)
 {
@@ -157,7 +149,6 @@ ATF_TEST_CASE_BODY(branch_path)
     ATF_REQUIRE_EQ("/foo", path("/foo/bar").branch_path().str());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(leaf_name);
 ATF_TEST_CASE_BODY(leaf_name)
 {
@@ -167,7 +158,6 @@ ATF_TEST_CASE_BODY(leaf_name)
     ATF_REQUIRE_EQ("foo", path("/foo").leaf_name());
     ATF_REQUIRE_EQ("bar", path("/foo/bar").leaf_name());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(to_absolute);
 ATF_TEST_CASE_BODY(to_absolute)
@@ -183,7 +173,6 @@ ATF_TEST_CASE_BODY(to_absolute)
     ATF_REQUIRE(absolute.find("/bin/ls") != std::string::npos);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(compare_less_than);
 ATF_TEST_CASE_BODY(compare_less_than)
 {
@@ -192,13 +181,12 @@ ATF_TEST_CASE_BODY(compare_less_than)
 
     ATF_REQUIRE(!(path("/a/b/c") < path("/a/b/c")));
 
-    ATF_REQUIRE(  path("/a") < path("/b"));
+    ATF_REQUIRE(path("/a") < path("/b"));
     ATF_REQUIRE(!(path("/b") < path("/a")));
 
-    ATF_REQUIRE(  path("/a") < path("/aa"));
+    ATF_REQUIRE(path("/a") < path("/aa"));
     ATF_REQUIRE(!(path("/aa") < path("/a")));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(compare_equal);
 ATF_TEST_CASE_BODY(compare_equal)
@@ -210,7 +198,6 @@ ATF_TEST_CASE_BODY(compare_equal)
     ATF_REQUIRE(path("a/b/c") == path("a//b//c"));
     ATF_REQUIRE(path("a/b/c") == path("a//b//c///"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(compare_different);
 ATF_TEST_CASE_BODY(compare_different)
@@ -224,7 +211,6 @@ ATF_TEST_CASE_BODY(compare_different)
     ATF_REQUIRE(path("a/b/c") != path("/a//b//c"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(concat__to_string);
 ATF_TEST_CASE_BODY(concat__to_string)
 {
@@ -236,7 +222,6 @@ ATF_TEST_CASE_BODY(concat__to_string)
     REQUIRE_JOIN_ERROR("foo", "/a/b", path("foo") / "/a/b");
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(concat__to_path);
 ATF_TEST_CASE_BODY(concat__to_path)
 {
@@ -247,16 +232,14 @@ ATF_TEST_CASE_BODY(concat__to_path)
     REQUIRE_JOIN_ERROR("foo", "/a/b", path("foo") / path("/a/b"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(use_as_key);
 ATF_TEST_CASE_BODY(use_as_key)
 {
-    std::set< path > paths;
+    std::set<path> paths;
     paths.insert(path("/a"));
     ATF_REQUIRE(paths.find(path("//a")) != paths.end());
     ATF_REQUIRE(paths.find(path("a")) == paths.end());
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

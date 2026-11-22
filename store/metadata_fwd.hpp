@@ -34,10 +34,8 @@
 
 namespace store {
 
-
 class metadata;
 
+} // namespace store
 
-}  // namespace store
-
-#endif  // !defined(STORE_METADATA_FWD_HPP)
+#endif // !defined(STORE_METADATA_FWD_HPP)

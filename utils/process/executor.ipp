@@ -29,16 +29,14 @@
 #if !defined(UTILS_PROCESS_EXECUTOR_IPP)
 #define UTILS_PROCESS_EXECUTOR_IPP
 
-#include "utils/process/executor.hpp"
-
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
 #include "utils/passwd.hpp"
 #include "utils/process/child.ipp"
+#include "utils/process/executor.hpp"
 
 namespace utils {
 namespace process {
-
 
 namespace executor {
 namespace detail {
@@ -48,8 +46,7 @@ namespace detail {
 /// The hook is executed after the process has been isolated per the logic in
 /// utils::process::isolation based on the input parameters at construction
 /// time.
-template< class Hook >
-class run_child {
+template <class Hook> class run_child {
     /// Function or functor to invoke in the child.
     Hook _hook;
 
@@ -66,7 +63,7 @@ class run_child {
     ///
     /// If not none, the subprocess will be executed as the provided user and
     /// the control and work directories will be writable by this user.
-    const optional< passwd::user > _unprivileged_user;
+    const optional<passwd::user> _unprivileged_user;
 
 public:
     /// Constructor.
@@ -75,10 +72,9 @@ public:
     /// \param control_directory Directory where control files can be placed.
     /// \param work_directory Directory to enter when running the subprocess.
     /// \param unprivileged_user If set, user to switch to before execution.
-    run_child(Hook hook,
-              const fs::path& control_directory,
+    run_child(Hook hook, const fs::path& control_directory,
               const fs::path& work_directory,
-              const optional< passwd::user > unprivileged_user) :
+              const optional<passwd::user> unprivileged_user) :
         _hook(hook),
         _control_directory(control_directory),
         _work_directory(work_directory),
@@ -87,18 +83,16 @@ public:
     }
 
     /// Body of the subprocess.
-    void
-    operator()(void)
+    void operator()(void)
     {
-        executor::detail::setup_child(_unprivileged_user,
-                                      _control_directory, _work_directory);
+        executor::detail::setup_child(_unprivileged_user, _control_directory,
+                                      _work_directory);
         _hook(_control_directory);
     }
 };
 
-}  // namespace detail
-}  // namespace executor
-
+} // namespace detail
+} // namespace executor
 
 /// Forks and executes a subprocess asynchronously.
 ///
@@ -113,33 +107,31 @@ public:
 ///
 /// \return A handle for the background operation.  Used to match the result of
 /// the execution returned by wait_any() with this invocation.
-template< class Hook >
+template <class Hook>
 executor::exec_handle
-executor::executor_handle::spawn(
-    Hook hook,
-    const datetime::delta& timeout,
-    const optional< passwd::user > unprivileged_user,
-    const optional< fs::path > stdout_target,
-    const optional< fs::path > stderr_target)
+executor::executor_handle::spawn(Hook hook, const datetime::delta& timeout,
+                                 const optional<passwd::user> unprivileged_user,
+                                 const optional<fs::path> stdout_target,
+                                 const optional<fs::path> stderr_target)
 {
     const fs::path unique_work_directory = spawn_pre();
 
     const fs::path stdout_path = stdout_target ?
-        stdout_target.get() : (unique_work_directory / detail::stdout_name);
+        stdout_target.get() :
+        (unique_work_directory / detail::stdout_name);
     const fs::path stderr_path = stderr_target ?
-        stderr_target.get() : (unique_work_directory / detail::stderr_name);
+        stderr_target.get() :
+        (unique_work_directory / detail::stderr_name);
 
-    std::unique_ptr< process::child > child = process::child::fork_files(
-        detail::run_child< Hook >(hook,
-                                  unique_work_directory,
-                                  unique_work_directory / detail::work_subdir,
-                                  unprivileged_user),
+    std::unique_ptr<process::child> child = process::child::fork_files(
+        detail::run_child<Hook>(hook, unique_work_directory,
+                                unique_work_directory / detail::work_subdir,
+                                unprivileged_user),
         stdout_path, stderr_path);
 
-    return spawn_post(unique_work_directory, stdout_path, stderr_path,
-                      timeout, unprivileged_user, std::move(child));
+    return spawn_post(unique_work_directory, stdout_path, stderr_path, timeout,
+                      unprivileged_user, std::move(child));
 }
-
 
 /// Forks and executes a subprocess asynchronously in the context of another.
 ///
@@ -157,26 +149,23 @@ executor::executor_handle::spawn(
 ///
 /// \return A handle for the background operation.  Used to match the result of
 /// the execution returned by wait_any() with this invocation.
-template< class Hook >
+template <class Hook>
 executor::exec_handle
-executor::executor_handle::spawn_followup(Hook hook,
-                                          const exit_handle& base,
+executor::executor_handle::spawn_followup(Hook hook, const exit_handle& base,
                                           const datetime::delta& timeout)
 {
     spawn_followup_pre();
 
-    std::unique_ptr< process::child > child = process::child::fork_files(
-        detail::run_child< Hook >(hook,
-                                  base.control_directory(),
-                                  base.work_directory(),
-                                  base.unprivileged_user()),
+    std::unique_ptr<process::child> child = process::child::fork_files(
+        detail::run_child<Hook>(hook, base.control_directory(),
+                                base.work_directory(),
+                                base.unprivileged_user()),
         base.stdout_file(), base.stderr_file());
 
     return spawn_followup_post(base, timeout, std::move(child));
 }
 
+} // namespace process
+} // namespace utils
 
-}  // namespace process
-}  // namespace utils
-
-#endif  // !defined(UTILS_PROCESS_EXECUTOR_IPP)
+#endif // !defined(UTILS_PROCESS_EXECUTOR_IPP)

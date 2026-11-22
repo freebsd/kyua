@@ -26,8 +26,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/sqlite/transaction.hpp"
-
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/noncopyable.hpp"
@@ -35,9 +33,9 @@
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/exceptions.hpp"
 #include "utils/sqlite/statement.ipp"
+#include "utils/sqlite/transaction.hpp"
 
 namespace sqlite = utils::sqlite;
-
 
 /// Internal implementation for the transaction.
 struct utils::sqlite::transaction::impl : utils::noncopyable {
@@ -58,9 +56,7 @@ struct utils::sqlite::transaction::impl : utils::noncopyable {
     ///
     /// \param db_ The database this transaction belongs to.
     /// \param status_ The status of the new transaction.
-    impl(database& db_, const statuses status_) :
-        db(db_),
-        status(status_)
+    impl(database& db_, const statuses status_) : db(db_), status(status_)
     {
     }
 
@@ -82,8 +78,7 @@ struct utils::sqlite::transaction::impl : utils::noncopyable {
     ///
     /// \throw api_error If there is any problem while committing the
     ///     transaction.
-    void
-    commit(void)
+    void commit(void)
     {
         PRE(status == impl::open_status);
         db.exec("COMMIT");
@@ -94,15 +89,13 @@ struct utils::sqlite::transaction::impl : utils::noncopyable {
     ///
     /// \throw api_error If there is any problem while rolling the
     ///     transaction back.
-    void
-    rollback(void)
+    void rollback(void)
     {
         PRE(status == impl::open_status);
         db.exec("ROLLBACK");
         status = impl::rolled_back_status;
     }
 };
-
 
 /// Initializes a transaction object.
 ///
@@ -115,12 +108,10 @@ sqlite::transaction::transaction(database& db) :
 {
 }
 
-
 /// Destructor for the transaction.
 sqlite::transaction::~transaction(void)
 {
 }
-
 
 /// Commits the transaction.
 ///
@@ -130,7 +121,6 @@ sqlite::transaction::commit(void)
 {
     _pimpl->commit();
 }
-
 
 /// Rolls the transaction back.
 ///

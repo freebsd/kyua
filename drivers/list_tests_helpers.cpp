@@ -26,26 +26,23 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <atf-c++.hpp>
 #include <cstdlib>
 
-#include <atf-c++.hpp>
-
 #include "utils/test_utils.ipp"
-
 
 ATF_TEST_CASE(config_in_head);
 ATF_TEST_CASE_HEAD(config_in_head)
 {
     if (has_config_var("the-variable")) {
-        set_md_var("descr", "the-variable is " +
-                   get_config_var("the-variable"));
+        set_md_var("descr",
+                   "the-variable is " + get_config_var("the-variable"));
     }
 }
 ATF_TEST_CASE_BODY(config_in_head)
 {
     utils::abort_without_coredump();
 }
-
 
 ATF_TEST_CASE(crash_list);
 ATF_TEST_CASE_HEAD(crash_list)
@@ -57,13 +54,11 @@ ATF_TEST_CASE_BODY(crash_list)
     utils::abort_without_coredump();
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(no_properties);
 ATF_TEST_CASE_BODY(no_properties)
 {
     utils::abort_without_coredump();
 }
-
 
 ATF_TEST_CASE(some_properties);
 ATF_TEST_CASE_HEAD(some_properties)
@@ -75,7 +70,6 @@ ATF_TEST_CASE_BODY(some_properties)
 {
     utils::abort_without_coredump();
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

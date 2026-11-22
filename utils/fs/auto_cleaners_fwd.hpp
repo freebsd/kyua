@@ -35,12 +35,10 @@
 namespace utils {
 namespace fs {
 
-
 class auto_directory;
 class auto_file;
 
+} // namespace fs
+} // namespace utils
 
-}  // namespace fs
-}  // namespace utils
-
-#endif  // !defined(UTILS_FS_AUTO_CLEANERS_FWD_HPP)
+#endif // !defined(UTILS_FS_AUTO_CLEANERS_FWD_HPP)

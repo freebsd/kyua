@@ -42,19 +42,15 @@
 namespace utils {
 namespace process {
 
-
 extern const int exit_isolation_failure;
 
-
-void isolate_child(const utils::optional< utils::passwd::user >&,
+void isolate_child(const utils::optional<utils::passwd::user>&,
                    const utils::fs::path&);
 
-void isolate_path(const utils::optional< utils::passwd::user >&,
+void isolate_path(const utils::optional<utils::passwd::user>&,
                   const utils::fs::path&);
 
+} // namespace process
+} // namespace utils
 
-}  // namespace process
-}  // namespace utils
-
-
-#endif  // !defined(UTILS_PROCESS_ISOLATION_HPP)
+#endif // !defined(UTILS_PROCESS_ISOLATION_HPP)

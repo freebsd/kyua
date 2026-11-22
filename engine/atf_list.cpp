@@ -26,12 +26,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/atf_list.hpp"
-
 #include <fstream>
 #include <string>
 #include <utility>
 
+#include "engine/atf_list.hpp"
 #include "engine/exceptions.hpp"
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
@@ -41,9 +40,7 @@
 namespace config = utils::config;
 namespace fs = utils::fs;
 
-
 namespace {
-
 
 /// Splits a property line of the form "name: word1 [... wordN]".
 ///
@@ -52,7 +49,7 @@ namespace {
 /// \return A (property_name, property_value) pair.
 ///
 /// \throw format_error If the value of line is invalid.
-static std::pair< std::string, std::string >
+static std::pair<std::string, std::string>
 split_prop_line(const std::string& line)
 {
     const std::string::size_type pos = line.find(": ");
@@ -61,7 +58,6 @@ split_prop_line(const std::string& line)
                                    "the form 'name: value'");
     return std::make_pair(line.substr(0, pos), line.substr(pos + 2));
 }
-
 
 /// Parses a set of consecutive property lines.
 ///
@@ -80,8 +76,8 @@ parse_properties(std::istream& input)
 
     std::string line;
     while (std::getline(input, line).good() && !line.empty()) {
-        const std::pair< std::string, std::string > property = split_prop_line(
-            line);
+        const std::pair<std::string, std::string> property =
+            split_prop_line(line);
         if (properties.find(property.first) != properties.end())
             throw engine::format_error("Duplicate value for property " +
                                        property.first);
@@ -91,9 +87,7 @@ parse_properties(std::istream& input)
     return properties;
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Parses the metadata of an ATF test case.
 ///
@@ -149,7 +143,8 @@ engine::parse_atf_metadata(const model::properties_map& props)
                 mdbuilder.add_custom(name.substr(2), value);
             } else {
                 throw engine::format_error(F("Unknown test case metadata "
-                                             "property '%s'") % name);
+                                             "property '%s'") %
+                                           name);
             }
         }
     } catch (const config::error& e) {
@@ -158,7 +153,6 @@ engine::parse_atf_metadata(const model::properties_map& props)
 
     return mdbuilder.build();
 }
-
 
 /// Parses the ATF list of test cases from an open stream.
 ///
@@ -173,21 +167,22 @@ engine::parse_atf_list(std::istream& input)
     std::string line;
 
     std::getline(input, line);
-    if (line != "Content-Type: application/X-atf-tp; version=\"1\""
-        || !input.good())
+    if (line != "Content-Type: application/X-atf-tp; version=\"1\"" ||
+        !input.good())
         throw format_error(F("Invalid header for test case list; expecting "
                              "Content-Type for application/X-atf-tp version 1, "
-                             "got '%s'") % line);
+                             "got '%s'") %
+                           line);
 
     std::getline(input, line);
     if (!line.empty() || !input.good())
         throw format_error(F("Invalid header for test case list; expecting "
-                             "a blank line, got '%s'") % line);
+                             "a blank line, got '%s'") %
+                           line);
 
     model::test_cases_map_builder test_cases_builder;
     while (std::getline(input, line).good()) {
-        const std::pair< std::string, std::string > ident = split_prop_line(
-            line);
+        const std::pair<std::string, std::string> ident = split_prop_line(line);
         if (ident.first != "ident" or ident.second.empty())
             throw format_error("Invalid test case definition; must be "
                                "preceeded by the identifier");

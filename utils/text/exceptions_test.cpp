@@ -26,14 +26,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/text/exceptions.hpp"
-
+#include <atf-c++.hpp>
 #include <cstring>
 
-#include <atf-c++.hpp>
+#include "utils/text/exceptions.hpp"
 
 namespace text = utils::text;
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(error);
 ATF_TEST_CASE_BODY(error)
@@ -42,14 +40,12 @@ ATF_TEST_CASE_BODY(error)
     ATF_REQUIRE(std::strcmp("Some text", e.what()) == 0);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(regex_error);
 ATF_TEST_CASE_BODY(regex_error)
 {
     const text::regex_error e("Some text");
     ATF_REQUIRE(std::strcmp("Some text", e.what()) == 0);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(syntax_error);
 ATF_TEST_CASE_BODY(syntax_error)
@@ -58,14 +54,12 @@ ATF_TEST_CASE_BODY(syntax_error)
     ATF_REQUIRE(std::strcmp("Some text", e.what()) == 0);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(value_error);
 ATF_TEST_CASE_BODY(value_error)
 {
     const text::value_error e("Some text");
     ATF_REQUIRE(std::strcmp("Some text", e.what()) == 0);
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

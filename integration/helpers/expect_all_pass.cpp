@@ -31,12 +31,10 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include <atf-c++.hpp>
 #include <cstdlib>
 
-#include <atf-c++.hpp>
-
 #include "utils/test_utils.ipp"
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(die);
 ATF_TEST_CASE_BODY(die)
@@ -45,14 +43,12 @@ ATF_TEST_CASE_BODY(die)
     utils::abort_without_coredump();
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(exit);
 ATF_TEST_CASE_BODY(exit)
 {
     expect_exit(12, "Exiting with correct code");
     std::exit(12);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(failure);
 ATF_TEST_CASE_BODY(failure)
@@ -61,14 +57,12 @@ ATF_TEST_CASE_BODY(failure)
     fail("Forced failure");
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(signal);
 ATF_TEST_CASE_BODY(signal)
 {
     expect_signal(SIGTERM, "Exiting with correct signal");
     ::kill(::getpid(), SIGTERM);
 }
-
 
 ATF_TEST_CASE(timeout);
 ATF_TEST_CASE_HEAD(timeout)
@@ -80,7 +74,6 @@ ATF_TEST_CASE_BODY(timeout)
     expect_timeout("This times out");
     ::sleep(10);
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

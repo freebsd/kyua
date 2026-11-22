@@ -35,11 +35,9 @@
 namespace utils {
 namespace sqlite {
 
-
 class transaction;
 
+} // namespace sqlite
+} // namespace utils
 
-}  // namespace sqlite
-}  // namespace utils
-
-#endif  // !defined(UTILS_SQLITE_TRANSACTION_FWD_HPP)
+#endif // !defined(UTILS_SQLITE_TRANSACTION_FWD_HPP)

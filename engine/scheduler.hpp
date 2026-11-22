@@ -55,12 +55,11 @@
 #if !defined(ENGINE_SCHEDULER_HPP)
 #define ENGINE_SCHEDULER_HPP
 
-#include "engine/scheduler_fwd.hpp"
-
 #include <memory>
 #include <set>
 #include <string>
 
+#include "engine/scheduler_fwd.hpp"
 #include "model/context_fwd.hpp"
 #include "model/metadata_fwd.hpp"
 #include "model/test_case_fwd.hpp"
@@ -79,7 +78,6 @@ using utils::none;
 namespace engine {
 namespace scheduler {
 
-
 /// Abstract interface of a test program scheduler interface.
 ///
 /// This interface defines the test program-specific operations that need to be
@@ -88,7 +86,9 @@ namespace scheduler {
 class interface {
 public:
     /// Destructor.
-    virtual ~interface() {}
+    virtual ~interface()
+    {
+    }
 
     /// Executes a test program's list operation.
     ///
@@ -98,9 +98,9 @@ public:
     ///
     /// \param test_program The test program to execute.
     /// \param vars User-provided variables to pass to the test program.
-    virtual void exec_list [[noreturn]] (
-        const model::test_program& test_program,
-        const utils::config::properties_map& vars) const = 0;
+    virtual void exec_list
+        [[noreturn]] (const model::test_program& test_program,
+                      const utils::config::properties_map& vars) const = 0;
 
     /// Computes the test cases list of a test program.
     ///
@@ -110,10 +110,10 @@ public:
     /// \param stderr_path Path to the file containing the stderr of the test.
     ///
     /// \return A list of test cases.
-    virtual model::test_cases_map parse_list(
-        const utils::optional< utils::process::status >& status,
-        const utils::fs::path& stdout_path,
-        const utils::fs::path& stderr_path) const = 0;
+    virtual model::test_cases_map
+    parse_list(const utils::optional<utils::process::status>& status,
+               const utils::fs::path& stdout_path,
+               const utils::fs::path& stderr_path) const = 0;
 
     /// Executes a test case of the test program.
     ///
@@ -126,11 +126,11 @@ public:
     /// \param vars User-provided variables to pass to the test program.
     /// \param control_directory Directory where the interface may place control
     ///     files.
-    virtual void exec_test [[noreturn]] (
-        const model::test_program& test_program,
-        const std::string& test_case_name,
-        const utils::config::properties_map& vars,
-        const utils::fs::path& control_directory) const = 0;
+    virtual void exec_test
+        [[noreturn]] (const model::test_program& test_program,
+                      const std::string& test_case_name,
+                      const utils::config::properties_map& vars,
+                      const utils::fs::path& control_directory) const = 0;
 
     /// Executes a test cleanup routine of the test program.
     ///
@@ -143,11 +143,11 @@ public:
     /// \param vars User-provided variables to pass to the test program.
     /// \param control_directory Directory where the interface may place control
     ///     files.
-    virtual void exec_cleanup [[noreturn]](
-        const model::test_program& test_program,
-        const std::string& test_case_name,
-        const utils::config::properties_map& vars,
-        const utils::fs::path& control_directory) const;
+    virtual void exec_cleanup
+        [[noreturn]] (const model::test_program& test_program,
+                      const std::string& test_case_name,
+                      const utils::config::properties_map& vars,
+                      const utils::fs::path& control_directory) const;
 
     /// Computes the result of a test case based on its termination status.
     ///
@@ -159,31 +159,28 @@ public:
     /// \param stderr_path Path to the file containing the stderr of the test.
     ///
     /// \return A test result.
-    virtual model::test_result compute_result(
-        const utils::optional< utils::process::status >& status,
-        const utils::fs::path& control_directory,
-        const utils::fs::path& stdout_path,
-        const utils::fs::path& stderr_path) const = 0;
+    virtual model::test_result
+    compute_result(const utils::optional<utils::process::status>& status,
+                   const utils::fs::path& control_directory,
+                   const utils::fs::path& stdout_path,
+                   const utils::fs::path& stderr_path) const = 0;
 };
-
 
 /// Implementation of a test program with lazy loading of test cases.
 class lazy_test_program : public model::test_program {
     struct impl;
 
     /// Pointer to the shared internal implementation.
-    std::shared_ptr< impl > _pimpl;
+    std::shared_ptr<impl> _pimpl;
 
 public:
     lazy_test_program(const std::string&, const utils::fs::path&,
                       const utils::fs::path&, const std::string&,
-                      const model::metadata&,
-                      const utils::config::tree&,
+                      const model::metadata&, const utils::config::tree&,
                       scheduler_handle&);
 
     const model::test_cases_map& test_cases(void) const;
 };
-
 
 /// Base type containing the results of the execution of a subprocess.
 class result_handle {
@@ -192,11 +189,11 @@ protected:
 
 private:
     /// Pointer to internal implementation of the base type.
-    std::shared_ptr< bimpl > _pbimpl;
+    std::shared_ptr<bimpl> _pbimpl;
 
 protected:
     friend class scheduler_handle;
-    result_handle(std::shared_ptr< bimpl >);
+    result_handle(std::shared_ptr<bimpl>);
 
 public:
     virtual ~result_handle(void) = 0;
@@ -211,15 +208,14 @@ public:
     const utils::fs::path& stderr_file(void) const;
 };
 
-
 /// Container for all test termination data and accessor to cleanup operations.
 class test_result_handle : public result_handle {
     struct impl;
     /// Pointer to internal implementation.
-    std::shared_ptr< impl > _pimpl;
+    std::shared_ptr<impl> _pimpl;
 
     friend class scheduler_handle;
-    test_result_handle(std::shared_ptr< bimpl >, std::shared_ptr< impl >);
+    test_result_handle(std::shared_ptr<bimpl>, std::shared_ptr<impl>);
 
 public:
     ~test_result_handle(void);
@@ -229,12 +225,11 @@ public:
     const model::test_result& test_result(void) const;
 };
 
-
 /// Stateful interface to the multiprogrammed execution of tests.
 class scheduler_handle {
     struct impl;
     /// Pointer to internal implementation.
-    std::shared_ptr< impl > _pimpl;
+    std::shared_ptr<impl> _pimpl;
 
     friend scheduler_handle setup(void);
     scheduler_handle(void);
@@ -248,40 +243,34 @@ public:
 
     model::test_cases_map list_tests(const model::test_program*,
                                      const utils::config::tree&);
-    exec_handle spawn_test(const model::test_program_ptr,
-                           const std::string&,
+    exec_handle spawn_test(const model::test_program_ptr, const std::string&,
                            const utils::config::tree&,
                            const utils::optional<utils::fs::path>& = none,
                            const utils::optional<utils::fs::path>& = none);
     result_handle_ptr wait_any(void);
 
     result_handle_ptr debug_test(const model::test_program_ptr,
-                                 const std::string&,
-                                 const utils::config::tree&,
+                                 const std::string&, const utils::config::tree&,
                                  const utils::fs::path&,
                                  const utils::fs::path&);
 
     void check_interrupt(void) const;
 };
 
-
 extern utils::datetime::delta cleanup_timeout;
 extern utils::datetime::delta execenv_cleanup_timeout;
 extern utils::datetime::delta list_timeout;
 
-
 void ensure_valid_interface(const std::string&);
-void register_interface(const std::string&, const std::shared_ptr< interface >);
-std::set< std::string > registered_interface_names(void);
+void register_interface(const std::string&, const std::shared_ptr<interface>);
+std::set<std::string> registered_interface_names(void);
 scheduler_handle setup(void);
 
 model::context current_context(void);
 utils::config::properties_map generate_config(const utils::config::tree&,
                                               const std::string&);
 
+} // namespace scheduler
+} // namespace engine
 
-}  // namespace scheduler
-}  // namespace engine
-
-
-#endif  // !defined(ENGINE_SCHEDULER_HPP)
+#endif // !defined(ENGINE_SCHEDULER_HPP)

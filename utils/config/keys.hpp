@@ -32,21 +32,19 @@
 #if !defined(UTILS_CONFIG_KEYS_HPP)
 #define UTILS_CONFIG_KEYS_HPP
 
-#include "utils/config/keys_fwd.hpp"
-
 #include <string>
+
+#include "utils/config/keys_fwd.hpp"
 
 namespace utils {
 namespace config {
 namespace detail {
 
-
 std::string flatten_key(const tree_key&);
 tree_key parse_key(const std::string&);
 
+} // namespace detail
+} // namespace config
+} // namespace utils
 
-}  // namespace detail
-}  // namespace config
-}  // namespace utils
-
-#endif  // !defined(UTILS_CONFIG_KEYS_HPP)
+#endif // !defined(UTILS_CONFIG_KEYS_HPP)

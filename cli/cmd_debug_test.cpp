@@ -26,12 +26,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "cli/cmd_debug.hpp"
-
+#include <atf-c++.hpp>
 #include <stdexcept>
 
-#include <atf-c++.hpp>
-
+#include "cli/cmd_debug.hpp"
 #include "cli/common.ipp"
 #include "engine/config.hpp"
 #include "utils/cmdline/exceptions.hpp"
@@ -40,7 +38,6 @@
 #include "utils/config/tree.ipp"
 
 namespace cmdline = utils::cmdline;
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(invalid_filter);
 ATF_TEST_CASE_BODY(invalid_filter)
@@ -58,7 +55,6 @@ ATF_TEST_CASE_BODY(invalid_filter)
     ATF_REQUIRE(ui.err_log().empty());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(filter_without_test_case);
 ATF_TEST_CASE_BODY(filter_without_test_case)
 {
@@ -73,7 +69,6 @@ ATF_TEST_CASE_BODY(filter_without_test_case)
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE(ui.err_log().empty());
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

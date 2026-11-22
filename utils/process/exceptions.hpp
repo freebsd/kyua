@@ -37,14 +37,12 @@
 namespace utils {
 namespace process {
 
-
 /// Base exceptions for process errors.
 class error : public std::runtime_error {
 public:
     explicit error(const std::string&);
     ~error(void) throw();
 };
-
 
 /// Exceptions for errno-based errors.
 ///
@@ -62,7 +60,6 @@ public:
     int original_errno(void) const throw();
 };
 
-
 /// Denotes that a deadline was exceeded.
 class timeout_error : public error {
 public:
@@ -70,9 +67,7 @@ public:
     ~timeout_error(void) throw();
 };
 
+} // namespace process
+} // namespace utils
 
-}  // namespace process
-}  // namespace utils
-
-
-#endif  // !defined(UTILS_PROCESS_EXCEPTIONS_HPP)
+#endif // !defined(UTILS_PROCESS_EXCEPTIONS_HPP)

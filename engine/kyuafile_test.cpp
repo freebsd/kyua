@@ -26,12 +26,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/kyuafile.hpp"
 #include <memory>
+
+#include "engine/kyuafile.hpp"
 extern "C" {
 #include <unistd.h>
 }
 #include <atf-c++.hpp>
+
 #include "engine/atf.hpp"
 #include "engine/exceptions.hpp"
 #include "engine/plain.hpp"
@@ -53,7 +55,6 @@ namespace scheduler = engine::scheduler;
 
 using utils::none;
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__empty);
 ATF_TEST_CASE_BODY(kyuafile__load__empty)
 {
@@ -61,15 +62,15 @@ ATF_TEST_CASE_BODY(kyuafile__load__empty)
 
     atf::utils::create_file("config", "syntax(2)\n");
 
-    const engine::kyuafile suite = engine::kyuafile::load(
-        fs::path("config"), none, config::tree(), handle);
+    const engine::kyuafile suite = engine::kyuafile::load(fs::path("config"),
+                                                          none, config::tree(),
+                                                          handle);
     ATF_REQUIRE_EQ(fs::path("."), suite.source_root());
     ATF_REQUIRE_EQ(fs::path("."), suite.build_root());
     ATF_REQUIRE_EQ(0, suite.test_programs().size());
 
     handle.cleanup();
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__real_interfaces);
 ATF_TEST_CASE_BODY(kyuafile__load__real_interfaces)
@@ -106,8 +107,9 @@ ATF_TEST_CASE_BODY(kyuafile__load__real_interfaces)
     atf::utils::create_file("dir/1st", "");
     atf::utils::create_file("dir/subdir/5th", "");
 
-    const engine::kyuafile suite = engine::kyuafile::load(
-        fs::path("config"), none, config::tree(), handle);
+    const engine::kyuafile suite = engine::kyuafile::load(fs::path("config"),
+                                                          none, config::tree(),
+                                                          handle);
     ATF_REQUIRE_EQ(fs::path("."), suite.source_root());
     ATF_REQUIRE_EQ(fs::path("."), suite.build_root());
     ATF_REQUIRE_EQ(6, suite.test_programs().size());
@@ -141,33 +143,32 @@ ATF_TEST_CASE_BODY(kyuafile__load__real_interfaces)
     handle.cleanup();
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__mock_interfaces);
 ATF_TEST_CASE_BODY(kyuafile__load__mock_interfaces)
 {
     scheduler::scheduler_handle handle = scheduler::setup();
 
-    std::shared_ptr< scheduler::interface > mock_interface(
+    std::shared_ptr<scheduler::interface> mock_interface(
         new engine::plain_interface());
 
     scheduler::register_interface("some", mock_interface);
     scheduler::register_interface("random", mock_interface);
     scheduler::register_interface("names", mock_interface);
 
-    atf::utils::create_file(
-        "config",
-        "syntax(2)\n"
-        "test_suite('one-suite')\n"
-        "some_test_program{name='1st'}\n"
-        "random_test_program{name='2nd'}\n"
-        "names_test_program{name='3rd'}\n");
+    atf::utils::create_file("config",
+                            "syntax(2)\n"
+                            "test_suite('one-suite')\n"
+                            "some_test_program{name='1st'}\n"
+                            "random_test_program{name='2nd'}\n"
+                            "names_test_program{name='3rd'}\n");
 
     atf::utils::create_file("1st", "");
     atf::utils::create_file("2nd", "");
     atf::utils::create_file("3rd", "");
 
-    const engine::kyuafile suite = engine::kyuafile::load(
-        fs::path("config"), none, config::tree(), handle);
+    const engine::kyuafile suite = engine::kyuafile::load(fs::path("config"),
+                                                          none, config::tree(),
+                                                          handle);
     ATF_REQUIRE_EQ(fs::path("."), suite.source_root());
     ATF_REQUIRE_EQ(fs::path("."), suite.build_root());
     ATF_REQUIRE_EQ(3, suite.test_programs().size());
@@ -183,7 +184,6 @@ ATF_TEST_CASE_BODY(kyuafile__load__mock_interfaces)
 
     handle.cleanup();
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__metadata);
 ATF_TEST_CASE_BODY(kyuafile__load__metadata)
@@ -201,70 +201,67 @@ ATF_TEST_CASE_BODY(kyuafile__load__metadata)
     atf::utils::create_file("1st", "");
     atf::utils::create_file("2nd", "");
 
-    const engine::kyuafile suite = engine::kyuafile::load(
-        fs::path("config"), none, config::tree(), handle);
+    const engine::kyuafile suite = engine::kyuafile::load(fs::path("config"),
+                                                          none, config::tree(),
+                                                          handle);
     ATF_REQUIRE_EQ(2, suite.test_programs().size());
 
     ATF_REQUIRE_EQ("atf", suite.test_programs()[0]->interface_name());
     ATF_REQUIRE_EQ(fs::path("1st"), suite.test_programs()[0]->relative_path());
     ATF_REQUIRE_EQ("first", suite.test_programs()[0]->test_suite_name());
     const model::metadata md1 = model::metadata_builder()
-        .add_allowed_architecture("amd64")
-        .add_allowed_architecture("i386")
-        .set_timeout(datetime::delta(15, 0))
-        .build();
+                                    .add_allowed_architecture("amd64")
+                                    .add_allowed_architecture("i386")
+                                    .set_timeout(datetime::delta(15, 0))
+                                    .build();
     ATF_REQUIRE_EQ(md1, suite.test_programs()[0]->get_metadata());
 
     ATF_REQUIRE_EQ("plain", suite.test_programs()[1]->interface_name());
     ATF_REQUIRE_EQ(fs::path("2nd"), suite.test_programs()[1]->relative_path());
     ATF_REQUIRE_EQ("second", suite.test_programs()[1]->test_suite_name());
     const model::metadata md2 = model::metadata_builder()
-        .add_required_file(fs::path("foo"))
-        .add_required_file(fs::path("/bar/baz"))
-        .add_custom("a-bool", "true")
-        .add_custom("a-number", "123")
-        .set_required_user("root")
-        .build();
+                                    .add_required_file(fs::path("foo"))
+                                    .add_required_file(fs::path("/bar/baz"))
+                                    .add_custom("a-bool", "true")
+                                    .add_custom("a-number", "123")
+                                    .set_required_user("root")
+                                    .build();
     ATF_REQUIRE_EQ(md2, suite.test_programs()[1]->get_metadata());
 
     handle.cleanup();
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__current_directory);
 ATF_TEST_CASE_BODY(kyuafile__load__current_directory)
 {
     scheduler::scheduler_handle handle = scheduler::setup();
 
-    atf::utils::create_file(
-        "config",
-        "syntax(2)\n"
-        "atf_test_program{name='one', test_suite='first'}\n"
-        "include('config2')\n");
+    atf::utils::create_file("config",
+                            "syntax(2)\n"
+                            "atf_test_program{name='one', test_suite='first'}\n"
+                            "include('config2')\n");
 
-    atf::utils::create_file(
-        "config2",
-        "syntax(2)\n"
-        "test_suite('second')\n"
-        "atf_test_program{name='two'}\n");
+    atf::utils::create_file("config2",
+                            "syntax(2)\n"
+                            "test_suite('second')\n"
+                            "atf_test_program{name='two'}\n");
 
     atf::utils::create_file("one", "");
     atf::utils::create_file("two", "");
 
-    const engine::kyuafile suite = engine::kyuafile::load(
-        fs::path("config"), none, config::tree(), handle);
+    const engine::kyuafile suite = engine::kyuafile::load(fs::path("config"),
+                                                          none, config::tree(),
+                                                          handle);
     ATF_REQUIRE_EQ(fs::path("."), suite.source_root());
     ATF_REQUIRE_EQ(fs::path("."), suite.build_root());
     ATF_REQUIRE_EQ(2, suite.test_programs().size());
     ATF_REQUIRE_EQ(fs::path("one"), suite.test_programs()[0]->relative_path());
     ATF_REQUIRE_EQ("first", suite.test_programs()[0]->test_suite_name());
-    ATF_REQUIRE_EQ(fs::path("two"),
-                   suite.test_programs()[1]->relative_path());
+    ATF_REQUIRE_EQ(fs::path("two"), suite.test_programs()[1]->relative_path());
     ATF_REQUIRE_EQ("second", suite.test_programs()[1]->test_suite_name());
 
     handle.cleanup();
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__other_directory);
 ATF_TEST_CASE_BODY(kyuafile__load__other_directory)
@@ -272,20 +269,18 @@ ATF_TEST_CASE_BODY(kyuafile__load__other_directory)
     scheduler::scheduler_handle handle = scheduler::setup();
 
     fs::mkdir(fs::path("root"), 0755);
-    atf::utils::create_file(
-        "root/config",
-        "syntax(2)\n"
-        "test_suite('abc')\n"
-        "atf_test_program{name='one'}\n"
-        "include('dir/config')\n");
+    atf::utils::create_file("root/config",
+                            "syntax(2)\n"
+                            "test_suite('abc')\n"
+                            "atf_test_program{name='one'}\n"
+                            "include('dir/config')\n");
 
     fs::mkdir(fs::path("root/dir"), 0755);
-    atf::utils::create_file(
-        "root/dir/config",
-        "syntax(2)\n"
-        "test_suite('foo')\n"
-        "atf_test_program{name='two', test_suite='def'}\n"
-        "atf_test_program{name='three'}\n");
+    atf::utils::create_file("root/dir/config",
+                            "syntax(2)\n"
+                            "test_suite('foo')\n"
+                            "atf_test_program{name='two', test_suite='def'}\n"
+                            "atf_test_program{name='three'}\n");
 
     atf::utils::create_file("root/one", "");
     atf::utils::create_file("root/dir/two", "");
@@ -308,27 +303,24 @@ ATF_TEST_CASE_BODY(kyuafile__load__other_directory)
     handle.cleanup();
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__build_directory);
 ATF_TEST_CASE_BODY(kyuafile__load__build_directory)
 {
     scheduler::scheduler_handle handle = scheduler::setup();
 
     fs::mkdir(fs::path("srcdir"), 0755);
-    atf::utils::create_file(
-        "srcdir/config",
-        "syntax(2)\n"
-        "test_suite('abc')\n"
-        "atf_test_program{name='one'}\n"
-        "include('dir/config')\n");
+    atf::utils::create_file("srcdir/config",
+                            "syntax(2)\n"
+                            "test_suite('abc')\n"
+                            "atf_test_program{name='one'}\n"
+                            "include('dir/config')\n");
 
     fs::mkdir(fs::path("srcdir/dir"), 0755);
-    atf::utils::create_file(
-        "srcdir/dir/config",
-        "syntax(2)\n"
-        "test_suite('foo')\n"
-        "atf_test_program{name='two', test_suite='def'}\n"
-        "atf_test_program{name='three'}\n");
+    atf::utils::create_file("srcdir/dir/config",
+                            "syntax(2)\n"
+                            "test_suite('foo')\n"
+                            "atf_test_program{name='two', test_suite='def'}\n"
+                            "atf_test_program{name='three'}\n");
 
     fs::mkdir(fs::path("builddir"), 0755);
     atf::utils::create_file("builddir/one", "");
@@ -360,7 +352,6 @@ ATF_TEST_CASE_BODY(kyuafile__load__build_directory)
     handle.cleanup();
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__absolute_paths_are_stable);
 ATF_TEST_CASE_BODY(kyuafile__load__absolute_paths_are_stable)
 {
@@ -372,8 +363,9 @@ ATF_TEST_CASE_BODY(kyuafile__load__absolute_paths_are_stable)
         "atf_test_program{name='one', test_suite='first'}\n");
     atf::utils::create_file("one", "");
 
-    const engine::kyuafile suite = engine::kyuafile::load(
-        fs::path("config"), none, config::tree(), handle);
+    const engine::kyuafile suite = engine::kyuafile::load(fs::path("config"),
+                                                          none, config::tree(),
+                                                          handle);
 
     const fs::path previous_dir = fs::current_path();
     fs::mkdir(fs::path("other"), 0755);
@@ -391,7 +383,6 @@ ATF_TEST_CASE_BODY(kyuafile__load__absolute_paths_are_stable)
 
     handle.cleanup();
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__fs_calls_are_relative);
 ATF_TEST_CASE_BODY(kyuafile__load__fs_calls_are_relative)
@@ -421,8 +412,9 @@ ATF_TEST_CASE_BODY(kyuafile__load__fs_calls_are_relative)
         "end\n");
     atf::utils::create_file("dir/two", "");
 
-    const engine::kyuafile suite = engine::kyuafile::load(
-        fs::path("Kyuafile"), none, config::tree(), handle);
+    const engine::kyuafile suite = engine::kyuafile::load(fs::path("Kyuafile"),
+                                                          none, config::tree(),
+                                                          handle);
 
     ATF_REQUIRE_EQ(2, suite.test_programs().size());
     ATF_REQUIRE_EQ(fs::current_path() / "one",
@@ -432,7 +424,6 @@ ATF_TEST_CASE_BODY(kyuafile__load__fs_calls_are_relative)
 
     handle.cleanup();
 }
-
 
 /// Verifies that load raises a load_error on a given input.
 ///
@@ -448,21 +439,18 @@ do_load_error_test(const char* file, const char* regex)
     handle.cleanup();
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__test_program_not_basename);
 ATF_TEST_CASE_BODY(kyuafile__load__test_program_not_basename)
 {
-    atf::utils::create_file(
-        "config",
-        "syntax(2)\n"
-        "test_suite('abc')\n"
-        "atf_test_program{name='one'}\n"
-        "atf_test_program{name='./ls'}\n");
+    atf::utils::create_file("config",
+                            "syntax(2)\n"
+                            "test_suite('abc')\n"
+                            "atf_test_program{name='one'}\n"
+                            "atf_test_program{name='./ls'}\n");
 
     atf::utils::create_file("one", "");
     do_load_error_test("config", "./ls.*path components");
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__lua_error);
 ATF_TEST_CASE_BODY(kyuafile__load__lua_error)
@@ -472,7 +460,6 @@ ATF_TEST_CASE_BODY(kyuafile__load__lua_error)
     do_load_error_test("config", ".*");
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__syntax__not_called);
 ATF_TEST_CASE_BODY(kyuafile__load__syntax__not_called)
 {
@@ -480,8 +467,6 @@ ATF_TEST_CASE_BODY(kyuafile__load__syntax__not_called)
 
     do_load_error_test("config", "syntax.* never called");
 }
-
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__syntax__deprecated_format);
 ATF_TEST_CASE_BODY(kyuafile__load__syntax__deprecated_format)
@@ -493,18 +478,15 @@ ATF_TEST_CASE_BODY(kyuafile__load__syntax__deprecated_format)
     do_load_error_test("config", "only takes one argument");
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__syntax__twice);
 ATF_TEST_CASE_BODY(kyuafile__load__syntax__twice)
 {
-    atf::utils::create_file(
-        "config",
-        "syntax(2)\n"
-        "syntax(2)\n");
+    atf::utils::create_file("config",
+                            "syntax(2)\n"
+                            "syntax(2)\n");
 
     do_load_error_test("config", "Can only call syntax.* once");
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__syntax__bad_version);
 ATF_TEST_CASE_BODY(kyuafile__load__syntax__bad_version)
@@ -514,40 +496,34 @@ ATF_TEST_CASE_BODY(kyuafile__load__syntax__bad_version)
     do_load_error_test("config", "Unsupported file version 12");
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__test_suite__missing);
 ATF_TEST_CASE_BODY(kyuafile__load__test_suite__missing)
 {
-    atf::utils::create_file(
-        "config",
-        "syntax(2)\n"
-        "plain_test_program{name='one'}");
+    atf::utils::create_file("config",
+                            "syntax(2)\n"
+                            "plain_test_program{name='one'}");
 
     atf::utils::create_file("one", "");
 
     do_load_error_test("config", "No test suite defined");
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__test_suite__twice);
 ATF_TEST_CASE_BODY(kyuafile__load__test_suite__twice)
 {
-    atf::utils::create_file(
-        "config",
-        "syntax(2)\n"
-        "test_suite('foo')\n"
-        "test_suite('bar')\n");
+    atf::utils::create_file("config",
+                            "syntax(2)\n"
+                            "test_suite('foo')\n"
+                            "test_suite('bar')\n");
 
     do_load_error_test("config", "Can only call test_suite.* once");
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__missing_file);
 ATF_TEST_CASE_BODY(kyuafile__load__missing_file)
 {
     do_load_error_test("missing", "Load of 'missing' failed");
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(kyuafile__load__missing_test_program);
 ATF_TEST_CASE_BODY(kyuafile__load__missing_test_program)
@@ -563,18 +539,17 @@ ATF_TEST_CASE_BODY(kyuafile__load__missing_test_program)
     do_load_error_test("config", "Non-existent.*'two'");
 }
 
-
 ATF_INIT_TEST_CASES(tcs)
 {
     scheduler::register_interface(
-        "atf", std::shared_ptr< scheduler::interface >(
-            new engine::atf_interface()));
+        "atf",
+        std::shared_ptr<scheduler::interface>(new engine::atf_interface()));
     scheduler::register_interface(
-        "plain", std::shared_ptr< scheduler::interface >(
-            new engine::plain_interface()));
+        "plain",
+        std::shared_ptr<scheduler::interface>(new engine::plain_interface()));
     scheduler::register_interface(
-        "tap", std::shared_ptr< scheduler::interface >(
-            new engine::tap_interface()));
+        "tap",
+        std::shared_ptr<scheduler::interface>(new engine::tap_interface()));
 
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__empty);
     ATF_ADD_TEST_CASE(tcs, kyuafile__load__real_interfaces);

@@ -26,15 +26,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/scanner.hpp"
-
+#include <atf-c++.hpp>
 #include <cstdarg>
 #include <cstddef>
 #include <typeinfo>
 
-#include <atf-c++.hpp>
-
 #include "engine/filters.hpp"
+#include "engine/scanner.hpp"
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
 #include "model/test_program.hpp"
@@ -46,9 +44,7 @@ namespace fs = utils::fs;
 
 using utils::optional;
 
-
 namespace {
-
 
 /// Test program that implements a mock test_cases() lazy call.
 class mock_test_program : public model::test_program {
@@ -73,8 +69,7 @@ public:
     /// Gets or loads the list of test cases from the test program.
     ///
     /// \return The list of test cases provided by the test program.
-    const model::test_cases_map&
-    test_cases(void) const
+    const model::test_cases_map& test_cases(void) const
     {
         if (_num_calls == 0) {
             const model::metadata metadata = model::metadata_builder().build();
@@ -90,13 +85,11 @@ public:
     /// Returns the number of times test_cases() has been called.
     ///
     /// \return A counter.
-    std::size_t
-    num_calls(void) const
+    std::size_t num_calls(void) const
     {
         return _num_calls;
     }
 };
-
 
 /// Syntactic sugar to instantiate a test program with various test cases.
 ///
@@ -112,9 +105,10 @@ public:
 static model::test_program_ptr
 new_test_program(const char* relative_path, ...)
 {
-    model::test_program_builder builder(
-        "unused-interface", fs::path(relative_path), fs::path("unused-root"),
-        "unused-suite");
+    model::test_program_builder builder("unused-interface",
+                                        fs::path(relative_path),
+                                        fs::path("unused-root"),
+                                        "unused-suite");
 
     va_list ap;
     va_start(ap, relative_path);
@@ -127,7 +121,6 @@ new_test_program(const char* relative_path, ...)
     return builder.build_ptr();
 }
 
-
 /// Yields all test cases in the scanner for simplicity of testing.
 ///
 /// In most of the tests below, we just care about the scanner returning the
@@ -138,12 +131,12 @@ new_test_program(const char* relative_path, ...)
 /// \param scanner The scanner on which to iterate.
 ///
 /// \return The full collection of results yielded by the scanner.
-static std::set< engine::scan_result >
+static std::set<engine::scan_result>
 yield_all(engine::scanner& scanner)
 {
-    std::set< engine::scan_result > results;
+    std::set<engine::scan_result> results;
     while (!scanner.done()) {
-        const optional< engine::scan_result > result = scanner.yield();
+        const optional<engine::scan_result> result = scanner.yield();
         ATF_REQUIRE(result);
         results.insert(result.get());
     }
@@ -152,15 +145,13 @@ yield_all(engine::scanner& scanner)
     return results;
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 ATF_TEST_CASE_WITHOUT_HEAD(scanner__no_filters__no_tests);
 ATF_TEST_CASE_BODY(scanner__no_filters__no_tests)
 {
     const model::test_programs_vector test_programs;
-    const std::set< engine::test_filter > filters;
+    const std::set<engine::test_filter> filters;
 
     engine::scanner scanner(test_programs, filters);
     ATF_REQUIRE(scanner.done());
@@ -168,56 +159,55 @@ ATF_TEST_CASE_BODY(scanner__no_filters__no_tests)
     ATF_REQUIRE(scanner.unused_filters().empty());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(scanner__no_filters__one_test_in_one_program);
 ATF_TEST_CASE_BODY(scanner__no_filters__one_test_in_one_program)
 {
-    const model::test_program_ptr test_program = new_test_program(
-        "dir/program", "lone_test", NULL);
+    const model::test_program_ptr test_program = new_test_program("dir/program",
+                                                                  "lone_test",
+                                                                  NULL);
 
     model::test_programs_vector test_programs;
     test_programs.push_back(test_program);
 
-    const std::set< engine::test_filter > filters;
+    const std::set<engine::test_filter> filters;
 
-    std::set< engine::scan_result > exp_results;
+    std::set<engine::scan_result> exp_results;
     exp_results.insert(engine::scan_result(test_program, "lone_test"));
 
     engine::scanner scanner(test_programs, filters);
-    const std::set< engine::scan_result > results = yield_all(scanner);
+    const std::set<engine::scan_result> results = yield_all(scanner);
     ATF_REQUIRE_EQ(exp_results, results);
     ATF_REQUIRE(scanner.unused_filters().empty());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(scanner__no_filters__one_test_per_many_programs);
 ATF_TEST_CASE_BODY(scanner__no_filters__one_test_per_many_programs)
 {
-    const model::test_program_ptr test_program1 = new_test_program(
-        "dir/program1", "foo_test", NULL);
-    const model::test_program_ptr test_program2 = new_test_program(
-        "program2", "bar_test", NULL);
-    const model::test_program_ptr test_program3 = new_test_program(
-        "a/b/c/d/e/program3", "baz_test", NULL);
+    const model::test_program_ptr test_program1 =
+        new_test_program("dir/program1", "foo_test", NULL);
+    const model::test_program_ptr test_program2 = new_test_program("program2",
+                                                                   "bar_test",
+                                                                   NULL);
+    const model::test_program_ptr test_program3 =
+        new_test_program("a/b/c/d/e/program3", "baz_test", NULL);
 
     model::test_programs_vector test_programs;
     test_programs.push_back(test_program1);
     test_programs.push_back(test_program2);
     test_programs.push_back(test_program3);
 
-    const std::set< engine::test_filter > filters;
+    const std::set<engine::test_filter> filters;
 
-    std::set< engine::scan_result > exp_results;
+    std::set<engine::scan_result> exp_results;
     exp_results.insert(engine::scan_result(test_program1, "foo_test"));
     exp_results.insert(engine::scan_result(test_program2, "bar_test"));
     exp_results.insert(engine::scan_result(test_program3, "baz_test"));
 
     engine::scanner scanner(test_programs, filters);
-    const std::set< engine::scan_result > results = yield_all(scanner);
+    const std::set<engine::scan_result> results = yield_all(scanner);
     ATF_REQUIRE_EQ(exp_results, results);
     ATF_REQUIRE(scanner.unused_filters().empty());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(scanner__no_filters__many_tests_in_one_program);
 ATF_TEST_CASE_BODY(scanner__no_filters__many_tests_in_one_program)
@@ -228,27 +218,27 @@ ATF_TEST_CASE_BODY(scanner__no_filters__many_tests_in_one_program)
     model::test_programs_vector test_programs;
     test_programs.push_back(test_program);
 
-    const std::set< engine::test_filter > filters;
+    const std::set<engine::test_filter> filters;
 
-    std::set< engine::scan_result > exp_results;
+    std::set<engine::scan_result> exp_results;
     exp_results.insert(engine::scan_result(test_program, "first_test"));
     exp_results.insert(engine::scan_result(test_program, "second_test"));
     exp_results.insert(engine::scan_result(test_program, "third_test"));
 
     engine::scanner scanner(test_programs, filters);
-    const std::set< engine::scan_result > results = yield_all(scanner);
+    const std::set<engine::scan_result> results = yield_all(scanner);
     ATF_REQUIRE_EQ(exp_results, results);
     ATF_REQUIRE(scanner.unused_filters().empty());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(scanner__no_filters__many_tests_per_many_programs);
 ATF_TEST_CASE_BODY(scanner__no_filters__many_tests_per_many_programs)
 {
     const model::test_program_ptr test_program1 = new_test_program(
         "dir/program1", "foo_test", "bar_test", "baz_test", NULL);
-    const model::test_program_ptr test_program2 = new_test_program(
-        "program2", "lone_test", NULL);
+    const model::test_program_ptr test_program2 = new_test_program("program2",
+                                                                   "lone_test",
+                                                                   NULL);
     const model::test_program_ptr test_program3 = new_test_program(
         "a/b/c/d/e/program3", "another_test", "last_test", NULL);
 
@@ -257,9 +247,9 @@ ATF_TEST_CASE_BODY(scanner__no_filters__many_tests_per_many_programs)
     test_programs.push_back(test_program2);
     test_programs.push_back(test_program3);
 
-    const std::set< engine::test_filter > filters;
+    const std::set<engine::test_filter> filters;
 
-    std::set< engine::scan_result > exp_results;
+    std::set<engine::scan_result> exp_results;
     exp_results.insert(engine::scan_result(test_program1, "foo_test"));
     exp_results.insert(engine::scan_result(test_program1, "bar_test"));
     exp_results.insert(engine::scan_result(test_program1, "baz_test"));
@@ -268,38 +258,37 @@ ATF_TEST_CASE_BODY(scanner__no_filters__many_tests_per_many_programs)
     exp_results.insert(engine::scan_result(test_program3, "last_test"));
 
     engine::scanner scanner(test_programs, filters);
-    const std::set< engine::scan_result > results = yield_all(scanner);
+    const std::set<engine::scan_result> results = yield_all(scanner);
     ATF_REQUIRE_EQ(exp_results, results);
     ATF_REQUIRE(scanner.unused_filters().empty());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(scanner__no_filters__verify_lazy_loads);
 ATF_TEST_CASE_BODY(scanner__no_filters__verify_lazy_loads)
 {
-    const model::test_program_ptr test_program1(new mock_test_program(
-        fs::path("first")));
+    const model::test_program_ptr test_program1(
+        new mock_test_program(fs::path("first")));
     const mock_test_program* mock_program1 =
-        dynamic_cast< const mock_test_program* >(test_program1.get());
-    const model::test_program_ptr test_program2(new mock_test_program(
-        fs::path("second")));
+        dynamic_cast<const mock_test_program*>(test_program1.get());
+    const model::test_program_ptr test_program2(
+        new mock_test_program(fs::path("second")));
     const mock_test_program* mock_program2 =
-        dynamic_cast< const mock_test_program* >(test_program2.get());
+        dynamic_cast<const mock_test_program*>(test_program2.get());
 
     model::test_programs_vector test_programs;
     test_programs.push_back(test_program1);
     test_programs.push_back(test_program2);
 
-    const std::set< engine::test_filter > filters;
+    const std::set<engine::test_filter> filters;
 
-    std::set< engine::scan_result > exp_results;
+    std::set<engine::scan_result> exp_results;
     exp_results.insert(engine::scan_result(test_program1, "one"));
     exp_results.insert(engine::scan_result(test_program1, "two"));
     exp_results.insert(engine::scan_result(test_program2, "one"));
     exp_results.insert(engine::scan_result(test_program2, "two"));
 
     engine::scanner scanner(test_programs, filters);
-    std::set< engine::scan_result > results;
+    std::set<engine::scan_result> results;
     ATF_REQUIRE_EQ(0, mock_program1->num_calls());
     ATF_REQUIRE_EQ(0, mock_program2->num_calls());
 
@@ -323,22 +312,21 @@ ATF_TEST_CASE_BODY(scanner__no_filters__verify_lazy_loads)
     ATF_REQUIRE(scanner.unused_filters().empty());
 
     // Make sure we are still talking to the original objects.
-    for (std::set< engine::scan_result >::const_iterator iter = results.begin();
+    for (std::set<engine::scan_result>::const_iterator iter = results.begin();
          iter != results.end(); ++iter) {
         const mock_test_program* mock_program =
-            dynamic_cast< const mock_test_program* >((*iter).first.get());
+            dynamic_cast<const mock_test_program*>((*iter).first.get());
         ATF_REQUIRE(mock_program != nullptr);
         ATF_REQUIRE_EQ(1, mock_program->num_calls());
     }
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(scanner__with_filters__no_tests);
 ATF_TEST_CASE_BODY(scanner__with_filters__no_tests)
 {
     const model::test_programs_vector test_programs;
 
-    std::set< engine::test_filter > filters;
+    std::set<engine::test_filter> filters;
     filters.insert(engine::test_filter(fs::path("foo"), "bar"));
 
     engine::scanner scanner(test_programs, filters);
@@ -347,47 +335,46 @@ ATF_TEST_CASE_BODY(scanner__with_filters__no_tests)
     ATF_REQUIRE_EQ(filters, scanner.unused_filters());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(scanner__with_filters__no_matches);
 ATF_TEST_CASE_BODY(scanner__with_filters__no_matches)
 {
     const model::test_program_ptr test_program1 = new_test_program(
         "dir/program1", "foo_test", "bar_test", "baz_test", NULL);
-    const model::test_program_ptr test_program2 = new_test_program(
-        "dir/program2", "bar_test", NULL);
-    const model::test_program_ptr test_program3 = new_test_program(
-        "program3", "another_test", "last_test", NULL);
+    const model::test_program_ptr test_program2 =
+        new_test_program("dir/program2", "bar_test", NULL);
+    const model::test_program_ptr test_program3 =
+        new_test_program("program3", "another_test", "last_test", NULL);
 
     model::test_programs_vector test_programs;
     test_programs.push_back(test_program1);
     test_programs.push_back(test_program2);
     test_programs.push_back(test_program3);
 
-    std::set< engine::test_filter > filters;
+    std::set<engine::test_filter> filters;
     filters.insert(engine::test_filter(fs::path("dir/program2"), "baz_test"));
     filters.insert(engine::test_filter(fs::path("program4"), "another_test"));
     filters.insert(engine::test_filter(fs::path("dir/program3"), ""));
 
-    const std::set< engine::scan_result > exp_results;
+    const std::set<engine::scan_result> exp_results;
 
     engine::scanner scanner(test_programs, filters);
-    const std::set< engine::scan_result > results = yield_all(scanner);
+    const std::set<engine::scan_result> results = yield_all(scanner);
     ATF_REQUIRE_EQ(exp_results, results);
     ATF_REQUIRE_EQ(filters, scanner.unused_filters());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(scanner__with_filters__some_matches);
 ATF_TEST_CASE_BODY(scanner__with_filters__some_matches)
 {
     const model::test_program_ptr test_program1 = new_test_program(
         "dir/program1", "foo_test", "bar_test", "baz_test", NULL);
-    const model::test_program_ptr test_program2 = new_test_program(
-        "dir/program2", "bar_test", NULL);
-    const model::test_program_ptr test_program3 = new_test_program(
-        "program3", "another_test", "last_test", NULL);
-    const model::test_program_ptr test_program4 = new_test_program(
-        "program4", "more_test", NULL);
+    const model::test_program_ptr test_program2 =
+        new_test_program("dir/program2", "bar_test", NULL);
+    const model::test_program_ptr test_program3 =
+        new_test_program("program3", "another_test", "last_test", NULL);
+    const model::test_program_ptr test_program4 = new_test_program("program4",
+                                                                   "more_test",
+                                                                   NULL);
 
     model::test_programs_vector test_programs;
     test_programs.push_back(test_program1);
@@ -395,53 +382,52 @@ ATF_TEST_CASE_BODY(scanner__with_filters__some_matches)
     test_programs.push_back(test_program3);
     test_programs.push_back(test_program4);
 
-    std::set< engine::test_filter > filters;
+    std::set<engine::test_filter> filters;
     filters.insert(engine::test_filter(fs::path("dir/program1"), "baz_test"));
     filters.insert(engine::test_filter(fs::path("dir/program2"), "foo_test"));
     filters.insert(engine::test_filter(fs::path("program3"), ""));
 
-    std::set< engine::test_filter > exp_filters;
+    std::set<engine::test_filter> exp_filters;
     exp_filters.insert(engine::test_filter(fs::path("dir/program2"),
                                            "foo_test"));
 
-    std::set< engine::scan_result > exp_results;
+    std::set<engine::scan_result> exp_results;
     exp_results.insert(engine::scan_result(test_program1, "baz_test"));
     exp_results.insert(engine::scan_result(test_program3, "another_test"));
     exp_results.insert(engine::scan_result(test_program3, "last_test"));
 
     engine::scanner scanner(test_programs, filters);
-    const std::set< engine::scan_result > results = yield_all(scanner);
+    const std::set<engine::scan_result> results = yield_all(scanner);
     ATF_REQUIRE_EQ(exp_results, results);
 
     ATF_REQUIRE_EQ(exp_filters, scanner.unused_filters());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(scanner__with_filters__verify_lazy_loads);
 ATF_TEST_CASE_BODY(scanner__with_filters__verify_lazy_loads)
 {
-    const model::test_program_ptr test_program1(new mock_test_program(
-        fs::path("first")));
+    const model::test_program_ptr test_program1(
+        new mock_test_program(fs::path("first")));
     const mock_test_program* mock_program1 =
-        dynamic_cast< const mock_test_program* >(test_program1.get());
-    const model::test_program_ptr test_program2(new mock_test_program(
-        fs::path("second")));
+        dynamic_cast<const mock_test_program*>(test_program1.get());
+    const model::test_program_ptr test_program2(
+        new mock_test_program(fs::path("second")));
     const mock_test_program* mock_program2 =
-        dynamic_cast< const mock_test_program* >(test_program2.get());
+        dynamic_cast<const mock_test_program*>(test_program2.get());
 
     model::test_programs_vector test_programs;
     test_programs.push_back(test_program1);
     test_programs.push_back(test_program2);
 
-    std::set< engine::test_filter > filters;
+    std::set<engine::test_filter> filters;
     filters.insert(engine::test_filter(fs::path("first"), ""));
 
-    std::set< engine::scan_result > exp_results;
+    std::set<engine::scan_result> exp_results;
     exp_results.insert(engine::scan_result(test_program1, "one"));
     exp_results.insert(engine::scan_result(test_program1, "two"));
 
     engine::scanner scanner(test_programs, filters);
-    std::set< engine::scan_result > results;
+    std::set<engine::scan_result> results;
     ATF_REQUIRE_EQ(0, mock_program1->num_calls());
     ATF_REQUIRE_EQ(0, mock_program2->num_calls());
 
@@ -459,7 +445,6 @@ ATF_TEST_CASE_BODY(scanner__with_filters__verify_lazy_loads)
     ATF_REQUIRE_EQ(1, mock_program1->num_calls());
     ATF_REQUIRE_EQ(0, mock_program2->num_calls());
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

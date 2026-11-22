@@ -32,9 +32,8 @@ extern "C" {
 #include <unistd.h>
 }
 
-#include <iostream>
-
 #include <atf-c++.hpp>
+#include <iostream>
 
 #include "store/exceptions.hpp"
 #include "store/layout.hpp"
@@ -47,17 +46,16 @@ namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace layout = store::layout;
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(find_results__latest);
 ATF_TEST_CASE_BODY(find_results__latest)
 {
     const fs::path store_dir = layout::query_store_dir();
     fs::mkdir_p(store_dir, 0755);
 
-    const std::string test_suite = layout::test_suite_for_path(
-        fs::current_path());
-    const std::string base = (store_dir / (
-        "results." + test_suite + ".")).str();
+    const std::string test_suite =
+        layout::test_suite_for_path(fs::current_path());
+    const std::string base =
+        (store_dir / ("results." + test_suite + ".")).str();
 
     atf::utils::create_file(base + "20140613-194515-000000.db", "");
     ATF_REQUIRE_EQ(base + "20140613-194515-000000.db",
@@ -72,7 +70,6 @@ ATF_TEST_CASE_BODY(find_results__latest)
                    layout::find_results("LATEST").str());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(find_results__directory);
 ATF_TEST_CASE_BODY(find_results__directory)
 {
@@ -84,10 +81,12 @@ ATF_TEST_CASE_BODY(find_results__directory)
     const fs::path dir2("dir1/bar");
     fs::mkdir_p(dir2, 0755);
 
-    const std::string base1 = (store_dir / (
-        "results." + layout::test_suite_for_path(dir1) + ".")).str();
-    const std::string base2 = (store_dir / (
-        "results." + layout::test_suite_for_path(dir2) + ".")).str();
+    const std::string base1 =
+        (store_dir / ("results." + layout::test_suite_for_path(dir1) + "."))
+            .str();
+    const std::string base2 =
+        (store_dir / ("results." + layout::test_suite_for_path(dir2) + "."))
+            .str();
 
     atf::utils::create_file(base1 + "20140613-194515-000000.db", "");
     ATF_REQUIRE_EQ(base1 + "20140613-194515-000000.db",
@@ -106,7 +105,6 @@ ATF_TEST_CASE_BODY(find_results__directory)
                    layout::find_results(dir1.str()).str());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(find_results__file);
 ATF_TEST_CASE_BODY(find_results__file)
 {
@@ -117,7 +115,6 @@ ATF_TEST_CASE_BODY(find_results__file)
     ATF_REQUIRE_EQ(fs::path("a-file.db").to_absolute(),
                    layout::find_results("a-file.db"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(find_results__id);
 ATF_TEST_CASE_BODY(find_results__id)
@@ -151,7 +148,6 @@ ATF_TEST_CASE_BODY(find_results__id)
     ATF_REQUIRE_EQ(base1 + "20140614-194515-123456.db",
                    layout::find_results(id1).str());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(find_results__id_with_timestamp);
 ATF_TEST_CASE_BODY(find_results__id_with_timestamp)
@@ -187,29 +183,26 @@ ATF_TEST_CASE_BODY(find_results__id_with_timestamp)
         layout::find_results(id2 + ".20140615-111111-000000").str());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(find_results__not_found);
 ATF_TEST_CASE_BODY(find_results__not_found)
 {
     ATF_REQUIRE_THROW_RE(
-        store::error,
-        "No previous results file found for test suite foo_bar",
+        store::error, "No previous results file found for test suite foo_bar",
         layout::find_results("foo_bar"));
 
     const fs::path store_dir = layout::query_store_dir();
     fs::mkdir_p(store_dir, 0755);
     ATF_REQUIRE_THROW_RE(
-        store::error,
-        "No previous results file found for test suite foo_bar",
+        store::error, "No previous results file found for test suite foo_bar",
         layout::find_results("foo_bar"));
 
     const char* candidates[] = {
-        "results.foo.20140613-194515-012345.db",  // Bad test suite.
-        "results.foo_bar.20140613-194515-012345",  // Missing extension.
-        "foo_bar.20140613-194515-012345.db",  // Missing prefix.
-        "results.foo_bar.2010613-194515-012345.db",  // Bad date.
-        "results.foo_bar.20140613-19515-012345.db",  // Bad time.
-        "results.foo_bar.20140613-194515-01245.db",  // Bad microseconds.
+        "results.foo.20140613-194515-012345.db",    // Bad test suite.
+        "results.foo_bar.20140613-194515-012345",   // Missing extension.
+        "foo_bar.20140613-194515-012345.db",        // Missing prefix.
+        "results.foo_bar.2010613-194515-012345.db", // Bad date.
+        "results.foo_bar.20140613-19515-012345.db", // Bad time.
+        "results.foo_bar.20140613-194515-01245.db", // Bad microseconds.
         NULL,
     };
     for (const char** candidate = candidates; *candidate != NULL; ++candidate) {
@@ -223,19 +216,18 @@ ATF_TEST_CASE_BODY(find_results__not_found)
 
     atf::utils::create_file(
         (store_dir / "results.foo_bar.20140613-194515-012345.db").str(), "");
-    layout::find_results("foo_bar");  // Expected not to throw.
+    layout::find_results("foo_bar"); // Expected not to throw.
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(new_db__new);
 ATF_TEST_CASE_BODY(new_db__new)
 {
     datetime::set_mock_now(2014, 6, 13, 19, 45, 15, 5000);
     ATF_REQUIRE(!fs::exists(fs::path(".kyua/store")));
-    const layout::results_id_file_pair results = layout::new_db(
-        "NEW", fs::path("/some/path/to/the/suite"));
-    ATF_REQUIRE( fs::exists(fs::path(".kyua/store")));
-    ATF_REQUIRE( fs::is_directory(fs::path(".kyua/store")));
+    const layout::results_id_file_pair results =
+        layout::new_db("NEW", fs::path("/some/path/to/the/suite"));
+    ATF_REQUIRE(fs::exists(fs::path(".kyua/store")));
+    ATF_REQUIRE(fs::is_directory(fs::path(".kyua/store")));
 
     const std::string id = "some_path_to_the_suite.20140613-194515-005000";
     ATF_REQUIRE_EQ(id, results.first);
@@ -243,20 +235,18 @@ ATF_TEST_CASE_BODY(new_db__new)
                    results.second);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(new_db__explicit);
 ATF_TEST_CASE_BODY(new_db__explicit)
 {
     ATF_REQUIRE(!fs::exists(fs::path(".kyua/store")));
-    const layout::results_id_file_pair results = layout::new_db(
-        "foo/results-file.db", fs::path("unused"));
+    const layout::results_id_file_pair results =
+        layout::new_db("foo/results-file.db", fs::path("unused"));
     ATF_REQUIRE(!fs::exists(fs::path(".kyua/store")));
     ATF_REQUIRE(!fs::exists(fs::path("foo")));
 
     ATF_REQUIRE(results.first.empty());
     ATF_REQUIRE_EQ(fs::path("foo/results-file.db"), results.second);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(new_db_for_migration);
 ATF_TEST_CASE_BODY(new_db_for_migration)
@@ -265,15 +255,13 @@ ATF_TEST_CASE_BODY(new_db_for_migration)
     const fs::path results_file = layout::new_db_for_migration(
         fs::path("/some/root"),
         datetime::timestamp::from_values(2014, 7, 30, 10, 5, 20, 76500));
-    ATF_REQUIRE( fs::exists(fs::path(".kyua/store")));
-    ATF_REQUIRE( fs::is_directory(fs::path(".kyua/store")));
+    ATF_REQUIRE(fs::exists(fs::path(".kyua/store")));
+    ATF_REQUIRE(fs::is_directory(fs::path(".kyua/store")));
 
-    ATF_REQUIRE_EQ(
-        layout::query_store_dir() /
-        "results.some_root.20140730-100520-076500.db",
-        results_file);
+    ATF_REQUIRE_EQ(layout::query_store_dir() /
+                       "results.some_root.20140730-100520-076500.db",
+                   results_file);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(query_store_dir__home_absolute);
 ATF_TEST_CASE_BODY(query_store_dir__home_absolute)
@@ -285,7 +273,6 @@ ATF_TEST_CASE_BODY(query_store_dir__home_absolute)
     ATF_REQUIRE_EQ(home / ".kyua/store", store_dir);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(query_store_dir__home_relative);
 ATF_TEST_CASE_BODY(query_store_dir__home_relative)
 {
@@ -296,7 +283,6 @@ ATF_TEST_CASE_BODY(query_store_dir__home_relative)
     ATF_REQUIRE_MATCH((home / ".kyua/store").str(), store_dir.str());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(query_store_dir__no_home);
 ATF_TEST_CASE_BODY(query_store_dir__no_home)
 {
@@ -304,28 +290,24 @@ ATF_TEST_CASE_BODY(query_store_dir__no_home)
     ATF_REQUIRE_EQ(fs::current_path(), layout::query_store_dir());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(test_suite_for_path__absolute);
 ATF_TEST_CASE_BODY(test_suite_for_path__absolute)
 {
     ATF_REQUIRE_EQ("dir1_dir2_dir3",
                    layout::test_suite_for_path(fs::path("/dir1/dir2/dir3")));
-    ATF_REQUIRE_EQ("dir1",
-                   layout::test_suite_for_path(fs::path("/dir1")));
+    ATF_REQUIRE_EQ("dir1", layout::test_suite_for_path(fs::path("/dir1")));
     ATF_REQUIRE_EQ("dir1_dir2",
                    layout::test_suite_for_path(fs::path("/dir1///dir2")));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(test_suite_for_path__relative);
 ATF_TEST_CASE_BODY(test_suite_for_path__relative)
 {
-    const std::string test_suite = layout::test_suite_for_path(
-        fs::path("foo/bar"));
+    const std::string test_suite =
+        layout::test_suite_for_path(fs::path("foo/bar"));
     ATF_REQUIRE_MATCH("_foo_bar$", test_suite);
     ATF_REQUIRE_MATCH("^[^_]", test_suite);
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

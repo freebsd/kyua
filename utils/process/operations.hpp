@@ -32,15 +32,13 @@
 #if !defined(UTILS_PROCESS_OPERATIONS_HPP)
 #define UTILS_PROCESS_OPERATIONS_HPP
 
-#include "utils/process/operations_fwd.hpp"
-
 #include "utils/defs.hpp"
 #include "utils/fs/path_fwd.hpp"
+#include "utils/process/operations_fwd.hpp"
 #include "utils/process/status_fwd.hpp"
 
 namespace utils {
 namespace process {
-
 
 void exec [[noreturn]] (const utils::fs::path&, const args_vector&) throw();
 void exec_unsafe [[noreturn]] (const utils::fs::path&, const args_vector&);
@@ -49,8 +47,7 @@ void terminate_self_with [[noreturn]] (const status&);
 status wait(const int);
 status wait_any(void);
 
+} // namespace process
+} // namespace utils
 
-}  // namespace process
-}  // namespace utils
-
-#endif  // !defined(UTILS_PROCESS_OPERATIONS_HPP)
+#endif // !defined(UTILS_PROCESS_OPERATIONS_HPP)

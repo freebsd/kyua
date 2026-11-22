@@ -45,12 +45,9 @@ extern "C" {
 
 namespace sqlite = utils::sqlite;
 
-
 namespace {
 
-
 static sqlite::type c_type_to_cxx(const int) UTILS_PURE;
-
 
 /// Maps a SQLite 3 data type to our own representation.
 ///
@@ -61,16 +58,21 @@ static sqlite::type
 c_type_to_cxx(const int original)
 {
     switch (original) {
-    case SQLITE_BLOB: return sqlite::type_blob;
-    case SQLITE_FLOAT: return sqlite::type_float;
-    case SQLITE_INTEGER: return sqlite::type_integer;
-    case SQLITE_NULL: return sqlite::type_null;
-    case SQLITE_TEXT: return sqlite::type_text;
-    default: UNREACHABLE_MSG("Unknown data type returned by SQLite 3");
+    case SQLITE_BLOB:
+        return sqlite::type_blob;
+    case SQLITE_FLOAT:
+        return sqlite::type_float;
+    case SQLITE_INTEGER:
+        return sqlite::type_integer;
+    case SQLITE_NULL:
+        return sqlite::type_null;
+    case SQLITE_TEXT:
+        return sqlite::type_text;
+    default:
+        UNREACHABLE_MSG("Unknown data type returned by SQLite 3");
     }
     UNREACHABLE;
 }
-
 
 /// Handles the return value of a sqlite3_bind_* call.
 ///
@@ -96,9 +98,7 @@ handle_bind_error(sqlite::database& db, const char* api_function,
     }
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Internal implementation for sqlite::statement.
 struct utils::sqlite::statement::impl : utils::noncopyable {
@@ -109,7 +109,7 @@ struct utils::sqlite::statement::impl : utils::noncopyable {
     ::sqlite3_stmt* stmt;
 
     /// Cache for the column names in a statement; lazily initialized.
-    std::map< std::string, int > column_cache;
+    std::map<std::string, int> column_cache;
 
     /// Constructor.
     ///
@@ -119,9 +119,7 @@ struct utils::sqlite::statement::impl : utils::noncopyable {
     ///     a shallow copy here instead, but I feel that statements that outlive
     ///     their database represents sloppy programming.)
     /// \param stmt_ The SQLite internal statement.
-    impl(database& db_, ::sqlite3_stmt* stmt_) :
-        db(db_),
-        stmt(stmt_)
+    impl(database& db_, ::sqlite3_stmt* stmt_) : db(db_), stmt(stmt_)
     {
     }
 
@@ -139,7 +137,6 @@ struct utils::sqlite::statement::impl : utils::noncopyable {
     }
 };
 
-
 /// Initializes a statement object.
 ///
 /// This is an internal function.  Use database::create_statement() to
@@ -149,10 +146,9 @@ struct utils::sqlite::statement::impl : utils::noncopyable {
 /// \param raw_stmt A void pointer representing a SQLite native statement of
 ///     type sqlite3_stmt.
 sqlite::statement::statement(database& db, void* raw_stmt) :
-    _pimpl(new impl(db, static_cast< ::sqlite3_stmt* >(raw_stmt)))
+    _pimpl(new impl(db, static_cast<::sqlite3_stmt*>(raw_stmt)))
 {
 }
-
 
 /// Destructor for the statement.
 ///
@@ -161,7 +157,6 @@ sqlite::statement::statement(database& db, void* raw_stmt) :
 sqlite::statement::~statement(void)
 {
 }
-
 
 /// Executes a statement that is not supposed to return any data.
 ///
@@ -174,10 +169,10 @@ void
 sqlite::statement::step_without_results(void)
 {
     const bool data = step();
-    INV_MSG(!data, "The statement should not have produced any rows, but it "
+    INV_MSG(!data,
+            "The statement should not have produced any rows, but it "
             "did");
 }
-
 
 /// Performs a processing step on the statement.
 ///
@@ -202,7 +197,6 @@ sqlite::statement::step(void)
     UNREACHABLE;
 }
 
-
 /// Returns the number of columns in the step result.
 ///
 /// \return The number of columns available for data retrieval.
@@ -211,7 +205,6 @@ sqlite::statement::column_count(void)
 {
     return ::sqlite3_column_count(_pimpl->stmt);
 }
-
 
 /// Returns the name of a particular column in the result.
 ///
@@ -227,7 +220,6 @@ sqlite::statement::column_name(const int index)
     return name;
 }
 
-
 /// Returns the type of a particular column in the result.
 ///
 /// \param index The column to request the type of.
@@ -239,7 +231,6 @@ sqlite::statement::column_type(const int index)
     return c_type_to_cxx(::sqlite3_column_type(_pimpl->stmt, index));
 }
 
-
 /// Finds a column by name.
 ///
 /// \param name The name of the column to search for.
@@ -250,7 +241,7 @@ sqlite::statement::column_type(const int index)
 int
 sqlite::statement::column_id(const char* name)
 {
-    std::map< std::string, int >& cache = _pimpl->column_cache;
+    std::map<std::string, int>& cache = _pimpl->column_cache;
 
     if (cache.empty()) {
         for (int i = 0; i < column_count(); i++) {
@@ -260,13 +251,12 @@ sqlite::statement::column_id(const char* name)
         }
     }
 
-    const std::map< std::string, int >::const_iterator iter = cache.find(name);
+    const std::map<std::string, int>::const_iterator iter = cache.find(name);
     if (iter == cache.end())
         throw invalid_column_error(_pimpl->db.db_filename(), name);
     else
         return (*iter).second;
 }
-
 
 /// Returns a particular column in the result as a blob.
 ///
@@ -283,7 +273,6 @@ sqlite::statement::column_blob(const int index)
                 ::sqlite3_column_bytes(_pimpl->stmt, index));
 }
 
-
 /// Returns a particular column in the result as a double.
 ///
 /// \param index The column to retrieve.
@@ -295,7 +284,6 @@ sqlite::statement::column_double(const int index)
     PRE(column_type(index) == type_float);
     return ::sqlite3_column_double(_pimpl->stmt, index);
 }
-
 
 /// Returns a particular column in the result as an integer.
 ///
@@ -311,7 +299,6 @@ sqlite::statement::column_int(const int index)
     return ::sqlite3_column_int(_pimpl->stmt, index);
 }
 
-
 /// Returns a particular column in the result as a 64-bit integer.
 ///
 /// \param index The column to retrieve.
@@ -323,7 +310,6 @@ sqlite::statement::column_int64(const int index)
     PRE(column_type(index) == type_integer);
     return ::sqlite3_column_int64(_pimpl->stmt, index);
 }
-
 
 /// Returns a particular column in the result as a double.
 ///
@@ -337,10 +323,9 @@ std::string
 sqlite::statement::column_text(const int index)
 {
     PRE(column_type(index) == type_text);
-    return reinterpret_cast< const char* >(::sqlite3_column_text(
-        _pimpl->stmt, index));
+    return reinterpret_cast<const char*>(::sqlite3_column_text(_pimpl->stmt,
+                                                               index));
 }
-
 
 /// Returns the number of bytes stored in the column.
 ///
@@ -357,7 +342,6 @@ sqlite::statement::column_bytes(const int index)
     PRE(column_type(index) == type_blob || column_type(index) == type_text);
     return ::sqlite3_column_bytes(_pimpl->stmt, index);
 }
-
 
 /// Type-checked version of column_blob.
 ///
@@ -377,7 +361,6 @@ sqlite::statement::safe_column_blob(const char* name)
     return column_blob(column);
 }
 
-
 /// Type-checked version of column_double.
 ///
 /// \param name The name of the column to retrieve.
@@ -395,7 +378,6 @@ sqlite::statement::safe_column_double(const char* name)
                             F("Column '%s' is not a float") % name);
     return column_double(column);
 }
-
 
 /// Type-checked version of column_int.
 ///
@@ -415,7 +397,6 @@ sqlite::statement::safe_column_int(const char* name)
     return column_int(column);
 }
 
-
 /// Type-checked version of column_int64.
 ///
 /// \param name The name of the column to retrieve.
@@ -434,7 +415,6 @@ sqlite::statement::safe_column_int64(const char* name)
     return column_int64(column);
 }
 
-
 /// Type-checked version of column_text.
 ///
 /// \param name The name of the column to retrieve.
@@ -452,7 +432,6 @@ sqlite::statement::safe_column_text(const char* name)
                             F("Column '%s' is not a string") % name);
     return column_text(column);
 }
-
 
 /// Type-checked version of column_bytes.
 ///
@@ -473,14 +452,12 @@ sqlite::statement::safe_column_bytes(const char* name)
     return column_bytes(column);
 }
 
-
 /// Resets a statement to allow further processing.
 void
 sqlite::statement::reset(void)
 {
     (void)::sqlite3_reset(_pimpl->stmt);
 }
-
 
 /// Binds a blob to a prepared statement.
 ///
@@ -497,7 +474,6 @@ sqlite::statement::bind(const int index, const blob& b)
     handle_bind_error(_pimpl->db, "sqlite3_bind_blob", error);
 }
 
-
 /// Binds a double value to a prepared statement.
 ///
 /// \param index The index of the binding.
@@ -510,7 +486,6 @@ sqlite::statement::bind(const int index, const double value)
     const int error = ::sqlite3_bind_double(_pimpl->stmt, index, value);
     handle_bind_error(_pimpl->db, "sqlite3_bind_double", error);
 }
-
 
 /// Binds an integer value to a prepared statement.
 ///
@@ -525,7 +500,6 @@ sqlite::statement::bind(const int index, const int value)
     handle_bind_error(_pimpl->db, "sqlite3_bind_int", error);
 }
 
-
 /// Binds a 64-bit integer value to a prepared statement.
 ///
 /// \param index The index of the binding.
@@ -539,7 +513,6 @@ sqlite::statement::bind(const int index, const int64_t value)
     handle_bind_error(_pimpl->db, "sqlite3_bind_int64", error);
 }
 
-
 /// Binds a NULL value to a prepared statement.
 ///
 /// \param index The index of the binding.
@@ -551,7 +524,6 @@ sqlite::statement::bind(const int index, const null& /* null */)
     const int error = ::sqlite3_bind_null(_pimpl->stmt, index);
     handle_bind_error(_pimpl->db, "sqlite3_bind_null", error);
 }
-
 
 /// Binds a text string to a prepared statement.
 ///
@@ -571,7 +543,6 @@ sqlite::statement::bind(const int index, const std::string& text)
     handle_bind_error(_pimpl->db, "sqlite3_bind_text", error);
 }
 
-
 /// Returns the index of the highest parameter.
 ///
 /// \return A parameter index.
@@ -580,7 +551,6 @@ sqlite::statement::bind_parameter_count(void)
 {
     return ::sqlite3_bind_parameter_count(_pimpl->stmt);
 }
-
 
 /// Returns the index of a named parameter.
 ///
@@ -596,7 +566,6 @@ sqlite::statement::bind_parameter_index(const std::string& name)
     return index;
 }
 
-
 /// Returns the name of a parameter by index.
 ///
 /// \param index The index to query; must be valid.
@@ -610,12 +579,12 @@ sqlite::statement::bind_parameter_name(const int index)
     return std::string(name);
 }
 
-
 /// Clears any bindings and releases their memory.
 void
 sqlite::statement::clear_bindings(void)
 {
     const int error = ::sqlite3_clear_bindings(_pimpl->stmt);
-    PRE_MSG(error == SQLITE_OK, "SQLite3 contract has changed; it should "
+    PRE_MSG(error == SQLITE_OK,
+            "SQLite3 contract has changed; it should "
             "only return SQLITE_OK");
 }

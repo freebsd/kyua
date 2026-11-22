@@ -42,15 +42,14 @@
 
 namespace utils {
 
-
 extern const char* builtin_gdb;
 extern utils::datetime::delta gdb_timeout;
 
-utils::optional< utils::fs::path > find_gdb(void);
+utils::optional<utils::fs::path> find_gdb(void);
 
-utils::optional< utils::fs::path > find_core(const utils::fs::path&,
-                                             const utils::process::status&,
-                                             const utils::fs::path&);
+utils::optional<utils::fs::path> find_core(const utils::fs::path&,
+                                           const utils::process::status&,
+                                           const utils::fs::path&);
 
 bool unlimit_core_size(void);
 
@@ -62,7 +61,6 @@ void dump_stacktrace_if_available(const utils::fs::path&,
                                   utils::process::executor::executor_handle&,
                                   const utils::process::executor::exit_handle&);
 
+} // namespace utils
 
-}  // namespace utils
-
-#endif  // !defined(ENGINE_STACKTRACE_HPP)
+#endif // !defined(ENGINE_STACKTRACE_HPP)

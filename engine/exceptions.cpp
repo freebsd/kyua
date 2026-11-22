@@ -27,7 +27,6 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "engine/exceptions.hpp"
-
 #include "utils/format/macros.hpp"
 
 namespace fs = utils::fs;
@@ -35,32 +34,26 @@ namespace fs = utils::fs;
 /// Constructs a new error with a plain-text message.
 ///
 /// \param message The plain-text error message.
-engine::error::error(const std::string& message) :
-    std::runtime_error(message)
+engine::error::error(const std::string& message) : std::runtime_error(message)
 {
 }
-
 
 /// Destructor for the error.
 engine::error::~error(void) throw()
 {
 }
 
-
 /// Constructs a new format_error.
 ///
 /// \param reason_ Description of the format problem.
-engine::format_error::format_error(const std::string& reason_) :
-    error(reason_)
+engine::format_error::format_error(const std::string& reason_) : error(reason_)
 {
 }
-
 
 /// Destructor for the error.
 engine::format_error::~format_error(void) throw()
 {
 }
-
 
 /// Constructs a new load_error.
 ///
@@ -73,7 +66,6 @@ engine::load_error::load_error(const fs::path& file_,
     reason(reason_)
 {
 }
-
 
 /// Destructor for the error.
 engine::load_error::~load_error(void) throw()

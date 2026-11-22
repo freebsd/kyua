@@ -126,12 +126,12 @@ EOF
 
 utils_test_case one_arg__no_test_case
 one_arg__no_test_case_body() {
-    # CHECK_STYLE_DISABLE
+    # NOLINTBEGIN
     cat >experr <<EOF
 Usage error for command debug: 'foo' is not a test case identifier (missing ':'?).
 Type 'kyua help debug' for usage information.
 EOF
-    # CHECK_STYLE_ENABLE
+    # NOLINTEND
     atf_check -s exit:3 -o empty -e file:experr kyua debug foo
 }
 
@@ -376,19 +376,19 @@ kyua: E: Unknown test case 'non_executable:a'.
 EOF
     atf_check -s exit:2 -o empty -e file:experr kyua debug non_executable:a
 
-    # CHECK_STYLE_DISABLE
+    # NOLINTBEGIN
     cat >expout <<EOF
 crash_on_list:__test_cases_list__  ->  broken: Invalid header for test case list; expecting Content-Type for application/X-atf-tp version 1, got ''
 EOF
-    # CHECK_STYLE_ENABLE
+    # NOLINTEND
     atf_check -s exit:1 -o file:expout -e empty kyua debug \
         crash_on_list:__test_cases_list__
 
-    # CHECK_STYLE_DISABLE
+    # NOLINTBEGIN
     cat >expout <<EOF
 non_executable:__test_cases_list__  ->  broken: Permission denied to run test program
 EOF
-    # CHECK_STYLE_ENABLE
+    # NOLINTEND
     atf_check -s exit:1 -o file:expout -e empty kyua debug \
         non_executable:__test_cases_list__
 }

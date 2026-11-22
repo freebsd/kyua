@@ -26,26 +26,23 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/units.hpp"
-
+#include <atf-c++.hpp>
 #include <sstream>
 #include <stdexcept>
 
-#include <atf-c++.hpp>
+#include "utils/units.hpp"
 
 namespace units = utils::units;
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(bytes__format__tb);
 ATF_TEST_CASE_BODY(bytes__format__tb)
 {
-    using units::TB;
     using units::GB;
+    using units::TB;
 
     ATF_REQUIRE_EQ("2.00T", units::bytes(2 * TB).format());
     ATF_REQUIRE_EQ("45.12T", units::bytes(45 * TB + 120 * GB).format());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(bytes__format__gb);
 ATF_TEST_CASE_BODY(bytes__format__gb)
@@ -57,17 +54,15 @@ ATF_TEST_CASE_BODY(bytes__format__gb)
     ATF_REQUIRE_EQ("745.96G", units::bytes(745 * GB + 980 * MB).format());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(bytes__format__mb);
 ATF_TEST_CASE_BODY(bytes__format__mb)
 {
-    using units::MB;
     using units::KB;
+    using units::MB;
 
     ATF_REQUIRE_EQ("1.00M", units::bytes(1 * MB).format());
     ATF_REQUIRE_EQ("1023.50M", units::bytes(1023 * MB + 512 * KB).format());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(bytes__format__kb);
 ATF_TEST_CASE_BODY(bytes__format__kb)
@@ -78,7 +73,6 @@ ATF_TEST_CASE_BODY(bytes__format__kb)
     ATF_REQUIRE_EQ("1.33K", units::bytes(1 * KB + 340).format());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(bytes__format__b);
 ATF_TEST_CASE_BODY(bytes__format__b)
 {
@@ -87,19 +81,17 @@ ATF_TEST_CASE_BODY(bytes__format__b)
     ATF_REQUIRE_EQ("1023", units::bytes(1023).format());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(bytes__parse__tb);
 ATF_TEST_CASE_BODY(bytes__parse__tb)
 {
-    using units::TB;
     using units::GB;
+    using units::TB;
 
     ATF_REQUIRE_EQ(0, units::bytes::parse("0T"));
     ATF_REQUIRE_EQ(units::bytes(TB), units::bytes::parse("1T"));
     ATF_REQUIRE_EQ(units::bytes(TB), units::bytes::parse("1t"));
     ATF_REQUIRE_EQ(13567973486755LL, units::bytes::parse("12.340000T"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(bytes__parse__gb);
 ATF_TEST_CASE_BODY(bytes__parse__gb)
@@ -113,19 +105,17 @@ ATF_TEST_CASE_BODY(bytes__parse__gb)
     ATF_REQUIRE_EQ(13249974108LL, units::bytes::parse("12.340G"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(bytes__parse__mb);
 ATF_TEST_CASE_BODY(bytes__parse__mb)
 {
-    using units::MB;
     using units::KB;
+    using units::MB;
 
     ATF_REQUIRE_EQ(0, units::bytes::parse("0M"));
     ATF_REQUIRE_EQ(units::bytes(MB), units::bytes::parse("1M"));
     ATF_REQUIRE_EQ(units::bytes(MB), units::bytes::parse("1m"));
     ATF_REQUIRE_EQ(12939427, units::bytes::parse("12.34000M"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(bytes__parse__kb);
 ATF_TEST_CASE_BODY(bytes__parse__kb)
@@ -138,7 +128,6 @@ ATF_TEST_CASE_BODY(bytes__parse__kb)
     ATF_REQUIRE_EQ(12636, units::bytes::parse("12.34K"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(bytes__parse__b);
 ATF_TEST_CASE_BODY(bytes__parse__b)
 {
@@ -147,7 +136,6 @@ ATF_TEST_CASE_BODY(bytes__parse__b)
     ATF_REQUIRE_EQ(1234, units::bytes::parse("1234"));
     ATF_REQUIRE_EQ(1234567890, units::bytes::parse("1234567890"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(bytes__parse__error);
 ATF_TEST_CASE_BODY(bytes__parse__error)
@@ -176,7 +164,6 @@ ATF_TEST_CASE_BODY(bytes__parse__error)
                          units::bytes::parse("abt"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(bytes__istream__one_word);
 ATF_TEST_CASE_BODY(bytes__istream__one_word)
 {
@@ -187,7 +174,6 @@ ATF_TEST_CASE_BODY(bytes__istream__one_word)
     ATF_REQUIRE(input.eof());
     ATF_REQUIRE_EQ(units::bytes(12 * units::MB), bytes);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(bytes__istream__many_words);
 ATF_TEST_CASE_BODY(bytes__istream__many_words)
@@ -204,7 +190,6 @@ ATF_TEST_CASE_BODY(bytes__istream__many_words)
     ATF_REQUIRE_EQ("more", word);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(bytes__istream__error);
 ATF_TEST_CASE_BODY(bytes__istream__error)
 {
@@ -216,7 +201,6 @@ ATF_TEST_CASE_BODY(bytes__istream__error)
     ATF_REQUIRE_EQ(units::bytes(123456789), bytes);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(bytes__ostream);
 ATF_TEST_CASE_BODY(bytes__ostream)
 {
@@ -224,7 +208,6 @@ ATF_TEST_CASE_BODY(bytes__ostream)
     output << "foo " << units::bytes(5 * units::KB) << " bar";
     ATF_REQUIRE_EQ("foo 5.00K bar", output.str());
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

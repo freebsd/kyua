@@ -40,7 +40,6 @@ extern "C" {
 
 namespace fs = utils::fs;
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(auto_directory__automatic);
 ATF_TEST_CASE_BODY(auto_directory__automatic)
 {
@@ -62,7 +61,6 @@ ATF_TEST_CASE_BODY(auto_directory__automatic)
     ATF_REQUIRE(::access("root", X_OK) == -1);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(auto_directory__explicit);
 ATF_TEST_CASE_BODY(auto_directory__explicit)
 {
@@ -78,7 +76,6 @@ ATF_TEST_CASE_BODY(auto_directory__explicit)
     ATF_REQUIRE(::access("root", X_OK) == -1);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(auto_directory__mkdtemp_public);
 ATF_TEST_CASE_BODY(auto_directory__mkdtemp_public)
 {
@@ -87,17 +84,16 @@ ATF_TEST_CASE_BODY(auto_directory__mkdtemp_public)
 
     const std::string path_template("test.XXXXXX");
     {
-        fs::auto_directory auto_directory = fs::auto_directory::mkdtemp_public(
-            path_template);
-        ATF_REQUIRE(::access((fs::path("tmp") / path_template).c_str(),
-                             X_OK) == -1);
+        fs::auto_directory auto_directory =
+            fs::auto_directory::mkdtemp_public(path_template);
+        ATF_REQUIRE(::access((fs::path("tmp") / path_template).c_str(), X_OK) ==
+                    -1);
         ATF_REQUIRE(::rmdir("tmp") == -1);
 
         ATF_REQUIRE(::access(auto_directory.directory().c_str(), X_OK) == 0);
     }
     ATF_REQUIRE(::rmdir("tmp") != -1);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(auto_file__automatic);
 ATF_TEST_CASE_BODY(auto_file__automatic)
@@ -119,7 +115,6 @@ ATF_TEST_CASE_BODY(auto_file__automatic)
     ATF_REQUIRE(::access(file.c_str(), R_OK) == -1);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(auto_file__explicit);
 ATF_TEST_CASE_BODY(auto_file__explicit)
 {
@@ -135,7 +130,6 @@ ATF_TEST_CASE_BODY(auto_file__explicit)
     ATF_REQUIRE(::access(file.c_str(), R_OK) == -1);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(auto_file__mkstemp);
 ATF_TEST_CASE_BODY(auto_file__mkstemp)
 {
@@ -145,15 +139,14 @@ ATF_TEST_CASE_BODY(auto_file__mkstemp)
     const std::string path_template("test.XXXXXX");
     {
         fs::auto_file auto_file = fs::auto_file::mkstemp(path_template);
-        ATF_REQUIRE(::access((fs::path("tmp") / path_template).c_str(),
-                             X_OK) == -1);
+        ATF_REQUIRE(::access((fs::path("tmp") / path_template).c_str(), X_OK) ==
+                    -1);
         ATF_REQUIRE(::rmdir("tmp") == -1);
 
         ATF_REQUIRE(::access(auto_file.file().c_str(), R_OK) == 0);
     }
     ATF_REQUIRE(::rmdir("tmp") != -1);
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

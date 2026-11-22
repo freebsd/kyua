@@ -36,12 +36,11 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include <atf-c++.hpp>
 #include <cerrno>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
-
-#include <atf-c++.hpp>
 
 #include "utils/defs.hpp"
 #include "utils/env.hpp"
@@ -62,9 +61,7 @@ namespace process = utils::process;
 using utils::none;
 using utils::optional;
 
-
 namespace {
-
 
 /// Runs the given hook in a subprocess.
 ///
@@ -74,11 +71,11 @@ namespace {
 ///
 /// \post The subprocess.stdout and subprocess.stderr files, created in the
 /// current directory, contain the output of the subprocess.
-template< typename Hook >
+template <typename Hook>
 static process::status
 fork_and_run(Hook hook)
 {
-    std::unique_ptr< process::child > child = process::child::fork_files(
+    std::unique_ptr<process::child> child = process::child::fork_files(
         hook, fs::path("subprocess.stdout"), fs::path("subprocess.stderr"));
     const process::status status = child->wait();
 
@@ -87,7 +84,6 @@ fork_and_run(Hook hook)
 
     return status;
 }
-
 
 /// Subprocess that validates the cleanliness of the environment.
 ///
@@ -100,9 +96,9 @@ check_clean_environment(void)
 
     bool failed = false;
 
-    const char* empty[] = { "LANG", "LC_ALL", "LC_COLLATE", "LC_CTYPE",
-                            "LC_MESSAGES", "LC_MONETARY", "LC_NUMERIC",
-                            "LC_TIME", NULL };
+    const char* empty[] = { "LANG",       "LC_ALL",      "LC_COLLATE",
+                            "LC_CTYPE",   "LC_MESSAGES", "LC_MONETARY",
+                            "LC_NUMERIC", "LC_TIME",     NULL };
     const char** iter;
     for (iter = empty; *iter != NULL; ++iter) {
         if (utils::getenv(*iter)) {
@@ -129,12 +125,11 @@ check_clean_environment(void)
     if (utils::getenv_with_default("LEAVE_ME_ALONE", "") != "kill-some-day") {
         failed = true;
         std::cout << "LEAVE_ME_ALONE was modified while it should not have "
-            "been\n";
+                     "been\n";
     }
 
     std::exit(failed ? EXIT_FAILURE : EXIT_SUCCESS);
 }
-
 
 /// Subprocess that checks if user privileges are dropped.
 class check_drop_privileges {
@@ -154,8 +149,7 @@ public:
     ///
     /// \post Exits with success if the process has dropped privileges as
     /// expected.
-    void
-    operator()(void) const
+    void operator()(void) const
     {
         fs::mkdir(fs::path("subdir"), 0755);
         process::isolate_child(utils::make_optional(_unprivileged_user),
@@ -187,14 +181,13 @@ public:
         std::ofstream output("file.txt");
         if (!output) {
             std::cout << "Cannot write to isolated directory; owner not "
-                "changed?\n";
+                         "changed?\n";
             std::exit(EXIT_FAILURE);
         }
 
         std::exit(EXIT_SUCCESS);
     }
 };
-
 
 /// Subprocess that dumps core to validate core dumping abilities.
 static void
@@ -203,7 +196,6 @@ check_enable_core_dumps(void)
     process::isolate_child(none, fs::path("."));
     std::abort();
 }
-
 
 /// Subprocess that checks if the work directory is entered.
 class check_enter_work_directory {
@@ -223,16 +215,14 @@ public:
     ///
     /// \post Exits with success if the process has entered the given work
     /// directory; false otherwise.
-    void
-    operator()(void) const
+    void operator()(void) const
     {
         const fs::path exp_subdir = fs::current_path() / _directory;
         process::isolate_child(none, _directory);
-        std::exit(fs::current_path() == exp_subdir ?
-                  EXIT_SUCCESS : EXIT_FAILURE);
+        std::exit(fs::current_path() == exp_subdir ? EXIT_SUCCESS :
+                                                     EXIT_FAILURE);
     }
 };
-
 
 /// Subprocess that validates that it owns a session.
 ///
@@ -245,7 +235,6 @@ check_new_session(void)
     std::exit(::getsid(::getpid()) == ::getpid() ? EXIT_SUCCESS : EXIT_FAILURE);
 }
 
-
 /// Subprocess that validates the disconnection from any terminal.
 ///
 /// \post Exits with success if the environment is clean; failure otherwise.
@@ -254,17 +243,10 @@ check_no_terminal(void)
 {
     process::isolate_child(none, fs::path("."));
 
-    const char* const args[] = {
-        "/bin/sh",
-        "-i",
-        "-c",
-        "echo success",
-        NULL
-    };
+    const char* const args[] = { "/bin/sh", "-i", "-c", "echo success", NULL };
     ::execv("/bin/sh", UTILS_UNCONST(char*, args));
     std::abort();
 }
-
 
 /// Subprocess that validates that it has become the leader of a process group.
 ///
@@ -274,10 +256,9 @@ static void
 check_process_group(void)
 {
     process::isolate_child(none, fs::path("."));
-    std::exit(::getpgid(::getpid()) == ::getpid() ?
-              EXIT_SUCCESS : EXIT_FAILURE);
+    std::exit(::getpgid(::getpid()) == ::getpid() ? EXIT_SUCCESS :
+                                                    EXIT_FAILURE);
 }
-
 
 /// Subprocess that validates that the umask has been reset.
 ///
@@ -290,9 +271,7 @@ check_umask(void)
     std::exit(::umask(0) == 0022 ? EXIT_SUCCESS : EXIT_FAILURE);
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 ATF_TEST_CASE_WITHOUT_HEAD(isolate_child__clean_environment);
 ATF_TEST_CASE_BODY(isolate_child__clean_environment)
@@ -315,7 +294,6 @@ ATF_TEST_CASE_BODY(isolate_child__clean_environment)
     ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
 }
 
-
 ATF_TEST_CASE(isolate_child__other_user_when_unprivileged);
 ATF_TEST_CASE_HEAD(isolate_child__other_user_when_unprivileged)
 {
@@ -334,7 +312,6 @@ ATF_TEST_CASE_BODY(isolate_child__other_user_when_unprivileged)
     ATF_REQUIRE_EQ(user.gid, ::getgid());
 }
 
-
 ATF_TEST_CASE(isolate_child__drop_privileges);
 ATF_TEST_CASE_HEAD(isolate_child__drop_privileges)
 {
@@ -343,15 +320,14 @@ ATF_TEST_CASE_HEAD(isolate_child__drop_privileges)
 }
 ATF_TEST_CASE_BODY(isolate_child__drop_privileges)
 {
-    const passwd::user unprivileged_user = passwd::find_user_by_name(
-        get_config_var("unprivileged-user"));
+    const passwd::user unprivileged_user =
+        passwd::find_user_by_name(get_config_var("unprivileged-user"));
 
-    const process::status status = fork_and_run(check_drop_privileges(
-        unprivileged_user));
+    const process::status status =
+        fork_and_run(check_drop_privileges(unprivileged_user));
     ATF_REQUIRE(status.exited());
     ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
 }
-
 
 ATF_TEST_CASE(isolate_child__drop_privileges_fail_uid);
 ATF_TEST_CASE_HEAD(isolate_child__drop_privileges_fail_uid)
@@ -370,14 +346,13 @@ ATF_TEST_CASE_BODY(isolate_child__drop_privileges_fail_uid)
     passwd::user unprivileged_user = passwd::current_user();
     unprivileged_user.uid += 1;
 
-    const process::status status = fork_and_run(check_drop_privileges(
-        unprivileged_user));
+    const process::status status =
+        fork_and_run(check_drop_privileges(unprivileged_user));
     ATF_REQUIRE(status.exited());
     ATF_REQUIRE_EQ(process::exit_isolation_failure, status.exitstatus());
     ATF_REQUIRE(atf::utils::grep_file("(chown|setuid).*failed",
                                       "subprocess.stderr"));
 }
-
 
 ATF_TEST_CASE(isolate_child__drop_privileges_fail_gid);
 ATF_TEST_CASE_HEAD(isolate_child__drop_privileges_fail_gid)
@@ -396,14 +371,13 @@ ATF_TEST_CASE_BODY(isolate_child__drop_privileges_fail_gid)
     passwd::user unprivileged_user = passwd::current_user();
     unprivileged_user.gid += 1;
 
-    const process::status status = fork_and_run(check_drop_privileges(
-        unprivileged_user));
+    const process::status status =
+        fork_and_run(check_drop_privileges(unprivileged_user));
     ATF_REQUIRE(status.exited());
     ATF_REQUIRE_EQ(process::exit_isolation_failure, status.exitstatus());
     ATF_REQUIRE(atf::utils::grep_file("(chown|setgid).*failed",
                                       "subprocess.stderr"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(isolate_child__enable_core_dumps);
 ATF_TEST_CASE_BODY(isolate_child__enable_core_dumps)
@@ -424,31 +398,28 @@ ATF_TEST_CASE_BODY(isolate_child__enable_core_dumps)
     ATF_REQUIRE(status.coredump());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(isolate_child__enter_work_directory);
 ATF_TEST_CASE_BODY(isolate_child__enter_work_directory)
 {
     const fs::path directory("some/sub/directory");
     fs::mkdir_p(directory, 0755);
-    const process::status status = fork_and_run(
-        check_enter_work_directory(directory));
+    const process::status status =
+        fork_and_run(check_enter_work_directory(directory));
     ATF_REQUIRE(status.exited());
     ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(isolate_child__enter_work_directory_failure);
 ATF_TEST_CASE_BODY(isolate_child__enter_work_directory_failure)
 {
     const fs::path directory("some/sub/directory");
-    const process::status status = fork_and_run(
-        check_enter_work_directory(directory));
+    const process::status status =
+        fork_and_run(check_enter_work_directory(directory));
     ATF_REQUIRE(status.exited());
     ATF_REQUIRE_EQ(process::exit_isolation_failure, status.exitstatus());
     ATF_REQUIRE(atf::utils::grep_file("chdir\\(some/sub/directory\\) failed",
                                       "subprocess.stderr"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(isolate_child__new_session);
 ATF_TEST_CASE_BODY(isolate_child__new_session)
@@ -458,7 +429,6 @@ ATF_TEST_CASE_BODY(isolate_child__new_session)
     ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(isolate_child__no_terminal);
 ATF_TEST_CASE_BODY(isolate_child__no_terminal)
 {
@@ -466,7 +436,6 @@ ATF_TEST_CASE_BODY(isolate_child__no_terminal)
     ATF_REQUIRE(status.exited());
     ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(isolate_child__process_group);
 ATF_TEST_CASE_BODY(isolate_child__process_group)
@@ -476,7 +445,6 @@ ATF_TEST_CASE_BODY(isolate_child__process_group)
     ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(isolate_child__reset_umask);
 ATF_TEST_CASE_BODY(isolate_child__reset_umask)
 {
@@ -485,16 +453,15 @@ ATF_TEST_CASE_BODY(isolate_child__reset_umask)
     ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
 }
 
-
 /// Executes isolate_path() and compares the on-disk changes to expected values.
 ///
 /// \param unprivileged_user The user to pass to isolate_path; may be none.
 /// \param exp_uid Expected UID or none to expect the old value.
 /// \param exp_gid Expected GID or none to expect the old value.
 static void
-do_isolate_path_test(const optional< passwd::user >& unprivileged_user,
-                     const optional< uid_t >& exp_uid,
-                     const optional< gid_t >& exp_gid)
+do_isolate_path_test(const optional<passwd::user>& unprivileged_user,
+                     const optional<uid_t>& exp_uid,
+                     const optional<gid_t>& exp_gid)
 {
     const fs::path dir("dir");
     fs::mkdir(dir, 0755);
@@ -517,21 +484,18 @@ do_isolate_path_test(const optional< passwd::user >& unprivileged_user,
         ATF_REQUIRE_EQ(old_sb.st_gid, new_sb.st_gid);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(isolate_path__no_user);
 ATF_TEST_CASE_BODY(isolate_path__no_user)
 {
     do_isolate_path_test(none, none, none);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(isolate_path__same_user);
 ATF_TEST_CASE_BODY(isolate_path__same_user)
 {
-    do_isolate_path_test(utils::make_optional(passwd::current_user()),
-                         none, none);
+    do_isolate_path_test(utils::make_optional(passwd::current_user()), none,
+                         none);
 }
-
 
 ATF_TEST_CASE(isolate_path__other_user_when_unprivileged);
 ATF_TEST_CASE_HEAD(isolate_path__other_user_when_unprivileged)
@@ -547,7 +511,6 @@ ATF_TEST_CASE_BODY(isolate_path__other_user_when_unprivileged)
     do_isolate_path_test(utils::make_optional(user), none, none);
 }
 
-
 ATF_TEST_CASE(isolate_path__drop_privileges);
 ATF_TEST_CASE_HEAD(isolate_path__drop_privileges)
 {
@@ -556,13 +519,12 @@ ATF_TEST_CASE_HEAD(isolate_path__drop_privileges)
 }
 ATF_TEST_CASE_BODY(isolate_path__drop_privileges)
 {
-    const passwd::user unprivileged_user = passwd::find_user_by_name(
-        get_config_var("unprivileged-user"));
+    const passwd::user unprivileged_user =
+        passwd::find_user_by_name(get_config_var("unprivileged-user"));
     do_isolate_path_test(utils::make_optional(unprivileged_user),
                          utils::make_optional(unprivileged_user.uid),
                          utils::make_optional(unprivileged_user.gid));
 }
-
 
 ATF_TEST_CASE(isolate_path__drop_privileges_only_uid);
 ATF_TEST_CASE_HEAD(isolate_path__drop_privileges_only_uid)
@@ -572,14 +534,12 @@ ATF_TEST_CASE_HEAD(isolate_path__drop_privileges_only_uid)
 }
 ATF_TEST_CASE_BODY(isolate_path__drop_privileges_only_uid)
 {
-    passwd::user unprivileged_user = passwd::find_user_by_name(
-        get_config_var("unprivileged-user"));
+    passwd::user unprivileged_user =
+        passwd::find_user_by_name(get_config_var("unprivileged-user"));
     unprivileged_user.gid = ::getgid();
     do_isolate_path_test(utils::make_optional(unprivileged_user),
-                         utils::make_optional(unprivileged_user.uid),
-                         none);
+                         utils::make_optional(unprivileged_user.uid), none);
 }
-
 
 ATF_TEST_CASE(isolate_path__drop_privileges_only_gid);
 ATF_TEST_CASE_HEAD(isolate_path__drop_privileges_only_gid)
@@ -589,14 +549,12 @@ ATF_TEST_CASE_HEAD(isolate_path__drop_privileges_only_gid)
 }
 ATF_TEST_CASE_BODY(isolate_path__drop_privileges_only_gid)
 {
-    passwd::user unprivileged_user = passwd::find_user_by_name(
-        get_config_var("unprivileged-user"));
+    passwd::user unprivileged_user =
+        passwd::find_user_by_name(get_config_var("unprivileged-user"));
     unprivileged_user.uid = ::getuid();
-    do_isolate_path_test(utils::make_optional(unprivileged_user),
-                         none,
+    do_isolate_path_test(utils::make_optional(unprivileged_user), none,
                          utils::make_optional(unprivileged_user.gid));
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

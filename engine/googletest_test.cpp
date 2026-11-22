@@ -37,13 +37,10 @@ namespace scheduler = engine::scheduler;
 
 using utils::none;
 
-
 namespace {
-
 
 /// Prefix for all testcases.
 const std::string test_suite = "Suite.";
-
 
 /// Runs one googletest test program and checks its result.
 ///
@@ -53,8 +50,7 @@ const std::string test_suite = "Suite.";
 ///
 /// \return The list of loaded test cases.
 static model::test_cases_map
-list(const char* program_name,
-     const fs::path& root,
+list(const char* program_name, const fs::path& root,
      config::tree user_config = engine::empty_config())
 {
     scheduler::scheduler_handle handle = scheduler::setup();
@@ -63,14 +59,13 @@ list(const char* program_name,
         "googletest", fs::path(program_name), root, "the-suite",
         model::metadata_builder().build(), user_config, handle);
 
-    const model::test_cases_map test_cases = handle.list_tests(
-        &program, user_config);
+    const model::test_cases_map test_cases = handle.list_tests(&program,
+                                                               user_config);
 
     handle.cleanup();
 
     return test_cases;
 }
-
 
 /// Runs a bogus test program and checks the error result.
 ///
@@ -78,21 +73,17 @@ list(const char* program_name,
 /// \param program_name Basename of the test program to run.
 /// \param root Path to the base of the test suite.
 static void
-check_list_fail(const char* exp_error,
-                const char* program_name,
+check_list_fail(const char* exp_error, const char* program_name,
                 const fs::path& root)
 {
-    const model::test_cases_map test_cases = list(
-        program_name, root);
+    const model::test_cases_map test_cases = list(program_name, root);
 
     ATF_REQUIRE_EQ(1, test_cases.size());
     const model::test_case& test_case = test_cases.begin()->second;
     ATF_REQUIRE_EQ("__test_cases_list__", test_case.name());
     ATF_REQUIRE(test_case.fake_result());
-    ATF_REQUIRE_MATCH(exp_error,
-                      test_case.fake_result().get().reason());
+    ATF_REQUIRE_MATCH(exp_error, test_case.fake_result().get().reason());
 }
-
 
 /// Runs one googletest test program and checks its result.
 ///
@@ -114,15 +105,14 @@ run_one(const atf::tests::tc* tc, const char* test_case_name,
 
     const model::test_program_ptr program(new scheduler::lazy_test_program(
         "googletest", fs::path("googletest_helpers"),
-        fs::path(tc->get_config_var("srcdir")),
-        "the-suite", metadata, user_config, handle));
+        fs::path(tc->get_config_var("srcdir")), "the-suite", metadata,
+        user_config, handle));
 
     (void)handle.spawn_test(program, test_name.c_str(), user_config);
 
     scheduler::result_handle_ptr result_handle = handle.wait_any();
     const scheduler::test_result_handle* test_result_handle =
-        dynamic_cast< const scheduler::test_result_handle* >(
-            result_handle.get());
+        dynamic_cast<const scheduler::test_result_handle*>(result_handle.get());
     ATF_REQUIRE(test_result_handle != nullptr);
     atf::utils::cat_file(result_handle->stdout_file().str(), "stdout: ");
     atf::utils::cat_file(result_handle->stderr_file().str(), "stderr: ");
@@ -133,75 +123,70 @@ run_one(const atf::tests::tc* tc, const char* test_case_name,
     handle.cleanup();
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 ATF_TEST_CASE_WITHOUT_HEAD(list__ok);
 ATF_TEST_CASE_BODY(list__ok)
 {
-    const model::test_cases_map test_cases = list(
-        "googletest_helpers", fs::path(get_config_var("srcdir")));
+    const model::test_cases_map test_cases =
+        list("googletest_helpers", fs::path(get_config_var("srcdir")));
 
-    const model::test_cases_map exp_test_cases = model::test_cases_map_builder()
-        .add(test_suite + "check_configuration_variables")
-        .add(test_suite + "crash")
-        .add(test_suite + "fail")
-        .add(test_suite + "pass")
-        .add(test_suite + "pass_but_exit_failure")
-        .add(test_suite + "timeout", model::metadata_builder()
-             .build())
-        .build();
+    const model::test_cases_map exp_test_cases =
+        model::test_cases_map_builder()
+            .add(test_suite + "check_configuration_variables")
+            .add(test_suite + "crash")
+            .add(test_suite + "fail")
+            .add(test_suite + "pass")
+            .add(test_suite + "pass_but_exit_failure")
+            .add(test_suite + "timeout", model::metadata_builder().build())
+            .build();
     ATF_REQUIRE_EQ(exp_test_cases, test_cases);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(list__current_directory);
 ATF_TEST_CASE_BODY(list__current_directory)
 {
-    const fs::path helpers =
-        fs::path(get_config_var("srcdir")) / "googletest_helpers";
+    const fs::path helpers = fs::path(get_config_var("srcdir")) /
+        "googletest_helpers";
     ATF_REQUIRE(::symlink(helpers.c_str(), "googletest_helpers") != -1);
-    const model::test_cases_map test_cases = list(
-        "googletest_helpers", fs::path("."));
+    const model::test_cases_map test_cases = list("googletest_helpers",
+                                                  fs::path("."));
 
-    const model::test_cases_map exp_test_cases = model::test_cases_map_builder()
-        .add(test_suite + "check_configuration_variables")
-        .add(test_suite + "crash")
-        .add(test_suite + "fail")
-        .add(test_suite + "pass")
-        .add(test_suite + "pass_but_exit_failure")
-        .add(test_suite + "timeout", model::metadata_builder()
-             .build())
-        .build();
+    const model::test_cases_map exp_test_cases =
+        model::test_cases_map_builder()
+            .add(test_suite + "check_configuration_variables")
+            .add(test_suite + "crash")
+            .add(test_suite + "fail")
+            .add(test_suite + "pass")
+            .add(test_suite + "pass_but_exit_failure")
+            .add(test_suite + "timeout", model::metadata_builder().build())
+            .build();
     ATF_REQUIRE_EQ(exp_test_cases, test_cases);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(list__relative_path);
 ATF_TEST_CASE_BODY(list__relative_path)
 {
-    const fs::path helpers =
-        fs::path(get_config_var("srcdir")) / "googletest_helpers";
+    const fs::path helpers = fs::path(get_config_var("srcdir")) /
+        "googletest_helpers";
     ATF_REQUIRE(::mkdir("dir1", 0755) != -1);
     ATF_REQUIRE(::mkdir("dir1/dir2", 0755) != -1);
-    ATF_REQUIRE_EQ(::symlink(helpers.c_str(),
-                   "dir1/dir2/googletest_helpers"), 0);
-    const model::test_cases_map test_cases = list(
-        "dir2/googletest_helpers", fs::path("dir1"));
+    ATF_REQUIRE_EQ(::symlink(helpers.c_str(), "dir1/dir2/googletest_helpers"),
+                   0);
+    const model::test_cases_map test_cases = list("dir2/googletest_helpers",
+                                                  fs::path("dir1"));
 
-    const model::test_cases_map exp_test_cases = model::test_cases_map_builder()
-        .add(test_suite + "check_configuration_variables")
-        .add(test_suite + "crash")
-        .add(test_suite + "fail")
-        .add(test_suite + "pass")
-        .add(test_suite + "pass_but_exit_failure")
-        .add(test_suite + "timeout", model::metadata_builder()
-             .build())
-        .build();
+    const model::test_cases_map exp_test_cases =
+        model::test_cases_map_builder()
+            .add(test_suite + "check_configuration_variables")
+            .add(test_suite + "crash")
+            .add(test_suite + "fail")
+            .add(test_suite + "pass")
+            .add(test_suite + "pass_but_exit_failure")
+            .add(test_suite + "timeout", model::metadata_builder().build())
+            .build();
     ATF_REQUIRE_EQ(exp_test_cases, test_cases);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(list__missing_test_program);
 ATF_TEST_CASE_BODY(list__missing_test_program)
@@ -209,7 +194,6 @@ ATF_TEST_CASE_BODY(list__missing_test_program)
     check_list_fail("Cannot find test program", "non-existent",
                     fs::current_path());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(list__not_a_test_program);
 ATF_TEST_CASE_BODY(list__not_a_test_program)
@@ -220,15 +204,13 @@ ATF_TEST_CASE_BODY(list__not_a_test_program)
                     fs::current_path());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(list__no_permissions);
 ATF_TEST_CASE_BODY(list__no_permissions)
 {
     atf::utils::create_file("not-executable", "garbage\n");
-    check_list_fail("Permission denied to run test program",
-                    "not-executable", fs::current_path());
+    check_list_fail("Permission denied to run test program", "not-executable",
+                    fs::current_path());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(list__abort);
 ATF_TEST_CASE_BODY(list__abort)
@@ -239,7 +221,6 @@ ATF_TEST_CASE_BODY(list__abort)
                     fs::current_path());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(list__empty);
 ATF_TEST_CASE_BODY(list__empty)
 {
@@ -248,7 +229,6 @@ ATF_TEST_CASE_BODY(list__empty)
     check_list_fail("No test cases", "empty_list", fs::current_path());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(test__body_only__passes);
 ATF_TEST_CASE_BODY(test__body_only__passes)
 {
@@ -256,20 +236,16 @@ ATF_TEST_CASE_BODY(test__body_only__passes)
     run_one(this, "pass", exp_result);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(test__body_only__fails);
 ATF_TEST_CASE_BODY(test__body_only__fails)
 {
-    const std::string failure_message = (
-"gtest_macros_demo.cc:4: Failure\n"
-"Failed\n"
-"with a reason\n"
-);
+    const std::string failure_message = ("gtest_macros_demo.cc:4: Failure\n"
+                                         "Failed\n"
+                                         "with a reason\n");
     const model::test_result exp_result(model::test_result_failed,
-       failure_message);
+                                        failure_message);
     run_one(this, "fail", exp_result);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(test__body_only__crashes);
 ATF_TEST_CASE_BODY(test__body_only__crashes)
@@ -279,10 +255,9 @@ ATF_TEST_CASE_BODY(test__body_only__crashes)
     const model::test_result exp_result(
         model::test_result_broken,
         F("Error: Premature exit. Test case received signal %s (core dumped)") %
-        SIGABRT);
+            SIGABRT);
     run_one(this, "crash", exp_result);
 }
-
 
 ATF_TEST_CASE(test__body_only__times_out);
 ATF_TEST_CASE_HEAD(test__body_only__times_out)
@@ -293,15 +268,14 @@ ATF_TEST_CASE_BODY(test__body_only__times_out)
 {
     config::tree user_config = engine::empty_config();
     utils::setenv("CONTROL_DIR", fs::current_path().str());
-    const model::metadata metadata = model::metadata_builder()
-        .set_timeout(datetime::delta(1, 0)).build();
-    const model::test_result exp_result(
-        model::test_result_broken, "Test case body timed out");
+    const model::metadata metadata =
+        model::metadata_builder().set_timeout(datetime::delta(1, 0)).build();
+    const model::test_result exp_result(model::test_result_broken,
+                                        "Test case body timed out");
     run_one(this, "timeout", exp_result, metadata, user_config);
 
     ATF_REQUIRE(!atf::utils::file_exists("cookie"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(test__body_only__configuration_variables);
 ATF_TEST_CASE_BODY(test__body_only__configuration_variables)
@@ -315,12 +289,11 @@ ATF_TEST_CASE_BODY(test__body_only__configuration_variables)
             model::metadata_builder().build(), user_config);
 }
 
-
 ATF_INIT_TEST_CASES(tcs)
 {
-    scheduler::register_interface(
-        "googletest", std::shared_ptr< scheduler::interface >(
-            new engine::googletest_interface()));
+    scheduler::register_interface("googletest",
+                                  std::shared_ptr<scheduler::interface>(
+                                      new engine::googletest_interface()));
 
     ATF_ADD_TEST_CASE(tcs, list__ok);
     ATF_ADD_TEST_CASE(tcs, list__current_directory);

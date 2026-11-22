@@ -35,11 +35,9 @@
 namespace utils {
 namespace format {
 
-
 class formatter;
 
+} // namespace format
+} // namespace utils
 
-}  // namespace format
-}  // namespace utils
-
-#endif  // !defined(UTILS_FORMAT_FORMATTER_FWD_HPP)
+#endif // !defined(UTILS_FORMAT_FORMATTER_FWD_HPP)

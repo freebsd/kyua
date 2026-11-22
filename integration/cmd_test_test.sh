@@ -161,7 +161,7 @@ test_suite("integration")
 atf_test_program{name="expect_all_pass"}
 EOF
 
-# CHECK_STYLE_DISABLE
+# NOLINTBEGIN
     cat >expout <<EOF
 expect_all_pass:die  ->  expected_failure: This is the reason for death  [S.UUUs]
 expect_all_pass:exit  ->  expected_failure: Exiting with correct code  [S.UUUs]
@@ -174,7 +174,7 @@ Results saved to $(utils_results_file)
 
 5/5 passed (0 broken, 0 failed, 0 skipped)
 EOF
-# CHECK_STYLE_ENABLE
+# NOLINTEND
 
     utils_cp_helper expect_all_pass .
     atf_check -s exit:0 -o file:expout -e empty kyua test
@@ -191,7 +191,7 @@ test_suite("integration")
 atf_test_program{name="expect_some_fail"}
 EOF
 
-# CHECK_STYLE_DISABLE
+# NOLINTBEGIN
     cat >expout <<EOF
 expect_some_fail:die  ->  failed: Test case was expected to terminate abruptly but it continued execution  [S.UUUs]
 expect_some_fail:exit  ->  failed: Test case expected to exit with code 12 but got code 34  [S.UUUs]
@@ -205,7 +205,7 @@ Results saved to $(utils_results_file)
 
 1/6 passed (0 broken, 5 failed, 0 skipped)
 EOF
-# CHECK_STYLE_ENABLE
+# NOLINTEND
 
     utils_cp_helper expect_some_fail .
     atf_check -s exit:1 -o file:expout -e empty kyua test
@@ -222,7 +222,7 @@ test_suite("integration")
 atf_test_program{name="bogus_test_cases"}
 EOF
 
-# CHECK_STYLE_DISABLE
+# NOLINTBEGIN
     cat >expout <<EOF
 bogus_test_cases:die  ->  broken: Error: Empty test result or no new line. Test case received signal 9  [S.UUUs]
 bogus_test_cases:exit  ->  broken: Error: Empty test result or no new line. Test case exited with code 0  [S.UUUs]
@@ -233,7 +233,7 @@ Results saved to $(utils_results_file)
 
 1/3 passed (2 broken, 0 failed, 0 skipped)
 EOF
-# CHECK_STYLE_ENABLE
+# NOLINTEND
 
     utils_cp_helper bogus_test_cases .
     atf_check -s exit:1 -o file:expout -e empty kyua test
@@ -294,7 +294,7 @@ atf_test_program{name="simple_all_pass"}
 EOF
     utils_cp_helper simple_all_pass subdir
 
-# CHECK_STYLE_DISABLE
+# NOLINTBEGIN
     cat >expout <<EOF
 subdir/simple_all_pass:pass  ->  passed  [S.UUUs]
 subdir/simple_all_pass:skip  ->  skipped: The reason for skipping is this  [S.UUUs]
@@ -304,7 +304,7 @@ Results saved to $(utils_results_file)
 
 1/2 passed (0 broken, 0 failed, 1 skipped)
 EOF
-# CHECK_STYLE_ENABLE
+# NOLINTEND
     atf_check -s exit:0 -o file:expout -e empty kyua test subdir
 }
 
@@ -1021,7 +1021,7 @@ EOF
     utils_cp_helper bad_test_program crash_on_list
     echo 'I am not executable' >non_executable
 
-# CHECK_STYLE_DISABLE
+# NOLINTBEGIN
     cat >expout <<EOF
 crash_on_list:__test_cases_list__  ->  broken: Invalid header for test case list; expecting Content-Type for application/X-atf-tp version 1, got ''  [S.UUUs]
 non_executable:__test_cases_list__  ->  broken: Permission denied to run test program  [S.UUUs]
@@ -1031,7 +1031,7 @@ Results saved to $(utils_results_file)
 
 0/2 passed (2 broken, 0 failed, 0 skipped)
 EOF
-# CHECK_STYLE_ENABLE
+# NOLINTEND
     atf_check -s exit:1 -o file:expout -e empty kyua test
 }
 
@@ -1051,11 +1051,11 @@ atf_test_program{name="i-am-missing"}
 EOF
     echo 'I should not be touched because the Kyuafile is bogus' >subdir/ok
 
-# CHECK_STYLE_DISABLE
+# NOLINTBEGIN
     cat >experr <<EOF
 kyua: E: Load of 'Kyuafile' failed: .*Non-existent test program 'subdir/i-am-missing'.
 EOF
-# CHECK_STYLE_ENABLE
+# NOLINTEND
     atf_check -s exit:2 -o empty -e "match:$(cat experr)" kyua list
 }
 

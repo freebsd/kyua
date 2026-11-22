@@ -38,12 +38,10 @@
 namespace utils {
 namespace process {
 
-
 /// Arguments to a program, without the program name.
-typedef std::vector< std::string > args_vector;
+typedef std::vector<std::string> args_vector;
 
+} // namespace process
+} // namespace utils
 
-}  // namespace process
-}  // namespace utils
-
-#endif  // !defined(UTILS_PROCESS_OPERATIONS_FWD_HPP)
+#endif // !defined(UTILS_PROCESS_OPERATIONS_FWD_HPP)

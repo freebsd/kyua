@@ -36,10 +36,8 @@
 
 namespace cli {
 
-
 /// Implementation of the "test" subcommand.
-class cmd_test : public cli_command
-{
+class cmd_test : public cli_command {
 public:
     cmd_test(void);
 
@@ -47,8 +45,6 @@ public:
             const utils::config::tree&);
 };
 
+} // namespace cli
 
-}  // namespace cli
-
-
-#endif  // !defined(CLI_CMD_TEST_HPP)
+#endif // !defined(CLI_CMD_TEST_HPP)

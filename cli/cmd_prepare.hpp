@@ -13,10 +13,8 @@
 
 namespace cli {
 
-
 /// Implementation of the "prepare" subcommand.
-class cmd_prepare : public cli_command
-{
+class cmd_prepare : public cli_command {
 public:
     cmd_prepare(void);
 
@@ -24,7 +22,6 @@ public:
             const utils::config::tree&);
 };
 
+} // namespace cli
 
-}  // namespace cli
-
-#endif  // !defined(CLI_CMD_PREPARE_HPP)
+#endif // !defined(CLI_CMD_PREPARE_HPP)

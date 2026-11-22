@@ -41,7 +41,6 @@
 
 namespace text = utils::text;
 
-
 int
 main(const int argc, const char* const* const argv)
 {
@@ -52,19 +51,19 @@ main(const int argc, const char* const* const argv)
     const char* prefix = argv[1];
     const char* continuation_prefix = argv[2];
 
-    const std::map< std::string, std::string > env = utils::getallenv();
-    for (std::map< std::string, std::string >::const_iterator
-             iter = env.begin(); iter != env.end(); ++iter) {
+    const std::map<std::string, std::string> env = utils::getallenv();
+    for (std::map<std::string, std::string>::const_iterator iter = env.begin();
+         iter != env.end(); ++iter) {
         const std::string& name = (*iter).first;
-        const std::vector< std::string > value = text::split(
-            (*iter).second, '\n');
+        const std::vector<std::string> value = text::split((*iter).second,
+                                                           '\n');
 
         if (value.empty()) {
             std::cout << prefix << name << "=\n";
         } else {
             std::cout << prefix << name << '=' << value[0] << '\n';
-            for (std::vector< std::string >::size_type i = 1;
-                 i < value.size(); ++i) {
+            for (std::vector<std::string>::size_type i = 1; i < value.size();
+                 ++i) {
                 std::cout << continuation_prefix << value[i] << '\n';
             }
         }

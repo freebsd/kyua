@@ -9,12 +9,11 @@ extern "C" {
 #include <signal.h>
 }
 
+#include <atf-c++.hpp>
 #include <cstdlib>
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
-
-#include <atf-c++.hpp>
 
 #include "engine/exceptions.hpp"
 #include "model/test_result.hpp"
@@ -28,9 +27,7 @@ namespace process = utils::process;
 using utils::none;
 using utils::optional;
 
-
 namespace {
-
 
 /// Performs a test for results::parse() that should succeed.
 ///
@@ -53,7 +50,6 @@ parse_ok_test(const engine::googletest_result::types& exp_type,
     }
 }
 
-
 /// Wrapper around parse_ok_test to define a test case.
 ///
 /// \param name The name of the test case; will be prefixed with
@@ -61,74 +57,62 @@ parse_ok_test(const engine::googletest_result::types& exp_type,
 /// \param exp_type The expected type of the result.
 /// \param exp_reason The expected reason describing the result, if any.
 /// \param input The literal input to parse.
-#define PARSE(name, exp_type, exp_reason, input) \
-    ATF_TEST_CASE_WITHOUT_HEAD(googletest_result__parse__ ## name); \
-    ATF_TEST_CASE_BODY(googletest_result__parse__ ## name) \
-    { \
-        parse_ok_test(exp_type, exp_reason, input); \
+#define PARSE(name, exp_type, exp_reason, input)                  \
+    ATF_TEST_CASE_WITHOUT_HEAD(googletest_result__parse__##name); \
+    ATF_TEST_CASE_BODY(googletest_result__parse__##name)          \
+    {                                                             \
+        parse_ok_test(exp_type, exp_reason, input);               \
     }
 
+} // anonymous namespace
 
-}  // anonymous namespace
+PARSE(broken, engine::googletest_result::broken,
+      engine::googletest_invalid_output_message.c_str(), "invalid input");
 
+const char disabled_context[] = ("YOU HAVE 1 DISABLED TEST");
 
-PARSE(broken,
-      engine::googletest_result::broken,
-      engine::googletest_invalid_output_message.c_str(),
-      "invalid input");
+const char disabled_message[] =
+    ("[==========] Running 0 tests from 0 test cases.\n"
+     "[==========] 0 tests from 0 test cases ran. (0 ms total)\n"
+     "[  PASSED  ] 0 tests.\n"
+     "\n"
+     "  YOU HAVE 1 DISABLED TEST\n"
+     "\n"
+     "\n");
 
-const char disabled_context[] = (
-"YOU HAVE 1 DISABLED TEST"
-);
-
-const char disabled_message[] = (
-"[==========] Running 0 tests from 0 test cases.\n"
-"[==========] 0 tests from 0 test cases ran. (0 ms total)\n"
-"[  PASSED  ] 0 tests.\n"
-"\n"
-"  YOU HAVE 1 DISABLED TEST\n"
-"\n"
-"\n"
-);
-
-PARSE(disabled,
-      engine::googletest_result::disabled, disabled_context,
+PARSE(disabled, engine::googletest_result::disabled, disabled_context,
       disabled_message);
 
-const char failed_context[] = (
-"pass_fail_demo.cc:8: Failure\n"
-"Expected equality of these values:\n"
-"  false\n"
-"  true\n"
-);
+const char failed_context[] = ("pass_fail_demo.cc:8: Failure\n"
+                               "Expected equality of these values:\n"
+                               "  false\n"
+                               "  true\n");
 
-const char failed_message[] = (
-"Note: Google Test filter = PassFailTest.Fails\n"
-"[==========] Running 1 test from 1 test case.\n"
-"[----------] Global test environment set-up.\n"
-"[----------] 1 test from PassFailTest\n"
-"[ RUN      ] PassFailTest.Fails\n"
-"pass_fail_demo.cc:8: Failure\n"
-"Expected equality of these values:\n"
-"  false\n"
-"  true\n"
-"[  FAILED  ] PassFailTest.Fails (0 ms)\n"
-"[----------] 1 test from PassFailTest (0 ms total)\n"
-"\n"
-"[----------] Global test environment tear-down\n"
-"[==========] 1 test from 1 test case ran. (0 ms total)\n"
-"[  PASSED  ] 0 tests.\n"
-"[  FAILED  ] 1 test, listed below:\n"
-"[  FAILED  ] PassFailTest.Fails\n"
-"\n"
-" 1 FAILED TEST\n"
-);
+const char failed_message[] =
+    ("Note: Google Test filter = PassFailTest.Fails\n"
+     "[==========] Running 1 test from 1 test case.\n"
+     "[----------] Global test environment set-up.\n"
+     "[----------] 1 test from PassFailTest\n"
+     "[ RUN      ] PassFailTest.Fails\n"
+     "pass_fail_demo.cc:8: Failure\n"
+     "Expected equality of these values:\n"
+     "  false\n"
+     "  true\n"
+     "[  FAILED  ] PassFailTest.Fails (0 ms)\n"
+     "[----------] 1 test from PassFailTest (0 ms total)\n"
+     "\n"
+     "[----------] Global test environment tear-down\n"
+     "[==========] 1 test from 1 test case ran. (0 ms total)\n"
+     "[  PASSED  ] 0 tests.\n"
+     "[  FAILED  ] 1 test, listed below:\n"
+     "[  FAILED  ] PassFailTest.Fails\n"
+     "\n"
+     " 1 FAILED TEST\n");
 
-PARSE(failed,
-      engine::googletest_result::failed, failed_context,
+PARSE(failed, engine::googletest_result::failed, failed_context,
       failed_message);
 
-// CHECK_STYLE_DISABLE
+// NOLINTBEGIN
 #if 0
 const char failed_parameterized_context[] = (
 "/usr/src/contrib/googletest/googletest/test/googletest-param-test-test.cc:882: Failure\n"
@@ -137,216 +121,192 @@ const char failed_parameterized_context[] = (
 "\n"
 );
 #else
-const char failed_parameterized_context[] = (
-"kyua: could not 'summarize' failure context; see full process output for more details:\n"
-"\n"
-"Note: Google Test filter = FourElemSequence/SeparateInstanceTest.TestsRunInSeparateInstances/0\n"
-"[==========] Running 1 test from 1 test suite.\n"
-"[----------] Global test environment set-up.\n"
-"[----------] 1 test from FourElemSequence/SeparateInstanceTest\n"
-"[ RUN      ] FourElemSequence/SeparateInstanceTest.TestsRunInSeparateInstances/0\n"
-"[       OK ] FourElemSequence/SeparateInstanceTest.TestsRunInSeparateInstances/0 (0 ms)\n"
-"/usr/src/contrib/googletest/googletest/test/googletest-param-test-test.cc:882: Failure\n"
-"Expected: (global_count_) >= (2), actual: 1 vs 2\n"
-"If some (but not all) SeparateInstanceTest tests have been filtered out this test will fail. Make sure that all GeneratorEvaluationTest are selected or de-selected together by the test filter.\n"
-"\n"
-"[----------] 1 test from FourElemSequence/SeparateInstanceTest (0 ms total)\n"
-"\n"
-"[----------] Global test environment tear-down\n"
-"[==========] 1 test from 1 test suite ran. (0 ms total)\n"
-"[  PASSED  ] 1 test.\n"
-"[  FAILED  ] 0 tests, listed below:\n"
-"\n"
-" 0 FAILED TESTS\n"
-"[  FAILED  ] FourElemSequence/SeparateInstanceTest: SetUpTestSuite or TearDownTestSuite\n"
-"\n"
-" 1 FAILED TEST SUITE\n"
-);
+const char failed_parameterized_context[] =
+    ("kyua: could not 'summarize' failure context; see full process output for more details:\n"
+     "\n"
+     "Note: Google Test filter = FourElemSequence/SeparateInstanceTest.TestsRunInSeparateInstances/0\n"
+     "[==========] Running 1 test from 1 test suite.\n"
+     "[----------] Global test environment set-up.\n"
+     "[----------] 1 test from FourElemSequence/SeparateInstanceTest\n"
+     "[ RUN      ] FourElemSequence/SeparateInstanceTest.TestsRunInSeparateInstances/0\n"
+     "[       OK ] FourElemSequence/SeparateInstanceTest.TestsRunInSeparateInstances/0 (0 ms)\n"
+     "/usr/src/contrib/googletest/googletest/test/googletest-param-test-test.cc:882: Failure\n"
+     "Expected: (global_count_) >= (2), actual: 1 vs 2\n"
+     "If some (but not all) SeparateInstanceTest tests have been filtered out this test will fail. Make sure that all GeneratorEvaluationTest are selected or de-selected together by the test filter.\n"
+     "\n"
+     "[----------] 1 test from FourElemSequence/SeparateInstanceTest (0 ms total)\n"
+     "\n"
+     "[----------] Global test environment tear-down\n"
+     "[==========] 1 test from 1 test suite ran. (0 ms total)\n"
+     "[  PASSED  ] 1 test.\n"
+     "[  FAILED  ] 0 tests, listed below:\n"
+     "\n"
+     " 0 FAILED TESTS\n"
+     "[  FAILED  ] FourElemSequence/SeparateInstanceTest: SetUpTestSuite or TearDownTestSuite\n"
+     "\n"
+     " 1 FAILED TEST SUITE\n");
 #endif
 
-const char failed_parameterized_message[] = (
-"Note: Google Test filter = FourElemSequence/SeparateInstanceTest.TestsRunInSeparateInstances/0\n"
-"[==========] Running 1 test from 1 test suite.\n"
-"[----------] Global test environment set-up.\n"
-"[----------] 1 test from FourElemSequence/SeparateInstanceTest\n"
-"[ RUN      ] FourElemSequence/SeparateInstanceTest.TestsRunInSeparateInstances/0\n"
-"[       OK ] FourElemSequence/SeparateInstanceTest.TestsRunInSeparateInstances/0 (0 ms)\n"
-"/usr/src/contrib/googletest/googletest/test/googletest-param-test-test.cc:882: Failure\n"
-"Expected: (global_count_) >= (2), actual: 1 vs 2\n"
-"If some (but not all) SeparateInstanceTest tests have been filtered out this test will fail. Make sure that all GeneratorEvaluationTest are selected or de-selected together by the test filter.\n"
-"\n"
-"[----------] 1 test from FourElemSequence/SeparateInstanceTest (0 ms total)\n"
-"\n"
-"[----------] Global test environment tear-down\n"
-"[==========] 1 test from 1 test suite ran. (0 ms total)\n"
-"[  PASSED  ] 1 test.\n"
-"[  FAILED  ] 0 tests, listed below:\n"
-"\n"
-" 0 FAILED TESTS\n"
-"[  FAILED  ] FourElemSequence/SeparateInstanceTest: SetUpTestSuite or TearDownTestSuite\n"
-"\n"
-" 1 FAILED TEST SUITE\n"
-);
-// CHECK_STYLE_ENABLE
+const char failed_parameterized_message[] =
+    ("Note: Google Test filter = FourElemSequence/SeparateInstanceTest.TestsRunInSeparateInstances/0\n"
+     "[==========] Running 1 test from 1 test suite.\n"
+     "[----------] Global test environment set-up.\n"
+     "[----------] 1 test from FourElemSequence/SeparateInstanceTest\n"
+     "[ RUN      ] FourElemSequence/SeparateInstanceTest.TestsRunInSeparateInstances/0\n"
+     "[       OK ] FourElemSequence/SeparateInstanceTest.TestsRunInSeparateInstances/0 (0 ms)\n"
+     "/usr/src/contrib/googletest/googletest/test/googletest-param-test-test.cc:882: Failure\n"
+     "Expected: (global_count_) >= (2), actual: 1 vs 2\n"
+     "If some (but not all) SeparateInstanceTest tests have been filtered out this test will fail. Make sure that all GeneratorEvaluationTest are selected or de-selected together by the test filter.\n"
+     "\n"
+     "[----------] 1 test from FourElemSequence/SeparateInstanceTest (0 ms total)\n"
+     "\n"
+     "[----------] Global test environment tear-down\n"
+     "[==========] 1 test from 1 test suite ran. (0 ms total)\n"
+     "[  PASSED  ] 1 test.\n"
+     "[  FAILED  ] 0 tests, listed below:\n"
+     "\n"
+     " 0 FAILED TESTS\n"
+     "[  FAILED  ] FourElemSequence/SeparateInstanceTest: SetUpTestSuite or TearDownTestSuite\n"
+     "\n"
+     " 1 FAILED TEST SUITE\n");
+// NOLINTEND
 
-PARSE(failed_parameterized,
-      engine::googletest_result::failed, failed_parameterized_context,
-      failed_parameterized_message);
+PARSE(failed_parameterized, engine::googletest_result::failed,
+      failed_parameterized_context, failed_parameterized_message);
 
-const char skipped_message[] = (
-"Note: Google Test filter = SkipTest.DoesSkip\n"
-"[==========] Running 1 test from 1 test suite.\n"
-"[----------] Global test environment set-up.\n"
-"[----------] 1 test from SkipTest\n"
-"[ RUN      ] SkipTest.DoesSkip\n"
-"[  SKIPPED ] SkipTest.DoesSkip (0 ms)\n"
-"[----------] 1 test from SkipTest (0 ms total)\n"
-"\n"
-"[----------] Global test environment tear-down\n"
-"[==========] 1 test from 1 test suite ran. (0 ms total)\n"
-"[  PASSED  ] 0 tests.\n"
-"[  SKIPPED ] 1 test, listed below:\n"
-"[  SKIPPED ] SkipTest.DoesSkip\n"
-);
+const char skipped_message[] =
+    ("Note: Google Test filter = SkipTest.DoesSkip\n"
+     "[==========] Running 1 test from 1 test suite.\n"
+     "[----------] Global test environment set-up.\n"
+     "[----------] 1 test from SkipTest\n"
+     "[ RUN      ] SkipTest.DoesSkip\n"
+     "[  SKIPPED ] SkipTest.DoesSkip (0 ms)\n"
+     "[----------] 1 test from SkipTest (0 ms total)\n"
+     "\n"
+     "[----------] Global test environment tear-down\n"
+     "[==========] 1 test from 1 test suite ran. (0 ms total)\n"
+     "[  PASSED  ] 0 tests.\n"
+     "[  SKIPPED ] 1 test, listed below:\n"
+     "[  SKIPPED ] SkipTest.DoesSkip\n");
 
-PARSE(skipped,
-      engine::googletest_result::skipped,
-      engine::googletest_bogus_skipped_nul_message.c_str(),
-      skipped_message
-);
+PARSE(skipped, engine::googletest_result::skipped,
+      engine::googletest_bogus_skipped_nul_message.c_str(), skipped_message);
 
-const char skipped_with_reason_context[] = (
-"This is a reason\n"
-);
+const char skipped_with_reason_context[] = ("This is a reason\n");
 
-const char skipped_with_reason_message[] = (
-"Note: Google Test filter = SkipTest.SkipWithReason\n"
-"[==========] Running 1 test from 1 test suite.\n"
-"[----------] Global test environment set-up.\n"
-"[----------] 1 test from SkipTest\n"
-"[ RUN      ] SkipTest.SkipWithReason\n"
-"This is a reason\n"
-"[  SKIPPED ] SkipTest.SkipWithReason (0 ms)\n"
-"[----------] 1 test from SkipTest (0 ms total)\n"
-"\n"
-"[----------] Global test environment tear-down\n"
-"[==========] 1 test from 1 test suite ran. (0 ms total)\n"
-"[  PASSED  ] 0 tests.\n"
-"[  SKIPPED ] 1 test, listed below:\n"
-"[  SKIPPED ] SkipTest.SkipWithReason\n"
-);
+const char skipped_with_reason_message[] =
+    ("Note: Google Test filter = SkipTest.SkipWithReason\n"
+     "[==========] Running 1 test from 1 test suite.\n"
+     "[----------] Global test environment set-up.\n"
+     "[----------] 1 test from SkipTest\n"
+     "[ RUN      ] SkipTest.SkipWithReason\n"
+     "This is a reason\n"
+     "[  SKIPPED ] SkipTest.SkipWithReason (0 ms)\n"
+     "[----------] 1 test from SkipTest (0 ms total)\n"
+     "\n"
+     "[----------] Global test environment tear-down\n"
+     "[==========] 1 test from 1 test suite ran. (0 ms total)\n"
+     "[  PASSED  ] 0 tests.\n"
+     "[  SKIPPED ] 1 test, listed below:\n"
+     "[  SKIPPED ] SkipTest.SkipWithReason\n");
 
-PARSE(skipped_with_reason,
-      engine::googletest_result::skipped, skipped_with_reason_context,
-      skipped_with_reason_message);
+PARSE(skipped_with_reason, engine::googletest_result::skipped,
+      skipped_with_reason_context, skipped_with_reason_message);
 
 // Issue 326: test suites built against 0.18.0 which skip in
 // `Environment::SetUp` misreport tests passing instead of being skipped.
 //
 // https://github.com/google/googletest/issues/4653
-const char skipped_from_environment_with_buggy_output_context[] = (
-"current user is not allowed to mount\n"
-"\n"
-"current user is not allowed to mount\n"
-"\n"
-);
+const char skipped_from_environment_with_buggy_output_context[] =
+    ("current user is not allowed to mount\n"
+     "\n"
+     "current user is not allowed to mount\n"
+     "\n");
 
-const char skipped_from_environment_with_buggy_output_message[] = (
-"Note: Google Test filter = Setattr.eacces\n"
-"[==========] Running 1 test from 1 test suite.\n"
-"[----------] Global test environment set-up.\n"
-"/usr/src/tests/sys/fs/fusefs/utils.cc:95: Skipped\n"
-"current user is not allowed to mount\n"
-"\n"
-"current user is not allowed to mount\n"
-"\n"
-"[----------] Global test environment tear-down\n"
-"[==========] 1 test from 1 test suite ran. (0 ms total)\n"
-"[  PASSED  ] 1 test.\n"
-);
+const char skipped_from_environment_with_buggy_output_message[] =
+    ("Note: Google Test filter = Setattr.eacces\n"
+     "[==========] Running 1 test from 1 test suite.\n"
+     "[----------] Global test environment set-up.\n"
+     "/usr/src/tests/sys/fs/fusefs/utils.cc:95: Skipped\n"
+     "current user is not allowed to mount\n"
+     "\n"
+     "current user is not allowed to mount\n"
+     "\n"
+     "[----------] Global test environment tear-down\n"
+     "[==========] 1 test from 1 test suite ran. (0 ms total)\n"
+     "[  PASSED  ] 1 test.\n");
 
 PARSE(skipped_from_environment_with_buggy_output,
       engine::googletest_result::skipped,
       skipped_from_environment_with_buggy_output_context,
       skipped_from_environment_with_buggy_output_message);
 
-const char successful_message[] = (
-"Note: Google Test filter = PassFailTest.Passes\n"
-"[==========] Running 1 test from 1 test case.\n"
-"[----------] Global test environment set-up.\n"
-"[----------] 1 test from PassFailTest\n"
-"[ RUN      ] PassFailTest.Passes\n"
-"[       OK ] PassFailTest.Passes (0 ms)\n"
-"[----------] 1 test from PassFailTest (0 ms total)\n"
-"\n"
-"[----------] Global test environment tear-down\n"
-"[==========] 1 test from 1 test case ran. (0 ms total)\n"
-"[  PASSED  ] 1 test.\n"
-);
+const char successful_message[] =
+    ("Note: Google Test filter = PassFailTest.Passes\n"
+     "[==========] Running 1 test from 1 test case.\n"
+     "[----------] Global test environment set-up.\n"
+     "[----------] 1 test from PassFailTest\n"
+     "[ RUN      ] PassFailTest.Passes\n"
+     "[       OK ] PassFailTest.Passes (0 ms)\n"
+     "[----------] 1 test from PassFailTest (0 ms total)\n"
+     "\n"
+     "[----------] Global test environment tear-down\n"
+     "[==========] 1 test from 1 test case ran. (0 ms total)\n"
+     "[  PASSED  ] 1 test.\n");
 
-PARSE(successful,
-      engine::googletest_result::successful, NULL,
+PARSE(successful, engine::googletest_result::successful, NULL,
       successful_message);
 
-const char successful_message2[] = (
-"Note: Google Test filter = ValuesTest.ValuesWorks\n"
-"[==========] Running 1 test from 1 test case.\n"
-"[----------] Global test environment set-up.\n"
-"[----------] 1 test from ValuesTest\n"
-"[ RUN      ] ValuesTest.ValuesWorks\n"
-"[       OK ] ValuesTest.ValuesWorks (0 ms)\n"
-"[----------] 1 test from ValuesTest (0 ms total)\n"
-"        \n"
-"[----------] Global test environment tear-down\n"
-"[==========] 1 test from 1 test case ran. (0 ms total)\n"
-"[  PASSED  ] 1 test.\n"
-);
+const char successful_message2[] =
+    ("Note: Google Test filter = ValuesTest.ValuesWorks\n"
+     "[==========] Running 1 test from 1 test case.\n"
+     "[----------] Global test environment set-up.\n"
+     "[----------] 1 test from ValuesTest\n"
+     "[ RUN      ] ValuesTest.ValuesWorks\n"
+     "[       OK ] ValuesTest.ValuesWorks (0 ms)\n"
+     "[----------] 1 test from ValuesTest (0 ms total)\n"
+     "        \n"
+     "[----------] Global test environment tear-down\n"
+     "[==========] 1 test from 1 test case ran. (0 ms total)\n"
+     "[  PASSED  ] 1 test.\n");
 
-PARSE(successful2,
-      engine::googletest_result::successful, NULL,
+PARSE(successful2, engine::googletest_result::successful, NULL,
       successful_message2);
 
-const char successful_parameterized_message[] = (
-"Note: Google Test filter = RangeZeroToFive/ParamDerivedTest/0\n"
-"[==========] Running 5 tests from 1 test case.\n"
-"[----------] Global test environment set-up.\n"
-"[----------] 5 tests from RangeZeroToFive/ParamDerivedTest\n"
-"[ RUN      ] RangeZeroToFive/ParamDerivedTest.SeesSequence/0\n"
-"[       OK ] RangeZeroToFive/ParamDerivedTest.SeesSequence/0 (0 ms)\n"
-"[----------] 1 test from RangeZeroToFive/ParamDerivedTest/0 (0 ms total)\n"
-"\n"
-"[----------] Global test environment tear-down\n"
-"[==========] 1 tests from 1 test case ran. (0 ms total)\n"
-"[  PASSED  ] 1 tests.\n"
-);
+const char successful_parameterized_message[] =
+    ("Note: Google Test filter = RangeZeroToFive/ParamDerivedTest/0\n"
+     "[==========] Running 5 tests from 1 test case.\n"
+     "[----------] Global test environment set-up.\n"
+     "[----------] 5 tests from RangeZeroToFive/ParamDerivedTest\n"
+     "[ RUN      ] RangeZeroToFive/ParamDerivedTest.SeesSequence/0\n"
+     "[       OK ] RangeZeroToFive/ParamDerivedTest.SeesSequence/0 (0 ms)\n"
+     "[----------] 1 test from RangeZeroToFive/ParamDerivedTest/0 (0 ms total)\n"
+     "\n"
+     "[----------] Global test environment tear-down\n"
+     "[==========] 1 tests from 1 test case ran. (0 ms total)\n"
+     "[  PASSED  ] 1 tests.\n");
 
-PARSE(successful_parameterized,
-      engine::googletest_result::successful, NULL,
+PARSE(successful_parameterized, engine::googletest_result::successful, NULL,
       successful_parameterized_message);
 
-const char successful_with_reason_context[] = (
-"This is a reason\n"
-);
+const char successful_with_reason_context[] = ("This is a reason\n");
 
-const char successful_with_reason_message[] = (
-"Note: Google Test filter = PassFailTest.PassesWithReason\n"
-"[==========] Running 1 test from 1 test suite.\n"
-"[----------] Global test environment set-up.\n"
-"[----------] 1 test from PassFailTest\n"
-"[ RUN      ] PassFailTest.PassesWithReason\n"
-"This is a reason\n"
-"[       OK ] PassFailTest.PassesWithReason (0 ms)\n"
-"[----------] 1 test from PassFailTest (0 ms total)\n"
-"\n"
-"[----------] Global test environment tear-down\n"
-"[==========] 1 test from 1 test suite ran. (0 ms total)\n"
-"[  PASSED  ] 1 tests.\n"
-);
+const char successful_with_reason_message[] =
+    ("Note: Google Test filter = PassFailTest.PassesWithReason\n"
+     "[==========] Running 1 test from 1 test suite.\n"
+     "[----------] Global test environment set-up.\n"
+     "[----------] 1 test from PassFailTest\n"
+     "[ RUN      ] PassFailTest.PassesWithReason\n"
+     "This is a reason\n"
+     "[       OK ] PassFailTest.PassesWithReason (0 ms)\n"
+     "[----------] 1 test from PassFailTest (0 ms total)\n"
+     "\n"
+     "[----------] Global test environment tear-down\n"
+     "[==========] 1 test from 1 test suite ran. (0 ms total)\n"
+     "[  PASSED  ] 1 tests.\n");
 
-PARSE(successful_with_reason,
-      engine::googletest_result::successful,
-      successful_with_reason_context,
-      successful_with_reason_message);
+PARSE(successful_with_reason, engine::googletest_result::successful,
+      successful_with_reason_context, successful_with_reason_message);
 
 ATF_TEST_CASE_WITHOUT_HEAD(googletest_result__load__ok);
 ATF_TEST_CASE_BODY(googletest_result__load__ok)
@@ -356,13 +316,12 @@ ATF_TEST_CASE_BODY(googletest_result__load__ok)
     output << skipped_with_reason_message;
     output.close();
 
-    const engine::googletest_result result = engine::googletest_result::load(
-        utils::fs::path("result.txt"));
+    const engine::googletest_result result =
+        engine::googletest_result::load(utils::fs::path("result.txt"));
     ATF_REQUIRE_EQ(engine::googletest_result::skipped, result.type());
     ATF_REQUIRE(result.reason());
     ATF_REQUIRE_EQ(skipped_with_reason_context, result.reason().get());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(googletest_result__load__missing_file);
 ATF_TEST_CASE_BODY(googletest_result__load__missing_file)
@@ -371,7 +330,6 @@ ATF_TEST_CASE_BODY(googletest_result__load__missing_file)
         std::runtime_error, "Cannot open",
         engine::googletest_result::load(utils::fs::path("result.txt")));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(googletest_result__apply__broken);
 ATF_TEST_CASE_BODY(googletest_result__apply__broken)
@@ -382,7 +340,6 @@ ATF_TEST_CASE_BODY(googletest_result__apply__broken)
     ATF_REQUIRE_EQ(broken, broken.apply(utils::make_optional(status)));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(googletest_result__apply__disabled);
 ATF_TEST_CASE_BODY(googletest_result__apply__disabled)
 {
@@ -391,7 +348,6 @@ ATF_TEST_CASE_BODY(googletest_result__apply__disabled)
         engine::googletest_result::disabled, "The reason");
     ATF_REQUIRE_EQ(disabled, disabled.apply(utils::make_optional(status)));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(googletest_result__apply__failed);
 ATF_TEST_CASE_BODY(googletest_result__apply__failed)
@@ -402,7 +358,6 @@ ATF_TEST_CASE_BODY(googletest_result__apply__failed)
     ATF_REQUIRE_EQ(failed, failed.apply(utils::make_optional(status)));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(googletest_result__apply__skipped);
 ATF_TEST_CASE_BODY(googletest_result__apply__skipped)
 {
@@ -412,60 +367,50 @@ ATF_TEST_CASE_BODY(googletest_result__apply__skipped)
     ATF_REQUIRE_EQ(skipped, skipped.apply(utils::make_optional(status)));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(googletest_result__apply__successful);
 ATF_TEST_CASE_BODY(googletest_result__apply__successful)
 {
     const process::status status = process::status::fake_exited(EXIT_SUCCESS);
-    const engine::googletest_result
-        successful(engine::googletest_result::successful);
+    const engine::googletest_result successful(
+        engine::googletest_result::successful);
     ATF_REQUIRE_EQ(successful, successful.apply(utils::make_optional(status)));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(googletest_result__externalize__broken);
 ATF_TEST_CASE_BODY(googletest_result__externalize__broken)
 {
     const engine::googletest_result raw(engine::googletest_result::broken,
                                         "The reason");
-    const model::test_result expected(model::test_result_broken,
-                                      "The reason");
+    const model::test_result expected(model::test_result_broken, "The reason");
     ATF_REQUIRE(expected == raw.externalize());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(googletest_result__externalize__disabled);
 ATF_TEST_CASE_BODY(googletest_result__externalize__disabled)
 {
     const engine::googletest_result raw(engine::googletest_result::disabled,
                                         "The reason");
-    const model::test_result expected(model::test_result_skipped,
-                                      "The reason");
+    const model::test_result expected(model::test_result_skipped, "The reason");
     ATF_REQUIRE(expected == raw.externalize());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(googletest_result__externalize__failed);
 ATF_TEST_CASE_BODY(googletest_result__externalize__failed)
 {
     const engine::googletest_result raw(engine::googletest_result::failed,
                                         "The reason");
-    const model::test_result expected(model::test_result_failed,
-                                      "The reason");
+    const model::test_result expected(model::test_result_failed, "The reason");
     ATF_REQUIRE(expected == raw.externalize());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(googletest_result__externalize__skipped);
 ATF_TEST_CASE_BODY(googletest_result__externalize__skipped)
 {
     const engine::googletest_result raw(engine::googletest_result::skipped,
                                         "The reason");
-    const model::test_result expected(model::test_result_skipped,
-                                      "The reason");
+    const model::test_result expected(model::test_result_skipped, "The reason");
     ATF_REQUIRE(expected == raw.externalize());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(googletest_result__externalize__successful);
 ATF_TEST_CASE_BODY(googletest_result__externalize__successful)
@@ -475,7 +420,6 @@ ATF_TEST_CASE_BODY(googletest_result__externalize__successful)
     ATF_REQUIRE_EQ(expected, raw.externalize());
 }
 
-
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, googletest_result__parse__broken);
@@ -483,7 +427,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, googletest_result__parse__failed);
     ATF_ADD_TEST_CASE(tcs, googletest_result__parse__failed_parameterized);
     ATF_ADD_TEST_CASE(tcs, googletest_result__parse__skipped);
-    ATF_ADD_TEST_CASE(tcs,
+    ATF_ADD_TEST_CASE(
+        tcs,
         googletest_result__parse__skipped_from_environment_with_buggy_output);
     ATF_ADD_TEST_CASE(tcs, googletest_result__parse__skipped_with_reason);
     ATF_ADD_TEST_CASE(tcs, googletest_result__parse__successful);

@@ -32,17 +32,15 @@
 #if !defined(UTILS_PROCESS_SYSTEMBUF_HPP)
 #define UTILS_PROCESS_SYSTEMBUF_HPP
 
-#include "utils/process/systembuf_fwd.hpp"
-
 #include <cstddef>
 #include <memory>
 #include <streambuf>
 
 #include "utils/noncopyable.hpp"
+#include "utils/process/systembuf_fwd.hpp"
 
 namespace utils {
 namespace process {
-
 
 /// A std::streambuf implementation for raw file descriptors.
 ///
@@ -52,7 +50,7 @@ class systembuf : public std::streambuf, noncopyable {
     struct impl;
 
     /// Pointer to the shared internal implementation.
-    std::unique_ptr< impl > _pimpl;
+    std::unique_ptr<impl> _pimpl;
 
 protected:
     int_type underflow(void);
@@ -64,8 +62,7 @@ public:
     ~systembuf(void);
 };
 
+} // namespace process
+} // namespace utils
 
-}  // namespace process
-}  // namespace utils
-
-#endif  // !defined(UTILS_PROCESS_SYSTEMBUF_HPP)
+#endif // !defined(UTILS_PROCESS_SYSTEMBUF_HPP)

@@ -14,7 +14,6 @@
 namespace engine {
 namespace prepare {
 
-
 class prepare_all : public prepare::handler {
 public:
     const std::string& name() const;
@@ -23,8 +22,7 @@ public:
              const config::tree&) const;
 };
 
+} // namespace prepare
+} // namespace engine
 
-}  // namespace prepare
-}  // namespace engine
-
-#endif  // !defined(ENGINE_PREPARE_ALL_HPP)
+#endif // !defined(ENGINE_PREPARE_ALL_HPP)

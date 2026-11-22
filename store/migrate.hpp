@@ -36,20 +36,15 @@
 
 namespace store {
 
-
 namespace detail {
-
 
 utils::fs::path migration_file(const int, const int);
 void backup_database(const utils::fs::path&, const int);
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 void migrate_schema(const utils::fs::path&);
 
+} // namespace store
 
-}  // namespace store
-
-#endif  // !defined(STORE_MIGRATE_HPP)
+#endif // !defined(STORE_MIGRATE_HPP)

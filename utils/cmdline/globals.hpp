@@ -37,12 +37,10 @@
 namespace utils {
 namespace cmdline {
 
-
 void init(const char*, const bool = false);
 const std::string& progname(void);
 
+} // namespace cmdline
+} // namespace utils
 
-}  // namespace cmdline
-}  // namespace utils
-
-#endif  // !defined(UTILS_CMDLINE_GLOBALS_HPP)
+#endif // !defined(UTILS_CMDLINE_GLOBALS_HPP)

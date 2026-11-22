@@ -57,9 +57,7 @@ using utils::optional;
 
 namespace {
 
-
 static void sigalrm_handler(const int);
-
 
 /// Calls setitimer(2) with exception-based error reporting.
 ///
@@ -85,30 +83,29 @@ safe_setitimer(const datetime::delta& delta, itimerval* old_timeval)
     }
 }
 
-
 /// Deadline scheduler for all user timers on top of the unique system timer.
 class global_state : utils::noncopyable {
     /// Collection of active timers.
     ///
     /// Because this is a collection of pointers, all timers are guaranteed to
     /// be unique, and we want all of these pointers to be valid.
-    typedef std::set< signals::timer* > timers_set;
+    typedef std::set<signals::timer*> timers_set;
 
     /// Sequence of ordered timers.
-    typedef std::vector< signals::timer* > timers_vector;
+    typedef std::vector<signals::timer*> timers_vector;
 
     /// Collection of active timestamps by their activation timestamp.
     ///
     /// This collection is ordered intentionally so that it can be scanned
     /// sequentially to find either expired or expiring-now timers.
-    typedef std::map< datetime::monotonic_timestamp, timers_set >
+    typedef std::map<datetime::monotonic_timestamp, timers_set>
         timers_by_timestamp_map;
 
     /// The original timer before any timer was programmed.
     ::itimerval _old_timeval;
 
     /// Programmer for the SIGALRM handler.
-    std::unique_ptr< signals::programmer > _sigalrm_programmer;
+    std::unique_ptr<signals::programmer> _sigalrm_programmer;
 
     /// Time of the current activation of the timer.
     datetime::monotonic_timestamp _timer_activation;
@@ -119,8 +116,7 @@ class global_state : utils::noncopyable {
     /// Adds a timer to the _all_timers map.
     ///
     /// \param timer The timer to add.
-    void
-    add_to_all_timers(signals::timer* timer)
+    void add_to_all_timers(signals::timer* timer)
     {
         timers_set& timers = _all_timers[timer->when()];
         INV(timers.find(timer) == timers.end());
@@ -133,13 +129,12 @@ class global_state : utils::noncopyable {
     /// removal of the timer causes its bucket to be emptied.
     ///
     /// \param timer The timer to remove.
-    void
-    remove_from_all_timers(signals::timer* timer)
+    void remove_from_all_timers(signals::timer* timer)
     {
         // We may not find the timer in _all_timers if the timer has fired,
         // because fire() took it out from the map.
-        timers_by_timestamp_map::iterator iter = _all_timers.find(
-            timer->when());
+        timers_by_timestamp_map::iterator iter =
+            _all_timers.find(timer->when());
         if (iter != _all_timers.end()) {
             timers_set& timers = (*iter).second;
             INV(timers.find(timer) != timers.end());
@@ -160,8 +155,7 @@ class global_state : utils::noncopyable {
     /// \return A sequence of valid timers that need to be invoked in the order
     /// of activation.  These are all previously registered timers with
     /// activations in the past.
-    timers_vector
-    compute_timers_to_run_and_prune_old(
+    timers_vector compute_timers_to_run_and_prune_old(
         const datetime::monotonic_timestamp& now,
         const signals::interrupts_inhibiter& /* inhibiter */)
     {
@@ -189,9 +183,8 @@ class global_state : utils::noncopyable {
     ///
     /// \throw system_error If the programming fails.
     void
-    reprogram_system_timer(
-        const datetime::monotonic_timestamp& now,
-        const signals::interrupts_inhibiter& /* inhibiter */)
+    reprogram_system_timer(const datetime::monotonic_timestamp& now,
+                           const signals::interrupts_inhibiter& /* inhibiter */)
     {
         if (_all_timers.empty()) {
             // Nothing to do.  We can reach this case if all the existing timers
@@ -252,8 +245,8 @@ public:
         LD(F("Installing first timer; firing on %s; now is %s") %
            timer->when() % now);
 
-        _sigalrm_programmer.reset(
-            new signals::programmer(SIGALRM, sigalrm_handler));
+        _sigalrm_programmer.reset(new signals::programmer(SIGALRM,
+                                                          sigalrm_handler));
         try {
             safe_setitimer(delta, &_old_timeval);
             _timer_activation = timer->when();
@@ -291,8 +284,8 @@ public:
     /// \param now The current timestamp.
     ///
     /// \throw system_error If the programming fails.
-    void
-    program_new(signals::timer* timer, const datetime::monotonic_timestamp& now)
+    void program_new(signals::timer* timer,
+                     const datetime::monotonic_timestamp& now)
     {
         signals::interrupts_inhibiter inhibiter;
 
@@ -309,8 +302,7 @@ public:
     ///
     /// \return True if the system interval timer has been reprogrammed to
     /// another future timer; false if there are no more active timers.
-    bool
-    unprogram(signals::timer* timer)
+    bool unprogram(signals::timer* timer)
     {
         signals::interrupts_inhibiter inhibiter;
 
@@ -331,8 +323,7 @@ public:
     /// Active timers are all those that fire on or before 'now'.
     ///
     /// \param now The current time.
-    void
-    fire(const datetime::monotonic_timestamp& now)
+    void fire(const datetime::monotonic_timestamp& now)
     {
         timers_vector to_run;
         {
@@ -348,10 +339,8 @@ public:
     }
 };
 
-
 /// Unique instance of the global state.
-static std::unique_ptr< global_state > globals;
-
+static std::unique_ptr<global_state> globals;
 
 /// SIGALRM handler for the timer implementation.
 ///
@@ -363,9 +352,7 @@ sigalrm_handler(const int signo)
     globals->fire(datetime::monotonic_timestamp::now());
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Indirection to invoke the private do_fired() method of a timer.
 ///
@@ -375,7 +362,6 @@ utils::signals::detail::invoke_do_fired(timer* timer)
 {
     timer->do_fired();
 }
-
 
 /// Internal implementation for the timer.
 ///
@@ -404,15 +390,17 @@ struct utils::signals::timer::impl : utils::noncopyable {
     ///
     /// \param when_ Timestamp when this timer is expected to fire.
     impl(const datetime::monotonic_timestamp& when_) :
-        when(when_), programmed(true), fired(false)
+        when(when_),
+        programmed(true),
+        fired(false)
     {
     }
 
     /// Destructor.
-    ~impl(void) {
+    ~impl(void)
+    {
     }
 };
-
 
 /// Constructor; programs a run-once timer.
 ///
@@ -430,7 +418,6 @@ signals::timer::timer(const datetime::delta& delta)
     start(now + delta, now);
 }
 
-
 /// Constructor; programs a run-once timer at an absolute monotonic deadline.
 ///
 /// \pre If this is the first timer, the deadline must be in the future.
@@ -444,7 +431,6 @@ signals::timer::timer(const datetime::monotonic_timestamp& when)
         datetime::monotonic_timestamp::now();
     start(when, now);
 }
-
 
 /// Initializes and registers a timer using the constructor's time sample.
 ///
@@ -463,7 +449,6 @@ signals::timer::start(const datetime::monotonic_timestamp& when,
         globals->program_new(this, now);
     }
 }
-
 
 /// Destructor; unprograms the timer if still programmed.
 ///
@@ -492,7 +477,6 @@ signals::timer::~timer(void)
     }
 }
 
-
 /// Returns the monotonic time of the timer activation.
 ///
 /// \return A monotonic deadline, which may be in the past or future regardless
@@ -502,7 +486,6 @@ signals::timer::when(void) const
 {
     return _pimpl->when;
 }
-
 
 /// Callback for the SIGALRM handler when this timer expires.
 ///
@@ -515,7 +498,6 @@ signals::timer::do_fired(void)
     _pimpl->fired = true;
     callback();
 }
-
 
 /// User-provided callback to run when the timer expires.
 ///
@@ -530,7 +512,6 @@ signals::timer::callback(void)
     // Intentionally left blank.
 }
 
-
 /// Checks whether the timer has fired already or not.
 ///
 /// \return Returns true if the timer has fired.
@@ -539,7 +520,6 @@ signals::timer::fired(void) const
 {
     return _pimpl->fired;
 }
-
 
 /// Unprograms the timer.
 ///

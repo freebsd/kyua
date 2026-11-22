@@ -26,21 +26,17 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/config/nodes.ipp"
-
 #include <atf-c++.hpp>
-
 #include <lutok/state.ipp>
 
 #include "utils/config/exceptions.hpp"
 #include "utils/config/keys.hpp"
+#include "utils/config/nodes.ipp"
 #include "utils/defs.hpp"
 
 namespace config = utils::config;
 
-
 namespace {
-
 
 /// Typed leaf node that specializes the validate() method.
 class validation_node : public config::int_node {
@@ -49,14 +45,12 @@ class validation_node : public config::int_node {
     /// \param new_value The value to validate.
     ///
     /// \throw value_error If the value is not valid.
-    void
-    validate(const value_type& new_value) const
+    void validate(const value_type& new_value) const
     {
         if (new_value == 12345)
             throw config::value_error("Custom validate method");
     }
 };
-
 
 /// Set node that specializes the validate() method.
 class set_validation_node : public config::strings_set_node {
@@ -65,8 +59,7 @@ class set_validation_node : public config::strings_set_node {
     /// \param new_value The value to validate.
     ///
     /// \throw value_error If the value is not valid.
-    void
-    validate(const value_type& new_value) const
+    void validate(const value_type& new_value) const
     {
         for (value_type::const_iterator iter = new_value.begin();
              iter != new_value.end(); ++iter)
@@ -75,9 +68,7 @@ class set_validation_node : public config::strings_set_node {
     }
 };
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 ATF_TEST_CASE_WITHOUT_HEAD(bool_node__deep_copy);
 ATF_TEST_CASE_BODY(bool_node__deep_copy)
@@ -85,7 +76,7 @@ ATF_TEST_CASE_BODY(bool_node__deep_copy)
     config::bool_node node;
     node.set(true);
     config::detail::base_node* raw_copy = node.deep_copy();
-    config::bool_node* copy = dynamic_cast< config::bool_node* >(raw_copy);
+    config::bool_node* copy = dynamic_cast<config::bool_node*>(raw_copy);
     ATF_REQUIRE(copy != nullptr);
     ATF_REQUIRE(copy->value());
     copy->set(false);
@@ -94,16 +85,14 @@ ATF_TEST_CASE_BODY(bool_node__deep_copy)
     delete copy;
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(bool_node__is_set_and_set);
 ATF_TEST_CASE_BODY(bool_node__is_set_and_set)
 {
     config::bool_node node;
     ATF_REQUIRE(!node.is_set());
     node.set(false);
-    ATF_REQUIRE( node.is_set());
+    ATF_REQUIRE(node.is_set());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(bool_node__value_and_set);
 ATF_TEST_CASE_BODY(bool_node__value_and_set)
@@ -112,9 +101,8 @@ ATF_TEST_CASE_BODY(bool_node__value_and_set)
     node.set(false);
     ATF_REQUIRE(!node.value());
     node.set(true);
-    ATF_REQUIRE( node.value());
+    ATF_REQUIRE(node.value());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(bool_node__push_lua);
 ATF_TEST_CASE_BODY(bool_node__push_lua)
@@ -129,7 +117,6 @@ ATF_TEST_CASE_BODY(bool_node__push_lua)
     state.pop(1);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(bool_node__set_lua__ok);
 ATF_TEST_CASE_BODY(bool_node__set_lua__ok)
 {
@@ -141,7 +128,6 @@ ATF_TEST_CASE_BODY(bool_node__set_lua__ok)
     state.pop(1);
     ATF_REQUIRE(!node.value());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(bool_node__set_lua__invalid_value);
 ATF_TEST_CASE_BODY(bool_node__set_lua__invalid_value)
@@ -155,7 +141,6 @@ ATF_TEST_CASE_BODY(bool_node__set_lua__invalid_value)
     ATF_REQUIRE(!node.is_set());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(bool_node__set_string__ok);
 ATF_TEST_CASE_BODY(bool_node__set_string__ok)
 {
@@ -163,9 +148,8 @@ ATF_TEST_CASE_BODY(bool_node__set_string__ok)
     node.set_string("false");
     ATF_REQUIRE(!node.value());
     node.set_string("true");
-    ATF_REQUIRE( node.value());
+    ATF_REQUIRE(node.value());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(bool_node__set_string__invalid_value);
 ATF_TEST_CASE_BODY(bool_node__set_string__invalid_value)
@@ -174,7 +158,6 @@ ATF_TEST_CASE_BODY(bool_node__set_string__invalid_value)
     ATF_REQUIRE_THROW(config::value_error, node.set_string("12345"));
     ATF_REQUIRE(!node.is_set());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(bool_node__to_string);
 ATF_TEST_CASE_BODY(bool_node__to_string)
@@ -186,14 +169,13 @@ ATF_TEST_CASE_BODY(bool_node__to_string)
     ATF_REQUIRE_EQ("true", node.to_string());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(int_node__deep_copy);
 ATF_TEST_CASE_BODY(int_node__deep_copy)
 {
     config::int_node node;
     node.set(5);
     config::detail::base_node* raw_copy = node.deep_copy();
-    config::int_node* copy = dynamic_cast< config::int_node* >(raw_copy);
+    config::int_node* copy = dynamic_cast<config::int_node*>(raw_copy);
     ATF_REQUIRE(copy != nullptr);
     ATF_REQUIRE_EQ(5, copy->value());
     copy->set(10);
@@ -202,16 +184,14 @@ ATF_TEST_CASE_BODY(int_node__deep_copy)
     delete copy;
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(int_node__is_set_and_set);
 ATF_TEST_CASE_BODY(int_node__is_set_and_set)
 {
     config::int_node node;
     ATF_REQUIRE(!node.is_set());
     node.set(20);
-    ATF_REQUIRE( node.is_set());
+    ATF_REQUIRE(node.is_set());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(int_node__value_and_set);
 ATF_TEST_CASE_BODY(int_node__value_and_set)
@@ -222,7 +202,6 @@ ATF_TEST_CASE_BODY(int_node__value_and_set)
     node.set(0);
     ATF_REQUIRE_EQ(0, node.value());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(int_node__push_lua);
 ATF_TEST_CASE_BODY(int_node__push_lua)
@@ -236,7 +215,6 @@ ATF_TEST_CASE_BODY(int_node__push_lua)
     ATF_REQUIRE_EQ(754, state.to_integer(-1));
     state.pop(1);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(int_node__set_lua__ok);
 ATF_TEST_CASE_BODY(int_node__set_lua__ok)
@@ -253,7 +231,6 @@ ATF_TEST_CASE_BODY(int_node__set_lua__ok)
     state.pop(2);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(int_node__set_lua__invalid_value);
 ATF_TEST_CASE_BODY(int_node__set_lua__invalid_value)
 {
@@ -266,7 +243,6 @@ ATF_TEST_CASE_BODY(int_node__set_lua__invalid_value)
     ATF_REQUIRE(!node.is_set());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(int_node__set_string__ok);
 ATF_TEST_CASE_BODY(int_node__set_string__ok)
 {
@@ -277,7 +253,6 @@ ATF_TEST_CASE_BODY(int_node__set_string__ok)
     ATF_REQUIRE_EQ(-123, node.value());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(int_node__set_string__invalid_value);
 ATF_TEST_CASE_BODY(int_node__set_string__invalid_value)
 {
@@ -285,7 +260,6 @@ ATF_TEST_CASE_BODY(int_node__set_string__invalid_value)
     ATF_REQUIRE_THROW(config::value_error, node.set_string(" 23"));
     ATF_REQUIRE(!node.is_set());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(int_node__to_string);
 ATF_TEST_CASE_BODY(int_node__to_string)
@@ -297,15 +271,14 @@ ATF_TEST_CASE_BODY(int_node__to_string)
     ATF_REQUIRE_EQ("-57", node.to_string());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(positive_int_node__deep_copy);
 ATF_TEST_CASE_BODY(positive_int_node__deep_copy)
 {
     config::positive_int_node node;
     node.set(5);
     config::detail::base_node* raw_copy = node.deep_copy();
-    config::positive_int_node* copy = dynamic_cast< config::positive_int_node* >(
-        raw_copy);
+    config::positive_int_node* copy =
+        dynamic_cast<config::positive_int_node*>(raw_copy);
     ATF_REQUIRE(copy != nullptr);
     ATF_REQUIRE_EQ(5, copy->value());
     copy->set(10);
@@ -314,16 +287,14 @@ ATF_TEST_CASE_BODY(positive_int_node__deep_copy)
     delete copy;
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(positive_int_node__is_set_and_set);
 ATF_TEST_CASE_BODY(positive_int_node__is_set_and_set)
 {
     config::positive_int_node node;
     ATF_REQUIRE(!node.is_set());
     node.set(20);
-    ATF_REQUIRE( node.is_set());
+    ATF_REQUIRE(node.is_set());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(positive_int_node__value_and_set);
 ATF_TEST_CASE_BODY(positive_int_node__value_and_set)
@@ -334,7 +305,6 @@ ATF_TEST_CASE_BODY(positive_int_node__value_and_set)
     node.set(1);
     ATF_REQUIRE_EQ(1, node.value());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(positive_int_node__push_lua);
 ATF_TEST_CASE_BODY(positive_int_node__push_lua)
@@ -348,7 +318,6 @@ ATF_TEST_CASE_BODY(positive_int_node__push_lua)
     ATF_REQUIRE_EQ(754, state.to_integer(-1));
     state.pop(1);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(positive_int_node__set_lua__ok);
 ATF_TEST_CASE_BODY(positive_int_node__set_lua__ok)
@@ -364,7 +333,6 @@ ATF_TEST_CASE_BODY(positive_int_node__set_lua__ok)
     ATF_REQUIRE_EQ(456, node.value());
     state.pop(2);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(positive_int_node__set_lua__invalid_value);
 ATF_TEST_CASE_BODY(positive_int_node__set_lua__invalid_value)
@@ -382,7 +350,6 @@ ATF_TEST_CASE_BODY(positive_int_node__set_lua__invalid_value)
     ATF_REQUIRE(!node.is_set());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(positive_int_node__set_string__ok);
 ATF_TEST_CASE_BODY(positive_int_node__set_string__ok)
 {
@@ -392,7 +359,6 @@ ATF_TEST_CASE_BODY(positive_int_node__set_string__ok)
     node.set_string("178");
     ATF_REQUIRE_EQ(178, node.value());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(positive_int_node__set_string__invalid_value);
 ATF_TEST_CASE_BODY(positive_int_node__set_string__invalid_value)
@@ -406,7 +372,6 @@ ATF_TEST_CASE_BODY(positive_int_node__set_string__invalid_value)
     ATF_REQUIRE(!node.is_set());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(positive_int_node__to_string);
 ATF_TEST_CASE_BODY(positive_int_node__to_string)
 {
@@ -415,14 +380,13 @@ ATF_TEST_CASE_BODY(positive_int_node__to_string)
     ATF_REQUIRE_EQ("89", node.to_string());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(string_node__deep_copy);
 ATF_TEST_CASE_BODY(string_node__deep_copy)
 {
     config::string_node node;
     node.set("first");
     config::detail::base_node* raw_copy = node.deep_copy();
-    config::string_node* copy = dynamic_cast< config::string_node* >(raw_copy);
+    config::string_node* copy = dynamic_cast<config::string_node*>(raw_copy);
     ATF_REQUIRE(copy != nullptr);
     ATF_REQUIRE_EQ("first", copy->value());
     copy->set("second");
@@ -431,16 +395,14 @@ ATF_TEST_CASE_BODY(string_node__deep_copy)
     delete copy;
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(string_node__is_set_and_set);
 ATF_TEST_CASE_BODY(string_node__is_set_and_set)
 {
     config::string_node node;
     ATF_REQUIRE(!node.is_set());
     node.set("foo");
-    ATF_REQUIRE( node.is_set());
+    ATF_REQUIRE(node.is_set());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(string_node__value_and_set);
 ATF_TEST_CASE_BODY(string_node__value_and_set)
@@ -451,7 +413,6 @@ ATF_TEST_CASE_BODY(string_node__value_and_set)
     node.set("");
     ATF_REQUIRE_EQ("", node.value());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(string_node__push_lua);
 ATF_TEST_CASE_BODY(string_node__push_lua)
@@ -465,7 +426,6 @@ ATF_TEST_CASE_BODY(string_node__push_lua)
     ATF_REQUIRE_EQ("some message", state.to_string(-1));
     state.pop(1);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(string_node__set_lua__ok);
 ATF_TEST_CASE_BODY(string_node__set_lua__ok)
@@ -482,7 +442,6 @@ ATF_TEST_CASE_BODY(string_node__set_lua__ok)
     state.pop(2);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(string_node__set_lua__invalid_value);
 ATF_TEST_CASE_BODY(string_node__set_lua__invalid_value)
 {
@@ -495,7 +454,6 @@ ATF_TEST_CASE_BODY(string_node__set_lua__invalid_value)
     ATF_REQUIRE(!node.is_set());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(string_node__set_string);
 ATF_TEST_CASE_BODY(string_node__set_string)
 {
@@ -505,7 +463,6 @@ ATF_TEST_CASE_BODY(string_node__set_string)
     node.set_string("  1234  ");
     ATF_REQUIRE_EQ("  1234  ", node.value());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(string_node__to_string);
 ATF_TEST_CASE_BODY(string_node__to_string)
@@ -517,17 +474,16 @@ ATF_TEST_CASE_BODY(string_node__to_string)
     ATF_REQUIRE_EQ("aaa", node.to_string());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(strings_set_node__deep_copy);
 ATF_TEST_CASE_BODY(strings_set_node__deep_copy)
 {
-    std::set< std::string > value;
+    std::set<std::string> value;
     config::strings_set_node node;
     value.insert("foo");
     node.set(value);
     config::detail::base_node* raw_copy = node.deep_copy();
     config::strings_set_node* copy =
-        dynamic_cast< config::strings_set_node* >(raw_copy);
+        dynamic_cast<config::strings_set_node*>(raw_copy);
     ATF_REQUIRE(copy != nullptr);
     value.insert("bar");
     ATF_REQUIRE_EQ(1, copy->value().size());
@@ -537,24 +493,22 @@ ATF_TEST_CASE_BODY(strings_set_node__deep_copy)
     delete copy;
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(strings_set_node__is_set_and_set);
 ATF_TEST_CASE_BODY(strings_set_node__is_set_and_set)
 {
-    std::set< std::string > value;
+    std::set<std::string> value;
     value.insert("foo");
 
     config::strings_set_node node;
     ATF_REQUIRE(!node.is_set());
     node.set(value);
-    ATF_REQUIRE( node.is_set());
+    ATF_REQUIRE(node.is_set());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(strings_set_node__value_and_set);
 ATF_TEST_CASE_BODY(strings_set_node__value_and_set)
 {
-    std::set< std::string > value;
+    std::set<std::string> value;
     value.insert("first");
 
     config::strings_set_node node;
@@ -566,13 +520,12 @@ ATF_TEST_CASE_BODY(strings_set_node__value_and_set)
     ATF_REQUIRE(node.value().empty());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(strings_set_node__set_string);
 ATF_TEST_CASE_BODY(strings_set_node__set_string)
 {
     config::strings_set_node node;
     {
-        std::set< std::string > expected;
+        std::set<std::string> expected;
         expected.insert("abcd");
         expected.insert("efgh");
 
@@ -580,7 +533,7 @@ ATF_TEST_CASE_BODY(strings_set_node__set_string)
         ATF_REQUIRE(expected == node.value());
     }
     {
-        std::set< std::string > expected;
+        std::set<std::string> expected;
         expected.insert("1234");
 
         node.set_string("  1234  ");
@@ -588,18 +541,16 @@ ATF_TEST_CASE_BODY(strings_set_node__set_string)
     }
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(strings_set_node__to_string);
 ATF_TEST_CASE_BODY(strings_set_node__to_string)
 {
-    std::set< std::string > value;
+    std::set<std::string> value;
     config::strings_set_node node;
     value.insert("second");
     value.insert("first");
     node.set(value);
     ATF_REQUIRE_EQ("first second", node.to_string());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(typed_leaf_node__validate_set);
 ATF_TEST_CASE_BODY(typed_leaf_node__validate_set)
@@ -610,7 +561,6 @@ ATF_TEST_CASE_BODY(typed_leaf_node__validate_set)
                          node.set(12345));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(typed_leaf_node__validate_set_string);
 ATF_TEST_CASE_BODY(typed_leaf_node__validate_set_string)
 {
@@ -619,7 +569,6 @@ ATF_TEST_CASE_BODY(typed_leaf_node__validate_set_string)
     ATF_REQUIRE_THROW_RE(config::value_error, "Custom validate method",
                          node.set_string("12345"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(base_set_node__validate_set);
 ATF_TEST_CASE_BODY(base_set_node__validate_set)
@@ -635,7 +584,6 @@ ATF_TEST_CASE_BODY(base_set_node__validate_set)
                          node.set(values));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(base_set_node__validate_set_string);
 ATF_TEST_CASE_BODY(base_set_node__validate_set_string)
 {
@@ -644,7 +592,6 @@ ATF_TEST_CASE_BODY(base_set_node__validate_set_string)
     ATF_REQUIRE_THROW_RE(config::value_error, "Custom validate method",
                          node.set_string("foo bar throw baz"));
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

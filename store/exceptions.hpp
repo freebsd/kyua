@@ -36,7 +36,6 @@
 
 namespace store {
 
-
 /// Base exception for store errors.
 class error : public std::runtime_error {
 public:
@@ -44,14 +43,12 @@ public:
     virtual ~error(void) throw();
 };
 
-
 /// The data in the database is inconsistent.
 class integrity_error : public error {
 public:
     explicit integrity_error(const std::string&);
     virtual ~integrity_error(void) throw();
 };
-
 
 /// The database schema is old and needs a migration.
 class old_schema_error : public error {
@@ -65,8 +62,6 @@ public:
     int old_version(void) const;
 };
 
+} // namespace store
 
-}  // namespace store
-
-
-#endif  // !defined(STORE_EXCEPTIONS_HPP)
+#endif // !defined(STORE_EXCEPTIONS_HPP)

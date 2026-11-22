@@ -38,7 +38,6 @@
 namespace utils {
 namespace cmdline {
 
-
 /// Base exception for cmdline errors.
 class error : public std::runtime_error {
 public:
@@ -46,14 +45,12 @@ public:
     ~error(void) throw();
 };
 
-
 /// Generic error to describe problems caused by the user.
 class usage_error : public error {
 public:
     explicit usage_error(const std::string&);
     ~usage_error(void) throw();
 };
-
 
 /// Error denoting that no argument was provided to an option that required one.
 class missing_option_argument_error : public usage_error {
@@ -66,7 +63,6 @@ public:
 
     const std::string& option(void) const;
 };
-
 
 /// Error denoting that the argument provided to an option is invalid.
 class option_argument_value_error : public usage_error {
@@ -88,7 +84,6 @@ public:
     const std::string& argument(void) const;
 };
 
-
 /// Error denoting that the user specified an unknown option.
 class unknown_option_error : public usage_error {
     /// Name of the option that was not known.
@@ -101,9 +96,7 @@ public:
     const std::string& option(void) const;
 };
 
+} // namespace cmdline
+} // namespace utils
 
-}  // namespace cmdline
-}  // namespace utils
-
-
-#endif  // !defined(UTILS_CMDLINE_EXCEPTIONS_HPP)
+#endif // !defined(UTILS_CMDLINE_EXCEPTIONS_HPP)

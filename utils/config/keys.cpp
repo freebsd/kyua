@@ -26,15 +26,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/config/tree.ipp"
-
 #include "utils/config/exceptions.hpp"
+#include "utils/config/tree.ipp"
 #include "utils/format/macros.hpp"
 #include "utils/text/operations.hpp"
 
 namespace config = utils::config;
 namespace text = utils::text;
-
 
 /// Converts a key to its textual representation.
 ///
@@ -47,7 +45,6 @@ utils::config::detail::flatten_key(const tree_key& key)
     PRE(!key.empty());
     return text::join(key, ".");
 }
-
 
 /// Parses and validates a textual key.
 ///

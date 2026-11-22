@@ -26,12 +26,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "store/write_backend.hpp"
-
 #include <atf-c++.hpp>
 
 #include "store/exceptions.hpp"
 #include "store/metadata.hpp"
+#include "store/write_backend.hpp"
 #include "utils/datetime.hpp"
 #include "utils/env.hpp"
 #include "utils/fs/path.hpp"
@@ -44,7 +43,6 @@ namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace logging = utils::logging;
 namespace sqlite = utils::sqlite;
-
 
 ATF_TEST_CASE(detail__initialize__ok);
 ATF_TEST_CASE_HEAD(detail__initialize__ok)
@@ -67,13 +65,12 @@ ATF_TEST_CASE_BODY(detail__initialize__ok)
     db.exec("SELECT * FROM metadata");
 
     // And now query some know values.
-    sqlite::statement stmt = db.create_statement(
-        "SELECT COUNT(*) FROM metadata");
+    sqlite::statement stmt =
+        db.create_statement("SELECT COUNT(*) FROM metadata");
     ATF_REQUIRE(stmt.step());
     ATF_REQUIRE_EQ(1, stmt.column_int(0));
     ATF_REQUIRE(!stmt.step());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(detail__initialize__missing_schema);
 ATF_TEST_CASE_BODY(detail__initialize__missing_schema)
@@ -86,7 +83,6 @@ ATF_TEST_CASE_BODY(detail__initialize__missing_schema)
                          "Cannot read.*'/non-existent/schema_v712.sql'",
                          store::detail::initialize(db));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(detail__initialize__sqlite_error);
 ATF_TEST_CASE_BODY(detail__initialize__sqlite_error)
@@ -101,7 +97,6 @@ ATF_TEST_CASE_BODY(detail__initialize__sqlite_error)
                          store::detail::initialize(db));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(detail__schema_file__builtin);
 ATF_TEST_CASE_BODY(detail__schema_file__builtin)
 {
@@ -109,7 +104,6 @@ ATF_TEST_CASE_BODY(detail__schema_file__builtin)
     ATF_REQUIRE_EQ(fs::path(KYUA_STOREDIR) / "schema_v3.sql",
                    store::detail::schema_file());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(detail__schema_file__overriden);
 ATF_TEST_CASE_BODY(detail__schema_file__overriden)
@@ -120,7 +114,6 @@ ATF_TEST_CASE_BODY(detail__schema_file__overriden)
                    store::detail::schema_file());
 }
 
-
 ATF_TEST_CASE(write_backend__open_rw__ok_if_empty);
 ATF_TEST_CASE_HEAD(write_backend__open_rw__ok_if_empty)
 {
@@ -130,14 +123,14 @@ ATF_TEST_CASE_HEAD(write_backend__open_rw__ok_if_empty)
 ATF_TEST_CASE_BODY(write_backend__open_rw__ok_if_empty)
 {
     {
-        sqlite::database db = sqlite::database::open(
-            fs::path("test.db"), sqlite::open_readwrite | sqlite::open_create);
+        sqlite::database db = sqlite::database::open(fs::path("test.db"),
+                                                     sqlite::open_readwrite |
+                                                         sqlite::open_create);
     }
-    store::write_backend backend = store::write_backend::open_rw(
-        fs::path("test.db"));
+    store::write_backend backend =
+        store::write_backend::open_rw(fs::path("test.db"));
     backend.database().exec("SELECT * FROM metadata");
 }
-
 
 ATF_TEST_CASE(write_backend__open_rw__error_if_not_empty);
 ATF_TEST_CASE_HEAD(write_backend__open_rw__error_if_not_empty)
@@ -148,14 +141,14 @@ ATF_TEST_CASE_HEAD(write_backend__open_rw__error_if_not_empty)
 ATF_TEST_CASE_BODY(write_backend__open_rw__error_if_not_empty)
 {
     {
-        sqlite::database db = sqlite::database::open(
-            fs::path("test.db"), sqlite::open_readwrite | sqlite::open_create);
+        sqlite::database db = sqlite::database::open(fs::path("test.db"),
+                                                     sqlite::open_readwrite |
+                                                         sqlite::open_create);
         store::detail::initialize(db);
     }
     ATF_REQUIRE_THROW_RE(store::error, "test.db already exists",
                          store::write_backend::open_rw(fs::path("test.db")));
 }
-
 
 ATF_TEST_CASE(write_backend__open_rw__create_missing);
 ATF_TEST_CASE_HEAD(write_backend__open_rw__create_missing)
@@ -165,11 +158,10 @@ ATF_TEST_CASE_HEAD(write_backend__open_rw__create_missing)
 }
 ATF_TEST_CASE_BODY(write_backend__open_rw__create_missing)
 {
-    store::write_backend backend = store::write_backend::open_rw(
-        fs::path("test.db"));
+    store::write_backend backend =
+        store::write_backend::open_rw(fs::path("test.db"));
     backend.database().exec("SELECT * FROM metadata");
 }
-
 
 ATF_TEST_CASE(write_backend__close);
 ATF_TEST_CASE_HEAD(write_backend__close)
@@ -179,14 +171,13 @@ ATF_TEST_CASE_HEAD(write_backend__close)
 }
 ATF_TEST_CASE_BODY(write_backend__close)
 {
-    store::write_backend backend = store::write_backend::open_rw(
-        fs::path("test.db"));
+    store::write_backend backend =
+        store::write_backend::open_rw(fs::path("test.db"));
     backend.database().exec("SELECT * FROM metadata");
     backend.close();
     ATF_REQUIRE_THROW(utils::sqlite::error,
                       backend.database().exec("SELECT * FROM metadata"));
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

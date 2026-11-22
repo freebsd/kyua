@@ -36,14 +36,12 @@ namespace utils {
 namespace process {
 namespace executor {
 
-
 class exec_handle;
 class executor_handle;
 class exit_handle;
 
+} // namespace executor
+} // namespace process
+} // namespace utils
 
-}  // namespace executor
-}  // namespace process
-}  // namespace utils
-
-#endif  // !defined(UTILS_PROCESS_EXECUTOR_FWD_HPP)
+#endif // !defined(UTILS_PROCESS_EXECUTOR_FWD_HPP)

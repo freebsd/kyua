@@ -27,7 +27,6 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "drivers/scan_results.hpp"
-
 #include "engine/filters.hpp"
 #include "model/context.hpp"
 #include "model/test_case.hpp"
@@ -38,12 +37,10 @@
 
 namespace fs = utils::fs;
 
-
 /// Pure abstract destructor.
 drivers::scan_results::base_hooks::~base_hooks(void)
 {
 }
-
 
 /// Callback executed before any operation is performed.
 void
@@ -51,13 +48,11 @@ drivers::scan_results::base_hooks::begin(void)
 {
 }
 
-
 /// Callback executed after all operations are performed.
 void
 drivers::scan_results::base_hooks::end(const result& /* r */)
 {
 }
-
 
 /// Executes the operation.
 ///
@@ -68,7 +63,7 @@ drivers::scan_results::base_hooks::end(const result& /* r */)
 /// \returns A structure with all results computed by this driver.
 drivers::scan_results::result
 drivers::scan_results::drive(const fs::path& store_path,
-                             const std::set< engine::test_filter >& raw_filters,
+                             const std::set<engine::test_filter>& raw_filters,
                              base_hooks& hooks)
 {
     engine::filters_state filters(raw_filters);
@@ -91,8 +86,8 @@ drivers::scan_results::drive(const fs::path& store_path,
         // and we get tracking of unmatched filters "for free".
         const model::test_program_ptr test_program = iter.test_program();
         if (filters.match_test_program(test_program->relative_path())) {
-            const model::test_case& test_case = test_program->find(
-                iter.test_case_name());
+            const model::test_case& test_case =
+                test_program->find(iter.test_case_name());
             if (filters.match_test_case(test_program->relative_path(),
                                         test_case.name())) {
                 hooks.got_result(iter);

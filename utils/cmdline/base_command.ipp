@@ -31,10 +31,8 @@
 
 #include "utils/cmdline/base_command.hpp"
 
-
 namespace utils {
 namespace cmdline {
-
 
 /// Adds an option to the command.
 ///
@@ -42,13 +40,12 @@ namespace cmdline {
 /// the command.
 ///
 /// \param option_ The option to add.
-template< typename Option >
+template <typename Option>
 void
 command_proto::add_option(const Option& option_)
 {
     add_option_ptr(new Option(option_));
 }
-
 
 /// Creates a new command.
 ///
@@ -60,16 +57,14 @@ command_proto::add_option(const Option& option_)
 /// \param max_args_ The maximum number of arguments required by the command.
 ///     -1 means infinity.
 /// \param short_description_ A description of the purpose of the command.
-template< typename Data >
-base_command< Data >::base_command(const std::string& name_,
-                                   const std::string& arg_list_,
-                                   const int min_args_,
-                                   const int max_args_,
-                                   const std::string& short_description_) :
+template <typename Data>
+base_command<Data>::base_command(const std::string& name_,
+                                 const std::string& arg_list_,
+                                 const int min_args_, const int max_args_,
+                                 const std::string& short_description_) :
     command_proto(name_, arg_list_, min_args_, max_args_, short_description_)
 {
 }
-
 
 /// Entry point for the command.
 ///
@@ -89,16 +84,14 @@ base_command< Data >::base_command(const std::string& name_,
 ///     other value on error.
 /// \throw usage_error If args is invalid (i.e. if the options are mispecified
 ///     or if the arguments are invalid).
-template< typename Data >
+template <typename Data>
 int
-base_command< Data >::main(ui* ui, const args_vector& args, const Data& data)
+base_command<Data>::main(ui* ui, const args_vector& args, const Data& data)
 {
     return run(ui, parse_cmdline(args), data);
 }
 
+} // namespace cli
+} // namespace utils
 
-}  // namespace cli
-}  // namespace utils
-
-
-#endif  // !defined(UTILS_CMDLINE_BASE_COMMAND_IPP)
+#endif // !defined(UTILS_CMDLINE_BASE_COMMAND_IPP)

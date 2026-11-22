@@ -26,11 +26,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <atf-c++.hpp>
 #include <cstdlib>
 #include <string>
-
-#include <atf-c++.hpp>
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(fails);
 ATF_TEST_CASE_BODY(fails)
@@ -38,19 +36,16 @@ ATF_TEST_CASE_BODY(fails)
     fail("Failed on purpose");
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(passes);
 ATF_TEST_CASE_BODY(passes)
 {
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(skips);
 ATF_TEST_CASE_BODY(skips)
 {
     skip("Skipped on purpose");
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

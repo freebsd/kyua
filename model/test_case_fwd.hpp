@@ -37,15 +37,12 @@
 
 namespace model {
 
-
 class test_case;
 class test_cases_map_builder;
 
-
 /// Collection of test cases keyed by their name.
-typedef std::map< std::string, model::test_case > test_cases_map;
+typedef std::map<std::string, model::test_case> test_cases_map;
 
+} // namespace model
 
-}  // namespace model
-
-#endif  // !defined(MODEL_TEST_CASE_FWD_HPP)
+#endif // !defined(MODEL_TEST_CASE_FWD_HPP)

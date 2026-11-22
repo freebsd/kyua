@@ -31,10 +31,8 @@ extern "C" {
 #include <unistd.h>
 }
 
-#include <cstdlib>
-
 #include <atf-c++.hpp>
-
+#include <cstdlib>
 
 ATF_TEST_CASE_WITHOUT_HEAD(die);
 ATF_TEST_CASE_BODY(die)
@@ -42,19 +40,16 @@ ATF_TEST_CASE_BODY(die)
     ::kill(::getpid(), SIGKILL);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(exit);
 ATF_TEST_CASE_BODY(exit)
 {
     std::exit(EXIT_SUCCESS);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(pass);
 ATF_TEST_CASE_BODY(pass)
 {
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

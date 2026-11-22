@@ -26,26 +26,22 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/cmdline/ui_mock.hpp"
-
 #include <iostream>
 
+#include "utils/cmdline/ui_mock.hpp"
 #include "utils/optional.ipp"
 
-using utils::cmdline::ui_mock;
 using utils::none;
 using utils::optional;
-
+using utils::cmdline::ui_mock;
 
 /// Constructs a new mock UI.
 ///
 /// \param screen_width_ The width of the screen to use for testing purposes.
 ///     Defaults to 0 to prevent uncontrolled wrapping on our tests.
-ui_mock::ui_mock(const std::size_t screen_width_) :
-    _screen_width(screen_width_)
+ui_mock::ui_mock(const std::size_t screen_width_) : _screen_width(screen_width_)
 {
 }
-
 
 /// Writes a line to stderr and records it for further inspection.
 ///
@@ -64,7 +60,6 @@ ui_mock::err(const std::string& message, const bool newline)
     _err_log.push_back(message);
 }
 
-
 /// Writes a line to stdout and records it for further inspection.
 ///
 /// \param message The line to print and record, without the trailing newline
@@ -82,32 +77,29 @@ ui_mock::out(const std::string& message, const bool newline)
     _out_log.push_back(message);
 }
 
-
 /// Queries the width of the screen.
 ///
 /// \return Always none, as we do not want to depend on line wrapping in our
 /// tests.
-optional< std::size_t >
+optional<std::size_t>
 ui_mock::screen_width(void) const
 {
-    return _screen_width > 0 ? optional< std::size_t >(_screen_width) : none;
+    return _screen_width > 0 ? optional<std::size_t>(_screen_width) : none;
 }
-
 
 /// Gets all the lines written to stderr.
 ///
 /// \return The printed lines.
-const std::vector< std::string >&
+const std::vector<std::string>&
 ui_mock::err_log(void) const
 {
     return _err_log;
 }
 
-
 /// Gets all the lines written to stdout.
 ///
 /// \return The printed lines.
-const std::vector< std::string >&
+const std::vector<std::string>&
 ui_mock::out_log(void) const
 {
     return _out_log;

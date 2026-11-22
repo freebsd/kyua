@@ -27,39 +27,31 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "model/exceptions.hpp"
-
 #include "utils/format/macros.hpp"
-
 
 /// Constructs a new error with a plain-text message.
 ///
 /// \param message The plain-text error message.
-model::error::error(const std::string& message) :
-    std::runtime_error(message)
+model::error::error(const std::string& message) : std::runtime_error(message)
 {
 }
-
 
 /// Destructor for the error.
 model::error::~error(void) throw()
 {
 }
 
-
 /// Constructs a new format_error.
 ///
 /// \param message The plain-text error message.
-model::format_error::format_error(const std::string& message) :
-    error(message)
+model::format_error::format_error(const std::string& message) : error(message)
 {
 }
-
 
 /// Destructor for the error.
 model::format_error::~format_error(void) throw()
 {
 }
-
 
 /// Constructs a new not_found_error.
 ///
@@ -68,7 +60,6 @@ model::not_found_error::not_found_error(const std::string& message) :
     error(message)
 {
 }
-
 
 /// Destructor for the error.
 model::not_found_error::~not_found_error(void) throw()

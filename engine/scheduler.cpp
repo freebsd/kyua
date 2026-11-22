@@ -82,17 +82,14 @@ namespace text = utils::text;
 using utils::none;
 using utils::optional;
 
-
 /// Timeout for the test case cleanup operation.
 ///
 /// TODO(jmmv): This is here only for testing purposes.  Maybe we should expose
 /// this setting as part of the user_config.
 datetime::delta scheduler::cleanup_timeout(300, 0);
 
-
 /// Timeout for the test case execenv cleanup operation.
 datetime::delta scheduler::execenv_cleanup_timeout(300, 0);
-
 
 /// Timeout for the test case listing operation.
 ///
@@ -100,16 +97,13 @@ datetime::delta scheduler::execenv_cleanup_timeout(300, 0);
 /// this setting as part of the user_config.
 datetime::delta scheduler::list_timeout(300, 0);
 
-
 namespace {
-
 
 /// Magic exit status to indicate that the test case was probably skipped.
 ///
 /// The test case was only skipped if and only if we return this exit code and
 /// we find the skipped_cookie file on disk.
 static const int exit_skipped = 84;
-
 
 /// Text file containing the skip reason for the test case.
 ///
@@ -119,17 +113,14 @@ static const int exit_skipped = 84;
 /// on its own).
 static const char* skipped_cookie = "skipped.txt";
 
-
 /// Mapping of interface names to interface definitions.
-typedef std::map< std::string, std::shared_ptr< scheduler::interface > >
+typedef std::map<std::string, std::shared_ptr<scheduler::interface>>
     interfaces_map;
-
 
 /// Mapping of interface names to interface definitions.
 ///
 /// Use register_interface() to add an entry to this global table.
 static interfaces_map interfaces;
-
 
 /// Scans the contents of a directory and appends the file listing to a file.
 ///
@@ -142,10 +133,10 @@ append_files_listing(const fs::path& dir_path, const fs::path& output_file)
 {
     std::ofstream output(output_file.c_str(), std::ios::app);
     if (!output)
-        throw engine::error(F("Failed to open output file %s for append")
-                            % output_file);
+        throw engine::error(F("Failed to open output file %s for append") %
+                            output_file);
     try {
-        std::set < std::string > names;
+        std::set<std::string> names;
 
         const fs::directory dir(dir_path);
         for (fs::directory::const_iterator iter = dir.begin();
@@ -159,11 +150,10 @@ append_files_listing(const fs::path& dir_path, const fs::path& output_file)
                    << text::join(names, ", ") << '\n';
         }
     } catch (const fs::error& e) {
-        throw engine::error(F("Cannot append files listing to %s: %s")
-                            % output_file % e.what());
+        throw engine::error(F("Cannot append files listing to %s: %s") %
+                            output_file % e.what());
     }
 }
-
 
 /// Maintenance data held while a test is being executed.
 ///
@@ -186,7 +176,8 @@ struct exec_data : utils::noncopyable {
     /// \param test_case_name_ Name of the test case.
     exec_data(const model::test_program_ptr test_program_,
               const std::string& test_case_name_) :
-        test_program(test_program_), test_case_name(test_case_name_)
+        test_program(test_program_),
+        test_case_name(test_case_name_)
     {
     }
 
@@ -196,11 +187,10 @@ struct exec_data : utils::noncopyable {
     }
 };
 
-
 /// Maintenance data held while a test is being executed.
 struct test_exec_data : public exec_data {
     /// Test program-specific execution interface.
-    const std::shared_ptr< scheduler::interface > interface;
+    const std::shared_ptr<scheduler::interface> interface;
 
     /// User configuration passed to the execution of the test.  We need this
     /// here to recover it later when chaining the execution of a cleanup
@@ -230,7 +220,7 @@ struct test_exec_data : public exec_data {
     /// This is set externally when the test case has finished, as we need this
     /// information to invoke the followup cleanup routine in the right context,
     /// as indicated by needs_cleanup.
-    optional< executor::exit_handle > exit_handle;
+    optional<executor::exit_handle> exit_handle;
 
     /// Constructor.
     ///
@@ -240,18 +230,18 @@ struct test_exec_data : public exec_data {
     /// \param user_config_ User configuration passed to the test.
     test_exec_data(const model::test_program_ptr test_program_,
                    const std::string& test_case_name_,
-                   const std::shared_ptr< scheduler::interface > interface_,
-                   const config::tree& user_config_,
-                   const pid_t pid_) :
+                   const std::shared_ptr<scheduler::interface> interface_,
+                   const config::tree& user_config_, const pid_t pid_) :
         exec_data(test_program_, test_case_name_),
-        interface(interface_), user_config(user_config_), pid(pid_)
+        interface(interface_),
+        user_config(user_config_),
+        pid(pid_)
     {
         const model::test_case& test_case = test_program->find(test_case_name);
         needs_cleanup = test_case.get_metadata().has_cleanup();
         needs_execenv_cleanup = test_case.get_metadata().has_execenv();
     }
 };
-
 
 /// Maintenance data held while a test cleanup routine is being executed.
 ///
@@ -281,11 +271,11 @@ struct cleanup_exec_data : public exec_data {
                       const executor::exit_handle& body_exit_handle_,
                       const model::test_result& body_result_) :
         exec_data(test_program_, test_case_name_),
-        body_exit_handle(body_exit_handle_), body_result(body_result_)
+        body_exit_handle(body_exit_handle_),
+        body_result(body_result_)
     {
     }
 };
-
 
 /// Maintenance data held while a test execenv cleanup is being executed.
 ///
@@ -311,26 +301,24 @@ struct execenv_exec_data : public exec_data {
     /// \param body_result_ If not none, result of the body corresponding to the
     ///     cleanup routine represented by this exec_data.
     execenv_exec_data(const model::test_program_ptr test_program_,
-                              const std::string& test_case_name_,
-                              const executor::exit_handle& body_exit_handle_,
-                              const model::test_result& body_result_) :
+                      const std::string& test_case_name_,
+                      const executor::exit_handle& body_exit_handle_,
+                      const model::test_result& body_result_) :
         exec_data(test_program_, test_case_name_),
-        body_exit_handle(body_exit_handle_), body_result(body_result_)
+        body_exit_handle(body_exit_handle_),
+        body_result(body_result_)
     {
     }
 };
-
 
 /// Shared pointer to exec_data.
 ///
 /// We require this because we want exec_data to not be copyable, and thus we
 /// cannot just store it in the map without move constructors.
-typedef std::shared_ptr< exec_data > exec_data_ptr;
-
+typedef std::shared_ptr<exec_data> exec_data_ptr;
 
 /// Mapping of active PIDs to their maintenance data.
-typedef std::map< int, exec_data_ptr > exec_data_map;
-
+typedef std::map<int, exec_data_ptr> exec_data_map;
 
 /// Enforces a test program to hold an absolute path.
 ///
@@ -353,21 +341,20 @@ force_absolute_paths(const model::test_program program)
     const std::string& relative = program.relative_path().str();
     const std::string absolute = program.absolute_path().str();
 
-    const std::string root = absolute.substr(
-        0, absolute.length() - relative.length());
+    const std::string root = absolute.substr(0,
+                                             absolute.length() -
+                                                 relative.length());
 
-    return model::test_program(
-        program.interface_name(),
-        program.relative_path(), fs::path(root),
-        program.test_suite_name(),
-        program.get_metadata(), program.test_cases());
+    return model::test_program(program.interface_name(),
+                               program.relative_path(), fs::path(root),
+                               program.test_suite_name(),
+                               program.get_metadata(), program.test_cases());
 }
-
 
 /// Functor to list the test cases of a test program.
 class list_test_cases {
     /// Interface of the test program to execute.
-    std::shared_ptr< scheduler::interface > _interface;
+    std::shared_ptr<scheduler::interface> _interface;
 
     /// Test program to execute.
     const model::test_program _test_program;
@@ -381,10 +368,9 @@ public:
     /// \param interface Interface of the test program to execute.
     /// \param test_program Test program to execute.
     /// \param user_config User-provided configuration variables.
-    list_test_cases(
-        const std::shared_ptr< scheduler::interface > interface,
-        const model::test_program* test_program,
-        const config::tree& user_config) :
+    list_test_cases(const std::shared_ptr<scheduler::interface> interface,
+                    const model::test_program* test_program,
+                    const config::tree& user_config) :
         _interface(interface),
         _test_program(force_absolute_paths(*test_program)),
         _user_config(user_config)
@@ -392,8 +378,7 @@ public:
     }
 
     /// Body of the subprocess.
-    void
-    operator()(const fs::path& /* control_directory */)
+    void operator()(const fs::path& /* control_directory */)
     {
         const config::properties_map vars = scheduler::generate_config(
             _user_config, _test_program.test_suite_name());
@@ -401,11 +386,10 @@ public:
     }
 };
 
-
 /// Functor to execute a test program in a child process.
 class run_test_program {
     /// Interface of the test program to execute.
-    std::shared_ptr< scheduler::interface > _interface;
+    std::shared_ptr<scheduler::interface> _interface;
 
     /// Test program to execute.
     const model::test_program _test_program;
@@ -430,23 +414,21 @@ class run_test_program {
     ///
     /// \param skipped_cookie_path File to create with the skip reason details
     ///     if this test is skipped.
-    void
-    do_requirements_check(const fs::path& skipped_cookie_path)
+    void do_requirements_check(const fs::path& skipped_cookie_path)
     {
-        const model::test_case& test_case = _test_program.find(
-            _test_case_name);
+        const model::test_case& test_case = _test_program.find(_test_case_name);
 
         const std::string skip_reason = engine::check_reqs(
             test_case.get_metadata(), _user_config,
-            _test_program.test_suite_name(),
-            fs::current_path());
+            _test_program.test_suite_name(), fs::current_path());
         if (skip_reason.empty())
             return;
 
         std::ofstream output(skipped_cookie_path.c_str());
         if (!output) {
-            std::perror((F("Failed to open %s for write") %
-                         skipped_cookie_path).str().c_str());
+            std::perror((F("Failed to open %s for write") % skipped_cookie_path)
+                            .str()
+                            .c_str());
             std::abort();
         }
         output << skip_reason;
@@ -465,11 +447,10 @@ public:
     /// \param test_program Test program to execute.
     /// \param test_case_name Name of the test case to execute.
     /// \param user_config User-provided configuration variables.
-    run_test_program(
-        const std::shared_ptr< scheduler::interface > interface,
-        const model::test_program_ptr test_program,
-        const std::string& test_case_name,
-        const config::tree& user_config) :
+    run_test_program(const std::shared_ptr<scheduler::interface> interface,
+                     const model::test_program_ptr test_program,
+                     const std::string& test_case_name,
+                     const config::tree& user_config) :
         _interface(interface),
         _test_program(force_absolute_paths(*test_program)),
         _test_case_name(test_case_name),
@@ -481,11 +462,9 @@ public:
     ///
     /// \param control_directory The testcase directory where files will be
     ///     read from.
-    void
-    operator()(const fs::path& control_directory)
+    void operator()(const fs::path& control_directory)
     {
-        const model::test_case& test_case = _test_program.find(
-            _test_case_name);
+        const model::test_case& test_case = _test_program.find(_test_case_name);
         if (test_case.fake_result())
             ::_exit(EXIT_SUCCESS);
 
@@ -498,11 +477,10 @@ public:
     }
 };
 
-
 /// Functor to execute a test program in a child process.
 class run_test_cleanup {
     /// Interface of the test program to execute.
-    std::shared_ptr< scheduler::interface > _interface;
+    std::shared_ptr<scheduler::interface> _interface;
 
     /// Test program to execute.
     const model::test_program _test_program;
@@ -520,11 +498,10 @@ public:
     /// \param test_program Test program to execute.
     /// \param test_case_name Name of the test case to execute.
     /// \param user_config User-provided configuration variables.
-    run_test_cleanup(
-        const std::shared_ptr< scheduler::interface > interface,
-        const model::test_program_ptr test_program,
-        const std::string& test_case_name,
-        const config::tree& user_config) :
+    run_test_cleanup(const std::shared_ptr<scheduler::interface> interface,
+                     const model::test_program_ptr test_program,
+                     const std::string& test_case_name,
+                     const config::tree& user_config) :
         _interface(interface),
         _test_program(force_absolute_paths(*test_program)),
         _test_case_name(test_case_name),
@@ -536,8 +513,7 @@ public:
     ///
     /// \param control_directory The testcase directory where cleanup will be
     ///     run from.
-    void
-    operator()(const fs::path& control_directory)
+    void operator()(const fs::path& control_directory)
     {
         const config::properties_map vars = scheduler::generate_config(
             _user_config, _test_program.test_suite_name());
@@ -545,7 +521,6 @@ public:
                                  control_directory);
     }
 };
-
 
 /// Functor to execute a test execenv cleanup in a child process.
 class run_execenv_cleanup {
@@ -560,9 +535,8 @@ public:
     ///
     /// \param test_program Test program to execute.
     /// \param test_case_name Name of the test case to execute.
-    run_execenv_cleanup(
-        const model::test_program_ptr test_program,
-        const std::string& test_case_name) :
+    run_execenv_cleanup(const model::test_program_ptr test_program,
+                        const std::string& test_case_name) :
         _test_program(force_absolute_paths(*test_program)),
         _test_case_name(test_case_name)
     {
@@ -572,21 +546,19 @@ public:
     ///
     /// \param control_directory The testcase directory where cleanup will be
     ///     run from.
-    void
-    operator()(const fs::path& /* control_directory */)
+    void operator()(const fs::path& /* control_directory */)
     {
         auto e = execenv::get(_test_program, _test_case_name);
         e->cleanup();
     }
 };
 
-
 /// Obtains the right scheduler interface for a given test program.
 ///
 /// \param name The name of the interface of the test program.
 ///
 /// \return An scheduler interface.
-std::shared_ptr< scheduler::interface >
+std::shared_ptr<scheduler::interface>
 find_interface(const std::string& name)
 {
     const interfaces_map::const_iterator iter = interfaces.find(name);
@@ -594,9 +566,7 @@ find_interface(const std::string& name)
     return (*iter).second;
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 void
 scheduler::interface::exec_cleanup(
@@ -610,7 +580,6 @@ scheduler::interface::exec_cleanup(
     UNREACHABLE_MSG("exec_cleanup not implemented for an interface that "
                     "supports standalone cleanup routines");
 }
-
 
 /// Internal implementation of a lazy_test_program.
 struct engine::scheduler::lazy_test_program::impl : utils::noncopyable {
@@ -631,12 +600,12 @@ struct engine::scheduler::lazy_test_program::impl : utils::noncopyable {
     ///     cases.
     impl(const config::tree& user_config_,
          scheduler::scheduler_handle& scheduler_handle_) :
-        _loaded(false), _user_config(user_config_),
+        _loaded(false),
+        _user_config(user_config_),
         _scheduler_handle(scheduler_handle_)
     {
     }
 };
-
 
 /// Constructs a new test program.
 ///
@@ -648,19 +617,15 @@ struct engine::scheduler::lazy_test_program::impl : utils::noncopyable {
 /// \param user_config_ User configuration to pass to the scheduler.
 /// \param scheduler_handle_ Scheduler context to use to load test cases.
 scheduler::lazy_test_program::lazy_test_program(
-    const std::string& interface_name_,
-    const fs::path& binary_,
-    const fs::path& root_,
-    const std::string& test_suite_name_,
-    const model::metadata& md_,
-    const config::tree& user_config_,
+    const std::string& interface_name_, const fs::path& binary_,
+    const fs::path& root_, const std::string& test_suite_name_,
+    const model::metadata& md_, const config::tree& user_config_,
     scheduler::scheduler_handle& scheduler_handle_) :
     test_program(interface_name_, binary_, root_, test_suite_name_, md_,
                  model::test_cases_map()),
     _pimpl(new impl(user_config_, scheduler_handle_))
 {
 }
-
 
 /// Gets or loads the list of test cases from the test program.
 ///
@@ -671,13 +636,13 @@ scheduler::lazy_test_program::test_cases(void) const
     _pimpl->_scheduler_handle.check_interrupt();
 
     if (!_pimpl->_loaded) {
-        const model::test_cases_map tcs = _pimpl->_scheduler_handle.list_tests(
-            this, _pimpl->_user_config);
+        const model::test_cases_map tcs =
+            _pimpl->_scheduler_handle.list_tests(this, _pimpl->_user_config);
 
         // Due to the restrictions on when set_test_cases() may be called (as a
         // way to lazily initialize the test cases list before it is ever
         // returned), this cast is valid.
-        const_cast< scheduler::lazy_test_program* >(this)->set_test_cases(tcs);
+        const_cast<scheduler::lazy_test_program*>(this)->set_test_cases(tcs);
 
         _pimpl->_loaded = true;
 
@@ -687,7 +652,6 @@ scheduler::lazy_test_program::test_cases(void) const
     INV(_pimpl->_loaded);
     return test_program::test_cases();
 }
-
 
 /// Internal implementation for the result_handle class.
 struct engine::scheduler::result_handle::bimpl : utils::noncopyable {
@@ -708,7 +672,8 @@ struct engine::scheduler::result_handle::bimpl : utils::noncopyable {
     ///     executions for an scheduler.  This is a pointer to a member of the
     ///     scheduler_handle object.
     bimpl(const executor::exit_handle generic_, exec_data_map& all_exec_data_) :
-        generic(generic_), all_exec_data(all_exec_data_)
+        generic(generic_),
+        all_exec_data(all_exec_data_)
     {
     }
 
@@ -720,21 +685,18 @@ struct engine::scheduler::result_handle::bimpl : utils::noncopyable {
     }
 };
 
-
 /// Constructor.
 ///
 /// \param pbimpl Constructed internal implementation.
-scheduler::result_handle::result_handle(std::shared_ptr< bimpl > pbimpl) :
+scheduler::result_handle::result_handle(std::shared_ptr<bimpl> pbimpl) :
     _pbimpl(pbimpl)
 {
 }
-
 
 /// Destructor.
 scheduler::result_handle::~result_handle(void)
 {
 }
-
 
 /// Cleans up the test case results.
 ///
@@ -750,7 +712,6 @@ scheduler::result_handle::cleanup(void)
     _pbimpl->generic.cleanup();
 }
 
-
 /// Returns the original PID corresponding to this result.
 ///
 /// \return An exec_handle.
@@ -759,7 +720,6 @@ scheduler::result_handle::original_pid(void) const
 {
     return _pbimpl->generic.original_pid();
 }
-
 
 /// Returns the timestamp of when spawn_test was called.
 ///
@@ -770,7 +730,6 @@ scheduler::result_handle::start_time(void) const
     return _pbimpl->generic.start_time();
 }
 
-
 /// Returns the timestamp of when wait_any_test returned this object.
 ///
 /// \return A timestamp.
@@ -779,7 +738,6 @@ scheduler::result_handle::end_time(void) const
 {
     return _pbimpl->generic.end_time();
 }
-
 
 /// Returns the path to the test-specific work directory.
 ///
@@ -792,7 +750,6 @@ scheduler::result_handle::work_directory(void) const
     return _pbimpl->generic.work_directory();
 }
 
-
 /// Returns the path to the test's stdout file.
 ///
 /// \return The path to a file that exists until cleanup() is called.
@@ -802,7 +759,6 @@ scheduler::result_handle::stdout_file(void) const
     return _pbimpl->generic.stdout_file();
 }
 
-
 /// Returns the path to the test's stderr file.
 ///
 /// \return The path to a file that exists until cleanup() is called.
@@ -811,7 +767,6 @@ scheduler::result_handle::stderr_file(void) const
 {
     return _pbimpl->generic.stderr_file();
 }
-
 
 /// Internal implementation for the test_result_handle class.
 struct engine::scheduler::test_result_handle::impl : utils::noncopyable {
@@ -839,23 +794,21 @@ struct engine::scheduler::test_result_handle::impl : utils::noncopyable {
     }
 };
 
-
 /// Constructor.
 ///
 /// \param pbimpl Constructed internal implementation for the base object.
 /// \param pimpl Constructed internal implementation.
-scheduler::test_result_handle::test_result_handle(
-    std::shared_ptr< bimpl > pbimpl, std::shared_ptr< impl > pimpl) :
-    result_handle(pbimpl), _pimpl(pimpl)
+scheduler::test_result_handle::test_result_handle(std::shared_ptr<bimpl> pbimpl,
+                                                  std::shared_ptr<impl> pimpl) :
+    result_handle(pbimpl),
+    _pimpl(pimpl)
 {
 }
-
 
 /// Destructor.
 scheduler::test_result_handle::~test_result_handle(void)
 {
 }
-
 
 /// Returns the test program that yielded this result.
 ///
@@ -866,7 +819,6 @@ scheduler::test_result_handle::test_program(void) const
     return _pimpl->test_program;
 }
 
-
 /// Returns the name of the test case that yielded this result.
 ///
 /// \return A test case name
@@ -875,7 +827,6 @@ scheduler::test_result_handle::test_case_name(void) const
 {
     return _pimpl->test_case_name;
 }
-
 
 /// Returns the actual result of the test execution.
 ///
@@ -886,7 +837,6 @@ scheduler::test_result_handle::test_result(void) const
     return _pimpl->test_result;
 }
 
-
 /// Internal implementation for the scheduler_handle.
 struct engine::scheduler::scheduler_handle::impl : utils::noncopyable {
     /// Generic executor instance encapsulated by this one.
@@ -896,7 +846,7 @@ struct engine::scheduler::scheduler_handle::impl : utils::noncopyable {
     exec_data_map all_exec_data;
 
     /// Collection of test_exec_data objects.
-    typedef std::vector< const test_exec_data* > test_exec_data_vector;
+    typedef std::vector<const test_exec_data*> test_exec_data_vector;
 
     /// Constructor.
     impl(void) : generic(executor::setup())
@@ -919,9 +869,9 @@ struct engine::scheduler::scheduler_handle::impl : utils::noncopyable {
                 sync_cleanup(test_data);
             } catch (const std::runtime_error& e) {
                 LW(F("Failed to run cleanup routine for %s:%s on abrupt "
-                     "termination")
-                   % test_data->test_program->relative_path()
-                   % test_data->test_case_name);
+                     "termination") %
+                   test_data->test_program->relative_path() %
+                   test_data->test_case_name);
             }
         }
 
@@ -935,9 +885,9 @@ struct engine::scheduler::scheduler_handle::impl : utils::noncopyable {
                 sync_execenv_cleanup(test_data);
             } catch (const std::runtime_error& e) {
                 LW(F("Failed to run execenv cleanup routine for %s:%s on abrupt "
-                     "termination")
-                   % test_data->test_program->relative_path()
-                   % test_data->test_case_name);
+                     "termination") %
+                   test_data->test_program->relative_path() %
+                   test_data->test_case_name);
             }
         }
     }
@@ -946,8 +896,7 @@ struct engine::scheduler::scheduler_handle::impl : utils::noncopyable {
     ///
     /// \return The collection of test_exec_data objects that have their
     /// needs_cleanup property set to true.
-    test_exec_data_vector
-    tests_needing_cleanup(void)
+    test_exec_data_vector tests_needing_cleanup(void)
     {
         test_exec_data_vector tests_data;
 
@@ -956,8 +905,8 @@ struct engine::scheduler::scheduler_handle::impl : utils::noncopyable {
             const exec_data_ptr data = (*iter).second;
 
             try {
-                test_exec_data* test_data = &dynamic_cast< test_exec_data& >(
-                    *data.get());
+                test_exec_data* test_data =
+                    &dynamic_cast<test_exec_data&>(*data.get());
                 if (test_data->needs_cleanup) {
                     tests_data.push_back(test_data);
                     test_data->needs_cleanup = false;
@@ -977,8 +926,7 @@ struct engine::scheduler::scheduler_handle::impl : utils::noncopyable {
     ///
     /// \return The collection of test_exec_data objects that have their
     /// specific execenv property set.
-    test_exec_data_vector
-    tests_needing_execenv_cleanup(void)
+    test_exec_data_vector tests_needing_execenv_cleanup(void)
     {
         test_exec_data_vector tests_data;
 
@@ -987,8 +935,8 @@ struct engine::scheduler::scheduler_handle::impl : utils::noncopyable {
             const exec_data_ptr data = (*iter).second;
 
             try {
-                test_exec_data* test_data = &dynamic_cast< test_exec_data& >(
-                    *data.get());
+                test_exec_data* test_data =
+                    &dynamic_cast<test_exec_data&>(*data.get());
                 if (test_data->needs_execenv_cleanup) {
                     tests_data.push_back(test_data);
                     test_data->needs_execenv_cleanup = false;
@@ -1007,8 +955,7 @@ struct engine::scheduler::scheduler_handle::impl : utils::noncopyable {
     ///
     /// \param test_data The data of the previously executed test case to be
     ///     cleaned up.
-    void
-    sync_cleanup(const test_exec_data* test_data)
+    void sync_cleanup(const test_exec_data* test_data)
     {
         // The message in this result should never be seen by the user, but use
         // something reasonable just in case it leaks and we need to pinpoint
@@ -1018,8 +965,7 @@ struct engine::scheduler::scheduler_handle::impl : utils::noncopyable {
 
         const executor::exec_handle cleanup_handle = spawn_cleanup(
             test_data->test_program, test_data->test_case_name,
-            test_data->user_config, test_data->exit_handle.get(),
-            result);
+            test_data->user_config, test_data->exit_handle.get(), result);
         generic.wait(cleanup_handle);
     }
 
@@ -1043,7 +989,7 @@ struct engine::scheduler::scheduler_handle::impl : utils::noncopyable {
     {
         generic.check_interrupt();
 
-        const std::shared_ptr< scheduler::interface > interface =
+        const std::shared_ptr<scheduler::interface> interface =
             find_interface(test_program->interface_name());
 
         LI(F("Spawning %s:%s (cleanup)") % test_program->absolute_path() %
@@ -1059,7 +1005,9 @@ struct engine::scheduler::scheduler_handle::impl : utils::noncopyable {
         LD(F("Inserting %s into all_exec_data (cleanup)") % handle.pid());
         INV_MSG(all_exec_data.find(handle.pid()) == all_exec_data.end(),
                 F("PID %s already in all_exec_data; not properly cleaned "
-                  "up or reused too fast") % handle.pid());;
+                  "up or reused too fast") %
+                    handle.pid());
+        ;
         all_exec_data.insert(exec_data_map::value_type(handle.pid(), data));
 
         return handle;
@@ -1069,8 +1017,7 @@ struct engine::scheduler::scheduler_handle::impl : utils::noncopyable {
     ///
     /// \param test_data The data of the previously executed test case to be
     ///     cleaned up.
-    void
-    sync_execenv_cleanup(const test_exec_data* test_data)
+    void sync_execenv_cleanup(const test_exec_data* test_data)
     {
         // The message in this result should never be seen by the user, but use
         // something reasonable just in case it leaks and we need to pinpoint
@@ -1102,37 +1049,37 @@ struct engine::scheduler::scheduler_handle::impl : utils::noncopyable {
     {
         generic.check_interrupt();
 
-        LI(F("Spawning %s:%s (execenv cleanup)")
-            % test_program->absolute_path() % test_case_name);
+        LI(F("Spawning %s:%s (execenv cleanup)") %
+           test_program->absolute_path() % test_case_name);
 
         const executor::exec_handle handle = generic.spawn_followup(
-            run_execenv_cleanup(test_program, test_case_name),
-            body_handle, execenv_cleanup_timeout);
+            run_execenv_cleanup(test_program, test_case_name), body_handle,
+            execenv_cleanup_timeout);
 
         const exec_data_ptr data(new execenv_exec_data(
             test_program, test_case_name, body_handle, body_result));
-        LD(F("Inserting %s into all_exec_data (execenv cleanup)") % handle.pid());
+        LD(F("Inserting %s into all_exec_data (execenv cleanup)") %
+           handle.pid());
         INV_MSG(all_exec_data.find(handle.pid()) == all_exec_data.end(),
                 F("PID %s already in all_exec_data; not properly cleaned "
-                  "up or reused too fast") % handle.pid());;
+                  "up or reused too fast") %
+                    handle.pid());
+        ;
         all_exec_data.insert(exec_data_map::value_type(handle.pid(), data));
 
         return handle;
     }
 };
 
-
 /// Constructor.
 scheduler::scheduler_handle::scheduler_handle(void) : _pimpl(new impl())
 {
 }
 
-
 /// Destructor.
 scheduler::scheduler_handle::~scheduler_handle(void)
 {
 }
-
 
 /// Queries the path to the root of the work directory for all tests.
 ///
@@ -1142,7 +1089,6 @@ scheduler::scheduler_handle::root_work_directory(void) const
 {
     return _pimpl->generic.root_work_directory();
 }
-
 
 /// Cleans up the scheduler state.
 ///
@@ -1157,7 +1103,6 @@ scheduler::scheduler_handle::cleanup(void)
     _pimpl->generic.cleanup();
 }
 
-
 /// Checks if the given interface name is valid.
 ///
 /// \param name The name of the interface to validate.
@@ -1170,34 +1115,31 @@ scheduler::ensure_valid_interface(const std::string& name)
         throw engine::error(F("Unsupported test interface '%s'") % name);
 }
 
-
 /// Registers a new interface.
 ///
 /// \param name The name of the interface.  Must not have yet been registered.
 /// \param spec Interface specification.
 void
 scheduler::register_interface(const std::string& name,
-                              const std::shared_ptr< interface > spec)
+                              const std::shared_ptr<interface> spec)
 {
     PRE(interfaces.find(name) == interfaces.end());
     interfaces.insert(interfaces_map::value_type(name, spec));
 }
 
-
 /// Returns the names of all registered interfaces.
 ///
 /// \return A collection of interface names.
-std::set< std::string >
+std::set<std::string>
 scheduler::registered_interface_names(void)
 {
-    std::set< std::string > names;
+    std::set<std::string> names;
     for (interfaces_map::const_iterator iter = interfaces.begin();
          iter != interfaces.end(); ++iter) {
         names.insert((*iter).first);
     }
     return names;
 }
-
 
 /// Initializes the scheduler.
 ///
@@ -1210,7 +1152,6 @@ scheduler::setup(void)
 {
     return scheduler_handle();
 }
-
 
 /// Retrieves the list of test cases from a test program.
 ///
@@ -1226,24 +1167,22 @@ scheduler::setup(void)
 ///
 /// \return The list of test cases.
 model::test_cases_map
-scheduler::scheduler_handle::list_tests(
-    const model::test_program* test_program,
-    const config::tree& user_config)
+scheduler::scheduler_handle::list_tests(const model::test_program* test_program,
+                                        const config::tree& user_config)
 {
     _pimpl->generic.check_interrupt();
 
-    const std::shared_ptr< scheduler::interface > interface = find_interface(
-        test_program->interface_name());
+    const std::shared_ptr<scheduler::interface> interface =
+        find_interface(test_program->interface_name());
 
     try {
         const executor::exec_handle exec_handle = _pimpl->generic.spawn(
-            list_test_cases(interface, test_program, user_config),
-            list_timeout, none);
+            list_test_cases(interface, test_program, user_config), list_timeout,
+            none);
         executor::exit_handle exit_handle = _pimpl->generic.wait(exec_handle);
 
         const model::test_cases_map test_cases = interface->parse_list(
-            exit_handle.status(),
-            exit_handle.stdout_file(),
+            exit_handle.status(), exit_handle.stdout_file(),
             exit_handle.stderr_file());
 
         exit_handle.cleanup();
@@ -1267,7 +1206,6 @@ scheduler::scheduler_handle::list_tests(
     }
 }
 
-
 /// Forks and executes a test case asynchronously.
 ///
 /// Note that the caller needn't know if the test has a cleanup routine or not.
@@ -1282,45 +1220,44 @@ scheduler::scheduler_handle::list_tests(
 scheduler::exec_handle
 scheduler::scheduler_handle::spawn_test(
     const model::test_program_ptr test_program,
-    const std::string& test_case_name,
-    const config::tree& user_config,
+    const std::string& test_case_name, const config::tree& user_config,
     const utils::optional<utils::fs::path>& stdout_target,
     const utils::optional<utils::fs::path>& stderr_target)
 {
     _pimpl->generic.check_interrupt();
 
-    const std::shared_ptr< scheduler::interface > interface = find_interface(
-        test_program->interface_name());
+    const std::shared_ptr<scheduler::interface> interface =
+        find_interface(test_program->interface_name());
 
     LI(F("Spawning %s:%s") % test_program->absolute_path() % test_case_name);
 
     const model::test_case& test_case = test_program->find(test_case_name);
 
-    optional< passwd::user > unprivileged_user;
+    optional<passwd::user> unprivileged_user;
     if (user_config.is_set("unprivileged_user") &&
         test_case.get_metadata().required_user() == "unprivileged") {
-        unprivileged_user = user_config.lookup< engine::user_node >(
-            "unprivileged_user");
+        unprivileged_user =
+            user_config.lookup<engine::user_node>("unprivileged_user");
     }
 
     const executor::exec_handle handle = _pimpl->generic.spawn(
-        run_test_program(interface, test_program, test_case_name,
-                         user_config),
-        test_case.get_metadata().timeout(),
-        unprivileged_user, stdout_target, stderr_target);
+        run_test_program(interface, test_program, test_case_name, user_config),
+        test_case.get_metadata().timeout(), unprivileged_user, stdout_target,
+        stderr_target);
 
-    const exec_data_ptr data(new test_exec_data(
-        test_program, test_case_name, interface, user_config, handle.pid()));
+    const exec_data_ptr data(new test_exec_data(test_program, test_case_name,
+                                                interface, user_config,
+                                                handle.pid()));
     LD(F("Inserting %s into all_exec_data") % handle.pid());
     INV_MSG(
         _pimpl->all_exec_data.find(handle.pid()) == _pimpl->all_exec_data.end(),
-        F("PID %s already in all_exec_data; not cleaned up or reused too fast")
-        % handle.pid());;
+        F("PID %s already in all_exec_data; not cleaned up or reused too fast") %
+            handle.pid());
+    ;
     _pimpl->all_exec_data.insert(exec_data_map::value_type(handle.pid(), data));
 
     return handle.pid();
 }
-
 
 /// Waits for completion of any forked test case.
 ///
@@ -1337,25 +1274,24 @@ scheduler::scheduler_handle::wait_any(void)
 
     executor::exit_handle handle = _pimpl->generic.wait_any();
 
-    const exec_data_map::iterator iter = _pimpl->all_exec_data.find(
-        handle.original_pid());
+    const exec_data_map::iterator iter =
+        _pimpl->all_exec_data.find(handle.original_pid());
     exec_data_ptr data = (*iter).second;
 
     utils::dump_stacktrace_if_available(data->test_program->absolute_path(),
                                         _pimpl->generic, handle);
 
-    optional< model::test_result > result;
+    optional<model::test_result> result;
 
     // test itself
     try {
-        test_exec_data* test_data = &dynamic_cast< test_exec_data& >(
-            *data.get());
+        test_exec_data* test_data = &dynamic_cast<test_exec_data&>(*data.get());
         LD(F("Got %s from all_exec_data") % handle.original_pid());
 
         test_data->exit_handle = handle;
 
-        const model::test_case& test_case = test_data->test_program->find(
-            test_data->test_case_name);
+        const model::test_case& test_case =
+            test_data->test_program->find(test_data->test_case_name);
 
         result = test_case.fake_result();
 
@@ -1387,25 +1323,22 @@ scheduler::scheduler_handle::wait_any(void)
         }
         if (!result) {
             result = test_data->interface->compute_result(
-                handle.status(),
-                handle.control_directory(),
-                handle.stdout_file(),
-                handle.stderr_file());
+                handle.status(), handle.control_directory(),
+                handle.stdout_file(), handle.stderr_file());
         }
         INV(result);
 
         if (!result.get().good()) {
-            append_files_listing(handle.work_directory(),
-                                 handle.stderr_file());
+            append_files_listing(handle.work_directory(), handle.stderr_file());
         }
 
-        std::shared_ptr< debugger > debugger = test_case.get_debugger();
+        std::shared_ptr<debugger> debugger = test_case.get_debugger();
         if (debugger) {
-            debugger->before_cleanup(test_data->test_program, test_case,
-                result, handle);
+            debugger->before_cleanup(test_data->test_program, test_case, result,
+                                     handle);
             if (!result.get().good())
                 debugger->upon_test_failure(test_data->test_program, test_case,
-                    result, handle);
+                                            result, handle);
         }
 
         if (test_data->needs_cleanup) {
@@ -1429,8 +1362,8 @@ scheduler::scheduler_handle::wait_any(void)
         if (test_data->needs_execenv_cleanup) {
             INV(test_case.get_metadata().has_execenv());
             _pimpl->spawn_execenv_cleanup(test_data->test_program,
-                                          test_data->test_case_name,
-                                          handle, result.get());
+                                          test_data->test_case_name, handle,
+                                          result.get());
             test_data->needs_execenv_cleanup = false;
             return wait_any();
         }
@@ -1441,7 +1374,7 @@ scheduler::scheduler_handle::wait_any(void)
     // test cleanup
     try {
         const cleanup_exec_data* cleanup_data =
-            &dynamic_cast< const cleanup_exec_data& >(*data.get());
+            &dynamic_cast<const cleanup_exec_data&>(*data.get());
         LD(F("Got %s from all_exec_data (cleanup)") % handle.original_pid());
 
         // Handle the completion of cleanup subprocesses internally: the caller
@@ -1472,19 +1405,19 @@ scheduler::scheduler_handle::wait_any(void)
         // Untrack the cleanup process.  This must be done explicitly because we
         // do not create a result_handle object for the cleanup, and that is the
         // one in charge of doing so in the regular (non-cleanup) case.
-        LD(F("Removing %s from all_exec_data (cleanup) in favor of %s")
-           % handle.original_pid()
-           % cleanup_data->body_exit_handle.original_pid());
+        LD(F("Removing %s from all_exec_data (cleanup) in favor of %s") %
+           handle.original_pid() %
+           cleanup_data->body_exit_handle.original_pid());
         _pimpl->all_exec_data.erase(handle.original_pid());
 
         handle = cleanup_data->body_exit_handle;
 
-        const exec_data_map::iterator it = _pimpl->all_exec_data.find(
-            handle.original_pid());
+        const exec_data_map::iterator it =
+            _pimpl->all_exec_data.find(handle.original_pid());
         if (it != _pimpl->all_exec_data.end()) {
             exec_data_ptr d = (*it).second;
-            test_exec_data* test_data = &dynamic_cast< test_exec_data& >(
-                *d.get());
+            test_exec_data* test_data =
+                &dynamic_cast<test_exec_data&>(*d.get());
             const model::test_case& test_case =
                 cleanup_data->test_program->find(cleanup_data->test_case_name);
             test_data->needs_cleanup = false;
@@ -1505,14 +1438,16 @@ scheduler::scheduler_handle::wait_any(void)
     // execenv cleanup
     try {
         const execenv_exec_data* execenv_data =
-            &dynamic_cast< const execenv_exec_data& >(*data.get());
-        LD(F("Got %s from all_exec_data (execenv cleanup)") % handle.original_pid());
+            &dynamic_cast<const execenv_exec_data&>(*data.get());
+        LD(F("Got %s from all_exec_data (execenv cleanup)") %
+           handle.original_pid());
 
         const model::test_result& body_result = execenv_data->body_result;
         if (body_result.good()) {
             if (!handle.status()) {
-                result = model::test_result(model::test_result_broken,
-                                            "Test case execenv cleanup timed out");
+                result =
+                    model::test_result(model::test_result_broken,
+                                       "Test case execenv cleanup timed out");
             } else {
                 if (!handle.status().get().exited() ||
                     handle.status().get().exitstatus() != EXIT_SUCCESS) {
@@ -1527,9 +1462,9 @@ scheduler::scheduler_handle::wait_any(void)
             result = body_result;
         }
 
-        LD(F("Removing %s from all_exec_data (execenv cleanup) in favor of %s")
-           % handle.original_pid()
-           % execenv_data->body_exit_handle.original_pid());
+        LD(F("Removing %s from all_exec_data (execenv cleanup) in favor of %s") %
+           handle.original_pid() %
+           execenv_data->body_exit_handle.original_pid());
         _pimpl->all_exec_data.erase(handle.original_pid());
 
         handle = execenv_data->body_exit_handle;
@@ -1539,15 +1474,14 @@ scheduler::scheduler_handle::wait_any(void)
 
     INV(result);
 
-    std::shared_ptr< result_handle::bimpl > result_handle_bimpl(
+    std::shared_ptr<result_handle::bimpl> result_handle_bimpl(
         new result_handle::bimpl(handle, _pimpl->all_exec_data));
-    std::shared_ptr< test_result_handle::impl > test_result_handle_impl(
-        new test_result_handle::impl(
-            data->test_program, data->test_case_name, result.get()));
+    std::shared_ptr<test_result_handle::impl> test_result_handle_impl(
+        new test_result_handle::impl(data->test_program, data->test_case_name,
+                                     result.get()));
     return result_handle_ptr(new test_result_handle(result_handle_bimpl,
                                                     test_result_handle_impl));
 }
-
 
 /// Forks and executes a test case synchronously for debugging.
 ///
@@ -1563,10 +1497,8 @@ scheduler::scheduler_handle::wait_any(void)
 scheduler::result_handle_ptr
 scheduler::scheduler_handle::debug_test(
     const model::test_program_ptr test_program,
-    const std::string& test_case_name,
-    const config::tree& user_config,
-    const fs::path& stdout_target,
-    const fs::path& stderr_target)
+    const std::string& test_case_name, const config::tree& user_config,
+    const fs::path& stdout_target, const fs::path& stderr_target)
 {
     optional<fs::path> out = none;
     optional<fs::path> err = none;
@@ -1576,8 +1508,8 @@ scheduler::scheduler_handle::debug_test(
         err = stderr_target;
     }
 
-    const exec_handle exec_handle = spawn_test(
-        test_program, test_case_name, user_config, out, err);
+    const exec_handle exec_handle = spawn_test(test_program, test_case_name,
+                                               user_config, out, err);
     result_handle_ptr result_handle = wait_any();
 
     // TODO(jmmv): We need to do this while the subprocess is alive.  This is
@@ -1588,20 +1520,19 @@ scheduler::scheduler_handle::debug_test(
     // file, waiting for further output to appear... as this only works on pipes
     // or sockets.  We need a better interface for this whole thing.
     if (test_case.get_debugger() == nullptr) {
-        std::unique_ptr< std::ostream > output = utils::open_ostream(
-            stdout_target);
+        std::unique_ptr<std::ostream> output =
+            utils::open_ostream(stdout_target);
         *output << utils::read_file(result_handle->stdout_file());
     }
     if (test_case.get_debugger() == nullptr) {
-        std::unique_ptr< std::ostream > output = utils::open_ostream(
-            stderr_target);
+        std::unique_ptr<std::ostream> output =
+            utils::open_ostream(stderr_target);
         *output << utils::read_file(result_handle->stderr_file());
     }
 
     INV(result_handle->original_pid() == exec_handle);
     return result_handle;
 }
-
 
 /// Checks if an interrupt has fired.
 ///
@@ -1618,7 +1549,6 @@ scheduler::scheduler_handle::check_interrupt(void) const
     _pimpl->generic.check_interrupt();
 }
 
-
 /// Queries the current execution context.
 ///
 /// \return The queried context.
@@ -1627,7 +1557,6 @@ scheduler::current_context(void)
 {
     return model::context(fs::current_path(), utils::getallenv());
 }
-
 
 /// Generates the set of configuration variables for a test program.
 ///
@@ -1652,9 +1581,9 @@ scheduler::generate_config(const config::tree& user_config,
     // should be moved there.
     if (user_config.is_set("unprivileged_user")) {
         const passwd::user& user =
-            user_config.lookup< engine::user_node >("unprivileged_user");
-	// The property is duplicated using both ATF and Kyua naming styles
-	// for better UX.
+            user_config.lookup<engine::user_node>("unprivileged_user");
+        // The property is duplicated using both ATF and Kyua naming styles
+        // for better UX.
         props["unprivileged-user"] = user.name;
         props["unprivileged_user"] = user.name;
     }

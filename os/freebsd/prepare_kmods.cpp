@@ -3,7 +3,7 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
-#include "os/freebsd/prepare_kmods.hpp"
+#include <system_error>
 
 #include "cli/common.hpp"
 #include "drivers/list_tests.hpp"
@@ -11,8 +11,7 @@
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
 #include "model/test_program.hpp"
-
-#include <system_error>
+#include "os/freebsd/prepare_kmods.hpp"
 
 // FreeBSD kldload syscall
 extern "C" {
@@ -20,26 +19,22 @@ extern "C" {
 #include <sys/linker.h>
 }
 
-
 namespace {
 
-
 static const std::string _name = "kmods";
-static const std::string _description = \
+static const std::string _description =
     "FreeBSD: load modules specified in the required_kmods metadata";
-
 
 /// Hooks for list_tests to examine test cases as they come.
 class list_hooks : public drivers::list_tests::base_hooks {
     /// Collected names of required kernel modules.
-    std::set< std::string >& _modules;
+    std::set<std::string>& _modules;
 
 public:
     /// Initializes the hooks.
     ///
     /// \param modules_ The set of modules to fill.
-    list_hooks(std::set< std::string >& modules_) :
-        _modules(modules_)
+    list_hooks(std::set<std::string>& modules_) : _modules(modules_)
     {
     }
 
@@ -47,9 +42,8 @@ public:
     ///
     /// \param test_program The test program containing the test case.
     /// \param test_case_name The name of the located test case.
-    void
-    got_test_case(const model::test_program& test_program,
-                  const std::string& test_case_name)
+    void got_test_case(const model::test_program& test_program,
+                       const std::string& test_case_name)
     {
         auto test_case = test_program.find(test_case_name);
         auto kmods = test_case.get_metadata().required_kmods();
@@ -57,12 +51,9 @@ public:
     }
 };
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 namespace freebsd {
-
 
 const std::string&
 prepare_kmods::name() const
@@ -70,27 +61,25 @@ prepare_kmods::name() const
     return _name;
 }
 
-
 const std::string&
 prepare_kmods::description() const
 {
     return _description;
 }
 
-
 int
 prepare_kmods::exec(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
-               const config::tree& user_config) const
+                    const config::tree& user_config) const
 {
     int err = 0;
 
     // Collect required modules
-    std::set< std::string > modules;
+    std::set<std::string> modules;
     list_hooks hooks(modules);
-    const std::set< engine::test_filter > nofilters;
+    const std::set<engine::test_filter> nofilters;
     const drivers::list_tests::result result = drivers::list_tests::drive(
-        cli::kyuafile_path(cmdline), cli::build_root_path(cmdline),
-        nofilters, user_config, hooks);
+        cli::kyuafile_path(cmdline), cli::build_root_path(cmdline), nofilters,
+        user_config, hooks);
 
     // Nothing to do
     if (modules.empty())
@@ -116,5 +105,4 @@ prepare_kmods::exec(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
     return err;
 }
 
-
-}  // namespace freebsd
+} // namespace freebsd

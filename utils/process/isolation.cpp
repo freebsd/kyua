@@ -42,9 +42,9 @@ extern "C" {
 #include <iostream>
 
 #include "utils/defs.hpp"
+#include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
-#include "utils/env.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/passwd.hpp"
@@ -59,16 +59,12 @@ namespace signals = utils::signals;
 
 using utils::optional;
 
-
 /// Magic exit code to denote an error while preparing the subprocess.
 const int process::exit_isolation_failure = 124;
 
-
 namespace {
 
-
 static void fail [[noreturn]] (const std::string&, const int);
-
 
 /// Fails the process with an errno-based error message.
 ///
@@ -81,7 +77,6 @@ fail(const std::string& message, const int original_errno)
     std::cerr << message << ": " << std::strerror(original_errno) << '\n';
     std::exit(process::exit_isolation_failure);
 }
-
 
 /// Changes the owner of a path.
 ///
@@ -96,10 +91,10 @@ static void
 do_chown(const fs::path& file, const uid_t uid, const gid_t gid)
 {
     if (::chown(file.c_str(), uid, gid) == -1)
-        fail(F("chown(%s, %s, %s) failed; UID is %s and GID is %s")
-             % file % uid % gid % ::getuid() % ::getgid(), errno);
+        fail(F("chown(%s, %s, %s) failed; UID is %s and GID is %s") % file %
+                 uid % gid % ::getuid() % ::getgid(),
+             errno);
 }
-
 
 /// Resets the environment of the process to a known state.
 ///
@@ -109,9 +104,9 @@ do_chown(const fs::path& file, const uid_t uid, const gid_t gid)
 static void
 prepare_environment(const fs::path& work_directory)
 {
-    const char* to_unset[] = { "LANG", "LC_ALL", "LC_COLLATE", "LC_CTYPE",
-                               "LC_MESSAGES", "LC_MONETARY", "LC_NUMERIC",
-                               "LC_TIME", NULL };
+    const char* to_unset[] = { "LANG",       "LC_ALL",      "LC_COLLATE",
+                               "LC_CTYPE",   "LC_MESSAGES", "LC_MONETARY",
+                               "LC_NUMERIC", "LC_TIME",     NULL };
     const char** iter;
     for (iter = to_unset; *iter != NULL; ++iter) {
         utils::unsetenv(*iter);
@@ -122,9 +117,7 @@ prepare_environment(const fs::path& work_directory)
     utils::setenv("TZ", "UTC");
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Cleans up the container process to run a new child.
 ///
@@ -134,7 +127,7 @@ prepare_environment(const fs::path& work_directory)
 /// \param unprivileged_user Unprivileged user to run the test case as.
 /// \param work_directory Path to the test case-specific work directory.
 void
-process::isolate_child(const optional< passwd::user >& unprivileged_user,
+process::isolate_child(const optional<passwd::user>& unprivileged_user,
                        const fs::path& work_directory)
 {
     isolate_path(unprivileged_user, work_directory);
@@ -153,24 +146,27 @@ process::isolate_child(const optional< passwd::user >& unprivileged_user,
 
         if (user.gid != ::getgid()) {
             if (::setgid(user.gid) == -1)
-                fail(F("setgid(%s) failed; UID is %s and GID is %s")
-                     % user.gid % ::getuid() % ::getgid(), errno);
+                fail(F("setgid(%s) failed; UID is %s and GID is %s") %
+                         user.gid % ::getuid() % ::getgid(),
+                     errno);
             if (::getuid() == 0) {
                 ::gid_t groups[1];
                 groups[0] = user.gid;
                 if (::setgroups(1, groups) == -1)
-                    fail(F("setgroups(1, [%s]) failed; UID is %s and GID is %s")
-                         % user.gid % ::getuid() % ::getgid(), errno);
+                    fail(
+                        F("setgroups(1, [%s]) failed; UID is %s and GID is %s") %
+                            user.gid % ::getuid() % ::getgid(),
+                        errno);
             }
         }
         if (user.uid != ::getuid()) {
             if (::setuid(user.uid) == -1)
-                fail(F("setuid(%s) failed; UID is %s and GID is %s")
-                     % user.uid % ::getuid() % ::getgid(), errno);
+                fail(F("setuid(%s) failed; UID is %s and GID is %s") %
+                         user.uid % ::getuid() % ::getgid(),
+                     errno);
         }
     }
 }
-
 
 /// Sets up a path to be writable by a child isolated with isolate_child.
 ///
@@ -184,7 +180,7 @@ process::isolate_child(const optional< passwd::user >& unprivileged_user,
 /// \param unprivileged_user Unprivileged user to run the test case as.
 /// \param file Path to the file to modify.
 void
-process::isolate_path(const optional< passwd::user >& unprivileged_user,
+process::isolate_path(const optional<passwd::user>& unprivileged_user,
                       const fs::path& file)
 {
     if (!unprivileged_user || !passwd::current_user().is_root())

@@ -61,9 +61,7 @@ namespace sqlite = utils::sqlite;
 
 using utils::optional;
 
-
 namespace {
-
 
 /// Retrieves the environment variables of the context.
 ///
@@ -72,13 +70,13 @@ namespace {
 /// \return The environment variables of the specified context.
 ///
 /// \throw sqlite::error If there is a problem loading the variables.
-static std::map< std::string, std::string >
+static std::map<std::string, std::string>
 get_env_vars(sqlite::database& db)
 {
-    std::map< std::string, std::string > env;
+    std::map<std::string, std::string> env;
 
-    sqlite::statement stmt = db.create_statement(
-        "SELECT var_name, var_value FROM env_vars");
+    sqlite::statement stmt =
+        db.create_statement("SELECT var_name, var_value FROM env_vars");
 
     while (stmt.step()) {
         const std::string name = stmt.safe_column_text("var_name");
@@ -88,7 +86,6 @@ get_env_vars(sqlite::database& db)
 
     return env;
 }
-
 
 /// Retrieves a metadata object.
 ///
@@ -113,7 +110,6 @@ get_metadata(sqlite::database& db, const int64_t metadata_id)
     return builder.build();
 }
 
-
 /// Gets a file from the database.
 ///
 /// \param db The database to query the file from.
@@ -136,7 +132,7 @@ get_file(sqlite::database& db, const int64_t file_id)
     try {
         const sqlite::blob raw_contents = stmt.safe_column_blob("contents");
         const std::string contents(
-            static_cast< const char *>(raw_contents.memory), raw_contents.size);
+            static_cast<const char*>(raw_contents.memory), raw_contents.size);
 
         const bool more = stmt.step();
         INV(!more);
@@ -146,7 +142,6 @@ get_file(sqlite::database& db, const int64_t file_id)
         throw store::integrity_error(e.what());
     }
 }
-
 
 /// Gets all the test cases within a particular test program.
 ///
@@ -177,7 +172,6 @@ get_test_cases(sqlite::database& db, const int64_t test_program_id)
 
     return test_cases.build();
 }
-
 
 /// Retrieves a result from the database.
 ///
@@ -211,9 +205,7 @@ parse_result(sqlite::statement& stmt, const char* type_column,
     }
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Loads a specific test program from the database.
 ///
@@ -236,8 +228,7 @@ store::detail::get_test_program(read_backend& backend_, const int64_t id)
     stmt.step();
     const std::string interface = stmt.safe_column_text("interface");
     test_program.reset(new model::test_program(
-        interface,
-        fs::path(stmt.safe_column_text("relative_path")),
+        interface, fs::path(stmt.safe_column_text("relative_path")),
         fs::path(stmt.safe_column_text("root")),
         stmt.safe_column_text("test_suite_name"),
         get_metadata(db, stmt.safe_column_int64("metadata_id")),
@@ -249,7 +240,6 @@ store::detail::get_test_program(read_backend& backend_, const int64_t id)
     return test_program;
 }
 
-
 /// Internal implementation for a results iterator.
 struct store::results_iterator::impl : utils::noncopyable {
     /// The store backend we are dealing with.
@@ -259,8 +249,7 @@ struct store::results_iterator::impl : utils::noncopyable {
     sqlite::statement _stmt;
 
     /// A cache for the last loaded test program.
-    optional< std::pair< int64_t, model::test_program_ptr > >
-        _last_test_program;
+    optional<std::pair<int64_t, model::test_program_ptr>> _last_test_program;
 
     /// Whether the iterator is still valid or not.
     bool _valid;
@@ -287,22 +276,18 @@ struct store::results_iterator::impl : utils::noncopyable {
     }
 };
 
-
 /// Constructor.
 ///
 /// \param pimpl_ The internal implementation details of the iterator.
-store::results_iterator::results_iterator(
-    std::shared_ptr< impl > pimpl_) :
+store::results_iterator::results_iterator(std::shared_ptr<impl> pimpl_) :
     _pimpl(pimpl_)
 {
 }
-
 
 /// Destructor.
 store::results_iterator::~results_iterator(void)
 {
 }
-
 
 /// Moves the iterator forward by one result.
 ///
@@ -314,7 +299,6 @@ store::results_iterator::operator++(void)
     return *this;
 }
 
-
 /// Checks whether the iterator is still valid.
 ///
 /// \return True if there is more elements to iterate on, false otherwise.
@@ -322,7 +306,6 @@ store::results_iterator::operator bool(void) const
 {
     return _pimpl->_valid;
 }
-
 
 /// Gets the test program this result belongs to.
 ///
@@ -332,15 +315,13 @@ store::results_iterator::test_program(void) const
 {
     const int64_t id = _pimpl->_stmt.safe_column_int64("test_program_id");
     if (!_pimpl->_last_test_program ||
-        _pimpl->_last_test_program.get().first != id)
-    {
-        const model::test_program_ptr tp = detail::get_test_program(
-            _pimpl->_backend, id);
+        _pimpl->_last_test_program.get().first != id) {
+        const model::test_program_ptr tp =
+            detail::get_test_program(_pimpl->_backend, id);
         _pimpl->_last_test_program = std::make_pair(id, tp);
     }
     return _pimpl->_last_test_program.get().second;
 }
-
 
 /// Gets the name of the test case pointed by the iterator.
 ///
@@ -354,7 +335,6 @@ store::results_iterator::test_case_name(void) const
     return _pimpl->_stmt.safe_column_text("name");
 }
 
-
 /// Gets the result of the test case pointed by the iterator.
 ///
 /// \return A test case result.
@@ -363,7 +343,6 @@ store::results_iterator::result(void) const
 {
     return parse_result(_pimpl->_stmt, "result_type", "result_reason");
 }
-
 
 /// Gets the start time of the test case execution.
 ///
@@ -374,7 +353,6 @@ store::results_iterator::start_time(void) const
     return column_timestamp(_pimpl->_stmt, "start_time");
 }
 
-
 /// Gets the end time of the test case execution.
 ///
 /// \return The time when the test finished execution.
@@ -383,7 +361,6 @@ store::results_iterator::end_time(void) const
 {
     return column_timestamp(_pimpl->_stmt, "end_time");
 }
-
 
 /// Gets a file from a test case.
 ///
@@ -410,7 +387,6 @@ get_test_case_file(sqlite::database& db, const int64_t test_case_id,
         return "";
 }
 
-
 /// Gets the contents of stdout of a test case.
 ///
 /// \return A textual representation of the stdout contents of the test case.
@@ -423,7 +399,6 @@ store::results_iterator::stdout_contents(void) const
                               "__STDOUT__");
 }
 
-
 /// Gets the contents of stderr of a test case.
 ///
 /// \return A textual representation of the stderr contents of the test case.
@@ -435,7 +410,6 @@ store::results_iterator::stderr_contents(void) const
                               _pimpl->_stmt.safe_column_int64("test_case_id"),
                               "__STDERR__");
 }
-
 
 /// Internal implementation for a store read-only transaction.
 struct store::read_transaction::impl : utils::noncopyable {
@@ -459,7 +433,6 @@ struct store::read_transaction::impl : utils::noncopyable {
     }
 };
 
-
 /// Creates a new read-only transaction.
 ///
 /// \param backend_ The backend this transaction belongs to.
@@ -468,12 +441,10 @@ store::read_transaction::read_transaction(read_backend& backend_) :
 {
 }
 
-
 /// Destructor.
 store::read_transaction::~read_transaction(void)
 {
 }
-
 
 /// Finishes the transaction.
 ///
@@ -492,7 +463,6 @@ store::read_transaction::finish(void)
     }
 }
 
-
 /// Retrieves an context from the database.
 ///
 /// \return The retrieved context.
@@ -502,8 +472,8 @@ model::context
 store::read_transaction::get_context(void)
 {
     try {
-        sqlite::statement stmt = _pimpl->_db.create_statement(
-            "SELECT cwd FROM contexts");
+        sqlite::statement stmt =
+            _pimpl->_db.create_statement("SELECT cwd FROM contexts");
         if (!stmt.step())
             throw error("Error loading context: no data");
 
@@ -514,7 +484,6 @@ store::read_transaction::get_context(void)
     }
 }
 
-
 /// Creates a new iterator to scan tests results.
 ///
 /// \return The constructed iterator.
@@ -524,8 +493,8 @@ store::results_iterator
 store::read_transaction::get_results(void)
 {
     try {
-        return results_iterator(std::shared_ptr< results_iterator::impl >(
-           new results_iterator::impl(_pimpl->_backend)));
+        return results_iterator(std::shared_ptr<results_iterator::impl>(
+            new results_iterator::impl(_pimpl->_backend)));
     } catch (const sqlite::error& e) {
         throw error(e.what());
     }

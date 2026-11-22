@@ -32,22 +32,20 @@
 #if !defined(UTILS_SIGNALS_PROGRAMMER_HPP)
 #define UTILS_SIGNALS_PROGRAMMER_HPP
 
-#include "utils/signals/programmer_fwd.hpp"
-
 #include <memory>
 
 #include "utils/noncopyable.hpp"
+#include "utils/signals/programmer_fwd.hpp"
 
 namespace utils {
 namespace signals {
-
 
 /// A RAII class to program signal handlers.
 class programmer : noncopyable {
     struct impl;
 
     /// Pointer to the shared internal implementation.
-    std::unique_ptr< impl > _pimpl;
+    std::unique_ptr<impl> _pimpl;
 
 public:
     programmer(const int, const handler_type);
@@ -55,7 +53,6 @@ public:
 
     void unprogram(void);
 };
-
 
 } // namespace signals
 } // namespace utils

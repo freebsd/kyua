@@ -35,11 +35,9 @@
 namespace utils {
 namespace sqlite {
 
-
 class database;
 
+} // namespace sqlite
+} // namespace utils
 
-}  // namespace sqlite
-}  // namespace utils
-
-#endif  // !defined(UTILS_SQLITE_DATABASE_FWD_HPP)
+#endif // !defined(UTILS_SQLITE_DATABASE_FWD_HPP)

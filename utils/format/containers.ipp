@@ -29,10 +29,9 @@
 #if !defined(UTILS_FORMAT_CONTAINERS_IPP)
 #define UTILS_FORMAT_CONTAINERS_IPP
 
-#include "utils/format/containers.hpp"
-
 #include <ostream>
 
+#include "utils/format/containers.hpp"
 
 /// Injects the object into a stream.
 ///
@@ -40,13 +39,13 @@
 /// \param object The object to format.
 ///
 /// \return The output stream.
-template< typename K, typename V >
+template <typename K, typename V>
 std::ostream&
-std::operator<<(std::ostream& output, const std::map< K, V >& object)
+std::operator<<(std::ostream& output, const std::map<K, V>& object)
 {
     output << "map(";
-    typename std::map< K, V >::size_type counter = 0;
-    for (typename std::map< K, V >::const_iterator iter = object.begin();
+    typename std::map<K, V>::size_type counter = 0;
+    for (typename std::map<K, V>::const_iterator iter = object.begin();
          iter != object.end(); ++iter, ++counter) {
         if (counter != 0)
             output << ", ";
@@ -56,31 +55,29 @@ std::operator<<(std::ostream& output, const std::map< K, V >& object)
     return output;
 }
 
-
 /// Injects the object into a stream.
 ///
 /// \param output The stream into which to inject the object.
 /// \param object The object to format.
 ///
 /// \return The output stream.
-template< typename T1, typename T2 >
+template <typename T1, typename T2>
 std::ostream&
-std::operator<<(std::ostream& output, const std::pair< T1, T2 >& object)
+std::operator<<(std::ostream& output, const std::pair<T1, T2>& object)
 {
     output << "pair(" << object.first << ", " << object.second << ")";
     return output;
 }
 
-
 /// Injects the object into a stream.
 ///
 /// \param output The stream into which to inject the object.
 /// \param object The object to format.
 ///
 /// \return The output stream.
-template< typename T >
+template <typename T>
 std::ostream&
-std::operator<<(std::ostream& output, const std::shared_ptr< T > object)
+std::operator<<(std::ostream& output, const std::shared_ptr<T> object)
 {
     if (object.get() == NULL) {
         output << "<NULL>";
@@ -90,20 +87,19 @@ std::operator<<(std::ostream& output, const std::shared_ptr< T > object)
     return output;
 }
 
-
 /// Injects the object into a stream.
 ///
 /// \param output The stream into which to inject the object.
 /// \param object The object to format.
 ///
 /// \return The output stream.
-template< typename T >
+template <typename T>
 std::ostream&
-std::operator<<(std::ostream& output, const std::set< T >& object)
+std::operator<<(std::ostream& output, const std::set<T>& object)
 {
     output << "set(";
-    typename std::set< T >::size_type counter = 0;
-    for (typename std::set< T >::const_iterator iter = object.begin();
+    typename std::set<T>::size_type counter = 0;
+    for (typename std::set<T>::const_iterator iter = object.begin();
          iter != object.end(); ++iter, ++counter) {
         if (counter != 0)
             output << ", ";
@@ -113,19 +109,18 @@ std::operator<<(std::ostream& output, const std::set< T >& object)
     return output;
 }
 
-
 /// Injects the object into a stream.
 ///
 /// \param output The stream into which to inject the object.
 /// \param object The object to format.
 ///
 /// \return The output stream.
-template< typename T >
+template <typename T>
 std::ostream&
-std::operator<<(std::ostream& output, const std::vector< T >& object)
+std::operator<<(std::ostream& output, const std::vector<T>& object)
 {
     output << "[";
-    for (typename std::vector< T >::size_type i = 0; i < object.size(); ++i) {
+    for (typename std::vector<T>::size_type i = 0; i < object.size(); ++i) {
         if (i != 0)
             output << ", ";
         output << object[i];
@@ -134,5 +129,4 @@ std::operator<<(std::ostream& output, const std::vector< T >& object)
     return output;
 }
 
-
-#endif  // !defined(UTILS_FORMAT_CONTAINERS_IPP)
+#endif // !defined(UTILS_FORMAT_CONTAINERS_IPP)

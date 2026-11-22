@@ -27,24 +27,19 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "store/exceptions.hpp"
-
 #include "utils/format/macros.hpp"
-
 
 /// Constructs a new error with a plain-text message.
 ///
 /// \param message The plain-text error message.
-store::error::error(const std::string& message) :
-    std::runtime_error(message)
+store::error::error(const std::string& message) : std::runtime_error(message)
 {
 }
-
 
 /// Destructor for the error.
 store::error::~error(void) throw()
 {
 }
-
 
 /// Constructs a new error with a plain-text message.
 ///
@@ -54,29 +49,26 @@ store::integrity_error::integrity_error(const std::string& message) :
 {
 }
 
-
 /// Destructor for the error.
 store::integrity_error::~integrity_error(void) throw()
 {
 }
-
 
 /// Constructs a new error with a plain-text message.
 ///
 /// \param version Version of the current schema.
 store::old_schema_error::old_schema_error(const int version) :
     error(F("The database contains version %s of the schema, which is "
-            "stale and needs to be upgraded") % version),
+            "stale and needs to be upgraded") %
+          version),
     _old_version(version)
 {
 }
-
 
 /// Destructor for the error.
 store::old_schema_error::~old_schema_error(void) throw()
 {
 }
-
 
 /// Returns the current schema version in the database.
 ///

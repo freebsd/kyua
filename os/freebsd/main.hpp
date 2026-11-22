@@ -36,6 +36,6 @@ namespace freebsd {
 
 int main(const int argc, const char* const* const argv);
 
-}  // namespace freebsd
+} // namespace freebsd
 
-#endif  // !defined(FREEBSD_MAIN_HPP)
+#endif // !defined(FREEBSD_MAIN_HPP)

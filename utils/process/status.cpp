@@ -42,9 +42,8 @@ using utils::none;
 using utils::optional;
 
 #if !defined(WCOREDUMP)
-#   define WCOREDUMP(x) false
+#define WCOREDUMP(x) false
 #endif
-
 
 /// Constructs a new status object based on the status value of waitpid(2).
 ///
@@ -52,29 +51,26 @@ using utils::optional;
 /// \param stat_loc The status value returnd by waitpid(2).
 process::status::status(const int dead_pid_, int stat_loc) :
     _dead_pid(dead_pid_),
-    _exited(WIFEXITED(stat_loc) ?
-            optional< int >(WEXITSTATUS(stat_loc)) : none),
+    _exited(WIFEXITED(stat_loc) ? optional<int>(WEXITSTATUS(stat_loc)) : none),
     _signaled(WIFSIGNALED(stat_loc) ?
-              optional< std::pair< int, bool > >(
-                  std::make_pair(WTERMSIG(stat_loc), WCOREDUMP(stat_loc))) :
+                  optional<std::pair<int, bool>>(
+                      std::make_pair(WTERMSIG(stat_loc), WCOREDUMP(stat_loc))) :
                   none)
 {
 }
-
 
 /// Constructs a new status object based on fake values.
 ///
 /// \param exited_ If not none, specifies the exit status of the program.
 /// \param signaled_ If not none, specifies the termination signal and whether
 ///     the process dumped core or not.
-process::status::status(const optional< int >& exited_,
-                        const optional< std::pair< int, bool > >& signaled_) :
+process::status::status(const optional<int>& exited_,
+                        const optional<std::pair<int, bool>>& signaled_) :
     _dead_pid(-1),
     _exited(exited_),
     _signaled(signaled_)
 {
 }
-
 
 /// Constructs a new status object based on a fake exit status.
 ///
@@ -87,7 +83,6 @@ process::status::fake_exited(const int exitstatus_)
     return status(utils::make_optional(exitstatus_), none);
 }
 
-
 /// Constructs a new status object based on a fake exit status.
 ///
 /// \param termsig_ The termination signal of the process.
@@ -97,10 +92,9 @@ process::status::fake_exited(const int exitstatus_)
 process::status
 process::status::fake_signaled(const int termsig_, const bool coredump_)
 {
-    return status(none, utils::make_optional(std::make_pair(termsig_,
-                                                            coredump_)));
+    return status(none,
+                  utils::make_optional(std::make_pair(termsig_, coredump_)));
 }
-
 
 /// Returns the PID of the process this status was taken from.
 ///
@@ -115,7 +109,6 @@ process::status::dead_pid(void) const
     return _dead_pid;
 }
 
-
 /// Returns whether the process exited cleanly or not.
 ///
 /// \return True if the process exited cleanly, false otherwise.
@@ -124,7 +117,6 @@ process::status::exited(void) const
 {
     return _exited;
 }
-
 
 /// Returns the exit code of the process.
 ///
@@ -138,7 +130,6 @@ process::status::exitstatus(void) const
     return _exited.get();
 }
 
-
 /// Returns whether the process terminated due to a signal or not.
 ///
 /// \return True if the process terminated due to a signal, false otherwise.
@@ -147,7 +138,6 @@ process::status::signaled(void) const
 {
     return _signaled;
 }
-
 
 /// Returns the signal that terminated the process.
 ///
@@ -161,7 +151,6 @@ process::status::termsig(void) const
     PRE(signaled());
     return _signaled.get().first;
 }
-
 
 /// Returns whether the process core dumped or not.
 ///
@@ -179,7 +168,6 @@ process::status::coredump(void) const
     return _signaled.get().second;
 }
 
-
 /// Injects the object into a stream.
 ///
 /// \param output The stream into which to inject the object.
@@ -194,7 +182,7 @@ process::operator<<(std::ostream& output, const status& status)
     } else {
         INV(status.signaled());
         output << F("status{termsig=%s, coredump=%s}") % status.termsig() %
-            status.coredump();
+                status.coredump();
     }
     return output;
 }

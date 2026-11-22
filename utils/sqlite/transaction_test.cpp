@@ -26,20 +26,17 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/sqlite/transaction.hpp"
-
 #include <atf-c++.hpp>
 
 #include "utils/format/macros.hpp"
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/exceptions.hpp"
 #include "utils/sqlite/statement.ipp"
+#include "utils/sqlite/transaction.hpp"
 
 namespace sqlite = utils::sqlite;
 
-
 namespace {
-
 
 /// Ensures that a table has a single specific value in a column.
 ///
@@ -54,9 +51,9 @@ static bool
 check_in_table(sqlite::database& db, const char* table_name,
                const char* column_name, int exp_value)
 {
-    sqlite::statement stmt = db.create_statement(
-        F("SELECT * FROM %s WHERE %s == %s") % table_name % column_name %
-        exp_value);
+    sqlite::statement stmt =
+        db.create_statement(F("SELECT * FROM %s WHERE %s == %s") % table_name %
+                            column_name % exp_value);
     if (!stmt.step())
         return false;
     if (stmt.step())
@@ -64,9 +61,7 @@ check_in_table(sqlite::database& db, const char* table_name,
     return true;
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 ATF_TEST_CASE_WITHOUT_HEAD(automatic_rollback);
 ATF_TEST_CASE_BODY(automatic_rollback)
@@ -78,10 +73,9 @@ ATF_TEST_CASE_BODY(automatic_rollback)
         sqlite::transaction tx = db.begin_transaction();
         db.exec("INSERT INTO t VALUES (5)");
     }
-    ATF_REQUIRE( check_in_table(db, "t", "col", 3));
+    ATF_REQUIRE(check_in_table(db, "t", "col", 3));
     ATF_REQUIRE(!check_in_table(db, "t", "col", 5));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(explicit_commit);
 ATF_TEST_CASE_BODY(explicit_commit)
@@ -98,7 +92,6 @@ ATF_TEST_CASE_BODY(explicit_commit)
     ATF_REQUIRE(check_in_table(db, "t", "col", 5));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(explicit_rollback);
 ATF_TEST_CASE_BODY(explicit_rollback)
 {
@@ -110,10 +103,9 @@ ATF_TEST_CASE_BODY(explicit_rollback)
         db.exec("INSERT INTO t VALUES (5)");
         tx.rollback();
     }
-    ATF_REQUIRE( check_in_table(db, "t", "col", 3));
+    ATF_REQUIRE(check_in_table(db, "t", "col", 3));
     ATF_REQUIRE(!check_in_table(db, "t", "col", 5));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(nested_fail);
 ATF_TEST_CASE_BODY(nested_fail)
@@ -124,7 +116,6 @@ ATF_TEST_CASE_BODY(nested_fail)
         ATF_REQUIRE_THROW(sqlite::error, db.begin_transaction());
     }
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

@@ -26,10 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <cstdlib>
-
 #include <atf-c++.hpp>
-
+#include <cstdlib>
 
 ATF_TEST_CASE(get_variable);
 ATF_TEST_CASE_HEAD(get_variable)
@@ -43,8 +41,9 @@ ATF_TEST_CASE_HEAD(get_variable)
         set_md_var("require.config", varname);
     } else {
         if (has_config_var(varname)) {
-            atf::utils::create_file(output, get_config_var(varname) +
-                                    std::string("\n"));
+            atf::utils::create_file(output,
+                                    get_config_var(varname) +
+                                        std::string("\n"));
         } else {
             atf::utils::create_file(output, "NOT DEFINED\n");
         }
@@ -54,7 +53,6 @@ ATF_TEST_CASE_BODY(get_variable)
 {
     ATF_REQUIRE_EQ("value2", get_config_var("the-variable"));
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

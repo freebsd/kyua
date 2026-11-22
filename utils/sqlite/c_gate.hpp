@@ -43,7 +43,6 @@ extern "C" {
 namespace utils {
 namespace sqlite {
 
-
 /// Gateway to the raw C database of SQLite 3.
 ///
 /// This class provides a mechanism to muck with the internals of the database
@@ -67,8 +66,7 @@ public:
     ::sqlite3* c_database(void);
 };
 
+} // namespace sqlite
+} // namespace utils
 
-}  // namespace sqlite
-}  // namespace utils
-
-#endif  // !defined(UTILS_SQLITE_C_GATE_HPP)
+#endif // !defined(UTILS_SQLITE_C_GATE_HPP)

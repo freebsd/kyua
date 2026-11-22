@@ -47,7 +47,6 @@
 namespace drivers {
 namespace list_tests {
 
-
 /// Abstract definition of the hooks for this driver.
 class base_hooks {
 public:
@@ -61,7 +60,6 @@ public:
                                const std::string& test_case_name) = 0;
 };
 
-
 /// Tuple containing the results of this driver.
 class result {
 public:
@@ -69,24 +67,22 @@ public:
     ///
     /// The presence of any filters here probably indicates a usage error.  If a
     /// test filter does not match any test case, it is probably a typo.
-    std::set< engine::test_filter > unused_filters;
+    std::set<engine::test_filter> unused_filters;
 
     /// Initializer for the tuple's fields.
     ///
     /// \param unused_filters_ The filters that did not match any test case.
-    result(const std::set< engine::test_filter >& unused_filters_) :
+    result(const std::set<engine::test_filter>& unused_filters_) :
         unused_filters(unused_filters_)
     {
     }
 };
 
+result drive(const utils::fs::path&, const utils::optional<utils::fs::path>,
+             const std::set<engine::test_filter>&, const utils::config::tree&,
+             base_hooks&);
 
-result drive(const utils::fs::path&, const utils::optional< utils::fs::path >,
-             const std::set< engine::test_filter >&,
-             const utils::config::tree&, base_hooks&);
+} // namespace list_tests
+} // namespace drivers
 
-
-}  // namespace list_tests
-}  // namespace drivers
-
-#endif  // !defined(DRIVERS_LIST_TESTS_HPP)
+#endif // !defined(DRIVERS_LIST_TESTS_HPP)

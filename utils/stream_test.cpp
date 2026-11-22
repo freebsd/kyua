@@ -26,25 +26,22 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/stream.hpp"
-
+#include <atf-c++.hpp>
 #include <cstdlib>
 #include <sstream>
 
-#include <atf-c++.hpp>
-
 #include "utils/fs/path.hpp"
+#include "utils/stream.hpp"
 
 namespace fs = utils::fs;
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(open_ostream__stdout);
 ATF_TEST_CASE_BODY(open_ostream__stdout)
 {
     const pid_t pid = atf::utils::fork();
     if (pid == 0) {
-        std::unique_ptr< std::ostream > output = utils::open_ostream(
-            fs::path("/dev/stdout"));
+        std::unique_ptr<std::ostream> output =
+            utils::open_ostream(fs::path("/dev/stdout"));
         (*output) << "Message to stdout\n";
         output.reset();
         std::exit(EXIT_SUCCESS);
@@ -52,14 +49,13 @@ ATF_TEST_CASE_BODY(open_ostream__stdout)
     atf::utils::wait(pid, EXIT_SUCCESS, "Message to stdout\n", "");
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(open_ostream__stderr);
 ATF_TEST_CASE_BODY(open_ostream__stderr)
 {
     const pid_t pid = atf::utils::fork();
     if (pid == 0) {
-        std::unique_ptr< std::ostream > output = utils::open_ostream(
-            fs::path("/dev/stderr"));
+        std::unique_ptr<std::ostream> output =
+            utils::open_ostream(fs::path("/dev/stderr"));
         (*output) << "Message to stderr\n";
         output.reset();
         std::exit(EXIT_SUCCESS);
@@ -67,14 +63,13 @@ ATF_TEST_CASE_BODY(open_ostream__stderr)
     atf::utils::wait(pid, EXIT_SUCCESS, "", "Message to stderr\n");
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(open_ostream__other);
 ATF_TEST_CASE_BODY(open_ostream__other)
 {
     const pid_t pid = atf::utils::fork();
     if (pid == 0) {
-        std::unique_ptr< std::ostream > output = utils::open_ostream(
-            fs::path("some-file.txt"));
+        std::unique_ptr<std::ostream> output =
+            utils::open_ostream(fs::path("some-file.txt"));
         (*output) << "Message to other file\n";
         output.reset();
         std::exit(EXIT_SUCCESS);
@@ -83,14 +78,12 @@ ATF_TEST_CASE_BODY(open_ostream__other)
     atf::utils::compare_file("some-file.txt", "Message to other file\n");
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(stream_length__empty);
 ATF_TEST_CASE_BODY(stream_length__empty)
 {
     std::istringstream input("");
     ATF_REQUIRE_EQ(0, utils::stream_length(input));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(stream_length__some);
 ATF_TEST_CASE_BODY(stream_length__some)
@@ -99,9 +92,8 @@ ATF_TEST_CASE_BODY(stream_length__some)
     std::istringstream input(contents);
     ATF_REQUIRE_EQ(
         contents.length(),
-        static_cast< std::string::size_type >(utils::stream_length(input)));
+        static_cast<std::string::size_type>(utils::stream_length(input)));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(read_file__ok);
 ATF_TEST_CASE_BODY(read_file__ok)
@@ -111,7 +103,6 @@ ATF_TEST_CASE_BODY(read_file__ok)
     ATF_REQUIRE_EQ(contents, utils::read_file(fs::path("input.txt")));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(read_file__missing_file);
 ATF_TEST_CASE_BODY(read_file__missing_file)
 {
@@ -120,14 +111,12 @@ ATF_TEST_CASE_BODY(read_file__missing_file)
                          utils::read_file(fs::path("foo.txt")));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(read_stream__empty);
 ATF_TEST_CASE_BODY(read_stream__empty)
 {
     std::istringstream input("");
     ATF_REQUIRE_EQ("", utils::read_stream(input));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(read_stream__some);
 ATF_TEST_CASE_BODY(read_stream__some)
@@ -138,7 +127,6 @@ ATF_TEST_CASE_BODY(read_stream__some)
     std::istringstream input(contents);
     ATF_REQUIRE_EQ(contents, utils::read_stream(input));
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

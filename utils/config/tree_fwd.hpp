@@ -38,15 +38,12 @@
 namespace utils {
 namespace config {
 
-
 /// Flat representation of all properties as strings.
-typedef std::map< std::string, std::string > properties_map;
-
+typedef std::map<std::string, std::string> properties_map;
 
 class tree;
 
+} // namespace config
+} // namespace utils
 
-}  // namespace config
-}  // namespace utils
-
-#endif  // !defined(UTILS_CONFIG_TREE_FWD_HPP)
+#endif // !defined(UTILS_CONFIG_TREE_FWD_HPP)

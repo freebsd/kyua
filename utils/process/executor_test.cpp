@@ -37,13 +37,12 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include <atf-c++.hpp>
 #include <cerrno>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <vector>
-
-#include <atf-c++.hpp>
 
 #include "utils/datetime.hpp"
 #include "utils/defs.hpp"
@@ -72,16 +71,13 @@ namespace text = utils::text;
 using utils::none;
 using utils::optional;
 
-
 /// Large timeout for the processes we spawn.
 ///
 /// This number is supposed to be (much) larger than the timeout of the test
 /// cases that use it so that children processes are not killed spuriously.
 static const datetime::delta infinite_timeout(1000000, 0);
 
-
 static void do_exit [[noreturn]] (const int);
-
 
 /// Terminates a subprocess without invoking destructors.
 ///
@@ -101,7 +97,6 @@ do_exit(const int exit_code)
     ::_exit(exit_code);
 }
 
-
 /// Subprocess that creates a cookie file in its work directory.
 class child_create_cookie {
     /// Name of the cookie to create.
@@ -117,8 +112,7 @@ public:
     }
 
     /// Runs the subprocess.
-    void
-    operator() [[noreturn]] (const fs::path& /* control_directory */)
+    void operator() [[noreturn]] (const fs::path& /* control_directory */)
     {
         std::cout << "Creating cookie: " << _cookie_name << " (stdout)\n";
         std::cerr << "Creating cookie: " << _cookie_name << " (stderr)\n";
@@ -127,9 +121,7 @@ public:
     }
 };
 
-
 static void child_delete_all [[noreturn]] (const fs::path&);
-
 
 /// Subprocess that deletes all files in the current directory.
 ///
@@ -148,14 +140,11 @@ child_delete_all(const fs::path& control_directory)
         std::abort();
     }
 
-    const int exit_code = ::system("rm *") == -1
-        ? EXIT_FAILURE : EXIT_SUCCESS;
+    const int exit_code = ::system("rm *") == -1 ? EXIT_FAILURE : EXIT_SUCCESS;
     do_exit(exit_code);
 }
 
-
 static void child_dump_unprivileged_user [[noreturn]] (const fs::path&);
-
 
 /// Subprocess that dumps user configuration.
 static void
@@ -165,7 +154,6 @@ child_dump_unprivileged_user(const fs::path& /* control_directory */)
     std::cout << F("UID = %s\n") % current_user.uid;
     do_exit(EXIT_SUCCESS);
 }
-
 
 /// Subprocess that returns a specific exit code.
 class child_exit {
@@ -181,16 +169,13 @@ public:
     }
 
     /// Runs the subprocess.
-    void
-    operator() [[noreturn]] (const fs::path& /* control_directory */)
+    void operator() [[noreturn]] (const fs::path& /* control_directory */)
     {
         do_exit(_exit_code);
     }
 };
 
-
 static void child_pause [[noreturn]] (const fs::path&);
-
 
 /// Subprocess that just blocks.
 static void
@@ -204,9 +189,7 @@ child_pause(const fs::path& /* control_directory */)
     std::abort();
 }
 
-
 static void child_print [[noreturn]] (const fs::path&);
-
 
 /// Subprocess that writes to stdout and stderr.
 static void
@@ -217,7 +200,6 @@ child_print(const fs::path& /* control_directory */)
 
     do_exit(EXIT_SUCCESS);
 }
-
 
 /// Subprocess that sleeps for a period of time before exiting.
 class child_sleep {
@@ -233,25 +215,21 @@ public:
     }
 
     /// Runs the subprocess.
-    void
-    operator() [[noreturn]] (const fs::path& /* control_directory */)
+    void operator() [[noreturn]] (const fs::path& /* control_directory */)
     {
         ::sleep(_seconds);
         do_exit(EXIT_SUCCESS);
     }
 };
 
-
 static void child_spawn_blocking_child [[noreturn]] (const fs::path&);
-
 
 /// Subprocess that spawns a subchild that gets stuck.
 ///
 /// Used by the caller to validate that the whole process tree is terminated
 /// when this subprocess is killed.
 static void
-child_spawn_blocking_child(
-    const fs::path& /* control_directory */)
+child_spawn_blocking_child(const fs::path& /* control_directory */)
 {
     pid_t pid = ::fork();
     if (pid == -1) {
@@ -274,9 +252,7 @@ child_spawn_blocking_child(
     }
 }
 
-
 static void child_validate_isolation [[noreturn]] (const fs::path&);
-
 
 /// Subprocess that checks if isolate_child() has been called.
 static void
@@ -293,7 +269,6 @@ child_validate_isolation(const fs::path& /* control_directory */)
     do_exit(EXIT_SUCCESS);
 }
 
-
 /// Invokes executor::spawn() with default arguments.
 ///
 /// \param handle The executor on which to invoke spawn().
@@ -307,19 +282,18 @@ child_validate_isolation(const fs::path& /* control_directory */)
 ///     test case.
 ///
 /// \return The exec handle for the spawned binary.
-template< class Hook >
+template <class Hook>
 static executor::exec_handle
 do_spawn(executor::executor_handle& handle, Hook hook,
          const datetime::delta& timeout = infinite_timeout,
-         const optional< passwd::user > unprivileged_user = none,
-         const optional< fs::path > stdout_target = none,
-         const optional< fs::path > stderr_target = none)
+         const optional<passwd::user> unprivileged_user = none,
+         const optional<fs::path> stdout_target = none,
+         const optional<fs::path> stderr_target = none)
 {
-    const executor::exec_handle exec_handle = handle.spawn< Hook >(
+    const executor::exec_handle exec_handle = handle.spawn<Hook>(
         hook, timeout, unprivileged_user, stdout_target, stderr_target);
     return exec_handle;
 }
-
 
 /// Checks for a specific exit status in the status of a exit_handle.
 ///
@@ -329,13 +303,12 @@ do_spawn(executor::executor_handle& handle, Hook hook,
 /// \post Terminates the calling test case if the status does not match the
 /// required value.
 static void
-require_exit(const int exit_status, const optional< process::status > status)
+require_exit(const int exit_status, const optional<process::status> status)
 {
     ATF_REQUIRE(status);
     ATF_REQUIRE(status.get().exited());
     ATF_REQUIRE_EQ(exit_status, status.get().exitstatus());
 }
-
 
 /// Ensures that a killed process is gone.
 ///
@@ -371,7 +344,6 @@ retry:
     }
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(integration__run_one);
 ATF_TEST_CASE_BODY(integration__run_one)
 {
@@ -387,7 +359,6 @@ ATF_TEST_CASE_BODY(integration__run_one)
     handle.cleanup();
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(integration__run_many);
 ATF_TEST_CASE_BODY(integration__run_many)
 {
@@ -396,11 +367,11 @@ ATF_TEST_CASE_BODY(integration__run_many)
     executor::executor_handle handle = executor::setup();
 
     std::size_t total_children = 0;
-    std::map< int, int > exp_exit_statuses;
-    std::map< int, datetime::timestamp > exp_start_times;
+    std::map<int, int> exp_exit_statuses;
+    std::map<int, datetime::timestamp> exp_start_times;
     for (std::size_t i = 0; i < num_children; ++i) {
-        const datetime::timestamp start_time = datetime::timestamp::from_values(
-            2014, 12, 8, 9, 40, 0, i);
+        const datetime::timestamp start_time =
+            datetime::timestamp::from_values(2014, 12, 8, 9, 40, 0, i);
 
         for (std::size_t j = 0; j < 3; j++) {
             const std::size_t id = i * 3 + j;
@@ -414,15 +385,15 @@ ATF_TEST_CASE_BODY(integration__run_many)
     }
 
     for (std::size_t i = 0; i < total_children; ++i) {
-        const datetime::timestamp end_time = datetime::timestamp::from_values(
-            2014, 12, 8, 9, 50, 10, i);
+        const datetime::timestamp end_time =
+            datetime::timestamp::from_values(2014, 12, 8, 9, 50, 10, i);
         datetime::set_mock_now(end_time);
         executor::exit_handle exit_handle = handle.wait_any();
         const int original_pid = exit_handle.original_pid();
 
         const int exit_status = exp_exit_statuses.find(original_pid)->second;
-        const datetime::timestamp& start_time = exp_start_times.find(
-            original_pid)->second;
+        const datetime::timestamp& start_time =
+            exp_start_times.find(original_pid)->second;
 
         require_exit(exit_status, exit_handle.status());
 
@@ -431,17 +402,14 @@ ATF_TEST_CASE_BODY(integration__run_many)
 
         exit_handle.cleanup();
 
-        ATF_REQUIRE(!atf::utils::file_exists(
-                        exit_handle.stdout_file().str()));
-        ATF_REQUIRE(!atf::utils::file_exists(
-                        exit_handle.stderr_file().str()));
-        ATF_REQUIRE(!atf::utils::file_exists(
-                        exit_handle.work_directory().str()));
+        ATF_REQUIRE(!atf::utils::file_exists(exit_handle.stdout_file().str()));
+        ATF_REQUIRE(!atf::utils::file_exists(exit_handle.stderr_file().str()));
+        ATF_REQUIRE(
+            !atf::utils::file_exists(exit_handle.work_directory().str()));
     }
 
     handle.cleanup();
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(integration__parameters_and_output);
 ATF_TEST_CASE_BODY(integration__parameters_and_output)
@@ -457,11 +425,11 @@ ATF_TEST_CASE_BODY(integration__parameters_and_output)
     require_exit(EXIT_SUCCESS, exit_handle.status());
 
     const fs::path stdout_file = exit_handle.stdout_file();
-    ATF_REQUIRE(atf::utils::compare_file(
-        stdout_file.str(), "stdout: some text\n"));
+    ATF_REQUIRE(atf::utils::compare_file(stdout_file.str(),
+                                         "stdout: some text\n"));
     const fs::path stderr_file = exit_handle.stderr_file();
-    ATF_REQUIRE(atf::utils::compare_file(
-        stderr_file.str(), "stderr: some other text\n"));
+    ATF_REQUIRE(atf::utils::compare_file(stderr_file.str(),
+                                         "stderr: some other text\n"));
 
     exit_handle.cleanup();
     ATF_REQUIRE(!fs::exists(stdout_file));
@@ -469,7 +437,6 @@ ATF_TEST_CASE_BODY(integration__parameters_and_output)
 
     handle.cleanup();
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(integration__custom_output_files);
 ATF_TEST_CASE_BODY(integration__custom_output_files)
@@ -481,8 +448,7 @@ ATF_TEST_CASE_BODY(integration__custom_output_files)
 
     const executor::exec_handle exec_handle = do_spawn(
         handle, child_print, infinite_timeout, none,
-        utils::make_optional(stdout_file),
-        utils::make_optional(stderr_file));
+        utils::make_optional(stdout_file), utils::make_optional(stderr_file));
 
     executor::exit_handle exit_handle = handle.wait_any();
 
@@ -498,22 +464,21 @@ ATF_TEST_CASE_BODY(integration__custom_output_files)
     handle.cleanup();
 
     // Must compare after cleanup to ensure the files did not get deleted.
-    ATF_REQUIRE(atf::utils::compare_file(
-        stdout_file.str(), "stdout: some text\n"));
-    ATF_REQUIRE(atf::utils::compare_file(
-        stderr_file.str(), "stderr: some other text\n"));
+    ATF_REQUIRE(atf::utils::compare_file(stdout_file.str(),
+                                         "stdout: some text\n"));
+    ATF_REQUIRE(atf::utils::compare_file(stderr_file.str(),
+                                         "stderr: some other text\n"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(integration__timestamps);
 ATF_TEST_CASE_BODY(integration__timestamps)
 {
     executor::executor_handle handle = executor::setup();
 
-    const datetime::timestamp start_time = datetime::timestamp::from_values(
-        2014, 12, 8, 9, 35, 10, 1000);
-    const datetime::timestamp end_time = datetime::timestamp::from_values(
-        2014, 12, 8, 9, 35, 20, 2000);
+    const datetime::timestamp start_time =
+        datetime::timestamp::from_values(2014, 12, 8, 9, 35, 10, 1000);
+    const datetime::timestamp end_time =
+        datetime::timestamp::from_values(2014, 12, 8, 9, 35, 20, 2000);
 
     datetime::set_mock_now(start_time);
     do_spawn(handle, child_exit(70));
@@ -530,7 +495,6 @@ ATF_TEST_CASE_BODY(integration__timestamps)
     handle.cleanup();
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(integration__files);
 ATF_TEST_CASE_BODY(integration__files)
 {
@@ -541,7 +505,7 @@ ATF_TEST_CASE_BODY(integration__files)
     executor::exit_handle exit_handle = handle.wait_any();
 
     ATF_REQUIRE(atf::utils::file_exists(
-                    (exit_handle.work_directory() / "cookie.12345").str()));
+        (exit_handle.work_directory() / "cookie.12345").str()));
 
     exit_handle.cleanup();
 
@@ -551,7 +515,6 @@ ATF_TEST_CASE_BODY(integration__files)
 
     handle.cleanup();
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(integration__followup);
 ATF_TEST_CASE_BODY(integration__followup)
@@ -586,23 +549,23 @@ ATF_TEST_CASE_BODY(integration__followup)
                    exit_3_handle.work_directory());
 
     ATF_REQUIRE(atf::utils::file_exists(
-                    (exit_1_handle.work_directory() / "cookie.1").str()));
+        (exit_1_handle.work_directory() / "cookie.1").str()));
     ATF_REQUIRE(atf::utils::file_exists(
-                    (exit_1_handle.work_directory() / "cookie.2").str()));
+        (exit_1_handle.work_directory() / "cookie.2").str()));
     ATF_REQUIRE(atf::utils::file_exists(
-                    (exit_1_handle.work_directory() / "cookie.3").str()));
+        (exit_1_handle.work_directory() / "cookie.3").str()));
 
-    ATF_REQUIRE(atf::utils::compare_file(
-                    exit_1_handle.stdout_file().str(),
-                    "Creating cookie: cookie.1 (stdout)\n"
-                    "Creating cookie: cookie.2 (stdout)\n"
-                    "Creating cookie: cookie.3 (stdout)\n"));
+    ATF_REQUIRE(
+        atf::utils::compare_file(exit_1_handle.stdout_file().str(),
+                                 "Creating cookie: cookie.1 (stdout)\n"
+                                 "Creating cookie: cookie.2 (stdout)\n"
+                                 "Creating cookie: cookie.3 (stdout)\n"));
 
-    ATF_REQUIRE(atf::utils::compare_file(
-                    exit_1_handle.stderr_file().str(),
-                    "Creating cookie: cookie.1 (stderr)\n"
-                    "Creating cookie: cookie.2 (stderr)\n"
-                    "Creating cookie: cookie.3 (stderr)\n"));
+    ATF_REQUIRE(
+        atf::utils::compare_file(exit_1_handle.stderr_file().str(),
+                                 "Creating cookie: cookie.1 (stderr)\n"
+                                 "Creating cookie: cookie.2 (stderr)\n"
+                                 "Creating cookie: cookie.3 (stderr)\n"));
 
     exit_3_handle.cleanup();
 
@@ -612,7 +575,6 @@ ATF_TEST_CASE_BODY(integration__followup)
 
     handle.cleanup();
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(integration__output_files_always_exist);
 ATF_TEST_CASE_BODY(integration__output_files_always_exist)
@@ -636,7 +598,6 @@ ATF_TEST_CASE_BODY(integration__output_files_always_exist)
     handle.cleanup();
 }
 
-
 ATF_TEST_CASE(integration__timeouts);
 ATF_TEST_CASE_HEAD(integration__timeouts)
 {
@@ -646,12 +607,11 @@ ATF_TEST_CASE_BODY(integration__timeouts)
 {
     executor::executor_handle handle = executor::setup();
 
-    const executor::exec_handle exec_handle1 =
-        do_spawn(handle, child_sleep(30), datetime::delta(2, 0));
-    const executor::exec_handle exec_handle2 =
-        do_spawn(handle, child_sleep(40), datetime::delta(5, 0));
-    const executor::exec_handle exec_handle3 =
-        do_spawn(handle, child_exit(15));
+    const executor::exec_handle exec_handle1 = do_spawn(handle, child_sleep(30),
+                                                        datetime::delta(2, 0));
+    const executor::exec_handle exec_handle2 = do_spawn(handle, child_sleep(40),
+                                                        datetime::delta(5, 0));
+    const executor::exec_handle exec_handle3 = do_spawn(handle, child_exit(15));
 
     {
         executor::exit_handle exit_handle = handle.wait_any();
@@ -664,8 +624,8 @@ ATF_TEST_CASE_BODY(integration__timeouts)
         executor::exit_handle exit_handle = handle.wait_any();
         ATF_REQUIRE_EQ(exec_handle1.pid(), exit_handle.original_pid());
         ATF_REQUIRE(!exit_handle.status());
-        const datetime::delta duration =
-            exit_handle.end_time() - exit_handle.start_time();
+        const datetime::delta duration = exit_handle.end_time() -
+            exit_handle.start_time();
         ATF_REQUIRE(duration < datetime::delta(10, 0));
         ATF_REQUIRE(duration >= datetime::delta(2, 0));
         exit_handle.cleanup();
@@ -675,8 +635,8 @@ ATF_TEST_CASE_BODY(integration__timeouts)
         executor::exit_handle exit_handle = handle.wait_any();
         ATF_REQUIRE_EQ(exec_handle2.pid(), exit_handle.original_pid());
         ATF_REQUIRE(!exit_handle.status());
-        const datetime::delta duration =
-            exit_handle.end_time() - exit_handle.start_time();
+        const datetime::delta duration = exit_handle.end_time() -
+            exit_handle.start_time();
         ATF_REQUIRE(duration < datetime::delta(10, 0));
         ATF_REQUIRE(duration >= datetime::delta(4, 0));
         exit_handle.cleanup();
@@ -684,7 +644,6 @@ ATF_TEST_CASE_BODY(integration__timeouts)
 
     handle.cleanup();
 }
-
 
 ATF_TEST_CASE(integration__unprivileged_user);
 ATF_TEST_CASE_HEAD(integration__unprivileged_user)
@@ -696,27 +655,26 @@ ATF_TEST_CASE_BODY(integration__unprivileged_user)
 {
     executor::executor_handle handle = executor::setup();
 
-    const passwd::user unprivileged_user = passwd::find_user_by_name(
-        get_config_var("unprivileged-user"));
+    const passwd::user unprivileged_user =
+        passwd::find_user_by_name(get_config_var("unprivileged-user"));
 
-    do_spawn(handle, child_dump_unprivileged_user,
-             infinite_timeout, utils::make_optional(unprivileged_user));
+    do_spawn(handle, child_dump_unprivileged_user, infinite_timeout,
+             utils::make_optional(unprivileged_user));
 
     executor::exit_handle exit_handle = handle.wait_any();
-    ATF_REQUIRE(atf::utils::compare_file(
-        exit_handle.stdout_file().str(),
-        F("UID = %s\n") % unprivileged_user.uid));
+    ATF_REQUIRE(atf::utils::compare_file(exit_handle.stdout_file().str(),
+                                         F("UID = %s\n") %
+                                             unprivileged_user.uid));
     exit_handle.cleanup();
 
     handle.cleanup();
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(integration__auto_cleanup);
 ATF_TEST_CASE_BODY(integration__auto_cleanup)
 {
-    std::vector< int > pids;
-    std::vector< fs::path > paths;
+    std::vector<int> pids;
+    std::vector<fs::path> paths;
     {
         executor::executor_handle handle = executor::setup();
 
@@ -738,16 +696,15 @@ ATF_TEST_CASE_BODY(integration__auto_cleanup)
         paths.push_back(exit_handle2.stderr_file());
         paths.push_back(exit_handle2.work_directory());
     }
-    for (std::vector< int >::const_iterator iter = pids.begin();
+    for (std::vector<int>::const_iterator iter = pids.begin();
          iter != pids.end(); ++iter) {
         ensure_dead(*iter);
     }
-    for (std::vector< fs::path >::const_iterator iter = paths.begin();
+    for (std::vector<fs::path>::const_iterator iter = paths.begin();
          iter != paths.end(); ++iter) {
         ATF_REQUIRE(!atf::utils::file_exists((*iter).str()));
     }
 }
-
 
 /// Ensures that interrupting an executor cleans things up correctly.
 ///
@@ -769,7 +726,7 @@ do_signal_handling_test(const int signo)
     if (pid == 0) {
         static const std::size_t num_children = 3;
 
-        optional< fs::path > root_work_directory;
+        optional<fs::path> root_work_directory;
         try {
             executor::executor_handle handle = executor::setup();
             root_work_directory = handle.root_work_directory();
@@ -834,7 +791,6 @@ do_signal_handling_test(const int signo)
     ATF_REQUIRE_EQ(EXIT_SUCCESS, WEXITSTATUS(status));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(integration__signal_handling);
 ATF_TEST_CASE_BODY(integration__signal_handling)
 {
@@ -849,7 +805,6 @@ ATF_TEST_CASE_BODY(integration__signal_handling)
         do_signal_handling_test(SIGTERM);
     }
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(integration__isolate_child_is_called);
 ATF_TEST_CASE_BODY(integration__isolate_child_is_called)
@@ -866,7 +821,6 @@ ATF_TEST_CASE_BODY(integration__isolate_child_is_called)
 
     handle.cleanup();
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(integration__process_group_is_terminated);
 ATF_TEST_CASE_BODY(integration__process_group_is_terminated)
@@ -894,7 +848,6 @@ ATF_TEST_CASE_BODY(integration__process_group_is_terminated)
     ensure_dead(pid);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(integration__prevent_clobbering_control_files);
 ATF_TEST_CASE_BODY(integration__prevent_clobbering_control_files)
 {
@@ -912,7 +865,6 @@ ATF_TEST_CASE_BODY(integration__prevent_clobbering_control_files)
 
     handle.cleanup();
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

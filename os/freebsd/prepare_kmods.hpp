@@ -14,9 +14,7 @@
 
 namespace prepare = engine::prepare;
 
-
 namespace freebsd {
-
 
 class prepare_kmods : public prepare::handler {
 public:
@@ -26,7 +24,6 @@ public:
              const config::tree&) const;
 };
 
+} // namespace freebsd
 
-}  // namespace freebsd
-
-#endif  // !defined(FREEBSD_PREPARE_KMODS_HPP)
+#endif // !defined(FREEBSD_PREPARE_KMODS_HPP)

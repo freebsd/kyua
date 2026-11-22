@@ -26,29 +26,24 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/process/exceptions.hpp"
-
 #include <cstring>
 
 #include "utils/format/macros.hpp"
+#include "utils/process/exceptions.hpp"
 
 namespace process = utils::process;
-
 
 /// Constructs a new error with a plain-text message.
 ///
 /// \param message The plain-text error message.
-process::error::error(const std::string& message) :
-    std::runtime_error(message)
+process::error::error(const std::string& message) : std::runtime_error(message)
 {
 }
-
 
 /// Destructor for the error.
 process::error::~error(void) throw()
 {
 }
-
 
 /// Constructs a new error based on an errno code.
 ///
@@ -61,12 +56,10 @@ process::system_error::system_error(const std::string& message_,
 {
 }
 
-
 /// Destructor for the error.
 process::system_error::~system_error(void) throw()
 {
 }
-
 
 /// \return The original errno value.
 int
@@ -75,7 +68,6 @@ process::system_error::original_errno(void) const throw()
     return _original_errno;
 }
 
-
 /// Constructs a new timeout_error.
 ///
 /// \param message_ The message describing what caused the error.
@@ -83,7 +75,6 @@ process::timeout_error::timeout_error(const std::string& message_) :
     error(message_)
 {
 }
-
 
 /// Destructor for the error.
 process::timeout_error::~timeout_error(void) throw()

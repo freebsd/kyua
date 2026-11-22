@@ -35,13 +35,11 @@
 namespace utils {
 namespace cmdline {
 
-
 class command_proto;
 class base_command_no_data;
-template< typename > class base_command;
+template <typename> class base_command;
 
+} // namespace cmdline
+} // namespace utils
 
-}  // namespace cmdline
-}  // namespace utils
-
-#endif  // !defined(UTILS_CMDLINE_BASE_COMMAND_FWD_HPP)
+#endif // !defined(UTILS_CMDLINE_BASE_COMMAND_FWD_HPP)

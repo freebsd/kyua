@@ -44,10 +44,8 @@ extern "C" {
 #include <ostream>
 #include <string>
 
-
 namespace utils {
 namespace datetime {
-
 
 /// Represents a time delta to describe deadlines.
 ///
@@ -82,9 +80,7 @@ public:
     delta& operator*=(const std::size_t);
 };
 
-
 std::ostream& operator<<(std::ostream&, const delta&);
-
 
 /// Represents a monotonic time point for deadlines.
 ///
@@ -109,9 +105,7 @@ public:
     delta operator-(const monotonic_timestamp&) const;
 };
 
-
 std::ostream& operator<<(std::ostream&, const monotonic_timestamp&);
-
 
 /// Represents a fixed date/time.
 ///
@@ -123,15 +117,14 @@ class timestamp {
     struct impl;
 
     /// Pointer to the shared internal implementation.
-    std::shared_ptr< impl > _pimpl;
+    std::shared_ptr<impl> _pimpl;
 
-    timestamp(std::shared_ptr< impl >);
+    timestamp(std::shared_ptr<impl>);
 
 public:
     static timestamp from_microseconds(const int64_t);
-    static timestamp from_values(const int, const int, const int,
-                                 const int, const int, const int,
-                                 const int);
+    static timestamp from_values(const int, const int, const int, const int,
+                                 const int, const int, const int);
     static timestamp now(void);
 
     std::string strftime(const std::string&) const;
@@ -153,16 +146,13 @@ public:
     delta operator-(const timestamp&) const;
 };
 
-
 std::ostream& operator<<(std::ostream&, const timestamp&);
-
 
 void set_mock_now(const int, const int, const int, const int, const int,
                   const int, const int);
 void set_mock_now(const timestamp&);
 
-
-}  // namespace datetime
-}  // namespace utils
+} // namespace datetime
+} // namespace utils
 
 #endif // !defined(UTILS_DATETIME_HPP)

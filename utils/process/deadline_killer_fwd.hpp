@@ -35,11 +35,9 @@
 namespace utils {
 namespace process {
 
-
 class deadline_killer;
 
+} // namespace process
+} // namespace utils
 
-}  // namespace process
-}  // namespace utils
-
-#endif  // !defined(UTILS_PROCESS_DEADLINE_KILLER_FWD_HPP)
+#endif // !defined(UTILS_PROCESS_DEADLINE_KILLER_FWD_HPP)

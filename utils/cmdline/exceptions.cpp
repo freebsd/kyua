@@ -27,48 +27,40 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "utils/cmdline/exceptions.hpp"
-
 #include "utils/format/macros.hpp"
 #include "utils/sanity.hpp"
 
 namespace cmdline = utils::cmdline;
 
-
-#define VALIDATE_OPTION_NAME(option) PRE_MSG( \
-    (option.length() == 2 && (option[0] == '-' && option[1] != '-')) || \
-    (option.length() > 2 && (option[0] == '-' && option[1] == '-')), \
-    F("The option name %s must be fully specified") % option);
-
+#define VALIDATE_OPTION_NAME(option)                                         \
+    PRE_MSG(                                                                 \
+        (option.length() == 2 && (option[0] == '-' && option[1] != '-')) ||  \
+            (option.length() > 2 && (option[0] == '-' && option[1] == '-')), \
+        F("The option name %s must be fully specified") % option);
 
 /// Constructs a new error with a plain-text message.
 ///
 /// \param message The plain-text error message.
-cmdline::error::error(const std::string& message) :
-    std::runtime_error(message)
+cmdline::error::error(const std::string& message) : std::runtime_error(message)
 {
 }
-
 
 /// Destructor for the error.
 cmdline::error::~error(void) throw()
 {
 }
 
-
 /// Constructs a new usage_error.
 ///
 /// \param message The reason behind the usage error.
-cmdline::usage_error::usage_error(const std::string& message) :
-    error(message)
+cmdline::usage_error::usage_error(const std::string& message) : error(message)
 {
 }
-
 
 /// Destructor for the error.
 cmdline::usage_error::~usage_error(void) throw()
 {
 }
-
 
 /// Constructs a new missing_option_argument_error.
 ///
@@ -82,13 +74,11 @@ cmdline::missing_option_argument_error::missing_option_argument_error(
     VALIDATE_OPTION_NAME(option_);
 }
 
-
 /// Destructor for the error.
-cmdline::missing_option_argument_error::~missing_option_argument_error(void)
-    throw()
+cmdline::missing_option_argument_error::~missing_option_argument_error(
+    void) throw()
 {
 }
-
 
 /// Returns the option name for which no argument was provided.
 ///
@@ -98,7 +88,6 @@ cmdline::missing_option_argument_error::option(void) const
 {
     return _option;
 }
-
 
 /// Constructs a new option_argument_value_error.
 ///
@@ -118,13 +107,10 @@ cmdline::option_argument_value_error::option_argument_value_error(
     VALIDATE_OPTION_NAME(option_);
 }
 
-
 /// Destructor for the error.
-cmdline::option_argument_value_error::~option_argument_value_error(void)
-    throw()
+cmdline::option_argument_value_error::~option_argument_value_error(void) throw()
 {
 }
-
 
 /// Returns the option to which the invalid argument was passed.
 ///
@@ -135,7 +121,6 @@ cmdline::option_argument_value_error::option(void) const
     return _option;
 }
 
-
 /// Returns the invalid argument value.
 ///
 /// \return The invalid argument.
@@ -144,7 +129,6 @@ cmdline::option_argument_value_error::argument(void) const
 {
     return _argument;
 }
-
 
 /// Constructs a new unknown_option_error.
 ///
@@ -158,12 +142,10 @@ cmdline::unknown_option_error::unknown_option_error(
     VALIDATE_OPTION_NAME(option_);
 }
 
-
 /// Destructor for the error.
 cmdline::unknown_option_error::~unknown_option_error(void) throw()
 {
 }
-
 
 /// Returns the unknown option name.
 ///

@@ -33,13 +33,11 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include <atf-c++.hpp>
 #include <sstream>
 #include <stdexcept>
 
-#include <atf-c++.hpp>
-
 namespace datetime = utils::datetime;
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(delta__defaults);
 ATF_TEST_CASE_BODY(delta__defaults)
@@ -49,7 +47,6 @@ ATF_TEST_CASE_BODY(delta__defaults)
     ATF_REQUIRE_EQ(0, delta.useconds);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(delta__overrides);
 ATF_TEST_CASE_BODY(delta__overrides)
 {
@@ -57,11 +54,10 @@ ATF_TEST_CASE_BODY(delta__overrides)
     ATF_REQUIRE_EQ(1, delta.seconds);
     ATF_REQUIRE_EQ(2, delta.useconds);
 
-    ATF_REQUIRE_THROW_RE(
-        std::runtime_error, "Negative.*not supported.*-4999997us",
-        datetime::delta(-5, 3));
+    ATF_REQUIRE_THROW_RE(std::runtime_error,
+                         "Negative.*not supported.*-4999997us",
+                         datetime::delta(-5, 3));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(delta__from_microseconds);
 ATF_TEST_CASE_BODY(delta__from_microseconds)
@@ -72,35 +68,34 @@ ATF_TEST_CASE_BODY(delta__from_microseconds)
         ATF_REQUIRE_EQ(0, delta.useconds);
     }
     {
-        const datetime::delta delta = datetime::delta::from_microseconds(
-            999999);
+        const datetime::delta delta =
+            datetime::delta::from_microseconds(999999);
         ATF_REQUIRE_EQ(0, delta.seconds);
         ATF_REQUIRE_EQ(999999, delta.useconds);
     }
     {
-        const datetime::delta delta = datetime::delta::from_microseconds(
-            1000000);
+        const datetime::delta delta =
+            datetime::delta::from_microseconds(1000000);
         ATF_REQUIRE_EQ(1, delta.seconds);
         ATF_REQUIRE_EQ(0, delta.useconds);
     }
     {
-        const datetime::delta delta = datetime::delta::from_microseconds(
-            10576293);
+        const datetime::delta delta =
+            datetime::delta::from_microseconds(10576293);
         ATF_REQUIRE_EQ(10, delta.seconds);
         ATF_REQUIRE_EQ(576293, delta.useconds);
     }
     {
-        const datetime::delta delta = datetime::delta::from_microseconds(
-            123456789123456LL);
+        const datetime::delta delta =
+            datetime::delta::from_microseconds(123456789123456LL);
         ATF_REQUIRE_EQ(123456789, delta.seconds);
         ATF_REQUIRE_EQ(123456, delta.useconds);
     }
 
-    ATF_REQUIRE_THROW_RE(
-        std::runtime_error, "Negative.*not supported.*-12345us",
-        datetime::delta::from_microseconds(-12345));
+    ATF_REQUIRE_THROW_RE(std::runtime_error,
+                         "Negative.*not supported.*-12345us",
+                         datetime::delta::from_microseconds(-12345));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(delta__to_microseconds);
 ATF_TEST_CASE_BODY(delta__to_microseconds)
@@ -111,7 +106,6 @@ ATF_TEST_CASE_BODY(delta__to_microseconds)
     ATF_REQUIRE_EQ(10576293, datetime::delta(10, 576293).to_microseconds());
     ATF_REQUIRE_EQ(11576293, datetime::delta(10, 1576293).to_microseconds());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(delta__equals);
 ATF_TEST_CASE_BODY(delta__equals)
@@ -125,7 +119,6 @@ ATF_TEST_CASE_BODY(delta__equals)
     ATF_REQUIRE(!(datetime::delta(1, 2) == datetime::delta(2, 1)));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(delta__differs);
 ATF_TEST_CASE_BODY(delta__differs)
 {
@@ -138,41 +131,39 @@ ATF_TEST_CASE_BODY(delta__differs)
     ATF_REQUIRE(datetime::delta(1, 2) != datetime::delta(2, 1));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(delta__sorting);
 ATF_TEST_CASE_BODY(delta__sorting)
 {
-    ATF_REQUIRE(!(datetime::delta() <  datetime::delta()));
-    ATF_REQUIRE(  datetime::delta() <= datetime::delta());
-    ATF_REQUIRE(!(datetime::delta() >  datetime::delta()));
-    ATF_REQUIRE(  datetime::delta() >= datetime::delta());
+    ATF_REQUIRE(!(datetime::delta() < datetime::delta()));
+    ATF_REQUIRE(datetime::delta() <= datetime::delta());
+    ATF_REQUIRE(!(datetime::delta() > datetime::delta()));
+    ATF_REQUIRE(datetime::delta() >= datetime::delta());
 
-    ATF_REQUIRE(!(datetime::delta(9, 8) <  datetime::delta(9, 8)));
-    ATF_REQUIRE(  datetime::delta(9, 8) <= datetime::delta(9, 8));
-    ATF_REQUIRE(!(datetime::delta(9, 8) >  datetime::delta(9, 8)));
-    ATF_REQUIRE(  datetime::delta(9, 8) >= datetime::delta(9, 8));
+    ATF_REQUIRE(!(datetime::delta(9, 8) < datetime::delta(9, 8)));
+    ATF_REQUIRE(datetime::delta(9, 8) <= datetime::delta(9, 8));
+    ATF_REQUIRE(!(datetime::delta(9, 8) > datetime::delta(9, 8)));
+    ATF_REQUIRE(datetime::delta(9, 8) >= datetime::delta(9, 8));
 
-    ATF_REQUIRE(  datetime::delta(2, 5) <  datetime::delta(4, 8));
-    ATF_REQUIRE(  datetime::delta(2, 5) <= datetime::delta(4, 8));
-    ATF_REQUIRE(!(datetime::delta(2, 5) >  datetime::delta(4, 8)));
+    ATF_REQUIRE(datetime::delta(2, 5) < datetime::delta(4, 8));
+    ATF_REQUIRE(datetime::delta(2, 5) <= datetime::delta(4, 8));
+    ATF_REQUIRE(!(datetime::delta(2, 5) > datetime::delta(4, 8)));
     ATF_REQUIRE(!(datetime::delta(2, 5) >= datetime::delta(4, 8)));
 
-    ATF_REQUIRE(  datetime::delta(2, 5) <  datetime::delta(2, 8));
-    ATF_REQUIRE(  datetime::delta(2, 5) <= datetime::delta(2, 8));
-    ATF_REQUIRE(!(datetime::delta(2, 5) >  datetime::delta(2, 8)));
+    ATF_REQUIRE(datetime::delta(2, 5) < datetime::delta(2, 8));
+    ATF_REQUIRE(datetime::delta(2, 5) <= datetime::delta(2, 8));
+    ATF_REQUIRE(!(datetime::delta(2, 5) > datetime::delta(2, 8)));
     ATF_REQUIRE(!(datetime::delta(2, 5) >= datetime::delta(2, 8)));
 
-    ATF_REQUIRE(!(datetime::delta(4, 8) <  datetime::delta(2, 5)));
+    ATF_REQUIRE(!(datetime::delta(4, 8) < datetime::delta(2, 5)));
     ATF_REQUIRE(!(datetime::delta(4, 8) <= datetime::delta(2, 5)));
-    ATF_REQUIRE(  datetime::delta(4, 8) >  datetime::delta(2, 5));
-    ATF_REQUIRE(  datetime::delta(4, 8) >= datetime::delta(2, 5));
+    ATF_REQUIRE(datetime::delta(4, 8) > datetime::delta(2, 5));
+    ATF_REQUIRE(datetime::delta(4, 8) >= datetime::delta(2, 5));
 
-    ATF_REQUIRE(!(datetime::delta(2, 8) <  datetime::delta(2, 5)));
+    ATF_REQUIRE(!(datetime::delta(2, 8) < datetime::delta(2, 5)));
     ATF_REQUIRE(!(datetime::delta(2, 8) <= datetime::delta(2, 5)));
-    ATF_REQUIRE(  datetime::delta(2, 8) >  datetime::delta(2, 5));
-    ATF_REQUIRE(  datetime::delta(2, 8) >= datetime::delta(2, 5));
+    ATF_REQUIRE(datetime::delta(2, 8) > datetime::delta(2, 5));
+    ATF_REQUIRE(datetime::delta(2, 8) >= datetime::delta(2, 5));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(delta__addition);
 ATF_TEST_CASE_BODY(delta__addition)
@@ -186,7 +177,6 @@ ATF_TEST_CASE_BODY(delta__addition)
     ATF_REQUIRE_EQ(delta(1, 234567), delta(0, 1234567) + delta());
     ATF_REQUIRE_EQ(delta(12, 34), delta(10, 20) + delta(2, 14));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(delta__addition_and_set);
 ATF_TEST_CASE_BODY(delta__addition_and_set)
@@ -209,7 +199,6 @@ ATF_TEST_CASE_BODY(delta__addition_and_set)
     }
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(delta__scale);
 ATF_TEST_CASE_BODY(delta__scale)
 {
@@ -221,7 +210,6 @@ ATF_TEST_CASE_BODY(delta__scale)
     ATF_REQUIRE_EQ(delta(0, 30), delta(0, 10) * 3);
     ATF_REQUIRE_EQ(delta(17, 500000), delta(3, 500000) * 5);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(delta__scale_and_set);
 ATF_TEST_CASE_BODY(delta__scale_and_set)
@@ -244,7 +232,6 @@ ATF_TEST_CASE_BODY(delta__scale_and_set)
     }
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(delta__output);
 ATF_TEST_CASE_BODY(delta__output)
 {
@@ -260,16 +247,16 @@ ATF_TEST_CASE_BODY(delta__output)
     }
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(timestamp__copy);
 ATF_TEST_CASE_BODY(timestamp__copy)
 {
-    const datetime::timestamp ts1 = datetime::timestamp::from_values(
-        2011, 2, 16, 19, 15, 30, 0);
+    const datetime::timestamp ts1 = datetime::timestamp::from_values(2011, 2,
+                                                                     16, 19, 15,
+                                                                     30, 0);
     {
         const datetime::timestamp ts2 = ts1;
-        const datetime::timestamp ts3 = datetime::timestamp::from_values(
-            2012, 2, 16, 19, 15, 30, 0);
+        const datetime::timestamp ts3 =
+            datetime::timestamp::from_values(2012, 2, 16, 19, 15, 30, 0);
         ATF_REQUIRE_EQ("2011", ts1.strftime("%Y"));
         ATF_REQUIRE_EQ("2011", ts2.strftime("%Y"));
         ATF_REQUIRE_EQ("2012", ts3.strftime("%Y"));
@@ -277,17 +264,15 @@ ATF_TEST_CASE_BODY(timestamp__copy)
     ATF_REQUIRE_EQ("2011", ts1.strftime("%Y"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(timestamp__from_microseconds);
 ATF_TEST_CASE_BODY(timestamp__from_microseconds)
 {
-    const datetime::timestamp ts = datetime::timestamp::from_microseconds(
-        1328829351987654LL);
+    const datetime::timestamp ts =
+        datetime::timestamp::from_microseconds(1328829351987654LL);
     ATF_REQUIRE_EQ("2012-02-09 23:15:51", ts.strftime("%Y-%m-%d %H:%M:%S"));
     ATF_REQUIRE_EQ(1328829351987654LL, ts.to_microseconds());
     ATF_REQUIRE_EQ(1328829351, ts.to_seconds());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(timestamp__now__mock);
 ATF_TEST_CASE_BODY(timestamp__now__mock)
@@ -296,14 +281,13 @@ ATF_TEST_CASE_BODY(timestamp__now__mock)
     ATF_REQUIRE_EQ("2011-02-21 18:05:10",
                    datetime::timestamp::now().strftime("%Y-%m-%d %H:%M:%S"));
 
-    datetime::set_mock_now(datetime::timestamp::from_values(
-                               2012, 3, 22, 19, 6, 11, 54321));
+    datetime::set_mock_now(datetime::timestamp::from_values(2012, 3, 22, 19, 6,
+                                                            11, 54321));
     ATF_REQUIRE_EQ("2012-03-22 19:06:11",
                    datetime::timestamp::now().strftime("%Y-%m-%d %H:%M:%S"));
     ATF_REQUIRE_EQ("2012-03-22 19:06:11",
                    datetime::timestamp::now().strftime("%Y-%m-%d %H:%M:%S"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(timestamp__now__real);
 ATF_TEST_CASE_BODY(timestamp__now__real)
@@ -325,7 +309,6 @@ ATF_TEST_CASE_BODY(timestamp__now__real)
     ATF_REQUIRE(now.strftime("%Z") == "GMT" || now.strftime("%Z") == "UTC");
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(timestamp__now__granularity);
 ATF_TEST_CASE_BODY(timestamp__now__granularity)
 {
@@ -335,62 +318,60 @@ ATF_TEST_CASE_BODY(timestamp__now__granularity)
     ATF_REQUIRE(first.to_microseconds() != second.to_microseconds());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(timestamp__strftime);
 ATF_TEST_CASE_BODY(timestamp__strftime)
 {
-    const datetime::timestamp ts1 = datetime::timestamp::from_values(
-        2010, 12, 10, 8, 45, 50, 0);
+    const datetime::timestamp ts1 = datetime::timestamp::from_values(2010, 12,
+                                                                     10, 8, 45,
+                                                                     50, 0);
     ATF_REQUIRE_EQ("2010-12-10", ts1.strftime("%Y-%m-%d"));
     ATF_REQUIRE_EQ("08:45:50", ts1.strftime("%H:%M:%S"));
 
-    const datetime::timestamp ts2 = datetime::timestamp::from_values(
-        2011, 2, 16, 19, 15, 30, 0);
+    const datetime::timestamp ts2 = datetime::timestamp::from_values(2011, 2,
+                                                                     16, 19, 15,
+                                                                     30, 0);
     ATF_REQUIRE_EQ("2011-02-16T19:15:30", ts2.strftime("%Y-%m-%dT%H:%M:%S"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(timestamp__to_iso8601_in_utc);
 ATF_TEST_CASE_BODY(timestamp__to_iso8601_in_utc)
 {
-    const datetime::timestamp ts1 = datetime::timestamp::from_values(
-        2010, 12, 10, 8, 45, 50, 0);
+    const datetime::timestamp ts1 = datetime::timestamp::from_values(2010, 12,
+                                                                     10, 8, 45,
+                                                                     50, 0);
     ATF_REQUIRE_EQ("2010-12-10T08:45:50.000000Z", ts1.to_iso8601_in_utc());
 
-    const datetime::timestamp ts2= datetime::timestamp::from_values(
-        2016, 7, 11, 17, 51, 28, 123456);
+    const datetime::timestamp ts2 =
+        datetime::timestamp::from_values(2016, 7, 11, 17, 51, 28, 123456);
     ATF_REQUIRE_EQ("2016-07-11T17:51:28.123456Z", ts2.to_iso8601_in_utc());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(timestamp__to_microseconds);
 ATF_TEST_CASE_BODY(timestamp__to_microseconds)
 {
-    const datetime::timestamp ts1 = datetime::timestamp::from_values(
-        2010, 12, 10, 8, 45, 50, 123456);
+    const datetime::timestamp ts1 =
+        datetime::timestamp::from_values(2010, 12, 10, 8, 45, 50, 123456);
     ATF_REQUIRE_EQ(1291970750123456LL, ts1.to_microseconds());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(timestamp__to_seconds);
 ATF_TEST_CASE_BODY(timestamp__to_seconds)
 {
-    const datetime::timestamp ts1 = datetime::timestamp::from_values(
-        2010, 12, 10, 8, 45, 50, 123456);
+    const datetime::timestamp ts1 =
+        datetime::timestamp::from_values(2010, 12, 10, 8, 45, 50, 123456);
     ATF_REQUIRE_EQ(1291970750, ts1.to_seconds());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(timestamp__leap_second);
 ATF_TEST_CASE_BODY(timestamp__leap_second)
 {
     // This is actually a test for from_values(), which is the function that
     // includes assertions to validate the input parameters.
-    const datetime::timestamp ts1 = datetime::timestamp::from_values(
-        2012, 6, 30, 23, 59, 60, 543);
+    const datetime::timestamp ts1 = datetime::timestamp::from_values(2012, 6,
+                                                                     30, 23, 59,
+                                                                     60, 543);
     ATF_REQUIRE_EQ(1341100800, ts1.to_seconds());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(timestamp__equals);
 ATF_TEST_CASE_BODY(timestamp__equals)
@@ -399,7 +380,6 @@ ATF_TEST_CASE_BODY(timestamp__equals)
                 datetime::timestamp::from_microseconds(1291970750123456LL));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(timestamp__differs);
 ATF_TEST_CASE_BODY(timestamp__differs)
 {
@@ -407,45 +387,43 @@ ATF_TEST_CASE_BODY(timestamp__differs)
                 datetime::timestamp::from_microseconds(1291970750123455LL));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(timestamp__sorting);
 ATF_TEST_CASE_BODY(timestamp__sorting)
 {
     {
-        const datetime::timestamp ts1 = datetime::timestamp::from_microseconds(
-            1291970750123455LL);
-        const datetime::timestamp ts2 = datetime::timestamp::from_microseconds(
-            1291970750123455LL);
+        const datetime::timestamp ts1 =
+            datetime::timestamp::from_microseconds(1291970750123455LL);
+        const datetime::timestamp ts2 =
+            datetime::timestamp::from_microseconds(1291970750123455LL);
 
         ATF_REQUIRE(!(ts1 < ts2));
-        ATF_REQUIRE(  ts1 <= ts2);
+        ATF_REQUIRE(ts1 <= ts2);
         ATF_REQUIRE(!(ts1 > ts2));
-        ATF_REQUIRE(  ts1 >= ts2);
+        ATF_REQUIRE(ts1 >= ts2);
     }
     {
-        const datetime::timestamp ts1 = datetime::timestamp::from_microseconds(
-            1291970750123455LL);
-        const datetime::timestamp ts2 = datetime::timestamp::from_microseconds(
-            1291970759123455LL);
+        const datetime::timestamp ts1 =
+            datetime::timestamp::from_microseconds(1291970750123455LL);
+        const datetime::timestamp ts2 =
+            datetime::timestamp::from_microseconds(1291970759123455LL);
 
-        ATF_REQUIRE( ts1 < ts2);
-        ATF_REQUIRE( ts1 <= ts2);
+        ATF_REQUIRE(ts1 < ts2);
+        ATF_REQUIRE(ts1 <= ts2);
         ATF_REQUIRE(!(ts1 > ts2));
         ATF_REQUIRE(!(ts1 >= ts2));
     }
     {
-        const datetime::timestamp ts1 = datetime::timestamp::from_microseconds(
-            1291970759123455LL);
-        const datetime::timestamp ts2 = datetime::timestamp::from_microseconds(
-            1291970750123455LL);
+        const datetime::timestamp ts1 =
+            datetime::timestamp::from_microseconds(1291970759123455LL);
+        const datetime::timestamp ts2 =
+            datetime::timestamp::from_microseconds(1291970750123455LL);
 
         ATF_REQUIRE(!(ts1 < ts2));
         ATF_REQUIRE(!(ts1 <= ts2));
-        ATF_REQUIRE(  ts1 > ts2);
-        ATF_REQUIRE(  ts1 >= ts2);
+        ATF_REQUIRE(ts1 > ts2);
+        ATF_REQUIRE(ts1 >= ts2);
     }
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(timestamp__add_delta);
 ATF_TEST_CASE_BODY(timestamp__add_delta)
@@ -455,12 +433,11 @@ ATF_TEST_CASE_BODY(timestamp__add_delta)
 
     ATF_REQUIRE_EQ(timestamp::from_values(2014, 12, 11, 21, 43, 30, 1234),
                    timestamp::from_values(2014, 12, 11, 21, 43, 0, 0) +
-                   delta(30, 1234));
+                       delta(30, 1234));
     ATF_REQUIRE_EQ(timestamp::from_values(2014, 12, 11, 22, 43, 7, 100),
                    timestamp::from_values(2014, 12, 11, 21, 43, 0, 0) +
-                   delta(3602, 5000100));
+                       delta(3602, 5000100));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(timestamp__add_delta_and_set);
 ATF_TEST_CASE_BODY(timestamp__add_delta_and_set)
@@ -481,7 +458,6 @@ ATF_TEST_CASE_BODY(timestamp__add_delta_and_set)
     }
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(timestamp__subtract_delta);
 ATF_TEST_CASE_BODY(timestamp__subtract_delta)
 {
@@ -490,12 +466,11 @@ ATF_TEST_CASE_BODY(timestamp__subtract_delta)
 
     ATF_REQUIRE_EQ(timestamp::from_values(2014, 12, 11, 21, 43, 10, 4321),
                    timestamp::from_values(2014, 12, 11, 21, 43, 40, 5555) -
-                   delta(30, 1234));
+                       delta(30, 1234));
     ATF_REQUIRE_EQ(timestamp::from_values(2014, 12, 11, 20, 43, 1, 300),
                    timestamp::from_values(2014, 12, 11, 21, 43, 8, 400) -
-                   delta(3602, 5000100));
+                       delta(3602, 5000100));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(timestamp__subtract_delta_and_set);
 ATF_TEST_CASE_BODY(timestamp__subtract_delta_and_set)
@@ -516,16 +491,15 @@ ATF_TEST_CASE_BODY(timestamp__subtract_delta_and_set)
     }
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(timestamp__subtraction);
 ATF_TEST_CASE_BODY(timestamp__subtraction)
 {
-    const datetime::timestamp ts1 = datetime::timestamp::from_microseconds(
-        1291970750123456LL);
-    const datetime::timestamp ts2 = datetime::timestamp::from_microseconds(
-        1291970750123468LL);
-    const datetime::timestamp ts3 = datetime::timestamp::from_microseconds(
-        1291970850123456LL);
+    const datetime::timestamp ts1 =
+        datetime::timestamp::from_microseconds(1291970750123456LL);
+    const datetime::timestamp ts2 =
+        datetime::timestamp::from_microseconds(1291970750123468LL);
+    const datetime::timestamp ts3 =
+        datetime::timestamp::from_microseconds(1291970850123456LL);
 
     ATF_REQUIRE_EQ(datetime::delta(0, 0), ts1 - ts1);
     ATF_REQUIRE_EQ(datetime::delta(0, 12), ts2 - ts1);
@@ -538,7 +512,6 @@ ATF_TEST_CASE_BODY(timestamp__subtraction)
      */
     ATF_REQUIRE_EQ(datetime::delta::from_microseconds(1), ts2 - ts3);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(timestamp__output);
 ATF_TEST_CASE_BODY(timestamp__output)
@@ -555,19 +528,15 @@ ATF_TEST_CASE_BODY(timestamp__output)
     }
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(monotonic_timestamp__add_delta);
 ATF_TEST_CASE_BODY(monotonic_timestamp__add_delta)
 {
     const datetime::monotonic_timestamp start =
         datetime::monotonic_timestamp::from_microseconds(1999999);
 
-    ATF_REQUIRE_EQ(2000001,
-                   (start + datetime::delta(0, 2)).to_microseconds());
-    ATF_REQUIRE_EQ(5000001,
-                   (start + datetime::delta(3, 2)).to_microseconds());
+    ATF_REQUIRE_EQ(2000001, (start + datetime::delta(0, 2)).to_microseconds());
+    ATF_REQUIRE_EQ(5000001, (start + datetime::delta(3, 2)).to_microseconds());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(monotonic_timestamp__subtraction);
 ATF_TEST_CASE_BODY(monotonic_timestamp__subtraction)
@@ -581,7 +550,6 @@ ATF_TEST_CASE_BODY(monotonic_timestamp__subtraction)
     ATF_REQUIRE_EQ(datetime::delta(0, 0), start - start);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(monotonic_timestamp__subtraction__negative);
 ATF_TEST_CASE_BODY(monotonic_timestamp__subtraction__negative)
 {
@@ -592,7 +560,6 @@ ATF_TEST_CASE_BODY(monotonic_timestamp__subtraction__negative)
 
     ATF_REQUIRE_THROW(std::runtime_error, start - end);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(monotonic_timestamp__equals);
 ATF_TEST_CASE_BODY(monotonic_timestamp__equals)
@@ -605,7 +572,6 @@ ATF_TEST_CASE_BODY(monotonic_timestamp__equals)
                   monotonic_timestamp::from_microseconds(2000000)));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(monotonic_timestamp__differs);
 ATF_TEST_CASE_BODY(monotonic_timestamp__differs)
 {
@@ -616,7 +582,6 @@ ATF_TEST_CASE_BODY(monotonic_timestamp__differs)
     ATF_REQUIRE(monotonic_timestamp::from_microseconds(1999999) !=
                 monotonic_timestamp::from_microseconds(2000000));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(monotonic_timestamp__sorting);
 ATF_TEST_CASE_BODY(monotonic_timestamp__sorting)
@@ -629,21 +594,20 @@ ATF_TEST_CASE_BODY(monotonic_timestamp__sorting)
         datetime::monotonic_timestamp::from_microseconds(2000000);
 
     ATF_REQUIRE(!(first < equal));
-    ATF_REQUIRE(  first <= equal);
+    ATF_REQUIRE(first <= equal);
     ATF_REQUIRE(!(first > equal));
-    ATF_REQUIRE(  first >= equal);
+    ATF_REQUIRE(first >= equal);
 
-    ATF_REQUIRE(  first < later);
-    ATF_REQUIRE(  first <= later);
+    ATF_REQUIRE(first < later);
+    ATF_REQUIRE(first <= later);
     ATF_REQUIRE(!(first > later));
     ATF_REQUIRE(!(first >= later));
 
     ATF_REQUIRE(!(later < first));
     ATF_REQUIRE(!(later <= first));
-    ATF_REQUIRE(  later > first);
-    ATF_REQUIRE(  later >= first);
+    ATF_REQUIRE(later > first);
+    ATF_REQUIRE(later >= first);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(monotonic_timestamp__now__real);
 ATF_TEST_CASE_BODY(monotonic_timestamp__now__real)
@@ -655,15 +619,14 @@ ATF_TEST_CASE_BODY(monotonic_timestamp__now__real)
     ATF_REQUIRE_EQ(0, ::clock_gettime(CLOCK_MONOTONIC, &after));
 
     // Compare in the public type's units as consecutive readings may be equal
-    const int64_t before_us = static_cast< int64_t >(before.tv_sec) * 1000000 +
+    const int64_t before_us = static_cast<int64_t>(before.tv_sec) * 1000000 +
         before.tv_nsec / 1000;
-    const int64_t after_us = static_cast< int64_t >(after.tv_sec) * 1000000 +
+    const int64_t after_us = static_cast<int64_t>(after.tv_sec) * 1000000 +
         after.tv_nsec / 1000;
 
     ATF_REQUIRE(now.to_microseconds() >= before_us);
     ATF_REQUIRE(now.to_microseconds() <= after_us);
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

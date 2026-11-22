@@ -37,25 +37,21 @@
 namespace engine {
 namespace scheduler {
 
-
 /// Unique identifier for in-flight execution operations.
 ///
 /// TODO(jmmv): Might be worth to drop altogether and just use "int".  The type
 /// difference with executor::exec_handle is confusing.
 typedef int exec_handle;
 
-
 class scheduler_handle;
 class interface;
 class result_handle;
 class test_result_handle;
 
-
 /// Pointer to a dynamically-allocated result_handle.
-typedef std::shared_ptr< result_handle > result_handle_ptr;
+typedef std::shared_ptr<result_handle> result_handle_ptr;
 
+} // namespace scheduler
+} // namespace engine
 
-}  // namespace scheduler
-}  // namespace engine
-
-#endif  // !defined(ENGINE_SCHEDULER_FWD_HPP)
+#endif // !defined(ENGINE_SCHEDULER_FWD_HPP)

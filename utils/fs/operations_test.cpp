@@ -38,6 +38,7 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include <atf-c++.hpp>
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
@@ -45,8 +46,6 @@ extern "C" {
 #include <stdexcept>
 #include <string>
 #include <vector>
-
-#include <atf-c++.hpp>
 
 #include "utils/env.hpp"
 #include "utils/format/containers.ipp"
@@ -65,9 +64,7 @@ namespace units = utils::units;
 
 using utils::optional;
 
-
 namespace {
-
 
 /// Checks if a directory entry exists and matches a specific type.
 ///
@@ -99,9 +96,7 @@ lookup(const char* dir, const char* name, const unsigned int expected_type)
     return found;
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 ATF_TEST_CASE_WITHOUT_HEAD(copy__ok);
 ATF_TEST_CASE_BODY(copy__ok)
@@ -114,7 +109,6 @@ ATF_TEST_CASE_BODY(copy__ok)
     ATF_REQUIRE(atf::utils::compare_file(target.str(), "This is the input"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(copy__fail_open);
 ATF_TEST_CASE_BODY(copy__fail_open)
 {
@@ -124,7 +118,6 @@ ATF_TEST_CASE_BODY(copy__fail_open)
     ATF_REQUIRE_THROW_RE(fs::error, "Cannot open copy source f1.txt",
                          fs::copy(source, target));
 }
-
 
 ATF_TEST_CASE(copy__fail_create);
 ATF_TEST_CASE_HEAD(copy__fail_create)
@@ -144,7 +137,6 @@ ATF_TEST_CASE_BODY(copy__fail_create)
                          fs::copy(source, target));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(current_path__ok);
 ATF_TEST_CASE_BODY(current_path__ok)
 {
@@ -155,7 +147,6 @@ ATF_TEST_CASE_BODY(current_path__ok)
     ATF_REQUIRE_EQ(cwd.str().length() - 5, cwd.str().find("/root"));
     ATF_REQUIRE_EQ(previous / "root", cwd);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(current_path__enoent);
 ATF_TEST_CASE_BODY(current_path__enoent)
@@ -172,7 +163,6 @@ ATF_TEST_CASE_BODY(current_path__enoent)
     }
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(exists);
 ATF_TEST_CASE_BODY(exists)
 {
@@ -181,7 +171,6 @@ ATF_TEST_CASE_BODY(exists)
     fs::mkdir(dir, 0755);
     ATF_REQUIRE(fs::exists(dir));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(find_in_path__no_path);
 ATF_TEST_CASE_BODY(find_in_path__no_path)
@@ -192,7 +181,6 @@ ATF_TEST_CASE_BODY(find_in_path__no_path)
     ATF_REQUIRE(!fs::find_in_path("ls"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(find_in_path__empty_path);
 ATF_TEST_CASE_BODY(find_in_path__empty_path)
 {
@@ -201,7 +189,6 @@ ATF_TEST_CASE_BODY(find_in_path__empty_path)
     atf::utils::create_file("ls", "");
     ATF_REQUIRE(!fs::find_in_path("ls"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(find_in_path__one_component);
 ATF_TEST_CASE_BODY(find_in_path__one_component)
@@ -214,7 +201,6 @@ ATF_TEST_CASE_BODY(find_in_path__one_component)
     atf::utils::create_file((dir / "ls").str(), "");
     ATF_REQUIRE_EQ(dir / "ls", fs::find_in_path("ls").get());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(find_in_path__many_components);
 ATF_TEST_CASE_BODY(find_in_path__many_components)
@@ -232,7 +218,6 @@ ATF_TEST_CASE_BODY(find_in_path__many_components)
     ATF_REQUIRE_EQ(dir1 / "ls", fs::find_in_path("ls").get());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(find_in_path__current_directory);
 ATF_TEST_CASE_BODY(find_in_path__current_directory)
 {
@@ -243,7 +228,6 @@ ATF_TEST_CASE_BODY(find_in_path__current_directory)
     ATF_REQUIRE_EQ(fs::path("foo-bar").to_absolute(),
                    fs::find_in_path("foo-bar").get());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(find_in_path__always_absolute);
 ATF_TEST_CASE_BODY(find_in_path__always_absolute)
@@ -257,14 +241,12 @@ ATF_TEST_CASE_BODY(find_in_path__always_absolute)
                    fs::find_in_path("abcd").get());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(free_disk_space__ok__smoke);
 ATF_TEST_CASE_BODY(free_disk_space__ok__smoke)
 {
     const units::bytes space = fs::free_disk_space(fs::path("."));
-    ATF_REQUIRE(space > units::MB);  // Simple test that should always pass.
+    ATF_REQUIRE(space > units::MB); // Simple test that should always pass.
 }
-
 
 /// Unmounts a directory without raising errors.
 ///
@@ -281,10 +263,10 @@ cleanup_mount_point(const fs::path& cookie, const fs::path& mount_point)
         }
     } catch (const std::runtime_error& e) {
         std::cerr << "Failed trying to unmount " + mount_point.str() +
-            " during cleanup: " << e.what() << '\n';
+                " during cleanup: "
+                  << e.what() << '\n';
     }
 }
-
 
 ATF_TEST_CASE_WITH_CLEANUP(free_disk_space__ok__real);
 ATF_TEST_CASE_HEAD(free_disk_space__ok__real)
@@ -312,14 +294,12 @@ ATF_TEST_CASE_CLEANUP(free_disk_space__ok__real)
     cleanup_mount_point(fs::path("mounted"), fs::path("mount_point"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(free_disk_space__fail);
 ATF_TEST_CASE_BODY(free_disk_space__fail)
 {
     ATF_REQUIRE_THROW_RE(fs::error, "Failed to stat file system for missing",
                          fs::free_disk_space(fs::path("missing")));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(is_directory__ok);
 ATF_TEST_CASE_BODY(is_directory__ok)
@@ -332,7 +312,6 @@ ATF_TEST_CASE_BODY(is_directory__ok)
     fs::mkdir(dir, 0755);
     ATF_REQUIRE(fs::is_directory(dir));
 }
-
 
 ATF_TEST_CASE_WITH_CLEANUP(is_directory__fail);
 ATF_TEST_CASE_HEAD(is_directory__fail)
@@ -353,14 +332,12 @@ ATF_TEST_CASE_CLEANUP(is_directory__fail)
     }
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(mkdir__ok);
 ATF_TEST_CASE_BODY(mkdir__ok)
 {
     fs::mkdir(fs::path("dir"), 0755);
     ATF_REQUIRE(lookup(".", "dir", S_IFDIR));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(mkdir__enoent);
 ATF_TEST_CASE_BODY(mkdir__enoent)
@@ -375,7 +352,6 @@ ATF_TEST_CASE_BODY(mkdir__enoent)
     ATF_REQUIRE(!lookup(".", "dir2", S_IFDIR));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(mkdir_p__one_component);
 ATF_TEST_CASE_BODY(mkdir_p__one_component)
 {
@@ -383,7 +359,6 @@ ATF_TEST_CASE_BODY(mkdir_p__one_component)
     fs::mkdir_p(fs::path("new-dir"), 0755);
     ATF_REQUIRE(lookup(".", "new-dir", S_IFDIR));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(mkdir_p__many_components);
 ATF_TEST_CASE_BODY(mkdir_p__many_components)
@@ -395,7 +370,6 @@ ATF_TEST_CASE_BODY(mkdir_p__many_components)
     ATF_REQUIRE(lookup("a/b", "c", S_IFDIR));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(mkdir_p__already_exists);
 ATF_TEST_CASE_BODY(mkdir_p__already_exists)
 {
@@ -403,7 +377,6 @@ ATF_TEST_CASE_BODY(mkdir_p__already_exists)
     fs::mkdir(fs::path("a/b"), 0755);
     fs::mkdir_p(fs::path("a/b"), 0755);
 }
-
 
 ATF_TEST_CASE(mkdir_p__eacces)
 ATF_TEST_CASE_HEAD(mkdir_p__eacces)
@@ -428,7 +401,6 @@ ATF_TEST_CASE_BODY(mkdir_p__eacces)
     ATF_REQUIRE(!lookup("a/b", "c", S_IFDIR));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(mkdtemp_public)
 ATF_TEST_CASE_BODY(mkdtemp_public)
 {
@@ -441,7 +413,6 @@ ATF_TEST_CASE_BODY(mkdtemp_public)
     ATF_REQUIRE(!lookup("tmp", dir_template.c_str(), S_IFDIR));
     ATF_REQUIRE(lookup("tmp", tempdir.leaf_name().c_str(), S_IFDIR));
 }
-
 
 ATF_TEST_CASE(mkdtemp_public__getcwd_as_non_root)
 ATF_TEST_CASE_HEAD(mkdtemp_public__getcwd_as_non_root)
@@ -459,8 +430,8 @@ ATF_TEST_CASE_BODY(mkdtemp_public__getcwd_as_non_root)
     const uid_t old_euid = ::geteuid();
     const gid_t old_egid = ::getegid();
 
-    const passwd::user unprivileged_user = passwd::find_user_by_name(
-        get_config_var("unprivileged-user"));
+    const passwd::user unprivileged_user =
+        passwd::find_user_by_name(get_config_var("unprivileged-user"));
     ATF_REQUIRE(::setegid(unprivileged_user.gid) != -1);
     ATF_REQUIRE(::seteuid(unprivileged_user.uid) != -1);
 
@@ -495,7 +466,6 @@ ATF_TEST_CASE_BODY(mkdtemp_public__getcwd_as_non_root)
         fail("Test failed; see stdout for details");
 }
 
-
 ATF_TEST_CASE(mkdtemp_public__search_permissions_as_non_root)
 ATF_TEST_CASE_HEAD(mkdtemp_public__search_permissions_as_non_root)
 {
@@ -517,8 +487,8 @@ ATF_TEST_CASE_BODY(mkdtemp_public__search_permissions_as_non_root)
     const uid_t old_euid = ::geteuid();
     const gid_t old_egid = ::getegid();
 
-    const passwd::user unprivileged_user = passwd::find_user_by_name(
-        get_config_var("unprivileged-user"));
+    const passwd::user unprivileged_user =
+        passwd::find_user_by_name(get_config_var("unprivileged-user"));
     ATF_REQUIRE(::setegid(unprivileged_user.gid) != -1);
     ATF_REQUIRE(::seteuid(unprivileged_user.uid) != -1);
 
@@ -550,7 +520,6 @@ ATF_TEST_CASE_BODY(mkdtemp_public__search_permissions_as_non_root)
         fail("Test failed; see stdout for details");
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(mkstemp)
 ATF_TEST_CASE_BODY(mkstemp)
 {
@@ -563,7 +532,6 @@ ATF_TEST_CASE_BODY(mkstemp)
     ATF_REQUIRE(!lookup("tmp", file_template.c_str(), S_IFREG));
     ATF_REQUIRE(lookup("tmp", tempfile.leaf_name().c_str(), S_IFREG));
 }
-
 
 static void
 test_mount_tmpfs_ok(const units::bytes& size)
@@ -587,7 +555,6 @@ test_mount_tmpfs_ok(const units::bytes& size)
     }
 }
 
-
 ATF_TEST_CASE_WITH_CLEANUP(mount_tmpfs__ok__default_size)
 ATF_TEST_CASE_HEAD(mount_tmpfs__ok__default_size)
 {
@@ -602,7 +569,6 @@ ATF_TEST_CASE_CLEANUP(mount_tmpfs__ok__default_size)
     cleanup_mount_point(fs::path("mounted"), fs::path("mount_point"));
 }
 
-
 ATF_TEST_CASE_WITH_CLEANUP(mount_tmpfs__ok__explicit_size)
 ATF_TEST_CASE_HEAD(mount_tmpfs__ok__explicit_size)
 {
@@ -616,7 +582,6 @@ ATF_TEST_CASE_CLEANUP(mount_tmpfs__ok__explicit_size)
 {
     cleanup_mount_point(fs::path("mounted"), fs::path("mount_point"));
 }
-
 
 ATF_TEST_CASE(mount_tmpfs__fail)
 ATF_TEST_CASE_HEAD(mount_tmpfs__fail)
@@ -634,7 +599,6 @@ ATF_TEST_CASE_BODY(mount_tmpfs__fail)
     }
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(rm_r__empty);
 ATF_TEST_CASE_BODY(rm_r__empty)
 {
@@ -643,7 +607,6 @@ ATF_TEST_CASE_BODY(rm_r__empty)
     fs::rm_r(fs::path("root"));
     ATF_REQUIRE(!lookup(".", "root", S_IFDIR));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(rm_r__files_and_directories);
 ATF_TEST_CASE_BODY(rm_r__files_and_directories)
@@ -663,7 +626,6 @@ ATF_TEST_CASE_BODY(rm_r__files_and_directories)
     ATF_REQUIRE(!lookup(".", "root", S_IFDIR));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(rm_r__bad_perms);
 ATF_TEST_CASE_BODY(rm_r__bad_perms)
 {
@@ -676,7 +638,6 @@ ATF_TEST_CASE_BODY(rm_r__bad_perms)
     ATF_REQUIRE(!lookup(".", "root", S_IFDIR));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(rmdir__ok)
 ATF_TEST_CASE_BODY(rmdir__ok)
 {
@@ -686,14 +647,12 @@ ATF_TEST_CASE_BODY(rmdir__ok)
     ATF_REQUIRE(::access("foo", X_OK) == -1);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(rmdir__fail)
 ATF_TEST_CASE_BODY(rmdir__fail)
 {
     ATF_REQUIRE_THROW_RE(fs::system_error, "Removal of foo failed",
                          fs::rmdir(fs::path("foo")));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(scan_directory__ok)
 ATF_TEST_CASE_BODY(scan_directory__ok)
@@ -702,10 +661,10 @@ ATF_TEST_CASE_BODY(scan_directory__ok)
     atf::utils::create_file("dir/foo", "");
     atf::utils::create_file("dir/.hidden", "");
 
-    const std::set< fs::directory_entry > contents = fs::scan_directory(
-        fs::path("dir"));
+    const std::set<fs::directory_entry> contents =
+        fs::scan_directory(fs::path("dir"));
 
-    std::set< fs::directory_entry > exp_contents;
+    std::set<fs::directory_entry> exp_contents;
     exp_contents.insert(fs::directory_entry("."));
     exp_contents.insert(fs::directory_entry(".."));
     exp_contents.insert(fs::directory_entry(".hidden"));
@@ -714,14 +673,12 @@ ATF_TEST_CASE_BODY(scan_directory__ok)
     ATF_REQUIRE_EQ(exp_contents, contents);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(scan_directory__fail)
 ATF_TEST_CASE_BODY(scan_directory__fail)
 {
     ATF_REQUIRE_THROW_RE(fs::system_error, "opendir(.*missing.*) failed",
                          fs::scan_directory(fs::path("missing")));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(unlink__ok)
 ATF_TEST_CASE_BODY(unlink__ok)
@@ -732,14 +689,12 @@ ATF_TEST_CASE_BODY(unlink__ok)
     ATF_REQUIRE(::access("foo", R_OK) == -1);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(unlink__fail)
 ATF_TEST_CASE_BODY(unlink__fail)
 {
     ATF_REQUIRE_THROW_RE(fs::system_error, "Removal of foo failed",
                          fs::unlink(fs::path("foo")));
 }
-
 
 ATF_TEST_CASE(unmount__ok)
 ATF_TEST_CASE_HEAD(unmount__ok)
@@ -761,12 +716,11 @@ ATF_TEST_CASE_BODY(unmount__ok)
     atf::utils::create_file((mount_point / "test2").str(), "");
 
     ATF_REQUIRE(!fs::exists(mount_point / "test1"));
-    ATF_REQUIRE( fs::exists(mount_point / "test2"));
+    ATF_REQUIRE(fs::exists(mount_point / "test2"));
     fs::unmount(mount_point);
-    ATF_REQUIRE( fs::exists(mount_point / "test1"));
+    ATF_REQUIRE(fs::exists(mount_point / "test1"));
     ATF_REQUIRE(!fs::exists(mount_point / "test2"));
 }
-
 
 ATF_TEST_CASE(unmount__fail)
 ATF_TEST_CASE_HEAD(unmount__fail)
@@ -777,7 +731,6 @@ ATF_TEST_CASE_BODY(unmount__fail)
 {
     ATF_REQUIRE_THROW(fs::error, fs::unmount(fs::path("non-existent")));
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

@@ -26,8 +26,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/text/templates.hpp"
-
 #include <algorithm>
 #include <fstream>
 #include <sstream>
@@ -39,12 +37,11 @@
 #include "utils/sanity.hpp"
 #include "utils/text/exceptions.hpp"
 #include "utils/text/operations.ipp"
+#include "utils/text/templates.hpp"
 
 namespace text = utils::text;
 
-
 namespace {
-
 
 /// Definition of a template statement.
 ///
@@ -99,14 +96,15 @@ private:
         /// \param type_ The native type of the statement.
         /// \param n_arguments_ The expected number of arguments.
         type_descriptor(const statement_type type_,
-                        const unsigned int n_arguments_)
-            : type(type_), n_arguments(n_arguments_)
+                        const unsigned int n_arguments_) :
+            type(type_),
+            n_arguments(n_arguments_)
         {
         }
     };
 
     /// Mapping of statement type names to their definitions.
-    typedef std::map< std::string, type_descriptor > types_map;
+    typedef std::map<std::string, type_descriptor> types_map;
 
     /// Description of the different statement types.
     ///
@@ -118,21 +116,19 @@ private:
     /// Generates a new types definition map.
     ///
     /// \return A new types definition map, to be assigned to _types.
-    static types_map
-    generate_types_map(void)
+    static types_map generate_types_map(void)
     {
         // If you change this, please edit the comments in the enum above.
         types_map types;
-        types.insert(types_map::value_type(
-            "else", type_descriptor(type_else, 0)));
-        types.insert(types_map::value_type(
-            "endif", type_descriptor(type_endif, 0)));
-        types.insert(types_map::value_type(
-            "endloop", type_descriptor(type_endloop, 0)));
-        types.insert(types_map::value_type(
-            "if", type_descriptor(type_if, 1)));
-        types.insert(types_map::value_type(
-            "loop", type_descriptor(type_loop, 2)));
+        types.insert(types_map::value_type("else",
+                                           type_descriptor(type_else, 0)));
+        types.insert(types_map::value_type("endif",
+                                           type_descriptor(type_endif, 0)));
+        types.insert(types_map::value_type("endloop",
+                                           type_descriptor(type_endloop, 0)));
+        types.insert(types_map::value_type("if", type_descriptor(type_if, 1)));
+        types.insert(types_map::value_type("loop",
+                                           type_descriptor(type_loop, 2)));
         return types;
     }
 
@@ -141,15 +137,16 @@ public:
     statement_type type;
 
     /// The arguments to the statement, in textual form.
-    const std::vector< std::string > arguments;
+    const std::vector<std::string> arguments;
 
     /// Creates a new statement.
     ///
     /// \param type_ The type of the statement.
     /// \param arguments_ The arguments to the statement.
     statement_def(const statement_type& type_,
-                  const std::vector< std::string >& arguments_) :
-        type(type_), arguments(arguments_)
+                  const std::vector<std::string>& arguments_) :
+        type(type_),
+        arguments(arguments_)
     {
 #if !defined(NDEBUG)
         for (types_map::const_iterator iter = _types.begin();
@@ -172,13 +169,12 @@ public:
     /// \return The parsed statement.
     ///
     /// \throw text::syntax_error If the statement is not correctly defined.
-    static statement_def
-    parse(const std::string& line)
+    static statement_def parse(const std::string& line)
     {
         if (_types.empty())
             _types = generate_types_map();
 
-        const std::vector< std::string > words = text::split(line, ' ');
+        const std::vector<std::string> words = text::split(line, ' ');
         if (words.empty())
             throw text::syntax_error("Empty statement");
 
@@ -189,9 +185,10 @@ public:
 
         if (words.size() - 1 != descriptor.n_arguments)
             throw text::syntax_error(F("Invalid number of arguments for "
-                                       "statement '%s'") % words[0]);
+                                       "statement '%s'") %
+                                     words[0]);
 
-        std::vector< std::string > new_arguments;
+        std::vector<std::string> new_arguments;
         new_arguments.resize(words.size() - 1);
         std::copy(words.begin() + 1, words.end(), new_arguments.begin());
 
@@ -199,9 +196,7 @@ public:
     }
 };
 
-
 statement_def::types_map statement_def::_types;
-
 
 /// Definition of a loop.
 ///
@@ -227,11 +222,12 @@ struct loop_def {
     /// \param position_ Position of the next line after the loop statement.
     loop_def(const std::string& vector_, const std::string& iterator_,
              const std::istream::pos_type position_) :
-        vector(vector_), iterator(iterator_), position(position_)
+        vector(vector_),
+        iterator(iterator_),
+        position(position_)
     {
     }
 };
-
 
 /// Stateful class to instantiate the templates in an input stream.
 ///
@@ -262,7 +258,7 @@ class templates_parser : utils::noncopyable {
     ///
     /// This is a stack rather than a plain boolean to allow us deal with
     /// if-else clauses.
-    std::stack< bool > _skip;
+    std::stack<bool> _skip;
 
     /// Current count of nested conditionals.
     unsigned int _if_level;
@@ -277,7 +273,7 @@ class templates_parser : utils::noncopyable {
     unsigned int _exit_loop_level;
 
     /// Information about all the nested loops up to the current point.
-    std::stack< loop_def > _loops;
+    std::stack<loop_def> _loops;
 
     /// Checks if a line is a statement or not.
     ///
@@ -285,8 +281,7 @@ class templates_parser : utils::noncopyable {
     ///
     /// \return True if the line looks like a statement, which is determined by
     /// checking if the line starts by the predefined prefix.
-    bool
-    is_statement(const std::string& line)
+    bool is_statement(const std::string& line)
     {
         return ((line.length() >= _prefix.length() &&
                  line.substr(0, _prefix.length()) == _prefix) &&
@@ -301,8 +296,7 @@ class templates_parser : utils::noncopyable {
     /// \return The parsed statement.
     ///
     /// \throw text::syntax_error If the input is not a valid statement.
-    statement_def
-    parse_statement(const std::string& line)
+    statement_def parse_statement(const std::string& line)
     {
         PRE(is_statement(line));
         return statement_def::parse(line.substr(_prefix.length()));
@@ -316,9 +310,8 @@ class templates_parser : utils::noncopyable {
     /// \param output The output stream into which to write the results.
     ///
     /// \throw text::syntax_error If the input is not valid.
-    void
-    handle_normal(const std::string& line, std::istream& input,
-                  std::ostream& output)
+    void handle_normal(const std::string& line, std::istream& input,
+                       std::ostream& output)
     {
         if (!is_statement(line)) {
             // Fast path.  Mostly to avoid an indentation level for the big
@@ -342,8 +335,9 @@ class templates_parser : utils::noncopyable {
             PRE(_loops.size() == _loop_level);
             loop_def& loop = _loops.top();
 
-            const std::size_t next_index = 1 + text::to_type< std::size_t >(
-                _templates.get_variable(loop.iterator));
+            const std::size_t next_index = 1 +
+                text::to_type<std::size_t>(_templates.get_variable(
+                    loop.iterator));
 
             if (next_index < _templates.get_vector(loop.vector).size()) {
                 _templates.add_variable(loop.iterator, F("%s") % next_index);
@@ -357,8 +351,8 @@ class templates_parser : utils::noncopyable {
 
         case statement_def::type_if: {
             _if_level++;
-            const std::string value = _templates.evaluate(
-                statement.arguments[0]);
+            const std::string value =
+                _templates.evaluate(statement.arguments[0]);
             if (value.empty() || value == "0" || value == "false") {
                 _exit_if_level = _if_level;
                 _skip.push(true);
@@ -389,8 +383,7 @@ class templates_parser : utils::noncopyable {
     /// \param line The line to be processed.
     ///
     /// \throw text::syntax_error If the input is not valid.
-    void
-    handle_skip(const std::string& line)
+    void handle_skip(const std::string& line)
     {
         PRE(_skip.top());
 
@@ -450,21 +443,20 @@ class templates_parser : utils::noncopyable {
     /// \return The evaluated line.
     ///
     /// \throw text::syntax_error If the expressions in the line are malformed.
-    std::string
-    evaluate(const std::string& in_line)
+    std::string evaluate(const std::string& in_line)
     {
         std::string out_line;
 
         std::string::size_type last_pos = 0;
         while (last_pos != std::string::npos) {
-            const std::string::size_type open_pos = in_line.find(
-                _delimiter, last_pos);
+            const std::string::size_type open_pos = in_line.find(_delimiter,
+                                                                 last_pos);
             if (open_pos == std::string::npos) {
                 out_line += in_line.substr(last_pos);
                 last_pos = std::string::npos;
             } else {
-                const std::string::size_type close_pos = in_line.find(
-                    _delimiter, open_pos + _delimiter.length());
+                const std::string::size_type close_pos =
+                    in_line.find(_delimiter, open_pos + _delimiter.length());
                 if (close_pos == std::string::npos) {
                     out_line += in_line.substr(last_pos);
                     last_pos = std::string::npos;
@@ -508,8 +500,7 @@ public:
     /// \throw text::syntax_error If the input is not valid.  Note that the
     ///     is not guaranteed to be unmodified on exit if an error is
     ///     encountered.
-    void
-    instantiate(std::istream& input, std::ostream& output)
+    void instantiate(std::istream& input, std::ostream& output)
     {
         std::string line;
         while (std::getline(input, line).good()) {
@@ -521,15 +512,12 @@ public:
     }
 };
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Constructs an empty templates definition.
 text::templates_def::templates_def(void)
 {
 }
-
 
 /// Sets a string variable in the templates.
 ///
@@ -549,7 +537,6 @@ text::templates_def::add_variable(const std::string& name,
     _variables[name] = value;
 }
 
-
 /// Unsets a string variable from the templates.
 ///
 /// Client code has no reason to use this.  This is only required to implement
@@ -564,7 +551,6 @@ text::templates_def::remove_variable(const std::string& name)
     PRE(_variables.find(name) != _variables.end());
     _variables.erase(_variables.find(name));
 }
-
 
 /// Creates a new vector in the templates.
 ///
@@ -581,7 +567,6 @@ text::templates_def::add_vector(const std::string& name)
     _vectors[name] = strings_vector();
 }
 
-
 /// Adds a value to an existing vector in the templates.
 ///
 /// \pre name The vector must exist.
@@ -597,7 +582,6 @@ text::templates_def::add_to_vector(const std::string& name,
     _vectors[name].push_back(value);
 }
 
-
 /// Checks whether a given identifier exists as a variable or a vector.
 ///
 /// This is used to implement the evaluation of conditions in if clauses.
@@ -612,7 +596,6 @@ text::templates_def::exists(const std::string& name) const
     return (_variables.find(name) != _variables.end() ||
             _vectors.find(name) != _vectors.end());
 }
-
 
 /// Gets the value of a variable.
 ///
@@ -630,7 +613,6 @@ text::templates_def::get_variable(const std::string& name) const
     return (*iter).second;
 }
 
-
 /// Gets a vector.
 ///
 /// \param name The name of the vector.
@@ -646,7 +628,6 @@ text::templates_def::get_vector(const std::string& name) const
         throw text::syntax_error(F("Unknown vector '%s'") % name);
     return (*iter).second;
 }
-
 
 /// Indexes a vector and gets the value.
 ///
@@ -667,7 +648,7 @@ text::templates_def::get_vector(const std::string& name,
 
     std::size_t index;
     try {
-        index = text::to_type< std::size_t >(index_str);
+        index = text::to_type<std::size_t>(index_str);
     } catch (const text::syntax_error& e) {
         throw text::syntax_error(F("Index '%s' not an integer, value '%s'") %
                                  index_name % index_str);
@@ -678,7 +659,6 @@ text::templates_def::get_vector(const std::string& name,
 
     return vector[index];
 }
-
 
 /// Evaluates a expression using these templates.
 ///
@@ -701,18 +681,20 @@ text::templates_def::evaluate(const std::string& expression) const
     if (paren_open == std::string::npos) {
         return get_variable(expression);
     } else {
-        const std::string::size_type paren_close = expression.find(
-            ')', paren_open);
+        const std::string::size_type paren_close = expression.find(')',
+                                                                   paren_open);
         if (paren_close == std::string::npos)
             throw text::syntax_error(F("Expected ')' in expression '%s')") %
                                      expression);
         if (paren_close != expression.length() - 1)
             throw text::syntax_error(F("Unexpected text found after ')' in "
-                                       "expression '%s'") % expression);
+                                       "expression '%s'") %
+                                     expression);
 
         const std::string arg0 = expression.substr(0, paren_open);
-        const std::string arg1 = expression.substr(
-            paren_open + 1, paren_close - paren_open - 1);
+        const std::string arg1 = expression.substr(paren_open + 1,
+                                                   paren_close - paren_open -
+                                                       1);
         if (arg0 == "defined") {
             return exists(arg1) ? "true" : "false";
         } else if (arg0 == "length") {
@@ -723,7 +705,6 @@ text::templates_def::evaluate(const std::string& expression) const
     }
 }
 
-
 /// Applies a set of templates to an input stream.
 ///
 /// \param templates The templates to use.
@@ -732,13 +713,12 @@ text::templates_def::evaluate(const std::string& expression) const
 ///
 /// \throw text::syntax_error If there is any problem processing the input.
 void
-text::instantiate(const templates_def& templates,
-                  std::istream& input, std::ostream& output)
+text::instantiate(const templates_def& templates, std::istream& input,
+                  std::ostream& output)
 {
     templates_parser parser(templates, "%", "%%");
     parser.instantiate(input, output);
 }
-
 
 /// Applies a set of templates to an input file and writes an output file.
 ///
@@ -749,8 +729,8 @@ text::instantiate(const templates_def& templates,
 /// \throw text::error If the input or output files cannot be opened.
 /// \throw text::syntax_error If there is any problem processing the input.
 void
-text::instantiate(const templates_def& templates,
-                  const fs::path& input_file, const fs::path& output_file)
+text::instantiate(const templates_def& templates, const fs::path& input_file,
+                  const fs::path& output_file)
 {
     std::ifstream input(input_file.c_str());
     if (!input)

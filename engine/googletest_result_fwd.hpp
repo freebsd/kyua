@@ -34,10 +34,8 @@
 
 namespace engine {
 
-
 class googletest_result;
 
+} // namespace engine
 
-}  // namespace engine
-
-#endif  // !defined(ENGINE_GOOGLETEST_RESULT_FWD_HPP)
+#endif // !defined(ENGINE_GOOGLETEST_RESULT_FWD_HPP)

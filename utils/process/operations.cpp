@@ -31,6 +31,7 @@
 extern "C" {
 #include <sys/types.h>
 #include <sys/wait.h>
+
 #include <signal.h>
 #include <unistd.h>
 }
@@ -44,15 +45,14 @@ extern "C" {
 #include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/process/exceptions.hpp"
-#include "utils/process/system.hpp"
 #include "utils/process/status.hpp"
+#include "utils/process/system.hpp"
 #include "utils/sanity.hpp"
 #include "utils/signals/interrupts.hpp"
 
 namespace fs = utils::fs;
 namespace process = utils::process;
 namespace signals = utils::signals;
-
 
 /// Maximum number of arguments supported by exec.
 ///
@@ -61,9 +61,7 @@ namespace signals = utils::signals;
 /// the parent's memory if we use vfork().
 #define MAX_ARGS 128
 
-
 namespace {
-
 
 /// Exception-based, type-improved version of wait(2).
 ///
@@ -83,7 +81,6 @@ safe_wait(void)
     }
     return process::status(pid, stat_loc);
 }
-
 
 /// Exception-based, type-improved version of waitpid(2).
 ///
@@ -105,9 +102,7 @@ safe_waitpid(const pid_t pid)
     return process::status(pid, stat_loc);
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Executes an external binary and replaces the current process.
 ///
@@ -130,7 +125,6 @@ process::exec(const fs::path& program, const args_vector& args) throw()
         std::abort();
     }
 }
-
 
 /// Executes an external binary and replaces the current process.
 ///
@@ -169,12 +163,13 @@ process::exec_unsafe(const fs::path& program, const args_vector& args)
         std::cerr << "Failed to execute " << program << ": "
                   << std::strerror(original_errno) << "\n";
     } catch (const std::runtime_error& error) {
-        std::cerr << "Failed to execute " << program << ": "
-                  << error.what() << "\n";
+        std::cerr << "Failed to execute " << program << ": " << error.what()
+                  << "\n";
         std::abort();
     } catch (...) {
-        std::cerr << "Failed to execute " << program << "; got unexpected "
-            "exception during exec\n";
+        std::cerr << "Failed to execute " << program
+                  << "; got unexpected "
+                     "exception during exec\n";
         std::abort();
     }
 
@@ -183,7 +178,6 @@ process::exec_unsafe(const fs::path& program, const args_vector& args)
     INV(original_errno != 0);
     throw system_error("Failed to execute " + program.str(), original_errno);
 }
-
 
 /// Forcibly kills a process group started by us.
 ///
@@ -215,7 +209,6 @@ process::terminate_group(const int pgid)
     (void)::kill(pgid, SIGKILL);
 }
 
-
 /// Terminates the current process reproducing the given status.
 ///
 /// The caller process is abruptly terminated.  In particular, no output streams
@@ -231,10 +224,10 @@ process::terminate_self_with(const status& status)
         INV(status.signaled());
         (void)::kill(::getpid(), status.termsig());
         UNREACHABLE_MSG(F("Signal %s terminated %s but did not terminate "
-                          "ourselves") % status.termsig() % status.dead_pid());
+                          "ourselves") %
+                        status.termsig() % status.dead_pid());
     }
 }
-
 
 /// Blocks to wait for completion of a subprocess.
 ///
@@ -253,7 +246,6 @@ process::wait(const int pid)
     }
     return status;
 }
-
 
 /// Blocks to wait for completion of any subprocess.
 ///

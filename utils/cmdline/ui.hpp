@@ -32,17 +32,15 @@
 #if !defined(UTILS_CMDLINE_UI_HPP)
 #define UTILS_CMDLINE_UI_HPP
 
-#include "utils/cmdline/ui_fwd.hpp"
-
 #include <cstddef>
 #include <string>
 
+#include "utils/cmdline/ui_fwd.hpp"
 #include "utils/optional_fwd.hpp"
 #include "utils/text/table_fwd.hpp"
 
 namespace utils {
 namespace cmdline {
-
 
 /// Interface to interact with the CLI.
 ///
@@ -58,7 +56,7 @@ public:
 
     virtual void err(const std::string&, const bool = true);
     virtual void out(const std::string&, const bool = true);
-    virtual optional< std::size_t > screen_width(void) const;
+    virtual optional<std::size_t> screen_width(void) const;
 
     void out_wrap(const std::string&);
     void out_tag_wrap(const std::string&, const std::string&,
@@ -67,13 +65,11 @@ public:
                    const std::string&);
 };
 
-
 void print_error(ui*, const std::string&);
 void print_info(ui*, const std::string&);
 void print_warning(ui*, const std::string&);
 
+} // namespace cmdline
+} // namespace utils
 
-}  // namespace cmdline
-}  // namespace utils
-
-#endif  // !defined(UTILS_CMDLINE_UI_HPP)
+#endif // !defined(UTILS_CMDLINE_UI_HPP)

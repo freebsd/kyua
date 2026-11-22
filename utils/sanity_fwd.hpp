@@ -34,7 +34,6 @@
 
 namespace utils {
 
-
 /// Enumeration to define the assertion type.
 ///
 /// The assertion type is used by the module to format the assertion messages
@@ -46,7 +45,6 @@ enum assert_type {
     unreachable,
 };
 
+} // namespace utils
 
-}  // namespace utils
-
-#endif  // !defined(UTILS_SANITY_FWD_HPP)
+#endif // !defined(UTILS_SANITY_FWD_HPP)

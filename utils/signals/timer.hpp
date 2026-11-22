@@ -36,21 +36,18 @@
 #if !defined(UTILS_SIGNALS_TIMER_HPP)
 #define UTILS_SIGNALS_TIMER_HPP
 
-#include "utils/signals/timer_fwd.hpp"
-
 #include <memory>
 
 #include "utils/datetime_fwd.hpp"
 #include "utils/noncopyable.hpp"
+#include "utils/signals/timer_fwd.hpp"
 
 namespace utils {
 namespace signals {
 
-
 namespace detail {
 void invoke_do_fired(timer*);
-}  // namespace detail
-
+} // namespace detail
 
 /// Individual timer.
 ///
@@ -61,7 +58,7 @@ class timer : noncopyable {
     struct impl;
 
     /// Pointer to the shared internal implementation.
-    std::unique_ptr< impl > _pimpl;
+    std::unique_ptr<impl> _pimpl;
 
     friend void detail::invoke_do_fired(timer*);
     void do_fired(void);
@@ -82,7 +79,6 @@ public:
 
     void unprogram(void);
 };
-
 
 } // namespace signals
 } // namespace utils

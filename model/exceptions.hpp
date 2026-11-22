@@ -41,14 +41,12 @@
 
 namespace model {
 
-
 /// Base exception for model errors.
 class error : public std::runtime_error {
 public:
     explicit error(const std::string&);
     virtual ~error(void) throw();
 };
-
 
 /// Error while parsing external data.
 class format_error : public error {
@@ -57,7 +55,6 @@ public:
     virtual ~format_error(void) throw();
 };
 
-
 /// A requested element could not be found.
 class not_found_error : public error {
 public:
@@ -65,7 +62,6 @@ public:
     virtual ~not_found_error(void) throw();
 };
 
+} // namespace model
 
-}  // namespace model
-
-#endif  // !defined(MODEL_EXCEPTIONS_HPP)
+#endif // !defined(MODEL_EXCEPTIONS_HPP)

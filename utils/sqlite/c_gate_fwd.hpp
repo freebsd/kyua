@@ -35,11 +35,9 @@
 namespace utils {
 namespace sqlite {
 
-
 class database_c_gate;
 
+} // namespace sqlite
+} // namespace utils
 
-}  // namespace sqlite
-}  // namespace utils
-
-#endif  // !defined(UTILS_SQLITE_C_GATE_FWD_HPP)
+#endif // !defined(UTILS_SQLITE_C_GATE_FWD_HPP)

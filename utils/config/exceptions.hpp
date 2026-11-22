@@ -40,7 +40,6 @@
 namespace utils {
 namespace config {
 
-
 /// Base exceptions for config errors.
 class error : public std::runtime_error {
 public:
@@ -48,15 +47,12 @@ public:
     ~error(void) throw();
 };
 
-
 /// Exception denoting that two trees cannot be combined.
 class bad_combination_error : public error {
 public:
-    explicit bad_combination_error(const detail::tree_key&,
-                                   const std::string&);
+    explicit bad_combination_error(const detail::tree_key&, const std::string&);
     ~bad_combination_error(void) throw();
 };
-
 
 /// Exception denoting that a key was not found within a tree.
 class invalid_key_error : public error {
@@ -65,7 +61,6 @@ public:
     ~invalid_key_error(void) throw();
 };
 
-
 /// Exception denoting that a key was given an invalid value.
 class invalid_key_value : public error {
 public:
@@ -73,14 +68,12 @@ public:
     ~invalid_key_value(void) throw();
 };
 
-
 /// Exception denoting that a configuration file is invalid.
 class syntax_error : public error {
 public:
     explicit syntax_error(const std::string&);
     ~syntax_error(void) throw();
 };
-
 
 /// Exception denoting that a key was not found within a tree.
 class unknown_key_error : public error {
@@ -90,7 +83,6 @@ public:
     ~unknown_key_error(void) throw();
 };
 
-
 /// Exception denoting that a value was invalid.
 class value_error : public error {
 public:
@@ -98,9 +90,7 @@ public:
     ~value_error(void) throw();
 };
 
+} // namespace config
+} // namespace utils
 
-}  // namespace config
-}  // namespace utils
-
-
-#endif  // !defined(UTILS_CONFIG_EXCEPTIONS_HPP)
+#endif // !defined(UTILS_CONFIG_EXCEPTIONS_HPP)

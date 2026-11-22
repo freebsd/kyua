@@ -29,13 +29,11 @@
 #if !defined(UTILS_TEXT_OPERATIONS_IPP)
 #define UTILS_TEXT_OPERATIONS_IPP
 
-#include "utils/text/operations.hpp"
-
-#include <string>
 #include <sstream>
+#include <string>
 
 #include "utils/text/exceptions.hpp"
-
+#include "utils/text/operations.hpp"
 
 /// Concatenates a collection of strings into a single string.
 ///
@@ -44,7 +42,7 @@
 /// \param delimiter The delimiter to use to separate the strings.
 ///
 /// \return The concatenated strings.
-template< typename Collection >
+template <typename Collection>
 std::string
 utils::text::join(const Collection& strings, const std::string& delimiter)
 {
@@ -59,7 +57,6 @@ utils::text::join(const Collection& strings, const std::string& delimiter)
     return output.str();
 }
 
-
 /// Converts a string to a native type.
 ///
 /// \tparam Type The type to convert the string to.  An input stream operator
@@ -71,7 +68,7 @@ utils::text::join(const Collection& strings, const std::string& delimiter)
 /// \throw std::value_error If the input string does not represent a valid
 ///     target type.  This exception does not include any details, so the caller
 ///     must take care to re-raise it with appropriate details.
-template< typename Type >
+template <typename Type>
 Type
 utils::text::to_type(const std::string& str)
 {
@@ -88,5 +85,4 @@ utils::text::to_type(const std::string& str)
     return value;
 }
 
-
-#endif  // !defined(UTILS_TEXT_OPERATIONS_IPP)
+#endif // !defined(UTILS_TEXT_OPERATIONS_IPP)

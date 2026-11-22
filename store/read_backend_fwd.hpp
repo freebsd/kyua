@@ -34,10 +34,8 @@
 
 namespace store {
 
-
 class read_backend;
 
+} // namespace store
 
-}  // namespace store
-
-#endif  // !defined(STORE_READ_BACKEND_FWD_HPP)
+#endif // !defined(STORE_READ_BACKEND_FWD_HPP)

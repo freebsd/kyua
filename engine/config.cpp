@@ -29,7 +29,7 @@
 #include "engine/config.hpp"
 
 #if defined(HAVE_CONFIG_H)
-#   include "config.h"
+#include "config.h"
 #endif
 
 #include <stdexcept>
@@ -49,9 +49,7 @@ namespace fs = utils::fs;
 namespace passwd = utils::passwd;
 namespace text = utils::text;
 
-
 namespace {
-
 
 /// Defines the schema of a configuration tree.
 ///
@@ -60,14 +58,13 @@ namespace {
 static void
 init_tree(config::tree& tree)
 {
-    tree.define< config::string_node >("architecture");
-    tree.define< config::strings_set_node >("execenvs");
-    tree.define< config::positive_int_node >("parallelism");
-    tree.define< config::string_node >("platform");
-    tree.define< engine::user_node >("unprivileged_user");
+    tree.define<config::string_node>("architecture");
+    tree.define<config::strings_set_node>("execenvs");
+    tree.define<config::positive_int_node>("parallelism");
+    tree.define<config::string_node>("platform");
+    tree.define<engine::user_node>("unprivileged_user");
     tree.define_dynamic("test_suites");
 }
-
 
 /// Fills in a configuration tree with default values.
 ///
@@ -76,22 +73,21 @@ init_tree(config::tree& tree)
 static void
 set_defaults(config::tree& tree)
 {
-    tree.set< config::string_node >("architecture", KYUA_ARCHITECTURE);
+    tree.set<config::string_node>("architecture", KYUA_ARCHITECTURE);
 
-    std::set< std::string > supported;
+    std::set<std::string> supported;
     for (auto em : execenv::execenvs())
         if (em->is_supported())
             supported.insert(em->name());
     supported.insert(DEFAULT_EXECENV_NAME);
-    tree.set< config::strings_set_node >("execenvs", supported);
+    tree.set<config::strings_set_node>("execenvs", supported);
 
     // TODO(jmmv): Automatically derive this from the number of CPUs in the
     // machine and forcibly set to a value greater than 1.  Still testing
     // the new parallel implementation as of 2015-02-27 though.
-    tree.set< config::positive_int_node >("parallelism", 1);
-    tree.set< config::string_node >("platform", KYUA_PLATFORM);
+    tree.set<config::positive_int_node>("parallelism", 1);
+    tree.set<config::string_node>("platform", KYUA_PLATFORM);
 }
-
 
 /// Configuration parser specialization for Kyua configuration files.
 class config_parser : public config::parser {
@@ -107,8 +103,7 @@ class config_parser : public config::parser {
     ///
     /// \throw config::syntax_error If the syntax_format/syntax_version
     /// combination is not supported.
-    void
-    setup(config::tree& tree, const int syntax_version)
+    void setup(config::tree& tree, const int syntax_version)
     {
         if (syntax_version < 1 || syntax_version > 2)
             throw config::syntax_error(F("Unsupported config version %s") %
@@ -125,15 +120,12 @@ public:
     ///     stored when parse() is called.  Should be empty on entry.  Because
     ///     we grab a reference to this object, the tree must remain valid for
     ///     the existence of the parser object.
-    explicit config_parser(config::tree& tree_) :
-        config::parser(tree_)
+    explicit config_parser(config::tree& tree_) : config::parser(tree_)
     {
     }
 };
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Copies the node.
 ///
@@ -141,11 +133,10 @@ public:
 config::detail::base_node*
 engine::user_node::deep_copy(void) const
 {
-    std::unique_ptr< user_node > new_node(new user_node());
+    std::unique_ptr<user_node> new_node(new user_node());
     new_node->_value = _value;
     return new_node.release();
 }
-
 
 /// Pushes the node's value onto the Lua stack.
 ///
@@ -155,7 +146,6 @@ engine::user_node::push_lua(lutok::state& state) const
 {
     state.push_string(value().name);
 }
-
 
 /// Sets the value of the node from an entry in the Lua stack.
 ///
@@ -168,15 +158,14 @@ void
 engine::user_node::set_lua(lutok::state& state, const int value_index)
 {
     if (state.is_number(value_index)) {
-        config::typed_leaf_node< passwd::user >::set(
+        config::typed_leaf_node<passwd::user>::set(
             passwd::find_user_by_uid(state.to_integer(-1)));
     } else if (state.is_string(value_index)) {
-        config::typed_leaf_node< passwd::user >::set(
+        config::typed_leaf_node<passwd::user>::set(
             passwd::find_user_by_name(state.to_string(-1)));
     } else
         throw config::value_error("Invalid user identifier");
 }
-
 
 /// Sets the value of the node from a raw string representation.
 ///
@@ -187,25 +176,24 @@ void
 engine::user_node::set_string(const std::string& raw_value)
 {
     try {
-        config::typed_leaf_node< passwd::user >::set(
+        config::typed_leaf_node<passwd::user>::set(
             passwd::find_user_by_name(raw_value));
     } catch (const std::runtime_error& e) {
         int uid;
         try {
-            uid = text::to_type< int >(raw_value);
+            uid = text::to_type<int>(raw_value);
         } catch (const text::value_error& e2) {
             throw error(F("Cannot find user with name '%s'") % raw_value);
         }
 
         try {
-            config::typed_leaf_node< passwd::user >::set(
+            config::typed_leaf_node<passwd::user>::set(
                 passwd::find_user_by_uid(uid));
         } catch (const std::runtime_error& e2) {
             throw error(F("Cannot find user with UID %s") % uid);
         }
     }
 }
-
 
 /// Converts the contents of the node to a string.
 ///
@@ -215,9 +203,8 @@ engine::user_node::set_string(const std::string& raw_value)
 std::string
 engine::user_node::to_string(void) const
 {
-    return config::typed_leaf_node< passwd::user >::value().name;
+    return config::typed_leaf_node<passwd::user>::value().name;
 }
-
 
 /// Constructs a config with the built-in settings.
 ///
@@ -231,7 +218,6 @@ engine::default_config(void)
     return tree;
 }
 
-
 /// Constructs a config with the built-in settings.
 ///
 /// \return An empty test suite configuration.
@@ -243,13 +229,12 @@ engine::empty_config(void)
 
     // Tests of Kyua itself tend to use an empty config, i.e. default
     // execution environment is used. Let's allow it.
-    std::set< std::string > supported;
+    std::set<std::string> supported;
     supported.insert(DEFAULT_EXECENV_NAME);
-    tree.set< config::strings_set_node >("execenvs", supported);
+    tree.set<config::strings_set_node>("execenvs", supported);
 
     return tree;
 }
-
 
 /// Parses a test suite configuration file.
 ///

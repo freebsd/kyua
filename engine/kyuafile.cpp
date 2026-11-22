@@ -26,18 +26,16 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/kyuafile.hpp"
-
 #include <algorithm>
 #include <iterator>
-#include <stdexcept>
-
 #include <lutok/exceptions.hpp>
 #include <lutok/operations.hpp>
 #include <lutok/stack_cleaner.hpp>
 #include <lutok/state.ipp>
+#include <stdexcept>
 
 #include "engine/exceptions.hpp"
+#include "engine/kyuafile.hpp"
 #include "engine/scheduler.hpp"
 #include "model/metadata.hpp"
 #include "model/test_program.hpp"
@@ -60,7 +58,6 @@ namespace scheduler = engine::scheduler;
 using utils::none;
 using utils::optional;
 
-
 // History of Kyuafile file versions:
 //
 // 3 - DOES NOT YET EXIST.  Pending changes for when this is introduced:
@@ -77,16 +74,13 @@ using utils::optional;
 //
 // 1 - Initial version.
 
-
 namespace {
-
 
 static int lua_current_kyuafile(lutok::state&);
 static int lua_generic_test_program(lutok::state&);
 static int lua_include(lutok::state&);
 static int lua_syntax(lutok::state&);
 static int lua_test_suite(lutok::state&);
-
 
 /// Concatenates two paths while avoiding paths to start with './'.
 ///
@@ -104,7 +98,6 @@ relativize(const fs::path& root, const fs::path& file)
     else
         return root / file;
 }
-
 
 /// Implementation of a parser for Kyuafiles.
 ///
@@ -127,12 +120,12 @@ class parser : utils::noncopyable {
     /// Version of the Kyuafile file format requested by the parsed file.
     ///
     /// This is set once the Kyuafile invokes the syntax() call.
-    optional< int > _version;
+    optional<int> _version;
 
     /// Name of the test suite defined by the Kyuafile.
     ///
     /// This is set once the Kyuafile invokes the test_suite() call.
-    optional< std::string > _test_suite;
+    optional<std::string> _test_suite;
 
     /// Collection of test programs defined by the Kyuafile.
     ///
@@ -149,8 +142,7 @@ class parser : utils::noncopyable {
     ///
     /// \throw std::runtime_error If program_override is empty and the Kyuafile
     /// did not yet define the global name of the test suite.
-    std::string
-    get_test_suite(const std::string& program_override)
+    std::string get_test_suite(const std::string& program_override)
     {
         std::string test_suite;
 
@@ -181,10 +173,10 @@ public:
     /// \param scheduler_handle The scheduler context to use for loading the
     ///     test case lists.
     parser(const fs::path& source_root_, const fs::path& build_root_,
-           const fs::path& relative_filename_,
-           const config::tree& user_config,
+           const fs::path& relative_filename_, const config::tree& user_config,
            scheduler::scheduler_handle& scheduler_handle) :
-        _source_root(source_root_), _build_root(build_root_),
+        _source_root(source_root_),
+        _build_root(build_root_),
         _relative_filename(relative_filename_)
     {
         lutok::stack_cleaner cleaner(_state);
@@ -192,14 +184,14 @@ public:
         _state.push_cxx_function(lua_syntax);
         _state.set_global("syntax");
 
-        *_state.new_userdata< parser* >() = this;
+        *_state.new_userdata<parser*>() = this;
         _state.set_global("_parser");
 
         _state.push_cxx_function(lua_current_kyuafile);
         _state.set_global("current_kyuafile");
 
-        *_state.new_userdata< const config::tree* >() = &user_config;
-        *_state.new_userdata< scheduler::scheduler_handle* >() =
+        *_state.new_userdata<const config::tree*>() = &user_config;
+        *_state.new_userdata<scheduler::scheduler_handle*>() =
             &scheduler_handle;
         _state.push_cxx_closure(lua_include, 2);
         _state.set_global("include");
@@ -207,15 +199,15 @@ public:
         _state.push_cxx_function(lua_test_suite);
         _state.set_global("test_suite");
 
-        const std::set< std::string > interfaces =
+        const std::set<std::string> interfaces =
             scheduler::registered_interface_names();
-        for (std::set< std::string >::const_iterator iter = interfaces.begin();
+        for (std::set<std::string>::const_iterator iter = interfaces.begin();
              iter != interfaces.end(); ++iter) {
             const std::string& interface = *iter;
 
             _state.push_string(interface);
-            *_state.new_userdata< const config::tree* >() = &user_config;
-            *_state.new_userdata< scheduler::scheduler_handle* >() =
+            *_state.new_userdata<const config::tree*>() = &user_config;
+            *_state.new_userdata<scheduler::scheduler_handle*>() =
                 &scheduler_handle;
             _state.push_cxx_closure(lua_generic_test_program, 3);
             _state.set_global(interface + "_test_program");
@@ -237,19 +229,17 @@ public:
     /// \param state The Lua state from which to obtain the parser object.
     ///
     /// \return A pointer to the parser.
-    static parser*
-    get_from_state(lutok::state& state)
+    static parser* get_from_state(lutok::state& state)
     {
         lutok::stack_cleaner cleaner(state);
         state.get_global("_parser");
-        return *state.to_userdata< parser* >(-1);
+        return *state.to_userdata<parser*>(-1);
     }
 
     /// Callback for the Kyuafile current_kyuafile() function.
     ///
     /// \return Returns the absolute path to the current Kyuafile.
-    fs::path
-    callback_current_kyuafile(void) const
+    fs::path callback_current_kyuafile(void) const
     {
         const fs::path file = relativize(_source_root, _relative_filename);
         if (file.is_absolute())
@@ -267,16 +257,17 @@ public:
     /// \param user_config User configuration holding any test suite properties
     ///     to be passed to the list operation.
     /// \param scheduler_handle Scheduler context to run test programs in.
-    void
-    callback_include(const fs::path& raw_file,
-                     const config::tree& user_config,
-                     scheduler::scheduler_handle& scheduler_handle)
+    void callback_include(const fs::path& raw_file,
+                          const config::tree& user_config,
+                          scheduler::scheduler_handle& scheduler_handle)
     {
         const fs::path file = relativize(_relative_filename.branch_path(),
                                          raw_file);
-        const model::test_programs_vector subtps =
-            parser(_source_root, _build_root, file, user_config,
-                   scheduler_handle).parse();
+        const model::test_programs_vector subtps = parser(_source_root,
+                                                          _build_root, file,
+                                                          user_config,
+                                                          scheduler_handle)
+                                                       .parse();
 
         std::copy(subtps.begin(), subtps.end(),
                   std::back_inserter(_test_programs));
@@ -290,8 +281,7 @@ public:
     ///
     /// \throw std::runtime_error If the format or the version are invalid, or
     /// if syntax() has already been called.
-    void
-    callback_syntax(const int version)
+    void callback_syntax(const int version)
     {
         if (_version)
             throw std::runtime_error("Can only call syntax() once");
@@ -321,20 +311,21 @@ public:
     ///
     /// \throw std::runtime_error If the test program definition is invalid or
     ///     if the test program does not exist.
-    void
-    callback_test_program(const std::string& interface,
-                          const fs::path& raw_path,
-                          const std::string& test_suite_override,
-                          const model::metadata& metadata,
-                          const config::tree& user_config,
-                          scheduler::scheduler_handle& scheduler_handle)
+    void callback_test_program(const std::string& interface,
+                               const fs::path& raw_path,
+                               const std::string& test_suite_override,
+                               const model::metadata& metadata,
+                               const config::tree& user_config,
+                               scheduler::scheduler_handle& scheduler_handle)
     {
         if (raw_path.is_absolute())
             throw std::runtime_error(F("Got unexpected absolute path for test "
-                                       "program '%s'") % raw_path);
+                                       "program '%s'") %
+                                     raw_path);
         else if (raw_path.str() != raw_path.leaf_name())
             throw std::runtime_error(F("Test program '%s' cannot contain path "
-                                       "components") % raw_path);
+                                       "components") %
+                                     raw_path);
 
         const fs::path path = relativize(_relative_filename.branch_path(),
                                          raw_path);
@@ -358,8 +349,7 @@ public:
     /// \param name Name of the test suite.
     ///
     /// \throw std::runtime_error If test_suite() has already been called.
-    void
-    callback_test_suite(const std::string& name)
+    void callback_test_suite(const std::string& name)
     {
         if (_test_suite)
             throw std::runtime_error("Can only call test_suite() once");
@@ -373,8 +363,7 @@ public:
     /// \return The collection of test programs defined by the Kyuafile.
     ///
     /// \throw load_error If there is any problem parsing the file.
-    const model::test_programs_vector&
-    parse(void)
+    const model::test_programs_vector& parse(void)
     {
         PRE(_test_programs.empty());
 
@@ -397,7 +386,6 @@ public:
         return _test_programs;
     }
 };
-
 
 /// Glue to invoke parser::callback_test_program() from Lua.
 ///
@@ -427,20 +415,21 @@ lua_generic_test_program(lutok::state& state)
     if (!state.is_userdata(state.upvalue_index(2)))
         throw std::runtime_error("Found corrupt state for test_program "
                                  "function");
-    const config::tree* user_config = *state.to_userdata< const config::tree* >(
-        state.upvalue_index(2));
+    const config::tree* user_config =
+        *state.to_userdata<const config::tree*>(state.upvalue_index(2));
 
     if (!state.is_userdata(state.upvalue_index(3)))
         throw std::runtime_error("Found corrupt state for test_program "
                                  "function");
     scheduler::scheduler_handle* scheduler_handle =
-        *state.to_userdata< scheduler::scheduler_handle* >(
+        *state.to_userdata<scheduler::scheduler_handle*>(
             state.upvalue_index(3));
 
     if (!state.is_table(-1))
         throw std::runtime_error(
             F("%s_test_program expects a table of properties as its single "
-              "argument") % interface);
+              "argument") %
+            interface);
 
     scheduler::ensure_valid_interface(interface);
 
@@ -463,7 +452,8 @@ lua_generic_test_program(lutok::state& state)
         test_suite = state.to_string(-1);
     } else {
         throw std::runtime_error(F("Found non-string value in the test_suite "
-                                   "property of test program '%s'") % path);
+                                   "property of test program '%s'") %
+                                 path);
     }
     state.pop(1);
 
@@ -487,7 +477,8 @@ lua_generic_test_program(lutok::state& state)
             } else {
                 throw std::runtime_error(
                     F("Metadata property '%s' in test program '%s' cannot be "
-                      "converted to a string") % property % path);
+                      "converted to a string") %
+                    property % path);
             }
 
             mdbuilder.set_string(property, value);
@@ -496,12 +487,13 @@ lua_generic_test_program(lutok::state& state)
         state.pop(1);
     }
 
-    parser::get_from_state(state)->callback_test_program(
-        interface, path, test_suite, mdbuilder.build(), *user_config,
-        *scheduler_handle);
+    parser::get_from_state(state)->callback_test_program(interface, path,
+                                                         test_suite,
+                                                         mdbuilder.build(),
+                                                         *user_config,
+                                                         *scheduler_handle);
     return 0;
 }
-
 
 /// Glue to invoke parser::callback_current_kyuafile() from Lua.
 ///
@@ -511,11 +503,10 @@ lua_generic_test_program(lutok::state& state)
 static int
 lua_current_kyuafile(lutok::state& state)
 {
-    state.push_string(parser::get_from_state(state)->
-                      callback_current_kyuafile().str());
+    state.push_string(
+        parser::get_from_state(state)->callback_current_kyuafile().str());
     return 1;
 }
-
 
 /// Glue to invoke parser::callback_include() from Lua.
 ///
@@ -531,21 +522,20 @@ lua_include(lutok::state& state)
     if (!state.is_userdata(state.upvalue_index(1)))
         throw std::runtime_error("Found corrupt state for test_program "
                                  "function");
-    const config::tree* user_config = *state.to_userdata< const config::tree* >(
-        state.upvalue_index(1));
+    const config::tree* user_config =
+        *state.to_userdata<const config::tree*>(state.upvalue_index(1));
 
     if (!state.is_userdata(state.upvalue_index(2)))
         throw std::runtime_error("Found corrupt state for test_program "
                                  "function");
     scheduler::scheduler_handle* scheduler_handle =
-        *state.to_userdata< scheduler::scheduler_handle* >(
+        *state.to_userdata<scheduler::scheduler_handle*>(
             state.upvalue_index(2));
 
     parser::get_from_state(state)->callback_include(
         fs::path(state.to_string(-1)), *user_config, *scheduler_handle);
     return 0;
 }
-
 
 /// Glue to invoke parser::callback_syntax() from Lua.
 ///
@@ -578,7 +568,6 @@ lua_syntax(lutok::state& state)
     return 0;
 }
 
-
 /// Glue to invoke parser::callback_test_suite() from Lua.
 ///
 /// \param state The Lua state that executed the function.
@@ -591,9 +580,7 @@ lua_test_suite(lutok::state& state)
     return 0;
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Constructs a kyuafile form initialized data.
 ///
@@ -616,12 +603,10 @@ engine::kyuafile::kyuafile(const fs::path& source_root_,
 {
 }
 
-
 /// Destructor.
 engine::kyuafile::~kyuafile(void)
 {
 }
-
 
 /// Parses a test suite configuration file.
 ///
@@ -641,13 +626,13 @@ engine::kyuafile::~kyuafile(void)
 ///     file access errors and syntax errors.
 engine::kyuafile
 engine::kyuafile::load(const fs::path& file,
-                       const optional< fs::path > user_build_root,
+                       const optional<fs::path> user_build_root,
                        const config::tree& user_config,
                        scheduler::scheduler_handle& scheduler_handle)
 {
     const fs::path source_root_ = file.branch_path();
-    const fs::path build_root_ = user_build_root ?
-        user_build_root.get() : source_root_;
+    const fs::path build_root_ = user_build_root ? user_build_root.get() :
+                                                   source_root_;
 
     // test_program.absolute_path() uses the current work directory and that
     // fails to resolve the correct path once we have used chdir to enter the
@@ -655,14 +640,15 @@ engine::kyuafile::load(const fs::path& file,
     // force the build root to be absolute so that absolute_path() does not
     // need to rely on the current work directory.
     const fs::path abs_build_root = build_root_.is_absolute() ?
-        build_root_ : build_root_.to_absolute();
+        build_root_ :
+        build_root_.to_absolute();
 
     return kyuafile(source_root_, build_root_,
                     parser(source_root_, abs_build_root,
                            fs::path(file.leaf_name()), user_config,
-                           scheduler_handle).parse());
+                           scheduler_handle)
+                        .parse());
 }
-
 
 /// Gets the root directory of the test suite.
 ///
@@ -673,7 +659,6 @@ engine::kyuafile::source_root(void) const
     return _source_root;
 }
 
-
 /// Gets the root directory of the test programs.
 ///
 /// \return A path.
@@ -682,7 +667,6 @@ engine::kyuafile::build_root(void) const
 {
     return _build_root;
 }
-
 
 /// Gets the collection of test programs that belong to this test suite.
 ///

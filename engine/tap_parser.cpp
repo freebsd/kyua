@@ -26,11 +26,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/tap_parser.hpp"
-
 #include <fstream>
 
 #include "engine/exceptions.hpp"
+#include "engine/tap_parser.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/noncopyable.hpp"
 #include "utils/optional.ipp"
@@ -44,13 +43,10 @@ namespace text = utils::text;
 
 using utils::optional;
 
-
 /// TAP plan representing all tests being skipped.
 const engine::tap_plan engine::all_skipped_plan(1, 0);
 
-
 namespace {
-
 
 /// Implementation of the TAP parser.
 ///
@@ -83,23 +79,22 @@ class tap_parser : utils::noncopyable {
     ///
     /// \throw engine::format_error If the input is invalid.
     /// \throw text::error If the input is invalid.
-    bool
-    try_parse_plan(const std::string& line,
-                   optional< engine::tap_plan >& out_plan,
-                   std::string& out_all_skipped_reason)
+    bool try_parse_plan(const std::string& line,
+                        optional<engine::tap_plan>& out_plan,
+                        std::string& out_all_skipped_reason)
     {
         const text::regex_matches plan_matches = _plan_regex.match(line);
         if (!plan_matches)
             return false;
         const engine::tap_plan plan(
-            text::to_type< std::size_t >(plan_matches.get(1)),
-            text::to_type< std::size_t >(plan_matches.get(2)));
+            text::to_type<std::size_t>(plan_matches.get(1)),
+            text::to_type<std::size_t>(plan_matches.get(2)));
 
         if (out_plan)
             throw engine::format_error(
                 F("Found duplicate plan %s..%s (saw %s..%s earlier)") %
-                plan.first % plan.second %
-                out_plan.get().first % out_plan.get().second);
+                plan.first % plan.second % out_plan.get().first %
+                out_plan.get().second);
 
         std::string all_skipped_reason;
         const text::regex_matches skip_matches = _skip_regex.match(line);
@@ -140,9 +135,8 @@ class tap_parser : utils::noncopyable {
     ///
     /// \throw engine::format_error If the input is invalid.
     /// \throw text::error If the input is invalid.
-    bool
-    try_parse_result(const std::string& line, std::size_t& out_ok_count,
-                     std::size_t& out_not_ok_count, bool& out_bailed_out)
+    bool try_parse_result(const std::string& line, std::size_t& out_ok_count,
+                          std::size_t& out_not_ok_count, bool& out_bailed_out)
     {
         PRE(!out_bailed_out);
 
@@ -188,10 +182,9 @@ public:
     ///
     /// \throw engine::format_error If there are any syntax errors in the input.
     /// \throw text::error If there are any syntax errors in the input.
-    engine::tap_summary
-    parse(std::ifstream& input)
+    engine::tap_summary parse(std::ifstream& input)
     {
-        optional< engine::tap_plan > plan;
+        optional<engine::tap_plan> plan;
         std::string all_skipped_reason;
         bool bailed_out = false;
         std::size_t ok_count = 0, not_ok_count = 0;
@@ -228,9 +221,7 @@ public:
     }
 };
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Constructs a TAP summary with the results of parsing a TAP output.
 ///
@@ -239,17 +230,17 @@ public:
 /// \param all_skipped_reason_ The reason for skipping all tests, if any.
 /// \param ok_count_ Number of 'ok' test results.
 /// \param not_ok_count_ Number of 'not ok' test results.
-engine::tap_summary::tap_summary(const bool bailed_out_,
-                                 const tap_plan& plan_,
+engine::tap_summary::tap_summary(const bool bailed_out_, const tap_plan& plan_,
                                  const std::string& all_skipped_reason_,
                                  const std::size_t ok_count_,
                                  const std::size_t not_ok_count_) :
-    _bailed_out(bailed_out_), _plan(plan_),
+    _bailed_out(bailed_out_),
+    _plan(plan_),
     _all_skipped_reason(all_skipped_reason_),
-    _ok_count(ok_count_), _not_ok_count(not_ok_count_)
+    _ok_count(ok_count_),
+    _not_ok_count(not_ok_count_)
 {
 }
-
 
 /// Constructs a TAP summary for a bailed out test program.
 ///
@@ -259,7 +250,6 @@ engine::tap_summary::new_bailed_out(void)
 {
     return tap_summary(true, tap_plan(0, 0), "", 0, 0);
 }
-
 
 /// Constructs a TAP summary for a test program that skipped all tests.
 ///
@@ -271,7 +261,6 @@ engine::tap_summary::new_all_skipped(const std::string& reason)
 {
     return tap_summary(false, all_skipped_plan, reason, 0, 0);
 }
-
 
 /// Constructs a TAP summary for a test program that reported results.
 ///
@@ -289,7 +278,6 @@ engine::tap_summary::new_results(const tap_plan& plan_,
     return tap_summary(false, plan_, "", ok_count_, not_ok_count_);
 }
 
-
 /// Checks whether the test program bailed out early or not.
 ///
 /// \return True if the test program aborted execution before completing.
@@ -298,7 +286,6 @@ engine::tap_summary::bailed_out(void) const
 {
     return _bailed_out;
 }
-
 
 /// Gets the TAP plan of the test program.
 ///
@@ -312,7 +299,6 @@ engine::tap_summary::plan(void) const
     PRE(!_bailed_out);
     return _plan;
 }
-
 
 /// Gets the reason for skipping all the tests, if any.
 ///
@@ -328,7 +314,6 @@ engine::tap_summary::all_skipped_reason(void) const
     return _all_skipped_reason;
 }
 
-
 /// Gets the number of 'ok' test results.
 ///
 /// \pre bailed_out() must be false.
@@ -341,7 +326,6 @@ engine::tap_summary::ok_count(void) const
     PRE(_all_skipped_reason.empty());
     return _ok_count;
 }
-
 
 /// Gets the number of 'not ok' test results.
 ///
@@ -356,7 +340,6 @@ engine::tap_summary::not_ok_count(void) const
     return _not_ok_count;
 }
 
-
 /// Checks two tap_summary objects for equality.
 ///
 /// \param other The object to compare this one to.
@@ -365,13 +348,11 @@ engine::tap_summary::not_ok_count(void) const
 bool
 engine::tap_summary::operator==(const tap_summary& other) const
 {
-    return (_bailed_out == other._bailed_out &&
-            _plan == other._plan &&
+    return (_bailed_out == other._bailed_out && _plan == other._plan &&
             _all_skipped_reason == other._all_skipped_reason &&
             _ok_count == other._ok_count &&
             _not_ok_count == other._not_ok_count);
 }
-
 
 /// Checks two tap_summary objects for inequality.
 ///
@@ -383,7 +364,6 @@ engine::tap_summary::operator!=(const tap_summary& other) const
 {
     return !(*this == other);
 }
-
 
 /// Formats a tap_summary into a stream.
 ///
@@ -411,7 +391,6 @@ engine::operator<<(std::ostream& output, const tap_summary& summary)
     output << "}";
     return output;
 }
-
 
 /// Parses an input file containing the TAP output of a test program.
 ///

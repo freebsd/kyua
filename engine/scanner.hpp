@@ -32,17 +32,15 @@
 #if !defined(ENGINE_SCANNER_HPP)
 #define ENGINE_SCANNER_HPP
 
-#include "engine/scanner_fwd.hpp"
-
 #include <memory>
 #include <set>
 
 #include "engine/filters_fwd.hpp"
+#include "engine/scanner_fwd.hpp"
 #include "model/test_program_fwd.hpp"
 #include "utils/optional_fwd.hpp"
 
 namespace engine {
-
 
 /// Scans a list of test programs, yielding one test case at a time.
 ///
@@ -57,20 +55,18 @@ namespace engine {
 class scanner {
     struct impl;
     /// Pointer to the internal implementation data.
-    std::shared_ptr< impl > _pimpl;
+    std::shared_ptr<impl> _pimpl;
 
 public:
-    scanner(const model::test_programs_vector&, const std::set< test_filter >&);
+    scanner(const model::test_programs_vector&, const std::set<test_filter>&);
     ~scanner(void);
 
     bool done(void);
-    utils::optional< scan_result > yield(void);
+    utils::optional<scan_result> yield(void);
 
-    std::set< test_filter > unused_filters(void) const;
+    std::set<test_filter> unused_filters(void) const;
 };
 
+} // namespace engine
 
-}  // namespace engine
-
-
-#endif  // !defined(ENGINE_SCANNER_HPP)
+#endif // !defined(ENGINE_SCANNER_HPP)

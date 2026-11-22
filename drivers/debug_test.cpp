@@ -26,11 +26,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "drivers/debug_test.hpp"
-
 #include <stdexcept>
 #include <utility>
 
+#include "drivers/debug_test.hpp"
 #include "engine/filters.hpp"
 #include "engine/kyuafile.hpp"
 #include "engine/scanner.hpp"
@@ -50,7 +49,6 @@ namespace scheduler = engine::scheduler;
 
 using utils::optional;
 
-
 /// Executes the operation.
 ///
 /// \param kyuafile_path The path to the Kyuafile to be loaded.
@@ -66,7 +64,7 @@ using utils::optional;
 drivers::debug_test::result
 drivers::debug_test::drive(engine::debugger_ptr debugger,
                            const fs::path& kyuafile_path,
-                           const optional< fs::path > build_root,
+                           const optional<fs::path> build_root,
                            const engine::test_filter& filter,
                            const config::tree& user_config,
                            const fs::path& stdout_path,
@@ -74,13 +72,13 @@ drivers::debug_test::drive(engine::debugger_ptr debugger,
 {
     scheduler::scheduler_handle handle = scheduler::setup();
 
-    const engine::kyuafile kyuafile = engine::kyuafile::load(
-        kyuafile_path, build_root, user_config, handle);
-    std::set< engine::test_filter > filters;
+    const engine::kyuafile kyuafile =
+        engine::kyuafile::load(kyuafile_path, build_root, user_config, handle);
+    std::set<engine::test_filter> filters;
     filters.insert(filter);
 
     engine::scanner scanner(kyuafile.test_programs(), filters);
-    optional< engine::scan_result > match;
+    optional<engine::scan_result> match;
     while (!match && !scanner.done()) {
         match = scanner.yield();
     }
@@ -88,7 +86,8 @@ drivers::debug_test::drive(engine::debugger_ptr debugger,
         throw std::runtime_error(F("Unknown test case '%s'") % filter.str());
     } else if (!scanner.done()) {
         throw std::runtime_error(F("The filter '%s' matches more than one test "
-                                 "case") % filter.str());
+                                   "case") %
+                                 filter.str());
     }
     INV(match && scanner.done());
     const model::test_program_ptr test_program = match.get().first;
@@ -99,11 +98,9 @@ drivers::debug_test::drive(engine::debugger_ptr debugger,
         test_case.attach_debugger(debugger);
 
     scheduler::result_handle_ptr result_handle = handle.debug_test(
-        test_program, test_case_name, user_config,
-        stdout_path, stderr_path);
+        test_program, test_case_name, user_config, stdout_path, stderr_path);
     const scheduler::test_result_handle* test_result_handle =
-        dynamic_cast< const scheduler::test_result_handle* >(
-            result_handle.get());
+        dynamic_cast<const scheduler::test_result_handle*>(result_handle.get());
     if (test_result_handle == nullptr)
         UNREACHABLE_MSG("Expected a test result handle from the scheduler");
     const model::test_result test_result = test_result_handle->test_result();
@@ -112,6 +109,7 @@ drivers::debug_test::drive(engine::debugger_ptr debugger,
     handle.check_interrupt();
     handle.cleanup();
 
-    return result(engine::test_filter(
-        test_program->relative_path(), test_case_name), test_result);
+    return result(engine::test_filter(test_program->relative_path(),
+                                      test_case_name),
+                  test_result);
 }

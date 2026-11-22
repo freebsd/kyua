@@ -46,11 +46,10 @@
 namespace utils {
 namespace fs {
 
-
 void copy(const fs::path&, const fs::path&);
 path current_path(void);
 bool exists(const fs::path&);
-utils::optional< path > find_in_path(const char*);
+utils::optional<path> find_in_path(const char*);
 utils::units::bytes free_disk_space(const fs::path&);
 bool is_directory(const fs::path&);
 void mkdir(const path&, const int);
@@ -61,12 +60,11 @@ void mount_tmpfs(const path&);
 void mount_tmpfs(const path&, const units::bytes&);
 void rm_r(const path&);
 void rmdir(const path&);
-std::set< directory_entry > scan_directory(const path&);
+std::set<directory_entry> scan_directory(const path&);
 void unlink(const path&);
 void unmount(const path&);
 
+} // namespace fs
+} // namespace utils
 
-}  // namespace fs
-}  // namespace utils
-
-#endif  // !defined(UTILS_FS_OPERATIONS_HPP)
+#endif // !defined(UTILS_FS_OPERATIONS_HPP)

@@ -32,17 +32,15 @@
 #if !defined(UTILS_CMDLINE_OPTIONS_HPP)
 #define UTILS_CMDLINE_OPTIONS_HPP
 
-#include "utils/cmdline/options_fwd.hpp"
-
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "utils/cmdline/options_fwd.hpp"
 #include "utils/fs/path_fwd.hpp"
 
 namespace utils {
 namespace cmdline {
-
 
 /// Type-less base option class.
 ///
@@ -127,7 +125,6 @@ public:
     virtual void validate(const std::string&) const;
 };
 
-
 /// Definition of a boolean option.
 ///
 /// A boolean option can be specified once in the command line, at which point
@@ -136,12 +133,13 @@ class bool_option : public base_option {
 public:
     bool_option(const char, const char*, const char*);
     bool_option(const char*, const char*);
-    virtual ~bool_option(void) {}
+    virtual ~bool_option(void)
+    {
+    }
 
     /// The data type of this option.
     typedef bool option_type;
 };
-
 
 /// Definition of an integer option.
 class int_option : public base_option {
@@ -149,7 +147,9 @@ public:
     int_option(const char, const char*, const char*, const char*,
                const char* = NULL);
     int_option(const char*, const char*, const char*, const char* = NULL);
-    virtual ~int_option(void) {}
+    virtual ~int_option(void)
+    {
+    }
 
     /// The data type of this option.
     typedef int option_type;
@@ -158,22 +158,22 @@ public:
     static int convert(const std::string& str);
 };
 
-
 /// Definition of a comma-separated list of strings.
 class list_option : public base_option {
 public:
     list_option(const char, const char*, const char*, const char*,
                 const char* = NULL);
     list_option(const char*, const char*, const char*, const char* = NULL);
-    virtual ~list_option(void) {}
+    virtual ~list_option(void)
+    {
+    }
 
     /// The data type of this option.
-    typedef std::vector< std::string > option_type;
+    typedef std::vector<std::string> option_type;
 
     virtual void validate(const std::string&) const;
     static option_type convert(const std::string&);
 };
-
 
 /// Definition of an option representing a path.
 ///
@@ -184,7 +184,9 @@ public:
     path_option(const char, const char*, const char*, const char*,
                 const char* = NULL);
     path_option(const char*, const char*, const char*, const char* = NULL);
-    virtual ~path_option(void) {}
+    virtual ~path_option(void)
+    {
+    }
 
     /// The data type of this option.
     typedef utils::fs::path option_type;
@@ -192,7 +194,6 @@ public:
     virtual void validate(const std::string&) const;
     static utils::fs::path convert(const std::string&);
 };
-
 
 /// Definition of a property option.
 ///
@@ -207,15 +208,16 @@ class property_option : public base_option {
 public:
     property_option(const char, const char*, const char*, const char*);
     property_option(const char*, const char*, const char*);
-    virtual ~property_option(void) {}
+    virtual ~property_option(void)
+    {
+    }
 
     /// The data type of this option.
-    typedef std::pair< std::string, std::string > option_type;
+    typedef std::pair<std::string, std::string> option_type;
 
     virtual void validate(const std::string& str) const;
     static option_type convert(const std::string& str);
 };
-
 
 /// Definition of a free-form string option.
 ///
@@ -225,7 +227,9 @@ public:
     string_option(const char, const char*, const char*, const char*,
                   const char* = NULL, bool = false);
     string_option(const char*, const char*, const char*, const char* = NULL);
-    virtual ~string_option(void) {}
+    virtual ~string_option(void)
+    {
+    }
 
     /// The data type of this option.
     typedef std::string option_type;
@@ -234,8 +238,7 @@ public:
     static std::string convert(const std::string& str);
 };
 
+} // namespace cmdline
+} // namespace utils
 
-}  // namespace cmdline
-}  // namespace utils
-
-#endif  // !defined(UTILS_CMDLINE_OPTIONS_HPP)
+#endif // !defined(UTILS_CMDLINE_OPTIONS_HPP)

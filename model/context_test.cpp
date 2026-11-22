@@ -26,23 +26,20 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "model/context.hpp"
-
+#include <atf-c++.hpp>
 #include <map>
 #include <sstream>
 #include <string>
 
-#include <atf-c++.hpp>
-
+#include "model/context.hpp"
 #include "utils/fs/path.hpp"
 
 namespace fs = utils::fs;
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(ctor_and_getters);
 ATF_TEST_CASE_BODY(ctor_and_getters)
 {
-    std::map< std::string, std::string > env;
+    std::map<std::string, std::string> env;
     env["foo"] = "first";
     env["bar"] = "second";
     const model::context context(fs::path("/foo/bar"), env);
@@ -50,30 +47,28 @@ ATF_TEST_CASE_BODY(ctor_and_getters)
     ATF_REQUIRE(env == context.env());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(operators_eq_and_ne);
 ATF_TEST_CASE_BODY(operators_eq_and_ne)
 {
-    std::map< std::string, std::string > env;
+    std::map<std::string, std::string> env;
     env["foo"] = "first";
     const model::context context1(fs::path("/foo/bar"), env);
     const model::context context2(fs::path("/foo/bar"), env);
     const model::context context3(fs::path("/foo/baz"), env);
     env["bar"] = "second";
     const model::context context4(fs::path("/foo/bar"), env);
-    ATF_REQUIRE(  context1 == context2);
+    ATF_REQUIRE(context1 == context2);
     ATF_REQUIRE(!(context1 != context2));
     ATF_REQUIRE(!(context1 == context3));
-    ATF_REQUIRE(  context1 != context3);
+    ATF_REQUIRE(context1 != context3);
     ATF_REQUIRE(!(context1 == context4));
-    ATF_REQUIRE(  context1 != context4);
+    ATF_REQUIRE(context1 != context4);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(output__empty_env);
 ATF_TEST_CASE_BODY(output__empty_env)
 {
-    const std::map< std::string, std::string > env;
+    const std::map<std::string, std::string> env;
     const model::context context(fs::path("/foo/bar"), env);
 
     std::ostringstream str;
@@ -81,11 +76,10 @@ ATF_TEST_CASE_BODY(output__empty_env)
     ATF_REQUIRE_EQ("context{cwd='/foo/bar', env=[]}", str.str());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(output__some_env);
 ATF_TEST_CASE_BODY(output__some_env)
 {
-    std::map< std::string, std::string > env;
+    std::map<std::string, std::string> env;
     env["foo"] = "first";
     env["bar"] = "second' var";
     const model::context context(fs::path("/foo/bar"), env);
@@ -93,9 +87,9 @@ ATF_TEST_CASE_BODY(output__some_env)
     std::ostringstream str;
     str << context;
     ATF_REQUIRE_EQ("context{cwd='/foo/bar', env=[bar='second\\' var', "
-        "foo='first']}", str.str());
+                   "foo='first']}",
+                   str.str());
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

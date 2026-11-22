@@ -33,12 +33,10 @@
 #define UTILS_PROCESS_DEADLINE_KILLER_HPP
 
 #include "utils/process/deadline_killer_fwd.hpp"
-
 #include "utils/signals/timer.hpp"
 
 namespace utils {
 namespace process {
-
 
 /// Timer that forcibly kills a process group on activation.
 class deadline_killer : public utils::signals::timer {
@@ -50,7 +48,6 @@ class deadline_killer : public utils::signals::timer {
 public:
     deadline_killer(const datetime::delta&, const int);
 };
-
 
 } // namespace process
 } // namespace utils

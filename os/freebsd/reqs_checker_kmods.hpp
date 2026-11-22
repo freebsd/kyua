@@ -39,16 +39,12 @@
 
 namespace freebsd {
 
-
 class reqs_checker_kmods : public engine::reqs_checker {
 public:
-    std::string exec(const model::metadata&,
-                     const utils::config::tree&,
-                     const std::string&,
-                     const utils::fs::path&) const;
+    std::string exec(const model::metadata&, const utils::config::tree&,
+                     const std::string&, const utils::fs::path&) const;
 };
 
+} // namespace freebsd
 
-}  // namespace freebsd
-
-#endif  // !defined(FREEBSD_REQS_CHECKER_KMODS)
+#endif // !defined(FREEBSD_REQS_CHECKER_KMODS)

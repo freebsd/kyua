@@ -26,8 +26,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/format/containers.ipp"
-
+#include <atf-c++.hpp>
 #include <memory>
 #include <ostream>
 #include <set>
@@ -35,12 +34,9 @@
 #include <utility>
 #include <vector>
 
-#include <atf-c++.hpp>
-
-
+#include "utils/format/containers.ipp"
 
 namespace {
-
 
 /// Formats a value and compares it to an expected string.
 ///
@@ -50,7 +46,7 @@ namespace {
 ///
 /// \post Fails the test case if the formatted actual value does not match
 /// the provided expected string.
-template< typename T >
+template <typename T>
 static void
 do_check(const char* expected, const T& actual)
 {
@@ -59,30 +55,27 @@ do_check(const char* expected, const T& actual)
     ATF_REQUIRE_EQ(expected, str.str());
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 ATF_TEST_CASE_WITHOUT_HEAD(std_map__empty);
 ATF_TEST_CASE_BODY(std_map__empty)
 {
-    do_check("map()", std::map< char, char >());
-    do_check("map()", std::map< int, long >());
+    do_check("map()", std::map<char, char>());
+    do_check("map()", std::map<int, long>());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(std_map__some);
 ATF_TEST_CASE_BODY(std_map__some)
 {
     {
-        std::map< char, int > v;
+        std::map<char, int> v;
         v['b'] = 123;
         v['z'] = 321;
         do_check("map(b=123, z=321)", v);
     }
 
     {
-        std::map< int, std::string > v;
+        std::map<int, std::string> v;
         v[5] = "first";
         v[2] = "second";
         v[8] = "third";
@@ -90,52 +83,47 @@ ATF_TEST_CASE_BODY(std_map__some)
     }
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(std_pair);
 ATF_TEST_CASE_BODY(std_pair)
 {
-    do_check("pair(5, b)", std::pair< int, char >(5, 'b'));
+    do_check("pair(5, b)", std::pair<int, char>(5, 'b'));
     do_check("pair(foo bar, baz)",
-             std::pair< std::string, std::string >("foo bar", "baz"));
+             std::pair<std::string, std::string>("foo bar", "baz"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(std_shared_ptr__null);
 ATF_TEST_CASE_BODY(std_shared_ptr__null)
 {
-    do_check("<NULL>", std::shared_ptr< char >());
-    do_check("<NULL>", std::shared_ptr< int >());
+    do_check("<NULL>", std::shared_ptr<char>());
+    do_check("<NULL>", std::shared_ptr<int>());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(std_shared_ptr__not_null);
 ATF_TEST_CASE_BODY(std_shared_ptr__not_null)
 {
-    do_check("f", std::shared_ptr< char >(new char('f')));
-    do_check("8", std::shared_ptr< int >(new int(8)));
+    do_check("f", std::shared_ptr<char>(new char('f')));
+    do_check("8", std::shared_ptr<int>(new int(8)));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(std_set__empty);
 ATF_TEST_CASE_BODY(std_set__empty)
 {
-    do_check("set()", std::set< char >());
-    do_check("set()", std::set< int >());
+    do_check("set()", std::set<char>());
+    do_check("set()", std::set<int>());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(std_set__some);
 ATF_TEST_CASE_BODY(std_set__some)
 {
     {
-        std::set< char > v;
+        std::set<char> v;
         v.insert('b');
         v.insert('z');
         do_check("set(b, z)", v);
     }
 
     {
-        std::set< int > v;
+        std::set<int> v;
         v.insert(5);
         v.insert(2);
         v.insert(8);
@@ -143,34 +131,31 @@ ATF_TEST_CASE_BODY(std_set__some)
     }
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(std_vector__empty);
 ATF_TEST_CASE_BODY(std_vector__empty)
 {
-    do_check("[]", std::vector< char >());
-    do_check("[]", std::vector< int >());
+    do_check("[]", std::vector<char>());
+    do_check("[]", std::vector<int>());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(std_vector__some);
 ATF_TEST_CASE_BODY(std_vector__some)
 {
     {
-        std::vector< char > v;
+        std::vector<char> v;
         v.push_back('b');
         v.push_back('z');
         do_check("[b, z]", v);
     }
 
     {
-        std::vector< int > v;
+        std::vector<int> v;
         v.push_back(5);
         v.push_back(2);
         v.push_back(8);
         do_check("[5, 2, 8]", v);
     }
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

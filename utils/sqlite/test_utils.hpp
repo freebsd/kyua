@@ -34,22 +34,19 @@
 /// dependency chain in the build rules.
 
 #if !defined(UTILS_SQLITE_TEST_UTILS_HPP)
-#   define UTILS_SQLITE_TEST_UTILS_HPP
+#define UTILS_SQLITE_TEST_UTILS_HPP
 #else
-#   error "test_utils.hpp can only be included once"
+#error "test_utils.hpp can only be included once"
 #endif
 
-#include <iostream>
-
 #include <atf-c++.hpp>
+#include <iostream>
 
 #include "utils/defs.hpp"
 #include "utils/sqlite/c_gate.hpp"
 #include "utils/sqlite/exceptions.hpp"
 
-
 namespace {
-
 
 /// Checks that a given expression raises a particular sqlite::api_error.
 ///
@@ -60,16 +57,15 @@ namespace {
 /// \param exp_api_function The name of the SQLite 3 C API function that causes
 ///     the error.
 /// \param statement The statement to execute.
-#define REQUIRE_API_ERROR(exp_api_function, statement) \
-    do { \
-        try { \
-            statement; \
-            ATF_FAIL("api_error not raised by " #statement); \
-        } catch (const utils::sqlite::api_error& api_error) { \
+#define REQUIRE_API_ERROR(exp_api_function, statement)                  \
+    do {                                                                \
+        try {                                                           \
+            statement;                                                  \
+            ATF_FAIL("api_error not raised by " #statement);            \
+        } catch (const utils::sqlite::api_error& api_error) {           \
             ATF_REQUIRE_EQ(exp_api_function, api_error.api_function()); \
-        } \
+        }                                                               \
     } while (0)
-
 
 /// Gets the pointer to the internal sqlite3 of a database object.
 ///
@@ -84,7 +80,6 @@ raw(utils::sqlite::database& db)
     return utils::sqlite::database_c_gate(db).c_database();
 }
 
-
 /// SQL commands to create a test table.
 ///
 /// See create_test_table() for more details.
@@ -96,9 +91,7 @@ static const char* create_test_table_sql =
     "INSERT INTO test (prime) VALUES (5);\n"
     "INSERT INTO test (prime) VALUES (3);\n";
 
-
 static void create_test_table [[maybe_unused]] (::sqlite3*);
-
 
 /// Creates a 'test' table in a database.
 ///
@@ -113,13 +106,11 @@ static void
 create_test_table(::sqlite3* db)
 {
     std::cout << "Creating 'test' table in the database\n";
-    ATF_REQUIRE_EQ(SQLITE_OK, ::sqlite3_exec(db, create_test_table_sql,
-                                             NULL, NULL, NULL));
+    ATF_REQUIRE_EQ(SQLITE_OK,
+                   ::sqlite3_exec(db, create_test_table_sql, NULL, NULL, NULL));
 }
 
-
 static void verify_test_table [[maybe_unused]] (::sqlite3*);
-
 
 /// Verifies that the specified database contains the 'test' table.
 ///
@@ -132,10 +123,11 @@ static void
 verify_test_table(::sqlite3* db)
 {
     std::cout << "Verifying that the 'test' table is in the database\n";
-    char **result;
+    char** result;
     int rows, columns;
-    ATF_REQUIRE_EQ(SQLITE_OK, ::sqlite3_get_table(db,
-        "SELECT * FROM test ORDER BY prime", &result, &rows, &columns, NULL));
+    ATF_REQUIRE_EQ(SQLITE_OK,
+                   ::sqlite3_get_table(db, "SELECT * FROM test ORDER BY prime",
+                                       &result, &rows, &columns, NULL));
     ATF_REQUIRE_EQ(5, rows);
     ATF_REQUIRE_EQ(1, columns);
     ATF_REQUIRE_EQ("prime", std::string(result[0]));
@@ -147,5 +139,4 @@ verify_test_table(::sqlite3* db)
     ::sqlite3_free_table(result);
 }
 
-
-}  // anonymous namespace
+} // anonymous namespace

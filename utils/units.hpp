@@ -45,7 +45,6 @@ extern "C" {
 namespace utils {
 namespace units {
 
-
 namespace {
 
 /// Constant representing 1 kilobyte.
@@ -60,8 +59,7 @@ const uint64_t GB = int64_t(1) << 30;
 /// Constant representing 1 terabyte.
 const uint64_t TB = int64_t(1) << 40;
 
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Representation of a bytes quantity.
 ///
@@ -85,12 +83,10 @@ public:
     operator uint64_t(void) const;
 };
 
-
 std::istream& operator>>(std::istream&, bytes&);
 std::ostream& operator<<(std::ostream&, const bytes&);
 
+} // namespace units
+} // namespace utils
 
-}  // namespace units
-}  // namespace utils
-
-#endif  // !defined(UTILS_UNITS_HPP)
+#endif // !defined(UTILS_UNITS_HPP)

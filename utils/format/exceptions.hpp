@@ -38,14 +38,12 @@
 namespace utils {
 namespace format {
 
-
 /// Base exception for format errors.
 class error : public std::runtime_error {
 public:
     explicit error(const std::string&);
     virtual ~error(void) throw();
 };
-
 
 /// Error denoting a bad format string.
 class bad_format_error : public error {
@@ -58,7 +56,6 @@ public:
 
     const std::string& format(void) const;
 };
-
 
 /// Error denoting too many arguments for the format string.
 class extra_args_error : public error {
@@ -76,9 +73,7 @@ public:
     const std::string& arg(void) const;
 };
 
+} // namespace format
+} // namespace utils
 
-}  // namespace format
-}  // namespace utils
-
-
-#endif  // !defined(UTILS_FORMAT_EXCEPTIONS_HPP)
+#endif // !defined(UTILS_FORMAT_EXCEPTIONS_HPP)

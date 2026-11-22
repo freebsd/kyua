@@ -59,28 +59,21 @@ using cli::cmd_debug;
 using utils::process::args_vector;
 using utils::process::child;
 
-
 namespace {
 
-
 const cmdline::bool_option pause_before_cleanup_upon_fail_option(
-    'p',
-    "pause-before-cleanup-upon-fail",
+    'p', "pause-before-cleanup-upon-fail",
     "Pauses right before the test cleanup upon fail");
 
-
-const cmdline::bool_option pause_before_cleanup_option(
-    'P',
-    "pause-before-cleanup",
-    "Pauses right before the test cleanup");
-
+const cmdline::bool_option
+    pause_before_cleanup_option('P', "pause-before-cleanup",
+                                "Pauses right before the test cleanup");
 
 static const char* DEFAULT_CMD = "$SHELL";
 const cmdline::string_option execute_option(
     'x', "execute",
-    "A command to run within the given execenv upon test failure",
-    "cmd", DEFAULT_CMD, true);
-
+    "A command to run within the given execenv upon test failure", "cmd",
+    DEFAULT_CMD, true);
 
 /// Functor to execute a program.
 class execute {
@@ -92,21 +85,18 @@ public:
     ///
     /// \param program Program binary absolute path.
     /// \param args Program arguments.
-    execute(
-        const std::string& cmd_,
-        executor::exit_handle& eh_) :
+    execute(const std::string& cmd_, executor::exit_handle& eh_) :
         _cmd(cmd_),
         _eh(eh_)
     {
     }
 
     /// Body of the subprocess.
-    void
-    operator()(void)
+    void operator()(void)
     {
         if (::chdir(_eh.work_directory().c_str()) == -1) {
-            std::cerr << "execute: chdir() errors: "
-                << std::strerror(errno) << ".\n";
+            std::cerr << "execute: chdir() errors: " << std::strerror(errno)
+                      << ".\n";
             std::exit(EXIT_FAILURE);
         }
 
@@ -125,7 +115,6 @@ public:
     }
 };
 
-
 /// The debugger interface implementation.
 class dbg : public engine::debugger {
     /// Object to interact with the I/O of the program.
@@ -140,58 +129,55 @@ public:
     /// \param ui_ Object to interact with the I/O of the program.
     /// \param cmdline Representation of the command line to the subcommand.
     dbg(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline) :
-        _ui(ui), _cmdline(cmdline)
-    {}
-
-    void before_cleanup(
-        const model::test_program_ptr&,
-        const model::test_case&,
-        optional< model::test_result >& result,
-        executor::exit_handle& eh) const
+        _ui(ui),
+        _cmdline(cmdline)
     {
-        if (_cmdline.has_option(pause_before_cleanup_upon_fail_option
-            .long_name())) {
+    }
+
+    void before_cleanup(const model::test_program_ptr&, const model::test_case&,
+                        optional<model::test_result>& result,
+                        executor::exit_handle& eh) const
+    {
+        if (_cmdline.has_option(
+                pause_before_cleanup_upon_fail_option.long_name())) {
             if (result && !result.get().good()) {
                 _ui->out("The test failed and paused right before its cleanup "
-                    "routine.");
+                         "routine.");
                 _ui->out(F("Test work dir: %s") % eh.work_directory().str());
                 _ui->out("Press any key to continue...");
-                (void) std::cin.get();
+                (void)std::cin.get();
             }
-        } else if (_cmdline.has_option(pause_before_cleanup_option
-            .long_name())) {
+        } else if (
+            _cmdline.has_option(pause_before_cleanup_option.long_name())) {
             _ui->out("The test paused right before its cleanup routine.");
             _ui->out(F("Test work dir: %s") % eh.work_directory().str());
             _ui->out("Press any key to continue...");
-            (void) std::cin.get();
+            (void)std::cin.get();
         }
     };
 
-    void upon_test_failure(
-        const model::test_program_ptr&,
-        const model::test_case&,
-        optional< model::test_result >&,
-        executor::exit_handle& eh) const
+    void upon_test_failure(const model::test_program_ptr&,
+                           const model::test_case&,
+                           optional<model::test_result>&,
+                           executor::exit_handle& eh) const
     {
         if (!_cmdline.has_option(execute_option.long_name()))
             return;
         const std::string& cmd = _cmdline.get_option<cmdline::string_option>(
             execute_option.long_name());
-        std::unique_ptr< process::child > child = child::fork_interactive(
-            execute(cmd, eh));
-        (void) child->wait();
+        std::unique_ptr<process::child> child =
+            child::fork_interactive(execute(cmd, eh));
+        (void)child->wait();
     };
-
 };
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Default constructor for cmd_debug.
-cmd_debug::cmd_debug(void) : cli_command(
-    "debug", "test_case", 1, 1,
-    "Executes a single test case providing facilities for debugging")
+cmd_debug::cmd_debug(void) :
+    cli_command(
+        "debug", "test_case", 1, 1,
+        "Executes a single test case providing facilities for debugging")
 {
     add_option(build_root_option);
     add_option(kyuafile_option);
@@ -204,12 +190,11 @@ cmd_debug::cmd_debug(void) : cli_command(
         "path", "/dev/stdout"));
 
     add_option(cmdline::path_option(
-        "stderr", "Where to direct the standard error of the test case",
-        "path", "/dev/stderr"));
+        "stderr", "Where to direct the standard error of the test case", "path",
+        "/dev/stderr"));
 
     add_option(execute_option);
 }
-
 
 /// Entry point for the "debug" subcommand.
 ///
@@ -226,22 +211,22 @@ cmd_debug::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
     const std::string& test_case_name = cmdline.arguments()[0];
     if (test_case_name.find(':') == std::string::npos)
         throw cmdline::usage_error(F("'%s' is not a test case identifier "
-                                     "(missing ':'?)") % test_case_name);
-    const engine::test_filter filter = engine::test_filter::parse(
-        test_case_name);
+                                     "(missing ':'?)") %
+                                   test_case_name);
+    const engine::test_filter filter =
+        engine::test_filter::parse(test_case_name);
 
     engine::debugger_ptr debugger = nullptr;
-    if (cmdline.has_option(pause_before_cleanup_upon_fail_option.long_name())
-        || cmdline.has_option(pause_before_cleanup_option.long_name())
-        || cmdline.has_option(execute_option.long_name())) {
-        debugger = std::shared_ptr< engine::debugger >(new dbg(ui, cmdline));
+    if (cmdline.has_option(pause_before_cleanup_upon_fail_option.long_name()) ||
+        cmdline.has_option(pause_before_cleanup_option.long_name()) ||
+        cmdline.has_option(execute_option.long_name())) {
+        debugger = std::shared_ptr<engine::debugger>(new dbg(ui, cmdline));
     }
 
     const drivers::debug_test::result result = drivers::debug_test::drive(
-        debugger,
-        kyuafile_path(cmdline), build_root_path(cmdline), filter, user_config,
-        cmdline.get_option< cmdline::path_option >("stdout"),
-        cmdline.get_option< cmdline::path_option >("stderr"));
+        debugger, kyuafile_path(cmdline), build_root_path(cmdline), filter,
+        user_config, cmdline.get_option<cmdline::path_option>("stdout"),
+        cmdline.get_option<cmdline::path_option>("stderr"));
 
     ui->out(F("%s  ->  %s") % cli::format_test_case_id(result.test_case) %
             cli::format_result(result.test_result));
