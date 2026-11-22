@@ -26,17 +26,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/filters.hpp"
-
+#include <atf-c++.hpp>
 #include <stdexcept>
 
-#include <atf-c++.hpp>
+#include "engine/filters.hpp"
 
 namespace fs = utils::fs;
 
-
 namespace {
-
 
 /// Syntactic sugar to instantiate engine::test_filter objects.
 ///
@@ -50,9 +47,7 @@ mkfilter(const char* test_program, const char* test_case)
     return engine::test_filter(fs::path(test_program), test_case);
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 ATF_TEST_CASE_WITHOUT_HEAD(test_filter__public_fields);
 ATF_TEST_CASE_BODY(test_filter__public_fields)
@@ -62,7 +57,6 @@ ATF_TEST_CASE_BODY(test_filter__public_fields)
     ATF_REQUIRE_EQ("baz", filter.test_case);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(test_filter__parse__ok);
 ATF_TEST_CASE_BODY(test_filter__parse__ok)
 {
@@ -71,14 +65,12 @@ ATF_TEST_CASE_BODY(test_filter__parse__ok)
     ATF_REQUIRE(filter.test_case.empty());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(test_filter__parse__empty);
 ATF_TEST_CASE_BODY(test_filter__parse__empty)
 {
     ATF_REQUIRE_THROW_RE(std::runtime_error, "empty",
                          engine::test_filter::parse(""));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(test_filter__parse__absolute);
 ATF_TEST_CASE_BODY(test_filter__parse__absolute)
@@ -87,7 +79,6 @@ ATF_TEST_CASE_BODY(test_filter__parse__absolute)
                          engine::test_filter::parse("/foo//bar"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(test_filter__parse__bad_program_name);
 ATF_TEST_CASE_BODY(test_filter__parse__bad_program_name)
 {
@@ -95,14 +86,12 @@ ATF_TEST_CASE_BODY(test_filter__parse__bad_program_name)
                          engine::test_filter::parse(":foo"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(test_filter__parse__bad_test_case);
 ATF_TEST_CASE_BODY(test_filter__parse__bad_test_case)
 {
     ATF_REQUIRE_THROW_RE(std::runtime_error, "Test case.*'bar/baz:'",
                          engine::test_filter::parse("bar/baz:"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(test_filter__parse__bad_path);
 ATF_TEST_CASE_BODY(test_filter__parse__bad_path)
@@ -113,14 +102,12 @@ ATF_TEST_CASE_BODY(test_filter__parse__bad_path)
     // an argument with an invalid non-empty path...
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(test_filter__str);
 ATF_TEST_CASE_BODY(test_filter__str)
 {
     const engine::test_filter filter(fs::path("foo/bar"), "baz");
     ATF_REQUIRE_EQ("foo/bar:baz", filter.str());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(test_filter__contains__same);
 ATF_TEST_CASE_BODY(test_filter__contains__same)
@@ -139,20 +126,19 @@ ATF_TEST_CASE_BODY(test_filter__contains__same)
     }
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(test_filter__contains__different);
 ATF_TEST_CASE_BODY(test_filter__contains__different)
 {
     {
         const engine::test_filter f1(fs::path("foo"), "");
         const engine::test_filter f2(fs::path("foo"), "bar");
-        ATF_REQUIRE( f1.contains(f2));
+        ATF_REQUIRE(f1.contains(f2));
         ATF_REQUIRE(!f2.contains(f1));
     }
     {
         const engine::test_filter f1(fs::path("foo/bar"), "");
         const engine::test_filter f2(fs::path("foo/bar"), "baz");
-        ATF_REQUIRE( f1.contains(f2));
+        ATF_REQUIRE(f1.contains(f2));
         ATF_REQUIRE(!f2.contains(f1));
     }
     {
@@ -164,7 +150,7 @@ ATF_TEST_CASE_BODY(test_filter__contains__different)
     {
         const engine::test_filter f1(fs::path("foo"), "");
         const engine::test_filter f2(fs::path("foo/bar"), "");
-        ATF_REQUIRE( f1.contains(f2));
+        ATF_REQUIRE(f1.contains(f2));
         ATF_REQUIRE(!f2.contains(f1));
     }
     {
@@ -175,22 +161,21 @@ ATF_TEST_CASE_BODY(test_filter__contains__different)
     }
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(test_filter__matches_test_program)
 ATF_TEST_CASE_BODY(test_filter__matches_test_program)
 {
     {
         const engine::test_filter f(fs::path("top"), "unused");
-        ATF_REQUIRE( f.matches_test_program(fs::path("top")));
+        ATF_REQUIRE(f.matches_test_program(fs::path("top")));
         ATF_REQUIRE(!f.matches_test_program(fs::path("top2")));
     }
 
     {
         const engine::test_filter f(fs::path("dir1/dir2"), "");
-        ATF_REQUIRE( f.matches_test_program(fs::path("dir1/dir2/foo")));
-        ATF_REQUIRE( f.matches_test_program(fs::path("dir1/dir2/bar")));
-        ATF_REQUIRE( f.matches_test_program(fs::path("dir1/dir2/bar/baz")));
-        ATF_REQUIRE( f.matches_test_program(fs::path("dir1/dir2/bar/baz")));
+        ATF_REQUIRE(f.matches_test_program(fs::path("dir1/dir2/foo")));
+        ATF_REQUIRE(f.matches_test_program(fs::path("dir1/dir2/bar")));
+        ATF_REQUIRE(f.matches_test_program(fs::path("dir1/dir2/bar/baz")));
+        ATF_REQUIRE(f.matches_test_program(fs::path("dir1/dir2/bar/baz")));
         ATF_REQUIRE(!f.matches_test_program(fs::path("dir1")));
         ATF_REQUIRE(!f.matches_test_program(fs::path("dir1/bar/baz")));
         ATF_REQUIRE(!f.matches_test_program(fs::path("dir2/bar/baz")));
@@ -198,7 +183,7 @@ ATF_TEST_CASE_BODY(test_filter__matches_test_program)
 
     {
         const engine::test_filter f(fs::path("dir1/dir2"), "unused");
-        ATF_REQUIRE( f.matches_test_program(fs::path("dir1/dir2")));
+        ATF_REQUIRE(f.matches_test_program(fs::path("dir1/dir2")));
         ATF_REQUIRE(!f.matches_test_program(fs::path("dir1/dir2/foo")));
         ATF_REQUIRE(!f.matches_test_program(fs::path("dir1/dir2/bar")));
         ATF_REQUIRE(!f.matches_test_program(fs::path("dir1/dir2/bar/baz")));
@@ -209,39 +194,37 @@ ATF_TEST_CASE_BODY(test_filter__matches_test_program)
     }
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(test_filter__matches_test_case)
 ATF_TEST_CASE_BODY(test_filter__matches_test_case)
 {
     {
         const engine::test_filter f(fs::path("top"), "foo");
-        ATF_REQUIRE( f.matches_test_case(fs::path("top"), "foo"));
+        ATF_REQUIRE(f.matches_test_case(fs::path("top"), "foo"));
         ATF_REQUIRE(!f.matches_test_case(fs::path("top"), "bar"));
     }
 
     {
         const engine::test_filter f(fs::path("top"), "");
-        ATF_REQUIRE( f.matches_test_case(fs::path("top"), "foo"));
-        ATF_REQUIRE( f.matches_test_case(fs::path("top"), "bar"));
+        ATF_REQUIRE(f.matches_test_case(fs::path("top"), "foo"));
+        ATF_REQUIRE(f.matches_test_case(fs::path("top"), "bar"));
         ATF_REQUIRE(!f.matches_test_case(fs::path("top2"), "foo"));
     }
 
     {
         const engine::test_filter f(fs::path("d1/d2/prog"), "t1");
-        ATF_REQUIRE( f.matches_test_case(fs::path("d1/d2/prog"), "t1"));
+        ATF_REQUIRE(f.matches_test_case(fs::path("d1/d2/prog"), "t1"));
         ATF_REQUIRE(!f.matches_test_case(fs::path("d1/d2/prog"), "t2"));
     }
 
     {
         const engine::test_filter f(fs::path("d1/d2"), "");
-        ATF_REQUIRE( f.matches_test_case(fs::path("d1/d2/prog"), "t1"));
-        ATF_REQUIRE( f.matches_test_case(fs::path("d1/d2/prog"), "t2"));
-        ATF_REQUIRE( f.matches_test_case(fs::path("d1/d2/prog2"), "t2"));
+        ATF_REQUIRE(f.matches_test_case(fs::path("d1/d2/prog"), "t1"));
+        ATF_REQUIRE(f.matches_test_case(fs::path("d1/d2/prog"), "t2"));
+        ATF_REQUIRE(f.matches_test_case(fs::path("d1/d2/prog2"), "t2"));
         ATF_REQUIRE(!f.matches_test_case(fs::path("d1/d3"), "foo"));
         ATF_REQUIRE(!f.matches_test_case(fs::path("d2"), "foo"));
     }
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(test_filter__operator_lt)
 ATF_TEST_CASE_BODY(test_filter__operator_lt)
@@ -253,41 +236,39 @@ ATF_TEST_CASE_BODY(test_filter__operator_lt)
     {
         const engine::test_filter f1(fs::path("d1/d2"), "");
         const engine::test_filter f2(fs::path("d1/d3"), "");
-        ATF_REQUIRE( (f1 < f2));
+        ATF_REQUIRE((f1 < f2));
         ATF_REQUIRE(!(f2 < f1));
     }
     {
         const engine::test_filter f1(fs::path("d1/d2"), "");
         const engine::test_filter f2(fs::path("d1/d2"), "foo");
-        ATF_REQUIRE( (f1 < f2));
+        ATF_REQUIRE((f1 < f2));
         ATF_REQUIRE(!(f2 < f1));
     }
     {
         const engine::test_filter f1(fs::path("d1/d2"), "bar");
         const engine::test_filter f2(fs::path("d1/d2"), "foo");
-        ATF_REQUIRE( (f1 < f2));
+        ATF_REQUIRE((f1 < f2));
         ATF_REQUIRE(!(f2 < f1));
     }
     {
         const engine::test_filter f1(fs::path("d1/d2"), "bar");
         const engine::test_filter f2(fs::path("d1/d3"), "");
-        ATF_REQUIRE( (f1 < f2));
+        ATF_REQUIRE((f1 < f2));
         ATF_REQUIRE(!(f2 < f1));
     }
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(test_filter__operator_eq)
 ATF_TEST_CASE_BODY(test_filter__operator_eq)
 {
     const engine::test_filter f1(fs::path("d1/d2"), "");
     const engine::test_filter f2(fs::path("d1/d2"), "bar");
-    ATF_REQUIRE( (f1 == f1));
+    ATF_REQUIRE((f1 == f1));
     ATF_REQUIRE(!(f1 == f2));
     ATF_REQUIRE(!(f2 == f1));
-    ATF_REQUIRE( (f2 == f2));
+    ATF_REQUIRE((f2 == f2));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(test_filter__operator_ne)
 ATF_TEST_CASE_BODY(test_filter__operator_ne)
@@ -295,11 +276,10 @@ ATF_TEST_CASE_BODY(test_filter__operator_ne)
     const engine::test_filter f1(fs::path("d1/d2"), "");
     const engine::test_filter f2(fs::path("d1/d2"), "bar");
     ATF_REQUIRE(!(f1 != f1));
-    ATF_REQUIRE( (f1 != f2));
-    ATF_REQUIRE( (f2 != f1));
+    ATF_REQUIRE((f1 != f2));
+    ATF_REQUIRE((f2 != f1));
     ATF_REQUIRE(!(f2 != f2));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(test_filter__output);
 ATF_TEST_CASE_BODY(test_filter__output)
@@ -307,24 +287,20 @@ ATF_TEST_CASE_BODY(test_filter__output)
     {
         std::ostringstream str;
         str << engine::test_filter(fs::path("d1/d2"), "");
-        ATF_REQUIRE_EQ(
-            "test_filter{test_program=d1/d2}",
-            str.str());
+        ATF_REQUIRE_EQ("test_filter{test_program=d1/d2}", str.str());
     }
     {
         std::ostringstream str;
         str << engine::test_filter(fs::path("d1/d2"), "bar");
-        ATF_REQUIRE_EQ(
-            "test_filter{test_program=d1/d2, test_case=bar}",
-            str.str());
+        ATF_REQUIRE_EQ("test_filter{test_program=d1/d2, test_case=bar}",
+                       str.str());
     }
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(test_filters__match_test_case__no_filters)
 ATF_TEST_CASE_BODY(test_filters__match_test_case__no_filters)
 {
-    const std::set< engine::test_filter > raw_filters;
+    const std::set<engine::test_filter> raw_filters;
 
     const engine::test_filters filters(raw_filters);
     engine::test_filters::match match;
@@ -338,11 +314,10 @@ ATF_TEST_CASE_BODY(test_filters__match_test_case__no_filters)
     ATF_REQUIRE(!match.second);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(test_filters__match_test_case__some_filters)
 ATF_TEST_CASE_BODY(test_filters__match_test_case__some_filters)
 {
-    std::set< engine::test_filter > raw_filters;
+    std::set<engine::test_filter> raw_filters;
     raw_filters.insert(mkfilter("top_test", ""));
     raw_filters.insert(mkfilter("subdir_1", ""));
     raw_filters.insert(mkfilter("subdir_2/a_test", ""));
@@ -381,89 +356,83 @@ ATF_TEST_CASE_BODY(test_filters__match_test_case__some_filters)
     ATF_REQUIRE(!match.first);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(test_filters__match_test_program__no_filters)
 ATF_TEST_CASE_BODY(test_filters__match_test_program__no_filters)
 {
-    const std::set< engine::test_filter > raw_filters;
+    const std::set<engine::test_filter> raw_filters;
 
     const engine::test_filters filters(raw_filters);
     ATF_REQUIRE(filters.match_test_program(fs::path("foo")));
     ATF_REQUIRE(filters.match_test_program(fs::path("foo/bar")));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(test_filters__match_test_program__some_filters)
 ATF_TEST_CASE_BODY(test_filters__match_test_program__some_filters)
 {
-    std::set< engine::test_filter > raw_filters;
+    std::set<engine::test_filter> raw_filters;
     raw_filters.insert(mkfilter("top_test", ""));
     raw_filters.insert(mkfilter("subdir_1", ""));
     raw_filters.insert(mkfilter("subdir_2/a_test", ""));
     raw_filters.insert(mkfilter("subdir_2/b_test", "foo"));
 
     const engine::test_filters filters(raw_filters);
-    ATF_REQUIRE( filters.match_test_program(fs::path("top_test")));
-    ATF_REQUIRE( filters.match_test_program(fs::path("subdir_1/foo")));
-    ATF_REQUIRE( filters.match_test_program(fs::path("subdir_1/bar")));
-    ATF_REQUIRE( filters.match_test_program(fs::path("subdir_2/a_test")));
-    ATF_REQUIRE( filters.match_test_program(fs::path("subdir_2/b_test")));
+    ATF_REQUIRE(filters.match_test_program(fs::path("top_test")));
+    ATF_REQUIRE(filters.match_test_program(fs::path("subdir_1/foo")));
+    ATF_REQUIRE(filters.match_test_program(fs::path("subdir_1/bar")));
+    ATF_REQUIRE(filters.match_test_program(fs::path("subdir_2/a_test")));
+    ATF_REQUIRE(filters.match_test_program(fs::path("subdir_2/b_test")));
     ATF_REQUIRE(!filters.match_test_program(fs::path("subdir_2/c_test")));
     ATF_REQUIRE(!filters.match_test_program(fs::path("subdir_3")));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(test_filters__difference__no_filters);
 ATF_TEST_CASE_BODY(test_filters__difference__no_filters)
 {
-    const std::set< engine::test_filter > in_filters;
-    const std::set< engine::test_filter > used;
-    const std::set< engine::test_filter > diff = engine::test_filters(
-        in_filters).difference(used);
+    const std::set<engine::test_filter> in_filters;
+    const std::set<engine::test_filter> used;
+    const std::set<engine::test_filter> diff =
+        engine::test_filters(in_filters).difference(used);
     ATF_REQUIRE(diff.empty());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(test_filters__difference__some_filters__all_used);
 ATF_TEST_CASE_BODY(test_filters__difference__some_filters__all_used)
 {
-    std::set< engine::test_filter > in_filters;
+    std::set<engine::test_filter> in_filters;
     in_filters.insert(mkfilter("a", ""));
     in_filters.insert(mkfilter("b", "c"));
 
-    const std::set< engine::test_filter > used = in_filters;
+    const std::set<engine::test_filter> used = in_filters;
 
-    const std::set< engine::test_filter > diff = engine::test_filters(
-        in_filters).difference(used);
+    const std::set<engine::test_filter> diff =
+        engine::test_filters(in_filters).difference(used);
     ATF_REQUIRE(diff.empty());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(test_filters__difference__some_filters__some_unused);
 ATF_TEST_CASE_BODY(test_filters__difference__some_filters__some_unused)
 {
-    std::set< engine::test_filter > in_filters;
+    std::set<engine::test_filter> in_filters;
     in_filters.insert(mkfilter("a", ""));
     in_filters.insert(mkfilter("b", "c"));
     in_filters.insert(mkfilter("d", ""));
     in_filters.insert(mkfilter("e", "f"));
 
-    std::set< engine::test_filter > used;
+    std::set<engine::test_filter> used;
     used.insert(mkfilter("b", "c"));
     used.insert(mkfilter("d", ""));
 
-    const std::set< engine::test_filter > diff = engine::test_filters(
-        in_filters).difference(used);
+    const std::set<engine::test_filter> diff =
+        engine::test_filters(in_filters).difference(used);
     ATF_REQUIRE_EQ(2, diff.size());
     ATF_REQUIRE(diff.find(mkfilter("a", "")) != diff.end());
     ATF_REQUIRE(diff.find(mkfilter("e", "f")) != diff.end());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(check_disjoint_filters__ok);
 ATF_TEST_CASE_BODY(check_disjoint_filters__ok)
 {
-    std::set< engine::test_filter > filters;
+    std::set<engine::test_filter> filters;
     filters.insert(mkfilter("a", ""));
     filters.insert(mkfilter("b", ""));
     filters.insert(mkfilter("c", "a"));
@@ -472,11 +441,10 @@ ATF_TEST_CASE_BODY(check_disjoint_filters__ok)
     engine::check_disjoint_filters(filters);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(check_disjoint_filters__fail);
 ATF_TEST_CASE_BODY(check_disjoint_filters__fail)
 {
-    std::set< engine::test_filter > filters;
+    std::set<engine::test_filter> filters;
     filters.insert(mkfilter("a", ""));
     filters.insert(mkfilter("b", ""));
     filters.insert(mkfilter("c", "a"));
@@ -487,11 +455,10 @@ ATF_TEST_CASE_BODY(check_disjoint_filters__fail)
                          engine::check_disjoint_filters(filters));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(filters_state__match_test_program);
 ATF_TEST_CASE_BODY(filters_state__match_test_program)
 {
-    std::set< engine::test_filter > filters;
+    std::set<engine::test_filter> filters;
     filters.insert(mkfilter("foo/bar", ""));
     filters.insert(mkfilter("baz", "tc"));
     engine::filters_state state(filters);
@@ -503,11 +470,10 @@ ATF_TEST_CASE_BODY(filters_state__match_test_program)
     ATF_REQUIRE(!state.match_test_program(fs::path("hello")));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(filters_state__match_test_case);
 ATF_TEST_CASE_BODY(filters_state__match_test_case)
 {
-    std::set< engine::test_filter > filters;
+    std::set<engine::test_filter> filters;
     filters.insert(mkfilter("foo/bar", ""));
     filters.insert(mkfilter("baz", "tc"));
     engine::filters_state state(filters);
@@ -519,11 +485,10 @@ ATF_TEST_CASE_BODY(filters_state__match_test_case)
     ATF_REQUIRE(!state.match_test_case(fs::path("baz"), "tc2"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(filters_state__unused__none);
 ATF_TEST_CASE_BODY(filters_state__unused__none)
 {
-    std::set< engine::test_filter > filters;
+    std::set<engine::test_filter> filters;
     filters.insert(mkfilter("a/b", ""));
     filters.insert(mkfilter("baz", "tc"));
     filters.insert(mkfilter("hey/d", "yes"));
@@ -536,11 +501,10 @@ ATF_TEST_CASE_BODY(filters_state__unused__none)
     ATF_REQUIRE(state.unused().empty());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(filters_state__unused__some);
 ATF_TEST_CASE_BODY(filters_state__unused__some)
 {
-    std::set< engine::test_filter > filters;
+    std::set<engine::test_filter> filters;
     filters.insert(mkfilter("a/b", ""));
     filters.insert(mkfilter("baz", "tc"));
     filters.insert(mkfilter("hey/d", "yes"));
@@ -549,13 +513,12 @@ ATF_TEST_CASE_BODY(filters_state__unused__some)
     state.match_test_program(fs::path("a/b/c"));
     state.match_test_case(fs::path("baz"), "tc");
 
-    std::set< engine::test_filter > exp_unused;
+    std::set<engine::test_filter> exp_unused;
     exp_unused.insert(mkfilter("a/b", ""));
     exp_unused.insert(mkfilter("hey/d", "yes"));
 
     ATF_REQUIRE(exp_unused == state.unused());
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

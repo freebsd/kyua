@@ -33,9 +33,7 @@
 #include "utils/defs.hpp"
 #include "utils/test_utils.ipp"
 
-
 namespace {
-
 
 /// Prints a fake but valid test case list and then aborts.
 ///
@@ -48,13 +46,12 @@ helper_abort_test_cases_list(int /* argc */, char** argv)
     for (const char* const* arg = argv; *arg != NULL; arg++) {
         if (std::strcmp(*arg, "-l") == 0) {
             std::cout << "Content-Type: application/X-atf-tp; "
-                "version=\"1\"\n\n";
+                         "version=\"1\"\n\n";
             std::cout << "ident: foo\n";
         }
     }
     utils::abort_without_coredump();
 }
-
 
 /// Just returns without printing anything as the test case list.
 ///
@@ -64,7 +61,6 @@ helper_empty_test_cases_list(int /* argc */, char** /* argv */)
 {
     return EXIT_SUCCESS;
 }
-
 
 /// Prints a correctly-formatted test case list but empty.
 ///
@@ -77,11 +73,10 @@ helper_zero_test_cases(int /* argc */, char** argv)
     for (const char* const* arg = argv; *arg != NULL; arg++) {
         if (std::strcmp(*arg, "-l") == 0)
             std::cout << "Content-Type: application/X-atf-tp; "
-                "version=\"1\"\n\n";
+                         "version=\"1\"\n\n";
     }
     return EXIT_SUCCESS;
 }
-
 
 /// Mapping of the name of a helper to its implementation.
 struct helper {
@@ -92,18 +87,27 @@ struct helper {
     int (*hook)(int, char**);
 };
 
-
 /// NULL-terminated table mapping helper names to their implementations.
 static const helper helpers[] = {
-    { "abort_test_cases_list", helper_abort_test_cases_list, },
-    { "empty_test_cases_list", helper_empty_test_cases_list, },
-    { "zero_test_cases", helper_zero_test_cases, },
-    { NULL, NULL, },
+    {
+        "abort_test_cases_list",
+        helper_abort_test_cases_list,
+    },
+    {
+        "empty_test_cases_list",
+        helper_empty_test_cases_list,
+    },
+    {
+        "zero_test_cases",
+        helper_zero_test_cases,
+    },
+    {
+        NULL,
+        NULL,
+    },
 };
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Entry point to the ATF-less helpers.
 ///

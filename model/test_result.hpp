@@ -32,14 +32,13 @@
 #if !defined(MODEL_TEST_RESULT_HPP)
 #define MODEL_TEST_RESULT_HPP
 
-#include "model/test_result_fwd.hpp"
-
 #include <map>
 #include <ostream>
 #include <string>
 
-namespace model {
+#include "model/test_result_fwd.hpp"
 
+namespace model {
 
 /// Test result type metadata.
 struct test_result_type_desc {
@@ -49,11 +48,9 @@ struct test_result_type_desc {
     bool is_good;
 };
 
-
 /// Description of each test result type.
-extern const std::map<enum test_result_type,
-    const struct test_result_type_desc> test_result_types;
-
+extern const std::map<enum test_result_type, const struct test_result_type_desc>
+    test_result_types;
 
 /// Representation of a single test result.
 ///
@@ -85,10 +82,8 @@ public:
     bool operator!=(const test_result&) const;
 };
 
-
 std::ostream& operator<<(std::ostream&, const test_result&);
 
+} // namespace model
 
-}  // namespace model
-
-#endif  // !defined(MODEL_TEST_RESULT_HPP)
+#endif // !defined(MODEL_TEST_RESULT_HPP)

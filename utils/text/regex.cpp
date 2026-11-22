@@ -44,13 +44,10 @@ extern "C" {
 
 namespace text = utils::text;
 
-
 namespace {
 
-
-static void throw_regex_error [[noreturn]] (
-    const int, const ::regex_t*, const std::string&);
-
+static void throw_regex_error
+    [[noreturn]] (const int, const ::regex_t*, const std::string&);
 
 /// Constructs and raises a regex_error.
 ///
@@ -72,9 +69,7 @@ throw_regex_error(const int error, const ::regex_t* preg,
     throw text::regex_error(F("%s: %s") % prefix % buffer);
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Internal implementation for regex_matches.
 struct utils::text::regex_matches::impl : utils::noncopyable {
@@ -88,7 +83,7 @@ struct utils::text::regex_matches::impl : utils::noncopyable {
     const std::string _string;
 
     /// Native match results, including the full match; empty if no match.
-    std::vector< ::regmatch_t > _matches;
+    std::vector<::regmatch_t> _matches;
 
     /// Constructor.
     ///
@@ -109,7 +104,7 @@ struct utils::text::regex_matches::impl : utils::noncopyable {
         const int error = ::regexec(preg, _string.c_str(), _matches.size(),
                                     _matches.data(), 0);
         if (error == REG_NOMATCH) {
-            std::vector< ::regmatch_t >().swap(_matches); // clear memory
+            std::vector<::regmatch_t>().swap(_matches); // clear memory
         } else if (error != 0) {
             throw_regex_error(error, preg,
                               F("regexec on '%s' failed") % _string);
@@ -122,21 +117,17 @@ struct utils::text::regex_matches::impl : utils::noncopyable {
     }
 };
 
-
 /// Constructor.
 ///
 /// \param pimpl Constructed implementation of the object.
-text::regex_matches::regex_matches(std::shared_ptr< impl > pimpl) :
-    _pimpl(pimpl)
+text::regex_matches::regex_matches(std::shared_ptr<impl> pimpl) : _pimpl(pimpl)
 {
 }
-
 
 /// Destructor.
 text::regex_matches::~regex_matches(void)
 {
 }
-
 
 /// Returns the number of matches in this object.
 ///
@@ -156,7 +147,6 @@ text::regex_matches::count(void) const
     INV(total <= _pimpl->_matches.size());
     return total;
 }
-
 
 /// Gets a match.
 ///
@@ -179,7 +169,6 @@ text::regex_matches::get(const std::size_t index) const
                        match->rm_eo - match->rm_so);
 }
 
-
 /// Checks if there are any matches.
 ///
 /// \return True if the object contains one or more matches; false otherwise.
@@ -187,7 +176,6 @@ text::regex_matches::operator bool(void) const
 {
     return !_pimpl->_matches.empty();
 }
-
 
 /// Internal implementation for regex.
 struct utils::text::regex::impl : utils::noncopyable {
@@ -216,8 +204,8 @@ struct utils::text::regex::impl : utils::noncopyable {
         const int flags = REG_EXTENDED | (ignore_case ? REG_ICASE : 0);
         const int error = ::regcomp(&_preg, regex_.c_str(), flags);
         if (error != 0)
-            throw_regex_error(error, &_preg, F("regcomp on '%s' failed")
-                              % regex_);
+            throw_regex_error(error, &_preg,
+                              F("regcomp on '%s' failed") % regex_);
     }
 
     /// Destructor.
@@ -227,20 +215,17 @@ struct utils::text::regex::impl : utils::noncopyable {
     }
 };
 
-
 /// Constructor.
 ///
 /// \param pimpl Constructed implementation of the object.
-text::regex::regex(std::shared_ptr< impl > pimpl) : _pimpl(pimpl)
+text::regex::regex(std::shared_ptr<impl> pimpl) : _pimpl(pimpl)
 {
 }
-
 
 /// Destructor.
 text::regex::~regex(void)
 {
 }
-
 
 /// Compiles a new regular expression.
 ///
@@ -257,10 +242,8 @@ text::regex
 text::regex::compile(const std::string& regex_, const std::size_t ngroups,
                      const bool ignore_case)
 {
-    return regex(std::shared_ptr< impl >(new impl(regex_, ngroups,
-                                                  ignore_case)));
+    return regex(std::shared_ptr<impl>(new impl(regex_, ngroups, ignore_case)));
 }
-
 
 /// Matches the regular expression against a string.
 ///
@@ -270,11 +253,10 @@ text::regex::compile(const std::string& regex_, const std::size_t ngroups,
 text::regex_matches
 text::regex::match(const std::string& str) const
 {
-    std::shared_ptr< regex_matches::impl > pimpl(new regex_matches::impl(
-        &_pimpl->_preg, str, _pimpl->_ngroups));
+    std::shared_ptr<regex_matches::impl> pimpl(
+        new regex_matches::impl(&_pimpl->_preg, str, _pimpl->_ngroups));
     return regex_matches(pimpl);
 }
-
 
 /// Compiles and matches a regular expression once.
 ///

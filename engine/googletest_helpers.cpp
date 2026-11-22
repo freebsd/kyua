@@ -18,9 +18,9 @@ extern char** environ;
 #include <fstream>
 #include <iostream>
 
-#include "utils/env.hpp"
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.ipp"
+#include "utils/env.hpp"
 #include "utils/format/containers.ipp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
@@ -40,10 +40,8 @@ namespace fs = utils::fs;
 
 namespace {
 
-
 /// Prefix for all testcases.
-const char *test_suite = "Suite.";
-
+const char* test_suite = "Suite.";
 
 /// Logs an error message and exits the test with an error code.
 ///
@@ -55,12 +53,11 @@ fail(const std::string& str)
     std::exit(EXIT_FAILURE);
 }
 
-
 /// A test scenario that validates the TEST_ENV_* variables.
 static void
 test_check_configuration_variables(void)
 {
-    std::set< std::string > vars;
+    std::set<std::string> vars;
     char** iter;
     for (iter = environ; *iter != NULL; ++iter) {
         if (std::strstr(*iter, "TEST_ENV_") == *iter) {
@@ -68,51 +65,46 @@ test_check_configuration_variables(void)
         }
     }
 
-    std::set< std::string > exp_vars{
-        "TEST_ENV_first=some value",
-        "TEST_ENV_second=some other value"
-    };
+    std::set<std::string> exp_vars{ "TEST_ENV_first=some value",
+                                    "TEST_ENV_second=some other value" };
 
     if (vars == exp_vars) {
-        std::cout <<
-"Note: Google Test filter = Suite.check_configuration_variables\n"
-"[==========] Running 1 test from 1 test case.\n"
-"[----------] Global test environment set-up.\n"
-"[----------] 1 test from Suite\n"
-"[ RUN      ] Suite.check_configuration_variables\n"
-"[       OK ] Suite.check_configuration_variables (0 ms)\n"
-"[----------] 1 test from PassFailTest (0 ms total)\n"
-"\n"
-"[----------] Global test environment tear-down\n"
-"[==========] 1 test from 1 test case ran. (1 ms total)\n"
-"[  PASSED  ] 1 test.\n"
-        ;
+        std::cout
+            << "Note: Google Test filter = Suite.check_configuration_variables\n"
+               "[==========] Running 1 test from 1 test case.\n"
+               "[----------] Global test environment set-up.\n"
+               "[----------] 1 test from Suite\n"
+               "[ RUN      ] Suite.check_configuration_variables\n"
+               "[       OK ] Suite.check_configuration_variables (0 ms)\n"
+               "[----------] 1 test from PassFailTest (0 ms total)\n"
+               "\n"
+               "[----------] Global test environment tear-down\n"
+               "[==========] 1 test from 1 test case ran. (1 ms total)\n"
+               "[  PASSED  ] 1 test.\n";
     } else {
-        std::cout <<
-"Note: Google Test filter = Suite.Fails\n"
-"[==========] Running 1 test from 1 test case.\n"
-"[----------] Global test environment set-up.\n"
-"[----------] 1 test from PassFailTest\n"
-"[ RUN      ] Suite.check_configuration_variables\n"
-"pass_fail_demo.cc:12: Failure\n"
-"Expected equality of these values:\n"
-"  false\n"
-"  true\n"
-"[  FAILED  ] Suite.check_configuration_variables (0 ms)\n"
-"[----------] 1 test from Suite (0 ms total)\n"
-"\n"
-"[----------] Global test environment tear-down\n"
-"[==========] 1 test from 1 test case ran. (0 ms total)\n"
-"[  PASSED  ] 0 tests.\n"
-"[  FAILED  ] 1 test, listed below:\n"
-"[  FAILED  ] Suite.check_configuration_variables\n"
-"\n"
-" 1 FAILED TEST\n"
-        << F("    Expected: %s\nFound: %s\n") % exp_vars % vars;
+        std::cout << "Note: Google Test filter = Suite.Fails\n"
+                     "[==========] Running 1 test from 1 test case.\n"
+                     "[----------] Global test environment set-up.\n"
+                     "[----------] 1 test from PassFailTest\n"
+                     "[ RUN      ] Suite.check_configuration_variables\n"
+                     "pass_fail_demo.cc:12: Failure\n"
+                     "Expected equality of these values:\n"
+                     "  false\n"
+                     "  true\n"
+                     "[  FAILED  ] Suite.check_configuration_variables (0 ms)\n"
+                     "[----------] 1 test from Suite (0 ms total)\n"
+                     "\n"
+                     "[----------] Global test environment tear-down\n"
+                     "[==========] 1 test from 1 test case ran. (0 ms total)\n"
+                     "[  PASSED  ] 0 tests.\n"
+                     "[  FAILED  ] 1 test, listed below:\n"
+                     "[  FAILED  ] Suite.check_configuration_variables\n"
+                     "\n"
+                     " 1 FAILED TEST\n"
+                  << F("    Expected: %s\nFound: %s\n") % exp_vars % vars;
         std::exit(EXIT_FAILURE);
     }
 }
-
 
 /// A test scenario that triggers a crash via abort in order to generate a
 /// core dump.
@@ -122,76 +114,66 @@ test_crash(void)
     std::abort();
 }
 
-
 /// A test scenario that reports some tests as failed.
 static void
 test_fail(void)
 {
-    std::cout << (
-"Note: Google Test filter = Suite.fail\n"
-"[==========] Running 1 test from 1 test suite.\n"
-"[----------] Global test environment set-up.\n"
-"[----------] 1 test from Suite\n"
-"[ RUN      ] Suite.fail\n"
-"gtest_macros_demo.cc:4: Failure\n"
-"Failed\n"
-"with a reason\n"
-"[  FAILED  ] Suite.fail (0 ms)\n"
-"[----------] 1 test from Suite (0 ms total)\n"
-"\n"
-"[----------] Global test environment tear-down\n"
-"[==========] 1 test from 1 test suite ran. (0 ms total)\n"
-"[  PASSED  ] 0 tests.\n"
-"[  FAILED  ] 1 test, listed below:\n"
-"[  FAILED  ] Suite.fail\n"
-"\n"
-" 1 FAILED TEST\n"
-    );
+    std::cout << ("Note: Google Test filter = Suite.fail\n"
+                  "[==========] Running 1 test from 1 test suite.\n"
+                  "[----------] Global test environment set-up.\n"
+                  "[----------] 1 test from Suite\n"
+                  "[ RUN      ] Suite.fail\n"
+                  "gtest_macros_demo.cc:4: Failure\n"
+                  "Failed\n"
+                  "with a reason\n"
+                  "[  FAILED  ] Suite.fail (0 ms)\n"
+                  "[----------] 1 test from Suite (0 ms total)\n"
+                  "\n"
+                  "[----------] Global test environment tear-down\n"
+                  "[==========] 1 test from 1 test suite ran. (0 ms total)\n"
+                  "[  PASSED  ] 0 tests.\n"
+                  "[  FAILED  ] 1 test, listed below:\n"
+                  "[  FAILED  ] Suite.fail\n"
+                  "\n"
+                  " 1 FAILED TEST\n");
     std::exit(EXIT_FAILURE);
 }
-
 
 /// A test scenario that passes.
 static void
 test_pass(void)
 {
-    std::cout << (
-"Note: Google Test filter = Suite.pass\n"
-"[==========] Running 1 test from 1 test suite.\n"
-"[----------] Global test environment set-up.\n"
-"[----------] 1 test from Suite\n"
-"[ RUN      ] Suite.pass\n"
-"[       OK ] Suite.pass (0 ms)\n"
-"[----------] 1 test from Suite (0 ms total)\n"
-"\n"
-"[----------] Global test environment tear-down\n"
-"[==========] 1 test from 1 test suite ran. (0 ms total)\n"
-"[  PASSED  ] 1 test.\n"
-    );
+    std::cout << ("Note: Google Test filter = Suite.pass\n"
+                  "[==========] Running 1 test from 1 test suite.\n"
+                  "[----------] Global test environment set-up.\n"
+                  "[----------] 1 test from Suite\n"
+                  "[ RUN      ] Suite.pass\n"
+                  "[       OK ] Suite.pass (0 ms)\n"
+                  "[----------] 1 test from Suite (0 ms total)\n"
+                  "\n"
+                  "[----------] Global test environment tear-down\n"
+                  "[==========] 1 test from 1 test suite ran. (0 ms total)\n"
+                  "[  PASSED  ] 1 test.\n");
 }
-
 
 /// A test scenario that passes but then exits with non-zero.
 static void
 test_pass_but_exit_failure(void)
 {
-    std::cout << (
-"Note: Google Test filter = Suite.pass_but_exit_failure\n"
-"[==========] Running 1 test from 1 test suite.\n"
-"[----------] Global test environment set-up.\n"
-"[----------] 1 test from Suite\n"
-"[ RUN      ] Suite.pass_but_exit_failure\n"
-"[       OK ] Suite.pass_but_exit_failure (0 ms)\n"
-"[----------] 1 test from Suite (0 ms total)\n"
-"\n"
-"[----------] Global test environment tear-down\n"
-"[==========] 1 test from 1 test suite ran. (0 ms total)\n"
-"[  PASSED  ] 1 test.\n"
-    );
+    std::cout << ("Note: Google Test filter = Suite.pass_but_exit_failure\n"
+                  "[==========] Running 1 test from 1 test suite.\n"
+                  "[----------] Global test environment set-up.\n"
+                  "[----------] 1 test from Suite\n"
+                  "[ RUN      ] Suite.pass_but_exit_failure\n"
+                  "[       OK ] Suite.pass_but_exit_failure (0 ms)\n"
+                  "[----------] 1 test from Suite (0 ms total)\n"
+                  "\n"
+                  "[----------] Global test environment tear-down\n"
+                  "[==========] 1 test from 1 test suite ran. (0 ms total)\n"
+                  "[  PASSED  ] 1 test.\n");
 
     std::exit(70);
 }
-
 
 /// A test scenario that times out.
 ///
@@ -200,13 +182,11 @@ test_pass_but_exit_failure(void)
 static void
 test_timeout(void)
 {
-    std::cout << (
-"Note: Google Test filter = Suite.incomplete\n"
-"[==========] Running 1 test from 1 test suite.\n"
-"[----------] Global test environment set-up.\n"
-"[----------] 1 test from Suite\n"
-"[ RUN      ] Suite.incomplete\n"
-    );
+    std::cout << ("Note: Google Test filter = Suite.incomplete\n"
+                  "[==========] Running 1 test from 1 test suite.\n"
+                  "[----------] Global test environment set-up.\n"
+                  "[----------] 1 test from Suite\n"
+                  "[ RUN      ] Suite.incomplete\n");
 
     ::sleep(10);
     const fs::path control_dir = fs::path(utils::getenv("CONTROL_DIR").get());
@@ -216,10 +196,10 @@ test_timeout(void)
     file.close();
 }
 
-
 /// Prints out program usage and exits with a non-zero exit code.
 static void
-usage(const char* argv0) {
+usage(const char* argv0)
+{
     std::cout << "usage: " << argv0 << " "
               << "[--gtest_color=(auto|yes|no)] "
               << "[--gtest_filter=POSITIVE_PATTERNS] "
@@ -230,9 +210,7 @@ usage(const char* argv0) {
     std::exit(EXIT_FAILURE);
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Entry point to the test program.
 ///
@@ -253,7 +231,7 @@ main(int argc, char** argv)
 {
     using scenario_fn_t = void (*)(void);
 
-    char *argv0 = argv[0];
+    char* argv0 = argv[0];
 
     std::map<std::string, scenario_fn_t> scenarios{
         { "check_configuration_variables", test_check_configuration_variables },
@@ -264,12 +242,11 @@ main(int argc, char** argv)
         { "timeout", test_timeout }
     };
 
-    const bool_option gtest_list_tests_opt(
-        "gtest_list_tests", "List tests");
-    const string_option gtest_color_opt(
-        "gtest_color", "Enable/disable color support", "auto");
-    const string_option gtest_filter_opt(
-        "gtest_filter", "", "POSITIVE_PATTERNS");
+    const bool_option gtest_list_tests_opt("gtest_list_tests", "List tests");
+    const string_option gtest_color_opt("gtest_color",
+                                        "Enable/disable color support", "auto");
+    const string_option gtest_filter_opt("gtest_filter", "",
+                                         "POSITIVE_PATTERNS");
 
     std::vector<const base_option*> options;
     /// Ignore `--gtest_color=*`.

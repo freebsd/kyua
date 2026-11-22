@@ -32,23 +32,20 @@
 #if !defined(UTILS_LOGGING_OPERATIONS_HPP)
 #define UTILS_LOGGING_OPERATIONS_HPP
 
-#include "utils/logging/operations_fwd.hpp"
-
 #include <string>
 
 #include "utils/fs/path_fwd.hpp"
+#include "utils/logging/operations_fwd.hpp"
 
 namespace utils {
 namespace logging {
-
 
 fs::path generate_log_name(const fs::path&, const std::string&);
 void log(const level, const char*, const int, const std::string&);
 void set_inmemory(void);
 void set_persistency(const std::string&, const fs::path&);
 
+} // namespace logging
+} // namespace utils
 
-}  // namespace logging
-}  // namespace utils
-
-#endif  // !defined(UTILS_LOGGING_OPERATIONS_HPP)
+#endif // !defined(UTILS_LOGGING_OPERATIONS_HPP)

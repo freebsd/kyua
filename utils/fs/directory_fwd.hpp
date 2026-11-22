@@ -35,21 +35,16 @@
 namespace utils {
 namespace fs {
 
-
 namespace detail {
-
 
 class directory_iterator;
 
-
-}  // namespace detail
-
+} // namespace detail
 
 struct directory_entry;
 class directory;
 
+} // namespace fs
+} // namespace utils
 
-}  // namespace fs
-}  // namespace utils
-
-#endif  // !defined(UTILS_FS_DIRECTORY_FWD_HPP)
+#endif // !defined(UTILS_FS_DIRECTORY_FWD_HPP)

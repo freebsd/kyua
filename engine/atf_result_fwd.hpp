@@ -34,10 +34,8 @@
 
 namespace engine {
 
-
 class atf_result;
 
+} // namespace engine
 
-}  // namespace engine
-
-#endif  // !defined(ENGINE_ATF_RESULT_FWD_HPP)
+#endif // !defined(ENGINE_ATF_RESULT_FWD_HPP)

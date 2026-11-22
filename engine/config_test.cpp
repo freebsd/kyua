@@ -29,13 +29,12 @@
 #include "engine/config.hpp"
 
 #if defined(HAVE_CONFIG_H)
-#   include "config.h"
+#include "config.h"
 #endif
 
+#include <atf-c++.hpp>
 #include <stdexcept>
 #include <vector>
-
-#include <atf-c++.hpp>
 
 #include "engine/exceptions.hpp"
 #include "utils/cmdline/exceptions.hpp"
@@ -50,20 +49,17 @@ namespace passwd = utils::passwd;
 using utils::none;
 using utils::optional;
 
-
 namespace {
-
 
 /// Replaces the system user database with a fake one for testing purposes.
 static void
 set_mock_users(void)
 {
-    std::vector< passwd::user > users;
+    std::vector<passwd::user> users;
     users.push_back(passwd::user("user1", 100, 150));
     users.push_back(passwd::user("user2", 200, 250));
     passwd::set_mock_users_for_testing(users);
 }
-
 
 /// Checks that the default values of a config object match our expectations.
 ///
@@ -74,26 +70,20 @@ set_mock_users(void)
 static void
 validate_defaults(const config::tree& config)
 {
-    ATF_REQUIRE_EQ(
-        KYUA_ARCHITECTURE,
-        config.lookup< config::string_node >("architecture"));
+    ATF_REQUIRE_EQ(KYUA_ARCHITECTURE,
+                   config.lookup<config::string_node>("architecture"));
 
-    ATF_REQUIRE_EQ(
-        1,
-        config.lookup< config::positive_int_node >("parallelism"));
+    ATF_REQUIRE_EQ(1, config.lookup<config::positive_int_node>("parallelism"));
 
-    ATF_REQUIRE_EQ(
-        KYUA_PLATFORM,
-        config.lookup< config::string_node >("platform"));
+    ATF_REQUIRE_EQ(KYUA_PLATFORM,
+                   config.lookup<config::string_node>("platform"));
 
     ATF_REQUIRE(!config.is_set("unprivileged_user"));
 
     ATF_REQUIRE(config.all_properties("test_suites").empty());
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 ATF_TEST_CASE_WITHOUT_HEAD(config__defaults);
 ATF_TEST_CASE_BODY(config__defaults)
@@ -102,20 +92,18 @@ ATF_TEST_CASE_BODY(config__defaults)
     validate_defaults(user_config);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(config__set__parallelism);
 ATF_TEST_CASE_BODY(config__set__parallelism)
 {
     config::tree user_config = engine::default_config();
     user_config.set_string("parallelism", "8");
-    ATF_REQUIRE_THROW_RE(
-        config::error, "parallelism.*Must be a positive integer",
-        user_config.set_string("parallelism", "0"));
-    ATF_REQUIRE_THROW_RE(
-        config::error, "parallelism.*Must be a positive integer",
-        user_config.set_string("parallelism", "-1"));
+    ATF_REQUIRE_THROW_RE(config::error,
+                         "parallelism.*Must be a positive integer",
+                         user_config.set_string("parallelism", "0"));
+    ATF_REQUIRE_THROW_RE(config::error,
+                         "parallelism.*Must be a positive integer",
+                         user_config.set_string("parallelism", "-1"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(config__load__defaults);
 ATF_TEST_CASE_BODY(config__load__defaults)
@@ -126,32 +114,28 @@ ATF_TEST_CASE_BODY(config__load__defaults)
     validate_defaults(user_config);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(config__load__overrides);
 ATF_TEST_CASE_BODY(config__load__overrides)
 {
     set_mock_users();
 
-    atf::utils::create_file(
-        "config",
-        "syntax(2)\n"
-        "architecture = 'test-architecture'\n"
-        "parallelism = 16\n"
-        "platform = 'test-platform'\n"
-        "unprivileged_user = 'user2'\n"
-        "test_suites.mysuite.myvar = 'myvalue'\n");
+    atf::utils::create_file("config",
+                            "syntax(2)\n"
+                            "architecture = 'test-architecture'\n"
+                            "parallelism = 16\n"
+                            "platform = 'test-platform'\n"
+                            "unprivileged_user = 'user2'\n"
+                            "test_suites.mysuite.myvar = 'myvalue'\n");
 
     const config::tree user_config = engine::load_config(fs::path("config"));
 
     ATF_REQUIRE_EQ("test-architecture",
                    user_config.lookup_string("architecture"));
-    ATF_REQUIRE_EQ("16",
-                   user_config.lookup_string("parallelism"));
-    ATF_REQUIRE_EQ("test-platform",
-                   user_config.lookup_string("platform"));
+    ATF_REQUIRE_EQ("16", user_config.lookup_string("parallelism"));
+    ATF_REQUIRE_EQ("test-platform", user_config.lookup_string("platform"));
 
-    const passwd::user& user = user_config.lookup< engine::user_node >(
-        "unprivileged_user");
+    const passwd::user& user =
+        user_config.lookup<engine::user_node>("unprivileged_user");
     ATF_REQUIRE_EQ("user2", user.name);
     ATF_REQUIRE_EQ(200, user.uid);
 
@@ -161,27 +145,23 @@ ATF_TEST_CASE_BODY(config__load__overrides)
     ATF_REQUIRE(exp_test_suites == user_config.all_properties("test_suites"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(config__load__lua_error);
 ATF_TEST_CASE_BODY(config__load__lua_error)
 {
     atf::utils::create_file("config", "this syntax is invalid\n");
 
-    ATF_REQUIRE_THROW(engine::load_error, engine::load_config(
-        fs::path("config")));
+    ATF_REQUIRE_THROW(engine::load_error,
+                      engine::load_config(fs::path("config")));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(config__load__bad_syntax__version);
 ATF_TEST_CASE_BODY(config__load__bad_syntax__version)
 {
     atf::utils::create_file("config", "syntax(123)\n");
 
-    ATF_REQUIRE_THROW_RE(engine::load_error,
-                         "Unsupported config version 123",
+    ATF_REQUIRE_THROW_RE(engine::load_error, "Unsupported config version 123",
                          engine::load_config(fs::path("config")));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(config__load__missing_file);
 ATF_TEST_CASE_BODY(config__load__missing_file)
@@ -189,7 +169,6 @@ ATF_TEST_CASE_BODY(config__load__missing_file)
     ATF_REQUIRE_THROW_RE(engine::load_error, "Load of 'missing' failed",
                          engine::load_config(fs::path("missing")));
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

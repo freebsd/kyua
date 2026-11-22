@@ -44,15 +44,13 @@
 
 namespace utils {
 
-
-std::map< std::string, std::string > getallenv(void);
-optional< std::string > getenv(const std::string&);
+std::map<std::string, std::string> getallenv(void);
+optional<std::string> getenv(const std::string&);
 std::string getenv_with_default(const std::string&, const std::string&);
-optional< utils::fs::path > get_home(void);
+optional<utils::fs::path> get_home(void);
 void setenv(const std::string&, const std::string&);
 void unsetenv(const std::string&);
 
+} // namespace utils
 
-}  // namespace utils
-
-#endif  // !defined(UTILS_ENV_HPP)
+#endif // !defined(UTILS_ENV_HPP)

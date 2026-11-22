@@ -41,7 +41,6 @@
 
 namespace utils {
 
-
 /// Registers a key as valid and having a specific type.
 ///
 /// This method does not raise errors on invalid/unknown keys or other
@@ -51,19 +50,19 @@ namespace utils {
 ///
 /// \tparam LeafType The node type of the leaf we are defining.
 /// \param dotted_key The key to be registered in dotted representation.
-template< class LeafType >
+template <class LeafType>
 void
 config::tree::define(const std::string& dotted_key)
 {
     try {
         const detail::tree_key key = detail::parse_key(dotted_key);
-        _root->define(key, 0, detail::new_node< LeafType >);
+        _root->define(key, 0, detail::new_node<LeafType>);
     } catch (const error& e) {
         UNREACHABLE_MSG(F("define() failing due to key errors is a programming "
-                          "mistake: %s") % e.what());
+                          "mistake: %s") %
+                        e.what());
     }
 }
-
 
 /// Gets a read-only reference to the value of a leaf addressed by its key.
 ///
@@ -74,14 +73,14 @@ config::tree::define(const std::string& dotted_key)
 ///
 /// \throw invalid_key_error If the provided key has an invalid format.
 /// \throw unknown_key_error If the provided key is unknown.
-template< class LeafType >
+template <class LeafType>
 const typename LeafType::value_type&
 config::tree::lookup(const std::string& dotted_key) const
 {
     const detail::tree_key key = detail::parse_key(dotted_key);
     const detail::base_node* raw_node = _root->lookup_ro(key, 0);
     try {
-        const LeafType& child = dynamic_cast< const LeafType& >(*raw_node);
+        const LeafType& child = dynamic_cast<const LeafType&>(*raw_node);
         if (child.is_set())
             return child.value();
         else
@@ -90,7 +89,6 @@ config::tree::lookup(const std::string& dotted_key) const
         throw unknown_key_error(key);
     }
 }
-
 
 /// Gets a read-write reference to the value of a leaf addressed by its key.
 ///
@@ -101,15 +99,15 @@ config::tree::lookup(const std::string& dotted_key) const
 ///
 /// \throw invalid_key_error If the provided key has an invalid format.
 /// \throw unknown_key_error If the provided key is unknown.
-template< class LeafType >
+template <class LeafType>
 typename LeafType::value_type&
 config::tree::lookup_rw(const std::string& dotted_key)
 {
     const detail::tree_key key = detail::parse_key(dotted_key);
-    detail::base_node* raw_node = _root->lookup_rw(
-        key, 0, detail::new_node< LeafType >);
+    detail::base_node* raw_node = _root->lookup_rw(key, 0,
+                                                   detail::new_node<LeafType>);
     try {
-        LeafType& child = dynamic_cast< LeafType& >(*raw_node);
+        LeafType& child = dynamic_cast<LeafType&>(*raw_node);
         if (child.is_set())
             return child.value();
         else
@@ -118,7 +116,6 @@ config::tree::lookup_rw(const std::string& dotted_key)
         throw unknown_key_error(key);
     }
 }
-
 
 /// Sets the value of a leaf addressed by its key.
 ///
@@ -129,7 +126,7 @@ config::tree::lookup_rw(const std::string& dotted_key)
 /// \throw invalid_key_error If the provided key has an invalid format.
 /// \throw invalid_key_value If the value mismatches the node type.
 /// \throw unknown_key_error If the provided key is unknown.
-template< class LeafType >
+template <class LeafType>
 void
 config::tree::set(const std::string& dotted_key,
                   const typename LeafType::value_type& value)
@@ -137,8 +134,8 @@ config::tree::set(const std::string& dotted_key,
     const detail::tree_key key = detail::parse_key(dotted_key);
     try {
         leaf_node* raw_node = _root->lookup_rw(key, 0,
-                                               detail::new_node< LeafType >);
-        LeafType& child = dynamic_cast< LeafType& >(*raw_node);
+                                               detail::new_node<LeafType>);
+        LeafType& child = dynamic_cast<LeafType&>(*raw_node);
         child.set(value);
     } catch (const unknown_key_error& e) {
         if (_strict)
@@ -150,7 +147,6 @@ config::tree::set(const std::string& dotted_key,
     }
 }
 
+} // namespace utils
 
-}  // namespace utils
-
-#endif  // !defined(UTILS_CONFIG_TREE_IPP)
+#endif // !defined(UTILS_CONFIG_TREE_IPP)

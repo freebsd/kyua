@@ -38,22 +38,17 @@ extern "C" {
 
 namespace detail = utils::process::detail;
 
-
 /// Indirection to execute the dup2(2) system call.
 int (*detail::syscall_dup2)(const int, const int) = ::dup2;
-
 
 /// Indirection to execute the fork(2) system call.
 pid_t (*detail::syscall_fork)(void) = ::fork;
 
-
 /// Indirection to execute the open(2) system call.
 int (*detail::syscall_open)(const char*, const int, ...) = ::open;
 
-
 /// Indirection to execute the pipe(2) system call.
 int (*detail::syscall_pipe)(int[2]) = ::pipe;
-
 
 /// Indirection to execute the waitpid(2) system call.
 pid_t (*detail::syscall_waitpid)(const pid_t, int*, const int) = ::waitpid;

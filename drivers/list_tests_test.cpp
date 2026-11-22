@@ -34,11 +34,10 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include <atf-c++.hpp>
 #include <map>
 #include <set>
 #include <string>
-
-#include <atf-c++.hpp>
 
 #include "cli/cmd_list.hpp"
 #include "cli/common.ipp"
@@ -63,9 +62,7 @@ namespace scheduler = engine::scheduler;
 using utils::none;
 using utils::optional;
 
-
 namespace {
-
 
 /// Gets the path to the helpers for this test program.
 ///
@@ -75,37 +72,33 @@ namespace {
 static fs::path
 helpers(const atf::tests::tc* test_case)
 {
-    return fs::path(test_case->get_config_var("srcdir")) /
-        "list_tests_helpers";
+    return fs::path(test_case->get_config_var("srcdir")) / "list_tests_helpers";
 }
-
 
 /// Hooks to capture the incremental listing of test cases.
 class capture_hooks : public drivers::list_tests::base_hooks {
 public:
     /// Set of the listed test cases in a program:test_case form.
-    std::set< std::string > test_cases;
+    std::set<std::string> test_cases;
 
     /// Set of the listed test cases in a program:test_case form.
-    std::map< std::string, model::metadata > metadatas;
+    std::map<std::string, model::metadata> metadatas;
 
     /// Called when a test case is identified in a test suite.
     ///
     /// \param test_program The test program containing the test case.
     /// \param test_case_name The name of the located test case.
-    virtual void
-    got_test_case(const model::test_program& test_program,
-                  const std::string& test_case_name)
+    virtual void got_test_case(const model::test_program& test_program,
+                               const std::string& test_case_name)
     {
-        const std::string ident = F("%s:%s") %
-            test_program.relative_path() % test_case_name;
+        const std::string ident = F("%s:%s") % test_program.relative_path() %
+            test_case_name;
         test_cases.insert(ident);
 
-        metadatas.insert(std::map< std::string, model::metadata >::value_type(
+        metadatas.insert(std::map<std::string, model::metadata>::value_type(
             ident, test_program.find(test_case_name).get_metadata()));
     }
 };
-
 
 /// Creates a mock test suite.
 ///
@@ -128,17 +121,15 @@ create_helpers(const atf::tests::tc* tc, const fs::path& source_root,
     ATF_REQUIRE(::symlink(helpers(tc).c_str(),
                           (build_root / "dir/program").c_str()) != -1);
 
-    atf::utils::create_file(
-        (source_root / "Kyuafile").str(),
-        "syntax(2)\n"
-        "include('dir/Kyuafile')\n");
+    atf::utils::create_file((source_root / "Kyuafile").str(),
+                            "syntax(2)\n"
+                            "include('dir/Kyuafile')\n");
 
     atf::utils::create_file(
         (source_root / "dir/Kyuafile").str(),
         "syntax(2)\n"
         "atf_test_program{name='program', test_suite='suite-name'}\n");
 }
-
 
 /// Runs the mock test suite.
 ///
@@ -153,14 +144,13 @@ create_helpers(const atf::tests::tc* tc, const fs::path& source_root,
 ///
 /// \return The result data of the driver.
 static drivers::list_tests::result
-run_helpers(const fs::path& source_root,
-            const optional< fs::path > build_root,
+run_helpers(const fs::path& source_root, const optional<fs::path> build_root,
             drivers::list_tests::base_hooks& hooks,
             const char* filter_program = NULL,
             const char* filter_test_case = NULL,
             const char* the_variable = NULL)
 {
-    std::set< engine::test_filter > filters;
+    std::set<engine::test_filter> filters;
     if (filter_program != NULL && filter_test_case != NULL)
         filters.insert(engine::test_filter(fs::path(filter_program),
                                            filter_test_case));
@@ -175,9 +165,7 @@ run_helpers(const fs::path& source_root,
                                       filters, user_config, hooks);
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 ATF_TEST_CASE_WITHOUT_HEAD(one_test_case);
 ATF_TEST_CASE_BODY(one_test_case)
@@ -187,11 +175,10 @@ ATF_TEST_CASE_BODY(one_test_case)
     create_helpers(this, fs::path("root"), fs::path("root"));
     run_helpers(fs::path("root"), none, hooks);
 
-    std::set< std::string > exp_test_cases;
+    std::set<std::string> exp_test_cases;
     exp_test_cases.insert("dir/program:some_properties");
     ATF_REQUIRE(exp_test_cases == hooks.test_cases);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(many_test_cases);
 ATF_TEST_CASE_BODY(many_test_cases)
@@ -201,12 +188,11 @@ ATF_TEST_CASE_BODY(many_test_cases)
     create_helpers(this, fs::path("root"), fs::path("root"));
     run_helpers(fs::path("root"), none, hooks);
 
-    std::set< std::string > exp_test_cases;
+    std::set<std::string> exp_test_cases;
     exp_test_cases.insert("dir/program:no_properties");
     exp_test_cases.insert("dir/program:some_properties");
     ATF_REQUIRE(exp_test_cases == hooks.test_cases);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(filter_match);
 ATF_TEST_CASE_BODY(filter_match)
@@ -217,11 +203,10 @@ ATF_TEST_CASE_BODY(filter_match)
     run_helpers(fs::path("root"), none, hooks, "dir/program",
                 "some_properties");
 
-    std::set< std::string > exp_test_cases;
+    std::set<std::string> exp_test_cases;
     exp_test_cases.insert("dir/program:some_properties");
     ATF_REQUIRE(exp_test_cases == hooks.test_cases);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(build_root);
 ATF_TEST_CASE_BODY(build_root)
@@ -232,12 +217,11 @@ ATF_TEST_CASE_BODY(build_root)
     run_helpers(fs::path("source"), utils::make_optional(fs::path("build")),
                 hooks);
 
-    std::set< std::string > exp_test_cases;
+    std::set<std::string> exp_test_cases;
     exp_test_cases.insert("dir/program:no_properties");
     exp_test_cases.insert("dir/program:some_properties");
     ATF_REQUIRE(exp_test_cases == hooks.test_cases);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(config_in_head);
 ATF_TEST_CASE_BODY(config_in_head)
@@ -248,15 +232,14 @@ ATF_TEST_CASE_BODY(config_in_head)
     run_helpers(fs::path("source"), utils::make_optional(fs::path("build")),
                 hooks, NULL, NULL, "magic value");
 
-    std::set< std::string > exp_test_cases;
+    std::set<std::string> exp_test_cases;
     exp_test_cases.insert("dir/program:config_in_head");
     ATF_REQUIRE(exp_test_cases == hooks.test_cases);
 
-    const model::metadata& metadata = hooks.metadatas.find(
-        "dir/program:config_in_head")->second;
+    const model::metadata& metadata =
+        hooks.metadatas.find("dir/program:config_in_head")->second;
     ATF_REQUIRE_EQ("the-variable is magic value", metadata.description());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(crash);
 ATF_TEST_CASE_BODY(crash)
@@ -266,17 +249,16 @@ ATF_TEST_CASE_BODY(crash)
     create_helpers(this, fs::path("root"), fs::path("root"));
     run_helpers(fs::path("root"), none, hooks, "dir/program");
 
-    std::set< std::string > exp_test_cases;
+    std::set<std::string> exp_test_cases;
     exp_test_cases.insert("dir/program:__test_cases_list__");
     ATF_REQUIRE(exp_test_cases == hooks.test_cases);
 }
 
-
 ATF_INIT_TEST_CASES(tcs)
 {
     scheduler::register_interface(
-        "atf", std::shared_ptr< scheduler::interface >(
-            new engine::atf_interface()));
+        "atf",
+        std::shared_ptr<scheduler::interface>(new engine::atf_interface()));
 
     ATF_ADD_TEST_CASE(tcs, one_test_case);
     ATF_ADD_TEST_CASE(tcs, many_test_cases);

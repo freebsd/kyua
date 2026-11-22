@@ -42,37 +42,34 @@ namespace executor = utils::process::executor;
 
 using utils::optional;
 
-
 namespace engine {
-
 
 /// Abstract debugger interface.
 class debugger {
 public:
-    debugger() {}
-    virtual ~debugger() {}
+    debugger()
+    {
+    }
+    virtual ~debugger()
+    {
+    }
 
     /// Called right before test cleanup.
-    virtual void before_cleanup(
-        const model::test_program_ptr&,
-        const model::test_case&,
-        optional< model::test_result >&,
-        executor::exit_handle&) const = 0;
+    virtual void before_cleanup(const model::test_program_ptr&,
+                                const model::test_case&,
+                                optional<model::test_result>&,
+                                executor::exit_handle&) const = 0;
 
     /// Called upon test failure.
-    virtual void upon_test_failure(
-        const model::test_program_ptr&,
-        const model::test_case&,
-        optional< model::test_result >&,
-        executor::exit_handle&) const = 0;
+    virtual void upon_test_failure(const model::test_program_ptr&,
+                                   const model::test_case&,
+                                   optional<model::test_result>&,
+                                   executor::exit_handle&) const = 0;
 };
 
-
 /// Pointer to a debugger implementation.
-typedef std::shared_ptr< debugger > debugger_ptr;
+typedef std::shared_ptr<debugger> debugger_ptr;
 
+} // namespace engine
 
-}  // namespace engine
-
-
-#endif  // !defined(ENGINE_DEBUGGER_HPP)
+#endif // !defined(ENGINE_DEBUGGER_HPP)

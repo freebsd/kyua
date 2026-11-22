@@ -43,19 +43,15 @@
 
 namespace model {
 
-
 /// Collection of paths.
-typedef std::set< utils::fs::path > paths_set;
-
+typedef std::set<utils::fs::path> paths_set;
 
 /// Collection of strings.
-typedef std::set< std::string > strings_set;
-
+typedef std::set<std::string> strings_set;
 
 /// Collection of test properties in their textual form.
-typedef std::map< std::string, std::string > properties_map;
+typedef std::map<std::string, std::string> properties_map;
 
+} // namespace model
 
-}  // namespace model
-
-#endif  // !defined(MODEL_TYPES_HPP)
+#endif // !defined(MODEL_TYPES_HPP)

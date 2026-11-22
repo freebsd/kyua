@@ -35,15 +35,12 @@
 namespace utils {
 namespace signals {
 
-
 extern const int last_signo;
-
 
 void reset(const int);
 bool reset_all(void);
 
+} // namespace signals
+} // namespace utils
 
-}  // namespace signals
-}  // namespace utils
-
-#endif  // !defined(UTILS_SIGNALS_MISC_HPP)
+#endif // !defined(UTILS_SIGNALS_MISC_HPP)

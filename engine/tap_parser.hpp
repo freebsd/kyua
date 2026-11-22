@@ -32,20 +32,17 @@
 #if !defined(ENGINE_TAP_PARSER_HPP)
 #define ENGINE_TAP_PARSER_HPP
 
-#include "engine/tap_parser_fwd.hpp"
-
 #include <cstddef>
 #include <ostream>
 #include <string>
 
+#include "engine/tap_parser_fwd.hpp"
 #include "utils/fs/path_fwd.hpp"
 
 namespace engine {
 
-
 /// TAP plan representing all tests being skipped.
 extern const engine::tap_plan all_skipped_plan;
-
 
 /// TAP output representation and parser.
 class tap_summary {
@@ -86,14 +83,10 @@ public:
     bool operator!=(const tap_summary&) const;
 };
 
-
 std::ostream& operator<<(std::ostream&, const tap_summary&);
-
 
 tap_summary parse_tap_output(const utils::fs::path&);
 
+} // namespace engine
 
-}  // namespace engine
-
-
-#endif  // !defined(ENGINE_TAP_PARSER_HPP)
+#endif // !defined(ENGINE_TAP_PARSER_HPP)

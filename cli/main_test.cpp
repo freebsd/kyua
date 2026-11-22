@@ -32,9 +32,8 @@ extern "C" {
 #include <signal.h>
 }
 
-#include <cstdlib>
-
 #include <atf-c++.hpp>
+#include <cstdlib>
 
 #include "utils/cmdline/base_command.ipp"
 #include "utils/cmdline/exceptions.hpp"
@@ -60,9 +59,7 @@ namespace fs = utils::fs;
 namespace logging = utils::logging;
 namespace process = utils::process;
 
-
 namespace {
-
 
 /// Fake command implementation that crashes during its execution.
 class cmd_mock_crash : public cli::cli_command {
@@ -78,15 +75,12 @@ public:
     /// Runs the mock command.
     ///
     /// \return Nothing because this function always aborts.
-    int
-    run(cmdline::ui* /* ui */,
-        const cmdline::parsed_cmdline& /* cmdline */,
-        const config::tree& /* user_config */)
+    int run(cmdline::ui* /* ui */, const cmdline::parsed_cmdline& /* cmdline */,
+            const config::tree& /* user_config */)
     {
         utils::abort_without_coredump();
     }
 };
-
 
 /// Fake command implementation that throws an exception during its execution.
 class cmd_mock_error : public cli::cli_command {
@@ -116,10 +110,8 @@ public:
     ///
     /// \throw std::logic_error If _unhandled is true.
     /// \throw std::runtime_error If _unhandled is false.
-    int
-    run(cmdline::ui* /* ui */,
-        const cmdline::parsed_cmdline& /* cmdline */,
-        const config::tree& /* user_config */)
+    int run(cmdline::ui* /* ui */, const cmdline::parsed_cmdline& /* cmdline */,
+            const config::tree& /* user_config */)
     {
         if (_unhandled)
             throw std::logic_error("This is unhandled");
@@ -128,15 +120,15 @@ public:
     }
 };
 
-
 /// Fake command implementation that prints messages during its execution.
 class cmd_mock_write : public cli::cli_command {
 public:
     /// Constructs a new mock command.
     ///
     /// All command parameters are set to irrelevant values.
-    cmd_mock_write(void) : cli::cli_command(
-        "mock_write", "", 0, 0, "Mock command that prints output")
+    cmd_mock_write(void) :
+        cli::cli_command("mock_write", "", 0, 0,
+                         "Mock command that prints output")
     {
     }
 
@@ -145,10 +137,8 @@ public:
     /// \param ui Object to interact with the I/O of the program.
     ///
     /// \return Nothing because this function always aborts.
-    int
-    run(cmdline::ui* ui,
-        const cmdline::parsed_cmdline& /* cmdline */,
-        const config::tree& /* user_config */)
+    int run(cmdline::ui* ui, const cmdline::parsed_cmdline& /* cmdline */,
+            const config::tree& /* user_config */)
     {
         ui->out("stdout message from subcommand");
         ui->err("stderr message from subcommand");
@@ -156,9 +146,7 @@ public:
     }
 };
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 ATF_TEST_CASE_WITHOUT_HEAD(detail__default_log_name__home);
 ATF_TEST_CASE_BODY(detail__default_log_name__home)
@@ -173,7 +161,6 @@ ATF_TEST_CASE_BODY(detail__default_log_name__home)
         cli::detail::default_log_name());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(detail__default_log_name__tmpdir);
 ATF_TEST_CASE_BODY(detail__default_log_name__tmpdir)
 {
@@ -185,7 +172,6 @@ ATF_TEST_CASE_BODY(detail__default_log_name__tmpdir)
     ATF_REQUIRE_EQ(fs::path("/a/b/c/progname2.20110221-211050.log"),
                    cli::detail::default_log_name());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(detail__default_log_name__hardcoded);
 ATF_TEST_CASE_BODY(detail__default_log_name__hardcoded)
@@ -199,7 +185,6 @@ ATF_TEST_CASE_BODY(detail__default_log_name__hardcoded)
                    cli::detail::default_log_name());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(main__no_args);
 ATF_TEST_CASE_BODY(main__no_args)
 {
@@ -207,7 +192,7 @@ ATF_TEST_CASE_BODY(main__no_args)
     cmdline::init("progname");
 
     const int argc = 1;
-    const char* const argv[] = {"progname", NULL};
+    const char* const argv[] = { "progname", NULL };
 
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(3, cli::main(&ui, argc, argv));
@@ -218,7 +203,6 @@ ATF_TEST_CASE_BODY(main__no_args)
                                             ui.err_log()));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(main__unknown_command);
 ATF_TEST_CASE_BODY(main__unknown_command)
 {
@@ -226,7 +210,7 @@ ATF_TEST_CASE_BODY(main__unknown_command)
     cmdline::init("progname");
 
     const int argc = 2;
-    const char* const argv[] = {"progname", "foo", NULL};
+    const char* const argv[] = { "progname", "foo", NULL };
 
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(3, cli::main(&ui, argc, argv));
@@ -237,7 +221,6 @@ ATF_TEST_CASE_BODY(main__unknown_command)
                                             ui.err_log()));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(main__logfile__default);
 ATF_TEST_CASE_BODY(main__logfile__default)
 {
@@ -246,16 +229,15 @@ ATF_TEST_CASE_BODY(main__logfile__default)
     cmdline::init("progname");
 
     const int argc = 1;
-    const char* const argv[] = {"progname", NULL};
+    const char* const argv[] = { "progname", NULL };
 
     cmdline::ui_mock ui;
-    ATF_REQUIRE(!fs::exists(fs::path(
-        ".kyua/logs/progname.20110221-213000.log")));
+    ATF_REQUIRE(
+        !fs::exists(fs::path(".kyua/logs/progname.20110221-213000.log")));
     ATF_REQUIRE_EQ(3, cli::main(&ui, argc, argv));
-    ATF_REQUIRE(fs::exists(fs::path(
-        ".kyua/logs/progname.20110221-213000.log")));
+    ATF_REQUIRE(
+        fs::exists(fs::path(".kyua/logs/progname.20110221-213000.log")));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(main__logfile__override);
 ATF_TEST_CASE_BODY(main__logfile__override)
@@ -265,16 +247,15 @@ ATF_TEST_CASE_BODY(main__logfile__override)
     cmdline::init("progname");
 
     const int argc = 2;
-    const char* const argv[] = {"progname", "--logfile=test.log", NULL};
+    const char* const argv[] = { "progname", "--logfile=test.log", NULL };
 
     cmdline::ui_mock ui;
     ATF_REQUIRE(!fs::exists(fs::path("test.log")));
     ATF_REQUIRE_EQ(3, cli::main(&ui, argc, argv));
-    ATF_REQUIRE(!fs::exists(fs::path(
-        ".kyua/logs/progname.20110221-213000.log")));
+    ATF_REQUIRE(
+        !fs::exists(fs::path(".kyua/logs/progname.20110221-213000.log")));
     ATF_REQUIRE(fs::exists(fs::path("test.log")));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(main__loglevel__default);
 ATF_TEST_CASE_BODY(main__loglevel__default)
@@ -283,7 +264,7 @@ ATF_TEST_CASE_BODY(main__loglevel__default)
     cmdline::init("progname");
 
     const int argc = 2;
-    const char* const argv[] = {"progname", "--logfile=test.log", NULL};
+    const char* const argv[] = { "progname", "--logfile=test.log", NULL };
 
     LD("Mock debug message");
     LE("Mock error message");
@@ -298,7 +279,6 @@ ATF_TEST_CASE_BODY(main__loglevel__default)
     ATF_REQUIRE(atf::utils::grep_file("Mock warning message", "test.log"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(main__loglevel__higher);
 ATF_TEST_CASE_BODY(main__loglevel__higher)
 {
@@ -306,8 +286,8 @@ ATF_TEST_CASE_BODY(main__loglevel__higher)
     cmdline::init("progname");
 
     const int argc = 3;
-    const char* const argv[] = {"progname", "--logfile=test.log",
-                                "--loglevel=debug", NULL};
+    const char* const argv[] = { "progname", "--logfile=test.log",
+                                 "--loglevel=debug", NULL };
 
     LD("Mock debug message");
     LE("Mock error message");
@@ -322,7 +302,6 @@ ATF_TEST_CASE_BODY(main__loglevel__higher)
     ATF_REQUIRE(atf::utils::grep_file("Mock warning message", "test.log"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(main__loglevel__lower);
 ATF_TEST_CASE_BODY(main__loglevel__lower)
 {
@@ -330,8 +309,8 @@ ATF_TEST_CASE_BODY(main__loglevel__lower)
     cmdline::init("progname");
 
     const int argc = 3;
-    const char* const argv[] = {"progname", "--logfile=test.log",
-                                "--loglevel=warning", NULL};
+    const char* const argv[] = { "progname", "--logfile=test.log",
+                                 "--loglevel=warning", NULL };
 
     LD("Mock debug message");
     LE("Mock error message");
@@ -346,7 +325,6 @@ ATF_TEST_CASE_BODY(main__loglevel__lower)
     ATF_REQUIRE(atf::utils::grep_file("Mock warning message", "test.log"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(main__loglevel__error);
 ATF_TEST_CASE_BODY(main__loglevel__error)
 {
@@ -354,8 +332,8 @@ ATF_TEST_CASE_BODY(main__loglevel__error)
     cmdline::init("progname");
 
     const int argc = 3;
-    const char* const argv[] = {"progname", "--logfile=test.log",
-                                "--loglevel=i-am-invalid", NULL};
+    const char* const argv[] = { "progname", "--logfile=test.log",
+                                 "--loglevel=i-am-invalid", NULL };
 
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(3, cli::main(&ui, argc, argv));
@@ -364,7 +342,6 @@ ATF_TEST_CASE_BODY(main__loglevel__error)
     ATF_REQUIRE(!fs::exists(fs::path("test.log")));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(main__subcommand__ok);
 ATF_TEST_CASE_BODY(main__subcommand__ok)
 {
@@ -372,7 +349,7 @@ ATF_TEST_CASE_BODY(main__subcommand__ok)
     cmdline::init("progname");
 
     const int argc = 2;
-    const char* const argv[] = {"progname", "mock_write", NULL};
+    const char* const argv[] = { "progname", "mock_write", NULL };
 
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(EXIT_FAILURE,
@@ -384,7 +361,6 @@ ATF_TEST_CASE_BODY(main__subcommand__ok)
     ATF_REQUIRE_EQ("stderr message from subcommand", ui.err_log()[0]);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(main__subcommand__invalid_args);
 ATF_TEST_CASE_BODY(main__subcommand__invalid_args)
 {
@@ -392,7 +368,7 @@ ATF_TEST_CASE_BODY(main__subcommand__invalid_args)
     cmdline::init("progname");
 
     const int argc = 3;
-    const char* const argv[] = {"progname", "mock_write", "bar", NULL};
+    const char* const argv[] = { "progname", "mock_write", "bar", NULL };
 
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(3,
@@ -406,7 +382,6 @@ ATF_TEST_CASE_BODY(main__subcommand__invalid_args)
                                             ui.err_log()));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(main__subcommand__runtime_error);
 ATF_TEST_CASE_BODY(main__subcommand__runtime_error)
 {
@@ -414,16 +389,16 @@ ATF_TEST_CASE_BODY(main__subcommand__runtime_error)
     cmdline::init("progname");
 
     const int argc = 2;
-    const char* const argv[] = {"progname", "mock_error", NULL};
+    const char* const argv[] = { "progname", "mock_error", NULL };
 
     cmdline::ui_mock ui;
-    ATF_REQUIRE_EQ(2, cli::main(&ui, argc, argv,
-        cli::cli_command_ptr(new cmd_mock_error(false))));
+    ATF_REQUIRE_EQ(2,
+                   cli::main(&ui, argc, argv,
+                             cli::cli_command_ptr(new cmd_mock_error(false))));
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE(atf::utils::grep_collection("progname: E: Runtime error.",
                                             ui.err_log()));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(main__subcommand__unhandled_exception);
 ATF_TEST_CASE_BODY(main__subcommand__unhandled_exception)
@@ -432,13 +407,14 @@ ATF_TEST_CASE_BODY(main__subcommand__unhandled_exception)
     cmdline::init("progname");
 
     const int argc = 2;
-    const char* const argv[] = {"progname", "mock_error", NULL};
+    const char* const argv[] = { "progname", "mock_error", NULL };
 
     cmdline::ui_mock ui;
-    ATF_REQUIRE_THROW(std::logic_error, cli::main(&ui, argc, argv,
-        cli::cli_command_ptr(new cmd_mock_error(true))));
+    ATF_REQUIRE_THROW(
+        std::logic_error,
+        cli::main(&ui, argc, argv,
+                  cli::cli_command_ptr(new cmd_mock_error(true))));
 }
-
 
 static void
 do_subcommand_crash(void)
@@ -447,25 +423,23 @@ do_subcommand_crash(void)
     cmdline::init("progname");
 
     const int argc = 2;
-    const char* const argv[] = {"progname", "mock_error", NULL};
+    const char* const argv[] = { "progname", "mock_error", NULL };
 
     cmdline::ui_mock ui;
-    cli::main(&ui, argc, argv,
-              cli::cli_command_ptr(new cmd_mock_crash()));
+    cli::main(&ui, argc, argv, cli::cli_command_ptr(new cmd_mock_crash()));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(main__subcommand__crash);
 ATF_TEST_CASE_BODY(main__subcommand__crash)
 {
-    const process::status status = process::child::fork_files(
-        do_subcommand_crash, fs::path("stdout.txt"),
-        fs::path("stderr.txt"))->wait();
+    const process::status status =
+        process::child::fork_files(do_subcommand_crash, fs::path("stdout.txt"),
+                                   fs::path("stderr.txt"))
+            ->wait();
     ATF_REQUIRE(status.signaled());
     ATF_REQUIRE_EQ(SIGABRT, status.termsig());
     ATF_REQUIRE(atf::utils::grep_file("Fatal signal", "stderr.txt"));
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

@@ -26,14 +26,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/exceptions.hpp"
-
+#include <atf-c++.hpp>
 #include <cstring>
 
-#include <atf-c++.hpp>
+#include "engine/exceptions.hpp"
 
 namespace fs = utils::fs;
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(error);
 ATF_TEST_CASE_BODY(error)
@@ -42,14 +40,12 @@ ATF_TEST_CASE_BODY(error)
     ATF_REQUIRE(std::strcmp("Some text", e.what()) == 0);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(format_error);
 ATF_TEST_CASE_BODY(format_error)
 {
     const engine::format_error e("Some text");
     ATF_REQUIRE(std::strcmp("Some text", e.what()) == 0);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(load_error);
 ATF_TEST_CASE_BODY(load_error)
@@ -59,7 +55,6 @@ ATF_TEST_CASE_BODY(load_error)
     ATF_REQUIRE_EQ("foo", e.reason);
     ATF_REQUIRE(std::strcmp("Load of '/my/file' failed: foo", e.what()) == 0);
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

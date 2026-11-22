@@ -26,18 +26,16 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/cmdline/options.hpp"
-
 #include <atf-c++.hpp>
 
 #include "utils/cmdline/exceptions.hpp"
+#include "utils/cmdline/options.hpp"
 #include "utils/defs.hpp"
 #include "utils/fs/path.hpp"
 
 namespace cmdline = utils::cmdline;
 
 namespace {
-
 
 /// Simple string-based option type for testing purposes.
 class mock_option : public cmdline::base_option {
@@ -54,10 +52,12 @@ public:
     /// \param default_value_ If not NULL, specifies that the option has a
     ///     default value for the mandatory argument.
     mock_option(const char short_name_, const char* long_name_,
-                  const char* description_, const char* arg_name_ = NULL,
-                  const char* default_value_ = NULL) :
+                const char* description_, const char* arg_name_ = NULL,
+                const char* default_value_ = NULL) :
         base_option(short_name_, long_name_, description_, arg_name_,
-                    default_value_) {}
+                    default_value_)
+    {
+    }
 
     /// Constructs a mock option with a long name only.
     ///
@@ -68,10 +68,12 @@ public:
     ///     purposes.
     /// \param default_value_ If not NULL, specifies that the option has a
     ///     default value for the mandatory argument.
-    mock_option(const char* long_name_,
-                  const char* description_, const char* arg_name_ = NULL,
-                  const char* default_value_ = NULL) :
-        base_option(long_name_, description_, arg_name_, default_value_) {}
+    mock_option(const char* long_name_, const char* description_,
+                const char* arg_name_ = NULL,
+                const char* default_value_ = NULL) :
+        base_option(long_name_, description_, arg_name_, default_value_)
+    {
+    }
 
     /// The data type of this option.
     typedef std::string option_type;
@@ -79,8 +81,7 @@ public:
     /// Ensures that the argument passed to the option is valid.
     ///
     /// In this particular mock option, this does not perform any validation.
-    void
-    validate(const std::string& /* str */) const
+    void validate(const std::string& /* str */) const
     {
         // Do nothing.
     }
@@ -90,16 +91,13 @@ public:
     /// \param str The user-provided argument to the option.
     ///
     /// \return The same value as provided by the user without conversion.
-    static std::string
-    convert(const std::string& str)
+    static std::string convert(const std::string& str)
     {
         return str;
     }
 };
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 ATF_TEST_CASE_WITHOUT_HEAD(base_option__short_name__no_arg);
 ATF_TEST_CASE_BODY(base_option__short_name__no_arg)
@@ -113,7 +111,6 @@ ATF_TEST_CASE_BODY(base_option__short_name__no_arg)
     ATF_REQUIRE_EQ("-f", o.format_short_name());
     ATF_REQUIRE_EQ("--force", o.format_long_name());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(base_option__short_name__with_arg__no_default);
 ATF_TEST_CASE_BODY(base_option__short_name__with_arg__no_default)
@@ -129,7 +126,6 @@ ATF_TEST_CASE_BODY(base_option__short_name__with_arg__no_default)
     ATF_REQUIRE_EQ("-c path", o.format_short_name());
     ATF_REQUIRE_EQ("--conf_file=path", o.format_long_name());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(base_option__short_name__with_arg__with_default);
 ATF_TEST_CASE_BODY(base_option__short_name__with_arg__with_default)
@@ -148,7 +144,6 @@ ATF_TEST_CASE_BODY(base_option__short_name__with_arg__with_default)
     ATF_REQUIRE_EQ("--conf_file=path", o.format_long_name());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(base_option__long_name__no_arg);
 ATF_TEST_CASE_BODY(base_option__long_name__no_arg)
 {
@@ -159,7 +154,6 @@ ATF_TEST_CASE_BODY(base_option__long_name__no_arg)
     ATF_REQUIRE(!o.needs_arg());
     ATF_REQUIRE_EQ("--dryrun", o.format_long_name());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(base_option__long_name__with_arg__no_default);
 ATF_TEST_CASE_BODY(base_option__long_name__with_arg__no_default)
@@ -173,7 +167,6 @@ ATF_TEST_CASE_BODY(base_option__long_name__with_arg__no_default)
     ATF_REQUIRE(!o.has_default_value());
     ATF_REQUIRE_EQ("--helper=path", o.format_long_name());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(base_option__long_name__with_arg__with_default);
 ATF_TEST_CASE_BODY(base_option__long_name__with_arg__with_default)
@@ -189,7 +182,6 @@ ATF_TEST_CASE_BODY(base_option__long_name__with_arg__with_default)
     ATF_REQUIRE_EQ("--executable=file", o.format_long_name());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(bool_option__short_name);
 ATF_TEST_CASE_BODY(bool_option__short_name)
 {
@@ -201,7 +193,6 @@ ATF_TEST_CASE_BODY(bool_option__short_name)
     ATF_REQUIRE(!o.needs_arg());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(bool_option__long_name);
 ATF_TEST_CASE_BODY(bool_option__long_name)
 {
@@ -211,7 +202,6 @@ ATF_TEST_CASE_BODY(bool_option__long_name)
     ATF_REQUIRE_EQ("Force execution", o.description());
     ATF_REQUIRE(!o.needs_arg());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(int_option__short_name);
 ATF_TEST_CASE_BODY(int_option__short_name)
@@ -227,7 +217,6 @@ ATF_TEST_CASE_BODY(int_option__short_name)
     ATF_REQUIRE_EQ("value", o.default_value());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(int_option__long_name);
 ATF_TEST_CASE_BODY(int_option__long_name)
 {
@@ -240,7 +229,6 @@ ATF_TEST_CASE_BODY(int_option__long_name)
     ATF_REQUIRE(o.has_default_value());
     ATF_REQUIRE_EQ("value", o.default_value());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(int_option__type);
 ATF_TEST_CASE_BODY(int_option__type)
@@ -260,7 +248,6 @@ ATF_TEST_CASE_BODY(int_option__type)
     ATF_REQUIRE_THROW(cmdline::option_argument_value_error, o.validate("5.0"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(list_option__short_name);
 ATF_TEST_CASE_BODY(list_option__short_name)
 {
@@ -275,7 +262,6 @@ ATF_TEST_CASE_BODY(list_option__short_name)
     ATF_REQUIRE_EQ("value", o.default_value());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(list_option__long_name);
 ATF_TEST_CASE_BODY(list_option__long_name)
 {
@@ -288,7 +274,6 @@ ATF_TEST_CASE_BODY(list_option__long_name)
     ATF_REQUIRE(o.has_default_value());
     ATF_REQUIRE_EQ("value", o.default_value());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(list_option__type);
 ATF_TEST_CASE_BODY(list_option__type)
@@ -351,7 +336,6 @@ ATF_TEST_CASE_BODY(list_option__type)
     }
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(path_option__short_name);
 ATF_TEST_CASE_BODY(path_option__short_name)
 {
@@ -366,7 +350,6 @@ ATF_TEST_CASE_BODY(path_option__short_name)
     ATF_REQUIRE_EQ("value", o.default_value());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(path_option__long_name);
 ATF_TEST_CASE_BODY(path_option__long_name)
 {
@@ -379,7 +362,6 @@ ATF_TEST_CASE_BODY(path_option__long_name)
     ATF_REQUIRE(o.has_default_value());
     ATF_REQUIRE_EQ("value", o.default_value());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(path_option__type);
 ATF_TEST_CASE_BODY(path_option__type)
@@ -397,9 +379,8 @@ ATF_TEST_CASE_BODY(path_option__type)
 
     const cmdline::path_option::option_type path =
         cmdline::path_option::convert("/foo/bar");
-    ATF_REQUIRE_EQ("bar", path.leaf_name());  // Ensure valid type.
+    ATF_REQUIRE_EQ("bar", path.leaf_name()); // Ensure valid type.
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(property_option__short_name);
 ATF_TEST_CASE_BODY(property_option__short_name)
@@ -414,7 +395,6 @@ ATF_TEST_CASE_BODY(property_option__short_name)
     ATF_REQUIRE(!o.has_default_value());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(property_option__long_name);
 ATF_TEST_CASE_BODY(property_option__long_name)
 {
@@ -427,11 +407,10 @@ ATF_TEST_CASE_BODY(property_option__long_name)
     ATF_REQUIRE(!o.has_default_value());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(property_option__type);
 ATF_TEST_CASE_BODY(property_option__type)
 {
-    typedef std::pair< std::string, std::string > string_pair;
+    typedef std::pair<std::string, std::string> string_pair;
     const cmdline::property_option o("property", "The property", "a=b");
 
     o.validate("foo=bar");
@@ -448,7 +427,6 @@ ATF_TEST_CASE_BODY(property_option__type)
     ATF_REQUIRE_THROW(cmdline::option_argument_value_error, o.validate("=b"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(string_option__short_name);
 ATF_TEST_CASE_BODY(string_option__short_name)
 {
@@ -463,7 +441,6 @@ ATF_TEST_CASE_BODY(string_option__short_name)
     ATF_REQUIRE_EQ("value", o.default_value());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(string_option__long_name);
 ATF_TEST_CASE_BODY(string_option__long_name)
 {
@@ -477,7 +454,6 @@ ATF_TEST_CASE_BODY(string_option__long_name)
     ATF_REQUIRE_EQ("value", o.default_value());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(string_option__type);
 ATF_TEST_CASE_BODY(string_option__type)
 {
@@ -488,9 +464,8 @@ ATF_TEST_CASE_BODY(string_option__type)
 
     const cmdline::string_option::option_type string =
         cmdline::string_option::convert("foo");
-    ATF_REQUIRE_EQ(3, string.length());  // Ensure valid type.
+    ATF_REQUIRE_EQ(3, string.length()); // Ensure valid type.
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

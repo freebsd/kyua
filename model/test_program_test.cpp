@@ -34,10 +34,9 @@ extern "C" {
 #include <signal.h>
 }
 
+#include <atf-c++.hpp>
 #include <set>
 #include <sstream>
-
-#include <atf-c++.hpp>
 
 #include "model/exceptions.hpp"
 #include "model/metadata.hpp"
@@ -52,9 +51,7 @@ extern "C" {
 
 namespace fs = utils::fs;
 
-
 namespace {
-
 
 /// Test program that sets its test cases lazily.
 ///
@@ -97,11 +94,10 @@ public:
     /// Lazily sets the test cases on the parent and returns them.
     ///
     /// \return The list of test cases.
-    const model::test_cases_map&
-    test_cases(void) const
+    const model::test_cases_map& test_cases(void) const
     {
         if (!_set_test_cases_called) {
-            const_cast< lazy_test_program* >(this)->set_test_cases(
+            const_cast<lazy_test_program*>(this)->set_test_cases(
                 _lazy_test_cases);
             _set_test_cases_called = true;
         }
@@ -109,29 +105,25 @@ public:
     }
 };
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Runs a ctor_and_getters test.
 ///
 /// \tparam TestProgram Either model::test_program or lazy_test_program.
-template< class TestProgram >
+template <class TestProgram>
 static void
 check_ctor_and_getters(void)
 {
     const model::metadata tp_md = model::metadata_builder()
-        .add_custom("first", "foo")
-        .add_custom("second", "bar")
-        .build();
-    const model::metadata tc_md = model::metadata_builder()
-        .add_custom("first", "baz")
-        .build();
+                                      .add_custom("first", "foo")
+                                      .add_custom("second", "bar")
+                                      .build();
+    const model::metadata tc_md =
+        model::metadata_builder().add_custom("first", "baz").build();
 
     const TestProgram test_program(
         "mock", fs::path("binary"), fs::path("root"), "suite-name", tp_md,
         model::test_cases_map_builder().add("foo", tc_md).build());
-
 
     ATF_REQUIRE_EQ("mock", test_program.interface_name());
     ATF_REQUIRE_EQ(fs::path("binary"), test_program.relative_path());
@@ -142,34 +134,30 @@ check_ctor_and_getters(void)
     ATF_REQUIRE_EQ(tp_md, test_program.get_metadata());
 
     const model::metadata exp_tc_md = model::metadata_builder()
-        .add_custom("first", "baz")
-        .add_custom("second", "bar")
-        .build();
-    const model::test_cases_map exp_tcs = model::test_cases_map_builder()
-        .add("foo", exp_tc_md)
-        .build();
+                                          .add_custom("first", "baz")
+                                          .add_custom("second", "bar")
+                                          .build();
+    const model::test_cases_map exp_tcs =
+        model::test_cases_map_builder().add("foo", exp_tc_md).build();
     ATF_REQUIRE_EQ(exp_tcs, test_program.test_cases());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(ctor_and_getters);
 ATF_TEST_CASE_BODY(ctor_and_getters)
 {
-    check_ctor_and_getters< model::test_program >();
+    check_ctor_and_getters<model::test_program>();
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(derived__ctor_and_getters);
 ATF_TEST_CASE_BODY(derived__ctor_and_getters)
 {
-    check_ctor_and_getters< lazy_test_program >();
+    check_ctor_and_getters<lazy_test_program>();
 }
-
 
 /// Runs a find_ok test.
 ///
 /// \tparam TestProgram Either model::test_program or lazy_test_program.
-template< class TestProgram >
+template <class TestProgram>
 static void
 check_find_ok(void)
 {
@@ -184,25 +172,22 @@ check_find_ok(void)
     ATF_REQUIRE_EQ(test_case, found_test_case);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(find__ok);
 ATF_TEST_CASE_BODY(find__ok)
 {
-    check_find_ok< model::test_program >();
+    check_find_ok<model::test_program>();
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(derived__find__ok);
 ATF_TEST_CASE_BODY(derived__find__ok)
 {
-    check_find_ok< lazy_test_program >();
+    check_find_ok<lazy_test_program>();
 }
-
 
 /// Runs a find_missing test.
 ///
 /// \tparam TestProgram Either model::test_program or lazy_test_program.
-template< class TestProgram >
+template <class TestProgram>
 static void
 check_find_missing(void)
 {
@@ -216,129 +201,123 @@ check_find_missing(void)
                          test_program.find("abc"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(find__missing);
 ATF_TEST_CASE_BODY(find__missing)
 {
-    check_find_missing< model::test_program >();
+    check_find_missing<model::test_program>();
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(derived__find__missing);
 ATF_TEST_CASE_BODY(derived__find__missing)
 {
-    check_find_missing< lazy_test_program >();
+    check_find_missing<lazy_test_program>();
 }
-
 
 /// Runs a metadata_inheritance test.
 ///
 /// \tparam TestProgram Either model::test_program or lazy_test_program.
-template< class TestProgram >
+template <class TestProgram>
 static void
 check_metadata_inheritance(void)
 {
-    const model::test_cases_map test_cases = model::test_cases_map_builder()
-        .add("inherit-all")
-        .add("inherit-some",
-             model::metadata_builder()
-             .set_description("Overriden description")
-             .build())
-        .add("inherit-none",
-             model::metadata_builder()
-             .add_allowed_architecture("overriden-arch")
-             .add_allowed_platform("overriden-platform")
-             .set_description("Overriden description")
-             .build())
-        .build();
+    const model::test_cases_map test_cases =
+        model::test_cases_map_builder()
+            .add("inherit-all")
+            .add("inherit-some",
+                 model::metadata_builder()
+                     .set_description("Overriden description")
+                     .build())
+            .add("inherit-none",
+                 model::metadata_builder()
+                     .add_allowed_architecture("overriden-arch")
+                     .add_allowed_platform("overriden-platform")
+                     .set_description("Overriden description")
+                     .build())
+            .build();
 
     const model::metadata metadata = model::metadata_builder()
-        .add_allowed_architecture("base-arch")
-        .set_description("Base description")
-        .build();
-    const TestProgram test_program(
-        "plain", fs::path("non-existent"), fs::path("."), "suite-name",
-        metadata, test_cases);
+                                         .add_allowed_architecture("base-arch")
+                                         .set_description("Base description")
+                                         .build();
+    const TestProgram test_program("plain", fs::path("non-existent"),
+                                   fs::path("."), "suite-name", metadata,
+                                   test_cases);
 
     {
-        const model::metadata exp_metadata = model::metadata_builder()
-            .add_allowed_architecture("base-arch")
-            .set_description("Base description")
-            .build();
+        const model::metadata exp_metadata =
+            model::metadata_builder()
+                .add_allowed_architecture("base-arch")
+                .set_description("Base description")
+                .build();
         ATF_REQUIRE_EQ(exp_metadata,
                        test_program.find("inherit-all").get_metadata());
     }
 
     {
-        const model::metadata exp_metadata = model::metadata_builder()
-            .add_allowed_architecture("base-arch")
-            .set_description("Overriden description")
-            .build();
+        const model::metadata exp_metadata =
+            model::metadata_builder()
+                .add_allowed_architecture("base-arch")
+                .set_description("Overriden description")
+                .build();
         ATF_REQUIRE_EQ(exp_metadata,
                        test_program.find("inherit-some").get_metadata());
     }
 
     {
-        const model::metadata exp_metadata = model::metadata_builder()
-            .add_allowed_architecture("overriden-arch")
-            .add_allowed_platform("overriden-platform")
-            .set_description("Overriden description")
-            .build();
+        const model::metadata exp_metadata =
+            model::metadata_builder()
+                .add_allowed_architecture("overriden-arch")
+                .add_allowed_platform("overriden-platform")
+                .set_description("Overriden description")
+                .build();
         ATF_REQUIRE_EQ(exp_metadata,
                        test_program.find("inherit-none").get_metadata());
     }
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(metadata_inheritance);
 ATF_TEST_CASE_BODY(metadata_inheritance)
 {
-    check_metadata_inheritance< model::test_program >();
+    check_metadata_inheritance<model::test_program>();
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(derived__metadata_inheritance);
 ATF_TEST_CASE_BODY(derived__metadata_inheritance)
 {
-    check_metadata_inheritance< lazy_test_program >();
+    check_metadata_inheritance<lazy_test_program>();
 }
-
 
 /// Runs a operators_eq_and_ne__copy test.
 ///
 /// \tparam TestProgram Either model::test_program or lazy_test_program.
-template< class TestProgram >
+template <class TestProgram>
 static void
 check_operators_eq_and_ne__copy(void)
 {
-    const TestProgram tp1(
-        "plain", fs::path("non-existent"), fs::path("."), "suite-name",
-        model::metadata_builder().build(),
-        model::test_cases_map());
+    const TestProgram tp1("plain", fs::path("non-existent"), fs::path("."),
+                          "suite-name", model::metadata_builder().build(),
+                          model::test_cases_map());
     const TestProgram tp2 = tp1;
-    ATF_REQUIRE(  tp1 == tp2);
+    ATF_REQUIRE(tp1 == tp2);
     ATF_REQUIRE(!(tp1 != tp2));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(operators_eq_and_ne__copy);
 ATF_TEST_CASE_BODY(operators_eq_and_ne__copy)
 {
-    check_operators_eq_and_ne__copy< model::test_program >();
+    check_operators_eq_and_ne__copy<model::test_program>();
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(derived__operators_eq_and_ne__copy);
 ATF_TEST_CASE_BODY(derived__operators_eq_and_ne__copy)
 {
-    check_operators_eq_and_ne__copy< lazy_test_program >();
+    check_operators_eq_and_ne__copy<lazy_test_program>();
 }
-
 
 /// Runs a operators_eq_and_ne__not_copy test.
 ///
 /// \tparam TestProgram Either model::test_program or lazy_test_program.
-template< class TestProgram >
+template <class TestProgram>
 static void
 check_operators_eq_and_ne__not_copy(void)
 {
@@ -346,33 +325,33 @@ check_operators_eq_and_ne__not_copy(void)
     const fs::path base_relative_path("the/test/program");
     const fs::path base_root("/the/root");
     const std::string base_test_suite("suite-name");
-    const model::metadata base_metadata = model::metadata_builder()
-        .add_custom("foo", "bar")
-        .build();
+    const model::metadata base_metadata =
+        model::metadata_builder().add_custom("foo", "bar").build();
 
-    const model::test_cases_map base_tcs = model::test_cases_map_builder()
-        .add("main", model::metadata_builder()
-             .add_custom("second", "baz")
-             .build())
-        .build();
+    const model::test_cases_map base_tcs =
+        model::test_cases_map_builder()
+            .add("main",
+                 model::metadata_builder().add_custom("second", "baz").build())
+            .build();
 
-    const TestProgram base_tp(
-        base_interface, base_relative_path, base_root, base_test_suite,
-        base_metadata, base_tcs);
+    const TestProgram base_tp(base_interface, base_relative_path, base_root,
+                              base_test_suite, base_metadata, base_tcs);
 
     // Construct with all same values.
     {
-        const model::test_cases_map other_tcs = model::test_cases_map_builder()
-            .add("main", model::metadata_builder()
-                 .add_custom("second", "baz")
-                 .build())
-            .build();
+        const model::test_cases_map other_tcs =
+            model::test_cases_map_builder()
+                .add("main",
+                     model::metadata_builder()
+                         .add_custom("second", "baz")
+                         .build())
+                .build();
 
-        const TestProgram other_tp(
-            base_interface, base_relative_path, base_root, base_test_suite,
-            base_metadata, other_tcs);
+        const TestProgram other_tp(base_interface, base_relative_path,
+                                   base_root, base_test_suite, base_metadata,
+                                   other_tcs);
 
-        ATF_REQUIRE(  base_tp == other_tp);
+        ATF_REQUIRE(base_tp == other_tp);
         ATF_REQUIRE(!(base_tp != other_tp));
     }
 
@@ -381,155 +360,146 @@ check_operators_eq_and_ne__not_copy(void)
     // in the base test program definition and another in the test case; here,
     // we put both definitions explicitly in the test case.
     {
-        const model::test_cases_map other_tcs = model::test_cases_map_builder()
-            .add("main", model::metadata_builder()
-                 .add_custom("foo", "bar")
-                 .add_custom("second", "baz")
-                 .build())
-            .build();
+        const model::test_cases_map other_tcs =
+            model::test_cases_map_builder()
+                .add("main",
+                     model::metadata_builder()
+                         .add_custom("foo", "bar")
+                         .add_custom("second", "baz")
+                         .build())
+                .build();
 
-        const TestProgram other_tp(
-            base_interface, base_relative_path, base_root, base_test_suite,
-            base_metadata, other_tcs);
+        const TestProgram other_tp(base_interface, base_relative_path,
+                                   base_root, base_test_suite, base_metadata,
+                                   other_tcs);
 
-        ATF_REQUIRE(  base_tp == other_tp);
+        ATF_REQUIRE(base_tp == other_tp);
         ATF_REQUIRE(!(base_tp != other_tp));
     }
 
     // Different interface.
     {
-        const TestProgram other_tp(
-            "atf", base_relative_path, base_root, base_test_suite,
-            base_metadata, base_tcs);
+        const TestProgram other_tp("atf", base_relative_path, base_root,
+                                   base_test_suite, base_metadata, base_tcs);
 
         ATF_REQUIRE(!(base_tp == other_tp));
-        ATF_REQUIRE(  base_tp != other_tp);
+        ATF_REQUIRE(base_tp != other_tp);
     }
 
     // Different relative path.
     {
-        const TestProgram other_tp(
-            base_interface, fs::path("a/b/c"), base_root, base_test_suite,
-            base_metadata, base_tcs);
+        const TestProgram other_tp(base_interface, fs::path("a/b/c"), base_root,
+                                   base_test_suite, base_metadata, base_tcs);
 
         ATF_REQUIRE(!(base_tp == other_tp));
-        ATF_REQUIRE(  base_tp != other_tp);
+        ATF_REQUIRE(base_tp != other_tp);
     }
 
     // Different root.
     {
-        const TestProgram other_tp(
-            base_interface, base_relative_path, fs::path("."), base_test_suite,
-            base_metadata, base_tcs);
+        const TestProgram other_tp(base_interface, base_relative_path,
+                                   fs::path("."), base_test_suite,
+                                   base_metadata, base_tcs);
 
         ATF_REQUIRE(!(base_tp == other_tp));
-        ATF_REQUIRE(  base_tp != other_tp);
+        ATF_REQUIRE(base_tp != other_tp);
     }
 
     // Different test suite.
     {
-        const TestProgram other_tp(
-            base_interface, base_relative_path, base_root, "different-suite",
-            base_metadata, base_tcs);
+        const TestProgram other_tp(base_interface, base_relative_path,
+                                   base_root, "different-suite", base_metadata,
+                                   base_tcs);
 
         ATF_REQUIRE(!(base_tp == other_tp));
-        ATF_REQUIRE(  base_tp != other_tp);
+        ATF_REQUIRE(base_tp != other_tp);
     }
 
     // Different metadata.
     {
-        const TestProgram other_tp(
-            base_interface, base_relative_path, base_root, base_test_suite,
-            model::metadata_builder().build(), base_tcs);
+        const TestProgram other_tp(base_interface, base_relative_path,
+                                   base_root, base_test_suite,
+                                   model::metadata_builder().build(), base_tcs);
 
         ATF_REQUIRE(!(base_tp == other_tp));
-        ATF_REQUIRE(  base_tp != other_tp);
+        ATF_REQUIRE(base_tp != other_tp);
     }
 
     // Different test cases.
     {
-        const model::test_cases_map other_tcs = model::test_cases_map_builder()
-            .add("foo").build();
+        const model::test_cases_map other_tcs =
+            model::test_cases_map_builder().add("foo").build();
 
-        const TestProgram other_tp(
-            base_interface, base_relative_path, base_root, base_test_suite,
-            base_metadata, other_tcs);
+        const TestProgram other_tp(base_interface, base_relative_path,
+                                   base_root, base_test_suite, base_metadata,
+                                   other_tcs);
 
         ATF_REQUIRE(!(base_tp == other_tp));
-        ATF_REQUIRE(  base_tp != other_tp);
+        ATF_REQUIRE(base_tp != other_tp);
     }
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(operators_eq_and_ne__not_copy);
 ATF_TEST_CASE_BODY(operators_eq_and_ne__not_copy)
 {
-    check_operators_eq_and_ne__not_copy< model::test_program >();
+    check_operators_eq_and_ne__not_copy<model::test_program>();
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(derived__operators_eq_and_ne__not_copy);
 ATF_TEST_CASE_BODY(derived__operators_eq_and_ne__not_copy)
 {
-    check_operators_eq_and_ne__not_copy< lazy_test_program >();
+    check_operators_eq_and_ne__not_copy<lazy_test_program>();
 }
-
 
 /// Runs a operator_lt test.
 ///
 /// \tparam TestProgram Either model::test_program or lazy_test_program.
-template< class TestProgram >
+template <class TestProgram>
 static void
 check_operator_lt(void)
 {
-    const TestProgram tp1(
-        "plain", fs::path("a/b/c"), fs::path("/foo/bar"), "suite-name",
-        model::metadata_builder().build(),
-        model::test_cases_map());
-    const TestProgram tp2(
-        "atf", fs::path("c"), fs::path("/foo/bar"), "suite-name",
-        model::metadata_builder().build(),
-        model::test_cases_map());
-    const TestProgram tp3(
-        "plain", fs::path("a/b/c"), fs::path("/abc"), "suite-name",
-        model::metadata_builder().build(),
-        model::test_cases_map());
+    const TestProgram tp1("plain", fs::path("a/b/c"), fs::path("/foo/bar"),
+                          "suite-name", model::metadata_builder().build(),
+                          model::test_cases_map());
+    const TestProgram tp2("atf", fs::path("c"), fs::path("/foo/bar"),
+                          "suite-name", model::metadata_builder().build(),
+                          model::test_cases_map());
+    const TestProgram tp3("plain", fs::path("a/b/c"), fs::path("/abc"),
+                          "suite-name", model::metadata_builder().build(),
+                          model::test_cases_map());
 
     ATF_REQUIRE(!(tp1 < tp1));
 
-    ATF_REQUIRE(  tp1 < tp2);
+    ATF_REQUIRE(tp1 < tp2);
     ATF_REQUIRE(!(tp2 < tp1));
 
     ATF_REQUIRE(!(tp1 < tp3));
-    ATF_REQUIRE(  tp3 < tp1);
+    ATF_REQUIRE(tp3 < tp1);
 
     // And now, test the actual reason why we want to have an < overload by
     // attempting to put the various programs in a set.
-    std::set< TestProgram > programs;
+    std::set<TestProgram> programs;
     programs.insert(tp1);
     programs.insert(tp2);
     programs.insert(tp3);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(operator_lt);
 ATF_TEST_CASE_BODY(operator_lt)
 {
-    check_operator_lt< model::test_program >();
+    check_operator_lt<model::test_program>();
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(derived__operator_lt);
 ATF_TEST_CASE_BODY(derived__operator_lt)
 {
-    check_operator_lt< lazy_test_program >();
+    check_operator_lt<lazy_test_program>();
 }
-
 
 /// Runs a output__no_test_cases test.
 ///
 /// \tparam TestProgram Either model::test_program or lazy_test_program.
-template< class TestProgram >
+template <class TestProgram>
 static void
 check_output__no_test_cases(void)
 {
@@ -553,35 +523,34 @@ check_output__no_test_cases(void)
         str.str());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(output__no_test_cases);
 ATF_TEST_CASE_BODY(output__no_test_cases)
 {
-    check_output__no_test_cases< model::test_program >();
+    check_output__no_test_cases<model::test_program>();
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(derived__output__no_test_cases);
 ATF_TEST_CASE_BODY(derived__output__no_test_cases)
 {
-    check_output__no_test_cases< lazy_test_program >();
+    check_output__no_test_cases<lazy_test_program>();
 }
-
 
 /// Runs a output__some_test_cases test.
 ///
 /// \tparam TestProgram Either model::test_program or lazy_test_program.
-template< class TestProgram >
+template <class TestProgram>
 static void
 check_output__some_test_cases(void)
 {
-    const model::test_cases_map test_cases = model::test_cases_map_builder()
-        .add("the-name", model::metadata_builder()
-             .add_allowed_platform("foo")
-             .add_custom("bar", "baz")
-             .build())
-        .add("another-name")
-        .build();
+    const model::test_cases_map test_cases =
+        model::test_cases_map_builder()
+            .add("the-name",
+                 model::metadata_builder()
+                     .add_allowed_platform("foo")
+                     .add_custom("bar", "baz")
+                     .build())
+            .add("another-name")
+            .build();
 
     const TestProgram tp = TestProgram(
         "plain", fs::path("binary/path"), fs::path("/the/root"), "suite-name",
@@ -617,74 +586,70 @@ check_output__some_test_cases(void)
         str.str());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(output__some_test_cases);
 ATF_TEST_CASE_BODY(output__some_test_cases)
 {
-    check_output__some_test_cases< model::test_program >();
+    check_output__some_test_cases<model::test_program>();
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(derived__output__some_test_cases);
 ATF_TEST_CASE_BODY(derived__output__some_test_cases)
 {
-    check_output__some_test_cases< lazy_test_program >();
+    check_output__some_test_cases<lazy_test_program>();
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(builder__defaults);
 ATF_TEST_CASE_BODY(builder__defaults)
 {
-    const model::test_program expected(
-        "mock", fs::path("non-existent"), fs::path("."), "suite-name",
-        model::metadata_builder().build(), model::test_cases_map());
+    const model::test_program expected("mock", fs::path("non-existent"),
+                                       fs::path("."), "suite-name",
+                                       model::metadata_builder().build(),
+                                       model::test_cases_map());
 
-    const model::test_program built = model::test_program_builder(
-        "mock", fs::path("non-existent"), fs::path("."), "suite-name")
-        .build();
+    const model::test_program built =
+        model::test_program_builder("mock", fs::path("non-existent"),
+                                    fs::path("."), "suite-name")
+            .build();
 
     ATF_REQUIRE_EQ(built, expected);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(builder__overrides);
 ATF_TEST_CASE_BODY(builder__overrides)
 {
-    const model::metadata md = model::metadata_builder()
-        .add_custom("foo", "bar")
-        .build();
-    const model::test_cases_map tcs = model::test_cases_map_builder()
-        .add("first")
-        .add("second", md)
-        .build();
-    const model::test_program expected(
-        "mock", fs::path("binary"), fs::path("root"), "suite-name", md, tcs);
+    const model::metadata md =
+        model::metadata_builder().add_custom("foo", "bar").build();
+    const model::test_cases_map tcs =
+        model::test_cases_map_builder().add("first").add("second", md).build();
+    const model::test_program expected("mock", fs::path("binary"),
+                                       fs::path("root"), "suite-name", md, tcs);
 
-    const model::test_program built = model::test_program_builder(
-        "mock", fs::path("binary"), fs::path("root"), "suite-name")
-        .add_test_case("first")
-        .add_test_case("second", md)
-        .set_metadata(md)
-        .build();
+    const model::test_program built =
+        model::test_program_builder("mock", fs::path("binary"),
+                                    fs::path("root"), "suite-name")
+            .add_test_case("first")
+            .add_test_case("second", md)
+            .set_metadata(md)
+            .build();
 
     ATF_REQUIRE_EQ(built, expected);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(builder__ptr);
 ATF_TEST_CASE_BODY(builder__ptr)
 {
-    const model::test_program expected(
-        "mock", fs::path("non-existent"), fs::path("."), "suite-name",
-        model::metadata_builder().build(), model::test_cases_map());
+    const model::test_program expected("mock", fs::path("non-existent"),
+                                       fs::path("."), "suite-name",
+                                       model::metadata_builder().build(),
+                                       model::test_cases_map());
 
-    const model::test_program_ptr built = model::test_program_builder(
-        "mock", fs::path("non-existent"), fs::path("."), "suite-name")
-        .build_ptr();
+    const model::test_program_ptr built =
+        model::test_program_builder("mock", fs::path("non-existent"),
+                                    fs::path("."), "suite-name")
+            .build_ptr();
 
     ATF_REQUIRE_EQ(*built, expected);
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

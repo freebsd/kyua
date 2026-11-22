@@ -35,7 +35,6 @@
 namespace utils {
 namespace cmdline {
 
-
 class base_option;
 class bool_option;
 class int_option;
@@ -44,8 +43,7 @@ class path_option;
 class property_option;
 class string_option;
 
+} // namespace cmdline
+} // namespace utils
 
-}  // namespace cmdline
-}  // namespace utils
-
-#endif  // !defined(UTILS_CMDLINE_OPTIONS_FWD_HPP)
+#endif // !defined(UTILS_CMDLINE_OPTIONS_FWD_HPP)

@@ -26,11 +26,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "os/freebsd/execenv_jail_manager.hpp"
-
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
 #include "os/freebsd/execenv_jail.hpp"
+#include "os/freebsd/execenv_jail_manager.hpp"
 
 static const std::string execenv_name = "jail";
 
@@ -40,24 +39,20 @@ freebsd::execenv_jail_manager::name() const
     return execenv_name;
 }
 
-
 bool
 freebsd::execenv_jail_manager::is_supported() const
 {
     return freebsd::execenv_jail_supported;
 }
 
-
-std::unique_ptr< execenv::interface >
-freebsd::execenv_jail_manager::probe(
-    const model::test_program& test_program,
-    const std::string& test_case_name) const
+std::unique_ptr<execenv::interface>
+freebsd::execenv_jail_manager::probe(const model::test_program& test_program,
+                                     const std::string& test_case_name) const
 {
     auto test_case = test_program.find(test_case_name);
     if (test_case.get_metadata().execenv() != execenv_name)
         return nullptr;
 
-    return std::unique_ptr< execenv::interface >(
-        new freebsd::execenv_jail(test_program, test_case_name)
-    );
+    return std::unique_ptr<execenv::interface>(
+        new freebsd::execenv_jail(test_program, test_case_name));
 }

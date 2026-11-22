@@ -35,11 +35,9 @@
 namespace utils {
 namespace signals {
 
-
 class timer;
 
+} // namespace signals
+} // namespace utils
 
-}  // namespace signals
-}  // namespace utils
-
-#endif  // !defined(UTILS_SIGNALS_TIMER_FWD_HPP)
+#endif // !defined(UTILS_SIGNALS_TIMER_FWD_HPP)

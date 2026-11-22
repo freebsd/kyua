@@ -26,14 +26,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "os/freebsd/execenv_jail.hpp"
-
 #include <iostream>
 
+#include "os/freebsd/execenv_jail.hpp"
 #include "utils/process/operations_fwd.hpp"
 
 using utils::process::args_vector;
-
 
 static inline void requires_freebsd [[noreturn]] (void);
 
@@ -44,12 +42,9 @@ requires_freebsd(void)
     std::exit(EXIT_FAILURE);
 }
 
-
 namespace freebsd {
 
-
 bool execenv_jail_supported = false;
-
 
 void
 execenv_jail::init() const
@@ -57,13 +52,11 @@ execenv_jail::init() const
     requires_freebsd();
 }
 
-
 void
 execenv_jail::cleanup() const
 {
     requires_freebsd();
 }
-
 
 void
 execenv_jail::exec(const args_vector&) const
@@ -71,5 +64,4 @@ execenv_jail::exec(const args_vector&) const
     requires_freebsd();
 }
 
-
-}  // namespace freebsd
+} // namespace freebsd

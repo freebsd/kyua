@@ -56,9 +56,7 @@ namespace scheduler = engine::scheduler;
 
 using utils::none;
 
-
 namespace {
-
 
 /// Copies the tap helper to the work directory, selecting a specific helper.
 ///
@@ -71,7 +69,6 @@ copy_tap_helper(const atf::tests::tc* tc, const char* name)
     const fs::path srcdir(tc->get_config_var("srcdir"));
     atf::utils::copy_file((srcdir / "tap_helpers").str(), name);
 }
-
 
 /// Runs one tap test program and checks its result.
 ///
@@ -88,17 +85,18 @@ run_one(const atf::tests::tc* tc, const char* test_case_name,
         const config::tree& user_config = engine::empty_config())
 {
     copy_tap_helper(tc, test_case_name);
-    const model::test_program_ptr program = model::test_program_builder(
-        "tap", fs::path(test_case_name), fs::current_path(), "the-suite")
-        .add_test_case("main", metadata).build_ptr();
+    const model::test_program_ptr program =
+        model::test_program_builder("tap", fs::path(test_case_name),
+                                    fs::current_path(), "the-suite")
+            .add_test_case("main", metadata)
+            .build_ptr();
 
     scheduler::scheduler_handle handle = scheduler::setup();
     (void)handle.spawn_test(program, "main", user_config);
 
     scheduler::result_handle_ptr result_handle = handle.wait_any();
     const scheduler::test_result_handle* test_result_handle =
-        dynamic_cast< const scheduler::test_result_handle* >(
-            result_handle.get());
+        dynamic_cast<const scheduler::test_result_handle*>(result_handle.get());
     ATF_REQUIRE(test_result_handle != nullptr);
     atf::utils::cat_file(result_handle->stdout_file().str(), "stdout: ");
     atf::utils::cat_file(result_handle->stderr_file().str(), "stderr: ");
@@ -109,27 +107,25 @@ run_one(const atf::tests::tc* tc, const char* test_case_name,
     handle.cleanup();
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 ATF_TEST_CASE_WITHOUT_HEAD(list);
 ATF_TEST_CASE_BODY(list)
 {
-    const model::test_program program = model::test_program_builder(
-        "tap", fs::path("non-existent"), fs::path("."), "unused-suite")
-        .build();
+    const model::test_program program =
+        model::test_program_builder("tap", fs::path("non-existent"),
+                                    fs::path("."), "unused-suite")
+            .build();
 
     scheduler::scheduler_handle handle = scheduler::setup();
-    const model::test_cases_map test_cases = handle.list_tests(
-        &program, engine::empty_config());
+    const model::test_cases_map test_cases =
+        handle.list_tests(&program, engine::empty_config());
     handle.cleanup();
 
-    const model::test_cases_map exp_test_cases = model::test_cases_map_builder()
-        .add("main").build();
+    const model::test_cases_map exp_test_cases =
+        model::test_cases_map_builder().add("main").build();
     ATF_REQUIRE_EQ(exp_test_cases, test_cases);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(test__all_tests_pass);
 ATF_TEST_CASE_BODY(test__all_tests_pass)
@@ -138,7 +134,6 @@ ATF_TEST_CASE_BODY(test__all_tests_pass)
     run_one(this, "pass", exp_result);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(test__some_tests_fail);
 ATF_TEST_CASE_BODY(test__some_tests_fail)
 {
@@ -146,7 +141,6 @@ ATF_TEST_CASE_BODY(test__some_tests_fail)
                                         "2 of 5 tests failed");
     run_one(this, "fail", exp_result);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(test__all_tests_pass_but_exit_failure);
 ATF_TEST_CASE_BODY(test__all_tests_pass_but_exit_failure)
@@ -158,7 +152,6 @@ ATF_TEST_CASE_BODY(test__all_tests_pass_but_exit_failure)
     run_one(this, "pass_but_exit_failure", exp_result);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(test__signal_is_broken);
 ATF_TEST_CASE_BODY(test__signal_is_broken)
 {
@@ -166,7 +159,6 @@ ATF_TEST_CASE_BODY(test__signal_is_broken)
                                         F("Received signal %s") % SIGABRT);
     run_one(this, "crash", exp_result);
 }
-
 
 ATF_TEST_CASE(test__timeout_is_broken);
 ATF_TEST_CASE_HEAD(test__timeout_is_broken)
@@ -177,15 +169,14 @@ ATF_TEST_CASE_BODY(test__timeout_is_broken)
 {
     utils::setenv("CONTROL_DIR", fs::current_path().str());
 
-    const model::metadata metadata = model::metadata_builder()
-        .set_timeout(datetime::delta(1, 0)).build();
+    const model::metadata metadata =
+        model::metadata_builder().set_timeout(datetime::delta(1, 0)).build();
     const model::test_result exp_result(model::test_result_broken,
                                         "Test case timed out");
     run_one(this, "timeout", exp_result, metadata);
 
     ATF_REQUIRE(!atf::utils::file_exists("cookie"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(test__configuration_variables);
 ATF_TEST_CASE_BODY(test__configuration_variables)
@@ -201,12 +192,11 @@ ATF_TEST_CASE_BODY(test__configuration_variables)
             model::metadata_builder().build(), user_config);
 }
 
-
 ATF_INIT_TEST_CASES(tcs)
 {
     scheduler::register_interface(
-        "tap", std::shared_ptr< scheduler::interface >(
-            new engine::tap_interface()));
+        "tap",
+        std::shared_ptr<scheduler::interface>(new engine::tap_interface()));
 
     ATF_ADD_TEST_CASE(tcs, list);
 

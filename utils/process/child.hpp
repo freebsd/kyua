@@ -46,8 +46,6 @@
 #if !defined(UTILS_PROCESS_CHILD_HPP)
 #define UTILS_PROCESS_CHILD_HPP
 
-#include "utils/process/child_fwd.hpp"
-
 #include <istream>
 #include <memory>
 #include <stdexcept>
@@ -55,64 +53,61 @@
 #include "utils/defs.hpp"
 #include "utils/fs/path_fwd.hpp"
 #include "utils/noncopyable.hpp"
+#include "utils/process/child_fwd.hpp"
 #include "utils/process/operations_fwd.hpp"
 #include "utils/process/status_fwd.hpp"
 
 namespace utils {
 namespace process {
 
-
 namespace detail {
 
 void report_error_and_abort [[noreturn]] (void);
 void report_error_and_abort [[noreturn]] (const std::runtime_error&);
 
-
-}  // namespace detail
-
+} // namespace detail
 
 /// Child process spawner and controller.
 class child : noncopyable {
     struct impl;
 
     /// Pointer to the shared internal implementation.
-    std::unique_ptr< impl > _pimpl;
+    std::unique_ptr<impl> _pimpl;
 
-    static std::unique_ptr< child > fork_capture_aux(void);
+    static std::unique_ptr<child> fork_capture_aux(void);
 
-    static std::unique_ptr< child > fork_interactive(void);
+    static std::unique_ptr<child> fork_interactive(void);
 
-    static std::unique_ptr< child > fork_files_aux(const fs::path&,
+    static std::unique_ptr<child> fork_files_aux(const fs::path&,
                                                  const fs::path&);
 
-    explicit child(impl *);
+    explicit child(impl*);
 
 public:
     ~child(void);
 
-    template< typename Hook >
-    static std::unique_ptr< child > fork_capture(Hook);
+    template <typename Hook> static std::unique_ptr<child> fork_capture(Hook);
     std::istream& output(void);
 
-    template< typename Hook >
-    static std::unique_ptr< child > fork_interactive(Hook);
+    template <typename Hook>
+    static std::unique_ptr<child> fork_interactive(Hook);
 
-    template< typename Hook >
-    static std::unique_ptr< child > fork_files(Hook, const fs::path&,
+    template <typename Hook>
+    static std::unique_ptr<child> fork_files(Hook, const fs::path&,
                                              const fs::path&);
 
-    static std::unique_ptr< child > spawn_capture(
-        const fs::path&, const args_vector&);
-    static std::unique_ptr< child > spawn_files(
-        const fs::path&, const args_vector&, const fs::path&, const fs::path&);
+    static std::unique_ptr<child> spawn_capture(const fs::path&,
+                                                const args_vector&);
+    static std::unique_ptr<child> spawn_files(const fs::path&,
+                                              const args_vector&,
+                                              const fs::path&, const fs::path&);
 
     int pid(void) const;
 
     status wait(void);
 };
 
+} // namespace process
+} // namespace utils
 
-}  // namespace process
-}  // namespace utils
-
-#endif  // !defined(UTILS_PROCESS_CHILD_HPP)
+#endif // !defined(UTILS_PROCESS_CHILD_HPP)

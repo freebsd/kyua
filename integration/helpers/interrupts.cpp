@@ -31,9 +31,7 @@ extern "C" {
 }
 
 #include <atf-c++.hpp>
-
 #include <fstream>
-
 
 ATF_TEST_CASE_WITH_CLEANUP(block_body);
 ATF_TEST_CASE_HEAD(block_body)
@@ -54,7 +52,6 @@ ATF_TEST_CASE_CLEANUP(block_body)
     std::ofstream output(cookie.c_str());
     output.close();
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

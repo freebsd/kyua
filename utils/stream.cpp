@@ -26,8 +26,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/stream.hpp"
-
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -36,33 +34,29 @@
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/sanity.hpp"
+#include "utils/stream.hpp"
 
 namespace fs = utils::fs;
 
-
 namespace {
-
 
 /// Constant that represents the path to stdout.
 static const fs::path stdout_path("/dev/stdout");
 
-
 /// Constant that represents the path to stderr.
 static const fs::path stderr_path("/dev/stderr");
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Opens a new file for output, respecting the stdout and stderr streams.
 ///
 /// \param path The path to the output file to be created.
 ///
 /// \return A pointer to a new output stream.
-std::unique_ptr< std::ostream >
+std::unique_ptr<std::ostream>
 utils::open_ostream(const fs::path& path)
 {
-    std::unique_ptr< std::ostream > out;
+    std::unique_ptr<std::ostream> out;
     if (path == stdout_path) {
         out.reset(new std::ofstream());
         out->copyfmt(std::cout);
@@ -83,7 +77,6 @@ utils::open_ostream(const fs::path& path)
     return out;
 }
 
-
 /// Gets the length of a stream.
 ///
 /// \param is The input stream for which to calculate its length.
@@ -102,13 +95,12 @@ utils::stream_length(std::istream& is)
         is.seekg(0, std::ios::end);
         const std::streampos length = is.tellg();
         is.seekg(current_pos, std::ios::beg);
-        return static_cast< std::size_t >(length);
+        return static_cast<std::size_t>(length);
     } catch (...) {
         is.seekg(current_pos, std::ios::beg);
         throw;
     }
 }
-
 
 /// Reads a whole file into memory.
 ///
@@ -125,7 +117,6 @@ utils::read_file(const fs::path& path)
         throw std::runtime_error(F("Failed to open '%s' for read") % path);
     return read_stream(input);
 }
-
 
 /// Reads the whole contents of a stream into memory.
 ///

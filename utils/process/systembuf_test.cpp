@@ -35,12 +35,10 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include <atf-c++.hpp>
 #include <fstream>
 
-#include <atf-c++.hpp>
-
 using utils::process::systembuf;
-
 
 static void
 check_data(std::istream& is, std::size_t length)
@@ -58,7 +56,6 @@ check_data(std::istream& is, std::size_t length)
     ATF_REQUIRE_EQ(cnt, length);
 }
 
-
 static void
 write_data(std::ostream& os, std::size_t length)
 {
@@ -72,7 +69,6 @@ write_data(std::ostream& os, std::size_t length)
     }
     os.flush();
 }
-
 
 static void
 test_read(std::size_t length, std::size_t bufsize)
@@ -89,7 +85,6 @@ test_read(std::size_t length, std::size_t bufsize)
     ::close(fd);
     ::unlink("test_read.txt");
 }
-
 
 static void
 test_write(std::size_t length, std::size_t bufsize)
@@ -108,11 +103,11 @@ test_write(std::size_t length, std::size_t bufsize)
     ::unlink("test_write.txt");
 }
 
-
 ATF_TEST_CASE(short_read);
 ATF_TEST_CASE_HEAD(short_read)
 {
-    set_md_var("descr", "Tests that a short read (one that fits in the "
+    set_md_var("descr",
+               "Tests that a short read (one that fits in the "
                "internal buffer) works when using systembuf");
 }
 ATF_TEST_CASE_BODY(short_read)
@@ -120,11 +115,11 @@ ATF_TEST_CASE_BODY(short_read)
     test_read(64, 1024);
 }
 
-
 ATF_TEST_CASE(long_read);
 ATF_TEST_CASE_HEAD(long_read)
 {
-    set_md_var("descr", "Tests that a long read (one that does not fit in "
+    set_md_var("descr",
+               "Tests that a long read (one that does not fit in "
                "the internal buffer) works when using systembuf");
 }
 ATF_TEST_CASE_BODY(long_read)
@@ -132,11 +127,11 @@ ATF_TEST_CASE_BODY(long_read)
     test_read(64 * 1024, 1024);
 }
 
-
 ATF_TEST_CASE(short_write);
 ATF_TEST_CASE_HEAD(short_write)
 {
-    set_md_var("descr", "Tests that a short write (one that fits in the "
+    set_md_var("descr",
+               "Tests that a short write (one that fits in the "
                "internal buffer) works when using systembuf");
 }
 ATF_TEST_CASE_BODY(short_write)
@@ -144,18 +139,17 @@ ATF_TEST_CASE_BODY(short_write)
     test_write(64, 1024);
 }
 
-
 ATF_TEST_CASE(long_write);
 ATF_TEST_CASE_HEAD(long_write)
 {
-    set_md_var("descr", "Tests that a long write (one that does not fit "
+    set_md_var("descr",
+               "Tests that a long write (one that does not fit "
                "in the internal buffer) works when using systembuf");
 }
 ATF_TEST_CASE_BODY(long_write)
 {
     test_write(64 * 1024, 1024);
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

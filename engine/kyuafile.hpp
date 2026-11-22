@@ -33,7 +33,6 @@
 #define ENGINE_KYUAFILE_HPP
 
 #include "engine/kyuafile_fwd.hpp"
-
 #include "engine/scheduler_fwd.hpp"
 #include "model/test_program_fwd.hpp"
 #include "utils/config/tree_fwd.hpp"
@@ -41,7 +40,6 @@
 #include "utils/optional_fwd.hpp"
 
 namespace engine {
-
 
 /// Representation of the configuration of a test suite.
 ///
@@ -76,7 +74,7 @@ public:
     ~kyuafile(void);
 
     static kyuafile load(const utils::fs::path&,
-                         const utils::optional< utils::fs::path >,
+                         const utils::optional<utils::fs::path>,
                          const utils::config::tree&,
                          scheduler::scheduler_handle&);
 
@@ -85,7 +83,6 @@ public:
     const model::test_programs_vector& test_programs(void) const;
 };
 
+} // namespace engine
 
-}  // namespace engine
-
-#endif  // !defined(ENGINE_KYUAFILE_HPP)
+#endif // !defined(ENGINE_KYUAFILE_HPP)

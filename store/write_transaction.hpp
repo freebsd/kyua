@@ -51,7 +51,6 @@ extern "C" {
 
 namespace store {
 
-
 /// Representation of a write-only transaction.
 ///
 /// Transactions are the entry place for high-level calls that access the
@@ -60,7 +59,7 @@ class write_transaction {
     struct impl;
 
     /// Pointer to the shared internal implementation.
-    std::shared_ptr< impl > _pimpl;
+    std::shared_ptr<impl> _pimpl;
 
     friend class write_backend;
     write_transaction(write_backend&);
@@ -75,15 +74,14 @@ public:
     int64_t put_test_program(const model::test_program&);
     int64_t put_test_case(const model::test_program&, const std::string&,
                           const int64_t);
-    utils::optional< int64_t > put_test_case_file(const std::string&,
-                                                  const utils::fs::path&,
-                                                  const int64_t);
+    utils::optional<int64_t> put_test_case_file(const std::string&,
+                                                const utils::fs::path&,
+                                                const int64_t);
     int64_t put_result(const model::test_result&, const int64_t,
                        const utils::datetime::timestamp&,
                        const utils::datetime::timestamp&);
 };
 
+} // namespace store
 
-}  // namespace store
-
-#endif  // !defined(STORE_WRITE_TRANSACTION_HPP)
+#endif // !defined(STORE_WRITE_TRANSACTION_HPP)

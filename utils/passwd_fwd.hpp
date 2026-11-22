@@ -35,11 +35,9 @@
 namespace utils {
 namespace passwd {
 
-
 class user;
 
+} // namespace passwd
+} // namespace utils
 
-}  // namespace passwd
-}  // namespace utils
-
-#endif  // !defined(UTILS_PASSWD_FWD_HPP)
+#endif // !defined(UTILS_PASSWD_FWD_HPP)

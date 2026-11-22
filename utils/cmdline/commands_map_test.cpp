@@ -26,19 +26,16 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/cmdline/commands_map.ipp"
-
 #include <atf-c++.hpp>
 
 #include "utils/cmdline/base_command.hpp"
+#include "utils/cmdline/commands_map.ipp"
 #include "utils/defs.hpp"
 #include "utils/sanity.hpp"
 
 namespace cmdline = utils::cmdline;
 
-
 namespace {
-
 
 /// Fake command to validate the behavior of commands_map.
 ///
@@ -60,31 +57,26 @@ public:
     /// Runs the mock command.
     ///
     /// \return Nothing because this function is never called.
-    int
-    run(cmdline::ui* /* ui */,
-        const cmdline::parsed_cmdline& /* cmdline */)
+    int run(cmdline::ui* /* ui */, const cmdline::parsed_cmdline& /* cmdline */)
     {
         UNREACHABLE;
     }
 };
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 ATF_TEST_CASE_WITHOUT_HEAD(empty);
 ATF_TEST_CASE_BODY(empty)
 {
-    cmdline::commands_map< cmdline::base_command_no_data > commands;
+    cmdline::commands_map<cmdline::base_command_no_data> commands;
     ATF_REQUIRE(commands.empty());
     ATF_REQUIRE(commands.begin() == commands.end());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(some);
 ATF_TEST_CASE_BODY(some)
 {
-    cmdline::commands_map< cmdline::base_command_no_data > commands;
+    cmdline::commands_map<cmdline::base_command_no_data> commands;
     cmdline::base_command_no_data* cmd1 = new mock_cmd("cmd1");
     commands.insert(cmd1);
     cmdline::base_command_no_data* cmd2 = new mock_cmd("cmd2");
@@ -92,8 +84,8 @@ ATF_TEST_CASE_BODY(some)
 
     ATF_REQUIRE(!commands.empty());
 
-    cmdline::commands_map< cmdline::base_command_no_data >::const_iterator
-        iter = commands.begin();
+    cmdline::commands_map<cmdline::base_command_no_data>::const_iterator iter =
+        commands.begin();
     ATF_REQUIRE_EQ("", (*iter).first);
     ATF_REQUIRE_EQ(1, (*iter).second.size());
     ATF_REQUIRE_EQ("cmd1", *(*iter).second.begin());
@@ -106,11 +98,10 @@ ATF_TEST_CASE_BODY(some)
     ATF_REQUIRE(++iter == commands.end());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(find__match);
 ATF_TEST_CASE_BODY(find__match)
 {
-    cmdline::commands_map< cmdline::base_command_no_data > commands;
+    cmdline::commands_map<cmdline::base_command_no_data> commands;
     cmdline::base_command_no_data* cmd1 = new mock_cmd("cmd1");
     commands.insert(cmd1);
     cmdline::base_command_no_data* cmd2 = new mock_cmd("cmd2");
@@ -120,16 +111,14 @@ ATF_TEST_CASE_BODY(find__match)
     ATF_REQUIRE(cmd2 == commands.find("cmd2"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(find__nomatch);
 ATF_TEST_CASE_BODY(find__nomatch)
 {
-    cmdline::commands_map< cmdline::base_command_no_data > commands;
+    cmdline::commands_map<cmdline::base_command_no_data> commands;
     commands.insert(new mock_cmd("cmd1"));
 
     ATF_REQUIRE(NULL == commands.find("cmd2"));
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

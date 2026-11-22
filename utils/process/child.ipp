@@ -36,7 +36,6 @@
 namespace utils {
 namespace process {
 
-
 /// Spawns a new subprocess and redirects its stdout and stderr to files.
 ///
 /// If the subprocess cannot be completely set up for any reason, it attempts to
@@ -51,12 +50,12 @@ namespace process {
 ///
 /// \throw process::system_error If the process cannot be spawned due to a
 ///     system call error.
-template< typename Hook >
-std::unique_ptr< child >
+template <typename Hook>
+std::unique_ptr<child>
 child::fork_files(Hook hook, const fs::path& stdout_file,
                   const fs::path& stderr_file)
 {
-    std::unique_ptr< child > child = fork_files_aux(stdout_file, stderr_file);
+    std::unique_ptr<child> child = fork_files_aux(stdout_file, stderr_file);
     if (child.get() == NULL) {
         try {
             hook();
@@ -70,7 +69,6 @@ child::fork_files(Hook hook, const fs::path& stdout_file,
 
     return child;
 }
-
 
 /// Spawns a new subprocess and multiplexes and captures its stdout and stderr.
 ///
@@ -84,11 +82,11 @@ child::fork_files(Hook hook, const fs::path& stdout_file,
 ///
 /// \throw process::system_error If the process cannot be spawned due to a
 ///     system call error.
-template< typename Hook >
-std::unique_ptr< child >
+template <typename Hook>
+std::unique_ptr<child>
 child::fork_capture(Hook hook)
 {
-    std::unique_ptr< child > child = fork_capture_aux();
+    std::unique_ptr<child> child = fork_capture_aux();
     if (child.get() == NULL) {
         try {
             hook();
@@ -103,12 +101,11 @@ child::fork_capture(Hook hook)
     return child;
 }
 
-
-template< typename Hook >
-std::unique_ptr< child >
+template <typename Hook>
+std::unique_ptr<child>
 child::fork_interactive(Hook hook)
 {
-    std::unique_ptr< child > child = fork_interactive();
+    std::unique_ptr<child> child = fork_interactive();
     if (child.get() == NULL) {
         try {
             hook();
@@ -123,8 +120,7 @@ child::fork_interactive(Hook hook)
     return child;
 }
 
+} // namespace process
+} // namespace utils
 
-}  // namespace process
-}  // namespace utils
-
-#endif  // !defined(UTILS_PROCESS_CHILD_IPP)
+#endif // !defined(UTILS_PROCESS_CHILD_IPP)

@@ -50,15 +50,11 @@ extern "C" {
 
 namespace store {
 
-
 namespace detail {
-
 
 model::test_program_ptr get_test_program(read_backend&, const int64_t);
 
-
-}  // namespace detail
-
+} // namespace detail
 
 /// Iterator for the set of test case results that are part of an action.
 ///
@@ -70,10 +66,10 @@ class results_iterator {
     struct impl;
 
     /// Pointer to the shared internal implementation.
-    std::shared_ptr< impl > _pimpl;
+    std::shared_ptr<impl> _pimpl;
 
     friend class read_transaction;
-    results_iterator(std::shared_ptr< impl >);
+    results_iterator(std::shared_ptr<impl>);
 
 public:
     ~results_iterator(void);
@@ -91,7 +87,6 @@ public:
     std::string stderr_contents(void) const;
 };
 
-
 /// Representation of a read-only transaction.
 ///
 /// Transactions are the entry place for high-level calls that access the
@@ -100,7 +95,7 @@ class read_transaction {
     struct impl;
 
     /// Pointer to the shared internal implementation.
-    std::shared_ptr< impl > _pimpl;
+    std::shared_ptr<impl> _pimpl;
 
     friend class read_backend;
     read_transaction(read_backend&);
@@ -114,7 +109,6 @@ public:
     results_iterator get_results(void);
 };
 
+} // namespace store
 
-}  // namespace store
-
-#endif  // !defined(STORE_READ_TRANSACTION_HPP)
+#endif // !defined(STORE_READ_TRANSACTION_HPP)

@@ -39,25 +39,20 @@
 #if !defined(UTILS_SANITY_HPP)
 #define UTILS_SANITY_HPP
 
-#include "utils/sanity_fwd.hpp"
-
 #include <cstddef>
 #include <string>
 
 #include "utils/defs.hpp"
+#include "utils/sanity_fwd.hpp"
 
 namespace utils {
 
-
-void sanity_failure [[noreturn]](
-    const assert_type, const char*, const size_t, const std::string&);
-
+void sanity_failure [[noreturn]] (const assert_type, const char*, const size_t,
+                                  const std::string&);
 
 void install_crash_handlers(const std::string&);
 
-
-}  // namespace utils
-
+} // namespace utils
 
 /// \def _UTILS_ASSERT(type, expr, message)
 /// \brief Performs an assertion check.
@@ -72,15 +67,16 @@ void install_crash_handlers(const std::string&);
 /// \param expr A boolean expression.
 /// \param message A string describing the nature of the error.
 #if !defined(NDEBUG)
-#   define _UTILS_ASSERT(type, expr, message) \
-    do { \
-        if (!(expr)) \
+#define _UTILS_ASSERT(type, expr, message)                            \
+    do {                                                              \
+        if (!(expr))                                                  \
             utils::sanity_failure(type, __FILE__, __LINE__, message); \
     } while (0)
-#else  // defined(NDEBUG)
-#   define _UTILS_ASSERT(type, expr, message) do {} while (0)
-#endif  // !defined(NDEBUG)
-
+#else // defined(NDEBUG)
+#define _UTILS_ASSERT(type, expr, message) \
+    do {                                   \
+    } while (0)
+#endif // !defined(NDEBUG)
 
 /// Ensures that an invariant holds.
 ///
@@ -94,7 +90,6 @@ void install_crash_handlers(const std::string&);
 /// \param expr A boolean expression describing the invariant.
 #define INV(expr) _UTILS_ASSERT(utils::invariant, expr, #expr)
 
-
 /// Ensures that an invariant holds using a custom error message.
 ///
 /// If the invariant does not hold, execution is immediately terminated.  The
@@ -103,7 +98,6 @@ void install_crash_handlers(const std::string&);
 /// \param expr A boolean expression describing the invariant.
 /// \param msg The error message to print if the condition is false.
 #define INV_MSG(expr, msg) _UTILS_ASSERT(utils::invariant, expr, msg)
-
 
 /// Ensures that a precondition holds.
 ///
@@ -117,7 +111,6 @@ void install_crash_handlers(const std::string&);
 /// \param expr A boolean expression describing the precondition.
 #define PRE(expr) _UTILS_ASSERT(utils::precondition, expr, #expr)
 
-
 /// Ensures that a precondition holds using a custom error message.
 ///
 /// If the precondition does not hold, execution is immediately terminated.  The
@@ -126,7 +119,6 @@ void install_crash_handlers(const std::string&);
 /// \param expr A boolean expression describing the precondition.
 /// \param msg The error message to print if the condition is false.
 #define PRE_MSG(expr, msg) _UTILS_ASSERT(utils::precondition, expr, msg)
-
 
 /// Ensures that an postcondition holds.
 ///
@@ -140,7 +132,6 @@ void install_crash_handlers(const std::string&);
 /// \param expr A boolean expression describing the postcondition.
 #define POST(expr) _UTILS_ASSERT(utils::postcondition, expr, #expr)
 
-
 /// Ensures that a postcondition holds using a custom error message.
 ///
 /// If the postcondition does not hold, execution is immediately terminated.
@@ -149,7 +140,6 @@ void install_crash_handlers(const std::string&);
 /// \param expr A boolean expression describing the postcondition.
 /// \param msg The error message to print if the condition is false.
 #define POST_MSG(expr, msg) _UTILS_ASSERT(utils::postcondition, expr, msg)
-
 
 /// Ensures that a code path is not reached.
 ///
@@ -164,7 +154,6 @@ void install_crash_handlers(const std::string&);
 /// POST_MSG instead.
 #define UNREACHABLE UNREACHABLE_MSG("")
 
-
 /// Ensures that a code path is not reached using a custom error message.
 ///
 /// If the code path in which this macro is located is reached, execution is
@@ -174,10 +163,9 @@ void install_crash_handlers(const std::string&);
 /// in debug and production builds.
 ///
 /// \param msg The error message to print if the condition is false.
-#define UNREACHABLE_MSG(msg) \
-    do { \
+#define UNREACHABLE_MSG(msg)                                                \
+    do {                                                                    \
         utils::sanity_failure(utils::unreachable, __FILE__, __LINE__, msg); \
     } while (0)
 
-
-#endif  // !defined(UTILS_SANITY_HPP)
+#endif // !defined(UTILS_SANITY_HPP)

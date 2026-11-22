@@ -43,23 +43,19 @@ using utils::process::args_vector;
 namespace freebsd {
 namespace utils {
 
-
 class jail {
 public:
-    std::vector< std::string > parse_params_string(const std::string& str);
+    std::vector<std::string> parse_params_string(const std::string& str);
     std::string make_name(const fs::path& program,
                           const std::string& test_case_name);
-    void create(const std::string& jail_name,
-                const std::string& jail_params);
-    void exec [[noreturn]] (
-        const std::string& jail_name,
-        const fs::path& program,
-        const args_vector& args) throw();
+    void create(const std::string& jail_name, const std::string& jail_params);
+    void exec
+        [[noreturn]] (const std::string& jail_name, const fs::path& program,
+                      const args_vector& args) throw();
     void remove(const std::string& jail_name);
 };
 
+} // namespace utils
+} // namespace freebsd
 
-}  // namespace utils
-}  // namespace freebsd
-
-#endif  // !defined(FREEBSD_UTILS_JAIL_HPP)
+#endif // !defined(FREEBSD_UTILS_JAIL_HPP)

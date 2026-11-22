@@ -26,23 +26,19 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/text/templates.hpp"
-
+#include <atf-c++.hpp>
 #include <fstream>
 #include <sstream>
-
-#include <atf-c++.hpp>
 
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/text/exceptions.hpp"
+#include "utils/text/templates.hpp"
 
 namespace fs = utils::fs;
 namespace text = utils::text;
 
-
 namespace {
-
 
 /// Applies a set of templates to an input string and validates the output.
 ///
@@ -63,7 +59,6 @@ do_test_ok(const text::templates_def& templates, const std::string& input_str,
     ATF_REQUIRE_EQ(exp_output, output.str());
 }
 
-
 /// Applies a set of templates to an input string and checks for an error.
 ///
 /// This fails the test case if the exception raised by the template processing
@@ -83,9 +78,7 @@ do_test_fail(const text::templates_def& templates, const std::string& input_str,
                          text::instantiate(templates, input, output));
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 ATF_TEST_CASE_WITHOUT_HEAD(templates_def__add_variable__first);
 ATF_TEST_CASE_BODY(templates_def__add_variable__first)
@@ -94,7 +87,6 @@ ATF_TEST_CASE_BODY(templates_def__add_variable__first)
     templates.add_variable("the-name", "first-value");
     ATF_REQUIRE_EQ("first-value", templates.get_variable("the-name"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(templates_def__add_variable__replace);
 ATF_TEST_CASE_BODY(templates_def__add_variable__replace)
@@ -105,17 +97,15 @@ ATF_TEST_CASE_BODY(templates_def__add_variable__replace)
     ATF_REQUIRE_EQ("second-value", templates.get_variable("the-name"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(templates_def__remove_variable);
 ATF_TEST_CASE_BODY(templates_def__remove_variable)
 {
     text::templates_def templates;
     templates.add_variable("the-name", "the-value");
-    templates.get_variable("the-name");  // Should not throw.
+    templates.get_variable("the-name"); // Should not throw.
     templates.remove_variable("the-name");
     ATF_REQUIRE_THROW(text::syntax_error, templates.get_variable("the-name"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(templates_def__add_vector__first);
 ATF_TEST_CASE_BODY(templates_def__add_vector__first)
@@ -124,7 +114,6 @@ ATF_TEST_CASE_BODY(templates_def__add_vector__first)
     templates.add_vector("the-name");
     ATF_REQUIRE(templates.get_vector("the-name").empty());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(templates_def__add_vector__replace);
 ATF_TEST_CASE_BODY(templates_def__add_vector__replace)
@@ -136,7 +125,6 @@ ATF_TEST_CASE_BODY(templates_def__add_vector__replace)
     templates.add_vector("the-name");
     ATF_REQUIRE(templates.get_vector("the-name").empty());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(templates_def__add_to_vector);
 ATF_TEST_CASE_BODY(templates_def__add_to_vector)
@@ -151,13 +139,12 @@ ATF_TEST_CASE_BODY(templates_def__add_to_vector)
     templates.add_to_vector("the-name", "third");
     ATF_REQUIRE_EQ(3, templates.get_vector("the-name").size());
 
-    std::vector< std::string > expected;
+    std::vector<std::string> expected;
     expected.push_back("first");
     expected.push_back("second");
     expected.push_back("third");
     ATF_REQUIRE(expected == templates.get_vector("the-name"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(templates_def__exists__variable);
 ATF_TEST_CASE_BODY(templates_def__exists__variable)
@@ -170,7 +157,6 @@ ATF_TEST_CASE_BODY(templates_def__exists__variable)
     ATF_REQUIRE(templates.exists("some-name"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(templates_def__exists__vector);
 ATF_TEST_CASE_BODY(templates_def__exists__vector)
 {
@@ -182,7 +168,6 @@ ATF_TEST_CASE_BODY(templates_def__exists__vector)
     ATF_REQUIRE(templates.exists("some-name"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(templates_def__get_variable__ok);
 ATF_TEST_CASE_BODY(templates_def__get_variable__ok)
 {
@@ -193,7 +178,6 @@ ATF_TEST_CASE_BODY(templates_def__get_variable__ok)
     ATF_REQUIRE_EQ("    baz  ", templates.get_variable("bar"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(templates_def__get_variable__unknown);
 ATF_TEST_CASE_BODY(templates_def__get_variable__unknown)
 {
@@ -202,7 +186,6 @@ ATF_TEST_CASE_BODY(templates_def__get_variable__unknown)
     ATF_REQUIRE_THROW_RE(text::syntax_error, "Unknown variable 'foo '",
                          templates.get_variable("foo "));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(templates_def__get_vector__ok);
 ATF_TEST_CASE_BODY(templates_def__get_vector__ok)
@@ -215,7 +198,6 @@ ATF_TEST_CASE_BODY(templates_def__get_vector__ok)
     ATF_REQUIRE_EQ(1, templates.get_vector("bar").size());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(templates_def__get_vector__unknown);
 ATF_TEST_CASE_BODY(templates_def__get_vector__unknown)
 {
@@ -224,7 +206,6 @@ ATF_TEST_CASE_BODY(templates_def__get_vector__unknown)
     ATF_REQUIRE_THROW_RE(text::syntax_error, "Unknown vector 'foo '",
                          templates.get_vector("foo "));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(templates_def__evaluate__variable__ok);
 ATF_TEST_CASE_BODY(templates_def__evaluate__variable__ok)
@@ -236,7 +217,6 @@ ATF_TEST_CASE_BODY(templates_def__evaluate__variable__ok)
     ATF_REQUIRE_EQ("    baz  ", templates.evaluate("bar"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(templates_def__evaluate__variable__unknown);
 ATF_TEST_CASE_BODY(templates_def__evaluate__variable__unknown)
 {
@@ -245,7 +225,6 @@ ATF_TEST_CASE_BODY(templates_def__evaluate__variable__unknown)
     ATF_REQUIRE_THROW_RE(text::syntax_error, "Unknown variable 'foo1'",
                          templates.evaluate("foo1"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(templates_def__evaluate__vector__ok);
 ATF_TEST_CASE_BODY(templates_def__evaluate__vector__ok)
@@ -264,7 +243,6 @@ ATF_TEST_CASE_BODY(templates_def__evaluate__vector__ok)
     ATF_REQUIRE_EQ("baz", templates.evaluate("v(index)"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(templates_def__evaluate__vector__unknown_vector);
 ATF_TEST_CASE_BODY(templates_def__evaluate__vector__unknown_vector)
 {
@@ -275,7 +253,6 @@ ATF_TEST_CASE_BODY(templates_def__evaluate__vector__unknown_vector)
     ATF_REQUIRE_THROW_RE(text::syntax_error, "Unknown vector 'fooz'",
                          templates.evaluate("fooz(index)"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(templates_def__evaluate__vector__unknown_index);
 ATF_TEST_CASE_BODY(templates_def__evaluate__vector__unknown_index)
@@ -288,7 +265,6 @@ ATF_TEST_CASE_BODY(templates_def__evaluate__vector__unknown_index)
                          templates.evaluate("v(indexz)"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(templates_def__evaluate__vector__out_of_range);
 ATF_TEST_CASE_BODY(templates_def__evaluate__vector__out_of_range)
 {
@@ -296,10 +272,11 @@ ATF_TEST_CASE_BODY(templates_def__evaluate__vector__out_of_range)
     templates.add_vector("v");
     templates.add_to_vector("v", "foo");
     templates.add_variable("index", "1");
-    ATF_REQUIRE_THROW_RE(text::syntax_error, "Index 'index' out of range "
-                         "at position '1'", templates.evaluate("v(index)"));
+    ATF_REQUIRE_THROW_RE(text::syntax_error,
+                         "Index 'index' out of range "
+                         "at position '1'",
+                         templates.evaluate("v(index)"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(templates_def__evaluate__defined);
 ATF_TEST_CASE_BODY(templates_def__evaluate__defined)
@@ -312,7 +289,6 @@ ATF_TEST_CASE_BODY(templates_def__evaluate__defined)
     ATF_REQUIRE_EQ("true", templates.evaluate("defined(the-variable)"));
     ATF_REQUIRE_EQ("true", templates.evaluate("defined(the-vector)"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(templates_def__evaluate__length__ok);
 ATF_TEST_CASE_BODY(templates_def__evaluate__length__ok)
@@ -328,7 +304,6 @@ ATF_TEST_CASE_BODY(templates_def__evaluate__length__ok)
     ATF_REQUIRE_EQ("3", templates.evaluate("length(v)"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(templates_def__evaluate__length__unknown_vector);
 ATF_TEST_CASE_BODY(templates_def__evaluate__length__unknown_vector)
 {
@@ -338,19 +313,16 @@ ATF_TEST_CASE_BODY(templates_def__evaluate__length__unknown_vector)
                          templates.evaluate("length(foo)"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(templates_def__evaluate__parenthesis_error);
 ATF_TEST_CASE_BODY(templates_def__evaluate__parenthesis_error)
 {
     text::templates_def templates;
-    ATF_REQUIRE_THROW_RE(text::syntax_error,
-                         "Expected '\\)' in.*'foo\\(abc'",
+    ATF_REQUIRE_THROW_RE(text::syntax_error, "Expected '\\)' in.*'foo\\(abc'",
                          templates.evaluate("foo(abc"));
     ATF_REQUIRE_THROW_RE(text::syntax_error,
                          "Unexpected text.*'\\)' in.*'a\\(b\\)c'",
                          templates.evaluate("a(b)c"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(instantiate__empty_input);
 ATF_TEST_CASE_BODY(instantiate__empty_input)
@@ -359,23 +331,20 @@ ATF_TEST_CASE_BODY(instantiate__empty_input)
     do_test_ok(templates, "", "");
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(instantiate__value__ok);
 ATF_TEST_CASE_BODY(instantiate__value__ok)
 {
-    const std::string input =
-        "first line\n"
-        "%%testvar1%%\n"
-        "third line\n"
-        "%%testvar2%% %%testvar3%%%%testvar4%%\n"
-        "fifth line\n";
+    const std::string input = "first line\n"
+                              "%%testvar1%%\n"
+                              "third line\n"
+                              "%%testvar2%% %%testvar3%%%%testvar4%%\n"
+                              "fifth line\n";
 
-    const std::string exp_output =
-        "first line\n"
-        "second line\n"
-        "third line\n"
-        "fourth line.\n"
-        "fifth line\n";
+    const std::string exp_output = "first line\n"
+                                   "second line\n"
+                                   "third line\n"
+                                   "fourth line.\n"
+                                   "fifth line\n";
 
     text::templates_def templates;
     templates.add_variable("testvar1", "second line");
@@ -386,19 +355,16 @@ ATF_TEST_CASE_BODY(instantiate__value__ok)
     do_test_ok(templates, input, exp_output);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(instantiate__value__unknown_variable);
 ATF_TEST_CASE_BODY(instantiate__value__unknown_variable)
 {
-    const std::string input =
-        "%%testvar1%%\n";
+    const std::string input = "%%testvar1%%\n";
 
     text::templates_def templates;
     templates.add_variable("testvar2", "fourth line");
 
     do_test_fail(templates, input, "Unknown variable 'testvar1'");
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(instantiate__vector_length__ok);
 ATF_TEST_CASE_BODY(instantiate__vector_length__ok)
@@ -407,9 +373,8 @@ ATF_TEST_CASE_BODY(instantiate__vector_length__ok)
         "%%length(testvector1)%%\n"
         "%%length(testvector2)%% - %%length(testvector3)%%\n";
 
-    const std::string exp_output =
-        "4\n"
-        "0 - 1\n";
+    const std::string exp_output = "4\n"
+                                   "0 - 1\n";
 
     text::templates_def templates;
     templates.add_vector("testvector1");
@@ -424,12 +389,10 @@ ATF_TEST_CASE_BODY(instantiate__vector_length__ok)
     do_test_ok(templates, input, exp_output);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(instantiate__vector_length__unknown_vector);
 ATF_TEST_CASE_BODY(instantiate__vector_length__unknown_vector)
 {
-    const std::string input =
-        "%%length(testvector)%%\n";
+    const std::string input = "%%length(testvector)%%\n";
 
     text::templates_def templates;
     templates.add_vector("testvector2");
@@ -437,23 +400,20 @@ ATF_TEST_CASE_BODY(instantiate__vector_length__unknown_vector)
     do_test_fail(templates, input, "Unknown vector 'testvector'");
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(instantiate__vector_value__ok);
 ATF_TEST_CASE_BODY(instantiate__vector_value__ok)
 {
-    const std::string input =
-        "first line\n"
-        "%%testvector1(i)%%\n"
-        "third line\n"
-        "%%testvector2(j)%%\n"
-        "fifth line\n";
+    const std::string input = "first line\n"
+                              "%%testvector1(i)%%\n"
+                              "third line\n"
+                              "%%testvector2(j)%%\n"
+                              "fifth line\n";
 
-    const std::string exp_output =
-        "first line\n"
-        "543\n"
-        "third line\n"
-        "123\n"
-        "fifth line\n";
+    const std::string exp_output = "first line\n"
+                                   "543\n"
+                                   "third line\n"
+                                   "123\n"
+                                   "fifth line\n";
 
     text::templates_def templates;
     templates.add_variable("i", "2");
@@ -469,12 +429,10 @@ ATF_TEST_CASE_BODY(instantiate__vector_value__ok)
     do_test_ok(templates, input, exp_output);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(instantiate__vector_value__unknown_vector);
 ATF_TEST_CASE_BODY(instantiate__vector_value__unknown_vector)
 {
-    const std::string input =
-        "%%testvector(j)%%\n";
+    const std::string input = "%%testvector(j)%%\n";
 
     text::templates_def templates;
     templates.add_vector("testvector2");
@@ -482,12 +440,10 @@ ATF_TEST_CASE_BODY(instantiate__vector_value__unknown_vector)
     do_test_fail(templates, input, "Unknown vector 'testvector'");
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(instantiate__vector_value__out_of_range__empty);
 ATF_TEST_CASE_BODY(instantiate__vector_value__out_of_range__empty)
 {
-    const std::string input =
-        "%%testvector(j)%%\n";
+    const std::string input = "%%testvector(j)%%\n";
 
     text::templates_def templates;
     templates.add_vector("testvector");
@@ -496,12 +452,10 @@ ATF_TEST_CASE_BODY(instantiate__vector_value__out_of_range__empty)
     do_test_fail(templates, input, "Index 'j' out of range at position '0'");
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(instantiate__vector_value__out_of_range__not_empty);
 ATF_TEST_CASE_BODY(instantiate__vector_value__out_of_range__not_empty)
 {
-    const std::string input =
-        "%%testvector(j)%%\n";
+    const std::string input = "%%testvector(j)%%\n";
 
     text::templates_def templates;
     templates.add_vector("testvector");
@@ -512,21 +466,19 @@ ATF_TEST_CASE_BODY(instantiate__vector_value__out_of_range__not_empty)
     do_test_fail(templates, input, "Index 'j' out of range at position '2'");
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(instantiate__if__one_level__taken);
 ATF_TEST_CASE_BODY(instantiate__if__one_level__taken)
 {
-    const std::string input =
-        "first line\n"
-        "%if defined(some_var)\n"
-        "hello from within the variable conditional\n"
-        "%endif\n"
-        "%if defined(some_vector)\n"
-        "hello from within the vector conditional\n"
-        "%else\n"
-        "bye from within the vector conditional\n"
-        "%endif\n"
-        "some more\n";
+    const std::string input = "first line\n"
+                              "%if defined(some_var)\n"
+                              "hello from within the variable conditional\n"
+                              "%endif\n"
+                              "%if defined(some_vector)\n"
+                              "hello from within the vector conditional\n"
+                              "%else\n"
+                              "bye from within the vector conditional\n"
+                              "%endif\n"
+                              "some more\n";
 
     const std::string exp_output =
         "first line\n"
@@ -541,65 +493,59 @@ ATF_TEST_CASE_BODY(instantiate__if__one_level__taken)
     do_test_ok(templates, input, exp_output);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(instantiate__if__one_level__not_taken);
 ATF_TEST_CASE_BODY(instantiate__if__one_level__not_taken)
 {
-    const std::string input =
-        "first line\n"
-        "%if defined(some_var)\n"
-        "hello from within the variable conditional\n"
-        "%endif\n"
-        "%if defined(some_vector)\n"
-        "hello from within the vector conditional\n"
-        "%else\n"
-        "bye from within the vector conditional\n"
-        "%endif\n"
-        "some more\n";
+    const std::string input = "first line\n"
+                              "%if defined(some_var)\n"
+                              "hello from within the variable conditional\n"
+                              "%endif\n"
+                              "%if defined(some_vector)\n"
+                              "hello from within the vector conditional\n"
+                              "%else\n"
+                              "bye from within the vector conditional\n"
+                              "%endif\n"
+                              "some more\n";
 
-    const std::string exp_output =
-        "first line\n"
-        "bye from within the vector conditional\n"
-        "some more\n";
+    const std::string exp_output = "first line\n"
+                                   "bye from within the vector conditional\n"
+                                   "some more\n";
 
     text::templates_def templates;
 
     do_test_ok(templates, input, exp_output);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(instantiate__if__multiple_levels__taken);
 ATF_TEST_CASE_BODY(instantiate__if__multiple_levels__taken)
 {
-    const std::string input =
-        "first line\n"
-        "%if defined(var1)\n"
-        "first before\n"
-        "%if length(var2)\n"
-        "second before\n"
-        "%if defined(var3)\n"
-        "third before\n"
-        "hello from within the conditional\n"
-        "third after\n"
-        "%endif\n"
-        "second after\n"
-        "%else\n"
-        "second after not shown\n"
-        "%endif\n"
-        "first after\n"
-        "%endif\n"
-        "some more\n";
+    const std::string input = "first line\n"
+                              "%if defined(var1)\n"
+                              "first before\n"
+                              "%if length(var2)\n"
+                              "second before\n"
+                              "%if defined(var3)\n"
+                              "third before\n"
+                              "hello from within the conditional\n"
+                              "third after\n"
+                              "%endif\n"
+                              "second after\n"
+                              "%else\n"
+                              "second after not shown\n"
+                              "%endif\n"
+                              "first after\n"
+                              "%endif\n"
+                              "some more\n";
 
-    const std::string exp_output =
-        "first line\n"
-        "first before\n"
-        "second before\n"
-        "third before\n"
-        "hello from within the conditional\n"
-        "third after\n"
-        "second after\n"
-        "first after\n"
-        "some more\n";
+    const std::string exp_output = "first line\n"
+                                   "first before\n"
+                                   "second before\n"
+                                   "third before\n"
+                                   "hello from within the conditional\n"
+                                   "third after\n"
+                                   "second after\n"
+                                   "first after\n"
+                                   "some more\n";
 
     text::templates_def templates;
     templates.add_variable("var1", "false");
@@ -610,37 +556,34 @@ ATF_TEST_CASE_BODY(instantiate__if__multiple_levels__taken)
     do_test_ok(templates, input, exp_output);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(instantiate__if__multiple_levels__not_taken);
 ATF_TEST_CASE_BODY(instantiate__if__multiple_levels__not_taken)
 {
-    const std::string input =
-        "first line\n"
-        "%if defined(var1)\n"
-        "first before\n"
-        "%if length(var2)\n"
-        "second before\n"
-        "%if defined(var3)\n"
-        "third before\n"
-        "hello from within the conditional\n"
-        "third after\n"
-        "%else\n"
-        "will not be shown either\n"
-        "%endif\n"
-        "second after\n"
-        "%else\n"
-        "second after shown\n"
-        "%endif\n"
-        "first after\n"
-        "%endif\n"
-        "some more\n";
+    const std::string input = "first line\n"
+                              "%if defined(var1)\n"
+                              "first before\n"
+                              "%if length(var2)\n"
+                              "second before\n"
+                              "%if defined(var3)\n"
+                              "third before\n"
+                              "hello from within the conditional\n"
+                              "third after\n"
+                              "%else\n"
+                              "will not be shown either\n"
+                              "%endif\n"
+                              "second after\n"
+                              "%else\n"
+                              "second after shown\n"
+                              "%endif\n"
+                              "first after\n"
+                              "%endif\n"
+                              "some more\n";
 
-    const std::string exp_output =
-        "first line\n"
-        "first before\n"
-        "second after shown\n"
-        "first after\n"
-        "some more\n";
+    const std::string exp_output = "first line\n"
+                                   "first before\n"
+                                   "second after shown\n"
+                                   "first after\n"
+                                   "some more\n";
 
     text::templates_def templates;
     templates.add_variable("var1", "false");
@@ -650,22 +593,21 @@ ATF_TEST_CASE_BODY(instantiate__if__multiple_levels__not_taken)
     do_test_ok(templates, input, exp_output);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(instantiate__loop__no_iterations);
 ATF_TEST_CASE_BODY(instantiate__loop__no_iterations)
 {
-    const std::string input =
-        "first line\n"
-        "%loop table1 i\n"
-        "hello\n"
-        "value in vector: %%table1(i)%%\n"
-        "%if defined(var1)\n" "some other text\n" "%endif\n"
-        "%endloop\n"
-        "some more\n";
+    const std::string input = "first line\n"
+                              "%loop table1 i\n"
+                              "hello\n"
+                              "value in vector: %%table1(i)%%\n"
+                              "%if defined(var1)\n"
+                              "some other text\n"
+                              "%endif\n"
+                              "%endloop\n"
+                              "some more\n";
 
-    const std::string exp_output =
-        "first line\n"
-        "some more\n";
+    const std::string exp_output = "first line\n"
+                                   "some more\n";
 
     text::templates_def templates;
     templates.add_variable("var1", "defined");
@@ -674,22 +616,19 @@ ATF_TEST_CASE_BODY(instantiate__loop__no_iterations)
     do_test_ok(templates, input, exp_output);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(instantiate__loop__multiple_iterations);
 ATF_TEST_CASE_BODY(instantiate__loop__multiple_iterations)
 {
-    const std::string input =
-        "first line\n"
-        "%loop table1 i\n"
-        "hello %%table1(i)%% %%table2(i)%%\n"
-        "%endloop\n"
-        "some more\n";
+    const std::string input = "first line\n"
+                              "%loop table1 i\n"
+                              "hello %%table1(i)%% %%table2(i)%%\n"
+                              "%endloop\n"
+                              "some more\n";
 
-    const std::string exp_output =
-        "first line\n"
-        "hello foo1 foo2\n"
-        "hello bar1 bar2\n"
-        "some more\n";
+    const std::string exp_output = "first line\n"
+                                   "hello foo1 foo2\n"
+                                   "hello bar1 bar2\n"
+                                   "some more\n";
 
     text::templates_def templates;
     templates.add_vector("table1");
@@ -702,32 +641,29 @@ ATF_TEST_CASE_BODY(instantiate__loop__multiple_iterations)
     do_test_ok(templates, input, exp_output);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(instantiate__loop__nested__no_iterations);
 ATF_TEST_CASE_BODY(instantiate__loop__nested__no_iterations)
 {
-    const std::string input =
-        "first line\n"
-        "%loop table1 i\n"
-        "before: %%table1(i)%%\n"
-        "%loop table2 j\n"
-        "before: %%table2(j)%%\n"
-        "%loop table3 k\n"
-        "%%table3(k)%%\n"
-        "%endloop\n"
-        "after: %%table2(i)%%\n"
-        "%endloop\n"
-        "after: %%table1(i)%%\n"
-        "%endloop\n"
-        "some more\n";
+    const std::string input = "first line\n"
+                              "%loop table1 i\n"
+                              "before: %%table1(i)%%\n"
+                              "%loop table2 j\n"
+                              "before: %%table2(j)%%\n"
+                              "%loop table3 k\n"
+                              "%%table3(k)%%\n"
+                              "%endloop\n"
+                              "after: %%table2(i)%%\n"
+                              "%endloop\n"
+                              "after: %%table1(i)%%\n"
+                              "%endloop\n"
+                              "some more\n";
 
-    const std::string exp_output =
-        "first line\n"
-        "before: a\n"
-        "after: a\n"
-        "before: b\n"
-        "after: b\n"
-        "some more\n";
+    const std::string exp_output = "first line\n"
+                                   "before: a\n"
+                                   "after: a\n"
+                                   "before: b\n"
+                                   "after: b\n"
+                                   "some more\n";
 
     text::templates_def templates;
     templates.add_vector("table1");
@@ -740,28 +676,25 @@ ATF_TEST_CASE_BODY(instantiate__loop__nested__no_iterations)
     do_test_ok(templates, input, exp_output);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(instantiate__loop__nested__multiple_iterations);
 ATF_TEST_CASE_BODY(instantiate__loop__nested__multiple_iterations)
 {
-    const std::string input =
-        "first line\n"
-        "%loop table1 i\n"
-        "%loop table2 j\n"
-        "%%table1(i)%% %%table2(j)%%\n"
-        "%endloop\n"
-        "%endloop\n"
-        "some more\n";
+    const std::string input = "first line\n"
+                              "%loop table1 i\n"
+                              "%loop table2 j\n"
+                              "%%table1(i)%% %%table2(j)%%\n"
+                              "%endloop\n"
+                              "%endloop\n"
+                              "some more\n";
 
-    const std::string exp_output =
-        "first line\n"
-        "a 1\n"
-        "a 2\n"
-        "a 3\n"
-        "b 1\n"
-        "b 2\n"
-        "b 3\n"
-        "some more\n";
+    const std::string exp_output = "first line\n"
+                                   "a 1\n"
+                                   "a 2\n"
+                                   "a 3\n"
+                                   "b 1\n"
+                                   "b 2\n"
+                                   "b 3\n"
+                                   "some more\n";
 
     text::templates_def templates;
     templates.add_vector("table1");
@@ -775,40 +708,37 @@ ATF_TEST_CASE_BODY(instantiate__loop__nested__multiple_iterations)
     do_test_ok(templates, input, exp_output);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(instantiate__loop__sequential);
 ATF_TEST_CASE_BODY(instantiate__loop__sequential)
 {
-    const std::string input =
-        "first line\n"
-        "%loop table1 iter\n"
-        "1: %%table1(iter)%%\n"
-        "%endloop\n"
-        "divider\n"
-        "%loop table2 iter\n"
-        "2: %%table2(iter)%%\n"
-        "%endloop\n"
-        "divider\n"
-        "%loop table3 iter\n"
-        "3: %%table3(iter)%%\n"
-        "%endloop\n"
-        "divider\n"
-        "%loop table4 iter\n"
-        "4: %%table4(iter)%%\n"
-        "%endloop\n"
-        "some more\n";
+    const std::string input = "first line\n"
+                              "%loop table1 iter\n"
+                              "1: %%table1(iter)%%\n"
+                              "%endloop\n"
+                              "divider\n"
+                              "%loop table2 iter\n"
+                              "2: %%table2(iter)%%\n"
+                              "%endloop\n"
+                              "divider\n"
+                              "%loop table3 iter\n"
+                              "3: %%table3(iter)%%\n"
+                              "%endloop\n"
+                              "divider\n"
+                              "%loop table4 iter\n"
+                              "4: %%table4(iter)%%\n"
+                              "%endloop\n"
+                              "some more\n";
 
-    const std::string exp_output =
-        "first line\n"
-        "1: a\n"
-        "1: b\n"
-        "divider\n"
-        "divider\n"
-        "divider\n"
-        "4: 1\n"
-        "4: 2\n"
-        "4: 3\n"
-        "some more\n";
+    const std::string exp_output = "first line\n"
+                                   "1: a\n"
+                                   "1: b\n"
+                                   "divider\n"
+                                   "divider\n"
+                                   "divider\n"
+                                   "4: 1\n"
+                                   "4: 2\n"
+                                   "4: 3\n"
+                                   "some more\n";
 
     text::templates_def templates;
     templates.add_vector("table1");
@@ -824,29 +754,38 @@ ATF_TEST_CASE_BODY(instantiate__loop__sequential)
     do_test_ok(templates, input, exp_output);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(instantiate__loop__scoping);
 ATF_TEST_CASE_BODY(instantiate__loop__scoping)
 {
-    const std::string input =
-        "%loop table1 i\n"
-        "%if defined(i)\n" "i defined inside scope 1\n" "%endif\n"
-        "%loop table2 j\n"
-        "%if defined(i)\n" "i defined inside scope 2\n" "%endif\n"
-        "%if defined(j)\n" "j defined inside scope 2\n" "%endif\n"
-        "%endloop\n"
-        "%if defined(j)\n" "j defined inside scope 1\n" "%endif\n"
-        "%endloop\n"
-        "%if defined(i)\n" "i defined outside\n" "%endif\n"
-        "%if defined(j)\n" "j defined outside\n" "%endif\n";
+    const std::string input = "%loop table1 i\n"
+                              "%if defined(i)\n"
+                              "i defined inside scope 1\n"
+                              "%endif\n"
+                              "%loop table2 j\n"
+                              "%if defined(i)\n"
+                              "i defined inside scope 2\n"
+                              "%endif\n"
+                              "%if defined(j)\n"
+                              "j defined inside scope 2\n"
+                              "%endif\n"
+                              "%endloop\n"
+                              "%if defined(j)\n"
+                              "j defined inside scope 1\n"
+                              "%endif\n"
+                              "%endloop\n"
+                              "%if defined(i)\n"
+                              "i defined outside\n"
+                              "%endif\n"
+                              "%if defined(j)\n"
+                              "j defined outside\n"
+                              "%endif\n";
 
-    const std::string exp_output =
-        "i defined inside scope 1\n"
-        "i defined inside scope 2\n"
-        "j defined inside scope 2\n"
-        "i defined inside scope 1\n"
-        "i defined inside scope 2\n"
-        "j defined inside scope 2\n";
+    const std::string exp_output = "i defined inside scope 1\n"
+                                   "i defined inside scope 2\n"
+                                   "j defined inside scope 2\n"
+                                   "i defined inside scope 1\n"
+                                   "i defined inside scope 2\n"
+                                   "j defined inside scope 2\n";
 
     text::templates_def templates;
     templates.add_vector("table1");
@@ -858,17 +797,14 @@ ATF_TEST_CASE_BODY(instantiate__loop__scoping)
     do_test_ok(templates, input, exp_output);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(instantiate__mismatched_delimiters);
 ATF_TEST_CASE_BODY(instantiate__mismatched_delimiters)
 {
-    const std::string input =
-        "this is some %% text\n"
-        "and this is %%var%% text%%\n";
+    const std::string input = "this is some %% text\n"
+                              "and this is %%var%% text%%\n";
 
-    const std::string exp_output =
-        "this is some %% text\n"
-        "and this is some more text%%\n";
+    const std::string exp_output = "this is some %% text\n"
+                                   "and this is some more text%%\n";
 
     text::templates_def templates;
     templates.add_variable("var", "some more");
@@ -876,13 +812,11 @@ ATF_TEST_CASE_BODY(instantiate__mismatched_delimiters)
     do_test_ok(templates, input, exp_output);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(instantiate__empty_statement);
 ATF_TEST_CASE_BODY(instantiate__empty_statement)
 {
     do_test_fail(text::templates_def(), "%\n", "Empty statement");
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(instantiate__unknown_statement);
 ATF_TEST_CASE_BODY(instantiate__unknown_statement)
@@ -890,14 +824,12 @@ ATF_TEST_CASE_BODY(instantiate__unknown_statement)
     do_test_fail(text::templates_def(), "%if2\n", "Unknown statement 'if2'");
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(instantiate__invalid_narguments);
 ATF_TEST_CASE_BODY(instantiate__invalid_narguments)
 {
     do_test_fail(text::templates_def(), "%if a b\n",
                  "Invalid number of arguments for statement 'if'");
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(instantiate__files__ok);
 ATF_TEST_CASE_BODY(instantiate__files__ok)
@@ -916,7 +848,6 @@ ATF_TEST_CASE_BODY(instantiate__files__ok)
     ATF_REQUIRE(std::getline(output, line).eof());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(instantiate__files__input_error);
 ATF_TEST_CASE_BODY(instantiate__files__input_error)
 {
@@ -925,7 +856,6 @@ ATF_TEST_CASE_BODY(instantiate__files__input_error)
                          text::instantiate(templates, fs::path("input.txt"),
                                            fs::path("output.txt")));
 }
-
 
 ATF_TEST_CASE(instantiate__files__output_error);
 ATF_TEST_CASE_HEAD(instantiate__files__output_error)
@@ -944,7 +874,6 @@ ATF_TEST_CASE_BODY(instantiate__files__output_error)
                          text::instantiate(templates, fs::path("input.txt"),
                                            fs::path("dir/output.txt")));
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

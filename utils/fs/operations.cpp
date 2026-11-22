@@ -29,20 +29,20 @@
 #include "utils/fs/operations.hpp"
 
 #if defined(HAVE_CONFIG_H)
-#   include "config.h"
+#include "config.h"
 #endif
 
 extern "C" {
 #include <sys/param.h>
 #if defined(HAVE_SYS_MOUNT_H)
-#   include <sys/mount.h>
+#include <sys/mount.h>
 #endif
 #include <sys/stat.h>
 #if defined(HAVE_SYS_STATVFS_H) && defined(HAVE_STATVFS)
-#   include <sys/statvfs.h>
+#include <sys/statvfs.h>
 #endif
 #if defined(HAVE_SYS_VFS_H)
-#   include <sys/vfs.h>
+#include <sys/vfs.h>
 #endif
 #include <sys/wait.h>
 
@@ -72,9 +72,7 @@ namespace units = utils::units;
 
 using utils::optional;
 
-
 namespace {
-
 
 /// Operating systems recognized by the code below.
 enum os_type {
@@ -84,7 +82,6 @@ enum os_type {
     os_netbsd,
     os_sunos,
 };
-
 
 /// The current operating system.
 static enum os_type current_os =
@@ -101,13 +98,10 @@ static enum os_type current_os =
 #endif
     ;
 
-
 /// Error code returned by subprocess to indicate a controlled failure.
 const int exit_known_error = 123;
 
-
 static void run_mount_tmpfs [[noreturn]] (const fs::path&, const uint64_t);
-
 
 /// Executes 'mount -t tmpfs' (or a similar variant).
 ///
@@ -169,7 +163,7 @@ run_mount_tmpfs(const fs::path& mount_point, const uint64_t size)
 
     default:
         std::cerr << "Don't know how to mount a temporary file system in this "
-            "host operating system\n";
+                     "host operating system\n";
         std::exit(exit_known_error);
     }
     mount_args[last] = NULL;
@@ -187,7 +181,6 @@ run_mount_tmpfs(const fs::path& mount_point, const uint64_t size)
     std::exit(EXIT_FAILURE);
 }
 
-
 /// Unmounts a file system using unmount(2) or umount(2).
 ///
 /// This is a thin wrapper around the filesystem implementation for the actual
@@ -199,7 +192,6 @@ run_mount_tmpfs(const fs::path& mount_point, const uint64_t size)
 static void
 unmount_impl(const fs::path& mount_point)
 {
-
 #if defined(HAVE_UNMOUNT)
     if (::unmount(mount_point.c_str(), 0) == 0)
         return;
@@ -231,9 +223,7 @@ safe_stat(const fs::path& path)
     return sb;
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Copies a file.
 ///
@@ -262,7 +252,6 @@ fs::copy(const fs::path& source, const fs::path& target)
     if (!input.good() && !input.eof())
         throw error(F("Error while reading input file %s") % source);
 }
-
 
 /// Queries the path to the current directory.
 ///
@@ -294,7 +283,6 @@ fs::current_path(void)
     }
 }
 
-
 /// Checks if a file exists.
 ///
 /// Be aware that this is racy in the same way as access(2) is.
@@ -308,17 +296,16 @@ fs::exists(const fs::path& path)
     return ::access(path.c_str(), F_OK) == 0;
 }
 
-
 /// Locates a file in the PATH.
 ///
 /// \param name The file to locate.
 ///
 /// \return The path to the located file or none if it was not found.  The
 /// returned path is always absolute.
-optional< fs::path >
+optional<fs::path>
 fs::find_in_path(const char* name)
 {
-    const optional< std::string > current_path = utils::getenv("PATH");
+    const optional<std::string> current_path = utils::getenv("PATH");
     if (!current_path || current_path.get().empty())
         return none;
 
@@ -326,7 +313,8 @@ fs::find_in_path(const char* name)
     std::string path_component;
     while (std::getline(path_input, path_component, ':').good()) {
         const fs::path candidate = path_component.empty() ?
-            fs::path(name) : (fs::path(path_component) / name);
+            fs::path(name) :
+            (fs::path(path_component) / name);
         if (exists(candidate)) {
             if (candidate.is_absolute())
                 return utils::make_optional(candidate);
@@ -336,7 +324,6 @@ fs::find_in_path(const char* name)
     }
     return none;
 }
-
 
 /// Calculates the free space in a given file system.
 ///
@@ -366,10 +353,9 @@ fs::free_disk_space(const fs::path& path)
     }
     return units::bytes(uint64_t(buf.f_bsize) * buf.f_bavail);
 #else
-#   error "Don't know how to query free disk space"
+#error "Don't know how to query free disk space"
 #endif
 }
-
 
 /// Checks if the given path is a directory or not.
 ///
@@ -381,7 +367,6 @@ fs::is_directory(const fs::path& path)
     return S_ISDIR(sb.st_mode);
 }
 
-
 /// Creates a directory.
 ///
 /// \param dir The path to the directory to create.
@@ -391,13 +376,12 @@ fs::is_directory(const fs::path& path)
 void
 fs::mkdir(const fs::path& dir, const int mode)
 {
-    if (::mkdir(dir.c_str(), static_cast< mode_t >(mode)) == -1) {
+    if (::mkdir(dir.c_str(), static_cast<mode_t>(mode)) == -1) {
         const int original_errno = errno;
         throw fs::system_error(F("Failed to create directory %s") % dir,
                                original_errno);
     }
 }
-
 
 /// Creates a directory and any missing parents.
 ///
@@ -421,7 +405,6 @@ fs::mkdir_p(const fs::path& dir, const int mode)
             throw e;
     }
 }
-
 
 /// Creates a temporary directory that is world readable/accessible.
 ///
@@ -471,7 +454,8 @@ fs::mkdtemp_public(const std::string& path_template)
     if (::mkdtemp(buf.data()) == NULL) {
         const int original_errno = errno;
         throw fs::system_error(F("Cannot create temporary directory using "
-                                 "template %s") % full_template,
+                                 "template %s") %
+                                   full_template,
                                original_errno);
     }
     const fs::path path(buf.c_str());
@@ -485,18 +469,18 @@ fs::mkdtemp_public(const std::string& path_template)
             // This really should not fail.  We just created the directory and
             // have not written anything to it so there is no reason for this to
             // fail.  But better handle the failure just in case.
-            LW(F("Failed to delete just-created temporary directory %s")
-               % path);
+            LW(F("Failed to delete just-created temporary directory %s") %
+               path);
         }
 
         throw fs::system_error(F("Failed to grant search permissions on "
-                                 "temporary directory %s") % path,
+                                 "temporary directory %s") %
+                                   path,
                                original_errno);
     }
 
     return path;
 }
-
 
 /// Creates a temporary file.
 ///
@@ -522,11 +506,12 @@ fs::mkstemp(const std::string& path_template)
     if (::mkstemp(buf.data()) == -1) {
         const int original_errno = errno;
         throw fs::system_error(F("Cannot create temporary file using template "
-                                 "%s") % full_template, original_errno);
+                                 "%s") %
+                                   full_template,
+                               original_errno);
     }
     return fs::path(buf.c_str());
 }
-
 
 /// Mounts a temporary file system with unlimited size.
 ///
@@ -540,7 +525,6 @@ fs::mount_tmpfs(const fs::path& in_mount_point)
 {
     mount_tmpfs(in_mount_point, units::bytes());
 }
-
 
 /// Mounts a temporary file system.
 ///
@@ -556,7 +540,8 @@ fs::mount_tmpfs(const fs::path& in_mount_point, const units::bytes& size)
     // SunOS's mount(8) requires paths to be absolute.  To err on the side of
     // caution, let's make the mount point absolute in all cases.
     const fs::path mount_point = in_mount_point.is_absolute() ?
-        in_mount_point : in_mount_point.to_absolute();
+        in_mount_point :
+        in_mount_point.to_absolute();
 
     const pid_t pid = ::fork();
     if (pid == -1) {
@@ -585,13 +570,14 @@ retry:
             return;
         else
             throw fs::error(F("Failed to mount tmpfs on %s; returned exit "
-                              "code %s") % mount_point % WEXITSTATUS(status));
+                              "code %s") %
+                            mount_point % WEXITSTATUS(status));
     } else {
         throw fs::error(F("Failed to mount tmpfs on %s; mount tool "
-                          "received signal") % mount_point);
+                          "received signal") %
+                        mount_point);
     }
 }
-
 
 /// Recursively removes a directory.
 ///
@@ -628,7 +614,6 @@ fs::rm_r(const fs::path& directory)
     fs::rmdir(directory);
 }
 
-
 /// Removes an empty directory.
 ///
 /// \param file The directory to remove.
@@ -644,7 +629,6 @@ fs::rmdir(const path& file)
     }
 }
 
-
 /// Obtains all the entries in a directory.
 ///
 /// \param path The directory to scan.
@@ -652,10 +636,10 @@ fs::rmdir(const path& file)
 /// \return The set of all directory entries in the given directory.
 ///
 /// \throw fs::system_error If reading the directory fails for any reason.
-std::set< fs::directory_entry >
+std::set<fs::directory_entry>
 fs::scan_directory(const fs::path& path)
 {
-    std::set< fs::directory_entry > contents;
+    std::set<fs::directory_entry> contents;
 
     fs::directory dir(path);
     for (fs::directory::const_iterator iter = dir.begin(); iter != dir.end();
@@ -665,7 +649,6 @@ fs::scan_directory(const fs::path& path)
 
     return contents;
 }
-
 
 /// Removes a file.
 ///
@@ -682,7 +665,6 @@ fs::unlink(const path& file)
     }
 }
 
-
 /// Unmounts a file system.
 ///
 /// \param in_mount_point The file system to unmount.
@@ -694,7 +676,8 @@ fs::unmount(const fs::path& in_mount_point)
     // FreeBSD's unmount(2) requires paths to be absolute.  To err on the side
     // of caution, let's make it absolute in all cases.
     const fs::path mount_point = in_mount_point.is_absolute() ?
-        in_mount_point : in_mount_point.to_absolute();
+        in_mount_point :
+        in_mount_point.to_absolute();
 
     static const int unmount_retries = 3;
     static const int unmount_retry_delay_seconds = 1;

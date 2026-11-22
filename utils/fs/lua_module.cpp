@@ -34,12 +34,11 @@ extern "C" {
 
 #include <cerrno>
 #include <cstring>
-#include <stdexcept>
-#include <string>
-
 #include <lutok/operations.hpp>
 #include <lutok/stack_cleaner.hpp>
 #include <lutok/state.ipp>
+#include <stdexcept>
+#include <string>
 
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
@@ -48,9 +47,7 @@ extern "C" {
 
 namespace fs = utils::fs;
 
-
 namespace {
-
 
 /// Given a path, qualifies it with the module's start directory if necessary.
 ///
@@ -77,7 +74,6 @@ qualify_path(lutok::state& state, const fs::path& path)
     }
 }
 
-
 /// Safely gets a path from the Lua state.
 ///
 /// \param state The Lua state.
@@ -95,7 +91,6 @@ to_path(lutok::state& state, const int index)
         throw std::runtime_error("Need a string parameter");
     return fs::path(state.to_string(index));
 }
-
 
 /// Lua binding for fs::path::basename.
 ///
@@ -116,7 +111,6 @@ lua_fs_basename(lutok::state& state)
     return 1;
 }
 
-
 /// Lua binding for fs::path::dirname.
 ///
 /// \pre stack(-1) The input path.
@@ -135,7 +129,6 @@ lua_fs_dirname(lutok::state& state)
     cleaner.forget();
     return 1;
 }
-
 
 /// Lua binding for fs::path::exists.
 ///
@@ -156,7 +149,6 @@ lua_fs_exists(lutok::state& state)
     return 1;
 }
 
-
 /// Lua binding for the files iterator.
 ///
 /// This function takes an open directory from the closure of the iterator and
@@ -174,7 +166,7 @@ files_iterator(lutok::state& state)
 {
     lutok::stack_cleaner cleaner(state);
 
-    DIR** dirp = state.to_userdata< DIR* >(state.upvalue_index(1));
+    DIR** dirp = state.to_userdata<DIR*>(state.upvalue_index(1));
     const struct dirent* entry = ::readdir(*dirp);
     if (entry == NULL)
         return 0;
@@ -184,7 +176,6 @@ files_iterator(lutok::state& state)
         return 1;
     }
 }
-
 
 /// Lua binding for the destruction of the files iterator.
 ///
@@ -204,7 +195,7 @@ files_gc(lutok::state& state)
 
     PRE(state.is_userdata(-1));
 
-    DIR** dirp = state.to_userdata< DIR* >(-1);
+    DIR** dirp = state.to_userdata<DIR*>(-1);
     // For some reason, this may be called more than once.  I don't know why
     // this happens, but we must protect against it.
     if (*dirp != NULL) {
@@ -214,7 +205,6 @@ files_gc(lutok::state& state)
 
     return 0;
 }
-
 
 /// Lua binding to create an iterator to scan the contents of a directory.
 ///
@@ -231,7 +221,7 @@ lua_fs_files(lutok::state& state)
 
     const fs::path path = qualify_path(state, to_path(state, -1));
 
-    DIR** dirp = state.new_userdata< DIR* >();
+    DIR** dirp = state.new_userdata<DIR*>();
 
     state.new_table();
     state.push_string("__gc");
@@ -253,7 +243,6 @@ lua_fs_files(lutok::state& state)
     return 1;
 }
 
-
 /// Lua binding for fs::path::is_absolute.
 ///
 /// \pre stack(-1) The input path.
@@ -273,7 +262,6 @@ lua_fs_is_absolute(lutok::state& state)
     cleaner.forget();
     return 1;
 }
-
 
 /// Lua binding for fs::path::operator/.
 ///
@@ -296,9 +284,7 @@ lua_fs_join(lutok::state& state)
     return 1;
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Creates a Lua 'fs' module with a default start directory of ".".
 ///
@@ -311,7 +297,6 @@ fs::open_fs(lutok::state& s)
 {
     open_fs(s, fs::current_path());
 }
-
 
 /// Creates a Lua 'fs' module with an explicit start directory.
 ///
@@ -329,7 +314,7 @@ fs::open_fs(lutok::state& s, const fs::path& start_dir)
     s.push_string(start_dir.str());
     s.set_global("_fs_start_dir");
 
-    std::map< std::string, lutok::cxx_function > members;
+    std::map<std::string, lutok::cxx_function> members;
     members["basename"] = lua_fs_basename;
     members["dirname"] = lua_fs_dirname;
     members["exists"] = lua_fs_exists;

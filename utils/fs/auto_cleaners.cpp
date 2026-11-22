@@ -26,9 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/fs/auto_cleaners.hpp"
-
 #include "utils/format/macros.hpp"
+#include "utils/fs/auto_cleaners.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
@@ -39,7 +38,6 @@
 
 namespace fs = utils::fs;
 namespace signals = utils::signals;
-
 
 /// Shared implementation of the auto_directory.
 struct utils::fs::auto_directory::impl : utils::noncopyable {
@@ -52,9 +50,7 @@ struct utils::fs::auto_directory::impl : utils::noncopyable {
     /// Constructor.
     ///
     /// \param directory_ The directory to grab the ownership of.
-    impl(const path& directory_) :
-        _directory(directory_),
-        _cleaned(false)
+    impl(const path& directory_) : _directory(directory_), _cleaned(false)
     {
     }
 
@@ -72,8 +68,7 @@ struct utils::fs::auto_directory::impl : utils::noncopyable {
     /// Removes the directory.
     ///
     /// See the cleanup() method of the auto_directory class for details.
-    void
-    cleanup(void)
+    void cleanup(void)
     {
         if (!_cleaned) {
             // Mark this as cleaned first so that, in case of failure, we don't
@@ -85,7 +80,6 @@ struct utils::fs::auto_directory::impl : utils::noncopyable {
     }
 };
 
-
 /// Constructs a new auto_directory and grabs ownership of a directory.
 ///
 /// \param directory_ The directory to grab the ownership of.
@@ -94,7 +88,6 @@ fs::auto_directory::auto_directory(const path& directory_) :
 {
 }
 
-
 /// Deletes the managed directory; must be empty.
 ///
 /// This should not be relied on because it cannot provide proper error
@@ -102,7 +95,6 @@ fs::auto_directory::auto_directory(const path& directory_) :
 fs::auto_directory::~auto_directory(void)
 {
 }
-
 
 /// Creates a self-destructing temporary directory.
 ///
@@ -130,7 +122,6 @@ fs::auto_directory::mkdtemp_public(const std::string& path_template)
     }
 }
 
-
 /// Gets the directory managed by this auto_directory.
 ///
 /// \return The path to the managed directory.
@@ -139,7 +130,6 @@ fs::auto_directory::directory(void) const
 {
     return _pimpl->_directory;
 }
-
 
 /// Deletes the managed directory; must be empty.
 ///
@@ -152,7 +142,6 @@ fs::auto_directory::cleanup(void)
     _pimpl->cleanup();
 }
 
-
 /// Shared implementation of the auto_file.
 struct utils::fs::auto_file::impl : utils::noncopyable {
     /// The path to the file being managed.
@@ -164,9 +153,7 @@ struct utils::fs::auto_file::impl : utils::noncopyable {
     /// Constructor.
     ///
     /// \param file_ The file to grab the ownership of.
-    impl(const path& file_) :
-        _file(file_),
-        _removed(false)
+    impl(const path& file_) : _file(file_), _removed(false)
     {
     }
 
@@ -176,16 +163,14 @@ struct utils::fs::auto_file::impl : utils::noncopyable {
         try {
             this->remove();
         } catch (const fs::error& e) {
-            LW(F("Failed to auto-cleanup file '%s': %s") % _file %
-               e.what());
+            LW(F("Failed to auto-cleanup file '%s': %s") % _file % e.what());
         }
     }
 
     /// Removes the file.
     ///
     /// See the remove() method of the auto_file class for details.
-    void
-    remove(void)
+    void remove(void)
     {
         if (!_removed) {
             // Mark this as cleaned first so that, in case of failure, we don't
@@ -197,15 +182,12 @@ struct utils::fs::auto_file::impl : utils::noncopyable {
     }
 };
 
-
 /// Constructs a new auto_file and grabs ownership of a file.
 ///
 /// \param file_ The file to grab the ownership of.
-fs::auto_file::auto_file(const path& file_) :
-    _pimpl(new impl(file_))
+fs::auto_file::auto_file(const path& file_) : _pimpl(new impl(file_))
 {
 }
-
 
 /// Deletes the managed file.
 ///
@@ -214,7 +196,6 @@ fs::auto_file::auto_file(const path& file_) :
 fs::auto_file::~auto_file(void)
 {
 }
-
 
 /// Creates a self-destructing temporary file.
 ///
@@ -238,7 +219,6 @@ fs::auto_file::mkstemp(const std::string& path_template)
     }
 }
 
-
 /// Gets the file managed by this auto_file.
 ///
 /// \return The path to the managed file.
@@ -247,7 +227,6 @@ fs::auto_file::file(void) const
 {
     return _pimpl->_file;
 }
-
 
 /// Deletes the managed file.
 ///

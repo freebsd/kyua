@@ -40,10 +40,8 @@ extern "C" {
 #include "utils/sanity.hpp"
 #include "utils/signals/exceptions.hpp"
 
-
 namespace utils {
 namespace signals {
-
 
 /// Internal implementation for the signals::programmer class.
 struct programmer::impl : utils::noncopyable {
@@ -59,20 +57,15 @@ struct programmer::impl : utils::noncopyable {
     /// Initializes the internal implementation of the programmer.
     ///
     /// \param signo_ The signal number.
-    impl(const int signo_) :
-        signo(signo_),
-        programmed(false)
+    impl(const int signo_) : signo(signo_), programmed(false)
     {
     }
 };
 
-
 } // namespace signals
 } // namespace utils
 
-
 namespace signals = utils::signals;
-
 
 /// Programs a signal handler.
 ///
@@ -91,11 +84,11 @@ signals::programmer::programmer(const int signo, const handler_type handler) :
     if (::sigaction(_pimpl->signo, &sa, &_pimpl->old_sa) == -1) {
         const int original_errno = errno;
         throw system_error(F("Could not install handler for signal %s") %
-                           _pimpl->signo, original_errno);
+                               _pimpl->signo,
+                           original_errno);
     } else
         _pimpl->programmed = true;
 }
-
 
 /// Destructor; unprograms the signal handler if still programmed.
 ///
@@ -112,7 +105,6 @@ signals::programmer::~programmer(void)
         }
     }
 }
-
 
 /// Unprograms the signal handler.
 ///
@@ -133,6 +125,7 @@ signals::programmer::unprogram(void)
     if (::sigaction(_pimpl->signo, &_pimpl->old_sa, NULL) == -1) {
         const int original_errno = errno;
         throw system_error(F("Could not reset handler for signal %s") %
-                           _pimpl->signo, original_errno);
+                               _pimpl->signo,
+                           original_errno);
     }
 }

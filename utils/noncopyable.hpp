@@ -35,9 +35,7 @@
 #if !defined(UTILS_NONCOPYABLE_HPP)
 #define UTILS_NONCOPYABLE_HPP
 
-
 namespace utils {
-
 
 /// Forbids copying a class at compile-time.
 ///
@@ -64,12 +62,14 @@ class noncopyable {
 protected:
     // Explicitly needed to provide some non-private functions.  Otherwise
     // we also get some warnings during the build.
-    noncopyable(void) {}
-    ~noncopyable(void) {}
+    noncopyable(void)
+    {
+    }
+    ~noncopyable(void)
+    {
+    }
 };
 
+} // namespace utils
 
-}  // namespace utils
-
-
-#endif  // !defined(UTILS_NONCOPYABLE_HPP)
+#endif // !defined(UTILS_NONCOPYABLE_HPP)

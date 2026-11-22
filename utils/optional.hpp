@@ -35,12 +35,11 @@
 #if !defined(UTILS_OPTIONAL_HPP)
 #define UTILS_OPTIONAL_HPP
 
-#include "utils/optional_fwd.hpp"
-
 #include <ostream>
 
-namespace utils {
+#include "utils/optional_fwd.hpp"
 
+namespace utils {
 
 /// Holds a data value or none.
 ///
@@ -50,24 +49,23 @@ namespace utils {
 /// behaviors.
 ///
 /// This class is a simplified version of Boost.Optional.
-template< class T >
-class optional {
+template <class T> class optional {
     /// Internal representation of the optional data value.
     T* _data;
 
 public:
     optional(void);
     optional(utils::detail::none_t);
-    optional(const optional< T >&);
+    optional(const optional<T>&);
     explicit optional(const T&);
     ~optional(void);
 
     optional& operator=(utils::detail::none_t);
     optional& operator=(const T&);
-    optional& operator=(const optional< T >&);
+    optional& operator=(const optional<T>&);
 
-    bool operator==(const optional< T >&) const;
-    bool operator!=(const optional< T >&) const;
+    bool operator==(const optional<T>&) const;
+    bool operator!=(const optional<T>&) const;
 
     operator bool(void) const;
 
@@ -76,15 +74,10 @@ public:
     T& get(void);
 };
 
+template <class T> std::ostream& operator<<(std::ostream&, const optional<T>&);
 
-template< class T >
-std::ostream& operator<<(std::ostream&, const optional< T >&);
+template <class T> optional<T> make_optional(const T&);
 
+} // namespace utils
 
-template< class T >
-optional< T > make_optional(const T&);
-
-
-}  // namespace utils
-
-#endif  // !defined(UTILS_OPTIONAL_HPP)
+#endif // !defined(UTILS_OPTIONAL_HPP)

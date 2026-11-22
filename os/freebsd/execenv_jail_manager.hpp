@@ -38,17 +38,15 @@ namespace execenv = engine::execenv;
 
 namespace freebsd {
 
-
 class execenv_jail_manager : public execenv::manager {
 public:
     const std::string& name() const;
     bool is_supported() const;
-    std::unique_ptr< execenv::interface > probe(
-        const model::test_program& test_program,
-        const std::string& test_case_name) const;
+    std::unique_ptr<execenv::interface>
+    probe(const model::test_program& test_program,
+          const std::string& test_case_name) const;
 };
 
+} // namespace freebsd
 
-}  // namespace freebsd
-
-#endif  // !defined(FREEBSD_EXECENV_JAIL_MANAGER_HPP)
+#endif // !defined(FREEBSD_EXECENV_JAIL_MANAGER_HPP)

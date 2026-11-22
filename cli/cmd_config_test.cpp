@@ -26,12 +26,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "cli/cmd_config.hpp"
-
+#include <atf-c++.hpp>
 #include <cstdlib>
 
-#include <atf-c++.hpp>
-
+#include "cli/cmd_config.hpp"
 #include "cli/common.ipp"
 #include "engine/config.hpp"
 #include "utils/cmdline/globals.hpp"
@@ -46,9 +44,7 @@ namespace config = utils::config;
 using cli::cmd_config;
 using utils::none;
 
-
 namespace {
-
 
 /// Instantiates a fake user configuration for testing purposes.
 ///
@@ -64,15 +60,13 @@ fake_config(void)
     user_config.set_string("execenvs", "the-env");
     user_config.set_string("parallelism", "128");
     user_config.set_string("platform", "the-platform");
-    //user_config.set_string("unprivileged_user", "");
+    // user_config.set_string("unprivileged_user", "");
     user_config.set_string("test_suites.foo.bar", "first");
     user_config.set_string("test_suites.foo.baz", "second");
     return user_config;
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 ATF_TEST_CASE_WITHOUT_HEAD(all);
 ATF_TEST_CASE_BODY(all)
@@ -94,7 +88,6 @@ ATF_TEST_CASE_BODY(all)
     ATF_REQUIRE(ui.err_log().empty());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(some__ok);
 ATF_TEST_CASE_BODY(some__ok)
 {
@@ -112,7 +105,6 @@ ATF_TEST_CASE_BODY(some__ok)
     ATF_REQUIRE_EQ("test_suites.foo.baz = second", ui.out_log()[1]);
     ATF_REQUIRE(ui.err_log().empty());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(some__fail);
 ATF_TEST_CASE_BODY(some__fail)
@@ -136,7 +128,6 @@ ATF_TEST_CASE_BODY(some__fail)
     ATF_REQUIRE(atf::utils::grep_string("unknown.*not defined",
                                         ui.err_log()[0]));
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

@@ -26,14 +26,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "model/test_program.hpp"
-
 #include <map>
 #include <sstream>
 
 #include "model/exceptions.hpp"
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
+#include "model/test_program.hpp"
 #include "model/test_result.hpp"
 #include "utils/format/containers.ipp"
 #include "utils/format/macros.hpp"
@@ -46,7 +45,6 @@ namespace fs = utils::fs;
 namespace text = utils::text;
 
 using utils::none;
-
 
 /// Internal implementation of a test_program.
 struct model::test_program::impl : utils::noncopyable {
@@ -90,7 +88,8 @@ struct model::test_program::impl : utils::noncopyable {
     {
         PRE_MSG(!binary.is_absolute(),
                 F("The program '%s' must be relative to the root of the test "
-                  "suite '%s'") % binary % root);
+                  "suite '%s'") %
+                    binary % root);
 
         set_test_cases(test_cases_);
     }
@@ -98,8 +97,7 @@ struct model::test_program::impl : utils::noncopyable {
     /// Sets the list of test cases of the test program.
     ///
     /// \param test_cases_ The new list of test cases.
-    void
-    set_test_cases(const model::test_cases_map& test_cases_)
+    void set_test_cases(const model::test_cases_map& test_cases_)
     {
         for (model::test_cases_map::const_iterator iter = test_cases_.begin();
              iter != test_cases_.end(); ++iter) {
@@ -108,7 +106,8 @@ struct model::test_program::impl : utils::noncopyable {
 
             PRE_MSG(name == test_case.name(),
                     F("The test case '%s' has been registered with the "
-                      "non-matching name '%s'") % name % test_case.name());
+                      "non-matching name '%s'") %
+                        name % test_case.name());
 
             test_cases.insert(model::test_cases_map::value_type(
                 name, test_case.apply_metadata_defaults(&md)));
@@ -116,7 +115,6 @@ struct model::test_program::impl : utils::noncopyable {
         INV(test_cases.size() == test_cases_.size());
     }
 };
-
 
 /// Constructs a new test program.
 ///
@@ -137,12 +135,10 @@ model::test_program::test_program(const std::string& interface_name_,
 {
 }
 
-
 /// Destroys a test program.
 model::test_program::~test_program(void)
 {
 }
-
 
 /// Gets the name of the test program interface.
 ///
@@ -153,7 +149,6 @@ model::test_program::interface_name(void) const
     return _pimpl->interface_name;
 }
 
-
 /// Gets the path to the test program relative to the root of the test suite.
 ///
 /// \return The relative path to the test program binary.
@@ -162,7 +157,6 @@ model::test_program::relative_path(void) const
 {
     return _pimpl->binary;
 }
-
 
 /// Gets the absolute path to the test program.
 ///
@@ -174,7 +168,6 @@ model::test_program::absolute_path(void) const
     return full_path.is_absolute() ? full_path : full_path.to_absolute();
 }
 
-
 /// Gets the root of the test suite containing this test program.
 ///
 /// \return The path to the root of the test suite.
@@ -183,7 +176,6 @@ model::test_program::root(void) const
 {
     return _pimpl->root;
 }
-
 
 /// Gets the name of the test suite containing this test program.
 ///
@@ -194,7 +186,6 @@ model::test_program::test_suite_name(void) const
     return _pimpl->test_suite_name;
 }
 
-
 /// Gets the metadata of the test program.
 ///
 /// \return The metadata.
@@ -203,7 +194,6 @@ model::test_program::get_metadata(void) const
 {
     return _pimpl->md;
 }
-
 
 /// Gets a test case by its name.
 ///
@@ -225,7 +215,6 @@ model::test_program::find(const std::string& name) const
     return (*iter).second;
 }
 
-
 /// Gets the list of test cases from the test program.
 ///
 /// \return The list of test cases provided by the test program.
@@ -234,7 +223,6 @@ model::test_program::test_cases(void) const
 {
     return _pimpl->test_cases;
 }
-
 
 /// Sets the list of test cases of the test program.
 ///
@@ -251,7 +239,6 @@ model::test_program::set_test_cases(const model::test_cases_map& test_cases_)
     _pimpl->set_test_cases(test_cases_);
 }
 
-
 /// Equality comparator.
 ///
 /// \param other The other object to compare this one to.
@@ -260,15 +247,13 @@ model::test_program::set_test_cases(const model::test_cases_map& test_cases_)
 bool
 model::test_program::operator==(const test_program& other) const
 {
-    return _pimpl == other._pimpl || (
-        _pimpl->interface_name == other._pimpl->interface_name &&
-        _pimpl->binary == other._pimpl->binary &&
-        _pimpl->root == other._pimpl->root &&
-        _pimpl->test_suite_name == other._pimpl->test_suite_name &&
-        _pimpl->md == other._pimpl->md &&
-        test_cases() == other.test_cases());
+    return _pimpl == other._pimpl ||
+        (_pimpl->interface_name == other._pimpl->interface_name &&
+         _pimpl->binary == other._pimpl->binary &&
+         _pimpl->root == other._pimpl->root &&
+         _pimpl->test_suite_name == other._pimpl->test_suite_name &&
+         _pimpl->md == other._pimpl->md && test_cases() == other.test_cases());
 }
-
 
 /// Inequality comparator.
 ///
@@ -280,7 +265,6 @@ model::test_program::operator!=(const test_program& other) const
 {
     return !(*this == other);
 }
-
 
 /// Less-than comparator.
 ///
@@ -301,7 +285,6 @@ model::test_program::operator<(const test_program& other) const
     return absolute_path() < other.absolute_path();
 }
 
-
 /// Injects the object into a stream.
 ///
 /// \param output The stream into which to inject the object.
@@ -312,16 +295,14 @@ std::ostream&
 model::operator<<(std::ostream& output, const test_program& object)
 {
     output << F("test_program{interface=%s, binary=%s, root=%s, test_suite=%s, "
-                "metadata=%s, test_cases=%s}")
-        % text::quote(object.interface_name(), '\'')
-        % text::quote(object.relative_path().str(), '\'')
-        % text::quote(object.root().str(), '\'')
-        % text::quote(object.test_suite_name(), '\'')
-        % object.get_metadata()
-        % object.test_cases();
+                "metadata=%s, test_cases=%s}") %
+            text::quote(object.interface_name(), '\'') %
+            text::quote(object.relative_path().str(), '\'') %
+            text::quote(object.root().str(), '\'') %
+            text::quote(object.test_suite_name(), '\'') %
+            object.get_metadata() % object.test_cases();
     return output;
 }
-
 
 /// Internal implementation of the test_program_builder class.
 struct model::test_program_builder::impl : utils::noncopyable {
@@ -349,7 +330,6 @@ struct model::test_program_builder::impl : utils::noncopyable {
     }
 };
 
-
 /// Constructs a new builder with non-optional values.
 ///
 /// \param interface_name_ Name of the test program interface.
@@ -366,12 +346,10 @@ model::test_program_builder::test_program_builder(
 {
 }
 
-
 /// Destructor.
 model::test_program_builder::~test_program_builder(void)
 {
 }
-
 
 /// Accumulates an additional test case with default metadata.
 ///
@@ -383,7 +361,6 @@ model::test_program_builder::add_test_case(const std::string& test_case_name)
 {
     return add_test_case(test_case_name, model::metadata_builder().build());
 }
-
 
 /// Accumulates an additional test case.
 ///
@@ -398,11 +375,10 @@ model::test_program_builder::add_test_case(const std::string& test_case_name,
     const model::test_case test_case(test_case_name, metadata);
     PRE_MSG(_pimpl->test_cases.find(test_case_name) == _pimpl->test_cases.end(),
             F("Attempted to re-register test case '%s'") % test_case_name);
-    _pimpl->test_cases.insert(model::test_cases_map::value_type(
-        test_case_name, test_case));
+    _pimpl->test_cases.insert(model::test_cases_map::value_type(test_case_name,
+                                                                test_case));
     return *this;
 }
-
 
 /// Sets the test program metadata.
 ///
@@ -415,7 +391,6 @@ model::test_program_builder::set_metadata(const model::metadata& metadata)
     _pimpl->metadata = metadata;
     return *this;
 }
-
 
 /// Creates a new test_program object.
 ///
@@ -432,11 +407,9 @@ model::test_program_builder::build(void) const
     return test_program(_pimpl->prototype.interface_name(),
                         _pimpl->prototype.relative_path(),
                         _pimpl->prototype.root(),
-                        _pimpl->prototype.test_suite_name(),
-                        _pimpl->metadata,
+                        _pimpl->prototype.test_suite_name(), _pimpl->metadata,
                         _pimpl->test_cases);
 }
-
 
 /// Creates a new dynamically-allocated test_program object.
 ///

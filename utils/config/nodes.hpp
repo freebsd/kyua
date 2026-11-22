@@ -32,12 +32,9 @@
 #if !defined(UTILS_CONFIG_NODES_HPP)
 #define UTILS_CONFIG_NODES_HPP
 
-#include "utils/config/nodes_fwd.hpp"
-
+#include <lutok/state.hpp>
 #include <set>
 #include <string>
-
-#include <lutok/state.hpp>
 
 #include "utils/config/keys_fwd.hpp"
 #include "utils/config/nodes_fwd.hpp"
@@ -47,9 +44,7 @@
 namespace utils {
 namespace config {
 
-
 namespace detail {
-
 
 /// Base representation of a node.
 ///
@@ -73,13 +68,11 @@ public:
     /// \return A new node representing the combination.
     ///
     /// \throw bad_combination_error If the two nodes cannot be combined.
-    virtual base_node* combine(const tree_key& key, const base_node* other)
-        const = 0;
+    virtual base_node* combine(const tree_key& key,
+                               const base_node* other) const = 0;
 };
 
-
-}  // namespace detail
-
+} // namespace detail
 
 /// Abstract leaf node without any specified type.
 ///
@@ -109,15 +102,13 @@ public:
     virtual std::string to_string(void) const = 0;
 };
 
-
 /// Base leaf node for a single arbitrary type.
 ///
 /// This templated leaf node holds a single object of any type.  The conversion
 /// to/from string representations is undefined, as that depends on the
 /// particular type being processed.  You should reimplement this class for any
 /// type that needs additional processing/validation during conversion.
-template< typename ValueType >
-class typed_leaf_node : public leaf_node {
+template <typename ValueType> class typed_leaf_node : public leaf_node {
 public:
     /// The type of the value held by this node.
     typedef ValueType value_type;
@@ -139,72 +130,66 @@ public:
 
 protected:
     /// The value held by this node.
-    optional< value_type > _value;
+    optional<value_type> _value;
 
 private:
     virtual void validate(const value_type&) const;
 };
 
-
 /// Leaf node holding a native type.
 ///
 /// This templated leaf node holds a native type.  The conversion to/from string
 /// representations of the value happens by means of iostreams.
-template< typename ValueType >
-class native_leaf_node : public typed_leaf_node< ValueType > {
+template <typename ValueType>
+class native_leaf_node : public typed_leaf_node<ValueType> {
 public:
     void set_string(const std::string&);
     std::string to_string(void) const;
 };
 
-
 /// A leaf node that holds a boolean value.
-class bool_node : public native_leaf_node< bool > {
+class bool_node : public native_leaf_node<bool> {
 public:
     virtual base_node* deep_copy(void) const;
 
     void push_lua(lutok::state&) const;
     void set_lua(lutok::state&, const int);
 };
-
 
 /// A leaf node that holds an integer value.
-class int_node : public native_leaf_node< int > {
+class int_node : public native_leaf_node<int> {
 public:
     virtual base_node* deep_copy(void) const;
 
     void push_lua(lutok::state&) const;
     void set_lua(lutok::state&, const int);
 };
-
 
 /// A leaf node that holds a positive non-zero integer value.
 class positive_int_node : public int_node {
     virtual void validate(const value_type&) const;
+
 public:
     virtual base_node* deep_copy(void) const;
 };
 
-
 /// A leaf node that holds a string value.
-class string_node : public native_leaf_node< std::string > {
+class string_node : public native_leaf_node<std::string> {
 public:
     virtual base_node* deep_copy(void) const;
 
     void push_lua(lutok::state&) const;
     void set_lua(lutok::state&, const int);
 };
-
 
 /// Base leaf node for a set of native types.
 ///
 /// This is a base abstract class because there is no generic way to parse a
 /// single word in the textual representation of the set to the native value.
-template< typename ValueType >
-class base_set_node : public leaf_node {
+template <typename ValueType> class base_set_node : public leaf_node {
 public:
     /// The type of the value held by this node.
-    typedef std::set< ValueType > value_type;
+    typedef std::set<ValueType> value_type;
 
     base_set_node(void);
 
@@ -244,7 +229,7 @@ public:
 
 protected:
     /// The value held by this node.
-    optional< value_type > _value;
+    optional<value_type> _value;
 
 private:
     /// Converts a single word to the native type.
@@ -257,9 +242,8 @@ private:
     virtual void validate(const value_type&) const;
 };
 
-
 /// A leaf node that holds a set of strings.
-class strings_set_node : public base_set_node< std::string > {
+class strings_set_node : public base_set_node<std::string> {
 public:
     virtual base_node* deep_copy(void) const;
 
@@ -267,8 +251,7 @@ private:
     std::string parse_one(const std::string&) const;
 };
 
+} // namespace config
+} // namespace utils
 
-}  // namespace config
-}  // namespace utils
-
-#endif  // !defined(UTILS_CONFIG_NODES_HPP)
+#endif // !defined(UTILS_CONFIG_NODES_HPP)

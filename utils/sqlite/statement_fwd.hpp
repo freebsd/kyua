@@ -35,7 +35,6 @@
 namespace utils {
 namespace sqlite {
 
-
 /// Representation of the SQLite data types.
 enum type {
     type_blob,
@@ -45,13 +44,11 @@ enum type {
     type_text,
 };
 
-
 class blob;
 class null;
 class statement;
 
+} // namespace sqlite
+} // namespace utils
 
-}  // namespace sqlite
-}  // namespace utils
-
-#endif  // !defined(UTILS_SQLITE_STATEMENT_FWD_HPP)
+#endif // !defined(UTILS_SQLITE_STATEMENT_FWD_HPP)

@@ -32,18 +32,16 @@
 #if !defined(ENGINE_ATF_RESULT_HPP)
 #define ENGINE_ATF_RESULT_HPP
 
-#include "engine/atf_result_fwd.hpp"
-
 #include <istream>
 #include <ostream>
 
+#include "engine/atf_result_fwd.hpp"
 #include "model/test_result_fwd.hpp"
-#include "utils/optional.hpp"
 #include "utils/fs/path_fwd.hpp"
+#include "utils/optional.hpp"
 #include "utils/process/status_fwd.hpp"
 
 namespace engine {
-
 
 /// Internal representation of the raw result files of ATF-based tests.
 ///
@@ -73,42 +71,39 @@ private:
     /// The optional integral argument that may accompany the result.
     ///
     /// Should only be present if the type is expected_exit or expected_signal.
-    utils::optional< int > _argument;
+    utils::optional<int> _argument;
 
     /// A description of the test case result.
     ///
     /// Should always be present except for the passed type.
-    utils::optional< std::string > _reason;
+    utils::optional<std::string> _reason;
 
 public:
     atf_result(const types);
     atf_result(const types, const std::string&);
-    atf_result(const types, const utils::optional< int >&, const std::string&);
+    atf_result(const types, const utils::optional<int>&, const std::string&);
 
     static atf_result parse(std::istream&);
     static atf_result load(const utils::fs::path&);
 
     types type(void) const;
-    const utils::optional< int >& argument(void) const;
-    const utils::optional< std::string >& reason(void) const;
+    const utils::optional<int>& argument(void) const;
+    const utils::optional<std::string>& reason(void) const;
 
     bool good(void) const;
-    atf_result apply(const utils::optional< utils::process::status >&) const;
+    atf_result apply(const utils::optional<utils::process::status>&) const;
     model::test_result externalize(void) const;
 
     bool operator==(const atf_result&) const;
     bool operator!=(const atf_result&) const;
 };
 
-
 std::ostream& operator<<(std::ostream&, const atf_result&);
 
+model::test_result
+calculate_atf_result(const utils::optional<utils::process::status>&,
+                     const utils::fs::path&);
 
-model::test_result calculate_atf_result(
-    const utils::optional< utils::process::status >&,
-    const utils::fs::path&);
+} // namespace engine
 
-
-}  // namespace engine
-
-#endif  // !defined(ENGINE_ATF_IFACE_RESULTS_HPP)
+#endif // !defined(ENGINE_ATF_IFACE_RESULTS_HPP)

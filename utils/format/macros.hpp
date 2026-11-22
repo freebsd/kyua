@@ -39,7 +39,6 @@
 // header files.  Henceforth, we make things easier to the callers.
 #include "utils/format/formatter.ipp"
 
-
 /// Constructs a utils::format::formatter object with the given format string.
 ///
 /// This macro is just a wrapper to make the construction of
@@ -54,5 +53,4 @@
 /// \param fmt The format string.
 #define F(fmt) utils::format::formatter(fmt)
 
-
-#endif  // !defined(UTILS_FORMAT_MACROS_HPP)
+#endif // !defined(UTILS_FORMAT_MACROS_HPP)

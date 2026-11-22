@@ -32,17 +32,15 @@
 #if !defined(MODEL_CONTEXT_HPP)
 #define MODEL_CONTEXT_HPP
 
-#include "model/context_fwd.hpp"
-
 #include <map>
 #include <memory>
 #include <ostream>
 #include <string>
 
+#include "model/context_fwd.hpp"
 #include "utils/fs/path_fwd.hpp"
 
 namespace model {
-
 
 /// Representation of a runtime context.
 ///
@@ -53,24 +51,21 @@ class context {
     struct impl;
 
     /// Pointer to the shared internal implementation.
-    std::shared_ptr< impl > _pimpl;
+    std::shared_ptr<impl> _pimpl;
 
 public:
-    context(const utils::fs::path&,
-            const std::map< std::string, std::string >&);
+    context(const utils::fs::path&, const std::map<std::string, std::string>&);
     ~context(void);
 
     const utils::fs::path& cwd(void) const;
-    const std::map< std::string, std::string >& env(void) const;
+    const std::map<std::string, std::string>& env(void) const;
 
     bool operator==(const context&) const;
     bool operator!=(const context&) const;
 };
 
-
 std::ostream& operator<<(std::ostream&, const context&);
 
+} // namespace model
 
-}  // namespace model
-
-#endif  // !defined(MODEL_CONTEXT_HPP)
+#endif // !defined(MODEL_CONTEXT_HPP)

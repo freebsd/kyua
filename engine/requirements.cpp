@@ -26,9 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/requirements.hpp"
-
 #include "engine/execenv/execenv.hpp"
+#include "engine/requirements.hpp"
 #include "model/metadata.hpp"
 #include "model/types.hpp"
 #include "utils/config/nodes.ipp"
@@ -46,9 +45,7 @@ namespace fs = utils::fs;
 namespace passwd = utils::passwd;
 namespace units = utils::units;
 
-
 namespace {
-
 
 /// Checks if all required configuration variables are present.
 ///
@@ -78,7 +75,6 @@ check_required_configs(const model::strings_set& required_configs,
     return "";
 }
 
-
 /// Checks if the allowed architectures match the current architecture.
 ///
 /// \param allowed_architectures Set of allowed architectures.
@@ -92,14 +88,13 @@ check_allowed_architectures(const model::strings_set& allowed_architectures,
 {
     if (!allowed_architectures.empty()) {
         const std::string architecture =
-            user_config.lookup< config::string_node >("architecture");
+            user_config.lookup<config::string_node>("architecture");
         if (allowed_architectures.find(architecture) ==
             allowed_architectures.end())
             return F("Current architecture '%s' not supported") % architecture;
     }
     return "";
 }
-
 
 /// Checks if test's execenv matches the user configuration.
 ///
@@ -114,20 +109,20 @@ check_execenv(const std::string& execenv, const config::tree& user_config)
     if (name.empty())
         name = DEFAULT_EXECENV_NAME; // if test claims nothing
 
-    std::set< std::string > execenvs;
+    std::set<std::string> execenvs;
     try {
-        execenvs = user_config.lookup< config::strings_set_node >("execenvs");
+        execenvs = user_config.lookup<config::strings_set_node>("execenvs");
     } catch (const config::unknown_key_error&) {
         // okay, user config does not define it, empty set then
     }
 
     if (execenvs.find(name) == execenvs.end())
         return F("'%s' execenv is not supported or not allowed by "
-            "the runtime user configuration") % name;
+                 "the runtime user configuration") %
+            name;
 
     return "";
 }
-
 
 /// Checks if the allowed platforms match the current architecture.
 ///
@@ -142,13 +137,12 @@ check_allowed_platforms(const model::strings_set& allowed_platforms,
 {
     if (!allowed_platforms.empty()) {
         const std::string platform =
-            user_config.lookup< config::string_node >("platform");
+            user_config.lookup<config::string_node>("platform");
         if (allowed_platforms.find(platform) == allowed_platforms.end())
             return F("Current platform '%s' not supported") % platform;
     }
     return "";
 }
-
 
 /// Checks if the current user matches the required user.
 ///
@@ -170,14 +164,13 @@ check_required_user(const std::string& required_user,
             if (user.is_root())
                 if (!user_config.is_set("unprivileged_user"))
                     return "Requires an unprivileged user but the "
-                        "unprivileged-user configuration variable is not "
-                        "defined";
+                           "unprivileged-user configuration variable is not "
+                           "defined";
         } else
             UNREACHABLE_MSG("Value of require.user not properly validated");
     }
     return "";
 }
-
 
 /// Checks if all required files exist.
 ///
@@ -195,7 +188,6 @@ check_required_files(const model::paths_set& required_files)
     }
     return "";
 }
-
 
 /// Checks if all required programs exist.
 ///
@@ -219,7 +211,6 @@ check_required_programs(const model::paths_set& required_programs)
     return "";
 }
 
-
 /// Checks if the current system has the specified amount of memory.
 ///
 /// \param required_memory Amount of required physical memory, or zero if not
@@ -240,7 +231,6 @@ check_required_memory(const units::bytes& required_memory)
     return "";
 }
 
-
 /// Checks if the work directory's file system has enough free disk space.
 ///
 /// \param required_disk_space Amount of required free disk space, or zero if
@@ -254,8 +244,8 @@ check_required_disk_space(const units::bytes& required_disk_space,
                           const fs::path& work_directory)
 {
     if (required_disk_space > 0) {
-        const units::bytes free_disk_space = fs::free_disk_space(
-            work_directory);
+        const units::bytes free_disk_space =
+            fs::free_disk_space(work_directory);
         if (free_disk_space < required_disk_space)
             return F("Requires %s bytes of free disk space but only %s "
                      "available") %
@@ -264,17 +254,14 @@ check_required_disk_space(const units::bytes& required_disk_space,
     return "";
 }
 
-
 /// List of registered extra requirement checkers.
 ///
 /// Use register_reqs_checker() to add an entry to this global list.
-static std::vector< std::shared_ptr< engine::reqs_checker > > _reqs_checkers;
+static std::vector<std::shared_ptr<engine::reqs_checker>> _reqs_checkers;
 
+} // anonymous namespace
 
-}  // anonymous namespace
-
-
-std::vector< std::shared_ptr< engine::reqs_checker > >
+std::vector<std::shared_ptr<engine::reqs_checker>>
 engine::reqs_checkers()
 {
     return _reqs_checkers;
@@ -282,11 +269,10 @@ engine::reqs_checkers()
 
 void
 engine::register_reqs_checker(
-    const std::shared_ptr< engine::reqs_checker > checker)
+    const std::shared_ptr<engine::reqs_checker> checker)
 {
     _reqs_checkers.push_back(checker);
 }
-
 
 /// Checks if all the requirements specified by the test case are met.
 ///

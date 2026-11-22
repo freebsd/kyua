@@ -35,11 +35,9 @@
 namespace utils {
 namespace fs {
 
-
 class path;
 
+} // namespace fs
+} // namespace utils
 
-}  // namespace fs
-}  // namespace utils
-
-#endif  // !defined(UTILS_FS_PATH_FWD_HPP)
+#endif // !defined(UTILS_FS_PATH_FWD_HPP)

@@ -36,7 +36,6 @@
 namespace utils {
 namespace format {
 
-
 /// Replaces the first format placeholder in a formatter.
 ///
 /// Constructs a new formatter object that has one less formatting placeholder,
@@ -47,14 +46,13 @@ namespace format {
 /// \param arg The argument to use as replacement for the format placeholder.
 ///
 /// \return A new formatter that has one less format placeholder.
-template< typename Type >
+template <typename Type>
 inline formatter
 formatter::operator%(const Type& arg) const
 {
     (*_oss) << arg;
     return replace(_oss->str());
 }
-
 
 /// Inserts a formatter string into a stream.
 ///
@@ -68,9 +66,7 @@ operator<<(std::ostream& os, const formatter& f)
     return (os << f.str());
 }
 
+} // namespace format
+} // namespace utils
 
-}  // namespace format
-}  // namespace utils
-
-
-#endif  // !defined(UTILS_FORMAT_FORMATTER_IPP)
+#endif // !defined(UTILS_FORMAT_FORMATTER_IPP)

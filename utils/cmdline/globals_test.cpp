@@ -26,12 +26,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/cmdline/globals.hpp"
-
 #include <atf-c++.hpp>
 
-namespace cmdline = utils::cmdline;
+#include "utils/cmdline/globals.hpp"
 
+namespace cmdline = utils::cmdline;
 
 ATF_TEST_CASE_WITHOUT_HEAD(progname__absolute);
 ATF_TEST_CASE_BODY(progname__absolute)
@@ -40,7 +39,6 @@ ATF_TEST_CASE_BODY(progname__absolute)
     ATF_REQUIRE_EQ("foobar", cmdline::progname());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(progname__relative);
 ATF_TEST_CASE_BODY(progname__relative)
 {
@@ -48,14 +46,12 @@ ATF_TEST_CASE_BODY(progname__relative)
     ATF_REQUIRE_EQ("barbaz", cmdline::progname());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(progname__plain);
 ATF_TEST_CASE_BODY(progname__plain)
 {
     cmdline::init("program");
     ATF_REQUIRE_EQ("program", cmdline::progname());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(progname__override_for_testing);
 ATF_TEST_CASE_BODY(progname__override_for_testing)
@@ -66,7 +62,6 @@ ATF_TEST_CASE_BODY(progname__override_for_testing)
     cmdline::init("foo", true);
     ATF_REQUIRE_EQ("foo", cmdline::progname());
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

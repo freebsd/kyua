@@ -26,21 +26,18 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/logging/macros.hpp"
-
+#include <atf-c++.hpp>
 #include <fstream>
 #include <string>
 
-#include <atf-c++.hpp>
-
 #include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/logging/macros.hpp"
 #include "utils/logging/operations.hpp"
 
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace logging = utils::logging;
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(ld);
 ATF_TEST_CASE_BODY(ld)
@@ -57,7 +54,6 @@ ATF_TEST_CASE_BODY(ld)
     ATF_REQUIRE_MATCH("20110221-183000 D .*: Debug message", line);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(le);
 ATF_TEST_CASE_BODY(le)
 {
@@ -72,7 +68,6 @@ ATF_TEST_CASE_BODY(le)
     ATF_REQUIRE(std::getline(input, line).good());
     ATF_REQUIRE_MATCH("20110221-183000 E .*: Error message", line);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(li);
 ATF_TEST_CASE_BODY(li)
@@ -89,7 +84,6 @@ ATF_TEST_CASE_BODY(li)
     ATF_REQUIRE_MATCH("20110221-183000 I .*: Info message", line);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(lw);
 ATF_TEST_CASE_BODY(lw)
 {
@@ -104,7 +98,6 @@ ATF_TEST_CASE_BODY(lw)
     ATF_REQUIRE(std::getline(input, line).good());
     ATF_REQUIRE_MATCH("20110221-183000 W .*: Warning message", line);
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

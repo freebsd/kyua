@@ -61,13 +61,10 @@ namespace process = utils::process;
 
 using utils::optional;
 
-
 namespace {
-
 
 /// Basename of the file containing the result written by the ATF test case.
 static const char* result_name = "result.atf";
-
 
 /// Magic numbers returned by exec_list when exec(2) fails.
 enum list_exit_code {
@@ -76,9 +73,7 @@ enum list_exit_code {
     exit_enoexec,
 };
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Executes a test program's list operation.
 ///
@@ -114,7 +109,6 @@ engine::atf_interface::exec_list(const model::test_program& test_program,
     }
 }
 
-
 /// Computes the test cases list of a test program.
 ///
 /// \param status The termination status of the subprocess used to execute
@@ -126,7 +120,7 @@ engine::atf_interface::exec_list(const model::test_program& test_program,
 ///
 /// \throw error If there is a problem parsing the test case list.
 model::test_cases_map
-engine::atf_interface::parse_list(const optional< process::status >& status,
+engine::atf_interface::parse_list(const optional<process::status>& status,
                                   const fs::path& stdout_path,
                                   const fs::path& stderr_path) const
 {
@@ -164,7 +158,6 @@ engine::atf_interface::parse_list(const optional< process::status >& status,
     return test_cases;
 }
 
-
 /// Executes a test case of the test program.
 ///
 /// This method is intended to be called within a subprocess and is expected
@@ -199,7 +192,6 @@ engine::atf_interface::exec_test(const model::test_program& test_program,
     __builtin_unreachable();
 }
 
-
 /// Executes a test cleanup routine of the test program.
 ///
 /// This method is intended to be called within a subprocess and is expected
@@ -211,8 +203,7 @@ engine::atf_interface::exec_test(const model::test_program& test_program,
 /// \param vars User-provided variables to pass to the test program.
 void
 engine::atf_interface::exec_cleanup(
-    const model::test_program& test_program,
-    const std::string& test_case_name,
+    const model::test_program& test_program, const std::string& test_case_name,
     const config::properties_map& vars,
     const fs::path& /* control_directory */) const
 {
@@ -231,7 +222,6 @@ engine::atf_interface::exec_cleanup(
     __builtin_unreachable();
 }
 
-
 /// Computes the result of a test case based on its termination status.
 ///
 /// \param status The termination status of the subprocess used to execute
@@ -241,11 +231,10 @@ engine::atf_interface::exec_cleanup(
 ///
 /// \return A test result.
 model::test_result
-engine::atf_interface::compute_result(
-    const optional< process::status >& status,
-    const fs::path& control_directory,
-    const fs::path& /* stdout_path */,
-    const fs::path& /* stderr_path */) const
+engine::atf_interface::compute_result(const optional<process::status>& status,
+                                      const fs::path& control_directory,
+                                      const fs::path& /* stdout_path */,
+                                      const fs::path& /* stderr_path */) const
 {
     return calculate_atf_result(status, control_directory / result_name);
 }

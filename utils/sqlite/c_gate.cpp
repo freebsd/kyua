@@ -26,16 +26,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/sqlite/c_gate.hpp"
-
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
+#include "utils/sqlite/c_gate.hpp"
 #include "utils/sqlite/database.hpp"
 
 namespace sqlite = utils::sqlite;
 
 using utils::none;
-
 
 /// Creates a new gateway to an existing C++ SQLite database.
 ///
@@ -46,7 +44,6 @@ sqlite::database_c_gate::database_c_gate(database& database_) :
 {
 }
 
-
 /// Destructor.
 ///
 /// Destroying this object has no implications on the life cycle of the SQLite
@@ -55,7 +52,6 @@ sqlite::database_c_gate::database_c_gate(database& database_) :
 sqlite::database_c_gate::~database_c_gate(void)
 {
 }
-
 
 /// Creates a C++ database for a C SQLite 3 database.
 ///
@@ -69,9 +65,8 @@ sqlite::database_c_gate::~database_c_gate(void)
 sqlite::database
 sqlite::database_c_gate::connect(::sqlite3* raw_database)
 {
-    return database(none, static_cast< void* >(raw_database), false);
+    return database(none, static_cast<void*>(raw_database), false);
 }
-
 
 /// Returns the C native SQLite 3 database.
 ///
@@ -79,5 +74,5 @@ sqlite::database_c_gate::connect(::sqlite3* raw_database)
 ::sqlite3*
 sqlite::database_c_gate::c_database(void)
 {
-    return static_cast< ::sqlite3* >(_database.raw_database());
+    return static_cast<::sqlite3*>(_database.raw_database());
 }

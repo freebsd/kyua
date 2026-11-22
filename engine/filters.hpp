@@ -36,19 +36,16 @@
 #if !defined(ENGINE_FILTERS_HPP)
 #define ENGINE_FILTERS_HPP
 
-#include "engine/filters_fwd.hpp"
-
 #include <ostream>
-#include <string>
 #include <set>
+#include <string>
 #include <utility>
 
+#include "engine/filters_fwd.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
 
-
 namespace engine {
-
 
 /// Filter for test cases.
 ///
@@ -77,9 +74,7 @@ public:
     bool operator!=(const test_filter&) const;
 };
 
-
 std::ostream& operator<<(std::ostream&, const test_filter&);
-
 
 /// Collection of user-provided filters to select test cases.
 ///
@@ -91,25 +86,23 @@ std::ostream& operator<<(std::ostream&, const test_filter&);
 /// constructing this object, use check_disjoint_filters.
 class test_filters {
     /// The user-provided filters.
-    std::set< test_filter > _filters;
+    std::set<test_filter> _filters;
 
 public:
-    explicit test_filters(const std::set< test_filter >&);
+    explicit test_filters(const std::set<test_filter>&);
 
     /// Return type of match_test_case.  Indicates whether the filters have
     /// matched a particular test case and, if they have, which filter did the
     /// match (if any).
-    typedef std::pair< bool, utils::optional< test_filter > > match;
+    typedef std::pair<bool, utils::optional<test_filter>> match;
 
     bool match_test_program(const utils::fs::path&) const;
     match match_test_case(const utils::fs::path&, const std::string&) const;
 
-    std::set< test_filter > difference(const std::set< test_filter >&) const;
+    std::set<test_filter> difference(const std::set<test_filter>&) const;
 };
 
-
-void check_disjoint_filters(const std::set< test_filter >&);
-
+void check_disjoint_filters(const std::set<test_filter>&);
 
 /// Tracks state of the filters that have matched tests during execution.
 class filters_state {
@@ -117,18 +110,17 @@ class filters_state {
     test_filters _filters;
 
     /// Collection of filters that have matched test cases so far.
-    std::set< test_filter > _used_filters;
+    std::set<test_filter> _used_filters;
 
 public:
-    explicit filters_state(const std::set< test_filter >&);
+    explicit filters_state(const std::set<test_filter>&);
 
     bool match_test_program(const utils::fs::path&) const;
     bool match_test_case(const utils::fs::path&, const std::string&);
 
-    std::set< test_filter > unused(void) const;
+    std::set<test_filter> unused(void) const;
 };
 
+} // namespace engine
 
-}  // namespace engine
-
-#endif  // !defined(ENGINE_FILTERS_HPP)
+#endif // !defined(ENGINE_FILTERS_HPP)

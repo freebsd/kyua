@@ -26,29 +26,24 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/signals/exceptions.hpp"
-
 #include <cstring>
 
 #include "utils/format/macros.hpp"
+#include "utils/signals/exceptions.hpp"
 
 namespace signals = utils::signals;
-
 
 /// Constructs a new error with a plain-text message.
 ///
 /// \param message The plain-text error message.
-signals::error::error(const std::string& message) :
-    std::runtime_error(message)
+signals::error::error(const std::string& message) : std::runtime_error(message)
 {
 }
-
 
 /// Destructor for the error.
 signals::error::~error(void) throw()
 {
 }
-
 
 /// Constructs a new interrupted error.
 ///
@@ -59,12 +54,10 @@ signals::interrupted_error::interrupted_error(const int signo_) :
 {
 }
 
-
 /// Destructor for the error.
 signals::interrupted_error::~interrupted_error(void) throw()
 {
 }
-
 
 /// Queries the signal number of the interruption.
 ///
@@ -74,7 +67,6 @@ signals::interrupted_error::signo(void) const
 {
     return _signo;
 }
-
 
 /// Constructs a new error based on an errno code.
 ///
@@ -87,12 +79,10 @@ signals::system_error::system_error(const std::string& message_,
 {
 }
 
-
 /// Destructor for the error.
 signals::system_error::~system_error(void) throw()
 {
 }
-
 
 /// \return The original errno value.
 int

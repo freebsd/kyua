@@ -39,13 +39,11 @@ namespace utils {
 namespace config {
 namespace detail {
 
-
 /// Representation of a valid, tokenized key.
-typedef std::vector< std::string > tree_key;
+typedef std::vector<std::string> tree_key;
 
+} // namespace detail
+} // namespace config
+} // namespace utils
 
-}  // namespace detail
-}  // namespace config
-}  // namespace utils
-
-#endif  // !defined(UTILS_CONFIG_KEYS_FWD_HPP)
+#endif // !defined(UTILS_CONFIG_KEYS_FWD_HPP)

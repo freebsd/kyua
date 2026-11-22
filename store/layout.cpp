@@ -26,20 +26,19 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "store/layout.hpp"
-
 #include <algorithm>
 #include <cstring>
 
 #include "store/exceptions.hpp"
+#include "store/layout.hpp"
 #include "utils/datetime.hpp"
+#include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/directory.hpp"
 #include "utils/fs/exceptions.hpp"
-#include "utils/fs/path.hpp"
 #include "utils/fs/operations.hpp"
+#include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
-#include "utils/env.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 #include "utils/text/exceptions.hpp"
@@ -52,9 +51,7 @@ namespace text = utils::text;
 
 using utils::optional;
 
-
 namespace {
-
 
 /// Finds the results file for the latest run of the given test suite.
 ///
@@ -89,19 +86,18 @@ find_latest(const std::string& test_suite)
 
         if (latest.empty())
             throw store::error(
-                F("No previous results file found for test suite %s")
-                % test_suite);
+                F("No previous results file found for test suite %s") %
+                test_suite);
 
         return store_dir / latest;
     } catch (const fs::system_error& e) {
         LW(F("Failed to open store dir %s: %s") % store_dir % e.what());
-        throw store::error(F("No previous results file found for test suite %s")
-                           % test_suite);
+        throw store::error(
+            F("No previous results file found for test suite %s") % test_suite);
     } catch (const text::regex_error& e) {
         throw store::error(e.what());
     }
 }
-
 
 /// Computes the identifier of a new tests results file.
 ///
@@ -117,21 +113,17 @@ new_id(const std::string& test_suite, const datetime::timestamp& when)
     return F("%s.%s-%06s") % test_suite % when_datetime % when_ms;
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Value to request the creation of a new results file with an automatic name.
 ///
 /// Can be passed to new_db().
 const char* layout::results_auto_create_name = "NEW";
 
-
 /// Value to request the opening of the latest results file.
 ///
 /// Can be passed to find_results().
 const char* layout::results_auto_open_name = "LATEST";
-
 
 /// Resolves the results file for the given identifier.
 ///
@@ -157,8 +149,8 @@ layout::find_results(const std::string& id)
             else
                 return id_as_path.to_absolute();
         } else if (id.find('/') == std::string::npos) {
-            const fs::path candidate =
-                query_store_dir() / (F("results.%s.db") % id);
+            const fs::path candidate = query_store_dir() /
+                (F("results.%s.db") % id);
             if (fs::exists(candidate)) {
                 return candidate;
             } else {
@@ -170,7 +162,6 @@ layout::find_results(const std::string& id)
         }
     }
 }
-
 
 /// Computes the path to a new database for the given test suite.
 ///
@@ -184,7 +175,7 @@ layout::results_id_file_pair
 layout::new_db(const std::string& id, const fs::path& root)
 {
     std::string generated_id;
-    optional< fs::path > path;
+    optional<fs::path> path;
 
     if (id == results_auto_create_name) {
         generated_id = new_id(test_suite_for_path(root),
@@ -197,7 +188,6 @@ layout::new_db(const std::string& id, const fs::path& root)
 
     return std::make_pair(generated_id, path.get());
 }
-
 
 /// Computes the path to a new database for the given test suite.
 ///
@@ -213,12 +203,11 @@ layout::new_db_for_migration(const fs::path& root,
                              const datetime::timestamp& when)
 {
     const std::string generated_id = new_id(test_suite_for_path(root), when);
-    const fs::path path = query_store_dir() / (
-        F("results.%s.db") % generated_id);
+    const fs::path path = query_store_dir() /
+        (F("results.%s.db") % generated_id);
     fs::mkdir_p(path.branch_path(), 0755);
     return path;
 }
-
 
 /// Gets the path to the store directory.
 ///
@@ -229,7 +218,7 @@ layout::new_db_for_migration(const fs::path& root,
 fs::path
 layout::query_store_dir(void)
 {
-    const optional< fs::path > home = utils::get_home();
+    const optional<fs::path> home = utils::get_home();
     if (home) {
         const fs::path& home_path = home.get();
         if (home_path.is_absolute())
@@ -242,7 +231,6 @@ layout::query_store_dir(void)
         return fs::current_path();
     }
 }
-
 
 /// Returns the test suite name for the current directory.
 ///

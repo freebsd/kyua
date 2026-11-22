@@ -35,13 +35,11 @@
 namespace utils {
 namespace datetime {
 
-
 class delta;
 class monotonic_timestamp;
 class timestamp;
 
+} // namespace datetime
+} // namespace utils
 
-}  // namespace datetime
-}  // namespace utils
-
-#endif  // !defined(UTILS_DATETIME_FWD_HPP)
+#endif // !defined(UTILS_DATETIME_FWD_HPP)

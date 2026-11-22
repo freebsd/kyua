@@ -36,10 +36,8 @@
 
 namespace cli {
 
-
 /// Implementation of the "debug" subcommand.
-class cmd_debug : public cli_command
-{
+class cmd_debug : public cli_command {
 public:
     cmd_debug(void);
 
@@ -47,8 +45,6 @@ public:
             const utils::config::tree&);
 };
 
+} // namespace cli
 
-}  // namespace cli
-
-
-#endif  // !defined(CLI_CMD_DEBUG_HPP)
+#endif // !defined(CLI_CMD_DEBUG_HPP)

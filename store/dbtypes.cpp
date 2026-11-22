@@ -26,10 +26,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "store/dbtypes.hpp"
-
 #include "model/test_program.hpp"
 #include "model/test_result.hpp"
+#include "store/dbtypes.hpp"
 #include "store/exceptions.hpp"
 #include "utils/datetime.hpp"
 #include "utils/format/macros.hpp"
@@ -38,7 +37,6 @@
 
 namespace datetime = utils::datetime;
 namespace sqlite = utils::sqlite;
-
 
 /// Binds a boolean value to a statement parameter.
 ///
@@ -51,7 +49,6 @@ store::bind_bool(sqlite::statement& stmt, const char* field, const bool value)
     stmt.bind(field, value ? "true" : "false");
 }
 
-
 /// Binds a time delta to a statement parameter.
 ///
 /// \param stmt The statement to which to bind the parameter.
@@ -61,9 +58,8 @@ void
 store::bind_delta(sqlite::statement& stmt, const char* field,
                   const datetime::delta& delta)
 {
-    stmt.bind(field, static_cast< int64_t >(delta.to_microseconds()));
+    stmt.bind(field, static_cast<int64_t>(delta.to_microseconds()));
 }
-
 
 /// Binds a string to a statement parameter.
 ///
@@ -82,7 +78,6 @@ store::bind_optional_string(sqlite::statement& stmt, const char* field,
     else
         stmt.bind(field, str);
 }
-
 
 /// Binds a test result type to a statement parameter.
 ///
@@ -119,7 +114,6 @@ store::bind_test_result_type(sqlite::statement& stmt, const char* field,
     }
 }
 
-
 /// Binds a timestamp to a statement parameter.
 ///
 /// \param stmt The statement to which to bind the parameter.
@@ -131,7 +125,6 @@ store::bind_timestamp(sqlite::statement& stmt, const char* field,
 {
     stmt.bind(field, timestamp.to_microseconds());
 }
-
 
 /// Queries a boolean value from a statement.
 ///
@@ -147,7 +140,8 @@ store::column_bool(sqlite::statement& stmt, const char* column)
     const int id = stmt.column_id(column);
     if (stmt.column_type(id) != sqlite::type_text)
         throw store::integrity_error(F("Boolean value in column %s is not a "
-                                       "string") % column);
+                                       "string") %
+                                     column);
     const std::string value = stmt.column_text(id);
     if (value == "true")
         return true;
@@ -156,7 +150,6 @@ store::column_bool(sqlite::statement& stmt, const char* column)
     else
         throw store::integrity_error(F("Unknown boolean value '%s'") % value);
 }
-
 
 /// Queries a time delta from a statement.
 ///
@@ -172,10 +165,10 @@ store::column_delta(sqlite::statement& stmt, const char* column)
     const int id = stmt.column_id(column);
     if (stmt.column_type(id) != sqlite::type_integer)
         throw store::integrity_error(F("Time delta in column %s is not an "
-                                       "integer") % column);
+                                       "integer") %
+                                     column);
     return datetime::delta::from_microseconds(stmt.column_int64(id));
 }
-
 
 /// Queries an optional string from a statement.
 ///
@@ -199,7 +192,6 @@ store::column_optional_string(sqlite::statement& stmt, const char* column)
     }
 }
 
-
 /// Queries a test result type from a statement.
 ///
 /// \param stmt The statement from which to get the column.
@@ -214,7 +206,8 @@ store::column_test_result_type(sqlite::statement& stmt, const char* column)
     const int id = stmt.column_id(column);
     if (stmt.column_type(id) != sqlite::type_text)
         throw store::integrity_error(F("Result type in column %s is not a "
-                                       "string") % column);
+                                       "string") %
+                                     column);
     const std::string type = stmt.column_text(id);
     if (type == "passed") {
         return model::test_result_passed;
@@ -231,7 +224,6 @@ store::column_test_result_type(sqlite::statement& stmt, const char* column)
     }
 }
 
-
 /// Queries a timestamp from a statement.
 ///
 /// \param stmt The statement from which to get the column.
@@ -246,10 +238,12 @@ store::column_timestamp(sqlite::statement& stmt, const char* column)
     const int id = stmt.column_id(column);
     if (stmt.column_type(id) != sqlite::type_integer)
         throw store::integrity_error(F("Timestamp in column %s is not an "
-                                       "integer") % column);
+                                       "integer") %
+                                     column);
     const int64_t value = stmt.column_int64(id);
     if (value < 0)
         throw store::integrity_error(F("Timestamp in column %s must be "
-                                       "positive") % column);
+                                       "positive") %
+                                     column);
     return datetime::timestamp::from_microseconds(value);
 }

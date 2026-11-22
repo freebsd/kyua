@@ -39,7 +39,6 @@ extern "C" {
 using utils::process::ifdstream;
 using utils::process::systembuf;
 
-
 ATF_TEST_CASE(ifdstream);
 ATF_TEST_CASE_HEAD(ifdstream)
 {
@@ -65,7 +64,6 @@ ATF_TEST_CASE_BODY(ifdstream)
     rend >> tmp;
     ATF_REQUIRE_EQ(tmp, "1message");
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

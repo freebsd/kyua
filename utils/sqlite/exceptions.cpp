@@ -45,9 +45,7 @@ namespace sqlite = utils::sqlite;
 
 using utils::optional;
 
-
 namespace {
-
 
 /// Formats the database filename returned by sqlite for user consumption.
 ///
@@ -55,7 +53,7 @@ namespace {
 ///
 /// \return A string describing the filename.
 static std::string
-format_db_filename(const optional< fs::path >& db_filename)
+format_db_filename(const optional<fs::path>& db_filename)
 {
     if (db_filename)
         return db_filename.get().str();
@@ -63,16 +61,14 @@ format_db_filename(const optional< fs::path >& db_filename)
         return "in-memory or temporary";
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Constructs a new error with a plain-text message.
 ///
 /// \param db_filename_ Database filename as returned by database::db_filename()
 ///     for error reporting purposes.
 /// \param message The plain-text error message.
-sqlite::error::error(const optional< fs::path >& db_filename_,
+sqlite::error::error(const optional<fs::path>& db_filename_,
                      const std::string& message) :
     std::runtime_error(F("%s (sqlite db: %s)") % message %
                        format_db_filename(db_filename_)),
@@ -80,22 +76,19 @@ sqlite::error::error(const optional< fs::path >& db_filename_,
 {
 }
 
-
 /// Destructor for the error.
 sqlite::error::~error(void) throw()
 {
 }
 
-
 /// Returns the path to the database that raised this error.
 ///
 /// \return A database filename as returned by database::db_filename().
-const optional< fs::path >&
+const optional<fs::path>&
 sqlite::error::db_filename(void) const
 {
     return _db_filename;
 }
-
 
 /// Constructs a new error.
 ///
@@ -103,7 +96,7 @@ sqlite::error::db_filename(void) const
 ///     for error reporting purposes.
 /// \param api_function_ The name of the API function that caused the error.
 /// \param message_ The plain-text error message provided by SQLite.
-sqlite::api_error::api_error(const optional< fs::path >& db_filename_,
+sqlite::api_error::api_error(const optional<fs::path>& db_filename_,
                              const std::string& api_function_,
                              const std::string& message_) :
     error(db_filename_, F("%s (sqlite op: %s)") % message_ % api_function_),
@@ -111,12 +104,10 @@ sqlite::api_error::api_error(const optional< fs::path >& db_filename_,
 {
 }
 
-
 /// Destructor for the error.
 sqlite::api_error::~api_error(void) throw()
 {
 }
-
 
 /// Constructs a new api_error with the message in the SQLite database.
 ///
@@ -134,7 +125,6 @@ sqlite::api_error::from_database(database& database_,
                      ::sqlite3_errmsg(c_db));
 }
 
-
 /// Gets the name of the SQlite C API function that caused this error.
 ///
 /// \return The name of the function.
@@ -144,26 +134,22 @@ sqlite::api_error::api_function(void) const
     return _api_function;
 }
 
-
 /// Constructs a new error.
 ///
 /// \param db_filename_ Database filename as returned by database::db_filename()
 ///     for error reporting purposes.
 /// \param name_ The name of the unknown column.
 sqlite::invalid_column_error::invalid_column_error(
-    const optional< fs::path >& db_filename_,
-    const std::string& name_) :
+    const optional<fs::path>& db_filename_, const std::string& name_) :
     error(db_filename_, F("Unknown column '%s'") % name_),
     _column_name(name_)
 {
 }
 
-
 /// Destructor for the error.
 sqlite::invalid_column_error::~invalid_column_error(void) throw()
 {
 }
-
 
 /// Gets the name of the column that could not be found.
 ///

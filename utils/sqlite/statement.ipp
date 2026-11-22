@@ -31,7 +31,6 @@
 
 #include "utils/sqlite/statement.hpp"
 
-
 /// Binds a value to a parameter of a prepared statement.
 ///
 /// \param parameter The name of the parameter; must exist.  This is a raw C
@@ -41,12 +40,11 @@
 /// \param value The value to bind to the parameter.
 ///
 /// \throw api_error If the binding fails.
-template< class T >
+template <class T>
 void
 utils::sqlite::statement::bind(const char* parameter, const T& value)
 {
     bind(bind_parameter_index(parameter), value);
 }
 
-
-#endif  // !defined(UTILS_SQLITE_STATEMENT_IPP)
+#endif // !defined(UTILS_SQLITE_STATEMENT_IPP)

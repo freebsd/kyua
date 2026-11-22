@@ -62,8 +62,6 @@
 #if !defined(UTILS_PROCESS_EXECUTOR_HPP)
 #define UTILS_PROCESS_EXECUTOR_HPP
 
-#include "utils/process/executor_fwd.hpp"
-
 #include <cstddef>
 #include <memory>
 
@@ -72,31 +70,26 @@
 #include "utils/optional.hpp"
 #include "utils/passwd_fwd.hpp"
 #include "utils/process/child_fwd.hpp"
+#include "utils/process/executor_fwd.hpp"
 #include "utils/process/status_fwd.hpp"
 
 namespace utils {
 namespace process {
 namespace executor {
 
-
 namespace detail {
-
 
 extern const char* stdout_name;
 extern const char* stderr_name;
 extern const char* work_subdir;
 
-
 /// Shared reference counter.
-typedef std::shared_ptr< std::size_t > refcnt_t;
+typedef std::shared_ptr<std::size_t> refcnt_t;
 
-
-void setup_child(const utils::optional< utils::passwd::user >,
+void setup_child(const utils::optional<utils::passwd::user>,
                  const utils::fs::path&, const utils::fs::path&);
 
-
-}   // namespace detail
-
+} // namespace detail
 
 /// Maintenance data held while a subprocess is being executed.
 ///
@@ -115,10 +108,10 @@ class exec_handle {
     struct impl;
 
     /// Pointer to internal implementation.
-    std::shared_ptr< impl > _pimpl;
+    std::shared_ptr<impl> _pimpl;
 
     friend class executor_handle;
-    exec_handle(std::shared_ptr< impl >);
+    exec_handle(std::shared_ptr<impl>);
 
 public:
     ~exec_handle(void);
@@ -129,7 +122,6 @@ public:
     const utils::fs::path& stdout_file(void) const;
     const utils::fs::path& stderr_file(void) const;
 };
-
 
 /// Container for the data of a process termination.
 ///
@@ -144,10 +136,10 @@ class exit_handle {
     struct impl;
 
     /// Pointer to internal implementation.
-    std::shared_ptr< impl > _pimpl;
+    std::shared_ptr<impl> _pimpl;
 
     friend class executor_handle;
-    exit_handle(std::shared_ptr< impl >);
+    exit_handle(std::shared_ptr<impl>);
 
     detail::refcnt_t state_owners(void) const;
 
@@ -157,8 +149,8 @@ public:
     void cleanup(void);
 
     int original_pid(void) const;
-    const utils::optional< utils::process::status >& status(void) const;
-    const utils::optional< utils::passwd::user >& unprivileged_user(void) const;
+    const utils::optional<utils::process::status>& status(void) const;
+    const utils::optional<utils::passwd::user>& unprivileged_user(void) const;
     const utils::datetime::timestamp& start_time() const;
     const utils::datetime::timestamp& end_time() const;
     utils::fs::path control_directory(void) const;
@@ -166,7 +158,6 @@ public:
     const utils::fs::path& stdout_file(void) const;
     const utils::fs::path& stderr_file(void) const;
 };
-
 
 /// Handler for the livelihood of the executor.
 ///
@@ -176,23 +167,22 @@ public:
 class executor_handle {
     struct impl;
     /// Pointer to internal implementation.
-    std::shared_ptr< impl > _pimpl;
+    std::shared_ptr<impl> _pimpl;
 
     friend executor_handle setup(void);
     executor_handle(void) throw();
 
     utils::fs::path spawn_pre(void);
-    exec_handle spawn_post(const utils::fs::path&,
-                           const utils::fs::path&,
+    exec_handle spawn_post(const utils::fs::path&, const utils::fs::path&,
                            const utils::fs::path&,
                            const utils::datetime::delta&,
-                           const utils::optional< utils::passwd::user >,
-                           std::unique_ptr< utils::process::child >);
+                           const utils::optional<utils::passwd::user>,
+                           std::unique_ptr<utils::process::child>);
 
     void spawn_followup_pre(void);
     exec_handle spawn_followup_post(const exit_handle&,
                                     const utils::datetime::delta&,
-                                    std::unique_ptr< utils::process::child >);
+                                    std::unique_ptr<utils::process::child>);
 
 public:
     ~executor_handle(void);
@@ -201,16 +191,14 @@ public:
 
     void cleanup(void);
 
-    template< class Hook >
-    exec_handle spawn(Hook,
-                      const datetime::delta&,
-                      const utils::optional< utils::passwd::user >,
-                      const utils::optional< utils::fs::path > = utils::none,
-                      const utils::optional< utils::fs::path > = utils::none);
+    template <class Hook>
+    exec_handle spawn(Hook, const datetime::delta&,
+                      const utils::optional<utils::passwd::user>,
+                      const utils::optional<utils::fs::path> = utils::none,
+                      const utils::optional<utils::fs::path> = utils::none);
 
-    template< class Hook >
-    exec_handle spawn_followup(Hook,
-                               const exit_handle&,
+    template <class Hook>
+    exec_handle spawn_followup(Hook, const exit_handle&,
                                const datetime::delta&);
 
     exit_handle wait(const exec_handle);
@@ -220,13 +208,10 @@ public:
     void check_interrupt(void) const;
 };
 
-
 executor_handle setup(void);
 
+} // namespace executor
+} // namespace process
+} // namespace utils
 
-}  // namespace executor
-}  // namespace process
-}  // namespace utils
-
-
-#endif  // !defined(UTILS_PROCESS_EXECUTOR_HPP)
+#endif // !defined(UTILS_PROCESS_EXECUTOR_HPP)

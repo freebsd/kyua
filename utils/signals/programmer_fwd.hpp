@@ -35,15 +35,12 @@
 namespace utils {
 namespace signals {
 
-
 /// Function type for signal handlers.
 typedef void (*handler_type)(const int);
 
-
 class programmer;
 
+} // namespace signals
+} // namespace utils
 
-}  // namespace signals
-}  // namespace utils
-
-#endif  // !defined(UTILS_SIGNALS_PROGRAMMER_FWD_HPP)
+#endif // !defined(UTILS_SIGNALS_PROGRAMMER_FWD_HPP)

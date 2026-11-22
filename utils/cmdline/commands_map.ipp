@@ -29,28 +29,24 @@
 #include "utils/cmdline/commands_map.hpp"
 #include "utils/sanity.hpp"
 
-
 namespace utils {
 
-
 /// Constructs an empty set of commands.
-template< typename BaseCommand >
-cmdline::commands_map< BaseCommand >::commands_map(void)
+template <typename BaseCommand>
+cmdline::commands_map<BaseCommand>::commands_map(void)
 {
 }
-
 
 /// Destroys a set of commands.
 ///
 /// This releases the dynamically-instantiated objects.
-template< typename BaseCommand >
-cmdline::commands_map< BaseCommand >::~commands_map(void)
+template <typename BaseCommand>
+cmdline::commands_map<BaseCommand>::~commands_map(void)
 {
     for (typename impl_map::iterator iter = _commands.begin();
          iter != _commands.end(); iter++)
         delete (*iter).second;
 }
-
 
 /// Inserts a new command into the map.
 ///
@@ -59,10 +55,10 @@ cmdline::commands_map< BaseCommand >::~commands_map(void)
 ///     command is freed if the call fails.
 /// \param category The category this command belongs to.  Defaults to the empty
 ///     string, which indicates that the command has not be categorized.
-template< typename BaseCommand >
+template <typename BaseCommand>
 void
-cmdline::commands_map< BaseCommand >::insert(command_ptr command,
-                                             const std::string& category)
+cmdline::commands_map<BaseCommand>::insert(command_ptr command,
+                                           const std::string& category)
 {
     INV(_commands.find(command->name()) == _commands.end());
     BaseCommand* ptr = command.release();
@@ -70,7 +66,6 @@ cmdline::commands_map< BaseCommand >::insert(command_ptr command,
     _commands[ptr->name()] = ptr;
     _categories[category].insert(ptr->name());
 }
-
 
 /// Inserts a new command into the map.
 ///
@@ -82,56 +77,52 @@ cmdline::commands_map< BaseCommand >::insert(command_ptr command,
 ///     command is freed if the call fails.
 /// \param category The category this command belongs to.  Defaults to the empty
 ///     string, which indicates that the command has not be categorized.
-template< typename BaseCommand >
+template <typename BaseCommand>
 void
-cmdline::commands_map< BaseCommand >::insert(BaseCommand* command,
-                                             const std::string& category)
+cmdline::commands_map<BaseCommand>::insert(BaseCommand* command,
+                                           const std::string& category)
 {
     insert(command_ptr(command), category);
 }
 
-
 /// Checks whether the list of commands is empty.
 ///
 /// \return True if there are no commands in this map.
-template< typename BaseCommand >
+template <typename BaseCommand>
 bool
-cmdline::commands_map< BaseCommand >::empty(void) const
+cmdline::commands_map<BaseCommand>::empty(void) const
 {
     return _commands.empty();
 }
 
-
 /// Returns a constant iterator to the beginning of the categories mapping.
 ///
 /// \return A map (string -> BaseCommand*) iterator.
-template< typename BaseCommand >
-typename cmdline::commands_map< BaseCommand >::const_iterator
-cmdline::commands_map< BaseCommand >::begin(void) const
+template <typename BaseCommand>
+typename cmdline::commands_map<BaseCommand>::const_iterator
+cmdline::commands_map<BaseCommand>::begin(void) const
 {
     return _categories.begin();
 }
 
-
 /// Returns a constant iterator to the end of the categories mapping.
 ///
 /// \return A map (string -> BaseCommand*) iterator.
-template< typename BaseCommand >
-typename cmdline::commands_map< BaseCommand >::const_iterator
-cmdline::commands_map< BaseCommand >::end(void) const
+template <typename BaseCommand>
+typename cmdline::commands_map<BaseCommand>::const_iterator
+cmdline::commands_map<BaseCommand>::end(void) const
 {
     return _categories.end();
 }
-
 
 /// Finds a command by name; mutable version.
 ///
 /// \param name The name of the command to locate.
 ///
 /// \return The command itself or NULL if it does not exist.
-template< typename BaseCommand >
+template <typename BaseCommand>
 BaseCommand*
-cmdline::commands_map< BaseCommand >::find(const std::string& name)
+cmdline::commands_map<BaseCommand>::find(const std::string& name)
 {
     typename impl_map::iterator iter = _commands.find(name);
     if (iter == _commands.end())
@@ -140,15 +131,14 @@ cmdline::commands_map< BaseCommand >::find(const std::string& name)
         return (*iter).second;
 }
 
-
 /// Finds a command by name; constant version.
 ///
 /// \param name The name of the command to locate.
 ///
 /// \return The command itself or NULL if it does not exist.
-template< typename BaseCommand >
+template <typename BaseCommand>
 const BaseCommand*
-cmdline::commands_map< BaseCommand >::find(const std::string& name) const
+cmdline::commands_map<BaseCommand>::find(const std::string& name) const
 {
     typename impl_map::const_iterator iter = _commands.find(name);
     if (iter == _commands.end())
@@ -157,5 +147,4 @@ cmdline::commands_map< BaseCommand >::find(const std::string& name) const
         return (*iter).second;
 }
 
-
-}  // namespace utils
+} // namespace utils

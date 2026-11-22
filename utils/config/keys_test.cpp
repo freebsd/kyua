@@ -26,14 +26,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/config/keys.hpp"
-
 #include <atf-c++.hpp>
 
 #include "utils/config/exceptions.hpp"
+#include "utils/config/keys.hpp"
 
 namespace config = utils::config;
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(flatten_key__one);
 ATF_TEST_CASE_BODY(flatten_key__one)
@@ -42,7 +40,6 @@ ATF_TEST_CASE_BODY(flatten_key__one)
     key.push_back("foo");
     ATF_REQUIRE_EQ("foo", config::detail::flatten_key(key));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(flatten_key__many);
 ATF_TEST_CASE_BODY(flatten_key__many)
@@ -54,7 +51,6 @@ ATF_TEST_CASE_BODY(flatten_key__many)
     ATF_REQUIRE_EQ("foo.1.bar", config::detail::flatten_key(key));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(parse_key__one);
 ATF_TEST_CASE_BODY(parse_key__one)
 {
@@ -62,7 +58,6 @@ ATF_TEST_CASE_BODY(parse_key__one)
     exp_key.push_back("one");
     ATF_REQUIRE(exp_key == config::detail::parse_key("one"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(parse_key__many);
 ATF_TEST_CASE_BODY(parse_key__many)
@@ -74,15 +69,12 @@ ATF_TEST_CASE_BODY(parse_key__many)
     ATF_REQUIRE(exp_key == config::detail::parse_key("one.2.foo"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(parse_key__empty_key);
 ATF_TEST_CASE_BODY(parse_key__empty_key)
 {
-    ATF_REQUIRE_THROW_RE(config::invalid_key_error,
-                         "Empty key",
+    ATF_REQUIRE_THROW_RE(config::invalid_key_error, "Empty key",
                          config::detail::parse_key(""));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(parse_key__empty_component);
 ATF_TEST_CASE_BODY(parse_key__empty_component)
@@ -100,7 +92,6 @@ ATF_TEST_CASE_BODY(parse_key__empty_component)
                          "Empty component in key 'a..b'",
                          config::detail::parse_key("a..b"));
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

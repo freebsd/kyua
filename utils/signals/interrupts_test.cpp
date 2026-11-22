@@ -33,10 +33,9 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include <atf-c++.hpp>
 #include <cstdlib>
 #include <iostream>
-
-#include <atf-c++.hpp>
 
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
@@ -49,13 +48,10 @@ namespace fs = utils::fs;
 namespace process = utils::process;
 namespace signals = utils::signals;
 
-
 namespace {
-
 
 /// Set to the signal that fired; -1 if none.
 static volatile int fired_signal = -1;
-
 
 /// Test handler for signals.
 ///
@@ -68,7 +64,6 @@ signal_handler(const int signo)
     PRE(fired_signal == -1 || fired_signal == signo);
     fired_signal = signo;
 }
-
 
 /// Child process that pauses waiting to be killed.
 static void
@@ -84,7 +79,6 @@ pause_child(void)
         std::cerr << F("Signal received; pid=%s\n") % ::getpid();
     }
 }
-
 
 /// Checks that interrupts_handler() handles a particular signal.
 ///
@@ -137,7 +131,6 @@ check_interrupts_handler(const int signo, const bool explicit_unprogram)
     test_handler.unprogram();
 }
 
-
 /// Checks that interrupts_inhibiter() handles a particular signal.
 ///
 /// \param signo The signal to check.
@@ -161,9 +154,7 @@ check_interrupts_inhibiter(const int signo)
     test_handler.unprogram();
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 ATF_TEST_CASE_WITHOUT_HEAD(interrupts_handler__sighup);
 ATF_TEST_CASE_BODY(interrupts_handler__sighup)
@@ -174,7 +165,6 @@ ATF_TEST_CASE_BODY(interrupts_handler__sighup)
     check_interrupts_handler(SIGHUP, false);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(interrupts_handler__sigint);
 ATF_TEST_CASE_BODY(interrupts_handler__sigint)
 {
@@ -183,7 +173,6 @@ ATF_TEST_CASE_BODY(interrupts_handler__sigint)
     check_interrupts_handler(SIGINT, true);
     check_interrupts_handler(SIGINT, false);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(interrupts_handler__sigterm);
 ATF_TEST_CASE_BODY(interrupts_handler__sigterm)
@@ -194,7 +183,6 @@ ATF_TEST_CASE_BODY(interrupts_handler__sigterm)
     check_interrupts_handler(SIGTERM, false);
 }
 
-
 ATF_TEST_CASE(interrupts_handler__kill_children);
 ATF_TEST_CASE_HEAD(interrupts_handler__kill_children)
 {
@@ -202,10 +190,10 @@ ATF_TEST_CASE_HEAD(interrupts_handler__kill_children)
 }
 ATF_TEST_CASE_BODY(interrupts_handler__kill_children)
 {
-    std::unique_ptr< process::child > child1(process::child::fork_files(
-         pause_child, fs::path("/dev/stdout"), fs::path("/dev/stderr")));
-    std::unique_ptr< process::child > child2(process::child::fork_files(
-         pause_child, fs::path("/dev/stdout"), fs::path("/dev/stderr")));
+    std::unique_ptr<process::child> child1(process::child::fork_files(
+        pause_child, fs::path("/dev/stdout"), fs::path("/dev/stderr")));
+    std::unique_ptr<process::child> child2(process::child::fork_files(
+        pause_child, fs::path("/dev/stdout"), fs::path("/dev/stderr")));
 
     signals::interrupts_handler interrupts;
 
@@ -223,13 +211,11 @@ ATF_TEST_CASE_BODY(interrupts_handler__kill_children)
     ATF_REQUIRE_EQ(SIGKILL, status2.termsig());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(interrupts_inhibiter__sigalrm);
 ATF_TEST_CASE_BODY(interrupts_inhibiter__sigalrm)
 {
     check_interrupts_inhibiter(SIGALRM);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(interrupts_inhibiter__sighup);
 ATF_TEST_CASE_BODY(interrupts_inhibiter__sighup)
@@ -237,20 +223,17 @@ ATF_TEST_CASE_BODY(interrupts_inhibiter__sighup)
     check_interrupts_inhibiter(SIGHUP);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(interrupts_inhibiter__sigint);
 ATF_TEST_CASE_BODY(interrupts_inhibiter__sigint)
 {
     check_interrupts_inhibiter(SIGINT);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(interrupts_inhibiter__sigterm);
 ATF_TEST_CASE_BODY(interrupts_inhibiter__sigterm)
 {
     check_interrupts_inhibiter(SIGTERM);
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

@@ -34,11 +34,9 @@
 
 namespace model {
 
-
 class metadata;
 class metadata_builder;
 
+} // namespace model
 
-}  // namespace model
-
-#endif  // !defined(MODEL_METADATA_FWD_HPP)
+#endif // !defined(MODEL_METADATA_FWD_HPP)

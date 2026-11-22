@@ -26,10 +26,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "cli/cmd_db_migrate.hpp"
-
 #include <cstdlib>
 
+#include "cli/cmd_db_migrate.hpp"
 #include "cli/common.ipp"
 #include "store/exceptions.hpp"
 #include "store/layout.hpp"
@@ -47,17 +46,16 @@ namespace layout = store::layout;
 
 using cli::cmd_db_migrate;
 
-
 /// Default constructor for cmd_db_migrate.
-cmd_db_migrate::cmd_db_migrate(void) : cli_command(
-    "db-migrate", "", 0, 0,
-    "Upgrades the schema of an existing results file to the currently "
-    "implemented version.  A backup of the results file is created, but "
-    "this operation is not reversible")
+cmd_db_migrate::cmd_db_migrate(void) :
+    cli_command(
+        "db-migrate", "", 0, 0,
+        "Upgrades the schema of an existing results file to the currently "
+        "implemented version.  A backup of the results file is created, but "
+        "this operation is not reversible")
 {
     add_option(results_file_open_option);
 }
-
 
 /// Entry point for the "db-migrate" subcommand.
 ///
@@ -71,8 +69,8 @@ cmd_db_migrate::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
                     const config::tree& /* user_config */)
 {
     try {
-        const fs::path results_file = layout::find_results(
-            results_file_open(cmdline));
+        const fs::path results_file =
+            layout::find_results(results_file_open(cmdline));
         store::migrate_schema(results_file);
         return EXIT_SUCCESS;
     } catch (const store::error& e) {

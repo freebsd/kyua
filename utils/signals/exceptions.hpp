@@ -37,14 +37,12 @@
 namespace utils {
 namespace signals {
 
-
 /// Base exceptions for signals errors.
 class error : public std::runtime_error {
 public:
     explicit error(const std::string&);
     ~error(void) throw();
 };
-
 
 /// Denotes the reception of a signal to controlledly terminate execution.
 class interrupted_error : public error {
@@ -57,7 +55,6 @@ public:
 
     int signo(void) const;
 };
-
 
 /// Exceptions for errno-based errors.
 ///
@@ -75,9 +72,7 @@ public:
     int original_errno(void) const throw();
 };
 
+} // namespace signals
+} // namespace utils
 
-}  // namespace signals
-}  // namespace utils
-
-
-#endif  // !defined(UTILS_SIGNALS_EXCEPTIONS_HPP)
+#endif // !defined(UTILS_SIGNALS_EXCEPTIONS_HPP)

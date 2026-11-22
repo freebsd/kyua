@@ -37,26 +37,22 @@
 
 namespace cli {
 
-
 /// Implementation of the "help" subcommand.
-class cmd_help : public cli_command
-{
+class cmd_help : public cli_command {
     /// The set of program-wide options for which to provide help.
     const utils::cmdline::options_vector* _options;
 
     /// The set of commands for which to provide help.
-    const utils::cmdline::commands_map< cli_command >* _commands;
+    const utils::cmdline::commands_map<cli_command>* _commands;
 
 public:
     cmd_help(const utils::cmdline::options_vector*,
-             const utils::cmdline::commands_map< cli_command >*);
+             const utils::cmdline::commands_map<cli_command>*);
 
     int run(utils::cmdline::ui*, const utils::cmdline::parsed_cmdline&,
             const utils::config::tree&);
 };
 
+} // namespace cli
 
-}  // namespace cli
-
-
-#endif  // !defined(CLI_CMD_HELP_HPP)
+#endif // !defined(CLI_CMD_HELP_HPP)

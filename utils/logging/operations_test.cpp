@@ -32,10 +32,9 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include <atf-c++.hpp>
 #include <fstream>
 #include <string>
-
-#include <atf-c++.hpp>
 
 #include "utils/datetime.hpp"
 #include "utils/format/macros.hpp"
@@ -45,7 +44,6 @@ extern "C" {
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace logging = utils::logging;
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(generate_log_name__before_log);
 ATF_TEST_CASE_BODY(generate_log_name__before_log)
@@ -61,7 +59,6 @@ ATF_TEST_CASE_BODY(generate_log_name__before_log)
     ATF_REQUIRE_EQ(fs::path("/some/dir/foobar.20110221-181000.log"),
                    logging::generate_log_name(fs::path("/some/dir"), "foobar"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(generate_log_name__after_log);
 ATF_TEST_CASE_BODY(generate_log_name__after_log)
@@ -82,7 +79,6 @@ ATF_TEST_CASE_BODY(generate_log_name__after_log)
     ATF_REQUIRE_EQ(fs::path("/some/dir/foobar.20110221-181500.log"),
                    logging::generate_log_name(fs::path("/some/dir"), "foobar"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(log);
 ATF_TEST_CASE_BODY(log)
@@ -110,19 +106,18 @@ ATF_TEST_CASE_BODY(log)
 
     std::string line;
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ(
-        (F("20110221-181000 D %s f1:1: Debug message") % pid).str(), line);
+    ATF_REQUIRE_EQ((F("20110221-181000 D %s f1:1: Debug message") % pid).str(),
+                   line);
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ(
-        (F("20110221-181001 E %s f2:2: Error message") % pid).str(), line);
+    ATF_REQUIRE_EQ((F("20110221-181001 E %s f2:2: Error message") % pid).str(),
+                   line);
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ(
-        (F("20110221-181002 I %s f3:3: Info message") % pid).str(), line);
+    ATF_REQUIRE_EQ((F("20110221-181002 I %s f3:3: Info message") % pid).str(),
+                   line);
     ATF_REQUIRE(std::getline(input, line).good());
     ATF_REQUIRE_EQ(
         (F("20110221-181003 W %s f4:4: Warning message") % pid).str(), line);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(set_inmemory__reset);
 ATF_TEST_CASE_BODY(set_inmemory__reset)
@@ -145,7 +140,6 @@ ATF_TEST_CASE_BODY(set_inmemory__reset)
         (F("20110221-182000 D %s file:123: Debug message") % pid).str(), line);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(set_persistency__no_backlog);
 ATF_TEST_CASE_BODY(set_persistency__no_backlog)
 {
@@ -164,7 +158,6 @@ ATF_TEST_CASE_BODY(set_persistency__no_backlog)
     ATF_REQUIRE_EQ(
         (F("20110221-182000 D %s file:123: Debug message") % pid).str(), line);
 }
-
 
 /// Creates a log for testing purposes, buffering messages on start.
 ///
@@ -202,7 +195,6 @@ create_log(const std::string& level, const std::string& path)
     logging::log(logging::level_warning, "file4", 44, "Warning 2");
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(set_persistency__some_backlog__debug);
 ATF_TEST_CASE_BODY(set_persistency__some_backlog__debug)
 {
@@ -215,31 +207,30 @@ ATF_TEST_CASE_BODY(set_persistency__some_backlog__debug)
 
     std::string line;
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ(
-        (F("20110319-114000 D %s file1:11: Debug 1") % pid).str(), line);
+    ATF_REQUIRE_EQ((F("20110319-114000 D %s file1:11: Debug 1") % pid).str(),
+                   line);
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ(
-        (F("20110319-114001 E %s file2:22: Error 1") % pid).str(), line);
+    ATF_REQUIRE_EQ((F("20110319-114001 E %s file2:22: Error 1") % pid).str(),
+                   line);
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ(
-        (F("20110319-114002 I %s file3:33: Info 1") % pid).str(), line);
+    ATF_REQUIRE_EQ((F("20110319-114002 I %s file3:33: Info 1") % pid).str(),
+                   line);
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ(
-        (F("20110319-114003 W %s file4:44: Warning 1") % pid).str(), line);
+    ATF_REQUIRE_EQ((F("20110319-114003 W %s file4:44: Warning 1") % pid).str(),
+                   line);
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ(
-        (F("20110319-114004 D %s file1:11: Debug 2") % pid).str(), line);
+    ATF_REQUIRE_EQ((F("20110319-114004 D %s file1:11: Debug 2") % pid).str(),
+                   line);
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ(
-        (F("20110319-114005 E %s file2:22: Error 2") % pid).str(), line);
+    ATF_REQUIRE_EQ((F("20110319-114005 E %s file2:22: Error 2") % pid).str(),
+                   line);
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ(
-        (F("20110319-114006 I %s file3:33: Info 2") % pid).str(), line);
+    ATF_REQUIRE_EQ((F("20110319-114006 I %s file3:33: Info 2") % pid).str(),
+                   line);
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ(
-        (F("20110319-114007 W %s file4:44: Warning 2") % pid).str(), line);
+    ATF_REQUIRE_EQ((F("20110319-114007 W %s file4:44: Warning 2") % pid).str(),
+                   line);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(set_persistency__some_backlog__error);
 ATF_TEST_CASE_BODY(set_persistency__some_backlog__error)
@@ -253,13 +244,12 @@ ATF_TEST_CASE_BODY(set_persistency__some_backlog__error)
 
     std::string line;
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ(
-        (F("20110319-114001 E %s file2:22: Error 1") % pid).str(), line);
+    ATF_REQUIRE_EQ((F("20110319-114001 E %s file2:22: Error 1") % pid).str(),
+                   line);
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ(
-        (F("20110319-114005 E %s file2:22: Error 2") % pid).str(), line);
+    ATF_REQUIRE_EQ((F("20110319-114005 E %s file2:22: Error 2") % pid).str(),
+                   line);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(set_persistency__some_backlog__info);
 ATF_TEST_CASE_BODY(set_persistency__some_backlog__info)
@@ -273,25 +263,24 @@ ATF_TEST_CASE_BODY(set_persistency__some_backlog__info)
 
     std::string line;
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ(
-        (F("20110319-114001 E %s file2:22: Error 1") % pid).str(), line);
+    ATF_REQUIRE_EQ((F("20110319-114001 E %s file2:22: Error 1") % pid).str(),
+                   line);
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ(
-        (F("20110319-114002 I %s file3:33: Info 1") % pid).str(), line);
+    ATF_REQUIRE_EQ((F("20110319-114002 I %s file3:33: Info 1") % pid).str(),
+                   line);
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ(
-        (F("20110319-114003 W %s file4:44: Warning 1") % pid).str(), line);
+    ATF_REQUIRE_EQ((F("20110319-114003 W %s file4:44: Warning 1") % pid).str(),
+                   line);
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ(
-        (F("20110319-114005 E %s file2:22: Error 2") % pid).str(), line);
+    ATF_REQUIRE_EQ((F("20110319-114005 E %s file2:22: Error 2") % pid).str(),
+                   line);
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ(
-        (F("20110319-114006 I %s file3:33: Info 2") % pid).str(), line);
+    ATF_REQUIRE_EQ((F("20110319-114006 I %s file3:33: Info 2") % pid).str(),
+                   line);
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ(
-        (F("20110319-114007 W %s file4:44: Warning 2") % pid).str(), line);
+    ATF_REQUIRE_EQ((F("20110319-114007 W %s file4:44: Warning 2") % pid).str(),
+                   line);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(set_persistency__some_backlog__warning);
 ATF_TEST_CASE_BODY(set_persistency__some_backlog__warning)
@@ -305,19 +294,18 @@ ATF_TEST_CASE_BODY(set_persistency__some_backlog__warning)
 
     std::string line;
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ(
-        (F("20110319-114001 E %s file2:22: Error 1") % pid).str(), line);
+    ATF_REQUIRE_EQ((F("20110319-114001 E %s file2:22: Error 1") % pid).str(),
+                   line);
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ(
-        (F("20110319-114003 W %s file4:44: Warning 1") % pid).str(), line);
+    ATF_REQUIRE_EQ((F("20110319-114003 W %s file4:44: Warning 1") % pid).str(),
+                   line);
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ(
-        (F("20110319-114005 E %s file2:22: Error 2") % pid).str(), line);
+    ATF_REQUIRE_EQ((F("20110319-114005 E %s file2:22: Error 2") % pid).str(),
+                   line);
     ATF_REQUIRE(std::getline(input, line).good());
-    ATF_REQUIRE_EQ(
-        (F("20110319-114007 W %s file4:44: Warning 2") % pid).str(), line);
+    ATF_REQUIRE_EQ((F("20110319-114007 W %s file4:44: Warning 2") % pid).str(),
+                   line);
 }
-
 
 ATF_TEST_CASE(set_persistency__fail);
 ATF_TEST_CASE_HEAD(set_persistency__fail)
@@ -334,7 +322,6 @@ ATF_TEST_CASE_BODY(set_persistency__fail)
                          logging::set_persistency("debug",
                                                   fs::path("dir/fail.log")));
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

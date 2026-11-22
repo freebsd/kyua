@@ -46,14 +46,13 @@
 #if !defined(UTILS_FORMAT_FORMATTER_HPP)
 #define UTILS_FORMAT_FORMATTER_HPP
 
-#include "utils/format/formatter_fwd.hpp"
-
 #include <sstream>
 #include <string>
 
+#include "utils/format/formatter_fwd.hpp"
+
 namespace utils {
 namespace format {
-
 
 /// Mechanism to format strings similar to printf.
 ///
@@ -111,13 +110,11 @@ public:
     const std::string& str(void) const;
     operator const std::string&(void) const;
 
-    template< typename Type > formatter operator%(const Type&) const;
+    template <typename Type> formatter operator%(const Type&) const;
     formatter operator%(const bool&) const;
 };
 
+} // namespace format
+} // namespace utils
 
-}  // namespace format
-}  // namespace utils
-
-
-#endif  // !defined(UTILS_FORMAT_FORMATTER_HPP)
+#endif // !defined(UTILS_FORMAT_FORMATTER_HPP)

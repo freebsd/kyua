@@ -40,22 +40,17 @@ extern "C" {
 
 namespace units = utils::units;
 
-
 /// Constructs a zero bytes quantity.
-units::bytes::bytes(void) :
-    _count(0)
+units::bytes::bytes(void) : _count(0)
 {
 }
-
 
 /// Constructs an arbitrary bytes quantity.
 ///
 /// \param count_ The amount of bytes in the quantity.
-units::bytes::bytes(const uint64_t count_) :
-    _count(count_)
+units::bytes::bytes(const uint64_t count_) : _count(count_)
 {
 }
-
 
 /// Parses a string into a bytes quantity.
 ///
@@ -75,11 +70,24 @@ units::bytes::parse(const std::string& in_str)
     {
         const char unit = str[str.length() - 1];
         switch (unit) {
-        case 'T': case 't': multiplier = TB; break;
-        case 'G': case 'g': multiplier = GB; break;
-        case 'M': case 'm': multiplier = MB; break;
-        case 'K': case 'k': multiplier = KB; break;
-        default: multiplier = 1;
+        case 'T':
+        case 't':
+            multiplier = TB;
+            break;
+        case 'G':
+        case 'g':
+            multiplier = GB;
+            break;
+        case 'M':
+        case 'm':
+            multiplier = MB;
+            break;
+        case 'K':
+        case 'k':
+            multiplier = KB;
+            break;
+        default:
+            multiplier = 1;
         }
         if (multiplier != 1)
             str.erase(str.length() - 1);
@@ -97,14 +105,13 @@ units::bytes::parse(const std::string& in_str)
 
     double count;
     try {
-        count = text::to_type< double >(str);
+        count = text::to_type<double>(str);
     } catch (const text::value_error& e) {
         throw std::runtime_error(F("Invalid bytes quantity '%s'") % in_str);
     }
 
     return bytes(uint64_t(count * multiplier));
 }
-
 
 /// Formats a bytes quantity for user consumption.
 ///
@@ -113,25 +120,23 @@ std::string
 units::bytes::format(void) const
 {
     if (_count >= TB) {
-        return F("%.2sT") % (static_cast< float >(_count) / TB);
+        return F("%.2sT") % (static_cast<float>(_count) / TB);
     } else if (_count >= GB) {
-        return F("%.2sG") % (static_cast< float >(_count) / GB);
+        return F("%.2sG") % (static_cast<float>(_count) / GB);
     } else if (_count >= MB) {
-        return F("%.2sM") % (static_cast< float >(_count) / MB);
+        return F("%.2sM") % (static_cast<float>(_count) / MB);
     } else if (_count >= KB) {
-        return F("%.2sK") % (static_cast< float >(_count) / KB);
+        return F("%.2sK") % (static_cast<float>(_count) / KB);
     } else {
         return F("%s") % _count;
     }
 }
-
 
 /// Implicit conversion to an integral representation.
 units::bytes::operator uint64_t(void) const
 {
     return _count;
 }
-
 
 /// Extracts a bytes quantity from a stream.
 ///
@@ -156,7 +161,6 @@ units::operator>>(std::istream& input, bytes& rhs)
     }
     return input;
 }
-
 
 /// Injects a bytes quantity into a stream.
 ///

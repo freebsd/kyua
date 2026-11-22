@@ -29,18 +29,18 @@
 #include "utils/memory.hpp"
 
 #if defined(HAVE_CONFIG_H)
-#   include "config.h"
+#include "config.h"
 #endif
 
 extern "C" {
 #if defined(HAVE_SYS_TYPES_H)
-#   include <sys/types.h>
+#include <sys/types.h>
 #endif
 #if defined(HAVE_SYS_PARAM_H)
-#   include <sys/param.h>
+#include <sys/param.h>
 #endif
 #if defined(HAVE_SYS_SYSCTL_H)
-#   include <sys/sysctl.h>
+#include <sys/sysctl.h>
 #endif
 }
 
@@ -52,32 +52,26 @@ extern "C" {
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
-#include "utils/units.hpp"
 #include "utils/sanity.hpp"
+#include "utils/units.hpp"
 
 namespace units = utils::units;
 
-
 namespace {
-
 
 /// Name of the method to query the available memory as detected by configure.
 static const char* query_type = MEMORY_QUERY_TYPE;
 
-
 /// Value of query_type when we do not know how to query the memory.
 static const char* query_type_unknown = "unknown";
 
-
 /// Value of query_type when we have to use sysctlbyname(3).
 static const char* query_type_sysctlbyname = "sysctlbyname";
-
 
 /// Name of the sysctl MIB with the physical memory as detected by configure.
 ///
 /// This should only be used if memory_query_type is 'sysctl'.
 static const char* query_sysctl_mib = MEMORY_QUERY_SYSCTL_MIB;
-
 
 #if !defined(HAVE_SYSCTLBYNAME)
 /// Stub for sysctlbyname(3) for systems that don't have it.
@@ -90,19 +84,15 @@ static const char* query_sysctl_mib = MEMORY_QUERY_SYSCTL_MIB;
 ///
 /// \return Nothing; this always crashes.
 static int
-sysctlbyname(const char* /* name */,
-             void* /* oldp */,
-             std::size_t* /* oldlenp */,
-             const void* /* newp */,
+sysctlbyname(const char* /* name */, void* /* oldp */,
+             std::size_t* /* oldlenp */, const void* /* newp */,
              std::size_t /* newlen */)
 {
     UNREACHABLE;
 }
 #endif
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Gets the value of an integral sysctl MIB.
 ///
@@ -124,12 +114,11 @@ query_sysctl(const char* mib)
     std::size_t value_length = sizeof(value);
     if (::sysctlbyname(mib, &value, &value_length, NULL, 0) == -1) {
         const int original_errno = errno;
-        throw std::runtime_error(F("Failed to get sysctl(%s) value: %s") %
-                                 mib % std::strerror(original_errno));
+        throw std::runtime_error(F("Failed to get sysctl(%s) value: %s") % mib %
+                                 std::strerror(original_errno));
     }
     return value;
 }
-
 
 /// Queries the total amount of physical memory.
 ///

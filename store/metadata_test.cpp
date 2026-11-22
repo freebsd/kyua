@@ -26,11 +26,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "store/metadata.hpp"
-
 #include <atf-c++.hpp>
 
 #include "store/exceptions.hpp"
+#include "store/metadata.hpp"
 #include "store/write_backend.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/logging/operations.hpp"
@@ -39,9 +38,7 @@
 namespace logging = utils::logging;
 namespace sqlite = utils::sqlite;
 
-
 namespace {
-
 
 /// Creates a test in-memory database.
 ///
@@ -62,9 +59,7 @@ create_database(void)
     return db;
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 ATF_TEST_CASE(fetch_latest__ok);
 ATF_TEST_CASE_HEAD(fetch_latest__ok)
@@ -85,7 +80,6 @@ ATF_TEST_CASE_BODY(fetch_latest__ok)
     ATF_REQUIRE_EQ(512, metadata.schema_version());
 }
 
-
 ATF_TEST_CASE(fetch_latest__empty_metadata);
 ATF_TEST_CASE_HEAD(fetch_latest__empty_metadata)
 {
@@ -99,7 +93,6 @@ ATF_TEST_CASE_BODY(fetch_latest__empty_metadata)
                          store::metadata::fetch_latest(db));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(fetch_latest__no_timestamp);
 ATF_TEST_CASE_BODY(fetch_latest__no_timestamp)
 {
@@ -107,11 +100,9 @@ ATF_TEST_CASE_BODY(fetch_latest__no_timestamp)
     db.exec("CREATE TABLE metadata (schema_version INTEGER)");
     db.exec("INSERT INTO metadata VALUES (3)");
 
-    ATF_REQUIRE_THROW_RE(store::integrity_error,
-                         "Invalid metadata.*timestamp",
+    ATF_REQUIRE_THROW_RE(store::integrity_error, "Invalid metadata.*timestamp",
                          store::metadata::fetch_latest(db));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(fetch_latest__no_schema_version);
 ATF_TEST_CASE_BODY(fetch_latest__no_schema_version)
@@ -125,7 +116,6 @@ ATF_TEST_CASE_BODY(fetch_latest__no_schema_version)
                          store::metadata::fetch_latest(db));
 }
 
-
 ATF_TEST_CASE(fetch_latest__invalid_timestamp);
 ATF_TEST_CASE_HEAD(fetch_latest__invalid_timestamp)
 {
@@ -138,11 +128,9 @@ ATF_TEST_CASE_BODY(fetch_latest__invalid_timestamp)
     db.exec("INSERT INTO metadata (schema_version, timestamp) "
             "VALUES (3, 'foo')");
 
-    ATF_REQUIRE_THROW_RE(store::integrity_error,
-                         "timestamp.*invalid type",
+    ATF_REQUIRE_THROW_RE(store::integrity_error, "timestamp.*invalid type",
                          store::metadata::fetch_latest(db));
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

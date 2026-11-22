@@ -32,15 +32,14 @@
 #if !defined(UTILS_TEXT_TABLE_HPP)
 #define UTILS_TEXT_TABLE_HPP
 
-#include "utils/text/table_fwd.hpp"
-
 #include <cstddef>
 #include <string>
 #include <vector>
 
+#include "utils/text/table_fwd.hpp"
+
 namespace utils {
 namespace text {
-
 
 /// Representation of a table.
 ///
@@ -56,7 +55,7 @@ class table {
     widths_vector _column_widths;
 
     /// Type defining the collection of rows in the table.
-    typedef std::vector< table_row > rows_vector;
+    typedef std::vector<table_row> rows_vector;
 
     /// The rows of the table.
     ///
@@ -68,8 +67,8 @@ public:
     table(const table_row::size_type);
 
     widths_vector::size_type ncolumns(void) const;
-    widths_vector::value_type column_width(const widths_vector::size_type)
-        const;
+    widths_vector::value_type
+    column_width(const widths_vector::size_type) const;
     const widths_vector& column_widths(void) const;
 
     void add_row(const table_row&);
@@ -82,7 +81,6 @@ public:
     const_iterator begin(void) const;
     const_iterator end(void) const;
 };
-
 
 /// Settings to format a table.
 ///
@@ -115,11 +113,10 @@ public:
     table_formatter& set_separator(const char*);
     table_formatter& set_table_width(const std::size_t);
 
-    std::vector< std::string > format(const table&) const;
+    std::vector<std::string> format(const table&) const;
 };
 
+} // namespace text
+} // namespace utils
 
-}  // namespace text
-}  // namespace utils
-
-#endif  // !defined(UTILS_TEXT_TABLE_HPP)
+#endif // !defined(UTILS_TEXT_TABLE_HPP)

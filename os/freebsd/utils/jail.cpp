@@ -29,9 +29,10 @@
 #include "os/freebsd/utils/jail.hpp"
 
 extern "C" {
+#include <sys/stat.h>
+
 #include <limits.h>
 #include <unistd.h>
-#include <sys/stat.h>
 
 // FreeBSD sysctl facility
 #include <sys/sysctl.h>
@@ -51,9 +52,9 @@ extern "C" {
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
 #include "model/test_program.hpp"
+#include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/process/child.ipp"
-#include "utils/format/macros.hpp"
 #include "utils/process/operations.hpp"
 #include "utils/process/status.hpp"
 
@@ -63,10 +64,8 @@ namespace fs = utils::fs;
 using utils::process::args_vector;
 using utils::process::child;
 
-
 static const size_t jail_name_max_len = MAXHOSTNAMELEN - 1;
 static const char* jail_name_prefix = "kyua";
-
 
 /// Functor to run a program.
 class run {
@@ -81,31 +80,26 @@ public:
     ///
     /// \param program Program binary absolute path.
     /// \param args Program arguments.
-    run(
-        const utils::fs::path& program,
-        const args_vector& args) :
+    run(const utils::fs::path& program, const args_vector& args) :
         _program(program),
         _args(args)
     {
     }
 
     /// Body of the subprocess.
-    void
-    operator()(void)
+    void operator()(void)
     {
         process::exec(_program, _args);
     }
 };
 
-
 namespace freebsd {
 namespace utils {
 
-
-std::vector< std::string >
+std::vector<std::string>
 jail::parse_params_string(const std::string& str)
 {
-    std::vector< std::string > params;
+    std::vector<std::string> params;
     std::string p;
     char quote = 0;
 
@@ -129,7 +123,6 @@ jail::parse_params_string(const std::string& str)
     return params;
 }
 
-
 /// Constructs a jail name based on program and test case.
 ///
 /// The formula is "kyua" + <program path> + "_" + <test case name>.
@@ -143,22 +136,18 @@ jail::parse_params_string(const std::string& str)
 ///
 /// \return A jail name string.
 std::string
-jail::make_name(const fs::path& program,
-                const std::string& test_case_name)
+jail::make_name(const fs::path& program, const std::string& test_case_name)
 {
-    std::string name = std::regex_replace(
-        program.str() + "_" + test_case_name,
-        std::regex(R"([^A-Za-z0-9_])"),
-        "_");
+    std::string name = std::regex_replace(program.str() + "_" + test_case_name,
+                                          std::regex(R"([^A-Za-z0-9_])"), "_");
 
-    const std::string::size_type limit =
-        jail_name_max_len - strlen(jail_name_prefix);
+    const std::string::size_type limit = jail_name_max_len -
+        strlen(jail_name_prefix);
     if (name.length() > limit)
         name.erase(0, name.length() - limit);
 
     return jail_name_prefix + name;
 }
-
 
 /// Create a jail with a given name and params string.
 ///
@@ -170,8 +159,7 @@ jail::make_name(const fs::path& program,
 /// \param jail_name Name of a new jail.
 /// \param jail_params String of jail parameters.
 void
-jail::create(const std::string& jail_name,
-             const std::string& jail_params)
+jail::create(const std::string& jail_name, const std::string& jail_params)
 {
     args_vector av;
 
@@ -186,18 +174,22 @@ jail::create(const std::string& jail_name,
     int max;
     size_t len = sizeof(max);
     if (::sysctlbyname(oid, &max, &len, NULL, 0) != 0) {
-        std::cerr << "sysctlbyname(" << oid << ") errors: "
-            << strerror(errno) << ".\n";
+        std::cerr << "sysctlbyname(" << oid << ") errors: " << strerror(errno)
+                  << ".\n";
         std::exit(EXIT_FAILURE);
     }
     if (len < sizeof(max)) {
-        std::cerr << "sysctlbyname(" << oid << ") provides less "
-            "data (" << len << ") than expected (" << sizeof(max) << ").\n";
+        std::cerr << "sysctlbyname(" << oid
+                  << ") provides less "
+                     "data ("
+                  << len << ") than expected (" << sizeof(max) << ").\n";
         std::exit(EXIT_FAILURE);
     }
     if (max < 0) {
-        std::cerr << "sysctlbyname(" << oid << ") yields "
-            "abnormal " << max << ".\n";
+        std::cerr << "sysctlbyname(" << oid
+                  << ") yields "
+                     "abnormal "
+                  << max << ".\n";
         std::exit(EXIT_FAILURE);
     }
     if (max > 0)
@@ -205,7 +197,7 @@ jail::create(const std::string& jail_name,
     av.push_back("children.max=" + std::to_string(max));
 
     // test defined jail params
-    const std::vector< std::string > params = parse_params_string(jail_params);
+    const std::vector<std::string> params = parse_params_string(jail_params);
     for (const std::string& p : params)
         av.push_back(p);
 
@@ -213,8 +205,8 @@ jail::create(const std::string& jail_name,
     av.push_back("persist");
 
     // invoke jail
-    std::unique_ptr< process::child > child = child::fork_capture(
-        run(fs::path("/usr/sbin/jail"), av));
+    std::unique_ptr<process::child> child =
+        child::fork_capture(run(fs::path("/usr/sbin/jail"), av));
     process::status status = child->wait();
 
     // expect success
@@ -226,50 +218,46 @@ jail::create(const std::string& jail_name,
     std::exit(EXIT_FAILURE);
 }
 
-
 /// Executes an external binary in a jail and replaces the current process.
 ///
 /// \param jail_name Name of the jail to run within.
 /// \param program The test program binary absolute path.
 /// \param args The arguments to pass to the binary, without the program name.
 void
-jail::exec(const std::string& jail_name,
-           const fs::path& program,
+jail::exec(const std::string& jail_name, const fs::path& program,
            const args_vector& args) throw()
 {
     // get work dir prepared by kyua
     char cwd[PATH_MAX];
     if (::getcwd(cwd, sizeof(cwd)) == NULL) {
-        std::cerr << "jail::exec: getcwd() errors: "
-            << strerror(errno) << ".\n";
+        std::cerr << "jail::exec: getcwd() errors: " << strerror(errno)
+                  << ".\n";
         std::exit(EXIT_FAILURE);
     }
 
     // get jail id by its name
     int jid = ::jail_getid(jail_name.c_str());
     if (jid == -1) {
-        std::cerr << "jail::exec: jail_getid() errors: "
-            << strerror(errno) << ": " << jail_errmsg << ".\n";
+        std::cerr << "jail::exec: jail_getid() errors: " << strerror(errno)
+                  << ": " << jail_errmsg << ".\n";
         std::exit(EXIT_FAILURE);
     }
 
     // attach to the jail
     if (::jail_attach(jid) == -1) {
-        std::cerr << "jail::exec: jail_attach() errors: "
-            << strerror(errno) << ".\n";
+        std::cerr << "jail::exec: jail_attach() errors: " << strerror(errno)
+                  << ".\n";
         std::exit(EXIT_FAILURE);
     }
 
     // set back the expected work dir
     if (::chdir(cwd) == -1) {
-        std::cerr << "jail::exec: chdir() errors: "
-            << strerror(errno) << ".\n";
+        std::cerr << "jail::exec: chdir() errors: " << strerror(errno) << ".\n";
         std::exit(EXIT_FAILURE);
     }
 
     process::exec(program, args);
 }
-
 
 /// Removes a jail with a given name.
 ///
@@ -288,8 +276,8 @@ jail::remove(const std::string& jail_name)
     av.push_back(jail_name);
 
     // invoke jail
-    std::unique_ptr< process::child > child = child::fork_capture(
-        run(fs::path("/usr/sbin/jail"), av));
+    std::unique_ptr<process::child> child =
+        child::fork_capture(run(fs::path("/usr/sbin/jail"), av));
     process::status status = child->wait();
 
     // expect success
@@ -301,6 +289,5 @@ jail::remove(const std::string& jail_name)
     std::exit(EXIT_FAILURE);
 }
 
-
-}  // namespace utils
-}  // namespace freebsd
+} // namespace utils
+} // namespace freebsd

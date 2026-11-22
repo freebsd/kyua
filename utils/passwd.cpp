@@ -44,17 +44,13 @@ extern "C" {
 
 namespace passwd_ns = utils::passwd;
 
-
 namespace {
 
-
 /// If defined, replaces the value returned by current_user().
-static utils::optional< passwd_ns::user > fake_current_user;
-
+static utils::optional<passwd_ns::user> fake_current_user;
 
 /// If not empty, defines the current set of mock users.
-static std::vector< passwd_ns::user > mock_users;
-
+static std::vector<passwd_ns::user> mock_users;
 
 /// Formats a user for logging purposes.
 ///
@@ -67,9 +63,7 @@ format_user(const passwd_ns::user& user)
     return F("name=%s, uid=%s, gid=%s") % user.name % user.uid % user.gid;
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Constructs a new user.
 ///
@@ -84,7 +78,6 @@ passwd_ns::user::user(const std::string& name_, const unsigned int uid_,
 {
 }
 
-
 /// Checks if the user has superpowers or not.
 ///
 /// \return True if the user is root, false otherwise.
@@ -93,7 +86,6 @@ passwd_ns::user::is_root(void) const
 {
     return uid == 0;
 }
-
 
 /// Gets the current user.
 ///
@@ -112,7 +104,6 @@ passwd_ns::current_user(void)
     }
 }
 
-
 /// Gets information about a user by its name.
 ///
 /// \param name The name of the user to query.
@@ -127,20 +118,21 @@ passwd_ns::find_user_by_name(const std::string& name)
         const struct ::passwd* pw = ::getpwnam(name.c_str());
         if (pw == NULL)
             throw std::runtime_error(F("Failed to get information about the "
-                                       "user '%s'") % name);
+                                       "user '%s'") %
+                                     name);
         INV(pw->pw_name == name);
         return user(pw->pw_name, pw->pw_uid, pw->pw_gid);
     } else {
-        for (std::vector< user >::const_iterator iter = mock_users.begin();
+        for (std::vector<user>::const_iterator iter = mock_users.begin();
              iter != mock_users.end(); iter++) {
             if ((*iter).name == name)
                 return *iter;
         }
         throw std::runtime_error(F("Failed to get information about the "
-                                   "user '%s'") % name);
+                                   "user '%s'") %
+                                 name);
     }
 }
-
 
 /// Gets information about a user by its identifier.
 ///
@@ -156,20 +148,21 @@ passwd_ns::find_user_by_uid(const unsigned int uid)
         const struct ::passwd* pw = ::getpwuid(uid);
         if (pw == NULL)
             throw std::runtime_error(F("Failed to get information about the "
-                                       "user with UID %s") % uid);
+                                       "user with UID %s") %
+                                     uid);
         INV(pw->pw_uid == uid);
         return user(pw->pw_name, pw->pw_uid, pw->pw_gid);
     } else {
-        for (std::vector< user >::const_iterator iter = mock_users.begin();
+        for (std::vector<user>::const_iterator iter = mock_users.begin();
              iter != mock_users.end(); iter++) {
             if ((*iter).uid == uid)
                 return *iter;
         }
         throw std::runtime_error(F("Failed to get information about the "
-                                   "user with UID %s") % uid);
+                                   "user with UID %s") %
+                                 uid);
     }
 }
-
 
 /// Overrides the current user for testing purposes.
 ///
@@ -182,12 +175,11 @@ passwd_ns::set_current_user_for_testing(const user& new_current_user)
     fake_current_user = new_current_user;
 }
 
-
 /// Overrides the current set of users for testing purposes.
 ///
 /// \param users The new users set.  Cannot be empty.
 void
-passwd_ns::set_mock_users_for_testing(const std::vector< user >& users)
+passwd_ns::set_mock_users_for_testing(const std::vector<user>& users)
 {
     PRE(!users.empty());
     mock_users = users;

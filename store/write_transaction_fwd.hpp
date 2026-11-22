@@ -34,10 +34,8 @@
 
 namespace store {
 
-
 class write_transaction;
 
+} // namespace store
 
-}  // namespace store
-
-#endif  // !defined(STORE_WRITE_TRANSACTION_FWD_HPP)
+#endif // !defined(STORE_WRITE_TRANSACTION_FWD_HPP)

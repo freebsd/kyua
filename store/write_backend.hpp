@@ -32,34 +32,29 @@
 #if !defined(STORE_WRITE_BACKEND_HPP)
 #define STORE_WRITE_BACKEND_HPP
 
-#include "store/write_backend_fwd.hpp"
-
 #include <memory>
 
 #include "store/metadata_fwd.hpp"
+#include "store/write_backend_fwd.hpp"
 #include "store/write_transaction_fwd.hpp"
 #include "utils/fs/path_fwd.hpp"
 #include "utils/sqlite/database_fwd.hpp"
 
 namespace store {
 
-
 namespace detail {
-
 
 utils::fs::path schema_file(void);
 metadata initialize(utils::sqlite::database&);
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Public interface to the database store for write-only operations.
 class write_backend {
     struct impl;
 
     /// Pointer to the shared internal implementation.
-    std::shared_ptr< impl > _pimpl;
+    std::shared_ptr<impl> _pimpl;
 
     friend class metadata;
 
@@ -75,7 +70,6 @@ public:
     write_transaction start_write(void);
 };
 
+} // namespace store
 
-}  // namespace store
-
-#endif  // !defined(STORE_WRITE_BACKEND_HPP)
+#endif // !defined(STORE_WRITE_BACKEND_HPP)

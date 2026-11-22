@@ -31,7 +31,6 @@
 #include <iostream>
 #include <sstream>
 
-
 static int
 print_args(int argc, char* argv[])
 {
@@ -40,7 +39,6 @@ print_args(int argc, char* argv[])
     std::cout << "argv[" << argc << "] = NULL";
     return EXIT_SUCCESS;
 }
-
 
 static int
 return_code(int argc, char* argv[])
@@ -53,7 +51,6 @@ return_code(int argc, char* argv[])
     iss >> code;
     return code;
 }
-
 
 int
 main(int argc, char* argv[])

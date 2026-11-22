@@ -26,8 +26,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/text/table.hpp"
-
 #include <algorithm>
 #include <iterator>
 #include <limits>
@@ -35,12 +33,11 @@
 
 #include "utils/sanity.hpp"
 #include "utils/text/operations.ipp"
+#include "utils/text/table.hpp"
 
 namespace text = utils::text;
 
-
 namespace {
-
 
 /// Applies user overrides to the column widths of a table.
 ///
@@ -64,7 +61,7 @@ override_column_widths(const text::table& table,
         const text::widths_vector::value_type& user_width = user_widths[i];
         if (user_width != text::table_formatter::width_auto) {
             PRE_MSG(user_width == text::table_formatter::width_refill ||
-                    user_width >= widths[i],
+                        user_width >= widths[i],
                     "User-provided column widths must be larger than the "
                     "column contents (except for the width_refill column)");
             widths[i] = user_width;
@@ -73,7 +70,6 @@ override_column_widths(const text::table& table,
 
     return widths;
 }
-
 
 /// Locates the refill column, if any.
 ///
@@ -93,7 +89,6 @@ find_refill_column(const text::widths_vector& widths)
     }
     return i - 1;
 }
-
 
 /// Pads the widths of the table to fit within a maximum width.
 ///
@@ -117,8 +112,9 @@ refill_widths(text::widths_vector& widths,
 
     // widths.size() is a proxy for the number of columns of the table.
     const std::size_t total_padding = column_padding * (widths.size() - 1);
-    const text::widths_vector::value_type max_width = std::max(
-        user_max_width, total_padding) - total_padding;
+    const text::widths_vector::value_type max_width = std::max(user_max_width,
+                                                               total_padding) -
+        total_padding;
 
     const text::widths_vector::size_type refill_column =
         find_refill_column(widths);
@@ -131,7 +127,6 @@ refill_widths(text::widths_vector& widths,
     }
     widths[refill_column] = max_width - width;
 }
-
 
 /// Pads an input text to a specified width with spaces.
 ///
@@ -158,7 +153,6 @@ pad_cell(const std::string& input, const std::size_t length, const bool is_last)
     }
 }
 
-
 /// Refills a cell and adds it to the output lines.
 ///
 /// \param row The row containing the cell to be refilled.
@@ -170,15 +164,15 @@ pad_cell(const std::string& input, const std::size_t length, const bool is_last)
 static void
 refill_cell(const text::table_row& row, const text::widths_vector& widths,
             const text::table_row::size_type column,
-            std::vector< text::table_row >& textual_rows)
+            std::vector<text::table_row>& textual_rows)
 {
-    const std::vector< std::string > rows = text::refill(row[column],
-                                                         widths[column]);
+    const std::vector<std::string> rows = text::refill(row[column],
+                                                       widths[column]);
 
     if (textual_rows.size() < rows.size())
         textual_rows.resize(rows.size(), text::table_row(row.size()));
 
-    for (std::vector< std::string >::size_type i = 0; i < rows.size(); ++i) {
+    for (std::vector<std::string>::size_type i = 0; i < rows.size(); ++i) {
         for (text::table_row::size_type j = 0; j < row.size(); ++j) {
             const bool is_last = j == row.size() - 1;
             if (j == column)
@@ -191,7 +185,6 @@ refill_cell(const text::table_row& row, const text::widths_vector& widths,
     }
 }
 
-
 /// Formats a single table row.
 ///
 /// \param row The row to format.
@@ -201,13 +194,13 @@ refill_cell(const text::table_row& row, const text::widths_vector& widths,
 /// \param separator The column separator to use.
 ///
 /// \return The textual lines that contain the formatted row.
-static std::vector< std::string >
+static std::vector<std::string>
 format_row(const text::table_row& row, const text::widths_vector& widths,
            const std::string& separator)
 {
     PRE(row.size() == widths.size());
 
-    std::vector< text::table_row > textual_rows(1, text::table_row(row.size()));
+    std::vector<text::table_row> textual_rows(1, text::table_row(row.size()));
 
     for (text::table_row::size_type column = 0; column < row.size(); ++column) {
         if (widths[column] > row[column].length())
@@ -217,17 +210,16 @@ format_row(const text::table_row& row, const text::widths_vector& widths,
             refill_cell(row, widths, column, textual_rows);
     }
 
-    std::vector< std::string > lines;
-    for (std::vector< text::table_row >::const_iterator
-         iter = textual_rows.begin(); iter != textual_rows.end(); ++iter) {
+    std::vector<std::string> lines;
+    for (std::vector<text::table_row>::const_iterator iter =
+             textual_rows.begin();
+         iter != textual_rows.end(); ++iter) {
         lines.push_back(text::join(*iter, separator));
     }
     return lines;
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Constructs a new table.
 ///
@@ -236,7 +228,6 @@ text::table::table(const table_row::size_type ncolumns_)
 {
     _column_widths.resize(ncolumns_, 0);
 }
-
 
 /// Gets the number of columns in the table.
 ///
@@ -247,7 +238,6 @@ text::table::ncolumns(void) const
 {
     return _column_widths.size();
 }
-
 
 /// Gets the width of a column.
 ///
@@ -265,7 +255,6 @@ text::table::column_width(const widths_vector::size_type column) const
     return _column_widths[column];
 }
 
-
 /// Gets the widths of all columns.
 ///
 /// The returned value is not valid if add_row() is called again, as the columns
@@ -278,7 +267,6 @@ text::table::column_widths(void) const
     return _column_widths;
 }
 
-
 /// Checks whether the table is empty or not.
 ///
 /// \return True if the table is empty; false otherwise.
@@ -287,7 +275,6 @@ text::table::empty(void) const
 {
     return _rows.empty();
 }
-
 
 /// Adds a row to the table.
 ///
@@ -304,7 +291,6 @@ text::table::add_row(const table_row& row)
             _column_widths[i] = row[i].length();
 }
 
-
 /// Gets an iterator pointing to the beginning of the rows of the table.
 ///
 /// \return An iterator on the rows.
@@ -313,7 +299,6 @@ text::table::begin(void) const
 {
     return _rows.begin();
 }
-
 
 /// Gets an iterator pointing to the end of the rows of the table.
 ///
@@ -324,23 +309,17 @@ text::table::end(void) const
     return _rows.end();
 }
 
-
 /// Column width to denote that the column has to fit all of its cells.
 const std::size_t text::table_formatter::width_auto = 0;
 
-
 /// Column width to denote that the column can be refilled to fit the table.
 const std::size_t text::table_formatter::width_refill =
-    std::numeric_limits< std::size_t >::max();
-
+    std::numeric_limits<std::size_t>::max();
 
 /// Constructs a new table formatter.
-text::table_formatter::table_formatter(void) :
-    _separator(""),
-    _table_width(0)
+text::table_formatter::table_formatter(void) : _separator(""), _table_width(0)
 {
 }
-
 
 /// Sets the width of a column.
 ///
@@ -373,7 +352,6 @@ text::table_formatter::set_column_width(const table_row::size_type column,
     return *this;
 }
 
-
 /// Sets the separator to use between the cells.
 ///
 /// \param separator The separator to use.
@@ -385,7 +363,6 @@ text::table_formatter::set_separator(const char* separator)
     _separator = separator;
     return *this;
 }
-
 
 /// Sets the maximum width of the table.
 ///
@@ -400,16 +377,15 @@ text::table_formatter::set_table_width(const std::size_t table_width)
     return *this;
 }
 
-
 /// Formats a table into a collection of textual lines.
 ///
 /// \param t Table to format.
 ///
 /// \return A collection of textual lines.
-std::vector< std::string >
+std::vector<std::string>
 text::table_formatter::format(const table& t) const
 {
-    std::vector< std::string > lines;
+    std::vector<std::string> lines;
 
     if (!t.empty()) {
         widths_vector widths = override_column_widths(t, _column_widths);
@@ -417,8 +393,8 @@ text::table_formatter::format(const table& t) const
             refill_widths(widths, _table_width, _separator.length());
 
         for (table::const_iterator iter = t.begin(); iter != t.end(); ++iter) {
-            const std::vector< std::string > sublines =
-                format_row(*iter, widths, _separator);
+            const std::vector<std::string> sublines = format_row(*iter, widths,
+                                                                 _separator);
             std::copy(sublines.begin(), sublines.end(),
                       std::back_inserter(lines));
         }

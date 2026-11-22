@@ -26,12 +26,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "store/dbtypes.hpp"
-
 #include <atf-c++.hpp>
 
 #include "model/test_program.hpp"
 #include "model/test_result.hpp"
+#include "store/dbtypes.hpp"
 #include "store/exceptions.hpp"
 #include "utils/datetime.hpp"
 #include "utils/optional.ipp"
@@ -44,19 +43,16 @@ namespace sqlite = utils::sqlite;
 
 using utils::none;
 
-
 namespace {
-
 
 /// Validates that a particular bind_x/column_x sequence works.
 ///
 /// \param bind The store::bind_* function to put the value.
 /// \param value The value to store and validate.
 /// \param column The store::column_* function to get the value.
-template< typename Type1, typename Type2, typename Type3 >
+template <typename Type1, typename Type2, typename Type3>
 static void
-do_ok_test(void (*bind)(sqlite::statement&, const char*, Type1),
-           Type2 value,
+do_ok_test(void (*bind)(sqlite::statement&, const char*, Type1), Type2 value,
            Type3 (*column)(sqlite::statement&, const char*))
 {
     sqlite::database db = sqlite::database::in_memory();
@@ -73,16 +69,14 @@ do_ok_test(void (*bind)(sqlite::statement&, const char*, Type1),
     ATF_REQUIRE(!query.step());
 }
 
-
 /// Validates an error condition of column_*.
 ///
 /// \param value The invalid value to insert into the database.
 /// \param column The store::column_* function to get the value.
 /// \param error_regexp The expected message in the raised integrity_error.
-template< typename Type1, typename Type2 >
+template <typename Type1, typename Type2>
 static void
-do_invalid_test(Type1 value,
-                Type2 (*column)(sqlite::statement&, const char*),
+do_invalid_test(Type1 value, Type2 (*column)(sqlite::statement&, const char*),
                 const std::string& error_regexp)
 {
     sqlite::database db = sqlite::database::in_memory();
@@ -100,9 +94,7 @@ do_invalid_test(Type1 value,
     ATF_REQUIRE(!query.step());
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 ATF_TEST_CASE_WITHOUT_HEAD(bool__ok);
 ATF_TEST_CASE_BODY(bool__ok)
@@ -111,13 +103,11 @@ ATF_TEST_CASE_BODY(bool__ok)
     do_ok_test(store::bind_bool, false, store::column_bool);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(bool__get_invalid_type);
 ATF_TEST_CASE_BODY(bool__get_invalid_type)
 {
     do_invalid_test(123, store::column_bool, "not a string");
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(bool__get_invalid_value);
 ATF_TEST_CASE_BODY(bool__get_invalid_value)
@@ -125,20 +115,17 @@ ATF_TEST_CASE_BODY(bool__get_invalid_value)
     do_invalid_test("foo", store::column_bool, "Unknown boolean.*foo");
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(delta__ok);
 ATF_TEST_CASE_BODY(delta__ok)
 {
     do_ok_test(store::bind_delta, datetime::delta(15, 34), store::column_delta);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(delta__get_invalid_type);
 ATF_TEST_CASE_BODY(delta__get_invalid_type)
 {
     do_invalid_test(15.6, store::column_delta, "not an integer");
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(optional_string__ok);
 ATF_TEST_CASE_BODY(optional_string__ok)
@@ -147,29 +134,24 @@ ATF_TEST_CASE_BODY(optional_string__ok)
     do_ok_test(store::bind_optional_string, "a", store::column_optional_string);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(optional_string__get_invalid_type);
 ATF_TEST_CASE_BODY(optional_string__get_invalid_type)
 {
     do_invalid_test(35, store::column_optional_string, "Invalid string");
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(test_result_type__ok);
 ATF_TEST_CASE_BODY(test_result_type__ok)
 {
-    do_ok_test(store::bind_test_result_type,
-               model::test_result_passed,
+    do_ok_test(store::bind_test_result_type, model::test_result_passed,
                store::column_test_result_type);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(test_result_type__get_invalid_type);
 ATF_TEST_CASE_BODY(test_result_type__get_invalid_type)
 {
     do_invalid_test(12, store::column_test_result_type, "not a string");
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(test_result_type__get_invalid_value);
 ATF_TEST_CASE_BODY(test_result_type__get_invalid_value)
@@ -178,12 +160,10 @@ ATF_TEST_CASE_BODY(test_result_type__get_invalid_value)
                     "Unknown test result type foo");
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(timestamp__ok);
 ATF_TEST_CASE_BODY(timestamp__ok)
 {
-    do_ok_test(store::bind_timestamp,
-               datetime::timestamp::from_microseconds(0),
+    do_ok_test(store::bind_timestamp, datetime::timestamp::from_microseconds(0),
                store::column_timestamp);
     do_ok_test(store::bind_timestamp,
                datetime::timestamp::from_microseconds(123),
@@ -197,20 +177,17 @@ ATF_TEST_CASE_BODY(timestamp__ok)
                store::column_timestamp);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(timestamp__get_invalid_type);
 ATF_TEST_CASE_BODY(timestamp__get_invalid_type)
 {
     do_invalid_test(35.6, store::column_timestamp, "not an integer");
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(timestamp__get_invalid_value);
 ATF_TEST_CASE_BODY(timestamp__get_invalid_value)
 {
     do_invalid_test(-1234, store::column_timestamp, "must be positive");
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

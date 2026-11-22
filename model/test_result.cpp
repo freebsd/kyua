@@ -27,49 +27,55 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "model/test_result.hpp"
-
 #include "utils/format/macros.hpp"
 #include "utils/sanity.hpp"
 #include "utils/text/operations.ipp"
 
 namespace text = utils::text;
 
-
 const std::map<enum model::test_result_type,
                const struct model::test_result_type_desc>
-    model::test_result_types =
-{
-    { test_result_broken,
-        { .id =      test_result_broken,
-          .name =    "broken",
-          .is_run =  true,
-          .is_good = false, } },
+    model::test_result_types = {
+        { test_result_broken,
+          {
+              .id = test_result_broken,
+              .name = "broken",
+              .is_run = true,
+              .is_good = false,
+          } },
 
-    { test_result_expected_failure,
-        { .id =      test_result_expected_failure,
-          .name =    "xfail",
-          .is_run =  true,
-          .is_good = true, } },
+        { test_result_expected_failure,
+          {
+              .id = test_result_expected_failure,
+              .name = "xfail",
+              .is_run = true,
+              .is_good = true,
+          } },
 
-    { test_result_failed,
-        { .id =      test_result_failed,
-          .name =    "failed",
-          .is_run =  true,
-          .is_good = false, } },
+        { test_result_failed,
+          {
+              .id = test_result_failed,
+              .name = "failed",
+              .is_run = true,
+              .is_good = false,
+          } },
 
-    { test_result_passed,
-        { .id =      test_result_passed,
-          .name =    "passed",
-          .is_run =  true,
-          .is_good = true, } },
+        { test_result_passed,
+          {
+              .id = test_result_passed,
+              .name = "passed",
+              .is_run = true,
+              .is_good = true,
+          } },
 
-    { test_result_skipped,
-        { .id =      test_result_skipped,
-          .name =    "skipped",
-          .is_run =  false,
-          .is_good = true, } },
-};
-
+        { test_result_skipped,
+          {
+              .id = test_result_skipped,
+              .name = "skipped",
+              .is_run = false,
+              .is_good = true,
+          } },
+    };
 
 /// Constructs a base result.
 ///
@@ -83,7 +89,6 @@ model::test_result::test_result(const test_result_type type_,
 {
 }
 
-
 /// Returns the type of the result.
 ///
 /// \return A result type.
@@ -92,7 +97,6 @@ model::test_result::type(void) const
 {
     return _type;
 }
-
 
 /// Returns the reason explaining the result.
 ///
@@ -103,7 +107,6 @@ model::test_result::reason(void) const
     return _reason;
 }
 
-
 /// True if the test case result has a positive connotation.
 ///
 /// \return Whether the test case is good or not.
@@ -112,7 +115,6 @@ model::test_result::good(void) const
 {
     return test_result_types.at(_type).is_good;
 }
-
 
 /// Equality comparator.
 ///
@@ -124,7 +126,6 @@ model::test_result::operator==(const test_result& other) const
 {
     return _type == other._type && _reason == other._reason;
 }
-
 
 /// Inequality comparator.
 ///
@@ -138,7 +139,6 @@ model::test_result::operator!=(const test_result& other) const
     return !(*this == other);
 }
 
-
 /// Injects the object into a stream.
 ///
 /// \param output The stream into which to inject the object.
@@ -150,19 +150,29 @@ model::operator<<(std::ostream& output, const test_result& object)
 {
     std::string result_name;
     switch (object.type()) {
-    case test_result_broken: result_name = "broken"; break;
-    case test_result_expected_failure: result_name = "expected_failure"; break;
-    case test_result_failed: result_name = "failed"; break;
-    case test_result_passed: result_name = "passed"; break;
-    case test_result_skipped: result_name = "skipped"; break;
+    case test_result_broken:
+        result_name = "broken";
+        break;
+    case test_result_expected_failure:
+        result_name = "expected_failure";
+        break;
+    case test_result_failed:
+        result_name = "failed";
+        break;
+    case test_result_passed:
+        result_name = "passed";
+        break;
+    case test_result_skipped:
+        result_name = "skipped";
+        break;
     }
     const std::string& reason = object.reason();
     if (reason.empty()) {
-        output << F("model::test_result{type=%s}")
-            % text::quote(result_name, '\'');
+        output << F("model::test_result{type=%s}") %
+                text::quote(result_name, '\'');
     } else {
-        output << F("model::test_result{type=%s, reason=%s}")
-            % text::quote(result_name, '\'') % text::quote(reason, '\'');
+        output << F("model::test_result{type=%s, reason=%s}") %
+                text::quote(result_name, '\'') % text::quote(reason, '\'');
     }
     return output;
 }

@@ -26,14 +26,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/text/regex.hpp"
-
 #include <atf-c++.hpp>
 
 #include "utils/text/exceptions.hpp"
+#include "utils/text/regex.hpp"
 
 namespace text = utils::text;
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(integration__no_matches);
 ATF_TEST_CASE_BODY(integration__no_matches)
@@ -43,7 +41,6 @@ ATF_TEST_CASE_BODY(integration__no_matches)
     ATF_REQUIRE(!matches);
     ATF_REQUIRE_EQ(0, matches.count());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(integration__no_capture_groups);
 ATF_TEST_CASE_BODY(integration__no_capture_groups)
@@ -55,18 +52,16 @@ ATF_TEST_CASE_BODY(integration__no_capture_groups)
     ATF_REQUIRE_EQ("foo and bar", matches.get(0));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(integration__one_capture_group);
 ATF_TEST_CASE_BODY(integration__one_capture_group)
 {
-    const text::regex_matches matches = text::match_regex(
-        "^([^ ]*) ", "the string", 1);
+    const text::regex_matches matches = text::match_regex("^([^ ]*) ",
+                                                          "the string", 1);
     ATF_REQUIRE(matches);
     ATF_REQUIRE_EQ(2, matches.count());
     ATF_REQUIRE_EQ("the ", matches.get(0));
     ATF_REQUIRE_EQ("the", matches.get(1));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(integration__many_capture_groups);
 ATF_TEST_CASE_BODY(integration__many_capture_groups)
@@ -80,7 +75,6 @@ ATF_TEST_CASE_BODY(integration__many_capture_groups)
     ATF_REQUIRE_EQ("string", matches.get(2));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(integration__capture_groups_underspecified);
 ATF_TEST_CASE_BODY(integration__capture_groups_underspecified)
 {
@@ -91,7 +85,6 @@ ATF_TEST_CASE_BODY(integration__capture_groups_underspecified)
     ATF_REQUIRE_EQ("is another string to", matches.get(0));
     ATF_REQUIRE_EQ("another", matches.get(1));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(integration__capture_groups_overspecified);
 ATF_TEST_CASE_BODY(integration__capture_groups_overspecified)
@@ -104,7 +97,6 @@ ATF_TEST_CASE_BODY(integration__capture_groups_overspecified)
     ATF_REQUIRE_EQ("another", matches.get(1));
     ATF_REQUIRE_EQ("string", matches.get(2));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(integration__reuse_regex_in_multiple_matches);
 ATF_TEST_CASE_BODY(integration__reuse_regex_in_multiple_matches)
@@ -128,7 +120,6 @@ ATF_TEST_CASE_BODY(integration__reuse_regex_in_multiple_matches)
     }
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(integration__ignore_case);
 ATF_TEST_CASE_BODY(integration__ignore_case)
 {
@@ -142,15 +133,15 @@ ATF_TEST_CASE_BODY(integration__ignore_case)
     ATF_REQUIRE(!text::match_regex("foo", "bar FOO bar", 0, false));
 
     const text::regex regex2 = text::regex::compile("foo", 0, true);
-    ATF_REQUIRE( regex2.match("bar foo bar"));
-    ATF_REQUIRE( regex2.match("bar Foo bar"));
-    ATF_REQUIRE( regex2.match("bar foO bar"));
-    ATF_REQUIRE( regex2.match("bar FOO bar"));
+    ATF_REQUIRE(regex2.match("bar foo bar"));
+    ATF_REQUIRE(regex2.match("bar Foo bar"));
+    ATF_REQUIRE(regex2.match("bar foO bar"));
+    ATF_REQUIRE(regex2.match("bar FOO bar"));
 
-    ATF_REQUIRE( text::match_regex("foo", "bar foo bar", 0, true));
-    ATF_REQUIRE( text::match_regex("foo", "bar Foo bar", 0, true));
-    ATF_REQUIRE( text::match_regex("foo", "bar foO bar", 0, true));
-    ATF_REQUIRE( text::match_regex("foo", "bar FOO bar", 0, true));
+    ATF_REQUIRE(text::match_regex("foo", "bar foo bar", 0, true));
+    ATF_REQUIRE(text::match_regex("foo", "bar Foo bar", 0, true));
+    ATF_REQUIRE(text::match_regex("foo", "bar foO bar", 0, true));
+    ATF_REQUIRE(text::match_regex("foo", "bar FOO bar", 0, true));
 }
 
 ATF_TEST_CASE_WITHOUT_HEAD(integration__invalid_regex);
@@ -159,7 +150,6 @@ ATF_TEST_CASE_BODY(integration__invalid_regex)
     ATF_REQUIRE_THROW(text::regex_error,
                       text::regex::compile("this is (unbalanced", 0));
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

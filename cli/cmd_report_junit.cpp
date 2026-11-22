@@ -26,12 +26,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "cli/cmd_report_junit.hpp"
-
 #include <cstddef>
 #include <cstdlib>
 #include <set>
 
+#include "cli/cmd_report_junit.hpp"
 #include "cli/common.ipp"
 #include "drivers/report_junit.hpp"
 #include "drivers/scan_results.hpp"
@@ -51,17 +50,15 @@ namespace layout = store::layout;
 using cli::cmd_report_junit;
 using utils::optional;
 
-
 /// Default constructor for cmd_report.
-cmd_report_junit::cmd_report_junit(void) : cli_command(
-    "report-junit", "", 0, 0,
-    "Generates a JUnit report with the result of a test suite run")
+cmd_report_junit::cmd_report_junit(void) :
+    cli_command("report-junit", "", 0, 0,
+                "Generates a JUnit report with the result of a test suite run")
 {
     add_option(results_file_open_option);
     add_option(cmdline::path_option("output", "Path to the output file", "path",
                                     "/dev/stdout"));
 }
-
 
 /// Entry point for the "report" subcommand.
 ///
@@ -74,15 +71,14 @@ cmd_report_junit::run(cmdline::ui* /* ui */,
                       const cmdline::parsed_cmdline& cmdline,
                       const config::tree& /* user_config */)
 {
-    const fs::path results_file = layout::find_results(
-        results_file_open(cmdline));
+    const fs::path results_file =
+        layout::find_results(results_file_open(cmdline));
 
-    std::unique_ptr< std::ostream > output = utils::open_ostream(
-        cmdline.get_option< cmdline::path_option >("output"));
+    std::unique_ptr<std::ostream> output =
+        utils::open_ostream(cmdline.get_option<cmdline::path_option>("output"));
 
     drivers::report_junit_hooks hooks(*output.get());
-    drivers::scan_results::drive(results_file,
-                                 std::set< engine::test_filter >(),
+    drivers::scan_results::drive(results_file, std::set<engine::test_filter>(),
                                  hooks);
 
     return EXIT_SUCCESS;

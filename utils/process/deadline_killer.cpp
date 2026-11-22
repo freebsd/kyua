@@ -26,14 +26,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/process/deadline_killer.hpp"
-
 #include "utils/datetime.hpp"
+#include "utils/process/deadline_killer.hpp"
 #include "utils/process/operations.hpp"
 
 namespace datetime = utils::datetime;
 namespace process = utils::process;
-
 
 /// Constructor.
 ///
@@ -41,10 +39,10 @@ namespace process = utils::process;
 /// \param pid PID of the process (and process group) to kill.
 process::deadline_killer::deadline_killer(const datetime::delta& delta,
                                           const int pid) :
-    signals::timer(delta), _pid(pid)
+    signals::timer(delta),
+    _pid(pid)
 {
 }
-
 
 /// Timer activation callback.
 void

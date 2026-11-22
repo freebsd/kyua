@@ -30,7 +30,7 @@
 /// Provides test-only convenience utilities.
 
 #if defined(UTILS_TEST_UTILS_IPP)
-#   error "utils/test_utils.hpp can only be included once"
+#error "utils/test_utils.hpp can only be included once"
 #endif
 #define UTILS_TEST_UTILS_IPP
 
@@ -38,17 +38,15 @@ extern "C" {
 #include <sys/resource.h>
 }
 
+#include <atf-c++.hpp>
 #include <cstdlib>
 #include <iostream>
-
-#include <atf-c++.hpp>
 
 #include "utils/defs.hpp"
 #include "utils/stacktrace.hpp"
 #include "utils/text/operations.ipp"
 
 namespace utils {
-
 
 /// Tries to prevent dumping core if we do not need one on a crash.
 ///
@@ -66,9 +64,7 @@ avoid_coredump_on_crash(void)
     }
 }
 
-
 inline void abort_without_coredump [[noreturn]] (void);
-
 
 /// Aborts execution and tries to not dump core.
 ///
@@ -82,7 +78,6 @@ abort_without_coredump(void)
     std::abort();
 }
 
-
 /// Skips the test if coredump tests have been disabled by the user.
 ///
 /// \param tc The calling test.
@@ -90,11 +85,10 @@ inline void
 require_run_coredump_tests(const atf::tests::tc* tc)
 {
     if (tc->has_config_var("run_coredump_tests") &&
-        !text::to_type< bool >(tc->get_config_var("run_coredump_tests"))) {
+        !text::to_type<bool>(tc->get_config_var("run_coredump_tests"))) {
         tc->skip("run_coredump_tests=false; not running test");
     }
 }
-
 
 /// Prepares the test so that it can dump core, or skips it otherwise.
 ///
@@ -109,5 +103,4 @@ prepare_coredump_test(const atf::tests::tc* tc)
     }
 }
 
-
-}  // namespace utils
+} // namespace utils

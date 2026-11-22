@@ -26,12 +26,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/cmdline/options.hpp"
-
 #include <stdexcept>
 #include <vector>
 
 #include "utils/cmdline/exceptions.hpp"
+#include "utils/cmdline/options.hpp"
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/exceptions.hpp"
@@ -41,7 +40,6 @@
 
 namespace cmdline = utils::cmdline;
 namespace text = utils::text;
-
 
 /// Constructs a generic option with both a short and a long name.
 ///
@@ -54,12 +52,9 @@ namespace text = utils::text;
 /// \param default_value_ If not NULL, specifies that the option has a default
 ///     value for the mandatory argument.
 /// \param arg_is_optional_ Specifies if a value must be provided or not.
-cmdline::base_option::base_option(const char short_name_,
-                                  const char* long_name_,
-                                  const char* description_,
-                                  const char* arg_name_,
-                                  const char* default_value_,
-                                  bool arg_is_optional_) :
+cmdline::base_option::base_option(
+    const char short_name_, const char* long_name_, const char* description_,
+    const char* arg_name_, const char* default_value_, bool arg_is_optional_) :
     _short_name(short_name_),
     _long_name(long_name_),
     _description(description_),
@@ -70,7 +65,6 @@ cmdline::base_option::base_option(const char short_name_,
 {
     INV(short_name_ != '\0');
 }
-
 
 /// Constructs a generic option with a long name only.
 ///
@@ -94,12 +88,10 @@ cmdline::base_option::base_option(const char* long_name_,
 {
 }
 
-
 /// Destructor for the option.
 cmdline::base_option::~base_option(void)
 {
 }
-
 
 /// Checks whether the option has a short name or not.
 ///
@@ -109,7 +101,6 @@ cmdline::base_option::has_short_name(void) const
 {
     return _short_name != '\0';
 }
-
 
 /// Returns the short name of the option.
 ///
@@ -123,7 +114,6 @@ cmdline::base_option::short_name(void) const
     return _short_name;
 }
 
-
 /// Returns the long name of the option.
 ///
 /// \return The long name.
@@ -132,7 +122,6 @@ cmdline::base_option::long_name(void) const
 {
     return _long_name;
 }
-
 
 /// Returns the description of the option.
 ///
@@ -143,7 +132,6 @@ cmdline::base_option::description(void) const
     return _description;
 }
 
-
 /// Checks whether the option needs an argument or not.
 ///
 /// \return True if the option needs an argument, false otherwise.
@@ -152,7 +140,6 @@ cmdline::base_option::needs_arg(void) const
 {
     return !_arg_name.empty();
 }
-
 
 /// Returns the argument name of the option for documentation purposes.
 ///
@@ -166,7 +153,6 @@ cmdline::base_option::arg_name(void) const
     return _arg_name;
 }
 
-
 /// Returns optionality of the argument.
 ///
 /// \return The optionality.
@@ -175,7 +161,6 @@ cmdline::base_option::arg_is_optional(void) const
 {
     return _arg_is_optional;
 }
-
 
 /// Checks whether the option has a default value for its argument.
 ///
@@ -189,7 +174,6 @@ cmdline::base_option::has_default_value(void) const
     return _has_default_value;
 }
 
-
 /// Returns the default value for the argument to the option.
 ///
 /// \pre has_default_value() must be true.
@@ -199,9 +183,9 @@ const std::string&
 cmdline::base_option::default_value(void) const
 {
     INV(has_default_value());
-    return _default_value;;
+    return _default_value;
+    ;
 }
-
 
 /// Formats the short name of the option for documentation purposes.
 ///
@@ -218,7 +202,6 @@ cmdline::base_option::format_short_name(void) const
     }
 }
 
-
 /// Formats the long name of the option for documentation purposes.
 ///
 /// \return A string describing the option's long name.
@@ -231,8 +214,6 @@ cmdline::base_option::format_long_name(void) const
         return F("--%s") % long_name();
     }
 }
-
-
 
 /// Ensures that an argument passed to the option is valid.
 ///
@@ -247,7 +228,6 @@ cmdline::base_option::validate(const std::string& /* str */) const
     UNREACHABLE_MSG("Option does not support an argument");
 }
 
-
 /// Constructs a boolean option with both a short and a long name.
 ///
 /// \param short_name_ The short name for the option.
@@ -260,7 +240,6 @@ cmdline::bool_option::bool_option(const char short_name_,
 {
 }
 
-
 /// Constructs a boolean option with a long name only.
 ///
 /// \param long_name_ The long name for the option.
@@ -271,7 +250,6 @@ cmdline::bool_option::bool_option(const char* long_name_,
 {
 }
 
-
 /// Constructs an integer option with both a short and a long name.
 ///
 /// \param short_name_ The short name for the option.
@@ -281,16 +259,13 @@ cmdline::bool_option::bool_option(const char* long_name_,
 ///     purposes.
 /// \param default_value_ If not NULL, the default value for the mandatory
 ///     argument.
-cmdline::int_option::int_option(const char short_name_,
-                                const char* long_name_,
-                                const char* description_,
-                                const char* arg_name_,
+cmdline::int_option::int_option(const char short_name_, const char* long_name_,
+                                const char* description_, const char* arg_name_,
                                 const char* default_value_) :
     base_option(short_name_, long_name_, description_, arg_name_,
                 default_value_)
 {
 }
-
 
 /// Constructs an integer option with a long name only.
 ///
@@ -301,13 +276,11 @@ cmdline::int_option::int_option(const char short_name_,
 /// \param default_value_ If not NULL, the default value for the mandatory
 ///     argument.
 cmdline::int_option::int_option(const char* long_name_,
-                                const char* description_,
-                                const char* arg_name_,
+                                const char* description_, const char* arg_name_,
                                 const char* default_value_) :
     base_option(long_name_, description_, arg_name_, default_value_)
 {
 }
-
 
 /// Ensures that an integer argument passed to the int_option is valid.
 ///
@@ -320,13 +293,13 @@ void
 cmdline::int_option::validate(const std::string& raw_value) const
 {
     try {
-        (void)text::to_type< int >(raw_value);
+        (void)text::to_type<int>(raw_value);
     } catch (const std::runtime_error& e) {
-        throw cmdline::option_argument_value_error(
-            F("--%s") % long_name(), raw_value, "Not a valid integer");
+        throw cmdline::option_argument_value_error(F("--%s") % long_name(),
+                                                   raw_value,
+                                                   "Not a valid integer");
     }
 }
-
 
 /// Converts an integer argument to a native integer.
 ///
@@ -340,13 +313,14 @@ int
 cmdline::int_option::convert(const std::string& raw_value)
 {
     try {
-        return text::to_type< int >(raw_value);
+        return text::to_type<int>(raw_value);
     } catch (const std::runtime_error& e) {
-        PRE_MSG(false, F("Raw value '%s' for int option not properly "
-                         "validated: %s") % raw_value % e.what());
+        PRE_MSG(false,
+                F("Raw value '%s' for int option not properly "
+                  "validated: %s") %
+                    raw_value % e.what());
     }
 }
-
 
 /// Constructs a list option with both a short and a long name.
 ///
@@ -367,7 +341,6 @@ cmdline::list_option::list_option(const char short_name_,
 {
 }
 
-
 /// Constructs a list option with a long name only.
 ///
 /// \param long_name_ The long name for the option.
@@ -384,15 +357,12 @@ cmdline::list_option::list_option(const char* long_name_,
 {
 }
 
-
 /// Ensures that a lisstring argument passed to the list_option is valid.
 void
-cmdline::list_option::validate(
-    const std::string& /* raw_value */) const
+cmdline::list_option::validate(const std::string& /* raw_value */) const
 {
     // Any list is potentially valid; the caller must check for semantics.
 }
-
 
 /// Converts a string argument to a vector.
 ///
@@ -407,11 +377,12 @@ cmdline::list_option::convert(const std::string& raw_value)
     try {
         return text::split(raw_value, ',');
     } catch (const std::runtime_error& e) {
-        PRE_MSG(false, F("Raw value '%s' for list option not properly "
-                         "validated: %s") % raw_value % e.what());
+        PRE_MSG(false,
+                F("Raw value '%s' for list option not properly "
+                  "validated: %s") %
+                    raw_value % e.what());
     }
 }
-
 
 /// Constructs a path option with both a short and a long name.
 ///
@@ -432,7 +403,6 @@ cmdline::path_option::path_option(const char short_name_,
 {
 }
 
-
 /// Constructs a path option with a long name only.
 ///
 /// \param long_name_ The long name for the option.
@@ -448,7 +418,6 @@ cmdline::path_option::path_option(const char* long_name_,
     base_option(long_name_, description_, arg_name_, default_value_)
 {
 }
-
 
 /// Ensures that a path argument passed to the path_option is valid.
 ///
@@ -467,7 +436,6 @@ cmdline::path_option::validate(const std::string& raw_value) const
     }
 }
 
-
 /// Converts a path argument to a utils::fs::path.
 ///
 /// \param raw_value The argument representing a path as provided by the user.
@@ -481,11 +449,12 @@ cmdline::path_option::convert(const std::string& raw_value)
     try {
         return utils::fs::path(raw_value);
     } catch (const std::runtime_error& e) {
-        PRE_MSG(false, F("Raw value '%s' for path option not properly "
-                         "validated: %s") % raw_value % e.what());
+        PRE_MSG(false,
+                F("Raw value '%s' for path option not properly "
+                  "validated: %s") %
+                    raw_value % e.what());
     }
 }
-
 
 /// Constructs a property option with both a short and a long name.
 ///
@@ -503,7 +472,6 @@ cmdline::property_option::property_option(const char short_name_,
     PRE(arg_name().find('=') != std::string::npos);
 }
 
-
 /// Constructs a property option with a long name only.
 ///
 /// \param long_name_ The long name for the option.
@@ -517,7 +485,6 @@ cmdline::property_option::property_option(const char* long_name_,
 {
     PRE(arg_name().find('=') != std::string::npos);
 }
-
 
 /// Validates the argument to a property option.
 ///
@@ -533,15 +500,15 @@ cmdline::property_option::validate(const std::string& raw_value) const
 
     const std::string key = raw_value.substr(0, pos);
     if (key.empty())
-        throw cmdline::option_argument_value_error(
-            F("--%s") % long_name(), raw_value, "Empty property name");
+        throw cmdline::option_argument_value_error(F("--%s") % long_name(),
+                                                   raw_value,
+                                                   "Empty property name");
 
     const std::string value = raw_value.substr(pos + 1);
     if (value.empty())
-        throw cmdline::option_argument_value_error(
-            F("--%s") % long_name(), raw_value, "Empty value");
+        throw cmdline::option_argument_value_error(F("--%s") % long_name(),
+                                                   raw_value, "Empty value");
 }
-
 
 /// Returns the property option in a key/value pair form.
 ///
@@ -557,7 +524,6 @@ cmdline::property_option::convert(const std::string& raw_value)
     return std::make_pair(raw_value.substr(0, pos), raw_value.substr(pos + 1));
 }
 
-
 /// Constructs a string option with both a short and a long name.
 ///
 /// \param short_name_ The short name for the option.
@@ -567,17 +533,13 @@ cmdline::property_option::convert(const std::string& raw_value)
 ///     purposes.
 /// \param default_value_ If not NULL, the default value for the mandatory
 ///     argument.
-cmdline::string_option::string_option(const char short_name_,
-                                      const char* long_name_,
-                                      const char* description_,
-                                      const char* arg_name_,
-                                      const char* default_value_,
-                                      bool arg_is_optional_) :
+cmdline::string_option::string_option(
+    const char short_name_, const char* long_name_, const char* description_,
+    const char* arg_name_, const char* default_value_, bool arg_is_optional_) :
     base_option(short_name_, long_name_, description_, arg_name_,
                 default_value_, arg_is_optional_)
 {
 }
-
 
 /// Constructs a string option with a long name only.
 ///
@@ -595,15 +557,12 @@ cmdline::string_option::string_option(const char* long_name_,
 {
 }
 
-
 /// Does nothing; all string values are valid arguments to a string_option.
 void
-cmdline::string_option::validate(
-    const std::string& /* raw_value */) const
+cmdline::string_option::validate(const std::string& /* raw_value */) const
 {
     // Nothing to do.
 }
-
 
 /// Returns the string unmodified.
 ///

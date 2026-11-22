@@ -26,17 +26,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/config/exceptions.hpp"
-
+#include <atf-c++.hpp>
 #include <cstring>
 
-#include <atf-c++.hpp>
-
+#include "utils/config/exceptions.hpp"
 #include "utils/config/tree.ipp"
 
 namespace config = utils::config;
 namespace detail = utils::config::detail;
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(error);
 ATF_TEST_CASE_BODY(error)
@@ -44,7 +41,6 @@ ATF_TEST_CASE_BODY(error)
     const config::error e("Some text");
     ATF_REQUIRE(std::strcmp("Some text", e.what()) == 0);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(bad_combination_error);
 ATF_TEST_CASE_BODY(bad_combination_error)
@@ -57,14 +53,12 @@ ATF_TEST_CASE_BODY(bad_combination_error)
     ATF_REQUIRE(std::strcmp("Failed to combine 'first.second'", e.what()) == 0);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(invalid_key_error);
 ATF_TEST_CASE_BODY(invalid_key_error)
 {
     const config::invalid_key_error e("Some text");
     ATF_REQUIRE(std::strcmp("Some text", e.what()) == 0);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(invalid_key_value);
 ATF_TEST_CASE_BODY(invalid_key_value)
@@ -78,14 +72,12 @@ ATF_TEST_CASE_BODY(invalid_key_value)
                             e.what()) == 0);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(syntax_error);
 ATF_TEST_CASE_BODY(syntax_error)
 {
     const config::syntax_error e("Some text");
     ATF_REQUIRE(std::strcmp("Some text", e.what()) == 0);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(unknown_key_error__default_message);
 ATF_TEST_CASE_BODY(unknown_key_error__default_message)
@@ -99,7 +91,6 @@ ATF_TEST_CASE_BODY(unknown_key_error__default_message)
                             e.what()) == 0);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(unknown_key_error__custom_message);
 ATF_TEST_CASE_BODY(unknown_key_error__custom_message)
 {
@@ -111,14 +102,12 @@ ATF_TEST_CASE_BODY(unknown_key_error__custom_message)
     ATF_REQUIRE(std::strcmp("The test '1.two' string", e.what()) == 0);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(value_error);
 ATF_TEST_CASE_BODY(value_error)
 {
     const config::value_error e("Some text");
     ATF_REQUIRE(std::strcmp("Some text", e.what()) == 0);
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

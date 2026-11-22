@@ -26,15 +26,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/text/operations.ipp"
-
 #include <sstream>
 
 #include "utils/format/macros.hpp"
 #include "utils/sanity.hpp"
+#include "utils/text/operations.ipp"
 
 namespace text = utils::text;
-
 
 /// Replaces XML special characters from an input string.
 ///
@@ -49,8 +47,7 @@ text::escape_xml(const std::string& in)
 {
     std::ostringstream quoted;
 
-    for (std::string::const_iterator it = in.begin();
-         it != in.end(); ++it) {
+    for (std::string::const_iterator it = in.begin(); it != in.end(); ++it) {
         unsigned char c = (unsigned char)*it;
         if (c == '"') {
             quoted << "&quot;";
@@ -62,16 +59,14 @@ text::escape_xml(const std::string& in)
             quoted << "&gt;";
         } else if (c == '\'') {
             quoted << "&apos;";
-        } else if ((c >= 0x01 && c <= 0x08) ||
-                   (c >= 0x0B && c <= 0x0C) ||
-                   (c >= 0x0E && c <= 0x1F) ||
-                   (c >= 0x7F && c <= 0x84) ||
+        } else if ((c >= 0x01 && c <= 0x08) || (c >= 0x0B && c <= 0x0C) ||
+                   (c >= 0x0E && c <= 0x1F) || (c >= 0x7F && c <= 0x84) ||
                    (c >= 0x86 && c <= 0x9F)) {
             // for RestrictedChar characters, escape them
             // as '&amp;#[decimal ASCII value];'
             // so that in the XML file we will see the escaped
             // character.
-            quoted << "&amp;#" << static_cast< std::string::size_type >(*it)
+            quoted << "&amp;#" << static_cast<std::string::size_type>(*it)
                    << ";";
         } else {
             quoted << *it;
@@ -79,7 +74,6 @@ text::escape_xml(const std::string& in)
     }
     return quoted.str();
 }
-
 
 /// Surrounds a string with quotes, escaping the quote itself if needed.
 ///
@@ -106,7 +100,6 @@ text::quote(const std::string& text, const char quote)
     return quoted.str();
 }
 
-
 /// Fills a paragraph to the specified length.
 ///
 /// This preserves any sequence of spaces in the input and any possible
@@ -118,10 +111,10 @@ text::quote(const std::string& text, const char quote)
 /// \param target_width The width to refill the paragraph to.
 ///
 /// \return The refilled paragraph as a sequence of independent lines.
-std::vector< std::string >
+std::vector<std::string>
 text::refill(const std::string& input, const std::size_t target_width)
 {
-    std::vector< std::string > output;
+    std::vector<std::string> output;
 
     std::string::size_type start = 0;
     while (start < input.length()) {
@@ -132,8 +125,8 @@ text::refill(const std::string& input, const std::size_t target_width)
             if (input[start + target_width] == ' ') {
                 width = target_width;
             } else {
-                const std::string::size_type pos = input.find_last_of(
-                    " ", start + target_width - 1);
+                const std::string::size_type pos =
+                    input.find_last_of(" ", start + target_width - 1);
                 if (pos == std::string::npos || pos < start + 1) {
                     width = input.find_first_of(" ", start + target_width);
                     if (width == std::string::npos)
@@ -161,7 +154,6 @@ text::refill(const std::string& input, const std::size_t target_width)
     return output;
 }
 
-
 /// Fills a paragraph to the specified length.
 ///
 /// See the documentation for refill() for additional details.
@@ -175,7 +167,6 @@ text::refill_as_string(const std::string& input, const std::size_t target_width)
 {
     return join(refill(input, target_width), "\n");
 }
-
 
 /// Replaces all occurrences of a substring in a string.
 ///
@@ -201,7 +192,6 @@ text::replace_all(const std::string& input, const std::string& search,
     return output;
 }
 
-
 /// Splits a string into different components.
 ///
 /// \param str The string to split.
@@ -209,10 +199,10 @@ text::replace_all(const std::string& input, const std::string& search,
 ///
 /// \return The different words in the input string as split by the provided
 /// delimiter.
-std::vector< std::string >
+std::vector<std::string>
 text::split(const std::string& str, const char delimiter)
 {
-    std::vector< std::string > words;
+    std::vector<std::string> words;
     if (!str.empty()) {
         std::string::size_type pos = str.find(delimiter);
         words.push_back(str.substr(0, pos));
@@ -226,7 +216,6 @@ text::split(const std::string& str, const char delimiter)
     return words;
 }
 
-
 /// Converts a string to a boolean.
 ///
 /// \param str The string to convert.
@@ -235,7 +224,7 @@ text::split(const std::string& str, const char delimiter)
 ///
 /// \throw std::value_error If the input string does not represent a valid
 ///     boolean value.
-template<>
+template <>
 bool
 text::to_type(const std::string& str)
 {
@@ -247,13 +236,12 @@ text::to_type(const std::string& str)
         throw value_error(F("Invalid boolean value '%s'") % str);
 }
 
-
 /// Identity function for to_type, for genericity purposes.
 ///
 /// \param str The string to convert.
 ///
 /// \return The input string.
-template<>
+template <>
 std::string
 text::to_type(const std::string& str)
 {

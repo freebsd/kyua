@@ -39,20 +39,16 @@
 namespace utils {
 namespace text {
 
-
 /// Values of the cells of a particular table row.
-typedef std::vector< std::string > table_row;
-
+typedef std::vector<std::string> table_row;
 
 /// Vector of column widths.
-typedef std::vector< std::size_t > widths_vector;
-
+typedef std::vector<std::size_t> widths_vector;
 
 class table;
 class table_formatter;
 
+} // namespace text
+} // namespace utils
 
-}  // namespace text
-}  // namespace utils
-
-#endif  // !defined(UTILS_TEXT_TABLE_FWD_HPP)
+#endif // !defined(UTILS_TEXT_TABLE_FWD_HPP)

@@ -41,21 +41,16 @@
 
 namespace cli {
 
-
 namespace detail {
-
 
 utils::fs::path default_log_name(void);
 
-
-}  // namespace detail
-
+} // namespace detail
 
 int main(utils::cmdline::ui*, const int, const char* const* const,
          cli_command_ptr = cli_command_ptr());
 int main(const int, const char* const* const);
 
+} // namespace cli
 
-}  // namespace cli
-
-#endif  // !defined(CLI_MAIN_HPP)
+#endif // !defined(CLI_MAIN_HPP)

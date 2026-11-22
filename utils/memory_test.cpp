@@ -27,19 +27,16 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if defined(HAVE_CONFIG_H)
-#   include "config.h"
+#include "config.h"
 #endif
 
-#include "utils/memory.hpp"
-
+#include <atf-c++.hpp>
 #include <cstring>
 
-#include <atf-c++.hpp>
-
+#include "utils/memory.hpp"
 #include "utils/units.hpp"
 
 namespace units = utils::units;
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(physical_memory);
 ATF_TEST_CASE_BODY(physical_memory)
@@ -50,12 +47,11 @@ ATF_TEST_CASE_BODY(physical_memory)
         ATF_REQUIRE(memory == 0);
     } else if (std::strcmp(MEMORY_QUERY_TYPE, "sysctlbyname") == 0) {
         ATF_REQUIRE(memory > 0);
-        ATF_REQUIRE(memory < 100 * units::TB);  // Large enough for now...
+        ATF_REQUIRE(memory < 100 * units::TB); // Large enough for now...
     } else {
         fail("Unimplemented memory query type");
     }
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

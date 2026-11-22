@@ -51,16 +51,14 @@ namespace utils {
 namespace process {
 namespace detail {
 
-
 extern int (*syscall_dup2)(const int, const int);
 extern pid_t (*syscall_fork)(void);
 extern int (*syscall_open)(const char*, const int, ...);
 extern int (*syscall_pipe)(int[2]);
 extern pid_t (*syscall_waitpid)(const pid_t, int*, const int);
 
+} // namespace detail
+} // namespace process
+} // namespace utils
 
-}  // namespace detail
-}  // namespace process
-}  // namespace utils
-
-#endif  // !defined(UTILS_PROCESS_SYSTEM_HPP)
+#endif // !defined(UTILS_PROCESS_SYSTEM_HPP)

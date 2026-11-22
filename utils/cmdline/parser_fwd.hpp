@@ -40,19 +40,15 @@
 namespace utils {
 namespace cmdline {
 
-
 /// Replacement for argc and argv to represent a command line.
-typedef std::vector< std::string > args_vector;
-
+typedef std::vector<std::string> args_vector;
 
 /// Collection of options to be used during parsing.
-typedef std::vector< const base_option* > options_vector;
-
+typedef std::vector<const base_option*> options_vector;
 
 class parsed_cmdline;
 
+} // namespace cmdline
+} // namespace utils
 
-}  // namespace cmdline
-}  // namespace utils
-
-#endif  // !defined(UTILS_CMDLINE_PARSER_FWD_HPP)
+#endif // !defined(UTILS_CMDLINE_PARSER_FWD_HPP)

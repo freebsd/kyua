@@ -33,7 +33,6 @@
 #define ENGINE_CONFIG_HPP
 
 #include "engine/config_fwd.hpp"
-
 #include "utils/config/nodes.hpp"
 #include "utils/config/tree_fwd.hpp"
 #include "utils/fs/path_fwd.hpp"
@@ -41,9 +40,8 @@
 
 namespace engine {
 
-
 /// Tree node to hold a system user identifier.
-class user_node : public utils::config::typed_leaf_node< utils::passwd::user > {
+class user_node : public utils::config::typed_leaf_node<utils::passwd::user> {
 public:
     virtual base_node* deep_copy(void) const;
 
@@ -54,12 +52,10 @@ public:
     std::string to_string(void) const;
 };
 
-
 utils::config::tree default_config(void);
 utils::config::tree empty_config(void);
 utils::config::tree load_config(const utils::fs::path&);
 
+} // namespace engine
 
-}  // namespace engine
-
-#endif  // !defined(ENGINE_CONFIG_HPP)
+#endif // !defined(ENGINE_CONFIG_HPP)

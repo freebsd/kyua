@@ -32,32 +32,27 @@
 #if !defined(STORE_READ_BACKEND_HPP)
 #define STORE_READ_BACKEND_HPP
 
-#include "store/read_backend_fwd.hpp"
-
 #include <memory>
 
+#include "store/read_backend_fwd.hpp"
 #include "store/read_transaction_fwd.hpp"
 #include "utils/fs/path_fwd.hpp"
 #include "utils/sqlite/database_fwd.hpp"
 
 namespace store {
 
-
 namespace detail {
-
 
 utils::sqlite::database open_and_setup(const utils::fs::path&, const int);
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Public interface to the database store for read-only operations.
 class read_backend {
     struct impl;
 
     /// Pointer to the shared internal implementation.
-    std::shared_ptr< impl > _pimpl;
+    std::shared_ptr<impl> _pimpl;
 
     read_backend(impl*);
 
@@ -71,7 +66,6 @@ public:
     read_transaction start_read(void);
 };
 
+} // namespace store
 
-}  // namespace store
-
-#endif  // !defined(STORE_READ_BACKEND_HPP)
+#endif // !defined(STORE_READ_BACKEND_HPP)

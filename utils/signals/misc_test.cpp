@@ -33,9 +33,8 @@ extern "C" {
 #include <unistd.h>
 }
 
-#include <cstdlib>
-
 #include <atf-c++.hpp>
+#include <cstdlib>
 
 #include "utils/defs.hpp"
 #include "utils/fs/path.hpp"
@@ -47,12 +46,9 @@ namespace fs = utils::fs;
 namespace process = utils::process;
 namespace signals = utils::signals;
 
-
 namespace {
 
-
 static void program_reset_raise [[noreturn]] (void);
-
 
 /// Body of a subprocess that tests the signals::reset function.
 ///
@@ -80,7 +76,6 @@ program_reset_raise(void)
     std::exit(EXIT_SUCCESS);
 }
 
-
 /// Body of a subprocess that executes the signals::reset_all function.
 ///
 /// The process exits with success if the function worked, or with a failure if
@@ -92,20 +87,17 @@ run_reset_all(void)
     std::exit(ok ? EXIT_SUCCESS : EXIT_FAILURE);
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 ATF_TEST_CASE_WITHOUT_HEAD(reset__ok);
 ATF_TEST_CASE_BODY(reset__ok)
 {
-    std::unique_ptr< process::child > child = process::child::fork_files(
+    std::unique_ptr<process::child> child = process::child::fork_files(
         program_reset_raise, fs::path("/dev/stdout"), fs::path("/dev/stderr"));
     process::status status = child->wait();
     ATF_REQUIRE(status.signaled());
     ATF_REQUIRE_EQ(SIGUSR1, status.termsig());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(reset__invalid);
 ATF_TEST_CASE_BODY(reset__invalid)
@@ -113,17 +105,15 @@ ATF_TEST_CASE_BODY(reset__invalid)
     ATF_REQUIRE_THROW(signals::system_error, signals::reset(-1));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(reset_all);
 ATF_TEST_CASE_BODY(reset_all)
 {
-    std::unique_ptr< process::child > child = process::child::fork_files(
+    std::unique_ptr<process::child> child = process::child::fork_files(
         run_reset_all, fs::path("/dev/stdout"), fs::path("/dev/stderr"));
     process::status status = child->wait();
     ATF_REQUIRE(status.exited());
     ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

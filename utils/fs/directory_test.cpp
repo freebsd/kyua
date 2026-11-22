@@ -26,19 +26,16 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/fs/directory.hpp"
-
+#include <atf-c++.hpp>
 #include <sstream>
 
-#include <atf-c++.hpp>
-
 #include "utils/format/containers.ipp"
+#include "utils/fs/directory.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 
 namespace fs = utils::fs;
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(directory_entry__public_fields);
 ATF_TEST_CASE_BODY(directory_entry__public_fields)
@@ -47,20 +44,18 @@ ATF_TEST_CASE_BODY(directory_entry__public_fields)
     ATF_REQUIRE_EQ("name", entry.name);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(directory_entry__equality);
 ATF_TEST_CASE_BODY(directory_entry__equality)
 {
     const fs::directory_entry entry1("name");
     const fs::directory_entry entry2("other-name");
 
-    ATF_REQUIRE(  entry1 == entry1);
+    ATF_REQUIRE(entry1 == entry1);
     ATF_REQUIRE(!(entry1 != entry1));
 
     ATF_REQUIRE(!(entry1 == entry2));
-    ATF_REQUIRE(  entry1 != entry2);
+    ATF_REQUIRE(entry1 != entry2);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(directory_entry__sorting);
 ATF_TEST_CASE_BODY(directory_entry__sorting)
@@ -70,10 +65,9 @@ ATF_TEST_CASE_BODY(directory_entry__sorting)
 
     ATF_REQUIRE(!(entry1 < entry1));
     ATF_REQUIRE(!(entry2 < entry2));
-    ATF_REQUIRE(  entry1 < entry2);
+    ATF_REQUIRE(entry1 < entry2);
     ATF_REQUIRE(!(entry2 < entry1));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(directory_entry__format);
 ATF_TEST_CASE_BODY(directory_entry__format)
@@ -84,13 +78,12 @@ ATF_TEST_CASE_BODY(directory_entry__format)
     ATF_REQUIRE_EQ("directory_entry{name='this is the name'}", output.str());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(integration__empty);
 ATF_TEST_CASE_BODY(integration__empty)
 {
     fs::mkdir(fs::path("empty"), 0755);
 
-    std::set< fs::directory_entry > contents;
+    std::set<fs::directory_entry> contents;
     const fs::directory dir(fs::path("empty"));
     for (fs::directory::const_iterator iter = dir.begin(); iter != dir.end();
          ++iter) {
@@ -99,13 +92,12 @@ ATF_TEST_CASE_BODY(integration__empty)
         ATF_REQUIRE((*iter).name == iter->name);
     }
 
-    std::set< fs::directory_entry > exp_contents;
+    std::set<fs::directory_entry> exp_contents;
     exp_contents.insert(fs::directory_entry("."));
     exp_contents.insert(fs::directory_entry(".."));
 
     ATF_REQUIRE_EQ(exp_contents, contents);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(integration__some_contents);
 ATF_TEST_CASE_BODY(integration__some_contents)
@@ -117,7 +109,7 @@ ATF_TEST_CASE_BODY(integration__some_contents)
     fs::mkdir(fs::path("full/subdir"), 0755);
     atf::utils::create_file("full/subdir/not-listed", "");
 
-    std::set< fs::directory_entry > contents;
+    std::set<fs::directory_entry> contents;
     const fs::directory dir(fs::path("full"));
     for (fs::directory::const_iterator iter = dir.begin(); iter != dir.end();
          ++iter) {
@@ -126,7 +118,7 @@ ATF_TEST_CASE_BODY(integration__some_contents)
         ATF_REQUIRE((*iter).name == iter->name);
     }
 
-    std::set< fs::directory_entry > exp_contents;
+    std::set<fs::directory_entry> exp_contents;
     exp_contents.insert(fs::directory_entry("."));
     exp_contents.insert(fs::directory_entry(".."));
     exp_contents.insert(fs::directory_entry(".hidden"));
@@ -137,7 +129,6 @@ ATF_TEST_CASE_BODY(integration__some_contents)
     ATF_REQUIRE_EQ(exp_contents, contents);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(integration__open_failure);
 ATF_TEST_CASE_BODY(integration__open_failure)
 {
@@ -145,7 +136,6 @@ ATF_TEST_CASE_BODY(integration__open_failure)
     ATF_REQUIRE_THROW_RE(fs::system_error, "opendir(.*non-existent.*) failed",
                          directory.begin());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(integration__iterators_equality);
 ATF_TEST_CASE_BODY(integration__iterators_equality)
@@ -156,25 +146,24 @@ ATF_TEST_CASE_BODY(integration__iterators_equality)
     fs::directory::const_iterator iter_ok2 = directory.begin();
     fs::directory::const_iterator iter_end = directory.end();
 
-    ATF_REQUIRE(  iter_ok1 == iter_ok1);
+    ATF_REQUIRE(iter_ok1 == iter_ok1);
     ATF_REQUIRE(!(iter_ok1 != iter_ok1));
 
-    ATF_REQUIRE(  iter_ok2 == iter_ok2);
+    ATF_REQUIRE(iter_ok2 == iter_ok2);
     ATF_REQUIRE(!(iter_ok2 != iter_ok2));
 
     ATF_REQUIRE(!(iter_ok1 == iter_ok2));
-    ATF_REQUIRE(  iter_ok1 != iter_ok2);
+    ATF_REQUIRE(iter_ok1 != iter_ok2);
 
     ATF_REQUIRE(!(iter_ok1 == iter_end));
-    ATF_REQUIRE(  iter_ok1 != iter_end);
+    ATF_REQUIRE(iter_ok1 != iter_end);
 
     ATF_REQUIRE(!(iter_ok2 == iter_end));
-    ATF_REQUIRE(  iter_ok2 != iter_end);
+    ATF_REQUIRE(iter_ok2 != iter_end);
 
-    ATF_REQUIRE(  iter_end == iter_end);
+    ATF_REQUIRE(iter_end == iter_end);
     ATF_REQUIRE(!(iter_end != iter_end));
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

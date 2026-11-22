@@ -36,10 +36,8 @@
 
 namespace cli {
 
-
 /// Implementation of the "report" subcommand.
-class cmd_report : public cli_command
-{
+class cmd_report : public cli_command {
 public:
     cmd_report(void);
 
@@ -47,8 +45,6 @@ public:
             const utils::config::tree&);
 };
 
+} // namespace cli
 
-}  // namespace cli
-
-
-#endif  // !defined(CLI_CMD_REPORT_HPP)
+#endif // !defined(CLI_CMD_REPORT_HPP)

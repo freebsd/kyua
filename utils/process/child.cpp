@@ -49,15 +49,13 @@ extern "C" {
 #include "utils/process/exceptions.hpp"
 #include "utils/process/fdstream.hpp"
 #include "utils/process/operations.hpp"
-#include "utils/process/system.hpp"
 #include "utils/process/status.hpp"
+#include "utils/process/system.hpp"
 #include "utils/sanity.hpp"
 #include "utils/signals/interrupts.hpp"
 
-
 namespace utils {
 namespace process {
-
 
 /// Private implementation fields for child objects.
 struct child::impl : utils::noncopyable {
@@ -65,28 +63,27 @@ struct child::impl : utils::noncopyable {
     pid_t _pid;
 
     /// The input stream for the process' stdout and stderr.  May be NULL.
-    std::unique_ptr< process::ifdstream > _output;
+    std::unique_ptr<process::ifdstream> _output;
 
     /// Initializes private implementation data.
     ///
     /// \param pid The process identifier.
     /// \param output The input stream.  Grabs ownership of the pointer.
     impl(const pid_t pid, process::ifdstream* output) :
-        _pid(pid), _output(output) {}
+        _pid(pid),
+        _output(output)
+    {
+    }
 };
 
-
-}  // namespace process
-}  // namespace utils
-
+} // namespace process
+} // namespace utils
 
 namespace fs = utils::fs;
 namespace process = utils::process;
 namespace signals = utils::signals;
 
-
 namespace {
-
 
 /// Exception-based version of dup(2).
 ///
@@ -105,7 +102,6 @@ safe_dup(const int old_fd, const int new_fd)
     }
 }
 
-
 /// Exception-based version of open(2) to open (or create) a file for append.
 ///
 /// \param filename The file to open in append mode.
@@ -116,17 +112,19 @@ safe_dup(const int old_fd, const int new_fd)
 static int
 open_for_append(const fs::path& filename)
 {
-    const int fd = process::detail::syscall_open(
-        filename.c_str(), O_CREAT | O_WRONLY | O_APPEND,
-        S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+    const int fd = process::detail::syscall_open(filename.c_str(),
+                                                 O_CREAT | O_WRONLY | O_APPEND,
+                                                 S_IRUSR | S_IWUSR | S_IRGRP |
+                                                     S_IROTH);
     if (fd == -1) {
         const int original_errno = errno;
         throw process::system_error(F("Failed to create %s because open(2) "
-                                      "failed") % filename, original_errno);
+                                      "failed") %
+                                        filename,
+                                    original_errno);
     }
     return fd;
 }
-
 
 /// Logs the execution of another program.
 ///
@@ -142,9 +140,7 @@ log_exec(const fs::path& program, const process::args_vector& args)
     LD(F("Executing %s") % plain_command);
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Prints out a fatal error and aborts.
 void
@@ -153,7 +149,6 @@ utils::process::detail::report_error_and_abort(void)
     std::cerr << "Caught unknown exception\n";
     std::abort();
 }
-
 
 /// Prints out a fatal error and aborts.
 ///
@@ -165,22 +160,18 @@ utils::process::detail::report_error_and_abort(const std::runtime_error& error)
     std::abort();
 }
 
-
 /// Creates a new child.
 ///
 /// \param implptr A dynamically-allocated impl object with the contents of the
 ///     new child.
-process::child::child(impl *implptr) :
-    _pimpl(implptr)
+process::child::child(impl* implptr) : _pimpl(implptr)
 {
 }
-
 
 /// Destructor for child.
 process::child::~child(void)
 {
 }
-
 
 /// Helper function for fork().
 ///
@@ -192,7 +183,7 @@ process::child::~child(void)
 /// noncopyable.  In the case of the child, a NULL pointer.
 ///
 /// \throw process::system_error If the calls to pipe(2) or fork(2) fail.
-std::unique_ptr< process::child >
+std::unique_ptr<process::child>
 process::child::fork_capture_aux(void)
 {
     std::cout.flush();
@@ -202,16 +193,16 @@ process::child::fork_capture_aux(void)
     if (detail::syscall_pipe(fds) == -1)
         throw process::system_error("pipe(2) failed", errno);
 
-    std::unique_ptr< signals::interrupts_inhibiter > inhibiter(
+    std::unique_ptr<signals::interrupts_inhibiter> inhibiter(
         new signals::interrupts_inhibiter);
     pid_t pid = detail::syscall_fork();
     if (pid == -1) {
-        inhibiter.reset();  // Unblock signals.
+        inhibiter.reset(); // Unblock signals.
         ::close(fds[0]);
         ::close(fds[1]);
         throw process::system_error("fork(2) failed", errno);
     } else if (pid == 0) {
-        inhibiter.reset();  // Unblock signals.
+        inhibiter.reset(); // Unblock signals.
         ::setsid();
 
         try {
@@ -228,36 +219,34 @@ process::child::fork_capture_aux(void)
         ::close(fds[1]);
         LD(F("Spawned process %s: stdout and stderr inherited") % pid);
         signals::add_pid_to_kill(pid);
-        inhibiter.reset(NULL);  // Unblock signals.
-        return std::unique_ptr< process::child >(
+        inhibiter.reset(NULL); // Unblock signals.
+        return std::unique_ptr<process::child>(
             new process::child(new impl(pid, new process::ifdstream(fds[0]))));
     }
 }
 
-
-std::unique_ptr< process::child >
+std::unique_ptr<process::child>
 process::child::fork_interactive(void)
 {
     std::cout.flush();
     std::cerr.flush();
 
-    std::unique_ptr< signals::interrupts_inhibiter > inhibiter(
+    std::unique_ptr<signals::interrupts_inhibiter> inhibiter(
         new signals::interrupts_inhibiter);
     pid_t pid = detail::syscall_fork();
     if (pid == -1) {
-        inhibiter.reset();  // Unblock signals.
+        inhibiter.reset(); // Unblock signals.
         throw process::system_error("fork(2) failed", errno);
     } else if (pid == 0) {
-        inhibiter.reset();  // Unblock signals.
+        inhibiter.reset(); // Unblock signals.
         return {};
     } else {
         signals::add_pid_to_kill(pid);
-        inhibiter.reset(NULL);  // Unblock signals.
-        return std::unique_ptr< process::child >(
+        inhibiter.reset(NULL); // Unblock signals.
+        return std::unique_ptr<process::child>(
             new process::child(new impl(pid, NULL)));
     }
 }
-
 
 /// Helper function for fork().
 ///
@@ -276,21 +265,21 @@ process::child::fork_interactive(void)
 /// noncopyable.  In the case of the child, a NULL pointer.
 ///
 /// \throw process::system_error If the call to fork(2) fails.
-std::unique_ptr< process::child >
+std::unique_ptr<process::child>
 process::child::fork_files_aux(const fs::path& stdout_file,
                                const fs::path& stderr_file)
 {
     std::cout.flush();
     std::cerr.flush();
 
-    std::unique_ptr< signals::interrupts_inhibiter > inhibiter(
+    std::unique_ptr<signals::interrupts_inhibiter> inhibiter(
         new signals::interrupts_inhibiter);
     pid_t pid = detail::syscall_fork();
     if (pid == -1) {
-        inhibiter.reset();  // Unblock signals.
+        inhibiter.reset(); // Unblock signals.
         throw process::system_error("fork(2) failed", errno);
     } else if (pid == 0) {
-        inhibiter.reset();  // Unblock signals.
+        inhibiter.reset(); // Unblock signals.
         ::setsid();
 
         try {
@@ -313,12 +302,11 @@ process::child::fork_files_aux(const fs::path& stdout_file,
         LD(F("Spawned process %s: stdout=%s, stderr=%s") % pid % stdout_file %
            stderr_file);
         signals::add_pid_to_kill(pid);
-        inhibiter.reset();  // Unblock signals.
-        return std::unique_ptr< process::child >(
+        inhibiter.reset(); // Unblock signals.
+        return std::unique_ptr<process::child>(
             new process::child(new impl(pid, NULL)));
     }
 }
-
 
 /// Spawns a new binary and multiplexes and captures its stdout and stderr.
 ///
@@ -333,16 +321,15 @@ process::child::fork_files_aux(const fs::path& stdout_file,
 ///
 /// \throw process::system_error If the process cannot be spawned due to a
 ///     system call error.
-std::unique_ptr< process::child >
+std::unique_ptr<process::child>
 process::child::spawn_capture(const fs::path& program, const args_vector& args)
 {
-    std::unique_ptr< child > child = fork_capture_aux();
+    std::unique_ptr<child> child = fork_capture_aux();
     if (child.get() == NULL)
         exec(program, args);
     log_exec(program, args);
     return child;
 }
-
 
 /// Spawns a new binary and redirects its stdout and stderr to files.
 ///
@@ -359,19 +346,17 @@ process::child::spawn_capture(const fs::path& program, const args_vector& args)
 ///
 /// \throw process::system_error If the process cannot be spawned due to a
 ///     system call error.
-std::unique_ptr< process::child >
-process::child::spawn_files(const fs::path& program,
-                            const args_vector& args,
+std::unique_ptr<process::child>
+process::child::spawn_files(const fs::path& program, const args_vector& args,
                             const fs::path& stdout_file,
                             const fs::path& stderr_file)
 {
-    std::unique_ptr< child > child = fork_files_aux(stdout_file, stderr_file);
+    std::unique_ptr<child> child = fork_files_aux(stdout_file, stderr_file);
     if (child.get() == NULL)
         exec(program, args);
     log_exec(program, args);
     return child;
 }
-
 
 /// Returns the process identifier of this child.
 ///
@@ -381,7 +366,6 @@ process::child::pid(void) const
 {
     return _pimpl->_pid;
 }
-
 
 /// Gets the input stream corresponding to the stdout and stderr of the child.
 ///
@@ -395,7 +379,6 @@ process::child::output(void)
     PRE(_pimpl->_output.get() != NULL);
     return *_pimpl->_output;
 }
-
 
 /// Blocks to wait for completion.
 ///

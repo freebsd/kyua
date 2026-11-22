@@ -44,7 +44,6 @@ extern "C" {
 
 namespace store {
 
-
 /// Representation of the database metadata.
 class metadata {
     /// Current version of the database schema.
@@ -62,7 +61,6 @@ public:
     static metadata fetch_latest(utils::sqlite::database&);
 };
 
+} // namespace store
 
-}  // namespace store
-
-#endif  // !defined(STORE_METADATA_HPP)
+#endif // !defined(STORE_METADATA_HPP)

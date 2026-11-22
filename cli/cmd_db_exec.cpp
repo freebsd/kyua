@@ -26,14 +26,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "cli/cmd_db_exec.hpp"
-
 #include <algorithm>
 #include <cstdlib>
 #include <iterator>
 #include <sstream>
 #include <string>
 
+#include "cli/cmd_db_exec.hpp"
 #include "cli/common.ipp"
 #include "store/exceptions.hpp"
 #include "store/layout.hpp"
@@ -57,9 +56,7 @@ namespace sqlite = utils::sqlite;
 
 using cli::cmd_db_exec;
 
-
 namespace {
-
 
 /// Concatenates a vector into a string using ' ' as a separator.
 ///
@@ -71,16 +68,14 @@ flatten_args(const cmdline::args_vector& args)
 {
     std::ostringstream output;
     std::copy(args.begin(), args.end(),
-              std::ostream_iterator< std::string >(output, " "));
+              std::ostream_iterator<std::string>(output, " "));
 
     std::string result = output.str();
     result.erase(result.end() - 1);
     return result;
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Formats a particular cell of a statement result.
 ///
@@ -113,7 +108,6 @@ cli::format_cell(sqlite::statement& stmt, const int index)
     UNREACHABLE;
 }
 
-
 /// Formats the column names of a statement for output as CSV.
 ///
 /// \param stmt The statement whose columns to format.
@@ -129,7 +123,6 @@ cli::format_headers(sqlite::statement& stmt)
     output += stmt.column_name(i);
     return output;
 }
-
 
 /// Formats a row of a statement for output as CSV.
 ///
@@ -147,18 +140,18 @@ cli::format_row(sqlite::statement& stmt)
     return output;
 }
 
-
 /// Default constructor for cmd_db_exec.
-cmd_db_exec::cmd_db_exec(void) : cli_command(
-    "db-exec", "sql_statement", 1, -1,
-    "Executes an arbitrary SQL statement in a results file and prints "
-    "the resulting table")
+cmd_db_exec::cmd_db_exec(void) :
+    cli_command(
+        "db-exec", "sql_statement", 1, -1,
+        "Executes an arbitrary SQL statement in a results file and prints "
+        "the resulting table")
 {
     add_option(results_file_open_option);
-    add_option(cmdline::bool_option("no-headers", "Do not show headers in the "
+    add_option(cmdline::bool_option("no-headers",
+                                    "Do not show headers in the "
                                     "output table"));
 }
-
 
 /// Entry point for the "db-exec" subcommand.
 ///
@@ -172,14 +165,14 @@ cmd_db_exec::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
                  const config::tree& /* user_config */)
 {
     try {
-        const fs::path results_file = layout::find_results(
-            results_file_open(cmdline));
+        const fs::path results_file =
+            layout::find_results(results_file_open(cmdline));
 
         // TODO(jmmv): Shouldn't be using store::detail here...
-        sqlite::database db = store::detail::open_and_setup(
-            results_file, sqlite::open_readwrite);
-        sqlite::statement stmt = db.create_statement(
-            flatten_args(cmdline.arguments()));
+        sqlite::database db =
+            store::detail::open_and_setup(results_file, sqlite::open_readwrite);
+        sqlite::statement stmt =
+            db.create_statement(flatten_args(cmdline.arguments()));
 
         if (stmt.step()) {
             if (!cmdline.has_option("no-headers"))

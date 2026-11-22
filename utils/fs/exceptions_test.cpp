@@ -26,17 +26,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/fs/exceptions.hpp"
-
+#include <atf-c++.hpp>
 #include <cerrno>
 #include <cstring>
 
-#include <atf-c++.hpp>
-
 #include "utils/format/macros.hpp"
+#include "utils/fs/exceptions.hpp"
 
 namespace fs = utils::fs;
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(error);
 ATF_TEST_CASE_BODY(error)
@@ -44,7 +41,6 @@ ATF_TEST_CASE_BODY(error)
     const fs::error e("Some text");
     ATF_REQUIRE(std::strcmp("Some text", e.what()) == 0);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(invalid_path_error);
 ATF_TEST_CASE_BODY(invalid_path_error)
@@ -55,17 +51,16 @@ ATF_TEST_CASE_BODY(invalid_path_error)
     ATF_REQUIRE_EQ("some/invalid/path", e.invalid_path());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(join_error);
 ATF_TEST_CASE_BODY(join_error)
 {
     const fs::join_error e("dir1/file1", "/dir2/file2", "The reason");
     ATF_REQUIRE(std::strcmp("Cannot join paths 'dir1/file1' and '/dir2/file2': "
-                            "The reason", e.what()) == 0);
+                            "The reason",
+                            e.what()) == 0);
     ATF_REQUIRE_EQ("dir1/file1", e.textual_path1());
     ATF_REQUIRE_EQ("/dir2/file2", e.textual_path2());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(system_error);
 ATF_TEST_CASE_BODY(system_error)
@@ -76,14 +71,12 @@ ATF_TEST_CASE_BODY(system_error)
     ATF_REQUIRE_EQ(ENOENT, e.original_errno());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(unsupported_operation_error);
 ATF_TEST_CASE_BODY(unsupported_operation_error)
 {
     const fs::unsupported_operation_error e("Some text");
     ATF_REQUIRE(std::strcmp("Some text", e.what()) == 0);
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

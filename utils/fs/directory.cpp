@@ -49,14 +49,12 @@ namespace detail = utils::fs::detail;
 namespace fs = utils::fs;
 namespace text = utils::text;
 
-
 /// Constructs a new directory entry.
 ///
 /// \param name_ Name of the directory entry.
 fs::directory_entry::directory_entry(const std::string& name_) : name(name_)
 {
 }
-
 
 /// Checks if two directory entries are equal.
 ///
@@ -69,7 +67,6 @@ fs::directory_entry::operator==(const directory_entry& other) const
     return name == other.name;
 }
 
-
 /// Checks if two directory entries are different.
 ///
 /// \param other The entry to compare to.
@@ -81,7 +78,6 @@ fs::directory_entry::operator!=(const directory_entry& other) const
     return !(*this == other);
 }
 
-
 /// Checks if this entry sorts before another entry.
 ///
 /// \param other The entry to compare to.
@@ -92,7 +88,6 @@ fs::directory_entry::operator<(const directory_entry& other) const
 {
     return name < other.name;
 }
-
 
 /// Formats a directory entry.
 ///
@@ -106,7 +101,6 @@ fs::operator<<(std::ostream& output, const directory_entry& entry)
     output << F("directory_entry{name=%s}") % text::quote(entry.name, '\'');
     return output;
 }
-
 
 /// Internal implementation details for the directory_iterator.
 ///
@@ -129,7 +123,7 @@ struct utils::fs::detail::directory_iterator::impl : utils::noncopyable {
     ::DIR* _dirp;
 
     /// Custom representation of the directory entry.
-    std::unique_ptr< directory_entry > _entry;
+    std::unique_ptr<directory_entry> _entry;
 
     /// Constructs an iterator pointing to the "end" of the directory.
     impl(void) : _path("invalid-directory-entry"), _dirp(NULL)
@@ -168,8 +162,7 @@ struct utils::fs::detail::directory_iterator::impl : utils::noncopyable {
     }
 
     /// Closes the directory and invalidates the iterator.
-    void
-    close(void)
+    void close(void)
     {
         PRE(_dirp != NULL);
         if (::closedir(_dirp) == -1) {
@@ -184,8 +177,7 @@ struct utils::fs::detail::directory_iterator::impl : utils::noncopyable {
     /// initialize the first entry.
     ///
     /// \throw system_error If the call to readdir fails.
-    void
-    next(void)
+    void next(void)
     {
         ::dirent* result;
 
@@ -201,21 +193,18 @@ struct utils::fs::detail::directory_iterator::impl : utils::noncopyable {
     }
 };
 
-
 /// Constructs a new directory iterator.
 ///
 /// \param pimpl The constructed internal implementation structure to use.
-detail::directory_iterator::directory_iterator(std::shared_ptr< impl > pimpl) :
+detail::directory_iterator::directory_iterator(std::shared_ptr<impl> pimpl) :
     _pimpl(pimpl)
 {
 }
-
 
 /// Destructor.
 detail::directory_iterator::~directory_iterator(void)
 {
 }
-
 
 /// Creates a new directory iterator for a directory.
 ///
@@ -226,9 +215,8 @@ detail::directory_iterator::~directory_iterator(void)
 detail::directory_iterator
 detail::directory_iterator::new_begin(const path& path)
 {
-    return directory_iterator(std::shared_ptr< impl >(new impl(path)));
+    return directory_iterator(std::shared_ptr<impl>(new impl(path)));
 }
-
 
 /// Creates a new invalid directory iterator.
 ///
@@ -236,9 +224,8 @@ detail::directory_iterator::new_begin(const path& path)
 detail::directory_iterator
 detail::directory_iterator::new_end(void)
 {
-    return directory_iterator(std::shared_ptr< impl >(new impl()));
+    return directory_iterator(std::shared_ptr<impl>(new impl()));
 }
-
 
 /// Checks if two iterators are equal.
 ///
@@ -256,7 +243,6 @@ detail::directory_iterator::operator==(const directory_iterator& other) const
         _pimpl == other._pimpl;
 }
 
-
 /// Checks if two iterators are different.
 ///
 /// \param other The object to compare to.
@@ -267,7 +253,6 @@ detail::directory_iterator::operator!=(const directory_iterator& other) const
 {
     return !(*this == other);
 }
-
 
 /// Moves the iterator one element forward.
 ///
@@ -281,7 +266,6 @@ detail::directory_iterator::operator++(void)
     return *this;
 }
 
-
 /// Dereferences the iterator to its contents.
 ///
 /// \return A reference to the directory entry pointed to by the iterator.
@@ -292,7 +276,6 @@ detail::directory_iterator::operator*(void) const
     return *_pimpl->_entry;
 }
 
-
 /// Dereferences the iterator to its contents.
 ///
 /// \return A pointer to the directory entry pointed to by the iterator.
@@ -302,7 +285,6 @@ detail::directory_iterator::operator->(void) const
     PRE(_pimpl->_entry.get() != NULL);
     return _pimpl->_entry.get();
 }
-
 
 /// Internal implementation details for the directory.
 struct utils::fs::directory::impl : utils::noncopyable {
@@ -317,14 +299,12 @@ struct utils::fs::directory::impl : utils::noncopyable {
     }
 };
 
-
 /// Constructs a new directory.
 ///
 /// \param path_ Path to the directory to scan.
 fs::directory::directory(const path& path_) : _pimpl(new impl(path_))
 {
 }
-
 
 /// Returns an iterator to start scanning the directory.
 ///
@@ -337,7 +317,6 @@ fs::directory::begin(void) const
 {
     return const_iterator::new_begin(_pimpl->_path);
 }
-
 
 /// Returns an invalid iterator to check for the end of an scan.
 ///

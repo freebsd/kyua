@@ -26,19 +26,18 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "cli/config.hpp"
-
 #include "cli/common.hpp"
+#include "cli/config.hpp"
 #include "engine/config.hpp"
 #include "engine/exceptions.hpp"
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.ipp"
 #include "utils/config/tree.ipp"
+#include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
-#include "utils/env.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
 
@@ -48,17 +47,13 @@ namespace fs = utils::fs;
 
 using utils::optional;
 
-
 namespace {
-
 
 /// Basename of the configuration file.
 static const char* config_basename = "kyua.conf";
 
-
 /// Magic string to disable loading of configuration files.
 static const char* none_config = "none";
-
 
 /// Textual description of the default configuration files.
 ///
@@ -72,7 +67,6 @@ static const char* none_config = "none";
 static const std::string config_lookup_names =
     (fs::path("~/.kyua") / config_basename).str() + " or " +
     (fs::path(KYUA_CONFDIR) / config_basename).str();
-
 
 /// Loads the configuration file for this session, if any.
 ///
@@ -93,7 +87,7 @@ load_config_file(const cmdline::parsed_cmdline& cmdline)
     // TODO(jmmv): We should really be able to use cmdline.has_option here to
     // detect whether the option was provided or not instead of checking against
     // the default value.
-    const fs::path filename = cmdline.get_option< cmdline::path_option >(
+    const fs::path filename = cmdline.get_option<cmdline::path_option>(
         cli::config_option.long_name());
     if (filename.str() == none_config) {
         LD("Configuration loading disabled; using defaults");
@@ -101,7 +95,7 @@ load_config_file(const cmdline::parsed_cmdline& cmdline)
     } else if (filename.str() != cli::config_option.default_value())
         return engine::load_config(filename);
 
-    const optional< fs::path > home = utils::get_home();
+    const optional<fs::path> home = utils::get_home();
     if (home) {
         const fs::path path = home.get() / ".kyua" / config_basename;
         try {
@@ -116,8 +110,8 @@ load_config_file(const cmdline::parsed_cmdline& cmdline)
         }
     }
 
-    const fs::path confdir(utils::getenv_with_default(
-        "KYUA_CONFDIR", KYUA_CONFDIR));
+    const fs::path confdir(utils::getenv_with_default("KYUA_CONFDIR",
+                                                      KYUA_CONFDIR));
 
     const fs::path path = confdir / config_basename;
     if (fs::exists(path)) {
@@ -126,7 +120,6 @@ load_config_file(const cmdline::parsed_cmdline& cmdline)
         return engine::default_config();
     }
 }
-
 
 /// Loads the configuration file for this session, if any.
 ///
@@ -144,14 +137,15 @@ load_required_config(const cmdline::parsed_cmdline& cmdline)
     config::tree user_config = load_config_file(cmdline);
 
     if (cmdline.has_option(cli::variable_option.long_name())) {
-        typedef std::pair< std::string, std::string > override_pair;
+        typedef std::pair<std::string, std::string> override_pair;
 
-        const std::vector< override_pair >& overrides =
-            cmdline.get_multi_option< cmdline::property_option >(
+        const std::vector<override_pair>& overrides =
+            cmdline.get_multi_option<cmdline::property_option>(
                 cli::variable_option.long_name());
 
-        for (std::vector< override_pair >::const_iterator
-                 iter = overrides.begin(); iter != overrides.end(); iter++) {
+        for (std::vector<override_pair>::const_iterator iter =
+                 overrides.begin();
+             iter != overrides.end(); iter++) {
             try {
                 user_config.set_string((*iter).first, (*iter).second);
             } catch (const config::error& e) {
@@ -165,27 +159,22 @@ load_required_config(const cmdline::parsed_cmdline& cmdline)
     return user_config;
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Standard definition of the option to specify a configuration file.
 ///
 /// You must use load_config() to load a configuration file while honoring the
 /// value of this flag.
-const cmdline::path_option cli::config_option(
-    'c', "config",
-    (std::string("Path to the configuration file; '") + none_config +
-     "' to disable loading").c_str(),
-    "file", config_lookup_names.c_str());
-
+const cmdline::path_option
+    cli::config_option('c', "config",
+                       (std::string("Path to the configuration file; '") +
+                        none_config + "' to disable loading")
+                           .c_str(),
+                       "file", config_lookup_names.c_str());
 
 /// Standard definition of the option to specify a configuration variable.
 const cmdline::property_option cli::variable_option(
-    'v', "variable",
-    "Overrides a particular configuration variable",
-    "K=V");
-
+    'v', "variable", "Overrides a particular configuration variable", "K=V");
 
 /// Loads the configuration file for this session, if any.
 ///
@@ -206,8 +195,7 @@ const cmdline::property_option cli::variable_option(
 ///
 /// \throw engine::error If the parsing of the configuration file fails.
 config::tree
-cli::load_config(const cmdline::parsed_cmdline& cmdline,
-                 const bool required)
+cli::load_config(const cmdline::parsed_cmdline& cmdline, const bool required)
 {
     try {
         return load_required_config(cmdline);
@@ -216,7 +204,8 @@ cli::load_config(const cmdline::parsed_cmdline& cmdline,
             throw;
         } else {
             LW(F("Ignoring failure to load configuration because the requested "
-                 "command should not fail: %s") % e.what());
+                 "command should not fail: %s") %
+               e.what());
             return engine::default_config();
         }
     }

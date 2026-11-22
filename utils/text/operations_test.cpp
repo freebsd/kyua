@@ -26,22 +26,18 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/text/operations.ipp"
-
+#include <atf-c++.hpp>
 #include <iostream>
 #include <set>
 #include <string>
 #include <vector>
 
-#include <atf-c++.hpp>
-
 #include "utils/text/exceptions.hpp"
+#include "utils/text/operations.ipp"
 
 namespace text = utils::text;
 
-
 namespace {
-
 
 /// Tests text::refill() on an input string with a range of widths.
 ///
@@ -54,23 +50,20 @@ refill_test(const char* expected, const char* input,
             const std::size_t first_width, const std::size_t last_width)
 {
     for (std::size_t width = first_width; width <= last_width; ++width) {
-        const std::vector< std::string > lines = text::split(expected, '\n');
+        const std::vector<std::string> lines = text::split(expected, '\n');
         std::cout << "Breaking at width " << width << '\n';
         ATF_REQUIRE_EQ(expected, text::refill_as_string(input, width));
         ATF_REQUIRE(lines == text::refill(input, width));
     }
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 ATF_TEST_CASE_WITHOUT_HEAD(escape_xml__empty);
 ATF_TEST_CASE_BODY(escape_xml__empty)
 {
     ATF_REQUIRE_EQ("", text::escape_xml(""));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(escape_xml__no_escaping);
 ATF_TEST_CASE_BODY(escape_xml__no_escaping)
@@ -79,7 +72,6 @@ ATF_TEST_CASE_BODY(escape_xml__no_escaping)
     ATF_REQUIRE_EQ("Some text!", text::escape_xml("Some text!"));
     ATF_REQUIRE_EQ("\n\t\r", text::escape_xml("\n\t\r"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(escape_xml__some_escaping);
 ATF_TEST_CASE_BODY(escape_xml__some_escaping)
@@ -92,9 +84,10 @@ ATF_TEST_CASE_BODY(escape_xml__some_escaping)
     ATF_REQUIRE_EQ("&quot;&amp;&lt;&gt;&apos;", text::escape_xml("\"&<>'"));
     ATF_REQUIRE_EQ("&amp;&amp;&amp;", text::escape_xml("&&&"));
     ATF_REQUIRE_EQ("&amp;#8;&amp;#11;", text::escape_xml("\b\v"));
-    ATF_REQUIRE_EQ("\t&amp;#127;BAR&amp;", text::escape_xml("\t\x7f""BAR&"));
+    ATF_REQUIRE_EQ("\t&amp;#127;BAR&amp;",
+                   text::escape_xml("\t\x7f"
+                                    "BAR&"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(quote__empty);
 ATF_TEST_CASE_BODY(quote__empty)
@@ -103,14 +96,12 @@ ATF_TEST_CASE_BODY(quote__empty)
     ATF_REQUIRE_EQ("##", text::quote("", '#'));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(quote__no_escaping);
 ATF_TEST_CASE_BODY(quote__no_escaping)
 {
     ATF_REQUIRE_EQ("'Some text\"'", text::quote("Some text\"", '\''));
     ATF_REQUIRE_EQ("#Another'string#", text::quote("Another'string", '#'));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(quote__some_escaping);
 ATF_TEST_CASE_BODY(quote__some_escaping)
@@ -129,7 +120,6 @@ ATF_TEST_CASE_BODY(quote__some_escaping)
                    text::quote("escape at the end'", '\''));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(refill__empty);
 ATF_TEST_CASE_BODY(refill__empty)
 {
@@ -142,11 +132,10 @@ ATF_TEST_CASE_BODY(refill__empty)
     ATF_REQUIRE_EQ("", text::refill_as_string("", 10));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(refill__no_changes);
 ATF_TEST_CASE_BODY(refill__no_changes)
 {
-    std::vector< std::string > exp_lines;
+    std::vector<std::string> exp_lines;
     exp_lines.push_back("foo bar\nbaz");
 
     ATF_REQUIRE(exp_lines == text::refill("foo bar\nbaz", 12));
@@ -156,14 +145,12 @@ ATF_TEST_CASE_BODY(refill__no_changes)
     ATF_REQUIRE_EQ("foo bar\nbaz", text::refill_as_string("foo bar\nbaz", 80));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(refill__break_one);
 ATF_TEST_CASE_BODY(refill__break_one)
 {
-    refill_test("only break the\nfirst line", "only break the first line",
-                14, 19);
+    refill_test("only break the\nfirst line", "only break the first line", 14,
+                19);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(refill__break_one__not_first_word);
 ATF_TEST_CASE_BODY(refill__break_one__not_first_word)
@@ -178,15 +165,12 @@ ATF_TEST_CASE_BODY(refill__break_one__not_first_word)
                 27, 28);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(refill__break_many);
 ATF_TEST_CASE_BODY(refill__break_many)
 {
     refill_test("this is a long\nparagraph to be\nsplit into\npieces",
-                "this is a long paragraph to be split into pieces",
-                15, 15);
+                "this is a long paragraph to be split into pieces", 15, 15);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(refill__cannot_break);
 ATF_TEST_CASE_BODY(refill__cannot_break)
@@ -197,42 +181,38 @@ ATF_TEST_CASE_BODY(refill__cannot_break)
                 "this is a-string-with-long-words", 10, 10);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(refill__preserve_whitespace);
 ATF_TEST_CASE_BODY(refill__preserve_whitespace)
 {
     refill_test("foo  bar baz  ", "foo  bar baz  ", 80, 80);
     refill_test("foo  \n bar", "foo    bar", 5, 5);
 
-    std::vector< std::string > exp_lines;
+    std::vector<std::string> exp_lines;
     exp_lines.push_back("foo \n");
     exp_lines.push_back(" bar");
     ATF_REQUIRE(exp_lines == text::refill("foo \n  bar", 5));
     ATF_REQUIRE_EQ("foo \n\n bar", text::refill_as_string("foo \n  bar", 5));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(join__empty);
 ATF_TEST_CASE_BODY(join__empty)
 {
-    std::vector< std::string > lines;
+    std::vector<std::string> lines;
     ATF_REQUIRE_EQ("", text::join(lines, " "));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(join__one);
 ATF_TEST_CASE_BODY(join__one)
 {
-    std::vector< std::string > lines;
+    std::vector<std::string> lines;
     lines.push_back("first line");
     ATF_REQUIRE_EQ("first line", text::join(lines, "*"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(join__several);
 ATF_TEST_CASE_BODY(join__several)
 {
-    std::vector< std::string > lines;
+    std::vector<std::string> lines;
     lines.push_back("first abc");
     lines.push_back("second");
     lines.push_back("and last line");
@@ -241,54 +221,49 @@ ATF_TEST_CASE_BODY(join__several)
                    text::join(lines, "***"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(join__unordered);
 ATF_TEST_CASE_BODY(join__unordered)
 {
-    std::set< std::string > lines;
+    std::set<std::string> lines;
     lines.insert("first");
     lines.insert("second");
     const std::string joined = text::join(lines, " ");
     ATF_REQUIRE(joined == "first second" || joined == "second first");
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(split__empty);
 ATF_TEST_CASE_BODY(split__empty)
 {
-    std::vector< std::string > words = text::split("", ' ');
-    std::vector< std::string > exp_words;
+    std::vector<std::string> words = text::split("", ' ');
+    std::vector<std::string> exp_words;
     ATF_REQUIRE(exp_words == words);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(split__one);
 ATF_TEST_CASE_BODY(split__one)
 {
-    std::vector< std::string > words = text::split("foo", ' ');
-    std::vector< std::string > exp_words;
+    std::vector<std::string> words = text::split("foo", ' ');
+    std::vector<std::string> exp_words;
     exp_words.push_back("foo");
     ATF_REQUIRE(exp_words == words);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(split__several__simple);
 ATF_TEST_CASE_BODY(split__several__simple)
 {
-    std::vector< std::string > words = text::split("foo bar baz", ' ');
-    std::vector< std::string > exp_words;
+    std::vector<std::string> words = text::split("foo bar baz", ' ');
+    std::vector<std::string> exp_words;
     exp_words.push_back("foo");
     exp_words.push_back("bar");
     exp_words.push_back("baz");
     ATF_REQUIRE(exp_words == words);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(split__several__delimiters);
 ATF_TEST_CASE_BODY(split__several__delimiters)
 {
-    std::vector< std::string > words = text::split("XfooXXbarXXXbazXX", 'X');
-    std::vector< std::string > exp_words;
+    std::vector<std::string> words = text::split("XfooXXbarXXXbazXX", 'X');
+    std::vector<std::string> exp_words;
     exp_words.push_back("");
     exp_words.push_back("foo");
     exp_words.push_back("");
@@ -300,7 +275,6 @@ ATF_TEST_CASE_BODY(split__several__delimiters)
     exp_words.push_back("");
     ATF_REQUIRE(exp_words == words);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(replace_all__empty);
 ATF_TEST_CASE_BODY(replace_all__empty)
@@ -308,53 +282,46 @@ ATF_TEST_CASE_BODY(replace_all__empty)
     ATF_REQUIRE_EQ("", text::replace_all("", "search", "replacement"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(replace_all__none);
 ATF_TEST_CASE_BODY(replace_all__none)
 {
     ATF_REQUIRE_EQ("string without matches",
-                   text::replace_all("string without matches",
-                                     "WITHOUT", "replacement"));
+                   text::replace_all("string without matches", "WITHOUT",
+                                     "replacement"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(replace_all__one);
 ATF_TEST_CASE_BODY(replace_all__one)
 {
     ATF_REQUIRE_EQ("string replacement matches",
-                   text::replace_all("string without matches",
-                                     "without", "replacement"));
+                   text::replace_all("string without matches", "without",
+                                     "replacement"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(replace_all__several);
 ATF_TEST_CASE_BODY(replace_all__several)
 {
     ATF_REQUIRE_EQ("OO fOO bar OOf baz OO",
-                   text::replace_all("oo foo bar oof baz oo",
-                                     "oo", "OO"));
+                   text::replace_all("oo foo bar oof baz oo", "oo", "OO"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(to_type__ok__bool);
 ATF_TEST_CASE_BODY(to_type__ok__bool)
 {
-    ATF_REQUIRE( text::to_type< bool >("true"));
-    ATF_REQUIRE(!text::to_type< bool >("false"));
+    ATF_REQUIRE(text::to_type<bool>("true"));
+    ATF_REQUIRE(!text::to_type<bool>("false"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(to_type__ok__numerical);
 ATF_TEST_CASE_BODY(to_type__ok__numerical)
 {
-    ATF_REQUIRE_EQ(12, text::to_type< int >("12"));
-    ATF_REQUIRE_EQ(18745, text::to_type< int >("18745"));
-    ATF_REQUIRE_EQ(-12345, text::to_type< int >("-12345"));
+    ATF_REQUIRE_EQ(12, text::to_type<int>("12"));
+    ATF_REQUIRE_EQ(18745, text::to_type<int>("18745"));
+    ATF_REQUIRE_EQ(-12345, text::to_type<int>("-12345"));
 
-    ATF_REQUIRE_EQ(12.0, text::to_type< double >("12"));
-    ATF_REQUIRE_EQ(12.5, text::to_type< double >("12.5"));
+    ATF_REQUIRE_EQ(12.0, text::to_type<double>("12"));
+    ATF_REQUIRE_EQ(12.5, text::to_type<double>("12.5"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(to_type__ok__string);
 ATF_TEST_CASE_BODY(to_type__ok__string)
@@ -362,36 +329,32 @@ ATF_TEST_CASE_BODY(to_type__ok__string)
     // While this seems redundant, having this particular specialization that
     // does nothing allows callers to delegate work to to_type without worrying
     // about the particular type being converted.
-    ATF_REQUIRE_EQ("", text::to_type< std::string >(""));
-    ATF_REQUIRE_EQ("  abcd  ", text::to_type< std::string >("  abcd  "));
+    ATF_REQUIRE_EQ("", text::to_type<std::string>(""));
+    ATF_REQUIRE_EQ("  abcd  ", text::to_type<std::string>("  abcd  "));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(to_type__empty);
 ATF_TEST_CASE_BODY(to_type__empty)
 {
-    ATF_REQUIRE_THROW(text::value_error, text::to_type< int >(""));
+    ATF_REQUIRE_THROW(text::value_error, text::to_type<int>(""));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(to_type__invalid__bool);
 ATF_TEST_CASE_BODY(to_type__invalid__bool)
 {
-    ATF_REQUIRE_THROW(text::value_error, text::to_type< bool >(""));
-    ATF_REQUIRE_THROW(text::value_error, text::to_type< bool >("true "));
-    ATF_REQUIRE_THROW(text::value_error, text::to_type< bool >("foo"));
+    ATF_REQUIRE_THROW(text::value_error, text::to_type<bool>(""));
+    ATF_REQUIRE_THROW(text::value_error, text::to_type<bool>("true "));
+    ATF_REQUIRE_THROW(text::value_error, text::to_type<bool>("foo"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(to_type__invalid__numerical);
 ATF_TEST_CASE_BODY(to_type__invalid__numerical)
 {
-    ATF_REQUIRE_THROW(text::value_error, text::to_type< int >(" 3"));
-    ATF_REQUIRE_THROW(text::value_error, text::to_type< int >("3 "));
-    ATF_REQUIRE_THROW(text::value_error, text::to_type< int >("3a"));
-    ATF_REQUIRE_THROW(text::value_error, text::to_type< int >("a3"));
+    ATF_REQUIRE_THROW(text::value_error, text::to_type<int>(" 3"));
+    ATF_REQUIRE_THROW(text::value_error, text::to_type<int>("3 "));
+    ATF_REQUIRE_THROW(text::value_error, text::to_type<int>("3a"));
+    ATF_REQUIRE_THROW(text::value_error, text::to_type<int>("a3"));
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

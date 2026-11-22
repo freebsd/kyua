@@ -39,28 +39,25 @@
 #include <utility>
 #include <vector>
 
-
 // This is ugly but necessary for C++ name resolution.  Unsure if we'd do it
 // differently...
 namespace std {
 
+template <typename K, typename V>
+std::ostream& operator<<(std::ostream&, const std::map<K, V>&);
 
-template< typename K, typename V >
-std::ostream& operator<<(std::ostream&, const std::map< K, V >&);
+template <typename T1, typename T2>
+std::ostream& operator<<(std::ostream&, const std::pair<T1, T2>&);
 
-template< typename T1, typename T2 >
-std::ostream& operator<<(std::ostream&, const std::pair< T1, T2 >&);
+template <typename T>
+std::ostream& operator<<(std::ostream&, const std::shared_ptr<T>);
 
-template< typename T >
-std::ostream& operator<<(std::ostream&, const std::shared_ptr< T >);
+template <typename T>
+std::ostream& operator<<(std::ostream&, const std::set<T>&);
 
-template< typename T >
-std::ostream& operator<<(std::ostream&, const std::set< T >&);
+template <typename T>
+std::ostream& operator<<(std::ostream&, const std::vector<T>&);
 
-template< typename T >
-std::ostream& operator<<(std::ostream&, const std::vector< T >&);
+} // namespace std
 
-
-}  // namespace std
-
-#endif  // !defined(UTILS_FORMAT_CONTAINERS_HPP)
+#endif // !defined(UTILS_FORMAT_CONTAINERS_HPP)

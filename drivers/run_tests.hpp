@@ -50,7 +50,6 @@
 namespace drivers {
 namespace run_tests {
 
-
 /// Abstract definition of the hooks for this driver.
 class base_hooks {
 public:
@@ -75,7 +74,6 @@ public:
                             const utils::datetime::delta& duration) = 0;
 };
 
-
 /// Tuple containing the results of this driver.
 class result {
 public:
@@ -83,24 +81,22 @@ public:
     ///
     /// The presence of any filters here probably indicates a usage error.  If a
     /// test filter does not match any test case, it is probably a typo.
-    std::set< engine::test_filter > unused_filters;
+    std::set<engine::test_filter> unused_filters;
 
     /// Initializer for the tuple's fields.
     ///
     /// \param unused_filters_ The filters that did not match any test case.
-    result(const std::set< engine::test_filter >& unused_filters_) :
+    result(const std::set<engine::test_filter>& unused_filters_) :
         unused_filters(unused_filters_)
     {
     }
 };
 
-
-result drive(const utils::fs::path&, const utils::optional< utils::fs::path >,
-             const utils::fs::path&, const std::set< engine::test_filter >&,
+result drive(const utils::fs::path&, const utils::optional<utils::fs::path>,
+             const utils::fs::path&, const std::set<engine::test_filter>&,
              const utils::config::tree&, base_hooks&);
 
+} // namespace run_tests
+} // namespace drivers
 
-}  // namespace run_tests
-}  // namespace drivers
-
-#endif  // !defined(DRIVERS_RUN_TESTS_HPP)
+#endif // !defined(DRIVERS_RUN_TESTS_HPP)

@@ -26,12 +26,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "store/exceptions.hpp"
-
+#include <atf-c++.hpp>
 #include <cstring>
 
-#include <atf-c++.hpp>
-
+#include "store/exceptions.hpp"
 
 ATF_TEST_CASE_WITHOUT_HEAD(error);
 ATF_TEST_CASE_BODY(error)
@@ -40,7 +38,6 @@ ATF_TEST_CASE_BODY(error)
     ATF_REQUIRE(std::strcmp("Some text", e.what()) == 0);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(integrity_error);
 ATF_TEST_CASE_BODY(integrity_error)
 {
@@ -48,14 +45,12 @@ ATF_TEST_CASE_BODY(integrity_error)
     ATF_REQUIRE(std::strcmp("Some text", e.what()) == 0);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(old_schema_error);
 ATF_TEST_CASE_BODY(old_schema_error)
 {
     const store::old_schema_error e(15);
     ATF_REQUIRE_MATCH("version 15 .*upgraded", e.what());
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

@@ -39,15 +39,12 @@
 
 namespace cli {
 
-
 std::string format_cell(utils::sqlite::statement&, const int);
 std::string format_headers(utils::sqlite::statement&);
 std::string format_row(utils::sqlite::statement&);
 
-
 /// Implementation of the "db-exec" subcommand.
-class cmd_db_exec : public cli_command
-{
+class cmd_db_exec : public cli_command {
 public:
     cmd_db_exec(void);
 
@@ -55,7 +52,6 @@ public:
             const utils::config::tree&);
 };
 
+} // namespace cli
 
-}  // namespace cli
-
-#endif  // !defined(CLI_CMD_DB_EXEC_HPP)
+#endif // !defined(CLI_CMD_DB_EXEC_HPP)

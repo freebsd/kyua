@@ -26,10 +26,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "drivers/report_junit.hpp"
-
 #include <algorithm>
 
+#include "drivers/report_junit.hpp"
 #include "model/context.hpp"
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
@@ -46,7 +45,6 @@ namespace config = utils::config;
 namespace datetime = utils::datetime;
 namespace text = utils::text;
 
-
 /// Converts a test program name into a class-like name.
 ///
 /// \param test_program Test program from which to extract the name.
@@ -60,7 +58,6 @@ drivers::junit_classname(const model::test_program& test_program)
     return classname;
 }
 
-
 /// Converts a test case's duration to a second-based representation.
 ///
 /// \param delta The duration to convert.
@@ -73,29 +70,22 @@ drivers::junit_duration(const datetime::delta& delta)
     return F("%.3s") % (delta.seconds + (delta.useconds / 1000000.0));
 }
 
-
 /// String to prepend to the formatted test case metadata.
-const char* const drivers::junit_metadata_header =
-    "Test case metadata\n"
-    "------------------\n"
-    "\n";
-
+const char* const drivers::junit_metadata_header = "Test case metadata\n"
+                                                   "------------------\n"
+                                                   "\n";
 
 /// String to prepend to the formatted test case timing details.
-const char* const drivers::junit_timing_header =
-    "\n"
-    "Timing information\n"
-    "------------------\n"
-    "\n";
-
+const char* const drivers::junit_timing_header = "\n"
+                                                 "Timing information\n"
+                                                 "------------------\n"
+                                                 "\n";
 
 /// String to append to the formatted test case metadata.
-const char* const drivers::junit_stderr_header =
-    "\n"
-    "Original stderr\n"
-    "---------------\n"
-    "\n";
-
+const char* const drivers::junit_stderr_header = "\n"
+                                                 "Original stderr\n"
+                                                 "---------------\n"
+                                                 "\n";
 
 /// Formats a test's metadata for recording in stderr.
 ///
@@ -123,7 +113,6 @@ drivers::junit_metadata(const model::metadata& metadata)
     return output.str();
 }
 
-
 /// Formats a test's timing information for recording in stderr.
 ///
 /// \param start_time The start time of the test.
@@ -143,7 +132,6 @@ drivers::junit_timing(const datetime::timestamp& start_time,
     return output.str();
 }
 
-
 /// Constructor for the hooks.
 ///
 /// \param [out] output_ Stream to which to write the report.
@@ -151,7 +139,6 @@ drivers::report_junit_hooks::report_junit_hooks(std::ostream& output_) :
     _output(output_)
 {
 }
-
 
 /// Callback executed when the context is loaded.
 ///
@@ -163,17 +150,16 @@ drivers::report_junit_hooks::got_context(const model::context& context)
     _output << "<testsuite>\n";
 
     _output << "<properties>\n";
-    _output << F("<property name=\"cwd\" value=\"%s\"/>\n")
-        % text::escape_xml(context.cwd().str());
-    for (model::properties_map::const_iterator iter =
-             context.env().begin(); iter != context.env().end(); ++iter) {
-        _output << F("<property name=\"env.%s\" value=\"%s\"/>\n")
-            % text::escape_xml((*iter).first)
-            % text::escape_xml((*iter).second);
+    _output << F("<property name=\"cwd\" value=\"%s\"/>\n") %
+            text::escape_xml(context.cwd().str());
+    for (model::properties_map::const_iterator iter = context.env().begin();
+         iter != context.env().end(); ++iter) {
+        _output << F("<property name=\"env.%s\" value=\"%s\"/>\n") %
+                text::escape_xml((*iter).first) %
+                text::escape_xml((*iter).second);
     }
     _output << "</properties>\n";
 }
-
 
 /// Callback executed when a test results is found.
 ///
@@ -183,24 +169,25 @@ drivers::report_junit_hooks::got_result(store::results_iterator& iter)
 {
     const model::test_result result = iter.result();
 
-    _output << F("<testcase classname=\"%s\" name=\"%s\" time=\"%s\">\n")
-        % text::escape_xml(junit_classname(*iter.test_program()))
-        % text::escape_xml(iter.test_case_name())
-        % junit_duration(iter.end_time() - iter.start_time());
+    _output << F("<testcase classname=\"%s\" name=\"%s\" time=\"%s\">\n") %
+            text::escape_xml(junit_classname(*iter.test_program())) %
+            text::escape_xml(iter.test_case_name()) %
+            junit_duration(iter.end_time() - iter.start_time());
 
     std::string stderr_contents;
 
     switch (result.type()) {
     case model::test_result_failed:
-        _output << F("<failure message=\"%s\"/>\n")
-            % text::escape_xml(result.reason());
+        _output << F("<failure message=\"%s\"/>\n") %
+                text::escape_xml(result.reason());
         break;
 
     case model::test_result_expected_failure:
         stderr_contents += ("Expected failure result details\n"
                             "-------------------------------\n"
+                            "\n" +
+                            result.reason() +
                             "\n"
-                            + result.reason() + "\n"
                             "\n");
         break;
 
@@ -212,25 +199,26 @@ drivers::report_junit_hooks::got_result(store::results_iterator& iter)
         _output << "<skipped/>\n";
         stderr_contents += ("Skipped result details\n"
                             "----------------------\n"
+                            "\n" +
+                            result.reason() +
                             "\n"
-                            + result.reason() + "\n"
                             "\n");
         break;
 
     default:
-        _output << F("<error message=\"%s\"/>\n")
-            % text::escape_xml(result.reason());
+        _output << F("<error message=\"%s\"/>\n") %
+                text::escape_xml(result.reason());
     }
 
     const std::string stdout_contents = iter.stdout_contents();
     if (!stdout_contents.empty()) {
-        _output << F("<system-out>%s</system-out>\n")
-            % text::escape_xml(stdout_contents);
+        _output << F("<system-out>%s</system-out>\n") %
+                text::escape_xml(stdout_contents);
     }
 
     {
-        const model::test_case& test_case = iter.test_program()->find(
-            iter.test_case_name());
+        const model::test_case& test_case =
+            iter.test_program()->find(iter.test_case_name());
         stderr_contents += junit_metadata(test_case.get_metadata());
     }
     stderr_contents += junit_timing(iter.start_time(), iter.end_time());
@@ -248,7 +236,6 @@ drivers::report_junit_hooks::got_result(store::results_iterator& iter)
 
     _output << "</testcase>\n";
 }
-
 
 /// Finalizes the report.
 void

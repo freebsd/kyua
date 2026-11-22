@@ -26,13 +26,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "store/write_backend.hpp"
-
 #include <stdexcept>
 
 #include "store/exceptions.hpp"
 #include "store/metadata.hpp"
 #include "store/read_backend.hpp"
+#include "store/write_backend.hpp"
 #include "store/write_transaction.hpp"
 #include "utils/env.hpp"
 #include "utils/format/macros.hpp"
@@ -40,14 +39,13 @@
 #include "utils/logging/macros.hpp"
 #include "utils/noncopyable.hpp"
 #include "utils/sanity.hpp"
-#include "utils/stream.hpp"
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/exceptions.hpp"
 #include "utils/sqlite/statement.ipp"
+#include "utils/stream.hpp"
 
 namespace fs = utils::fs;
 namespace sqlite = utils::sqlite;
-
 
 /// The current schema version.
 ///
@@ -62,9 +60,7 @@ namespace sqlite = utils::sqlite;
 /// should change its value.
 int store::detail::current_schema_version = 3;
 
-
 namespace {
-
 
 /// Checks if a database is empty (i.e. if it is new).
 ///
@@ -78,9 +74,7 @@ empty_database(sqlite::database& db)
     return !stmt.step();
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Calculates the path to the schema file for the database.
 ///
@@ -89,10 +83,10 @@ empty_database(sqlite::database& db)
 fs::path
 store::detail::schema_file(void)
 {
-    return fs::path(utils::getenv_with_default("KYUA_STOREDIR", KYUA_STOREDIR))
-        / (F("schema_v%s.sql") % current_schema_version);
+    return fs::path(utils::getenv_with_default("KYUA_STOREDIR",
+                                               KYUA_STOREDIR)) /
+        (F("schema_v%s.sql") % current_schema_version);
 }
-
 
 /// Initializes an empty database.
 ///
@@ -116,7 +110,8 @@ store::detail::initialize(sqlite::database& db)
         LI(F("New metadata entry %s") % metadata.timestamp());
         if (metadata.schema_version() != detail::current_schema_version) {
             UNREACHABLE_MSG(F("current_schema_version is out of sync with "
-                              "%s") % schema);
+                              "%s") %
+                            schema);
         }
         return metadata;
     } catch (const store::integrity_error& e) {
@@ -128,7 +123,6 @@ store::detail::initialize(sqlite::database& db)
         throw error(F("Cannot read database schema '%s'") % schema);
     }
 }
-
 
 /// Internal implementation for the backend.
 struct store::write_backend::impl : utils::noncopyable {
@@ -143,21 +137,17 @@ struct store::write_backend::impl : utils::noncopyable {
     }
 };
 
-
 /// Constructs a new backend.
 ///
 /// \param pimpl_ The internal data.
-store::write_backend::write_backend(impl* pimpl_) :
-    _pimpl(pimpl_)
+store::write_backend::write_backend(impl* pimpl_) : _pimpl(pimpl_)
 {
 }
-
 
 /// Destructor.
 store::write_backend::~write_backend(void)
 {
 }
-
 
 /// Opens a database in read-write mode and creates it if necessary.
 ///
@@ -170,15 +160,16 @@ store::write_backend::~write_backend(void)
 store::write_backend
 store::write_backend::open_rw(const fs::path& file)
 {
-    sqlite::database db = detail::open_and_setup(
-        file, sqlite::open_readwrite | sqlite::open_create);
+    sqlite::database db = detail::open_and_setup(file,
+                                                 sqlite::open_readwrite |
+                                                     sqlite::open_create);
     if (!empty_database(db))
         throw error(F("%s already exists and is not empty; cannot open "
-                      "for write") % file);
+                      "for write") %
+                    file);
     detail::initialize(db);
     return write_backend(new impl(db));
 }
-
 
 /// Closes the SQLite database.
 void
@@ -186,7 +177,6 @@ store::write_backend::close(void)
 {
     _pimpl->database.close();
 }
-
 
 /// Gets the connection to the SQLite database.
 ///
@@ -196,7 +186,6 @@ store::write_backend::database(void)
 {
     return _pimpl->database;
 }
-
 
 /// Opens a write-only transaction.
 ///

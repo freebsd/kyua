@@ -27,27 +27,22 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "utils/config/exceptions.hpp"
-
 #include "utils/config/tree.ipp"
 #include "utils/format/macros.hpp"
 
 namespace config = utils::config;
 
-
 /// Constructs a new error with a plain-text message.
 ///
 /// \param message The plain-text error message.
-config::error::error(const std::string& message) :
-    std::runtime_error(message)
+config::error::error(const std::string& message) : std::runtime_error(message)
 {
 }
-
 
 /// Destructor for the error.
 config::error::~error(void) throw()
 {
 }
-
 
 /// Constructs a new error with a plain-text message.
 ///
@@ -60,12 +55,10 @@ config::bad_combination_error::bad_combination_error(
 {
 }
 
-
 /// Destructor for the error.
 config::bad_combination_error::~bad_combination_error(void) throw()
 {
 }
-
 
 /// Constructs a new error with a plain-text message.
 ///
@@ -75,12 +68,10 @@ config::invalid_key_error::invalid_key_error(const std::string& message) :
 {
 }
 
-
 /// Destructor for the error.
 config::invalid_key_error::~invalid_key_error(void) throw()
 {
 }
-
 
 /// Constructs a new error with a plain-text message.
 ///
@@ -88,32 +79,27 @@ config::invalid_key_error::~invalid_key_error(void) throw()
 /// \param message The plain-text error message.
 config::invalid_key_value::invalid_key_value(const detail::tree_key& key,
                                              const std::string& message) :
-    error(F("Invalid value for property '%s': %s")
-          % detail::flatten_key(key) % message)
+    error(F("Invalid value for property '%s': %s") % detail::flatten_key(key) %
+          message)
 {
 }
-
 
 /// Destructor for the error.
 config::invalid_key_value::~invalid_key_value(void) throw()
 {
 }
 
-
 /// Constructs a new error with a plain-text message.
 ///
 /// \param message The plain-text error message.
-config::syntax_error::syntax_error(const std::string& message) :
-    error(message)
+config::syntax_error::syntax_error(const std::string& message) : error(message)
 {
 }
-
 
 /// Destructor for the error.
 config::syntax_error::~syntax_error(void) throw()
 {
 }
-
 
 /// Constructs a new error with a plain-text message.
 ///
@@ -127,21 +113,17 @@ config::unknown_key_error::unknown_key_error(const detail::tree_key& key,
 {
 }
 
-
 /// Destructor for the error.
 config::unknown_key_error::~unknown_key_error(void) throw()
 {
 }
 
-
 /// Constructs a new error with a plain-text message.
 ///
 /// \param message The plain-text error message.
-config::value_error::value_error(const std::string& message) :
-    error(message)
+config::value_error::value_error(const std::string& message) : error(message)
 {
 }
-
 
 /// Destructor for the error.
 config::value_error::~value_error(void) throw()

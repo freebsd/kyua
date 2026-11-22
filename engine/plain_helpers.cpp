@@ -52,9 +52,7 @@ namespace fs = utils::fs;
 
 using utils::optional;
 
-
 namespace {
-
 
 /// Gets the name of the test case to run.
 ///
@@ -67,14 +65,13 @@ namespace {
 static std::string
 guess_test_case_name(const char* arg0)
 {
-    const optional< std::string > test_case_env = utils::getenv("TEST_CASE");
+    const optional<std::string> test_case_env = utils::getenv("TEST_CASE");
     if (test_case_env) {
         return test_case_env.get();
     } else {
         return fs::path(arg0).leaf_name();
     }
 }
-
 
 /// Logs an error message and exits the test with an error code.
 ///
@@ -86,12 +83,11 @@ fail(const std::string& str)
     std::exit(EXIT_FAILURE);
 }
 
-
 /// A test case that validates the TEST_ENV_* variables.
 static void
 test_check_configuration_variables(void)
 {
-    std::set< std::string > vars;
+    std::set<std::string> vars;
     char** iter;
     for (iter = environ; *iter != NULL; ++iter) {
         if (std::strstr(*iter, "TEST_ENV_") == *iter) {
@@ -99,14 +95,13 @@ test_check_configuration_variables(void)
         }
     }
 
-    std::set< std::string > exp_vars;
+    std::set<std::string> exp_vars;
     exp_vars.insert("TEST_ENV_first=some value");
     exp_vars.insert("TEST_ENV_second=some other value");
     if (vars != exp_vars) {
         fail(F("Expected: %s\nFound: %s\n") % exp_vars % vars);
     }
 }
-
 
 /// A test case that crashes.
 static void
@@ -115,7 +110,6 @@ test_crash(void)
     utils::abort_without_coredump();
 }
 
-
 /// A test case that exits with a non-zero exit code, and not 1.
 static void
 test_fail(void)
@@ -123,13 +117,11 @@ test_fail(void)
     std::exit(8);
 }
 
-
 /// A test case that passes.
 static void
 test_pass(void)
 {
 }
-
 
 /// A test case that spawns a subchild that gets stuck.
 ///
@@ -155,7 +147,6 @@ test_spawn_blocking_child(void)
     }
 }
 
-
 /// A test case that times out.
 ///
 /// Note that the timeout is defined in the Kyuafile, as the plain interface has
@@ -171,7 +162,6 @@ test_timeout(void)
     file.close();
 }
 
-
 /// A test case that performs basic checks on the runtime environment.
 ///
 /// If the runtime environment does not look clean (according to the rules in
@@ -185,9 +175,7 @@ test_validate_isolation(void)
         fail("LANG not unset");
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Entry point to the test program.
 ///
@@ -209,7 +197,7 @@ main(int argc, char** argv)
 {
     if (argc != 1) {
         std::cerr << "No arguments allowed; select the test case with the "
-            "TEST_CASE variable";
+                     "TEST_CASE variable";
         return EXIT_FAILURE;
     }
 

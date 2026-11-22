@@ -55,9 +55,7 @@ namespace process = utils::process;
 
 using utils::optional;
 
-
 namespace {
-
 
 /// Computes the result of a TAP test program termination.
 ///
@@ -69,8 +67,7 @@ namespace {
 ///
 /// \return A test result.
 static model::test_result
-tap_to_result(const engine::tap_summary& summary,
-              const process::status& status)
+tap_to_result(const engine::tap_summary& summary, const process::status& status)
 {
     if (summary.bailed_out()) {
         return model::test_result(model::test_result_failed, "Bailed out");
@@ -88,19 +85,18 @@ tap_to_result(const engine::tap_summary& summary,
             return model::test_result(
                 model::test_result_broken,
                 F("Dubious test program: reported all tests as passed "
-                  "but returned exit code %s") % status.exitstatus());
+                  "but returned exit code %s") %
+                    status.exitstatus());
         }
     } else {
         const std::size_t total = summary.ok_count() + summary.not_ok_count();
         return model::test_result(model::test_result_failed,
                                   F("%s of %s tests failed") %
-                                  summary.not_ok_count() % total);
+                                      summary.not_ok_count() % total);
     }
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Executes a test program's list operation.
 ///
@@ -108,26 +104,22 @@ tap_to_result(const engine::tap_summary& summary,
 /// to terminate execution either by exec(2)ing the test program or by
 /// exiting with a failure.
 void
-engine::tap_interface::exec_list(
-    const model::test_program& /* test_program */,
-    const config::properties_map& /* vars */) const
+engine::tap_interface::exec_list(const model::test_program& /* test_program */,
+                                 const config::properties_map& /* vars */) const
 {
     ::_exit(EXIT_SUCCESS);
 }
-
 
 /// Computes the test cases list of a test program.
 ///
 /// \return A list of test cases.
 model::test_cases_map
-engine::tap_interface::parse_list(
-    const optional< process::status >& /* status */,
-    const fs::path& /* stdout_path */,
-    const fs::path& /* stderr_path */) const
+engine::tap_interface::parse_list(const optional<process::status>& /* status */,
+                                  const fs::path& /* stdout_path */,
+                                  const fs::path& /* stderr_path */) const
 {
     return model::test_cases_map_builder().add("main").build();
 }
-
 
 /// Executes a test case of the test program.
 ///
@@ -139,11 +131,10 @@ engine::tap_interface::parse_list(
 /// \param test_case_name Name of the test case to invoke.
 /// \param vars User-provided variables to pass to the test program.
 void
-engine::tap_interface::exec_test(
-    const model::test_program& test_program,
-    const std::string& test_case_name,
-    const config::properties_map& vars,
-    const fs::path& /* control_directory */) const
+engine::tap_interface::exec_test(const model::test_program& test_program,
+                                 const std::string& test_case_name,
+                                 const config::properties_map& vars,
+                                 const fs::path& /* control_directory */) const
 {
     PRE(test_case_name == "main");
 
@@ -160,7 +151,6 @@ engine::tap_interface::exec_test(
     __builtin_unreachable();
 }
 
-
 /// Computes the result of a test case based on its termination status.
 ///
 /// \param status The termination status of the subprocess used to execute
@@ -169,20 +159,19 @@ engine::tap_interface::exec_test(
 ///
 /// \return A test result.
 model::test_result
-engine::tap_interface::compute_result(
-    const optional< process::status >& status,
-    const fs::path& /* control_directory */,
-    const fs::path& stdout_path,
-    const fs::path& /* stderr_path */) const
+engine::tap_interface::compute_result(const optional<process::status>& status,
+                                      const fs::path& /* control_directory */,
+                                      const fs::path& stdout_path,
+                                      const fs::path& /* stderr_path */) const
 {
     if (!status) {
         return model::test_result(model::test_result_broken,
                                   "Test case timed out");
     } else {
         if (status.get().signaled()) {
-            return model::test_result(
-                model::test_result_broken,
-                F("Received signal %s") % status.get().termsig());
+            return model::test_result(model::test_result_broken,
+                                      F("Received signal %s") %
+                                          status.get().termsig());
         } else {
             try {
                 const tap_summary summary = parse_tap_output(stdout_path);

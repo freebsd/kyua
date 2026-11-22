@@ -32,35 +32,31 @@
 #if !defined(UTILS_PROCESS_FDSTREAM_HPP)
 #define UTILS_PROCESS_FDSTREAM_HPP
 
-#include "utils/process/fdstream_fwd.hpp"
-
 #include <istream>
 #include <memory>
 
 #include "utils/noncopyable.hpp"
+#include "utils/process/fdstream_fwd.hpp"
 
 namespace utils {
 namespace process {
-
 
 /// An input stream backed by a file descriptor.
 ///
 /// This class grabs ownership of the file descriptor.  I.e. when the class is
 /// destroyed, the file descriptor is closed unconditionally.
-class ifdstream : public std::istream, noncopyable
-{
+class ifdstream : public std::istream, noncopyable {
     struct impl;
 
     /// Pointer to the shared internal implementation.
-    std::unique_ptr< impl > _pimpl;
+    std::unique_ptr<impl> _pimpl;
 
 public:
     explicit ifdstream(const int);
     ~ifdstream(void);
 };
 
+} // namespace process
+} // namespace utils
 
-}  // namespace process
-}  // namespace utils
-
-#endif  // !defined(UTILS_PROCESS_FDSTREAM_HPP)
+#endif // !defined(UTILS_PROCESS_FDSTREAM_HPP)

@@ -34,10 +34,8 @@
 
 namespace engine {
 
-
 class user_node;
 
+} // namespace engine
 
-}  // namespace engine
-
-#endif  // !defined(ENGINE_CONFIG_FWD_HPP)
+#endif // !defined(ENGINE_CONFIG_FWD_HPP)

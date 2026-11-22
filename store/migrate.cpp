@@ -26,14 +26,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "store/migrate.hpp"
-
 #include <stdexcept>
 
 #include "store/dbtypes.hpp"
 #include "store/exceptions.hpp"
 #include "store/layout.hpp"
 #include "store/metadata.hpp"
+#include "store/migrate.hpp"
 #include "store/read_backend.hpp"
 #include "store/write_backend.hpp"
 #include "utils/datetime.hpp"
@@ -45,10 +44,10 @@
 #include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
-#include "utils/stream.hpp"
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/exceptions.hpp"
 #include "utils/sqlite/statement.ipp"
+#include "utils/stream.hpp"
 #include "utils/text/operations.hpp"
 
 namespace datetime = utils::datetime;
@@ -59,13 +58,10 @@ namespace text = utils::text;
 using utils::none;
 using utils::optional;
 
-
 namespace {
-
 
 /// Schema version at which we switched to results files.
 const int first_chunked_schema_version = 3;
-
 
 /// Queries the schema version of the given database.
 ///
@@ -75,11 +71,10 @@ const int first_chunked_schema_version = 3;
 static int
 get_schema_version(const fs::path& file)
 {
-    sqlite::database db = store::detail::open_and_setup(
-        file, sqlite::open_readonly);
+    sqlite::database db = store::detail::open_and_setup(file,
+                                                        sqlite::open_readonly);
     return store::metadata::fetch_latest(db).schema_version();
 }
-
 
 /// Performs a single migration step.
 ///
@@ -97,19 +92,18 @@ get_schema_version(const fs::path& file)
 ///
 /// \throw error If there is a problem applying the migration.
 static void
-migrate_schema_step(const fs::path& file,
-                    const int version_from,
+migrate_schema_step(const fs::path& file, const int version_from,
                     const int version_to,
-                    const optional< int64_t > action_id = none,
-                    const optional< fs::path > old_database = none)
+                    const optional<int64_t> action_id = none,
+                    const optional<fs::path> old_database = none)
 {
-    LI(F("Migrating schema of %s from version %s to %s") % file % version_from
-       % version_to);
+    LI(F("Migrating schema of %s from version %s to %s") % file % version_from %
+       version_to);
 
     PRE(version_to == version_from + 1);
 
-    sqlite::database db = store::detail::open_and_setup(
-        file, sqlite::open_readwrite);
+    sqlite::database db = store::detail::open_and_setup(file,
+                                                        sqlite::open_readwrite);
 
     const fs::path migration = store::detail::migration_file(version_from,
                                                              version_to);
@@ -135,7 +129,6 @@ migrate_schema_step(const fs::path& file,
     }
 }
 
-
 /// Given a historical database, chunks it up into results files.
 ///
 /// The given database is DELETED on success given that it will have been
@@ -149,8 +142,8 @@ chunk_database(const fs::path& old_file)
 
     LI(F("Need to split %s into per-action files") % old_file);
 
-    sqlite::database old_db = store::detail::open_and_setup(
-        old_file, sqlite::open_readonly);
+    sqlite::database old_db =
+        store::detail::open_and_setup(old_file, sqlite::open_readonly);
 
     sqlite::statement actions_stmt = old_db.create_statement(
         "SELECT action_id, cwd FROM actions NATURAL JOIN contexts");
@@ -177,12 +170,12 @@ chunk_database(const fs::path& old_file)
             LI(F("Skipping empty action %s") % action_id);
             continue;
         }
-        const datetime::timestamp start_time = store::column_timestamp(
-            start_time_stmt, "start_time");
+        const datetime::timestamp start_time =
+            store::column_timestamp(start_time_stmt, "start_time");
         start_time_stmt.step_without_results();
 
-        const fs::path new_file = store::layout::new_db_for_migration(
-            cwd, start_time);
+        const fs::path new_file =
+            store::layout::new_db_for_migration(cwd, start_time);
         if (fs::exists(new_file)) {
             LI(F("Skipping action because %s already exists") % new_file);
             continue;
@@ -196,8 +189,7 @@ chunk_database(const fs::path& old_file)
                 new_file, sqlite::open_readwrite | sqlite::open_create);
             store::detail::initialize(db);
             db.close();
-            migrate_schema_step(new_file,
-                                first_chunked_schema_version - 1,
+            migrate_schema_step(new_file, first_chunked_schema_version - 1,
                                 first_chunked_schema_version,
                                 utils::make_optional(action_id),
                                 utils::make_optional(old_file));
@@ -210,9 +202,7 @@ chunk_database(const fs::path& old_file)
     fs::unlink(old_file);
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Calculates the path to a schema migration file.
 ///
@@ -223,10 +213,10 @@ chunk_database(const fs::path& old_file)
 fs::path
 store::detail::migration_file(const int version_from, const int version_to)
 {
-    return fs::path(utils::getenv_with_default("KYUA_STOREDIR", KYUA_STOREDIR))
-        / (F("migrate_v%s_v%s.sql") % version_from % version_to);
+    return fs::path(utils::getenv_with_default("KYUA_STOREDIR",
+                                               KYUA_STOREDIR)) /
+        (F("migrate_v%s_v%s.sql") % version_from % version_to);
 }
-
 
 /// Backs up a database for schema migration purposes.
 ///
@@ -252,7 +242,6 @@ store::detail::backup_database(const fs::path& source, const int old_version)
     }
 }
 
-
 /// Migrates the schema of a database to the current version.
 ///
 /// The algorithm implemented here performs a migration step for every
@@ -270,10 +259,12 @@ store::migrate_schema(const utils::fs::path& file)
     const int version_to = detail::current_schema_version;
     if (version_from == version_to) {
         throw error(F("Database already at schema version %s; migration not "
-                      "needed") % version_from);
+                      "needed") %
+                    version_from);
     } else if (version_from > version_to) {
         throw error(F("Database at schema version %s, which is newer than the "
-                      "supported version %s") % version_from % version_to);
+                      "supported version %s") %
+                    version_from % version_to);
     }
 
     detail::backup_database(file, version_from);

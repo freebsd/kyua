@@ -26,13 +26,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/atf_list.hpp"
-
+#include <atf-c++.hpp>
 #include <sstream>
 #include <string>
 
-#include <atf-c++.hpp>
-
+#include "engine/atf_list.hpp"
 #include "engine/exceptions.hpp"
 #include "model/metadata.hpp"
 #include "model/test_case.hpp"
@@ -46,7 +44,6 @@ namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace units = utils::units;
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(parse_atf_metadata__defaults)
 ATF_TEST_CASE_BODY(parse_atf_metadata__defaults)
 {
@@ -56,7 +53,6 @@ ATF_TEST_CASE_BODY(parse_atf_metadata__defaults)
     const model::metadata exp_md = model::metadata_builder().build();
     ATF_REQUIRE_EQ(exp_md, md);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(parse_atf_metadata__override_all)
 ATF_TEST_CASE_BODY(parse_atf_metadata__override_all)
@@ -79,31 +75,31 @@ ATF_TEST_CASE_BODY(parse_atf_metadata__override_all)
     properties["X-baz-www"] = "value3";
     const model::metadata md = engine::parse_atf_metadata(properties);
 
-    const model::metadata exp_md = model::metadata_builder()
-        .add_allowed_architecture("i386")
-        .add_allowed_architecture("x86_64")
-        .add_allowed_platform("amd64")
-        .add_custom("foo", "value1")
-        .add_custom("bar", "value2")
-        .add_custom("baz-www", "value3")
-        .add_required_config("var1")
-        .add_required_config("var2")
-        .add_required_config("var3")
-        .add_required_file(fs::path("/file1"))
-        .add_required_file(fs::path("/dir/file2"))
-        .add_required_program(fs::path("/bin/ls"))
-        .add_required_program(fs::path("svn"))
-        .set_description("Some text")
-        .set_has_cleanup(true)
-        .set_is_exclusive(true)
-        .set_required_disk_space(units::bytes::parse("10g"))
-        .set_required_memory(units::bytes::parse("1m"))
-        .set_required_user("root")
-        .set_timeout(datetime::delta(123, 0))
-        .build();
+    const model::metadata exp_md =
+        model::metadata_builder()
+            .add_allowed_architecture("i386")
+            .add_allowed_architecture("x86_64")
+            .add_allowed_platform("amd64")
+            .add_custom("foo", "value1")
+            .add_custom("bar", "value2")
+            .add_custom("baz-www", "value3")
+            .add_required_config("var1")
+            .add_required_config("var2")
+            .add_required_config("var3")
+            .add_required_file(fs::path("/file1"))
+            .add_required_file(fs::path("/dir/file2"))
+            .add_required_program(fs::path("/bin/ls"))
+            .add_required_program(fs::path("svn"))
+            .set_description("Some text")
+            .set_has_cleanup(true)
+            .set_is_exclusive(true)
+            .set_required_disk_space(units::bytes::parse("10g"))
+            .set_required_memory(units::bytes::parse("1m"))
+            .set_required_user("root")
+            .set_timeout(datetime::delta(123, 0))
+            .build();
     ATF_REQUIRE_EQ(exp_md, md);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(parse_atf_metadata__unknown)
 ATF_TEST_CASE_BODY(parse_atf_metadata__unknown)
@@ -115,16 +111,14 @@ ATF_TEST_CASE_BODY(parse_atf_metadata__unknown)
                          engine::parse_atf_metadata(properties));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(parse_atf_list__empty);
 ATF_TEST_CASE_BODY(parse_atf_list__empty)
 {
     const std::string text = "";
     std::istringstream input(text);
     ATF_REQUIRE_THROW_RE(engine::format_error, "expecting Content-Type",
-        engine::parse_atf_list(input));
+                         engine::parse_atf_list(input));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(parse_atf_list__invalid_header);
 ATF_TEST_CASE_BODY(parse_atf_list__invalid_header)
@@ -134,7 +128,7 @@ ATF_TEST_CASE_BODY(parse_atf_list__invalid_header)
             "Content-Type: application/X-atf-tp; version=\"1\"\n";
         std::istringstream input(text);
         ATF_REQUIRE_THROW_RE(engine::format_error, "expecting.*blank line",
-            engine::parse_atf_list(input));
+                             engine::parse_atf_list(input));
     }
 
     {
@@ -142,7 +136,7 @@ ATF_TEST_CASE_BODY(parse_atf_list__invalid_header)
             "Content-Type: application/X-atf-tp; version=\"1\"\nfoo\n";
         std::istringstream input(text);
         ATF_REQUIRE_THROW_RE(engine::format_error, "expecting.*blank line",
-            engine::parse_atf_list(input));
+                             engine::parse_atf_list(input));
     }
 
     {
@@ -150,10 +144,9 @@ ATF_TEST_CASE_BODY(parse_atf_list__invalid_header)
             "Content-Type: application/X-atf-tp; version=\"2\"\n\n";
         std::istringstream input(text);
         ATF_REQUIRE_THROW_RE(engine::format_error, "expecting Content-Type",
-            engine::parse_atf_list(input));
+                             engine::parse_atf_list(input));
     }
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(parse_atf_list__no_test_cases);
 ATF_TEST_CASE_BODY(parse_atf_list__no_test_cases)
@@ -162,9 +155,8 @@ ATF_TEST_CASE_BODY(parse_atf_list__no_test_cases)
         "Content-Type: application/X-atf-tp; version=\"1\"\n\n";
     std::istringstream input(text);
     ATF_REQUIRE_THROW_RE(engine::format_error, "No test cases",
-        engine::parse_atf_list(input));
+                         engine::parse_atf_list(input));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(parse_atf_list__one_test_case_simple);
 ATF_TEST_CASE_BODY(parse_atf_list__one_test_case_simple)
@@ -176,11 +168,10 @@ ATF_TEST_CASE_BODY(parse_atf_list__one_test_case_simple)
     std::istringstream input(text);
     const model::test_cases_map tests = engine::parse_atf_list(input);
 
-    const model::test_cases_map exp_tests = model::test_cases_map_builder()
-        .add("test-case").build();
+    const model::test_cases_map exp_tests =
+        model::test_cases_map_builder().add("test-case").build();
     ATF_REQUIRE_EQ(exp_tests, tests);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(parse_atf_list__one_test_case_complex);
 ATF_TEST_CASE_BODY(parse_atf_list__one_test_case_complex)
@@ -194,15 +185,16 @@ ATF_TEST_CASE_BODY(parse_atf_list__one_test_case_complex)
     std::istringstream input(text);
     const model::test_cases_map tests = engine::parse_atf_list(input);
 
-    const model::test_cases_map exp_tests = model::test_cases_map_builder()
-        .add("first", model::metadata_builder()
-             .set_description("This is the description")
-             .set_timeout(datetime::delta(500, 0))
-             .build())
-        .build();
+    const model::test_cases_map exp_tests =
+        model::test_cases_map_builder()
+            .add("first",
+                 model::metadata_builder()
+                     .set_description("This is the description")
+                     .set_timeout(datetime::delta(500, 0))
+                     .build())
+            .build();
     ATF_REQUIRE_EQ(exp_tests, tests);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(parse_atf_list__one_test_case_invalid_syntax);
 ATF_TEST_CASE_BODY(parse_atf_list__one_test_case_invalid_syntax)
@@ -213,9 +205,8 @@ ATF_TEST_CASE_BODY(parse_atf_list__one_test_case_invalid_syntax)
         "ident: first\n";
     std::istringstream input(text);
     ATF_REQUIRE_THROW_RE(engine::format_error, "preceeded.*identifier",
-        engine::parse_atf_list(input));
+                         engine::parse_atf_list(input));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(parse_atf_list__one_test_case_invalid_properties);
 ATF_TEST_CASE_BODY(parse_atf_list__one_test_case_invalid_properties)
@@ -230,9 +221,8 @@ ATF_TEST_CASE_BODY(parse_atf_list__one_test_case_invalid_properties)
         "require.progs: bin/ls\n";
     std::istringstream input(text);
     ATF_REQUIRE_THROW_RE(engine::format_error, "Relative path 'bin/ls'",
-        engine::parse_atf_list(input));
+                         engine::parse_atf_list(input));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(parse_atf_list__many_test_cases);
 ATF_TEST_CASE_BODY(parse_atf_list__many_test_cases)
@@ -251,19 +241,21 @@ ATF_TEST_CASE_BODY(parse_atf_list__many_test_cases)
     std::istringstream input(text);
     const model::test_cases_map tests = engine::parse_atf_list(input);
 
-    const model::test_cases_map exp_tests = model::test_cases_map_builder()
-        .add("first", model::metadata_builder()
-             .set_description("This is the description")
-             .build())
-        .add("second", model::metadata_builder()
-             .set_description("Some text")
-             .set_timeout(datetime::delta(500, 0))
-             .build())
-        .add("third")
-        .build();
+    const model::test_cases_map exp_tests =
+        model::test_cases_map_builder()
+            .add("first",
+                 model::metadata_builder()
+                     .set_description("This is the description")
+                     .build())
+            .add("second",
+                 model::metadata_builder()
+                     .set_description("Some text")
+                     .set_timeout(datetime::delta(500, 0))
+                     .build())
+            .add("third")
+            .build();
     ATF_REQUIRE_EQ(exp_tests, tests);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(parse_atf_list__is_exclusive_support);
 ATF_TEST_CASE_BODY(parse_atf_list__is_exclusive_support)
@@ -282,18 +274,18 @@ ATF_TEST_CASE_BODY(parse_atf_list__is_exclusive_support)
     std::istringstream input(text);
     const model::test_cases_map tests = engine::parse_atf_list(input);
 
-    const model::test_cases_map exp_tests = model::test_cases_map_builder()
-        .add("first", model::metadata_builder()
-             .set_description("This is the descr")
-             .build())
-        .add("second", model::metadata_builder()
-             .set_is_exclusive(true)
-             .build())
-        .add("third")
-        .build();
+    const model::test_cases_map exp_tests =
+        model::test_cases_map_builder()
+            .add("first",
+                 model::metadata_builder()
+                     .set_description("This is the descr")
+                     .build())
+            .add("second",
+                 model::metadata_builder().set_is_exclusive(true).build())
+            .add("third")
+            .build();
     ATF_REQUIRE_EQ(exp_tests, tests);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(parse_atf_list__disk_space_support);
 ATF_TEST_CASE_BODY(parse_atf_list__disk_space_support)
@@ -306,14 +298,15 @@ ATF_TEST_CASE_BODY(parse_atf_list__disk_space_support)
     std::istringstream input(text);
     const model::test_cases_map tests = engine::parse_atf_list(input);
 
-    const model::test_cases_map exp_tests = model::test_cases_map_builder()
-        .add("first", model::metadata_builder()
-             .set_required_disk_space(units::bytes::parse("123M"))
-             .build())
-        .build();
+    const model::test_cases_map exp_tests =
+        model::test_cases_map_builder()
+            .add("first",
+                 model::metadata_builder()
+                     .set_required_disk_space(units::bytes::parse("123M"))
+                     .build())
+            .build();
     ATF_REQUIRE_EQ(exp_tests, tests);
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

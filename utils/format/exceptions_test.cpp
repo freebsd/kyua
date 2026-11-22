@@ -26,16 +26,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/format/exceptions.hpp"
-
+#include <atf-c++.hpp>
 #include <cstring>
 
-#include <atf-c++.hpp>
+#include "utils/format/exceptions.hpp"
 
 using utils::format::bad_format_error;
 using utils::format::error;
 using utils::format::extra_args_error;
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(error);
 ATF_TEST_CASE_BODY(error)
@@ -44,27 +42,26 @@ ATF_TEST_CASE_BODY(error)
     ATF_REQUIRE(std::strcmp("Some text", e.what()) == 0);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(bad_format_error);
 ATF_TEST_CASE_BODY(bad_format_error)
 {
     const bad_format_error e("format-string", "the-error");
     ATF_REQUIRE(std::strcmp("Invalid formatting string 'format-string': "
-                            "the-error", e.what()) == 0);
+                            "the-error",
+                            e.what()) == 0);
     ATF_REQUIRE_EQ("format-string", e.format());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(extra_args_error);
 ATF_TEST_CASE_BODY(extra_args_error)
 {
     const extra_args_error e("fmt", "extra");
     ATF_REQUIRE(std::strcmp("Not enough fields in formatting string 'fmt' to "
-                            "place argument 'extra'", e.what()) == 0);
+                            "place argument 'extra'",
+                            e.what()) == 0);
     ATF_REQUIRE_EQ("fmt", e.format());
     ATF_REQUIRE_EQ("extra", e.arg());
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

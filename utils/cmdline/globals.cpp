@@ -27,23 +27,19 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "utils/cmdline/globals.hpp"
-
 #include "utils/format/macros.hpp"
-#include "utils/logging/macros.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/logging/macros.hpp"
 #include "utils/sanity.hpp"
 
 namespace cmdline = utils::cmdline;
 
 namespace {
 
-
 /// The name of the binary used to execute the program.
 static std::string Progname;
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Initializes the global state of the CLI.
 ///
@@ -63,7 +59,6 @@ cmdline::init(const char* argv0, const bool override_for_testing)
     LD(F("Program name: %s") % Progname);
     POST(!Progname.empty());
 }
-
 
 /// Gets the program name.
 ///

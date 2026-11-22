@@ -37,14 +37,12 @@
 namespace utils {
 namespace text {
 
-
 /// Base exceptions for text errors.
 class error : public std::runtime_error {
 public:
     explicit error(const std::string&);
     ~error(void) throw();
 };
-
 
 /// Exception denoting an error in a regular expression.
 class regex_error : public error {
@@ -53,14 +51,12 @@ public:
     ~regex_error(void) throw();
 };
 
-
 /// Exception denoting an error while parsing templates.
 class syntax_error : public error {
 public:
     explicit syntax_error(const std::string&);
     ~syntax_error(void) throw();
 };
-
 
 /// Exception denoting an error in a text value format.
 class value_error : public error {
@@ -69,9 +65,7 @@ public:
     ~value_error(void) throw();
 };
 
+} // namespace text
+} // namespace utils
 
-}  // namespace text
-}  // namespace utils
-
-
-#endif  // !defined(UTILS_TEXT_EXCEPTIONS_HPP)
+#endif // !defined(UTILS_TEXT_EXCEPTIONS_HPP)

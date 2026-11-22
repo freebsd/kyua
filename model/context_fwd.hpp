@@ -34,10 +34,8 @@
 
 namespace model {
 
-
 class context;
 
+} // namespace model
 
-}  // namespace model
-
-#endif  // !defined(MODEL_CONTEXT_FWD_HPP)
+#endif // !defined(MODEL_CONTEXT_FWD_HPP)

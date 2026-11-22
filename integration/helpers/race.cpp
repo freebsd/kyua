@@ -42,10 +42,10 @@ extern "C" {
 #include <fstream>
 #include <iostream>
 
+#include "utils/env.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
-#include "utils/env.hpp"
 #include "utils/optional.ipp"
 #include "utils/stream.hpp"
 
@@ -53,15 +53,14 @@ namespace fs = utils::fs;
 
 using utils::optional;
 
-
 /// Entry point to the helper test program.
 ///
 /// \return EXIT_SUCCESS if no race is detected; EXIT_FAILURE otherwise.
 int
 main(void)
 {
-    const optional< std::string > shared_file = utils::getenv(
-        "TEST_ENV_shared_file");
+    const optional<std::string> shared_file =
+        utils::getenv("TEST_ENV_shared_file");
     if (!shared_file) {
         std::cerr << "Environment variable TEST_ENV_shared_file not defined\n";
         std::exit(EXIT_FAILURE);
@@ -70,7 +69,7 @@ main(void)
 
     if (fs::exists(shared_path)) {
         std::cerr << "Shared file already exists; created by a concurrent "
-            "test?";
+                     "test?";
         std::exit(EXIT_FAILURE);
     }
 
@@ -79,7 +78,7 @@ main(void)
     std::ofstream output(shared_path.c_str());
     if (!output) {
         std::cerr << "Failed to create shared file; conflict with a concurrent "
-            "test?";
+                     "test?";
         std::exit(EXIT_FAILURE);
     }
     output << contents;
@@ -90,7 +89,7 @@ main(void)
     const std::string read_contents = utils::read_file(shared_path);
     if (read_contents != contents) {
         std::cerr << "Shared file contains unexpected contents; modified by a "
-            "concurrent test?";
+                     "concurrent test?";
         std::exit(EXIT_FAILURE);
     }
 

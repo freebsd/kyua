@@ -26,33 +26,27 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/config/nodes.ipp"
-
-#include <memory>
-
 #include <lutok/state.ipp>
+#include <memory>
 
 #include "utils/config/exceptions.hpp"
 #include "utils/config/keys.hpp"
+#include "utils/config/nodes.ipp"
 #include "utils/format/macros.hpp"
 
 namespace config = utils::config;
-
 
 /// Destructor.
 config::detail::base_node::~base_node(void)
 {
 }
 
-
 /// Constructor.
 ///
 /// \param dynamic_ Whether the node is dynamic or not.
-config::detail::inner_node::inner_node(const bool dynamic_) :
-    _dynamic(dynamic_)
+config::detail::inner_node::inner_node(const bool dynamic_) : _dynamic(dynamic_)
 {
 }
-
 
 /// Destructor.
 config::detail::inner_node::~inner_node(void)
@@ -61,7 +55,6 @@ config::detail::inner_node::~inner_node(void)
          iter != _children.end(); ++iter)
         delete (*iter).second;
 }
-
 
 /// Fills the given node with a copy of this node's data.
 ///
@@ -83,7 +76,6 @@ config::detail::inner_node::copy_into(inner_node* node) const
     }
 }
 
-
 /// Combines two children sets, preferring the keys in the first set only.
 ///
 /// This operation is not symmetrical on c1 and c2.  The caller is responsible
@@ -97,20 +89,20 @@ config::detail::inner_node::copy_into(inner_node* node) const
 ///
 /// \throw bad_combination_error If the two nodes cannot be combined.
 void
-config::detail::inner_node::combine_children_into(
-    const tree_key& key,
-    const children_map& c1, const children_map& c2,
-    inner_node* node) const
+config::detail::inner_node::combine_children_into(const tree_key& key,
+                                                  const children_map& c1,
+                                                  const children_map& c2,
+                                                  inner_node* node) const
 {
-    for (children_map::const_iterator iter1 = c1.begin();
-         iter1 != c1.end(); ++iter1) {
+    for (children_map::const_iterator iter1 = c1.begin(); iter1 != c1.end();
+         ++iter1) {
         const std::string& name = (*iter1).first;
 
         if (node->_children.find(name) != node->_children.end()) {
             continue;
         }
 
-        std::unique_ptr< base_node > new_node;
+        std::unique_ptr<base_node> new_node;
 
         children_map::const_iterator iter2 = c2.find(name);
         if (iter2 == c2.end()) {
@@ -125,7 +117,6 @@ config::detail::inner_node::combine_children_into(
         node->_children[name] = new_node.release();
     }
 }
-
 
 /// Combines this inner node with another inner node onto a new node.
 ///
@@ -143,8 +134,7 @@ config::detail::inner_node::combine_into(const tree_key& key,
                                          inner_node* node) const
 {
     try {
-        const inner_node& other = dynamic_cast< const inner_node& >(
-            *other_base);
+        const inner_node& other = dynamic_cast<const inner_node&>(*other_base);
 
         node->_dynamic = _dynamic || other._dynamic;
 
@@ -152,11 +142,11 @@ config::detail::inner_node::combine_into(const tree_key& key,
         combine_children_into(key, other._children, _children, node);
     } catch (const std::bad_cast& unused_e) {
         throw config::bad_combination_error(
-            key, "'%s' is an inner node in the base tree but a leaf node in "
+            key,
+            "'%s' is an inner node in the base tree but a leaf node in "
             "the overrides tree");
     }
 }
-
 
 /// Finds a node without creating it if not found.
 ///
@@ -177,8 +167,8 @@ config::detail::inner_node::lookup_ro(const tree_key& key,
 {
     PRE(key_pos < key.size());
 
-    const children_map::const_iterator child_iter = _children.find(
-        key[key_pos]);
+    const children_map::const_iterator child_iter =
+        _children.find(key[key_pos]);
     if (child_iter == _children.end())
         throw unknown_key_error(key);
 
@@ -187,8 +177,8 @@ config::detail::inner_node::lookup_ro(const tree_key& key,
     } else {
         PRE(key_pos < key.size() - 1);
         try {
-            const inner_node& child = dynamic_cast< const inner_node& >(
-                *(*child_iter).second);
+            const inner_node& child =
+                dynamic_cast<const inner_node&>(*(*child_iter).second);
             return child.lookup_ro(key, key_pos + 1);
         } catch (const std::bad_cast& e) {
             throw unknown_key_error(
@@ -196,7 +186,6 @@ config::detail::inner_node::lookup_ro(const tree_key& key,
         }
     }
 }
-
 
 /// Finds a node and creates it if not found.
 ///
@@ -227,7 +216,8 @@ config::detail::inner_node::lookup_rw(const tree_key& key,
     if (child_iter == _children.end()) {
         if (_dynamic) {
             base_node* const child = (key_pos == key.size() - 1) ?
-                new_node() : new dynamic_inner_node();
+                new_node() :
+                new dynamic_inner_node();
             INV_MSG(child != nullptr, "Node factory returned a null pointer");
             _children.insert(children_map::value_type(key[key_pos], child));
             child_iter = _children.find(key[key_pos]);
@@ -238,8 +228,7 @@ config::detail::inner_node::lookup_rw(const tree_key& key,
 
     if (key_pos == key.size() - 1) {
         try {
-            leaf_node& child = dynamic_cast< leaf_node& >(
-                *(*child_iter).second);
+            leaf_node& child = dynamic_cast<leaf_node&>(*(*child_iter).second);
             return &child;
         } catch (const std::bad_cast& unused_error) {
             throw invalid_key_value(key, "Type mismatch");
@@ -247,8 +236,8 @@ config::detail::inner_node::lookup_rw(const tree_key& key,
     } else {
         PRE(key_pos < key.size() - 1);
         try {
-            inner_node& child = dynamic_cast< inner_node& >(
-                *(*child_iter).second);
+            inner_node& child =
+                dynamic_cast<inner_node&>(*(*child_iter).second);
             return child.lookup_rw(key, key_pos + 1, new_node);
         } catch (const std::bad_cast& e) {
             throw unknown_key_error(
@@ -256,7 +245,6 @@ config::detail::inner_node::lookup_rw(const tree_key& key,
         }
     }
 }
-
 
 /// Converts the subtree to a collection of key/value string pairs.
 ///
@@ -272,23 +260,20 @@ config::detail::inner_node::all_properties(properties_map& properties,
         tree_key child_key = key;
         child_key.push_back((*iter).first);
         try {
-            leaf_node& child = dynamic_cast< leaf_node& >(*(*iter).second);
+            leaf_node& child = dynamic_cast<leaf_node&>(*(*iter).second);
             if (child.is_set())
                 properties[flatten_key(child_key)] = child.to_string();
         } catch (const std::bad_cast& unused_error) {
-            inner_node& child = dynamic_cast< inner_node& >(*(*iter).second);
+            inner_node& child = dynamic_cast<inner_node&>(*(*iter).second);
             child.all_properties(properties, child_key);
         }
     }
 }
 
-
 /// Constructor.
-config::detail::static_inner_node::static_inner_node(void) :
-    inner_node(false)
+config::detail::static_inner_node::static_inner_node(void) : inner_node(false)
 {
 }
-
 
 /// Copies the node.
 ///
@@ -296,11 +281,10 @@ config::detail::static_inner_node::static_inner_node(void) :
 config::detail::base_node*
 config::detail::static_inner_node::deep_copy(void) const
 {
-    std::unique_ptr< inner_node > new_node(new static_inner_node());
+    std::unique_ptr<inner_node> new_node(new static_inner_node());
     copy_into(new_node.get());
     return new_node.release();
 }
-
 
 /// Combines this node with another one.
 ///
@@ -314,11 +298,10 @@ config::detail::base_node*
 config::detail::static_inner_node::combine(const tree_key& key,
                                            const base_node* other) const
 {
-    std::unique_ptr< inner_node > new_node(new static_inner_node());
+    std::unique_ptr<inner_node> new_node(new static_inner_node());
     combine_into(key, other, new_node.get());
     return new_node.release();
 }
-
 
 /// Registers a key as valid and having a specific type.
 ///
@@ -344,8 +327,8 @@ config::detail::static_inner_node::define(const tree_key& key,
         _children.insert(children_map::value_type(key[key_pos], new_node()));
     } else {
         PRE(key_pos < key.size() - 1);
-        const children_map::const_iterator child_iter = _children.find(
-            key[key_pos]);
+        const children_map::const_iterator child_iter =
+            _children.find(key[key_pos]);
 
         if (child_iter == _children.end()) {
             static_inner_node* const child_ptr = new static_inner_node();
@@ -353,8 +336,8 @@ config::detail::static_inner_node::define(const tree_key& key,
             child_ptr->define(key, key_pos + 1, new_node);
         } else {
             try {
-                static_inner_node& child = dynamic_cast< static_inner_node& >(
-                    *(*child_iter).second);
+                static_inner_node& child =
+                    dynamic_cast<static_inner_node&>(*(*child_iter).second);
                 child.define(key, key_pos + 1, new_node);
             } catch (const std::bad_cast& e) {
                 UNREACHABLE;
@@ -363,13 +346,10 @@ config::detail::static_inner_node::define(const tree_key& key,
     }
 }
 
-
 /// Constructor.
-config::detail::dynamic_inner_node::dynamic_inner_node(void) :
-    inner_node(true)
+config::detail::dynamic_inner_node::dynamic_inner_node(void) : inner_node(true)
 {
 }
-
 
 /// Copies the node.
 ///
@@ -377,11 +357,10 @@ config::detail::dynamic_inner_node::dynamic_inner_node(void) :
 config::detail::base_node*
 config::detail::dynamic_inner_node::deep_copy(void) const
 {
-    std::unique_ptr< inner_node > new_node(new dynamic_inner_node());
+    std::unique_ptr<inner_node> new_node(new dynamic_inner_node());
     copy_into(new_node.get());
     return new_node.release();
 }
-
 
 /// Combines this node with another one.
 ///
@@ -395,17 +374,15 @@ config::detail::base_node*
 config::detail::dynamic_inner_node::combine(const tree_key& key,
                                             const base_node* other) const
 {
-    std::unique_ptr< inner_node > new_node(new dynamic_inner_node());
+    std::unique_ptr<inner_node> new_node(new dynamic_inner_node());
     combine_into(key, other, new_node.get());
     return new_node.release();
 }
-
 
 /// Destructor.
 config::leaf_node::~leaf_node(void)
 {
 }
-
 
 /// Combines this node with another one.
 ///
@@ -420,7 +397,7 @@ config::leaf_node::combine(const detail::tree_key& key,
                            const base_node* other_base) const
 {
     try {
-        const leaf_node& other = dynamic_cast< const leaf_node& >(*other_base);
+        const leaf_node& other = dynamic_cast<const leaf_node&>(*other_base);
 
         if (other.is_set()) {
             return other.deep_copy();
@@ -429,11 +406,11 @@ config::leaf_node::combine(const detail::tree_key& key,
         }
     } catch (const std::bad_cast& unused_e) {
         throw config::bad_combination_error(
-            key, "'%s' is a leaf node in the base tree but an inner node in "
+            key,
+            "'%s' is a leaf node in the base tree but an inner node in "
             "the overrides treee");
     }
 }
-
 
 /// Copies the node.
 ///
@@ -441,11 +418,10 @@ config::leaf_node::combine(const detail::tree_key& key,
 config::detail::base_node*
 config::bool_node::deep_copy(void) const
 {
-    std::unique_ptr< bool_node > new_node(new bool_node());
+    std::unique_ptr<bool_node> new_node(new bool_node());
     new_node->_value = _value;
     return new_node.release();
 }
-
 
 /// Pushes the node's value onto the Lua stack.
 ///
@@ -455,7 +431,6 @@ config::bool_node::push_lua(lutok::state& state) const
 {
     state.push_boolean(value());
 }
-
 
 /// Sets the value of the node from an entry in the Lua stack.
 ///
@@ -473,18 +448,16 @@ config::bool_node::set_lua(lutok::state& state, const int value_index)
         throw value_error("Not a boolean");
 }
 
-
 /// Copies the node.
 ///
 /// \return A dynamically-allocated node.
 config::detail::base_node*
 config::int_node::deep_copy(void) const
 {
-    std::unique_ptr< int_node > new_node(new int_node());
+    std::unique_ptr<int_node> new_node(new int_node());
     new_node->_value = _value;
     return new_node.release();
 }
-
 
 /// Pushes the node's value onto the Lua stack.
 ///
@@ -494,7 +467,6 @@ config::int_node::push_lua(lutok::state& state) const
 {
     state.push_integer(value());
 }
-
 
 /// Sets the value of the node from an entry in the Lua stack.
 ///
@@ -512,7 +484,6 @@ config::int_node::set_lua(lutok::state& state, const int value_index)
         throw value_error("Not an integer");
 }
 
-
 /// Checks a given value for validity.
 ///
 /// \param new_value The value to validate.
@@ -525,18 +496,16 @@ config::positive_int_node::validate(const value_type& new_value) const
         throw value_error("Must be a positive integer");
 }
 
-
 /// Copies the node.
 ///
 /// \return A dynamically-allocated node.
 config::detail::base_node*
 config::positive_int_node::deep_copy(void) const
 {
-    std::unique_ptr< positive_int_node > new_node(new positive_int_node());
+    std::unique_ptr<positive_int_node> new_node(new positive_int_node());
     new_node->_value = _value;
     return new_node.release();
 }
-
 
 /// Copies the node.
 ///
@@ -544,11 +513,10 @@ config::positive_int_node::deep_copy(void) const
 config::detail::base_node*
 config::string_node::deep_copy(void) const
 {
-    std::unique_ptr< string_node > new_node(new string_node());
+    std::unique_ptr<string_node> new_node(new string_node());
     new_node->_value = _value;
     return new_node.release();
 }
-
 
 /// Pushes the node's value onto the Lua stack.
 ///
@@ -558,7 +526,6 @@ config::string_node::push_lua(lutok::state& state) const
 {
     state.push_string(value());
 }
-
 
 /// Sets the value of the node from an entry in the Lua stack.
 ///
@@ -576,18 +543,16 @@ config::string_node::set_lua(lutok::state& state, const int value_index)
         throw value_error("Not a string");
 }
 
-
 /// Copies the node.
 ///
 /// \return A dynamically-allocated node.
 config::detail::base_node*
 config::strings_set_node::deep_copy(void) const
 {
-    std::unique_ptr< strings_set_node > new_node(new strings_set_node());
+    std::unique_ptr<strings_set_node> new_node(new strings_set_node());
     new_node->_value = _value;
     return new_node.release();
 }
-
 
 /// Converts a single word to the native type.
 ///

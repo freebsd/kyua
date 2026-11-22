@@ -26,9 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "store/metadata.hpp"
-
 #include "store/exceptions.hpp"
+#include "store/metadata.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/sanity.hpp"
 #include "utils/sqlite/database.hpp"
@@ -37,9 +36,7 @@
 
 namespace sqlite = utils::sqlite;
 
-
 namespace {
-
 
 /// Fetches an integer column from a statement of the 'metadata' table.
 ///
@@ -62,13 +59,12 @@ int64_column(sqlite::statement& stmt, const char* column)
     }
     if (stmt.column_type(index) != sqlite::type_integer)
         throw store::integrity_error(F("The '%s' column in 'metadata' table "
-                                       "has an invalid type") % column);
+                                       "has an invalid type") %
+                                     column);
     return stmt.column_int64(index);
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Constructs a new metadata object.
 ///
@@ -80,7 +76,6 @@ store::metadata::metadata(const int schema_version_, const int64_t timestamp_) :
 {
 }
 
-
 /// Returns the timestamp of this entry.
 ///
 /// \return The timestamp in this metadata entry.
@@ -90,7 +85,6 @@ store::metadata::timestamp(void) const
     return _timestamp;
 }
 
-
 /// Returns the schema version.
 ///
 /// \return The schema version in this metadata entry.
@@ -99,7 +93,6 @@ store::metadata::schema_version(void) const
 {
     return _schema_version;
 }
-
 
 /// Reads the latest metadata entry from the database.
 ///
@@ -122,7 +115,7 @@ store::metadata::fetch_latest(sqlite::database& db)
             throw store::integrity_error("The 'metadata' table is empty");
 
         const int schema_version_ =
-            static_cast< int >(int64_column(stmt, "schema_version"));
+            static_cast<int>(int64_column(stmt, "schema_version"));
         const int64_t timestamp_ = int64_column(stmt, "timestamp");
 
         if (stmt.step())

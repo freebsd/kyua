@@ -26,19 +26,16 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <atf-c++.hpp>
 #include <cstdlib>
 #include <iostream>
 
-#include <atf-c++.hpp>
-
 #include "utils/test_utils.ipp"
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(no_properties);
 ATF_TEST_CASE_BODY(no_properties)
 {
 }
-
 
 ATF_TEST_CASE(one_property);
 ATF_TEST_CASE_HEAD(one_property)
@@ -49,7 +46,6 @@ ATF_TEST_CASE_BODY(one_property)
 {
     utils::abort_without_coredump();
 }
-
 
 ATF_TEST_CASE(many_properties);
 ATF_TEST_CASE_HEAD(many_properties)
@@ -68,7 +64,6 @@ ATF_TEST_CASE_BODY(many_properties)
     utils::abort_without_coredump();
 }
 
-
 ATF_TEST_CASE_WITH_CLEANUP(with_cleanup);
 ATF_TEST_CASE_HEAD(with_cleanup)
 {
@@ -84,7 +79,6 @@ ATF_TEST_CASE_CLEANUP(with_cleanup)
     std::cout << "Cleanup message to stdout\n";
     std::cerr << "Cleanup message to stderr\n";
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

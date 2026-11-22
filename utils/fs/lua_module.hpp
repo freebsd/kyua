@@ -43,12 +43,10 @@
 namespace utils {
 namespace fs {
 
-
 void open_fs(lutok::state&);
 void open_fs(lutok::state&, const fs::path&);
 
+} // namespace fs
+} // namespace utils
 
-}  // namespace fs
-}  // namespace utils
-
-#endif  // !defined(UTILS_FS_LUA_MODULE_HPP)
+#endif // !defined(UTILS_FS_LUA_MODULE_HPP)

@@ -26,17 +26,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/fs/path.hpp"
-
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/operations.hpp"
+#include "utils/fs/path.hpp"
 #include "utils/sanity.hpp"
 
 namespace fs = utils::fs;
 
-
 namespace {
-
 
 /// Normalizes an input string to a valid path.
 ///
@@ -77,9 +74,7 @@ normalize(const std::string& in)
     return out.empty() ? "/" : out;
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Creates a new path object from a textual representation of a path.
 ///
@@ -87,11 +82,9 @@ normalize(const std::string& in)
 ///
 /// \throw utils::fs::invalid_path_error If the input text does not represent a
 ///     valid path.
-fs::path::path(const std::string& text) :
-    _repr(normalize(text))
+fs::path::path(const std::string& text) : _repr(normalize(text))
 {
 }
-
 
 /// Gets a view of the path as an array of characters.
 ///
@@ -102,7 +95,6 @@ fs::path::c_str(void) const
     return _repr.c_str();
 }
 
-
 /// Gets a view of the path as a std::string.
 ///
 /// \return A \code std::string& \endcode representation for the object.
@@ -111,7 +103,6 @@ fs::path::str(void) const
 {
     return _repr;
 }
-
 
 /// Gets the branch path (directory name) of the path.
 ///
@@ -130,7 +121,6 @@ fs::path::branch_path(void) const
         return fs::path(_repr.substr(0, end_pos));
 }
 
-
 /// Gets the leaf name (base name) of the path.
 ///
 /// \return A new string representing the leaf name.
@@ -145,7 +135,6 @@ fs::path::leaf_name(void) const
         return _repr.substr(beg_pos + 1);
 }
 
-
 /// Converts a relative path in the current directory to an absolute path.
 ///
 /// \pre The path is relative.
@@ -158,14 +147,12 @@ fs::path::to_absolute(void) const
     return fs::current_path() / *this;
 }
 
-
 /// \return True if the representation of the path is absolute.
 bool
 fs::path::is_absolute(void) const
 {
     return _repr[0] == '/';
 }
-
 
 /// Checks whether the path is a parent of another path.
 ///
@@ -182,7 +169,6 @@ fs::path::is_parent_of(path p) const
     } while (p != fs::path(".") && p != fs::path("/"));
     return false;
 }
-
 
 /// Counts the number of components in the path.
 ///
@@ -203,7 +189,6 @@ fs::path::ncomponents(void) const
     }
 }
 
-
 /// Less-than comparator for paths.
 ///
 /// This is provided to make identifiers useful as map keys.
@@ -217,7 +202,6 @@ fs::path::operator<(const fs::path& p) const
 {
     return _repr < p._repr;
 }
-
 
 /// Compares two paths for equality.
 ///
@@ -235,7 +219,6 @@ fs::path::operator==(const fs::path& p) const
     return _repr == p._repr;
 }
 
-
 /// Compares two paths for inequality.
 ///
 /// See the description of operator==() for more details on the comparison
@@ -249,7 +232,6 @@ fs::path::operator!=(const fs::path& p) const
 {
     return _repr != p._repr;
 }
-
 
 /// Concatenates this path with one or more components.
 ///
@@ -270,7 +252,6 @@ fs::path::operator/(const std::string& components) const
     return (*this) / fs::path(components);
 }
 
-
 /// Concatenates this path with another path.
 ///
 /// \param rest The path to concatenate to this one.  Cannot be absolute.
@@ -288,7 +269,6 @@ fs::path::operator/(const fs::path& rest) const
                              "Cannot concatenate a path to an absolute path");
     return fs::path(_repr + '/' + rest._repr);
 }
-
 
 /// Formats a path for insertion on a stream.
 ///

@@ -42,20 +42,17 @@
 namespace utils {
 namespace sqlite {
 
-
 /// Base exception for sqlite errors.
 class error : public std::runtime_error {
     /// Path to the database that raised this error.
-    utils::optional< utils::fs::path > _db_filename;
+    utils::optional<utils::fs::path> _db_filename;
 
 public:
-    explicit error(const utils::optional< utils::fs::path >&,
-                   const std::string&);
+    explicit error(const utils::optional<utils::fs::path>&, const std::string&);
     virtual ~error(void) throw();
 
-    const utils::optional< utils::fs::path >& db_filename(void) const;
+    const utils::optional<utils::fs::path>& db_filename(void) const;
 };
-
 
 /// Exception for errors raised by the SQLite 3 API library.
 class api_error : public error {
@@ -63,7 +60,7 @@ class api_error : public error {
     std::string _api_function;
 
 public:
-    explicit api_error(const utils::optional< utils::fs::path >&,
+    explicit api_error(const utils::optional<utils::fs::path>&,
                        const std::string&, const std::string&);
     virtual ~api_error(void) throw();
 
@@ -72,23 +69,20 @@ public:
     const std::string& api_function(void) const;
 };
 
-
 /// The caller requested a non-existent column name.
 class invalid_column_error : public error {
     /// The name of the invalid column.
     std::string _column_name;
 
 public:
-    explicit invalid_column_error(const utils::optional< utils::fs::path >&,
+    explicit invalid_column_error(const utils::optional<utils::fs::path>&,
                                   const std::string&);
     virtual ~invalid_column_error(void) throw();
 
     const std::string& column_name(void) const;
 };
 
+} // namespace sqlite
+} // namespace utils
 
-}  // namespace sqlite
-}  // namespace utils
-
-
-#endif  // !defined(UTILS_SQLITE_EXCEPTIONS_HPP)
+#endif // !defined(UTILS_SQLITE_EXCEPTIONS_HPP)

@@ -26,14 +26,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "cli/cmd_help.hpp"
-
 #include <algorithm>
+#include <atf-c++.hpp>
 #include <cstdlib>
 #include <iterator>
 
-#include <atf-c++.hpp>
-
+#include "cli/cmd_help.hpp"
 #include "cli/common.ipp"
 #include "engine/config.hpp"
 #include "utils/cmdline/commands_map.ipp"
@@ -47,7 +45,7 @@
 #include "utils/sanity.hpp"
 
 #if defined(HAVE_CONFIG_H)
-#   include "config.h"
+#include "config.h"
 #endif
 
 namespace cmdline = utils::cmdline;
@@ -55,9 +53,7 @@ namespace config = utils::config;
 
 using cli::cmd_help;
 
-
 namespace {
-
 
 /// Mock command with a simple definition (no options, no arguments).
 ///
@@ -68,23 +64,20 @@ public:
     /// Constructs a new mock command.
     ///
     /// \param name_ The name of the command to create.
-    cmd_mock_simple(const char* name_) : cli::cli_command(
-        name_, "", 0, 0, "Simple command")
+    cmd_mock_simple(const char* name_) :
+        cli::cli_command(name_, "", 0, 0, "Simple command")
     {
     }
 
     /// Runs the mock command.
     ///
     /// \return Nothing because this function is never called.
-    int
-    run(cmdline::ui* /* ui */,
-        const cmdline::parsed_cmdline& /* cmdline */,
-        const config::tree& /* user_config */)
+    int run(cmdline::ui* /* ui */, const cmdline::parsed_cmdline& /* cmdline */,
+            const config::tree& /* user_config */)
     {
         UNREACHABLE;
     }
 };
-
 
 /// Mock command with a complex definition (some options, some arguments).
 ///
@@ -95,8 +88,8 @@ public:
     /// Constructs a new mock command.
     ///
     /// \param name_ The name of the command to create.
-    cmd_mock_complex(const char* name_) : cli::cli_command(
-        name_, "[arg1 .. argN]", 0, 2, "Complex command")
+    cmd_mock_complex(const char* name_) :
+        cli::cli_command(name_, "[arg1 .. argN]", 0, 2, "Complex command")
     {
         add_option(cmdline::bool_option("flag_a", "Flag A"));
         add_option(cmdline::bool_option('b', "flag_b", "Flag B"));
@@ -107,22 +100,19 @@ public:
     /// Runs the mock command.
     ///
     /// \return Nothing because this function is never called.
-    int
-    run(cmdline::ui* /* ui */,
-        const cmdline::parsed_cmdline& /* cmdline */,
-        const config::tree& /* user_config */)
+    int run(cmdline::ui* /* ui */, const cmdline::parsed_cmdline& /* cmdline */,
+            const config::tree& /* user_config */)
     {
         UNREACHABLE;
     }
 };
-
 
 /// Initializes the cmdline library and generates the set of test commands.
 ///
 /// \param [out] commands A mapping that is updated to contain the commands to
 ///     use for testing.
 static void
-setup(cmdline::commands_map< cli::cli_command >& commands)
+setup(cmdline::commands_map<cli::cli_command>& commands)
 {
     cmdline::init("progname");
 
@@ -135,7 +125,6 @@ setup(cmdline::commands_map< cli::cli_command >& commands)
     commands.insert(new cmd_mock_simple("mock_simple_3"), "Second");
 }
 
-
 /// Performs a test on the global help (not that of a subcommand).
 ///
 /// \param general_options The genral options supported by the tool, if any.
@@ -144,10 +133,10 @@ setup(cmdline::commands_map< cli::cli_command >& commands)
 /// \param ui The cmdline::mock_ui object to which to write the output.
 static void
 global_test(const cmdline::options_vector& general_options,
-            const std::vector< std::string >& expected_options,
+            const std::vector<std::string>& expected_options,
             cmdline::ui_mock& ui)
 {
-    cmdline::commands_map< cli::cli_command > mock_commands;
+    cmdline::commands_map<cli::cli_command> mock_commands;
     setup(mock_commands);
 
     cmdline::args_vector args;
@@ -156,7 +145,7 @@ global_test(const cmdline::options_vector& general_options,
     cmd_help cmd(&general_options, &mock_commands);
     ATF_REQUIRE_EQ(EXIT_SUCCESS, cmd.main(&ui, args, engine::default_config()));
 
-    std::vector< std::string > expected;
+    std::vector<std::string> expected;
 
     expected.push_back(PACKAGE " (" PACKAGE_NAME ") " PACKAGE_VERSION);
     expected.push_back("");
@@ -186,9 +175,7 @@ global_test(const cmdline::options_vector& general_options,
     ATF_REQUIRE(ui.err_log().empty());
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 ATF_TEST_CASE_WITHOUT_HEAD(global__no_options);
 ATF_TEST_CASE_BODY(global__no_options)
@@ -197,9 +184,8 @@ ATF_TEST_CASE_BODY(global__no_options)
 
     cmdline::options_vector general_options;
 
-    global_test(general_options, std::vector< std::string >(), ui);
+    global_test(general_options, std::vector<std::string>(), ui);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(global__some_options);
 ATF_TEST_CASE_BODY(global__some_options)
@@ -212,20 +198,19 @@ ATF_TEST_CASE_BODY(global__some_options)
     const cmdline::string_option flag_c('c', "lc", "Flag C", "X");
     general_options.push_back(&flag_c);
 
-    std::vector< std::string > expected;
+    std::vector<std::string> expected;
     expected.push_back("  --flag_a        Flag A.");
     expected.push_back("  -c X, --lc=X    Flag C.");
 
     global_test(general_options, expected, ui);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(subcommand__simple);
 ATF_TEST_CASE_BODY(subcommand__simple)
 {
     cmdline::options_vector general_options;
 
-    cmdline::commands_map< cli::cli_command > mock_commands;
+    cmdline::commands_map<cli::cli_command> mock_commands;
     setup(mock_commands);
 
     cmdline::args_vector args;
@@ -235,17 +220,16 @@ ATF_TEST_CASE_BODY(subcommand__simple)
     cmd_help cmd(&general_options, &mock_commands);
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(EXIT_SUCCESS, cmd.main(&ui, args, engine::default_config()));
-    ATF_REQUIRE(atf::utils::grep_collection(
-        "^kyua.*" PACKAGE_VERSION, ui.out_log()));
+    ATF_REQUIRE(atf::utils::grep_collection("^kyua.*" PACKAGE_VERSION,
+                                            ui.out_log()));
     ATF_REQUIRE(atf::utils::grep_collection(
         "^Usage: progname \\[general_options\\] mock_simple$", ui.out_log()));
-    ATF_REQUIRE(!atf::utils::grep_collection(
-        "Available.*options", ui.out_log()));
+    ATF_REQUIRE(!atf::utils::grep_collection("Available.*options",
+                                             ui.out_log()));
     ATF_REQUIRE(atf::utils::grep_collection(
         "^See kyua-mock_simple\\(1\\) for more details.", ui.out_log()));
     ATF_REQUIRE(ui.err_log().empty());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(subcommand__complex);
 ATF_TEST_CASE_BODY(subcommand__complex)
@@ -257,7 +241,7 @@ ATF_TEST_CASE_BODY(subcommand__complex)
                                           "c_global");
     general_options.push_back(&global_c);
 
-    cmdline::commands_map< cli::cli_command > mock_commands;
+    cmdline::commands_map<cli::cli_command> mock_commands;
     setup(mock_commands);
 
     cmdline::args_vector args;
@@ -267,11 +251,12 @@ ATF_TEST_CASE_BODY(subcommand__complex)
     cmd_help cmd(&general_options, &mock_commands);
     cmdline::ui_mock ui;
     ATF_REQUIRE_EQ(EXIT_SUCCESS, cmd.main(&ui, args, engine::default_config()));
-    ATF_REQUIRE(atf::utils::grep_collection(
-        "^kyua.*" PACKAGE_VERSION, ui.out_log()));
+    ATF_REQUIRE(atf::utils::grep_collection("^kyua.*" PACKAGE_VERSION,
+                                            ui.out_log()));
     ATF_REQUIRE(atf::utils::grep_collection(
         "^Usage: progname \\[general_options\\] mock_complex "
-        "\\[command_options\\] \\[arg1 .. argN\\]$", ui.out_log()));
+        "\\[command_options\\] \\[arg1 .. argN\\]$",
+        ui.out_log()));
     ATF_REQUIRE(atf::utils::grep_collection("Available general options",
                                             ui.out_log()));
     ATF_REQUIRE(atf::utils::grep_collection("--global_a", ui.out_log()));
@@ -292,13 +277,12 @@ ATF_TEST_CASE_BODY(subcommand__complex)
     ATF_REQUIRE(ui.err_log().empty());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(subcommand__unknown);
 ATF_TEST_CASE_BODY(subcommand__unknown)
 {
     cmdline::options_vector general_options;
 
-    cmdline::commands_map< cli::cli_command > mock_commands;
+    cmdline::commands_map<cli::cli_command> mock_commands;
     setup(mock_commands);
 
     cmdline::args_vector args;
@@ -313,13 +297,12 @@ ATF_TEST_CASE_BODY(subcommand__unknown)
     ATF_REQUIRE(ui.err_log().empty());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(invalid_args);
 ATF_TEST_CASE_BODY(invalid_args)
 {
     cmdline::options_vector general_options;
 
-    cmdline::commands_map< cli::cli_command > mock_commands;
+    cmdline::commands_map<cli::cli_command> mock_commands;
     setup(mock_commands);
 
     cmdline::args_vector args;
@@ -334,7 +317,6 @@ ATF_TEST_CASE_BODY(invalid_args)
     ATF_REQUIRE(ui.out_log().empty());
     ATF_REQUIRE(ui.err_log().empty());
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

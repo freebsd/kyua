@@ -41,10 +41,8 @@
 
 namespace engine {
 
-
 model::test_cases_map parse_googletest_list(std::istream&);
 
+} // namespace engine
 
-}  // namespace engine
-
-#endif  // !defined(ENGINE_GOOGLETEST_LIST_HPP)
+#endif // !defined(ENGINE_GOOGLETEST_LIST_HPP)

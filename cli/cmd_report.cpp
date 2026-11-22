@@ -26,8 +26,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "cli/cmd_report.hpp"
-
 #include <algorithm>
 #include <cstddef>
 #include <cstdlib>
@@ -36,6 +34,7 @@
 #include <string>
 #include <vector>
 
+#include "cli/cmd_report.hpp"
 #include "cli/common.ipp"
 #include "drivers/scan_results.hpp"
 #include "model/context.hpp"
@@ -69,9 +68,7 @@ namespace text = utils::text;
 using cli::cmd_report;
 using utils::optional;
 
-
 namespace {
-
 
 /// Generates a plain-text report intended to be printed to the console.
 class report_console_hooks : public drivers::scan_results::base_hooks {
@@ -88,10 +85,10 @@ class report_console_hooks : public drivers::scan_results::base_hooks {
     const fs::path& _results_file;
 
     /// The start time of the first test.
-    optional< utils::datetime::timestamp > _start_time;
+    optional<utils::datetime::timestamp> _start_time;
 
     /// The end time of the last test.
-    optional< utils::datetime::timestamp > _end_time;
+    optional<utils::datetime::timestamp> _end_time;
 
     /// The total run time of the tests.  Note that we cannot subtract _end_time
     /// from _start_time to compute this due to parallel execution.
@@ -121,8 +118,10 @@ class report_console_hooks : public drivers::scan_results::base_hooks {
                     const std::string& test_case_name_,
                     const model::test_result& result_,
                     const utils::datetime::delta& duration_) :
-            binary_path(binary_path_), test_case_name(test_case_name_),
-            result(result_), duration(duration_)
+            binary_path(binary_path_),
+            test_case_name(test_case_name_),
+            result(result_),
+            duration(duration_)
         {
         }
     };
@@ -131,7 +130,7 @@ class report_console_hooks : public drivers::scan_results::base_hooks {
     ///
     /// Note that this may not include all results, as keeping the whole list in
     /// memory may be too much.
-    std::map< model::test_result_type, std::vector< result_data > > _results;
+    std::map<model::test_result_type, std::vector<result_data>> _results;
 
     /// Pretty-prints the value of an environment variable.
     ///
@@ -139,17 +138,17 @@ class report_console_hooks : public drivers::scan_results::base_hooks {
     ///     use this indentation twice.
     /// \param name Name of the variable.
     /// \param value Value of the variable.  Can have newlines.
-    void
-    print_env_var(const char* indent, const std::string& name,
-                  const std::string& value)
+    void print_env_var(const char* indent, const std::string& name,
+                       const std::string& value)
     {
-        const std::vector< std::string > lines = text::split(value, '\n');
+        const std::vector<std::string> lines = text::split(value, '\n');
         if (lines.size() == 0) {
-            _output << F("%s%s=\n") % indent % name;;
+            _output << F("%s%s=\n") % indent % name;
+            ;
         } else {
             _output << F("%s%s=%s\n") % indent % name % lines[0];
-            for (std::vector< std::string >::size_type i = 1;
-                 i < lines.size(); ++i) {
+            for (std::vector<std::string>::size_type i = 1; i < lines.size();
+                 ++i) {
                 _output << F("%s%s%s\n") % indent % indent % lines[i];
             }
         }
@@ -158,19 +157,19 @@ class report_console_hooks : public drivers::scan_results::base_hooks {
     /// Prints the execution context to the output.
     ///
     /// \param context The context to dump.
-    void
-    print_context(const model::context& context)
+    void print_context(const model::context& context)
     {
         _output << "===> Execution context\n";
 
         _output << F("Current directory: %s\n") % context.cwd();
-        const std::map< std::string, std::string >& env = context.env();
+        const std::map<std::string, std::string>& env = context.env();
         if (env.empty())
             _output << "No environment variables recorded\n";
         else {
             _output << "Environment variables:\n";
-            for (std::map< std::string, std::string >::const_iterator
-                     iter = env.begin(); iter != env.end(); iter++) {
+            for (std::map<std::string, std::string>::const_iterator iter =
+                     env.begin();
+                 iter != env.end(); iter++) {
                 print_env_var("    ", (*iter).first, (*iter).second);
             }
         }
@@ -180,8 +179,7 @@ class report_console_hooks : public drivers::scan_results::base_hooks {
     ///
     /// \param result_iter Results iterator pointing at the test case to be
     ///     dumped.
-    void
-    print_test_case_and_result(const store::results_iterator& result_iter)
+    void print_test_case_and_result(const store::results_iterator& result_iter)
     {
         const model::test_case& test_case =
             result_iter.test_program()->find(result_iter.test_case_name());
@@ -189,17 +187,17 @@ class report_console_hooks : public drivers::scan_results::base_hooks {
             test_case.get_metadata().to_properties();
 
         _output << F("===> %s:%s\n") %
-            result_iter.test_program()->relative_path() %
-            result_iter.test_case_name();
+                result_iter.test_program()->relative_path() %
+                result_iter.test_case_name();
         _output << F("Result:     %s\n") %
-            cli::format_result(result_iter.result());
+                cli::format_result(result_iter.result());
         _output << F("Start time: %s\n") %
-            result_iter.start_time().to_iso8601_in_utc();
+                result_iter.start_time().to_iso8601_in_utc();
         _output << F("End time:   %s\n") %
-            result_iter.end_time().to_iso8601_in_utc();
+                result_iter.end_time().to_iso8601_in_utc();
         _output << F("Duration:   %s\n") %
-            cli::format_delta(result_iter.end_time() -
-                              result_iter.start_time());
+                cli::format_delta(result_iter.end_time() -
+                                  result_iter.start_time());
 
         _output << "\n";
         _output << "Metadata:\n";
@@ -232,11 +230,10 @@ class report_console_hooks : public drivers::scan_results::base_hooks {
     /// \param type Test result type to count results for.
     ///
     /// \return The number of test results with \p type.
-    std::size_t
-    count_results(const model::test_result_type type)
+    std::size_t count_results(const model::test_result_type type)
     {
-        const std::map< model::test_result_type,
-                        std::vector< result_data > >::const_iterator iter =
+        const std::map<model::test_result_type,
+                       std::vector<result_data>>::const_iterator iter =
             _results.find(type);
         if (iter == _results.end())
             return 0;
@@ -248,24 +245,22 @@ class report_console_hooks : public drivers::scan_results::base_hooks {
     ///
     /// \param type Test result type to print results for.
     /// \param title Title used when printing results.
-    void
-    print_results(const model::test_result_type type,
-                  const char* title)
+    void print_results(const model::test_result_type type, const char* title)
     {
-        const std::map< model::test_result_type,
-                        std::vector< result_data > >::const_iterator iter2 =
+        const std::map<model::test_result_type,
+                       std::vector<result_data>>::const_iterator iter2 =
             _results.find(type);
         if (iter2 == _results.end())
             return;
-        const std::vector< result_data >& all = (*iter2).second;
+        const std::vector<result_data>& all = (*iter2).second;
 
         _output << F("===> %s\n") % title;
-        for (std::vector< result_data >::const_iterator iter = all.begin();
+        for (std::vector<result_data>::const_iterator iter = all.begin();
              iter != all.end(); iter++) {
             _output << F("%s:%s  ->  %s  [%s]\n") % (*iter).binary_path %
-                (*iter).test_case_name %
-                cli::format_result((*iter).result) %
-                cli::format_delta((*iter).duration);
+                    (*iter).test_case_name %
+                    cli::format_result((*iter).result) %
+                    cli::format_delta((*iter).duration);
         }
     }
 
@@ -291,8 +286,7 @@ public:
     /// Callback executed when the context is loaded.
     ///
     /// \param context The context loaded from the database.
-    void
-    got_context(const model::context& context)
+    void got_context(const model::context& context)
     {
         if (_verbose)
             print_context(context);
@@ -301,8 +295,7 @@ public:
     /// Callback executed when a test results is found.
     ///
     /// \param iter Container for the test result's data.
-    void
-    got_result(store::results_iterator& iter)
+    void got_result(store::results_iterator& iter)
     {
         if (!_start_time || _start_time.get() > iter.start_time())
             _start_time = iter.start_time();
@@ -329,10 +322,9 @@ public:
     }
 
     /// Prints the tests summary.
-    void
-    end(const drivers::scan_results::result& /* r */)
+    void end(const drivers::scan_results::result& /* r */)
     {
-        typedef std::map< model::test_result_type, const char* > types_map;
+        typedef std::map<model::test_result_type, const char*> types_map;
 
         types_map titles;
         titles[model::test_result_broken] = "Broken tests";
@@ -344,7 +336,8 @@ public:
         for (cli::result_types::const_iterator iter = _results_filters.begin();
              iter != _results_filters.end(); ++iter) {
             const types_map::const_iterator match = titles.find(*iter);
-            INV_MSG(match != titles.end(), "Conditional does not match user "
+            INV_MSG(match != titles.end(),
+                    "Conditional does not match user "
                     "input validation in parse_types()");
             print_results((*match).first, (*match).second);
         }
@@ -353,15 +346,15 @@ public:
         const std::size_t failed = count_results(model::test_result_failed);
         const std::size_t passed = count_results(model::test_result_passed);
         const std::size_t skipped = count_results(model::test_result_skipped);
-        const std::size_t xfail = count_results(
-            model::test_result_expected_failure);
+        const std::size_t xfail =
+            count_results(model::test_result_expected_failure);
         const std::size_t total = broken + failed + passed + skipped + xfail;
 
         _output << "===> Summary\n";
         _output << F("Results read from %s\n") % _results_file;
         _output << F("Test cases: %s total, %s skipped, %s expected failures, "
                      "%s broken, %s failed\n") %
-            total % skipped % xfail % broken % failed;
+                total % skipped % xfail % broken % failed;
         if (_verbose && _start_time) {
             INV(_end_time);
             _output << F("Start time: %s\n") %
@@ -373,24 +366,22 @@ public:
     }
 };
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Default constructor for cmd_report.
-cmd_report::cmd_report(void) : cli_command(
-    "report", "", 0, -1,
-    "Generates a report with the results of a test suite run")
+cmd_report::cmd_report(void) :
+    cli_command("report", "", 0, -1,
+                "Generates a report with the results of a test suite run")
 {
     add_option(results_file_open_option);
     add_option(cmdline::bool_option(
-        "verbose", "Include the execution context and the details of each test "
+        "verbose",
+        "Include the execution context and the details of each test "
         "case in the report"));
     add_option(cmdline::path_option("output", "Path to the output file", "path",
                                     "/dev/stdout"));
     add_option(results_filter_option);
 }
-
 
 /// Entry point for the "report" subcommand.
 ///
@@ -400,15 +391,14 @@ cmd_report::cmd_report(void) : cli_command(
 /// \return 0 if everything is OK, 1 if the statement is invalid or if there is
 /// any other problem.
 int
-cmd_report::run(cmdline::ui* ui,
-                const cmdline::parsed_cmdline& cmdline,
+cmd_report::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
                 const config::tree& /* user_config */)
 {
-    std::unique_ptr< std::ostream > output = utils::open_ostream(
-        cmdline.get_option< cmdline::path_option >("output"));
+    std::unique_ptr<std::ostream> output =
+        utils::open_ostream(cmdline.get_option<cmdline::path_option>("output"));
 
-    const fs::path results_file = layout::find_results(
-        results_file_open(cmdline));
+    const fs::path results_file =
+        layout::find_results(results_file_open(cmdline));
 
     const result_types types = get_result_types(cmdline);
     report_console_hooks hooks(*output.get(), cmdline.has_option("verbose"),
@@ -416,6 +406,6 @@ cmd_report::run(cmdline::ui* ui,
     const drivers::scan_results::result result = drivers::scan_results::drive(
         results_file, parse_filters(cmdline.arguments()), hooks);
 
-    return report_unused_filters(result.unused_filters, ui) ?
-        EXIT_FAILURE : EXIT_SUCCESS;
+    return report_unused_filters(result.unused_filters, ui) ? EXIT_FAILURE :
+                                                              EXIT_SUCCESS;
 }

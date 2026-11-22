@@ -53,9 +53,7 @@ namespace scheduler = engine::scheduler;
 
 using utils::none;
 
-
 namespace {
-
 
 /// Gets the path to an example file.
 ///
@@ -67,14 +65,12 @@ namespace {
 static fs::path
 example_file(const char* name)
 {
-    const fs::path examplesdir(utils::getenv_with_default(
-        "KYUA_EXAMPLESDIR", KYUA_EXAMPLESDIR));
+    const fs::path examplesdir(utils::getenv_with_default("KYUA_EXAMPLESDIR",
+                                                          KYUA_EXAMPLESDIR));
     return examplesdir / name;
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 ATF_TEST_CASE(kyua_conf);
 ATF_TEST_CASE_HEAD(kyua_conf)
@@ -84,26 +80,23 @@ ATF_TEST_CASE_HEAD(kyua_conf)
 }
 ATF_TEST_CASE_BODY(kyua_conf)
 {
-    std::vector< passwd::user > users;
+    std::vector<passwd::user> users;
     users.push_back(passwd::user("nobody", 1, 2));
     passwd::set_mock_users_for_testing(users);
 
-    const config::tree user_config = engine::load_config(
-        example_file("kyua.conf"));
+    const config::tree user_config =
+        engine::load_config(example_file("kyua.conf"));
 
+    ATF_REQUIRE_EQ("x86_64",
+                   user_config.lookup<config::string_node>("architecture"));
     ATF_REQUIRE_EQ(
-        "x86_64",
-        user_config.lookup< config::string_node >("architecture"));
-    ATF_REQUIRE_EQ(
-        16,
-        user_config.lookup< config::positive_int_node >("parallelism"));
-    ATF_REQUIRE_EQ(
-        "amd64",
-        user_config.lookup< config::string_node >("platform"));
+        16, user_config.lookup<config::positive_int_node>("parallelism"));
+    ATF_REQUIRE_EQ("amd64",
+                   user_config.lookup<config::string_node>("platform"));
 
     ATF_REQUIRE_EQ(
         "nobody",
-        user_config.lookup< engine::user_node >("unprivileged_user").name);
+        user_config.lookup<engine::user_node>("unprivileged_user").name);
 
     config::properties_map exp_test_suites;
     exp_test_suites["test_suites.kyua.run_coredump_tests"] = "false";
@@ -114,7 +107,6 @@ ATF_TEST_CASE_BODY(kyua_conf)
     exp_test_suites["test_suites.NetBSD.run_broken_tests"] = "true";
     ATF_REQUIRE(exp_test_suites == user_config.all_properties("test_suites"));
 }
-
 
 ATF_TEST_CASE(kyuafile_top__no_matches);
 ATF_TEST_CASE_HEAD(kyuafile_top__no_matches)
@@ -141,7 +133,6 @@ ATF_TEST_CASE_BODY(kyuafile_top__no_matches)
 
     handle.cleanup();
 }
-
 
 ATF_TEST_CASE(kyuafile_top__some_matches);
 ATF_TEST_CASE_HEAD(kyuafile_top__some_matches)
@@ -177,31 +168,31 @@ ATF_TEST_CASE_BODY(kyuafile_top__some_matches)
     ATF_REQUIRE_EQ(fs::path("root"), kyuafile.source_root());
     ATF_REQUIRE_EQ(fs::path("root"), kyuafile.build_root());
 
-    const model::test_program exp_test_program_a = model::test_program_builder(
-        "plain", fs::path("subdir1/a"), fs::path("root").to_absolute(), "b")
-        .add_test_case("main")
-        .build();
-    const model::test_program exp_test_program_c = model::test_program_builder(
-        "plain", fs::path("subdir2/c"), fs::path("root").to_absolute(), "d")
-        .add_test_case("main")
-        .build();
+    const model::test_program exp_test_program_a =
+        model::test_program_builder("plain", fs::path("subdir1/a"),
+                                    fs::path("root").to_absolute(), "b")
+            .add_test_case("main")
+            .build();
+    const model::test_program exp_test_program_c =
+        model::test_program_builder("plain", fs::path("subdir2/c"),
+                                    fs::path("root").to_absolute(), "d")
+            .add_test_case("main")
+            .build();
 
     ATF_REQUIRE_EQ(2, kyuafile.test_programs().size());
     ATF_REQUIRE((exp_test_program_a == *kyuafile.test_programs()[0] &&
-                 exp_test_program_c == *kyuafile.test_programs()[1])
-                ||
+                 exp_test_program_c == *kyuafile.test_programs()[1]) ||
                 (exp_test_program_a == *kyuafile.test_programs()[1] &&
                  exp_test_program_c == *kyuafile.test_programs()[0]));
 
     handle.cleanup();
 }
 
-
 ATF_INIT_TEST_CASES(tcs)
 {
     scheduler::register_interface(
-        "plain", std::shared_ptr< scheduler::interface >(
-            new engine::plain_interface()));
+        "plain",
+        std::shared_ptr<scheduler::interface>(new engine::plain_interface()));
 
     ATF_ADD_TEST_CASE(tcs, kyua_conf);
 

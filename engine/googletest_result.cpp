@@ -3,17 +3,16 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
-#include "engine/googletest_result.hpp"
-
 #include <cstdlib>
 #include <fstream>
 #include <regex>
 #include <utility>
 
 #include "engine/exceptions.hpp"
+#include "engine/googletest_result.hpp"
 #include "model/test_result.hpp"
-#include "utils/fs/path.hpp"
 #include "utils/format/macros.hpp"
+#include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
 #include "utils/process/status.hpp"
 #include "utils/sanity.hpp"
@@ -27,29 +26,22 @@ namespace text = utils::text;
 using utils::none;
 using utils::optional;
 
-
 namespace {
 
 /// Regular expression for disabled tests line.
-const std::regex disabled_re(
-    R"RE((YOU HAVE [[:digit:]]+ DISABLED TESTS?))RE"
-);
+const std::regex disabled_re(R"RE((YOU HAVE [[:digit:]]+ DISABLED TESTS?))RE");
 
 /// Regular expression for buggy skipped message output. Should be resolved via
 /// google/googletest#5098 .
-const std::regex global_env_buggy_skip_prefix_re(
-    R"RE(.+: Skipped\n)RE"
-);
+const std::regex global_env_buggy_skip_prefix_re(R"RE(.+: Skipped\n)RE");
 
 /// Regular expression for starting sentinel for Global test environment.
 const std::regex global_env_context_start_re(
-    R"(\[\-+\][[:space:]]+Global test environment set-up)"
-);
+    R"(\[\-+\][[:space:]]+Global test environment set-up)");
 
 /// Regular expression for ending sentinel for Global test environment.
 const std::regex global_env_context_end_re(
-    R"(\[\-+\][[:space:]]+Global test environment tear-down)"
-);
+    R"(\[\-+\][[:space:]]+Global test environment tear-down)");
 
 // NOLINTBEGIN
 
@@ -58,20 +50,17 @@ const std::regex global_env_context_end_re(
 ///
 /// This only applies to the failure result type, not the other ones.
 const std::regex suite_setup_or_teardown_failure_re(
-    R"RE(\[[[:space:]]+FAILED[[:space:]]+\][[:space:]]+[^:]+:[[:space:]]SetUpTestSuite or TearDownTestSuite)RE"
-);
+    R"RE(\[[[:space:]]+FAILED[[:space:]]+\][[:space:]]+[^:]+:[[:space:]]SetUpTestSuite or TearDownTestSuite)RE");
 
 // NOLINTEND
 
 /// Regular expression for starting sentinel of results block.
 const std::regex test_context_start_re(
-    R"(\[[[:space:]]+RUN[[:space:]]+\][[:space:]]+[^[:space:]]+)"
-);
+    R"(\[[[:space:]]+RUN[[:space:]]+\][[:space:]]+[^[:space:]]+)");
 
 /// Regular expression for ending sentinel of results block.
 const std::regex test_context_end_re(
-    R"RE(\[[[:space:]]+(FAILED|OK|SKIPPED)[[:space:]]+\])RE"
-);
+    R"RE(\[[[:space:]]+(FAILED|OK|SKIPPED)[[:space:]]+\])RE");
 
 /// Parses a test result that does not accept a reason.
 ///
@@ -96,10 +85,10 @@ parse_without_reason(const std::string& status, const std::string& rest)
     else if (status == "failed")
         return engine::googletest_result(engine::googletest_result::failed);
     else
-        return engine::googletest_result(engine::googletest_result::broken,
+        return engine::googletest_result(
+            engine::googletest_result::broken,
             F("bad status: '%s'; output was:\n%s") % status % rest);
 }
-
 
 /// Parses a test result that needs a reason.
 ///
@@ -132,7 +121,6 @@ parse_with_reason(const std::string& status, const std::string& rest)
         PRE_MSG(false, F("Unexpected status: %s") % status);
 }
 
-
 /// Formats the termination status of a process to be used with validate_result.
 ///
 /// \param status The status to format.
@@ -150,32 +138,27 @@ format_status(const process::status& status)
         return F("terminated in an unknown manner");
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Constructs a raw result with a type.
 ///
 /// The reason is left uninitialized.
 ///
 /// \param type_ The type of the result.
-engine::googletest_result::googletest_result(const types type_) :
-    _type(type_)
+engine::googletest_result::googletest_result(const types type_) : _type(type_)
 {
 }
-
 
 /// Constructs a raw result with a type and a reason.
 ///
 /// \param type_ The type of the result.
 /// \param reason_ The reason for the result.
-engine::googletest_result::googletest_result(
-    const types type_,
-    const std::string& reason_) :
-    _type(type_), _reason(reason_)
+engine::googletest_result::googletest_result(const types type_,
+                                             const std::string& reason_) :
+    _type(type_),
+    _reason(reason_)
 {
 }
-
 
 /// Parses an input stream to extract a test result.
 ///
@@ -213,7 +196,7 @@ engine::googletest_result::parse(std::istream& input)
     bool global_env_message_start_seen = false;
     bool valid_output = false;
 
-    for (auto& line: lines) {
+    for (auto& line : lines) {
         // FIXME: drop the line-by-line parsing and just use multiline regular
         // expressions with associated matching or just bite the bullet and
         // switch to a structured format like JSON or XML.
@@ -260,7 +243,7 @@ engine::googletest_result::parse(std::istream& input)
                 status = "failed";
             } else {
                 INV_MSG(googletest_res == "SKIPPED",
-                    F("expected SKIPPED; got %s") % googletest_res);
+                        F("expected SKIPPED; got %s") % googletest_res);
                 status = "skipped";
             }
             capture_immediate_context = false;
@@ -277,9 +260,8 @@ engine::googletest_result::parse(std::istream& input)
             // the event it isn't, just dump the whole test output for sanity's
             // sake/debuggability.
             if (context.empty()) {
-                context = \
-                    F("kyua: could not 'summarize' failure context; "
-                      "see full process output for more details:\n\n%s") %
+                context = F("kyua: could not 'summarize' failure context; "
+                            "see full process output for more details:\n\n%s") %
                     all_context;
             }
             status = "failed";
@@ -299,7 +281,7 @@ engine::googletest_result::parse(std::istream& input)
             // It is easier to replace the existing string instead of
             // extracting the multiline match.
             context = std::regex_replace(context,
-                global_env_buggy_skip_prefix_re, "");
+                                         global_env_buggy_skip_prefix_re, "");
             status = "skipped";
         }
     }
@@ -311,7 +293,6 @@ engine::googletest_result::parse(std::istream& input)
     else
         return parse_with_reason(status, context);
 }
-
 
 /// Loads a test case result from a file.
 ///
@@ -331,7 +312,6 @@ engine::googletest_result::load(const fs::path& file)
         return parse(input);
 }
 
-
 /// Gets the type of the result.
 ///
 /// \return A result type.
@@ -341,16 +321,14 @@ engine::googletest_result::type(void) const
     return _type;
 }
 
-
 /// Gets the optional reason of the result.
 ///
 /// \return The reason of the result if present; none otherwise.
-const optional< std::string >&
+const optional<std::string>&
 engine::googletest_result::reason(void) const
 {
     return _reason;
 }
-
 
 /// Checks whether the result should be reported as good or not.
 ///
@@ -373,7 +351,6 @@ engine::googletest_result::good(void) const
     }
 }
 
-
 /// Reinterprets a raw result based on the termination status of the test case.
 ///
 /// This reinterpretation ensures that the termination conditions of the program
@@ -390,8 +367,7 @@ engine::googletest_result::good(void) const
 /// \result The adjusted result.  The original result is transformed into broken
 /// if the exit status of the program does not match our expectations.
 engine::googletest_result
-engine::googletest_result::apply(const optional< process::status >& status)
-    const
+engine::googletest_result::apply(const optional<process::status>& status) const
 {
     if (!status) {
         return *this;
@@ -417,38 +393,41 @@ engine::googletest_result::apply(const optional< process::status >& status)
         if (check_status(true)) {
             return *this;
         }
-        return googletest_result(googletest_result::broken,
+        return googletest_result(
+            googletest_result::broken,
             "Disabled test case should have reported success but " +
-            format_status(status.get()));
+                format_status(status.get()));
 
     case googletest_result::failed:
         if (check_status(false)) {
             return *this;
         }
-        return googletest_result(googletest_result::broken,
+        return googletest_result(
+            googletest_result::broken,
             "Failed test case should have reported failure but " +
-            format_status(status.get()));
+                format_status(status.get()));
 
     case googletest_result::skipped:
         if (check_status(true)) {
             return *this;
         }
-        return googletest_result(googletest_result::broken,
+        return googletest_result(
+            googletest_result::broken,
             "Skipped test case should have reported success but " +
-            format_status(status.get()));
+                format_status(status.get()));
 
     case googletest_result::successful:
         if (check_status(true)) {
             return *this;
         }
-        return googletest_result(googletest_result::broken,
+        return googletest_result(
+            googletest_result::broken,
             "Passed test case should have reported success but " +
-            format_status(status.get()));
+                format_status(status.get()));
     }
 
     UNREACHABLE;
 }
-
 
 /// Converts an internal result to the interface-agnostic representation.
 ///
@@ -456,21 +435,25 @@ engine::googletest_result::apply(const optional< process::status >& status)
 model::test_result
 engine::googletest_result::externalize(void) const
 {
-
-    // FIXME(ngie,#323): some of these test result types may require a reason, and thus the
+    // FIXME(ngie,#323): some of these test result types may require a reason,
+    // and thus the
     // `.get()` -> `.get_default("")` change might be a bug.
     switch (_type) {
     case googletest_result::broken:
-        return model::test_result(model::test_result_broken, _reason.get_default(""));
+        return model::test_result(model::test_result_broken,
+                                  _reason.get_default(""));
 
     case googletest_result::disabled:
-        return model::test_result(model::test_result_skipped, _reason.get_default(""));
+        return model::test_result(model::test_result_skipped,
+                                  _reason.get_default(""));
 
     case googletest_result::failed:
-        return model::test_result(model::test_result_failed, _reason.get_default(""));
+        return model::test_result(model::test_result_failed,
+                                  _reason.get_default(""));
 
     case googletest_result::skipped:
-        return model::test_result(model::test_result_skipped, _reason.get_default(""));
+        return model::test_result(model::test_result_skipped,
+                                  _reason.get_default(""));
 
     case googletest_result::successful:
         return model::test_result(model::test_result_passed);
@@ -480,7 +463,6 @@ engine::googletest_result::externalize(void) const
     }
 }
 
-
 /// Compares two raw results for equality.
 ///
 /// \param other The result to compare to.
@@ -489,10 +471,8 @@ engine::googletest_result::externalize(void) const
 bool
 engine::googletest_result::operator==(const googletest_result& other) const
 {
-    return _type == other._type &&
-        _reason == other._reason;
+    return _type == other._type && _reason == other._reason;
 }
-
 
 /// Compares two raw results for inequality.
 ///
@@ -505,7 +485,6 @@ engine::googletest_result::operator!=(const googletest_result& other) const
     return !(*this == other);
 }
 
-
 /// Injects the object into a stream.
 ///
 /// \param output The stream into which to inject the object.
@@ -517,22 +496,31 @@ engine::operator<<(std::ostream& output, const googletest_result& object)
 {
     std::string result_name;
     switch (object.type()) {
-    case googletest_result::broken: result_name = "broken"; break;
-    case googletest_result::disabled: result_name = "disabled"; break;
-    case googletest_result::failed: result_name = "failed"; break;
-    case googletest_result::skipped: result_name = "skipped"; break;
-    case googletest_result::successful: result_name = "successful"; break;
+    case googletest_result::broken:
+        result_name = "broken";
+        break;
+    case googletest_result::disabled:
+        result_name = "disabled";
+        break;
+    case googletest_result::failed:
+        result_name = "failed";
+        break;
+    case googletest_result::skipped:
+        result_name = "skipped";
+        break;
+    case googletest_result::successful:
+        result_name = "successful";
+        break;
     }
 
-    const optional< std::string >& reason = object.reason();
+    const optional<std::string>& reason = object.reason();
 
-    output << F("model::test_result{type=%s, reason=%s}")
-        % text::quote(result_name, '\'')
-        % (reason ? text::quote(reason.get(), '\'') : "none");
+    output << F("model::test_result{type=%s, reason=%s}") %
+            text::quote(result_name, '\'') %
+            (reason ? text::quote(reason.get(), '\'') : "none");
 
     return output;
 }
-
 
 /// Calculates the user-visible result of a test case.
 ///
@@ -549,8 +537,7 @@ engine::operator<<(std::ostream& output, const googletest_result& object)
 /// \return The calculated test case result.
 model::test_result
 engine::calculate_googletest_result(
-                             const optional< process::status >& body_status,
-                             const fs::path& results_file)
+    const optional<process::status>& body_status, const fs::path& results_file)
 {
     using engine::googletest_result;
 
@@ -565,29 +552,29 @@ engine::calculate_googletest_result(
         // tested for after the fact to confirm whether or not program crashed
         // or failed.
         if (result.type() == googletest_result::broken && body_status) {
-            const optional< std::string >& reason = result.reason();
+            const optional<std::string>& reason = result.reason();
             if (reason && reason.get() == googletest_invalid_output_message) {
-                result = googletest_result(
-                    googletest_result::broken,
-                    F("Error: Premature exit. Test case %s") %
-                    format_status(body_status.get()));
+                result =
+                    googletest_result(googletest_result::broken,
+                                      F("Error: Premature exit. Test case %s") %
+                                          format_status(body_status.get()));
             }
         }
     } catch (const engine::format_error& error) {
         if (body_status)
             result = googletest_result(googletest_result::broken,
-                F("Error: %s. Test case %s") %
-                error.what() %
-                format_status(body_status.get()));
+                                       F("Error: %s. Test case %s") %
+                                           error.what() %
+                                           format_status(body_status.get()));
         else {
             // The test case timed out.  apply() handles this case later.
         }
     } catch (const std::runtime_error& error) {
         if (body_status)
-            result = googletest_result(
-                googletest_result::broken,
-                F("Error: Premature exit. Test case %s") %
-                format_status(body_status.get()));
+            result =
+                googletest_result(googletest_result::broken,
+                                  F("Error: Premature exit. Test case %s") %
+                                      format_status(body_status.get()));
         else {
             // The test case timed out.  apply() handles this case later.
         }

@@ -35,11 +35,9 @@
 namespace utils {
 namespace cmdline {
 
-
 class ui;
 
+} // namespace cmdline
+} // namespace utils
 
-}  // namespace cmdline
-}  // namespace utils
-
-#endif  // !defined(UTILS_CMDLINE_UI_FWD_HPP)
+#endif // !defined(UTILS_CMDLINE_UI_FWD_HPP)

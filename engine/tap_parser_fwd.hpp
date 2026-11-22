@@ -37,14 +37,11 @@
 
 namespace engine {
 
-
 /// Representation of the TAP plan line.
-typedef std::pair< std::size_t, std::size_t > tap_plan;
-
+typedef std::pair<std::size_t, std::size_t> tap_plan;
 
 class tap_summary;
 
+} // namespace engine
 
-}  // namespace engine
-
-#endif  // !defined(ENGINE_TAP_PARSER_FWD_HPP)
+#endif // !defined(ENGINE_TAP_PARSER_FWD_HPP)

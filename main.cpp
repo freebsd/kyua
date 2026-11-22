@@ -29,7 +29,6 @@
 #include "cli/main.hpp"
 #include "os/freebsd/main.hpp"
 
-
 /// Program entry point.
 ///
 /// The whole purpose of this extremely-simple function is to delegate execution

@@ -38,33 +38,29 @@
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/optional.ipp"
+#include "utils/sanity.hpp"
 #include "utils/text/exceptions.hpp"
 #include "utils/text/operations.ipp"
-#include "utils/sanity.hpp"
 
 namespace utils {
-
 
 namespace config {
 namespace detail {
 
-
 /// Type of the new_node() family of functions.
 typedef base_node* (*new_node_hook)(void);
-
 
 /// Creates a new leaf node of a given type.
 ///
 /// \tparam NodeType The type of the leaf node to create.
 ///
 /// \return A pointer to the newly-created node.
-template< class NodeType >
+template <class NodeType>
 base_node*
 new_node(void)
 {
     return new NodeType();
 }
-
 
 /// Internal node of the tree.
 ///
@@ -82,7 +78,7 @@ protected:
     ///
     /// Note that these are one-level keys.  They cannot contain dots, and thus
     /// is why we use a string rather than a tree_key.
-    typedef std::map< std::string, base_node* > children_map;
+    typedef std::map<std::string, base_node*> children_map;
 
     /// Mapping of keys to values that are descendants of this node.
     children_map _children;
@@ -91,9 +87,8 @@ protected:
     void combine_into(const tree_key&, const base_node*, inner_node*) const;
 
 private:
-    void combine_children_into(const tree_key&,
-                               const children_map&, const children_map&,
-                               inner_node*) const;
+    void combine_children_into(const tree_key&, const children_map&,
+                               const children_map&, inner_node*) const;
 
 public:
     inner_node(const bool);
@@ -106,7 +101,6 @@ public:
 
     void all_properties(properties_map&, const tree_key&) const;
 };
-
 
 /// Static internal node of the tree.
 ///
@@ -123,7 +117,6 @@ public:
     void define(const tree_key&, const tree_key::size_type, new_node_hook);
 };
 
-
 /// Dynamic internal node of the tree.
 ///
 /// The children of this node need not be pre-defined.  Attempts to traverse
@@ -138,22 +131,18 @@ public:
     dynamic_inner_node(void);
 };
 
-
-}  // namespace detail
-}  // namespace config
-
+} // namespace detail
+} // namespace config
 
 /// Constructor for a node with an undefined value.
 ///
 /// This should only be called by the tree's define() method as a way to
 /// register a node as known but undefined.  The node will then serve as a
 /// placeholder for future values.
-template< typename ValueType >
-config::typed_leaf_node< ValueType >::typed_leaf_node(void) :
-    _value(none)
+template <typename ValueType>
+config::typed_leaf_node<ValueType>::typed_leaf_node(void) : _value(none)
 {
 }
-
 
 /// Checks whether the node has been set by the user.
 ///
@@ -164,55 +153,51 @@ config::typed_leaf_node< ValueType >::typed_leaf_node(void) :
 /// error.
 ///
 /// \return True if a value has been set in the node.
-template< typename ValueType >
+template <typename ValueType>
 bool
-config::typed_leaf_node< ValueType >::is_set(void) const
+config::typed_leaf_node<ValueType>::is_set(void) const
 {
-    return static_cast< bool >(_value);
+    return static_cast<bool>(_value);
 }
-
 
 /// Gets the value stored in the node.
 ///
 /// \pre The node must have a value.
 ///
 /// \return The value in the node.
-template< typename ValueType >
-const typename config::typed_leaf_node< ValueType >::value_type&
-config::typed_leaf_node< ValueType >::value(void) const
+template <typename ValueType>
+const typename config::typed_leaf_node<ValueType>::value_type&
+config::typed_leaf_node<ValueType>::value(void) const
 {
     PRE(is_set());
     return _value.get();
 }
-
 
 /// Gets the read-write value stored in the node.
 ///
 /// \pre The node must have a value.
 ///
 /// \return The value in the node.
-template< typename ValueType >
-typename config::typed_leaf_node< ValueType >::value_type&
-config::typed_leaf_node< ValueType >::value(void)
+template <typename ValueType>
+typename config::typed_leaf_node<ValueType>::value_type&
+config::typed_leaf_node<ValueType>::value(void)
 {
     PRE(is_set());
     return _value.get();
 }
-
 
 /// Sets the value of the node.
 ///
 /// \param value_ The new value to set the node to.
 ///
 /// \throw value_error If the value is invalid, according to validate().
-template< typename ValueType >
+template <typename ValueType>
 void
-config::typed_leaf_node< ValueType >::set(const value_type& value_)
+config::typed_leaf_node<ValueType>::set(const value_type& value_)
 {
     validate(value_);
-    _value = optional< value_type >(value_);
+    _value = optional<value_type>(value_);
 }
-
 
 /// Checks a given value for validity.
 ///
@@ -220,58 +205,53 @@ config::typed_leaf_node< ValueType >::set(const value_type& value_)
 /// value.  This method can be redefined by subclasses.
 ///
 /// \throw value_error If the value is not valid.
-template< typename ValueType >
+template <typename ValueType>
 void
-config::typed_leaf_node< ValueType >::validate(
+config::typed_leaf_node<ValueType>::validate(
     const value_type& /* new_value */) const
 {
 }
-
 
 /// Sets the value of the node from a raw string representation.
 ///
 /// \param raw_value The value to set the node to.
 ///
 /// \throw value_error If the value is invalid.
-template< typename ValueType >
+template <typename ValueType>
 void
-config::native_leaf_node< ValueType >::set_string(const std::string& raw_value)
+config::native_leaf_node<ValueType>::set_string(const std::string& raw_value)
 {
     try {
-        typed_leaf_node< ValueType >::set(text::to_type< ValueType >(
-            raw_value));
+        typed_leaf_node<ValueType>::set(text::to_type<ValueType>(raw_value));
     } catch (const text::value_error& e) {
         throw config::value_error(F("Failed to convert string value '%s' to "
-                                    "the node's type") % raw_value);
+                                    "the node's type") %
+                                  raw_value);
     }
 }
-
 
 /// Converts the contents of the node to a string.
 ///
 /// \pre The node must have a value.
 ///
 /// \return A string representation of the value held by the node.
-template< typename ValueType >
+template <typename ValueType>
 std::string
-config::native_leaf_node< ValueType >::to_string(void) const
+config::native_leaf_node<ValueType>::to_string(void) const
 {
-    PRE(typed_leaf_node< ValueType >::is_set());
-    return F("%s") % typed_leaf_node< ValueType >::value();
+    PRE(typed_leaf_node<ValueType>::is_set());
+    return F("%s") % typed_leaf_node<ValueType>::value();
 }
-
 
 /// Constructor for a node with an undefined value.
 ///
 /// This should only be called by the tree's define() method as a way to
 /// register a node as known but undefined.  The node will then serve as a
 /// placeholder for future values.
-template< typename ValueType >
-config::base_set_node< ValueType >::base_set_node(void) :
-    _value(none)
+template <typename ValueType>
+config::base_set_node<ValueType>::base_set_node(void) : _value(none)
 {
 }
-
 
 /// Checks whether the node has been set.
 ///
@@ -280,69 +260,65 @@ config::base_set_node< ValueType >::base_set_node(void) :
 /// checks whether the node laready holds a value.
 ///
 /// \return True if a value has been set in the node.
-template< typename ValueType >
+template <typename ValueType>
 bool
-config::base_set_node< ValueType >::is_set(void) const
+config::base_set_node<ValueType>::is_set(void) const
 {
-    return static_cast< bool >(_value);
+    return static_cast<bool>(_value);
 }
-
 
 /// Gets the value stored in the node.
 ///
 /// \pre The node must have a value.
 ///
 /// \return The value in the node.
-template< typename ValueType >
-const typename config::base_set_node< ValueType >::value_type&
-config::base_set_node< ValueType >::value(void) const
+template <typename ValueType>
+const typename config::base_set_node<ValueType>::value_type&
+config::base_set_node<ValueType>::value(void) const
 {
     PRE(is_set());
     return _value.get();
 }
-
 
 /// Gets the read-write value stored in the node.
 ///
 /// \pre The node must have a value.
 ///
 /// \return The value in the node.
-template< typename ValueType >
-typename config::base_set_node< ValueType >::value_type&
-config::base_set_node< ValueType >::value(void)
+template <typename ValueType>
+typename config::base_set_node<ValueType>::value_type&
+config::base_set_node<ValueType>::value(void)
 {
     PRE(is_set());
     return _value.get();
 }
-
 
 /// Sets the value of the node.
 ///
 /// \param value_ The new value to set the node to.
 ///
 /// \throw value_error If the value is invalid, according to validate().
-template< typename ValueType >
+template <typename ValueType>
 void
-config::base_set_node< ValueType >::set(const value_type& value_)
+config::base_set_node<ValueType>::set(const value_type& value_)
 {
     validate(value_);
-    _value = optional< value_type >(value_);
+    _value = optional<value_type>(value_);
 }
-
 
 /// Sets the value of the node from a raw string representation.
 ///
 /// \param raw_value The value to set the node to.
 ///
 /// \throw value_error If the value is invalid.
-template< typename ValueType >
+template <typename ValueType>
 void
-config::base_set_node< ValueType >::set_string(const std::string& raw_value)
+config::base_set_node<ValueType>::set_string(const std::string& raw_value)
 {
-    std::set< ValueType > new_value;
+    std::set<ValueType> new_value;
 
-    const std::vector< std::string > words = text::split(raw_value, ' ');
-    for (std::vector< std::string >::const_iterator iter = words.begin();
+    const std::vector<std::string> words = text::split(raw_value, ' ');
+    for (std::vector<std::string>::const_iterator iter = words.begin();
          iter != words.end(); ++iter) {
         if (!(*iter).empty())
             new_value.insert(parse_one(*iter));
@@ -351,39 +327,35 @@ config::base_set_node< ValueType >::set_string(const std::string& raw_value)
     set(new_value);
 }
 
-
 /// Converts the contents of the node to a string.
 ///
 /// \pre The node must have a value.
 ///
 /// \return A string representation of the value held by the node.
-template< typename ValueType >
+template <typename ValueType>
 std::string
-config::base_set_node< ValueType >::to_string(void) const
+config::base_set_node<ValueType>::to_string(void) const
 {
     PRE(is_set());
     return text::join(_value.get(), " ");
 }
 
-
 /// Pushes the node's value onto the Lua stack.
-template< typename ValueType >
+template <typename ValueType>
 void
-config::base_set_node< ValueType >::push_lua(lutok::state& /* state */) const
+config::base_set_node<ValueType>::push_lua(lutok::state& /* state */) const
 {
     UNREACHABLE;
 }
-
 
 /// Sets the value of the node from an entry in the Lua stack.
 ///
 /// \throw value_error If the value in state(value_index) cannot be
 ///     processed by this node.
-template< typename ValueType >
+template <typename ValueType>
 void
-config::base_set_node< ValueType >::set_lua(
-    lutok::state& state,
-    const int value_index)
+config::base_set_node<ValueType>::set_lua(lutok::state& state,
+                                          const int value_index)
 {
     if (state.is_string(value_index)) {
         set_string(state.to_string(value_index));
@@ -393,21 +365,19 @@ config::base_set_node< ValueType >::set_lua(
     UNREACHABLE;
 }
 
-
 /// Checks a given value for validity.
 ///
 /// This is called internally by the node right before updating the recorded
 /// value.  This method can be redefined by subclasses.
 ///
 /// \throw value_error If the value is not valid.
-template< typename ValueType >
+template <typename ValueType>
 void
-config::base_set_node< ValueType >::validate(
+config::base_set_node<ValueType>::validate(
     const value_type& /* new_value */) const
 {
 }
 
+} // namespace utils
 
-}  // namespace utils
-
-#endif  // !defined(UTILS_CONFIG_NODES_IPP)
+#endif // !defined(UTILS_CONFIG_NODES_IPP)

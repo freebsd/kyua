@@ -34,7 +34,6 @@
 
 namespace model {
 
-
 /// Definitions for all possible test case results.
 enum test_result_type {
     test_result_broken,
@@ -44,10 +43,8 @@ enum test_result_type {
     test_result_skipped,
 };
 
-
 class test_result;
 
+} // namespace model
 
-}  // namespace model
-
-#endif  // !defined(MODEL_TEST_RESULT_FWD_HPP)
+#endif // !defined(MODEL_TEST_RESULT_FWD_HPP)

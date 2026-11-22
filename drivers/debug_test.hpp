@@ -48,7 +48,6 @@ using engine::debugger;
 namespace drivers {
 namespace debug_test {
 
-
 /// Tuple containing the results of this driver.
 class result {
 public:
@@ -70,14 +69,12 @@ public:
     }
 };
 
+result drive(std::shared_ptr<debugger>, const utils::fs::path&,
+             const utils::optional<utils::fs::path>, const engine::test_filter&,
+             const utils::config::tree&, const utils::fs::path&,
+             const utils::fs::path&);
 
-result drive(std::shared_ptr< debugger >,
-             const utils::fs::path&, const utils::optional< utils::fs::path >,
-             const engine::test_filter&, const utils::config::tree&,
-             const utils::fs::path&, const utils::fs::path&);
+} // namespace debug_test
+} // namespace drivers
 
-
-}  // namespace debug_test
-}  // namespace drivers
-
-#endif  // !defined(DRIVERS_DEBUG_TEST_HPP)
+#endif // !defined(DRIVERS_DEBUG_TEST_HPP)

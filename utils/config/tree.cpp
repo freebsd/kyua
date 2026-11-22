@@ -26,41 +26,38 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/config/tree.ipp"
-
 #include "utils/config/exceptions.hpp"
 #include "utils/config/keys.hpp"
 #include "utils/config/nodes.ipp"
+#include "utils/config/tree.ipp"
 #include "utils/format/macros.hpp"
 #include "utils/sanity.hpp"
 
 namespace config = utils::config;
 
-
 /// Constructor.
 ///
 /// \param strict Whether keys must be validated at "set" time.
 config::tree::tree(const bool strict) :
-    _strict(strict), _root(new detail::static_inner_node())
+    _strict(strict),
+    _root(new detail::static_inner_node())
 {
 }
-
 
 /// Constructor with a non-empty root.
 ///
 /// \param strict Whether keys must be validated at "set" time.
 /// \param root The root to the tree to be owned by this instance.
 config::tree::tree(const bool strict, detail::static_inner_node* root) :
-    _strict(strict), _root(root)
+    _strict(strict),
+    _root(root)
 {
 }
-
 
 /// Destructor.
 config::tree::~tree(void)
 {
 }
-
 
 /// Generates a deep copy of the input tree.
 ///
@@ -69,12 +66,11 @@ config::tree
 config::tree::deep_copy(void) const
 {
     detail::static_inner_node* new_root =
-        dynamic_cast< detail::static_inner_node* >(_root->deep_copy());
+        dynamic_cast<detail::static_inner_node*>(_root->deep_copy());
     if (new_root == nullptr)
         UNREACHABLE_MSG("Expected a static inner node from deep_copy()");
     return config::tree(_strict, new_root);
 }
-
 
 /// Combines two trees.
 ///
@@ -96,13 +92,12 @@ config::tree
 config::tree::combine(const tree& overrides) const
 {
     detail::static_inner_node* new_root =
-        dynamic_cast< detail::static_inner_node* >(
+        dynamic_cast<detail::static_inner_node*>(
             _root->combine(detail::tree_key(), overrides._root.get()));
     if (new_root == nullptr)
         UNREACHABLE_MSG("Expected a static inner node from combine()");
     return config::tree(_strict, new_root);
 }
-
 
 /// Registers a node as being dynamic.
 ///
@@ -121,13 +116,13 @@ config::tree::define_dynamic(const std::string& dotted_key)
 {
     try {
         const detail::tree_key key = detail::parse_key(dotted_key);
-        _root->define(key, 0, detail::new_node< detail::dynamic_inner_node >);
+        _root->define(key, 0, detail::new_node<detail::dynamic_inner_node>);
     } catch (const error& e) {
         UNREACHABLE_MSG("define() failing due to key errors is a programming "
-                        "mistake: " + std::string(e.what()));
+                        "mistake: " +
+                        std::string(e.what()));
     }
 }
-
 
 /// Checks if a given node is set.
 ///
@@ -144,8 +139,7 @@ config::tree::is_set(const std::string& dotted_key) const
     try {
         const detail::base_node* raw_node = _root->lookup_ro(key, 0);
         try {
-            const leaf_node& child = dynamic_cast< const leaf_node& >(
-                *raw_node);
+            const leaf_node& child = dynamic_cast<const leaf_node&>(*raw_node);
             return child.is_set();
         } catch (const std::bad_cast& unused_error) {
             return false;
@@ -154,7 +148,6 @@ config::tree::is_set(const std::string& dotted_key) const
         return false;
     }
 }
-
 
 /// Pushes a leaf node's value onto the Lua stack.
 ///
@@ -169,13 +162,12 @@ config::tree::push_lua(const std::string& dotted_key, lutok::state& state) const
     const detail::tree_key key = detail::parse_key(dotted_key);
     const detail::base_node* raw_node = _root->lookup_ro(key, 0);
     try {
-        const leaf_node& child = dynamic_cast< const leaf_node& >(*raw_node);
+        const leaf_node& child = dynamic_cast<const leaf_node&>(*raw_node);
         child.push_lua(state);
     } catch (const std::bad_cast& unused_error) {
         throw unknown_key_error(key);
     }
 }
-
 
 /// Sets a leaf node's value from a value in the Lua stack.
 ///
@@ -192,9 +184,9 @@ config::tree::set_lua(const std::string& dotted_key, lutok::state& state,
 {
     const detail::tree_key key = detail::parse_key(dotted_key);
     try {
-        detail::base_node* raw_node = _root->lookup_rw(
-            key, 0, detail::new_node< string_node >);
-        leaf_node& child = dynamic_cast< leaf_node& >(*raw_node);
+        detail::base_node* raw_node =
+            _root->lookup_rw(key, 0, detail::new_node<string_node>);
+        leaf_node& child = dynamic_cast<leaf_node&>(*raw_node);
         child.set_lua(state, value_index);
     } catch (const unknown_key_error& e) {
         if (_strict)
@@ -205,7 +197,6 @@ config::tree::set_lua(const std::string& dotted_key, lutok::state& state,
         throw invalid_key_value(key, "Type mismatch");
     }
 }
-
 
 /// Gets the value of a node as a plain string.
 ///
@@ -221,13 +212,12 @@ config::tree::lookup_string(const std::string& dotted_key) const
     const detail::tree_key key = detail::parse_key(dotted_key);
     const detail::base_node* raw_node = _root->lookup_ro(key, 0);
     try {
-        const leaf_node& child = dynamic_cast< const leaf_node& >(*raw_node);
+        const leaf_node& child = dynamic_cast<const leaf_node&>(*raw_node);
         return child.to_string();
     } catch (const std::bad_cast& unused_error) {
         throw unknown_key_error(key);
     }
 }
-
 
 /// Sets the value of a leaf addressed by its key from a string value.
 ///
@@ -247,9 +237,9 @@ config::tree::set_string(const std::string& dotted_key,
 {
     const detail::tree_key key = detail::parse_key(dotted_key);
     try {
-        detail::base_node* raw_node = _root->lookup_rw(
-            key, 0, detail::new_node< string_node >);
-        leaf_node& child = dynamic_cast< leaf_node& >(*raw_node);
+        detail::base_node* raw_node =
+            _root->lookup_rw(key, 0, detail::new_node<string_node>);
+        leaf_node& child = dynamic_cast<leaf_node&>(*raw_node);
         child.set_string(raw_value);
     } catch (const unknown_key_error& e) {
         if (_strict)
@@ -260,7 +250,6 @@ config::tree::set_string(const std::string& dotted_key,
         throw invalid_key_value(key, "Type mismatch");
     }
 }
-
 
 /// Converts the tree to a collection of key/value string pairs.
 ///
@@ -291,12 +280,13 @@ config::tree::all_properties(const std::string& dotted_key,
     }
     try {
         const detail::inner_node& child =
-            dynamic_cast< const detail::inner_node& >(*raw_node);
+            dynamic_cast<const detail::inner_node&>(*raw_node);
         child.all_properties(properties, key);
     } catch (const std::bad_cast& unused_error) {
         INV(!dotted_key.empty());
         throw value_error(F("Cannot export properties from a leaf node; "
-                            "'%s' given") % dotted_key);
+                            "'%s' given") %
+                          dotted_key);
     }
 
     if (strip_key) {
@@ -312,7 +302,6 @@ config::tree::all_properties(const std::string& dotted_key,
     return properties;
 }
 
-
 /// Equality comparator.
 ///
 /// \param other The other object to compare this one to.
@@ -325,7 +314,6 @@ config::tree::operator==(const tree& other) const
     // nodes, instead of exporting the values to strings first.
     return _root == other._root || all_properties() == other.all_properties();
 }
-
 
 /// Inequality comparator.
 ///

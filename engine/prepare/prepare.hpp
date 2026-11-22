@@ -19,19 +19,21 @@
 namespace cmdline = utils::cmdline;
 namespace config = utils::config;
 
-
 namespace engine {
 namespace prepare {
-
 
 /// Abstract interface of a requirement preparation handler.
 class handler {
 public:
     /// Constructor.
-    handler() {}
+    handler()
+    {
+    }
 
     /// Destructor.
-    virtual ~handler() {}
+    virtual ~handler()
+    {
+    }
 
     /// Returns name of the handler.
     virtual const std::string& name() const = 0;
@@ -46,23 +48,19 @@ public:
     /// \param user_config The runtime configuration of the program.
     ///
     /// \return 0 to indicate success.
-    virtual int exec(cmdline::ui* ui,
-                     const cmdline::parsed_cmdline& cmdline,
+    virtual int exec(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
                      const config::tree& user_config) const = 0;
 };
-
 
 /// Registers a requirement preparation handler.
 ///
 /// \param handler A requirement preparation handler.
-void register_handler(const std::shared_ptr< handler > handler);
-
+void register_handler(const std::shared_ptr<handler> handler);
 
 /// Returns the list of registered requirement preparation handlers.
 ///
 /// \return A vector of pointers to requirement preparation handlers.
-const std::vector< std::shared_ptr< handler > > handlers();
-
+const std::vector<std::shared_ptr<handler>> handlers();
 
 /// Run named handlers.
 ///
@@ -72,13 +70,11 @@ const std::vector< std::shared_ptr< handler > > handlers();
 /// \param user_config The runtime configuration of the program.
 ///
 /// \return 0 to indicate success.
-int run(const std::vector< std::string >& handler_names,
-        cmdline::ui* ui,
+int run(const std::vector<std::string>& handler_names, cmdline::ui* ui,
         const cmdline::parsed_cmdline& cmdline,
         const config::tree& user_config);
 
+} // namespace prepare
+} // namespace engine
 
-}  // namespace prepare
-}  // namespace engine
-
-#endif  // !defined(ENGINE_PREPARE_HPP)
+#endif // !defined(ENGINE_PREPARE_HPP)

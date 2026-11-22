@@ -26,12 +26,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "model/exceptions.hpp"
-
+#include <atf-c++.hpp>
 #include <cstring>
 
-#include <atf-c++.hpp>
-
+#include "model/exceptions.hpp"
 
 ATF_TEST_CASE_WITHOUT_HEAD(error);
 ATF_TEST_CASE_BODY(error)
@@ -40,7 +38,6 @@ ATF_TEST_CASE_BODY(error)
     ATF_REQUIRE(std::strcmp("Some text", e.what()) == 0);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(format_error);
 ATF_TEST_CASE_BODY(format_error)
 {
@@ -48,14 +45,12 @@ ATF_TEST_CASE_BODY(format_error)
     ATF_REQUIRE(std::strcmp("Some other text", e.what()) == 0);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(not_found_error);
 ATF_TEST_CASE_BODY(not_found_error)
 {
     const model::not_found_error e("Missing foo");
     ATF_REQUIRE(std::strcmp("Missing foo", e.what()) == 0);
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

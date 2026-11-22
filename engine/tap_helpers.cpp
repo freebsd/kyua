@@ -48,9 +48,7 @@ extern char** environ;
 
 namespace fs = utils::fs;
 
-
 namespace {
-
 
 /// Logs an error message and exits the test with an error code.
 ///
@@ -62,12 +60,11 @@ fail(const std::string& str)
     std::exit(EXIT_FAILURE);
 }
 
-
 /// A test scenario that validates the TEST_ENV_* variables.
 static void
 test_check_configuration_variables(void)
 {
-    std::set< std::string > vars;
+    std::set<std::string> vars;
     char** iter;
     for (iter = environ; *iter != NULL; ++iter) {
         if (std::strstr(*iter, "TEST_ENV_") == *iter) {
@@ -75,7 +72,7 @@ test_check_configuration_variables(void)
         }
     }
 
-    std::set< std::string > exp_vars;
+    std::set<std::string> exp_vars;
     exp_vars.insert("TEST_ENV_first=some value");
     exp_vars.insert("TEST_ENV_second=some other value");
     if (vars == exp_vars) {
@@ -88,14 +85,12 @@ test_check_configuration_variables(void)
     }
 }
 
-
 /// A test scenario that crashes.
 static void
 test_crash(void)
 {
     utils::abort_without_coredump();
 }
-
 
 /// A test scenario that reports some tests as failed.
 static void
@@ -109,7 +104,6 @@ test_fail(void)
               << "not ok 5\n";
 }
 
-
 /// A test scenario that passes.
 static void
 test_pass(void)
@@ -122,7 +116,6 @@ test_pass(void)
               << "ok 4\n";
 }
 
-
 /// A test scenario that passes but then exits with non-zero.
 static void
 test_pass_but_exit_failure(void)
@@ -132,7 +125,6 @@ test_pass_but_exit_failure(void)
               << "ok 2\n";
     std::exit(70);
 }
-
 
 /// A test scenario that times out.
 ///
@@ -152,9 +144,7 @@ test_timeout(void)
     file.close();
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Entry point to the test program.
 ///
@@ -175,7 +165,7 @@ main(int argc, char** argv)
 {
     if (argc != 1) {
         std::cerr << "No arguments allowed; select the test scenario with the "
-            "program's basename\n";
+                     "program's basename\n";
         return EXIT_FAILURE;
     }
 

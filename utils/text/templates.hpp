@@ -54,8 +54,6 @@
 #if !defined(UTILS_TEXT_TEMPLATES_HPP)
 #define UTILS_TEXT_TEMPLATES_HPP
 
-#include "utils/text/templates_fwd.hpp"
-
 #include <istream>
 #include <map>
 #include <ostream>
@@ -63,10 +61,10 @@
 #include <vector>
 
 #include "utils/fs/path_fwd.hpp"
+#include "utils/text/templates_fwd.hpp"
 
 namespace utils {
 namespace text {
-
 
 /// Definitions of the templates to apply to a file.
 ///
@@ -76,20 +74,20 @@ namespace text {
 /// specifies.
 class templates_def {
     /// Mapping of variable names to their values.
-    typedef std::map< std::string, std::string > variables_map;
+    typedef std::map<std::string, std::string> variables_map;
 
     /// Collection of global variables available to the templates.
     variables_map _variables;
 
     /// Convenience name for a vector of strings.
-    typedef std::vector< std::string > strings_vector;
+    typedef std::vector<std::string> strings_vector;
 
     /// Mapping of vector names to their contents.
     ///
     /// Ideally, these would be represented as part of the _variables, but we
     /// would need a complex mechanism to identify whether a variable is a
     /// string or a vector.
-    typedef std::map< std::string, strings_vector > vectors_map;
+    typedef std::map<std::string, strings_vector> vectors_map;
 
     /// Collection of vectors available to the templates.
     vectors_map _vectors;
@@ -111,12 +109,10 @@ public:
     std::string evaluate(const std::string&) const;
 };
 
-
 void instantiate(const templates_def&, std::istream&, std::ostream&);
 void instantiate(const templates_def&, const fs::path&, const fs::path&);
 
+} // namespace text
+} // namespace utils
 
-}  // namespace text
-}  // namespace utils
-
-#endif  // !defined(UTILS_TEXT_TEMPLATES_HPP)
+#endif // !defined(UTILS_TEXT_TEMPLATES_HPP)

@@ -26,10 +26,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "cli/cmd_list.hpp"
-
 #include <atf-c++.hpp>
 
+#include "cli/cmd_list.hpp"
 #include "model/metadata.hpp"
 #include "model/test_program.hpp"
 #include "utils/cmdline/exceptions.hpp"
@@ -40,18 +39,18 @@
 namespace cmdline = utils::cmdline;
 namespace fs = utils::fs;
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(list_test_case__no_verbose);
 ATF_TEST_CASE_BODY(list_test_case__no_verbose)
 {
     const model::metadata md = model::metadata_builder()
-        .set_description("This should not be shown")
-        .build();
-    const model::test_program test_program = model::test_program_builder(
-        "mock", fs::path("the/test-program"), fs::path("root"), "suite")
-        .add_test_case("abc", md)
-        .set_metadata(md)
-        .build();
+                                   .set_description("This should not be shown")
+                                   .build();
+    const model::test_program test_program =
+        model::test_program_builder("mock", fs::path("the/test-program"),
+                                    fs::path("root"), "suite")
+            .add_test_case("abc", md)
+            .set_metadata(md)
+            .build();
 
     cmdline::ui_mock ui;
     cli::detail::list_test_case(&ui, false, test_program, "abc");
@@ -60,14 +59,14 @@ ATF_TEST_CASE_BODY(list_test_case__no_verbose)
     ATF_REQUIRE(ui.err_log().empty());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(list_test_case__verbose__no_properties);
 ATF_TEST_CASE_BODY(list_test_case__verbose__no_properties)
 {
-    const model::test_program test_program = model::test_program_builder(
-        "mock", fs::path("hello/world"), fs::path("root"), "the-suite")
-        .add_test_case("my_name")
-        .build();
+    const model::test_program test_program =
+        model::test_program_builder("mock", fs::path("hello/world"),
+                                    fs::path("root"), "the-suite")
+            .add_test_case("my_name")
+            .build();
 
     cmdline::ui_mock ui;
     cli::detail::list_test_case(&ui, true, test_program, "my_name");
@@ -76,20 +75,20 @@ ATF_TEST_CASE_BODY(list_test_case__verbose__no_properties)
     ATF_REQUIRE(ui.err_log().empty());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(list_test_case__verbose__some_properties);
 ATF_TEST_CASE_BODY(list_test_case__verbose__some_properties)
 {
     const model::metadata md = model::metadata_builder()
-        .add_custom("my-property", "value")
-        .set_description("Some description")
-        .set_has_cleanup(true)
-        .build();
-    const model::test_program test_program = model::test_program_builder(
-        "mock", fs::path("hello/world"), fs::path("root"), "the-suite")
-        .add_test_case("my_name", md)
-        .set_metadata(md)
-        .build();
+                                   .add_custom("my-property", "value")
+                                   .set_description("Some description")
+                                   .set_has_cleanup(true)
+                                   .build();
+    const model::test_program test_program =
+        model::test_program_builder("mock", fs::path("hello/world"),
+                                    fs::path("root"), "the-suite")
+            .add_test_case("my_name", md)
+            .set_metadata(md)
+            .build();
 
     cmdline::ui_mock ui;
     cli::detail::list_test_case(&ui, true, test_program, "my_name");
@@ -100,7 +99,6 @@ ATF_TEST_CASE_BODY(list_test_case__verbose__some_properties)
     ATF_REQUIRE_EQ("    has_cleanup = true", ui.out_log()[3]);
     ATF_REQUIRE(ui.err_log().empty());
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

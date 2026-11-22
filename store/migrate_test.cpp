@@ -41,7 +41,6 @@ extern "C" {
 
 namespace fs = utils::fs;
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(detail__backup_database__ok);
 ATF_TEST_CASE_BODY(detail__backup_database__ok)
 {
@@ -51,7 +50,6 @@ ATF_TEST_CASE_BODY(detail__backup_database__ok)
     ATF_REQUIRE(fs::exists(fs::path("test.db.v13.backup")));
     ATF_REQUIRE(atf::utils::compare_file("test.db.v13.backup", "The DB\n"));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(detail__backup_database__ok_overwrite);
 ATF_TEST_CASE_BODY(detail__backup_database__ok_overwrite)
@@ -65,14 +63,12 @@ ATF_TEST_CASE_BODY(detail__backup_database__ok_overwrite)
                                          "Original contents"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(detail__backup_database__fail_open);
 ATF_TEST_CASE_BODY(detail__backup_database__fail_open)
 {
     ATF_REQUIRE_THROW_RE(store::error, "Cannot open.*foo.db",
                          store::detail::backup_database(fs::path("foo.db"), 5));
 }
-
 
 ATF_TEST_CASE_WITH_CLEANUP(detail__backup_database__fail_create);
 ATF_TEST_CASE_HEAD(detail__backup_database__fail_create)
@@ -84,9 +80,9 @@ ATF_TEST_CASE_BODY(detail__backup_database__fail_create)
     ATF_REQUIRE(::mkdir("dir", 0755) != -1);
     atf::utils::create_file("dir/test.db", "Does not need to be valid");
     ATF_REQUIRE(::chmod("dir", 0111) != -1);
-    ATF_REQUIRE_THROW_RE(
-        store::error, "Cannot create.*dir/test.db.v13.backup",
-        store::detail::backup_database(fs::path("dir/test.db"), 13));
+    ATF_REQUIRE_THROW_RE(store::error, "Cannot create.*dir/test.db.v13.backup",
+                         store::detail::backup_database(fs::path("dir/test.db"),
+                                                        13));
 }
 ATF_TEST_CASE_CLEANUP(detail__backup_database__fail_create)
 {
@@ -97,7 +93,6 @@ ATF_TEST_CASE_CLEANUP(detail__backup_database__fail_create)
     }
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(detail__migration_file__builtin);
 ATF_TEST_CASE_BODY(detail__migration_file__builtin)
 {
@@ -106,7 +101,6 @@ ATF_TEST_CASE_BODY(detail__migration_file__builtin)
                    store::detail::migration_file(5, 9));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(detail__migration_file__overriden);
 ATF_TEST_CASE_BODY(detail__migration_file__overriden)
 {
@@ -114,7 +108,6 @@ ATF_TEST_CASE_BODY(detail__migration_file__overriden)
     ATF_REQUIRE_EQ(fs::path("/tmp/test/migrate_v5_v9.sql"),
                    store::detail::migration_file(5, 9));
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

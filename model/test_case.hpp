@@ -32,21 +32,18 @@
 #if !defined(MODEL_TEST_CASE_HPP)
 #define MODEL_TEST_CASE_HPP
 
-#include "model/test_case_fwd.hpp"
-
 #include <memory>
 #include <ostream>
 #include <string>
 
 #include "engine/debugger.hpp"
 #include "model/metadata_fwd.hpp"
+#include "model/test_case_fwd.hpp"
 #include "model/test_result_fwd.hpp"
 #include "utils/noncopyable.hpp"
 #include "utils/optional_fwd.hpp"
 
-
 namespace model {
-
 
 /// Representation of a test case.
 ///
@@ -57,9 +54,9 @@ class test_case {
     struct impl;
 
     /// Pointer to the shared internal implementation.
-    std::shared_ptr< impl > _pimpl;
+    std::shared_ptr<impl> _pimpl;
 
-    test_case(std::shared_ptr< impl >);
+    test_case(std::shared_ptr<impl>);
 
 public:
     test_case(const std::string&, const metadata&);
@@ -71,7 +68,7 @@ public:
     const std::string& name(void) const;
     metadata get_metadata(void) const;
     const metadata& get_raw_metadata(void) const;
-    utils::optional< test_result > fake_result(void) const;
+    utils::optional<test_result> fake_result(void) const;
 
     void attach_debugger(engine::debugger_ptr) const;
     engine::debugger_ptr get_debugger() const;
@@ -79,7 +76,6 @@ public:
     bool operator==(const test_case&) const;
     bool operator!=(const test_case&) const;
 };
-
 
 /// Builder for a test_cases_map object.
 class test_cases_map_builder : utils::noncopyable {
@@ -94,10 +90,8 @@ public:
     test_cases_map build(void) const;
 };
 
-
 std::ostream& operator<<(std::ostream&, const test_case&);
 
+} // namespace model
 
-}  // namespace model
-
-#endif  // !defined(MODEL_TEST_CASE_HPP)
+#endif // !defined(MODEL_TEST_CASE_HPP)

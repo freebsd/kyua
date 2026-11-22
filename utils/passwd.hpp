@@ -32,14 +32,13 @@
 #if !defined(UTILS_PASSWD_HPP)
 #define UTILS_PASSWD_HPP
 
-#include "utils/passwd_fwd.hpp"
-
 #include <string>
 #include <vector>
 
+#include "utils/passwd_fwd.hpp"
+
 namespace utils {
 namespace passwd {
-
 
 /// Represents a system user.
 class user {
@@ -58,15 +57,13 @@ public:
     bool is_root(void) const;
 };
 
-
 user current_user(void);
 user find_user_by_name(const std::string&);
 user find_user_by_uid(const unsigned int);
 void set_current_user_for_testing(const user&);
-void set_mock_users_for_testing(const std::vector< user >&);
+void set_mock_users_for_testing(const std::vector<user>&);
 
+} // namespace passwd
+} // namespace utils
 
-}  // namespace passwd
-}  // namespace utils
-
-#endif  // !defined(UTILS_PASSWD_HPP)
+#endif // !defined(UTILS_PASSWD_HPP)

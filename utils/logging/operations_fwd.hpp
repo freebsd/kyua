@@ -35,7 +35,6 @@
 namespace utils {
 namespace logging {
 
-
 /// Severity levels for log messages.
 ///
 /// This enumeration must be sorted from the most severe message to the least
@@ -47,8 +46,7 @@ enum level {
     level_debug,
 };
 
+} // namespace logging
+} // namespace utils
 
-}  // namespace logging
-}  // namespace utils
-
-#endif  // !defined(UTILS_LOGGING_OPERATIONS_FWD_HPP)
+#endif // !defined(UTILS_LOGGING_OPERATIONS_FWD_HPP)

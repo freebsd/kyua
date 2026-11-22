@@ -39,7 +39,6 @@ extern "C" {
 
 using utils::process::systembuf;
 
-
 /// Private implementation fields for systembuf.
 struct systembuf::impl : utils::noncopyable {
     /// File descriptor attached to the systembuf.
@@ -49,10 +48,10 @@ struct systembuf::impl : utils::noncopyable {
     std::size_t _bufsize;
 
     /// In-memory buffer for read operations.
-    std::unique_ptr< char[] > _read_buf;
+    std::unique_ptr<char[]> _read_buf;
 
     /// In-memory buffer for write operations.
-    std::unique_ptr< char[] > _write_buf;
+    std::unique_ptr<char[]> _write_buf;
 
     /// Initializes private implementation data.
     ///
@@ -67,7 +66,6 @@ struct systembuf::impl : utils::noncopyable {
     }
 };
 
-
 /// Constructs a new systembuf based on an open file descriptor.
 ///
 /// This grabs ownership of the file descriptor.
@@ -80,7 +78,6 @@ systembuf::systembuf(const int fd, std::size_t bufsize) :
     setp(_pimpl->_write_buf.get(), _pimpl->_write_buf.get() + _pimpl->_bufsize);
 }
 
-
 /// Destroys a systembuf object.
 ///
 /// \post The file descriptor attached to this systembuf is closed.
@@ -88,7 +85,6 @@ systembuf::~systembuf(void)
 {
     ::close(_pimpl->_fd);
 }
-
 
 /// Reads new data when the systembuf read buffer underflows.
 ///
@@ -112,7 +108,6 @@ systembuf::underflow(void)
     }
 }
 
-
 /// Writes data to the file descriptor when the write buffer overflows.
 ///
 /// \param c The character that causes the overflow.
@@ -134,7 +129,6 @@ systembuf::overflow(int c)
     }
     return traits_type::not_eof(c);
 }
-
 
 /// Synchronizes the stream with the file descriptor.
 ///

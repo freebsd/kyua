@@ -34,11 +34,9 @@
 
 namespace store {
 
-
 class read_transaction;
 class results_iterator;
 
+} // namespace store
 
-}  // namespace store
-
-#endif  // !defined(STORE_READ_TRANSACTION_FWD_HPP)
+#endif // !defined(STORE_READ_TRANSACTION_FWD_HPP)

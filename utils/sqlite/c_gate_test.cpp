@@ -26,25 +26,24 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/sqlite/c_gate.hpp"
-
 #include <atf-c++.hpp>
 
 #include "utils/fs/path.hpp"
 #include "utils/optional.ipp"
+#include "utils/sqlite/c_gate.hpp"
 #include "utils/sqlite/database.hpp"
 #include "utils/sqlite/test_utils.hpp"
 
 namespace fs = utils::fs;
 namespace sqlite = utils::sqlite;
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(connect);
 ATF_TEST_CASE_BODY(connect)
 {
     ::sqlite3* raw_db;
-    ATF_REQUIRE_EQ(SQLITE_OK, ::sqlite3_open_v2(":memory:", &raw_db,
-                                                SQLITE_OPEN_READWRITE, NULL));
+    ATF_REQUIRE_EQ(SQLITE_OK,
+                   ::sqlite3_open_v2(":memory:", &raw_db, SQLITE_OPEN_READWRITE,
+                                     NULL));
     {
         sqlite::database database = sqlite::database_c_gate::connect(raw_db);
         create_test_table(raw(database));
@@ -54,7 +53,6 @@ ATF_TEST_CASE_BODY(connect)
     verify_test_table(raw_db);
     ::sqlite3_close(raw_db);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(c_database);
 ATF_TEST_CASE_BODY(c_database)
@@ -68,25 +66,26 @@ ATF_TEST_CASE_BODY(c_database)
     }
 }
 
-
 ATF_TEST_CASE(database__db_filename);
 ATF_TEST_CASE_HEAD(database__db_filename)
 {
-    set_md_var("descr", "The current implementation of db_filename() has no "
+    set_md_var("descr",
+               "The current implementation of db_filename() has no "
                "means to access the filename of a database connected to a raw "
                "sqlite3 object");
 }
 ATF_TEST_CASE_BODY(database__db_filename)
 {
     ::sqlite3* raw_db;
-    ATF_REQUIRE_EQ(SQLITE_OK, ::sqlite3_open_v2(
-        "test.db", &raw_db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL));
+    ATF_REQUIRE_EQ(SQLITE_OK,
+                   ::sqlite3_open_v2("test.db", &raw_db,
+                                     SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE,
+                                     NULL));
 
     sqlite::database database = sqlite::database_c_gate::connect(raw_db);
     ATF_REQUIRE(!database.db_filename());
     ::sqlite3_close(raw_db);
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {

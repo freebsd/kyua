@@ -26,9 +26,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "model/test_case.hpp"
-
 #include "model/metadata.hpp"
+#include "model/test_case.hpp"
 #include "model/test_result.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/noncopyable.hpp"
@@ -39,7 +38,6 @@ namespace text = utils::text;
 
 using utils::none;
 using utils::optional;
-
 
 /// Internal implementation for a test_case.
 struct model::test_case::impl : utils::noncopyable {
@@ -58,7 +56,7 @@ struct model::test_case::impl : utils::noncopyable {
     model::metadata md;
 
     /// Fake result to return instead of running the test case.
-    optional< model::test_result > fake_result;
+    optional<model::test_result> fake_result;
 
     /// Optional pointer to a debugger attached.
     engine::debugger_ptr debugger;
@@ -70,10 +68,9 @@ struct model::test_case::impl : utils::noncopyable {
     /// \param md_ Metadata of the test case.
     /// \param fake_result_ Fake result to return instead of running the test
     ///     case.
-    impl(const std::string& name_,
-         const model::metadata* md_defaults_,
+    impl(const std::string& name_, const model::metadata* md_defaults_,
          const model::metadata& md_,
-         const optional< model::test_result >& fake_result_) :
+         const optional<model::test_result>& fake_result_) :
         name(name_),
         md_defaults(md_defaults_),
         md(md_),
@@ -87,8 +84,7 @@ struct model::test_case::impl : utils::noncopyable {
     /// metadata, using the latter as defaults.
     ///
     /// \return The test case metadata.
-    model::metadata
-    get_metadata(void) const
+    model::metadata get_metadata(void) const
     {
         if (md_defaults != NULL) {
             return md_defaults->apply_overrides(md);
@@ -102,24 +98,19 @@ struct model::test_case::impl : utils::noncopyable {
     /// \param other The other object to compare this one to.
     ///
     /// \return True if this object and other are equal; false otherwise.
-    bool
-    operator==(const impl& other) const
+    bool operator==(const impl& other) const
     {
-        return (name == other.name &&
-                get_metadata() == other.get_metadata() &&
+        return (name == other.name && get_metadata() == other.get_metadata() &&
                 fake_result == other.fake_result);
     }
 };
 
-
 /// Constructs a new test case from an already-built impl oject.
 ///
 /// \param pimpl_ The internal representation of the test case.
-model::test_case::test_case(std::shared_ptr< impl > pimpl_) :
-    _pimpl(pimpl_)
+model::test_case::test_case(std::shared_ptr<impl> pimpl_) : _pimpl(pimpl_)
 {
 }
-
 
 /// Constructs a new test case.
 ///
@@ -130,8 +121,6 @@ model::test_case::test_case(const std::string& name_,
     _pimpl(new impl(name_, NULL, md_, none))
 {
 }
-
-
 
 /// Constructs a new fake test case.
 ///
@@ -151,27 +140,23 @@ model::test_case::test_case(const std::string& name_,
 ///     prefixed and suffixed by '__' to clearly denote that this is internal.
 /// \param description_ The description of the test case, if any.
 /// \param test_result_ The fake result to return when this test case is run.
-model::test_case::test_case(
-    const std::string& name_,
-    const std::string& description_,
-    const model::test_result& test_result_) :
+model::test_case::test_case(const std::string& name_,
+                            const std::string& description_,
+                            const model::test_result& test_result_) :
     _pimpl(new impl(
-        name_,
-        NULL,
+        name_, NULL,
         model::metadata_builder().set_description(description_).build(),
         utils::make_optional(test_result_)))
 {
     PRE_MSG(name_.length() > 4 && name_.substr(0, 2) == "__" &&
-            name_.substr(name_.length() - 2) == "__",
+                name_.substr(name_.length() - 2) == "__",
             "Invalid fake name provided to fake test case");
 }
-
 
 /// Destroys a test case.
 model::test_case::~test_case(void)
 {
 }
-
 
 /// Constructs a new test case applying metadata defaults.
 ///
@@ -189,13 +174,9 @@ model::test_case::~test_case(void)
 model::test_case
 model::test_case::apply_metadata_defaults(const metadata* defaults) const
 {
-    return test_case(std::shared_ptr< impl >(new impl(
-        _pimpl->name,
-        defaults,
-        _pimpl->md,
-        _pimpl->fake_result)));
+    return test_case(std::shared_ptr<impl>(
+        new impl(_pimpl->name, defaults, _pimpl->md, _pimpl->fake_result)));
 }
-
 
 /// Gets the test case name.
 ///
@@ -205,7 +186,6 @@ model::test_case::name(void) const
 {
     return _pimpl->name;
 }
-
 
 /// Gets the test case metadata.
 ///
@@ -219,7 +199,6 @@ model::test_case::get_metadata(void) const
 {
     return _pimpl->get_metadata();
 }
-
 
 /// Gets the original test case metadata without test program overrides.
 ///
@@ -235,14 +214,12 @@ model::test_case::get_raw_metadata(void) const
     return _pimpl->md;
 }
 
-
 /// Attach a debugger to the test case.
 void
 model::test_case::attach_debugger(engine::debugger_ptr debugger) const
 {
     _pimpl->debugger = debugger;
 }
-
 
 /// Gets the optional pointer to a debugger.
 ///
@@ -253,16 +230,14 @@ model::test_case::get_debugger() const
     return _pimpl->debugger;
 }
 
-
 /// Gets the fake result pre-stored for this test case.
 ///
 /// \return A fake result, or none if not defined.
-optional< model::test_result >
+optional<model::test_result>
 model::test_case::fake_result(void) const
 {
     return _pimpl->fake_result;
 }
-
 
 /// Equality comparator.
 ///
@@ -281,7 +256,6 @@ model::test_case::operator==(const test_case& other) const
     return _pimpl == other._pimpl || *_pimpl == *other._pimpl;
 }
 
-
 /// Inequality comparator.
 ///
 /// \param other The other object to compare this one to.
@@ -293,7 +267,6 @@ model::test_case::operator!=(const test_case& other) const
     return !(*this == other);
 }
 
-
 /// Injects the object into a stream.
 ///
 /// \param output The stream into which to inject the object.
@@ -303,12 +276,10 @@ model::test_case::operator!=(const test_case& other) const
 std::ostream&
 model::operator<<(std::ostream& output, const test_case& object)
 {
-    output << F("test_case{name=%s, metadata=%s}")
-        % text::quote(object.name(), '\'')
-        % object.get_metadata();
+    output << F("test_case{name=%s, metadata=%s}") %
+            text::quote(object.name(), '\'') % object.get_metadata();
     return output;
 }
-
 
 /// Adds an already-constructed test case.
 ///
@@ -318,11 +289,9 @@ model::operator<<(std::ostream& output, const test_case& object)
 model::test_cases_map_builder&
 model::test_cases_map_builder::add(const test_case& test_case)
 {
-    _test_cases.insert(
-        test_cases_map::value_type(test_case.name(), test_case));
+    _test_cases.insert(test_cases_map::value_type(test_case.name(), test_case));
     return *this;
 }
-
 
 /// Constructs and adds a new test case with default metadata.
 ///
@@ -334,7 +303,6 @@ model::test_cases_map_builder::add(const std::string& test_case_name)
 {
     return add(test_case(test_case_name, metadata_builder().build()));
 }
-
 
 /// Constructs and adds a new test case with explicit metadata.
 ///
@@ -348,7 +316,6 @@ model::test_cases_map_builder::add(const std::string& test_case_name,
 {
     return add(test_case(test_case_name, metadata));
 }
-
 
 /// Creates a new test_cases_map.
 ///

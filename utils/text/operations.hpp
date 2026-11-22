@@ -39,30 +39,24 @@
 namespace utils {
 namespace text {
 
-
 std::string escape_xml(const std::string&);
 std::string quote(const std::string&, const char);
 
-
-std::vector< std::string > refill(const std::string&, const std::size_t);
+std::vector<std::string> refill(const std::string&, const std::size_t);
 std::string refill_as_string(const std::string&, const std::size_t);
 
 std::string replace_all(const std::string&, const std::string&,
                         const std::string&);
 
-template< typename Collection >
+template <typename Collection>
 std::string join(const Collection&, const std::string&);
-std::vector< std::string > split(const std::string&, const char);
+std::vector<std::string> split(const std::string&, const char);
 
-template< typename Type >
-Type to_type(const std::string&);
-template<>
-bool to_type(const std::string&);
-template<>
-std::string to_type(const std::string&);
+template <typename Type> Type to_type(const std::string&);
+template <> bool to_type(const std::string&);
+template <> std::string to_type(const std::string&);
 
+} // namespace text
+} // namespace utils
 
-}  // namespace text
-}  // namespace utils
-
-#endif  // !defined(UTILS_TEXT_OPERATIONS_HPP)
+#endif // !defined(UTILS_TEXT_OPERATIONS_HPP)

@@ -32,16 +32,14 @@
 #if !defined(UTILS_FS_AUTO_CLEANERS_HPP)
 #define UTILS_FS_AUTO_CLEANERS_HPP
 
-#include "utils/fs/auto_cleaners_fwd.hpp"
-
 #include <memory>
 #include <string>
 
+#include "utils/fs/auto_cleaners_fwd.hpp"
 #include "utils/fs/path_fwd.hpp"
 
 namespace utils {
 namespace fs {
-
 
 /// Grabs ownership of a directory and removes it upon destruction.
 ///
@@ -50,7 +48,7 @@ namespace fs {
 class auto_directory {
     struct impl;
     /// Reference-counted, shared implementation.
-    std::shared_ptr< impl > _pimpl;
+    std::shared_ptr<impl> _pimpl;
 
 public:
     explicit auto_directory(const path&);
@@ -62,7 +60,6 @@ public:
     void cleanup(void);
 };
 
-
 /// Grabs ownership of a file and removes it upon destruction.
 ///
 /// This class is reference-counted and therefore only the destruction of the
@@ -70,7 +67,7 @@ public:
 class auto_file {
     struct impl;
     /// Reference-counted, shared implementation.
-    std::shared_ptr< impl > _pimpl;
+    std::shared_ptr<impl> _pimpl;
 
 public:
     explicit auto_file(const path&);
@@ -82,8 +79,7 @@ public:
     void remove(void);
 };
 
+} // namespace fs
+} // namespace utils
 
-}  // namespace fs
-}  // namespace utils
-
-#endif  // !defined(UTILS_FS_AUTO_CLEANERS_HPP)
+#endif // !defined(UTILS_FS_AUTO_CLEANERS_HPP)

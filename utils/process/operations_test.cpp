@@ -36,10 +36,9 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include <atf-c++.hpp>
 #include <cerrno>
 #include <iostream>
-
-#include <atf-c++.hpp>
 
 #include "utils/defs.hpp"
 #include "utils/format/containers.ipp"
@@ -53,13 +52,10 @@ extern "C" {
 namespace fs = utils::fs;
 namespace process = utils::process;
 
-
 namespace {
-
 
 /// Type of the process::exec() and process::exec_unsafe() functions.
 typedef void (*exec_function)(const fs::path&, const process::args_vector&);
-
 
 /// Calculates the path to the test helpers binary.
 ///
@@ -72,7 +68,6 @@ get_helpers(const atf::tests::tc* tc)
 {
     return fs::path(tc->get_config_var("srcdir")) / "helpers";
 }
-
 
 /// Body for a subprocess that runs exec().
 class child_exec {
@@ -93,32 +88,30 @@ public:
     /// \param args Arguments to the binary, not including argv[0].
     child_exec(const exec_function do_exec, const fs::path& program,
                const process::args_vector& args) :
-        _do_exec(do_exec), _program(program), _args(args)
+        _do_exec(do_exec),
+        _program(program),
+        _args(args)
     {
     }
 
     /// Body for the subprocess.
-    void
-    operator()(void)
+    void operator()(void)
     {
         _do_exec(_program, _args);
     }
 };
 
-
 /// Body for a process that returns a specific exit code.
 ///
 /// \tparam ExitStatus The exit status for the subprocess.
-template< int ExitStatus >
+template <int ExitStatus>
 static void
 child_exit(void)
 {
     std::exit(ExitStatus);
 }
 
-
 static void suspend [[noreturn]] (void);
-
 
 /// Blocks a subprocess from running indefinitely.
 static void
@@ -131,9 +124,7 @@ suspend(void)
     }
 }
 
-
 static void write_loop [[noreturn]] (const int);
-
 
 /// Provides an infinite stream of data in a subprocess.
 ///
@@ -150,9 +141,7 @@ write_loop(const int fd)
     }
 }
 
-
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /// Tests an exec function with no arguments.
 ///
@@ -161,7 +150,7 @@ write_loop(const int fd)
 static void
 check_exec_no_args(const atf::tests::tc* tc, const exec_function do_exec)
 {
-    std::unique_ptr< process::child > child = process::child::fork_files(
+    std::unique_ptr<process::child> child = process::child::fork_files(
         child_exec(do_exec, get_helpers(tc), process::args_vector()),
         fs::path("stdout"), fs::path("stderr"));
     const process::status status = child->wait();
@@ -169,7 +158,6 @@ check_exec_no_args(const atf::tests::tc* tc, const exec_function do_exec)
     ATF_REQUIRE_EQ(EXIT_FAILURE, status.exitstatus());
     ATF_REQUIRE(atf::utils::grep_file("Must provide a helper name", "stderr"));
 }
-
 
 /// Tests an exec function with some arguments.
 ///
@@ -183,9 +171,9 @@ check_exec_some_args(const atf::tests::tc* tc, const exec_function do_exec)
     args.push_back("foo");
     args.push_back("bar");
 
-    std::unique_ptr< process::child > child = process::child::fork_files(
-        child_exec(do_exec, get_helpers(tc), args),
-        fs::path("stdout"), fs::path("stderr"));
+    std::unique_ptr<process::child> child =
+        process::child::fork_files(child_exec(do_exec, get_helpers(tc), args),
+                                   fs::path("stdout"), fs::path("stderr"));
     const process::status status = child->wait();
     ATF_REQUIRE(status.exited());
     ATF_REQUIRE_EQ(EXIT_SUCCESS, status.exitstatus());
@@ -194,13 +182,11 @@ check_exec_some_args(const atf::tests::tc* tc, const exec_function do_exec)
     ATF_REQUIRE(atf::utils::grep_file("argv\\[3\\] = bar", "stdout"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(exec__no_args);
 ATF_TEST_CASE_BODY(exec__no_args)
 {
     check_exec_no_args(this, process::exec);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(exec__some_args);
 ATF_TEST_CASE_BODY(exec__some_args)
@@ -208,13 +194,12 @@ ATF_TEST_CASE_BODY(exec__some_args)
     check_exec_some_args(this, process::exec);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(exec__fail);
 ATF_TEST_CASE_BODY(exec__fail)
 {
     utils::avoid_coredump_on_crash();
 
-    std::unique_ptr< process::child > child = process::child::fork_files(
+    std::unique_ptr<process::child> child = process::child::fork_files(
         child_exec(process::exec, fs::path("non-existent"),
                    process::args_vector()),
         fs::path("stdout"), fs::path("stderr"));
@@ -225,13 +210,11 @@ ATF_TEST_CASE_BODY(exec__fail)
                                       "stderr"));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(exec_unsafe__no_args);
 ATF_TEST_CASE_BODY(exec_unsafe__no_args)
 {
     check_exec_no_args(this, process::exec_unsafe);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(exec_unsafe__some_args);
 ATF_TEST_CASE_BODY(exec_unsafe__some_args)
@@ -239,16 +222,14 @@ ATF_TEST_CASE_BODY(exec_unsafe__some_args)
     check_exec_some_args(this, process::exec_unsafe);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(exec_unsafe__fail);
 ATF_TEST_CASE_BODY(exec_unsafe__fail)
 {
-    ATF_REQUIRE_THROW_RE(
-        process::system_error, "Failed to execute missing-program",
-        process::exec_unsafe(fs::path("missing-program"),
-                             process::args_vector()));
+    ATF_REQUIRE_THROW_RE(process::system_error,
+                         "Failed to execute missing-program",
+                         process::exec_unsafe(fs::path("missing-program"),
+                                              process::args_vector()));
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(terminate_group__setpgrp_executed);
 ATF_TEST_CASE_BODY(terminate_group__setpgrp_executed)
@@ -299,7 +280,6 @@ ATF_TEST_CASE_BODY(terminate_group__setpgrp_executed)
     ATF_REQUIRE(WTERMSIG(status) == SIGKILL);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(terminate_group__setpgrp_not_executed);
 ATF_TEST_CASE_BODY(terminate_group__setpgrp_not_executed)
 {
@@ -320,7 +300,6 @@ ATF_TEST_CASE_BODY(terminate_group__setpgrp_not_executed)
     ATF_REQUIRE(WTERMSIG(status) == SIGKILL);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(terminate_self_with__exitstatus);
 ATF_TEST_CASE_BODY(terminate_self_with__exitstatus)
 {
@@ -337,15 +316,14 @@ ATF_TEST_CASE_BODY(terminate_self_with__exitstatus)
     ATF_REQUIRE(WEXITSTATUS(status) == 123);
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(terminate_self_with__termsig);
 ATF_TEST_CASE_BODY(terminate_self_with__termsig)
 {
     const pid_t pid = ::fork();
     ATF_REQUIRE(pid != -1);
     if (pid == 0) {
-        const process::status status = process::status::fake_signaled(
-            SIGKILL, false);
+        const process::status status = process::status::fake_signaled(SIGKILL,
+                                                                      false);
         process::terminate_self_with(status);
     }
 
@@ -356,7 +334,6 @@ ATF_TEST_CASE_BODY(terminate_self_with__termsig)
     ATF_REQUIRE(!WCOREDUMP(status));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(terminate_self_with__termsig_and_core);
 ATF_TEST_CASE_BODY(terminate_self_with__termsig_and_core)
 {
@@ -365,8 +342,8 @@ ATF_TEST_CASE_BODY(terminate_self_with__termsig_and_core)
     const pid_t pid = ::fork();
     ATF_REQUIRE(pid != -1);
     if (pid == 0) {
-        const process::status status = process::status::fake_signaled(
-            SIGABRT, true);
+        const process::status status = process::status::fake_signaled(SIGABRT,
+                                                                      true);
         process::terminate_self_with(status);
     }
 
@@ -377,20 +354,18 @@ ATF_TEST_CASE_BODY(terminate_self_with__termsig_and_core)
     ATF_REQUIRE(WCOREDUMP(status));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(wait__ok);
 ATF_TEST_CASE_BODY(wait__ok)
 {
-    std::unique_ptr< process::child > child = process::child::fork_capture(
-        child_exit< 15 >);
+    std::unique_ptr<process::child> child =
+        process::child::fork_capture(child_exit<15>);
     const pid_t pid = child->pid();
-    child.reset();  // Ensure there is no conflict between destructor and wait.
+    child.reset(); // Ensure there is no conflict between destructor and wait.
 
     const process::status status = process::wait(pid);
     ATF_REQUIRE(status.exited());
     ATF_REQUIRE_EQ(15, status.exitstatus());
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(wait__fail);
 ATF_TEST_CASE_BODY(wait__fail)
@@ -398,39 +373,36 @@ ATF_TEST_CASE_BODY(wait__fail)
     ATF_REQUIRE_THROW(process::system_error, process::wait(1));
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(wait_any__one);
 ATF_TEST_CASE_BODY(wait_any__one)
 {
-    process::child::fork_capture(child_exit< 15 >);
+    process::child::fork_capture(child_exit<15>);
 
     const process::status status = process::wait_any();
     ATF_REQUIRE(status.exited());
     ATF_REQUIRE_EQ(15, status.exitstatus());
 }
 
-
 ATF_TEST_CASE_WITHOUT_HEAD(wait_any__many);
 ATF_TEST_CASE_BODY(wait_any__many)
 {
-    process::child::fork_capture(child_exit< 15 >);
-    process::child::fork_capture(child_exit< 30 >);
-    process::child::fork_capture(child_exit< 45 >);
+    process::child::fork_capture(child_exit<15>);
+    process::child::fork_capture(child_exit<30>);
+    process::child::fork_capture(child_exit<45>);
 
-    std::set< int > exit_codes;
+    std::set<int> exit_codes;
     for (int i = 0; i < 3; i++) {
         const process::status status = process::wait_any();
         ATF_REQUIRE(status.exited());
         exit_codes.insert(status.exitstatus());
     }
 
-    std::set< int > exp_exit_codes;
+    std::set<int> exp_exit_codes;
     exp_exit_codes.insert(15);
     exp_exit_codes.insert(30);
     exp_exit_codes.insert(45);
     ATF_REQUIRE_EQ(exp_exit_codes, exit_codes);
 }
-
 
 ATF_TEST_CASE_WITHOUT_HEAD(wait_any__none_is_failure);
 ATF_TEST_CASE_BODY(wait_any__none_is_failure)
@@ -443,7 +415,6 @@ ATF_TEST_CASE_BODY(wait_any__none_is_failure)
         ATF_REQUIRE_EQ(ECHILD, e.original_errno());
     }
 }
-
 
 ATF_INIT_TEST_CASES(tcs)
 {
