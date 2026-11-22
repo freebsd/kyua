@@ -205,7 +205,8 @@ ATF_TEST_CASE_BODY(test_case__output)
         "is_exclusive='false', "
         "required_configs='', required_disk_space='0', required_files='', "
         "required_kmods='', required_memory='0', "
-        "required_programs='', required_user='', timeout='300'}}",
+        "required_programs='', required_user='', "
+        "timeout='300', timeout_scale='1'}}",
         str.str());
 }
 
