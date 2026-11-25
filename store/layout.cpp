@@ -28,6 +28,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <regex>
 
 #include "store/exceptions.hpp"
 #include "store/layout.hpp"
@@ -41,13 +42,10 @@
 #include "utils/logging/macros.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
-#include "utils/text/exceptions.hpp"
-#include "utils/text/regex.hpp"
 
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace layout = store::layout;
-namespace text = utils::text;
 
 using utils::optional;
 
@@ -66,16 +64,20 @@ find_latest(const std::string& test_suite)
 {
     const fs::path store_dir = layout::query_store_dir();
     try {
-        const text::regex preg = text::regex::compile(
-            F("^results.%s.[0-9]{8}-[0-9]{6}-[0-9]{6}.db$") % test_suite, 0);
+        // Test suite identifiers may contain regex metacharacters.
+        const std::string prefix = "results." + test_suite + ".";
+        const std::regex suffix_regex("[0-9]{8}-[0-9]{6}-[0-9]{6}\\.db");
 
         std::string latest;
 
         const fs::directory dir(store_dir);
         for (fs::directory::const_iterator iter = dir.begin();
              iter != dir.end(); ++iter) {
-            const text::regex_matches matches = preg.match(iter->name);
-            if (matches) {
+            if (!iter->name.starts_with(prefix))
+                continue;
+
+            if (std::regex_match(iter->name.substr(prefix.size()),
+                                 suffix_regex)) {
                 if (latest.empty() || iter->name > latest) {
                     latest = iter->name;
                 }
@@ -94,7 +96,7 @@ find_latest(const std::string& test_suite)
         LW(F("Failed to open store dir %s: %s") % store_dir % e.what());
         throw store::error(
             F("No previous results file found for test suite %s") % test_suite);
-    } catch (const text::regex_error& e) {
+    } catch (const std::regex_error& e) {
         throw store::error(e.what());
     }
 }
