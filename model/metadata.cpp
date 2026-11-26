@@ -40,7 +40,6 @@
 #include "utils/format/macros.hpp"
 #include "utils/fs/exceptions.hpp"
 #include "utils/fs/path.hpp"
-#include "utils/noncopyable.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 #include "utils/text/exceptions.hpp"
@@ -334,7 +333,13 @@ set(config::tree& tree, const std::string& key,
 } // anonymous namespace
 
 /// Internal implementation of the metadata class.
-struct model::metadata::impl : utils::noncopyable {
+struct model::metadata::impl {
+private:
+    /// Noncopyable
+    impl(const impl&) = delete;
+    impl& operator=(const impl&) = delete;
+
+public:
     /// Metadata properties.
     config::tree props;
 
@@ -665,7 +670,13 @@ model::operator<<(std::ostream& output, const metadata& object)
 }
 
 /// Internal implementation of the metadata_builder class.
-struct model::metadata_builder::impl : utils::noncopyable {
+struct model::metadata_builder::impl {
+private:
+    /// Noncopyable
+    impl(const impl&) = delete;
+    impl& operator=(const impl&) = delete;
+
+public:
     /// Collection of requirements.
     config::tree props;
 

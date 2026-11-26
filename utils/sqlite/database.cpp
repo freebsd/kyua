@@ -38,7 +38,6 @@ extern "C" {
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
-#include "utils/noncopyable.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 #include "utils/sqlite/exceptions.hpp"
@@ -52,7 +51,13 @@ using utils::none;
 using utils::optional;
 
 /// Internal implementation for sqlite::database.
-struct utils::sqlite::database::impl : utils::noncopyable {
+struct utils::sqlite::database::impl {
+private:
+    /// Noncopyable
+    impl(const impl&) = delete;
+    impl& operator=(const impl&) = delete;
+
+public:
     /// Path to the database as seen at construction time.
     optional<fs::path> db_filename;
 

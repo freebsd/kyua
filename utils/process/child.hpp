@@ -52,7 +52,6 @@
 
 #include "utils/defs.hpp"
 #include "utils/fs/path_fwd.hpp"
-#include "utils/noncopyable.hpp"
 #include "utils/process/child_fwd.hpp"
 #include "utils/process/operations_fwd.hpp"
 #include "utils/process/status_fwd.hpp"
@@ -68,7 +67,7 @@ void report_error_and_abort [[noreturn]] (const std::runtime_error&);
 } // namespace detail
 
 /// Child process spawner and controller.
-class child : noncopyable {
+class child {
     struct impl;
 
     /// Pointer to the shared internal implementation.
@@ -82,6 +81,10 @@ class child : noncopyable {
                                                  const fs::path&);
 
     explicit child(impl*);
+
+private:
+    child(const child&) = delete;
+    child& operator=(const child&) = delete;
 
 public:
     ~child(void);

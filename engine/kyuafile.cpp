@@ -46,7 +46,6 @@
 #include "utils/fs/lua_module.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/logging/macros.hpp"
-#include "utils/noncopyable.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 
@@ -104,7 +103,7 @@ relativize(const fs::path& root, const fs::path& file)
 /// The main purpose of having this as a class is to keep track of global state
 /// within the Lua files and allowing the Lua callbacks to easily access such
 /// data.
-class parser : utils::noncopyable {
+class parser {
     /// Lua state to parse a single Kyuafile file.
     lutok::state _state;
 
@@ -159,6 +158,11 @@ class parser : utils::noncopyable {
 
         return test_suite;
     }
+
+private:
+    /// Noncopyable
+    parser(const parser&) = delete;
+    parser& operator=(const parser&) = delete;
 
 public:
     /// Initializes the parser and the Lua state.

@@ -35,7 +35,6 @@
 #include <istream>
 #include <memory>
 
-#include "utils/noncopyable.hpp"
 #include "utils/process/fdstream_fwd.hpp"
 
 namespace utils {
@@ -45,7 +44,7 @@ namespace process {
 ///
 /// This class grabs ownership of the file descriptor.  I.e. when the class is
 /// destroyed, the file descriptor is closed unconditionally.
-class ifdstream : public std::istream, noncopyable {
+class ifdstream : public std::istream {
     struct impl;
 
     /// Pointer to the shared internal implementation.
@@ -54,6 +53,10 @@ class ifdstream : public std::istream, noncopyable {
 public:
     explicit ifdstream(const int);
     ~ifdstream(void);
+
+private:
+    ifdstream(const ifdstream&) = delete;
+    ifdstream& operator=(const ifdstream&) = delete;
 };
 
 } // namespace process

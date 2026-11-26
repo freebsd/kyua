@@ -36,7 +36,6 @@
 #include <memory>
 #include <streambuf>
 
-#include "utils/noncopyable.hpp"
 #include "utils/process/systembuf_fwd.hpp"
 
 namespace utils {
@@ -46,7 +45,7 @@ namespace process {
 ///
 /// This class grabs ownership of the file descriptor.  I.e. when the class is
 /// destroyed, the file descriptor is closed unconditionally.
-class systembuf : public std::streambuf, noncopyable {
+class systembuf : public std::streambuf {
     struct impl;
 
     /// Pointer to the shared internal implementation.
@@ -60,6 +59,10 @@ protected:
 public:
     explicit systembuf(const int, std::size_t = 8192);
     ~systembuf(void);
+
+private:
+    systembuf(const systembuf&) = delete;
+    systembuf& operator=(const systembuf&) = delete;
 };
 
 } // namespace process

@@ -54,7 +54,6 @@ extern "C" {
 #include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
 #include "utils/logging/operations.hpp"
-#include "utils/noncopyable.hpp"
 #include "utils/optional.ipp"
 #include "utils/passwd.hpp"
 #include "utils/process/child.ipp"
@@ -116,7 +115,13 @@ utils::process::executor::detail::setup_child(
 }
 
 /// Internal implementation for the exec_handle class.
-struct utils::process::executor::exec_handle::impl : utils::noncopyable {
+struct utils::process::executor::exec_handle::impl {
+private:
+    /// Noncopyable
+    impl(const impl&) = delete;
+    impl& operator=(const impl&) = delete;
+
+public:
     /// PID of the process being run.
     int pid;
 
@@ -241,7 +246,13 @@ executor::exec_handle::stderr_file(void) const
 }
 
 /// Internal implementation for the exit_handle class.
-struct utils::process::executor::exit_handle::impl : utils::noncopyable {
+struct utils::process::executor::exit_handle::impl {
+private:
+    /// Noncopyable
+    impl(const impl&) = delete;
+    impl& operator=(const impl&) = delete;
+
+public:
     /// Original PID of the terminated subprocess.
     ///
     /// Note that this PID is no longer valid and cannot be used on system
@@ -515,7 +526,13 @@ executor::exit_handle::stderr_file(void) const
 ///
 /// Because the executor is a singleton, these essentially is a container for
 /// global variables.
-struct utils::process::executor::executor_handle::impl : utils::noncopyable {
+struct utils::process::executor::executor_handle::impl {
+private:
+    /// Noncopyable
+    impl(const impl&) = delete;
+    impl& operator=(const impl&) = delete;
+
+public:
     /// Numeric counter of executed subprocesses.
     ///
     /// This is used to generate a unique identifier for each subprocess as an

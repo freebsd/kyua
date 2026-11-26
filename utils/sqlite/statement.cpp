@@ -37,7 +37,6 @@ extern "C" {
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
-#include "utils/noncopyable.hpp"
 #include "utils/sanity.hpp"
 #include "utils/sqlite/c_gate.hpp"
 #include "utils/sqlite/database.hpp"
@@ -101,7 +100,13 @@ handle_bind_error(sqlite::database& db, const char* api_function,
 } // anonymous namespace
 
 /// Internal implementation for sqlite::statement.
-struct utils::sqlite::statement::impl : utils::noncopyable {
+struct utils::sqlite::statement::impl {
+private:
+    /// Noncopyable
+    impl(const impl&) = delete;
+    impl& operator=(const impl&) = delete;
+
+public:
     /// The database this statement belongs to.
     sqlite::database& db;
 

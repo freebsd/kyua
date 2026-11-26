@@ -44,7 +44,6 @@ extern "C" {
 #include "utils/cmdline/exceptions.hpp"
 #include "utils/cmdline/options.hpp"
 #include "utils/format/macros.hpp"
-#include "utils/noncopyable.hpp"
 #include "utils/sanity.hpp"
 
 namespace cmdline = utils::cmdline;
@@ -52,7 +51,7 @@ namespace cmdline = utils::cmdline;
 namespace {
 
 /// Auxiliary data to call getopt_long(3).
-struct getopt_data : utils::noncopyable {
+struct getopt_data {
     /// Plain-text representation of the short options.
     ///
     /// This string follows the syntax expected by getopt_long(3) in the

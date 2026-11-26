@@ -31,7 +31,6 @@
 #include "engine/exceptions.hpp"
 #include "engine/tap_parser.hpp"
 #include "utils/format/macros.hpp"
-#include "utils/noncopyable.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 #include "utils/text/exceptions.hpp"
@@ -52,7 +51,7 @@ namespace {
 ///
 /// This is a class only to simplify keeping global constant values around (like
 /// prebuilt regular expressions).
-class tap_parser : utils::noncopyable {
+class tap_parser {
     /// Regular expression to match plan lines.
     text::regex _plan_regex;
 
@@ -162,6 +161,11 @@ class tap_parser : utils::noncopyable {
             }
         }
     }
+
+private:
+    /// Noncopyable
+    tap_parser(const tap_parser&) = delete;
+    tap_parser& operator=(const tap_parser&) = delete;
 
 public:
     /// Sets up the TAP parser state.

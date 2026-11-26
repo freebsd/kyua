@@ -38,7 +38,6 @@
 #include "utils/cmdline/options_fwd.hpp"
 #include "utils/cmdline/parser_fwd.hpp"
 #include "utils/cmdline/ui_fwd.hpp"
-#include "utils/noncopyable.hpp"
 
 namespace utils {
 namespace cmdline {
@@ -48,7 +47,7 @@ namespace cmdline {
 /// Use the subclasses of command_proto defined in this module instead of
 /// command_proto itself as base classes for your application-specific
 /// commands.
-class command_proto : noncopyable {
+class command_proto {
     /// The user-visible name of the command.
     const std::string _name;
 
@@ -68,6 +67,11 @@ class command_proto : noncopyable {
     options_vector _options;
 
     void add_option_ptr(const base_option*);
+
+private:
+    /// Noncopyable
+    command_proto(const command_proto&) = delete;
+    command_proto& operator=(const command_proto&) = delete;
 
 protected:
     template <typename Option> void add_option(const Option&);

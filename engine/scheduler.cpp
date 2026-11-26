@@ -58,7 +58,6 @@ extern "C" {
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
-#include "utils/noncopyable.hpp"
 #include "utils/optional.ipp"
 #include "utils/passwd.hpp"
 #include "utils/process/executor.ipp"
@@ -163,7 +162,13 @@ append_files_listing(const fs::path& dir_path, const fs::path& output_file)
 ///
 /// This is a base data type intended to be extended for the test and cleanup
 /// cases so that each contains only the relevant data.
-struct exec_data : utils::noncopyable {
+struct exec_data {
+private:
+    /// Noncopyable
+    exec_data(const exec_data&) = delete;
+    exec_data operator=(const exec_data&) = delete;
+
+public:
     /// Test program data for this test case.
     const model::test_program_ptr test_program;
 
@@ -582,7 +587,13 @@ scheduler::interface::exec_cleanup(
 }
 
 /// Internal implementation of a lazy_test_program.
-struct engine::scheduler::lazy_test_program::impl : utils::noncopyable {
+struct engine::scheduler::lazy_test_program::impl {
+private:
+    /// Noncopyable
+    impl(const impl&) = delete;
+    impl& operator=(const impl&) = delete;
+
+public:
     /// Whether the test cases list has been yet loaded or not.
     bool _loaded;
 
@@ -654,7 +665,13 @@ scheduler::lazy_test_program::test_cases(void) const
 }
 
 /// Internal implementation for the result_handle class.
-struct engine::scheduler::result_handle::bimpl : utils::noncopyable {
+struct engine::scheduler::result_handle::bimpl {
+private:
+    /// Noncopyable
+    bimpl(const bimpl&) = delete;
+    bimpl& operator=(const bimpl&) = delete;
+
+public:
     /// Generic executor exit handle for this result handle.
     executor::exit_handle generic;
 
@@ -776,7 +793,13 @@ scheduler::result_handle::stderr_file(void) const
 }
 
 /// Internal implementation for the test_result_handle class.
-struct engine::scheduler::test_result_handle::impl : utils::noncopyable {
+struct engine::scheduler::test_result_handle::impl {
+private:
+    /// Noncopyable
+    impl(const impl&) = delete;
+    impl& operator=(const impl&) = delete;
+
+public:
     /// Test program data for this test case.
     model::test_program_ptr test_program;
 
@@ -845,7 +868,13 @@ scheduler::test_result_handle::test_result(void) const
 }
 
 /// Internal implementation for the scheduler_handle.
-struct engine::scheduler::scheduler_handle::impl : utils::noncopyable {
+struct engine::scheduler::scheduler_handle::impl {
+private:
+    /// Noncopyable
+    impl(const impl&) = delete;
+    impl& operator=(const impl&) = delete;
+
+public:
     /// Generic executor instance encapsulated by this one.
     executor::executor_handle generic;
 

@@ -44,13 +44,12 @@
 #include <string>
 
 #include "utils/cmdline/commands_map_fwd.hpp"
-#include "utils/noncopyable.hpp"
 
 namespace utils {
 namespace cmdline {
 
 /// Collection of dynamically-instantiated commands.
-template <typename BaseCommand> class commands_map : noncopyable {
+template <typename BaseCommand> class commands_map {
     /// Map of command names to their implementations.
     typedef std::map<std::string, BaseCommand*> impl_map;
 
@@ -82,6 +81,10 @@ public:
 
     BaseCommand* find(const std::string&);
     const BaseCommand* find(const std::string&) const;
+
+private:
+    commands_map(const commands_map&) = delete;
+    commands_map& operator=(const commands_map&) = delete;
 };
 
 } // namespace cmdline

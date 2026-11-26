@@ -26,7 +26,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "utils/noncopyable.hpp"
 #include "utils/process/fdstream.hpp"
 #include "utils/process/systembuf.hpp"
 
@@ -34,7 +33,7 @@ namespace utils {
 namespace process {
 
 /// Private implementation fields for ifdstream.
-struct ifdstream::impl : utils::noncopyable {
+struct ifdstream::impl {
     /// The systembuf backing this file descriptor.
     systembuf _systembuf;
 
@@ -44,6 +43,10 @@ struct ifdstream::impl : utils::noncopyable {
     impl(const int fd) : _systembuf(fd)
     {
     }
+
+private:
+    impl(const impl&) = delete;
+    impl& operator=(const impl&) = delete;
 };
 
 } // namespace process

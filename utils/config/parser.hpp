@@ -37,7 +37,6 @@
 #include "utils/config/parser_fwd.hpp"
 #include "utils/config/tree_fwd.hpp"
 #include "utils/fs/path_fwd.hpp"
-#include "utils/noncopyable.hpp"
 
 namespace utils {
 namespace config {
@@ -58,11 +57,16 @@ namespace config {
 /// supposed to be passed to multiple parsers (even if sequentially).  Doing so
 /// will cause all kinds of inconsistencies in the managed tree itself or in the
 /// Lua state.
-class parser : noncopyable {
+class parser {
 public:
     struct impl;
 
 private:
+    /// Noncopyable
+    parser(const parser&) = delete;
+    parser& operator=(const parser&) = delete;
+
+protected:
     /// Pointer to the internal implementation.
     std::unique_ptr<impl> _pimpl;
 

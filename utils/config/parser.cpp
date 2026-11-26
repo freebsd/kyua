@@ -37,7 +37,6 @@
 #include "utils/config/tree.ipp"
 #include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
-#include "utils/noncopyable.hpp"
 
 namespace config = utils::config;
 
@@ -50,7 +49,13 @@ namespace config = utils::config;
 // 1 - Initial version.
 
 /// Internal implementation of the parser.
-struct utils::config::parser::impl : utils::noncopyable {
+struct utils::config::parser::impl {
+private:
+    /// Noncopyable
+    impl(const impl&) = delete;
+    impl& operator=(const impl&) = delete;
+
+public:
     /// Pointer to the parent parser.  Needed for callbacks.
     parser* _parent;
 
