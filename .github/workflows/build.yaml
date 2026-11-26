@@ -245,7 +245,7 @@ jobs:
                       -C "${REPORTS_DIR}" .
               if: ${{ ! cancelled() }}
             - name: Archive Build Artifacts
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@v7
               with:
                   name: Test Report for ${{ env.JOB_NAME }}
                   path: kyua-test-reports-*.tar
@@ -467,7 +467,7 @@ jobs:
                       -C "${REPORTS_DIR}" .
               if: ${{ ! cancelled() }}
             - name: Archive Build Artifacts
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@v7
               with:
                   name: Test Report for ${{ env.JOB_NAME }}
                   path: kyua-test-reports-*.tar
