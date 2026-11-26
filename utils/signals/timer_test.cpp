@@ -104,14 +104,12 @@ null_handler(const int /* signo */)
 ///
 /// \param timers Pointers to all the timers to wait for.
 static void
-wait_timers(const std::vector<signals::timer*>& timers)
+wait_timers(const std::vector<std::unique_ptr<signals::timer>>& timers)
 {
     std::size_t n_fired, old_n_fired = 0;
     do {
         n_fired = 0;
-        for (std::vector<signals::timer*>::const_iterator iter = timers.begin();
-             iter != timers.end(); ++iter) {
-            const signals::timer* timer = *iter;
+        for (const auto& timer : timers) {
             if (timer->fired())
                 ++n_fired;
         }
@@ -160,19 +158,21 @@ ATF_TEST_CASE_BODY(multiprogram_ordered)
 {
     static const std::size_t n_timers = 100;
 
-    std::vector<signals::timer*> timers;
     std::vector<int> items, exp_items;
+    std::vector<std::unique_ptr<signals::timer>> timers;
 
     const int initial_delay_ms = 1000000;
     for (std::size_t i = 0; i < n_timers; ++i) {
         exp_items.push_back(i);
 
-        timers.push_back(new delayed_inserter(
+        timers.push_back(std::make_unique<delayed_inserter>(
             datetime::delta(0, initial_delay_ms + (i + 1) * 10000), items, i));
         ATF_REQUIRE(!timers[i]->fired());
     }
 
     wait_timers(timers);
+    for (const auto& timer : timers)
+        timer->unprogram();
 
     ATF_REQUIRE_EQ(exp_items, items);
 }
@@ -184,8 +184,8 @@ ATF_TEST_CASE_HEAD(multiprogram_reorder_next_activations)
 }
 ATF_TEST_CASE_BODY(multiprogram_reorder_next_activations)
 {
-    std::vector<signals::timer*> timers;
     std::vector<int> items;
+    std::vector<std::unique_ptr<signals::timer>> timers;
 
     {
         // Register the whole group before any callback can run.
@@ -193,7 +193,8 @@ ATF_TEST_CASE_BODY(multiprogram_reorder_next_activations)
 
         // First timer with an activation in the future.
         const datetime::delta initial_delay(0, 100000);
-        timers.push_back(new delayed_inserter(initial_delay, items, 1));
+        timers.push_back(std::make_unique<delayed_inserter>(initial_delay,
+                                                            items, 1));
         ATF_REQUIRE(!timers[timers.size() - 1]->fired());
 
         // Use the first timer's time origin so registration delays cannot
@@ -204,22 +205,24 @@ ATF_TEST_CASE_BODY(multiprogram_reorder_next_activations)
                 initial_delay.to_microseconds());
 
         // Timer with an activation earlier than the previous one.
-        timers.push_back(new delayed_inserter(base + datetime::delta(0, 50000),
-                                              items, 2));
+        timers.push_back(std::make_unique<delayed_inserter>(
+            base + datetime::delta(0, 50000), items, 2));
         ATF_REQUIRE(!timers[timers.size() - 1]->fired());
 
         // Timer with an activation later than all others.
-        timers.push_back(new delayed_inserter(base + datetime::delta(0, 200000),
-                                              items, 3));
+        timers.push_back(std::make_unique<delayed_inserter>(
+            base + datetime::delta(0, 200000), items, 3));
         ATF_REQUIRE(!timers[timers.size() - 1]->fired());
 
         // Timer with an activation in between.
-        timers.push_back(new delayed_inserter(base + datetime::delta(0, 150000),
-                                              items, 4));
+        timers.push_back(std::make_unique<delayed_inserter>(
+            base + datetime::delta(0, 150000), items, 4));
         ATF_REQUIRE(!timers[timers.size() - 1]->fired());
     }
 
     wait_timers(timers);
+    for (const auto& timer : timers)
+        timer->unprogram();
 
     std::vector<int> exp_items;
     exp_items.push_back(2);
@@ -236,35 +239,40 @@ ATF_TEST_CASE_HEAD(multiprogram_and_cancel_some)
 }
 ATF_TEST_CASE_BODY(multiprogram_and_cancel_some)
 {
-    std::vector<signals::timer*> timers;
     std::vector<int> items;
+    std::vector<std::unique_ptr<signals::timer>> timers;
 
     // First timer with an activation in the future.
-    timers.push_back(new delayed_inserter(datetime::delta(0, 100000), items,
-                                          1));
+    timers.push_back(std::make_unique<delayed_inserter>(datetime::delta(0,
+                                                                        100000),
+                                                        items, 1));
 
     // Timer with an activation earlier than the previous one.
-    timers.push_back(new delayed_inserter(datetime::delta(0, 50000), items, 2));
+    timers.push_back(std::make_unique<delayed_inserter>(datetime::delta(0,
+                                                                        50000),
+                                                        items, 2));
 
     // Timer with an activation later than all others.
-    timers.push_back(new delayed_inserter(datetime::delta(0, 200000), items,
-                                          3));
+    timers.push_back(std::make_unique<delayed_inserter>(datetime::delta(0,
+                                                                        200000),
+                                                        items, 3));
 
     // Timer with an activation in between.
-    timers.push_back(new delayed_inserter(datetime::delta(0, 150000), items,
-                                          4));
+    timers.push_back(std::make_unique<delayed_inserter>(datetime::delta(0,
+                                                                        150000),
+                                                        items, 4));
 
     // Cancel the first timer to reprogram next activation.
     timers[1]->unprogram();
-    delete timers[1];
     timers.erase(timers.begin() + 1);
 
     // Cancel another timer without reprogramming next activation.
     timers[2]->unprogram();
-    delete timers[2];
     timers.erase(timers.begin() + 2);
 
     wait_timers(timers);
+    for (const auto& timer : timers)
+        timer->unprogram();
 
     std::vector<int> exp_items;
     exp_items.push_back(1);
@@ -279,15 +287,16 @@ ATF_TEST_CASE_HEAD(multiprogram_and_expire_before_activations)
 }
 ATF_TEST_CASE_BODY(multiprogram_and_expire_before_activations)
 {
-    std::vector<signals::timer*> timers;
     std::vector<int> items;
+    std::vector<std::unique_ptr<signals::timer>> timers;
 
     {
         signals::interrupts_inhibiter inhibiter;
 
         // First timer with an activation in the future.
         const datetime::delta initial_delay(0, 100000);
-        timers.push_back(new delayed_inserter(initial_delay, items, 1));
+        timers.push_back(std::make_unique<delayed_inserter>(initial_delay,
+                                                            items, 1));
         ATF_REQUIRE(!timers[timers.size() - 1]->fired());
 
         const datetime::monotonic_timestamp base =
@@ -296,20 +305,22 @@ ATF_TEST_CASE_BODY(multiprogram_and_expire_before_activations)
                 initial_delay.to_microseconds());
 
         // Timer with an activation earlier than the previous one.
-        timers.push_back(new delayed_inserter(base + datetime::delta(0, 50000),
-                                              items, 2));
+        timers.push_back(std::make_unique<delayed_inserter>(
+            base + datetime::delta(0, 50000), items, 2));
         ATF_REQUIRE(!timers[timers.size() - 1]->fired());
 
         ::sleep(1);
 
         // Timer with an activation later than all others.
-        timers.push_back(new delayed_inserter(datetime::delta(0, 200000), items,
-                                              3));
+        timers.push_back(std::make_unique<delayed_inserter>(
+            datetime::delta(0, 200000), items, 3));
 
         ::sleep(1);
     }
 
     wait_timers(timers);
+    for (const auto& timer : timers)
+        timer->unprogram();
 
     std::vector<int> exp_items;
     exp_items.push_back(2);

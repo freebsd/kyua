@@ -543,7 +543,7 @@ signals::timer::unprogram(void)
         return;
     }
 
-    if (!globals->unprogram(this)) {
+    if (globals.get() != NULL && !globals->unprogram(this)) {
         globals.reset();
     }
     _pimpl->programmed = false;
