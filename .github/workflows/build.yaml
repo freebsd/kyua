@@ -189,6 +189,7 @@ jobs:
                   rm -Rf "${LUTOK_SRCDIR}"
 
             - name: Configure
+              timeout-minutes: 10
               run: |
                   export PREFIX="${KYUA_PREFIX}"
                   export PKG_CONFIG_PATH="${PREFIX}/lib/pkgconfig"
@@ -410,6 +411,7 @@ jobs:
                   rm -Rf "${LUTOK_SRCDIR}"
 
             - name: Configure
+              timeout-minutes: 10
               shell: freebsd {0}
               run: |
                   export PREFIX="${KYUA_PREFIX}"
