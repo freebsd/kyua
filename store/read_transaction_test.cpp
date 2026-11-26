@@ -181,12 +181,10 @@ ATF_TEST_CASE_BODY(get_results__many)
         datetime::timestamp::from_values(2012, 01, 30, 22, 10, 00, 0);
     const datetime::timestamp end_time1 =
         datetime::timestamp::from_values(2012, 01, 30, 22, 15, 30, 1234);
-    const datetime::delta elapsed_time1(1, 234567);
     const datetime::timestamp start_time2 =
         datetime::timestamp::from_values(2012, 01, 30, 22, 15, 40, 987);
     const datetime::timestamp end_time2 =
         datetime::timestamp::from_values(2012, 01, 30, 22, 16, 0, 0);
-    const datetime::delta elapsed_time2(0, 0);
 
     atf::utils::create_file("unused.txt", "unused file\n");
 
@@ -202,7 +200,7 @@ ATF_TEST_CASE_BODY(get_results__many)
         atf::utils::create_file("prog1.out", "stdout of prog1\n");
         tx.put_test_case_file("__STDOUT__", fs::path("prog1.out"), tc_id);
         tx.put_test_case_file("unused.txt", fs::path("unused.txt"), tc_id);
-        tx.put_result(result_1, tc_id, start_time1, end_time1, elapsed_time1);
+        tx.put_result(result_1, tc_id, start_time1, end_time1);
     }
 
     const model::test_program test_program_2 =
@@ -217,7 +215,7 @@ ATF_TEST_CASE_BODY(get_results__many)
         atf::utils::create_file("prog2.err", "stderr of prog2\n");
         tx.put_test_case_file("__STDERR__", fs::path("prog2.err"), tc_id);
         tx.put_test_case_file("unused.txt", fs::path("unused.txt"), tc_id);
-        tx.put_result(result_2, tc_id, start_time2, end_time2, elapsed_time2);
+        tx.put_result(result_2, tc_id, start_time2, end_time2);
     }
 
     tx.commit();
@@ -228,7 +226,6 @@ ATF_TEST_CASE_BODY(get_results__many)
     store::read_transaction tx2 = backend2.start_read();
     store::results_iterator iter = tx2.get_results();
     ATF_REQUIRE(iter);
-
     ATF_REQUIRE_EQ(test_program_1, *iter.test_program());
     ATF_REQUIRE_EQ("main", iter.test_case_name());
     ATF_REQUIRE_EQ("stdout of prog1\n", iter.stdout_contents());
@@ -236,9 +233,7 @@ ATF_TEST_CASE_BODY(get_results__many)
     ATF_REQUIRE_EQ(result_1, iter.result());
     ATF_REQUIRE_EQ(start_time1, iter.start_time());
     ATF_REQUIRE_EQ(end_time1, iter.end_time());
-    ATF_REQUIRE_EQ(elapsed_time1, iter.elapsed_time());
     ATF_REQUIRE(++iter);
-
     ATF_REQUIRE_EQ(test_program_2, *iter.test_program());
     ATF_REQUIRE_EQ("main", iter.test_case_name());
     ATF_REQUIRE(iter.stdout_contents().empty());
@@ -246,7 +241,6 @@ ATF_TEST_CASE_BODY(get_results__many)
     ATF_REQUIRE_EQ(result_2, iter.result());
     ATF_REQUIRE_EQ(start_time2, iter.start_time());
     ATF_REQUIRE_EQ(end_time2, iter.end_time());
-    ATF_REQUIRE_EQ(elapsed_time2, iter.elapsed_time());
     ATF_REQUIRE(!++iter);
 }
 
