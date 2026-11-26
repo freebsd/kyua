@@ -60,7 +60,9 @@ upgrade__from_v1_head() {
         "${KYUA_STORETESTDATADIR}/schema_v1.sql" \
         "${KYUA_STORETESTDATADIR}/testdata_v1.sql" \
         "${KYUA_STOREDIR}/migrate_v1_v2.sql" \
-        "${KYUA_STOREDIR}/migrate_v2_v3.sql"
+        "${KYUA_STOREDIR}/migrate_v2_v3.sql" \
+        "${KYUA_STOREDIR}/schema_v3.sql" \
+        "${KYUA_STOREDIR}/migrate_v3_v4.sql"
     atf_set require.progs "sqlite3"
 }
 upgrade__from_v1_body() {
@@ -85,7 +87,9 @@ upgrade__from_v2_head() {
     atf_set require.files \
         "${KYUA_STORETESTDATADIR}/schema_v2.sql" \
         "${KYUA_STORETESTDATADIR}/testdata_v2.sql" \
-        "${KYUA_STOREDIR}/migrate_v2_v3.sql"
+        "${KYUA_STOREDIR}/migrate_v2_v3.sql" \
+        "${KYUA_STOREDIR}/schema_v3.sql" \
+        "${KYUA_STOREDIR}/migrate_v3_v4.sql"
     atf_set require.progs "sqlite3"
 }
 upgrade__from_v2_body() {
@@ -105,13 +109,62 @@ upgrade__from_v2_body() {
 }
 
 
+utils_test_case upgrade__from_v2__retry
+upgrade__from_v2__retry_head() {
+    upgrade__from_v2_head
+}
+upgrade__from_v2__retry_body() {
+    create_historical_db "${KYUA_STORETESTDATADIR}/schema_v2.sql" \
+        "${KYUA_STORETESTDATADIR}/testdata_v2.sql"
+    local dbfile="${HOME}/.kyua/store.db"
+    cp "${dbfile}" original.db
+    mkdir schemas
+    cp "${KYUA_STOREDIR}/schema_v3.sql" \
+        "${KYUA_STOREDIR}/migrate_v2_v3.sql" schemas/
+
+    atf_check -s exit:1 -o empty \
+        -e match:"Migration failed.*Cannot read migration file.*migrate_v3_v4" \
+        env KYUA_STOREDIR="$(pwd)/schemas" kyua db-migrate
+    atf_check -s exit:0 -o empty -e empty cmp original.db "${dbfile}"
+    atf_check -s exit:0 -o empty -e empty \
+        cmp original.db "${dbfile}.v2.backup"
+    atf_check -s exit:0 -o empty -e empty \
+        find "${HOME}/.kyua/store" -name '*.db' -print
+
+    cp "${KYUA_STOREDIR}/migrate_v3_v4.sql" schemas/
+    atf_check -s exit:0 -o empty -e empty \
+        env KYUA_STOREDIR="$(pwd)/schemas" kyua db-migrate
+    [ ! -f "${dbfile}" ] || atf_fail "Historical database not deleted"
+}
+
+
+utils_test_case upgrade__from_v3
+upgrade__from_v3_head() {
+    atf_set require.files \
+        "${KYUA_STOREDIR}/schema_v3.sql" \
+        "${KYUA_STOREDIR}/migrate_v3_v4.sql"
+    atf_set require.progs "sqlite3"
+}
+upgrade__from_v3_body() {
+    create_results_file "${KYUA_STOREDIR}/schema_v3.sql"
+
+    local dbname="results.$(utils_test_suite_id)-20140718-173200-123456.db"
+    local dbfile="${HOME}/.kyua/store/${dbname}"
+
+    atf_check -s exit:0 -o empty -e empty kyua db-migrate
+    atf_check -s exit:1 -o empty -e match:"already at schema version 4" \
+        kyua db-migrate
+    [ -f "${dbfile}.v3.backup" ] || atf_fail "Backup was not created"
+}
+
+
 utils_test_case already_up_to_date
 already_up_to_date_head() {
-    atf_set require.files "${KYUA_STOREDIR}/schema_v3.sql"
+    atf_set require.files "${KYUA_STOREDIR}/schema_v4.sql"
     atf_set require.progs "sqlite3"
 }
 already_up_to_date_body() {
-    create_results_file "${KYUA_STOREDIR}/schema_v3.sql"
+    create_results_file "${KYUA_STOREDIR}/schema_v4.sql"
     atf_check -s exit:1 -o empty -e match:"already at schema version" \
         kyua db-migrate
 }
@@ -157,6 +210,8 @@ EOF
 atf_init_test_cases() {
     atf_add_test_case upgrade__from_v1
     atf_add_test_case upgrade__from_v2
+    atf_add_test_case upgrade__from_v2__retry
+    atf_add_test_case upgrade__from_v3
     atf_add_test_case already_up_to_date
     atf_add_test_case need_upgrade
 
