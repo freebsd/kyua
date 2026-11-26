@@ -45,6 +45,7 @@ extern "C" {
 #include <jail.h>
 }
 
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <regex>
@@ -174,8 +175,8 @@ jail::create(const std::string& jail_name, const std::string& jail_params)
     int max;
     size_t len = sizeof(max);
     if (::sysctlbyname(oid, &max, &len, NULL, 0) != 0) {
-        std::cerr << "sysctlbyname(" << oid << ") errors: " << strerror(errno)
-                  << ".\n";
+        std::cerr << "sysctlbyname(" << oid
+                  << ") errors: " << std::strerror(errno) << ".\n";
         std::exit(EXIT_FAILURE);
     }
     if (len < sizeof(max)) {
@@ -230,7 +231,7 @@ jail::exec(const std::string& jail_name, const fs::path& program,
     // get work dir prepared by kyua
     char cwd[PATH_MAX];
     if (::getcwd(cwd, sizeof(cwd)) == NULL) {
-        std::cerr << "jail::exec: getcwd() errors: " << strerror(errno)
+        std::cerr << "jail::exec: getcwd() errors: " << std::strerror(errno)
                   << ".\n";
         std::exit(EXIT_FAILURE);
     }
@@ -238,21 +239,22 @@ jail::exec(const std::string& jail_name, const fs::path& program,
     // get jail id by its name
     int jid = ::jail_getid(jail_name.c_str());
     if (jid == -1) {
-        std::cerr << "jail::exec: jail_getid() errors: " << strerror(errno)
+        std::cerr << "jail::exec: jail_getid() errors: " << std::strerror(errno)
                   << ": " << jail_errmsg << ".\n";
         std::exit(EXIT_FAILURE);
     }
 
     // attach to the jail
     if (::jail_attach(jid) == -1) {
-        std::cerr << "jail::exec: jail_attach() errors: " << strerror(errno)
-                  << ".\n";
+        std::cerr << "jail::exec: jail_attach() errors: "
+                  << std::strerror(errno) << ".\n";
         std::exit(EXIT_FAILURE);
     }
 
     // set back the expected work dir
     if (::chdir(cwd) == -1) {
-        std::cerr << "jail::exec: chdir() errors: " << strerror(errno) << ".\n";
+        std::cerr << "jail::exec: chdir() errors: " << std::strerror(errno)
+                  << ".\n";
         std::exit(EXIT_FAILURE);
     }
 

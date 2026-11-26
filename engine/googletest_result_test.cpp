@@ -41,7 +41,9 @@ parse_ok_test(const engine::googletest_result::types& exp_type,
     std::istringstream input(text);
     const engine::googletest_result actual =
         engine::googletest_result::parse(input);
-    ATF_REQUIRE_EQ(exp_type, actual.type());
+    /// Casting the value to intmax_t mutes a -Wsign-promo warning with gcc.
+    ATF_REQUIRE_EQ(static_cast<intmax_t>(exp_type),
+                   static_cast<intmax_t>(actual.type()));
     if (exp_reason != NULL) {
         ATF_REQUIRE(actual.reason());
         ATF_REQUIRE_EQ(exp_reason, actual.reason().get());
@@ -318,7 +320,9 @@ ATF_TEST_CASE_BODY(googletest_result__load__ok)
 
     const engine::googletest_result result =
         engine::googletest_result::load(utils::fs::path("result.txt"));
-    ATF_REQUIRE_EQ(engine::googletest_result::skipped, result.type());
+    /// Casting the value to intmax_t mutes a -Wsign-promo warning with gcc.
+    ATF_REQUIRE_EQ(static_cast<intmax_t>(engine::googletest_result::skipped),
+                   static_cast<intmax_t>(result.type()));
     ATF_REQUIRE(result.reason());
     ATF_REQUIRE_EQ(skipped_with_reason_context, result.reason().get());
 }
