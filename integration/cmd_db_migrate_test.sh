@@ -49,7 +49,7 @@ create_historical_db() {
 # \param ... Files that contain SQL commands to be run.
 create_results_file() {
     mkdir -p "${HOME}/.kyua/store"
-    local dbname="results.$(utils_test_suite_id)-20140718-173200-123456.db"
+    local dbname="results.$(utils_test_suite_id).20140718-173200-123456.db"
     cat "${@}" | sqlite3 "${HOME}/.kyua/store/${dbname}"
 }
 

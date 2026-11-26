@@ -33,6 +33,7 @@ extern "C" {
 }
 
 #include <atf-c++.hpp>
+#include <initializer_list>
 #include <iostream>
 
 #include "store/exceptions.hpp"
@@ -45,6 +46,105 @@ extern "C" {
 namespace datetime = utils::datetime;
 namespace fs = utils::fs;
 namespace layout = store::layout;
+
+static void
+require_results(const fs::path& expected, const std::string& name)
+{
+    try {
+        const fs::path actual = layout::find_results(name);
+        ATF_REQUIRE_EQ(expected, actual);
+    } catch (const store::error& e) {
+        ATF_FAIL(e.what());
+    }
+}
+
+static void
+check_special_characters(const std::string& name,
+                         const std::string& results_file,
+                         const std::string& other_results_file)
+{
+    const fs::path store_dir = layout::query_store_dir();
+    fs::mkdir_p(store_dir, 0755);
+
+    const fs::path expected = store_dir / results_file;
+    atf::utils::create_file(expected.str(), "");
+    atf::utils::create_file((store_dir / other_results_file).str(), "");
+
+    require_results(expected, name);
+}
+
+static void
+check_special_characters_latest(
+    const std::string& name, const std::string& latest_results_file,
+    std::initializer_list<std::string> results_files)
+{
+    const fs::path store_dir = layout::query_store_dir();
+    fs::mkdir_p(store_dir, 0755);
+
+    for (const std::string& file : results_files) {
+        atf::utils::create_file((store_dir / file).str(), "");
+    }
+
+    require_results(store_dir / latest_results_file, name);
+}
+
+#define SPECIAL_CHARACTERS_TEST(id, name, results_file, other_results_file, \
+                                latest_file, ...)                           \
+    ATF_TEST_CASE_WITHOUT_HEAD(find_results__special_characters__##id);     \
+    ATF_TEST_CASE_BODY(find_results__special_characters__##id)              \
+    {                                                                       \
+        check_special_characters(name, results_file, other_results_file);   \
+    }                                                                       \
+    ATF_TEST_CASE_WITHOUT_HEAD(                                             \
+        find_results__special_characters__latest__##id);                    \
+    ATF_TEST_CASE_BODY(find_results__special_characters__latest__##id)      \
+    {                                                                       \
+        check_special_characters_latest(name, latest_file, __VA_ARGS__);    \
+    }
+
+SPECIAL_CHARACTERS_TEST(dot, "usr_tests_.dot.",
+                        "results.usr_tests_.dot..20140613-194515-000000.db",
+                        "results.usr_tests_XdotX.20140614-194515-000000.db",
+                        "results.usr_tests_.dot..20140614-194515-123456.db",
+                        { "results.usr_tests_.dot..20140613-194515-000000.db",
+                          "results.usr_tests_.dot..20140614-194515-123456.db",
+                          "results.usr_tests_.dot..20130614-194515-999999.db",
+                          "results.other_suite.20150614-194515-000000.db" })
+SPECIAL_CHARACTERS_TEST(hyphen, "usr_tests_my-test",
+                        "results.usr_tests_my-test.20140613-194515-000000.db",
+                        "results.usr_tests_myXtest.20140614-194515-000000.db",
+                        "results.usr_tests_my-test.20140614-194515-123456.db",
+                        { "results.usr_tests_my-test.20140613-194515-000000.db",
+                          "results.usr_tests_my-test.20140614-194515-123456.db",
+                          "results.usr_tests_my-test.20130614-194515-999999.db",
+                          "results.other_suite.20150614-194515-000000.db" })
+SPECIAL_CHARACTERS_TEST(braces, "usr_tests_{goval}",
+                        "results.usr_tests_{goval}.20140613-194515-000000.db",
+                        "results.usr_tests_goval.20140614-194515-000000.db",
+                        "results.usr_tests_{goval}.20140614-194515-123456.db",
+                        { "results.usr_tests_{goval}.20140613-194515-000000.db",
+                          "results.usr_tests_{goval}.20140614-194515-123456.db",
+                          "results.usr_tests_{goval}.20130614-194515-999999.db",
+                          "results.other_suite.20150614-194515-000000.db" })
+SPECIAL_CHARACTERS_TEST(question, "usr_tests_who?",
+                        "results.usr_tests_who?.20140613-194515-000000.db",
+                        "results.usr_tests_who.20140614-194515-000000.db",
+                        "results.usr_tests_who?.20140614-194515-123456.db",
+                        { "results.usr_tests_who?.20140613-194515-000000.db",
+                          "results.usr_tests_who?.20140614-194515-123456.db",
+                          "results.usr_tests_who?.20130614-194515-999999.db",
+                          "results.other_suite.20150614-194515-000000.db" })
+SPECIAL_CHARACTERS_TEST(
+    plus, "usr_tests_lib_atf_libatf-c++",
+    "results.usr_tests_lib_atf_libatf-c++.20140613-194515-000000.db",
+    "results.usr_tests_lib_atf_libatf-ccc.20140614-194515-000000.db",
+    "results.usr_tests_lib_atf_libatf-c++.20140614-194515-123456.db",
+    { "results.usr_tests_lib_atf_libatf-c++.20140613-194515-000000.db",
+      "results.usr_tests_lib_atf_libatf-c++.20140614-194515-123456.db",
+      "results.usr_tests_lib_atf_libatf-c++.20130614-194515-999999.db",
+      "results.other_suite.20150614-194515-000000.db" })
+
+#undef SPECIAL_CHARACTERS_TEST
 
 ATF_TEST_CASE_WITHOUT_HEAD(find_results__latest);
 ATF_TEST_CASE_BODY(find_results__latest)
@@ -311,6 +411,18 @@ ATF_TEST_CASE_BODY(test_suite_for_path__relative)
 
 ATF_INIT_TEST_CASES(tcs)
 {
+#define ADD_SPECIAL_CHARACTERS_TEST(id)                             \
+    ATF_ADD_TEST_CASE(tcs, find_results__special_characters__##id); \
+    ATF_ADD_TEST_CASE(tcs, find_results__special_characters__latest__##id)
+
+    ADD_SPECIAL_CHARACTERS_TEST(dot);
+    ADD_SPECIAL_CHARACTERS_TEST(hyphen);
+    ADD_SPECIAL_CHARACTERS_TEST(braces);
+    ADD_SPECIAL_CHARACTERS_TEST(question);
+    ADD_SPECIAL_CHARACTERS_TEST(plus);
+
+#undef ADD_SPECIAL_CHARACTERS_TEST
+
     ATF_ADD_TEST_CASE(tcs, find_results__latest);
     ATF_ADD_TEST_CASE(tcs, find_results__directory);
     ATF_ADD_TEST_CASE(tcs, find_results__file);
