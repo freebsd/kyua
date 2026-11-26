@@ -86,6 +86,8 @@ AC_DEFUN([KYUA_DEVELOPER_MODE], [
                  -Wno-traditional \
                  -Wstrict-prototypes"
 
+    # TODO(ngie,310): remove `-Wno-error=mismatched-new-delete` when
+    # `utils::optional` has been replacedwith `std::optional`, etc.
     try_cxx_flags="-Wabi \
                    -Wctor-dtor-privacy \
                    -Wno-deprecated \
@@ -95,7 +97,9 @@ AC_DEFUN([KYUA_DEVELOPER_MODE], [
                    -Woverloaded-virtual \
                    -Wreorder \
                    -Wsign-promo \
-                   -Wsynth"
+                   -Wsynth \
+                   -Wno-error=mismatched-new-delete \
+                  "
 
     if test ${enable_developer} = yes; then
         try_werror=yes
