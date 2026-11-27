@@ -739,6 +739,13 @@ scheduler::result_handle::end_time(void) const
     return _pbimpl->generic.end_time();
 }
 
+/// \return The monotonic duration of the process excluding cleanup.
+const datetime::delta&
+scheduler::result_handle::elapsed_time(void) const
+{
+    return _pbimpl->generic.elapsed_time();
+}
+
 /// Returns the path to the test-specific work directory.
 ///
 /// This is guaranteed to be clear of files created by the scheduler.

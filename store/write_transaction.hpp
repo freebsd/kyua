@@ -79,7 +79,8 @@ public:
                                                 const int64_t);
     int64_t put_result(const model::test_result&, const int64_t,
                        const utils::datetime::timestamp&,
-                       const utils::datetime::timestamp&);
+                       const utils::datetime::timestamp&,
+                       const utils::datetime::delta&);
 };
 
 } // namespace store
