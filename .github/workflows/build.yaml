@@ -24,7 +24,7 @@ env:
     ATF_REPO: freebsd/atf
     ATF_REF: atf-0.26.1
     LUTOK_REPO: freebsd/lutok
-    LUTOK_REF: lutok-0.7.0
+    LUTOK_REF: master
 
 name: build
 "on":
