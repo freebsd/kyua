@@ -37,7 +37,6 @@ extern "C" {
 #include <stdexcept>
 
 #include "utils/format/macros.hpp"
-#include "utils/noncopyable.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 
@@ -236,7 +235,7 @@ namespace utils {
 namespace datetime {
 
 /// Internal representation for datetime::timestamp.
-struct timestamp::impl : utils::noncopyable {
+struct timestamp::impl {
     /// The raw timestamp as provided by libc.
     ::timeval data;
 
@@ -246,6 +245,10 @@ struct timestamp::impl : utils::noncopyable {
     impl(const ::timeval& data_) : data(data_)
     {
     }
+
+private:
+    impl(const impl&) = delete;
+    impl& operator=(const impl&) = delete;
 };
 
 } // namespace datetime

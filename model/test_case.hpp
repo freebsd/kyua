@@ -40,7 +40,6 @@
 #include "model/metadata_fwd.hpp"
 #include "model/test_case_fwd.hpp"
 #include "model/test_result_fwd.hpp"
-#include "utils/noncopyable.hpp"
 #include "utils/optional_fwd.hpp"
 
 namespace model {
@@ -78,11 +77,18 @@ public:
 };
 
 /// Builder for a test_cases_map object.
-class test_cases_map_builder : utils::noncopyable {
+class test_cases_map_builder {
     /// Accumulator for the map being built.
     test_cases_map _test_cases;
 
+private:
+    /// Noncopyable
+    test_cases_map_builder(const test_cases_map_builder&) = delete;
+    test_cases_map_builder& operator=(const test_cases_map_builder&) = delete;
+
 public:
+    test_cases_map_builder(void) = default;
+
     test_cases_map_builder& add(const test_case&);
     test_cases_map_builder& add(const std::string&);
     test_cases_map_builder& add(const std::string&, const metadata&);

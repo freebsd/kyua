@@ -30,7 +30,6 @@
 #include "model/test_case.hpp"
 #include "model/test_result.hpp"
 #include "utils/format/macros.hpp"
-#include "utils/noncopyable.hpp"
 #include "utils/optional.ipp"
 #include "utils/text/operations.ipp"
 
@@ -40,7 +39,13 @@ using utils::none;
 using utils::optional;
 
 /// Internal implementation for a test_case.
-struct model::test_case::impl : utils::noncopyable {
+struct model::test_case::impl {
+private:
+    /// Noncopyable
+    impl(const impl&) = delete;
+    impl& operator=(const impl&) = delete;
+
+public:
     /// Name of the test case; must be unique within the test program.
     std::string name;
 

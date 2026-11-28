@@ -34,7 +34,6 @@
 
 #include <unistd.h>
 
-#include "utils/noncopyable.hpp"
 #include "utils/signals/interrupts_fwd.hpp"
 
 namespace utils {
@@ -46,7 +45,7 @@ namespace signals {
 /// removes them upon destruction.  While this object is active, the
 /// check_interrupt() free function can be used to determine if an interrupt has
 /// happened.
-class interrupts_handler : noncopyable {
+class interrupts_handler {
     /// Whether the interrupts are still programmed or not.
     ///
     /// Used by the destructor to prevent double-unprogramming when unprogram()
@@ -58,13 +57,21 @@ public:
     ~interrupts_handler(void);
 
     void unprogram(void);
+
+private:
+    interrupts_handler(const interrupts_handler&) = delete;
+    interrupts_handler& operator=(const interrupts_handler&) = delete;
 };
 
 /// Disables interrupts while the object is alive.
-class interrupts_inhibiter : noncopyable {
+class interrupts_inhibiter {
 public:
     interrupts_inhibiter(void);
     ~interrupts_inhibiter(void);
+
+private:
+    interrupts_inhibiter(const interrupts_inhibiter&) = delete;
+    interrupts_inhibiter& operator=(const interrupts_inhibiter&) = delete;
 };
 
 void check_interrupt(void);

@@ -39,7 +39,6 @@
 #include <memory>
 
 #include "utils/datetime_fwd.hpp"
-#include "utils/noncopyable.hpp"
 #include "utils/signals/timer_fwd.hpp"
 
 namespace utils {
@@ -54,7 +53,7 @@ void invoke_do_fired(timer*);
 /// Asynchronously executes its callback() method, which can be overridden by
 /// subclasses, when the timeout or absolute deadline given at construction
 /// expires.
-class timer : noncopyable {
+class timer {
     struct impl;
 
     /// Pointer to the shared internal implementation.
@@ -78,6 +77,10 @@ public:
     bool fired(void) const;
 
     void unprogram(void);
+
+private:
+    timer(const timer&) = delete;
+    timer& operator=(const timer&) = delete;
 };
 
 } // namespace signals

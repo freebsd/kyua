@@ -42,7 +42,6 @@ extern "C" {
 #include "utils/datetime.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
-#include "utils/noncopyable.hpp"
 #include "utils/optional.ipp"
 #include "utils/sanity.hpp"
 #include "utils/signals/exceptions.hpp"
@@ -84,7 +83,7 @@ safe_setitimer(const datetime::delta& delta, itimerval* old_timeval)
 }
 
 /// Deadline scheduler for all user timers on top of the unique system timer.
-class global_state : utils::noncopyable {
+class global_state {
     /// Collection of active timers.
     ///
     /// Because this is a collection of pointers, all timers are guaranteed to
@@ -221,6 +220,11 @@ class global_state : utils::noncopyable {
             _timer_activation = next;
         }
     }
+
+private:
+    /// Noncopyable
+    global_state(const global_state&) = delete;
+    global_state& operator=(const global_state&) = delete;
 
 public:
     /// Programs the first timer.
@@ -369,7 +373,13 @@ utils::signals::detail::invoke_do_fired(timer* timer)
 /// objects.  If this assumption breaks, then the rest of the code in this
 /// module breaks as well because we use pointers to the parent timer as the
 /// identifier of the timer.
-struct utils::signals::timer::impl : utils::noncopyable {
+struct utils::signals::timer::impl {
+private:
+    /// Noncopyable
+    impl(const impl&) = delete;
+    impl& operator=(const impl&) = delete;
+
+public:
     /// Timestamp when this timer is expected to fire.
     ///
     /// Note that the timer might be processed after this timestamp, so users of

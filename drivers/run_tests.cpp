@@ -46,7 +46,6 @@
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/logging/macros.hpp"
-#include "utils/noncopyable.hpp"
 #include "utils/optional.ipp"
 #include "utils/passwd.hpp"
 #include "utils/sanity.hpp"

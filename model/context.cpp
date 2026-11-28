@@ -29,14 +29,19 @@
 #include "model/context.hpp"
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
-#include "utils/noncopyable.hpp"
 #include "utils/text/operations.ipp"
 
 namespace fs = utils::fs;
 namespace text = utils::text;
 
 /// Internal implementation of a context.
-struct model::context::impl : utils::noncopyable {
+struct model::context::impl {
+private:
+    /// Noncopyable
+    impl(const impl&) = delete;
+    impl& operator=(const impl&) = delete;
+
+public:
     /// The current working directory.
     fs::path _cwd;
 

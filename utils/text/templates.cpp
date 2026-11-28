@@ -33,7 +33,6 @@
 
 #include "utils/format/macros.hpp"
 #include "utils/fs/path.hpp"
-#include "utils/noncopyable.hpp"
 #include "utils/sanity.hpp"
 #include "utils/text/exceptions.hpp"
 #include "utils/text/operations.ipp"
@@ -235,7 +234,7 @@ struct loop_def {
 /// memory.  The only exception are loops: loops are reinterpreted on every
 /// iteration from the same input file by rewidining the stream to the
 /// appropriate position.
-class templates_parser : utils::noncopyable {
+class templates_parser {
     /// The templates to apply.
     ///
     /// Note that this is not const because the parser has to have write access
@@ -472,6 +471,10 @@ class templates_parser : utils::noncopyable {
 
         return out_line;
     }
+
+private:
+    templates_parser(const templates_parser&) = delete;
+    templates_parser& operator=(const templates_parser&) = delete;
 
 public:
     /// Constructs a new template parser.

@@ -38,7 +38,6 @@ extern "C" {
 
 #include "utils/defs.hpp"
 #include "utils/format/macros.hpp"
-#include "utils/noncopyable.hpp"
 #include "utils/sanity.hpp"
 #include "utils/text/exceptions.hpp"
 
@@ -72,7 +71,13 @@ throw_regex_error(const int error, const ::regex_t* preg,
 } // anonymous namespace
 
 /// Internal implementation for regex_matches.
-struct utils::text::regex_matches::impl : utils::noncopyable {
+struct utils::text::regex_matches::impl {
+private:
+    /// Noncopyable
+    impl(const impl&) = delete;
+    impl& operator=(const impl&) = delete;
+
+public:
     /// String on which we are matching.
     ///
     /// In theory, we could take a reference here instead of a copy, and make
@@ -178,7 +183,13 @@ text::regex_matches::operator bool(void) const
 }
 
 /// Internal implementation for regex.
-struct utils::text::regex::impl : utils::noncopyable {
+struct utils::text::regex::impl {
+private:
+    /// Noncopyable
+    impl(const impl&) = delete;
+    impl& operator=(const impl&) = delete;
+
+public:
     /// Native regular expression representation.
     ::regex_t _preg;
 

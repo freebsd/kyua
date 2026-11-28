@@ -41,7 +41,6 @@
 #include "model/test_case_fwd.hpp"
 #include "model/test_program_fwd.hpp"
 #include "utils/fs/path_fwd.hpp"
-#include "utils/noncopyable.hpp"
 
 namespace model {
 
@@ -79,11 +78,15 @@ public:
 std::ostream& operator<<(std::ostream&, const test_program&);
 
 /// Builder for a test_program object.
-class test_program_builder : utils::noncopyable {
+class test_program_builder {
     struct impl;
 
     /// Pointer to the shared internal implementation.
     std::unique_ptr<impl> _pimpl;
+
+    /// Noncopyable
+    test_program_builder(const test_program_builder&) = delete;
+    test_program_builder& operator=(const test_program_builder&) = delete;
 
 public:
     test_program_builder(const std::string&, const utils::fs::path&,

@@ -34,14 +34,13 @@
 
 #include <memory>
 
-#include "utils/noncopyable.hpp"
 #include "utils/signals/programmer_fwd.hpp"
 
 namespace utils {
 namespace signals {
 
 /// A RAII class to program signal handlers.
-class programmer : noncopyable {
+class programmer {
     struct impl;
 
     /// Pointer to the shared internal implementation.
@@ -52,6 +51,10 @@ public:
     ~programmer(void);
 
     void unprogram(void);
+
+private:
+    programmer(const programmer&) = delete;
+    programmer& operator=(const programmer&) = delete;
 };
 
 } // namespace signals

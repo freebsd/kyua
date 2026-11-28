@@ -34,13 +34,12 @@ extern "C" {
 
 #include <memory>
 
-#include "utils/noncopyable.hpp"
 #include "utils/sanity.hpp"
 
 using utils::process::systembuf;
 
 /// Private implementation fields for systembuf.
-struct systembuf::impl : utils::noncopyable {
+struct systembuf::impl {
     /// File descriptor attached to the systembuf.
     int _fd;
 
@@ -64,6 +63,10 @@ struct systembuf::impl : utils::noncopyable {
         _write_buf(new char[bufsize])
     {
     }
+
+private:
+    impl(const impl&) = delete;
+    impl& operator=(const impl&) = delete;
 };
 
 /// Constructs a new systembuf based on an open file descriptor.

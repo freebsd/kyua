@@ -48,7 +48,6 @@ libutils_la_SOURCES += utils/env.hpp
 libutils_la_SOURCES += utils/env.cpp
 libutils_la_SOURCES += utils/memory.hpp
 libutils_la_SOURCES += utils/memory.cpp
-libutils_la_SOURCES += utils/noncopyable.hpp
 libutils_la_SOURCES += utils/optional.hpp
 libutils_la_SOURCES += utils/optional_fwd.hpp
 libutils_la_SOURCES += utils/optional.ipp

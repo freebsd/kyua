@@ -32,7 +32,6 @@
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/logging/macros.hpp"
-#include "utils/noncopyable.hpp"
 #include "utils/sanity.hpp"
 #include "utils/signals/interrupts.hpp"
 
@@ -40,7 +39,13 @@ namespace fs = utils::fs;
 namespace signals = utils::signals;
 
 /// Shared implementation of the auto_directory.
-struct utils::fs::auto_directory::impl : utils::noncopyable {
+struct utils::fs::auto_directory::impl {
+private:
+    /// Noncopyable
+    impl(const impl&) = delete;
+    impl& operator=(const impl&) = delete;
+
+public:
     /// The path to the directory being managed.
     fs::path _directory;
 
@@ -143,7 +148,13 @@ fs::auto_directory::cleanup(void)
 }
 
 /// Shared implementation of the auto_file.
-struct utils::fs::auto_file::impl : utils::noncopyable {
+struct utils::fs::auto_file::impl {
+private:
+    /// Noncopyable
+    impl(const impl&) = delete;
+    impl& operator=(const impl&) = delete;
+
+public:
     /// The path to the file being managed.
     fs::path _file;
 

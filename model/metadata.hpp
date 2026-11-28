@@ -41,7 +41,6 @@
 #include "utils/config/tree_fwd.hpp"
 #include "utils/datetime_fwd.hpp"
 #include "utils/fs/path_fwd.hpp"
-#include "utils/noncopyable.hpp"
 #include "utils/units_fwd.hpp"
 
 namespace model {
@@ -88,11 +87,16 @@ public:
 std::ostream& operator<<(std::ostream&, const metadata&);
 
 /// Builder for a metadata object.
-class metadata_builder : utils::noncopyable {
+class metadata_builder {
     struct impl;
 
     /// Pointer to the shared internal implementation.
     std::unique_ptr<impl> _pimpl;
+
+private:
+    /// Noncopyable
+    metadata_builder(const metadata_builder&) = delete;
+    metadata_builder& operator=(const metadata_builder&) = delete;
 
 public:
     metadata_builder(void);

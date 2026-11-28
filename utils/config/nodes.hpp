@@ -38,7 +38,6 @@
 
 #include "utils/config/keys_fwd.hpp"
 #include "utils/config/nodes_fwd.hpp"
-#include "utils/noncopyable.hpp"
 #include "utils/optional.hpp"
 
 namespace utils {
@@ -51,7 +50,7 @@ namespace detail {
 /// This abstract class provides the base type for every node in the tree.  Due
 /// to the dynamic nature of our trees (each leaf being able to hold arbitrary
 /// data types), this base type is a necessity.
-class base_node : noncopyable {
+class base_node {
 public:
     virtual ~base_node(void) = 0;
 
