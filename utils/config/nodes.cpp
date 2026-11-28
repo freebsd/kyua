@@ -281,7 +281,7 @@ config::detail::static_inner_node::static_inner_node(void) : inner_node(false)
 config::detail::base_node*
 config::detail::static_inner_node::deep_copy(void) const
 {
-    std::unique_ptr<inner_node> new_node(new static_inner_node());
+    auto new_node = std::make_unique<static_inner_node>();
     copy_into(new_node.get());
     return new_node.release();
 }
@@ -298,7 +298,7 @@ config::detail::base_node*
 config::detail::static_inner_node::combine(const tree_key& key,
                                            const base_node* other) const
 {
-    std::unique_ptr<inner_node> new_node(new static_inner_node());
+    auto new_node = std::make_unique<static_inner_node>();
     combine_into(key, other, new_node.get());
     return new_node.release();
 }
@@ -357,7 +357,7 @@ config::detail::dynamic_inner_node::dynamic_inner_node(void) : inner_node(true)
 config::detail::base_node*
 config::detail::dynamic_inner_node::deep_copy(void) const
 {
-    std::unique_ptr<inner_node> new_node(new dynamic_inner_node());
+    auto new_node = std::make_unique<dynamic_inner_node>();
     copy_into(new_node.get());
     return new_node.release();
 }
@@ -374,7 +374,7 @@ config::detail::base_node*
 config::detail::dynamic_inner_node::combine(const tree_key& key,
                                             const base_node* other) const
 {
-    std::unique_ptr<inner_node> new_node(new dynamic_inner_node());
+    auto new_node = std::make_unique<dynamic_inner_node>();
     combine_into(key, other, new_node.get());
     return new_node.release();
 }
@@ -418,7 +418,7 @@ config::leaf_node::combine(const detail::tree_key& key,
 config::detail::base_node*
 config::bool_node::deep_copy(void) const
 {
-    std::unique_ptr<bool_node> new_node(new bool_node());
+    auto new_node = std::make_unique<bool_node>();
     new_node->_value = _value;
     return new_node.release();
 }
@@ -454,7 +454,7 @@ config::bool_node::set_lua(lutok::state& state, const int value_index)
 config::detail::base_node*
 config::int_node::deep_copy(void) const
 {
-    std::unique_ptr<int_node> new_node(new int_node());
+    auto new_node = std::make_unique<int_node>();
     new_node->_value = _value;
     return new_node.release();
 }
@@ -502,7 +502,7 @@ config::positive_int_node::validate(const value_type& new_value) const
 config::detail::base_node*
 config::positive_int_node::deep_copy(void) const
 {
-    std::unique_ptr<positive_int_node> new_node(new positive_int_node());
+    auto new_node = std::make_unique<positive_int_node>();
     new_node->_value = _value;
     return new_node.release();
 }
@@ -513,7 +513,7 @@ config::positive_int_node::deep_copy(void) const
 config::detail::base_node*
 config::string_node::deep_copy(void) const
 {
-    std::unique_ptr<string_node> new_node(new string_node());
+    auto new_node = std::make_unique<string_node>();
     new_node->_value = _value;
     return new_node.release();
 }
@@ -549,7 +549,7 @@ config::string_node::set_lua(lutok::state& state, const int value_index)
 config::detail::base_node*
 config::strings_set_node::deep_copy(void) const
 {
-    std::unique_ptr<strings_set_node> new_node(new strings_set_node());
+    auto new_node = std::make_unique<strings_set_node>();
     new_node->_value = _value;
     return new_node.release();
 }

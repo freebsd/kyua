@@ -71,7 +71,7 @@ public:
     /// \return A dynamically-allocated node.
     virtual base_node* deep_copy(void) const
     {
-        std::unique_ptr<bytes_node> new_node(new bytes_node());
+        auto new_node = std::make_unique<bytes_node>();
         new_node->_value = _value;
         return new_node.release();
     }
@@ -97,7 +97,7 @@ public:
     /// \return A dynamically-allocated node.
     virtual base_node* deep_copy(void) const
     {
-        std::unique_ptr<delta_node> new_node(new delta_node());
+        auto new_node = std::make_unique<delta_node>();
         new_node->_value = _value;
         return new_node.release();
     }
@@ -151,7 +151,7 @@ class user_node : public config::string_node {
     /// \return A dynamically-allocated node.
     virtual base_node* deep_copy(void) const
     {
-        std::unique_ptr<user_node> new_node(new user_node());
+        auto new_node = std::make_unique<user_node>();
         new_node->_value = _value;
         return new_node.release();
     }
@@ -179,7 +179,7 @@ class paths_set_node : public config::base_set_node<fs::path> {
     /// \return A dynamically-allocated node.
     virtual base_node* deep_copy(void) const
     {
-        std::unique_ptr<paths_set_node> new_node(new paths_set_node());
+        auto new_node = std::make_unique<paths_set_node>();
         new_node->_value = _value;
         return new_node.release();
     }

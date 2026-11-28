@@ -148,8 +148,7 @@ ATF_TEST_CASE_BODY(kyuafile__load__mock_interfaces)
 {
     scheduler::scheduler_handle handle = scheduler::setup();
 
-    std::shared_ptr<scheduler::interface> mock_interface(
-        new engine::plain_interface());
+    auto mock_interface = std::make_shared<engine::plain_interface>();
 
     scheduler::register_interface("some", mock_interface);
     scheduler::register_interface("random", mock_interface);
