@@ -135,20 +135,20 @@ jobs:
                       ${{ join(matrix.pkgs, ' ') }}
             - name: Checking out source (ATF)
               if: ${{ matrix.build-dependencies-from-source }}
-              uses: actions/checkout@v4
+              uses: actions/checkout@v7
               with:
                   repository: "${{ env.ATF_REPO }}"
                   ref: "${{ env.ATF_REF }}"
                   path: "${{ env.ATF_SRCDIR }}"
             - name: Checking out source (Lutok)
               if: ${{ matrix.build-dependencies-from-source }}
-              uses: actions/checkout@v4
+              uses: actions/checkout@v7
               with:
                   repository: "${{ env.LUTOK_REPO }}"
                   ref: "${{ env.LUTOK_REF }}"
                   path: "${{ env.LUTOK_SRCDIR }}"
             - name: Checking out source (Kyua)
-              uses: actions/checkout@v4
+              uses: actions/checkout@v7
               with:
                   # Same as `KYUA_SRCDIR`.
                   path: "${{ env.KYUA_SRCDIR }}"
@@ -348,20 +348,20 @@ jobs:
         steps:
             - name: Checking out source (ATF)
               if: ${{ matrix.build-dependencies-from-source }}
-              uses: actions/checkout@v4
+              uses: actions/checkout@v7
               with:
                   repository: "${{ env.ATF_REPO }}"
                   ref: "${{ env.ATF_REF }}"
                   path: "${{ env.ATF_SRCDIR }}"
             - name: Checking out source (Lutok)
               if: ${{ matrix.build-dependencies-from-source }}
-              uses: actions/checkout@v4
+              uses: actions/checkout@v7
               with:
                   repository: "${{ env.LUTOK_REPO }}"
                   ref: "${{ env.LUTOK_REF }}"
                   path: "${{ env.LUTOK_SRCDIR }}"
             - name: Checking out source (Kyua)
-              uses: actions/checkout@v4
+              uses: actions/checkout@v7
               with:
                   path: "${{ env.KYUA_SRCDIR }}"
 
