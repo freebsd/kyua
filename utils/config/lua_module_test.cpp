@@ -60,7 +60,7 @@ public:
     /// \return A dynamically-allocated node.
     virtual base_node* deep_copy(void) const
     {
-        std::unique_ptr<custom_node> new_node(new custom_node());
+        auto new_node = std::make_unique<custom_node>();
         new_node->_value = _value;
         return new_node.release();
     }
